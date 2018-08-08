@@ -6,11 +6,10 @@ import numpy as np
 
 import espressomd
 import espressomd.lb
-from espressomd import *
 from tests_common import abspath
 
 
-class TestLB(ut.TestCase):
+class TestLB(object):
 
     """
     Basic tests of the Lattice Boltzmann implementation
@@ -160,15 +159,6 @@ class TestLB(ut.TestCase):
         temp_prec = self.params['temp_confidence'] * \
             temp_dev / (self.params['int_times'])**0.5
 
-        print("maximal mass deviation: {}  accepted deviation: {}".format(
-            self.max_dmass, self.params['mass_prec_per_node']))
-        print("maximal momentum deviation: {}  accepted deviation: {}".format(
-            self.max_dm, self.params['mom_prec']))
-        print("average temperature: {}".format(self.avg_temp))
-        print("average fluid temperature: {}".format(self.avg_fluid_temp))
-        print("set temperature: {}".format(self.params['temp']))
-        print("maximally accepted deviation: {}".format(temp_prec))
-
         self.assertTrue(
             abs(
                 self.avg_temp -
@@ -246,3 +236,21 @@ class TestLB(ut.TestCase):
             np.testing.assert_allclose(
                 np.copy(self.lbf[n].velocity), fluid_velocity,atol=1E-6)
 
+
+@ut.skipIf(not espressomd.has_features(["LB"]),
+           "Features not available, skipping test!")
+class TestLBCPU(TestLB, ut.TestCase):
+    def setUp(self):
+        self.lb_class = espressomd.lb.LBFluid
+        self.params.update({"mom_prec":1E-9,"mass_prec_per_node":5E-8})
+
+@ut.skipIf(not espressomd.has_features(["LB_GPU"]) or espressomd.has_features('SHANCHEN'),
+           "Features not available, skipping test!")
+class TestLBGPU(TestLB, ut.TestCase):
+    def setUp(self):
+        self.lb_class = espressomd.lb.LBFluidGPU
+        self.params.update({"mom_prec":1E-3,"mass_prec_per_node":1E-5})
+
+
+if __name__ == "__main__":
+    ut.main()
