@@ -2,7 +2,9 @@ set(Scafacos_SRC
     Scafacos.cpp
 )
 add_library(Scafacos SHARED ${Scafacos_SRC})
-target_include_directories(Scafacos ${SCAFACOS_INCLUDE_DIRS})
+if (${SCAFACOS_INCLUDE_DIRS})
+    target_include_directories(Scafacos ${SCAFACOS_INCLUDE_DIRS})
+endif()
 install(TARGETS Scafacos DESTINATION ${PYTHON_INSTDIR}/espressomd)
 add_dependencies(Scafacos EspressoConfig)
 
