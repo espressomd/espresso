@@ -1,3 +1,6 @@
+"""
+This sample performs a grand canonical simulation of a salt solution.
+"""
 #
 # Copyright (C) 2013,2014 The ESPResSo project
 #
@@ -21,6 +24,10 @@ import numpy as np
 import sys
 
 import espressomd
+
+required_features = ["ELECTROSTATICS","EXTERNAL_FORCES","LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
@@ -73,7 +80,7 @@ for i in range(N0, 2 * N0):
 
 lj_eps=1.0
 lj_sig=1.0
-lj_cut=2**(1.0/6)
+lj_cut=2**(1.0/6)*lj_sig
 types=[0,1,2]
 for type_1 in types:
     for type_2 in types:
@@ -82,7 +89,7 @@ for type_1 in types:
             cutoff=lj_cut, shift="auto")
 
 RE = reaction_ensemble.ReactionEnsemble(temperature=temperature, exclusion_radius=1.0)
-RE.add_reaction(Gamma=cs_bulk**2*np.exp(excess_chemical_potential_pair/temperature), reactant_types=[], reactant_coefficients=[], product_types=[1, 2], product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
+RE.add_reaction(gamma=cs_bulk**2*np.exp(excess_chemical_potential_pair/temperature), reactant_types=[], reactant_coefficients=[], product_types=[1, 2], product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
