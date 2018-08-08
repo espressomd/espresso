@@ -27,10 +27,7 @@
 
 #include "config.hpp"
 
-#include <limits>
-
 #include "communication.hpp"
-#include "constraints.hpp"
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
 #include "initialize.hpp"
@@ -39,11 +36,12 @@
 #include "lbboundaries.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 #include "lbgpu.hpp"
-#include "utils.hpp"
+#include "grid.hpp"
 
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include <limits>
 
 namespace LBBoundaries {
 

@@ -27,6 +27,10 @@ public:
   ParticleForce force(const Particle &p, Vector3d const &folded_pos) override {
     return impl.force(p, folded_pos);
   }
+
+  bool fits_in_box(Vector3d const &box) const override {
+    return impl.field().fits_in_box(box);
+  }
 };
 } /* namespace Constraints */
 #endif

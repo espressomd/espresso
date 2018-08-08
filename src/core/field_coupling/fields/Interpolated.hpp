@@ -131,7 +131,13 @@ public:
     }
   }
 
-  bool fits_in_box(const Vector3d &) const { return false; }
+  bool fits_in_box(const Vector3d &box) const {
+    const Vector3d grid_size = {m_grid_spacing[0] * shape()[0],
+                                m_grid_spacing[1] * shape()[1],
+                                m_grid_spacing[2] * shape()[2]};
+    return (m_origin < Vector3d::broadcast(0.)) &&
+           ((m_origin + grid_size) >= box);
+  }
 };
 }
 }

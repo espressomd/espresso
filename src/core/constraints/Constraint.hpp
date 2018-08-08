@@ -14,6 +14,8 @@ public:
   virtual ParticleForce force(const Particle &p,
                               const Vector3d &folded_pos) = 0;
 
+  virtual bool fits_in_box(Vector3d const &box) const = 0;
+
   virtual void reset_force(){};
 
   virtual ~Constraint() {}
