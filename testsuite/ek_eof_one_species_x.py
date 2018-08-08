@@ -106,10 +106,10 @@ class ek_eof_one_species_x(ut.TestCase):
 
 # Set up the walls confining the fluid and carrying charge
 
-        ek_wall1 = electrokinetics.EKBoundary(
+        ek_wall1 = espressomd.ekboundaries.EKBoundary(
             charge_density=sigma / (agrid * padding), shape=shapes.Wall(normal=[0, 0, 1], dist=padding))
         system.ekboundaries.add(ek_wall1)
-        ek_wall2 = electrokinetics.EKBoundary(charge_density=sigma / (
+        ek_wall2 = espressomd.ekboundaries.EKBoundary(charge_density=sigma / (
             agrid * padding), shape=shapes.Wall(normal=[0, 0, -1], dist=-(padding + width)))
         system.ekboundaries.add(ek_wall2)
 
