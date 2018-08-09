@@ -95,6 +95,11 @@ template <size_t N> struct infer_type_helper<Vector<N, double>> {
   static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
 };
 
+template <size_t N, size_t M>
+struct infer_type_helper<Vector<N, Vector<M, double>>> {
+  static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
+};
+
 template <size_t N> struct infer_type_helper<Vector<N, int>> {
   static constexpr VariantType value{VariantType::INT_VECTOR};
 };
