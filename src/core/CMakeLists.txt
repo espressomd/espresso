@@ -96,8 +96,8 @@ set(EspressoCore_SRC
 
 
 
-add_custom_target(generate_config_features
-  BYPRODUCTS ${CMAKE_BINARY_DIR}/src/core/config-features.hpp ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
+add_custom_command(
+  OUTPUT ${CMAKE_BINARY_DIR}/src/core/config-features.hpp ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
   COMMAND
   ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
   ${CMAKE_SOURCE_DIR}/src/features.def
@@ -105,37 +105,35 @@ add_custom_target(generate_config_features
   ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
   DEPENDS ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
   )
+add_custom_target(
+  generate_config_features
+  DEPENDS ${CMAKE_BINARY_DIR}/src/core/config-features.hpp ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
+)
 
-add_custom_target(generate_config_version
-  BYPRODUCTS ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
+add_custom_command(
+  OUTPUT ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
   COMMAND ${CMAKE_SOURCE_DIR}/config/genversion.sh -c > ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
 
+
 add_library(EspressoConfig SHARED config-features.cpp)
-add_dependencies(EspressoConfig myconfig check_myconfig generate_config_features generate_config_version)
+add_dependencies(EspressoConfig myconfig check_myconfig generate_config_features)
 install(TARGETS EspressoConfig LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoConfig PROPERTIES SOVERSION ${SOVERSION})
 target_include_directories(EspressoConfig PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(EspressoCore SHARED ${EspressoCore_SRC} config-version.cpp)
-add_dependencies(EspressoCore generate_config_features)
+add_dependencies(EspressoCore EspressoConfig)
 install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
-target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Observables Accumulators cluster_analysis VirtualSites)
+target_link_libraries(EspressoCore PRIVATE EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Observables Accumulators cluster_analysis VirtualSites)
 
-
-if(WITH_COVERAGE)
-  target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:RELEASE>:-g -Og>")
-  target_compile_options(EspressoCore PUBLIC "$<$<CXX_COMPILER_ID:Clang>: -fprofile-instr-generate -fcoverage-mapping>")
-  target_compile_options(EspressoCore PUBLIC "$<$<NOT:CXX_COMPILER_ID:Clang>: --coverage -fprofile-arcs -ftest-coverage>")
-  target_link_libraries(EspressoCore PUBLIC "$<$<NOT:CXX_COMPILER_ID:Clang>: gcov>")
-endif()
 
 if(SCAFACOS)
-  target_link_libraries(EspressoCore Scafacos)
+  target_link_libraries(EspressoCore PRIVATE Scafacos)
 endif(SCAFACOS)
 
 if(GSL)
@@ -144,7 +142,7 @@ endif(GSL)
 
 
 if(GSL)
-  target_link_libraries(EspressoCore gsl gslcblas)
+  target_link_libraries(EspressoCore PRIVATE gsl gslcblas)
 endif(GSL)
 
 if(CUDA)
@@ -168,7 +166,7 @@ if(CUDA)
   add_dependencies(EspressoCuda EspressoConfig)
 
   CUDA_ADD_CUFFT_TO_TARGET(EspressoCuda)
-  target_link_libraries(EspressoCore EspressoCuda)
+  target_link_libraries(EspressoCore PRIVATE EspressoCuda)
 endif(CUDA)
 
 # Subdirectories
@@ -176,12 +174,12 @@ add_subdirectory(observables)
 add_subdirectory(accumulators)
 add_subdirectory(io)
 if(HDF5_FOUND)
-    target_link_libraries(EspressoCore H5mdCore)
+    target_link_libraries(EspressoCore PUBLIC H5mdCore)
 endif(HDF5_FOUND)
-target_link_libraries(EspressoCore mpiio)
-target_link_libraries(EspressoCore pdbreader)
-target_link_libraries(EspressoCore bonded_interactions)
-target_link_libraries(EspressoCore nonbonded_interactions)
+target_link_libraries(EspressoCore PRIVATE mpiio)
+target_link_libraries(EspressoCore PRIVATE pdbreader)
+target_link_libraries(EspressoCore PRIVATE bonded_interactions)
+target_link_libraries(EspressoCore PRIVATE nonbonded_interactions)
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
