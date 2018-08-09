@@ -93,8 +93,18 @@ set(EspressoCore_SRC
     virtual_sites.cpp
 )
 
-
-
+if(WITH_COVERAGE)
+  add_compile_options("$<$<CONFIG:Release>:-g>")
+  add_compile_options("$<$<CONFIG:Release>:-O0>")
+  add_compile_options("$<$<CXX_COMPILER_ID:Clang>:-fprofile-instr-generate>")
+  add_compile_options("$<$<CXX_COMPILER_ID:Clang>:-fcoverage-mapping>")
+  add_compile_options("$<$<NOT:$<CXX_COMPILER_ID:Clang>>:--coverage>")
+  add_compile_options("$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-fprofile-arcs>")
+  add_compile_options("$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-ftest-coverage>")
+  if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lgcov")
+  endif()
+endif()
 
 add_custom_command(
   OUTPUT ${CMAKE_BINARY_DIR}/src/core/config-features.hpp ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
