@@ -41,9 +41,6 @@ using TabulatedForceField = ExternalField<Scaled, Interpolated<double, 3>>;
 using TabulatedPotentialField =
     ExternalPotential<Scaled, Interpolated<double, 1>>;
 
-using LinearForceField = ExternalField<Scaled, AffineMap<double, 3>>;
-using LinearPotentialField = ExternalPotential<Scaled, AffineMap<double, 1>>;
-
 /* Physical Fields */
 using Gravity = ExternalField<Mass, Constant<double, 3>>;
 
@@ -69,8 +66,6 @@ void initialize() {
   ScriptInterface::register_new<TabulatedForceField>("Constraints::ForceField");
   ScriptInterface::register_new<TabulatedPotentialField>(
       "Constraints::PotentialField");
-  ScriptInterface::register_new<LinearPotentialField>(
-      "Constraints::LinearPotentialField");
 
   ScriptInterface::register_new<Gravity>("Constraints::Gravity");
   ScriptInterface::register_new<FlowField>("Constraints::FlowField");

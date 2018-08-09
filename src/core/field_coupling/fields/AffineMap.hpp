@@ -8,23 +8,24 @@ namespace FieldCoupling {
 namespace Fields {
 
 namespace detail {
-/* Matrix * Vector overload */
-template <typename T, size_t codim>
-Vector<codim, T> axb(const Vector<codim, Vector<3, T>> &A, Vector3d const &x,
-                     Vector<codim, T> const &b) {
-  Vector<codim, T> ret;
 
-  for(int i = 0; i < codim; i++)
-    ret[i] = A[i] * x;
+template <typename T, size_t codim> struct matrix_vector_impl {
+  Vector<codim, T> operator()(const Vector<codim, Vector<3, T>> &A,
+                              Vector<3, T> const &v) const {
+    Vector<codim, T> ret;
 
-  return ret + b;
-}
+    for (int i = 0; i < codim; i++)
+      ret[i] = A[i] * v;
 
-/* Scalar overload */
-template <typename T>
-T axb(const Vector<3, T> &A, Vector3d const &x, T const &b) {
-  return A * x + b;
-}
+    return ret;
+  }
+};
+
+template <typename T> struct matrix_vector_impl<T, 1> {
+  T operator()(const Vector<3, T> &A, Vector<3, T> const &v) const {
+    return A * v;
+  }
+};
 }
 
 /**
@@ -49,7 +50,7 @@ public:
 
   template <typename F>
   value_type operator()(const F &f, const Vector3d &pos) const {
-    auto const axb = detail::axb(m_A, pos, m_b);
+    auto const axb = detail::matrix_vector_impl<T, codim>{}(m_A, pos) + m_b;
 
     return f(axb);
   }

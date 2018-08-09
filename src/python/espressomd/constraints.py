@@ -187,20 +187,18 @@ class HomogeneousMagneticField(Constraint):
 class _Interpolated(Constraint):
     """
     Tabulated field data.
-    The actual field value is calculated by cardinal b-spline
-    intepolation (force fields) or gradient cardinal b-splins
+    The actual field value is calculated by linear
+    intepolation (force fields) or gradient linear
     interpolation.
 
-    The provided field data grid has to be larger than the box
-    by a margin depending on the interpolation order:
-    In each dimension the provided grid has to be
-    order//2 * grid_spacing larger than the box.
-    For example if the box is 10 in x direction, and the interpolation
-    order is 2 and a grid spacing of .1 is to be used, (2//2) = 1 extra
-    point is needed on each side, and the grid spans the range
-    [-1 * 0.1, 10 + 1 * 0.1]. Please be aware that the periodicity is not
-    taken into account automatically, so this is also true for periodic
-    directions.
+    The data has to have one point of halo in each direction,
+    and is shifted by half a grid spacing in the +xyz direction,
+    so that the element (0,0,0) has coordinates -0.5 * grid_spacing.
+    The numer of points has to be such that the data spanc the whole
+    box, e.g. the most up right back point has to be at least at
+    box + 0.5 * grid_spacing. There are convenienc function on this
+    class that can calulate the required grid dimensions and the coordinates.
+    See also the examples on ForceField.
 
     Attributes
     ----------
@@ -273,6 +271,18 @@ class _Interpolated(Constraint):
 
     @classmethod
     def field_coordinates(cls, box_size, grid_spacing):
+        """Returns an array of the coordinates of  the grid
+        points required.
+
+        Arguments
+        ---------
+        box_size : array_like obj:`float`
+            The box the field should be used.
+
+        grid_spacing : array_like obj:`float`
+            The desired grid spacing.
+        """
+
         return cls.field_from_fn(box_size, grid_spacing, lambda x: x, 3)
 
     def _unpack_dims(self, a):
@@ -316,7 +326,9 @@ class ForceField(_Interpolated):
 class PotentialField(_Interpolated):
     """
     A generic tabulated force field that applies a per particle
-    scaling factor.
+    scaling factor. The forces are calculated numerically from
+    the data by finite differences. The potential is interpolated
+    from the provided data.
 
     Attributes
     ----------
@@ -369,7 +381,11 @@ class LinearElectricPotential(Constraint):
 
     resulting in the electic field E
     everywhere. (E.g. in a plate capacitor).
+    The resulting force on the particles are then
 
+      F = q * E
+
+    where q is the charge of the particle.
 
     Attributes
     ----------
@@ -445,7 +461,15 @@ class HomogeneousFlowField(Constraint):
 @script_interface_register
 class ElectricPotential(_Interpolated):
     """
-    Electric potential.
+    Electric potential interpolated from
+    provided data. The electric field E is
+    calculated numerically from the potential,
+    and the resulting force on the particles are
+
+      F = q * E
+
+    where q is the charge of the particle.
+
 
     """
 
