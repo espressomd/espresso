@@ -15,6 +15,13 @@ namespace Constraints {
 namespace detail {
 using namespace ::FieldCoupling::Fields;
 
+/**
+ * @brief ScriptInterface implementations for the
+ *        various fields provided.
+ *
+ * These are seperated from the Contraints because
+ * they can be reused togher with the fields themselfes.
+ */
 template <typename Field> struct field_params_impl;
 
 template <typename T, size_t codim>
@@ -89,12 +96,12 @@ struct field_params_impl<Interpolated<T, codim>> {
             {"_field_codim", AutoParameter::read_only,
              []() { return static_cast<int>(codim); }},
             {"_field_data", AutoParameter::read_only, [this_]() {
-              auto &field_data = this_().field_data();
-              auto data_ptr =
-                  reinterpret_cast<const double *>(field_data.data());
-              return std::vector<double>(
-                  data_ptr, data_ptr + codim * field_data.num_elements());
-            }}};
+               auto &field_data = this_().field_data();
+               auto data_ptr =
+                   reinterpret_cast<const double *>(field_data.data());
+               return std::vector<double>(
+                   data_ptr, data_ptr + codim * field_data.num_elements());
+             }}};
   }
 };
 
@@ -106,8 +113,8 @@ static std::vector<AutoParameter> field_parameters(const T &this_) {
 template <typename Field> Field make_field(const VariantMap &params) {
   return field_params_impl<Field>::make(params);
 }
-}
-}
-}
+} // namespace detail
+} // namespace Constraints
+} // namespace ScriptInterface
 
 #endif

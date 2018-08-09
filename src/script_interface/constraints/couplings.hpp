@@ -1,11 +1,11 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_COUPLINGS_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_COUPLINGS_HPP
 
-#include "core/field_coupling/couplings/Viscous.hpp"
 #include "core/field_coupling/couplings/Charge.hpp"
 #include "core/field_coupling/couplings/Direct.hpp"
-#include "core/field_coupling/couplings/Scaled.hpp"
 #include "core/field_coupling/couplings/Mass.hpp"
+#include "core/field_coupling/couplings/Scaled.hpp"
+#include "core/field_coupling/couplings/Viscous.hpp"
 
 #include "ScriptInterface.hpp"
 
@@ -13,6 +13,15 @@ namespace ScriptInterface {
 namespace Constraints {
 namespace detail {
 using namespace ::FieldCoupling::Coupling;
+
+/**
+ * @brief ScriptInterface implementations for the
+ *        various couplings provided.
+ *
+ * These are seperated from the Contraints because
+ * they can be reused togher with the couplings themselfes.
+ */
+
 /**
  * Default version for parameterless couplings.
  */
@@ -30,7 +39,8 @@ template <> struct coupling_parameters_impl<Viscous> {
     return {{
         "gamma",
         [this_](const Variant &v) { this_().gamma() = get_value<double>(v); },
-        [this_]() { return this_().gamma(); }, }};
+        [this_]() { return this_().gamma(); },
+    }};
   }
 };
 
@@ -38,11 +48,11 @@ template <> struct coupling_parameters_impl<Scaled> {
   template <typename This>
   static std::vector<AutoParameter> params(const This &this_) {
     return {{
-             "default_scale",
-             [this_](const Variant &v) {
-               this_().default_scale() = get_value<double>(v);
-             },
-             [this_]() { return this_().default_scale(); },
+                "default_scale",
+                [this_](const Variant &v) {
+                  this_().default_scale() = get_value<double>(v);
+                },
+                [this_]() { return this_().default_scale(); },
             },
             {"particle_scales",
              [this_](const Variant &v) {
@@ -70,8 +80,8 @@ template <> inline Scaled make_coupling<Scaled>(const VariantMap &params) {
   return Scaled{unpack_map<int, double>(scales_packed),
                 get_value<double>(params, "default_scale")};
 }
-}
-}
-}
+} // namespace detail
+} // namespace Constraints
+} // namespace ScriptInterface
 
 #endif
