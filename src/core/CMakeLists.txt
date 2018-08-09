@@ -93,18 +93,6 @@ set(EspressoCore_SRC
     virtual_sites.cpp
 )
 
-if(WITH_COVERAGE)
-  add_compile_options("$<$<CONFIG:Release>:-g>")
-  add_compile_options("$<$<CONFIG:Release>:-O0>")
-  add_compile_options("$<$<CXX_COMPILER_ID:Clang>:-fprofile-instr-generate>")
-  add_compile_options("$<$<CXX_COMPILER_ID:Clang>:-fcoverage-mapping>")
-  add_compile_options("$<$<NOT:$<CXX_COMPILER_ID:Clang>>:--coverage>")
-  add_compile_options("$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-fprofile-arcs>")
-  add_compile_options("$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-ftest-coverage>")
-  if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lgcov")
-  endif()
-endif()
 
 add_custom_command(
   OUTPUT ${CMAKE_BINARY_DIR}/src/core/config-features.hpp ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
@@ -138,6 +126,18 @@ install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+if(WITH_COVERAGE)
+  target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:Release>:-g>")
+  target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:Release>:-O0>")
+  target_compile_options(EspressoCore PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fprofile-instr-generate>")
+  target_compile_options(EspressoCore PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fcoverage-mapping>")
+  target_compile_options(EspressoCore PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:--coverage>")
+  target_compile_options(EspressoCore PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-fprofile-arcs>")
+  target_compile_options(EspressoCore PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-ftest-coverage>")
+  if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_link_libraries(EspressoCore PUBLIC gcov)
+  endif()
+endif()
 
 target_link_libraries(EspressoCore PRIVATE EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Observables Accumulators cluster_analysis VirtualSites)
 
