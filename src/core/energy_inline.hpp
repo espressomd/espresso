@@ -63,14 +63,12 @@
 #include "angledist.hpp"
 #include "debye_hueckel.hpp"
 #include "elc.hpp"
-#include "hydrogen_bond.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "morse.hpp"
 #include "reaction_field.hpp"
 #include "scafacos.hpp"
 #include "subt_lj.hpp"
-#include "twist_stack.hpp"
 
 #ifdef CONSTRAINTS
 #include "constraints.hpp"
@@ -271,9 +269,6 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 
 inline void add_bonded_energy(Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
-#ifdef TWIST_STACK
-  Particle *p5 = nullptr, *p6 = nullptr, *p7 = nullptr, *p8 = nullptr;
-#endif
   Bonded_ia_parameters *iaparams;
   int i, bond_broken;
   double ret = 0, dx[3] = {0, 0, 0};
@@ -317,24 +312,6 @@ inline void add_bonded_energy(Particle *p1) {
         return;
       }
     }
-#ifdef TWIST_STACK
-    if (n_partners >= 7) {
-      p5 = local_particles[p1->bl.e[i++]];
-      p6 = local_particles[p1->bl.e[i++]];
-      p7 = local_particles[p1->bl.e[i++]];
-      p8 = local_particles[p1->bl.e[i++]];
-
-      if (!p4 || !p5 || !p6 || !p7 || !p8) {
-        runtimeErrorMsg() << "bond broken between particles" << p1->p.identity
-                          << ", " << p1->bl.e[i - 7] << ", " << p1->bl.e[i - 6]
-                          << ", " << p1->bl.e[i - 5] << ", " << p1->bl.e[i - 4]
-                          << ", " << p1->bl.e[i - 3] << ", " << p1->bl.e[i - 2]
-                          << ", " << p1->bl.e[i - 1]
-                          << " (particles not stored on the same node)";
-        return;
-      }
-    }
-#endif
     /* similar to the force, we prepare the center-center vector */
     if (n_partners == 1)
       get_mi_vector(dx, p1->r.p, p2->r.p);
@@ -370,17 +347,6 @@ inline void add_bonded_energy(Particle *p1) {
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
-#endif
-#ifdef TWIST_STACK
-    case BONDED_IA_CG_DNA_STACKING:
-      bond_broken = calc_twist_stack_energy(p1, p2, p3, p4, p5, p6, p7, p8,
-                                            iaparams, &ret);
-      break;
-#endif
-#ifdef HYDROGEN_BOND
-    case BONDED_IA_CG_DNA_BASEPAIR:
-      bond_broken = calc_hydrogen_bond_energy(p1, p2, p3, p4, iaparams, &ret);
       break;
 #endif
 #ifdef BOND_ANGLE

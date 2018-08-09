@@ -1,43 +1,38 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file debye_hueckel.cpp
  *
  *  Implementation of \ref debye_hueckel.hpp
  */
 
-#include "config.hpp"
+#include "debye_hueckel.hpp"
 
 #ifdef ELECTROSTATICS
-
-#include "utils.hpp"
-#include "debug.hpp"
-#include "debye_hueckel.hpp"
 #include "communication.hpp"
 
-int dh_set_params(double kappa, double r_cut)
-{
-  if(dh_params.kappa < 0.0)
+int dh_set_params(double kappa, double r_cut) {
+  if (dh_params.kappa < 0.0)
     return -1;
 
-  if(dh_params.r_cut < 0.0)
+  if (dh_params.r_cut < 0.0)
     return -2;
 
   dh_params.kappa = kappa;
@@ -47,17 +42,5 @@ int dh_set_params(double kappa, double r_cut)
 
   return 1;
 }
-
-#ifdef COULOMB_DEBYE_HUECKEL
-int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext, double r0, double r1, double alpha) {
-  dh_params.eps_int = eps_int;
-  dh_params.eps_ext = eps_ext;
-  dh_params.r0 = r0;
-  dh_params.r1 = r1;
-  dh_params.alpha = alpha;
-
-  return dh_set_params(kappa, r_cut);
-}
-#endif
 
 #endif
