@@ -27,12 +27,13 @@
 #include "EspressoSystemInterface.hpp"
 
 #include "comfixed_global.hpp"
+#include "constraints.hpp"
 #include "electrokinetics.hpp"
+#include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "iccp3m.hpp"
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
-#include "forcecap.hpp"
 #include "short_range_loop.hpp"
 #include "immersed_boundaries.hpp" 
 #include "lb.hpp"
@@ -65,10 +66,6 @@ void init_forces() {
   for (auto &p : ghost_cells.particles()) {
     init_ghost_force(&p);
   }
-
-#ifdef CONSTRAINTS
-  init_constraint_forces();
-#endif
 }
 
 void init_forces_ghosts() {
@@ -134,11 +131,14 @@ void force_calc() {
                                                sqrt(d.dist2), d.dist2);
                    });
 
+  auto local_parts = local_cells.particles();
+  Constraints::constraints.add_forces(local_parts);
+
 #ifdef OIF_GLOBAL_FORCES
   if (max_oif_objects) {
     double area_volume[2]; // There are two global quantities that need to be
-                         // evaluated: object's surface and object's volume. One
-                         // can add another quantity.
+    // evaluated: object's surface and object's volume. One
+    // can add another quantity.
     area_volume[0] = 0.0;
     area_volume[1] = 0.0;
     for (int i = 0; i < max_oif_objects; i++) {
@@ -171,8 +171,7 @@ void force_calc() {
 
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
-  if (virtual_sites()->need_ghost_comm_before_back_transfer())
-  {
+  if (virtual_sites()->need_ghost_comm_before_back_transfer()) {
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
     init_forces_ghosts();
   }

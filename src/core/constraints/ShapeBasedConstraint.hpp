@@ -42,7 +42,7 @@ public:
   Shapes::Shape const &shape() const { return *m_shape; }
 
   void reset_force() override { m_local_force = Vector3d{0, 0, 0}; m_outer_normal_force=0.0;}
-  
+
   bool &only_positive() { return m_only_positive; }
   bool &penetrable() { return m_penetrable; }
   int &type() { return part_rep.p.type; }

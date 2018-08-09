@@ -1,3 +1,6 @@
+""" Visualization sample of a simple plate capacitor with applied potential difference and charged particles.  
+"""
+
 from __future__ import print_function
 from espressomd import *
 from espressomd.shapes import *
@@ -6,6 +9,9 @@ import numpy
 from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
+
+required_features = ["PARTIAL_PERIODIC", "ELECTROSTATICS", "LENNARD_JONES"]
+espressomd.assert_features(required_features)
 
 box_l = 20
 system = espressomd.System(box_l=[box_l]*3)

@@ -72,7 +72,7 @@ void thermalized_bond_cool_down() {
 void thermalized_bond_init()
 {
 
-  for (int i = 0; i < n_bonded_ia; i++) {
+  for (int i = 0; i < bonded_ia_params.size(); i++) {
      if (bonded_ia_params[i].type == BONDED_IA_THERMALIZED_DIST) {
         Thermalized_bond_parameters &t = bonded_ia_params[i].p.thermalized_bond;
         t.pref1_com = t.gamma_com;
@@ -86,7 +86,7 @@ void thermalized_bond_init()
 
 void thermalized_bond_update_params(double pref_scale) {
   
-  for (int i = 0; i < n_bonded_ia; i++) {
+  for (int i = 0; i < bonded_ia_params.size(); i++) {
      if (bonded_ia_params[i].type == BONDED_IA_THERMALIZED_DIST) {
         Thermalized_bond_parameters &t = bonded_ia_params[i].p.thermalized_bond;
         t.pref2_com *= pref_scale;

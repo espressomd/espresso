@@ -3,8 +3,13 @@ file(GLOB EspressoCore_SRC
 
 
 if( WITH_COVERAGE )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Og --coverage -fprofile-arcs -ftest-coverage")
-  link_libraries(gcov)
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -Og")
+  if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+    link_libraries(gcov)
+  endif()
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -36,7 +41,6 @@ set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Observables Accumulators cluster_analysis VirtualSites)
 
 if(SCAFACOS)
-  include_directories(${SCAFACOS_INCLUDE_DIRS})
   target_link_libraries(EspressoCore Scafacos)
 endif(SCAFACOS)
 if(GSL)

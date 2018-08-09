@@ -26,6 +26,7 @@ from espressomd.utils cimport *
 from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
+from .interactions cimport bonded_ia_params
 from copy import copy
 from globals cimport max_seen_particle, time_step, box_l, n_part, n_rigidbonds, max_seen_particle_type
 import collections
@@ -497,7 +498,6 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-
                 cdef const double *o = NULL
                 pointer_to_omega_body(self.particle_data, o)
                 return array_locked([o[0], o[1], o[2]])
@@ -1417,7 +1417,7 @@ cdef class ParticleHandle(object):
         if change_particle_bond(self._id, bond_info, 1):
             handle_errors("Deleting the bond failed.")
 
-    def check_bond_or_throw_exception(self, _bond):
+    def check_bond_or_throw_exception(self, bond):
         """
         Checks the validity of the given bond:
 
@@ -1430,9 +1430,6 @@ cdef class ParticleHandle(object):
         Throws an exception if any of these are not met.
 
         """
-
-        bond = _bond
-
         # Has it []-access
         if not hasattr(bond, "__getitem__"):
             raise ValueError(
@@ -1453,14 +1450,13 @@ cdef class ParticleHandle(object):
                 "The bonded interaction has not yet been added to the list of active bonds in Espresso.")
 
         # Validity of the numeric id
-        if bond[0]._bond_id >= n_bonded_ia:
-            raise ValueError("The bond type", bond._bond_id, "does not exist.")
+        if bond[0]._bond_id >= bonded_ia_params.size():
+            raise ValueError("The bond type", bond[0]._bond_id, "does not exist.")
 
         bond_id=bond[0]._bond_id
         # Number of partners
         if bonded_ia_params[bond_id].num != len(bond) - 1:
-            raise ValueError("Bond of type", bond[0]._bond_id, "needs", bonded_ia_params[
-                             bond_id], "partners.")
+            raise ValueError("Bond of type", bond[0]._bond_id, "needs", bonded_ia_params[bond_id].num, "partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):

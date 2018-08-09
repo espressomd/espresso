@@ -308,6 +308,14 @@ def fene_force2(bond_vector, k, d_r_max, r_0):
     r=np.linalg.norm(bond_vector)
     return k*(r-r_0)/(r*(1-((r-r_0)/d_r_max)**2))*np.array(bond_vector)
 
+# Coulomb bond
+
+def coulomb_potential(scalar_r, k, q1, q2):
+    return k*q1*q2/scalar_r
+
+def coulomb_force(scalar_r, k, q1, q2):
+    return k*q1*q2/scalar_r**2
+
 
 # Generic Lennard-Jones
 def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12., e2=6., b1=4., b2=4., delta=0., lam=1.):

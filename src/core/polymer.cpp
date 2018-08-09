@@ -109,8 +109,6 @@ int collision(PartCfg & partCfg, double pos[3], double shield, int n_add, double
   return (1);
 }
 
-#ifdef CONSTRAINTS
-
 int constraint_collision(double *p1, double *p2) {
   Particle part1, part2;
   double d1, d2, v[3];
@@ -137,8 +135,6 @@ int constraint_collision(double *p1, double *p2) {
   }
   return 0;
 }
-
-#endif
 
 int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_id, double *posed,
              int mode, double shield, int max_try, double val_cM, int cM_dist,
@@ -220,10 +216,8 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
           pos[0] = poz[0] + rr * cos(phi);
           pos[1] = poz[1] + rr * sin(phi);
           pos[2] = poz[2] + zz;
-#ifdef CONSTRAINTS
           if (constr == 0 ||
               constraint_collision(pos, poly.data() + 3 * (n - 1)) == 0) {
-#endif
 
             if (mode == 1 || collision(partCfg, pos, shield, n, poly.data()) == 0)
               break;
@@ -231,9 +225,7 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
               cnt1 = -1;
               break;
             }
-#ifdef CONSTRAINTS
           }
-#endif
           POLY_TRACE(printf("m"); fflush(nullptr));
         }
         if (cnt1 >= max_try) {
@@ -335,19 +327,15 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
 // POLY_TRACE(/* printf("placed Monomer %d at
 // (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
 
-#ifdef CONSTRAINTS
           if (constr == 0 ||
               constraint_collision(pos, poly.data() + 3 * (n - 1)) == 0) {
-#endif
             if (mode == 1 || collision(partCfg, pos, shield, n, poly.data()) == 0)
               break;
             if (mode == 0) {
               cnt1 = -2;
               break;
             }
-#ifdef CONSTRAINTS
           }
-#endif
           POLY_TRACE(printf("m"); fflush(nullptr));
         }
         if (cnt1 >= max_try) {

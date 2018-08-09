@@ -47,6 +47,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cstring>
+#include <random>
 
 #ifndef D3Q19
 #error The implementation only works for D3Q19 so far!
@@ -104,7 +105,7 @@ LB_parameters_gpu lbpar_gpu = {
   // bulk_viscosity
   SCM1,
   // agrid
-  0.0,
+  -1.0,
   // tau
   -1.0,
   // time_step
@@ -218,11 +219,7 @@ void lb_realloc_particles_gpu(){
 
   lbpar_gpu.number_of_particles = n_part;
   LB_TRACE (printf("#particles realloc\t %u \n", lbpar_gpu.number_of_particles));
-  //fprintf(stderr, "%u \t \n", lbpar_gpu.number_of_particles);
-  /**-----------------------------------------------------*/
-  /** allocating of the needed memory for several structs */
-  /**-----------------------------------------------------*/
-  lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
+  lbpar_gpu.your_seed = (unsigned int)std::random_device{}();
 
   LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
 
@@ -232,14 +229,10 @@ void lb_realloc_particles_gpu(){
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
 
-  //lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
   lb_reinit_parameters_gpu();
-//#ifdef SHANCHEN
-//  lb_calc_particle_lattice_ia_gpu();
-//  copy_forces_from_GPU();
-//#endif 
   if(lbpar_gpu.number_of_nodes != 0){
     lb_reinit_GPU(&lbpar_gpu);
+    lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
     lbpar_gpu.reinit = 1;
   }
 
@@ -265,7 +258,7 @@ void lb_reinit_parameters_gpu() {
   for(ii=0;ii<LB_COMPONENTS;++ii){
     lbpar_gpu.mu[ii] = 0.0;
   
-    if (lbpar_gpu.viscosity[ii] > 0.0) {
+    if (lbpar_gpu.viscosity[ii] > 0.0 && lbpar_gpu.agrid > 0.0 && lbpar_gpu.tau > 0.0 ) {
       /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
       lbpar_gpu.gamma_shear[ii] = 1. - 2./(6.*lbpar_gpu.viscosity[ii]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);   
     }
@@ -450,15 +443,20 @@ void lb_lbfluid_particles_add_momentum(float momentum[3]) {
   auto & parts = partCfg();
   auto const n_part = parts.size();
 
+  // set_particle_v invalidates the parts pointer, so we need to defer setting the new values
+  std::vector<std::pair<int, double[3]>> new_velocity(n_part);
+
+  size_t i = 0;
   for (auto const &p : parts) {
-    double new_velocity[3] = {
-        p.m.v[0] +
-            momentum[0] / p.p.mass / n_part,
-        p.m.v[1] +
-            momentum[1] / p.p.mass / n_part,
-        p.m.v[2] +
-            momentum[2] / p.p.mass / n_part};
-    set_particle_v(p.p.identity, new_velocity);
+    new_velocity[i].first = p.p.identity;
+    const auto factor = 1 / (p.p.mass * n_part);
+    new_velocity[i].second[0] = p.m.v[0] + momentum[0] * factor;
+    new_velocity[i].second[1] = p.m.v[1] + momentum[1] * factor;
+    new_velocity[i].second[2] = p.m.v[2] + momentum[2] * factor;
+    ++i;
+  }
+  for (auto &p : new_velocity) {
+    set_particle_v(p.first, p.second);
   }
 }
 

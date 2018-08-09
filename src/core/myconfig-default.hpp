@@ -29,7 +29,6 @@
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define EXTERNAL_FORCES
-#define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
 #define NPT

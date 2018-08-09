@@ -642,3 +642,24 @@ report so to the developers.
     | Parallel Tempering             | Single                 | Single           | No         |
     +--------------------------------+------------------------+------------------+------------+
 
+
+
+Intended interface compatibility between ESPResSo versions
+----------------------------------------------------------
+
+We use the following versioning scheme:
+major.minor.patch_level
+
+With regards to the stability of the Python interface, we plan the following guidelines: 
+
+  * patch_level: The Python interface will not change, if only the patch_level number is different. Example: 4.0.0 -> 4.0.1.
+
+  * minor: There will be no silent interface changes between two versions with different minor numbers. I.e., a simulation script will not silently produce different results with the new version. The interface can, however, be extended. In important cases, the interface can change in such a way that using the old interface produces a clear error message and the simulation is terminated. Example: 4.0.1 -> 4.1.0
+
+  * major: No guarantees are made for a transition between major versions. Example 4.1.2 -> 5.0. 
+
+  * No guarantees are made with regards to the development branch on GitHub.
+
+  * No guarantees are made with respect to the C++ bindings in the simulation core. 
+
+

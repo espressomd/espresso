@@ -103,25 +103,21 @@ bool validate_collision_parameters() {
   }
 #endif
 
-  // For vs based methods, Binding so far only works on a single cpu
-  //  if ((collision_params.mode & COLLISION_MODE_VS) ||(collision_params.mode &
-  //  COLLISION_MODE_GLUE_TO_SURF))
-  //    if (n_nodes != 1) {
-  //      runtimeErrorMsg() << "Virtual sites based collision modes only work on
-  //      a single node.";
-  //      return false;
-  //    }
-  //
+  if ((collision_params.mode != COLLISION_MODE_OFF) && (n_nodes>1)) {
+        runtimeErrorMsg() << "The collision detection schemes are currently not available in parallel simulations";
+        return false;
+  }
+  
   // Check if bonded ia exist
   if ((collision_params.mode & COLLISION_MODE_BOND) &&
-      (collision_params.bond_centers >= n_bonded_ia)) {
+      (collision_params.bond_centers >= bonded_ia_params.size())) {
     runtimeErrorMsg() << "The bond type to be used for binding particle "
                          "centers does not exist";
     return false;
   }
 
   if ((collision_params.mode & COLLISION_MODE_VS) &&
-      (collision_params.bond_vs >= n_bonded_ia)) {
+      (collision_params.bond_vs >= bonded_ia_params.size())) {
     runtimeErrorMsg()
         << "The bond type to be used for binding virtual sites does not exist";
     return false;
@@ -156,7 +152,7 @@ bool validate_collision_parameters() {
   if (collision_params.mode & COLLISION_MODE_BIND_THREE_PARTICLES) {
     if (collision_params.bond_three_particles +
             collision_params.three_particle_angle_resolution >
-        n_bonded_ia) {
+        bonded_ia_params.size()) {
       runtimeErrorMsg()
           << "Insufficient bonds defined for three particle binding.";
       return false;

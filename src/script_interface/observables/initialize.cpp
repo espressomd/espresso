@@ -22,6 +22,7 @@
 
 #include "CylindricalPidProfileObservable.hpp"
 #include "CylindricalLBProfileObservable.hpp"
+#include "LBProfileObservable.hpp"
 #include "ParamlessObservable.hpp"
 #include "PidObservable.hpp"
 #include "PidProfileObservable.hpp"
@@ -36,11 +37,11 @@
 #include "core/observables/ParticleAngularVelocities.hpp"
 #include "core/observables/ParticleBodyAngularVelocities.hpp"
 #include "core/observables/ParticleBodyVelocities.hpp"
-#include "core/observables/ParticleCurrents.hpp"
 #include "core/observables/ParticleForces.hpp"
 #include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
 #include "core/observables/CylindricalLBVelocityProfile.hpp"
+#include "core/observables/LBVelocityProfile.hpp"
 
 
 namespace ScriptInterface {
@@ -69,6 +70,10 @@ namespace Observables {
   ScriptInterface::register_new<CylindricalLBProfileObservable<::Observables::name>>(           \
       "Observables::" #name "");
 
+#define REGISTER_LB_OBS(name)                                                 \
+  ScriptInterface::register_new<LBProfileObservable<::Observables::name>>(           \
+      "Observables::" #name "");
+
 void initialize() {
   // Manual registration:
   //  ScriptInterface::register_new<ScriptInterface::Observables::ParticleVelocities>::
@@ -81,7 +86,6 @@ void initialize() {
   REGISTER_PID_OBS(ParticleBodyVelocities);
   REGISTER_PID_OBS(ParticleAngularVelocities);
   REGISTER_PID_OBS(ParticleBodyAngularVelocities);
-  REGISTER_PID_OBS(ParticleCurrent);
   REGISTER_PID_OBS(Current);
   REGISTER_PID_OBS(DipoleMoment);
   REGISTER_PID_OBS(MagneticDipoleMoment);
@@ -91,7 +95,7 @@ void initialize() {
   REGISTER_PID_PROFILE_OBS(DensityProfile);
   REGISTER_PID_PROFILE_OBS(ForceDensityProfile);
   REGISTER_PID_PROFILE_OBS(FluxDensityProfile);
-  REGISTER_PROFILE_OBS(LBVelocityProfile);
+  REGISTER_LB_OBS(LBVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalDensityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);

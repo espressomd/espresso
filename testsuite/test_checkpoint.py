@@ -11,11 +11,21 @@ import espressomd.virtual_sites
 class CheckpointTest(ut.TestCase):
     @classmethod
     def setUpClass(self):
-        checkpoint = espressomd.checkpointing.Checkpointing(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
+        checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
+        if espressomd.has_features('LB'):
+            self.lbf = system.actors[0]
+            self.lbf.load_checkpoint("@CMAKE_CURRENT_BINARY_DIR@/lb.cpt", 1)
+
+    @ut.skipIf(not espressomd.has_features('LB'),"Skipping test due to missing features.")
+    def test_LB(self):
+        np.testing.assert_almost_equal(np.copy(self.lbf[1,1,1].velocity), np.array([0.1, 0.2, 0.3]))
+        state = self.lbf.get_params()
+        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01, 'fric': 2.0}
+        self.assertDictContainsSubset(reference, state)
 
     def test_variables(self):
-        self.assertEqual(system.cell_system.skin, 0.4)
+        self.assertEqual(system.cell_system.skin, 0.1)
         self.assertEqual(system.time_step, 0.01)
         self.assertEqual(system.min_global_cut, 2.0)
 
@@ -40,6 +50,11 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(len(set(state.items()) & set(reference.items())), len(reference))
         self.assertEqual(len(set(state2.items()) & set(reference2.items())), len(reference2))
 
+    def test_bonded_inter(self):
+        state = system.part[1].bonds[0][0].params
+        reference = {'r_0': 0.0, 'k': 1.0}
+        self.assertEqual(len(set(state.items()) & set(reference.items())), len(reference))
+
     @ut.skipIf(not espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']),
                "Cannot test for virtual site checkpointing because feature not compiled in.")
     def test_virtual_sites(self):
@@ -53,7 +68,7 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not espressomd.has_features(['ELECTROSTATICS']),
               "Cannot test for P3M checkpointing because feature not compiled in.")  
     def test_p3m(self):
-        self.assertTrue(isinstance(system.actors.active_actors[0], espressomd.electrostatics.P3M))
+        self.assertTrue(isinstance(system.actors.active_actors[1], espressomd.electrostatics.P3M))
 
 if __name__ == '__main__':
     ut.main()

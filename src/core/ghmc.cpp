@@ -266,12 +266,16 @@ void simple_momentum_update() {
     sigmat = sqrt(temperature / (p).p.mass);
 #endif
     for (int j = 0; j < 3; j++) {
-      p.m.v[j] = sigmat * gaussian_random() * time_step;
+      if (sigmat > 0.0) {
+        p.m.v[j] = sigmat * gaussian_random() * time_step;
+      }
 #ifdef ROTATION
 #ifdef ROTATIONAL_INERTIA
       sigmar = sqrt(temperature / p.p.rinertia[j]);
 #endif
-      p.m.omega[j] = sigmar * gaussian_random();
+      if (sigmar > 0.0) {
+        p.m.omega[j] = sigmar * gaussian_random();
+      }
 #endif
     }
   }
@@ -289,14 +293,22 @@ void partial_momentum_update() {
     sigmat = sqrt(temperature / (p).p.mass);
 #endif
     for (int j = 0; j < 3; j++) {
-      p.m.v[j] =
+      if (sigmat > 0.0) {
+        p.m.v[j] =
           cosp * (p.m.v[j]) + sinp * (sigmat * gaussian_random() * time_step);
+      } else {
+        p.m.v[j] = cosp * p.m.v[j];
+      }
 #ifdef ROTATION
 #ifdef ROTATIONAL_INERTIA
       sigmar = sqrt(temperature / p.p.rinertia[j]);
 #endif
-      p.m.omega[j] =
+      if (sigmar > 0.0) {
+        p.m.omega[j] =
           cosp * (p.m.omega[j]) + sinp * (sigmar * gaussian_random());
+      } else {
+        p.m.omega[j] = cosp * p.m.omega[j];
+      }
 #endif
     }
   }
@@ -378,9 +390,6 @@ void ghmc_mc() {
       boltzmann = 0.0;
     else
       boltzmann = exp(-beta * boltzmann);
-
-    // fprintf(stderr,"old hamiltonian : %f, new hamiltonian: % f, boltzmann
-    // factor: %f\n",ghmcdata.hmlt_old,ghmcdata.hmlt_new,boltzmann);
 
     if (d_random() < boltzmann) {
       ghmcdata.acc++;

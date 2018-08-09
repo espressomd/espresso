@@ -1,9 +1,5 @@
 """
-This script compares the diffusion coefficient of a single particle obtained 
-from the particle's mean square displacement and the auto correllation function
-of its velocity to the expected value.
-It uses the Observables/Correlators framework.
-
+This script compares the diffusion coefficient of a single thermalized particle obtained from the particle's mean square displacement and the auto correlation function of its velocity to the expected value. It uses the Observables/Correlators framework.
 """
 
 from __future__ import division, print_function
@@ -20,7 +16,6 @@ system=espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
-
 
 p=system.part.add(pos=(0,0,0),id=0)
 system.time_step=dt
@@ -50,11 +45,11 @@ np.savetxt("vacf.dat",c_vel.result())
 #D= 1/3 int_0^infty <v(t_0)v(t_0+t)> dt
 
 vacf=c_vel.result()
-#Integrate w. trapez rule
+#Integrate with trapezoidal rule
 I=np.trapz(vacf[:,2],vacf[:,0])
-print("Ratio of measured and expected diffusion coeff from Green-Kubo:", 1./3.*I/(kT/gamma))
+print("Ratio of measured and expected diffusion coefficients from Green-Kubo:", 1./3.*I/(kT/gamma))
 
-# Check msd
+# Check MSD
 msd=c_pos.result()
 
 expected_msd = lambda x: 2.*kT/gamma *x

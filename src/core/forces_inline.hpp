@@ -34,7 +34,6 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "collision.hpp"
-#include "constraints.hpp"
 #include "dihedral.hpp"
 #include "elc.hpp"
 #include "fene.hpp"
@@ -108,10 +107,14 @@ inline void init_ghost_force(Particle *part) {
     /* and rescale quaternion, so it is exactly of unit length */
     scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
                  Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
-    part->r.quat[0] /= scale;
-    part->r.quat[1] /= scale;
-    part->r.quat[2] /= scale;
-    part->r.quat[3] /= scale;
+    if (scale == 0) {
+      part->r.quat[0] = 1;
+    } else {
+      part->r.quat[0] /= scale;
+      part->r.quat[1] /= scale;
+      part->r.quat[2] /= scale;
+      part->r.quat[3] /= scale;
+    }
   }
 #endif
 }
@@ -163,10 +166,14 @@ inline void init_local_particle_force(Particle *part) {
     /* and rescale quaternion, so it is exactly of unit length */
     scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
                  Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
-    part->r.quat[0] /= scale;
-    part->r.quat[1] /= scale;
-    part->r.quat[2] /= scale;
-    part->r.quat[3] /= scale;
+    if (scale == 0) {
+      part->r.quat[0] = 1;
+    } else {
+      part->r.quat[0] /= scale;
+      part->r.quat[1] /= scale;
+      part->r.quat[2] /= scale;
+      part->r.quat[3] /= scale;
+    }
   }
 #endif
 }
@@ -786,9 +793,6 @@ inline void check_particle_force(Particle *part) {
 
 inline void add_single_particle_force(Particle *p) {
   add_bonded_force(p);
-#ifdef CONSTRAINTS
-  add_constraints_forces(p);
-#endif
 }
 
 #endif
