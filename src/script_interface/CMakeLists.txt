@@ -41,7 +41,3 @@ add_dependencies(EspressoScriptInterface EspressoConfig)
 target_link_libraries(EspressoScriptInterface EspressoCore)
 
 target_include_directories(EspressoScriptInterface PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-#include_directories(${CMAKE_SOURCE_DIR}/src)
-#include_directories(${CMAKE_SOURCE_DIR}/src/core)
-#include_directories(${CMAKE_BINARY_DIR}/src/core)
