@@ -94,20 +94,10 @@ set(EspressoCore_SRC
 )
 
 
-if( WITH_COVERAGE )
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -Og")
-  if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-  else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
-    link_libraries(gcov)
-  endif()
-endif()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/config-features.hpp ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
+add_custom_target(generate_config_features
+  BYPRODUCTS ${CMAKE_BINARY_DIR}/src/core/config-features.hpp ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
   COMMAND
   ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
   ${CMAKE_SOURCE_DIR}/src/features.def
@@ -115,36 +105,43 @@ add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/config-features.hpp ${CMA
   ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
   DEPENDS ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
   )
-add_custom_target(generate_config_features DEPENDS ${CMAKE_BINARY_DIR}/src/core/config-features.hpp)
 
-add_custom_command(OUTPUT config-version.cpp
-                   COMMAND ${CMAKE_SOURCE_DIR}/config/genversion.sh -c > ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
+add_custom_target(generate_config_version
+  BYPRODUCTS ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
+  COMMAND ${CMAKE_SOURCE_DIR}/config/genversion.sh -c > ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
 
-# Custom target for everything that needs to be triggered when the myconfig changes
 add_library(EspressoConfig SHARED config-features.cpp)
-add_dependencies(EspressoConfig myconfig check_myconfig)
+add_dependencies(EspressoConfig myconfig check_myconfig generate_config_features generate_config_version)
 install(TARGETS EspressoConfig LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoConfig PROPERTIES SOVERSION ${SOVERSION})
+target_include_directories(EspressoConfig PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(EspressoCore SHARED ${EspressoCore_SRC} config-version.cpp)
 add_dependencies(EspressoCore generate_config_features)
 install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
+target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Observables Accumulators cluster_analysis VirtualSites)
+
+
+if(WITH_COVERAGE)
+  target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:RELEASE>:-g -Og>")
+  target_compile_options(EspressoCore PUBLIC "$<$<CXX_COMPILER_ID:Clang>: -fprofile-instr-generate -fcoverage-mapping>")
+  target_compile_options(EspressoCore PUBLIC "$<$<NOT:CXX_COMPILER_ID:Clang>: --coverage -fprofile-arcs -ftest-coverage>")
+  target_link_libraries(EspressoCore PUBLIC "$<$<NOT:CXX_COMPILER_ID:Clang>: gcov>")
+endif()
 
 if(SCAFACOS)
   target_link_libraries(EspressoCore Scafacos)
 endif(SCAFACOS)
+
 if(GSL)
   target_include_directories(EspressoCore PUBLIC ${GSL_INCLUDE_DIRS})
 endif(GSL)
 
-
-if(GSL)
-  target_link_libraries(EspressoCore gsl gslcblas)
-endif(GSL)
 
 if(GSL)
   target_link_libraries(EspressoCore gsl gslcblas)

@@ -24,3 +24,4 @@ if(CUDA)
 endif(CUDA)
 
 set_target_properties(VirtualSites PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(VirtualSites PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
