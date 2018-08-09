@@ -15,3 +15,5 @@ add_library(nonbonded_interactions SHARED
     steppot.cpp
     thole.cpp
 )
+
+target_include_directories(nonbonded_interactions PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)

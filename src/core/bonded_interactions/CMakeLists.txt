@@ -13,3 +13,4 @@ add_library(bonded_interactions SHARED
     thermalized_bond.cpp
 )
 
+target_include_directories(bonded_interactions PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)

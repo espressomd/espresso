@@ -11,6 +11,7 @@ add_library(Actor SHARED ${Actor_SRC})
 install(TARGETS Actor LIBRARY DESTINATION ${LIBDIR} ARCHIVE DESTINATION ${LIBDIR})
 set_target_properties(Actor PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(Actor EspressoConfig)
+target_include_directories(Actor PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
 
 if(CUDA)
   set(ActorCuda_SRC
