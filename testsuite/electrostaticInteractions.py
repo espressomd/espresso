@@ -88,8 +88,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                                     [-p3m_force, 0, 0],atol=1E-10)
         self.system.actors.remove(p3m)
 
-    @ut.skipIf( espressomd.has_features(["COULOMB_DEBYE_HUECKEL"]),
-           "Features not available, skipping test!")
     def test_dh(self):
         dh_params = dict(prefactor=1.0,
                          kappa=2.0,

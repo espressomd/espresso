@@ -549,20 +549,6 @@ following features.
 
 -  ``UMBRELLA`` (experimental)
 
-
-.. _DNA Model:
-
-DNA Model
-^^^^^^^^^
-
--  ``CG_DNA``
-
--  ``TWIST_STACK``
-
--  ``HYDROGEN_BOND``
-
--  ``COULOMB_DEBYE_HUECKEL``
-
 .. _Miscellaneous:
 
 Miscellaneous

@@ -29,7 +29,6 @@ set(EspressoCore_SRC
     global.cpp
     grid.cpp
     halo.cpp
-    hydrogen_bond.cpp
     iccp3m.cpp
     immersed_boundaries.cpp
     initialize.cpp
@@ -86,7 +85,6 @@ set(EspressoCore_SRC
     thermostat.cpp
     topology.cpp
     tuning.cpp
-    twist_stack.cpp
     umbrella.cpp
     utils.cpp
     Vector.cpp
