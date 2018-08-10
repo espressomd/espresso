@@ -56,7 +56,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "communication.hpp"
-#include "maggs.hpp"
+#include "electrostatics/maggs.hpp"
 #include "thermostat.hpp"
 #include "cells.hpp"
 #include "domain_decomposition.hpp"

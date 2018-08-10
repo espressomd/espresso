@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file elc.hpp ELC algorithm for long range coulomb interactions.
+/** \file electrostatics/elc.hpp ELC algorithm for long range coulomb interactions.
     Implementation of the ELC method for the calculation of the
     electrostatic interaction in two dimensional periodic systems. For
     details on the method see MMM in general. The ELC method works

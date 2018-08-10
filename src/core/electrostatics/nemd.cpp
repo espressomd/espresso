@@ -34,7 +34,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "nemd.hpp"
+#include "electrostatics/nemd.hpp"
 
 /************************************************************/
 

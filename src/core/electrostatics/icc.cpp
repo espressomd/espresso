@@ -31,12 +31,12 @@
 #include <cstring>
 #include <ctime>
 
-#include "elc.hpp"
-#include "iccp3m.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
-#include "p3m.hpp"
-#include "p3m_gpu.hpp"
+#include "electrostatics/elc.hpp"
+#include "icc.hpp"
+#include "electrostatics/mmm1d.hpp"
+#include "electrostatics/mmm2d.hpp"
+#include "electrostatics/p3m.hpp"
+#include "electrostatics/p3m_gpu.hpp"
 
 #include "communication.hpp"
 

@@ -10,7 +10,6 @@ set(EspressoCore_SRC
     debug.cpp
     domain_decomposition.cpp
     dpd.cpp
-    elc.cpp
     electrokinetics.cpp
     electrokinetics_pdb_parse.cpp
     energy.cpp
@@ -28,7 +27,6 @@ set(EspressoCore_SRC
     global.cpp
     grid.cpp
     halo.cpp
-    iccp3m.cpp
     immersed_boundaries.cpp
     initialize.cpp
     integrate.cpp
@@ -38,23 +36,14 @@ set(EspressoCore_SRC
     lb.cpp
     lb-d3q19.cpp
     lbgpu.cpp
-    maggs.cpp
     magnetic_non_p3m_methods.cpp
     mdlc_correction.cpp
     metadynamics.cpp
     minimize_energy.cpp
-    mmm1d.cpp
-    mmm2d.cpp
-    mmm-common.cpp
     molforces.cpp
     MpiCallbacks.cpp
-    nemd.cpp
     npt.cpp
     nsquare.cpp
-    p3m-common.cpp
-    p3m.cpp
-    p3m-dipolar.cpp
-    p3m_gpu.cpp
     partCfg_global.cpp
     particle_data.cpp
     PdbParser.cpp
@@ -69,7 +58,6 @@ set(EspressoCore_SRC
     RuntimeErrorCollector.cpp
     RuntimeError.cpp
     RuntimeErrorStream.cpp
-    scafacos.cpp
     specfunc.cpp
     statistics_chain.cpp
     statistics_cluster.cpp
@@ -155,8 +143,6 @@ if(CUDA)
         EspressoSystemInterface_cuda.cu
         fd-electrostatics_cuda.cu
         lbgpu_cuda.cu
-        p3m_gpu_cuda.cu
-        p3m_gpu_error_cuda.cu
     )
 
   cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -197,7 +183,8 @@ add_subdirectory(object-in-fluid)
 add_subdirectory(shapes)
 add_subdirectory(constraints)
 add_subdirectory(cluster_analysis)
-
-if(SCAFACOS)
-  add_subdirectory(scafacos)
-endif(SCAFACOS)
+add_subdirectory(electrostatics)
+target_link_libraries(EspressoCore PRIVATE electrostatics_core)
+if(CUDA)
+  target_link_libraries(EspressoCore PRIVATE electrostatics_core_cuda)
+endif()

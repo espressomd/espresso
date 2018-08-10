@@ -23,7 +23,7 @@
  *  For more information about MMM1D, see \ref mmm1d.hpp "mmm1d.h".
  */
 
-#include "mmm1d.hpp"
+#include "electrostatics/mmm1d.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"

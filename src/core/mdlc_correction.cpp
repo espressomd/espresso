@@ -38,7 +38,7 @@
 #include "communication.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "p3m-dipolar.hpp"
+#include "electrostatics/p3m-dipolar.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
 #include "debug.hpp"

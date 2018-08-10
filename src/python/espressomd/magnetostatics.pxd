@@ -42,7 +42,7 @@ IF DIPOLES == 1:
 IF DP3M == 1:
     from p3m_common cimport p3m_parameter_struct
 
-    cdef extern from "p3m-dipolar.hpp":
+    cdef extern from "electrostatics/p3m-dipolar.hpp":
         int dp3m_set_params(double r_cut, int mesh, int cao, double alpha, double accuracy)
         void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha, double accuracy, int n_interpol)
         int dp3m_set_mesh_offset(double x, double y, double z)

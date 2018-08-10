@@ -30,7 +30,7 @@
  PS: By default the magnetic epsilon is metallic = 0.
 */
 
-#include "p3m-dipolar.hpp"
+#include "electrostatics/p3m-dipolar.hpp"
 
 #include <cstdio>
 #include <cstdlib>

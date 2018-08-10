@@ -20,15 +20,15 @@
 */
 /** \file elc.cpp
  *
- *  For more information about ELC, see \ref elc.hpp "elc.hpp".
+ *  For more information about ELC, see \ref electrostatics/elc.hpp "electrostatics/elc.hpp".
  */
-#include "elc.hpp"
+#include "electrostatics/elc.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "mmm-common.hpp"
-#include "p3m.hpp"
+#include "electrostatics/p3m.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "utils.hpp"

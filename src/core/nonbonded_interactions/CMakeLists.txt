@@ -2,7 +2,6 @@ add_library(nonbonded_interactions SHARED
     bmhtf-nacl.cpp
     buckingham.cpp
     cos2.cpp
-    debye_hueckel.cpp
     gaussian.cpp
     gb.cpp
     hat.cpp

@@ -32,7 +32,7 @@
 #include "particle_data.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "cells.hpp"
-#include "mmm2d.hpp"
+#include "electrostatics/mmm2d.hpp"
 #include "mmm-common.hpp"
 #include "specfunc.hpp"
 #include "integrate.hpp"

@@ -41,7 +41,7 @@
 #include <cuda.h>
 #include <cufft.h>
 
-#include "p3m_gpu.hpp"
+#include "electrostatics/p3m_gpu.hpp"
 
 #include "EspressoSystemInterface.hpp"
 #include "global.hpp"

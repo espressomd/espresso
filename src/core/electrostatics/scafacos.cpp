@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "scafacos.hpp"
+#include "electrostatics/scafacos.hpp"
 
 #if defined(SCAFACOS)
 

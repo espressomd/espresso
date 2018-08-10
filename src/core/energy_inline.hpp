@@ -40,7 +40,7 @@
 #include "nonbonded_interactions/steppot.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "nonbonded_interactions/thole.hpp"
-#include "nonbonded_interactions/debye_hueckel.hpp"
+#include "electrostatics/debye_hueckel.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/morse.hpp"
 #include "nonbonded_interactions/reaction_field.hpp"
@@ -64,12 +64,12 @@
 #ifdef P3M
 #include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
 #endif
-#include "elc.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
-#include "scafacos.hpp"
-#include "p3m-dipolar.hpp"
-#include "p3m.hpp"
+#include "electrostatics/elc.hpp"
+#include "electrostatics/mmm1d.hpp"
+#include "electrostatics/mmm2d.hpp"
+#include "electrostatics/scafacos.hpp"
+#include "electrostatics/p3m-dipolar.hpp"
+#include "electrostatics/p3m.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
 
