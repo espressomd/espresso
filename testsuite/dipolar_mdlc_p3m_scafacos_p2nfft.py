@@ -39,6 +39,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
        3d: As long as the independently written p3m and p2nfft agree, we are save.
     """
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    s.seed  = s.cell_system.get_state()['n_nodes'] * [1234]
     s.time_step = 0.01
     s.cell_system.skin = .4
     s.periodicity = 1, 1, 1

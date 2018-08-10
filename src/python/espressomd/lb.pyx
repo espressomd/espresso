@@ -37,6 +37,11 @@ cdef class HydrodynamicInteraction(Actor):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
+def _construct(cls, params):
+    obj = cls(**params)
+    obj._params = params
+    return obj
+
 # LBFluid main class
 ####################################################
 IF LB_GPU or LB:
@@ -45,6 +50,9 @@ IF LB_GPU or LB:
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
 
         """            
+
+        def __reduce__(self):
+            return _construct, (self.__class__, self._params), None
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
@@ -60,6 +68,9 @@ IF LB_GPU or LB:
             default_params = self.default_params()
 
             IF SHANCHEN:
+                if not hasattr(self._params["dens"],"__getitem__"):
+                    raise ValueError(
+                        "Density must be two positive double (ShanChen)")
                 if not (self._params["dens"][0] > 0.0 and self._params["dens"][1] > 0.0):
                     raise ValueError(
                         "Density must be two positive double (ShanChen)")
@@ -73,7 +84,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple"
+            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even"
 
         # list of esential keys required for the fluid
         ####################################################
@@ -120,25 +131,32 @@ IF LB_GPU or LB:
             if python_lbfluid_set_visc(self._params["visc"]):
                 raise Exception("lb_lbfluid_set_visc error")
 
-            if not self._params["bulk_visc"] == default_params["bulk_visc"]:
+            if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
                 if python_lbfluid_set_bulk_visc(self._params["bulk_visc"]):
                     raise Exception("lb_lbfluid_set_bulk_visc error")
 
             if python_lbfluid_set_agrid(self._params["agrid"]):
                 raise Exception("lb_lbfluid_set_agrid error")
 
-            if not self._params["fric"] == default_params["fric"]:
+            if self._params["fric"]!=default_params["fric"]:
                 if python_lbfluid_set_friction(self._params["fric"]):
                     raise Exception("lb_lbfluid_set_friction error")
 
-            if not self._params["ext_force_density"] == default_params["ext_force_density"]:
-                if python_lbfluid_set_ext_force_density(self._params["ext_force_density"]):
-                    raise Exception("lb_lbfluid_set_ext_force_density error")
+            if python_lbfluid_set_ext_force_density(self._params["ext_force_density"]):
+                raise Exception("lb_lbfluid_set_ext_force_density error")
 
-            if not self._params["couple"] == default_params["couple"]:
-                if python_lbfluid_set_couple_flag(self._params["couple"]):
-                    raise Exception("lb_lbfluid_set_couple_flag error")
-            utils.handle_errors("LB activation")
+            if python_lbfluid_set_couple_flag(self._params["couple"]):
+                raise Exception("lb_lbfluid_set_couple_flag error")
+
+            if "gamma_odd" in self._params:
+                if python_lbfluid_set_gamma_odd(self._params["gamma_odd"]):
+                    raise Exception("lb_lbfluid_set_gamma_odd error")
+
+            if "gamma_even" in self._params:
+                if python_lbfluid_set_gamma_even(self._params["gamma_even"]):
+                    raise Exception("lb_lbfluid_set_gamma_even error")
+
+            utils.handle_errors("LB fluid activation")
 
         # function that calls wrapper functions which get the parameters from C-Level
         ####################################################
@@ -226,8 +244,9 @@ IF LB_GPU or LB:
         ####################################################
         def _activate_method(self):
             self.validate_params()
-            self._set_params_in_es_core()
             self._set_lattice_switch()
+            self._set_params_in_es_core()
+            utils.handle_errors("LB fluid activation")
             IF LB:
                 return
             ELSE:
@@ -244,12 +263,13 @@ IF LB_GPU:
 
         """
 
+        def remove_total_momentum(self):
+            lb_lbfluid_remove_total_momentum()
+        
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
 
-        def remove_total_momentum(self):
-            lb_lbfluid_remove_total_momentum()
 
         def _activate_method(self):
             self.validate_params()
@@ -311,7 +331,6 @@ IF LB or LB_GPU:
                     lb_lbnode_set_u(self.node, host_velocity)
                 else:
                     raise ValueError("Velocity has to be of shape 3 and type float.")
-
         property density:
             def __get__(self):
                 cdef double[3] double_return
@@ -351,7 +370,9 @@ IF LB or LB_GPU:
                 return array_locked(double_return)
 
             def __set__(self, value):
-                cdef double[19] double_return = value
+                cdef double[19] double_return
+                for i in range(19):
+                    double_return[i] = value[i]
                 lb_lbnode_set_pop(self.node, double_return)
 
         property boundary:

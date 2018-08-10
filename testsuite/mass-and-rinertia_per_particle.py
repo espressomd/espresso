@@ -14,7 +14,8 @@ import math
 class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System(box_l=[1.0,1.0,1.0])
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
     es.cell_system.skin = 5.0
     
     # The NVT thermostat parameters
@@ -286,7 +287,7 @@ class ThermoTest(ut.TestCase):
                 pos0[ind, :] = self.es.part[ind].pos
         dt0 = self.mass / self.gamma_tran_p_validate
 
-        loops = 200
+        loops = 250
         print("Thermalizing...")
         therm_steps = 20
         self.es.integrator.run(therm_steps)

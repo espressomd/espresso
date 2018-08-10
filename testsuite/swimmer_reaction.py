@@ -12,6 +12,8 @@ class ReactionTest(ut.TestCase):
 
     def test_reaction(self):
         system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+        system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+
         system.cell_system.skin = 0.1
         system.time_step = 0.01
 

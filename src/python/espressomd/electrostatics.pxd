@@ -177,22 +177,13 @@ IF ELECTROSTATICS:
             p3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy, n_interpol)
 
     cdef extern from "debye_hueckel.hpp":
-        IF COULOMB_DEBYE_HUECKEL:
-            ctypedef struct Debye_hueckel_params:
-                double r_cut
-                double kappa
-                double eps_int, eps_ext
-                double r0, r1
-                double alpha
-        ELSE:
-            ctypedef struct Debye_hueckel_params:
-                double r_cut
-                double kappa
+        ctypedef struct Debye_hueckel_params:
+            double r_cut
+            double kappa
 
         cdef extern Debye_hueckel_params dh_params
 
         int dh_set_params(double kappa, double r_cut)
-        int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext, double r0, double r1, double alpha)
 
 IF ELECTROSTATICS:
     cdef extern from "mmm1d.hpp":

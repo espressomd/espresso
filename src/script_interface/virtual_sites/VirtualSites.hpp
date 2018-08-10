@@ -36,22 +36,22 @@ public:
     add_parameters(
         {{"have_velocity",
           [this](const Variant &v) {
-            virtual_sites()->set_have_velocity( // NOLINT, bug in clang-tidy-4.0
-                get_value<bool>(v));            // NOLINT, bug in clang-tidy-4.0
+            virtual_sites()->set_have_velocity(
+                get_value<bool>(v));
           },
           [this]() {
-            return virtual_sites()     // NOLINT, bug in clang-tidy-4.0
-                ->get_have_velocity(); // NOLINT, bug in clang-tidy-4.0
+            return virtual_sites()
+                ->get_have_velocity();
           }},
          {"have_quaternion",
           [this](const Variant &v) {
-            virtual_sites()              // NOLINT, bug in clang-tidy-4.0
-                ->set_have_quaternion(   // NOLINT, bug in clang-tidy-4.0
-                    get_value<bool>(v)); // NOLINT, bug in clang-tidy-4.0
+            virtual_sites()
+                ->set_have_quaternion(
+                    get_value<bool>(v));
           },
           [this]() {
-            return virtual_sites()       // NOLINT, bug in clang-tidy-4.0
-                ->get_have_quaternion(); // NOLINT, bug in clang-tidy-4.0
+            return virtual_sites()
+                ->get_have_quaternion();
           }}});
   }
   /** Vs implementation we are wrapping */

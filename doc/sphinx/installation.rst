@@ -65,13 +65,15 @@ Cython
 Installing Requirements on Ubuntu 16.04 LTS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To make ESPResSo run on Ubuntu 16.04 LTS, its dependencies can be
+To make ESPResSo run on Ubuntu 16.04 LTS or 18.04 LTS, its dependencies can be
 installed with:
 
 .. code-block:: bash
 
     sudo apt install build-essential cmake cython python-numpy \
-    libboost-all-dev openmpi-common
+    libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
+    doxygen python-opengl python-sphinx python-pip libgsl-dev
+    
 
 Optionally the ccmake utility can be installed for easier configuration:
 
@@ -79,6 +81,12 @@ Optionally the ccmake utility can be installed for easier configuration:
 
     $ sudo apt install cmake-curses-gui
 
+If your computer has an Nvidia graphics card, you should also download and install the
+CUDA SDK to make use of GPU computation:
+
+.. code-block:: bash
+
+    $ sudo apt install nvidia-cuda-toolkit
 
 .. _Installing Requirements on Mac OS X:
 
@@ -96,10 +104,12 @@ following commands:
     sudo xcode-select --install
     sudo xcodebuild -license accept
     sudo port selfupdate
-    sudo port install cmake python27 python27-cython python27-numpy \
-    openmpi-default fftw-3 +openmpi boost +openmpi +python27
+    sudo port install cmake python27 py27-cython py27-numpy \
+      openmpi-default fftw-3 +openmpi boost +openmpi +python27 \
+      doxygen py27-opengl py27-sphinx py27-pip gsl hdf5 +openmpi
     sudo port select --set cython cython27
     sudo port select --set python python27
+    sudo port selet --set pip pip27
     sudo port select --set mpi openmpi-mp-fortran
 
 Alternatively, you can use Homebrew.
@@ -109,9 +119,12 @@ Alternatively, you can use Homebrew.
     sudo xcode-select --install
     sudo xcodebuild -license accept
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    brew install cmake python@3 cython boost boost-mpi fftw
+    brew install cmake python@3 cython boost boost-mpi fftw \
+      doxygen gsl
+    brew install hdf5 --with-mpi
     brew install numpy --without-python@2
     ln -s /usr/local/bin/python2 /usr/local/bin/python
+    pip install --user PyOpenGL
 
 Note: If both MacPorts and Homebrew are installed, you will not be able to
 run |es|. Therefore, if you have both installed, please uninstall one
@@ -121,6 +134,9 @@ or the other by running one of the following two commands:
 
     sudo port -f uninstall installed && rm -r /opt/local
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+
+If your Mac has an Nvidia graphics card, you should also download and install the
+CUDA SDK [6]_ to make use of GPU computation.
 
 .. _Installing python dependencies:
 
@@ -410,8 +426,6 @@ integrator or thermostat:
 
 -  ``MEMBRANE_COLLISION``
 
--  ``LEES_EDWARDS`` (experimental)
-
 -  ``REACTION_ENSEMBLE``
 
 -  ``GHMC``
@@ -534,20 +548,6 @@ following features.
 -  ``HAT``
 
 -  ``UMBRELLA`` (experimental)
-
-
-.. _DNA Model:
-
-DNA Model
-^^^^^^^^^
-
--  ``CG_DNA``
-
--  ``TWIST_STACK``
-
--  ``HYDROGEN_BOND``
-
--  ``COULOMB_DEBYE_HUECKEL``
 
 .. _Miscellaneous:
 
@@ -897,3 +897,6 @@ use one tool at a time.
 
 .. [5]
    http://www.fftw.org/
+
+.. [6]
+   https://developer.nvidia.com/cuda-downloads

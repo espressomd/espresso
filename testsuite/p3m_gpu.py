@@ -31,6 +31,7 @@ class P3MGPU_test(ut.TestCase):
         from espressomd.electrostatics import P3MGPU
 
         es = espressomd.System(box_l=[10.0, 10.0, 10.0])
+        es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
         test_params = {}
         test_params["prefactor"] = 2
         test_params["cao"] = 2

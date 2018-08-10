@@ -21,13 +21,15 @@
 #include "VirtualSitesRelative.hpp"
 #include "rotation.hpp"
 #include "errorhandling.hpp" 
+#include "grid.hpp"
+#include "cells.hpp"
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
 void VirtualSitesRelative::update(bool recalc_positions) const {
 
 for (auto& p : local_cells.particles()) {
-  if (!p.p.isVirtual) continue;
+  if (!p.p.is_virtual) continue;
 
   if (recalc_positions)
     update_pos(p);
@@ -163,7 +165,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
   // Iterate over all the particles in the local cells
   for (auto &p : local_cells.particles()) {
     // We only care about virtual particles
-    if (p.p.isVirtual) {
+    if (p.p.is_virtual) {
       // First obtain the real particle responsible for this virtual particle:
       Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
 
@@ -202,7 +204,7 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(double* press
   // Iterate over all the particles in the local cells
 
   for (auto &p : local_cells.particles()) {
-    if (!p.p.isVirtual)
+    if (!p.p.is_virtual)
       continue;
 
     update_pos(p);

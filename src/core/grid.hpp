@@ -47,7 +47,6 @@
 #include "communication.hpp"
 #include "utils.hpp"
 #include "errorhandling.hpp"
-#include "lees_edwards.hpp"
 
 #include <climits>
 
@@ -66,17 +65,8 @@
 extern int node_grid[3];
 /** position of node in node grid */
 extern int node_pos[3];
-#ifdef LEES_EDWARDS
-/** the nearest neighbors of a node in the node grid. */
-extern int *node_neighbors;
-extern int *node_neighbor_lr;
-extern int *node_neighbor_wrap;
-/** the number of nearest neighbors of a node in the node grid. */
-extern int my_neighbor_count;
-#else
 /** the six nearest neighbors of a node in the node grid. */
 extern int node_neighbors[6];
-#endif
 /** where to fold particles that leave local box in direction i. */
 extern int boundary[6];
 /** Flags for all three dimensions wether pbc are applied (default).
@@ -184,9 +174,6 @@ int map_3don2d_grid(int g3d[3], int g2d[3], int mult[3]);
 void rescale_boxl(int dir, double d_new);
 
 /** get the minimal distance vector of two vectors in the current bc.
-  *  \ref LEES_EDWARDS note: there is no need to add the le_offset here,
-  *  any offset should already have been added when the image particle was
- * prepared.
   *  @param a the vector to subtract from
   *  @param b the vector to subtract
   *  @param res where to store the result
@@ -209,9 +196,7 @@ Vector3d get_mi_vector(T const &a, U const &b) {
   return res;
 }
 
-/** fold a coordinate to primary simulation box, including velocity (in case of
-   LEES_EDWARDS,
-    the velocity depends on the image we are in).
+/** fold a coordinate to primary simulation box, including velocity.
     \param pos         the position...
     \param vel         the velocity...
     \param image_box   and the box
@@ -240,19 +225,6 @@ void fold_coordinate(T1& pos, T2& vel, T3&  image_box,
       return;
     }
 
-#ifdef LEES_EDWARDS
-    if (dir == 1) {
-      /* must image y and v_x at same time as x */
-      pos[0] -= (lees_edwards_offset * img_count);
-      vel[0] -= (lees_edwards_rate * img_count);
-
-      /* (re)-image x */
-      img_count = (int)floor(pos[0] * box_l_i[0]);
-      image_box[0] += img_count;
-      pos[0] = pos[0] - img_count * box_l[0];
-    }
-
-#endif
   }
 }
 
@@ -325,7 +297,7 @@ inline Vector3d folded_position(const Particle *p) {
 
 /** unfold coordinates to physical position.
     \param pos the position
-    \param pos the velocity
+    \param vel the velocity
     \param image_box and the box
 
     Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
@@ -333,18 +305,6 @@ inline Vector3d folded_position(const Particle *p) {
 */
 template <typename T1, typename T2, typename T3>
 void unfold_position(T1& pos, T2&  vel, T3& image_box) {
-#ifdef LEES_EDWARDS
-  auto const y_img_count = static_cast<int>(floor(pos[1] * box_l_i[1] + image_box[1]));
-
-  pos[0] += image_box[0] * box_l[0] + y_img_count * lees_edwards_offset;
-  pos[1] += image_box[1] * box_l[1];
-  pos[2] += image_box[2] * box_l[2];
-
-  vel[0] += y_img_count * lees_edwards_rate;
-
-  image_box[0] = image_box[1] = image_box[2] = 0;
-
-#else
 
   int i;
   for (i = 0; i < 3; i++) {
@@ -352,24 +312,14 @@ void unfold_position(T1& pos, T2&  vel, T3& image_box) {
     image_box[i] = 0;
   }
 
-#endif
 }
 
 inline
 Vector3d unfolded_position(Particle const * p) {
   Vector3d pos{p->r.p};
-#ifdef LEES_EDWARDS
-  auto const y_img_count = static_cast<int>(floor(pos[1] * box_l_i[1] + p->l.i[1]));
-
-  pos[0] += p->l.i[0] * box_l[0] + y_img_count * lees_edwards_offset;
-  pos[1] += p->l.i[1] * box_l[1];
-  pos[2] += p->l.i[2] * box_l[2];
-#else
   for (int i = 0; i < 3; i++) {
     pos[i] += p->l.i[i] * box_l[i];
   }
-
-#endif
 
   return pos;
 }
@@ -386,7 +336,7 @@ inline Vector3d unfolded_position(Particle const &p) {
     afterwards.
 */
 template <typename T1, typename T2>
-void unfold_position(T1&  pos, T2&  image_box) {
+void unfold_position(T1& pos, T2& image_box) {
   double v[3];
   unfold_position(pos, v, image_box);
 }

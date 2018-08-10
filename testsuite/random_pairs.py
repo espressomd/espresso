@@ -27,20 +27,31 @@ class RandomPairTest(ut.TestCase):
         np.random.seed(2)
 
         s.part.add(pos=s.box_l * np.random.random((n_part, 3)))
+        self.all_pairs=[]
+
+        dist_func=self.system.distance
+        for pair in self.system.part.pairs():
+                if dist_func(pair[0], pair[1]) < 1.5:
+                    self.all_pairs.append((pair[0].id,pair[1].id))
+
+        self.all_pairs=set(self.all_pairs)
+        self.assertTrue(len(self.all_pairs))
+
+
 
     def tearDown(self):
         self.system.part.clear()
 
     def pairs_n2(self, dist):
-        parts = self.system.part
+        # Go through list of all possible pairs for full periodicy
+        # and skip those that ar not within the desired distance
+        # for the current periodicity
 
-        pairs = []
-        for i in range(len(parts)):
-            for j in range(i + 1, len(parts)):
-                if self.system.distance(parts[i], parts[j]) < dist:
-                    pairs.append((i, j))
-
-        self.assertTrue(len(pairs))
+        pairs=[]
+        parts=self.system.part
+        for p in self.all_pairs:
+            if self.system.distance(parts[p[0]],parts[p[1]]) <=dist:
+                pairs.append(p)
         return set(pairs)
 
     def check_duplicates(self, l):
