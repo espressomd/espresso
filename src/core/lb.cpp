@@ -28,6 +28,7 @@
  */
 
 #include "lb.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #ifdef LB
 
