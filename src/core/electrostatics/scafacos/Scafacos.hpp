@@ -4,7 +4,7 @@
 #include <list>
 #include <fcs.h>
 #include <mpi.h>
-#include "../config.hpp"
+#include "config.hpp"
 
 
 namespace Scafacos {

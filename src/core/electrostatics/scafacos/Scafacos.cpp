@@ -1,5 +1,5 @@
 
-#include "Scafacos.hpp"
+#include "electrostatics/scafacos/Scafacos.hpp"
 #include "errorhandling.hpp"
 #include <cassert>
 #include "communication.hpp"
