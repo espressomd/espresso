@@ -2,6 +2,7 @@ add_library(nonbonded_interactions SHARED
     bmhtf-nacl.cpp
     buckingham.cpp
     cos2.cpp
+    debye_hueckel.cpp
     gaussian.cpp
     gb.cpp
     hat.cpp
@@ -11,6 +12,9 @@ add_library(nonbonded_interactions SHARED
     lj.cpp
     ljgen.cpp
     morse.cpp
+    nonbonded_interaction_data.cpp
+    nonbonded_tab.cpp
+    reaction_field.cpp
     soft_sphere.cpp
     steppot.cpp
     thole.cpp

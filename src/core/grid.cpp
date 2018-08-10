@@ -29,7 +29,6 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "global.hpp"
-#include "interaction_data.hpp"
 #include "utils.hpp"
 #include <cmath>
 #include <cstdio>

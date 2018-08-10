@@ -53,7 +53,7 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "communication.hpp"
 #include "maggs.hpp"

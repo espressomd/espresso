@@ -6,8 +6,8 @@
 #include "DipolarDirectSum_cuda.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
-#include "interaction_data.hpp"
 #include "grid.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <memory>
 

@@ -6,7 +6,7 @@ IF DIPOLES == 1:
     cdef extern from "communication.hpp":
         void mpi_bcast_coulomb_params()
 
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         ctypedef enum dipolar_interaction "DipolarInteraction":
             DIPOLAR_NONE = 0,
             DIPOLAR_P3M,

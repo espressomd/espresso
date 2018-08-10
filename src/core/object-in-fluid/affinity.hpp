@@ -27,12 +27,12 @@
  *  \ref forces.cpp
 */
 
-#include "../utils.hpp"
-#include "../interaction_data.hpp"
-#include "../particle_data.hpp"
-#include "../integrate.hpp"
-#include "../random.hpp"
-#include "../grid.hpp"
+#include "utils.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
+#include "integrate.hpp"
+#include "random.hpp"
+#include "grid.hpp"
 
 
 #ifdef AFFINITY

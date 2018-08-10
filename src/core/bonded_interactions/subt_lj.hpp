@@ -31,7 +31,7 @@
 #ifdef LENNARD_JONES
 
 #include "debug.hpp"
-#include "interaction_data.hpp"
+#include "bonded_interaction_data.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "utils.hpp"
 

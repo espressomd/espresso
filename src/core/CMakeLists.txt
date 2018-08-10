@@ -8,7 +8,6 @@ set(EspressoCore_SRC
     cuda_init.cpp
     cuda_interface.cpp
     debug.cpp
-    debye_hueckel.cpp
     domain_decomposition.cpp
     dpd.cpp
     elc.cpp
@@ -33,7 +32,6 @@ set(EspressoCore_SRC
     immersed_boundaries.cpp
     initialize.cpp
     integrate.cpp
-    interaction_data.cpp
     lattice.cpp
     layered.cpp
     lbboundaries.cpp
@@ -63,11 +61,9 @@ set(EspressoCore_SRC
     polymer.cpp
     polynom.cpp
     pressure.cpp
-    quartic.cpp
     random.cpp
     rattle.cpp
     reaction_ensemble.cpp
-    reaction_field.cpp
     rotate_system.cpp
     rotation.cpp
     RuntimeErrorCollector.cpp
@@ -81,11 +77,9 @@ set(EspressoCore_SRC
     statistics_fluid.cpp
     swimmer_reaction.cpp
     SystemInterface.cpp
-    tab.cpp
     thermostat.cpp
     topology.cpp
     tuning.cpp
-    umbrella.cpp
     utils.cpp
     Vector.cpp
     virtual_sites.cpp

@@ -22,7 +22,7 @@
 
 #include "statistics_cluster.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 /** nullptr terminated linked list of elements of a cluster (indices in particle list) */
 ClusterElement *element;

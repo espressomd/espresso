@@ -19,9 +19,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file interaction_data.cpp
-    Implementation of interaction_data.hpp
+    Implementation of nonbonded_interaction_data.hpp
  */
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "cells.hpp"
@@ -29,7 +30,6 @@
 #include "nonbonded_interactions/cos2.hpp"
 #include "debye_hueckel.hpp"
 #include "dpd.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "elc.hpp"
 #include "errorhandling.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -38,7 +38,6 @@
 #include "nonbonded_interactions/hat.hpp"
 #include "nonbonded_interactions/hertzian.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "nonbonded_interactions/ljcos.hpp"
 #include "nonbonded_interactions/ljcos2.hpp"
@@ -47,7 +46,7 @@
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"
 #ifdef DIPOLAR_BARNES_HUT
 #include "actor/DipolarBarnesHut.hpp"
@@ -65,9 +64,8 @@
 #include "scafacos.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/steppot.hpp"
-#include "tab.hpp"
+#include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "thermostat.hpp"
-#include "umbrella.hpp"
 #include "utils.hpp"
 #include "utils/serialization/IA_parameters.hpp"
 #include <cstdlib>
@@ -107,7 +105,6 @@ double field_induced;
 double field_applied;
 #endif
 
-std::vector<Bonded_ia_parameters> bonded_ia_params;
 
 double min_global_cut = 0.0;
 
@@ -133,9 +130,6 @@ double dipolar_cutoff;
     required.  Currently, this are just the cutoffs from the
     electrostatics method and some dpd cutoffs. */
 static void recalc_global_maximal_nonbonded_cutoff();
-/** calculate the maximal cutoff of bonded interactions, required to
-    determine the cell size for communication. */
-static void recalc_maximal_cutoff_bonded();
 
 /*****************************************
  * general lowlevel functions
@@ -164,79 +158,6 @@ void ia_params_set_state(std::string const &state) {
   ia >> max_seen_particle_type;
   mpi_bcast_max_seen_particle_type(max_seen_particle_type);
   mpi_bcast_all_ia_params();
-}
-
-static void recalc_maximal_cutoff_bonded() {
-  int i;
-  double max_cut_tmp;
-
-  max_cut_bonded = 0.0;
-
-  for (i = 0; i < bonded_ia_params.size(); i++) {
-    switch (bonded_ia_params[i].type) {
-    case BONDED_IA_FENE:
-      max_cut_tmp =
-          bonded_ia_params[i].p.fene.r0 + bonded_ia_params[i].p.fene.drmax;
-      if (max_cut_bonded < max_cut_tmp)
-        max_cut_bonded = max_cut_tmp;
-      break;
-    case BONDED_IA_HARMONIC:
-      if ((bonded_ia_params[i].p.harmonic.r_cut > 0) &&
-          (max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
-        max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
-      break;
-    case BONDED_IA_THERMALIZED_DIST:
-      if ((bonded_ia_params[i].p.thermalized_bond.r_cut > 0) && 
-	  (max_cut_bonded < bonded_ia_params[i].p.thermalized_bond.r_cut))
-    	max_cut_bonded = bonded_ia_params[i].p.thermalized_bond.r_cut;
-      break;
-    case BONDED_IA_RIGID_BOND:
-      if (max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
-        max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
-      break;
-#ifdef TABULATED
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
-          max_cut_bonded < bonded_ia_params[i].p.tab.pot->cutoff())
-        max_cut_bonded = bonded_ia_params[i].p.tab.pot->cutoff();
-      break;
-#endif
-#ifdef IMMERSED_BOUNDARY
-    case BONDED_IA_IBM_TRIEL:
-      if (max_cut_bonded < bonded_ia_params[i].p.ibm_triel.maxDist)
-        max_cut_bonded = bonded_ia_params[i].p.ibm_triel.maxDist;
-      break;
-#endif
-    default:
-      break;
-    }
-  }
-
-  /* Bond angle and dihedral potentials do not contain a cutoff
-     intrinsically. The cutoff for these potentials depends on the
-     bond length potentials. For bond angle potentials nothing has to
-     be done (it is assumed, that particles participating in a bond
-     angle or dihedral potential are bound to each other by some bond
-     length potential (FENE, Harmonic or tabulated)). For dihedral
-     potentials (both normal and tabulated ones) it follows, that the
-     cutoff is TWO TIMES the maximal cutoff! That's what the following
-     lines assure. */
-  max_cut_tmp = 2.0 * max_cut_bonded;
-  for (i = 0; i < bonded_ia_params.size(); i++) {
-    switch (bonded_ia_params[i].type) {
-    case BONDED_IA_DIHEDRAL:
-      max_cut_bonded = max_cut_tmp;
-      break;
-#ifdef TABULATED
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
-        max_cut_bonded = max_cut_tmp;
-      break;
-#endif
-    default:
-      break;
-    }
-  }
 }
 
 double calc_electrostatics_cutoff() {
@@ -504,18 +425,6 @@ void make_particle_type_exist_local(int type) {
 }
 
 
-void make_bond_type_exist(int type) {
-  int i, ns = type + 1;
-  const auto old_size = bonded_ia_params.size();
-  if (ns <= bonded_ia_params.size()) {
-    return;
-  }
-  /* else allocate new memory */
-  bonded_ia_params.resize(ns);
-  /* set bond types not used as undefined */
-  for (i = old_size; i < ns; i++)
-    bonded_ia_params[i].type = BONDED_IA_NONE;
-}
 
 int interactions_sanity_checks() {
   /* set to zero if initialization was not successful. */

@@ -4,14 +4,11 @@
 #ifdef IMMERSED_BOUNDARY
 
 #include "particle_data.hpp"
-#include "interaction_data.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "ImmersedBoundaries.hpp" 
-
-
-
 
 
 /************

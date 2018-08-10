@@ -61,7 +61,7 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "p3m.hpp"

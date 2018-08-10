@@ -38,7 +38,7 @@
 #include "grid.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "scafacos/Scafacos.hpp"
 #include "tuning.hpp"
 #include "communication.hpp" 

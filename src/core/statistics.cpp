@@ -27,7 +27,7 @@
 #include "energy.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "lb.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"

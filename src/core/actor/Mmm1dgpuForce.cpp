@@ -1,7 +1,6 @@
 #include "actor/Mmm1dgpuForce.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
-#include "interaction_data.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
 

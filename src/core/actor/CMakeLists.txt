@@ -16,7 +16,6 @@ target_include_directories(Actor PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BI
 if(CUDA)
   set(ActorCuda_SRC
         DipolarBarnesHut_cuda.cu
-        DipolarBarnesHut_cuda.cuh
         DipolarDirectSum_cuda.cu
         HarmonicOrientationWell_cuda.cu
         HarmonicWell_cuda.cu

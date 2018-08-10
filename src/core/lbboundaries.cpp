@@ -34,7 +34,6 @@
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
 #include "lb.hpp"
 #include "lbboundaries.hpp"
 #include "lbboundaries/LBBoundary.hpp"

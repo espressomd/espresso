@@ -36,7 +36,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
-#include "interaction_data.hpp"
 #include "lb-d3q19.hpp"
 #include "lb.hpp"
 #include "lbboundaries.hpp"
@@ -147,7 +146,6 @@ static int rancounter = 0;
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
 
 /* *********************** C Interface part
  * *************************************/

@@ -31,7 +31,7 @@
 
 #ifdef BOND_ANGLEDIST
 
-#include "interaction_data.hpp"
+#include "bonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
 

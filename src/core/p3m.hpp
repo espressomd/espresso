@@ -51,9 +51,8 @@
 #include "config.hpp"
 #include "utils.hpp"
 #include "debug.hpp"
-
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "p3m-common.hpp"
-#include "interaction_data.hpp"
 
 #ifdef P3M
 

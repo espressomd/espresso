@@ -28,7 +28,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "lb.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"

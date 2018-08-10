@@ -21,7 +21,7 @@
 
 #include <vector>
 #include "h5md_core.hpp"
-#include "core/interaction_data.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 
 namespace Writer {
 namespace H5md {

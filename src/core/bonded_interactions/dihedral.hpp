@@ -27,7 +27,7 @@
 */
 
 #include "utils.hpp"
-#include "interaction_data.hpp"
+#include "bonded_interaction_data.hpp"
 #include "grid.hpp"
 
 #define ANGLE_NOT_DEFINED -100

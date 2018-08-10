@@ -30,7 +30,7 @@
 
 #include "debug.hpp"
 #include "utils.hpp"
-#include "interaction_data.hpp"
+#include "bonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
 

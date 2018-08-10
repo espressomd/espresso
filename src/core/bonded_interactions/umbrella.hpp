@@ -29,7 +29,7 @@
 */
 
 #include "utils.hpp"
-#include "interaction_data.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
 #ifdef UMBRELLA

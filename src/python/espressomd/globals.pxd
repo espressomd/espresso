@@ -73,7 +73,7 @@ cdef extern from "domain_decomposition.hpp":
 cdef extern from "particle_data.hpp":
     extern int n_part
 
-cdef extern from "interaction_data.hpp":
+cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     double dpd_gamma
     double dpd_r_cut
     extern double max_cut

@@ -42,7 +42,7 @@ IF ELECTROSTATICS:
 
     IF P3M:
         from p3m_common cimport p3m_parameter_struct
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         cdef enum CoulombMethod:
             COULOMB_NONE, \
                 COULOMB_DH, \
@@ -176,7 +176,7 @@ IF ELECTROSTATICS:
 
             p3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy, n_interpol)
 
-    cdef extern from "debye_hueckel.hpp":
+    cdef extern from "nonbonded_interactions/debye_hueckel.hpp":
         ctypedef struct Debye_hueckel_params:
             double r_cut
             double kappa
@@ -199,7 +199,7 @@ IF ELECTROSTATICS:
         int MMM1D_sanity_checks();
         int mmm1d_tune(char **log);
 
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int coulomb_set_prefactor(double prefactor)
 
     cdef inline pyMMM1D_tune():

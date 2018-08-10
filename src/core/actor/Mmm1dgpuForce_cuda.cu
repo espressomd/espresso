@@ -32,7 +32,7 @@ float multigpu_factors[] = {1.0};
 
 #include "mmm-common_cuda.hpp"
 #include "mmm1d.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "EspressoSystemInterface.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)

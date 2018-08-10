@@ -34,7 +34,7 @@
 #include "utils.hpp"
 #include "debug.hpp"
 #include "particle_data.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interaction_data.hpp"
 
 int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
                              double sig, double cut, double shift,

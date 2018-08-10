@@ -2,7 +2,6 @@
 #define PAIR_CRITERIA_HPP
 
 #include "particle_data.hpp"
-#include "interaction_data.hpp"
 #include "grid.hpp"
 #include "energy_inline.hpp"
 #include <stdexcept>

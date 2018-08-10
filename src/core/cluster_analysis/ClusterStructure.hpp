@@ -7,10 +7,6 @@
 #include <map>
 #include <string>
 #include "pair_criteria/pair_criteria.hpp"
-
-#include "pair_criteria/pair_criteria.hpp"
-#include "interaction_data.hpp"
-#include "particle_data.hpp"
 #include "Cluster.hpp"
 
 namespace ClusterAnalysis {

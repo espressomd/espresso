@@ -29,7 +29,7 @@
 #ifdef ELECTROSTATICS
 
 #include "debug.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 /** Structure to hold Debye-Hueckel Parameters. */
 typedef struct {

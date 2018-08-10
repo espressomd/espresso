@@ -26,7 +26,7 @@
 #include "thermalized_bond.hpp"
 #include "communication.hpp"
 #include "global.hpp"
-#include "interaction_data.hpp"
+#include "bonded_interaction_data.hpp"
 
 int n_thermalized_bonds = 0;
 

@@ -31,7 +31,7 @@
 extern int n_thermalized_bonds;
 
 #include "utils.hpp"
-#include "interaction_data.hpp"
+#include "bonded_interaction_data.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
 #include "debug.hpp"

@@ -21,7 +21,7 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "DipolarBarnesHut.hpp"
-#include "../forces.hpp"
+#include "forces.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "forces.hpp"
 #include "energy.hpp"

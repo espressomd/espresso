@@ -29,7 +29,7 @@
 #include "DipolarBarnesHut_cuda.cuh"
 #include "grid.hpp"
 #include "cuda_interface.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #ifndef ACTOR_DIPOLARBARNESHUT_HPP
 #define ACTOR_DIPOLARBARNESHUT_HPP

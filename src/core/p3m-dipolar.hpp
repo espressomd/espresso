@@ -35,8 +35,8 @@
  *  </ul>
  *
  */
-#include "interaction_data.hpp"
 #include "p3m-common.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #ifdef DP3M
 

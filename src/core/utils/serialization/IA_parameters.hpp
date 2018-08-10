@@ -1,7 +1,7 @@
 #ifndef SERIALIZATION_IA_PARAMETERS_HPP
 #define SERIALIZATION_IA_PARAMETERS_HPP
 
-#include "core/interaction_data.hpp"
+#include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 namespace boost {
 namespace serialization {

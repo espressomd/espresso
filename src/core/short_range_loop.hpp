@@ -9,7 +9,7 @@
 #include "cells.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "utils/Batch.hpp"
 #include "collision.hpp"
 

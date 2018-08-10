@@ -7,7 +7,6 @@
 #include <map>
 #include <string>
 
-#include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include <tuple>
 

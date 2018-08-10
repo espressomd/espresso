@@ -40,7 +40,7 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "PartCfg.hpp"
 #include "polymer.hpp"
 #include "random.hpp"

@@ -53,7 +53,7 @@
 #include "cells.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "mpiio.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"

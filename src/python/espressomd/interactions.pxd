@@ -38,7 +38,7 @@ cdef extern from "TabulatedPotential.hpp":
         vector[double] energy_tab
         vector[double] force_tab
 
-cdef extern from "interaction_data.hpp":
+cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef struct IA_parameters:
         double LJ_eps
         double LJ_sig
@@ -151,9 +151,11 @@ cdef extern from "interaction_data.hpp":
 
     cdef IA_parameters * get_ia_param(int i, int j)
     cdef IA_parameters * get_ia_param_safe(int i, int j)
-    cdef void make_bond_type_exist(int type)
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
+
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
+    cdef void make_bond_type_exist(int type)
 
 cdef extern from "nonbonded_interactions/lj.hpp":
     cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
@@ -258,13 +260,13 @@ IF AFFINITY:
                                      int afftype, double kappa, double r0, 
                                      double Kon, double Koff, double maxBond, double cut)
 IF TABULATED:
-    cdef extern from "tab.hpp":
+    cdef extern from "nonbonded_interactions/nonbonded_tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b,
                                  double min, double max,
                                  vector[double] energy,
                                  vector[double] force);
 IF ROTATION:
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     #* Parameters for the harmonic dumbbell bond potential */
         cdef struct Harmonic_dumbbell_bond_parameters:
             double k1
@@ -279,7 +281,7 @@ ELSE:
         double r_cut
 
 IF TABULATED:
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     #* Parameters for n-body tabulated potential (n=2,3,4). */
         cdef struct Tabulated_bond_parameters:
             int type
@@ -290,7 +292,7 @@ ELSE:
         TabulatedPotential * pot
 
 IF P3M:
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         #* Parameters for Bonded coulomb p3m sr */
         cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
             double q1q2
@@ -298,7 +300,7 @@ ELSE:
     cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
         double q1q2
 
-cdef extern from "interaction_data.hpp":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef struct Fene_bond_parameters:
         double k
         double drmax
@@ -487,7 +489,7 @@ cdef extern from "interaction_data.hpp":
 
     vector[Bonded_ia_parameters] bonded_ia_params
 
-cdef extern from "interaction_data.hpp" namespace "tElasticLaw":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp" namespace "tElasticLaw":
     cdef tElasticLaw NeoHookean
     cdef tElasticLaw Skalak
 
@@ -537,10 +539,10 @@ IF ROTATION:
         int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, double r_cut)
 
 IF TABULATED:
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         cdef enum TabulatedBondedInteraction:
             TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
-    cdef extern from "tab.hpp":
+    cdef extern from "bonded_interactions/bonded_tab.hpp":
         int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, double min, double max, vector[double] energy, vector[double] force)
 
 IF ELECTROSTATICS:
@@ -548,11 +550,11 @@ IF ELECTROSTATICS:
         int bonded_coulomb_set_params(int bond_type, double prefactor)
     
 
-cdef extern from "interaction_data.hpp":
+cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     int virtual_set_params(int bond_type)
 
 
-cdef extern from "interaction_data.hpp":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef enum enum_bonded_interaction "BondedInteraction":
         BONDED_IA_NONE = -1,
         BONDED_IA_FENE,

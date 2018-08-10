@@ -26,7 +26,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "mmm-common.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"

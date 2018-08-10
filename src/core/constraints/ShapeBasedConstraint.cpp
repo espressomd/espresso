@@ -5,7 +5,7 @@
 #include "energy_inline.hpp"
 #include "errorhandling.hpp"
 #include "forces_inline.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 namespace Constraints {
 Vector3d ShapeBasedConstraint::total_force() const {

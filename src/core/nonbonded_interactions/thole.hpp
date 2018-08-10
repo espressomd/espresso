@@ -32,7 +32,8 @@
 
 #include "utils.hpp"
 #include "debug.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "p3m.hpp"
 

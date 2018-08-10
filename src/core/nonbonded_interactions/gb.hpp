@@ -28,7 +28,7 @@
 */
 
 #include "utils.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
 #ifdef GAY_BERNE
