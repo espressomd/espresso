@@ -988,7 +988,7 @@ int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
         p2[0] = configs[c3][3 * id];
         p2[1] = configs[c3][3 * id + 1];
         p2[2] = configs[c3][3 * id + 2];
-        auto const dist = distance(p1, p2);
+        auto const dist = (p1 - p2).norm();
         if (dist > rmin && dist < rmax) {
           ind = (int)((dist - rmin) * inv_bin_width);
           vanhove[(c3 - c1 - 1)][ind]++;
