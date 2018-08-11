@@ -27,6 +27,10 @@ using Utils::Span;
 #include <vector>
 #include <numeric>
 
+BOOST_AUTO_TEST_CASE(const_expr_ctor) {
+  static_assert(4 == Span<int>(nullptr, 4).size(), "");
+}
+
 BOOST_AUTO_TEST_CASE(ctor) {
   /* from ptr + size */
   {
