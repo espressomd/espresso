@@ -1,3 +1,7 @@
+"""
+This sample sets up a diamond-structured polymer network.
+"""
+
 #
 # Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
@@ -95,7 +99,7 @@ while ( lj_cap < 5):
     lj_cap = lj_cap*1.1
     system.force_cap = lj_cap
 
-#remove force cap
+# remove force cap
 lj_cap = 0
 system.force_cap = lj_cap
 system.integrator.run(warm_steps*10)
@@ -104,7 +108,6 @@ system.integrator.run(warm_steps*10)
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 system.integrator.run(warm_steps*10)
 print("Finished warmup")
-
 
 
 #############################################################

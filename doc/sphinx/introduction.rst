@@ -326,7 +326,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     .. todo:: add save/load optimal cell parameters from tune_skin()
     
 
-* ``coulomb_debye_hueckel.py``,  ``debye_hueckel.py``
+* ``debye_hueckel.py``
     Charged beads with a WCA interaction are simulated using the screened Debye-Hückel potential. See :ref:`Debye-Hückel potential`
 
 

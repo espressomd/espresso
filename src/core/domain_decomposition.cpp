@@ -674,7 +674,7 @@ void dd_on_geometry_change(int flags) {
 
   /* If we are not in a hurry, check if we can maybe optimize the cell
      system by using smaller cells. */
-  if (!(flags & CELL_FLAG_FAST)) {
+  if (!(flags & CELL_FLAG_FAST) && max_range > 0) {
     int i;
     for (i = 0; i < 3; i++) {
       int poss_size = (int)floor(local_box_l[i] / max_range);

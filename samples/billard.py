@@ -1,7 +1,12 @@
-#!/usr/bin/python
+""" ESPResSo 8Ball billard game.  
+"""
 
 from __future__ import print_function
 import espressomd
+
+required_features = ["LENNARD_JONES","EXTERNAL_FORCES"]
+espressomd.assert_features(required_features)
+
 from espressomd import thermostat
 from espressomd import analyze
 from espressomd import integrate
@@ -13,6 +18,9 @@ from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
 from espressomd.shapes import *
+
+required_features = ["LENNARD_JONES", "MASS", "EXTERNAL_FORCES"]
+espressomd.assert_features(required_features)
 
 print('8Ball BILLARD - An Espresso Visualizer Demo\nControls:\nNumpad 4/6: Adjust Angle\nNumpad 2/8: Adjust Impulse\nNumpad 5: Shoot')
 

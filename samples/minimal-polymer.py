@@ -1,4 +1,6 @@
-
+"""
+This sample sets up a polymer.
+"""
 #
 # Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
@@ -23,13 +25,15 @@ from espressomd import thermostat
 from espressomd import interactions
 from espressomd import polymer
 from espressomd.io.writer import vtf  # pylint: disable=import-error
+import numpy as np
 
 # System parameters
 #############################################################
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.set_random_state_PRNG()
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
@@ -46,7 +50,7 @@ fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
 
-polymer.create_polymer(N_P=1, bond_length=1.0, type_poly_neutral=0, type_poly_charged=0, MPC=50, bond=fene)
+polymer.create_polymer(N_P=1, bond_length=1.0, type_poly_neutral=0, type_poly_charged=0, MPC=50, bond=fene, start_pos=[0.,0.,0.])
 vtf.writevsf(system, outfile)
 
 
