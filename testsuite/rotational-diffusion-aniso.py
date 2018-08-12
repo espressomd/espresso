@@ -104,19 +104,17 @@ class RotDiffAniso(ut.TestCase):
         # tests which are based on the partial differential equation (eq. (68), Perrin1934) leading only to the simple
         # classical Einstein-Smoluchowski equations of the diffusion
         # in a contrast of the eq. (10.2.26) [N. Pottier, https://doi.org/10.1007/s10955-010-0114-6 (2010)].
-        self.gamma_global = 1E2 * self.generate_vec_ranged_rnd(0.5,2.0/3.0)
+        self.gamma_global = 1E2 * self.generate_vec_ranged_rnd(0.5,0.7)
         
         ## Particles
-        # As far as the problem characteristic time is t0 ~ mass / gamma
+        # As far as the problem characteristic time is t0 ~ J / gamma
         # and the Langevin equation finite-difference approximation is stable
-        # only for time_step << t0, it is needed to set the mass higher than
-        # some minimal value according to the value min_mass_param.
-        # Also, it is expected to test the large enough mass (max_mass_param).
+        # only for time_step << t0, it is needed to set the moment of inertia higher than
+        # some minimal value.
+        # Also, it is expected to test the large enough J.
         # It should be not very large, otherwise the thermalization will require
         # too much of the CPU time: the in silico time should clock over the t0.
-        min_mass_param = 0.2
-        max_mass_param = 7.0
-        self.J = self.generate_vec_ranged_rnd(0.474*min_mass_param,2.147*max_mass_param)
+        self.J = self.generate_vec_ranged_rnd(0.1,15.)
         for ind in range(n):
             part_pos = np.random.random(3) * box
             self.es.part.add(rotation=(1,1,1), id=ind, rinertia=self.J,
