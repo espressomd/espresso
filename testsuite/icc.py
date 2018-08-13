@@ -12,6 +12,7 @@ class test_icc(ut.TestCase):
         from espressomd.electrostatic_extensions import ICC
 
         S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
         # Parameters
         box_l = 20.0
         nicc = 10

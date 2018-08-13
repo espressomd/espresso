@@ -52,6 +52,10 @@ function(UNIT_TEST)
     add_test(${TEST_NAME} ${TEST_NAME})
   endif( )
 
+  if(WARNINGS_ARE_ERRORS)
+    set_tests_properties(${TEST_NAME} PROPERTIES ENVIRONMENT "UBSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/tools/ubsan-suppressions.txt:halt_on_error=1:print_stacktrace=1 ASAN_OPTIONS=halt_on_error=1:detect_leaks=0 MSAN_OPTIONS=halt_on_error=1")
+  endif()
+
   add_dependencies(check_unit_tests ${TEST_NAME})
 endfunction(UNIT_TEST)
 
@@ -103,4 +107,4 @@ unit_test(NAME AS_erfc_part SRC AS_erfc_part_test.cpp)
 unit_test(NAME sinc SRC sinc_test.cpp)
 unit_test(NAME permute_ifield_test SRC permute_ifield_test.cpp)
 unit_test(NAME vec_rotate SRC vec_rotate_test.cpp)
-
+unit_test(NAME Span_test SRC Span_test.cpp)

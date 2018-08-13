@@ -1,3 +1,7 @@
+"""
+This sample illustrates how particles of interest can be accessed via slicing.
+"""
+
 #
 # Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #

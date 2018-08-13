@@ -48,7 +48,10 @@ class VirtualSites {
     virtual void update(bool recalc_positions=true) const =0;
     /** Back-transfer forces (and torques) to non-virtual particles. */
     virtual void back_transfer_forces_and_torques() const =0;
-    /** @brief Number of pressure contributions. */
+    /** @brief Called after force calculation (and before rattle/shake) */
+    virtual void after_force_calc() {};
+    virtual void after_lb_propagation() {};
+    /** @brief Number of pressure contributions */
     virtual int n_pressure_contribs() const {return 0;};
     /** @brief Pressure contribution(). */
     virtual void pressure_and_stress_tensor_contribution(double* pressure, double* stress_tensor) const {};    
@@ -64,6 +67,7 @@ class VirtualSites {
     virtual bool need_ghost_comm_before_vel_update() const =0;
     /** Is a ghost comm needed before the back_transfer */
     virtual bool need_ghost_comm_before_back_transfer() const =0;
+    virtual ~VirtualSites() {}
   private:
     bool m_have_velocity;
     bool m_have_quaternion;

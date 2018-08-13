@@ -7,6 +7,7 @@ import numpy as np
 class LBEHTest(ut.TestCase):
     from espressomd import lb
     s = espressomd.System(box_l=[6.0, 6.0, 6.0])
+    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.params = {'time_step': 0.005,

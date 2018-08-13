@@ -1,8 +1,12 @@
+"""
+This sample illustrates how various observables of interest can be checkpointed.
+"""
 from __future__ import print_function
 import espressomd
 from espressomd import checkpointing
+import numpy as np
 
-checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
+checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
 checkpoint.load()
 
 # print out actors
@@ -46,5 +50,9 @@ print("checkpoint.get_registered_objects() = {}".format(checkpoint.get_registere
 # integrate system and finally save checkpoint
 print("\n### Integrate until user presses ctrl+c ###")
 print("Integrating...")
+
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 while True:
     system.integrator.run(1000)

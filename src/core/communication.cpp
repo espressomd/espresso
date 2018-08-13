@@ -50,8 +50,6 @@
 #include "interaction_data.hpp"
 #include "io/mpiio/mpiio.hpp"
 #include "lb.hpp"
-#include "lbboundaries.hpp"
-#include "lbboundaries/LBBoundary.hpp"
 #include "lj.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
@@ -938,15 +936,15 @@ void mpi_send_dipm_slave(int pnode, int part) {
 
 /********************* REQ_SET_ISVI ********/
 
-void mpi_send_virtual(int pnode, int part, int isVirtual) {
+void mpi_send_virtual(int pnode, int part, int is_virtual) {
 #ifdef VIRTUAL_SITES
   mpi_call(mpi_send_virtual_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.isVirtual = isVirtual;
+    p->p.is_virtual = is_virtual;
   } else {
-    MPI_Send(&isVirtual, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
+    MPI_Send(&is_virtual, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
   }
 
   on_particle_change();
@@ -957,7 +955,7 @@ void mpi_send_virtual_slave(int pnode, int part) {
 #ifdef VIRTUAL_SITES
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&(p->p.isVirtual), 1, MPI_INT, 0, SOME_TAG, comm_cart,
+    MPI_Recv(&(p->p.is_virtual), 1, MPI_INT, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -1866,7 +1864,7 @@ void mpi_send_exclusion_slave(int part1, int part2) {
 }
 
 /************** REQ_SET_FLUID **************/
-void mpi_send_fluid(int node, int index, double rho, double *j, double *pi) {
+void mpi_send_fluid(int node, int index, double rho, const std::array<double, 3> &j, const std::array<double, 6> &pi) {
 #ifdef LB
   if (node == this_node) {
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
@@ -1884,8 +1882,9 @@ void mpi_send_fluid_slave(int node, int index) {
   if (node == this_node) {
     double data[10];
     MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-
-    lb_calc_n_from_rho_j_pi(index, data[0], &data[1], &data[4]);
+    std::array<double, 3> j = {{data[1], data[2], data[3]}};
+    std::array<double, 6> pi = {{data[4], data[5], data[6], data[7], data[8], data[9]}};
+    lb_calc_n_from_rho_j_pi(index, data[0], j, pi);
   }
 #endif
 }
@@ -2042,6 +2041,7 @@ void mpi_send_fluid_populations(int node, int index, double *pop) {
     mpi_call(mpi_send_fluid_populations_slave, node, index);
     MPI_Send(pop, 19 * LB_COMPONENTS, MPI_DOUBLE, node, SOME_TAG, comm_cart);
   }
+  lbpar.resend_halo = 1;
 #endif
 }
 
@@ -2053,6 +2053,7 @@ void mpi_send_fluid_populations_slave(int node, int index) {
              MPI_STATUS_IGNORE);
     lb_set_populations(index, data);
   }
+  lbpar.resend_halo = 1;
 #endif
 }
 
