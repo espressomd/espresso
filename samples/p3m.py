@@ -19,6 +19,10 @@
 from __future__ import print_function
 import numpy as np
 import espressomd
+
+required_features = ["ELECTROSTATICS","LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import thermostat
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions

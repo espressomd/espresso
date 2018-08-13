@@ -1,5 +1,6 @@
-# This scripts demonstrates the measurement of the mean square displacement
-# using the Observables/Correlators mechanism
+"""This scripts demonstrates the measurement of the mean square displacement
+using the Observables/Correlators framework."""
+
 from __future__ import print_function
 import espressomd
 from espressomd.observables import *

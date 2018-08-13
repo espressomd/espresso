@@ -175,6 +175,7 @@ ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
   } else if (is_vector(value)) {
     auto const &in_vec = boost::get<std::vector<Variant>>(value);
     std::vector<Variant> out_vec;
+    out_vec.reserve(in_vec.size());
 
     for (auto const &e : in_vec) {
       out_vec.emplace_back(map_local_to_parallel_id(e));

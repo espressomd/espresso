@@ -27,7 +27,7 @@ valency = 1.0
 viscosity_dynamic = 79.53
 density_water = 26.15
 sigma = -0.05
-ext_force_density = 0.1
+ext_force = 0.1
 
 # Set the simulation parameters
 
@@ -46,15 +46,15 @@ ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water,
 density_counterions  = -2.0 * sigma / width
 counterions = electrokinetics.Species(density=density_counterions,
                                       D=D, valency=valency,
-                                      ext_force_density=[ext_force_density, 0, 0])
+                                      ext_force_density=[ext_force, 0, 0])
 
 ek.add_species(counterions)
 
 # Set up the walls confining the fluid
-ek_wall_left = electrokinetics.EKBoundary(charge_density=sigma/agrid,
+ek_wall_left = espressomd.ekboundaries.EKBoundary(charge_density=sigma/agrid,
                                           shape=shapes.Wall(normal=[0, 0, 1],
                                                             dist=padding))
-ek_wall_right = electrokinetics.EKBoundary(charge_density=sigma/agrid,
+ek_wall_right = espressomd.ekboundaries.EKBoundary(charge_density=sigma/agrid,
                                            shape=shapes.Wall(normal=[0, 0, -1],
                                                              dist=-(padding+width)))
 

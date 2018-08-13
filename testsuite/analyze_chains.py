@@ -10,6 +10,8 @@ from espressomd import polymer
 class AnalyzeChain(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(1234)
+    system.set_random_state_PRNG()
+
     num_poly=2
     num_mono=5
 
@@ -21,7 +23,7 @@ class AnalyzeChain(ut.TestCase):
         self.system.cell_system.set_n_square(use_verlet_lists=False)
         fene=FeneBond(k=30, d_r_max=2)
         self.system.bonded_inter.add(fene)
-        polymer.create_polymer(N_P=self.num_poly,
+        polymer.create_polymer(start_pos=[0,0,0], N_P=self.num_poly,
                                bond_length=0.9,
                                MPC=self.num_mono,
                                bond=fene)
@@ -110,17 +112,17 @@ class AnalyzeChain(ut.TestCase):
         core_re = self.system.analysis.calc_re(chain_start=0,
                                                number_of_chains=self.num_poly,
                                                chain_length=self.num_mono)
-        self.assertTrue( np.allclose(core_re, self.calc_re()))
+        np.testing.assert_allclose(core_re, self.calc_re())
         # compare calc_rg()
         core_rg = self.system.analysis.calc_rg(chain_start=0,
                                                number_of_chains=self.num_poly,
                                                chain_length=self.num_mono)
-        self.assertTrue( np.allclose(core_rg, self.calc_rg()))
+        np.testing.assert_allclose(core_rg, self.calc_rg())
         # compare calc_rh()
         core_rh = self.system.analysis.calc_rh(chain_start=0,
                                                number_of_chains=self.num_poly,
                                                chain_length=self.num_mono)
-        self.assertTrue( np.allclose(core_rh, self.calc_rh()))
+        np.testing.assert_allclose(core_rh, self.calc_rh())
         # restore PBC
         self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos
@@ -152,13 +154,13 @@ class AnalyzeChain(ut.TestCase):
         # number of pairs between monomers or different polymers
         num_pair_mono = 0.5*(self.num_mono*self.num_mono)*(self.num_poly-1)*(self.num_poly)
         # bins
-        self.assertTrue( np.allclose(core_rdf[:,0], (bins[1:]+bins[:-1])*0.5))
+        np.testing.assert_allclose(core_rdf[:,0], (bins[1:]+bins[:-1])*0.5)
         # monomer rdf
-        self.assertTrue( np.allclose(core_rdf[:,1]*bin_volume*num_pair_mono/box_volume, rdf[0]))
+        np.testing.assert_allclose(core_rdf[:,1]*bin_volume*num_pair_mono/box_volume, rdf[0])
         # cm rdf
-        self.assertTrue( np.allclose(core_rdf[:,2]*bin_volume*num_pair_poly/box_volume, rdf[1]))
+        np.testing.assert_allclose(core_rdf[:,2]*bin_volume*num_pair_poly/box_volume, rdf[1])
         # min rdf
-        self.assertTrue( np.allclose(core_rdf[:,3]*bin_volume*num_pair_poly/box_volume, rdf[2]))
+        np.testing.assert_allclose(core_rdf[:,3]*bin_volume*num_pair_poly/box_volume, rdf[2])
         # restore PBC
         self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos
