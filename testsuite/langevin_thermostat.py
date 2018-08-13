@@ -26,19 +26,19 @@ from time import time
 from espressomd.accumulators import Correlator
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 
+
 @ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"),
            "Skipped because of THERMOSTAT_IGNORE_NON_VIRTUAL")
 class LangevinThermostat(ut.TestCase):
     """Tests the velocity distribution created by the Langevin thermostat against
        the single component Maxwell distribution."""
 
-    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.cell_system.set_n_square()
-    s.cell_system.skin = 0.3
-    s.seed = range(s.cell_system.get_state()["n_nodes"])
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.cell_system.set_n_square()
+    system.cell_system.skin = 0.3
+    system.seed = range(system.cell_system.get_state()["n_nodes"])
     if espressomd.has_features("PARTIAL_PERIODIC"):
-        s.periodicity = 0,0,0
-
+        system.periodicity = 0, 0, 0
 
     @classmethod
     def setUpClass(cls):
@@ -71,40 +71,40 @@ class LangevinThermostat(ut.TestCase):
     def test_global_langevin(self):
         """Test for global Langevin parameters."""
         N = 200
-        s = self.s
-        s.part.clear()
-        s.time_step = 0.04
-        
+        system = self.system
+        system.part.clear()
+        system.time_step = 0.04
+
         # Place particles
-        s.part.add(pos=np.random.random((N, 3)))
-       
+        system.part.add(pos=np.random.random((N, 3)))
+
         # Enable rotation if compiled in
-        if espressomd.has_features("ROTATION"): 
-            s.part[:].rotation = 1,1,1
+        if espressomd.has_features("ROTATION"):
+            system.part[:].rotation = 1, 1, 1
 
         kT = 2.3
         gamma = 1.5
-        s.thermostat.set_langevin(kT=kT, gamma=gamma)
-        
+        system.thermostat.set_langevin(kT=kT, gamma=gamma)
+
         # Warmup
-        s.integrator.run(100)
+        system.integrator.run(100)
 
         # Sampling
-        loops = 4000
+        loops = 400
         v_stored = np.zeros((N * loops, 3))
         omega_stored = np.zeros((N * loops, 3))
         for i in range(loops):
-            s.integrator.run(1)
-            v_stored[i * N:(i + 1) * N, :] = s.part[:].v
+            system.integrator.run(1)
+            v_stored[i * N:(i + 1) * N, :] = system.part[:].v
             if espressomd.has_features("ROTATION"):
-                omega_stored[i * N:(i + 1) * N, :] = s.part[:].omega_body
+                omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
 
         v_minmax = 5
         bins = 5
         error_tol = 0.015
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
-        if espressomd.has_features("ROTATION"): 
+        if espressomd.has_features("ROTATION"):
             self.check_velocity_distribution(
                 omega_stored, v_minmax, bins, error_tol, kT)
 
@@ -114,49 +114,49 @@ class LangevinThermostat(ut.TestCase):
         """Test for Langevin particle. Covers all combinations of
            particle specific gamma and temp set or not set.
         """
-        N = 200
-        s = self.s
-        s.part.clear()
-        s.time_step = 0.04
-        s.part.add(pos=np.random.random((N, 3)))
-        if espressomd.has_features("ROTATION"): 
-            s.part[:].rotation = 1,1,1
-        
+        N = 400
+        system = self.system
+        system.part.clear()
+        system.time_step = 0.04
+        system.part.add(pos=np.random.random((N, 3)))
+        if espressomd.has_features("ROTATION"):
+            system.part[:].rotation = 1, 1, 1
+
         kT = 2.3
         gamma = 1.5
         gamma2 = 2.3
         kT2 = 1.5
-        s.thermostat.set_langevin(kT=kT, gamma=gamma)
+        system.thermostat.set_langevin(kT=kT, gamma=gamma)
         # Set different kT on 2nd half of particles
-        s.part[int(N / 2):].temp = kT2
+        system.part[int(N / 2):].temp = kT2
         # Set different gamma on half of the partiles (overlap over both kTs)
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
-            s.part[int(N / 4):int(3 * N / 4)].gamma = gamma2, gamma2, gamma2
+            system.part[int(N / 4):int(3 * N / 4)].gamma = gamma2, gamma2, gamma2
         else:
-            s.part[int(N / 4):int(3 * N / 4)].gamma = gamma2
+            system.part[int(N / 4):int(3 * N / 4)].gamma = gamma2
 
-        s.integrator.run(50)
-        loops = 4000
+        system.integrator.run(50)
+        loops = 400
 
         v_kT = np.zeros((int(N / 2) * loops, 3))
         v_kT2 = np.zeros((int(N / 2 * loops), 3))
-        
-        if espressomd.has_features("ROTATION"): 
+
+        if espressomd.has_features("ROTATION"):
             omega_kT = np.zeros((int(N / 2) * loops, 3))
             omega_kT2 = np.zeros((int(N / 2 * loops), 3))
 
         for i in range(loops):
-            s.integrator.run(1)
+            system.integrator.run(1)
             v_kT[int(i * N / 2):int((i + 1) * N / 2),
-                 :] = s.part[:int(N / 2)].v
+                 :] = system.part[:int(N / 2)].v
             v_kT2[int(i * N / 2):int((i + 1) * N / 2),
-                  :] = s.part[int(N / 2):].v
-           
+                  :] = system.part[int(N / 2):].v
+
             if espressomd.has_features("ROTATION"):
-               omega_kT[int(i * N / 2):int((i + 1) * N / 2),
-                   :] = s.part[:int(N / 2)].omega_body
-               omega_kT2[int(i * N / 2):int((i + 1) * N / 2),
-                    :] = s.part[int(N / 2):].omega_body
+                omega_kT[int(i * N / 2):int((i + 1) * N / 2),
+                         :] = system.part[:int(N / 2)].omega_body
+                omega_kT2[int(i * N / 2):int((i + 1) * N / 2),
+                          :] = system.part[int(N / 2):].omega_body
         v_minmax = 5
         bins = 5
         error_tol = 0.014
@@ -164,276 +164,273 @@ class LangevinThermostat(ut.TestCase):
         self.check_velocity_distribution(v_kT2, v_minmax, bins, error_tol, kT2)
 
         if espressomd.has_features("ROTATION"):
-            self.check_velocity_distribution(omega_kT, v_minmax, bins, error_tol, kT)
-            self.check_velocity_distribution(omega_kT2, v_minmax, bins, error_tol, kT2)
+            self.check_velocity_distribution(
+                omega_kT, v_minmax, bins, error_tol, kT)
+            self.check_velocity_distribution(
+                omega_kT2, v_minmax, bins, error_tol, kT2)
 
-    def setup_diff_mass_rinertia(self,p):
+    def setup_diff_mass_rinertia(self, p):
         if espressomd.has_features("MASS"):
-            p.mass=0.5
-        if espressomd.has_features("ROTATION"): 
-            p.rotation = 1,1,1
+            p.mass = 0.5
+        if espressomd.has_features("ROTATION"):
+            p.rotation = 1, 1, 1
             # Make sure rinertia does not change diff coeff
-            if espressomd.has_features("ROTATIONAL_INERTIA"): 
-                p.rinertia =0.4,0.4,0.4
-        
+            if espressomd.has_features("ROTATIONAL_INERTIA"):
+                p.rinertia = 0.4, 0.4, 0.4
+
     def test_diffusion(self):
         """This tests rotational and translational diffusion coeff via green-kubo"""
-        s=self.s
-        s.part.clear()
+        system = self.system
+        system.part.clear()
 
-        kT=1.37
-        dt=0.1
-        s.time_step=dt
-        
+        kT = 1.37
+        dt = 0.1
+        system.time_step = dt
+
         # Translational gamma. We cannot test per-component, if rotation is on,
         # because body and space frames become different.
-        gamma=3.1
-        
+        gamma = 3.1
+
         # Rotational gamma
-        gamma_rot_i=0.7
-        gamma_rot_a=0.7,1,1.2
+        gamma_rot_i = 0.7
+        gamma_rot_a = 0.7, 1, 1.2
 
         # If we have langevin per particle:
         # per particle kT
-        per_part_kT=1.6
+        per_part_kT = 1.6
         # Translation
-        per_part_gamma=1.63
-        # Rotational 
-        per_part_gamma_rot_i=0.6
-        per_part_gamma_rot_a=0.4,0.8,1.1
+        per_part_gamma = 1.63
+        # Rotational
+        per_part_gamma_rot_i = 0.6
+        per_part_gamma_rot_a = 0.4, 0.8, 1.1
 
-
-        
-        
-        
-        
         # Particle with global thermostat params
-        p_global=s.part.add(pos=(0,0,0))
+        p_global = system.part.add(pos=(0, 0, 0))
         # Make sure, mass doesn't change diff coeff
         self.setup_diff_mass_rinertia(p_global)
 
-        # particle specific gamma, kT, and both 
+        # particle specific gamma, kT, and both
         if espressomd.has_features("LANGEVIN_PER_PARTICLE"):
-            p_gamma=s.part.add(pos=(0,0,0))
+            p_gamma = system.part.add(pos=(0, 0, 0))
             self.setup_diff_mass_rinertia(p_gamma)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                p_gamma.gamma =per_part_gamma,per_part_gamma,per_part_gamma
+                p_gamma.gamma = per_part_gamma, per_part_gamma, per_part_gamma
                 if espressomd.has_features("ROTATION"):
-                   p_gamma.gamma_rot=per_part_gamma_rot_a
+                    p_gamma.gamma_rot = per_part_gamma_rot_a
             else:
-                p_gamma.gamma =per_part_gamma
+                p_gamma.gamma = per_part_gamma
                 if espressomd.has_features("ROTATION"):
-                   p_gamma.gamma_rot=per_part_gamma_rot_i
+                    p_gamma.gamma_rot = per_part_gamma_rot_i
 
-            p_kT=s.part.add(pos=(0,0,0))
+            p_kT = system.part.add(pos=(0, 0, 0))
             self.setup_diff_mass_rinertia(p_kT)
-            p_kT.temp=per_part_kT
+            p_kT.temp = per_part_kT
 
-            p_both=s.part.add(pos=(0,0,0))
+            p_both = system.part.add(pos=(0, 0, 0))
             self.setup_diff_mass_rinertia(p_both)
-            p_both.temp=per_part_kT
+            p_both.temp = per_part_kT
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                p_both.gamma =per_part_gamma,per_part_gamma,per_part_gamma
+                p_both.gamma = per_part_gamma, per_part_gamma, per_part_gamma
                 if espressomd.has_features("ROTATION"):
-                   p_both.gamma_rot=per_part_gamma_rot_a
+                    p_both.gamma_rot = per_part_gamma_rot_a
             else:
-                p_both.gamma =per_part_gamma
+                p_both.gamma = per_part_gamma
                 if espressomd.has_features("ROTATION"):
-                   p_both.gamma_rot=per_part_gamma_rot_i
+                    p_both.gamma_rot = per_part_gamma_rot_i
 
-
-        
-        
         # Thermostat setup
         if espressomd.has_features("ROTATION"):
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 # particle anisotropy and rotation
-                s.thermostat.set_langevin(kT=kT,gamma=gamma,gamma_rotation=gamma_rot_a)
+                system.thermostat.set_langevin(
+                    kT=kT, gamma=gamma, gamma_rotation=gamma_rot_a)
             else:
                 # Rotation without particle anisotropy
-                s.thermostat.set_langevin(kT=kT,gamma=gamma,gamma_rotation=gamma_rot_i)
+                system.thermostat.set_langevin(
+                    kT=kT, gamma=gamma, gamma_rotation=gamma_rot_i)
         else:
             # No rotation
-            s.thermostat.set_langevin(kT=kT,gamma=gamma)
-        
+            system.thermostat.set_langevin(kT=kT, gamma=gamma)
 
-        
-        s.cell_system.skin =0.4
-        s.integrator.run(5000)
-        
+        system.cell_system.skin = 0.4
+        system.integrator.run(500)
+
         # Correlators
-        vel_obs={}
-        omega_obs={}
-        corr_vel={}
-        corr_omega={}
-        all_particles=[p_global]
+        vel_obs = {}
+        omega_obs = {}
+        corr_vel = {}
+        corr_omega = {}
+        all_particles = [p_global]
         if espressomd.has_features("LANGEVIN_PER_PARTICLE"):
             all_particles.append(p_gamma)
             all_particles.append(p_kT)
             all_particles.append(p_both)
 
         # linear vel
-        vel_obs=ParticleVelocities(ids=s.part[:].id)
+        vel_obs = ParticleVelocities(ids=system.part[:].id)
         corr_vel = Correlator(obs1=vel_obs, tau_lin=20, tau_max=1.9, delta_N=1,
-                corr_operation="componentwise_product", compress1="discard1")
-        s.auto_update_accumulators.add(corr_vel)
+                              corr_operation="componentwise_product", compress1="discard1")
+        system.auto_update_accumulators.add(corr_vel)
         # angular vel
         if espressomd.has_features("ROTATION"):
-            omega_obs=ParticleBodyAngularVelocities(ids=s.part[:].id)
+            omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
             corr_omega = Correlator(obs1=omega_obs, tau_lin=40, tau_max=3.9, delta_N=1,
-                    corr_operation="componentwise_product", compress1="discard1")
-            s.auto_update_accumulators.add(corr_omega)
-        
-        s.integrator.run(400000)
-        
-        s.auto_update_accumulators.remove(corr_vel)
+                                    corr_operation="componentwise_product", compress1="discard1")
+            system.auto_update_accumulators.add(corr_omega)
+
+        system.integrator.run(400000)
+
+        system.auto_update_accumulators.remove(corr_vel)
         corr_vel.finalize()
         if espressomd.has_features("ROTATION"):
-            s.auto_update_accumulators.remove(corr_omega)
+            system.auto_update_accumulators.remove(corr_omega)
             corr_omega.finalize()
 
         # Verify diffusion
         # Translation
         # Cast gammas to vector, to make checks independent of PARTICLE_ANISOTROPY
-        gamma=np.ones(3) *gamma
-        per_part_gamma=np.ones(3) *per_part_gamma
-        self.verify_diffusion(p_global,corr_vel,kT,gamma)
-        if espressomd.has_features("LANGEVIN_PER_PARTICLE"): 
-            self.verify_diffusion(p_gamma,corr_vel,kT,per_part_gamma)
-            self.verify_diffusion(p_kT,corr_vel,per_part_kT,gamma)
-            self.verify_diffusion(p_both,corr_vel,per_part_kT,per_part_gamma)
-        
+        gamma = np.ones(3) * gamma
+        per_part_gamma = np.ones(3) * per_part_gamma
+        self.verify_diffusion(p_global, corr_vel, kT, gamma)
+        if espressomd.has_features("LANGEVIN_PER_PARTICLE"):
+            self.verify_diffusion(p_gamma, corr_vel, kT, per_part_gamma)
+            self.verify_diffusion(p_kT, corr_vel, per_part_kT, gamma)
+            self.verify_diffusion(
+                p_both, corr_vel, per_part_kT, per_part_gamma)
+
         # Rotation
         if espressomd.has_features("ROTATION"):
             # Decide on effective gamma rotation, since for rotation it is direction dependent
-            eff_gamma_rot=None
-            per_part_eff_gamma_rot=None
+            eff_gamma_rot = None
+            per_part_eff_gamma_rot = None
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                eff_gamma_rot=gamma_rot_a
-                eff_per_part_gamma_rot =per_part_gamma_rot_a
+                eff_gamma_rot = gamma_rot_a
+                eff_per_part_gamma_rot = per_part_gamma_rot_a
             else:
-                eff_gamma_rot=gamma_rot_i*np.ones(3)
-                eff_per_part_gamma_rot =per_part_gamma_rot_i *np.ones(3)
+                eff_gamma_rot = gamma_rot_i * np.ones(3)
+                eff_per_part_gamma_rot = per_part_gamma_rot_i * np.ones(3)
 
+            self.verify_diffusion(p_global, corr_omega, kT, eff_gamma_rot)
+            if espressomd.has_features("LANGEVIN_PER_PARTICLE"):
+                self.verify_diffusion(
+                    p_gamma, corr_omega, kT, eff_per_part_gamma_rot)
+                self.verify_diffusion(
+                    p_kT, corr_omega, per_part_kT, eff_gamma_rot)
+                self.verify_diffusion(p_both, corr_omega,
+                                      per_part_kT, eff_per_part_gamma_rot)
 
-            self.verify_diffusion(p_global,corr_omega,kT,eff_gamma_rot)
-            if espressomd.has_features("LANGEVIN_PER_PARTICLE"): 
-                self.verify_diffusion(p_gamma,corr_omega,kT,eff_per_part_gamma_rot)
-                self.verify_diffusion(p_kT,corr_omega,per_part_kT,eff_gamma_rot)
-                self.verify_diffusion(p_both,corr_omega,per_part_kT,eff_per_part_gamma_rot)
-
-
-            
-
-    def verify_diffusion(self,p,corr,kT,gamma):
+    def verify_diffusion(self, p, corr, kT, gamma):
         """Verifify diffusion coeff.
 
            p: particle, corr: dict containing correltor with particle as key,
            kT=kT, gamma=gamma as 3 component vector.
         """
-        c=corr
+        c = corr
         # Integral of vacf via Green-Kubo
-        #D= int_0^infty <v(t_0)v(t_0+t)> dt     (o 1/3, since we work componentwise)
-        i=p.id
-        acf=c.result()[:,[0,2+3*i,2+3*i+1,2+3*i+2]]
-        np.savetxt("acf.dat",acf)
+        # D= int_0^infty <v(t_0)v(t_0+t)> dt     (o 1/3, since we work componentwise)
+        i = p.id
+        acf = c.result()[:, [0, 2 + 3 * i, 2 + 3 * i + 1, 2 + 3 * i + 2]]
+        np.savetxt("acf.dat", acf)
 
-        #Integrate w. trapez rule
-        for coord in 1,2,3:
-            I=np.trapz(acf[:,coord],acf[:,0])
-            ratio = I/(kT/gamma[coord-1])
-            self.assertAlmostEqual(ratio,1.,delta=0.07)
-        
- 
+        # Integrate w. trapez rule
+        for coord in 1, 2, 3:
+            I = np.trapz(acf[:, coord], acf[:, 0])
+            ratio = I / (kT / gamma[coord - 1])
+            self.assertAlmostEqual(ratio, 1., delta=0.07)
 
     def test_00__friction_trans(self):
         """Tests the translational friction-only part of the thermostat."""
 
-        
-        s=self.s
+        system = self.system
         # Translation
-        gamma_t_i=2
-        gamma_t_a=0.5,2,1.5
-        v0=5.
+        gamma_t_i = 2
+        gamma_t_a = 0.5, 2, 1.5
+        v0 = 5.
 
-        s.time_step=0.0005
-        s.part.clear()
-        s.part.add(pos=(0,0,0),v=(v0,v0,v0))
+        system.time_step = 0.0005
+        system.part.clear()
+        system.part.add(pos=(0, 0, 0), v=(v0, v0, v0))
         if espressomd.has_features("MASS"):
-            s.part[0].mass=3
+            system.part[0].mass = 3
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
-            s.thermostat.set_langevin(kT=0,gamma=gamma_t_a)
+            system.thermostat.set_langevin(kT=0, gamma=gamma_t_a)
         else:
-            s.thermostat.set_langevin(kT=0,gamma=gamma_t_i)
+            system.thermostat.set_langevin(kT=0, gamma=gamma_t_i)
 
-        s.time=0
+        system.time = 0
         for i in range(100):
-            s.integrator.run(10)
+            system.integrator.run(10)
             for j in range(3):
                 if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                    self.assertAlmostEqual(s.part[0].v[j],v0*np.exp(-gamma_t_a[j]/s.part[0].mass*s.time),places=2)
+                    self.assertAlmostEqual(
+                        system.part[0].v[j], v0 * np.exp(-gamma_t_a[j] / system.part[0].mass * system.time), places=2)
                 else:
-                    self.assertAlmostEqual(s.part[0].v[j],v0*np.exp(-gamma_t_i/s.part[0].mass*s.time),places=2)
+                    self.assertAlmostEqual(
+                        system.part[0].v[j], v0 * np.exp(-gamma_t_i / system.part[0].mass * system.time), places=2)
 
-
-    @ut.skipIf(not espressomd.has_features("ROTATION"), "Skipped for lack of ROTATION" )
+    @ut.skipIf(not espressomd.has_features("ROTATION"), "Skipped for lack of ROTATION")
     def test_00__friction_rot(self):
         """Tests the rotational friction-only part of the thermostat."""
 
-        
-        s=self.s
+        system = self.system
         # Translation
-        gamma_t_i=2
-        gamma_t_a=0.5,2,1.5
-        gamma_r_i=3
-        gamma_r_a=1.5,0.7,1.2
-        o0=5.
+        gamma_t_i = 2
+        gamma_t_a = 0.5, 2, 1.5
+        gamma_r_i = 3
+        gamma_r_a = 1.5, 0.7, 1.2
+        o0 = 5.
 
-        s.time_step=0.0005
-        s.part.clear()
-        s.part.add(pos=(0,0,0),omega_body=(o0,o0,o0),rotation=(1,1,1))
+        system.time_step = 0.0005
+        system.part.clear()
+        system.part.add(pos=(0, 0, 0), omega_body=(o0, o0, o0), rotation=(1, 1, 1))
         if espressomd.has_features("ROTATIONAL_INERTIA"):
-            s.part[0].rinertia=2,2,2
+            system.part[0].rinertia = 2, 2, 2
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
-            s.thermostat.set_langevin(kT=0,gamma=gamma_t_a,gamma_rotation=gamma_r_a)
+            system.thermostat.set_langevin(
+                kT=0, gamma=gamma_t_a, gamma_rotation=gamma_r_a)
         else:
-            s.thermostat.set_langevin(kT=0,gamma=gamma_t_i,gamma_rotation=gamma_r_i)
+            system.thermostat.set_langevin(
+                kT=0, gamma=gamma_t_i, gamma_rotation=gamma_r_i)
 
-        s.time=0
+        system.time = 0
         for i in range(100):
-            s.integrator.run(10)
+            system.integrator.run(10)
             if espressomd.has_features("ROTATIONAL_INERTIA"):
-                rinertia=s.part[0].rinertia
+                rinertia = system.part[0].rinertia
             else:
-                rinertia=(1,1,1)
+                rinertia = (1, 1, 1)
             for j in range(3):
                 if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                    self.assertAlmostEqual(s.part[0].omega_body[j],o0*np.exp(-gamma_r_a[j]/rinertia[j]*s.time),places=2)
+                    self.assertAlmostEqual(
+                        system.part[0].omega_body[j], o0 * np.exp(-gamma_r_a[j] / rinertia[j] * system.time), places=2)
                 else:
-                    self.assertAlmostEqual(s.part[0].omega_body[j],o0*np.exp(-gamma_r_i/rinertia[j]*s.time),places=2)
+                    self.assertAlmostEqual(
+                        system.part[0].omega_body[j], o0 * np.exp(-gamma_r_i / rinertia[j] * system.time), places=2)
 
-
-    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES"), "Skipped for lack of VIRTUAL_SITES" )
+    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES"), "Skipped for lack of VIRTUAL_SITES")
     def test_virtual(self):
-        s = self.s
-        s.time_step = 0.01
-        s.part.clear()
+        system = self.system
+        system.time_step = 0.01
+        system.part.clear()
 
-        virtual = s.part.add(pos=[0,0,0], virtual=True, v=[1,0,0])
-        physical = s.part.add(pos=[0,0,0], virtual=False, v=[1,0,0])
+        virtual = system.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
+        physical = system.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
 
-        s.thermostat.set_langevin(kT=0, gamma=1, gamma_rotation=1., act_on_virtual=False)
+        system.thermostat.set_langevin(
+            kT=0, gamma=1, gamma_rotation=1., act_on_virtual=False)
 
-        s.integrator.run(0)
+        system.integrator.run(0)
 
-        np.testing.assert_almost_equal(np.copy(virtual.f), [0,0,0])
-        np.testing.assert_almost_equal(np.copy(physical.f), [-1,0,0])
+        np.testing.assert_almost_equal(np.copy(virtual.f), [0, 0, 0])
+        np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
 
-        s.thermostat.set_langevin(kT=0, gamma=1, gamma_rotation=1., act_on_virtual=True)
-        s.integrator.run(0)
+        system.thermostat.set_langevin(
+            kT=0, gamma=1, gamma_rotation=1., act_on_virtual=True)
+        system.integrator.run(0)
 
-        np.testing.assert_almost_equal(np.copy(virtual.f), [-1,0,0])
-        np.testing.assert_almost_equal(np.copy(physical.f), [-1,0,0])
+        np.testing.assert_almost_equal(np.copy(virtual.f), [-1, 0, 0])
+        np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
+
 
 if __name__ == "__main__":
     ut.main()
