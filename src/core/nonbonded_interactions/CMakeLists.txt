@@ -19,4 +19,5 @@ add_library(nonbonded_interactions SHARED
     thole.cpp
 )
 
+add_dependencies(nonbonded_interactions EspressoConfig)
 target_include_directories(nonbonded_interactions PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)

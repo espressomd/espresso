@@ -17,4 +17,5 @@ add_library(bonded_interactions SHARED
     umbrella.cpp
 )
 
+add_dependencies(bonded_interactions EspressoConfig)
 target_include_directories(bonded_interactions PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
