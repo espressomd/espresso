@@ -81,7 +81,6 @@ cdef extern from "particle_data.hpp":
                 double v_swim
 
     # Setter/getter/modifier functions functions
-    const particle* get_particle_data_ptr(int part) except +
     void prefetch_particle_data(vector[int] ids)
 
     int place_particle(int part, double p[3])
@@ -212,6 +211,8 @@ cdef extern from "particle_data.hpp":
     bool particle_exists(int part)
 
     int get_particle_node(int id) except +
+
+    particle& get_particle_data(int id) except +
 
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
