@@ -212,7 +212,7 @@ cdef extern from "particle_data.hpp":
 
     int get_particle_node(int id) except +
 
-    particle& get_particle_data(int id) except +
+    const particle& get_particle_data(int id) except +
 
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
