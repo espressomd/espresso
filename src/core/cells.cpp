@@ -385,6 +385,10 @@ void check_resort_particles() {
 
 /*************************************************/
 void cells_update_ghosts() {
+  // If no Verlet lists are used we need exact sorting of the particles
+  if (!cell_structure.use_verlet_list)
+    resort_particles |= Cells::RESORT_LOCAL;
+
   if (resort_particles) {
     int global = (resort_particles & Cells::RESORT_GLOBAL)
                      ? CELL_GLOBAL_EXCHANGE
