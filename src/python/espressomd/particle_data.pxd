@@ -203,15 +203,15 @@ cdef extern from "particle_data.hpp":
         int set_particle_swimming(int part, particle_parameters_swimming swim)
         void pointer_to_swimming(const particle * p, const particle_parameters_swimming * & swim)
 
-    int remove_particle(int part)
+    int remove_particle(int part) except +
 
-    void remove_all_particles()
+    void remove_all_particles() except +
 
     void remove_all_bonds_to(int part)
 
     bool particle_exists(int part)
 
-    int get_particle_node(int id)
+    int get_particle_node(int id) except +
 
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
@@ -227,7 +227,7 @@ cdef extern from "rotation.hpp":
 cdef class ParticleHandle(object):
     cdef public int _id
     cdef const particle * particle_data
-    cdef int update_particle_data(self) except -1
+    cdef int update_particle_data(self)
 
 cdef class _ParticleSliceImpl:
     cdef public id_selection
