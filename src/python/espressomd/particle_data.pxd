@@ -92,7 +92,7 @@ cdef extern from "particle_data.hpp":
 
     int set_particle_solvation(int part, double * solvation)
 
-    IF ROTATION == 1:
+    IF ROTATION:
         int set_particle_rotation(int part, int rot)
 
     IF MASS:
@@ -140,7 +140,7 @@ cdef extern from "particle_data.hpp":
         int set_particle_affinity(int part, double bond_site[3])
         void pointer_to_bond_site(particle*  p, double*& res)
 
-    IF MASS == 1:
+    IF MASS:
         void pointer_to_mass(particle * p, double * & res)
 
     IF DIPOLES:
@@ -227,7 +227,7 @@ cdef extern from "rotation.hpp":
 cdef class ParticleHandle(object):
     cdef public int _id
     cdef const particle * particle_data
-    cdef int update_particle_data(self)
+    cdef int update_particle_data(self) except -1
 
 cdef class _ParticleSliceImpl:
     cdef public id_selection

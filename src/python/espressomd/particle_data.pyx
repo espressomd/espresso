@@ -46,10 +46,6 @@ ROT_X = 2
 ROT_Y = 4
 ROT_Z = 8
 
-def check_particle_exists(id):
-    if not particle_exists(id):
-        raise ValueError("Trying to access non-existing particle with id {}.".format(id))
-
 
 cdef make_array_locked(const Vector3d &v):
     return array_locked([v[0], v[1], v[2]])
@@ -67,9 +63,10 @@ cdef class ParticleHandle(object):
     def __cinit__(self, int _id):
         self._id = _id
 
-    cdef int update_particle_data(self):
-        check_particle_exists(self._id)
+    cdef int update_particle_data(self) except -1:
         self.particle_data = get_particle_data_ptr(self._id)
+        if not self.particle_data:
+            raise ValueError("Could not get particle data for id {}".format(self._id))
         
     def __str__(self):
         res = collections.OrderedDict()
@@ -93,7 +90,7 @@ cdef class ParticleHandle(object):
 
         """
         def __get__(self):
-            check_particle_exists(self._id)
+            self.update_particle_data()
             return self._id
 
     # Particle Type
@@ -1323,7 +1320,6 @@ cdef class ParticleHandle(object):
         clear
 
         """
-        check_particle_exists(self._id)
         if remove_particle(self._id):
             raise Exception("Could not remove particle.")
         del self
