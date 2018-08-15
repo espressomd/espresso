@@ -220,14 +220,13 @@ class ParticleProperties(ut.TestCase):
     def test_accessing_invalid_id_raises(self):
         self.system.part.clear()
         handle_to_non_existing_particle = self.system.part[42]
-        def get_pos_prop(handle):
-            return handle.pos
-        self.assertRaises(RuntimeError, get_pos_prop, handle_to_non_existing_particle)
+        with self.assertRaises(RuntimeError):
+            handle_to_non_existing_particle.id
 
     def test_parallel_property_setters(self):
         s= self.system
         s.part.clear()
-        s.part.add(pos=s.box_l*np.random.random((100,3)))
+        s.part.add(pos=s.box_l*np.random.random((100, 3)))
 
         # Copy individual properties of particle 0
         print("If this test hangs, there is an mpi deadlock in a particle property setter." )
@@ -238,11 +237,11 @@ class ParticleProperties(ut.TestCase):
             if not hasattr(s.part[0],p):
                 raise Exception("Inconsistency between ParticleHandle and particle_data.particle_attributes")
             try: 
-                setattr(s.part[:],p,getattr(s.part[0],p))
+                setattr(s.part[:], p, getattr(s.part[0], p))
             except AttributeError:
-                print("Skipping read-only",p)
+                print("Skipping read-only", p)
             # Cause a differtn mpi callback to uncover deadlock immediately
-            x=getattr(s.part[:],p)
+            x = getattr(s.part[:],p)
             
 
 if __name__ == "__main__":
