@@ -214,6 +214,9 @@ cdef extern from "particle_data.hpp":
 
     const particle& get_particle_data(int id) except +
 
+cdef inline const particle* get_particle_data_ptr(const particle& p):
+    return &p
+
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
         int vs_relate_to(int part_num, int relate_to)
