@@ -214,6 +214,10 @@ cdef extern from "particle_data.hpp":
 
     const particle& get_particle_data(int id) except +
 
+# This ugly function is only needed because of a bug in cython: 
+# c.f. https://github.com/cython/cython/blob/f568e1463e4dc9d45325713cce740ace182d7874/Cython/Utility/ModuleSetupCode.c#L424
+# c.f. https://github.com/cython/cython/issues/1519  
+# It was fixed in cython 0.26, once we require that version, we can remove this.
 cdef inline const particle* get_particle_data_ptr(const particle& p):
     return &p
 
