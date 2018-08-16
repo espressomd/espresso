@@ -16,30 +16,28 @@ namespace Interpolation {
 template <size_t order, typename Kernel>
 void bspline_3d(const Vector3d &pos, const Kernel &kernel,
                 const Vector3d &grid_spacing, const Vector3d &offset) {
-  /* Distance to the nearest mesh point in units of h \in [-0.5, 0.5) */
-  std::array<double, 3> dist;
-  /* Index of the lower left corner of the assignment cube */
-  std::array<int, 3> ll;
+  using Utils::bspline;
 
-  std::tie(ll, dist) = detail::ll_and_dist<order>(pos, grid_spacing, offset);
+  /* The coordinates and relative distance of the assigment cube. */
+  const auto block = detail::ll_and_dist<order>(pos, grid_spacing, offset);
 
   /* Precalc weights that are used multiple times. */
   std::array<double, order> w_y;
   std::array<double, order> w_z;
   for (int i = 0; i < order; i++) {
-    w_y[i] = Utils::bspline<order>(i, dist[1]);
-    w_z[i] = Utils::bspline<order>(i, dist[2]);
+    w_y[i] = bspline<order>(i, block.distance[1]);
+    w_z[i] = bspline<order>(i, block.distance[2]);
   }
 
   std::array<int, 3> ind;
   for (int i = 0; i < order; i++) {
-    ind[0] = ll[0] + i;
-    const auto wx = Utils::bspline<order>(i, dist[0]);
+    ind[0] = block.corner[0] + i;
+    const auto wx = bspline<order>(i, block.distance[0]);
     for (int j = 0; j < order; j++) {
-      ind[1] = ll[1] + j;
+      ind[1] = block.corner[1] + j;
       const auto wxy = wx * w_y[j];
       for (int k = 0; k < order; k++) {
-        ind[2] = ll[2] + k;
+        ind[2] = block.corner[2] + k;
         kernel(ind, wxy * w_z[k]);
       }
     }

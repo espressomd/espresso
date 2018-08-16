@@ -12,13 +12,22 @@
 namespace Utils {
 namespace Interpolation {
 namespace detail {
-template <size_t order>
-std::pair<std::array<int, 3>, std::array<double, 3>>
-ll_and_dist(const Vector3d &pos, const Vector3d &grid_spacing,
-            const Vector3d &offset) {
-  /* Distance to the nearest mesh point in units of h \in [-0.5, 0.5) */
-  std::array<double, 3> dist;
+
+struct Block {
   /* Index of the lower left corner of the assignment cube */
+  const std::array<int, 3> corner;
+  /* Distance to the nearest mesh point in units of h \in [-0.5, 0.5) */
+  const Vector3d distance;
+};
+
+/**
+ * @brief Calculate the lower left index of a block
+ *        stencil with order points side length.
+ */
+template <size_t order>
+Block ll_and_dist(const Vector3d &pos, const Vector3d &grid_spacing,
+                  const Vector3d &offset) {
+  Vector3d dist;
   std::array<int, 3> ll;
 
   for (int dim = 0; dim < 3; dim++) {
