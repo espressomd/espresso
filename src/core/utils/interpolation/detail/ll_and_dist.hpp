@@ -33,7 +33,7 @@ Block ll_and_dist(const Vector3d &pos, const Vector3d &grid_spacing,
   for (int dim = 0; dim < 3; dim++) {
     const double nmp_pos = (pos[dim] - offset[dim]) / grid_spacing[dim] +
                            detail::pos_shift<order>();
-    const double nmp_ind = static_cast<int>(nmp_pos);
+    const int nmp_ind = static_cast<int>(nmp_pos);
     dist[dim] = nmp_pos - nmp_ind - 0.5;
     ll[dim] = nmp_ind - (order - 1) / 2;
   }
