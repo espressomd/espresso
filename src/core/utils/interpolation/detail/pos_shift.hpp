@@ -15,7 +15,7 @@ namespace detail {
  * so there is no shift.
  */
 template <unsigned order> constexpr double pos_shift() {
-  return std::floor((order - 1) / 2.) - 0.5 * (order % 2);
+  return 0.5 * (order % 2);
 }
 }
 }
