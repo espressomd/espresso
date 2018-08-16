@@ -32,27 +32,25 @@ using Utils::Interpolation::detail::ll_and_dist;
 #include <limits>
 
 BOOST_AUTO_TEST_CASE(pos_shift_test) {
-  BOOST_CHECK(pos_shift<2>() == 0.0);  
+  BOOST_CHECK(pos_shift<2>() == 0.0);
   BOOST_CHECK(pos_shift<3>() == 0.5);
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test) {
-  std::array<double, 3> dist;
-  std::array<int, 3> ll;
-
-  std::tie(ll, dist) = ll_and_dist<3>(
+  auto const block = ll_and_dist<3>(
       Vector3d{.1, .2, .3}, Vector3d{0.5, 0.5, 0.5}, Vector3d{-1., -3., -2.});
 
   /* Pos with offset is {1.1, 3.2, 2.3} */
   /* nmp is {2, 6, 5} @ {1.0, 3.0, 2.5} */
-  /* distance in lattice units is +.1/.5, +.2/.5, -.2/.5 = {.2, .4, -.4} */
-  BOOST_CHECK_CLOSE(dist[0], .2, 1e-13);
-  BOOST_CHECK_CLOSE(dist[1], .4, 1e-13);
-  BOOST_CHECK_CLOSE(dist[2], -.4, 1e-13);
+  /* block.distanceance in lattice units is +.1/.5, +.2/.5, -.2/.5 = {.2, .4,
+   * -.4} */
+  BOOST_CHECK_CLOSE(block.distance[0], .2, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[1], .4, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[2], -.4, 1e-13);
 
-  BOOST_CHECK(ll[0] == 1);
-  BOOST_CHECK(ll[1] == 5);
-  BOOST_CHECK(ll[2] == 4);
+  BOOST_CHECK(block.corner[0] == 1);
+  BOOST_CHECK(block.corner[1] == 5);
+  BOOST_CHECK(block.corner[2] == 4);
 }
 
 BOOST_AUTO_TEST_CASE(number_of_points) {
@@ -108,7 +106,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_3) {
     for (int j = 0; j < 3; j++)
       for (int k = 0; k < 3; k++) {
         auto const expected = std::array<int, 3>{
-		{lower_left[0] + i, lower_left[1] + j, lower_left[2] + k}};
+            {lower_left[0] + i, lower_left[1] + j, lower_left[2] + k}};
         BOOST_CHECK(*it == expected);
         ++it;
       }
@@ -136,7 +134,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_2) {
     for (int j = 0; j < 2; j++)
       for (int k = 0; k < 2; k++) {
         auto const expected = std::array<int, 3>{
-		{lower_left[0] + i, lower_left[1] + j, lower_left[2] + k}};
+            {lower_left[0] + i, lower_left[1] + j, lower_left[2] + k}};
         BOOST_CHECK(*it == expected);
         ++it;
       }
@@ -169,16 +167,16 @@ BOOST_AUTO_TEST_CASE(interpolation_weights_3) {
 }
 
 BOOST_AUTO_TEST_CASE(interpolation_accumulate) {
-  auto const w_acc = bspline_3d_accumulate(
+  auto const w_acc = bspline_3d_accumulate<7>(
       {1.1, 1.2, 1.3}, [](const std::array<int, 3> &) { return 2.; },
       /* grid spacing */ {1., 1., 1.},
-      /* offset */ {0., 0., 0.}, 7, 0.0);
+      /* offset */ {0., 0., 0.}, 0.0);
 
   BOOST_CHECK_CLOSE(w_acc, 2., 1e-12);
 }
 
 BOOST_AUTO_TEST_CASE(interpolation_integration_test_odd) {
-  const int order = 5;
+  constexpr int order = 5;
   const Vector3d grid_spacing = {.1, .2, .3};
   const Vector3d origin = {-1., 2., -1.4};
   const int n_nodes = 10;
@@ -189,9 +187,9 @@ BOOST_AUTO_TEST_CASE(interpolation_integration_test_odd) {
   auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
 
   auto const p = Vector3d{-.4, 3.14, 0.1};
-  auto const interpolated_value = bspline_3d_accumulate(
+  auto const interpolated_value = bspline_3d_accumulate<order>(
       p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-      grid_spacing, origin, order, 0.0);
+      grid_spacing, origin, 0.0);
 
   auto const exact_value = gaussian(p, x0, sigma);
 
@@ -199,7 +197,7 @@ BOOST_AUTO_TEST_CASE(interpolation_integration_test_odd) {
 }
 
 BOOST_AUTO_TEST_CASE(interpolation_integration_test_even) {
-  const int order = 6;
+  constexpr int order = 6;
   const Vector3d grid_spacing = {.1, .2, .3};
   const Vector3d origin = {-1., 2., -1.4};
   const int n_nodes = 10;
@@ -210,9 +208,9 @@ BOOST_AUTO_TEST_CASE(interpolation_integration_test_even) {
   auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
 
   auto const p = Vector3d{-.4, 3.14, 0.1};
-  auto const interpolated_value = bspline_3d_accumulate(
+  auto const interpolated_value = bspline_3d_accumulate<order>(
       p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-      grid_spacing, origin, order, 0.0);
+      grid_spacing, origin, 0.0);
 
   auto const exact_value = gaussian(p, x0, sigma);
 
