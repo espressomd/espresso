@@ -330,5 +330,3 @@ def is_valid_type(value, t):
     else:
         return isinstance(value, t)
 
-def bspline_basis(k, i, x):
-    return bspline(k, i, x)

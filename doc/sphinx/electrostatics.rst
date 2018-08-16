@@ -133,10 +133,7 @@ and :ref:`Electrostatic Layer Correction (ELC)`.
 Debye-Hückel potential
 ----------------------
 
-.. todo:: FINISH DOCUMENTATION/TESTING/INTERFACE BELOW
-
-For a list of all parameters see :attr:`espressomd.electrostatics.DH` or :attr:`espressomd.electrostatics.CDH`.
-
+For a list of all parameters see :attr:`espressomd.electrostatics.DH`
 Uses the Debye-Hückel electrostatic potential defined by
 
   .. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
@@ -150,29 +147,6 @@ fluctuations in energy.
 
 For :math:`\kappa = 0`, this corresponds to the plain coulomb potential.
 
-The second variant combines the coulomb interaction for charges that are
-closer than :math:`r_0` with the Debye-Hueckel approximation for charges
-that are further apart than :math:`r_1` in a continuous way. The used potential
-introduces three new parameters :math:`\varepsilon_\mathrm{int}`,
-:math:`\varepsilon_\mathrm{ext}` and :math:`\alpha` and reads:
-
-.. math::
-
-   U(r)^{C-DHC} = 
-     \begin{cases} 
-       \frac{C q_1 q_2}{\varepsilon_{\text{int}} r} & \text{if } r < r_0, \\ 
-       \frac{C q_1 q_2 e^{-\alpha (r - r_0)}}{\varepsilon_{\text{int}} r} & \text{if } r_0 < r < r_1,  \\
-       \frac{C q_1 q_2 e^{-\kappa r}}{\varepsilon_{\text{ext}} r} & \text{if } r_{\text{cut}} > r > r_1,  \\
-       0 & \text{if } r > r_{\text{cut}}.
-     \end{cases}
-
-The parameter :math:`\alpha` that controls the transition from Coulomb-
-to Debye-Hückel potential should be chosen such that the force is
-continuous. 
-
-.. note:: The two variants are mutually exclusive. If “COULOMB_DEBYE_HUECKEL”
-    is defined in the configuration file, variant (DH) would not work. However, both methods
-    require the feature "ELECTROSTATICS" do be defined.
 
 .. _Dielectric interfaces with the ICC algorithm:
 
