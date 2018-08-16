@@ -30,13 +30,6 @@ void deep_copy(boost::multi_array<T, 3> &dst,
   dst.reindex(std::array<typename boost::multi_array<T, 3>::index, 3>{
       {b[0], b[1], b[2]}});
 }
-
-template <typename F, class = void>
-struct is_linear : public std::false_type {};
-
-template <typename F>
-struct is_linear<F, typename std::enable_if<F::is_linear>::type>
-    : std::true_type {};
 }
 
 /**
@@ -87,25 +80,23 @@ public:
   /*
    * @brief Evaluate f at pos with the field value as argument.
    */
-  template <typename F>
-  value_type operator()(const F &f, const Vector3d &pos) const {
+  value_type operator()(const Vector3d &pos) const {
     using Utils::Interpolation::bspline_3d_accumulate;
-    return f(bspline_3d_accumulate<2>(
+    return bspline_3d_accumulate<2>(
         pos,
         [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-        m_grid_spacing, m_origin, value_type{}));
+        m_grid_spacing, m_origin, value_type{});
   }
 
   /*
    * @brief Evaluate f at pos with the gradient field value as argument.
    */
-  template <typename F>
-  gradient_type gradient(const F &f, const Vector3d &pos) const {
+  gradient_type gradient(const Vector3d &pos) const {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
-    return f(bspline_3d_gradient_accumulate<2>(
+    return bspline_3d_gradient_accumulate<2>(
         pos,
         [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-        m_grid_spacing, m_origin, gradient_type{}));
+        m_grid_spacing, m_origin, gradient_type{});
   }
 
   bool fits_in_box(const Vector3d &box) const {

@@ -20,7 +20,7 @@ public:
   template <typename Particle>
   Vector3d force(const Particle &p, const Vector3d &folded_pos) const {
     using detail::make_bind_coupling;
-    return m_field(make_bind_coupling(m_coupling, p), folded_pos);
+    return m_coupling(p, m_field(folded_pos));
   }
 };
 } /* namespace FieldCoupling */

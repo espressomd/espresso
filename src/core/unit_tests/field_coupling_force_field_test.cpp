@@ -85,12 +85,7 @@ BOOST_AUTO_TEST_CASE(FieldBase_test) {
 }
 
 struct DummyVectorField {
-  template <class Binder>
-  Vector3d operator()(const Binder &b, const Vector3d &x) const {
-    (void)(b(x));
-
-    return 2. * x;
-  }
+  Vector3d operator()(const Vector3d &x) const { return 2. * x; }
 };
 
 BOOST_AUTO_TEST_CASE(ForceField_test) {
@@ -104,19 +99,8 @@ BOOST_AUTO_TEST_CASE(ForceField_test) {
 }
 
 struct DummyScalarField {
-  template <class Binder>
-  double operator()(const Binder &b, const Vector3d &x) const {
-    (void)(b(x));
-
-    return 2. * x.norm();
-  }
-
-  template <class Binder>
-  Vector3d gradient(const Binder &b, const Vector3d &x) const {
-    (void)(b(x));
-
-    return 3. * x;
-  }
+  double operator()(const Vector3d &x) const { return 2. * x.norm(); }
+  Vector3d gradient(const Vector3d &x) const { return 3. * x; }
 };
 
 BOOST_AUTO_TEST_CASE(PotentialField_test) {

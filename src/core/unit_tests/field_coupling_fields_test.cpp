@@ -1,3 +1,4 @@
+
 #define BOOST_TEST_MODULE AutoParameter test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -13,15 +14,6 @@
 #include <limits>
 
 using namespace FieldCoupling::Fields;
-
-struct Id {
-  mutable int count = 0;
-
-  template <typename T> T operator()(T x) const {
-    count++;
-    return x;
-  }
-};
 
 BOOST_AUTO_TEST_CASE(gradient_type_test) {
   using FieldCoupling::Fields::detail::gradient_type;
@@ -63,16 +55,14 @@ BOOST_AUTO_TEST_CASE(constant_scalar_field) {
   {
     Field field(5.);
 
-    BOOST_CHECK(5. == field(Id{}, {1., 2., 3.}));
-    BOOST_CHECK(5. == field(Id{}, {1., 2., 3.}));
+    BOOST_CHECK(5. == field({1., 2., 3.}));
   }
 
   /* Gradient */
   {
     Field field(5.);
 
-    BOOST_CHECK(Vector3d{} == field.gradient(Id{}, {1., 2., 3.}));
-    BOOST_CHECK(Vector3d{} == field.gradient(Id{}, {1., 2., 3.}));
+    BOOST_CHECK(Vector3d{} == field.gradient({1., 2., 3.}));
   }
 }
 
@@ -110,8 +100,7 @@ BOOST_AUTO_TEST_CASE(constant_vector_field) {
 
     Field field(field_val);
 
-    BOOST_CHECK(field_val == field(Id{}, {1., 2., 3.}));
-    BOOST_CHECK(field_val == field(Id{}, {1., 2., 3.}));
+    BOOST_CHECK(field_val == field({1., 2., 3.}));
   }
 
   /* Gradient */
@@ -119,8 +108,7 @@ BOOST_AUTO_TEST_CASE(constant_vector_field) {
     const auto zero = Field::gradient_type{};
     Field field({5., 6.});
 
-    BOOST_CHECK(zero == field.gradient(Id{}, {1., 2., 3.}));
-    BOOST_CHECK(zero == field.gradient(Id{}, {1., 2., 3.}));
+    BOOST_CHECK(zero == field.gradient({1., 2., 3.}));
   }
 }
 
@@ -166,8 +154,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
 
     const Vector3d x = {1., 2., 3.};
 
-    BOOST_CHECK((A * x + b) == field(Id{}, x));
-    BOOST_CHECK((A * x + b) == field(Id{}, x));
+    BOOST_CHECK((A * x + b) == field(x));
   }
 
   /* Gradient */
@@ -176,8 +163,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
     const double b = 4.;
     Field field(A, b);
 
-    BOOST_CHECK(A == field.gradient(Id{}, {1., 2., 3.}));
-    BOOST_CHECK(A == field.gradient(Id{}, {1., 2., 3.}));
+    BOOST_CHECK(A == field.gradient({1., 2., 3.}));
   }
 }
 
@@ -202,7 +188,7 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
 
     const Vector3d x = {1., 1., 1.};
 
-    auto const res = field(Id{}, x);
+    auto const res = field(x);
 
     BOOST_CHECK((A[0][0] + A[0][1] + A[0][2] + b[0]) == res[0]);
     BOOST_CHECK((A[1][0] + A[1][1] + A[1][2] + b[1]) == res[1]);
@@ -214,8 +200,7 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
     const Vector2d b = {7., 8.};
     Field field(A, b);
 
-    BOOST_CHECK(A == field.gradient(Id{}, {1., 2., 3.}));
-    BOOST_CHECK(A == field.gradient(Id{}, {1., 2., 3.}));
+    BOOST_CHECK(A == field.gradient({1., 2., 3.}));
   }
 }
 
@@ -267,12 +252,9 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
         grid_spacing, origin, 0.0);
 
-    auto const field_value_lin = field(Id{}, p);
-    auto const field_value_non_lin = field(Id{}, p);
+    auto const field_value = field(p);
 
-    BOOST_CHECK(std::abs(interpolated_value - field_value_lin) <
-                std::numeric_limits<double>::epsilon());
-    BOOST_CHECK(std::abs(interpolated_value - field_value_non_lin) <
+    BOOST_CHECK(std::abs(interpolated_value - field_value) <
                 std::numeric_limits<double>::epsilon());
   }
 
@@ -293,16 +275,13 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
     auto const p = Vector3d{-.4, 3.14, 0.1};
 
-    auto const field_value_lin = field.gradient(Id{}, p);
-    auto const field_value_non_lin = field.gradient(Id{}, p);
+    auto const field_value = field.gradient(p);
 
     auto const interpolated_value = bspline_3d_gradient_accumulate<2>(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
         grid_spacing, origin, Vector3d{});
 
-    BOOST_CHECK((interpolated_value - field_value_lin).norm() <
-                std::numeric_limits<double>::epsilon());
-    BOOST_CHECK((interpolated_value - field_value_non_lin).norm() <
+    BOOST_CHECK((interpolated_value - field_value).norm() <
                 std::numeric_limits<double>::epsilon());
   }
 }
@@ -344,16 +323,13 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
 
     auto const p = Vector3d{-.4, 3.14, 0.1};
 
-    auto const field_value_lin = field(Id{}, p);
-    auto const field_value_non_lin = field(Id{}, p);
+    auto const field_value = field(p);
 
     auto const interpolated_value = bspline_3d_accumulate<2>(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
         grid_spacing, origin, Vector2d{});
 
-    BOOST_CHECK_SMALL((interpolated_value - field_value_lin).norm(),
-                      std::numeric_limits<double>::epsilon());
-    BOOST_CHECK_SMALL((interpolated_value - field_value_non_lin).norm(),
+    BOOST_CHECK_SMALL((interpolated_value - field_value).norm(),
                       std::numeric_limits<double>::epsilon());
   }
 
@@ -384,16 +360,15 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
 
     auto const p = Vector3d{-.4, 3.14, 0.1};
 
-    auto const field_value_lin = field.gradient(Id{}, p);
-    auto const field_value_non_lin = field.gradient(Id{}, p);
+    auto const field_value = field.gradient(p);
 
     auto const interpolated_value = bspline_3d_gradient_accumulate<2>(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
         grid_spacing, origin, Field::gradient_type{});
 
-    BOOST_CHECK_SMALL((interpolated_value[0] - field_value_lin[0]).norm(),
+    BOOST_CHECK_SMALL((interpolated_value[0] - field_value[0]).norm(),
                       std::numeric_limits<double>::epsilon());
-    BOOST_CHECK_SMALL((interpolated_value[1] - field_value_non_lin[1]).norm(),
+    BOOST_CHECK_SMALL((interpolated_value[1] - field_value[1]).norm(),
                       std::numeric_limits<double>::epsilon());
   }
 }

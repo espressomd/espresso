@@ -48,17 +48,11 @@ public:
   gradient_type &A() { return m_A; }
   value_type &b() { return m_b; }
 
-  template <typename F>
-  value_type operator()(const F &f, const Vector3d &pos) const {
-    auto const axb = detail::matrix_vector_impl<T, codim>{}(m_A, pos) + m_b;
-
-    return f(axb);
+  value_type operator()(const Vector3d &pos) const {
+    return detail::matrix_vector_impl<T, codim>{}(m_A, pos) + m_b;
   }
 
-  template <typename F>
-  gradient_type gradient(const F &f, const Vector3d &) const {
-    return f(m_A);
-  }
+  gradient_type gradient(const Vector3d &) const { return m_A; }
 
   bool fits_in_box(const Vector3d &) const { return true; }
 };
