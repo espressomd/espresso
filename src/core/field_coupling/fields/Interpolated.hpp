@@ -94,16 +94,17 @@ public:
     /* If F is linear we can first interpolate the field value and
        then evaluate the function once on the result. */
     if (detail::is_linear<F>::value) {
-      return f(bspline_3d_accumulate(
+      return f(bspline_3d_accumulate<2>(
           pos,
           [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-          m_grid_spacing, m_origin, 2, value_type{}));
+          m_grid_spacing, m_origin, value_type{}));
     } else {
-      return bspline_3d_accumulate(pos,
-                                   [this, &f](const std::array<int, 3> &ind) {
-                                     return f(m_global_field(ind));
-                                   },
-                                   m_grid_spacing, m_origin, 2, value_type{});
+      return bspline_3d_accumulate<2>(
+          pos,
+          [this, &f](const std::array<int, 3> &ind) {
+            return f(m_global_field(ind));
+          },
+          m_grid_spacing, m_origin, value_type{});
     }
   }
 
@@ -117,17 +118,17 @@ public:
     /* If F is linear we can first interpolate the field value and
        then evaluate the function once on the result. */
     if (detail::is_linear<F>::value) {
-      return f(bspline_3d_gradient_accumulate(
+      return f(bspline_3d_gradient_accumulate<2>(
           pos,
           [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-          m_grid_spacing, m_origin, 2, gradient_type{}));
+          m_grid_spacing, m_origin, gradient_type{}));
     } else {
-      return bspline_3d_gradient_accumulate(
+      return bspline_3d_gradient_accumulate<2>(
           pos,
           [this, &f](const std::array<int, 3> &ind) {
             return f(m_global_field(ind));
           },
-          m_grid_spacing, m_origin, 2, gradient_type{});
+          m_grid_spacing, m_origin, gradient_type{});
     }
   }
 

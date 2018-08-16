@@ -9,9 +9,17 @@
 
 namespace Utils {
 namespace Interpolation {
-
 /**
  * @brief cardinal B-spline interpolation with internal iteration.
+ *
+ * @tparam order The number of interpolation points in each direction.
+ * @tparam Kernel Callable that can be called at every point with the
+ *         index of the point and it's weight as arguments.
+ *
+ * @param pos The point at which the interpolation should be run.
+ * @param kernel Function to run for every point.
+ * @param grid_spacing The distance between the grid points.
+ * @param offset Shift of the grid relative to the origin.
  */
 template <size_t order, typename Kernel>
 void bspline_3d(const Vector3d &pos, const Kernel &kernel,
@@ -45,52 +53,18 @@ void bspline_3d(const Vector3d &pos, const Kernel &kernel,
 }
 
 /**
- * @brief cardinal B-spline interpolation with internal iteration.
- */
-template <typename Kernel>
-void bspline_3d(const Vector3d &pos, const Kernel &kernel,
-                const Vector3d &grid_spacing, const Vector3d &offset,
-                int order) {
-
-  switch (order) {
-  case 1:
-    bspline_3d<1>(pos, kernel, grid_spacing, offset);
-    break;
-  case 2:
-    bspline_3d<2>(pos, kernel, grid_spacing, offset);
-    break;
-  case 3:
-    bspline_3d<3>(pos, kernel, grid_spacing, offset);
-    break;
-  case 4:
-    bspline_3d<4>(pos, kernel, grid_spacing, offset);
-    break;
-  case 5:
-    bspline_3d<5>(pos, kernel, grid_spacing, offset);
-    break;
-  case 6:
-    bspline_3d<6>(pos, kernel, grid_spacing, offset);
-    break;
-  case 7:
-    bspline_3d<7>(pos, kernel, grid_spacing, offset);
-    break;
-
-  default:
-    throw std::runtime_error("Interpolation order not implemented.");
-  }
-}
-
-/**
  * @brief cardinal B-spline weighted sum.
  */
-template <typename T, typename Kernel>
+template <size_t order, typename T, typename Kernel>
 T bspline_3d_accumulate(const Vector3d &pos, const Kernel &kernel,
                         const Vector3d &grid_spacing, const Vector3d &offset,
-                        int order, T const &init) {
+                        T const &init) {
   T value = init;
-  bspline_3d(pos, [&value, &kernel](const std::array<int, 3> &ind,
-                                    double w) { value += w * kernel(ind); },
-             grid_spacing, offset, order);
+  bspline_3d<order>(pos,
+                    [&value, &kernel](const std::array<int, 3> &ind, double w) {
+                      value += w * kernel(ind);
+                    },
+                    grid_spacing, offset);
 
   return value;
 }

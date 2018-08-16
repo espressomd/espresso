@@ -13,7 +13,16 @@
 namespace Utils {
 namespace Interpolation {
 /**
- * @brief cardinal B-spline interpolation with internal iteration.
+ * @brief cardinal B-spline gradient interpolation with internal iteration.
+ *
+ * @tparam order The number of interpolation points in each direction.
+ * @tparam Kernel Callable that can be called at every point with the
+ *         index of the point and it's weights as arguments.
+ *
+ * @param pos The point at which the interpolation should be run.
+ * @param kernel Function to run for every point.
+ * @param grid_spacing The distance between the grid points.
+ * @param offset Shift of the grid relative to the origin.
  */
 template <size_t order, typename Kernel>
 void bspline_3d_gradient(const Vector3d &pos, const Kernel &kernel,
@@ -52,54 +61,19 @@ void bspline_3d_gradient(const Vector3d &pos, const Kernel &kernel,
 }
 
 /**
- * @brief cardinal B-spline interpolation with internal iteration.
- */
-template <typename Kernel>
-void bspline_3d_gradient(const Vector3d &pos, const Kernel &kernel,
-                         const Vector3d &grid_spacing, const Vector3d &offset,
-                         int order) {
-  switch (order) {
-  case 1:
-    bspline_3d_gradient<1>(pos, kernel, grid_spacing, offset);
-    break;
-  case 2:
-    bspline_3d_gradient<2>(pos, kernel, grid_spacing, offset);
-    break;
-  case 3:
-    bspline_3d_gradient<3>(pos, kernel, grid_spacing, offset);
-    break;
-  case 4:
-    bspline_3d_gradient<4>(pos, kernel, grid_spacing, offset);
-    break;
-  case 5:
-    bspline_3d_gradient<5>(pos, kernel, grid_spacing, offset);
-    break;
-  case 6:
-    bspline_3d_gradient<6>(pos, kernel, grid_spacing, offset);
-    break;
-  case 7:
-    bspline_3d_gradient<7>(pos, kernel, grid_spacing, offset);
-    break;
-  default:
-    throw std::runtime_error("Interpolation order not implemented.");
-  }
-}
-
-/**
  * @brief cardinal B-spline weighted sum.
  */
-template <typename T, typename Kernel>
+template <size_t order, typename T, typename Kernel>
 T bspline_3d_gradient_accumulate(const Vector3d &pos, const Kernel &kernel,
                                  const Vector3d &grid_spacing,
-                                 const Vector3d &offset, int order,
-                                 T const &init) {
+                                 const Vector3d &offset, T const &init) {
   T value = init;
-  bspline_3d_gradient(
+  bspline_3d_gradient<order>(
       pos,
       [&value, &kernel](const std::array<int, 3> &ind, const Vector3d &w) {
         value += Utils::tensor_product(kernel(ind), w);
       },
-      grid_spacing, offset, order);
+      grid_spacing, offset);
 
   return value;
 }
