@@ -3,8 +3,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include "core/field_coupling/couplings/Charge.hpp"
-#include "core/field_coupling/couplings/Mass.hpp"
 #include "core/field_coupling/couplings/Direct.hpp"
+#include "core/field_coupling/couplings/Mass.hpp"
 #include "core/field_coupling/couplings/Scaled.hpp"
 #include "core/field_coupling/couplings/Viscous.hpp"
 
@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE(charge) {
 }
 
 BOOST_AUTO_TEST_CASE(mass) {
-  static_assert(Charge::is_linear, "");
+  static_assert(Mass::is_linear, "");
 
   struct {
     struct {
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(scaled) {
 }
 
 BOOST_AUTO_TEST_CASE(viscous) {
-  static_assert(Scaled::is_linear, "");
+  static_assert(Viscous::is_linear, "");
 
   auto const gamma = 3.14159;
 
