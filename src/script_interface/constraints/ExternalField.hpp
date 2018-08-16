@@ -23,27 +23,18 @@
 #define SCRIPT_INTERFACE_CONSTRAINTS_EXTERNAL_FIELD_HPP
 
 #include "core/constraints/ExternalField.hpp"
-#include "core/grid.hpp"
 #include "script_interface/ScriptInterface.hpp"
 
 #include "couplings.hpp"
 #include "fields.hpp"
 
-#include "utils/print.hpp"
+#include "core/grid.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
 
-namespace ExternalFieldType {
-  struct Force;
-  struct Potential;
-}
-
-template <typename Coupling, typename Field, class Tag = ExternalFieldType::Force> class ExternalField;
-
 template <typename Coupling, typename Field>
-class ExternalField<Coupling, Field, ExternalFieldType::Force>
-    : public Constraint {
+class ExternalField : public Constraint {
   using CoreField = ::Constraints::ExternalField<Coupling, Field>;
 
 public:
@@ -57,10 +48,15 @@ public:
   void construct(VariantMap const &args) override {
     m_constraint = std::make_shared<CoreField>(
         detail::make_coupling<Coupling>(args), detail::make_field<Field>(args));
+  }
 
-    if (not m_constraint->field().fits_in_box(Vector3d{box_l, box_l + 3})) {
-      Utils::print("grid too small.");
+  Variant call_method(const std::string &name,
+                      VariantMap const &args) override {
+    if (name == "_eval_field") {
+      return m_constraint->field()([](Vector3d const &x) { return x; },
+                                   get_value<Vector3d>(args, "x"));
     }
+    return none;
   }
 
   std::shared_ptr<::Constraints::Constraint> constraint() override {

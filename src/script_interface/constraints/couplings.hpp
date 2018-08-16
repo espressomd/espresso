@@ -1,10 +1,11 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_COUPLINGS_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_COUPLINGS_HPP
 
-#include "core/field_coupling/couplings/Viscous.hpp"
 #include "core/field_coupling/couplings/Charge.hpp"
 #include "core/field_coupling/couplings/Direct.hpp"
+#include "core/field_coupling/couplings/Mass.hpp"
 #include "core/field_coupling/couplings/Scaled.hpp"
+#include "core/field_coupling/couplings/Viscous.hpp"
 
 #include "ScriptInterface.hpp"
 
@@ -12,6 +13,15 @@ namespace ScriptInterface {
 namespace Constraints {
 namespace detail {
 using namespace ::FieldCoupling::Coupling;
+
+/**
+ * @brief ScriptInterface implementations for the
+ *        various couplings provided.
+ *
+ * These are seperated from the Contraints because
+ * they can be reused togher with the couplings themselfes.
+ */
+
 /**
  * Default version for parameterless couplings.
  */
@@ -59,19 +69,19 @@ static std::vector<AutoParameter> coupling_parameters(const This &this_) {
 }
 
 template <typename T> T make_coupling(const VariantMap &) { return T{}; }
-template <> Viscous make_coupling<Viscous>(const VariantMap &params) {
+template <> inline Viscous make_coupling<Viscous>(const VariantMap &params) {
   return Viscous{get_value<double>(params, "gamma")};
 }
 
-template <> Scaled make_coupling<Scaled>(const VariantMap &params) {
+template <> inline Scaled make_coupling<Scaled>(const VariantMap &params) {
   auto scales_packed =
       get_value_or<std::vector<Variant>>(params, "particle_scales", {});
 
   return Scaled{unpack_map<int, double>(scales_packed),
                 get_value<double>(params, "default_scale")};
 }
-}
-}
-}
+} // namespace detail
+} // namespace Constraints
+} // namespace ScriptInterface
 
 #endif

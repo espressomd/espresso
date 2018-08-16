@@ -10,11 +10,15 @@ namespace Constraints {
 class Constraint {
 public:
   virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
-                          Observable_stat &energy) const {};
+                          Observable_stat &energy) const = 0;
   virtual ParticleForce force(const Particle &p,
                               const Vector3d &folded_pos) = 0;
 
+  virtual bool fits_in_box(Vector3d const &box) const = 0;
+
   virtual void reset_force(){};
+
+  virtual ~Constraint() {}
 };
 
 } /* namespace Constraints */

@@ -43,7 +43,7 @@ from .constraints import Constraints
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
-from .ekboundaries import EKBoundaries
+    from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from globals cimport max_seen_particle
 from .globals import Globals

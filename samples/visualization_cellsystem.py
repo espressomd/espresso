@@ -1,9 +1,16 @@
+""" Visualization of the system cells and MPI domains.  
+"""
+
 import espressomd
 from espressomd.visualization_opengl import openGLLive
 import numpy as np
 
+required_features = ["LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 box = [40,30,20]
 system = espressomd.System(box_l = box)
+system.set_random_state_PRNG()
 visualizer = openGLLive(system, window_size = [800,800], background_color = [0,0,0], camera_position = [20,15,80], particle_coloring = 'node', draw_nodes = True, draw_cells = True) 
 
 system.time_step = 0.0005

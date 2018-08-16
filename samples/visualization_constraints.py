@@ -1,3 +1,6 @@
+""" Visualization of shape-based constraints with test particles.
+"""
+
 from __future__ import print_function
 from espressomd import *
 from espressomd.shapes import *
@@ -5,10 +8,12 @@ from espressomd.visualization_opengl import *
 from threading import Thread
 import numpy as np
 
+required_features = ["LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 box_l = 50
 system = espressomd.System(box_l=[50.0]*3)
 system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
 
 system.time_step = 0.0001

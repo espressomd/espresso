@@ -50,31 +50,26 @@ public:
   Vector(Vector const &) = default;
   Vector &operator=(Vector const &) = default;
 
-  void swap(Vector &rhs) {
-    auto tmp = rhs;
-    rhs = *this;
-    *this = tmp;
-  }
+  void swap(Vector &rhs) { std::swap(d, rhs.d); }
 
-  template <typename Container> explicit Vector(Container v) {
-    assert(std::distance(std::begin(v), std::end(v)) == n);
-    std::copy(std::begin(v), std::end(v), d.begin());
-  }
+  template <typename Container>
+  explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
 
   explicit Vector(Scalar const (&v)[n]) {
-    std::copy(std::begin(v), std::end(v), d.begin());
+    std::copy_n(std::begin(v), n, d.begin());
   }
 
-  Vector(std::initializer_list<Scalar> v) {
-    /* Convert to static_assert in C++14 */
-    assert(v.size() == n);
-    std::copy(std::begin(v), std::end(v), d.begin());
-  }
+  Vector(std::initializer_list<Scalar> v)
+      : Vector(std::begin(v), std::end(v)) {}
 
   template <typename InputIterator>
   Vector(InputIterator begin, InputIterator end) {
-    assert(std::distance(begin, end) == n);
-    std::copy(begin, end, d.begin());
+    if (std::distance(begin, end) == n) {
+      std::copy_n(begin, n, d.begin());
+    } else {
+      throw std::length_error(
+          "Construction of Vector from Container of wrong length.");
+    }
   }
 
   Scalar &operator[](int i) {
@@ -114,16 +109,10 @@ public:
 
   operator std::vector<Scalar>() const { return as_vector(); }
 
-  inline Scalar dot(const Vector<n, Scalar> &b) const {
-    Scalar sum = 0;
-    for (int i = 0; i < n; i++)
-      sum += d[i] * b[i];
-    return sum;
-  }
+  inline Scalar dot(const Vector<n, Scalar> &b) const { return *this * b; }
 
-  inline Scalar norm2(void) const { return dot(*this); }
-
-  inline Scalar norm(void) const { return sqrt(norm2()); }
+  inline Scalar norm2() const { return (*this) * (*this); }
+  inline Scalar norm() const { return sqrt(norm2()); }
 
   inline void normalize(void) {
     const auto N = norm();
@@ -335,4 +324,5 @@ template <typename T, size_t N> struct decay_to_scalar<Vector<N, T>> {
 };
 
 template <typename T> struct decay_to_scalar<Vector<1, T>> { using type = T; };
+
 #endif

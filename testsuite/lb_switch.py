@@ -7,7 +7,7 @@ from espressomd import *
 from tests_common import abspath
 from itertools import product
 
-@ut.skipIf(not espressomd.has_features(["LB"]),
+@ut.skipIf(not espressomd.has_features(["EXTERNAL_FORCES"]),
            "Features not available, skipping test!")
 class LBSwitchActor(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
@@ -64,10 +64,13 @@ class LBSwitchActor(ut.TestCase):
 
         np.testing.assert_allclose(np.copy(system.part[0].f), [-gamma_2, 0.0, 0.0])
 
+    @ut.skipIf(not espressomd.has_features(["LB"]),
+            "LB_GPU not available, skipping test.")
     def test_CPU_LB(self):
         self.switch_test()
 
-    @ut.skipIf(not espressomd.has_features(["LB_GPU"]),
+    @ut.skipIf((not espressomd.has_features(["LB_GPU"])
+	       or  espressomd.has_features("SHANCHEN")),
             "LB_GPU not available, skipping test.")
     def test_GPU_LB(self):
         self.switch_test(GPU=True)

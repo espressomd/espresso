@@ -3,8 +3,8 @@
 
 #include "sqr.hpp"
 
-#include <stdexcept>
 #include <cassert>
+#include <stdexcept>
 
 namespace Utils {
 template <int order, typename T = double> inline T bspline(int i, T x) {
@@ -146,6 +146,27 @@ template <int order, typename T = double> inline T bspline(int i, T x) {
   throw std::runtime_error("Internal interpolation error.");
 }
 
+inline double bspline(int k, int i, double x) {
+  switch (k) {
+  case 1:
+    return bspline<1>(i, x);
+  case 2:
+    return bspline<2>(i, x);
+  case 3:
+    return bspline<3>(i, x);
+  case 4:
+    return bspline<4>(i, x);
+  case 5:
+    return bspline<5>(i, x);
+  case 6:
+    return bspline<6>(i, x);
+  case 7:
+    return bspline<7>(i, x);
+  }
+
+  return 0.0;
+}
+
 template <int order, typename T = double> inline T bspline_d(int i, T x) {
   static_assert(order <= 7, "");
   assert(i < order);
@@ -153,6 +174,8 @@ template <int order, typename T = double> inline T bspline_d(int i, T x) {
   assert(x <= 0.5);
 
   switch (order - 1) {
+  case 0:
+    return 0.;
   case 1:
     switch (i) {
     case 0:

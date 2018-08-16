@@ -2,45 +2,35 @@
 #define CONSTRAINTS_EXTERNAL_POTENTIAL_HPP
 
 #include "Constraint.hpp"
-#include "particle_data.hpp"
-
-#include "detail/BindCoupling.hpp"
+#include "field_coupling/PotentialField.hpp"
 
 namespace Constraints {
+/**
+ * @brief Constraint interface for ExternalField::PotentialField.
+ */
 template <typename Coupling, typename Field>
 class ExternalPotential : public Constraint {
-  using field_gradient_type = typename Field::gradient_type;
-  using field_value_type = typename Field::value_type;
-
-  Coupling m_coupling;
-  Field m_field;
+  FieldCoupling::PotentialField<Coupling, Field> impl;
 
 public:
-  template <typename CouplingRef, typename FieldRef>
-  ExternalPotential(CouplingRef &&coupling, FieldRef &&field)
-      : m_coupling(coupling), m_field(field) {}
+  template <typename... Args>
+  ExternalPotential(Args &&... args) : impl(std::forward<Args>(args)...) {}
 
-  Coupling &coupling() { return m_coupling; }
-  Field &field() { return m_field; }
+  const Coupling &coupling() const { return impl.coupling(); }
+  const Field &field() const { return impl.field(); }
 
-  void add_force(Particle *p, double *folded_pos) override {
-    const Vector3d force = m_field.gradient(
-        [&p, this](const field_gradient_type &field) {
-          return m_coupling(*p, field);
-        },
-        Vector3d{folded_pos, folded_pos + 3});
-
-    for (int i = 0; i < 3; i++) {
-      p->f.f[i] += force[i];
-    }
+  void add_energy(const Particle &p, const Vector3d &folded_pos,
+                  Observable_stat &e) const override {
+    e.external_fields[0] += impl.energy(p, folded_pos);
   }
 
-  double energy(Particle *p, double *folded_pos) const {
-    return m_field([&p, this](const field_value_type &field) {
-      return m_coupling(*p, field);
-    });
+  ParticleForce force(const Particle &p, Vector3d const &folded_pos) override {
+    return impl.force(p, folded_pos);
+  }
+
+  bool fits_in_box(Vector3d const &box) const override {
+    return impl.field().fits_in_box(box);
   }
 };
 } /* namespace Constraints */
-
 #endif

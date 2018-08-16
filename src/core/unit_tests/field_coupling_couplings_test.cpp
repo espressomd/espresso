@@ -3,6 +3,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "core/field_coupling/couplings/Charge.hpp"
+#include "core/field_coupling/couplings/Mass.hpp"
 #include "core/field_coupling/couplings/Direct.hpp"
 #include "core/field_coupling/couplings/Scaled.hpp"
 #include "core/field_coupling/couplings/Viscous.hpp"
@@ -19,6 +20,18 @@ BOOST_AUTO_TEST_CASE(charge) {
   } p;
 
   BOOST_CHECK((p.p.q * 2.0) == Charge()(p, 2.0));
+}
+
+BOOST_AUTO_TEST_CASE(mass) {
+  static_assert(Charge::is_linear, "");
+
+  struct {
+    struct {
+      const double mass = 1.23;
+    } p;
+  } p;
+
+  BOOST_CHECK((p.p.mass * 2.0) == Mass()(p, 2.0));
 }
 
 BOOST_AUTO_TEST_CASE(direct) {

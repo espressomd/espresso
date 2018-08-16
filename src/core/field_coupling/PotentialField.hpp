@@ -1,5 +1,5 @@
-#ifndef CONSTRAINTS_EXTERNAL_POTENTIAL_HPP
-#define CONSTRAINTS_EXTERNAL_POTENTIAL_HPP
+#ifndef FIELD_COUPLING_EXTERNAL_POTENTIAL_HPP
+#define FIELD_COUPLING_EXTERNAL_POTENTIAL_HPP
 
 #include "detail/Base.hpp"
 #include "detail/BindCoupling.hpp"
@@ -20,7 +20,7 @@ public:
   template <typename Particle>
   Vector3d force(const Particle &p, const Vector3d &folded_pos) const {
     using detail::make_bind_coupling;
-    return m_field.gradient(make_bind_coupling(m_coupling, p), folded_pos);
+    return -m_field.gradient(make_bind_coupling(m_coupling, p), folded_pos);
   }
 
   template <typename Particle>

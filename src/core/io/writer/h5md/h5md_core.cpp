@@ -301,9 +301,9 @@ void File::create_new_file(const std::string &filename) {
   h5xx::write_attribute(group, "dimension", 3);
   h5xx::write_attribute(group, "boundary", "periodic");
   std::string path_edges = "particles/atoms/box/edges";
-  int change_extent_box =
-      3; // for three entries for cuboid box box_l_x, box_l_y, box_l_z
-  ExtendDataset(path_edges, &change_extent_box);
+  std::vector<int> change_extent_box =
+      {3}; // for three entries for cuboid box box_l_x, box_l_y, box_l_z
+  ExtendDataset(path_edges, change_extent_box);
   h5xx::write_dataset(datasets[path_edges], boxvec);
 }
 
@@ -474,9 +474,9 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   }
   int extent_particle_number = m_max_n_part - old_max_n_part;
 
-  int change_extent_1d[1] = {1};
-  int change_extent_2d[2] = {1, extent_particle_number};
-  int change_extent_3d[3] = {1, extent_particle_number, 0};
+  std::vector<int> change_extent_1d = {1};
+  std::vector<int> change_extent_2d = {1, extent_particle_number};
+  std::vector<int> change_extent_3d = {1, extent_particle_number, 0};
 
   if (!m_already_wrote_bonds) {
     // communicate the total number of bonds to all processes since extending is
@@ -492,7 +492,7 @@ void File::Write(int write_dat, PartCfg &partCfg) {
     }
     hsize_t offset_bonds[2] = {(hsize_t)prefix_bonds, 0};
     hsize_t count_bonds[2] = {(hsize_t)nbonds_local, 2};
-    int change_extent_bonds[2] = {nbonds_total, 2};
+    std::vector<int> change_extent_bonds = {nbonds_total, 2};
     WriteDataset(bond, "connectivity/atoms", change_extent_bonds, offset_bonds,
                  count_bonds);
     m_already_wrote_bonds = true;
@@ -535,7 +535,7 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   }
 }
 
-void File::ExtendDataset(const std::string & path, int *change_extent) {
+void File::ExtendDataset(const std::string & path, const std::vector<int> & change_extent) {
   /* Until now the h5xx does not support dataset extending, so we
      have to use the lower level hdf5 library functions. */
   auto &dataset = datasets[path];
@@ -547,14 +547,14 @@ void File::ExtendDataset(const std::string & path, int *change_extent) {
   H5Sclose(ds);
   /* Extend the dataset for another timestep (extent = 1) */
   for (int i = 0; i < rank; i++) {
-    dims[i] += change_extent[i]; // NOLINT
+    dims[i] += change_extent[i];
   }
   H5Dset_extent(dataset.hid(), dims.data()); // extend all dims is collective
 }
 
 /* data is assumed to be three dimensional */
 template <typename T>
-void File::WriteDataset(T &data, const std::string &path, int *change_extent,
+void File::WriteDataset(T &data, const std::string &path, const std::vector<int> & change_extent,
                         hsize_t *offset, hsize_t *count) {
 #ifdef H5MD_DEBUG
   /* Turn on hdf5 error messages */

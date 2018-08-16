@@ -1,7 +1,6 @@
 /// \file
 /// \brief Main of the Bayreuth Immersed-Boundary implementation
 
-
 #ifndef VIRTUAL_SITES_LB_INERTIALESS_TRACERS_HPP
 #define VIRTUAL_SITES_LB_INERTIALESS_TRACERS_HPP
 

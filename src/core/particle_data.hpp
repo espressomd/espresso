@@ -575,9 +575,6 @@ void realloc_local_particles(int part);
  *          nullptr otherwise;
 */
 const Particle &get_particle_data(int part);
-// Helper function for the interface due to cython bug.
-// TODO: remove after we require cython version > 0.26
-const Particle *get_particle_data_ptr(int part);
 
 /**
  * @brief Fetch a range of particle into the fetch cache.

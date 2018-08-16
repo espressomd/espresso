@@ -16,8 +16,8 @@ public:
       : m_coupling(std::forward<CouplingRef>(coupling)),
         m_field(std::forward<FieldRef>(field)) {}
 
-  Coupling &coupling() { return m_coupling; }
-  Field &field() { return m_field; }
+  Coupling const &coupling() const { return m_coupling; }
+  Field const &field() const { return m_field; }
 };
 }
 }

@@ -21,17 +21,7 @@
 /** \file energy.hpp
     Implementation of the energy calculation.
 */
-/*
-#include "utils.hpp"
-#include "integrate.hpp"
 
-#include "object-in-fluid/oif_local_forces.hpp"
-#include "object-in-fluid/oif_global_forces.hpp"
-#include "object-in-fluid/out_direction.hpp"
-#include "dihedral.hpp"
-#include "mdlc_correction.hpp"
-#include "hydrogen_bond.hpp"
-*/
 #ifndef _ENERGY_H
 #define _ENERGY_H
 

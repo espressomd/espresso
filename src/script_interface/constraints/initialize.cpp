@@ -25,7 +25,7 @@
 #include "ShapeBasedConstraint.hpp"
 
 #include "ExternalField.hpp"
-// #include "ExternalPotential.hpp"
+#include "ExternalPotential.hpp"
 
 #include "couplings.hpp"
 #include "fields.hpp"
@@ -35,8 +35,21 @@ namespace Constraints {
 
 using namespace FieldCoupling::Coupling;
 using namespace FieldCoupling::Fields;
+
+/* Generic Fields */
 using TabulatedForceField = ExternalField<Scaled, Interpolated<double, 3>>;
-using ConstantForceField = ExternalField<Scaled, Constant<double, 3>>;
+using TabulatedPotentialField =
+    ExternalPotential<Scaled, Interpolated<double, 1>>;
+
+/* Physical Fields */
+using Gravity = ExternalField<Mass, Constant<double, 3>>;
+
+using FlowField = ExternalField<Viscous, Interpolated<double, 3>>;
+using LinearFlowField = ExternalField<Viscous, AffineMap<double, 3>>;
+using HomogeneousFlowField = ExternalField<Viscous, Constant<double, 3>>;
+
+using ElectricPotential = ExternalPotential<Charge, Interpolated<double, 1>>;
+using LinearElectricPotential = ExternalPotential<Charge, AffineMap<double, 1>>;
 
 void initialize() {
   ScriptInterface::register_new<ScriptInterface::Constraints::Constraints>(
@@ -51,6 +64,20 @@ void initialize() {
       "Constraints::HomogeneousMagneticField");
 
   ScriptInterface::register_new<TabulatedForceField>("Constraints::ForceField");
+  ScriptInterface::register_new<TabulatedPotentialField>(
+      "Constraints::PotentialField");
+
+  ScriptInterface::register_new<Gravity>("Constraints::Gravity");
+  ScriptInterface::register_new<FlowField>("Constraints::FlowField");
+  ScriptInterface::register_new<HomogeneousFlowField>(
+      "Constraints::HomogeneousFlowField");
+
+#ifdef ELECTROSTATICS
+  ScriptInterface::register_new<ElectricPotential>(
+      "Constraints::ElectricPotential");
+  ScriptInterface::register_new<LinearElectricPotential>(
+      "Constraints::LinearElectricPotential");
+#endif
 }
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
