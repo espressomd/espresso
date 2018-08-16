@@ -90,22 +90,10 @@ public:
   template <typename F>
   value_type operator()(const F &f, const Vector3d &pos) const {
     using Utils::Interpolation::bspline_3d_accumulate;
-
-    /* If F is linear we can first interpolate the field value and
-       then evaluate the function once on the result. */
-    if (detail::is_linear<F>::value) {
-      return f(bspline_3d_accumulate<2>(
-          pos,
-          [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-          m_grid_spacing, m_origin, value_type{}));
-    } else {
-      return bspline_3d_accumulate<2>(
-          pos,
-          [this, &f](const std::array<int, 3> &ind) {
-            return f(m_global_field(ind));
-          },
-          m_grid_spacing, m_origin, value_type{});
-    }
+    return f(bspline_3d_accumulate<2>(
+        pos,
+        [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
+        m_grid_spacing, m_origin, value_type{}));
   }
 
   /*
@@ -114,22 +102,10 @@ public:
   template <typename F>
   gradient_type gradient(const F &f, const Vector3d &pos) const {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
-
-    /* If F is linear we can first interpolate the field value and
-       then evaluate the function once on the result. */
-    if (detail::is_linear<F>::value) {
-      return f(bspline_3d_gradient_accumulate<2>(
-          pos,
-          [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-          m_grid_spacing, m_origin, gradient_type{}));
-    } else {
-      return bspline_3d_gradient_accumulate<2>(
-          pos,
-          [this, &f](const std::array<int, 3> &ind) {
-            return f(m_global_field(ind));
-          },
-          m_grid_spacing, m_origin, gradient_type{});
-    }
+    return f(bspline_3d_gradient_accumulate<2>(
+        pos,
+        [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
+        m_grid_spacing, m_origin, gradient_type{}));
   }
 
   bool fits_in_box(const Vector3d &box) const {
