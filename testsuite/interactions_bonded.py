@@ -26,20 +26,17 @@ from tests_common import *
 
 
 class InteractionsBondedTest(ut.TestCase):
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.seed = range(system.cell_system.get_state()['n_nodes'])
     numpy.random.seed(seed=system.seed)
 
-    box_l = 10.
-
-    start_pos = numpy.random.rand(3) * box_l
+    start_pos = numpy.random.rand(3) * system.box_l
     axis = numpy.random.rand(3)
     axis /= numpy.linalg.norm(axis)
     step = axis * 0.01
     step_width = numpy.linalg.norm(step)
 
     def setUp(self):
-
-        self.system.box_l = [self.box_l] * 3
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
 
@@ -47,12 +44,10 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.part.add(id=1, pos=self.start_pos, type=0)
 
     def tearDown(self):
-
         self.system.part.clear()
 
     # Test Harmonic Bond
     def test_harmonic(self):
-
         hb_k = 5
         hb_r_0 = 1.5
         hb_r_cut = 3.355
@@ -93,7 +88,6 @@ class InteractionsBondedTest(ut.TestCase):
 
     # Test Fene Bond
     def test_fene(self):
-
         fene_k = 23.15
         fene_d_r_max = 3.355
         fene_r_0 = 1.1
