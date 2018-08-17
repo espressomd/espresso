@@ -117,7 +117,7 @@ valency = 1.0
 viscosity_dynamic = 79.53
 density_water = 26.15
 sigma = -0.05
-ext_force = 0.1
+ext_force_density = 0.1
 \end{lstlisting}
 
 Before we initialize the actual electrokinetics algorithm, we need to set the time step and some other parameters that are not actually used, but would otherwise lead to error messages.
@@ -146,7 +146,7 @@ Next, we set up the individual ionic species. In this case, we only set up one s
 \begin{lstlisting}[firstnumber=45]
 # Set up the charged and neutral species
 density_counterions  = -2.0 * sigma / width
-counterions = electrokinetics.Species(density=density_counterions, D=D, valency=valency, ext_force_density=[ext_force, 0, 0])
+counterions = electrokinetics.Species(density=density_counterions, D=D, valency=valency, ext_force_density=[ext_force_density, 0, 0])
 
 ek.add_species(counterions)
 \end{lstlisting}

@@ -27,7 +27,7 @@ valency = 1.0
 viscosity_dynamic = 79.53
 density_water = 26.15
 sigma = -0.05
-ext_force = 0.1
+ext_force_density = 0.1
 
 # Set the simulation parameters
 
@@ -46,7 +46,7 @@ ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water,
 density_counterions  = -2.0 * sigma / width
 counterions = electrokinetics.Species(density=density_counterions,
                                       D=D, valency=valency,
-                                      ext_force_density=[ext_force, 0, 0])
+                                      ext_force_density=[ext_force_density, 0, 0])
 
 ek.add_species(counterions)
 
