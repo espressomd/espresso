@@ -84,11 +84,6 @@ Adding New Source Files
 To add new files to |es| (like C++ source files or header files) you
 need to look at the CMakeList.txt in the directory where the file is located.
 * Please note that .hpp-header files usually do not have to be added to CMakeList.txt
-* In some cases (e.g., src/core/CMakeList.txt), the CMakeList.txt contains a wild-card include like this::
-
-      file(GLOB EspressoCore_SRC *.cpp)
-
-  In this case, placing a file with that ending is enough.
 
 * In other cases, the files are explicitly included (e.g., testsuite/python/CMakeList):: 
 
@@ -293,7 +288,7 @@ To add a new bonded interaction, the following steps have to be taken
 Defining the data structure for the interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The data structures for bonded interactions reside in ``interaction_data.hpp``.
+The data structures for bonded interactions reside in ``src/core/bonded_interactions/bonded_interaction_data.hpp``.
 
 * Add your interaction to the ``enum BondedInteraction``.
   This enumeration is used to identify different bonded interactions.
@@ -313,12 +308,12 @@ Functions for calculating force and energy, and for setting parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Every interaction resides in its own source .cpp and .hpp. A simple example for a
-bonded interaction is the FENE bond in ``src/core/fene.cpp``` and ``src/core/fene.hpp``. 
+bonded interaction is the FENE bond in ``src/core/bonded_interactions/fene.cpp``` and ``src/core/bonded_interactions/fene.hpp``. 
 Use these two files as templates for your interaction.
 
 Notes:
 
-* The names of function arguments mentioned below are taken from the FENE bond in ``src/core/fene.cpp`` and ``src/core/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction. 
+* The names of function arguments mentioned below are taken from the FENE bond in ``src/core/bonded_interactions/fene.cpp`` and ``src/core/bonded_interactions/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction. 
 * The recommended signatures of the force and energy functions are::
 
     inline int calc_fene_pair_force(Particle *p1, Particle *p2, 
@@ -352,7 +347,7 @@ Notes:
 Including the bonded interaction in the force calculation and the energy and pressure analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* In ``src/core/interaction_data.cpp``:
+* In ``src/core/bonded_interactions/bonded_interaction_data.cpp``:
 
     #. Add a name for the interaction to ``get_name_of_bonded_ia()``.
     #. In ``calc_maximal_cutoff()``, add a case for the new interaction which
