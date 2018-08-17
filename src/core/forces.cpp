@@ -28,15 +28,15 @@
 
 #include "comfixed_global.hpp"
 #include "constraints.hpp"
-#include "electrokinetics.hpp"
+#include "grid_based_algorithms/electrokinetics.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
-#include "electrostatics/icc.hpp"
-#include "electrostatics/maggs.hpp"
-#include "electrostatics/p3m_gpu.hpp"
+#include "electrostatics_magnetostatics/icc.hpp"
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "short_range_loop.hpp"
 #include "immersed_boundaries.hpp" 
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 
 #include <cassert>
 

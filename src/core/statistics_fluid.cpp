@@ -30,8 +30,8 @@
 #ifdef LB
 
 #include "communication.hpp"
-#include "lb.hpp"
-#include "lbboundaries.hpp"
+#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbboundaries.hpp"
 #include "utils.hpp"
 #include <mpi.h>
 

@@ -17,9 +17,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
-#include "lbgpu.hpp"
+#include "grid_based_algorithms/lbgpu.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
 #include "utils/coordinate_transformation.hpp"

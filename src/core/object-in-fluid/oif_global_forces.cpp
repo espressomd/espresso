@@ -29,7 +29,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
 

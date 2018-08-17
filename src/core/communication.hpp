@@ -527,7 +527,7 @@ int mpi_sync_topo_part_info(void);
 
 /** Issue REQ_BCAST_LBPAR: Broadcast a parameter for Lattice Boltzmann.
  * @param field References the parameter field to be broadcasted. The references
- * are defined in \ref lb.hpp "lb.hpp"
+ * are defined in \ref lb.hpp "grid_based_algorithms/lb.hpp"
  */
 void mpi_bcast_lb_params(int field, int value = -1);
 

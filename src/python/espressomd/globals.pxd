@@ -98,13 +98,13 @@ cdef extern from "dpd.hpp":
 
 
 IF LB:
-    cdef extern from "lb.hpp":
+    cdef extern from "grid_based_algorithms/lb.hpp":
         ctypedef struct LB_Parameters:
             double tau
         extern LB_Parameters lbpar
 
 IF LB_GPU:
-    cdef extern from "lbgpu.hpp":
+    cdef extern from "grid_based_algorithms/lbgpu.hpp":
         ctypedef struct LB_parameters_gpu:
             double tau
         extern LB_parameters_gpu lbpar_gpu

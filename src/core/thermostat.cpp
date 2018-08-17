@@ -25,7 +25,7 @@
 #include "communication.hpp"
 #include "npt.hpp"
 #include "ghmc.hpp"
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "dpd.hpp"
 

@@ -26,7 +26,7 @@ from espressomd.electrostatics cimport *
 
 IF ELECTROSTATICS and P3M:
 
-    cdef extern from "electrostatics/elc.hpp":
+    cdef extern from "electrostatics_magnetostatics/elc.hpp":
         ctypedef struct ELC_struct:
             double maxPWerror
             double gap_size
@@ -43,7 +43,7 @@ IF ELECTROSTATICS and P3M:
         # links intern C-struct with python object
         ELC_struct elc_params
 
-    cdef extern from "electrostatics/icc.hpp":
+    cdef extern from "electrostatics_magnetostatics/icc.hpp":
         ctypedef struct iccp3m_struct:
             int n_ic
             int num_iteration

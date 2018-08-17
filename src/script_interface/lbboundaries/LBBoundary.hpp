@@ -3,7 +3,7 @@
 
 #include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
-#include "core/lbboundaries/LBBoundary.hpp"
+#include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
 #include "shapes/Shape.hpp"
 
 namespace ScriptInterface {

@@ -27,10 +27,10 @@
 #include "energy_inline.hpp"
 #include "forces.hpp"
 #include "initialize.hpp"
-#include "electrostatics/maggs.hpp"
-#include "magnetic_non_p3m_methods.hpp"
-#include "mdlc_correction.hpp"
-#include "electrostatics/scafacos.hpp"
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+#include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "constraints.hpp"
 #include <cassert>
 

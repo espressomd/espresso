@@ -31,7 +31,7 @@ float multigpu_factors[] = {1.0};
 #define cudaSetDevice(d)
 
 #include "mmm-common_cuda.hpp"
-#include "electrostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "EspressoSystemInterface.hpp"
 

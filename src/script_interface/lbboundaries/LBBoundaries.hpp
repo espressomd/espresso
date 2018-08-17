@@ -4,7 +4,7 @@
 #include "LBBoundary.hpp"
 #include "ScriptInterface.hpp"
 #include "ScriptObjectRegistry.hpp"
-#include "core/lbboundaries.hpp"
+#include "core/grid_based_algorithms/lbboundaries.hpp"
 
 namespace ScriptInterface {
 namespace LBBoundaries {

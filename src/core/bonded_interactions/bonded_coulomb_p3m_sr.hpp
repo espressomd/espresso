@@ -37,7 +37,7 @@
 #include "debug.hpp"
 #include "bonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "electrostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 
 /// set the parameters for the bonded_coulomb potential
 int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2);

@@ -10,8 +10,6 @@ set(EspressoCore_SRC
     debug.cpp
     domain_decomposition.cpp
     dpd.cpp
-    electrokinetics.cpp
-    electrokinetics_pdb_parse.cpp
     energy.cpp
     errorhandling.cpp
     EspressoSystemInterface.cpp
@@ -32,16 +30,11 @@ set(EspressoCore_SRC
     integrate.cpp
     lattice.cpp
     layered.cpp
-    lbboundaries.cpp
-    lb.cpp
-    lb-d3q19.cpp
-    lbgpu.cpp
-    magnetic_non_p3m_methods.cpp
-    mdlc_correction.cpp
     metadynamics.cpp
     minimize_energy.cpp
     molforces.cpp
     MpiCallbacks.cpp
+    nemd.cpp
     npt.cpp
     nsquare.cpp
     partCfg_global.cpp
@@ -119,7 +112,7 @@ if(WITH_COVERAGE)
   endif()
 endif()
 
-target_link_libraries(EspressoCore PRIVATE EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Observables Accumulators cluster_analysis VirtualSites)
+target_link_libraries(EspressoCore PRIVATE EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Accumulators cluster_analysis)
 
 
 if(SCAFACOS)
@@ -139,10 +132,7 @@ if(CUDA)
     set(EspressoCuda_SRC
         cuda_common_cuda.cu
         cuda_init_cuda.cu
-        electrokinetics_cuda.cu
         EspressoSystemInterface_cuda.cu
-        fd-electrostatics_cuda.cu
-        lbgpu_cuda.cu
     )
 
   cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -159,6 +149,7 @@ endif(CUDA)
 
 # Subdirectories
 add_subdirectory(observables)
+target_link_libraries(EspressoCore PUBLIC Observables)
 add_subdirectory(accumulators)
 add_subdirectory(io)
 if(HDF5_FOUND)
@@ -175,16 +166,27 @@ endif(WITH_UNIT_TESTS)
 
 add_subdirectory(actor)
 add_subdirectory(bonded_interactions)
+add_subdirectory(grid_based_algorithms)
+target_link_libraries(EspressoCore PRIVATE lbboundaries_interface)
+target_link_libraries(EspressoCore PRIVATE lbcpu)
+if(CUDA)
+  target_link_libraries(EspressoCore PRIVATE electrokinetics_core)
+  target_link_libraries(EspressoCore PRIVATE fd_electrostatics)
+  target_link_libraries(EspressoCore PRIVATE lbgpu)
+endif(CUDA)
 add_subdirectory(immersed_boundary)
 add_subdirectory(virtual_sites)
-add_subdirectory(lbboundaries)
+target_link_libraries(EspressoCore PRIVATE VirtualSites)
+if(CUDA)
+  target_link_libraries(EspressoCore PRIVATE VirtualSitesCuda)
+endif(CUDA)
 add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)
 add_subdirectory(shapes)
 add_subdirectory(constraints)
 add_subdirectory(cluster_analysis)
-add_subdirectory(electrostatics)
-target_link_libraries(EspressoCore PRIVATE electrostatics_core)
+add_subdirectory(electrostatics_magnetostatics)
+target_link_libraries(EspressoCore PRIVATE electrostatics_magnetostatics_core)
 if(CUDA)
-  target_link_libraries(EspressoCore PRIVATE electrostatics_core_cuda)
+  target_link_libraries(EspressoCore PRIVATE electrostatics_magnetostatics_core_cuda)
 endif()

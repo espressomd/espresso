@@ -2,7 +2,7 @@
 #define OBSERVABLES_LBVELOCITYPROFILE_HPP
 
 #include "LBProfileObservable.hpp"
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "particle_data.hpp"
 
 #include <vector>

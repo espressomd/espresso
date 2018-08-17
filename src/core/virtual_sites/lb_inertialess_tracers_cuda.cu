@@ -8,8 +8,8 @@
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
-#include "lbgpu.hpp"
-#include "lbboundaries.hpp"
+#include "grid_based_algorithms/lbgpu.hpp"
+#include "grid_based_algorithms/lbboundaries.hpp"
 #include "particle_data.hpp"
 #include "cuda_utils.hpp"
 #include "cuda_interface.hpp"

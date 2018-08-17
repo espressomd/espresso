@@ -18,7 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "CylindricalLBVelocityProfile.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"

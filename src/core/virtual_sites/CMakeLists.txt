@@ -20,7 +20,6 @@ if(CUDA)
   add_dependencies(VirtualSitesCuda EspressoConfig)
 
   CUDA_ADD_CUFFT_TO_TARGET(VirtualSitesCuda)
-  target_link_libraries(VirtualSites VirtualSitesCuda)
 endif(CUDA)
 
 set_target_properties(VirtualSites PROPERTIES LINKER_LANGUAGE CXX)

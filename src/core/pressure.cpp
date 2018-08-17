@@ -28,8 +28,8 @@
 #include "initialize.hpp"
 #include "virtual_sites.hpp" 
 #include "npt.hpp"
-#include "electrostatics/p3m.hpp"
-#include "electrostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 
 #include "short_range_loop.hpp"
 

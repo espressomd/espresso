@@ -1,4 +1,4 @@
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "utils/Histogram.hpp"
 #include "LBVelocityProfile.hpp"
 

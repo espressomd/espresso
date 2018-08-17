@@ -43,7 +43,7 @@
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 
 #include <cmath>
 #include <cstdio>
