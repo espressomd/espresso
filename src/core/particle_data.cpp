@@ -342,9 +342,6 @@ const Particle &get_particle_data(int part) {
   return *cache_ptr;
 }
 
-const Particle *get_particle_data_ptr(int part) {
-  return &get_particle_data(part);
-}
 
 void mpi_get_particles_slave(int, int) {
   std::vector<int> ids;

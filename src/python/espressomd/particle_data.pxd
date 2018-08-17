@@ -81,7 +81,6 @@ cdef extern from "particle_data.hpp":
                 double v_swim
 
     # Setter/getter/modifier functions functions
-    const particle* get_particle_data_ptr(int part) except +
     void prefetch_particle_data(vector[int] ids)
 
     int place_particle(int part, double p[3])
@@ -92,7 +91,7 @@ cdef extern from "particle_data.hpp":
 
     int set_particle_solvation(int part, double * solvation)
 
-    IF ROTATION == 1:
+    IF ROTATION:
         int set_particle_rotation(int part, int rot)
 
     IF MASS:
@@ -140,7 +139,7 @@ cdef extern from "particle_data.hpp":
         int set_particle_affinity(int part, double bond_site[3])
         void pointer_to_bond_site(particle*  p, double*& res)
 
-    IF MASS == 1:
+    IF MASS:
         void pointer_to_mass(particle * p, double * & res)
 
     IF DIPOLES:
@@ -203,15 +202,24 @@ cdef extern from "particle_data.hpp":
         int set_particle_swimming(int part, particle_parameters_swimming swim)
         void pointer_to_swimming(const particle * p, const particle_parameters_swimming * & swim)
 
-    int remove_particle(int part)
+    int remove_particle(int part) except +
 
-    void remove_all_particles()
+    void remove_all_particles() except +
 
     void remove_all_bonds_to(int part)
 
     bool particle_exists(int part)
 
-    int get_particle_node(int id)
+    int get_particle_node(int id) except +
+
+    const particle& get_particle_data(int id) except +
+
+# This ugly function is only needed because of a bug in cython: 
+# c.f. https://github.com/cython/cython/blob/f568e1463e4dc9d45325713cce740ace182d7874/Cython/Utility/ModuleSetupCode.c#L424
+# c.f. https://github.com/cython/cython/issues/1519  
+# It was fixed in cython 0.26, once we require that version, we can remove this.
+cdef inline const particle* get_particle_data_ptr(const particle& p):
+    return &p
 
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
