@@ -75,65 +75,41 @@ IF ELECTROSTATICS == 1:
                     raise ValueError("Invalid parameter given to tune function.")
             self._tune()
 
-IF COULOMB_DEBYE_HUECKEL:
-    cdef class CDH(ElectrostaticInteraction):
-        """ Hybrid method to solve electrostatic interactions, on short length
-        scales the full Coulomb potential is used and on longer length scales
-        Debye-Hueckel is applied.  For more details see the formula in the user
-        guide under :ref:`Debye-Hückel potential`.
+
+IF ELECTROSTATICS:
+    cdef class DH(ElectrostaticInteraction):
+        """
+        Solve electrostatics in the Debye-Hueckel framework see
+        :ref:`Debye-Hückel potential` for more details.
 
         Parameters
         ----------
         prefactor : :obj:`float`
             Electrostatics prefactor (see :eq:`coulomb_prefactor`).
         kappa : :obj:`float`
-            Inverse Debye screening length.
+            Inverse Debye sreening length.
         r_cut : :obj:`float`
             Cut off radius for this interaction.
-        eps_int : :obj:`float`
-            Relative permitivity in the interior region r<r1.
-        eps_ext : :obj:`float`
-            Relative permitivity in the exterior region r>r1.
-        r0 : :obj:`float`
-            Radius that defines the region where electrostatics are not
-            screened, classical Coulomb potential.
-        r1 : :obj:`float`
-            Radius for the transition region from pure Coulomb to Debye-Hueckel.
-        alpha : :obj:`float`
-            Controls the transition between the pure Coulomb and Debye Hueckel
-            regions.
 
         """
         def validate_params(self):
             if (self._params["prefactor"] <= 0):
-                raise ValueError("Prefactor should be a positive float")
+                raise ValueError(
+                    "prefactor should be a positive float")
             if (self._params["kappa"] < 0):
                 raise ValueError("kappa should be a non-negative double")
             if (self._params["r_cut"] < 0):
                 raise ValueError("r_cut should be a non-negative double")
-            if (self._params["eps_int"] <= 0):
-                raise ValueError("eps_int should be a positive double")
-            if (self._params["eps_ext"] <= 0):
-                raise ValueError("eps_ext should be a positive double")
-            if (self._params["r0"] <= 0 or self._params["r0"] >= self._params["r1"]):
-                raise ValueError(
-                    "r0 should be a positive double smaller than r1")
-            if (self._params["r1"] <= 0 or self._params["r1"] >= self._params["r_cut"]):
-                raise ValueError(
-                    "r1 should be a positive double larger than r0 and smaller than r_cut")
-            if (self._params["alpha"] < 0):
-                raise ValueError("alpha should be a non-negative double")
 
         def valid_keys(self):
-            return "prefactor", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha", "check_neutrality"
+            return "prefactor", "kappa", "r_cut", "check_neutrality"
 
         def required_keys(self):
-            return "prefactor", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha"
+            return "prefactor", "kappa", "r_cut"
 
         def _set_params_in_es_core(self):
             coulomb_set_prefactor(self._params["prefactor"])
-            dh_set_params_cdh(self._params["kappa"], self._params["r_cut"], self._params[
-                              "eps_int"], self._params["eps_ext"], self._params["r0"], self._params["r1"], self._params["alpha"])
+            dh_set_params(self._params["kappa"], self._params["r_cut"])
 
         def _get_params_from_es_core(self):
             params = {}
@@ -149,64 +125,7 @@ IF COULOMB_DEBYE_HUECKEL:
             return {"prefactor": -1,
                     "kappa": -1,
                     "r_cut": -1,
-                    "eps_int": -1,
-                    "eps_ext": -1,
-                    "r0": -1,
-                    "r1": -1,
-                    "alpha": -1,
                     "check_neutrality": True}
-
-ELSE:
-    IF ELECTROSTATICS:
-        cdef class DH(ElectrostaticInteraction):
-            """
-            Solve electrostatics in the Debye-Hueckel framework see
-            :ref:`Debye-Hückel potential` for more details.
-
-            Parameters
-            ----------
-            prefactor : :obj:`float`
-                Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-            kappa : :obj:`float`
-                Inverse Debye sreening length.
-            r_cut : :obj:`float`
-                Cut off radius for this interaction.
-
-            """
-            def validate_params(self):
-                if (self._params["prefactor"] <= 0):
-                    raise ValueError(
-                        "prefactor should be a positive float")
-                if (self._params["kappa"] < 0):
-                    raise ValueError("kappa should be a non-negative double")
-                if (self._params["r_cut"] < 0):
-                    raise ValueError("r_cut should be a non-negative double")
-
-            def valid_keys(self):
-                return "prefactor", "kappa", "r_cut", "check_neutrality"
-
-            def required_keys(self):
-                return "prefactor", "kappa", "r_cut"
-
-            def _set_params_in_es_core(self):
-                coulomb_set_prefactor(self._params["prefactor"])
-                dh_set_params(self._params["kappa"], self._params["r_cut"])
-
-            def _get_params_from_es_core(self):
-                params = {}
-                params.update(dh_params)
-                return params
-
-            def _activate_method(self):
-                check_neutrality(self._params)
-                coulomb.method = COULOMB_DH
-                self._set_params_in_es_core()
-
-            def default_params(self):
-                return {"prefactor": -1,
-                        "kappa": -1,
-                        "r_cut": -1,
-                        "check_neutrality": True}
 
 
 IF P3M == 1:

@@ -33,20 +33,19 @@ import tests_common
            "Features not available, skipping test!")
 class CoulombCloudWallTune(ut.TestCase):
     """This compares p3m, p3m_gpu electrostatic forces against stored data."""
-    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    S.seed  = S.cell_system.get_state()['n_nodes'] * [1234]
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
 
     tolerance = 1E-3
 
     def setUp(self):
-        self.S.box_l = (10, 10, 10)
-        self.S.time_step = 0.01
-        self.S.cell_system.skin = 0.4
+        self.system.box_l = (10, 10, 10)
+        self.system.time_step = 0.01
+        self.system.cell_system.skin = 0.4
 
         #  Clear actors that might be left from prev tests
-        if len(self.S.actors):
-            del self.S.actors[0]
-        self.S.part.clear()
+        self.system.actors.clear()
+        self.system.part.clear()
         data = np.load(tests_common.abspath("data/coulomb_tuning_system.npz"))
         self.forces = []
         # Add particles to system and store reference forces in hash
@@ -55,17 +54,14 @@ class CoulombCloudWallTune(ut.TestCase):
             pos = data['pos'][id]
             q = data['charges'][id]
             self.forces.append(data['forces'][id])
-            self.S.part.add(id=id, pos=pos, q=q)
+            self.system.part.add(id=id, pos=pos, q=q)
 
     def compare(self, method_name):
         # Compare forces now in the system to stored ones
         force_abs_diff = 0.
-        for p in self.S.part:
+        for p in self.system.part:
             force_abs_diff += abs(np.sqrt(sum((p.f - self.forces[p.id])**2)))
-        force_abs_diff /= len(self.S.part)
-
-        print(method_name, "force difference", force_abs_diff)
-
+        force_abs_diff /= len(self.system.part)
         self.assertLessEqual(
             force_abs_diff,
             self.tolerance,
@@ -79,18 +75,18 @@ class CoulombCloudWallTune(ut.TestCase):
         def test_p3m(self):
             # We have to add some tolerance here, because the reference
             # system is not homogeneous
-            self.S.actors.add(P3M(prefactor=1., accuracy=5e-4,
+            self.system.actors.add(P3M(prefactor=1., accuracy=5e-4,
                                   tune=True))
-            self.S.integrator.run(0)
+            self.system.integrator.run(0)
             self.compare("p3m")
 
     if espressomd.has_features(["ELECTROSTATICS", "CUDA"]):
         def test_p3m_gpu(self):
             # We have to add some tolerance here, because the reference
             # system is not homogeneous
-            self.S.actors.add(P3MGPU(prefactor=1., accuracy=5e-4,
+            self.system.actors.add(P3MGPU(prefactor=1., accuracy=5e-4,
                                       tune=True))
-            self.S.integrator.run(0)
+            self.system.integrator.run(0)
             self.compare("p3m_gpu")
 
 

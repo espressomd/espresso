@@ -52,6 +52,10 @@ function(UNIT_TEST)
     add_test(${TEST_NAME} ${TEST_NAME})
   endif( )
 
+  if(WARNINGS_ARE_ERRORS)
+    set_tests_properties(${TEST_NAME} PROPERTIES ENVIRONMENT "UBSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/tools/ubsan-suppressions.txt:halt_on_error=1:print_stacktrace=1 ASAN_OPTIONS=halt_on_error=1:detect_leaks=0 MSAN_OPTIONS=halt_on_error=1")
+  endif()
+
   add_dependencies(check_unit_tests ${TEST_NAME})
 endfunction(UNIT_TEST)
 
@@ -96,3 +100,4 @@ unit_test(NAME Cache_test SRC Cache_test.cpp)
 unit_test(NAME histogram SRC histogram.cpp)
 unit_test(NAME get_value SRC get_value_test.cpp)
 unit_test(NAME accumulator SRC accumulator.cpp)
+unit_test(NAME Span_test SRC Span_test.cpp)

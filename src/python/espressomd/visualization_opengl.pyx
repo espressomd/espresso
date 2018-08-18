@@ -16,14 +16,14 @@ from espressomd.particle_data import ParticleHandle
 
 
 class openGLLive(object):
-
-    """This class provides live visualization using pyOpenGL.
+    """
+    This class provides live visualization using pyOpenGL.
     Use the update method to push your current simulation state after
     integrating. Modify the appearance with a list of keywords.
     Timed callbacks can be registered via the register_callback method.
     Keyboad callbacks via  keyboardManager.register_button().
 
-    Attributes
+    Parameters
     ----------
 
     system : instance of :attr:`espressomd.System`
