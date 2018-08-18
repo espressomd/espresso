@@ -2,7 +2,11 @@
 #define CORE_UTILS_ACCUMULATOR
 
 #include <boost/serialization/access.hpp>
+
 #include <cmath>
+#include <vector>
+#include <stdexcept>
+#include <algorithm>
 
 namespace Utils {
 
@@ -23,7 +27,7 @@ private:
 
 class Accumulator {
 public:
-  Accumulator(std::size_t N) : m_n(0), m_acc_data(N) {}
+  explicit Accumulator(std::size_t N) : m_n(0), m_acc_data(N) {}
   void operator()(const std::vector<double> &);
   std::vector<double> get_mean() const;
   std::vector<double> get_variance() const;
