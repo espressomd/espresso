@@ -15,13 +15,25 @@ template <class CellRef> class Neighbors {
 public:
   using value_type = typename storage_type::value_type;
   using iterator = typename storage_type::iterator;
+  using const_iterator = typename storage_type::const_iterator;
   using cell_range = Utils::Range<iterator>;
 
+private:
+  void copy(const Neighbors &rhs) {
+    m_neighbors = rhs.m_neighbors;
+    m_red_black_divider =
+        m_neighbors.begin() +
+        std::distance(rhs.m_neighbors.begin(),
+                      const_iterator(rhs.m_red_black_divider));
+  }
+
+public:
   Neighbors() = default;
-  Neighbors(const Neighbors &) = delete;
-  Neighbors(Neighbors &&) noexcept = default;
-  Neighbors &operator=(const Neighbors &) = delete;
-  Neighbors &operator=(Neighbors &&) noexcept = default;
+  Neighbors(const Neighbors &rhs) { copy(rhs); }
+  Neighbors &operator=(const Neighbors &rhs) {
+    copy(rhs);
+    return *this;
+  }
 
   Neighbors(Utils::Span<const CellRef> red_neighbors,
             Utils::Span<const CellRef> black_neighbors) {
