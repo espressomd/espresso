@@ -101,12 +101,6 @@ bool validate_collision_parameters() {
   }
 #endif
 
-  if ((collision_params.mode != COLLISION_MODE_OFF) && (n_nodes > 1)) {
-    runtimeErrorMsg() << "The collision detection schemes are currently not "
-                         "available in parallel simulations";
-    return false;
-  }
-
   // Check if bonded ia exist
   if ((collision_params.mode & COLLISION_MODE_BOND) &&
       (collision_params.bond_centers >= bonded_ia_params.size())) {
