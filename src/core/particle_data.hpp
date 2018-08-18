@@ -157,7 +157,7 @@ struct ParticleProperties {
   // Store the orientation of the virtual particle in the body fixed frame.
   double vs_quat[4] = {0., 0., 0., 0.};
 #endif
-#else /* VIRTUAL_SITES */
+#else  /* VIRTUAL_SITES */
   static constexpr const int is_virtual = 0;
 #endif /* VIRTUAL_SITES */
 
@@ -236,13 +236,13 @@ struct ParticlePosition {
 struct ParticleForce {
   ParticleForce() = default;
   ParticleForce(ParticleForce const &) = default;
-  ParticleForce(const Vector3d & f) : f(f) {}
+  ParticleForce(const Vector3d &f) : f(f) {}
 #ifdef ROTATION
-  ParticleForce(const Vector3d & f,
-                const Vector3d &torque) : f(f), torque(torque) {}
+  ParticleForce(const Vector3d &f, const Vector3d &torque)
+      : f(f), torque(torque) {}
 #endif
 
-ParticleForce & operator+=(ParticleForce const& rhs) {
+  ParticleForce &operator+=(ParticleForce const &rhs) {
     f += rhs.f;
 #ifdef ROTATION
     torque += rhs.torque;
@@ -250,7 +250,7 @@ ParticleForce & operator+=(ParticleForce const& rhs) {
 
     return *this;
   }
-  
+
   /** force. */
   Vector3d f = {0., 0., 0.};
 
@@ -695,7 +695,7 @@ int set_particle_q(int part, double q);
     @return ES_OK if particle existed
 */
 int set_particle_mu_E(int part, double mu_E[3]);
-void get_particle_mu_E(int part, double (&mu_E)[3]);
+void get_particle_mu_E(int part, double(&mu_E)[3]);
 #endif
 
 /** Call only on the master node: set particle type.

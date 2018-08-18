@@ -118,7 +118,7 @@ void dd_create_cell_grid() {
     dd.cell_grid[0] = cells_per_dir;
     dd.cell_grid[1] = cells_per_dir;
     dd.cell_grid[2] = cells_per_dir;
-    
+
     n_local_cells = dd.cell_grid[0] * dd.cell_grid[1] * dd.cell_grid[2];
   } else {
     /* Calculate initial cell grid */
@@ -495,19 +495,13 @@ void dd_update_communicators_w_boxl() {
 void dd_init_cell_interactions() {
   int m, n, o, p, q, r, ind1, ind2;
 
-  dd_fs_neigh.clear();
-  for (p = -1; p <= 1; p++)
-    for (q = -1; q <= 1; q++)
-      for (r = -1; r <= 1; r++)
-        dd_fs_neigh.push_back(get_linear_index(r, q, p, dd.ghost_cell_grid));
-
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
 
     ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
 
-    cells[ind1].m_neighbors.clear();
-    cells[ind1].m_neighbors.reserve(CELLS_MAX_NEIGHBORS);
+    std::vector<Cell *> red_neighbors;
+    std::vector<Cell *> black_neighbors;
 
     /* loop all neighbor cells */
     for (p = o - 1; p <= o + 1; p++)
@@ -515,12 +509,12 @@ void dd_init_cell_interactions() {
         for (r = m - 1; r <= m + 1; r++) {
           ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
           if (ind2 > ind1) {
-            cells[ind1].m_neighbors.emplace_back(&cells[ind2]);
+            red_neighbors.push_back(&cells[ind2]);
+          } else {
+            black_neighbors.push_back(&cells[ind2]);
           }
         }
-
-    /* Release excess memory */
-    cells[ind1].m_neighbors.shrink_to_fit();
+    cells[ind1].m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
   }
 }
 
@@ -713,7 +707,7 @@ void dd_topology_init(CellPList *old) {
   /* mark cells */
   dd_mark_cells();
 
-/* create communicators */
+  /* create communicators */
   dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
 
   exchange_data =
@@ -738,12 +732,13 @@ void dd_topology_init(CellPList *old) {
 #endif
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  // Inertialess tracers (and hence Immersed boundary) needs to communicate 
+  // Inertialess tracers (and hence Immersed boundary) needs to communicate
   // the forces from but also to the ghosts
   // This is different than usual collect_ghost_force_comm (not in reverse
   // order)
   // Therefore we need our own communicator
-  dd_prepare_comm(&cell_structure.vs_inertialess_tracers_ghost_force_comm, GHOSTTRANS_FORCE);
+  dd_prepare_comm(&cell_structure.vs_inertialess_tracers_ghost_force_comm,
+                  GHOSTTRANS_FORCE);
   dd_assign_prefetches(&cell_structure.vs_inertialess_tracers_ghost_force_comm);
 #endif
 
@@ -752,7 +747,7 @@ void dd_topology_init(CellPList *old) {
   dd_assign_prefetches(&cell_structure.ghost_swimming_comm);
 #endif
 
-/* initialize cell neighbor structures */
+  /* initialize cell neighbor structures */
   dd_init_cell_interactions();
 
   /* copy particles */
@@ -1025,7 +1020,3 @@ int calc_processor_min_num_cells() {
 }
 
 /************************************************************/
-
-int dd_full_shell_neigh(int cellidx, int neigh) {
-  return cellidx + dd_fs_neigh[neigh];
-}
