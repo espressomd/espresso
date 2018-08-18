@@ -19,9 +19,9 @@ public:
 
   Neighbors() = default;
   Neighbors(const Neighbors &) = delete;
-  Neighbors(Neighbors &&) = default;
+  Neighbors(Neighbors &&) noexcept = default;
   Neighbors &operator=(const Neighbors &) = delete;
-  Neighbors &operator=(Neighbors &&) = default;
+  Neighbors &operator=(Neighbors &&) noexcept = default;
 
   Neighbors(Utils::Span<const CellRef> red_neighbors,
             Utils::Span<const CellRef> black_neighbors) {
