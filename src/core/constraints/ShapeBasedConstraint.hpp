@@ -16,16 +16,18 @@ public:
   enum class ReflectionType { NONE, NORMAL, NORMAL_TANGENTIAL };
 
   ShapeBasedConstraint()
-      : m_shape(std::make_shared<Shapes::NoWhere>()),
-        m_penetrable(false),
+      : m_shape(std::make_shared<Shapes::NoWhere>()), m_penetrable(false),
         m_only_positive(false) {
     ShapeBasedConstraint::reset_force();
   }
 
-  virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
-                          Observable_stat &energy) const override;
+  void add_energy(const Particle &p, const Vector3d &folded_pos,
+                  Observable_stat &energy) const override;
 
-  virtual ParticleForce force(const Particle &p, const Vector3d &folded_pos) override;
+  virtual ParticleForce force(const Particle &p,
+                              const Vector3d &folded_pos) override;
+
+  bool fits_in_box(Vector3d const &) const override { return true; }
 
   /* finds the minimum distance to all particles */
   double min_dist();
@@ -41,7 +43,10 @@ public:
 
   Shapes::Shape const &shape() const { return *m_shape; }
 
-  void reset_force() override { m_local_force = Vector3d{0, 0, 0}; m_outer_normal_force=0.0;}
+  void reset_force() override {
+    m_local_force = Vector3d{0, 0, 0};
+    m_outer_normal_force = 0.0;
+  }
 
   bool &only_positive() { return m_only_positive; }
   bool &penetrable() { return m_penetrable; }
@@ -59,7 +64,7 @@ public:
 private:
   Particle part_rep;
 
-    /** Private data members */
+  /** Private data members */
   std::shared_ptr<Shapes::Shape> m_shape;
 
   bool m_penetrable;

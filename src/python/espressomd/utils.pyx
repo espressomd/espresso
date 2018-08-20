@@ -329,3 +329,4 @@ def is_valid_type(value, t):
         return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
     else:
         return isinstance(value, t)
+
