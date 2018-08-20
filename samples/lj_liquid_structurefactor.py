@@ -25,7 +25,6 @@ espressomd.assert_features(required_features)
 
 from espressomd import thermostat
 from espressomd import analyze
-from samples_common import open
 
 print("""
 =======================================================

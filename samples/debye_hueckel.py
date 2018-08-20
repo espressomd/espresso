@@ -27,7 +27,6 @@ required_features = ["ELECTROSTATICS","LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import electrostatics
-from samples_common import open
 import numpy as np
 
 print("""
