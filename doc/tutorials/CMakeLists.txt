@@ -19,7 +19,6 @@
 
 
 ### Here: add new directory
-add_subdirectory(00-building_espresso)
 add_subdirectory(01-lennard_jones)
 add_subdirectory(02-charged_system)
 add_subdirectory(04-lattice_boltzmann)
@@ -34,7 +33,6 @@ add_subdirectory(10-reaction_ensemble)
 ### here: add the appropriate tutorial target after DEPENDS
 add_custom_target(tutorials
   DEPENDS
-  tutorials_00
   tutorials_01
   tutorials_02
   tutorials_04
@@ -44,3 +42,5 @@ add_custom_target(tutorials
   tutorials_08
   tutorials_09
   tutorials_10)
+
+configure_file(Readme.rst ${CMAKE_CURRENT_BINARY_DIR}/Readme.rst COPYONLY)
