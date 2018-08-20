@@ -122,12 +122,12 @@ static double weight(int type, double r_cut, double dist_inv) {
 
 static Vector3d vel_diff(Vector3d const &x, Vector3d const &y,
                          Vector3d const &u, Vector3d const &v) {
-  auto const sheer_rate = 0.5;
+  auto shear_velocity = 0.5;
   auto ret = u - v;
 
   auto const dy = std::abs(x[1] - y[1]);
   if(dy > 0.5 * box_l[1] ) {
-    ret[0] += Utils::sgn(dy) * sheer_rate;
+    ret[0] += Utils::sgn(dy) * shear_velocity;
   }
 
   return ret;

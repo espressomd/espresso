@@ -53,6 +53,10 @@
 
 #include <climits>
 
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
+
 /** Macro that tests for a coordinate being periodic or not. */
 #ifdef PARTIAL_PERIODIC
 #define PERIODIC(coord) (periodic & (1L << coord))
@@ -191,6 +195,7 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
   auto const dy = res[1];
 #endif
 
+#ifdef LEES_EDWARDS
   for (int i = 0; i < 3; i++)
     if (PERIODIC(i))
       res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
@@ -199,7 +204,7 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
 #ifdef LEES_EDWARDS
 
   if (std::abs(dy) > half_box_l[1]) {
-
+    
     auto offset = lees_edwards_protocol.offset;
     auto shift =
         Utils::sgn(dy) * (offset - dround(offset * box_l_i[1]) * box_l[1]);
@@ -208,7 +213,7 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
     res[0] -= dround(res[0] * box_l_i[0]) * box_l[0];
 
   }
-#endif
+#endif    
 }
 
 template <typename T, typename U>

@@ -61,6 +61,10 @@
 #include "immersed_boundaries.hpp"
 #include "npt.hpp"
 
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -804,19 +808,22 @@ void propagate_vel_pos() {
     ONEPART_TRACE(if (p.p.identity == check_id)
                       fprintf(stderr, "%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",
                               this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
-
+  
+#ifdef LEES_EDWARDS
     /* LE Push */
     {
-      auto const shear_rate = 0.5;
-      auto const offset = sim_time * shear_rate;
+      void setup_lees_edwards_protocol(lees_edwards_protocol, sim_time, box_l_y);
+      auto shear_velocity = lees_edwards_protocol.velocity;
+      auto offset = lees_edwards_protocol.offset;
       if (p.r.p[1] > box_l[1]) {
-        p.m.v[0] -= shear_rate;
+        p.m.v[0] -= shear_velocity;
         p.r.p[0] += (offset - dround(offset * box_l_i[0]) * box_l[0]);
       } else if (p.r.p[1] < 0.) {
-        p.m.v[0] += shear_rate;
+        p.m.v[0] += shear_velocity;
         p.r.p[0] -= (offset - dround(offset * box_l_i[0]) * box_l[0]);
       }
     }
+#endif
   }
 
   set_resort_particles(Cells::RESORT_LOCAL);
