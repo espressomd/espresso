@@ -326,7 +326,7 @@ cdef class Thermostat(object):
 
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
-        def set_lb(self, kT=None, act_on_virtual=False):
+        def set_lb(self, kT=None, act_on_virtual=True):
             """
             Sets the LB thermostat with required parameter 'kT'.
 
@@ -337,7 +337,7 @@ cdef class Thermostat(object):
             kT : :obj:`float`
                  Specifies the thermal energy of the heat bath.
             act_on_virtual : :obj:`bool`, optional
-                If true the thermostat will act on virtual sites, default is off.
+                If true the thermostat will act on virtual sites, default is on.
 
             """
 
