@@ -1,3 +1,7 @@
+"""
+This sample simulates electrophoresis using P3M solver.
+"""
+
 #
 # Copyright (C) 2013,2014 The ESPResSo project
 #
@@ -18,6 +22,10 @@
 #
 from __future__ import print_function
 import espressomd
+
+required_features = ["ELECTROSTATICS","EXTERNAL_FORCES","LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import electrostatics
@@ -30,7 +38,6 @@ except ImportError:
 import os
 
 print(espressomd.features())
-
 
 # System parameters
 #############################################################
@@ -173,7 +180,7 @@ for key in list(p3m_params.keys()):
 
 print(system.actors)
 
-# Apply external Force
+# Apply external force
 #############################################################
 n_part = len(system.part)
 system.part[:].ext_force = np.dstack(

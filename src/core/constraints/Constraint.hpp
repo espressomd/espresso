@@ -15,6 +15,8 @@ public:
                               const Vector3d &folded_pos) = 0;
 
   virtual void reset_force(){};
+
+  virtual ~Constraint() {}
 };
 
 } /* namespace Constraints */

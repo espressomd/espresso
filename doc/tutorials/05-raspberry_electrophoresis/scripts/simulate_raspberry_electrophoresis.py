@@ -111,16 +111,12 @@ system.min_global_cut = radius_col+1
 
 #here we calculate the center of mass position (com) and the moment of inertia (momI) of the colloid
 com=np.zeros(3)
-momI=0
 for i in range(n_col_part):
     com+=system.part[i].pos
-    momI+=np.power(np.linalg.norm(com-system.part[i].pos),2)
 com/=n_col_part
 
-for i in range(n_col_part):
-    momI+=np.power(np.linalg.norm(com-system.part[i].pos),2)
 #Note the 2/3 factor is for a spherical shell
-momI*=(2./3.)
+momI=(2./3.)*np.ones(3)*radius_col
 
 #note that the real particle must be at the center of mass of the colloid because of the integrator
 print("\n# moving central particle from {} to {}".format(system.part[0].pos, com))

@@ -28,6 +28,7 @@ add_subdirectory(06-active_matter)
 add_subdirectory(07-electrokinetics)
 add_subdirectory(08-visualization)
 add_subdirectory(09-swimmer_reactions)
+add_subdirectory(10-reaction_ensemble)
 
 
 ### here: add the appropriate tutorial target after DEPENDS
@@ -41,4 +42,5 @@ add_custom_target(tutorials
   tutorials_06
   tutorials_07
   tutorials_08
-  tutorials_09)
+  tutorials_09
+  tutorials_10)

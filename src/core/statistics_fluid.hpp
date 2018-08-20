@@ -28,7 +28,7 @@
 #ifndef STATISTICS_FLUID_H
 #define STATISTICS_FLUID_H
 
-#include "utils.hpp"
+#include "config.hpp"
 
 #ifdef LB
 
@@ -48,9 +48,6 @@ void lb_calc_fluid_momentum(double *result);
 void lb_calc_fluid_temp(double *result);
 
 void lb_collect_boundary_forces(double *result);
-
-void lb_calc_densprof(double *result, int *params);
-void lb_calc_velprof(double *result, int *params);
 
 #endif /* LB */
 

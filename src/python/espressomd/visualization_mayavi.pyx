@@ -171,7 +171,7 @@ cdef class mayaviLive(object):
     # Using (additional) untyped variables and python constructs in the loop 
     # will slow it down considerably. 
         for i in range(N):
-            p = get_particle_data_ptr(i)
+            p = get_particle_data_ptr(get_particle_data(i))
             if not p:
                 continue
 
@@ -206,8 +206,8 @@ cdef class mayaviLive(object):
             i = bonds[3*n]
             j = bonds[3*n+1]
             t = bonds[3*n+2]
-            p1 = get_particle_data_ptr(i)
-            p2 = get_particle_data_ptr(j)
+            p1 = get_particle_data_ptr(get_particle_data(i))
+            p2 = get_particle_data_ptr(get_particle_data(j))
             bond_coords[n,:3] = numpy.array([p1.r.p[0],p1.r.p[1],p1.r.p[2]])
             get_mi_vector(bond_vec, p2.r.p.data(), p1.r.p.data())
             bond_coords[n,3:6] = bond_vec

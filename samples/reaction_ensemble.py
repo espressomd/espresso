@@ -1,3 +1,7 @@
+"""
+This sample simulates the reaction ensemble. It also illustrates how the constant pH method can be used.
+"""
+
 #
 # Copyright (C) 2013,2014 The ESPResSo project
 #
