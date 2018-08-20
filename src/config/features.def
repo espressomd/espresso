@@ -26,6 +26,7 @@ NPT
 SWIMMER_REACTIONS
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY             implies ROTATION
+LEES_EDWARDS
 
 /* Rotation */
 ROTATION
