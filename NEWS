@@ -29,8 +29,8 @@ New features:
 * GPU-accelerated P3M method for electrostatic interactions
 * GPU-accelerated direct summation and Barnes-Hutt schemes for dipolar interactions under open boundary conditions
 * Support for the electrostatic and magnetostatics method provided by the ScaFaCoS library
-* Virtual sites acting as inertialess tracers in an LB fluid can now be used
-  independently from the other components of the immersed boundary method.
+* Immersed boundary method for soft immersed objects in an LB fluid
+* Virtual sites acting as inertialess tracers in an LB fluid usable as part of the immersed boundary method or independently
 * New bonded quartic and Coulomb interactions
 * Possibility to tune the skin parameter 
 * Support for saving to the h5md file format for molecular dynamics data.
