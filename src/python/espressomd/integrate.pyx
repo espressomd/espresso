@@ -78,8 +78,7 @@ cdef class Integrator(object):
             check_type_or_throw_except(
                 reuse_forces, 1, bool, "reuse_forces has to be a bool")
 
-            if (_integrate(steps, recalc_forces, reuse_forces)):
-                handle_errors("Encoutered errors during integrate")
+            _integrate(steps, recalc_forces, reuse_forces)
         elif self._method == "STEEPEST_DESCENT":
             minimize_energy_init(self._steepest_descent_params["f_max"],
                                  self._steepest_descent_params["gamma"],
@@ -88,6 +87,8 @@ cdef class Integrator(object):
             mpi_minimize_energy()
         else:
             raise ValueError("No integrator method set!")
+
+        handle_errors("Encoutered errors during integrate")
 
     def set_steepest_descent(self, *args, **kwargs):
         """
