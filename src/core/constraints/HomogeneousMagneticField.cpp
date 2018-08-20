@@ -4,10 +4,8 @@
 namespace Constraints {
 
 ParticleForce HomogeneousMagneticField::force(const Particle &p, const Vector3d &folded_pos) {
-#ifdef ROTATION
-#ifdef DIPOLES
+#if defined(ROTATION) && defined(DIPOLES)
     return {Vector3d{}, Vector3d::cross(p.r.dip, m_field)};
-#endif
 #else
     return {Vector3d{}};
 #endif
