@@ -167,6 +167,8 @@ cdef class Thermostat(object):
         """
 
         global temperature
+        global thermo_virtual
+        thermo_virtual = True
         temperature = 0.
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         global langevin_gamma
