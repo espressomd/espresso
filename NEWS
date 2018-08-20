@@ -22,13 +22,15 @@ Please note that, starting from ESPResSo 4.0, enabling additional features in my
 
 New features:
 -------------
-* Reaction ensemble method for the modelling of chemical reactions
+* Reaction ensemble methods for the modelling of chemical reactions, including constant pH and Wang-Landau schemes
 * Polarisable particles via the Drude-oscillator scheme
 * Steepest-descent energy minimization scheme 
 * Methods for active particles (swimmer_reaction, dipolar swimmers)
 * GPU-accelerated P3M method for electrostatic interactions
-* GPU-accelerated direct summation of dipolar interactions under open boundary conditions
+* GPU-accelerated direct summation and Barnes-Hutt schemes for dipolar interactions under open boundary conditions
 * Support for the electrostatic and magnetostatics method provided by the ScaFaCoS library
+* Virtual sites acting as inertialess tracers in an LB fluid can now be used
+  independently from the other components of the immersed boundary method.
 * New bonded quartic and Coulomb interactions
 * Possibility to tune the skin parameter 
 * Support for saving to the h5md file format for molecular dynamics data.
