@@ -20,6 +20,6 @@ typedef struct {
 } lees_edwards_protocol_struct;
 
 extern lees_edwards_protocol_struct lees_edwards_protocol;
-void setup_lees_edwards_protocol(lees_edwards_protocol, sim_time, box_l_y);
+void setup_lees_edwards_protocol();
 
 #endif

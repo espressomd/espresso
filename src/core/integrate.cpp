@@ -215,6 +215,9 @@ void integrate_ensemble_init() {
 void integrate_vv(int n_steps, int reuse_forces) {
   /* Prepare the Integrator */
   on_integration_start();
+#ifdef LEES_EDWARDS
+  setup_lees_edwards_protocol();
+#endif
 
 #ifdef IMMERSED_BOUNDARY
   // Here we initialize volume conservation
@@ -812,7 +815,6 @@ void propagate_vel_pos() {
 #ifdef LEES_EDWARDS
     /* LE Push */
     {
-      void setup_lees_edwards_protocol(lees_edwards_protocol, sim_time, box_l_y);
       auto shear_velocity = lees_edwards_protocol.velocity;
       auto offset = lees_edwards_protocol.offset;
       if (p.r.p[1] > box_l[1]) {
