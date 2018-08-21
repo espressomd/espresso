@@ -29,7 +29,7 @@ double const box_l_y = box_l[1];
 
 /* Functions to determine the current offset and shear rate with respect to the chosen protocol */
 
-void setup_lees_edwards_protocol(lees_edwards_protocol_struct lees_edwards_protocol, double sim_time, double box_l_y) {
+void setup_lees_edwards_protocol() {
   if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_OFF) {
     lees_edwards_protocol.offset = 0.0;
     lees_edwards_protocol.velocity = 0.0;
