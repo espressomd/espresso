@@ -22,7 +22,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
     def pos_on_surface(self, theta, v, semiaxis0, semiaxis1,
                        semiaxis2, center=numpy.array([15, 15, 15])):
-        """Return postion on ellipsoid surface."""
+        """Return position on ellipsoid surface."""
         pos = numpy.array([semiaxis0 *
                            numpy.sqrt(1. -
                                       v *
@@ -109,7 +109,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         # check sphere (multiple distances from surface)
 
-        # change ellipsoid paramters instead of creating a new constraint
+        # change ellipsoid parameters instead of creating a new constraint
         e.a = 1.
         e.b = 1.
 
@@ -144,7 +144,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.part.add(id=0, pos=[self.box_l / 2.0, 1.02, self.box_l / 2.0], type=0)
 
         # check force calculation of cylinder constraint
-        interactio_dir = -1  # constraint is directed inwards
+        interaction_dir = -1  # constraint is directed inwards
         cylinder_shape = espressomd.shapes.Cylinder(
             center=[
                 self.box_l /
@@ -157,19 +157,17 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 0,
                 0,
                 1],
-            direction=interactio_dir,
+            direction=interaction_dir,
             radius=self.box_l /
             2.0,
             length=self.box_l +
             5)  # +5 in order to have no top or bottom
-        penetrability = False  # inpenetrable
+        penetrability = False  # impenetrable
         outer_cylinder_constraint = espressomd.constraints.ShapeBasedConstraint(
             shape=cylinder_shape, particle_type=1, penetrable=penetrability)
         outer_cylinder_wall = system.constraints.add(outer_cylinder_constraint)
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
-        system.non_bonded_inter[0, 2].lennard_jones.set_params(
-            epsilon=1.5, sigma=1.0, cutoff=2.0, shift=0)
         system.integrator.run(0)  # update forces
 
         self.assertAlmostEqual(outer_cylinder_constraint.min_dist(), 1.02)
@@ -184,7 +182,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 eps=1.0,
                 sig=1.0,
                 r=1.02),
-            places=10)  # minus for newtons thrid law
+            places=10)  # minus for Newton's third law
             
         #check whether total_summed_outer_normal_force is correct
         y_part2=self.box_l-1.02
@@ -198,8 +196,6 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # Reset
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
-        system.non_bonded_inter[0, 2].lennard_jones.set_params(
-            epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
 
     def test_wall_forces(self):
         """Tests if shape based constraints can be added to a system both by
@@ -210,6 +206,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         """
         system = self.system
+        system.time_step = 0.01
         system.part.add(id=0,pos=[5., 1.21, 0.83], type=0)
 
         # Check forces are initialized to zero
@@ -232,7 +229,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             shape=shape_xz, particle_type=1)
         wall_xz = system.constraints.add(constraint_xz)
 
-        # (3)
+        # (2)
         wall_xy = system.constraints.add(shape=shape_xy, particle_type=2)
 
         system.integrator.run(0)  # update forces
@@ -270,7 +267,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 eps=1.0,
                 sig=1.0,
                 r=1.21),
-            places=10)  # minus for newtons thrid law
+            places=10)  # minus for Newton's third law
         self.assertAlmostEqual(
             -1.0 * wall_xy.total_force()[2],
             tests_common.lj_force(
