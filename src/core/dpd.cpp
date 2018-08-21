@@ -30,6 +30,7 @@
 #include "random.hpp"
 #include "short_range_loop.hpp"
 #include "thermostat.hpp"
+#include "lees_edwards.hpp"
 
 #include <utils/Vector.hpp>
 using Utils::Vector3d;
