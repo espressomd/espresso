@@ -30,6 +30,7 @@
 #include "integrate.hpp"
 #include "random.hpp"
 #include "thermostat.hpp"
+#include "lees_edwards.hpp"
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
@@ -122,7 +123,7 @@ static double weight(int type, double r_cut, double dist_inv) {
 
 static Vector3d vel_diff(Vector3d const &x, Vector3d const &y,
                          Vector3d const &u, Vector3d const &v) {
-  auto shear_velocity = 0.5;
+  auto shear_velocity = lees_edwards_protocol.velocity;
   auto ret = u - v;
 
   auto const dy = std::abs(x[1] - y[1]);
