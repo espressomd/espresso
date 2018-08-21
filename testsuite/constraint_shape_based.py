@@ -197,6 +197,108 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
 
+    def test_spherocylinder(self):
+        """Checks that spherocylinder constraints with LJ interactions exert
+        forces on a test particle (that is, the constraints do what they should)
+        using geometrical parameters of (1) an infinite cylinder and (2) a
+        finite spherocylinder.
+
+        """
+        system = self.system
+        system.time_step = 0.01
+        system.cell_system.skin = 0.4
+
+        system.part.add(id=0, pos=[self.box_l / 2.0, 1.02, self.box_l / 2.0], type=0)
+
+        # check force calculation of spherocylinder constraint
+        # (1) infinite cylinder
+        interaction_dir = -1  # constraint is directed inwards
+        spherocylinder_shape = espressomd.shapes.SpheroCylinder(
+            center=[self.box_l / 2.0,
+                    self.box_l / 2.0,
+                    self.box_l / 2.0],
+            axis=[0, 0, 1],
+            direction=interaction_dir,
+            radius=self.box_l / 2.0,
+            length=self.box_l + 5)  # +5 in order to have no top or bottom
+        penetrability = False  # impenetrable
+        outer_cylinder_constraint = espressomd.constraints.ShapeBasedConstraint(
+            shape=spherocylinder_shape, particle_type=1, penetrable=penetrability)
+        outer_cylinder_wall = system.constraints.add(outer_cylinder_constraint)
+        system.non_bonded_inter[0, 1].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
+        system.integrator.run(0)  # update forces
+
+        self.assertAlmostEqual(outer_cylinder_constraint.min_dist(), 1.02)
+
+        # test summed forces on cylinder wall
+        self.assertAlmostEqual(
+            -1.0 * outer_cylinder_wall.total_force()[1],
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.0,
+                sig=1.0,
+                r=1.02),
+            places=10)  # minus for Newton's third law
+
+        #check whether total_summed_outer_normal_force is correct
+        y_part2=self.box_l-1.02
+        system.part.add(id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
+        system.integrator.run(0)
+
+        dist_part2=self.box_l-y_part2
+        self.assertAlmostEqual(outer_cylinder_wall.total_force()[2],0.0)
+        self.assertAlmostEqual(outer_cylinder_wall.total_normal_force(),
+                               2*tests_common.lj_force(espressomd, cutoff=2.0,
+                                 offset=0., eps=1.0, sig=1.0, r=dist_part2))
+
+        # Reset
+        system.part.clear()
+        system.constraints.clear()
+        system.non_bonded_inter[0, 1].lennard_jones.set_params(
+            epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
+
+        # (2) finite spherocylinder
+        system.part.clear()
+        interaction_dir = -1  # constraint is directed inwards
+        spherocylinder_shape = espressomd.shapes.SpheroCylinder(
+            center=[self.box_l / 2.0,
+                    self.box_l / 2.0,
+                    self.box_l / 2.0],
+            axis=[0, 1, 0],
+            direction=interaction_dir,
+            radius=10.0,
+            length=6.0)
+        penetrability = True  # penetrable
+        inner_cylinder_constraint = espressomd.constraints.ShapeBasedConstraint(
+            shape=spherocylinder_shape, particle_type=1, penetrable=penetrability)
+        inner_cylinder_wall = system.constraints.add(inner_cylinder_constraint)
+
+        # V(r) = r
+        system.non_bonded_inter[0, 1].generic_lennard_jones.set_params(
+            epsilon=1., sigma=1., cutoff=10., shift=0., offset=0., e1=-1, e2=0, b1=1., b2=0.)
+
+        # check hemispherical caps (multiple distances from surface)
+        N = 10
+        radii = numpy.linspace(1., 10., 10)
+        system.part.add(pos=[0., 0., 0.], type=0)
+        for i in range(6):
+            for j in range(N):
+                theta = 2. * i / float(N) * numpy.pi
+                v = j / float(N - 1) * 2. - 1
+                for r in radii:
+                    pos = self.pos_on_surface(theta, v, r, r, r) + [0,3,0]
+                    system.part[0].pos = pos
+                    system.integrator.run(recalc_forces=True, steps=0)
+                    energy = system.analysis.energy()
+                    self.assertAlmostEqual(energy["total"], 10. - r)
+
+        # Reset
+        system.non_bonded_inter[0, 1].generic_lennard_jones.set_params(
+            epsilon=0., sigma=0., cutoff=0., shift=0., offset=0., e1=0, e2=0, b1=0., b2=0.)
+
     def test_wall_forces(self):
         """Tests if shape based constraints can be added to a system both by
         (1) defining a constraint object which is then added
@@ -302,6 +404,196 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
         system.non_bonded_inter[0, 2].lennard_jones.set_params(
+            epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
+
+    def test_hollowcone(self):
+        """Checks that hollowcone constraints with LJ interactions exert forces
+        on a test particle (that is, the constraints do what they should).
+
+        """
+        system = self.system
+        system.time_step = 0.01
+        system.cell_system.skin = 0.4
+
+        system.part.add(id=0, pos=[self.box_l / 2.0 + 1.5,
+                                   self.box_l / 2.0,
+                                   self.box_l / 2.0], type=0)
+
+        # check force calculation of hollowcone constraint
+        interaction_dir = +1  # constraint is directed outwards
+        hollowcone_shape = espressomd.shapes.HollowCone(
+            center=[self.box_l / 2.0,
+                    self.box_l / 2.0,
+                    self.box_l / 2.0],
+            axis=[0, 0, 1],
+            direction=interaction_dir,
+            inner_radius=5.,
+            outer_radius=10.,
+            opening_angle=numpy.pi / 5,
+            width=2.)
+        hollowcone_constraint = espressomd.constraints.ShapeBasedConstraint(
+            shape=hollowcone_shape, particle_type=1, penetrable=False)
+        hollowcone_wall = system.constraints.add(hollowcone_constraint)
+        system.non_bonded_inter[0, 1].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
+        system.integrator.run(0)  # update forces
+
+        self.assertAlmostEqual(hollowcone_constraint.min_dist(), 2.75442936)
+
+        # test summed forces on hollowcone wall
+        self.assertAlmostEqual(
+            -1.0 * hollowcone_wall.total_force()[1],
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.0,
+                sig=1.0,
+                r=2.75442936),
+            places=10)
+
+        # Reset
+        system.non_bonded_inter[0, 1].lennard_jones.set_params(
+            epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
+
+    def test_slitpore(self):
+        """Checks that slitpore constraints with LJ interactions exert forces
+        on a test particle (that is, the constraints do what they should).
+
+        """
+        system = self.system
+        system.time_step = 0.01
+        system.cell_system.skin = 0.4
+
+        # check force calculation of slitpore constraint
+        slitpore_shape = espressomd.shapes.Slitpore(
+            channel_width=5,
+            lower_smoothing_radius=2,
+            upper_smoothing_radius=3,
+            pore_length=15,
+            pore_mouth=20,
+            pore_width=10)
+        slitpore_constraint = espressomd.constraints.ShapeBasedConstraint(
+            shape=slitpore_shape, particle_type=1, penetrable=True)
+        slitpore_wall = system.constraints.add(slitpore_constraint)
+        # V(r) = r
+        system.non_bonded_inter[0, 1].generic_lennard_jones.set_params(
+            epsilon=1., sigma=1., cutoff=10., shift=0., offset=0., e1=-1, e2=0, b1=1., b2=0.)
+
+        system.part.add(pos=[0., 0., 0.], type=0)
+        x = self.box_l / 2.0
+        parameters = [
+            ([x, x,  1.], -4., [ 0.,  0., -1.]), # outside channel
+            ([x, x, 15.],  5., [-1.,  0.,  0.]), # inside channel
+            ([x, x,  5.],  0., [ 0.,  0.,  0.]), # on channel bottom surface
+            ([x+5., x, 15.], 0., [ 0.,  0.,  0.]), # on channel side surface
+            ([x, x, 15.],  5., [-1.,  0.,  0.]), # within mouth
+            ([x, x, 25.],  0., [ 0.,  0.,  0.]), # on wall surface
+            ([x, x, 27.], -2., [ 0.,  0.,  1.]), # outside wall
+        ]
+        for pos, ref_mindist, ref_force in parameters:
+            system.part[0].pos = pos
+            system.integrator.run(recalc_forces=True, steps=0)
+            self.assertEqual(slitpore_wall.min_dist(), ref_mindist)
+            numpy.testing.assert_almost_equal(slitpore_wall.total_force(), ref_force, 10)
+
+        # Reset
+        system.non_bonded_inter[0, 1].generic_lennard_jones.set_params(
+            epsilon=0., sigma=0., cutoff=0., shift=0., offset=0., e1=0, e2=0, b1=0., b2=0.)
+
+    def test_rhomboid(self):
+        """Checks that rhomboid constraints with LJ interactions exert forces
+        on a test particle (that is, the constraints do what they should)
+        using the geometrical parameters of (1) a cube and (2) a rhomboid.
+
+        """
+        system = self.system
+        system.time_step = 0.01
+        system.cell_system.skin = 0.4
+
+        # check force calculation of rhomboid constraint
+        # (1) using a cube
+        interaction_dir = +1  # constraint is directed outwards
+        rhomboid_shape = espressomd.shapes.Rhomboid(
+            corner=[self.box_l / 2.0,
+                    self.box_l / 2.0,
+                    self.box_l / 2.0],
+            a=[5.0, 0.0, 0.0],  # cube
+            b=[0.0, 5.0, 0.0],
+            c=[0.0, 0.0, 5.0],
+            direction=interaction_dir
+        )
+        penetrability = False  # impenetrable
+        rhomboid_constraint = espressomd.constraints.ShapeBasedConstraint(
+            shape=rhomboid_shape, particle_type=1, penetrable=penetrability)
+        rhomboid_wall = system.constraints.add(rhomboid_constraint)
+
+        system.non_bonded_inter[0, 1].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
+
+        system.part.add(id=0, pos=[self.box_l / 2.0 + 2.5,
+                                   self.box_l / 2.0 + 2.5,
+                                   self.box_l / 2.0 - 1], type=0)
+        system.integrator.run(0)  # update forces
+        f_part = system.part[0].f
+        self.assertEqual(rhomboid_wall.min_dist(), 1.)
+        self.assertEqual(f_part[0], 0.)
+        self.assertEqual(f_part[1], 0.)
+        self.assertAlmostEqual(
+            -f_part[2],
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.,
+                offset=0.,
+                eps=1.,
+                sig=1.,
+                r=1.),
+            places=10)
+        self.assertAlmostEqual(
+            rhomboid_wall.total_normal_force(),
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.,
+                offset=0.,
+                eps=1.,
+                sig=1.,
+                r=1.),
+            places=10)
+
+        # (2) using a rhomboid
+        rhomboid_shape.a=[5., 5., 0.]  # rhomboid
+        rhomboid_shape.b=[0., 0., 5.]
+        rhomboid_shape.c=[0., 5., 0.]
+
+        system.integrator.run(0)  # update forces
+        self.assertEqual(rhomboid_wall.min_dist(), 1.)
+        self.assertAlmostEqual(
+            rhomboid_wall.total_normal_force(),
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.,
+                offset=0.,
+                eps=1.,
+                sig=1.,
+                r=1.),
+            places=10)
+
+        system.part[0].pos = system.part[0].pos - [0., 1., 0.]
+        system.integrator.run(0)  # update forces
+        self.assertAlmostEqual(rhomboid_wall.min_dist(), 1.2247448714, 10)
+        self.assertAlmostEqual(
+            rhomboid_wall.total_normal_force(),
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.,
+                offset=0.,
+                eps=1.,
+                sig=1.,
+                r=1.2247448714),
+            places=10)
+
+        # Reset
+        system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
 
 
