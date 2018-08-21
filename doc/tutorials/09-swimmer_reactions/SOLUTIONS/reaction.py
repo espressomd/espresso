@@ -29,11 +29,11 @@ import numpy as np
 import os
 import sys
 import time
-
+import espressomd
 from espressomd import assert_features
-from espressomd.observables import ParticlePositions, ParticleBodyAngularMomentum
-from espressomd.correlators import Correlator
-from espressomd.reaction import Reaction
+from espressomd.observables import ParticlePositions, ParticleBodyAngularVelocities
+from espressomd.accumulators import Correlator
+from espressomd.swimmer_reaction import Reaction
 
 
 assert_features(["ROTATION",
@@ -102,7 +102,7 @@ system.min_global_cut = 1.1*radius
 
 # Set up the random seeds
 
-system.seed = np.random.randint(0,2**31-1)
+system.set_random_state_PRNG()
 
 ################################################################################
 
@@ -235,7 +235,7 @@ if active == 1:
 
 # Perform warmup
 
-cap = 1.0
+cap = 20.0
 warm_length = 100
 
 ## Exercise 5 ##
@@ -245,11 +245,19 @@ warm_length = 100
 ## Answer 5 ##
 # Force capping truncates the interaction at a maximum value of the
 # force, allowing for more controlled MD steps, until 'overlaps' have
-# been removed. Minimize_energy uses a steepest-descent method to
+# been removed. A steepest-descent method is used to
 # remove such overlapping configurations.
 
-system.minimize_energy.init(f_max=cap,max_steps=warm_length,gamma=1.0/20.0,max_displacement=0.05)
-system.minimize_energy.minimize()
+system.integrator.set_steepest_descent(f_max=cap,gamma=.05,max_displacement=0.005)
+
+# Note: system.part[:].f returns an n-by-3 array.
+# We use the maximum force in any entry of this array as criterion
+system.integrator.run(100)
+while np.amax(system.part[:].f)>=cap:
+    print(np.amax(system.part[:].f),np.argmax(system.part[:].f),cap,system.part[0].f)
+    system.integrator.run(100)
+# Restore the velocity Verlet integrator
+system.integrator.set_vv()
 
 ################################################################################
 
@@ -284,10 +292,10 @@ for cnt in range(5):
     pos_id = ParticlePositions(ids=[cent])
     msd    = Correlator(obs1=pos_id,
                         corr_operation="square_distance_componentwise",
-                        dt=dt,
+                        delta_N=1,
                         tau_max=tmax,
                         tau_lin=16)
-    system.auto_update_correlators.add(msd)
+    system.auto_update_accumulators.add(msd)
 
     ## Exercise 7a ##
     # Construct the auto-correlators for the AVACF, using the example
@@ -295,13 +303,13 @@ for cnt in range(5):
 
     # Initialize the angular velocity auto-correlation function
     # (AVACF) correlator
-    ang_id = ParticleBodyAngularMomentum(ids=[cent])
+    ang_id = ParticleBodyAngularVelocities(ids=[cent])
     avacf  = Correlator(obs1=ang_id,
                         corr_operation="scalar_product",
-                        dt=dt,
+                        delta_N=1,
                         tau_max=tmax,
                         tau_lin=16)
-    system.auto_update_correlators.add(avacf)
+    system.auto_update_accumulators.add(avacf)
 
     # Perform production
 
@@ -311,13 +319,13 @@ for cnt in range(5):
         system.integrator.run(prod_length)
 
     # Finalize the MSD and export
-    system.auto_update_correlators.remove(msd)
+    system.auto_update_accumulators.remove(msd)
     msd.finalize()
     np.savetxt("{}/msd_{}.dat".format(outdir,cnt),msd.result())
 
     ## Exercise 7b ##
     # Finalize the angular velocity auto-correlation function (AVACF)
     # correlator and write the result to a file.
-    system.auto_update_correlators.remove(avacf)
+    system.auto_update_accumulators.remove(avacf)
     avacf.finalize()
     np.savetxt("{}/avacf_{}.dat".format(outdir,cnt),avacf.result())
