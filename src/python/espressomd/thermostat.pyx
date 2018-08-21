@@ -170,6 +170,7 @@ cdef class Thermostat(object):
         global thermo_virtual
         thermo_virtual = True
         temperature = 0.
+        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         global langevin_gamma
         IF PARTICLE_ANISOTROPY:
@@ -190,7 +191,6 @@ cdef class Thermostat(object):
         global thermo_switch
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-        # here other thermostats stuff
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
