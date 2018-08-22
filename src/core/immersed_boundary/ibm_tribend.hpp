@@ -2,7 +2,11 @@
 #ifndef IBM_TRIBEND_H
 #define IBM_TRIBEND_H
 
+#include "config.hpp"
+
 #ifdef IMMERSED_BOUNDARY
+
+#include "interaction_data.hpp"
 
 // DEBUG stuff
 extern double maxBendingForce, maxBendingDist, maxX;

@@ -2,7 +2,11 @@
 #ifndef IBM_TRIEL_H
 #define IBM_TRIEL_H
 
+#include "config.hpp"
+
 #ifdef IMMERSED_BOUNDARY
+
+#include "interaction_data.hpp"
 
 // This function is used to set the parameters
 // Also calculates and stores the reference state
