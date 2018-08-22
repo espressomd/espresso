@@ -265,7 +265,7 @@ cpdef handle_errors(msg):
     for err in errors:
     # Cast because cython does not support typed enums completely
         if < int > err.level() == <int > ERROR:
-            raise Exception(msg)
+            raise Exception("{}: {}".format(msg, err.format()))
 
 def get_unravelled_index(len_dims, n_dims, flattened_index):
     """
@@ -329,3 +329,4 @@ def is_valid_type(value, t):
         return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
     else:
         return isinstance(value, t)
+

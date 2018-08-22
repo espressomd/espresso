@@ -22,10 +22,8 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "domain_decomposition.hpp"
 #include "particle_data.hpp"
 #include "collision.hpp"
 #include "initialize.hpp"
@@ -103,11 +101,12 @@ bool validate_collision_parameters() {
   }
 #endif
 
-  if ((collision_params.mode != COLLISION_MODE_OFF) && (n_nodes>1)) {
-        runtimeErrorMsg() << "The collision detection schemes are currently not available in parallel simulations";
-        return false;
+  if ((collision_params.mode != COLLISION_MODE_OFF) && (n_nodes > 1)) {
+    runtimeErrorMsg() << "The collision detection schemes are currently not "
+                         "available in parallel simulations";
+    return false;
   }
-  
+
   // Check if bonded ia exist
   if ((collision_params.mode & COLLISION_MODE_BOND) &&
       (collision_params.bond_centers >= bonded_ia_params.size())) {
@@ -122,7 +121,6 @@ bool validate_collision_parameters() {
         << "The bond type to be used for binding virtual sites does not exist";
     return false;
   }
-
 
   if ((collision_params.mode & COLLISION_MODE_BOND) &&
       collision_params.bond_centers == -1) {
@@ -232,7 +230,7 @@ void queue_collision(const int part1, const int part2) {
 /** @brief Calculate position of vs for GLUE_TO_SURFACE mode
 *    Reutnrs id of particle to bind vs to */
 int glue_to_surface_calc_vs_pos(const Particle *const p1,
-                                const Particle *const p2, Vector3d& pos) {
+                                const Particle *const p2, Vector3d &pos) {
   int bind_vs_to_pid;
   double vec21[3];
   double c;
@@ -259,7 +257,7 @@ int glue_to_surface_calc_vs_pos(const Particle *const p1,
 
 void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
                                             const Particle *const p2,
-                                            Vector3d& pos1, Vector3d& pos2) {
+                                            Vector3d &pos1, Vector3d &pos2) {
   double vec21[3];
   get_mi_vector(vec21, p1->r.p, p2->r.p);
   for (int i = 0; i < 3; i++) {
@@ -369,9 +367,8 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void place_vs_and_relate_to_particle(const int current_vs_pid,
-                                     const Vector3d& pos,
-                                     const int relate_to,
-                                     const Vector3d& initial_pos) {
+                                     const Vector3d &pos, const int relate_to,
+                                     const Vector3d &initial_pos) {
 
   // The virtual site is placed at initial_pos which will be in the local
   // node's domain. It will then be moved to its final position.
@@ -379,7 +376,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   // into the right cell.
   added_particle(current_vs_pid);
   local_place_particle(current_vs_pid, initial_pos.data(), 1);
-  local_particles[current_vs_pid]->r.p=pos;
+  local_particles[current_vs_pid]->r.p = pos;
   local_vs_relate_to(current_vs_pid, relate_to);
 
   (local_particles[max_seen_particle])->p.is_virtual = 1;
@@ -472,60 +469,14 @@ std::vector<collision_struct> gather_global_collision_queue() {
   return res;
 }
 
-// this looks in all local particles for a particle close to those in a
-// 2-particle collision. If it finds them, it performs three particle binding
-void three_particle_binding_full_search(
-    const std::vector<collision_struct> &gathered_queue) {
-  // Handler checking a single particle against collision queue. Used for
-  // local particles and ghosts
-  auto handle_single_particle = [&gathered_queue](Particle &p) {
-    for (auto &c : gathered_queue) {
-      Particle *p1 = local_particles[c.pp1];
-      Particle *p2 = local_particles[c.pp2];
+static void three_particle_binding_do_search(Cell *basecell, Particle &p1,
+                                             Particle &p2) {
+  auto handle_cell = [&p1, &p2](Cell *c) {
+    for (int p_id = 0; p_id < c->n; p_id++) {
+      auto &P = c->part[p_id];
 
-      // Check, whether p is equal to one of the particles in the
-      // collision. If so, skip
-      if ((p.p.identity == p1->p.identity) ||
-          (p.p.identity == p2->p.identity)) {
-        continue;
-      }
-
-      // The following checks,
-      // if the particle p is closer that the cutoff from p1 and/or p2.
-      // If yes, three particle bonds are created on all particles
-      // which have two other particles within the cutoff distance,
-      // unless such a bond already exists
-
-      // We need all cyclical permutations, here
-      // (bond is placed on 1st particle, order of bond partners
-      // does not matter, so we don't neet non-cyclic permutations):
-      coldet_do_three_particle_bond(p, *p1, *p2);
-      coldet_do_three_particle_bond(*p1, p, *p2);
-      coldet_do_three_particle_bond(*p2, p, *p1);
-    }
-  };
-
-  // Iterate over all local particles
-  for (auto &p : local_cells.particles()) {
-    handle_single_particle(p);
-  };
-
-  // And ghosts
-  for (auto &p : ghost_cells.particles()) {
-    handle_single_particle(p);
-  }
-}
-
-static void three_particle_binding_dd_do_search(
-    Cell *basecell, Particle &p1, Particle &p2) {
-  int basecellno = std::distance(&cells[0], basecell);
-  for (int n = 0; n < 27; ++n) {
-    Cell &cell = cells[dd_full_shell_neigh(basecellno, n)];
-    for (int pno = 0; pno < cell.n; ++pno) {
-      Particle &P = cell.part[pno];
       // Skip collided particles themselves
-      if ((P.p.identity == p1.p.identity) ||
-          (P.p.identity == p2.p.identity)) {
+      if ((P.p.identity == p1.p.identity) || (P.p.identity == p2.p.identity)) {
         continue;
       }
 
@@ -546,6 +497,14 @@ static void three_particle_binding_dd_do_search(
         coldet_do_three_particle_bond(p2, P, p1);
       }
     }
+  };
+
+  /* Search the base cell ... */
+  handle_cell(basecell);
+
+  /* ... and all the neighbors. */
+  for (auto &n : basecell->neighbors().all()) {
+    handle_cell(n);
   }
 }
 
@@ -556,23 +515,19 @@ void three_particle_binding_domain_decomposition(
     const std::vector<collision_struct> &gathered_queue) {
 
   for (auto &c : gathered_queue) {
-
     // If we have both particles, at least as ghosts, Get the corresponding cell
     // indices
     if ((local_particles[c.pp1] != NULL) && (local_particles[c.pp2] != NULL)) {
-
       Particle &p1 = *local_particles[c.pp1];
       Particle &p2 = *local_particles[c.pp2];
       auto cell1 = cell_structure.position_to_cell(p1.r.p.data());
       auto cell2 = cell_structure.position_to_cell(p2.r.p.data());
 
-      three_particle_binding_dd_do_search(cell1, p1, p2);
+      three_particle_binding_do_search(cell1, p1, p2);
       if (cell1 != cell2)
-        three_particle_binding_dd_do_search(cell2, p1, p2);
-
+        three_particle_binding_do_search(cell2, p1, p2);
     } // If local particles exist
-
-  } // Loop over total collisions
+  }   // Loop over total collisions
 }
 
 // Handle the collisions stored in the queue
@@ -646,7 +601,7 @@ void handle_collisions() {
         if (p1->l.ghost)
           initial_pos = p2->r.p;
         else
-          initial_pos= p1->r.p;
+          initial_pos = p1->r.p;
 
         // If we are in the two vs mode
         // Virtual site related to first particle in the collision
@@ -715,17 +670,7 @@ void handle_collisions() {
   // three-particle-binding part
   if (collision_params.mode & (COLLISION_MODE_BIND_THREE_PARTICLES)) {
     auto gathered_queue = gather_global_collision_queue();
-
-    // If we don't have domain decomposition, we need to do a full sweep over
-    // all
-    // particles in the system. (slow)
-    if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      three_particle_binding_full_search(gathered_queue);
-    } // if cell structure != domain decomposition
-    else {
-      three_particle_binding_domain_decomposition(gathered_queue);
-    } // If we have doamin decomposition
-
+    three_particle_binding_domain_decomposition(gathered_queue);
   } // if TPB
 
   local_collision_queue.clear();

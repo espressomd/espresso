@@ -19,9 +19,6 @@ constraint using the  :class:`espressomd.interactions.NonBondedInteractions` cla
 Shaped-based constraints
 ------------------------
 
-.. note::
-    `Feature CONSTRAINTS required`
-
 In order to use shapes you first have to import the :mod:`espressomd.shapes`
 module. This module provides classes for the different available shapes::
 
@@ -543,14 +540,44 @@ position of the spring is at and its force constant is . A more
 flexible trap can be constructed with constraints, but this one runs on
 the GPU.
 
-.. _Homogeneous Magnetic Field:
+.. _External Fields:
 
-Homogeneous Magnetic Field 
+
+External Fields
 --------------------------
 
-:class:`espressomd.Constraints::HomogeneousMagneticField`
+There is a variety of external fields, which differ by how their
+values are obtained and how they couple to particles.
 
-This does not define a surface but is based on magnetic dipolar
-interaction with an external magnetic field. It applies to all particles
-with a dipole moment.
+Constant fields
+~~~~~~~~~~~~~~~
+
+These are fields that are constant in space or simple linear functions
+of the position.  The available fields are
+
+:class:`espressomd.Constraints::HomogeneousMagneticField`
+:class:`espressomd.Constraints::HomogeneousElectricField`
+:class:`espressomd.Constraints::LinearElectricPotential`
+:class:`espressomd.Constraints::HomogeneousFlowField`
+:class:`espressomd.Constraints::Gravity`
+
+a detailed describtion can be found in the class documentation.
+
+please be aware of the fact that a constant per particle force can be
+set via the `ext_force` property of the particles and is not provided
+here.
+
+
+Interpolated Force and Potential fields
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The values of these fields are obtained by interpolating table data,
+which has to be provided by the user. The fields differe by how
+they couple to particles, for a a detailed describtion their repective
+the class documentation.
+
+:class:`espressomd.Constraints::ForceField`
+:class:`espressomd.Constraints::PotentialField`
+:class:`espressomd.Constraints::ElectricPotential`
+:class:`espressomd.Constraints::FlowField`
 

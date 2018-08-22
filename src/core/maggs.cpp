@@ -43,11 +43,10 @@
  *  
  */
 
+#include "maggs.hpp"
 
-#include <mpi.h>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
+#ifdef ELECTROSTATICS
+
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
@@ -59,10 +58,12 @@
 #include "maggs.hpp"
 #include "thermostat.hpp"
 #include "cells.hpp"
-#include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 
-#ifdef ELECTROSTATICS
+#include <mpi.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 /* MPI tags for the maggs communications: */
 /* Used in maggs_init() -> calc_glue_patch(). */

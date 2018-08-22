@@ -30,7 +30,6 @@
 #include "utils.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
-#include "domain_decomposition.hpp"
 
 #include <algorithm>
 #include <cstdio>
