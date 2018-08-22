@@ -57,8 +57,9 @@ int Ellipsoid::calculate_dist(const double *ppos, double *dist,
   /* calculate dist and vec */
   double distance = 0.;
   for (int i = 0; i < 3; i++) {
-    vec[i] = (ppos_e[i] - Utils::sqr(m_semiaxes[i]) * ppos_e[i] /
-                              (l + Utils::sqr(m_semiaxes[i])));
+    vec[i] = (ppos_e[i] -
+              Utils::sqr(m_semiaxes[i]) * ppos_e[i] /
+                  (l + Utils::sqr(m_semiaxes[i])));
     distance += Utils::sqr(vec[i]);
   }
 

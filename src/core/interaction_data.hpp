@@ -188,7 +188,7 @@ struct IA_parameters {
   double LJ_shift = 0.0;
   double LJ_offset = 0.0;
   double LJ_min = 0.0;
-  /*@}*/
+/*@}*/
 
 #endif
 
@@ -440,7 +440,6 @@ struct Coulomb_parameters {
   double Dprefactor;
   DipolarInteraction Dmethod;
 #endif
-
 };
 
 #ifdef ELECTROSTATICS
@@ -477,15 +476,15 @@ struct Oif_global_forces_bond_parameters {
 
 /** Parameters for oif_local_forces */
 struct Oif_local_forces_bond_parameters {
-    double r0;
-    double ks;
-    double kslin;
-    double phi0;
-    double kb;
-    double A01;
-    double A02;
-    double kal;
-    double kvisc;
+  double r0;
+  double ks;
+  double kslin;
+  double phi0;
+  double kb;
+  double A01;
+  double A02;
+  double kal;
+  double kvisc;
 };
 
 /** Parameters for harmonic bond Potential */
@@ -497,15 +496,15 @@ struct Harmonic_bond_parameters {
 
 /** Parameters for Thermalized bond **/
 struct Thermalized_bond_parameters {
-    double temp_com;
-    double gamma_com;
-    double temp_distance;
-    double gamma_distance;
-    double r_cut;
-    double pref1_com;
-    double pref2_com;
-    double pref1_dist;
-    double pref2_dist;
+  double temp_com;
+  double gamma_com;
+  double temp_distance;
+  double gamma_distance;
+  double r_cut;
+  double pref1_com;
+  double pref2_com;
+  double pref1_dist;
+  double pref2_dist;
 };
 
 #ifdef ROTATION
@@ -526,11 +525,15 @@ struct Quartic_bond_parameters {
 };
 
 /** Parameters for coulomb bond Potential */
-struct Bonded_coulomb_bond_parameters { double prefactor; };
+struct Bonded_coulomb_bond_parameters {
+  double prefactor;
+};
 
 #ifdef P3M
 /** Parameters for coulomb bond p3m shortrange Potential */
-struct Bonded_coulomb_p3m_sr_bond_parameters { double q1q2; };
+struct Bonded_coulomb_p3m_sr_bond_parameters {
+  double q1q2;
+};
 #endif
 
 /** Parameters for three body angular potential (bond-angle potentials).
@@ -545,7 +548,6 @@ struct Angle_bond_parameters {
   double phi0;
   double cos_phi0;
   double sin_phi0;
-
 };
 
 /** Parameters for three body angular potential (bond_angle_harmonic).
@@ -598,8 +600,7 @@ struct Umbrella_bond_parameters {
 #endif
 
 /** Dummy parameters for -LJ Potential */
-struct Subt_lj_bond_parameters {
-};
+struct Subt_lj_bond_parameters {};
 
 /**Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
 struct Rigid_bond_parameters {
@@ -656,7 +657,6 @@ struct IBM_Triel_Parameters {
   tElasticLaw elasticLaw;
   double k1;
   double k2;
-
 };
 
 /** Parameters for IBM volume conservation bond **/
@@ -679,7 +679,6 @@ struct IBM_Tribend_Parameters {
 
   // Reference angle
   double theta0;
-
 };
 
 /** Union in which to store the parameters of an individual bonded interaction

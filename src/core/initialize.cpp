@@ -155,9 +155,9 @@ void on_integration_start() {
   }
 #endif
 
-  /********************************************/
-  /* end sanity checks                        */
-  /********************************************/
+/********************************************/
+/* end sanity checks                        */
+/********************************************/
 
 #ifdef LB_GPU
   if (lattice_switch & LATTICE_LB_GPU && this_node == 0) {
@@ -385,7 +385,6 @@ void on_constraint_change() {
 void on_lbboundary_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
   invalidate_obs();
-  
 
 #ifdef LB_BOUNDARIES
   if (lattice_switch & LATTICE_LB) {

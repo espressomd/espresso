@@ -31,10 +31,10 @@
 
 #ifdef HAT
 
-#include "utils.hpp"
 #include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
+#include "utils.hpp"
 
 ///
 int hat_set_params(int part_type_a, int part_type_b, double Fmax, double r);

@@ -50,7 +50,8 @@ inline void add_ljcos_pair_force(const Particle *const p1,
     /* cos part of ljcos potential. */
     if (dist > ia_params->LJCOS_rmin + ia_params->LJCOS_offset) {
       fac = (r_off / dist) * ia_params->LJCOS_alfa * ia_params->LJCOS_eps *
-            (sin(ia_params->LJCOS_alfa * Utils::sqr(r_off) + ia_params->LJCOS_beta));
+            (sin(ia_params->LJCOS_alfa * Utils::sqr(r_off) +
+                 ia_params->LJCOS_beta));
       for (j = 0; j < 3; j++)
         force[j] += fac * d[j];
     }
@@ -106,7 +107,8 @@ inline double ljcos_pair_energy(const Particle *p1, const Particle *p2,
     /* cosine part of the potential. */
     else if (dist < (ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
       return .5 * ia_params->LJCOS_eps *
-             (cos(ia_params->LJCOS_alfa * Utils::sqr(r_off) + ia_params->LJCOS_beta) -
+             (cos(ia_params->LJCOS_alfa * Utils::sqr(r_off) +
+                  ia_params->LJCOS_beta) -
               1.);
     }
     /* this should not happen! */

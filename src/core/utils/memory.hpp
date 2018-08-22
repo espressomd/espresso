@@ -7,17 +7,17 @@
 
 namespace Utils {
 
-  /*************************************************************/
-  /** \name Dynamic memory allocation.                         */
-  /*************************************************************/
-  /*@{*/
+/*************************************************************/
+/** \name Dynamic memory allocation.                         */
+/*************************************************************/
+/*@{*/
 
-  /* to enable us to make sure that freed pointers are invalidated, we normally
-     try to use realloc.
-     Unfortunately allocating zero bytes (which should be avoided) actually
-     allocates 16 bytes, and
-     reallocating to 0 also. To avoid this, we use our own malloc and realloc
-     procedures. */
+/* to enable us to make sure that freed pointers are invalidated, we normally
+   try to use realloc.
+   Unfortunately allocating zero bytes (which should be avoided) actually
+   allocates 16 bytes, and
+   reallocating to 0 also. To avoid this, we use our own malloc and realloc
+   procedures. */
 
 /** used instead of realloc.
     Makes sure that resizing to zero FREEs pointer */

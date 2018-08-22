@@ -72,7 +72,8 @@ int get_state_size_of_generator() {
 /** Communication */
 
 void mpi_random_seed_slave(int pnode, int cnt) {
-  int this_seed;  user_has_seeded=true;
+  int this_seed;
+  user_has_seeded = true;
 
   MPI_Scatter(nullptr, 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
 
@@ -142,11 +143,13 @@ void init_random(void) {
   mpiCallbacks().add(mpi_random_get_stat_slave);
 }
 
-void init_random_seed(int seed)
-{
-  std::seed_seq seeder{seed}; //come up with "sane" initialization to avoid too many zeros in the internal state of the Mersenne twister
+void init_random_seed(int seed) {
+  std::seed_seq seeder{seed}; // come up with "sane" initialization to avoid too
+                              // many zeros in the internal state of the
+                              // Mersenne twister
   generator.seed(seeder);
-  generator.discard(1e6); //discard the first 1e6 random numbers to warm up the Mersenne-Twister PRNG
+  generator.discard(1e6); // discard the first 1e6 random numbers to warm up the
+                          // Mersenne-Twister PRNG
 }
 
 } /* Random */

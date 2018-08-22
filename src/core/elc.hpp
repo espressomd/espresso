@@ -99,8 +99,8 @@ extern ELC_struct elc_params;
     @param bottom  dielectric constant of lower part
 */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-                   int neutralize, double delta_mid_top, double delta_mid_bot, int const_pot,
-                   double pot_diff);
+                   int neutralize, double delta_mid_top, double delta_mid_bot,
+                   int const_pot, double pot_diff);
 
 /// the force calculation
 void ELC_add_force();

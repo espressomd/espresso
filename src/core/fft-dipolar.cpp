@@ -36,9 +36,9 @@ void *fftw_malloc(size_t n);
 #include <mpi.h>
 
 #include "communication.hpp"
+#include "debug.hpp"
 #include "fft-common.hpp"
 #include "grid.hpp"
-#include "debug.hpp"
 
 /************************************************
  * variables
@@ -237,14 +237,13 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
   }
 
   /* Factor 2 for complex numbers */
-  dfft.send_buf = Utils::realloc(dfft.send_buf,
-                                           dfft.max_comm_size * sizeof(double));
-  dfft.recv_buf = Utils::realloc(dfft.recv_buf,
-                                           dfft.max_comm_size * sizeof(double));
-  (*data) =
-      Utils::realloc((*data), dfft.max_mesh_size * sizeof(double));
-  dfft.data_buf = Utils::realloc(dfft.data_buf,
-                                           dfft.max_mesh_size * sizeof(double));
+  dfft.send_buf =
+      Utils::realloc(dfft.send_buf, dfft.max_comm_size * sizeof(double));
+  dfft.recv_buf =
+      Utils::realloc(dfft.recv_buf, dfft.max_comm_size * sizeof(double));
+  (*data) = Utils::realloc((*data), dfft.max_mesh_size * sizeof(double));
+  dfft.data_buf =
+      Utils::realloc(dfft.data_buf, dfft.max_mesh_size * sizeof(double));
   if (!(*data) || !dfft.data_buf || !dfft.recv_buf || !dfft.send_buf) {
     fprintf(stderr, "%d: Could not allocate FFT data arays\n", this_node);
     errexit();

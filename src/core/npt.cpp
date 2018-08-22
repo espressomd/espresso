@@ -1,3 +1,2 @@
-#include "config.hpp"
 #include "npt.hpp"
-
+#include "config.hpp"

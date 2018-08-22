@@ -20,12 +20,12 @@
 */
 
 #include "minimize_energy.hpp"
+#include "cells.hpp"
+#include "communication.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
-#include "communication.hpp"
-#include "cells.hpp"
 
 #include <algorithm>
 #include <limits>

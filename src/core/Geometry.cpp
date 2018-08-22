@@ -1,3 +1,2 @@
-#include "config.hpp"
 #include "Geometry.hpp"
-
+#include "config.hpp"
