@@ -13,3 +13,8 @@ html_export(TUTORIAL tutorials_04_1 FILE "04-lattice_boltzmann_part1.ipynb")
 html_export(TUTORIAL tutorials_04_2 FILE "04-lattice_boltzmann_part2.ipynb")
 html_export(TUTORIAL tutorials_04_3 FILE "04-lattice_boltzmann_part3.ipynb")
 html_export(TUTORIAL tutorials_04_4 FILE "04-lattice_boltzmann_part4.ipynb")
+
+python_export(TUTORIAL tutorials_04_1 FILE "04-lattice_boltzmann_part1.ipynb")
+python_export(TUTORIAL tutorials_04_2 FILE "04-lattice_boltzmann_part2.ipynb")
+python_export(TUTORIAL tutorials_04_3 FILE "04-lattice_boltzmann_part3.ipynb")
+python_export(TUTORIAL tutorials_04_4 FILE "04-lattice_boltzmann_part4.ipynb")

@@ -14,3 +14,6 @@ add_custom_target(tutorials_02)
 
 html_export(TUTORIAL tutorials_02_1 FILE "02-charged_system-1.ipynb")
 html_export(TUTORIAL tutorials_02_2 FILE "02-charged_system-2.ipynb")
+
+python_export(TUTORIAL tutorials_02_1 FILE "02-charged_system-1.ipynb")
+python_export(TUTORIAL tutorials_02_2 FILE "02-charged_system-2.ipynb")

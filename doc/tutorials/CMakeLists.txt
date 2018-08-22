@@ -17,25 +17,42 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function(HTML_EXPORT)
-  cmake_parse_arguments(HTML_EXPORT "" "FILE;TUTORIAL" "" ${ARGN})
-  get_filename_component(BASE_NAME ${HTML_EXPORT_FILE} NAME_WE)
-  set(TARGET "${HTML_EXPORT_TUTORIAL}_html")
-  set(HTML_FILE_BASE "${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}")
-  set(HTML_FILE "${HTML_FILE_BASE}.html")
+function(NB_EXPORT)
+  cmake_parse_arguments(NB_EXPORT "" "FILE;TUTORIAL;TYPE" "" ${ARGN})
+  get_filename_component(BASE_NAME ${NB_EXPORT_FILE} NAME_WE)
+
+  if(${NB_EXPORT_TYPE} STREQUAL "html")
+    set(NB_EXT "html")
+  elseif(${NB_EXPORT_TYPE} STREQUAL "python")
+    set(NB_EXT "py")
+  endif()
+
+  set(TARGET "${NB_EXPORT_TUTORIAL}_${NB_EXPORT_TYPE}")
+  set(NB_FILE_BASE "${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}")
+  set(NB_FILE "${NB_FILE_BASE}.${NB_EXT}")
 
   add_custom_command(
-    OUTPUT ${HTML_FILE}
-    DEPENDS ${HTML_EXPORT_FILE}
+    OUTPUT ${NB_FILE}
+    DEPENDS ${NB_EXPORT_FILE}
     COMMAND
     ${IPYTHON_EXECUTABLE} nbconvert
-    --to html
-    --output "${HTML_FILE_BASE}"
-    ${HTML_EXPORT_FILE}
+    --to ${NB_EXPORT_TYPE}
+    --output "${NB_FILE_BASE}"
+    ${NB_EXPORT_FILE}
     )
 
-  add_custom_target(${TARGET} DEPENDS ${HTML_FILE})
+  add_custom_target(${TARGET} DEPENDS ${NB_FILE})
+endfunction(NB_EXPORT)
+
+function(HTML_EXPORT)
+  cmake_parse_arguments(HTML_EXPORT "" "FILE;TUTORIAL" "" ${ARGN})
+  nb_export(FILE ${HTML_EXPORT_FILE} TUTORIAL ${HTML_EXPORT_TUTORIAL} TYPE "html")
 endfunction(HTML_EXPORT)
+
+function(PYTHON_EXPORT)
+  cmake_parse_arguments(PYTHON_EXPORT "" "FILE;TUTORIAL" "" ${ARGN})
+  nb_export(FILE ${PYTHON_EXPORT_FILE} TUTORIAL ${PYTHON_EXPORT_TUTORIAL} TYPE "python")
+endfunction(PYTHON_EXPORT)
 
 ### Here: add new directory
 add_subdirectory(01-lennard_jones)
@@ -72,6 +89,18 @@ add_custom_target(tutorials_html DEPENDS
   tutorials_04_3_html
   tutorials_04_4_html
   tutorials_05_html
+  )
+
+add_custom_target(tutorials_python DEPENDS
+  tutorials
+  tutorials_01_python
+  tutorials_02_1_python
+  tutorials_02_2_python
+  tutorials_04_1_python
+  tutorials_04_2_python
+  tutorials_04_3_python
+  tutorials_04_4_python
+  tutorials_05_python
   )
 
 configure_file(Readme.rst ${CMAKE_CURRENT_BINARY_DIR}/Readme.rst COPYONLY)
