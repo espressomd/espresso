@@ -55,7 +55,7 @@ dt       = 0.01
 
 # Setup the MD parameters
 
-system = espressomd.System(box_l=[length, dieameter+4, diameter+4])
+system = espressomd.System(box_l=[length, diameter+4, diameter+4])
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 0.5
@@ -105,18 +105,15 @@ angle = pi/4.0
 orad  = (diameter - irad)/sin(angle)
 shift = 0.25*orad*cos(angle)
 
-hollow_cone = LBBoundary(shape=HollowCone(position_x=length/2.0 - shift,
-                                          position_y=(diameter+4)/2.0,
-                                          position_z=(diameter+4)/2.0,
-                                          orientation_x=1,
-                                          orientation_y=0,
-                                          orientation_z=0,
-                                          outer_radius=orad,
-                                          inner_radius=irad,
-                                          width=2.0,
-                                          opening_angle=angle,
-                                          direction=1))
-system.lbboundaries.add(hollow_cone)
+hollow_cone = HollowCone(
+    center=(length/2.0 - shift, (diameter+4)/2.0, (diameter+4)/2.0),
+    axis=[1,1,1], 
+    outer_radius=orad,
+    inner_radius=irad,
+    width=2.0,
+    opening_angle=angle,
+    direction=1)
+system.lbboundaries.add(LBBoundary(shape=hollow_cone))
 
 ################################################################################
 

@@ -47,11 +47,11 @@ Active matter is a term that describes a class of systems, in which energy is co
 
 \section{\label{sec:swimming}Active Particles in ESPResSo }
 
-The current development master of \es{} ships with the new \code{ENGINE} feature. N.B. There is currently no release version supporting this feature. \code{ENGINE} offers intuitive syntax for adding self-propulsion to a particle. The propulsion will occur along the vector that defines the orientation of the particle (henceforth referred to as `director'). In \es{} the orientation of the particle is defined by a quaternion; this in turn defines a rotation matrix that acts on the particle's initial orientation (along the z-axis), which then defines the particles current orientation through the matrix-oriented vector~\cite{UG,Limbach_06,Arnold_13}. Within the \code{ENGINE} feature there are two ways of setting up a self-propelled particle, with and without hydrodynamic interactions. The particle without hydrodynamic interactions will be discussed first, as it is the simplest case.
+The \code{ENGINE} feature offers intuitive syntax for adding self-propulsion to a particle. The propulsion will occur along the vector that defines the orientation of the particle (henceforth referred to as `director'). In \es{} the orientation of the particle is defined by a quaternion; this in turn defines a rotation matrix that acts on the particle's initial orientation (along the z-axis), which then defines the particles current orientation through the matrix-oriented vector~\cite{UG,Limbach_06,Arnold_13}. Within the \code{ENGINE} feature there are two ways of setting up a self-propelled particle, with and without hydrodynamic interactions. The particle without hydrodynamic interactions will be discussed first, as it is the simplest case.
 
 \subsection{\label{sub:langevin}Self-Propulsion without Hydrodynamics}
 
-For this type of self-propulsion the Langevin thermostat is exploited. The Langevin thermostat causes a particle to experience a velocity-dependent friction~\cite{UG}. When a constant force is applied along the director, the friction causes the particle to attain a terminal velocity, due to the balance of driving and friction force, see Fig.~\ref{fig:balance}. The exponent with which the particle's velocity relaxes towards this value, depends on the strength of the friction and the mass of the particle. The \code{ENGINE} feature implies that rotation of the particles (the \code{ROTATION} feature) is compiled into \es{}. The particle can thus reorient due to external torques or due to thermal fluctuations, whenever the rotational degrees of freedom are thermalized. This `engine' building block can be connected to other particles,~\textit{e.g.}, via the virtual sites (rigid bonds)~\cite{UG} to construct complex self-propelled objects\cite{ilse16a}.
+For this type of self-propulsion the Langevin thermostat is exploited. The Langevin thermostat causes a particle to experience a velocity-dependent friction~\cite{UG}. When a constant force is applied along the director, the friction causes the particle to attain a terminal velocity, due to the balance of driving and friction force, see Fig.~\ref{fig:balance}. The exponent with which the particle's velocity relaxes towards this value, depends on the strength of the friction and the mass of the particle. The \code{ENGINE} feature implies that rotation of the particles (the \code{ROTATION} feature) is compiled into \es{}. The particle can thus reorient due to external torques or due to thermal fluctuations, whenever the rotational degrees of freedom are thermalized. Note that the rotation of the particles has to be enabled explicitly via their \code{ROTATION} property. This `engine' building block can be connected to other particles,~\textit{e.g.}, via the virtual sites (rigid body)~\cite{UG} to construct complex self-propelled objects\cite{ilse16a}.
 
 \begin{figure}[!htb]
 \begin{center}
@@ -60,7 +60,7 @@ For this type of self-propulsion the Langevin thermostat is exploited. The Lange
 \caption{\label{fig:balance}A balance of the driving force in the direction defined by the `director' unit vector and the friction due to the Langevin thermostat results in a constant terminal velocity.}
 \end{figure}
 
-The syntax for the Langevin-based swimming is incorporated in the \codees{ParticleHandle} command of \es{}. You can either set up the self-propulsion during the creation of a particle or at a later stage. In the following example we set up a particle with ID 0 at the position $(1,1,1)$ and set its terminal velocity to $1.0$.
+The configuration for the Langevin-based swimming is exposed as an attribute of the \codees{ParticleHandle} class of \es{}, which represents a particle in the simulation. You can either set up the self-propulsion during the creation of a particle or at a later stage. In the following example we set up a particle with ID 0 at the position $(1,1,1)$ and set its terminal velocity to $1.0$.
 \begin{espresso}
 system.part.add(pos=[1,1,1],swimming={'v_swim':1.0})
 \end{espresso}
@@ -143,7 +143,6 @@ $ cp myconfig-sample.hpp myconfig.hpp
 \end{bash}
 To run all the tutorials you need to uncomment the following \code{FEATURES}:
 \begin{bash}
-#define CONSTRAINTS
 #define MASS
 #define ENGINE
 #define ROTATION
@@ -223,7 +222,7 @@ In this tutorial you will consider the `rectifying' properties of certain geomet
 
 \subsection{\label{sub:rgtut}The Rectifying-Geometry Tutorial}
 
-Here, we will set up a rectifying geometry. In the folder EXERCISES you will find the \code{rectification_geometry.py} file. This will help you construct and visualize a rectifying geometry of a cylindrical chamber with a wedge-like obstacle in the center, see Fig.~\ref{fig:system}(a). You will first need to complete the exercises before the script evaluates properly. The wedge-like obstacle causes rectification when the particles are self-propelled. As you can see the LB is used and the rectifying geometry is built up using the \codees{LBBoundary} command, see the User Guide for more information~\cite{UG}. The reason for the use of LB is to help visualize the geometry, as there is currently no means in \es{} or VMD to visualize constraints.
+Here, we will set up a rectifying geometry. In the folder EXERCISES you will find the \code{rectification_geometry.py} file. This will help you construct and visualize a rectifying geometry of a cylindrical chamber with a wedge-like obstacle in the center, see Fig.~\ref{fig:system}(a). You will first need to complete the exercises before the script evaluates properly. The wedge-like obstacle causes rectification when the particles are self-propelled. As you can see the LB is used and the rectifying geometry is built by adding instances of the \codees{LBBoundary} class to the system, see the User Guide for more information~\cite{UG}. The reason for the use of LB is to help visualize the geometry. An alternative is the OpenGL visualizer included with \es{}.
 
 \begin{figure}[!htb]
 \begin{center}
@@ -232,7 +231,7 @@ Here, we will set up a rectifying geometry. In the folder EXERCISES you will fin
 \caption{\label{fig:system}(a) Sketch of the rectifying geometry which we simulate for this tutorial. (b) The geometry of the \codees{HollowCone} constraint and \codees{LBBoundary}. The figure is cylindrically symmetric about the x-axis. The size of the pore opening is determined by $r_{i}$, the length of the cone by $r_{o}$ and the opening angle by $\alpha$. Finally, the pore is given a width using the parameter $w$.}
 \end{figure}
 
-The first block of the script sets up the basic simulation parameters, with which you should be familiar -- if you are struggling with this part, please consult the previous tutorials. The second block sets up the boundaries using the \codees{LBBoundary} command that was introduced in the LB tutorial. Here it is worth noting that the geometric parameters of the \codees{HollowCone} command are somewhat counterintuitive. They are illustrated in Fig.~\ref{fig:system}(b) for clarification. Finally, in the third block the code
+The first block of the script sets up the basic simulation parameters, with which you should be familiar -- if you are struggling with this part, please consult the previous tutorials. The second block sets up the boundaries using instances of \codees{LBBoundary}, as was introduced in the LB tutorial. Here it is worth noting that the geometric parameters of the \codees{HollowCone} command are somewhat counterintuitive. They are illustrated in Fig.~\ref{fig:system}(b) for clarification. Finally, in the third block the code
 \begin{espresso}
 lbf.print_vtk_boundary("{}/boundary.vtk".format(outdir))
 \end{espresso}
