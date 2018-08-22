@@ -67,9 +67,9 @@ The following features will likely not be part of the ESPResSo 4.0 release, but 
 The following functionality is removed permanently:
 * Blockfile support, which is replaced by support for the h5md format as well as checkpointing based on the pickle Python module.
 * Some of the convenience functions for particle creation such as salt and counterions, as these can be replaced by a very few lines of Python in the simulation script.
-* The lj_angle and angledist (not-qutie)-pair potentials
+* The lj_angle and angledist (not-quite)-pair potentials
 * The following analysis methods:
-  diffusion_profile, cwvac, p_isnt, ..._mol, cel_gpb, dipmom_normal, MSd, angularmomentum, cluster_size_dist, mol, lipid_orient_order, get_lipid_oriends, current, wall_stuff,
+  diffusion_profile, cwvac, p_inst, ..._mol, cel_gpb, dipmom_normal, MSD, angularmomentum, cluster_size_dist, mol, lipid_orient_order, get_lipid_orients, current, wall_stuff,
   necklace, bilayer, modes2d
 
 
