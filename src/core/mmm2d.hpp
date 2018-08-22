@@ -29,7 +29,9 @@
  */
 #ifndef MMM2D_H
 #define MMM2D_H
-#include "utils.hpp"
+
+#include "config.hpp"
+
 #ifdef ELECTROSTATICS
 
 /** error messages, see above */
