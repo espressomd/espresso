@@ -121,6 +121,11 @@ class ParticleProperties(ut.TestCase):
             if espressomd.has_features(["PARTICLE_ANISOTROPY"]):
                 test_gamma = generateTestForVectorProperty(
                     "gamma", np.array([2., 9., 0.23]))
+                def test_gamma_single(self):
+                    self.system.part[self.pid].gamma = 17.4
+                    np.testing.assert_array_equal(np.copy(self.system.part[self.pid].gamma),
+                                                  np.array([17.4, 17.4, 17.4]),
+                                                  "gamma: value set and value gotten back differ.")
             else:
                 test_gamma = generateTestForScalarProperty("gamma", 17.3)
 

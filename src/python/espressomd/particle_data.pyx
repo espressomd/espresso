@@ -918,7 +918,7 @@ cdef class ParticleHandle(object):
         IF PARTICLE_ANISOTROPY:
             property gamma:
                 """
-                The rotational frictional coefficient used in the the Langevin thermostat.
+                The body-fixed frictional coefficient used in the the Langevin thermostat.
 
                 gamma : list of :obj:`float`
 
@@ -932,6 +932,11 @@ cdef class ParticleHandle(object):
                 """
                 def __set__(self, _gamma):
                     cdef Vector3d gamma
+
+                    # We accept a single number by just repeating it
+                    if not isinstance(_gamma, collections.Iterable):
+                        _gamma = 3 * [_gamma]
+
                     check_type_or_throw_except(
                         _gamma, 3, float, "Friction has to be 3 floats.")
                     for i in range(3):
