@@ -45,13 +45,13 @@ In this tutorial we explore the ways to simulate self-propulsion in the simulati
 
 Active matter is a term that describes a class of systems, in which energy is constantly consumed to perform work. These systems are therefore highly out-of-equilibrium (thermodynamically) and (can) thus defy description using the standard framework of statistical mechanics. Active systems are, however, ubiquitous. On our length scale, we encounter flocks of birds~\cite{Ballerini_08}, schools of fish~\cite{Katz_11}, and, of course, humans~\cite{Helbing_00,Zhang_13,Sliverberg_13}; on the mesoscopic level examples are found in bacteria~\cite{Sokolov_07,Schwarz-Linek_12,Reufer_14}, sperm~\cite{Woolley_03,Riedel_05,Ma_14}, and algae~\cite{Polin_09,Geyer_13}; and on the nanoscopic level, transport along the cytoskeleton is achieved by myosin motors~\cite{Mizuno07}. This exemplifies that range of length scales which the field of active matter encompasses, as well as its diversity. Recent years have seen a huge increase in studies into systems consisting of self-propelled particles, in particular artificial ones in the colloidal regime~\cite{ismagilov,Paxton_04,Wang_06,Brown,Ebbens,Ebbens_12,Howse_07,Valadares_10,simmchen,Yoshinaga,Baraban_13a,Buttinoni_12,Solovev_09,Mei_11}. These self-propelled colloids show promise as physical model systems for complex biological behavior (bacteria moving collectively) and could be used to answer fundamental questions concerning out-of-equilibrium statistical physics~\cite{Cates_12,Cates_14}. Simulations can also play an important role in this regard, as the parameters are more easily tunable and the results `cleaner' than in experiments. The above should give you some idea of the importance of the field of active matter and why you should be interested in performing simulations in it.
 
-\section{\label{sec:swimming}Active Particles in ESPResSo}
+\section{\label{sec:swimming}Active Particles in ESPResSo }
 
 The current development master of \es{} ships with the new \code{ENGINE} feature. N.B. There is currently no release version supporting this feature. \code{ENGINE} offers intuitive syntax for adding self-propulsion to a particle. The propulsion will occur along the vector that defines the orientation of the particle (henceforth referred to as `director'). In \es{} the orientation of the particle is defined by a quaternion; this in turn defines a rotation matrix that acts on the particle's initial orientation (along the z-axis), which then defines the particles current orientation through the matrix-oriented vector~\cite{UG,Limbach_06,Arnold_13}. Within the \code{ENGINE} feature there are two ways of setting up a self-propelled particle, with and without hydrodynamic interactions. The particle without hydrodynamic interactions will be discussed first, as it is the simplest case.
 
 \subsection{\label{sub:langevin}Self-Propulsion without Hydrodynamics}
 
-For this type of self-propulsion the Langevin thermostat is exploited. The Langevin thermostat causes a particle to experience a velocity-dependent friction~\cite{UG}. When a constant force is applied along the director, the friction causes the particle to attain a terminal velocity, due to the balance of driving and friction force, see Fig.~\ref{fig:balance}. The exponent with which the particle's velocity relaxes towards this value, depends on the strength of the friction and the mass of the particle. The \code{ENGINE} feature implies that rotation of the particles (the \code{ROTATION} feature) is compiled into \es{}. The particle can thus reorient due to external torques or due to thermal fluctuations, whenever the rotational degrees of freedom are thermalized. This `engine' building block can be connected to other particles,~\textit{e.g.}, via the virtual sites (rigid bonds)~\cite{UG} to construct complex self-propelled objects.
+For this type of self-propulsion the Langevin thermostat is exploited. The Langevin thermostat causes a particle to experience a velocity-dependent friction~\cite{UG}. When a constant force is applied along the director, the friction causes the particle to attain a terminal velocity, due to the balance of driving and friction force, see Fig.~\ref{fig:balance}. The exponent with which the particle's velocity relaxes towards this value, depends on the strength of the friction and the mass of the particle. The \code{ENGINE} feature implies that rotation of the particles (the \code{ROTATION} feature) is compiled into \es{}. The particle can thus reorient due to external torques or due to thermal fluctuations, whenever the rotational degrees of freedom are thermalized. This `engine' building block can be connected to other particles,~\textit{e.g.}, via the virtual sites (rigid bonds)~\cite{UG} to construct complex self-propelled objects\cite{ilse16a}.
 
 \begin{figure}[!htb]
 \begin{center}
@@ -64,9 +64,9 @@ The syntax for the Langevin-based swimming is incorporated in the \codees{Partic
 \begin{espresso}
 system.part.add(pos=[1,1,1],swimming={'v_swim':1.0})
 \end{espresso}
-As you can see, the keyword for setting up the engine is \codees{swimming}. The code \codees{'v_swim':1.0} sets the terminal velocity to $1.0$ (in MD units). Setting the terminal velocity directly is possible, since the terminal velocity is simply the ratio of the applied driving force and Langevin friction coefficient. It is also possible to set the driving force directly, which requires you to calculate/compute the terminal velocity. This can be achieved by replacing \codees{v_swim} with \codees{f_swim}. Please note, that the options \codees{v_swim} and \codees{f_swim} are mutually exclusive. Also, one is limited to the force/velocity and time step that can be used, by the stability criteria on the Langevin algorithm itself.
+As you can see, the keyword for setting up the engine is \codees{swimming}. The code \codees{'v_swim':1.0} sets the terminal velocity to $1.0$ (in MD units). Setting the terminal velocity directly is possible, since the terminal velocity is simply the ratio of the applied driving force and Langevin friction coefficient. It is also possible to set the driving force directly, which requires you to calculate/compute the terminal velocity. This can be achieved by replacing \codees{v_swim} with \codees{f_swim}. Please note, that the options \codees{v_swim} and \codees{f_swim} are mutually exclusive. Also, one is limited to the force/velocity and time step that can be used by the stability criteria on the Langevin algorithm itself.
 
-To modify a passive particle (switch on self-propulsion) or deactivate activity, one can use the following commands. Suppose a passive particle with, say ID 1, has been set up, we can add self-propulsion to it by specifying
+To modify a passive particle (switch on self-propulsion) or deactivate activity, one can use the following commands: Suppose a passive particle with, say ID 1, has been set up, we can add self-propulsion to it by specifying
 \begin{espresso}
 system.part[1].swimming = {'f_swim':0.03}
 \end{espresso}
@@ -101,7 +101,7 @@ system.part.add(pos=[1,1,1],swimming={'f_swim':0.1, 'dipole_length':1.0})
 \end{espresso}
 The \codees{v_swim} option exists, but it does not produce the right flow field. With \codees{v_swim} one has motion, but no dipolar flow field. This can be used to check whether the presence of a dipolar flow field is the dominant term in describing the interactions. The keys \codees{f_swim} and \codees{dipole_length} together determine what the dipole strength is. One should be careful, however, the \codees{dipole_length} should be at least one grid spacing, since use is made of the LB interpolation scheme. If the length is less than one grid spacing, you can easily run into discretization artifacts or cause the particle not to move. This dipole length together with the director and the keyword \codees{pusher/puller} determines where the counter force on the fluid is applied to make the system force free, see Fig.~\ref{fig:pusher-puller}(a) for an illustration of the setup. That is to say, a force of magnitude \codees{f_swim} is applied to the particle (leading to a Stokeslet in the fluid, due to friction) and a counter force is applied to compensate for this in the fluid (resulting in an extended dipole flow field, due to the second monopole). For a puller the counter force is applied in front of the particle and for a pusher it is in the back (Fig.~\ref{fig:pusher-puller}(b)).
 
-Finally, there are a few caveats to the swimming setup with hydrodynamic interactions. First, the stability of this algorithm is governed by the stability limitations of the LB method. Second, since the particle is essentially a point particle, there is no rotation caused by the fluid flow,~\textit{e.g.}, a swimmer in a Posseuille flow. If the thermostat is switched on, the rotational degrees of freedom will also be thermalized, but there is still no contribution of rotation due to `external' flow fields. A rather unsatisfying solution to this problem is offered by the \codees{rotational_friction} option, which allows one to include the effect of fluid flow on the rotation. The algorithm computes the difference in fluid flow velocity between the center of the particle and the coupling point, and takes the cross product of that with the dipole length. This quantity is then converted into a torque using the \codees{rotational_friction}. It is recommended to use an alternative means of obtaining rotations in your LB swimming simulations. For example, by constructing a raspberry particle~\cite{lobaskin04,chatterji05,fischer15,degraaf15}.
+Finally, there are a few caveats to the swimming setup with hydrodynamic interactions. First, the stability of this algorithm is governed by the stability limitations of the LB method. Second, since the particle is essentially a point particle, there is no rotation caused by the fluid flow,~\textit{e.g.}, a swimmer in a Posseuille flow. If the thermostat is switched on, the rotational degrees of freedom will also be thermalized, but there is still no contribution of rotation due to `external' flow fields. A rather unsatisfying solution to this problem is offered by the \codees{rotational_friction} option, which allows one to include the effect of fluid flow on the rotation. The algorithm computes the difference in fluid flow velocity between the center of the particle and the coupling point, and takes the cross product of that with the dipole length. This quantity is then converted into a torque using the \codees{rotational_friction}. It is recommended to use an alternative means of obtaining rotations in your LB swimming simulations. For example, by constructing a raspberry particle~\cite{lobaskin04,chatterji05,fischer15,degraaf15,degraaf16b}.
 
 \section{\label{sec:enhanced}Enhanced Diffusion}
 
@@ -130,10 +130,7 @@ To start, you will need the latest version of the \es master. This can be obtain
 \begin{bash}
 $ git clone https://github.com/espressomd/espresso.git
 \end{bash}
-Then checkout the right commit to perform the simulations with. N.B. the active matter capability of \es{} is not yet a part of the release version. You can set get it via
-\begin{bash}
-$ git checkout <name_of_remote_repository>/python -b my_active_matter_branch
-\end{bash}
+
 Now you are ready to configure \es{} in the newly created \es{} directory.
 \begin{bash}
 $ mkdir build
@@ -160,7 +157,7 @@ Now you are ready to build \es{}.  You have to run \code{cmake} again to process
 $ cmake ..
 $ make -j 8
 \end{bash}
-Next you can find the tutorial files in the ``../tutorials/python/06-active\_mater/'' directory. There are two folders, one called `EXERCISES' and one called `SOLUTIONS'. Copy the content of `EXERCISES' into your build directory.
+Next you can find the tutorial files in the ``doc/tutorials/06-active\_mater/'' directory. There are two folders, one called `EXERCISES' and one called `SOLUTIONS'. Copy the content of `EXERCISES' into your build directory.
 
 \subsection{\label{sub:edtut}The Enhanced-Diffusion Tutorial}
 
@@ -177,10 +174,10 @@ where the parameter 0.0 gives the magnitude of the self-propulsion velocity. At 
 pos_id = ParticlePositions(ids=[0])
 msd = Correlator(obs1=pos_id,
                    corr_operation="square_distance_componentwise",
-                   dt=tstep,
+                   delta_N=1,
                    tau_max=tmax,
                    tau_lin=16)
-system.auto_update_correlators.add(msd)
+system.auto_update_accumulators.add(msd)
 
 # Integrate
 
@@ -189,17 +186,17 @@ for i in range(sampsteps):
 
 # Finalize the correlator and write to disk
 
-system.auto_update_correlators.remove(msd)
+system.auto_update_accumulators.remove(msd)
 msd.finalize()
 numpy.savetxt("output.dat",msd.result())
 \end{espresso}
 Here, the observable \codees{pos_id} is set to the particle positions of the only particle in the simulation (with ID 0). Then an MSD correlation is created on the next line. Since the MSD is an auto-correlation function, we only require one entry for the observables, see the User Guide for additional information~\cite{UG}. The command \codees{corr_operation} allows one to choose the type of correlation, in this case \codees{"square_distance_componentwise"}, which gives the MSD for each component (x, y, and z). The time step \codees{dt} is set next, followed by the value of the maximum time (\codees{tmax}) over which the correlation is to be computed. This maximum can be set to the total integrated time. However, it is recommended --- as in the script --- not to do so, since this will give very limited sampling for the longest times (one or even zero samples). In the tutorial only a 1000th of the total run length is used for \codees{tmax}, which means at least 1000 samples are gathered for the longest time in the correlation function. You can play with this parameter to see the effect on the quality of the sampling. The command \codees{tau_lin=16} indicates that the intervals of sampling are chosen by the correlator according to an exponential distribution, see the User Guide~\cite{UG}. Next the command
 \begin{espresso}
-system.auto_update_correlators.add(msd)
+system.auto_update_accumulators.add(msd)
 \end{espresso}
 lets \es{} know to start measuring the correlation function and to do so automatically during integration. After integration, the commands
 \begin{espresso}
-system.auto_update_correlators.remove(msd)
+system.auto_update_accumulators.remove(msd)
 msd.finalize()
 \end{espresso}
 ensure that the auto updating is terminated and that any available information used to create the auto correlation. That is, information that has not yet been used is processed. Finally, the correlation allows you to write output to disk in a format that depends on the specific choice of correlation.

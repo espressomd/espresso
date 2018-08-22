@@ -29,6 +29,7 @@ import numpy as np
 import os
 import sys
 
+import espressomd
 from espressomd import assert_features, lb
 
 

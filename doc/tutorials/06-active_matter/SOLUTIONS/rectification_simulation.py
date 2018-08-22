@@ -30,6 +30,7 @@ import numpy as np
 import os
 import sys
 
+import espressomd
 from espressomd import assert_features
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
@@ -87,7 +88,7 @@ prod_steps  = 500
 prod_length = 500
 dt          = 0.01
 
-# Setup the MD parameters 
+# Setup the MD parameters
 
 system = espressomd.System(box_l=[length, diameter + 4, diameter + 4])
 system.box_l = [length, diameter + 4, diameter + 4]
@@ -97,10 +98,10 @@ system.min_global_cut = 0.5
 system.thermostat.set_langevin(kT=1.0,gamma=1.0)
 
 ################################################################################
-# 
+#
 # Here we use exactly the same parameters for the geometry of the constraints
 # that was used for the LB boundaries. This can be done, since the distance
-# function used for the constraints is the same as the one used for the 
+# function used for the constraints is the same as the one used for the
 # LB boundaries.
 #
 ################################################################################
@@ -142,9 +143,9 @@ system.constraints.add(shape=hollow_cone,particle_type=4)
 
 ################################################################################
 #
-# We set up a WCA (almost-hard) interaction between the particles and the 
+# We set up a WCA (almost-hard) interaction between the particles and the
 # the confining geometry. We do not have particle-particle interactions, which
-# are not necessary to observe rectification. 
+# are not necessary to observe rectification.
 #
 ################################################################################
 
@@ -163,7 +164,7 @@ system.non_bonded_inter[0,4].lennard_jones.set_params(epsilon=eps, sigma=sig, cu
 # Setup the particles. We put them all in two points one in each chamber
 # and give them random directions. This speeds up the equilibration, since
 # putting them all in a single chamber, would make it take a long time to
-# observe the effect of rectification. Note that they need to be able to 
+# observe the effect of rectification. Note that they need to be able to
 # rotate freely, hence the command rotation=[1,1,1] is provided
 #
 ################################################################################
@@ -193,28 +194,28 @@ system.integrator.run(25*prod_length)
 # Output the CMS coordinates
 
 with open("{}/CMS_{}.dat".format(outdir,vel), "w") as outfile:
-    print("####################################################",file=outfile) 
-    print("#        time    CMS x coord    average CMS        #",file=outfile) 
-    print("####################################################",file=outfile) 
-     
+    print("####################################################",file=outfile)
+    print("#        time    CMS x coord    average CMS        #",file=outfile)
+    print("####################################################",file=outfile)
+
     # Production run
-     
+
     dev_sum = 0.0
     dev_av  = 0.0
     time_0 = system.time
     for i in range(prod_steps):
-        # We output the coordinate of the center of mass in 
-        # the direction of the long axis, here we consider 
+        # We output the coordinate of the center of mass in
+        # the direction of the long axis, here we consider
         # the deviation from the center
-     
+
         dev = system.galilei.system_CMS()[0] - 0.5*length;
-     
+
         if i > 0:
             dev_sum = dev_sum + dev
             dev_av  = dev_sum/i
 
         time = system.time - time_0
-     
+
         print("{} {} {}".format(time,dev,dev_av),file=outfile)
 
         system.integrator.run(prod_length)

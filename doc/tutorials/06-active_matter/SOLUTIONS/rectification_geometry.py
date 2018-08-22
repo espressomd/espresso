@@ -30,6 +30,7 @@ import numpy as np
 import os
 import sys
 
+import espressomd
 from espressomd import assert_features, lb
 from espressomd.lbboundaries import LBBoundary
 from espressomd.shapes import Cylinder, Wall, HollowCone
@@ -52,7 +53,7 @@ length   = 100
 diameter = 20
 dt       = 0.01
 
-# Setup the MD parameters 
+# Setup the MD parameters
 
 system = espressomd.System(box_l=[length, dieameter+4, diameter+4])
 system.cell_system.skin = 0.1
@@ -71,7 +72,7 @@ lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco, tau=dt, fric=frict)
 system.actors.add(lbf)
 
 ################################################################################
-# 
+#
 # Now we set up the three LB boundaries that form the rectifying geometry.
 # The cylinder boundary/constraint is actually already capped, but we put
 # in two planes for safety's sake. If you want to create an cylinder of
