@@ -1,11 +1,10 @@
 
-#include "config.hpp"
+#include "ibm_tribend.hpp"
 
 #ifdef IMMERSED_BOUNDARY
 
 #include "communication.hpp"
 #include "grid.hpp"
-#include "immersed_boundary/ibm_tribend.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 
