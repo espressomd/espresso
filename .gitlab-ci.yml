@@ -244,6 +244,19 @@ intel:17:
 
 ### Other builds
 
+style:
+  stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
+  script:
+    - find . -name '*.h' -o -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' | xargs clang-format-6.0 -i -style=file
+    - find . -name '*.py' -o -name '*.pyx' -o -name '*.pxd' | xargs autopep8 --in-place --aggressive --aggressive
+    - git --no-pager diff
+    - git diff-index --quiet HEAD -- || echo "Failed style check" && exit 1
+    - echo "Passed style check"
+  tags:
+    - docker
+    - linux
+
 check_sphinx:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
