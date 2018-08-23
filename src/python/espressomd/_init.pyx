@@ -37,4 +37,3 @@ script_interface.init()
 if this_node != 0:
     mpi_loop()
     sys.exit(0)
-

@@ -5,7 +5,9 @@ import espressomd.analyze
 import espressomd.lb
 import numpy as np
 
+
 class ComFixed(ut.TestCase):
+
     def com(self, s):
         return np.average(s.part[:].pos, axis=0, weights=s.part[:].mass)
 
@@ -14,7 +16,7 @@ class ComFixed(ut.TestCase):
         skin = 0.4
 
         s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        s.seed  = s.cell_system.get_state()['n_nodes'] * [1234]
+        s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
         np.random.seed(seed=s.seed)
 
         s.box_l = [10, 10, 10]
@@ -25,9 +27,9 @@ class ComFixed(ut.TestCase):
 
         for i in range(100):
             r = [0.5, 1., 1.] * s.box_l * np.random.random(3)
-            v = 3*[0.]
+            v = 3 * [0.]
             # Make sure that id and type gaps work correctly
-            s.part.add(id=2*i, pos=r, v=v, type=2*(i % 2))
+            s.part.add(id=2 * i, pos=r, v=v, type=2 * (i % 2))
 
         if espressomd.has_features(["MASS"]):
             # Avoid masses too small for the time step

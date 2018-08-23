@@ -26,10 +26,12 @@ import numpy as np
 import espressomd  # pylint: disable=import-error
 from espressomd import reaction_ensemble
 
+
 class ReactionEnsembleTest(ut.TestCase):
+
     """Test the core implementation of the reaction ensemble."""
 
-    # The reaction ensemble follows the ideal titration curve only if N>>1, 
+    # The reaction ensemble follows the ideal titration curve only if N>>1,
     # Ideal curve is derived in the grandcanionical ensemble and for low N
     # there are systematic devations caused by differences between the
     # ensembles. This is not an error but a fundamental difference (various
@@ -39,7 +41,7 @@ class ReactionEnsembleTest(ut.TestCase):
     type_HA = 0
     type_A = 1
     type_H = 2
-    target_alpha=0.6; 
+    target_alpha = 0.6
     # We get best statistics at alpha=0.5 Then the test is least sensistive to # the exact sequence of random numbers and does not require hard-coded
     # output values
     temperature = 1.0
@@ -49,7 +51,7 @@ class ReactionEnsembleTest(ut.TestCase):
     reactant_coefficients = [1]
     product_types = [type_A, type_H]
     product_coefficients = [1, 1]
-    nubar=1; 
+    nubar = 1
     system = espressomd.System(box_l=np.ones(3) * (N0 / c0)**(1.0 / 3.0))
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
     np.random.seed(69) #make reaction code fully deterministic
@@ -59,7 +61,7 @@ class ReactionEnsembleTest(ut.TestCase):
     # Requires N0>>1, otherwise discrete character of N changes the statistics (N>20 should suffice)
     # gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
     # degree of dissociation alpha = N_A / N_HA = N_H / N_0
-    gamma=target_alpha**2/(1.-target_alpha)*N0/(volume**nubar)
+    gamma = target_alpha**2 / (1. - target_alpha) * N0 / (volume**nubar)
     RE = reaction_ensemble.ReactionEnsemble(
         temperature=temperature,
         exclusion_radius=exclusion_radius)
@@ -78,16 +80,15 @@ class ReactionEnsembleTest(ut.TestCase):
             reactant_types=cls.reactant_types,
             reactant_coefficients=cls.reactant_coefficients,
             product_types=cls.product_types,
-            product_coefficients=cls.product_coefficients, 
+            product_coefficients=cls.product_coefficients,
             default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1}, check_for_electroneutrality=True)
 
     @classmethod
-    def ideal_alpha(cls, gamma,N0,V,nubar):
+    def ideal_alpha(cls, gamma, N0, V, nubar):
         # gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
         # degree of dissociation alpha = N_A / N_HA = N_H / N_0
-        X=2*N0/(gamma*V**nubar);
-        return (np.sqrt(1+2*X)-1)/X
-    
+        X = 2 * N0 / (gamma * V**nubar)
+        return (np.sqrt(1 + 2 * X) - 1) / X
 
     def test_ideal_titration_curve(self):
         N0 = ReactionEnsembleTest.N0
@@ -101,21 +102,23 @@ class ReactionEnsembleTest(ut.TestCase):
 
         volume = ReactionEnsembleTest.volume
         RE = ReactionEnsembleTest.RE
-        target_alpha = ReactionEnsembleTest.target_alpha;
-        
-        #chemical warmup - get close to chemical equilibrium before we start sampling
-        RE.reaction(5*N0)
+        target_alpha = ReactionEnsembleTest.target_alpha
 
-        system.seed = system.cell_system.get_state()['n_nodes'] * [np.random.randint(5)]
+        # chemical warmup - get close to chemical equilibrium before we start
+        # sampling
+        RE.reaction(5 * N0)
+
+        system.seed = system.cell_system.get_state()[
+            'n_nodes'] * [np.random.randint(5)]
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
         num_samples = 1000
         for i in range(num_samples):
-            RE.reaction(10);
-            average_NH += system.number_of_particles( type=type_H)
-            average_NHA += system.number_of_particles( type=type_HA)
-            average_NA += system.number_of_particles( type=type_A)
+            RE.reaction(10)
+            average_NH += system.number_of_particles(type=type_H)
+            average_NHA += system.number_of_particles(type=type_HA)
+            average_NA += system.number_of_particles(type=type_A)
         average_NH /= num_samples
         average_NA /= num_samples
         average_NHA /= num_samples
@@ -124,18 +127,19 @@ class ReactionEnsembleTest(ut.TestCase):
         # deviation of average alpha is about 0.003 (determined from 40
         # repeated simulations).  We set the desired accuracy to 5*std = 0.015
         rel_error_alpha = abs(
-            average_alpha - target_alpha )/target_alpha; # relative error
+            average_alpha - target_alpha) / target_alpha
+        # relative error
         self.assertLess(
             rel_error_alpha,
             0.015,
             msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
-            +"  gamma: "+str(gamma)
-            +"  average_NH: "+str(average_NH)
-            +"  average_NA: "+str(average_NA) 
-            +"  average_NHA:"+str(average_NHA) 
-            +"  average alpha: "+str(average_alpha)
-            +"  target_alpha: "+str(target_alpha)
-            )
+            + "  gamma: " + str(gamma)
+            + "  average_NH: " + str(average_NH)
+            + "  average_NA: " + str(average_NA)
+            + "  average_NHA:" + str(average_NHA)
+            + "  average alpha: " + str(average_alpha)
+            + "  target_alpha: " + str(target_alpha)
+        )
 
     def test_reaction_system(self):
         RE_status = ReactionEnsembleTest.RE.get_status()

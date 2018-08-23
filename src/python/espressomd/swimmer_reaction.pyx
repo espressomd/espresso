@@ -15,8 +15,8 @@ IF SWIMMER_REACTIONS:
 
         .. note::
            Requires the features SWIMMER_REACTIONS.
-           
-           Keep in mind, that there may be only one reaction enabled. 
+
+           Keep in mind, that there may be only one reaction enabled.
            There can be only one.
 
         Parameters

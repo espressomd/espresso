@@ -95,7 +95,8 @@ cdef class Thermostat(object):
                 self.set_langevin(kT=thmst["kT"], gamma=thmst[
                                   "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"])
             if thmst["type"] == "LB":
-                self.set_lb(kT=thmst["kT"], act_on_virtual=thmst["act_on_virtual"])
+                self.set_lb(
+                    kT=thmst["kT"], act_on_virtual=thmst["act_on_virtual"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])

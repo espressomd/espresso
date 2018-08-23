@@ -34,7 +34,7 @@ A minimal working example is the following:
 try:
     import cStringIO as StringIO
 except ImportError:
-    from io import StringIO
+    from .io import StringIO
 
 import numpy as np
 import MDAnalysis
@@ -58,7 +58,7 @@ from MDAnalysis.core.topologyattrs import (
 
 class Stream(object):
 
-    def __init__(self,system):
+    def __init__(self, system):
         """
             Create an object that provides a MDAnalysis topology and a coordinate reader
 
@@ -81,7 +81,7 @@ class Stream(object):
             >>> eos = MDA_ESP.Stream(system)
             >>> u = mda.Universe(eos.topology,eos.trajectory)
         """
-        self.topology = ESPParser(None,espresso=system).parse()
+        self.topology = ESPParser(None, espresso=system).parse()
         self.system = system
 
     @property
@@ -95,26 +95,29 @@ class Stream(object):
             A named stream in the format that can be parsed by ESPReader()
         """
         # time
-        _xyz=str(self.system.time)+'\n'
+        _xyz = str(self.system.time) + '\n'
         # number of particles
-        _xyz+=str(len(self.system.part))+'\n'
+        _xyz += str(len(self.system.part)) + '\n'
         # box edges
-        _xyz+=str(self.system.box_l)+'\n'
+        _xyz += str(self.system.box_l) + '\n'
         # configuration
         for _p in self.system.part:
-            _xyz+=str(_p.pos)+'\n'
+            _xyz += str(_p.pos) + '\n'
         for _p in self.system.part:
-            _xyz+=str(_p.v)+'\n'
+            _xyz += str(_p.v) + '\n'
         for _p in self.system.part:
-            _xyz+=str(_p.f)+'\n'
-        return  NamedStream(StringIO(_xyz), "__.ESP")
+            _xyz += str(_p.f) + '\n'
+        return NamedStream(StringIO(_xyz), "__.ESP")
+
 
 class ESPParser(TopologyReaderBase):
+
     """
         An MDAnalysis reader of espresso's topology
 
     """
     format = 'ESP'
+
     def __init__(self, filename, **kwargs):
         self.kwargs = kwargs
 
@@ -128,7 +131,7 @@ class ESPParser(TopologyReaderBase):
             an MDAnalysis Topology object
 
         """
-        espresso =  self.kwargs['espresso']
+        espresso = self.kwargs['espresso']
 
         names = []
         atomtypes = []
@@ -136,29 +139,30 @@ class ESPParser(TopologyReaderBase):
         charges = []
 
         for p in espresso.part:
-            names.append("A"+repr(p.type))
-            atomtypes.append("T"+repr(p.type))
+            names.append("A" + repr(p.type))
+            atomtypes.append("T" + repr(p.type))
             masses.append(p.mass)
             charges.append(p.q)
         natoms = len(espresso.part)
-        attrs = [Atomnames(np.array(names,dtype=object)),
-             Atomids(np.arange(natoms)+1),
-             Atomtypes(np.array(atomtypes,dtype=object)),
-             Masses(masses),
-             Resids(np.array([1])),
-             Resnums(np.array([1])),
-             Segids(np.array(['System'],dtype=object)),
-             AltLocs(np.array([' ']*natoms,dtype=object)),
-             Resnames(np.array(['R'],dtype=object)),
-             Occupancies(np.zeros(natoms)),
-             Tempfactors(np.zeros(natoms)),
-             ICodes(np.array([' '],dtype=object)),
-             Charges(np.array(charges)),
-            ]
+        attrs = [Atomnames(np.array(names, dtype=object)),
+                 Atomids(np.arange(natoms) + 1),
+                 Atomtypes(np.array(atomtypes, dtype=object)),
+                 Masses(masses),
+                 Resids(np.array([1])),
+                 Resnums(np.array([1])),
+                 Segids(np.array(['System'], dtype=object)),
+                 AltLocs(np.array([' '] * natoms, dtype=object)),
+                 Resnames(np.array(['R'], dtype=object)),
+                 Occupancies(np.zeros(natoms)),
+                 Tempfactors(np.zeros(natoms)),
+                 ICodes(np.array([' '], dtype=object)),
+                 Charges(np.array(charges)),
+                 ]
 
-        top = Topology(natoms,1,1,attrs=attrs)
+        top = Topology(natoms, 1, 1, attrs=attrs)
 
         return top
+
 
 class Timestep(base.Timestep):
     _ts_order_x = [0, 3, 4]
@@ -173,7 +177,8 @@ class Timestep(base.Timestep):
         # This information now stored as _ts_order_x/y/z to keep DRY
         x = self._unitcell[self._ts_order_x]
         y = self._unitcell[self._ts_order_y]
-        z = self._unitcell[self._ts_order_z]  # this ordering is correct! (checked it, OB)
+        z = self._unitcell[self._ts_order_z]
+            # this ordering is correct! (checked it, OB)
         return triclinic_box(x, y, z)
 
     @dimensions.setter
@@ -184,6 +189,7 @@ class Timestep(base.Timestep):
 
 
 class ESPReader(SingleFrameReaderBase):
+
     """
         An MDAnalysis single frame reader for the stream provided by Stream()
 
@@ -195,27 +201,34 @@ class ESPReader(SingleFrameReaderBase):
     def _read_first_frame(self):
         with util.openany(self.filename, 'rt') as espfile:
             n_atoms = 1
-            for pos, line in enumerate(espfile,start=-3):
-                if  (pos==-3):
+            for pos, line in enumerate(espfile, start=-3):
+                if (pos == -3):
                     time = float(line[1:-1])
-                elif(pos==-2):
+                elif(pos == -2):
                     n_atoms = int(line)
                     self.n_atoms = n_atoms
-                    positions  = np.zeros(self.n_atoms* 3, dtype=np.float32).reshape(self.n_atoms,3)
-                    velocities = np.zeros(self.n_atoms* 3, dtype=np.float32).reshape(self.n_atoms,3)
-                    forces = np.zeros(self.n_atoms* 3, dtype=np.float32).reshape(self.n_atoms,3)
-                    self.ts = ts = self._Timestep(self.n_atoms, **self._ts_kwargs)
+                    positions = np.zeros(
+                        self.n_atoms * 3, dtype=np.float32).reshape(self.n_atoms, 3)
+                    velocities = np.zeros(
+                        self.n_atoms * 3, dtype=np.float32).reshape(self.n_atoms, 3)
+                    forces = np.zeros(
+                        self.n_atoms * 3, dtype=np.float32).reshape(self.n_atoms, 3)
+                    self.ts = ts = self._Timestep(
+                        self.n_atoms, **self._ts_kwargs)
                     self.ts.time = time
-                elif(pos==-1):
-                    self.ts._unitcell[:3] = np.array(list(map(float,line[1:-2].split())))
+                elif(pos == -1):
+                    self.ts._unitcell[:3] = np.array(
+                        list(map(float, line[1:-2].split())))
                 elif(pos < n_atoms):
-                    positions[pos] = np.array(list(map(float, line[1:-2].split())))
-                elif(pos < 2*n_atoms):
-                    velocities[pos-n_atoms] = np.array(list(map(float, line[1:-2].split())))
+                    positions[pos] = np.array(
+                        list(map(float, line[1:-2].split())))
+                elif(pos < 2 * n_atoms):
+                    velocities[pos - n_atoms] = np.array(
+                        list(map(float, line[1:-2].split())))
                 else:
-                    forces[pos-2*n_atoms] = np.array(list(map(float, line[1:-2].split())))
+                    forces[pos - 2 * n_atoms] = np.array(
+                        list(map(float, line[1:-2].split())))
 
-            ts.positions=np.copy(positions)
-            ts.velocities=np.copy(velocities)
-            ts.forces=np.copy(forces)
-
+            ts.positions = np.copy(positions)
+            ts.velocities = np.copy(velocities)
+            ts.forces = np.copy(forces)

@@ -68,14 +68,14 @@ class Analysis(object):
 
         Parameters
         ----------
-        p1, p2 
-    
+        p1, p2
+
         """
         cdef double p1c[3]
         cdef double p2c[3]
         for i in range(3):
-            p1c[i]=p1[i]
-            p2c[i]=p2[i]
+            p1c[i] = p1[i]
+            p2c[i] = p2[i]
         return c_analyze.min_distance2(p1c, p2c)
 
     def min_dist(self, p1='default', p2='default'):
@@ -105,7 +105,6 @@ class Analysis(object):
                 if not is_valid_type(p2[i], int):
                     raise ValueError(
                         "Particle types in p1 and p2 have to be of type int" + str(p2[i]))
-
 
             set1 = create_int_list_from_python_object(p1)
             set2 = create_int_list_from_python_object(p2)
@@ -199,7 +198,7 @@ class Analysis(object):
         Parameters
         ----------
         p_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                    Particle type for which to calculate the center of mass.    
+                    Particle type for which to calculate the center of mass.
 
         Returns
         -------
@@ -304,17 +303,17 @@ class Analysis(object):
 
         # Check the input types
         check_type_or_throw_except(
-            center,      3, float, "center has to be 3 floats")
+            center, 3, float, "center has to be 3 floats")
         check_type_or_throw_except(
-            axis,   3, float, "direction has to be 3 floats")
+            axis, 3, float, "direction has to be 3 floats")
         check_type_or_throw_except(
-            length,      1, float, "length has to be a float")
+            length, 1, float, "length has to be a float")
         check_type_or_throw_except(
-            radius,      1, float, "radius has to be a floats")
+            radius, 1, float, "radius has to be a floats")
         check_type_or_throw_except(
-            bins_axial,  1, int,   "bins_axial has to be an int")
+            bins_axial, 1, int, "bins_axial has to be an int")
         check_type_or_throw_except(
-            bins_radial, 1, int,   "bins_radial has to be an int")
+            bins_radial, 1, int, "bins_radial has to be an int")
 
         # Convert Python types to C++ types
         cdef vector[double] c_center = center
@@ -326,7 +325,8 @@ class Analysis(object):
         cdef vector[int] c_types = types
 
         cdef map[string, vector[vector[vector[double]]]] distribution
-        c_analyze.calc_cylindrical_average(c_analyze.partCfg(), c_center, c_direction, c_length,
+        c_analyze.calc_cylindrical_average(
+            c_analyze.partCfg(), c_center, c_direction, c_length,
                                            c_radius, c_bins_axial, c_bins_radial, c_types,
                                            distribution)
 
@@ -465,7 +465,8 @@ class Analysis(object):
             p_vs = 0.
             for i in range(c_analyze.total_pressure.n_virtual_sites):
                 p_vs += c_analyze.total_pressure.virtual_sites[i]
-                p["virtual_sites", i] = c_analyze.total_pressure.virtual_sites[0]
+                p["virtual_sites", i] = c_analyze.total_pressure.virtual_sites[
+                    0]
             if c_analyze.total_pressure.n_virtual_sites:
                 p["virtual_sites"] = p_vs
 
@@ -560,21 +561,21 @@ class Analysis(object):
 
         # Electrostatics
         IF ELECTROSTATICS == 1:
-            total_coulomb = np.zeros((3,3))
+            total_coulomb = np.zeros((3, 3))
             for i in range(c_analyze.total_p_tensor.n_coulomb):
                 p["coulomb", i] = np.reshape(
                     create_nparray_from_double_array(
-                        c_analyze.total_p_tensor.coulomb+9*i, 9), (3, 3))
+                        c_analyze.total_p_tensor.coulomb + 9 * i, 9), (3, 3))
                 total_coulomb += p["coulomb", i]
             p["coulomb"] = total_coulomb
 
         # Dipoles
         IF DIPOLES == 1:
-            total_dipolar = np.zeros((3,3))
+            total_dipolar = np.zeros((3, 3))
             for i in range(c_analyze.total_p_tensor.n_dipolar):
                 p["dipolar", i] = np.reshape(
                     create_nparray_from_double_array(
-                        c_analyze.total_p_tensor.dipolar+9*i, 9), (3, 3))
+                        c_analyze.total_p_tensor.dipolar + 9 * i, 9), (3, 3))
                 total_dipolar += p["dipolar", i]
             p["dipolar"] = total_dipolar
 
@@ -596,7 +597,7 @@ class Analysis(object):
         """
         """
         Computes local stress tensors in the system.
-        
+
         A cuboid is defined starting at the coordinate `range_start` and going
         to the coordinate `range_start`+`stress_range`.  This cuboid in divided
         into `bins[0]` in the x direction, `bins[1]` in the y direction and
@@ -606,7 +607,7 @@ class Analysis(object):
         interaction contributes towards the stress tensor in a bin proportional
         to the fraction of the line connecting the two particles that is within
         the bin.
-        
+
         If the P3M and MMM1D electrostatic methods are used, these interactions
         are not included in the local stress tensor.  The DH and RF methods, in
         contrast, are included.  Concerning bonded interactions only two body
@@ -617,7 +618,7 @@ class Analysis(object):
         Care should be taken when using constraints of any kind, since these
         are not accounted for in the local stress tensor calculations.
 
-        
+
         Parameters
         ----------
         periodicity : array_like :obj:`int`
@@ -628,7 +629,7 @@ class Analysis(object):
                        The range of the cuboid.
         bins : array_like :obj:`int`
                A list condaining the number of bins for each direction.
-        
+
         """
 
         cdef vector[double_list] local_stress_tensor
@@ -783,7 +784,7 @@ class Analysis(object):
         chain_length : :obj:`int`
                        The length of every chain.
 
-        Returns            
+        Returns
         -------
         array_like : :obj:`float`
                      Where [0] is the Mean end-to-end distance of chains
@@ -818,7 +819,7 @@ class Analysis(object):
         chain_length : :obj:`int`.
                        The length of every chain.
 
-        Returns            
+        Returns
         -------
         array_like : :obj:`float`
                      Where [0] is the Mean radius of gyration of the chains
@@ -852,7 +853,7 @@ class Analysis(object):
         chain_length : :obj:`int`.
                        The length of every chain.
 
-        Returns            
+        Returns
         -------
         array_like
             Where [0] is the mean hydrodynamic radius of the chains
@@ -990,7 +991,8 @@ class Analysis(object):
             c_analyze.calc_rdf(c_analyze.partCfg(), p1_types,
                                p2_types, r_min, r_max, r_bins, rdf)
         elif rdf_type == '<rdf>':
-            c_analyze.calc_rdf_av(c_analyze.partCfg(), p1_types, p2_types, r_min,
+            c_analyze.calc_rdf_av(
+                c_analyze.partCfg(), p1_types, p2_types, r_min,
                                   r_max, r_bins, rdf, n_conf)
         else:
             raise Exception(
@@ -1066,7 +1068,9 @@ class Analysis(object):
         p1_types = create_int_list_from_python_object(type_list_a)
         p2_types = create_int_list_from_python_object(type_list_b)
 
-        c_analyze.calc_part_distribution(c_analyze.partCfg(), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
+        c_analyze.calc_part_distribution(
+            c_analyze.partCfg(
+                ), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
                                          r_min, r_max, r_bins, log_flag, & low, distribution)
 
         np_distribution = create_nparray_from_double_array(
@@ -1100,7 +1104,7 @@ class Analysis(object):
     def angular_momentum(self, p_type=None):
         print("p_type = ", p_type)
         check_type_or_throw_except(
-            p_type, 1, int,   "p_type has to be an int")
+            p_type, 1, int, "p_type has to be an int")
 
         cdef double[3] com
         cdef int p1 = p_type
@@ -1141,30 +1145,32 @@ class Analysis(object):
         if not hasattr(p_type, '__iter__'):
             p_type = [p_type]
         for type in p_type:
-            check_type_or_throw_except(type, 1, int, "particle type has to be an int")
+            check_type_or_throw_except(
+                type, 1, int, "particle type has to be an int")
             if (type < 0 or type >= c_analyze.max_seen_particle_type):
                 raise ValueError("Particle type", type, "does not exist!")
         selection = np.in1d(self._system.part[:].type, p_type)
-        
+
         cm = np.mean(self._system.part[selection].pos, axis=0)
-        mat=np.zeros(shape=(3,3))
-        for i,j in np.ndindex((3,3)):
-            mat[i,j]=np.mean(((self._system.part[selection].pos)[:,i]-cm[i])*((self._system.part[selection].pos)[:,j]-cm[j]))
-        w,v=np.linalg.eig(mat)
+        mat = np.zeros(shape=(3, 3))
+        for i, j in np.ndindex((3, 3)):
+            mat[i, j] = np.mean(((self._system.part[selection].pos)[:, i] - cm[i]) * (
+                (self._system.part[selection].pos)[:, j] - cm[j]))
+        w, v = np.linalg.eig(mat)
         # return eigenvalue/vector tuples in order of increasing eigenvalues
         order = np.argsort(np.abs(w))[::-1]
-        rad_gyr_sqr = mat[0,0]+mat[1,1]+mat[2,2]
+        rad_gyr_sqr = mat[0, 0] + mat[1, 1] + mat[2, 2]
         aspheric = w[order[0]] - 0.5 * (w[order[1]] + w[order[2]])
         acylindric = w[order[1]] - w[order[2]]
-        rel_shape_anis = (aspheric**2 +0.75*acylindric**2) / rad_gyr_sqr**2
+        rel_shape_anis = (aspheric**2 + 0.75 * acylindric**2) / rad_gyr_sqr**2
         return{
         "Rg^2": rad_gyr_sqr,
         "shape": [aspheric,
                   acylindric,
                   rel_shape_anis],
-        "eva0": (w[order[0]], v[:,order[0]]),
-        "eva1": (w[order[1]], v[:,order[1]]),
-        "eva2": (w[order[2]], v[:,order[2]])}
+        "eva0": (w[order[0]], v[:, order[0]]),
+        "eva1": (w[order[1]], v[:, order[1]]),
+        "eva2": (w[order[2]], v[:, order[2]])}
 
     #
     # momentofinertiamatrix
@@ -1241,7 +1247,7 @@ class Analysis(object):
         chain_length : :obj:`int`.
                        The length of every chain.
 
-        Returns            
+        Returns
         -------
         array_like
             Where [0] is the bins used
@@ -1330,7 +1336,8 @@ class Analysis(object):
             check_type_or_throw_except(avk, 1, float, "avk has to be a float")
             self._Vkappa["avk"] = avk
             if (self._Vkappa["avk"] <= 0.0):
-                result = self._Vkappa["Vk1"] = self._Vkappa["Vk2"] = self._Vkappa["avk"] = 0.0
+                result = self._Vkappa["Vk1"] = self._Vkappa[
+                    "Vk2"] = self._Vkappa["avk"] = 0.0
                 raise Exception(
                     "ERROR: # of averages <avk> has to be positive! Resetting values.")
             else:

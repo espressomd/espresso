@@ -1,8 +1,10 @@
 from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
+
 @script_interface_register
 class ComFixed(ScriptInterfaceHelper):
+
     """Fix the center of mass of specific types.
 
     Subtracts mass-weighted fraction of the total

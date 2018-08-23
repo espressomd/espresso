@@ -21,7 +21,6 @@ import sys
            "Features not available, skipping test!")
 class Stokes(ut.TestCase):
 
-
     def test_stokes(self):
         # System setup
         agrid = 1
@@ -43,7 +42,7 @@ class Stokes(ut.TestCase):
 
         # Invoke LB fluid
         lbf = lb.LBFluidGPU(visc=kinematic_visc, dens=1,
-                             agrid=agrid, tau=system.time_step, fric=1)
+                            agrid=agrid, tau=system.time_step, fric=1)
         system.actors.add(lbf)
 
         # Setup walls
