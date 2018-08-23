@@ -32,6 +32,7 @@ npart = 26
 
 
 class CommonTests(ut.TestCase):
+
     """
     Class that holds common test methods.
     """
@@ -76,7 +77,8 @@ class CommonTests(ut.TestCase):
         self.assertIn('creator', self.py_file['h5md'])
         self.assertIn('name', self.py_file['h5md/creator'].attrs)
         self.assertIn('version', self.py_file['h5md/creator'].attrs)
-        self.assertEqual(self.py_file['h5md/creator'].attrs['name'][:], b'ESPResSo')
+        self.assertEqual(
+            self.py_file['h5md/creator'].attrs['name'][:], b'ESPResSo')
         self.assertIn('author', self.py_file['h5md'])
         self.assertIn('name', self.py_file['h5md/author'].attrs)
 
@@ -122,7 +124,6 @@ class CommonTests(ut.TestCase):
             np.array([x for (_, x) in sorted(zip(self.py_id, self.py_f))])),
             msg="Forces not written correctly by H5md!")
 
-
     def test_bonds(self):
         """Test if bonds have been written properly."""
         self.assertEqual(len(self.py_bonds), npart - 1)
@@ -133,9 +134,11 @@ class CommonTests(ut.TestCase):
             self.assertEqual(bond[0], i + 0)
             self.assertEqual(bond[1], i + 1)
 
+
 @ut.skipIf(not espressomd.has_features(['H5MD']),
            "H5MD not compiled in, can not check functionality.")
 class H5mdTestOrdered(CommonTests):
+
     """
     Test the core implementation of writing hdf5 files if written ordered.
     """
@@ -177,6 +180,7 @@ class H5mdTestOrdered(CommonTests):
 @ut.skipIf(not espressomd.has_features(['H5MD']),
            "H5MD not compiled in, can not check functionality.")
 class H5mdTestUnordered(CommonTests):
+
     """
     Test the core implementation of writing hdf5 files if written un-ordered.
     """

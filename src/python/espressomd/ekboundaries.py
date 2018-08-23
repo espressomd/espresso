@@ -5,6 +5,7 @@ import espressomd.lbboundaries
 if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     @script_interface_register
     class EKBoundaries(espressomd.lbboundaries.LBBoundaries):
+
         """
         Creates a set of electrokinetics boundaries.
 
@@ -13,6 +14,7 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
 
     @script_interface_register
     class EKBoundary(espressomd.lbboundaries.LBBoundary):
+
         """
         Creates a EK boundary.
 

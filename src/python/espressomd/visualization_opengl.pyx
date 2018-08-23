@@ -16,6 +16,7 @@ from espressomd.particle_data import ParticleHandle
 
 
 class openGLLive(object):
+
     """
     This class provides live visualization using pyOpenGL.
     Use the update method to push your current simulation state after
@@ -97,7 +98,7 @@ class openGLLive(object):
                           The number of subdivisions for primitive constraints.
     constraint_type_colors : array_like :obj:`float`, optional
                              Colors of the constaints by type.
-    constraint_type_materials : array_like :obj:`str`, optional 
+    constraint_type_materials : array_like :obj:`str`, optional
                                 Materials of the constraints by type.
     draw_bonds : :obj:`bool`, optional
                  Enables bond visualization.
@@ -189,16 +190,16 @@ class openGLLive(object):
     def __init__(self, system, **kwargs):
         # MATERIALS
         self.materials = {
-            'bright':       [0.9, 1.0, 0.8, 0.4, 1.0],
-            'medium':       [0.6, 0.8, 0.2, 0.4, 1.0],
-            'dark':         [0.4, 0.5, 0.1, 0.4, 1.0],
+            'bright': [0.9, 1.0, 0.8, 0.4, 1.0],
+            'medium': [0.6, 0.8, 0.2, 0.4, 1.0],
+            'dark': [0.4, 0.5, 0.1, 0.4, 1.0],
             'transparent1': [0.6, 0.8, 0.2, 0.5, 0.8],
             'transparent2': [0.6, 0.8, 0.2, 0.5, 0.4],
             'transparent3': [0.6, 0.8, 0.2, 0.5, 0.2],
-            'rubber':   	[0, 0.4, 0.7, 0.078125, 1.0],
-            'chrome':       [0.25, 0.4, 0.774597, 0.6, 1.0],
-            'plastic': 		[0, 0.55, 0.7, 0.25, 1.0],
-            'steel':		[0.25, 0.38, 0, 0.32, 1.0]
+            'rubber': [0, 0.4, 0.7, 0.078125, 1.0],
+            'chrome': [0.25, 0.4, 0.774597, 0.6, 1.0],
+            'plastic': [0, 0.55, 0.7, 0.25, 1.0],
+            'steel': [0.25, 0.38, 0, 0.32, 1.0]
         }
 
         # DEFAULT PROPERTIES
@@ -335,13 +336,16 @@ class openGLLive(object):
         self.has_particle_data = {}
         self.has_particle_data['velocity'] = self.specs['velocity_arrows']
         self.has_particle_data['force'] = self.specs['force_arrows']
-        self.has_particle_data['ext_force'] = self.specs['ext_force_arrows'] or self.specs['drag_enabled']
+        self.has_particle_data['ext_force'] = self.specs[
+            'ext_force_arrows'] or self.specs['drag_enabled']
         IF ELECTROSTATICS:
-            self.has_particle_data['charge'] = self.specs['particle_coloring'] == 'auto' or self.specs['particle_coloring'] == 'charge'
+            self.has_particle_data['charge'] = self.specs[
+                'particle_coloring'] == 'auto' or self.specs['particle_coloring'] == 'charge'
         ELSE:
             self.has_particle_data['charge'] = False
         self.has_particle_data['director'] = self.specs['director_arrows']
-        self.has_particle_data['node'] = self.specs['particle_coloring'] == 'node'
+        self.has_particle_data['node'] = self.specs[
+            'particle_coloring'] == 'node'
 
         # PARTICLE INFO OF HIGHLIGHTED PARTICLE: COLLECT PARTICLE ATTRIBUTES
         self.highlighted_particle = {}
@@ -578,7 +582,8 @@ class openGLLive(object):
             if self.update_elapsed > 1.0 / self.specs['update_fps']:
                 self.update_elapsed = 0
 
-                # ES UPDATES WHEN SYSTEM HAS PROPAGATED. ALSO UPDATE ON PAUSE FOR PARTICLE INFO
+                # ES UPDATES WHEN SYSTEM HAS PROPAGATED. ALSO UPDATE ON PAUSE
+                # FOR PARTICLE INFO
                 if self.paused or not self.last_T == self.system.time:
                     self.last_T = self.system.time
                     self._update_particles()
@@ -729,7 +734,8 @@ class openGLLive(object):
         self.shapes = collections.defaultdict(list)
 
         # Collect shapes and interaction type (for coloring) from constraints
-        primitive_shapes = ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid',
+        primitive_shapes = [
+            'Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid',
                             'Shapes::SimplePore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
 
         coll_shape_obj = collections.defaultdict(list)
@@ -839,7 +845,7 @@ class openGLLive(object):
                     for p in b[1:]:
                         self.bonds.append([i, p, t])
 
-    def _draw_text(self, x,  y, text, color, font=GLUT_BITMAP_9_BY_15):
+    def _draw_text(self, x, y, text, color, font=GLUT_BITMAP_9_BY_15):
         glColor(color)
         glWindowPos2f(x, y)
         for ch in text:
@@ -882,13 +888,17 @@ class openGLLive(object):
 
     def _draw_nodes(self):
         for n in self.node_box_origins:
-            draw_box(n, self.local_box_l, self.node_box_color, self.materials['transparent1'],
+            draw_box(
+                n, self.local_box_l, self.node_box_color, self.materials[
+                    'transparent1'],
                      1.5 * self.line_width_fac)
 
     def _draw_cells(self):
         for n in self.node_box_origins:
             for c in self.cell_box_origins:
-                draw_box(c + n, self.cell_size, self.cell_box_color, self.materials['transparent1'],
+                draw_box(
+                    c + n, self.cell_size, self.cell_box_color, self.materials[
+                        'transparent1'],
                          0.75 * self.line_width_fac)
 
     def _draw_lb_grid(self):
@@ -915,7 +925,9 @@ class openGLLive(object):
 
         # NEEDS ADDITIONAL CLIP PLANES
         for s in self.shapes['Shapes::SimplePore']:
-            draw_simple_pore(s[0], s[1], s[2], s[3], s[4], max(self.system.box_l), self._modulo_indexing(self.specs['constraint_type_colors'], s[5]),
+            draw_simple_pore(
+                s[0], s[1], s[2], s[3], s[4], max(self.system.box_l), self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[5]),
                              self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[5])], self.specs['quality_constraints'])
 
         # NEEDS ADDITIONAL CLIP PLANES
@@ -931,7 +943,9 @@ class openGLLive(object):
             glClipPlane(GL_CLIP_PLANE0 + i, self.box_eqn[i])
 
         for s in self.shapes['Shapes::Ellipsoid']:
-            draw_ellipsoid(s[0], s[1], s[2], s[3], self._modulo_indexing(self.specs['constraint_type_colors'], s[4]),
+            draw_ellipsoid(
+                s[0], s[1], s[2], s[3], self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[4]),
                            self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Sphere']:
@@ -949,7 +963,7 @@ class openGLLive(object):
                 self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'], True)
 
         for s in self.shapes['Shapes::Misc']:
-            draw_points(s[0], self.specs['rasterize_pointsize'],  self._modulo_indexing(
+            draw_points(s[0], self.specs['rasterize_pointsize'], self._modulo_indexing(
                 self.specs['constraint_type_colors'], s[1]), self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[1])])
 
         for i in range(6):
@@ -987,7 +1001,8 @@ class openGLLive(object):
             ptype_last = ptype
             ptype = int(self.particles['type'][pid])
 
-            # Only change material if type/charge has changed, colorById or material was resetted by arrows
+            # Only change material if type/charge has changed, colorById or
+            # material was resetted by arrows
             if reset_material or colorById or not ptype == ptype_last or pid == self.dragId or pid == self.infoId or self.specs['particle_coloring'] == 'node':
                 reset_material = False
 
@@ -1029,7 +1044,8 @@ class openGLLive(object):
 
                     set_solid_material(color, material)
 
-                # Create a new display list, used until next material/color change
+                # Create a new display list, used until next material/color
+                # change
                 glNewList(self.dl_sphere, GL_COMPILE)
                 glutSolidSphere(
                     radius, self.specs['quality_particles'], self.specs['quality_particles'])
@@ -1069,7 +1085,8 @@ class openGLLive(object):
                 reset_material = True
 
             if self.specs['force_arrows']:
-                self._draw_arrow_property(pid, ptype, self.specs['force_arrows_type_scale'],
+                self._draw_arrow_property(
+                    pid, ptype, self.specs['force_arrows_type_scale'],
                                           self.specs['force_arrows_type_colors'], self.specs['force_arrows_type_radii'], 'force')
                 reset_material = True
 
@@ -1102,7 +1119,9 @@ class openGLLive(object):
 
             if bondLen_sqr < box_l2_sqr:
                 # BOND COMPLETELY INSIDE BOX
-                draw_cylinder(self.particles['pos'][b[0]], self.particles['pos'][b[1]], radius,
+                draw_cylinder(
+                    self.particles['pos'][
+                        b[0]], self.particles['pos'][b[1]], radius,
                               col, mat, self.specs['quality_bonds'])
                 for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
                     for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
@@ -1168,7 +1187,10 @@ class openGLLive(object):
             p = lbl[0]
             v = lbl[1]
             c = np.linalg.norm(v)
-            draw_arrow(p, v * self.specs['LB_vel_scale'], self.lb_arrow_radius, self.specs['LB_arrow_color'],
+            draw_arrow(
+                p, v *
+                    self.specs['LB_vel_scale'], self.lb_arrow_radius, self.specs[
+                        'LB_arrow_color'],
                        self.materials[self.specs['LB_arrow_material']], self.specs['LB_arrow_quality'])
 
     # USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR
@@ -1246,7 +1268,7 @@ class openGLLive(object):
             self._draw_text(10, 10, "{} fps".format(
                 self.fps), self.text_color)
             self._draw_text(
-                10, 30, "{} ms/frame".format(1000.0 / self.fps),  self.text_color)
+                10, 30, "{} ms/frame".format(1000.0 / self.fps), self.text_color)
             self.fps_count += 1
 
         # DRAW PARTICLE INFO
@@ -1265,7 +1287,9 @@ class openGLLive(object):
             if ts > fadetime:
                 self.screenshot_captured = False
             else:
-                self._draw_text(self.specs['window_size'][0] - len(self.screenshot_capture_txt) * 9.0 - 15,
+                self._draw_text(
+                    self.specs['window_size'][0] - len(
+                        self.screenshot_capture_txt) * 9.0 - 15,
                                 self.specs['window_size'][1] - 15, self.screenshot_capture_txt, col)
 
     def _draw_sysinfo_dict(self, d):
@@ -1295,7 +1319,7 @@ class openGLLive(object):
         y = 0
         for k, v in d.items():
             txt = "{} {} {}".format(
-                k, (maxlen - len(k)) * ' ',  v)
+                k, (maxlen - len(k)) * ' ', v)
             self._draw_text(
                 10, self.specs['window_size'][1] - 10 - 15 * y, txt, self.text_color)
             y += 1
@@ -1500,7 +1524,8 @@ class openGLLive(object):
                 IF LB_GPU:
                     types.append(espressomd.lb.LBFluidGPU)
 
-                # if type(a) == espressomd.lb.LBFluidGPU or type(a) == espressomd.lb.LBFluid
+                # if type(a) == espressomd.lb.LBFluidGPU or type(a) ==
+                # espressomd.lb.LBFluid
                 if type(a) in types:
                     # if 'agrid' in pa:
                     self.lb_params = a.get_params()
@@ -1673,7 +1698,7 @@ class openGLLive(object):
         cr = np.array(self.specs['camera_right'])
 
         self.camera.set_camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 *
-                               box_diag / 17.0,  center=box_center)
+                               box_diag / 17.0, center=box_center)
         self._set_camera_spotlight()
 
     def _init_opengl(self):
@@ -1757,9 +1782,9 @@ class openGLLive(object):
 # OPENGL DRAW WRAPPERS
 
 def set_solid_material(color, material=[0.6, 1.0, 0.1, 0.4, 1.0]):
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  [
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, [
                  color[0] * material[0], color[1] * material[0], color[2] * material[0], material[4]])
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  [
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, [
                  color[0] * material[1], color[1] * material[1], color[2] * material[1], material[4]])
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [
                  color[0] * material[2], color[1] * material[2], color[2] * material[2], material[4]])
