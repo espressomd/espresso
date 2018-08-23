@@ -157,7 +157,7 @@ struct ParticleProperties {
   // Store the orientation of the virtual particle in the body fixed frame.
   double vs_quat[4] = {0., 0., 0., 0.};
 #endif
-#else /* VIRTUAL_SITES */
+#else  /* VIRTUAL_SITES */
   static constexpr const int is_virtual = 0;
 #endif /* VIRTUAL_SITES */
 
@@ -236,13 +236,13 @@ struct ParticlePosition {
 struct ParticleForce {
   ParticleForce() = default;
   ParticleForce(ParticleForce const &) = default;
-  ParticleForce(const Vector3d & f) : f(f) {}
+  ParticleForce(const Vector3d &f) : f(f) {}
 #ifdef ROTATION
-  ParticleForce(const Vector3d & f,
-                const Vector3d &torque) : f(f), torque(torque) {}
+  ParticleForce(const Vector3d &f, const Vector3d &torque)
+      : f(f), torque(torque) {}
 #endif
 
-ParticleForce & operator+=(ParticleForce const& rhs) {
+  ParticleForce &operator+=(ParticleForce const &rhs) {
     f += rhs.f;
 #ifdef ROTATION
     torque += rhs.torque;
@@ -250,7 +250,7 @@ ParticleForce & operator+=(ParticleForce const& rhs) {
 
     return *this;
   }
-  
+
   /** force. */
   Vector3d f = {0., 0., 0.};
 
@@ -575,9 +575,6 @@ void realloc_local_particles(int part);
  *          nullptr otherwise;
 */
 const Particle &get_particle_data(int part);
-// Helper function for the interface due to cython bug.
-// TODO: remove after we require cython version > 0.26
-const Particle *get_particle_data_ptr(int part);
 
 /**
  * @brief Fetch a range of particle into the fetch cache.

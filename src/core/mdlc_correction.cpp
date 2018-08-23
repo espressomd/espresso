@@ -36,12 +36,12 @@
 #include "mdlc_correction.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "p3m-dipolar.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
-#include "debug.hpp"
 
 #ifdef DIPOLES
 
@@ -124,8 +124,10 @@ double slab_dip_count_mu(double *mt, double *mx, double *my) {
    ****************************************************************************************************
    */
 
-double get_DLC_dipolar(int kcut, std::vector<double> & fx, std::vector<double> & fy, std::vector<double> & fz,
-                       std::vector<double> & tx, std::vector<double> & ty, std::vector<double> & tz) {
+double get_DLC_dipolar(int kcut, std::vector<double> &fx,
+                       std::vector<double> &fy, std::vector<double> &fz,
+                       std::vector<double> &tx, std::vector<double> &ty,
+                       std::vector<double> &tz) {
 
   int ix, iy, ip;
   double gx, gy, gr;
@@ -134,8 +136,10 @@ double get_DLC_dipolar(int kcut, std::vector<double> & fx, std::vector<double> &
                                       // {Re(S+), Im(S+), Re(S-), Im(S-)}
   std::vector<double> ReSjp(n_local_particles), ReSjm(n_local_particles);
   std::vector<double> ImSjp(n_local_particles), ImSjm(n_local_particles);
-  std::vector<double> ReGrad_Mup(n_local_particles), ImGrad_Mup(n_local_particles);
-  std::vector<double> ReGrad_Mum(n_local_particles), ImGrad_Mum(n_local_particles);
+  std::vector<double> ReGrad_Mup(n_local_particles),
+      ImGrad_Mup(n_local_particles);
+  std::vector<double> ReGrad_Mum(n_local_particles),
+      ImGrad_Mum(n_local_particles);
   double a, b, c, d, er, ez, f, fa1;
   double s1, s2, s3, s4;
   double s1z, s2z, s3z, s4z;
@@ -388,8 +392,10 @@ double get_DLC_energy_dipolar(int kcut) {
 void add_mdlc_force_corrections() {
   int i, ip;
   int dip_DLC_kcut;
-  std::vector<double> dip_DLC_f_x(n_part), dip_DLC_f_y(n_part), dip_DLC_f_z(n_part);
-  std::vector<double> dip_DLC_t_x(n_part), dip_DLC_t_y(n_part), dip_DLC_t_z(n_part);
+  std::vector<double> dip_DLC_f_x(n_part), dip_DLC_f_y(n_part),
+      dip_DLC_f_z(n_part);
+  std::vector<double> dip_DLC_t_x(n_part), dip_DLC_t_y(n_part),
+      dip_DLC_t_z(n_part);
   double dip_DLC_energy = 0.0;
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
 #if defined(ROTATION) && defined(DP3M)

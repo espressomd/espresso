@@ -12,8 +12,8 @@
 
 namespace Observables {
 
-class CylindricalLBProfileObservable : public CylindricalProfileObservable, public LBObservable {
-};
+class CylindricalLBProfileObservable : public CylindricalProfileObservable,
+                                       public LBObservable {};
 
 } // Namespace Observables
 #endif

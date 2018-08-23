@@ -26,9 +26,9 @@
  *  \ref forces.cpp
 */
 
-#include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
+#include "utils.hpp"
 
 #ifdef BMHTF_NACL
 
@@ -43,9 +43,10 @@ inline void add_BMHTF_pair_force(const Particle *const p1,
                                  double dist, double dist2, double force[3]) {
   if ((dist < ia_params->BMHTF_cut)) {
     double pw8 = dist2 * dist2 * dist2 * dist2;
-    double fac = ia_params->BMHTF_A * ia_params->BMHTF_B *
-              exp(ia_params->BMHTF_B * (ia_params->BMHTF_sig - dist)) / dist -
-          6 * ia_params->BMHTF_C / pw8 - 8 * ia_params->BMHTF_D / pw8 / dist2;
+    double fac =
+        ia_params->BMHTF_A * ia_params->BMHTF_B *
+            exp(ia_params->BMHTF_B * (ia_params->BMHTF_sig - dist)) / dist -
+        6 * ia_params->BMHTF_C / pw8 - 8 * ia_params->BMHTF_D / pw8 / dist2;
 
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];

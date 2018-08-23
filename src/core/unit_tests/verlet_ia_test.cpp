@@ -28,7 +28,8 @@ struct Distance {
 
 /* Dummy interaction criterion */
 struct VerletCriterion {
-  bool operator()(Particle const &p1, Particle const &p2, Distance const& d) const {
+  bool operator()(Particle const &p1, Particle const &p2,
+                  Distance const &d) const {
     return d.interact;
   }
 };
@@ -42,10 +43,14 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
 
   auto id = 0;
   for (auto &c : cells) {
+    std::vector<Cell *> neighbors;
+
     for (auto &n : cells) {
       if (&c != &n)
-        c.m_neighbors.push_back(&n);
+        neighbors.push_back(&n);
     }
+
+    c.m_neighbors = Neighbors<Cell *>(neighbors, {});
 
     c.part = new Particle[n_part_per_cell];
     c.n = c.max = n_part_per_cell;

@@ -58,6 +58,20 @@ BOOST_AUTO_TEST_CASE(user_provided) {
   BOOST_CHECK(i == 42);
 }
 
+BOOST_AUTO_TEST_CASE(user_provided_read_only) {
+  using namespace ScriptInterface;
+  int i{12};
+
+  auto getter = [&i]() { return i; };
+
+  auto p = AutoParameter("i", AutoParameter::ReadOnly{}, getter);
+
+  BOOST_CHECK(p.type == VariantType::INT);
+
+  BOOST_CHECK(boost::get<int>(p.get()) == 12);
+  BOOST_CHECK_THROW(p.set(42), AutoParameter::WriteError);
+}
+
 BOOST_AUTO_TEST_CASE(pointer_to_method) {
   using namespace ScriptInterface;
   struct C {

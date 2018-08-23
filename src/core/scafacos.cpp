@@ -34,21 +34,20 @@
 
 #include "cells.hpp"
 #include "communication.hpp"
+#include "communication.hpp"
 #include "errorhandling.hpp"
+#include "global.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "scafacos/Scafacos.hpp"
 #include "tuning.hpp"
-#include "communication.hpp" 
-#include "global.hpp" 
-#include "utils.hpp" 
+#include "utils.hpp"
 
 /** This file contains the c-like interface for Scafacos */
 
 namespace Scafacos {
-
 
 /** Get available scafacos methods */
 std::list<std::string> available_methods() {
@@ -81,7 +80,7 @@ int ScafacosData::update_particle_data() {
   }
 
   for (auto const &p : local_cells.particles()) {
-    auto pos=folded_position(p);
+    auto pos = folded_position(p);
     positions.push_back(pos[0]);
     positions.push_back(pos[1]);
     positions.push_back(pos[2]);
@@ -153,7 +152,7 @@ void ScafacosData::update_particle_forces() const {
   if (!dipolar()) {
     assert(it == fields.size());
   } else {
-    int tmp=positions.size()/3;
+    int tmp = positions.size() / 3;
     assert(it == positions.size() / 3);
   }
 }
@@ -180,19 +179,20 @@ double pair_energy(Particle *p1, Particle *p2, double dist) {
     return 0.;
 }
 
-
 // Issues a runtime error if positions are outside the box domain
 // This is needed, because the scafacos grid sort produces an mpi deadlock
 // otherwise
 // Returns true if calculations can continue.
-bool check_position_validity(const std::vector<double>& pos) {
-  assert(pos.size()%3==0);
-  for (int i=0;i<pos.size()/3;i++) {
-    for (int j=0;j<3;j++) {
-      if (pos[3*i+j]<0 || pos[3*i+j]>box_l[j]) {
-        // Throwing exception rather than runtime error, because continuing will result
+bool check_position_validity(const std::vector<double> &pos) {
+  assert(pos.size() % 3 == 0);
+  for (int i = 0; i < pos.size() / 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      if (pos[3 * i + j] < 0 || pos[3 * i + j] > box_l[j]) {
+        // Throwing exception rather than runtime error, because continuing will
+        // result
         // in mpi deadlock
-        throw std::runtime_error("Particle position outside the box domain not allowed for scafacos-based methods.");
+        throw std::runtime_error("Particle position outside the box domain not "
+                                 "allowed for scafacos-based methods.");
         return false;
       }
     }
@@ -218,7 +218,8 @@ void add_long_range_force() {
 #endif
     }
   } else
-    throw std::runtime_error("Scafacos internal error. Instance pointer is not valid.");
+    throw std::runtime_error(
+        "Scafacos internal error. Instance pointer is not valid.");
 
   particles.update_particle_forces();
 }
@@ -235,8 +236,12 @@ double long_range_energy() {
                                 particles.potentials.begin(), 0.0);
     } else {
 #ifdef SCAFACOS_DIPOLES
-      scafacos->run_dipolar(particles.dipoles, particles.positions, particles.fields,particles.potentials);
-      return -0.5* coulomb.Dprefactor * std::inner_product(particles.dipoles.begin(),particles.dipoles.end(),particles.potentials.begin(),0.0);
+      scafacos->run_dipolar(particles.dipoles, particles.positions,
+                            particles.fields, particles.potentials);
+      return -0.5 * coulomb.Dprefactor *
+             std::inner_product(particles.dipoles.begin(),
+                                particles.dipoles.end(),
+                                particles.potentials.begin(), 0.0);
 #endif
     }
   }
@@ -255,15 +260,15 @@ void set_r_cut_and_tune_local(double r_cut) {
 
 /** Determine runtime for a specific cutoff */
 double time_r_cut(double r_cut) {
-  assert(this_node==0);
+  assert(this_node == 0);
   double t;
 
   /** Set cutoff to time */
-  mpi_call(mpi_scafacos_set_r_cut_and_tune_slave,0,0);
+  mpi_call(mpi_scafacos_set_r_cut_and_tune_slave, 0, 0);
   MPI_Bcast(&r_cut, 1, MPI_DOUBLE, 0, comm_cart);
 
   set_r_cut_and_tune_local(r_cut);
-  //mpi_bcast_coulomb_params();
+  // mpi_bcast_coulomb_params();
   return time_force_calc(10);
 }
 
@@ -310,13 +315,11 @@ void tune() {
   /** Check whether we have to do a bisection for the short range cutoff */
   /** Check if there is a user supplied cutoff */
   if ((scafacos->has_near) && (scafacos->r_cut() <= 0.0)) {
-    // Tuning of r_cut needs to run on the master node because it relies on 
+    // Tuning of r_cut needs to run on the master node because it relies on
     // master-slve mode communication
-    if (this_node==0) {
+    if (this_node == 0) {
       tune_r_cut();
-    }
-    else
-    {
+    } else {
       return; // Tune on the master node will issue mpi calls
     }
   } else {
@@ -325,44 +328,44 @@ void tune() {
   }
 }
 
-static void set_params_safe(const std::string &method, const std::string &params, bool dipolar_ia) {
-  if(scafacos) {
+static void set_params_safe(const std::string &method,
+                            const std::string &params, bool dipolar_ia) {
+  if (scafacos) {
     delete scafacos;
     scafacos = 0;
   }
 
   scafacos = new Scafacos(method, comm_cart, params);
 
-  int per[3] = { PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0 };
+  int per[3] = {PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0};
 
   scafacos->set_dipolar(dipolar_ia);
-  #ifdef DIPOLES
+#ifdef DIPOLES
   if (dipolar_ia) {
     coulomb.Dmethod = DIPOLAR_SCAFACOS;
   }
-  #endif
-  #ifdef ELECTROSTATICS
+#endif
+#ifdef ELECTROSTATICS
   if (!dipolar_ia) {
     coulomb.method = COULOMB_SCAFACOS;
   }
-  #endif
+#endif
   scafacos->set_common_parameters(box_l, per, n_part);
-  
+
   on_coulomb_change();
-  
+
   if (!dipolar_ia) {
-      tune();
+    tune();
   }
 }
 
-
 /** Bend result from scafacos back to original format */
 std::string get_method_and_parameters() {
-  if(!scafacos) {
+  if (!scafacos) {
     return std::string();
   }
 
-  std::string p = scafacos->get_method()+" "+scafacos->get_parameters();
+  std::string p = scafacos->get_method() + " " + scafacos->get_parameters();
 
   std::replace(p.begin(), p.end(), ',', ' ');
 
@@ -370,8 +373,9 @@ std::string get_method_and_parameters() {
 }
 
 double get_r_cut() {
-  if(scafacos) {
-    if (!scafacos->has_near) return 0;
+  if (scafacos) {
+    if (!scafacos->has_near)
+      return 0;
     return scafacos->r_cut();
   }
   return 0.0;
@@ -416,28 +420,27 @@ void set_dipolar(bool d) {
 
 void free_handle() {
 
-  if (this_node==0) 
-    mpi_call(mpi_scafacos_free_slave, 0,0);
-  if(scafacos) {
-delete scafacos;
+  if (this_node == 0)
+    mpi_call(mpi_scafacos_free_slave, 0, 0);
+  if (scafacos) {
+    delete scafacos;
     scafacos = 0;
   }
 }
 
 void update_system_params() {
-// If scafacos is not active, do nothing
-if (!scafacos) {
-throw std::runtime_error("Scafacos object not there");
-}
+  // If scafacos is not active, do nothing
+  if (!scafacos) {
+    throw std::runtime_error("Scafacos object not there");
+  }
 
-  int per[3] = { PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0 };
+  int per[3] = {PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0};
 
   int tmp;
-  MPI_Allreduce(&n_part,&tmp,1,MPI_INT,MPI_MAX,comm_cart);
-  n_part=tmp;
+  MPI_Allreduce(&n_part, &tmp, 1, MPI_INT, MPI_MAX, comm_cart);
+  n_part = tmp;
   scafacos->set_common_parameters(box_l, per, n_part);
 }
-
 
 } // namespace scafacos
 #endif /* SCAFACOS */
@@ -463,19 +466,18 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
 #endif /* SCAFACOS */
 }
 
-
 void mpi_scafacos_free_slave(int a, int b) {
-  #if defined(SCAFACOS) 
+#if defined(SCAFACOS)
   using namespace Scafacos;
   free_handle();
-  #endif
+#endif
 }
 
 void mpi_scafacos_set_r_cut_and_tune_slave(int a, int b) {
-  #if defined(SCAFACOS) 
+#if defined(SCAFACOS)
   using namespace Scafacos;
   double r_cut;
   MPI_Bcast(&r_cut, 1, MPI_DOUBLE, 0, comm_cart);
   set_r_cut_and_tune_local(r_cut);
-  #endif
+#endif
 }

@@ -70,8 +70,8 @@ int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
   } else {
     detail::size_and_offset(n_elem, comm, root);
     /* Send data */
-    gatherv(comm, buffer, n_elem, static_cast<T *>(nullptr),
-            nullptr, nullptr, root);
+    gatherv(comm, buffer, n_elem, static_cast<T *>(nullptr), nullptr, nullptr,
+            root);
 
     return 0;
   }
@@ -101,7 +101,7 @@ void gather_buffer(std::vector<T> &buffer, boost::mpi::communicator comm,
     static std::vector<int> displ;
 
     auto const tot_size =
-      detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
+        detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
 
     /* Resize the buffer */
     buffer.resize(tot_size);

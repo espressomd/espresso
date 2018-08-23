@@ -713,8 +713,8 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
 }
 
 int calc_cylindrical_average(
-    PartCfg &partCfg, std::vector<double> center_,
-    std::vector<double> direction_, double length, double radius,
+    PartCfg &partCfg, std::vector<double> const &center_,
+    std::vector<double> const &direction_, double length, double radius,
     int bins_axial, int bins_radial, std::vector<int> types,
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution) {
@@ -723,8 +723,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{std::move(center_)};
-  auto direction = Vector3d{std::move(direction_)};
+  auto center = Vector3d{center_};
+  auto direction = Vector3d{direction_};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -1110,14 +1110,14 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                                int n_non_bonded, int n_coulomb, int n_dipolar,
                                int n_vs, int c_size) {
 
-  int i;
   // Number of doubles to store pressure in
-  int total = c_size * (n_pre + bonded_ia_params.size() + n_non_bonded + n_coulomb +
-                        n_dipolar + n_vs);
+  const int total =
+      c_size * (n_pre + bonded_ia_params.size() + n_non_bonded + n_coulomb +
+                n_dipolar + n_vs + Observable_stat::n_external_field);
 
   // Allocate mem for the double list
   stat->data.resize(total);
-  
+
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
   stat->chunk_size = c_size;
 
@@ -1132,9 +1132,10 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
   stat->coulomb = stat->non_bonded + c_size * n_non_bonded;
   stat->dipolar = stat->coulomb + c_size * n_coulomb;
   stat->virtual_sites = stat->dipolar + c_size * n_dipolar;
+  stat->external_fields = stat->virtual_sites + c_size * n_vs;
 
   // Set all obseravables to zero
-  for (i = 0; i < total; i++)
+  for (int i = 0; i < total; i++)
     stat->data[i] = 0.0;
 }
 

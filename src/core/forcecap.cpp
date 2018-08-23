@@ -24,8 +24,8 @@
 */
 
 #include "forcecap.hpp"
-#include "utils.hpp"
 #include "global.hpp"
+#include "utils.hpp"
 
 double force_cap = 0.0;
 
@@ -34,9 +34,7 @@ void forcecap_set(double forcecap) {
   mpi_bcast_parameter(FIELD_FORCE_CAP);
 }
 
-double forcecap_get() {
-  return force_cap;
-}
+double forcecap_get() { return force_cap; }
 
 void forcecap_cap(ParticleRange particles) {
   if (force_cap <= 0) {

@@ -672,7 +672,7 @@ class Analysis(object):
 
         Returns
         -------
-        :obj:`dict` {'total', 'kinetic', 'bonded', 'nonbonded', ['coulomb']}
+        :obj:`dict` {'total', 'kinetic', 'bonded', 'nonbonded', ['coulomb'], 'external_fields'}
 
 
         Examples
@@ -682,7 +682,7 @@ class Analysis(object):
         >>> print(energy["kinetic"])
         >>> print(energy["bonded"])
         >>> print(energy["non_bonded"])
-
+        >>> print(energy["external_fields"])
 
         """
     #  if system.n_part == 0:
@@ -703,6 +703,7 @@ class Analysis(object):
         total += calculate_current_potential_energy_of_system()
 
         e["total"] = total
+        e["external_fields"] = c_analyze.total_energy.external_fields[0]
 
         # Kinetic energy
         e["kinetic"] = c_analyze.total_energy.data.e[0]

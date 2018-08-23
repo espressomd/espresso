@@ -12,6 +12,5 @@ add_custom_command(
 )
 
 
-# FIXME here: for the          XX  give it a proper number (01, 02...)
-add_custom_target(tutorials_00 DEPENDS ${BASENAME}.pdf)
+add_custom_target(tutorials_10 DEPENDS ${BASENAME}.pdf)
 

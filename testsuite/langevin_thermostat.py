@@ -90,7 +90,7 @@ class LangevinThermostat(ut.TestCase):
         system.integrator.run(100)
 
         # Sampling
-        loops = 400
+        loops = 600
         v_stored = np.zeros((N * loops, 3))
         omega_stored = np.zeros((N * loops, 3))
         for i in range(loops):
@@ -101,7 +101,7 @@ class LangevinThermostat(ut.TestCase):
 
         v_minmax = 5
         bins = 5
-        error_tol = 0.015
+        error_tol = 0.016
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
         if espressomd.has_features("ROTATION"):
@@ -136,7 +136,7 @@ class LangevinThermostat(ut.TestCase):
             system.part[int(N / 4):int(3 * N / 4)].gamma = gamma2
 
         system.integrator.run(50)
-        loops = 400
+        loops = 600
 
         v_kT = np.zeros((int(N / 2) * loops, 3))
         v_kT2 = np.zeros((int(N / 2 * loops), 3))
@@ -159,7 +159,7 @@ class LangevinThermostat(ut.TestCase):
                           :] = system.part[int(N / 2):].omega_body
         v_minmax = 5
         bins = 5
-        error_tol = 0.014
+        error_tol = 0.016
         self.check_velocity_distribution(v_kT, v_minmax, bins, error_tol, kT)
         self.check_velocity_distribution(v_kT2, v_minmax, bins, error_tol, kT2)
 

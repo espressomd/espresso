@@ -52,14 +52,13 @@
 #define LB
 #define LB_BOUNDARIES
 #ifdef CUDA
-  #define LB_GPU
-  #define LB_BOUNDARIES_GPU
-#endif  
+#define LB_GPU
+#define LB_BOUNDARIES_GPU
+#endif
 
 // Electrokinetics
 #ifdef CUDA
-  #define ELECTROKINETICS
-  #define EK_BOUNDARIES
-  #define EK_ELECTROSTATIC_COUPLING
+#define ELECTROKINETICS
+#define EK_BOUNDARIES
+#define EK_ELECTROSTATIC_COUPLING
 #endif
-

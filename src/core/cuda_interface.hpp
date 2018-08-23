@@ -23,8 +23,8 @@
 
 #ifdef CUDA
 
-#include "SystemInterface.hpp"
 #include "ParticleRange.hpp"
+#include "SystemInterface.hpp"
 
 #ifdef ENGINE
 // velocities which need to be copied from the GPU to the CPU to calculate a
@@ -69,7 +69,7 @@ struct CUDA_particle_data {
   /** particle position given from md part*/
   float p[3];
 
-#if defined(LB_GPU) 
+#if defined(LB_GPU)
   /** particle momentum struct velocity p.m->v*/
   float v[3];
 #endif

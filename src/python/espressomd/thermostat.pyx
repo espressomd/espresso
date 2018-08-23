@@ -167,7 +167,10 @@ cdef class Thermostat(object):
         """
 
         global temperature
+        global thermo_virtual
+        thermo_virtual = True
         temperature = 0.
+        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         global langevin_gamma
         IF PARTICLE_ANISOTROPY:
@@ -188,7 +191,6 @@ cdef class Thermostat(object):
         global thermo_switch
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-        # here other thermostats stuff
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
@@ -326,7 +328,7 @@ cdef class Thermostat(object):
 
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
-        def set_lb(self, kT=None, act_on_virtual=False):
+        def set_lb(self, kT=None, act_on_virtual=True):
             """
             Sets the LB thermostat with required parameter 'kT'.
 
@@ -337,7 +339,7 @@ cdef class Thermostat(object):
             kT : :obj:`float`
                  Specifies the thermal energy of the heat bath.
             act_on_virtual : :obj:`bool`, optional
-                If true the thermostat will act on virtual sites, default is off.
+                If true the thermostat will act on virtual sites, default is on.
 
             """
 

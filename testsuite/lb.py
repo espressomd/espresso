@@ -39,7 +39,7 @@ class TestLB(object):
               'temp_confidence': 10}
     if espressomd.has_features("SHANCHEN"):
        params.update({"dens":2*[params["dens"]]})
-     
+
     if espressomd.has_features("ROTATION"):
         dof = 6.
     else:

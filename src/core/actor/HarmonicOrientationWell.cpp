@@ -23,14 +23,16 @@
 #ifdef CUDA
 #ifdef ROTATION
 
-HarmonicOrientationWell::
-HarmonicOrientationWell(float x1, float x2, float x3, float _k, SystemInterface &s)
-  : x(x1), y(x2), z(x3), k(_k){
-  if(!s.requestQuatuGpu())
-    std::cerr << "HarmonicOrientationWell needs access to quatu on GPU!" << std::endl;
+HarmonicOrientationWell::HarmonicOrientationWell(float x1, float x2, float x3,
+                                                 float _k, SystemInterface &s)
+    : x(x1), y(x2), z(x3), k(_k) {
+  if (!s.requestQuatuGpu())
+    std::cerr << "HarmonicOrientationWell needs access to quatu on GPU!"
+              << std::endl;
 
-  if(!s.requestTorqueGpu())
-    std::cerr << "HarmonicOrientationWell needs access to torques on GPU!" << std::endl;
+  if (!s.requestTorqueGpu())
+    std::cerr << "HarmonicOrientationWell needs access to torques on GPU!"
+              << std::endl;
 }
 
 #endif
