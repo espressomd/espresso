@@ -287,18 +287,20 @@ of the system are printed: ::
 Tutorials
 ---------
 
-There is a number of tutorials that guide you through the different features of |es|:
+There is a number of tutorials that introduce the use of ESPResSo for different
+physical systems. You can also find the tutorials and related scripts in the
+directory ``/doc/tutorials`` or `online on github <https://github.com/espressomd/espresso/blob/python/doc/tutorials/>`_.
+Currently, the following tutorials are available:
 
-* `Building |es|						  <https://github.com/espressomd/espresso/blob/python/doc/tutorials/00-building_espresso/00-building_espresso.pdf>`_
-* `Simulate a simple Lennard-Jones liquid <https://github.com/espressomd/espresso/blob/python/doc/tutorials/01-lennard_jones/01-lennard_jones.pdf>`_
-* `Charged systems                        <https://github.com/espressomd/espresso/blob/python/doc/tutorials/02-charged_system/02-charged_system.pdf>`_
-* `Lattice Boltzmann                      <https://github.com/espressomd/espresso/blob/python/doc/tutorials/04-lattice_boltzmann/04-lattice_boltzmann.pdf>`_
-* `Raspberry electrophoresis              <https://github.com/espressomd/espresso/blob/python/doc/tutorials/05-raspberry_electrophoresis/05-raspberry_electrophoresis.pdf>`_
-* `Electrokinetics                        <https://github.com/espressomd/espresso/blob/python/doc/tutorials/07-electrokinetics/07-electrokinetics.pdf>`_
-* `Visualization                          <https://github.com/espressomd/espresso/blob/python/doc/tutorials/08-visualization/08-visualization.pdf>`_
-* `Swimmer reactions                    <https://github.com/espressomd/espresso/blob/python/doc/tutorials/09-swimmer_reactions/09-swimmer_reactions.pdf>`_
-
-You can also find the tutorials and related scripts in the directory ``/doc/tutorials``.
+* 01-lennard_jones: Modelling of a single-component and a two-component Lennard-Jones liquid.
+* 02-charged_system: Modelling of charged systems such as ionic crystals.
+* 04-lattice_boltzmann: Simulations including hydrodynamic interactions using the Lattice-Boltzmann method.
+* 05-raspberry_electrophoresis: Extended objects in a Lattice-Boltzmann fluid, raspberry particles.
+* 06-active_matter: Modelling of self-propelling particles.
+* 07-electrokinetics: Modelling electrokinetics together with hydrodynamic interactions.
+* 08-visualization: Using the online visualizers of ESPResSo.
+* 09-swimmer_reactions: Further modelling of self-propelling particles.
+* 10-reaction_ensemble: Modelling chemical reactions by means of the reaction ensemble.
 
 .. _Sample scripts:
 
