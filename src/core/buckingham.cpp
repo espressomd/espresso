@@ -27,10 +27,9 @@
 #ifdef BUCKINGHAM
 #include "communication.hpp"
 
-int buckingham_set_params(int part_type_a, int part_type_b,
-			  double A, double B, double C, double D, double cut,
-			  double discont, double shift)
-{
+int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
+                          double C, double D, double cut, double discont,
+                          double shift) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
   if (!data)

@@ -31,10 +31,10 @@
  *  \ref forces.cpp
 */
 
-#include "utils.hpp"
 #include "debug.hpp"
-#include "particle_data.hpp"
 #include "interaction_data.hpp"
+#include "particle_data.hpp"
+#include "utils.hpp"
 
 int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
                              double sig, double cut, double shift,
@@ -54,7 +54,8 @@ inline void add_lj_pair_force(const Particle *const p1,
     double r_off = dist - ia_params->LJ_offset;
     double frac2 = Utils::sqr(ia_params->LJ_sig / r_off);
     double frac6 = frac2 * frac2 * frac2;
-    double fac = 48.0 * ia_params->LJ_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
+    double fac =
+        48.0 * ia_params->LJ_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
 #ifdef SHANCHEN
     if (ia_params->affinity_on == 1) {
       if (LB_COMPONENTS == 2) {
@@ -108,7 +109,8 @@ inline double lj_pair_energy(const Particle *p1, const Particle *p2,
     double r_off = dist - ia_params->LJ_offset;
     double frac2 = Utils::sqr(ia_params->LJ_sig / r_off);
     double frac6 = frac2 * frac2 * frac2;
-    return 4.0 * ia_params->LJ_eps * (Utils::sqr(frac6) - frac6 + ia_params->LJ_shift);
+    return 4.0 * ia_params->LJ_eps *
+           (Utils::sqr(frac6) - frac6 + ia_params->LJ_shift);
   }
   return 0.0;
 }

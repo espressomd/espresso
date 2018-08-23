@@ -695,7 +695,7 @@ int set_particle_q(int part, double q);
     @return ES_OK if particle existed
 */
 int set_particle_mu_E(int part, double mu_E[3]);
-void get_particle_mu_E(int part, double(&mu_E)[3]);
+void get_particle_mu_E(int part, double (&mu_E)[3]);
 #endif
 
 /** Call only on the master node: set particle type.

@@ -244,7 +244,7 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh[3],
 template <int cao> static void p3m_do_charge_assign();
 
 template <int cao>
-void p3m_do_assign_charge(double q, Vector3d& real_pos, int cp_cnt);
+void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
 /*@}*/
 
 void p3m_pre_init(void) {
@@ -354,16 +354,16 @@ void p3m_init() {
     p3m.recv_grid = Utils::realloc(p3m.recv_grid, sizeof(double) * p3m.sm.max);
 
     /* FFT */
-    P3M_TRACE(
-        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
+    P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
+                      (void *)p3m.rs_mesh));
 
     int ca_mesh_size =
         fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
                  p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum);
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
 
-    P3M_TRACE(
-        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
+    P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
+                      (void *)p3m.rs_mesh));
 
     /* k-space part: */
     p3m_calc_differential_operator();
@@ -412,7 +412,6 @@ void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha,
 
   if (n_interpol != -1)
     p3m.params.inter = n_interpol;
-
 }
 
 /*@}*/
@@ -565,7 +564,7 @@ template <int cao> void p3m_do_charge_assign() {
 }
 
 /* Template wrapper for p3m_do_assign_charge() */
-void p3m_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
+void p3m_assign_charge(double q, Vector3d &real_pos, int cp_cnt) {
   switch (p3m.params.cao) {
   case 1:
     p3m_do_assign_charge<1>(q, real_pos, cp_cnt);
@@ -592,8 +591,8 @@ void p3m_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
 }
 
 template <int cao>
-void p3m_do_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
-  auto const inter = not (p3m.params.inter == 0);
+void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt) {
+  auto const inter = not(p3m.params.inter == 0);
   /* distance to nearest mesh point */
   double dist[3];
   /* index for caf interpolation grid */
@@ -611,8 +610,9 @@ void p3m_do_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
 
   for (int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
-    auto const pos = ((real_pos[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
-          p3m.pos_shift;
+    auto const pos =
+        ((real_pos[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
+        p3m.pos_shift;
     /* nearest mesh point */
     auto const nmp = (int)pos;
     /* 3d-array index of nearest mesh point */
@@ -829,8 +829,9 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
 
     for (i = 0; i < fft.plan[3].new_size; i++) {
       // Use the energy optimized influence function for energy!
-      node_k_space_energy += p3m.g_energy[i] * (Utils::sqr(p3m.rs_mesh[2 * i]) +
-                                                Utils::sqr(p3m.rs_mesh[2 * i + 1]));
+      node_k_space_energy +=
+          p3m.g_energy[i] *
+          (Utils::sqr(p3m.rs_mesh[2 * i]) + Utils::sqr(p3m.rs_mesh[2 * i + 1]));
     }
     node_k_space_energy *= force_prefac;
 
@@ -952,7 +953,8 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   MPI_Allreduce(lcl_dm, gbl_dm, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
 
   if (energy_flag)
-    en = 0.5 * pref * (Utils::sqr(gbl_dm[0]) + Utils::sqr(gbl_dm[1]) + Utils::sqr(gbl_dm[2]));
+    en = 0.5 * pref * (Utils::sqr(gbl_dm[0]) + Utils::sqr(gbl_dm[1]) +
+                       Utils::sqr(gbl_dm[2]));
   else
     en = 0;
   if (force_flag) {
@@ -1143,8 +1145,8 @@ inline double perform_aliasing_sums_force(int n[3], double numerator[3]) {
         nmz = p3m.meshift_z[n[KZ]] + p3m.params.mesh[RZ] * mz;
         sz = sy * int_pow<2 * cao>(sinc(nmz / (double)p3m.params.mesh[RZ]));
 
-        nm2 =
-            Utils::sqr(nmx / box_l[RX]) + Utils::sqr(nmy / box_l[RY]) + Utils::sqr(nmz / box_l[RZ]);
+        nm2 = Utils::sqr(nmx / box_l[RX]) + Utils::sqr(nmy / box_l[RY]) +
+              Utils::sqr(nmz / box_l[RZ]);
         expo = f1 * nm2;
         f2 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
 
@@ -1177,9 +1179,9 @@ template <int cao> void calc_influence_function_force() {
 
   /* Skip influence function calculation in tuning mode,
      the results need not be correct for timing. */
-  if(p3m.params.tuning) {
+  if (p3m.params.tuning) {
     /* If resized, fill with zeros to avoid nan forces. */
-      memset(p3m.g_force, 0, size * sizeof(double));
+    memset(p3m.g_force, 0, size * sizeof(double));
 
     return;
   }
@@ -1207,10 +1209,9 @@ template <int cao> void calc_influence_function_force() {
                  Utils::sqr(p3m.d_op[RY][n[KY]] / box_l[RY]) +
                  Utils::sqr(p3m.d_op[RZ][n[KZ]] / box_l[RZ]);
 
-          if(fak2 == 0) {
+          if (fak2 == 0) {
             fak3 = 0;
-          }
-          else
+          } else
             fak3 = fak1 / (fak2 * Utils::sqr(denominator));
 
           p3m.g_force[ind] = 2 * fak3 / (PI);
@@ -1269,8 +1270,8 @@ template <int cao> inline double perform_aliasing_sums_energy(int n[3]) {
         nmz = p3m.meshift_z[n[KZ]] + p3m.params.mesh[RZ] * mz;
         sz = sy * int_pow<2 * cao>(sinc(nmz / (double)p3m.params.mesh[RZ]));
         /* k = 2*pi * (nx/lx, ny/ly, nz/lz); expo = -k^2 / 4*alpha^2 */
-        nm2 =
-            Utils::sqr(nmx / box_l[RX]) + Utils::sqr(nmy / box_l[RY]) + Utils::sqr(nmz / box_l[RZ]);
+        nm2 = Utils::sqr(nmx / box_l[RX]) + Utils::sqr(nmy / box_l[RY]) +
+              Utils::sqr(nmz / box_l[RZ]);
         expo = f1 * nm2;
         f2 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
 
@@ -1301,7 +1302,7 @@ template <int cao> void calc_influence_function_energy() {
 
   /* Skip influence function calculation in tuning mode,
      the results need not be correct for timing. */
-  if(p3m.params.tuning)
+  if (p3m.params.tuning)
     return;
 
   ind = 0;
@@ -1746,8 +1747,7 @@ int p3m_adaptive_tune(char **log) {
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
   /* Print Status */
-  sprintf(b,
-          "P3M tune parameters: Accuracy goal = %.5e prefactor = %.5e \n",
+  sprintf(b, "P3M tune parameters: Accuracy goal = %.5e prefactor = %.5e \n",
           p3m.params.accuracy, coulomb.prefactor);
   *log = strcat_alloc(*log, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
@@ -2315,7 +2315,11 @@ void p3m_scaleby_box_l() {
 
 void p3m_calc_kspace_stress(double *stress) {
   /**
-  Calculates the long range electrostatics part of the stress tensor. This is part Pi_{dir, alpha,beta} in the paper by Essmann et al "A smooth particle mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995); doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper is not present here since M is the empty set in our simulations.
+  Calculates the long range electrostatics part of the stress tensor. This is
+  part Pi_{dir, alpha,beta} in the paper by Essmann et al "A smooth particle
+  mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995); doi:
+  10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper is not
+  present here since M is the empty set in our simulations.
   */
   if (p3m.sum_q2 > 0) {
     double *node_k_space_stress;
@@ -2352,12 +2356,13 @@ void p3m_calc_kspace_stress(double *stress) {
           } else {
             vterm = -2.0 * (1 / sqk + Utils::sqr(1.0 / 2.0 / p3m.params.alpha));
             node_k_space_energy =
-                p3m.g_energy[ind] *
-                (Utils::sqr(p3m.rs_mesh[2 * ind]) + Utils::sqr(p3m.rs_mesh[2 * ind + 1]));
+                p3m.g_energy[ind] * (Utils::sqr(p3m.rs_mesh[2 * ind]) +
+                                     Utils::sqr(p3m.rs_mesh[2 * ind + 1]));
           }
           ind++;
           node_k_space_stress[0] +=
-              node_k_space_energy * (1.0 + vterm * Utils::sqr(kx)); /* sigma_xx */
+              node_k_space_energy *
+              (1.0 + vterm * Utils::sqr(kx)); /* sigma_xx */
           node_k_space_stress[1] +=
               node_k_space_energy * (vterm * kx * ky); /* sigma_xy */
           node_k_space_stress[2] +=
@@ -2366,7 +2371,8 @@ void p3m_calc_kspace_stress(double *stress) {
           node_k_space_stress[3] +=
               node_k_space_energy * (vterm * kx * ky); /* sigma_yx */
           node_k_space_stress[4] +=
-              node_k_space_energy * (1.0 + vterm * Utils::sqr(ky)); /* sigma_yy */
+              node_k_space_energy *
+              (1.0 + vterm * Utils::sqr(ky)); /* sigma_yy */
           node_k_space_stress[5] +=
               node_k_space_energy * (vterm * ky * kz); /* sigma_yz */
 
@@ -2375,7 +2381,8 @@ void p3m_calc_kspace_stress(double *stress) {
           node_k_space_stress[7] +=
               node_k_space_energy * (vterm * ky * kz); /* sigma_zy */
           node_k_space_stress[8] +=
-              node_k_space_energy * (1.0 + vterm * Utils::sqr(kz)); /* sigma_zz */
+              node_k_space_energy *
+              (1.0 + vterm * Utils::sqr(kz)); /* sigma_zz */
         }
       }
     }

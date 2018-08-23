@@ -2127,7 +2127,8 @@ void lb_release() { release_halo_communication(&update_halo_comm); }
 /***********************************************************************/
 /*@{*/
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             const std::array<double, 3> &j, const std::array<double, 6> &pi) {
+                             const std::array<double, 3> &j,
+                             const std::array<double, 6> &pi) {
   int i;
   double local_rho, local_j[3], local_pi[6], trace;
   const double avg_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
@@ -3046,30 +3047,31 @@ void calc_particle_lattice_ia() {
 
   /*@}*/
 
-/*@}*/
-void print_fluid() {
-  for (int x=0; x < lblattice.halo_grid[0]; ++x) {
-    for (int y=0; y < lblattice.halo_grid[1]; ++y) {
-        for (int z=0; z<lblattice.halo_grid[2]; ++z) {
-            int index = get_linear_index(x, y, z, lblattice.halo_grid);
-            for (int p=0; p < lbmodel.n_veloc; ++p) {
-                printf("x %d y %d z %d pop %d: %f\n", x, y, z, p, lbfluid[p][index]);
-            }
+  /*@}*/
+  void print_fluid() {
+    for (int x = 0; x < lblattice.halo_grid[0]; ++x) {
+      for (int y = 0; y < lblattice.halo_grid[1]; ++y) {
+        for (int z = 0; z < lblattice.halo_grid[2]; ++z) {
+          int index = get_linear_index(x, y, z, lblattice.halo_grid);
+          for (int p = 0; p < lbmodel.n_veloc; ++p) {
+            printf("x %d y %d z %d pop %d: %f\n", x, y, z, p,
+                   lbfluid[p][index]);
+          }
         }
+      }
     }
   }
-}
 
-static int compare_buffers(double *buf1, double *buf2, int size) {
-  int ret;
-  if (memcmp(buf1, buf2, size) != 0) {
-    runtimeErrorMsg() << "Halo buffers are not identical";
-    ret = 1;
-  } else {
-    ret = 0;
+  static int compare_buffers(double *buf1, double *buf2, int size) {
+    int ret;
+    if (memcmp(buf1, buf2, size) != 0) {
+      runtimeErrorMsg() << "Halo buffers are not identical";
+      ret = 1;
+    } else {
+      ret = 0;
+    }
+    return ret;
   }
-  return ret;
-}
 
   /** Checks consistency of the halo regions (ADDITIONAL_CHECKS)
       This function can be used as an additional check. It test whether the

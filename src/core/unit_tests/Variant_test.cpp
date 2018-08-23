@@ -194,7 +194,10 @@ BOOST_AUTO_TEST_CASE(make_shared_from_args_test) {
 
 BOOST_AUTO_TEST_CASE(call_with_args_test) {
   struct C {
-    int mem(std::string s) { s.clear(); return 12; }
+    int mem(std::string s) {
+      s.clear();
+      return 12;
+    }
   };
 
   VariantMap vals{{"s", std::string()}};

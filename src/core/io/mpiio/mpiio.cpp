@@ -51,13 +51,13 @@
 #include "config.hpp"
 
 #include "cells.hpp"
+#include "errorhandling.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "mpiio.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
-#include "errorhandling.hpp"
 
 #include <mpi.h>
 
@@ -80,8 +80,8 @@ namespace Mpiio {
  * \param MPI_T The MPI_Datatype corresponding to the template parameter T.
  */
 template <typename T>
-static void mpiio_dump_array(const std::string & fn, T *arr, size_t len, size_t pref,
-                             MPI_Datatype MPI_T) {
+static void mpiio_dump_array(const std::string &fn, T *arr, size_t len,
+                             size_t pref, MPI_Datatype MPI_T) {
   MPI_File f;
   int ret;
 
@@ -115,7 +115,7 @@ static void mpiio_dump_array(const std::string & fn, T *arr, size_t len, size_t 
  * \param fn The filename to write to
  * \param fields The dumped fields
  */
-static void dump_info(const std::string & fn, unsigned fields) {
+static void dump_info(const std::string &fn, unsigned fields) {
   static std::vector<int> npartners;
   int success;
   FILE *f = fopen(fn.c_str(), "wb");
@@ -138,8 +138,9 @@ static void dump_info(const std::string & fn, unsigned fields) {
   }
   auto ia_params_size = static_cast<size_t>(bonded_ia_params.size());
   success = success && (fwrite(&ia_params_size, sizeof(size_t), 1, f) == 1);
-  success = success && (fwrite(npartners.data(), sizeof(int), bonded_ia_params.size(), f) ==
-                        bonded_ia_params.size());
+  success =
+      success && (fwrite(npartners.data(), sizeof(int), bonded_ia_params.size(),
+                         f) == bonded_ia_params.size());
   fclose(f);
   if (!success) {
     fprintf(stderr, "MPI-IO Error: Failed to write %s.\n", fn.c_str());
@@ -246,7 +247,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields) {
  * \param elem_sz Sizeof a single element
  * \return The number of elements stored binary in the file
  */
-static int get_num_elem(const std::string & fn, size_t elem_sz) {
+static int get_num_elem(const std::string &fn, size_t elem_sz) {
   // Could also be done via MPI_File_open, MPI_File_get_size,
   // MPI_File_cose.
   struct stat st;
@@ -264,8 +265,8 @@ static int get_num_elem(const std::string & fn, size_t elem_sz) {
  *  have to match!
  */
 template <typename T>
-static void mpiio_read_array(const std::string & fn, T *arr, size_t len, size_t pref,
-                             MPI_Datatype MPI_T) {
+static void mpiio_read_array(const std::string &fn, T *arr, size_t len,
+                             size_t pref, MPI_Datatype MPI_T) {
   MPI_File f;
   int ret;
 
@@ -299,7 +300,7 @@ static void mpiio_read_array(const std::string & fn, T *arr, size_t len, size_t 
  * \param rank The rank of the current process in MPI_COMM_WORLD
  * \param file Pointer to store the fields to
  */
-static void read_head(const std::string & fn, int rank, unsigned *fields) {
+static void read_head(const std::string &fn, int rank, unsigned *fields) {
   FILE *f = nullptr;
   if (rank == 0) {
     if (!(f = fopen(fn.c_str(), "rb"))) {
@@ -327,8 +328,8 @@ static void read_head(const std::string & fn, int rank, unsigned *fields) {
  * \param prefs Pointer to store the prefix to
  * \param nlocalpart Pointer to store the amount of local particles to
  */
-static void read_prefs(const std::string & fn, int rank, int size, int nglobalpart,
-                       int *pref, int *nlocalpart) {
+static void read_prefs(const std::string &fn, int rank, int size,
+                       int nglobalpart, int *pref, int *nlocalpart) {
   mpiio_read_array<int>(fn, pref, 1, rank, MPI_INT);
   if (rank > 0)
     MPI_Send(pref, 1, MPI_INT, rank - 1, 0, MPI_COMM_WORLD);
@@ -376,8 +377,8 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   read_prefs(fnam + ".pref", rank, size, nglobalpart, &pref, &nlocalpart);
 
   // Prepare ESPResSo data structures
-  local_particles = Utils::realloc(
-      local_particles, sizeof(Particle *) * nglobalpart);
+  local_particles =
+      Utils::realloc(local_particles, sizeof(Particle *) * nglobalpart);
   for (int i = 0; i < nglobalpart; ++i)
     local_particles[i] = nullptr;
   n_part = nglobalpart;
@@ -456,5 +457,4 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   // Out of box particles might be accepted by the cell system.
   set_resort_particles(Cells::RESORT_GLOBAL);
 }
-
 }

@@ -45,8 +45,8 @@
 */
 #include "RuntimeErrorStream.hpp"
 #include "communication.hpp"
-#include "utils.hpp"
 #include "errorhandling.hpp"
+#include "utils.hpp"
 
 #include <climits>
 
@@ -207,8 +207,7 @@ Vector3d get_mi_vector(T const &a, U const &b) {
     i. e. a previously folded position will be folded correctly.
 */
 template <typename T1, typename T2, typename T3>
-void fold_coordinate(T1& pos, T2& vel, T3&  image_box,
-                            int dir) {
+void fold_coordinate(T1 &pos, T2 &vel, T3 &image_box, int dir) {
   if (PERIODIC(dir)) {
     int img_count = (int)floor(pos[dir] * box_l_i[dir]);
     image_box[dir] += img_count;
@@ -224,7 +223,6 @@ void fold_coordinate(T1& pos, T2& vel, T3&  image_box,
       pos[dir] = 0;
       return;
     }
-
   }
 }
 
@@ -238,7 +236,7 @@ void fold_coordinate(T1& pos, T2& vel, T3&  image_box,
     i. e. a previously folded position will be folded correctly.
 */
 template <typename T1, typename T2>
-void fold_coordinate(T1& pos, T2& image_box, int dir) {
+void fold_coordinate(T1 &pos, T2 &image_box, int dir) {
   double v[3];
   fold_coordinate(pos, v, image_box, dir);
 }
@@ -252,7 +250,7 @@ void fold_coordinate(T1& pos, T2& image_box, int dir) {
     i. e. a previously folded position will be folded correctly.
 */
 template <typename T1, typename T2, typename T3>
-inline void fold_position(T1& pos, T2& vel, T3& image_box) {
+inline void fold_position(T1 &pos, T2 &vel, T3 &image_box) {
   for (int i = 0; i < 3; i++)
     fold_coordinate(pos, vel, image_box, i);
 }
@@ -264,8 +262,7 @@ inline void fold_position(T1& pos, T2& vel, T3& image_box) {
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
 */
-template <typename T1, typename T2>
-void fold_position(T1& pos, T2&  image_box) {
+template <typename T1, typename T2> void fold_position(T1 &pos, T2 &image_box) {
   for (int i = 0; i < 3; i++)
     fold_coordinate(pos, image_box, i);
 }
@@ -294,7 +291,6 @@ inline Vector3d folded_position(const Particle *p) {
   return folded_position(*p);
 }
 
-
 /** unfold coordinates to physical position.
     \param pos the position
     \param vel the velocity
@@ -304,18 +300,16 @@ inline Vector3d folded_position(const Particle *p) {
     afterwards.
 */
 template <typename T1, typename T2, typename T3>
-void unfold_position(T1& pos, T2&  vel, T3& image_box) {
+void unfold_position(T1 &pos, T2 &vel, T3 &image_box) {
 
   int i;
   for (i = 0; i < 3; i++) {
     pos[i] = pos[i] + image_box[i] * box_l[i];
     image_box[i] = 0;
   }
-
 }
 
-inline
-Vector3d unfolded_position(Particle const * p) {
+inline Vector3d unfolded_position(Particle const *p) {
   Vector3d pos{p->r.p};
   for (int i = 0; i < 3; i++) {
     pos[i] += p->l.i[i] * box_l[i];
@@ -336,7 +330,7 @@ inline Vector3d unfolded_position(Particle const &p) {
     afterwards.
 */
 template <typename T1, typename T2>
-void unfold_position(T1& pos, T2& image_box) {
+void unfold_position(T1 &pos, T2 &image_box) {
   double v[3];
   unfold_position(pos, v, image_box);
 }

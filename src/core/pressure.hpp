@@ -33,7 +33,8 @@
 ///
 extern Observable_stat virials, total_pressure, p_tensor, total_p_tensor;
 ///
-extern Observable_stat_non_bonded virials_non_bonded, total_pressure_non_bonded, p_tensor_non_bonded, total_p_tensor_non_bonded;
+extern Observable_stat_non_bonded virials_non_bonded, total_pressure_non_bonded,
+    p_tensor_non_bonded, total_p_tensor_non_bonded;
 /*@}*/
 
 /** \name Exported Functions */
@@ -45,28 +46,36 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 void init_p_tensor(Observable_stat *stat);
 void master_pressure_calc(int v_comp);
 
-
-/** Calculates the pressure in the system from a virial expansion using the terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials dependeing on the used cell system.<BR>
+/** Calculates the pressure in the system from a virial expansion using the
+   terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials
+   dependeing on the used cell system.<BR>
     @param result here the data about the scalar pressure are stored
     @param result_t here the data about the stress tensor are stored
-    @param result_nb here the data about the intra- and inter- molecular nonbonded contributions to scalar pressure are stored
-    @param result_t_nb here the data about the intra- and inter- molecular nonbonded contributions to stress tensor are stored
+    @param result_nb here the data about the intra- and inter- molecular
+   nonbonded contributions to scalar pressure are stored
+    @param result_t_nb here the data about the intra- and inter- molecular
+   nonbonded contributions to stress tensor are stored
     @param v_comp flag which enables (1) compensation of the velocities required
-		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
-		  (hence it only works with domain decomposition); naturally it
-		  therefore doesn't make sense to use it without NpT.
+                  for deriving a pressure reflecting \ref nptiso_struct::p_inst
+                  (hence it only works with domain decomposition); naturally it
+                  therefore doesn't make sense to use it without NpT.
 */
-void pressure_calc(double *result, double *result_t, double *result_nb, double *result_t_nb, int v_comp);
+void pressure_calc(double *result, double *result_t, double *result_nb,
+                   double *result_t_nb, int v_comp);
 
 /** implementation of 'analyse local_stress_tensor */
-int local_stress_tensor_calc (DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]);
+int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
+                             int periodic[3], double range_start[3],
+                             double range[3]);
 
 /** function to calculate stress tensor for the observables */
 int observable_compute_stress_tensor(int v_comp, double *A);
 
 void update_pressure(int v_comp);
 void update_stress_tensor(int v_comp);
-int analyze_local_stress_tensor(int* periodic, double* range_start, double* range, int* bins, DoubleList* local_stress_tensor);
+int analyze_local_stress_tensor(int *periodic, double *range_start,
+                                double *range, int *bins,
+                                DoubleList *local_stress_tensor);
 
 /*@}*/
 

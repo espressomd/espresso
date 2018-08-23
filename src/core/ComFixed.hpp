@@ -22,8 +22,8 @@
 #include "Vector.hpp"
 #include "utils/keys.hpp"
 
-#include <boost/mpi/communicator.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/communicator.hpp>
 
 #include <unordered_map>
 #include <vector>

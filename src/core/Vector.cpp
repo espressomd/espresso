@@ -1,3 +1,2 @@
-#include "config.hpp"
 #include "Vector.hpp"
-
+#include "config.hpp"

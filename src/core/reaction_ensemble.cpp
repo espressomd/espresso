@@ -188,7 +188,6 @@ void ReactionAlgorithm::check_reaction_ensemble() {
 #endif
 }
 
-
 // boring helper functions
 /**
 * Automatically sets the volume which is used by the reaction ensemble to the
@@ -465,8 +464,8 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
                         p_ids_created_particles, hidden_particles_properties);
 
   double E_pot_new;
-  if(particle_inserted_too_close_to_another_one==true)
-    E_pot_new=std::numeric_limits<double>::max();
+  if (particle_inserted_too_close_to_another_one == true)
+    E_pot_new = std::numeric_limits<double>::max();
   else
     E_pot_new = calculate_current_potential_energy_of_system();
 
@@ -479,7 +478,8 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
       current_reaction, E_pot_old, E_pot_new, old_particle_numbers,
       old_state_index, new_state_index, only_make_configuration_changing_move);
 
-  std::vector<double> exponential = {exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
+  std::vector<double> exponential = {
+      exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
   current_reaction.accumulator_exponentials(exponential);
 
   if (d_random() < bf) {
@@ -525,7 +525,6 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   on_end_reaction(accepted_state);
   return reaction_is_accepted;
 }
-
 
 /**
 * Calculates the change in particle numbers for the given reaction
@@ -711,7 +710,6 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   double charge = charges_of_types[desired_type];
 #endif
 
-  
   pos_vec = get_random_position_in_box();
   place_particle(p_id, pos_vec.data());
   // set type
@@ -730,15 +728,15 @@ int ReactionAlgorithm::create_particle(int desired_type) {
                                // forces
   if (d_min < exclusion_radius)
     particle_inserted_too_close_to_another_one = true; // setting of a minimal
-                                                      // distance is allowed to
-                                                      // avoid overlapping
-                                                      // configurations if there is
-                                                      // a repulsive potential.
-                                                      // States with very high
-                                                      // energies have a probability
-                                                      // of almost zero and
-                                                      // therefore do not contribute
-                                                      // to ensemble averages.
+                                                       // distance is allowed to
+                                                       // avoid overlapping
+  // configurations if there is
+  // a repulsive potential.
+  // States with very high
+  // energies have a probability
+  // of almost zero and
+  // therefore do not contribute
+  // to ensemble averages.
 
   return p_id;
 }
@@ -772,7 +770,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     int type, int particle_number_of_type_to_be_changed, bool use_wang_landau) {
   m_tried_configurational_MC_moves += 1;
   bool got_accepted = false;
-  particle_inserted_too_close_to_another_one=false;
+  particle_inserted_too_close_to_another_one = false;
 
   int old_state_index = -1;
   if (use_wang_landau) {
@@ -797,7 +795,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
   // save old_position
   int p_id = get_random_p_id(type);
-  for (int i=0; i < particle_number_of_type_to_be_changed;i++) {
+  for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
     // determine a p_id you have not touched yet
     while (is_in_list(p_id, p_id_s_changed_particles)) {
       p_id = get_random_p_id(
@@ -814,25 +812,26 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
   // propose new positions
   std::vector<double> new_pos(3);
-  for (int i=0; i < particle_number_of_type_to_be_changed; i++) {
+  for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
     p_id = p_id_s_changed_particles[i];
     // change particle position
     new_pos = get_random_position_in_box();
     // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
     // //enhanced proposal of small radii
     place_particle(p_id, new_pos.data());
-    double d_min = distto(partCfg(), new_pos.data(), p_id); // TODO also catch constraints with an IFDEF
-                               // CONSTRAINTS here, but only interesting,
-                               // when doing MD/ HMC because then the system
-                               // might explode easily here due to high
-    
-    if(d_min<exclusion_radius)
-        particle_inserted_too_close_to_another_one=true;
+    double d_min = distto(partCfg(), new_pos.data(),
+                          p_id); // TODO also catch constraints with an IFDEF
+                                 // CONSTRAINTS here, but only interesting,
+                                 // when doing MD/ HMC because then the system
+                                 // might explode easily here due to high
+
+    if (d_min < exclusion_radius)
+      particle_inserted_too_close_to_another_one = true;
   }
 
   double E_pot_new;
-  if(particle_inserted_too_close_to_another_one==true)
-    E_pot_new=std::numeric_limits<double>::max();
+  if (particle_inserted_too_close_to_another_one == true)
+    E_pot_new = std::numeric_limits<double>::max();
   else
     E_pot_new = calculate_current_potential_energy_of_system();
 
@@ -1670,10 +1669,10 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
 }
 
 int ConstantpHEnsemble::get_random_valid_p_id() {
-  int random_p_id = i_random(max_seen_particle+1);
-  //draw random p_ids till we draw a pid which exists
+  int random_p_id = i_random(max_seen_particle + 1);
+  // draw random p_ids till we draw a pid which exists
   while (not particle_exists(random_p_id))
-    random_p_id = i_random(max_seen_particle+1);
+    random_p_id = i_random(max_seen_particle + 1);
   return random_p_id;
 }
 
@@ -1685,7 +1684,8 @@ int ConstantpHEnsemble::get_random_valid_p_id() {
 * Note that there is a difference in the usecase of the constant pH reactions
 * and the above reaction ensemble. For the constant pH simulation directily the
 * **apparent equilibrium constant which carries a unit** needs to be provided --
-* this is equivalent to the gamma of the reaction ensemble above, where the dimensionless
+* this is equivalent to the gamma of the reaction ensemble above, where the
+* dimensionless
 * reaction constant needs to be provided. Again: For the constant-pH algorithm
 * not the dimensionless reaction constant needs to be provided here, but the
 * apparent reaction constant.
@@ -1751,15 +1751,18 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
   double ln_bf;
   double pKa;
   const double beta = 1.0 / temperature;
-  pKa = -current_reaction.nu_bar*log10(current_reaction.gamma);
-  ln_bf = (E_pot_new - E_pot_old) - current_reaction.nu_bar* 1.0 / beta * log(10) * (m_constant_pH - pKa);
+  pKa = -current_reaction.nu_bar * log10(current_reaction.gamma);
+  ln_bf =
+      (E_pot_new - E_pot_old) -
+      current_reaction.nu_bar * 1.0 / beta * log(10) * (m_constant_pH - pKa);
   double bf = exp(-beta * ln_bf);
   return bf;
 }
 
-std::pair<double,double> WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
+std::pair<double, double>
+WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   SingleReaction &current_reaction = reactions[reaction_id];
-  particle_inserted_too_close_to_another_one=false;
+  particle_inserted_too_close_to_another_one = false;
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
   // make reaction attempt
@@ -1772,10 +1775,10 @@ std::pair<double,double> WidomInsertion::measure_excess_chemical_potential(int r
   make_reaction_attempt(current_reaction, changed_particles_properties,
                         p_ids_created_particles, hidden_particles_properties);
   double E_pot_new;
-  if(particle_inserted_too_close_to_another_one==true)
-    E_pot_new=std::numeric_limits<double>::max();
+  if (particle_inserted_too_close_to_another_one == true)
+    E_pot_new = std::numeric_limits<double>::max();
   else
-    E_pot_new= calculate_current_potential_energy_of_system();
+    E_pot_new = calculate_current_potential_energy_of_system();
   // reverse reaction attempt
   // reverse reaction
   // 1) delete created product particles
@@ -1786,10 +1789,19 @@ std::pair<double,double> WidomInsertion::measure_excess_chemical_potential(int r
   restore_properties(hidden_particles_properties, number_of_saved_properties);
   // 2)restore previously changed reactant particles
   restore_properties(changed_particles_properties, number_of_saved_properties);
-  std::vector<double> exponential = {exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
+  std::vector<double> exponential = {
+      exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
   current_reaction.accumulator_exponentials(exponential);
 
-  std::pair<double,double> result=std::make_pair(-temperature*log(current_reaction.accumulator_exponentials.get_mean()[0]),std::abs(-temperature/current_reaction.accumulator_exponentials.get_mean()[0]*current_reaction.accumulator_exponentials.get_std_error()[0])); //(excess chemical potential; error excess chemical potential, determined via error propagation)
+  std::pair<double, double> result = std::make_pair(
+      -temperature *
+          log(current_reaction.accumulator_exponentials.get_mean()[0]),
+      std::abs(-temperature /
+               current_reaction.accumulator_exponentials.get_mean()[0] *
+               current_reaction.accumulator_exponentials
+                   .get_std_error()[0])); //(excess chemical potential; error
+                                          //excess chemical potential,
+                                          //determined via error propagation)
   return result;
 }
 

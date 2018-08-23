@@ -367,13 +367,13 @@ __device__ inline int linear_index_r(P3MGpuData const &p, int i, int j, int k) {
 }
 
 __device__ inline int linear_index_k(P3MGpuData const &p, int i, int j, int k) {
-  return p.mesh[1] * (p.mesh[2] / 2 + 1) * i +
-                           (p.mesh[2] / 2 + 1) * j + k;
+  return p.mesh[1] * (p.mesh[2] / 2 + 1) * i + (p.mesh[2] / 2 + 1) * j + k;
 }
 }
 
 __global__ void apply_diff_op(const P3MGpuData p) {
-  const int linear_index = linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
+  const int linear_index =
+      linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
 
   const int nx =
       (blockIdx.x > p.mesh[0] / 2) ? blockIdx.x - p.mesh[0] : blockIdx.x;
@@ -406,7 +406,8 @@ __device__ inline int wrap_index(const int ind, const int mesh) {
 }
 
 __global__ void apply_influence_function(const P3MGpuData p) {
-  const int linear_index = linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
+  const int linear_index =
+      linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
 
   p.charge_mesh[linear_index].x *= p.G_hat[linear_index];
   p.charge_mesh[linear_index].y *= p.G_hat[linear_index];

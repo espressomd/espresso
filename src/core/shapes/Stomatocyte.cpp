@@ -91,12 +91,10 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist,
       (sqr(a) * d + 5 * sqr(c) * d + pow(d, 3) - sqr(a) * e - 5 * sqr(c) * e +
        6 * c * d * e - 3 * sqr(d) * e - 6 * c * sqr(e) + 4 * d * sqr(e) -
        2 * pow(e, 3) -
-       (3 * c + e) *
-           sqrt(-pow(a, 4) -
-                sqr(5 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e + 2 * sqr(e)) +
-                2 * sqr(a) *
-                    (13 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e +
-                     2 * sqr(e)))) /
+       (3 * c + e) * sqrt(-pow(a, 4) - sqr(5 * sqr(c) + sqr(d) + 6 * c * e -
+                                           2 * d * e + 2 * sqr(e)) +
+                          2 * sqr(a) * (13 * sqr(c) + sqr(d) + 6 * c * e -
+                                        2 * d * e + 2 * sqr(e)))) /
       (2 * a * (9 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e + 2 * sqr(e))));
 
   T1p = acos(-(
@@ -105,23 +103,20 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist,
        sqr(a) * (3 * c + e) -
        d * sqrt(-pow(a, 4) -
                 sqr(5 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e + 2 * sqr(e)) +
-                2 * sqr(a) *
-                    (13 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e +
-                     2 * sqr(e))) +
+                2 * sqr(a) * (13 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e +
+                              2 * sqr(e))) +
        e * sqrt(-pow(a, 4) -
                 sqr(5 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e + 2 * sqr(e)) +
-                2 * sqr(a) *
-                    (13 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e +
-                     2 * sqr(e)))) /
+                2 * sqr(a) * (13 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e +
+                              2 * sqr(e)))) /
       (4 * c * (9 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e + 2 * sqr(e)))));
 
   T1 = 3.0 * M_PI / 4.0 - T1p;
 
   T2 = e;
 
-  T3sqrt = -sqr(b * c) *
-           (sqr(a) + 9 * sqr(c) + 4 * c * d + d * (2 * b + d) -
-            2 * a * (b + 2 * c + d)) *
+  T3sqrt = -sqr(b * c) * (sqr(a) + 9 * sqr(c) + 4 * c * d + d * (2 * b + d) -
+                          2 * a * (b + 2 * c + d)) *
            (sqr(a) + 9 * sqr(c) + 4 * c * d + sqr(d) - 2 * a * (b + 2 * c + d) +
             2 * b * (4 * c + d));
 
@@ -132,35 +127,31 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist,
          3 * sqr(a) * b * (b + 2 * c + d) +
          sqr(b) * (25 * sqr(c) + 12 * c * d + 3 * sqr(d)) +
          b * (34 * pow(c, 3) + 25 * sqr(c) * d + 6 * c * sqr(d) + pow(d, 3)) -
-         a * b *
-             (2 * sqr(b) + 25 * sqr(c) + 12 * c * d + 3 * sqr(d) +
-              6 * b * (2 * c + d)) +
+         a * b * (2 * sqr(b) + 25 * sqr(c) + 12 * c * d + 3 * sqr(d) +
+                  6 * b * (2 * c + d)) +
          3 * sqrt(T3sqrt)) /
-        (4 * b * c *
-         (sqr(a) + sqr(b) + 13 * sqr(c) + 4 * c * d + sqr(d) +
-          2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d)))));
+        (4 * b * c * (sqr(a) + sqr(b) + 13 * sqr(c) + 4 * c * d + sqr(d) +
+                      2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d)))));
 
   T3 = 3.0 * M_PI / 4.0 - T3p;
 
-  T4sqrt = -sqr(b) * sqr(c) *
-           (sqr(a) + 9 * sqr(c) + 4 * c * d + d * (2 * b + d) -
-            2 * a * (b + 2 * c + d)) *
+  T4sqrt = -sqr(b) * sqr(c) * (sqr(a) + 9 * sqr(c) + 4 * c * d +
+                               d * (2 * b + d) - 2 * a * (b + 2 * c + d)) *
            (sqr(a) + 9 * sqr(c) + 4 * c * d + sqr(d) - 2 * a * (b + 2 * c + d) +
             2 * b * (4 * c + d));
 
   T4sqrt = std::max(T4sqrt, 0.0);
 
-  T4 = acos((b * (-a + b + 2 * c + d) *
-                 (sqr(a) + 2 * sqr(b) + 9 * sqr(c) + 4 * c * d + sqr(d) +
-                  2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d)) -
-             3 * sqrt(-sqr(b * c) *
-                      (sqr(a) + 9 * sqr(c) + 4 * c * d + d * (2 * b + d) -
-                       2 * a * (b + 2 * c + d)) *
-                      (sqr(a) + 9 * sqr(c) + 4 * c * d + sqr(d) -
-                       2 * a * (b + 2 * c + d) + 2 * b * (4 * c + d)))) /
-            (2 * sqr(b) *
-             (sqr(a) + sqr(b) + 13 * sqr(c) + 4 * c * d + sqr(d) +
-              2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d))));
+  T4 =
+      acos((b * (-a + b + 2 * c + d) *
+                (sqr(a) + 2 * sqr(b) + 9 * sqr(c) + 4 * c * d + sqr(d) +
+                 2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d)) -
+            3 * sqrt(-sqr(b * c) * (sqr(a) + 9 * sqr(c) + 4 * c * d +
+                                    d * (2 * b + d) - 2 * a * (b + 2 * c + d)) *
+                     (sqr(a) + 9 * sqr(c) + 4 * c * d + sqr(d) -
+                      2 * a * (b + 2 * c + d) + 2 * b * (4 * c + d)))) /
+           (2 * sqr(b) * (sqr(a) + sqr(b) + 13 * sqr(c) + 4 * c * d + sqr(d) +
+                          2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d))));
 
   // Radii for the various parts of the swimmer
 
