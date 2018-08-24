@@ -28,7 +28,8 @@ struct Distance {
 
 /* Dummy interaction criterion */
 struct VerletCriterion {
-  bool operator()(Particle const &p1, Particle const &p2, Distance const& d) const {
+  bool operator()(Particle const &p1, Particle const &p2,
+                  Distance const &d) const {
     return d.interact;
   }
 };

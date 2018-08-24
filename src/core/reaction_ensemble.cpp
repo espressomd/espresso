@@ -1,12 +1,11 @@
 /** reaction ensemble method according to smith94x for the reaction ensemble at
-*constant volume and temperature, for the reaction ensemble at constant pressure
-*additionally employ a barostat!
-*NOTE: a chemical reaction consists of a forward and backward reaction. Here
-*both reactions have to be defined seperately.
-*The extent of the reaction is here chosen to be +1.
-*If the reaction trial move for a dissociation of HA is accepted then there is
-*one more dissociated ion pair H+ and A-
-*/
+ *constant volume and temperature, for the reaction ensemble at constant
+ *pressure additionally employ a barostat! NOTE: a chemical reaction consists of
+ *a forward and backward reaction. Here both reactions have to be defined
+ *seperately. The extent of the reaction is here chosen to be +1. If the
+ *reaction trial move for a dissociation of HA is accepted then there is one
+ *more dissociated ion pair H+ and A-
+ */
 
 /** @file */
 
@@ -25,12 +24,12 @@
 
 namespace ReactionEnsemble {
 /**
-*Calculates the average of an array (used for the histogram of the
-*Wang-Landau algorithm). It excludes values which are initialized to be
-*negative. Those values indicate that the Wang-Landau algorithm should not
-*sample those values. The values still occur in the list because we can only
-*store "rectangular" value ranges.
-*/
+ *Calculates the average of an array (used for the histogram of the
+ *Wang-Landau algorithm). It excludes values which are initialized to be
+ *negative. Those values indicate that the Wang-Landau algorithm should not
+ *sample those values. The values still occur in the list because we can only
+ *store "rectangular" value ranges.
+ */
 template <typename T>
 double average_list_of_allowed_entries(const std::vector<T> &vector) {
   double result = 0.0;
@@ -49,8 +48,8 @@ double average_list_of_allowed_entries(const std::vector<T> &vector) {
 }
 
 /**
-* Checks wether a number is in a std:vector of numbers.
-*/
+ * Checks wether a number is in a std:vector of numbers.
+ */
 template <typename T> bool is_in_list(T value, const std::vector<T> &list) {
   for (int i = 0; i < list.size(); i++) {
     if (std::abs(list[i] - value) < std::numeric_limits<double>::epsilon())
@@ -102,8 +101,8 @@ void EnergyCollectiveVariable::load_CV_boundaries(
 }
 
 /**
-* Performs a randomly selected reaction in the reaction ensemble
-*/
+ * Performs a randomly selected reaction in the reaction ensemble
+ */
 int ReactionAlgorithm::do_reaction(int reaction_steps) {
   for (int i = 0; i < reaction_steps; i++) {
     int reaction_id = i_random(reactions.size());
@@ -113,8 +112,8 @@ int ReactionAlgorithm::do_reaction(int reaction_steps) {
 }
 
 /**
-* Adds a reaction to the reaction system
-*/
+ * Adds a reaction to the reaction system
+ */
 void ReactionAlgorithm::add_reaction(
     double gamma, const std::vector<int> &_reactant_types,
     const std::vector<int> &_reactant_coefficients,
@@ -143,9 +142,9 @@ void ReactionAlgorithm::add_reaction(
 }
 
 /**
-* Checks whether all necessary variables for the reaction ensemble have been
-* set.
-*/
+ * Checks whether all necessary variables for the reaction ensemble have been
+ * set.
+ */
 void ReactionAlgorithm::check_reaction_ensemble() {
   /**checks the reaction_ensemble struct for valid parameters */
   if (reactions.size() == 0) {
@@ -188,21 +187,20 @@ void ReactionAlgorithm::check_reaction_ensemble() {
 #endif
 }
 
-
 // boring helper functions
 /**
-* Automatically sets the volume which is used by the reaction ensemble to the
-* volume of a cuboid box
-*/
+ * Automatically sets the volume which is used by the reaction ensemble to the
+ * volume of a cuboid box
+ */
 void ReactionAlgorithm::set_cuboid_reaction_ensemble_volume() {
   if (volume < 0)
     volume = box_l[0] * box_l[1] * box_l[2];
 }
 
 /**
-* Calculates the factorial expression which occurs in the reaction ensemble
-* acceptance probability
-*/
+ * Calculates the factorial expression which occurs in the reaction ensemble
+ * acceptance probability
+ */
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
   double value;
   if (nu_i == 0) {
@@ -224,8 +222,8 @@ double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
 }
 
 /**
-* Checks wether all particles exist for the provided reaction.
-*/
+ * Checks wether all particles exist for the provided reaction.
+ */
 bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) {
   bool enough_particles = true;
   for (int i = 0; i < reactions[reaction_id].reactant_types.size(); i++) {
@@ -240,9 +238,9 @@ bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) {
 }
 
 /**
-* Stores the particle property of a random particle of the provided type into
-* the provided vector
-*/
+ * Stores the particle property of a random particle of the provided type into
+ * the provided vector
+ */
 void ReactionAlgorithm::append_particle_property_of_random_particle(
     int type, std::vector<StoredParticleProperty> &list_of_particles) {
   int p_id = get_random_p_id(type);
@@ -252,8 +250,8 @@ void ReactionAlgorithm::append_particle_property_of_random_particle(
 }
 
 /**
-*Performs a trial reaction move
-*/
+ *Performs a trial reaction move
+ */
 void ReactionAlgorithm::make_reaction_attempt(
     SingleReaction &current_reaction,
     std::vector<StoredParticleProperty> &changed_particles_properties,
@@ -325,9 +323,9 @@ void ReactionAlgorithm::make_reaction_attempt(
 }
 
 /**
-* Restores the previosly stored particle properties. This funtion is invoked
-* when a reaction attempt is rejected.
-*/
+ * Restores the previosly stored particle properties. This funtion is invoked
+ * when a reaction attempt is rejected.
+ */
 void ReactionAlgorithm::restore_properties(
     std::vector<StoredParticleProperty> &property_list,
     const int number_of_saved_properties) {
@@ -347,9 +345,9 @@ void ReactionAlgorithm::restore_properties(
 }
 
 /**
-* Calculates the expression in the acceptance probability in the reaction
-* ensemble
-*/
+ * Calculates the expression in the acceptance probability in the reaction
+ * ensemble
+ */
 double ReactionEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
     std::map<int, int> &old_particle_numbers, int dummy_old_state_index,
@@ -409,19 +407,17 @@ void WangLandauReactionEnsemble::on_end_reaction(int &accepted_state) {
 
 bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   /**
-  *generic one way reaction
-  *A+B+...+G +... --> K+...X + Z +...
-  *you need to use 2A --> B instead of A+A --> B since in the last case you
-  *assume
-  *distinctness of the particles, however both ways to describe the reaction are
-  *equivalent in the thermodynamic limit (large particle numbers)
-  *further it is crucial for the function in which order you provide the
-  *reactant
-  *and product types since particles will be replaced correspondingly! If there
-  *are less reactants than products, new product particles are created randomly
-  *in
-  *the box. Matching particles simply change the types. If there are more
-  *reactants than products, old reactant particles are deleted.
+   *generic one way reaction
+   *A+B+...+G +... --> K+...X + Z +...
+   *you need to use 2A --> B instead of A+A --> B since in the last case you
+   *assume
+   *distinctness of the particles, however both ways to describe the reaction
+   *are equivalent in the thermodynamic limit (large particle numbers) further
+   *it is crucial for the function in which order you provide the reactant and
+   *product types since particles will be replaced correspondingly! If there are
+   *less reactants than products, new product particles are created randomly in
+   *the box. Matching particles simply change the types. If there are more
+   *reactants than products, old reactant particles are deleted.
    */
 
   SingleReaction &current_reaction = reactions[reaction_id];
@@ -465,8 +461,8 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
                         p_ids_created_particles, hidden_particles_properties);
 
   double E_pot_new;
-  if(particle_inserted_too_close_to_another_one==true)
-    E_pot_new=std::numeric_limits<double>::max();
+  if (particle_inserted_too_close_to_another_one == true)
+    E_pot_new = std::numeric_limits<double>::max();
   else
     E_pot_new = calculate_current_potential_energy_of_system();
 
@@ -479,7 +475,8 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
       current_reaction, E_pot_old, E_pot_new, old_particle_numbers,
       old_state_index, new_state_index, only_make_configuration_changing_move);
 
-  std::vector<double> exponential = {exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
+  std::vector<double> exponential = {
+      exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
   current_reaction.accumulator_exponentials(exponential);
 
   if (d_random() < bf) {
@@ -526,10 +523,9 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   return reaction_is_accepted;
 }
 
-
 /**
-* Calculates the change in particle numbers for the given reaction
-*/
+ * Calculates the change in particle numbers for the given reaction
+ */
 int ReactionAlgorithm::calculate_nu_bar(
     std::vector<int> &reactant_coefficients,
     std::vector<int> &product_coefficients) {
@@ -545,9 +541,9 @@ int ReactionAlgorithm::calculate_nu_bar(
 }
 
 /**
-* Replaces a particle with the given particle id to be of a certain type. This
-* especially means that the particle type and the particle charge are changed.
-*/
+ * Replaces a particle with the given particle id to be of a certain type. This
+ * especially means that the particle type and the particle charge are changed.
+ */
 int ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
   int err_code_type = set_particle_type(p_id, desired_type);
   int err_code_q = 0.0;
@@ -558,22 +554,22 @@ int ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
 }
 
 /**
-* Hides a particle from short ranged interactions and from the electrostatic
-* interaction. Additional hiding from interactions would need to be implemented
-* here.
-*/
+ * Hides a particle from short ranged interactions and from the electrostatic
+ * interaction. Additional hiding from interactions would need to be implemented
+ * here.
+ */
 int ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
 /**
-*remove_charge and put type to a non existing one --> no interactions anymore it
-*is as if the particle was non existing (currently only type-based interactions
-*are swithced off, as well as the electrostatic interaction)
-*hide_particle() does not break bonds for simple reactions. as long as there are
-*no reactions like 2A -->B where one of the reacting A particles occurs in the
-*polymer (think of bond breakages if the monomer in the polymer gets deleted in
-*the reaction). This constraint is not of fundamental reason, but there would be
-*a need for a rule for such "collision" reactions (a reaction like the one
-*above).
-*/
+ *remove_charge and put type to a non existing one --> no interactions anymore
+ *it is as if the particle was non existing (currently only type-based
+ *interactions are swithced off, as well as the electrostatic interaction)
+ *hide_particle() does not break bonds for simple reactions. as long as there
+ *are no reactions like 2A -->B where one of the reacting A particles occurs in
+ *the polymer (think of bond breakages if the monomer in the polymer gets
+ *deleted in the reaction). This constraint is not of fundamental reason, but
+ *there would be a need for a rule for such "collision" reactions (a reaction
+ *like the one above).
+ */
 #ifdef ELECTROSTATICS
   // set charge
   set_particle_q(p_id, 0.0);
@@ -585,13 +581,13 @@ int ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
 
 int ReactionAlgorithm::delete_particle(int p_id) {
   /**
-  * Deletes the particle with the given p_id and stores if it created a hole
-     * at that position in the particle id range. This method is intended to
-  * only
-  * delete unbonded particles since bonds are coupled to ids. This is used to
-  * avoid the id
-  * range becoming excessively huge.
-  */
+   * Deletes the particle with the given p_id and stores if it created a hole
+   * at that position in the particle id range. This method is intended to
+   * only
+   * delete unbonded particles since bonds are coupled to ids. This is used to
+   * avoid the id
+   * range becoming excessively huge.
+   */
 
   /**deletes the particle with the provided id  */
   int old_max_seen_id = max_seen_particle;
@@ -619,8 +615,8 @@ int ReactionAlgorithm::delete_particle(int p_id) {
 }
 
 /**
-* Writes a random position inside the central box into the provided array.
-*/
+ * Writes a random position inside the central box into the provided array.
+ */
 std::vector<double> ReactionAlgorithm::get_random_position_in_box() {
   std::vector<double> out_pos(3);
   if (box_is_cylindric_around_z_axis) {
@@ -654,10 +650,10 @@ std::vector<double> ReactionAlgorithm::get_random_position_in_box() {
 }
 
 /**
-* Writes a random position inside the central box into the provided array.
-* Additionally it proposes points with a small radii more often than a uniform
-* random probability density would do it.
-*/
+ * Writes a random position inside the central box into the provided array.
+ * Additionally it proposes points with a small radii more often than a uniform
+ * random probability density would do it.
+ */
 std::vector<double> ReactionAlgorithm::
     get_random_position_in_box_enhanced_proposal_of_small_radii() {
   double random_radius =
@@ -685,8 +681,8 @@ std::vector<double> ReactionAlgorithm::
 }
 
 /**
-* Creates a particle at the end of the observed particle id range.
-*/
+ * Creates a particle at the end of the observed particle id range.
+ */
 int ReactionAlgorithm::create_particle(int desired_type) {
   int p_id;
   if (m_empty_p_ids_smaller_than_max_seen_particle.size() > 0) {
@@ -711,7 +707,6 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   double charge = charges_of_types[desired_type];
 #endif
 
-  
   pos_vec = get_random_position_in_box();
   place_particle(p_id, pos_vec.data());
   // set type
@@ -729,16 +724,17 @@ int ReactionAlgorithm::create_particle(int desired_type) {
                                // might explode easily here due to high
                                // forces
   if (d_min < exclusion_radius)
-    particle_inserted_too_close_to_another_one = true; // setting of a minimal
-                                                      // distance is allowed to
-                                                      // avoid overlapping
-                                                      // configurations if there is
-                                                      // a repulsive potential.
-                                                      // States with very high
-                                                      // energies have a probability
-                                                      // of almost zero and
-                                                      // therefore do not contribute
-                                                      // to ensemble averages.
+    particle_inserted_too_close_to_another_one =
+        true; // setting of a minimal
+              // distance is allowed to
+              // avoid overlapping
+              // configurations if there is
+              // a repulsive potential.
+              // States with very high
+              // energies have a probability
+              // of almost zero and
+              // therefore do not contribute
+              // to ensemble averages.
 
   return p_id;
 }
@@ -766,13 +762,13 @@ int WangLandauReactionEnsemble::on_mc_use_WL_get_new_state() {
 }
 
 /**
-* Performs a global mc move for a particle of the provided type.
-*/
+ * Performs a global mc move for a particle of the provided type.
+ */
 bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     int type, int particle_number_of_type_to_be_changed, bool use_wang_landau) {
   m_tried_configurational_MC_moves += 1;
   bool got_accepted = false;
-  particle_inserted_too_close_to_another_one=false;
+  particle_inserted_too_close_to_another_one = false;
 
   int old_state_index = -1;
   if (use_wang_landau) {
@@ -797,7 +793,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
   // save old_position
   int p_id = get_random_p_id(type);
-  for (int i=0; i < particle_number_of_type_to_be_changed;i++) {
+  for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
     // determine a p_id you have not touched yet
     while (is_in_list(p_id, p_id_s_changed_particles)) {
       p_id = get_random_p_id(
@@ -814,25 +810,26 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
   // propose new positions
   std::vector<double> new_pos(3);
-  for (int i=0; i < particle_number_of_type_to_be_changed; i++) {
+  for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
     p_id = p_id_s_changed_particles[i];
     // change particle position
     new_pos = get_random_position_in_box();
     // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
     // //enhanced proposal of small radii
     place_particle(p_id, new_pos.data());
-    double d_min = distto(partCfg(), new_pos.data(), p_id); // TODO also catch constraints with an IFDEF
-                               // CONSTRAINTS here, but only interesting,
-                               // when doing MD/ HMC because then the system
-                               // might explode easily here due to high
-    
-    if(d_min<exclusion_radius)
-        particle_inserted_too_close_to_another_one=true;
+    double d_min = distto(partCfg(), new_pos.data(),
+                          p_id); // TODO also catch constraints with an IFDEF
+                                 // CONSTRAINTS here, but only interesting,
+                                 // when doing MD/ HMC because then the system
+                                 // might explode easily here due to high
+
+    if (d_min < exclusion_radius)
+      particle_inserted_too_close_to_another_one = true;
   }
 
   double E_pot_new;
-  if(particle_inserted_too_close_to_another_one==true)
-    E_pot_new=std::numeric_limits<double>::max();
+  if (particle_inserted_too_close_to_another_one == true)
+    E_pot_new = std::numeric_limits<double>::max();
   else
     E_pot_new = calculate_current_potential_energy_of_system();
 
@@ -890,9 +887,9 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 ///////////////////////////////////////////// Wang-Landau algorithm
 
 /**
-* Adds a new collective variable (CV) of the type degree of association to the
-* Wang-Landau sampling
-*/
+ * Adds a new collective variable (CV) of the type degree of association to the
+ * Wang-Landau sampling
+ */
 void WangLandauReactionEnsemble::add_new_CV_degree_of_association(
     int associated_type, double CV_minimum, double CV_maximum,
     const std::vector<int> &corresponding_acid_types) {
@@ -910,9 +907,9 @@ void WangLandauReactionEnsemble::add_new_CV_degree_of_association(
 }
 
 /**
-* Adds a new collective variable (CV) of the type potential energy to the
-* Wang-Landau sampling
-*/
+ * Adds a new collective variable (CV) of the type potential energy to the
+ * Wang-Landau sampling
+ */
 void WangLandauReactionEnsemble::add_new_CV_potential_energy(
     const std::string &filename, double delta_CV) {
   std::shared_ptr<EnergyCollectiveVariable> new_collective_variable =
@@ -927,8 +924,8 @@ void WangLandauReactionEnsemble::add_new_CV_potential_energy(
 }
 
 /**
-* Returns the flattened index of the multidimensional Wang-Landau histogram
-*/
+ * Returns the flattened index of the multidimensional Wang-Landau histogram
+ */
 int WangLandauReactionEnsemble::get_flattened_index_wang_landau(
     std::vector<double> &current_state,
     std::vector<double> &collective_variables_minimum_values,
@@ -986,9 +983,9 @@ int WangLandauReactionEnsemble::get_flattened_index_wang_landau(
 }
 
 /**
-* Returns the flattened index of the multidimensional Wang-Landau histogram for
-* the current state of the simulation.
-*/
+ * Returns the flattened index of the multidimensional Wang-Landau histogram for
+ * the current state of the simulation.
+ */
 int WangLandauReactionEnsemble::
     get_flattened_index_wang_landau_of_current_state() {
   int nr_collective_variables = collective_variables.size();
@@ -1025,9 +1022,9 @@ int WangLandauReactionEnsemble::
 }
 
 /**
-* Returns the minimum value of the collective variable on a delta_CV spaced grid
-* which starts at 0
-*/
+ * Returns the minimum value of the collective variable on a delta_CV spaced
+ * grid which starts at 0
+ */
 double WangLandauReactionEnsemble::get_minimum_CV_value_on_delta_CV_spaced_grid(
     double min_CV_value, double delta_CV) {
   // assume grid has it s origin at 0
@@ -1037,9 +1034,9 @@ double WangLandauReactionEnsemble::get_minimum_CV_value_on_delta_CV_spaced_grid(
 }
 
 /**
-* Calculates the smallest difference in the degree of association which can be
-* observed when changing the degree of association by one single reaction.
-*/
+ * Calculates the smallest difference in the degree of association which can be
+ * observed when changing the degree of association by one single reaction.
+ */
 double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
     DegreeOfAssociationCollectiveVariable &current_collective_variable) {
   // calculate Delta in the degree of association so that EVERY reaction step is
@@ -1063,8 +1060,8 @@ double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
 }
 
 /**
-* Initializes the Wang-Landau histogram.
-*/
+ * Initializes the Wang-Landau histogram.
+ */
 int WangLandauReactionEnsemble::get_num_needed_bins() {
   int needed_bins = 1;
   for (int CV_i = 0; CV_i < collective_variables.size(); CV_i++) {
@@ -1123,9 +1120,9 @@ void WangLandauReactionEnsemble::invalidate_bins() {
 }
 
 /**
-* Finds the minimum non negative value in the provided double array and returns
-* this value.
-*/
+ * Finds the minimum non negative value in the provided double array and returns
+ * this value.
+ */
 double find_minimum_non_negative_value(double *list, int len) {
   double minimum = list[0];
   for (int i = 0; i < len; i++) {
@@ -1139,8 +1136,8 @@ double find_minimum_non_negative_value(double *list, int len) {
 }
 
 /**
-* Finds the maximum in a double array and returns it.
-*/
+ * Finds the maximum in a double array and returns it.
+ */
 double find_maximum(double *list, int len) {
   double maximum = list[0];
   for (int i = 0; i < len; i++) {
@@ -1151,8 +1148,8 @@ double find_maximum(double *list, int len) {
 }
 
 /**
-* Initializes the current Wang-Landau system.
-*/
+ * Initializes the current Wang-Landau system.
+ */
 int WangLandauReactionEnsemble::initialize_wang_landau() {
 
   nr_subindices_of_collective_variable.resize(collective_variables.size(), 0);
@@ -1183,16 +1180,16 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
 }
 
 /**
-* Calculates the expression which occurs in the Wang-Landau acceptance
-* probability.
-*/
+ * Calculates the expression which occurs in the Wang-Landau acceptance
+ * probability.
+ */
 double WangLandauReactionEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
     std::map<int, int> &old_particle_numbers, int old_state_index,
     int new_state_index, bool only_make_configuration_changing_move) {
   /**determine the acceptance probabilities of the reaction move
-  * in wang landau reaction ensemble
-  */
+   * in wang landau reaction ensemble
+   */
   double beta = 1.0 / temperature;
   double bf;
   if (do_not_sample_reaction_partition_function ||
@@ -1318,8 +1315,8 @@ void WangLandauReactionEnsemble::update_wang_landau_potential_and_histogram(
 }
 
 /**
-*Determines wether we can reduce the Wang-Landau parameter
-*/
+ *Determines wether we can reduce the Wang-Landau parameter
+ */
 bool WangLandauReactionEnsemble::can_refine_wang_landau_one_over_t() {
   double minimum_required_value =
       0.80 * average_list_of_allowed_entries(
@@ -1336,8 +1333,8 @@ bool WangLandauReactionEnsemble::can_refine_wang_landau_one_over_t() {
 }
 
 /**
-*Reset the Wang-Landau histogram.
-*/
+ *Reset the Wang-Landau histogram.
+ */
 void WangLandauReactionEnsemble::reset_histogram() {
   printf("Histogram is flat. Refining. Previous Wang-Landau modification "
          "parameter was %f.\n",
@@ -1356,8 +1353,8 @@ void WangLandauReactionEnsemble::reset_histogram() {
 }
 
 /**
-*Refine the Wang-Landau parameter using the 1/t rule.
-*/
+ *Refine the Wang-Landau parameter using the 1/t rule.
+ */
 void WangLandauReactionEnsemble::refine_wang_landau_parameter_one_over_t() {
   double monte_carlo_time =
       static_cast<double>(monte_carlo_trial_moves) / used_bins;
@@ -1375,8 +1372,8 @@ void WangLandauReactionEnsemble::refine_wang_landau_parameter_one_over_t() {
 }
 
 /**
-*Determine whether the desired number of refinements was achieved.
-*/
+ *Determine whether the desired number of refinements was achieved.
+ */
 bool WangLandauReactionEnsemble::
     achieved_desired_number_of_refinements_one_over_t() {
   if (wang_landau_parameter < final_wang_landau_parameter) {
@@ -1388,8 +1385,8 @@ bool WangLandauReactionEnsemble::
 }
 
 /**
-*Writes the Wang-Landau potential to file.
-*/
+ *Writes the Wang-Landau potential to file.
+ */
 void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
     const std::string &full_path_to_output_filename) {
 
@@ -1428,9 +1425,9 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
 }
 
 /**
-*Update the minimum and maximum observed energies using the current state.
-*Needed for perliminary energy reweighting runs.
-*/
+ *Update the minimum and maximum observed energies using the current state.
+ *Needed for perliminary energy reweighting runs.
+ */
 int WangLandauReactionEnsemble::
     update_maximum_and_minimum_energies_at_current_state() {
   if (minimum_energies_at_flat_index.size() == 0 ||
@@ -1460,9 +1457,9 @@ int WangLandauReactionEnsemble::
 }
 
 /**
-*Write out an energy boundary file using the energy boundaries observed in a
-*preliminary energy reweighting run.
-*/
+ *Write out an energy boundary file using the energy boundaries observed in a
+ *preliminary energy reweighting run.
+ */
 void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
     const std::string &full_path_to_output_filename) {
   FILE *pFile;
@@ -1495,9 +1492,9 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
 }
 
 /**
-*Returns the flattened index of a given flattened index without the energy
-*collective variable.
-*/
+ *Returns the flattened index of a given flattened index without the energy
+ *collective variable.
+ */
 int WangLandauReactionEnsemble::
     get_flattened_index_wang_landau_without_energy_collective_variable(
         int flattened_index_with_EnergyCollectiveVariable,
@@ -1546,13 +1543,13 @@ int WangLandauReactionEnsemble::
 }
 
 /** remove bins from the range of to be sampled values if they have not been
-*sampled.
-*use with caution otherwise you produce unpyhsical results, do only use when you
-*know what you want to do. This can make wang landau converge on a reduced set
-*gamma. use this function e.g. in do_reaction_wang_landau() for the diprotonic
-*acid
-*compare "Wang-Landau sampling with self-adaptive range" by Troester and Dellago
-*/
+ *sampled.
+ *use with caution otherwise you produce unpyhsical results, do only use when
+ *you know what you want to do. This can make wang landau converge on a reduced
+ *set gamma. use this function e.g. in do_reaction_wang_landau() for the
+ *diprotonic acid compare "Wang-Landau sampling with self-adaptive range" by
+ *Troester and Dellago
+ */
 void WangLandauReactionEnsemble::remove_bins_that_have_not_been_sampled() {
   int removed_bins = 0;
   for (int k = 0; k < wang_landau_potential.size(); k++) {
@@ -1570,11 +1567,11 @@ void WangLandauReactionEnsemble::remove_bins_that_have_not_been_sampled() {
 }
 
 /**
-*Writes the Wang-Landau parameter, the histogram and the potential to a file.
-*You can restart a Wang-Landau simulation using this information. Additionally
-*you should store the positions of the particles. Not storing them introduces
-*small, small statistical errors.
-*/
+ *Writes the Wang-Landau parameter, the histogram and the potential to a file.
+ *You can restart a Wang-Landau simulation using this information. Additionally
+ *you should store the positions of the particles. Not storing them introduces
+ *small, small statistical errors.
+ */
 int WangLandauReactionEnsemble::write_wang_landau_checkpoint(
     const std::string &identifier) {
   std::ofstream outfile;
@@ -1602,8 +1599,8 @@ int WangLandauReactionEnsemble::write_wang_landau_checkpoint(
 }
 
 /**
-*Loads the Wang-Landau checkpoint
-*/
+ *Loads the Wang-Landau checkpoint
+ */
 int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     const std::string &identifier) {
   std::ifstream infile;
@@ -1670,30 +1667,30 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
 }
 
 int ConstantpHEnsemble::get_random_valid_p_id() {
-  int random_p_id = i_random(max_seen_particle+1);
-  //draw random p_ids till we draw a pid which exists
+  int random_p_id = i_random(max_seen_particle + 1);
+  // draw random p_ids till we draw a pid which exists
   while (not particle_exists(random_p_id))
-    random_p_id = i_random(max_seen_particle+1);
+    random_p_id = i_random(max_seen_particle + 1);
   return random_p_id;
 }
 
 /**
-* Constant-pH Ensemble, for derivation see Reed and Reed 1992
-* For the constant pH reactions you need to provide the deprotonation and
-* afterwards the corresponding protonation reaction (in this order). If you want
-* to deal with multiple reactions do it multiple times.
-* Note that there is a difference in the usecase of the constant pH reactions
-* and the above reaction ensemble. For the constant pH simulation directily the
-* **apparent equilibrium constant which carries a unit** needs to be provided --
-* this is equivalent to the gamma of the reaction ensemble above, where the dimensionless
-* reaction constant needs to be provided. Again: For the constant-pH algorithm
-* not the dimensionless reaction constant needs to be provided here, but the
-* apparent reaction constant.
-*/
+ * Constant-pH Ensemble, for derivation see Reed and Reed 1992
+ * For the constant pH reactions you need to provide the deprotonation and
+ * afterwards the corresponding protonation reaction (in this order). If you
+ * want to deal with multiple reactions do it multiple times. Note that there is
+ * a difference in the usecase of the constant pH reactions and the above
+ * reaction ensemble. For the constant pH simulation directily the
+ * **apparent equilibrium constant which carries a unit** needs to be provided
+ * -- this is equivalent to the gamma of the reaction ensemble above, where the
+ * dimensionless reaction constant needs to be provided. Again: For the
+ * constant-pH algorithm not the dimensionless reaction constant needs to be
+ * provided here, but the apparent reaction constant.
+ */
 
 /**
-*Performs a reaction in the constant pH ensemble
-*/
+ *Performs a reaction in the constant pH ensemble
+ */
 int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 
   for (int i = 0; i < reaction_steps; ++i) {
@@ -1705,10 +1702,9 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 
     // for optimizations this list could be determined during the initialization
     std::vector<int> list_of_reaction_ids_with_given_reactant_type;
-    while (
-        list_of_reaction_ids_with_given_reactant_type.size() ==
-        0) { // avoid selecting a (e.g. salt) particle which does not take part
-             // in a reaction
+    while (list_of_reaction_ids_with_given_reactant_type.size() ==
+           0) { // avoid selecting a (e.g. salt) particle which
+                // does not take part in a reaction
       int random_p_id = get_random_valid_p_id(); // only used to determine which
                                                  // reaction is attempted.
       auto part = get_particle_data(random_p_id);
@@ -1745,21 +1741,23 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
     int dummy_new_state_index,
     bool dummy_only_make_configuration_changing_move) {
   /**
-*Calculates the expression in the acceptance probability of the constant pH
-*method.
-*/
+   *Calculates the expression in the acceptance probability of the constant pH
+   *method.
+   */
   double ln_bf;
   double pKa;
   const double beta = 1.0 / temperature;
-  pKa = -current_reaction.nu_bar*log10(current_reaction.gamma);
-  ln_bf = (E_pot_new - E_pot_old) - current_reaction.nu_bar* 1.0 / beta * log(10) * (m_constant_pH - pKa);
+  pKa = -current_reaction.nu_bar * log10(current_reaction.gamma);
+  ln_bf = (E_pot_new - E_pot_old) - current_reaction.nu_bar * 1.0 / beta *
+                                        log(10) * (m_constant_pH - pKa);
   double bf = exp(-beta * ln_bf);
   return bf;
 }
 
-std::pair<double,double> WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
+std::pair<double, double>
+WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   SingleReaction &current_reaction = reactions[reaction_id];
-  particle_inserted_too_close_to_another_one=false;
+  particle_inserted_too_close_to_another_one = false;
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
   // make reaction attempt
@@ -1772,10 +1770,10 @@ std::pair<double,double> WidomInsertion::measure_excess_chemical_potential(int r
   make_reaction_attempt(current_reaction, changed_particles_properties,
                         p_ids_created_particles, hidden_particles_properties);
   double E_pot_new;
-  if(particle_inserted_too_close_to_another_one==true)
-    E_pot_new=std::numeric_limits<double>::max();
+  if (particle_inserted_too_close_to_another_one == true)
+    E_pot_new = std::numeric_limits<double>::max();
   else
-    E_pot_new= calculate_current_potential_energy_of_system();
+    E_pot_new = calculate_current_potential_energy_of_system();
   // reverse reaction attempt
   // reverse reaction
   // 1) delete created product particles
@@ -1786,19 +1784,28 @@ std::pair<double,double> WidomInsertion::measure_excess_chemical_potential(int r
   restore_properties(hidden_particles_properties, number_of_saved_properties);
   // 2)restore previously changed reactant particles
   restore_properties(changed_particles_properties, number_of_saved_properties);
-  std::vector<double> exponential = {exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
+  std::vector<double> exponential = {
+      exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
   current_reaction.accumulator_exponentials(exponential);
 
-  std::pair<double,double> result=std::make_pair(-temperature*log(current_reaction.accumulator_exponentials.get_mean()[0]),std::abs(-temperature/current_reaction.accumulator_exponentials.get_mean()[0]*current_reaction.accumulator_exponentials.get_std_error()[0])); //(excess chemical potential; error excess chemical potential, determined via error propagation)
+  std::pair<double, double> result = std::make_pair(
+      -temperature *
+          log(current_reaction.accumulator_exponentials.get_mean()[0]),
+      std::abs(-temperature /
+               current_reaction.accumulator_exponentials.get_mean()[0] *
+               current_reaction.accumulator_exponentials
+                   .get_std_error()[0])); // excess chemical potential; error
+                                          // excess chemical potential,
+                                          // determined via error propagation
   return result;
 }
 
 /////////////////////////////////////////////////////////////////free functions
 
 /**
-* Calculates the whole product of factorial expressions which occur in the
-* reaction ensemble acceptance probability
-*/
+ * Calculates the whole product of factorial expressions which occur in the
+ * reaction ensemble acceptance probability
+ */
 double
 calculate_factorial_expression(SingleReaction &current_reaction,
                                std::map<int, int> &old_particle_numbers) {
@@ -1809,9 +1816,9 @@ calculate_factorial_expression(SingleReaction &current_reaction,
     int N_i0 = old_particle_numbers[current_reaction.reactant_types[i]];
     factorial_expr =
         factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see smith paper) since we
-                                          // only perform one reaction at one
-                                          // call of the function
+                             N_i0, nu_i); // zeta = 1 (see smith paper) since
+                                          // we only perform one reaction at
+                                          // one call of the function
   }
   // factorial contribution of products
   for (int i = 0; i < current_reaction.product_types.size(); i++) {
@@ -1819,10 +1826,10 @@ calculate_factorial_expression(SingleReaction &current_reaction,
     int N_i0 = old_particle_numbers[current_reaction.product_types[i]];
     factorial_expr =
         factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see smith paper) since we
-                                          // only perform one reaction at one
-                                          // call of the function
+                             N_i0, nu_i); // zeta = 1 (see smith paper) since
+                                          // we only perform one reaction at
+                                          // one call of the function
   }
   return factorial_expr;
 }
-}
+} // namespace ReactionEnsemble

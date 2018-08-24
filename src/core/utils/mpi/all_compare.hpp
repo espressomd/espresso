@@ -55,7 +55,7 @@ bool all_compare(boost::mpi::communicator const &comm, T const &value) {
 
   return is_same;
 }
-}
-}
+} // namespace Mpi
+} // namespace Utils
 
 #endif

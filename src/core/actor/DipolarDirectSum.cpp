@@ -1,8 +1,8 @@
 #include "DipolarDirectSum.hpp"
 
 #include "EspressoSystemInterface.hpp"
-#include "forces.hpp"
 #include "energy.hpp"
+#include "forces.hpp"
 
 #include "utils/make_unique.hpp"
 
@@ -15,7 +15,8 @@ void activate_dipolar_direct_sum_gpu() {
   coulomb.Dmethod = DIPOLAR_DS_GPU;
   mpi_bcast_coulomb_params();
 
-  dipolarDirectSum = Utils::make_unique<DipolarDirectSum>(espressoSystemInterface);
+  dipolarDirectSum =
+      Utils::make_unique<DipolarDirectSum>(espressoSystemInterface);
   forceActors.push_back(dipolarDirectSum.get());
   energyActors.push_back(dipolarDirectSum.get());
 }

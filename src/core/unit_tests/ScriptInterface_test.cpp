@@ -27,8 +27,8 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
-using std::string;
 using std::map;
+using std::string;
 using std::vector;
 
 using namespace ScriptInterface;

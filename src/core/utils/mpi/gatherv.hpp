@@ -54,7 +54,7 @@ void gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
     comm.send(root, 42, in_values, in_size);
   }
 }
-}
+} // namespace detail
 
 template <typename T>
 void gatherv(const boost::mpi::communicator &comm, const T *in_values,
@@ -85,13 +85,14 @@ void gatherv(const boost::mpi::communicator &comm, const T *in_values,
   }
 }
 
-  template <typename T>
-  void gatherv(const boost::mpi::communicator &comm, const T *in_values,
-               int in_size, int root) {
-    assert(comm.rank() != root && "This overload can not be called on the root rank.");
-    gatherv(comm, in_values, in_size, static_cast<T*>(nullptr), 0, 0, root);
-  }
+template <typename T>
+void gatherv(const boost::mpi::communicator &comm, const T *in_values,
+             int in_size, int root) {
+  assert(comm.rank() != root &&
+         "This overload can not be called on the root rank.");
+  gatherv(comm, in_values, in_size, static_cast<T *>(nullptr), 0, 0, root);
+}
 
-}
-}
+} // namespace Mpi
+} // namespace Utils
 #endif

@@ -20,7 +20,7 @@
 
 /** \file MpiCallbacks_test.cpp Unit tests for the MpiCallbacks class.
  *
-*/
+ */
 
 #include <random>
 #include <vector>
@@ -36,8 +36,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/List.hpp"
 #include "mock/Particle.hpp"
+#include "utils/List.hpp"
 
 using Communication::MpiCallbacks;
 namespace mpi = boost::mpi;

@@ -312,7 +312,8 @@ void layered_topology_init(CellPList *old) {
   /* check node grid. All we can do is 1x1xn. */
   if (node_grid[0] != 1 || node_grid[1] != 1) {
     runtimeErrorMsg() << "selected node grid is not suitable for layered cell "
-                         "structure (needs 1x1x" << n_nodes << " grid";
+                         "structure (needs 1x1x"
+                      << n_nodes << " grid";
     node_grid[0] = node_grid[1] = 1;
     node_grid[2] = n_nodes;
   }
@@ -521,8 +522,9 @@ void layered_exchange_and_sort_particles(int global_flag) {
     } else {
       if (recv_buf_up.n != 0 || recv_buf_dn.n != 0 || send_buf_dn.n != 0 ||
           send_buf_up.n != 0) {
-        fprintf(stderr, "1 node but transfer buffers are not empty. send up "
-                        "%d, down %d, recv up %d recv dn %d\n",
+        fprintf(stderr,
+                "1 node but transfer buffers are not empty. send up "
+                "%d, down %d, recv up %d recv dn %d\n",
                 send_buf_up.n, send_buf_dn.n, recv_buf_up.n, recv_buf_dn.n);
         errexit();
       }

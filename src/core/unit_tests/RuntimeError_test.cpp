@@ -22,7 +22,7 @@
 /** \file RuntimeError_test.cpp Unit tests for the ErrorHandling::RuntimeError
  * class.
  *
-*/
+ */
 
 #include <sstream>
 #include <string>
@@ -36,8 +36,8 @@
 
 #include "../RuntimeError.hpp"
 
-using std::string;
 using ErrorHandling::RuntimeError;
+using std::string;
 
 /** Check constructor and getters */
 BOOST_AUTO_TEST_CASE(values) {
@@ -68,7 +68,8 @@ BOOST_AUTO_TEST_CASE(def_ctor_and_assignment) {
   RuntimeError err(level, who, what, function, file, line);
 
   /** Copy ctor */
-  RuntimeError err2(err); // NOLINT (local copy 'err2' of the variable 'err' is never modified; consider avoiding the copy)
+  RuntimeError err2(err); // NOLINT (local copy 'err2' of the variable 'err' is
+                          // never modified; consider avoiding the copy)
 
   BOOST_CHECK(level == err2.level());
   BOOST_CHECK(what == err2.what());

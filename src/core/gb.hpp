@@ -25,11 +25,11 @@
  *  Routines to calculate the Gay-Berne energy and force
  *  for a pair of particles.
  *  \ref forces.cpp
-*/
+ */
 
-#include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
+#include "utils.hpp"
 
 #ifdef GAY_BERNE
 
@@ -100,8 +100,9 @@ add_gb_pair_force(const Particle *const p1, const Particle *const p2,
 
     /*-------- Here we calculate derivatives -----------------------------*/
 
-    dU_dr = E * (Koef1 * Brhi2 * (Brack - BrackCut) -
-                 Koef2 * Brhi1 * (Bra12 - Bra12Cut) - Bra12 * dist) /
+    dU_dr = E *
+            (Koef1 * Brhi2 * (Brack - BrackCut) -
+             Koef2 * Brhi1 * (Bra12 - Bra12Cut) - Bra12 * dist) /
             dist / dist;
     Koef1 = Koef1 * ia_params->GB_chi2 / dist / dist;
     Koef2 = Koef2 * ia_params->GB_chi1 / dist / dist;
@@ -184,13 +185,12 @@ inline double gb_pair_energy(const Particle *p1, const Particle *p2,
   Minus1 = (a - b) / (1 - ia_params->GB_chi1 * c);
   Minus2 = (a - b) / (1 - ia_params->GB_chi2 * c);
   E1 = 1 / sqrt(1 - ia_params->GB_chi1 * ia_params->GB_chi1 * c * c);
-  E2 = 1 -
-       0.5 * (ia_params->GB_chi2 / dist / dist) *
-           (Plus2 * (a + b) + Minus2 * (a - b));
+  E2 = 1 - 0.5 * (ia_params->GB_chi2 / dist / dist) *
+               (Plus2 * (a + b) + Minus2 * (a - b));
   E = 4 * ia_params->GB_eps * pow(E1, ia_params->GB_nu) *
       pow(E2, ia_params->GB_mu);
-  Sigma = ia_params->GB_sig / sqrt(1 -
-                                   0.5 * (ia_params->GB_chi1 / dist / dist) *
+  Sigma =
+      ia_params->GB_sig / sqrt(1 - 0.5 * (ia_params->GB_chi1 / dist / dist) *
                                        (Plus1 * (a + b) + Minus1 * (a - b)));
 
   X = 1 / (dist - Sigma + ia_params->GB_sig);

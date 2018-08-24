@@ -22,12 +22,12 @@
  *
  *  For more information on the domain decomposition,
  *  see \ref grid.hpp "grid.h".
-*/
+ */
 
-#include "debug.hpp"
 #include "grid.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "interaction_data.hpp"
 #include "utils.hpp"
@@ -146,8 +146,9 @@ void grid_changed_box_l() {
 #ifdef GRID_DEBUG
   fprintf(stderr, "%d: local_box_l = (%.3f, %.3f, %.3f)\n", this_node,
           local_box_l[0], local_box_l[1], local_box_l[2]);
-  fprintf(stderr, "%d: coordinates: x in [%.3f, %.3f], y in [%.3f, %.3f], z in "
-                  "[%.3f, %.3f]\n",
+  fprintf(stderr,
+          "%d: coordinates: x in [%.3f, %.3f], y in [%.3f, %.3f], z in "
+          "[%.3f, %.3f]\n",
           this_node, my_left[0], my_right[0], my_left[1], my_right[1],
           my_left[2], my_right[2]);
 #endif
@@ -157,7 +158,7 @@ void grid_changed_n_nodes() {
   GRID_TRACE(fprintf(stderr, "%d: grid_changed_n_nodes:\n", this_node));
 
   mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
-                           {{ 1, 1, 1}});
+                           {{1, 1, 1}});
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 

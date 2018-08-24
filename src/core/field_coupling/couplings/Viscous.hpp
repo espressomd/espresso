@@ -20,7 +20,7 @@ public:
     return m_gamma * (field - p.m.v);
   }
 };
-}
-}
+} // namespace Coupling
+} // namespace FieldCoupling
 
 #endif

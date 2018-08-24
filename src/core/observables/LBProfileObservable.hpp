@@ -8,6 +8,6 @@ namespace Observables {
 
 class LBProfileObservable : public LBObservable, public ProfileObservable {};
 
-}
+} // namespace Observables
 
 #endif

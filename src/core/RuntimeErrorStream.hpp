@@ -34,6 +34,6 @@ private:
   std::ostringstream m_buff;
 };
 
-} /* ErrorHandling */
+} // namespace ErrorHandling
 
 #endif

@@ -30,14 +30,14 @@ void deep_copy(boost::multi_array<T, 3> &dst,
   dst.reindex(std::array<typename boost::multi_array<T, 3>::index, 3>{
       {b[0], b[1], b[2]}});
 }
-}
+} // namespace detail
 
 /**
-* @brief A vector field interpolated from a regular grid.
-*
-* This is an interpolation wrapper around a boost::multi_array,
-* which can be evaluated on any point in space by spline interpolation.
-*/
+ * @brief A vector field interpolated from a regular grid.
+ *
+ * This is an interpolation wrapper around a boost::multi_array,
+ * which can be evaluated on any point in space by spline interpolation.
+ */
 template <typename T, size_t codim> class Interpolated {
 public:
   using value_type = typename decay_to_scalar<Vector<codim, T>>::type;
@@ -107,7 +107,7 @@ public:
            ((m_origin + grid_size) >= box);
   }
 };
-}
-}
+} // namespace Fields
+} // namespace FieldCoupling
 
 #endif

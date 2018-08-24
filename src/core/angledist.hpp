@@ -25,7 +25,7 @@
  * energy or/and and force
  *  for a particle triple.
  *  \ref forces.cpp
-*/
+ */
 
 #include "config.hpp"
 

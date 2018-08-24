@@ -22,7 +22,7 @@
 /** \file RuntimeErrorCollector_test.cpp Unit tests for the
  * ErrorHandling::RuntimeErrorCollector class.
  *
-*/
+ */
 
 #include <algorithm>
 #include <iostream>
@@ -55,7 +55,7 @@ void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
     boost::mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
   }
 }
-}
+} // namespace Testing
 
 using ErrorHandling::RuntimeError;
 using ErrorHandling::RuntimeErrorCollector;
