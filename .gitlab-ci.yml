@@ -248,14 +248,19 @@ style:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
   script:
-    - find . -name '*.h' -o -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' | xargs clang-format-6.0 -i -style=file
-    - find . -name '*.py' -o -name '*.pyx' -o -name '*.pxd' | xargs autopep8 --in-place --aggressive --aggressive
-    - git --no-pager diff
-    - git diff-index --quiet HEAD -- || echo "Failed style check" && exit 1
+    - find . -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' | xargs -P 8 clang-format-6.0 -i -style=file
+    - find . -name '*.py' -o -name '*.pyx' -o -name '*.pxd' | xargs -P 8 autopep8 --in-place --aggressive --aggressive
+    - git --no-pager diff > style.patch
+    - git diff-index --quiet HEAD -- || echo "Failed style check. Download the build artifact to see which changes are necessary." && exit 1
     - echo "Passed style check"
   tags:
     - docker
     - linux
+  artifacts:
+    paths:
+    - style.patch
+    expire_in: 1 week
+    when: on_failure
 
 check_sphinx:
   stage: additional_checks
