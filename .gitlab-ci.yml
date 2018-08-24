@@ -244,6 +244,26 @@ intel:17:
 
 ### Other builds
 
+style:
+  stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
+  script:
+    - find . -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' | xargs -n 5 -P 8 clang-format-6.0 -i -style=file
+    - find . -name '*.py' -o -name '*.pyx' -o -name '*.pxd' | xargs -n 5 -P 8 autopep8 --ignore=E266 --in-place --aggressive --aggressive
+    - git --no-pager diff > style.patch
+    - git diff-index --quiet HEAD -- || echo "Failed style check. Download $CI_JOB_URL/artifacts/raw/style.patch to see which changes are necessary." && exit 1
+    - echo "Passed style check"
+  tags:
+    - docker
+    - linux
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  artifacts:
+    paths:
+    - style.patch
+    expire_in: 1 week
+    when: on_failure
+
 check_sphinx:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
