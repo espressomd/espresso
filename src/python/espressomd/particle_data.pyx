@@ -1288,7 +1288,7 @@ cdef class ParticleHandle(object):
                     swim.rotational_friction = 0.0
 
                 if type(_params) == type(True):
-                    if _params == True:
+                    if _params:
                         raise Exception(
                             "To enable swimming supply a dictionary of parameters.")
                 else:
@@ -1647,7 +1647,6 @@ cdef class _ParticleSliceImpl(object):
         id_list = np.arange(max_seen_particle + 1)
         self.id_selection = id_list[slice_]
         mask = np.empty(len(self.id_selection), dtype=np.bool)
-        mask == True
         cdef int i
         for i in range(len(self.id_selection) - 1, -1, -1):
             mask[i] = particle_exists(i)

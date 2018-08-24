@@ -327,7 +327,8 @@ def coulomb_force(scalar_r, k, q1, q2):
 
 
 # Generic Lennard-Jones
-def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12., e2=6., b1=4., b2=4., delta=0., lam=1.):
+def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12.,
+                         e2=6., b1=4., b2=4., delta=0., lam=1.):
     V = 0.
     if (r >= offset + cutoff):
         V = 0.
@@ -341,7 +342,8 @@ def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12., e2=6.
     return V
 
 
-def lj_generic_force(espressomd, r, eps, sig, cutoff, offset=0., e1=12, e2=6, b1=4., b2=4., delta=0., lam=1., generic=True):
+def lj_generic_force(espressomd, r, eps, sig, cutoff, offset=0., e1=12, e2=6,
+                     b1=4., b2=4., delta=0., lam=1., generic=True):
     f = 1.
     if (r >= offset + cutoff):
         f = 0.

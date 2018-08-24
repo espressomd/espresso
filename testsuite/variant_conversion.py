@@ -33,7 +33,7 @@ class test_variant_conversion(ut.TestCase):
     def test_default(self):
         """ Check that a default constructed Variant translates to None.
         """
-        self.assertTrue(self.vt.call_method("default") == None)
+        self.assertTrue(self.vt.call_method("default") is None)
 
     def test_flat(self):
         ret = self.vt.call_method("flat")

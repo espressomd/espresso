@@ -194,12 +194,13 @@ IF DP3M == 1:
         def python_dp3m_adaptive_tune(self):
             cdef char * log = NULL
             cdef int response
-            response = dp3m_adaptive_tune( & log)
+            response = dp3m_adaptive_tune(& log)
             handle_errors(
                 "dipolar P3M_init: k-space cutoff is larger than half of box dimension")
             return response, log
 
-        def python_dp3m_set_params(self, p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
+        def python_dp3m_set_params(self, p_r_cut, p_mesh, p_cao, p_alpha,
+                                   p_accuracy):
             cdef int mesh
             cdef double r_cut
             cdef int cao
@@ -215,7 +216,8 @@ IF DP3M == 1:
                 mesh = p_mesh
             dp3m_set_params(r_cut, mesh, cao, alpha, accuracy)
 
-        def python_dp3m_set_tune_params(self, p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy, p_n_interpol):
+        def python_dp3m_set_tune_params(self, p_r_cut, p_mesh, p_cao, p_alpha,
+                                        p_accuracy, p_n_interpol):
             # cdef  python_p3m_set_tune_params():
             cdef int mesh
             cdef double r_cut

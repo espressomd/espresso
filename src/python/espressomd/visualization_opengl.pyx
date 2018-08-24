@@ -233,42 +233,56 @@ class openGLLive(object):
 
             'particle_coloring': 'auto',
             'particle_sizes': 'auto',
-            'particle_type_colors': [[1, 1, 0], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 1], [1, 0.5, 0], [0.5, 0, 1]],
+            'particle_type_colors':
+                [[1, 1, 0], [1, 0, 1], [0, 0, 1], [0, 1, 1],
+                    [1, 1, 1], [1, 0.5, 0], [0.5, 0, 1]],
             'particle_type_materials': ['medium'],
             'particle_charge_colors': [[1, 0, 0], [0, 1, 0]],
 
             'draw_constraints': True,
             'rasterize_pointsize': 10,
             'rasterize_resolution': 75.0,
-            'constraint_type_colors': [[0.5, 0.5, 0.5], [0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0], [0, 0, 0.5], [0.5, 0, 0]],
+            'constraint_type_colors':
+                [[0.5, 0.5, 0.5], [0, 0.5, 0.5], [0.5, 0, 0.5],
+                    [0.5, 0.5, 0], [0, 0, 0.5], [0.5, 0, 0]],
             'constraint_type_materials': ['transparent1'],
 
             'draw_bonds': True,
             'bond_type_radius': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-            'bond_type_colors': [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
+            'bond_type_colors':
+                [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1],
+                    [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
             'bond_type_materials': ['medium'],
 
             'ext_force_arrows': False,
             'ext_force_arrows_type_scale': [1.0],
-            'ext_force_arrows_type_colors': [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
+            'ext_force_arrows_type_colors':
+                [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1],
+                    [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
             'ext_force_arrows_type_materials': ['transparent2'],
             'ext_force_arrows_type_radii': [0.2],
 
             'velocity_arrows': False,
             'velocity_arrows_type_scale': [1.0],
-            'velocity_arrows_type_colors': [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
+            'velocity_arrows_type_colors':
+                [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1],
+                    [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
             'velocity_arrows_type_materials': ['transparent2'],
             'velocity_arrows_type_radii': [0.2],
 
             'force_arrows': False,
             'force_arrows_type_scale': [1.0],
-            'force_arrows_type_colors': [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
+            'force_arrows_type_colors':
+                [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1],
+                    [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
             'force_arrows_type_materials': ['transparent2'],
             'force_arrows_type_radii': [0.2],
 
             'director_arrows': False,
             'director_arrows_type_scale': [1.0],
-            'director_arrows_type_colors': [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
+            'director_arrows_type_colors':
+                [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1],
+                    [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
             'director_arrows_type_materials': ['transparent2'],
             'director_arrows_type_radii': [0.2],
 
@@ -286,12 +300,14 @@ class openGLLive(object):
             'LB_arrow_quality': 16,
 
             'light_pos': 'auto',
-            'light_colors': [[0.1, 0.1, 0.2], [0.9, 0.9, 0.9], [1.0, 1.0, 1.0]],
+            'light_colors':
+                [[0.1, 0.1, 0.2], [0.9, 0.9, 0.9], [1.0, 1.0, 1.0]],
             'light_brightness': 1.0,
             'light_size': 'auto',
 
             'spotlight_enabled': False,
-            'spotlight_colors': [[0.2, 0.2, 0.3], [0.5, 0.5, 0.5], [1.0, 1.0, 1.0]],
+            'spotlight_colors':
+                [[0.2, 0.2, 0.3], [0.5, 0.5, 0.5], [1.0, 1.0, 1.0]],
             'spotlight_angle': 45,
             'spotlight_focus': 1,
             'spotlight_brightness': 0.6,
@@ -452,7 +468,7 @@ class openGLLive(object):
                 for check_nb in all_non_bonded_inters:
                     nb = getattr(
                         self.system.non_bonded_inter[t1, t2], check_nb)
-                    if not nb == None and nb.is_active():
+                    if not nb is None and nb.is_active():
                         self.system_info['Non-bonded interactions'].append(
                             [t1, t2, nb.type_name(), nb.get_params()])
         if len(self.system_info['Non-bonded interactions']) == 0:
@@ -607,10 +623,10 @@ class openGLLive(object):
 
             # DRAG PARTICLES
             if self.specs['drag_enabled']:
-                if self.triggerSetParticleDrag == True and self.dragId != -1:
+                if self.triggerSetParticleDrag and self.dragId != -1:
                     self.system.part[self.dragId].ext_force = self.dragExtForce
                     self.triggerSetParticleDrag = False
-                elif self.triggerResetParticleDrag == True and self.dragId != -1:
+                elif self.triggerResetParticleDrag and self.dragId != -1:
                     self.system.part[self.dragId].ext_force = self.extForceOld
                     self.triggerResetParticleDrag = False
                     self.dragId = -1
@@ -1095,7 +1111,8 @@ class openGLLive(object):
                     'director_arrows_type_colors'], self.specs['director_arrows_type_radii'], 'director')
                 reset_material = True
 
-    def _draw_arrow_property(self, pid, ptype, type_scale, type_colors, type_radii, prop):
+    def _draw_arrow_property(self, pid, ptype, type_scale, type_colors,
+                             type_radii, prop):
         sc = self._modulo_indexing(type_scale, ptype)
         if sc > 0:
             v = self.particles[prop][pid]
@@ -1849,7 +1866,8 @@ def draw_points(points, pointsize, color, material):
     glEnd()
 
 
-def draw_cylinder(posA, posB, radius, color, material, quality, draw_caps=False):
+def draw_cylinder(posA, posB, radius, color, material, quality,
+                  draw_caps=False):
     set_solid_material(color, material)
     glPushMatrix()
     quadric = gluNewQuadric()
@@ -1881,7 +1899,8 @@ def rotation_helper(d):
     return angle, vz[0], vz[1]
 
 
-def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, quality):
+def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material,
+                   quality):
     set_solid_material(color, material)
     glPushMatrix()
     glTranslatef(pos[0], pos[1], pos[2])
@@ -1903,7 +1922,8 @@ def get_extra_clip_plane():
         return GL_CLIP_PLANE0
 
 
-def draw_simple_pore(center, axis, length, radius, smoothing_radius, max_box_l, color, material, quality):
+def draw_simple_pore(center, axis, length, radius, smoothing_radius,
+                     max_box_l, color, material, quality):
 
     clip_plane = get_extra_clip_plane()
 
@@ -2211,7 +2231,8 @@ class Camera(object):
     def __init__(self):
         pass
 
-    def set_camera(self, camPos=np.array([0, 0, 1]), camTarget=np.array([0, 0, 0]), camRight=np.array([1.0, 0.0, 0.0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0])):
+    def set_camera(self, camPos=np.array([0, 0, 1]), camTarget=np.array([0, 0, 0]), camRight=np.array(
+                   [1.0, 0.0, 0.0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0])):
         self.moveSpeed = moveSpeed
         self.lookSpeed = rotSpeed
         self.globalRotSpeed = globalRotSpeed

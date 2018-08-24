@@ -36,7 +36,7 @@ from .particle_data cimport particle
 IF ELECTROSTATICS == 1:
     def check_neutrality(_params):
         if "check_neutrality" in _params:
-            if(_params["check_neutrality"] == True):
+            if(_params["check_neutrality"]):
                 if not checks.check_charge_neutrality[PartCfg](partCfg()):
                     raise Exception("""
                     The system is not charge neutral. Please

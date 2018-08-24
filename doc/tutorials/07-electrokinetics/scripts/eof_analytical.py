@@ -87,13 +87,15 @@ def density(x=None, xi=None, bjerrum_length=None):
 # function to calculate the velocity
 
 
-def velocity(x=None, xi=None, d=None, bjerrum_length=None, force=None, viscosity_kinematic=None, density_water=None):
+def velocity(x=None, xi=None, d=None, bjerrum_length=None, force=None,
+             viscosity_kinematic=None, density_water=None):
     return force * np.log(np.cos(xi * x) / np.cos(xi * d / 2.0)) / (2.0 * np.pi * bjerrum_length * viscosity_kinematic * density_water)
 
 # function to calculate the nonzero component of the pressure tensor
 
 
-def pressure_tensor_offdiagonal(x=None, xi=None, bjerrum_length=None, force=None):
+def pressure_tensor_offdiagonal(x=None, xi=None, bjerrum_length=None,
+                                force=None):
     return force * xi * np.tan(xi * x) / (2.0 * np.pi * bjerrum_length)
 
 # function to calculate the hydrostatic pressure
@@ -105,7 +107,8 @@ def pressure_tensor_offdiagonal(x=None, xi=None, bjerrum_length=None, force=None
 # we neglect here.
 
 
-def hydrostatic_pressure(x=None, xi=None, bjerrum_length=None, tensor_entry=None):
+def hydrostatic_pressure(x=None, xi=None, bjerrum_length=None,
+                         tensor_entry=None):
     return 0.0
 
 position_list = []

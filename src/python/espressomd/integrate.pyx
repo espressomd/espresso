@@ -121,7 +121,8 @@ cdef class Integrator(object):
         self._method = "NVT"
         integrate_set_nvt()
 
-    def set_isotropic_npt(self, ext_pressure, piston, direction=[0, 0, 0], cubic_box=False):
+    def set_isotropic_npt(self, ext_pressure, piston, direction=[0, 0, 0],
+                          cubic_box=False):
         """
         Set the integration method to NPT.
 

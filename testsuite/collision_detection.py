@@ -310,7 +310,7 @@ class CollisionDetection(ut.TestCase):
                         for b in candidate.bonds:
                             if b[0] == self.H and b[1] == base_p.id:
                                 p2 = candidate
-                if p2 == None:
+                if p2 is None:
                     raise Exception("Bound particle not found")
             # Take note of accounted-for particles
             parts_not_accounted_for.remove(base_p.id)

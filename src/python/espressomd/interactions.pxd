@@ -246,8 +246,8 @@ IF HAT:
 
 IF MEMBRANE_COLLISION:
     cdef extern from "object-in-fluid/membrane_collision.hpp":
-        cdef int membrane_collision_set_params(
-            int part_type_a, int part_type_b,
+        cdef int membrane_collision_set_params(int part_type_a,
+                                               int part_type_b,
                                                double a, double n,
                                                double cut, double offset)
 

@@ -83,7 +83,7 @@ def process(block):
     """
     Processes the block and returns the block's type and the block's contents as a tuple.
     """
-    if re_block_type.match(block) != None:
+    if re_block_type.match(block) is not None:
         block_type = re_block_type.match(block).group(1)
     else:
         return None
@@ -180,7 +180,7 @@ class blockfile(object):
                                      # newline
             if block.count('{') == block.count('}'):  # we have a full block:
                 output = process(block)
-                if output != None:
+                if output is not None:
                     yield output
                 else:
                     pass

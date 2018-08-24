@@ -148,7 +148,7 @@ IF SWIMMER_REACTIONS:
 
             # There can only be one reaction
             global __reaction_is_initiated
-            if __reaction_is_initiated == True:
+            if __reaction_is_initiated:
                 raise ThereCanOnlyBeOne(self.__class__)
             __reaction_is_initiated = True
 

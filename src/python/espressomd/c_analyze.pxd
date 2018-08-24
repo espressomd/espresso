@@ -71,9 +71,10 @@ cdef extern from "statistics.hpp":
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
     cdef vector[double] centerofmass(PartCfg &, int part_type)
-    cdef int calc_cylindrical_average(
-        PartCfg & , vector[double] center, vector[double] direction, double length,
-                                      double radius, int bins_axial, int bins_radial, vector[int] types,
+    cdef int calc_cylindrical_average(PartCfg & , vector[double] center,
+                                      vector[double] direction, double length,
+                                      double radius, int bins_axial,
+                                      int bins_radial, vector[int] types,
                                       map[string, vector[vector[vector[double]]]] & distribution)
 
 cdef extern from "pressure.hpp":

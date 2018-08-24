@@ -46,7 +46,7 @@ cdef class NonBondedInteraction(object):
     cdef public object user_interactions
 
     def __init__(self, *args, **kwargs):
-        if self.user_interactions == None:
+        if self.user_interactions is None:
             self.user_interactions = {}
         # Interaction id as argument
         if len(args) == 2 and is_valid_type(args[0], int) and is_valid_type(args[1], int):
@@ -2188,9 +2188,14 @@ class ThermalizedBond(BondedInteraction):
     def _get_params_from_es_core(self):
         return \
             {"temp_com": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_com,
-             "gamma_com": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_com,
-             "temp_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_distance,
-             "gamma_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_distance,
+             "gamma_com":
+                 bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_com,
+             "temp_distance":
+                 bonded_ia_params[
+                     self._bond_id].p.thermalized_bond.temp_distance,
+             "gamma_distance":
+                 bonded_ia_params[
+                     self._bond_id].p.thermalized_bond.gamma_distance,
              "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut}
 
     def _set_params_in_es_core(self):
@@ -2543,7 +2548,8 @@ IF TABULATED == 1:
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
                  "min": bonded_ia_params[self._bond_id].p.tab.pot.minval,
                  "max": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
-                 "energy": bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
+                 "energy":
+                     bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
                  "force": bonded_ia_params[self._bond_id].p.tab.pot.force_tab
                  }
             if res["type"] == 1:

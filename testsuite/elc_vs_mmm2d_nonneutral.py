@@ -21,16 +21,39 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
     def test_elc_vs_mmm2d(self):
 
         elc_param_sets = {
-            "inert": {"gap_size": self.elc_gap, "maxPWerror": self.acc, "neutralize": False, "check_neutrality": False},
-            "const_pot_0": {"gap_size": self.elc_gap, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 0.0},
-            "const_pot_1": {"gap_size": self.elc_gap, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 1.0},
+            "inert": {
+                "gap_size": self.elc_gap,
+                "maxPWerror": self.acc,
+                "neutralize": False,
+                "check_neutrality": False},
+            "const_pot_0": {
+                "gap_size": self.elc_gap,
+                "maxPWerror": self.acc,
+                "const_pot": 1,
+                "pot_diff": 0.0},
+            "const_pot_1": {
+                "gap_size": self.elc_gap,
+                "maxPWerror": self.acc,
+                "const_pot": 1,
+                "pot_diff": 1.0},
             "const_pot_m1": {"gap_size": self.elc_gap, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": -1.0}
         }
 
         mmm2d_param_sets = {
-            "inert": {"prefactor": 1.0, "maxPWerror": self.acc, "check_neutrality": False},
-            "const_pot_0": {"prefactor": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 0.0},
-            "const_pot_1": {"prefactor": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 1.0},
+            "inert": {
+                "prefactor": 1.0,
+                "maxPWerror": self.acc,
+                "check_neutrality": False},
+            "const_pot_0": {
+                "prefactor": 1.0,
+                "maxPWerror": self.acc,
+                "const_pot": 1,
+                "pot_diff": 0.0},
+            "const_pot_1": {
+                "prefactor": 1.0,
+                "maxPWerror": self.acc,
+                "const_pot": 1,
+                "pot_diff": 1.0},
             "const_pot_m1": {"prefactor": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": -1.0}
         }
 
@@ -89,7 +112,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
 
         for run in elc_res:
             self.assertTrue(np.testing.assert_allclose(
-                mmm2d_res[run], elc_res[run], rtol=0, atol=1e-4) == None)
+                mmm2d_res[run], elc_res[run], rtol=0, atol=1e-4) is None)
 
     def scan(self):
         n = 10

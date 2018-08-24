@@ -166,7 +166,8 @@ class Analysis(object):
     # Analyze Linear Momentum
     #
 
-    def analyze_linear_momentum(self, include_particles=True, include_lbfluid=True):
+    def analyze_linear_momentum(self, include_particles=True,
+                                include_lbfluid=True):
         """
         Calculates the systems linear momentum.
 
@@ -416,7 +417,7 @@ class Analysis(object):
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
             if (bonded_ia_params[i].type != BONDED_IA_NONE):
-                p["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_pressure, i)[0]
+                p["bonded", i] = c_analyze.obsstat_bonded(& c_analyze.total_pressure, i)[0]
                 total_bonded += c_analyze.obsstat_bonded(& c_analyze.total_pressure, i)[0]
         p["bonded"] = total_bonded
 
@@ -432,12 +433,12 @@ class Analysis(object):
         for i in range(c_analyze.max_seen_particle_type):
             for j in range(i, c_analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
-                p["non_bonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
-                total_non_bonded += c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
-                total_intra += c_analyze.obsstat_nonbonded_intra( & c_analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_intra", i, j] = c_analyze.obsstat_nonbonded_intra( & c_analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_inter", i, j] = c_analyze.obsstat_nonbonded_inter( & c_analyze.total_pressure_non_bonded, i, j)[0]
-                total_inter += c_analyze.obsstat_nonbonded_inter( & c_analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
+                total_non_bonded += c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
+                total_intra += c_analyze.obsstat_nonbonded_intra(& c_analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_intra", i, j] = c_analyze.obsstat_nonbonded_intra(& c_analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_inter", i, j] = c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
+                total_inter += c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
         p["non_bonded_intra"] = total_intra
         p["non_bonded_inter"] = total_inter
         p["non_bonded"] = total_non_bonded
@@ -524,7 +525,7 @@ class Analysis(object):
         for i in range(bonded_ia_params.size()):
             if (bonded_ia_params[i].type != BONDED_IA_NONE):
                 p["bonded", i] = np.reshape(create_nparray_from_double_array(
-                    c_analyze.obsstat_bonded( & c_analyze.total_p_tensor, i), 9),
+                    c_analyze.obsstat_bonded(& c_analyze.total_p_tensor, i), 9),
                     (3, 3))
                 total_bonded += p["bonded", i]
         p["bonded"] = total_bonded
@@ -592,7 +593,9 @@ class Analysis(object):
 
         return p
 
-    def local_stress_tensor(self, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1)):
+    def local_stress_tensor(self, periodicity=(1, 1, 1), range_start=(
+                            0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0),
+                            bins=(1, 1, 1)):
         """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
         """
         """
@@ -714,7 +717,7 @@ class Analysis(object):
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
             if (bonded_ia_params[i].type != BONDED_IA_NONE):
-                e["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_energy, i)[0]
+                e["bonded", i] = c_analyze.obsstat_bonded(& c_analyze.total_energy, i)[0]
                 total_bonded += c_analyze.obsstat_bonded(& c_analyze.total_energy, i)[0]
         e["bonded"] = total_bonded
 
@@ -730,9 +733,9 @@ class Analysis(object):
         for i in range(c_analyze.max_seen_particle_type):
             for j in range(c_analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
-                e["non_bonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_energy, i, j)[0]
+                e["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
                 if i <= j:
-                    total_non_bonded += c_analyze.obsstat_nonbonded( & c_analyze.total_energy, i, j)[0]
+                    total_non_bonded += c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
     #        total_intra +=c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
     #        e["non_bonded_intra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
     #        e["nonBondedInter",i,j] =c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
@@ -761,7 +764,8 @@ class Analysis(object):
 
         return e
 
-    def calc_re(self, chain_start=None, number_of_chains=None, chain_length=None):
+    def calc_re(self, chain_start=None, number_of_chains=None,
+                chain_length=None):
         """
         Calculates the Mean end-to-end distance of chains and its
         standard deviation, as well as Mean Square end-to-end distance of
@@ -800,7 +804,8 @@ class Analysis(object):
         free(re)
         return tuple_re
 
-    def calc_rg(self, chain_start=None, number_of_chains=None, chain_length=None):
+    def calc_rg(self, chain_start=None, number_of_chains=None,
+                chain_length=None):
         """
         Calculates the mean radius of gyration of chains and its standard deviation,
         as well as the mean square radius of gyration of chains and its
@@ -835,7 +840,8 @@ class Analysis(object):
         free(rg)
         return tuple_rg
 
-    def calc_rh(self, chain_start=None, number_of_chains=None, chain_length=None):
+    def calc_rh(self, chain_start=None, number_of_chains=None,
+                chain_length=None):
         """
         Calculates the hydrodynamic mean radius of chains and its standard deviation.
 
@@ -868,7 +874,8 @@ class Analysis(object):
         free(rh)
         return tuple_rh
 
-    def check_topology(self, chain_start=None, number_of_chains=None, chain_length=None):
+    def check_topology(self, chain_start=None, number_of_chains=None,
+                       chain_length=None):
         check_type_or_throw_except(
             chain_start, 1, int, "chain_start=int is a required argument")
         check_type_or_throw_except(

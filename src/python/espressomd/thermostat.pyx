@@ -195,7 +195,8 @@ cdef class Thermostat(object):
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
-    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None, act_on_virtual=False):
+    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None,
+                     act_on_virtual=False):
         """
         Sets the Langevin thermostat with required parameters 'kT' 'gamma'
         and optional parameter 'gamma_rotation'.

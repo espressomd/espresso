@@ -83,7 +83,7 @@ IF ELECTROKINETICS:
             else:
                 raise Exception("Value of stencil could not be identified.")
 
-            if ek_parameters.fluidcoupling_ideal_contribution == True:
+            if ek_parameters.fluidcoupling_ideal_contribution:
                 fluid_coupling = "friction"
             else:
                 fluid_coupling = "estatics"
@@ -141,11 +141,11 @@ IF ELECTROKINETICS:
 
             """
 
-            if species == None or density == None:
+            if species is None or density is None:
                 raise ValueError("species and density has to be set.")
             if not is_valid_type(species, int):
                 raise ValueError("species needs to be an integer.")
-            if node == None:
+            if node is None:
                 ek_set_density(species, density)
             else:
                 if not (isinstance(node, list) or isinstance(node, np.ndarray)):
@@ -426,9 +426,11 @@ IF ELECTROKINETICS:
 
         def _get_params_from_es_core(self):
             return {
-                "density": ek_parameters.density[ek_parameters.species_index[self.id]],
+                "density": ek_parameters.density[
+                    ek_parameters.species_index[self.id]],
                     "D": ek_parameters.D[ek_parameters.species_index[self.id]],
-                    "valency": ek_parameters.valency[ek_parameters.species_index[self.id]],
+                    "valency": ek_parameters.valency[
+                        ek_parameters.species_index[self.id]],
                     "ext_force_density": [ek_parameters.ext_force_density[0][ek_parameters.species_index[self.id]],
                                           ek_parameters.ext_force_density[1][
                                           ek_parameters.species_index[

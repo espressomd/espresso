@@ -13,7 +13,10 @@ core_id_from_drude_id = {}
 drude_id_list = []
 
 
-def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond, p_core, id_drude, type_drude, alpha, mass_drude, coulomb_prefactor, thole_damping=2.6, verbose=False):
+def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
+                               p_core, id_drude, type_drude, alpha,
+                               mass_drude, coulomb_prefactor,
+                               thole_damping=2.6, verbose=False):
     """
     Adds a drude particle with specified id, type, and mass to the system.
     Checks if different Drude particles have different types.
@@ -203,7 +206,8 @@ def setup_and_add_drude_exclusion_bonds(system, verbose=False):
                   "between ids", drude_id, "and", core_id)
 
 
-def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types, mol_core_partial_charges, verbose=False):
+def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types,
+                                   mol_core_partial_charges, verbose=False):
     """
     Creates electrostatic short-range exclusion bonds for intramolecular exclusion
     between Drude particles and partial charges of the cores. Has to be called once

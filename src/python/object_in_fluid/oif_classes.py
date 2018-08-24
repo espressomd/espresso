@@ -430,7 +430,8 @@ class Mesh(object):
                     selected_neighbors = ThreeNeighbors(point, point, point)
                     self.neighbors.append(selected_neighbors)
 
-    def copy(self, origin=None, particle_type=-1, particle_mass=1.0, rotate=None):
+    def copy(self, origin=None, particle_type=-1, particle_mass=1.0,
+             rotate=None):
         mesh = Mesh(system=self.system)
         mesh.ids_extremal_points = self.ids_extremal_points
         rotation = np.array([[1.0, 0.0, 0.0],
@@ -792,7 +793,8 @@ class OifCell(object):
 
     """
 
-    def __init__(self, cell_type=None, origin=None, particle_type=None, particle_mass=1.0, rotate=None):
+    def __init__(self, cell_type=None, origin=None, particle_type=None,
+                 particle_mass=1.0, rotate=None):
         if (cell_type is None) or (not isinstance(cell_type, OifCellType)):
             raise Exception(
                 "OifCell: No cellType provided or wrong type. Quitting.")
@@ -1002,7 +1004,8 @@ class OifCell(object):
                 "3 " + str(t.A.id) + " " + str(t.B.id) + " " + str(t.C.id) + "\n")
         output_file.close()
 
-    def append_point_data_to_vtk(self, file_name=None, data_name=None, data=None, first_append=None):
+    def append_point_data_to_vtk(self, file_name=None, data_name=None,
+                                 data=None, first_append=None):
         if file_name is None:
             raise Exception(
                 "OifCell: append_point_data_to_vtk: No file_name provided. Quitting.")

@@ -101,7 +101,7 @@ class Checkpoint(object):
         for i in range(len(names) - 1):
             obj = getattr(obj, names[i], None)
 
-        if obj == None:
+        if obj is None:
             raise Exception(
                 "Cannot set attribute of non existing submodules: {}\nCheck the order you registered objects for checkpointing.".format(name))
         setattr(obj, names[-1], value)
@@ -223,7 +223,7 @@ class Checkpoint(object):
             If not given, the latest checkpoint_index will be used.
 
         """
-        if checkpoint_index == None:
+        if checkpoint_index is None:
             checkpoint_index = self.get_last_checkpoint_index()
 
         filename = os.path.join(

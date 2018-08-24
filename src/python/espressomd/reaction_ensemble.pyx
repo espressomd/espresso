@@ -54,7 +54,8 @@ cdef class ReactionAlgorithm(object):
         self.RE.exclusion_radius = self._params[
             "exclusion_radius"]
 
-    def set_cylindrical_constraint_in_z_direction(self, center_x, center_y, radius_of_cylinder):
+    def set_cylindrical_constraint_in_z_direction(self, center_x, center_y,
+                                                  radius_of_cylinder):
         """
         Constrain the reaction moves within a cylinder defined by its axis
         passing through centres (:math:`x` and :math:`y`) and the radius.
@@ -224,7 +225,7 @@ cdef class ReactionAlgorithm(object):
             raise ValueError(
                 "No dictionary for relation between types and default charges provided.")
         #check electroneutrality of the provided reaction
-        if(self._params["check_for_electroneutrality"] == True):
+        if(self._params["check_for_electroneutrality"]):
             total_charge_change = 0.0
             for i in range(len(self._params["reactant_coefficients"])):
                 type_here = self._params["reactant_types"][i]
@@ -252,7 +253,8 @@ cdef class ReactionAlgorithm(object):
         """
         self.RE.do_reaction(int(reaction_steps))
 
-    def displacement_mc_move_for_particles_of_type(self, type_mc, particle_number_to_be_changed=1):
+    def displacement_mc_move_for_particles_of_type(self, type_mc,
+                                                   particle_number_to_be_changed=1):
         """
         Perfoms a diplacemenet Monte Carlo move for particles of given type. New positions
         of the displaced particles are chosen from the whole box with a uniform probablity distribution.
@@ -617,7 +619,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         """
         self.WLRptr.write_wang_landau_results_to_file(filename.encode("utf-8"))
 
-    def displacement_mc_move_for_particles_of_type(self, type_mc, particle_number_to_be_changed=1):
+    def displacement_mc_move_for_particles_of_type(self, type_mc,
+                                                   particle_number_to_be_changed=1):
         """
         Performs an MC (Monte Carlo) move for particle_number_to_be_changed particle of type type_mc. Positions for the particles are drawn uniformly random within the box. The command takes into account the Wang-Landau terms in the acceptance probability.
         If there are multiple types, that
