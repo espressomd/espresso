@@ -47,8 +47,7 @@ echo "    \"$current_year\""
 tmpfile=`mktemp`
 for file in $noyear_files; do
     echo "    $file"
-    perl -pe "if (!\$done) { s/(Copyright\s+(?:\(C\)\s+)?\d+(?:\s*,\s*\d+)*)(\s+The ESPResSo project)/\1,$current_year\2/ and \$done=1; }" $file > $tmpfile
-    cat $tmpfile > $file
+    sed -ie 's/Copyright (C) 2010.*The ESPR/Copyright (C) 2010-2018 The ESPR/' $file
 done
 
 noproject_files=`egrep -L "Copyright.*The ESPResSo project" $files`
