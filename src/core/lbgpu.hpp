@@ -54,7 +54,7 @@
 #define LBPAR_TAU 3       /**< time step for fluid propagation */
 #define LBPAR_FRICTION                                                         \
   4 /**< friction coefficient for viscous coupling between particles and fluid \
-       */
+     */
 #define LBPAR_EXTFORCE 5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
 #define LBPAR_BOUNDARY 7 /**< boundary parameters */
@@ -88,9 +88,8 @@ typedef struct {
   float gamma_odd[LB_COMPONENTS];
   float gamma_even[LB_COMPONENTS];
   /** flag determining whether gamma_shear, gamma_odd, and gamma_even are
-   * calculated
-   *  from gamma_shear in such a way to yield a TRT LB with minimized slip at
-   *  bounce-back boundaries */
+   * calculated from gamma_shear in such a way to yield a TRT LB with minimized
+   * slip at bounce-back boundaries */
   bool is_TRT;
   /** friction coefficient for viscous coupling (LJ units)
    * Note that the friction coefficient is quite high and may
@@ -161,8 +160,7 @@ typedef struct {
 } LB_rho_v_gpu;
 /* this structure is almost duplicated for memory efficiency. When the stress
    tensor element are needed at every timestep, this features should be
-   explicitly
-   switched on */
+   explicitly switched on */
 typedef struct {
   /** density of the node */
   float rho[LB_COMPONENTS];
@@ -201,9 +199,8 @@ typedef struct {
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 
   // We need the node forces for the velocity interpolation at the virtual
-  // particles' position
-  // However, LBM wants to reset them immediately after the LBM update
-  // This variable keeps a backup
+  // particles' position However, LBM wants to reset them immediately after the
+  // LBM update This variable keeps a backup
   lbForceFloat *force_density_buf;
 #endif
 

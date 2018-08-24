@@ -38,7 +38,7 @@ class TestLB(object):
               'skin': 0.2,
               'temp_confidence': 10}
     if espressomd.has_features("SHANCHEN"):
-       params.update({"dens":2*[params["dens"]]})
+        params.update({"dens": 2 * [params["dens"]]})
 
     if espressomd.has_features("ROTATION"):
         dof = 6.
@@ -212,7 +212,7 @@ class TestLB(object):
         self.lbf[0, 0, 0].velocity = v_fluid
         self.system.integrator.run(1)
         np.testing.assert_allclose(
-            np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid),atol=1E-6)
+            np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
     def test_a_ext_force_density(self):
         self.system.thermostat.turn_off()
@@ -234,22 +234,27 @@ class TestLB(object):
             n_time_steps - 0.5) / self.params['dens']
         for n in list(itertools.combinations(range(int(self.system.box_l[0] / self.params['agrid'])), 3)):
             np.testing.assert_allclose(
-                np.copy(self.lbf[n].velocity), fluid_velocity,atol=1E-6)
+                np.copy(self.lbf[n].velocity), fluid_velocity, atol=1E-6)
 
 
 @ut.skipIf(not espressomd.has_features(["LB"]),
            "Features not available, skipping test!")
 class TestLBCPU(TestLB, ut.TestCase):
+
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluid
-        self.params.update({"mom_prec":1E-9,"mass_prec_per_node":5E-8})
+        self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
 
-@ut.skipIf(not espressomd.has_features(["LB_GPU"]) or espressomd.has_features('SHANCHEN'),
+
+@ut.skipIf(
+    not espressomd.has_features(
+        ["LB_GPU"]) or espressomd.has_features('SHANCHEN'),
            "Features not available, skipping test!")
 class TestLBGPU(TestLB, ut.TestCase):
+
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidGPU
-        self.params.update({"mom_prec":1E-3,"mass_prec_per_node":1E-5})
+        self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
 
 if __name__ == "__main__":

@@ -47,8 +47,8 @@ void ImmersedBoundaries::init_volume_conservation() {
     for (int i = 0; i < bonded_ia_params.size(); i++) {
       if (bonded_ia_params[i].type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
         // This check is important because InitVolumeConservation may be called
-        // accidentally
-        // during the integration. Then we must not reset the reference
+        // accidentally during the integration. Then we must not reset the
+        // reference
         if (bonded_ia_params[i].p.ibmVolConsParameters.volRef == 0) {
           const int softID = bonded_ia_params[i].p.ibmVolConsParameters.softID;
           bonded_ia_params[i].p.ibmVolConsParameters.volRef =
@@ -97,9 +97,9 @@ int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
 
   // General bond parameters
   bonded_ia_params[bond_type].type = BONDED_IA_IBM_VOLUME_CONSERVATION;
-  bonded_ia_params[bond_type].num = 0; // This means that Espresso requires one
-                                       // bond partner. Here we simply ignore
-                                       // it, but Espresso cannot handle 0.
+  bonded_ia_params[bond_type].num =
+      0; // This means that Espresso requires one bond partner. Here we simply
+         // ignore it, but Espresso cannot handle 0.
 
   // Specific stuff
   if (softID > MaxNumIBM) {
@@ -116,9 +116,8 @@ int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
   bonded_ia_params[bond_type].p.ibmVolConsParameters.kappaV = kappaV;
   bonded_ia_params[bond_type].p.ibmVolConsParameters.volRef = 0;
   // NOTE: We cannot compute the reference volume here because not all
-  // interactions are setup
-  // and thus we do not know which triangles belong to this softID
-  // Calculate it later in the init function
+  // interactions are setup and thus we do not know which triangles belong to
+  // this softID Calculate it later in the init function
 
   // Communicate this to whoever is interested
   mpi_bcast_ia_params(bond_type, -1);
@@ -145,11 +144,10 @@ void ImmersedBoundaries::calc_volumes() {
       Particle &p1 = cell->part[i];
 
       // Check if particle has a BONDED_IA_IBM_TRIEL and a
-      // BONDED_IA_IBM_VOLUME_CONSERVATION
-      // Basically this loops over all triangles, not all particles
-      // First round to check for volume conservation and virtual
-      // Loop over all bonds of this particle
-      // Actually j loops over the bond-list, i.e. the bond partners (see
+      // BONDED_IA_IBM_VOLUME_CONSERVATION Basically this loops over all
+      // triangles, not all particles First round to check for volume
+      // conservation and virtual Loop over all bonds of this particle Actually
+      // j loops over the bond-list, i.e. the bond partners (see
       // particle_data.hpp)
       int softID = -1;
       int j = 0;
@@ -225,13 +223,12 @@ void ImmersedBoundaries::calc_volumes() {
             // See Cha Zhang et.al. 2001, doi:10.1109/ICIP.2001.958278
             // http://research.microsoft.com/en-us/um/people/chazhang/publications/icip01_ChaZhang.pdf
             // The volume can be negative, but it is not necessarily the "signed
-            // volume" in the above paper
-            // (the sign of the real "signed volume" must be calculated using
-            // the normal vector; the result of the calculation here
-            // is simply a term in the sum required to calculate the volume of a
-            // particle). Again, see the paper.
-            // This should be equivalent to the formulation using vector
-            // identities in Krüger thesis
+            // volume" in the above paper (the sign of the real "signed volume"
+            // must be calculated using the normal vector; the result of the
+            // calculation here is simply a term in the sum required to
+            // calculate the volume of a particle). Again, see the paper. This
+            // should be equivalent to the formulation using vector identities
+            // in Krüger thesis
 
             const double v321 = x3[0] * x2[1] * x1[2];
             const double v231 = x2[0] * x3[1] * x1[2];
@@ -273,11 +270,10 @@ void ImmersedBoundaries::calc_volume_force() {
       Particle &p1 = cell->part[i];
 
       // Check if particle has a BONDED_IA_IBM_TRIEL and a
-      // BONDED_IA_IBM_VOLUME_CONSERVATION
-      // Basically this loops over all triangles, not all particles
-      // First round to check for volume conservation and virtual
-      // Loop over all bonds of this particle
-      // Actually j loops over the bond-list, i.e. the bond partners (see
+      // BONDED_IA_IBM_VOLUME_CONSERVATION Basically this loops over all
+      // triangles, not all particles First round to check for volume
+      // conservation and virtual Loop over all bonds of this particle Actually
+      // j loops over the bond-list, i.e. the bond partners (see
       // particle_data.hpp)
       int softID = -1;
       double volRef = 0.;

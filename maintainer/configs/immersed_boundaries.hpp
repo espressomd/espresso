@@ -1,4 +1,5 @@
-/* test configuration without relative/com virtual sites for immersed boundaries */
+/* test configuration without relative/com virtual sites for immersed boundaries
+ */
 #define IMMERSED_BOUNDARY
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
@@ -11,13 +12,12 @@
 #define EXCLUSIONS
 #define MOLFORCES
 
-
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
 #define SWIMMER_REACTIONS
 
 #define NEMD
-#define NPT 
+#define NPT
 #define GHMC
 
 #define LB

@@ -22,8 +22,8 @@
 
 // order hardcoded. mmm1d_recalcTables() typically does order less than 30.
 // As the coefficients are stored in __constant__ memory, the array needs to be
-// sized in advance.
-// We don't know exactly how many coefficients per order, so we size plentiful.
+// sized in advance. We don't know exactly how many coefficients per order, so
+// we size plentiful.
 const int modpsi_order = 30;
 const int modpsi_constant_size = modpsi_order * modpsi_order * 2;
 

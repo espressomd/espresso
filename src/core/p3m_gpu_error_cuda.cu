@@ -191,8 +191,8 @@ __global__ void p3m_k_space_error_gpu_kernel_ik_i(int3 mesh, double3 meshi,
       }
     }
 
-    he_q[lind] = alias1 -
-                 (alias2 * alias2) / (0.5 * (nx * nx + ny * ny + nz * nz) *
+    he_q[lind] =
+        alias1 - (alias2 * alias2) / (0.5 * (nx * nx + ny * ny + nz * nz) *
                                       (alias3 * alias3 + alias4 * alias4));
 
   } else {

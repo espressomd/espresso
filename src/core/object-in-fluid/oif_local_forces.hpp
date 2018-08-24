@@ -22,8 +22,7 @@
 /** \file oif_local_forces.hpp
  *  Routines to calculate the OIF_LOCAL_FORCES
  *  for a particle quadruple (two neighboring triangles with common edge).
- * (Dupin2007)
- *  \ref forces.cpp
+ * (Dupin2007) \ref forces.cpp
  */
 
 #include "config.hpp"
@@ -121,10 +120,10 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
             fp3[i] = fp4[i] + CC[i];
           }
         } else {
-          throw std::runtime_error("Something wrong in oif_local_forces.hpp: "
-                                   "All particles in a bond are ghost "
-                                   "particles, impossible to unfold the "
-                                   "positions...\n");
+          throw std::runtime_error(
+              "Something wrong in oif_local_forces.hpp: All particles in a "
+              "bond are ghost "
+              "particles, impossible to unfold the positions...\n");
           return 0;
         }
       }
@@ -214,9 +213,8 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
 
   /* bending
      forceT1 is restoring force for triangle p1,p2,p3 and force2T restoring
-     force for triangle p2,p3,p4
-     p1 += forceT1; p2 -= 0.5*forceT1+0.5*forceT2; p3 -=
-     0.5*forceT1+0.5*forceT2; p4 += forceT2; */
+     force for triangle p2,p3,p4 p1 += forceT1; p2 -= 0.5*forceT1+0.5*forceT2;
+     p3 -= 0.5*forceT1+0.5*forceT2; p4 += forceT2; */
   if (iaparams->p.oif_local_forces.kb > TINY_OIF_ELASTICITY_COEFFICIENT) {
     get_n_triangle(fp2, fp1, fp3, n1);
     dn1 = normr(n1);
@@ -224,9 +222,9 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
     dn2 = normr(n2);
     phi = angle_btw_triangles(fp1, fp2, fp3, fp4);
 
-    aa = (phi - iaparams->p.oif_local_forces.phi0); // no renormalization by
-                                                    // phi0, to be consistent
-                                                    // with Krueger and Fedosov
+    aa = (phi - iaparams->p.oif_local_forces
+                    .phi0); // no renormalization by phi0, to be consistent with
+                            // Krueger and Fedosov
     fac = iaparams->p.oif_local_forces.kb * aa;
     for (i = 0; i < 3; i++) {
       force[i] += fac * n1[i] / dn1;
@@ -242,12 +240,9 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
      this calculation 3 times (one time per edge)
 
               Proportional distribution of forces, implemented according to the
-     article
-              I.Jancigova, I.Cimrak,
-              Non-uniform force allocation for area preservation in spring
-     network models,
-              International Journal for Numerical Methods in Biomedical
-     Engineering, DOI: 10.1002/cnm.2757
+     article I.Jancigova, I.Cimrak, Non-uniform force allocation for area
+     preservation in spring network models, International Journal for Numerical
+     Methods in Biomedical Engineering, DOI: 10.1002/cnm.2757
 
   */
   if (iaparams->p.oif_local_forces.kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
@@ -266,9 +261,10 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
     m2_length = normr(m2);
     m3_length = normr(m3);
 
-    fac = iaparams->p.oif_local_forces.kal * iaparams->p.oif_local_forces.A01 *
-          (2 * t + t * t) / (m1_length * m1_length + m2_length * m2_length +
-                             m3_length * m3_length);
+    fac =
+        iaparams->p.oif_local_forces.kal * iaparams->p.oif_local_forces.A01 *
+        (2 * t + t * t) /
+        (m1_length * m1_length + m2_length * m2_length + m3_length * m3_length);
 
     for (i = 0; i < 3; i++) { // local area force for p1
       force[i] += fac * m1[i] / 3.0;
@@ -294,9 +290,10 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
     m2_length = normr(m2);
     m3_length = normr(m3);
 
-    fac = iaparams->p.oif_local_forces.kal * iaparams->p.oif_local_forces.A02 *
-          (2 * t + t * t) / (m1_length * m1_length + m2_length * m2_length +
-                             m3_length * m3_length);
+    fac =
+        iaparams->p.oif_local_forces.kal * iaparams->p.oif_local_forces.A02 *
+        (2 * t + t * t) /
+        (m1_length * m1_length + m2_length * m2_length + m3_length * m3_length);
 
     for (i = 0; i < 3; i++) { // local area force for p2
       force2[i] += fac * m1[i] / 3.0;

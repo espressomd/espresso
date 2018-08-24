@@ -12,7 +12,7 @@ public:
     return p.p.q * x;
   }
 };
-}
-}
+} // namespace Coupling
+} // namespace FieldCoupling
 
 #endif

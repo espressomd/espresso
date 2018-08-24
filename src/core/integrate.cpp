@@ -23,7 +23,7 @@
  *
  *  For more information about the integrator
  *  see \ref integrate.hpp "integrate.hpp".
-*/
+ */
 
 #include "integrate.hpp"
 #include "accumulators.hpp"
@@ -187,8 +187,9 @@ void integrate_ensemble_init() {
     nptiso.inv_piston = 1 / (1.0 * nptiso.piston);
     nptiso.p_inst_av = 0.0;
     if (nptiso.dimension == 0) {
-      fprintf(stderr, "%d: INTERNAL ERROR: npt integrator was called but "
-                      "dimension not yet set. this should not happen. ",
+      fprintf(stderr,
+              "%d: INTERNAL ERROR: npt integrator was called but "
+              "dimension not yet set. this should not happen. ",
               this_node);
       errexit();
     }
@@ -325,7 +326,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef NEMD
         || nemd_method != NEMD_METHOD_OFF
 #endif
-        ) {
+    ) {
       propagate_vel();
       propagate_pos();
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
@@ -351,9 +352,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-/* Integration Step: Step 3 of Velocity Verlet scheme:
-   Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
-   v(t+0.5*dt) ) */
+    /* Integration Step: Step 3 of Velocity Verlet scheme:
+       Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
+       v(t+0.5*dt) ) */
 
 #ifdef LB
     transfer_momentum = (n_part > 0);

@@ -3,6 +3,6 @@
 
 namespace Testing {
 class CellPList {};
-}
+} // namespace Testing
 
 #endif

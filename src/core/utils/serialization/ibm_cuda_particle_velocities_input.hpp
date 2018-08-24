@@ -18,7 +18,7 @@ void serialize(Archive &ar, IBM_CUDA_ParticleDataOutput &d,
                const unsigned int /* version */) {
   ar &d.v;
 }
-}
-}
+} // namespace serialization
+} // namespace boost
 
 #endif

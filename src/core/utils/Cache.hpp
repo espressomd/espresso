@@ -65,8 +65,8 @@ private:
     auto const bucket_count = m_cache.bucket_count();
 
     /* Pick a random bucket, this has to terminate because
-    * the map is not empty. So there has to be a bucket with
-    * at least one element. */
+     * the map is not empty. So there has to be a bucket with
+     * at least one element. */
     auto bucket =
         std::uniform_int_distribution<size_type>{0, bucket_count - 1}(m_rand);
 
@@ -172,6 +172,6 @@ public:
     }
   }
 };
-}
+} // namespace Utils
 
 #endif

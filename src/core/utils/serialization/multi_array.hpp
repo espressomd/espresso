@@ -32,7 +32,7 @@ void serialize(Archive &ar, boost::multi_array<T, N, Allocator> &v,
                const unsigned int version) {
   split_free(ar, v, version);
 }
-}
-}
+} // namespace serialization
+} // namespace boost
 
 #endif

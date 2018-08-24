@@ -85,7 +85,7 @@ IF LB_GPU or LB:
         int lb_lbfluid_set_bulk_visc(double * c_bulk_visc)
         int lb_lbfluid_get_bulk_visc(double * c_bulk_visc)
         int lb_lbfluid_print_vtk_velocity(char * filename)
-        int lb_lbfluid_print_vtk_velocity(char* filename, vector[int] bb1, vector[int] bb2)
+        int lb_lbfluid_print_vtk_velocity(char * filename, vector[int] bb1, vector[int] bb2)
         int lb_lbfluid_print_vtk_boundary(char * filename)
         int lb_lbfluid_print_velocity(char * filename)
         int lb_lbfluid_print_boundary(char * filename)
@@ -94,7 +94,7 @@ IF LB_GPU or LB:
         int lb_set_lattice_switch(int py_switch)
         int lb_get_lattice_switch(int * py_switch)
         int lb_lbnode_get_u(int * coord, double * double_return)
-        int lb_lbnode_set_u(int *ind, double *u);
+        int lb_lbnode_set_u(int * ind, double * u);
         int lb_lbnode_get_rho(int * coord, double * double_return)
         int lb_lbnode_get_pi(int * coord, double * double_return)
         int lb_lbnode_get_pi_neq(int * coord, double * double_return)
@@ -103,11 +103,11 @@ IF LB_GPU or LB:
         int lb_lbnode_get_boundary(int * coord, int * int_return)
         int lb_lbfluid_set_couple_flag(int c_couple_flag)
         int lb_lbfluid_get_couple_flag(int * c_couple_flag)
-        int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v)
+        int lb_lbfluid_get_interpolated_velocity_global(Vector3d & p, double * v)
 
     cdef extern from "lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()
-        void lb_lbfluid_get_interpolated_velocity_at_positions(double *positions, double *velocities, int length);
+        void lb_lbfluid_get_interpolated_velocity_at_positions(double * positions, double * velocities, int length);
 
     ###############################################
     #
@@ -228,7 +228,8 @@ IF LB_GPU or LB:
             c_gamma_odd = gamma_odd
         # call c-function
         if(lb_lbfluid_set_gamma_odd(c_gamma_odd)):
-            raise Exception("lb_fluid_set_gamma_odd error at C-level interface")
+            raise Exception(
+                "lb_fluid_set_gamma_odd error at C-level interface")
 
         return 0
 
@@ -244,7 +245,8 @@ IF LB_GPU or LB:
             c_gamma_even = gamma_even
         # call c-function
         if(lb_lbfluid_set_gamma_even(c_gamma_even)):
-            raise Exception("lb_fluid_set_gamma_even error at C-level interface")
+            raise Exception(
+                "lb_fluid_set_gamma_even error at C-level interface")
 
         return 0
 
@@ -291,7 +293,7 @@ IF LB_GPU or LB:
     cdef inline python_lbfluid_get_couple_flag(p_couple_flag):
 
         cdef int c_couple_flag;
-        if(lb_lbfluid_get_couple_flag(&c_couple_flag)):
+        if(lb_lbfluid_get_couple_flag( & c_couple_flag)):
             raise Exception(
                 "lb_lbfluid_get_couple_flag error at C-level interface")
         p_couple_flag = c_couple_flag

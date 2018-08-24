@@ -113,8 +113,8 @@ __device__ mmm1dgpu_real dev_K0(mmm1dgpu_real x) {
   mmm1dgpu_real c = evaluateAsChebychevSeriesAt(
       x <= 2 ? bk0_data : x <= 8 ? ak0_data : ak02_data,
       x <= 2 ? bk0_size : x <= 8 ? ak0_size : ak02_size,
-      x <= 2 ? x * x / 2 - 1.0f : x <= 8 ? (16 / x - 5.0f) / 3.0f
-                                         : (16 / x - 1.0f));
+      x <= 2 ? x * x / 2 - 1.0f
+             : x <= 8 ? (16 / x - 5.0f) / 3.0f : (16 / x - 1.0f));
   if (x <= 2) {
     mmm1dgpu_real I0 =
         evaluateAsChebychevSeriesAt(bi0_data, bi0_size, x * x / 4.5f - 1.0f);
@@ -127,8 +127,8 @@ __device__ mmm1dgpu_real dev_K1(mmm1dgpu_real x) {
   mmm1dgpu_real c = evaluateAsChebychevSeriesAt(
       x <= 2 ? bk1_data : x <= 8 ? ak1_data : ak12_data,
       x <= 2 ? bk1_size : x <= 8 ? ak1_size : ak12_size,
-      x <= 2 ? x * x / 2 - 1.0f : x <= 8 ? (16 / x - 5.0f) / 3.0f
-                                         : (16 / x - 1.0f));
+      x <= 2 ? x * x / 2 - 1.0f
+             : x <= 8 ? (16 / x - 5.0f) / 3.0f : (16 / x - 1.0f));
   if (x <= 2) {
     mmm1dgpu_real I1 = x * evaluateAsChebychevSeriesAt(bi1_data, bi1_size,
                                                        x * x / 4.5f - 1.0f);

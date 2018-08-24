@@ -85,7 +85,7 @@ void decide_distance(CellIterator first, CellIterator last,
     break;
   }
 }
-}
+} // namespace detail
 
 template <typename ParticleKernel, typename PairKernel>
 void short_range_loop(ParticleKernel &&particle_kernel,

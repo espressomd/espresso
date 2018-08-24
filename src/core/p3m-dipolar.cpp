@@ -460,9 +460,10 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
           node_phi += 0.0;
         else {
           U2 = dp3m_perform_aliasing_sums_dipolar_self_energy(n);
-          node_phi += dp3m.g_energy[ind] * U2 * (Utils::sqr(dp3m.d_op[n[0]]) +
-                                                 Utils::sqr(dp3m.d_op[n[1]]) +
-                                                 Utils::sqr(dp3m.d_op[n[2]]));
+          node_phi +=
+              dp3m.g_energy[ind] * U2 *
+              (Utils::sqr(dp3m.d_op[n[0]]) + Utils::sqr(dp3m.d_op[n[1]]) +
+               Utils::sqr(dp3m.d_op[n[2]]));
         }
       }
     }
@@ -611,8 +612,9 @@ void dp3m_interpolate_dipole_assignment_function() {
   if (dp3m.params.inter == 0)
     return;
 
-  P3M_TRACE(fprintf(stderr, "dipolar %d - interpolating (%d) the order-%d "
-                            "charge assignment function\n",
+  P3M_TRACE(fprintf(stderr,
+                    "dipolar %d - interpolating (%d) the order-%d "
+                    "charge assignment function\n",
                     this_node, dp3m.params.inter, dp3m.params.cao));
 
   dp3m.params.inter2 = 2 * dp3m.params.inter + 1;
@@ -1922,8 +1924,9 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     else if (tmp_time > best_time + P3M_TIME_GRAN)
       break;
   }
-  P3M_TRACE(fprintf(stderr, "dp3m_m_time: "
-                            "Dmesh=%d final Dcao=%d Dr_cut=%f time=%f\n",
+  P3M_TRACE(fprintf(stderr,
+                    "dp3m_m_time: "
+                    "Dmesh=%d final Dcao=%d Dr_cut=%f time=%f\n",
                     mesh, *_cao, *_r_cut_iL, best_time));
   return best_time;
 }
@@ -1966,8 +1969,9 @@ int dp3m_adaptive_tune(char **logger) {
   mpi_bcast_event(P3M_COUNT_DIPOLES);
 
   /* Print Status */
-  sprintf(b, "Dipolar P3M tune parameters: Accuracy goal = %.5e prefactor "
-             "= %.5e\n",
+  sprintf(b,
+          "Dipolar P3M tune parameters: Accuracy goal = %.5e prefactor "
+          "= %.5e\n",
           dp3m.params.accuracy, coulomb.Dprefactor);
   *logger = strcat_alloc(*logger, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
@@ -2222,9 +2226,9 @@ double P3M_DIPOLAR_real_space_error(double box_size, double prefac,
   d_con = 1.0 / sqrt(box_size * box_size * box_size * d_a2 * d_a2 * d_rcut2 *
                      d_rcut2 * d_rcut2 * d_rcut2 * d_RCUT * (double)n_c_part);
 
-  d_error_f =
-      d_c * d_con * sqrt((13. / 6.) * d_cc * d_cc + (2. / 15.) * d_dc * d_dc -
-                         (13. / 15.) * d_cc * d_dc);
+  d_error_f = d_c * d_con *
+              sqrt((13. / 6.) * d_cc * d_cc + (2. / 15.) * d_dc * d_dc -
+                   (13. / 15.) * d_cc * d_dc);
 
   return d_error_f;
 }

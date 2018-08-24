@@ -179,19 +179,16 @@ enum P3M_TUNE_ERROR {
     For the real space error the estimate of Kolafa/Perram is used.
 
     Parameter range if not given explicit values: For \ref
-   p3m_parameter_struct::r_cut_iL
-    the function uses the values (\ref min_local_box_l -\ref #skin) /
-    (n * \ref box_l), n being an integer (this implies the assumption that \ref
-    p3m_parameter_struct::r_cut_iL is the largest cutoff in the system!). For
-   \ref
-    p3m_parameter_struct::mesh the function uses the two values which matches
-   best the
-    equation: number of mesh point = number of charged particles. For
-    \ref p3m_parameter_struct::cao the function considers all possible values.
+   p3m_parameter_struct::r_cut_iL the function uses the values (\ref
+   min_local_box_l -\ref #skin) / (n * \ref box_l), n being an integer (this
+   implies the assumption that \ref p3m_parameter_struct::r_cut_iL is the
+   largest cutoff in the system!). For \ref p3m_parameter_struct::mesh the
+   function uses the two values which matches best the equation: number of mesh
+   point = number of charged particles. For \ref p3m_parameter_struct::cao the
+   function considers all possible values.
 
     For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming
-   that the
-    error contributions of real and reciprocal space should be equal.
+   that the error contributions of real and reciprocal space should be equal.
 
     After checking if the total error fulfils the accuracy goal the
     time needed for one force calculation (including verlet list
@@ -205,16 +202,13 @@ enum P3M_TUNE_ERROR {
 
 /** assign the physical charges using the tabulated charge assignment function.
     If store_ca_frac is true, then the charge fractions are buffered in
-   cur_ca_fmp and
-    cur_ca_frac. */
+   cur_ca_fmp and cur_ca_frac. */
 
 void p3m_charge_assign();
 
 /** assign a single charge into the current charge grid. cp_cnt gives the a
-   running index,
-    which may be smaller than 0, in which case the charge is assumed to be
-   virtual and is not
-    stored in the ca_frac arrays. */
+   running index, which may be smaller than 0, in which case the charge is
+   assumed to be virtual and is not stored in the ca_frac arrays. */
 void p3m_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
 
 /** shrink wrap the charge grid */

@@ -23,7 +23,7 @@
  *  Routines, row decomposition, data structures and communication for the
  * 3D-FFT.
  *
-*/
+ */
 
 #include "fft.hpp"
 
@@ -48,16 +48,15 @@ fft_data_struct fft;
  * \param plan communication plan (see \ref fft_forw_plan).
  * \param in   input mesh.
  * \param out  output mesh.
-*/
+ */
 static void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
 
 /** communicate the grid data according to the given
- * fft_forw_plan/fft_bakc_plan.
- * \param plan_f communication plan (see \ref fft_forw_plan).
- * \param plan_b additional back plan (see \ref fft_back_plan).
+ * fft_forw_plan/fft_bakc_plan. \param plan_f communication plan (see \ref
+ * fft_forw_plan). \param plan_b additional back plan (see \ref fft_back_plan).
  * \param in     input mesh.
  * \param out    output mesh.
-*/
+ */
 static void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
                                double *in, double *out);
 
@@ -257,7 +256,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     fft.plan[i].dir = FFTW_FORWARD;
     /* FFT plan creation.
        Attention: destroys contents of c_data/data and c_fft.data_buf/data_buf.
-       */
+     */
 
     if (fft.init_tag == 1)
       fftw_destroy_plan(fft.plan[i].our_fftw_plan);

@@ -35,7 +35,7 @@ box_l = 6 * np.sqrt(2)
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
@@ -63,21 +63,27 @@ system.part.add(id=1, pos=[1.0, 1.0, 1.0] * system.box_l / 2.0, type=1)
 system.part.add(id=2, pos=np.random.random() * system.box_l, type=2)
 system.part.add(id=3, pos=np.random.random() * system.box_l, type=2)
 
-# create a harmonic bond between the two reacting particles => the potential energy is quadratic in the elongation of the bond and therefore the density of states is known as the one of the harmonic oscillator
+# create a harmonic bond between the two reacting particles => the
+# potential energy is quadratic in the elongation of the bond and
+# therefore the density of states is known as the one of the harmonic
+# oscillator
 h = HarmonicBond(r_0=0, k=1)
 system.bonded_inter[0] = h
 system.part[0].add_bond((h, 1))
 
 
-RE = reaction_ensemble.WangLandauReactionEnsemble(temperature=1, exclusion_radius=0)
+RE = reaction_ensemble.WangLandauReactionEnsemble(
+    temperature=1, exclusion_radius=0)
 RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
-       1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
+    1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2, 3])
 
 
 # initialize wang_landau
-# generate preliminary_energy_run_results here, this should be done in a seperate simulation without energy reweighting using the update energy functions
+# generate preliminary_energy_run_results here, this should be done in a
+# seperate simulation without energy reweighting using the update energy
+# functions
 np.savetxt("energy_boundaries.dat", np.c_[
            [0, 1], [0, 0], [9, 9]], header="nbar E_min E_max")
 
@@ -85,7 +91,8 @@ RE.add_collective_variable_degree_of_association(
     associated_type=0, min=0, max=1, corresponding_acid_types=[0, 1])
 RE.add_collective_variable_potential_energy(
     filename="energy_boundaries.dat", delta=0.05)
-RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3, do_not_sample_reaction_partition_function=True, full_path_to_output_filename="WL_potential_out.dat")
+RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3,
+                              do_not_sample_reaction_partition_function=True, full_path_to_output_filename="WL_potential_out.dat")
 
 i = 0
 while True:

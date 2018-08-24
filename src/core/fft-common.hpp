@@ -34,7 +34,7 @@
  *
  *  This includes the information about the redistribution of the 3D
  *  FFT *grid before the actual FFT.
-*/
+ */
 typedef struct {
   /** plan direction: 0 = Forward FFT, 1 = Backward FFT. */
   int dir;
@@ -155,9 +155,8 @@ void fft_common_pre_init(fft_data_struct *fft);
  * \param node_list1  Linear node index list for grid1 (Input).
  * \param node_list2  Linear node index list for grid2 (Output).
  * \param group       communication group (node identity list) for the calling
- * node  (Output).
- * \param pos        positions of the nodes in in grid2 (Output).
- * \param my_pos      position of this_node in  grid2.
+ * node  (Output). \param pos        positions of the nodes in in grid2
+ * (Output). \param my_pos      position of this_node in  grid2.
  * \return Size of the communication group (Output of course!).  */
 int fft_find_comm_groups(int grid1[3], int grid2[3], int *node_list1,
                          int *node_list2, int *group, int *pos, int *my_pos);
@@ -174,7 +173,7 @@ int fft_find_comm_groups(int grid1[3], int grid2[3], int *node_list1,
  * \param  mesh_off global mesh offset (see \ref p3m_data_struct).
  * \param  loc_mesh local mesh dimension (output).
  * \param  start    first point of local mesh in global mesh (output).
-*/
+ */
 int fft_calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3],
                         double mesh_off[3], int loc_mesh[3], int start[3]);
 
@@ -188,12 +187,10 @@ int fft_calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3],
  *  units)).
  *
  *  For the calculation of a receive block you have to change the arguments in
- * the following way: <br>
- *  pos1  - position of receiving node in the desired node grid. <br>
- *  grid1 - desired node grid. <br>
- *  pos2  - position of the node you intend to receive the data from in the
- * actual node grid. <br>
- *  grid2 - actual node grid.  <br>
+ * the following way: <br> pos1  - position of receiving node in the desired
+ * node grid. <br> grid1 - desired node grid. <br> pos2  - position of the node
+ * you intend to receive the data from in the actual node grid. <br> grid2 -
+ * actual node grid.  <br>
  *
  *  \return          size of the send block.
  *  \param  pos1     Position of send node in grid1.
@@ -203,7 +200,7 @@ int fft_calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3],
  *  \param  mesh     global mesh dimensions.
  *  \param  mesh_off global mesh offset (see \ref p3m_data_struct).
  *  \param  block    send block specification.
-*/
+ */
 int fft_calc_send_block(int pos1[3], int grid1[3], int pos2[3], int grid2[3],
                         int mesh[3], double mesh_off[3], int block[6]);
 
@@ -236,10 +233,9 @@ void fft_pack_block(double *in, double *out, int start[3], int size[3],
  *
  * An element (i0_in , i1_in , i2_in ) is then
  * (i0_out = i1_in-start[1], i1_out = i2_in-start[2], i2_out = i0_in-start[0])
- * and
- * for the linear indices we have:                              <br>
- * li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br>
- * li_out = i2_out + size[0] * (i1_out + (size[2]*i0_out))
+ * and for the linear indices we have:                              <br> li_in =
+ * i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br> li_out = i2_out +
+ * size[0] * (i1_out + (size[2]*i0_out))
  *
  * For index definition see \ref fft_pack_block.
  *
@@ -263,10 +259,9 @@ void fft_pack_block_permute1(double *in, double *out, int start[3], int size[3],
  *
  * An element (i0_in , i1_in , i2_in ) is then
  * (i0_out = i2_in-start[2], i1_out = i0_in-start[0], i2_out = i1_in-start[1])
- * and
- * for the linear indices we have:                              <br>
- * li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br>
- * li_out = i2_out + size[0] * (i1_out + (size[2]*i0_out))
+ * and for the linear indices we have:                              <br> li_in =
+ * i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br> li_out = i2_out +
+ * size[0] * (i1_out + (size[2]*i0_out))
  *
  * For index definition see \ref fft_pack_block.
  *

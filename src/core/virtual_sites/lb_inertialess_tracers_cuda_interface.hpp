@@ -28,7 +28,9 @@ typedef struct {
   bool is_virtual;
 } IBM_CUDA_ParticleDataInput;
 
-typedef struct { float v[3]; } IBM_CUDA_ParticleDataOutput;
+typedef struct {
+  float v[3];
+} IBM_CUDA_ParticleDataOutput;
 
 // ******** global variables for CUDA and MPI communication ******
 extern IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host;

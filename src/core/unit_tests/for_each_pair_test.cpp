@@ -19,7 +19,7 @@
 
 /** \file for_each_pair_test.cpp Unit tests for the Utils::for_each_pair.
  *
-*/
+ */
 
 #define BOOST_TEST_MODULE for_each_pair test
 #define BOOST_TEST_DYN_LINK

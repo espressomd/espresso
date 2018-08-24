@@ -3,8 +3,10 @@ import tempfile
 import subprocess
 from sys import argv
 
+
 class Defines(object):
-    def __init__(self, compiler, flags = []):
+
+    def __init__(self, compiler, flags=[]):
         self._compiler = compiler
         self._flags = flags + ["-E", "-dM"]
 
@@ -12,7 +14,8 @@ class Defines(object):
         self._buildin = set(build_in)
 
     def _run_compiler(self, filename):
-        raw_output = subprocess.check_output([self._compiler] + self._flags + [filename],stderr=subprocess.STDOUT)
+        raw_output = subprocess.check_output(
+            [self._compiler] + self._flags + [filename], stderr=subprocess.STDOUT)
         return raw_output.decode('ascii').splitlines()
 
     def _remove_define(self, line):
@@ -30,7 +33,7 @@ class Defines(object):
         return self._buildin
 
     def defines(self, filename, include_build_in=False):
-        all_defs=set(self._get_defs(filename))
+        all_defs = set(self._get_defs(filename))
 
         if include_build_in:
             return all_defs

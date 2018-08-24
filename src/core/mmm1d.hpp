@@ -45,17 +45,12 @@ typedef struct {
 extern MMM1D_struct mmm1d_params;
 
 /** parameters for MMM1D. Most of the parameters can also be tuned
-   automatically. Unlike
-    P3M, this tuning is redone automatically whenever parameters change, but not
-   immediately
-    if you set this parameters.
+   automatically. Unlike P3M, this tuning is redone automatically whenever
+   parameters change, but not immediately if you set this parameters.
     @param switch_rad at which xy-distance the calculation switches from the far
-   to the
-                      near formula. If -1, this parameter will be tuned
-   automatically.
+   to the near formula. If -1, this parameter will be tuned automatically.
     @param maxPWerror the maximal allowed error for the potential and the forces
-   without the
-                      prefactors, i. e. for the pure lattice 1/r-sum. */
+   without the prefactors, i. e. for the pure lattice 1/r-sum. */
 int MMM1D_set_params(double switch_rad, double maxPWerror);
 
 /// check that MMM1D can run with the current parameters

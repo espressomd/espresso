@@ -70,17 +70,15 @@ int dfft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
               int *global_mesh_dim, double *global_mesh_off, int *ks_pnum);
 
 /** perform the forward 3D FFT for meshes related to the magnetic dipole-dipole
-   interaction.
-    The assigned charges are in \a data. The result is also stored in \a data.
-    \warning The content of \a data is overwritten.
-    \param data DMesh.
+   interaction. The assigned charges are in \a data. The result is also stored
+   in \a data. \warning The content of \a data is overwritten. \param data
+   DMesh.
 */
 void dfft_perform_forw(double *data);
 
 /** perform the backward 3D FFT for meshes related to the magnetic dipole-dipole
-   interaction.
-    \warning The content of \a data is overwritten.
-    \param data DMesh.
+   interaction. \warning The content of \a data is overwritten. \param data
+   DMesh.
 */
 void dfft_perform_back(double *data);
 

@@ -24,8 +24,8 @@
 #include "utils/interpolation/bspline_3d.hpp"
 using Utils::Interpolation::bspline_3d;
 using Utils::Interpolation::bspline_3d_accumulate;
-using Utils::Interpolation::detail::pos_shift;
 using Utils::Interpolation::detail::ll_and_dist;
+using Utils::Interpolation::detail::pos_shift;
 
 #include "common/gaussian.hpp"
 

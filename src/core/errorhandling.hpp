@@ -115,6 +115,6 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
 
 std::vector<RuntimeError> mpi_gather_runtime_errors();
 
-} /* ErrorHandling */
+} // namespace ErrorHandling
 
 #endif

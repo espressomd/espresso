@@ -23,7 +23,7 @@
  *  Routines, row decomposition, data structures and communication for the
  * 3D-FFT.
  *
-*/
+ */
 
 #include "fft-dipolar.hpp"
 
@@ -50,7 +50,7 @@ fft_data_struct dfft;
  * \param plan communication plan (see \ref fft_forw_plan).
  * \param in   input mesh.
  * \param out  output mesh.
-*/
+ */
 void dfft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
 
 /** communicate the grid data according to the given
@@ -59,7 +59,7 @@ void dfft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
  * \param plan_b additional back plan (see \ref fft_back_plan).
  * \param in     input mesh.
  * \param out    output mesh.
-*/
+ */
 void dfft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
                          double *out);
 

@@ -40,7 +40,7 @@ void serialize(Archive &ar, boost::container::flat_set<V, C> &v,
                const unsigned int version) {
   split_free(ar, v, version);
 }
-}
-}
+} // namespace serialization
+} // namespace boost
 
 #endif

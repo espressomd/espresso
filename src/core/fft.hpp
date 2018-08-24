@@ -40,7 +40,7 @@
  * elsewhere.
  *
  *  For more information about FFT usage, see \ref fft.cpp "fft.c".
-*/
+ */
 
 #include "config.hpp"
 #ifdef P3M

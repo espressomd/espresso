@@ -12,6 +12,6 @@ public:
   std::size_t n;
   std::vector<Particle> part;
 };
-}
+} // namespace Testing
 
 #endif

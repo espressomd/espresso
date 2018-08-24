@@ -788,4 +788,5 @@ int Rhomboid::calculate_dist(const double *ppos, double *dist,
   }
   return 0;
 }
-}
+
+} // namespace Shapes

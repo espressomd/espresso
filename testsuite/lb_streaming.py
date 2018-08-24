@@ -47,6 +47,7 @@ LB_PARAMETERS = {
 
 
 class LBStreamingCommon(object):
+
     """
     Check the streaming step of the LB fluid implementation by setting all populations
     to zero except one. Relaxation is supressed by choosing appropriate parameters.
@@ -75,7 +76,7 @@ class LBStreamingCommon(object):
         """Set the population of direction n_v of grid_index to n_v+1.
 
         """
-        pop = np.arange(1,20)
+        pop = np.arange(1, 20)
         self.lbf[grid_index].population = pop
 
     def test_population_streaming(self):
@@ -87,21 +88,27 @@ class LBStreamingCommon(object):
                 target_node_index = np.mod(
                     grid_index + VELOCITY_VECTORS[n_v], self.grid)
                 np.testing.assert_almost_equal(
-                    self.lbf[target_node_index].population[n_v], float(n_v+1))
+                    self.lbf[target_node_index].population[n_v], float(n_v + 1))
                 self.lbf[target_node_index].population = np.zeros(19)
 
 
-@ut.skipIf(not espressomd.has_features('LB') or espressomd.has_features('SHANCHEN'),
-        "Skipping test due to missing features.")
+@ut.skipIf(
+    not espressomd.has_features('LB') or espressomd.has_features('SHANCHEN'),
+          "Skipping test due to missing features.")
 class LBCPU(ut.TestCase, LBStreamingCommon):
+
     """Test for the CPU implementation of the LB."""
+
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
 
 
-@ut.skipIf(not espressomd.has_features('LB_GPU') or espressomd.has_features('SHANCHEN'),
+@ut.skipIf(
+    not espressomd.has_features(
+        'LB_GPU') or espressomd.has_features('SHANCHEN'),
            "Skipping test due to missing features.")
 class LBGPU(ut.TestCase, LBStreamingCommon):
+
     """Test for the GPU implementation of the LB."""
 
     def setUp(self):

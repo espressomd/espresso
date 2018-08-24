@@ -18,10 +18,9 @@
 */
 
 /** \file out_direction.hpp Routines to calculate the outward direction of the
- * membrane
- *  using a particle quadruple (one particle and its 3 strategically placed
- * neighbors)
-*/
+ * membrane using a particle quadruple (one particle and its 3 strategically
+ * placed neighbors)
+ */
 
 #include "out_direction.hpp"
 #include "../communication.hpp"

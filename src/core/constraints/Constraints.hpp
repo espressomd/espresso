@@ -78,6 +78,6 @@ public:
     }
   }
 };
-}
+} // namespace Constraints
 
 #endif
