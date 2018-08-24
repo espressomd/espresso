@@ -287,7 +287,7 @@ of the system are printed: ::
 Tutorials
 ---------
 
-There is a number of tutorials that introduce the use of ESPResSo for different
+There are a number of tutorials that introduce the use of |es| for different
 physical systems. You can also find the tutorials and related scripts in the
 directory ``/doc/tutorials`` or `online on github <https://github.com/espressomd/espresso/blob/python/doc/tutorials/>`_.
 Currently, the following tutorials are available:
