@@ -225,7 +225,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   for (i = 1; i < n_nodes; i++) {
     sum_n_local_mols += n_local_mols[i];
   }
-  std::vector<int> local_mols(sum_n_local_mols);
+  std::vector<int>local_mols(sum_n_local_mols);
 
   /* Everyone tells me which trapped molecules are on their node */
   count = 0;

@@ -23,14 +23,14 @@
  */
 #include "thermostat.hpp"
 #include "communication.hpp"
-#include "dpd.hpp"
+#include "npt.hpp"
 #include "ghmc.hpp"
 #include "lb.hpp"
-#include "npt.hpp"
 #include "thermalized_bond.hpp"
+#include "dpd.hpp"
 
-#include <fstream>
 #include <iostream>
+#include <fstream>
 #include <unistd.h>
 
 /* thermostat switch */
@@ -44,9 +44,9 @@ bool thermo_virtual = true;
 using Thermostat::GammaType;
 
 namespace {
-/* These functions return the sentinel value for the
-   langevin params, indicating that they have not been
-   set yet. */
+  /* These functions return the sentinel value for the
+     langevin params, indicating that they have not been
+     set yet. */
 constexpr double sentinel(double) { return -1.0; }
 Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }
 }
@@ -101,16 +101,15 @@ void thermo_init_langevin() {
 
 #ifdef PARTICLE_ANISOTROPY
 #ifdef ROTATION
-  THERMO_TRACE(fprintf(
-      stderr, "%d: thermo_init_langevin: langevin_gamma_rotation=(%f,%f,%f), "
-              "langevin_pref2_rotation=(%f,%f,%f)",
-      this_node, langevin_gamma_rotation[0], langevin_gamma_rotation[1],
-      langevin_gamma_rotation[2], langevin_pref2_rotation[0],
-      langevin_pref2_rotation[1], langevin_pref2_rotation[2]));
+  THERMO_TRACE(
+      fprintf(stderr, "%d: thermo_init_langevin: langevin_gamma_rotation=(%f,%f,%f), "
+                      "langevin_pref2_rotation=(%f,%f,%f)",
+              this_node, langevin_gamma_rotation[0], langevin_gamma_rotation[1],
+              langevin_gamma_rotation[2], langevin_pref2_rotation[0],
+              langevin_pref2_rotation[1], langevin_pref2_rotation[2]));
 #endif
   THERMO_TRACE(fprintf(
-      stderr, "%d: thermo_init_langevin: langevin_pref1=(%f,%f,%f), "
-              "langevin_pref2=(%f,%f,%f)",
+      stderr, "%d: thermo_init_langevin: langevin_pref1=(%f,%f,%f), langevin_pref2=(%f,%f,%f)",
       this_node, langevin_pref1[0], langevin_pref1[1], langevin_pref1[2],
       langevin_pref2[0], langevin_pref2[1], langevin_pref2[2]));
 #else
@@ -131,7 +130,8 @@ void thermo_init_npt_isotropic() {
   if (nptiso.piston != 0.0) {
     nptiso_pref1 = -nptiso_gamma0 * 0.5 * time_step;
 
-    nptiso_pref2 = sqrt(12.0 * temperature * nptiso_gamma0 * time_step);
+      nptiso_pref2 =
+          sqrt(12.0 * temperature * nptiso_gamma0 * time_step);
     nptiso_pref3 = -nptiso_gammav * (1.0 / nptiso.piston) * 0.5 * time_step;
     nptiso_pref4 = sqrt(12.0 * temperature * nptiso_gammav * time_step);
     THERMO_TRACE(fprintf(
@@ -149,7 +149,7 @@ void thermo_init_npt_isotropic() {
 
 void thermo_init() {
 
-  // Init thermalized bond despite of thermostat
+  // Init thermalized bond despite of thermostat 
   if (n_thermalized_bonds) {
     thermalized_bond_init();
   }
@@ -157,11 +157,9 @@ void thermo_init() {
   if (thermo_switch == THERMO_OFF) {
     return;
   }
-  if (thermo_switch & THERMO_LANGEVIN)
-    thermo_init_langevin();
+  if(thermo_switch & THERMO_LANGEVIN ) thermo_init_langevin();
 #ifdef DPD
-  if (thermo_switch & THERMO_DPD)
-    dpd_init();
+  if(thermo_switch & THERMO_DPD) dpd_init();
 #endif
 #ifdef NPT
   if (thermo_switch & THERMO_NPT_ISO)
@@ -193,6 +191,7 @@ void thermo_heat_up() {
   if (n_thermalized_bonds) {
     thermalized_bond_heat_up();
   }
+
 }
 
 void langevin_cool_down() {

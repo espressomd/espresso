@@ -21,17 +21,17 @@
 #include "forces.hpp"
 
 #ifdef CUDA
-HarmonicWell::HarmonicWell(float x1, float x2, float x3, float _k,
-                           SystemInterface &s) {
+HarmonicWell::
+HarmonicWell(float x1, float x2, float x3, float _k, SystemInterface &s) {
   x = x1;
   y = x2;
   z = x3;
   k = _k;
 
-  if (!s.requestFGpu())
+  if(!s.requestFGpu())
     std::cerr << "HarmonicWell needs access to forces on GPU!" << std::endl;
 
-  if (!s.requestRGpu())
+  if(!s.requestRGpu())
     std::cerr << "HarmonicWell needs access to positions on GPU!" << std::endl;
 }
 

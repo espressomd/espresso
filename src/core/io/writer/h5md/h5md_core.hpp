@@ -22,21 +22,21 @@
 #ifndef ESPRESSO_H5MD_CORE_HPP
 #define ESPRESSO_H5MD_CORE_HPP
 
-#include "MpiCallbacks.hpp"
-#include "PartCfg.hpp"
 #include "cells.hpp"
 #include "global.hpp"
-#include <algorithm>
-#include <fstream>
+#include "MpiCallbacks.hpp"
+#include "PartCfg.hpp"
 #include <iostream>
-#include <mpi.h>
+#include <fstream>
 #include <string>
+#include <algorithm>
 #include <unordered_map>
+#include <mpi.h>
 #define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
-#include "communication.hpp"
 #include <h5xx/h5xx.hpp>
+#include "communication.hpp"
 
 extern double sim_time;
 extern double time_step;
@@ -120,15 +120,13 @@ private:
    * positions to the dataset.
    */
   template <typename T>
-  void WriteDataset(T &data, const std::string &path,
-                    const std::vector<int> &change_extent, hsize_t *offset,
-                    hsize_t *count);
+  void WriteDataset(T &data, const std::string &path, const std::vector<int> & change_extent,
+                    hsize_t *offset, hsize_t *count);
 
   /**
    * @brief Method that extends datasets by the given extent.
    */
-  void ExtendDataset(const std::string &path,
-                     const std::vector<int> &change_extent);
+  void ExtendDataset(const std::string & path, const std::vector<int> & change_extent);
 
   /**
   * @brief Method that returns chunk dimensions.
@@ -144,7 +142,7 @@ private:
       int particle_index, int_array_3d &id, int_array_3d &typ,
       double_array_3d &mass, double_array_3d &pos, int_array_3d &image,
       double_array_3d &vel, double_array_3d &f, double_array_3d &charge,
-      Particle const &current_particle, int write_dat, int_array_3d &bond);
+      Particle const&current_particle, int write_dat, int_array_3d &bond);
   /*
    * @brief Method to write the simulation script to the dataset.
    */

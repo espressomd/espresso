@@ -19,9 +19,7 @@ public:
   double &default_scale() { return m_default; }
   double const &default_scale() const { return m_default; }
   std::unordered_map<int, double> &particle_scales() { return m_scales; }
-  std::unordered_map<int, double> const &particle_scales() const {
-    return m_scales;
-  }
+  std::unordered_map<int, double> const &particle_scales() const { return m_scales; }
 
 private:
   template <typename Particle> double scale(Particle const &p) const {

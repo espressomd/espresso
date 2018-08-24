@@ -21,9 +21,10 @@ public:
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
     for (auto const &id : ids()) {
       auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
-      histogram.update(
-          ppos, ::Vector<3, double>{{partCfg[id].m.v[0], partCfg[id].m.v[1],
-                                     partCfg[id].m.v[2]}});
+      histogram.update(ppos,
+                       ::Vector<3, double>{{partCfg[id].m.v[0],
+                                            partCfg[id].m.v[1],
+                                            partCfg[id].m.v[2]}});
     }
     histogram.normalize();
     return histogram.get_histogram();

@@ -1,5 +1,5 @@
-#include "utils.hpp"
 #include <cstring>
+#include "utils.hpp"
 
 char *strcat_alloc(char *left, const char *right) {
   if (!left) {

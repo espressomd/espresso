@@ -236,8 +236,7 @@ void check_particle_sorting() {
       auto p = cell->part[n];
       if (cell_structure.position_to_cell(p.r.p.data()) != cell) {
         fprintf(stderr, "%d: misplaced part id %d. %p != %p\n", this_node,
-                p.p.identity, (void *)cell,
-                (void *)cell_structure.position_to_cell(p.r.p.data()));
+                p.p.identity, (void*)cell, (void*)cell_structure.position_to_cell(p.r.p.data()));
         errexit();
       }
     }

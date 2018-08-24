@@ -113,8 +113,8 @@ void meta_perform() {
     if (p.p.identity == meta_pid1) {
       flag1 = 1;
       p1 = &p;
-      ppos1 = unfolded_position(p);
-
+      ppos1=unfolded_position(p);
+      
       if (flag1 && flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
         meta_cur_xi = ppos2 - ppos1;
@@ -124,11 +124,11 @@ void meta_perform() {
     if (p.p.identity == meta_pid2) {
       flag2 = 1;
       p2 = &p;
-      ppos2 = unfolded_position(p);
+      ppos2=unfolded_position(p);
 
       if (flag1 && flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
-        meta_cur_xi = ppos2 - ppos1;
+        meta_cur_xi =ppos2 - ppos1;
         break;
       }
     }
@@ -157,7 +157,7 @@ void meta_perform() {
       }
 
       // direction of the bias force
-      meta_apply_direction = meta_cur_xi / meta_cur_xi.norm();
+      meta_apply_direction =meta_cur_xi /meta_cur_xi.norm();
     } else if (meta_switch == META_REL_Z) {
       // reaction coordinate value: relative height of z_pid1 with respect to
       // z_pid2
@@ -182,7 +182,7 @@ void meta_perform() {
   /** Apply force */
 
   // Calculate the strength of the applied force
-  double factor = 0;
+  double factor=0;
   if (meta_val_xi < meta_xi_min) {
     // below the lower bound
     factor = -1. * meta_f_bound * (meta_xi_min - meta_val_xi) / meta_xi_step;

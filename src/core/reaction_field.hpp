@@ -29,9 +29,9 @@
 */
 
 #include "debug.hpp"
+#include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -99,8 +99,7 @@ inline void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 }
 
-inline double rf_coulomb_pair_energy_no_cutoff(const Particle *p1,
-                                               const Particle *p2,
+inline double rf_coulomb_pair_energy_no_cutoff(const Particle *p1, const Particle *p2,
                                                double dist) {
   double fac;
   fac = 1.0 / dist -

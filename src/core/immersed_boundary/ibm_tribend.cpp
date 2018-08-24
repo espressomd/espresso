@@ -1,5 +1,5 @@
 
-#include "ibm_tribend.hpp"
+#include "config.hpp"
 
 #ifdef IMMERSED_BOUNDARY
 
@@ -7,6 +7,7 @@
 #include "interaction_data.hpp"
 #include "grid.hpp"
 #include "communication.hpp"
+#include "immersed_boundary/ibm_tribend.hpp"
 
 // DEBUG
 /*double maxBendingForce;

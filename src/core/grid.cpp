@@ -24,10 +24,10 @@
  *  see \ref grid.hpp "grid.h".
 */
 
+#include "debug.hpp"
 #include "grid.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
 #include "global.hpp"
 #include "interaction_data.hpp"
 #include "utils.hpp"
@@ -157,7 +157,7 @@ void grid_changed_n_nodes() {
   GRID_TRACE(fprintf(stderr, "%d: grid_changed_n_nodes:\n", this_node));
 
   mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
-                           {{1, 1, 1}});
+                           {{ 1, 1, 1}});
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 

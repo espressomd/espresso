@@ -713,8 +713,8 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
 }
 
 int calc_cylindrical_average(
-    PartCfg &partCfg, std::vector<double> const &center_,
-    std::vector<double> const &direction_, double length, double radius,
+    PartCfg &partCfg, std::vector<double> const & center_,
+    std::vector<double> const& direction_, double length, double radius,
     int bins_axial, int bins_radial, std::vector<int> types,
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution) {
@@ -1111,9 +1111,8 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                                int n_vs, int c_size) {
 
   // Number of doubles to store pressure in
-  const int total =
-      c_size * (n_pre + bonded_ia_params.size() + n_non_bonded + n_coulomb +
-                n_dipolar + n_vs + Observable_stat::n_external_field);
+  const int total = c_size * (n_pre + bonded_ia_params.size() + n_non_bonded + n_coulomb +
+                              n_dipolar + n_vs + Observable_stat::n_external_field);
 
   // Allocate mem for the double list
   stat->data.resize(total);

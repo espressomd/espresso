@@ -71,9 +71,8 @@ public:
 public:
   Cylinder()
       : m_center({0.0, 0.0, 0.0}), m_axis({1.0, 0.0, 0.0}), m_rad(0),
-        m_length(0.0), m_open(false), m_direction(1.0) {
-    precalc();
-  }
+        m_length(0.0), m_open(false), m_direction(1.0) { precalc(); }
+
 
   double radius() const { return m_rad; }
   void set_radius(double const &radius) {
@@ -99,6 +98,7 @@ public:
 
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;
+
 };
 }
 #endif

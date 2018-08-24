@@ -1,5 +1,5 @@
 
-#include "ibm_triel.hpp"
+#include "config.hpp"
 
 #ifdef IMMERSED_BOUNDARY
 
@@ -7,6 +7,7 @@
 #include "interaction_data.hpp"
 #include "grid.hpp"
 #include "communication.hpp"
+#include "immersed_boundary/ibm_triel.hpp"
 
 // Internal function
 void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3], double f2[3], double v12[3], double v13[3]);

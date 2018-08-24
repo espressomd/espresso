@@ -103,9 +103,9 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
       ErrorHandling::RuntimeError::ErrorLevel::ERROR, __FILE__, __LINE__,      \
       __PRETTYFUNC__)
 
-#define runtimeWarningMsg()                                                    \
+#define runtimeWarningMsg()                                                      \
   ErrorHandling::_runtimeMessageStream(                                        \
-      ErrorHandling::RuntimeError::ErrorLevel::WARNING, __FILE__, __LINE__,    \
+      ErrorHandling::RuntimeError::ErrorLevel::WARNING, __FILE__, __LINE__,      \
       __PRETTYFUNC__)
 
 #define debugMsg()                                                             \

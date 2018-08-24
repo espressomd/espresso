@@ -65,6 +65,7 @@
 #define LB_COUPLE_TWO_POINT 2
 #define LB_COUPLE_THREE_POINT 4
 
+
 #ifdef ADDITIONAL_CHECKS
 void print_fluid();
 #endif
@@ -90,7 +91,8 @@ void print_fluid();
 /** Description of the LB Model in terms of the unit vectors of the
  *  velocity sub-lattice and the corresponding coefficients
  *  of the pseudo-equilibrium distribution */
-template <size_t N_vel = 19> struct LB_Model {
+template<size_t N_vel=19>
+struct LB_Model {
   /** number of velocities */
   static const int n_veloc = static_cast<int>(N_vel);
 
@@ -119,7 +121,7 @@ struct LB_FluidNode {
 
   /** local force density */
   double force_density[3];
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS 
   // For particle update, we need the force on the nodes in LBM
   // Yet, Espresso resets the force immediately after the LBM update
   // Therefore we save it here
@@ -150,11 +152,9 @@ typedef struct {
    * lead to numerical artifacts with low order integrators */
   double friction;
 
-  /** external force density applied to the fluid at each lattice site (MD
-   * units) */
-  double
-      ext_force_density[3]; /* Open question: Do we want a local force or global
-                       force? */
+  /** external force density applied to the fluid at each lattice site (MD units) */
+  double ext_force_density[3]; /* Open question: Do we want a local force or global
+                          force? */
   double rho_lb_units;
   /** relaxation of the odd kinetic modes */
   double gamma_odd;
@@ -209,8 +209,7 @@ extern int transfer_momentum;
 
 /** Updates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
- * If external force densities are present, they are applied prior to the
- * collisions.
+ * If external force densities are present, they are applied prior to the collisions.
  * If boundaries are present, it also applies the boundary conditions.
  */
 void lattice_boltzmann_update();
@@ -241,13 +240,11 @@ int lb_sanity_checks();
     @param pi local fluid pressure
 */
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             const std::array<double, 3> &j,
-                             const std::array<double, 6> &pi);
+                             const std::array<double, 3> &j, const std::array<double, 6> &pi);
 
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
- * If external force densities are present, they are applied prior to the
- * collisions.
+ * If external force densities are present, they are applied prior to the collisions.
  * If boundaries are present, it also applies the boundary conditions.
  */
 void lb_propagate();
@@ -291,13 +288,13 @@ inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
 
   double avg_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
-  *rho = avg_rho + lbfluid[0][index] + lbfluid[1][index] + lbfluid[2][index] +
-         lbfluid[3][index] + lbfluid[4][index] + lbfluid[5][index] +
-         lbfluid[6][index] + lbfluid[7][index] + lbfluid[8][index] +
-         lbfluid[9][index] + lbfluid[10][index] + lbfluid[11][index] +
-         lbfluid[12][index] + lbfluid[13][index] + lbfluid[14][index] +
-         lbfluid[15][index] + lbfluid[16][index] + lbfluid[17][index] +
-         lbfluid[18][index];
+  *rho = avg_rho + lbfluid[0][index] + lbfluid[1][index] +
+         lbfluid[2][index] + lbfluid[3][index] + lbfluid[4][index] +
+         lbfluid[5][index] + lbfluid[6][index] + lbfluid[7][index] +
+         lbfluid[8][index] + lbfluid[9][index] + lbfluid[10][index] +
+         lbfluid[11][index] + lbfluid[12][index] + lbfluid[13][index] +
+         lbfluid[14][index] + lbfluid[15][index] + lbfluid[16][index] +
+         lbfluid[17][index] + lbfluid[18][index];
 }
 
 /** Calculate the local fluid momentum.
@@ -491,7 +488,7 @@ int lb_lbfluid_set_friction(double *p_friction);
 int lb_lbfluid_set_couple_flag(int couple_flag);
 int lb_lbfluid_set_agrid(double p_agrid);
 int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
-                                     double p_fz);
+                             double p_fz);
 int lb_lbfluid_set_tau(double p_tau);
 int lb_lbfluid_set_remove_momentum(void);
 int lb_lbfluid_get_agrid(double *p_agrid);
@@ -537,7 +534,7 @@ int lb_lbnode_set_pop(int *ind, double *pop);
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. This version of the function
  * can be called without the position needing to be on the local processor */
-int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v);
+int lb_lbfluid_get_interpolated_velocity_global(Vector3d& p, double* v);
 
 #endif
 

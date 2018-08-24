@@ -47,7 +47,7 @@ void check_pairs(int n_values, std::vector<std::pair<int, int>> &pairs) {
 BOOST_AUTO_TEST_CASE(basic_check) {
   auto const n_values = 141;
   std::vector<int> vec(n_values);
-
+  
   std::iota(vec.begin(), vec.end(), 0);
 
   std::vector<std::pair<int, int>> pairs;

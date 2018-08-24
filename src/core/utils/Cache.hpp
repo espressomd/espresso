@@ -138,8 +138,7 @@ public:
    *          into the cache.
    */
   template <typename KeyInputIterator, typename ValueInputIterator>
-  KeyInputIterator put(KeyInputIterator kbegin, KeyInputIterator kend,
-                       ValueInputIterator vbegin) {
+  KeyInputIterator put(KeyInputIterator kbegin, KeyInputIterator kend, ValueInputIterator vbegin) {
     auto const range_len = std::distance(kbegin, kend);
     auto const len = (range_len > max_size()) ? max_size() : range_len;
     kend = std::next(kbegin, len);
@@ -149,7 +148,7 @@ public:
       drop_random_element();
     }
 
-    while (kbegin != kend) {
+    while(kbegin != kend) {
       put(*kbegin++, *vbegin++);
     }
 

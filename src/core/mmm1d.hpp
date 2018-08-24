@@ -1,22 +1,22 @@
 /*
   Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
-
+  
   This file is part of ESPResSo.
-
+  
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
+  
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-
+  
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file mmm1d.hpp MMM1D algorithm for long range coulomb interactions.
     Implementation of the MMM1D method for the calculation of the electrostatic
@@ -28,8 +28,8 @@
 #ifndef MMM1D_H
 #define MMM1D_H
 
-#include "particle_data.hpp"
 #include "utils.hpp"
+#include "particle_data.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -40,21 +40,16 @@ typedef struct {
   /** required accuracy */
   double maxPWerror;
   /** cutoff of the bessel sum. only used by the GPU implementation */
-  int bessel_cutoff;
+  int    bessel_cutoff;
 } MMM1D_struct;
 extern MMM1D_struct mmm1d_params;
 
-/** parameters for MMM1D. Most of the parameters can also be tuned
-   automatically. Unlike
-    P3M, this tuning is redone automatically whenever parameters change, but not
-   immediately
+/** parameters for MMM1D. Most of the parameters can also be tuned automatically. Unlike
+    P3M, this tuning is redone automatically whenever parameters change, but not immediately
     if you set this parameters.
-    @param switch_rad at which xy-distance the calculation switches from the far
-   to the
-                      near formula. If -1, this parameter will be tuned
-   automatically.
-    @param maxPWerror the maximal allowed error for the potential and the forces
-   without the
+    @param switch_rad at which xy-distance the calculation switches from the far to the
+                      near formula. If -1, this parameter will be tuned automatically.
+    @param maxPWerror the maximal allowed error for the potential and the forces without the
                       prefactors, i. e. for the pure lattice 1/r-sum. */
 int MMM1D_set_params(double switch_rad, double maxPWerror);
 
@@ -66,11 +61,10 @@ void MMM1D_init();
 
 ///
 void add_mmm1d_coulomb_pair_force(double chprf, double d[3], double dist2,
-                                  double dist, double force[3]);
+				  double dist, double force[3]);
 
 ///
-double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3],
-                                 double r2, double r);
+double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double r2, double r);
 
 /** tuning of the parameters which are not set by the user, e.g. the
     switching radius or the bessel_cutoff. Call this only on the master node.

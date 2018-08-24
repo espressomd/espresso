@@ -32,11 +32,11 @@
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "iccp3m.hpp"
-#include "immersed_boundaries.hpp"
-#include "lb.hpp"
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
 #include "short_range_loop.hpp"
+#include "immersed_boundaries.hpp" 
+#include "lb.hpp"
 
 #include <cassert>
 

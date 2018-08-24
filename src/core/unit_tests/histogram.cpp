@@ -14,8 +14,8 @@ BOOST_AUTO_TEST_CASE(histogram) {
   // Check getters.
   BOOST_CHECK(hist.get_limits() == limits);
   BOOST_CHECK(hist.get_n_bins() == n_bins);
-  BOOST_CHECK((hist.get_bin_sizes() ==
-               std::array<double, 2>{{19.0 / 10.0, 5.0 / 10.0}}));
+  BOOST_CHECK(
+      (hist.get_bin_sizes() == std::array<double, 2>{{19.0 / 10.0, 5.0 / 10.0}}));
   // Check that histogram is initialized to zero.
   BOOST_CHECK(hist.get_histogram() ==
               std::vector<double>(n_dims_data * n_bins[0] * n_bins[1], 0.0));

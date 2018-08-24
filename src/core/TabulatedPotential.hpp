@@ -7,8 +7,8 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include <cassert>
 #include <vector>
+#include <cassert>
 
 struct TabulatedPotential {
   double minval = -1.0;

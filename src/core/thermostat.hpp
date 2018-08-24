@@ -27,14 +27,14 @@
 #include "config.hpp"
 
 #include "debug.hpp"
-#include "integrate.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
+#include "integrate.hpp"
 
 #include "Vector.hpp"
 
-#include "grid.hpp"
 #include <cmath>
+#include "grid.hpp" 
 
 /** \name Thermostat switches*/
 /************************************************************/
@@ -159,9 +159,8 @@ inline void thermo_convert_forces_body_to_space(Particle *p, double *force) {
              A[2 + 3 * 2] * p->f.f[2];
 }
 
-inline void thermo_convert_vel_space_to_body(Particle *p,
-                                             const Vector3d &vel_space,
-                                             Vector3d &vel_body) {
+inline void thermo_convert_vel_space_to_body(Particle *p, const Vector3d& vel_space,
+                                             Vector3d&  vel_body) {
   double A[9];
   thermo_define_rotation_matrix(p, A);
 
@@ -295,7 +294,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #ifndef PARTICLE_ANISOTROPY
       if (langevin_pref2_temp > 0.0) {
         p->f.f[j] = langevin_pref1_temp * velocity[j] +
-                    langevin_pref2_temp * Thermostat::noise();
+          langevin_pref2_temp * Thermostat::noise();
       } else {
         p->f.f[j] = langevin_pref1_temp * velocity[j];
       }
@@ -305,14 +304,14 @@ inline void friction_thermo_langevin(Particle *p) {
       if (aniso_flag) {
         if (langevin_pref2_temp[j] > 0.0) {
           p->f.f[j] = langevin_pref1_temp[j] * velocity_body[j] +
-                      langevin_pref2_temp[j] * Thermostat::noise();
+            langevin_pref2_temp[j] * Thermostat::noise();
         } else {
           p->f.f[j] = langevin_pref1_temp[j] * velocity_body[j];
         }
       } else {
         if (langevin_pref2_temp[j] > 0.0) {
           p->f.f[j] = langevin_pref1_temp[j] * velocity[j] +
-                      langevin_pref2_temp[j] * Thermostat::noise();
+            langevin_pref2_temp[j] * Thermostat::noise();
         } else {
           p->f.f[j] = langevin_pref1_temp[j] * velocity[j];
         }
@@ -395,15 +394,16 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
   for (int j = 0; j < 3; j++) {
 #ifdef PARTICLE_ANISOTROPY
     if (langevin_pref2_temp[j] > 0.0) {
-      p->f.torque[j] = -langevin_pref1_temp[j] * p->m.omega[j] +
-                       langevin_pref2_temp[j] * Thermostat::noise();
+      p->f.torque[j] =
+        -langevin_pref1_temp[j] * p->m.omega[j] +
+        langevin_pref2_temp[j] * Thermostat::noise();
     } else {
       p->f.torque[j] = -langevin_pref1_temp[j] * p->m.omega[j];
     }
 #else
     if (langevin_pref2_temp > 0.0) {
       p->f.torque[j] = -langevin_pref1_temp * p->m.omega[j] +
-                       langevin_pref2_temp * Thermostat::noise();
+        langevin_pref2_temp * Thermostat::noise();
     } else {
       p->f.torque[j] = -langevin_pref1_temp * p->m.omega[j];
     }

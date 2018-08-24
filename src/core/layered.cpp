@@ -312,8 +312,7 @@ void layered_topology_init(CellPList *old) {
   /* check node grid. All we can do is 1x1xn. */
   if (node_grid[0] != 1 || node_grid[1] != 1) {
     runtimeErrorMsg() << "selected node grid is not suitable for layered cell "
-                         "structure (needs 1x1x"
-                      << n_nodes << " grid";
+                         "structure (needs 1x1x" << n_nodes << " grid";
     node_grid[0] = node_grid[1] = 1;
     node_grid[2] = n_nodes;
   }

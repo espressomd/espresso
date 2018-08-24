@@ -36,8 +36,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "mock/Particle.hpp"
 #include "utils/List.hpp"
+#include "mock/Particle.hpp"
 
 using Communication::MpiCallbacks;
 namespace mpi = boost::mpi;

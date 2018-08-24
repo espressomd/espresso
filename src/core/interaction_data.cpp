@@ -23,13 +23,13 @@
  */
 #include "interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"
-#include "actor/DipolarDirectSum.hpp"
 #include "buckingham.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cos2.hpp"
 #include "debye_hueckel.hpp"
 #include "dpd.hpp"
+#include "thermalized_bond.hpp"
 #include "elc.hpp"
 #include "errorhandling.hpp"
 #include "gaussian.hpp"
@@ -38,8 +38,6 @@
 #include "hat.hpp"
 #include "hertzian.hpp"
 #include "initialize.hpp"
-#include "initialize.hpp"
-#include "interaction_data.hpp"
 #include "interaction_data.hpp"
 #include "lj.hpp"
 #include "ljcos.hpp"
@@ -48,7 +46,9 @@
 #include "maggs.hpp"
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
-#include "thermalized_bond.hpp"
+#include "initialize.hpp"
+#include "interaction_data.hpp"
+#include "actor/DipolarDirectSum.hpp"
 #ifdef DIPOLAR_BARNES_HUT
 #include "actor/DipolarBarnesHut.hpp"
 #endif
@@ -70,14 +70,15 @@
 #include "umbrella.hpp"
 #include "utils.hpp"
 #include "utils/serialization/IA_parameters.hpp"
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/iostreams/device/array.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
 #include <cstdlib>
 #include <cstring>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
+
 
 /****************************************
  * variables
@@ -88,10 +89,10 @@ std::vector<IA_parameters> ia_params;
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
 Coulomb_parameters coulomb = {
 #ifdef ELECTROSTATICS
-    0.0, COULOMB_NONE,
+  0.0, COULOMB_NONE,
 #endif
 #ifdef DIPOLES
-    0.0, DIPOLAR_NONE,
+  0.0, DIPOLAR_NONE,
 #endif
 };
 #endif
@@ -185,9 +186,9 @@ static void recalc_maximal_cutoff_bonded() {
         max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
       break;
     case BONDED_IA_THERMALIZED_DIST:
-      if ((bonded_ia_params[i].p.thermalized_bond.r_cut > 0) &&
-          (max_cut_bonded < bonded_ia_params[i].p.thermalized_bond.r_cut))
-        max_cut_bonded = bonded_ia_params[i].p.thermalized_bond.r_cut;
+      if ((bonded_ia_params[i].p.thermalized_bond.r_cut > 0) && 
+	  (max_cut_bonded < bonded_ia_params[i].p.thermalized_bond.r_cut))
+    	max_cut_bonded = bonded_ia_params[i].p.thermalized_bond.r_cut;
       break;
     case BONDED_IA_RIGID_BOND:
       if (max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
@@ -502,6 +503,7 @@ void make_particle_type_exist_local(int type) {
     realloc_ia_params(type + 1);
 }
 
+
 void make_bond_type_exist(int type) {
   int i, ns = type + 1;
   const auto old_size = bonded_ia_params.size();
@@ -578,9 +580,10 @@ void set_dipolar_method_local(DipolarInteraction method) {
   }
 #endif
 #ifdef DIPOLAR_BARNES_HUT
-  if ((coulomb.Dmethod == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
-    deactivate_dipolar_barnes_hut();
-  }
+if ((coulomb.Dmethod == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU))
+{
+ deactivate_dipolar_barnes_hut();
+}
 #endif // BARNES_HUT
   coulomb.Dmethod = method;
 }
@@ -592,50 +595,57 @@ void set_dipolar_method_local(DipolarInteraction method) {
 /*                                 electrostatics */
 /********************************************************************************/
 
-int coulomb_set_prefactor(double prefactor) {
+int coulomb_set_prefactor(double prefactor)
+{
   if (prefactor < 0.0) {
     runtimeErrorMsg() << "Coulomb prefactor has to be >=0";
     return ES_ERROR;
   }
-
-  coulomb.prefactor = prefactor;
+  
+  coulomb.prefactor=prefactor;
   mpi_bcast_coulomb_params();
 
+ 
   return ES_OK;
 }
 
-/** @brief Deactivates the current Coulomb mhthod
+/** @brief Deactivates the current Coulomb mhthod 
     This was part of coulomb_set_bjerrum()
 */
 void deactivate_coulomb_method() {
-  coulomb.prefactor = 0;
-  switch (coulomb.method) {
+coulomb.prefactor =0;
+switch (coulomb.method) {
 #ifdef P3M
-  case COULOMB_ELC_P3M:
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    break;
+    case COULOMB_ELC_P3M:
+    case COULOMB_P3M_GPU:
+    case COULOMB_P3M:
+      break;
 #endif
-  case COULOMB_DH:
-    dh_params.r_cut = 0.0;
-    dh_params.kappa = 0.0;
-  case COULOMB_RF:
-  case COULOMB_INTER_RF:
-    rf_params.kappa = 0.0;
-    rf_params.epsilon1 = 0.0;
-    rf_params.epsilon2 = 0.0;
-    rf_params.r_cut = 0.0;
-    rf_params.B = 0.0;
-  case COULOMB_MMM1D:
-    mmm1d_params.maxPWerror = 1e40;
-  default:
-    break;
-  }
+    case COULOMB_DH:
+      dh_params.r_cut = 0.0;
+      dh_params.kappa = 0.0;
+    case COULOMB_RF:
+    case COULOMB_INTER_RF:
+      rf_params.kappa = 0.0;
+      rf_params.epsilon1 = 0.0;
+      rf_params.epsilon2 = 0.0;
+      rf_params.r_cut = 0.0;
+      rf_params.B = 0.0;
+    case COULOMB_MMM1D:
+      mmm1d_params.maxPWerror = 1e40;
+    default:
+      break;
+    }
 
-  mpi_bcast_coulomb_params();
-  coulomb.method = COULOMB_NONE;
-  mpi_bcast_coulomb_params();
+    mpi_bcast_coulomb_params();
+    coulomb.method = COULOMB_NONE;
+    mpi_bcast_coulomb_params();
 }
+
+
+
+
+
 
 /* =========================================================
    ========================================================= */
@@ -643,12 +653,13 @@ void deactivate_coulomb_method() {
 
 #ifdef DIPOLES
 
-int dipolar_set_Dprefactor(double prefactor) {
-  if (prefactor < 0.0) {
+int dipolar_set_Dprefactor(double prefactor)
+{
+  if (prefactor < 0.0){
     runtimeErrorMsg() << "Dipolar prefactor has to be >=0";
     return ES_ERROR;
   }
-
+  
   coulomb.Dprefactor = prefactor;
 
   mpi_bcast_coulomb_params();
@@ -656,6 +667,7 @@ int dipolar_set_Dprefactor(double prefactor) {
 }
 
 #endif /* ifdef  DIPOLES */
+
 
 int virtual_set_params(int bond_type) {
   if (bond_type < 0)

@@ -392,13 +392,13 @@ void mpi_place_new_particle_slave(int pnode, int part) {
 }
 
 /****************** REQ_SET_V ************/
-void mpi_send_v(int pnode, int part, double *v) {
+void mpi_send_v(int pnode, int part, double* v) {
   mpi_call(mpi_send_v_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
 
-    p->m.v = {v[0], v[1], v[2]};
+    p->m.v = {v[0],v[1],v[2]};
   } else
     MPI_Send(v, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
 
@@ -408,8 +408,7 @@ void mpi_send_v(int pnode, int part, double *v) {
 void mpi_send_v_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->m.v.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
+    MPI_Recv(p->m.v.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
 
   on_particle_change();
@@ -1591,7 +1590,7 @@ void mpi_send_ext_torque(int pnode, int part, int flag, int mask,
     p->p.ext_flag |= flag;
 
     if (mask & PARTICLE_EXT_TORQUE)
-      p->p.ext_torque = {torque[0], torque[1], torque[2]};
+      p->p.ext_torque ={torque[0],torque[1],torque[2]};
   } else {
     int s_buf[2];
     s_buf[0] = flag;
@@ -1640,7 +1639,7 @@ void mpi_send_ext_force(int pnode, int part, int flag, int mask,
     /* set new values */
     p->p.ext_flag |= flag;
     if (mask & PARTICLE_EXT_FORCE)
-      p->p.ext_force = {force[0], force[1], force[2]};
+      p->p.ext_force ={force[0],force[1],force[2]};
   } else {
     int s_buf[2];
     s_buf[0] = flag;
@@ -1865,9 +1864,7 @@ void mpi_send_exclusion_slave(int part1, int part2) {
 }
 
 /************** REQ_SET_FLUID **************/
-void mpi_send_fluid(int node, int index, double rho,
-                    const std::array<double, 3> &j,
-                    const std::array<double, 6> &pi) {
+void mpi_send_fluid(int node, int index, double rho, const std::array<double, 3> &j, const std::array<double, 6> &pi) {
 #ifdef LB
   if (node == this_node) {
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
@@ -1886,8 +1883,7 @@ void mpi_send_fluid_slave(int node, int index) {
     double data[10];
     MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     std::array<double, 3> j = {{data[1], data[2], data[3]}};
-    std::array<double, 6> pi = {
-        {data[4], data[5], data[6], data[7], data[8], data[9]}};
+    std::array<double, 6> pi = {{data[4], data[5], data[6], data[7], data[8], data[9]}};
     lb_calc_n_from_rho_j_pi(index, data[0], j, pi);
   }
 #endif

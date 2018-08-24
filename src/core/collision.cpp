@@ -21,13 +21,13 @@
 
 #include "cells.hpp"
 #include "collision.hpp"
-#include "collision.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "particle_data.hpp"
+#include "collision.hpp"
 #include "initialize.hpp"
 #include "interaction_data.hpp"
-#include "particle_data.hpp"
 #include "rotation.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
 

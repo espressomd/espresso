@@ -95,11 +95,7 @@
 #define CELL_NEIGHBOR_EXCHANGE 0
 
 namespace Cells {
-enum Resort : unsigned {
-  RESORT_NONE = 0u,
-  RESORT_LOCAL = 1u,
-  RESORT_GLOBAL = 2u
-};
+enum Resort : unsigned { RESORT_NONE = 0u, RESORT_LOCAL = 1u, RESORT_GLOBAL = 2u };
 }
 
 /** \name Flags for cells_on_geometry_change */
@@ -294,7 +290,7 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
  *
  * The changed level has to be commuicated via annouce_resort_particles.
  */
-void set_resort_particles(Cells::Resort level);
+  void set_resort_particles(Cells::Resort level);
 
 /**
  * @brief Get the currently scheduled resort level.

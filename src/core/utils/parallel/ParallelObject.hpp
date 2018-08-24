@@ -30,11 +30,13 @@ class ParallelObject {
 public:
   ParallelObject() = delete;
 
-  static void register_callback(Communication::MpiCallbacks &cb) {
+  static void register_callback(Communication::MpiCallbacks & cb) {
     cb.add(&mpi_callback);
   }
 
-  static void make(Communication::MpiCallbacks &cb) { cb.call(&mpi_callback); }
+  static void make(Communication::MpiCallbacks & cb) {
+    cb.call(&mpi_callback);
+  }
 
 private:
   /* Supported callback types. Currently we can only create new instances. */

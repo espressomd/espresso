@@ -29,8 +29,7 @@ namespace Shapes {
 class Ellipsoid : public Shape {
 public:
   Ellipsoid()
-      : m_center({0.0, 0.0, 0.0}), m_semiaxes({1.0, 1.0, 1.0}),
-        m_direction(1.0) {}
+      : m_center({0.0, 0.0, 0.0}), m_semiaxes({1.0, 1.0, 1.0}), m_direction(1.0) { }
 
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;

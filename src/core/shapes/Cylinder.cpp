@@ -25,39 +25,39 @@
 
 using namespace std;
 
+
 namespace Shapes {
 
 std::pair<double, double> Cylinder::dist_half_pore(double r, double z) const {
   assert(z >= 0.0);
   assert(r >= 0.0);
 
-  if (z >= m_half_length || r >= m_rad) {
-    /* Outside */
-    if (!m_open && z >= m_half_length && r < m_rad) {
-      /* Closest feature: cap */
-      return {0, -(z - m_half_length)};
-    } else if (z >= m_half_length && (m_open || r >= m_rad)) {
-      /* Closest feature: ring */
-      return {-(r - m_rad), -(z - m_half_length)};
+  if (z >= m_half_length || r >= m_rad ) { 
+  /* Outside */
+    if (!m_open && z >= m_half_length && r < m_rad ) { 
+    /* Closest feature: cap */
+        return {0, -(z - m_half_length)};
+    } else if ( z >= m_half_length && (m_open || r >= m_rad)) { 
+    /* Closest feature: ring */
+        return {-(r - m_rad), -(z - m_half_length)};      
     } else {
-      /* Closest feature: cylinder */
-      return {-(r - m_rad), 0};
+    /* Closest feature: cylinder */
+        return {-(r - m_rad), 0};
     }
   } else {
     /* Inside */
-    if (!m_open && z >= m_half_length - m_rad &&
-        r < (z - (m_half_length - m_rad))) {
-      /* Closest feature: cap */
-      return {0, m_half_length - z};
+    if (!m_open && z >= m_half_length - m_rad && r < (z - (m_half_length - m_rad)) ) { 
+    /* Closest feature: cap */
+        return {0, m_half_length - z};
     } else {
-      /* Closest feature: cylinder */
-      return {m_rad - r, 0};
+    /* Closest feature: cylinder */
+        return {m_rad - r, 0};
     }
   }
 }
 
 int Cylinder::calculate_dist(const double *ppos, double *dist,
-                             double *vec) const {
+                               double *vec) const {
   /* Coordinate transform to cylinder coords
      with origin at m_center. */
   Vector3d const c_dist = Vector3d(ppos, ppos + 3) - m_center;
@@ -74,9 +74,9 @@ int Cylinder::calculate_dist(const double *ppos, double *dist,
      for the z > 0 case, and flip the result if appropriate. */
   double dr, dz;
   std::tie(dr, dz) = dist_half_pore(r, std::abs(z));
-
+  
   double side = -1;
-  if (std::abs(z) >= m_half_length || r >= m_rad) /* outside */
+  if (std::abs(z) >= m_half_length || r >= m_rad ) /* outside */
     side = 1;
 
   if (z <= 0.0) {

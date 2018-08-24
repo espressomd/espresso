@@ -26,9 +26,9 @@
  *  for a particle pair.
 */
 
+#include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef GAUSSIAN
 
