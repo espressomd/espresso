@@ -21,6 +21,7 @@ import espressomd
 import numpy as np
 import unittest as ut
 
+
 @ut.skipIf(not espressomd.has_features(["BOND_ANGLE"]),
            "Features not available, skipping test!")
 class InteractionsNonBondedTest(ut.TestCase):
@@ -48,7 +49,7 @@ class InteractionsNonBondedTest(ut.TestCase):
     def rotate_vector(self, v, k, phi):
         """Rotates vector v around unit vector k by angle phi
         using Rodrigues' rotation formula.
-        
+
         """
         vrot = v * np.cos(phi) + np.cross(k, v) * \
             np.sin(phi) + k * np.dot(k, v) * (1 - np.cos(phi))
@@ -58,11 +59,11 @@ class InteractionsNonBondedTest(ut.TestCase):
     def angle_harmonic_potential(self, phi, bend=1.0, phi0=np.pi):
         return 0.5 * bend * np.power(phi - phi0, 2)
 
-    def angle_cosine_potential(self, phi, bend=1.0, phi0 = np.pi):
-        return bend*(1-np.cos(phi - phi0))
+    def angle_cosine_potential(self, phi, bend=1.0, phi0=np.pi):
+        return bend * (1 - np.cos(phi - phi0))
 
-    def angle_cos_squared_potential(self, phi, bend = 1.0, phi0 = np.pi):
-        return 0.5*bend*(np.cos(phi) - np.cos(phi0))**2
+    def angle_cos_squared_potential(self, phi, bend=1.0, phi0=np.pi):
+        return 0.5 * bend * (np.cos(phi) - np.cos(phi0))**2
 
     def test_angle_harmonic(self):
         ah_bend = 1.
@@ -86,7 +87,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                 phi=i * d_phi, bend=ah_bend, phi0=ah_phi0)
 
             # Check that energies match
-            np.testing.assert_almost_equal(E_sim, E_ref, decimal = 4)
+            np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
 
     # Test Angle Cosine Potential
     def test_angle_cosine(self):
@@ -94,7 +95,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         ac_phi0 = 1
 
         angle_cosine = espressomd.interactions.AngleCosine(
-            bend = ac_bend, phi0 = ac_phi0)
+            bend=ac_bend, phi0=ac_phi0)
         self.system.bonded_inter.add(angle_cosine)
         self.system.part[0].add_bond((angle_cosine, 1, 2))
 
@@ -102,23 +103,23 @@ class InteractionsNonBondedTest(ut.TestCase):
         d_phi = np.pi / N
         for i in range(N):
             self.system.part[2].pos = self.start_pos + \
-                    self.rotate_vector(self.rel_pos, self.axis, i*d_phi)
-            self.system.integrator.run(recalc_forces = True, steps = 0)
+                self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
+            self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
             E_sim = self.system.analysis.energy()['bonded']
             E_ref = self.angle_cosine_potential(
-                phi = i*d_phi, bend = ac_bend, phi0 = ac_phi0)
+                phi=i * d_phi, bend=ac_bend, phi0=ac_phi0)
 
             # Check that energies match
-            np.testing.assert_almost_equal(E_sim, E_ref, decimal = 4)
+            np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
 
     def test_angle_cos_squared(self):
         acs_bend = 1
         acs_phi0 = 1
 
         angle_cos_squared = espressomd.interactions.AngleCossquare(
-            bend = acs_bend, phi0 = acs_phi0)
+            bend=acs_bend, phi0=acs_phi0)
         self.system.bonded_inter.add(angle_cos_squared)
         self.system.part[0].add_bond((angle_cos_squared, 1, 2))
 
@@ -126,13 +127,13 @@ class InteractionsNonBondedTest(ut.TestCase):
         d_phi = np.pi / N
         for i in range(N):
             self.system.part[2].pos = self.start_pos + \
-                    self.rotate_vector(self.rel_pos, self.axis, i*d_phi)
-            self.system.integrator.run(recalc_forces = True, steps = 0)
+                self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
+            self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
             E_sim = self.system.analysis.energy()['bonded']
             E_ref = self.angle_cos_squared_potential(
-                phi = i*d_phi, bend = acs_bend, phi0 = acs_phi0)
+                phi=i * d_phi, bend=acs_bend, phi0=acs_phi0)
 
             # Check that energies match
             np.testing.assert_almost_equal(E_sim, E_ref)

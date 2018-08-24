@@ -24,46 +24,48 @@ class _PairCriterion(ScriptInterfaceHelper):
 
 @script_interface_register
 class DistanceCriterion(_PairCriterion):
+
     """Pair criterion returning true, if particles are closer than a cut off.
        Periodic boundaries are treated via minimum image convention.
 
-       The following parameters can be passed to the constructor, changed via set_params() 
+       The following parameters can be passed to the constructor, changed via set_params()
        and retrieved via get_params()
 
        cut_off : float
            distance cut off for the criterion
     """
     _so_name = "PairCriteria::DistanceCriterion"
-    _so_creation_policy="LOCAL"
-    
+    _so_creation_policy = "LOCAL"
 
 
 @script_interface_register
 class EnergyCriterion(_PairCriterion):
+
     """Pair criterion returning true, if the short range energy between the particles is >= the cutoff
 
        Be aware that the short range energy contains the short range part of dipolar and electrostatic interactions,
        but not the long range part.
 
-       The following parameters can be passed to the constructor, changed via set_params() 
+       The following parameters can be passed to the constructor, changed via set_params()
        and retrieved via get_params()
 
        cut_off : float
            energy cut off for the criterion
     """
     _so_name = "PairCriteria::EnergyCriterion"
-    _so_creation_policy="LOCAL"
+    _so_creation_policy = "LOCAL"
 
 
 @script_interface_register
 class BondCriterion(_PairCriterion):
+
     """Pair criterion returning true, if a pair bond of given type exists between them
 
-       The following parameters can be passed to the constructor, changed via set_params() 
+       The following parameters can be passed to the constructor, changed via set_params()
        and retrieved via get_params()
 
        bond_type : int
-           numeric type of the bond 
+           numeric type of the bond
     """
     _so_name = "PairCriteria::BondCriterion"
-    _so_creation_policy="LOCAL"
+    _so_creation_policy = "LOCAL"

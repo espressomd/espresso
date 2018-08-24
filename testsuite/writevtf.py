@@ -33,6 +33,7 @@ npart = 50
 
 
 class CommonTests(ut.TestCase):
+
     """
     Class that holds common test methods.
     """
@@ -72,7 +73,7 @@ class CommonTests(ut.TestCase):
                 [((i * 2), float(i * 2), float(i * 2), float(i * 2)) for i in range(npart // 2)])
 
         self.assertTrue(np.allclose(
-            simulation_pos[:,1:], self.written_pos[:,1:]),
+            simulation_pos[:, 1:], self.written_pos[:, 1:]),
             msg="Positions not written correctly by writevcf!")
 
     def test_bonds(self):
@@ -95,13 +96,14 @@ class CommonTests(ut.TestCase):
         elif (2 in self.types_to_write):
             simulation_atoms = np.array([((i * 2), 2)
                                          for i in range(npart // 2)])
-        
+
         self.assertTrue(np.allclose(
-            simulation_atoms[:,1], self.written_atoms[:,1]),
+            simulation_atoms[:, 1], self.written_atoms[:, 1]),
             msg="Atoms not written correctly by writevsf!")
 
 
 class VCFTestAll(CommonTests):
+
     """
     Test the writing VTF files: all particle types.
     """
@@ -134,6 +136,7 @@ class VCFTestAll(CommonTests):
 
 
 class VCFTestType(CommonTests):
+
     """
     Test the writing VTF files: only particle types 2 and 23.
     """

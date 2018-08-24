@@ -42,7 +42,8 @@ class AnalyzeDistance(ut.TestCase):
         ij = np.triu_indices(len(r), k=1)
         r_ij = np.fabs(r[ij[0]] - r[ij[1]])
         # check smaller distances via PBC
-        r_ij = np.where(r_ij > 0.5 * self.system.box_l, self.system.box_l-r_ij, r_ij)
+        r_ij = np.where(
+            r_ij > 0.5 * self.system.box_l, self.system.box_l - r_ij, r_ij)
         dist = np.sum(r_ij**2, axis=1)
         return np.sqrt(np.min(dist))
 
@@ -50,7 +51,8 @@ class AnalyzeDistance(ut.TestCase):
     def nbhood(self, pos, r_catch):
         dist = np.fabs(np.array(self.system.part[:].pos) - pos)
         # check smaller distances via PBC
-        dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
+        dist = np.where(
+            dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
         dist = np.sum(dist**2, axis=1)
         return np.where(dist < r_catch**2)[0]
 
@@ -58,15 +60,18 @@ class AnalyzeDistance(ut.TestCase):
     def dist_to_pos(self, pos):
         dist = np.fabs(self.system.part[:].pos - pos)
         # check smaller distances via PBC
-        dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
+        dist = np.where(
+            dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
         dist = np.sum(dist**2, axis=-1)
         return np.sqrt(np.min(dist))
 
     # python version of the espresso core function, using id
     def dist_to_id(self, id):
-        dist = np.fabs(np.delete(self.system.part[:].pos, id, axis=0) - self.system.part[id].pos)
+        dist = np.fabs(
+            np.delete(self.system.part[:].pos, id, axis=0) - self.system.part[id].pos)
         # check smaller distances via PBC
-        dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
+        dist = np.where(
+            dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
         dist = np.sum(dist**2, axis=1)
         return np.sqrt(np.min(dist))
 
