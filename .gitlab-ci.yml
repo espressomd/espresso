@@ -248,6 +248,8 @@ style:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
   dependencies: []
+  before_script:
+    - git submodule deinit --all
   script:
     - find . -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' | xargs -n 5 -P 8 clang-format-6.0 -i -style=file
     - find . -name '*.py' -o -name '*.pyx' -o -name '*.pxd' | xargs -n 5 -P 8 autopep8 --ignore=E266 --in-place --aggressive --aggressive
