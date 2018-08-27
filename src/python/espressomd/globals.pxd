@@ -163,7 +163,7 @@ cdef extern from "swimmer_reaction.hpp":
 cdef extern from "immersed_boundaries.hpp":
     extern ImmersedBoundaries immersed_boundaries
 
-cdef extern from "object-in-fluid/oif_global_forces.hpp": 
+cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int max_oif_objects
 
 cdef extern from "forcecap.hpp":

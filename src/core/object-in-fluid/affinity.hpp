@@ -198,8 +198,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j] / len;
-            //					ftemp += abs(fac * vec[j] /
-            // len);
+            // ftemp += abs(fac * vec[j] / len);
           }
           // if (ftemp > 0.000000000000001) printf("%f ",fac);
           // Decision whether I should break the bond:
@@ -224,9 +223,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
                 p1->p.bond_site[j] = -1;
-              //							printf("bond
-              // broken. Poff = %f, F = %f, Koff = %f, K0 = %f, len = %f
-              //\n",Poff,tmpF,tmpKoff,tmpK0,len);
+              // printf("bond broken. Poff = %f, F = %f, Koff = %f, K0 = %f, len
+              // = %f\n", Poff, tmpF, tmpKoff, tmpK0, len);
             }
 
           } else {
@@ -257,13 +255,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                         // talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
-          // Kon*dt. Here is a table of values of this function, just to have an
-          // idea about the values
-          // x		|	0		|	0.25	|	0.5		|	0.75
-          // |	1.0 |	1.5		|	2.0		|	3.0
-          // |	5.0
-          // Pon(x) 	|	0		|	0.22	| 	0.39	|	0.52	|	0.63
-          // | 0.77	|	0.84	| 	0.95	|	0.99
+          // Kon*dt.
           double decide = d_random();
           if (decide <
               Pon) { // the bond will be created only with probability Pon.
@@ -375,13 +367,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                         // talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
-          // Kon*dt. Here is a table of values of this function, just to have an
-          // idea about the values
-          // x		|	0		|	0.25	|	0.5		|	0.75
-          // |	1.0 |	1.5		|	2.0		|	3.0
-          // |	5.0
-          // Pon(x) 	|	0		|	0.22	| 	0.39	|	0.52	|	0.63
-          // | 0.77	|	0.84	| 	0.95	|	0.99
+          // Kon*dt.
           double decide = d_random();
           if (decide <
               Pon) { // the bond will be created only with probability Pon.
@@ -485,9 +471,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
                 p1->p.bond_site[j] = -1;
-              //							printf("bond
-              // broken. Poff = %f, F = %f, Koff = %f, K0 = %f, len = %f
-              //\n",Poff,tmpF,tmpKoff,tmpK0,len);
             }
 
           } else {
@@ -517,13 +500,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                         // talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
-          // Kon*dt. Here is a table of values of this function, just to have an
-          // idea about the values
-          // x		|	0		|	0.25	|	0.5		|	0.75
-          // |	1.0 |	1.5		|	2.0		|	3.0
-          // |	5.0
-          // Pon(x) 	|	0		|	0.22	| 	0.39	|	0.52	|	0.63
-          // | 0.77	|	0.84	| 	0.95	|	0.99
+          // Kon*dt.
           double decide = d_random();
           if (decide <
               Pon) { // the bond will be created only with probability Pon.
@@ -606,8 +583,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j] / len;
-            //					ftemp += abs(fac * vec[j] /
-            // len);
           }
           // if (ftemp > 0.000000000000001) printf("%f ",fac);
           // Decision whether I should break the bond:
@@ -632,9 +607,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
                 p1->p.bond_site[j] = -1;
-              //							printf("bond
-              // broken. Poff = %f, F = %f, Koff = %f, K0 = %f, len = %f
-              //\n",Poff,tmpF,tmpKoff,tmpK0,len);
             }
 
           } else {
@@ -665,13 +637,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                         // talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
-          // Kon*dt. Here is a table of values of this function, just to have an
-          // idea about the values
-          // x		|	0		|	0.25	|	0.5		|	0.75
-          // |	1.0 |	1.5		|	2.0		|	3.0
-          // |	5.0
-          // Pon(x) 	|	0		|	0.22	| 	0.39	|	0.52	|	0.63
-          // | 0.77	|	0.84	| 	0.95	|	0.99
+          // Kon*dt.
           double decide = d_random();
           if (decide <
               Pon) { // the bond will be created only with probability Pon.
@@ -759,8 +725,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j] / len;
-            //					ftemp += abs(fac * vec[j] /
-            // len);
           }
           // if (ftemp > 0.000000000000001) printf("%f ",fac);
           // Decision whether I should break the bond:
@@ -785,9 +749,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
                 p1->p.bond_site[j] = -1;
-              //							printf("bond
-              // broken. Poff = %f, F = %f, Koff = %f, K0 = %f, len = %f
-              //\n",Poff,tmpF,tmpKoff,tmpK0,len);
             }
 
           } else {
@@ -818,13 +779,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                         // talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
-          // Kon*dt. Here is a table of values of this function, just to have an
-          // idea about the values
-          // x		|	0		|	0.25	|	0.5		|	0.75
-          // |	1.0 |	1.5		|	2.0		|	3.0
-          // |	5.0
-          // Pon(x) 	|	0		|	0.22	| 	0.39	|	0.52	|	0.63
-          // | 0.77	|	0.84	| 	0.95	|	0.99
+          // Kon*dt.
           double decide = d_random();
           if (decide <
               Pon) { // the bond will be created only with probability Pon.

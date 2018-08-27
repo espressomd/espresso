@@ -1703,8 +1703,8 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
     // for optimizations this list could be determined during the initialization
     std::vector<int> list_of_reaction_ids_with_given_reactant_type;
     while (list_of_reaction_ids_with_given_reactant_type.size() ==
-           0) { // avoid selecting a (e.g. salt) particle which does not take
-                // part in a reaction
+           0) { // avoid selecting a (e.g. salt) particle which
+                // does not take part in a reaction
       int random_p_id = get_random_valid_p_id(); // only used to determine which
                                                  // reaction is attempted.
       auto part = get_particle_data(random_p_id);
@@ -1794,9 +1794,9 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
       std::abs(-temperature /
                current_reaction.accumulator_exponentials.get_mean()[0] *
                current_reaction.accumulator_exponentials
-                   .get_std_error()[0])); //(excess chemical potential; error
+                   .get_std_error()[0])); // excess chemical potential; error
                                           // excess chemical potential,
-                                          // determined via error propagation)
+                                          // determined via error propagation
   return result;
 }
 
@@ -1816,9 +1816,9 @@ calculate_factorial_expression(SingleReaction &current_reaction,
     int N_i0 = old_particle_numbers[current_reaction.reactant_types[i]];
     factorial_expr =
         factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see smith paper) since we
-                                          // only perform one reaction at one
-                                          // call of the function
+                             N_i0, nu_i); // zeta = 1 (see smith paper) since
+                                          // we only perform one reaction at
+                                          // one call of the function
   }
   // factorial contribution of products
   for (int i = 0; i < current_reaction.product_types.size(); i++) {
@@ -1826,9 +1826,9 @@ calculate_factorial_expression(SingleReaction &current_reaction,
     int N_i0 = old_particle_numbers[current_reaction.product_types[i]];
     factorial_expr =
         factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see smith paper) since we
-                                          // only perform one reaction at one
-                                          // call of the function
+                             N_i0, nu_i); // zeta = 1 (see smith paper) since
+                                          // we only perform one reaction at
+                                          // one call of the function
   }
   return factorial_expr;
 }

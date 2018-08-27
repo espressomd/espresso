@@ -38,7 +38,7 @@ template <typename T, typename = void> struct get_value_helper {
 /* Vector<N,T> case */
 template <size_t N, typename T> struct get_value_helper<Vector<N, T>, void> {
   Vector<N, T> operator()(Variant const &v) const {
-    return Vector<N, T>(boost::get<std::vector<double>>(v));
+    return Vector<N, T>(boost::get<std::vector<T>>(v));
   }
 };
 
@@ -140,11 +140,12 @@ T get_value(VariantMap const &vals, std::string const &name) {
   try {
     return get_value<T>(vals.at(name));
   } catch (boost::bad_get const &) {
-    /* TODO: Better exceptions. */
-    throw;
+    throw std::runtime_error(std::string("Argument '") + name +
+                             "' has wrong type: Is a " +
+                             get_type_label(vals.at(name)) + " expected a " +
+                             get_type_label(infer_type<T>()));
   } catch (std::out_of_range const &) {
-    /* TODO: Better exceptions. */
-    throw;
+    throw std::out_of_range("Parameter '" + name + "' is missing.");
   }
 }
 

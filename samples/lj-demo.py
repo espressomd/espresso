@@ -444,7 +444,8 @@ def main_loop():
         new_box = np.ones(3) * controls.volume**(1. / 3.)
         if np.any(np.array(system.box_l) != new_box):
             for i in range(len(system.part)):
-                system.part[i].pos = system.part[i].pos * new_box / system.box_l[0]
+                system.part[i].pos = system.part[
+                    i].pos * new_box / system.box_l[0]
             print("volume changed")
             system.force_cap = lj_cap
         system.box_l = new_box
@@ -514,7 +515,8 @@ def midi_thread():
                     elif status == controls.MIDI_ROTATE:
                         if data2 < 65:
                             # rotate clockwise
-                            mayavi_rotation_angle += mayavi_rotation_angle_step * data2
+                            mayavi_rotation_angle += mayavi_rotation_angle_step * \
+                                data2
                         elif data2 >= 65:
                             # rotate counterclockwise
                             mayavi_rotation_angle -= mayavi_rotation_angle_step * \
@@ -527,7 +529,8 @@ def midi_thread():
                             # zoom out
                             mayavi_zoom += mayavi_zoom_step
                     # else:
-                    #    print("Unknown Status {0} with data1={1} and data2={2}".format(status, data1, data2))
+                    # print("Unknown Status {0} with data1={1} and
+                    # data2={2}".format(status, data1, data2))
 
         except Exception as e:
             print(e)
@@ -536,6 +539,7 @@ def midi_thread():
 
 
 last_plotted = 0
+
 
 def rotate_scene():
     global mayavi_rotation_angle
@@ -562,9 +566,8 @@ def zoom_scene():
             mayavi_zoom_old = mayavi_zoom
         elif mayavi_zoom_old > mayavi_zoom:
             vis.camera.move_forward()
-            help( vis.camera.move_forward)
+            help(vis.camera.move_forward)
             mayavi_zoom_old = mayavi_zoom
-
 
 
 def update_plot():

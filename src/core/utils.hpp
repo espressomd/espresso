@@ -33,6 +33,7 @@
 #include "utils/math/sqr.hpp"
 #include "utils/memory.hpp"
 
+#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -249,7 +250,10 @@ inline ::Vector<3, double> vec_rotate(::Vector<3, double> axis, double alpha,
  * @param c       z position
  * @param adim    dimensions of the underlying grid
  */
-inline int get_linear_index(int a, int b, int c, int adim[3]) {
+inline int get_linear_index(int a, int b, int c, const int adim[3]) {
+  assert((a >= 0) && (a < adim[0]));
+  assert((b >= 0) && (b < adim[1]));
+  assert((c >= 0) && (c < adim[2]));
   return (a + adim[0] * (b + adim[1] * c));
 }
 

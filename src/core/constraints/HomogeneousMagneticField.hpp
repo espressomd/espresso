@@ -20,6 +20,8 @@ public:
   virtual ParticleForce force(const Particle &p,
                               const Vector3d &folded_pos) override;
 
+  bool fits_in_box(Vector3d const &box) const override { return true; }
+
 private:
   Vector3d m_field;
 };

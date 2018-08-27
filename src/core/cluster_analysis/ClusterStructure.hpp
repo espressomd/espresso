@@ -2,11 +2,14 @@
 #ifndef CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
 #define CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
 
-#include "Cluster.hpp"
 #include "pair_criteria/pair_criteria.hpp"
 #include <map>
 #include <string>
 #include <vector>
+
+#include "Cluster.hpp"
+#include "pair_criteria/pair_criteria.hpp"
+#include "particle_data.hpp"
 
 namespace ClusterAnalysis {
 

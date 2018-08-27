@@ -21,11 +21,13 @@ public:
     ShapeBasedConstraint::reset_force();
   }
 
-  virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
-                          Observable_stat &energy) const override;
+  void add_energy(const Particle &p, const Vector3d &folded_pos,
+                  Observable_stat &energy) const override;
 
   virtual ParticleForce force(const Particle &p,
                               const Vector3d &folded_pos) override;
+
+  bool fits_in_box(Vector3d const &) const override { return true; }
 
   /* finds the minimum distance to all particles */
   double min_dist();

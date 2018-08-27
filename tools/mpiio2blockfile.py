@@ -95,14 +95,14 @@ with open(bondf) as f:
 # Print particles in blockfile format
 print("{particles {id type pos v}")
 for i in range(ntotalpart):
-    print("\t{%i %i %r %r %r %r %r %r}" \
-        % (id[i], type[i], pos[3*i], pos[3*i+1], pos[3*i+2], \
-           vel[3*i], vel[3*i+1], vel[3*i+2]))
+    print("\t{%i %i %r %r %r %r %r %r}"
+          % (id[i], type[i], pos[3 * i], pos[3 * i + 1], pos[3 * i + 2],
+             vel[3 * i], vel[3 * i + 1], vel[3 * i + 2]))
 print("}")
 
 # Print bonds in blockfile format
 print("{bonds")
-addend = 0 # ntotal bonds of previous processors
+addend = 0  # ntotal bonds of previous processors
 for rank in range(nproc):
     # The start and end indices for the boff array are determined via
     # pref. However, there are (nlocalpart + 1) boff entries per proc.

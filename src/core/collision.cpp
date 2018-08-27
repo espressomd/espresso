@@ -22,7 +22,6 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
@@ -469,57 +468,12 @@ std::vector<collision_struct> gather_global_collision_queue() {
   return res;
 }
 
-// this looks in all local particles for a particle close to those in a
-// 2-particle collision. If it finds them, it performs three particle binding
-void three_particle_binding_full_search(
-    const std::vector<collision_struct> &gathered_queue) {
-  // Handler checking a single particle against collision queue. Used for
-  // local particles and ghosts
-  auto handle_single_particle = [&gathered_queue](Particle &p) {
-    for (auto &c : gathered_queue) {
-      Particle *p1 = local_particles[c.pp1];
-      Particle *p2 = local_particles[c.pp2];
+static void three_particle_binding_do_search(Cell *basecell, Particle &p1,
+                                             Particle &p2) {
+  auto handle_cell = [&p1, &p2](Cell *c) {
+    for (int p_id = 0; p_id < c->n; p_id++) {
+      auto &P = c->part[p_id];
 
-      // Check, whether p is equal to one of the particles in the
-      // collision. If so, skip
-      if ((p.p.identity == p1->p.identity) ||
-          (p.p.identity == p2->p.identity)) {
-        continue;
-      }
-
-      // The following checks,
-      // if the particle p is closer that the cutoff from p1 and/or p2.
-      // If yes, three particle bonds are created on all particles
-      // which have two other particles within the cutoff distance,
-      // unless such a bond already exists
-
-      // We need all cyclical permutations, here
-      // (bond is placed on 1st particle, order of bond partners
-      // does not matter, so we don't neet non-cyclic permutations):
-      coldet_do_three_particle_bond(p, *p1, *p2);
-      coldet_do_three_particle_bond(*p1, p, *p2);
-      coldet_do_three_particle_bond(*p2, p, *p1);
-    }
-  };
-
-  // Iterate over all local particles
-  for (auto &p : local_cells.particles()) {
-    handle_single_particle(p);
-  };
-
-  // And ghosts
-  for (auto &p : ghost_cells.particles()) {
-    handle_single_particle(p);
-  }
-}
-
-static void three_particle_binding_dd_do_search(Cell *basecell, Particle &p1,
-                                                Particle &p2) {
-  int basecellno = std::distance(&cells[0], basecell);
-  for (int n = 0; n < 27; ++n) {
-    Cell &cell = cells[dd_full_shell_neigh(basecellno, n)];
-    for (int pno = 0; pno < cell.n; ++pno) {
-      Particle &P = cell.part[pno];
       // Skip collided particles themselves
       if ((P.p.identity == p1.p.identity) || (P.p.identity == p2.p.identity)) {
         continue;
@@ -542,6 +496,14 @@ static void three_particle_binding_dd_do_search(Cell *basecell, Particle &p1,
         coldet_do_three_particle_bond(p2, P, p1);
       }
     }
+  };
+
+  /* Search the base cell ... */
+  handle_cell(basecell);
+
+  /* ... and all the neighbors. */
+  for (auto &n : basecell->neighbors().all()) {
+    handle_cell(n);
   }
 }
 
@@ -552,23 +514,19 @@ void three_particle_binding_domain_decomposition(
     const std::vector<collision_struct> &gathered_queue) {
 
   for (auto &c : gathered_queue) {
-
     // If we have both particles, at least as ghosts, Get the corresponding cell
     // indices
     if ((local_particles[c.pp1] != NULL) && (local_particles[c.pp2] != NULL)) {
-
       Particle &p1 = *local_particles[c.pp1];
       Particle &p2 = *local_particles[c.pp2];
       auto cell1 = cell_structure.position_to_cell(p1.r.p.data());
       auto cell2 = cell_structure.position_to_cell(p2.r.p.data());
 
-      three_particle_binding_dd_do_search(cell1, p1, p2);
+      three_particle_binding_do_search(cell1, p1, p2);
       if (cell1 != cell2)
-        three_particle_binding_dd_do_search(cell2, p1, p2);
-
+        three_particle_binding_do_search(cell2, p1, p2);
     } // If local particles exist
-
-  } // Loop over total collisions
+  }   // Loop over total collisions
 }
 
 // Handle the collisions stored in the queue
@@ -711,17 +669,7 @@ void handle_collisions() {
   // three-particle-binding part
   if (collision_params.mode & (COLLISION_MODE_BIND_THREE_PARTICLES)) {
     auto gathered_queue = gather_global_collision_queue();
-
-    // If we don't have domain decomposition, we need to do a full sweep over
-    // all
-    // particles in the system. (slow)
-    if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      three_particle_binding_full_search(gathered_queue);
-    } // if cell structure != domain decomposition
-    else {
-      three_particle_binding_domain_decomposition(gathered_queue);
-    } // If we have doamin decomposition
-
+    three_particle_binding_domain_decomposition(gathered_queue);
   } // if TPB
 
   local_collision_queue.clear();

@@ -17,10 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import string, re, os
+import string
+import re
+import os
 
 # Execute git log with the desired command line options.
-fin = os.popen('git log --summary --stat --no-merges --date=short 3.0.1..', 'r')
+fin = os.popen(
+    'git log --summary --stat --no-merges --date=short 3.0.1..', 'r')
 
 # Set up the loop variables in order to locate the blocks we want
 authorFound = False
@@ -118,13 +121,13 @@ for line in fin:
             if len(commitLine) < i + 78:
                 commit = commit + "\n " + commitLine[i:len(commitLine)]
                 break
-            index = commitLine.rfind(' ', i, i+78)
+            index = commitLine.rfind(' ', i, i + 78)
             if index > i:
                 commit = commit + "\n " + commitLine[i:index]
-                i = index+1
+                i = index + 1
             else:
                 commit = commit + "\n " + commitLine[i:78]
-                i = i+79
+                i = i + 79
 
         # Write out the commit line
         print(commit)
@@ -142,4 +145,3 @@ for line in fin:
 
 # Close the input and output lines now that we are finished.
 fin.close()
-

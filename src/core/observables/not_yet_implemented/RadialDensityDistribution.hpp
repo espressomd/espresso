@@ -46,9 +46,9 @@ int ObservableRadialDensityDistribution::actual_calculate(PartCfg &partCfg) {
   double *bin_volume = (double *)Utils::malloc(sizeof(double) * r_data->rbins);
 
   double part_pos[3];
-  double AB[3]; // normalized normal vector pointing to start point
-  double BA[3]; // ...
-                // end point
+  double AB[3];    // normalized normal vector pointing to start point
+  double BA[3];    // ...
+                   // end point
   double Apart[3]; // vector difference start_point - part_pos
   double norm_Apart;
   double normAB;

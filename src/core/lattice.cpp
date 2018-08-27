@@ -101,7 +101,8 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
       } else {
         fprintf(stderr,
                 "%d: map_position_to_lattice: position (%f,%f,%f) not inside a "
-                "local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",
+                "local plaquette in dir %d ind[dir]=%d "
+                "rel=%f lpos=%f.\n",
                 this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
       }
     } else if (ind[dir] > this->grid[dir]) {
@@ -110,7 +111,8 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
       else
         fprintf(stderr,
                 "%d: map_position_to_lattice: position (%f,%f,%f) not inside a "
-                "local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",
+                "local plaquette in dir %d ind[dir]=%d "
+                "rel=%f lpos=%f.\n",
                 this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
     }
 

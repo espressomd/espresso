@@ -21,6 +21,11 @@ template <typename T> struct infer_length_helper {
 template <size_t N, typename T> struct infer_length_helper<Vector<N, T>> {
   static constexpr size_t value{N};
 };
+
+template <size_t N, size_t M, typename T>
+struct infer_length_helper<Vector<M, Vector<N, T>>> {
+  static constexpr size_t value{N * M};
+};
 } // namespace detail
 
 /**
@@ -42,6 +47,10 @@ template <typename T> constexpr size_t infer_length() {
 struct AutoParameter {
   /* Exception types */
   struct WriteError {};
+
+  /* Tag types */
+  struct ReadOnly {};
+  static constexpr const ReadOnly read_only = ReadOnly{};
 
   /**
    * @brief read-write parameter that is bound to an object
@@ -189,6 +198,17 @@ struct AutoParameter {
                 VariantType type = infer_type<R>(),
                 size_t length = infer_length<R>())
       : name(name), type(type), length(length), set(Utils::make_function(set)),
+        get(Utils::make_function(get)) {}
+
+  template <typename G,
+            /* Try to guess the type from the return type of the getter */
+            typename R = typename decltype(
+                Utils::make_function(std::declval<G>()))::result_type>
+  AutoParameter(std::string const &name, ReadOnly, G const &get,
+                VariantType type = infer_type<R>(),
+                size_t length = infer_length<R>())
+      : name(name), type(type), length(length),
+        set([](Variant const &) { throw WriteError{}; }),
         get(Utils::make_function(get)) {}
 
   /** The interface name. */

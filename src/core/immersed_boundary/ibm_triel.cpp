@@ -97,9 +97,8 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   const double dI2dGxx = Gyy;
   const double dI2dGxy = -Gyx; // Note: Krueger has a factor 2 here, because he
                                // uses the symmetry of the G-matrix.
-  const double dI2dGyx =
-      -Gxy; //			But we don't use it. So, Krueger is missing the yx
-            //term, whereas we have it.
+  const double dI2dGyx = -Gxy; // But we don't use it. So, Krueger is missing
+                               // the yx term, whereas we have it.
   const double dI2dGyy = Gxx;
 
   // Derivatives of G (C.16)
@@ -127,9 +126,9 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   // Krüger (chain rule applied in eq. (C.13), but for the energy density). Only
   // two nodes are needed, third one is calcualted from momentum conservation
   // Note: If you calculate the derivatives in a straightforward manner, you get
-  // 8 terms (done here). Krueger exploits the symmetry of the G-matrix,
-  //		which results in 6 elements, but with an additional factor 2 for
-  //the xy-elements (see also above at the definition of dI2dGxy).
+  // 8 terms (done here). Krueger exploits the symmetry of the G-matrix, which
+  // results in 6 elements, but with an additional factor 2 for the xy-elements
+  // (see also above at the definition of dI2dGxy).
   double f1_rot[2] = {0., 0.};
   double f2_rot[2] = {0., 0.};
   f1_rot[0] = -(dEdI1 * dI1dGxx * dGxxdV1x) - (dEdI1 * dI1dGxy * dGxydV1x) -
@@ -329,12 +328,11 @@ void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
   // fRot is in the rotated system, i.e. in a system where the side lPrime of
   // the triangle (i.e. v12) is parallel to the x-axis, and the y-axis is
   // perpendicular to the x-axis (cf. Krueger, Fig. 7.1c).
-  //		I.e. fRot[XX] is the component parallel to the x-axis, fRot[YY]]
-  //the component parallel to the y-axis.
-  // Now, the idea is to get these unit vectors for the x- and y-axis in the
-  // real coordinate system. They are named xu and yu below. 		The
-  // x-component of the force in the real coordinate system is therefore:
-  // fRot[XX]*xu
+  // I.e. fRot[XX] is the component parallel to the x-axis, fRot[YY]] the
+  // component parallel to the y-axis. Now, the idea is to get these unit
+  // vectors for the x- and y-axis in the real coordinate system. They are named
+  // xu and yu below. The x-component of the force in the real coordinate system
+  // is therefore: fRot[XX]*xu
 
   // xu is simple: The x-axis in the rotated system is parallel to v12 --> xu =
   // v12 (+ normalization)
@@ -342,14 +340,11 @@ void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
   unit_vector(v12, xu);
 
   // yu needs to be orthogonal to xu, and point in the direction of node 3 in
-  // Krueger, Fig. 7.1b. Therefore:
-  //		First get the projection of v13 onto v12: The direction is
-  //definied by xu, the length by the scalar product (scalar product can be
-  // interpreted as a projection, after all).
-  //					--> sca * xu
-  //		Then: v13 - sca * xu gives the component of v13 orthogonal to
-  //v12, i..e. perpendicular to the x-axis --> yu 		Last: Normalize
-  // yu.
+  // Krueger, Fig. 7.1b. Therefore: First get the projection of v13 onto v12:
+  // The direction is definied by xu, the length by the scalar product (scalar
+  // product can be interpreted as a projection, after all). --> sca * xu Then:
+  // v13 - sca * xu gives the component of v13 orthogonal to v12, i..e.
+  // perpendicular to the x-axis --> yu Last: Normalize yu.
 
   const double sca = scalar(v13, xu);
   double y[3] = {0., 0., 0.};

@@ -122,8 +122,8 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
         } else {
           throw std::runtime_error(
               "Something wrong in oif_local_forces.hpp: All particles in a "
-              "bond are ghost particles, impossible to unfold the "
-              "positions...\n");
+              "bond are ghost "
+              "particles, impossible to unfold the positions...\n");
           return 0;
         }
       }

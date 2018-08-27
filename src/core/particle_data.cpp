@@ -509,6 +509,8 @@ int set_particle_rotational_inertia(int part, double rinertia[3]) {
   mpi_send_rotational_inertia(pnode, part, rinertia);
   return ES_OK;
 }
+#else
+const constexpr double ParticleProperties::rinertia[3];
 #endif
 #ifdef ROTATION
 int set_particle_rotation(int part, int rot) {

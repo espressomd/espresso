@@ -71,7 +71,7 @@ class InteractionsBondedTest(ut.TestCase):
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
                 harmonic_force(scalar_r=(i + 1) * self.step_width,
-                                    k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
+                               k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)
@@ -111,7 +111,7 @@ class InteractionsBondedTest(ut.TestCase):
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
                 fene_force(scalar_r=(i + 1) * self.step_width,
-                                k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
+                           k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)
@@ -119,7 +119,7 @@ class InteractionsBondedTest(ut.TestCase):
             self.assertTrue((f0_sim == -f1_sim).all())
             # and has correct value.
             f1_sim_copy = np.copy(f1_sim)
-            np.testing.assert_almost_equal(f1_sim_copy, f1_ref, decimal = 6)
+            np.testing.assert_almost_equal(f1_sim_copy, f1_ref, decimal=5)
 
         # Check that bond breaks when distance > r_cut
         self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -135,7 +135,7 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.part[0].q = q1
         self.system.part[1].q = q2
 
-        coulomb = espressomd.interactions.BondedCoulomb(prefactor = coulomb_k)
+        coulomb = espressomd.interactions.BondedCoulomb(prefactor=coulomb_k)
         self.system.bonded_inter.add(coulomb)
         self.system.part[0].add_bond((coulomb, 1))
 
@@ -146,13 +146,14 @@ class InteractionsBondedTest(ut.TestCase):
             # Calculate energies
             E_sim = self.system.analysis.energy()["bonded"]
             E_ref = coulomb_potential(
-                scalar_r=(i + 1) * self.step_width, k=coulomb_k, q1 = q1, q2 = q2)
+                scalar_r=(i + 1) * self.step_width, k=coulomb_k, q1=q1, q2=q2)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * coulomb_force(scalar_r=(i + 1) * self.step_width,
-                                k=coulomb_k, q1 = q1, q2 = q2)
+            f1_ref = self.axis * coulomb_force(
+                scalar_r=(i + 1) * self.step_width,
+                                k=coulomb_k, q1=q1, q2=q2)
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)

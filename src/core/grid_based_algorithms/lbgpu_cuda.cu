@@ -1597,7 +1597,8 @@ calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_pi_gpu *d_p_v,
       float Rho = d_v[index].rho[ii];
 
       /* note that d_v[index].v[] already includes the 1/2 f term, accounting
-       * for the pre- and post-collisional average */
+       * for the pre- and post-collisional average
+       */
 
       j[0] = Rho * d_v[index].v[0];
       j[1] = Rho * d_v[index].v[1];
@@ -2761,8 +2762,8 @@ __device__ void calc_node_force(float *delta, float *delta_j, float *partgrad1,
                                 LB_node_force_density_gpu node_f) {
   /* TODO: should the drag depend on the density?? */
   /* NOTE: partgrad is not zero only if SHANCHEN is defined. It is initialized
-     in calc_node_force. Alternatively one could
-           specialize this function to the single component LB */
+     in calc_node_force. Alternatively one
+     could specialize this function to the single component LB */
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
     atomicadd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
                                      node_index[0]]),
@@ -4207,9 +4208,9 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
     } else { /** only other option is the three point coupling scheme */
 #ifdef SHANCHEN
 #if __CUDA_ARCH__ >= 200
-      fprintf(stderr,
-              "The three point particle coupling is not currently compatible "
-              "with the Shan-Chen implementation of the LB\n");
+      fprintf(stderr, "The three point particle coupling is not currently "
+                      "compatible with the Shan-Chen implementation "
+                      "of the LB\n");
       errexit();
 #endif
 #endif

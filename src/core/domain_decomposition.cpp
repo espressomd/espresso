@@ -498,19 +498,13 @@ void dd_update_communicators_w_boxl() {
 void dd_init_cell_interactions() {
   int m, n, o, p, q, r, ind1, ind2;
 
-  dd_fs_neigh.clear();
-  for (p = -1; p <= 1; p++)
-    for (q = -1; q <= 1; q++)
-      for (r = -1; r <= 1; r++)
-        dd_fs_neigh.push_back(get_linear_index(r, q, p, dd.ghost_cell_grid));
-
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
 
     ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
 
-    cells[ind1].m_neighbors.clear();
-    cells[ind1].m_neighbors.reserve(CELLS_MAX_NEIGHBORS);
+    std::vector<Cell *> red_neighbors;
+    std::vector<Cell *> black_neighbors;
 
     /* loop all neighbor cells */
     for (p = o - 1; p <= o + 1; p++)
@@ -518,12 +512,12 @@ void dd_init_cell_interactions() {
         for (r = m - 1; r <= m + 1; r++) {
           ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
           if (ind2 > ind1) {
-            cells[ind1].m_neighbors.emplace_back(&cells[ind2]);
+            red_neighbors.push_back(&cells[ind2]);
+          } else {
+            black_neighbors.push_back(&cells[ind2]);
           }
         }
-
-    /* Release excess memory */
-    cells[ind1].m_neighbors.shrink_to_fit();
+    cells[ind1].m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
   }
 }
 
@@ -1035,7 +1029,3 @@ int calc_processor_min_num_cells() {
 }
 
 /************************************************************/
-
-int dd_full_shell_neigh(int cellidx, int neigh) {
-  return cellidx + dd_fs_neigh[neigh];
-}

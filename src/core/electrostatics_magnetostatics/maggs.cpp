@@ -46,7 +46,6 @@
 #include "electrostatics_magnetostatics/maggs.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"

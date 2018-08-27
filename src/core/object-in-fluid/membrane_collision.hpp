@@ -87,10 +87,6 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
       if (fabs(out1[0]) + fabs(out1[1]) + fabs(out1[2]) + fabs(out2[0]) +
               fabs(out2[1]) + fabs(out2[2]) <
           SMALL_OIF_MEMBRANE_CUTOFF) {
-        fprintf(stderr,
-                "membrane_collision.hpp: out_direction is not set. Probably, "
-                "you have not used switch \" normal\" in your "
-                "oif_create_template command. Exiting the process. \n");
         errexit();
       }
 

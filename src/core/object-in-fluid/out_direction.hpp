@@ -110,9 +110,9 @@ inline int calc_out_direction(
             fp3[i] = fp4[i] + CC[i];
           }
         } else {
-          printf(
-              "Something wrong in out_direction.hpp: All particles in a bond "
-              "are ghost particles, impossible to unfold the positions...");
+          printf("Something wrong in out_direction.hpp: All particles in a "
+                 "bond are ghost particles, impossible to "
+                 "unfold the positions...");
           return 0;
         }
       }

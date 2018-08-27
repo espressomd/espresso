@@ -91,8 +91,7 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
       gpu_get_global_particle_vars_pointer_host()->number_of_particles;
 
   // Storage only needed on master and allocated only once at the first time
-  // step
-  // if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
+  // step if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
   if (IBM_ParticleDataInput_host == NULL ||
       numParticles != IBM_numParticlesCache)
     InitCUDA_IBM(numParticles);

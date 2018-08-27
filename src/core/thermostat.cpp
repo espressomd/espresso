@@ -39,7 +39,7 @@ int thermo_switch = THERMO_OFF;
 double temperature = 0.0;
 
 /** True if the thermostat should acton on virtual particles. */
-bool thermo_virtual = false;
+bool thermo_virtual = true;
 
 using Thermostat::GammaType;
 

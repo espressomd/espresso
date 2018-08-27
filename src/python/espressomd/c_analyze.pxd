@@ -56,6 +56,7 @@ cdef extern from "statistics.hpp":
         double * coulomb
         double * dipolar
         double * virtual_sites
+        double * external_fields
 
 cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
@@ -70,8 +71,10 @@ cdef extern from "statistics.hpp":
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
     cdef vector[double] centerofmass(PartCfg &, int part_type)
-    cdef int calc_cylindrical_average(PartCfg &, vector[double] center, vector[double] direction, double length,
-                                      double radius, int bins_axial, int bins_radial, vector[int] types,
+    cdef int calc_cylindrical_average(PartCfg & , vector[double] center,
+                                      vector[double] direction, double length,
+                                      double radius, int bins_axial,
+                                      int bins_radial, vector[int] types,
                                       map[string, vector[vector[vector[double]]]] & distribution)
 
 cdef extern from "pressure.hpp":
@@ -92,9 +95,9 @@ cdef extern from "statistics_chain.hpp":
     int chain_start
     int chain_n_chains
     int chain_length
-    void calc_re(PartCfg&, double ** re)
-    void calc_rg(PartCfg&, double ** rg)
-    void calc_rh(PartCfg&, double ** rh)
+    void calc_re(PartCfg & , double ** re)
+    void calc_rg(PartCfg & , double ** rg)
+    void calc_rh(PartCfg & , double ** rh)
 
 cdef extern from "statistics.hpp":
     void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
@@ -114,6 +117,7 @@ cdef extern from "statistics.hpp":
     void analyze_append(PartCfg &)
 
 cdef extern from "statistics.hpp":
-    void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types, int n_p2,
-                                double r_min, double r_max, int r_bins, int log_flag, 
-                                double *low, double *dist)
+    void calc_part_distribution(
+        PartCfg & , int * p1_types, int n_p1, int * p2_types, int n_p2,
+                                double r_min, double r_max, int r_bins, int log_flag,
+                                double * low, double * dist)

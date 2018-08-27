@@ -340,8 +340,8 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
     mmm1dgpu_real rxy = sqrt(rxy2);
     mmm1dgpu_real sum_r = 0, sum_z = 0;
 
-    //		if (boxz <= 0.0) return; // otherwise we'd get into an infinite
-    //loop if we're not initialized correctly
+(??)		while (fabs(z) > boxz/2) // make sure we take the shortest distance
+(??)			z -= (z > 0? 1 : -1)*boxz;
 
     while (fabs(z) > boxz / 2) // make sure we take the shortest distance
       z -= (z > 0 ? 1 : -1) * boxz;
@@ -439,8 +439,7 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
     mmm1dgpu_real rxy = sqrt(rxy2);
     mmm1dgpu_real sum_e = 0;
 
-    //		if (boxz <= 0.0) return; // otherwise we'd get into an infinite
-    //loop if we're not initialized correctly
+(??)//		if (boxz <= 0.0) return; // otherwise we'd get into an infinite loop if we're not initialized correctly
 
     while (fabs(z) > boxz / 2) // make sure we take the shortest distance
       z -= (z > 0 ? 1 : -1) * boxz;

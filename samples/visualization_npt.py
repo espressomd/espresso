@@ -13,11 +13,12 @@ required_features = ["NPT", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 box_l = 10
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 
-visualizer = openGLLive(system, background_color=[1, 1, 1], bond_type_radius = [0.2])
+visualizer = openGLLive(
+    system, background_color=[1, 1, 1], bond_type_radius=[0.2])
 
 system.time_step = 0.0005
 system.cell_system.skin = 0.1
@@ -34,7 +35,7 @@ n_part = 200
 for i in range(n_part):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
-for i in range(0,n_part - 1,2):
+for i in range(0, n_part - 1, 2):
     system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
 
 print("E before minimization:", system.analysis.energy()["total"])
@@ -54,9 +55,9 @@ def main():
         system.integrator.run(1)
         P += system.analysis.pressure()['total']
         if cnt > 10000:
-            print("Pressure:", P/cnt, "Box:", system.box_l)
+            print("Pressure:", P / cnt, "Box:", system.box_l)
             cnt = 0
-            P=0
+            P = 0
 
         visualizer.update()
         cnt += 1

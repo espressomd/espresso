@@ -26,7 +26,7 @@ void link_cell(CellIterator first, CellIterator last,
       }
 
       /* Pairs with neighbors */
-      for (auto &neighbor : first->neighbors()) {
+      for (auto &neighbor : first->neighbors().red()) {
         for (int j = 0; j < neighbor->n; j++) {
           auto &p2 = neighbor->part[j];
           auto dist = distance_function(p1, p2);

@@ -60,8 +60,9 @@ void calculate_vs_relate_to_params(const Particle &p_current,
         << l << ") is\nlarger than the minimum global cutoff ("
         << min_global_cut
         << "). This may lead to incorrect simulations\nunder certain "
-           "conditions. Set the \"System()\" class property \"min_global_cut\" "
-           "to\nincrease the minimum cutoff.\n";
+           "conditions. Set the \"System()\" "
+           "class property \"min_global_cut\" to\nincrease the minimum "
+           "cutoff.\n";
   }
 
   // Now, calculate the quaternions which specify the angle between

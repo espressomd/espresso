@@ -38,7 +38,7 @@
 /************************************************************/
 /*@{*/
 
-typedef struct {
+struct Observable_stat {
   /** Status flag for observable calculation.  For 'analyze energy': 0
       re-initialize observable struct, else everything is fine,
       calculation can start.  For 'analyze pressure' and 'analyze
@@ -56,6 +56,8 @@ typedef struct {
   int n_non_bonded;
   /** Number of virtual sites relative (rigid body) conributions */
   int n_virtual_sites;
+  /** Number of external field contributions */
+  const static int n_external_field = 1;
 
   /** start of bonded interactions. Right after the special ones */
   double *bonded;
@@ -67,10 +69,12 @@ typedef struct {
   double *dipolar;
   /** Start of observables for virtual sites relative (rigid bodies) */
   double *virtual_sites;
+  /** Start of observables for external fields */
+  double *external_fields;
 
   /** number of doubles per data item */
   int chunk_size;
-} Observable_stat;
+};
 
 /** Structure used only in the pressure and stress tensor calculation to
    distinguish
@@ -322,9 +326,9 @@ void density_profile_av(int n_conf, int n_bin, double density, int dir,
                         double *rho_ave, int type);
 
 int calc_cylindrical_average(
-    PartCfg &, std::vector<double> center, std::vector<double> direction,
-    double length, double radius, int bins_axial, int bins_radial,
-    std::vector<int> types,
+    PartCfg &, std::vector<double> const &center,
+    std::vector<double> const &direction, double length, double radius,
+    int bins_axial, int bins_radial, std::vector<int> types,
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution);
 

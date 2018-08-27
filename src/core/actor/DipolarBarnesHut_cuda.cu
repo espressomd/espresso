@@ -32,12 +32,12 @@ typedef float dds_float;
 
 #ifdef DIPOLAR_BARNES_HUT
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// The method concept is revealed within: // M. Burtscher, K. Pingali , in: GPU
-// Gems’11: GPU Computing Gems Emerald Edition, 2011.// An Efficient CUDA
-// Implementation of the Tree-Based Barnes Hut n-Body Algorithm       //
-// http://iss.ices.utexas.edu/Publications/Papers/burtscher11.pdf //
-//////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// The method concept is revealed within: M. Burtscher, K. Pingali, in: GPU
+// Gems’11: GPU Computing Gems Emerald Edition, 2011. An Efficient CUDA
+// Implementation of the Tree-Based Barnes Hut n-Body Algorithm
+// http://iss.ices.utexas.edu/Publications/Papers/burtscher11.pdf
+////////////////////////////////////////////////////////////////////////////////
 
 #include "DipolarBarnesHut_cuda.cuh"
 
@@ -598,8 +598,8 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
         xd[3 * k + l] = p[l] * m;
         uxd[3 * k + l] = u[l];
       }
-      //__threadfence();	// make sure data are visible before setting
-      // mass
+      // __threadfence();	// make sure data are visible before setting
+      //                    // mass
       massd[k] = cm;
       k += inc; // move on to next cell
     }

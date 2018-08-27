@@ -655,20 +655,20 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
   int zi;
   double length; /* length of line between the two points */
   int d1, d2; /* for each z-bin d1 and d2 are calculated.  they indicate through
-                 which faces of the bin the line enters and leaves the bin.
-                 i.e. if the line enters through the face corresponding to y =
-                 0.34 then d1 = 1 (y-direction) and val1 = 0.34 */
+                 which faces of the bin the line enters and leaves the bin. i.e.
+                 if the line enters through the face corresponding to y = 0.34
+                 then d1 = 1 (y-direction) and val1 = 0.34 */
   double val1, val2;
   double intersect;
   double segment, segment2;
   double calclength;
   int xa, ya, za; /* counters for bins */
   double temp[3];
-  double redentry[3],
-      redexit[3];     /* like entry and exit but using a coordinate system where
-                         range_start corresponds to (0,0,0) and the length scale in
-                         each direction is the bin width */
-  double redbox_l[3]; /* box size is reduced units */
+  double redentry[3], redexit[3]; /* like entry and exit but using a coordinate
+                                     system where range_start corresponds to
+                                     (0,0,0) and the length scale in each
+                                     direction is the bin width */
+  double redbox_l[3];             /* box size is reduced units */
   int facein, faceout;
 
   PTENSOR_TRACE(fprintf(stderr,
@@ -1108,9 +1108,9 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force,
                         "handle DAWAANR magnetostatics so it is left out\n");
         break;
       case DIPOLAR_DS:
-        fprintf(stderr,
-                "WARNING: Local stress tensor calculation cannot handle "
-                "MAGNETIC DIPOLAR SUM magnetostatics so it is left out\n");
+        fprintf(stderr, "WARNING: Local stress tensor calculation cannot "
+                        "handle MAGNETIC DIPOLAR SUM magnetostatics so "
+                        "it is left out\n");
         break;
 
       default:

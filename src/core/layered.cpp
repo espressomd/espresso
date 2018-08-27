@@ -364,9 +364,12 @@ void layered_topology_init(CellPList *old) {
   /* allocate cells and mark them */
   realloc_cells(n_layers + 2);
   realloc_cellplist(&local_cells, local_cells.n = n_layers);
-  for (c = 0; c < n_layers; c++) {
-    local_cells.cell[c] = &cells[c + 1];
-    cells[c + 1].m_neighbors.push_back(&cells[c]);
+  for (c = 1; c <= n_layers; c++) {
+    Cell *red[] = {&cells[c - 1]};
+    Cell *black[] = {&cells[c + 1]};
+
+    local_cells.cell[c - 1] = &cells.at(c);
+    cells[c].m_neighbors = Neighbors<Cell *>(red, black);
   }
 
   realloc_cellplist(&ghost_cells, ghost_cells.n = 2);

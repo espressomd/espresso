@@ -7,7 +7,8 @@
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 /** @brief Virtual sites which are advected with an lb fuid. Forces on them are
- * instantaneously transferred to the fluid */
+ * instantaneously transferred to the fluid
+ */
 class VirtualSitesInertialessTracers : public VirtualSites {
   /** @brief Update positions and/or velocities of virtual sites
 

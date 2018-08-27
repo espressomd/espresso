@@ -7,6 +7,7 @@ from espressomd.shapes import Wall
 import espressomd.lbboundaries
 from itertools import product
 
+
 class LBBoundariesBase(object):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 
@@ -22,8 +23,10 @@ class LBBoundariesBase(object):
     def test_remove(self):
         lbb = self.system.lbboundaries
 
-        b1 = lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        b2 = lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        b1 = lbb.add(
+            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        b2 = lbb.add(
+            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
 
         lbb.remove(b1)
 
@@ -50,8 +53,10 @@ class LBBoundariesBase(object):
     def test_clear(self):
         lbb = self.system.lbboundaries
 
-        b1 = lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        b2 = lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        b1 = lbb.add(
+            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        b2 = lbb.add(
+            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
 
         lbb.clear()
 
@@ -79,6 +84,7 @@ class LBBoundariesBase(object):
         for i in product(rng, rng, rng):
             self.assertEqual(lbf[i].boundary, 0)
 
+
 @ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES"]),
            "Features not available, skipping test!")
 class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
@@ -98,6 +104,7 @@ class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
     def tearDown(self):
         self.system.lbboundaries.clear()
         self.system.actors.remove(self.lbf)
+
 
 @ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES_GPU"]),
            "Features not available, skipping test!")
