@@ -54,7 +54,7 @@
  *
  *  For more information on cells,
  *  see \ref cells.hpp
-*/
+ */
 
 #include "cells.hpp"
 #include "integrate.hpp"

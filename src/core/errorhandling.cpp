@@ -50,7 +50,7 @@ unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 
 /** The callback loop we are on. */
 Communication::MpiCallbacks *m_callbacks = nullptr;
-}
+} // namespace
 
 /** Initialize the error collection system. */
 void init_error_handling(Communication::MpiCallbacks &cb) {
@@ -110,7 +110,7 @@ void mpi_gather_runtime_errors_slave(int node, int parm) {
   runtimeErrorCollector->gatherSlave();
 }
 
-} /* ErrorHandling */
+} // namespace ErrorHandling
 
 void errexit() {
   ErrorHandling::m_callbacks->comm().abort(1);

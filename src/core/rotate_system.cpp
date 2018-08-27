@@ -1,9 +1,9 @@
 #include "cells.hpp"
 #include "communication.hpp"
+#include "initialize.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
-#include "initialize.hpp"
 
 #include <boost/mpi/collectives.hpp>
 

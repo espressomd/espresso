@@ -20,7 +20,7 @@
 
 /** \file MpiCallbacks_test.cpp Unit tests for the MpiCallbacks class.
  *
-*/
+ */
 
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE MpiCallbacks test
@@ -42,7 +42,7 @@ void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
     boost::mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
   }
 }
-}
+} // namespace Testing
 
 bool static_callback_called = false;
 void static_callback(int a, int b) {

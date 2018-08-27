@@ -327,9 +327,9 @@ void density_profile_av(int n_conf, int n_bin, double density, int dir,
                         double *rho_ave, int type);
 
 int calc_cylindrical_average(
-    PartCfg &, std::vector<double> const& center, std::vector<double> const& direction,
-    double length, double radius, int bins_axial, int bins_radial,
-    std::vector<int> types,
+    PartCfg &, std::vector<double> const &center,
+    std::vector<double> const &direction, double length, double radius,
+    int bins_axial, int bins_radial, std::vector<int> types,
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution);
 

@@ -23,12 +23,12 @@
 
 #include <boost/mpi/collectives.hpp>
 
-#include <utility>
 #include <sstream>
+#include <utility>
 
 using namespace std;
-using boost::mpi::communicator;
 using boost::mpi::all_reduce;
+using boost::mpi::communicator;
 
 namespace ErrorHandling {
 
@@ -131,4 +131,4 @@ void RuntimeErrorCollector::gatherSlave() {
   this->clear();
 }
 
-} /* ErrorHandling */
+} // namespace ErrorHandling

@@ -36,6 +36,7 @@ from espressomd.utils import nesting_level, array_locked, is_valid_type
 
 PARTICLE_EXT_FORCE = 1
 
+
 def _COORD_FIXED(coord):
     return 2L << coord
 
@@ -47,7 +48,7 @@ ROT_Y = 4
 ROT_Z = 8
 
 
-cdef make_array_locked(const Vector3d &v):
+cdef make_array_locked(const Vector3d & v):
     return array_locked([v[0], v[1], v[2]])
 
 # List of particle attributes for pickle and the like
@@ -65,7 +66,7 @@ cdef class ParticleHandle(object):
 
     cdef int update_particle_data(self) except -1:
         self.particle_data = get_particle_data_ptr(get_particle_data(self._id))
-        
+
     def __str__(self):
         res = collections.OrderedDict()
         # Id and pos first, then the rest
@@ -87,6 +88,7 @@ cdef class ParticleHandle(object):
         """Integer particle id
 
         """
+
         def __get__(self):
             self.update_particle_data()
             return self._id
@@ -103,6 +105,7 @@ cdef class ParticleHandle(object):
            The value of `type` has to be an integer >= 0.
 
         """
+
         def __set__(self, _type):
             if is_valid_type(_type, int) and _type >= 0:
                 if set_particle_type(self._id, _type) == 1:
@@ -129,6 +132,7 @@ cdef class ParticleHandle(object):
            The value of `mol_id` has to be an integer >= 0.
 
         """
+
         def __set__(self, _mol_id):
             if is_valid_type(_mol_id, int) and _mol_id >= 0:
                 if set_particle_mol_id(self._id, _mol_id) == 1:
@@ -149,6 +153,7 @@ cdef class ParticleHandle(object):
               A list of three floats representing the particles's absolute position.
 
         """
+
         def __set__(self, _pos):
             cdef double mypos[3]
             check_type_or_throw_except(
@@ -196,8 +201,10 @@ cdef class ParticleHandle(object):
         [5.0, 0.0, 0.0]
 
         """
+
         def __set__(self, pos_folded):
-            raise AttributeError("setting a folded position is not implemented")
+            raise AttributeError(
+                "setting a folded position is not implemented")
 
         def __get__(self):
             self.update_particle_data()
@@ -211,6 +218,7 @@ cdef class ParticleHandle(object):
         the particle position has been folded by the box length in each
         direction.
         """
+
         def __get__(self):
             self.update_particle_data()
             return array_locked([self.particle_data.l.i[0],
@@ -229,6 +237,7 @@ cdef class ParticleHandle(object):
            The velocity remains variable and will be changed during integration.
 
         """
+
         def __set__(self, _v):
             cdef double myv[3]
             check_type_or_throw_except(
@@ -256,6 +265,7 @@ cdef class ParticleHandle(object):
            force set in this way is immediatly lost at the next integration step.
 
         """
+
         def __set__(self, _f):
             cdef Vector3d f
             check_type_or_throw_except(_f, 3, float, "Force has to be floats")
@@ -288,8 +298,8 @@ cdef class ParticleHandle(object):
            Bond ids have to be an integer >= 0.
 
         """
-        def __set__(self, _bonds):
 
+        def __set__(self, _bonds):
 
             # Assigning to the bond property means replacing the existing value
             # i.e., we delete all existing bonds
@@ -335,9 +345,9 @@ cdef class ParticleHandle(object):
         """
         The node the particle is on, identified by its MPI rank.
         """
+
         def __get__(self):
             return get_particle_node(self._id)
-
 
     # Properties that exist only when certain features are activated
     # MASS
@@ -353,6 +363,7 @@ cdef class ParticleHandle(object):
         :meth:`espressomd.thermostat.Thermostat.set_langevin` : Setting the parameters of the Langevin thermostat
 
         """
+
         def __set__(self, _mass):
             IF MASS == 1:
                 check_type_or_throw_except(
@@ -390,6 +401,7 @@ cdef class ParticleHandle(object):
             :attr:`espressomd.particle_data.ParticleHandle.omega_body`
 
             """
+
             def __set__(self, _o):
                 cdef double myo[3]
                 check_type_or_throw_except(
@@ -418,6 +430,7 @@ cdef class ParticleHandle(object):
                This needs the feature ROTATION.
 
             """
+
             def __set__(self, _q):
                 cdef double myq[4]
                 check_type_or_throw_except(
@@ -444,6 +457,7 @@ cdef class ParticleHandle(object):
                This needs the feature ROTATION.
 
             """
+
             def __set__(self, _q):
                 raise AttributeError(
                     "Setting the director is not implemented in the c++-core of Espresso.")
@@ -468,6 +482,7 @@ cdef class ParticleHandle(object):
                This needs the feature ROTATION.
 
             """
+
             def __set__(self, _o):
                 cdef double myo[3]
                 check_type_or_throw_except(
@@ -479,7 +494,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double *o = NULL
+                cdef const double * o = NULL
                 pointer_to_omega_body(self.particle_data, o)
                 return array_locked([o[0], o[1], o[2]])
 
@@ -503,6 +518,7 @@ cdef class ParticleHandle(object):
             :attr:`espressomd.particle_data.ParticleHandle.torque_body`
 
             """
+
             def __set__(self, _t):
                 cdef double myt[3]
                 check_type_or_throw_except(
@@ -536,6 +552,7 @@ cdef class ParticleHandle(object):
                This needs the feature ROTATIONAL_INERTIA.
 
             """
+
             def __set__(self, _rinertia):
                 cdef double rinertia[3]
                 check_type_or_throw_except(
@@ -555,6 +572,7 @@ cdef class ParticleHandle(object):
     IF MEMBRANE_COLLISION:
         property out_direction:
             """OIF Outward direction"""
+
             def __set__(self, _out_direction):
                 cdef double out_direction[3]
                 check_type_or_throw_except(
@@ -573,6 +591,7 @@ cdef class ParticleHandle(object):
     IF AFFINITY:
         property bond_site:
             """OIF bond_site"""
+
             def __set__(self, _bond_site):
                 cdef double bond_site[3]
                 check_type_or_throw_except(
@@ -601,6 +620,7 @@ cdef class ParticleHandle(object):
                This needs the feature ELECTROSTATICS.
 
             """
+
             def __set__(self, _q):
                 cdef double myq
                 check_type_or_throw_except(
@@ -630,6 +650,7 @@ cdef class ParticleHandle(object):
                This needs the feature LB_ELECTROHYDRODYNAMICS.
 
             """
+
             def __set__(self, mu_E):
                 cdef double _mu_E[3]
 
@@ -660,6 +681,7 @@ cdef class ParticleHandle(object):
                This needs the feature VIRTUAL_SITES
 
             """
+
             def __set__(self, _v):
                 if is_valid_type(_v, int):
                     if set_particle_virtual(self._id, _v) == 1:
@@ -686,9 +708,11 @@ cdef class ParticleHandle(object):
                This needs the feature VIRTUAL_SITES_RELATIVE.
 
             """
+
             def __set__(self, q):
                 if len(q) != 4:
-                    raise ValueError("vs_quat has to be an array-like of length 4.")
+                    raise ValueError(
+                        "vs_quat has to be an array-like of length 4.")
                 cdef double _q[4]
                 for i in range(4):
                     _q[i] = q[i]
@@ -696,7 +720,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double *q = NULL
+                cdef const double * q = NULL
                 pointer_to_vs_quat(self.particle_data, q)
                 return np.array([q[0], q[1], q[2], q[3]])
 
@@ -715,6 +739,7 @@ cdef class ParticleHandle(object):
                This needs the feature VIRTUAL_SITES_RELATIVE
 
             """
+
             def __set__(self, x):
                 if len(x) < 3:
                     raise ValueError(
@@ -726,7 +751,7 @@ cdef class ParticleHandle(object):
                 for i in range(4):
                     _q[i] = q[i]
 
-                if is_valid_type(_relto, int) and is_valid_type(_dist, float) and all(is_valid_type(fq,float) for fq in q):
+                if is_valid_type(_relto, int) and is_valid_type(_dist, float) and all(is_valid_type(fq, float) for fq in q):
                     if set_particle_vs_relative(self._id, _relto, _dist, _q) == 1:
                         raise Exception("Set particle position first.")
                 else:
@@ -764,6 +789,7 @@ cdef class ParticleHandle(object):
                This needs the feature DIPOLES.
 
             """
+
             def __set__(self, _q):
                 cdef double myq[3]
                 check_type_or_throw_except(
@@ -791,6 +817,7 @@ cdef class ParticleHandle(object):
                This needs the feature DIPOLES.
 
             """
+
             def __set__(self, _q):
                 check_type_or_throw_except(
                     _q, 1, float, "Magnitude of dipole moment has to be 1 floats.")
@@ -814,6 +841,7 @@ cdef class ParticleHandle(object):
                This needs the feature EXTERNAL_FORCES.
 
             """
+
             def __set__(self, _ext_f):
                 cdef double ext_f[3]
                 cdef int ext_flag = 0
@@ -857,6 +885,7 @@ cdef class ParticleHandle(object):
                This needs the feature EXTERNAL_FORCES.
 
             """
+
             def __set__(self, _fixed_coord_flag):
                 cdef int ext_flag = 0
                 check_type_or_throw_except(
@@ -889,6 +918,7 @@ cdef class ParticleHandle(object):
                     * This needs the feature EXTERNAL_FORCES and ROTATION.
 
                 """
+
                 def __set__(self, _ext_t):
                     cdef double ext_t[3]
                     cdef int ext_flag
@@ -930,6 +960,7 @@ cdef class ParticleHandle(object):
                 :meth:`espressomd.thermostat.Thermostat.set_langevin` : Setting the parameters of the Langevin thermostat
 
                 """
+
                 def __set__(self, _gamma):
                     cdef Vector3d gamma
 
@@ -966,6 +997,7 @@ cdef class ParticleHandle(object):
                 :meth:`espressomd.thermostat.Thermostat.set_langevin.set_langevin` : Setting the parameters of the Langevin thermostat
 
                 """
+
                 def __set__(self, _gamma):
                     check_type_or_throw_except(
                         _gamma, 1, float, "Gamma has to be a float.")
@@ -988,6 +1020,7 @@ cdef class ParticleHandle(object):
                     .. note::
                        This needs the feature LANGEVIN_PER_PARTICLE, ROTATION and PARTICLE_ANISOTROPY.
                     """
+
                     def __set__(self, _gamma_rot):
                         cdef Vector3d gamma_rot
                         # We accept a single number by just repeating it
@@ -1015,6 +1048,7 @@ cdef class ParticleHandle(object):
                     gamma : :obj:`float`
 
                     """
+
                     def __set__(self, _gamma_rot):
                         check_type_or_throw_except(
                             _gamma_rot, 1, float, "gamma_rot has to be a float.")
@@ -1038,6 +1072,7 @@ cdef class ParticleHandle(object):
                This needs the feature LANGEVIN_PER_PARTICLE.
 
             """
+
             def __set__(self, _temp):
                 check_type_or_throw_except(
                     _temp, 1, float, "temp has to be a float.")
@@ -1065,6 +1100,7 @@ cdef class ParticleHandle(object):
                This needs the feature ROTATION.
 
             """
+
             def __set__(self, _rot):
                 cdef int rot
                 check_type_or_throw_except(
@@ -1083,12 +1119,15 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef const short int * _rot = NULL
-                pointer_to_rotation( self.particle_data, _rot)
-                rot=_rot[0]
-                res=np.zeros(3, dtype=int)
-                if rot&ROT_X: res[0]=1
-                if rot&ROT_Y: res[1]=1
-                if rot&ROT_Z: res[2]=1
+                pointer_to_rotation(self.particle_data, _rot)
+                rot = _rot[0]
+                res = np.zeros(3, dtype=int)
+                if rot & ROT_X:
+                    res[0] = 1
+                if rot & ROT_Y:
+                    res[1] = 1
+                if rot & ROT_Z:
+                    res[2] = 1
                 return array_locked(res)
 
     IF EXCLUSIONS:
@@ -1100,6 +1139,7 @@ cdef class ParticleHandle(object):
                This needs the feature EXCLUSIONS.
 
             """
+
             def __set__(self, _partners):
                 # Delete all
                 for e in self.exclusions:
@@ -1166,7 +1206,7 @@ cdef class ParticleHandle(object):
     IF ENGINE:
         property swimming:
             """
-            Set swimming parameters. 
+            Set swimming parameters.
 
             This property takes a dictionary with a different number of
             entries depending whether there is an implicit fluid (i.e. with the
@@ -1225,17 +1265,18 @@ cdef class ParticleHandle(object):
             Examples
             --------
             >>> import espressomd
-            >>> 
+            >>>
             >>> system = espressomd.System()
-            >>> 
+            >>>
             >>> # Usage with Langevin
             >>> system.part.add(id=0, pos=[1,0,0],swimming={'f_swim':0.03})
-            >>> 
+            >>>
             >>> # Usage with LB
             >>> system.part.add(id=1, pos=[2,0,0],swimming={
             >>>    'f_swim':0.01, 'mode':'pusher', 'dipole_length':2.0, 'rotational_friction':20})
 
             """
+
             def __set__(self, _params):
                 cdef particle_parameters_swimming swim
                 swim.swimming = True
@@ -1247,7 +1288,7 @@ cdef class ParticleHandle(object):
                     swim.rotational_friction = 0.0
 
                 if type(_params) == type(True):
-                    if _params == True:
+                    if _params:
                         raise Exception(
                             "To enable swimming supply a dictionary of parameters.")
                 else:
@@ -1345,7 +1386,8 @@ cdef class ParticleHandle(object):
 
         """
 
-        # If someone adds bond types with more than four partners, this has to be changed
+        # If someone adds bond types with more than four partners, this has to
+        # be changed
         cdef int bond_info[5]
         bond_info[0] = bond[0]._bond_id
         for i in range(1, len(bond)):
@@ -1415,12 +1457,14 @@ cdef class ParticleHandle(object):
 
         # Validity of the numeric id
         if bond[0]._bond_id >= bonded_ia_params.size():
-            raise ValueError("The bond type", bond[0]._bond_id, "does not exist.")
+            raise ValueError(
+                "The bond type", bond[0]._bond_id, "does not exist.")
 
-        bond_id=bond[0]._bond_id
+        bond_id = bond[0]._bond_id
         # Number of partners
         if bonded_ia_params[bond_id].num != len(bond) - 1:
-            raise ValueError("Bond of type", bond[0]._bond_id, "needs", bonded_ia_params[bond_id].num, "partners.")
+            raise ValueError("Bond of type", bond[
+                             0]._bond_id, "needs", bonded_ia_params[bond_id].num, "partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):
@@ -1483,7 +1527,7 @@ cdef class ParticleHandle(object):
 
         Parameters
         ----------
-        _bond : bond to be deleted 
+        _bond : bond to be deleted
 
         See Also
         --------
@@ -1557,9 +1601,9 @@ cdef class ParticleHandle(object):
             _v[1] = vec[1]
             _v[2] = vec[2]
             self.update_particle_data()
-            res= convert_vector_body_to_space(self.particle_data[0],_v)
-            return np.array((res[0],res[1],res[2]))
-        
+            res = convert_vector_body_to_space(self.particle_data[0], _v)
+            return np.array((res[0], res[1], res[2]))
+
         def convert_vector_space_to_body(self, vec):
             """Converts the given vector from the space frame to the particle's body frame"""
             cdef Vector3d res
@@ -1568,11 +1612,10 @@ cdef class ParticleHandle(object):
             _v[1] = vec[1]
             _v[2] = vec[2]
             self.update_particle_data()
-            res= convert_vector_space_to_body(self.particle_data[0],_v)
-            return np.array((res[0],res[1],res[2]))
-        
+            res = convert_vector_space_to_body(self.particle_data[0], _v)
+            return np.array((res[0], res[1], res[2]))
 
-        def rotate(self,axis=None,angle=None):
+        def rotate(self, axis=None, angle=None):
             """Rotates the particle around the given axis
 
             Parameters
@@ -1583,11 +1626,11 @@ cdef class ParticleHandle(object):
 
             """
             cdef double[3] a
-            a[0]=axis[0]
-            a[1]=axis[1]
-            a[2]=axis[2]
+            a[0] = axis[0]
+            a[1] = axis[1]
+            a[2] = axis[2]
 
-            rotate_particle(self._id,a,angle)
+            rotate_particle(self._id, a, angle)
 
 cdef class _ParticleSliceImpl(object):
     """Handles slice inputs.
@@ -1598,14 +1641,12 @@ cdef class _ParticleSliceImpl(object):
 
     """
 
-    
     def __cinit__(self, slice_, prefetch_chunk_size=10000):
         self._chunk_size = prefetch_chunk_size
 
         id_list = np.arange(max_seen_particle + 1)
         self.id_selection = id_list[slice_]
         mask = np.empty(len(self.id_selection), dtype=np.bool)
-        mask == True
         cdef int i
         for i in range(len(self.id_selection) - 1, -1, -1):
             mask[i] = particle_exists(i)
@@ -1704,6 +1745,7 @@ cdef class _ParticleSliceImpl(object):
 
 
 class ParticleSlice(_ParticleSliceImpl):
+
     """
     Handles slice inputs e.g. part[0:2]. Sets values for selected slices or
     returns values as a single list.
@@ -1712,7 +1754,8 @@ class ParticleSlice(_ParticleSliceImpl):
 
     def __setattr__(self, name, value):
         if name != "_chunk_size" and not hasattr(ParticleHandle, name):
-            raise AttributeError("ParticleHandle does not have the attribute {}.".format(name))
+            raise AttributeError(
+                "ParticleHandle does not have the attribute {}.".format(name))
         super(ParticleSlice, self).__setattr__(name, value)
 
 
@@ -1835,7 +1878,6 @@ cdef class ParticleList(object):
         else:
             return self._place_new_particle(P)
 
-
     def _place_new_particle(self, P):
         # Handling of particle id
         if not "id" in P:
@@ -1894,7 +1936,6 @@ Set quat and scalar dipole moment (dipm) instead.")
 
         return self[ids]
 
-
     # Iteration over all existing particles
     def __iter__(self):
         for i in range(max_seen_particle + 1):
@@ -1947,15 +1988,15 @@ Set quat and scalar dipole moment (dipm) instead.")
         --------
 
         >>> import espressomd
-        >>> 
+        >>>
         >>> system = espressomd.System()
-        >>> 
+        >>>
         >>> # add several particles
         >>> system.part.add(pos=.5*system.box_l,v=[1,0,0],type=0)
         >>> system.part.add(pos=.4*system.box_l,v=[0,2,0],type=1)
         >>> system.part.add(pos=.7*system.box_l,v=[2,0,1],type=1)
         >>> system.part.add(pos=.1*system.box_l,v=[0,0,1],type=2)
-        >>> 
+        >>>
         >>> # write to VTK
         >>> system.part.writevtk("part_type_0_1.vtk", types=[0,1])
         >>> system.part.writevtk("part_type_2.vtk", types=[2])
@@ -2044,14 +2085,14 @@ Set quat and scalar dipole moment (dipm) instead.")
 
                 yield (self[i], self[j])
 
-    def select(self,*args, **kwargs):
+    def select(self, *args, **kwargs):
         """Generates a particle slice by filtering particles via a user-defined criterion
 
         Parameters
         ----------
         Either:
 
-            a keywor arguments in which the keys are names of particle properties 
+            a keywor arguments in which the keys are names of particle properties
             and the values are the values to filter for. E.g.,::
 
                 type=0,q=1
@@ -2072,7 +2113,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         # Ids of the selected particles
         ids = []
         # Did we get a function as argument?
-        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0],types.FunctionType):
+        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], types.FunctionType):
             # Go over all particles and pass them to the user-provided function
             for p in self:
                 if args[0](p):
@@ -2089,7 +2130,8 @@ Set quat and scalar dipole moment (dipm) instead.")
                     val1 = kwargs[k]
                     val2 = getattr(p, k)
                     # Get tolerance from numerical accuracy limits
-                    tol = max(np.amax(np.spacing(val1)), np.amax(np.spacing(val2)))
+                    tol = max(
+                        np.amax(np.spacing(val1)), np.amax(np.spacing(val2)))
 
                     # Compare
                     if not np.allclose(val1, val2, atol=tol):
@@ -2107,9 +2149,11 @@ def set_slice_one_for_all(particle_slice, attribute, values):
     for i in particle_slice.id_selection:
         setattr(ParticleHandle(i), attribute, values)
 
+
 def set_slice_one_for_each(particle_slice, attribute, values):
     for i, v in zip(particle_slice.id_selection, values):
         setattr(ParticleHandle(i), attribute, v)
+
 
 def _add_particle_slice_properties():
     """
@@ -2129,12 +2173,12 @@ def _add_particle_slice_properties():
 
         N = len(particle_slice.id_selection)
 
-        # Special attributes 
+        # Special attributes
         if attribute == "bonds":
             nlvl = nesting_level(values)
-            if nlvl == 1 or nlvl == 2:  
+            if nlvl == 1 or nlvl == 2:
                 set_slice_one_for_all(particle_slice, attribute, values)
-            elif nlvl == 3 and len(values) == N:  
+            elif nlvl == 3 and len(values) == N:
                 set_slice_one_for_each(particle_slice, attribute, values)
             else:
                 raise Exception("Failed to set bonds for particle slice.")
@@ -2143,9 +2187,9 @@ def _add_particle_slice_properties():
 
         elif attribute == "exclusions":
             nlvl = nesting_level(values)
-            if nlvl == 0 or nlvl == 1:  
+            if nlvl == 0 or nlvl == 1:
                 set_slice_one_for_all(particle_slice, attribute, values)
-            elif nlvl == 2 and len(values) == N:  
+            elif nlvl == 2 and len(values) == N:
                 set_slice_one_for_each(particle_slice, attribute, values)
             else:
                 raise Exception("Failed to set exclusions for particle slice.")
@@ -2154,23 +2198,25 @@ def _add_particle_slice_properties():
 
         elif attribute == "vs_relative":
             nlvl = nesting_level(values)
-            if nlvl in [1, 2]: 
+            if nlvl in [1, 2]:
                 set_slice_one_for_all(particle_slice, attribute, values)
-            elif nlvl == 3 and len(values) == N:  
+            elif nlvl == 3 and len(values) == N:
                 set_slice_one_for_each(particle_slice, attribute, values)
             else:
-                raise Exception("Failed to set vs_relative for particle slice.")
+                raise Exception(
+                    "Failed to set vs_relative for particle slice.")
 
             return
 
         else:
-            target = getattr(ParticleHandle(particle_slice.id_selection[0]), attribute)
+            target = getattr(
+                ParticleHandle(particle_slice.id_selection[0]), attribute)
             target_shape = np.shape(target)
 
             if not target_shape:  # scalar quantity
-                if not np.shape(values):  
+                if not np.shape(values):
                     set_slice_one_for_all(particle_slice, attribute, values)
-                elif np.shape(values)[0] == N:  
+                elif np.shape(values)[0] == N:
                     set_slice_one_for_each(particle_slice, attribute, values)
                 else:
                     raise Exception("Shape of value (%s) does not broadcast to shape of attribute (%s)." % (
@@ -2178,7 +2224,7 @@ def _add_particle_slice_properties():
 
                 return
 
-            else: # fixed length vector quantity
+            else:  # fixed length vector quantity
 
                 if target_shape == np.shape(values):
                     set_slice_one_for_all(particle_slice, attribute, values)

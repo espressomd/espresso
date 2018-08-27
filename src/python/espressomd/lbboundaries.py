@@ -6,6 +6,7 @@ import espressomd.code_info
 if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     @script_interface_register
     class LBBoundaries(ScriptInterfaceHelper):
+
         """
         Creates a set of lattice Boltzmann boundaries.
 
@@ -70,6 +71,7 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
 
     @script_interface_register
     class LBBoundary(ScriptInterfaceHelper):
+
         """
         Creates a LB boundary.
 

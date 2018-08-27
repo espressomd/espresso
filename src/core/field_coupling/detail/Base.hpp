@@ -19,6 +19,6 @@ public:
   Coupling const &coupling() const { return m_coupling; }
   Field const &field() const { return m_field; }
 };
-}
-}
+} // namespace detail
+} // namespace FieldCoupling
 #endif

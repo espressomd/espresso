@@ -23,8 +23,8 @@ template <class T> struct gradient_type_impl<T, 1> {
  */
 template <class T, size_t codim>
 using gradient_type = typename gradient_type_impl<T, codim>::type;
-}
-}
-}
+} // namespace detail
+} // namespace Fields
+} // namespace FieldCoupling
 
 #endif

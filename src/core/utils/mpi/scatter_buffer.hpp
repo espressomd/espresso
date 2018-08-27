@@ -26,8 +26,8 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 namespace Utils {
 namespace Mpi {
@@ -50,7 +50,7 @@ void scatter_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
 
     detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
 
-    for(int i = 0; i < comm.size(); i++) {
+    for (int i = 0; i < comm.size(); i++) {
       sizes[i] *= sizeof(T);
       displ[i] *= sizeof(T);
     }
@@ -65,7 +65,7 @@ void scatter_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
                  n_elem * sizeof(T), MPI_BYTE, root, comm);
   }
 }
-}
-}
+} // namespace Mpi
+} // namespace Utils
 
 #endif

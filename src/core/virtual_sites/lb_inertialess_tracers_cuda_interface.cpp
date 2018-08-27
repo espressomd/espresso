@@ -12,10 +12,10 @@
 #include "communication.hpp"
 #include "debug.hpp"
 #include "grid.hpp"
-#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "utils/serialization/ibm_cuda_particle_velocities_input.hpp"
+#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/mpi/scatter_buffer.hpp"
@@ -43,7 +43,7 @@ void pack_particles(ParticleRange particles,
 
   int i = 0;
   for (auto const &part : particles) {
-    Vector3d pos=folded_position(part);
+    Vector3d pos = folded_position(part);
 
     buffer[i].pos[0] = (float)pos[0];
     buffer[i].pos[1] = (float)pos[1];
@@ -58,7 +58,7 @@ void pack_particles(ParticleRange particles,
     i++;
   }
 }
-}
+} // namespace
 
 // Analogous to the usual cuda_mpi_get_particles function
 void IBM_cuda_mpi_get_particles(ParticleRange particles) {
@@ -94,14 +94,14 @@ void set_velocities(ParticleRange particles,
                     IBM_CUDA_ParticleDataOutput *buffer) {
   int i = 0;
   for (auto &part : particles) {
-    if ( part.p.is_virtual )
+    if (part.p.is_virtual)
       for (int j = 0; j < 3; j++)
         part.m.v[j] = buffer[i].v[j];
 
     i++;
   }
 }
-}
+} // namespace
 
 void IBM_cuda_mpi_send_velocities(ParticleRange particles) {
   auto const n_part = particles.size();

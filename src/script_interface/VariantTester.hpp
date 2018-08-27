@@ -6,7 +6,7 @@ class VariantTester : public ScriptInterfaceBase {
 public:
   Variant call_method(std::string const &method,
                       VariantMap const &par) override {
-    if(method == "default") {
+    if (method == "default") {
       return Variant{};
     }
 
@@ -40,7 +40,7 @@ public:
     if (method == "check_parameter_type") {
       auto const type = boost::get<std::string>(par.at("type"));
 
-      if(type == "none")
+      if (type == "none")
         return is_none(par.at("value"));
 
       if (type == "bool") {
@@ -87,5 +87,5 @@ private:
       return std::string("end");
   }
 };
-}
-}
+} // namespace Testing
+} // namespace ScriptInterface

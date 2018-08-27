@@ -19,8 +19,8 @@
 #ifndef SYSTEMINTERFACE_H
 #define SYSTEMINTERFACE_H
 
-#include "config.hpp"
 #include "Vector.hpp"
+#include "config.hpp"
 #include <vector>
 
 /** @todo: Turn needsXY in getter/setter **/

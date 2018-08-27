@@ -5,9 +5,11 @@ import espressomd.analyze
 import espressomd.lb
 import numpy as np
 
+
 @ut.skipIf((not espressomd.has_features(["LB_GPU"])) or
            espressomd.has_features(["SHANCHEN"]), "Features not available, skipping test!")
 class RemoveTotalMomentumTest(ut.TestCase):
+
     def test(self):
         dt = 0.01
         skin = 0.1
@@ -26,7 +28,7 @@ class RemoveTotalMomentumTest(ut.TestCase):
             r = s.box_l * np.random.random(3)
             v = [1., 1., 1.] * np.random.random(3)
             # Make sure that id gaps work correctly
-            s.part.add(id=2*i, pos=r, v=v)
+            s.part.add(id=2 * i, pos=r, v=v)
 
         if espressomd.has_features(["MASS"]):
             # Avoid masses too small for the time step

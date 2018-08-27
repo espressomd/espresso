@@ -9,7 +9,7 @@
 
 BOOST_IS_BITWISE_SERIALIZABLE(CUDA_particle_data)
 
- namespace boost {
+namespace boost {
 namespace serialization {
 template <typename Archive>
 void load(Archive &ar, CUDA_particle_data &p,
@@ -30,7 +30,7 @@ void serialize(Archive &ar, CUDA_particle_data &p,
                const unsigned int file_version) {
   split_free(ar, p, file_version);
 }
-}
-}
+} // namespace serialization
+} // namespace boost
 
 #endif

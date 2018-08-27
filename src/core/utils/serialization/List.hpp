@@ -1,8 +1,8 @@
 #ifndef CORE_UTILS_SERIALIZATION_LIST_HPP
 #define CORE_UTILS_SERIALIZATION_LIST_HPP
 
+#include <boost/serialization/array.hpp>
 #include <boost/serialization/split_free.hpp>
-#include <boost/serialization/array.hpp> 
 
 #include "core/utils/List.hpp"
 
@@ -30,7 +30,7 @@ void serialize(Archive &ar, Utils::List<T> &v,
                const unsigned int file_version) {
   split_free(ar, v, file_version);
 }
-}
-}
+} // namespace serialization
+} // namespace boost
 
 #endif

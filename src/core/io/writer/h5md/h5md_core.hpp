@@ -22,21 +22,21 @@
 #ifndef ESPRESSO_H5MD_CORE_HPP
 #define ESPRESSO_H5MD_CORE_HPP
 
-#include "cells.hpp"
-#include "global.hpp"
 #include "MpiCallbacks.hpp"
 #include "PartCfg.hpp"
-#include <iostream>
-#include <fstream>
-#include <string>
+#include "cells.hpp"
+#include "global.hpp"
 #include <algorithm>
-#include <unordered_map>
+#include <fstream>
+#include <iostream>
 #include <mpi.h>
+#include <string>
+#include <unordered_map>
 #define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
-#include <h5xx/h5xx.hpp>
 #include "communication.hpp"
+#include <h5xx/h5xx.hpp>
 
 extern double sim_time;
 extern double time_step;
@@ -50,13 +50,13 @@ typedef boost::multi_array<int, 3> int_array_3d;
 
 /**
  * @brief Class for writing H5MD files.
-**/
+ **/
 class File {
 public:
   /**
    * Constructor/destructor without arguments (due to script_interface).
    * @brief Constructor of the "File" class.
-  */
+   */
   File();
   ~File();
   /**
@@ -120,17 +120,19 @@ private:
    * positions to the dataset.
    */
   template <typename T>
-  void WriteDataset(T &data, const std::string &path, const std::vector<int> & change_extent,
-                    hsize_t *offset, hsize_t *count);
+  void WriteDataset(T &data, const std::string &path,
+                    const std::vector<int> &change_extent, hsize_t *offset,
+                    hsize_t *count);
 
   /**
    * @brief Method that extends datasets by the given extent.
    */
-  void ExtendDataset(const std::string & path, const std::vector<int> & change_extent);
+  void ExtendDataset(const std::string &path,
+                     const std::vector<int> &change_extent);
 
   /**
-  * @brief Method that returns chunk dimensions.
-  */
+   * @brief Method that returns chunk dimensions.
+   */
   std::vector<hsize_t> create_chunk_dims(hsize_t dim, hsize_t size,
                                          hsize_t chunk_size);
 
@@ -142,7 +144,7 @@ private:
       int particle_index, int_array_3d &id, int_array_3d &typ,
       double_array_3d &mass, double_array_3d &pos, int_array_3d &image,
       double_array_3d &vel, double_array_3d &f, double_array_3d &charge,
-      Particle const&current_particle, int write_dat, int_array_3d &bond);
+      Particle const &current_particle, int write_dat, int_array_3d &bond);
   /*
    * @brief Method to write the simulation script to the dataset.
    */

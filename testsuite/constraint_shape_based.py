@@ -141,7 +141,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.time_step = 0.01
         system.cell_system.skin = 0.4
 
-        system.part.add(id=0, pos=[self.box_l / 2.0, 1.02, self.box_l / 2.0], type=0)
+        system.part.add(
+            id=0, pos=[self.box_l / 2.0, 1.02, self.box_l / 2.0], type=0)
 
         # check force calculation of cylinder constraint
         interaction_dir = -1  # constraint is directed inwards
@@ -183,16 +184,18 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 sig=1.0,
                 r=1.02),
             places=10)  # minus for Newton's third law
-            
+
         #check whether total_summed_outer_normal_force is correct
-        y_part2=self.box_l-1.02
-        system.part.add(id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
+        y_part2 = self.box_l - 1.02
+        system.part.add(
+            id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
         system.integrator.run(0)
-        
-        dist_part2=self.box_l-y_part2
-        self.assertAlmostEqual(outer_cylinder_wall.total_force()[2],0.0)
-        self.assertAlmostEqual(outer_cylinder_wall.total_normal_force(),2*tests_common.lj_force( espressomd, cutoff=2.0, offset=0., eps=1.0, sig=1.0, r=dist_part2))
-        
+
+        dist_part2 = self.box_l - y_part2
+        self.assertAlmostEqual(outer_cylinder_wall.total_force()[2], 0.0)
+        self.assertAlmostEqual(outer_cylinder_wall.total_normal_force(), 2 * tests_common.lj_force(
+            espressomd, cutoff=2.0, offset=0., eps=1.0, sig=1.0, r=dist_part2))
+
         # Reset
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
@@ -208,7 +211,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.time_step = 0.01
         system.cell_system.skin = 0.4
 
-        system.part.add(id=0, pos=[self.box_l / 2.0, 1.02, self.box_l / 2.0], type=0)
+        system.part.add(
+            id=0, pos=[self.box_l / 2.0, 1.02, self.box_l / 2.0], type=0)
 
         # check force calculation of spherocylinder constraint
         # (1) infinite cylinder
@@ -244,14 +248,16 @@ class ShapeBasedConstraintTest(ut.TestCase):
             places=10)  # minus for Newton's third law
 
         #check whether total_summed_outer_normal_force is correct
-        y_part2=self.box_l-1.02
-        system.part.add(id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
+        y_part2 = self.box_l - 1.02
+        system.part.add(
+            id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
         system.integrator.run(0)
 
-        dist_part2=self.box_l-y_part2
-        self.assertAlmostEqual(outer_cylinder_constraint.total_force()[2],0.0)
+        dist_part2 = self.box_l - y_part2
+        self.assertAlmostEqual(outer_cylinder_constraint.total_force()[2], 0.0)
         self.assertAlmostEqual(outer_cylinder_constraint.total_normal_force(),
-                               2*tests_common.lj_force(espressomd, cutoff=2.0,
+                               2 * tests_common.lj_force(
+                                   espressomd, cutoff=2.0,
                                  offset=0., eps=1.0, sig=1.0, r=dist_part2))
 
         # Reset
@@ -289,7 +295,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 theta = 2. * i / float(N) * numpy.pi
                 v = j / float(N - 1) * 2. - 1
                 for r in radii:
-                    pos = self.pos_on_surface(theta, v, r, r, r) + [0,3,0]
+                    pos = self.pos_on_surface(theta, v, r, r, r) + [0, 3, 0]
                     system.part[0].pos = pos
                     system.integrator.run(recalc_forces=True, steps=0)
                     energy = system.analysis.energy()
@@ -309,7 +315,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         """
         system = self.system
         system.time_step = 0.01
-        system.part.add(id=0,pos=[5., 1.21, 0.83], type=0)
+        system.part.add(id=0, pos=[5., 1.21, 0.83], type=0)
 
         # Check forces are initialized to zero
         f_part = system.part[0].f
@@ -383,23 +389,22 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         #check whether total_normal_force is correct
         self.assertAlmostEqual(
-        wall_xy.total_normal_force(),
-        tests_common.lj_force(
-            espressomd,
-            cutoff=2.0,
-            offset=0.,
-            eps=1.5,
-            sig=1.0,
-            r=0.83),
-        places=10)
-        
+            wall_xy.total_normal_force(),
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.5,
+                sig=1.0,
+                r=0.83),
+            places=10)
+
         # this one is closer and should get the mindist()
         system.part.add(pos=[5., 1.20, 0.82], type=0)
         self.assertAlmostEqual(constraint_xz.min_dist(), system.part[1].pos[1])
         self.assertAlmostEqual(wall_xz.min_dist(), system.part[1].pos[1])
         self.assertAlmostEqual(wall_xy.min_dist(), system.part[1].pos[2])
-        
-        
+
         # Reset
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
@@ -439,7 +444,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.integrator.run(0)  # update forces
 
         self.assertAlmostEqual(hollowcone_constraint.min_dist(),
-            1.134228603)  # distance measured manually; shape geometry not trivial
+                               1.134228603)  # distance measured manually; shape geometry not trivial
 
         # test summed forces on hollowcone wall
         self.assertAlmostEqual(
@@ -484,19 +489,20 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.part.add(pos=[0., 0., 0.], type=0)
         x = self.box_l / 2.0
         parameters = [
-            ([x, x,  1.], -4., [ 0.,  0., -1.]), # outside channel
-            ([x, x, 15.],  5., [-1.,  0.,  0.]), # inside channel
-            ([x, x,  5.],  0., [ 0.,  0.,  0.]), # on channel bottom surface
-            ([x+5., x, 15.], 0., [ 0.,  0.,  0.]), # on channel side surface
-            ([x, x, 15.],  5., [-1.,  0.,  0.]), # within mouth
-            ([x, x, 25.],  0., [ 0.,  0.,  0.]), # on wall surface
-            ([x, x, 27.], -2., [ 0.,  0.,  1.]), # outside wall
+            ([x, x, 1.], -4., [0., 0., -1.]),  # outside channel
+            ([x, x, 15.], 5., [-1., 0., 0.]),  # inside channel
+            ([x, x, 5.], 0., [0., 0., 0.]),  # on channel bottom surface
+            ([x + 5., x, 15.], 0., [0., 0., 0.]),  # on channel side surface
+            ([x, x, 15.], 5., [-1., 0., 0.]),  # within mouth
+            ([x, x, 25.], 0., [0., 0., 0.]),  # on wall surface
+            ([x, x, 27.], -2., [0., 0., 1.]),  # outside wall
         ]
         for pos, ref_mindist, ref_force in parameters:
             system.part[0].pos = pos
             system.integrator.run(recalc_forces=True, steps=0)
             self.assertEqual(slitpore_constraint.min_dist(), ref_mindist)
-            numpy.testing.assert_almost_equal(slitpore_constraint.total_force(), ref_force, 10)
+            numpy.testing.assert_almost_equal(
+                slitpore_constraint.total_force(), ref_force, 10)
 
         # Reset
         system.non_bonded_inter[0, 1].generic_lennard_jones.set_params(
@@ -562,9 +568,9 @@ class ShapeBasedConstraintTest(ut.TestCase):
             places=10)
 
         # (2) using a rhomboid
-        rhomboid_shape.a=[5., 5., 0.]  # rhomboid
-        rhomboid_shape.b=[0., 0., 5.]
-        rhomboid_shape.c=[0., 5., 0.]
+        rhomboid_shape.a = [5., 5., 0.]  # rhomboid
+        rhomboid_shape.b = [0., 0., 5.]
+        rhomboid_shape.c = [0., 5., 0.]
 
         system.integrator.run(0)  # update forces
         self.assertEqual(rhomboid_constraint.min_dist(), 1.)
@@ -581,7 +587,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         system.part[0].pos = system.part[0].pos - [0., 1., 0.]
         system.integrator.run(0)  # update forces
-        self.assertAlmostEqual(rhomboid_constraint.min_dist(), 1.2247448714, 10)
+        self.assertAlmostEqual(
+            rhomboid_constraint.min_dist(), 1.2247448714, 10)
         self.assertAlmostEqual(
             rhomboid_constraint.total_normal_force(),
             tests_common.lj_force(

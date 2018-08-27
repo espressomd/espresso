@@ -6,8 +6,7 @@
 namespace boost {
 namespace serialization {
 template <class Archive>
-void load(Archive &ar, ParticleList &pl,
-          const unsigned int /* version */) {
+void load(Archive &ar, ParticleList &pl, const unsigned int /* version */) {
   int size;
   ar >> size;
 
@@ -31,7 +30,7 @@ template <typename Archive>
 void serialize(Archive &ar, ParticleList &pl, unsigned int file_version) {
   split_free(ar, pl, file_version);
 }
-}
-}
+} // namespace serialization
+} // namespace boost
 
 #endif

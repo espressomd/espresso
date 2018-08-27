@@ -25,7 +25,7 @@ lj_cap = 20
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l, box_l, box_l])
-system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -93,6 +93,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 # remove force capping
 lj_cap = 0
 system.force_cap = lj_cap
+
 
 def main():
     for i in range(0, int_n_times):

@@ -81,6 +81,6 @@ private:
   boost::mpi::communicator m_comm;
 };
 
-} /* ErrorHandling */
+} // namespace ErrorHandling
 
 #endif

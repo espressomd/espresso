@@ -8,6 +8,6 @@ template <class T>
 constexpr typename std::add_const<T>::type &as_const(T &t) noexcept {
   return t;
 }
-}
+} // namespace Utils
 
 #endif

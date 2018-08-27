@@ -11,5 +11,5 @@ public:
   template <typename... Args> void operator()(Args...) const { return; }
 };
 
-}
+} // namespace Utils
 #endif

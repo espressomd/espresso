@@ -23,6 +23,7 @@
 */
 
 #include "EspressoSystemInterface.hpp"
+#include "constraints.hpp"
 #include "cuda_interface.hpp"
 #include "energy_inline.hpp"
 #include "forces.hpp"
@@ -31,15 +32,14 @@
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "scafacos.hpp"
-#include "constraints.hpp"
 #include <cassert>
 
 #include "short_range_loop.hpp"
 
 ActorList energyActors;
 
-Observable_stat energy = {0, {}, 0,0,0};
-Observable_stat total_energy = {0, {}, 0,0,0};
+Observable_stat energy = {0, {}, 0, 0, 0};
+Observable_stat total_energy = {0, {}, 0, 0, 0};
 
 /************************************************************/
 
@@ -96,8 +96,8 @@ void init_energies(Observable_stat *stat) {
     n_dipolar = 2;
     break;
 #ifdef DIPOLAR_BARNES_HUT
- case DIPOLAR_BH_GPU:   
-    n_dipolar = 2; 
+  case DIPOLAR_BH_GPU:
+    n_dipolar = 2;
     break;
 #endif
   case DIPOLAR_SCAFACOS:
@@ -107,11 +107,9 @@ void init_energies(Observable_stat *stat) {
 
 #endif
 
-  obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded, n_coulomb,
-                            n_dipolar, 0, 1);
+  obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded,
+                            n_coulomb, n_dipolar, 0, 1);
   stat->init_status = 0;
-
-
 }
 
 /************************************************************/
@@ -161,7 +159,6 @@ void energy_calc(double *result) {
   /* gather data */
   MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0,
              comm_cart);
-
 }
 
 /************************************************************/
@@ -270,18 +267,18 @@ void calc_long_range_energies() {
 #endif /* ifdef DIPOLES */
 }
 
-double calculate_current_potential_energy_of_system(){
-	//calculate potential energy
-	if (total_energy.init_status == 0) {
-		init_energies(&total_energy);
-		master_energy_calc();
-	}
-  	int num_energies=total_energy.data.n;
-	double kinetic_energy =total_energy.data.e[0];
-	double sum_all_energies=0;
-	for(int i=0;i<num_energies;i++){
-		sum_all_energies+= total_energy.data.e[i];
-	}
+double calculate_current_potential_energy_of_system() {
+  // calculate potential energy
+  if (total_energy.init_status == 0) {
+    init_energies(&total_energy);
+    master_energy_calc();
+  }
+  int num_energies = total_energy.data.n;
+  double kinetic_energy = total_energy.data.e[0];
+  double sum_all_energies = 0;
+  for (int i = 0; i < num_energies; i++) {
+    sum_all_energies += total_energy.data.e[i];
+  }
 
-	return sum_all_energies-kinetic_energy;
+  return sum_all_energies - kinetic_energy;
 }

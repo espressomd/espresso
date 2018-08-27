@@ -22,7 +22,7 @@
 /** \file forces.cpp Force calculation.
  *
  *  For more information see \ref forces.hpp "forces.h".
-*/
+ */
 
 #include "EspressoSystemInterface.hpp"
 
@@ -32,19 +32,19 @@
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "iccp3m.hpp"
+#include "immersed_boundaries.hpp"
+#include "lb.hpp"
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
 #include "short_range_loop.hpp"
-#include "immersed_boundaries.hpp" 
-#include "lb.hpp"
 
 #include <cassert>
 
 ActorList forceActors;
 
 void init_forces() {
-/* The force initialization depends on the used thermostat and the
-   thermodynamic ensemble */
+  /* The force initialization depends on the used thermostat and the
+     thermodynamic ensemble */
 
 #ifdef NPT
   /* reset virial part of instantaneous pressure */
