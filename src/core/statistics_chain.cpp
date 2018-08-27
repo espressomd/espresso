@@ -21,11 +21,11 @@
 /** \file statistics_chain.cpp
     Implementation of \ref statistics_chain.hpp "statistics_chain.hpp".
 */
-#include "statistics.hpp"
 #include "PartCfg.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
+#include "statistics.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
 
@@ -85,14 +85,12 @@ void calc_re_av(double **_re) {
     for (i = 0; i < chain_n_chains; i++) {
       dx = configs[j][3 * (chain_start + i * chain_length + chain_length - 1)] -
            configs[j][3 * (chain_start + i * chain_length)];
-      dy =
-          configs[j]
-                 [3 * (chain_start + i * chain_length + chain_length - 1) + 1] -
-          configs[j][3 * (chain_start + i * chain_length) + 1];
-      dz =
-          configs[j]
-                 [3 * (chain_start + i * chain_length + chain_length - 1) + 2] -
-          configs[j][3 * (chain_start + i * chain_length) + 2];
+      dy = configs[j][3 * (chain_start + i * chain_length + chain_length - 1) +
+                      1] -
+           configs[j][3 * (chain_start + i * chain_length) + 1];
+      dz = configs[j][3 * (chain_start + i * chain_length + chain_length - 1) +
+                      2] -
+           configs[j][3 * (chain_start + i * chain_length) + 2];
       tmp = (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
       dist += sqrt(tmp);
       dist2 += tmp;

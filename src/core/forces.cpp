@@ -22,7 +22,7 @@
 /** \file forces.cpp Force calculation.
  *
  *  For more information see \ref forces.hpp "forces.h".
-*/
+ */
 
 #include "EspressoSystemInterface.hpp"
 
@@ -43,8 +43,8 @@
 ActorList forceActors;
 
 void init_forces() {
-/* The force initialization depends on the used thermostat and the
-   thermodynamic ensemble */
+  /* The force initialization depends on the used thermostat and the
+     thermodynamic ensemble */
 
 #ifdef NPT
   /* reset virial part of instantaneous pressure */

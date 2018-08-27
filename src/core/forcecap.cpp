@@ -21,7 +21,7 @@
 /** \file forcecap.cpp force cap calculation.
  *
  *  For more information see \ref forcecap.hpp "forcecap.h".
-*/
+ */
 
 #include "forcecap.hpp"
 #include "global.hpp"

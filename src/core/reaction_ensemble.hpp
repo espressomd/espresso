@@ -75,10 +75,10 @@ struct DegreeOfAssociationCollectiveVariable : public CollectiveVariable {
 
 private:
   /**
-  * Returns the degree of association for the current collective variable. This
-  * is needed since you may use multiple degrees of association as collective
-  * variable for the Wang-Landau algorithm.
-  */
+   * Returns the degree of association for the current collective variable. This
+   * is needed since you may use multiple degrees of association as collective
+   * variable for the Wang-Landau algorithm.
+   */
   double calculate_degree_of_association() {
     int total_number_of_corresponding_acid = 0;
     for (int i = 0; i < corresponding_acid_types.size(); ++i) {
@@ -264,9 +264,8 @@ private:
   int on_mc_use_WL_get_new_state() override;
 
   std::vector<int> histogram;
-  std::vector<double>
-      wang_landau_potential; // equals the logarithm to basis e of the
-                             // degeneracy of the states
+  std::vector<double> wang_landau_potential; // equals the logarithm to basis e
+                                             // of the degeneracy of the states
 
   std::vector<int> nr_subindices_of_collective_variable;
   double wang_landau_parameter = 1.0; // equals the logarithm to basis e of the
@@ -336,5 +335,5 @@ public:
 double calculate_factorial_expression(SingleReaction &current_reaction,
                                       std::map<int, int> &old_particle_numbers);
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
-}
+} // namespace ReactionEnsemble
 #endif

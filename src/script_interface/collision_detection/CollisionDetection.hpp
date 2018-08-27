@@ -22,8 +22,8 @@
 #ifndef SCRIPT_INTERFACE_COLLISION_DETECTION_COLLISION_DETECTION_HPP
 #define SCRIPT_INTERFACE_COLLISION_DETECTION_COLLISION_DETECTION_HPP
 
-#include "core/collision.hpp"
 #include "../ScriptInterfaceBase.hpp"
+#include "core/collision.hpp"
 
 #ifdef COLLISION_DETECTION
 
@@ -33,29 +33,33 @@ namespace CollisionDetection {
 class CollisionDetection : public AutoParameters<CollisionDetection> {
 public:
   CollisionDetection() {
-    add_parameters({
-      {"mode", collision_params.mode},
-      {"exception_on_collision", collision_params.exception_on_collision},
-      
-      {"bond_centers",collision_params.bond_centers},
-      {"bond_vs",collision_params.bond_vs},
-      {"bond_three_particles",collision_params.bond_three_particles},
-      {"three_particle_binding_angle_resolution",collision_params.three_particle_angle_resolution},
+    add_parameters(
+        {{"mode", collision_params.mode},
+         {"exception_on_collision", collision_params.exception_on_collision},
 
-      {"distance",collision_params.distance},
-      {"distance_glued_particle_to_vs",collision_params.dist_glued_part_to_vs},
-      {"vs_placement", collision_params.vs_placement},
+         {"bond_centers", collision_params.bond_centers},
+         {"bond_vs", collision_params.bond_vs},
+         {"bond_three_particles", collision_params.bond_three_particles},
+         {"three_particle_binding_angle_resolution",
+          collision_params.three_particle_angle_resolution},
 
-      {"part_type_vs",collision_params.vs_particle_type},
-      {"part_type_to_be_glued",collision_params.part_type_to_be_glued},
-      {"part_type_to_attach_vs_to",collision_params.part_type_to_attach_vs_to},
-      {"part_type_after_glueing",collision_params.part_type_after_glueing}
-    });
+         {"distance", collision_params.distance},
+         {"distance_glued_particle_to_vs",
+          collision_params.dist_glued_part_to_vs},
+         {"vs_placement", collision_params.vs_placement},
+
+         {"part_type_vs", collision_params.vs_particle_type},
+         {"part_type_to_be_glued", collision_params.part_type_to_be_glued},
+         {"part_type_to_attach_vs_to",
+          collision_params.part_type_to_attach_vs_to},
+         {"part_type_after_glueing",
+          collision_params.part_type_after_glueing}});
   };
-  Variant call_method(const std::string& name, const VariantMap& params) override {
-      if (name == "validate") {
-          return validate_collision_parameters();
-      };
+  Variant call_method(const std::string &name,
+                      const VariantMap &params) override {
+    if (name == "validate") {
+      return validate_collision_parameters();
+    };
     return none;
   };
 };

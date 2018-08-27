@@ -106,11 +106,15 @@ struct CUDA_particle_data {
 };
 
 /** data structure for the different kinds of energies */
-typedef struct { float bonded, non_bonded, coulomb, dipolar; } CUDA_energy;
+typedef struct {
+  float bonded, non_bonded, coulomb, dipolar;
+} CUDA_energy;
 
 /** Note the particle's seed gets its own struct since it doesn't get copied
  * back and forth from the GPU */
-typedef struct { unsigned int seed; } CUDA_particle_seed;
+typedef struct {
+  unsigned int seed;
+} CUDA_particle_seed;
 
 extern CUDA_particle_data *particle_data_host;
 

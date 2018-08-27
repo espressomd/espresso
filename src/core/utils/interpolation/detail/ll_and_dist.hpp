@@ -58,8 +58,8 @@ Block ll_and_dist(const Vector3d &pos, const Vector3d &grid_spacing,
 
   return {ll, dist};
 }
-}
-}
-}
+} // namespace detail
+} // namespace Interpolation
+} // namespace Utils
 
 #endif

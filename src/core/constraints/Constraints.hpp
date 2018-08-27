@@ -96,6 +96,6 @@ public:
     }
   }
 };
-}
+} // namespace Constraints
 
 #endif

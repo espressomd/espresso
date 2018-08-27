@@ -28,7 +28,7 @@ box_y = 6
 width = 50
 
 padding = 1
-box_z = width + 2*padding
+box_z = width + 2 * padding
 
 system = espressomd.System(box_l=[box_x, box_y, box_z])
 
@@ -54,12 +54,12 @@ integration_length = int(2e3)
 
 # Set up the (LB) electrokinetics fluid
 viscosity_kinematic = viscosity_dynamic / density_water
-ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water,
-                                     viscosity = viscosity_kinematic, friction = 1.0,
-                                     T = kT, prefactor = bjerrum_length)
+ek = electrokinetics.Electrokinetics(agrid=agrid, lb_density=density_water,
+                                     viscosity=viscosity_kinematic, friction=1.0,
+                                     T=kT, prefactor=bjerrum_length)
 
 # Set up the charged and neutral species
-density_counterions  = -2.0 * sigma / width
+density_counterions = -2.0 * sigma / width
 counterions = electrokinetics.Species(density=density_counterions,
                                       D=D, valency=valency,
                                       ext_force_density=[ext_force_density, 0, 0])
@@ -67,12 +67,14 @@ counterions = electrokinetics.Species(density=density_counterions,
 ek.add_species(counterions)
 
 # Set up the walls confining the fluid
-ek_wall_left = espressomd.ekboundaries.EKBoundary(charge_density=sigma/agrid,
-                                          shape=shapes.Wall(normal=[0, 0, 1],
-                                                            dist=padding))
-ek_wall_right = espressomd.ekboundaries.EKBoundary(charge_density=sigma/agrid,
+ek_wall_left = espressomd.ekboundaries.EKBoundary(charge_density=sigma / agrid,
+                                                  shape=shapes.Wall(
+                                                  normal=[0, 0, 1],
+                                                  dist=padding))
+ek_wall_right = espressomd.ekboundaries.EKBoundary(
+    charge_density=sigma / agrid,
                                            shape=shapes.Wall(normal=[0, 0, -1],
-                                                             dist=-(padding+width)))
+                                                             dist=-(padding + width)))
 
 system.ekboundaries.add(ek_wall_left)
 system.ekboundaries.add(ek_wall_right)
@@ -82,7 +84,7 @@ system.actors.add(ek)
 # Integrate the system
 for i in range(100):
     system.integrator.run(integration_length)
-    sys.stdout.write("\rintegration step: %03i"%i)
+    sys.stdout.write("\rintegration step: %03i" % i)
     sys.stdout.flush()
 
 print("Integration finished.")
@@ -93,19 +95,22 @@ density_list = []
 velocity_list = []
 pressure_xz_list = []
 
-for i in range(int(box_z/agrid)):
-    if (i*agrid >= padding) and (i*agrid < box_z - padding):
-        position = i*agrid - padding - width/2.0 + agrid/2.0
+for i in range(int(box_z / agrid)):
+    if (i * agrid >= padding) and (i * agrid < box_z - padding):
+        position = i * agrid - padding - width / 2.0 + agrid / 2.0
         position_list.append(position)
 
         # density
-        density_list.append(counterions[box_x/(2*agrid), box_y/(2*agrid), i].density)
+        density_list.append(
+            counterions[box_x / (2 * agrid), box_y / (2 * agrid), i].density)
 
         # velocity
-        velocity_list.append(ek[box_x/(2*agrid), box_y/(2*agrid), i].velocity[0])
+        velocity_list.append(
+            ek[box_x / (2 * agrid), box_y / (2 * agrid), i].velocity[0])
 
         # xz component pressure tensor
-        pressure_xz_list.append(ek[box_x/(2*agrid), box_y/(2*agrid), i].pressure[0,2])
+        pressure_xz_list.append(
+            ek[box_x / (2 * agrid), box_y / (2 * agrid), i].pressure[0, 2])
 
 np.savetxt("eof_electrokinetics.dat", np.column_stack((position_list,
                                                        density_list,

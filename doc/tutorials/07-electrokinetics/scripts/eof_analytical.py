@@ -28,7 +28,7 @@ box_z = width + 2 * padding
 # Set the electrokinetic parameters
 
 agrid = 1.0
-temperature =1.0
+temperature = 1.0
 bjerrum_length = 0.7095
 valency = 1.0
 viscosity_dynamic = 79.53
@@ -45,6 +45,7 @@ density_counterions = -2.0 * sigma / width
 
 # root finding function
 
+
 def solve(xi=None, d=None, bjerrum_length=None, sigma=None, valency=None):
     el_char = 1.0
     return xi * np.tan(xi * d / 2.0) + 2.0 * np.pi * bjerrum_length * sigma / (valency * el_char)
@@ -59,9 +60,12 @@ pnt1 = pnt0 + 1.9 * size
 tol = 1e-8
 
 while size > tol:
-    val0 = solve(xi=pnt0, d=width, bjerrum_length=bjerrum_length, sigma=sigma, valency=valency)
-    val1 = solve(xi=pnt1, d=width, bjerrum_length=bjerrum_length, sigma=sigma, valency=valency)
-    valm = solve(xi=pntm, d=width, bjerrum_length=bjerrum_length, sigma=sigma, valency=valency)
+    val0 = solve(xi=pnt0, d=width,
+                 bjerrum_length=bjerrum_length, sigma=sigma, valency=valency)
+    val1 = solve(xi=pnt1, d=width,
+                 bjerrum_length=bjerrum_length, sigma=sigma, valency=valency)
+    valm = solve(xi=pntm, d=width,
+                 bjerrum_length=bjerrum_length, sigma=sigma, valency=valency)
 
     if (val0 < 0.0) and (val1 > 0.0):
         if valm < 0.0:
@@ -82,33 +86,45 @@ while size > tol:
             size = size / 2.0
             pntm = pnt0 - size
     else:
-        raise Exception("Bisection method fails:\nTuning of domain boundaries may be required.")
-        
-    
+        raise Exception(
+            "Bisection method fails:\nTuning of domain boundaries may be required.")
+
+
 # obtain the desired xi value
 xi = pntm
 
 # function to calculate the density
+
+
 def density(x=None, xi=None, bjerrum_length=None):
     kb = 1.0
     return (xi**2) / (2.0 * np.pi * bjerrum_length * np.cos(xi * x)**2)
 
 # function to calculate the velocity
-def velocity(x=None, xi=None, d=None, bjerrum_length=None, force=None, viscosity_kinematic=None, density_water=None):
+
+
+def velocity(x=None, xi=None, d=None, bjerrum_length=None, force=None,
+             viscosity_kinematic=None, density_water=None):
     return force * np.log(np.cos(xi * x) / np.cos(xi * d / 2.0)) / (2.0 * np.pi * bjerrum_length * viscosity_kinematic * density_water)
 
 # function to calculate the nonzero component of the pressure tensor
-def pressure_tensor_offdiagonal(x=None, xi=None, bjerrum_length=None, force=None):
+
+
+def pressure_tensor_offdiagonal(x=None, xi=None, bjerrum_length=None,
+                                force=None):
     return force * xi * np.tan(xi * x) / (2.0 * np.pi * bjerrum_length)
 
 # function to calculate the hydrostatic pressure
 
 # Technically, the LB simulates a compressible fluid, whiches pressure
-# tensor contains an additional term on the diagonal, proportional to 
+# tensor contains an additional term on the diagonal, proportional to
 # the divergence of the velocity. We neglect this (small) contribution.
 # The LB pressure tensor also contains the convective acceleration, which
 # we neglect here.
-def hydrostatic_pressure(x=None, xi=None, bjerrum_length=None, tensor_entry=None):
+
+
+def hydrostatic_pressure(x=None, xi=None, bjerrum_length=None,
+                         tensor_entry=None):
     return 0.0
 
 position_list = []
@@ -116,9 +132,9 @@ density_list = []
 velocity_list = []
 pressure_xz_list = []
 
-for i in range(int(box_z/agrid)):
-    if (i*agrid >= padding) and (i*agrid < box_z - padding):
-        position = i*agrid - padding - width/2.0 + agrid/2.0
+for i in range(int(box_z / agrid)):
+    if (i * agrid >= padding) and (i * agrid < box_z - padding):
+        position = i * agrid - padding - width / 2.0 + agrid / 2.0
         position_list.append(position)
 
         # density
@@ -134,8 +150,7 @@ for i in range(int(box_z/agrid)):
         pressure_xz_list.append(pressure_tensor_offdiagonal(x=position, xi=xi,
                                                             bjerrum_length=bjerrum_length, force=force))
 
-np.savetxt("eof_analytical.dat", np.column_stack((position_list, density_list, velocity_list, pressure_xz_list)), header="#position calculated_density calculated_velocity calculated_pressure_xz")
-
-
-
-
+np.savetxt(
+    "eof_analytical.dat", np.column_stack(
+        (position_list, density_list, velocity_list, pressure_xz_list)),
+           header="#position calculated_density calculated_velocity calculated_pressure_xz")

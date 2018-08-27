@@ -286,9 +286,9 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   double torque2[3] = {0., 0., 0.};
   int j;
 
-/***********************************************/
-/* bond creation and breaking                  */
-/***********************************************/
+  /***********************************************/
+  /* bond creation and breaking                  */
+  /***********************************************/
 
 #ifdef COLLISION_DETECTION
   if (collision_params.mode != COLLISION_MODE_OFF)
@@ -303,9 +303,9 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
                       p1->p.identity, p2->p.identity, dist));
 
-/***********************************************/
-/* non bonded pair potentials                  */
-/***********************************************/
+  /***********************************************/
+  /* non bonded pair potentials                  */
+  /***********************************************/
 
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
@@ -313,9 +313,9 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force.data(),
                                torque1, torque2);
 
-/***********************************************/
-/* short range electrostatics                  */
-/***********************************************/
+    /***********************************************/
+    /* short range electrostatics                  */
+    /***********************************************/
 
 #ifdef ELECTROSTATICS
   if (coulomb.method == COULOMB_DH)
@@ -346,9 +346,9 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 #endif
 
-/***********************************************/
-/* long range electrostatics                   */
-/***********************************************/
+  /***********************************************/
+  /* long range electrostatics                   */
+  /***********************************************/
 
 #ifdef ELECTROSTATICS
   /* real space coulomb */
@@ -404,9 +404,9 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 
 #endif /*ifdef ELECTROSTATICS */
 
-/***********************************************/
-/* long range magnetostatics                   */
-/***********************************************/
+  /***********************************************/
+  /* long range magnetostatics                   */
+  /***********************************************/
 
 #ifdef DIPOLES
   /* real space magnetic dipole-dipole */
@@ -483,10 +483,10 @@ inline void add_bonded_force(Particle *p1) {
       if (n_partners >= 2) {
         p3 = local_particles[p1->bl.e[i++]];
         if (!p3) {
-          runtimeErrorMsg() << "bond broken between particles "
-                            << p1->p.identity << ", " << p1->bl.e[i - 2]
-                            << " and " << p1->bl.e[i - 1]
-                            << " (particles are not stored on the same node)";
+          runtimeErrorMsg()
+              << "bond broken between particles " << p1->p.identity << ", "
+              << p1->bl.e[i - 2] << " and " << p1->bl.e[i - 1]
+              << " (particles are not stored on the same node)";
           return;
         }
       }
@@ -495,10 +495,10 @@ inline void add_bonded_force(Particle *p1) {
       if (n_partners >= 3) {
         p4 = local_particles[p1->bl.e[i++]];
         if (!p4) {
-          runtimeErrorMsg() << "bond broken between particles "
-                            << p1->p.identity << ", " << p1->bl.e[i - 3] << ", "
-                            << p1->bl.e[i - 2] << " and " << p1->bl.e[i - 1]
-                            << " (particles not stored on the same node)";
+          runtimeErrorMsg()
+              << "bond broken between particles " << p1->p.identity << ", "
+              << p1->bl.e[i - 3] << ", " << p1->bl.e[i - 2] << " and "
+              << p1->bl.e[i - 1] << " (particles not stored on the same node)";
           return;
         }
       }
@@ -689,10 +689,10 @@ inline void add_bonded_force(Particle *p1) {
       switch (n_partners) {
       case 1:
         if (bond_broken) {
-          runtimeErrorMsg() << "bond broken between particles "
-                            << p1->p.identity << " and " << p2->p.identity
-                            << ". Distance vector: " << dx[0] << " " << dx[1]
-                            << " " << dx[2];
+          runtimeErrorMsg()
+              << "bond broken between particles " << p1->p.identity << " and "
+              << p2->p.identity << ". Distance vector: " << dx[0] << " "
+              << dx[1] << " " << dx[2];
           continue;
         }
 
@@ -719,9 +719,9 @@ inline void add_bonded_force(Particle *p1) {
         break;
       case 2:
         if (bond_broken) {
-          runtimeErrorMsg() << "bond broken between particles "
-                            << p1->p.identity << ", " << p2->p.identity
-                            << " and " << p3->p.identity;
+          runtimeErrorMsg()
+              << "bond broken between particles " << p1->p.identity << ", "
+              << p2->p.identity << " and " << p3->p.identity;
           continue;
         }
 

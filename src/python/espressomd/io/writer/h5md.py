@@ -25,6 +25,7 @@ from ...script_interface import PScriptInterface  # pylint: disable=import
 
 
 class H5md(object):
+
     """H5md file object.
 
     Used for accessing the H5MD core implementation via the

@@ -47,7 +47,7 @@ public:
 
   bool fits_in_box(const Vector3d &) const { return true; }
 };
-}
-}
+} // namespace Fields
+} // namespace FieldCoupling
 
 #endif

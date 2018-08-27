@@ -41,7 +41,7 @@ lj_cap = 20
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l, box_l, box_l])
-system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -113,23 +113,25 @@ while (i < warm_n_times and act_min_dist < min_dist):
 lj_cap = 0
 system.force_cap = lj_cap
 
-energies = numpy.empty((int_n_times,2))
+energies = numpy.empty((int_n_times, 2))
 current_time = -1
 pyplot.xlabel("time")
 pyplot.ylabel("energy")
-plot, = pyplot.plot([0],[0])
+plot, = pyplot.plot([0], [0])
 pyplot.show(block=False)
+
 
 def update_plot():
     if current_time < 0:
         return
     i = current_time
-    plot.set_xdata(energies[:i+1,0])
-    plot.set_ydata(energies[:i+1,1])
-    pyplot.xlim(0, energies[i,0])
-    pyplot.ylim(energies[:i+1,1].min(), energies[:i+1,1].max())
+    plot.set_xdata(energies[:i + 1, 0])
+    plot.set_ydata(energies[:i + 1, 1])
+    pyplot.xlim(0, energies[i, 0])
+    pyplot.ylim(energies[:i + 1, 1].min(), energies[:i + 1, 1].max())
     pyplot.draw()
     pyplot.pause(0.01)
+
 
 def main():
     global current_time

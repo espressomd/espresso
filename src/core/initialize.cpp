@@ -155,9 +155,9 @@ void on_integration_start() {
   }
 #endif
 
-/********************************************/
-/* end sanity checks                        */
-/********************************************/
+  /********************************************/
+  /* end sanity checks                        */
+  /********************************************/
 
 #ifdef LB_GPU
   if (lattice_switch & LATTICE_LB_GPU && this_node == 0) {

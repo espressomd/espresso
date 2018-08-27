@@ -115,16 +115,14 @@ template <int order, typename T = double> inline T bspline(int i, T x) {
     case 0:
       return (1.0 +
               x * (-12.0 +
-                   x * (60.0 +
-                        x * (-160.0 +
-                             x * (240.0 + x * (-192.0 + x * 64.0)))))) /
+                   x * (60.0 + x * (-160.0 +
+                                    x * (240.0 + x * (-192.0 + x * 64.0)))))) /
              46080.0;
     case 1:
-      return (361.0 +
-              x * (-1416.0 +
-                   x * (2220.0 +
-                        x * (-1600.0 +
-                             x * (240.0 + x * (384.0 - x * 192.0)))))) /
+      return (361.0 + x * (-1416.0 +
+                           x * (2220.0 +
+                                x * (-1600.0 +
+                                     x * (240.0 + x * (384.0 - x * 192.0)))))) /
              23040.0;
     case 2:
       return (10543.0 +
@@ -288,6 +286,6 @@ template <int order, typename T = double> inline T bspline_d(int i, T x) {
 
   throw std::runtime_error("Internal interpolation error.");
 }
-}
+} // namespace Utils
 
 #endif

@@ -457,4 +457,5 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   // Out of box particles might be accepted by the cell system.
   set_resort_particles(Cells::RESORT_GLOBAL);
 }
-}
+
+} // namespace Mpiio

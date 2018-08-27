@@ -21,7 +21,7 @@
  *  Routines to calculate the OIF_GLOBAL_FORCES energy or/and and force
  *  for a particle triple (triangle from mesh). (Dupin2007)
  *  \ref forces.cpp
-*/
+ */
 
 #include "oif_global_forces.hpp"
 #include "cells.hpp"
@@ -34,7 +34,7 @@
 #include "utils.hpp"
 
 /** set parameters for the OIF_GLOBAL_FORCES potential.
-*/
+ */
 int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
                                  double V0, double kv) {
   if (bond_type < 0)

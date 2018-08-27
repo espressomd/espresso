@@ -19,7 +19,8 @@ This sample simulates planar Poisseuille flow in Espresso. A spherical RBC-like 
 """
 import espressomd
 
-required_features = ["LB","LB_BOUNDARIES","IMMERSED_BOUNDARY","VIRTUAL_SITES_INERTIALESS_TRACERS"]
+required_features = ["LB", "LB_BOUNDARIES",
+                     "IMMERSED_BOUNDARY", "VIRTUAL_SITES_INERTIALESS_TRACERS"]
 espressomd.assert_features(required_features)
 
 from espressomd import System, lb, shapes, lbboundaries
@@ -28,26 +29,27 @@ from espressomd.virtual_sites import VirtualSitesInertialessTracers
 
 # System setup
 boxZ = 20
-system = System(box_l=(20,20,boxZ))
-system.time_step = 1/6.
+system = System(box_l=(20, 20, boxZ))
+system.time_step = 1 / 6.
 system.cell_system.skin = 0.1
 system.virtual_sites = VirtualSitesInertialessTracers()
 print("Parallelization: " + str(system.cell_system.node_grid))
 
 force = 0.001
-lbf = lb.LBFluid(agrid=1, dens=1, visc=1, tau= system.time_step, ext_force_density=[force, 0, 0], fric = 1)
+lbf = lb.LBFluid(agrid=1, dens=1, visc=1, tau=system.time_step, ext_force_density=[
+                 force, 0, 0], fric=1)
 system.actors.add(lbf)
 
-system.thermostat.set_lb(kT=0,act_on_virtual=False)
+system.thermostat.set_lb(kT=0, act_on_virtual=False)
 
 # Setup boundaries
 walls = [lbboundaries.LBBoundary() for k in range(2)]
-walls[0].set_params(shape=shapes.Wall(normal=[0,0,1], dist = 0.5))
-walls[1].set_params(shape=shapes.Wall(normal=[0,0,-1], dist = -boxZ + 0.5))
+walls[0].set_params(shape=shapes.Wall(normal=[0, 0, 1], dist=0.5))
+walls[1].set_params(shape=shapes.Wall(normal=[0, 0, -1], dist=-boxZ + 0.5))
 
 for wall in walls:
     system.lbboundaries.add(wall)
-    
+
 from addSoft import AddSoft
 k1 = 0.1
 k2 = 1
@@ -71,7 +73,7 @@ outputDir = "outputVolParaCUDA"
 ## make directory
 from os import mkdir
 mkdir(outputDir)
-    
+
 ## Perform integration
 from writeVTK import WriteVTK
 WriteVTK(system, str(outputDir + "/cell_" + str(0) + ".vtk"))
@@ -82,5 +84,5 @@ numSteps = 20
 for i in range(0, numSteps):
 
     system.integrator.run(stepSize)
-    WriteVTK(system, str(outputDir + "/cell_" + str(i+1) + ".vtk"))
-    print("Done " + str(i+1) + " out of " + str(numSteps) + " steps.")
+    WriteVTK(system, str(outputDir + "/cell_" + str(i + 1) + ".vtk"))
+    print("Done " + str(i + 1) + " out of " + str(numSteps) + " steps.")

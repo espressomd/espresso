@@ -25,7 +25,7 @@
  *  Routines to calculate the lennard jones energy and/or  force
  *  for a particle pair.
  *  \ref forces.cpp
-*/
+ */
 
 #include "config.hpp"
 
@@ -60,13 +60,15 @@ inline void add_morse_pair_force(const Particle *const p1,
               this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
 #endif
     ONEPART_TRACE(if (p1->p.identity == check_id)
-                      fprintf(stderr, "%d: OPT: MORSE   f = (%.3e,%.3e,%.3e) "
-                                      "with part id=%d at dist %f fac %.3e\n",
+                      fprintf(stderr,
+                              "%d: OPT: MORSE   f = (%.3e,%.3e,%.3e) "
+                              "with part id=%d at dist %f fac %.3e\n",
                               this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                               p2->p.identity, dist, fac));
     ONEPART_TRACE(if (p2->p.identity == check_id)
-                      fprintf(stderr, "%d: OPT: MORSE   f = (%.3e,%.3e,%.3e) "
-                                      "with part id=%d at dist %f fac %.3e\n",
+                      fprintf(stderr,
+                              "%d: OPT: MORSE   f = (%.3e,%.3e,%.3e) "
+                              "with part id=%d at dist %f fac %.3e\n",
                               this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                               p1->p.identity, dist, fac));
 

@@ -58,8 +58,8 @@ inline void size_and_offset(int n_elem, const boost::mpi::communicator &comm,
   /* Send local size */
   boost::mpi::gather(comm, n_elem, root);
 }
-}
-}
-}
+} // namespace detail
+} // namespace Mpi
+} // namespace Utils
 
 #endif

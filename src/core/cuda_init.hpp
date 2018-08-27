@@ -45,7 +45,7 @@ struct EspressoGpuDevice {
 };
 
 /** Initializes the CUDA stream.
-*/
+ */
 void cuda_init();
 
 /** get the number of CUDA devices.

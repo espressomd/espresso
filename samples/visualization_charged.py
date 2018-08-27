@@ -14,7 +14,7 @@
 #  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-""" Visualization sample for charged particles. Simulates a pool of particles with various charges, LJ parameters and masses.  
+""" Visualization sample for charged particles. Simulates a pool of particles with various charges, LJ parameters and masses.
 """
 
 import espressomd
@@ -43,20 +43,21 @@ SI_temperature = 400.0
 kb_kjmol = 0.0083145
 temperature = SI_temperature * kb_kjmol
 
-# COULOMB PREFACTOR (elementary charge)^2 / (4*pi*epsilon_0) in Angstrom * kJ/mol
+# COULOMB PREFACTOR (elementary charge)^2 / (4*pi*epsilon_0) in Angstrom *
+# kJ/mol
 epsilon_r = 4.0
 coulomb_prefactor = 1.67101e5 * kb_kjmol / epsilon_r
 
 # FORCE FIELDS
 species = ["Cl", "Na", "Colloid", "Solvent"]
-types = {"Cl":          0, "Na": 1, "Colloid": 2, "Solvent": 3}
+types = {"Cl": 0, "Na": 1, "Colloid": 2, "Solvent": 3}
 charges = {"Cl": -1.0, "Na": 1.0, "Colloid": -3.0, "Solvent": 0.0}
-lj_sigmas = {"Cl":       3.85, "Na": 2.52, "Colloid": 10.0, "Solvent": 1.5}
-lj_epsilons = {"Cl":     192.45, "Na": 17.44,
+lj_sigmas = {"Cl": 3.85, "Na": 2.52, "Colloid": 10.0, "Solvent": 1.5}
+lj_epsilons = {"Cl": 192.45, "Na": 17.44,
                "Colloid": 100.0, "Solvent": 50.0}
-lj_cuts = {"Cl":  2.0 * lj_sigmas["Cl"], "Na": 2.0 * lj_sigmas["Na"],
+lj_cuts = {"Cl": 2.0 * lj_sigmas["Cl"], "Na": 2.0 * lj_sigmas["Na"],
            "Colloid": 1.5 * lj_sigmas["Colloid"], "Solvent": 2.0 * lj_sigmas["Solvent"]}
-masses = {"Cl":        35.453, "Na": 22.99, "Colloid": 300, "Solvent": 18.0}
+masses = {"Cl": 35.453, "Na": 22.99, "Colloid": 300, "Solvent": 18.0}
 
 n_ionpairs = 50
 for i in range(n_ionpairs):

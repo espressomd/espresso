@@ -23,6 +23,7 @@ import espressomd
 @ut.skipIf(not espressomd.has_features(["ENGINE"]),
            "Features not available, skipping test!")
 class SwimmerTest(ut.TestCase):
+
     def test(self):
         boxl = 12
         sampsteps = 2000
@@ -45,7 +46,7 @@ class SwimmerTest(ut.TestCase):
                              np.exp(-gamma * t)) + z0
 
         S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        S.seed  = S.cell_system.get_state()['n_nodes'] * [1234]
+        S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
 
         S.box_l = [boxl, boxl, boxl]
         S.cell_system.skin = 0.1
@@ -53,7 +54,7 @@ class SwimmerTest(ut.TestCase):
 
         S.part.add(id=0, pos=pos_0, swimming={"v_swim": v_swim})
         S.part.add(id=1, pos=pos_1, swimming={"f_swim": f_swim})
-        S.part[:].rotation=1,1,1
+        S.part[:].rotation = 1, 1, 1
 
         S.thermostat.set_langevin(kT=temp, gamma=gamma)
 

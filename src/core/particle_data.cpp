@@ -168,7 +168,7 @@ void build_particle_node() { mpi_who_has(); }
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
-*/
+ */
 int get_particle_node(int id) {
   if ((id < 0) or (id > max_seen_particle))
     throw std::runtime_error("Invalid particle id!");
@@ -316,7 +316,7 @@ namespace {
 /* Limit cache to 100 MiB */
 std::size_t const max_cache_size = (100ul * 1048576ul) / sizeof(Particle);
 Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
-}
+} // namespace
 
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 
@@ -335,7 +335,7 @@ const Particle &get_particle_data(int part) {
   }
 
   /* Cache miss, fetch the particle,
-  * put it into the cache and return a pointer into the cache. */
+   * put it into the cache and return a pointer into the cache. */
   auto const cache_ptr =
       particle_fetch_cache.put(part, mpi_recv_part(pnode, part));
   return *cache_ptr;
@@ -876,8 +876,9 @@ void local_place_particle(int part, const double p[3], int _new) {
     /* allocate particle anew */
     cell = cell_structure.position_to_cell(pp);
     if (!cell) {
-      fprintf(stderr, "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
-                      "does not belong on this node\n",
+      fprintf(stderr,
+              "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
+              "does not belong on this node\n",
               this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
       errexit();
     }
@@ -1013,8 +1014,9 @@ void remove_all_bonds_to(int identity) {
         i += 1 + partners;
     }
     if (i != bl->n) {
-      fprintf(stderr, "%d: INTERNAL ERROR: bond information corrupt for "
-                      "particle %d, exiting...\n",
+      fprintf(stderr,
+              "%d: INTERNAL ERROR: bond information corrupt for "
+              "particle %d, exiting...\n",
               this_node, p.p.identity);
       errexit();
     }
@@ -1105,7 +1107,7 @@ void add_partner(IntList *il, int i, int j, int distance) {
   il->push_back(j);
   il->push_back(distance);
 }
-}
+} // namespace
 
 int change_exclusion(int part1, int part2, int _delete) {
   if (particle_exists(part1) && particle_exists(part2)) {

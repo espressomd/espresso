@@ -62,6 +62,6 @@ template <typename... Callables>
 Batch<Callables...> make_batch(Callables &&... callables) {
   return Batch<Callables...>(std::forward<Callables>(callables)...);
 }
-}
+} // namespace Utils
 
 #endif

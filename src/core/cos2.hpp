@@ -27,7 +27,7 @@
  *  Used for attractive tail/tail interactions in lipid bilayer calculations.
  *  Same potential as ljcos2 without Lennard-Jones part.
  *  \ref forces.cpp
-*/
+ */
 
 #include "interaction_data.hpp"
 #include "particle_data.hpp"

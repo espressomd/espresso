@@ -21,7 +21,7 @@
 #define UTILS_ENUMERATED_CONTAINER_HPP
 
 /** Keep a enumerated list of T objects, managed by the class.
-*/
+ */
 
 #include <cassert>
 #include <set>
@@ -186,6 +186,6 @@ private:
     return index;
   }
 };
-}
+} // namespace Utils
 
 #endif

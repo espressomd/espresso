@@ -36,8 +36,8 @@ template <typename Archive, typename T, std::size_t N>
 void serialize(Archive &ar, std::array<T, N> &a, const unsigned int) {
   ar &*static_cast<T(*)[N]>(static_cast<void *>(a.data()));
 }
-}
-}
+} // namespace serialization
+} // namespace boost
 
 #else
 #include <array>

@@ -42,6 +42,6 @@ template <typename T, size_t N>
 Vector<N, T> tensor_product(const T &x, const Vector<N, T> &y) {
   return x * y;
 }
-}
+} // namespace Utils
 
 #endif

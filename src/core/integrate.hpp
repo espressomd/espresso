@@ -24,7 +24,7 @@
 /** \file integrate.hpp    Molecular dynamics integrator.
  *
  *  For more information see \ref integrate.cpp "integrate.c".
-*/
+ */
 
 #define INTEG_METHOD_NPT_ISO 0
 #define INTEG_METHOD_NVT 1

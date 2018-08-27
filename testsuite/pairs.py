@@ -18,6 +18,7 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 
+
 @ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
            "Features not available, skipping test!")
 class PairTest(ut.TestCase):
@@ -29,12 +30,12 @@ class PairTest(ut.TestCase):
         self.s.thermostat.turn_off()
 
         self.s.part.clear()
-        self.s.box_l = 3*[10.]
+        self.s.box_l = 3 * [10.]
         self.s.cell_system.skin = 0.3
 
         # Force an appropriate cell grid
-        self.s.non_bonded_inter[0,0].lennard_jones.set_params(
-                epsilon=0.0, sigma=1.0,
+        self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=0.0, sigma=1.0,
                 cutoff=1.5, shift=0.0)
 
         vel = [1., 2., 3.]
@@ -52,10 +53,10 @@ class PairTest(ut.TestCase):
         self.s.part.add(id=10, pos=[1., 1., 1.], v=vel)
         self.s.part.add(id=11, pos=[9., 9., 9.], v=vel)
 
-    def expected_pairs(self,periodicity):
-        if all(periodicity == (1,1,1)):
+    def expected_pairs(self, periodicity):
+        if all(periodicity == (1, 1, 1)):
             return [(0, 1), (2, 3), (4, 5), (6, 7), (8, 9)]
-        elif all(periodicity == (1,1,0)):
+        elif all(periodicity == (1, 1, 0)):
             return [(0, 1), (2, 3), (6, 7)]
 
     def check(self):
@@ -69,7 +70,7 @@ class PairTest(ut.TestCase):
 
     def test_nsquare(self):
         self.s.cell_system.set_n_square()
-        self.s.periodicity = 1,1,1
+        self.s.periodicity = 1, 1, 1
 
         self.s.integrator.run(0)
         self.check()
@@ -77,10 +78,10 @@ class PairTest(ut.TestCase):
         self.check()
 
     @ut.skipIf(not espressomd.has_features(["PARTIAL_PERIODIC"]),
-       "Features not available, skipping test!")
+               "Features not available, skipping test!")
     def test_nsquare_partial_z(self):
         self.s.cell_system.set_n_square()
-        self.s.periodicity = 1,1,0
+        self.s.periodicity = 1, 1, 0
 
         self.s.integrator.run(0)
         self.check()
@@ -90,7 +91,7 @@ class PairTest(ut.TestCase):
     def test_dd(self):
         self.s.cell_system.set_domain_decomposition()
         self.s.cell_system.min_num_cells = 8
-        self.s.periodicity = 1,1,1
+        self.s.periodicity = 1, 1, 1
 
         self.s.integrator.run(0)
         self.check()
@@ -98,10 +99,10 @@ class PairTest(ut.TestCase):
         self.check()
 
     @ut.skipIf(not espressomd.has_features(["PARTIAL_PERIODIC"]),
-       "Features not available, skipping test!")
+               "Features not available, skipping test!")
     def test_dd_partial_z(self):
         self.s.cell_system.set_domain_decomposition()
-        self.s.periodicity = 1,1,0
+        self.s.periodicity = 1, 1, 0
 
         self.s.integrator.run(0)
         self.check()
@@ -110,7 +111,7 @@ class PairTest(ut.TestCase):
 
     def test_layered(self):
         self.s.cell_system.set_layered()
-        self.s.periodicity = 1,1,1
+        self.s.periodicity = 1, 1, 1
 
         self.s.integrator.run(0)
         self.check()
@@ -118,10 +119,10 @@ class PairTest(ut.TestCase):
         self.check()
 
     @ut.skipIf(not espressomd.has_features(["PARTIAL_PERIODIC"]),
-       "Features not available, skipping test!")
+               "Features not available, skipping test!")
     def test_layered_partial_z(self):
         self.s.cell_system.set_layered()
-        self.s.periodicity = 1,1,0
+        self.s.periodicity = 1, 1, 0
 
         self.s.integrator.run(0)
         self.check()

@@ -33,7 +33,7 @@ template <class T, class C>
 using has_data =
     std::is_convertible<decay_t<decltype(std::declval<C>().data())> *,
                         T *const *>;
-}
+} // namespace detail
 
 /**
  * @brief A sripped-down version of std::span from C++17.
@@ -107,6 +107,6 @@ public:
 
   constexpr pointer data() const { return m_ptr; }
 };
-}
+} // namespace Utils
 
 #endif

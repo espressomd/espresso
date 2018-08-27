@@ -79,10 +79,9 @@
 // .gamma_shear=SC0, .gamma_bulk=SC0,
 //                                 .gamma_odd=SC0,.gamma_even=SC0, .agrid=0.0,
 //                                 .tau=-1.0, .friction=SC0, .time_step=0.0,
-//                                 .lb_coupl_pref=SC1 ,
-//                                 .lb_coupl_pref2=SC0, .bulk_viscosity=SCM1,
-//                                 .dim_x=0, .dim_y=0, .dim_z=0,
-//                                 .number_of_nodes=0,
+//                                 .lb_coupl_pref=SC1 , .lb_coupl_pref2=SC0,
+//                                 .bulk_viscosity=SCM1, .dim_x=0, .dim_y=0,
+//                                 .dim_z=0, .number_of_nodes=0,
 //                                 .number_of_particles=0, .fluct=0,
 //                                 .calc_val=1, .external_force=0,
 //                                 .ext_force={0.0, 0.0, 0.0},
@@ -206,7 +205,7 @@ void lattice_boltzmann_calc_shanchen_gpu(void) {
 #endif // SHANCHEN
 
 /** lattice boltzmann update gpu called from integrate.cpp
-*/
+ */
 
 void lattice_boltzmann_update_gpu() {
 
@@ -227,7 +226,7 @@ void lattice_boltzmann_update_gpu() {
 }
 
 /** (re-) allocation of the memory needed for the particles (cpu part)
-*/
+ */
 void lb_realloc_particles_gpu() {
 
   lbpar_gpu.number_of_particles = n_part;
@@ -281,19 +280,17 @@ void lb_reinit_parameters_gpu() {
         lbpar_gpu.tau > 0.0) {
       /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
       lbpar_gpu.gamma_shear[ii] =
-          1. -
-          2. / (6. * lbpar_gpu.viscosity[ii] * lbpar_gpu.tau /
-                    (lbpar_gpu.agrid * lbpar_gpu.agrid) +
-                1.);
+          1. - 2. / (6. * lbpar_gpu.viscosity[ii] * lbpar_gpu.tau /
+                         (lbpar_gpu.agrid * lbpar_gpu.agrid) +
+                     1.);
     }
 
     if (lbpar_gpu.bulk_viscosity[ii] > 0.0) {
       /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
       lbpar_gpu.gamma_bulk[ii] =
-          1. -
-          2. / (9. * lbpar_gpu.bulk_viscosity[ii] * lbpar_gpu.tau /
-                    (lbpar_gpu.agrid * lbpar_gpu.agrid) +
-                1.);
+          1. - 2. / (9. * lbpar_gpu.bulk_viscosity[ii] * lbpar_gpu.tau /
+                         (lbpar_gpu.agrid * lbpar_gpu.agrid) +
+                     1.);
     }
 
     // By default, gamma_even and gamma_odd are chosen such that the MRT becomes
@@ -315,24 +312,23 @@ void lb_reinit_parameters_gpu() {
       // BGK
     }
 
-// lbpar_gpu.gamma_even[ii] = 0.0; //uncomment for special case of BGK
-// lbpar_gpu.gamma_odd[ii] = 0.0;
-// lbpar_gpu.gamma_shear[ii] = 0.0;
-// lbpar_gpu.gamma_bulk[ii] = 0.0;
+    // lbpar_gpu.gamma_even[ii] = 0.0; //uncomment for special case of BGK
+    // lbpar_gpu.gamma_odd[ii] = 0.0;
+    // lbpar_gpu.gamma_shear[ii] = 0.0;
+    // lbpar_gpu.gamma_bulk[ii] = 0.0;
 
-// printf("gamma_shear=%e\n", lbpar_gpu.gamma_shear[ii]);
-// printf("gamma_bulk=%e\n", lbpar_gpu.gamma_bulk[ii]);
-// printf("TRT gamma_odd=%e\n", lbpar_gpu.gamma_odd[ii]);
-// printf("TRT gamma_even=%e\n", lbpar_gpu.gamma_even[ii]);
-// printf("\n");
+    // printf("gamma_shear=%e\n", lbpar_gpu.gamma_shear[ii]);
+    // printf("gamma_bulk=%e\n", lbpar_gpu.gamma_bulk[ii]);
+    // printf("TRT gamma_odd=%e\n", lbpar_gpu.gamma_odd[ii]);
+    // printf("TRT gamma_even=%e\n", lbpar_gpu.gamma_even[ii]);
+    // printf("\n");
 
 #ifdef SHANCHEN
     if (lbpar_gpu.mobility[0] > 0.0) {
       lbpar_gpu.gamma_mobility[0] =
-          1. -
-          2. / (6. * lbpar_gpu.mobility[0] * lbpar_gpu.tau /
-                    (lbpar_gpu.agrid * lbpar_gpu.agrid) +
-                1.);
+          1. - 2. / (6. * lbpar_gpu.mobility[0] * lbpar_gpu.tau /
+                         (lbpar_gpu.agrid * lbpar_gpu.agrid) +
+                     1.);
     }
 #endif
     if (temperature > 0.0) { /* fluctuating hydrodynamics ? */

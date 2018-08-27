@@ -90,7 +90,7 @@ private:
   Scalar m_old_var, m_new_var;
   Scalar m_min, m_max;
 };
-}
-}
+} // namespace Statistics
+} // namespace Utils
 
 #endif

@@ -19,6 +19,7 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 @script_interface_register
 class Cylinder(ScriptInterfaceHelper):
+
     """
     A cylinder shape.
 
@@ -44,6 +45,7 @@ class Cylinder(ScriptInterfaceHelper):
 
 @script_interface_register
 class Ellipsoid(ScriptInterfaceHelper):
+
     """
     An ellipsoid.
 
@@ -67,6 +69,7 @@ class Ellipsoid(ScriptInterfaceHelper):
 
 @script_interface_register
 class HollowCone(ScriptInterfaceHelper):
+
     """
     A hollow cone shape.
 
@@ -94,6 +97,7 @@ class HollowCone(ScriptInterfaceHelper):
 
 @script_interface_register
 class Maze(ScriptInterfaceHelper):
+
     """
     Spherical cavities on a regular grid that are
     connected by tubes.
@@ -115,6 +119,7 @@ class Maze(ScriptInterfaceHelper):
 
 @script_interface_register
 class Rhomboid(ScriptInterfaceHelper):
+
     """
     An parallelepiped.
 
@@ -138,6 +143,7 @@ class Rhomboid(ScriptInterfaceHelper):
 
 @script_interface_register
 class Slitpore(ScriptInterfaceHelper):
+
     """
 
     .. image:: figures/slitpore.png
@@ -158,6 +164,7 @@ class Slitpore(ScriptInterfaceHelper):
 
 @script_interface_register
 class Sphere(ScriptInterfaceHelper):
+
     """
     A sphere.
 
@@ -177,6 +184,7 @@ class Sphere(ScriptInterfaceHelper):
 
 @script_interface_register
 class SpheroCylinder(ScriptInterfaceHelper):
+
     """
     A cylinder with hemispheres as caps.
 
@@ -200,6 +208,7 @@ class SpheroCylinder(ScriptInterfaceHelper):
 
 @script_interface_register
 class Stomatocyte(ScriptInterfaceHelper):
+
     """
     Attributes
     ----------
@@ -224,6 +233,7 @@ class Stomatocyte(ScriptInterfaceHelper):
 
 @script_interface_register
 class Wall(ScriptInterfaceHelper):
+
     """
     An infinite plane.
 
@@ -240,6 +250,7 @@ class Wall(ScriptInterfaceHelper):
 
 @script_interface_register
 class SimplePore(ScriptInterfaceHelper):
+
     """
     Two parallel infinite planes, and a cylindrical orfice connecting them.
     The cylinder and the planes are connected by torus segments with an

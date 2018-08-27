@@ -48,13 +48,13 @@ public:
   double radius_of_gyration();
   double radius_of_gyration_subcluster(std::vector<int> &subcl_particle_ids);
   /** @brief Calculate the fractal dimension
-  *  N(r) via r^d, where N(r) counts the number of particles in a sphere
-  *  of radius n, and d denotes the fractal dimension.
-  *  The fitting is done by the Gnu Scientific Library.
-  *  @param dr:   increment for when constructing the discrete version of N(r)
-  *  @param mean_sq_residual:  Mean square residual returned by the fit
-  *
-  *  @return fractal dimension, rms error of the fit */
+   *  N(r) via r^d, where N(r) counts the number of particles in a sphere
+   *  of radius n, and d denotes the fractal dimension.
+   *  The fitting is done by the Gnu Scientific Library.
+   *  @param dr:   increment for when constructing the discrete version of N(r)
+   *  @param mean_sq_residual:  Mean square residual returned by the fit
+   *
+   *  @return fractal dimension, rms error of the fit */
   std::pair<double, double> fractal_dimension(double dr);
 };
 

@@ -89,5 +89,5 @@ public:
     }
   }
 };
-}
+} // namespace ScriptInterface
 #endif

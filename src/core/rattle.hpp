@@ -22,13 +22,11 @@
 #define RATTLE_H
 
 /** \file rattle.hpp    RATTLE Algorithm (Rattle: A "Velocity" Version of the
- * Shake
- *                    Algorithm for Molecular Dynamics Calculations, H.C
- * Andersen,
- *                    J Comp Phys, 52, 24-34, 1983)
+ * Shake Algorithm for Molecular Dynamics Calculations, H.C Andersen, J Comp
+ * Phys, 52, 24-34, 1983)
  *
  *  For more information see \ref rattle.cpp "rattle.c".
-*/
+ */
 
 /** number of rigid bonds */
 extern int n_rigidbonds;

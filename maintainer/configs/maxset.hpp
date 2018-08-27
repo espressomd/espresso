@@ -29,14 +29,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EXCLUSIONS
 #define MOLFORCES
 
-
 #define BOND_CONSTRAINT
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
 #define SWIMMER_REACTIONS
 
 #define NEMD
-#define NPT 
+#define NPT
 #define GHMC
 #define DPD
 #define METADYNAMICS
@@ -80,7 +79,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOND_ANGLEDIST_HARMONIC
 
 #define EXPERIMENTAL_FEATURES
-
 
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS

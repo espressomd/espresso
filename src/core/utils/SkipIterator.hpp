@@ -87,6 +87,6 @@ SkipIter make_skip_iterator(ForwardIterator const &it,
                             ForwardIterator const &end, Predicate const &pred) {
   return SkipIter(it, end, pred);
 }
-}
+} // namespace Utils
 
 #endif

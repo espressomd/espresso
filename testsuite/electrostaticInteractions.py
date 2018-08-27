@@ -83,9 +83,9 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         # need to update forces
         self.system.integrator.run(0)
         np.testing.assert_allclose(np.copy(self.system.part[0].f),
-                                    [p3m_force, 0, 0],atol=1E-5)
+                                   [p3m_force, 0, 0], atol=1E-5)
         np.testing.assert_allclose(np.copy(self.system.part[1].f),
-                                    [-p3m_force, 0, 0],atol=1E-10)
+                                   [-p3m_force, 0, 0], atol=1E-10)
         self.system.actors.remove(p3m)
 
     def test_dh(self):
@@ -122,11 +122,11 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             f_dh_core[i] = self.system.part[0].f[0]
 
         np.testing.assert_allclose(u_dh_core,
-                                    u_dh,
-                                    atol=1e-7)
+                                   u_dh,
+                                   atol=1e-7)
         np.testing.assert_allclose(f_dh_core,
-                                    -f_dh,
-                                    atol=1e-2)
+                                   -f_dh,
+                                   atol=1e-2)
         self.system.actors.remove(dh)
 
 

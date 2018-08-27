@@ -27,18 +27,22 @@ from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
 
-required_features = ["LENNARD_JONES", "MASS", "EXTERNAL_FORCES", "LANGEVIN_PER_PARTICLE"]
+required_features = ["LENNARD_JONES", "MASS",
+                     "EXTERNAL_FORCES", "LANGEVIN_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
-print("THE CHAMBER GAME\n\nYOUR GOAL IS TO SCOOP ALL BLUE PARTICLES INTO THE RIGHT BOX.\nGREEN/RED SPHERES CAN BE PICKED UP AND INCREASE/DECREASE\nTHE TEMERATURE IN THE CHAMBER WHERE THEY ARE COLLECTED.")
+print(
+    "THE CHAMBER GAME\n\nYOUR GOAL IS TO SCOOP ALL BLUE PARTICLES INTO THE RIGHT BOX.\nGREEN/RED SPHERES CAN BE PICKED UP AND INCREASE/DECREASE\nTHE TEMERATURE IN THE CHAMBER WHERE THEY ARE COLLECTED.")
 
 try:
     import pygame
     has_pygame = True
-    print("\nCONTROLS:\nMOVE: (JOYSTICK AXIS), (KEYBOARD i/j/k/l)\nACTION BUTTON: (JOYSTICK A), (KEYBOARD p)\nRESTART: (JOYSTICK START), (KEYBOARD b)")
+    print(
+        "\nCONTROLS:\nMOVE: (JOYSTICK AXIS), (KEYBOARD i/j/k/l)\nACTION BUTTON: (JOYSTICK A), (KEYBOARD p)\nRESTART: (JOYSTICK START), (KEYBOARD b)")
 except:
     has_pygame = False
-    print("\nCONTROLS:\nMOVE: (KEYBOARD i/j/k/l)\nACTION BUTTON: (KEYBOARD p)\nRESTART: (KEYBOARD b)")
+    print(
+        "\nCONTROLS:\nMOVE: (KEYBOARD i/j/k/l)\nACTION BUTTON: (KEYBOARD p)\nRESTART: (KEYBOARD b)")
 
 box = np.array([1500.0, 500.0, 150.0])
 system = espressomd.System(box_l=box)
@@ -107,13 +111,15 @@ zoom = 10
 visualizer = openGLLive(system,
                         window_size=[800, 600],
                         draw_axis=False,
-                        particle_sizes=[snake_head_sigma * 0.5, snake_bead_sigma * 0.5,
+                        particle_sizes=[
+                            snake_head_sigma * 0.5, snake_bead_sigma * 0.5,
                                         cylinder_sigma, bubble_sigma * 0.5, temp_change_radius, temp_change_radius],
                         particle_type_colors=[[1, 1, 0], [1, 0, 1], [0, 0, 1], [
                             0, 1, 1], [0, 1, 0], [1, 0, 0], [0.5, 0, 1]],
                         constraint_type_colors=[[1, 1, 1]],
                         camera_position=[snake_startpos[0],
-                                         snake_startpos[1], system.box_l[2] * zoom],
+                                         snake_startpos[
+                                             1], system.box_l[2] * zoom],
                         camera_target=snake_startpos)
 
 
@@ -153,7 +159,9 @@ for i in range(snake_n):
         p_head = system.part.add(pos=snake_startpos, type=snake_head_type, fix=[
                                  0, 0, 1], mass=snake_head_mass, temp=temperature_snake, gamma=gamma_snake_head)
 #    elif i == snake_n - 1:
-#        system.part.add(pos = snake_startpos,type = snake_head_type, fix = [0,0,1], mass = snake_head_mass, bonds = (harmonic_bead if (i > 1) else harmonic_head, i - 1))
+# system.part.add(pos = snake_startpos,type = snake_head_type, fix =
+# [0,0,1], mass = snake_head_mass, bonds = (harmonic_bead if (i > 1) else
+# harmonic_head, i - 1))
     else:
         system.part.add(pos=snake_startpos + np.array([0, -1, 0]) * (0.5 * (snake_head_sigma + snake_bead_sigma) + (i - 1) * snake_bead_sigma), bonds=(
             harmonic_bead if (i > 1) else harmonic_head, i - 1), type=snake_bead_type, fix=[0, 0, 1], mass=snake_bead_mass, temp=temperature_snake, gamma=gamma_snake_bead)
@@ -215,7 +223,9 @@ n = 0
 
 # for i in range(bubbles_n):
 while (n < bubbles_n):
-    #bpos = [pore_xr +  np.random.random() * (pore_xr - pore_xl - snake_head_sigma*4) + snake_head_sigma * 2, np.random.random() * box[1], box[2]*0.5]
+    # bpos = [pore_xr +  np.random.random() * (pore_xr - pore_xl -
+    # snake_head_sigma*4) + snake_head_sigma * 2, np.random.random() * box[1],
+    # box[2]*0.5]
     bpos = [np.random.random() * (pore_xl - snake_head_sigma * 4) +
             snake_head_sigma * 2, np.random.random() * box[1], box[2] * 0.5]
     system.part.add(pos=bpos, type=bubble_type, fix=[
@@ -349,6 +359,8 @@ visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('b', KeyboardFireEvent.Pressed, restart))
 
 # MAIN LOOP
+
+
 def main():
     global F_act_j, F_act_k, temp_l, temp_r, exploding, expl_time
 
@@ -411,7 +423,8 @@ def main():
                 p.gamma = T_to_g(temp_r)
 
             w = visualizer.specs['window_size']
-            visualizer.user_texts = [[[20, w[1] - 20], 'LEFT: {}   RIGHT: {}'.format(Nl, Nr)],
+            visualizer.user_texts = [
+                [[20, w[1] - 20], 'LEFT: {}   RIGHT: {}'.format(Nl, Nr)],
                                      [[20, w[1] - 40], 'TEMPERATURE LEFT: {:.0f}   TEMPERATURE RIGHT: {:.0f}'.format(temp_l, temp_r)]]
             # [[w[0] * 0.5, w[1] - 60], 'GAMMA LEFT: {:0.4f}   GAMMA RIGHT: {:0.4f}'.format( T_to_g(temp_l), T_to_g(temp_r))]]
 

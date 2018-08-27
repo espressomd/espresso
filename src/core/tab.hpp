@@ -26,7 +26,7 @@
  *  for a particle pair or bonds via interpolating from lookup tables.
  *  \ref forces.cpp
  *  Needs feature TABULATED compiled in (see \ref config.hpp).
-*/
+ */
 
 #include "config.hpp"
 

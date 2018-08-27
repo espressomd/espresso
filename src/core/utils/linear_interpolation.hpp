@@ -32,6 +32,6 @@ T linear_interpolation(Container const &table, T hi, T offset, T x) {
   /* linear interpolation between data points */
   return table[ind] * (T{1} - dx) + table[ind + 1] * dx;
 }
-}
+} // namespace Utils
 
 #endif

@@ -53,15 +53,17 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
 num_part = 30
 
 # create random positions in the box sufficiently away from the walls
-ran_pos = np.random.uniform(low=1, high=49, size=(num_part,3))
-system.part.add(id=np.arange(num_part), pos=ran_pos, type=np.zeros(num_part,dtype=int))
+ran_pos = np.random.uniform(low=1, high=49, size=(num_part, 3))
+system.part.add(id=np.arange(num_part),
+                pos=ran_pos, type=np.zeros(num_part, dtype=int))
 
 # bottom wall, normal pointing in the +z direction, laid at z=0.1
 floor = shapes.Wall(normal=[0, 0, 1], dist=0.1)
 c1 = system.constraints.add(
     particle_type=0, penetrable=False, only_positive=False, shape=floor)
 
-# top wall, normal pointing in the -z direction, laid at z=49.9, since the normal direction points down, dist is -49.9
+# top wall, normal pointing in the -z direction, laid at z=49.9, since the
+# normal direction points down, dist is -49.9
 ceil = shapes.Wall(normal=[0, 0, -1], dist=-49.9)
 c2 = system.constraints.add(
     particle_type=0, penetrable=False, only_positive=False, shape=ceil)
@@ -74,7 +76,9 @@ system.bonded_inter.add(fene)
 # start it next to the wall to test it!
 start = np.array([1, 1, 1])
 
-#polymer.create_polymer(N_P=1, bond_length=1.0, MPC=50, start_id=num_part, start_pos=start, type_poly_neutral=0, type_poly_charged=0,  bond=fene, constraints=1)
+# polymer.create_polymer(N_P=1, bond_length=1.0, MPC=50,
+# start_id=num_part, start_pos=start, type_poly_neutral=0,
+# type_poly_charged=0,  bond=fene, constraints=1)
 
 
 # Warmup
@@ -91,8 +95,8 @@ act_min_dist = system.analysis.min_dist()
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
 # warmp with zero temperature to remove overlaps
-while ( act_min_dist < min_dist or c1.min_dist()<min_dist or c2.min_dist()<min_dist):
-    for j in range(warm_steps+lj_cap):
+while (act_min_dist < min_dist or c1.min_dist() < min_dist or c2.min_dist() < min_dist):
+    for j in range(warm_steps + lj_cap):
         print(j)
         system.integrator.run(1)
 #    system.integrator.run(warm_steps + lj_cap)

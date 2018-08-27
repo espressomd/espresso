@@ -63,6 +63,7 @@ def poiseuille_flow(z, H, ext_force_density, dyn_visc):
 
 
 class LBPoiseuilleCommon(object):
+
     """Base class of the test that holds the test logic."""
     lbf = None
     system = espressomd.System(box_l=[12.0, 3.0, 3.0])
@@ -115,7 +116,8 @@ class LBPoiseuilleCommon(object):
 
         v_measured = velocities[1:-1, 1]
         v_expected = poiseuille_flow(velocities[1:-1,
-                                                0] - 0.5 * self.system.box_l[0],
+                                                0] - 0.5 * self.system.box_l[
+                                                    0],
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
                                      VISC * DENS)
@@ -126,7 +128,9 @@ class LBPoiseuilleCommon(object):
 @ut.skipIf(not espressomd.has_features(
     ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+
     """Test for the CPU implementation of the LB."""
+
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
@@ -134,7 +138,9 @@ class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 @ut.skipIf(not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+
     """Test for the GPU implementation of the LB."""
+
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 

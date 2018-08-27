@@ -35,7 +35,7 @@
 
 namespace {
 int min(int i, unsigned int j) { return std::min(i, static_cast<int>(j)); }
-}
+} // namespace
 
 namespace Accumulators {
 /** The minimal version of compression function */
@@ -632,4 +632,4 @@ void Correlator::set_internal_state(std::string const &state) {
   ia >> m_last_update;
 }
 
-} // Namespace Correlators
+} // namespace Accumulators

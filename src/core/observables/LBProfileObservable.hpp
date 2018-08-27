@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace Observables {
 
 class LBProfileObservable : public LBObservable, public ProfileObservable {};
-}
+
+} // namespace Observables
 
 #endif

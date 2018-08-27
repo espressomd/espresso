@@ -53,6 +53,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields);
  * \param fields Specifier which fields to read.
  */
 void mpi_mpiio_common_read(const char *filename, unsigned fields);
-}
+
+} // namespace Mpiio
 
 #endif

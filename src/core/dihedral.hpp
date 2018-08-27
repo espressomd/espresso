@@ -24,7 +24,7 @@
  *  and force for a particle quadruple.  Note that usage of dihedrals
  *  increases the interaction range of bonded interactions to 2 times
  *  the maximal bond length!  \ref forces.cpp
-*/
+ */
 
 #include "grid.hpp"
 #include "interaction_data.hpp"
@@ -125,7 +125,7 @@ inline int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3,
   vector_product(v34, f4, v34Xf4);
   vector_product(v12, f1, v12Xf1);
 
-/* calculate force magnitude */
+  /* calculate force magnitude */
 #ifdef OLD_DIHEDRAL
   fac = iaparams->p.dihedral.bend * iaparams->p.dihedral.phase *
         iaparams->p.dihedral.mult;

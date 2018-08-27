@@ -74,6 +74,7 @@ template <typename T> __device__ inline T csinc(T d) {
 }
 
 template <typename T> __device__ T sqr(T x) { return x * x; }
-}
+
+} // namespace
 
 #endif

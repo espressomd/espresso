@@ -23,4 +23,3 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SHANCHEN
 #define EXTERNAL_FORCES
 #define PARTIAL_PERIODIC
-

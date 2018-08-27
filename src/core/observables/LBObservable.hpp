@@ -56,6 +56,7 @@ public:
   }
   std::vector<double> m_sample_positions;
 };
-}
+
+} // namespace Observables
 
 #endif

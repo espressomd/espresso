@@ -54,9 +54,9 @@ public:
 private:
   std::shared_ptr<::Shapes::Stomatocyte> m_stomatocyte;
 };
-}
+} // namespace Shapes
 /* namespace Shapes */
-}
+} // namespace ScriptInterface
 /* namespace ScriptInterface */
 
 #endif

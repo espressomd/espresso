@@ -24,7 +24,7 @@
 /** \file gaussian.hpp
  *  Routines to calculate the Gaussian energy and/or force
  *  for a particle pair.
-*/
+ */
 
 #include "interaction_data.hpp"
 #include "particle_data.hpp"

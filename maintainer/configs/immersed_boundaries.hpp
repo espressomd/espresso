@@ -16,7 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/* test configuration without relative/com virtual sites for immersed boundaries */
+/* test configuration without relative/com virtual sites for immersed boundaries
+ */
 #define IMMERSED_BOUNDARY
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
@@ -29,13 +30,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EXCLUSIONS
 #define MOLFORCES
 
-
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
 #define SWIMMER_REACTIONS
 
 #define NEMD
-#define NPT 
+#define NPT
 #define GHMC
 
 #define LB

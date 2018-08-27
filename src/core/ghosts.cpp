@@ -22,7 +22,7 @@
  *
  *  For more information on ghosts,
  *  see \ref ghosts.hpp "ghosts.hpp"
-*/
+ */
 #include "ghosts.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -56,9 +56,9 @@ static char *r_buffer = nullptr;
 std::vector<int> r_bondbuffer;
 
 /** whether the ghosts should also have velocity information, e. g. for DPD or
-   RATTLE.
-    You need this whenever you need the relative velocity of two particles.
-    NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change !!!!
+   RATTLE. You need this whenever you need the relative velocity of two
+   particles. NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change
+   !!!!
 */
 int ghosts_have_v = 0;
 
@@ -102,7 +102,7 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
     n_buffer_new = 0;
     if (data_parts & GHOSTTRANS_PROPRTS) {
       n_buffer_new += sizeof(ParticleProperties);
-// sending size of bond/exclusion lists
+      // sending size of bond/exclusion lists
 #ifdef GHOSTS_HAVE_BONDS
       n_buffer_new += sizeof(int);
 #ifdef EXCLUSIONS
@@ -222,8 +222,9 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
   }
 
   if (insert - s_buffer != n_s_buffer) {
-    fprintf(stderr, "%d: INTERNAL ERROR: send buffer size %d "
-                    "differs from what I put in (%ld)\n",
+    fprintf(stderr,
+            "%d: INTERNAL ERROR: send buffer size %d "
+            "differs from what I put in (%ld)\n",
             this_node, n_s_buffer, insert - s_buffer);
     errexit();
   }
@@ -346,8 +347,9 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
   }
 
   if (retrieve - r_buffer != n_r_buffer) {
-    fprintf(stderr, "%d: recv buffer size %d differs "
-                    "from what I read out (%ld)\n",
+    fprintf(stderr,
+            "%d: recv buffer size %d differs "
+            "from what I read out (%ld)\n",
             this_node, n_r_buffer, retrieve - r_buffer);
     errexit();
   }
@@ -377,8 +379,9 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
     }
   }
   if (retrieve - r_buffer != n_r_buffer) {
-    fprintf(stderr, "%d: recv buffer size %d differs "
-                    "from what I put in %ld\n",
+    fprintf(stderr,
+            "%d: recv buffer size %d differs "
+            "from what I put in %ld\n",
             this_node, n_r_buffer, retrieve - r_buffer);
     errexit();
   }
@@ -500,13 +503,15 @@ void ghost_communicator(GhostCommunicator *gc) {
         if (!prefetch)
           prepare_send_buffer(gcn, data_parts);
         else {
-          GHOST_TRACE(fprintf(stderr, "%d: ghost_comm using prefetched data "
-                                      "for operation %d, sending to %d\n",
+          GHOST_TRACE(fprintf(stderr,
+                              "%d: ghost_comm using prefetched data for "
+                              "operation %d, sending to %d\n",
                               this_node, n, node));
 #ifdef ADDITIONAL_CHECKS
           if (n_s_buffer != calc_transmit_size(gcn, data_parts)) {
-            fprintf(stderr, "%d: ghost_comm transmission size and current size "
-                            "of cells to transmit do not match\n",
+            fprintf(stderr,
+                    "%d: ghost_comm transmission size and current size of "
+                    "cells to transmit do not match\n",
                     this_node);
             errexit();
           }
@@ -522,8 +527,9 @@ void ghost_communicator(GhostCommunicator *gc) {
             int prefetch2 = gcn2->type & GHOST_PREFETCH;
             int node2 = gcn2->node;
             if (is_send_op(comm_type2, node2) && prefetch2) {
-              GHOST_TRACE(fprintf(stderr, "%d: ghost_comm prefetch operation "
-                                          "%d, is send/bcast to/from %d\n",
+              GHOST_TRACE(fprintf(stderr,
+                                  "%d: ghost_comm prefetch operation %d, is "
+                                  "send/bcast to/from %d\n",
                                   this_node, n2, node2));
               prepare_send_buffer(gcn2, data_parts);
               break;
@@ -564,8 +570,9 @@ void ghost_communicator(GhostCommunicator *gc) {
                  comm_cart);
         int n_bonds = s_bondbuffer.size();
         if (!(data_parts & GHOSTTRANS_PROPRTS) && n_bonds > 0) {
-          fprintf(stderr, "%d: INTERNAL ERROR: not sending properties, but "
-                          "bond buffer not empty\n",
+          fprintf(stderr,
+                  "%d: INTERNAL ERROR: not sending properties, but bond buffer "
+                  "not empty\n",
                   this_node);
           errexit();
         }
@@ -585,8 +592,9 @@ void ghost_communicator(GhostCommunicator *gc) {
           MPI_Bcast(s_buffer, n_s_buffer, MPI_BYTE, node, comm_cart);
           int n_bonds = s_bondbuffer.size();
           if (!(data_parts & GHOSTTRANS_PROPRTS) && n_bonds > 0) {
-            fprintf(stderr, "%d: INTERNAL ERROR: not sending properties, but "
-                            "bond buffer not empty\n",
+            fprintf(stderr,
+                    "%d: INTERNAL ERROR: not sending properties, but bond "
+                    "buffer not empty\n",
                     this_node);
             errexit();
           }
@@ -626,8 +634,7 @@ void ghost_communicator(GhostCommunicator *gc) {
       if (is_recv_op(comm_type, node)) {
         if (!poststore) {
           /* forces have to be added, the rest overwritten. Exception is RDCE,
-             where the addition
-             is integrated into the communication. */
+             where the addition is integrated into the communication. */
           if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
             add_forces_from_recv_buffer(gcn);
           else
@@ -648,13 +655,15 @@ void ghost_communicator(GhostCommunicator *gc) {
             int poststore2 = gcn2->type & GHOST_PSTSTORE;
             int node2 = gcn2->node;
             if (is_recv_op(comm_type2, node2) && poststore2) {
-              GHOST_TRACE(fprintf(stderr, "%d: ghost_comm storing delayed "
-                                          "recv, operation %d, from %d\n",
+              GHOST_TRACE(fprintf(stderr,
+                                  "%d: ghost_comm storing delayed recv, "
+                                  "operation %d, from %d\n",
                                   this_node, n2, node2));
 #ifdef ADDITIONAL_CHECKS
               if (n_r_buffer != calc_transmit_size(gcn2, data_parts)) {
-                fprintf(stderr, "%d: ghost_comm transmission size and current "
-                                "size of cells to transmit do not match\n",
+                fprintf(stderr,
+                        "%d: ghost_comm transmission size and current size of "
+                        "cells to transmit do not match\n",
                         this_node);
                 errexit();
               }

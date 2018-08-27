@@ -27,6 +27,7 @@ from tests_common import *
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "CUDA"]),
            "Features not available, skipping test!")
 class P3MGPU_test(ut.TestCase):
+
     def runTest(self):
         from espressomd.electrostatics import P3MGPU
 

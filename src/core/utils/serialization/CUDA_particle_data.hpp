@@ -48,7 +48,7 @@ void serialize(Archive &ar, CUDA_particle_data &p,
                const unsigned int file_version) {
   split_free(ar, p, file_version);
 }
-}
-}
+} // namespace serialization
+} // namespace boost
 
 #endif

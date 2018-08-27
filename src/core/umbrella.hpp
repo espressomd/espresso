@@ -26,7 +26,7 @@
  *  for a particle pair: harmonic interaction in only one
  *  cartesian direction. Useful for umbrella sampling simulations.
  *  \ref forces.cpp
-*/
+ */
 
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
@@ -53,13 +53,15 @@ inline int calc_umbrella_pair_force(Particle *p1, Particle *p2,
   force[ia_params->p.umbrella.dir] += fac;
 
   ONEPART_TRACE(if (p1->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: umbrella f = (%.3e,%.3e,%.3e) "
-                                    "with part id=%d at dist %f fac %.3e\n",
+                    fprintf(stderr,
+                            "%d: OPT: umbrella f = (%.3e,%.3e,%.3e) with part "
+                            "id=%d at dist %f fac %.3e\n",
                             this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                             p2->p.identity, distn, fac));
   ONEPART_TRACE(if (p2->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: umbrella f = (%.3e,%.3e,%.3e) "
-                                    "with part id=%d at dist %f fac %.3e\n",
+                    fprintf(stderr,
+                            "%d: OPT: umbrella f = (%.3e,%.3e,%.3e) with part "
+                            "id=%d at dist %f fac %.3e\n",
                             this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                             p1->p.identity, distn, fac));
   return 0;

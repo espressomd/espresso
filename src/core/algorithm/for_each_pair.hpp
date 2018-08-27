@@ -40,9 +40,8 @@ namespace Algorithm {
  * The Cell type has to provide a function neighbors() that returns
  * a cell range coprised of the topological neighbors of the cell,
  * excluding the cell itself. The cells have to provide a m_verlet_list
- * container
- * that can be used to store particle pairs. It can be empty and is not touched
- * if use_verlet_list is false.
+ * container that can be used to store particle pairs. It can be empty and is
+ * not touched if use_verlet_list is false.
  *
  * verlet_criterion(p1, p2, distance_function(p1, p2)) has to be valid and
  * convertible to bool.
@@ -70,6 +69,6 @@ void for_each_pair(CellIterator first, CellIterator last,
               std::forward<DistanceFunction>(distance_function));
   }
 }
-}
+} // namespace Algorithm
 
 #endif

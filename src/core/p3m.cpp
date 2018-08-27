@@ -953,8 +953,9 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   MPI_Allreduce(lcl_dm, gbl_dm, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
 
   if (energy_flag)
-    en = 0.5 * pref * (Utils::sqr(gbl_dm[0]) + Utils::sqr(gbl_dm[1]) +
-                       Utils::sqr(gbl_dm[2]));
+    en =
+        0.5 * pref *
+        (Utils::sqr(gbl_dm[0]) + Utils::sqr(gbl_dm[1]) + Utils::sqr(gbl_dm[2]));
   else
     en = 0;
   if (force_flag) {
@@ -1437,8 +1438,9 @@ static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL,
   mpi_bcast_coulomb_params();
   /* perform force calculation test */
   int_time = time_force_calc(int_num);
-  P3M_TRACE(fprintf(stderr, "%d: test integration with mesh (%d %d %d), "
-                            "r_cut_iL %lf, cao %d, alpha_L %lf returned %lf.\n",
+  P3M_TRACE(fprintf(stderr,
+                    "%d: test integration with mesh (%d %d %d), "
+                    "r_cut_iL %lf, cao %d, alpha_L %lf returned %lf.\n",
                     this_node, mesh[0], mesh[1], mesh[2], r_cut_iL, cao,
                     alpha_L, int_time));
   return int_time;
@@ -1514,8 +1516,9 @@ static double p3m_mc_time(char **log, int mesh[3], int cao, double r_cut_iL_min,
    * space */
   if (coulomb.method == COULOMB_ELC_P3M &&
       elc_params.gap_size <= 1.1 * r_cut_iL * box_l[0]) {
-    P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh (%d, %d, %d) cao %d r_cut %f "
-                              "reject r_cut %f > gap %f\n",
+    P3M_TRACE(fprintf(stderr,
+                      "p3m_mc_time: mesh (%d, %d, %d) cao %d r_cut %f "
+                      "reject r_cut %f > gap %f\n",
                       mesh[0], mesh[1], mesh[2], cao, r_cut_iL,
                       2 * r_cut_iL * box_l[0], elc_params.gap_size));
     /* print result */
@@ -1579,8 +1582,9 @@ static double p3m_m_time(char **log, int mesh[3], int cao_min, int cao_max,
   int final_dir = 0;
   int cao = *_cao;
 
-  P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=(%d, %d %d), cao_min=%d, "
-                            "cao_max=%d, rmin=%f, rmax=%f\n",
+  P3M_TRACE(fprintf(stderr,
+                    "p3m_m_time: mesh=(%d, %d %d), cao_min=%d, "
+                    "cao_max=%d, rmin=%f, rmax=%f\n",
                     mesh[0], mesh[1], mesh[2], cao_min, cao_max, r_cut_iL_min,
                     r_cut_iL_max));
   /* the initial step sets a timing mark. If there is no valid r_cut, we can
@@ -1917,8 +1921,9 @@ int p3m_adaptive_tune(char **log) {
   p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
   p3m.params.accuracy = accuracy;
   /* broadcast tuned p3m parameters */
-  P3M_TRACE(fprintf(stderr, "%d: Broadcasting P3M parameters: mesh: (%d %d "
-                            "%d), cao: %d, alpha_L: %lf, acccuracy: %lf\n",
+  P3M_TRACE(fprintf(stderr,
+                    "%d: Broadcasting P3M parameters: mesh: (%d %d "
+                    "%d), cao: %d, alpha_L: %lf, acccuracy: %lf\n",
                     this_node, p3m.params.mesh[0], p3m.params.mesh[1],
                     p3m.params.mesh[2], p3m.params.cao, p3m.params.alpha_L,
                     p3m.params.accuracy));
@@ -2317,9 +2322,9 @@ void p3m_calc_kspace_stress(double *stress) {
   /**
   Calculates the long range electrostatics part of the stress tensor. This is
   part Pi_{dir, alpha,beta} in the paper by Essmann et al "A smooth particle
-  mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995); doi:
-  10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper is not
-  present here since M is the empty set in our simulations.
+  mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995);
+  doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper is
+  not present here since M is the empty set in our simulations.
   */
   if (p3m.sum_q2 > 0) {
     double *node_k_space_stress;

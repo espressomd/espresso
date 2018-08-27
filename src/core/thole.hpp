@@ -24,7 +24,7 @@
  *  Routines to calculate the thole dampingi energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp
-*/
+ */
 
 #include "config.hpp"
 
@@ -58,22 +58,23 @@ inline void add_thole_pair_force(const Particle *const p1,
     // Calc damping function (see doi.org/10.1016/0301-0104(81)85176-2)
     // S(r) = 1.0 - (1.0 + thole_s*r/2.0) * exp(-thole_s*r);
     // Calc F = - d/dr ( S(r)*q1q2/r) =
-    // -(1/2)*(-2+(r^2*s^2+2*r*s+2)*exp(-s*r))*q1q2/r^2
-    // Everything before q1q2/r^2 can be used as a factor for the
-    // p3m_add_pair_force method
+    // -(1/2)*(-2+(r^2*s^2+2*r*s+2)*exp(-s*r))*q1q2/r^2 Everything before
+    // q1q2/r^2 can be used as a factor for the p3m_add_pair_force method
     double sr = thole_s * dist;
     double dS_r = 0.5 * (2.0 - (exp(-sr) * (sr * (sr + 2.0) + 2.0)));
     // Add damped p3m shortrange of dipole term
     p3m_add_pair_force(thole_q1q2 * dS_r, d, dist2, dist, force);
 
     ONEPART_TRACE(if (p1->p.identity == check_id)
-                      fprintf(stderr, "%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) "
-                                      "with part id=%d at dist %f fac %.3e\n",
+                      fprintf(stderr,
+                              "%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) with part "
+                              "id=%d at dist %f fac %.3e\n",
                               this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                               p2->p.identity, dist, thole_s));
     ONEPART_TRACE(if (p2->p.identity == check_id)
-                      fprintf(stderr, "%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) "
-                                      "with part id=%d at dist %f fac %.3e\n",
+                      fprintf(stderr,
+                              "%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) with part "
+                              "id=%d at dist %f fac %.3e\n",
                               this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                               p1->p.identity, dist, thole_s));
   }

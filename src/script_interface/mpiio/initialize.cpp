@@ -27,5 +27,5 @@ void initialize() {
   ScriptInterface::register_new<ScriptInterface::MPIIO::MPIIOScript>(
       "ScriptInterface::MPIIO::MPIIOScript");
 }
-}
-}
+} // namespace MPIIO
+} // namespace ScriptInterface

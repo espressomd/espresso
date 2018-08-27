@@ -67,7 +67,7 @@ inline void *malloc(size_t size) {
   }
   return p;
 }
-}
+} // namespace Utils
 
 /*@}*/
 

@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace Utils {
 /** Calculates the SQuaRe of 'double' x, returning 'double'. */
 template <typename T> inline T sqr(T x) { return x * x; }
-}
+
+} // namespace Utils
 
 #endif

@@ -42,6 +42,6 @@ private:
   double m_rad;
   double m_direction;
 };
-}
+} // namespace Shapes
 
 #endif

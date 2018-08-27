@@ -132,9 +132,9 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   for (auto const &it : particles) {
     double dist[3];
     get_mi_vector(dist, com.begin(), partCfg()[it].r.p);
-    distances.push_back(sqrt(sqrlen(dist))); // add distance from the current
-                                             // particle to the com in the
-                                             // distances vectors
+    distances.push_back(
+        sqrt(sqrlen(dist))); // add distance from the current particle to the
+                             // com in the distances vectors
   }
 
   // Get particle indices in the cluster which yield distances  sorted in
@@ -175,4 +175,5 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   return {0, 0};
 #endif
 }
-}
+
+} // namespace ClusterAnalysis

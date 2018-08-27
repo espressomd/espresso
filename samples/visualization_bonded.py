@@ -14,7 +14,7 @@
 #  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-""" Visualization sample for bonds. Simulates a large chain of particles connected via harmonic bonds.  
+""" Visualization sample for bonds. Simulates a large chain of particles connected via harmonic bonds.
 """
 
 from __future__ import print_function
@@ -32,7 +32,7 @@ espressomd.assert_features(required_features)
 box_l = 50
 n_part = 200
 
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 

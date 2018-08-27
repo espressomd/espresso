@@ -21,7 +21,7 @@
 #                                                                              #
 #                  Active Matter: Swimmer Flow Field Tutorial                  #
 #                                                                              #
-################################################################################
+##########################################################################
 
 from __future__ import print_function
 
@@ -32,20 +32,20 @@ import sys
 from espressomd import assert_features, lb
 
 
-assert_features(["ENGINE","LB_GPU","MASS","ROTATION","ROTATIONAL_INERTIA"])
+assert_features(["ENGINE", "LB_GPU", "MASS", "ROTATION", "ROTATIONAL_INERTIA"])
 
 # Read in the hydrodynamic type (pusher/puller) and position
 
 if len(sys.argv) != 3:
-    print("Usage:",sys.argv[0],"<type> <pos>")
+    print("Usage:", sys.argv[0], "<type> <pos>")
     exit()
 
 mode = sys.argv[1]
-pos  = float(sys.argv[2])
+pos = float(sys.argv[2])
 
-################################################################################
+##########################################################################
 
-outdir = "./RESULTS_FLOW_FIELD/T_{}_P_{}/".format(mode,pos)
+outdir = "./RESULTS_FLOW_FIELD/T_{}_P_{}/".format(mode, pos)
 try:
     os.makedirs(outdir)
 except:
@@ -53,37 +53,38 @@ except:
 
 # System parameters
 
-length      = 25.0
-prod_steps  = 1000
+length = 25.0
+prod_steps = 1000
 prod_length = 50
-dt          = 0.01
+dt = 0.01
 
 system = espressomd.System(box_l=[length, length, length])
 system.cell_system.skin = 0.3
 system.time_step = dt
 system.min_global_cut = 1.0
 
-################################################################################
+##########################################################################
 
 # Set the position of the particle
 
-x0 = 0.5*length
-y0 = 0.5*length
-z0 = 0.5*length + pos
+x0 = 0.5 * length
+y0 = 0.5 * length
+z0 = 0.5 * length + pos
 
 # Sphere size, mass, and moment of inertia, dipole force
 
 sph_size = 0.5
 sph_mass = 4.8
-Ixyz     = 4.8
-force    = 0.1 
+Ixyz = 4.8
+force = 0.1
 
 # Setup the particle particle
 
-system.part.add(pos=[x0,y0,z0],type=0,mass=sph_mass, rinertia=[Ixyz,Ixyz,Ixyz],
-                swimming={'f_swim':force, 'mode':mode, 'dipole_length':sph_size + 0.5})
+system.part.add(
+    pos=[x0, y0, z0], type=0, mass=sph_mass, rinertia=[Ixyz, Ixyz, Ixyz],
+                swimming={'f_swim': force, 'mode': mode, 'dipole_length': sph_size + 0.5})
 
-################################################################################
+##########################################################################
 
 # Setup the fluid (quiescent)
 
@@ -92,20 +93,21 @@ vskin = 0.1
 frict = 20.0
 visco = 1.0
 densi = 1.0
-temp  = 0.0
+temp = 0.0
 
-lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco, tau=dt, fric=frict, couple='3pt')
+lbf = lb.LBFluidGPU(agrid=agrid, dens=densi,
+                    visc=visco, tau=dt, fric=frict, couple='3pt')
 system.actors.add(lbf)
 system.thermostat.set_lb(kT=temp)
 
-################################################################################
+##########################################################################
 
 # Output the coordinates
 
-with open("{}/trajectory.dat".format(outdir),'w') as outfile:
-    print("####################################################",file=outfile)
-    print("#        time        position       velocity       #",file=outfile)
-    print("####################################################",file=outfile)
+with open("{}/trajectory.dat".format(outdir), 'w') as outfile:
+    print("####################################################", file=outfile)
+    print("#        time        position       velocity       #", file=outfile)
+    print("####################################################", file=outfile)
 
     # Production run
 
@@ -116,9 +118,10 @@ with open("{}/trajectory.dat".format(outdir),'w') as outfile:
               file=outfile)
 
         # Output 50 simulations
-        if k % (prod_steps/50) == 0:
-            num = k/(prod_steps/50)
-            lbf.print_vtk_velocity("{}/lb_velocity_{}.vtk".format(outdir,num))
-            system.part.writevtk("{}/position_{}.vtk".format(outdir,num),types=[0])
+        if k % (prod_steps / 50) == 0:
+            num = k / (prod_steps / 50)
+            lbf.print_vtk_velocity("{}/lb_velocity_{}.vtk".format(outdir, num))
+            system.part.writevtk(
+                "{}/position_{}.vtk".format(outdir, num), types=[0])
 
         system.integrator.run(prod_length)

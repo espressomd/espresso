@@ -25,7 +25,7 @@
  *  Routines to calculate the soft-sphere energy and/or  force
  *  for a particle pair.
  *  \ref forces.cpp
-*/
+ */
 
 #include "config.hpp"
 

@@ -76,7 +76,7 @@ void pack_particles(ParticleRange particles,
     i++;
   }
 }
-}
+} // namespace
 
 // Analogous to the usual cuda_mpi_get_particles function
 void IBM_cuda_mpi_get_particles(ParticleRange particles) {
@@ -119,7 +119,7 @@ void set_velocities(ParticleRange particles,
     i++;
   }
 }
-}
+} // namespace
 
 void IBM_cuda_mpi_send_velocities(ParticleRange particles) {
   auto const n_part = particles.size();

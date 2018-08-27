@@ -19,10 +19,9 @@
 #ifndef _OBJECT_IN_FLUID_OUT_DIRECTION_H
 #define _OBJECT_IN_FLUID_OUT_DIRECTION_H
 /** \file out_direction.hpp Routines to calculate the outward direction of the
- * membrane
- *  using a particle quadruple (one particle and its 3 strategically placed
- * neighbors)
-*/
+ * membrane using a particle quadruple (one particle and its 3 strategically
+ * placed neighbors)
+ */
 
 #include "config.hpp"
 
@@ -44,8 +43,8 @@ int oif_out_direction_set_params(int bond_type);
 
     computes the normal of triangle p2p3p4
     this triangle was initially oriented in such a way that its normal already
-   points out of the object
-    normalizes and stores the result as out_direction in p1 data
+   points out of the object normalizes and stores the result as out_direction in
+   p1 data
     @return 0
 */
 inline int calc_out_direction(
@@ -112,8 +111,8 @@ inline int calc_out_direction(
           }
         } else {
           printf("Something wrong in out_direction.hpp: All particles in a "
-                 "bond are ghost particles, impossible to unfold the "
-                 "positions...");
+                 "bond are ghost particles, impossible to "
+                 "unfold the positions...");
           return 0;
         }
       }

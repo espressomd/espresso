@@ -22,12 +22,10 @@
 #define _BONDED_COULOMB_P3M_SR_HPP
 /** \file bonded_coulomb.hpp
  *  Routines to calculate the BONDED_COULOMB_P3M_SR Energy or/and
- * BONDED_COULOMB_P3M_SR force
- *  for a particle pair. This is only the shortrange part of P3M and first
- *  used to subtract certain intramolecular interactions in combination with
- * thole damping
- *  \ref forces.cpp
-*/
+ * BONDED_COULOMB_P3M_SR force for a particle pair. This is only the shortrange
+ * part of P3M and first used to subtract certain intramolecular interactions in
+ * combination with thole damping \ref forces.cpp
+ */
 
 /************************************************************/
 
@@ -67,12 +65,14 @@ inline int calc_bonded_coulomb_p3m_sr_pair_force(Particle *p1, Particle *p2,
                        force);
 
     ONEPART_TRACE(if (p1->p.identity == check_id) fprintf(
-        stderr, "%d: OPT: BONDED_COULOMB_P3M_SR f = (%.3e,%.3e,%.3e) with part "
-                "id=%d at dist %f\n",
+        stderr,
+        "%d: OPT: BONDED_COULOMB_P3M_SR f = (%.3e,%.3e,%.3e) with part id=%d "
+        "at dist %f\n",
         this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2], p2->p.identity, dist2));
     ONEPART_TRACE(if (p2->p.identity == check_id) fprintf(
-        stderr, "%d: OPT: BONDED_COULOMB_P3M_SR f = (%.3e,%.3e,%.3e) with part "
-                "id=%d at dist %f\n",
+        stderr,
+        "%d: OPT: BONDED_COULOMB_P3M_SR f = (%.3e,%.3e,%.3e) with part id=%d "
+        "at dist %f\n",
         this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2], p1->p.identity, dist2));
   }
 

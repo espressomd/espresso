@@ -573,7 +573,7 @@ void realloc_local_particles(int part);
  *   @param part the identity of the particle to fetch
  *   @return Pointer to copy of particle if it exists,
  *          nullptr otherwise;
-*/
+ */
 const Particle &get_particle_data(int part);
 
 /**

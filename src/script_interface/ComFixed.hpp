@@ -39,5 +39,5 @@ public:
                      []() { return comfixed.get_fixed_types(); }}});
   }
 };
-}
+} // namespace ScriptInterface
 #endif

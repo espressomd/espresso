@@ -29,7 +29,7 @@ public:
     return x;
   }
 };
-}
-}
+} // namespace Coupling
+} // namespace FieldCoupling
 
 #endif

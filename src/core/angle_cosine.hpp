@@ -24,7 +24,7 @@
  *  Routines to calculate the angle energy or/and and force
  *  for a particle triple.
  *  \ref forces.cpp
-*/
+ */
 
 #include "interaction_data.hpp"
 #include "particle_data.hpp"

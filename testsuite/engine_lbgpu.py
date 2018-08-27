@@ -31,9 +31,11 @@ except ImportError:
     print("Module \"vtk\" not available, skipping test!")
     exit()
 
+
 @ut.skipIf(not espressomd.has_features(["ENGINE", "LB_GPU"]),
            "Features not available, skipping test!")
 class SwimmerTest(ut.TestCase):
+
     def prepare(self, S):
         boxl = 12
         tstep = 0.01
@@ -82,7 +84,7 @@ class SwimmerTest(ut.TestCase):
                    swimming={"mode": "puller", "f_swim": 0.05,
                              "dipole_length": 1.5, "rotational_friction": 6.0},
                    quat=[0, 0, np.sqrt(.5), np.sqrt(.5)])
-        S.part[:].rotation=1,1,1
+        S.part[:].rotation = 1, 1, 1
 
     def run_and_check(self, S, lbm, vtk_name):
         S.integrator.run(self.sampsteps)
@@ -104,7 +106,7 @@ class SwimmerTest(ut.TestCase):
         self.sampsteps = 2000
 
         S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        S.seed  = S.cell_system.get_state()['n_nodes'] * [1234]
+        S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
         self.prepare(S)
 
         lbm = espressomd.lb.LBFluidGPU(
@@ -115,7 +117,8 @@ class SwimmerTest(ut.TestCase):
             dens=1.0,
             couple="2pt")
         S.actors.add(lbm)
-        self.run_and_check(S, lbm, tests_common.abspath("data/engine_lbgpu_2pt.vtk"))
+        self.run_and_check(
+            S, lbm, tests_common.abspath("data/engine_lbgpu_2pt.vtk"))
 
 if __name__ == '__main__':
     ut.main()

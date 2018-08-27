@@ -26,7 +26,7 @@
  *  eps * [ b1 * (sigma/(r-r_offset))^a1 - b2 * (sigma/(r-r_offset))^a2 + shift]
  *
  *  \ref forces.cpp
-*/
+ */
 
 #include "config.hpp"
 
@@ -45,7 +45,7 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      ,
                      double lambda, double softrad
 #endif
-                     ) {
+) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
   if (!data)

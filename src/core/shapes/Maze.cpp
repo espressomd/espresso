@@ -94,4 +94,4 @@ int Maze::calculate_dist(const double *ppos, double *dist, double *vec) const {
   }
   return 0;
 }
-}
+} // namespace Shapes

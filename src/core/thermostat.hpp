@@ -56,7 +56,7 @@ using GammaType = Vector3d;
 #else
 using GammaType = double;
 #endif
-}
+} // namespace Thermostat
 
 /************************************************
  * exported variables

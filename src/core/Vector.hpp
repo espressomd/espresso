@@ -192,7 +192,7 @@ bool all_of(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
 
   return true;
 }
-}
+} // namespace detail
 
 template <size_t N, typename T>
 bool operator<(Vector<N, T> const &a, Vector<N, T> const &b) {

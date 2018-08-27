@@ -24,7 +24,7 @@
  *  Routines to calculate the Born-Meyer-Huggins-Tosi-Fumi energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp
-*/
+ */
 
 #include "interaction_data.hpp"
 #include "particle_data.hpp"

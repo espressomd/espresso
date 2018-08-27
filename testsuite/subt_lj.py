@@ -22,6 +22,7 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
            "Skipped because of not LENNARD_JONES")
 class SubtLjTest(ut.TestCase):
@@ -56,7 +57,7 @@ class SubtLjTest(ut.TestCase):
         print(s.analysis.energy())
 
         self.assertAlmostEqual(f, 0, places=10)
-        self.assertAlmostEqual(s.analysis.energy()['total'] , 0, places=10)
+        self.assertAlmostEqual(s.analysis.energy()['total'], 0, places=10)
 
 if __name__ == "__main__":
     ut.main()

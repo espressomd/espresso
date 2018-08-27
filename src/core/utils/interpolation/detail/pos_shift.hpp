@@ -35,8 +35,8 @@ namespace detail {
 template <unsigned order> constexpr double pos_shift() {
   return 0.5 * (order % 2);
 }
-}
-}
-}
+} // namespace detail
+} // namespace Interpolation
+} // namespace Utils
 
 #endif

@@ -467,4 +467,4 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
 }
 
 #endif
-} // namespace
+} // namespace LBBoundaries

@@ -154,9 +154,10 @@ Vector3d dpd_pair_force(const Particle *p1, const Particle *p2,
         weight(ia_params->dpd_twf, ia_params->dpd_tr_cut, dist_inv);
     auto const omega2 = Utils::sqr(omega);
 
-    double P_times_dist_sqr[3]
-                           [3] = {{dist2, 0, 0}, {0, dist2, 0}, {0, 0, dist2}},
-        noise_vec[3];
+    double P_times_dist_sqr[3][3] = {{dist2, 0, 0},
+                                     {0, dist2, 0},
+                                     {0, 0, dist2}},
+           noise_vec[3];
     for (int i = 0; i < 3; i++) {
       // noise vector
       if (ia_params->dpd_pref2 > 0.0) {

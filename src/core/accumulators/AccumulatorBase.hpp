@@ -41,6 +41,6 @@ inline void AccumulatorBase::auto_update() {
   }
   ++m_counter;
 }
-}
+} // namespace Accumulators
 
 #endif

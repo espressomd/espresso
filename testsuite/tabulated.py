@@ -23,13 +23,14 @@ import espressomd
 import numpy as np
 from time import time
 
-@ut.skipIf(not espressomd.has_features("TABULATED"),"Skipped because feature is disabled")
+
+@ut.skipIf(not espressomd.has_features("TABULATED"), "Skipped because feature is disabled")
 class TabulatedTest(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
     s.box_l = 3 * [10]
     s.time_step = 0.01
-    s.cell_system.skin=0.4
+    s.cell_system.skin = 0.4
 
     def setUp(self):
         self.force = np.zeros((100,))
@@ -39,7 +40,7 @@ class TabulatedTest(ut.TestCase):
 
         self.dx = (self.max_ - self.min_) / 99.
         for i in range(0, 100):
-            self.force[i] =  5 + i * 2.3 * self.dx
+            self.force[i] = 5 + i * 2.3 * self.dx
             self.energy[i] = 5 - i * 2.3 * self.dx
 
         self.s.part.clear()
@@ -53,26 +54,37 @@ class TabulatedTest(ut.TestCase):
         for z in np.linspace(0, self.max_ - self.min_, 200, endpoint=False):
             self.s.part[1].pos = [5., 5., 6. + z]
             self.s.integrator.run(0)
-            np.testing.assert_allclose(np.copy(self.s.part[0].f), [0., 0., 5. + z * 2.3])
-            np.testing.assert_allclose(np.copy(self.s.part[0].f), -np.copy(self.s.part[1].f))
-            self.assertAlmostEqual(self.s.analysis.energy()['total'], 5. - z * 2.3)
+            np.testing.assert_allclose(
+                np.copy(self.s.part[0].f), [0., 0., 5. + z * 2.3])
+            np.testing.assert_allclose(
+                np.copy(self.s.part[0].f), -np.copy(self.s.part[1].f))
+            self.assertAlmostEqual(
+                self.s.analysis.energy()['total'], 5. - z * 2.3)
 
     def test_non_bonded(self):
-        self.s.non_bonded_inter[0,0].tabulated.set_params(min=self.min_, max=self.max_, energy=self.energy, force=self.force)
+        self.s.non_bonded_inter[0, 0].tabulated.set_params(
+            min=self.min_, max=self.max_, energy=self.energy, force=self.force)
 
-        np.testing.assert_allclose(self.force, self.s.non_bonded_inter[0,0].tabulated.get_params()['force'])
-        np.testing.assert_allclose(self.energy, self.s.non_bonded_inter[0,0].tabulated.get_params()['energy'])
-        self.assertAlmostEqual(self.min_, self.s.non_bonded_inter[0,0].tabulated.get_params()['min'])
-        self.assertAlmostEqual(self.max_, self.s.non_bonded_inter[0,0].tabulated.get_params()['max'])
+        np.testing.assert_allclose(
+            self.force, self.s.non_bonded_inter[0, 0].tabulated.get_params()['force'])
+        np.testing.assert_allclose(
+            self.energy, self.s.non_bonded_inter[0, 0].tabulated.get_params()['energy'])
+        self.assertAlmostEqual(
+            self.min_, self.s.non_bonded_inter[0, 0].tabulated.get_params()['min'])
+        self.assertAlmostEqual(
+            self.max_, self.s.non_bonded_inter[0, 0].tabulated.get_params()['max'])
 
         self.check()
 
-        self.s.non_bonded_inter[0,0].tabulated.set_params(min=-1, max=-1, energy=[], force=[])
+        self.s.non_bonded_inter[0, 0].tabulated.set_params(
+            min=-1, max=-1, energy=[], force=[])
 
     def test_bonded(self):
         from espressomd.interactions import Tabulated
 
-        tb = Tabulated(type='distance', min=self.min_, max=self.max_, energy=self.energy, force=self.force)
+        tb = Tabulated(
+            type='distance', min=self.min_, max=self.max_, energy=self.energy,
+                       force=self.force)
         self.s.bonded_inter.add(tb)
 
         np.testing.assert_allclose(self.force, tb.params['force'])

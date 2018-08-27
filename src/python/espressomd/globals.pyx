@@ -86,12 +86,12 @@ cdef class Globals(object):
 
     def __getstate__(self):
         state = {'box_l': self.box_l,
-                'time_step': self.time_step,
-                'min_global_cut': self.min_global_cut,
-                'periodicity': self.periodicity,
-                'time': self.time,
-                'timings': self.timings,
-                'force_cap': self.force_cap}
+                 'time_step': self.time_step,
+                 'min_global_cut': self.min_global_cut,
+                 'periodicity': self.periodicity,
+                 'time': self.time,
+                 'timings': self.timings,
+                 'force_cap': self.force_cap}
         return state
 
     def __setstate__(self, state):

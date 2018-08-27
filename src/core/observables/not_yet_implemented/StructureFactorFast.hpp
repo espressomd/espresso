@@ -105,8 +105,9 @@ int ObservableStructureFactorFast::actual_calculate(PartCfg &partCfg) {
         double C_sum = 0;
         double S_sum = 0;
         for (int p = 0; p < n_part; p++) {
-          double qr = twoPI_L * order * (partCache[3 * p + off1] * fac1 +
-                                         partCache[3 * p + off2] * fac2);
+          double qr =
+              twoPI_L * order *
+              (partCache[3 * p + off1] * fac1 + partCache[3 * p + off2] * fac2);
           C_sum += scattering_length * cos(qr);
           S_sum += scattering_length * sin(qr);
         }
@@ -140,9 +141,9 @@ int ObservableStructureFactorFast::actual_calculate(PartCfg &partCfg) {
         // pick 6 random vectors
         int fac1 = (1 - 2 * (dir / 3));
         for (int p = 0; p < n_part; p++) {
-          double qr =
-              twoPI_L * order * (partCache[3 * p + (dir % 3)] * fac1 +
-                                 partCache[3 * p + ((dir + 1) % 3)] * 2);
+          double qr = twoPI_L * order *
+                      (partCache[3 * p + (dir % 3)] * fac1 +
+                       partCache[3 * p + ((dir + 1) % 3)] * 2);
           C_sum += scattering_length * cos(qr);
           S_sum += scattering_length * sin(qr);
         }
@@ -158,10 +159,10 @@ int ObservableStructureFactorFast::actual_calculate(PartCfg &partCfg) {
         // pick 6 random vectors
         int fac1 = (1 - 2 * (dir / 3)) * 2;
         for (int p = 0; p < n_part; p++) {
-          double qr =
-              twoPI_L * order * (partCache[3 * p + (dir % 3)] +
-                                 partCache[3 * p + ((dir + 1) % 3)] * fac1 +
-                                 partCache[3 * p + ((dir + 2) % 3)]);
+          double qr = twoPI_L * order *
+                      (partCache[3 * p + (dir % 3)] +
+                       partCache[3 * p + ((dir + 1) % 3)] * fac1 +
+                       partCache[3 * p + ((dir + 2) % 3)]);
           C_sum += scattering_length * cos(qr);
           S_sum += scattering_length * sin(qr);
         }
@@ -177,10 +178,10 @@ int ObservableStructureFactorFast::actual_calculate(PartCfg &partCfg) {
         // pick 6 random vectors
         int fac1 = (1 - 2 * (dir / 3)) * 2;
         for (int p = 0; p < n_part; p++) {
-          double qr =
-              twoPI_L * order * (partCache[3 * p + (dir % 3)] * fac1 +
-                                 partCache[3 * p + ((dir + 1) % 3)] * 2 +
-                                 partCache[3 * p + ((dir + 2) % 3)]);
+          double qr = twoPI_L * order *
+                      (partCache[3 * p + (dir % 3)] * fac1 +
+                       partCache[3 * p + ((dir + 1) % 3)] * 2 +
+                       partCache[3 * p + ((dir + 2) % 3)]);
           C_sum += scattering_length * cos(qr);
           S_sum += scattering_length * sin(qr);
         }

@@ -45,11 +45,10 @@ typedef struct {
   /** far formula cutoff and its square */
   double far_cut, far_cut2;
   /** if nonzero, \ref MMM2D_struct::far_cut has been calculated by \ref
-     MMM2D_tune_far, and will be
-      recalculated automatically, if important parameters, such as the number of
-     cells, change. If this
-      is zero, the far cutoff has been set explicitly by the user and will not
-     be touched by Espresso. */
+     MMM2D_tune_far, and will be recalculated automatically, if important
+     parameters, such as the number of cells, change. If this is zero, the far
+     cutoff has been set explicitly by the user and will not be touched by
+     Espresso. */
   int far_calculated;
   /// whether there is dielectric contrast
   int dielectric_contrast_on;
@@ -62,15 +61,11 @@ typedef struct {
 extern MMM2D_struct mmm2d_params;
 
 /** set parameters for MMM2D. This assumes that the particles do NOT leave the
-   box.
-    For the near formula (nsquared cell structure), precision might be lost,
-   while
-    the far formula might have problems with overflows.
+   box. For the near formula (nsquared cell structure), precision might be lost,
+   while the far formula might have problems with overflows.
     @param maxPWerror   the maximal error for the pairwise interactions. Both
-   for
-                        potential and force components. The potential is
-   therefore
-                        always slightly more precise
+   for potential and force components. The potential is therefore always
+   slightly more precise
     @param far_cut      sets the cutoff for the far formula in inverse lengths.
                         If -1, the far cutoff is determined by maxPWerror.
                         Manual setting is probably only good for testing

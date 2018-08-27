@@ -32,7 +32,7 @@ class TestCylindricalLBObservable(ut.TestCase):
     Testcase for the CylindricalFluxDensityObservable.
 
     """
-    system = espressomd.System(box_l=(10,10,10))
+    system = espressomd.System(box_l=(10, 10, 10))
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     positions = []
@@ -83,7 +83,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         for i, p in enumerate(self.positions):
             tmp = p - np.array(self.params['center'])
             tmp = self.swap_axis_inverse(tmp, self.params['axis'])
-            positions[i, :] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(
+            positions[i,:] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(
                 tmp)
         return positions
 
@@ -147,7 +147,7 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['max_z'])
         # Normalization
         for i in range(self.params['n_r_bins']):
-            histogram[i, :, :] /= bin_volume[i]
+            histogram[i,:,:] /= bin_volume[i]
         return histogram
 
     def LB_fluxdensity_profile_test(self):
@@ -162,9 +162,9 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['n_phi_bins'],
             self.params['n_z_bins'],
             3)
-        core_hist_v_r = core_hist[:, :, :, 0]
-        core_hist_v_phi = core_hist[:, :, :, 1]
-        core_hist_v_z = core_hist[:, :, :, 2]
+        core_hist_v_r = core_hist[:,:,:, 0]
+        core_hist_v_phi = core_hist[:,:,:, 1]
+        core_hist_v_z = core_hist[:,:,:, 2]
         self.pol_positions = self.pol_coords()
         np_hist, _ = np.histogramdd(self.pol_positions, bins=(self.params['n_r_bins'],
                                                               self.params['n_phi_bins'],
@@ -194,9 +194,9 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['n_phi_bins'],
             self.params['n_z_bins'],
             3)
-        core_hist_v_r = core_hist[:, :, :, 0]
-        core_hist_v_phi = core_hist[:, :, :, 1]
-        core_hist_v_z = core_hist[:, :, :, 2]
+        core_hist_v_r = core_hist[:,:,:, 0]
+        core_hist_v_phi = core_hist[:,:,:, 1]
+        core_hist_v_z = core_hist[:,:,:, 2]
         self.pol_positions = self.pol_coords()
         np_hist, _ = np.histogramdd(self.pol_positions, bins=(self.params['n_r_bins'],
                                                               self.params['n_phi_bins'],
@@ -235,9 +235,9 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['n_phi_bins'],
             self.params['n_z_bins'],
             3)
-        core_hist_v_r = core_hist[:, :, :, 0]
-        core_hist_v_phi = core_hist[:, :, :, 1]
-        core_hist_v_z = core_hist[:, :, :, 2]
+        core_hist_v_r = core_hist[:,:,:, 0]
+        core_hist_v_phi = core_hist[:,:,:, 1]
+        core_hist_v_z = core_hist[:,:,:, 2]
         self.pol_positions = self.pol_coords()
         np_hist, _ = np.histogramdd(self.pol_positions, bins=(self.params['n_r_bins'],
                                                               self.params['n_phi_bins'],

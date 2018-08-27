@@ -93,12 +93,12 @@ void init_random(void);
  */
 void init_random_seed(int seed);
 
-} /* Random */
+} // namespace Random
 
 /**
  * @brief Draws a random real number from the uniform distribution in the range
  * [0,1)
-*/
+ */
 
 inline double d_random() {
   using namespace Random;
@@ -134,8 +134,7 @@ inline double gaussian_random(void) {
  *
  * Generates a Gaussian random number and generates a number between -2 sigma
  * and 2 sigma in the form of a Gaussian with standard deviation
- * sigma=1.118591404 resulting in
- * an actual standard deviation of 1.
+ * sigma=1.118591404 resulting in an actual standard deviation of 1.
  *
  * @return Gaussian random number.
  */

@@ -25,6 +25,7 @@ import numpy as np
 @ut.skipIf(not espressomd.has_features(["LB", "LB_BOUNDARIES"]),
            "Features not available, skipping test.")
 class LBBoundaryVelocityTest(ut.TestCase):
+
     """Test slip velocity of boundaries.
 
        In this simple test add wall with a slip verlocity is
@@ -45,7 +46,8 @@ class LBBoundaryVelocityTest(ut.TestCase):
         v_boundary = [0.03, 0.02, 0.01]
 
         wall_shape = espressomd.shapes.Wall(normal=[1, 2, 3], dist=0.5)
-        wall = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v_boundary)
+        wall = espressomd.lbboundaries.LBBoundary(
+            shape=wall_shape, velocity=v_boundary)
         system.lbboundaries.add(wall)
 
         system.integrator.run(10000)
@@ -57,4 +59,3 @@ class LBBoundaryVelocityTest(ut.TestCase):
 
 if __name__ == "__main__":
     ut.main()
-

@@ -99,11 +99,14 @@ public:
   }
 
   std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
-    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_correlator);
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(
+        m_correlator);
   }
 
-  std::shared_ptr<const ::Accumulators::AccumulatorBase> accumulator() const override {
-    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_correlator);
+  std::shared_ptr<const ::Accumulators::AccumulatorBase>
+  accumulator() const override {
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(
+        m_correlator);
   }
 
 private:
@@ -121,7 +124,7 @@ private:
   std::shared_ptr<Observables::Observable> m_obs2;
 };
 
-} /* namespace Correlators */
+} // namespace Accumulators
 } /* namespace ScriptInterface */
 
 #endif

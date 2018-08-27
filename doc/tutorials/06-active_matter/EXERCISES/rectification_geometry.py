@@ -21,7 +21,7 @@
 #                                                                              #
 #                   Active Matter: Rectification System Setup                  #
 #                                                                              #
-################################################################################
+##########################################################################
 
 from __future__ import print_function
 
@@ -53,7 +53,7 @@ dt = 0.01
 # Setup the MD parameters
 
 system = espressomd.System(box_l=[length, diameter + 4, diameter + 4])
-system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 0.5
@@ -77,12 +77,14 @@ system.actors.add(lbf)
 # 'infinite length' using the periodic boundaries, then the cylinder must
 # extend over the boundary.
 #
-################################################################################
+##########################################################################
 
 # Setup cylinder
 
-cylinder = LBBoundary(shape=Cylinder(center=[length / 2.0, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
-                                     axis=[1, 0, 0],
+cylinder = LBBoundary(
+    shape=Cylinder(
+        center=[length / 2.0, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
+                     axis=[1, 0, 0],
                                      radius=diameter / 2.0,
                                      length=length,
                                      direction=-1))
@@ -115,7 +117,7 @@ hollow_cone = LBBoundary(shape=HollowCone(position_x=length / 2.0 - shift,
                                           direction=1))
 system.lbboundaries.add(hollow_cone)
 
-################################################################################
+##########################################################################
 
 # Output the geometry
 
@@ -124,4 +126,4 @@ lbf.print_vtk_boundary("{}/boundary.vtk".format(outdir))
 ## Exercise 2 ##
 # Visualize this geometry using paraview
 
-################################################################################
+##########################################################################

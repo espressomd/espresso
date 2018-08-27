@@ -90,7 +90,7 @@ namespace Communication {
  *
  */
 MpiCallbacks &mpiCallbacks();
-}
+} // namespace Communication
 
 /**************************************************
  * for every procedure requesting a MPI negotiation

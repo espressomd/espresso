@@ -91,7 +91,9 @@ static double *partblk = nullptr;
 static double gblcblk[8];
 
 /** structure for storing of sin and cos values */
-typedef struct { double s, c; } SCCache;
+typedef struct {
+  double s, c;
+} SCCache;
 
 /** \name sin/cos caching */
 /*@{*/
@@ -385,8 +387,9 @@ static double dipole_energy() {
 
   if (!elc_params.neutralize) {
     // SUBTRACT the energy of the P3M homogeneous neutralizing background
-    eng += 2 * pref * (-gblcblk[0] * gblcblk[4] -
-                       (.25 - .5 / 3.) * Utils::sqr(gblcblk[0] * box_l[2]));
+    eng += 2 * pref *
+           (-gblcblk[0] * gblcblk[4] -
+            (.25 - .5 / 3.) * Utils::sqr(gblcblk[0] * box_l[2]));
   }
 
   if (elc_params.dielectric_contrast_on) {
@@ -573,9 +576,8 @@ static void setup_P(int p, double omega) {
 
   if (elc_params.dielectric_contrast_on) {
     double fac_elc =
-        1.0 / (1 -
-               elc_params.delta_mid_top * elc_params.delta_mid_bot *
-                   exp(-omega * 2 * elc_params.h));
+        1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
+                       exp(-omega * 2 * elc_params.h));
     fac_delta_mid_bot = elc_params.delta_mid_bot * fac_elc;
     fac_delta_mid_top = elc_params.delta_mid_top * fac_elc;
     fac_delta = fac_delta_mid_bot * elc_params.delta_mid_top;
@@ -681,9 +683,8 @@ static void setup_Q(int q, double omega) {
 
   if (elc_params.dielectric_contrast_on) {
     double fac_elc =
-        1.0 / (1 -
-               elc_params.delta_mid_top * elc_params.delta_mid_bot *
-                   exp(-omega * 2 * elc_params.h));
+        1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
+                       exp(-omega * 2 * elc_params.h));
     fac_delta_mid_bot = elc_params.delta_mid_bot * fac_elc;
     fac_delta_mid_top = elc_params.delta_mid_top * fac_elc;
     fac_delta = fac_delta_mid_bot * elc_params.delta_mid_top;
@@ -857,9 +858,8 @@ static void setup_PQ(int p, int q, double omega) {
   double scale = 1;
   if (elc_params.dielectric_contrast_on) {
     double fac_elc =
-        1.0 / (1 -
-               elc_params.delta_mid_top * elc_params.delta_mid_bot *
-                   exp(-omega * 2 * elc_params.h));
+        1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
+                       exp(-omega * 2 * elc_params.h));
     fac_delta_mid_bot = elc_params.delta_mid_bot * fac_elc;
     fac_delta_mid_top = elc_params.delta_mid_top * fac_elc;
     fac_delta = fac_delta_mid_bot * elc_params.delta_mid_top;

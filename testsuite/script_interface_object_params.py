@@ -23,7 +23,9 @@ import espressomd
 from espressomd.shapes import Wall, Sphere
 from espressomd.constraints import ShapeBasedConstraint
 
+
 class ScriptInterfaceObjectParams(ut.TestCase):
+
     """Tests that object parameters are assigned the correct python class"""
 
     def test(self):

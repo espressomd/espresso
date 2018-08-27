@@ -33,8 +33,8 @@ class OifVolumeConservation(ut.TestCase):
     def test(self):
         import object_in_fluid as oif
 
-        system = espressomd.System(box_l=(10,10,10))
-        self.assertEqual(system.max_oif_objects,0)
+        system = espressomd.System(box_l=(10, 10, 10))
+        self.assertEqual(system.max_oif_objects, 0)
         system.time_step = 0.1
         system.cell_system.skin = 0.5
         system.thermostat.set_langevin(kT=0, gamma=0.7)
@@ -46,7 +46,7 @@ class OifVolumeConservation(ut.TestCase):
         # creating the OIF object
         cell0 = oif.OifCell(
             cell_type=cell_type, particle_type=0, origin=[5.0, 5.0, 5.0])
-        self.assertEqual(system.max_oif_objects,1)
+        self.assertEqual(system.max_oif_objects, 1)
         # cell0.output_vtk_pos_folded(file_name="cell0_0.vtk")
 
         # fluid
@@ -69,7 +69,6 @@ class OifVolumeConservation(ut.TestCase):
             print("final diameter = " + str(diameter_final))
             self.assertAlmostEqual(
                 diameter_final / diameter_init - 1, 0, delta=0.005)
-        
 
 
 if __name__ == "__main__":

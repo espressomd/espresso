@@ -74,4 +74,5 @@ std::vector<double> LBVelocityProfile::operator()(PartCfg &partCfg) const {
   }
   return hist_tmp;
 }
-}
+
+} // namespace Observables

@@ -36,23 +36,14 @@ public:
     add_parameters(
         {{"have_velocity",
           [this](const Variant &v) {
-            virtual_sites()->set_have_velocity(
-                get_value<bool>(v));
+            virtual_sites()->set_have_velocity(get_value<bool>(v));
           },
-          [this]() {
-            return virtual_sites()
-                ->get_have_velocity();
-          }},
+          [this]() { return virtual_sites()->get_have_velocity(); }},
          {"have_quaternion",
           [this](const Variant &v) {
-            virtual_sites()
-                ->set_have_quaternion(
-                    get_value<bool>(v));
+            virtual_sites()->set_have_quaternion(get_value<bool>(v));
           },
-          [this]() {
-            return virtual_sites()
-                ->get_have_quaternion();
-          }}});
+          [this]() { return virtual_sites()->get_have_quaternion(); }}});
   }
   /** Vs implementation we are wrapping */
   virtual std::shared_ptr<::VirtualSites> virtual_sites() = 0;

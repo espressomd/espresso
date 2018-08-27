@@ -23,6 +23,7 @@ import collections
 
 
 class RandomPairTest(ut.TestCase):
+
     """This test creates a system of random particles.
        Then the interaction paris for a certain cutoff
        are calculated by brute force in python (pairs_n2),
@@ -31,8 +32,8 @@ class RandomPairTest(ut.TestCase):
        repeated for all valid combination of periodicities.
 
     """
-    system = espressomd.System(box_l = 3 * [10.])
-        
+    system = espressomd.System(box_l=3 * [10.])
+
     def setUp(self):
         s = self.system
         s.time_step = .1
@@ -43,17 +44,15 @@ class RandomPairTest(ut.TestCase):
         np.random.seed(2)
 
         s.part.add(pos=s.box_l * np.random.random((n_part, 3)))
-        self.all_pairs=[]
+        self.all_pairs = []
 
-        dist_func=self.system.distance
+        dist_func = self.system.distance
         for pair in self.system.part.pairs():
                 if dist_func(pair[0], pair[1]) < 1.5:
-                    self.all_pairs.append((pair[0].id,pair[1].id))
+                    self.all_pairs.append((pair[0].id, pair[1].id))
 
-        self.all_pairs=set(self.all_pairs)
+        self.all_pairs = set(self.all_pairs)
         self.assertTrue(len(self.all_pairs))
-
-
 
     def tearDown(self):
         self.system.part.clear()
@@ -63,10 +62,10 @@ class RandomPairTest(ut.TestCase):
         # and skip those that ar not within the desired distance
         # for the current periodicity
 
-        pairs=[]
-        parts=self.system.part
+        pairs = []
+        parts = self.system.part
         for p in self.all_pairs:
-            if self.system.distance(parts[p[0]],parts[p[1]]) <=dist:
+            if self.system.distance(parts[p[0]], parts[p[1]]) <= dist:
                 pairs.append(p)
         return set(pairs)
 

@@ -23,7 +23,7 @@
  *  Routines, row decomposition, data structures and communication for the
  * 3D-FFT.
  *
-*/
+ */
 #include "fft-common.hpp"
 
 #if defined(P3M) || defined(DP3M)
@@ -319,8 +319,9 @@ void fft_print_fft_plan(fft_forw_plan pl) {
   fprintf(stderr, "%d: dir=%d, row_dir=%d, n_permute=%d, n_ffts=%d\n",
           this_node, pl.dir, pl.row_dir, pl.n_permute, pl.n_ffts);
 
-  fprintf(stderr, "%d:    local: old_mesh=(%d,%d,%d), new_mesh=(%d,%d,%d), "
-                  "start=(%d,%d,%d)\n",
+  fprintf(stderr,
+          "%d:    local: old_mesh=(%d,%d,%d), new_mesh=(%d,%d,%d), "
+          "start=(%d,%d,%d)\n",
           this_node, pl.old_mesh[0], pl.old_mesh[1], pl.old_mesh[2],
           pl.new_mesh[0], pl.new_mesh[1], pl.new_mesh[2], pl.start[0],
           pl.start[1], pl.start[2]);

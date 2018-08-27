@@ -34,7 +34,7 @@ static void backup_file(const std::string &from, const std::string &to) {
     /*
      * If the file itself *and* a backup file exists something must
      * went wrong before.
-    */
+     */
     boost::filesystem::path pfrom(from), pto(to);
     try {
       boost::filesystem::copy_file(
@@ -131,7 +131,7 @@ void File::InitFile() {
        * backup of it.  This has the advantage, that the new file can
        * just be deleted if the simulation crashes at some point and we
        * still have a valid trajectory, we can start from.
-      */
+       */
       if (this_node == 0)
         backup_file(m_filename, m_backup_filename);
       load_file(m_filename);

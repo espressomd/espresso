@@ -16,8 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include "Cluster.hpp"
 #include "ClusterStructure.hpp"
+#include "Cluster.hpp"
 #include "interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "utils/for_each_pair.hpp"
@@ -190,4 +190,5 @@ int ClusterStructure::get_next_free_cluster_id() {
   }
   return max_seen_cluster + 1;
 }
-}
+
+} // namespace ClusterAnalysis

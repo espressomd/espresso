@@ -103,4 +103,5 @@ struct Scafacos {
   /** Scafacos used for dipolar ia */
   bool m_dipolar;
 };
-}
+
+} // namespace Scafacos

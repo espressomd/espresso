@@ -42,7 +42,7 @@
  *
  *  For more information on the domain decomposition, see \ref grid.cpp
  * "grid.c".
-*/
+ */
 #include "RuntimeErrorStream.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -111,7 +111,7 @@ int node_grid_is_set();
  *
  * \param node   rank of the node you want to know the position for.
  * \param pos    position of the node in node grid.
-*/
+ */
 inline void map_node_array(int node, int pos[3]) {
   MPI_Cart_coords(comm_cart, node, 3, pos);
 }
@@ -120,7 +120,7 @@ inline void map_node_array(int node, int pos[3]) {
  *
  * \return      rank of the node at position pos.
  * \param pos   position of the node in node grid.
-*/
+ */
 inline int map_array_node(int pos[3]) {
   int rank;
   MPI_Cart_rank(comm_cart, pos, &rank);
@@ -166,7 +166,7 @@ void calc_2d_grid(int n, int grid[3]);
  *  \param g2d      2d grid.
  *  \param mult     factors between 3d and 2d grid dimensions
  *  \return         index of the row direction [0,1,2].
-*/
+ */
 int map_3don2d_grid(int g3d[3], int g2d[3], int mult[3]);
 
 /** rescales the box in dimension 'dir' to the new value 'd_new', and rescales
@@ -174,10 +174,10 @@ int map_3don2d_grid(int g3d[3], int g2d[3], int mult[3]);
 void rescale_boxl(int dir, double d_new);
 
 /** get the minimal distance vector of two vectors in the current bc.
-  *  @param a the vector to subtract from
-  *  @param b the vector to subtract
-  *  @param res where to store the result
-*/
+ *  @param a the vector to subtract from
+ *  @param b the vector to subtract
+ *  @param res where to store the result
+ */
 
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {

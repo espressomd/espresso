@@ -59,8 +59,9 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
     }
   }
 
-  LATTICE_TRACE(fprintf(stderr, "%d: box_l (%.3f,%.3f,%.3f) grid (%d,%d,%d) "
-                                "node_neighbors (%d,%d,%d,%d,%d,%d)\n",
+  LATTICE_TRACE(fprintf(stderr,
+                        "%d: box_l (%.3f,%.3f,%.3f) grid (%d,%d,%d) "
+                        "node_neighbors (%d,%d,%d,%d,%d,%d)\n",
                         this_node, local_box_l[0], local_box_l[1],
                         local_box_l[2], this->grid[0], this->grid[1],
                         this->grid[2], node_neighbors[0], node_neighbors[1],
@@ -98,18 +99,20 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
       if (fabs(rel) < ROUND_ERROR_PREC) {
         ind[dir] = 0; // TODO
       } else {
-        fprintf(stderr, "%d: map_position_to_lattice: position (%f,%f,%f) not "
-                        "inside a local plaquette in dir %d ind[dir]=%d rel=%f "
-                        "lpos=%f.\n",
+        fprintf(stderr,
+                "%d: map_position_to_lattice: position (%f,%f,%f) not inside a "
+                "local plaquette in dir %d ind[dir]=%d "
+                "rel=%f lpos=%f.\n",
                 this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
       }
     } else if (ind[dir] > this->grid[dir]) {
       if (lpos - local_box_l[dir] < ROUND_ERROR_PREC * local_box_l[dir])
         ind[dir] = this->grid[dir];
       else
-        fprintf(stderr, "%d: map_position_to_lattice: position (%f,%f,%f) not "
-                        "inside a local plaquette in dir %d ind[dir]=%d rel=%f "
-                        "lpos=%f.\n",
+        fprintf(stderr,
+                "%d: map_position_to_lattice: position (%f,%f,%f) not inside a "
+                "local plaquette in dir %d ind[dir]=%d "
+                "rel=%f lpos=%f.\n",
                 this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
     }
 

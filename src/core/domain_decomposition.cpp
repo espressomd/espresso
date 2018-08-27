@@ -207,11 +207,12 @@ void dd_create_cell_grid() {
   realloc_cellplist(&local_cells, local_cells.n = n_local_cells);
   realloc_cellplist(&ghost_cells, ghost_cells.n = new_cells - n_local_cells);
 
-  CELL_TRACE(fprintf(
-      stderr, "%d: dd_create_cell_grid, n_cells=%lu, local_cells.n=%d, "
-              "ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n",
-      this_node, (unsigned long)cells.size(), local_cells.n, ghost_cells.n,
-      dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]));
+  CELL_TRACE(fprintf(stderr,
+                     "%d: dd_create_cell_grid, n_cells=%lu, local_cells.n=%d, "
+                     "ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n",
+                     this_node, (unsigned long)cells.size(), local_cells.n,
+                     ghost_cells.n, dd.ghost_cell_grid[0],
+                     dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]));
 }
 
 /** Fill local_cells list and ghost_cells list for use with domain
@@ -363,8 +364,9 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
               dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
 
-              CELL_TRACE(fprintf(stderr, "%d: prep_comm %d send to   node %d "
-                                         "grid (%d,%d,%d)-(%d,%d,%d)\n",
+              CELL_TRACE(fprintf(stderr,
+                                 "%d: prep_comm %d send to   node %d "
+                                 "grid (%d,%d,%d)-(%d,%d,%d)\n",
                                  this_node, cnt, comm->comm[cnt].node, lc[0],
                                  lc[1], lc[2], hc[0], hc[1], hc[2]));
               cnt++;
@@ -380,8 +382,9 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
               dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
-              CELL_TRACE(fprintf(stderr, "%d: prep_comm %d recv from node %d "
-                                         "grid (%d,%d,%d)-(%d,%d,%d)\n",
+              CELL_TRACE(fprintf(stderr,
+                                 "%d: prep_comm %d recv from node %d "
+                                 "grid (%d,%d,%d)-(%d,%d,%d)\n",
                                  this_node, cnt, comm->comm[cnt].node, lc[0],
                                  lc[1], lc[2], hc[0], hc[1], hc[2]));
               cnt++;
@@ -584,8 +587,9 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
         if (PERIODIC(dir) || !boundary[2 * dir]) {
           flag = 1;
           CELL_TRACE(if (fold_coord == 2) {
-            fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) "
-                            "not inside node domain.\n",
+            fprintf(stderr,
+                    "%d: dd_append_particles: particle %d (%f,%f,%f) "
+                    "not inside node domain.\n",
                     this_node, pl->part[p].p.identity, pl->part[p].r.p[0],
                     pl->part[p].r.p[1], pl->part[p].r.p[2]);
           });
@@ -595,8 +599,9 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
         if (PERIODIC(dir) || !boundary[2 * dir + 1]) {
           flag = 1;
           CELL_TRACE(if (fold_coord == 2) {
-            fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) "
-                            "not inside node domain.\n",
+            fprintf(stderr,
+                    "%d: dd_append_particles: particle %d (%f,%f,%f) "
+                    "not inside node domain.\n",
                     this_node, pl->part[p].p.identity, pl->part[p].r.p[0],
                     pl->part[p].r.p[1], pl->part[p].r.p[2]);
           });
@@ -655,8 +660,9 @@ void dd_on_geometry_change(int flags) {
       std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
   max_skin = min_cell_size - max_cut;
 
-  CELL_TRACE(fprintf(stderr, "%d: dd_on_geometry_change: max_range = %f, "
-                             "min_cell_size = %f, max_skin = %f\n",
+  CELL_TRACE(fprintf(stderr,
+                     "%d: dd_on_geometry_change: max_range = %f, "
+                     "min_cell_size = %f, max_skin = %f\n",
                      this_node, max_range, min_cell_size, max_skin));
 
   if (max_range > min_cell_size) {
@@ -860,10 +866,11 @@ void dd_exchange_and_sort_particles(int global_flag) {
                       stderr,
                       "%d: dd_exchange_and_sort_particles: Take another loop",
                       this_node));
-                  CELL_TRACE(fprintf(stderr, "%d: "
-                                             "dd_exchange_and_sort_particles: "
-                                             "CP1 Particle %d (%f,%f,%f) not "
-                                             "inside node domain.\n",
+                  CELL_TRACE(fprintf(stderr,
+                                     "%d: "
+                                     "dd_exchange_and_sort_particles: "
+                                     "CP1 Particle %d (%f,%f,%f) not "
+                                     "inside node domain.\n",
                                      this_node, part->p.identity, part->r.p[0],
                                      part->r.p[1], part->r.p[2]));
                   finished = 0;
@@ -923,10 +930,11 @@ void dd_exchange_and_sort_particles(int global_flag) {
               sort_cell = dd_save_position_to_cell(part->r.p.data());
               if (sort_cell != cell) {
                 if (sort_cell == nullptr) {
-                  CELL_TRACE(fprintf(stderr, "%d: "
-                                             "dd_exchange_and_sort_particles: "
-                                             "CP2 Particle %d (%f,%f,%f) not "
-                                             "inside node domain.\n",
+                  CELL_TRACE(fprintf(stderr,
+                                     "%d: "
+                                     "dd_exchange_and_sort_particles: "
+                                     "CP2 Particle %d (%f,%f,%f) not "
+                                     "inside node domain.\n",
                                      this_node, part->p.identity, part->r.p[0],
                                      part->r.p[1], part->r.p[2]));
                   finished = 0;
@@ -937,9 +945,10 @@ void dd_exchange_and_sort_particles(int global_flag) {
                       p--;
                   }
                 } else {
-                  CELL_TRACE(fprintf(stderr, "%d: "
-                                             "dd_exchange_and_sort_particles: "
-                                             "move particle id %d\n",
+                  CELL_TRACE(fprintf(stderr,
+                                     "%d: "
+                                     "dd_exchange_and_sort_particles: "
+                                     "move particle id %d\n",
                                      this_node, part->p.identity));
                   move_indexed_particle(sort_cell, cell, p);
                   if (p < cell->n)

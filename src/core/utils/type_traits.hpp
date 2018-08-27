@@ -46,6 +46,6 @@ struct is_instance_of : public std::false_type {};
 
 template <typename... T, template <typename...> class Template>
 struct is_instance_of<Template<T...>, Template> : public std::true_type {};
-}
+} // namespace Utils
 
 #endif

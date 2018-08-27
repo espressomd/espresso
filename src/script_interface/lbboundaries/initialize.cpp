@@ -20,8 +20,8 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
-#include "LBBoundary.hpp"
 #include "LBBoundaries.hpp"
+#include "LBBoundary.hpp"
 
 namespace ScriptInterface {
 namespace LBBoundaries {

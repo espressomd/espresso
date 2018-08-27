@@ -44,7 +44,7 @@ template <typename T> struct matrix_vector_impl<T, 1> {
     return A * v;
   }
 };
-}
+} // namespace detail
 
 /**
  * @brief Affine transform of an vector field.
@@ -74,7 +74,7 @@ public:
 
   bool fits_in_box(const Vector3d &) const { return true; }
 };
-}
-}
+} // namespace Fields
+} // namespace FieldCoupling
 
 #endif

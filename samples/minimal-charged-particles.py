@@ -23,7 +23,7 @@ This sample simulates equal number of positively and negatively charged particle
 from __future__ import print_function
 import espressomd
 
-required_features = ["ELECTROSTATICS","LENNARD_JONES"]
+required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import electrostatics
@@ -45,7 +45,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)

@@ -37,8 +37,7 @@ class DDSGPUTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    es.seed  = es.cell_system.get_state()['n_nodes'] * [1234]
-
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def stopAll(self):
         for i in range(len(self.es.part)):
@@ -129,11 +128,13 @@ class DDSGPUTest(ut.TestCase):
             # compare
             for i in range(n):
                 np.testing.assert_allclose(np.array(dawaanr_t[i]),
-                        ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i]),
-                    err_msg='Torques on particle do not match for particle {}'.format(i), atol=3e-3)
+                                           ratio_dawaanr_dds_gpu *
+                                           np.array(ddsgpu_t[i]),
+                                           err_msg='Torques on particle do not match for particle {}'.format(i), atol=3e-3)
                 np.testing.assert_allclose(np.array(dawaanr_f[i]),
-                        ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i]),
-                    err_msg='Forces on particle do not match for particle i={}'.format(i), atol=3e-3)
+                                           ratio_dawaanr_dds_gpu *
+                                           np.array(ddsgpu_f[i]),
+                                           err_msg='Forces on particle do not match for particle i={}'.format(i), atol=3e-3)
             self.assertAlmostEqual(
                 dawaanr_e,
                 ddsgpu_e *

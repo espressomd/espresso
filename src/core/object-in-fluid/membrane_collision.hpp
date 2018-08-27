@@ -25,7 +25,7 @@
  *  Routines to calculate the membrane collision force
  *  for a particle pair.
  *  \ref forces.cpp
-*/
+ */
 
 #include "../utils.hpp"
 
@@ -53,22 +53,21 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
                                               double d[3], double dist,
                                               double force[3]) {
   /************************
-  *
-  * Description of implementation:
-* We have two particles, each belongs to the membrane of a different immersed
-*object
-  * For both particles we have the position of the particle - p, and in
-*part->p.out_direction are the coordinates of the outward normal vector (with
-*respect to the immersed object).
-*
-  * Algorithm:
-  * 1) compute angle between outward normal vectors out1 and out2 to check if
-*they are almost collinear (in this case nothing happens, this is at the edge of
-*contact zone and forces should not be applied because they would quite likely
-*have wrong direction)
-* 2) in other cases, repulsive forces are applied in the direction out1-out2
-*
-*********************/
+   *
+   * Description of implementation:
+   * We have two particles, each belongs to the membrane of a different immersed
+   *object For both particles we have the position of the particle - p, and in
+   *part->p.out_direction are the coordinates of the outward normal vector (with
+   *respect to the immersed object).
+   *
+   * Algorithm:
+   * 1) compute angle between outward normal vectors out1 and out2 to check if
+   *they are almost collinear (in this case nothing happens, this is at the edge
+   *of contact zone and forces should not be applied because they would quite
+   *likely have wrong direction) 2) in other cases, repulsive forces are applied
+   *in the direction out1-out2
+   *
+   *********************/
 
   int j;
   double r_off, fac = 0.0, product, angle, ndir;
@@ -89,9 +88,9 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
               fabs(out2[1]) + fabs(out2[2]) <
           SMALL_OIF_MEMBRANE_CUTOFF) {
         fprintf(stderr, "membrane_collision.hpp: out_direction is not set. "
-                        "Probably, you have not used switch \" normal\" in "
-                        "your oif_create_template command. Exiting the "
-                        "process. \n");
+                        "Probably, you have not used switch \" "
+                        "normal\" in your oif_create_template command. Exiting "
+                        "the process. \n");
         errexit();
       }
 

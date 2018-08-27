@@ -43,7 +43,7 @@ BindCoupling<Coupling, Particle> make_bind_coupling(const Coupling &c,
                                                     const Particle &p) {
   return BindCoupling<Coupling, Particle>{c, p};
 }
-}
-}
+} // namespace detail
+} // namespace FieldCoupling
 
 #endif

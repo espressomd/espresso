@@ -18,15 +18,16 @@
 */
 
 #include "initialize.hpp"
-#include "ScriptInterface.hpp"
 #include "Cluster.hpp"
 #include "ClusterStructure.hpp"
+#include "ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {
 
 void initialize() {
-  ScriptInterface::register_new<ScriptInterface::ClusterAnalysis::ClusterStructure>(
+  ScriptInterface::register_new<
+      ScriptInterface::ClusterAnalysis::ClusterStructure>(
       "ClusterAnalysis::ClusterStructure");
   ScriptInterface::register_new<ScriptInterface::ClusterAnalysis::Cluster>(
       "ClusterAnalysis::Cluster");

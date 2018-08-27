@@ -119,6 +119,7 @@ inline std::vector<double> Accumulator::get_std_error() const {
                  [this](double d) { return std::sqrt(d / m_n); });
   return std_error;
 }
-}
+
+} // namespace Utils
 
 #endif

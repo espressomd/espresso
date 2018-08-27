@@ -23,8 +23,7 @@
 /** \file forces.hpp Force calculation.
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned
- * on).
- *  \todo Implement more flexible thermostat, %e.g. which thermostat to use.
+ * on). \todo Implement more flexible thermostat, %e.g. which thermostat to use.
  *
  *  For more information see forces.cpp .
  */

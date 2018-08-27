@@ -30,10 +30,10 @@ IF ELECTROSTATICS and P3M:
 
     cdef class ElectrostaticExtensions(actors.Actor):
         pass
-        
+
     cdef class ELC(ElectrostaticExtensions):
         """
-        Electrostatics solver for systems with two periodic dimensions. 
+        Electrostatics solver for systems with two periodic dimensions.
 
         Parameters
         ----------
@@ -81,9 +81,8 @@ IF ELECTROSTATICS and P3M:
                                   `delta_mid_top` or `delta_mid_bot` in `]-1,1[`) is not covered by the
                                   algorithm and will throw an error.
         far_cut                 : float, optional
-                                  Cut off radius, use with care, intended for testing purposes. 
+                                  Cut off radius, use with care, intended for testing purposes.
         """
-
 
         def validate_params(self):
             default_params = self.default_params()
@@ -124,21 +123,22 @@ IF ELECTROSTATICS and P3M:
             if coulomb.method == COULOMB_P3M_GPU:
                 raise Exception(
                     "ELC tuning failed, ELC is not set up to work with the GPU P3M")
-            
+
             if self._params["const_pot"]:
                 self._params["delta_mid_top"] = -1
                 self._params["delta_mid_bot"] = -1
 
             if ELC_set_params(
                 self._params["maxPWerror"],
-                self._params["gap_size"], 
-                self._params["far_cut"], 
-                int(self._params["neutralize"]), 
-                self._params["delta_mid_top"], 
-                self._params["delta_mid_bot"], 
+                self._params["gap_size"],
+                self._params["far_cut"],
+                int(self._params["neutralize"]),
+                self._params["delta_mid_top"],
+                self._params["delta_mid_bot"],
                 int(self._params["const_pot"]),
-                self._params["pot_diff"]):
-                handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
+                    self._params["pot_diff"]):
+                handle_errors(
+                    "ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
             check_neutrality(self._params)
@@ -151,11 +151,10 @@ IF ELECTROSTATICS and P3M:
     cdef class ICC(ElectrostaticExtensions):
         """
         Interface to the induced charge calculatino scheme for dielectric interfaces
-        
+
         See :ref:`Dielectric interfaces with the ICC algorithm`
 
         """
-
 
         def validate_params(self):
             default_params = self.default_params()
