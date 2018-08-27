@@ -66,7 +66,7 @@ inline int calc_fene_pair_force(Particle *p1, Particle *p2,
     if (len > ROUND_ERROR_PREC) { /* Regular case */
       fac /= len;
     } else { /* dx[] == 0: the force is undefined. Let's use a random direction
-                */
+              */
       for (int i = 0; i < 3; i++)
         dx[i] = d_random() - 0.5;
       fac /= sqrt(sqrlen(dx));
@@ -76,21 +76,24 @@ inline int calc_fene_pair_force(Particle *p1, Particle *p2,
   }
 
   FENE_TRACE(if (fac > 50)
-                 fprintf(stderr, "WARNING: FENE force factor between Pair "
-                                 "(%d,%d) large: %f at distance %f\n",
+                 fprintf(stderr,
+                         "WARNING: FENE force factor between Pair (%d,%d) "
+                         "large: %f at distance %f\n",
                          p1->p.identity, p2->p.identity, fac, sqrt(len2)));
 
   for (i = 0; i < 3; i++)
     force[i] = fac * dx[i];
 
   ONEPART_TRACE(if (p1->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: FENE f = (%.3e,%.3e,%.3e) with "
-                                    "part id=%d at dist %f fac %.3e\n",
+                    fprintf(stderr,
+                            "%d: OPT: FENE f = (%.3e,%.3e,%.3e) with part "
+                            "id=%d at dist %f fac %.3e\n",
                             this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                             p2->p.identity, sqrt(len2), fac));
   ONEPART_TRACE(if (p2->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: FENE f = (%.3e,%.3e,%.3e) with "
-                                    "part id=%d at dist %f fac %.3e\n",
+                    fprintf(stderr,
+                            "%d: OPT: FENE f = (%.3e,%.3e,%.3e) with part "
+                            "id=%d at dist %f fac %.3e\n",
                             this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                             p1->p.identity, sqrt(len2), fac));
 

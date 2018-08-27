@@ -169,4 +169,5 @@ void Scafacos::set_dipolar(bool d) {
 #endif
   m_dipolar = d;
 }
-}
+
+} // namespace Scafacos

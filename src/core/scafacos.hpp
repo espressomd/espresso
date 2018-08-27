@@ -65,7 +65,7 @@ std::list<std::string> available_methods();
 
 void free_handle();
 
-} // namespace scafacos
+} // namespace Scafacos
 
 /** Parameter callback */
 void mpi_scafacos_set_parameters_slave(int n_method, int n_params);

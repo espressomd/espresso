@@ -57,4 +57,4 @@ void MeanVarianceCalculator::set_internal_state(std::string const &state) {
 
   ia >> m_acc;
 }
-}
+} // namespace Accumulators

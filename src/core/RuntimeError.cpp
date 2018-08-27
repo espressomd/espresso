@@ -55,4 +55,4 @@ std::string RuntimeError::format() const {
 }
 void RuntimeError::print() const { std::cerr << format() << std::endl; }
 
-} /* ErrorHandling */
+} // namespace ErrorHandling

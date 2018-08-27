@@ -25,7 +25,7 @@
  *  for a particle pair.  Cosine tail is different from that in ljcos.hpp
  *  Used for attractive tail/tail interactions in lipid bilayer calculations
  *  \ref forces.cpp
-*/
+ */
 #include "ljcos2.hpp"
 
 #ifdef LJCOS2

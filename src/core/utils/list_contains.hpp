@@ -8,6 +8,6 @@ namespace Utils {
 template <typename T> bool list_contains(List<T> const &l, T const &c) {
   return std::any_of(l.begin(), l.end(), [c](T const &e) { return e == c; });
 }
-}
+} // namespace Utils
 
 #endif

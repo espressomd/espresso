@@ -100,5 +100,5 @@ public:
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;
 };
-}
+} // namespace Shapes
 #endif

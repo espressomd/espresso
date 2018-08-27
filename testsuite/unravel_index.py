@@ -6,6 +6,7 @@ from espressomd import utils
 
 
 class TestUnravelIndex(ut.TestCase):
+
     def test_against_numpy(self):
         xdim = (0, 10)
         ydim = (0, 200)

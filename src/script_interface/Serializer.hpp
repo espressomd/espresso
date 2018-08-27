@@ -71,5 +71,5 @@ public:
     }
   }
 };
-}
+} // namespace ScriptInterface
 #endif

@@ -20,8 +20,7 @@
 /** \file oif_local_forces.hpp
  *  Routines to calculate the OIF_LOCAL_FORCES
  *  for a particle quadruple (two neighboring triangles with common edge).
- * (Dupin2007)
- *  \ref forces.cpp
+ * (Dupin2007) \ref forces.cpp
  */
 
 #include "oif_local_forces.hpp"

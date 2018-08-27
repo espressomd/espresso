@@ -429,12 +429,12 @@ int getintersection(double pos1[3], double pos2[3], int given, int get,
   // %f\n",this_node,pos1[0],pos1[1],pos1[2],pos2[0],pos2[1],pos2[2],p2r[0],p2r[1],p2r[2],value););
 
   if ((value) * (p2r[given]) < -0.0001) {
-    runtimeErrorMsg() << "analyze stress_profile: getintersection: "
-                         "intersection is not between the two given particles "
-                         "- "
-                      << value << " is not between " << 0.0 << " and "
-                      << p2r[given] << " and box size is " << box_size[given]
-                      << ", given is " << given << "\n";
+    runtimeErrorMsg()
+        << "analyze stress_profile: getintersection: intersection is not "
+           "between the two given particles - "
+        << value << " is not between " << 0.0 << " and " << p2r[given]
+        << " and box size is " << box_size[given] << ", given is " << given
+        << "\n";
     return 0;
   } else if (given == get) {
     *answer = drem_down(value + pos1[given], box_size[given]);
@@ -458,9 +458,8 @@ int getlength(double pos1[3], double pos2[3], int d1, double val1, int d2,
     d1 and d2 are integers between 0 and 2 denoting an axis (x, y, or z)
     l and k are integers between 0 and 2 denoting an axis (x, y, or z)
     two points on the line connecting these particles are defined by r[d1]=val1
-    and r[d2]=val2
-    call these two points p3 and p4 (not program variables)
-    this program returns the distance between p3 and p4 in the l direction
+    and r[d2]=val2 call these two points p3 and p4 (not program variables) this
+    program returns the distance between p3 and p4 in the l direction
   */
 
   double intersect1, intersect2;
@@ -483,12 +482,10 @@ int does_line_go_through_cube(double pos1[3], double pos2[3],
                               int *facein, int *faceout)
 /* p1 and p2 are two particle positions
    there is a cube in the simulation box with one vertex at range_start and the
-   opposite vertex at range_start + range
-   this routine calculates where the line connecting p1 and p2 enters and exits
-   this cube
-   these points are returned in the variables entry and exit
-   the function returns a 0 if the line does not pass through the cube and 1 if
-   it does
+   opposite vertex at range_start + range this routine calculates where the line
+   connecting p1 and p2 enters and exits this cube these points are returned in
+   the variables entry and exit the function returns a 0 if the line does not
+   pass through the cube and 1 if it does
 */
 {
 
@@ -497,15 +494,14 @@ int does_line_go_through_cube(double pos1[3], double pos2[3],
   double vect2centre2[3];
   int i;
 
-  int doesntenter = 0; /* boolean that indicates whether we have already
-                          determined that the line does not enter the cube at
-                          all */
+  int doesntenter =
+      0; /* boolean that indicates whether we have already determined that the
+            line does not enter the cube at all */
   double intersection1 = 0.0, intersection2 = 0.0;
   int found_entry = 0; /* boolean that indicates whether we have determined
                           where the line enters */
-  int found_exit =
-      0; /* boolean that indicates whether we have determined where the line
-            exits */
+  int found_exit = 0; /* boolean that indicates whether we have determined where
+                         the line exits */
   int i1, i2;
   int inside1, inside2;
 
@@ -530,9 +526,9 @@ int does_line_go_through_cube(double pos1[3], double pos2[3],
     if (fabs(vect2centre2[i]) > range[i] / 2.0)
       inside2 = 0;
   }
-  PTENSOR_TRACE(fprintf(stderr, "%d: does_line_go_through_cube: Particle1 "
-                                "inside cube = %d Particle2 inside cube = %d "
-                                "\n",
+  PTENSOR_TRACE(fprintf(stderr,
+                        "%d: does_line_go_through_cube: Particle1 inside cube "
+                        "= %d Particle2 inside cube = %d \n",
                         this_node, inside1, inside2););
 
   /* work out which face connecting line enters through */
@@ -633,28 +629,24 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
                        double range_start[3], double range[3], double pos1[3],
                        double pos2[3]) {
   /*calculates how to distribute a force tensor between two particles between
-    various bins
-    the amount distributed to a bin is proportional to the length of the line
-    between the
-      two particles p1 and p2 that passes through the bin volume
-    we consider a cube of space starting with a corner at {x_range_start,
-    y_range_start, z_range_start} extending to
-      {x_range_start+x_range, y_range_start+y_range, z_range_start+z_range}
-    this cube is split into x_bins bins in the x direction - we refer to these
-    as x-bins
-    each x-bin into y_bins bins in the y direction - we refer to these as y-bins
-    each y_bin into z_bins bins in the z direction - we refer to these as z-bins
+    various bins the amount distributed to a bin is proportional to the length
+    of the line between the two particles p1 and p2 that passes through the bin
+    volume we consider a cube of space starting with a corner at {x_range_start,
+    y_range_start, z_range_start} extending to {x_range_start+x_range,
+    y_range_start+y_range, z_range_start+z_range} this cube is split into x_bins
+    bins in the x direction - we refer to these as x-bins each x-bin into y_bins
+    bins in the y direction - we refer to these as y-bins each y_bin into z_bins
+    bins in the z direction - we refer to these as z-bins
   */
 
-  int sign[3], sign10
-                   [3]; /* indicates whether the line goes in the positive or
-                           negative direction in each dimension */
+  int sign[3], sign10[3]; /* indicates whether the line goes in the positive or
+                             negative direction in each dimension */
   double entry[3],
       exit[3]; /* the positions at which the line enters and exits the cube */
   int startx, endx;     /* x-bins in which the line starts and ends in */
   int occupiedxbins;    /* number of x-bins occuped by the line */
   int totoccupiedybins; /* total number of y-bins through which the line passes
-                           */
+                         */
   int xbin, ybin,
       zbin; /* counters to keep track of bins x_bin goes from 0 to x_bins-1,
                y_bins from 0 to y_bins-1, z_bins from 0 to Z-bins-1 */
@@ -663,29 +655,30 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
   int zi;
   double length; /* length of line between the two points */
   int d1, d2; /* for each z-bin d1 and d2 are calculated.  they indicate through
-                 which faces of the bin the line enters and leaves the bin.
-                 i.e. if the line enters through the face corresponding to y =
-                 0.34 then d1 = 1 (y-direction) and val1 = 0.34 */
+                 which faces of the bin the line enters and leaves the bin. i.e.
+                 if the line enters through the face corresponding to y = 0.34
+                 then d1 = 1 (y-direction) and val1 = 0.34 */
   double val1, val2;
   double intersect;
   double segment, segment2;
   double calclength;
   int xa, ya, za; /* counters for bins */
   double temp[3];
-  double redentry[3],
-      redexit
-          [3];        /* like entry and exit but using a coordinate system where
-                         range_start corresponds to (0,0,0) and the length scale in
-                         each direction is the bin width */
-  double redbox_l[3]; /* box size is reduced units */
+  double redentry[3], redexit[3]; /* like entry and exit but using a coordinate
+                                     system where range_start corresponds to
+                                     (0,0,0) and the length scale in each
+                                     direction is the bin width */
+  double redbox_l[3];             /* box size is reduced units */
   int facein, faceout;
 
-  PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: Distributing tensors "
-                                "for particle p1 %f %f %f and p2 %f %f %f\n",
+  PTENSOR_TRACE(fprintf(stderr,
+                        "%d: distribute_tensors: Distributing tensors for "
+                        "particle p1 %f %f %f and p2 %f %f %f\n",
                         this_node, pos1[0], pos1[1], pos1[2], pos2[0], pos2[1],
                         pos2[2]););
-  PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: range_start is %f %f "
-                                "%f range is %f %f %f bins is %d %d %d\n",
+  PTENSOR_TRACE(fprintf(stderr,
+                        "%d: distribute_tensors: range_start is %f %f %f range "
+                        "is %f %f %f bins is %d %d %d\n",
                         this_node, range_start[0], range_start[1],
                         range_start[2], range[0], range[1], range[2], bins[0],
                         bins[1], bins[2]););
@@ -723,8 +716,9 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
       length += pow(temp[i], 2);
     }
     length = pow(length, 0.5);
-    PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: Reduced Entry is %f "
-                                  "%f %f Reduced Exit is %f %f %f \n",
+    PTENSOR_TRACE(fprintf(stderr,
+                          "%d: distribute_tensors: Reduced Entry is %f %f %f "
+                          "Reduced Exit is %f %f %f \n",
                           this_node, redentry[0], redentry[1], redentry[2],
                           redexit[0], redexit[1], redexit[2]););
 
@@ -808,9 +802,9 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
       xbin = (startx + xa * sign[0] + bins[0]) % bins[0];
       for (ya = 0; ya < occupiedybins[xa] - 1; ya++) {
         ybin = (starty[xa] + ya * sign[1] + bins[1]) % bins[1];
-        PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: xbin is %d ya "
-                                      "is %d, occupiedybins[xa] is %d, ybin is "
-                                      "%d\n",
+        PTENSOR_TRACE(fprintf(stderr,
+                              "%d: distribute_tensors: xbin is %d ya is %d, "
+                              "occupiedybins[xa] is %d, ybin is %d\n",
                               this_node, xbin, ya, occupiedybins[xa], ybin););
         if (getintersection(redentry, redexit, 1, 2, ybin + sign10[1],
                             &intersect, redbox_l) != 1)
@@ -821,8 +815,9 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
             (sign[2] * (startz[counter + 1] - startz[counter]) + bins[2]) %
                 bins[2] +
             1;
-        PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: in xbin %d ybin "
-                                      "%d zbin goes from %d to %d\n",
+        PTENSOR_TRACE(fprintf(stderr,
+                              "%d: distribute_tensors: in xbin %d ybin %d zbin "
+                              "goes from %d to %d\n",
                               this_node, xbin, ybin, startz[counter],
                               startz[counter + 1]););
         counter++;
@@ -848,16 +843,18 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
           (sign[2] * (startz[counter + 1] - startz[counter]) + bins[2]) %
               bins[2] +
           1;
-      PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: in xbin %d ybin "
-                                    "%d zbin goes from %d to %d\n",
+      PTENSOR_TRACE(fprintf(stderr,
+                            "%d: distribute_tensors: in xbin %d ybin %d zbin "
+                            "goes from %d to %d\n",
                             this_node, xbin, ybin, startz[counter],
                             startz[counter + 1]););
       counter++;
     }
-    PTENSOR_TRACE(
-        fprintf(stderr, "%d: distribute_tensors: occupiedxbins is "
-                        "%d,occupiedybins[0] is %d, occupiedzbins[0] is %d\n",
-                this_node, occupiedxbins, occupiedybins[0], occupiedzbins[0]););
+    PTENSOR_TRACE(fprintf(stderr,
+                          "%d: distribute_tensors: occupiedxbins is "
+                          "%d,occupiedybins[0] is %d, occupiedzbins[0] is %d\n",
+                          this_node, occupiedxbins, occupiedybins[0],
+                          occupiedzbins[0]););
 
     /* find out what length of the line passes through each z-bin */
     counter = 0;
@@ -880,33 +877,34 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
                   d1 = 2;
                   val1 = redentry[2];
                 }
-                PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: %d %d "
-                                              "%d line starts at point p1 "
-                                              "inside bin\n",
+                PTENSOR_TRACE(fprintf(stderr,
+                                      "%d: distribute_tensors: %d %d %d line "
+                                      "starts at point p1 inside bin\n",
                                       this_node, xbin, ybin, zbin););
               } else {
                 d1 = 0;
                 val1 = xbin + 1 - sign10[0];
-                PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: %d %d "
-                                              "%d line enters through x = %e "
-                                              "face of box\n",
+                PTENSOR_TRACE(fprintf(stderr,
+                                      "%d: distribute_tensors: %d %d %d line "
+                                      "enters through x = %e face of box\n",
                                       this_node, xbin, ybin, zbin, val1););
               }
             } else {
               d1 = 1;
               val1 = ybin + 1 - sign10[1];
-              PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: %d %d %d "
-                                            "line enters through y = %e face "
-                                            "of box\n",
+              PTENSOR_TRACE(fprintf(stderr,
+                                    "%d: distribute_tensors: %d %d %d line "
+                                    "enters through y = %e face of box\n",
                                     this_node, xbin, ybin, zbin, val1););
             }
           } else {
             d1 = 2;
             val1 = zbin + 1 - sign10[2];
-            PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: %d %d %d "
-                                          "line enters through z = %e face of "
-                                          "box zbin is %d\n",
-                                  this_node, xbin, ybin, zbin, val1, zbin););
+            PTENSOR_TRACE(
+                fprintf(stderr,
+                        "%d: distribute_tensors: %d %d %d line enters through "
+                        "z = %e face of box zbin is %d\n",
+                        this_node, xbin, ybin, zbin, val1, zbin););
           }
           if (zbin == startz[counter + 1]) {
             if (ybin == starty[xa + 1]) {
@@ -921,38 +919,40 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
                   d2 = 2;
                   val2 = redexit[2];
                 }
-                PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: %d %d "
-                                              "%d line ends at p2 inside bin\n",
+                PTENSOR_TRACE(fprintf(stderr,
+                                      "%d: distribute_tensors: %d %d %d line "
+                                      "ends at p2 inside bin\n",
                                       this_node, xbin, ybin, zbin););
               } else {
                 d2 = 0;
                 val2 = xbin + sign10[0];
-                PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: %d %d "
-                                              "%d line leaves through x = %e "
-                                              "face of box\n",
+                PTENSOR_TRACE(fprintf(stderr,
+                                      "%d: distribute_tensors: %d %d %d line "
+                                      "leaves through x = %e face of box\n",
                                       this_node, xbin, ybin, zbin, val2););
               }
             } else {
               d2 = 1;
               val2 = ybin + sign10[1];
-              PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: %d %d %d "
-                                            "line leaves through y = %e face "
-                                            "of box direction %d\n",
-                                    this_node, xbin, ybin, zbin, val2,
-                                    sign[1]););
+              PTENSOR_TRACE(
+                  fprintf(stderr,
+                          "%d: distribute_tensors: %d %d %d line leaves "
+                          "through y = %e face of box direction %d\n",
+                          this_node, xbin, ybin, zbin, val2, sign[1]););
             }
           } else {
             d2 = 2;
             val2 = zbin + sign10[2];
-            PTENSOR_TRACE(fprintf(stderr, "%d: distribute_tensors: %d %d %d "
-                                          "line leaves through z = %e face of "
-                                          "box\n",
+            PTENSOR_TRACE(fprintf(stderr,
+                                  "%d: distribute_tensors: %d %d %d line "
+                                  "leaves through z = %e face of box\n",
                                   this_node, xbin, ybin, zbin, val2););
           }
           segment2 = 0;
           PTENSOR_TRACE(
-              fprintf(stderr, "%d: distribute_tensors: entry %f %f %f exit %f "
-                              "%f %f d1 %d val1 %f d2 %d val2 %f\n",
+              fprintf(stderr,
+                      "%d: distribute_tensors: entry %f %f %f exit %f %f %f d1 "
+                      "%d val1 %f d2 %d val2 %f\n",
                       this_node, entry[0], entry[1], entry[2], exit[0], exit[1],
                       exit[2], d1,
                       range_start[d1] + val1 * range[d1] / (double)bins[d1], d2,
@@ -1109,8 +1109,8 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force,
         break;
       case DIPOLAR_DS:
         fprintf(stderr, "WARNING: Local stress tensor calculation cannot "
-                        "handle MAGNETIC DIPOLAR SUM magnetostatics so it is "
-                        "left out\n");
+                        "handle MAGNETIC DIPOLAR SUM magnetostatics so "
+                        "it is left out\n");
         break;
 
       default:

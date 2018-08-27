@@ -188,4 +188,5 @@ bool PdbParser::parse_file(const string &pdb_filename,
                            const string &itp_filename) {
   return parse_pdb_file(pdb_filename) && parse_itp_file(itp_filename);
 }
-}
+
+} // namespace PdbParser

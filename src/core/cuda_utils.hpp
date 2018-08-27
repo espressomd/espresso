@@ -36,7 +36,7 @@ extern cudaError_t _err;
  * @param err cuda error code
  * @param *file .cu file were the error took place
  * @param line line of the file were the error took place
-*/
+ */
 
 void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line);
 

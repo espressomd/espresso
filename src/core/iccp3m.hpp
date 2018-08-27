@@ -89,7 +89,7 @@ typedef struct {
   double relax;   /* relaxation parameter for iterative                       */
   int citeration; /* current number of iterations*/
   int set_flag;   /* flag that indicates if ICCP3M has been initialized properly
-                     */
+                   */
 
   double *fx;
   double *fy;

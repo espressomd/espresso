@@ -22,9 +22,9 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
 
-#include "config.hpp"
 #include "VirtualSites.hpp"
-#include "core/virtual_sites/VirtualSitesRelative.hpp" 
+#include "config.hpp"
+#include "core/virtual_sites/VirtualSitesRelative.hpp"
 
 #ifdef VIRTUAL_SITES_RELATIVE
 namespace ScriptInterface {
@@ -32,11 +32,12 @@ namespace VirtualSites {
 
 class VirtualSitesRelative : public VirtualSites {
 public:
-  VirtualSitesRelative()
-      : m_virtual_sites(new ::VirtualSitesRelative()) {
-  };
+  VirtualSitesRelative() : m_virtual_sites(new ::VirtualSitesRelative()){};
   /** Vs implementation we are wrapping */
-  std::shared_ptr<::VirtualSites> virtual_sites() override { return m_virtual_sites;};
+  std::shared_ptr<::VirtualSites> virtual_sites() override {
+    return m_virtual_sites;
+  };
+
 private:
   std::shared_ptr<::VirtualSitesRelative> m_virtual_sites;
 };

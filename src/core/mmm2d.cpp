@@ -24,9 +24,6 @@
  */
 
 #include "mmm2d.hpp"
-
-#ifdef ELECTROSTATICS
-
 #include "cells.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
@@ -34,17 +31,17 @@
 #include "interaction_data.hpp"
 #include "layered.hpp"
 #include "mmm-common.hpp"
-#include "mmm2d.hpp"
 #include "particle_data.hpp"
 #include "specfunc.hpp"
 #include "utils.hpp"
-
 #include <cmath>
 #include <mpi.h>
 #include <numeric>
 
+#ifdef ELECTROSTATICS
 char const *mmm2d_errors[] = {
-    "ok", "Layer height too large for MMM2D near formula, increase n_layers",
+    "ok",
+    "Layer height too large for MMM2D near formula, increase n_layers",
     "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and "
     "y",
     "Could find not reasonable Bessel cutoff. Please decrease n_layers or the "
@@ -93,8 +90,7 @@ char const *mmm2d_errors[] = {
     p,q vectors are done at once. This has nothing to do with the effective
     precision, but rather controls how different values can be we add up without
     loosing the smallest values. In principle one could choose smaller values,
-   but
-    that would not make things faster */
+   but that would not make things faster */
 #define FARRELPREC 1e-6
 
 /** number of steps in the complex cutoff table */
@@ -202,7 +198,9 @@ static double *gblcblk = nullptr;
 /** contribution from the image charges */
 static double lclimge[8];
 
-typedef struct { double s, c; } SCCache;
+typedef struct {
+  double s, c;
+} SCCache;
 
 /** sin/cos caching */
 static SCCache *scxcache = nullptr;
@@ -404,7 +402,7 @@ void clear_image_contributions(int e_size) {
     /* the gblcblk contains all contributions from layers deeper than one layer
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
-       */
+     */
     clear_vec(blwentry(gblcblk, 0, e_size), e_size);
 
   if (this_node == n_nodes - 1)
@@ -422,7 +420,7 @@ void gather_image_contributions(int e_size) {
     /* the gblcblk contains all contributions from layers deeper than one layer
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
-       */
+     */
     copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
 
   if (this_node == n_nodes - 1)
@@ -621,8 +619,7 @@ static void setup_z_energy() {
 
   if (this_node == 0)
     /* the lowest lclcblk does not contain anything, since there are no charges
-       below the simulation
-       box, at least for this term. */
+       below the simulation box, at least for this term. */
     clear_vec(blwentry(lclcblk, 0, e_size), e_size);
 
   if (this_node == n_nodes - 1)
@@ -738,8 +735,7 @@ static void setup_P(int p, double omega, double fac) {
       if (mmm2d_params.dielectric_contrast_on) {
         if (c == 1 && this_node == 0) {
           /* There are image charges at -(2h+z) and -(2h-z) etc. layer_h
-             included due to the shift
-             in z */
+             included due to the shift in z */
           e_di_l = (exp(omega * (-part[i].r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_bot +
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h))) *
@@ -759,8 +755,7 @@ static void setup_P(int p, double omega, double fac) {
 
         if (c == n_layers && this_node == n_nodes - 1) {
           /* There are image charges at (3h-z) and (h+z) from the top layer etc.
-             layer_h included
-             due to the shift in z */
+             layer_h included due to the shift in z */
           e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_top +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h))) *
@@ -775,8 +770,7 @@ static void setup_P(int p, double omega, double fac) {
           lclimgetop[POQECM] += part[i].p.q * scxcache[o + ic].c * e;
         } else
           /* There are image charges at (h-z) and (h+z) from the top layer etc.
-             layer_h included due
-             to the shift in z */
+             layer_h included due to the shift in z */
           e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_bot) *

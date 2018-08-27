@@ -151,11 +151,11 @@ LOOKUP_TABLE default\n",
 }
 
 int populate_lattice(PdbParser::PdbParser &parser, double scale) {
-/*
- * This routine will populate the lattice using the
- * values read from the pdb and itp files.
- * WARNING: It contains much logic and interpolation stuff!
- */
+  /*
+   * This routine will populate the lattice using the
+   * values read from the pdb and itp files.
+   * WARNING: It contains much logic and interpolation stuff!
+   */
 #ifdef DEBUG
   printf("pdb_n_particles=%u, itp_n_particles=%u, itp_n_parameters=%u\n",
          atom_data->pdb_n_particles, atom_data->itp_n_particles,
@@ -320,8 +320,7 @@ int pdb_parse(char *pdb_filename, char *itp_filename, double scale) {
   /*
    * This is the main parsing routine, which is visible to the outside
    * through the header electrokinetics_pdb_parse.h. It doesn't contain any
-   * logic and just
-   * deploys the input to the subroutines.
+   * logic and just deploys the input to the subroutines.
    */
 
   /* BEGIN DEPLOY */

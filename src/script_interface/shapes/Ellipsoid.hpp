@@ -33,15 +33,15 @@ public:
   Ellipsoid() : m_ellipsoid(new ::Shapes::Ellipsoid()) {
     add_parameters({{"center", m_ellipsoid->center()},
                     {"a",
-		     [this](Variant const &v) {
-		       m_ellipsoid->set_semiaxis_a(get_value<double>(v));
-		     },
-		     [this]() { return m_ellipsoid->semiaxis_a(); }},
+                     [this](Variant const &v) {
+                       m_ellipsoid->set_semiaxis_a(get_value<double>(v));
+                     },
+                     [this]() { return m_ellipsoid->semiaxis_a(); }},
                     {"b",
-		     [this](Variant const &v) {
-		       m_ellipsoid->set_semiaxis_b(get_value<double>(v));
-		     },
-		     [this]() { return m_ellipsoid->semiaxis_b(); }},
+                     [this](Variant const &v) {
+                       m_ellipsoid->set_semiaxis_b(get_value<double>(v));
+                     },
+                     [this]() { return m_ellipsoid->semiaxis_b(); }},
                     {"direction", m_ellipsoid->direction()}});
   }
 

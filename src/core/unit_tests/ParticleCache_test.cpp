@@ -20,7 +20,7 @@
 
 /** \file MpiCallbacks_test.cpp Unit tests for the MpiCallbacks class.
  *
-*/
+ */
 
 #include <random>
 #include <vector>

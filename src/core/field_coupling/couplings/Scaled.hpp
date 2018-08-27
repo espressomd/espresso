@@ -38,7 +38,7 @@ public:
     return scale(p) * x;
   }
 };
-}
-}
+} // namespace Coupling
+} // namespace FieldCoupling
 
 #endif

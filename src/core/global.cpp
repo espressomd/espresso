@@ -261,7 +261,7 @@ void common_bcast_parameter(int i) {
 
   on_parameter_change(i);
 }
-}
+} // namespace
 
 int warnings = 1;
 

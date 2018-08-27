@@ -75,8 +75,9 @@ void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
   } else {
     CU_err = cudaGetLastError();
     if (CU_err != cudaSuccess) {
-      fprintf(stderr, "Error found during memory operation. Possibly however "
-                      "from an failed operation before. %s:%u.\n",
+      fprintf(stderr,
+              "Error found during memory operation. Possibly however "
+              "from an failed operation before. %s:%u.\n",
               file, line);
       printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
       if (CU_err == cudaErrorInvalidValue)
@@ -99,8 +100,9 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
 #endif
   CU_err = cudaGetLastError();
   if (CU_err != cudaSuccess) {
-    fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d "
-                    "%d in %s:%u\n",
+    fprintf(stderr,
+            "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d "
+            "%d in %s:%u\n",
             this_node, cudaGetErrorString(CU_err), function, block.x, block.y,
             block.z, grid.x, grid.y, grid.z, file, line);
     errexit();
@@ -120,7 +122,7 @@ __device__ unsigned int getThreadIndex() {
  * rn
  * seed
  * storearray (Output)
-*/
+ */
 __global__ void init_particle_force(float *particle_forces_device,
                                     float *particle_torques_device,
                                     CUDA_particle_seed *particle_seeds_device) {
@@ -145,7 +147,7 @@ __global__ void init_particle_force(float *particle_forces_device,
 
 /** kernel for the initalisation of the fluid composition
  * @param *fluid_composition_device Pointer to local fluid composition (Output)
-*/
+ */
 __global__ void
 init_fluid_composition(CUDA_fluid_composition *fluid_composition_device) {
 
@@ -163,7 +165,7 @@ init_fluid_composition(CUDA_fluid_composition *fluid_composition_device) {
 
 /** kernel for the initalisation of the partikel force array
  * @param *particle_forces_device	pointer to local particle force (Input)
-*/
+ */
 __global__ void reset_particle_force(float *particle_forces_device,
                                      float *particle_torques_device) {
 

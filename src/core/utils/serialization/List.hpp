@@ -30,7 +30,7 @@ void serialize(Archive &ar, Utils::List<T> &v,
                const unsigned int file_version) {
   split_free(ar, v, file_version);
 }
-}
-}
+} // namespace serialization
+} // namespace boost
 
 #endif

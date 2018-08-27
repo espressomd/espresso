@@ -65,7 +65,7 @@ void scatter_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
                  n_elem * sizeof(T), MPI_BYTE, root, comm);
   }
 }
-}
-}
+} // namespace Mpi
+} // namespace Utils
 
 #endif

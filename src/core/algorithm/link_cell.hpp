@@ -36,6 +36,6 @@ void link_cell(CellIterator first, CellIterator last,
     }
   }
 }
-}
+} // namespace Algorithm
 
 #endif

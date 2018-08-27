@@ -298,7 +298,7 @@ void set_resort_particles(Cells::Resort level);
 
 /**
  * @brief Get the currently scheduled resort level.
-  */
+ */
 unsigned const &get_resort_particles();
 
 /** spread the particle resorting criterion across the nodes. */

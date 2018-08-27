@@ -21,7 +21,7 @@
  * The factory is tested by registering different types of classes
  * with it (first test), and then checking if instances of those classes can be
  * made via the Factory (second test).
-*/
+ */
 
 #define BOOST_TEST_MODULE Factory test
 #define BOOST_TEST_DYN_LINK

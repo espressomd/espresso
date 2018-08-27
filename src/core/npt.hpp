@@ -70,9 +70,8 @@ typedef struct {
    * particles */
   int dimension;
   /** Set this flag if you want all box dimensions to be identical. Needed for
-     electrostatics and magnetostatics.
-      If the value of dimension is less than 3 then box length motion in one or
-     more
+     electrostatics and magnetostatics. If the value of dimension is less than 3
+     then box length motion in one or more
       directions will be decoupled from the particle motion */
   int cubic_box;
   /** An index to one of the non_constant dimensions. handy if you just want the

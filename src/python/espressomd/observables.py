@@ -2,7 +2,6 @@ from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
-
 @script_interface_register
 class Observable(ScriptInterfaceHelper):
     _so_name = "Observables::Observable"
@@ -12,6 +11,7 @@ class Observable(ScriptInterfaceHelper):
 
 @script_interface_register
 class ComForce(Observable):
+
     """Calculates the total force on particles with given ids.
 
     Parameters
@@ -25,6 +25,7 @@ class ComForce(Observable):
 
 @script_interface_register
 class ComPosition(Observable):
+
     """Calculates the center of mass for particles with given ids.
 
     Parameters
@@ -38,6 +39,7 @@ class ComPosition(Observable):
 
 @script_interface_register
 class ComVelocity(Observable):
+
     """Calculates the center of mass velocity for particles with given ids.
 
     Parameters
@@ -51,6 +53,7 @@ class ComVelocity(Observable):
 
 @script_interface_register
 class Current(Observable):
+
     """Calculates the electric current for particles with given ids.
 
     Parameters
@@ -64,6 +67,7 @@ class Current(Observable):
 
 @script_interface_register
 class DensityProfile(Observable):
+
     """Calculates the particle density profile for particles with given ids.
 
     Parameters
@@ -95,6 +99,7 @@ class DensityProfile(Observable):
 
 @script_interface_register
 class DipoleMoment(Observable):
+
     """Calculates the dipole moment for particles with given ids.
 
     Parameters
@@ -108,6 +113,7 @@ class DipoleMoment(Observable):
 
 @script_interface_register
 class FluxDensityProfile(Observable):
+
     """Calculates the particle flux density for particles with given ids.
 
     Parameters
@@ -139,6 +145,7 @@ class FluxDensityProfile(Observable):
 
 @script_interface_register
 class ForceDensityProfile(Observable):
+
     """Calculates the force density profile for particles with given ids.
 
     Parameters
@@ -170,6 +177,7 @@ class ForceDensityProfile(Observable):
 
 @script_interface_register
 class LBVelocityProfile(Observable):
+
     """Calculates the LB fluid velocity profile.
 
     This observable samples the fluid in on a regular grid defined by the variables
@@ -221,6 +229,7 @@ class LBVelocityProfile(Observable):
 
 @script_interface_register
 class MagneticDipoleMoment(Observable):
+
     """Calculates the magnetic dipole moment for particles with given ids.
 
     Parameters
@@ -235,9 +244,9 @@ class MagneticDipoleMoment(Observable):
 @script_interface_register
 class ParticleAngularVelocities(Observable):
     _so_name = "Observables::ParticleAngularVelocities"
-    
+
     """Calculates the angular velocity (omega) in the spaced-fixed frame of reference
-   
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
@@ -250,7 +259,7 @@ class ParticleAngularVelocities(Observable):
 class ParticleBodyAngularVelocities(Observable):
     _so_name = "Observables::ParticleBodyAngularVelocities"
     """Calculates the angular velocity (omega) in the particles'  body-fixed frame of reference.
-   
+
    For each particle, the body-fixed frame of reference is obtained from the particle's
    orientation stored in the quaternions.
 
@@ -264,8 +273,9 @@ class ParticleBodyAngularVelocities(Observable):
 
 @script_interface_register
 class ParticleBodyVelocities(Observable):
+
     """Calculates the particle velocity in the particles'  body-fixed frame of reference.
-   
+
     For each particle, the body-fixed frame of reference is obtained from the particle's
     orientation stored in the quaternions.
 
@@ -280,6 +290,7 @@ class ParticleBodyVelocities(Observable):
 
 @script_interface_register
 class ParticleForces(Observable):
+
     """Calculates the particle forces for particles with given ids.
 
     Parameters
@@ -293,6 +304,7 @@ class ParticleForces(Observable):
 
 @script_interface_register
 class ParticlePositions(Observable):
+
     """Calculates the particle positions for particles with given ids.
 
     Parameters
@@ -306,6 +318,7 @@ class ParticlePositions(Observable):
 
 @script_interface_register
 class ParticleVelocities(Observable):
+
     """Calculates the particle velocities for particles with given ids.
 
     Parameters
@@ -326,9 +339,9 @@ class StressTensor(Observable):
     """
 
 
-
 @script_interface_register
 class CylindricalDensityProfile(Observable):
+
     """Calculates the particle density in polar coordinates.
 
     Parameters
@@ -364,6 +377,7 @@ class CylindricalDensityProfile(Observable):
 
 @script_interface_register
 class CylindricalFluxDensityProfile(Observable):
+
     """Calculates the particle flux density in polar coordinates.
 
     Parameters
@@ -399,6 +413,7 @@ class CylindricalFluxDensityProfile(Observable):
 
 @script_interface_register
 class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
+
     """Calculates the LB fluid flux density at the particle positions in polar coordinates.
 
     Parameters
@@ -434,6 +449,7 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
 
 @script_interface_register
 class CylindricalLBVelocityProfileAtParticlePositions(Observable):
+
     """Calculates the LB fluid velocity at the particle positions in polar coordinates.
 
     Parameters
@@ -469,6 +485,7 @@ class CylindricalLBVelocityProfileAtParticlePositions(Observable):
 
 @script_interface_register
 class CylindricalVelocityProfile(Observable):
+
     """Calculates the particle velocity profile in polar coordinates.
 
     Parameters
@@ -504,6 +521,7 @@ class CylindricalVelocityProfile(Observable):
 
 @script_interface_register
 class CylindricalLBVelocityProfile(Observable):
+
     """Calculates the LB fluid velocity profile in polar coordinates.
 
     This observable samples the fluid in on a regular grid defined by the variables

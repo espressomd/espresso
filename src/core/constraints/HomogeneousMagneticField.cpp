@@ -19,4 +19,5 @@ void HomogeneousMagneticField::add_energy(const Particle &p,
   energy.dipolar[0] += -1.0 * m_field * p.r.dip;
 #endif
 }
-}
+
+} // namespace Constraints

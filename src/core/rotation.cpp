@@ -29,7 +29,7 @@
  *  treated as 3D objects with 3 translational and 3 rotational degrees of
  * freedom if ROTATION
  *  flag is set in \ref config.hpp "config.h".
-*/
+ */
 
 #include "rotation.hpp"
 #include "cells.hpp"
@@ -167,23 +167,20 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 5.*/
   if (p->p.rotation & ROTATION_X)
-    Wd[0] = (p->f.torque[0] +
-             p->m.omega[1] * p->m.omega[2] *
-                 (p->p.rinertia[1] - p->p.rinertia[2])) /
+    Wd[0] = (p->f.torque[0] + p->m.omega[1] * p->m.omega[2] *
+                                  (p->p.rinertia[1] - p->p.rinertia[2])) /
             p->p.rinertia[0];
   else
     Wd[0] = 0.0;
   if (p->p.rotation & ROTATION_Y)
-    Wd[1] = (p->f.torque[1] +
-             p->m.omega[2] * p->m.omega[0] *
-                 (p->p.rinertia[2] - p->p.rinertia[0])) /
+    Wd[1] = (p->f.torque[1] + p->m.omega[2] * p->m.omega[0] *
+                                  (p->p.rinertia[2] - p->p.rinertia[0])) /
             p->p.rinertia[1];
   else
     Wd[1] = 0.0;
   if (p->p.rotation & ROTATION_Z)
-    Wd[2] = (p->f.torque[2] +
-             p->m.omega[0] * p->m.omega[1] *
-                 (p->p.rinertia[0] - p->p.rinertia[1])) /
+    Wd[2] = (p->f.torque[2] + p->m.omega[0] * p->m.omega[1] *
+                                  (p->p.rinertia[0] - p->p.rinertia[1])) /
             p->p.rinertia[2];
   else
     Wd[2] = 0.0;
@@ -237,11 +234,9 @@ void propagate_omega_quat_particle(Particle *p) {
   /* Taken from "On the numerical integration of motion for rigid polyatomics:
    * The modified quaternion approach", Omeylan, Igor (1998), Eq. 12.*/
   lambda = 1 - S[0] * time_step_squared_half -
-           sqrt(1 -
-                time_step_squared *
-                    (S[0] +
-                     time_step *
-                         (S[1] + time_step_half / 2. * (S[2] - S[0] * S[0]))));
+           sqrt(1 - time_step_squared *
+                        (S[0] + time_step * (S[1] + time_step_half / 2. *
+                                                        (S[2] - S[0] * S[0]))));
 
   for (int j = 0; j < 3; j++) {
     p->m.omega[j] += time_step_half * Wd[j];

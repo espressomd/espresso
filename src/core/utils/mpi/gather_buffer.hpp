@@ -116,7 +116,7 @@ void gather_buffer(std::vector<T> &buffer, boost::mpi::communicator comm,
     gatherv(comm, buffer.data(), n_elem, static_cast<T *>(nullptr), 0, 0, root);
   }
 }
-}
-}
+} // namespace Mpi
+} // namespace Utils
 
 #endif

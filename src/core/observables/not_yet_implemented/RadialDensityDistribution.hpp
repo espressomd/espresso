@@ -46,9 +46,8 @@ int ObservableRadialDensityDistribution::actual_calculate(PartCfg &partCfg) {
   double *bin_volume = (double *)Utils::malloc(sizeof(double) * r_data->rbins);
 
   double part_pos[3];
-  double AB[3]; // normalized normal vector pointing to start point
-  double
-      BA[3];       // ...
+  double AB[3];    // normalized normal vector pointing to start point
+  double BA[3];    // ...
                    // end point
   double Apart[3]; // vector difference start_point - part_pos
   double norm_Apart;
@@ -93,8 +92,9 @@ int ObservableRadialDensityDistribution::actual_calculate(PartCfg &partCfg) {
   // start_point[2], end_point[0], end_point[1], end_point[2]);
   normAB = normr(AB);
   for (int i = 0; i < r_data->rbins; i++) {
-    bin_volume[i] = normAB * (pow(r_data->minr + (i + 1) * rbin_size, 2) -
-                              pow(r_data->minr + i * rbin_size, 2)) *
+    bin_volume[i] = normAB *
+                    (pow(r_data->minr + (i + 1) * rbin_size, 2) -
+                     pow(r_data->minr + i * rbin_size, 2)) *
                     PI;
   }
 
@@ -109,8 +109,7 @@ int ObservableRadialDensityDistribution::actual_calculate(PartCfg &partCfg) {
     part_pos[1] = partCfg[ids->e[i]].r.p[1];
     part_pos[2] = partCfg[ids->e[i]].r.p[2];
     // that might seem weird, but this ensures that the used particle position
-    // is the
-    // closest image to one of the two points that define the axis
+    // is the closest image to one of the two points that define the axis
     get_mi_vector(tmp, part_pos, start_point);
     get_mi_vector(tmp2, part_pos, end_point);
 

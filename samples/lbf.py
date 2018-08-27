@@ -1,5 +1,5 @@
 """
-This samples sets up a Lattice-Boltzmann fluid and applies an external force density on it. 
+This samples sets up a Lattice-Boltzmann fluid and applies an external force density on it.
 """
 
 #
@@ -43,7 +43,7 @@ print(espressomd.features())
 
 
 box_l = 50
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 

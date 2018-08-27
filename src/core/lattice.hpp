@@ -53,9 +53,9 @@ public:
   int global_grid[3];
   double agrid[3]; /** lattice constant */
 
-  int halo_grid
-      [3];       /** number of lattice sites in each direction including halo */
-  int halo_size; /** halo size in all directions */
+  int halo_grid[3]; /** number of lattice sites in each direction including halo
+                     */
+  int halo_size;    /** halo size in all directions */
 
   double offset[3]; /** global offset */
   double local_offset[3];

@@ -50,13 +50,13 @@ typedef boost::multi_array<int, 3> int_array_3d;
 
 /**
  * @brief Class for writing H5MD files.
-**/
+ **/
 class File {
 public:
   /**
    * Constructor/destructor without arguments (due to script_interface).
    * @brief Constructor of the "File" class.
-  */
+   */
   File();
   ~File();
   /**
@@ -131,8 +131,8 @@ private:
                      const std::vector<int> &change_extent);
 
   /**
-  * @brief Method that returns chunk dimensions.
-  */
+   * @brief Method that returns chunk dimensions.
+   */
   std::vector<hsize_t> create_chunk_dims(hsize_t dim, hsize_t size,
                                          hsize_t chunk_size);
 

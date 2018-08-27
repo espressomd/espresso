@@ -24,10 +24,8 @@
 #include "lbboundaries.hpp"
 
 // note that we need to declare the ek_parameters struct and instantiate it for
-// LB_GPU
-// to compile when electrokinetics is not compiled in. This seemed more elegant
-// than
-// ifdeffing multiple versions of the kernel integrate.
+// LB_GPU to compile when electrokinetics is not compiled in. This seemed more
+// elegant than ifdeffing multiple versions of the kernel integrate.
 #ifdef CUDA
 
 #if defined(EK_DOUBLE_PREC)

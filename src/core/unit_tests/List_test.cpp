@@ -19,7 +19,7 @@
 
 /** \file Vector_test.cpp Unit tests for the Utils::Vector class.
  *
-*/
+ */
 
 #define BOOST_TEST_MODULE List test
 #define BOOST_TEST_DYN_LINK
