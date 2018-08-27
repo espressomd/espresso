@@ -212,7 +212,6 @@ class CollisionDetection(ut.TestCase):
                 np.copy(p.pos_folded), expected_pos, atol=1E-4)
 
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
-    #@ut.skipIf(s.cell_system.get_state()["n_nodes"]>1,"VS based tests only on a single node")
     def test_bind_at_point_of_collision(self):
         # Single collision head node
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0, 0, 0)))
@@ -235,7 +234,7 @@ class CollisionDetection(ut.TestCase):
         self.run_test_bind_at_point_of_collision_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
 
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipping for lack of LJ potential")
+    @ut.skipIf(not espressomd.has_features("LENNARD_JONES","VIRTUAL_SITES"), "Skipping for lack of LJ potential")
     def test_bind_at_point_of_collision_random(self):
         """Integrate lj liquid and check that no double bonds are formed
            and the number of bonds fits the number of virtual sites
@@ -463,6 +462,7 @@ class CollisionDetection(ut.TestCase):
         self.run_test_glue_to_surface_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
 
+    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
     def test_glue_to_surface_random(self):
         """Integrate lj liquid and check that no double bonds are formed
            and the number of bonds fits the number of virtual sites

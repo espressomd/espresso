@@ -228,28 +228,28 @@ void queue_collision(const int part1, const int part2) {
 
 /** @brief Calculate position of vs for GLUE_TO_SURFACE mode
  *    Reutnrs id of particle to bind vs to */
-int glue_to_surface_calc_vs_pos(const Particle *const p1,
-                                const Particle *const p2, Vector3d &pos) {
+int glue_to_surface_calc_vs_pos(const Particle& p1,
+                                const Particle& p2, Vector3d &pos) {
   int bind_vs_to_pid;
   double vec21[3];
   double c;
-  get_mi_vector(vec21, p1->r.p, p2->r.p);
+  get_mi_vector(vec21, p1.r.p, p2.r.p);
   const double dist_betw_part = sqrt(sqrlen(vec21));
 
   // Find out, which is the particle to be glued.
-  if ((p1->p.type == collision_params.part_type_to_be_glued) &&
-      (p2->p.type == collision_params.part_type_to_attach_vs_to)) {
+  if ((p1.p.type == collision_params.part_type_to_be_glued) &&
+      (p2.p.type == collision_params.part_type_to_attach_vs_to)) {
     c = 1 - collision_params.dist_glued_part_to_vs / dist_betw_part;
-    bind_vs_to_pid = p2->p.identity;
-  } else if ((p2->p.type == collision_params.part_type_to_be_glued) &&
-             (p1->p.type == collision_params.part_type_to_attach_vs_to)) {
+    bind_vs_to_pid = p2.p.identity;
+  } else if ((p2.p.type == collision_params.part_type_to_be_glued) &&
+             (p1.p.type == collision_params.part_type_to_attach_vs_to)) {
     c = collision_params.dist_glued_part_to_vs / dist_betw_part;
-    bind_vs_to_pid = p1->p.identity;
+    bind_vs_to_pid = p1.p.identity;
   } else {
     throw std::runtime_error("This should never be thrown. Bug.");
   }
   for (int i = 0; i < 3; i++) {
-    pos[i] = p2->r.p[i] + vec21[i] * c;
+    pos[i] = p2.r.p[i] + vec21[i] * c;
   }
   return bind_vs_to_pid;
 }
@@ -702,7 +702,7 @@ void handle_collisions() {
           }
 
           Vector3d pos;
-          const int pid = glue_to_surface_calc_vs_pos(p1, p2, pos);
+          const int pid = glue_to_surface_calc_vs_pos(*p1, *p2, pos);
 
           // Add a bond between the centers of the colliding particles
           // The bond is placed on the node that has p1
