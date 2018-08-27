@@ -31,5 +31,5 @@ bool check_charge_neutrality(ParticleRange &prange,
 
   return excess_ratio <= relative_tolerance;
 }
-}
+} // namespace Utils
 #endif

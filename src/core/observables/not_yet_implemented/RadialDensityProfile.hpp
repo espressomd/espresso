@@ -40,11 +40,12 @@ int ObservableRadialDensityProfile::actual_calculate(PartCfg &partCfg) {
 
     if (binr >= 0 && binr < pdata->rbins && binphi >= 0 &&
         binphi < pdata->phibins && binz >= 0 && binz < pdata->zbins) {
-      bin_volume = PI * ((pdata->minr + (binr + 1) * rbinsize) *
-                             (pdata->minr + (binr + 1) * rbinsize) -
-                         (pdata->minr + (binr)*rbinsize) *
-                             (pdata->minr + (binr)*rbinsize)) *
-                   zbinsize * phibinsize / 2 / PI;
+      bin_volume =
+          PI *
+          ((pdata->minr + (binr + 1) * rbinsize) *
+               (pdata->minr + (binr + 1) * rbinsize) -
+           (pdata->minr + (binr)*rbinsize) * (pdata->minr + (binr)*rbinsize)) *
+          zbinsize * phibinsize / 2 / PI;
       A[binr * pdata->phibins * pdata->zbins + binphi * pdata->zbins + binz] +=
           1. / bin_volume;
     }

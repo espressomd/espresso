@@ -32,14 +32,12 @@ typedef float dds_float;
 
 #ifdef DIPOLAR_BARNES_HUT
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// The method concept is revealed within: //
-// M. Burtscher, K. Pingali , in: GPU Gems’11: GPU Computing Gems Emerald
-// Edition, 2011.//
-// An Efficient CUDA Implementation of the Tree-Based Barnes Hut n-Body
-// Algorithm       //
-// http://iss.ices.utexas.edu/Publications/Papers/burtscher11.pdf //
-//////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// The method concept is revealed within: M. Burtscher, K. Pingali, in: GPU
+// Gems’11: GPU Computing Gems Emerald Edition, 2011. An Efficient CUDA
+// Implementation of the Tree-Based Barnes Hut n-Body Algorithm
+// http://iss.ices.utexas.edu/Publications/Papers/burtscher11.pdf
+////////////////////////////////////////////////////////////////////////////////
 
 #include "DipolarBarnesHut_cuda.cuh"
 
@@ -50,17 +48,16 @@ using namespace std;
 // CUDA blocks
 __constant__ int blocks;
 // each node corresponds to a split of the cubic box in 3D space to equal cubic
-// boxes
-// hence, 8 octant nodes per particle is a theoretical octree limit:
-// a maximal number of octree nodes is "nnodesd" and a number of particles
+// boxes hence, 8 octant nodes per particle is a theoretical octree limit: a
+// maximal number of octree nodes is "nnodesd" and a number of particles
 // "nbodiesd" respectively.
 __constant__ int nnodesd, nbodiesd;
 // Method performance/accuracy parameters
 __constant__ float epssqd, itolsqd;
 // blkcntd is a factual blocks' count.
 // bottomd is a bottom Barnes-Hut node (the division octant cell) in a linear
-// array representation.
-// maxdepthd is a largest length of the octree "branch" till the "leaf".
+// array representation. maxdepthd is a largest length of the octree "branch"
+// till the "leaf".
 __device__ int bottomd, maxdepthd, blkcntd;
 // half edge of the BH box
 __device__ float radiusd;
@@ -137,15 +134,15 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
   // In order to iterate over all bodies assigned to thread,
   // it is necessary to step over all threads in the GPU:
   // inc = [number of blocks: gridDim.x] * [THREADS1 per block within given
-  // kernel].
-  // Hence, this approach could handle an infinite number of bodies (particles)
+  // kernel]. Hence, this approach could handle an infinite number of bodies
+  // (particles)
   i = threadIdx.x;
   inc = THREADS1 * gridDim.x;
   // j is an absolute index of the particle.
   // It is shifted over a count of the passed block threads behind: blockIdx.x *
-  // THREADS1.
-  // NOTE: this loop is extrema search among all particles of the given thread
-  // in the present block. However, one is not among all threads of this block.
+  // THREADS1. NOTE: this loop is extrema search among all particles of the
+  // given thread in the present block. However, one is not among all threads of
+  // this block.
   for (j = i + blockIdx.x * THREADS1; j < nbodiesd; j += inc)
     for (l = 0; l < 3; l++) {
       val = xd[3 * j + l];
@@ -297,9 +294,8 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
       n = ch;
       depth++;
       // Going down through the octree depth: radius split corresponds to the
-      // cube split.
-      // Corresponding octants are cells, not bodies.
-      // Smaller radius will be used until the next skip == 1
+      // cube split. Corresponding octants are cells, not bodies. Smaller radius
+      // will be used until the next skip == 1
       r *= 0.5f;
       j = 0;
       // Determine which child octant to follow based on body coordinates.
@@ -316,17 +312,14 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
       // Try to lock and iterate towards next body:
       if (ch == atomicCAS((int *)&childd[locked], ch, -2)) {
         // If we are here then childd[locked] was equal to "ch" and now is
-        // assigned to -2, it is locked.
-        // We will not came here in a case if this child will be already locked
-        // by other threads
-        // because other particle could already do it in other thread.
-        // Several particles simultaneously could force a new octants' split.
-        // In this case we will not came here and "i += inc" will be not
-        // executed below.
-        // Hence, the present loop "while (i < nbodiesd)" will mandatory repeat
-        // in the given thread for the given i-th particle
-        // until other threads will unlock this cell for either a body insertion
-        // and/or new octant level cells creation.
+        // assigned to -2, it is locked. We will not came here in a case if this
+        // child will be already locked by other threads because other particle
+        // could already do it in other thread. Several particles simultaneously
+        // could force a new octants' split. In this case we will not came here
+        // and "i += inc" will be not executed below. Hence, the present loop
+        // "while (i < nbodiesd)" will mandatory repeat in the given thread for
+        // the given i-th particle until other threads will unlock this cell for
+        // either a body insertion and/or new octant level cells creation.
         if (ch == -2) {
           // Cannot be here..
           // printf("Error: ch = -2\n");
@@ -340,15 +333,14 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
           patch = -1;
           // There already is a body and/or cell(s) in this position.
           // We should start from a loop of the deepest child cell
-          // determination.
-          // Then, we need to create new cells and to distribute
+          // determination. Then, we need to create new cells and to distribute
           // existing and new bodies between these new cells.
           do {
             // If we are here then the tree bottom level is moving further:
             // Note, that the bottomd is not a global tree depth.
             // It is rather a tree size in 1D representation of nnodesd == 8 *
-            // nbodiesd nodes.
-            // These lists will be correctly handled by the sortKernel later.
+            // nbodiesd nodes. These lists will be correctly handled by the
+            // sortKernel later.
             depth++;
             cell = atomicSub((int *)&bottomd, 1) - 1;
             if (cell <= nbodiesd) {
@@ -357,9 +349,8 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
               bottomd = nnodesd;
             }
             // The "patch" is saving the information about a first cell created
-            // in the current thread
-            // before it continues to dive into the tree depth.
-            // Hence, the "patch" defines the new branch inception index.
+            // in the current thread before it continues to dive into the tree
+            // depth. Hence, the "patch" defines the new branch inception index.
             patch = max(patch, cell);
 
             // Note: "j" is defined by the body position against the parent cell
@@ -369,12 +360,10 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             for (l = 0; l < 3; l++)
               pos[l] = ((j >> l) & 1) * r;
             // Note, that negative octants correspond to pos[l] == 0 and
-            // positive octants correspond
-            // to pos[l] == r.
+            // positive octants correspond to pos[l] == r.
 
             // Going down through the octree depth: radius split corresponds to
-            // the cube split.
-            // Corresponding octants are cells, not bodies.
+            // the cube split. Corresponding octants are cells, not bodies.
             // Smaller radius will be used until the next skip == 1
             r *= 0.5f;
 
@@ -387,24 +376,20 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // Here, we assign -1 to the cells in contrast to bodies.
             // Bodies do not need this array. They need only array sortd,
             // which will be defined in the sortKernel for a usage by the force
-            // and energy
-            // calculation kernels.
+            // and energy calculation kernels.
             startd[cell] = -1;
 
             // Now, let's save the cell coordinates locally (pos[l]) and
-            // globally (xd[3 * cell + l]).
-            // This location should be shifted from the octant center defined
-            // above (pos[l] before this assignment).
+            // globally (xd[3 * cell + l]). This location should be shifted from
+            // the octant center defined above (pos[l] before this assignment).
             // Parent cell coordinates xd[3 * n + l] will be added.
             // Parent radius now is equal to 2 * r, where "r" is already updated
-            // above: r *= 0.5f.
-            // Hence, the negative octant is defined above by pos[l] == 0 and
-            // positive - by pos[l] == 2 * r.
-            // In order to transform these coordinates into relative octant
-            // positions, we need to add -r
-            // to obtain -r and r for negative and positive octants.
-            // Now, the child (cell) octants centers are deriving from the
-            // parent (n) octant center:
+            // above: r *= 0.5f. Hence, the negative octant is defined above by
+            // pos[l] == 0 and positive - by pos[l] == 2 * r. In order to
+            // transform these coordinates into relative octant positions, we
+            // need to add -r to obtain -r and r for negative and positive
+            // octants. Now, the child (cell) octants centers are deriving from
+            // the parent (n) octant center:
             for (l = 0; l < 3; l++)
               pos[l] = xd[3 * cell + l] = xd[3 * n + l] - r + pos[l];
 
@@ -413,8 +398,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
               childd[cell * 8 + k] = -1;
 
             // This condition should always be true cause "patch" is -1 at the
-            // beginning
-            // and the bottomd/cell reduces further.
+            // beginning and the bottomd/cell reduces further.
             if (patch != cell) {
               // New cell is assigned as a child of previous "n" parent:
               childd[n * 8 + j] = cell;
@@ -427,11 +411,9 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
               if (pos[l] < xd[3 * ch + l])
                 j += pow(2, l);
             // New element just appeared in the chain of cells. Hence, that what
-            // supposed
-            // to be a child ("ch") before entering the present iteration, now
-            // will be a
-            // child of the new cell (after this smallest octant split into new
-            // octants):
+            // supposed to be a child ("ch") before entering the present
+            // iteration, now will be a child of the new cell (after this
+            // smallest octant split into new octants):
             childd[cell * 8 + j] = ch;
 
             // Now cell is claimed to be a parent of further iteration of the
@@ -439,8 +421,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             n = cell;
             j = 0;
             // Let's handle the particle position (p[l]) corresponding to the
-            // given thread and block
-            // against new octant cell (pos[l]):
+            // given thread and block against new octant cell (pos[l]):
             for (l = 0; l < 3; l++)
               if (pos[l] < p[l])
                 j += pow(2, l);
@@ -452,8 +433,8 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // Hence, the current "childd" should have no children.
             // It is equivalent to an absence of other particles
             // in the i-th particle new smallest octant, otherwise we should
-            // split octants further
-            // until these two particles will come to different octants:
+            // split octants further until these two particles will come to
+            // different octants:
           } while (ch >= 0);
 
           // i-th particle assignment as a child to the last created cell:
@@ -544,11 +525,9 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
           child[missing * THREADS3 + threadIdx.x] = ch;
           m = massd[ch];
           // Is a child the particle? Only particles have non-negative mass
-          // initialized originally.
-          // Another option: a cell which already aggregated masses of other
-          // cells and particles.
-          // "missing" means that a non-zero contribution of such kind is
-          // missing:
+          // initialized originally. Another option: a cell which already
+          // aggregated masses of other cells and particles. "missing" means
+          // that a non-zero contribution of such kind is missing:
           missing++;
           if (m >= 0.0f) {
             // child is ready
@@ -557,8 +536,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
             // Also, the previous condition (m >= 0.0f) reveals
             // that its' children total mass is already calculated.
             // Hence, below command "countd[k] = cnt" is already executed by
-            // other threads/blocks
-            // and we can add this count
+            // other threads/blocks and we can add this count
             if (ch >= nbodiesd) { // count bodies (needed later)
               // As far as a child is a cell, its "countd" was already
               // calculated.
@@ -586,9 +564,8 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
         ch = child[(missing - 1) * THREADS3 + threadIdx.x];
         m = massd[ch];
         // Is a child the particle? Only particles have non-negative mass
-        // initialized originally.
-        // Another option: a cell which already aggregated masses of other cells
-        // and particles.
+        // initialized originally. Another option: a cell which already
+        // aggregated masses of other cells and particles.
         if (m >= 0.0f) {
           // child is now ready
           missing--;
@@ -609,12 +586,10 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
     }
 
     // (missing == 0) could be true and threads will move to next particles (k
-    // += inc)
-    // only if previous conditions (m >= 0.0f) will be true.
-    // It can happen only if cell will obtain the mass (only here below:
-    // "massd[k] = cm")
-    // or they will find the very last childs: particles.
-    // Before that: do/while loop will continue.
+    // += inc) only if previous conditions (m >= 0.0f) will be true. It can
+    // happen only if cell will obtain the mass (only here below: "massd[k] =
+    // cm") or they will find the very last childs: particles. Before that:
+    // do/while loop will continue.
     if (missing == 0) {
       // all children are ready, so store computed information
       countd[k] = cnt;
@@ -623,8 +598,8 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
         xd[3 * k + l] = p[l] * m;
         uxd[3 * k + l] = u[l];
       }
-      //__threadfence();	// make sure data are visible before setting
-      //mass
+      // __threadfence();	// make sure data are visible before setting
+      //                    // mass
       massd[k] = cm;
       k += inc; // move on to next cell
     }
@@ -638,10 +613,8 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
 
 // This kernel concurrently places the bodies into an array such that the bodies
 // appear in the same order in the array as they would during an in-order
-// traversal
-// of the octree. This sorting groups spatially close bodies (in the same octant
-// cells)
-// together, and these grouped bodies are crucial to speed up
+// traversal of the octree. This sorting groups spatially close bodies (in the
+// same octant cells) together, and these grouped bodies are crucial to speed up
 // forceCalculationKernel and energyCalculationKernel
 __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
   int i, k, ch, dec, start, bottom;
@@ -652,8 +625,7 @@ __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
   // Reverse order is required now cause octant cells which are more close
   // to the root have a larger count of entities inside (countd[k]).
   // Particles should be sorted over all entities count in the tree array
-  // representation
-  // made by treeBuildingKernel.
+  // representation made by treeBuildingKernel.
   k = nnodesd + 1 - dec + threadIdx.x + blockIdx.x * blockDim.x;
 
   // iterate over all cells assigned to thread
@@ -805,27 +777,25 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
               tmp += dr[l] * dr[l];
             }
 
-// NOTE: i-th particle is specific for the given thread.
-// However, the above-mentioned index "i" is already sorted by the sortKernel.
-// Hence, below stack-diving operations will
-// be performed by different threads of the same warp almost synchronously
-// because adjacent threads
-// have particles located in the space not far from each other (=adjacent
-// octants of corresponding local maxdepth).
-// Hence, such particles will have a similar stack of the below execution from a
-// perspective of other Barnes-Hut tree
-// branches distancing against them. Same global memory fragments (childd[])
-// will be loaded to the same warp access
-// and no corresponding threads' divergence will take place.
-// Only in this way, zero thread could control others: see "if (sbase ==
-// threadIdx.x)" above and below..
-// and this control will be correct. It will be even with a single stack arrays
-// per the single warp:
-// The pos, node and dq array fragments are shared between all threads of the
-// whole warp.
+            // NOTE: i-th particle is specific for the given thread.
+            // However, the above-mentioned index "i" is already sorted by the
+            // sortKernel. Hence, below stack-diving operations will be
+            // performed by different threads of the same warp almost
+            // synchronously because adjacent threads have particles located in
+            // the space not far from each other (=adjacent octants of
+            // corresponding local maxdepth). Hence, such particles will have a
+            // similar stack of the below execution from a perspective of other
+            // Barnes-Hut tree branches distancing against them. Same global
+            // memory fragments (childd[]) will be loaded to the same warp
+            // access and no corresponding threads' divergence will take place.
+            // Only in this way, zero thread could control others: see "if
+            // (sbase == threadIdx.x)" above and below.. and this control will
+            // be correct. It will be even with a single stack arrays per the
+            // single warp: The pos, node and dq array fragments are shared
+            // between all threads of the whole warp.
 
-// Check if all threads agree that cell is far enough away (or is a body, i.e. n
-// < nbodiesd).
+            // Check if all threads agree that cell is far enough away (or is a
+            // body, i.e. n < nbodiesd).
 #if CUDA_VERSION >= 9000
             if ((n < nbodiesd) ||
                 __all_sync(__activemask(), tmp >= dq[depth])) {
@@ -870,8 +840,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
           } else {
             // Early out because all remaining children are also zero.
             // We shuld move to the next octant or to the next depth if other
-            // threads already
-            // checked other octants:
+            // threads already checked other octants:
             depth = max(j, depth - 1);
           }
         }
@@ -982,15 +951,15 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
             }
 #if CUDA_VERSION >= 9000
             if ((n < nbodiesd) ||
-                __all_sync(__activemask(),
-                           tmp >= dq[depth])) { // check if all threads agree
-                                                // that cell is far enough away
-                                                // (or is a body)
+                __all_sync(
+                    __activemask(),
+                    tmp >= dq[depth])) { // check if all threads agree that cell
+                                         // is far enough away (or is a body)
 #else
             if ((n < nbodiesd) ||
-                __all(tmp >= dq[depth])) { // check if all threads agree that
-                                           // cell is far enough away (or is a
-                                           // body)
+                __all(tmp >=
+                      dq[depth])) { // check if all threads agree that cell is
+                                    // far enough away (or is a body)
 #endif
               if (n != i) {
                 d1 = sqrtf(tmp /*, 0.5f*/);
@@ -1187,8 +1156,7 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
 
   bh_data->blocks = dev.n_cores;
   // Each node corresponds to a split of the cubic box in 3D space to equal
-  // cubic boxes
-  // hence, 8 nodes per particle is a theoretical octree limit:
+  // cubic boxes hence, 8 nodes per particle is a theoretical octree limit:
   bh_data->nnodes = bh_data->nbodies * 8;
   if (bh_data->nnodes < 1024 * bh_data->blocks)
     bh_data->nnodes = 1024 * bh_data->blocks;

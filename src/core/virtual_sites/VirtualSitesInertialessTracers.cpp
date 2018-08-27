@@ -8,7 +8,7 @@
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
 void VirtualSitesInertialessTracers::after_force_calc() {
-// Now the forces are computed and need to go into the LB fluid
+  // Now the forces are computed and need to go into the LB fluid
 #ifdef LB
   if (lattice_switch & LATTICE_LB) {
     IBM_ForcesIntoFluid_CPU();

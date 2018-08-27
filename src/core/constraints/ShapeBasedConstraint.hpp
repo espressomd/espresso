@@ -73,6 +73,6 @@ private:
   double m_outer_normal_force;
 };
 
-} /* namespace Constaints */
+} // namespace Constraints
 
 #endif

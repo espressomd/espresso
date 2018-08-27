@@ -20,7 +20,7 @@
 /** \file NumeratedContainer_test.cpp Unit tests for the
  * Utils::NumeratedContainer class.
  *
-*/
+ */
 
 #define BOOST_TEST_MODULE Utils::Batch test
 #define BOOST_TEST_DYN_LINK

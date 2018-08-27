@@ -15,7 +15,7 @@ public:
   /** @brief Make a decision based on two Particle objects */
   virtual bool decide(const Particle &p1, const Particle &p2) const = 0;
   /** @brief Make a decision based on particle ids.
-  * This can only run on the master node outside the integration loop */
+   * This can only run on the master node outside the integration loop */
   bool decide(int id1, int id2) const {
     // Retrieve particle data
     auto const &p1 = get_particle_data(id1);
@@ -78,6 +78,6 @@ public:
 private:
   int m_bond_type;
 };
-}
+} // namespace PairCriteria
 
 #endif

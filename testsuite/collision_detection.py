@@ -83,24 +83,18 @@ class CollisionDetection(ut.TestCase):
 
         # Check that it cannot be activated
         self.s.collision_detection.set_params(
-            mode="bind_centers",
-            distance=0.11,
-            bond_centers=self.H)
+            mode="bind_centers", distance=0.11, bond_centers=self.H)
         self.s.integrator.run(1, recalc_forces=True)
         bond0 = ((self.s.bonded_inter[0], 1),)
         bond1 = ((self.s.bonded_inter[0], 0),)
         self.assertTrue(
-            self.s.part[
-                0].bonds == bond0 or self.s.part[
-                    1].bonds == bond1)
+            self.s.part[0].bonds == bond0 or self.s.part[1].bonds == bond1)
         self.assertEqual(self.s.part[2].bonds, ())
 
         # Check that no additional bonds appear
         self.s.integrator.run(1)
         self.assertTrue(
-            self.s.part[
-                0].bonds == bond0 or self.s.part[
-                    1].bonds == bond1)
+            self.s.part[0].bonds == bond0 or self.s.part[1].bonds == bond1)
         self.assertEqual(self.s.part[2].bonds, ())
 
         # Check turning it off
@@ -120,16 +114,11 @@ class CollisionDetection(ut.TestCase):
                 raise Exception(
                     "Test particle too close to particle, which should not take part in collision")
 
-        # 2 non-virtual + 2 virtual + one that doesn't take part
+        # 2 non-virtual + 2 virtual + one that doesn't tkae part
         expected_np = 4 * len(positions) + 1
 
         self.s.collision_detection.set_params(
-            mode="bind_at_point_of_collision",
-            distance=0.11,
-            bond_centers=self.H,
-            bond_vs=self.H2,
-            part_type_vs=1,
-            vs_placement=0.4)
+            mode="bind_at_point_of_collision", distance=0.11, bond_centers=self.H, bond_vs=self.H2, part_type_vs=1, vs_placement=0.4)
         self.s.integrator.run(0, recalc_forces=True)
         self.verify_state_after_bind_at_poc(expected_np)
 
@@ -220,9 +209,7 @@ class CollisionDetection(ut.TestCase):
             expected_pos = self.s.part[rel_to].pos_folded + \
                 self.s.collision_detection.vs_placement * dist_centers
             np.testing.assert_allclose(
-                np.copy(p.pos_folded),
-                expected_pos,
-                atol=1E-4)
+                np.copy(p.pos_folded), expected_pos, atol=1E-4)
 
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
     #@ut.skipIf(s.cell_system.get_state()["n_nodes"]>1,"VS based tests only on a single node")
@@ -451,19 +438,8 @@ class CollisionDetection(ut.TestCase):
         self.assertAlmostEqual(self.s.distance(base_p, vs), 0.08, places=3)
 
         # base_p,vs,bound_p on a line
-        self.assertGreater(
-            np.dot(
-                self.s.distance_vec(
-                    base_p,
-                    vs),
-                self.s.distance_vec(
-                    base_p,
-                    bound_p)) / self.s.distance(
-                        base_p,
-                     vs) / self.s.distance(
-                        base_p,
-                         bound_p),
-                         0.99)
+        self.assertGreater(np.dot(self.s.distance_vec(base_p, vs), self.s.distance_vec(base_p, bound_p))
+                           / self.s.distance(base_p, vs) / self.s.distance(base_p, bound_p), 0.99)
 
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "Skipped due to missing VIRTUAL_SITES_RELATIVE")
     def test_glue_to_surface(self):
@@ -628,11 +604,8 @@ class CollisionDetection(ut.TestCase):
                 bend=1, phi0=float(i) / (res - 1) * np.pi)
         cutoff = 0.11
         self.s.collision_detection.set_params(
-            mode="bind_three_particles",
-            bond_centers=self.H,
-            bond_three_particles=2,
-            three_particle_binding_angle_resolution=res,
-            distance=cutoff)
+            mode="bind_three_particles", bond_centers=self.H,
+                                              bond_three_particles=2, three_particle_binding_angle_resolution=res, distance=cutoff)
         self.s.integrator.run(0, recalc_forces=True)
         self.verify_triangle_binding(cutoff, self.s.bonded_inter[2], res)
 

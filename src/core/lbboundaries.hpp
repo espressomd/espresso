@@ -78,5 +78,5 @@ void lb_bounce_back(LB_Fluid &lbfluid);
 #endif /* LB_BOUNDARIES */
 
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
-}
+} // namespace LBBoundaries
 #endif /* LB_BOUNDARIES_H */

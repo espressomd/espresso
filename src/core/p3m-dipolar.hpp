@@ -257,12 +257,12 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
 
   if (dist < dp3m.params.r_cut && dist > 0) {
     adist = dp3m.params.alpha * dist;
-/*fac1 = coulomb.Dprefactor;*/
+    /*fac1 = coulomb.Dprefactor;*/
 
 #if USE_ERFC_APPROXIMATION
     erfc_part_ri = AS_erfc_part(adist) / dist;
     /*  fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */ /* *exp(-adist*adist);
-                                                                              */
+                                                                            */
 #else
     erfc_part_ri = erfc(adist) / dist;
 /* fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/

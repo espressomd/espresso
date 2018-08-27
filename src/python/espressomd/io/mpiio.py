@@ -15,7 +15,8 @@ class Mpiio(object):
         self._instance = PScriptInterface(
             "ScriptInterface::MPIIO::MPIIOScript")
 
-    def write(self, prefix=None, positions=False, velocities=False, types=False, bonds=False):
+    def write(self, prefix=None, positions=False, velocities=False,
+              types=False, bonds=False):
         """MPI-IO write.
 
         Outputs binary data using MPI-IO to several files starting with prefix.
@@ -61,7 +62,8 @@ class Mpiio(object):
         self._instance.call_method(
             "write", prefix=prefix, pos=positions, vel=velocities, typ=types, bond=bonds)
 
-    def read(self, prefix=None, positions=False, velocities=False, types=False, bonds=False):
+    def read(self, prefix=None, positions=False, velocities=False,
+             types=False, bonds=False):
         """MPI-IO read.
 
         This function reads data dumped by `write`. See the write documentation

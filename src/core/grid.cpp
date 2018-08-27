@@ -22,7 +22,7 @@
  *
  *  For more information on the domain decomposition,
  *  see \ref grid.hpp "grid.h".
-*/
+ */
 
 #include "grid.hpp"
 #include "cells.hpp"
@@ -146,8 +146,9 @@ void grid_changed_box_l() {
 #ifdef GRID_DEBUG
   fprintf(stderr, "%d: local_box_l = (%.3f, %.3f, %.3f)\n", this_node,
           local_box_l[0], local_box_l[1], local_box_l[2]);
-  fprintf(stderr, "%d: coordinates: x in [%.3f, %.3f], y in [%.3f, %.3f], z in "
-                  "[%.3f, %.3f]\n",
+  fprintf(stderr,
+          "%d: coordinates: x in [%.3f, %.3f], y in [%.3f, %.3f], z in "
+          "[%.3f, %.3f]\n",
           this_node, my_left[0], my_right[0], my_left[1], my_right[1],
           my_left[2], my_right[2]);
 #endif

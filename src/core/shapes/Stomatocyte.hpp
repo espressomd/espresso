@@ -65,6 +65,6 @@ private:
   /** Inside/Outside (+1 outside -1 inside interaction direction)*/
   double m_direction;
 };
-}
+} // namespace Shapes
 
 #endif

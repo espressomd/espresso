@@ -22,7 +22,7 @@
 /** \file RuntimeError_test.cpp Unit tests for the ErrorHandling::RuntimeError
  * class.
  *
-*/
+ */
 
 #include <sstream>
 #include <string>
@@ -36,8 +36,8 @@
 
 #include "../RuntimeError.hpp"
 
-using std::string;
 using ErrorHandling::RuntimeError;
+using std::string;
 
 /** Check constructor and getters */
 BOOST_AUTO_TEST_CASE(values) {

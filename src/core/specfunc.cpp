@@ -362,9 +362,8 @@ double K1(double x) {
  ***********************************************************/
 
 /** necessary orders for K0/1 from 2 up to 22 for 10^-14 precision. Note that at
-   8
-    the expansion changes. From 23 to 26 order 2 is used, above order 1. For the
-    latter cases separate implementations are necessary. */
+   8 the expansion changes. From 23 to 26 order 2 is used, above order 1. For
+   the latter cases separate implementations are necessary. */
 static int ak01_orders[] = {
     /* 2 - 8 */
     11, 11, 10, 10, 9, 9,

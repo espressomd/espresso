@@ -34,7 +34,6 @@
 
 #include "cells.hpp"
 #include "communication.hpp"
-#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
@@ -189,8 +188,7 @@ bool check_position_validity(const std::vector<double> &pos) {
     for (int j = 0; j < 3; j++) {
       if (pos[3 * i + j] < 0 || pos[3 * i + j] > box_l[j]) {
         // Throwing exception rather than runtime error, because continuing will
-        // result
-        // in mpi deadlock
+        // result in mpi deadlock
         throw std::runtime_error("Particle position outside the box domain not "
                                  "allowed for scafacos-based methods.");
         return false;
@@ -442,7 +440,7 @@ void update_system_params() {
   scafacos->set_common_parameters(box_l, per, n_part);
 }
 
-} // namespace scafacos
+} // namespace Scafacos
 #endif /* SCAFACOS */
 
 void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {

@@ -40,8 +40,7 @@ Cluster *last_cluster;
 /* HOLE CLUSTER ALGORITHM */
 
 /** test if a mesh point belongs to free (return -1) or occupied (return -2)
-volume.
-Needs feature LENNARD_JONES compiled in. */
+volume. Needs feature LENNARD_JONES compiled in. */
 int test_mesh_elements(PartCfg &partCfg, double pos[3], int probe_part_type) {
 #ifdef LENNARD_JONES
   double dist, vec[3];

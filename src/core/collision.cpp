@@ -21,7 +21,6 @@
 
 #include "cells.hpp"
 #include "collision.hpp"
-#include "collision.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
@@ -228,7 +227,7 @@ void queue_collision(const int part1, const int part2) {
 }
 
 /** @brief Calculate position of vs for GLUE_TO_SURFACE mode
-*    Reutnrs id of particle to bind vs to */
+ *    Reutnrs id of particle to bind vs to */
 int glue_to_surface_calc_vs_pos(const Particle *const p1,
                                 const Particle *const p2, Vector3d &pos) {
   int bind_vs_to_pid;

@@ -65,9 +65,8 @@ int ObservableRadialFluxDensityProfile::actual_calculate(PartCfg &partCfg) {
     if (i == 0) {
       //      printf("(%3.4f) %f %f %f\n", sim_time-last_update, v[2],
       //      partCfg[ids->e[i]].m.v[2]/time_step,v[2]*
-      //      partCfg[ids->e[i]].m.v[2]/time_step/time_step);
-      //      printf("(%3.3f) %f %f", sim_time, old_positions[3*i+2],
-      //      unfolded_ppos[2]);
+      //      partCfg[ids->e[i]].m.v[2]/time_step/time_step); printf("(%3.3f) %f
+      //      %f", sim_time, old_positions[3*i+2], unfolded_ppos[2]);
     }
     old_positions[3 * i + 0] = unfolded_ppos[0];
     old_positions[3 * i + 1] = unfolded_ppos[1];
@@ -81,15 +80,18 @@ int ObservableRadialFluxDensityProfile::actual_calculate(PartCfg &partCfg) {
 
     if (binr >= 0 && binr < pdata->rbins && binphi >= 0 &&
         binphi < pdata->phibins && binz >= 0 && binz < pdata->zbins) {
-      bin_volume = PI * ((pdata->minr + (binr + 1) * rbinsize) *
-                             (pdata->minr + (binr + 1) * rbinsize) -
-                         (pdata->minr + (binr)*rbinsize) *
-                             (pdata->minr + (binr)*rbinsize)) *
-                   zbinsize * phibinsize / 2 / PI;
-      v_r = 1 / r * ((ppos[0] - pdata->center[0]) * v[0] +
-                     (ppos[1] - pdata->center[1]) * v[1]);
-      v_phi = 1 / r / r * ((ppos[0] - pdata->center[0]) * v[1] -
-                           (ppos[1] - pdata->center[1]) * v[0]);
+      bin_volume =
+          PI *
+          ((pdata->minr + (binr + 1) * rbinsize) *
+               (pdata->minr + (binr + 1) * rbinsize) -
+           (pdata->minr + (binr)*rbinsize) * (pdata->minr + (binr)*rbinsize)) *
+          zbinsize * phibinsize / 2 / PI;
+      v_r = 1 / r *
+            ((ppos[0] - pdata->center[0]) * v[0] +
+             (ppos[1] - pdata->center[1]) * v[1]);
+      v_phi = 1 / r / r *
+              ((ppos[0] - pdata->center[0]) * v[1] -
+               (ppos[1] - pdata->center[1]) * v[0]);
       v_z = v[2];
       A[3 * (binr * pdata->phibins * pdata->zbins + binphi * pdata->zbins +
              binz) +

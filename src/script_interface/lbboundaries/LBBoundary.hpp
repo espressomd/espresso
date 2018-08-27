@@ -15,10 +15,7 @@ public:
                      [this](Variant const &value) {
                        m_lbboundary->set_velocity(get_value<Vector3d>(value));
                      },
-                     [this]() {
-                       return m_lbboundary->velocity();
-                     }
-                    },
+                     [this]() { return m_lbboundary->velocity(); }},
                     {"shape",
                      [this](Variant const &value) {
                        m_shape =
@@ -66,6 +63,6 @@ private:
   /* Keep a reference to the shape */
   std::shared_ptr<Shapes::Shape> m_shape;
 }; // class LBBoundary
-} /* namespace LBBoundary */
+} // namespace LBBoundaries
 } /* namespace ScriptInterface */
 #endif

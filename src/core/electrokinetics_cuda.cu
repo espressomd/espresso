@@ -248,10 +248,10 @@ __device__ void ek_displacement(float *dx, LB_nodes_gpu n,
   // Velocity requires half the force_density in the previous time step
 
   dx[0] += 0.5f * ek_parameters_gpu.lb_force_density_previous[node_index];
-  dx[1] += 0.5f *
-           ek_parameters_gpu
-               .lb_force_density_previous[ek_parameters_gpu.number_of_nodes +
-                                          node_index];
+  dx[1] +=
+      0.5f * ek_parameters_gpu
+                 .lb_force_density_previous[ek_parameters_gpu.number_of_nodes +
+                                            node_index];
   dx[2] +=
       0.5f *
       ek_parameters_gpu
@@ -1385,8 +1385,9 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
 
   // face in y
   node = rhoindex_cartesian2linear(
-      coord[0], (coord[1] + di[1] - 1 + ek_parameters_gpu.dim_y) %
-                    ek_parameters_gpu.dim_y,
+      coord[0],
+      (coord[1] + di[1] - 1 + ek_parameters_gpu.dim_y) %
+          ek_parameters_gpu.dim_y,
       coord[2]);
 
   target_node[0] = coord[0];
@@ -1404,8 +1405,9 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
 
   // face in z
   node = rhoindex_cartesian2linear(
-      coord[0], coord[1], (coord[2] + di[2] - 1 + ek_parameters_gpu.dim_z) %
-                              ek_parameters_gpu.dim_z);
+      coord[0], coord[1],
+      (coord[2] + di[2] - 1 + ek_parameters_gpu.dim_z) %
+          ek_parameters_gpu.dim_z);
 
   target_node[0] = coord[0];
   target_node[1] = coord[1];
@@ -1422,8 +1424,9 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
 
   // edge in x
   node = rhoindex_cartesian2linear(
-      coord[0], (coord[1] + di[1] - 1 + ek_parameters_gpu.dim_y) %
-                    ek_parameters_gpu.dim_y,
+      coord[0],
+      (coord[1] + di[1] - 1 + ek_parameters_gpu.dim_y) %
+          ek_parameters_gpu.dim_y,
       (coord[2] + (1 - di[1]) * (2 * di[2] - 1) + ek_parameters_gpu.dim_z) %
           ek_parameters_gpu.dim_z);
 
@@ -1932,10 +1935,9 @@ __global__ void ek_gather_species_charge_density() {
 
     for (int i = 0; i < ek_parameters_gpu.number_of_species; i++) {
       cufftReal tmp = ek_getNode(index);
-      ek_setNode(index, tmp +
-                            ek_parameters_gpu.valency[i] *
-                                ek_parameters_gpu.rho[i][index] /
-                                powf(ek_parameters_gpu.agrid, 3));
+      ek_setNode(index, tmp + ek_parameters_gpu.valency[i] *
+                                  ek_parameters_gpu.rho[i][index] /
+                                  powf(ek_parameters_gpu.agrid, 3));
     }
   }
 }
@@ -2177,8 +2179,9 @@ __global__ void ek_calc_electric_field(const float *potential) {
         (potential[rhoindex_cartesian2linear_padded(
              coord[0], coord[1], (coord[2] + 1) % ek_parameters_gpu.dim_z)] -
          potential[rhoindex_cartesian2linear_padded(
-             coord[0], coord[1], (coord[2] - 1 + ek_parameters_gpu.dim_z) %
-                                     ek_parameters_gpu.dim_z)]);
+             coord[0], coord[1],
+             (coord[2] - 1 + ek_parameters_gpu.dim_z) %
+                 ek_parameters_gpu.dim_z)]);
   }
 }
 #endif
@@ -2304,9 +2307,8 @@ void ek_integrate() {
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   /* Clears the force on the nodes and must be called before fluxes are
-     calculated,
-     since in the reaction set up the previous-step LB force is added to the
-     flux
+     calculated, since in the reaction set up the previous-step LB force is
+     added to the flux
      (in ek_calculate_quantities / ek_displacement), which is copied in this
      routine */
 
@@ -2424,8 +2426,8 @@ int ek_init() {
 
     if (lattice_switch != LATTICE_OFF) {
       fprintf(stderr, "ERROR: Electrokinetics automatically intializes the LB "
-                      "on the GPU and can therefore not be used in conjunction "
-                      "with LB.\n");
+                      "on the GPU and can therefore not be used "
+                      "in conjunction with LB.\n");
       fprintf(stderr, "ERROR: Please run either electrokinetics or LB.\n");
 
       return 1;

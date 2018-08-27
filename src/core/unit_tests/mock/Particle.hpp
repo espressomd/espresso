@@ -21,6 +21,6 @@ class Position {
 public:
   std::array<double, 3> &position() { return m_pos; }
 };
-}
+} // namespace Testing
 
 #endif

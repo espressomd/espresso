@@ -47,9 +47,9 @@ void VirtualSitesRelative::update_virtual_particle_quaternion(
     Particle &p) const {
   const Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
   if (!p_real) {
-    throw std::runtime_error("virtual_sites_relative.cpp - "
-                             "update_mol_pos_particle(): No real particle "
-                             "associated with virtual site.\n");
+    throw std::runtime_error(
+        "virtual_sites_relative.cpp - update_mol_pos_particle(): No real "
+        "particle associated with virtual site.\n");
   }
   multiply_quaternions(p_real->r.quat, p.p.vs_quat, p.r.quat);
   convert_quat_to_quatu(p.r.quat, p.r.quatu);
@@ -74,9 +74,9 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   const Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
   // Check, if a real particle was found
   if (!p_real) {
-    runtimeErrorMsg() << "virtual_sites_relative.cpp - "
-                         "update_mol_pos_particle(): No real particle "
-                         "associated with virtual site.\n";
+    runtimeErrorMsg()
+        << "virtual_sites_relative.cpp - update_mol_pos_particle(): No real "
+           "particle associated with virtual site.\n";
     return;
   }
 
@@ -130,9 +130,9 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
   Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
   // Check, if a real particle was found
   if (!p_real) {
-    runtimeErrorMsg() << "virtual_sites_relative.cpp - "
-                         "update_mol_pos_particle(): No real particle "
-                         "associated with virtual site.\n";
+    runtimeErrorMsg()
+        << "virtual_sites_relative.cpp - update_mol_pos_particle(): No real "
+           "particle associated with virtual site.\n";
     return;
   }
 
@@ -150,8 +150,7 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
   // Add prefactors and add velocity of real particle
   for (i = 0; i < 3; i++) {
     // Scale the velocity by the distance of virtual particle from the real
-    // particle
-    // Add velocity of real particle
+    // particle Add velocity of real particle
     p.m.v[i] += p_real->m.v[i];
   }
 }
@@ -197,8 +196,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     double *pressure, double *stress_tensor) const {
   // Division by 3 volume is somewhere else. (pressure.cpp after all presure
-  // calculations)
-  // Iterate over all the particles in the local cells
+  // calculations) Iterate over all the particles in the local cells
 
   for (auto &p : local_cells.particles()) {
     if (!p.p.is_virtual)

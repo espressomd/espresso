@@ -55,8 +55,7 @@ extern int chain_length;
 void calc_re(PartCfg &, double **re);
 
 /** calculate the end-to-end-distance averaged over all configurations stored in
-   \ref #configs.
-    Chain information \ref chain_start etc. must be set!
+   \ref #configs. Chain information \ref chain_start etc. must be set!
     @return the averaged end-to-end-distance */
 void calc_re_av(double **re);
 
@@ -66,8 +65,7 @@ void calc_re_av(double **re);
 void calc_rg(PartCfg &, double **rg);
 
 /** calculate the radius of gyration averaged over all configurations stored in
-   \ref #configs.
-    Chain information \ref chain_start etc. must be set!
+   \ref #configs. Chain information \ref chain_start etc. must be set!
     @return the averaged radius of gyration */
 void calc_rg_av(PartCfg &, double **rg);
 
@@ -77,8 +75,7 @@ void calc_rg_av(PartCfg &, double **rg);
 void calc_rh(PartCfg &, double **rh);
 
 /** calculate the hydrodynamic radius averaged over all configurations stored in
-   \ref #configs.
-    Chain information \ref chain_start etc. must be set!
+   \ref #configs. Chain information \ref chain_start etc. must be set!
     @return the averaged hydrodynamic radius */
 void calc_rh_av(double **rh);
 
@@ -88,33 +85,32 @@ void calc_rh_av(double **rh);
 void calc_internal_dist(double **idf);
 
 /** calculates the internal distances within a chain averaged over all
-   configurations stored in \ref #configs.
-    Chain information \ref chain_start etc. must be set!
+   configurations stored in \ref #configs. Chain information \ref chain_start
+   etc. must be set!
     @param idf contains <tt>idf[0],...,idf[chain_length-1]</tt> */
 void calc_internal_dist_av(double **idf);
 
 /** calculates the bond length between two neighbouring monomers (i.e. idf[1] in
-   \ref calc_internal_dist).
-    Chain information \ref chain_start etc. must be set!
+   \ref calc_internal_dist). Chain information \ref chain_start etc. must be
+   set!
     @param bond_l returns the bond length */
 void calc_bond_l(double **bond_l);
 
 /** calculates the averaged bond length between two neighbouring monomers (i.e.
-   idf[1] in \ref calc_internal_dist_av).
-    Chain information \ref chain_start etc. must be set!
+   idf[1] in \ref calc_internal_dist_av). Chain information \ref chain_start
+   etc. must be set!
     @param bond_l returns the bond length */
 void calc_bond_l_av(double **bond_l);
 
 /** calculates the internal distances within a chain measured from monomer
-   \<ind_n\>.
-    Chain information \ref chain_start etc. must be set!
+   \<ind_n\>. Chain information \ref chain_start etc. must be set!
     @param bdf   contains <tt>bdf[0],...,bdf[(chain_length-1) - ind_n]</tt>
     @param ind_n the index of the monomer from where all distances are taken */
 void calc_bond_dist(double **bdf, int ind_n);
 
 /** calculates the internal distances within a chain measured from monomer
-   \<ind_n\> averaged over all configurations stored in \ref #configs.
-    Chain information \ref chain_start etc. must be set!
+   \<ind_n\> averaged over all configurations stored in \ref #configs. Chain
+   information \ref chain_start etc. must be set!
     @param bdf contains <tt>bdf[0],...,bdf[(chain_length-1) - ind_n]</tt>
     @param ind_n the index of the monomer from where all distances are taken */
 void calc_bond_dist_av(double **bdf, int ind_n);
@@ -163,9 +159,9 @@ void calc_g3_av(double **_g3, int window, double weights[3]);
 void init_g123();
 
 /** Derives the spherically averaged formfactor S(q) = 1/chain_length *
-   Sum(i,j=1..chain_length)[sin(q*r_ij)/q*r_ij] of a single chain,
-    averaged over all \ref chain_n_chains currently allocated (-\> chain
-   information must be set!).
+   Sum(i,j=1..chain_length)[sin(q*r_ij)/q*r_ij] of a single chain, averaged over
+   all \ref chain_n_chains currently allocated (-\> chain information must be
+   set!).
     @param qmin  smallest q-vector to look at (qmin \> 0)
     @param qmax  biggest q-vector to look at (qmax \> qmin)
     @param qbins decides how many S(q) are derived (note that the qbins+1 values
@@ -174,9 +170,9 @@ void init_g123();
 void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff);
 
 /** Derives the spherically averaged formfactor S(q) = 1/chain_length *
-   Sum(i,j=1..chain_length)[sin(q*r_ij)/q*r_ij] of a single chain,
-    averaged over all \ref chain_n_chains of all \ref n_configs stored
-   configurations in \ref #configs.
+   Sum(i,j=1..chain_length)[sin(q*r_ij)/q*r_ij] of a single chain, averaged over
+   all \ref chain_n_chains of all \ref n_configs stored configurations in \ref
+   #configs.
     @param qmin  smallest q-vector to look at (qmin \> 0)
     @param qmax  biggest q-vector to look at (qmax \> qmin)
     @param qbins decides how many S(q) are derived (note that the qbins+1 values

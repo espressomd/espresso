@@ -78,11 +78,11 @@ static void add_lj_internal(
 }
 #endif /* LENNARD_JONES */
 
-static int add_particles(PdbParser::PdbParser &parser, int first_id,
-                         int default_type,
-                         std::set<PdbParser::itp_atomtype,
-                                  PdbParser::itp_atomtype_compare> &seen_types,
-                         int first_type = 0, bool fit = false) {
+static int
+add_particles(PdbParser::PdbParser &parser, int first_id, int default_type,
+              std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare>
+                  &seen_types,
+              int first_type = 0, bool fit = false) {
   double pos[3];
   int id = first_id;
   int stat;
@@ -129,7 +129,7 @@ static int add_particles(PdbParser::PdbParser &parser, int first_id,
     case ES_PART_OK:
       std::cerr << "Warning: position and type of particle " << id
                 << " was overwriten by value from pdb file." << std::endl;
-    /* Fall through */
+      /* Fall through */
     case ES_PART_CREATED:
       /* See if we have a type from itp file, otherwise set default type */
       if (entry != parser.itp_atoms.end()) {

@@ -56,7 +56,7 @@
 #define LBPAR_TAU 3       /**< time step for fluid propagation */
 #define LBPAR_FRICTION                                                         \
   4 /**< friction coefficient for viscous coupling between particles and fluid \
-       */
+     */
 #define LBPAR_EXTFORCE 5 /**< external force density acting on the fluid */
 #define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
 
@@ -152,9 +152,8 @@ typedef struct {
 
   /** external force density applied to the fluid at each lattice site (MD
    * units) */
-  double
-      ext_force_density[3]; /* Open question: Do we want a local force or global
-                       force? */
+  double ext_force_density[3]; /* Open question: Do we want a local force or
+                          global force? */
   double rho_lb_units;
   /** relaxation of the odd kinetic modes */
   double gamma_odd;
@@ -210,8 +209,8 @@ extern int transfer_momentum;
 /** Updates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
  * If external force densities are present, they are applied prior to the
- * collisions.
- * If boundaries are present, it also applies the boundary conditions.
+ * collisions. If boundaries are present, it also applies the boundary
+ * conditions.
  */
 void lattice_boltzmann_update();
 
@@ -247,8 +246,8 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
  * If external force densities are present, they are applied prior to the
- * collisions.
- * If boundaries are present, it also applies the boundary conditions.
+ * collisions. If boundaries are present, it also applies the boundary
+ * conditions.
  */
 void lb_propagate();
 

@@ -23,7 +23,6 @@
  */
 #include "interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"
-#include "actor/DipolarDirectSum.hpp"
 #include "buckingham.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -38,8 +37,6 @@
 #include "hat.hpp"
 #include "hertzian.hpp"
 #include "initialize.hpp"
-#include "initialize.hpp"
-#include "interaction_data.hpp"
 #include "interaction_data.hpp"
 #include "lj.hpp"
 #include "ljcos.hpp"
@@ -88,10 +85,12 @@ std::vector<IA_parameters> ia_params;
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
 Coulomb_parameters coulomb = {
 #ifdef ELECTROSTATICS
-    0.0, COULOMB_NONE,
+    0.0,
+    COULOMB_NONE,
 #endif
 #ifdef DIPOLES
-    0.0, DIPOLAR_NONE,
+    0.0,
+    DIPOLAR_NONE,
 #endif
 };
 #endif

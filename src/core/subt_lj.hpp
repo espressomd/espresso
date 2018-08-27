@@ -24,7 +24,7 @@
  *  Routines to subtract the LENNARD-JONES Energy and/or the LENNARD-JONES force
  *  for a particle pair.
  *  \ref forces.cpp
-*/
+ */
 
 #include "config.hpp"
 

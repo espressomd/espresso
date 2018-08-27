@@ -78,6 +78,6 @@ private:
   int m_line;
 };
 
-} /* ErrorHandling */
+} // namespace ErrorHandling
 
 #endif

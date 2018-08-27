@@ -25,7 +25,7 @@
 /** \file thermalized_bond.hpp
  *  Routines to thermalize the com and distance of a particle pair.
  *  \ref forces.c
-*/
+ */
 
 /** number of thermalized bonds */
 extern int n_thermalized_bonds;

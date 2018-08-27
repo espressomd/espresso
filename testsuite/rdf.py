@@ -22,6 +22,7 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+
 class RdfTest(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
@@ -36,7 +37,7 @@ class RdfTest(ut.TestCase):
         r2 = np.power(r, 2)
 
         # Volumes of the bins
-        return 4.*3.14159*(r2*bin_size + r * bin_size**2 + bin_size**3/3.)
+        return 4. * 3.14159 * (r2 * bin_size + r * bin_size**2 + bin_size**3 / 3.)
 
     def test_single_type(self):
         s = self.s
@@ -45,12 +46,13 @@ class RdfTest(ut.TestCase):
         dx = self.s.box_l[0] / float(n_part + 1)
 
         for i in range(n_part):
-            s.part.add(id=i, pos=[i*dx, 0.5*s.box_l[1], 0.5*s.box_l[2]], type=0)
+            s.part.add(
+                id=i, pos=[i * dx, 0.5 * s.box_l[1], 0.5 * s.box_l[2]], type=0)
 
         r_bins = 50
         r_min = 0.5 * dx
         r_max = r_bins * dx
-        rdf = s.analysis.rdf(rdf_type='rdf', type_list_a=[0,1],
+        rdf = s.analysis.rdf(rdf_type='rdf', type_list_a=[0, 1],
                              r_min=r_min, r_max=r_max, r_bins=r_bins)
         rv = self.bin_volumes(rdf[0])
         rho = n_part / (s.box_l[0]**3)
@@ -67,13 +69,15 @@ class RdfTest(ut.TestCase):
         dx = self.s.box_l[0] / float(n_part + 1)
 
         for i in range(n_part):
-            s.part.add(id=i, pos=[i*dx, 0.5*s.box_l[1], 0.5*s.box_l[2]], type=(i % 2))
+            s.part.add(
+                id=i, pos=[i * dx, 0.5 * s.box_l[1], 0.5 * s.box_l[2]], type=(i % 2))
 
         r_bins = 50
         r_min = 0.5 * dx
         r_max = r_bins * dx
-        rdf01 = s.analysis.rdf(rdf_type='rdf', type_list_a=[0], type_list_b=[1],
-                             r_min=r_min, r_max=r_max, r_bins=r_bins)
+        rdf01 = s.analysis.rdf(
+            rdf_type='rdf', type_list_a=[0], type_list_b=[1],
+                              r_min=r_min, r_max=r_max, r_bins=r_bins)
         rv = self.bin_volumes(rdf01[0])
         rho = 0.5 * n_part / (s.box_l[0]**3)
 
@@ -85,7 +89,8 @@ class RdfTest(ut.TestCase):
         self.assertTrue(np.allclose(parts_in_bin[1:-1:2], 0.0))
 
         # Check symmetry
-        rdf10 = s.analysis.rdf(rdf_type='rdf', type_list_a=[1], type_list_b=[0],
+        rdf10 = s.analysis.rdf(
+            rdf_type='rdf', type_list_a=[1], type_list_b=[0],
                              r_min=r_min, r_max=r_max, r_bins=r_bins)
 
         self.assertTrue(np.allclose(rdf10, rdf01))
@@ -94,19 +99,19 @@ class RdfTest(ut.TestCase):
         s = self.s
 
         for i in range(200):
-            s.part.add(id = i, pos=s.box_l * np.random.random(3), type=(i % 3))
+            s.part.add(id=i, pos=s.box_l * np.random.random(3), type=(i % 3))
 
         r_bins = 50
         r_min = 0.0
         r_max = 0.49 * s.box_l[0]
-        rdf = s.analysis.rdf(rdf_type='rdf', type_list_a=[0,1,2],
+        rdf = s.analysis.rdf(rdf_type='rdf', type_list_a=[0, 1, 2],
                              r_min=r_min, r_max=r_max, r_bins=r_bins)
 
         for i in range(10):
             s.analysis.append()
 
-        rdf_av = s.analysis.rdf(rdf_type='<rdf>', type_list_a=[0,1,2],
-                             r_min=r_min, r_max=r_max, r_bins=r_bins)
+        rdf_av = s.analysis.rdf(rdf_type='<rdf>', type_list_a=[0, 1, 2],
+                                r_min=r_min, r_max=r_max, r_bins=r_bins)
 
         self.assertTrue(np.allclose(rdf[1], rdf_av[1]))
 

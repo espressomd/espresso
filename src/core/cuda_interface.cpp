@@ -237,7 +237,7 @@ void set_v_cs(ParticleRange particles, CUDA_v_cs *v_cs) {
     v_cs++;
   }
 }
-}
+} // namespace
 
 void cuda_mpi_send_v_cs(ParticleRange particles, CUDA_v_cs *host_v_cs) {
   // first collect number of particles on each node

@@ -55,7 +55,6 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.part[0].v = [0, 0, 0]
         self.system.part[1].v = [0, 0, 0]
 
-
     def test_non_bonded(self):
         self.system.part[0].pos = [1, 2, 2]
         self.system.part[1].pos = [2, 2, 2]
@@ -161,7 +160,8 @@ class AnalyzeEnergy(ut.TestCase):
                                  tune=False)
         self.system.actors.add(p3m)
 
-        # did not verify if this is correct, but looks pretty good (close to 1/2)
+        # did not verify if this is correct, but looks pretty good (close to
+        # 1/2)
         u_p3m = -0.501062398379
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], u_p3m, delta=1e-5)

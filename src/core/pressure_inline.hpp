@@ -174,8 +174,8 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
     calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
     break;
 #endif
-  /* since it is not clear at the moment how to handle a many body interaction
-   * here, I skip it */
+    /* since it is not clear at the moment how to handle a many body interaction
+     * here, I skip it */
   case BONDED_IA_ANGLE_HARMONIC:
     (*i)++;
     force[0] = force[1] = force[2] = 0;

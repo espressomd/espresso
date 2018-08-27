@@ -42,6 +42,6 @@ auto keys(Map const &m) -> std::vector<typename Map::key_type> {
                  [](value_type const &kv) { return kv.first; });
   return ret;
 }
-}
+} // namespace Utils
 
 #endif

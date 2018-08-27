@@ -188,7 +188,7 @@ struct IA_parameters {
   double LJ_shift = 0.0;
   double LJ_offset = 0.0;
   double LJ_min = 0.0;
-/*@}*/
+  /*@}*/
 
 #endif
 

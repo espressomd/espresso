@@ -26,7 +26,8 @@ print("system.box_l = {}".format(system.box_l))
 
 # test "system.non_bonded_inter"
 print("\n### system.non_bonded_inter test ###")
-print("system.non_bonded_inter[0, 0].lennard_jones.get_params() = {}".format(system.non_bonded_inter[0, 0].lennard_jones.get_params()))
+print("system.non_bonded_inter[0, 0].lennard_jones.get_params() = {}".format(
+    system.non_bonded_inter[0, 0].lennard_jones.get_params()))
 
 # test "system.part"
 print("\n### system.part test ###")
@@ -34,7 +35,8 @@ print("system.part[:].pos = {}".format(system.part[:].pos))
 
 # test "system.thermostat"
 print("\n### system.thermostat test ###")
-print("system.thermostat.get_state() = {}".format(system.thermostat.get_state()))
+print("system.thermostat.get_state() = {}".format(
+    system.thermostat.get_state()))
 
 # test "p3m"
 print("\n### p3m test ###")
@@ -42,9 +44,11 @@ print("p3m.get_params() = {}".format(p3m.get_params()))
 
 
 # test registered objects
-# all objects that are registered when writing a checkpoint are automatically registered after loading this checkpoint
+# all objects that are registered when writing a checkpoint are
+# automatically registered after loading this checkpoint
 print("\n### checkpoint register test ###")
-print("checkpoint.get_registered_objects() = {}".format(checkpoint.get_registered_objects()))
+print("checkpoint.get_registered_objects() = {}".format(
+    checkpoint.get_registered_objects()))
 
 
 # integrate system and finally save checkpoint

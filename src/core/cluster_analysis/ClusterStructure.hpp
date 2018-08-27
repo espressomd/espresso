@@ -45,9 +45,9 @@ public:
 
 private:
   /** @brief Clusters that turn out to be the same during the analysis process
-  * (i.e., if two particles are neighbors that already belong to different
-  * clusters
-  */
+   * (i.e., if two particles are neighbors that already belong to different
+   * clusters
+   */
   std::map<int, int> m_cluster_identities;
 
   /** @brief pari criterion which decides whether two particles are neighbors */
@@ -62,5 +62,6 @@ private:
   /** @brief Get next free lucster id */
   inline int get_next_free_cluster_id();
 };
-}
+
+} // namespace ClusterAnalysis
 #endif

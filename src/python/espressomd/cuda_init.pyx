@@ -63,7 +63,7 @@ cdef class CudaInitHandle(object):
                 List of available CUDA devices.
 
             """
-            cdef char gpu_name_buffer[4+64]
+            cdef char gpu_name_buffer[4 + 64]
             devices = dict()
             for i in range(cuda_get_n_gpus()):
                 cuda_get_gpu_name(i, gpu_name_buffer)

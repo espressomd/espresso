@@ -18,6 +18,7 @@ except ImportError:
 @ut.skipIf(not espressomd.has_features(["ENGINE", "LB"]),
            "Features not available, skipping test!")
 class SwimmerTest(ut.TestCase):
+
     def prepare(self, S):
         boxl = 12
         tstep = 0.01
@@ -66,7 +67,7 @@ class SwimmerTest(ut.TestCase):
                    swimming={"mode": "puller", "f_swim": 0.05,
                              "dipole_length": 1.5, "rotational_friction": 6.0},
                    quat=[0, 0, np.sqrt(.5), np.sqrt(.5)])
-        S.part[:].rotation=1,1,1
+        S.part[:].rotation = 1, 1, 1
 
     def run_and_check(self, S, lbm, vtk_name):
         S.integrator.run(self.sampsteps)
@@ -98,7 +99,8 @@ class SwimmerTest(ut.TestCase):
         if (S.cell_system.get_state()["n_nodes"] > 1):
             print("NOTE: Ignoring testcase for n_nodes > 1")
         else:
-            self.run_and_check(S, lbm, tests_common.abspath("data/engine_lb.vtk"))
+            self.run_and_check(
+                S, lbm, tests_common.abspath("data/engine_lb.vtk"))
 
 
 if __name__ == '__main__':

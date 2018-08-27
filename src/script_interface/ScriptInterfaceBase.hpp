@@ -222,7 +222,8 @@ public:
 
 public:
   std::string serialize() const;
-  static std::shared_ptr<ScriptInterfaceBase> unserialize(std::string const& state);
+  static std::shared_ptr<ScriptInterfaceBase>
+  unserialize(std::string const &state);
   virtual Variant get_state() const;
 
 protected:

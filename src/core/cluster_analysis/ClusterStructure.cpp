@@ -1,5 +1,5 @@
-#include "Cluster.hpp"
 #include "ClusterStructure.hpp"
+#include "Cluster.hpp"
 #include "interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "utils/for_each_pair.hpp"
@@ -172,4 +172,5 @@ int ClusterStructure::get_next_free_cluster_id() {
   }
   return max_seen_cluster + 1;
 }
-}
+
+} // namespace ClusterAnalysis

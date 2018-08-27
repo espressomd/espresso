@@ -49,9 +49,8 @@ extern LB_node_force_density_gpu node_f;
 extern LB_nodes_gpu *current_nodes;
 
 // ** These variables are static in lbgpu_cuda.cu, so we need to duplicate them
-// here
-// They are initialized in ForcesIntoFluid
-// The pointers are on the host, but point into device memory
+// here They are initialized in ForcesIntoFluid The pointers are on the host,
+// but point into device memory
 LB_parameters_gpu *paraIBM = nullptr;
 float *lb_boundary_velocity_IBM = nullptr;
 
@@ -92,8 +91,7 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
       gpu_get_global_particle_vars_pointer_host()->number_of_particles;
 
   // Storage only needed on master and allocated only once at the first time
-  // step
-  // if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
+  // step if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
   if (IBM_ParticleDataInput_host == NULL ||
       numParticles != IBM_numParticlesCache)
     InitCUDA_IBM(numParticles);
@@ -162,8 +160,8 @@ void InitCUDA_IBM(const int numParticles) {
     cuda_safe_mem(cudaMemcpy(paraIBM, para_gpu, sizeof(LB_parameters_gpu),
                              cudaMemcpyHostToDevice));
 
-// Copy boundary velocities to the GPU
-// First put them into correct format
+    // Copy boundary velocities to the GPU
+    // First put them into correct format
 #ifdef LB_BOUNDARIES_GPU
     float *host_lb_boundary_velocity =
         new float[3 * (LBBoundaries::lbboundaries.size() + 1)];
@@ -270,8 +268,7 @@ __device__ void Calc_m_from_n_IBM(const LB_nodes_gpu n_a,
 /**************
    ParticleVelocitiesFromLB_GPU
 Calls a kernel function to interpolate the velocity at each IBM particle's
-position
-Store velocity in the particle data structure
+position Store velocity in the particle data structure
 **************/
 
 void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {

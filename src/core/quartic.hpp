@@ -24,7 +24,7 @@
  *  Routines to calculate the HARMONIC Energy or/and HARMONIC force
  *  for a particle pair.
  *  \ref forces.cpp
-*/
+ */
 
 /************************************************************/
 
@@ -75,13 +75,15 @@ inline int calc_quartic_pair_force(Particle *p1, Particle *p2,
   //  force[1], force[2]);
 
   ONEPART_TRACE(if (p1->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: QUARTIC f = (%.3e,%.3e,%.3e) "
-                                    "with part id=%d at dist %f fac %.3e\n",
+                    fprintf(stderr,
+                            "%d: OPT: QUARTIC f = (%.3e,%.3e,%.3e) with part "
+                            "id=%d at dist %f fac %.3e\n",
                             this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                             p2->p.identity, dist2, fac));
   ONEPART_TRACE(if (p2->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: QUARTIC f = (%.3e,%.3e,%.3e) "
-                                    "with part id=%d at dist %f fac %.3e\n",
+                    fprintf(stderr,
+                            "%d: OPT: QUARTIC f = (%.3e,%.3e,%.3e) with part "
+                            "id=%d at dist %f fac %.3e\n",
                             this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                             p1->p.identity, dist2, fac));
 

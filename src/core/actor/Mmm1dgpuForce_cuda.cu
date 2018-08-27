@@ -110,8 +110,8 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
   }
 
   // For all but the largest systems, it is faster to store force pairs and then
-  // sum them up.
-  // Atomics are just so slow: so unless we're limited by memory, do the latter.
+  // sum them up. Atomics are just so slow: so unless we're limited by memory,
+  // do the latter.
   pairs = 2;
   for (int d = 0; d < deviceCount; d++) {
     cudaSetDevice(d);
@@ -250,9 +250,9 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
                              cudaMemcpyDeviceToHost));
     cudaFree(dev_cutoff);
     if (_bessel_cutoff != -2 &&
-        bessel_cutoff >= maxCut) // we already have our switching radius and
-                                 // only need to determine the cutoff, i.e. this
-                                 // is the final tuning round
+        bessel_cutoff >=
+            maxCut) // we already have our switching radius and only need to
+                    // determine the cutoff, i.e. this is the final tuning round
     {
       std::cerr << "No reasonable Bessel cutoff could be determined."
                 << std::endl;
@@ -277,8 +277,7 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
   mmm1dgpu_real _uz = 1.0 / _boxz;
   for (int d = 0; d < deviceCount; d++) {
     // double colons are needed to access the constant memory variables because
-    // they
-    // are file globals and we have identically named class variables
+    // they are file globals and we have identically named class variables
     cudaSetDevice(d);
     if (manual) // tuning needs to be performed again
     {
@@ -341,8 +340,7 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
     mmm1dgpu_real rxy = sqrt(rxy2);
     mmm1dgpu_real sum_r = 0, sum_z = 0;
 
-    //		if (boxz <= 0.0) return; // otherwise we'd get into an infinite loop
-    //if we're not initialized correctly
+    // if (boxz <= 0.0) return; // in case we are not initialized yet
 
     while (fabs(z) > boxz / 2) // make sure we take the shortest distance
       z -= (z > 0 ? 1 : -1) * boxz;
@@ -440,8 +438,7 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
     mmm1dgpu_real rxy = sqrt(rxy2);
     mmm1dgpu_real sum_e = 0;
 
-    //		if (boxz <= 0.0) return; // otherwise we'd get into an infinite loop
-    //if we're not initialized correctly
+    // if (boxz <= 0.0) return; // in case we are not initialized yet
 
     while (fabs(z) > boxz / 2) // make sure we take the shortest distance
       z -= (z > 0 ? 1 : -1) * boxz;
@@ -509,9 +506,9 @@ __global__ void vectorReductionKernel(mmm1dgpu_real *src, mmm1dgpu_real *dst,
 }
 
 void Mmm1dgpuForce::computeForces(SystemInterface &s) {
-  if (coulomb.method != COULOMB_MMM1D_GPU) // MMM1DGPU was disabled. nobody
-                                           // cares about our calculations
-                                           // anymore
+  if (coulomb.method !=
+      COULOMB_MMM1D_GPU) // MMM1DGPU was disabled. nobody cares about our
+                         // calculations anymore
   {
     std::cerr << "MMM1D: coulomb.method has been changed, skipping calculation"
               << std::endl;
@@ -548,9 +545,9 @@ __global__ void scaleAndAddKernel(mmm1dgpu_real *dst, mmm1dgpu_real *src, int N,
 }
 
 void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
-  if (coulomb.method != COULOMB_MMM1D_GPU) // MMM1DGPU was disabled. nobody
-                                           // cares about our calculations
-                                           // anymore
+  if (coulomb.method !=
+      COULOMB_MMM1D_GPU) // MMM1DGPU was disabled. nobody cares about our
+                         // calculations anymore
   {
     std::cerr << "MMM1D: coulomb.method has been changed, skipping calculation"
               << std::endl;

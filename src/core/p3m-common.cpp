@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file p3m-common.cpp P3M main file.
-*/
+ */
 #include "p3m-common.hpp"
 
 #include "errorhandling.hpp"
@@ -84,13 +84,15 @@ void p3m_p3m_print_send_mesh(p3m_send_mesh sm) {
   int i;
   fprintf(stderr, "%d: p3m_send_mesh: max=%d\n", this_node, sm.max);
   for (i = 0; i < 6; i++) {
-    fprintf(stderr, "%d:  dir=%d: s_dim (%d,%d,%d)  s_ld (%d,%d,%d) s_ur "
-                    "(%d,%d,%d) s_size=%d\n",
+    fprintf(stderr,
+            "%d:  dir=%d: s_dim (%d,%d,%d)  s_ld (%d,%d,%d) s_ur (%d,%d,%d) "
+            "s_size=%d\n",
             this_node, i, sm.s_dim[i][0], sm.s_dim[i][1], sm.s_dim[i][2],
             sm.s_ld[i][0], sm.s_ld[i][1], sm.s_ld[i][2], sm.s_ur[i][0],
             sm.s_ur[i][1], sm.s_ur[i][2], sm.s_size[i]);
-    fprintf(stderr, "%d:         r_dim (%d,%d,%d)  r_ld (%d,%d,%d) r_ur "
-                    "(%d,%d,%d) r_size=%d\n",
+    fprintf(stderr,
+            "%d:         r_dim (%d,%d,%d)  r_ld (%d,%d,%d) r_ur (%d,%d,%d) "
+            "r_size=%d\n",
             this_node, sm.r_dim[i][0], sm.r_dim[i][1], sm.r_dim[i][2],
             sm.r_ld[i][0], sm.r_ld[i][1], sm.r_ld[i][2], sm.r_ur[i][0],
             sm.r_ur[i][1], sm.r_ur[i][2], sm.r_size[i]);
@@ -154,17 +156,18 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
     break;
   }
   case 7: {
-    res = (21844.0 +
-           c * (776661.0 +
-                c * (2801040.0 +
-                     c * (2123860.0 +
-                          c * (349500.0 + c * (8166.0 + c * 4.0)))))) /
-          6081075.0;
+    res =
+        (21844.0 +
+         c * (776661.0 + c * (2801040.0 +
+                              c * (2123860.0 +
+                                   c * (349500.0 + c * (8166.0 + c * 4.0)))))) /
+        6081075.0;
     break;
   }
   default: {
-    fprintf(stderr, "%d: INTERNAL_ERROR: The value %d for the interpolation "
-                    "order should not occur!\n",
+    fprintf(stderr,
+            "%d: INTERNAL_ERROR: The value %d for the interpolation order "
+            "should not occur!\n",
             this_node, cao);
     errexit();
   }
@@ -186,8 +189,9 @@ double p3m_caf(int i, double x, int cao_value) {
     case 1:
       return 0.5 + x;
     default:
-      fprintf(stderr, "%d: Tried to access charge assignment function of "
-                      "degree %d in scheme of order %d.\n",
+      fprintf(stderr,
+              "%d: Tried to access charge assignment function of degree %d in "
+              "scheme of order %d.\n",
               this_node, i, cao_value);
       return 0.0;
     }
@@ -201,8 +205,9 @@ double p3m_caf(int i, double x, int cao_value) {
     case 2:
       return 0.5 * Utils::sqr(0.5 + x);
     default:
-      fprintf(stderr, "%d: Tried to access charge assignment function of "
-                      "degree %d in scheme of order %d.\n",
+      fprintf(stderr,
+              "%d: Tried to access charge assignment function of degree %d in "
+              "scheme of order %d.\n",
               this_node, i, cao_value);
       return 0.0;
     }
@@ -217,8 +222,9 @@ double p3m_caf(int i, double x, int cao_value) {
     case 3:
       return (1.0 + x * (6.0 + x * (12.0 + x * 8.0))) / 48.0;
     default:
-      fprintf(stderr, "%d: Tried to access charge assignment function of "
-                      "degree %d in scheme of order %d.\n",
+      fprintf(stderr,
+              "%d: Tried to access charge assignment function of degree %d in "
+              "scheme of order %d.\n",
               this_node, i, cao_value);
       return 0.0;
     }
@@ -236,8 +242,9 @@ double p3m_caf(int i, double x, int cao_value) {
     case 4:
       return (1.0 + x * (8.0 + x * (24.0 + x * (32.0 + x * 16.0)))) / 384.0;
     default:
-      fprintf(stderr, "%d: Tried to access charge assignment function of "
-                      "degree %d in scheme of order %d.\n",
+      fprintf(stderr,
+              "%d: Tried to access charge assignment function of degree %d in "
+              "scheme of order %d.\n",
               this_node, i, cao_value);
       return 0.0;
     }
@@ -273,8 +280,9 @@ double p3m_caf(int i, double x, int cao_value) {
               x * (10.0 + x * (40.0 + x * (80.0 + x * (80.0 + x * 32.0))))) /
              3840.0;
     default:
-      fprintf(stderr, "%d: Tried to access charge assignment function of "
-                      "degree %d in scheme of order %d.\n",
+      fprintf(stderr,
+              "%d: Tried to access charge assignment function of degree %d in "
+              "scheme of order %d.\n",
               this_node, i, cao_value);
       return 0.0;
     }
@@ -284,16 +292,14 @@ double p3m_caf(int i, double x, int cao_value) {
     case 0:
       return (1.0 +
               x * (-12.0 +
-                   x * (60.0 +
-                        x * (-160.0 +
-                             x * (240.0 + x * (-192.0 + x * 64.0)))))) /
+                   x * (60.0 + x * (-160.0 +
+                                    x * (240.0 + x * (-192.0 + x * 64.0)))))) /
              46080.0;
     case 1:
-      return (361.0 +
-              x * (-1416.0 +
-                   x * (2220.0 +
-                        x * (-1600.0 +
-                             x * (240.0 + x * (384.0 - x * 192.0)))))) /
+      return (361.0 + x * (-1416.0 +
+                           x * (2220.0 +
+                                x * (-1600.0 +
+                                     x * (240.0 + x * (384.0 - x * 192.0)))))) /
              23040.0;
     case 2:
       return (10543.0 +
@@ -326,8 +332,9 @@ double p3m_caf(int i, double x, int cao_value) {
                         x * (160.0 + x * (240.0 + x * (192.0 + x * 64.0)))))) /
              46080.0;
     default:
-      fprintf(stderr, "%d: Tried to access charge assignment function of "
-                      "degree %d in scheme of order %d.\n",
+      fprintf(stderr,
+              "%d: Tried to access charge assignment function of degree %d in "
+              "scheme of order %d.\n",
               this_node, i, cao_value);
       return 0.0;
     }

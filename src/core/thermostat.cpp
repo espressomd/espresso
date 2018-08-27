@@ -49,7 +49,7 @@ namespace {
    set yet. */
 constexpr double sentinel(double) { return -1.0; }
 Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }
-}
+} // namespace
 
 /* LANGEVIN THERMOSTAT */
 
@@ -101,24 +101,27 @@ void thermo_init_langevin() {
 
 #ifdef PARTICLE_ANISOTROPY
 #ifdef ROTATION
-  THERMO_TRACE(fprintf(
-      stderr, "%d: thermo_init_langevin: langevin_gamma_rotation=(%f,%f,%f), "
+  THERMO_TRACE(
+      fprintf(stderr,
+              "%d: thermo_init_langevin: langevin_gamma_rotation=(%f,%f,%f), "
               "langevin_pref2_rotation=(%f,%f,%f)",
-      this_node, langevin_gamma_rotation[0], langevin_gamma_rotation[1],
-      langevin_gamma_rotation[2], langevin_pref2_rotation[0],
-      langevin_pref2_rotation[1], langevin_pref2_rotation[2]));
+              this_node, langevin_gamma_rotation[0], langevin_gamma_rotation[1],
+              langevin_gamma_rotation[2], langevin_pref2_rotation[0],
+              langevin_pref2_rotation[1], langevin_pref2_rotation[2]));
 #endif
-  THERMO_TRACE(fprintf(
-      stderr, "%d: thermo_init_langevin: langevin_pref1=(%f,%f,%f), "
-              "langevin_pref2=(%f,%f,%f)",
-      this_node, langevin_pref1[0], langevin_pref1[1], langevin_pref1[2],
-      langevin_pref2[0], langevin_pref2[1], langevin_pref2[2]));
+  THERMO_TRACE(fprintf(stderr,
+                       "%d: thermo_init_langevin: langevin_pref1=(%f,%f,%f), "
+                       "langevin_pref2=(%f,%f,%f)",
+                       this_node, langevin_pref1[0], langevin_pref1[1],
+                       langevin_pref1[2], langevin_pref2[0], langevin_pref2[1],
+                       langevin_pref2[2]));
 #else
 #ifdef ROTATION
-  THERMO_TRACE(
-      fprintf(stderr, "%d: thermo_init_langevin: langevin_gamma_rotation=%f, "
-                      "langevin_pref2_rotation=%f",
-              this_node, langevin_gamma_rotation, langevin_pref2_rotation));
+  THERMO_TRACE(fprintf(stderr,
+                       "%d: thermo_init_langevin: langevin_gamma_rotation=%f, "
+                       "langevin_pref2_rotation=%f",
+                       this_node, langevin_gamma_rotation,
+                       langevin_pref2_rotation));
 #endif
   THERMO_TRACE(fprintf(
       stderr, "%d: thermo_init_langevin: langevin_pref1=%f, langevin_pref2=%f",
@@ -134,14 +137,16 @@ void thermo_init_npt_isotropic() {
     nptiso_pref2 = sqrt(12.0 * temperature * nptiso_gamma0 * time_step);
     nptiso_pref3 = -nptiso_gammav * (1.0 / nptiso.piston) * 0.5 * time_step;
     nptiso_pref4 = sqrt(12.0 * temperature * nptiso_gammav * time_step);
-    THERMO_TRACE(fprintf(
-        stderr, "%d: thermo_init_npt_isotropic: nptiso_pref1=%f, "
-                "nptiso_pref2=%f, nptiso_pref3=%f, nptiso_pref4=%f \n",
-        this_node, nptiso_pref1, nptiso_pref2, nptiso_pref3, nptiso_pref4));
+    THERMO_TRACE(fprintf(stderr,
+                         "%d: thermo_init_npt_isotropic: nptiso_pref1=%f, "
+                         "nptiso_pref2=%f, nptiso_pref3=%f, nptiso_pref4=%f \n",
+                         this_node, nptiso_pref1, nptiso_pref2, nptiso_pref3,
+                         nptiso_pref4));
   } else {
     thermo_switch = (thermo_switch ^ THERMO_NPT_ISO);
-    THERMO_TRACE(fprintf(stderr, "%d: thermo_init_npt_isotropic: switched off "
-                                 "nptiso (piston=%f; thermo_switch=%d) \n",
+    THERMO_TRACE(fprintf(stderr,
+                         "%d: thermo_init_npt_isotropic: switched off "
+                         "nptiso (piston=%f; thermo_switch=%d) \n",
                          this_node, nptiso.piston, thermo_switch));
   }
 }

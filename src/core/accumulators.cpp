@@ -29,4 +29,4 @@ void auto_update() {
     c->auto_update();
   }
 }
-}
+} // namespace Accumulators

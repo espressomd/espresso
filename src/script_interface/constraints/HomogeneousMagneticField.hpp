@@ -31,12 +31,12 @@ namespace Constraints {
 class HomogeneousMagneticField : public Constraint {
 public:
   HomogeneousMagneticField()
-    : m_constraint(new ::Constraints::HomogeneousMagneticField()) {
+      : m_constraint(new ::Constraints::HomogeneousMagneticField()) {
     add_parameters({{"H",
                      [this](Variant const &v) {
                        m_constraint->set_H(get_value<Vector3d>(v));
                      },
-                     [this]() {return m_constraint->H(); }}});
+                     [this]() { return m_constraint->H(); }}});
   }
 
   std::shared_ptr<::Constraints::Constraint> constraint() override {
@@ -45,14 +45,14 @@ public:
   std::shared_ptr<const ::Constraints::Constraint> constraint() const override {
     return std::static_pointer_cast<::Constraints::Constraint>(m_constraint);
   }
-  std::shared_ptr<::Constraints::HomogeneousMagneticField> homogeneous_magnetic_field() const {
+  std::shared_ptr<::Constraints::HomogeneousMagneticField>
+  homogeneous_magnetic_field() const {
     return m_constraint;
   }
 
 private:
   /* The actual constraint */
   std::shared_ptr<::Constraints::HomogeneousMagneticField> m_constraint;
-
 };
 
 } /* namespace Constraints */

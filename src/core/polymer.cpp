@@ -234,8 +234,9 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
           POLY_TRACE(printf("m"); fflush(nullptr));
         }
         if (cnt1 >= max_try) {
-          fprintf(stderr, "\nWarning! Attempt #%d to build polymer %d failed "
-                          "while placing monomer 2!\n",
+          fprintf(stderr,
+                  "\nWarning! Attempt #%d to build polymer %d failed "
+                  "while placing monomer 2!\n",
                   cnt2 + 1, p);
           fprintf(stderr, "         Retrying by re-setting the start-monomer "
                           "of current chain...\n");
@@ -346,8 +347,9 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
           POLY_TRACE(printf("m"); fflush(nullptr));
         }
         if (cnt1 >= max_try) {
-          fprintf(stderr, "\nWarning! Attempt #%d to build polymer %d failed "
-                          "after %d unsuccessful trials to place monomer %d!\n",
+          fprintf(stderr,
+                  "\nWarning! Attempt #%d to build polymer %d failed "
+                  "after %d unsuccessful trials to place monomer %d!\n",
                   cnt2 + 1, p, cnt1, n);
           fprintf(stderr, "         Retrying by re-setting the start-monomer "
                           "of current chain...\n");
@@ -451,13 +453,13 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
   double pos[3], off = bond_length / sqrt(3);
   double dnodes[8][3] = {{0, 0, 0}, {1, 1, 1}, {2, 2, 0}, {0, 2, 2},
                          {2, 0, 2}, {3, 3, 1}, {1, 3, 3}, {3, 1, 3}};
-  int dchain[16]
-            [5] = {{0, 1, +1, +1, +1}, {1, 2, +1, +1, -1}, {1, 3, -1, +1, +1},
-                   {1, 4, +1, -1, +1}, {2, 5, +1, +1, +1}, {3, 6, +1, +1, +1},
-                   {4, 7, +1, +1, +1}, {5, 0, +1, +1, -1}, {5, 3, +1, -1, +1},
-                   {5, 4, -1, +1, +1}, {6, 0, -1, +1, +1}, {6, 2, +1, -1, +1},
-                   {6, 4, +1, +1, -1}, {7, 0, +1, -1, +1}, {7, 2, -1, +1, +1},
-                   {7, 3, +1, +1, -1}};
+  int dchain[16][5] = {
+      {0, 1, +1, +1, +1}, {1, 2, +1, +1, -1}, {1, 3, -1, +1, +1},
+      {1, 4, +1, -1, +1}, {2, 5, +1, +1, +1}, {3, 6, +1, +1, +1},
+      {4, 7, +1, +1, +1}, {5, 0, +1, +1, -1}, {5, 3, +1, -1, +1},
+      {5, 4, -1, +1, +1}, {6, 0, -1, +1, +1}, {6, 2, +1, -1, +1},
+      {6, 4, +1, +1, -1}, {7, 0, +1, -1, +1}, {7, 2, -1, +1, +1},
+      {7, 3, +1, +1, -1}};
 
   part_id = 0;
   /* place 8 tetra-functional nodes */

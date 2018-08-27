@@ -522,8 +522,9 @@ void layered_exchange_and_sort_particles(int global_flag) {
     } else {
       if (recv_buf_up.n != 0 || recv_buf_dn.n != 0 || send_buf_dn.n != 0 ||
           send_buf_up.n != 0) {
-        fprintf(stderr, "1 node but transfer buffers are not empty. send up "
-                        "%d, down %d, recv up %d recv dn %d\n",
+        fprintf(stderr,
+                "1 node but transfer buffers are not empty. send up "
+                "%d, down %d, recv up %d recv dn %d\n",
                 send_buf_up.n, send_buf_dn.n, recv_buf_up.n, recv_buf_dn.n);
         errexit();
       }

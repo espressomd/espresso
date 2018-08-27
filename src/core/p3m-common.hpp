@@ -162,8 +162,7 @@ typedef struct {
    * p3m.cao^3 */
   int cao3;
   /** additional points around the charge assignment mesh, for method like
-     dielectric ELC
-      creating virtual charges. */
+     dielectric ELC creating virtual charges. */
   double additional_mesh[3];
 } p3m_parameter_struct;
 
@@ -177,7 +176,7 @@ void p3m_p3m_print_local_mesh(p3m_local_mesh l);
 
 /** print send mesh content.
  *  \param sm send mesh structure.
-*/
+ */
 void p3m_p3m_print_send_mesh(p3m_send_mesh sm);
 
 /** Add values of a 3d-grid input block (size[3]) to values of 3d-grid
@@ -188,7 +187,7 @@ void p3m_p3m_print_send_mesh(p3m_send_mesh sm);
  *  \param start       Start position of block in output grid.
  *  \param size        Dimensions of the block
  *  \param dim         Dimensions of the output grid.
-*/
+ */
 void p3m_add_block(double *in, double *out, int start[3], int size[3],
                    int dim[3]);
 
