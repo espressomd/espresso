@@ -61,7 +61,7 @@ The following features are not part of the ESPResSo 4.0 release, but support is 
 * Non-equilibrium molecular dynamics (shear boundary conditions implemented by moving slabs of particles at the boundaries)
 * The memd/maggs electrostatic solver
 * The com_force feature
-* The Chan Shen lattice Boltzmann extension
+* The Shan Chen lattice Boltzmann extension
 * Lees-Edwards (shear) boundary conditions
 
 The following functionality is removed permanently:
