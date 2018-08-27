@@ -6,7 +6,7 @@
 
 #ifdef IMMERSED_BOUNDARY
 
-#include "interaction_data.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 
 // This function is used to set the parameters
 // Also calculates and stores the reference state

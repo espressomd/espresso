@@ -343,78 +343,78 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
 (??)		while (fabs(z) > boxz/2) // make sure we take the shortest distance
 (??)			z -= (z > 0? 1 : -1)*boxz;
 
-    while (fabs(z) > boxz / 2) // make sure we take the shortest distance
-      z -= (z > 0 ? 1 : -1) * boxz;
+while (fabs(z) > boxz / 2) // make sure we take the shortest distance
+  z -= (z > 0 ? 1 : -1) * boxz;
 
-    if (p1 == p2) // particle exerts no force on itself
-    {
-      rxy = 1; // so the division at the end doesn't fail with NaN (sum_r is 0
-               // anyway)
-    } else if (rxy2 <= far_switch_radius_2) // near formula
-    {
-      mmm1dgpu_real uzz = uz * z;
-      mmm1dgpu_real uzr = uz * rxy;
-      sum_z = dev_mod_psi_odd(0, uzz);
-      mmm1dgpu_real uzrpow = uzr;
-      for (int n = 1; n < device_n_modPsi; n++) {
-        mmm1dgpu_real sum_r_old = sum_r;
-        mmm1dgpu_real mpe = dev_mod_psi_even(n, uzz);
-        mmm1dgpu_real mpo = dev_mod_psi_odd(n, uzz);
+if (p1 == p2) // particle exerts no force on itself
+{
+  rxy = 1; // so the division at the end doesn't fail with NaN (sum_r is 0
+           // anyway)
+} else if (rxy2 <= far_switch_radius_2) // near formula
+{
+  mmm1dgpu_real uzz = uz * z;
+  mmm1dgpu_real uzr = uz * rxy;
+  sum_z = dev_mod_psi_odd(0, uzz);
+  mmm1dgpu_real uzrpow = uzr;
+  for (int n = 1; n < device_n_modPsi; n++) {
+    mmm1dgpu_real sum_r_old = sum_r;
+    mmm1dgpu_real mpe = dev_mod_psi_even(n, uzz);
+    mmm1dgpu_real mpo = dev_mod_psi_odd(n, uzz);
 
-        sum_r += 2 * n * mpe * uzrpow;
-        uzrpow *= uzr;
-        sum_z += mpo * uzrpow;
-        uzrpow *= uzr;
+    sum_r += 2 * n * mpe * uzrpow;
+    uzrpow *= uzr;
+    sum_z += mpo * uzrpow;
+    uzrpow *= uzr;
 
-        if (fabs(sum_r_old - sum_r) < maxPWerror)
-          break;
-      }
+    if (fabs(sum_r_old - sum_r) < maxPWerror)
+      break;
+  }
 
-      sum_r *= sqpow(uz);
-      sum_z *= sqpow(uz);
+  sum_r *= sqpow(uz);
+  sum_z *= sqpow(uz);
 
-      sum_r += rxy * cbpow(rsqrt(rxy2 + sqpow(z)));
-      sum_r += rxy * cbpow(rsqrt(rxy2 + sqpow(z + boxz)));
-      sum_r += rxy * cbpow(rsqrt(rxy2 + sqpow(z - boxz)));
+  sum_r += rxy * cbpow(rsqrt(rxy2 + sqpow(z)));
+  sum_r += rxy * cbpow(rsqrt(rxy2 + sqpow(z + boxz)));
+  sum_r += rxy * cbpow(rsqrt(rxy2 + sqpow(z - boxz)));
 
-      sum_z += z * cbpow(rsqrt(rxy2 + sqpow(z)));
-      sum_z += (z + boxz) * cbpow(rsqrt(rxy2 + sqpow(z + boxz)));
-      sum_z += (z - boxz) * cbpow(rsqrt(rxy2 + sqpow(z - boxz)));
+  sum_z += z * cbpow(rsqrt(rxy2 + sqpow(z)));
+  sum_z += (z + boxz) * cbpow(rsqrt(rxy2 + sqpow(z + boxz)));
+  sum_z += (z - boxz) * cbpow(rsqrt(rxy2 + sqpow(z - boxz)));
 
-      if (rxy == 0) // particles at the same radial position only exert a force
-                    // in z direction
-      {
-        rxy = 1; // so the division at the end doesn't fail with NaN (sum_r is 0
-                 // anyway)
-      }
-    } else // far formula
-    {
-      for (int p = 1; p < bessel_cutoff; p++) {
-        mmm1dgpu_real arg = C_2PIf * uz * p;
-        sum_r += p * dev_K1(arg * rxy) * cos(arg * z);
-        sum_z += p * dev_K0(arg * rxy) * sin(arg * z);
-      }
-      sum_r *= sqpow(uz) * 4 * C_2PIf;
-      sum_z *= sqpow(uz) * 4 * C_2PIf;
-      sum_r += 2 * uz / rxy;
-    }
+  if (rxy == 0) // particles at the same radial position only exert a force
+                // in z direction
+  {
+    rxy = 1; // so the division at the end doesn't fail with NaN (sum_r is 0
+             // anyway)
+  }
+} else // far formula
+{
+  for (int p = 1; p < bessel_cutoff; p++) {
+    mmm1dgpu_real arg = C_2PIf * uz * p;
+    sum_r += p * dev_K1(arg * rxy) * cos(arg * z);
+    sum_z += p * dev_K0(arg * rxy) * sin(arg * z);
+  }
+  sum_r *= sqpow(uz) * 4 * C_2PIf;
+  sum_z *= sqpow(uz) * 4 * C_2PIf;
+  sum_r += 2 * uz / rxy;
+}
 
-    mmm1dgpu_real pref = coulomb_prefactor * q[p1] * q[p2];
-    if (pairs) {
-      force[3 * (p1 + p2 * N - tStart)] = pref * sum_r / rxy * x;
-      force[3 * (p1 + p2 * N - tStart) + 1] = pref * sum_r / rxy * y;
-      force[3 * (p1 + p2 * N - tStart) + 2] = pref * sum_z;
-    } else {
+mmm1dgpu_real pref = coulomb_prefactor * q[p1] * q[p2];
+if (pairs) {
+  force[3 * (p1 + p2 * N - tStart)] = pref * sum_r / rxy * x;
+  force[3 * (p1 + p2 * N - tStart) + 1] = pref * sum_r / rxy * y;
+  force[3 * (p1 + p2 * N - tStart) + 2] = pref * sum_z;
+} else {
 #ifdef ELECTROSTATICS_GPU_DOUBLE_PRECISION
-      atomicadd8(&force[3 * p2], pref * sum_r / rxy * x);
-      atomicadd8(&force[3 * p2 + 1], pref * sum_r / rxy * y);
-      atomicadd8(&force[3 * p2 + 2], pref * sum_z);
+  atomicadd8(&force[3 * p2], pref * sum_r / rxy * x);
+  atomicadd8(&force[3 * p2 + 1], pref * sum_r / rxy * y);
+  atomicadd8(&force[3 * p2 + 2], pref * sum_z);
 #else
-      atomicadd(&force[3 * p2], pref * sum_r / rxy * x);
-      atomicadd(&force[3 * p2 + 1], pref * sum_r / rxy * y);
-      atomicadd(&force[3 * p2 + 2], pref * sum_z);
+  atomicadd(&force[3 * p2], pref * sum_r / rxy * x);
+  atomicadd(&force[3 * p2 + 1], pref * sum_r / rxy * y);
+  atomicadd(&force[3 * p2 + 2], pref * sum_z);
 #endif
-    }
+}
   }
 }
 
@@ -444,44 +444,44 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
     while (fabs(z) > boxz / 2) // make sure we take the shortest distance
       z -= (z > 0 ? 1 : -1) * boxz;
 
-    if (p1 == p2) // particle exerts no force on itself
-    {
-    } else if (rxy2 <= far_switch_radius_2) // near formula
-    {
-      mmm1dgpu_real uzz = uz * z;
-      mmm1dgpu_real uzr2 = sqpow(uz * rxy);
-      mmm1dgpu_real uzrpow = uzr2;
-      sum_e = dev_mod_psi_even(0, uzz);
-      for (int n = 1; n < device_n_modPsi; n++) {
-        mmm1dgpu_real sum_e_old = sum_e;
-        mmm1dgpu_real mpe = dev_mod_psi_even(n, uzz);
-        sum_e += mpe * uzrpow;
-        uzrpow *= uzr2;
+if (p1 == p2) // particle exerts no force on itself
+{
+} else if (rxy2 <= far_switch_radius_2) // near formula
+{
+  mmm1dgpu_real uzz = uz * z;
+  mmm1dgpu_real uzr2 = sqpow(uz * rxy);
+  mmm1dgpu_real uzrpow = uzr2;
+  sum_e = dev_mod_psi_even(0, uzz);
+  for (int n = 1; n < device_n_modPsi; n++) {
+    mmm1dgpu_real sum_e_old = sum_e;
+    mmm1dgpu_real mpe = dev_mod_psi_even(n, uzz);
+    sum_e += mpe * uzrpow;
+    uzrpow *= uzr2;
 
-        if (fabs(sum_e_old - sum_e) < maxPWerror)
-          break;
-      }
+    if (fabs(sum_e_old - sum_e) < maxPWerror)
+      break;
+  }
 
-      sum_e *= -1 * uz;
-      sum_e -= 2 * uz * C_GAMMAf;
-      sum_e += rsqrt(rxy2 + sqpow(z));
-      sum_e += rsqrt(rxy2 + sqpow(z + boxz));
-      sum_e += rsqrt(rxy2 + sqpow(z - boxz));
-    } else // far formula
-    {
-      sum_e = -(log(rxy * uz / 2) + C_GAMMAf) / 2;
-      for (int p = 1; p < bessel_cutoff; p++) {
-        mmm1dgpu_real arg = C_2PIf * uz * p;
-        sum_e += dev_K0(arg * rxy) * cos(arg * z);
-      }
-      sum_e *= uz * 4;
-    }
+  sum_e *= -1 * uz;
+  sum_e -= 2 * uz * C_GAMMAf;
+  sum_e += rsqrt(rxy2 + sqpow(z));
+  sum_e += rsqrt(rxy2 + sqpow(z + boxz));
+  sum_e += rsqrt(rxy2 + sqpow(z - boxz));
+} else // far formula
+{
+  sum_e = -(log(rxy * uz / 2) + C_GAMMAf) / 2;
+  for (int p = 1; p < bessel_cutoff; p++) {
+    mmm1dgpu_real arg = C_2PIf * uz * p;
+    sum_e += dev_K0(arg * rxy) * cos(arg * z);
+  }
+  sum_e *= uz * 4;
+}
 
-    if (pairs) {
-      energy[p1 + p2 * N - tStart] = coulomb_prefactor * q[p1] * q[p2] * sum_e;
-    } else {
-      partialsums[threadIdx.x] += coulomb_prefactor * q[p1] * q[p2] * sum_e;
-    }
+if (pairs) {
+  energy[p1 + p2 * N - tStart] = coulomb_prefactor * q[p1] * q[p2] * sum_e;
+} else {
+  partialsums[threadIdx.x] += coulomb_prefactor * q[p1] * q[p2] * sum_e;
+}
   }
   if (!pairs) {
     sumReduction(partialsums, &energy[blockIdx.x]);

@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CORE_TABULATED_HPP
-#define CORE_TABULATED_HPP
+#ifndef CORE_BONDED_INTERACTIONS_TABULATED_HPP
+#define CORE_BONDED_INTERACTIONS_TABULATED_HPP
 
 /** \file tab.hpp
  *  Routines to calculate the  energy and/or  force
@@ -82,33 +82,6 @@ int tabulated_bonded_set_params(int bond_type,
                                 TabulatedBondedInteraction tab_type, double min,
                                 double max, std::vector<double> const &energy,
                                 std::vector<double> const &force);
-
-/** Add a non-bonded pair force by linear interpolation from a table.
-    Needs feature TABULATED compiled in (see \ref config.hpp). */
-inline void add_tabulated_pair_force(const Particle *const p1,
-                                     const Particle *const p2,
-                                     IA_parameters const *ia_params,
-                                     double const d[3], double dist,
-                                     double force[3]) {
-  if (dist < ia_params->TAB.cutoff()) {
-    auto const fac = ia_params->TAB.force(dist) / dist;
-
-    for (int j = 0; j < 3; j++)
-      force[j] -= fac * d[j];
-  }
-}
-
-/** Add a non-bonded pair energy by linear interpolation from a table.
-    Needs feature TABULATED compiled in (see \ref config.hpp). */
-inline double tabulated_pair_energy(Particle const *, Particle const *,
-                                    IA_parameters const *ia_params,
-                                    const double d[3], double dist) {
-  if (dist < ia_params->TAB.cutoff()) {
-    return ia_params->TAB.energy(dist);
-  } else {
-    return 0.0;
-  }
-}
 
 /* BONDED INTERACTIONS */
 

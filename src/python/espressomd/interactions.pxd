@@ -254,7 +254,7 @@ IF MEMBRANE_COLLISION:
                                                double cut, double offset)
 
 IF SOFT_SPHERE:
-    cdef extern from "soft_sphere.hpp":
+    cdef extern from "nonbonded_interactions/soft_sphere.hpp":
         cdef int soft_sphere_set_params(int part_type_a, int part_type_b,
                                         double a, double n,
                                         double cut, double offset)
