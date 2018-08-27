@@ -35,7 +35,7 @@ from espressomd import assert_features
 from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
 from espressomd.accumulators import Correlator
 
-required_features=["ENGINE","ROTATION"]
+required_features = ["ENGINE", "ROTATION"]
 assert_features(required_features)
 
 # create an output folder
@@ -46,7 +46,7 @@ try:
 except:
     print("INFO: Directory \"{}\" exists".format(outdir))
 
-################################################################################
+##########################################################################
 
 # Read in the active velocity from the command prompt
 
@@ -66,7 +66,7 @@ tstep = 0.01
 # Why can we get away with such a small box?
 # Could it be even smaller?
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.cell_system.skin = 0.3
 system.time_step = tstep
@@ -77,7 +77,7 @@ system.time_step = tstep
 # several times, which is accomplished by this loop. Do not increase
 # this number too much, as it will slow down the simulation.
 #
-################################################################################
+##########################################################################
 
 ## Exercise 4 ##
 # Once you have tested the routine for a single , then
@@ -120,7 +120,8 @@ for ...:
 
     ...
 
-    # Initialize the angular velocity auto-correlation function (AVACF) correlator
+    # Initialize the angular velocity auto-correlation function (AVACF)
+    # correlator
 
     ...
 

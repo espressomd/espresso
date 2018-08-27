@@ -35,7 +35,7 @@ from espressomd import assert_features
 from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
 from espressomd.accumulators import Correlator
 
-required_features=["ENGINE","ROTATION"]
+required_features = ["ENGINE", "ROTATION"]
 assert_features(required_features)
 
 # create an output folder
@@ -46,21 +46,21 @@ try:
 except:
     print("INFO: Directory \"{}\" exists".format(outdir))
 
-################################################################################
+##########################################################################
 
 # Read in the active velocity from the command prompt
 
 if len(sys.argv) != 2:
-    print("Usage:",sys.argv[0],"<vel> (0 <= vel < 10.0)")
+    print("Usage:", sys.argv[0], "<vel> (0 <= vel < 10.0)")
     exit()
 
 vel = float(sys.argv[1])
 
 # Set the basic simulation parameters
 
-sampsteps  = 5000
+sampsteps = 5000
 samplength = 1000
-tstep      = 0.01
+tstep = 0.01
 
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.cell_system.skin = 0.3
@@ -72,12 +72,12 @@ system.time_step = tstep
 # several times, which is accomplished by this loop. Do not increase
 # this number too much, as it will slow down the simulation.
 #
-################################################################################
+##########################################################################
 
 for run in range(5):
     # Set up a random seed (a new one for each run)
 
-    system.seed = np.random.randint(0,2**31-1)
+    system.seed = np.random.randint(0, 2**31 - 1)
 
     # Use the Langevin thermostat (no hydrodynamics)
 
@@ -85,11 +85,12 @@ for run in range(5):
 
     # Place a single active particle (that can rotate freely! rotation=[1,1,1])
 
-    system.part.add(pos=[5.0, 5.0, 5.0],swimming={ 'v_swim' : vel },rotation=[1,1,1])
+    system.part.add(pos=[5.0, 5.0, 5.0], swimming={
+                    'v_swim': vel}, rotation=[1, 1, 1])
 
     # Initialize the mean squared displacement (MSD) correlator
 
-    tmax = tstep*sampsteps
+    tmax = tstep * sampsteps
 
     pos_id = ParticlePositions(ids=[0])
     msd    = Correlator(obs1=pos_id,
@@ -109,7 +110,8 @@ for run in range(5):
                         tau_lin=16)
     system.auto_update_accumulators.add(vacf)
 
-    # Initialize the angular velocity auto-correlation function (AVACF) correlator
+    # Initialize the angular velocity auto-correlation function (AVACF)
+    # correlator
 
     ang_id = ParticleAngularVelocities(ids=[0])
     avacf  = Correlator(obs1=ang_id,
