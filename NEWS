@@ -52,9 +52,9 @@ User-visible changes
 * Espresso now depends on the Boost library including Boost-Mpi and a C++11 capable compiler
 * The build system is now based on CMake.
 
-Removed featues
----------------
-The following features will likely not be part of the ESPResSo 4.0 release, but support is expected to be re-added in a subsequent release.
+Removed features
+----------------
+The following features are not part of the ESPResSo 4.0 release, but support is expected to be re-added in a subsequent release.
 * Generalized hybrid Monte Carlo thermostat
 * Virtual sites located at the center of mass of a group of particles
 * Metadynamics, umbrella sampling and parallel tempering
@@ -71,6 +71,7 @@ The following functionality is removed permanently:
 * The following analysis methods:
   diffusion_profile, cwvac, p_inst, ..._mol, cel_gpb, dipmom_normal, MSD, angularmomentum, cluster_size_dist, mol, lipid_orient_order, get_lipid_orients, current, wall_stuff,
   necklace, bilayer, modes2d
+* The uwerr error estimator
 
 
 ESPResSo 3.3
