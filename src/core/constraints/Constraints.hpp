@@ -50,6 +50,6 @@ public:
     }
   }
 };
-}
+} // namespace Constraints
 
 #endif

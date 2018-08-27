@@ -23,7 +23,7 @@
  *  Routines, row decomposition, data structures and communication for the
  * 3D-FFT.
  *
-*/
+ */
 
 #include "fft-dipolar.hpp"
 
@@ -36,9 +36,9 @@ void *fftw_malloc(size_t n);
 #include <mpi.h>
 
 #include "communication.hpp"
+#include "debug.hpp"
 #include "fft-common.hpp"
 #include "grid.hpp"
-#include "debug.hpp"
 
 /************************************************
  * variables
@@ -50,7 +50,7 @@ fft_data_struct dfft;
  * \param plan communication plan (see \ref fft_forw_plan).
  * \param in   input mesh.
  * \param out  output mesh.
-*/
+ */
 void dfft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
 
 /** communicate the grid data according to the given
@@ -59,7 +59,7 @@ void dfft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
  * \param plan_b additional back plan (see \ref fft_back_plan).
  * \param in     input mesh.
  * \param out    output mesh.
-*/
+ */
 void dfft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
                          double *out);
 
@@ -237,14 +237,13 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
   }
 
   /* Factor 2 for complex numbers */
-  dfft.send_buf = Utils::realloc(dfft.send_buf,
-                                           dfft.max_comm_size * sizeof(double));
-  dfft.recv_buf = Utils::realloc(dfft.recv_buf,
-                                           dfft.max_comm_size * sizeof(double));
-  (*data) =
-      Utils::realloc((*data), dfft.max_mesh_size * sizeof(double));
-  dfft.data_buf = Utils::realloc(dfft.data_buf,
-                                           dfft.max_mesh_size * sizeof(double));
+  dfft.send_buf =
+      Utils::realloc(dfft.send_buf, dfft.max_comm_size * sizeof(double));
+  dfft.recv_buf =
+      Utils::realloc(dfft.recv_buf, dfft.max_comm_size * sizeof(double));
+  (*data) = Utils::realloc((*data), dfft.max_mesh_size * sizeof(double));
+  dfft.data_buf =
+      Utils::realloc(dfft.data_buf, dfft.max_mesh_size * sizeof(double));
   if (!(*data) || !dfft.data_buf || !dfft.recv_buf || !dfft.send_buf) {
     fprintf(stderr, "%d: Could not allocate FFT data arays\n", this_node);
     errexit();

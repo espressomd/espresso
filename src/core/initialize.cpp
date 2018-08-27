@@ -22,13 +22,22 @@
     Implementation of \ref initialize.hpp "initialize.hpp"
 */
 #include "initialize.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "dpd.hpp"
+#include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/icc.hpp" /* -iccp3m- */
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/p3m_gpu.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
@@ -36,33 +45,24 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "electrostatics_magnetostatics/icc.hpp" /* -iccp3m- */
-#include "lattice.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
+#include "lattice.hpp"
 #include "metadynamics.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "nemd.hpp"
+#include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
 #include "observables/Observable.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"
 #include "reaction_ensemble.hpp"
-#include "nonbonded_interactions/reaction_field.hpp"
 #include "rotation.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "statistics.hpp"
 #include "swimmer_reaction.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "virtual_sites.hpp"
@@ -385,7 +385,6 @@ void on_constraint_change() {
 void on_lbboundary_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
   invalidate_obs();
-  
 
 #ifdef LB_BOUNDARIES
   if (lattice_switch & LATTICE_LB) {

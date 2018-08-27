@@ -38,17 +38,17 @@
 #ifndef LBBOUNDARIES_H
 #define LBBOUNDARIES_H
 
-#include "utils.hpp"
 #include "lbboundaries/LBBoundary.hpp"
+#include "utils.hpp"
 
 #include "utils/Span.hpp"
 
 #include <array>
 
 namespace LBBoundaries {
-  using LB_Fluid = std::array<Utils::Span<double>, 19>;
+using LB_Fluid = std::array<Utils::Span<double>, 19>;
 
-  extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
+extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 /*@}*/
 
@@ -57,7 +57,7 @@ namespace LBBoundaries {
  *  and marks them with a corresponding flag.
  */
 void lb_init_boundaries();
-void lbboundary_mindist_position(const Vector3d& pos, double *mindist,
+void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
                                  double distvec[3], int *no);
 
 int lbboundary_get_force(int no, double *f);
@@ -73,11 +73,10 @@ void remove(const std::shared_ptr<LBBoundary> &);
  *
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  */
-  void lb_bounce_back(LB_Fluid &lbfluid);
+void lb_bounce_back(LB_Fluid &lbfluid);
 
 #endif /* LB_BOUNDARIES */
 
-
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
-}
+} // namespace LBBoundaries
 #endif /* LB_BOUNDARIES_H */

@@ -27,24 +27,30 @@
 #include "topology.hpp"
 #endif
 
-#include "thermostat.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
-#include "bonded_interactions/angle_harmonic.hpp"
 #include "bonded_interactions/angle_dist.hpp"
-#include "bonded_interactions/quartic.hpp"
+#include "bonded_interactions/angle_harmonic.hpp"
+#include "bonded_interactions/bonded_tab.hpp"
 #include "bonded_interactions/dihedral.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
 #include "bonded_interactions/harmonic_dumbbell.hpp"
+#include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/subt_lj.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
-#include "bonded_interactions/bonded_tab.hpp"
-#include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "collision.hpp"
+#include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+#include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
+#include "forces.hpp"
+#include "metadynamics.hpp"
+#include "molforces.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -55,39 +61,30 @@
 #include "nonbonded_interactions/ljcos.hpp"
 #include "nonbonded_interactions/ljcos2.hpp"
 #include "nonbonded_interactions/ljgen.hpp"
-#include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/steppot.hpp"
-#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
-#include "electrostatics_magnetostatics/mdlc_correction.hpp"
-#include "metadynamics.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "molforces.hpp"
+#include "nonbonded_interactions/thole.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/out_direction.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "collision.hpp"
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "forces.hpp"
+#include "thermostat.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
-#include "nonbonded_interactions/reaction_field.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
+#include "nonbonded_interactions/reaction_field.hpp"
 #endif
 #ifdef P3M
 #include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
-#include "immersed_boundary/ibm_triel.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
+#include "immersed_boundary/ibm_triel.hpp"
 #endif
 #ifdef DPD
 #include "dpd.hpp"
@@ -794,8 +791,6 @@ inline void check_particle_force(Particle *part) {
 #endif
 }
 
-inline void add_single_particle_force(Particle *p) {
-  add_bonded_force(p);
-}
+inline void add_single_particle_force(Particle *p) { add_bonded_force(p); }
 
 #endif

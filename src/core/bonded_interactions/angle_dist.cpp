@@ -32,8 +32,8 @@
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
 #include "grid.hpp"
-#include <memory>
 #include "shapes/Wall.hpp"
+#include <memory>
 
 int angledist_set_params(int bond_type, double bend, double phimin,
                          double distmin, double phimax, double distmax) {
@@ -82,16 +82,18 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   const double distmx = iaparams->p.angledist.distmax;
 
   /* folds coordinates of p_mid into original box */
-  Vector3d folded_pos =folded_position(*p_mid);
+  Vector3d folded_pos = folded_position(*p_mid);
 
   double pwdistmin = std::numeric_limits<double>::infinity();
   double pwdistmin_d = 0.0;
 
   for (auto const &c : Constraints::constraints) {
-    auto cs = std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
+    auto cs =
+        std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
     if (cs) {
-      if (dynamic_cast<const Shapes::Wall*>(&(cs->shape()))) {
-        const Shapes::Wall* wall = dynamic_cast<const Shapes::Wall*>(&(cs->shape()));
+      if (dynamic_cast<const Shapes::Wall *>(&(cs->shape()))) {
+        const Shapes::Wall *wall =
+            dynamic_cast<const Shapes::Wall *>(&(cs->shape()));
         double dist = -wall->d();
         for (int j = 0; j < 3; j++) {
           dist += folded_pos[j] * (wall->n())[j];

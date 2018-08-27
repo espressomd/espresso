@@ -32,7 +32,7 @@ template <class Archive>
 void serialize(Archive &ar, IA_parameters &p, const unsigned int file_version) {
   split_free(ar, p, file_version);
 }
-}
-}
+} // namespace serialization
+} // namespace boost
 
 #endif

@@ -49,7 +49,7 @@ private:
 };
 
 } /* namespace Writer */
-} /* namespace Scriptinterface */
+} // namespace ScriptInterface
 
 #endif // ESPRESSO_H5MD_HPP
 #endif // H5MD

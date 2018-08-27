@@ -14,7 +14,7 @@ template <class FPtr> struct function_traits;
  * @brief Determine the signature from a pointer to member function (C::*).
  */
 template <class T, class C> struct function_traits<T(C::*)> { typedef T type; };
-}
+} // namespace detail
 
 /* make_function deduces the signature of a class with not-overloaded operator()
    member , a lambda or std::function,

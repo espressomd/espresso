@@ -26,7 +26,21 @@
 
 #include "config.hpp"
 
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "bonded_interactions/angle_cosine.hpp"
+#include "bonded_interactions/angle_cossquare.hpp"
+#include "bonded_interactions/angle_dist.hpp"
+#include "bonded_interactions/angle_harmonic.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonded_interactions/bonded_tab.hpp"
+#include "bonded_interactions/dihedral.hpp"
+#include "bonded_interactions/fene.hpp"
+#include "bonded_interactions/harmonic.hpp"
+#include "bonded_interactions/harmonic_dumbbell.hpp"
+#include "bonded_interactions/quartic.hpp"
+#include "bonded_interactions/subt_lj.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
+#include "bonded_interactions/umbrella.hpp"
+#include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -37,27 +51,13 @@
 #include "nonbonded_interactions/ljcos.hpp"
 #include "nonbonded_interactions/ljcos2.hpp"
 #include "nonbonded_interactions/ljgen.hpp"
-#include "nonbonded_interactions/steppot.hpp"
-#include "nonbonded_interactions/nonbonded_tab.hpp"
-#include "nonbonded_interactions/thole.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
-#include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "nonbonded_interactions/reaction_field.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
-#include "bonded_interactions/umbrella.hpp"
-#include "bonded_interactions/quartic.hpp"
-#include "bonded_interactions/harmonic.hpp"
-#include "bonded_interactions/harmonic_dumbbell.hpp"
-#include "bonded_interactions/dihedral.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
-#include "bonded_interactions/fene.hpp"
-#include "bonded_interactions/angle_cosine.hpp"
-#include "bonded_interactions/angle_cossquare.hpp"
-#include "bonded_interactions/angle_harmonic.hpp"
-#include "bonded_interactions/angle_dist.hpp"
-#include "bonded_interactions/subt_lj.hpp"
-#include "bonded_interactions/bonded_tab.hpp"
+#include "nonbonded_interactions/soft_sphere.hpp"
+#include "nonbonded_interactions/steppot.hpp"
+#include "nonbonded_interactions/thole.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
 #endif
@@ -67,9 +67,9 @@
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
 
@@ -84,9 +84,11 @@
     @param dist2     distance squared between p1 and p2.
     @return the short ranged interaction energy between the two particles
 */
-inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
-                                          const IA_parameters *ia_params, const double d[3],
-                                          double dist, double dist2) {
+inline double calc_non_bonded_pair_energy(const Particle *p1,
+                                          const Particle *p2,
+                                          const IA_parameters *ia_params,
+                                          const double d[3], double dist,
+                                          double dist2) {
   double ret = 0;
 
 #ifdef NO_INTRA_NB
@@ -194,8 +196,8 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
-  *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
-      calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
+    *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
+        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
 
 #ifdef ELECTROSTATICS
   if (coulomb.method != COULOMB_NONE) {
@@ -337,7 +339,8 @@ inline void add_bonded_energy(Particle *p1) {
 #endif
 #ifdef P3M
     case BONDED_IA_BONDED_COULOMB_P3M_SR:
-      bond_broken = bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
+      bond_broken =
+          bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
 #ifdef LENNARD_JONES
@@ -442,18 +445,18 @@ inline void add_kinetic_energy(Particle *p1) {
 #endif
 
   /* kinetic energy */
-  energy.data.e[0] +=
-      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * 0.5 * p1->p.mass;
+  energy.data.e[0] += (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) +
+                       Utils::sqr(p1->m.v[2])) *
+                      0.5 * p1->p.mass;
 
 #ifdef ROTATION
-  if (p1->p.rotation)
-  {
+  if (p1->p.rotation) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
     energy.data.e[0] += 0.5 * (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
-                         Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
-                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]);
+                               Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
+                               Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]);
   }
 #endif
 }

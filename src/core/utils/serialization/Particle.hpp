@@ -37,7 +37,7 @@ template <class Archive>
 void serialize(Archive &ar, Particle &p, const unsigned int file_version) {
   split_free(ar, p, file_version);
 }
-}
-}
+} // namespace serialization
+} // namespace boost
 
 #endif

@@ -35,8 +35,8 @@
  *  </ul>
  *
  */
-#include "p3m-common.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "p3m-common.hpp"
 
 #ifdef DP3M
 
@@ -155,8 +155,8 @@ void dp3m_count_magnetic_particles();
     which may be smaller than 0, in which case the charge is assumed to be
    virtual and is not
     stored in the Dca_frac arrays. */
-void dp3m_assign_dipole(double const real_pos[3], double mu, double const dip[3],
-                        int cp_cnt);
+void dp3m_assign_dipole(double const real_pos[3], double mu,
+                        double const dip[3], int cp_cnt);
 
 /** shrink wrap the dipoles grid */
 void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
@@ -165,7 +165,8 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
     If NPT is compiled in, it returns the energy, which is needed for NPT. */
 inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
                                   double dist2, double dist, double force[3]) {
-  if ((p1->p.dipm==0.) || (p2->p.dipm==0.)) return 0.;
+  if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.))
+    return 0.;
 
   int j;
 #ifdef NPT
@@ -256,12 +257,12 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
 
   if (dist < dp3m.params.r_cut && dist > 0) {
     adist = dp3m.params.alpha * dist;
-/*fac1 = coulomb.Dprefactor;*/
+    /*fac1 = coulomb.Dprefactor;*/
 
 #if USE_ERFC_APPROXIMATION
     erfc_part_ri = AS_erfc_part(adist) / dist;
     /*  fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */ /* *exp(-adist*adist);
-                                                                              */
+                                                                            */
 #else
     erfc_part_ri = erfc(adist) / dist;
 /* fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/

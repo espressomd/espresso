@@ -22,61 +22,58 @@
     Implementation of nonbonded_interaction_data.hpp
  */
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"
-#include "nonbonded_interactions/buckingham.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "nonbonded_interactions/cos2.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "dpd.hpp"
+#include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+#include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "errorhandling.hpp"
+#include "grid.hpp"
+#include "initialize.hpp"
+#include "nonbonded_interaction_data.hpp"
+#include "nonbonded_interactions/buckingham.hpp"
+#include "nonbonded_interactions/cos2.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
 #include "nonbonded_interactions/gb.hpp"
-#include "grid.hpp"
 #include "nonbonded_interactions/hat.hpp"
 #include "nonbonded_interactions/hertzian.hpp"
-#include "initialize.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "nonbonded_interactions/ljcos.hpp"
 #include "nonbonded_interactions/ljcos2.hpp"
 #include "nonbonded_interactions/ljgen.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
-#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
-#include "electrostatics_magnetostatics/mdlc_correction.hpp"
-#include "initialize.hpp"
-#include "nonbonded_interaction_data.hpp"
-#include "actor/DipolarDirectSum.hpp"
 #ifdef DIPOLAR_BARNES_HUT
 #include "actor/DipolarBarnesHut.hpp"
 #endif
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "nonbonded_interactions/morse.hpp"
-#include "object-in-fluid/affinity.hpp"
-#include "object-in-fluid/membrane_collision.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
+#include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "nonbonded_interactions/soft_sphere.hpp"
+#include "nonbonded_interactions/steppot.hpp"
+#include "object-in-fluid/affinity.hpp"
+#include "object-in-fluid/membrane_collision.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
 #include "reaction_field.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
-#include "nonbonded_interactions/soft_sphere.hpp"
-#include "nonbonded_interactions/steppot.hpp"
-#include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "utils/serialization/IA_parameters.hpp"
-#include <cstdlib>
-#include <cstring>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
-
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <cstdlib>
+#include <cstring>
 
 /****************************************
  * variables
@@ -87,10 +84,12 @@ std::vector<IA_parameters> ia_params;
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
 Coulomb_parameters coulomb = {
 #ifdef ELECTROSTATICS
-  0.0, COULOMB_NONE,
+    0.0,
+    COULOMB_NONE,
 #endif
 #ifdef DIPOLES
-  0.0, DIPOLAR_NONE,
+    0.0,
+    DIPOLAR_NONE,
 #endif
 };
 #endif
@@ -104,7 +103,6 @@ double field_induced;
 /** Applied field (for const. potential feature) **/
 double field_applied;
 #endif
-
 
 double min_global_cut = 0.0;
 
@@ -424,8 +422,6 @@ void make_particle_type_exist_local(int type) {
     realloc_ia_params(type + 1);
 }
 
-
-
 int interactions_sanity_checks() {
   /* set to zero if initialization was not successful. */
   int state = 1;
@@ -489,10 +485,9 @@ void set_dipolar_method_local(DipolarInteraction method) {
   }
 #endif
 #ifdef DIPOLAR_BARNES_HUT
-if ((coulomb.Dmethod == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU))
-{
- deactivate_dipolar_barnes_hut();
-}
+  if ((coulomb.Dmethod == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
+    deactivate_dipolar_barnes_hut();
+  }
 #endif // BARNES_HUT
   coulomb.Dmethod = method;
 }
@@ -504,57 +499,50 @@ if ((coulomb.Dmethod == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU))
 /*                                 electrostatics */
 /********************************************************************************/
 
-int coulomb_set_prefactor(double prefactor)
-{
+int coulomb_set_prefactor(double prefactor) {
   if (prefactor < 0.0) {
     runtimeErrorMsg() << "Coulomb prefactor has to be >=0";
     return ES_ERROR;
   }
-  
-  coulomb.prefactor=prefactor;
+
+  coulomb.prefactor = prefactor;
   mpi_bcast_coulomb_params();
 
- 
   return ES_OK;
 }
 
-/** @brief Deactivates the current Coulomb mhthod 
+/** @brief Deactivates the current Coulomb mhthod
     This was part of coulomb_set_bjerrum()
 */
 void deactivate_coulomb_method() {
-coulomb.prefactor =0;
-switch (coulomb.method) {
+  coulomb.prefactor = 0;
+  switch (coulomb.method) {
 #ifdef P3M
-    case COULOMB_ELC_P3M:
-    case COULOMB_P3M_GPU:
-    case COULOMB_P3M:
-      break;
+  case COULOMB_ELC_P3M:
+  case COULOMB_P3M_GPU:
+  case COULOMB_P3M:
+    break;
 #endif
-    case COULOMB_DH:
-      dh_params.r_cut = 0.0;
-      dh_params.kappa = 0.0;
-    case COULOMB_RF:
-    case COULOMB_INTER_RF:
-      rf_params.kappa = 0.0;
-      rf_params.epsilon1 = 0.0;
-      rf_params.epsilon2 = 0.0;
-      rf_params.r_cut = 0.0;
-      rf_params.B = 0.0;
-    case COULOMB_MMM1D:
-      mmm1d_params.maxPWerror = 1e40;
-    default:
-      break;
-    }
+  case COULOMB_DH:
+    dh_params.r_cut = 0.0;
+    dh_params.kappa = 0.0;
+  case COULOMB_RF:
+  case COULOMB_INTER_RF:
+    rf_params.kappa = 0.0;
+    rf_params.epsilon1 = 0.0;
+    rf_params.epsilon2 = 0.0;
+    rf_params.r_cut = 0.0;
+    rf_params.B = 0.0;
+  case COULOMB_MMM1D:
+    mmm1d_params.maxPWerror = 1e40;
+  default:
+    break;
+  }
 
-    mpi_bcast_coulomb_params();
-    coulomb.method = COULOMB_NONE;
-    mpi_bcast_coulomb_params();
+  mpi_bcast_coulomb_params();
+  coulomb.method = COULOMB_NONE;
+  mpi_bcast_coulomb_params();
 }
-
-
-
-
-
 
 /* =========================================================
    ========================================================= */
@@ -562,13 +550,12 @@ switch (coulomb.method) {
 
 #ifdef DIPOLES
 
-int dipolar_set_Dprefactor(double prefactor)
-{
-  if (prefactor < 0.0){
+int dipolar_set_Dprefactor(double prefactor) {
+  if (prefactor < 0.0) {
     runtimeErrorMsg() << "Dipolar prefactor has to be >=0";
     return ES_ERROR;
   }
-  
+
   coulomb.Dprefactor = prefactor;
 
   mpi_bcast_coulomb_params();
@@ -576,7 +563,6 @@ int dipolar_set_Dprefactor(double prefactor)
 }
 
 #endif /* ifdef  DIPOLES */
-
 
 int virtual_set_params(int bond_type) {
   if (bond_type < 0)

@@ -53,13 +53,13 @@ public:
   }
 
   reference at(size_type i) const {
-    return (i < size())
-               ? m_ptr[i]
-      : throw std::out_of_range("span access out of bounds."), m_ptr[i];
+    return (i < size()) ? m_ptr[i]
+                        : throw std::out_of_range("span access out of bounds."),
+           m_ptr[i];
   }
 
   pointer data() const { return m_ptr; }
 };
-}
+} // namespace Utils
 
 #endif

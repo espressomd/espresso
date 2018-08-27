@@ -21,8 +21,8 @@
 
 #include "Constraints.hpp"
 
-#include "ShapeBasedConstraint.hpp"
 #include "HomogeneousMagneticField.hpp"
+#include "ShapeBasedConstraint.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
@@ -31,10 +31,12 @@ void initialize() {
   ScriptInterface::register_new<ScriptInterface::Constraints::Constraints>(
       "Constraints::Constraints");
 
-  ScriptInterface::register_new<ScriptInterface::Constraints::ShapeBasedConstraint>(
+  ScriptInterface::register_new<
+      ScriptInterface::Constraints::ShapeBasedConstraint>(
       "Constraints::ShapeBasedConstraint");
 
-  ScriptInterface::register_new<ScriptInterface::Constraints::HomogeneousMagneticField>(
+  ScriptInterface::register_new<
+      ScriptInterface::Constraints::HomogeneousMagneticField>(
       "Constraints::HomogeneousMagneticField");
 }
 } /* namespace Constraints */

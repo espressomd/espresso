@@ -58,13 +58,13 @@
 #if defined(ELECTROSTATICS)
 
 #include "cells.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "particle_data.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
@@ -89,7 +89,7 @@ typedef struct {
   double relax;   /* relaxation parameter for iterative                       */
   int citeration; /* current number of iterations*/
   int set_flag;   /* flag that indicates if ICCP3M has been initialized properly
-                     */
+                   */
 
   double *fx;
   double *fy;

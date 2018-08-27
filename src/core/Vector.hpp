@@ -27,8 +27,8 @@
 #include <functional>
 #include <initializer_list>
 #include <iterator>
-#include <vector>
 #include <numeric>
+#include <vector>
 
 #include "utils/serialization/array.hpp"
 
@@ -55,7 +55,7 @@ public:
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
-  explicit Vector(Scalar const(&v)[n]) {
+  explicit Vector(Scalar const (&v)[n]) {
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
@@ -161,7 +161,7 @@ Vector<N, T> binary_op(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
 }
 
 template <size_t N, typename T, typename Op>
-Vector<N, T> & binary_op_assign(Vector<N, T> &a, Vector<N, T> const &b, Op op) {
+Vector<N, T> &binary_op_assign(Vector<N, T> &a, Vector<N, T> const &b, Op op) {
   std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
   return a;
 }
@@ -177,7 +177,7 @@ bool all_of(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
 
   return true;
 }
-}
+} // namespace detail
 
 template <size_t N, typename T>
 bool operator<(Vector<N, T> const &a, Vector<N, T> const &b) {
@@ -215,7 +215,7 @@ Vector<N, T> operator+(Vector<N, T> const &a, Vector<N, T> const &b) {
 }
 
 template <size_t N, typename T>
-Vector<N, T> & operator+=(Vector<N, T> &a, Vector<N, T> const &b) {
+Vector<N, T> &operator+=(Vector<N, T> &a, Vector<N, T> const &b) {
   return detail::binary_op_assign(a, b, std::plus<T>());
 }
 
@@ -234,7 +234,7 @@ template <size_t N, typename T> Vector<N, T> operator-(Vector<N, T> const &a) {
 }
 
 template <size_t N, typename T>
-Vector<N, T> & operator-=(Vector<N, T> &a, Vector<N, T> const &b) {
+Vector<N, T> &operator-=(Vector<N, T> &a, Vector<N, T> const &b) {
   return detail::binary_op_assign(a, b, std::minus<T>());
 }
 

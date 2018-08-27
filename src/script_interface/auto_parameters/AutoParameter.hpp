@@ -21,7 +21,7 @@ template <typename T> struct infer_length_helper {
 template <size_t N, typename T> struct infer_length_helper<Vector<N, T>> {
   static constexpr size_t value{N};
 };
-}
+} // namespace detail
 
 /**
  * @brief Infer supposed length of the paramer.
@@ -207,6 +207,6 @@ struct AutoParameter {
    */
   const std::function<Variant()> get;
 };
-}
+} // namespace ScriptInterface
 
 #endif

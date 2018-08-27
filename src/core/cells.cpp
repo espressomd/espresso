@@ -32,8 +32,8 @@
 #include "grid.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "layered.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
@@ -174,8 +174,9 @@ static void topology_release(int cs) {
     layered_topology_release();
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an "
-                    "unknown way (%d)\n",
+    fprintf(stderr,
+            "INTERNAL ERROR: attempting to sort the particles in an "
+            "unknown way (%d)\n",
             cs);
     errexit();
   }
@@ -203,8 +204,9 @@ void topology_init(int cs, CellPList *local) {
     layered_topology_init(local);
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an "
-                    "unknown way (%d)\n",
+    fprintf(stderr,
+            "INTERNAL ERROR: attempting to sort the particles in an "
+            "unknown way (%d)\n",
             cs);
     errexit();
   }

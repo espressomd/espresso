@@ -29,7 +29,6 @@
 
 #include "TabulatedPotential.hpp"
 
-
 /** cutoff for deactivated interactions. Below 0, so that even particles on
     top of each other don't interact by chance. */
 #define INACTIVE_CUTOFF -1.0
@@ -369,7 +368,6 @@ struct Coulomb_parameters {
   double Dprefactor;
   DipolarInteraction Dmethod;
 #endif
-
 };
 
 #ifdef ELECTROSTATICS
@@ -380,7 +378,6 @@ extern double field_induced;
 extern double field_applied;
 
 #endif
-
 
 /************************************************
  * exported variables
@@ -457,7 +454,6 @@ void make_particle_type_exist(int type);
 
 void make_particle_type_exist_local(int type);
 
-
 /** This function increases the LOCAL ia_params field
     to the given size. Better use
     \ref make_particle_type_exist since it takes care of
@@ -491,7 +487,6 @@ int virtual_set_params(int bond_type);
 #ifdef DIPOLES
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
-
 
 #include "utils/math/sqr.hpp"
 

@@ -1554,13 +1554,13 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
   return denominator;
 }
 
-  /*****************************************************************************/
+/*****************************************************************************/
 
-  /************************************************
-   * Functions for dipoloar P3M Parameter tuning
-   * This tuning is based on the P3M tuning of the charges
-   which in turn is based on the P3M_tune by M. Deserno
-   ************************************************/
+/************************************************
+ * Functions for dipoloar P3M Parameter tuning
+ * This tuning is based on the P3M tuning of the charges
+ which in turn is based on the P3M_tune by M. Deserno
+ ************************************************/
 
 #define P3M_TUNE_MAX_CUTS 50
 /** Tune dipolar P3M parameters to desired accuracy.
@@ -2579,8 +2579,8 @@ void dp3m_compute_constants_energy_dipolar() {
   dp3m.energy_correction = -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * PI / 3.);
 }
 
-  /*****************************************************************************/
+/*****************************************************************************/
 
-  /*****************************************************************************/
+/*****************************************************************************/
 
 #endif /* DP3M */

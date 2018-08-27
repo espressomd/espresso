@@ -92,7 +92,8 @@ void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
 }
 
 Cell *layered_position_to_cell(double pos[3]) {
-  int cpos = static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
+  int cpos =
+      static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
   if (cpos < 1) {
     if (!LAYERED_BTM_NEIGHBOR)
       cpos = 1;
@@ -300,9 +301,9 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 void layered_topology_init(CellPList *old) {
   int c, p;
 
-  CELL_TRACE(fprintf(stderr,
-                     "%d: layered_topology_init, %d old particle lists max_range %g\n",
-                     this_node, old->n, max_range));
+  CELL_TRACE(fprintf(
+      stderr, "%d: layered_topology_init, %d old particle lists max_range %g\n",
+      this_node, old->n, max_range));
 
   cell_structure.type = CELL_STRUCTURE_LAYERED;
   cell_structure.position_to_node = map_position_node_array;
@@ -417,7 +418,8 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(up, pl, p);
     } else
-      move_indexed_particle(layered_position_to_cell(pl->part[p].r.p.data()), pl, p);
+      move_indexed_particle(layered_position_to_cell(pl->part[p].r.p.data()),
+                            pl, p);
     /* same particle again, as this is now a new one */
     if (p < pl->n)
       p--;
@@ -430,7 +432,8 @@ void layered_exchange_and_sort_particles(int global_flag) {
   Cell *nc, *oc;
   int c, p, flag, redo;
   ParticleList send_buf_dn, send_buf_up;
-  ParticleList recv_buf_up, recv_buf_dn;;
+  ParticleList recv_buf_up, recv_buf_dn;
+  ;
 
   CELL_TRACE(fprintf(stderr, "%d:layered exchange and sort %d\n", this_node,
                      global_flag));
@@ -475,12 +478,14 @@ void layered_exchange_and_sort_particles(int global_flag) {
       if (this_node % 2 == 0) {
         /* send down */
         if (LAYERED_BTM_NEIGHBOR) {
-          CELL_TRACE(fprintf(stderr, "%d: send dn %d\n", this_node, send_buf_dn.n));
+          CELL_TRACE(
+              fprintf(stderr, "%d: send dn %d\n", this_node, send_buf_dn.n));
           send_particles(&send_buf_dn, btm);
         }
         if (LAYERED_TOP_NEIGHBOR) {
           recv_particles(&recv_buf_up, top);
-          CELL_TRACE(fprintf(stderr, "%d: recv up %d\n", this_node, recv_buf_up.n));
+          CELL_TRACE(
+              fprintf(stderr, "%d: recv up %d\n", this_node, recv_buf_up.n));
         }
         /* send up */
         if (LAYERED_TOP_NEIGHBOR) {
@@ -489,7 +494,8 @@ void layered_exchange_and_sort_particles(int global_flag) {
         }
         if (LAYERED_BTM_NEIGHBOR) {
           recv_particles(&recv_buf_dn, btm);
-          CELL_TRACE(fprintf(stderr, "%d: recv dn %d\n", this_node, recv_buf_dn.n));
+          CELL_TRACE(
+              fprintf(stderr, "%d: recv dn %d\n", this_node, recv_buf_dn.n));
         }
       } else {
         if (LAYERED_TOP_NEIGHBOR) {
@@ -497,7 +503,8 @@ void layered_exchange_and_sort_particles(int global_flag) {
           recv_particles(&recv_buf_up, top);
         }
         if (LAYERED_BTM_NEIGHBOR) {
-          CELL_TRACE(fprintf(stderr, "%d: send dn %d\n", this_node, send_buf_dn.n));
+          CELL_TRACE(
+              fprintf(stderr, "%d: send dn %d\n", this_node, send_buf_dn.n));
           send_particles(&send_buf_dn, btm);
         }
         if (LAYERED_BTM_NEIGHBOR) {
@@ -510,8 +517,10 @@ void layered_exchange_and_sort_particles(int global_flag) {
         }
       }
     } else {
-      if (recv_buf_up.n != 0 || recv_buf_dn.n != 0 || send_buf_dn.n != 0 || send_buf_up.n != 0) {
-        fprintf(stderr, "1 node but transfer buffers are not empty. send up "
+      if (recv_buf_up.n != 0 || recv_buf_dn.n != 0 || send_buf_dn.n != 0 ||
+          send_buf_up.n != 0) {
+        fprintf(stderr,
+                "1 node but transfer buffers are not empty. send up "
                 "%d, down %d, recv up %d recv dn %d\n",
                 send_buf_up.n, send_buf_dn.n, recv_buf_up.n, recv_buf_dn.n);
         errexit();

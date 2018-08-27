@@ -33,11 +33,11 @@
 #include "constraints.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
-#include "initialize.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
-#include "lbboundaries/LBBoundary.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
+#include "initialize.hpp"
+#include "lbboundaries/LBBoundary.hpp"
 #include "utils.hpp"
 
 #include <algorithm>
@@ -468,4 +468,4 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
 }
 
 #endif
-} // namespace
+} // namespace LBBoundaries

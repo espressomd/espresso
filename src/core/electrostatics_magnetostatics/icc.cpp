@@ -32,11 +32,11 @@
 #include <ctime>
 
 #include "electrostatics_magnetostatics/elc.hpp"
-#include "icc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
+#include "icc.hpp"
 
 #include "communication.hpp"
 
@@ -44,10 +44,10 @@
 #include "config.hpp"
 #include "forces.hpp"
 #include "global.hpp"
+#include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
-#include "initialize.hpp"
 
 #include "short_range_loop.hpp"
 #include "utils/NoOp.hpp"
@@ -208,8 +208,8 @@ int bcast_iccp3m_cfg(void) {
 }
 
 int iccp3m_iteration() {
-  double fdot, hold, hnew, del_eps, diff = 0.0, difftemp = 0.0, ex, ey,
-                                          ez, pref;
+  double fdot, hold, hnew, del_eps, diff = 0.0, difftemp = 0.0, ex, ey, ez,
+                                    pref;
   Cell *cell;
   int c, np;
   Particle *part;
@@ -261,7 +261,6 @@ int iccp3m_iteration() {
             msg << "ICCP3M found zero electric field on a charge. This must "
                    "never happen";
             runtimeError(msg);
-
           }
           /* the dot product   */
           fdot = ex * iccp3m_cfg.nvectorx[id] + ey * iccp3m_cfg.nvectory[id] +
@@ -332,19 +331,19 @@ void force_calc_iccp3m() {
 
   short_range_loop(Utils::NoOp{}, [](Particle &p1, Particle &p2, Distance &d) {
     /* calc non bonded interactions */
-    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21.data(), sqrt(d.dist2),
-                                     d.dist2);
+    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21.data(),
+                                     sqrt(d.dist2), d.dist2);
   });
 
   calc_long_range_forces_iccp3m();
 }
 
 void init_forces_iccp3m() {
-  for(auto & p : local_cells.particles()) {
+  for (auto &p : local_cells.particles()) {
     p.f = ParticleForce{};
   }
 
-  for(auto & p : ghost_cells.particles()) {
+  for (auto &p : ghost_cells.particles()) {
     p.f = ParticleForce{};
   }
 }

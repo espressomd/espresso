@@ -34,10 +34,10 @@
  */
 
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
-#include "thermostat.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "grid.hpp"
 #include "cells.hpp"
+#include "grid.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "thermostat.hpp"
 
 #ifdef DIPOLES
 

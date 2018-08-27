@@ -112,7 +112,7 @@ template <typename T> struct infer_type_helper<std::shared_ptr<T>> {
   static_assert(std::is_base_of<ScriptInterfaceBase, T>::value, "");
   static constexpr VariantType value{VariantType::OBJECTID};
 };
-}
+} // namespace detail
 
 /**
  * @brief Infer the variant type id from the c++ type.

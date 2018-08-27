@@ -24,18 +24,18 @@
 #include "utils/Span.hpp"
 using Utils::Span;
 
-#include <vector>
 #include <numeric>
+#include <vector>
 
 BOOST_AUTO_TEST_CASE(ctor) {
   /* from ptr + size */
   {
-  std::vector<int> v(23);
+    std::vector<int> v(23);
 
-  auto s = Span<int>(v.data(), v.size());
+    auto s = Span<int>(v.data(), v.size());
 
-  BOOST_CHECK(v.size() == s.size());
-  BOOST_CHECK(v.data() == s.data());
+    BOOST_CHECK(v.size() == s.size());
+    BOOST_CHECK(v.data() == s.data());
   }
 
   /* from ptr + size */
@@ -75,4 +75,3 @@ BOOST_AUTO_TEST_CASE(element_access) {
 
   BOOST_CHECK_THROW(s.at(s.size()), std::out_of_range);
 }
-

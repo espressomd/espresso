@@ -50,5 +50,4 @@ int tabulated_set_params(int part_type_a, int part_type_b, double min,
   return 0;
 }
 
-
 #endif

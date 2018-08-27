@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file electrostatics_magnetostatics/elc.hpp ELC algorithm for long range coulomb interactions.
-    Implementation of the ELC method for the calculation of the
-    electrostatic interaction in two dimensional periodic systems. For
+/** \file electrostatics_magnetostatics/elc.hpp ELC algorithm for long range
+   coulomb interactions. Implementation of the ELC method for the calculation of
+   the electrostatic interaction in two dimensional periodic systems. For
     details on the method see MMM in general. The ELC method works
     together with any three dimensional method, which in Espresso is
     for example \ref p3m.hpp "P3M", with metallic boundary conditions.  */
@@ -99,8 +99,8 @@ extern ELC_struct elc_params;
     @param bottom  dielectric constant of lower part
 */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-                   int neutralize, double delta_mid_top, double delta_mid_bot, int const_pot,
-                   double pot_diff);
+                   int neutralize, double delta_mid_top, double delta_mid_bot,
+                   int const_pot, double pot_diff);
 
 /// the force calculation
 void ELC_add_force();

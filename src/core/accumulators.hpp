@@ -36,6 +36,6 @@ void auto_update();
 inline bool auto_update_enabled() {
   return auto_update_accumulators.size() > 0;
 }
-}
+} // namespace Accumulators
 
 #endif // ESPRESSO_ACCUMULATORS_HPP

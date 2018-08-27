@@ -18,7 +18,7 @@
 /** \file NumeratedContainer_test.cpp Unit tests for the
  * Utils::NumeratedContainer class.
  *
-*/
+ */
 
 #include <utility>
 

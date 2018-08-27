@@ -43,6 +43,6 @@ private:
   template <typename Archive>
   void serialize(Archive &, long int /* version */) const {}
 };
-}
+} // namespace ScriptInterface
 
 #endif

@@ -20,7 +20,7 @@
 /** \file NumeratedContainer_test.cpp Unit tests for the
  * Utils::NumeratedContainer class.
  *
-*/
+ */
 
 #define BOOST_TEST_MODULE Utils::Batch test
 #define BOOST_TEST_DYN_LINK
@@ -30,22 +30,21 @@
 
 BOOST_AUTO_TEST_CASE(batch) {
   int counter = 0;
-  auto a = [&counter] (int i) {
-             BOOST_CHECK(i == 42);
-             BOOST_CHECK(counter++ == 0);
-           };
-  auto b = [&counter] (int i) {
-             BOOST_CHECK(i == 42);
-             BOOST_CHECK(counter++ == 1);
-           };
-  auto c = [&counter] (int i) {
-             BOOST_CHECK(i == 42);
-             BOOST_CHECK(counter++ == 2);
-           };
+  auto a = [&counter](int i) {
+    BOOST_CHECK(i == 42);
+    BOOST_CHECK(counter++ == 0);
+  };
+  auto b = [&counter](int i) {
+    BOOST_CHECK(i == 42);
+    BOOST_CHECK(counter++ == 1);
+  };
+  auto c = [&counter](int i) {
+    BOOST_CHECK(i == 42);
+    BOOST_CHECK(counter++ == 2);
+  };
 
   auto batch = Utils::make_batch(a, b, c);
 
   batch(42);
   BOOST_CHECK(counter == 3);
 }
-

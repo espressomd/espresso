@@ -65,8 +65,8 @@ private:
     auto const bucket_count = m_cache.bucket_count();
 
     /* Pick a random bucket, this has to terminate because
-    * the map is not empty. So there has to be a bucket with
-    * at least one element. */
+     * the map is not empty. So there has to be a bucket with
+     * at least one element. */
     auto bucket =
         std::uniform_int_distribution<size_type>{0, bucket_count - 1}(m_rand);
 
@@ -138,7 +138,8 @@ public:
    *          into the cache.
    */
   template <typename KeyInputIterator, typename ValueInputIterator>
-  KeyInputIterator put(KeyInputIterator kbegin, KeyInputIterator kend, ValueInputIterator vbegin) {
+  KeyInputIterator put(KeyInputIterator kbegin, KeyInputIterator kend,
+                       ValueInputIterator vbegin) {
     auto const range_len = std::distance(kbegin, kend);
     auto const len = (range_len > max_size()) ? max_size() : range_len;
     kend = std::next(kbegin, len);
@@ -148,7 +149,7 @@ public:
       drop_random_element();
     }
 
-    while(kbegin != kend) {
+    while (kbegin != kend) {
       put(*kbegin++, *vbegin++);
     }
 
@@ -171,6 +172,6 @@ public:
     }
   }
 };
-}
+} // namespace Utils
 
 #endif

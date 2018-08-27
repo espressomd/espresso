@@ -26,9 +26,9 @@
 #include "communication.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "grid_based_algorithms/lb.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
@@ -135,39 +135,37 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
     agg_size[i] = 0;
   }
 
-  short_range_loop(Utils::NoOp{},
-                   [&](Particle &p1, Particle &p2, Distance &d) {
-                     auto p1molid = p1.p.mol_id;
-                     auto p2molid = p2.p.mol_id;
-                     if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
-                         ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-                       if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
+  short_range_loop(Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
+    auto p1molid = p1.p.mol_id;
+    auto p2molid = p2.p.mol_id;
+    if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
+        ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
+      if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
 #ifdef ELECTROSTATICS
-                         if (charge && (p1.p.q * p2.p.q >= 0)) {
-                           return;
-                         }
+        if (charge && (p1.p.q * p2.p.q >= 0)) {
+          return;
+        }
 #endif
-                         if (d.dist2 < dist_criteria2) {
-                           if (p1molid > p2molid) {
-                             ind = p1molid * topology.size() + p2molid;
-                           } else {
-                             ind = p2molid * topology.size() + p1molid;
-                           }
-                           if (min_contact > 1) {
-                             contact_num[ind]++;
-                             if (contact_num[ind] >= min_contact) {
-                               merge_aggregate_lists(head_list, agg_id_list,
-                                                     p1molid, p2molid,
-                                                     link_list);
-                             }
-                           } else {
-                             merge_aggregate_lists(head_list, agg_id_list,
-                                                   p1molid, p2molid, link_list);
-                           }
-                         }
-                       }
-                     }
-                   });
+        if (d.dist2 < dist_criteria2) {
+          if (p1molid > p2molid) {
+            ind = p1molid * topology.size() + p2molid;
+          } else {
+            ind = p2molid * topology.size() + p1molid;
+          }
+          if (min_contact > 1) {
+            contact_num[ind]++;
+            if (contact_num[ind] >= min_contact) {
+              merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
+                                    link_list);
+            }
+          } else {
+            merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
+                                  link_list);
+          }
+        }
+      }
+    }
+  });
 
   /* count number of aggregates
      find aggregate size
@@ -1112,12 +1110,12 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
 
   int i;
   // Number of doubles to store pressure in
-  int total = c_size * (n_pre + bonded_ia_params.size() + n_non_bonded + n_coulomb +
-                        n_dipolar + n_vs);
+  int total = c_size * (n_pre + bonded_ia_params.size() + n_non_bonded +
+                        n_coulomb + n_dipolar + n_vs);
 
   // Allocate mem for the double list
   stat->data.resize(total);
-  
+
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
   stat->chunk_size = c_size;
 

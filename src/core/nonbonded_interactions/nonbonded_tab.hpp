@@ -26,17 +26,16 @@
  *  for a particle pair or bonds via interpolating from lookup tables.
  *  \ref forces.cpp
  *  Needs feature TABULATED compiled in (see \ref config.hpp).
-*/
+ */
 
 #include "config.hpp"
 
 #ifdef TABULATED
 
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "debug.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
-
 
 /** Non-Bonded tabulated potentials:
     Reads tabulated parameters and force and energy tables from a file.
@@ -59,7 +58,6 @@
 int tabulated_set_params(int part_type_a, int part_type_b, double min,
                          double max, std::vector<double> const &energy,
                          std::vector<double> const &force);
-
 
 /** Add a non-bonded pair force by linear interpolation from a table.
     Needs feature TABULATED compiled in (see \ref config.hpp). */

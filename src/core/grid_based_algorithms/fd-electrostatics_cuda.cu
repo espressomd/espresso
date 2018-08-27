@@ -1,9 +1,9 @@
 // TODO: throw exceptions upon errors initialization
 
+#include "grid_based_algorithms/fd-electrostatics.hpp"
 #include <cuda.h>
 #include <cuda_utils.hpp>
 #include <cufft.h>
-#include "grid_based_algorithms/fd-electrostatics.hpp"
 #include <string>
 //#include <cuda_interface.hpp>
 #include <cstdio>
@@ -23,33 +23,33 @@ __device__ unsigned int fde_getThreadIndex() {
          threadIdx.x;
 }
 
-__device__ cufftReal fde_getNode(int x, int y, int z)
-{
-  cufftReal* field = reinterpret_cast<cufftReal*>(fde_parameters_gpu.charge_potential);
-  return field[fde_parameters_gpu.dim_y*fde_parameters_gpu.dim_x_padded*z + fde_parameters_gpu.dim_x_padded*y + x];
+__device__ cufftReal fde_getNode(int x, int y, int z) {
+  cufftReal *field =
+      reinterpret_cast<cufftReal *>(fde_parameters_gpu.charge_potential);
+  return field[fde_parameters_gpu.dim_y * fde_parameters_gpu.dim_x_padded * z +
+               fde_parameters_gpu.dim_x_padded * y + x];
 }
 
-__device__ void fde_setNode(int x, int y, int z, cufftReal value)
-{
-  cufftReal* field = reinterpret_cast<cufftReal*>(fde_parameters_gpu.charge_potential);
-  field[fde_parameters_gpu.dim_y*fde_parameters_gpu.dim_x_padded*z + fde_parameters_gpu.dim_x_padded*y + x] = value;
+__device__ void fde_setNode(int x, int y, int z, cufftReal value) {
+  cufftReal *field =
+      reinterpret_cast<cufftReal *>(fde_parameters_gpu.charge_potential);
+  field[fde_parameters_gpu.dim_y * fde_parameters_gpu.dim_x_padded * z +
+        fde_parameters_gpu.dim_x_padded * y + x] = value;
 }
 
-__device__ cufftReal fde_getNode(int i)
-{
-  int x  = i % fde_parameters_gpu.dim_x_padded;
+__device__ cufftReal fde_getNode(int i) {
+  int x = i % fde_parameters_gpu.dim_x_padded;
   i /= fde_parameters_gpu.dim_x_padded;
-  int y  = i % fde_parameters_gpu.dim_y;
-  int z  = i / fde_parameters_gpu.dim_y;
+  int y = i % fde_parameters_gpu.dim_y;
+  int z = i / fde_parameters_gpu.dim_y;
   return fde_getNode(x, y, z);
 }
 
-__device__ void fde_setNode(int i, cufftReal value)
-{
-  int x  = i % fde_parameters_gpu.dim_x_padded;
+__device__ void fde_setNode(int i, cufftReal value) {
+  int x = i % fde_parameters_gpu.dim_x_padded;
   i /= fde_parameters_gpu.dim_x_padded;
-  int y  = i % fde_parameters_gpu.dim_y;
-  int z  = i / fde_parameters_gpu.dim_y;
+  int y = i % fde_parameters_gpu.dim_y;
+  int z = i / fde_parameters_gpu.dim_y;
   fde_setNode(x, y, z, value);
 }
 
@@ -134,8 +134,7 @@ __global__ void createGreensfcn() {
     } else {
       fde_parameters_gpu.greensfcn[index] =
           -4.0f * PI_FLOAT * fde_parameters_gpu.prefactor *
-          fde_parameters_gpu.agrid *
-          fde_parameters_gpu.agrid * 0.5f /
+          fde_parameters_gpu.agrid * fde_parameters_gpu.agrid * 0.5f /
           (cos(2.0f * PI_FLOAT * coord[0] /
                (cufftReal)fde_parameters_gpu.dim_x) +
            cos(2.0f * PI_FLOAT * coord[1] /

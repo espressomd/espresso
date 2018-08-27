@@ -25,9 +25,9 @@ void recalc_maximal_cutoff_bonded() {
         max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
       break;
     case BONDED_IA_THERMALIZED_DIST:
-      if ((bonded_ia_params[i].p.thermalized_bond.r_cut > 0) && 
-	  (max_cut_bonded < bonded_ia_params[i].p.thermalized_bond.r_cut))
-    	max_cut_bonded = bonded_ia_params[i].p.thermalized_bond.r_cut;
+      if ((bonded_ia_params[i].p.thermalized_bond.r_cut > 0) &&
+          (max_cut_bonded < bonded_ia_params[i].p.thermalized_bond.r_cut))
+        max_cut_bonded = bonded_ia_params[i].p.thermalized_bond.r_cut;
       break;
     case BONDED_IA_RIGID_BOND:
       if (max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
@@ -77,7 +77,6 @@ void recalc_maximal_cutoff_bonded() {
     }
   }
 }
-
 
 void make_bond_type_exist(int type) {
   int i, ns = type + 1;

@@ -1,3 +1,2 @@
-#include "config.hpp"
 #include "polynom.hpp"
-
+#include "config.hpp"

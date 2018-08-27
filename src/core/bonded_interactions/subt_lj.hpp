@@ -24,14 +24,14 @@
  *  Routines to subtract the LENNARD-JONES Energy and/or the LENNARD-JONES force
  *  for a particle pair.
  *  \ref forces.cpp
-*/
+ */
 
 #include "config.hpp"
 
 #ifdef LENNARD_JONES
 
-#include "debug.hpp"
 #include "bonded_interaction_data.hpp"
+#include "debug.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "utils.hpp"
 
