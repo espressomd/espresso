@@ -30,8 +30,8 @@
     For more information on polymer, see \ref polymer.cpp "polymer.c"
 */
 
-#include "particle_data.hpp"
 #include "PartCfg.hpp"
+#include "particle_data.hpp"
 
 /*************************************************************
  * Functions                                                 *
@@ -99,9 +99,9 @@ int constraint_collision(double *p1, double *p2);
    case. <br>
     If val_cM \< 1e-10, the charge is assumed to be zero, and type_cM = type_nM.
    */
-int polymerC(PartCfg &, int N_P, int MPC, double bond_length, int part_id, double *posed,
-             int mode, double shield, int max_try, double val_cM, int cM_dist,
-             int type_nM, int type_cM, int type_FENE, double angle,
+int polymerC(PartCfg &, int N_P, int MPC, double bond_length, int part_id,
+             double *posed, int mode, double shield, int max_try, double val_cM,
+             int cM_dist, int type_nM, int type_cM, int type_FENE, double angle,
              double angle2, double *posed2, int constr);
 
 /** C implementation of 'counterions \<N_CI\> [options]'.
@@ -119,15 +119,16 @@ int polymerC(PartCfg &, int N_P, int MPC, double bond_length, int part_id, doubl
    (default to '2')
     @return Returns how often the attempt to place a particle failed in the
    worst case. */
-int counterionsC(PartCfg &, int N_CI, int part_id, int mode, double shield, int max_try,
-                 double val_CI, int type_CI);
+int counterionsC(PartCfg &, int N_CI, int part_id, int mode, double shield,
+                 int max_try, double val_CI, int type_CI);
 
 /** C implementation of 'diamond \<a\> \<bond_length\> \<MPC\> [options]' */
-int diamondC(PartCfg &, double a, double bond_length, int MPC, int N_CI, double val_nodes,
-             double val_cM, double val_CI, int cM_dist, int nonet);
+int diamondC(PartCfg &, double a, double bond_length, int MPC, int N_CI,
+             double val_nodes, double val_cM, double val_CI, int cM_dist,
+             int nonet);
 
 /** C implementation of 'icosaeder \<a\> \<bond_length\> \<MPC\> [options]' */
-int icosaederC(PartCfg &, double ico_a, int MPC, int N_CI, double val_cM, double val_CI,
-               int cM_dist);
+int icosaederC(PartCfg &, double ico_a, int MPC, int N_CI, double val_cM,
+               double val_CI, int cM_dist);
 
 #endif

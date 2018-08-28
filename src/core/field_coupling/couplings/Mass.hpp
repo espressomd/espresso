@@ -12,7 +12,7 @@ public:
     return p.p.mass * x;
   }
 };
-}
-}
+} // namespace Coupling
+} // namespace FieldCoupling
 
 #endif

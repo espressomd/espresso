@@ -25,14 +25,14 @@ int n_rigidbonds = 0;
 
 #ifdef BOND_CONSTRAINT
 
-#include "global.hpp"
-#include "integrate.hpp"
-#include "particle_data.hpp"
-#include "interaction_data.hpp"
-#include "errorhandling.hpp"
-#include "communication.hpp"
-#include "grid.hpp"
 #include "cells.hpp"
+#include "communication.hpp"
+#include "errorhandling.hpp"
+#include "global.hpp"
+#include "grid.hpp"
+#include "integrate.hpp"
+#include "interaction_data.hpp"
+#include "particle_data.hpp"
 
 #include <cmath>
 #include <cstdio>
@@ -307,8 +307,9 @@ void correct_vel_shake() {
   }
 
   if (cnt >= SHAKE_MAX_ITERATIONS) {
-    fprintf(stderr, "%d: VEL CORRECTIONS IN RATTLE failed to converge after %d "
-                    "iterations !!\n",
+    fprintf(stderr,
+            "%d: VEL CORRECTIONS IN RATTLE failed to converge after %d "
+            "iterations !!\n",
             this_node, cnt);
     errexit();
   }

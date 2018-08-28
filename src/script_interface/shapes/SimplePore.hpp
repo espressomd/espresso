@@ -45,7 +45,7 @@ public:
     return m_simple_pore;
   }
 };
-}
-}
+} // namespace Shapes
+} // namespace ScriptInterface
 
 #endif

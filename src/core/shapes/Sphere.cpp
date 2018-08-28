@@ -25,7 +25,6 @@
 
 using namespace std;
 
-
 namespace Shapes {
 int Sphere::calculate_dist(const double *ppos, double *dist,
                            double *vec) const {
@@ -54,4 +53,4 @@ int Sphere::calculate_dist(const double *ppos, double *dist,
   }
   return 0;
 }
-}
+} // namespace Shapes

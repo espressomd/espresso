@@ -1,8 +1,8 @@
 #ifndef CORE_UNIT_TESTS_MOCK_CELL_HPP
 #define CORE_UNIT_TESTS_MOCK_CELL_HPP
 
-#include <vector>
 #include <functional>
+#include <vector>
 
 namespace Testing {
 template <typename Particle> class Cell {
@@ -12,6 +12,6 @@ public:
   std::size_t n;
   std::vector<Particle> part;
 };
-}
+} // namespace Testing
 
 #endif

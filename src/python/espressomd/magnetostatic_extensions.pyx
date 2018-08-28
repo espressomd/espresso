@@ -28,6 +28,7 @@ IF DIPOLES == 1:
         pass
 
     class DLC(MagnetostaticExtension):
+
         """Provide the Dipolar Layer Correction (DLC) method.
 
         DLC works like ELC for electrostatics

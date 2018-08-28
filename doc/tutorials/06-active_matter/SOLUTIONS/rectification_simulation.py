@@ -21,7 +21,7 @@
 #                                                                              #
 #                     Active Matter: Rectification Tutorial                    #
 #                                                                              #
-################################################################################
+##########################################################################
 
 from __future__ import print_function
 
@@ -38,6 +38,11 @@ from espressomd.shapes import Cylinder, Wall, HollowCone
 assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
 
 # Quaternion procedure
+
+assert_features(["ENGINE", "CONSTRAINTS", "LENNARD_JONES", "ROTATION", "MASS"])
+
+# Quaternion procedure
+
 
 def a2quat(phi, theta):
 
@@ -138,7 +143,7 @@ hollow_cone = HollowCone(
     width=2.0,
     opening_angle=angle,
     direction=1)
-system.constraints.add(shape=hollow_cone,particle_type=4)
+system.constraints.add(shape=hollow_cone, particle_type=4)
 
 ################################################################################
 #

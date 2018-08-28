@@ -791,8 +791,6 @@ inline void check_particle_force(Particle *part) {
 #endif
 }
 
-inline void add_single_particle_force(Particle *p) {
-  add_bonded_force(p);
-}
+inline void add_single_particle_force(Particle *p) { add_bonded_force(p); }
 
 #endif

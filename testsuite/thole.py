@@ -4,17 +4,18 @@ import espressomd
 import numpy as np
 import espressomd.interactions
 
+
 @ut.skipIf(not espressomd.has_features(["THOLE", "EXTERNAL_FORCES"]),
            "Features not available, skipping test!")
-
 class TestThole(ut.TestCase):
+
     """
     This testcase takes a large box to minimize periodic effects and tests the
     thole damping nonbonded interaction forces agains the analytical result
     """
 
     box_l = 500.0
-    system = espressomd.System(box_l = [box_l]*3)
+    system = espressomd.System(box_l=[box_l] * 3)
 
     def setUp(self):
         from espressomd.electrostatics import P3M
@@ -42,10 +43,11 @@ class TestThole(ut.TestCase):
             self.system.part[1].pos = [x, 0, 0]
             self.system.integrator.run(0)
             res.append(self.system.part[1].f[0] - (-1 / x**2 * 0.5 *
-                                         (2.0 - (np.exp(-x) * (x * (x + 2.0) + 2.0)))))
+                                                   (2.0 - (np.exp(-x) * (x * (x + 2.0) + 2.0)))))
 
         for f in res:
-            self.assertLess(abs(f),1e-3, msg = "Deviation of thole interaction (damped coulomb) from analytical result too large")
+            self.assertLess(
+                abs(f), 1e-3, msg="Deviation of thole interaction (damped coulomb) from analytical result too large")
 
 
 if __name__ == "__main__":

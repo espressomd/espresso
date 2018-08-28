@@ -20,7 +20,7 @@
 /** \file None_test.cpp Unit tests for the
  * ScriptInterface::None class.
  *
-*/
+ */
 
 #define BOOST_TEST_MODULE None test
 #define BOOST_TEST_DYN_LINK

@@ -90,7 +90,7 @@ namespace Communication {
  *
  */
 MpiCallbacks &mpiCallbacks();
-}
+} // namespace Communication
 
 /**************************************************
  * for every procedure requesting a MPI negotiation
@@ -125,8 +125,8 @@ void mpi_finalize();
  * and node grid.
  */
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity = {{1, 1,
-                                                                       1}});
+                              std::array<int, 3> const &periodicity = {
+                                  {1, 1, 1}});
 
 /** Issue REQ_EVENT: tells all clients of some system change.
     The events are:
@@ -180,7 +180,7 @@ void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
     \param node the node it is attached to.
     \param F its new force.
 */
-void mpi_send_f(int node, int part, const Vector3d & F);
+void mpi_send_f(int node, int part, const Vector3d &F);
 
 /** issue req_set_solv: send particle solvation free energy
     also calls \ref on_particle_change.
@@ -224,14 +224,14 @@ void mpi_send_mu_E(int node, int part, double mu_E[3]);
 void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
 #endif
 #ifdef ROTATION
-/** Mpi call for rotating a single particle 
+/** Mpi call for rotating a single particle
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
     \param axis rotation axis
     \param angle rotation angle
 */
-void mpi_rotate_particle(int node, int part, double axis[3],double angle);
+void mpi_rotate_particle(int node, int part, double axis[3], double angle);
 #endif
 
 #ifdef AFFINITY
@@ -318,7 +318,7 @@ void mpi_send_virtual(int node, int part, int is_virtual);
 #ifdef VIRTUAL_SITES_RELATIVE
 void mpi_send_vs_quat(int node, int part, double *vs_quat);
 void mpi_send_vs_relative(int node, int part, int vs_relative_to,
-                          double vs_distance, double* rel_ori);
+                          double vs_distance, double *rel_ori);
 #endif
 
 /** Issue REQ_SET_TYPE: send particle type.
@@ -542,7 +542,9 @@ void mpi_bcast_cuda_global_part_vars();
  * @param j     local fluid velocity
  * @param pi    local fluid pressure
  */
-void mpi_send_fluid(int node, int index, double rho, const std::array<double, 3> &j, const std::array<double, 6> &pi);
+void mpi_send_fluid(int node, int index, double rho,
+                    const std::array<double, 3> &j,
+                    const std::array<double, 6> &pi);
 
 /** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
  * @param node  processor to send to

@@ -7,10 +7,12 @@ import numpy as np
 import espressomd
 from espressomd import constraints
 
+
 class FieldTest(ut.TestCase):
+
     """Tests for not space dependend external fields.
     """
-    system = espressomd.System(box_l=[10,10,10], time_step=0.01)
+    system = espressomd.System(box_l=[10, 10, 10], time_step=0.01)
     system.cell_system.skin = 0.
 
     def potential(self, x):
@@ -26,16 +28,16 @@ class FieldTest(ut.TestCase):
         self.system.part.clear()
 
     def test_gravity(self):
-        g_const = [1,2,3]
+        g_const = [1, 2, 3]
         gravity = constraints.Gravity(g=g_const)
 
         self.assertSequenceEqual(gravity.g, g_const)
         self.system.constraints.add(gravity)
 
         if espressomd.has_features("MASS"):
-            p = self.system.part.add(pos=[0,0,0], mass=3.1)
+            p = self.system.part.add(pos=[0, 0, 0], mass=3.1)
         else:
-            p = self.system.part.add(pos=[0,0,0])
+            p = self.system.part.add(pos=[0, 0, 0])
 
         self.system.integrator.run(0)
 
@@ -44,7 +46,7 @@ class FieldTest(ut.TestCase):
 
     @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Skipping")
     def test_linear_electric_potential(self):
-        E = np.array([1.,2.,3.])
+        E = np.array([1., 2., 3.])
         phi0 = 4.
 
         electric_field = constraints.LinearElectricPotential(E=E, phi0=phi0)
@@ -53,7 +55,7 @@ class FieldTest(ut.TestCase):
 
         self.system.constraints.add(electric_field)
 
-        p = self.system.part.add(pos=[0.5,0.5,0.5])
+        p = self.system.part.add(pos=[0.5, 0.5, 0.5])
 
         if espressomd.has_features("ELECTROSTATICS"):
             q_part = -3.1
@@ -70,57 +72,61 @@ class FieldTest(ut.TestCase):
                                self.system.analysis.energy()['external_fields'])
 
     def test_homogeneous_flow_field(self):
-        u = np.array([1.,2.,3.])
-        gamma=2.3
+        u = np.array([1., 2., 3.])
+        gamma = 2.3
 
         flow_field = constraints.HomogeneousFlowField(u=u, gamma=gamma)
         np.testing.assert_almost_equal(u, flow_field.u)
 
         self.system.constraints.add(flow_field)
 
-        p = self.system.part.add(pos=[0.5,0.5,0.5], v=[3.,4.,5.])
+        p = self.system.part.add(pos=[0.5, 0.5, 0.5], v=[3., 4., 5.])
 
         self.system.integrator.run(0)
-        np.testing.assert_almost_equal(gamma * (u - p.v) , np.copy(p.f))
+        np.testing.assert_almost_equal(gamma * (u - p.v), np.copy(p.f))
 
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
                                self.system.analysis.energy()['kinetic'])
 
     def test_potential_field(self):
         h = np.array([.2, .2, .2])
-        box = np.array([10.,10.,10.])
+        box = np.array([10., 10., 10.])
         scaling = 2.6
 
-        field_data = constraints.PotentialField.field_from_fn(box, h, self.potential)
+        field_data = constraints.PotentialField.field_from_fn(
+            box, h, self.potential)
 
         F = constraints.PotentialField(field=field_data,
                                        grid_spacing=h,
                                        default_scale=scaling)
 
-        p = self.system.part.add(pos=[0,0,0])
+        p = self.system.part.add(pos=[0, 0, 0])
         self.system.constraints.add(F)
 
-        for i in product(*map(range, 3*[10])):
-            x=(h*i)
+        for i in product(*map(range, 3 * [10])):
+            x = (h * i)
             f_val = F.call_method("_eval_field", x=x)
             np.testing.assert_allclose(f_val, self.potential(x), rtol=1e-3)
             p.pos = x
 
             self.system.integrator.run(0)
-            self.assertAlmostEqual(self.system.analysis.energy()['total'], scaling*f_val, places=5)
-            np.testing.assert_allclose(np.copy(p.f), scaling*self.force(x), rtol=1e-5)
+            self.assertAlmostEqual(
+                self.system.analysis.energy()['total'], scaling * f_val, places=5)
+            np.testing.assert_allclose(
+                np.copy(p.f), scaling * self.force(x), rtol=1e-5)
 
     @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Skipping")
     def test_electric_potential_field(self):
         h = np.array([.2, .2, .2])
-        box = np.array([10.,10.,10.])
+        box = np.array([10., 10., 10.])
 
-        field_data = constraints.ElectricPotential.field_from_fn(box, h, self.potential)
+        field_data = constraints.ElectricPotential.field_from_fn(
+            box, h, self.potential)
 
         F = constraints.ElectricPotential(field=field_data,
-                                       grid_spacing=h)
+                                          grid_spacing=h)
 
-        p = self.system.part.add(pos=[0,0,0])
+        p = self.system.part.add(pos=[0, 0, 0])
         if espressomd.has_features("ELECTROSTATICS"):
             q_part = -3.1
             p.q = q_part
@@ -129,20 +135,21 @@ class FieldTest(ut.TestCase):
 
         self.system.constraints.add(F)
 
-        for i in product(*map(range, 3*[10])):
-            x=(h*i)
+        for i in product(*map(range, 3 * [10])):
+            x = (h * i)
             f_val = F.call_method("_eval_field", x=x)
             np.testing.assert_allclose(f_val, self.potential(x), rtol=1e-3)
             p.pos = x
 
             self.system.integrator.run(0)
-            self.assertAlmostEqual(self.system.analysis.energy()['total'], q_part*f_val, places=5)
-            np.testing.assert_allclose(np.copy(p.f), q_part*self.force(x),rtol=1e-5)
-
+            self.assertAlmostEqual(
+                self.system.analysis.energy()['total'], q_part * f_val, places=5)
+            np.testing.assert_allclose(
+                np.copy(p.f), q_part * self.force(x), rtol=1e-5)
 
     def test_force_field(self):
         h = np.array([.2, .2, .2])
-        box = np.array([10.,10.,10.])
+        box = np.array([10., 10., 10.])
         scaling = 2.6
 
         field_data = constraints.ForceField.field_from_fn(box, h, self.force)
@@ -151,11 +158,11 @@ class FieldTest(ut.TestCase):
                                    grid_spacing=h,
                                    default_scale=scaling)
 
-        p = self.system.part.add(pos=[0,0,0])
+        p = self.system.part.add(pos=[0, 0, 0])
         self.system.constraints.add(F)
 
-        for i in product(*map(range, 3*[10])):
-            x=(h*i)
+        for i in product(*map(range, 3 * [10])):
+            x = (h * i)
             f_val = np.array(F.call_method("_eval_field", x=x))
             np.testing.assert_allclose(f_val, self.force(x))
 
@@ -165,29 +172,29 @@ class FieldTest(ut.TestCase):
 
     def test_flow_field(self):
         h = np.array([.2, .2, .2])
-        box = np.array([10.,10.,10.])
+        box = np.array([10., 10., 10.])
         gamma = 2.6
 
         field_data = constraints.FlowField.field_from_fn(box, h, self.force)
 
         F = constraints.FlowField(field=field_data,
-                                   grid_spacing=h,
-                                   gamma=gamma)
+                                  grid_spacing=h,
+                                  gamma=gamma)
 
-        p = self.system.part.add(pos=[0,0,0], v=[1,2,3])
+        p = self.system.part.add(pos=[0, 0, 0], v=[1, 2, 3])
         self.system.constraints.add(F)
 
-        for i in product(*map(range, 3*[10])):
-            x=(h*i)
+        for i in product(*map(range, 3 * [10])):
+            x = (h * i)
             f_val = np.array(F.call_method("_eval_field", x=x))
             np.testing.assert_allclose(f_val, self.force(x))
 
             p.pos = x
             self.system.integrator.run(0)
-            np.testing.assert_allclose(-gamma * (p.v - f_val), np.copy(p.f), atol=1e-12)
+            np.testing.assert_allclose(
+                -gamma * (p.v - f_val), np.copy(p.f), atol=1e-12)
 
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
     ut.main()
-

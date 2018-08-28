@@ -72,7 +72,7 @@ private:
   /* The actual constraint */
   std::shared_ptr<CoreField> m_constraint;
 };
-}
-}
+} // namespace Constraints
+} // namespace ScriptInterface
 
 #endif

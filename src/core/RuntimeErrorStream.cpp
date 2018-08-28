@@ -22,4 +22,4 @@ RuntimeErrorStream::~RuntimeErrorStream() {
                m_line);
 }
 
-} /* ErrorHandling */
+} // namespace ErrorHandling

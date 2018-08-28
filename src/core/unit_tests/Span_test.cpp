@@ -24,8 +24,8 @@
 #include "utils/Span.hpp"
 using Utils::Span;
 
-#include <vector>
 #include <numeric>
+#include <vector>
 
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {
   static_assert(4 == Span<int>(nullptr, 4).size(), "");
@@ -33,12 +33,10 @@ BOOST_AUTO_TEST_CASE(const_expr_ctor) {
 
 BOOST_AUTO_TEST_CASE(array_ctor) {
   BOOST_CHECK((std::is_constructible<Span<const int>, int[3]>::value));
-  BOOST_CHECK(
-          (std::is_constructible<Span<const int>, const int[3]>::value));
-  BOOST_CHECK(not (std::is_constructible<Span<int>, const int[3]>::value));
+  BOOST_CHECK((std::is_constructible<Span<const int>, const int[3]>::value));
+  BOOST_CHECK(not(std::is_constructible<Span<int>, const int[3]>::value));
   BOOST_CHECK((std::is_convertible<int[3], Span<const int>>::value));
-  BOOST_CHECK(
-          (std::is_convertible<const int[3], Span<const int>>::value));
+  BOOST_CHECK((std::is_convertible<const int[3], Span<const int>>::value));
 
   int a[4] = {1, 2, 3, 4};
   Span<int> s(a);
@@ -50,23 +48,26 @@ BOOST_AUTO_TEST_CASE(array_ctor) {
 BOOST_AUTO_TEST_CASE(ctor) {
   /* Container conversion rules */
   {
-    BOOST_CHECK((std::is_constructible<Span<const int>, std::vector<int>>::value));
     BOOST_CHECK(
-            (std::is_constructible<Span<const int>, const std::vector<int>>::value));
-    BOOST_CHECK(not(std::is_constructible<Span<int>, const std::vector<int>>::value));
-    BOOST_CHECK((std::is_convertible<std::vector<int>, Span<const int>>::value));
+        (std::is_constructible<Span<const int>, std::vector<int>>::value));
+    BOOST_CHECK((
+        std::is_constructible<Span<const int>, const std::vector<int>>::value));
     BOOST_CHECK(
-            (std::is_convertible<const std::vector<int>, Span<const int>>::value));
+        not(std::is_constructible<Span<int>, const std::vector<int>>::value));
+    BOOST_CHECK(
+        (std::is_convertible<std::vector<int>, Span<const int>>::value));
+    BOOST_CHECK(
+        (std::is_convertible<const std::vector<int>, Span<const int>>::value));
   }
 
   /* from ptr + size */
   {
-  std::vector<int> v(23);
+    std::vector<int> v(23);
 
-  auto s = Span<int>(v.data(), v.size());
+    auto s = Span<int>(v.data(), v.size());
 
-  BOOST_CHECK(v.size() == s.size());
-  BOOST_CHECK(v.data() == s.data());
+    BOOST_CHECK(v.size() == s.size());
+    BOOST_CHECK(v.data() == s.data());
   }
 
   /* From container */
@@ -77,7 +78,6 @@ BOOST_AUTO_TEST_CASE(ctor) {
     BOOST_CHECK(v.size() == s.size());
     BOOST_CHECK(v.data() == s.data());
   }
-
 }
 
 BOOST_AUTO_TEST_CASE(iterators) {
@@ -106,4 +106,3 @@ BOOST_AUTO_TEST_CASE(element_access) {
 
   BOOST_CHECK_THROW(s.at(s.size()), std::out_of_range);
 }
-

@@ -24,8 +24,7 @@ namespace ScriptInterface {
 namespace MPIIO {
 
 void initialize();
-
 }
-}
+} // namespace ScriptInterface
 
 #endif

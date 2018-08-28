@@ -25,7 +25,9 @@ Testmodule for the actor base class.
 import unittest as ut
 from espressomd import actors
 
+
 class TestActor(actors.Actor):
+
     def __init__(self, *args, **kwargs):
         self._core_args = None
         self._activated = False
@@ -47,7 +49,7 @@ class TestActor(actors.Actor):
         return "a", "c"
 
     def default_params(self):
-        return {"a" : False, "b": False, "c": False}
+        return {"a": False, "b": False, "c": False}
 
     def _activate_method(self):
         self._activated = True
@@ -58,7 +60,9 @@ class TestActor(actors.Actor):
     def validate_params(self):
         self._validated = True
 
+
 class ActorTest(ut.TestCase):
+
     def test_ctor(self):
         a = TestActor(a=False, c=False)
         self.assertFalse(a.is_active())

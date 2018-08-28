@@ -21,7 +21,7 @@
 #                                                                              #
 #                  Active Matter: Enhanced Diffusion Tutorial                  #
 #                                                                              #
-################################################################################
+##########################################################################
 
 from __future__ import print_function
 
@@ -130,12 +130,12 @@ for run in range(5):
 
     system.auto_update_accumulators.remove(msd)
     msd.finalize()
-    np.savetxt("{}/msd_{}_{}.dat".format(outdir,vel,run),msd.result())
+    np.savetxt("{}/msd_{}_{}.dat".format(outdir, vel, run), msd.result())
 
     system.auto_update_accumulators.remove(vacf)
     vacf.finalize()
-    np.savetxt("{}/vacf_{}_{}.dat".format(outdir,vel,run),vacf.result())
+    np.savetxt("{}/vacf_{}_{}.dat".format(outdir, vel, run), vacf.result())
 
     system.auto_update_accumulators.remove(avacf)
     avacf.finalize()
-    np.savetxt("{}/avacf_{}_{}.dat".format(outdir,vel,run),avacf.result())
+    np.savetxt("{}/avacf_{}_{}.dat".format(outdir, vel, run), avacf.result())

@@ -10,9 +10,8 @@
 
 namespace Utils {
 template <typename ParticleRange>
-bool check_charge_neutrality(
-    ParticleRange &prange,
-    double relative_tolerance = 1e-12) {
+bool check_charge_neutrality(ParticleRange &prange,
+                             double relative_tolerance = 1e-12) {
   using namespace boost::accumulators;
   using KahanSum = accumulator_set<double, features<tag::sum_kahan>>;
 
@@ -32,5 +31,5 @@ bool check_charge_neutrality(
 
   return excess_ratio <= relative_tolerance;
 }
-}
+} // namespace Utils
 #endif

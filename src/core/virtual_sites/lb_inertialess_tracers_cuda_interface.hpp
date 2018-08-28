@@ -36,8 +36,6 @@ typedef struct {
 extern IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host;
 extern IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_host;
 
-
-
 #endif
 
 #endif

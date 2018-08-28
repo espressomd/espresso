@@ -62,7 +62,7 @@ void kernel(CellIterator first, CellIterator last,
     }
   }
 }
-}
+} // namespace detail
 
 /**
  * @brief Iterates over all particles in the cell range
@@ -88,6 +88,6 @@ void verlet_ia(CellIterator first, CellIterator last,
                    std::forward<DistanceFunction>(distance_function));
   }
 }
-}
+} // namespace Algorithm
 
 #endif

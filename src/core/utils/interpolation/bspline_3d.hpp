@@ -68,7 +68,7 @@ T bspline_3d_accumulate(const Vector3d &pos, const Kernel &kernel,
 
   return value;
 }
-}
-}
+} // namespace Interpolation
+} // namespace Utils
 
 #endif

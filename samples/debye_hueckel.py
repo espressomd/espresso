@@ -23,7 +23,7 @@ This sample simulates monovalent salt (equal number of positive and negative uni
 from __future__ import print_function
 import espressomd
 
-required_features = ["ELECTROSTATICS","LENNARD_JONES"]
+required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import electrostatics
@@ -69,7 +69,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 
@@ -120,7 +120,7 @@ for i in range(n_part // 2):
 # Activating the Debye-Hueckel interaction
 # The Coulomb prefactor is set to one. Assuming the solvent is water, this
 # means that lj_sig is 0.714 nm in SI units.
-coulomb_prefactor =1
+coulomb_prefactor = 1
 # inverse Debye length for 1:1 electrolyte in water at room temperature (nm)
 dh_kappa = np.sqrt(mol_dens) / 0.304
 # convert to MD units

@@ -17,42 +17,39 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.hpp"
-#include "communication.hpp"
-#include "grid.hpp"
 #include "DipolarBarnesHut.hpp"
 #include "../forces.hpp"
 #include "EspressoSystemInterface.hpp"
-#include "forces.hpp"
+#include "communication.hpp"
+#include "config.hpp"
 #include "energy.hpp"
+#include "forces.hpp"
+#include "grid.hpp"
 
 #ifdef DIPOLAR_BARNES_HUT
 
-void activate_dipolar_barnes_hut(float epssq, float itolsq)
-{
-    delete dipolarBarnesHut;
-    dipolarBarnesHut = nullptr;
-    // also necessary on 1 CPU or GPU, does more than just broadcasting
-    mpi_bcast_coulomb_params();
-    dipolarBarnesHut = new DipolarBarnesHut(espressoSystemInterface, epssq, itolsq);
-    forceActors.push_back(dipolarBarnesHut);
-    energyActors.push_back(dipolarBarnesHut);
+void activate_dipolar_barnes_hut(float epssq, float itolsq) {
+  delete dipolarBarnesHut;
+  dipolarBarnesHut = nullptr;
+  // also necessary on 1 CPU or GPU, does more than just broadcasting
+  mpi_bcast_coulomb_params();
+  dipolarBarnesHut =
+      new DipolarBarnesHut(espressoSystemInterface, epssq, itolsq);
+  forceActors.push_back(dipolarBarnesHut);
+  energyActors.push_back(dipolarBarnesHut);
 
-    coulomb.Dmethod = DIPOLAR_BH_GPU;
+  coulomb.Dmethod = DIPOLAR_BH_GPU;
 }
 
-void deactivate_dipolar_barnes_hut()
-{
-    if (dipolarBarnesHut)
-    {
-        forceActors.remove(dipolarBarnesHut);
-        energyActors.remove(dipolarBarnesHut);
-    }
-        delete dipolarBarnesHut;
-        dipolarBarnesHut = nullptr;
+void deactivate_dipolar_barnes_hut() {
+  if (dipolarBarnesHut) {
+    forceActors.remove(dipolarBarnesHut);
+    energyActors.remove(dipolarBarnesHut);
+  }
+  delete dipolarBarnesHut;
+  dipolarBarnesHut = nullptr;
 }
 
 DipolarBarnesHut *dipolarBarnesHut = nullptr;
 
 #endif
-
