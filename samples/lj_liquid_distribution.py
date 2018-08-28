@@ -2,7 +2,7 @@
 This sample sets up a Lennard-Jones fluid. The particles in the system are of two types: Type 0 and Type 1. Type 0 particles interact with each other via a repulsive WCA interaction. Type 1 particles neither interact with themselves nor with Type 0 particles. The distribution of minimum distances between particles of Type 0 and Type 1 is recorded.
 """
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #

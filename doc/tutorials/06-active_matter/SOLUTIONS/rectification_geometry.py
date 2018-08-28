@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010,2011,2012,2013,2014, 2015,2016 The ESPResSo project            #
+# Copyright (C) 2010-2018 The ESPResSo project            #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -86,10 +86,10 @@ system.actors.add(lbf)
 cylinder = LBBoundary(
     shape=Cylinder(
         center=[length / 2.0, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
-        axis=[1, 0, 0],
-        radius=diameter / 2.0,
-        length=length,
-        direction=-1))
+                   axis=[1, 0, 0],
+                                     radius=diameter / 2.0,
+                                     length=length,
+                                     direction=-1))
 system.lbboundaries.add(cylinder)
 
 # Setup walls
@@ -112,11 +112,11 @@ hollow_cone = LBBoundary(
         center=[length / 2.0 + shift,
                         (diameter + 4) / 2.0, (diameter + 4) / 2.0],
         axis=[-1, 0, 0],
-        outer_radius=orad,
-        inner_radius=irad,
-        width=2.0,
-        opening_angle=angle,
-        direction=1))
+                                          outer_radius=orad,
+                                          inner_radius=irad,
+                                          width=2.0,
+                                          opening_angle=angle,
+                                          direction=1))
 system.lbboundaries.add(hollow_cone)
 
 ##########################################################################

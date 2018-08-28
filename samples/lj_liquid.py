@@ -2,7 +2,7 @@
 This sample simulates a Lennard-Jones fluid maintained at a fixed temperature by a Langevin thermostat.
 """
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
