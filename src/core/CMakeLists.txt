@@ -120,10 +120,6 @@ endif(SCAFACOS)
 
 if(GSL)
   target_include_directories(EspressoCore PUBLIC ${GSL_INCLUDE_DIRS})
-endif(GSL)
-
-
-if(GSL)
   target_link_libraries(EspressoCore PRIVATE gsl gslcblas)
 endif(GSL)
 
@@ -142,7 +138,7 @@ if(CUDA)
   set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
   add_dependencies(EspressoCuda EspressoConfig)
 
-  CUDA_ADD_CUFFT_TO_TARGET(EspressoCuda)
+  target_link_libraries(EspressoCuda PRIVATE ${CUDA_CUFFT_LIBRARIES})
   target_link_libraries(EspressoCore PRIVATE EspressoCuda)
 endif(CUDA)
 
