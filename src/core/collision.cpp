@@ -535,7 +535,7 @@ void three_particle_binding_domain_decomposition(
   for (auto &c : gathered_queue) {
     // If we have both particles, at least as ghosts, Get the corresponding cell
     // indices
-    if ((local_particles[c.pp1] != NULL) && (local_particles[c.pp2] != NULL)) {
+    if ((local_particles[c.pp1]) && (local_particles[c.pp2])) {
       Particle &p1 = *local_particles[c.pp1];
       Particle &p2 = *local_particles[c.pp2];
       auto cell1 = responsible_collision_cell(p1);
@@ -614,9 +614,9 @@ void handle_collisions() {
       // * or we have only one and it is a ghost
       // we only increase the counter for the ext id to use based on the
       // number of particles created by other nodes
-      if ((p1 == NULL and p2 == NULL) ||
-          ((p1 != NULL && p1->l.ghost) && (p2 != NULL && p2->l.ghost)) ||
-          (p1 == NULL && p2->l.ghost) || (p2 == NULL && p1->l.ghost)) {
+      if ((!p1 and !p2) ||
+          ((p1 && p1->l.ghost) && (p2 && p2->l.ghost)) ||
+          (!p1 && p2->l.ghost) || (!p2 && p1->l.ghost)) {
         // Increase local counters
         if (collision_params.mode & COLLISION_MODE_VS) {
           added_particle(current_vs_pid);
