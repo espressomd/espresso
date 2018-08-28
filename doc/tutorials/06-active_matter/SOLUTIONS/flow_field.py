@@ -42,7 +42,7 @@ if len(sys.argv) != 3:
     exit()
 
 mode = sys.argv[1]
-pos  = float(sys.argv[2])
+pos = float(sys.argv[2])
 
 ##########################################################################
 
@@ -54,10 +54,10 @@ except:
 
 # System parameters
 
-length      = 25.0
-prod_steps  = 1000
+length = 25.0
+prod_steps = 1000
 prod_length = 50
-dt          = 0.01
+dt = 0.01
 
 system = espressomd.System(box_l=[length, length, length])
 system.cell_system.skin = 0.3
@@ -76,8 +76,8 @@ z0 = 0.5 * length + pos
 
 sph_size = 0.5
 sph_mass = 4.8
-Ixyz     = 4.8
-force    = 0.1 
+Ixyz = 4.8
+force = 0.1
 
 # Setup the particle particle
 
@@ -94,7 +94,7 @@ vskin = 0.1
 frict = 20.0
 visco = 1.0
 densi = 1.0
-temp  = 0.0
+temp = 0.0
 
 lbf = lb.LBFluidGPU(agrid=agrid, dens=densi,
                     visc=visco, tau=dt, fric=frict, couple='3pt')

@@ -109,7 +109,8 @@ shift = 0.25 * orad * cos(angle)
 
 hollow_cone = LBBoundary(
     shape=HollowCone(
-        center=[length / 2.0 + shift, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
+        center=[length / 2.0 + shift,
+                        (diameter + 4) / 2.0, (diameter + 4) / 2.0],
         axis=[-1, 0, 0],
         outer_radius=orad,
         inner_radius=irad,

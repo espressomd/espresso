@@ -93,32 +93,32 @@ for run in range(5):
     tmax = tstep * sampsteps
 
     pos_id = ParticlePositions(ids=[0])
-    msd    = Correlator(obs1=pos_id,
-                        corr_operation="square_distance_componentwise",
-                        delta_N=1,
-                        tau_max=tmax,
-                        tau_lin=16)
+    msd = Correlator(obs1=pos_id,
+                     corr_operation="square_distance_componentwise",
+                     delta_N=1,
+                     tau_max=tmax,
+                     tau_lin=16)
     system.auto_update_accumulators.add(msd)
 
     # Initialize the velocity auto-correlation function (VACF) correlator
 
     vel_id = ParticleVelocities(ids=[0])
-    vacf   = Correlator(obs1=vel_id,
-                        corr_operation="scalar_product",
-                        delta_N=1,
-                        tau_max=tmax,
-                        tau_lin=16)
+    vacf = Correlator(obs1=vel_id,
+                      corr_operation="scalar_product",
+                      delta_N=1,
+                      tau_max=tmax,
+                      tau_lin=16)
     system.auto_update_accumulators.add(vacf)
 
     # Initialize the angular velocity auto-correlation function (AVACF)
     # correlator
 
     ang_id = ParticleAngularVelocities(ids=[0])
-    avacf  = Correlator(obs1=ang_id,
-                        corr_operation="scalar_product",
-                        delta_N=1,
-                        tau_max=tmax,
-                        tau_lin=16)
+    avacf = Correlator(obs1=ang_id,
+                       corr_operation="scalar_product",
+                       delta_N=1,
+                       tau_max=tmax,
+                       tau_lin=16)
     system.auto_update_accumulators.add(avacf)
 
     # Integrate 5,000,000 steps. This can be done in one go as well.
