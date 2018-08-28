@@ -47,7 +47,7 @@ echo "    \"$current_year\""
 tmpfile=`mktemp`
 for file in $noyear_files; do
     echo "    $file"
-    sed -ie 's/Copyright (C) 2010.*The ESPR/Copyright (C) 2010-2018 The ESPR/' $file
+    sed -ie 's/Copyright (C) \(20[0-9][0-9]\).*The ESPR/Copyright (C) \1-2018 The ESPR/' $file
 done
 
 noproject_files=`egrep -L "Copyright.*The ESPResSo project" $files`
