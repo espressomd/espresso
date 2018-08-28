@@ -285,7 +285,7 @@ class ek_eof_one_species_x(ut.TestCase):
                             calculated_pressure_zz))
 
         if (output_profiles):
-            fp.close
+            fp.close()
 
         total_density_difference = agrid * total_density_difference / width
         total_velocity_difference = agrid * total_velocity_difference / width
