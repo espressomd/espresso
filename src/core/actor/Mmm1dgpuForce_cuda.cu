@@ -31,9 +31,9 @@ float multigpu_factors[] = {1.0};
 #define cudaSetDevice(d)
 
 #include "EspressoSystemInterface.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "mmm-common_cuda.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "mmm-common_cuda.hpp"
+#include "mmm1d.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -340,6 +340,8 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
     mmm1dgpu_real rxy = sqrt(rxy2);
     mmm1dgpu_real sum_r = 0, sum_z = 0;
 
+    // if (boxz <= 0.0) return; // in case we are not initialized yet
+
     while (fabs(z) > boxz / 2) // make sure we take the shortest distance
       z -= (z > 0 ? 1 : -1) * boxz;
 
@@ -436,49 +438,49 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
     mmm1dgpu_real rxy = sqrt(rxy2);
     mmm1dgpu_real sum_e = 0;
 
-(??)//		if (boxz <= 0.0) return; // otherwise we'd get into an infinite loop if we're not initialized correctly
+    // if (boxz <= 0.0) return; // in case we are not initialized yet
 
     while (fabs(z) > boxz / 2) // make sure we take the shortest distance
       z -= (z > 0 ? 1 : -1) * boxz;
 
-if (p1 == p2) // particle exerts no force on itself
-{
-} else if (rxy2 <= far_switch_radius_2) // near formula
-{
-  mmm1dgpu_real uzz = uz * z;
-  mmm1dgpu_real uzr2 = sqpow(uz * rxy);
-  mmm1dgpu_real uzrpow = uzr2;
-  sum_e = dev_mod_psi_even(0, uzz);
-  for (int n = 1; n < device_n_modPsi; n++) {
-    mmm1dgpu_real sum_e_old = sum_e;
-    mmm1dgpu_real mpe = dev_mod_psi_even(n, uzz);
-    sum_e += mpe * uzrpow;
-    uzrpow *= uzr2;
+    if (p1 == p2) // particle exerts no force on itself
+    {
+    } else if (rxy2 <= far_switch_radius_2) // near formula
+    {
+      mmm1dgpu_real uzz = uz * z;
+      mmm1dgpu_real uzr2 = sqpow(uz * rxy);
+      mmm1dgpu_real uzrpow = uzr2;
+      sum_e = dev_mod_psi_even(0, uzz);
+      for (int n = 1; n < device_n_modPsi; n++) {
+        mmm1dgpu_real sum_e_old = sum_e;
+        mmm1dgpu_real mpe = dev_mod_psi_even(n, uzz);
+        sum_e += mpe * uzrpow;
+        uzrpow *= uzr2;
 
-    if (fabs(sum_e_old - sum_e) < maxPWerror)
-      break;
-  }
+        if (fabs(sum_e_old - sum_e) < maxPWerror)
+          break;
+      }
 
-  sum_e *= -1 * uz;
-  sum_e -= 2 * uz * C_GAMMAf;
-  sum_e += rsqrt(rxy2 + sqpow(z));
-  sum_e += rsqrt(rxy2 + sqpow(z + boxz));
-  sum_e += rsqrt(rxy2 + sqpow(z - boxz));
-} else // far formula
-{
-  sum_e = -(log(rxy * uz / 2) + C_GAMMAf) / 2;
-  for (int p = 1; p < bessel_cutoff; p++) {
-    mmm1dgpu_real arg = C_2PIf * uz * p;
-    sum_e += dev_K0(arg * rxy) * cos(arg * z);
-  }
-  sum_e *= uz * 4;
-}
+      sum_e *= -1 * uz;
+      sum_e -= 2 * uz * C_GAMMAf;
+      sum_e += rsqrt(rxy2 + sqpow(z));
+      sum_e += rsqrt(rxy2 + sqpow(z + boxz));
+      sum_e += rsqrt(rxy2 + sqpow(z - boxz));
+    } else // far formula
+    {
+      sum_e = -(log(rxy * uz / 2) + C_GAMMAf) / 2;
+      for (int p = 1; p < bessel_cutoff; p++) {
+        mmm1dgpu_real arg = C_2PIf * uz * p;
+        sum_e += dev_K0(arg * rxy) * cos(arg * z);
+      }
+      sum_e *= uz * 4;
+    }
 
-if (pairs) {
-  energy[p1 + p2 * N - tStart] = coulomb_prefactor * q[p1] * q[p2] * sum_e;
-} else {
-  partialsums[threadIdx.x] += coulomb_prefactor * q[p1] * q[p2] * sum_e;
-}
+    if (pairs) {
+      energy[p1 + p2 * N - tStart] = coulomb_prefactor * q[p1] * q[p2] * sum_e;
+    } else {
+      partialsums[threadIdx.x] += coulomb_prefactor * q[p1] * q[p2] * sum_e;
+    }
   }
   if (!pairs) {
     sumReduction(partialsums, &energy[blockIdx.x]);
