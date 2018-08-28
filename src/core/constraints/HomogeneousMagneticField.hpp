@@ -14,10 +14,10 @@ public:
 
   Vector3d const &H() const { return m_field; }
 
-  virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
+  void add_energy(const Particle &p, const Vector3d &folded_pos,
                           Observable_stat &energy) const override;
 
-  virtual ParticleForce force(const Particle &p,
+  ParticleForce force(const Particle &p,
                               const Vector3d &folded_pos) override;
 
   bool fits_in_box(Vector3d const &box) const override { return true; }
