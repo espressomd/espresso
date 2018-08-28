@@ -138,7 +138,7 @@ if(CUDA)
   set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
   add_dependencies(EspressoCuda EspressoConfig)
 
-  target_link_libraries(EspressoCuda PRIVATE ${CUDA_CUFFT_LIBRARIES})
+  target_link_libraries(EspressoCuda ${CUDA_CUFFT_LIBRARIES})
   target_link_libraries(EspressoCore PRIVATE EspressoCuda)
 endif(CUDA)
 
