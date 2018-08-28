@@ -1434,7 +1434,6 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index,
 __device__ void apply_forces(unsigned int index, float *mode,
                              LB_node_force_density_gpu node_f,
                              LB_rho_v_gpu *d_v) {
-
   float u[3] = {0.0f, 0.0f, 0.0f}, C[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
   /* Note: the values d_v were calculated in relax_modes() */
 
@@ -1844,7 +1843,6 @@ __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_rho_v_gpu *d_v,
  */
 __device__ void calc_mode(float *mode, LB_nodes_gpu n_a,
                           unsigned int node_index, int component_index) {
-
   /** mass mode */
   mode[0] =
       n_a.vd[(0 + component_index * LBQ) * para.number_of_nodes + node_index] +
@@ -2045,7 +2043,6 @@ __device__ void calc_viscous_force_three_point_couple(
     LB_nodes_gpu n_a, float *delta, CUDA_particle_data *particle_data,
     float *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part,
     float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs) {
-
   float interpolated_u[3];
   float interpolated_rho[LB_COMPONENTS];
   float viscforce_density[3 * LB_COMPONENTS];
@@ -2225,7 +2222,6 @@ calc_node_force_three_point_couple(float *delta, float *delta_j,
                                    unsigned int *node_index,
                                    LB_node_force_density_gpu node_f) {
   /* TODO: should the drag depend on the density?? */
-
   for (int i = -1; i <= 1; i++) {
     for (int j = -1; j <= 1; j++) {
       for (int k = -1; k <= 1; k++) {
@@ -2402,7 +2398,6 @@ __device__ void calc_viscous_force(
     CUDA_fluid_composition *fluid_composition, unsigned int part_index,
     LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index,
     LB_rho_v_gpu *d_v, int flag_cs) {
-
   float interpolated_u[3];
   float interpolated_rho[LB_COMPONENTS];
   float viscforce_density[3 * LB_COMPONENTS];
@@ -3211,7 +3206,6 @@ __global__ void init_extern_node_force_densities(
  */
 __device__ __inline__ float
 calc_massmode(LB_nodes_gpu n_a, int single_nodeindex, int component_index) {
-
   /** mass mode */
   float mode;
   mode = n_a.vd[(0 + component_index * LBQ) * para.number_of_nodes +
@@ -3647,7 +3641,6 @@ __global__ void calc_fluid_particle_ia_three_point_couple(
     LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,
     LB_node_force_density_gpu node_f, CUDA_particle_seed *part,
     LB_rho_v_gpu *d_v) {
-
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[27];
@@ -3655,7 +3648,6 @@ __global__ void calc_fluid_particle_ia_three_point_couple(
   float delta_j[3 * LB_COMPONENTS];
   LB_randomnr_gpu rng_part;
   if (part_index < para.number_of_particles) {
-
     rng_part.seed = part[part_index].seed;
     /**force acting on the particle. delta_j will be used later to compute the
      * force that acts back onto the fluid. */
@@ -4001,7 +3993,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
  * @param *lbpar_gpu  Pointer to parameters to setup the lb field
  */
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
-
   /**write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
@@ -4020,7 +4011,6 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
 }
 
 void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu) {
-
   // copy parameters, especially number of parts to gpu mem
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 }
@@ -4098,7 +4088,6 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
  * @param *lbpar_gpu    Pointer to host parameter struct
  */
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu) {
-
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   /** values for the kernel call */
@@ -4193,7 +4182,6 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
  * @param *host_values struct to save the gpu values
  */
 void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values) {
-
   /** values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
@@ -4212,7 +4200,6 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values) {
  *  @param host_bound_array here go the values of the boundary flag
  */
 void lb_get_boundary_flags_GPU(unsigned int *host_bound_array) {
-
   unsigned int *device_bound_array;
   cuda_safe_mem(cudaMalloc((void **)&device_bound_array,
                            lbpar_gpu.number_of_nodes * sizeof(unsigned int)));
@@ -4238,7 +4225,6 @@ void lb_get_boundary_flags_GPU(unsigned int *host_bound_array) {
  * node*/
 void lb_print_node_GPU(int single_nodeindex,
                        LB_rho_v_pi_gpu *host_print_values) {
-
   LB_rho_v_pi_gpu *device_print_values;
   cuda_safe_mem(
       cudaMalloc((void **)&device_print_values, sizeof(LB_rho_v_pi_gpu)));
@@ -4261,7 +4247,6 @@ void lb_print_node_GPU(int single_nodeindex,
  * @param *mass value of the mass calcutated on the GPU
  */
 void lb_calc_fluid_mass_GPU(double *mass) {
-
   float *tot_mass;
   float cpu_mass = 0.0f;
   cuda_safe_mem(cudaMalloc((void **)&tot_mass, sizeof(float)));
@@ -4290,7 +4275,6 @@ void lb_calc_fluid_mass_GPU(double *mass) {
  *  @param host_mom value of the momentum calcutated on the GPU
  */
 void lb_calc_fluid_momentum_GPU(double *host_mom) {
-
   float *tot_momentum;
   float host_momentum[3] = {0.0f, 0.0f, 0.0f};
   cuda_safe_mem(cudaMalloc((void **)&tot_momentum, 3 * sizeof(float)));
@@ -4350,7 +4334,6 @@ void lb_remove_fluid_momentum_GPU(void) {
  *  @param host_temp value of the temperatur calcutated on the GPU
  */
 void lb_calc_fluid_temperature_GPU(double *host_temp) {
-
   int host_number_of_non_boundary_nodes = 0;
   int *device_number_of_non_boundary_nodes;
   cuda_safe_mem(
@@ -4430,7 +4413,6 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_seed,
                             unsigned int *host_checkpoint_boundary,
                             lbForceFloat *host_checkpoint_force) {
-
   cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
                            cudaMemcpyDeviceToHost));
@@ -4456,7 +4438,6 @@ void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_seed,
                             unsigned int *host_checkpoint_boundary,
                             lbForceFloat *host_checkpoint_force) {
-
   current_nodes = &nodes_a;
   intflag = 1;
 
@@ -4480,7 +4461,6 @@ void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
  *  @param host_flag her goes the value of the boundary flag
  */
 void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag) {
-
   unsigned int *device_flag;
   cuda_safe_mem(cudaMalloc((void **)&device_flag, sizeof(unsigned int)));
   int threads_per_block_flag = 1;
@@ -4503,7 +4483,6 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag) {
  *  @param *host_rho the density to set
  */
 void lb_set_node_rho_GPU(int single_nodeindex, float *host_rho) {
-
   float *device_rho;
   cuda_safe_mem(
       cudaMalloc((void **)&device_rho, LB_COMPONENTS * sizeof(float)));
@@ -4524,7 +4503,6 @@ void lb_set_node_rho_GPU(int single_nodeindex, float *host_rho) {
  *  @param host_velocity the velocity to set
  */
 void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
-
   float *device_velocity;
   cuda_safe_mem(cudaMalloc((void **)&device_velocity, 3 * sizeof(float)));
   cuda_safe_mem(cudaMemcpy(device_velocity, host_velocity, 3 * sizeof(float),
@@ -4552,7 +4530,6 @@ void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu) {
 
 /**integration kernel for the lb gpu fluid update called from host */
 void lb_integrate_GPU() {
-
   /** values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
