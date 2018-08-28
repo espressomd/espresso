@@ -308,8 +308,7 @@ class DPDThermostat(ut.TestCase):
         def f(i):
             if i == 0:
                 return dx
-            else:
-                return 10. - dx
+            return 10. - dx
 
         # Put a particle in every corner
         for ind in product([0, 1], [0, 1], [0, 1]):

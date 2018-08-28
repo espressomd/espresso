@@ -1012,7 +1012,6 @@ class OifCell(object):
         if data is None:
             raise Exception(
                 "OifCell: append_point_data_to_vtk: No data provided. Quitting.")
-            return
         if data_name is None:
             raise Exception(
                 "OifCell: append_point_data_to_vtk: No data_name provided. Quitting.")
