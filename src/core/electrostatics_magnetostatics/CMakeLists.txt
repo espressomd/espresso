@@ -29,7 +29,7 @@ if(CUDA)
   set_target_properties(electrostatics_magnetostatics_core_cuda PROPERTIES SOVERSION ${SOVERSION})
   add_dependencies(electrostatics_magnetostatics_core_cuda EspressoConfig)
 
-  CUDA_ADD_CUFFT_TO_TARGET(electrostatics_magnetostatics_core_cuda)
+  target_link_libraries(electrostatics_magnetostatics_core_cuda ${CUDA_CUFFT_LIBRARIES})
   target_link_libraries(electrostatics_magnetostatics_core_cuda EspressoCuda)
 endif(CUDA)
 

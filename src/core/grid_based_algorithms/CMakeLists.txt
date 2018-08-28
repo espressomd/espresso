@@ -4,7 +4,8 @@ if (CUDA)
   cuda_add_library(electrokinetics_core_cuda SHARED
     electrokinetics_cuda.cu
   )
-  target_link_libraries(electrokinetics_core_cuda "cufft")
+  target_link_libraries(electrokinetics_core_cuda ${CUDA_CUFFT_LIBRARIES})
+
 
   add_library(electrokinetics_core SHARED
     electrokinetics.cpp
@@ -37,7 +38,7 @@ if (CUDA)
     fd-electrostatics_cuda.cu
   )
   add_dependencies(fd_electrostatics EspressoConfig)
-  target_link_libraries(fd_electrostatics "cufft")
+  target_link_libraries(fd_electrostatics ${CUDA_CUFFT_LIBRARIES})
 endif()
 
 add_library(lbboundaries_interface SHARED
