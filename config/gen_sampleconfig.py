@@ -48,7 +48,7 @@ for line in fileinput.input(deffilename):
     line = line.strip()
 
     # Handle empty and comment lines
-    if len(line) == 0:
+    if not line:
         print()
         continue
     elif line.startswith('#'):

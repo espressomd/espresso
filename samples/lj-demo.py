@@ -170,7 +170,7 @@ class Controls(HasTraits):
             default_input = i
             break
 
-    default_input = default_input if len(inputs) > 0 else None
+    default_input = default_input if inputs else None
 
     default_output = -1
     for i in outputs:
@@ -258,7 +258,7 @@ class Controls(HasTraits):
     def _input_device_fired(self):
         if self.midi_input is not None:
             self.midi_input.close()
-        if len(self.input_device) > 0:
+        if self.input_device:
             self.midi_input = midi.Input(self.input_device[0])
 
     def _output_device_fired(self):

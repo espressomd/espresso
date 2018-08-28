@@ -15,7 +15,7 @@ import signal
 
 checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
 
-if not len(checkpoint.checkpoint_signals):
+if not checkpoint.checkpoint_signals:
     checkpoint.register_signal(signal.SIGINT)
 
 # test for user data

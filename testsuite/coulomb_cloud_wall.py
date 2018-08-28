@@ -49,7 +49,7 @@ class CoulombCloudWall(ut.TestCase):
         self.S.cell_system.skin = 0.4
 
         #  Clear actors that might be left from prev tests
-        if len(self.S.actors):
+        if self.S.actors:
             del self.S.actors[0]
         self.S.part.clear()
         data = np.genfromtxt(tests_common.abspath(

@@ -46,7 +46,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         return True
 
     def setUp(self):
-        if len(self.system.part) == 0:
+        if not self.system.part:
             self.system.periodicity = [0, 0, 1]
             self.system.cell_system.set_n_square()
             self.system.box_l = 10, 10, 10

@@ -51,7 +51,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.S.box_l = (10, 10, 10)
         self.S.time_step = 0.01
         self.S.cell_system.skin = 0.
-        while len(self.S.actors) > 0:
+        while self.S.actors:
             del self.S.actors[0]
 
         #  Clear actors that might be left from prev tests
