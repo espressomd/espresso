@@ -9,8 +9,8 @@ namespace Observables {
 
 class ComPosition : public PidObservable {
 public:
-  virtual int n_values() const override { return 3; }
-  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+  int n_values() const override { return 3; }
+  std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     double total_mass = 0;
     for (int i = 0; i < ids().size(); i++) {

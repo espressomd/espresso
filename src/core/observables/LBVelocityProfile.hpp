@@ -11,10 +11,10 @@ namespace Observables {
 
 class LBVelocityProfile : public LBProfileObservable {
 public:
-  virtual int n_values() const override {
+  int n_values() const override {
     return 3 * n_x_bins * n_y_bins * n_z_bins;
   }
-  virtual std::vector<double> operator()(PartCfg &partCfg) const override;
+  std::vector<double> operator()(PartCfg &partCfg) const override;
 };
 
 } // Namespace Observables

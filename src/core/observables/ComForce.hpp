@@ -9,8 +9,8 @@ namespace Observables {
 
 class ComForce : public PidObservable {
 public:
-  virtual int n_values() const override { return 3; }
-  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+  int n_values() const override { return 3; }
+  std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
       res[0] += partCfg[ids()[i]].f.f[0] * partCfg[ids()[i]].p.mass;

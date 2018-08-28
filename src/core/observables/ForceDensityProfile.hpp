@@ -9,10 +9,10 @@ namespace Observables {
 
 class ForceDensityProfile : public PidProfileObservable {
 public:
-  virtual int n_values() const override {
+  int n_values() const override {
     return 3 * n_x_bins * n_y_bins * n_z_bins;
   }
-  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> operator()(PartCfg &partCfg) const override {
     std::array<size_t, 3> n_bins{{static_cast<size_t>(n_x_bins),
                                   static_cast<size_t>(n_y_bins),
                                   static_cast<size_t>(n_z_bins)}};
