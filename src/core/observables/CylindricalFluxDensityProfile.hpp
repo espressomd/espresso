@@ -41,9 +41,7 @@ public:
     histogram.normalize();
     return histogram.get_histogram();
   }
-  int n_values() const override {
-    return 3 * n_r_bins * n_phi_bins * n_z_bins;
-  }
+  int n_values() const override { return 3 * n_r_bins * n_phi_bins * n_z_bins; }
 };
 
 } // Namespace Observables

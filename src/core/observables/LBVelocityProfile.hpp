@@ -11,9 +11,7 @@ namespace Observables {
 
 class LBVelocityProfile : public LBProfileObservable {
 public:
-  int n_values() const override {
-    return 3 * n_x_bins * n_y_bins * n_z_bins;
-  }
+  int n_values() const override { return 3 * n_x_bins * n_y_bins * n_z_bins; }
   std::vector<double> operator()(PartCfg &partCfg) const override;
 };
 
