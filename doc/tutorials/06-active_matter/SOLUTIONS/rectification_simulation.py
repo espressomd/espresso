@@ -35,10 +35,6 @@ from espressomd import assert_features
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
 
-assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
-
-# Quaternion procedure
-
 assert_features(["ENGINE", "CONSTRAINTS", "LENNARD_JONES", "ROTATION", "MASS"])
 
 # Quaternion procedure
