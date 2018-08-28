@@ -33,7 +33,7 @@ import time
 import espressomd
 from espressomd import assert_features
 from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
-from espressomd.correlators import Correlator
+from espressomd.accumulators import Correlator
 
 required_features = ["ENGINE", "ROTATION"]
 assert_features(required_features)
@@ -95,20 +95,20 @@ for run in range(5):
     pos_id = ParticlePositions(ids=[0])
     msd = Correlator(obs1=pos_id,
                      corr_operation="square_distance_componentwise",
-                     dt=tstep,
+                     delta_N=1,
                      tau_max=tmax,
                      tau_lin=16)
-    system.auto_update_correlators.add(msd)
+    system.auto_update_accumulators.add(msd)
 
     # Initialize the velocity auto-correlation function (VACF) correlator
 
     vel_id = ParticleVelocities(ids=[0])
     vacf = Correlator(obs1=vel_id,
                       corr_operation="scalar_product",
-                      dt=tstep,
+                      delta_N=1,
                       tau_max=tmax,
                       tau_lin=16)
-    system.auto_update_correlators.add(vacf)
+    system.auto_update_accumulators.add(vacf)
 
     # Initialize the angular velocity auto-correlation function (AVACF)
     # correlator
@@ -116,26 +116,26 @@ for run in range(5):
     ang_id = ParticleAngularVelocities(ids=[0])
     avacf = Correlator(obs1=ang_id,
                        corr_operation="scalar_product",
-                       dt=tstep,
+                       delta_N=1,
                        tau_max=tmax,
                        tau_lin=16)
-    system.auto_update_correlators.add(avacf)
+    system.auto_update_accumulators.add(avacf)
 
     # Integrate 5,000,000 steps. This can be done in one go as well.
 
     for i in range(sampsteps):
         system.integrator.run(samplength)
 
-    # Finalize the correlators and write to disk
+    # Finalize the accumulators and write to disk
 
-    system.auto_update_correlators.remove(msd)
+    system.auto_update_accumulators.remove(msd)
     msd.finalize()
     np.savetxt("{}/msd_{}_{}.dat".format(outdir, vel, run), msd.result())
 
-    system.auto_update_correlators.remove(vacf)
+    system.auto_update_accumulators.remove(vacf)
     vacf.finalize()
     np.savetxt("{}/vacf_{}_{}.dat".format(outdir, vel, run), vacf.result())
 
-    system.auto_update_correlators.remove(avacf)
+    system.auto_update_accumulators.remove(avacf)
     avacf.finalize()
     np.savetxt("{}/avacf_{}_{}.dat".format(outdir, vel, run), avacf.result())

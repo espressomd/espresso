@@ -30,6 +30,7 @@ import numpy as np
 import os
 import sys
 
+import espressomd
 from espressomd import assert_features
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
@@ -70,7 +71,7 @@ vel = float(sys.argv[1])
 
 # create an output folder
 
-outdir = "./RESULTS_ENHANCED_DIFFUSION/"
+outdir = "./RESULTS_RECTIFICATION"
 try:
     os.makedirs(outdir)
 except:

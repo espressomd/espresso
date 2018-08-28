@@ -30,14 +30,17 @@ import numpy as np
 import os
 import sys
 
+import espressomd
 from espressomd import assert_features, lb
 from espressomd.lbboundaries import LBBoundary
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
 
+assert_features(["LB_GPU", "LB_BOUNDARIES_GPU"])
+
 # Setup constants
 
-outdir = "./RESULTS_RECTIFICATION/"
+outdir = "./RESULTS_RECTIFICATION"
 try:
     os.makedirs(outdir)
 except:
@@ -104,12 +107,11 @@ angle = pi / 4.0
 orad = (diameter - irad) / sin(angle)
 shift = 0.25 * orad * cos(angle)
 
-hollow_cone = LBBoundary(shape=HollowCone(position_x=length / 2.0 - shift,
-                                          position_y=(diameter + 4) / 2.0,
-                                          position_z=(diameter + 4) / 2.0,
-                                          orientation_x=1,
-                                          orientation_y=0,
-                                          orientation_z=0,
+hollow_cone = LBBoundary(
+    shape=HollowCone(
+        center=[length / 2.0 + shift,
+                        (diameter + 4) / 2.0, (diameter + 4) / 2.0],
+        axis=[-1, 0, 0],
                                           outer_radius=orad,
                                           inner_radius=irad,
                                           width=2.0,
@@ -123,6 +125,7 @@ system.lbboundaries.add(hollow_cone)
 
 lbf.print_vtk_boundary("{}/boundary.vtk".format(outdir))
 
+################################################################################
 ## Exercise 2 ##
 # Visualize this geometry using paraview
 
