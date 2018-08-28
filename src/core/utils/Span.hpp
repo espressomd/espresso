@@ -78,7 +78,8 @@ public:
   constexpr reverse_iterator rend() const { return reverse_iterator(begin()); }
 
   constexpr reference operator[](size_type i) const {
-    return assert(i < size()), m_ptr[i];
+    assert(i < size());
+    return m_ptr[i];
   }
 
   constexpr reference at(size_type i) const {
