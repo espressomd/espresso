@@ -26,10 +26,7 @@ class BHGPUPerfTest(ut.TestCase):
         tol = 15E-2
         vec_len = la.norm(a - b)
         rel = 2 * vec_len / (la.norm(a) + la.norm(b))
-        if rel <= tol:
-            return True
-        else:
-            return False
+        return rel <= tol
 
     def stopAll(self):
         for i in range(len(self.system.part)):
