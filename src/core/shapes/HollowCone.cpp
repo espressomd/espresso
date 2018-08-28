@@ -367,7 +367,7 @@ int HollowCone::calculate_dist(const double *ppos, double *dist,
     vec[i] = normal_3D[i] * distance;
   }
 
-  *dist = std::copysign(distance, m_direction);
+  *dist = distance * std::copysign(1.0, m_direction);
 
   // And we are done with the hollow cone
 
