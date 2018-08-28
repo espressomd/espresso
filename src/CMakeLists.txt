@@ -1,4 +1,4 @@
-# Copyright (C) 2009,2010,2011,2012,2015,2016 The ESPResSo project
+# Copyright (C) 2009-2018 The ESPResSo project
 # Copyright (C) 2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
