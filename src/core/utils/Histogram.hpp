@@ -50,7 +50,7 @@ inline size_t ravel_index(std::vector<size_t> unravelled_indices,
 }
 
 /**
- * \brief Returns the unravelled index of the provided flat index.
+ * \brief Returns the unraveled index of the provided flat index.
  *        Therefore is the inversion of flattening an ndims dimensional index.
  * \param len_dims an int array of length ndims containing the lengths of the
  * dimensions. (Input) \param ndims int denoting the number of dimensions.
@@ -282,7 +282,7 @@ private:
     std::vector<int> len_bins(len_bins_u.begin(), len_bins_u.end());
     len_bins.push_back(m_n_dims_data);
     for (size_t ind = 0; ind < m_hist.size(); ind += m_n_dims_data) {
-      // Get the unravelled indices and calculate the bin volume.
+      // Get the unraveled indices and calculate the bin volume.
       ::Utils::unravel_index(len_bins.data(), 4, ind, unravelled_index);
       r_bin = unravelled_index[0];
       min_r = get_limits()[0].first;

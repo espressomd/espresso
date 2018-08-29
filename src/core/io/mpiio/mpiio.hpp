@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file mpiio.hpp
- *  Implements binary output unsing MPI-IO.
+ *  Implements binary output using MPI-IO.
  */
 
 #ifndef _MPIIO_HPP

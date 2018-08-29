@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(mean_and_variance) {
 
   BOOST_CHECK(running_average.n() == sample_size);
 
-  /** Directly calculate the meann from the data */
+  /** Directly calculate the mean from the data */
   const double m_mean = std::accumulate(std::begin(RandomSequence::values),
                                         std::end(RandomSequence::values), 0.0) /
                         sample_size;

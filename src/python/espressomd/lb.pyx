@@ -63,7 +63,7 @@ IF LB_GPU or LB:
                 raise Exception(
                     "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," % key)
 
-        # validate the given parameters on actor initalization
+        # validate the given parameters on actor initialization
         ####################################################
         def validate_params(self):
             default_params = self.default_params()
@@ -87,7 +87,7 @@ IF LB_GPU or LB:
         def valid_keys(self):
             return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even"
 
-        # list of esential keys required for the fluid
+        # list of essential keys required for the fluid
         ####################################################
         def required_keys(self):
             return ["dens", "agrid", "visc", "tau"]

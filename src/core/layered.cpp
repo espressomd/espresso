@@ -60,9 +60,9 @@
 
 */
 
-/** wether we are the lowest node */
+/** whether we are the lowest node */
 #define LAYERED_BOTTOM 1
-/** wether we are the highest node */
+/** whether we are the highest node */
 #define LAYERED_TOP 2
 /** same as PERIODIC(2) */
 #define LAYERED_PERIODIC 4
@@ -333,7 +333,7 @@ void layered_topology_init(CellPList *old) {
   }
   MPI_Bcast(&n_layers, 1, MPI_INT, 0, comm_cart);
 
-  /* check wether node is top and/or bottom */
+  /* check whether node is top and/or bottom */
   layered_flags = 0;
   if (this_node == 0)
     layered_flags |= LAYERED_BOTTOM;

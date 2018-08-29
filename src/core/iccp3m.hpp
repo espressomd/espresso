@@ -23,7 +23,7 @@
 /** \file iccp3m.hpp
 
     ICCP3M is a method that allows to take into account the influence
-    of arbitrarliy shaped dielectric interfaces.  The dielectric
+    of arbitrarily shaped dielectric interfaces.  The dielectric
     properties of a dielectric medium in the bulk of the simulation
     box are taken into account by reproducing the jump in the electric
     field at the inface with charge surface segments. The charge

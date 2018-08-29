@@ -72,7 +72,7 @@ cdef class Thermostat(object):
         """Recover a suspended thermostat
 
         If the thermostat had been suspended using .suspend(), it can
-        be reovered with this method.
+        be recovered with this method.
 
         """
         if self._state is not None:

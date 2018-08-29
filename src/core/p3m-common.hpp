@@ -100,21 +100,21 @@ typedef struct {
   int q_21_off;
 } p3m_local_mesh;
 
-/** Structure for send/recv meshs. */
+/** Structure for send/recv meshes. */
 typedef struct {
-  /** dimension of sub meshs to send. */
+  /** dimension of sub meshes to send. */
   int s_dim[6][3];
-  /** left down corners of sub meshs to send. */
+  /** left down corners of sub meshes to send. */
   int s_ld[6][3];
-  /** up right corners of sub meshs to send. */
+  /** up right corners of sub meshes to send. */
   int s_ur[6][3];
   /** sizes for send buffers. */
   int s_size[6];
-  /** dimensionof sub meshs to recv. */
+  /** dimensionof sub meshes to recv. */
   int r_dim[6][3];
-  /** left down corners of sub meshs to recv. */
+  /** left down corners of sub meshes to recv. */
   int r_ld[6][3];
-  /** up right corners of sub meshs to recv. */
+  /** up right corners of sub meshes to recv. */
   int r_ur[6][3];
   /** sizes for recv buffers. */
   int r_size[6];
@@ -122,7 +122,7 @@ typedef struct {
   int max;
 } p3m_send_mesh;
 
-/** Structure to hold P3M parameters and some dependend variables. */
+/** Structure to hold P3M parameters and some dependent variables. */
 typedef struct {
   /** Tuning or production? */
   bool tuning;
@@ -180,7 +180,7 @@ void p3m_p3m_print_local_mesh(p3m_local_mesh l);
 void p3m_p3m_print_send_mesh(p3m_send_mesh sm);
 
 /** Add values of a 3d-grid input block (size[3]) to values of 3d-grid
- *  ouput array with dimension dim[3] at start position start[3].
+ *  output array with dimension dim[3] at start position start[3].
  *
  *  \param in          Pointer to first element of input block data.
  *  \param out         Pointer to first element of output grid.

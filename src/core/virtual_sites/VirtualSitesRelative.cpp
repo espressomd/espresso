@@ -80,7 +80,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
     return;
   }
 
-  // Calculate the quaternion defining the orientation of the vecotr connectinhg
+  // Calculate the quaternion defining the orientation of the vector connecting
   // the virtual site and the real particle
   // This is obtained, by multiplying the quaternion representing the director
   // of the real particle with the quaternion of the virtual particle, which
@@ -171,7 +171,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
       double d[3];
       get_mi_vector(d, p.r.p, p_real->r.p);
 
-      // The rules for transfering forces are:
+      // The rules for transferring forces are:
       // F_realParticle +=F_virtualParticle
       // T_realParticle +=f_realParticle \times
       // (r_virtualParticle-r_realParticle)
@@ -190,12 +190,12 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 }
 
 // Setup the virtual_sites_relative properties of a particle so that the given
-// virtaul particle will follow the given real particle
+// virtual particle will follow the given real particle
 
-// Rigid body conribution to scalar pressure and stress tensor
+// Rigid body contribution to scalar pressure and stress tensor
 void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     double *pressure, double *stress_tensor) const {
-  // Division by 3 volume is somewhere else. (pressure.cpp after all presure
+  // Division by 3 volume is somewhere else. (pressure.cpp after all pressure
   // calculations) Iterate over all the particles in the local cells
 
   for (auto &p : local_cells.particles()) {
@@ -213,7 +213,7 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     double d[3];
     get_mi_vector(d, p_real->r.p, p.r.p);
 
-    // Stress tensor conribution
+    // Stress tensor contribution
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
         stress_tensor[k * 3 + l] += p.f.f[k] * d[l];

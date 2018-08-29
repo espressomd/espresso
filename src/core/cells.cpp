@@ -60,7 +60,7 @@ CellStructure cell_structure = {/* type */ CELL_STRUCTURE_NONEYET,
 
 double max_range = 0.0;
 
-/** On of Cells::Resort, annouces the level of resort needed.
+/** On of Cells::Resort, announces the level of resort needed.
  */
 unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
@@ -151,7 +151,7 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 }
 
 /************************************************************/
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 

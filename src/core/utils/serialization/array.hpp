@@ -5,7 +5,7 @@
 
 #include <boost/version.hpp>
 
-/* New versions of boost alrady containt this
+/* New versions of boost already contain this
  * function
  * */
 #if BOOST_VERSION < 105600

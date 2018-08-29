@@ -143,7 +143,7 @@ enum CoulombMethod {
 /************************************************************/
 /*@{*/
 enum DipolarInteraction {
-  /** dipolar interation switched off (NONE). */
+  /** dipolar interaction switched off (NONE). */
   DIPOLAR_NONE = 0,
   /** dipolar method is P3M. */
   DIPOLAR_P3M,
@@ -454,7 +454,7 @@ extern double field_applied;
 /*@}*/
 /** Parameters for FENE bond Potential.
 k - spring constant.
-drmax - maximal bond streching.
+drmax - maximal bond stretching.
 r0 - equilibrium bond length.
 drmax2 - square of drmax (internal parameter).
 */
@@ -736,7 +736,7 @@ extern int max_seen_particle_type;
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
 
-/** Field containing the paramters of the bonded ia types */
+/** Field containing the parameters of the bonded ia types */
 extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 
 /** Maximal interaction cutoff (real space/short range interactions). */
@@ -767,7 +767,7 @@ extern int ia_excl;
 /** @brief Set the electrostatics prefactor */
 int coulomb_set_prefactor(double prefactor);
 
-/** @brief Deactivates the current Coulomb mhthod
+/** @brief Deactivates the current Coulomb method
     This was part of coulomb_set_bjerrum()
 */
 void deactivate_coulomb_method();
@@ -949,13 +949,13 @@ public:
       return true;
 #endif
 
-// Within dipolar cutoff and both cary magnetic moments
+// Within dipolar cutoff and both carry magnetic moments
 #ifdef DIPOLES
     if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
       return true;
 #endif
 
-// Collision detectoin
+// Collision detection
 #ifdef COLLISION_DETECTION
     if (dist2 <= m_collision_cut2)
       return true;

@@ -79,7 +79,7 @@ void momentum_flip();
 /************************************************************/
 
 /************************************************************/
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -137,7 +137,7 @@ void hamiltonian_calc(int ekin_update_flag) {
   }
 }
 
-// get local temperature - here for debbuging purposes
+// get local temperature - here for debugging purposes
 double calc_local_temp() {
   int tot_np = 0;
   double temp = 0.0;

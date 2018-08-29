@@ -54,11 +54,11 @@ int mindist3(PartCfg &, int part_id, double r_catch, int *ids);
     @return Returns '1' if there is a collision, '0' otherwise. */
 int collision(PartCfg &, double pos[3], double shield, int n_add, double *add);
 
-/** Function used by polymerC to determine wether a constraint has been violated
+/** Function used by polymerC to determine whether a constraint has been violated
    while setting up a polymer. Currently only "wall", "sphere" and "cylinder"
    constraints are respected.
     @param p1           = position of first particle given as double-array of
-   lenght 3
+   length 3
     @param p2           = position of second particle given as double-array of
    length 3
     @return Returns 1 if p1 and p2 sit on opposite sites of any constraint
@@ -90,7 +90,7 @@ int constraint_collision(double *p1, double *p2);
     @param  type_FENE   = type number of the FENE-typed bonded interaction bonds
    to be set between the monomers (defaults to '0') <br>
     @param  angle       = desired bond-angle to be fixed <br>
-    @param  angle2      = secon spherical bond-angle <br>
+    @param  angle2      = second spherical bond-angle <br>
     @param  posed2      = sets the position of the 2nd monomer of the first
    chain <br>
     @param  constr      = shall constraints be respected when setting up

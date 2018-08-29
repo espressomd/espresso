@@ -561,7 +561,7 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
   else
     shift = ico_g;
 
-  /* create fulleren & soccer-ball */
+  /* create fullerene & soccer-ball */
   part_id = 0;
   for (i = 0; i < 12; i++) {
     for (j = 0; j < 5; j++) {

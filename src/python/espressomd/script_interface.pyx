@@ -186,7 +186,7 @@ cdef class PScriptInterface(object):
         if < int > type == <int > DOUBLE_VECTOR:
             return get[vector[double]](value)
         if < int > type == <int > OBJECTID:
-            # Get the id and build a curresponding object
+            # Get the id and build a corresponding object
             try:
                 oid = get[ObjectId](value)
                 ptr = get_instance(oid).lock()
@@ -297,7 +297,7 @@ _python_class_by_so_name = {}
 def script_interface_register(c):
     """Decorator used to register script interface classes
        This will store a name<->class relationship in a registry, so that parameters
-       of type object can be instanciated as the correct python class
+       of type object can be instantiated as the correct python class
     """
     if not hasattr(c, "_so_name"):
         raise Exception(

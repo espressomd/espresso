@@ -74,7 +74,7 @@ ScriptInterfaceBase::get_instance(ObjectId id) {
 /**
  * @brief  Return a Variant representation of the state of the object.
  *
- * This should returne the internal state of the instance, so that
+ * This should return the internal state of the instance, so that
  * the instance can be restored from this information.  The default
  * implementation stores all the public parameters, including object
  * parameters that are captured by calling get_state on them.

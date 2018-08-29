@@ -118,9 +118,9 @@ struct is_commutative<::detail::Merge<Container, ::detail::IdCompare>,
  *
  * To update the cache particles are sorted by id on the nodes,
  * and the sorted arrays a merged in a reduction tree, until the
- * master node recives a complete and sorted particle array.
+ * master node receives a complete and sorted particle array.
  *
- * This class can be customized by running a unary opration on
+ * This class can be customized by running a unary operation on
  * the particles. This op is run on all the nodes. It can be used
  * e.g. to fold or unfold the coordinates on the fly.
  *
@@ -209,7 +209,7 @@ class ParticleCache {
    *
    * This gets a new particle range, packs
    * the particles into a buffer and then
-   * merges these buffers hierachicaly to the
+   * merges these buffers hierarchically to the
    * master node
    */
   void m_update() {

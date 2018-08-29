@@ -48,7 +48,7 @@ IF ELECTROKINETICS:
 
         def required_keys(self):
             """
-            Returns the nessesary options to initialize the electokinetic method.
+            Returns the necessary options to initialize the electrokinetic method.
 
             """
 
@@ -56,7 +56,7 @@ IF ELECTROKINETICS:
 
         def default_params(self):
             """
-            Returns the default paramters.
+            Returns the default parameters.
 
             """
 
@@ -127,7 +127,7 @@ IF ELECTROKINETICS:
 
         def set_density(self, species=None, density=None, node=None):
             """
-            Sets the density of a species at a speciffic node.
+            Sets the density of a species at a specific node.
             If no node is given the density will be set global for the species.
 
             Parameters
@@ -172,10 +172,10 @@ IF ELECTROKINETICS:
                       The species which will be changed to neutralize the system.
 
             note : The previous density of the species will be ignored and
-                   it will be homogenious distributed over the whole system
+                   it will be homogeneous distributed over the whole system
                    The species must be charged to begin with.
                    If the neutralization would lead to a negative species density
-                   an exeption will be raised.
+                   an exception will be raised.
 
             """
 
@@ -197,8 +197,8 @@ IF ELECTROKINETICS:
 
         def ek_init(self):
             """
-            Initializes the electrikinetic system.
-            This automatically initializes the lattice Boltzman method on the GPU.
+            Initializes the electrokinetic system.
+            This automatically initializes the lattice Boltzmann method on the GPU.
 
             """
 

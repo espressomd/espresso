@@ -44,7 +44,7 @@
 /** \name Data Types */
 /************************************************/
 /*@{*/
-/** Data structure describing a slab and the velocities occuring their in. */
+/** Data structure describing a slab and the velocities occurring their in. */
 typedef struct {
 
   /** MC  statistics variables */
@@ -77,10 +77,10 @@ extern int ghmc_mc_res;
 
 #ifdef GHMC
 
-/**  initilize global thermostat parameters*/
+/**  initialize global thermostat parameters*/
 void thermo_init_ghmc();
 
-/**  initilize ghmc during integration*/
+/**  initialize ghmc during integration*/
 void ghmc_init();
 
 /**  momentum update step of ghmc */

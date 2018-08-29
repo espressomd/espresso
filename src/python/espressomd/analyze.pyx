@@ -174,10 +174,10 @@ class Analysis(object):
         Parameters
         ----------
         include_particles : :obj:`bool`, optional
-                            wether to include the particles contribution to the linear
+                            whether to include the particles contribution to the linear
                             momentum.
         include_lbfluid : :obj:`bool`, optional
-                          wether to include the Lattice Boltzmann fluid
+                          whether to include the Lattice Boltzmann fluid
                           contribution to the linear momentum.
 
         Returns
@@ -380,9 +380,9 @@ class Analysis(object):
         * "bonded" , total bonded pressure
         * "bonded", bond_type , bonded pressure which arises from the given bond_type
         * "nonbonded", total nonbonded pressure
-        * "nonbonded", type_i, type_j, nonboned pressure which arises from the interactions between type_i and type_j
-        * "nonbonded_intra", type_i, type_j, nonboned pressure between short ranged forces between type i and j and with the same mol_id
-        * "nonbonded_inter" type_i, type_j", nonboned pressure between short ranged forces between type i and j and different mol_ids
+        * "nonbonded", type_i, type_j, nonbonded pressure which arises from the interactions between type_i and type_j
+        * "nonbonded_intra", type_i, type_j, nonbonded pressure between short ranged forces between type i and j and with the same mol_id
+        * "nonbonded_inter" type_i, type_j", nonbonded pressure between short ranged forces between type i and j and different mol_ids
         * "coulomb", Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the coulomb stress tensor. For how the stress tensor is calculated see below. The averaged value in an isotropic NVT simulation is equivalent to the average of :math:`E^{coulomb}/(3V)`, see :cite:`brown1995general`.
         * "dipolar", TODO
         * "virtual_sites", Stress contribution due to virtual sites
@@ -485,9 +485,9 @@ class Analysis(object):
         * "bonded" , total bonded stress tensor
         * "{bonded, bond_type}" , bonded stress tensor which arises from the given bond_type
         * "nonbonded", total nonbonded stress tensor
-        * "nonbonded type_i", type_j, nonboned stress tensor which arises from the interactions between type_i and type_j
-        * "nonbonded_intra type_i" type_j, nonboned stress tensor between short ranged forces between type i and j and with the same mol_id
-        * "nonbonded_inter type_i", type_j, nonboned stress tensor between short ranged forces between type i and j and different mol_ids
+        * "nonbonded type_i", type_j, nonbonded stress tensor which arises from the interactions between type_i and type_j
+        * "nonbonded_intra type_i" type_j, nonbonded stress tensor between short ranged forces between type i and j and with the same mol_id
+        * "nonbonded_inter type_i", type_j, nonbonded stress tensor between short ranged forces between type i and j and different mol_ids
         * "coulomb", Maxwell stress tensor, how it is calculated depends on the method
         * "dipolar", TODO
         * "virtual_sites", Stress tensor contribution for virtual sites
@@ -631,7 +631,7 @@ class Analysis(object):
         stress_range : array_like :obj:`float`
                        The range of the cuboid.
         bins : array_like :obj:`int`
-               A list condaining the number of bins for each direction.
+               A list containing the number of bins for each direction.
 
         """
 
@@ -699,7 +699,7 @@ class Analysis(object):
             c_analyze.master_energy_calc()
             handle_errors("calc_long_range_energies failed")
 
-        # Individual components of the pressur
+        # Individual components of the pressure
 
         # Total energy
         cdef int i
@@ -1185,7 +1185,7 @@ class Analysis(object):
 
     def moment_of_inertia_matrix(self, p_type=None):
         """
-        Returns the 3x3 moment of interia matrix for particles of a given type.
+        Returns the 3x3 moment of inertia matrix for particles of a given type.
 
         Parameters
         ----------

@@ -91,8 +91,8 @@ void ClusterStructure::add_pair(const Particle &p1, const Particle &p2) {
         (part_of_cluster(p1) && part_of_cluster(p2) &&
          cluster_id.at(p1.p.identity) != cluster_id.at(p2.p.identity)) {
       // Clusters of p1 and p2 are one and the same. Add an identity to the list
-      // The higher number must be inserted as first value of tjhe pair
-      // because the substituions later have to be done in descending order
+      // The higher number must be inserted as first value of the pair
+      // because the substitutions later have to be done in descending order
       const int cid1 = find_id_for(cluster_id.at(p1.p.identity));
       const int cid2 = find_id_for(cluster_id.at(p2.p.identity));
       if (cid1 > cid2) {
@@ -147,7 +147,7 @@ void ClusterStructure::merge_clusters() {
     clusters[it.second]->particles.push_back(it.first);
   }
 
-  // Sort particles ids in the cluters
+  // Sort particles ids in the clusters
   for (auto c : clusters) {
     std::sort(c.second->particles.begin(), c.second->particles.end());
   }

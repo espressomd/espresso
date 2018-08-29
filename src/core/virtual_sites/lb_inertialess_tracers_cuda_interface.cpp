@@ -31,7 +31,7 @@ IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_host = nullptr;
 /*****************
    IBM_cuda_mpi_get_particles
 Gather particle positions on the master node in order to communicate them to GPU
-We transfer all particles (real and virtual), but acutally we would only need
+We transfer all particles (real and virtual), but actually we would only need
 the virtual ones
 Room for improvement...
  *****************/

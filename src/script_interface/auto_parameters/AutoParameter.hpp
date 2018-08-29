@@ -29,7 +29,7 @@ struct infer_length_helper<Vector<M, Vector<N, T>>> {
 } // namespace detail
 
 /**
- * @brief Infer supposed length of the paramer.
+ * @brief Infer supposed length of the parameter.
  *
  * This currently only works for fixed-sized vectors,
  * where the length is encoded in the type.
@@ -39,7 +39,7 @@ template <typename T> constexpr size_t infer_length() {
 }
 
 /**
- * @brief Describtion and getter/setter for a parameter.
+ * @brief Description and getter/setter for a parameter.
  *
  * This is to be used with @c AutoParameters, see there for
  * more detailed documentation.
@@ -125,7 +125,7 @@ struct AutoParameter {
   }
 
   /**
-   * @brief read-write parameter that is bound to a referece.
+   * @brief read-write parameter that is bound to a reference.
    *
    * @param name The name the parameter should be bound to in the interface.
    * @param type The parameter type, by default this is deduced from the
@@ -152,7 +152,7 @@ struct AutoParameter {
         get([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
   /**
-   * @brief read-only parameter that is bound to a const referece.
+   * @brief read-only parameter that is bound to a const reference.
    *
    * @param name The name the parameter should be bound to in the interface.
    * @param type The parameter type, by default this is deduced from the
@@ -177,7 +177,7 @@ struct AutoParameter {
         get([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
   /**
-   * @brief Parameter with a user-proivded getter and setter.
+   * @brief Parameter with a user-provided getter and setter.
    *
    * @param name The name the parameter should be bound to in the interface.
    * @param set A setter, which can be a Functor, a Lambda or a std::function

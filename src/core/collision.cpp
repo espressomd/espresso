@@ -77,7 +77,7 @@ bool validate_collision_parameters() {
   }
 
 #ifndef VIRTUAL_SITES_RELATIVE
-  // The collision modes involving virutal istes also requires the creation of a
+  // The collision modes involving virtual sites also require the creation of a
   // bond between the colliding
   // If we don't have virtual sites, virtual site binding isn't possible.
   if ((collision_params.mode & COLLISION_MODE_VS) ||
@@ -227,7 +227,7 @@ void queue_collision(const int part1, const int part2) {
 }
 
 /** @brief Calculate position of vs for GLUE_TO_SURFACE mode
- *    Reutnrs id of particle to bind vs to */
+ *    Returns id of particle to bind vs to */
 int glue_to_surface_calc_vs_pos(const Particle *const p1,
                                 const Particle *const p2, Vector3d &pos) {
   int bind_vs_to_pid;
@@ -333,7 +333,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   for (int j = 0; j < 3; j++)
     vec2[j] *= d2i;
 
-  /* scalar produvt of vec1 and vec2 */
+  /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
 
   // Handle case where cosine is nearly 1 or nearly -1
@@ -460,7 +460,7 @@ std::vector<collision_struct> gather_global_collision_queue() {
 
   res.resize(total_collisions);
 
-  // Gather collision informtion from all nodes and send it to all nodes
+  // Gather collision information from all nodes and send it to all nodes
   MPI_Allgatherv(&(local_collision_queue[0]), byte_counts[this_node], MPI_BYTE,
                  &(res[0]), &(byte_counts[0]), &(displacements[0]), MPI_BYTE,
                  comm_cart);
@@ -553,12 +553,12 @@ void handle_collisions() {
     }
   }
 
-// Virtual sites based collision schemese
+// Virtual sites based collision schemes
 #ifdef VIRTUAL_SITES_RELATIVE
   if ((collision_params.mode & COLLISION_MODE_VS) ||
       (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
-    // Gather the global collision queue, because only one node hsa a collision
-    // across node boundaries in its cueue.
+    // Gather the global collision queue, because only one node has a collision
+    // across node boundaries in its queue.
     // The other node might still have to change particle properties on its
     // non-ghost particle
     auto gathered_queue = gather_global_collision_queue();
@@ -579,7 +579,7 @@ void handle_collisions() {
       Particle *const p1 = local_particles[c.pp1];
       Particle *const p2 = local_particles[c.pp2];
 
-      // If we have none of the two partic;es, only increase the counter for the
+      // If we have none of the two particles, only increase the counter for the
       // next id to use
       if (p1 == NULL and p2 == NULL) {
         if (collision_params.mode & COLLISION_MODE_VS) {
@@ -633,7 +633,7 @@ void handle_collisions() {
           Vector3d pos;
           const int pid = glue_to_surface_calc_vs_pos(p1, p2, pos);
 
-          // Change type of partilce being attached, to make it inert
+          // Change type of particle being attached, to make it inert
           if (p1->p.type == collision_params.part_type_to_be_glued) {
             p1->p.type = collision_params.part_type_after_glueing;
           }

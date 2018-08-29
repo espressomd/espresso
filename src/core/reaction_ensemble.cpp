@@ -2,7 +2,7 @@
  *constant volume and temperature, for the reaction ensemble at constant
  *pressure additionally employ a barostat! NOTE: a chemical reaction consists of
  *a forward and backward reaction. Here both reactions have to be defined
- *seperately. The extent of the reaction is here chosen to be +1. If the
+ *separately. The extent of the reaction is here chosen to be +1. If the
  *reaction trial move for a dissociation of HA is accepted then there is one
  *more dissociated ion pair H+ and A-
  */
@@ -39,7 +39,7 @@ double average_list_of_allowed_entries(const std::vector<T> &vector) {
                           // collective variables, in a cubic memory layout
                           // there will be indices which are not allowed by
                           // the energy boundaries. These values will be
-                          // initalized with a negative fill value)
+                          // initialized with a negative fill value)
       result += static_cast<double>(vector[i]);
       counter_allowed_entries += 1;
     }
@@ -48,7 +48,7 @@ double average_list_of_allowed_entries(const std::vector<T> &vector) {
 }
 
 /**
- * Checks wether a number is in a std:vector of numbers.
+ * Checks whether a number is in a std:vector of numbers.
  */
 template <typename T> bool is_in_list(T value, const std::vector<T> &list) {
   for (int i = 0; i < list.size(); i++) {
@@ -60,7 +60,7 @@ template <typename T> bool is_in_list(T value, const std::vector<T> &list) {
 
 void EnergyCollectiveVariable::load_CV_boundaries(
     WangLandauReactionEnsemble &m_current_wang_landau_system) {
-  /**save minimum and maximum energies as a function of the other collectiv
+  /**save minimum and maximum energies as a function of the other collective
    * variables under min_boundaries_energies, max_boundaries_energies **/
 
   m_current_wang_landau_system.do_energy_reweighting = true;
@@ -222,7 +222,7 @@ double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
 }
 
 /**
- * Checks wether all particles exist for the provided reaction.
+ * Checks whether all particles exist for the provided reaction.
  */
 bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) {
   bool enough_particles = true;
@@ -323,7 +323,7 @@ void ReactionAlgorithm::make_reaction_attempt(
 }
 
 /**
- * Restores the previosly stored particle properties. This funtion is invoked
+ * Restores the previously stored particle properties. This function is invoked
  * when a reaction attempt is rejected.
  */
 void ReactionAlgorithm::restore_properties(
@@ -441,7 +441,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
                                                       // process of calculating
                                                       // ensemble averages
                                                       // (kinetic part may be
-                                                      // seperated and crossed
+                                                      // separated and crossed
                                                       // out)
 
   // find reacting molecules in reactants and save their properties for later
@@ -562,7 +562,7 @@ int ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
 /**
  *remove_charge and put type to a non existing one --> no interactions anymore
  *it is as if the particle was non existing (currently only type-based
- *interactions are swithced off, as well as the electrostatic interaction)
+ *interactions are switched off, as well as the electrostatic interaction)
  *hide_particle() does not break bonds for simple reactions. as long as there
  *are no reactions like 2A -->B where one of the reacting A particles occurs in
  *the polymer (think of bond breakages if the monomer in the polymer gets
@@ -699,7 +699,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   // create random velocity vector according to Maxwell Boltzmann distribution
   // for components
   double vel[3];
-  // we usse mass=1 for all particles, think about adapting this
+  // we use mass=1 for all particles, think about adapting this
   vel[0] = std::pow(2 * PI * temperature, -3.0 / 2.0) * gaussian_random();
   vel[1] = std::pow(2 * PI * temperature, -3.0 / 2.0) * gaussian_random();
   vel[2] = std::pow(2 * PI * temperature, -3.0 / 2.0) * gaussian_random();
@@ -797,7 +797,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     // determine a p_id you have not touched yet
     while (is_in_list(p_id, p_id_s_changed_particles)) {
       p_id = get_random_p_id(
-          type); // check wether you already touched this p_id, then reassign
+          type); // check whether you already touched this p_id, then reassign
     }
 
     auto part = get_particle_data(p_id);
@@ -1158,7 +1158,7 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
       int((collective_variables[new_CV_i]->CV_maximum -
            collective_variables[new_CV_i]->CV_minimum) /
           collective_variables[new_CV_i]->delta_CV) +
-      1; //+1 for collecive variables which are of type degree of association
+      1; //+1 for collective variables which are of type degree of association
 
   // construct (possibly higher dimensional) histogram over gamma (the room
   // which should be equally sampled when the wang-landau algorithm has
@@ -1207,7 +1207,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
   } else {
     // pass
   }
-  // look wether the proposed state lies in the reaction coordinate space gamma
+  // look whether the proposed state lies in the reaction coordinate space gamma
   // and add the Wang-Landau modification factor, this is a bit nasty due to the
   // energy collective variable case (memory layout of storage array of the
   // histogram and the wang_landau_potential values is "cuboid")
@@ -1224,7 +1224,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
       // paper "Density-of-states
       // Monte Carlo method for
       // simulation of fluids"
-      // this makes the new state being accepted with the conditinal probability
+      // this makes the new state being accepted with the conditional probability
       // bf (bf is a transition probability = conditional probability from the
       // old state to move to the new state)
     } else {
@@ -1290,7 +1290,7 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
     double minimum_wang_landau_potential = find_minimum_non_negative_value(
         wang_landau_potential.data(), wang_landau_potential.size());
     for (int i = 0; i < wang_landau_potential.size(); i++) {
-      if (wang_landau_potential[i] >= 0) // check for wether we are in the valid
+      if (wang_landau_potential[i] >= 0) // check for whether we are in the valid
                                          // range of the collective variable
         wang_landau_potential[i] -= minimum_wang_landau_potential;
     }
@@ -1315,7 +1315,7 @@ void WangLandauReactionEnsemble::update_wang_landau_potential_and_histogram(
 }
 
 /**
- *Determines wether we can reduce the Wang-Landau parameter
+ *Determines whether we can reduce the Wang-Landau parameter
  */
 bool WangLandauReactionEnsemble::can_refine_wang_landau_one_over_t() {
   double minimum_required_value =
@@ -1346,7 +1346,7 @@ void WangLandauReactionEnsemble::reset_histogram() {
                              // collective variables, in a cubic memory layout
                              // there will be indices which are not allowed by
                              // the energy boundaries. These values will be
-                             // initalized with a negative fill value)
+                             // initialized with a negative fill value)
       histogram[i] = 0;
     }
   }
@@ -1426,7 +1426,7 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
 
 /**
  *Update the minimum and maximum observed energies using the current state.
- *Needed for perliminary energy reweighting runs.
+ *Needed for preliminary energy reweighting runs.
  */
 int WangLandauReactionEnsemble::
     update_maximum_and_minimum_energies_at_current_state() {
@@ -1544,7 +1544,7 @@ int WangLandauReactionEnsemble::
 
 /** remove bins from the range of to be sampled values if they have not been
  *sampled.
- *use with caution otherwise you produce unpyhsical results, do only use when
+ *use with caution otherwise you produce unphysical results, do only use when
  *you know what you want to do. This can make wang landau converge on a reduced
  *set gamma. use this function e.g. in do_reaction_wang_landau() for the
  *diprotonic acid compare "Wang-Landau sampling with self-adaptive range" by
@@ -1696,7 +1696,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
   for (int i = 0; i < reaction_steps; ++i) {
     // get a list of reactions where a randomly selected particle type occurs in
     // the reactant list. the selection probability of the particle types has to
-    // be proportional to the number of occurances of the number of particles
+    // be proportional to the number of occurrences of the number of particles
     // with
     // this type
 

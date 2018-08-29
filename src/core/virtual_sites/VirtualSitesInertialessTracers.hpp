@@ -6,7 +6,7 @@
 #include "VirtualSites.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-/** @brief Virtual sites which are advected with an lb fuid. Forces on them are
+/** @brief Virtual sites which are advected with an lb fluid. Forces on them are
  * instantaneously transferred to the fluid
  */
 class VirtualSitesInertialessTracers : public VirtualSites {

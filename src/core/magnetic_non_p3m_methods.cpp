@@ -26,7 +26,7 @@
  *   Assumes minimum image convention for those axis in which the
  *   system is periodic as defined by setmd.
  *
- *   MDDS => Calculates dipole-dipole interaction of a perioidic system
+ *   MDDS => Calculates dipole-dipole interaction of a periodic system
  *   by explicitly summing the dipole-dipole interaction over several copies of
  * the system
  *   Uses spherical summation order

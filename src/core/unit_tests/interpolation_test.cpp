@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(ll_and_dist_test) {
 
   /* Pos with offset is {1.1, 3.2, 2.3} */
   /* nmp is {2, 6, 5} @ {1.0, 3.0, 2.5} */
-  /* block.distanceance in lattice units is +.1/.5, +.2/.5, -.2/.5 = {.2, .4,
+  /* block.distance in lattice units is +.1/.5, +.2/.5, -.2/.5 = {.2, .4,
    * -.4} */
   BOOST_CHECK_CLOSE(block.distance[0], .2, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[1], .4, 1e-13);
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_2) {
                 /* offset */ {10., 0., 15.});
 
   /* pos - offset = {-5., 6., -8} */
-  /* shited pos = {-4.5, 6.5, -7.5} */
+  /* shifted pos = {-4.5, 6.5, -7.5} */
   /* nmp = {-4, 4, -2 } @ pos {-4., 8., -6.} */
   /* ll = nmp - order / 2 (= 1) = {-5, 3, -3} */
   std::array<int, 3> lower_left = {{-5, 3, -2}};

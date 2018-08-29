@@ -75,7 +75,7 @@ private:
       bucket = ((bucket + 1) % bucket_count);
     }
 
-    /* Pick a random elemnt form that bucket. */
+    /* Pick a random element form that bucket. */
     auto const elem_in_bucket = std::uniform_int_distribution<size_type>{
         0, m_cache.bucket_size(bucket) - 1}(m_rand);
 
@@ -129,7 +129,7 @@ public:
    * maximal size, a random elements are removed until
    * all of the new values fit. If the given range is
    * larger than max_size(), only the first max_size()
-   * elements are put into the caache.
+   * elements are put into the cache.
    *
    * @tparam KeyInputIterator iterator of keys, at least InputIterator.
    * @tparam ValueInputIterator iterator of value, at least InputIterator.

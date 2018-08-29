@@ -12,7 +12,7 @@ def vtf_pid_map(system, types='all'):
             the one used in writevsf() and writevsf().
     Returns
     -------
-    dict:   A dictionary where the values are the VTF indicies and the keys are the ESPresSo particle ``id``
+    dict:   A dictionary where the values are the VTF indices and the keys are the ESPresSo particle ``id``
     """
 
     if not hasattr(types, '__iter__'):
@@ -60,7 +60,7 @@ def writevsf(system, fp, types='all'):
 def writevcf(system, fp, types='all'):
     """
     writes a VCF (VTF Coordinate Format) to a file.
-    This can be used to write a stimestep to a VTF file.
+    This can be used to write a timestep to a VTF file.
 
     Parameters
     ----------

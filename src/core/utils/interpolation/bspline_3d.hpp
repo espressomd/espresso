@@ -26,7 +26,7 @@ void bspline_3d(const Vector3d &pos, const Kernel &kernel,
                 const Vector3d &grid_spacing, const Vector3d &offset) {
   using Utils::bspline;
 
-  /* The coordinates and relative distance of the assigment cube. */
+  /* The coordinates and relative distance of the assignment cube. */
   const auto block = detail::ll_and_dist<order>(pos, grid_spacing, offset);
 
   /* Precalc weights that are used multiple times. */

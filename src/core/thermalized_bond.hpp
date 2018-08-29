@@ -46,7 +46,7 @@ void thermalized_bond_cool_down();
 void thermalized_bond_update_params(double pref_scale);
 void thermalized_bond_init();
 
-/** Seperately thermalizes the com and distance of a particle pair
+/** Separately thermalizes the com and distance of a particle pair
     and adds this force to the particle forces.
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.

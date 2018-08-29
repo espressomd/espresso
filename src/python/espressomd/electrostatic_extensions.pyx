@@ -73,7 +73,7 @@ IF ELECTROSTATICS and P3M:
                                   probably want to disable the neutralization for non-neutral systems.
                                   This corresponds then to a formal regularization of the forces and
                                   energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
-                                  explicitely as constraints, you have to disable the neutralization.
+                                  explicitly as constraints, you have to disable the neutralization.
                                   When using a dielectric contrast or full metallic walls (`delta_mid_top
                                   != 0` or `delta_mid_bot != 0` or `const_pot_on=1`), `neutralize` is
                                   overwritten and switched off internally. Note that the special case of
@@ -150,7 +150,7 @@ IF ELECTROSTATICS and P3M:
 
     cdef class ICC(ElectrostaticExtensions):
         """
-        Interface to the induced charge calculatino scheme for dielectric interfaces
+        Interface to the induced charge calculation scheme for dielectric interfaces
 
         See :ref:`Dielectric interfaces with the ICC algorithm`
 

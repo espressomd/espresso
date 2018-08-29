@@ -88,7 +88,7 @@ public:
    * Remove the callback id from the callback list.
    * This is a collective call that must be run on all node.
    *
-   * @param id Identifier of the calback to remove.
+   * @param id Identifier of the callback to remove.
    */
   void remove(const int id);
 
@@ -127,7 +127,7 @@ public:
    * on the MPI call and wait for a new callback request
    * coming from the master.
    * This should be run on the slaves and must be running
-   * so thet the master can issue call().
+   * so that the master can issue call().
    */
   void loop() const;
 
@@ -172,7 +172,7 @@ private:
 
   /**
    * Mapping of function pointers to ids, so static callbacks can be
-   * called by their pointer for backward compability.
+   * called by their pointer for backward compatibility.
    */
   std::unordered_map<func_ptr_type, int> m_func_ptr_to_id;
 };

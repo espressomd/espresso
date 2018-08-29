@@ -35,7 +35,7 @@
  *
  *  \image html directions.gif "Convention for the order of the directions"
  *
- *  The Figure illustrates the direction convetion used for arrays
+ *  The Figure illustrates the direction convention used for arrays
  *  with 6 (e.g. \ref node_neighbors, \ref #boundary) and 3 entries
  *  (e.g \ref node_grid, \ref box_l , \ref my_left,...).
  *
@@ -69,7 +69,7 @@ extern int node_pos[3];
 extern int node_neighbors[6];
 /** where to fold particles that leave local box in direction i. */
 extern int boundary[6];
-/** Flags for all three dimensions wether pbc are applied (default).
+/** Flags for all three dimensions whether pbc are applied (default).
     The first three bits give the periodicity */
 extern int periodic;
 
@@ -104,7 +104,7 @@ extern double my_right[3];
     determine one automatically. */
 void init_node_grid();
 
-/** return wether node grid was set. */
+/** return whether node grid was set. */
 int node_grid_is_set();
 
 /** node mapping: array -> node.
@@ -150,7 +150,7 @@ void grid_changed_box_l();
  * compatible with the box dimensions and the node grid.
  * see also \ref box_l, \ref local_box_l, \ref min_box_l
  * and \ref min_local_box_l.
- * Remark: In the apreiodic case min_box_l is set to
+ * Remark: In the aperiodic case min_box_l is set to
  * 2 * \ref MAX_INTERACTION_RANGE . */
 void calc_minimal_box_dimensions();
 

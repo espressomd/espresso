@@ -25,7 +25,7 @@
  *  - a harmonic potential with a restlength of zero on the molecular centre of
  * mass
  *  - a drag on the molecular velocity
- *  - a cancelation of the total force on the molecule (including thermostat
+ *  - a cancellation of the total force on the molecule (including thermostat
  * forces)
  *  The centre of mass can be fixed to an absolute position or to a relative
  * position in the

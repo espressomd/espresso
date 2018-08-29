@@ -77,20 +77,20 @@ void cuda_get_gpu_name(int dev, char name[64]);
 /** choose a device for future CUDA computations.
 
     @param dev the device to use
-    @return \ref ES_OK on sucess, \ref ES_ERROR else. The error
+    @return \ref ES_OK on success, \ref ES_ERROR else. The error
     message from CUDA can be found in \ref cuda_error.
 */
 int cuda_set_device(int dev);
 
 /** get the current CUDA device.
 
-    @return the current device's number or -1 if an error occured. The error
+    @return the current device's number or -1 if an error occurred. The error
     message from CUDA can be found in \ref cuda_error.
 */
 int cuda_get_device();
 
 /** Test if actual CUDA device works.
-    @return \ref ES_OK on sucess, \ref ES_ERROR else.
+    @return \ref ES_OK on success, \ref ES_ERROR else.
     The error message from CUDA can be found in \ref cuda_error.
 */
 

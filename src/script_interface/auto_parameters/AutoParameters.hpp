@@ -12,7 +12,7 @@ namespace ScriptInterface {
 /**
  * @brief Bind parameters in the script interface.
  *
- * This class implementes @c ScriptInterfaceBase, binding
+ * This class implements @c ScriptInterfaceBase, binding
  * the parameters added by add_parameters or by the constructor.
  * To use, derive from this class and add parameters. For example,
  * given a class A
@@ -64,7 +64,7 @@ namespace ScriptInterface {
  * int m_i;
  * };
  * ~~~
- * (this has to be caputerd in the lambdas to have acces to the member functions
+ * (this has to be captured in the lambdas to have access to the member functions
  * of the class).
  */
 template <typename Derived, typename Base = ScriptInterfaceBase>

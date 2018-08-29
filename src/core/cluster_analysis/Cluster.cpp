@@ -38,7 +38,7 @@ Cluster::center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids) {
     total_mass += partCfg()[pid].p.mass;
   }
 
-  // Normalize by numer of particles
+  // Normalize by number of particles
   com = com * 1. / total_mass;
 
   // Re-add reference position
@@ -108,7 +108,7 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   // gyration against the number of particles in sub-clusters. Particles are
   // included step by step from the center of mass outwards
 
-  // Distnaces of particles from the center of mass
+  // Distances of particles from the center of mass
   std::vector<double> distances;
 
   for (auto const &it : particles) {

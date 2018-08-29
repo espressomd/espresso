@@ -37,7 +37,7 @@
  *  - a harmonic potential with a restlength of zero on the molecular centre of
  * mass
  *  - a drag on the molecular velocity
- *  - a cancelation of the total force on the molecule (including thermostat
+ *  - a cancellation of the total force on the molecule (including thermostat
  * forces)
  *  The centre of mass can be fixed to an absolute position or to a relative
  * position in the
@@ -307,7 +307,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
 }
 
 /* Send molecule information to the master node.
-   Recieve the combined molecule information and the trap forces */
+   Receive the combined molecule information and the trap forces */
 
 void mpi_comm_mol_info_slave(IntList *local_trapped_mols) {
   int i, mol;

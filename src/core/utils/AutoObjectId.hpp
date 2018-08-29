@@ -71,7 +71,7 @@ public:
   virtual ~AutoObjectId() { reg().remove(m_id.m_id); }
 
   /**
-   * @brief Get indentifier for this instance.
+   * @brief Get identifier for this instance.
    */
   ObjectId<T> id() const { return m_id; }
   /**

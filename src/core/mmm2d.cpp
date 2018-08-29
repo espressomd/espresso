@@ -1700,7 +1700,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
     F[1] += d[1] * rinv3;
     F[2] += d[2] * rinv3;
 
-    // fprintf(stderr, "explcit force %f %f %f\n", F[0], F[1], F[2]);
+    // fprintf(stderr, "explicit force %f %f %f\n", F[0], F[1], F[2]);
   }
 
   for (i = 0; i < 3; i++)
@@ -1814,7 +1814,7 @@ inline double calc_mmm2d_copy_pair_energy(double d[3]) {
     rinv = sqrt(1.0 / (cx * cx + rho2));
     eng += rinv;
 
-    // fprintf(stderr, "explcit energy %f %f %f %f\n", d[0], d[1], d[2], eng);
+    // fprintf(stderr, "explicit energy %f %f %f %f\n", d[0], d[1], d[2], eng);
   }
 
   return eng;

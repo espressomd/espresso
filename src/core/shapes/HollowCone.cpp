@@ -273,7 +273,7 @@ int HollowCone::calculate_dist(const double *ppos, double *dist,
   yd = m_orientation[1] / m_orientation.norm();
   zd = m_orientation[2] / m_orientation.norm();
 
-  // We now establish the rotion matrix required to go
+  // We now establish the rotation matrix required to go
   // form {0,0,1} to {xd,yd,zd}
 
   double matrix[9];

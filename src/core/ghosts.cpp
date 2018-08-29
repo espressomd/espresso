@@ -692,7 +692,7 @@ void invalidate_ghosts() {
     int np = ghost_cells.cell[c]->n;
     for (p = 0; p < np; p++) {
       /* Particle is stored as ghost in the local_particles array,
-         if the pointer stored there belongs to a ghost celll
+         if the pointer stored there belongs to a ghost cell
          particle array. */
       if (&(part[p]) == local_particles[part[p].p.identity])
         local_particles[part[p].p.identity] = nullptr;

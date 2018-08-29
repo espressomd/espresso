@@ -45,7 +45,7 @@ void markTime();
 /** calculate milliseconds between last two calls to \ref markTime. */
 double diffTime();
 
-/** sets the optimal \ref skin between min and max by bisectio to tolerance tol.
+/** sets the optimal \ref skin between min and max by bisection to tolerance tol.
  */
 void tune_skin(double min, double max, double tol, int steps);
 

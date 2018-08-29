@@ -101,7 +101,7 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
 }
 
 vector<RuntimeError> mpi_gather_runtime_errors() {
-  // Tell other processors to send their erros
+  // Tell other processors to send their errors
   m_callbacks->call(mpi_gather_runtime_errors_slave, -1, 0);
   return runtimeErrorCollector->gather();
 }

@@ -9,7 +9,7 @@ namespace ScriptInterface {
 /**
  * @brief Serialize a Variant into a Variant with type info.
  *
- * ObjectId values are flattend by the get_state function of
+ * ObjectId values are flattened by the get_state function of
  * the ScriptObject they refer to.
  */
 class Serializer : public boost::static_visitor<Variant> {
@@ -34,7 +34,7 @@ public:
 /**
  * @brief Serialize a Variant into a Variant with type info.
  *
- * ObjectId values are flattend by the get_state function of
+ * ObjectId values are flattened by the get_state function of
  * the ScriptObject they refer to.
  */
 class UnSerializer : public boost::static_visitor<Variant> {
