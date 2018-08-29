@@ -5,8 +5,9 @@ import os
 import requests
 import subprocess
 
-PR = os.environ['CI_COMMIT_REF_NAME'].replace("PR-","")
-URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + PR + '/comments?access_token=' + os.environ['GITHUB_TOKEN']
+PR = os.environ['CI_COMMIT_REF_NAME'].replace("PR-", "")
+URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + \
+      PR + '/comments?access_token=' + os.environ['GITHUB_TOKEN']
 SIZELIMIT = 10000
 
 # Delete all existing comments
@@ -39,4 +40,3 @@ if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
     comment += 'Please note that there are often multiple ways to correctly format code. As I am just a robot, I sometimes fail to identify the most aesthetically pleasing way. So please look over my suggested changes and adapt them where the style does not make sense.'
 
     requests.post(URL, json={'body': comment})
-
