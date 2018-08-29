@@ -561,7 +561,7 @@ of the position.  The available fields are
 :class:`espressomd.Constraints::HomogeneousFlowField`
 :class:`espressomd.Constraints::Gravity`
 
-a detailed describtion can be found in the class documentation.
+a detailed description can be found in the class documentation.
 
 please be aware of the fact that a constant per particle force can be
 set via the `ext_force` property of the particles and is not provided
@@ -572,8 +572,8 @@ Interpolated Force and Potential fields
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The values of these fields are obtained by interpolating table data,
-which has to be provided by the user. The fields differe by how
-they couple to particles, for a a detailed describtion their repective
+which has to be provided by the user. The fields differ by how
+they couple to particles, for a a detailed description their respective
 the class documentation.
 
 :class:`espressomd.Constraints::ForceField`

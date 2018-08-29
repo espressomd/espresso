@@ -140,7 +140,7 @@ Bonded coulomb
 
 .. note::
 
-    Require ELECTROSTAICS feature.
+    Require ELECTROSTATICS feature.
 
 A pairwise Coulomb interaction can be instantiated via 
 :class:`espressomd.interactions.BondedCoulomb`::
@@ -174,10 +174,10 @@ This bond can be instantiated via
     subtr_p3m_sr = BondedCoulombP3MSRBond(q1q2 = <float>)
 
 The parameter `q1q2` sets the charge factor of the short-range P3M interaction.
-It can differ from the actual partice charges.  This specialized bond can be
+It can differ from the actual particle charges.  This specialized bond can be
 used to cancel or add **only the short-range** electrostatic part 
-of the P3M solver. A use case is descibed in :ref:`Particle polarizability with
-thermalized cold Drude oszillators`.
+of the P3M solver. A use case is described in :ref:`Particle polarizability with
+thermalized cold Drude oscillators`.
 
 .. _Subtracted Lennard-Jones bond:
 
@@ -442,8 +442,8 @@ OIF global forces
 ~~~~~~~~~~~~~~~~~
 
 .. note::
-    
-    required OIF_GLOBAL:_FORCES feature.
+
+    required OIF_GLOBAL_FORCES feature.
 
 
 OIF global forces are available through the
@@ -642,7 +642,7 @@ Dihedral interactions
 
 Dihedral interactions are available through the :class:`espressomd.interactions.Dihedral` class.
 
-This creates a bond type with identificator with a dihedral potential, a
+This creates a bond type with identifier with a dihedral potential, a
 four-body-potential. In the following, let the particle for which the
 bond is created be particle :math:`p_2`, and the other bond partners
 :math:`p_1`, :math:`p_3`, :math:`p_4`, in this order. Then, the
@@ -654,7 +654,7 @@ where :math:`n` is the multiplicity of the potential (number of minima) and can
 take any integer value (typically from 1 to 6), :math:`p` is a phase
 parameter and :math:`K` is the bending constant of the potential. :math:`\phi` is
 the dihedral angle between the particles defined by the particle
-quadrupel :math:`p_1`, :math:`p_2`, :math:`p_3` and :math:`p_4`, the
+quadruple :math:`p_1`, :math:`p_2`, :math:`p_3` and :math:`p_4`, the
 angle between the planes defined by the particle triples :math:`p_1`,
 :math:`p_2` and :math:`p_3` and :math:`p_2`, :math:`p_3` and
 :math:`p_4`:
@@ -684,12 +684,12 @@ The bond is configured with::
 
 The parameters are:
 
-    * temp_com : Temerature of the Langevin thermostat for the COM of the particle pair.
+    * temp_com : Temperature of the Langevin thermostat for the COM of the particle pair.
     * gamma_com: Friction coefficient of the Langevin thermostat for the COM of the particle pair.
-    * temp_distance: Temerature of the Langevin thermostat for the distance vector of the particle pair.
+    * temp_distance: Temperature of the Langevin thermostat for the distance vector of the particle pair.
     * gamma_distance: Friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
     * r_cut:  Specifies maximum distance beyond which the bond is considered broken.
 
 The bond is closely related to simulating :ref:`Particle polarizability with
-thermalized cold Drude oszillators`. 
+thermalized cold Drude oscillators`. 
 

@@ -554,11 +554,11 @@ following features.
 Miscellaneous
 ^^^^^^^^^^^^^
 
--  ``FLATNOISE`` Shape of the noise in ther (LB) thermostat.
+-  ``FLATNOISE`` Shape of the noise in the (LB) thermostat.
 
--  ``GAUSSRANDOM`` Shape of the noise in ther (LB) thermostat.
+-  ``GAUSSRANDOM`` Shape of the noise in the (LB) thermostat.
 
--  ``GAUSSRANDOMCUT`` Shape of the noise in ther (LB) thermostat.
+-  ``GAUSSRANDOMCUT`` Shape of the noise in the (LB) thermostat.
 
 
 

@@ -131,7 +131,7 @@ That is, catalytic surfaces induce a reactions that produce charged species by c
       B &\xrightarrow{C^{-}} A
     \end{aligned}
 
-where on the upper half of the catalyst :math:`C^{+}` a species :math:`A` is converted into :math:`B`, and on the lower half :math:`C^{-}` the opposite reaction takes place. Note that when :math:`A` and :math:`B` are charged, this reaction conserves charge, provided the rates are equal. Note that this feature uses the word catalyst in a meaning which cannot be brought into agreement with the definition of a catalyst. If the catalyst :math:`C^{+}` catalyzes (on average) the reaction, where :math:`A` is converted to :math:`B`, then it is impossible that a catalyst :math:`C^{-}` perfoms (on average) the reverse reaction. For the example with hydrogen peroxide this would mean that hydrogen peroxide is created spontaneously using a catalyst (under the same environment where another catalyst wants to split hydrogen peroxide). This is chemically impossible. What is meant to be modeled is that hydrogen peroxide is constantly flowing into the system from the bulk and therfore it is not depleted. This behaviour cannot be modeled using a catalyst (in the defined meaning of the word catalyst).
+where on the upper half of the catalyst :math:`C^{+}` a species :math:`A` is converted into :math:`B`, and on the lower half :math:`C^{-}` the opposite reaction takes place. Note that when :math:`A` and :math:`B` are charged, this reaction conserves charge, provided the rates are equal. Note that this feature uses the word catalyst in a meaning which cannot be brought into agreement with the definition of a catalyst. If the catalyst :math:`C^{+}` catalyzes (on average) the reaction, where :math:`A` is converted to :math:`B`, then it is impossible that a catalyst :math:`C^{-}` performs (on average) the reverse reaction. For the example with hydrogen peroxide this would mean that hydrogen peroxide is created spontaneously using a catalyst (under the same environment where another catalyst wants to split hydrogen peroxide). This is chemically impossible. What is meant to be modeled is that hydrogen peroxide is constantly flowing into the system from the bulk and therefore it is not depleted. This behaviour cannot be modeled using a catalyst (in the defined meaning of the word catalyst).
 
 In |es| the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the *reaction range*: :math:`r`. Inside the reaction range, we react only reactant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by
 
@@ -1512,7 +1512,7 @@ thermostat that produces thermal fluctuations.
 advective contribution to the diffusive species’ fluxes. Default is
 `True`.
 
-``fluid_coulping`` can be set to `friction` or `estatics`. This option determines the force
+``fluid_coupling`` can be set to `friction` or `estatics`. This option determines the force
 term acting on the fluid. The former specifies the force term to be the
 sum of the species fluxes divided by their respective mobilities while
 the latter simply uses the electrostatic force density acting on all
@@ -1646,9 +1646,9 @@ The local `density` and `flux` of a species can be obtained in the same fashion:
 .. |image_oif_area| image:: figures/arealocal.png
 .. |image_oif_volume| image:: figures/volume.png
 
-.. _Particle polarizability with thermalized cold Drude oszillators:
+.. _Particle polarizability with thermalized cold Drude oscillators:
 
-Particle polarizability with thermalized cold Drude oszillators
+Particle polarizability with thermalized cold Drude oscillators
 ---------------------------------------------------------------
 
 .. note::
@@ -1659,13 +1659,13 @@ Particle polarizability with thermalized cold Drude oszillators
 
     Drude is only available for the P3M electrostatics solver and the Langevin thermostat.
 
-**Thermalized cold drude oszillators** can be used to simulate
+**Thermalized cold drude oscillators** can be used to simulate
 polarizable particles.  The basic idea is to add a 'charge-on-a-spring' (Drude
 charge) to a particle (Drude core) that mimics an electron cloud which can be
 elongated to create a dynamically inducible dipole. The energetic minimum of
 the Drude charge can be obtained self-consistently, which requires several
 iterations of the system's electrostatics and is usually considered
-computational expensive. However, with thermalized cold Drude oszillators, the
+computational expensive. However, with thermalized cold Drude oscillators, the
 distance between Drude charge and core is coupled to a thermostat so that it
 fluctuates around the SCF solution. This thermostat is kept at a low
 temperature compared to the global temperature to minimize the heat flow into
@@ -1694,7 +1694,7 @@ polarizability :math:`\alpha` (in units of inverse volume) with :math:`q_d =
 -\sqrt{k \cdot \alpha}`.
 
 The following helper method takes into account all the preceding considerations
-and can be used to convenientely add a drude particle to a given core particle.
+and can be used to conveniently add a drude particle to a given core particle.
 As it also adds the first two bonds between Drude and core, these bonds have to
 be created beforehand::
 
@@ -1762,7 +1762,7 @@ Parameters are:
 
     * <system>: The espressomd.System().
     * <molecule drude types>: List of the drude types within the molecule.
-    * <molecule core types>: List of the core types within the molecue that have partial charges.
+    * <molecule core types>: List of the core types within the molecule that have partial charges.
     * <molecule core partial charges>: List of the partial charges on the cores.
     * <verbose>: (bool, optional) Prints out information about the created bonds (default: False)
 
@@ -1778,7 +1778,7 @@ This method has to be called for all molecules and needs the following parameter
     * <core ids>: The ids of the core particles within one molecule.
     * <verbose>: (bool, optional) Prints out information about the added bonds (default: False)
 
-Internally, this is done with the bond descibed in  :ref:`Subtract P3M short-range bond`, that
+Internally, this is done with the bond described in  :ref:`Subtract P3M short-range bond`, that
 simply adds the p3m shortrange pair-force of scale `- q_d q_{partial}` the to
 bonded particles.
 
@@ -1917,7 +1917,7 @@ value of :math:`K_c` has to be converted as
    \Gamma = K_c(c^{\ominus} = 1/\sigma^3) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) 
    \Bigl( N_{\mathrm{A}}\bigl(\frac{\sigma}{\mathrm{dm}}\bigr)^3\Bigr)^{\bar\nu}
    
-where :math:`N_{\mathrm{A}}` is the Avogardo number.  For gas-phase reactions,
+where :math:`N_{\mathrm{A}}` is the Avogadro number.  For gas-phase reactions,
 the pressure-based reaction constant, :math:`K_p` is often used, which can
 be converted to :math:`K_c` as
 

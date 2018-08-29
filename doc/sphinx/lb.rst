@@ -178,7 +178,7 @@ Reading and setting properties of single lattice nodes
 
 Appending three indices to the ``lb`` object returns an object that represents the selected LB grid node and allows one to access all of its properties::
 
-    lb[x,y,z].density    #fluid density (one scalar for LB and LB_GPU, two scalars for SHAN_CHEN)
+    lb[x,y,z].density    #fluid density (one scalar for LB and LB_GPU, two scalars for SHANCHEN)
     lb[x,y,z].velocity   #fluid velocity (a numpy array of three floats)
     lb[x,y,z].pi         #fluid pressure tensor (a symmetric 3x3 numpy array of floats)
     lb[x,y,z].pi_neq     #nonequilbrium part of the pressure tensor (as above)
@@ -200,9 +200,9 @@ The first line prints the fluid velocity at node 0 0 0 to the screen. The second
 Removing total fluid momentum
 -----------------------------
 
-.. note:: Only available for LB_GPU and SHAN_CHEN
+.. note:: Only available for LB_GPU and SHANCHEN
 
-Some simulations require the net momentum of the system to vanish. Even if the physics of the system fulfills this condition, numerical errors can introduce drift. Simulations that frequently suffer from this effect are for example free energy profile calculations using ``SHAN_CHEN``, where it might be useful to prevent interface motion, or electrophoretic mobility calculations for mobile objects. Removing the total momentum of the fluid can be achieved using::
+Some simulations require the net momentum of the system to vanish. Even if the physics of the system fulfills this condition, numerical errors can introduce drift. Simulations that frequently suffer from this effect are for example free energy profile calculations using ``SHANCHEN``, where it might be useful to prevent interface motion, or electrophoretic mobility calculations for mobile objects. Removing the total momentum of the fluid can be achieved using::
 
     lb.remove_momentum()
 
@@ -230,7 +230,7 @@ The variant
 
    lb.print_vtk_velocity(path, bb1, bb2) 
 
-allows you to only output part of the flow field by specifiying an axis aligned
+allows you to only output part of the flow field by specifying an axis aligned
 bounding box through the coordinates ``bb1`` and ``bb1`` (lists of three ints) of two of its corners. This
 bounding box can be used to output a slice of the flow field. As an
 example, executing
@@ -288,7 +288,7 @@ field by having the charged particles create flow.
 
 For that to work, you need to set the electrophoretic mobility
 (multiplied by the external :math:`E`-field) :math:`\mu E` on the
-particles that should be subject to the field. This effectivly acts
+particles that should be subject to the field. This effectively acts
 as an velocity offset between the particle and the LB fluid.
 
 For more information on this method and how it works, read the

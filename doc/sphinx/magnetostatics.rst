@@ -78,7 +78,7 @@ Usage notes:
   
   * The method relies on a slab of the simulation box perpendicular to the z-direction not to contain particles. The size in z-direction of this slab is controlled by the `gap_size` parameter. The user has to ensure that no particles enter this region by means of constraints or by fixing the particles' z-coordinate. When there is no empty slab of the specified size, the method will silently produce wrong results.
 
-  * The method can be tuned using the `accuracy` parameter. In contrast to the elctrostatic method, it refers to the energy. Furthermore, it is assumed that all dipole moment are as large as the largest of the dipoles in the system. 
+  * The method can be tuned using the `accuracy` parameter. In contrast to the electrostatic method, it refers to the energy. Furthermore, it is assumed that all dipole moment are as large as the largest of the dipoles in the system. 
 
 The method is used as follows::
 

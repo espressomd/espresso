@@ -69,7 +69,7 @@ It is also generally a good idea to contact the mailing lists before you
 start major coding projects. It might be that someone else is already
 working on the problem or has a solution at hand.
 
-You find more detailed information on our developement processes in the
+You find more detailed information on our development processes in the
 :ref:`Developers guide`.
 
 .. _github: https://github.com/espressomd/espresso/blob/python/CONTRIBUTING.md

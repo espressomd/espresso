@@ -319,7 +319,7 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
 The `have_velocity` parameter determines whether or not the velocity of virtual sites is calculated, which carries a performance cost.
-The `have_quaternion` parameter determines whether the quaternion of the virtual particle is updated (usefull in combination with the
+The `have_quaternion` parameter determines whether the quaternion of the virtual particle is updated (useful in combination with the
 :attr:`espressomd.particle_data.ParticleHandle.vs_quat` property of the virtual particle which defines the orientation of the virtual particle
 in the body fixed frame of the related real particle.
 
@@ -407,7 +407,7 @@ Inertialess Lattice-Boltzmann tracers
 
 :class:`espressomd.virtual_sites.VirtualSitesInertialessTracers`
 
-When this implementation is selected, the virtual sites follow the motion of a Lattice Botzmann fluid (both, Cpu and Gpu). This is achieved by integrating their position using the fluid velocity at the virtual sites' position.
+When this implementation is selected, the virtual sites follow the motion of a Lattice Boltzmann fluid (both, Cpu and Gpu). This is achieved by integrating their position using the fluid velocity at the virtual sites' position.
 Forces acting on the virtual sites are directly transferred as force density onto the Lattice Boltzmann fluid, making the coupling free of inertia.
 The feature stems from the implementation of the :ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
 

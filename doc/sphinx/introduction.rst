@@ -61,9 +61,9 @@ An example can be the implementation of the Generic Lennard-Jones potential
 described in section :ref:`Generic Lennard-Jones interaction` where the user
 can change all available parameters. Where possible, default values are
 avoided, providing the user with the possibility of choice. |es| cannot be
-aware whether your particles are representing atoms or billard balls, so it
+aware whether your particles are representing atoms or billiard balls, so it
 cannot check if the chosen parameters make sense and it is the user’s
-responsibility to make sure they do. In fact, |es| can be used to play billard
+responsibility to make sure they do. In fact, |es| can be used to play billiard
 (see the sample script in ``samples/billard.py``)!
 
 On the other hand, flexibility of |es| stems from the employment of a scripting
@@ -215,7 +215,7 @@ interaction between all particles of type 0 with the given parameters: ::
 
 .. rubric:: Bonded interaction
 
-Next, we add another pair of partices with a different type to later add 
+Next, we add another pair of particles with a different type to later add 
 a :ref:`harmonic bond<Harmonic bond>` between them: ::
 
     system.part.add(id = 2, pos = [7.0, 7.0, 7.0], type = 1) 
@@ -311,7 +311,7 @@ Several scripts that can serve as usage examples can be found in the directory `
 or in the `git repository <https://github.com/espressomd/espresso/blob/python/samples/>`_.
 
 * ``billard.py`` 
-    A simple billard game, needs the Python ``pypopengl`` module
+    A simple billiard game, needs the Python ``pypopengl`` module
 
 * ``bonds-tst.py``
    Test script that manually creates and deletes different bonds between particles (see :ref:`Bonded interactions`). This script performs:
@@ -368,7 +368,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
    * custom user variables
    * non bonded interactions
    * particles
-   * P3M paremeters
+   * P3M parameters
    * thermostat
 
 * ``load_properties.py``,  ``store_properties.py``
@@ -409,7 +409,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     Simple test visualization for the NPT ensemble.
 
 * ``visualization_poisseuille.py``
-    Visualization for poisseuille flow with Lattice-Boltzmann.
+    Visualization for Poiseuille flow with Lattice-Boltzmann.
 
 * ``visualization_constraints.py``
     Constraint visualization with opengl with all available constraints (commented out).
@@ -479,7 +479,7 @@ scale can be derived from the time, energy and length scales as
 
     [\mathrm{mass}] = [\mathrm{energy}]\frac{[\mathrm{time}]^2}{[\mathrm{length}]^2}.
 
-By activating the feature MASSES, you can specify particle masses in
+By activating the feature MASS, you can specify particle masses in
 the chosen unit system.
 
 A special note is due regarding the temperature, which is coupled to the
@@ -544,7 +544,7 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+------------+
 | Isotropic NPT                  | None                   | Single           | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Quarternion Integrator         | Core                   | Good             | Yes        |
+| Quaternion Integrator          | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 |                                **Interactions**                                         |
 +--------------------------------+------------------------+------------------+------------+

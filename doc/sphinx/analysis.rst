@@ -48,7 +48,7 @@ Energies
 :meth:`espressomd.analyze.Analysis.energy`
 
 Returns the energies of the system.
-The the different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, coublomb))
+The the different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, Coulomb))
 
 For example, ::
 
@@ -789,7 +789,7 @@ The following observables are available:
    - ComForce: Sum of the forces on the particles
      :math:`\sum_i f^x_i, \sum_i f^y_i, \sum_i f^z_i` 
 
-- Profile observables sampling the spacial profile of various quantities
+- Profile observables sampling the spatial profile of various quantities
 
    -  DensityProfile
 

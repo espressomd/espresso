@@ -512,7 +512,7 @@ MMM family of algorithms, refer to appendix :ref:`The MMM family of algorithms`.
 Please cite :cite:`arnold02a` when using MMM2D.
 
 A complete (but unphysical) sample script for a plate capacitor simulated with MMM2D
-can be found in `/samples/visualiztion_mmm2d.py`.
+can be found in `/samples/visualization_mmm2d.py`.
 
 .. _Electrostatic Layer Correction (ELC):
 
@@ -580,7 +580,7 @@ Parameters are:
         probably want to disable the neutralization for non-neutral systems.
         This corresponds then to a formal regularization of the forces and
         energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
-        explicitely as constraints, you have to disable the neutralization.
+        explicitly as constraints, you have to disable the neutralization.
         When using a dielectric contrast or full metallic walls
         (``delta_mid_top != 0`` or ``delta_mid_bot != 0`` or
         ``const_pot=1``), ``neutralize`` is overwritten and switched off internally.
@@ -596,7 +596,7 @@ MMM1D
 
 .. note::
     Required features: ELECTROSTATICS, PARTIAL_PERIODIC for MMM1D, the GPU version additionally needs
-    the features CUDA and MMM1DGPU.
+    the features CUDA and MMM1D_GPU.
 
 :: 
 

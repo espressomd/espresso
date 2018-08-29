@@ -56,7 +56,7 @@ format.
 ----------------------------------------
 
 Referring to the previous section, generic checkpointing poses
-difficulties in many ways. Fortunatelly, the Python checkpointing module
+difficulties in many ways. Fortunately, the Python checkpointing module
 presented in this section provides a comfortable workflow for an almost
 generic checkpointing.
 

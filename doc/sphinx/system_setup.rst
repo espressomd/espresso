@@ -343,7 +343,7 @@ friction coefficient for every particle individually via the feature
     In case the MD step is rejected, the particles momenta may be flipped.
     This is specified by setting the / option, for the option half of the
     rejected MD steps randomly result in momenta flip. The default for
-    momenta flip is . The :math:`\pmb{\xi}` noise vector’s variance van be
+    momenta flip is . The :math:`\pmb{\xi}` noise vector’s variance can be
     tuned to exactly :math:`1/\mathrm{temperature}` by specifying the option.
     The default for temperature scaling is .
 

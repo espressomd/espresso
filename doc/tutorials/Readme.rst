@@ -39,7 +39,7 @@ If it is not found, on Ubuntu and related platforms, it can be installed via::
     
     sudo apt install ipython-notebook
 
-To view the turorials, first change to the tutorials directory and then run the `ipypresso` script from the directory into which espresso was compiled::
+To view the tutorials, first change to the tutorials directory and then run the `ipypresso` script from the directory into which espresso was compiled::
     
     cd doc/tutorials
     /path_to_espresso_build/ipypresso notebook
