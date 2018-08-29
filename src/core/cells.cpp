@@ -123,6 +123,13 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
 
                            return vec21.norm2();
                          });
+  case CELL_STRUCTURE_COLUMNAR:
+    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
+                         boost::make_indirect_iterator(local_cells.end()),
+                         Utils::NoOp{}, pair_kernel,
+                         [](Particle const &p1, Particle const &p2) {
+                           return distance2(p1.r.p, p2.r.p);
+                         });
   }
 
   /* Sort pairs */
@@ -179,6 +186,9 @@ static void topology_release(int cs) {
   case CELL_STRUCTURE_LAYERED:
     layered_topology_release();
     break;
+  case CELL_STRUCTURE_COLUMNAR:
+    //cd_topology_release();
+    break;
   default:
     fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an "
                     "unknown way (%d)\n",
@@ -206,6 +216,9 @@ void topology_init(int cs, CellPList *local) {
     break;
   case CELL_STRUCTURE_LAYERED:
     layered_topology_init(local, node_grid);
+    break;
+  case CELL_STRUCTURE_COLUMNAR:
+    //cd_topology_init(local);
     break;
   default:
     fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an "
@@ -376,6 +389,9 @@ void cells_resort_particles(int global_flag) {
   case CELL_STRUCTURE_DOMDEC:
     dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid);
     break;
+  case CELL_STRUCTURE_COLUMNAR:
+    //cd_exchange_and_sort_particles(global_flag);
+    break;
   }
 
   if (0 != displaced_parts.n) {
@@ -431,6 +447,9 @@ void cells_on_geometry_change(int flags) {
     break;
   case CELL_STRUCTURE_NSQUARE:
     break;
+  case CELL_STRUCTURE_COLUMNAR:
+    cells_re_init(CELL_STRUCTURE_COLUMNAR);
+    break
   }
 }
 
