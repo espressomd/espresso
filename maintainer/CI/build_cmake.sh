@@ -65,6 +65,7 @@ if [ -z "$cxx_flags" ]; then
             cxx_flags="-O3"
         else
             cxx_flags="-O0"
+        fi
     fi
 fi
 
