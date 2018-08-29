@@ -66,7 +66,7 @@ class BHGPUTest(ut.TestCase):
 
         part_dip = np.zeros((3))
 
-        for n in [110, 111, 540, 541, 5946]:
+        for n in [128, 541]:
             dipole_modulus = 1.3
             # scale the box for a large number of particles:
             if n > 1000:
