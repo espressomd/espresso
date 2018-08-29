@@ -61,7 +61,7 @@ if [ -z "$cxx_flags" ]; then
     if $with_coverage; then
         cxx_flags="-Og"
     else
-        cxx_flags="-O3"
+        cxx_flags="-O0"
     fi
 fi
 
