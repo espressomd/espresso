@@ -76,7 +76,7 @@ system.actors.add(lbf)
 #
 # Now we set up the three LB boundaries that form the rectifying geometry.
 # The cylinder boundary/constraint is actually already capped, but we put
-# in two planes for safety's sake. If you want to create an cylinder of
+# in two planes for safety's sake. If you want to create a cylinder of
 # 'infinite length' using the periodic boundaries, then the cylinder must
 # extend over the boundary.
 #

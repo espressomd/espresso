@@ -48,7 +48,7 @@ Energies
 :meth:`espressomd.analyze.Analysis.energy`
 
 Returns the energies of the system.
-The the different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, Coulomb))
+The different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, Coulomb))
 
 For example, ::
 
@@ -490,7 +490,7 @@ The long ranged (kspace) part is given by:
 
 .. math :: p^\text{Coulomb, P3M, rec}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2 \pi V^2} \sum_{\vec{k} \neq \vec{0}} \frac{\exp(-\pi^2 \vec{k}^2/\beta^2)}{\vec{k}^2} |S(\vec{k})|^2 \cdot (\delta_{k,l}-2\frac{1+\pi^2\vec{k}^2/\beta^2}{\vec{k}^2} \vec{k}_k \vec{k}_l),
 
-where :math:`S(\vec{k})` is the Fourier transformed charge density. Compared to Essmann we do not have a the contribution :math:`p^\text{corr}_{k,l}` since we want to calculate the pressure that arises from all particles in the system.
+where :math:`S(\vec{k})` is the Fourier transformed charge density. Compared to Essmann we do not have the contribution :math:`p^\text{corr}_{k,l}` since we want to calculate the pressure that arises from all particles in the system.
 
 Note: The different contributions which are returned are the summands that arise from force splitting :math:`\vec{F}_{i,j}={\vec{F}_{i,j}}_\text{bonded}+{\vec{F}_{i,j}}_\text{nonbonded}+...` in the virial stress tensor formula.
 Later when the user calculates the stress tensor via :math:`\langle p_{(k,l)}\rangle  \approx 1/N \sum_{i=1}^N p_{k,l}` however the ensemble average with all interactions present is performed.
@@ -510,7 +510,7 @@ Local Stress Tensor
 
 A cuboid is defined in the system and divided into bins.
 For each of these bins an instantaneous stress tensor is calculated using the Irving Kirkwood method.
-That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles that is within the bin.
+That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles within that bin.
 
 If the P3M and MMM1D electrostatic methods are used, these interactions
 are not included in the local stress tensor. The DH and RF methods, in
@@ -734,7 +734,7 @@ Creating an observable
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The observables are represented as Python classes derived from :class:`espressomd.observables.Observable`. They are contained in
-the ``espressomd.observables`` module. An observable is instanced as
+the ``espressomd.observables`` module. An observable is instantiated as
 follows
 
 ::

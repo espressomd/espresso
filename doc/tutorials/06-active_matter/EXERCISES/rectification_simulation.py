@@ -133,7 +133,7 @@ system.constraints.add(shape=hollow_cone, particle_type=4)
 ################################################################################
 #
 # We set up a WCA (almost-hard) interaction between the particles and the
-# the confining geometry. We do not have particle-particle interactions, which
+# confining geometry. We do not have particle-particle interactions, which
 # are not necessary to observe rectification.
 #
 ##########################################################################

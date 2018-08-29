@@ -272,7 +272,7 @@ The following minimal example demonstrates how to use the GPU implementation of 
 
 For boundary conditions analogous to the CPU
 implementation, the feature ``LB_BOUNDARIES_GPU`` has to be activated.
-The feature ``LB_GPU`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
+The feature ``LB_GPU`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
 
 .. _Electrohydrodynamics:
 
@@ -289,7 +289,7 @@ field by having the charged particles create flow.
 For that to work, you need to set the electrophoretic mobility
 (multiplied by the external :math:`E`-field) :math:`\mu E` on the
 particles that should be subject to the field. This effectively acts
-as an velocity offset between the particle and the LB fluid.
+as a velocity offset between the particle and the LB fluid.
 
 For more information on this method and how it works, read the
 publication :cite:`hickey10a`.
@@ -308,7 +308,7 @@ Lattice-Boltzmann boundaries are implemented in the module
 at the classes :class:`espressomd.lbboundaries.LBBoundary`
 and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
 
-Adding a shape based boundary is straightforward::
+Adding a shape-based boundary is straightforward::
 
     lbb = espressomd.lbboundaries.LBBoundary(shape=my_shape, velocity=[0,0,0])
     system.lbboundaries.add(lbb)
@@ -379,7 +379,7 @@ The following example sets up a system consisting of a spherical boundary in the
 
 After integrating the system for a sufficient time to reach the steady state, the hydrodynamic drag force exerted on the sphere is evaluated.
 
-The LB boundaries use the same ``shapes`` objects to specify their geometry as ``constraints`` for particles do. This allows the user to quickly set up a system with boundary conditions that simultaneously act on the fluid and particles. For a complete description of all of the available shapes, refer to :meth:`espressomd.shapes`.
+The LB boundaries use the same ``shapes`` objects to specify their geometry as ``constraints`` do for particles. This allows the user to quickly set up a system with boundary conditions that simultaneously act on the fluid and particles. For a complete description of all available shapes, refer to :meth:`espressomd.shapes`.
 
 Intersecting boundaries are in principle possible but must be treated
 with care. In the current implementation, all nodes that are
@@ -414,10 +414,10 @@ straightforward. The ``LBBoundary`` object furthermore possesses a property ``fo
     The Lattice Boltzmann variant of Shan and
     Chen :cite:`shan93a` is widely used as it is simple and yet
     very effective in reproducing the most important traits of
-    multicomponent or multiphase fluids. The version of the Shan-Chen method
+    multi-component or multi-phase fluids. The version of the Shan-Chen method
     implemented in is an extension to bi-component fluids of the
     multi-relaxation-times Lattice Boltzmann with fluctuations applied to
-    all modes, that is already present in |es|. It features, in addition,
+    all modes, that is already present in |es|. It also features
     coupling with particles :cite:`sega13c` and
     component-dependent particle interactions (see sections
     :ref:`SC as a thermostat` and :ref:`SC component-dependent interactions between particles`).

@@ -285,7 +285,7 @@ The camera can be controlled via mouse and keyboard:
 Additional input functionality for mouse and keyboard is possible by assigning
 callbacks to specified keyboard or mouse buttons. This may be useful for
 realtime adjustment of system parameters (temperature, interactions, particle
-properties etc) of for demonstration purposes. The callbacks can be triggered
+properties etc) or for demonstration purposes. The callbacks can be triggered
 by a timer or keyboard input:: 
 
     def foo():

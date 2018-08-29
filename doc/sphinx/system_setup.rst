@@ -16,7 +16,7 @@ available in the Python interface are listed in the following. Note that for the
 vectorial properties ``box_l`` and ``periodicity``, component-wise manipulation
 like ``system.box_l[0] = 1`` or in-place operators like ``+=`` or ``*=`` are not
 allowed and result in an error. This behavior is inherited, so the same applies
-to ``a`` after ``a = system.box_l``. If you want to use an vectorial property
+to ``a`` after ``a = system.box_l``. If you want to use a vectorial property
 for further calculations, you should explicitly make a copy e.g. via
 ``a = numpy.copy(system.box_l)``.
 
@@ -209,12 +209,12 @@ Layered cell system
 Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_layered`
 selects the layered cell system, which is specifically designed for
 the needs of the MMM2D algorithm. Basically it consists of a nsquared
-algorithm in x and y, but a domain decomposition along z, i. e. the
+algorithm in x and y, but a domain decomposition along z, i.e. the
 system is cut into equally sized layers along the z axis. The current
 implementation allows for the CPUs to align only along the z axis,
 therefore the processor grid has to have the form 1x1xN. However, each
 processor may be responsible for several layers, which is determined by
-``n_layers``, i. e. the system is split into N\* layers along the z axis. Since in x
+``n_layers``, i.e. the system is split into N\* layers along the z axis. Since in x
 and y direction there are no processor boundaries, the implementation is
 basically just a stripped down version of the domain decomposition
 cellsystem.::
@@ -299,7 +299,7 @@ same value as that for the translation.
 
 A separate rotational diffusion coefficient can be set by inputting
 ``gamma_rotate``.  This also allows one to properly match the translational and
-rotational diffusion coefficients of a sphere. ``ROTATIONAL_INERTIA`` Feature
+rotational diffusion coefficients of a sphere. Feature ``ROTATIONAL_INERTIA``
 enables an anisotropic rotational diffusion coefficient tensor through
 corresponding friction coefficients. 
 

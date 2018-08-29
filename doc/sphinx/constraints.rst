@@ -64,13 +64,13 @@ The module :mod:`espressomd.constraints` provides the class
 
     shape_constraint = espressomd.constraints.ShapeBasedConstraint(shape=my_shape)
 
-In order to add the constraint to to the system
+In order to add the constraint to the system
 invoke the :meth:`espressomd.constraints.add` method::
 
     system.constraints.add(shape_constraint)
 
-All previously listed shapes can be added to the system's constraints 
-by passing a initialized shape object to :meth:`system.constraints.add`, returning a constraint object ::
+All previously listed shapes can be added to the system constraints 
+by passing an initialized shape object to :meth:`system.constraints.add`, returning a constraint object ::
   
     misshaped = Wall(dist=20, normal=[0.1, 0.0, 1])
     myConstraint = system.constraints.add(shape = myShape, particle_type=p_type)
@@ -78,9 +78,9 @@ by passing a initialized shape object to :meth:`system.constraints.add`, returni
 The extra argument ``particle_type`` specifies the non-bonded interaction to be used with
 that constraint.
 
-There are two further optional parameters and that can
-be used to fine tune the behavior of the constraint. If ``penetrable`` is
-set to ``True`` then particles can move through the constraint in this case the
+There are two additional optional parameters
+to fine tune the behavior of the constraint. If ``penetrable`` is
+set to ``True`` then particles can move through the constraint. In this case the
 other option ``only_positive`` controls whether the particle is subject to the interaction
 potential of the wall. If set to then the constraint will only act in
 the direction of the normal vector.
@@ -127,8 +127,8 @@ Getting the force on a constraint
 
 :meth:`espressomd.system.constraints.total_force`
 
-Returns the force acting on the constraint. Note, however, that this
-are only forces due to interactions with particles, not with other
+Returns the force acting on the constraint. Note, however, that this is
+only due to forces from interactions with particles, not with other
 constraints. Also, these forces still do not mean that the constraints
 move, they are just the negative of the sum of forces acting on all
 particles due to this constraint. Similarly, the total energy does not
@@ -209,7 +209,7 @@ for this too work.
     A sphere.
 
 The resulting surface is a sphere with center ``center`` and radius ``radius``. 
-The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward.
+The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
 .. _shape-sphere:
 
@@ -228,7 +228,7 @@ Pictured is an example constraint with a ``Sphere`` shape created with ::
     An ellipsoid.
 
 The resulting surface is an ellipsoid of revolution with center ``center``, semiaxis ``a`` along the symmetry axis and equatorial semiaxes ``b``. The symmetry axis is aligned parallel to the x-axis.
-The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward. The distance to the surface is determined iteratively via Newton's method.
+The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward. The distance to the surface is determined iteratively via Newton's method.
 
 .. _shape-ellipsoid:
 
@@ -249,7 +249,7 @@ Pictured is an example constraint with an ``Ellipsoid`` shape created with ::
 The resulting surface is a cylinder with center ``center`` and radius ``radius``.
 The ``length`` parameter is **half** of the cylinder length.
 The ``axis`` parameter is a vector along the cylinder axis, which is normalized in the program.
-The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward.
+The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
 
 
@@ -270,9 +270,9 @@ Pictured is an example constraint with a ``Cylinder`` shape created with ::
 
 The resulting surface is a rhomboid, defined by one corner located at ``corner`` 
 and three adjacent edges, defined by the three vectors connecting the 
-corner ``corner`` with it’s three neighboring corners:
+corner ``corner`` with its three neighboring corners:
 ``a`` ``[ax ay az ]``; ``b`` ``[bx by bz]`` and ``c`` ``[cx cy cz]``.
-The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward.
+The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
  ::
 
@@ -400,7 +400,7 @@ The resulting surface is a cylinder capped by hemispheres on both ends.
 Similar to `espressomd.shapes::Cylinder`, it is positioned at ``center`` and has a radius ``radius``.
 The ``length`` parameter is **half** of the cylinder length, and does not include the contribution from the hemispherical ends.
 The ``axis`` parameter is a vector along the cylinder axis, which is normalized in the program.
-The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward.
+The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
 
 .. figure:: figures/shape-spherocylinder.png
@@ -419,7 +419,7 @@ Pictured is an example constraint with a ``SpheroCylinder`` shape created with :
 
 The resulting surface is a section of a hollow cone.
 The parameters ``inner_radius`` and ``outer_radius`` specifies the two radii .
-The parameter ``opening_angle`` specifies the opening angle of the cone (in radians, between 0 and:math:`\pi/2` ), and thus also determines the length.
+The parameter ``opening_angle`` specifies the opening angle of the cone (in radians, between 0 and :math:`\pi/2` ), and thus also determines the length.
 
 The orientation of the (cylindrically symmetric) cone is specified with the array_like parameter ``axis``,
 which points in the direction of the symmetry axis, and does not need to be normalized.
@@ -427,7 +427,7 @@ which points in the direction of the symmetry axis, and does not need to be norm
 The position is specified via the array_like parameter ``center`` and can be any point in the simulation box.
 
 The ``width`` specifies the width.
-This shape supports the ``direction`` parameter, +1 the normal points out of the mantel, -1 for when points inward.
+This shape supports the ``direction`` parameter, ``+1`` for outward and ``-1`` for inward.
 
 .. figure:: figures/shape-hollowcone.png
    :alt:  Example constraint with a  ``Hollowcone`` shape.
@@ -573,8 +573,8 @@ Interpolated Force and Potential fields
 
 The values of these fields are obtained by interpolating table data,
 which has to be provided by the user. The fields differ by how
-they couple to particles, for a a detailed description their respective
-the class documentation.
+they couple to particles, for a detailed description see their respective
+class documentation.
 
 :class:`espressomd.Constraints::ForceField`
 :class:`espressomd.Constraints::PotentialField`

@@ -256,7 +256,7 @@ Writing MPI-IO binary files
 This method outputs binary data in parallel and is, thus, also suitable for
 large-scale simulations. Generally, H5MD is the preferred method because the
 data is easier accessible. In contrast to H5MD, the MPI-IO functionality
-outputs data in a *machine dependent format* but has write and read
+outputs data in a *machine-dependent format* but has write and read
 capabilities. The usage is quite simple:
 
 .. code:: python
@@ -286,7 +286,7 @@ There exists a legacy python script in the `tools` directory which can convert
 MPI-IO data to the now unsupported blockfile format. Check it out if you want
 to post-process the data without ESPResSo.
 
-*WARNING* Do not attempt to read these data on a machine with a different
+*WARNING* Do not attempt to read these binary files on a machine with a different
 architecture!
 
 .. _Writing VTF files:
@@ -342,7 +342,7 @@ A standalone VTF file can simply be
         vtf.writevcf(system, fp)
     fp.close()
 
-The structure definitions in the VTF/VSF formats are incremental, a user
+The structure definitions in the VTF/VSF formats are incremental, the user
 can easily add further structure lines to the VTF/VSF file after a
 structure block has been written to specify further particle properties
 for visualization.

@@ -95,7 +95,7 @@ force = 0.1
 # change the mass and rotational inertia? Why is the value of
 # the force chosen to be low.
 
-# Setup the particle particle
+# Setup the particle
 
 system.part.add(
     pos=[x0, y0, z0], type=0, mass=sph_mass, rinertia=[Ixyz, Ixyz, Ixyz],

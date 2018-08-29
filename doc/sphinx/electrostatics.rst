@@ -370,7 +370,7 @@ using it.
        \label{eq:bjerrum-length}
 
     The local changes of :math:`\varepsilon` are in reference to this value
-    and can be seen as a spatially dependent prefactor to this epsilon. If
+    and can be seen as a spatially-dependent prefactor to this epsilon. If
     left unchanged, this prefactor is :math:`1.0` for every site by default.
 
     .. _Adaptive permittivity with MEMD:

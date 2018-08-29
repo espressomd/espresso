@@ -561,7 +561,7 @@ of the algorithm see there. The parameters can be set via::
 
     system.non_bonded_inter[type1, type2].dpd.set_params(**kwargs)
 
-This command defines a velocity dependent interaction
+This command defines a velocity-dependent interaction
 between particles of the types *type1* and *type2*. For a description of the input arguments
 see :class:`espressomd.interactions.DPDInteraction`. The interaction
 only has an effect if the DPD thermostat activated, and acts according to the
@@ -658,7 +658,7 @@ coefficients, the helper method ``add_drude_particle_to_core()`` (see
 :ref:`Particle polarizability with thermalized cold Drude oscillators`) 
 collects all core types, Drude types and relevant parameters when a Drude 
 particle is created. The user already provided all the information when 
-setting up the the Drude particles, so the simple call::
+setting up the Drude particles, so the simple call::
 
     add_all_thole(<system>, <verbose>)
 

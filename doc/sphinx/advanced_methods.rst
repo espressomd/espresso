@@ -113,7 +113,7 @@ Swimmer Reactions
 
 With the help of the feature ``SWIMMER_REACTIONS``, one can define three particle types to act as reactant (e.g. :math:`\mathrm{H_2 O_2}`), catalyzer (e.g. platinum), and product (e.g. :math:`\mathrm{O_2}` and :math:`\mathrm{H_2 O}`). The current setup allows one to simulate active swimmers and their chemical propulsion.
 
-For a Janus swimmer consisting of platinum on one hemisphere and gold on the other hemisphere, both surfaces catalytically induce a reaction. We assume an initial abundance of hydrogen peroxide and absence of products, so that back (recombination) reactions seldomly occur at the surface. A typical model for the propulsion of such a particle assumes
+For a Janus swimmer consisting of platinum on one hemisphere and gold on the other hemisphere, both surfaces catalytically induce a reaction. We assume an initial abundance of hydrogen peroxide and absence of products, so that back (recombination) reactions seldom occur at the surface. A typical model for the propulsion of such a particle assumes
 
 .. math::
 
@@ -283,8 +283,7 @@ University of Bayreuth if you plan to use this feature.
 
 Boundary Method (IBM), soft particles are considered as an infinitely
 thin shell filled with liquid (see e.g. :cite:`Peskin2002,Crowl2010,KruegerThesis`). When the
-shell is deformed by an external flow it responds by elastic restoring
->>>>>>> 86ca06ad32a3dfa71547de702e9933fd6b7f6037
+shell is deformed by an external flow, it responds with elastic restoring
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
 Lattice-Boltzmann.
@@ -640,7 +639,7 @@ printed in the terminal window and when the integration is complete, we
 should get a message about it.
 
 
-| To sum up, the proper order of setting up a individual simulation
+| To sum up, the proper order of setting up individual simulation
   parts is as follows:
 | - cell types
 | - cells
@@ -648,8 +647,8 @@ should get a message about it.
 | - fluid boundaries
 | - interactions
 | If cell types and cells are specified after the fluid, the simulation
-  is slower. Also, interactions can only be defined once both the
-  objects and boundaries exist. Technically, the fluid boundaries can be
+  is slower. Also, interactions can only be defined once the objects
+  and boundaries both exist. Technically, the fluid boundaries can be
   specified before fluid, but it is really not recommended.
   
   
@@ -680,7 +679,7 @@ In the script, we have used the commands such as
 
     cell.output_vtk_pos_folded(filename="output/sim1/cell_" + str(i) + ".vtk")
 
-to output the information about cell in in every pass of the simulation
+to output the information about cell in every pass of the simulation
 loop. These files can then be used for inspection in ParaView and
 creation of animations. It is also possible to save a .vtk file for the
 fluid. And obviously, one can save various types of other data into text
@@ -1006,8 +1005,8 @@ bonds are created here.
   correct orientation and then calculates the volume of the object. If
   the result is negative, it flips the orientation of all triangles.
 
-| Note, this methods tells the user about the correction it makes. If
-  there are any, it might be useful to save the corrected triangulation
+| Note, this method tells the user about the correction it makes. If
+  there is any, it might be useful to save the corrected triangulation
   for future simulations using the method
   ``CellType.mesh.OutputMeshTriangles``\ (:math:`filename`), so that the
   check does not have to be used repeatedly.
@@ -1282,7 +1281,7 @@ how the object data are stored.
 classes FixedPoint and PartPoint
 
 
-Class PartPoint represents an particle. These particles are then used as
+Class PartPoint represents a particle. These particles are then used as
 building blocks for edges, angles, triangles and ultimately the whole
 object mesh. Since we use a two-step process to create the objects, it
 is necessary to distinguish between a FixedPoint and PartPoint.
@@ -1477,7 +1476,7 @@ Initialization
     viscosity = 1.0, friction = 1.0, T =1.0, prefactor = 1.0, stencil = 'linkcentered', advection = True, fluid_coupling = 'friction')
     sys.actors.add(ek)
 
-.. note:: `Feature ELECTROKINETICS and LB_GPU required`
+.. note:: `Features ELECTROKINETICS and LB_GPU required`
 
 The above is a minimal example how to initialize the LB fluid, and
 it is very similar to the Lattice-Boltzmann command in set-up. We

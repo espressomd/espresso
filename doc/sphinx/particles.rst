@@ -13,7 +13,7 @@ For understanding this chapter, it is helpful to be aware of the Python classes 
 * :class:`espressomd.particle_data.ParticleList` provides access to all particles in the simulation
 * :class:`espressomd.particle_data.ParticleSlice` provides access to a subset of particles in the simulation identified by a list of ids.
 
-in almost no case have these classes to be instanced explicitly by the user. 
+in almost no case have these classes to be instantiated explicitly by the user. 
 Rather, access is provided via the :attr:`espressomd.system.System.part` attribute.
 The details are explained in the following sections.
 
@@ -71,7 +71,7 @@ Vectorial properties
 For vectorial particle properties, component-wise manipulation like ``system.part[0].pos[0]
 = 1`` or in-place operators like ``+=`` or ``*=`` are not allowed and result in an error.
 This behavior is inherited, so the same applies to ``a`` after ``a =
-system.part[0].pos``. If you want to use an vectorial property for further
+system.part[0].pos``. If you want to use a vectorial property for further
 calculations, you should explicitly make a copy e.g. via
 ``a = numpy.copy(system.part[0].pos)``.
 
@@ -116,7 +116,7 @@ by the length of the input, as slice length and input length can be equal. Here,
 
     system.part[2:4].exclusions = [[0, 1], [0, 1]]
 
-The above code snippet would lead the the same exclusions as the one before.
+The above code snippet would lead to the same exclusions as the one before.
 The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with 
 the tuple ``(bond, partners)``. 
 
@@ -213,11 +213,11 @@ The polymer can be created using several different random walk modes (via the pa
 
  (Random walk)
     ``mode = 1`` The monomers are randomly placed by a random walk with a
-    steps size of ``bond_length``.
+    step size of ``bond_length``.
 
  (Pruned self-avoiding walk)
-    ``mode = 2`` The position of a monomer is randomly chosen in a distance
-    of to the previous monomer. If the position is closer to another
+    ``mode = 2`` The position of a monomer is randomly chosen within a distance
+    to the previous monomer. If the position is closer to another
     particle than ``shield``, the attempt is repeated up to ``max_tries`` times. Note, that this
     is not a real self-avoiding random walk, as the particle
     distribution is not the same. If you want a real self-avoiding walk, use

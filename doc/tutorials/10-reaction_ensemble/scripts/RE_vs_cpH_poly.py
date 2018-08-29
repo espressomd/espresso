@@ -173,7 +173,7 @@ c = 0
 for i in range(12000):
     RE.reaction()
     system.integrator.run(
-        500)  # this is for tutorial only, too less integrations
+        500)  # this is for tutorial only, too few integration steps
     print(
         i, ") HA", system.number_of_particles(type=type_HA), "A-", system.number_of_particles(
             type=type_A), "H+", system.number_of_particles(type=type_H),

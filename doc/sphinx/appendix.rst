@@ -20,7 +20,7 @@ idea what this acronym stands for). Instead of defining the summation
 order, one multiplies each summand by a continuous factor
 :math:`c(\beta,r_{ij},n_{klm})` such that the sum is absolutely
 convergent for :math:`\beta>0`, but :math:`c(0,.,.)=1`. The energy is
-then defined as the limit :math:`\beta\rightarrow 0` of the sum, i. e.
+then defined as the limit :math:`\beta\rightarrow 0` of the sum, i.e.
 :math:`\beta` is an artificial convergence parameter. For a convergence
 factor of :math:`e^{-\beta n_{klm}^2}` the limit is the same as the spherical
 limit, and one can derive the classical Ewald method quite conveniently through
@@ -97,7 +97,7 @@ together, which can be done in :math:`O(N)` computation time. As can be
 seen easily, the convergence of the series is excellent as long as z is
 sufficiently large. By symmetry one can choose the coordinate with the
 largest distance as z to optimize the convergence. Similar to the Lekner
-sum, we need a different formula if all coordinates are small, i. e. for
+sum, we need a different formula if all coordinates are small, i.e. for
 particles close to each other. For sufficiently small :math:`u_y\rho`
 and :math:`u_xx` we obtain the near formula as
 
@@ -116,7 +116,7 @@ and :math:`u_xx` we obtain the near formula as
      2\log(4\pi). \end{array}
 
 Note that this time we calculate :math:`\tilde{\phi}` instead of
-:math:`\phi`, i. e. we omit the contribution of the primary simulation
+:math:`\phi`, i.e. we omit the contribution of the primary simulation
 box. This is very convenient as it includes the case of self energy and
 makes :math:`\tilde{\phi}` a smooth function. To obtain :math:`\phi` one
 has to add the :math:`1/r` contribution of the primary box. The self
@@ -579,7 +579,7 @@ computationally cheap.
     The algorithm as it is implemented only calculates step-wise time updates
     of the exact field solution. Therefore in order to start the simulation
     for the given random distribution of charges we have to calculate the
-    initial electrostatic field, i. e. the exact solution of the
+    initial electrostatic field, i.e. the exact solution of the
     electrostatic problem. We find a particular solution of Gauss’ law as
     the result of the following recursive procedure (see
     Fig. [fig:maggs-initialization]):
@@ -611,7 +611,7 @@ computationally cheap.
 
        .. math:: E_x^2=E_x^1+\frac{q_\text{vertex}}{\epsilon_0a^2}
 
-    This scheme is repeated until the fields are completely relaxed (i. e.
+    This scheme is repeated until the fields are completely relaxed (i.e.
     the energy is minimized). During repetition, the spatial dimensions are
     permutated to avoid a drift in one direction.
 

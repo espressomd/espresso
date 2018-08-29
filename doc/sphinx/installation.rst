@@ -571,7 +571,7 @@ Finally, there are a number of flags for debugging. The most important
 one are
 
 -  ``ADDITIONAL_CHECKS`` Enables numerous additional checks which can detect inconsistencies
-   especially in the cell systems. This checks are however too slow to
+   especially in the cell systems. These checks are however too slow to
    be enabled in production runs.
 
 The following flags control the debug output of various sections of
@@ -580,9 +580,9 @@ looking directly at the code.
 
 -  ``COMM_DEBUG`` Output from the asynchronous communication code.
 
--  ``EVENT_DEBUG`` Notifications for event calls, i. e. the ``on_...`` functions in
+-  ``EVENT_DEBUG`` Notifications for event calls, i.e. the ``on_...`` functions in
    ``initialize.c``. Useful if some module does not correctly respond to
-   changes of e. g. global variables.
+   changes of e.g. global variables.
 
 -  ``INTEG_DEBUG`` Integrator output.
 
@@ -642,7 +642,7 @@ looking directly at the code.
 -  ``VIRTUAL_SITES_DEBUG``
 
 -  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps
-   in detection of mismatching communication.
+   in the detection of mismatching communication.
 
 -  ``FORCE_CORE`` Causes |es| to try to provoke a core dump when exiting unexpectedly.
 
@@ -690,8 +690,8 @@ platforms as you want.
 When the source directory is ``srcdir`` (the files where unpacked to this
 directory), then the user can create a build directory ``build`` below that
 path by calling ``mkdir srcdir/build``. In the build directory `cmake` is to be
-executed, followed by a call of make. None of the files in the source directory
-is ever modified when by the build process.
+executed, followed by a call to make. None of the files in the source directory
+are ever modified by the build process.
 
 .. code-block:: bash
 
@@ -707,14 +707,14 @@ line.
 ccmake
 ~~~~~~
 
-Optionally and for easier use the curses interface to cmake can be used
+Optionally and for easier use, the curses interface to cmake can be used
 to configure |es| interactively.
 
 **Example:**
 
-Alternatively to the previous example instead of , the executable is
-called in the build directory to configure ESPResSo previous to its
-compilation followed by a call of make:
+Alternatively to the previous example, instead of , the executable is
+called in the build directory to configure ESPResSo,
+followed by a call to make:
 
 .. code-block:: bash
 
@@ -739,7 +739,7 @@ Fig. :ref:`ccmake-figure` shows the interactive ccmake UI.
 Options and Variables
 ^^^^^^^^^^^^^^^^^^^^^
 
-The behavior of |es| can be controlled by the means of options and variables
+The behavior of |es| can be controlled by means of options and variables
 in the CMakeLists.txt file. Also options are defined there. The following
 options are available:
 

@@ -32,9 +32,9 @@ Note that the *fene* object specifies the type of bond and its parameters,
 the specific bonds are stored within the particles. you can find more 
 information regarding particle properties in :ref:`Setting up particles`.
 
-.. _Distance dependent bonds:
+.. _Distance-dependent bonds:
 
-Distance dependent bonds
+Distance-dependent bonds
 ------------------------
 
 .. _FENE bond:
@@ -140,7 +140,7 @@ Bonded Coulomb
 
 .. note::
 
-    Require ELECTROSTATICS feature.
+    Requires ELECTROSTATICS feature.
 
 A pairwise Coulomb interaction can be instantiated via 
 :class:`espressomd.interactions.BondedCoulomb`::
@@ -443,7 +443,7 @@ OIF global forces
 
 .. note::
 
-    required OIF_GLOBAL_FORCES feature.
+    Requires OIF_GLOBAL_FORCES feature.
 
 
 OIF global forces are available through the
@@ -560,13 +560,13 @@ Bond-angle interactions involve three particles forming the angle :math:`\phi`, 
    :align: center
    :height: 12.00cm
 
-This allows for a bond type having an angle dependent potential.
+This allows for a bond type having an angle-dependent potential.
 This potential is defined between three particles.
 The particle for which the bond is created, is the central particle, and the
 angle :math:`\phi` between the vectors from this particle to the two
 others determines the interaction.
 
-Similar to other bonded interactions, these are defined for every particle triad and and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`).
+Similar to other bonded interactions, these are defined for every particle triplet and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`).
 For example, for the schematic with particles ``id=0``, ``1`` and ``2`` the bond was defined using ::
 
     >>> system.part[1].add_bond((bond_angle, 0, 2))
@@ -673,7 +673,7 @@ Thermalized distance bond
 -------------------------
 
 This bond can be used to apply Langevin thermalization on the centre of mass
-and the distance of a particle pair.  Each thermostat can have it's own
+and the distance of a particle pair.  Each thermostat can have its own
 temperature and friction coefficient. 
 
 The bond is configured with::
