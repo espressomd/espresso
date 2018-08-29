@@ -384,7 +384,7 @@ void cells_on_geometry_change(int flags) {
     break;
   case CELL_STRUCTURE_COLUMNAR:
     cells_re_init(CELL_STRUCTURE_COLUMNAR);
-    break
+    break;
   }
 }
 
