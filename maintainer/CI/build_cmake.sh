@@ -39,7 +39,7 @@ function cmd {
 # handle environment variables
 [ -z "$insource" ] && insource="false"
 [ -z "$srcdir" ] && srcdir=`pwd`
-[ -z "$cmake_params" ] && cmake_params="-DCMAKE_CXX_FLAGS='-O3'"
+[ -z "$cmake_params" ] && cmake_params=""
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$with_coverage" ] && with_coverage="false"
@@ -55,11 +55,22 @@ function cmd {
 [ -z "$with_cuda" ] && with_cuda="true"
 [ -z "$build_type" ] && build_type="Debug"
 
+# If there are no user-provided flags they
+# are added according to with_coverage.
+if [ -z "$cxx_flags" ]; then
+    if $with_coverage; then
+        cxx_flags="-Og"
+    else
+        cxx_flags="-O3"
+    fi
+fi
+
 if [[ ! -z ${with_coverage+x} ]]; then
   bash <(curl -s https://codecov.io/env) &> /dev/null;
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=$build_type -DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
+cmake_params="$cmake_params -DCMAKE_CXX_FLAGS=$cxx_flags"
 
 if $insource; then
     builddir=$srcdir
