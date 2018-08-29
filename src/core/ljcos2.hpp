@@ -49,7 +49,7 @@ inline void add_ljcos2_pair_force(const Particle *const p1,
                                   double dist, double force[3]) {
   if ((dist < ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
     double r_off = dist - ia_params->LJCOS2_offset;
-    double fac;
+    double fac = 0.0;
     if (r_off < ia_params->LJCOS2_rchange) {
       double frac2 = Utils::sqr(ia_params->LJCOS2_sig / r_off);
       double frac6 = frac2 * frac2 * frac2;
