@@ -4,15 +4,14 @@ This sample demonstrates how new bonds can be added between particles and how ex
 
 from __future__ import print_function
 import espressomd
-from espressomd.interactions import *
 from espressomd import assert_features
 
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
-h = HarmonicBond(r_0=0, k=1)
-f = FeneBond(k=1, d_r_max=1)
-f2 = FeneBond(k=2, d_r_max=1)
+h = espressomd.interactions.HarmonicBond(r_0=0, k=1)
+f = espressomd.interactions.FeneBond(k=1, d_r_max=1)
+f2 = espressomd.interactions.FeneBond(k=2, d_r_max=1)
 
 print("\n**Defined three bond types:")
 print(h)

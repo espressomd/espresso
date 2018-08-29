@@ -2,8 +2,8 @@ from __future__ import print_function
 import sys
 import unittest as ut
 import numpy as np
+
 import espressomd
-from espressomd.interactions import *
 
 
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
@@ -71,5 +71,4 @@ class test_minimize_energy(ut.TestCase):
         np.testing.assert_allclose(f_old, np.copy(self.system.part[:].f))
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

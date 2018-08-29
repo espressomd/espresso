@@ -22,7 +22,7 @@ import unittest as ut
 import numpy
 
 import espressomd
-from tests_common import *
+import tests_common
 
 
 class InteractionsBondedTest(ut.TestCase):
@@ -68,14 +68,14 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["bonded"]
-            E_ref = harmonic_potential(
+            E_ref = tests_common.harmonic_potential(
                 scalar_r=(i + 1) * self.step_width, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
-                harmonic_force(scalar_r=(i + 1) * self.step_width,
+                tests_common.harmonic_force(scalar_r=(i + 1) * self.step_width,
                                k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
 
             # Check that energies match, ...
@@ -93,7 +93,6 @@ class InteractionsBondedTest(ut.TestCase):
 
     # Test Fene Bond
     def test_fene(self):
-
         fene_k = 23.15
         fene_d_r_max = 3.355
         fene_r_0 = 1.1
@@ -109,14 +108,14 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["bonded"]
-            E_ref = fene_potential(
+            E_ref = tests_common.fene_potential(
                 scalar_r=(i + 1) * self.step_width, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
-                fene_force(scalar_r=(i + 1) * self.step_width,
+                tests_common.fene_force(scalar_r=(i + 1) * self.step_width,
                            k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
 
             # Check that energies match, ...
@@ -151,13 +150,13 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["bonded"]
-            E_ref = coulomb_potential(
+            E_ref = tests_common.coulomb_potential(
                 scalar_r=(i + 1) * self.step_width, k=coulomb_k, q1=q1, q2=q2)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * coulomb_force(
+            f1_ref = self.axis * tests_common.coulomb_force(
                 scalar_r=(i + 1) * self.step_width,
                                 k=coulomb_k, q1=q1, q2=q2)
 
@@ -168,7 +167,6 @@ class InteractionsBondedTest(ut.TestCase):
             # and has correct value.
             f1_sim_copy = np.copy(f1_sim)
             np.testing.assert_almost_equal(f1_sim_copy, f1_ref)
-
 
 if __name__ == '__main__':
     ut.main()

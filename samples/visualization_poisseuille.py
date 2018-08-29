@@ -5,7 +5,7 @@ from __future__ import print_function
 from espressomd import System, lb, shapes, lbboundaries
 import numpy as np
 from threading import Thread
-from espressomd.visualization_opengl import *
+import espressomd.visualization_opengl
 
 required_features = ["LB", "LB_BOUNDARIES", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
@@ -19,7 +19,7 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = 0.2
 
-visualizer = openGLLive(system,
+visualizer = espressomd.visualization_opengl.openGLLive(system,
                         LB_draw_boundaries=True,
                         LB_draw_velocity_plane=True,
                         LB_plane_dist=8,

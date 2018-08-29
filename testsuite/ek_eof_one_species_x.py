@@ -15,14 +15,14 @@
 
 from __future__ import print_function
 import unittest as ut
+import sys
+import math
+import numpy as np
+
 import espressomd
 import espressomd.electrokinetics
 import espressomd.shapes
-from espressomd import *
-import numpy as np
-import sys
-import math
-from ek_common import *
+import ek_common
 
 ##########################################################################
 #                              Set up the System                               #
@@ -34,7 +34,6 @@ from ek_common import *
 @ut.skipIf(not espressomd.has_features(["ELECTROKINETICS", "EK_BOUNDARIES"]),
            "Features not available, skipping test!")
 class ek_eof_one_species_x(ut.TestCase):
-
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
     es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
@@ -85,7 +84,7 @@ class ek_eof_one_species_x(ut.TestCase):
 
 # Set up the (LB) electrokinetics fluid
 
-        ek = electrokinetics.Electrokinetics(
+        ek = espressomd.electrokinetics.Electrokinetics(
             agrid=agrid,
             lb_density=density_water,
             viscosity=viscosity_kinematic,
@@ -94,7 +93,7 @@ class ek_eof_one_species_x(ut.TestCase):
             prefactor=bjerrum_length * temperature,
             stencil="linkcentered")
 
-        counterions = electrokinetics.Species(
+        counterions = espressomd.electrokinetics.Species(
             density=density_counterions,
             D=0.3,
             valency=valency,
@@ -143,9 +142,9 @@ class ek_eof_one_species_x(ut.TestCase):
         tol = 1.0e-08
         while (size > tol):
 
-            val0 = solve(pnt0, width, bjerrum_length, sigma, valency)
-            val1 = solve(pnt1, width, bjerrum_length, sigma, valency)
-            valm = solve(pntm, width, bjerrum_length, sigma, valency)
+            val0 = ek_common.solve(pnt0, width, bjerrum_length, sigma, valency)
+            val1 = ek_common.solve(pnt1, width, bjerrum_length, sigma, valency)
+            valm = ek_common.solve(pntm, width, bjerrum_length, sigma, valency)
 
             if (val0 < 0.0 and val1 > 0.0):
                 if (valm < 0.0):
@@ -185,7 +184,7 @@ class ek_eof_one_species_x(ut.TestCase):
             # density
                 measured_density = counterions[int(
                     box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].density
-                calculated_density = density(position, xi, bjerrum_length)
+                calculated_density = ek_common.density(position, xi, bjerrum_length)
                 density_difference = abs(measured_density - calculated_density)
                 total_density_difference = total_density_difference + \
                     density_difference
@@ -193,7 +192,7 @@ class ek_eof_one_species_x(ut.TestCase):
             # velocity
                 measured_velocity = ek[int(
                     box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].velocity[0]
-                calculated_velocity = velocity(
+                calculated_velocity = ek_common.velocity(
                     position,
                     xi,
                     width,
@@ -210,15 +209,15 @@ class ek_eof_one_species_x(ut.TestCase):
 
                 measured_pressure_xx = ek[int(
                     box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(0, 0)]
-                calculated_pressure_xx = hydrostatic_pressure(
+                calculated_pressure_xx = ek_common.hydrostatic_pressure(
                     ek, position, xi, bjerrum_length, (0, 0), box_x, box_y, box_z, agrid)
                 measured_pressure_yy = ek[int(
                     box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(1, 1)]
-                calculated_pressure_yy = hydrostatic_pressure(
+                calculated_pressure_yy = ek_common.hydrostatic_pressure(
                     ek, position, xi, bjerrum_length, (1, 1), box_x, box_y, box_z, agrid)
                 measured_pressure_zz = ek[int(
                     box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(2, 2)]
-                calculated_pressure_zz = hydrostatic_pressure(
+                calculated_pressure_zz = ek_common.hydrostatic_pressure(
                     ek, position, xi, bjerrum_length, (2, 2), box_x, box_y, box_z, agrid)
 
                 pressure_difference_xx = abs(
@@ -256,7 +255,7 @@ class ek_eof_one_species_x(ut.TestCase):
             # xz component pressure tensor
                 measured_pressure_xz = ek[int(
                     box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(0, 2)]
-                calculated_pressure_xz = pressure_tensor_offdiagonal(
+                calculated_pressure_xz = ek_common.pressure_tensor_offdiagonal(
                     position, xi, bjerrum_length, force)
                 pressure_difference_xz = abs(
                     measured_pressure_xz - calculated_pressure_xz)

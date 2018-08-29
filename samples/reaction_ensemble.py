@@ -27,7 +27,6 @@ import espressomd
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
-from espressomd.interactions import *
 from espressomd import reaction_ensemble
 
 

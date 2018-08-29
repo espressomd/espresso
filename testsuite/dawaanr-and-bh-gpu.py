@@ -7,18 +7,19 @@ from numpy import linalg as la
 from numpy.random import random, seed
 
 import espressomd
-from espressomd.interactions import *
-from espressomd.magnetostatics import *
-from espressomd.analyze import *
-from tests_common import *
-from espressomd import assert_features, has_features, missing_features
+import espressomd.magnetostatics
+import espressomd.analyze
+import tests_common
+
+def stopAll(system):
+    for i in system.part:
+        i.v = np.array([0.0, 0.0, 0.0])
+        i.omega_body = np.array([0.0, 0.0, 0.0])
 
 
-@ut.skipIf(not has_features(["DIPOLAR_BARNES_HUT"]),
+@ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT"]),
            "Features not available, skipping test!")
 class BHGPUTest(ut.TestCase):
-    longMessage = True
-    # Handle for espresso system
     system = espressomd.System(box_l=[1, 1, 1])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(system.seed)
@@ -28,11 +29,6 @@ class BHGPUTest(ut.TestCase):
         vec_len = la.norm(a - b)
         rel = 2 * vec_len / (la.norm(a) + la.norm(b))
         return rel <= tol
-
-    def stopAll(self):
-        for i in range(len(self.system.part)):
-            self.system.part[i].v = np.array([0.0, 0.0, 0.0])
-            self.system.part[i].omega_body = np.array([0.0, 0.0, 0.0])
 
     def run_test_case(self):
         seed(1)
@@ -82,7 +78,7 @@ class BHGPUTest(ut.TestCase):
             # and torque
             self.system.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
-            dds_cpu = DipolarDirectSumCpu(prefactor=pf_dawaanr)
+            dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=pf_dawaanr)
             self.system.actors.add(dds_cpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
@@ -92,14 +88,13 @@ class BHGPUTest(ut.TestCase):
             for i in range(n):
                 dawaanr_f.append(self.system.part[i].f)
                 dawaanr_t.append(self.system.part[i].torque_lab)
-            dawaanr_e = Analysis(self.system).energy()["total"]
+            dawaanr_e = espressomd.analyze.Analysis(self.system).energy()["total"]
 
             del dds_cpu
-            for i in range(len(self.system.actors.active_actors)):
-                self.system.actors.remove(self.system.actors.active_actors[i])
+            self.system.actors.clear()
 
             self.system.integrator.run(steps=0, recalc_forces=True)
-            bh_gpu = DipolarBarnesHutGpu(
+            bh_gpu = espressomd.magnetostatics.DipolarBarnesHutGpu(
                 prefactor=pf_bh_gpu, epssq=200.0, itolsq=8.0)
             self.system.actors.add(bh_gpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
@@ -110,7 +105,7 @@ class BHGPUTest(ut.TestCase):
             for i in range(n):
                 bhgpu_f.append(self.system.part[i].f)
                 bhgpu_t.append(self.system.part[i].torque_lab)
-            bhgpu_e = Analysis(self.system).energy()["total"]
+            bhgpu_e = espressomd.analyze.Analysis(self.system).energy()["total"]
 
             # compare
             for i in range(n):
@@ -134,8 +129,7 @@ class BHGPUTest(ut.TestCase):
             self.system.integrator.run(steps=0, recalc_forces=True)
 
             del bh_gpu
-            for i in range(len(self.system.actors.active_actors)):
-                self.system.actors.remove(self.system.actors.active_actors[i])
+            self.system.actors.clear()
             self.system.part.clear()
 
     def test(self):
@@ -145,5 +139,4 @@ class BHGPUTest(ut.TestCase):
             self.run_test_case()
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()
