@@ -54,7 +54,7 @@ template <typename Container, typename Compare> class Merge {
   Compare m_comp;
 
 public:
-  Merge(Compare &&comp = Compare{}) : m_comp(comp) {}
+  explicit Merge(Compare &&comp = Compare{}) : m_comp(comp) {}
   Container operator()(Container const &a, Container const &b) const {
     Container ret;
     ret.reserve(a.size() + b.size());

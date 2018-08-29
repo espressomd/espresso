@@ -37,7 +37,6 @@ struct BoundingBox {
 
 typedef struct {
   int i; // index
-  int m; // model index
   float x, y, z;
 } pdb_atom;
 

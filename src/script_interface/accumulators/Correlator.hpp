@@ -78,7 +78,7 @@ public:
     return m_correlator;
   }
 
-  virtual Variant call_method(std::string const &method,
+  Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
     if (method == "update")
       correlator()->update();

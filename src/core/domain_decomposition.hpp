@@ -65,7 +65,7 @@
  * decomposition. */
 struct DomainDecomposition {
   DomainDecomposition()
-      : cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{0, 0, 0} {}
+      : cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{0, 0, 0}, inv_cell_size{0, 0, 0} {}
   /** linked cell grid in nodes spatial domain. */
   int cell_grid[3];
   /** linked cell grid with ghost frame. */

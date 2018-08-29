@@ -31,7 +31,7 @@ namespace ErrorHandling {
 
 class RuntimeErrorCollector {
 public:
-  RuntimeErrorCollector(const boost::mpi::communicator &comm);
+  explicit RuntimeErrorCollector(const boost::mpi::communicator &comm);
   ~RuntimeErrorCollector();
 
   void message(RuntimeError message);

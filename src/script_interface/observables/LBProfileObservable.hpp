@@ -129,7 +129,7 @@ public:
           [this]() { return profile_observable()->allow_empty_bins; }}});
   }
 
-  virtual Variant call_method(std::string const &method,
+  Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
     if (method == "calculate") {
       return profile_observable()->operator()(partCfg());
@@ -140,7 +140,7 @@ public:
     return {};
   }
 
-  virtual std::shared_ptr<::Observables::Observable>
+  std::shared_ptr<::Observables::Observable>
   observable() const override {
     return m_observable;
   }

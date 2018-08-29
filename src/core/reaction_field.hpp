@@ -156,9 +156,8 @@ inline void add_interrf_pair_force(const Particle *const p1,
 
 inline double interrf_pair_energy(const Particle *p1, const Particle *p2,
                                   const IA_parameters *ia_params, double dist) {
-  double val;
   if ((ia_params->rf_on == 1) && (dist < rf_params.r_cut)) {
-    val = rf_coulomb_pair_energy_no_cutoff(p1, p2, dist);
+    double val = rf_coulomb_pair_energy_no_cutoff(p1, p2, dist);
     return val;
   }
   return 0.0;

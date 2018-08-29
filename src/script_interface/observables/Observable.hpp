@@ -38,7 +38,7 @@ typedef ::Observables::Observable CoreObs;
 class Observable : public ScriptInterfaceBase {
 public:
   virtual std::shared_ptr<CoreObs> observable() const = 0;
-  virtual Variant call_method(std::string const &method,
+  Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
     if (method == "calculate") {
       return observable()->operator()(partCfg());
