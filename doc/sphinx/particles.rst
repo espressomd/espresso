@@ -13,7 +13,7 @@ For understanding this chapter, it is helpful to be aware of the Python classes 
 * :class:`espressomd.particle_data.ParticleList` provides access to all particles in the simulation
 * :class:`espressomd.particle_data.ParticleSlice` provides access to a subset of particles in the simulation identified by a list of ids.
 
-in almost no case have these classes to be instantiated explicitly by the user. 
+in almost no case have these classes to be instantiated explicitly by the user.
 Rather, access is provided via the :attr:`espressomd.system.System.part` attribute.
 The details are explained in the following sections.
 
@@ -86,11 +86,11 @@ The :class:`espressomd.particle_data.ParticleList` support slicing similarly to 
     system.part[:].q=0
 
 To access particles with indices ranging from 0 to 9, use::
-    
+
     system.part[0:10].pos
 
 Note that, like in other cases in Python, the lower bound is inclusive and the upper bound is non-inclusive.
-Setting slices can be done by 
+Setting slices can be done by
 
 - supplying a *single value* that is assigned to each entry of the slice, e.g.::
 
@@ -117,8 +117,8 @@ by the length of the input, as slice length and input length can be equal. Here,
     system.part[2:4].exclusions = [[0, 1], [0, 1]]
 
 The above code snippet would lead to the same exclusions as the one before.
-The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with 
-the tuple ``(bond, partners)``. 
+The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with
+the tuple ``(bond, partners)``.
 
 You can select a subset of particles via using the select method. For example you can obtain a list of particles with charge -1 via using ::
 
@@ -148,23 +148,23 @@ You can iterate over all particles or over a subset of particles as follows::
 
     for p in system.part:
         print(p.pos)
-    
+
     for p in system.part[0:10]:
         print(p.pos)
 
 You can iterate over all pairs of particles using::
-    
+
     for pair in system.part.pairs():
         print(pair[0].id,pair[1].id)
 
-        
+
 .. _Exclusions:
 
 Exclusions
 ----------
 
 Particles can have an exclusion list of all other particles where non-bonded interactions are ignored.
-This is typically used in atomistic simulations, 
+This is typically used in atomistic simulations,
 where nearest and next nearest neighbor interactions along the chain have to be omitted since they are included in the bonding potentials.
 Exclusions do not apply to the short range part of electrostatics and magnetostatics methods, e.g. to P3M.
 
@@ -263,7 +263,7 @@ See :meth:`espressomd.diamond.Diamond` for more details.
     Cross-linking polymers
     ~~~~~~~~~~~~~~~~~~~~~~
 
-            :todo: `This is not implemented in Python` 
+            :todo: `This is not implemented in Python`
 
     crosslink
 
@@ -323,7 +323,7 @@ The `have_quaternion` parameter determines whether the quaternion of the virtual
 :attr:`espressomd.particle_data.ParticleHandle.vs_quat` property of the virtual particle which defines the orientation of the virtual particle
 in the body fixed frame of the related real particle.
 
-.. _Rigid arrangements of particles: 
+.. _Rigid arrangements of particles:
 
 Rigid arrangements of particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -357,12 +357,12 @@ To set up a virtual site,
 
 #. Place a particle at the desired relative position, make it virtual
    and relate it to the first particle::
-       
+
        p=system.part.add(pos=(1,2,3))
        p.vs_auto_relate_to(<ID>)
 
    where <ID> is the id of the central particle. This will also set the :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on the particle to 1.
-  
+
 #. Repeat the previous step with more virtual sites, if desired.
 
 #. To update the positions of all virtual sites, call
@@ -390,7 +390,7 @@ Please note:
    to be larger than the largest distance between a non-virtual particle
    and its associated virtual sites. To this aim, when running on more than one core,
    you need to set the
-   system's :attr:`espressomd.system.System.min_global_cut` attribute to this largest distance. 
+   system's :attr:`espressomd.system.System.min_global_cut` attribute to this largest distance.
    An error is generated when this requirement is not met.
 
 -  If the virtual sites represent actual particles carrying a mass, the

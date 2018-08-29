@@ -40,7 +40,7 @@ for further calculations, you should explicitly make a copy e.g. via
     is obtained by [0,0,1]. Caveat: Be aware of the fact that making a
     dimension non-periodic does not hinder particles from leaving the box in
     this direction. In this case for keeping particles in the simulation box
-    a constraint has to be set. 
+    a constraint has to be set.
 
 * :py:attr:`~espressomd.system.System.time_step`
 
@@ -79,9 +79,9 @@ objects like
 or by calling the corresponding ``get_state`` methods like::
 
     temperature = espressomd.System().thermostat.get_state()[0][’kT’]
-    
+
     gamma = espressomd.System().thermostat.get_state()[0][’gamma’]
-    
+
     gamma_rot = espressomd.System().thermostat.get_state()[0][’gamma_rotation’]
 
 .. _Cellsystems:
@@ -111,18 +111,18 @@ The properties of the cell system can be accessed by
     * :py:attr:`~espressomd.cellsystem.CellSystem.min_num_cells`
 
     (int) Minimal number of cells for the link cell algorithm. Reasonable
-    values range in :math:`10^{-6} N^2` to :math:`10^{-7} N^2`. In general 
+    values range in :math:`10^{-6} N^2` to :math:`10^{-7} N^2`. In general
     just make sure that the Verlet lists are not incredibly large. By default the
     minimum is 0, but for the automatic P3M tuning it may be wise to set larger
     values for high particle numbers.
 
     * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
-    
+
     (int[3]) 3D node grid for real space domain decomposition (optional, if
     unset an optimal set is chosen automatically).
 
     * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
-    
+
     (float) Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
 
 Details about the cell system can be obtained by ``espressomd.System().cell_system.get_state()``:
@@ -141,7 +141,7 @@ Details about the cell system can be obtained by ``espressomd.System().cell_syst
 Domain decomposition
 ~~~~~~~~~~~~~~~~~~~~
 
-Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_domain_decomposition` 
+Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_domain_decomposition`
 selects the domain decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
 domain decomposition is used, but not the Verlet lists.::
@@ -271,14 +271,14 @@ In order to activate the Langevin thermostat the member function
 :py:attr:`~espressomd.thermostat.Thermostat.set_langevin` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
 Best explained in an example:::
-    
+
     import espressomd
     system = espressomd.System()
     therm  = system.Thermostat()
 
     therm.set_langevin(kT=1.0, gamma=1.0)
 
-As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`. 
+As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`.
 The Langevin thermostat consists of a friction and noise term coupled
 via the fluctuation-dissipation theorem. The friction term is a function
 of the particle velocities. By specifying the diffusion coefficient for
@@ -301,7 +301,7 @@ A separate rotational diffusion coefficient can be set by inputting
 ``gamma_rotate``.  This also allows one to properly match the translational and
 rotational diffusion coefficients of a sphere. Feature ``ROTATIONAL_INERTIA``
 enables an anisotropic rotational diffusion coefficient tensor through
-corresponding friction coefficients. 
+corresponding friction coefficients.
 
 Finally, the two options allow one to switch the translational and rotational
 thermalization on or off separately, maintaining the frictional behavior. This
@@ -407,7 +407,7 @@ and set the following parameters:
     * gamma0: (float) Friction coefficient of the bath
     * gammav: (float) Artificial friction coefficient for the volume fluctuations.
 
-Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.system.integrator.set_isotropic_npt` 
+Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.system.integrator.set_isotropic_npt`
 and the parameters:
 
     * ext_pressure:  (float) The external pressure as float variable.
@@ -415,7 +415,7 @@ and the parameters:
 
 This thermostat is based on the Anderson thermostat (see
 :cite:`andersen80a,mann05d`) and will thermalize the box
-geometry. It will only do isotropic changes of the box. 
+geometry. It will only do isotropic changes of the box.
 See this code snippet for the two commands::
 
     import espressomd
@@ -439,13 +439,13 @@ changed anymore after the first GPU-using command has been issued, for
 example ``lbfluid``. If you do not choose the GPU manually before that,
 CUDA internally chooses one, which is normally the most powerful GPU
 available, but load-independent.::
-    
+
     system=espressomd.System()
 
     dev = system.cuda_init_handle.device
     system.cuda_init_handle.device = dev
 
-The first invocation in the sample above returns the id of the set graphics card, the second one sets the 
+The first invocation in the sample above returns the id of the set graphics card, the second one sets the
 device id.
 
 .. _GPU Acceleration with CUDA:
@@ -458,7 +458,7 @@ GPU Acceleration with CUDA
 
 
 |es| is capable of GPU acceleration to speed up simulations.
-Not every simulation method is parallelizable or profits from 
+Not every simulation method is parallelizable or profits from
 GPU acceleration. Refer to :ref:`Available simulation methods`
 to check whether your desired method can be used on the GPU.
 In order to use GPU acceleration you need a NVIDIA GPU
@@ -487,8 +487,8 @@ Selection of CUDA device
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 When you start ``pypresso`` your first GPU should
-be selected. 
-If you wanted to use the second GPU, this can be done 
+be selected.
+If you wanted to use the second GPU, this can be done
 by setting :attr:`espressomd.cuda_init.CudaInitHandle.device` as follows::
 
     system=espressomd.System()

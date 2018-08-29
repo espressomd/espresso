@@ -24,14 +24,14 @@ Several modes are available for different types of binding.
 * "bind_centers": adds a pair-bond between two particles at their first collision. By making the bonded interaction `stiff` enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
     import espressomd
     from espressomd.interactions import HarmonicBond
-    
+
     system=espressomd.System()
     bond_centers=HarmonicBond(k=1000,r_0=<CUTOFF>)
     system.bonded_inter.add(bond_centers)
     system.collision_detection.set_params(mode="bind_centers",distance=<CUTOFF>, bond_centers=bond_centers)
-  
+
   The parameters are as follows:
-  
+
     * `distance` is the distance between two particles at which the binding is triggered. This cutoff distance, `<CUTOFF>` in the example above, is typically chosen slightly larger than the particle diameter. It is also a good choice for the equilibrium length of the bond.
     * `bond_centers` is the bonded interaction (an instance of :class:espressomd.interactions.BondedInteraction`) to be created between the particles. No guarantees are made regarding which of the two colliding particles gets the bond. Once there is a bond of this type on any of the colliding particles, no further binding occurs for this pair of particles.
 
@@ -50,22 +50,22 @@ Several modes are available for different types of binding.
   can either use a real bonded interaction to prevent wobbling around
   the point of contact or you can use :class:`espressomd.interactions.Virtual` which acts as a marker, only.
   The method is setup as follows::
-     
+
      system.collision_detection.set_params(mode="bind_at_point_of_collision", distance=<CUTOFF>, bond_centers=<BOND_CENTERS>, bond_vs=<BOND_VS>, part_type_vs=<PART_TYPE_VS>, vs_placement=<VS_PLACEMENT>)
 
-  
+
   The parameters `distance` and `bond_centers` have the same meaning as in the `bind_centers` mode. The remaining parameters are as follows:
-    
+
     * `bond_vs` is the bond to be added between the two virtual sites created on collision. This is either a pair-bond with an equilibrium length matching the distance between the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
     * `part_type_vs` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
     * `vs_placement` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed ad the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
 
 * "glue_to_surface": This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them `inert`. On collision, a single virtual site is placed and related to the big particle. Then, a bond (`bond_centers`) connects the big and the small particle. A second bond (`bond_vs`) connects the virtual site and the small particle. Further required parameters are:
-  
+
   * `part_type_to_attach_vs_to`: Type of the particle to which the virtual site is attached, i.e., the `big` particle.
   * `part_type_to_be_glued`: Type of the particle bound to the virtual site (the `small` particle).
   * `part_type_after_glueing`: The type assigned to the particle bound to the virtual site (`small` particle) after the collision.
-  * `part_type_vs`: Particle type assigned to the virtual site created during the collision. 
+  * `part_type_vs`: Particle type assigned to the virtual site created during the collision.
   * `distance_glued_particle_to_vs`: Distance of the virtual site to the particle being bound to it (`small` particle).
 
 
@@ -78,7 +78,7 @@ Several modes are available for different types of binding.
   angular bonds are placed to maintain the local shape.
   If all three particles are within the cutoff distance, an angle bond is added
   on each of the three particles in addition
-  to the distance based bonds between the particle centers. 
+  to the distance based bonds between the particle centers.
   If two particles are within the cutoff of a central particle (e.g., chain of three particles)
   an angle bond is placed on the central particle.
   The angular bonds being added are determined from the angle between the particles.
@@ -86,16 +86,16 @@ Several modes are available for different types of binding.
   degrees of freedom being integrated. Virtual sites are also not
   required.
   The method, along with the corresponding bonds are setup as follows::
-        
+
         n_angle_bonds=181 # 0 to 180 degrees in one degree steps
         for i in range(0,res,1):
            self.s.bonded_inter[i]=Angle_Harmonic(bend=1,phi0=float(i)/(res-1)*np.pi)
-        
+
         # Create the bond passed to bond_centers here and add it to the system
-        
+
         self.s.collision_detection.set_params(mode="bind_three_particles",bond_centers=<BOND_CENTERS>,bond_three_particles=0,three_particle_binding_angle_resolution=res,distance=<CUTOFF>)
 
-  Important: The bonds for the angles are mapped via their numerical bond ids. In this example, ids from 0 to 180 are used. All other bonds required for the simulation need to be added to the system after those bonds. In particular, this applies to the bonded interaction passed via `bond_centers` 
+  Important: The bonds for the angles are mapped via their numerical bond ids. In this example, ids from 0 to 180 are used. All other bonds required for the simulation need to be added to the system after those bonds. In particular, this applies to the bonded interaction passed via `bond_centers`
 
 
 The following limitations currently apply for the collision detection:
@@ -292,7 +292,7 @@ Numerically, the shell is discretized by a set of marker points
 connected by triangles. The marker points are advected with *exactly*
 the local fluid velocity, i.e., they do not possess a mass nor a
 friction coefficient (this is different from the Object-in-Fluid method
-below). We implement these marker points as virtual tracer 
+below). We implement these marker points as virtual tracer
 particles which are not integrated using the usual velocity-Verlet
 scheme, but instead are propagated using a simple Euler algorithm with
 the local fluid velocity (if the ``IMMERSED_BOUNDARY`` feature is turned
@@ -305,7 +305,7 @@ The immersed boundary method consists of two components, which can be used indep
   * Interactions providing the elastic forces for the particles forming the surface. These are described below.
 
 
-To compute the elastic forces, three new bonded interactions are defined ibm\_triel, ibm\_tribend and ibm\_volCons. 
+To compute the elastic forces, three new bonded interactions are defined ibm\_triel, ibm\_tribend and ibm\_volCons.
 
 ibm_triel is used to compute elastic shear forces. To setup an interaction, use:
 
@@ -322,7 +322,7 @@ ibm_tribend computes out-of-plane bending forces. To setup an interaction, use:
 
     tribend = IBM_Tribend(ind1=0, ind2=1, ind3=2,ind4=3,kb=1, refShape = "Initial")
 
-where `ind1`, `ind2`, `ind3 and `ind4` are four marker points corresponding to two neighboring triangles. The indices `ind1` and `ind3` contain the shared edge. Note that the marker points within a triangle must be labelled such that the normal vector :math:`\vec{n} = (\vec{r}_\text{ind2} - \vec{r}_\text{ind1}) \times (\vec{r}_\text{ind3} - \vec{r}_\text{ind1})` points outward of the elastic object. 
+where `ind1`, `ind2`, `ind3 and `ind4` are four marker points corresponding to two neighboring triangles. The indices `ind1` and `ind3` contain the shared edge. Note that the marker points within a triangle must be labelled such that the normal vector :math:`\vec{n} = (\vec{r}_\text{ind2} - \vec{r}_\text{ind1}) \times (\vec{r}_\text{ind3} - \vec{r}_\text{ind1})` points outward of the elastic object.
 The reference (zero energy) shape can be either `Flat` or the initial curvature `Initial`.
 The bending modulus is `kb`.
 
@@ -363,18 +363,18 @@ University of Zilina:
   objects, it is a flexible package and appears very suitable when one
   wants to model closed objects with elastic properties, especially if
   they are immersed in a moving fluid. Here we describe the module
-  itself and offer some additional information to get you started with. Additionally, we 
+  itself and offer some additional information to get you started with. Additionally, we
   provide a step by step tutorial that will show you how to use this
   module.
-  
+
 | The OIF module was developed for simulations of red blood cells
   flowing through microfluidic devices and therefore the elasticity
   features were designed with this application in mind. However, they
   are completely tunable and can be modified easily to allow the user to
   model any elastic object moving in fluid flow.
-  
 
-   
+
+
 
 |image1| |image2| |image3|
 
@@ -388,7 +388,7 @@ Triangulations of elastic objects
   http://cell-in-fluid.kst.fri.uniza.sk/en/content/oif-espresso. User
   can create his/her own meshes, for example in gmsh, salome or any other meshing software. The
   required format is as follows:
-  
+
 | The file ``some_nodes.dat`` should contain triplets of floats (one
   triplet per line), where each triplet represents the :math:`x, y` and
   :math:`z` coordinates of one node of the surface triangulation. No
@@ -398,7 +398,7 @@ Triangulations of elastic objects
   approximate center of mass of the object corresponds to the origin
   (0,0,0). This is for convenience when placing the objects at desired
   locations later.
-  
+
 | The file ``some_triangles.dat`` should also contain triplets of
   numbers, this time integers. These integers refer to the IDs of the nodes in
   the ``some_nodes.dat`` file and specify which three nodes form a
@@ -409,23 +409,23 @@ Triangulations of elastic objects
 Description of sample script
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note:: 
+.. note::
 
-    `The following features are required 
-    LB, LB_BOUNDARIES, 
-    EXTERNAL_FORCES, 
-    MASS, CONSTRAINTS, OIF_LOCAL_FORCES, 
+    `The following features are required
+    LB, LB_BOUNDARIES,
+    EXTERNAL_FORCES,
+    MASS, CONSTRAINTS, OIF_LOCAL_FORCES,
     OIF_GLOBAL_FORCES, SOFT_SPHERE, MEMBRANE_COLLISION`
 
 The script described in this section is available in samples/object-in-fluid/two-cells.py folder and also at
-http://cell-in-fluid.kst.fri.uniza.sk/en/content/oif-espresso. 
+http://cell-in-fluid.kst.fri.uniza.sk/en/content/oif-espresso.
 
 In the first few lines, the script includes several imports related to
 the red blood cell model, fluid, boundaries and interactions. Then we
 have::
 
-    system = espressomd.System(box_l=(22,14,15)) 
-    system.time_step = 0.1 
+    system = espressomd.System(box_l=(22,14,15))
+    system.time_step = 0.1
     system.cell_system.skin = 0.2
 
 Here we set up a system and its most important parameters. The ``skin``
@@ -449,7 +449,7 @@ Specification of immersed objects
 ::
 
     cell_type = OifCellType(nodesfile=“input/rbc374nodes.dat”,
-        trianglesfile=“input/rbc374triangles.dat”, system = system, 
+        trianglesfile=“input/rbc374triangles.dat”, system = system,
         ks=0.02, kb=0.016, kal=0.02, kag=0.9, kv=0.5, resize=[2.0,2.0,2.0])
 
 We do not create elastic objects directly but rather each one has to
@@ -499,7 +499,7 @@ Specification of fluid and movement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
-    lbf = espressomd.lb.LBFluid(agrid = 1, dens = 1.0, visc = 1.5, 
+    lbf = espressomd.lb.LBFluid(agrid = 1, dens = 1.0, visc = 1.5,
         tau = time_step, fric = 1.5, ext_force_density = [0.002, 0.0, 0.0])
     system.actors.add(lbf)
 
@@ -525,9 +525,9 @@ Specification of boundaries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | To set up the geometry of the channels, we mostly use rhomboids and
-  cylinders, but there are also other boundary types available in |es|. 
+  cylinders, but there are also other boundary types available in |es|.
   The usage is described elsewhere.
-  
+
 
 |image4| |image5| |image6|
 
@@ -565,14 +565,14 @@ visualisation:
 
 ::
 
-    output_vtk_rhomboid(corner=[0.0,0.0,0.0], a=[boxX,0.0,0.0], \ 
+    output_vtk_rhomboid(corner=[0.0,0.0,0.0], a=[boxX,0.0,0.0], \
     b=[0.0,boxY,0.0], c=[0.0,0.0,1.0], out_file="output/sim1/wallBack.vtk")
     output_vtk_cylinder(center=[11.0,2.0,7.0], axis=[0.0,0.0,1.0], length=7.0, \
     radius=2.0, n=20, out_file="output/sim1/obstacle.vtk")
 
 | Note that the method for cylinder output also has an argument ``n``.
   This specifies number of rectangular faces on the side.
-  
+
 | It is a good idea to output and visualize the boundaries and objects
   just prior to running the actual simulation, to make sure that the
   geometry is correct and no objects intersect with any boundaries.
@@ -600,7 +600,7 @@ Similar interaction is defined with the boundaries:
 
 ::
 
-    system.non_bonded_inter[0,10].soft_sphere.set_params( \ 
+    system.non_bonded_inter[0,10].soft_sphere.set_params( \
     soft_a = 0.0001, soft_n = 1.2, soft_cut = 0.1, soft_offset = 0.0)
 
 These interactions are also *pointwise*, e.g. each particle of type 0
@@ -650,8 +650,8 @@ should get a message about it.
   is slower. Also, interactions can only be defined once the objects
   and boundaries both exist. Technically, the fluid boundaries can be
   specified before fluid, but it is really not recommended.
-  
-  
+
+
 
 Running the simulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -661,7 +661,7 @@ in terminal using
 
 ::
 
-    ../pypresso script.py 
+    ../pypresso script.py
 
 Here ``script.py`` is the name of the script we just went over and
 ``../pypresso`` should be replaced with the path to your executable.
@@ -696,17 +696,17 @@ Visualization in ParaView
   pressing the Apply button, are the files actually imported. Using the
   eye icon to the left of file names, one can turn on and off the
   individual objects and/or boundaries.
-  
+
 | Fluid can be visualized using Filters/Alphabetical/Glyph (or other
   options from this menu. Please, refer to the ParaView user’s guide for
   more details).
-  
+
 | Note, that ParaView does not automatically reload the data if they
   have been changed in the input folder, but a useful thing to know is
   that the created filters can be “recycled”. Once you delete the old
   data, load the new data and right-click on the existing filters, you
   can re-attach them to the new data.
-  
+
 | It is a good idea to output and visualize the boundaries and objects
   just prior to running the actual simulation, to make sure that the
   geometry is correct and no objects intersect with any boundaries. This
@@ -773,15 +773,15 @@ following lines:
   table. As an example, we might want to see a force magnitude in each
   surface node
 
-|image7| 
+|image7|
 
 	Stretched sphere after some relaxation, showing magnitude
 	of total stretching force in each node.
 
 
-   
-   
-   
+
+
+
 Color coding of scalar data by triangles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -789,11 +789,11 @@ It is also possible to save (and visualize) data corresponding to
 individual triangles
 
 |image8|
- 
+
 	Red blood cell showing
 	which triangles (local surface areas) are under most strain in shear
 	flow.
-	
+
 In such case, the keyword ``POINT_DATA`` is changed to ``CELL_DATA`` and the number of
 triangles is given instead of number of mesh points.
 
@@ -904,7 +904,7 @@ Available Object-in-fluid (OIF) classes
 | Here we describe the currently available OIF classes and commands.
   Note that there are more still being added. We would be pleased to
   hear from you about any suggestions on further functionality.
-  
+
 | Notation: ``keywords``, *parameter values*, **vectors**
 | The keywords do not have to be in a specific order.
 
@@ -928,7 +928,7 @@ bonds are created here.
   real numbers. These are the :math:`x, y, z` coordinates of individual
   surface mesh nodes of the objects centered at [0,0,0] and normalized
   so that the “radius” of the object is 1.
-  
+
 | ``trianglesfile=``\ *triangles.dat* - input file. Each line contains
   three integers. These are the ID numbers of the mesh nodes as they
   appear in *nodes.dat*. Note that the first node has ID 0.
@@ -951,18 +951,18 @@ bonds are created here.
   stiffness. Currently, the stiffness is implemented to be uniform over
   the whole object, but with some tweaking, it is possible to have
   non-uniform local interactions.
-  
+
 | Note, the difference between stretching (``ks``) and linear stretching
   (``kslin``) - these two options cannot be used simultaneously:
-  
+
 | Linear stretching behaves like linear spring, where the stretching
   force is calculated as :math:`\mathbf{F}_s=k_s*\Delta L`, where
   :math:`\Delta L` is the prolongation of the given edge. By default,
   the stretching is non-linear (neo-Hookian).
-  
+
 | ``kvisc=``\ *value* - elastic modulus for viscosity of the membrane.
   Viscosity slows down the reaction of the membrane.
-  
+
 | ``kag=``\ *value* - elastic modulus for global area forces
 
 | ``kv=``\ *value* - elastic modulus for volume forces
@@ -1351,7 +1351,7 @@ In the electrokinetics code we solve the following system of coupled
 continuity, diffusion-advection, Poisson, and Navier-Stokes equations:
 
 .. math::
-   
+
    \begin{aligned}
    \label{eq:ek-model-continuity} \frac{\partial n_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
    \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
@@ -1472,7 +1472,7 @@ Initialization
     sys = espressomd.System(box_l = [10.0,10.0,10.0])
     sys.time_step = 0.0
     sys.cell_system.skin = 0.4
-    ek = espressomd.electrokinetics.Electrokinetics(agrid = 1.0, lb_density = 1.0, 
+    ek = espressomd.electrokinetics.Electrokinetics(agrid = 1.0, lb_density = 1.0,
     viscosity = 1.0, friction = 1.0, T =1.0, prefactor = 1.0, stencil = 'linkcentered', advection = True, fluid_coupling = 'friction')
     sys.actors.add(ek)
 
@@ -1703,28 +1703,28 @@ be created beforehand::
 The arguments of the helper function are:
     * <system>: The espressomd.System().
     * <harmonic_bond>: The harmonic bond of the charge-on-a-spring. This is
-      added between core and newly generated Drude particle 
+      added between core and newly generated Drude particle
     * <thermalized_bond>: The thermalized distance bond for the cold and hot
       thermostats.
     * <core particle>: The core particle on which the Drude particle is added.
     * <id drude>: The user-defined id of the Drude particle that is created.
-    * <type drude>: The user-defined type of the Drude particle. 
+    * <type drude>: The user-defined type of the Drude particle.
       Each Drude particle of each complex should have an
       individual type (e.g. in an ionic system with Anions (type 0) and Cations
       (type 1), two new, individual Drude types have to be assigned).
     * <alpha>: The polarizability volume.
     * <coulomb_prefactor>: The Coulomb prefactor of the system. Used to
       calculate the Drude charge from the polarizability and the spring constant
-      of the Drude bond.  
+      of the Drude bond.
     * <thole damping>: (optional) An individual Thole damping parameter for the
       core-Drude pair. Only relevant if Thole damping is used (defaults to 2.6).
     * <verbose>: (bool, optional) Prints out information about the added Drude
       particles (default: False)
 
 What is still missing is the short-range exclusion bond between all Drude-core pairs.
-One bond type of this kind is needed per Drude type. The above helper function also 
+One bond type of this kind is needed per Drude type. The above helper function also
 tracks particle types, ids and charges of Drude and core particles, so a simple call of
-another helper function:: 
+another helper function::
 
     drude_helpers.setup_and_add_drude_exclusion_bonds(S)
 
@@ -1781,12 +1781,12 @@ Internally, this is done with the bond described in  :ref:`Subtract P3M short-ra
 simply adds the p3m shortrange pair-force of scale `- q_d q_{partial}` the to
 bonded particles.
 
-.. seealso:: 
+.. seealso::
 
     Often used in conjunction with Drude oscillators is the :ref:`Thole correction`
-    to damp dipole-dipole interactions on short distances. It is available in |es| 
+    to damp dipole-dipole interactions on short distances. It is available in |es|
     as a non-bonded interaction.
-    
+
 .. _Reaction Ensemble:
 
 Reaction Ensemble
@@ -1794,7 +1794,7 @@ Reaction Ensemble
 
 .. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
 
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`. 
+For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
 An Example script can be found here:
 
 * `Reaction ensemble/ constant pH ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
@@ -1834,9 +1834,9 @@ Here :math:`k_B` is the Boltzmann constant, :math:`T` is temperature,
 of the reaction, and :math:`\mu_i^{\ominus}` the standard chemical
 potential (per particle) of species :math:`i`. Note that thermodynamic equilibrium is
 independent of the direction in which we write the reaction. If it is
-written with left and right-hand side swapped, 
+written with left and right-hand side swapped,
 both :math:`\Delta_{\mathrm{r}}G^{\ominus}` and the stoichiometric
-coefficients attain opposite signs, and the equilibrium constant attains the inverse value. 
+coefficients attain opposite signs, and the equilibrium constant attains the inverse value.
 Further, note that the equilibrium constant :math:`K` is the
 dimensionless *thermodynamic, concentration-based* equilibrium constant,
 defined as
@@ -1874,9 +1874,9 @@ ensemble is given by the criterion :cite:`smith94a`
 
 where :math:`\Delta E=E_\mathrm{new}-E_\mathrm{old}` is the change in potential energy,
 :math:`V` is the simulation box volume,
-and :math:`\beta=1/k_\mathrm{B}T`. 
+and :math:`\beta=1/k_\mathrm{B}T`.
 The extent of reaction, :math:`\xi=1` for the forward, and
-:math:`\xi=-1` for the backward direction. 
+:math:`\xi=-1` for the backward direction.
 The parameter :math:`\Gamma` proportional to the reaction constant. It is defined as
 
 .. math::
@@ -1887,7 +1887,7 @@ where :math:`\left<N_i\right>/V` is the average number density of particles of t
 Note that the dimension of :math:`\Gamma` is :math:`V^{\bar\nu}`, therefore its
 units must be consistent with the units in which Espresso measures the box volume,
 i.e. :math:`\sigma^3`.
-   
+
 It is often convenient, and in some cases even necessary, that some particles
 representing reactants are not removed from or placed at randomly in the system
 but their identity is changed to that of the products, or vice versa in the
@@ -1901,21 +1901,21 @@ reaction.
 
 .. _Converting tabulated reaction constants to internal units in Espresso:
 
-Converting tabulated reaction constants to internal units in Espresso 
+Converting tabulated reaction constants to internal units in Espresso
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The implementation in Espresso requires that the dimension of :math:`\Gamma` 
+The implementation in Espresso requires that the dimension of :math:`\Gamma`
 is consistent with the internal unit of volume, :math:`\sigma^3`.
 The tabulated values of equilibrium constants for reactions in solution, :math:`K_c`, typically use
-:math:`c^{\ominus} = 1\,\mathrm{moldm^{-3}}` as the reference concentration, 
+:math:`c^{\ominus} = 1\,\mathrm{moldm^{-3}}` as the reference concentration,
 and have the dimension of :math:`(c^{\ominus})^{\bar\nu}`.  To be used with Espresso, the
 value of :math:`K_c` has to be converted as
 
 .. math::
 
-   \Gamma = K_c(c^{\ominus} = 1/\sigma^3) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) 
+   \Gamma = K_c(c^{\ominus} = 1/\sigma^3) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}})
    \Bigl( N_{\mathrm{A}}\bigl(\frac{\sigma}{\mathrm{dm}}\bigr)^3\Bigr)^{\bar\nu}
-   
+
 where :math:`N_{\mathrm{A}}` is the Avogadro number.  For gas-phase reactions,
 the pressure-based reaction constant, :math:`K_p` is often used, which can
 be converted to :math:`K_c` as
@@ -1924,7 +1924,7 @@ be converted to :math:`K_c` as
 
    K_p(p^{\ominus}=1\,\mathrm{atm}) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) \biggl(\frac{c^{\ominus}RT}{p^{\ominus}}\biggr)^{\bar\nu},
 
-where :math:`p^{\ominus}=1\,\mathrm{atm}` is the standard pressure. 
+where :math:`p^{\ominus}=1\,\mathrm{atm}` is the standard pressure.
 
 
 .. _Wang-Landau Reaction Ensemble:
@@ -1938,10 +1938,10 @@ An Example script can be found here:
 
 * `Wang Landau reaction ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`_
 
-Combination of the Reaction Ensemble with the Wang-Landau algorithm 
+Combination of the Reaction Ensemble with the Wang-Landau algorithm
 :cite:`wang01a`
 allows for enhanced sampling of the reacting system, and
-and for the determination of the density of states with respect 
+and for the determination of the density of states with respect
 to the reaction coordinate or with respect to some other collective
 variable :cite:`landsgesell16a`. Here the 1/t Wang-Landau
 algorithm :cite:`belardinelli07a` is implemented since it
@@ -1968,9 +1968,9 @@ equilibrium of acids and bases. Under certain conditions, the constant
 pH method can yield equivalent results as the reaction ensemble :cite:`landsgesell16b`. However, it
 treats the chemical potential of :math:`H^{+}` ions and their actual
 number in the simulation box as independent variables, which can lead to
-serious artifacts. 
+serious artifacts.
 The constant pH method can be used within the reaction ensemble module by
-initializing the reactions with the standard commands of the reaction ensemble. 
+initializing the reactions with the standard commands of the reaction ensemble.
 
 The dissociation constant, which is the input of the constant pH method, is the equilibrium
 constant :math:`K_c` for the following reaction:
@@ -1980,7 +1980,7 @@ constant :math:`K_c` for the following reaction:
    \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
 
 For an example of how to setup
-a Constant pH simulation, see the file in the testsuite directory. 
+a Constant pH simulation, see the file in the testsuite directory.
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
 
 .. _Grand canonical ensemble simulation using the Reaction Ensemble:
@@ -1989,13 +1989,13 @@ Grand canonical ensemble simulation using the Reaction Ensemble
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As a special case, all stoichiometric coefficients on one side of the chemical
-reaction can be set to zero.  Such reaction creates particles *ex nihilo*, and 
+reaction can be set to zero.  Such reaction creates particles *ex nihilo*, and
 is equivalent to exchange with a reservoir. Then the simulation in the reaction ensemble becomes equivalent with the
 grandcanonical simulation. Formally, this can be expressed by the reaction
 
 .. math::
- 
-    \mathrm{\emptyset \rightleftharpoons\ \nu_A A  }  \,, 
+
+    \mathrm{\emptyset \rightleftharpoons\ \nu_A A  }  \,,
 
 where, if :math:`\nu_A=1`, the reaction constant :math:`\Gamma` defines the chemical potential of species A.
 However, if :math:`\nu_A\neq 1`, the statistics of the reaction ensemble becomes
@@ -2015,29 +2015,29 @@ reaction ensemble transition probabilities.
 
 .. The text below is commented-out because it is still an open research question how it should be used correctly.
 ..
-.. This can be used to include water autoprotolysis in the implicit solvent simulation, 
+.. This can be used to include water autoprotolysis in the implicit solvent simulation,
 .. by means of a reaction:
-.. 
+..
 .. .. math::
-.. 
+..
 ..    \mathrm{2 H_2O \rightleftharpoons\ H_3O^+ + OH^- } \,,
-.. 
-.. 
+..
+..
 .. add the following ex nihilo reactions to Espresso. (:math:`\emptyset`, read ex
 .. nihilo). Ex nihilo means that the reaction has no reactants or products.
 .. Therefore, if :math:`\emptyset` is a product, particles vanish and if
 .. :math:`\emptyset` is an reactant, then particles are created ex nihilo:
-.. 
+..
 .. .. math::
-.. 
-..    \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- }  \,, 
-.. 
+..
+..    \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- }  \,,
+..
 .. with reaction constant K
-.. 
+..
 .. .. math::
-.. 
-..    \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,, 
-.. 
+..
+..    \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,,
+..
 .. with reaction constant 1/K. K is given implicitly as a function of the apparent dissociation
 .. constant :math:`K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}` such that the dimensionless is
 .. :math:`K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}` with

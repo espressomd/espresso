@@ -3,17 +3,17 @@
 Bonded interactions
 ===================
 
-Bonded interactions are configured by the 
+Bonded interactions are configured by the
 :class:`espressomd.interactions.BondedInteractions` class, which is
-a member of :class:`espressomd.system.System`. Generally, one may use 
+a member of :class:`espressomd.system.System`. Generally, one may use
 the following syntax to activate and assign a bonded interaction::
 
     system.bonded_inter.add(bond)
     system.part[pid1].add_bond((bond, pid2...))
 
-In general, one instantiates an interaction object *bond* and subsequently passes it 
+In general, one instantiates an interaction object *bond* and subsequently passes it
 to :meth:`espressomd.interactions.BondedInteractions.add`. This will enable the
-bonded interaction and allows the user to assign bonds between particle ids *pidX*. 
+bonded interaction and allows the user to assign bonds between particle ids *pidX*.
 Bonded interactions are identified by either their *bondid* or their appropriate object.
 
 Defining a bond between two particles always involves three steps:
@@ -29,7 +29,7 @@ is provided in subsection :ref:`FENE bond`) between them using::
 
 This will set up a FENE bond between particles 42 and 43, 42 and 12, and 12 and 43.
 Note that the *fene* object specifies the type of bond and its parameters,
-the specific bonds are stored within the particles. you can find more 
+the specific bonds are stored within the particles. you can find more
 information regarding particle properties in :ref:`Setting up particles`.
 
 .. _Distance-dependent bonds:
@@ -44,7 +44,7 @@ FENE bond
 
 A FENE (finite extension nonlinear elastic) bond can be instantiated via
 :class:`espressomd.interactions.FeneBond`::
-    
+
     from espressomd.interactions import FeneBond
     fene = FeneBond(k = <float>, d_r_max = <float>, r_0 = <float>)
 
@@ -56,7 +56,7 @@ interaction. The FENE potential
    V(r) = -\frac{1}{2} K \Delta r_\mathrm{max}^2\ln \left[ 1 - \left(
          \frac{r-r_0}{\Delta r_\mathrm{max}} \right)^2 \right]
 
-models a rubber-band-like, symmetric interaction between two particles with magnitude 
+models a rubber-band-like, symmetric interaction between two particles with magnitude
 :math:`K`, maximal stretching length :math:`\Delta r_0` and equilibrium bond length
 :math:`r_0`. The bond potential diverges at a particle distance
 :math:`r=r_0-\Delta r_\mathrm{max}` and :math:`r=r_0+\Delta r_\mathrm{max}`.
@@ -68,13 +68,13 @@ Harmonic bond
 
 A harmonic bond can be instantiated via
 :class:`espressomd.interactions.HarmonicBond`::
-    
+
     from espressomd.interactions import HarmonicBond
     hb = HarmonicBond(k = <float>, r_0 = <float>, r_cut = <float>)
 
 
 This creates a bond type identifier with a classical harmonic
-potential. It is a symmetric interaction between two particles. With the 
+potential. It is a symmetric interaction between two particles. With the
 equilibrium length :math:`r_0` and the magnitude :math:`k`. It is given by
 
 .. math:: V(r) = \frac{1}{2} k \left( r - r_0 \right)^2
@@ -95,7 +95,7 @@ Harmonic Dumbbell Bond
 
 A harmonic bond can be instantiated via
 :class:`espressomd.interactions.HarmonicDumbbellBond`::
-    
+
     from espressomd.interactions import HarmonicDumbbellBond
     hdb = HarmonicDumbbellBond(k1 = <float>, k2 = <float>, r_0 = <float>, r_cut = <float>)
 
@@ -142,14 +142,14 @@ Bonded Coulomb
 
     Requires ELECTROSTATICS feature.
 
-A pairwise Coulomb interaction can be instantiated via 
+A pairwise Coulomb interaction can be instantiated via
 :class:`espressomd.interactions.BondedCoulomb`::
 
     bonded_coulomb = espressomd.interactions.BondedCoulomb(prefactor = 1.0)
     system.bonded_inter.add(bonded_coulomb)
     system.part[0].add_bond((bonded_coulomb, 1))
 
-This creates a bond with a Coulomb pair potential between particles `0` and `1`. 
+This creates a bond with a Coulomb pair potential between particles `0` and `1`.
 It is given by
 
 .. math:: V(r) = \frac{\alpha q_1 q_2}{r},
@@ -169,13 +169,13 @@ Subtract P3M short-range bond
 
 This bond can be instantiated via
 :class:`espressomd.interactions.BondedCoulombP3MSRBond`::
-    
+
     from espressomd.interactions import BondedCoulombP3MSRBond
     subtr_p3m_sr = BondedCoulombP3MSRBond(q1q2 = <float>)
 
 The parameter `q1q2` sets the charge factor of the short-range P3M interaction.
 It can differ from the actual particle charges.  This specialized bond can be
-used to cancel or add **only the short-range** electrostatic part 
+used to cancel or add **only the short-range** electrostatic part
 of the P3M solver. A use case is described in :ref:`Particle polarizability with
 thermalized cold Drude oscillators`.
 
@@ -184,8 +184,8 @@ thermalized cold Drude oscillators`.
 Subtracted Lennard-Jones bond
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`espressomd.interactions.SubtLJ` can be used to exclude certain particle 
-pairs from the non-bonded :ref:`Lennard-Jones interaction`:: 
+:class:`espressomd.interactions.SubtLJ` can be used to exclude certain particle
+pairs from the non-bonded :ref:`Lennard-Jones interaction`::
 
     subtLJ = espressomd.interactions.SubtLJ()
     system.bonded_inter.add(subtLJ)
@@ -208,13 +208,13 @@ Rigid bonds
 
 A rigid bond can be instantiated via
 :class:`espressomd.interactions.RigidBond`::
-    
+
     from espressomd.interactions import RigidBond
     rig = RigidBond(r = <float>, ptol = <float>, vtol = <float> )
 
 To simulate rigid bonds, |es| uses the Rattle Shake algorithm which satisfies
 internal constraints for molecular models with internal constraints,
-using Lagrange multipliers.:cite:`andersen83a` The constrained bond distance 
+using Lagrange multipliers.:cite:`andersen83a` The constrained bond distance
 is named :math:`r`, the positional tolerance is named :math:`ptol` and the velocity tolerance
 is named :math:`vtol`.
 
@@ -224,19 +224,19 @@ Tabulated bond interactions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    
+
     required TABULATED feature.
 
 
 A tabulated bond can be instantiated via
 :class:`espressomd.interactions.Tabulated`::
-    
+
     from espressomd.interactions import Tabulated
     tab = Tabulated(type = <str>, min = <min>, max = <max>,
                     energy = <energy>, force = <force>)
 
-This creates a bond type identifier with a two-body bond length, 
-three-body angle or four-body dihedral 
+This creates a bond type identifier with a two-body bond length,
+three-body angle or four-body dihedral
 tabulated potential. For details of the interpolation, see :ref:`Tabulated interaction`.
 
 The bonded interaction can be based on a distance, a bond angle or a
@@ -263,7 +263,7 @@ The potential is calculated as follows:
    for all angles between 0 and :math:`\pi`, where 0 corresponds to a
    stretched polymer, and just as for the tabulated pair potential, the
    forces are scaled with the inverse length of the connecting vectors.
-   The force on the extremities acts perpendicular 
+   The force on the extremities acts perpendicular
    to the connecting vector
    between the corresponding particle and the center particle, in the plane
    defined by the three particles. The force on the center particle
@@ -282,7 +282,7 @@ Virtual bonds
 
 A virtual bond can be instantiated via
 :class:`espressomd.interactions.Virtual`::
-    
+
     from espressomd.interactions import Virtual
     tab = Virtual()
 
@@ -310,7 +310,7 @@ OIF local forces
 ~~~~~~~~~~~~~~~~
 
 .. note::
-    
+
     required OIF_GLOBAL_FORCES feature.
 
 
@@ -342,7 +342,7 @@ stretching force between :math:`A` and :math:`B` is calculated using
 .. math:: F_s(A,B) = (k_s\kappa(\lambda_{AB}) + k_{s,\mathrm{lin}})\Delta L_{AB}n_{AB}.
 
 Here, :math:`n_{AB}` is the unit vector pointing from :math:`A` to :math:`B`, :math:`k_s` is the
-constant for nonlinear stretching, :math:`k_{s,\mathrm{lin}}` is the constant for 
+constant for nonlinear stretching, :math:`k_{s,\mathrm{lin}}` is the constant for
 linear stretching, :math:`\lambda_{AB} = L_{AB}/L_{AB}^0`, and :math:`\kappa`
 is a nonlinear function that resembles neo-Hookean behavior
 
@@ -391,7 +391,7 @@ Local area conservation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 This interaction conserves the area of the triangles in the
-triangulation. The area constraint assigns the following shrinking/expanding force to 
+triangulation. The area constraint assigns the following shrinking/expanding force to
 vertex :math:`A`
 
 .. math:: F_{AT} = k_{al} \vec{AT}\frac{\Delta S_\triangle}{t_a^2 + t_b^2 + t_c^2}
@@ -575,8 +575,8 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
 
 
 :class:`espressomd.interactions.AngleHarmonic`
-    A classical harmonic potential of the form: 
-    
+    A classical harmonic potential of the form:
+
     .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
 
     :math:`K` is the bending constant,
@@ -674,7 +674,7 @@ Thermalized distance bond
 
 This bond can be used to apply Langevin thermalization on the centre of mass
 and the distance of a particle pair.  Each thermostat can have its own
-temperature and friction coefficient. 
+temperature and friction coefficient.
 
 The bond is configured with::
 
@@ -691,5 +691,5 @@ The parameters are:
     * r_cut:  Specifies maximum distance beyond which the bond is considered broken.
 
 The bond is closely related to simulating :ref:`Particle polarizability with
-thermalized cold Drude oscillators`. 
+thermalized cold Drude oscillators`.
 

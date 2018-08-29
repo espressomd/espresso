@@ -9,13 +9,13 @@ follows. For a pair of particles at distance :math:`r` with charges
 
 .. math:: U_C(r)=C \cdot \frac{q_1 q_2}{r}.
 
-where 
+where
 
-.. math::  
-   C=\frac{1}{4\pi \epsilon_0 \epsilon_r} 
+.. math::
+   C=\frac{1}{4\pi \epsilon_0 \epsilon_r}
    :label: coulomb_prefactor
-    
-is a prefactor which can be set by the user. 
+
+is a prefactor which can be set by the user.
 The commonly used Bdrm length :math:`l_B = e_o^2 / (4 \pi \e\epsilon k_B T)` is the length at which the Coulomb energy between two unit charges is equal to the thermal energy :math:`k_B T`.
 Based on the this length, the prefactor is given by :math:`C=l_B *k_B T`.
 
@@ -41,7 +41,7 @@ activation to achieve the given accuracy::
 
     import espressomd
     from espressomd import electrostatics
-    
+
     system = espressomd.System()
     solver = electrostatics.<SOLVER>(prefactor = C, <ADDITIONAL REQUIRED PARAMETERS>)
     system.actors.add(solver)
@@ -81,7 +81,7 @@ are already known.
 To prevent the automatic tuning, set the ``tune`` parameter to ``False``.
 To manually tune or retune P3M, call :meth:`espresso.electrostatics.P3M.Tune`.
 Note, however, that this is a method the P3M object inherited from
-:attr:`espressomd.electrostatics.ElectrostaticInteraction`. 
+:attr:`espressomd.electrostatics.ElectrostaticInteraction`.
 All parameters passed to the method are fixed in the tuning routine. If not
 specified in the ``Tune()`` method, the parameters ``prefactor`` and
 ``accuracy`` are reused.
@@ -120,12 +120,12 @@ Required parameters:
     * prefactor
     * accuracy
 
-The GPU implementation of P3M calculates the far field portion on the GPU. 
+The GPU implementation of P3M calculates the far field portion on the GPU.
 It uses the same parameters and interface functionality as the CPU version of
 the solver. It should be noted that this does not always provide significant
 increase in performance. Furthermore it computes the far field interactions
 with only single precision which limits the maximum precision. The algorithm
-does not work in combination with the electrostatic extensions :ref:`Dielectric interfaces with the ICC algorithm` 
+does not work in combination with the electrostatic extensions :ref:`Dielectric interfaces with the ICC algorithm`
 and :ref:`Electrostatic Layer Correction (ELC)`.
 
 .. _Debye-Hückel potential:
@@ -168,9 +168,9 @@ actor and can be activated via::
 
 Parameters are:
 
-	* first_id: 
+	* first_id:
 		ID of the first ICC Particle.
-	* n_icc: 
+	* n_icc:
 		Total number of ICC Particles.
 	* convergence:
 		Abort criteria of the iteration. It corresponds to the maximum relative
@@ -184,14 +184,14 @@ Parameters are:
 	* eps_out:
 		Relative permittivity of the outer region (where the particles are).
 	* normals:
-		List of size `n_icc` with normal vectors pointing into the outer region. 
-	* areas 
-		List of size `n_icc` with areas of the discretized surface. 
-	* sigmas 
+		List of size `n_icc` with normal vectors pointing into the outer region.
+	* areas
+		List of size `n_icc` with areas of the discretized surface.
+	* sigmas
 		List of size `n_icc` with an additional surface charge density in
 		absence of any charge induction
 	* epsilons
-		List of size `n_icc` with the dielectric constant associated to the area. 
+		List of size `n_icc` with the dielectric constant associated to the area.
 
 The ICC particles are setup as normal |es| particles. Note that they should be
 fixed in space and need an initial nonzero charge. The following usage example
@@ -230,24 +230,24 @@ sets up parallel metallic plates and activates ICC::
 	iccAreas.extend([iccArea] * nicc_tot)
 	iccSigmas.extend([0] * nicc_tot)
 	iccEpsilons.extend([100000] * nicc_tot)
-	
-	icc=ICC(first_id=0, 
-			n_icc=nicc_tot, 
-			convergence=1e-4, 
+
+	icc=ICC(first_id=0,
+			n_icc=nicc_tot,
+			convergence=1e-4,
 			relaxation=0.75,
-			ext_field=[0,0,0], 
-			max_iterations=100, 
+			ext_field=[0,0,0],
+			max_iterations=100,
 			eps_out = 1.0,
-			normals=iccNormals, 
-			areas=iccAreas, 
-			sigmas=iccSigmas, 
+			normals=iccNormals,
+			areas=iccAreas,
+			sigmas=iccSigmas,
 			epsilons=iccEpsilons)
 
 	system.actors.add(icc)
 
 
 With each iteration, ICC has to solve electrostatics which can severely slow
-down the integration. The performance can be improved by using multiple cores, 
+down the integration. The performance can be improved by using multiple cores,
 a minimal set of ICC particles and convergence and relaxation parameters that
 result in a minimal number of iterations. Also please make sure to read the
 corresponding articles, mainly :cite:`espresso2,tyagi10a,kesselheim11a` before
@@ -293,7 +293,7 @@ using it.
     leads to the following rule of thumb for the parameter choices:
 
     -  The lattice should be of the size of your particle size (i.e. the
-       Lennard Jones epsilon). That means: 
+       Lennard Jones epsilon). That means:
        :math:`\text{mesh} \approx \text{box_l} / \text{lj_sigma}`
 
     -  The integration timestep should be in a range where no particle moves
@@ -459,7 +459,7 @@ MMM2D
     Required features: ELECTROSTATICS, PARTIAL_PERIODIC.
 
 MMM2D is an electrostatics solver for explicit 2D periodic systems.
-It can account for different dielectric jumps on both sides of the 
+It can account for different dielectric jumps on both sides of the
 non-periodic direction. MMM2D Coulomb method needs periodicity 1 1 0 and the
 layered cell system. The performance of the method depends on the number of
 slices of the cell system, which has to be tuned manually. It is
@@ -472,7 +472,7 @@ no dielectric contrast is set and it is used as::
 	system.actors.add(mmm2d)
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
-For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`. 
+For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`.
 The last two, mutually exclusive parameters `dielectric` and
 `dielectric_constants_on` allow to specify dielectric contrasts at the
 upper and lower boundaries of the simulation box. The first form
@@ -494,7 +494,7 @@ to metallic boundary conditions::
 Using `const_pot` allows to maintain a constant electric potential difference `pot_diff`
 between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
 denotes the box length in :math:`z`-direction::
-	
+
 	mmm2d = electrostatics.MMM2D(prefactor = 100.0, maxPWerror = 1e-3, const_pot = 1, pot_diff = 100.0)
 
 This is done by countering the total dipole moment of the system with the
@@ -525,7 +525,7 @@ method in computational order N. Currently, it only supports P3M. This means,
 that you will first have to set up the P3M algorithm before using ELC. The
 algorithm is definitely faster than MMM2D for larger numbers of particles
 (:math:`>400` at reasonable accuracy requirements). The periodicity has to be
-set to ``1 1 1`` still, *ELC* cancels the electrostatic contribution of the 
+set to ``1 1 1`` still, *ELC* cancels the electrostatic contribution of the
 periodic replica in **z-direction**. Make sure that you read the papers on ELC
 (:cite:`arnold02c,icelc`) before using it. ELC is an |es| actor and is used
 with::
@@ -548,8 +548,8 @@ Parameters are:
         the force between any two charges without prefactors (see the papers).
         The algorithm tries to find parameters to meet this LUB requirements or
         will throw an error if there are none.
-    * delta_mid_top/delta_mid_bot: 
-        *ELC* can also be used to simulate 2D periodic systems with image charges, 
+    * delta_mid_top/delta_mid_bot:
+        *ELC* can also be used to simulate 2D periodic systems with image charges,
         specified by dielectric contrasts on the non-periodic boundaries
         (:cite:`icelc`).  Similar to *MMM2D*, these can be set with the
         keywords ``delta_mid_bot`` and ``delta_mid_top``, setting the dielectric
@@ -558,7 +558,7 @@ Parameters are:
         ``delta_mid_top=delta_mid_bot=-1`` would lead to divergence of the
         forces/energies in *ELC* and is therefore only possible with the
         ``const_pot`` option.
-    * const_pot: 
+    * const_pot:
         As described, setting this to ``1`` leads to fully metallic boundaries and
         behaves just like the mmm2d parameter of the same name: It maintains a
         constant potential ``pot_diff`` by countering the total dipole moment of
@@ -566,7 +566,7 @@ Parameters are:
         ``pot_diff``.
     * pot_diff:
         Used in conjunction with ``const_pot`` set to 1, this sets the potential difference
-        between the boundaries in the z-direction between ``z=0`` and 
+        between the boundaries in the z-direction between ``z=0`` and
         ``z = box_l[2] - gap_size``.
     * far_cut:
         The setting of the far cutoff is only intended for testing and allows to
@@ -598,7 +598,7 @@ MMM1D
     Required features: ELECTROSTATICS, PARTIAL_PERIODIC for MMM1D, the GPU version additionally needs
     the features CUDA and MMM1D_GPU.
 
-:: 
+::
 
     from espressomd.electrostatics import MMM1D
     from espressomd.electrostatics import MMM1DGPU
@@ -657,17 +657,17 @@ To use SCAFACOS, create an instance of :attr:`espressomd.electrostatics.Scafacos
 * method_params: dictionary containing the method-specific parameters
 * prefactor: Coulomb prefactor as defined in :eq:`coulomb_prefactor`.
 The method-specific parameters are described in the SCAFACOS manual.
-Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field 
+Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field
 
 To use the, e.g.,  ``ewald`` solver from SCAFACOS as electrostatics solver for your system, set its
 cutoff to :math:`1.5` and tune the other parameters for an accuracy of
 :math:`10^{-3}`, use::
 
   from espressomd.electrostatics import Scafacos
-  scafacos=Scafacos(prefactor=1,method_name="ewald", 
+  scafacos=Scafacos(prefactor=1,method_name="ewald",
     method_params={"ewald_r_cut":1.5, "tolerance_field":1e-3})
   system.actors.add(scafacos)
-  
+
 
 For details of the various methods and their parameters please refer to
 the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for Coulomb or for dipolar interactions.

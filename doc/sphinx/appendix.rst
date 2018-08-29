@@ -136,7 +136,7 @@ argument does not hold.
 
 To obtain the :math:`O(N\log N)` scaling, some algorithm tricks are
 needed, which are not used in MMM1D, MMM2D or ELC and are therefore not
-discussed here. For details, see :cite:`strebel99a`. 
+discussed here. For details, see :cite:`strebel99a`.
 
 .. _MMM2D theory:
 
@@ -523,7 +523,7 @@ computationally cheap.
          \dot{\vec p}_i & = & - \frac{\partial U}{\partial \vec r_i} + q_i \vec E (\vec r_i)- \frac{\zeta}{m_i} \vec p_i
                                + \vec f_i \\
          \dot{\vec A} & = & - \vec E \\
-         \dot{\vec E} & = & 
+         \dot{\vec E} & = &
          c^2 \vec \nabla \times \left( \vec \nabla \times \vec A \right)
          - \frac{1}{\epsilon_0} \vec j ,\end{aligned}
 

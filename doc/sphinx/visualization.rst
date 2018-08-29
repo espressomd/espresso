@@ -14,7 +14,7 @@ online-visualization:
    Note that only VTK from version 7.0.0 and higher has Python 3
    support.
 
-#. A direct rendering engine based on *pyopengl*. As it is developed for |es|, 
+#. A direct rendering engine based on *pyopengl*. As it is developed for |es|,
    it supports the visualization of several specific features like
    constraints, particle properties, the cell system, Lattice-Boltzmann and
    more. It can be adjusted with a large number of parameters to set colors,
@@ -38,28 +38,28 @@ non-blocking thread. Whenever needed, call ``update()`` to synchronize
 the renderer with your system. Finally start the blocking visualization
 window with ``start()``. See the following minimal code example::
 
-    import espressomd 
-    from espressomd import visualization 
+    import espressomd
+    from espressomd import visualization
     from threading import Thread
 
-    system = espressomd.System() 
+    system = espressomd.System()
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     system.box_l = [10,10,10]
 
-    system.part.add(pos = [1,1,1]) 
+    system.part.add(pos = [1,1,1])
     system.part.add(pos = [9,9,9])
 
-    #visualizer = visualization.mayaviLive(system) 
+    #visualizer = visualization.mayaviLive(system)
     visualizer = visualization.openGLLive(system)
 
-    def main_thread(): 
-        while True: 
+    def main_thread():
+        while True:
             system.integrator.run(1)
             visualizer.update()
 
-    t = Thread(target=main_thread) 
-    t.daemon = True 
+    t = Thread(target=main_thread)
+    t.daemon = True
     t.start()
     visualizer.start()
 
@@ -68,16 +68,16 @@ window with ``start()``. See the following minimal code example::
 Common methods for OpenGL and Mayavi
 ------------------------------------
 
-| :meth:`espressomd.visualization.mayaviLive.update()` 
+| :meth:`espressomd.visualization.mayaviLive.update()`
 | :meth:`espressomd.visualization.openGLLive.update()`
 
 ``update()`` synchronizes system and visualizer, handles keyboard events for
 openGLLive.
 
-| :meth:`espressomd.visualization.mayaviLive.start()` 
+| :meth:`espressomd.visualization.mayaviLive.start()`
 | :meth:`espressomd.visualization.openGLLive.start()`
 
-``start()`` starts the blocking visualizer window. 
+``start()`` starts the blocking visualizer window.
 Should be called after a separate thread containing ``update()`` has been started.
 
 | :meth:`espressomd.visualization.mayaviLive.register_callback()`
@@ -111,7 +111,7 @@ OpenGL visualizer
 :class:`espressomd.visualization.openGLLive()`
 
 The optional keywords in ``**kwargs`` are used to adjust the appearance of the visualization.
-The parameters have suitable default values for most simulations. 
+The parameters have suitable default values for most simulations.
 
 Required parameters:
     * `system`: The espressomd.System() object.
@@ -124,20 +124,20 @@ Optional keywords:
 Running the visualizer
 ~~~~~~~~~~~~~~~~~~~~~~
 
-| :meth:`espressomd.visualization.openGLLive.run()` 
+| :meth:`espressomd.visualization.openGLLive.run()`
 
-To visually debug your simulation, ``run(n)`` can be used to conveniently start 
+To visually debug your simulation, ``run(n)`` can be used to conveniently start
 an integration loop with `n` integration steps in a separate thread once the
 visualizer is initialized::
 
-    import espressomd 
-    from espressomd import visualization 
+    import espressomd
+    from espressomd import visualization
 
-    system = espressomd.System(box_l = [10,10,10]) 
+    system = espressomd.System(box_l = [10,10,10])
     system.cell_system.skin = 0.4
     system.time_step = 0.00001
 
-    system.part.add(pos = [1,1,1], v = [1,0,0]) 
+    system.part.add(pos = [1,1,1], v = [1,0,0])
     system.part.add(pos = [9,9,9], v = [0,1,0])
 
     visualizer = visualization.openGLLive(system, background_color = [1,1,1])
@@ -169,7 +169,7 @@ screenshots without blocking the simulation script::
     for i in range(1000):
         system.part.add(pos = [5,5,5])
 
-    system.thermostat.set_langevin(kT=1, gamma=1) 
+    system.thermostat.set_langevin(kT=1, gamma=1)
 
     visualizer = visualization.openGLLive(system, window_size = [500,500])
 
@@ -195,19 +195,19 @@ components. To distinguish particle groups, arrays of RGBA or ADSSO entries are
 used, which are indexed circularly by the numerical particle type::
 
     # Particle type 0 is red, type 1 is blue (type 2 is red etc)..
-    visualizer = visualization.openGLLive(system, 
+    visualizer = visualization.openGLLive(system,
                                           particle_coloring = 'type',
                                           particle_type_colors = [[1, 0, 0],[0, 0, 1]])
 
 `particle_type_materials` lists the materials by type::
 
     # Particle type 0 is gold, type 1 is blue (type 2 is gold again etc).
-    visualizer = visualization.openGLLive(system, 
+    visualizer = visualization.openGLLive(system,
                                           particle_coloring = 'type',
                                           particle_type_colors = [[1, 1, 1],[0, 0, 1]],
                                           particle_type_materials = [steel, bright])
 
-Materials are stored in :attr:`espressomd.visualization.openGLLive().materials`. 
+Materials are stored in :attr:`espressomd.visualization.openGLLive().materials`.
 
 .. _Visualize vectorial properties:
 
@@ -215,7 +215,7 @@ Visualize vectorial properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Most vectorial particle properties can be visualized by 3D-arrows on the
-particles: 
+particles:
 
     * `ext_force`: An external force. Activate with the keyword ``ext_force_arrows = True``.
     * `f`: The force acting on the particle. Activate with the keyword ``force_arrows = True``.
@@ -239,27 +239,27 @@ feature)::
 
 	system.time_step = 0.00001
 
-	visualizer = openGLLive(system, 
+	visualizer = openGLLive(system,
 	                        director_arrows = True,
-	                        director_arrows_type_scale = [1.5, 1.0], 
-	                        director_arrows_type_radii = [0.1, 0.4], 
+	                        director_arrows_type_scale = [1.5, 1.0],
+	                        director_arrows_type_radii = [0.1, 0.4],
 	                        director_arrows_type_colors = [[1.0, 0, 0], [0, 1.0, 0]])
 
 	for i in range(10):
-		system.part.add(pos = numpy.random.random(3) * box_l, 
-		                rotation = [1, 1, 1], 
-		                ext_torque = [5, 0, 0], 
-		                v = [10, 0, 0], 
+		system.part.add(pos = numpy.random.random(3) * box_l,
+		                rotation = [1, 1, 1],
+		                ext_torque = [5, 0, 0],
+		                v = [10, 0, 0],
 		                type = 0)
-						
-		system.part.add(pos = numpy.random.random(3) * box_l, 
-		                rotation = [1, 1, 1], 
-		                ext_torque = [0, 5, 0], 
-		                v = [-10, 0, 0], 
+
+		system.part.add(pos = numpy.random.random(3) * box_l,
+		                rotation = [1, 1, 1],
+		                ext_torque = [0, 5, 0],
+		                v = [-10, 0, 0],
 		                type = 1)
 
 	visualizer.run(1)
-																									
+
 
 
 
@@ -275,7 +275,7 @@ The camera can be controlled via mouse and keyboard:
     * hold middle button: zoom / roll
     * mouse wheel / key pair TG: zoom
     * WASD-Keyboard control (WS: move forwards/backwards, AD: move sidewards)
-    * Key pairs QE, RF, ZC: rotate the system 
+    * Key pairs QE, RF, ZC: rotate the system
     * Double click on a particle: Show particle information
     * Double click in empty space: Toggle system information
     * Left/Right arrows: Cycle through particles
@@ -286,7 +286,7 @@ Additional input functionality for mouse and keyboard is possible by assigning
 callbacks to specified keyboard or mouse buttons. This may be useful for
 realtime adjustment of system parameters (temperature, interactions, particle
 properties etc) or for demonstration purposes. The callbacks can be triggered
-by a timer or keyboard input:: 
+by a timer or keyboard input::
 
     def foo():
         print "foo"
@@ -294,7 +294,7 @@ by a timer or keyboard input::
     #Registers timed calls of foo()
     visualizer.register_callback(foo,interval=500)
 
-    #Callbacks to control temperature 
+    #Callbacks to control temperature
     temperature = 1.0
     def increaseTemp():
             global temperature
@@ -327,7 +327,7 @@ Dragging particles
 
 With the keyword ``drag_enabled`` set to ``True``, the mouse can be used to
 exert a force on particles in drag direction (scaled by ``drag_force`` and the
-distance of particle and mouse cursor). 
+distance of particle and mouse cursor).
 
 .. _Visualization example scripts:
 

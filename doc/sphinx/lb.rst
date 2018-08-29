@@ -62,7 +62,7 @@ in ``tau`` and so on.
 LB nodes are located at 0.5, 1.5, 2.5, etc.
 (in terms of ``agrid``). This has important implications for the location of
 hydrodynamic boundaries which are generally considered to be halfway
-between two nodes for flat, axis-aligned walls. For more complex boundary geometries, the hydrodynamic boundary location deviates from this midpoint and the deviation decays to first order in ``agrid``. 
+between two nodes for flat, axis-aligned walls. For more complex boundary geometries, the hydrodynamic boundary location deviates from this midpoint and the deviation decays to first order in ``agrid``.
 The LBM should
 *not be used as a black box*, but only after a careful check of all
 parameters that were applied.
@@ -129,7 +129,7 @@ coefficients. The correct way to restart an LB simulation is to first
 load in the particles with the correct forces, and use::
 
     sys.integrator.run(steps=number_of_steps, reuse_forces=True)
-    
+
 upon the first call to :ref:`run <Integrator>`. This causes the
 old forces to be reused and thus conserves momentum.
 
@@ -153,8 +153,8 @@ fluid using a linear interpolation scheme, to preserve total momentum.
 In the GPU implementation the force can alternatively be interpolated
 using a three point scheme which couples the particles to the nearest 27
 LB nodes. This can be called using “lbfluid 3pt” and is described in
-Dünweg and Ladd by equation 301 :cite:`duenweg08a`. 
-.. Note that the three point coupling scheme is incompatible with the Shan Chen Lattice Boltzmann. 
+Dünweg and Ladd by equation 301 :cite:`duenweg08a`.
+.. Note that the three point coupling scheme is incompatible with the Shan Chen Lattice Boltzmann.
 The frictional force tends to decrease the relative
 velocity between the fluid and the particle whereas the random forces
 are chosen so large that the average kinetic energy per particle
@@ -228,7 +228,7 @@ The variant
 
 ::
 
-   lb.print_vtk_velocity(path, bb1, bb2) 
+   lb.print_vtk_velocity(path, bb1, bb2)
 
 allows you to only output part of the flow field by specifying an axis aligned
 bounding box through the coordinates ``bb1`` and ``bb1`` (lists of three ints) of two of its corners. This
@@ -347,22 +347,22 @@ The following example sets up a system consisting of a spherical boundary in the
     sys.box_l = [64, 64, 64]
     sys.time_step = 0.01
     sys.cell_system.skin = 0.4
-    
+
     lb = lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
     sys.actors.add(lb)
 
     v = [0, 0, 0.01]  #the boundary slip
     walls = [None] * 4
-    
+
     wall_shape = shapes.Wall(normal=[1,0,0], dist=1)
     walls[0] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
 
     wall_shape = shapes.Wall(normal=[-1,0,0], dist=-63)
     walls[1] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
-    
+
     wall_shape = shapes.Wall(normal=[0,1,0], dist=1)
     walls[2] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
-    
+
     wall_shape = shapes.Wall(normal=[0,-1,0], dist=-63)
     walls[3] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
 

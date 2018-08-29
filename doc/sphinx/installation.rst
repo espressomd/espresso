@@ -1,6 +1,6 @@
 .. _Installation:
 
-Installation 
+Installation
 ============
 
 This chapter will describe how to get, compile and run the software.
@@ -73,7 +73,7 @@ installed with:
     sudo apt install build-essential cmake cython python-numpy \
     libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
     doxygen python-opengl python-sphinx python-pip libgsl-dev
-    
+
 
 Optionally the ccmake utility can be installed for easier configuration:
 
@@ -160,7 +160,7 @@ Quick installation
 
 If you have installed the requirements (see section :ref:`Requirements
 <requirements>` ) in standard locations, to compile, it is usually enough to
-create a build directory and call ``cmake`` and ``make`` (optional steps 
+create a build directory and call ``cmake`` and ``make`` (optional steps
 which modify the build process are commented out):
 
 .. code-block:: bash
@@ -174,13 +174,13 @@ which modify the build process are commented out):
     make
 
 This will build |es| with a default feature set, namely
-:file:`src/core/myconfig-default.hpp`. This file is a ``c++`` header file, 
+:file:`src/core/myconfig-default.hpp`. This file is a ``c++`` header file,
 which defines the features that should be compiled in.
 You may want to adjust the feature set to your needs. This can be easily done
-by copying the `myconfig-sample.hpp` which has been created in the build 
+by copying the `myconfig-sample.hpp` which has been created in the build
 directory to `myconfig.hpp` and only uncomment the features you want to use in your simulation.
 
-The ``cmake`` command looks for libraries and tools needed by |es|. So |es| 
+The ``cmake`` command looks for libraries and tools needed by |es|. So |es|
 can only be built if ``cmake`` reports no errors.
 
 The command ``make`` will compile the source code. Depending on the
@@ -191,7 +191,7 @@ other things:
    However, normally it is not necessary to actually *install* to run
    it: ``make install``
 
-*  It can invoke code checks: ``make check`` 
+*  It can invoke code checks: ``make check``
 
 *  It can build this documentation: ``make sphinx``
 
@@ -328,19 +328,19 @@ General features
 -  ``DIPOLES`` This activates the dipole-moment property of particles; In addition,
    the various magnetostatics algorithms, such as P3M are switched on.
 
-   .. seealso:: 
-   
+   .. seealso::
+
        :ref:`Magnetostatics / Dipolar interactions`
        :ref:`Electrostatics`
 
 -  ``SCAFACOS_DIPOLES``
 
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
-   the corresponding quaternion integrator. 
-   
+   the corresponding quaternion integrator.
+
    .. seealso:: :ref:`Setting up particles`
 
-   .. note:: 
+   .. note::
       Note, that when the feature is activated, every particle has three
       additional degrees of freedom, which for example means that the
       kinetic energy changes at constant temperature is twice as large.
@@ -382,15 +382,15 @@ General features
    placed using the position (and orientation) of other particles. The
    feature allows to place a virtual particle into the center of mass of
    a set of other particles.
-   
-   .. seealso:: :ref:`Virtual sites` 
+
+   .. seealso:: :ref:`Virtual sites`
 
 -  ``VIRTUAL_SITES_RELATIVE`` Virtual sites are particles, the position and velocity of which is
    not obtained by integrating equations of motion. Rather, they are
    placed using the position (and orientation) of other particles. The
    feature allows for rigid arrangements of particles.
 
-   .. seealso:: :ref:`Virtual sites` 
+   .. seealso:: :ref:`Virtual sites`
 
 -  ``METADYNAMICS``
 
@@ -400,7 +400,7 @@ General features
    constant. It is also possible to set up a chemical equilibrium
    reaction between the reactants and products, with another rate
    constant. Be careful the model makes usage of the word catalyst. This usage of the word cannot be brought into agreement with the correct usage of the word catalyst.
-   
+
    .. seealso:: :ref:`Swimmer reactions`
 
 -  ``OVERLAPPED``
@@ -420,7 +420,7 @@ integrator or thermostat:
        .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibrium MD`
 
 -  ``NPT`` Enables an on–the–fly NPT integration scheme.
-   
+
    .. seealso:: :ref:`Isotropic NPT thermostat`
 
 
@@ -695,8 +695,8 @@ are ever modified by the build process.
 
 .. code-block:: bash
 
-    $ cd build 
-    $ cmake .. 
+    $ cd build
+    $ cmake ..
     $ make
 
 Afterwards Espresso can be run via calling ``./pypresso`` from the command
@@ -718,8 +718,8 @@ followed by a call to make:
 
 .. code-block:: bash
 
-    $ cd build 
-    $ ccmake .. 
+    $ cd build
+    $ ccmake ..
     $ make
 
 Fig. :ref:`ccmake-figure` shows the interactive ccmake UI.
@@ -769,7 +769,7 @@ build directory and create a new one.
 
 .. _make\: Compiling, testing and installing:
 
-``make``: Compiling, testing and installing 
+``make``: Compiling, testing and installing
 --------------------------------------------
 
 The command ``make`` is mainly used to compile the source code, but it
@@ -790,13 +790,13 @@ targets are available:
 ``check``
     Runs the testsuite. By default, all available tests will be run on
     1, 2, 3, 4, 6, or 8 processors.
-    
+
 ``clean``
     Deletes all files that were created during the compilation.
 
 ``install``
-    Install |es|. 
-    Use ``make DESTDIR=/home/john install`` to install to a 
+    Install |es|.
+    Use ``make DESTDIR=/home/john install`` to install to a
     specific directory.
 
 ``doxygen``
@@ -867,7 +867,7 @@ commandline options for the most common tools.
 
 where ``--tool`` can be any from the following table.  You can only
 use one tool at a time.
-  
+
 +---------------------+----------------------------------------------+
 | Tool                | Effect                                       |
 +=====================+==============================================+

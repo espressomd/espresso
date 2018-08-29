@@ -90,7 +90,7 @@ Galilei Transform and Particle Velocity Manipulation
 
 The following class :class:`espressomd.galilei.GalileiTransform` may be useful
 in affecting the velocity of the system.::
-    
+
     system = espressomd.System()
     gt = system.galilei
 
@@ -127,7 +127,7 @@ factor in the density fluctuations of the Lattice-Boltzmann fluid.
 * The center-of-mass velocity
 
 ::
-    
+
     gt.system_CMS_velocity()
 
 Returns the velocity of the center of mass of the whole system.

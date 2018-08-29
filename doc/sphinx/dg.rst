@@ -7,14 +7,14 @@ Contact the Developers
 To contact the |es| developers, please write an email to the developers mailing list:
 espressomd-devel@nongnu.org
 to subscribe to the developers’ mailing list go to
-http://lists.nongnu.org/mailman/listinfo/espressomd-devel 
+http://lists.nongnu.org/mailman/listinfo/espressomd-devel
 
 
 .. _Before you start a development project:
 
 Before you start a development project
 --------------------------------------
-Before you start a development project for |es|, please always write to the developers mailing list and describe the project. 
+Before you start a development project for |es|, please always write to the developers mailing list and describe the project.
 This is to avoid that several people work on the same thing at the same time. Also, implementation details can be discussed in advance. In many cases, existing developers can point to re-usable code and simpler solutions.
 
 
@@ -32,12 +32,12 @@ Required Development Tools
 -  First of all, please install the dependencies for compiling |es|. See the section on "Getting, compiling and running" in the user guide.
 
 -  To be able to access the development version of |es|, you will need
-   the distributed versioning control system git_. 
+   the distributed versioning control system git_.
 
 -  To build the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
       pip install --upgrade --user -r requirements.txt
 
-   Note, that some distributions now use ``pip`` for Python3 and ``pip2`` for Python 2. 
+   Note, that some distributions now use ``pip`` for Python3 and ``pip2`` for Python 2.
 
 -  To build the tutorials, you will need LaTeX.
 
@@ -51,7 +51,7 @@ systems.
 
 Getting the Development Code
 ----------------------------
-We use Github for storing the source code and its history, and for managing the development process. 
+We use Github for storing the source code and its history, and for managing the development process.
 The repository is located at http://github.com/espressomd/espresso.
 To get the current development code, run::
 
@@ -90,7 +90,7 @@ need to look at the CMakeList.txt in the directory where the file is located.
 
   In this case, placing a file with that ending is enough.
 
-* In other cases, the files are explicitly included (e.g., testsuite/python/CMakeList):: 
+* In other cases, the files are explicitly included (e.g., testsuite/python/CMakeList)::
 
       set(py_tests  bondedInteractions.py
                    cellsystem.py
@@ -102,7 +102,7 @@ need to look at the CMakeList.txt in the directory where the file is located.
 Testsuite
 ---------
 
--  New or significantly changed features will only be accepted, if they have a test case. 
+-  New or significantly changed features will only be accepted, if they have a test case.
    This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behavior is guaranteed to work.
 -  There are two kinds of tests:
 
@@ -111,7 +111,7 @@ Testsuite
 
 -  To execute the tests, run::
 
-     make check 
+     make check
 
    in the top build directory.
 
@@ -207,7 +207,7 @@ The source tree has the following structure:
   * docker: Definitions of the docker images for various distributions used for continuous integration testing
   * CI: Support files for the continuous integration testing run on the Travis-CI service.
   * jenkins: Outdated support files for the Jenkins continuous integration testing
-		
+
 
 Flow control and communications architecture
 --------------------------------------------
@@ -313,19 +313,19 @@ Functions for calculating force and energy, and for setting parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Every interaction resides in its own source .cpp and .hpp. A simple example for a
-bonded interaction is the FENE bond in ``src/core/fene.cpp``` and ``src/core/fene.hpp``. 
+bonded interaction is the FENE bond in ``src/core/fene.cpp``` and ``src/core/fene.hpp``.
 Use these two files as templates for your interaction.
 
 Notes:
 
-* The names of function arguments mentioned below are taken from the FENE bond in ``src/core/fene.cpp`` and ``src/core/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction. 
+* The names of function arguments mentioned below are taken from the FENE bond in ``src/core/fene.cpp`` and ``src/core/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction.
 * The recommended signatures of the force and energy functions are::
 
-    inline int calc_fene_pair_force(Particle *p1, Particle *p2, 
-                                Bonded_ia_parameters *iaparams, 
+    inline int calc_fene_pair_force(Particle *p1, Particle *p2,
+                                Bonded_ia_parameters *iaparams,
                                 double dx[3], double force[3])
-    inline int fene_pair_energy(Particle *p1, Particle *p2, 
-                            Bonded_ia_parameters *iaparams, 
+    inline int fene_pair_energy(Particle *p1, Particle *p2,
+                            Bonded_ia_parameters *iaparams,
                             double dx[3], double *_energy)
 
   Here, ``fene`` needs to be replaced by the name of the new interaction.
@@ -337,7 +337,7 @@ Notes:
   A return value of ``ES_OK`` is returned on success, ``ES_ERR`` on error, e.g., when parameters are invalid.
 * The setter function must call make_bond_type_exists() with that bond type, to allocate the memory for storing the parameters.
 * Afterwards, the bond parameters can be stored in the global variable bonded_ia_params[bond_type]
-  
+
   * bonded_ia_params[bond_type].num is the number of particles involved in the bond -1. I.e., 1 for a pairwise bonded potential such as the FENE bond.
   * The parameters for the individual bonded interaction go to the member of Bond_parameters for your interaction defined in the previous step. For the FENE bond, this would be::
     bonded_ia_params[bond_tpe].p.fene
@@ -426,12 +426,12 @@ Please note that the following is Cython code (www.cython.org), rather than pure
     the FENE bond as template. Please use pep8 naming convention::
 
         class FeneBond(BondedInteraction):
-        
+
             def __init__(self, *args, **kwargs):
-                """ 
+                """
                 FeneBond initializer. Used to instantiate a FeneBond identifier
                 with a given set of parameters.
-        
+
                 Parameters
                 ----------
                 k : float
@@ -443,34 +443,34 @@ Please note that the following is Cython code (www.cython.org), rather than pure
                       Specifies the equilibrium length of the bond.
                 """
                 super(FeneBond, self).__init__(*args, **kwargs)
-        
+
             def type_number(self):
                 return BONDED_IA_FENE
-        
+
             def type_name(self):
                 return "FENE"
-        
+
             def valid_keys(self):
                 return "k", "d_r_max", "r_0"
-        
+
             def required_keys(self):
                 return "k", "d_r_max"
-        
+
             def set_default_params(self):
                 self._params = {"r_0": 0.}
-        
+
             def _get_params_from_es_core(self):
                 return \
                     {"k": bonded_ia_params[self._bond_id].p.fene.k,
                      "d_r_max": bonded_ia_params[self._bond_id].p.fene.drmax,
                      "r_0": bonded_ia_params[self._bond_id].p.fene.r0}
-        
+
             def _set_params_in_es_core(self):
                 fene_set_params(
                     self._bond_id, self._params["k"], self._params["d_r_max"], self._params["r_0"])
-    
+
 * In ``testsuite/python/bondedInteractions.py``:
-  
+
   * Add a test case, which verifies that parameters set and gotten from the interaction are consistent::
 
         test_fene = generateTestForBondParams(

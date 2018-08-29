@@ -32,7 +32,7 @@ Guiding principles
 how to use this tool. However, it should be borne in mind that being able to
 operate a tool is not sufficient to obtain physically meaningful results. It is
 always the responsibility of the user to understand the principles behind the
-model, simulation and analysis methods he or she is using. 
+model, simulation and analysis methods he or she is using.
 
 It is expected that the users of |es| and readers of this user guide have a
 thorough understanding of simulation methods and algorithms they are planning
@@ -122,7 +122,7 @@ Basic python simulation script
 
 In this section, a brief overview is given over the most important components
 of the Python interface. Their usage is illustrated by short examples, which
-can be put together to a demo script. 
+can be put together to a demo script.
 
 .. rubric:: Imports
 
@@ -135,7 +135,7 @@ imported, before anything related can be done. ::
 This should be followed by further necessary imports of the example at hand: ::
 
     from espressomd.interactions import HarmonicBond
-    from espressomd.electrostatics import P3M 
+    from espressomd.electrostatics import P3M
 
 .. rubric:: espressomd.System
 
@@ -158,12 +158,12 @@ concerning the simulation system such as box geometry, time step or :ref:`cell-s
 The particles in the simulation are accessed via ``system.part``, an instance of the ParticleList class. Use
 the `add` method to :ref:`create new particles<Adding particles>`: ::
 
-    system.part.add(id = 0, pos = [1.0, 1.0, 1.0], type = 0) 
-    system.part.add(id = 1, pos = [1.0, 1.0, 2.0], type = 0) 
+    system.part.add(id = 0, pos = [1.0, 1.0, 1.0], type = 0)
+    system.part.add(id = 1, pos = [1.0, 1.0, 2.0], type = 0)
 
 Individual particles can be retrieved by their numerical id using angular
 brackets::
-    
+
     system.part[1].pos = [1.0, 1.0, 2.0]
 
 It is also possible to :ref:`loop<Iterating over particles and pairs of
@@ -215,44 +215,44 @@ interaction between all particles of type 0 with the given parameters: ::
 
 .. rubric:: Bonded interaction
 
-Next, we add another pair of particles with a different type to later add 
+Next, we add another pair of particles with a different type to later add
 a :ref:`harmonic bond<Harmonic bond>` between them: ::
 
-    system.part.add(id = 2, pos = [7.0, 7.0, 7.0], type = 1) 
-    system.part.add(id = 3, pos = [7.0, 7.0, 8.0], type = 1) 
+    system.part.add(id = 2, pos = [7.0, 7.0, 7.0], type = 1)
+    system.part.add(id = 3, pos = [7.0, 7.0, 8.0], type = 1)
 
 To set up a bonded interaction, first an instance of the appropriate
 class is created with the desired parameters: ::
-    
+
     harmonic = HarmonicBond(k = 1.0, r_0 = 0.5)
 
 Then, the bonded interaction is registered in the simulation core
 by adding the instance to `bonded_inter`: ::
-    
+
     system.bonded_inter.add(harmonic)
 
 Finally, the bond can be added to particles using the add_bond()-method of
 ParticleHandle with the instance of the bond class and the id of the bond
 partner particle: ::
-    
+
     system.part[2].add_bond((harmonic, 3))
 
 .. rubric:: Charges
 
 Now we want to setup a pair of charged particles treated by the P3M
 electrostatics solver. We start by adding the particles: ::
-    
-    system.part.add(id = 4, pos = [4.0, 1.0, 1.0], type = 2, q = 1.0) 
-    system.part.add(id = 5, pos = [6.0, 1.0, 1.0], type = 2, q = -1.0) 
+
+    system.part.add(id = 4, pos = [4.0, 1.0, 1.0], type = 2, q = 1.0)
+    system.part.add(id = 5, pos = [6.0, 1.0, 1.0], type = 2, q = -1.0)
 
 Long-range interactions and other methods that might be mutually exclusive
 are treated as so-called *actors*. They are used by first creating an instance
 of the desired actor::
-    
-    p3m = P3M(accuracy = 1e-3, prefactor = 1.0) 
+
+    p3m = P3M(accuracy = 1e-3, prefactor = 1.0)
 
 and then adding it to the system: ::
-   
+
     print("Tuning p3m...")
     system.actors.add(p3m)
 
@@ -278,9 +278,9 @@ of the system are printed: ::
 
     	energy = system.analysis.energy()
         print("System time: {}".format(system.time))
-        print("Energy of the LJ interaction: {}".format(energy["non_bonded"])) 
-        print("Energy of the harmonic bond: {}".format(energy["bonded"])) 
-        print("Energy of the Coulomb interaction: {}".format(energy["coulomb"])) 
+        print("Energy of the LJ interaction: {}".format(energy["non_bonded"]))
+        print("Energy of the harmonic bond: {}".format(energy["bonded"]))
+        print("Energy of the Coulomb interaction: {}".format(energy["coulomb"]))
 
 .. _Tutorials:
 
@@ -310,23 +310,23 @@ Sample scripts
 Several scripts that can serve as usage examples can be found in the directory ``/samples``,
 or in the `git repository <https://github.com/espressomd/espresso/blob/python/samples/>`_.
 
-* ``billard.py`` 
+* ``billard.py``
     A simple billiard game, needs the Python ``pypopengl`` module
 
 * ``bonds-tst.py``
    Test script that manually creates and deletes different bonds between particles (see :ref:`Bonded interactions`). This script performs:
-  
-   * print defined bonded interactions 
+
+   * print defined bonded interactions
    * print bonds on a particle
    * delete bonds by index or name
    * save/load a bond to/from a variable
- 
+
 
 * ``cellsystem_test.py``
-    Test script that changes the skin depth parameter.  This should not be seen as a benchmark, but rather as a rough estimate of the effect of the cellsystem.     
+    Test script that changes the skin depth parameter.  This should not be seen as a benchmark, but rather as a rough estimate of the effect of the cellsystem.
     .. todo:: implement the older [tune_cells] call
     .. todo:: add save/load optimal cell parameters from tune_skin()
-    
+
 
 * ``debye_hueckel.py``
     Charged beads with a WCA interaction are simulated using the screened Debye-Hückel potential. See :ref:`Debye-Hückel potential`
@@ -353,7 +353,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     Simple Lennard-Jones particle liquid. Shows the basic features of how to:
 
     * set up system parameters, particles and interactions.
-    * warm up and integrate. 
+    * warm up and integrate.
     * write parameters, configurations and observables to files
 
 * ``lj_liquid_structurefactor.py``
@@ -364,7 +364,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     Uses the Python ``pickle`` module to store and load bond information.
 
 * ``load_checkpoint.py``,  ``save_checkpoint.py``
-   Basing usage of the checkpointing feature. Shows how to write/load the state of:   
+   Basing usage of the checkpointing feature. Shows how to write/load the state of:
    * custom user variables
    * non bonded interactions
    * particles
@@ -375,11 +375,11 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     Uses the Python ``pickle`` module to store and load system information.
 
 * ``MDAnalysisIntegration.py``.
-    Shows how to expose configuration to ``MDAnalysis`` at run time. The functions of ``MDAnalysis`` can be used to perform some analysis or 
+    Shows how to expose configuration to ``MDAnalysis`` at run time. The functions of ``MDAnalysis`` can be used to perform some analysis or
     convert the frame to other formats (CHARMM, GROMACS, ...)
 
 * ``minimal-charged-particles.py``
-   Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions. 
+   Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions.
 
 * ``minimal-diamond.py``
 
@@ -391,7 +391,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * ``observables_correlators.py``
 
 * ``p3m.py``
-   Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions. 
+   Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions.
 
 * ``slice_input.py``
     Uses python array slicing to set and extract various particle properties.
@@ -464,7 +464,7 @@ mass of 1, so that the mass unit is simply the mass of all particles.
 Combined with the energy and length scale, this is sufficient to derive
 the resulting time scale:
 
-.. math:: 
+.. math::
 
     [\mathrm{time}] = [\mathrm{length}]\sqrt{\frac{[\mathrm{mass}]}{[\mathrm{energy}]}}
 
@@ -475,7 +475,7 @@ This means, that if you measure lengths in Ångström, energies in
 On the other hand, if you want a particular time scale, then the mass
 scale can be derived from the time, energy and length scales as
 
-.. math:: 
+.. math::
 
     [\mathrm{mass}] = [\mathrm{energy}]\frac{[\mathrm{time}]^2}{[\mathrm{length}]^2}.
 
@@ -572,7 +572,7 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+------------+
 | MMM1D on GPU                   | Single                 | Single           | No         |
 +--------------------------------+------------------------+------------------+------------+
-| ELC                            | Good                   | Good             | Yes        | 
+| ELC                            | Good                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | ICC*                           | Group                  | Group            | Yes        |
 +--------------------------------+------------------------+------------------+------------+
@@ -613,8 +613,8 @@ report so to the developers.
 | DPD                            | Single                 | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 
-.. 
-    Features subject for removal / no python support / fate unclear 
+..
+    Features subject for removal / no python support / fate unclear
 
     +--------------------------------+------------------------+------------------+------------+
     | **No Python support**                                                                   |
@@ -633,7 +633,7 @@ report so to the developers.
     +--------------------------------+------------------------+------------------+------------+
     | Directional Lennard-Jones      | Single                 | Single           | No         |
     +--------------------------------+------------------------+------------------+------------+
-    | MEMD                           | Single                 | Group            | Yes        | 
+    | MEMD                           | Single                 | Group            | Yes        |
     +--------------------------------+------------------------+------------------+------------+
     | Shan-Chen Multicomponent Fluid | Group                  | Group            | No         |
     +--------------------------------+------------------------+------------------+------------+
@@ -652,16 +652,16 @@ Intended interface compatibility between ESPResSo versions
 We use the following versioning scheme:
 major.minor.patch_level
 
-With regards to the stability of the Python interface, we plan the following guidelines: 
+With regards to the stability of the Python interface, we plan the following guidelines:
 
   * patch_level: The Python interface will not change, if only the patch_level number is different. Example: 4.0.0 -> 4.0.1.
 
   * minor: There will be no silent interface changes between two versions with different minor numbers. I.e., a simulation script will not silently produce different results with the new version. The interface can, however, be extended. In important cases, the interface can change in such a way that using the old interface produces a clear error message and the simulation is terminated. Example: 4.0.1 -> 4.1.0
 
-  * major: No guarantees are made for a transition between major versions. Example 4.1.2 -> 5.0. 
+  * major: No guarantees are made for a transition between major versions. Example 4.1.2 -> 5.0.
 
   * No guarantees are made with regards to the development branch on GitHub.
 
-  * No guarantees are made with respect to the C++ bindings in the simulation core. 
+  * No guarantees are made with respect to the C++ bindings in the simulation core.
 
 

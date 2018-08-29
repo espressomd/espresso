@@ -48,7 +48,7 @@ are stored in text files (the particle positions), there is only a limited
 precision. Therefore, it is not possible to bitwise reproduce a simulation
 state using this text files. When you need bitwise reproducibility, you will have
 to use checkpointing , which stores positions, forces and velocities in binary
-format. 
+format.
 
 .. _(Almost) generic checkpointing in Python:
 
@@ -102,7 +102,7 @@ To give an example::
     checkpoint.register("skin")
 
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
-    # ... set system properties like time_step here ... 
+    # ... set system properties like time_step here ...
     checkpoint.register("system")
 
     system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -114,7 +114,7 @@ To give an example::
     # ... add particles to the system with system.part.add(...) here ...
     checkpoint.register("system.part")
 
-    # ... set charges of particles here ... 
+    # ... set charges of particles here ...
     from espressomd import electrostatics
     p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     system.actors.add(p3m)
@@ -226,7 +226,7 @@ Currently available:
     - write_mass: particle masses
 
     - write_ordered: if particles should be written ordered according to their
-      id (implies serial write). 
+      id (implies serial write).
 
 
 
@@ -244,7 +244,7 @@ call the H5md objects :meth:`espressomd.io.writer.h5md.H5md.write` method withou
 
     h5.write()
 
-    
+
 After the last write call, you have to call the close() method to remove
 the backup file and to close the datasets etc.
 
@@ -317,10 +317,10 @@ refer to the VTF homepage (https://github.com/olenz/vtfplugin/wiki).
 Creating files in these formats from within is supported by the commands :meth:`espressomd.io.writer.vtf.writevsf`
 and :meth:`espressomd.io.writer.vtf.writevcf`, that write a structure and coordinate block (respectively ) to the
 given file. To create a standalone VTF file, first use ``writevsf`` at the beginning of
-the simulation to write the particle definitions as a header, and then ``writevcf`` 
+the simulation to write the particle definitions as a header, and then ``writevcf``
 to generate a timeframe of the simulation state. For example:
 
-A standalone VTF file can simply be 
+A standalone VTF file can simply be
 
 .. code:: python
 
@@ -330,7 +330,7 @@ A standalone VTF file can simply be
     fp = open('trajectory.vtf', mode='w+t')
 
     # ... add particles here
-    
+
     # write structure block as header
     vtf.writevtf(system, fp)
     # write initial positions as coordinate block
@@ -399,15 +399,15 @@ the system’s particles.
     from espressomd.io.writer import vtf
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
-    fp = open('trajectory.vcf', mode='w+t')    
-    vtf.writevcf(system, fp, types='all')  
+    fp = open('trajectory.vcf', mode='w+t')
+    vtf.writevcf(system, fp, types='all')
 
 .. _vtf_pid_map\: Going back and forth between |es| and VTF indexing:
 
 :meth:`espressomd.io.writer.vtf.vtf_pid_map`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Generates a dictionary which maps |es| particle ``id`` to VTF indices.
-This is motivated by the fact that the list of |es| particle ``id`` is allowed to contain *holes* but VMD 
+This is motivated by the fact that the list of |es| particle ``id`` is allowed to contain *holes* but VMD
 requires increasing and continuous indexing. The |es| ``id`` can be used as *key* to obtain the VTF index as the *value*, for example:
 
 .. code:: python

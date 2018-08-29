@@ -32,7 +32,7 @@ Non-bonded interaction are configured via the :class:`espressomd.interactions.No
 
 This command defines an interaction between all particles of type *type1* and
 *type2*. Possible interaction types and their parameters are
-listed below. 
+listed below.
 
 .. todo::
     Implement this functionality:
@@ -82,7 +82,7 @@ Lennard-Jones interaction
 .. note::
     `Feature LENNARD_JONES required.`
 
-The interface for the Lennard-Jones interaction is implemented in 
+The interface for the Lennard-Jones interaction is implemented in
 :class:`espressomd.interactions.LennardJonesInteraction`. The Lennard-Jones parameters
 can be set via::
 
@@ -100,7 +100,7 @@ see :class:`espressomd.interactions.LennardJonesInteraction`. The potential is d
          4 \epsilon \left[ \left(\frac{\sigma}{r-r_\mathrm{off}}\right)^{12}
          - \left(\frac{\sigma}{r-r_\mathrm{off}}\right)^6+c_\mathrm{shift}\right]
          & \mathrm{if~} r_\mathrm{min}+r_\mathrm{off} < r < r_\mathrm{cut}+r_\mathrm{off}\\
-         0 
+         0
          & \mathrm{otherwise}
        \end{cases}.
 
@@ -113,7 +113,7 @@ the radii of the interaction particles. At this distance, the potential is
 :math:`V_\mathrm{LJ}(r_\mathrm{off} + \sigma) = 4 \epsilon c_\mathrm{shift}`.
 The minimum of the potential is at
 :math:`V_\mathrm{LJ}(r_\mathrm{off} +
-2^\frac{1}{6}\sigma) = 
+2^\frac{1}{6}\sigma) =
 -\epsilon + 4 \epsilon c_\mathrm{shift}`. Beyond this value the interaction is attractive.
 Beyond the distance :math:`r_\mathrm{cut}` the potential is cut off and the interaction force is zero.
 
@@ -176,7 +176,7 @@ Generic Lennard-Jones interaction
     `Feature LENNARD_JONES_GENERIC required.`
 
 
-The interface for the generic Lennard-Jones interactions is implemented in 
+The interface for the generic Lennard-Jones interactions is implemented in
 :class:`espressomd.interactions.GenericLennardJonesInteraction`. They
 are configured via the syntax::
 
@@ -194,7 +194,7 @@ types *type1* and *type2*. The potential is defined by
          \epsilon\left[b_1\left(\frac{\sigma}{r-r_\mathrm{off}}\right)^{e_1}
          -b_2\left(\frac{\sigma}{r-r_\mathrm{off}}\right)^{e_2}+c_\mathrm{shift}\right]
          & \mathrm{if~} r_\mathrm{min}+r_\mathrm{off} < r < r_\mathrm{cut}+r_\mathrm{off}\\
-         0 
+         0
          & \mathrm{otherwise}
        \end{cases}\ .
 
@@ -356,7 +356,7 @@ can be set via::
 This defines an interaction using the Morse potential between particles
 of the types *type1* and *type2*. It serves similar purposes as the Lennard-Jones
 potential, but has a deeper minimum, around which it is harmonic. This
-models the potential energy in a diatomic molecule. 
+models the potential energy in a diatomic molecule.
 
 For :math:`r < r_\mathrm{cut}`, this potential is given by
 
@@ -460,7 +460,7 @@ Hat interaction
 .. note::
     `Feature HAT required.`
 
-The interface for the Lennard-Jones interaction is implemented in 
+The interface for the Lennard-Jones interaction is implemented in
 :class:`espressomd.interactions.HatInteraction`. The hat parameters
 can be set via::
 
@@ -531,7 +531,7 @@ particles of the types *type1* and *type2*. The Gaussian potential is defined by
 
 .. math::
 
-   V(r) = 
+   V(r) =
      \begin{cases} \epsilon\,e^{-\frac{1}{2}\left(\frac{r}{\sigma}\right)^{2}}
        & r < r_\mathrm{cut}\\
      0 & r \ge r_\mathrm{cut}
@@ -590,7 +590,7 @@ order of :math:`w^D`:
 
 .. math::
 
-   w^D (r_{ij}) = ( w^R (r_{ij})) ^2 = 
+   w^D (r_{ij}) = ( w^R (r_{ij})) ^2 =
       \left\{
    \begin{array}{clcr}
                 1                      & , \; \text{weight_function} = 0 \\
@@ -623,7 +623,7 @@ Thole correction
 
     THOLE is only implemented for the P3M electrostatics solver.
 
-The Thole correction is closely related to simulations involving 
+The Thole correction is closely related to simulations involving
 :ref:`Particle polarizability with thermalized cold Drude oscillators`.
 In this context, it is used to correct for overestimation of
 induced dipoles at short distances. Ultimately, it alters the short-range
@@ -654,10 +654,10 @@ cores, except the one it's connected to.  This exception is handled internally
 by disabling Thole interaction between particles connected via Drude bonds.
 Also, each Drude core has a Thole correction interaction with all other Drude
 cores and Drude charges. To assist with the bookkeeping of mixed scaling
-coefficients, the helper method ``add_drude_particle_to_core()`` (see 
-:ref:`Particle polarizability with thermalized cold Drude oscillators`) 
-collects all core types, Drude types and relevant parameters when a Drude 
-particle is created. The user already provided all the information when 
+coefficients, the helper method ``add_drude_particle_to_core()`` (see
+:ref:`Particle polarizability with thermalized cold Drude oscillators`)
+collects all core types, Drude types and relevant parameters when a Drude
+particle is created. The user already provided all the information when
 setting up the Drude particles, so the simple call::
 
     add_all_thole(<system>, <verbose>)
@@ -697,7 +697,7 @@ Anisotropic non-bonded interactions
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. todo::
-        
+
         Not implemented yet.
 
     inter LJ-angle
@@ -719,7 +719,7 @@ Anisotropic non-bonded interactions
     .. math::
 
        U(r_{ik},\theta_{jik},\theta_{ikn})=
-         \epsilon\left[5\left(\frac{\sigma}r\right)^{12} - 
+         \epsilon\left[5\left(\frac{\sigma}r\right)^{12} -
            6\left(\frac{\sigma}{r}\right)^{10}\right]
          \cos^2\theta_{jik}\cos^2\theta_{ikn},
 
@@ -832,8 +832,8 @@ and
            \mathbf{\hat{u}}_j)^{2}} {1-\chi' \, \mathbf{\hat{u}}_i \cdot
            \mathbf{\hat{u}}_j } \right) \right]^{\mu}.\end{gathered}
 
-The parameters :math:`\chi = \left(k_1^{2} - 1\right)/\left(k_1^{2} + 1\right)` 
-and :math:`\chi' = \left(k_2^{1/\mu} -  1\right)/\left(k_2^{1/\mu} + 1\right)` 
+The parameters :math:`\chi = \left(k_1^{2} - 1\right)/\left(k_1^{2} + 1\right)`
+and :math:`\chi' = \left(k_2^{1/\mu} -  1\right)/\left(k_2^{1/\mu} + 1\right)`
 are responsible for the degree of anisotropy of the molecular properties. :math:`k_1` is
 the molecular elongation, and :math:`k_2` is the ratio of the potential well depths for the
 side-by-side and end-to-end configurations. The exponents and are adjustable
@@ -847,7 +847,7 @@ Affinity interaction
 ~~~~~~~~~~~~~~~~~~~~
 
 .. todo::
-    
+
     Not implemented yet.
 
 inter affinity
