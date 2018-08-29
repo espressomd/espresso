@@ -39,4 +39,5 @@ if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
     comment += '- You can run `maintainer/CI/fix_style.sh` to automatically fix your coding style. This is the same command that I have executed to generate the patch above, but it requires certain tools to be installed on your computer.\n\n'
     comment += 'Please note that there are often multiple ways to correctly format code. As I am just a robot, I sometimes fail to identify the most aesthetically pleasing way. So please look over my suggested changes and adapt them where the style does not make sense.'
 
-    requests.post(URL, json={'body': comment})
+    if len(patch) > 0:
+        requests.post(URL, json={'body': comment})
