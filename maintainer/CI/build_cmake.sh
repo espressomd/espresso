@@ -39,7 +39,7 @@ function cmd {
 # handle environment variables
 [ -z "$insource" ] && insource="false"
 [ -z "$srcdir" ] && srcdir=`pwd`
-[ -z "$cmake_params" ] && cmake_params=""
+[ -z "$cmake_params" ] && cmake_params="-DCMAKE_CXX_FLAGS='-O3'"
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$with_coverage" ] && with_coverage="false"
