@@ -60,7 +60,7 @@ Required parameters:
     * accuracy
 
 For this feature to work, you need to have the ``fftw3`` library
-installed on your system. In , you can check if it is compiled in by
+installed on your system. In python you can check if it is compiled in by
 checking for the feature ``FFTW`` with ``espressomd.features()``
 P3M requires full periodicity (1 1 1). Make sure that you know the relevance of the
 P3M parameters before using P3M! If you are not sure, read the following

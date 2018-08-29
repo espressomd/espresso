@@ -465,4 +465,4 @@ For other examples see samples/python/MDAnalysisIntegration.py
 Parsing PDB Files
 -----------------
 
-The feature allows the user to parse simple PDB files, a file format introduced by the protein database to encode molecular structures. Together with a topology file (here ) the structure gets interpolated to the grid. For the input you will need to prepare a PDB file with a force field to generate the topology file. Normally the PDB file extension is , the topology file extension is . Obviously the PDB file is placed instead of and the topology file instead of .
+The feature allows the user to parse simple PDB files, a file format introduced by the protein database to encode molecular structures. Together with a topology file (here ) the structure gets interpolated to the grid. For the input you will need to prepare a PDB file with a force field to generate the topology file. Normally the PDB file extension is :file:`.pdb`, the topology file extension is :file:`.itp`. Obviously the PDB file is placed instead of and the topology file instead of .

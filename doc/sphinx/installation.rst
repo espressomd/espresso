@@ -712,7 +712,7 @@ to configure |es| interactively.
 
 **Example:**
 
-Alternatively to the previous example, instead of , the executable is
+Alternatively to the previous example, instead of cmake, the ccmake executable is
 called in the build directory to configure ESPResSo,
 followed by a call to make:
 

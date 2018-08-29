@@ -281,7 +281,7 @@ Immersed Boundary Method for soft elastic objects
 Please contact the Biofluid Simulation and Modeling Group at the
 University of Bayreuth if you plan to use this feature.
 
-Boundary Method (IBM), soft particles are considered as an infinitely
+With the Immersed Boundary Method (IBM), soft particles are considered as an infinitely
 thin shell filled with liquid (see e.g. :cite:`Peskin2002,Crowl2010,KruegerThesis`). When the
 shell is deformed by an external flow, it responds with elastic restoring
 forces which are transmitted into the fluid. In the present case, the

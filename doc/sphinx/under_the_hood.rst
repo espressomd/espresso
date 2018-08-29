@@ -51,7 +51,7 @@ a :math:`10\times 20\times 20` box. If the maximal interaction range is
 coordinate, allowing for a small skin of 0.05. If one chooses only 6
 boxes in the first coordinate, the skin depth increases to 0.467. In
 this example we assume that the number of cells in the first coordinate
-was chosen to be 6 and that the cells are cubic. would then organize
+was chosen to be 6 and that the cells are cubic. One would then organize
 the cells on each node in a :math:`6\times
 12\times 12` cell grid embedded at the center of a
 :math:`8\times 14 \times

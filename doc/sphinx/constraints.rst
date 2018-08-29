@@ -82,7 +82,7 @@ There are two additional optional parameters
 to fine tune the behavior of the constraint. If ``penetrable`` is
 set to ``True`` then particles can move through the constraint. In this case the
 other option ``only_positive`` controls whether the particle is subject to the interaction
-potential of the wall. If set to then the constraint will only act in
+potential of the wall. If set to ``False``, then the constraint will only act in
 the direction of the normal vector.
 
 If we wanted to add a non-penetrable pore constraint to our simulation,
