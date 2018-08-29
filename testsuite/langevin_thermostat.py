@@ -74,7 +74,7 @@ class LangevinThermostat(ut.TestCase):
         N = 200
         system = self.system
         system.part.clear()
-        system.time_step = 0.04
+        system.time_step = 0.06
 
         # Place particles
         system.part.add(pos=np.random.random((N, 3)))
@@ -83,15 +83,15 @@ class LangevinThermostat(ut.TestCase):
         if espressomd.has_features("ROTATION"):
             system.part[:].rotation = 1, 1, 1
 
-        kT = 2.3
-        gamma = 1.5
+        kT = 1.1 
+        gamma = 3.5
         system.thermostat.set_langevin(kT=kT, gamma=gamma)
 
         # Warmup
         system.integrator.run(100)
 
         # Sampling
-        loops = 600
+        loops = 400
         v_stored = np.zeros((N * loops, 3))
         omega_stored = np.zeros((N * loops, 3))
         for i in range(loops):
@@ -101,7 +101,7 @@ class LangevinThermostat(ut.TestCase):
                 omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
 
         v_minmax = 5
-        bins = 5
+        bins = 4
         error_tol = 0.016
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
@@ -118,14 +118,14 @@ class LangevinThermostat(ut.TestCase):
         N = 400
         system = self.system
         system.part.clear()
-        system.time_step = 0.04
+        system.time_step = 0.06
         system.part.add(pos=np.random.random((N, 3)))
         if espressomd.has_features("ROTATION"):
             system.part[:].rotation = 1, 1, 1
 
-        kT = 2.3
-        gamma = 1.5
-        gamma2 = 2.3
+        kT = 0.9 
+        gamma = 3.2
+        gamma2 = 4.3
         kT2 = 1.5
         system.thermostat.set_langevin(kT=kT, gamma=gamma)
         # Set different kT on 2nd half of particles
@@ -160,7 +160,7 @@ class LangevinThermostat(ut.TestCase):
                 omega_kT2[int(i * N / 2):int((i + 1) * N / 2),
                           :] = system.part[int(N / 2):].omega_body
         v_minmax = 5
-        bins = 5
+        bins = 4
         error_tol = 0.016
         self.check_velocity_distribution(v_kT, v_minmax, bins, error_tol, kT)
         self.check_velocity_distribution(v_kT2, v_minmax, bins, error_tol, kT2)
@@ -194,8 +194,8 @@ class LangevinThermostat(ut.TestCase):
         gamma = 3.1
 
         # Rotational gamma
-        gamma_rot_i = 0.7
-        gamma_rot_a = 0.7, 1, 1.2
+        gamma_rot_i = 4.7
+        gamma_rot_a = 4.2, 1, 1.2
 
         # If we have langevin per particle:
         # per particle kT
@@ -203,8 +203,8 @@ class LangevinThermostat(ut.TestCase):
         # Translation
         per_part_gamma = 1.63
         # Rotational
-        per_part_gamma_rot_i = 0.6
-        per_part_gamma_rot_a = 0.4, 0.8, 1.1
+        per_part_gamma_rot_i = 2.6
+        per_part_gamma_rot_a = 2.4, 3.8, 1.1
 
         # Particle with global thermostat params
         p_global = system.part.add(pos=(0, 0, 0))
@@ -255,7 +255,7 @@ class LangevinThermostat(ut.TestCase):
             system.thermostat.set_langevin(kT=kT, gamma=gamma)
 
         system.cell_system.skin = 0.4
-        system.integrator.run(500)
+        system.integrator.run(100)
 
         # Correlators
         vel_obs = {}
@@ -270,18 +270,18 @@ class LangevinThermostat(ut.TestCase):
 
         # linear vel
         vel_obs = ParticleVelocities(ids=system.part[:].id)
-        corr_vel = Correlator(obs1=vel_obs, tau_lin=20, tau_max=1.9, delta_N=1,
+        corr_vel = Correlator(obs1=vel_obs, tau_lin=20, tau_max=1.4, delta_N=1,
                               corr_operation="componentwise_product", compress1="discard1")
         system.auto_update_accumulators.add(corr_vel)
         # angular vel
         if espressomd.has_features("ROTATION"):
             omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
             corr_omega = Correlator(
-                obs1=omega_obs, tau_lin=40, tau_max=3.9, delta_N=1,
+                obs1=omega_obs, tau_lin=20, tau_max=1.5, delta_N=1,
                                     corr_operation="componentwise_product", compress1="discard1")
             system.auto_update_accumulators.add(corr_omega)
 
-        system.integrator.run(400000)
+        system.integrator.run(150000)
 
         system.auto_update_accumulators.remove(corr_vel)
         corr_vel.finalize()
