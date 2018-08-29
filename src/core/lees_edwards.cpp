@@ -54,4 +54,10 @@ void setup_lees_edwards_protocol() {
     lees_edwards_protocol.offset = (lees_edwards_protocol.amplitude / box_l_y) * std::sin(lees_edwards_protocol.frequency*sim_time);
     lees_edwards_protocol.velocity = (lees_edwards_protocol.amplitude / box_l_y) * std::cos(lees_edwards_protocol.frequency*sim_time); 
   } 
+
+  else {
+  lees_edwards_protocol.offset = 0.0;
+  lees_edwards_protocol.velocity = 0.0;
+  }
+
 }
