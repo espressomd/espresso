@@ -95,7 +95,7 @@ system.time_step = dt
 system.min_global_cut = 0.5
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 ## Exercise 1 ##
-# Why are the langevin parameters chosen as such?
+# Why are the Langevin parameters chosen as such?
 
 
 ################################################################################

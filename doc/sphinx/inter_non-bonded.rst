@@ -627,10 +627,10 @@ The Thole correction is closely related to simulations involving
 :ref:`Particle polarizability with thermalized cold Drude oscillators`.
 In this context, it is used to correct for overestimation of
 induced dipoles at short distances. Ultimately, it alters the short-range
-electrostatics of P3M to result in a damped coulomb interaction potential
+electrostatics of P3M to result in a damped Coulomb interaction potential
 :math:`V(r) = \frac{q_1 q_2}{r} \cdot (1- e^{-s r} (1 + \frac{s r}{2}) )`.  The
-thole scaling coefficient :math:`s` is related to the polarizabilities
-:math:`\alpha` and thole damping parameters :math:`a` of the interacting
+Thole scaling coefficient :math:`s` is related to the polarizabilities
+:math:`\alpha` and Thole damping parameters :math:`a` of the interacting
 species via :math:`s = \frac{ (a_i + a_j) / 2 }{ (\alpha_i \alpha_j)^{1/6} }`.
 Note that for the Drude oscillators, the Thole correction should be applied
 only for the dipole part :math:`\pm q_d` added by the Drude charge and not on
@@ -656,16 +656,16 @@ Also, each Drude core has a Thole correction interaction with all other Drude
 cores and Drude charges. To assist with the bookkeeping of mixed scaling
 coefficients, the helper method ``add_drude_particle_to_core()`` (see 
 :ref:`Particle polarizability with thermalized cold Drude oscillators`) 
-collects all core types, drude types and relevant parameters when a drude 
+collects all core types, Drude types and relevant parameters when a Drude 
 particle is created. The user already provided all the information when 
-setting up the the drude particles, so the simple call::
+setting up the the Drude particles, so the simple call::
 
     add_all_thole(<system>, <verbose>)
 
 given the espressomd.System() object, uses this information to create all
 necessary Thole interactions. The method calculates the mixed scaling
 coefficient `s` and creates the non-bonded Thole interactions between the
-collected types to cover all the drude-drude, drude-core and core-core
+collected types to cover all the Drude-Drude, Drude-core and core-core
 combinations. No further calls of ``add_drude_particle_to_core()`` should
 follow. Set `verbose` to `True` to print out the coefficients, charge factors
 and involved types.
@@ -700,7 +700,7 @@ Anisotropic non-bonded interactions
         
         Not implemented yet.
 
-    inter lj-angle
+    inter LJ-angle
 
     |image_directional_lj|
 

@@ -409,7 +409,7 @@ Please note that the following is Cython code (www.cython.org), rather than pure
           BONDED_IA_HARMONIC,
           [...]
 
-    The spelling has to match the one in the c++ enum exactly.
+    The spelling has to match the one in the C++ enum exactly.
   * Adapt the Cython copy of the bond_parameters union analogous to the C++ core.  The member name has to match the one in C++ exactly::
       ctypedef union bond_parameters "Bond_parameters":
           Fene_bond_parameters fene

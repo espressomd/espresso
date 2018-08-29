@@ -135,7 +135,7 @@ harmonic bond.
 
 .. _Bonded coulomb:
 
-Bonded coulomb
+Bonded Coulomb
 ~~~~~~~~~~~~~~
 
 .. note::

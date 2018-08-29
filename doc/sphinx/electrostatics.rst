@@ -101,7 +101,7 @@ regular grid.
 The function employs the analytical expression of the error estimate for
 the P3M method :cite:`hockney88` and its real space error :cite:`kolafa92` to
 obtain sets of parameters that yield the desired accuracy, then it measures how
-long it takes to compute the coulomb interaction using these parameter sets and
+long it takes to compute the Coulomb interaction using these parameter sets and
 chooses the set with the shortest run time.
 
 After execution the tuning routines report the tested parameter sets,
@@ -145,7 +145,7 @@ short-ranged non-bonding potentials. For :math:`r>r_{\mathrm cut}` it is
 set to zero which introduces a step in energy. Therefore, it introduces
 fluctuations in energy.
 
-For :math:`\kappa = 0`, this corresponds to the plain coulomb potential.
+For :math:`\kappa = 0`, this corresponds to the plain Coulomb potential.
 
 
 .. _Dielectric interfaces with the ICC algorithm:
@@ -159,7 +159,7 @@ used to simulate a curved metallic boundary. This is done by iterating the
 charge on a set of spatially fixed *ICC particles* until they correctly
 represent the influence of the dielectric discontinuity. All *ICC particles*
 need a certain area, normal vector and dielectric constant to specify the
-surface. ICC relies on a coulomb solver that is already initialized. So far, it
+surface. ICC relies on a Coulomb solver that is already initialized. So far, it
 is implemented and well tested with the Coulomb solver P3M. ICC is an |es|
 actor and can be activated via::
 
@@ -460,7 +460,7 @@ MMM2D
 
 MMM2D is an electrostatics solver for explicit 2D periodic systems.
 It can account for different dielectric jumps on both sides of the 
-non-periodic direction. MMM2D coulomb method needs periodicity 1 1 0 and the
+non-periodic direction. MMM2D Coulomb method needs periodicity 1 1 0 and the
 layered cell system. The performance of the method depends on the number of
 slices of the cell system, which has to be tuned manually. It is
 automatically ensured that the maximal pairwise error is smaller than
@@ -615,7 +615,7 @@ parameters.
     mmm1d = MMM1D(prefactor=C, maxPWerror=err)
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
-MMM1D coulomb method for systems with periodicity 0 0 1. Needs the
+MMM1D Coulomb method for systems with periodicity 0 0 1. Needs the
 nsquared cell system (see section :ref:`Cellsystems`). The first form sets parameters
 manually. The switch radius determines at which xy-distance the force
 calculation switches from the near to the far formula. The Bessel cutoff
@@ -670,5 +670,5 @@ cutoff to :math:`1.5` and tune the other parameters for an accuracy of
   
 
 For details of the various methods and their parameters please refer to
-the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
+the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for Coulomb or for dipolar interactions.
 

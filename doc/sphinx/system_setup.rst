@@ -134,7 +134,7 @@ Details about the cell system can be obtained by ``espressomd.System().cell_syst
     * `n_layers`        Number of layers in cell structure LAYERED
     * `n_nodes`         Number of nodes.
     * `type`            The current type of the cell system.
-    * `verlet_reuse`    Average number of integration steps the verlet list is re-used.
+    * `verlet_reuse`    Average number of integration steps the Verlet list is re-used.
 
 .. _Domain decomposition:
 

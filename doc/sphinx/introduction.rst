@@ -199,7 +199,7 @@ In |es|, interactions between particles usually fall in three categories:
    chain.
 
 -  Long-range interactions act between all particles with specific
-   properties in the entire system. An example is the :ref:`coulomb
+   properties in the entire system. An example is the :ref:`Coulomb
    interaction<Electrostatics>`.
 
 .. rubric:: Non-bonded interaction
@@ -260,7 +260,7 @@ and then adding it to the system: ::
 
 So far we just *added* particles and interactions, but did not propagate the
 system. This is done by the `integrator`.  It uses by default the velocity
-verlet algorithm and is already created by the system class. To perform an
+Verlet algorithm and is already created by the system class. To perform an
 integration step, just execute::
 
     system.integrator.run(1)
@@ -289,7 +289,7 @@ Tutorials
 
 There are a number of tutorials that introduce the use of |es| for different
 physical systems. You can also find the tutorials and related scripts in the
-directory ``/doc/tutorials`` or `online on github <https://github.com/espressomd/espresso/blob/python/doc/tutorials/>`_.
+directory ``/doc/tutorials`` or `online on GitHub <https://github.com/espressomd/espresso/blob/python/doc/tutorials/>`_.
 Currently, the following tutorials are available:
 
 * 01-lennard_jones: Modelling of a single-component and a two-component Lennard-Jones liquid.
@@ -397,13 +397,13 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     Uses python array slicing to set and extract various particle properties.
 
 * ``visualization.py``
-    A visualization for mayavi/opengl of the lj-liquid with interactive plotting.
+    A visualization for Mayavi/OpenGL of the LJ-liquid with interactive plotting.
 
 * ``visualization_bonded.py``
-    Opengl visualization for bonds.
+    OpenGL visualization for bonds.
 
 * ``visualization_interactive.py``
-    Sample for an interactive opengl visualization with user-defined keyboard- and timed callbacks.
+    Sample for an interactive OpenGL visualization with user-defined keyboard- and timed callbacks.
 
 * ``visualization_npt.py``
     Simple test visualization for the NPT ensemble.
@@ -412,7 +412,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     Visualization for Poiseuille flow with Lattice-Boltzmann.
 
 * ``visualization_constraints.py``
-    Constraint visualization with opengl with all available constraints (commented out).
+    Constraint visualization with OpenGL with all available constraints (commented out).
 
 * ``visualization_mmm2d.py``
     A visual sample for a constant potential plate capacitor simulated with mmm2d.

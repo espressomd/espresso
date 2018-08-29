@@ -63,9 +63,9 @@ window with ``start()``. See the following minimal code example::
     t.start()
     visualizer.start()
 
-.. _Common methods for openGL and mayavi:
+.. _Common methods for OpenGL and Mayavi:
 
-Common methods for openGL and mayavi
+Common methods for OpenGL and Mayavi
 ------------------------------------
 
 | :meth:`espressomd.visualization.mayaviLive.update()` 
@@ -91,7 +91,7 @@ live plotting (see sample script samples/python/visualization.py).
 Mayavi visualizer
 -----------------
 
-The mayavi visualizer is created with the following syntax:
+The Mayavi visualizer is created with the following syntax:
 
 :class:`espressomd.visualization.mayaviLive()`
 
@@ -151,7 +151,7 @@ Screenshots
 
 | :meth:`espressomd.visualization.openGLLive.screenshot()`
 
-The openGL visualizer can also be used for offline rendering.
+The OpenGL visualizer can also be used for offline rendering.
 After creating the visualizer object, call ``screenshot(path)``
 to save an image of your simulation to `path`. Internally, the image is saved
 with `matplotlib.pyplot.imsave`, so the file format is specified by the

@@ -178,6 +178,6 @@ The method-specific parameters are described in the SCAFACOS manual.
 Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field 
 
 For details of the various methods and their parameters please refer to
-the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
+the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for Coulomb or for dipolar interactions.
 
 

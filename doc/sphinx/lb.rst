@@ -220,8 +220,8 @@ Output for visualization
 
 Currently supported fluid properties are the velocity, and boundary flag in ASCII VTK as well as Gnuplot compatible ASCII output.
 
-The VTK format is readable by visualization software such as Paraview [1]_
-or mayavi2 [2]_. If you plan to use Paraview for visualization, note that also the particle
+The VTK format is readable by visualization software such as ParaView [1]_
+or Mayavi2 [2]_. If you plan to use ParaView for visualization, note that also the particle
 positions can be exported using the VTK format (see :meth:`espressomd.particle_data.ParticleList.writevtk`).
 
 The variant

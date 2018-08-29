@@ -490,7 +490,7 @@ The long ranged (kspace) part is given by:
 
 .. math :: p^\text{Coulomb, P3M, rec}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2 \pi V^2} \sum_{\vec{k} \neq \vec{0}} \frac{\exp(-\pi^2 \vec{k}^2/\beta^2)}{\vec{k}^2} |S(\vec{k})|^2 \cdot (\delta_{k,l}-2\frac{1+\pi^2\vec{k}^2/\beta^2}{\vec{k}^2} \vec{k}_k \vec{k}_l),
 
-where :math:`S(\vec{k})` is the fourier transformed charge density. Compared to Essmann we do not have a the contribution :math:`p^\text{corr}_{k,l}` since we want to calculate the pressure that arises from all particles in the system.
+where :math:`S(\vec{k})` is the Fourier transformed charge density. Compared to Essmann we do not have a the contribution :math:`p^\text{corr}_{k,l}` since we want to calculate the pressure that arises from all particles in the system.
 
 Note: The different contributions which are returned are the summands that arise from force splitting :math:`\vec{F}_{i,j}={\vec{F}_{i,j}}_\text{bonded}+{\vec{F}_{i,j}}_\text{nonbonded}+...` in the virial stress tensor formula.
 Later when the user calculates the stress tensor via :math:`\langle p_{(k,l)}\rangle  \approx 1/N \sum_{i=1}^N p_{k,l}` however the ensemble average with all interactions present is performed.

@@ -294,7 +294,7 @@ connected by triangles. The marker points are advected with *exactly*
 the local fluid velocity, i.e., they do not possess a mass nor a
 friction coefficient (this is different from the Object-in-Fluid method
 below). We implement these marker points as virtual tracer 
-particles which are not integrated using the usual velocity-verlet
+particles which are not integrated using the usual velocity-Verlet
 scheme, but instead are propagated using a simple Euler algorithm with
 the local fluid velocity (if the ``IMMERSED_BOUNDARY`` feature is turned
 on).
@@ -716,7 +716,7 @@ Visualization in ParaView
 File format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Paraview (download at http://www.paraview.org) accepts .vtk files. For
+ParaView (download at http://www.paraview.org) accepts .vtk files. For
 our cells we use the following format:
 
 ::
@@ -742,7 +742,7 @@ our cells we use the following format:
   each. Then we write the triangulation, since that is how our
   surface is specified. We need to know the number of triangles
   (``num_triang``) and the each line/triangle is specified by 4 numbers
-  (so we are telling paraview to expect 4 *  ``num_triang``  numbers in
+  (so we are telling ParaView to expect 4 *  ``num_triang``  numbers in
   the following lines. Each line begins with 3 (which stands for a
   triangle) and three point IDs that tell us which three points (from
   the order above) form this specific triangle.
@@ -1603,7 +1603,7 @@ are: density, velocity, potential and boundary, which give the LB fluid density,
 the electrostatic potential, and the location and type of the
 boundaries, respectively. The boundaries can only be printed when the
 ``EK_BOUNDARIES`` is compiled in. The output is a vtk-file, which is readable by
-visualization software such as paraview [5]_ and mayavi2 [6]_.
+visualization software such as ParaView [5]_ and Mayavi2 [6]_.
 
 ::
 
@@ -1659,7 +1659,7 @@ Particle polarizability with thermalized cold Drude oscillators
 
     Drude is only available for the P3M electrostatics solver and the Langevin thermostat.
 
-**Thermalized cold drude oscillators** can be used to simulate
+**Thermalized cold Drude oscillators** can be used to simulate
 polarizable particles.  The basic idea is to add a 'charge-on-a-spring' (Drude
 charge) to a particle (Drude core) that mimics an electron cloud which can be
 elongated to create a dynamically inducible dipole. The energetic minimum of
@@ -1688,13 +1688,13 @@ to still use a global Langevin thermostat for non-polarizable particles.
 
 As the Drude charge should not alter the *charge* or *mass* of the Drude
 complex, both properties have to be subtracted from the core when adding the
-drude particle. In the following convention, we assume that the Drude charge is
+Drude particle. In the following convention, we assume that the Drude charge is
 **always negative**. It is calculated via the spring constant :math:`k` and
 polarizability :math:`\alpha` (in units of inverse volume) with :math:`q_d =
 -\sqrt{k \cdot \alpha}`.
 
 The following helper method takes into account all the preceding considerations
-and can be used to conveniently add a drude particle to a given core particle.
+and can be used to conveniently add a Drude particle to a given core particle.
 As it also adds the first two bonds between Drude and core, these bonds have to
 be created beforehand::
 
@@ -1707,18 +1707,18 @@ The arguments of the helper function are:
       added between core and newly generated Drude particle 
     * <thermalized_bond>: The thermalized distance bond for the cold and hot
       thermostats.
-    * <core particle>: The core particle on which the drude particle is added.
-    * <id drude>: The user-defined id of the drude particle that is created.
-    * <type drude>: The user-defined type of the drude particle. 
-      Each drude particle of each complex should have an
+    * <core particle>: The core particle on which the Drude particle is added.
+    * <id drude>: The user-defined id of the Drude particle that is created.
+    * <type drude>: The user-defined type of the Drude particle. 
+      Each Drude particle of each complex should have an
       individual type (e.g. in an ionic system with Anions (type 0) and Cations
       (type 1), two new, individual Drude types have to be assigned).
     * <alpha>: The polarizability volume.
-    * <coulomb_prefactor>: The coulomb prefactor of the system. Used to
-      calculate the drude charge from the polarizability and the spring constant
-      of the drude bond.  
-    * <thole damping>: (optional) An individual thole damping parameter for the
-      core-drude pair. Only relevant if thole damping is used (defaults to 2.6).
+    * <coulomb_prefactor>: The Coulomb prefactor of the system. Used to
+      calculate the Drude charge from the polarizability and the spring constant
+      of the Drude bond.  
+    * <thole damping>: (optional) An individual Thole damping parameter for the
+      core-Drude pair. Only relevant if Thole damping is used (defaults to 2.6).
     * <verbose>: (bool, optional) Prints out information about the added Drude
       particles (default: False)
 
@@ -1738,20 +1738,20 @@ Canceling intramolecular electrostatics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that for polarizable **molecules** (i.e. connected particles, coarse grained
-models etc.) with partial charges on the molecule sites, the drude charges will
+models etc.) with partial charges on the molecule sites, the Drude charges will
 have electrostatic interaction with other cores of the molecule. Often, this
 is unwanted, as it might be already part of the force-field (via. partial
 charges or parametrization of the covalent bonds). Without any further
-measures, the elongation of the drude particles will be greatly affected be the
+measures, the elongation of the Drude particles will be greatly affected be the
 close-by partial charges of the molecule. To prevent this, one has to cancel
-the interaction of the drude charge with the partial charges of the cores
+the interaction of the Drude charge with the partial charges of the cores
 within the molecule. This can be done with special bonds that subtracts the P3M
 short-range interaction of the charge portion `q_d q_{partial}`. This ensures
 that only the *dipolar interaction* inside the molecule remains. It should be
 considered that the error of this approximation increases with the share of the
 long-range part of the electrostatic interaction. Two helper methods assist
 with setting up this exclusion. If used, they have to be called
-after all drude particles are added to the system::
+after all Drude particles are added to the system::
 
     setup_intramol_exclusion_bonds(<system>, <molecule drude types>, <molecule core types>, <molecule core partial charges>, <verbose>)
 
@@ -1761,7 +1761,7 @@ sites, `N*(N-1)` bond types are needed to cover all the combinations.
 Parameters are:
 
     * <system>: The espressomd.System().
-    * <molecule drude types>: List of the drude types within the molecule.
+    * <molecule drude types>: List of the Drude types within the molecule.
     * <molecule core types>: List of the core types within the molecule that have partial charges.
     * <molecule core partial charges>: List of the partial charges on the cores.
     * <verbose>: (bool, optional) Prints out information about the created bonds (default: False)
@@ -1774,7 +1774,7 @@ following method::
 This method has to be called for all molecules and needs the following parameters:
 
     * <system>: The espressomd.System().
-    * <drude ids>: The ids of the drude particles within one molecule.
+    * <drude ids>: The ids of the Drude particles within one molecule.
     * <core ids>: The ids of the core particles within one molecule.
     * <verbose>: (bool, optional) Prints out information about the added bonds (default: False)
 
