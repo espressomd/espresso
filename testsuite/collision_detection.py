@@ -502,10 +502,7 @@ class CollisionDetection(ut.TestCase):
         virtual_sites = self.s.part.select(virtual=1)
         non_virtual = self.s.part.select(virtual=0)
         to_be_glued = self.s.part.select(type=self.part_type_to_be_glued)
-        to_attach_vs_to = self.s.part.select(
-            type=self.part_type_to_attach_vs_to)
         after_glueing = self.s.part.select(type=self.part_type_after_glueing)
-        other_type = self.s.part.select(type=self.other_type)
 
         # One virtual site per glued particle?
         self.assertEqual(len(after_glueing), len(virtual_sites))

@@ -614,7 +614,7 @@ void handle_collisions() {
       // * or we have only one and it is a ghost
       // we only increase the counter for the ext id to use based on the
       // number of particles created by other nodes
-      if ((!p1 and !p2) ||
+      if ((!p1 or !p2) ||
           ((p1 && p1->l.ghost) && (p2 && p2->l.ghost)) ||
           (!p1 && p2->l.ghost) || (!p2 && p1->l.ghost)) {
         // Increase local counters
@@ -636,7 +636,7 @@ void handle_collisions() {
             }
         }
 
-      } else { // We consider teh pair
+      } else { // We consider the pair
 
         // Calculate initial position for new vs, which is in the local node's
         // domain
