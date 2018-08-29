@@ -399,3 +399,17 @@ void cells_update_ghosts() {
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
 }
+
+
+Cell *find_current_cell(const Particle& p)
+{
+  auto c = cell_structure.position_to_cell(p.r.p.data());
+  if (c) {
+    return c;
+  } else if (!p.l.ghost) {
+    // Old pos must lie within the cell system
+    return cell_structure.position_to_cell(p.l.p_old.data());
+  } else {
+    return nullptr;
+  }
+}

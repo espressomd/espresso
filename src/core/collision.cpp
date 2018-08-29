@@ -228,9 +228,8 @@ void queue_collision(const int part1, const int part2) {
 
 /** @brief Calculate position of vs for GLUE_TO_SURFACE mode
  *    Reutnrs id of particle to bind vs to */
-int glue_to_surface_calc_vs_pos(const Particle& p1,
+const Particle& glue_to_surface_calc_vs_pos(const Particle& p1,
                                 const Particle& p2, Vector3d &pos) {
-  int bind_vs_to_pid;
   double vec21[3];
   double c;
   get_mi_vector(vec21, p1.r.p, p2.r.p);
@@ -240,18 +239,19 @@ int glue_to_surface_calc_vs_pos(const Particle& p1,
   if ((p1.p.type == collision_params.part_type_to_be_glued) &&
       (p2.p.type == collision_params.part_type_to_attach_vs_to)) {
     c = 1 - collision_params.dist_glued_part_to_vs / dist_betw_part;
-    bind_vs_to_pid = p2.p.identity;
   } else if ((p2.p.type == collision_params.part_type_to_be_glued) &&
              (p1.p.type == collision_params.part_type_to_attach_vs_to)) {
     c = collision_params.dist_glued_part_to_vs / dist_betw_part;
-    bind_vs_to_pid = p1.p.identity;
   } else {
     throw std::runtime_error("This should never be thrown. Bug.");
   }
   for (int i = 0; i < 3; i++) {
     pos[i] = p2.r.p[i] + vec21[i] * c;
   }
-  return bind_vs_to_pid;
+  if (p1.p.type == collision_params.part_type_to_attach_vs_to)
+    return p1;
+  else
+    return p2;
 }
 
 void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
@@ -513,18 +513,6 @@ static void three_particle_binding_do_search(Cell *basecell, Particle &p1,
   }
 }
 
-Cell *responsible_collision_cell(Particle& p)
-{
-  auto c = cell_structure.position_to_cell(p.r.p.data());
-  if (c) {
-    return c;
-  } else if (!p.l.ghost) {
-    // Old pos must lie within the cell system
-    return cell_structure.position_to_cell(p.l.p_old.data());
-  } else {
-    return nullptr;
-  }
-}
 
 // Goes through the collision queue and for each pair in it
 // looks for a third particle by using the domain decomposition
@@ -538,8 +526,8 @@ void three_particle_binding_domain_decomposition(
     if ((local_particles[c.pp1]) && (local_particles[c.pp2])) {
       Particle &p1 = *local_particles[c.pp1];
       Particle &p2 = *local_particles[c.pp2];
-      auto cell1 = responsible_collision_cell(p1);
-      auto cell2 = responsible_collision_cell(p2);
+      auto cell1 = find_current_cell(p1);
+      auto cell2 = find_current_cell(p2);
 
       if (cell1)
         three_particle_binding_do_search(cell1, p1, p2);
@@ -608,15 +596,11 @@ void handle_collisions() {
       // Only nodes take part in particle creation and binding
       // that see both particles
 
-      // If we have
-      // * none of the two partic;es or
-      // * both are ghosts,
-      // * or we have only one and it is a ghost
+      // If we cannot access both particles, both are ghosts,
+      // ore one is ghost and one is not accessible
       // we only increase the counter for the ext id to use based on the
       // number of particles created by other nodes
-      if ((!p1 or !p2) ||
-          ((p1 && p1->l.ghost) && (p2 && p2->l.ghost)) ||
-          (!p1 && p2->l.ghost) || (!p2 && p1->l.ghost)) {
+      if ((!p1 or p1->l.ghost) and (!p2 or p2->l.ghost)) {
         // Increase local counters
         if (collision_params.mode & COLLISION_MODE_VS) {
           added_particle(current_vs_pid);
@@ -634,9 +618,11 @@ void handle_collisions() {
             if (p2->p.type == collision_params.part_type_to_be_glued) {
               p2->p.type = collision_params.part_type_after_glueing;
             }
-        }
+        } // mode glue to surface
 
-      } else { // We consider the pair
+      } else { // We consider the pair because one particle
+               // is local to the node and the other is local or ghost
+
 
         // Calculate initial position for new vs, which is in the local node's
         // domain
@@ -684,29 +670,30 @@ void handle_collisions() {
           // Create bonds between the vs.
 
           bind_at_poc_create_bond_between_vs(current_vs_pid, c);
-        }
+        } // mode VS
 
         if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
-          // If particles are made inert by a type change on collision
+          // If particles are made inert by a type change on collision:
+          // We skip the pair if one of the particles has already reacted
+          // but we still increase the particle counters, as other nodes
+          // can not always know whether or not a vs is placed
           if (collision_params.part_type_after_glueing !=
               collision_params.part_type_to_be_glued) {
-            // We skip the pair if one of the particles has already reacted
-            // but we still increase the particle counters, as other nodes
-            // can not always know whether or not a vs is placed
             if ((p1->p.type == collision_params.part_type_after_glueing) ||
                 (p2->p.type == collision_params.part_type_after_glueing)) {
+
               added_particle(current_vs_pid);
               current_vs_pid++;
               continue;
             }
           }
 
-          Vector3d pos;
-          const int pid = glue_to_surface_calc_vs_pos(*p1, *p2, pos);
+           Vector3d pos;
+          const Particle& attach_vs_to = glue_to_surface_calc_vs_pos(*p1, *p2, pos);
 
           // Add a bond between the centers of the colliding particles
           // The bond is placed on the node that has p1
-          if (!local_particles[c.pp1]->l.ghost) {
+          if (!p1->l.ghost) {
             int bondG[2];
             bondG[0] = collision_params.bond_centers;
             bondG[1] = c.pp2;
@@ -722,8 +709,9 @@ void handle_collisions() {
           }
 
           // Vs placement happens on the node that has p1
-          if (!local_particles[pid]->l.ghost) {
-            place_vs_and_relate_to_particle(current_vs_pid, pos, pid,
+          if (!attach_vs_to.l.ghost) {
+            place_vs_and_relate_to_particle(current_vs_pid, pos, 
+                                            attach_vs_to.p.identity,
                                             initial_pos);
             current_vs_pid++;
           } else { // Just update the books

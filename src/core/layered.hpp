@@ -36,7 +36,7 @@ extern int n_layers, determine_n_layers;
 extern double layer_h, layer_h_i;
 
 /** map a position to a cell, if on this node, else returns nullptr. */
-Cell *layered_position_to_cell(double pos[3]);
+Cell *layered_position_to_cell(const double pos[3]);
 
 /// free all data structure that belong to this cell system
 void layered_topology_release();
