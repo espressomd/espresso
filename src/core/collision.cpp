@@ -228,8 +228,8 @@ void queue_collision(const int part1, const int part2) {
 
 /** @brief Calculate position of vs for GLUE_TO_SURFACE mode
  *    Reutnrs id of particle to bind vs to */
-const Particle& glue_to_surface_calc_vs_pos(const Particle& p1,
-                                const Particle& p2, Vector3d &pos) {
+const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
+                                            const Particle &p2, Vector3d &pos) {
   double vec21[3];
   double c;
   get_mi_vector(vec21, p1.r.p, p2.r.p);
@@ -513,7 +513,6 @@ static void three_particle_binding_do_search(Cell *basecell, Particle &p1,
   }
 }
 
-
 // Goes through the collision queue and for each pair in it
 // looks for a third particle by using the domain decomposition
 // cell system. If found, it performs three particle binding
@@ -533,7 +532,6 @@ void three_particle_binding_domain_decomposition(
         three_particle_binding_do_search(cell1, p1, p2);
       if (cell2 && cell1 != cell2)
         three_particle_binding_do_search(cell2, p1, p2);
-
 
     } // If local particles exist
   }   // Loop over total collisions
@@ -623,7 +621,6 @@ void handle_collisions() {
       } else { // We consider the pair because one particle
                // is local to the node and the other is local or ghost
 
-
         // Calculate initial position for new vs, which is in the local node's
         // domain
         // Vs is moved afterwards and resorted after all collision s are handled
@@ -688,8 +685,9 @@ void handle_collisions() {
             }
           }
 
-           Vector3d pos;
-          const Particle& attach_vs_to = glue_to_surface_calc_vs_pos(*p1, *p2, pos);
+          Vector3d pos;
+          const Particle &attach_vs_to =
+              glue_to_surface_calc_vs_pos(*p1, *p2, pos);
 
           // Add a bond between the centers of the colliding particles
           // The bond is placed on the node that has p1
@@ -710,9 +708,8 @@ void handle_collisions() {
 
           // Vs placement happens on the node that has p1
           if (!attach_vs_to.l.ghost) {
-            place_vs_and_relate_to_particle(current_vs_pid, pos, 
-                                            attach_vs_to.p.identity,
-                                            initial_pos);
+            place_vs_and_relate_to_particle(
+                current_vs_pid, pos, attach_vs_to.p.identity, initial_pos);
             current_vs_pid++;
           } else { // Just update the books
             added_particle(current_vs_pid);
