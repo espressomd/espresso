@@ -718,6 +718,10 @@ void handle_collisions() {
           if (!attach_vs_to.l.ghost) {
             place_vs_and_relate_to_particle(
                 current_vs_pid, pos, attach_vs_to.p.identity, initial_pos);
+            // Particle storage locations may have changed due to
+            // added particle
+            p1 = local_particles[c.pp1];
+            p2 = local_particles[c.pp2];
             current_vs_pid++;
           } else { // Just update the books
             added_particle(current_vs_pid);
