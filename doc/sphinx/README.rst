@@ -20,7 +20,7 @@ How to get started with SPHINX
 
       make sphinx
 
-#. In the directory ``doc/sphinx`` you can find all the source rst files for the user guide.
+#. In the directory :file:`doc/sphinx` you can find all the source rst files for the user guide.
    You can change those files and rerun ``make sphinx``.
 
 #. When writing a docstring please keep the style to

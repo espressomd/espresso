@@ -191,7 +191,7 @@ are created and can be easily initialized with checkpointed user variables
 Writing H5MD-files
 ------------------
 
-For large amounts of data it’s a good idea to store it in the hdf5 (H5MD
+For large amounts of data it's a good idea to store it in the hdf5 (H5MD
 is based on hdf5) file format (see https://www.hdfgroup.org/ for
 details). Currently |es| supports some basic functions for writing simulation
 data to H5MD files. The implementation is MPI-parallelized and is capable
@@ -210,24 +210,24 @@ respective hdf5-file. This may, for example, look like:
 
 If a file with the given filename exists and has a valid H5MD structures
 it will be backed up to a file with suffix ".bak". This file will be
-removed by the close() method of the class which has to be called at the
+removed by the ``close()`` method of the class which has to be called at the
 end of the simulation to close the file. The current implementation
 allows to write the following properties: positions, velocities, forces,
 species (|es| types), and masses of the particles. In order to write any property, you
 have to set the respective boolean flag as an option to the H5md class.
 Currently available:
 
-    - write_pos: particle positions
+    - ``write_pos``: particle positions
 
-    - write_vel: particle velocities
+    - ``write_vel``: particle velocities
 
-    - write_force: particle forces
+    - ``write_force``: particle forces
 
-    - write_species: particle types
+    - ``write_species``: particle types
 
-    - write_mass: particle masses
+    - ``write_mass``: particle masses
 
-    - write_ordered: if particles should be written ordered according to their
+    - ``write_ordered``: if particles should be written ordered according to their
       id (implies serial write).
 
 
@@ -247,7 +247,7 @@ call the H5md objects :meth:`espressomd.io.writer.h5md.H5md.write` method withou
     h5.write()
 
 
-After the last write call, you have to call the close() method to remove
+After the last write call, you have to call the ``close()`` method to remove
 the backup file and to close the datasets etc.
 
 .. _Writing MPI-IO binary files:
@@ -268,23 +268,23 @@ capabilities. The usage is quite simple:
     # ... add particles here
     mpiio.write("/tmp/mydata", positions=True, velocities=True, types=True, bonds=True)
 
-Here, `/tmp/mydata` is the prefix used for several files. The call will output
+Here, :file:`/tmp/mydata` is the prefix used for several files. The call will output
 particle positions, velocities, types and their bonds to the following files in
-folder `/tmp`:
+folder :file:`/tmp`:
 
-    - mydata.head
-    - mydata.id
-    - mydata.pos
-    - mydata.pref
-    - mydata.type
-    - mydata.vel
-    - mydata.boff
-    - mydata.bond
+    - :file:`mydata.head`
+    - :file:`mydata.id`
+    - :file:`mydata.pos`
+    - :file:`mydata.pref`
+    - :file:`mydata.type`
+    - :file:`mydata.vel`
+    - :file:`mydata.boff`
+    - :file:`mydata.bond`
 
 Depending on the chosen output, not all of these files might be created.
 To read these in again, simply call :meth:`espressomd.io.mpiio.Mpiio.read`. It has the same signature as
 :meth:`espressomd.io.mpiio.Mpiio.write`.
-There exists a legacy python script in the `tools` directory which can convert
+There exists a legacy python script in the :file:`tools` directory which can convert
 MPI-IO data to the now unsupported blockfile format. Check it out if you want
 to post-process the data without ESPResSo.
 
@@ -370,7 +370,7 @@ timesteps. This is a restriction of VMD itself, not of the format.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :meth:`espressomd.io.writer.vtf.writevsf`
 
-Writes a structure block describing the system’s structure to the given channel.
+Writes a structure block describing the system's structure to the given channel.
 for example
 
 .. code:: python
@@ -393,7 +393,7 @@ contains a trajectory of a whole simulation.
 :meth:`espressomd.io.writer.vtf.writevcf`
 
 Writes a coordinate (or timestep) block that contains all coordinates of
-the system’s particles.
+the system's particles.
 
 .. code:: python
 

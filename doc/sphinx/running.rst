@@ -72,7 +72,7 @@ Iterate
 
 while the maximal force is bigger than ``f_max`` or for at most ``max_steps`` times. The energy
 is relaxed by ``gamma``, while the change per coordinate per step is limited to ``max_displacement``.
-The combination of ``gamma`` and ``max_displacement`` can be used to get a poor man’s adaptive update.
+The combination of ``gamma`` and ``max_displacement`` can be used to get a poor man's adaptive update.
 Rotational degrees of freedom are treated similarly: each particle is
 rotated around an axis parallel to the torque acting on the particle.
 Please be aware of the fact that this needs not to converge to a local
@@ -117,13 +117,13 @@ simulations, respectively. See :cite:`bereau15` for more details.
 
 Integrating rotational degrees of freedom
 -----------------------------------------
-When the feature ROTATION is compiled in, Particles not only have a position, but also an orientation.
+When the feature ``ROTATION`` is compiled in, Particles not only have a position, but also an orientation.
 Just as a force on a particle leads to an increase in linear velocity, a torque on a particle leads to an increase in angular velocity. The rotational degrees of freedom are also integrated using a velocity Verlet scheme.
 When the Langevin thermostat is enabled, the rotational degrees of freedom are also thermalized.
 
 Whether or not rotational degrees of freedom are propagated, is controlled on a per-particle and per-axis level, where the axes are the Cartesian axes of the particle in its body-fixed frame.
 It is important to note that starting from version 4.0 and unlike in earlier versions of |es|, the particles' rotation is disabled by default.
-In this way, just compiling in the ROTATION feature no longer changes the physics of the system.
+In this way, just compiling in the ``ROTATION`` feature no longer changes the physics of the system.
 
 The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled::
 
@@ -134,9 +134,9 @@ The rotation of a particle is controlled via the :attr:`espressomd.particle_data
 Notes:
 
 * The orientation of a particle is stored as a quaternion in the :attr:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide.
-* The space-frame direction of the particle's z-axis in its body frame is accessible through the `espressomd.particle_data.ParticleHandle.director` property.
-* Any other vector can be converted from body to space fixed frame using the `espressomd.particle_data.ParticleHandle.convert_vector_body_to_space` method.
-* When DIPOLES are compiled in, the particles dipole moment is always co-aligned with the z-axis in the body-fixed frame.
+* The space-frame direction of the particle's z-axis in its body frame is accessible through the ``espressomd.particle_data.ParticleHandle.director`` property.
+* Any other vector can be converted from body to space fixed frame using the ``espressomd.particle_data.ParticleHandle.convert_vector_body_to_space`` method.
+* When ``DIPOLES`` are compiled in, the particles dipole moment is always co-aligned with the z-axis in the body-fixed frame.
 * Changing the particles dipole moment and director will re-orient the particle such that its z-axis in space frame is aligned parallel to the given vector. No guarantees are made for the other two axes after setting the director or the dipole moment.
 
 

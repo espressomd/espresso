@@ -11,7 +11,7 @@ is tested and known to run on a number of platforms.
 Alternatively, people that want to use the newest features of |es| or that
 want to start contributing to the software can instead obtain the
 current development code via the version control system software  [2]_
-from |es| ’s project page at Github  [3]_. This code might be not as well
+from |es| 's project page at Github  [3]_. This code might be not as well
 tested and documented as the release code; it is recommended to use this
 code only if you have already gained some experience in using |es|.
 
@@ -25,7 +25,7 @@ performance of the code. Therefore it is not possible to build a single
 binary that can satisfy all needs. For performance reasons a user
 should always activate only those features that are actually needed.
 This means, however, that learning how to compile is a necessary evil.
-The build system of |es| uses `cmake` [4]_ to compile
+The build system of |es| uses ``cmake`` [4]_ to compile
 software easily on a wide range of platforms.
 
 .. _Requirements:
@@ -151,7 +151,7 @@ command in |es| 's source directory:
 
     pip install -r requirements.txt --user --upgrade
 
-Please note that on some systems, `pip` has to be replaced by `pip2` to install Python 2 versions of the packages.
+Please note that on some systems, ``pip`` has to be replaced by ``pip2`` to install Python 2 versions of the packages.
 
 .. _Quick installation:
 
@@ -177,8 +177,8 @@ This will build |es| with a default feature set, namely
 :file:`src/core/myconfig-default.hpp`. This file is a ``c++`` header file,
 which defines the features that should be compiled in.
 You may want to adjust the feature set to your needs. This can be easily done
-by copying the `myconfig-sample.hpp` which has been created in the build
-directory to `myconfig.hpp` and only uncomment the features you want to use in your simulation.
+by copying the :file:`myconfig-sample.hpp` which has been created in the :file:`build`
+directory to :file:`myconfig.hpp` and only uncomment the features you want to use in your simulation.
 
 The ``cmake`` command looks for libraries and tools needed by |es|. So |es|
 can only be built if ``cmake`` reports no errors.
@@ -223,8 +223,8 @@ Configuring
 
 .. _myconfig.hpp\: Activating and deactivating features:
 
-``myconfig.hpp``: Activating and deactivating features
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:file:`myconfig.hpp`: Activating and deactivating features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 |es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
@@ -235,11 +235,11 @@ one, e.g. . For the developers, it is also possible to turn on or off a
 number of debugging messages. The features and debug messages can be
 controlled via a configuration header file that contains C-preprocessor
 declarations. Appendix lists and describes all available features. The
-file ``myconfig-sample.hpp`` that configure will generate in the build
+file :file:`myconfig-sample.hpp` that configure will generate in the build
 directory contains a list of all possible features that can be copied
 into your own configuration file. When no configuration header is
 provided by the user, a default header, found in
-``src/core/myconfig-default.hpp``, will be used that turns on the
+:file:`src/core/myconfig-default.hpp`, will be used that turns on the
 default features.
 
 When you distinguish between the build and the source directory, the
@@ -247,21 +247,21 @@ configuration header can be put in either of these. Note, however, that
 when a configuration header is found in both directories, the one in the
 build directory will be used.
 
-By default, the configuration header is called ``myconfig.hpp``.
+By default, the configuration header is called :file:`myconfig.hpp`.
 The configuration header can be used to compile different binary
 versions of with a different set of features from the same source
-directory. Suppose that you have a source directory ``$srcdir`` and two
-build directories ``$builddir1`` and ``$builddir2`` that contain
+directory. Suppose that you have a source directory :file:`$srcdir` and two
+build directories :file:`$builddir1` and :file:`$builddir2` that contain
 different configuration headers:
 
-*  ``$builddir1/myconfig.hpp``:
+*  :file:`$builddir1/myconfig.hpp`:
 
   .. code-block:: c++
 
     #define ELECTROSTATICS
     #define LENNARD-JONES
 
-*  ``$builddir2/myconfig.hpp``:
+*  :file:`$builddir2/myconfig.hpp`:
 
   .. code-block:: c++
 
@@ -279,7 +279,7 @@ Then you can simply compile two different versions of via:
     cmake ..
     make
 
-To see, what features were activated in myconfig.hpp, run:
+To see, what features were activated in :file:`myconfig.hpp`, run:
 
 .. code-block:: bash
 
@@ -299,9 +299,9 @@ Features
 
 This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
-will negatively effect |es| ’s performance.
+will negatively effect |es| 's performance.
 
-Features can be activated in the configuration header ``myconfig.hpp`` (see
+Features can be activated in the configuration header :file:`myconfig.hpp` (see
 section :ref:`myconfig.hpp\: Activating and deactivating features`). To
 activate ``FEATURE``, add the following line to the header file:
 
@@ -364,7 +364,7 @@ General features
 
 -  ``CONSTRAINTS`` Turns on various spatial constraints such as spherical compartments
    or walls. This constraints interact with the particles through
-   regular short ranged potentials such as the Lennard–Jones potential.
+   regular short ranged potentials such as the Lennard--Jones potential.
    See section for possible constraint forms.
 
 -  ``MASS`` Allows particles to have individual masses. Note that some analysis
@@ -427,7 +427,7 @@ integrator or thermostat:
 
        .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibrium MD`
 
--  ``NPT`` Enables an on–the–fly NPT integration scheme.
+-  ``NPT`` Enables an on-the-fly NPT integration scheme.
 
    .. seealso:: :ref:`Isotropic NPT thermostat`
 
@@ -498,16 +498,16 @@ Interaction features
 The following switches turn on various short ranged interactions (see
 section :ref:`Isotropic non-bonded interactions`):
 
--  ``TABULATED`` Enable support for user–defined interactions.
+-  ``TABULATED`` Enable support for user-defined interactions.
 
--  ``LENNARD_JONES`` Enable the Lennard–Jones potential.
+-  ``LENNARD_JONES`` Enable the Lennard--Jones potential.
 
--  ``LENNARD_JONES_GENERIC`` Enable the generic Lennard–Jones potential with configurable
+-  ``LENNARD_JONES_GENERIC`` Enable the generic Lennard--Jones potential with configurable
    exponents and individual prefactors for the two terms.
 
--  ``LJCOS`` Enable the Lennard–Jones potential with a cosine–tail.
+-  ``LJCOS`` Enable the Lennard--Jones potential with a cosine-tail.
 
--  ``LJCOS2`` Same as LJCOS, but using a slightly different way of smoothing the
+-  ``LJCOS2`` Same as ``LJCOS``, but using a slightly different way of smoothing the
    connection to 0.
 
 -  ``GAY_BERNE`` (experimental)
@@ -530,7 +530,7 @@ section :ref:`Isotropic non-bonded interactions`):
 
 Some of the short range interactions have additional features:
 
--  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard–Jones potentials that
+-  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard--Jones potentials that
    prints a warning if particles come too close so that the simulation
    becomes unphysical.
 
@@ -616,7 +616,7 @@ looking directly at the code.
 
 -  ``ESR_DEBUG`` debugging of P\ :math:`^3`\ Ms real space part.
 
--  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` –space part.
+-  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
 
 -  ``FFT_DEBUG`` Output from the unified FFT code.
 
@@ -630,7 +630,7 @@ looking directly at the code.
 
 -  ``THERMO_DEBUG`` Output from the thermostats.
 
--  ``LJ_DEBUG`` Output from the Lennard–Jones code.
+-  ``LJ_DEBUG`` Output from the Lennard--Jones code.
 
 -  ``MORSE_DEBUG`` Output from the Morse code.
 
@@ -645,7 +645,7 @@ looking directly at the code.
 
 -  ``MOLFORCES_DEBUG``
 
--  ``LB_DEBUG`` Output from the lattice–Boltzmann code.
+-  ``LB_DEBUG`` Output from the lattice--Boltzmann code.
 
 -  ``VIRTUAL_SITES_DEBUG``
 
@@ -673,7 +673,7 @@ looking directly at the code.
 
 Features marked as experimental
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define `EXPERIMENTAL_FEATURES` in myconfig.hpp.
+Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define ``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
 
 
@@ -685,8 +685,8 @@ cmake
 In order to build the first step is to create a build directory in which
 cmake can be executed. In cmake, the *source directory* (that contains
 all the source files) is completely separated from the *build directory*
-(where the files created by the build process are put). `cmake` is
-designed to *not* be executed in the source directory. `cmake` will
+(where the files created by the build process are put). ``cmake`` is
+designed to *not* be executed in the source directory. ``cmake`` will
 determine how to use and where to find the compiler, as well as the
 different libraries and tools required by the compilation process. By
 having multiple build directories you can build several variants of |es|,
@@ -695,9 +695,9 @@ platforms as you want.
 
 **Example:**
 
-When the source directory is ``srcdir`` (the files where unpacked to this
-directory), then the user can create a build directory ``build`` below that
-path by calling ``mkdir srcdir/build``. In the build directory `cmake` is to be
+When the source directory is :file:`srcdir` (the files where unpacked to this
+directory), then the user can create a build directory :file:`build` below that
+path by calling :file:`mkdir srcdir/build`. In the build directory ``cmake`` is to be
 executed, followed by a call to make. None of the files in the source directory
 are ever modified by the build process.
 
@@ -707,7 +707,7 @@ are ever modified by the build process.
     cmake ..
     make
 
-Afterwards Espresso can be run via calling ``./pypresso`` from the command
+Afterwards Espresso can be run via calling :file:`./pypresso` from the command
 line.
 
 .. _ccmake:
@@ -748,24 +748,24 @@ Options and Variables
 ^^^^^^^^^^^^^^^^^^^^^
 
 The behavior of |es| can be controlled by means of options and variables
-in the CMakeLists.txt file. Also options are defined there. The following
+in the :file:`CMakeLists.txt` file. Also options are defined there. The following
 options are available:
 
-* WITH\_CUDA: Build with GPU support
+* ``WITH_CUDA``: Build with GPU support
 
-* WITH\_HDF5: Build with HDF5
+* ``WITH_HDF5``: Build with HDF5
 
-* WITH\_TESTS: Enable tests
+* ``WITH_TESTS``: Enable tests
 
-* WITH\_SCAFACOS: Build with Scafacos support
+* ``WITH_SCAFACOS``: Build with Scafacos support
 
-* WITH\_VALGRIND\_INSTRUMENTATION: Build with valgrind instrumentation
+* ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 
-When the value in the CMakeLists.txt file is set to ON the corresponding
+When the value in the :file:`CMakeLists.txt` file is set to ON the corresponding
 option is created if the value of the option is set to OFF the
 corresponding option is not created. These options can also be modified
-by calling cmake with the command line argument ``-D``:
+by calling ``cmake`` with the command line argument ``-D``:
 
 .. code-block:: bash
 
@@ -810,25 +810,25 @@ targets are available:
     specific directory.
 
 ``doxygen``
-    Creates the Doxygen code documentation in the ``doc/doxygen``
+    Creates the Doxygen code documentation in the :file:`doc/doxygen`
     subdirectory.
 
 ``sphinx``
-    Creates the `sphinx` code documentation in the ``doc/sphinx``
+    Creates the `sphinx` code documentation in the :file:`doc/sphinx`
     subdirectory.
 
 ``tutorials``
-    Creates the tutorials in the ``doc/tutorials`` subdirectory.
+    Creates the tutorials in the :file:`doc/tutorials` subdirectory.
 
 ``doc``
-    Creates all documentation in the ``doc`` subdirectory (only when
+    Creates all documentation in the :file:`doc` subdirectory (only when
     using the development sources).
 
 A number of options are available when calling ``make``. The most
 interesting option is probably ``-j num_jobs``, which can be used for
 parallel compilation on computers that have more than one CPU or core.
-*num\_jobs* specifies the maximal number of jobs that will be run.
-Setting *num\_jobs* to the number of available processors speeds up the
+*num_jobs* specifies the maximal number of jobs that will be run.
+Setting *num_jobs* to the number of available processors speeds up the
 compilation process significantly.
 
 .. _Running es:
@@ -853,7 +853,7 @@ the build directory.
 
 The ``pypresso`` script is just a wrapper in order to expose our
 self built python modules to the systems python interpreter by
-modifying the  ``PYTHONPATH``.
+modifying the  ``$PYTHONPATH``.
 Please see the following chapters describing how to actually write
 a simulation script for |es|.
 
@@ -865,10 +865,10 @@ Debugging |es|
 Exceptional situations occur in every program.  If |es| crashes with a
 segmentation fault that means that there was a memory fault in the
 simulation core which requires running the program in a debugger.  The
-`pypresso` executable file is actually not a program but a script
+``pypresso`` executable file is actually not a program but a script
 which sets the Python path appropriately and starts the Python
 interpreter with your arguments.  Thus it is not possible to directly
-run `pypresso` in a debugger.  However, we provide some useful
+run ``pypresso`` in a debugger.  However, we provide some useful
 commandline options for the most common tools.
 
 .. code-block:: bash

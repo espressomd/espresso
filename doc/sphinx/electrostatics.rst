@@ -56,12 +56,12 @@ Coulomb P3M
 :class:`espressomd.electrostatics.P3M`
 
 Required parameters:
-    * prefactor
-    * accuracy
+    * ``prefactor``
+    * ``accuracy``
 
 For this feature to work, you need to have the ``fftw3`` library
 installed on your system. In python you can check if it is compiled in by
-checking for the feature ``FFTW`` with ``espressomd.features()``
+checking for the feature ``FFTW`` with ``espressomd.features``
 P3M requires full periodicity (1 1 1). Make sure that you know the relevance of the
 P3M parameters before using P3M! If you are not sure, read the following
 references
@@ -117,8 +117,8 @@ Coulomb P3M on GPU
 :class:`espressomd.electrostatics.P3MGPU`
 
 Required parameters:
-    * prefactor
-    * accuracy
+    * ``prefactor``
+    * ``accuracy``
 
 The GPU implementation of P3M calculates the far field portion on the GPU.
 It uses the same parameters and interface functionality as the CPU version of
@@ -168,30 +168,30 @@ actor and can be activated via::
 
 Parameters are:
 
-	* first_id:
+	* ``first_id``:
 		ID of the first ICC Particle.
-	* n_icc:
+	* ``n_icc``:
 		Total number of ICC Particles.
-	* convergence:
+	* ``convergence``:
 		Abort criteria of the iteration. It corresponds to the maximum relative
-		change of any of the interface particle’s charge.
-	* relaxation:
+		change of any of the interface particle's charge.
+	* ``relaxation``:
 		SOR relaxation parameter.
-	* ext_field:
+	* ``ext_field``:
 		Homogeneous electric field added to the calculation of dielectric boundary forces.
-	* max_iterations:
+	* ``max_iterations``:
 		Maximal number of iterations.
-	* eps_out:
+	* ``eps_out``:
 		Relative permittivity of the outer region (where the particles are).
-	* normals:
-		List of size `n_icc` with normal vectors pointing into the outer region.
-	* areas
-		List of size `n_icc` with areas of the discretized surface.
-	* sigmas
-		List of size `n_icc` with an additional surface charge density in
+	* ``normals``:
+		List of size ``n_icc`` with normal vectors pointing into the outer region.
+	* ``areas``
+		List of size ``n_icc`` with areas of the discretized surface.
+	* ``sigmas``
+		List of size ``n_icc`` with an additional surface charge density in
 		absence of any charge induction
-	* epsilons
-		List of size `n_icc` with the dielectric constant associated to the area.
+	* ``epsilons``
+		List of size ``n_icc`` with the dielectric constant associated to the area.
 
 The ICC particles are setup as normal |es| particles. Note that they should be
 fixed in space and need an initial nonzero charge. The following usage example
@@ -286,7 +286,7 @@ using it.
     metallic boundary conditions, to match the results of P3M.
 
     The arising self-interactions are treated with a modified version of the
-    exact solution of the lattice Green’s function for the problem.
+    exact solution of the lattice Green's function for the problem.
 
     Currently, forces have large errors for two particles within the same
     lattice cube. This may be fixed in future development, but right now
@@ -456,7 +456,7 @@ MMM2D
 -----
 
 .. note::
-    Required features: ELECTROSTATICS, PARTIAL_PERIODIC.
+    Required features: ``ELECTROSTATICS``, ``PARTIAL_PERIODIC``.
 
 MMM2D is an electrostatics solver for explicit 2D periodic systems.
 It can account for different dielectric jumps on both sides of the
@@ -473,8 +473,8 @@ no dielectric contrast is set and it is used as::
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
 For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`.
-The last two, mutually exclusive parameters `dielectric` and
-`dielectric_constants_on` allow to specify dielectric contrasts at the
+The last two, mutually exclusive parameters ``dielectric`` and
+``dielectric_constants_on`` allow to specify dielectric contrasts at the
 upper and lower boundaries of the simulation box. The first form
 specifies the respective dielectric constants in the media, which
 however is only used to calculate the contrasts. That is, specifying
@@ -493,7 +493,7 @@ to metallic boundary conditions::
     mmm2d = electrostatics.MMM2D(prefactor=C, maxPWerror=1e-3, dielectric_contrast_on=1,
                                  delta_mid_top=-1, delta_mid_bot=-1)
 
-Using `const_pot` allows to maintain a constant electric potential difference `pot_diff`
+Using ``const_pot`` allows to maintain a constant electric potential difference ``pot_diff``
 between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
 denotes the box length in :math:`z`-direction::
 
@@ -504,17 +504,17 @@ electric field :math:`E_{induced}` and superposing a homogeneous electric field
 :math:`E_{applied} = \frac{U}{L}` to retain :math:`U`. This mimics the
 induction of surface charges :math:`\pm\sigma = E_{induced} \cdot \epsilon_0`
 for planar electrodes at :math:`z=0` and :math:`z=L` in a capacitor connected
-to a battery with voltage `pot_diff`. Using 0 is equivalent to
+to a battery with voltage ``pot_diff``. Using 0 is equivalent to
 :math:`\Delta_{t/b}=-1`.
 
 Finally, the far cutoff setting should only be used for testing reasons,
-otherwise you are more safe with the automatic tuning. If you even don’t know
+otherwise you are more safe with the automatic tuning. If you even don't know
 what it is, do not even think of touching the far cutoff. For details on the
 MMM family of algorithms, refer to appendix :ref:`The MMM family of algorithms`.
 Please cite :cite:`arnold02a` when using MMM2D.
 
 A complete (but unphysical) sample script for a plate capacitor simulated with MMM2D
-can be found in `/samples/visualization_mmm2d.py`.
+can be found in :file:`/samples/visualization_mmm2d.py`.
 
 .. _Electrostatic Layer Correction (ELC):
 
@@ -537,7 +537,7 @@ with::
 
 
 Parameters are:
-    * gap_size:
+    * ``gap_size``:
         The gap size gives the height of the empty region between the system box
         and the neighboring artificial images. |es| does not
         make sure that the gap is actually empty, this is the users
@@ -545,12 +545,12 @@ Parameters are:
         fulfilled, however, the error bound will not be reached. Therefore you
         should really make sure that the gap region is empty (e.g. with wall
         constraints).
-    * maxPWerror:
+    * ``maxPWerror``:
         The maximal pairwise error sets the least upper bound (LUB) error of
         the force between any two charges without prefactors (see the papers).
         The algorithm tries to find parameters to meet this LUB requirements or
         will throw an error if there are none.
-    * delta_mid_top/delta_mid_bot:
+    * ``delta_mid_top``/``delta_mid_bot``:
         *ELC* can also be used to simulate 2D periodic systems with image charges,
         specified by dielectric contrasts on the non-periodic boundaries
         (:cite:`icelc`).  Similar to *MMM2D*, these can be set with the
@@ -560,21 +560,21 @@ Parameters are:
         ``delta_mid_top=delta_mid_bot=-1`` would lead to divergence of the
         forces/energies in *ELC* and is therefore only possible with the
         ``const_pot`` option.
-    * const_pot:
+    * ``const_pot``:
         As described, setting this to ``1`` leads to fully metallic boundaries and
         behaves just like the mmm2d parameter of the same name: It maintains a
         constant potential ``pot_diff`` by countering the total dipole moment of
         the system and adding a homogeneous electric field according to
         ``pot_diff``.
-    * pot_diff:
+    * ``pot_diff``:
         Used in conjunction with ``const_pot`` set to 1, this sets the potential difference
         between the boundaries in the z-direction between ``z=0`` and
         ``z = box_l[2] - gap_size``.
-    * far_cut:
+    * ``far_cut``:
         The setting of the far cutoff is only intended for testing and allows to
         directly set the cutoff. In this case, the maximal pairwise error is
         ignored.
-    * neutralize:
+    * ``neutralize``:
         By default, ELC just as P3M adds a homogeneous neutralizing background
         to the system in case of a net charge. However, unlike in three dimensions,
         this background adds a parabolic potential across the
@@ -597,8 +597,8 @@ MMM1D
 -----
 
 .. note::
-    Required features: ELECTROSTATICS, PARTIAL_PERIODIC for MMM1D, the GPU version additionally needs
-    the features CUDA and MMM1D_GPU.
+    Required features: ``ELECTROSTATICS``, ``PARTIAL_PERIODIC`` for MMM1D, the GPU version additionally needs
+    the features ``CUDA`` and ``MMM1D_GPU``.
 
 ::
 
@@ -654,12 +654,12 @@ Scafacos Electrostatics
 -----------------------
 
 Espresso can use the electrostatics methods from the SCAFACOS *Scalable
-fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :attr:`espressomd.scafacos.available_methods()`
+fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :attr:`espressomd.scafacos.available_methods`
 
 To use SCAFACOS, create an instance of :attr:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
-* method_name: name of the SCAFACOS method being used.
-* method_params: dictionary containing the method-specific parameters
-* prefactor: Coulomb prefactor as defined in :eq:`coulomb_prefactor`.
+* ``method_name``: name of the SCAFACOS method being used.
+* ``method_params``: dictionary containing the method-specific parameters
+* ``prefactor``: Coulomb prefactor as defined in :eq:`coulomb_prefactor`.
 The method-specific parameters are described in the SCAFACOS manual.
 Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field
 

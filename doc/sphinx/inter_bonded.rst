@@ -90,7 +90,7 @@ Harmonic Dumbbell Bond
 
 .. note::
 
-    Requires ROTATION feature.
+    Requires ``ROTATION`` feature.
 
 
 A harmonic bond can be instantiated via
@@ -140,7 +140,7 @@ Bonded Coulomb
 
 .. note::
 
-    Requires ELECTROSTATICS feature.
+    Requires ``ELECTROSTATICS`` feature.
 
 A pairwise Coulomb interaction can be instantiated via
 :class:`espressomd.interactions.BondedCoulomb`::
@@ -154,7 +154,7 @@ It is given by
 
 .. math:: V(r) = \frac{\alpha q_1 q_2}{r},
 
-where `q1` and `q2` are the charges of the bound particles and `alpha` is the
+where :math:`q1` and :math:`q2` are the charges of the bound particles and :math:`\alpha` is the
 Coulomb prefactor. This interaction has no cutoff and acts independently of other
 Coulomb interactions.
 
@@ -165,7 +165,7 @@ Subtract P3M short-range bond
 
 .. note::
 
-    requires the P3M feature.
+    Requires the ``P3M`` feature.
 
 This bond can be instantiated via
 :class:`espressomd.interactions.BondedCoulombP3MSRBond`::
@@ -173,7 +173,7 @@ This bond can be instantiated via
     from espressomd.interactions import BondedCoulombP3MSRBond
     subtr_p3m_sr = BondedCoulombP3MSRBond(q1q2=<float>)
 
-The parameter `q1q2` sets the charge factor of the short-range P3M interaction.
+The parameter ``q1q2`` sets the charge factor of the short-range P3M interaction.
 It can differ from the actual particle charges.  This specialized bond can be
 used to cancel or add **only the short-range** electrostatic part
 of the P3M solver. A use case is described in :ref:`Particle polarizability with
@@ -203,7 +203,7 @@ Rigid bonds
 
 .. note::
 
-    Requires BOND_CONSTRAINT feature.
+    Requires ``BOND_CONSTRAINT`` feature.
 
 
 A rigid bond can be instantiated via
@@ -214,7 +214,7 @@ A rigid bond can be instantiated via
 
 To simulate rigid bonds, |es| uses the Rattle Shake algorithm which satisfies
 internal constraints for molecular models with internal constraints,
-using Lagrange multipliers.:cite:`andersen83a` The constrained bond distance
+using Lagrange multipliers.\ :cite:`andersen83a` The constrained bond distance
 is named :math:`r`, the positional tolerance is named :math:`ptol` and the velocity tolerance
 is named :math:`vtol`.
 
@@ -225,7 +225,7 @@ Tabulated bond interactions
 
 .. note::
 
-    required TABULATED feature.
+    Requires ``TABULATED`` feature.
 
 
 A tabulated bond can be instantiated via
@@ -311,7 +311,7 @@ OIF local forces
 
 .. note::
 
-    required OIF_GLOBAL_FORCES feature.
+    Requires ``OIF_GLOBAL_FORCES`` feature.
 
 
 OIF local forces are available through the :class:`espressomd.interactions.OifLocalForces` class.
@@ -443,7 +443,7 @@ OIF global forces
 
 .. note::
 
-    Requires OIF_GLOBAL_FORCES feature.
+    Requires ``OIF_GLOBAL_FORCES`` feature.
 
 
 OIF global forces are available through the
@@ -550,7 +550,7 @@ oif_global_forces interaction).
 Bond-angle interactions
 -----------------------
 .. note::
-    `Feature BOND_ANGLE required.`
+    Feature ``BOND_ANGLE`` required.
 
 Bond-angle interactions involve three particles forming the angle :math:`\phi`, as shown in the schematic below.
 
@@ -689,11 +689,11 @@ The bond is configured with::
 
 The parameters are:
 
-    * temp_com : Temperature of the Langevin thermostat for the COM of the particle pair.
-    * gamma_com: Friction coefficient of the Langevin thermostat for the COM of the particle pair.
-    * temp_distance: Temperature of the Langevin thermostat for the distance vector of the particle pair.
-    * gamma_distance: Friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
-    * r_cut:  Specifies maximum distance beyond which the bond is considered broken.
+    * ``temp_com``: Temperature of the Langevin thermostat for the COM of the particle pair.
+    * ``gamma_com``: Friction coefficient of the Langevin thermostat for the COM of the particle pair.
+    * ``temp_distance``: Temperature of the Langevin thermostat for the distance vector of the particle pair.
+    * ``gamma_distance``: Friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
+    * ``r_cut``:  Specifies maximum distance beyond which the bond is considered broken.
 
 The bond is closely related to simulating :ref:`Particle polarizability with
 thermalized cold Drude oscillators`.

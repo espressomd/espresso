@@ -96,12 +96,12 @@ The Mayavi visualizer is created with the following syntax:
 :class:`espressomd.visualization.mayaviLive()`
 
 Required parameters:
-    * `system`: The espressomd.System() object.
+    * ``system``: The ``espressomd.System()`` object.
 Optional keywords:
-    * `particle_sizes`:
-        * `"auto"` (default)`: The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
-        * `callable`: A lambda function with one argument. Internally, the numerical particle type is passed to the lambda function to determine the particle radius.
-        * `list`: A list of particle radii, indexed by the particle type.
+    * ``particle_sizes``:
+        * ``"auto"`` (default): The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
+        * ``callable``: A lambda function with one argument. Internally, the numerical particle type is passed to the lambda function to determine the particle radius.
+        * ``list``: A list of particle radii, indexed by the particle type.
 
 .. _OpenGL visualizer:
 
@@ -114,7 +114,7 @@ The optional keywords in ``**kwargs`` are used to adjust the appearance of the v
 The parameters have suitable default values for most simulations.
 
 Required parameters:
-    * `system`: The espressomd.System() object.
+    * ``system``: The ``espressomd.System()`` object.
 Optional keywords:
     * Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
 
@@ -127,7 +127,7 @@ Running the visualizer
 | :meth:`espressomd.visualization.openGLLive.run()`
 
 To visually debug your simulation, ``run(n)`` can be used to conveniently start
-an integration loop with `n` integration steps in a separate thread once the
+an integration loop with ``n`` integration steps in a separate thread once the
 visualizer is initialized::
 
     import espressomd
@@ -153,10 +153,10 @@ Screenshots
 
 The OpenGL visualizer can also be used for offline rendering.
 After creating the visualizer object, call ``screenshot(path)``
-to save an image of your simulation to `path`. Internally, the image is saved
-with `matplotlib.pyplot.imsave`, so the file format is specified by the
+to save an image of your simulation to ``path``. Internally, the image is saved
+with ``matplotlib.pyplot.imsave``, so the file format is specified by the
 extension of the filename.  The image size is determined by the keyword
-argument `window_size` of the visualizer. This method can be used to create
+argument ``window_size`` of the visualizer. This method can be used to create
 screenshots without blocking the simulation script::
 
     import espressomd
@@ -182,7 +182,7 @@ screenshots without blocking the simulation script::
 
 It is also possible to create a snapshot during online visualization.
 Simply press the *enter* key to create a snapshot of the current window,
-which saves it to `<scriptname>_n.png` (with incrementing `n`).
+which saves it to :file:`<scriptname>_n.png` (with incrementing ``n``).
 
 .. _Colors and Materials:
 
@@ -199,7 +199,7 @@ used, which are indexed circularly by the numerical particle type::
                                           particle_coloring='type',
                                           particle_type_colors=[[1, 0, 0], [0, 0, 1]])
 
-`particle_type_materials` lists the materials by type::
+``particle_type_materials`` lists the materials by type::
 
     # Particle type 0 is gold, type 1 is blue (type 2 is gold again etc).
     visualizer = visualization.openGLLive(system,
@@ -217,15 +217,15 @@ Visualize vectorial properties
 Most vectorial particle properties can be visualized by 3D-arrows on the
 particles:
 
-    * `ext_force`: An external force. Activate with the keyword ``ext_force_arrows = True``.
-    * `f`: The force acting on the particle. Activate with the keyword ``force_arrows = True``.
-    * `v`: The velocity of the particle. Activate with the keyword ``velocity_arrows = True``.
-    * `director`: A vector associated with the orientation of the particle. Activate with the keyword ``director_arrows = True``.
+    * ``ext_force``: An external force. Activate with the keyword ``ext_force_arrows = True``.
+    * ``f``: The force acting on the particle. Activate with the keyword ``force_arrows = True``.
+    * ``v``: The velocity of the particle. Activate with the keyword ``velocity_arrows = True``.
+    * ``director``: A vector associated with the orientation of the particle. Activate with the keyword ``director_arrows = True``.
 
 Arrow colors, scales and radii can be adjusted. Again, the lists specifying
 these quantities are indexed circularly by the numerical particle type. The
 following code snippet demonstrates the visualization of the director property
-and individual settings for two particle types (requires the ROTATION
+and individual settings for two particle types (requires the ``ROTATION``
 feature)::
 
     from __future__ import print_function
@@ -279,8 +279,8 @@ The camera can be controlled via mouse and keyboard:
     * Double click on a particle: Show particle information
     * Double click in empty space: Toggle system information
     * Left/Right arrows: Cycle through particles
-    * Space: If started with `run(n)`, this pauses the simulation
-    * Enter: Creates a snapshot of the current window and saves it to `<scriptname>_n.png` (with incrementing `n`)
+    * Space: If started with ``run(n)``, this pauses the simulation
+    * Enter: Creates a snapshot of the current window and saves it to :file:`<scriptname>_n.png` (with incrementing ``n``)
 
 Additional input functionality for mouse and keyboard is possible by assigning
 callbacks to specified keyboard or mouse buttons. This may be useful for
@@ -334,5 +334,5 @@ distance of particle and mouse cursor).
 Visualization example scripts
 -----------------------------
 
-Various :ref:`Sample Scripts` can be found in `samples/python/visualization*`
+Various :ref:`Sample Scripts` can be found in :file:`samples/python/visualization*`
 or in the :ref:`Tutorials` "Visualization" and "Charged Systems".

@@ -15,7 +15,7 @@ information about the following topics there:
 
 -  Obtaining development version of
 
--  Archives of both developers’ and users’ mailing lists
+-  Archives of both developers' and users' mailing lists
 
 -  Registering to mailing lists
 

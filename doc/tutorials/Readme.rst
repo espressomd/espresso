@@ -8,15 +8,15 @@ Overview
 This folder contains tutorials that introduce the use of ESPResSo for different
 physical systems. Currently, the following tutorials are available:
 
-* 01-lennard_jones: Modelling of a single-component and a two-component Lennard-Jones liquid
-* 02-charged_system: Modelling of charged systems such as ionic crystals
-* 04-lattice_boltzmann: Simulations including hydrodynamic interactions using the Lattice-Boltzmann method
-* 05-raspberry_electrophoresis: Extended objects in a Lattice-Boltzmann fluid, raspberry particles
-* 06-active_matter: Modelling of self-propelling particles
-* 07-electrokinetics: Modelling electrokinetics together with hydrodynamic interactions
-* 08-visualization: Using the online visualizers of ESPResSo
-* 09-swimmer_reactions: Further modelling of self-propelling particles
-* 10-reaction_ensemble: Modelling chemical reactions by means of the reaction ensemble
+* :file:`01-lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid
+* :file:`02-charged_system`: Modelling of charged systems such as ionic crystals
+* :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the Lattice-Boltzmann method
+* :file:`05-raspberry_electrophoresis`: Extended objects in a Lattice-Boltzmann fluid, raspberry particles
+* :file:`06-active_matter`: Modelling of self-propelling particles
+* :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions
+* :file:`08-visualization`: Using the online visualizers of ESPResSo
+* :file:`09-swimmer_reactions`: Further modelling of self-propelling particles
+* :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble
 
 Using the tutorials
 -------------------

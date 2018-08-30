@@ -32,7 +32,7 @@ for further calculations, you should explicitly make a copy e.g. via
 * :py:attr:`~espressomd.system.System.periodicity`
 
     (int[3]) Specifies periodicity for the three directions. If the feature
-    PARTIAL\_PERIODIC is set, |es| can be instructed to treat some
+    ``PARTIAL_PERIODIC`` is set, |es| can be instructed to treat some
     dimensions as non-periodic. Per default espresso assumes periodicity in
     all directions which equals setting this variable to [1,1,1]. A
     dimension is specified as non-periodic via setting the periodicity
@@ -78,11 +78,11 @@ objects like
 
 or by calling the corresponding ``get_state`` methods like::
 
-    temperature = espressomd.System().thermostat.get_state()[0][’kT’]
+    temperature = espressomd.System().thermostat.get_state()[0]['kT']
 
-    gamma = espressomd.System().thermostat.get_state()[0][’gamma’]
+    gamma = espressomd.System().thermostat.get_state()[0]['gamma']
 
-    gamma_rot = espressomd.System().thermostat.get_state()[0][’gamma_rotation’]
+    gamma_rot = espressomd.System().thermostat.get_state()[0]['gamma_rotation']
 
 .. _Cellsystems:
 
@@ -127,14 +127,14 @@ The properties of the cell system can be accessed by
 
 Details about the cell system can be obtained by ``espressomd.System().cell_system.get_state()``:
 
-    * `cell_grid`       Dimension of the inner cell grid.
-    * `cell_size`       Box-length of a cell.
-    * `local_box_l`     Local simulation box length of the nodes.
-    * `max_cut`         Maximal cutoff of real space interactions.
-    * `n_layers`        Number of layers in cell structure LAYERED
-    * `n_nodes`         Number of nodes.
-    * `type`            The current type of the cell system.
-    * `verlet_reuse`    Average number of integration steps the Verlet list is re-used.
+    * ``cell_grid``       Dimension of the inner cell grid.
+    * ``cell_size``       Box-length of a cell.
+    * ``local_box_l``     Local simulation box length of the nodes.
+    * ``max_cut``         Maximal cutoff of real space interactions.
+    * ``n_layers``        Number of layers in cell structure LAYERED
+    * ``n_nodes``         Number of nodes.
+    * ``type``            The current type of the cell system.
+    * ``verlet_reuse``    Average number of integration steps the Verlet list is re-used.
 
 .. _Domain decomposition:
 
@@ -244,7 +244,7 @@ Since |es| does not enforce a particular unit system, it cannot know about
 the current value of the Boltzmann constant. Therefore, when specifying
 the temperature of a thermostat, you actually do not define the
 temperature, but the value of the thermal energy :math:`k_B T` in the
-current unit system (see the discussion on units, Section [sec:units]).
+current unit system (see the discussion on units, Section :ref:`On units`).
 
 Note that there are three different types of noise which can be used in
 |es|. The one used typically in simulations is flat noise with the correct
@@ -287,7 +287,7 @@ the particle becomes
 .. math:: D = \frac{\text{temperature}}{\text{gamma}}.
 
 The relaxation time is given by :math:`\text{gamma}/\text{MASS}`, with
-``MASS`` the particle’s mass.  For a more detailed explanation, refer to
+``MASS`` the particle's mass.  For a more detailed explanation, refer to
 :cite:`grest86a`.  An anisotropic diffusion coefficient tensor is available to
 simulate anisotropic colloids (rods, etc.) properly. It can be enabled by the
 feature ``PARTICLE_ANISOTROPY``.
@@ -343,7 +343,7 @@ friction coefficient for every particle individually via the feature
     In case the MD step is rejected, the particles momenta may be flipped.
     This is specified by setting the / option, for the option half of the
     rejected MD steps randomly result in momenta flip. The default for
-    momenta flip is . The :math:`\pmb{\xi}` noise vector’s variance can be
+    momenta flip is . The :math:`\pmb{\xi}` noise vector's variance can be
     tuned to exactly :math:`1/\mathrm{temperature}` by specifying the option.
     The default for temperature scaling is .
 
@@ -381,7 +381,7 @@ relative velocity of particle pairs. The DPD thermostat is better for
 dynamics than the Langevin thermostat, since it mimics hydrodynamics in
 the system.
 
-When using a Lennard-Jones interaction, :math:`{r\_cut} =
+When using a Lennard-Jones interaction, :math:`{r_cut} =
 2^{\frac{1}{6}} \sigma` is a good value to choose, so that the
 thermostat acts on the relative velocities between nearest neighbor
 particles. Larger cutoffs including next nearest neighbors or even more
@@ -399,19 +399,19 @@ Isotropic NPT thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 This feature allows to simulate an (on average) homogeneous and isotropic system in the NPT ensemble.
-In order to use this feature, ``NPT`` has to be defined in the ``myconfig.hpp``.
+In order to use this feature, ``NPT`` has to be defined in the :file:`myconfig.hpp`.
 Activate the NPT thermostat with the command :py:func:`~espressomd.thermostat.Thermostat.set_npt`
 and set the following parameters:
 
-    * kT:     (float) Thermal energy of the heat bath
-    * gamma0: (float) Friction coefficient of the bath
-    * gammav: (float) Artificial friction coefficient for the volume fluctuations.
+    * ``kT``:     (float) Thermal energy of the heat bath
+    * ``gamma0``: (float) Friction coefficient of the bath
+    * ``gammav``: (float) Artificial friction coefficient for the volume fluctuations.
 
 Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.system.integrator.set_isotropic_npt`
 and the parameters:
 
-    * ext_pressure:  (float) The external pressure as float variable.
-    * piston:        (float) The mass of the applied piston as float variable.
+    * ``ext_pressure``:  (float) The external pressure as float variable.
+    * ``piston``:        (float) The mass of the applied piston as float variable.
 
 This thermostat is based on the Anderson thermostat (see
 :cite:`andersen80a,mann05d`) and will thermalize the box
@@ -454,7 +454,7 @@ GPU Acceleration with CUDA
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    `Feature CUDA required`
+    Feature ``CUDA`` required
 
 
 |es| is capable of GPU acceleration to speed up simulations.

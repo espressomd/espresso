@@ -6,7 +6,7 @@ Contact the Developers
 
 To contact the |es| developers, please write an email to the developers mailing list:
 espressomd-devel@nongnu.org
-to subscribe to the developers’ mailing list go to
+to subscribe to the developers' mailing list go to
 http://lists.nongnu.org/mailman/listinfo/espressomd-devel
 
 
@@ -34,7 +34,7 @@ Required Development Tools
 -  To be able to access the development version of |es|, you will need
    the distributed versioning control system git_.
 
--  To build the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue:
+-  To build the sphinx documentation, you will need the Python packages listed in :file:`requirements.txt` in the top-level source directory. To install them, issue:
 
    .. code-block:: bash
 
@@ -73,11 +73,11 @@ The build system of |es| is based on CMake.
 
 The central source files of the build system are the following:
 
--  ``CMakeList.txt``
+-  :file:`CMakeList.txt`
 
--  Contents of the ``cmake`` directory
+-  Contents of the :file:`cmake` directory
 
--  The CMakeList.txt files in the ``src/``, ``doc/``, and ``testsuite/`` directories and their sub-directories
+-  The CMakeList.txt files in the :file:`src/`, :file:`doc/`, and :file:`testsuite/` directories and their sub-directories
 
 The most common reasons for editing these files are:
 -  Adding new source files
@@ -87,10 +87,10 @@ Adding New Source Files
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 To add new files to |es| (like C++ source files or header files) you
-need to look at the CMakeList.txt in the directory where the file is located.
+need to look at the :file:`CMakeLists.txt` in the directory where the file is located.
 
-* Please note that .hpp-header files usually do not have to be added to CMakeList.txt
-* In some cases (e.g., src/core/CMakeList.txt), the CMakeList.txt contains a wild-card include like this:
+* Please note that .hpp-header files usually do not have to be added to :file:`CMakeLists.txt`
+* In some cases (e.g., :file:`src/core/CMakeLists.txt`), the :file:`CMakeLists.txt` contains a wild-card include like this:
 
   .. code-block:: cmake
 
@@ -98,14 +98,14 @@ need to look at the CMakeList.txt in the directory where the file is located.
 
   In this case, placing a file with that ending is enough.
 
-* In other cases, the files are explicitly included (e.g., testsuite/python/CMakeList):
+* In other cases, the files are explicitly included (e.g., :file:`testsuite/CMakeLists.txt`):
 
   .. code-block:: cmake
 
       set(py_tests  bondedInteractions.py
-                   cellsystem.py
-                   constraint_shape_based.py
-                   coulomb_cloud_wall.py)
+                    cellsystem.py
+                    constraint_shape_based.py
+                    coulomb_cloud_wall.py)
 
   In that case, add the new file to the list.
 
@@ -116,8 +116,8 @@ Testsuite
    This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behavior is guaranteed to work.
 -  There are two kinds of tests:
 
-  -  C++-unit tests, testing individual C++ functions and classes. They make use of the boost unit test framework and reside in ``src/core/unit_tests``
-  -  Python integration tests, testing the Python interface and (physical) results of features. They reside in ``testsuite/python``
+  -  C++-unit tests, testing individual C++ functions and classes. They make use of the boost unit test framework and reside in :file:`src/core/unit_tests`
+  -  Python integration tests, testing the Python interface and (physical) results of features. They reside in :file:`python`
 
 - To execute the tests, run:
 
@@ -135,9 +135,9 @@ Documentation
 
 The documentation of |es| consists of four parts:
 
-  -  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
+  -  The users' guide and developers' guide are located in :file:`doc/sphinx`, and make use of the Sphinx Python package
   -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We make use of the napoleon extension and use the NumPy documentation style.
-  -  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/src/core`` and its sub-directories and makes use of Doxygen.
+  -  In-code documentation of the C++ core is located in the .cpp and .hpp files in :file:`/src/core` and its sub-directories and makes use of Doxygen.
 
 Doxygen Code Documentation
 --------------------------
@@ -236,7 +236,7 @@ Espresso uses two communication models, namely master-slave and synchronous.
 
 * When an integration is started in Python on the head node, a command to start the integration is sent to all nodes, in the master-slave framework described above.
   Then, Espresso switches into the synchronous mode, in which all nodes run the same code in the integration loop at the same time.
-  The code of the main integration loop is in integrate.cpp:integrate_vv().
+  The code of the main integration loop is in ``integrate.cpp:integrate_vv()``.
   When writing code which is run during the main integration loop, no commands making use of the master-slave mechanism can be called.
   When code during the integration loop executes MPI communication, it has to be ensured, that the MPI call is executed on all nodes
   involved in the communication. If this is not done, a deadlock will result.
@@ -264,7 +264,7 @@ Using an instance of MpiCallback
       Communication::mpiCallbacks().add(my_callback);
     }
 
-  You can, e.g., call your registration from initialize.cpp:on_program_start()
+  You can, e.g., call your registration from ``initialize.cpp:on_program_start()``
   Instead of a static function, from which a ``std::function<void(int,int)>`` can be constructed can
   be used. For example:
 
@@ -290,8 +290,8 @@ Using an instance of MpiCallback
 Legacy callbacks
 ~~~~~~~~~~~~~~~~
 
-Older code uses callbacks defined in the CALLBACK_LIST preprocessor macro in communications.cpp. They are called via mpi_call().
-See communications.cpp:mpi_place_particle() for an example.
+Older code uses callbacks defined in the ``CALLBACK_LIST`` preprocessor macro in :file:`communications.cpp`. They are called via ``mpi_call()``.
+See ``communications.cpp:mpi_place_particle()`` for an example.
 
 Adding New Bonded Interactions
 ------------------------------
@@ -313,7 +313,7 @@ To add a new bonded interaction, the following steps have to be taken
 Defining the data structure for the interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The data structures for bonded interactions reside in ``interaction_data.hpp``.
+The data structures for bonded interactions reside in :file:`interaction_data.hpp`.
 
 * Add your interaction to the ``enum BondedInteraction``.
   This enumeration is used to identify different bonded interactions.
@@ -337,22 +337,22 @@ Functions for calculating force and energy, and for setting parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Every interaction resides in its own source .cpp and .hpp. A simple example for a
-bonded interaction is the FENE bond in ``src/core/fene.cpp``` and ``src/core/fene.hpp``.
+bonded interaction is the FENE bond in :file:`src/core/fene.cpp` and :file:`src/core/fene.hpp`.
 Use these two files as templates for your interaction.
 
 Notes:
 
-* The names of function arguments mentioned below are taken from the FENE bond in ``src/core/fene.cpp`` and ``src/core/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction.
+* The names of function arguments mentioned below are taken from the FENE bond in :file:`src/core/fene.cpp` and :file:`src/core/fene.hpp`. It is recommended to use the same names for the corresponding functions for your interaction.
 * The recommended signatures of the force and energy functions are:
 
   .. code-block:: c++
 
     inline int calc_fene_pair_force(Particle *p1, Particle *p2,
-                                Bonded_ia_parameters *iaparams,
-                                double dx[3], double force[3])
+                                    Bonded_ia_parameters *iaparams,
+                                    double dx[3], double force[3])
     inline int fene_pair_energy(Particle *p1, Particle *p2,
-                            Bonded_ia_parameters *iaparams,
-                            double dx[3], double *_energy)
+                                Bonded_ia_parameters *iaparams,
+                                double dx[3], double *_energy)
 
   Here, ``fene`` needs to be replaced by the name of the new interaction.
 * The setter function gets a ``bond_type`` which is a numerical id identifying the number of the bond type in the simulation. It DOES NOT determine the type of the bond potential (harmonic vs FENE).
@@ -363,17 +363,17 @@ Notes:
     fene_set_params(int bond_type, double k, double drmax, double r0)
 
   A return value of ``ES_OK`` is returned on success, ``ES_ERR`` on error, e.g., when parameters are invalid.
-* The setter function must call make_bond_type_exists() with that bond type, to allocate the memory for storing the parameters.
-* Afterwards, the bond parameters can be stored in the global variable bonded_ia_params[bond_type]
+* The setter function must call ``make_bond_type_exists()`` with that bond type, to allocate the memory for storing the parameters.
+* Afterwards, the bond parameters can be stored in the global variable ``bonded_ia_params[bond_type]``
 
-  * bonded_ia_params[bond_type].num is the number of particles involved in the bond -1. I.e., 1 for a pairwise bonded potential such as the FENE bond.
-  * The parameters for the individual bonded interaction go to the member of Bond_parameters for your interaction defined in the previous step. For the FENE bond, this would be:
+  * ``bonded_ia_params[bond_type].num`` is the number of particles involved in the bond -1. I.e., 1 for a pairwise bonded potential such as the FENE bond.
+  * The parameters for the individual bonded interaction go to the member of ``Bond_parameters`` for your interaction defined in the previous step. For the FENE bond, this would be:
 
     .. code-block:: c++
 
       bonded_ia_params[bond_tpe].p.fene
 
-* At the end of the parameter setter function, do not forget the call to mpi_bcast_ia_params(), which will sync the parameters just set to other compute nodes in a parallel simulation.
+* At the end of the parameter setter function, do not forget the call to ``mpi_bcast_ia_params()``, which will sync the parameters just set to other compute nodes in a parallel simulation.
 * The routines for calculating force and energy return an integer. A return value of 0 means OK, a value of 1 means that the particles are too far apart and the bond is broken. This will stop the integration with a runtime error.
 * The functions for calculating force and energy can make use of a pre-calculated distance vector (dx) pointing from particle 2 to particle 1.
 * The force on particle 1 has to be stored in the force vector  (not added to it). The force on particle 2 will be obtained from Newton's law.
@@ -384,7 +384,7 @@ Notes:
 Including the bonded interaction in the force calculation and the energy and pressure analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* In ``src/core/interaction_data.cpp``:
+* In :file:`src/core/interaction_data.cpp`:
 
     #. Add a name for the interaction to ``get_name_of_bonded_ia()``.
     #. In ``calc_maximal_cutoff()``, add a case for the new interaction which
@@ -403,7 +403,7 @@ Including the bonded interaction in the force calculation and the energy and pre
        calculated.
     #. Do not forget to include the header file of your interaction.
 
-* Force calculation: in ``forces_inline.hpp`` in the function
+* Force calculation: in :file:`forces_inline.hpp` in the function
   ``add_bonded_force()``, add your bond to the switch statement. For the FENE
   bond, e.g., the code looks like this:
 
@@ -412,10 +412,10 @@ Including the bonded interaction in the force calculation and the energy and pre
     case BONDED_IA_FENE:
       bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
 
-* Energy calculation: add similar code to ``add_bonded_energy()`` in ``energy_inline.hpp``
+* Energy calculation: add similar code to ``add_bonded_energy()`` in :file:`energy_inline.hpp`
 * Pressure, stress tensor and virial calculation: If your bonded interaction is
   a pair bond and does not modify the particles involved, add similar code as
-  above to pressure.hpp:calc_bonded_pair_force(). Otherwise, you have to
+  above to ``pressure.hpp:calc_bonded_pair_force()``. Otherwise, you have to
   implement a custom solution for virial calculation.
 
 
@@ -423,7 +423,7 @@ Adding the bonded interaction in the Python interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Please note that the following is Cython code (www.cython.org), rather than pure Python.
-* In ``src/python/espressomd/interactions.pxd``:
+* In :file:`src/python/espressomd/interactions.pxd`:
 
   * import the parameter data structure from the C++ header file for your interaction. For the FENE bond, this looks like:
 
@@ -465,7 +465,7 @@ Please note that the following is Cython code (www.cython.org), rather than pure
         cdef extern from "fene.hpp":
             int fene_set_params(int bond_type, double k, double drmax, double r0)
 
-* In ``src/python/espressomd/interactions.pyx``:
+* In :file:`src/python/espressomd/interactions.pyx`:
 
   * Implement the Cython class for the bonded interaction, using the one for
     the FENE bond as template. Please use pep8 naming convention:
@@ -516,7 +516,7 @@ Please note that the following is Cython code (www.cython.org), rather than pure
                 fene_set_params(
                     self._bond_id, self._params["k"], self._params["d_r_max"], self._params["r_0"])
 
-* In ``testsuite/python/bondedInteractions.py``:
+* In :file:`testsuite/python/bondedInteractions.py`:
 
   * Add a test case, which verifies that parameters set and gotten from the interaction are consistent::
 

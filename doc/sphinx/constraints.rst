@@ -179,7 +179,7 @@ The following shapes can be used as constraints.
 
 
 :class:`espressomd.shapes.Wall`
-    An infinite plane`.
+    An infinite plane.
 
 The resulting surface is a plane defined by the normal vector ``normal``
 and the distance ``dist`` from the origin (in the direction of the normal vector).
@@ -198,13 +198,13 @@ Pictured is an example constraint with a ``Wall`` shape created with ::
     wall = Wall(dist=20, normal=[0.1, 0.0, 1])
     system.constraints.add(shape=wall, particle_type=0)
 
-In variant (1) if the only_positive flag is set to 1, interactions are only calculated if
+In variant (1) if the ``only_positive`` flag is set to 1, interactions are only calculated if
 the particle is on the side of the wall in which the normal vector is
 pointing.
 This has only an effect for penetrable walls. If the flag is
 set to 1, then slip boundary interactions apply that are essential for
 microchannel flows like the Plane Poiseuille or Plane Couette Flow.
-You also need to use the tunable\_slip interaction (see [sec:tunableSlip])
+You also need to use the tunable_slip interaction (see [sec:tunableSlip])
 for this too work.
 
 
@@ -382,10 +382,12 @@ Pictured is an example constraint with a ``Stomatocyte`` shape (with a closeup o
    Channel-like surface
 
 The resulting surface is T-shape channel that extends in the z-direction.
-The cross sectional geometry is depicted in Fig.[fig:slitpore].
+The cross sectional geometry is depicted in Fig. :ref:`schematic <figure-slitpore>`.
 It is translationally invariant in y direction.
 
 The region is described as a pore (lower vertical part of the "T"-shape) and a channel (upper horizontal part of the "T"-shape).
+
+.. _figure-slitpore:
 
 .. figure:: figures/slitpore.pdf
    :alt: Schematic for the slitpore shape showing geometrical parameters
@@ -398,7 +400,7 @@ The parameter ``pore_width`` specifies the distance between the two plateau edge
 The parameter ``pore_mouth`` specifies the location (z-coordinate) of the pore opening (center). It is always centered in the x-direction.
 
 All the edges  are smoothed via the parameters ``upper_smoothing_radius`` (for the concave corner at the edge of the plateau region) and ``lower_smoothing_radius`` (for the convex corner at the bottom of the pore region).
-The meaning of the geometrical parameters can be inferred from the schematic in fig. [fig:slitpore].
+The meaning of the geometrical parameters can be inferred from the schematic in Fig. :ref:`slitpore <figure-slitpore>`.
 
 
 .. figure:: figures/shape-slitpore.png
@@ -478,7 +480,7 @@ Pictured is an example constraint with a ``Hollowcone`` shape created with ::
 
 For the shapes ``wall``; ``sphere``; ``cylinder``; ``rhomboid``; ``maze``; ``pore`` and ``stomatocyte``, constraints are able to be penetrated if ``penetrable`` is set to ``True``.
 Otherwise, when the ``penetrable`` option is
-ignored or is set to `False`, the constraint cannot be violated, i.e. no
+ignored or is set to ``False``, the constraint cannot be violated, i.e. no
 particle can go through the constraint surface (|es| will exit if it does).
 
 
@@ -568,7 +570,7 @@ as Lattice-Boltzmann boundary`.
 Creating a harmonic trap
 ------------------------
 
-:todo: `This feature is not yet implemented .`
+:todo: `This feature is not yet implemented.`
 
 Calculates a spring force for all particles, where the equilibrium
 position of the spring is at and its force constant is . A more
@@ -599,7 +601,7 @@ of the position.  The available fields are
 a detailed description can be found in the class documentation.
 
 please be aware of the fact that a constant per particle force can be
-set via the `ext_force` property of the particles and is not provided
+set via the ``ext_force`` property of the particles and is not provided
 here.
 
 

@@ -16,7 +16,7 @@ geometries and boundary conditions are somewhat limited in comparison to
 Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
-.. note:: Please cite :cite:`espresso2` (Bibtex key espresso2 in doc/sphinx/zref.bib) if you use the LB fluid and :cite:`lbgpu` (Bibtex key lbgpu in doc/sphinx/zref.bib) if you use the GPU implementation.
+.. note:: Please cite :cite:`espresso2` (Bibtex key espresso2 in :file:`doc/sphinx/zref.bib`) if you use the LB fluid and :cite:`lbgpu` (Bibtex key lbgpu in :file:`doc/sphinx/zref.bib`) if you use the GPU implementation.
 
 .. _Setting up a LB fluid:
 
@@ -38,7 +38,7 @@ To use the GPU accelerated variant, replace line 5 in the example above by::
 
     lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
 
-.. note:: `Feature LB or LB_GPU required`
+.. note:: Feature ``LB`` or ``LB_GPU`` required
 
 To use the (much faster) GPU implementation of the LBM, use
 :class:`espressomd.lb.LBFluidGPU` in place of :class:`espressomd.lb.LBFluid`.
@@ -142,7 +142,7 @@ The LB fluid can be used to thermalize particles, while also including their hyd
 
     sys.thermostat.set_lb(kT)
 
-The LBM implementation in |es| uses Ahlrichs and Dünweg’s point coupling
+The LBM implementation in |es| uses Ahlrichs and Dünweg's point coupling
 method to couple MD particles the LB fluid. This coupling consists of a
 frictional and a random force, similar to the :ref:`Langevin thermostat`:
 
@@ -152,7 +152,7 @@ The momentum acquired by the particles is then transferred back to the
 fluid using a linear interpolation scheme, to preserve total momentum.
 In the GPU implementation the force can alternatively be interpolated
 using a three point scheme which couples the particles to the nearest 27
-LB nodes. This can be called using “lbfluid 3pt” and is described in
+LB nodes. This can be called using "lbfluid 3pt" and is described in
 Dünweg and Ladd by equation 301 :cite:`duenweg08a`.
 .. Note that the three point coupling scheme is incompatible with the Shan Chen Lattice Boltzmann.
 The frictional force tends to decrease the relative
@@ -200,7 +200,7 @@ The first line prints the fluid velocity at node 0 0 0 to the screen. The second
 Removing total fluid momentum
 -----------------------------
 
-.. note:: Only available for LB_GPU and SHANCHEN
+.. note:: Only available for ``LB_GPU`` and ``SHANCHEN``
 
 Some simulations require the net momentum of the system to vanish. Even if the physics of the system fulfills this condition, numerical errors can introduce drift. Simulations that frequently suffer from this effect are for example free energy profile calculations using ``SHANCHEN``, where it might be useful to prevent interface motion, or electrophoretic mobility calculations for mobile objects. Removing the total momentum of the fluid can be achieved using::
 
@@ -211,7 +211,7 @@ Some simulations require the net momentum of the system to vanish. Even if the p
 Output for visualization
 ------------------------
 
-|es| implements a number of commands to output fluid field data of the whole fluid into a file at once.::
+|es| implements a number of commands to output fluid field data of the whole fluid into a file at once. ::
 
     lb.print_vtk_velocity(path)
     lb.print_vtk_boundary(path)
@@ -251,7 +251,7 @@ size is 10 in the :math:`x`- and :math:`y`-direction).
 Choosing between the GPU and CPU implementations
 ------------------------------------------------
 
-.. note:: Feature LB_GPU required
+.. note:: Feature ``LB_GPU`` required
 
 Espresso contains an implementation of the LBM for NVIDIA
 GPUs using the CUDA framework. On CUDA-supporting machines this can be
@@ -280,7 +280,7 @@ Electrohydrodynamics
 --------------------
 
         .. note::
-           This needs the feature LB_ELECTROHYDRODYNAMICS.
+           This needs the feature ``LB_ELECTROHYDRODYNAMICS``.
 
 If the feature is activated, the Lattice Boltzmann Code can be
 used to implicitly model surrounding salt ions in an external electric
@@ -301,7 +301,7 @@ Using shapes as Lattice-Boltzmann boundary
 ------------------------------------------
 
 .. note::
-    `Feature LB_BOUNDARIES required`
+    Feature ``LB_BOUNDARIES`` required
 
 Lattice-Boltzmann boundaries are implemented in the module
 :mod:`espressomd.lbboundaries`. You might want to take a look
@@ -325,7 +325,7 @@ or::
 Minimal usage example
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. note:: Feature LB_BOUNDARIES or LB_BOUNDARIES_GPU required
+.. note:: Feature ``LB_BOUNDARIES`` or ``LB_BOUNDARIES_GPU`` required
 
 In order to add a wall as boundary for a Lattice-Boltzmann fluid
 you could do the following::
@@ -385,7 +385,7 @@ Intersecting boundaries are in principle possible but must be treated
 with care. In the current implementation, all nodes that are
 within at least one boundary are treated as boundary nodes.
 
-Currently, only the so called “link-bounce-back” algorithm for wall
+Currently, only the so called "link-bounce-back" algorithm for wall
 nodes is available. This creates a boundary that is located
 approximately midway between the lattice nodes, so in the above example ``wall[0]``
 corresponds to a boundary at :math:`x=1.5`. Note that the
@@ -492,7 +492,7 @@ straightforward. The ``LBBoundary`` object furthermore possesses a property ``fo
     .. note:: The Shan-Chen LB currently does not possess a Python interface.
 
     The coupling of particle dynamics to the Shan-Chen fluid has been
-    conceived as an extension of the Ahlrichs and Dünweg’s point coupling,
+    conceived as an extension of the Ahlrichs and Dünweg's point coupling,
     with the force acting on a particle given by
 
     .. math:: \vec{F} = -\frac{\sum_\zeta \gamma_\zeta \rho_\zeta(\vec{r})}{\sum_\zeta \rho_\zeta(\vec{r}_\zeta)} \left(\vec{v}-\vec{u}\right) + \vec{F}_R + \vec{F}^{ps},

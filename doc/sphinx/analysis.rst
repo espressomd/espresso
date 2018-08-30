@@ -37,7 +37,7 @@ The direct analysis commands can be classified into two types:
     - :ref:`Stress Tensor`
     - :ref:`Local Stress Tensor`
 
-- Analysis on stored configurations, added by :meth:`espressomd.analyze.append()`:
+- Analysis on stored configurations, added by :meth:`espressomd.analyze.append`:
     - :ref:`Radial distribution function` with ``rdf_type='<rdf>'``
     - :ref:`Chains`
 
@@ -48,7 +48,7 @@ Energies
 :meth:`espressomd.analyze.Analysis.energy`
 
 Returns the energies of the system.
-The different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, Coulomb))
+The different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, Coulomb).
 
 For example, ::
 
@@ -81,10 +81,10 @@ Returns the minimal distance between all particles in the system.
 When used with type-lists as arguments, then the minimal distance between particles of only those types is determined.
 
 
-:meth:`espressomd.analyze.Analysis.dist_to()`
+:meth:`espressomd.analyze.Analysis.dist_to`
 
-Returns the minimal distance of all particles to either a particle (when used with an argument `id`)
-or a position coordinate when used with a vector `pos`.
+Returns the minimal distance of all particles to either a particle (when used with an argument ``id``)
+or a position coordinate when used with a vector ``pos``.
 
 For example, ::
 
@@ -196,9 +196,9 @@ Cylindrical Average
 
 Calculates the particle distribution using cylindrical binning.
 
-The volume considered is inside a cylinder defined by the parameters `center`, `axis`, `length` and  `radius`.
+The volume considered is inside a cylinder defined by the parameters ``center``, ``axis``, ``length`` and  ``radius``.
 
-The geometrical details of the cylindrical binning is defined using ` bins_axial` and `bins_radial` which are the number bins in the axial and radial directions (respectively).
+The geometrical details of the cylindrical binning is defined using ``bins_axial`` and ``bins_radial`` which are the number bins in the axial and radial directions (respectively).
 See figure :ref:`cylindrical_average` for a visual representation of the binning geometry.
 
 .. _cylindrical_average:
@@ -233,8 +233,8 @@ index_radial     index_axial   pos_radial   pos_axial   binvolume  density  v_ra
 =============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
 
 As one can see the columns `density`, `v_radial` and `v_axial` appear twice.
-The order of appearance corresponds to the order of the types in the argument `types`.
-For example if was set to `types=[0, 1]` then the first triple is associated to type 0 and
+The order of appearance corresponds to the order of the types in the argument ``types``.
+For example if was set to ``types=[0, 1]`` then the first triple is associated to type 0 and
 the second triple to type 1.
 
 ..
@@ -251,9 +251,9 @@ the second triple to type 1.
 	:math:`V \times \kappa_T = \beta \left(\langle V^2\rangle - \langle V \rangle^2\right)`
 	:cite:`kolb99a`. Given no arguments this function calculates
 	and returns the current value of the running average for the volume
-	fluctuations.The `mode=reset` argument clears the currently stored values. With `mode=read` the
+	fluctuations. The ``mode=reset`` argument clears the currently stored values. With ``mode=read`` the
 	cumulative mean volume, cumulative mean squared volume and how many
-	samples were used can be retrieved. Likewise the option `mode=set` enables you to
+	samples were used can be retrieved. Likewise the option ``mode=set`` enables you to
 	set those.
 
 
@@ -264,8 +264,8 @@ Radial distribution function
 :meth:`espressomd.analyze.Analysis.rdf`
 
 Calculates a radial distribution function for given particle type and binning.
-The `rdf_type` defines if the analysis is performed on the current configuration (`rdf_type='rdf'`)
-or on averaged configurations stored with `analyze.append()` (`rdf_type='<rdf>'`).
+The ``rdf_type`` defines if the analysis is performed on the current configuration (``rdf_type='rdf'``)
+or on averaged configurations stored with ``analyze.append()`` (``rdf_type='<rdf>'``).
 
 For example, ::
 
@@ -331,7 +331,7 @@ Center of mass
 ~~~~~~~~~~~~~~
 :meth:`espressomd.analyze.Analysis.center_of_mass`
 
-Returns the center of mass of particles of the given type given by `part_type`.
+Returns the center of mass of particles of the given type given by ``part_type``.
 
 
 .. _Moment of inertia matrix:
@@ -467,7 +467,7 @@ Stress Tensor
 :meth:`espressomd.analyze.Analysis.stress_tensor`
 
 Computes the volume averaged instantaneous stress tensor of the system with options which are
-described by in :meth: espressomd.System.analysis.stress_tensor. It is called a stress tensor but the sign convention follows that of a pressure tensor.
+described by in :meth:`espressomd.System.analysis.stress_tensor`. It is called a stress tensor but the sign convention follows that of a pressure tensor.
 In general do only use it for (on average) homogeneous systems. For inhomogeneous systems you need to use the local stress tensor.
 
 The instantaneous virial stress tensor is calculated by
@@ -644,7 +644,7 @@ Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give n
 	want to look only at specific chains, use the optional arguments,
 	:math:`\var{chain\_start} =
 	2*\var{MPC}` and :math:`\var{n\_chains} = 1` to only include the third
-	chain’s monomers. If is used, the value will be averaged over all stored
+	chain's monomers. If is used, the value will be averaged over all stored
 	configurations (see section ). This function assumes linear chain
 	topology and does not check if the bonds really exist!
 
@@ -842,7 +842,7 @@ respective autocorrelation times. The correlator provides the same
 functionality as a by-product of computing the correlation function.
 
 An example of the usage of observables and correlations is provided in
-the script ``samples/observables_correlators.py``.
+the script :file:`samples/observables_correlators.py`.
 
 .. _Creating a correlation:
 
@@ -858,11 +858,11 @@ integration by adding them to :attr:`espressomd.system.System.auto_update_accumu
 
     system.auto_update_accumulators.add(corr)
 
-Alternatively, an update can triggered by calling the update()-method of the correlator instance. In that case, one has to make sure to call the update in the correct time intervals.
+Alternatively, an update can triggered by calling the ``update()`` method of the correlator instance. In that case, one has to make sure to call the update in the correct time intervals.
 
 
-The current on-the-fly correlation result can of a correlator can be obtained using its result()-method.
-The final result (including the latest data in the buffers) is obtained using the finalize()-method. After this, no further update of the correlator is possible.
+The current on-the-fly correlation result can of a correlator can be obtained using its ``result()`` method.
+The final result (including the latest data in the buffers) is obtained using the ``finalize()`` method. After this, no further update of the correlator is possible.
 
 .. _Example\: Calculating a particle's diffusion coefficient:
 
@@ -881,7 +881,7 @@ To obtain the velocity auto-correlation function of particle 0, use::
     c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
                        corr_operation="scalar_product", compress1="discard1")
 
-The full example can be found in ``samples/diffusion_coefficient.py``.
+The full example can be found in :file:`samples/diffusion_coefficient.py`.
 
 
 .. _Details of the multiple tau correlation algorithm:

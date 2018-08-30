@@ -102,7 +102,7 @@ in affecting the velocity of the system. ::
 
 This command halts all particles in the current simulation, setting
 their velocities to zero, as well as their angular momentum if the
-option ``rotation`` is specified and the feature ROTATION has been
+option ``rotation`` is specified and the feature ``ROTATION`` has been
 compiled in.
 
 * Forces and torques acting on the particles
@@ -111,9 +111,9 @@ compiled in.
 
     gt.kill_particle_forces()
 
-This command sets all forces on the particles to zero, as well as all
-torques if the option ``torque`` is specified and the feature ROTATION
-has been compiled in.
+  This command sets all forces on the particles to zero, as well as all
+  torques if the option ``torque`` is specified and the feature ``ROTATION``
+  has been compiled in.
 
 * The center of mass of the system
 
@@ -121,8 +121,8 @@ has been compiled in.
 
     gt.system_CMS()
 
-Returns the center of mass of the whole system. It currently does not
-factor in the density fluctuations of the Lattice-Boltzmann fluid.
+  Returns the center of mass of the whole system. It currently does not
+  factor in the density fluctuations of the Lattice-Boltzmann fluid.
 
 * The center-of-mass velocity
 
@@ -130,7 +130,7 @@ factor in the density fluctuations of the Lattice-Boltzmann fluid.
 
     gt.system_CMS_velocity()
 
-Returns the velocity of the center of mass of the whole system.
+  Returns the velocity of the center of mass of the whole system.
 
 * The Galilei transform
 
@@ -138,10 +138,10 @@ Returns the velocity of the center of mass of the whole system.
 
     gt.galilei_transform()
 
-Subtracts the velocity of the center of mass of the whole system from
-every particle’s velocity, thereby performing a Galilei transform into
-the reference frame of the center of mass of the system. This
-transformation is useful for example in combination with the DPD
-thermostat, since there, a drift in the velocity of the whole system
-leads to an offset in the reported temperature.
+  Subtracts the velocity of the center of mass of the whole system from
+  every particle's velocity, thereby performing a Galilei transform into
+  the reference frame of the center of mass of the system. This
+  transformation is useful for example in combination with the DPD
+  thermostat, since there, a drift in the velocity of the whole system
+  leads to an offset in the reported temperature.
 

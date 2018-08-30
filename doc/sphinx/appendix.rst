@@ -191,7 +191,7 @@ The implementation of the near formula is relatively straight forward
 and can be treated as any short ranged force is treated using the link
 cell algorithm, here in the layered variant. The special functions in
 the formula are somewhat demanding, but for the polygamma functions
-Taylor series can be achieved, which are implemented in mmm-common.h.
+Taylor series can be achieved, which are implemented in :file:`mmm-common.h`.
 The Bessel functions are calculated using a Chebychev series.
 
 The treatment of the far formula is algorithmically more complicated.
@@ -419,13 +419,13 @@ distance :math:`n\lambda_z` from the central layer.
 However, in a naive implementation, even large gap sizes will result in
 large errors. This is due to the order of summation for the standard
 Ewald sum, which is spherical, while the above approach orders the cells
-in layers, called slab–wise summation. Smith has shown that by adding to
+in layers, called slab-wise summation. Smith has shown that by adding to
 the Ewald energy the term
 
 .. math:: E_c=2\pi M_z^2 - \frac{2\pi M^2}{3},
 
 where M is the total dipole moment, one obtains the result of a
-slab–wise summation instead of the spherical limit
+slab-wise summation instead of the spherical limit
 :cite:`smith81a`. Although this is a major change in the
 summation order, the difference is a very simple term. In fact, Smith
 shows that changes of the summation order always result in a difference
@@ -476,7 +476,7 @@ estimates is of little importance here, for details see
 One important aspect is that the error estimates are also exponential in
 the non-periodic coordinate. Since the number of close by and far away
 particles is different for particles near the border and in the center
-of the system, the error distribution is highly non–homogeneous. This is
+of the system, the error distribution is highly non-homogeneous. This is
 unproblematic as long as the maximal error is really much smaller than
 the thermal energy. However, one cannot interpret the error simply as an
 additional error source.
@@ -499,11 +499,11 @@ computationally cheap.
     -------------------------------------------
 
     In this chapter, we want to give a more thorough introduction to the
-    MEMD (or “Maggs”) algorithm for the calculation of Coulomb interactions
+    MEMD (or "Maggs") algorithm for the calculation of Coulomb interactions
     that is implemented in |es|. For an even more detailed description, we refer
     to the publications :cite:`maggs02a,pasichnyk04a`. The method is intimately
-    related to the Car–Parrinello approach, while being equivalent to solving
-    Maxwell’s equations with freely adjustable speed of light.
+    related to the Car--Parrinello approach, while being equivalent to solving
+    Maxwell's equations with freely adjustable speed of light.
 
     .. _Equations of motion:
 
@@ -568,7 +568,7 @@ computationally cheap.
 
     In the implementation of the algorithm we assume that particles with
     masses :math:`m_i` and charges :math:`q_i` live in the continuum
-    (off–lattice approach). The charges are interpolated on the lattice with
+    (off-lattice approach). The charges are interpolated on the lattice with
     grid spacing :math:`a` using a linear interpolation scheme.
 
     .. _Initialization of the algorithm:
@@ -580,7 +580,7 @@ computationally cheap.
     of the exact field solution. Therefore in order to start the simulation
     for the given random distribution of charges we have to calculate the
     initial electrostatic field, i.e. the exact solution of the
-    electrostatic problem. We find a particular solution of Gauss’ law as
+    electrostatic problem. We find a particular solution of Gauss' law as
     the result of the following recursive procedure (see
     Fig. [fig:maggs-initialization]):
 
@@ -616,9 +616,9 @@ computationally cheap.
     permutated to avoid a drift in one direction.
 
     .. figure:: figures/maggs-initial-scheme.pdf
-       :alt: Recursive solution of Gauss’ law
+       :alt: Recursive solution of Gauss' law
 
-       Recursive solution of Gauss’ law
+       Recursive solution of Gauss' law
 
     .. _Time integrator:
 
@@ -627,7 +627,7 @@ computationally cheap.
 
     For the time discretization we have adopted the elegant solution which
     was found by Rottler and Maggs :cite:`maggs02a` and allows
-    to conserve *both* time–reversibility and phase–space volume
+    to conserve *both* time-reversibility and phase-space volume
     conservation:
 
     #. Update the particle momenta by half a time step.
@@ -666,17 +666,17 @@ computationally cheap.
 
     #. Update the particle momenta by half a time step.
 
-    .. _Self–energy:
+    .. _Self-energy:
 
-    Self–energy
+    Self-energy
     ~~~~~~~~~~~
 
     The interpolation of the charges onto the lattice gives rise to the
     artificial force exerted on the particle by its own field. In order to
-    cure this remedy, the direct subtraction of the self–energy is
+    cure this remedy, the direct subtraction of the self-energy is
     introduced.
 
-    For the interpolated charge cloud the self–energy can be directly
+    For the interpolated charge cloud the self-energy can be directly
     calculated. For the simple cubic lattice in three dimensions the linear
     interpolation will give 8 charges which are placed at the corners of the
     cube with edge length :math:`a` (see Fig. [fig:charge-assignment]).

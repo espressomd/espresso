@@ -134,7 +134,7 @@ Deleting particles
 Particles can be easily deleted in Python using particle ids or ranges of particle ids.
 For example, to delete all particles with particle index greater than 10, run::
 
-    >>> system.part[10:].remove()
+    system.part[10:].remove()
 
 To delete all particles, use::
 
@@ -205,7 +205,7 @@ arguments.
 The distance between adjacent monomers
 during the course of the simulation depends on the applied potentials.
 For fixed bond length please refer to the Rattle Shake
-algorithm:raw-latex:`\cite{andersen83a}`. The algorithm is based on
+algorithm\ :cite:`andersen83a`. The algorithm is based on
 Verlet algorithm and satisfy internal constraints for molecular models
 with internal constraints, using Lagrange multipliers.
 
@@ -318,8 +318,8 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
     s.virtual_sites = VirtualSitesOff()
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
-The `have_velocity` parameter determines whether or not the velocity of virtual sites is calculated, which carries a performance cost.
-The `have_quaternion` parameter determines whether the quaternion of the virtual particle is updated (useful in combination with the
+The ``have_velocity`` parameter determines whether or not the velocity of virtual sites is calculated, which carries a performance cost.
+The ``have_quaternion`` parameter determines whether the quaternion of the virtual particle is updated (useful in combination with the
 :attr:`espressomd.particle_data.ParticleHandle.vs_quat` property of the virtual particle which defines the orientation of the virtual particle
 in the body fixed frame of the related real particle.
 
@@ -348,7 +348,7 @@ site is placed at a fixed distance from the non-virtual particle. When
 the non-virtual particle rotates, the virtual sites rotates on an orbit
 around the non-virtual particles center.
 
-To use this implementation of virtual sites, activate the feature VIRTUAL_SITES_RELATIVE. Furthermore, an instance of :class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the active virtual sites scheme (see above).
+To use this implementation of virtual sites, activate the feature ``VIRTUAL_SITES_RELATIVE``. Furthermore, an instance of :class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the active virtual sites scheme (see above).
 To set up a virtual site,
 
 #. Place the particle to which the virtual site should be related. It
@@ -375,8 +375,8 @@ Please note:
    from the non-virtual particle, the id of the non-virtual particle and
    a quaternion which defines the vector from non-virtual particle to
    virtual site in the non-virtual particles body-fixed frame. This
-   information is saved in the virtual site's`espressomd.particle_data.ParticleHandle.vs_relative` attribute.
-   Take care, not to overwrite it after using vs\_auto\_relate.
+   information is saved in the virtual site's `espressomd.particle_data.ParticleHandle.vs_relative` attribute.
+   Take care, not to overwrite it after using ``vs_auto_relate``.
 
 -  Virtual sites can not be placed relative to other virtual sites, as
    the order in which the positions of virtual sites are updated is not
@@ -426,7 +426,7 @@ Please note that the velocity attribute of the virtual particles does not carry 
 
     :todo: `This is not implemented in Python, yet`
 
-    To activate this implementation, enable the feature VIRTUAL_SITES_COM in myconfig.hpp. Virtual sites are then placed in the center of mass of
+    To activate this implementation, enable the feature ``VIRTUAL_SITES_COM`` in :file:`myconfig.hpp`. Virtual sites are then placed in the center of mass of
     a set of particles (as defined below). Their velocity will also be that
     of the center of mass. Forces accumulating on the virtual sites are
     distributed back to the particles which form the molecule. To place a
@@ -487,14 +487,14 @@ Please note that the velocity attribute of the virtual particles does not carry 
     ~~~~~~~~~~~~~~~~~~~
 
     The behavior of virtual sites can be fine-tuned with the following
-    switches in ``myconfig.hpp``.
+    switches in :file:`myconfig.hpp`.
 
-    - VIRTUAL_SITES_NO_VELOCITY specifies that the velocity of virtual sites is not computed
+    - ``VIRTUAL_SITES_NO_VELOCITY`` specifies that the velocity of virtual sites is not computed
 
-    - VIRTUAL_SITES_THERMOSTAT specifies that the Langevin thermostat should also act on virtual
+    - ``VIRTUAL_SITES_THERMOSTAT`` specifies that the Langevin thermostat should also act on virtual
        sites
 
-    - THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
+    - ``THERMOSTAT_IGNORE_NON_VIRTUAL`` specifies that the thermostat does not act on non-virtual particles
 
 .. _Particle number counting feature:
 
@@ -537,7 +537,7 @@ particles which have the given type. For counting the number of particles of a g
     ...
     number_of_particles = len(system.part.select(type=type))
 
-However calling select(type=type) results in looping over all particles. Therefore calling select() is slow compared to using :meth:`espressomd.system.System.number_of_particles` which directly can return the number of particles with that type.
+However calling ``select(type=type)`` results in looping over all particles. Therefore calling ``select()`` is slow compared to using :meth:`espressomd.system.System.number_of_particles` which directly can return the number of particles with that type.
 
 .. _Self-propelled swimmers:
 
@@ -612,8 +612,8 @@ flow. The torque on the particle is determined by taking the cross product of
 the difference between the fluid velocity at the center of the particle and at
 the source point and the vector connecting the center and source.
 
-You may ask: “Why are there two methods ``v_swim`` and ``f_swim`` for the
-self-propulsion using the lattice-Boltzmann algorithm?” The answer is
+You may ask: "Why are there two methods ``v_swim`` and ``f_swim`` for the
+self-propulsion using the lattice-Boltzmann algorithm?" The answer is
 straightforward. When a particle is accelerating, it has a monopolar flow-field
 contribution which vanishes when it reaches its terminal velocity (for which
 there will only be a dipolar flow field). The major difference between the
