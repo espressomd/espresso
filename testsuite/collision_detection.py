@@ -234,7 +234,7 @@ class CollisionDetection(ut.TestCase):
         self.run_test_bind_at_point_of_collision_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
 
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES","VIRTUAL_SITES"), "Skipping for lack of LJ potential")
+    @ut.skipIf(not espressomd.has_features("LENNARD_JONES", "VIRTUAL_SITES"), "Skipping for lack of LJ potential")
     def test_bind_at_point_of_collision_random(self):
         """Integrate lj liquid and check that no double bonds are formed
            and the number of bonds fits the number of virtual sites

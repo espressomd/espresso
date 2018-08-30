@@ -400,9 +400,7 @@ void cells_update_ghosts() {
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
 }
 
-
-Cell *find_current_cell(const Particle& p)
-{
+Cell *find_current_cell(const Particle &p) {
   auto c = cell_structure.position_to_cell(p.r.p.data());
   if (c) {
     return c;
