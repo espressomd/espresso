@@ -29,28 +29,11 @@ class AnalyzeDistance(ut.TestCase):
 
     @classmethod
     def setUpClass(self):
-        box_l = 50.0
-        self.system.box_l = [box_l, box_l, box_l]
-        self.system.cell_system.skin = 0.4
-        self.system.time_step = 0.01
-        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=1.0, sigma=1.0,
-            cutoff=2**(1. / 6.), shift="auto")
-        self.system.thermostat.set_langevin(kT=1., gamma=1.)
+        self.box_l = 50.0
+        self.system.box_l = [self.box_l, self.box_l, self.box_l]
         for i in range(100):
-            self.system.part.add(id=i, pos=np.random.random(3) * box_l)
-        self.system.force_cap = 10
-        i = 0
-        min_dist = self.system.analysis.min_dist()
-        while (i < 50 and min_dist < 0.9):
-            system.integrator.run(100)
-            min_dist = self.system.analysis.min_dist()
-            i += 1
-            lj_cap = lj_cap + 10
-            self.system.force_cap = lj_cap
-        self.system.force_cap = 0
-        self.system.integrator.run(1000)
-
+            self.system.part.add(id=i, pos=np.random.random(3) * self.box_l)
+    
     # python version of the espresso core function
     def min_dist(self):
         r = np.array(self.system.part[:].pos)
@@ -94,33 +77,33 @@ class AnalyzeDistance(ut.TestCase):
     def test_min_dist(self):
         # try five times
         for i in range(5):
+            self.system.part[:].pos=np.random.random((len(self.system.part),3))*self.box_l
             self.assertAlmostEqual(self.system.analysis.min_dist(),
                                    self.min_dist(),
                                    delta=1e-7)
-            self.system.integrator.run(100)
 
     def test_nbhood(self):
         # try five times
         for i in range(1, 10, 2):
+            self.system.part[:].pos=np.random.random((len(self.system.part),3))*self.box_l
             self.assertTrue(
                 np.allclose(self.system.analysis.nbhood([i, i, i], i * 2),
                             self.nbhood([i, i, i], i * 2)))
-            self.system.integrator.run(100)
 
     def test_dist_to_pos(self):
         # try five times
         for i in range(5):
+            self.system.part[:].pos=np.random.random((len(self.system.part),3))*self.box_l
             self.assertTrue(
                 np.allclose(self.system.analysis.dist_to(pos=[i, i, i]),
                             self.dist_to_pos([i, i, i])))
-            self.system.integrator.run(100)
 
     def test_dist_to_id(self):
         # try five times
         for i in range(5):
+            self.system.part[:].pos=np.random.random((len(self.system.part),3))*self.box_l
             self.assertAlmostEqual(self.system.analysis.dist_to(id=i),
                                    self.dist_to_id(i))
-            self.system.integrator.run(100)
 
 
 if __name__ == "__main__":
