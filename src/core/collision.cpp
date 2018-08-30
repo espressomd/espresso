@@ -598,7 +598,7 @@ void handle_collisions() {
       // ore one is ghost and one is not accessible
       // we only increase the counter for the ext id to use based on the
       // number of particles created by other nodes
-      if ((!p1 or p1->l.ghost) and (!p2 or p2->l.ghost) or !p1 or !p2) {
+      if (((!p1 or p1->l.ghost) and (!p2 or p2->l.ghost)) or !p1 or !p2) {
         // Increase local counters
         if (collision_params.mode & COLLISION_MODE_VS) {
           added_particle(current_vs_pid);
