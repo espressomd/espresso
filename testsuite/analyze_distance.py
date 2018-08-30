@@ -77,7 +77,8 @@ class AnalyzeDistance(ut.TestCase):
     def test_min_dist(self):
         # try five times
         for i in range(5):
-            self.system.part[:].pos=np.random.random((len(self.system.part),3))*self.box_l
+            self.system.part[:].pos = np.random.random(
+                (len(self.system.part), 3)) * self.box_l
             self.assertAlmostEqual(self.system.analysis.min_dist(),
                                    self.min_dist(),
                                    delta=1e-7)
@@ -85,7 +86,8 @@ class AnalyzeDistance(ut.TestCase):
     def test_nbhood(self):
         # try five times
         for i in range(1, 10, 2):
-            self.system.part[:].pos=np.random.random((len(self.system.part),3))*self.box_l
+            self.system.part[:].pos = np.random.random(
+                (len(self.system.part), 3)) * self.box_l
             self.assertTrue(
                 np.allclose(self.system.analysis.nbhood([i, i, i], i * 2),
                             self.nbhood([i, i, i], i * 2)))
@@ -93,7 +95,8 @@ class AnalyzeDistance(ut.TestCase):
     def test_dist_to_pos(self):
         # try five times
         for i in range(5):
-            self.system.part[:].pos=np.random.random((len(self.system.part),3))*self.box_l
+            self.system.part[:].pos = np.random.random(
+                (len(self.system.part), 3)) * self.box_l
             self.assertTrue(
                 np.allclose(self.system.analysis.dist_to(pos=[i, i, i]),
                             self.dist_to_pos([i, i, i])))
@@ -101,7 +104,8 @@ class AnalyzeDistance(ut.TestCase):
     def test_dist_to_id(self):
         # try five times
         for i in range(5):
-            self.system.part[:].pos=np.random.random((len(self.system.part),3))*self.box_l
+            self.system.part[:].pos = np.random.random(
+                (len(self.system.part), 3)) * self.box_l
             self.assertAlmostEqual(self.system.analysis.dist_to(id=i),
                                    self.dist_to_id(i))
 
