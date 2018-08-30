@@ -21,21 +21,62 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Vector.hpp"
 
-#include "pos_shift.hpp"
-
 #include <array>
 #include <cmath>
 #include <utility>
 
+#include "utils/type_traits.hpp"
+
 namespace Utils {
 namespace Interpolation {
 namespace detail {
+using Utils::enable_if_t;
 
 struct Block {
   /* Index of the lower left corner of the assignment cube */
   const std::array<int, 3> corner;
   /* Distance to the nearest mesh point in units of h \in [-0.5, 0.5) */
   const Vector3d distance;
+};
+
+template <size_t order, typename = void> struct ll_and_dist_;
+
+template <size_t order>
+struct ll_and_dist_<order, enable_if_t<(order % 2) == 1>> {
+  Block operator()(const Vector3d &pos, const Vector3d &grid_spacing,
+                   const Vector3d &offset) const {
+    Vector3d dist;
+    std::array<int, 3> ll;
+
+    for (int dim = 0; dim < 3; dim++) {
+      auto const fractional_index =
+          (pos[dim] - offset[dim]) / grid_spacing[dim];
+
+      const int nmp = std::floor(fractional_index + 0.5);
+      dist[dim] = fractional_index - nmp;
+      ll[dim] = nmp - (order - 1) / 2;
+    }
+    return {ll, dist};
+  }
+};
+
+template <size_t order>
+struct ll_and_dist_<order, enable_if_t<(order % 2) == 0>> {
+  Block operator()(const Vector3d &pos, const Vector3d &grid_spacing,
+                   const Vector3d &offset) const {
+    Vector3d dist;
+    std::array<int, 3> ll;
+
+    for (int dim = 0; dim < 3; dim++) {
+      auto const fractional_index =
+          (pos[dim] - offset[dim]) / grid_spacing[dim];
+
+      const int nmp = std::floor(fractional_index);
+      dist[dim] = fractional_index - nmp - 0.5;
+      ll[dim] = nmp - (order - 1) / 2;
+    }
+    return {ll, dist};
+  }
 };
 
 /**
@@ -45,18 +86,7 @@ struct Block {
 template <size_t order>
 Block ll_and_dist(const Vector3d &pos, const Vector3d &grid_spacing,
                   const Vector3d &offset) {
-  Vector3d dist;
-  std::array<int, 3> ll;
-
-  for (int dim = 0; dim < 3; dim++) {
-    const double nmp_pos = (pos[dim] - offset[dim]) / grid_spacing[dim] +
-                           detail::pos_shift<order>();
-    const int nmp_ind = static_cast<int>(nmp_pos);
-    dist[dim] = nmp_pos - nmp_ind - 0.5;
-    ll[dim] = nmp_ind - (order - 1) / 2;
-  }
-
-  return {ll, dist};
+  return ll_and_dist_<order>{}(pos, grid_spacing, offset);
 }
 } // namespace detail
 } // namespace Interpolation
