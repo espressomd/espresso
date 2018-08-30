@@ -20,8 +20,10 @@
 # Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
-import espressomd
 import numpy as np
+
+import espressomd
+import espressomd.electrostatics
 from espressomd import scafacos
 from tests_common import abspath
 

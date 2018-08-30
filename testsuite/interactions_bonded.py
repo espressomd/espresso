@@ -19,7 +19,7 @@
 from __future__ import print_function
 
 import unittest as ut
-import numpy
+import numpy as np
 
 import espressomd
 import tests_common
@@ -27,15 +27,15 @@ import tests_common
 
 class InteractionsBondedTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    numpy.random.seed(seed=system.seed)
+    np.random.seed(seed=system.seed)
 
     box_l = 10.
 
-    start_pos = numpy.random.rand(3) * box_l
-    axis = numpy.random.rand(3)
-    axis /= numpy.linalg.norm(axis)
+    start_pos = np.random.rand(3) * box_l
+    axis = np.random.rand(3)
+    axis /= np.linalg.norm(axis)
     step = axis * 0.01
-    step_width = numpy.linalg.norm(step)
+    step_width = np.linalg.norm(step)
 
     def setUp(self):
 

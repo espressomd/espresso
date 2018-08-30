@@ -108,7 +108,7 @@ class ek_eof_one_species_x(ut.TestCase):
         ek_wall1 = espressomd.ekboundaries.EKBoundary(
             charge_density=sigma /
             (padding),
-            shape=shapes.Wall(
+            shape=espressomd.shapes.Wall(
                 normal=[
                     0,
                     1,
@@ -116,7 +116,7 @@ class ek_eof_one_species_x(ut.TestCase):
                 dist=padding))
         system.ekboundaries.add(ek_wall1)
         ek_wall2 = espressomd.ekboundaries.EKBoundary(
-            charge_density=sigma / (padding), shape=shapes.Wall(normal=[0, -1, 0], dist=-(padding + width)))
+            charge_density=sigma / (padding), shape=espressomd.shapes.Wall(normal=[0, -1, 0], dist=-(padding + width)))
         system.ekboundaries.add(ek_wall2)
 
         system.actors.add(ek)

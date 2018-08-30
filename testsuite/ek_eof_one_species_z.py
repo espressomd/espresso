@@ -22,7 +22,7 @@ import numpy as np
 import espressomd
 import espressomd.electrokinetics
 import espressomd.shapes
-import ek_commoimport ek_commonn
+import ek_common
 
 ##########################################################################
 #                              Set up the System                               #
@@ -223,7 +223,7 @@ class ek_eof_one_species_x(ut.TestCase):
                     ek, position, xi, bjerrum_length, (1, 1), box_x, box_y, box_z, agrid)
                 measured_pressure_zz = ek[int(
                     box_x / (2 * agrid)), i, int(box_z / (2 * agrid))].pressure[(2, 2)]
-                calculated_pressure_zz = ek_commonek_common..hydrostatic_pressure(
+                calculated_pressure_zz = ek_common.hydrostatic_pressure(
                     ek, position, xi, bjerrum_length, (2, 2), box_x, box_y, box_z, agrid)
 
                 pressure_difference_xx = abs(

@@ -12,9 +12,8 @@ import espressomd.analyze
 import tests_common
 
 def stopAll(system):
-    for i in system.part:
-        i.v = np.array([0.0, 0.0, 0.0])
-        i.omega_body = np.array([0.0, 0.0, 0.0])
+    system.part[:].v = np.zeros(3)
+    system.part[:].omega_body = np.zeros(3)
 
 
 @ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT"]),
@@ -63,7 +62,7 @@ class BHGPUTest(ut.TestCase):
                 epsilon=10.0, sigma=0.5,
                 cutoff=0.55, shift="auto")
             self.system.thermostat.set_langevin(kT=0.0, gamma=10.0)
-            self.stopAll()
+            stopAll(self.system)
             self.system.integrator.set_vv()
 
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(

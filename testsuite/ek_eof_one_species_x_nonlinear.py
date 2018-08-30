@@ -34,7 +34,6 @@ import ek_common
 @ut.skipIf(not espressomd.has_features(["ELECTROKINETICS", "EK_BOUNDARIES"]),
            "Features not available, skipping test!")
 class ek_eof_one_species_x(ut.TestCase):
-
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
     es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
@@ -108,10 +107,10 @@ class ek_eof_one_species_x(ut.TestCase):
 # Set up the walls confining the fluid and carrying charge
 
         ek_wall1 = espressomd.ekboundaries.EKBoundary(
-            charge_density=sigma / (agrid * padding), shape=shapes.Wall(normal=[0, 0, 1], dist=padding))
+            charge_density=sigma / (agrid * padding), shape=espressomd.shapes.Wall(normal=[0, 0, 1], dist=padding))
         system.ekboundaries.add(ek_wall1)
         ek_wall2 = espressomd.ekboundaries.EKBoundary(charge_density=sigma / (
-            agrid * padding), shape=shapes.Wall(normal=[0, 0, -1], dist=-(padding + width)))
+            agrid * padding), shape=espressomd.shapes.Wall(normal=[0, 0, -1], dist=-(padding + width)))
         system.ekboundaries.add(ek_wall2)
 
         system.actors.add(ek)
