@@ -23,6 +23,7 @@ import espressomd
 import espressomd.electrokinetics
 import espressomd.shapes
 import ek_common
+from tests_common import DynamicDict
 
 ##########################################################################
 #                              Set up the System                               #
@@ -30,97 +31,74 @@ import ek_common
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field inside outside the slit
 
+params_x = DynamicDict([
+            ('box_x', 6.0),
+            ('box_y', 6.0),
+            ('width', 50.0),
+            ('padding', 6.0),
+            ('box_z', 'width + 2 * padding'),
+            ('agrid', 1.0),
+            ('dt', 1.0/7),
+            ('force', 0.13),
+            ('sigma', -0.05),
+            ('viscosity_kinematic', 2.3),
+            ('friction', 4.3),
+            ('temperature', 2.9),
+            ('bjerrum_length', 0.47),
+            ('integration_length', 30000),
+            ('density_water', 26.15),
+            ('density_counterions', '-2.0 * sigma / width'),
+            ('valency', 1.0),
+            ('ext_force_density', '[force, 0.0, 0.0]'),
+            ('wall_normal_1', [0, 0, 1]),
+            ('wall_normal_2', [0, 0, -1])])
 
 @ut.skipIf(not espressomd.has_features(["ELECTROKINETICS", "EK_BOUNDARIES"]),
            "Features not available, skipping test!")
 class ek_eof_one_species_x(ut.TestCase):
-    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     def test(self):
-        system = self.es
-
-        pi = math.pi
-        box_x = 6
-        box_y = 6
-        width = 50
-
-        padding = 6
-        box_z = width + 2 * padding
-
-# Set the electrokinetic parameters
-        agrid = 1.0
-        dt = 1.0 / 7.
-        force = 0.13
-        sigma = -0.05
-        viscosity_kinematic = 2.3
-        friction = 4.3
-        temperature = 2.9
-        bjerrum_length = 0.47
-
-        temperature_LB = agrid * agrid / (3.0 * dt * dt)
-        kB_LB = 1.0
-        cs_squared = (1.0 / 3.0) * (agrid * agrid / (dt * dt))
-
-        system.box_l = [box_x, box_y, box_z]
-
-
-# Set the simulation parameters
-
-        system.time_step = dt
+        system = self.system
+        system.box_l = [params_x['box_x'], params_x['box_y'], params_x['box_z']]
+        system.time_step = params_x['dt']
         system.cell_system.skin = 0.1
         system.thermostat.turn_off()
-        integration_length = 30000
 
-# Output density, velocity, and pressure tensor profiles
+        # Output density, velocity, and pressure tensor profiles
+        output_profiles = False
 
-        output_profiles = 1
-
-# Set up the charged and neutral species
-
-        density_water = 26.15
-        density_counterions = -2.0 * float(sigma) / float(width)
-        valency = 1.0
-
-# Set up the (LB) electrokinetics fluid
-
+        # Set up the (LB) electrokinetics fluid
         ek = espressomd.electrokinetics.Electrokinetics(
-            agrid=agrid,
-            lb_density=density_water,
-            viscosity=viscosity_kinematic,
-            friction=friction,
-            T=temperature,
-            prefactor=bjerrum_length * temperature,
+            agrid=params_x['agrid'],
+            lb_density=params_x['density_water'],
+            viscosity=params_x['viscosity_kinematic'],
+            friction=params_x['friction'],
+            T=params_x['temperature'],
+            prefactor=params_x['bjerrum_length'] * params_x['temperature'],
             stencil="linkcentered")
 
         counterions = espressomd.electrokinetics.Species(
-            density=density_counterions,
+            density=params_x['density_counterions'],
             D=0.3,
-            valency=valency,
-            ext_force_density=[
-                force,
-                0,
-                0])
+            valency=params_x['valency'],
+            ext_force_density=params_x['ext_force_density'])
         ek.add_species(counterions)
 
-
-# Set up the walls confining the fluid and carrying charge
-
+        # Set up the walls confining the fluid and carrying charge
         ek_wall1 = espressomd.ekboundaries.EKBoundary(
-            charge_density=sigma / (agrid * padding), shape=shapes.Wall(normal=[0, 0, 1], dist=padding))
+            charge_density=params_x['sigma'] / (params_x['agrid'] * params_x['padding']), shape=shapes.Wall(normal=params_x['wall_normal_1'], dist=params_x['padding']))
+        ek_wall2 = espressomd.ekboundaries.EKBoundary(charge_density=params_x['sigma'] / (
+            params_x['agrid'] * params_x['padding']), shape=shapes.Wall(normal=params_x['wall_normal_2'], dist=-(params_x['padding'] + params_x['width'])))
         system.ekboundaries.add(ek_wall1)
-        ek_wall2 = espressomd.ekboundaries.EKBoundary(charge_density=sigma / (
-            agrid * padding), shape=shapes.Wall(normal=[0, 0, -1], dist=-(padding + width)))
         system.ekboundaries.add(ek_wall2)
-
         system.actors.add(ek)
 
-# Integrate the system
+        # Integrate the system
+        system.integrator.run(params_x['integration_length'])
 
-        system.integrator.run(integration_length)
-
-# compare the various quantities to the analytic results
-
+        # compare the various quantities to the analytic results
         total_velocity_difference = 0.0
         total_density_difference = 0.0
         total_pressure_difference_xx = 0.0
@@ -130,21 +108,18 @@ class ek_eof_one_species_x(ut.TestCase):
         total_pressure_difference_yz = 0.0
         total_pressure_difference_xz = 0.0
 
-# initial parameters for bisection scheme
-        size = pi / (2.0 * width)
-
+        # initial parameters for bisection scheme
+        size = math.pi / (2.0 * params_x['width'])
         pnt0 = 0.0
         pntm = pnt0 + size
         pnt1 = pnt0 + 1.9 * size
 
-# the bisection scheme
-
+        # the bisection scheme
         tol = 1.0e-08
         while (size > tol):
-
-            val0 = ek_common.solve(pnt0, width, bjerrum_length, sigma, valency)
-            val1 = ek_common.solve(pnt1, width, bjerrum_length, sigma, valency)
-            valm = ek_common.solve(pntm, width, bjerrum_length, sigma, valency)
+            val0 = ek_common.solve(pnt0, params_x['width'], params_x['bjerrum_length'], params_x['sigma'], params_x['valency'])
+            val1 = ek_common.solve(pnt1, params_x['width'], params_x['bjerrum_length'], params_x['sigma'], params_x['valency'])
+            valm = ek_common.solve(pntm, params_x['width'], params_x['bjerrum_length'], params_x['sigma'], params_x['valency'])
 
             if (val0 < 0.0 and val1 > 0.0):
                 if (valm < 0.0):
@@ -168,57 +143,54 @@ class ek_eof_one_species_x(ut.TestCase):
                 sys.exit(
                     "Bisection method fails:\nTuning of domain boundaries may be required.")
 
-# obtain the desired xi value
-
+        # obtain the desired xi value
         xi = pntm
 
-        if (output_profiles):
+        if output_profiles:
             fp = open("ek_eof_profile.dat", "w")
 
-        for i in range(int(box_z / agrid)):
+        for i in range(int(params_x['box_z'] / params_x['agrid'])):
+            if (i * params_x['agrid'] >= params_x['padding'] and i * params_x['agrid'] < params_x['box_z'] - params_x['padding']):
+                xvalue = i * params_x['agrid'] - params_x['padding']
+                position = i * params_x['agrid'] - params_x['padding'] - params_x['width'] / 2.0 + params_x['agrid'] / 2.0
 
-            if (i * agrid >= padding and i * agrid < box_z - padding):
-                xvalue = i * agrid - padding
-                position = i * agrid - padding - width / 2.0 + agrid / 2.0
-
-            # density
+                # density
                 measured_density = counterions[int(
-                    box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].density
-                calculated_density = ek_common.density(position, xi, bjerrum_length)
+                    params_x['box_x'] / (2 * params_x['agrid'])), int(params_x['box_y'] / (2 * params_x['agrid'])), i].density
+                calculated_density = ek_common.density(position, xi, params_x['bjerrum_length'])
                 density_difference = abs(measured_density - calculated_density)
                 total_density_difference = total_density_difference + \
                     density_difference
 
-            # velocity
+                # velocity
                 measured_velocity = ek[int(
-                    box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].velocity[0]
+                    params_x['box_x'] / (2 * params_x['agrid'])), int(params_x['box_y'] / (2 * params_x['agrid'])), i].velocity[0]
                 calculated_velocity = ek_common.velocity(
                     position,
                     xi,
-                    width,
-                    bjerrum_length,
-                    force,
-                    viscosity_kinematic,
-                    density_water)
+                    params_x['width'],
+                    params_x['bjerrum_length'],
+                    params_x['force'],
+                    params_x['viscosity_kinematic'],
+                    params_x['density_water'])
                 velocity_difference = abs(
                     measured_velocity - calculated_velocity)
                 total_velocity_difference = total_velocity_difference + \
                     velocity_difference
 
-            # diagonal pressure tensor
-
+                # diagonal pressure tensor
                 measured_pressure_xx = ek[int(
-                    box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(0, 0)]
+                    params_x['box_x'] / (2 * params_x['agrid'])), int(params_x['box_y'] / (2 * params_x['agrid'])), i].pressure[(0, 0)]
                 calculated_pressure_xx = ek_common.hydrostatic_pressure(
-                    ek, position, xi, bjerrum_length, (0, 0), box_x, box_y, box_z, agrid)
+                    ek, position, xi, params_x['bjerrum_length'], (0, 0), params_x['box_x'], params_x['box_y'], params_x['box_z'], params_x['agrid'])
                 measured_pressure_yy = ek[int(
-                    box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(1, 1)]
+                    params_x['box_x'] / (2 * params_x['agrid'])), int(params_x['box_y'] / (2 * params_x['agrid'])), i].pressure[(1, 1)]
                 calculated_pressure_yy = ek_common.hydrostatic_pressure(
-                    ek, position, xi, bjerrum_length, (1, 1), box_x, box_y, box_z, agrid)
+                    ek, position, xi, params_x['bjerrum_length'], (1, 1), params_x['box_x'], params_x['box_y'], params_x['box_z'], params_x['agrid'])
                 measured_pressure_zz = ek[int(
-                    box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(2, 2)]
+                    params_x['box_x'] / (2 * params_x['agrid'])), int(params_x['box_y'] / (2 * params_x['agrid'])), i].pressure[(2, 2)]
                 calculated_pressure_zz = ek_common.hydrostatic_pressure(
-                    ek, position, xi, bjerrum_length, (2, 2), box_x, box_y, box_z, agrid)
+                    ek, position, xi, params_x['bjerrum_length'], (2, 2), params_x['box_x'], params_x['box_y'], params_x['box_z'], params_x['agrid'])
 
                 pressure_difference_xx = abs(
                     measured_pressure_xx - calculated_pressure_xx)
@@ -234,18 +206,18 @@ class ek_eof_one_species_x(ut.TestCase):
                 total_pressure_difference_zz = total_pressure_difference_zz + \
                     pressure_difference_zz
 
-            # xy component pressure tensor
+                # xy component pressure tensor
                 measured_pressure_xy = ek[int(
-                    box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(0, 1)]
+                    params_x['box_x'] / (2 * params_x['agrid'])), int(params_x['box_y'] / (2 * params_x['agrid'])), i].pressure[(0, 1)]
                 calculated_pressure_xy = 0.0
                 pressure_difference_xy = abs(
                     measured_pressure_xy - calculated_pressure_xy)
                 total_pressure_difference_xy = total_pressure_difference_xy + \
                     pressure_difference_xy
 
-            # yz component pressure tensor
+                # yz component pressure tensor
                 measured_pressure_yz = ek[int(
-                    box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(1, 2)]
+                    params_x['box_x'] / (2 * params_x['agrid'])), int(params_x['box_y'] / (2 * params_x['agrid'])), i].pressure[(1, 2)]
                 calculated_pressure_yz = 0.0
                 pressure_difference_yz = abs(
                     measured_pressure_yz - calculated_pressure_yz)
@@ -254,15 +226,15 @@ class ek_eof_one_species_x(ut.TestCase):
 
             # xz component pressure tensor
                 measured_pressure_xz = ek[int(
-                    box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(0, 2)]
+                    params_x['box_x'] / (2 * params_x['agrid'])), int(params_x['box_y'] / (2 * params_x['agrid'])), i].pressure[(0, 2)]
                 calculated_pressure_xz = ek_common.pressure_tensor_offdiagonal(
-                    position, xi, bjerrum_length, force)
+                    position, xi, params_x['bjerrum_length'], params_x['force'])
                 pressure_difference_xz = abs(
                     measured_pressure_xz - calculated_pressure_xz)
                 total_pressure_difference_xz = total_pressure_difference_xz + \
                     pressure_difference_xz
 
-                if (output_profiles):
+                if output_profiles:
                     fp.write(
                         "{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n".format(
                             position,
@@ -283,7 +255,7 @@ class ek_eof_one_species_x(ut.TestCase):
                             measured_pressure_zz,
                             calculated_pressure_zz))
 
-        if (output_profiles):
+        if output_profiles:
             fp.close()
 
         total_density_difference = agrid * total_density_difference / width
@@ -332,7 +304,6 @@ class ek_eof_one_species_x(ut.TestCase):
                         "Pressure accuracy yz component not achieved")
         self.assertLess(total_pressure_difference_xz, 1.0e-04,
                         "Pressure accuracy xz component not achieved")
-
 
 if __name__ == "__main__":
     ut.main()

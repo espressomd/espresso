@@ -149,7 +149,6 @@ class ek_eof_one_species_x(ut.TestCase):
 
         tol = 1.0e-08
         while (size > tol):
-
             val0 = ek_common.solve(pnt0, width, bjerrum_length, sigma, valency)
             val1 = ek_common.solve(pnt1, width, bjerrum_length, sigma, valency)
             valm = ek_common.solve(pntm, width, bjerrum_length, sigma, valency)
