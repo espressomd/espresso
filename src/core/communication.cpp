@@ -49,6 +49,9 @@
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "integrate.hpp"
 #include "io/mpiio/mpiio.hpp"
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
 #include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "npt.hpp"

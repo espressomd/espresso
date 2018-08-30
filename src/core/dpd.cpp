@@ -110,6 +110,7 @@ Vector3d dpd_pair_force(DPDParameters const &params, const Vector3d &v,
 
   return {};
 }
+#endif
 
 Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
                         const IA_parameters *ia_params, double const *d,
