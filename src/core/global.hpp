@@ -156,5 +156,5 @@ enum Fields {
 
 /** bool: whether to write out warnings or not */
 extern int warnings;
-
+extern MPI_Datatype lees_edwards_mpi_data;
 #endif
