@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(sum_of_weights) {
   Vector3d sum_const{};
   Vector3d sum_lin{};
   auto summer = [&sum_const, &sum_lin, &grid_spacing](
-      const std::array<int, 3> &ind, const Vector3d &w) {
+                    const std::array<int, 3> &ind, const Vector3d &w) {
     sum_const += w;
     sum_lin +=
         {w[0] * ind[0] * grid_spacing[0], w[1] * ind[1] * grid_spacing[1],
