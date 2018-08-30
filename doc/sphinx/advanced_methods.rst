@@ -26,10 +26,11 @@ Several modes are available for different types of binding.
     import espressomd
     from espressomd.interactions import HarmonicBond
 
-    system=espressomd.System()
-    bond_centers=HarmonicBond(k=1000,r_0=<CUTOFF>)
+    system = espressomd.System()
+    bond_centers = HarmonicBond(k=1000, r_0=<CUTOFF>)
     system.bonded_inter.add(bond_centers)
-    system.collision_detection.set_params(mode="bind_centers",distance=<CUTOFF>, bond_centers=bond_centers)
+    system.collision_detection.set_params(mode="bind_centers", distance=<CUTOFF>,
+                                          bond_centers=bond_centers)
 
   The parameters are as follows:
 
@@ -52,7 +53,9 @@ Several modes are available for different types of binding.
   the point of contact or you can use :class:`espressomd.interactions.Virtual` which acts as a marker, only.
   The method is setup as follows::
 
-     system.collision_detection.set_params(mode="bind_at_point_of_collision", distance=<CUTOFF>, bond_centers=<BOND_CENTERS>, bond_vs=<BOND_VS>, part_type_vs=<PART_TYPE_VS>, vs_placement=<VS_PLACEMENT>)
+     system.collision_detection.set_params(mode="bind_at_point_of_collision",
+         distance=<CUTOFF>, bond_centers=<BOND_CENTERS>, bond_vs=<BOND_VS>,
+         part_type_vs=<PART_TYPE_VS>, vs_placement=<VS_PLACEMENT>)
 
 
   The parameters `distance` and `bond_centers` have the same meaning as in the `bind_centers` mode. The remaining parameters are as follows:
@@ -88,13 +91,16 @@ Several modes are available for different types of binding.
   required.
   The method, along with the corresponding bonds are setup as follows::
 
-        n_angle_bonds=181 # 0 to 180 degrees in one degree steps
-        for i in range(0,res,1):
-           self.s.bonded_inter[i]=Angle_Harmonic(bend=1,phi0=float(i)/(res-1)*np.pi)
+        n_angle_bonds = 181  # 0 to 180 degrees in one degree steps
+        for i in range(0, res, 1):
+            self.s.bonded_inter[i] = Angle_Harmonic(
+                bend=1, phi0=float(i) / (res - 1) * np.pi)
 
         # Create the bond passed to bond_centers here and add it to the system
 
-        self.s.collision_detection.set_params(mode="bind_three_particles",bond_centers=<BOND_CENTERS>,bond_three_particles=0,three_particle_binding_angle_resolution=res,distance=<CUTOFF>)
+        self.s.collision_detection.set_params(mode="bind_three_particles",
+            bond_centers=<BOND_CENTERS>, bond_three_particles=0,
+            three_particle_binding_angle_resolution=res, distance=<CUTOFF>)
 
   Important: The bonds for the angles are mapped via their numerical bond ids. In this example, ids from 0 to 180 are used. All other bonds required for the simulation need to be added to the system after those bonds. In particular, this applies to the bonded interaction passed via `bond_centers`
 
@@ -157,7 +163,8 @@ can be used.::
 
     # setting up particles etc
 
-    r = Reaction(product_type=1, reactant_type=2, catalyzer_type=0, ct_range=2, ct_rate=0.2, eq_rate=0)
+    r = Reaction(product_type=1, reactant_type=2, catalyzer_type=0,
+                 ct_range=2, ct_rate=0.2, eq_rate=0)
     r.start()
     r.stop()
 
@@ -312,7 +319,7 @@ ibm_triel is used to compute elastic shear forces. To setup an interaction, use:
 
 ::
 
-    tri1 = IBM_Triel(ind1=0, ind2=1, ind3=2, elasticLaw="Skalak", k1=0.1, k2=0, maxDist = 2.4)
+    tri1 = IBM_Triel(ind1=0, ind2=1, ind3=2, elasticLaw="Skalak", k1=0.1, k2=0, maxDist=2.4)
 
 where `ind1`, `ind2` and `ind3` represent the indices of the three marker points making up the triangle. The parameter `maxDist`
 specifies the maximum stretch above which the bond is considered broken. The parameter `elasticLaw` can be either `NeoHookean` or `Skalak`.
@@ -321,7 +328,7 @@ The parameters `k1` and `k2` are the elastic moduli.
 ibm_tribend computes out-of-plane bending forces. To setup an interaction, use:
 ::
 
-    tribend = IBM_Tribend(ind1=0, ind2=1, ind3=2,ind4=3,kb=1, refShape = "Initial")
+    tribend = IBM_Tribend(ind1=0, ind2=1, ind3=2, ind4=3, kb=1, refShape="Initial")
 
 where `ind1`, `ind2`, `ind3 and `ind4` are four marker points corresponding to two neighboring triangles. The indices `ind1` and `ind3` contain the shared edge. Note that the marker points within a triangle must be labelled such that the normal vector :math:`\vec{n} = (\vec{r}_\text{ind2} - \vec{r}_\text{ind1}) \times (\vec{r}_\text{ind3} - \vec{r}_\text{ind1})` points outward of the elastic object.
 The reference (zero energy) shape can be either `Flat` or the initial curvature `Initial`.
@@ -425,7 +432,7 @@ In the first few lines, the script includes several imports related to
 the red blood cell model, fluid, boundaries and interactions. Then we
 have::
 
-    system = espressomd.System(box_l=(22,14,15))
+    system = espressomd.System(box_l=(22, 14, 15))
     system.time_step = 0.1
     system.cell_system.skin = 0.2
 
@@ -449,9 +456,9 @@ Specification of immersed objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
-    cell_type = OifCellType(nodesfile=“input/rbc374nodes.dat”,
-        trianglesfile=“input/rbc374triangles.dat”, system = system,
-        ks=0.02, kb=0.016, kal=0.02, kag=0.9, kv=0.5, resize=[2.0,2.0,2.0])
+    cell_type = OifCellType(nodesfile="input/rbc374nodes.dat",
+        trianglesfile="input/rbc374triangles.dat", system=system,
+        ks=0.02, kb=0.016, kal=0.02, kag=0.9, kv=0.5, resize=[2.0, 2.0, 2.0])
 
 We do not create elastic objects directly but rather each one has to
 correspond to a template, ``cell_type``, that has been created first.
@@ -483,7 +490,7 @@ multiple lines.
 
 ::
 
-    cell = OifCell(cellType=cell_type, partType=0, origin=[5.0,5.0,3.0])
+    cell = OifCell(cellType=cell_type, partType=0, origin=[5.0, 5.0, 3.0])
 
 Next, an actual object is created and its initial position is saved to a
 *.vtk* file (the directory ``output/sim1`` needs to exist before the
@@ -500,8 +507,8 @@ Specification of fluid and movement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
-    lbf = espressomd.lb.LBFluid(agrid = 1, dens = 1.0, visc = 1.5,
-        tau = time_step, fric = 1.5, ext_force_density = [0.002, 0.0, 0.0])
+    lbf = espressomd.lb.LBFluid(agrid=1, dens=1.0, visc=1.5, fric=1.5,
+                                tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
     system.actors.add(lbf)
 
 This part of the script specifies the fluid that will get the system
@@ -540,18 +547,24 @@ defined as follows. First we define the two shapes:
 
 ::
 
-    boundary1 = shapes.Rhomboid(corner=[0.0,0.0,0.0], \
-    a=[boxX,0.0,0.0], b=[0.0,boxY,0.0], c=[0.0,0.0,1.0], direction=1)
-    boundary2 = shapes.Cylinder(center=[11.0,2.0,7.0], \
-    axis=[0.0,0.0,1.0], length=7.0, radius=2.0, direction=1)
+    boundary1 = shapes.Rhomboid(corner=[0.0, 0.0, 0.0],
+                                a=[boxX, 0.0, 0.0],
+                                b=[0.0, boxY, 0.0],
+                                c=[0.0, 0.0, 1.0],
+                                direction=1)
+    boundary2 = shapes.Cylinder(center=[11.0, 2.0, 7.0],
+                                axis=[0.0, 0.0, 1.0],
+                                length=7.0,
+                                radius=2.0,
+                                direction=1)
 
 The ``direction 1`` determines that the fluid is on the *outside*. Next
 we create boundaries for the fluid:
 
 ::
 
-    system.lbboundaries.add(lbboundaries.LBBoundary(shape = boundary1))
-    system.lbboundaries.add(lbboundaries.LBBoundary(shape = boundary2))
+    system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary1))
+    system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary2))
 
 Followed by constraints for cells:
 
@@ -566,10 +579,17 @@ visualisation:
 
 ::
 
-    output_vtk_rhomboid(corner=[0.0,0.0,0.0], a=[boxX,0.0,0.0], \
-    b=[0.0,boxY,0.0], c=[0.0,0.0,1.0], out_file="output/sim1/wallBack.vtk")
-    output_vtk_cylinder(center=[11.0,2.0,7.0], axis=[0.0,0.0,1.0], length=7.0, \
-    radius=2.0, n=20, out_file="output/sim1/obstacle.vtk")
+    output_vtk_rhomboid(corner=[0.0, 0.0, 0.0],
+                        a=[boxX, 0.0, 0.0],
+                        b=[0.0, boxY, 0.0],
+                        c=[0.0, 0.0, 1.0],
+                        out_file="output/sim1/wallBack.vtk")
+    output_vtk_cylinder(center=[11.0, 2.0, 7.0],
+                        axis=[0.0, 0.0, 1.0],
+                        length=7.0,
+                        radius=2.0,
+                        n=20,
+                        out_file="output/sim1/obstacle.vtk")
 
 | Note that the method for cylinder output also has an argument ``n``.
   This specifies number of rectangular faces on the side.
@@ -588,9 +608,9 @@ so that they *know* about each other:
 
 ::
 
-    system.non_bonded_inter[0,1].membrane_collision.set_params( \
-    membrane_a = 0.0001, membrane_n = 1.2, membrane_cut = 0.1, \
-    membrane_offset = 0.0)
+    system.non_bonded_inter[0, 1].membrane_collision.set_params(
+        membrane_a=0.0001, membrane_n=1.2, membrane_cut=0.1,
+        membrane_offset=0.0)
 
 These interactions act *pointwise*, e.g. each particle of type 0 (all
 mesh points of cell0) has a repulsive membrane collision interaction
@@ -601,8 +621,8 @@ Similar interaction is defined with the boundaries:
 
 ::
 
-    system.non_bonded_inter[0,10].soft_sphere.set_params( \
-    soft_a = 0.0001, soft_n = 1.2, soft_cut = 0.1, soft_offset = 0.0)
+    system.non_bonded_inter[0, 10].soft_sphere.set_params(
+        soft_a=0.0001, soft_n=1.2, soft_cut=0.1, soft_offset=0.0)
 
 These interactions are also *pointwise*, e.g. each particle of type 0
 (that means all mesh points of cell) will have a repulsive soft-sphere
@@ -621,11 +641,11 @@ end:
 
 ::
 
-    for i in range(1,101):
+    for i in range(1, 101):
         system.integrator.run(steps=500)
-        cell.output_vtk_pos_folded(filename="output/sim1/cell_" \
-        + str(i) + ".vtk")
-        print "time: ", str(i*time_step)
+        cell.output_vtk_pos_folded(filename="output/sim1/cell_"
+                                   + str(i) + ".vtk")
+        print "time: ", str(i * time_step)
     print "Simulation completed."
 
 This simulation runs for 100 cycles. In each cycle, 500 integration
@@ -1024,19 +1044,19 @@ class OifCell
 ^^^^^^^^^^^^^^^
 ::
 
-    OifCell.set_origin([x,y,z])
+    OifCell.set_origin([x, y, z])
     OifCell.get_origin()
     OifCell.get_origin_folded()
     OifCell.get_approx_origin()
     OifCell.get_approx_origin_folded()
     OifCell.get_velocity()
-    OifCell.set_velocity([x,y,z])
+    OifCell.set_velocity([x, y, z])
     OifCell.pos_bounds()
     OifCell.surface()
     OifCell.volume()
     OifCell.get_diameter()
     OifCell.get_n_nodes()
-    OifCell.set_force([x,y,z])
+    OifCell.set_force([x, y, z])
     OifCell.kill_motion()
     OifCell.unkill_motion()
     OifCell.output_vtk_pos(filename.vtk)
@@ -1470,11 +1490,12 @@ Initialization
 ::
 
     import espressomd
-    sys = espressomd.System(box_l = [10.0,10.0,10.0])
+    sys = espressomd.System(box_l=[10.0, 10.0, 10.0])
     sys.time_step = 0.0
     sys.cell_system.skin = 0.4
-    ek = espressomd.electrokinetics.Electrokinetics(agrid = 1.0, lb_density = 1.0,
-    viscosity = 1.0, friction = 1.0, T =1.0, prefactor = 1.0, stencil = 'linkcentered', advection = True, fluid_coupling = 'friction')
+    ek = espressomd.electrokinetics.Electrokinetics(agrid=1.0, lb_density=1.0,
+        viscosity=1.0, friction=1.0, T=1.0, prefactor=1.0,
+        stencil='linkcentered', advection=True, fluid_coupling='friction')
     sys.actors.add(ek)
 
 .. note:: `Features ELECTROKINETICS and LB_GPU required`
@@ -1536,7 +1557,8 @@ Diffusive Species
 ^^^^^^^^^^^^^^^^^
 ::
 
-    species = electrokinetics.Species(density=density, D=D, valency=valency, ext_force_density=ext_force)
+    species = electrokinetics.Species(density=density, D=D, valency=valency,
+        ext_force_density=ext_force)
 
 :class:`espressomd.electrokinetics.Species` is used to initialize a diffusive species. Here the
 options specify: the number density ``density``, the diffusion coefficient ``D``, the
@@ -1621,9 +1643,9 @@ Local Quantities
 
 ::
 
-    ek[0,0,0].velocity
-    ek[0,0,0].potential
-    ek[0,0,0].pressure
+    ek[0, 0, 0].velocity
+    ek[0, 0, 0].potential
+    ek[0, 0, 0].pressure
 
 A single node can be addressed using three integer values
 which run from 0 to `dim_x/agrid`, `dim_y/agrid`, and `dim_z/agrid`, respectively. The
@@ -1633,8 +1655,8 @@ The local `density` and `flux` of a species can be obtained in the same fashion:
 
 ::
 
-    species[0,0,0].density
-    species[0,0,0].flux
+    species[0, 0, 0].density
+    species[0, 0, 0].flux
 
 .. [5]
    http://www.paraview.org/
@@ -1699,7 +1721,9 @@ As it also adds the first two bonds between Drude and core, these bonds have to
 be created beforehand::
 
     from drude_functions import *
-    add_drude_particle_to_core(<system>, <harmonic_bond>, <thermalized_bond>, <core particle>, <id drude>, <type drude>, <alpha>, <mass drude>, <coulomb_prefactor>, <thole damping>, <verbose>)
+    add_drude_particle_to_core(<system>, <harmonic_bond>, <thermalized_bond>,
+        <core particle>, <id drude>, <type drude>, <alpha>, <mass drude>,
+        <coulomb_prefactor>, <thole damping>, <verbose>)
 
 The arguments of the helper function are:
     * <system>: The espressomd.System().
@@ -1753,7 +1777,8 @@ long-range part of the electrostatic interaction. Two helper methods assist
 with setting up this exclusion. If used, they have to be called
 after all Drude particles are added to the system::
 
-    setup_intramol_exclusion_bonds(<system>, <molecule drude types>, <molecule core types>, <molecule core partial charges>, <verbose>)
+    setup_intramol_exclusion_bonds(<system>, <molecule drude types>,
+        <molecule core types>, <molecule core partial charges>, <verbose>)
 
 This function creates the requires number of bonds which are later added to the
 particles. It has to be called only once. In a molecule with `N` polarizable

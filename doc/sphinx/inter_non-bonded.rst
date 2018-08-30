@@ -58,7 +58,8 @@ The interface for tabulated interactions are implemented in the
 :class:`espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
-  system.non_bonded_inter[type1, type2].tabulated.set_params(min='min', max='max', energy='energy', force='force')
+  system.non_bonded_inter[type1, type2].tabulated.set_params(
+      min='min', max='max', energy='energy', force='force')
 
 
 This defines an interaction between particles of the types *type1* and
@@ -640,7 +641,7 @@ Again, the accuracy is related to the P3M accuracy and the split between
 short-range and long-range electrostatics interaction. It is configured by::
 
     system = espressomd.System()
-    system.non_bonded_inter[type_1,type_2].thole.set_params(scaling_coeff = <float>, q1q2 = <float>)
+    system.non_bonded_inter[type_1,type_2].thole.set_params(scaling_coeff=<float>, q1q2=<float>)
 
 with parameters:
     * scaling_coeff: The scaling coefficient :math:`s`.

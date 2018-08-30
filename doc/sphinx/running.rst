@@ -84,7 +84,7 @@ Usage example::
         system.integrator.set_steepest_descent(
             f_max=0, gamma=0.1, max_displacement=0.1)
         system.integrator.run(20)
-        system.integrator.set_vv() # to switch back to velocity verlet
+        system.integrator.set_vv()  # to switch back to velocity verlet
 
 
 
@@ -128,8 +128,8 @@ In this way, just compiling in the ROTATION feature no longer changes the physic
 The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled::
 
     import espressomd
-    s=espressomd.System()
-    s.part.add(pos=(0,0,0),rotation=(1,0,0))
+    s = espressomd.System()
+    s.part.add(pos=(0, 0, 0), rotation=(1, 0, 0))
 
 Notes:
 

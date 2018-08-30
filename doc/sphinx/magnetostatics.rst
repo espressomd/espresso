@@ -27,9 +27,9 @@ Magnetostatic interactions are activated via the actor framework::
 
     from espressomd.magnetostatics import DipolarDirectSumCpu
 
-    direct_sum=DipolarDirectSumCpu(prefactor=1)
+    direct_sum = DipolarDirectSumCpu(prefactor=1)
     system.actors.add(direct_sum)
-    #...
+    # ...
     system.actors.remove(direct_sum)
 
 The magnetostatics algorithms for periodic boundary conditions require
@@ -125,7 +125,7 @@ Two methods are available:
 To use the methods, create an instance of either :class:`espressomd.magnetostatics.DipolarDirectSumCpu` or :class:`espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the system's list of active actors. The only required parameter is the Prefactor: (:eq:`dipolar_prefactor`)::
 
   from espressomd.magnetostatics import DipolarDirectSumGpu
-  dds=DipolarDirectSumGpu(bjerrum_length=1)
+  dds = DipolarDirectSumGpu(bjerrum_length=1)
   system.actors.add(dds)
 
 
@@ -156,7 +156,7 @@ refer to :cite:`Polyakov2013`.
 To use the method, create an instance of :class:`espressomd.magnetostatics.DipolarBarnesHutGpu` and add it to the system's list of active actors::
 
   from espressomd.magnetostatics import DipolarBarnesHutGpu
-  bh=DipolarBarnesHutGpu(prefactor = pf_dds_gpu, epssq = 200.0, itolsq = 8.0)
+  bh = DipolarBarnesHutGpu(prefactor=pf_dds_gpu, epssq=200.0, itolsq=8.0)
   system.actors.add(bh)
 
 .. _Scafacos Magnetostatics:

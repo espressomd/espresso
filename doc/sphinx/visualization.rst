@@ -45,10 +45,10 @@ window with ``start()``. See the following minimal code example::
     system = espressomd.System()
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    system.box_l = [10,10,10]
+    system.box_l = [10, 10, 10]
 
-    system.part.add(pos = [1,1,1])
-    system.part.add(pos = [9,9,9])
+    system.part.add(pos=[1, 1, 1])
+    system.part.add(pos=[9, 9, 9])
 
     #visualizer = visualization.mayaviLive(system)
     visualizer = visualization.openGLLive(system)
@@ -133,14 +133,14 @@ visualizer is initialized::
     import espressomd
     from espressomd import visualization
 
-    system = espressomd.System(box_l = [10,10,10])
+    system = espressomd.System(box_l=[10, 10, 10])
     system.cell_system.skin = 0.4
     system.time_step = 0.00001
 
-    system.part.add(pos = [1,1,1], v = [1,0,0])
-    system.part.add(pos = [9,9,9], v = [0,1,0])
+    system.part.add(pos=[1, 1, 1], v=[1, 0, 0])
+    system.part.add(pos=[9, 9, 9], v=[0, 1, 0])
 
-    visualizer = visualization.openGLLive(system, background_color = [1,1,1])
+    visualizer = visualization.openGLLive(system, background_color=[1, 1, 1])
     visualizer.run(1)
 
 
@@ -162,23 +162,23 @@ screenshots without blocking the simulation script::
     import espressomd
     from espressomd import visualization
 
-    system = espressomd.System(box_l = [10,10,10])
+    system = espressomd.System(box_l=[10, 10, 10])
     system.cell_system.skin = 1.0
     system.time_step = 0.1
 
     for i in range(1000):
-        system.part.add(pos = [5,5,5])
+        system.part.add(pos=[5, 5, 5])
 
     system.thermostat.set_langevin(kT=1, gamma=1)
 
-    visualizer = visualization.openGLLive(system, window_size = [500,500])
+    visualizer = visualization.openGLLive(system, window_size=[500, 500])
 
     for i in range(100):
         system.integrator.run(1)
         visualizer.screenshot('screenshot_{}.jpg'.format(i))
 
-    #You may consider creating a video with ffmpeg:
-    #ffmpeg -f image2 -framerate 30 -i 'screenshot_%d.jpg' output.mp4
+    # You may consider creating a video with ffmpeg:
+    # ffmpeg -f image2 -framerate 30 -i 'screenshot_%d.jpg' output.mp4
 
 It is also possible to create a snapshot during online visualization.
 Simply press the *enter* key to create a snapshot of the current window,
@@ -196,16 +196,16 @@ used, which are indexed circularly by the numerical particle type::
 
     # Particle type 0 is red, type 1 is blue (type 2 is red etc)..
     visualizer = visualization.openGLLive(system,
-                                          particle_coloring = 'type',
-                                          particle_type_colors = [[1, 0, 0],[0, 0, 1]])
+                                          particle_coloring='type',
+                                          particle_type_colors=[[1, 0, 0], [0, 0, 1]])
 
 `particle_type_materials` lists the materials by type::
 
     # Particle type 0 is gold, type 1 is blue (type 2 is gold again etc).
     visualizer = visualization.openGLLive(system,
-                                          particle_coloring = 'type',
-                                          particle_type_colors = [[1, 1, 1],[0, 0, 1]],
-                                          particle_type_materials = [steel, bright])
+                                          particle_coloring='type',
+                                          particle_type_colors=[[1, 1, 1], [0, 0, 1]],
+                                          particle_type_materials=[steel, bright])
 
 Materials are stored in :attr:`espressomd.visualization.openGLLive().materials`.
 
@@ -228,37 +228,37 @@ following code snippet demonstrates the visualization of the director property
 and individual settings for two particle types (requires the ROTATION
 feature)::
 
-	from __future__ import print_function
-	import numpy
-	from espressomd import *
-	from espressomd.visualization_opengl import *
+    from __future__ import print_function
+    import numpy
+    from espressomd import *
+    from espressomd.visualization_opengl import *
 
-	box_l = 10
-	system = espressomd.System(box_l=[box_l, box_l, box_l])
-	system.cell_system.skin = 0.4
+    box_l = 10
+    system = espressomd.System(box_l=[box_l, box_l, box_l])
+    system.cell_system.skin = 0.4
 
-	system.time_step = 0.00001
+    system.time_step = 0.00001
 
-	visualizer = openGLLive(system,
-	                        director_arrows = True,
-	                        director_arrows_type_scale = [1.5, 1.0],
-	                        director_arrows_type_radii = [0.1, 0.4],
-	                        director_arrows_type_colors = [[1.0, 0, 0], [0, 1.0, 0]])
+    visualizer = openGLLive(system,
+                            director_arrows=True,
+                            director_arrows_type_scale=[1.5, 1.0],
+                            director_arrows_type_radii=[0.1, 0.4],
+                            director_arrows_type_colors=[[1.0, 0, 0], [0, 1.0, 0]])
 
-	for i in range(10):
-		system.part.add(pos = numpy.random.random(3) * box_l,
-		                rotation = [1, 1, 1],
-		                ext_torque = [5, 0, 0],
-		                v = [10, 0, 0],
-		                type = 0)
+    for i in range(10):
+        system.part.add(pos=numpy.random.random(3) * box_l,
+                        rotation=[1, 1, 1],
+                        ext_torque=[5, 0, 0],
+                        v=[10, 0, 0],
+                        type=0)
 
-		system.part.add(pos = numpy.random.random(3) * box_l,
-		                rotation = [1, 1, 1],
-		                ext_torque = [0, 5, 0],
-		                v = [-10, 0, 0],
-		                type = 1)
+        system.part.add(pos=numpy.random.random(3) * box_l,
+                        rotation=[1, 1, 1],
+                        ext_torque=[0, 5, 0],
+                        v=[-10, 0, 0],
+                        type=1)
 
-	visualizer.run(1)
+    visualizer.run(1)
 
 
 
@@ -291,16 +291,16 @@ by a timer or keyboard input::
     def foo():
         print "foo"
 
-    #Registers timed calls of foo()
-    visualizer.register_callback(foo,interval=500)
+    # Registers timed calls of foo()
+    visualizer.register_callback(foo, interval=500)
 
-    #Callbacks to control temperature
+    # Callbacks to control temperature
     temperature = 1.0
     def increaseTemp():
-            global temperature
-            temperature += 0.1
-            system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-            print "T =",system.thermostat.get_state()[0]['kT']
+        global temperature
+        temperature += 0.1
+        system.thermostat.set_langevin(kT=temperature, gamma=1.0)
+        print "T =", system.thermostat.get_state()[0]['kT']
 
     def decreaseTemp():
         global temperature
@@ -308,15 +308,15 @@ by a timer or keyboard input::
 
         if temperature > 0:
             system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-            print "T =",system.thermostat.get_state()[0]['kT']
+            print "T =", system.thermostat.get_state()[0]['kT']
         else:
             temperature = 0
             system.thermostat.turn_off()
             print "T = 0"
 
-    #Registers input-based calls
-    visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseTemp))
-    visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g',KeyboardFireEvent.Hold,decreaseTemp))
+    # Registers input-based calls
+    visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
+    visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
 
 Further examples can be found in samples/python/billard.py or samples/python/visualization\_interactive.py.
 

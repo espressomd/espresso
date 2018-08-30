@@ -159,7 +159,9 @@ restores the state of all checkpointed objects and registers a signal.
 
 .. code::
 
-    import espressomd from espressomd import checkpointing import signal
+    import espressomd
+    from espressomd import checkpointing
+    import signal
 
     checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
     checkpoint.load()
@@ -168,7 +170,7 @@ restores the state of all checkpointed objects and registers a signal.
     system.cell_system.skin = skin
     system.actors.add(p3m)
 
-    #signal.SIGINT: signal 2, is sent when ctrl+c is pressed
+    # signal.SIGINT: signal 2, is sent when ctrl+c is pressed
     checkpoint.register_signal(signal.SIGINT)
 
     # integrate system until user presses ctrl+c while True:
@@ -415,11 +417,10 @@ requires increasing and continuous indexing. The |es| ``id`` can be used as *key
     import espressomd
     from espressomd.io.writer import vtf
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
-    system.part.add(id=5, pos=[0,0,0])
-    system.part.add(id=3, pos=[0,0,0])
+    system.part.add(id=5, pos=[0, 0, 0])
+    system.part.add(id=3, pos=[0, 0, 0])
     vtf_index = vtf.vtf_pid_map(system)
     vtf_index[3]
-    >>> 0
 
 Note that the |es| particles are ordered in increasing order, thus ``id=3`` corresponds to the zeroth VTF index.
 
@@ -444,19 +445,19 @@ using MDAnalysis. A simple example is the following:
     from espressomd import MDA_ESP
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
-    eos = MDA_ESP.Stream(system) # create the stream
-    u =  mda.Universe( eos.topology, eos.trajectory ) # create the MDA universe
+    eos = MDA_ESP.Stream(system)  # create the stream
+    u = mda.Universe(eos.topology, eos.trajectory)  # create the MDA universe
 
     # example: write a single frame to PDB
     u.atoms.write("system.pdb")
 
     # example: save the trajectory to GROMACS format
     from MDAnalysis.coordinates.TRR import TRRWriter
-    W = TRRWriter("traj.trr",n_atoms=len(system.part)) # open the trajectory file
+    W = TRRWriter("traj.trr", n_atoms=len(system.part))  # open the trajectory file
     for i in range(100):
         system.integrator.run(1)
-        u.load_new(eos.trajectory) # load the frame to the MDA universe
-        W.write_next_timestep(u.trajectory.ts) # append it to the trajectory
+        u.load_new(eos.trajectory)  # load the frame to the MDA universe
+        W.write_next_timestep(u.trajectory.ts)  # append it to the trajectory
 
 For other examples see samples/python/MDAnalysisIntegration.py
 

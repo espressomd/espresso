@@ -146,7 +146,7 @@ selects the domain decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
 domain decomposition is used, but not the Verlet lists. ::
 
-    system=espressomd.System()
+    system = espressomd.System()
 
     system.cell_system.set_domain_decomposition(use_verlet_lists=True)
 
@@ -175,7 +175,7 @@ particles, giving an unfavorable computation time scaling of
 interaction in the cell model require the calculation of all pair
 interactions. ::
 
-    system=espressomd.System()
+    system = espressomd.System()
 
     system.cell_system.set_n_square()
 
@@ -219,7 +219,7 @@ and y direction there are no processor boundaries, the implementation is
 basically just a stripped down version of the domain decomposition
 cellsystem. ::
 
-    system=espressomd.System()
+    system = espressomd.System()
 
     system.cell_system.set_layered(n_layers=4)
 
@@ -274,7 +274,7 @@ Best explained in an example::
 
     import espressomd
     system = espressomd.System()
-    therm  = system.Thermostat()
+    therm = system.Thermostat()
 
     therm.set_langevin(kT=1.0, gamma=1.0)
 
@@ -420,7 +420,7 @@ See this code snippet for the two commands::
 
     import espressomd
 
-    system=espressomd.System()
+    system = espressomd.System()
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
@@ -440,7 +440,7 @@ example ``lbfluid``. If you do not choose the GPU manually before that,
 CUDA internally chooses one, which is normally the most powerful GPU
 available, but load-independent. ::
 
-    system=espressomd.System()
+    system = espressomd.System()
 
     dev = system.cuda_init_handle.device
     system.cuda_init_handle.device = dev
@@ -474,7 +474,7 @@ List available CUDA devices
 If you want to list available CUDA devices
 you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g., ::
 
-    system=espressomd.System()
+    system = espressomd.System()
 
     print(system.cuda_init_handle.device_list)
 
@@ -491,7 +491,7 @@ be selected.
 If you wanted to use the second GPU, this can be done
 by setting :attr:`espressomd.cuda_init.CudaInitHandle.device` as follows::
 
-    system=espressomd.System()
+    system = espressomd.System()
 
     system.cuda_init_handle.device = 1
 

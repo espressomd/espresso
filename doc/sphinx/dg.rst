@@ -230,7 +230,7 @@ Espresso uses two communication models, namely master-slave and synchronous.
   changing of particle properties and changing global simulation parameters.
   When a Python command such as::
 
-    system.part.add(pos=(1,2,3))
+    system.part.add(pos=(1, 2, 3))
 
   is issued, the head node determines, which node is responsible for the given position, and then sends the node the command to place the particle.
 

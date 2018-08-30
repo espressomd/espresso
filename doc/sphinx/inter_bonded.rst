@@ -46,7 +46,7 @@ A FENE (finite extension nonlinear elastic) bond can be instantiated via
 :class:`espressomd.interactions.FeneBond`::
 
     from espressomd.interactions import FeneBond
-    fene = FeneBond(k = <float>, d_r_max = <float>, r_0 = <float>)
+    fene = FeneBond(k=<float>, d_r_max=<float>, r_0=<float>)
 
 This command creates a bond type identifier with a FENE
 interaction. The FENE potential
@@ -70,7 +70,7 @@ A harmonic bond can be instantiated via
 :class:`espressomd.interactions.HarmonicBond`::
 
     from espressomd.interactions import HarmonicBond
-    hb = HarmonicBond(k = <float>, r_0 = <float>, r_cut = <float>)
+    hb = HarmonicBond(k=<float>, r_0=<float>, r_cut=<float>)
 
 
 This creates a bond type identifier with a classical harmonic
@@ -97,7 +97,7 @@ A harmonic bond can be instantiated via
 :class:`espressomd.interactions.HarmonicDumbbellBond`::
 
     from espressomd.interactions import HarmonicDumbbellBond
-    hdb = HarmonicDumbbellBond(k1 = <float>, k2 = <float>, r_0 = <float>, r_cut = <float>)
+    hdb = HarmonicDumbbellBond(k1=<float>, k2=<float>, r_0=<float>, r_cut=<float>)
 
 
 This bond is similar to the normal harmonic bond in such a way that it
@@ -145,7 +145,7 @@ Bonded Coulomb
 A pairwise Coulomb interaction can be instantiated via
 :class:`espressomd.interactions.BondedCoulomb`::
 
-    bonded_coulomb = espressomd.interactions.BondedCoulomb(prefactor = 1.0)
+    bonded_coulomb = espressomd.interactions.BondedCoulomb(prefactor=1.0)
     system.bonded_inter.add(bonded_coulomb)
     system.part[0].add_bond((bonded_coulomb, 1))
 
@@ -171,7 +171,7 @@ This bond can be instantiated via
 :class:`espressomd.interactions.BondedCoulombP3MSRBond`::
 
     from espressomd.interactions import BondedCoulombP3MSRBond
-    subtr_p3m_sr = BondedCoulombP3MSRBond(q1q2 = <float>)
+    subtr_p3m_sr = BondedCoulombP3MSRBond(q1q2=<float>)
 
 The parameter `q1q2` sets the charge factor of the short-range P3M interaction.
 It can differ from the actual particle charges.  This specialized bond can be
@@ -210,7 +210,7 @@ A rigid bond can be instantiated via
 :class:`espressomd.interactions.RigidBond`::
 
     from espressomd.interactions import RigidBond
-    rig = RigidBond(r = <float>, ptol = <float>, vtol = <float> )
+    rig = RigidBond(r=<float>, ptol=<float>, vtol=<float> )
 
 To simulate rigid bonds, |es| uses the Rattle Shake algorithm which satisfies
 internal constraints for molecular models with internal constraints,
@@ -232,8 +232,8 @@ A tabulated bond can be instantiated via
 :class:`espressomd.interactions.Tabulated`::
 
     from espressomd.interactions import Tabulated
-    tab = Tabulated(type = <str>, min = <min>, max = <max>,
-                    energy = <energy>, force = <force>)
+    tab = Tabulated(type=<str>, min=<min>, max=<max>,
+                    energy=<energy>, force=<force>)
 
 This creates a bond type identifier with a two-body bond length,
 three-body angle or four-body dihedral
@@ -404,8 +404,8 @@ OIF local force is asymmetric. After creating the interaction
 
 ::
 
-    local_inter = OifLocalForces(r0=1.0, ks=0.5, kslin=0.0, phi0=1.7, kb=0.6, A01=0.2, A02=0.3,
-                                                       kal=1.1, kvisc=0.7)
+    local_inter = OifLocalForces(r0=1.0, ks=0.5, kslin=0.0, phi0=1.7, kb=0.6, A01=0.2,
+                                 A02=0.3, kal=1.1, kvisc=0.7)
 
 it is important how the bond is created. Particles need to be mentioned
 in the correct order. Command
@@ -592,7 +592,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
 
     example ::
 
-        >>> angle_harmonic=AngleHarmonic(bend=1.0, phi0=np.pi)
+        >>> angle_harmonic = AngleHarmonic(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_harmonic)
         >>> system.part[1].add_bond((angle_harmonic, 0, 2))
 
@@ -617,7 +617,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
 
     example ::
 
-        >>> angle_cosine=AngleCosine(bend=1.0, phi0=np.pi)
+        >>> angle_cosine = AngleCosine(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cosine)
         >>> system.part[1].add_bond((angle_cosine, 0, 2))
 
@@ -633,7 +633,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
 
     example ::
 
-        >>> angle_cossquare=AngleCossquare(bend=1.0, phi0=np.pi)
+        >>> angle_cossquare = AngleCossquare(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cossquare)
         >>> system.part[1].add_bond((angle_cossquare, 0, 2))
 
@@ -682,7 +682,9 @@ temperature and friction coefficient.
 The bond is configured with::
 
     from espressomd.interactions import ThermalizedBond
-    thermalized_bond = ThermalizedBond(temp_com = <float>, gamma_com = <float>, temp_distance = <float>, gamma_distance = <float>, r_cut = <float>)
+    thermalized_bond = ThermalizedBond(temp_com=<float>, gamma_com=<float>,
+                                       temp_distance=<float>, gamma_distance=<float>,
+                                       r_cut=<float>)
     system.bonded_inter.add(thermalized_bond)
 
 The parameters are:

@@ -178,20 +178,20 @@ Reading and setting properties of single lattice nodes
 
 Appending three indices to the ``lb`` object returns an object that represents the selected LB grid node and allows one to access all of its properties::
 
-    lb[x,y,z].density    #fluid density (one scalar for LB and LB_GPU, two scalars for SHANCHEN)
-    lb[x,y,z].velocity   #fluid velocity (a numpy array of three floats)
-    lb[x,y,z].pi         #fluid pressure tensor (a symmetric 3x3 numpy array of floats)
-    lb[x,y,z].pi_neq     #nonequilbrium part of the pressure tensor (as above)
-    lb[x,y,z].boundary   #flag indicating whether the node is fluid  or boundary (fluid: boundary=0, boundary: boundary != 0)
-    lb[x,y,z].population #19 LB populations (a numpy array of 19 floats, check order from the source code)
+    lb[x, y, z].density     # fluid density (one scalar for LB and LB_GPU, two scalars for SHANCHEN)
+    lb[x, y, z].velocity    # fluid velocity (a numpy array of three floats)
+    lb[x, y, z].pi          # fluid pressure tensor (a symmetric 3x3 numpy array of floats)
+    lb[x, y, z].pi_neq      # nonequilbrium part of the pressure tensor (as above)
+    lb[x, y, z].boundary    # flag indicating whether the node is fluid or boundary (fluid: boundary=0, boundary: boundary != 0)
+    lb[x, y, z].population  # 19 LB populations (a numpy array of 19 floats, check order from the source code)
 
 All of these properties can be read and used in further calculations. Only the property ``population`` can be modified. The indices ``x,y,z`` are integers and enumerate the LB nodes in the three directions, starts with 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
 
 Examples::
 
-    print(lb[0,0,0].velocity)
+    print(lb[0, 0, 0].velocity)
 
-    lb[0,0,0].density = 1.2
+    lb[0, 0, 0].density = 1.2
 
 The first line prints the fluid velocity at node 0 0 0 to the screen. The second line sets this fluid node's density to the value ``1.2``.
 
@@ -237,7 +237,7 @@ example, executing
 
 ::
 
-    lb.print_vtk_velocity(path, [0,0,5], [10,10,5])
+    lb.print_vtk_velocity(path, [0, 0, 5], [10, 10, 5])
 
 will output the cross-section of the velocity field in a plane
 perpendicular to the :math:`z`-axis at :math:`z = 5` (assuming the box
@@ -310,14 +310,14 @@ and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
 
 Adding a shape-based boundary is straightforward::
 
-    lbb = espressomd.lbboundaries.LBBoundary(shape=my_shape, velocity=[0,0,0])
+    lbb = espressomd.lbboundaries.LBBoundary(shape=my_shape, velocity=[0, 0, 0])
     system.lbboundaries.add(lbb)
 
 or::
 
     lbb = espressomd.lbboundaries.LBBoundary()
     lbb.shape = my_shape
-    lbb.velocity = [0,0,0]
+    lbb.velocity = [0, 0, 0]
     system.lbboundaries.add(lbb)
 
 .. _Minimal usage example:
@@ -330,8 +330,8 @@ Minimal usage example
 In order to add a wall as boundary for a Lattice-Boltzmann fluid
 you could do the following::
 
-    wall = espressomd.shapes.Wall(dist=5, normal=[1,0,0])
-    lbb = espressomd.lbboundaries.LBBoundary(shape=wall, velocity=[0,0,0])
+    wall = espressomd.shapes.Wall(dist=5, normal=[1, 0, 0])
+    lbb = espressomd.lbboundaries.LBBoundary(shape=wall, velocity=[0, 0, 0])
     system.lbboundaries.add(lbb)
 
 .. _Setting up boundary conditions:
@@ -351,25 +351,25 @@ The following example sets up a system consisting of a spherical boundary in the
     lb = lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
     sys.actors.add(lb)
 
-    v = [0, 0, 0.01]  #the boundary slip
+    v = [0, 0, 0.01]  # the boundary slip
     walls = [None] * 4
 
-    wall_shape = shapes.Wall(normal=[1,0,0], dist=1)
+    wall_shape = shapes.Wall(normal=[1, 0, 0], dist=1)
     walls[0] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
 
-    wall_shape = shapes.Wall(normal=[-1,0,0], dist=-63)
+    wall_shape = shapes.Wall(normal=[-1, 0, 0], dist=-63)
     walls[1] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
 
-    wall_shape = shapes.Wall(normal=[0,1,0], dist=1)
+    wall_shape = shapes.Wall(normal=[0, 1, 0], dist=1)
     walls[2] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
 
-    wall_shape = shapes.Wall(normal=[0,-1,0], dist=-63)
+    wall_shape = shapes.Wall(normal=[0, -1, 0], dist=-63)
     walls[3] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
 
     for wall in walls:
         system.lbboundaries.add(wall)
 
-    sphere_shape = shapes.Sphere(radius=5.5, center=[33,33,33], direction=1)
+    sphere_shape = shapes.Sphere(radius=5.5, center=[33, 33, 33], direction=1)
     sphere = lbboundaries.LBBoundary(shape=sphere_shape)
     sys.lbboundaries.add(sphere)
 

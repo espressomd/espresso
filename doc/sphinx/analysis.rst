@@ -92,10 +92,10 @@ For example, ::
     >>> system = espressomd.System()
     >>> system.box_l = [100, 100, 100]
     >>> for i in range(10):
-    >>>     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
+    ...     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
     >>> system.analysis.dist_to(id=4)
     7.0
-    >>> system.analysis.dist_to(pos=[0,0,0])
+    >>> system.analysis.dist_to(pos=[0, 0, 0])
     1.4142135623730951
     >>> system.analysis.mindist()
     1.0
@@ -111,7 +111,7 @@ Particles in the neighborhood
 Returns a list of the particle ids of that fall within a given radius of a target position.
 For example, ::
 
-    idlist = system.analysis.nbhood(pos = system.box_l*0.5, r_catch=5.0)
+    idlist = system.analysis.nbhood(pos=system.box_l * 0.5, r_catch=5.0)
 
 .. _Particle distribution:
 
@@ -129,11 +129,12 @@ group.
 Two arrays are returned corresponding to the normalized distribution and the bins midpoints, for example ::
 
     >>> system = espressomd.System()
-    >>> box_l=10.
+    >>> box_l = 10.
     >>> system.box_l = [box_l, box_l, box_l]
     >>> for i in range(5):
-    >>>     system.part.add(id=i, pos=i*system.box_l, type=0)
-    >>> bins, count=system.analysis.distribution(type_list_a=[0], type_list_b=[0], r_min=0.0, r_max = 10.0, r_bins=10)
+    ...     system.part.add(id=i, pos=i * system.box_l, type=0)
+    >>> bins, count = system.analysis.distribution(type_list_a=[0], type_list_b=[0],
+    ...                                            r_min=0.0, r_max=10.0, r_bins=10)
     >>>
     >>> print(bins)
     [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
@@ -268,14 +269,15 @@ or on averaged configurations stored with `analyze.append()` (`rdf_type='<rdf>'`
 
 For example, ::
 
-	rdf_bins = 100
-	r_min  = 0.0
-	r_max  = system.box_l[0]/2.0
-	r, rdf_01 = S.analysis.rdf(rdf_type='<rdf>', type_list_a=[0], type_list_b=[1], r_min=r_min, r_max=r_max, r_bins=rdf_bins)
-	rdf_fp = open("rdf.dat", 'w')
-	for i in range(rdf_bins):
-		rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" % (r[i], rdf_01[i]))
-	rdf_fp.close()
+    rdf_bins = 100
+    r_min = 0.0
+    r_max = system.box_l[0] / 2.0
+    r, rdf_01 = S.analysis.rdf(rdf_type='<rdf>', type_list_a=[0], type_list_b=[1],
+                               r_min=r_min, r_max=r_max, r_bins=rdf_bins)
+    rdf_fp = open("rdf.dat", 'w')
+    for i in range(rdf_bins):
+        rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" % (r[i], rdf_01[i]))
+    rdf_fp.close()
 
 
 .. _Structure factor:
@@ -740,7 +742,7 @@ follows
 ::
 
     from espressomd.observables import ParticlePositions
-    part_pos=ParticlePositions(ids=(1,2,3,4,5))
+    part_pos = ParticlePositions(ids=(1, 2, 3, 4, 5))
 
 Here, the keyword argument ``ids`` specifies the ids of the particles,
 which the observable should take into account.
@@ -869,15 +871,15 @@ Example: Calculating a particle's diffusion coefficient
 
 For setting up an observable and correlator to obtain the mean square displacement of particle 0, use::
 
-    pos_obs=ParticlePositions(ids=(0,))
+    pos_obs = ParticlePositions(ids=(0,))
     c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
-        corr_operation="square_distance_componentwise", compress1="discard1")
+                       corr_operation="square_distance_componentwise", compress1="discard1")
 
 To obtain the velocity auto-correlation function of particle 0, use::
 
-    obs=ParticleVelocities(ids=(0,))
+    obs = ParticleVelocities(ids=(0,))
     c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
-        corr_operation="scalar_product", compress1="discard1")
+                       corr_operation="scalar_product", compress1="discard1")
 
 The full example can be found in ``samples/diffusion_coefficient.py``.
 
@@ -1001,7 +1003,8 @@ In order to calculate the running mean and variance of an observable
     system.time_step = 0.01
     system.part.add(id=0, pos=[5.0, 5.0, 5.0])
     position_observable = espressomd.observables.ParticlePositions(ids=(0,))
-    accumulator = espressomd.accumulators.MeanVarianceCalculator(obs=position_observable, delta_N=1)
+    accumulator = espressomd.accumulators.MeanVarianceCalculator(
+        obs=position_observable, delta_N=1)
     system.auto_update_accumulators.add(accumulator)
     # Perform integration (not shown)
     print accumulator.get_mean()
@@ -1023,13 +1026,13 @@ Whether or not two particles are neighbors is defined by a pair criterion. The a
 For example, a distance criterion which will consider particles as neighbors if they are closer than 0.11 is created as follows::
 
     from espressomd.pair_criteria import DistanceCriterion
-    dc=DistanceCriterion(cut_off=0.11)
+    dc = DistanceCriterion(cut_off=0.11)
 
 To obtain the cluster structure of a system, an instance of :class:`espressomd.cluster_analysis.ClusterStructure` has to be created.
 To to create a cluster structure with above criterion::
 
     from espressomd.cluster_analysis import ClusterStructure
-    cs=ClusterStructure(distance_criterion=dc)
+    cs = ClusterStructure(distance_criterion=dc)
 
 In most cases, the cluster analysis is carried out by calling the :any:`espressomd.cluster_analysis.ClusterStructure.run_for_all_pairs` method. When the pair criterion is purely based on bonds,  :any:`espressomd.cluster_analysis.ClusterStructure.run_for_bonded_particles` can be used.
 

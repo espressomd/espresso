@@ -43,7 +43,7 @@ activation to achieve the given accuracy::
     from espressomd import electrostatics
 
     system = espressomd.System()
-    solver = electrostatics.<SOLVER>(prefactor = C, <ADDITIONAL REQUIRED PARAMETERS>)
+    solver = electrostatics.<SOLVER>(prefactor=C, <ADDITIONAL REQUIRED PARAMETERS>)
     system.actors.add(solver)
 
 where the prefactor :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor`
@@ -163,8 +163,8 @@ surface. ICC relies on a Coulomb solver that is already initialized. So far, it
 is implemented and well tested with the Coulomb solver P3M. ICC is an |es|
 actor and can be activated via::
 
-	icc=ICC(<See the following list of ICC parameters>)
-	system.actors.add(icc)
+    icc = ICC(<See the following list of ICC parameters>)
+    system.actors.add(icc)
 
 Parameters are:
 
@@ -197,53 +197,53 @@ The ICC particles are setup as normal |es| particles. Note that they should be
 fixed in space and need an initial nonzero charge. The following usage example
 sets up parallel metallic plates and activates ICC::
 
-	# Set the ICC line density and calculate the number of
-	# ICC particles according to the box size
-	l = 3.2
-	nicc =int(box_l / l)
-	nicc_per_electrode = nicc * nicc
-	nicc_tot = 2 * nicc_per_electrode
-	iccArea = box_l * box_l / nicc_per_electrode
-	l=box_l / nicc
+    # Set the ICC line density and calculate the number of
+    # ICC particles according to the box size
+    l = 3.2
+    nicc = int(box_l / l)
+    nicc_per_electrode = nicc * nicc
+    nicc_tot = 2 * nicc_per_electrode
+    iccArea = box_l * box_l / nicc_per_electrode
+    l = box_l / nicc
 
-	# Lists to collect required parameters
-	iccNormals=[]
-	iccAreas=[]
-	iccSigmas=[]
-	iccEpsilons=[]
+    # Lists to collect required parameters
+    iccNormals = []
+    iccAreas = []
+    iccSigmas = []
+    iccEpsilons = []
 
-	# Add the fixed ICC particles:
+    # Add the fixed ICC particles:
 
-	# Left electrode (normal [0,0,1])
-	for xi in xrange(nicc):
-		for yi in xrange(nicc):
-			system.part.add(pos=[l * xi, l * yi, 0], q = -0.0001, fix = [1, 1, 1], type = icc_type)
-	iccNormals.extend([0, 0, 1] * nicc_per_electrode)
+    # Left electrode (normal [0,0,1])
+    for xi in xrange(nicc):
+        for yi in xrange(nicc):
+            system.part.add(pos=[l * xi, l * yi, 0], q=-0.0001, fix=[1, 1, 1], type=icc_type)
+    iccNormals.extend([0, 0, 1] * nicc_per_electrode)
 
-	# Right electrode (normal [0,0,-1])
-	for xi in xrange(nicc):
-		for yi in xrange(nicc):
-			system.part.add(pos=[l * xi, l * yi, box_l], q = 0.0001, fix = [1, 1, 1], type = icc_type)
-	iccNormals.extend([0, 0, -1] * nicc_per_electrode)
+    # Right electrode (normal [0,0,-1])
+    for xi in xrange(nicc):
+        for yi in xrange(nicc):
+            system.part.add(pos=[l * xi, l * yi, box_l], q=0.0001, fix=[1, 1, 1], type=icc_type)
+    iccNormals.extend([0, 0, -1] * nicc_per_electrode)
 
-	# Common area, sigma and metallic epsilon
-	iccAreas.extend([iccArea] * nicc_tot)
-	iccSigmas.extend([0] * nicc_tot)
-	iccEpsilons.extend([100000] * nicc_tot)
+    # Common area, sigma and metallic epsilon
+    iccAreas.extend([iccArea] * nicc_tot)
+    iccSigmas.extend([0] * nicc_tot)
+    iccEpsilons.extend([100000] * nicc_tot)
 
-	icc=ICC(first_id=0,
-			n_icc=nicc_tot,
-			convergence=1e-4,
-			relaxation=0.75,
-			ext_field=[0,0,0],
-			max_iterations=100,
-			eps_out = 1.0,
-			normals=iccNormals,
-			areas=iccAreas,
-			sigmas=iccSigmas,
-			epsilons=iccEpsilons)
+    icc = ICC(first_id=0,
+              n_icc=nicc_tot,
+              convergence=1e-4,
+              relaxation=0.75,
+              ext_field=[0, 0, 0],
+              max_iterations=100,
+              eps_out=1.0,
+              normals=iccNormals,
+              areas=iccAreas,
+              sigmas=iccSigmas,
+              epsilons=iccEpsilons)
 
-	system.actors.add(icc)
+    system.actors.add(icc)
 
 
 With each iteration, ICC has to solve electrostatics which can severely slow
@@ -468,8 +468,8 @@ the given bound. Note that the user has to take care that the particles don't
 leave the box in the non-periodic z-direction e.g. with constraints. By default,
 no dielectric contrast is set and it is used as::
 
-	mmm2d = electrostatics.MMM2D(prefactor=C, maxPWerror = 1e-3)
-	system.actors.add(mmm2d)
+    mmm2d = electrostatics.MMM2D(prefactor=C, maxPWerror=1e-3)
+    system.actors.add(mmm2d)
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
 For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`.
@@ -481,7 +481,8 @@ however is only used to calculate the contrasts. That is, specifying
 :math:`\epsilon_t=\epsilon_m=\epsilon_b=\text{const}` is always
 identical to :math:`\epsilon_t=\epsilon_m=\epsilon_b=1`::
 
-	mmm2d = electrostatics.MMM2D(prefactor = C, maxPWerror = 1e-3, dielectric = 1, top = 1, mid = 1, bot = 1)
+    mmm2d = electrostatics.MMM2D(prefactor=C, maxPWerror=1e-3, dielectric=1,
+                                 top=1, mid=1, bot=1)
 
 The second form specifies only the dielectric contrasts at the boundaries,
 that is :math:`\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}`
@@ -489,13 +490,14 @@ and :math:`\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}`.
 Using this form allows to choose :math:`\Delta_{t/b}=-1`, corresponding
 to metallic boundary conditions::
 
-	mmm2d = electrostatics.MMM2D(prefactor = C, maxPWerror = 1e-3, dielectric_contrast_on = 1, delta_mid_top = -1, delta_mid_bot = -1)
+    mmm2d = electrostatics.MMM2D(prefactor=C, maxPWerror=1e-3, dielectric_contrast_on=1,
+                                 delta_mid_top=-1, delta_mid_bot=-1)
 
 Using `const_pot` allows to maintain a constant electric potential difference `pot_diff`
 between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
 denotes the box length in :math:`z`-direction::
 
-	mmm2d = electrostatics.MMM2D(prefactor = 100.0, maxPWerror = 1e-3, const_pot = 1, pot_diff = 100.0)
+    mmm2d = electrostatics.MMM2D(prefactor=100.0, maxPWerror=1e-3, const_pot=1, pot_diff=100.0)
 
 This is done by countering the total dipole moment of the system with the
 electric field :math:`E_{induced}` and superposing a homogeneous electric field
@@ -530,7 +532,7 @@ periodic replica in **z-direction**. Make sure that you read the papers on ELC
 (:cite:`arnold02c,icelc`) before using it. ELC is an |es| actor and is used
 with::
 
-    elc = electrostatic_extensions.ELC(gap_size = box_l*0.2, maxPWerror = 1e-3)
+    elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3)
     system.actors.add(elc)
 
 
@@ -611,7 +613,8 @@ parameters.
 
 ::
 
-    mmm1d = MMM1D(prefactor=C, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d = MMM1D(prefactor=C, far_switch_radius=fr, maxPWerror=err, tune=False,
+                  bessel_cutoff=bc)
     mmm1d = MMM1D(prefactor=C, maxPWerror=err)
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
@@ -628,7 +631,8 @@ test force calculations.
 
 ::
 
-    mmm1d_gpu = MMM1DGPU(prefactor=C, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d_gpu = MMM1DGPU(prefactor=C, far_switch_radius=fr, maxPWerror=err,
+                         tune=False, bessel_cutoff=bc)
     mmm1d_gpu = MMM1DGPU(prefactor=C, maxPWerror=err)
 
 MMM1D is also available in a GPU implementation. Unlike its CPU
@@ -664,8 +668,8 @@ cutoff to :math:`1.5` and tune the other parameters for an accuracy of
 :math:`10^{-3}`, use::
 
   from espressomd.electrostatics import Scafacos
-  scafacos=Scafacos(prefactor=1,method_name="ewald",
-    method_params={"ewald_r_cut":1.5, "tolerance_field":1e-3})
+  scafacos = Scafacos(prefactor=1, method_name="ewald",
+                      method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
   system.actors.add(scafacos)
 
 

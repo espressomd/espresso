@@ -142,7 +142,7 @@ This should be followed by further necessary imports of the example at hand: ::
 Access to the simulation system is provided via the System class. As a
 first step, an instance of this class needs to be created. ::
 
-    system = espressomd.System(box_l = [10,10,10])
+    system = espressomd.System(box_l=[10, 10, 10])
 
 Note that only one instance of the System class can be created due to
 limitations in the simulation core. :ref:`Properties of the System
@@ -158,8 +158,8 @@ concerning the simulation system such as box geometry, time step or :ref:`cell-s
 The particles in the simulation are accessed via ``system.part``, an instance of the ParticleList class. Use
 the `add` method to :ref:`create new particles<Adding particles>`: ::
 
-    system.part.add(id = 0, pos = [1.0, 1.0, 1.0], type = 0)
-    system.part.add(id = 1, pos = [1.0, 1.0, 2.0], type = 0)
+    system.part.add(id=0, pos=[1.0, 1.0, 1.0], type=0)
+    system.part.add(id=1, pos=[1.0, 1.0, 2.0], type=0)
 
 Individual particles can be retrieved by their numerical id using angular
 brackets::
@@ -211,20 +211,21 @@ Instances of these classes for a given pair of particle types are accessed via
 the non_bonded_inter attribute of the System class. This sets up a Lennard Jones
 interaction between all particles of type 0 with the given parameters: ::
 
-    system.non_bonded_inter[0,0].lennard_jones.set_params(epsilon = 1, sigma = 1, cutoff = 5.0, shift = "auto")
+    system.non_bonded_inter[0, 0].lennard_jones.set_params(
+        epsilon=1, sigma=1, cutoff=5.0, shift="auto")
 
 .. rubric:: Bonded interaction
 
 Next, we add another pair of particles with a different type to later add
 a :ref:`harmonic bond<Harmonic bond>` between them: ::
 
-    system.part.add(id = 2, pos = [7.0, 7.0, 7.0], type = 1)
-    system.part.add(id = 3, pos = [7.0, 7.0, 8.0], type = 1)
+    system.part.add(id=2, pos=[7.0, 7.0, 7.0], type=1)
+    system.part.add(id=3, pos=[7.0, 7.0, 8.0], type=1)
 
 To set up a bonded interaction, first an instance of the appropriate
 class is created with the desired parameters: ::
 
-    harmonic = HarmonicBond(k = 1.0, r_0 = 0.5)
+    harmonic = HarmonicBond(k=1.0, r_0=0.5)
 
 Then, the bonded interaction is registered in the simulation core
 by adding the instance to `bonded_inter`: ::
@@ -242,14 +243,14 @@ partner particle: ::
 Now we want to setup a pair of charged particles treated by the P3M
 electrostatics solver. We start by adding the particles: ::
 
-    system.part.add(id = 4, pos = [4.0, 1.0, 1.0], type = 2, q = 1.0)
-    system.part.add(id = 5, pos = [6.0, 1.0, 1.0], type = 2, q = -1.0)
+    system.part.add(id=4, pos=[4.0, 1.0, 1.0], type=2, q=1.0)
+    system.part.add(id=5, pos=[6.0, 1.0, 1.0], type=2, q=-1.0)
 
 Long-range interactions and other methods that might be mutually exclusive
 are treated as so-called *actors*. They are used by first creating an instance
 of the desired actor::
 
-    p3m = P3M(accuracy = 1e-3, prefactor = 1.0)
+    p3m = P3M(accuracy=1e-3, prefactor=1.0)
 
 and then adding it to the system: ::
 
@@ -273,10 +274,8 @@ of the system are printed: ::
     num_steps = 1000
 
     for i in range(num_configs):
-
         system.integrator.run(num_steps)
-
-    	energy = system.analysis.energy()
+        energy = system.analysis.energy()
         print("System time: {}".format(system.time))
         print("Energy of the LJ interaction: {}".format(energy["non_bonded"]))
         print("Energy of the harmonic bond: {}".format(energy["bonded"]))

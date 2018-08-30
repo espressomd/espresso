@@ -25,7 +25,7 @@ In order to add particles to the system, call
 :meth:`espressomd.particle_data.ParticleList.add`::
 
     import espressomd
-    system=espressomd.System()
+    system = espressomd.System()
     system.part.add(pos=[1.0, 1.0, 1.0], id=0, type=0)
 
 This command adds a single particle to the system with properties given
@@ -35,11 +35,11 @@ All available particle properties are members of :class:`espressomd.particle_dat
 It is also possible to add several particles at once::
 
     import numpy as np
-    system.part.add(pos=np.random.random((10,3)*box_length))
+    system.part.add(pos=np.random.random((10, 3) * box_length))
 
 Furthermore, the :meth:`espressomd.particle_data.ParticleList.add` method returns the added particle(s)::
 
-    tracer=system.part.add(pos=(0,0,0))
+    tracer = system.part.add(pos=(0, 0, 0))
     print(tracer.pos)
 
 Note that the instance of :class:`espressomd.particle_data.ParticleHandle` returned by :meth:`espressomd.particle_data.ParticleList.add` are handles for the live particles in the simulation, rather than offline copies. Changing their properties will affect the simulation.
@@ -61,7 +61,7 @@ For example, to print the current position of the particle with index 0 in the s
 
 Similarly, the position can be set::
 
-    system.part[0].pos=(1,2.5,3)
+    system.part[0].pos = (1, 2.5, 3)
 
 .. _Vectorial properties:
 
@@ -83,7 +83,7 @@ Interacting with groups of particles
 The :class:`espressomd.particle_data.ParticleList` support slicing similarly to lists and NumPy arrays. To access all existing particles, use a colon::
 
     print(sysstem.part[:].pos)
-    system.part[:].q=0
+    system.part[:].q = 0
 
 To access particles with indices ranging from 0 to 9, use::
 
@@ -155,7 +155,7 @@ You can iterate over all particles or over a subset of particles as follows::
 You can iterate over all pairs of particles using::
 
     for pair in system.part.pairs():
-        print(pair[0].id,pair[1].id)
+        print(pair[0].id, pair[1].id)
 
 
 .. _Exclusions:
@@ -312,10 +312,10 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
     import espressomd
     from espressomd.virtual_sites import VirtualSitesOff, VirtualSitesRelative
 
-    s=espressomd.System()
-    s.virtual_sites=VirtualSitesRelative(have_velocity=True, have_quaternion=False)
+    s = espressomd.System()
+    s.virtual_sites = VirtualSitesRelative(have_velocity=True, have_quaternion=False)
     # or
-    s.virtual_sites=VirtualSitesOff()
+    s.virtual_sites = VirtualSitesOff()
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
 The `have_velocity` parameter determines whether or not the velocity of virtual sites is calculated, which carries a performance cost.
@@ -358,7 +358,7 @@ To set up a virtual site,
 #. Place a particle at the desired relative position, make it virtual
    and relate it to the first particle::
 
-       p=system.part.add(pos=(1,2,3))
+       p = system.part.add(pos=(1, 2, 3))
        p.vs_auto_relate_to(<ID>)
 
    where <ID> is the id of the central particle. This will also set the :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on the particle to 1.
@@ -413,7 +413,7 @@ The feature stems from the implementation of the :ref:`Immersed Boundary Method 
 
 For correct results, the LB thermostat has to be deactivated for virtual sites::
 
-   system.thermostat.set_lb(kT=0,act_on_virtual=False)
+   system.thermostat.set_lb(kT=0, act_on_virtual=False)
 
 Please note that the velocity attribute of the virtual particles does not carry valid information for this virtual sites scheme.
 
@@ -515,7 +515,7 @@ individual type and so random ids of particles of a certain type can be
 drawn.  ::
 
     import espressomd
-    system=espressomd.System()
+    system = espressomd.System()
     system.setup_type_map([_type])
     system.find_particle(_type)
     system.number_of_particles(_type)
@@ -533,9 +533,9 @@ chosen particle id, for a particle of the given type. The keyword
 particles which have the given type. For counting the number of particles of a given type you could also use :meth:`espressomd.particle_data.ParticleList.select` ::
 
     import espressomd
-    system=espressomd.System()
+    system = espressomd.System()
     ...
-    number_of_particles=len(system.part.select(type=type))
+    number_of_particles = len(system.part.select(type=type))
 
 However calling select(type=type) results in looping over all particles. Therefore calling select() is slow compared to using :meth:`espressomd.system.System.number_of_particles` which directly can return the number of particles with that type.
 
@@ -564,7 +564,7 @@ Langevin swimmers
 
     system = espressomd.System()
 
-    system.part.add(id=0, pos=[1,0,0], swimming={'f_swim':0.03})
+    system.part.add(id=0, pos=[1, 0, 0], swimming={'f_swim': 0.03})
 
 This enables the particle to be self-propelled in the direction determined by
 its quaternion. For setting the particle's quaternion see
@@ -591,8 +591,8 @@ Lattice-Boltzmann (LB) swimmers
 
     system = espressomd.System()
 
-    system.part.add(id=1, pos=[2,0,0], rotation=[1,1,1], swimming={
-       'f_swim':0.01, 'mode':'pusher', 'dipole_length':2.0, 'rotational_friction':20})
+    system.part.add(id=1, pos=[2, 0, 0], rotation=[1, 1, 1], swimming={
+        'f_swim': 0.01, 'mode': 'pusher', 'dipole_length': 2.0, 'rotational_friction': 20})
 
 For an explanation of the parameters ``v_swim`` and ``f_swim`` see the previous
 item. In lattice-Boltzmann self-propulsion is less trivial than for regular MD,
