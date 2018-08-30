@@ -5,7 +5,7 @@ This sample sets up a polymer and tests the available cell systems.
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #

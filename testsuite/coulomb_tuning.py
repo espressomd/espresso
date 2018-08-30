@@ -1,6 +1,6 @@
 
 #
-# Copyright (C) 2017 The ESPResSo project
+# Copyright (C) 2017-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #

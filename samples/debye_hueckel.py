@@ -3,7 +3,7 @@ This sample simulates monovalent salt (equal number of positive and negative uni
 """
 
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #

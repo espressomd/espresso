@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010,2011,2012,2013,2014, 2015,2016 The ESPResSo project            #
+# Copyright (C) 2010-2018 The ESPResSo project            #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -30,6 +30,7 @@ import numpy as np
 import os
 import sys
 
+import espressomd
 from espressomd import assert_features
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
@@ -70,7 +71,7 @@ vel = float(sys.argv[1])
 
 # create an output folder
 
-outdir = "./RESULTS_ENHANCED_DIFFUSION/"
+outdir = "./RESULTS_RECTIFICATION"
 try:
     os.makedirs(outdir)
 except:
