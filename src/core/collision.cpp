@@ -588,8 +588,8 @@ void handle_collisions() {
     for (auto &c : gathered_queue) {
 
       // Get particle pointers
-      Particle* p1 = local_particles[c.pp1];
-      Particle* p2 = local_particles[c.pp2];
+      Particle *p1 = local_particles[c.pp1];
+      Particle *p2 = local_particles[c.pp2];
 
       // Only nodes take part in particle creation and binding
       // that see both particles
@@ -648,12 +648,11 @@ void handle_collisions() {
           if (!p1->l.ghost) {
             place_vs_and_relate_to_particle(current_vs_pid, pos1, c.pp1,
                                             initial_pos);
-            // Particle storage locations may have changed due to 
+            // Particle storage locations may have changed due to
             // added particle
             p1 = local_particles[c.pp1];
             p2 = local_particles[c.pp2];
-          }
-          else // update the books
+          } else // update the books
             added_particle(current_vs_pid);
 
           // Increment counter
@@ -663,12 +662,11 @@ void handle_collisions() {
           if (!p2->l.ghost) {
             place_vs_and_relate_to_particle(current_vs_pid, pos2, c.pp2,
                                             initial_pos);
-            // Particle storage locations may have changed due to 
+            // Particle storage locations may have changed due to
             // added particle
             p1 = local_particles[c.pp1];
             p2 = local_particles[c.pp2];
-          }
-          else // update the books
+          } else // update the books
             added_particle(current_vs_pid);
 
           // Increment counter
