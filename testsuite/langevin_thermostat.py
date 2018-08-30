@@ -83,7 +83,7 @@ class LangevinThermostat(ut.TestCase):
         if espressomd.has_features("ROTATION"):
             system.part[:].rotation = 1, 1, 1
 
-        kT = 1.1 
+        kT = 1.1
         gamma = 3.5
         system.thermostat.set_langevin(kT=kT, gamma=gamma)
 
@@ -123,7 +123,7 @@ class LangevinThermostat(ut.TestCase):
         if espressomd.has_features("ROTATION"):
             system.part[:].rotation = 1, 1, 1
 
-        kT = 0.9 
+        kT = 0.9
         gamma = 3.2
         gamma2 = 4.3
         kT2 = 1.5

@@ -113,7 +113,7 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
-        num_samples = 200 
+        num_samples = 200
         for i in range(num_samples):
             RE.reaction(10)
             average_NH += system.number_of_particles(type=type_H)
