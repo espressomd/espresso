@@ -46,6 +46,10 @@ struct is_instance_of : public std::false_type {};
 
 template <typename... T, template <typename...> class Template>
 struct is_instance_of<Template<T...>, Template> : public std::true_type {};
+
+template <bool P, typename T = void>
+using enable_if_t = typename std::enable_if<P, T>::type;
+
 } // namespace Utils
 
 #endif
