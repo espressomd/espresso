@@ -215,7 +215,7 @@ combined whereas each inner list contains one line. Each lines stores a
 different combination of the radial and axial index. The output might
 look something like this
 
-::
+.. code-block:: numpy
 
     [ [ 0 0 0.05 -0.25 0.0314159 0 0 0 0 0 0 ]
       [ 0 1 0.05 0.25 0.0314159 31.831 1.41421 1 0 0 0 ]
@@ -1026,7 +1026,7 @@ For example, a distance criterion which will consider particles as neighbors if 
     dc=DistanceCriterion(cut_off=0.11)
 
 To obtain the cluster structure of a system, an instance of :class:`espressomd.cluster_analysis.ClusterStructure` has to be created.
-To to create a cluster structure with above criterion:::
+To to create a cluster structure with above criterion::
 
     from espressomd.cluster_analysis import ClusterStructure
     cs=ClusterStructure(distance_criterion=dc)

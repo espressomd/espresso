@@ -125,7 +125,7 @@ Whether or not rotational degrees of freedom are propagated, is controlled on a 
 It is important to note that starting from version 4.0 and unlike in earlier versions of |es|, the particles' rotation is disabled by default.
 In this way, just compiling in the ROTATION feature no longer changes the physics of the system.
 
-The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled:::
+The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled::
 
     import espressomd
     s=espressomd.System()

@@ -135,6 +135,7 @@ particles due to this constraint. Similarly, the total energy does not
 contain constraint-constraint contributions.
 
 For example the pressure from wall ::
+
     >>> p = system.constraints[0].total_force()
     >>> print(p)
 
@@ -274,7 +275,7 @@ corner ``corner`` with its three neighboring corners:
 ``a`` ``[ax ay az ]``; ``b`` ``[bx by bz]`` and ``c`` ``[cx cy cz]``.
 The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
- ::
+::
 
     rhomboid = Rhomboid(pos=[5.0, 5.0, 5.0], a=[1.0, 1.0, 0.0], b=[0.0, 0.0, 1.0], c=[0.0, 1.0, 0.0], direction=1)
     system.constraints.add(shape=rhomboid, particle_type=0, penetrable=1)

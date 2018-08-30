@@ -79,14 +79,14 @@ Optionally the ccmake utility can be installed for easier configuration:
 
 .. code-block:: bash
 
-    $ sudo apt install cmake-curses-gui
+    sudo apt install cmake-curses-gui
 
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:
 
 .. code-block:: bash
 
-    $ sudo apt install nvidia-cuda-toolkit
+    sudo apt install nvidia-cuda-toolkit
 
 .. _Installing Requirements on Mac OS X:
 
@@ -196,7 +196,9 @@ other things:
 *  It can build this documentation: ``make sphinx``
 
 When these steps have successfully completed, |es| can be started with the
-command::
+command:
+
+.. code-block:: bash
 
     ./pypresso <SCRIPT>
 
@@ -207,7 +209,7 @@ have compiled with *Open MPI*, and need to tell MPI to run in parallel. The actu
 invocation is implementation dependent, but in many cases, such as
 *Open MPI*, you can use
 
-::
+.. code-block:: bash
 
     mpirun -n <N> ./pypresso <SCRIPT>
 
@@ -254,18 +256,20 @@ different configuration headers:
 
 *  ``$builddir1/myconfig.hpp``:
 
-.. code-block:: c
+  .. code-block:: c++
 
     #define ELECTROSTATICS
     #define LENNARD-JONES
 
 *  ``$builddir2/myconfig.hpp``:
 
-.. code-block:: c
+  .. code-block:: c++
 
-   #define LJCOS
+    #define LJCOS
 
-Then you can simply compile two different versions of via::
+Then you can simply compile two different versions of via:
+
+.. code-block:: bash
 
     cd builddir1
     cmake ..
@@ -275,11 +279,15 @@ Then you can simply compile two different versions of via::
     cmake ..
     make
 
-To see, what features were activated in myconfig.hpp, run:::
+To see, what features were activated in myconfig.hpp, run:
+
+.. code-block:: bash
 
     ./pypresso
 
-and then in the Python interpreter::
+and then in the Python interpreter:
+
+.. code-block:: python
 
     import espressomd
     print(espressomd.features())
@@ -297,7 +305,7 @@ Features can be activated in the configuration header ``myconfig.hpp`` (see
 section :ref:`myconfig.hpp\: Activating and deactivating features`). To
 activate ``FEATURE``, add the following line to the header file:
 
-::
+.. code-block:: c++
 
     #define FEATURE
 
@@ -695,9 +703,9 @@ are ever modified by the build process.
 
 .. code-block:: bash
 
-    $ cd build
-    $ cmake ..
-    $ make
+    cd build
+    cmake ..
+    make
 
 Afterwards Espresso can be run via calling ``./pypresso`` from the command
 line.
@@ -718,9 +726,9 @@ followed by a call to make:
 
 .. code-block:: bash
 
-    $ cd build
-    $ ccmake ..
-    $ make
+    cd build
+    ccmake ..
+    make
 
 Fig. :ref:`ccmake-figure` shows the interactive ccmake UI.
 
@@ -757,7 +765,9 @@ options are available:
 When the value in the CMakeLists.txt file is set to ON the corresponding
 option is created if the value of the option is set to OFF the
 corresponding option is not created. These options can also be modified
-by calling cmake with the command line argument ``-D``::
+by calling cmake with the command line argument ``-D``:
+
+.. code-block:: bash
 
     cmake -D WITH_HDF5=OFF srcdir
 
@@ -778,7 +788,7 @@ command is:
 
 .. code-block:: bash
 
-    $ make [options] [target] [variable=value]
+    make [options] [target] [variable=value]
 
 When no target is given, the target ``all`` is used. The following
 targets are available:
@@ -837,7 +847,7 @@ src/python folder under the build directory. A convenient way to run
 python with the correct path is to use the pypresso script located in
 the build directory.
 
-::
+.. code-block:: bash
 
     ./pypresso simulation.py
 

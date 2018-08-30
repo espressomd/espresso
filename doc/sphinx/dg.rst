@@ -34,7 +34,10 @@ Required Development Tools
 -  To be able to access the development version of |es|, you will need
    the distributed versioning control system git_.
 
--  To build the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
+-  To build the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue:
+
+   .. code-block:: bash
+
       pip install --upgrade --user -r requirements.txt
 
    Note, that some distributions now use ``pip`` for Python3 and ``pip2`` for Python 2.
@@ -53,7 +56,9 @@ Getting the Development Code
 ----------------------------
 We use Github for storing the source code and its history, and for managing the development process.
 The repository is located at http://github.com/espressomd/espresso.
-To get the current development code, run::
+To get the current development code, run:
+
+.. code-block:: bash
 
   git clone git://github.com/espressomd/espresso
 
@@ -83,14 +88,19 @@ Adding New Source Files
 
 To add new files to |es| (like C++ source files or header files) you
 need to look at the CMakeList.txt in the directory where the file is located.
+
 * Please note that .hpp-header files usually do not have to be added to CMakeList.txt
-* In some cases (e.g., src/core/CMakeList.txt), the CMakeList.txt contains a wild-card include like this::
+* In some cases (e.g., src/core/CMakeList.txt), the CMakeList.txt contains a wild-card include like this:
+
+  .. code-block:: cmake
 
       file(GLOB EspressoCore_SRC *.cpp)
 
   In this case, placing a file with that ending is enough.
 
-* In other cases, the files are explicitly included (e.g., testsuite/python/CMakeList)::
+* In other cases, the files are explicitly included (e.g., testsuite/python/CMakeList):
+
+  .. code-block:: cmake
 
       set(py_tests  bondedInteractions.py
                    cellsystem.py
@@ -109,11 +119,13 @@ Testsuite
   -  C++-unit tests, testing individual C++ functions and classes. They make use of the boost unit test framework and reside in ``src/core/unit_tests``
   -  Python integration tests, testing the Python interface and (physical) results of features. They reside in ``testsuite/python``
 
--  To execute the tests, run::
+- To execute the tests, run:
+
+  .. code-block:: bash
 
      make check
 
-   in the top build directory.
+  in the top build directory.
 
 
 .. _Documentation:
@@ -216,7 +228,7 @@ Espresso uses two communication models, namely master-slave and synchronous.
 * When Espresso does not run an integration, it works in the master-slave mode, i.e. the head node (MPI rank 0) in a parallel simulation
   runs the Python script, whereas all other nodes are idle until they receive a command from the head node. Such commands include particle creation,
   changing of particle properties and changing global simulation parameters.
-  When a Python command such as:::
+  When a Python command such as::
 
     system.part.add(pos=(1,2,3))
 
@@ -235,13 +247,17 @@ Adding calls to the master-slave framework
 Using an instance of MpiCallback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Write the callback slave function, which will be executed on all nodes except the head node (0)::
+* Write the callback slave function, which will be executed on all nodes except the head node (0):
+
+  .. code-block:: c++
 
     void my_callback(int p1, int p2) {
       // Do something. The two int-parameters can be used for anything
     }
 
-* On all nodes, the callback has to be registered::
+* On all nodes, the callback has to be registered:
+
+  .. code-block:: c++
 
     #include "MpiCallbacks.hpp"
     void register_my_callback() {
@@ -250,7 +266,9 @@ Using an instance of MpiCallback
 
   You can, e.g., call your registration from initialize.cpp:on_program_start()
   Instead of a static function, from which a ``std::function<void(int,int)>`` can be constructed can
-  be used. For example::
+  be used. For example:
+
+  .. code-block:: c++
 
     #include "MpiCallbacks.hpp"
     void register_my_callback() {
@@ -258,7 +276,9 @@ Using an instance of MpiCallback
     }
 
   can be used to add a lambda function as callback.
-* Then, you can use your callback from the head node::
+* Then, you can use your callback from the head node:
+
+  .. code-block:: c++
 
     #include "MpiCallbacks.hpp"
     void call_my_callback() {
@@ -297,14 +317,18 @@ The data structures for bonded interactions reside in ``interaction_data.hpp``.
 
 * Add your interaction to the ``enum BondedInteraction``.
   This enumeration is used to identify different bonded interactions.
-* Add a typedef struct containing the parameters of the interaction. Use the one for the FENE interaction as template::
+* Add a typedef struct containing the parameters of the interaction. Use the one for the FENE interaction as template:
+
+  .. code-block:: c++
 
     typedef struct {
       double k;
       [...]
     } Fene_bond_parameters;
 
-* Add a member to the typedef union Bond_parameters. For the FENE bond it looks like this::
+* Add a member to the typedef union Bond_parameters. For the FENE bond it looks like this:
+
+  .. code-block:: c++
 
     Fene_bond_parameters fene;
 
@@ -319,7 +343,9 @@ Use these two files as templates for your interaction.
 Notes:
 
 * The names of function arguments mentioned below are taken from the FENE bond in ``src/core/fene.cpp`` and ``src/core/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction.
-* The recommended signatures of the force and energy functions are::
+* The recommended signatures of the force and energy functions are:
+
+  .. code-block:: c++
 
     inline int calc_fene_pair_force(Particle *p1, Particle *p2,
                                 Bonded_ia_parameters *iaparams,
@@ -330,7 +356,9 @@ Notes:
 
   Here, ``fene`` needs to be replaced by the name of the new interaction.
 * The setter function gets a ``bond_type`` which is a numerical id identifying the number of the bond type in the simulation. It DOES NOT determine the type of the bond potential (harmonic vs FENE).
-  The signature of the setter function has to contain the ``bond_type``, the remaining parameters are specific to the interaction. For the FENE bond, e.g., we have::
+  The signature of the setter function has to contain the ``bond_type``, the remaining parameters are specific to the interaction. For the FENE bond, e.g., we have:
+
+  .. code-block:: c++
 
     fene_set_params(int bond_type, double k, double drmax, double r0)
 
@@ -339,8 +367,12 @@ Notes:
 * Afterwards, the bond parameters can be stored in the global variable bonded_ia_params[bond_type]
 
   * bonded_ia_params[bond_type].num is the number of particles involved in the bond -1. I.e., 1 for a pairwise bonded potential such as the FENE bond.
-  * The parameters for the individual bonded interaction go to the member of Bond_parameters for your interaction defined in the previous step. For the FENE bond, this would be::
-    bonded_ia_params[bond_tpe].p.fene
+  * The parameters for the individual bonded interaction go to the member of Bond_parameters for your interaction defined in the previous step. For the FENE bond, this would be:
+
+    .. code-block:: c++
+
+      bonded_ia_params[bond_tpe].p.fene
+
 * At the end of the parameter setter function, do not forget the call to mpi_bcast_ia_params(), which will sync the parameters just set to other compute nodes in a parallel simulation.
 * The routines for calculating force and energy return an integer. A return value of 0 means OK, a value of 1 means that the particles are too far apart and the bond is broken. This will stop the integration with a runtime error.
 * The functions for calculating force and energy can make use of a pre-calculated distance vector (dx) pointing from particle 2 to particle 1.
@@ -373,7 +405,9 @@ Including the bonded interaction in the force calculation and the energy and pre
 
 * Force calculation: in ``forces_inline.hpp`` in the function
   ``add_bonded_force()``, add your bond to the switch statement. For the FENE
-  bond, e.g., the code looks like this::
+  bond, e.g., the code looks like this:
+
+  .. code-block:: c++
 
     case BONDED_IA_FENE:
       bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
@@ -391,7 +425,9 @@ Adding the bonded interaction in the Python interface
 Please note that the following is Cython code (www.cython.org), rather than pure Python.
 * In ``src/python/espressomd/interactions.pxd``:
 
-  * import the parameter data structure from the C++ header file for your interaction. For the FENE bond, this looks like::
+  * import the parameter data structure from the C++ header file for your interaction. For the FENE bond, this looks like:
+
+    .. code-block:: cython
 
       cdef extern from "interaction_data.hpp":
           ctypedef struct Fene_bond_parameters:
@@ -401,7 +437,9 @@ Please note that the following is Cython code (www.cython.org), rather than pure
               double drmax2
               double drmax2i
 
-  * Add your bonded interaction to the Cython copy of the BondedInteractions enum analogous to the one in the core:, described above::
+  * Add your bonded interaction to the Cython copy of the BondedInteractions enum analogous to the one in the core:, described above:
+
+    .. code-block:: cython
 
       cdef enum enum_bonded_interaction "BondedInteraction":
           BONDED_IA_NONE = -1,
@@ -410,20 +448,29 @@ Please note that the following is Cython code (www.cython.org), rather than pure
           [...]
 
     The spelling has to match the one in the C++ enum exactly.
-  * Adapt the Cython copy of the bond_parameters union analogous to the C++ core.  The member name has to match the one in C++ exactly::
+  * Adapt the Cython copy of the bond_parameters union analogous to the C++ core.  The member name has to match the one in C++ exactly:
+
+    .. code-block:: cython
+
       ctypedef union bond_parameters "Bond_parameters":
           Fene_bond_parameters fene
           Oif_global_forces_bond_parameters oif_global_forces
           Oif_local_forces_bond_parameters oif_local_forces
           Harmonic_bond_parameters harmonic
-  * Import the declaration of the setter function implemented in the core. For the FENE bond, this looks like::
+
+  * Import the declaration of the setter function implemented in the core. For the FENE bond, this looks like:
+
+    .. code-block:: cython
+
         cdef extern from "fene.hpp":
             int fene_set_params(int bond_type, double k, double drmax, double r0)
 
 * In ``src/python/espressomd/interactions.pyx``:
 
   * Implement the Cython class for the bonded interaction, using the one for
-    the FENE bond as template. Please use pep8 naming convention::
+    the FENE bond as template. Please use pep8 naming convention:
+
+    .. code-block:: cython
 
         class FeneBond(BondedInteraction):
 

@@ -672,7 +672,9 @@ and involved types.
 
 The samples folder contains the script *drude_bmimpf6.py* with a fully
 polarizable, coarse grained ionic liquid where this approach is applied.
-To use the script, compile espresso with the following features::
+To use the script, compile espresso with the following features:
+
+.. code-block:: c++
 
     #define EXTERNAL_FORCES
     #define MASS

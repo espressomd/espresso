@@ -591,6 +591,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     force, and should therefore be used with caution.
 
     example ::
+
         >>> angle_harmonic=AngleHarmonic(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_harmonic)
         >>> system.part[1].add_bond((angle_harmonic, 0, 2))
@@ -615,6 +616,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     periodic and smooth for all angles :math:`\phi`.
 
     example ::
+
         >>> angle_cosine=AngleCosine(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cosine)
         >>> system.part[1].add_bond((angle_cosine, 0, 2))
@@ -630,6 +632,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     therefore much flatter than the two potentials before.
 
     example ::
+
         >>> angle_cossquare=AngleCossquare(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cossquare)
         >>> system.part[1].add_bond((angle_cossquare, 0, 2))

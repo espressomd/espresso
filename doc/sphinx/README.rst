@@ -1,16 +1,22 @@
 How to get started with SPHINX
 ==============================
 
-#. Install the latest stable sphinx version via pip::
+#. Install the latest stable sphinx version via pip:
+
+.. code-block:: bash
 
     pip2 install git+https://github.com/sphinx-doc/sphinx@stable --user --upgrade
 
-#. Install a bibtex extension to Sphinx::
+#. Install a bibtex extension to Sphinx:
+
+.. code-block:: bash
 
     pip2 install sphinxcontrib-bibtex --user --upgrade
 
 #. Compile the ``sphinx`` target in your build directory (that can take some time
-   since we depend on finishing the build of the interface)::
+   since we depend on finishing the build of the interface):
+
+.. code-block:: bash
 
       make sphinx
 

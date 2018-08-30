@@ -22,6 +22,7 @@ The collision detection is controlled via the :attr:`espressomd.system.System.co
 Several modes are available for different types of binding.
 
 * "bind_centers": adds a pair-bond between two particles at their first collision. By making the bonded interaction `stiff` enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
+
     import espressomd
     from espressomd.interactions import HarmonicBond
 
@@ -659,7 +660,7 @@ Running the simulation
 The script can be executed
 in terminal using
 
-::
+.. code-block:: bash
 
     ../pypresso script.py
 
@@ -718,7 +719,7 @@ File format
 ParaView (download at http://www.paraview.org) accepts .vtk files. For
 our cells we use the following format:
 
-::
+.. code-block:: none
 
     # vtk DataFile Version 3.0
     Data
@@ -756,7 +757,7 @@ surface points. These data can be scalar or vector values associated
 with all surface points. At the end of the .vtk file above, add the
 following lines:
 
-::
+.. code-block:: none
 
     POINT_DATA 393
     SCALARS sample_scalars float 1
@@ -797,7 +798,7 @@ individual triangles
 In such case, the keyword ``POINT_DATA`` is changed to ``CELL_DATA`` and the number of
 triangles is given instead of number of mesh points.
 
-::
+.. code-block:: none
 
     # vtk DataFile Version 3.0
     Data
@@ -832,7 +833,7 @@ corresponding to mesh nodes, these are specifies consecutively in the
 .vtk file, as follows. Their names (*scalars1* and *scalars2* in the
 following example) appear in a drop-down menu in ParaView.
 
-::
+.. code-block:: none
 
     POINT_DATA 393
     SCALARS scalars1 float 1
@@ -858,7 +859,7 @@ Vector data for objects .vtk file
   following structure of the .vtk file, where the vector at one point is
   [v1, v2, v3]:
 
-::
+.. code-block:: none
 
     POINT_DATA 393
     VECTORS vector_field float

@@ -144,7 +144,7 @@ Domain decomposition
 Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_domain_decomposition`
 selects the domain decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
-domain decomposition is used, but not the Verlet lists.::
+domain decomposition is used, but not the Verlet lists. ::
 
     system=espressomd.System()
 
@@ -173,7 +173,7 @@ the interactions for all particle pairs. Therefore it loops over all
 particles, giving an unfavorable computation time scaling of
 :math:`N^2`. However, algorithms like MMM1D or the plain Coulomb
 interaction in the cell model require the calculation of all pair
-interactions.::
+interactions. ::
 
     system=espressomd.System()
 
@@ -217,7 +217,7 @@ processor may be responsible for several layers, which is determined by
 ``n_layers``, i.e. the system is split into N\* layers along the z axis. Since in x
 and y direction there are no processor boundaries, the implementation is
 basically just a stripped down version of the domain decomposition
-cellsystem.::
+cellsystem. ::
 
     system=espressomd.System()
 
@@ -270,7 +270,7 @@ Langevin thermostat
 In order to activate the Langevin thermostat the member function
 :py:attr:`~espressomd.thermostat.Thermostat.set_langevin` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
-Best explained in an example:::
+Best explained in an example::
 
     import espressomd
     system = espressomd.System()
@@ -438,7 +438,7 @@ GPU-computations. Note that due to driver limitations, the GPU cannot be
 changed anymore after the first GPU-using command has been issued, for
 example ``lbfluid``. If you do not choose the GPU manually before that,
 CUDA internally chooses one, which is normally the most powerful GPU
-available, but load-independent.::
+available, but load-independent. ::
 
     system=espressomd.System()
 
@@ -472,7 +472,7 @@ List available CUDA devices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to list available CUDA devices
-you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g.,::
+you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g., ::
 
     system=espressomd.System()
 

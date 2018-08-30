@@ -32,12 +32,12 @@ This command adds a single particle to the system with properties given
 as arguments. The pos property is required, the id can be omitted, in which case it is chosen automatically.
 All available particle properties are members of :class:`espressomd.particle_data.ParticleHandle`.
 
-It is also possible to add several particles at once:::
+It is also possible to add several particles at once::
 
     import numpy as np
     system.part.add(pos=np.random.random((10,3)*box_length))
 
-Furthermore, the :meth:`espressomd.particle_data.ParticleList.add` method returns the added particle(s):::
+Furthermore, the :meth:`espressomd.particle_data.ParticleList.add` method returns the added particle(s)::
 
     tracer=system.part.add(pos=(0,0,0))
     print(tracer.pos)
@@ -168,7 +168,7 @@ This is typically used in atomistic simulations,
 where nearest and next nearest neighbor interactions along the chain have to be omitted since they are included in the bonding potentials.
 Exclusions do not apply to the short range part of electrostatics and magnetostatics methods, e.g. to P3M.
 
-  ::
+::
 
     system.part[0].add_exclusion(1)
 
@@ -177,7 +177,7 @@ Create exclusions for particles pairs 0 and 1.
 
 To delete the exclusion, simply use
 
-  ::
+::
 
     system.part[0].delete_exclusion(1)
 

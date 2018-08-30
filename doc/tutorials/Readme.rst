@@ -32,14 +32,21 @@ The remaining tutorials consist of a `.pdf`-file containing the explanations and
 Using the IPython tutorials
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To view the tutorials, IPython needs to be installed.
-To check, whether it is installed, run::
+To check, whether it is installed, run:
+
+.. code-block:: bash
 
     ipython --version
-If it is not found, on Ubuntu and related platforms, it can be installed via::
+
+If it is not found, on Ubuntu and related platforms, it can be installed via:
+
+.. code-block:: bash
 
     sudo apt install ipython-notebook
 
-To view the tutorials, first change to the tutorials directory and then run the `ipypresso` script from the directory into which espresso was compiled::
+To view the tutorials, first change to the tutorials directory and then run the `ipypresso` script from the directory into which espresso was compiled:
+
+.. code-block:: bash
 
     cd doc/tutorials
     /path_to_espresso_build/ipypresso notebook

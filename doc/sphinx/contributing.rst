@@ -86,5 +86,7 @@ contribute to the guide and have others benefit from your knowledge.
 For this, you should also checkout the development version as described
 on the homepage. You can then build the documentation by typing
 
-make sphinx
+.. code-block:: bash
+
+    make sphinx
 
