@@ -3,7 +3,7 @@ This sample simulates the Wang-Landau Reaction Ensemble for a harmonic bond.
 """
 
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #

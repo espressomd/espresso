@@ -3,7 +3,7 @@ This samples sets up a Lattice-Boltzmann fluid and applies an external force den
 """
 
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #

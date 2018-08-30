@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010,2011,2012,2013,2014, 2015,2016 The ESPResSo project            #
+# Copyright (C) 2010-2018 The ESPResSo project            #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -30,6 +30,7 @@ import numpy as np
 import os
 import sys
 
+import espressomd
 from espressomd import assert_features
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
@@ -73,7 +74,7 @@ vel = float(sys.argv[1])
 
 # create an output folder
 
-outdir = "./RESULTS_RECTIFICATION_SIMULATION/"
+outdir = "./RESULTS_RECTIFICATION"
 try:
     os.makedirs(outdir)
 except:
@@ -91,6 +92,7 @@ dt = 0.01
 # Setup the MD parameters
 
 system = espressomd.System(box_l=[length, diameter + 4, diameter + 4])
+system.set_random_state_PRNG()
 system.box_l = [length, diameter + 4, diameter + 4]
 system.cell_system.skin = 0.1
 system.time_step = dt
@@ -129,12 +131,9 @@ angle = pi / 4.0
 orad = (diameter - irad) / sin(angle)
 shift = 0.25 * orad * cos(angle)
 
-hollow_cone = HollowCone(position_x=length / 2.0 - shift,
-                         position_y=(diameter + 4) / 2.0,
-                         position_z=(diameter + 4) / 2.0,
-                         orientation_x=1,
-                         orientation_y=0,
-                         orientation_z=0,
+hollow_cone = HollowCone(
+    center=[length / 2.0 + shift, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
+    axis=[-1, 0, 0],
                          outer_radius=orad,
                          inner_radius=irad,
                          width=2.0,

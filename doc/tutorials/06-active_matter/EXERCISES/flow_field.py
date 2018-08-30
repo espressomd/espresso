@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010-2017 The ESPResSo project                                 #
+# Copyright (C) 2010-2018 The ESPResSo project                                 #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -28,6 +28,7 @@ from __future__ import print_function
 import numpy as np
 import os
 
+import espressomd
 from espressomd import assert_features, lb
 
 

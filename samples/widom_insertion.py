@@ -4,7 +4,7 @@ particles using the reaction ensemble method.
 """
 
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
