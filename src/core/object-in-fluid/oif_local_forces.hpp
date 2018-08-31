@@ -58,11 +58,6 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
                           double force[3], double force2[3], double force3[3],
                           double force4[3]) // first-fold-then-the-same approach
 {
-  double dx[3], fac, dr, len2, len, lambda;
-  double A, h[3], rh[3], hn;
-  double m1[3], m2[3], m3[3];
-  double v[3], def_vel;
-  double m1_length, m2_length, m3_length, t;
 
   auto const fp2 = unfolded_position(*p2);
   auto const fp1 = fp2 + get_mi_vector(p1->r.p, fp2);
