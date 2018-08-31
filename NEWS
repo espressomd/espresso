@@ -16,7 +16,8 @@ Transitioning from TCL-based versions
 
 The following can serve as a starting point for the new interface: 
 * The "Introduction" chapter in the user's guide
-* The tutorials in the /doc/tutorials directory of the distribution.
+* The tutorials provided with ESPResSo
+Both can be found at http://espressomd.org/wordpress/documentation
 
 Please note that, starting from ESPResSo 4.0, enabling additional features in myconfig.hpp no longer changes the behavior of a simulation scripts. Features such as particle rotation and virtual sites have to be activated explicitly in the simulation scripts.
 
