@@ -63,6 +63,7 @@ The following features are not part of the ESPResSo 4.0 release, but support is 
 * The com_force feature
 * The Shan Chen lattice Boltzmann extension
 * Lees-Edwards (shear) boundary conditions
+* The chain rdf analysis 
 
 The following functionality is removed permanently:
 * Blockfile support, which is replaced by support for the h5md format as well as checkpointing based on the pickle Python module.
@@ -91,9 +92,6 @@ The numbers refer to issue numbers at http://github.com/espressomd/espresso
 * The dipolar P3M method can only be tuned once in a simulation script,
   unless method parameters are explicitly reset to 0 before the second tuning 
   (#1937)
-* The chain-analysis routines (such as rdfchains) fail the test case in 
-  about 1% of the runs. There are likely corner cases in which the observables 
-  are not correctly calculated (#2187)
 * In rare cases, P3M produces an rs mesh overflow warning (#2067)
 * The H5MD file writer cannot handle bounds that involve more than two bond 
   partners (#1715)
