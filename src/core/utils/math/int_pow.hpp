@@ -24,6 +24,27 @@
 #define UTILS_MATH_INT_POW_HPP
 
 namespace Utils {
+namespace detail {
+template <class T, unsigned n> struct int_pow_impl {
+  T operator()(T x) const {
+    /** Even branch */
+    if (n % 2 == 0) {
+      return int_pow_impl<T, n / 2>{}(x * x);
+    } else {
+      return x * int_pow_impl<T, (n - 1) / 2>{}(x * x);
+    }
+  }
+};
+
+template <class T> struct int_pow_impl<T, 1> {
+  T operator()(T x) const { return x; }
+};
+
+template <class T> struct int_pow_impl<T, 0> {
+  T operator()(T x) const { return T{1}; }
+};
+}
+
 /**
  * \brief Calculate integer powers.
  * This functions calculates x^n, where
@@ -32,19 +53,7 @@ namespace Utils {
  * squaring to construct a efficient function.
  */
 template <unsigned n, typename T> inline T int_pow(T x) {
-  switch (n) {
-  case 0:
-    return T(1);
-  case 1:
-    return x;
-  default:
-    /** Even branch */
-    if (n % 2 == 0) {
-      return int_pow<n / 2, T>(x * x);
-    } else {
-      return x * int_pow<(n - 1) / 2, T>(x * x);
-    }
-  }
+  return detail::int_pow_impl<T, n>{}(x);
 }
 }
 

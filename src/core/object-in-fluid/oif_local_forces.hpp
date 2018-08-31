@@ -25,12 +25,14 @@
  *  \ref forces.cpp
  */
 
-#include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "grid.hpp"
-#include "config.hpp"
-#include "integrate.hpp"
+
+#include "utils/math/triangle_functions.hpp"
+using Utils::get_n_triangle;
+using Utils::angle_btw_triangles;
+using Utils::area_triangle;
 
 // set parameters for local forces
 int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal, double kvisc);
@@ -55,7 +57,6 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
 	int i, img[3];
 	Vector3d fp1,fp2,fp3,fp4;
 	double AA[3],BB[3],CC[3];
-    double n1[3],n2[3],dn1,dn2,phi,aa;
     double dx[3],fac,dr,len2,len,lambda;
     double A,h[3],rh[3],hn;
     double m1[3],m2[3],m3[3];
@@ -201,19 +202,17 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
        forceT1 is restoring force for triangle p1,p2,p3 and force2T restoring force for triangle p2,p3,p4
        p1 += forceT1; p2 -= 0.5*forceT1+0.5*forceT2; p3 -= 0.5*forceT1+0.5*forceT2; p4 += forceT2; */
     if (iaparams->p.oif_local_forces.kb > TINY_OIF_ELASTICITY_COEFFICIENT) {
-        get_n_triangle(fp2,fp1,fp3,n1);
-        dn1=normr(n1);
-        get_n_triangle(fp2,fp3,fp4,n2);
-        dn2=normr(n2);
-        phi = angle_btw_triangles(fp1,fp2,fp3,fp4);
+      auto const n1 = get_n_triangle(fp2,fp1,fp3).normalize();
+      auto const n2 = get_n_triangle(fp2,fp3,fp4).normalize();
 
-        aa = (phi - iaparams->p.oif_local_forces.phi0); // no renormalization by phi0, to be consistent with Krueger and Fedosov
+        auto const phi = angle_btw_triangles(fp1,fp2,fp3,fp4);
+        auto const aa = (phi - iaparams->p.oif_local_forces.phi0); // no renormalization by phi0, to be consistent with Krueger and Fedosov
         fac = iaparams->p.oif_local_forces.kb * aa;
         for(i=0; i<3; i++) {
-            force[i] += fac * n1[i]/dn1;
-            force2[i] -= (0.5 * fac * n1[i]/dn1 + 0.5 * fac * n2[i]/dn2);
-            force3[i] -= (0.5 * fac * n1[i]/dn1 + 0.5 * fac * n2[i]/dn2);
-            force4[i] += fac * n2[i]/dn2;
+            force[i] += fac * n1[i];
+            force2[i] -= (0.5 * fac * n1[i] + 0.5 * fac * n2[i]);
+            force3[i] -= (0.5 * fac * n1[i] + 0.5 * fac * n2[i]);
+            force4[i] += fac * n2[i];
         }
     }
 

@@ -29,9 +29,13 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "interaction_data.hpp"
-#include "lb.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+
+#include "utils/math/triangle_functions.hpp"
+using Utils::get_n_triangle;
+using Utils::angle_btw_triangles;
+using Utils::area_triangle;
 
 /** set parameters for the OIF_GLOBAL_FORCES potential.
 */
@@ -71,7 +75,7 @@ void calc_oif_global(double *area_volume,
   double part_area_volume[2]; // added
 
   // z volume
-  double VOL_partVol = 0., VOL_A, VOL_norm[3], VOL_dn, VOL_hz;
+  double VOL_partVol = 0.;
 
   /** loop over particles */
   Particle *p1, *p2, *p3;
@@ -167,12 +171,12 @@ void calc_oif_global(double *area_volume,
         }
 
         // unfolded positions correct
-        VOL_A = area_triangle(p11, p22, p33);
+        auto const VOL_A = area_triangle(p11, p22, p33);
         partArea += VOL_A;
 
-        get_n_triangle(p11, p22, p33, VOL_norm);
-        VOL_dn = normr(VOL_norm);
-        VOL_hz = 1.0 / 3.0 * (p11[2] + p22[2] + p33[2]);
+        auto const VOL_norm = get_n_triangle(p11, p22, p33);
+        auto const VOL_dn = VOL_norm.norm();
+        auto const VOL_hz = 1.0 / 3.0 * (p11[2] + p22[2] + p33[2]);
         VOL_partVol += VOL_A * -1 * VOL_norm[2] / VOL_dn * VOL_hz;
       } else {
         j += n_partners;
@@ -192,7 +196,7 @@ void add_oif_global_forces(double *area_volume,
   double area = area_volume[0];
   double VOL_volume = area_volume[1];
   double VOL_force[3];
-  double VOL_A, VOL_norm[3], VOL_dn, VOL_vv;
+  double VOL_A, VOL_vv;
 
   double m1[3],m2[3],m3[3];
   double m1_length,m2_length,m3_length,t,fac;
@@ -296,8 +300,8 @@ void add_oif_global_forces(double *area_volume,
 
         // unfolded positions correct
         /// starting code from volume force
-        get_n_triangle(p11,p22,p33,VOL_norm);
-        VOL_dn=normr(VOL_norm);
+        auto const VOL_norm = get_n_triangle(p11,p22,p33);
+        auto const VOL_dn= VOL_norm.norm();
         VOL_A=area_triangle(p11,p22,p33);
         VOL_vv=(VOL_volume - iaparams->p.oif_global_forces.V0)/iaparams->p.oif_global_forces.V0;          
         for(k=0;k<3;k++) {

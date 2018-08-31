@@ -959,7 +959,6 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
 int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
                  int rbins, int tmax, double *msd, double **vanhove) {
   int c1, c3, c3_max, ind;
-  double p1[3], p2[3], dist;
   double bin_width, inv_bin_width;
   std::vector<int> ids;
 
@@ -982,13 +981,14 @@ int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
     c3_max = (c1 + tmax + 1) > n_configs ? n_configs : c1 + tmax + 1;
     for (c3 = (c1 + 1); c3 < c3_max; c3++) {
       for (auto const &id : ids) {
+        Vector3d p1, p2;
         p1[0] = configs[c1][3 * id];
         p1[1] = configs[c1][3 * id + 1];
         p1[2] = configs[c1][3 * id + 2];
         p2[0] = configs[c3][3 * id];
         p2[1] = configs[c3][3 * id + 1];
         p2[2] = configs[c3][3 * id + 2];
-        dist = distance(p1, p2);
+        auto const dist = (p1 - p2).norm();
         if (dist > rmin && dist < rmax) {
           ind = (int)((dist - rmin) * inv_bin_width);
           vanhove[(c3 - c1 - 1)][ind]++;
@@ -1112,7 +1112,7 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
 
   int i;
   // Number of doubles to store pressure in
-  int total = c_size * (n_pre + n_bonded_ia + n_non_bonded + n_coulomb +
+  int total = c_size * (n_pre + bonded_ia_params.size() + n_non_bonded + n_coulomb +
                         n_dipolar + n_vs);
 
   // Allocate mem for the double list
@@ -1128,7 +1128,7 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
   stat->n_virtual_sites = n_vs;
   // Pointers to the start of different contributions
   stat->bonded = stat->data.e + c_size * n_pre;
-  stat->non_bonded = stat->bonded + c_size * n_bonded_ia;
+  stat->non_bonded = stat->bonded + c_size * bonded_ia_params.size();
   stat->coulomb = stat->non_bonded + c_size * n_non_bonded;
   stat->dipolar = stat->coulomb + c_size * n_coulomb;
   stat->virtual_sites = stat->dipolar + c_size * n_dipolar;

@@ -132,7 +132,7 @@ inline void detect_collision(const Particle *const p1, const Particle *const p2,
 
 #ifdef VIRTUAL_SITES_RELATIVE
   // Ignore virtual particles
-  if ((p1->p.isVirtual) || (p2->p.isVirtual))
+  if ((p1->p.is_virtual) || (p2->p.is_virtual))
     return;
 #endif
 

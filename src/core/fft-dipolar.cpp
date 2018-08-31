@@ -29,16 +29,17 @@
 
 #ifdef DP3M
 
-#include <fftw3.h>
-/* our remapping of malloc interferes with fftw3's name mangling. */
-void *fftw_malloc(size_t n);
-
-#include <mpi.h>
-
 #include "communication.hpp"
 #include "fft-common.hpp"
 #include "grid.hpp"
 #include "debug.hpp"
+
+#include "utils/math/permute_ifield.hpp"
+using Utils::permute_ifield;
+
+#include <fftw3.h>
+#include <mpi.h>
+
 
 /************************************************
  * variables

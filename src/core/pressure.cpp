@@ -263,7 +263,7 @@ void init_virials(Observable_stat *stat)
 
 
   // Allocate memory for the data
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vs, 1);
+  obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded, n_coulomb, n_dipolar, n_vs, 1);
   stat->init_status = 0;
 }
 
@@ -316,7 +316,7 @@ void init_p_tensor(Observable_stat *stat)
   n_vs=virtual_sites()->n_pressure_contribs();
 #endif
 
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vs, 9);
+  obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded, n_coulomb, n_dipolar, n_vs, 9);
   stat->init_status = 0;
 }
 

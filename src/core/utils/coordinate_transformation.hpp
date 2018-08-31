@@ -1,6 +1,9 @@
 #ifndef UTILS_COORDINATE_TRANSFORMATION_HPP
 #define UTILS_COORDINATE_TRANSFORMATION_HPP
 
+#include "Vector.hpp"
+#include "vec_rotate.hpp"
+
 namespace Utils {
 
 /** \brief Transform the given 3D position to cylinder coordinates with

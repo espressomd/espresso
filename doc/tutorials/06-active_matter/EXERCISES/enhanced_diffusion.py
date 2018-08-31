@@ -62,7 +62,7 @@ tstep = 0.01
 # Why can we get away with such a small box?
 # Could it be even smaller?
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-
+system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.cell_system.skin = 0.3
 system.time_step = tstep

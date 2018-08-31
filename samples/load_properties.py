@@ -80,7 +80,7 @@ with open("thermostat_save", "rb") as thermostat_save:
 # warmup integration (with capped LJ potential)
 warm_steps = 100
 warm_n_times = 30
-# do the warmup until the particles have at least the distance min__dist
+# do the warmup until the particles have at least the distance min_dist
 min_dist = 0.9
 
 # integration

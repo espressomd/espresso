@@ -1,13 +1,19 @@
+"""
+This samples simulates the flow of a Lattice-Boltzmann fluid past a cylinder, obtains the velocity profile in polar coordinates and compares it with the analytical result.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 
 import espressomd
+
+required_features = ["LB_GPU","LB_BOUNDARIES_GPU"]
+espressomd.assert_features(required_features)
+
 import espressomd.lb
 import espressomd.observables
 import espressomd.shapes
 import espressomd.lbboundaries
 import espressomd.accumulators
-
 
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])
 system.time_step = 0.01
@@ -53,10 +59,11 @@ def poiseuille_flow(r, R, ext_force_density):
     return ext_force_density * 1./4 * (R**2.0-r**2.0)
 
 
-# Please note that due to symmetry and interpolation a plateau is seen near r=0.
+# Please note that due to symmetry and interpolation, a plateau is seen near r=0.
 n_bins = len(lb_fluid_profile[:, 0, 0, 2])
 r_max = 4.0
 r = np.linspace(0.0, r_max, n_bins)
 plt.plot(r, lb_fluid_profile[:, 0, 0, 2], label='LB profile')
 plt.plot(r, poiseuille_flow(r, r_max, 0.15), label='analytical solution')
+plt.legend()
 plt.show()

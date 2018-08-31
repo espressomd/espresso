@@ -16,14 +16,14 @@ from espressomd.particle_data import ParticleHandle
 
 
 class openGLLive(object):
-
-    """This class provides live visualization using pyOpenGL.
+    """
+    This class provides live visualization using pyOpenGL.
     Use the update method to push your current simulation state after
     integrating. Modify the appearance with a list of keywords.
     Timed callbacks can be registered via the register_callback method.
     Keyboad callbacks via  keyboardManager.register_button().
 
-    Attributes
+    Parameters
     ----------
 
     system : instance of :attr:`espressomd.System`
@@ -315,9 +315,6 @@ class openGLLive(object):
         IF not ROTATION:
             self.specs['director_arrows'] = False
 
-        IF not CONSTRAINTS:
-            self.specs['draw_constraints'] = False
-
         IF not LB and not LB_GPU:
             self.specs['LB_draw_velocity_plane'] = False
             self.specs['LB_draw_boundaries'] = False
@@ -412,6 +409,9 @@ class openGLLive(object):
         self.update_timer = 0
         self.draw_elapsed = 0
         self.draw_timer = 0
+
+        # LIST OF [[px,py],[string]] FOR USER DEFINED TEXT
+        self.user_texts = []
 
     def update_system_info(self):
 
@@ -768,7 +768,7 @@ class openGLLive(object):
             l = s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Cylinder'].append(
-                [pos - a/np.linalg.norm(a) * l * 0.5, pos + a/np.linalg.norm(a) * l * 0.5, r, s[1]])
+                [pos - a / np.linalg.norm(a) * l * 0.5, pos + a / np.linalg.norm(a) * l * 0.5, r, s[1]])
 
         for s in coll_shape_obj['Shapes::Ellipsoid']:
             pos = np.array(s[0].get_parameter('center'))
@@ -797,7 +797,7 @@ class openGLLive(object):
             l = s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::SpheroCylinder'].append(
-                [pos - a/np.linalg.norm(a) * l * 0.5, pos + a/np.linalg.norm(a) * l * 0.5, r, s[1]])
+                [pos - a / np.linalg.norm(a) * l * 0.5, pos + a / np.linalg.norm(a) * l * 0.5, r, s[1]])
 
         for s in coll_shape_obj['Shapes::Misc']:
             self.shapes['Shapes::Misc'].append(
@@ -831,8 +831,8 @@ class openGLLive(object):
     def _update_bonds(self):
         if self.specs['draw_bonds']:
             self.bonds = []
-            for i in range(len(self.system.part)):
-                bs = self.system.part[i].bonds
+            for i, p in enumerate(self.system.part):
+                bs = p.bonds
                 for b in bs:
                     t = b[0].type_number()
                     # b[0]: Bond, b[1:] Partners
@@ -908,6 +908,24 @@ class openGLLive(object):
 
     def _draw_constraints(self):
 
+        # CLIP BORDERS OF SIMULATION BOX
+        for i in range(6):
+            glEnable(GL_CLIP_PLANE0 + i)
+            glClipPlane(GL_CLIP_PLANE0 + i, self.box_eqn[i])
+
+        # NEEDS ADDITIONAL CLIP PLANES
+        for s in self.shapes['Shapes::SimplePore']:
+            draw_simple_pore(s[0], s[1], s[2], s[3], s[4], max(self.system.box_l), self._modulo_indexing(self.specs['constraint_type_colors'], s[5]),
+                             self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[5])], self.specs['quality_constraints'])
+
+        # NEEDS ADDITIONAL CLIP PLANES
+        for s in self.shapes['Shapes::SpheroCylinder']:
+            draw_sphero_cylinder(
+                s[0], s[1], s[2], self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[3]),
+                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'])
+
+        # RESET CLIP BORDERS
         for i in range(6):
             glEnable(GL_CLIP_PLANE0 + i)
             glClipPlane(GL_CLIP_PLANE0 + i, self.box_eqn[i])
@@ -916,19 +934,9 @@ class openGLLive(object):
             draw_ellipsoid(s[0], s[1], s[2], s[3], self._modulo_indexing(self.specs['constraint_type_colors'], s[4]),
                            self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
 
-        for s in self.shapes['Shapes::SimplePore']:
-            draw_simple_pore(s[0], s[1], s[2], s[3], s[4], max(self.system.box_l), self._modulo_indexing(self.specs['constraint_type_colors'], s[5]),
-                             self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[5])], self.specs['quality_constraints'])
-
         for s in self.shapes['Shapes::Sphere']:
             draw_sphere(s[0], s[1], self._modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self._modulo_indexing(
                 self.specs['constraint_type_materials'], s[2])], self.specs['quality_constraints'])
-
-        for s in self.shapes['Shapes::SpheroCylinder']:
-            draw_sphero_cylinder(
-                s[0], s[1], s[2], self._modulo_indexing(
-                    self.specs['constraint_type_colors'], s[3]),
-                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Wall']:
             draw_plane(
@@ -1077,7 +1085,7 @@ class openGLLive(object):
             col = self._modulo_indexing(type_colors, ptype)
             radius = self._modulo_indexing(type_radii, ptype)
             draw_arrow(self.particles['pos'][pid], np.array(
-                v) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
+                v, dtype=float) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
 
     def _draw_bonds(self):
         pIds = range(len(self.particles['pos']))
@@ -1220,6 +1228,12 @@ class openGLLive(object):
         self._handle_screenshot()
 
     def _draw_texts(self):
+
+        # DRAW USER TEXT
+        for ut in self.user_texts:
+            p = ut[0]
+            t = ut[1]
+            self._draw_text(p[0], p[1], t, self.text_color)
 
         # DRAW FPS TEXT
         if self.specs['draw_fps']:
@@ -1851,7 +1865,23 @@ def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, qua
     glPopMatrix()
 
 
+def get_extra_clip_plane():
+
+    # ON SOME HARDWARE (e.g. MAC) only 6 CLIP PLANES ARE ALLOWED,
+    # SO CAPPING OF BOX BOUNDARIES AND ADDITIONAL SHAPE CLIP PLANES
+    # ARE NOT POSSIBLE. THIS WILL CAUSE THE SHAPES THAT NEED ADDITIONAL
+    # CLIP PLANES TO NOT BE CLIPPED ON ONE FACE OF THE BOX
+
+    if GL_MAX_CLIP_PLANES > 6:
+        return GL_CLIP_PLANE0 + 6
+    else:
+        return GL_CLIP_PLANE0
+
+
 def draw_simple_pore(center, axis, length, radius, smoothing_radius, max_box_l, color, material, quality):
+
+    clip_plane = get_extra_clip_plane()
+
     set_solid_material(color, material)
     glPushMatrix()
     quadric = gluNewQuadric()
@@ -1865,7 +1895,7 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius, max_box_l, 
     gluCylinder(quadric, radius, radius, length - 2 *
                 smoothing_radius, quality, quality)
     # torus segment
-    clip_plane = GL_CLIP_PLANE0 + 6
+
     glEnable(clip_plane)
     glClipPlane(clip_plane, (0, 0, -1, 0))
     glutSolidTorus(smoothing_radius, (radius +
@@ -1914,7 +1944,7 @@ def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     glRotatef(ax, rx, ry, 0.0)
 
     # First hemispherical cap
-    clip_plane = GL_CLIP_PLANE0 + 6
+    clip_plane = get_extra_clip_plane()
     glEnable(clip_plane)
     glClipPlane(clip_plane, (0, 0, -1, 0))
     gluSphere(quadric, radius, quality, quality)

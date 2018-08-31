@@ -29,7 +29,6 @@ from tests_common import *
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.system.box_l = [20, 20, 20]
@@ -89,8 +88,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                                     [-p3m_force, 0, 0],atol=1E-10)
         self.system.actors.remove(p3m)
 
-    @ut.skipIf( espressomd.has_features(["COULOMB_DEBYE_HUECKEL"]),
-           "Features not available, skipping test!")
     def test_dh(self):
         dh_params = dict(prefactor=1.0,
                          kappa=2.0,

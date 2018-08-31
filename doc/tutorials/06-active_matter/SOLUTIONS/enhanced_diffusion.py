@@ -30,12 +30,13 @@ import os
 import sys
 import time
 
+import espressomd
 from espressomd import assert_features
 from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
 from espressomd.correlators import Correlator
 
-
-assert_features(["ENGINE","ROTATION"])
+required_features=["ENGINE","ROTATION"]
+assert_features(required_features)
 
 # create an output folder
 

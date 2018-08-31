@@ -37,6 +37,8 @@ a_eff   = 0.32 # effective hydrodynamic radius of a bead due to the discreteness
 # System setup
 #############################################################
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 system.box_l = [box_l, box_l, box_l]
 system.cell_system.skin = skin
 system.periodicity = [1, 1, 1]
@@ -109,16 +111,12 @@ system.min_global_cut = radius_col+1
 
 #here we calculate the center of mass position (com) and the moment of inertia (momI) of the colloid
 com=np.zeros(3)
-momI=0
 for i in range(n_col_part):
     com+=system.part[i].pos
-    momI+=np.power(np.linalg.norm(com-system.part[i].pos),2)
 com/=n_col_part
 
-for i in range(n_col_part):
-    momI+=np.power(np.linalg.norm(com-system.part[i].pos),2)
 #Note the 2/3 factor is for a spherical shell
-momI*=(2./3.)
+momI=(2./3.)*np.ones(3)*radius_col
 
 #note that the real particle must be at the center of mass of the colloid because of the integrator
 print("\n# moving central particle from {} to {}".format(system.part[0].pos, com))
