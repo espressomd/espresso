@@ -102,8 +102,7 @@ for i in range(n_part):
 
 system.analysis.dist_to(0)
 
-print("Simulate {} particles in a cubic simulation box of length {} at density {}."
-      .format(n_part, box_l, density).strip())
+print("Simulate {} particles in a cubic simulation box of length {} at density {}.".format(n_part, box_l, density).strip())
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
