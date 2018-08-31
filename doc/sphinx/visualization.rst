@@ -32,7 +32,7 @@ General usage
 -------------
 
 The recommended usage of both tools is similar: Create the visualizer of
-your choice and pass it the ``espressomd.System()`` object. Then write
+your choice and pass it the :class:`espressomd.System() <espressomd.system.System>` object. Then write
 your integration loop in a separate function, which is started in a
 non-blocking thread. Whenever needed, call ``update()`` to synchronize
 the renderer with your system. Finally start the blocking visualization
@@ -96,7 +96,7 @@ The Mayavi visualizer is created with the following syntax:
 :class:`espressomd.visualization.mayaviLive()`
 
 Required parameters:
-    * ``system``: The ``espressomd.System()`` object.
+    * ``system``: The :class:`espressomd.System() <espressomd.system.System>` object.
 Optional keywords:
     * ``particle_sizes``:
         * ``"auto"`` (default): The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
@@ -114,7 +114,7 @@ The optional keywords in ``**kwargs`` are used to adjust the appearance of the v
 The parameters have suitable default values for most simulations.
 
 Required parameters:
-    * ``system``: The ``espressomd.System()`` object.
+    * ``system``: The :class:`espressomd.System() <espressomd.system.System>` object.
 Optional keywords:
     * Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
 

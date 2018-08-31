@@ -37,7 +37,7 @@ The direct analysis commands can be classified into two types:
     - :ref:`Stress Tensor`
     - :ref:`Local Stress Tensor`
 
-- Analysis on stored configurations, added by :meth:`espressomd.analyze.append`:
+- Analysis on stored configurations, added by :meth:`espressomd.analyze.Analysis.append`:
     - :ref:`Radial distribution function` with ``rdf_type='<rdf>'``
     - :ref:`Chains`
 
@@ -265,7 +265,7 @@ Radial distribution function
 
 Calculates a radial distribution function for given particle type and binning.
 The ``rdf_type`` defines if the analysis is performed on the current configuration (``rdf_type='rdf'``)
-or on averaged configurations stored with ``analyze.append()`` (``rdf_type='<rdf>'``).
+or on averaged configurations stored with :meth:`analyze.append() <espressomd.analyze.Analysis.append>` (``rdf_type='<rdf>'``).
 
 For example, ::
 

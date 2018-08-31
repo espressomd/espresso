@@ -3,7 +3,7 @@
 Non-bonded interactions
 =======================
 
-In |es|, interactions are set up and investigated by the ``interactions`` module. There are
+In |es|, interactions are set up and investigated by the :mod:`espressomd.interactions` module. There are
 mainly two types of interactions: non-bonded and bonded interactions.
 
 Non-bonded interactions only depend on the *type* of the two particles
@@ -55,7 +55,7 @@ Tabulated interaction
 
 
 The interface for tabulated interactions are implemented in the
-:class:`espressomd.interactions.TabulatedNonBonded` class. They can be configured
+:class:`~espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
   system.non_bonded_inter[type1, type2].tabulated.set_params(
@@ -84,14 +84,14 @@ Lennard-Jones interaction
     Feature ``LENNARD_JONES`` required.
 
 The interface for the Lennard-Jones interaction is implemented in
-:class:`espressomd.interactions.LennardJonesInteraction`. The Lennard-Jones parameters
+:class:`~espressomd.interactions.LennardJonesInteraction`. The Lennard-Jones parameters
 can be set via::
 
     system.non_bonded_inter[type1, type2].lennard_jones.set_params(**kwargs)
 
 This command defines the traditional (12-6)-Lennard-Jones interaction
 between particles of the types ``type1`` and ``type2``. For a description of the input arguments
-see :class:`espressomd.interactions.LennardJonesInteraction`. The potential is defined by
+see :class:`~espressomd.interactions.LennardJonesInteraction`. The potential is defined by
 
 .. math::
 
@@ -655,7 +655,7 @@ cores, except the one it's connected to.  This exception is handled internally
 by disabling Thole interaction between particles connected via Drude bonds.
 Also, each Drude core has a Thole correction interaction with all other Drude
 cores and Drude charges. To assist with the bookkeeping of mixed scaling
-coefficients, the helper method ``add_drude_particle_to_core()`` (see
+coefficients, the helper method :meth:`~espressomd.drude_helpers.add_drude_particle_to_core` (see
 :ref:`Particle polarizability with thermalized cold Drude oscillators`)
 collects all core types, Drude types and relevant parameters when a Drude
 particle is created. The user already provided all the information when
@@ -663,11 +663,11 @@ setting up the Drude particles, so the simple call::
 
     add_all_thole(<system>, <verbose>)
 
-given the espressomd.System() object, uses this information to create all
+given the :class:`espressomd.System() <espressomd.system.System>` object, uses this information to create all
 necessary Thole interactions. The method calculates the mixed scaling
 coefficient `s` and creates the non-bonded Thole interactions between the
 collected types to cover all the Drude-Drude, Drude-core and core-core
-combinations. No further calls of ``add_drude_particle_to_core()`` should
+combinations. No further calls of :meth:`~espressomd.drude_helpers.add_drude_particle_to_core` should
 follow. Set ``verbose`` to ``True`` to print out the coefficients, charge factors
 and involved types.
 

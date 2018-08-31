@@ -180,9 +180,9 @@ The above example runs as long as the user interrupts by pressing
 ctrl+c. In this case a new checkpoint is written and the simulation
 quits.
 
-It is perhaps surprising that one has to explicitly create ``system`` again.
-But this is necessary as not all |es| modules like ``cell_system`` or
-``actors`` have implementations for checkpointing yet. By calling ``System()`` these modules
+It is perhaps surprising that one has to explicitly create :class:`~espressomd.system.System` again.
+But this is necessary as not all |es| modules like :class:`~espressomd.cellsystem` or
+:class:`~espressomd.actors` have implementations for checkpointing yet. By calling :class:`~espressomd.system.System` these modules
 are created and can be easily initialized with checkpointed user variables
 (like ``skin``) or checkpointed submodules (like ``p3m``).
 
@@ -214,7 +214,7 @@ removed by the ``close()`` method of the class which has to be called at the
 end of the simulation to close the file. The current implementation
 allows to write the following properties: positions, velocities, forces,
 species (|es| types), and masses of the particles. In order to write any property, you
-have to set the respective boolean flag as an option to the H5md class.
+have to set the respective boolean flag as an option to the :class:`~espressomd.io.writer.h5md.H5md` class.
 Currently available:
 
     - ``write_pos``: particle positions

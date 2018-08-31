@@ -76,7 +76,7 @@ objects like
 
 ``n_part = len(espressomd.System().part[:].pos)``
 
-or by calling the corresponding ``get_state`` methods like::
+or by calling the corresponding ``get_state()`` methods like::
 
     temperature = espressomd.System().thermostat.get_state()[0]['kT']
 
@@ -125,7 +125,7 @@ The properties of the cell system can be accessed by
 
     (float) Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
 
-Details about the cell system can be obtained by ``espressomd.System().cell_system.get_state()``:
+Details about the cell system can be obtained by :meth:`espressomd.System().cell_system.get_state() <espressomd.cellsystem.CellSystem.get_state>`:
 
     * ``cell_grid``       Dimension of the inner cell grid.
     * ``cell_size``       Box-length of a cell.

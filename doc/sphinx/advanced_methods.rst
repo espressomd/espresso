@@ -315,9 +315,9 @@ The immersed boundary method consists of two components, which can be used indep
   * Interactions providing the elastic forces for the particles forming the surface. These are described below.
 
 
-To compute the elastic forces, three new bonded interactions are defined: :class:`ibm_triel`, :class:`ibm_tribend` and :class:`ibm_volCons`.
+To compute the elastic forces, three new bonded interactions are defined: :class:`espressomd.interactions.IBM_Triel`, :class:`espressomd.interactions.IBM_Tribend` and :class:`espressomd.interactions.IBM_VolCons`.
 
-:class:`ibm_triel` is used to compute elastic shear forces. To setup an interaction, use:
+:class:`espressomd.interactions.IBM_Triel` is used to compute elastic shear forces. To setup an interaction, use:
 
 ::
 
@@ -327,7 +327,7 @@ where ``ind1``, ``ind2`` and ``ind3`` represent the indices of the three marker 
 specifies the maximum stretch above which the bond is considered broken. The parameter ``elasticLaw`` can be either ``"NeoHookean"`` or ``"Skalak"``.
 The parameters ``k1`` and ``k2`` are the elastic moduli.
 
-:class:`ibm_tribend` computes out-of-plane bending forces. To setup an interaction, use:
+:class:`espressomd.interactions.IBM_Tribend` computes out-of-plane bending forces. To setup an interaction, use:
 ::
 
     tribend = IBM_Tribend(ind1=0, ind2=1, ind3=2, ind4=3, kb=1, refShape="Initial")
@@ -336,13 +336,13 @@ where ``ind1``, ``ind2``, ``ind3`` and ``ind4`` are four marker points correspon
 The reference (zero energy) shape can be either ``"Flat"`` or the initial curvature ``"Initial"``.
 The bending modulus is ``kb``.
 
-:class:`ibm_volCons` is a volume-conservation force. Without this correction, the volume of the soft object tends to shrink over time due to numerical inaccuracies. Therefore, this implements an artificial force intended to keep the volume constant. If volume conservation is to be used for a given soft particle, the interaction must be added to every marker point belonging to that object.
+:class:`espressomd.interactions.IBM_VolCons` is a volume-conservation force. Without this correction, the volume of the soft object tends to shrink over time due to numerical inaccuracies. Therefore, this implements an artificial force intended to keep the volume constant. If volume conservation is to be used for a given soft particle, the interaction must be added to every marker point belonging to that object.
 ::
 
     volCons = IBM_VolCons(softID=1, kappaV=kV)
 
 where ``softID`` identifies the soft particle and ``kv`` is a volumetric spring constant.
-Note that the :class:`IBM_VolCons` ``bond`` does not need a bond partner. It is added to a particle as follows::
+Note that the :class:`espressomd.interactions.IBM_VolCons` ``bond`` does not need a bond partner. It is added to a particle as follows::
 
     s.part[0].add_bond((Volcons,))
 
@@ -1728,7 +1728,7 @@ be created beforehand::
         <coulomb_prefactor>, <thole damping>, <verbose>)
 
 The arguments of the helper function are:
-    * ``<system>``: The ``espressomd.System()``.
+    * ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
     * ``<harmonic_bond>``: The harmonic bond of the charge-on-a-spring. This is
       added between core and newly generated Drude particle
     * ``<thermalized_bond>``: The thermalized distance bond for the cold and hot
@@ -1756,7 +1756,7 @@ another helper function::
     drude_helpers.setup_and_add_drude_exclusion_bonds(S)
 
 will use this data to create a :ref:`Subtract P3M short-range bond` per Drude type
-and set it up it between all Drude and core particles collected in calls of ``add_drude_particle_to_core()``.
+and set it up it between all Drude and core particles collected in calls of :meth:`~espressomd.drude_helpers.add_drude_particle_to_core`.
 
 .. _Canceling intramolecular electrostatics:
 
@@ -1787,7 +1787,7 @@ particles. It has to be called only once. In a molecule with :math:`N` polarizab
 sites, :math:`N*(N-1)` bond types are needed to cover all the combinations.
 Parameters are:
 
-    * ``<system>``: The ``espressomd.System()``.
+    * ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
     * ``<molecule drude types>``: List of the Drude types within the molecule.
     * ``<molecule core types>``: List of the core types within the molecule that have partial charges.
     * ``<molecule core partial charges>``: List of the partial charges on the cores.
@@ -1800,7 +1800,7 @@ following method::
 
 This method has to be called for all molecules and needs the following parameters:
 
-    * ``<system>``: The ``espressomd.System()``.
+    * ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
     * ``<drude ids>``: The ids of the Drude particles within one molecule.
     * ``<core ids>``: The ids of the core particles within one molecule.
     * ``<verbose>``: (bool, optional) Prints out information about the added bonds (default: ``False``)

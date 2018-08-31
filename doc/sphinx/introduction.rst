@@ -127,7 +127,7 @@ can be put together to a demo script.
 .. rubric:: Imports
 
 As usual, the Python script starts by importing the necessary modules.  The
-|es| interface is contained in the espressomd Python module, which needs to be
+|es| interface is contained in the :mod:`espressomd` Python module, which needs to be
 imported, before anything related can be done. ::
 
     import espressomd
@@ -139,7 +139,7 @@ This should be followed by further necessary imports of the example at hand: ::
 
 .. rubric:: espressomd.System
 
-Access to the simulation system is provided via the System class. As a
+Access to the simulation system is provided via the :class:`~espressomd.system.System` class. As a
 first step, an instance of this class needs to be created. ::
 
     system = espressomd.System(box_l=[10, 10, 10])
@@ -155,7 +155,7 @@ concerning the simulation system such as box geometry, time step or :ref:`cell-s
 
 .. rubric:: Particles
 
-The particles in the simulation are accessed via ``system.part``, an instance of the ParticleList class. Use
+The particles in the simulation are accessed via ``system.part``, an instance of the :class:`~espressomd.particle_data.ParticleList` class. Use
 the ``add`` method to :ref:`create new particles<Adding particles>`: ::
 
     system.part.add(id=0, pos=[1.0, 1.0, 1.0], type=0)
@@ -172,9 +172,8 @@ particles>` over all particles::
     for p in system.part:
         print("Particle id {}, type {}".format(p.id, p.type))
 
-An individual particle is represented by an instance of ParticleHandle.
-The properties of the particle (see
-:class:`espressomd.particle_data.ParticleHandle`) are implemented as Python
+An individual particle is represented by an instance of :class:`~espressomd.particle_data.ParticleHandle`.
+The properties of the particle are implemented as Python
 properties. ::
 
     particle = system.part[0]
@@ -205,8 +204,8 @@ In |es|, interactions between particles usually fall in three categories:
 .. rubric:: Non-bonded interaction
 
 Non-bonded interactions are represented as subclasses of
-:class:`espressomd.interactions.NonBondedInteraction`, e.g.
-:class:`espressomd.interactions.LennardJonesInteraction`.
+:class:`~espressomd.interactions.NonBondedInteraction`, e.g.
+:class:`~espressomd.interactions.LennardJonesInteraction`.
 Instances of these classes for a given pair of particle types are accessed via
 the non_bonded_inter attribute of the System class. This sets up a Lennard Jones
 interaction between all particles of type 0 with the given parameters: ::
@@ -228,12 +227,12 @@ class is created with the desired parameters: ::
     harmonic = HarmonicBond(k=1.0, r_0=0.5)
 
 Then, the bonded interaction is registered in the simulation core
-by adding the instance to ``bonded_inter``: ::
+by adding the instance to :attr:`~espressomd.system.System.bonded_inter`: ::
 
     system.bonded_inter.add(harmonic)
 
-Finally, the bond can be added to particles using the add_bond()-method of
-ParticleHandle with the instance of the bond class and the id of the bond
+Finally, the bond can be added to particles using the :meth:`~espressomd.particle_data.ParticleHandle.add_bond()` method of
+:class:`~espressomd.particle_data.ParticleHandle` with the instance of the bond class and the id of the bond
 partner particle: ::
 
     system.part[2].add_bond((harmonic, 3))
@@ -384,7 +383,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * :file:`minimal-diamond.py`
 
 * :file:`minimal-polymer.py`
-   Sets up a single dilute bead-spring polymer. Shows the basic usage of ``create_polymer``.
+   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.create_polymer`.
 
 * :file:`minimal_random_number_generator.py`
 

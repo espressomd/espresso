@@ -224,7 +224,7 @@ Currently supported fluid properties are the velocity, and boundary flag in ASCI
 
 The VTK format is readable by visualization software such as ParaView [1]_
 or Mayavi2 [2]_. If you plan to use ParaView for visualization, note that also the particle
-positions can be exported using the VTK format (see :meth:`espressomd.particle_data.ParticleList.writevtk`).
+positions can be exported using the VTK format (see :meth:`~espressomd.particle_data.ParticleList.writevtk`).
 
 The variant
 
@@ -258,7 +258,7 @@ Choosing between the GPU and CPU implementations
 Espresso contains an implementation of the LBM for NVIDIA
 GPUs using the CUDA framework. On CUDA-supporting machines this can be
 activated by compiling with the feature ``LB_GPU``. Within the
-Python script, the ``LBFluid`` object can be substituted with the ``LBFluidGPU`` object to switch from CPU based to GPU based execution. For further
+Python script, the :class:`~espressomd.lb.LBFluid` object can be substituted with the :class:`~espressomd.lb.LBFluidGPU` object to switch from CPU based to GPU based execution. For further
 information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
 
 The following minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
@@ -381,7 +381,7 @@ The following example sets up a system consisting of a spherical boundary in the
 
 After integrating the system for a sufficient time to reach the steady state, the hydrodynamic drag force exerted on the sphere is evaluated.
 
-The LB boundaries use the same ``shapes`` objects to specify their geometry as ``constraints`` do for particles. This allows the user to quickly set up a system with boundary conditions that simultaneously act on the fluid and particles. For a complete description of all available shapes, refer to :meth:`espressomd.shapes`.
+The LB boundaries use the same :mod:`~espressomd.shapes` objects to specify their geometry as :mod:`~espressomd.constraints` do for particles. This allows the user to quickly set up a system with boundary conditions that simultaneously act on the fluid and particles. For a complete description of all available shapes, refer to :mod:`espressomd.shapes`.
 
 Intersecting boundaries are in principle possible but must be treated
 with care. In the current implementation, all nodes that are
