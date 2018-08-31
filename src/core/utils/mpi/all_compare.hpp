@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -55,7 +55,7 @@ bool all_compare(boost::mpi::communicator const &comm, T const &value) {
 
   return is_same;
 }
-}
-}
+} // namespace Mpi
+} // namespace Utils
 
 #endif

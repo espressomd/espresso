@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -22,7 +22,7 @@
 /** \file RuntimeErrorCollector_test.cpp Unit tests for the
  * ErrorHandling::RuntimeErrorCollector class.
  *
-*/
+ */
 
 #include <algorithm>
 #include <iostream>
@@ -55,7 +55,7 @@ void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
     boost::mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
   }
 }
-}
+} // namespace Testing
 
 using ErrorHandling::RuntimeError;
 using ErrorHandling::RuntimeErrorCollector;

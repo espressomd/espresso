@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 This sample sets up a DPD fluid and calculates pressure as a function of varying density. The fluid is thermalized using a DPD thermostat.
 """
@@ -11,7 +27,7 @@ espressomd.assert_features(required_features)
 import numpy as np
 
 # Set up the box and time step
-system = espressomd.System(box_l = 3 * [10])
+system = espressomd.System(box_l=3 * [10])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
@@ -30,16 +46,16 @@ np.random.seed(seed=system.seed)
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 # Set up the DPD friction interaction
-system.non_bonded_inter[0,0].dpd.set_params(
+system.non_bonded_inter[0, 0].dpd.set_params(
     weight_function=0, gamma=gamma, r_cut=r_cut,
     trans_weight_function=0, trans_gamma=gamma, trans_r_cut=r_cut)
 
 # Set up the repulsive interaction
-system.non_bonded_inter[0,0].hat.set_params(F_max=F_max,
-                                       cutoff=r_cut)
+system.non_bonded_inter[0, 0].hat.set_params(F_max=F_max,
+                                             cutoff=r_cut)
 
 # Add particles that are randomly distributed over the box
-system.part.add(pos=system.box_l * np.random.random((n_part,3)))
+system.part.add(pos=system.box_l * np.random.random((n_part, 3)))
 
 # As a usage example, we calculate the pressure at several
 # particle densities.
@@ -58,4 +74,5 @@ for V in range(100, 1000, 100):
     # Standard deviation of pressure
     p_std = np.std(p_samples)
 
-    print('rho {:.2f} p {:.2f} ({:.2f})'.format(float(n_part) / V, p_avg, p_std))
+    print('rho {:.2f} p {:.2f} ({:.2f})'.format(
+        float(n_part) / V, p_avg, p_std))

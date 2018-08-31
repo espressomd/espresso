@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import itertools
 import numpy as np
@@ -47,6 +63,7 @@ LB_PARAMETERS = {
 
 
 class LBStreamingCommon(object):
+
     """
     Check the streaming step of the LB fluid implementation by setting all populations
     to zero except one. Relaxation is supressed by choosing appropriate parameters.
@@ -75,7 +92,7 @@ class LBStreamingCommon(object):
         """Set the population of direction n_v of grid_index to n_v+1.
 
         """
-        pop = np.arange(1,20)
+        pop = np.arange(1, 20)
         self.lbf[grid_index].population = pop
 
     def test_population_streaming(self):
@@ -87,21 +104,27 @@ class LBStreamingCommon(object):
                 target_node_index = np.mod(
                     grid_index + VELOCITY_VECTORS[n_v], self.grid)
                 np.testing.assert_almost_equal(
-                    self.lbf[target_node_index].population[n_v], float(n_v+1))
+                    self.lbf[target_node_index].population[n_v], float(n_v + 1))
                 self.lbf[target_node_index].population = np.zeros(19)
 
 
-@ut.skipIf(not espressomd.has_features('LB') or espressomd.has_features('SHANCHEN'),
-        "Skipping test due to missing features.")
+@ut.skipIf(
+    not espressomd.has_features('LB') or espressomd.has_features('SHANCHEN'),
+          "Skipping test due to missing features.")
 class LBCPU(ut.TestCase, LBStreamingCommon):
+
     """Test for the CPU implementation of the LB."""
+
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
 
 
-@ut.skipIf(not espressomd.has_features('LB_GPU') or espressomd.has_features('SHANCHEN'),
+@ut.skipIf(
+    not espressomd.has_features(
+        'LB_GPU') or espressomd.has_features('SHANCHEN'),
            "Skipping test due to missing features.")
 class LBGPU(ut.TestCase, LBStreamingCommon):
+
     """Test for the GPU implementation of the LB."""
 
     def setUp(self):

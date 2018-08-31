@@ -1,6 +1,6 @@
 
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -22,7 +22,7 @@
 /** \file forces.cpp Force calculation.
  *
  *  For more information see \ref forces.hpp "forces.h".
-*/
+ */
 
 #include "EspressoSystemInterface.hpp"
 
@@ -32,19 +32,19 @@
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "iccp3m.hpp"
+#include "immersed_boundaries.hpp"
+#include "lb.hpp"
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
 #include "short_range_loop.hpp"
-#include "immersed_boundaries.hpp" 
-#include "lb.hpp"
 
 #include <cassert>
 
 ActorList forceActors;
 
 void init_forces() {
-/* The force initialization depends on the used thermostat and the
-   thermodynamic ensemble */
+  /* The force initialization depends on the used thermostat and the
+     thermodynamic ensemble */
 
 #ifdef NPT
   /* reset virial part of instantaneous pressure */

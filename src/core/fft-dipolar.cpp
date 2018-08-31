@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -23,16 +23,16 @@
  *  Routines, row decomposition, data structures and communication for the
  * 3D-FFT.
  *
-*/
+ */
 
 #include "fft-dipolar.hpp"
 
 #ifdef DP3M
 
 #include "communication.hpp"
+#include "debug.hpp"
 #include "fft-common.hpp"
 #include "grid.hpp"
-#include "debug.hpp"
 
 #include "utils/math/permute_ifield.hpp"
 using Utils::permute_ifield;
@@ -51,7 +51,7 @@ fft_data_struct dfft;
  * \param plan communication plan (see \ref fft_forw_plan).
  * \param in   input mesh.
  * \param out  output mesh.
-*/
+ */
 void dfft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
 
 /** communicate the grid data according to the given
@@ -60,7 +60,7 @@ void dfft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
  * \param plan_b additional back plan (see \ref fft_back_plan).
  * \param in     input mesh.
  * \param out    output mesh.
-*/
+ */
 void dfft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
                          double *out);
 
@@ -238,14 +238,13 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
   }
 
   /* Factor 2 for complex numbers */
-  dfft.send_buf = Utils::realloc(dfft.send_buf,
-                                           dfft.max_comm_size * sizeof(double));
-  dfft.recv_buf = Utils::realloc(dfft.recv_buf,
-                                           dfft.max_comm_size * sizeof(double));
-  (*data) =
-      Utils::realloc((*data), dfft.max_mesh_size * sizeof(double));
-  dfft.data_buf = Utils::realloc(dfft.data_buf,
-                                           dfft.max_mesh_size * sizeof(double));
+  dfft.send_buf =
+      Utils::realloc(dfft.send_buf, dfft.max_comm_size * sizeof(double));
+  dfft.recv_buf =
+      Utils::realloc(dfft.recv_buf, dfft.max_comm_size * sizeof(double));
+  (*data) = Utils::realloc((*data), dfft.max_mesh_size * sizeof(double));
+  dfft.data_buf =
+      Utils::realloc(dfft.data_buf, dfft.max_mesh_size * sizeof(double));
   if (!(*data) || !dfft.data_buf || !dfft.recv_buf || !dfft.send_buf) {
     fprintf(stderr, "%d: Could not allocate FFT data arays\n", this_node);
     errexit();

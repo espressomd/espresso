@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -23,7 +23,7 @@
  *
  *  For more information about the integrator
  *  see \ref integrate.hpp "integrate.hpp".
-*/
+ */
 
 #include "integrate.hpp"
 #include "accumulators.hpp"
@@ -55,10 +55,10 @@
 #include "utils.hpp"
 #include "virtual_sites.hpp"
 
-#include "immersed_boundaries.hpp"
-#include "npt.hpp"
 #include "collision.hpp"
 #include "forces.hpp"
+#include "immersed_boundaries.hpp"
+#include "npt.hpp"
 
 #include <cmath>
 #include <cstdio>
@@ -112,7 +112,7 @@ void propagate_pos();
     \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] <br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
 void propagate_vel_pos();
-/** Integration step 4 of the Velocity Verletintegrator and finalize 
+/** Integration step 4 of the Velocity Verletintegrator and finalize
     instantanious pressure calculation:<br>
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
 void propagate_vel_finalize_p_inst();
@@ -187,8 +187,9 @@ void integrate_ensemble_init() {
     nptiso.inv_piston = 1 / (1.0 * nptiso.piston);
     nptiso.p_inst_av = 0.0;
     if (nptiso.dimension == 0) {
-      fprintf(stderr, "%d: INTERNAL ERROR: npt integrator was called but "
-                      "dimension not yet set. this should not happen. ",
+      fprintf(stderr,
+              "%d: INTERNAL ERROR: npt integrator was called but "
+              "dimension not yet set. this should not happen. ",
               this_node);
       errexit();
     }
@@ -216,7 +217,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
   // necessary calculates them
   immersed_boundaries.init_volume_conservation();
 #endif
-
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors())
@@ -258,15 +258,15 @@ void integrate_vv(int n_steps, int reuse_forces) {
                      "sampling.\n");
 #endif
 
-  // Communication step: distribute ghost positions
-  cells_update_ghosts();
+    // Communication step: distribute ghost positions
+    cells_update_ghosts();
 
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-  virtual_sites()->update();
-  if (virtual_sites()->need_ghost_comm_after_pos_update()) {
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-  }
+    virtual_sites()->update();
+    if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    }
 #endif
     force_calc();
 
@@ -326,7 +326,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef NEMD
         || nemd_method != NEMD_METHOD_OFF
 #endif
-        ) {
+    ) {
       propagate_vel();
       propagate_pos();
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
@@ -352,9 +352,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-/* Integration Step: Step 3 of Velocity Verlet scheme:
-   Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
-   v(t+0.5*dt) ) */
+    /* Integration Step: Step 3 of Velocity Verlet scheme:
+       Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
+       v(t+0.5*dt) ) */
 
 #ifdef LB
     transfer_momentum = (n_part > 0);
@@ -363,15 +363,15 @@ void integrate_vv(int n_steps, int reuse_forces) {
     transfer_momentum_gpu = (n_part > 0);
 #endif
 
-  // Communication step: distribute ghost positions
-  cells_update_ghosts();
+    // Communication step: distribute ghost positions
+    cells_update_ghosts();
 
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-  virtual_sites()->update();
-  if (virtual_sites()->need_ghost_comm_after_pos_update()) {
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-  }
+    virtual_sites()->update();
+    if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    }
 #endif
     force_calc();
 
@@ -462,10 +462,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
   }
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
-    if (virtual_sites()->need_ghost_comm_before_vel_update()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
-    virtual_sites()->update(false); // Recalc positions = false
+  if (virtual_sites()->need_ghost_comm_before_vel_update()) {
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  }
+  virtual_sites()->update(false); // Recalc positions = false
 #endif
 
 #ifdef VALGRIND_INSTRUMENTATION
@@ -535,8 +535,9 @@ void propagate_vel_finalize_p_inst() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-            nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
-            p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+          nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
+          p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] +
+                      friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
         } else
 #endif
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
@@ -696,8 +697,9 @@ void propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-            p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
-            nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
+          p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass +
+                      friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+          nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
         } else
 #endif
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */

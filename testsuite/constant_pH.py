@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -28,6 +28,7 @@ from espressomd import reaction_ensemble
 
 
 class ReactionEnsembleTest(ut.TestCase):
+
     """Test the core implementation of the reaction ensemble."""
 
     N0 = 40
@@ -37,15 +38,16 @@ class ReactionEnsembleTest(ut.TestCase):
     type_H = 5
     temperature = 1.0
     # avoid extreme regions in the titration curve e.g. via the choice
-    # choose target alpha not too far from 0.5 to get good statistics in a small number of steps
+    # choose target alpha not too far from 0.5 to get good statistics in a
+    # small number of steps
     pKa_minus_pH = -0.2
-    pH = 2  
+    pH = 2
     pKa = pKa_minus_pH + pH
     Ka = 10**(-pKa)
     box_l = (N0 / c0)**(1.0 / 3.0)
     system = espressomd.System(box_l=[box_l, box_l, box_l])
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
-    np.random.seed(69) #make reaction code fully deterministic
+    np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = reaction_ensemble.ConstantpHEnsemble(
@@ -81,8 +83,9 @@ class ReactionEnsembleTest(ut.TestCase):
         box_l = ReactionEnsembleTest.system.box_l
         system = ReactionEnsembleTest.system
         RE = ReactionEnsembleTest.RE
-        #chemical warmup - get close to chemical equilibrium before we start sampling
-        RE.reaction(5*N0)
+        # chemical warmup - get close to chemical equilibrium before we start
+        # sampling
+        RE.reaction(5 * N0)
 
         volume = np.prod(self.system.box_l)  # cuboid box
         average_NH = 0.0
@@ -91,9 +94,9 @@ class ReactionEnsembleTest(ut.TestCase):
         num_samples = 1000
         for i in range(num_samples):
             RE.reaction(2)
-            average_NH += system.number_of_particles( type=type_H)
-            average_NHA += system.number_of_particles( type=type_HA)
-            average_NA += system.number_of_particles( type=type_A)
+            average_NH += system.number_of_particles(type=type_H)
+            average_NHA += system.number_of_particles(type=type_HA)
+            average_NA += system.number_of_particles(type=type_A)
         average_NH /= num_samples
         average_NA /= num_samples
         average_NHA /= num_samples
@@ -103,22 +106,23 @@ class ReactionEnsembleTest(ut.TestCase):
         # not influence the average number of protons
         pH = ReactionEnsembleTest.pH
         pKa = ReactionEnsembleTest.pKa
-        target_alpha=ReactionEnsembleTest.ideal_alpha(pH);
+        target_alpha = ReactionEnsembleTest.ideal_alpha(pH)
         rel_error_alpha = abs(
-            average_alpha - target_alpha )/target_alpha; # relative error
+            average_alpha - target_alpha) / target_alpha
+        # relative error
         self.assertLess(
             rel_error_alpha,
             0.07,
             msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
-            +"  pH: "+str(pH)
-            +"  pKa: "+str(pKa)
-            +"  average_NH: "+str(average_NH)
-            +"  average_NA: "+str(average_NA) 
-            +"  average_NHA:"+str(average_NHA) 
-            +"  average alpha: "+str(average_alpha)
-            +"  target_alpha: "+str(target_alpha)
-            +"  rel_error: "+str(rel_error_alpha)
-            )
+            + "  pH: " + str(pH)
+            + "  pKa: " + str(pKa)
+            + "  average_NH: " + str(average_NH)
+            + "  average_NA: " + str(average_NA)
+            + "  average_NHA:" + str(average_NHA)
+            + "  average alpha: " + str(average_alpha)
+            + "  target_alpha: " + str(target_alpha)
+            + "  rel_error: " + str(rel_error_alpha)
+        )
 
 
 if __name__ == "__main__":

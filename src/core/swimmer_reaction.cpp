@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -24,14 +24,14 @@
 
 #include "swimmer_reaction.hpp"
 #include "cells.hpp"
+#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
-#include "initialize.hpp"
-#include "utils.hpp"
-#include "random.hpp"
-#include "communication.hpp"
-#include "integrate.hpp"
 #include "grid.hpp"
+#include "initialize.hpp"
+#include "integrate.hpp"
+#include "random.hpp"
+#include "utils.hpp"
 
 #include "utils/math/sgn.hpp"
 
@@ -46,7 +46,8 @@ reaction_struct reaction;
 void reactions_sanity_checks() {
   if (reaction.ct_rate != 0.0) {
 
-    if (!cell_structure.use_verlet_list || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+    if (!cell_structure.use_verlet_list ||
+        cell_structure.type != CELL_STRUCTURE_DOMDEC) {
       runtimeErrorMsg() << "The SWIMMER_REACTIONS feature requires verlet "
                            "lists and domain decomposition";
     }
@@ -118,7 +119,7 @@ void integrate_reaction_noswap() {
       if (check_catalyzer != 0) {
 
         for (auto &pair : cell->m_verlet_list) {
-          auto p1 = pair.first;      // pointer to particle 1
+          auto p1 = pair.first;  // pointer to particle 1
           auto p2 = pair.second; // pointer to particle 2
 
           if ((p1->p.type == reaction.reactant_type &&
@@ -143,39 +144,39 @@ void integrate_reaction_noswap() {
       }
     }
 
-  /* Now carry out the reaction on the particles which are tagged */
-  for (int c = 0; c < local_cells.n; c++) {
-    auto cell = local_cells.cell[c];
-    auto p1 = cell->part;
-    auto np = cell->n;
+    /* Now carry out the reaction on the particles which are tagged */
+    for (int c = 0; c < local_cells.n; c++) {
+      auto cell = local_cells.cell[c];
+      auto p1 = cell->part;
+      auto np = cell->n;
 
-    for (int i = 0; i < np; i++) {
-      if (p1[i].p.type == reaction.reactant_type) {
+      for (int i = 0; i < np; i++) {
+        if (p1[i].p.type == reaction.reactant_type) {
 
-        if (p1[i].p.catalyzer_count > 0) {
+          if (p1[i].p.catalyzer_count > 0) {
 
-          if (reaction.sing_mult == 0) {
-            rand = d_random();
+            if (reaction.sing_mult == 0) {
+              rand = d_random();
 
-            bernoulli = pow(ct_ratexp, p1[i].p.catalyzer_count);
+              bernoulli = pow(ct_ratexp, p1[i].p.catalyzer_count);
 
-            if (rand > bernoulli) {
-              p1[i].p.type = reaction.product_type;
+              if (rand > bernoulli) {
+                p1[i].p.type = reaction.product_type;
+              }
+
+            } else /* We only consider each reactant once */
+            {
+              rand = d_random();
+
+              if (rand > ct_ratexp) {
+                p1[i].p.type = reaction.product_type;
+              }
             }
 
-          } else /* We only consider each reactant once */
-          {
-            rand = d_random();
-
-            if (rand > ct_ratexp) {
-              p1[i].p.type = reaction.product_type;
-            }
+            p1[i].p.catalyzer_count = 0;
           }
-
-          p1[i].p.catalyzer_count = 0;
         }
       }
-    }
     }
 
     /* We only need to do something when the equilibrium

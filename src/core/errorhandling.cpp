@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -50,7 +50,7 @@ unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 
 /** The callback loop we are on. */
 Communication::MpiCallbacks *m_callbacks = nullptr;
-}
+} // namespace
 
 /** Initialize the error collection system. */
 void init_error_handling(Communication::MpiCallbacks &cb) {
@@ -110,7 +110,7 @@ void mpi_gather_runtime_errors_slave(int node, int parm) {
   runtimeErrorCollector->gatherSlave();
 }
 
-} /* ErrorHandling */
+} // namespace ErrorHandling
 
 void errexit() {
   ErrorHandling::m_callbacks->comm().abort(1);

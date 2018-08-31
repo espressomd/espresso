@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 The ESPResSo project
+# Copyright (C) 2017-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,9 +25,11 @@ import unittest as ut
 import numpy as np
 import espressomd  # pylint: disable=import-error
 
+
 class RotateSystemTest(ut.TestCase):
-    s = espressomd.System(box_l = 3 * [10.])
+    s = espressomd.System(box_l=3 * [10.])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
+
     def tearDown(self):
         self.s.part.clear()
 

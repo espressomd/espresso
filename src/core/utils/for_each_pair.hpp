@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -51,6 +51,6 @@ void for_each_pair(ForwardRange &&rng, BinaryOp &&op) {
   using std::end;
   for_each_pair(begin(rng), end(rng), std::forward<BinaryOp>(op));
 }
-}
+} // namespace Utils
 
 #endif

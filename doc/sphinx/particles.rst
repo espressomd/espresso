@@ -62,9 +62,6 @@ For example, to print the current position of the particle with index 0 in the s
 Similarly, the position can be set::
 
     system.part[0].pos=(1,2.5,3)
-    system.part[0].id=4
-
-Note that the index and the property ID are not necessarily the same.
 
 .. _Vectorial properties:
 

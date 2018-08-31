@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -91,7 +91,9 @@ static double *partblk = nullptr;
 static double gblcblk[8];
 
 /** structure for storing of sin and cos values */
-typedef struct { double s, c; } SCCache;
+typedef struct {
+  double s, c;
+} SCCache;
 
 /** \name sin/cos caching */
 /*@{*/
@@ -385,8 +387,9 @@ static double dipole_energy() {
 
   if (!elc_params.neutralize) {
     // SUBTRACT the energy of the P3M homogeneous neutralizing background
-    eng += 2 * pref * (-gblcblk[0] * gblcblk[4] -
-                       (.25 - .5 / 3.) * Utils::sqr(gblcblk[0] * box_l[2]));
+    eng += 2 * pref *
+           (-gblcblk[0] * gblcblk[4] -
+            (.25 - .5 / 3.) * Utils::sqr(gblcblk[0] * box_l[2]));
   }
 
   if (elc_params.dielectric_contrast_on) {
@@ -400,8 +403,9 @@ static double dipole_energy() {
     /* counter the P3M homogeneous background contribution to the
        boundaries.  We never need that, since a homogeneous background
        spanning the artifical boundary layers is aphysical. */
-    eng += pref * (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
-                   (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] * Utils::sqr(box_l[2]));
+    eng += pref *
+           (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
+            (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] * Utils::sqr(box_l[2]));
   }
 
   return this_node == 0 ? eng : 0;
@@ -572,9 +576,8 @@ static void setup_P(int p, double omega) {
 
   if (elc_params.dielectric_contrast_on) {
     double fac_elc =
-        1.0 / (1 -
-               elc_params.delta_mid_top * elc_params.delta_mid_bot *
-                   exp(-omega * 2 * elc_params.h));
+        1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
+                       exp(-omega * 2 * elc_params.h));
     fac_delta_mid_bot = elc_params.delta_mid_bot * fac_elc;
     fac_delta_mid_top = elc_params.delta_mid_top * fac_elc;
     fac_delta = fac_delta_mid_bot * elc_params.delta_mid_top;
@@ -680,9 +683,8 @@ static void setup_Q(int q, double omega) {
 
   if (elc_params.dielectric_contrast_on) {
     double fac_elc =
-        1.0 / (1 -
-               elc_params.delta_mid_top * elc_params.delta_mid_bot *
-                   exp(-omega * 2 * elc_params.h));
+        1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
+                       exp(-omega * 2 * elc_params.h));
     fac_delta_mid_bot = elc_params.delta_mid_bot * fac_elc;
     fac_delta_mid_top = elc_params.delta_mid_top * fac_elc;
     fac_delta = fac_delta_mid_bot * elc_params.delta_mid_top;
@@ -832,7 +834,7 @@ static double Q_energy(double omega) {
   double eng = 0;
   double pref = 1 / omega;
 
-    for(unsigned ic = 0; ic < n_localpart; ic++) {
+  for (unsigned ic = 0; ic < n_localpart; ic++) {
     eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
                    partblk[size * ic + POQESM] * gblcblk[POQESP] +
                    partblk[size * ic + POQECP] * gblcblk[POQECM] +
@@ -856,9 +858,8 @@ static void setup_PQ(int p, int q, double omega) {
   double scale = 1;
   if (elc_params.dielectric_contrast_on) {
     double fac_elc =
-        1.0 / (1 -
-               elc_params.delta_mid_top * elc_params.delta_mid_bot *
-                   exp(-omega * 2 * elc_params.h));
+        1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
+                       exp(-omega * 2 * elc_params.h));
     fac_delta_mid_bot = elc_params.delta_mid_bot * fac_elc;
     fac_delta_mid_top = elc_params.delta_mid_top * fac_elc;
     fac_delta = fac_delta_mid_bot * elc_params.delta_mid_top;
@@ -1069,7 +1070,8 @@ void ELC_add_force() {
   }
 
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
-    for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) < elc_params.far_cut2 &&
+    for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
+                    elc_params.far_cut2 &&
                 q <= n_scycache;
          q++) {
       omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
@@ -1109,7 +1111,8 @@ double ELC_energy() {
     checkpoint("E************distri q", 0, q, 2);
   }
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
-    for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) < elc_params.far_cut2 &&
+    for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
+                    elc_params.far_cut2 &&
                 q <= n_scycache;
          q++) {
       omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));

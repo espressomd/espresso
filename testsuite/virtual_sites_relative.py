@@ -1,6 +1,6 @@
 
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -239,7 +239,8 @@ class VirtualSites(ut.TestCase):
         # For n sphers n/2 dumbells.
         for i in range(int(n / 2)):
             # Type=1, i.e., no lj ia for the center of mass particles
-            system.part.add(rotation=(1, 1, 1), id=3 * i, pos=random.random(3) * l, type=1,
+            system.part.add(
+                rotation=(1, 1, 1), id=3 * i, pos=random.random(3) * l, type=1,
                             omega_lab=0.3 * random.random(3), v=random.random(3))
             # lj spheres
             system.part.add(rotation=(1, 1, 1), id=3 * i + 1,

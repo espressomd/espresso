@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -25,11 +25,11 @@
  *  Routines to calculate the Hertzian energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp
-*/
+ */
 
-#include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
+#include "utils.hpp"
 
 #ifdef HERTZIAN
 
@@ -45,7 +45,7 @@ inline void add_hertzian_pair_force(const Particle *const p1,
                                     double force[3]) {
   if ((dist < ia_params->Hertzian_sig)) {
     double fac = 5. / 2. * ia_params->Hertzian_eps / ia_params->Hertzian_sig *
-          pow(1 - dist / ia_params->Hertzian_sig, 3. / 2.) / dist;
+                 pow(1 - dist / ia_params->Hertzian_sig, 3. / 2.) / dist;
 
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];

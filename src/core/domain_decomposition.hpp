@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -54,7 +54,7 @@
  *
  *  For more information on cells,
  *  see \ref cells.hpp
-*/
+ */
 
 #include "cells.hpp"
 #include "integrate.hpp"
@@ -171,13 +171,6 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]);
  * poststore */
 void dd_assign_prefetches(GhostCommunicator *comm);
 
-/** Return a full shell neighbor index.
- * Required for collision.cpp.
- * @param cellidx Index of a local cell
- * @param neigh Number of full shell neighbor to get (0 <= neigh < 27)
- * @return Index to cells (local or ghost cell) of the requested neighbor.
- */
-int dd_full_shell_neigh(int cellidx, int neigh);
 /*@}*/
 
 #endif

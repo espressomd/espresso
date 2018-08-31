@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -61,8 +61,7 @@ struct RuntimeError {
 private:
   /** Boost serialization */
   friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &ar, const unsigned int) {
+  template <class Archive> void serialize(Archive &ar, const unsigned int) {
     ar &m_level;
     ar &m_who;
     ar &m_what;
@@ -79,6 +78,6 @@ private:
   int m_line;
 };
 
-} /* ErrorHandling */
+} // namespace ErrorHandling
 
 #endif

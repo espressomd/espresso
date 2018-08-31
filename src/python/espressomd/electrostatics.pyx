@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -35,8 +35,8 @@ from .particle_data cimport particle
 
 IF ELECTROSTATICS == 1:
     def check_neutrality(_params):
-        if "check_neutrality" in _params: 
-            if(_params["check_neutrality"]==True):
+        if "check_neutrality" in _params:
+            if(_params["check_neutrality"]):
                 if not checks.check_charge_neutrality[PartCfg](partCfg()):
                     raise Exception("""
                     The system is not charge neutral. Please
@@ -69,10 +69,11 @@ IF ELECTROSTATICS == 1:
 
         def tune(self, **tune_params_subset):
             if tune_params_subset is not None:
-                if all (k in self.valid_keys() for k in tune_params_subset):
+                if all(k in self.valid_keys() for k in tune_params_subset):
                     self._params.update(tune_params_subset)
                 else:
-                    raise ValueError("Invalid parameter given to tune function.")
+                    raise ValueError(
+                        "Invalid parameter given to tune function.")
             self._tune()
 
 
@@ -92,6 +93,7 @@ IF ELECTROSTATICS:
             Cut off radius for this interaction.
 
         """
+
         def validate_params(self):
             if (self._params["prefactor"] <= 0):
                 raise ValueError(
@@ -239,8 +241,8 @@ IF P3M == 1:
             coulomb_set_prefactor(self._params["prefactor"])
             #Sets cdef vars and calls p3m_set_params() in core
             python_p3m_set_params(self._params["r_cut"],
-                        self._params["mesh"], self._params["cao"],
-                        self._params["alpha"], self._params["accuracy"])
+                                  self._params["mesh"], self._params["cao"],
+                                  self._params["alpha"], self._params["accuracy"])
             #p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts
             #Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
             #         which resets r_cut if lb is zero. OK.
@@ -393,7 +395,7 @@ IF P3M == 1:
                 p3m_set_eps(self._params["epsilon"])
                 p3m_set_ninterpol(self._params["inter"])
                 python_p3m_set_mesh_offset(self._params["mesh_off"])
-                handle_errors("p3m gpu init" )
+                handle_errors("p3m gpu init")
 
 IF ELECTROSTATICS:
     cdef class MMM1D(ElectrostaticInteraction):
@@ -442,7 +444,8 @@ IF ELECTROSTATICS:
         def _get_params_from_es_core(self):
             params = {}
             params.update(mmm1d_params)
-            params["far_switch_radius"] = np.sqrt(params["far_switch_radius_2"])
+            params["far_switch_radius"] = np.sqrt(
+                params["far_switch_radius_2"])
             del params["far_switch_radius_2"]
             params["prefactor"] = coulomb.prefactor
             params["tune"] = self._params["tune"]
@@ -601,6 +604,7 @@ IF ELECTROSTATICS:
             Cut off radius, use with care, intended for testing purposes.
 
         """
+
         def validate_params(self):
             default_params = self.default_params()
             if self._params["prefactor"] <= 0:
@@ -659,8 +663,9 @@ IF ELECTROSTATICS:
                 self._params["delta_mid_bot"] = -1
 
             res = MMM2D_set_params(self._params["maxPWerror"],
-            self._params["far_cut"], self._params["delta_mid_top"],
-            self._params["delta_mid_bot"], self._params["const_pot"], self._params["pot_diff"])
+                                   self._params["far_cut"], self._params[
+                                       "delta_mid_top"],
+                                   self._params["delta_mid_bot"], self._params["const_pot"], self._params["pot_diff"])
             handle_errors("MMM2d setup")
             if res:
                 raise Exception("MMM2D setup failed")
@@ -671,16 +676,16 @@ IF ELECTROSTATICS:
             self._set_params_in_es_core()
             MMM2D_init()
             handle_errors("MMM2d setup")
-            res=MMM2D_sanity_checks()
+            res = MMM2D_sanity_checks()
             handle_errors("MMM2d setup")
             if res:
                 raise Exception("MMM2D sanity checks failed.")
             mpi_bcast_coulomb_params()
             handle_errors("MMM2d setup")
 
-
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
+
             """Calculates Coulomb interactions using method from the SCAFACOs library."""
             dipolar = False
 
@@ -698,6 +703,6 @@ IF ELECTROSTATICS:
                 return {}
 
             def _deactivate_method(self):
-                super(Scafacos,self)._deactivate_method()
+                super(Scafacos, self)._deactivate_method()
                 scafacos.free_handle()
                 mpi_bcast_coulomb_params()

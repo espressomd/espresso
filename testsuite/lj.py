@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,7 +22,8 @@ import numpy
 import unittest as ut
 from tests_common import abspath
 
-@ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]) ,
+
+@ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
            "Features not available, skipping test!")
 class LennardJonesTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -30,7 +31,7 @@ class LennardJonesTest(ut.TestCase):
 
     def setUp(self):
         self.system.part.clear()
-        self.system.box_l = [10.7437]*3
+        self.system.box_l = [10.7437] * 3
 
         lj_eps = 1.0
         lj_sig = 1.0
@@ -44,7 +45,8 @@ class LennardJonesTest(ut.TestCase):
         self.system.time_step = .1
 
         for i in range(self.data.shape[0]):
-            self.system.part.add(id=int(self.data[i][0]), pos=[self.data[i][1], self.data[i][2], self.data[i][3]])
+            self.system.part.add(id=int(self.data[i][0]), pos=[
+                                 self.data[i][1], self.data[i][2], self.data[i][3]])
 
     def check(self):
         rms = 0.0
@@ -58,12 +60,13 @@ class LennardJonesTest(ut.TestCase):
                 max_df = max(max_df, (df2)**0.5)
 
         rms = rms**0.5
-        
+
         self.assertTrue(rms < 1e-5)
         self.assertTrue(max_df < 1e-5)
 
     def test_dd(self):
-        self.system.cell_system.set_domain_decomposition(use_verlet_lists=False)
+        self.system.cell_system.set_domain_decomposition(
+            use_verlet_lists=False)
         self.system.integrator.run(recalc_forces=True, steps=0)
 
         self.check()
@@ -82,11 +85,3 @@ class LennardJonesTest(ut.TestCase):
 if __name__ == '__main__':
     print("Features: ", espressomd.features())
     ut.main()
-
-
-
-
-
-
-
-

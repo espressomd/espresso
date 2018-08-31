@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -34,10 +34,10 @@
  */
 
 #include "magnetic_non_p3m_methods.hpp"
-#include "thermostat.hpp"
-#include "interaction_data.hpp"
-#include "grid.hpp"
 #include "cells.hpp"
+#include "grid.hpp"
+#include "interaction_data.hpp"
+#include "thermostat.hpp"
 
 #ifdef DIPOLES
 

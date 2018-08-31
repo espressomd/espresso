@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
     Max-Planck-Institute for Polymer Research, Theory Group
 
   This file is part of ESPResSo.
@@ -20,7 +20,7 @@
 
 /** \file MpiCallbacks_test.cpp Unit tests for the MpiCallbacks class.
  *
-*/
+ */
 
 #include <random>
 #include <vector>
@@ -36,8 +36,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/List.hpp"
 #include "mock/Particle.hpp"
+#include "utils/List.hpp"
 
 using Communication::MpiCallbacks;
 namespace mpi = boost::mpi;

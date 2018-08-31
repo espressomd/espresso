@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -113,8 +113,9 @@ void lb_calc_fluid_temp(double *result) {
   }
 
   // @Todo: lblattice.agrid is 3d. What to use here?
-  temp *= 1. / (3. * lbpar.rho * number_of_non_boundary_nodes * lbpar.tau *
-                lbpar.tau * lbpar.agrid) /
+  temp *= 1. /
+          (3. * lbpar.rho * number_of_non_boundary_nodes * lbpar.tau *
+           lbpar.tau * lbpar.agrid) /
           n_nodes;
 
   MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);

@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 #define SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 
@@ -67,9 +85,10 @@ namespace ScriptInterface {
  * (this has to be caputerd in the lambdas to have acces to the member functions
  * of the class).
  */
-template<typename Derived, typename Base=ScriptInterfaceBase>
+template <typename Derived, typename Base = ScriptInterfaceBase>
 class AutoParameters : public Base {
   static_assert(std::is_base_of<ScriptInterfaceBase, Base>::value, "");
+
 public:
   /* Exceptions */
   struct UnknownParameter : public std::runtime_error {
@@ -90,9 +109,8 @@ protected:
 
   void add_parameters(std::vector<AutoParameter> &&params) {
     for (auto const &p : params) {
-      m_parameters.emplace(std::make_pair(
-          p.name,
-          Parameter{p.type, p.length, p.set, p.get}));
+      m_parameters.emplace(
+          std::make_pair(p.name, Parameter{p.type, p.length, p.set, p.get}));
     }
   }
 
@@ -138,6 +156,6 @@ private:
 
   std::unordered_map<std::string, Parameter> m_parameters;
 };
-}
+} // namespace ScriptInterface
 
 #endif

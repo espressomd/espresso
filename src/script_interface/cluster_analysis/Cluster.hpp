@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -26,7 +26,6 @@
 #include "core/cluster_analysis/Cluster.hpp"
 #include "core/utils/Factory.hpp"
 
-
 namespace ScriptInterface {
 namespace ClusterAnalysis {
 
@@ -41,27 +40,28 @@ public:
     if (method == "size") {
       return (int)m_cluster->particles.size();
     }
-    if (method=="longest_distance") {
-        return m_cluster->longest_distance();
+    if (method == "longest_distance") {
+      return m_cluster->longest_distance();
     }
     if (method == "radius_of_gyration") {
       return m_cluster->radius_of_gyration();
     }
-    if (method=="fractal_dimension") {
-      double mean_sq_residual; 
+    if (method == "fractal_dimension") {
+      double mean_sq_residual;
       double df;
-      std::tie(df,mean_sq_residual) = m_cluster->fractal_dimension(boost::get<double>(parameters.at("dr")));
+      std::tie(df, mean_sq_residual) =
+          m_cluster->fractal_dimension(boost::get<double>(parameters.at("dr")));
       return std::vector<double>({df, mean_sq_residual});
     }
-    if (method=="center_of_mass") {
-     return m_cluster->center_of_mass();
-    
+    if (method == "center_of_mass") {
+      return m_cluster->center_of_mass();
     }
     return false;
-  }                              
-  void set_cluster(std::shared_ptr<::ClusterAnalysis::Cluster> &c) {
-    m_cluster=c;
   }
+  void set_cluster(std::shared_ptr<::ClusterAnalysis::Cluster> &c) {
+    m_cluster = c;
+  }
+
 private:
   std::shared_ptr<::ClusterAnalysis::Cluster> m_cluster;
 };

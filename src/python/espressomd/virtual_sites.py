@@ -1,37 +1,60 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .script_interface import ScriptInterfaceHelper, script_interface_register
+
 
 @script_interface_register
 class VirtualSitesOff(ScriptInterfaceHelper):
+
     """Virtual sites implementation which does nothing (default)"""
     _so_name = "VirtualSites::VirtualSitesOff"
+
+
 @script_interface_register
 class VirtualSitesInertialessTracers(ScriptInterfaceHelper):
+
     """Virtual sites which are advected with an lb fluid without inertia. Forces are on them are transferred to the fluid instantly.
-    
+
     """
     _so_name = "VirtualSites::VirtualSitesInertialessTracers"
 
 
-
 @script_interface_register
 class VirtualSitesRelative(ScriptInterfaceHelper):
+
     """Virtual sites implementation placing virtual sites relative to other particles.
-       See :ref:`Rigid arrangements of particles` for details. 
+       See :ref:`Rigid arrangements of particles` for details.
 
        Attributes
        ----------
        have_velocity : :obj:`bool`
            Determines whether the velocity of the virtual sites is calculated.
            This carries a performance cost.
-       
+
        Attributes can be set on the instance or passed to the constructor as
        keyword arguments.
 
     """
     _so_name = "VirtualSites::VirtualSitesRelative"
 
+
 @script_interface_register
 class ActiveVirtualSitesHandle(ScriptInterfaceHelper):
+
     """Handle for the virtual sites implementation active in the core
 
        This should not be used directly.

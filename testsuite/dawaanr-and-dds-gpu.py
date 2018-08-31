@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
 import numpy as np
@@ -21,8 +37,7 @@ class DDSGPUTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    es.seed  = es.cell_system.get_state()['n_nodes'] * [1234]
-
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def stopAll(self):
         for i in range(len(self.es.part)):
@@ -45,7 +60,7 @@ class DDSGPUTest(ut.TestCase):
 
         part_dip = np.zeros((3))
 
-        for n in [110, 111, 540, 541]:
+        for n in [128, 541]:
             print("{0} particles".format(n))
             dipole_modulus = 1.3
             for i in range(n):
@@ -113,11 +128,13 @@ class DDSGPUTest(ut.TestCase):
             # compare
             for i in range(n):
                 np.testing.assert_allclose(np.array(dawaanr_t[i]),
-                        ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i]),
-                    err_msg='Torques on particle do not match for particle {}'.format(i), atol=3e-3)
+                                           ratio_dawaanr_dds_gpu *
+                                           np.array(ddsgpu_t[i]),
+                                           err_msg='Torques on particle do not match for particle {}'.format(i), atol=3e-3)
                 np.testing.assert_allclose(np.array(dawaanr_f[i]),
-                        ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i]),
-                    err_msg='Forces on particle do not match for particle i={}'.format(i), atol=3e-3)
+                                           ratio_dawaanr_dds_gpu *
+                                           np.array(ddsgpu_f[i]),
+                                           err_msg='Forces on particle do not match for particle i={}'.format(i), atol=3e-3)
             self.assertAlmostEqual(
                 dawaanr_e,
                 ddsgpu_e *

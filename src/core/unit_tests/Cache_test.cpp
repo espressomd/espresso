@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(get_value) {
 BOOST_AUTO_TEST_CASE(has) {
   {
     Cache<int, char> cache;
-    cache.put(41,0);
+    cache.put(41, 0);
     cache.put(1, 0);
 
     BOOST_CHECK(cache.has(41));
@@ -85,18 +85,18 @@ BOOST_AUTO_TEST_CASE(put) {
 
 BOOST_AUTO_TEST_CASE(max_size) {
   {
-  Cache<int, char> cache(1);
+    Cache<int, char> cache(1);
 
-  cache.put(1, 2);
-  cache.put(2, 3);
+    cache.put(1, 2);
+    cache.put(2, 3);
 
-  BOOST_CHECK(!cache.has(1));
-  BOOST_CHECK(cache.has(2));
+    BOOST_CHECK(!cache.has(1));
+    BOOST_CHECK(cache.has(2));
 
-  cache.put(1, 2);
+    cache.put(1, 2);
 
-  BOOST_CHECK(cache.has(1));
-  BOOST_CHECK(!cache.has(2));
+    BOOST_CHECK(cache.has(1));
+    BOOST_CHECK(!cache.has(2));
   }
 
   {
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(max_size) {
     const Cache<int, int>::size_type max_size = 1000;
     Cache<int, int> cache(max_size);
 
-    for(int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 10000; i++) {
       cache.put(i, 11);
     }
 
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(range_put) {
     std::vector<int> keys = {1, 2, 3, 4, 5};
     std::vector<int> vals = {6, 7, 8, 9, 10};
 
-    for(int i = 12; i > 0; i--)
+    for (int i = 12; i > 0; i--)
       cache.put(i, i);
 
     cache.put(keys.begin(), keys.end(), vals.begin());

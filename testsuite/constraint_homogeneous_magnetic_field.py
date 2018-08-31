@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division, print_function
 
 import unittest as ut
@@ -6,12 +22,12 @@ import espressomd
 import numpy
 import sys
 
+
 class HomogeneousMagneticFieldTest(ut.TestCase):
 
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    S.seed  = S.cell_system.get_state()['n_nodes'] * [1234]
+    S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
     numpy.random.seed(S.seed)
-
 
     def setUp(self):
         self.S.box_l = [3.0, 3.0, 3.0]
@@ -56,9 +72,10 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
         self.assertEqual(self.S.analysis.energy()["dipolar"], 0.0)
 
         # check dipolar energy when adding dipole moments
-        self.S.part.add(id=0, pos=[0,0,0], dip=dip_mom0,rotation=(1,1,1))
-        self.assertEqual(self.S.analysis.energy()["dipolar"], -1.0*numpy.dot(H_field, dip_mom0))
-        self.S.part.add(id=1, pos=[1,1,1], dip=dip_mom1,rotation=(1,1,1))
+        self.S.part.add(id=0, pos=[0, 0, 0], dip=dip_mom0, rotation=(1, 1, 1))
+        self.assertEqual(self.S.analysis.energy()[
+                         "dipolar"], -1.0 * numpy.dot(H_field, dip_mom0))
+        self.S.part.add(id=1, pos=[1, 1, 1], dip=dip_mom1, rotation=(1, 1, 1))
         self.assertEqual(self.S.analysis.energy()["dipolar"],
                          (-1.0 * numpy.dot(H_field, dip_mom0) - 1.0 * numpy.dot(H_field, dip_mom1)))
 

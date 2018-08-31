@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -29,10 +29,10 @@ from espressomd.interactions import FeneBond
 from espressomd.observables import *
 from espressomd.accumulators import *
 
+
 class CorrelatorTest(ut.TestCase):
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
 
     def test(self):
         s = self.system

@@ -33,6 +33,7 @@
 #include "utils/math/sqr.hpp"
 
 #include <cmath>
+#include <cassert>
 
 /*************************************************************/
 /** \name Vector and matrix operations for three dimensons.  */
@@ -95,6 +96,10 @@ inline void vector_product(T const &a, U const &b, V &c) {
  * @param adim    dimensions of the underlying grid
  */
 inline int get_linear_index(int a, int b, int c, int adim[3]) {
+  assert((a >= 0) && (a < adim[0]));
+  assert((b >= 0) && (b < adim[1]));
+  assert((c >= 0) && (c < adim[2]));
+
   return (a + adim[0] * (b + adim[1] * c));
 }
 
@@ -126,7 +131,9 @@ inline void get_grid_pos(int i, int *a, int *b, int *c, int adim[3]) {
  *  \param pos1 Position one.
  *  \param pos2 Position two.
  */
-inline double distance2(const Vector3d &a, const Vector3d &b) { return (a - b).norm2(); }
+inline double distance2(const Vector3d &a, const Vector3d &b) {
+  return (a - b).norm2();
+}
 
 /*@}*/
 

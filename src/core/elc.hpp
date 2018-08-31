@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -99,8 +99,8 @@ extern ELC_struct elc_params;
     @param bottom  dielectric constant of lower part
 */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-                   int neutralize, double delta_mid_top, double delta_mid_bot, int const_pot,
-                   double pot_diff);
+                   int neutralize, double delta_mid_top, double delta_mid_bot,
+                   int const_pot, double pot_diff);
 
 /// the force calculation
 void ELC_add_force();
