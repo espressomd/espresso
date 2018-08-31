@@ -35,8 +35,10 @@ class LangevinThermostat(ut.TestCase):
        the single component Maxwell distribution."""
 
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.cell_system.set_n_square()
-    system.cell_system.skin = 0.3
+    system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+    system.cell_system.max_num_cells=8
+    system.periodicity=0,0,0
+    system.cell_system.skin=0
     system.seed = range(system.cell_system.get_state()["n_nodes"])
     if espressomd.has_features("PARTIAL_PERIODIC"):
         system.periodicity = 0, 0, 0
@@ -88,6 +90,7 @@ class LangevinThermostat(ut.TestCase):
         system.thermostat.set_langevin(kT=kT, gamma=gamma)
 
         # Warmup
+        print(system.cell_system.get_state())
         system.integrator.run(100)
 
         # Sampling

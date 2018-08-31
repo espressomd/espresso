@@ -141,12 +141,17 @@ void energy_calc(double *result) {
 
   on_observable_calc();
 
-  short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
+  if (max_cut < 0) {
+    for (auto& p: local_cells.particles()) {
+      add_single_particle_energy(&p);
+    }
+  } else {
+    short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
                    [](Particle &p1, Particle &p2, Distance &d) {
                      add_non_bonded_pair_energy(&p1, &p2, d.vec21.data(),
                                                 sqrt(d.dist2), d.dist2);
                    });
-
+  }
   calc_long_range_energies();
 
   auto local_parts = local_cells.particles();

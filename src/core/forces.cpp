@@ -125,12 +125,18 @@ void force_calc() {
 
   calc_long_range_forces();
 
-  short_range_loop([](Particle &p) { add_single_particle_force(&p); },
+  if (max_cut <= 0) {
+    printf("Disabling sr\n");
+    for (auto& p: local_cells.particles()) {
+      add_single_particle_force(&p);
+    }
+  } else {
+    short_range_loop([](Particle &p) { add_single_particle_force(&p); },
                    [](Particle &p1, Particle &p2, Distance &d) {
                      add_non_bonded_pair_force(&(p1), &(p2), d.vec21.data(),
                                                sqrt(d.dist2), d.dist2);
                    });
-
+  }
   auto local_parts = local_cells.particles();
   Constraints::constraints.add_forces(local_parts);
 
