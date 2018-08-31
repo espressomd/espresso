@@ -40,14 +40,6 @@
 /*************************************************************/
 /*@{*/
 
-/** Subtracts vector v2 from vector v1 and stores result in vector dv */
-template <typename T, typename U, typename V>
-inline void vecsub(T const &v1, U const &v2, V &dv) {
-  dv[0] = v1[0] - v2[0];
-  dv[1] = v1[1] - v2[1];
-  dv[2] = v1[2] - v2[2];
-}
-
 /** calculates the scalar product of two vectors a nd b */
 template <typename T1, typename T2> double scalar(const T1 &a, const T2 &b) {
   double d2 = 0.0;
