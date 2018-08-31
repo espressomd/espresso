@@ -112,7 +112,6 @@ void compute_pos_corr_vec(int *repeat_) {
   Bonded_ia_parameters *ia_params;
   int j, k, cnt = -1;
   Particle *p1, *p2;
-  double r_ij_t[3], r_ij[3], r_ij_dot, G, pos_corr, r_ij2;
 
   for (auto &p : local_cells.particles()) {
     p1 = &p;
@@ -129,20 +128,18 @@ void compute_pos_corr_vec(int *repeat_) {
           return;
         }
 
-        get_mi_vector(r_ij, p1->r.p, p2->r.p);
-        r_ij2 = sqrlen(r_ij);
+        auto const r_ij = get_mi_vector(p1->r.p, p2->r.p);
+        auto const r_ij2 = r_ij.norm2();
+
         if (fabs(1.0 - r_ij2 / ia_params->p.rigid_bond.d2) >
             ia_params->p.rigid_bond.p_tol) {
-          get_mi_vector(r_ij_t, p1->r.p_old, p2->r.p_old);
-          r_ij_dot = scalar(r_ij_t, r_ij);
-          G = 0.50 * (ia_params->p.rigid_bond.d2 - r_ij2) / r_ij_dot;
-#ifdef MASS
-          G /= ((*p1).p.mass + (*p2).p.mass);
-#else
-          G /= 2;
-#endif
-          for (j = 0; j < 3; j++) {
-            pos_corr = G * r_ij_t[j];
+          auto const r_ij_t = get_mi_vector(p1->r.p_old, p2->r.p_old);
+          auto const r_ij_dot = r_ij_t * r_ij;
+          auto const G = 0.50 * (ia_params->p.rigid_bond.d2 - r_ij2) / r_ij_dot /
+              ((*p1).p.mass + (*p2).p.mass);
+
+          for (int j = 0; j < 3; j++) {
+            auto const pos_corr = G * r_ij_t[j];
             p1->f.f[j] += pos_corr * (*p2).p.mass;
             p2->f.f[j] -= pos_corr * (*p1).p.mass;
           }
@@ -221,7 +218,6 @@ void compute_vel_corr_vec(int *repeat_) {
   Bonded_ia_parameters *ia_params;
   int j, k;
   Particle *p1, *p2;
-  double v_ij[3], r_ij[3], K, vel_corr;
 
   for (auto &p : local_cells.particles()) {
     p1 = &p;
@@ -237,17 +233,16 @@ void compute_vel_corr_vec(int *repeat_) {
           return;
         }
 
-        vecsub(p1->m.v, p2->m.v, v_ij);
-        get_mi_vector(r_ij, p1->r.p, p2->r.p);
-        if (fabs(scalar(v_ij, r_ij)) > ia_params->p.rigid_bond.v_tol) {
-          K = scalar(v_ij, r_ij) / ia_params->p.rigid_bond.d2;
-#ifdef MASS
-          K /= ((*p1).p.mass + (*p2).p.mass);
-#else
-          K /= 2.0;
-#endif
-          for (j = 0; j < 3; j++) {
-            vel_corr = K * r_ij[j];
+        auto const v_ij = p1->m.v - p2->m.v;
+        auto const r_ij = get_mi_vector(p1->r.p, p2->r.p);
+
+        auto const v_proj = v_ij * r_ij;
+        if (std::abs(v_proj) > ia_params->p.rigid_bond.v_tol) {
+          auto const K =
+              v_proj / ia_params->p.rigid_bond.d2 / p1->p.mass + p2->p.mass;
+
+          for (int j = 0; j < 3; j++) {
+            auto const vel_corr = K * r_ij[j];
             p1->f.f[j] -= vel_corr * (*p2).p.mass;
             p2->f.f[j] += vel_corr * (*p1).p.mass;
           }
@@ -307,9 +302,8 @@ void correct_vel_shake() {
   }
 
   if (cnt >= SHAKE_MAX_ITERATIONS) {
-    fprintf(stderr,
-            "%d: VEL CORRECTIONS IN RATTLE failed to converge after %d "
-            "iterations !!\n",
+    fprintf(stderr, "%d: VEL CORRECTIONS IN RATTLE failed to converge after %d "
+                    "iterations !!\n",
             this_node, cnt);
     errexit();
   }
