@@ -681,14 +681,15 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
 }
 
 void analyze_rdfchain(PartCfg &partCfg, double r_min, double r_max, int r_bins,
-                      double **_f1, double **_f2, double **_f3) {
+                      std::vector<double> &f1, std::vector<double> &f2,
+                      std::vector<double> &f3) {
   int i, j, ind, c_i, c_j, mon;
   double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist,
-      chain_mass, *f1 = nullptr, *f2 = nullptr, *f3 = nullptr;
+      chain_mass;
 
-  *_f1 = f1 = Utils::realloc(f1, r_bins * sizeof(double));
-  *_f2 = f2 = Utils::realloc(f2, r_bins * sizeof(double));
-  *_f3 = f3 = Utils::realloc(f3, r_bins * sizeof(double));
+  f1.resize(r_bins);
+  f2.resize(r_bins);
+  f3.resize(r_bins);
   std::vector<double> cm(chain_n_chains * 3);
   std::vector<double> min_d(chain_n_chains * chain_n_chains);
   for (i = 0; i < r_bins; i++) {

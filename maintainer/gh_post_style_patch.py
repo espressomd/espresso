@@ -5,7 +5,10 @@ import os
 import requests
 import subprocess
 
-PR = os.environ['CI_COMMIT_REF_NAME'].replace("PR-", "")
+if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):
+    exit(0)
+
+PR = os.environ['CI_COMMIT_REF_NAME'][3:]
 URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + \
       PR + '/comments?access_token=' + os.environ['GITHUB_TOKEN']
 SIZELIMIT = 10000

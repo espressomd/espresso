@@ -191,7 +191,8 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff);
    chains
     */
 void analyze_rdfchain(PartCfg &, double r_min, double r_max, int r_bins,
-                      double **_rdf, double **_rdf_cm, double **_rdf_d);
+                      std::vector<double> &_rdf, std::vector<double> &_rdf_cm,
+                      std::vector<double> &_rdf_d);
 
 /** sets the particle mol_id according to the chain_structure info*/
 void update_mol_ids_setchains();
