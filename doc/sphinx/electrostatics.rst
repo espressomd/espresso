@@ -657,9 +657,11 @@ Espresso can use the electrostatics methods from the SCAFACOS *Scalable
 fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :attr:`espressomd.scafacos.available_methods`
 
 To use SCAFACOS, create an instance of :attr:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+
 * ``method_name``: name of the SCAFACOS method being used.
 * ``method_params``: dictionary containing the method-specific parameters
 * ``prefactor``: Coulomb prefactor as defined in :eq:`coulomb_prefactor`.
+
 The method-specific parameters are described in the SCAFACOS manual.
 Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field
 

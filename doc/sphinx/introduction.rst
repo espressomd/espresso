@@ -364,6 +364,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 
 * :file:`load_checkpoint.py`,  :file:`save_checkpoint.py`
    Basing usage of the checkpointing feature. Shows how to write/load the state of:
+
    * custom user variables
    * non bonded interactions
    * particles

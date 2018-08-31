@@ -106,7 +106,9 @@ Several modes are available for different types of binding.
 
 
 The following limitations currently apply for the collision detection:
+
 * No distinction is currently made between different particle types for the ``"bind_centers"`` method.
+
 * The ``"bind at point of collision"`` and ``"glue to surface"``  approaches require the feature ``VIRTUAL_SITES_RELATIVE`` to be activated in :file:`myconfig.hpp`.
 
 * The ``"bind at point of collision"`` approach cannot handle collisions

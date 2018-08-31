@@ -9,6 +9,7 @@ Dipolar interaction
 -------------------
 
 |es| contains methods to calculate the interactions between point dipoles
+
 .. math::
 
    U^{Dip}(\vec{r}) = D \cdot \left( \frac{(\vec{\mu}_i \cdot \vec{\mu}_j)}{r^3}
@@ -171,9 +172,11 @@ calculations. The feature ``SCAFACOS_DIPOLES`` has to be added to
 2018) dipolar calculations are only included in the ``dipolar`` branch of the Scafacos code.
 
 To use SCAFACOS, create an instance of :attr:`espressomd.magnetostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+
 * ``method_name``: name of the SCAFACOS method being used.
 * ``method_params``: dictionary containing the method-specific parameters
 * ``bjerrum_length``
+
 The method-specific parameters are described in the SCAFACOS manual.
 Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field
 

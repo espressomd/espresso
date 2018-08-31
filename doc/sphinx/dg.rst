@@ -423,6 +423,7 @@ Adding the bonded interaction in the Python interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Please note that the following is Cython code (www.cython.org), rather than pure Python.
+
 * In :file:`src/python/espressomd/interactions.pxd`:
 
   * import the parameter data structure from the C++ header file for your interaction. For the FENE bond, this looks like:

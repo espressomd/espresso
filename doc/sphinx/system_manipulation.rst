@@ -107,7 +107,7 @@ compiled in.
 
 * Forces and torques acting on the particles
 
-::
+  ::
 
     gt.kill_particle_forces()
 
@@ -117,7 +117,7 @@ compiled in.
 
 * The center of mass of the system
 
-::
+  ::
 
     gt.system_CMS()
 
@@ -126,7 +126,7 @@ compiled in.
 
 * The center-of-mass velocity
 
-::
+  ::
 
     gt.system_CMS_velocity()
 
@@ -134,7 +134,7 @@ compiled in.
 
 * The Galilei transform
 
-::
+  ::
 
     gt.galilei_transform()
 

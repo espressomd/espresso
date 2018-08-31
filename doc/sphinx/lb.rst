@@ -154,7 +154,9 @@ In the GPU implementation the force can alternatively be interpolated
 using a three point scheme which couples the particles to the nearest 27
 LB nodes. This can be called using "lbfluid 3pt" and is described in
 Dünweg and Ladd by equation 301 :cite:`duenweg08a`.
+
 .. Note that the three point coupling scheme is incompatible with the Shan Chen Lattice Boltzmann.
+
 The frictional force tends to decrease the relative
 velocity between the fluid and the particle whereas the random forces
 are chosen so large that the average kinetic energy per particle
