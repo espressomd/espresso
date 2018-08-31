@@ -317,9 +317,12 @@ void add_oif_global_forces(double *area_volume,
         }
         deltaA = (area - iaparams->p.oif_global_forces.A0_g) /
                  iaparams->p.oif_global_forces.A0_g;
-        vecsub(h, p11, m1);
-        vecsub(h, p22, m2);
-        vecsub(h, p33, m3);
+
+        for (int i = 0; i < 3; i++) {
+          m1[i] = h[i] - p11[i];
+          m2[i] = h[i] - p22[i];
+          m3[i] = h[i] - p33[i];
+        }
 
         m1_length = normr(m1);
         m2_length = normr(m2);
