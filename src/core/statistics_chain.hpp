@@ -180,7 +180,6 @@ void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff);
     @param _ff   contains S(q) as an array of size qbins */
 void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff);
 
-
 /** sets the particle mol_id according to the chain_structure info*/
 void update_mol_ids_setchains();
 

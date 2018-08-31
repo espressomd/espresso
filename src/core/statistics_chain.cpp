@@ -679,4 +679,3 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
     ff[qi] /= ((double)chain_length * chain_n_chains * n_configs);
   free(r_ij);
 }
-
