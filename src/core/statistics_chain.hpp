@@ -180,19 +180,6 @@ void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff);
     @param _ff   contains S(q) as an array of size qbins */
 void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff);
 
-/** Calculates monomer-monomer distribution between monomers of different
-   chains.
-    @param r_min   minimal distance for the distribution.
-    @param r_max   maximal distance for the distribution.
-    @param r_bins  the number of bins
-    @param _rdf    contains the monomer-monomer distribution
-    @param _rdf_cm contains the distribution of centers of mass of the chains
-    @param _rdf_d  contains the distribution of closest distances between the
-   chains
-    */
-void analyze_rdfchain(PartCfg &, double r_min, double r_max, int r_bins,
-                      std::vector<double> &_rdf, std::vector<double> &_rdf_cm,
-                      std::vector<double> &_rdf_d);
 
 /** sets the particle mol_id according to the chain_structure info*/
 void update_mol_ids_setchains();
