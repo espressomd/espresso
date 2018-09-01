@@ -1,0 +1,16 @@
+# This gets a tentative list of authors that are missing from the AUTHORS file
+# based on git commits. The output has to be checked manually, because
+# users have committed under different spellings and abbreviations.
+
+# This has to be run from the root directory of the source tree
+
+git log|
+grep -i ^author|
+cut -f2- -d\ |
+sed -e 's/ <.*//'|
+sort -u|
+while read author
+do 
+  grep -i "$author" AUTHORS >/dev/null || echo Missing: $author
+done
+

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -175,7 +175,7 @@ struct CellStructure {
       \param  pos Position of a particle.
       \return pointer to cell  where to put the particle.
   */
-  Cell *(*position_to_cell)(double pos[3]);
+  Cell *(*position_to_cell)(const double pos[3]);
 };
 
 /*@}*/
@@ -311,5 +311,14 @@ void check_resort_particles();
 void local_sort_particles();
 
 /*@}*/
+
+/* @brief Finds the cell in which a particle is stored
+
+   Uses position_to_cell on p.r.p. If this is not on the node's domain,
+   uses position at last Verlet list rebuild (p.l.p_old).
+
+   @return pointer to the cell or nullptr if the particle is not on the node
+*/
+Cell *find_current_cell(const Particle &p);
 
 #endif

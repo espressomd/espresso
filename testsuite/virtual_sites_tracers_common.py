@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -57,7 +57,7 @@ class VirtualSitesTracersCommon(object):
 
         # Establish steady state flow field
         system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=1)
-        system.integrator.run(1000)
+        system.integrator.run(400)
 
         #
         #
@@ -67,7 +67,7 @@ class VirtualSitesTracersCommon(object):
         ## Perform integration
 
         print("time, actual position, expected position")
-        for i in range(5):
+        for i in range(3):
             system.integrator.run(100)
             # compute expected position
             X = self.lbf.get_interpolated_velocity(
@@ -153,7 +153,7 @@ class VirtualSitesTracersCommon(object):
 
         ## Perform integrat[ion
         last_angle = self.compute_angle()
-        for i in range(11):
+        for i in range(8):
             system.integrator.run(500)
             angle = self.compute_angle()
             print("Angle after relaxation: ", angle)
@@ -201,7 +201,7 @@ class VirtualSitesTracersCommon(object):
 #        system.integrator.run(1)
 #        system.part[3:].pos =system.part[3:].pos +random.random((6,3)) -.5
 
-        system.integrator.run(12000)
+        system.integrator.run(8000)
 
         # For the cpu variant, check particle velocities
         if isinstance(self.lbf, lb.LBFluid):  # as opposed to LBFluidGPU

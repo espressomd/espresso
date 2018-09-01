@@ -72,6 +72,11 @@ Several modes are available for different types of binding.
   * ``part_type_vs``: Particle type assigned to the virtual site created during the collision.
   * ``distance_glued_particle_to_vs``: Distance of the virtual site to the particle being bound to it (`small` particle).
 
+  Note: When the type of a particle is changed on collision, this makes the
+  particle inert with regards to further collision. Should a particle  of
+  type ``part_type_to_be_glued`` collide with two particles in a single
+  time step, no guarantees are made with regards to which partner is selected.
+  In particular, there is no guarantee that the choice is unbiased.
 
 
 

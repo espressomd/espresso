@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -31,7 +31,7 @@
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr
     pointer. */
-Cell *dd_save_position_to_cell(double pos[3]);
+Cell *dd_save_position_to_cell(const double pos[3]);
 
 /************************************************/
 /** \name Defines */
@@ -526,7 +526,7 @@ void dd_init_cell_interactions() {
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr
     pointer. */
-Cell *dd_save_position_to_cell(double pos[3]) {
+Cell *dd_save_position_to_cell(const double pos[3]) {
   int i, cpos[3];
 
   for (i = 0; i < 3; i++) {
