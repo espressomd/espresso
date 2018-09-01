@@ -2,42 +2,106 @@
 = ESPRESSO NEWS =
 =================
 
-ESPResSo 3.4
+ESPResSo 4.0
 ============
 
-New user-visible features
--------------------------
+ESPResSo 4.0 is the first release of ESPResSo with a Python interface.
+I.e., the language in which simulation scripts are written is now Python,
+and support for the TCL-interface has been dropped.
+We recommend all users switch to ESPResSo 4.0, there will be no more fixes to
+TCL-based versions.
 
-* New quartic bonded interaction
-* New bonded coulomb interaction
-* Lees Edwards boundaries for sheer stuff
-* Espresso can now read pdb and gromacs topology files.
-* Checkpointing for the correlator
-* New polymer observables
-* Using the rotation_per_particle feature, it is now possible to switch the integration of the rotational degrees of freedom per individual axis in the particle's body-fixed frame.
-* The rotational degrees of freedom of virtual sites is now integrated. Virtual sites no longer use the quaternion attributes to store their relative orientation
+Transitioning from TCL-based versions
+-------------------------------------
+
+The following can serve as a starting point for the new interface: 
+* The "Introduction" chapter in the user's guide
+* The tutorials provided with ESPResSo
+Both can be found at http://espressomd.org/wordpress/documentation
+
+Please note that, starting from ESPResSo 4.0, enabling additional features in myconfig.hpp no longer changes the behavior of a simulation scripts. Features such as particle rotation and virtual sites have to be activated explicitly in the simulation scripts.
+
+New features:
+-------------
+* Reaction ensemble methods for the modelling of chemical reactions, including constant pH and Wang-Landau schemes
+* Polarisable particles via the Drude-oscillator scheme
+* Steepest-descent energy minimization scheme 
+* Methods for active particles (swimmer_reaction, dipolar swimmers)
+* GPU-accelerated P3M method for electrostatic interactions
+* GPU-accelerated direct summation and Barnes-Hutt schemes for dipolar interactions under open boundary conditions
+* Support for the electrostatic and magnetostatics method provided by the ScaFaCoS library
+* Immersed boundary method for soft immersed objects in an LB fluid
+* Virtual sites acting as inertialess tracers in an LB fluid usable as part of the immersed boundary method or independently
+* New bonded quartic and Coulomb interactions
+* Possibility to tune the skin parameter 
+* Support for saving to the h5md file format for molecular dynamics data.
+* Connection to the MD Analysis Python package
 * A rotate_system command was added, which rotates the particle positions around the system's center of mass
-* Steepest descent energy minimization for translational and rotational degrees of freedom
-* Multiple time step integration that allows one of two time steps per particle
-* Stokesian Dynamics support (GPU only)
-* Dipolar direct sum on gpu for large systems (more particles than the max number of threads the gpu runs in parallel)
-* analyze momentum now returns the total momentum including the fluid momentum.
-* CMake build system
-* Support for the Scafacos library for electrostatis
-* Random number generator changed to Mersenne Twister as implemented by C++11.
-* Espresso now depends on Boost MPI.
 
-Known bugs
-----------
-* Correlator checkpointing does not work with certain combination of features.
+Visualisation
+-------------
+Espresso contains two online visualizers, one based on Mayavi, one on the OpenGl Python module.
+Support for online visualization in VMD has been dropped, but particle data can be stored in file formats which VMD can read (vcf/vtf, h5md).
 
 User-visible changes
 --------------------
-* bit_random tcl command removed.
 
-Changes visible for developers
-------------------------------
-* CMake build system
+* When the ROTATION feature is compiled in, the rotation of a particle around each of its Cartesian axes in the body-fixed frame can be enabled
+* The rotational degrees of freedom of virtual sites is now integrated. Virtual sites no longer use the quaternion attributes to store their relative orientation
+* Alternatively, the orientation of the virtual site can be specified relative to that of the particle it is derived from.
+* The random number generator was changed to Mersenne Twister as implemented by C++11.
+* Espresso now depends on the Boost library including Boost-Mpi and a C++11 capable compiler
+* The build system is now based on CMake.
+
+Removed features
+----------------
+The following features are not part of the ESPResSo 4.0 release, but support is expected to be re-added in a subsequent release.
+* Generalized hybrid Monte Carlo thermostat
+* Virtual sites located at the center of mass of a group of particles
+* Metadynamics, umbrella sampling and parallel tempering
+* Non-equilibrium molecular dynamics (shear boundary conditions implemented by moving slabs of particles at the boundaries)
+* The memd/maggs electrostatic solver
+* The com_force feature
+* The Shan Chen lattice Boltzmann extension
+* Lees-Edwards (shear) boundary conditions
+* The chain rdf analysis 
+
+The following functionality is removed permanently:
+* Blockfile support, which is replaced by support for the h5md format as well as checkpointing based on the pickle Python module.
+* Some of the convenience functions for particle creation such as salt and counterions, as these can be replaced by a very few lines of Python in the simulation script.
+* The lj_angle and angledist (not-quite)-pair potentials
+* The following analysis methods:
+  diffusion_profile, cwvac, p_inst, ..._mol, cel_gpb, dipmom_normal, MSD, angularmomentum, cluster_size_dist, mol, lipid_orient_order, get_lipid_orients, current, wall_stuff,
+  necklace, bilayer, modes2d
+* The uwerr error estimator
+
+
+
+Known issues and limitations
+----------------------------
+The numbers refer to issue numbers at http://github.com/espressomd/espresso
+* Lattice Boltzmann interpolated velocities are only accurate up to one 
+  lattice cell next to a boundary (#1865)
+* Adding boundaries in the electrokinetics method resets species densities
+  to their initial values (#1899)
+* The collision detection feature does not support checkpointing (#1943)
+* Changing interaction parameters does not automatically update the value of 
+  the force property stored on the particles. Forces are re-calculated in
+  the next integration step. (#1973)
+* The domain decomposition cell system does not always choose the node grid
+  yielding the best performance in parallel simulations (#1970)
+* The dipolar P3M method can only be tuned once in a simulation script,
+  unless method parameters are explicitly reset to 0 before the second tuning 
+  (#1937)
+* In rare cases, P3M produces an rs mesh overflow warning (#2067)
+* The H5MD file writer cannot handle bounds that involve more than two bond 
+  partners (#1715)
+* Pickle checkpoints are not guaranteed to be compatible between 
+  different ESPResSo versions (#1181)
+* Switching from the GPU-Based MMM1D and MMM2D methods to a different 
+  electrostatic method within a single simulation script may not work (#396)
+* The membrane_collision interaction of the object in fluid framework may
+  use an outward direction which is outdated by one time step (#2214)
 
 ESPResSo 3.3
 ============

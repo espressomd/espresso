@@ -29,8 +29,11 @@ They can be viewed, changed and run interactively.
 
 The remaining tutorials consist of a `.pdf`-file containing the explanations and separate `.py`-scripts containing the simulation scripts.
 
-Using the IPython tutorials
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All tutorials can be viewed and the corresponding simulation scripts downloaded
+from http://espressomd.org/wordpress/documentation
+
+Using the IPython tutorials interactively
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To view the tutorials, IPython needs to be installed.
 To check, whether it is installed, run::
 
