@@ -82,8 +82,8 @@ namespace ScriptInterface {
  * int m_i;
  * };
  * ~~~
- * (this has to be captured in the lambdas to have access to the member functions
- * of the class).
+ * (this has to be captured in the lambdas to have access to the member
+ * functions of the class).
  */
 template <typename Derived, typename Base = ScriptInterfaceBase>
 class AutoParameters : public Base {

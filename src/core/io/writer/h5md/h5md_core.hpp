@@ -163,7 +163,8 @@ private:
   void load_file(const std::string &filename);
 
   /**
-   * @brief Initializes the necessary data to create the datasets and attributes.
+   * @brief Initializes the necessary data to create the datasets and
+   * attributes.
    */
   void init_filestructure();
 

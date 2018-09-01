@@ -54,9 +54,9 @@ int mindist3(PartCfg &, int part_id, double r_catch, int *ids);
     @return Returns '1' if there is a collision, '0' otherwise. */
 int collision(PartCfg &, double pos[3], double shield, int n_add, double *add);
 
-/** Function used by polymerC to determine whether a constraint has been violated
-   while setting up a polymer. Currently only "wall", "sphere" and "cylinder"
-   constraints are respected.
+/** Function used by polymerC to determine whether a constraint has been
+   violated while setting up a polymer. Currently only "wall", "sphere" and
+   "cylinder" constraints are respected.
     @param p1           = position of first particle given as double-array of
    length 3
     @param p2           = position of second particle given as double-array of

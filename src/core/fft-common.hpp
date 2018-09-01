@@ -291,7 +291,8 @@ void fft_unpack_block(double *in, double *out, int start[3], int size[3],
                       int dim[3], int element);
 
 /** Debug function to print global fft mesh.
-    Print a globally distributed mesh contained in data. Element size is element.
+    Print a globally distributed mesh contained in data. Element size is
+ element.
  * \param plan     fft/communication plan (see \ref fft_forw_plan).
  * \param data     mesh data.
  * \param element  element size.

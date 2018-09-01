@@ -1242,9 +1242,9 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
       // paper "Density-of-states
       // Monte Carlo method for
       // simulation of fluids"
-      // this makes the new state being accepted with the conditional probability
-      // bf (bf is a transition probability = conditional probability from the
-      // old state to move to the new state)
+      // this makes the new state being accepted with the conditional
+      // probability bf (bf is a transition probability = conditional
+      // probability from the old state to move to the new state)
     } else {
       if (histogram[new_state_index] >= 0 && histogram[old_state_index] < 0)
         bf = 10; // this makes the reaction get accepted, since we found a state
@@ -1308,8 +1308,9 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
     double minimum_wang_landau_potential = find_minimum_non_negative_value(
         wang_landau_potential.data(), wang_landau_potential.size());
     for (int i = 0; i < wang_landau_potential.size(); i++) {
-      if (wang_landau_potential[i] >= 0) // check for whether we are in the valid
-                                         // range of the collective variable
+      if (wang_landau_potential[i] >=
+          0) // check for whether we are in the valid
+             // range of the collective variable
         wang_landau_potential[i] -= minimum_wang_landau_potential;
     }
     // write out preliminary wang-landau potential results
