@@ -37,8 +37,8 @@ one has to use a different convergence factor, namely
    q_iq_j\phi_\beta(x_{ij}, y_{ij},z_{ij}).
 
 :math:`\phi_\beta` is given by
-:math:` \phi_\beta(x,y,z)=\,\tilde\phi_\beta(x,y,z)
-+ \frac{e^{-\beta r}}{r} ` for :math:`(x,y,z)\neq 0` and
+:math:`\phi_\beta(x,y,z)=\,\tilde\phi_\beta(x,y,z)
++ \frac{e^{-\beta r}}{r}` for :math:`(x,y,z)\neq 0` and
 :math:`\phi_\beta(0,0,0)=\,\tilde\phi_\beta(0,0,0)`, where
 
 .. math::
@@ -80,9 +80,9 @@ transform the potential along both x and y. We obtain the far formula as
        - 1\right)} e^{2\pi i u_y q y}e^{2\pi i u_x p x} + 2\pi u_x
    u_y\left(u_z z^2 - z + \frac{\lambda_z}{6}\right).
 
-where :math:`\lambda_{x,y,z}` are the box dimensions, :math:` f_{pq} =\,
-\sqrt{(u_x p)^2 + (u_y q)^2},\quad f_p =\, u_x p,\quad f_q =\, u_x q
-`, :math:` \omega_p=2\pi u_x p` and :math:`\omega_q=2\pi u_y q`. The
+where :math:`\lambda_{x,y,z}` are the box dimensions, :math:`f_{pq} =\,
+\sqrt{(u_x p)^2 + (u_y q)^2},\quad f_p =\, u_x p,\quad f_q =\, u_x q`,
+:math:`\omega_p=2\pi u_x p` and :math:`\omega_q=2\pi u_y q`. The
 advantage of this formula is that it allows for a product decomposition
 into components of the particles. For example
 
@@ -195,7 +195,7 @@ Taylor series can be achieved, which are implemented in :file:`mmm-common.h`.
 The Bessel functions are calculated using a Chebychev series.
 
 The treatment of the far formula is algorithmically more complicated.
-For a particle i in layer :math:` S_i`, the formula can product
+For a particle i in layer :math:`S_i`, the formula can product
 decomposed, as in
 
 .. math::
@@ -391,7 +391,7 @@ charge neutral, the additional image layers (those layers above or below
 the original slab system) are charge neutral, too. Now let us consider
 the n-th image layer which has an offset of :math:`n\lambda_z` to the
 original layer. If :math:`n\lambda_z` is large enough, each particle of
-charge q\_j at position :math:`(x_j,y_j,z_j+n\lambda_z)` and its
+charge :math:`q\_j` at position :math:`(x_j,y_j,z_j+n\lambda_z)` and its
 replicas in the xy-plane can be viewed as constituting a homogeneous
 charged sheet of charge density
 :math:`\sigma_j = \frac{q_j}{\lambda_x\lambda_y}`. The potential of such

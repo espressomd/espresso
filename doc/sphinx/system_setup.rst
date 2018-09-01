@@ -381,7 +381,7 @@ relative velocity of particle pairs. The DPD thermostat is better for
 dynamics than the Langevin thermostat, since it mimics hydrodynamics in
 the system.
 
-When using a Lennard-Jones interaction, :math:`{r_cut} =
+When using a Lennard-Jones interaction, :math:`{r_\mathrm{cut}} =
 2^{\frac{1}{6}} \sigma` is a good value to choose, so that the
 thermostat acts on the relative velocities between nearest neighbor
 particles. Larger cutoffs including next nearest neighbors or even more

@@ -46,7 +46,7 @@ Boost
     A number of advanced C++ features used by ESPResSo is provided by Boost.
 
 FFTW
-    For some algorithms (P:math:`^3`\ M), ESPResSo needs the FFTW library
+    For some algorithms (P\ :math:`^3`\ M), ESPResSo needs the FFTW library
     version 3 or later  [5]_ for Fourier transforms, including header
     files.
 

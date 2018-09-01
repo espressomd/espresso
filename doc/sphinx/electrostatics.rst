@@ -16,8 +16,8 @@ where
    :label: coulomb_prefactor
 
 is a prefactor which can be set by the user.
-The commonly used Bdrm length :math:`l_B = e_o^2 / (4 \pi \e\epsilon k_B T)` is the length at which the Coulomb energy between two unit charges is equal to the thermal energy :math:`k_B T`.
-Based on the this length, the prefactor is given by :math:`C=l_B *k_B T`.
+The commonly used Bdrm length :math:`l_B = e_o^2 / (4 \pi \epsilon_0 \epsilon_r k_B T)` is the length at which the Coulomb energy between two unit charges is equal to the thermal energy :math:`k_B T`.
+Based on the this length, the prefactor is given by :math:`C=l_B k_B T`.
 
 Computing electrostatic interactions is computationally very expensive.
 |es| features some state-of-the-art algorithms to deal with these
@@ -136,7 +136,7 @@ Debye-Hückel potential
 For a list of all parameters see :attr:`espressomd.electrostatics.DH`
 Uses the Debye-Hückel electrostatic potential defined by
 
-  .. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
+  .. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 \exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 
 where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor`.
 The Debye-Hückel potential is an approximate method for calculating

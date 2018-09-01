@@ -1784,7 +1784,7 @@ after all Drude particles are added to the system::
 
 This function creates the requires number of bonds which are later added to the
 particles. It has to be called only once. In a molecule with :math:`N` polarizable
-sites, :math:`N*(N-1)` bond types are needed to cover all the combinations.
+sites, :math:`N \cdot (N-1)` bond types are needed to cover all the combinations.
 Parameters are:
 
     * ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
