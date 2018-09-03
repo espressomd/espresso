@@ -42,7 +42,7 @@ struct Scafacos {
   /** Set parameters common to all methods */
   void set_common_parameters(double *box_l, int *periodicity,
                              int total_particles);
-  /** Calulate short range pair force if supported by the method */
+  /** Calculate short range pair force if supported by the method */
   inline double pair_force(double dist) const {
     if (has_near) {
       fcs_float field;

@@ -26,8 +26,8 @@
 
 namespace Utils {
 /**
- * @brief Convinience class to chain together multiple
- * Callables, like Funktors or lambdas.
+ * @brief Convenience class to chain together multiple
+ * Callables, like Functors or lambdas.
  * Batch(A, B, ...)(args...) calls A(args...), B(args...), ... in order.
  */
 template <typename... Callables> class Batch {

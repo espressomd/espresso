@@ -72,7 +72,7 @@ inline int calc_angle_cossquare_force(Particle *p_mid, Particle *p_left,
   d2i = 1.0 / sqrt(dist2);
   for (j = 0; j < 3; j++)
     vec2[j] *= d2i;
-  /* scalar produvt of vec1 and vec2 */
+  /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
   fac = iaparams->p.angle_cossquare.bend;
 
@@ -184,7 +184,7 @@ inline int angle_cossquare_energy(Particle *p_mid, Particle *p_left,
   d2i = 1.0 / sqrt(dist2);
   for (j = 0; j < 3; j++)
     vec2[j] *= d2i;
-  /* scalar produvt of vec1 and vec2 */
+  /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
   if (cosine > TINY_COS_VALUE)
     cosine = TINY_COS_VALUE;

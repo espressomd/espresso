@@ -45,8 +45,8 @@
  *
  * Each cell has 3^D neighbor cells (For cell 14 they are
  * marked). Since we deal with pair forces, it is sufficient to
- * calculate only half of the interactions (Newtons law: actio =
- * reactio). We have chosen the upper half e.g. all neighbor cells with
+ * calculate only half of the interactions (Newtons law: action =
+ * reaction). We have chosen the upper half e.g. all neighbor cells with
  * a higher linear index (For cell 14 they are marked in light
  * blue). Caution: This implementation needs double sided ghost
  * communication! For single sided ghost communication one would need
@@ -86,7 +86,7 @@ struct DomainDecomposition {
 /** Information about the domain decomposition. */
 extern DomainDecomposition dd;
 
-/** Maximal skin size. This is a global variable wwhich can be read
+/** Maximal skin size. This is a global variable which can be read
     out by the user via the TCL command setmd in order to optimize the
     cell grid */
 extern double max_skin;

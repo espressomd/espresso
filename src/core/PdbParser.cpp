@@ -88,7 +88,7 @@ bool PdbParser::parse_itp_file(const string &filename) {
   while (file.good()) {
     try {
       buf = char(file.get());
-      /* Skipp leading whitespace */
+      /* Skip leading whitespace */
       if (std::isspace(buf[0]))
         continue;
 
@@ -116,7 +116,7 @@ bool PdbParser::parse_itp_file(const string &filename) {
             buf = char(file.get());
 
             /* Ignore leading whitespace, check for end of file (standard says
-             * EOF is "generaly" -1) */
+             * EOF is "generally" -1) */
             if (std::isspace(buf[0]) || (buf[0] == -1)) {
               continue;
             }
@@ -157,7 +157,7 @@ bool PdbParser::parse_itp_file(const string &filename) {
             }
 
             /* Ignore leading whitespace, check for end of file (standard says
-             * EOF is "generaly" -1) */
+             * EOF is "generally" -1) */
             if (std::isspace(buf[0]) || (buf[0] == -1)) {
               continue;
             }
