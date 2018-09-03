@@ -82,6 +82,7 @@
 #include "utils/make_unique.hpp"
 #include "utils/serialization/IA_parameters.hpp"
 #include "utils/serialization/Particle.hpp"
+#include "utils/serialization/ParticleParametersSwimming.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
@@ -425,8 +426,7 @@ void mpi_send_swimming(int pnode, int part, const ParticleParametersSwimming &sw
     Particle *p = local_particles[part];
     p->swim = swim;
   } else {
-    MPI_Send(&swim, sizeof(ParticleParametersSwimming), MPI_BYTE, pnode,
-             SOME_TAG, comm_cart);
+    comm_cart.send(pnode, SOME_TAG, swim);
   }
 
   on_particle_change();
@@ -437,8 +437,9 @@ void mpi_send_swimming_slave(int pnode, int part) {
 #ifdef ENGINE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->swim, sizeof(ParticleParametersSwimming), MPI_BYTE, 0,
-             SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    ParticleParametersSwimming swim;
+    comm_cart.recv(0, SOME_TAG, swim);
+    p->swim = swim;
   }
 
   on_particle_change();

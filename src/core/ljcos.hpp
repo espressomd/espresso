@@ -68,24 +68,6 @@ inline void add_ljcos_pair_force(const Particle *const p1,
                 this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
 #endif
     }
-
-    ONEPART_TRACE(if (p1->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
-                              "part id=%d at dist %f fac %.3e\n",
-                              this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                              p2->p.identity, dist, fac));
-    ONEPART_TRACE(if (p2->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
-                              "part id=%d at dist %f fac %.3e\n",
-                              this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                              p1->p.identity, dist, fac));
-
-    LJ_TRACE(fprintf(
-        stderr, "%d: LJ: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
-        this_node, p1->p.identity, p2->p.identity, dist, fac * d[0], fac * d[1],
-        fac * d[2]));
   }
 }
 
@@ -96,7 +78,6 @@ inline double ljcos_pair_energy(const Particle *p1, const Particle *p2,
     double r_off = dist - ia_params->LJCOS_offset;
     /* lennard-jones part of the potential. */
     if (dist < (ia_params->LJCOS_rmin + ia_params->LJCOS_offset)) {
-      // printf("this is nomal ,  %.3e \n",r_off);
       double frac2 = Utils::sqr(ia_params->LJCOS_sig / r_off);
       double frac6 = frac2 * frac2 * frac2;
       return 4.0 * ia_params->LJCOS_eps * (Utils::sqr(frac6) - frac6);
