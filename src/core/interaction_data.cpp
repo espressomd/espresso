@@ -38,6 +38,7 @@
 #include "hertzian.hpp"
 #include "initialize.hpp"
 #include "interaction_data.hpp"
+#include "layered.hpp" 
 #include "lj.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
@@ -248,6 +249,8 @@ double calc_electrostatics_cutoff() {
 #ifdef P3M
   case COULOMB_ELC_P3M:
     return std::max(elc_params.space_layer, p3m.params.r_cut_iL * box_l[0]);
+  case COULOMB_MMM2D:
+    return layer_h-skin;
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     /* do not use precalculated r_cut here, might not be set yet */
@@ -627,6 +630,8 @@ void deactivate_coulomb_method() {
     rf_params.B = 0.0;
   case COULOMB_MMM1D:
     mmm1d_params.maxPWerror = 1e40;
+  case COULOMB_MMM2D:
+    mmm2d_params.far_cut=0;
   default:
     break;
   }
