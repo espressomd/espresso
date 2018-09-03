@@ -60,9 +60,9 @@ class test_minimize_energy(ut.TestCase):
             self.system.analysis.energy()["total"], 0, places=10)
 
         self.system.integrator.set_steepest_descent(
-            f_max=0.0, gamma=0.1, max_displacement=0.001)
+            f_max=0.0, gamma=0.1, max_displacement=0.005)
 
-        self.system.integrator.run(1000)
+        self.system.integrator.run(200)
 
         self.assertAlmostEqual(
             self.system.analysis.energy()["total"], 0, places=10)

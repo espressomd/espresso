@@ -31,7 +31,7 @@ class CollisionDetection(ut.TestCase):
 
     """Tests interface and functionality of the collision detection / dynamic binding"""
 
-    s = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(seed=s.seed)
     if espressomd.has_features("VIRTUAL_SITES"):
@@ -44,7 +44,7 @@ class CollisionDetection(ut.TestCase):
     s.bonded_inter.add(H2)
     s.time_step = 0.001
     s.cell_system.skin = 0.05
-    s.min_global_cut = 0.2
+    s.min_global_cut = 0.112
 
     part_type_to_attach_vs_to = 0
     part_type_vs = 1
@@ -212,7 +212,6 @@ class CollisionDetection(ut.TestCase):
                 np.copy(p.pos_folded), expected_pos, atol=1E-4)
 
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
-    #@ut.skipIf(s.cell_system.get_state()["n_nodes"]>1,"VS based tests only on a single node")
     def test_bind_at_point_of_collision(self):
         # Single collision head node
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0, 0, 0)))
@@ -235,6 +234,90 @@ class CollisionDetection(ut.TestCase):
         self.run_test_bind_at_point_of_collision_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
 
+    @ut.skipIf(not espressomd.has_features("LENNARD_JONES", "VIRTUAL_SITES"), "Skipping for lack of LJ potential")
+    def test_bind_at_point_of_collision_random(self):
+        """Integrate lj liquid and check that no double bonds are formed
+           and the number of bonds fits the number of virtual sites
+
+        """
+        self.s.part.clear()
+
+        # Add randomly placed particles
+        self.s.part.add(pos=np.random.random((200, 3)))
+
+        # Setup Lennard-Jones
+        self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1, sigma=0.1, cutoff=2**(1. / 6) * 0.1, shift="auto")
+
+        # Remove overalp between particles
+        self.s.integrator.set_steepest_descent(
+            f_max=0,
+            gamma=1,
+            max_displacement=0.001)
+        while self.s.analysis.energy()["total"] > len(self.s.part):
+            self.s.integrator.run(10)
+
+        # Collision detection
+        self.s.collision_detection.set_params(
+            mode="bind_at_point_of_collision",
+            distance=0.11,
+            bond_centers=self.H,
+            bond_vs=self.H2,
+            part_type_vs=1,
+            vs_placement=0.4)
+
+        # Integrate lj liquid
+        self.s.integrator.set_vv()
+        self.s.integrator.run(5000)
+
+        # Analysis
+        virtual_sites = self.s.part.select(virtual=1)
+        non_virtual = self.s.part.select(virtual=0)
+
+        # Check bonds on non-virtual particles
+        bonds = []
+        for p in non_virtual:
+            for bond in p.bonds:
+                # Sort bond partners to make them unique independently of
+                # which particle got the bond
+                bonds.append(tuple(sorted([p.id, bond[1]])))
+
+        # No duplicate bonds?
+        self.assertEqual(len(bonds), len(set(bonds)))
+
+        # 2 virtual sites per bond?
+        self.assertEqual(2 * len(bonds), len(virtual_sites))
+
+        # Find pairs of bonded virtual sites
+        vs_pairs = []
+        for p in virtual_sites:
+            # 0 or 1 bond on vs?
+            self.assertTrue(len(p.bonds) in [0, 1])
+
+            if len(p.bonds) == 1:
+                vs_pairs.append((p.id, p.bonds[0][1]))
+
+        # Number of vs pairs = number of bonds?
+        self.assertEqual(len(vs_pairs), len(bonds))
+
+        # Che3ck that vs pairs and bonds agree
+        for vs_pair in vs_pairs:
+            # Get corresponding non-virtual particles
+            base_particles = tuple(sorted(
+                [self.s.part[vs_pair[0]].vs_relative[0],
+                 self.s.part[vs_pair[1]].vs_relative[0]]))
+
+            # Is there a corresponding bond?
+            self.assertTrue(base_particles in bonds)
+
+        # Tidy
+        self.s.non_bonded_inter[
+            0,
+            0].lennard_jones.set_params(
+                epsilon=0,
+                sigma=0,
+         cutoff=0)
+
     def run_test_glue_to_surface_for_pos(self, *positions):
         positions = list(positions)
         shuffle(positions)
@@ -244,7 +327,7 @@ class CollisionDetection(ut.TestCase):
         # even if it is within range for a collision
         p = self.s.part.add(pos=positions[0], type=self.other_type)
         for pos in positions:
-                # Since this is non-symmetric, we randomize order
+            # Since this is non-symmetric, we randomize order
             if np.random.random() > .5:
                 p1 = self.s.part.add(
                     pos=pos + (0, 0, 0), type=self.part_type_to_attach_vs_to)
@@ -334,13 +417,13 @@ class CollisionDetection(ut.TestCase):
 
         # Bound particle should have a bond to vs. It can additionally have a bond
         # to the base particle
-        bond_to_vs_found = False
+        bond_to_vs_found = 0
         for b in bound_p.bonds:
             if b[0] == self.H2:
                 # bond to vs
                 self.assertEqual(b, (self.H2, vs.id))
-                bond_to_vs_found = True
-        self.assertEqual(bond_to_vs_found, True)
+                bond_to_vs_found += 1
+        self.assertEqual(bond_to_vs_found, 1)
         # Vs should not have a bond
         self.assertEqual(vs.bonds, ())
 
@@ -378,6 +461,119 @@ class CollisionDetection(ut.TestCase):
         # Head + mixed + other
         self.run_test_glue_to_surface_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
+
+    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
+    def test_glue_to_surface_random(self):
+        """Integrate lj liquid and check that no double bonds are formed
+           and the number of bonds fits the number of virtual sites
+
+        """
+        self.s.part.clear()
+
+        # Add randomly placed particles
+        self.s.part.add(pos=np.random.random((100, 3)),
+                        type=100 * [self.part_type_to_attach_vs_to])
+        self.s.part.add(pos=np.random.random(
+            (100, 3)), type=100 * [self.part_type_to_be_glued])
+        self.s.part.add(pos=np.random.random(
+            (100, 3)), type=100 * [self.other_type])
+
+        # Setup Lennard-Jones
+        self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1, sigma=0.1, cutoff=2**(1. / 6) * 0.1, shift="auto")
+
+        # Remove overalp between particles
+        self.s.integrator.set_steepest_descent(
+            f_max=0,
+            gamma=1,
+            max_displacement=0.001)
+        while self.s.analysis.energy()["total"] > len(self.s.part):
+            self.s.integrator.run(10)
+
+        # Collision detection
+        self.s.collision_detection.set_params(
+            mode="glue_to_surface", distance=0.11, distance_glued_particle_to_vs=0.02, bond_centers=self.H, bond_vs=self.H2, part_type_vs=self.part_type_vs, part_type_to_attach_vs_to=self.part_type_to_attach_vs_to, part_type_to_be_glued=self.part_type_to_be_glued, part_type_after_glueing=self.part_type_after_glueing)
+
+        # Integrate lj liquid
+        self.s.integrator.set_vv()
+        self.s.integrator.run(500)
+
+        # Analysis
+        virtual_sites = self.s.part.select(virtual=1)
+        non_virtual = self.s.part.select(virtual=0)
+        to_be_glued = self.s.part.select(type=self.part_type_to_be_glued)
+        after_glueing = self.s.part.select(type=self.part_type_after_glueing)
+
+        # One virtual site per glued particle?
+        self.assertEqual(len(after_glueing), len(virtual_sites))
+
+        # Check bonds on non-virtual particles
+        bonds_centers = []
+        bonds_virtual = []
+        for p in non_virtual:
+            # Inert particles should not have bonds
+            if p.type == self.other_type:
+                self.assertEqual(len(p.bonds), 0)
+
+            # Particles that have not yet collided should not have a bond
+            if p.type == self.part_type_to_be_glued:
+                self.assertEqual(len(p.bonds), 0)
+
+            for bond in p.bonds:
+                # Bond type and partner type
+                # part_type_after_glueing can have a bond to a vs or to a
+                # non_virtual particle
+                if p.type == self.part_type_after_glueing:
+                    self.assertTrue(bond[0] in (self.H, self.H2))
+                    # Bonds to virtual sites:
+                    if bond[0] == self.H2:
+                        self.assertEqual(
+                            self.s.part[bond[1]].type,
+                            self.part_type_vs)
+                    else:
+                        self.assertEqual(
+                            self.s.part[bond[1]].type,
+                            self.part_type_to_attach_vs_to)
+                elif p.type == self.part_type_to_attach_vs_to:
+                    self.assertEqual(bond[0], self.H)
+                    self.assertEqual(
+                        self.s.part[bond[1]].type,
+                        self.part_type_after_glueing)
+                else:
+                    print(p.id, p.type, p.bonds)
+                    raise Exception("Particle should not have bonds. ")
+
+                # Collect bonds
+                # Sort bond partners to make them unique independently of
+                # which particle got the bond
+                if bond[0] == self.H:
+                    bonds_centers.append(tuple(sorted([p.id, bond[1]])))
+                else:
+                    bonds_virtual.append(tuple(sorted([p.id, bond[1]])))
+
+        # No duplicate bonds?
+        self.assertEqual(len(bonds_centers), len(set(bonds_centers)))
+        self.assertEqual(len(bonds_virtual), len(set(bonds_virtual)))
+
+        # 1 bond between centers and one between vs and glued particle
+        # per collision
+        self.assertEqual(len(bonds_virtual), len(bonds_centers))
+
+        # 1 virtual sites per bond?
+        self.assertEqual(len(bonds_centers), len(virtual_sites))
+
+        # no bonds on vs and vs particle type
+        for p in virtual_sites:
+            self.assertEqual(len(p.bonds), 0)
+            self.assertEqual(p.type, self.part_type_vs)
+
+        # Tidy
+        self.s.non_bonded_inter[
+            0,
+            0].lennard_jones.set_params(
+                epsilon=0,
+                sigma=0,
+         cutoff=0)
 
     #@ut.skipIf(not espressomd.has_features("AngleHarmonic"),"Tests skipped because AngleHarmonic not compiled in")
     def test_AngleHarmonic(self):

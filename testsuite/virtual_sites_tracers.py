@@ -40,7 +40,7 @@ class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
         box_height = 10.
         box_lw = 8.
         system = espressomd.System(box_l=(box_lw, box_lw, box_height))
-        system.time_step = 0.03
+        system.time_step = 0.05
         system.cell_system.skin = 0.1
         lbf = lb.LBFluid(
             agrid=1, dens=1, visc=2, tau=system.time_step, fric=1)

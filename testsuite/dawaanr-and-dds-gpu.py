@@ -20,6 +20,7 @@ from numpy import linalg as la
 from numpy.random import random
 import math
 import numpy as np
+
 import espressomd
 import espressomd.interactions
 import espressomd.magnetostatics
@@ -53,7 +54,7 @@ class DDSGPUTest(ut.TestCase):
 
         part_dip = np.zeros((3))
 
-        for n in [110, 111, 540, 541]:
+        for n in [128, 541]:
             dipole_modulus = 1.3
             for i in range(n):
                 part_pos = np.array(random(3)) * l
