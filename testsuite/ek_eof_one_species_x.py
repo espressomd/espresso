@@ -71,7 +71,7 @@ class ek_eof_one_species_x(ut.TestCase):
         system.time_step = dt
         system.cell_system.skin = 0.1
         system.thermostat.turn_off()
-        integration_length = 30000
+        integration_length = 6000
 
 # Output density, velocity, and pressure tensor profiles
 
