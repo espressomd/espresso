@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -266,9 +266,8 @@ private:
   unsigned int finalized; // non-zero of correlation is finialized
   unsigned int t;         // global time in number of frames
 
-  Vector3d
-      m_correlation_args; // additional arguments, which the correlation may
-                          // need (currently only used by fcs_acf)
+  Vector3d m_correlation_args; // additional arguments, which the correlation
+                               // may need (currently only used by fcs_acf)
 
   int hierarchy_depth; // maximum level of data compression
   int m_tau_lin;       // number of frames in the linear correlation
@@ -295,9 +294,8 @@ private:
   // The actual allocated storage space
   std::vector<unsigned int>
       n_sweeps; // number of correlation sweeps at a particular value of tau
-  std::vector<unsigned int>
-      n_vals; // number of data values already present at a particular
-              // value of tau
+  std::vector<unsigned int> n_vals; // number of data values already present at
+                                    // a particular value of tau
   std::vector<unsigned int>
       newest; // index of the newest entry in each hierarchy level
 
@@ -323,5 +321,5 @@ private:
   compression_function compressB;
 };
 
-} // Namespace correlators
+} // namespace Accumulators
 #endif

@@ -3,7 +3,7 @@ This sample simulates electrophoresis using P3M solver.
 """
 
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,7 +23,7 @@ This sample simulates electrophoresis using P3M solver.
 from __future__ import print_function
 import espressomd
 
-required_features = ["ELECTROSTATICS","EXTERNAL_FORCES","LENNARD_JONES"]
+required_features = ["ELECTROSTATICS", "EXTERNAL_FORCES", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
@@ -108,16 +108,16 @@ for i in range(n_monomers):
     if i > 0:
         system.part[i].add_bond((harmonic, i - 1))
 
-for i in range(1,n_monomers-1):
-    system.part[i].add_bond((harmonicangle,i - 1, i + 1))
+for i in range(1, n_monomers-1):
+    system.part[i].add_bond((harmonicangle, i - 1, i + 1))
 
 system.part[:n_monomers].q = -np.ones(n_monomers)
 
 # Create counterions
 ###################################################################
 system.part.add(pos=np.random.random((n_monomers, 3)) * system.box_l,
-                q=np.ones(n_monomers,dtype=int),
-                type=np.ones(n_monomers,dtype=int))
+                q=np.ones(n_monomers, dtype=int),
+                type=np.ones(n_monomers, dtype=int))
 
 # Create ions
 ###############################################################
@@ -236,7 +236,7 @@ if float(np.version.version.split(".")[1]) >= 10:
     from numpy.linalg import norm
 
     # First get bond vectors
-    bond_vec = pos_list[:, 1:, :] - pos_list[:, :-1, :]
+    bond_vec = pos_list[:, 1:,:] - pos_list[:, :-1,:]
     bond_abs = norm(bond_vec, axis=2, keepdims=True)
     bond_abs_avg = bond_abs.mean(axis=0)[:, 0]
 
@@ -248,7 +248,7 @@ if float(np.version.version.split(".")[1]) >= 10:
 
     bv_zero = np.empty_like(bv_norm)
     for i in range(bv_zero.shape[1]):
-        bv_zero[:, i, :] = bv_norm[:, 0, :]
+        bv_zero[:, i,:] = bv_norm[:, 0,:]
 
     # Calculate <cos(theta)>
     cos_theta = (bv_zero * bv_norm).sum(axis=2).mean(axis=0)

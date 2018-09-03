@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -222,7 +222,8 @@ public:
 
 public:
   std::string serialize() const;
-  static std::shared_ptr<ScriptInterfaceBase> unserialize(std::string const& state);
+  static std::shared_ptr<ScriptInterfaceBase>
+  unserialize(std::string const &state);
   virtual Variant get_state() const;
 
 protected:

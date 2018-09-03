@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2010-2018 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -24,7 +24,7 @@ import numpy
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 numpy.random.seed(system.seed)
 
 print("\n--->Setup system")
@@ -45,16 +45,16 @@ num_configs = 50
 integ_steps_per_config = 500
 
 # Particle parameters
-types = {"Cl":          0, "Na": 1}
+types = {"Cl": 0, "Na": 1}
 numbers = {"Cl": n_ionpairs, "Na": n_ionpairs}
 charges = {"Cl": -1.0, "Na": 1.0}
-lj_sigmas = {"Cl":       3.85, "Na": 2.52}
-lj_epsilons = {"Cl":     192.45, "Na": 17.44}
+lj_sigmas = {"Cl": 3.85, "Na": 2.52}
+lj_epsilons = {"Cl": 192.45, "Na": 17.44}
 
-lj_cuts = {"Cl":  3.0 * lj_sigmas["Cl"],
+lj_cuts = {"Cl": 3.0 * lj_sigmas["Cl"],
            "Na": 3.0 * lj_sigmas["Na"]}
 
-masses = {"Cl":        35.453, "Na": 22.99}
+masses = {"Cl": 35.453, "Na": 22.99}
 
 # Setup System
 box_l = (n_ionpairs * sum(masses.values()) / density)**(1. / 3.)
@@ -73,10 +73,10 @@ for i in range(n_ppside):
             p = numpy.array([i, j, k]) * l
             if q < 0:
                 system.part.add(id=len(
-                    system.part), type=types["Cl"],  pos=p, q=charges["Cl"], mass=masses["Cl"])
+                    system.part), type=types["Cl"], pos=p, q=charges["Cl"], mass=masses["Cl"])
             else:
                 system.part.add(id=len(
-                    system.part), type=types["Na"],  pos=p, q=charges["Na"], mass=masses["Na"])
+                    system.part), type=types["Na"], pos=p, q=charges["Na"], mass=masses["Na"])
 
             q *= -1
         q *= -1
@@ -110,7 +110,8 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"]]:
 
 
 print("\n--->Tuning Electrostatics")
-#p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2, mesh=[84,84,84], cao=6)
+# p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2,
+# mesh=[84,84,84], cao=6)
 p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2)
 system.actors.add(p3m)
 
@@ -119,10 +120,13 @@ system.time = 0.0
 for i in range(int(num_steps_equilibration / 100)):
     energy = system.analysis.energy()
     temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                                energy['total'],
-                                                                                energy['coulomb'],
-                                                                                temp_measured))
+    print(
+        "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
+                                                                              energy[
+                                                                              'total'],
+                                                                              energy[
+                                                                              'coulomb'],
+                                                                              temp_measured))
     system.integrator.run(100)
 
 print("\n--->Integration")
@@ -130,10 +134,13 @@ system.time = 0.0
 for i in range(num_configs):
     energy = system.analysis.energy()
     temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                                energy['total'],
-                                                                                energy['coulomb'],
-                                                                                temp_measured))
+    print(
+        "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
+                                                                              energy[
+                                                                              'total'],
+                                                                              energy[
+                                                                              'coulomb'],
+                                                                              temp_measured))
     system.integrator.run(integ_steps_per_config)
 
     # Interally append particle configuration
@@ -174,5 +181,3 @@ for i in range(rdf_bins):
 rdf_fp.close()
 print("\n--->Written rdf.data")
 print("\n--->Done")
-
-

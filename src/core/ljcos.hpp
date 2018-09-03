@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -24,7 +24,7 @@
  *  Routines to calculate the lennard jones+cosine energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp
-*/
+ */
 
 #include "config.hpp"
 
@@ -50,7 +50,8 @@ inline void add_ljcos_pair_force(const Particle *const p1,
     /* cos part of ljcos potential. */
     if (dist > ia_params->LJCOS_rmin + ia_params->LJCOS_offset) {
       fac = (r_off / dist) * ia_params->LJCOS_alfa * ia_params->LJCOS_eps *
-            (sin(ia_params->LJCOS_alfa * Utils::sqr(r_off) + ia_params->LJCOS_beta));
+            (sin(ia_params->LJCOS_alfa * Utils::sqr(r_off) +
+                 ia_params->LJCOS_beta));
       for (j = 0; j < 3; j++)
         force[j] += fac * d[j];
     }
@@ -72,13 +73,15 @@ inline void add_ljcos_pair_force(const Particle *const p1,
     }
 
     ONEPART_TRACE(if (p1->p.identity == check_id)
-                      fprintf(stderr, "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
-                                      "part id=%d at dist %f fac %.3e\n",
+                      fprintf(stderr,
+                              "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
+                              "part id=%d at dist %f fac %.3e\n",
                               this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                               p2->p.identity, dist, fac));
     ONEPART_TRACE(if (p2->p.identity == check_id)
-                      fprintf(stderr, "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
-                                      "part id=%d at dist %f fac %.3e\n",
+                      fprintf(stderr,
+                              "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
+                              "part id=%d at dist %f fac %.3e\n",
                               this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                               p1->p.identity, dist, fac));
 
@@ -106,7 +109,8 @@ inline double ljcos_pair_energy(const Particle *p1, const Particle *p2,
     /* cosine part of the potential. */
     else if (dist < (ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
       return .5 * ia_params->LJCOS_eps *
-             (cos(ia_params->LJCOS_alfa * Utils::sqr(r_off) + ia_params->LJCOS_beta) -
+             (cos(ia_params->LJCOS_alfa * Utils::sqr(r_off) +
+                  ia_params->LJCOS_beta) -
               1.);
     }
     /* this should not happen! */

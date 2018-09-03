@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010-2017 The ESPResSo project                                 #
+# Copyright (C) 2010-2018 The ESPResSo project                                 #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -21,13 +21,14 @@
 #                                                                              #
 #                  Active Matter: Swimmer Flow Field Tutorial                  #
 #                                                                              #
-################################################################################
+##########################################################################
 
 from __future__ import print_function
 
 import numpy as np
 import os
 
+import espressomd
 from espressomd import assert_features, lb
 
 
@@ -42,7 +43,7 @@ from espressomd import assert_features, lb
 mode = ...
 pos = ...
 
-################################################################################
+##########################################################################
 
 ## Exercise 2 ##
 # Create an output directory that is labeled according
@@ -63,12 +64,12 @@ prod_length = 50
 dt = 0.01
 
 system = espressomd.System(box_l=[length, length, length])
-system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.cell_system.skin = 0.3
 system.time_step = dt
 system.min_global_cut = 1.0
 
-################################################################################
+##########################################################################
 
 # Set the position of the particle
 
@@ -96,7 +97,8 @@ force = 0.1
 
 # Setup the particle particle
 
-system.part.add(pos=[x0, y0, z0], type=0, mass=sph_mass, rinertia=[Ixyz, Ixyz, Ixyz],
+system.part.add(
+    pos=[x0, y0, z0], type=0, mass=sph_mass, rinertia=[Ixyz, Ixyz, Ixyz],
                 swimming={'f_swim': force, 'mode': mode, 'dipole_length': sph_size + 0.5})
 
 ## Exercise 5 ##
@@ -104,7 +106,7 @@ system.part.add(pos=[x0, y0, z0], type=0, mass=sph_mass, rinertia=[Ixyz, Ixyz, I
 # What happens if you make the length go to zero?
 # Why does this happen?
 
-################################################################################
+##########################################################################
 
 # Setup the fluid (quiescent)
 
@@ -123,7 +125,7 @@ lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco,
 system.actors.add(lbf)
 system.thermostat.set_lb(kT=temp)
 
-################################################################################
+##########################################################################
 
 # Output the coordinates
 

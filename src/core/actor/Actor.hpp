@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -27,9 +27,9 @@
  */
 class Actor {
 public:
-  virtual void computeForces(SystemInterface &s) { };
-  virtual void computeTorques(SystemInterface &s) { };
-  virtual void computeEnergy(SystemInterface &s) { };
+  virtual void computeForces(SystemInterface &s){};
+  virtual void computeTorques(SystemInterface &s){};
+  virtual void computeEnergy(SystemInterface &s){};
   virtual ~Actor() {}
 };
 

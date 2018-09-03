@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """This scripts demonstrates the measurement of the mean square displacement
 using the Observables/Correlators framework."""
 
@@ -30,16 +46,20 @@ print(p.calculate())
 print(p.calculate())
 
 
-# Instance a correlator correlating the p observable with itself, calculating the mean squared displacement (msd).
+# Instance a correlator correlating the p observable with itself,
+# calculating the mean squared displacement (msd).
 c = Correlator(tau_lin=16, tau_max=1000, delta_N=1, obs1=p,
                corr_operation="square_distance_componentwise", compress1="discard1")
-# Instance a correlator calculating the FCS autocorrelation function from particle positions, using the symmetric focal spot with wx=wy=wz=10 (sigma)
+# Instance a correlator calculating the FCS autocorrelation function from
+# particle positions, using the symmetric focal spot with wx=wy=wz=10
+# (sigma)
 fcs = Correlator(tau_lin=16, tau_max=10000, delta_N=10, obs1=p,
                  corr_operation="fcs_acf", args=[10, 10, 10], compress1="discard2")
 # Ask the correlator for its parameters
 print(c.get_params())
 
-# Register the correlator for auto updating at the interval given by its dt (currently every timestep)
+# Register the correlator for auto updating at the interval given by its
+# dt (currently every timestep)
 system.auto_update_accumulators.add(c)
 system.auto_update_accumulators.add(fcs)
 

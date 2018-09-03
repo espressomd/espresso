@@ -1,15 +1,33 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 def vtf_pid_map(system, types='all'):
     """
     Generates a VTF particle index map to ESPResSo ``id``.
     This fills the gap for particle ID's as required by VMD
-    
+
     Parameters
     ----------
     system: espressomd.System() object
     types : :obj:`str`
-            Specifies the particle types. The id mapping depends on which 
-            particles are going to be printed. This should be the same as 
-            the one used in writevsf() and writevsf(). 
+            Specifies the particle types. The id mapping depends on which
+            particles are going to be printed. This should be the same as
+            the one used in writevsf() and writevsf().
     Returns
     -------
     dict:   A dictionary where the values are the VTF indicies and the keys are the ESPresSo particle ``id``
@@ -25,7 +43,7 @@ def vtf_pid_map(system, types='all'):
             if p.type == t or t == "all":
                 id_to_write.append(p.id)
     return dict(zip(id_to_write, range(len(id_to_write))))
-    
+
 
 def writevsf(system, fp, types='all'):
     """
@@ -47,19 +65,21 @@ def writevsf(system, fp, types='all'):
 
     for pid, vtf_id, in vtf_index.items():
         fp.write("atom {} radius 1 name {} type {} \n".format(vtf_id,
-                                                              system.part[pid].type,
+                                                              system.part[
+                                                                  pid].type,
                                                               system.part[pid].type))
     for pid, vtf_id, in vtf_index.items():
         for b in system.part[pid].bonds:
-            if (system.part[b[1]].id in vtf_index ):
-                fp.write("bond {}:{}\n".format(vtf_id, vtf_index[system.part[b[1]].id]))
+            if (system.part[b[1]].id in vtf_index):
+                fp.write("bond {}:{}\n".format(
+                    vtf_id, vtf_index[system.part[b[1]].id]))
 
 
 def writevcf(system, fp, types='all'):
     """
     writes a VCF (VTF Coordinate Format) to a file.
     This can be used to write a stimestep to a VTF file.
-    
+
     Parameters
     ----------
     system: espressomd.System() object

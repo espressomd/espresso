@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import sys
 import unittest as ut
@@ -54,7 +70,6 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
         self.system.part[0].v = [0, 0, 0]
         self.system.part[1].v = [0, 0, 0]
-
 
     def test_non_bonded(self):
         self.system.part[0].pos = [1, 2, 2]
@@ -161,7 +176,8 @@ class AnalyzeEnergy(ut.TestCase):
                                  tune=False)
         self.system.actors.add(p3m)
 
-        # did not verify if this is correct, but looks pretty good (close to 1/2)
+        # did not verify if this is correct, but looks pretty good (close to
+        # 1/2)
         u_p3m = -0.501062398379
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], u_p3m, delta=1e-5)

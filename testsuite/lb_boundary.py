@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
 import numpy as np
@@ -6,6 +22,7 @@ import espressomd.lb
 from espressomd.shapes import Wall
 import espressomd.lbboundaries
 from itertools import product
+
 
 class LBBoundariesBase(object):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
@@ -22,8 +39,10 @@ class LBBoundariesBase(object):
     def test_remove(self):
         lbb = self.system.lbboundaries
 
-        b1 = lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        b2 = lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        b1 = lbb.add(
+            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        b2 = lbb.add(
+            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
 
         lbb.remove(b1)
 
@@ -50,8 +69,10 @@ class LBBoundariesBase(object):
     def test_clear(self):
         lbb = self.system.lbboundaries
 
-        b1 = lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        b2 = lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        b1 = lbb.add(
+            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        b2 = lbb.add(
+            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
 
         lbb.clear()
 
@@ -79,6 +100,7 @@ class LBBoundariesBase(object):
         for i in product(rng, rng, rng):
             self.assertEqual(lbf[i].boundary, 0)
 
+
 @ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES"]),
            "Features not available, skipping test!")
 class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
@@ -98,6 +120,7 @@ class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
     def tearDown(self):
         self.system.lbboundaries.clear()
         self.system.actors.remove(self.lbf)
+
 
 @ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES_GPU"]),
            "Features not available, skipping test!")

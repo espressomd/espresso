@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+ Copyright (C) 2010-2018 The ESPResSo project
 
  This file is part of ESPResSo.
 
@@ -35,7 +35,7 @@
 
 namespace {
 int min(int i, unsigned int j) { return std::min(i, static_cast<int>(j)); }
-}
+} // namespace
 
 namespace Accumulators {
 /** The minimal version of compression function */
@@ -632,4 +632,4 @@ void Correlator::set_internal_state(std::string const &state) {
   ia >> m_last_update;
 }
 
-} // Namespace Correlators
+} // namespace Accumulators

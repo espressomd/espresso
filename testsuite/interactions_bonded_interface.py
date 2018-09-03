@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -124,11 +124,12 @@ class ParticleProperties(ut.TestCase):
             0, SubtLJ, {})
 
     if espressomd.has_features(["TABULATED"]):
-        test_tabulated = generateTestForBondParams(0, Tabulated, {"type": "distance",
-                                                                  "min": 1.,
-                                                                  "max": 2.,
-                                                                  "energy": [1.,2.,3.],
-                                                                  "force": [3.,4.,5.]})
+        test_tabulated = generateTestForBondParams(
+            0, Tabulated, {"type": "distance",
+                           "min": 1.,
+                           "max": 2.,
+                           "energy": [1., 2., 3.],
+                           "force": [3., 4., 5.]})
 
 
 if __name__ == "__main__":

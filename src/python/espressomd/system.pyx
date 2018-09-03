@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -113,13 +113,14 @@ cdef class System(object):
                 if arg in setable_properties:
                     System.__setattr__(self, arg, kwargs.get(arg))
                 else:
-                    raise ValueError("Property {} can not be set via argument to System class.".format(arg))
+                    raise ValueError(
+                        "Property {} can not be set via argument to System class.".format(arg))
             self.actors = Actors()
             self.analysis = Analysis(self)
             self.auto_update_accumulators = AutoUpdateAccumulators()
             self.bonded_inter = interactions.BondedInteractions()
             self.cell_system = CellSystem()
-            IF COLLISION_DETECTION==1:
+            IF COLLISION_DETECTION == 1:
                 self.collision_detection = CollisionDetection()
             self.comfixed = ComFixed()
             self.constraints = Constraints()
@@ -135,7 +136,8 @@ cdef class System(object):
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()
             IF VIRTUAL_SITES:
-                self._active_virtual_sites_handle=ActiveVirtualSitesHandle(implementation=VirtualSitesOff())
+                self._active_virtual_sites_handle = ActiveVirtualSitesHandle(
+                    implementation=VirtualSitesOff())
             _system_created = True
         else:
             raise RuntimeError(
@@ -148,20 +150,24 @@ cdef class System(object):
         for property_ in setable_properties:
             if not hasattr(self.globals, property_):
                 odict[property_] = System.__getattribute__(self, property_)
-        odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
+        odict['non_bonded_inter'] = System.__getattribute__(
+            self, "non_bonded_inter")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['part'] = System.__getattribute__(self, "part")
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
-        odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
+        odict['auto_update_accumulators'] = System.__getattribute__(
+            self, "auto_update_accumulators")
         odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
         odict['constraints'] = System.__getattribute__(self, "constraints")
         odict['galilei'] = System.__getattribute__(self, "galilei")
         odict['integrator'] = System.__getattribute__(self, "integrator")
         IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
-            odict['lbboundaries'] = System.__getattribute__(self, "lbboundaries")
-        odict['minimize_energy'] = System.__getattribute__(self, "minimize_energy")
+            odict['lbboundaries'] = System.__getattribute__(
+                self, "lbboundaries")
+        odict['minimize_energy'] = System.__getattribute__(
+            self, "minimize_energy")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
         return odict
 
@@ -201,6 +207,7 @@ cdef class System(object):
         type : float
 
         """
+
         def __get__(self):
             return self.globals.force_cap
 
@@ -235,8 +242,9 @@ cdef class System(object):
 
     property time:
         """
-        Set the time in the simulation 
+        Set the time in the simulation
         """
+
         def __set__(self, double _time):
             if _time < 0:
                 raise ValueError("Simulation time must be >= 0")
@@ -250,8 +258,9 @@ cdef class System(object):
 
     property time_step:
         """
-        Sets the time step for the integrator. 
+        Sets the time step for the integrator.
         """
+
         def __set__(self, double _time_step):
             IF LB:
                 global lbpar
@@ -303,14 +312,14 @@ cdef class System(object):
         """
         Returns the state of the pseudo random number generator.
         """
-        
+
         return get_state_size_of_generator()
 
     def set_random_state_PRNG(self):
         """
         Sets the state of the pseudo random number generator using real random numbers.
         """
-        
+
         _state_size_plus_one = self._get_PRNG_state_size() + 1
         states = string_vec(n_nodes)
         rng = random.SystemRandom()  # true RNG that uses os.urandom()
@@ -352,18 +361,19 @@ cdef class System(object):
     property random_number_generator_state:
         """Sets the random number generator state in the core. this is of interest for deterministic checkpointing
         """
-        
+
         def __set__(self, rng_state):
             _state_size_plus_one = self._get_PRNG_state_size() + 1
             if(len(rng_state) == n_nodes * _state_size_plus_one):
                 states = string_vec(n_nodes)
                 for i in range(n_nodes):
                     states[i] = (" ".join(map(str,
-                                 rng_state[i*_state_size_plus_one:(i+1)*_state_size_plus_one])
-                                 )).encode('utf-8')
+                                 rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
+                    )).encode('utf-8')
                 mpi_random_set_stat(states)
             else:
-                raise ValueError("Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
+                raise ValueError(
+                    "Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
 
         def __get__(self):
             rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
@@ -371,27 +381,26 @@ cdef class System(object):
 
     IF VIRTUAL_SITES:
         property virtual_sites:
-            def __set__(self,v):
-                self._active_virtual_sites_handle.implementation=v
+            def __set__(self, v):
+                self._active_virtual_sites_handle.implementation = v
+
             def __get__(self):
                 return self._active_virtual_sites_handle.implementation
 
-    
     IF OIF_GLOBAL_FORCES:
         property max_oif_objects:
             """Maximum number of objects as per the object_in_fluid method.
 
             """
-            
+
             def __get__(self):
                 return max_oif_objects
 
-            def __set__(self,v):
+            def __set__(self, v):
                 global max_oif_objects
-                max_oif_objects=v
+                max_oif_objects = v
                 mpi_bcast_parameter(FIELD_MAX_OIF_OBJECTS)
 
-    
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
 
@@ -477,15 +486,12 @@ cdef class System(object):
             """
             auto_exclusions(distance)
 
-
     def _is_valid_type(self, current_type):
         return (not (isinstance(current_type, int) or current_type < 0 or current_type > globals.max_seen_particle_type))
-
 
     def check_valid_type(self, current_type):
         if self._is_valid_type(current_type):
             raise ValueError("type", current_type, "does not exist!")
-
 
     def setup_type_map(self, type_list=None):
         """
@@ -509,7 +515,7 @@ cdef class System(object):
         Parameters
         ----------
         current_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                       Particle type to count the number for. 
+                       Particle type to count the number for.
 
         Returns
         -------
@@ -517,16 +523,16 @@ cdef class System(object):
             The number of particles which have the given type.
 
         """
-        self.check_valid_type( type)
-        number=number_of_particles_with_type(type)
+        self.check_valid_type(type)
+        number = number_of_particles_with_type(type)
         return int(number)
 
     def find_particle(self, type=None):
         """
         The command will return a randomly chosen particle id, for a particle of
         the given type.
-        
+
         """
         self.check_valid_type(type)
-        pid=get_random_p_id(type)
+        pid = get_random_p_id(type)
         return int(pid)

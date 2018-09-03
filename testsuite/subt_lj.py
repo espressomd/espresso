@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 The ESPResSo project
+# Copyright (C) 2017-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,6 +21,7 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
+
 
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
            "Skipped because of not LENNARD_JONES")
@@ -56,7 +57,7 @@ class SubtLjTest(ut.TestCase):
         print(s.analysis.energy())
 
         self.assertAlmostEqual(f, 0, places=10)
-        self.assertAlmostEqual(s.analysis.energy()['total'] , 0, places=10)
+        self.assertAlmostEqual(s.analysis.energy()['total'], 0, places=10)
 
 if __name__ == "__main__":
     ut.main()

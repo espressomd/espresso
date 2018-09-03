@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -35,7 +35,8 @@ namespace Parallel {
 class Callback {
 public:
   Callback(Communication::MpiCallbacks &cb,
-           const Communication::MpiCallbacks::function_type &callback) : m_cb(cb) {
+           const Communication::MpiCallbacks::function_type &callback)
+      : m_cb(cb) {
     m_callback_id = m_cb.add(callback);
   }
 
@@ -46,13 +47,11 @@ public:
    *
    * The callback is not run on the calling node.
    */
-  void call(int a = 0, int b = 0) {
-    m_cb.call(m_callback_id, a, b);
-  }
+  void call(int a = 0, int b = 0) { m_cb.call(m_callback_id, a, b); }
 
 private:
   /* Callback system we're on */
-  Communication::MpiCallbacks & m_cb;
+  Communication::MpiCallbacks &m_cb;
   /* Id of the encapsulated callback */
   int m_callback_id;
 };

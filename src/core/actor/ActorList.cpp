@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -21,12 +21,10 @@
 #include <algorithm>
 #include <cassert>
 
-void ActorList::add(Actor *actor) {
-	this->push_back(actor);
-}
+void ActorList::add(Actor *actor) { this->push_back(actor); }
 
 void ActorList::remove(Actor *actor) {
-	iterator needle = std::find(this->begin(), this->end(), actor);
-	assert(needle != this->end());
-	this->erase(needle);
+  iterator needle = std::find(this->begin(), this->end(), actor);
+  assert(needle != this->end());
+  this->erase(needle);
 }

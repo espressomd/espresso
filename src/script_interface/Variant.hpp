@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef SCRIPT_INTERFACE_VARIANT_HPP
 #define SCRIPT_INTERFACE_VARIANT_HPP
 
@@ -95,6 +113,11 @@ template <size_t N> struct infer_type_helper<Vector<N, double>> {
   static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
 };
 
+template <size_t N, size_t M>
+struct infer_type_helper<Vector<N, Vector<M, double>>> {
+  static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
+};
+
 template <size_t N> struct infer_type_helper<Vector<N, int>> {
   static constexpr VariantType value{VariantType::INT_VECTOR};
 };
@@ -112,7 +135,7 @@ template <typename T> struct infer_type_helper<std::shared_ptr<T>> {
   static_assert(std::is_base_of<ScriptInterfaceBase, T>::value, "");
   static constexpr VariantType value{VariantType::OBJECTID};
 };
-}
+} // namespace detail
 
 /**
  * @brief Infer the variant type id from the c++ type.
@@ -161,6 +184,41 @@ void transform_vectors(Variant &v);
  */
 std::string print_variant_types(Variant const &v);
 
+template <typename T, typename U>
+std::vector<Variant> pack_pair(const std::pair<T, U> &pair) {
+  return {{pair.first, pair.second}};
+}
+
+template <typename T, typename U>
+const std::pair<T, U> unpack_pair(const std::vector<Variant> &v) {
+  return {boost::get<T>(v.at(0)), boost::get<U>(v.at(1))};
+}
+
+/**
+ * @brief Pack a map into a vector of Variants
+ *        by serializing the key-value pairs.
+ *
+ */
+template <typename K, typename V>
+std::vector<Variant> pack_map(const std::unordered_map<K, V> &map) {
+  std::vector<Variant> ret(map.size());
+
+  std::transform(map.begin(), map.end(), ret.begin(),
+                 [](const std::pair<K, V> &p) { return pack_pair(p); });
+
+  return ret;
+}
+
+template <typename K, typename V>
+std::unordered_map<K, V> unpack_map(const std::vector<Variant> &v) {
+  std::unordered_map<K, V> ret;
+
+  for (auto const &pair : v) {
+    ret.insert(unpack_pair<K, V>(boost::get<const std::vector<Variant>>(pair)));
+  }
+
+  return ret;
+}
 } /* namespace ScriptInterface */
 
 #endif

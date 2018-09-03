@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -157,7 +157,7 @@ struct ParticleProperties {
   // Store the orientation of the virtual particle in the body fixed frame.
   double vs_quat[4] = {0., 0., 0., 0.};
 #endif
-#else /* VIRTUAL_SITES */
+#else  /* VIRTUAL_SITES */
   static constexpr const int is_virtual = 0;
 #endif /* VIRTUAL_SITES */
 
@@ -236,13 +236,13 @@ struct ParticlePosition {
 struct ParticleForce {
   ParticleForce() = default;
   ParticleForce(ParticleForce const &) = default;
-  ParticleForce(const Vector3d & f) : f(f) {}
+  ParticleForce(const Vector3d &f) : f(f) {}
 #ifdef ROTATION
-  ParticleForce(const Vector3d & f,
-                const Vector3d &torque) : f(f), torque(torque) {}
+  ParticleForce(const Vector3d &f, const Vector3d &torque)
+      : f(f), torque(torque) {}
 #endif
 
-ParticleForce & operator+=(ParticleForce const& rhs) {
+  ParticleForce &operator+=(ParticleForce const &rhs) {
     f += rhs.f;
 #ifdef ROTATION
     torque += rhs.torque;
@@ -250,7 +250,7 @@ ParticleForce & operator+=(ParticleForce const& rhs) {
 
     return *this;
   }
-  
+
   /** force. */
   Vector3d f = {0., 0., 0.};
 
@@ -573,7 +573,7 @@ void realloc_local_particles(int part);
  *   @param part the identity of the particle to fetch
  *   @return Pointer to copy of particle if it exists,
  *          nullptr otherwise;
-*/
+ */
 const Particle &get_particle_data(int part);
 
 /**

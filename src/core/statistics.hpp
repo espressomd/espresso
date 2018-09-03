@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -24,23 +24,22 @@
     This file contains the code for statistics on the data.
 */
 
+#include "PartCfg.hpp"
 #include "grid.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
-#include "PartCfg.hpp"
 
 #include <map>
 #include <string>
 #include <vector>
 
-
 /** \name Data Types */
 /************************************************************/
 /*@{*/
 
-typedef struct {
+struct Observable_stat {
   /** Status flag for observable calculation.  For 'analyze energy': 0
       re-initialize observable struct, else everything is fine,
       calculation can start.  For 'analyze pressure' and 'analyze
@@ -58,6 +57,8 @@ typedef struct {
   int n_non_bonded;
   /** Number of virtual sites relative (rigid body) conributions */
   int n_virtual_sites;
+  /** Number of external field contributions */
+  const static int n_external_field = 1;
 
   /** start of bonded interactions. Right after the special ones */
   double *bonded;
@@ -69,10 +70,12 @@ typedef struct {
   double *dipolar;
   /** Start of observables for virtual sites relative (rigid bodies) */
   double *virtual_sites;
+  /** Start of observables for external fields */
+  double *external_fields;
 
   /** number of doubles per data item */
   int chunk_size;
-} Observable_stat;
+};
 
 /** Structure used only in the pressure and stress tensor calculation to
    distinguish
@@ -121,7 +124,7 @@ extern int n_part_conf;
     @param set1 types of particles
     @param set2 types of particles
     @return the minimal distance of two particles */
-double mindist(PartCfg &, IntList const& set1, IntList const& set2);
+double mindist(PartCfg &, IntList const &set1, IntList const &set2);
 
 /** calculate the aggregate distribution for molecules.
     @param dist_criteria2 distance criteria squared
@@ -151,7 +154,8 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
 
     @return List of ids close to pos.
 */
-IntList nbhood(PartCfg & partCfg, double pos[3], double r_catch, int planedims[3]);
+IntList nbhood(PartCfg &partCfg, double pos[3], double r_catch,
+               int planedims[3]);
 
 /** minimal distance to point.
     @param pos point
@@ -207,8 +211,8 @@ void analyze_remove(int ind);
     @param low      particles closer than r_min
     @param dist     Array to store the result (size: r_bins).
  */
-void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types, int n_p2,
-                            double r_min, double r_max, int r_bins,
+void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types,
+                            int n_p2, double r_min, double r_max, int r_bins,
                             int log_flag, double *low, double *dist);
 /** Calculates the radial distribution function.
 
@@ -229,10 +233,11 @@ void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types, i
     @param rdf     Array to store the result (size: r_bins).
 */
 
-void calc_rdf(PartCfg & partCfg, int *p1_types, int n_p1, int *p2_types, int n_p2, double r_min,
-              double r_max, int r_bins, double *rdf);
-void calc_rdf(PartCfg & partCfg, std::vector<int> &p1_types, std::vector<int> &p2_types,
-              double r_min, double r_max, int r_bins, std::vector<double> &rdf);
+void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
+              int n_p2, double r_min, double r_max, int r_bins, double *rdf);
+void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
+              std::vector<int> &p2_types, double r_min, double r_max,
+              int r_bins, std::vector<double> &rdf);
 
 /** Calculates the radial distribution function averaged over last n_conf
    configurations.
@@ -254,11 +259,12 @@ void calc_rdf(PartCfg & partCfg, std::vector<int> &p1_types, std::vector<int> &p
     @param rdf      Array to store the result (size: r_bins).
     @param n_conf   Number of configurations from the last stored configuration.
 */
-void calc_rdf_av(PartCfg & partCfg, int *p1_types, int n_p1, int *p2_types, int n_p2, double r_min,
-                 double r_max, int r_bins, double *rdf, int n_conf);
-void calc_rdf_av(PartCfg & partCfg, std::vector<int> &p1_types, std::vector<int> &p2_types,
-                 double r_min, double r_max, int r_bins,
-                 std::vector<double> &rdf, int n_conf);
+void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
+                 int n_p2, double r_min, double r_max, int r_bins, double *rdf,
+                 int n_conf);
+void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
+                 std::vector<int> &p2_types, double r_min, double r_max,
+                 int r_bins, std::vector<double> &rdf, int n_conf);
 
 /** Calculates the van Hove auto correlation function and as a side product the
    mean sqaure displacement (msd).
@@ -285,8 +291,8 @@ void calc_rdf_av(PartCfg & partCfg, std::vector<int> &p1_types, std::vector<int>
     @param vanhove  array to store G(r,t) (size (n_configs-1)*(rbins))
 
 */
-int calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins, int tmax,
-                    double *msd, double **vanhove);
+int calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins,
+                 int tmax, double *msd, double **vanhove);
 
 /** Calculates the spherically averaged structure factor.
 
@@ -311,7 +317,8 @@ int calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins, int 
    (size: 2*order^2).
 */
 
-void calc_structurefactor(PartCfg &, int *p_types, int n_types, int order, double **sf);
+void calc_structurefactor(PartCfg &, int *p_types, int n_types, int order,
+                          double **sf);
 
 std::vector<std::vector<double>> modify_stucturefactor(int order, double *sf);
 
@@ -319,9 +326,10 @@ std::vector<std::vector<double>> modify_stucturefactor(int order, double *sf);
 void density_profile_av(int n_conf, int n_bin, double density, int dir,
                         double *rho_ave, int type);
 
-int calc_cylindrical_average(PartCfg &,
-    std::vector<double> center, std::vector<double> direction, double length,
-    double radius, int bins_axial, int bins_radial, std::vector<int> types,
+int calc_cylindrical_average(
+    PartCfg &, std::vector<double> const &center,
+    std::vector<double> const &direction, double length, double radius,
+    int bins_axial, int bins_radial, std::vector<int> types,
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution);
 
@@ -329,7 +337,6 @@ int calc_radial_density_map(int xbins, int ybins, int thetabins, double xrange,
                             double yrange, double axis[3], double center[3],
                             IntList *beadids, DoubleList *density_map,
                             DoubleList *density_profile);
-
 
 template <typename T1, typename T2>
 double min_distance2(T1 const pos1, T2 const pos2) {
@@ -372,7 +379,7 @@ void angularmomentum(PartCfg &, int type, double *com);
  *  \param com     center of mass position
  */
 
-void momentofinertiamatrix(PartCfg & partCfg, int type, double *MofImatrix);
+void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
 
 /** returns the momentum of the particles in the simulation box.
  * \param result Momentum of particles.
@@ -397,7 +404,8 @@ inline double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2) {
     p1 = tmp;
   }
   return stat->non_bonded +
-         stat->chunk_size * (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
+         stat->chunk_size *
+             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
 }
 
 inline double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p1,

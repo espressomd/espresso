@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -150,12 +150,12 @@ elif(mode == "constant_pH_ensemble"):
     RE.constant_pH = 0
 
 # HA <--> A- + H+
-RE.add_reaction(gamma=K_diss, reactant_types=[type_HA],    reactant_coefficients=[1],    product_types=[
+RE.add_reaction(gamma=K_diss, reactant_types=[type_HA], reactant_coefficients=[1], product_types=[
                 type_A, type_H], product_coefficients=[1, 1], default_charges={type_HA: charges[type_HA], type_A: charges[type_A], type_H: charges[type_H]})
 
 # H2O autoprotolysis
 RE.add_reaction(gamma=(1 / K_w), reactant_types=[type_H, type_OH], reactant_coefficients=[
-                1, 1], product_types=[],    product_coefficients=[],    default_charges={type_H: charges[type_H], type_OH: charges[type_OH]})
+                1, 1], product_types=[], product_coefficients=[], default_charges={type_H: charges[type_H], type_OH: charges[type_OH]})
 
 
 print(RE.get_status())

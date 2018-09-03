@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -38,7 +38,7 @@ template <typename T, typename = void> struct get_value_helper {
 /* Vector<N,T> case */
 template <size_t N, typename T> struct get_value_helper<Vector<N, T>, void> {
   Vector<N, T> operator()(Variant const &v) const {
-    return Vector<N, T>(boost::get<std::vector<double>>(v));
+    return Vector<N, T>(boost::get<std::vector<T>>(v));
   }
 };
 
@@ -63,7 +63,7 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
 };
 
 /* std::vector cases
-* We implicitly transform an empty vector<Variant> into a empty vector<T>. */
+ * We implicitly transform an empty vector<Variant> into a empty vector<T>. */
 template <> struct get_value_helper<std::vector<int>, void> {
   std::vector<int> operator()(Variant const &v) const {
     return boost::apply_visitor(GetVectorOrEmpty<int>{}, v);
@@ -114,7 +114,7 @@ struct get_value_helper<
     }
   }
 };
-}
+} // namespace detail
 
 /**
  * @brief Extract value of specific type T from a Variant.
@@ -140,11 +140,12 @@ T get_value(VariantMap const &vals, std::string const &name) {
   try {
     return get_value<T>(vals.at(name));
   } catch (boost::bad_get const &) {
-    /* TODO: Better exceptions. */
-    throw;
+    throw std::runtime_error(std::string("Argument '") + name +
+                             "' has wrong type: Is a " +
+                             get_type_label(vals.at(name)) + " expected a " +
+                             get_type_label(infer_type<T>()));
   } catch (std::out_of_range const &) {
-    /* TODO: Better exceptions. */
-    throw;
+    throw std::out_of_range("Parameter '" + name + "' is missing.");
   }
 }
 

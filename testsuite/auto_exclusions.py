@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 The ESPResSo project
+# Copyright (C) 2017-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,6 +22,7 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+
 @ut.skipIf(not espressomd.has_features("EXCLUSIONS"),
            "Skipped because of not EXCLUSIONS")
 class AutoExclusions(ut.TestCase):
@@ -36,7 +37,7 @@ class AutoExclusions(ut.TestCase):
         s.bonded_inter.add(bond)
 
         for i in range(10):
-            s.part.add(id=i, pos=[0,0,0])
+            s.part.add(id=i, pos=[0, 0, 0])
 
         for i in range(9):
             s.part[i].add_bond((bond, i + 1))
@@ -63,7 +64,7 @@ class AutoExclusions(ut.TestCase):
         s.bonded_inter.add(bond)
 
         for i in range(10):
-            s.part.add(id=i, pos=[0,0,0])
+            s.part.add(id=i, pos=[0, 0, 0])
 
         for i in range(10):
             s.part[i].add_bond((bond, (i + 1) % 10))
@@ -73,7 +74,7 @@ class AutoExclusions(ut.TestCase):
         for p in range(10):
             excl = s.part[p].exclusions
             self.assertEqual(len(excl), 4)
-            for i in range(1,3):
+            for i in range(1, 3):
                 self.assertTrue((p - i) % 10 in excl)
                 self.assertTrue((p + i) % 10 in excl)
 

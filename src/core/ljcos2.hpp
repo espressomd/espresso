@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -26,7 +26,7 @@
  *  for a particle pair.  Cosine tail is different from that in ljcos.hpp
  *  Used for attractive tail/tail interactions in lipid bilayer calculations
  *  \ref forces.cpp
-*/
+ */
 
 #include "config.hpp"
 
@@ -72,13 +72,15 @@ inline void add_ljcos2_pair_force(const Particle *const p1,
 #endif
 
     ONEPART_TRACE(if (p1->p.identity == check_id)
-                      fprintf(stderr, "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
-                                      "part id=%d at dist %f fac %.3e\n",
+                      fprintf(stderr,
+                              "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
+                              "part id=%d at dist %f fac %.3e\n",
                               this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                               p2->p.identity, dist, fac));
     ONEPART_TRACE(if (p2->p.identity == check_id)
-                      fprintf(stderr, "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
-                                      "part id=%d at dist %f fac %.3e\n",
+                      fprintf(stderr,
+                              "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
+                              "part id=%d at dist %f fac %.3e\n",
                               this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                               p1->p.identity, dist, fac));
 

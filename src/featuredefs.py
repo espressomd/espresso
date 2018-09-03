@@ -1,4 +1,4 @@
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -18,17 +18,23 @@
 #
 # This module parses the feature definition file features.def
 #
-import fileinput, string, re
+import fileinput
+import string
+import re
+
 
 class SyntaxError(object):
+
     def __init__(self, message, instead):
         self.message = message
         self.filename = fileinput.filename()
         self.lineno = fileinput.filelineno()
         self.instead = instead
+
     def __str__(self):
         return '%s: %2d: %s in the following line:\n%s' % \
             (self.filename, self.lineno, self.message, self.instead)
+
 
 def toCPPExpr(expr):
     expr = expr.replace('and', ' && ')
@@ -37,7 +43,9 @@ def toCPPExpr(expr):
     expr = re.sub('([A-Z0-9_]+)', 'defined(\\1)', expr)
     return expr
 
+
 class defs(object):
+
     def __init__(self, filename):
         # complete set of all defined features
         allfeatures = set()
@@ -60,7 +68,8 @@ class defs(object):
             line = line.strip()
             # Ignore empty and comment lines
             if len(line) == 0 or line.startswith('#') \
-                or line.startswith('//') or line.startswith('/*'): continue
+                    or line.startswith('//') or line.startswith('/*'):
+                    continue
 
             # Tokenify line
             tokens = line.split(None, 2)
@@ -82,9 +91,11 @@ class defs(object):
                     if rest is None:
                         raise SyntaxError("<feature> equals <expr>", line)
                     if feature in derived:
-                        raise SyntaxError("Derived feature is already defined above:", line);
+                        raise SyntaxError(
+                            "Derived feature is already defined above:", line)
                     if feature in externals:
-                        raise SyntaxError("Derived feature is already defined as external above:", line);
+                        raise SyntaxError(
+                            "Derived feature is already defined as external above:", line)
                     derived.add(feature)
                     derivations.append((feature, rest, toCPPExpr(rest)))
 
@@ -93,21 +104,26 @@ class defs(object):
                     if rest is not None:
                         raise SyntaxError("<feature> external", line)
                     if feature in derived:
-                        raise SyntaxError("External feature is already defined as derived above:", line);
-                    implied = set(map((lambda x_y:x_y[1]), implications))
+                        raise SyntaxError(
+                            "External feature is already defined as derived above:", line)
+                    implied = set(map((lambda x_y: x_y[1]), implications))
                     if feature in implied:
-                        raise SyntaxError("External feature is implied above:", line);
+                        raise SyntaxError(
+                            "External feature is implied above:", line)
                     externals.add(feature)
 
                 # implications
                 elif keyword == 'implies':
                     if rest is None:
-                        raise SyntaxError("<feature> implies [<feature>...]", line)
+                        raise SyntaxError(
+                            "<feature> implies [<feature>...]", line)
                     tokens = rest.split()
                     for implied in tokens:
-                        if implied.endswith(','): implied = implied[:-1]
+                        if implied.endswith(','):
+                            implied = implied[:-1]
                         if implied in externals:
-                            raise SyntaxError("Implied feature %s is already defined as external above:" % feature, line);
+                            raise SyntaxError(
+                                "Implied feature %s is already defined as external above:" % feature, line)
 
                         implications.append((feature, implied))
 
@@ -149,8 +165,8 @@ class defs(object):
 #        print 'Implied set: ' + str(newset)
 
         # handle requirements
-        featurevars=dict()
-        derived = list(map((lambda x_y_z:x_y_z[0]), self.derivations))
+        featurevars = dict()
+        derived = list(map((lambda x_y_z: x_y_z[0]), self.derivations))
         allfeatures = self.features.union(derived, self.externals)
         for feature in allfeatures:
             featurevars[feature] = feature in newset
