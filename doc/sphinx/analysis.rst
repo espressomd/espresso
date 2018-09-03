@@ -678,19 +678,6 @@ Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give n
 	with :math:`q \in \{\var{qmin},\dots,\var{qmax}\}`.
 
 
-.. _Chain radial distribution function:
-
-Chain radial distribution function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-:meth:`espressomd.analyze.Analysis.rdf_chain`
-
-Returns three radial distribution functions (rdf) for the chains.
-The first rdf is calculated for monomers belonging to different chains,
-the second rdf is for the centers of mass of the chains and
-the third one is the distribution of the closest distances between the chains (the
-shortest monomer-monomer distances).
-
 .. _Observables and correlators:
 
 Observables and correlators
