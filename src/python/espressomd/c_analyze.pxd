@@ -108,7 +108,6 @@ cdef extern from "statistics.hpp":
 
     void angularmomentum(PartCfg &, int p_type, double * com)
     void momentofinertiamatrix(PartCfg &, int p_type, double * MofImatrix)
-    void analyze_rdfchain(PartCfg &, double r_min, double r_max, int r_bins, double ** f1, double ** f2, double ** f3)
 
 cdef extern from "statistics.hpp":
     int n_part

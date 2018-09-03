@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Vector.hpp"
 
 #include "detail/ll_and_dist.hpp"
-
 #include "utils/math/bspline.hpp"
 
 namespace Utils {
