@@ -192,7 +192,7 @@ IF ELECTROKINETICS:
         def ek_init(self):
             """
             Initializes the electrikinetic system.
-            This automatically initializes the lattice Boltzman method on the GPU.
+            This automatically initializes the lattice Boltzmann method on the GPU.
 
             """
             err = ek_init()
@@ -310,9 +310,6 @@ IF ELECTROKINETICS:
         def add_boundary(self, shape):
             raise Exception("This method is not implemented yet.")
 
-        def _deactivate_method(self):
-            if lb_set_lattice_switch(0):
-                raise Exception("lb_set_lattice_switch error")
 
     cdef class ElectrokineticsRoutines(object):
         cdef int node[3]

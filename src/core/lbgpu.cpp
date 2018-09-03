@@ -184,7 +184,7 @@ int i;
 
 int n_extern_node_force_densities = 0;
 LB_extern_nodeforcedensity_gpu *host_extern_node_force_densities = nullptr;
-int ek_initialized = 0;
+bool ek_initialized = false;
 
 /*-----------------------------------------------------------*/
 /** main of lb_gpu_programm */

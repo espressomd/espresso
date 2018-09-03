@@ -51,7 +51,7 @@
 #define LATTICE_LB_CPU 1
 #define LATTICE_LB_GPU 2
 extern int lattice_switch;
-extern int ek_initialized;
+extern bool ek_initialized;
 extern EK_parameters *lb_ek_parameters_gpu;
 
 // Used to limit register use for the pressure calculation
@@ -91,7 +91,6 @@ unsigned int old_number_of_boundaries = 0;
 
 FdElectrostatics *electrostatics = nullptr;
 
-bool initialized = false;
 
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_node_force_density_gpu node_f, node_f_buf;
@@ -1375,10 +1374,6 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
   not_boundary =
       (lb_node.boundary[index] || lb_node.boundary[target_node_index]) == 0;
 
-  // if(!not_boundary)
-  //  printf("[%d,%d,%d]=%d\n", coord[0], coord[1], coord[2], not_boundary);
-  //  //TODO delete
-
   atomicadd(&ek_parameters_gpu.j[jindex_getByRhoLinear(node, EK_LINK_U00)],
             (2 * di[0] - 1) * ek_parameters_gpu.rho[species_index][index] *
                 dx[0] * (1.0f - dx[1]) * (1.0f - dx[2]) * not_boundary);
@@ -1900,7 +1895,6 @@ __global__ void ek_apply_boundaries(unsigned int species_index,
 }
 
 __global__ void ek_clear_fluxes() {
-
   unsigned int index = ek_getThreadIndex();
 
   if (index < ek_parameters_gpu.number_of_nodes) {
@@ -1911,7 +1905,6 @@ __global__ void ek_clear_fluxes() {
 }
 
 __global__ void ek_init_species_density_homogeneous() {
-
   unsigned int index = ek_getThreadIndex();
   unsigned int coord[3];
 
@@ -1927,7 +1920,6 @@ __global__ void ek_init_species_density_homogeneous() {
 }
 
 __global__ void ek_gather_species_charge_density() {
-
   unsigned int index = ek_getThreadIndex();
 
   if (index < ek_parameters_gpu.number_of_nodes) {
@@ -1945,7 +1937,6 @@ __global__ void ek_gather_species_charge_density() {
 __global__ void
 ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
                                   LB_parameters_gpu *ek_lbparameters_gpu) {
-
   unsigned int index = ek_getThreadIndex();
   int lowernode[3];
   float cellpos[3];
@@ -2025,13 +2016,6 @@ ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
                   (lowernode[1] + 1) % ek_parameters_gpu.dim_y,
                   (lowernode[2] + 1) % ek_parameters_gpu.dim_z)],
               particle_data[index].q * cellpos[0] * cellpos[1] * cellpos[2]);
-
-    // printf("particle %d (%d):\n  charge %f\n  pos %f %f %f\n  lowernode %d %d
-    // %d\n  cellpos %f %f %f\n\n", index,
-    // ek_lbparameters_gpu->number_of_particles, particle_data[index].q,
-    // particle_data[index].p[0], particle_data[index].p[1],
-    // particle_data[index].p[2], lowernode[0], lowernode[1], lowernode[2],
-    // cellpos[0], cellpos[1], cellpos[2]); //TODO delete
   }
 }
 #ifdef EK_ELECTROSTATIC_COUPLING
@@ -2241,7 +2225,7 @@ void ek_calculate_electrostatic_coupling() {
   int threads_per_block = 64;
   dim3 dim_grid;
 
-  if ((!ek_parameters.es_coupling) || (!initialized))
+  if ((!ek_parameters.es_coupling) || (!ek_initialized))
     return;
 
   blocks_per_grid_x = (lbpar_gpu.number_of_particles +
@@ -2341,8 +2325,6 @@ void ek_integrate() {
 
   lb_integrate_GPU();
 
-  // TODO delete - needed for printfs
-  // cudaDeviceSynchronize();
 }
 
 #ifdef EK_BOUNDARIES
@@ -2370,8 +2352,7 @@ void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
 #endif
 
 void ek_init_species(int species) {
-
-  if (!initialized) {
+  if (!ek_initialized) {
     ek_init();
   }
 
@@ -2412,7 +2393,7 @@ int ek_init() {
   int blocks_per_grid_x;
   dim3 dim_grid;
 
-  if (!initialized) {
+  if (!ek_initialized) {
     if (cudaGetSymbolAddress((void **)&ek_parameters_gpu_pointer,
                              ek_parameters_gpu) != cudaSuccess) {
       fprintf(stderr, "ERROR: Fetching constant memory pointer\n");
@@ -2434,7 +2415,7 @@ int ek_init() {
     }
 
     lattice_switch = LATTICE_LB_GPU;
-    ek_initialized = 1;
+    ek_initialized = true;
 
     lbpar_gpu.agrid = ek_parameters.agrid;
     lbpar_gpu.viscosity[0] = ek_parameters.viscosity;
@@ -2543,7 +2524,7 @@ int ek_init() {
     dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
     KERNELCALL(ek_clear_node_force, dim_grid, threads_per_block, (node_f));
 
-    initialized = true;
+    ek_initialized = true;
   } else {
     if (lbpar_gpu.agrid != ek_parameters.agrid ||
         lbpar_gpu.viscosity[0] != ek_parameters.viscosity ||
@@ -2578,9 +2559,6 @@ int ek_init() {
       ek_integrate_electrostatics();
     }
   }
-
-  // ek_print_parameters(); //TODO delete
-
   return 0;
 }
 
@@ -3023,8 +3001,6 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
 
 int ek_node_set_density(int species, int x, int y, int z, double density) {
   if (ek_parameters.species_index[species] != -1) {
-    // printf("[%d %d %d].density[%d] = %f\n", x, y, z, species, density);
-    // //TODO delete
     int index = z * ek_parameters.dim_y * ek_parameters.dim_x +
                 y * ek_parameters.dim_x + x;
     ekfloat num_particles = density * ek_parameters.agrid *

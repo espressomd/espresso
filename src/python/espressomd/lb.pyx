@@ -51,7 +51,6 @@ IF LB_GPU or LB:
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
 
         """
-
         def __reduce__(self):
             return _construct, (self.__class__, self._params), None
 
