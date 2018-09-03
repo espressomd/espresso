@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import sys
 import unittest as ut
@@ -44,9 +60,9 @@ class test_minimize_energy(ut.TestCase):
             self.system.analysis.energy()["total"], 0, places=10)
 
         self.system.integrator.set_steepest_descent(
-            f_max=0.0, gamma=0.1, max_displacement=0.001)
+            f_max=0.0, gamma=0.1, max_displacement=0.005)
 
-        self.system.integrator.run(1000)
+        self.system.integrator.run(200)
 
         self.assertAlmostEqual(
             self.system.analysis.energy()["total"], 0, places=10)

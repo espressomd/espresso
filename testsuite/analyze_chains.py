@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import sys
 import unittest as ut
@@ -82,33 +98,6 @@ class AnalyzeChain(ut.TestCase):
 
     # python version of the espresso core function,
     # does not check mirror distances
-    def calc_chain_rdf(self, bins):
-        head_id = np.arange(0, self.num_poly * self.num_mono, self.num_mono)
-        tail_id = head_id + self.num_mono - 1
-        data_cm = []
-        data_min = []
-        data_mono = []
-        i = np.arange(self.num_mono * self.num_mono) // self.num_mono
-        j = np.arange(self.num_mono * self.num_mono) % self.num_mono
-        for p1 in range(self.num_poly):
-            for p2 in range(p1):
-                r1 = np.array(
-                    self.system.part[head_id[p1]:tail_id[p1] + 1].pos)
-                r2 = np.array(
-                    self.system.part[head_id[p2]:tail_id[p2] + 1].pos)
-                r_ij = r1[i] - r2[j]
-                dist = np.sqrt(np.sum(r_ij**2, axis=1))
-                data_min.append(np.min(dist))
-                dist_cm = np.sqrt(
-                    np.sum((np.mean(r1, axis=0) - np.mean(r2, axis=0))**2))
-                data_cm.append(dist_cm)
-                data_mono.append(dist)
-        hist_mono = np.histogram(
-            np.ravel(data_mono), bins=bins, density=False)[0]
-        hist_cm = np.histogram(data_cm, bins=bins, density=False)[0]
-        hist_min = np.histogram(data_min, bins=bins, density=False)[0]
-        return hist_mono, hist_cm, hist_min
-
     # test core results versus python variants (no PBC)
     def test_radii(self):
         # increase PBC for remove mirror images
@@ -130,53 +119,6 @@ class AnalyzeChain(ut.TestCase):
                                                number_of_chains=self.num_poly,
                                                chain_length=self.num_mono)
         np.testing.assert_allclose(core_rh, self.calc_rh())
-        # restore PBC
-        self.system.box_l = self.system.box_l / 2.
-        self.system.part[:].pos = old_pos
-
-    # test core results versus python variants (no PBC)
-    def test_chain_rdf(self):
-        # increase PBC for remove mirror images
-        old_pos = self.system.part[:].pos.copy()
-        self.system.box_l = self.system.box_l * 2.
-        self.system.part[:].pos = old_pos
-        r_min = 0.0
-        r_max = 100.0
-        r_bins = 10
-        bin_width = (r_max - r_min) / r_bins
-        bins = np.arange(r_min, r_max + bin_width, bin_width)
-        core_rdf = self.system.analysis.rdf_chain(r_min=r_min,
-                                                  r_max=r_max,
-                                                  r_bins=r_bins,
-                                                  chain_start=0,
-                                                  number_of_chains=self.num_poly,
-                                                  chain_length=self.num_mono)
-        rdf = (self.calc_chain_rdf(bins))
-        bin_volume = 4. / 3. * np.pi * (bins[1:]**3 - bins[:-1]**3)
-        box_volume = self.system.box_l[
-            0] * self.system.box_l[1] * self.system.box_l[2]
-        # number pairs between in all particles
-        num_pair_part = 0.5 * \
-            (self.num_mono * self.num_poly) * \
-            (self.num_mono * self.num_poly - 1)
-        # number of polymer pairs
-        num_pair_poly = 0.5 * (self.num_poly) * (self.num_poly - 1)
-        # number of pairs between monomers or different polymers
-        num_pair_mono = 0.5 * \
-            (self.num_mono * self.num_mono) * \
-            (self.num_poly - 1) * (self.num_poly)
-        # bins
-        np.testing.assert_allclose(
-            core_rdf[:, 0], (bins[1:] + bins[:-1]) * 0.5)
-        # monomer rdf
-        np.testing.assert_allclose(
-            core_rdf[:, 1] * bin_volume * num_pair_mono / box_volume, rdf[0])
-        # cm rdf
-        np.testing.assert_allclose(
-            core_rdf[:, 2] * bin_volume * num_pair_poly / box_volume, rdf[1])
-        # min rdf
-        np.testing.assert_allclose(
-            core_rdf[:, 3] * bin_volume * num_pair_poly / box_volume, rdf[2])
         # restore PBC
         self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos

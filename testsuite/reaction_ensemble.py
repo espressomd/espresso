@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -106,14 +106,14 @@ class ReactionEnsembleTest(ut.TestCase):
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
-        RE.reaction(5 * N0)
+        RE.reaction(2 * N0)
 
         system.seed = system.cell_system.get_state()[
             'n_nodes'] * [np.random.randint(5)]
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
-        num_samples = 1000
+        num_samples = 200
         for i in range(num_samples):
             RE.reaction(10)
             average_NH += system.number_of_particles(type=type_H)
