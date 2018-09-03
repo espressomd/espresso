@@ -32,6 +32,7 @@ New features:
 * Support for the electrostatic and magnetostatics method provided by the ScaFaCoS library
 * Immersed boundary method for soft immersed objects in an LB fluid
 * Virtual sites acting as inertialess tracers in an LB fluid usable as part of the immersed boundary method or independently
+* Online cluster analysis based on criteria for pairs of particles
 * New bonded quartic and Coulomb interactions
 * Possibility to tune the skin parameter 
 * Support for saving to the h5md file format for molecular dynamics data.
