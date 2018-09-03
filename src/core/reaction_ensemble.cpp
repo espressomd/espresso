@@ -377,9 +377,8 @@ double ReactionEnsemble::calculate_acceptance_probability(
 
   const double beta = 1.0 / temperature;
   // calculate boltzmann factor
-  return std::pow(volume, current_reaction.nu_bar) *
-         current_reaction.gamma * factorial_expr *
-         exp(-beta * (E_pot_new - E_pot_old));
+  return std::pow(volume, current_reaction.nu_bar) * current_reaction.gamma *
+         factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
 }
 
 std::map<int, int>
@@ -1216,8 +1215,8 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
   } else {
     double factorial_expr =
         calculate_factorial_expression(current_reaction, old_particle_numbers);
-    bf = std::pow(volume, current_reaction.nu_bar) *
-         current_reaction.gamma * factorial_expr;
+    bf = std::pow(volume, current_reaction.nu_bar) * current_reaction.gamma *
+         factorial_expr;
   }
 
   if (!do_energy_reweighting) {
