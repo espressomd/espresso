@@ -222,7 +222,7 @@ class ek_eof_one_species_x(ut.TestCase):
                     ek, position, xi, bjerrum_length, (1, 1), box_x, box_y, box_z, agrid, temperature)
                 measured_pressure_zz = ek[int(
                     box_x / (2 * agrid)), i, int(box_z / (2 * agrid))].pressure[(2, 2)]
-                calculated_pressure_zz = hydrostatic_pressure_non_lin(
+                calculated_pressure_zz = ek_common.hydrostatic_pressure_non_lin(
                     ek, position, xi, bjerrum_length, (2, 2), box_x, box_y, box_z, agrid, temperature)
 
                 pressure_difference_xx = abs(

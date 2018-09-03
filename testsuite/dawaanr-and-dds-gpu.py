@@ -89,7 +89,7 @@ class DDSGPUTest(ut.TestCase):
             # and torque
             self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
-            dds_cpu = DipolarDirectSumCpu(prefactor=pf_dawaanr)
+            dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=pf_dawaanr)
             self.es.actors.add(dds_cpu)
             self.es.integrator.run(steps=0, recalc_forces=True)
 
@@ -99,7 +99,7 @@ class DDSGPUTest(ut.TestCase):
             for i in range(n):
                 dawaanr_f.append(self.es.part[i].f)
                 dawaanr_t.append(self.es.part[i].torque_lab)
-            dawaanr_e = espressomd.analyse.Analysis(self.es).energy()["total"]
+            dawaanr_e = self.es.analysis.energy()["total"]
 
             del dds_cpu
             for i in range(len(self.es.actors.active_actors)):
@@ -116,7 +116,7 @@ class DDSGPUTest(ut.TestCase):
             for i in range(n):
                 ddsgpu_f.append(self.es.part[i].f)
                 ddsgpu_t.append(self.es.part[i].torque_lab)
-            ddsgpu_e = espressomd.analysis.Analysis(self.es).energy()["total"]
+            ddsgpu_e = self.es.analysis.energy()["total"]
 
             # compare
             for i in range(n):

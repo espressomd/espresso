@@ -191,7 +191,7 @@ class ek_eof_one_species_x(ut.TestCase):
             # density
                 measured_density = counterions[i, int(
                     box_y / (2 * agrid)), int(box_z / (2 * agrid))].density
-                calculated_density = density(position, xi, bjerrum_length)
+                calculated_density = ek_common.density(position, xi, bjerrum_length)
                 density_difference = abs(measured_density - calculated_density)
                 total_density_difference = total_density_difference + \
                     density_difference
