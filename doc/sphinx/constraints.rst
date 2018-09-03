@@ -26,7 +26,7 @@ module. This module provides classes for the different available shapes::
 
 Shapes define geometries which can be used in |es| either as
 constraints in particle interactions or as a boundary for a
-Lattice-Boltzmann fluid.
+lattice Boltzmann fluid.
 
 To avoid unexpected behavior make sure all parts of your shape are
 within the central box since the distance to the shape is calculated only
@@ -561,7 +561,7 @@ the ``normal`` vector of the wall points in the direction that is considered to
 yield positive distances.  Outside its use in constraints, shapes can also be
 used as a way to define LB boundary nodes. In this case, negative distances
 define nodes which are part of a boundary, please refer to :ref:`Using shapes
-as Lattice-Boltzmann boundary`.
+as lattice Boltzmann boundary`.
 
 
 

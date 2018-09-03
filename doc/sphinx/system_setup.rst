@@ -252,7 +252,7 @@ variance and it is the default used in |es|, though it can be explicitly
 specified using the feature ``FLATNOISE``. You can also employ Gaussian noise which
 is, in some sense, more realistic. Notably Gaussian noise (activated
 using the feature ``GAUSSRANDOM``) does a superior job of reproducing higher order
-moments of the Maxwell-Boltzmann distribution. For typical generic
+moments of the Maxwell--Boltzmann distribution. For typical generic
 coarse-grained polymers using FENE bonds the Gaussian noise tends to
 break the FENE bonds. We thus offer a third type of noise, activate
 using the feature ``GAUSSRANDOMCUT``, which produces Gaussian random numbers but takes

@@ -1214,7 +1214,6 @@ double calc_surface_term(int force_flag, int energy_flag) {
   }
 #ifdef ROTATION
   if (force_flag) {
-    // fprintf(stderr," number of particles= %d ",n_part);
 
     std::vector<double> sumix(n_local_part);
     std::vector<double> sumiy(n_local_part);
@@ -1225,11 +1224,6 @@ double calc_surface_term(int force_flag, int energy_flag) {
       sumiy[i] = mz[i] * a[0] - mx[i] * a[2];
       sumiz[i] = mx[i] * a[1] - my[i] * a[0];
     }
-
-    // for (i = 0; i < n_part; i++){
-    //    fprintf(stderr,"part %d, corrections torque  x:%le, y:%le,
-    //    z:%le\n",i,sumix[i],sumiy[i],sumiz[i]);
-    // }
 
     ip = 0;
     for (auto &p : local_cells.particles()) {

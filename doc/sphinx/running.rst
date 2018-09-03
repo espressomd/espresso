@@ -26,7 +26,7 @@ step after setting up, there are no forces present yet. Therefore, |es| has
 to compute them before the first time step. That has two consequences:
 first, random forces are redrawn, resulting in a narrower distribution
 of the random forces, which we compensate by stretching. Second,
-coupling forces of e.g. the Lattice Boltzmann fluid cannot be computed
+coupling forces of e.g. the lattice Boltzmann fluid cannot be computed
 and are therefore lacking in the first half time step. In order to
 minimize these effects, |es| has a quite conservative heuristics to decide
 whether a change makes it necessary to recompute forces before the first
@@ -63,7 +63,7 @@ When only conservative forces for which a potential exists are in use, this is e
 A common application is removing overlap between randomly placed particles.
 
 Please note that the behavior is undefined if either a thermostat,
-Maggs electrostatics or Lattice-Boltzmann is activated. It runs a simple
+Maggs electrostatics or lattice Boltzmann is activated. It runs a simple
 steepest descent algorithm:
 
 Iterate

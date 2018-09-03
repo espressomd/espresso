@@ -11,7 +11,7 @@ performing simulations using models with different levels of coarse-graining.
 It also includes modern and efficient algorithms for treatment of
 :ref:`electrostatics` (P3M, MMM-type algorithms, constant potential
 simulations, dielectric interfaces, …), hydrodynamic interactions
-(:ref:`DPD<Dissipative Particle Dynamics (DPD)>`, :ref:`Lattice-Boltzmann`),
+(:ref:`DPD<Dissipative Particle Dynamics (DPD)>`, :ref:`Lattice Boltzmann`),
 and :ref:`magnetic interactions<Magnetostatics / Dipolar interactions>`, only
 to name a few.  It is designed to exploit the capabilities of parallel
 computational environments.  The program is being continuously extended to keep
@@ -207,7 +207,7 @@ Non-bonded interactions are represented as subclasses of
 :class:`~espressomd.interactions.NonBondedInteraction`, e.g.
 :class:`~espressomd.interactions.LennardJonesInteraction`.
 Instances of these classes for a given pair of particle types are accessed via
-the non_bonded_inter attribute of the System class. This sets up a Lennard Jones
+the non_bonded_inter attribute of the System class. This sets up a Lennard-Jones
 interaction between all particles of type 0 with the given parameters: ::
 
     system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -292,8 +292,8 @@ Currently, the following tutorials are available:
 
 * :file:`01-lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid.
 * :file:`02-charged_system`: Modelling of charged systems such as ionic crystals.
-* :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the Lattice-Boltzmann method.
-* :file:`05-raspberry_electrophoresis`: Extended objects in a Lattice-Boltzmann fluid, raspberry particles.
+* :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice Boltzmann method.
+* :file:`05-raspberry_electrophoresis`: Extended objects in a lattice Boltzmann fluid, raspberry particles.
 * :file:`06-active_matter`: Modelling of self-propelling particles.
 * :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`08-visualization`: Using the online visualizers of |es|.
@@ -408,7 +408,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     Simple test visualization for the NPT ensemble.
 
 * :file:`visualization_poisseuille.py`
-    Visualization for Poiseuille flow with Lattice-Boltzmann.
+    Visualization for Poiseuille flow with lattice Boltzmann.
 
 * :file:`visualization_constraints.py`
     Constraint visualization with OpenGL with all available constraints (commented out).
@@ -577,9 +577,9 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+------------+
 |                         **Hydrodynamic Interaction**                                    |
 +--------------------------------+------------------------+------------------+------------+
-| Lattice-Boltzmann              | Core                   | Core             | Yes        |
+| Lattice Boltzmann              | Core                   | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Lattice-Boltzmann on GPU       | Group                  | Core             | Yes        |
+| Lattice Boltzmann on GPU       | Group                  | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 |                              **Input/Output**                                           |
 +--------------------------------+------------------------+------------------+------------+

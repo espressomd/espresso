@@ -364,7 +364,7 @@ General features
 
 -  ``CONSTRAINTS`` Turns on various spatial constraints such as spherical compartments
    or walls. This constraints interact with the particles through
-   regular short ranged potentials such as the Lennard--Jones potential.
+   regular short ranged potentials such as the Lennard-Jones potential.
    See section for possible constraint forms.
 
 -  ``MASS`` Allows particles to have individual masses. Note that some analysis
@@ -454,13 +454,13 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
--  ``LB`` Enables the lattice-Boltzmann fluid code.
+-  ``LB`` Enables the lattice Boltzmann fluid code.
 
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice-Boltzmann`
+   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
 
--  ``LB_GPU`` Enables the lattice-Boltzmann fluid code support for GPU.
+-  ``LB_GPU`` Enables the lattice Boltzmann fluid code support for GPU.
 
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice-Boltzmann`
+   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
 
 -  ``LB_BOUNDARIES``
 
@@ -500,12 +500,12 @@ section :ref:`Isotropic non-bonded interactions`):
 
 -  ``TABULATED`` Enable support for user-defined interactions.
 
--  ``LENNARD_JONES`` Enable the Lennard--Jones potential.
+-  ``LENNARD_JONES`` Enable the Lennard-Jones potential.
 
--  ``LENNARD_JONES_GENERIC`` Enable the generic Lennard--Jones potential with configurable
+-  ``LENNARD_JONES_GENERIC`` Enable the generic Lennard-Jones potential with configurable
    exponents and individual prefactors for the two terms.
 
--  ``LJCOS`` Enable the Lennard--Jones potential with a cosine-tail.
+-  ``LJCOS`` Enable the Lennard-Jones potential with a cosine-tail.
 
 -  ``LJCOS2`` Same as ``LJCOS``, but using a slightly different way of smoothing the
    connection to 0.
@@ -530,7 +530,7 @@ section :ref:`Isotropic non-bonded interactions`):
 
 Some of the short range interactions have additional features:
 
--  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard--Jones potentials that
+-  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard-Jones potentials that
    prints a warning if particles come too close so that the simulation
    becomes unphysical.
 
@@ -630,7 +630,7 @@ looking directly at the code.
 
 -  ``THERMO_DEBUG`` Output from the thermostats.
 
--  ``LJ_DEBUG`` Output from the Lennard--Jones code.
+-  ``LJ_DEBUG`` Output from the Lennard-Jones code.
 
 -  ``MORSE_DEBUG`` Output from the Morse code.
 
@@ -645,7 +645,7 @@ looking directly at the code.
 
 -  ``MOLFORCES_DEBUG``
 
--  ``LB_DEBUG`` Output from the lattice--Boltzmann code.
+-  ``LB_DEBUG`` Output from the lattice Boltzmann code.
 
 -  ``VIRTUAL_SITES_DEBUG``
 

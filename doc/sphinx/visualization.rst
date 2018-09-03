@@ -16,7 +16,7 @@ online-visualization:
 
 #. A direct rendering engine based on *pyopengl*. As it is developed for |es|,
    it supports the visualization of several specific features like
-   constraints, particle properties, the cell system, Lattice-Boltzmann and
+   constraints, particle properties, the cell system, lattice Boltzmann and
    more. It can be adjusted with a large number of parameters to set colors,
    materials, camera and interactive features like assigning callbacks to user
    input.

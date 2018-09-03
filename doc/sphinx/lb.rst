@@ -1,10 +1,10 @@
-.. _Lattice-Boltzmann:
+.. _Lattice Boltzmann:
 
-Lattice-Boltzmann
+Lattice Boltzmann
 =================
 
 For an implicit treatment of a solvent, |es| allows to couple the molecular
-dynamics simulation to a Lattice-Boltzmann fluid. The Lattice-Boltzmann-Method (LBM) is a fast, lattice based method that, in its
+dynamics simulation to a lattice Boltzmann fluid. The Lattice Boltzmann Method (LBM) is a fast, lattice-based method that, in its
 "pure" form, allows to calculate fluid flow in different boundary
 conditions of arbitrarily complex geometries. Coupled to molecular
 dynamics, it allows for the computationally efficient inclusion of
@@ -80,7 +80,7 @@ Before running a simulation at least the following parameters must be
 set up: ``agrid``, ``tau``, ``visc``, ``dens``, ``fric``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force_density=[0,0,0]``.
 
 ..
-    If the feature ``SHANCHEN`` is activated, the Lattice Boltzmann code (so far GPU
+    If the feature ``SHANCHEN`` is activated, the lattice Boltzmann code (so far GPU
     version only) is extended to a two-component Shan-Chen (SC) method.
 
     .. note:: The Shan-Chen LB currently does not possess a Python interface.
@@ -297,15 +297,15 @@ For more information on this method and how it works, read the
 publication :cite:`hickey10a`.
 
 
-.. _Using shapes as Lattice-Boltzmann boundary:
+.. _Using shapes as lattice Boltzmann boundary:
 
-Using shapes as Lattice-Boltzmann boundary
+Using shapes as lattice Boltzmann boundary
 ------------------------------------------
 
 .. note::
     Feature ``LB_BOUNDARIES`` required
 
-Lattice-Boltzmann boundaries are implemented in the module
+Lattice Boltzmann boundaries are implemented in the module
 :mod:`espressomd.lbboundaries`. You might want to take a look
 at the classes :class:`espressomd.lbboundaries.LBBoundary`
 and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
@@ -329,7 +329,7 @@ Minimal usage example
 
 .. note:: Feature ``LB_BOUNDARIES`` or ``LB_BOUNDARIES_GPU`` required
 
-In order to add a wall as boundary for a Lattice-Boltzmann fluid
+In order to add a wall as boundary for a lattice Boltzmann fluid
 you could do the following::
 
     wall = espressomd.shapes.Wall(dist=5, normal=[1, 0, 0])
@@ -413,12 +413,12 @@ straightforward. The ``LBBoundary`` object furthermore possesses a property ``fo
 
     .. note:: Please cite :cite:`sega13c` if you use the Shan Chen implementation described below.
 
-    The Lattice Boltzmann variant of Shan and
+    The lattice Boltzmann variant of Shan and
     Chen :cite:`shan93a` is widely used as it is simple and yet
     very effective in reproducing the most important traits of
     multi-component or multi-phase fluids. The version of the Shan-Chen method
     implemented in is an extension to bi-component fluids of the
-    multi-relaxation-times Lattice Boltzmann with fluctuations applied to
+    multi-relaxation-times lattice Boltzmann with fluctuations applied to
     all modes, that is already present in |es|. It also features
     coupling with particles :cite:`sega13c` and
     component-dependent particle interactions (see sections

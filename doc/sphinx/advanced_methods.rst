@@ -301,7 +301,7 @@ thin shell filled with liquid (see e.g. :cite:`Peskin2002,Crowl2010,KruegerThesi
 shell is deformed by an external flow, it responds with elastic restoring
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
-Lattice-Boltzmann.
+lattice Boltzmann.
 
 Numerically, the shell is discretized by a set of marker points
 connected by triangles. The marker points are advected with *exactly*
@@ -315,7 +315,7 @@ on).
 
 The immersed boundary method consists of two components, which can be used independently:
 
-  * :ref:`Inertialess Lattice-Boltzmann tracers` implemented as virtual sites
+  * :ref:`Inertialess lattice Boltzmann tracers` implemented as virtual sites
 
   * Interactions providing the elastic forces for the particles forming the surface. These are described below.
 
@@ -1364,7 +1364,7 @@ Electrokinetics
 
 The electrokinetics setup in |es| allows for the description of
 electro-hydrodynamic systems on the level of ion density distributions
-coupled to a Lattice-Boltzmann (LB) fluid. The ion density distributions
+coupled to a Lattice Boltzmann (LB) fluid. The ion density distributions
 may also interact with explicit charged particles, which are
 interpolated on the LB grid. In the following paragraph we briefly
 explain the electrokinetic model implemented in |es|, before we come to the
@@ -1457,12 +1457,12 @@ The electrokinetic equations have the following properties:
    moderate charge densities. At higher valencies or densities,
    overcharging and layering effects can occur, which lead to
    non-monotonic charge densities and potentials, that can not be
-   covered by a mean-field model such as Poisson-Boltzmann or this one.
+   covered by a mean-field model such as Poisson--Boltzmann or this one.
 
    Even in salt free systems containing only counter ions, the
    counter-ion densities close to highly charged objects can be
    overestimated when neglecting excluded volume effects. Decades of the
-   application of Poisson-Boltzmann theory to systems of electrolytic
+   application of Poisson--Boltzmann theory to systems of electrolytic
    solutions, however, show that those conditions are fulfilled for
    monovalent salt ions (such as sodium chloride or potassium chloride)
    at experimentally realizable concentrations.
@@ -1508,8 +1508,8 @@ Initialization
 .. note:: Features ``ELECTROKINETICS`` and ``LB_GPU`` required
 
 The above is a minimal example how to initialize the LB fluid, and
-it is very similar to the Lattice-Boltzmann command in set-up. We
-therefore refer the reader to Chapter :ref:`Lattice-Boltzmann` for details on the
+it is very similar to the lattice Boltzmann command in set-up. We
+therefore refer the reader to Chapter :ref:`Lattice Boltzmann` for details on the
 implementation of LB in |es| and describe only the major differences here.
 
 The first major difference with the LB implementation is that the
@@ -1524,7 +1524,7 @@ To set up a proper LB fluid using this command one has to specify at
 least the following options: ``agrid``, ``lb_density``, ``viscosity``, ``friction``, ``T``, and ``prefactor``. The other options can be
 used to modify the behavior of the LB fluid. Note that the command does
 not allow the user to set the time step parameter as is the case for the
-Lattice-Boltzmann command, this parameter is instead taken directly from the value set for
+lattice Boltzmann command, this parameter is instead taken directly from the value set for
 :attr:`espressomd.system.System.time_step`. The LB `mass density` is set independently from the
 electrokinetic `number densities`, since the LB fluid serves only as a
 medium through which hydrodynamic interactions are propagated, as will

@@ -60,8 +60,8 @@ Required parameters:
     * ``accuracy``
 
 For this feature to work, you need to have the ``fftw3`` library
-installed on your system. In python you can check if it is compiled in by
-checking for the feature ``FFTW`` with ``espressomd.features``
+installed on your system. In |es|, you can check if it is compiled in by
+checking for the feature ``FFTW`` with ``espressomd.features``.
 P3M requires full periodicity (1 1 1). Make sure that you know the relevance of the
 P3M parameters before using P3M! If you are not sure, read the following
 references
@@ -293,11 +293,11 @@ using it.
     leads to the following rule of thumb for the parameter choices:
 
     -  The lattice should be of the size of your particle size (i.e. the
-       Lennard Jones epsilon). That means:
+       Lennard-Jones epsilon). That means:
        :math:`\text{mesh} \approx \text{box_l} / \text{lj_sigma}`
 
     -  The integration timestep should be in a range where no particle moves
-       more than one lattice box (i.e. Lennard Jones sigma) per timestep.
+       more than one lattice box (i.e. Lennard-Jones sigma) per timestep.
 
     -  The speed of light should satisfy the stability criterion
        :math:`c\ll a/dt`, where :math:`a` is the lattice spacing and

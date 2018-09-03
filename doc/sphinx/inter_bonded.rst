@@ -133,7 +133,7 @@ harmonic bond.
     quartic bond gets longer than , the bond will be reported as broken, and
     a background error will be raised.
 
-.. _Bonded coulomb:
+.. _Bonded Coulomb:
 
 Bonded Coulomb
 ~~~~~~~~~~~~~~

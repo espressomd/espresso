@@ -66,7 +66,7 @@ Momentum of the System
 :meth:`espressomd.analyze.Analysis.analyze_linear_momentum`
 
 This command returns the total linear momentum of the particles and the
-lattice-Boltzmann (LB) fluid, if one exists. Giving the optional
+lattice Boltzmann (LB) fluid, if one exists. Giving the optional
 parameters either causes the command to ignore the contribution of LB or
 of the particles.
 
@@ -390,7 +390,7 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
     (or the ones you are interested in) particle types in your system and a
     fictitious particle type. Practically one uses the van der Waals radius
     of the particles plus the size of the probe you want to use as the
-    Lennard Jones cutoff. The mesh spacing is the box length divided by the
+    Lennard-Jones cutoff. The mesh spacing is the box length divided by the
     .
 
     { { } { } { } }
@@ -406,13 +406,13 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
     in the order x, y, z). Attention: the algorithm assumes a cubic box.
     Surface results have not been tested. .
 
-	.. _Temperature of the lb fluid:
+	.. _Temperature of the LB fluid:
 
 	Temperature of the LB fluid
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	.. todo:: This feature is not implemented
 
-	This command returns the temperature of the lattice-Boltzmann (LB)
+	This command returns the temperature of the lattice Boltzmann (LB)
 	fluid, see Chapter [sec:lb], by averaging over the fluid nodes. In case
 	or are compiled in and boundaries are defined, only the available fluid
 	volume is taken into account.

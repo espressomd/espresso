@@ -122,7 +122,7 @@ compiled in.
     gt.system_CMS()
 
   Returns the center of mass of the whole system. It currently does not
-  factor in the density fluctuations of the Lattice-Boltzmann fluid.
+  factor in the density fluctuations of the lattice Boltzmann fluid.
 
 * The center-of-mass velocity
 

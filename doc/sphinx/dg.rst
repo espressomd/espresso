@@ -73,13 +73,14 @@ The build system of |es| is based on CMake.
 
 The central source files of the build system are the following:
 
--  :file:`CMakeList.txt`
+-  :file:`CMakeLists.txt`
 
 -  Contents of the :file:`cmake` directory
 
--  The CMakeList.txt files in the :file:`src/`, :file:`doc/`, and :file:`testsuite/` directories and their sub-directories
+-  The :file:`CMakeLists.txt` files in the :file:`src/`, :file:`doc/`, and :file:`testsuite/` directories and their sub-directories
 
 The most common reasons for editing these files are:
+
 -  Adding new source files
 -  Adding new external dependencies
 
