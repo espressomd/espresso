@@ -33,9 +33,10 @@
 extern int timing_samples;
 
 /** returns the time for some force calculations.
-    Actually performs \ref mpi_integrate (0)
-    @param default_samples the number of samples to take if
-    \ref timing_samples is not set. */
+ *  Actually performs \ref mpi_integrate (0)
+ *  @param default_samples the number of samples to take if
+ *  \ref timing_samples is not set.
+ */
 double time_force_calc(int default_samples);
 
 /** set a time marker. \ref diffTime always gives the time in ms between
@@ -46,7 +47,7 @@ void markTime();
 double diffTime();
 
 /** sets the optimal \ref skin between min and max by bisection to tolerance
- * tol.
+ *  tol.
  */
 void tune_skin(double min, double max, double tol, int steps);
 

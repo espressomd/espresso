@@ -1271,16 +1271,21 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
 }
 
 /** Performs a randomly selected reaction using the Wang-Landau algorithm.
-*make sure to perform additional configuration changing steps, after the
-reaction step! like in Density-of-states Monte Carlo method for simulation of
-fluids Yan, De Pablo. this can be done with MD in the case of the
-no-energy-reweighting case, or with the functions
-do_global_mc_move_for_particles_of_type
-*perform additional Monte-carlo moves to to sample configurational partition
-function
-*according to "Density-of-states Monte Carlo method for simulation of fluids"
-do as many steps as needed to get to a new conformation (compare
-Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo)*/
+ *
+ *  make sure to perform additional configuration changing steps, after the
+ *  reaction step! like in Density-of-states Monte Carlo method for simulation
+ *  of fluids Yan, De Pablo. this can be done with MD in the case of the
+ *  no-energy-reweighting case, or with the functions
+ *  do_global_mc_move_for_particles_of_type
+ *
+ *  perform additional Monte-carlo moves to to sample configurational
+ *  partition function according to "Density-of-states Monte Carlo method
+ *  for simulation of fluids"
+ *
+ *  do as many steps as needed to get to a new conformation (compare
+ *  Density-of-states Monte Carlo method for simulation of fluids Yan,
+ *  De Pablo)
+ */
 int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
   m_WL_tries += reaction_steps;
   bool got_accepted = false;
@@ -1308,9 +1313,9 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
     double minimum_wang_landau_potential = find_minimum_non_negative_value(
         wang_landau_potential.data(), wang_landau_potential.size());
     for (int i = 0; i < wang_landau_potential.size(); i++) {
-      if (wang_landau_potential[i] >=
-          0) // check for whether we are in the valid
-             // range of the collective variable
+      if (wang_landau_potential[i] >= 0) // check for whether we are in the
+                                         // valid range of the collective
+                                         // variable
         wang_landau_potential[i] -= minimum_wang_landau_potential;
     }
     // write out preliminary wang-landau potential results
@@ -1562,12 +1567,12 @@ int WangLandauReactionEnsemble::
 }
 
 /** remove bins from the range of to be sampled values if they have not been
- *sampled.
- *use with caution otherwise you produce unphysical results, do only use when
- *you know what you want to do. This can make wang landau converge on a reduced
- *set gamma. use this function e.g. in do_reaction_wang_landau() for the
- *diprotonic acid compare "Wang-Landau sampling with self-adaptive range" by
- *Troester and Dellago
+ *  sampled.
+ *  use with caution otherwise you produce unphysical results, do only use
+ *  when you know what you want to do. This can make wang landau converge on a
+ *  reduced set gamma. use this function e.g. in do_reaction_wang_landau() for
+ *  the diprotonic acid compare "Wang-Landau sampling with self-adaptive range"
+ *  by Troester and Dellago
  */
 void WangLandauReactionEnsemble::remove_bins_that_have_not_been_sampled() {
   int removed_bins = 0;
@@ -1586,10 +1591,10 @@ void WangLandauReactionEnsemble::remove_bins_that_have_not_been_sampled() {
 }
 
 /**
- *Writes the Wang-Landau parameter, the histogram and the potential to a file.
- *You can restart a Wang-Landau simulation using this information. Additionally
- *you should store the positions of the particles. Not storing them introduces
- *small, small statistical errors.
+ * Writes the Wang-Landau parameter, the histogram and the potential to a file.
+ * You can restart a Wang-Landau simulation using this information.
+ * Additionally you should store the positions of the particles.
+ * Not storing them introduces small, small statistical errors.
  */
 int WangLandauReactionEnsemble::write_wang_landau_checkpoint(
     const std::string &identifier) {
