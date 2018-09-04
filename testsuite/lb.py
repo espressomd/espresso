@@ -40,7 +40,7 @@ class TestLB(object):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = range(n_nodes)
-    np.random.seed=1
+    np.random.seed = 1
     params = {'int_steps': 25,
               'int_times': 10,
               'time_step': 0.01,
@@ -168,7 +168,6 @@ class TestLB(object):
             temp_dev / (self.params['int_times'])**0.5
         temp_prec_fluid = self.params['temp_confidence'] * \
             temp_dev_fluid / (self.params['int_times'])**0.5
-
 
         self.assertTrue(
             abs(
