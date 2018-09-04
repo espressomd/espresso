@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -31,8 +31,8 @@ class ScriptObjectRegistry : public ScriptInterfaceBase {
 public:
   virtual void add_in_core(std::shared_ptr<ManagedType> obj_ptr) = 0;
   virtual void remove_in_core(std::shared_ptr<ManagedType> obj_ptr) = 0;
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
 
     if (method == "add") {
       auto obj_ptr =

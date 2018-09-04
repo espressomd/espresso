@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,7 +21,6 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
-import espressomd
 from espressomd.magnetostatics import *
 from tests_common import *
 
@@ -29,6 +28,7 @@ from tests_common import *
 class MagnetostaticsInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+
     def setUp(self):
         self.system.box_l = 10, 10, 10
         if not self.system.part.exists(0):

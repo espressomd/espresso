@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -22,8 +22,8 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
 
-#include "config.hpp"
 #include "VirtualSites.hpp"
+#include "config.hpp"
 #include "core/virtual_sites/VirtualSitesInertialessTracers.hpp"
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
@@ -33,9 +33,12 @@ namespace VirtualSites {
 class VirtualSitesInertialessTracers : public VirtualSites {
 public:
   VirtualSitesInertialessTracers()
-      : m_virtual_sites(new ::VirtualSitesInertialessTracers()) {};
+      : m_virtual_sites(new ::VirtualSitesInertialessTracers()){};
   /** Vs implementation we are wrapping */
-  std::shared_ptr<::VirtualSites> virtual_sites() override { return m_virtual_sites;};
+  std::shared_ptr<::VirtualSites> virtual_sites() override {
+    return m_virtual_sites;
+  };
+
 private:
   std::shared_ptr<::VirtualSitesInertialessTracers> m_virtual_sites;
 };
@@ -44,4 +47,3 @@ private:
 } /* namespace ScriptInterface */
 #endif
 #endif
-

@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef OBSERVABLES_FORCEDENSITYPROFILE_HPP
 #define OBSERVABLES_FORCEDENSITYPROFILE_HPP
 
@@ -9,10 +27,8 @@ namespace Observables {
 
 class ForceDensityProfile : public PidProfileObservable {
 public:
-  virtual int n_values() const override {
-    return 3 * n_x_bins * n_y_bins * n_z_bins;
-  }
-  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+  int n_values() const override { return 3 * n_x_bins * n_y_bins * n_z_bins; }
+  std::vector<double> operator()(PartCfg &partCfg) const override {
     std::array<size_t, 3> n_bins{{static_cast<size_t>(n_x_bins),
                                   static_cast<size_t>(n_y_bins),
                                   static_cast<size_t>(n_z_bins)}};
@@ -22,10 +38,9 @@ public:
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
     for (auto const &id : ids()) {
       auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
-      histogram.update(ppos,
-                       ::Vector<3, double>{{partCfg[id].f.f[0],
-                                            partCfg[id].f.f[1],
-                                            partCfg[id].f.f[2]}});
+      histogram.update(
+          ppos, ::Vector<3, double>{{partCfg[id].f.f[0], partCfg[id].f.f[1],
+                                     partCfg[id].f.f[2]}});
     }
     histogram.normalize();
     return histogram.get_histogram();

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -33,6 +33,7 @@
 #include "utils/math/sqr.hpp"
 #include "utils/memory.hpp"
 
+#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -73,7 +74,7 @@ template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 
 /** permute an integer array field of size size about permute positions. */
 inline void permute_ifield(int *field, int size, int permute) {
-   if (permute == 0)
+  if (permute == 0)
     return;
   if (permute < 0)
     permute = (size + permute);
@@ -139,7 +140,7 @@ inline double sinc(double d) {
 /*@}*/
 
 /*************************************************************/
-/** \name Vector and matrix operations for three dimensons.  */
+/** \name Vector and matrix operations for three dimensions. */
 /*************************************************************/
 /*@{*/
 
@@ -172,9 +173,8 @@ template <typename T> double sqrlen(T const &v) {
 
 /** calculates unit vector */
 inline void unit_vector(double v[3], double y[3]) {
-  double d = 0.0;
+  double d = sqrt(sqrlen(v));
   int i;
-  d = sqrt(sqrlen(v));
 
   for (i = 0; i < 3; i++)
     y[i] = v[i] / d;
@@ -183,8 +183,7 @@ inline void unit_vector(double v[3], double y[3]) {
 }
 
 /** calculates the scalar product of two vectors a nd b */
-template <typename T1, typename T2>
-double scalar(const T1& a, const T2& b) {
+template <typename T1, typename T2> double scalar(const T1 &a, const T2 &b) {
   double d2 = 0.0;
   int i;
   for (i = 0; i < 3; i++)
@@ -203,8 +202,7 @@ inline void vector_product(T const &a, U const &b, V &c) {
 
 /** rotates vector around axis by alpha */
 template <typename T1, typename T2, typename T3>
-void vec_rotate(const T1& axis, double alpha, const T2& vector,
-                       T3& result) {
+void vec_rotate(const T1 &axis, double alpha, const T2 &vector, T3 &result) {
   double sina, cosa, absa, a[3];
   sina = sin(alpha);
   cosa = cos(alpha);
@@ -228,8 +226,9 @@ void vec_rotate(const T1& axis, double alpha, const T2& vector,
 }
 
 /** rotates vector around axis by alpha */
-inline ::Vector<3, double> vec_rotate(::Vector<3, double> axis, double alpha,
-                                      ::Vector<3, double> vector) {
+inline ::Vector<3, double> vec_rotate(const ::Vector<3, double> &axis,
+                                      double alpha,
+                                      const ::Vector<3, double> &vector) {
   ::Vector<3, double> result;
   vec_rotate(axis, alpha, vector, result);
   return result;
@@ -251,7 +250,10 @@ inline ::Vector<3, double> vec_rotate(::Vector<3, double> axis, double alpha,
  * @param c       z position
  * @param adim    dimensions of the underlying grid
  */
-inline int get_linear_index(int a, int b, int c, int adim[3]) {
+inline int get_linear_index(int a, int b, int c, const int adim[3]) {
+  assert((a >= 0) && (a < adim[0]));
+  assert((b >= 0) && (b < adim[1]));
+  assert((c >= 0) && (c < adim[2]));
   return (a + adim[0] * (b + adim[1] * c));
 }
 
@@ -293,7 +295,7 @@ inline double distance(double pos1[3], double pos2[3]) {
  *  \param pos2 Position two.
  */
 template <typename T1, typename T2>
-inline double distance2(const T1& pos1, const T2& pos2) {
+inline double distance2(const T1 &pos1, const T2 &pos2) {
   return Utils::sqr(pos1[0] - pos2[0]) + Utils::sqr(pos1[1] - pos2[1]) +
          Utils::sqr(pos1[2] - pos2[2]);
 }
@@ -302,12 +304,11 @@ inline double distance2(const T1& pos1, const T2& pos2) {
     distance vector pos1-pos2 in vec.
  *  \param pos1 Position one.
  *  \param pos2 Position two.
- *  \param vec  vecotr pos1-pos2.
+ *  \param vec  vector pos1-pos2.
  *  \return distance squared
 */
 template <typename T1, typename T2, typename T3>
-double distance2vec(T1 const pos1, T2 const pos2,
-                           T3& vec) {
+double distance2vec(T1 const pos1, T2 const pos2, T3 &vec) {
   vec[0] = pos1[0] - pos2[0];
   vec[1] = pos1[1] - pos2[1];
   vec[2] = pos1[2] - pos2[2];
@@ -335,7 +336,7 @@ char *strcat_alloc(char *left, const char *right);
 /** Computes the area of triangle between vectors P1,P2,P3,
  *  by computing the crossproduct P1P2 x P1P3 and taking the half of its norm */
 template <typename T1, typename T2, typename T3>
-inline double area_triangle(const T1& P1, const T2& P2, const T3& P3) {
+inline double area_triangle(const T1 &P1, const T2 &P2, const T3 &P3) {
   double area;
   double u[3], v[3], normal[3], n; // auxiliary variables
   u[0] = P2[0] - P1[0];            // u = P1P2
@@ -352,14 +353,14 @@ inline double area_triangle(const T1& P1, const T2& P2, const T3& P3) {
 
 /** Computes the normal vector to the plane given by points P1P2P3 */
 template <typename T1, typename T2, typename T3>
-void get_n_triangle(const T1& p1, const T2& p2, const T3& p3, double *n) {
+void get_n_triangle(const T1 &p1, const T2 &p2, const T3 &p3, double *n) {
   n[0] = (p2[1] - p1[1]) * (p3[2] - p1[2]) - (p2[2] - p1[2]) * (p3[1] - p1[1]);
   n[1] = (p2[2] - p1[2]) * (p3[0] - p1[0]) - (p2[0] - p1[0]) * (p3[2] - p1[2]);
   n[2] = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
 }
 
 /** This function returns the angle btw the triangle p1,p2,p3 and p2,p3,p4.  Be
- * careful, the angle depends on the orientation of the trianlges!  You need to
+ * careful, the angle depends on the orientation of the triangles!  You need to
  * be sure that the orientation (direction of normal vector) of p1p2p3 is given
  * by the cross product p2p1 x p2p3.  The orientation of p2p3p4 must be given
  * by p2p3 x p2p4.
@@ -374,7 +375,8 @@ void get_n_triangle(const T1& p1, const T2& p2, const T3& p3, double *n) {
  *  function with exactly this order. Otherwise you need to check the
  *  orientations. */
 template <typename T1, typename T2, typename T3, typename T4>
-double angle_btw_triangles(const T1& P1, const T2& P2, const T3& P3, const T4& P4) {
+double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
+                           const T4 &P4) {
   double phi;
   double u[3], v[3], normal1[3], normal2[3]; // auxiliary variables
   u[0] = P1[0] - P2[0];                      // u = P2P1
@@ -424,7 +426,7 @@ double angle_btw_triangles(const T1& P1, const T2& P2, const T3& P3, const T4& P
 
   // Now we need to determine, if the angle btw two triangles is less than Pi or
   // more than Pi. To do this we check,
-  // if the point P4 lies in the halfspace given by trianlge P1P2P3 and the
+  // if the point P4 lies in the halfspace given by triangle P1P2P3 and the
   // normal to this triangle. If yes, we have
   // angle less than Pi, if not, we have angle more than Pi.
   // General equation of the plane is n_x*x + n_y*y + n_z*z + d = 0 where
@@ -450,7 +452,7 @@ namespace Utils {
 // cross_product: Calculate the cross product of two vectors
 //
 template <typename T1, typename T2, typename T3>
-void cross_product(const T1& a, const T2& b, T3& c) {
+void cross_product(const T1 &a, const T2 &b, T3 &c) {
   c[0] = a[1] * b[2] - a[2] * b[1];
   c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0];

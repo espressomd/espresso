@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef UTILS_MPI_GATHERV_HPP
 #define UTILS_MPI_GATHERV_HPP
 
@@ -54,7 +72,7 @@ void gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
     comm.send(root, 42, in_values, in_size);
   }
 }
-}
+} // namespace detail
 
 template <typename T>
 void gatherv(const boost::mpi::communicator &comm, const T *in_values,
@@ -85,13 +103,14 @@ void gatherv(const boost::mpi::communicator &comm, const T *in_values,
   }
 }
 
-  template <typename T>
-  void gatherv(const boost::mpi::communicator &comm, const T *in_values,
-               int in_size, int root) {
-    assert(comm.rank() != root && "This overload can not be called on the root rank.");
-    gatherv(comm, in_values, in_size, static_cast<T*>(nullptr), 0, 0, root);
-  }
+template <typename T>
+void gatherv(const boost::mpi::communicator &comm, const T *in_values,
+             int in_size, int root) {
+  assert(comm.rank() != root &&
+         "This overload can not be called on the root rank.");
+  gatherv(comm, in_values, in_size, static_cast<T *>(nullptr), 0, 0, root);
+}
 
-}
-}
+} // namespace Mpi
+} // namespace Utils
 #endif

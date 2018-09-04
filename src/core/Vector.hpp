@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -27,8 +27,8 @@
 #include <functional>
 #include <initializer_list>
 #include <iterator>
-#include <vector>
 #include <numeric>
+#include <vector>
 
 #include "utils/serialization/array.hpp"
 
@@ -50,35 +50,44 @@ public:
   Vector(Vector const &) = default;
   Vector &operator=(Vector const &) = default;
 
-  template <typename Container> explicit Vector(Container v) {
-    assert(std::distance(std::begin(v), std::end(v)) == n);
-    std::copy(std::begin(v), std::end(v), d.begin());
+  void swap(Vector &rhs) { std::swap(d, rhs.d); }
+
+  template <typename Container>
+  explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
+
+  explicit Vector(Scalar const (&v)[n]) {
+    std::copy_n(std::begin(v), n, d.begin());
   }
 
-  explicit Vector(Scalar const(&v)[n]) {
-    std::copy(std::begin(v), std::end(v), d.begin());
-  }
-
-  Vector(std::initializer_list<Scalar> v) {
-    /* Convert to static_assert in C++14 */
-    assert(v.size() == n);
-    std::copy(std::begin(v), std::end(v), d.begin());
-  }
+  Vector(std::initializer_list<Scalar> v)
+      : Vector(std::begin(v), std::end(v)) {}
 
   template <typename InputIterator>
   Vector(InputIterator begin, InputIterator end) {
-    assert(std::distance(begin, end) == n);
-    std::copy(begin, end, d.begin());
+    if (std::distance(begin, end) == n) {
+      std::copy_n(begin, n, d.begin());
+    } else {
+      throw std::length_error(
+          "Construction of Vector from Container of wrong length.");
+    }
   }
 
-  Scalar &operator[](int i) { return d[i]; }
-  Scalar const &operator[](int i) const { return d[i]; }
+  Scalar &operator[](int i) {
+    assert(i < n);
+    return d[i];
+  }
+  Scalar const &operator[](int i) const {
+    assert(i < n);
+    return d[i];
+  }
 
   iterator begin() { return d.begin(); }
   const_iterator begin() const { return d.begin(); }
+  const_iterator cbegin() const { return d.cbegin(); }
 
   iterator end() { return d.end(); }
   const_iterator end() const { return d.end(); }
+  const_iterator cend() const { return d.cend(); }
 
   reference front() { return d.front(); }
   reference back() { return d.back(); }
@@ -100,16 +109,10 @@ public:
 
   operator std::vector<Scalar>() const { return as_vector(); }
 
-  inline Scalar dot(const Vector<n, Scalar> &b) const {
-    Scalar sum = 0;
-    for (int i = 0; i < n; i++)
-      sum += d[i] * b[i];
-    return sum;
-  }
+  inline Scalar dot(const Vector<n, Scalar> &b) const { return *this * b; }
 
-  inline Scalar norm2(void) const { return dot(*this); }
-
-  inline Scalar norm(void) const { return sqrt(norm2()); }
+  inline Scalar norm2() const { return (*this) * (*this); }
+  inline Scalar norm() const { return sqrt(norm2()); }
 
   inline void normalize(void) {
     const auto N = norm();
@@ -117,6 +120,17 @@ public:
       for (int i = 0; i < n; i++)
         d[i] /= N;
     }
+  }
+
+  /**
+   * @brief Create a vector that has all entries set to
+   *         one value.
+   */
+  static Vector<n, Scalar> broadcast(const Scalar &s) {
+    Vector<n, Scalar> ret;
+    std::fill(ret.begin(), ret.end(), s);
+
+    return ret;
   }
 
   static void cross(const Vector<3, Scalar> &a, const Vector<3, Scalar> &b,
@@ -137,6 +151,7 @@ public:
     return cross(*this, a);
   }
 
+private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int /* version */) {
@@ -161,7 +176,7 @@ Vector<N, T> binary_op(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
 }
 
 template <size_t N, typename T, typename Op>
-Vector<N, T> & binary_op_assign(Vector<N, T> &a, Vector<N, T> const &b, Op op) {
+Vector<N, T> &binary_op_assign(Vector<N, T> &a, Vector<N, T> const &b, Op op) {
   std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
   return a;
 }
@@ -177,7 +192,7 @@ bool all_of(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
 
   return true;
 }
-}
+} // namespace detail
 
 template <size_t N, typename T>
 bool operator<(Vector<N, T> const &a, Vector<N, T> const &b) {
@@ -215,7 +230,7 @@ Vector<N, T> operator+(Vector<N, T> const &a, Vector<N, T> const &b) {
 }
 
 template <size_t N, typename T>
-Vector<N, T> & operator+=(Vector<N, T> &a, Vector<N, T> const &b) {
+Vector<N, T> &operator+=(Vector<N, T> &a, Vector<N, T> const &b) {
   return detail::binary_op_assign(a, b, std::plus<T>());
 }
 
@@ -234,7 +249,7 @@ template <size_t N, typename T> Vector<N, T> operator-(Vector<N, T> const &a) {
 }
 
 template <size_t N, typename T>
-Vector<N, T> & operator-=(Vector<N, T> &a, Vector<N, T> const &b) {
+Vector<N, T> &operator-=(Vector<N, T> &a, Vector<N, T> const &b) {
   return detail::binary_op_assign(a, b, std::minus<T>());
 }
 
@@ -289,7 +304,7 @@ T operator*(Vector<N, T> const &a, Vector<N, T> const &b) {
   return std::inner_product(a.begin(), a.end(), b.begin(), T{});
 }
 
-/* Componentwise square route */
+/* Componentwise square root */
 template <size_t N, typename T> Vector<N, T> sqrt(Vector<N, T> const &a) {
   using std::sqrt;
   Vector<N, T> ret;
@@ -299,5 +314,15 @@ template <size_t N, typename T> Vector<N, T> sqrt(Vector<N, T> const &a) {
 
   return ret;
 }
+
+/**
+ * @brief Meta function to turns a Vector<1, T> into T.
+ */
+template <typename T> struct decay_to_scalar {};
+template <typename T, size_t N> struct decay_to_scalar<Vector<N, T>> {
+  using type = Vector<N, T>;
+};
+
+template <typename T> struct decay_to_scalar<Vector<1, T>> { using type = T; };
 
 #endif

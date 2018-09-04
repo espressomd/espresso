@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -17,8 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "lb.hpp"
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
+#include "lb.hpp"
 #include "lbgpu.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
@@ -57,15 +57,14 @@ operator()(PartCfg &partCfg) const {
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #if defined(LB)
-    for (size_t ind=0; ind < ppos.size(); ind +=3) {
-      Vector3d pos_tmp = {ppos[ind + 0],
-                           ppos[ind + 1],
-                           ppos[ind + 2]};
+    for (size_t ind = 0; ind < ppos.size(); ind += 3) {
+      Vector3d pos_tmp = {ppos[ind + 0], ppos[ind + 1], ppos[ind + 2]};
       lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
     }
 #endif
   } else {
-    throw std::runtime_error("Either CPU LB or GPU LB has to be active for this observable to work.");
+    throw std::runtime_error("Either CPU LB or GPU LB has to be active for "
+                             "this observable to work.");
   }
   for (auto &p : folded_positions)
     p -= center;

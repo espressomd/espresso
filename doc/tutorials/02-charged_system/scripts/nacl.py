@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2010-2018 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -39,14 +39,14 @@ num_configs = 100
 integ_steps_per_config = 1000
 
 # Particle parameters
-types = {"Anion":          0, "Cation": 1}
+types = {"Anion": 0, "Cation": 1}
 numbers = {"Anion": n_ionpairs, "Cation": n_ionpairs}
 charges = {"Anion": -1.0, "Cation": 1.0}
-lj_sigmas = {"Anion":        1.0, "Cation": 1.0}
-lj_epsilons = {"Anion":        1.0, "Cation": 1.0}
+lj_sigmas = {"Anion": 1.0, "Cation": 1.0}
+lj_epsilons = {"Anion": 1.0, "Cation": 1.0}
 
 WCA_cut = 2.**(1. / 6.)
-lj_cuts = {"Anion":  WCA_cut * lj_sigmas["Anion"],
+lj_cuts = {"Anion": WCA_cut * lj_sigmas["Anion"],
            "Cation": WCA_cut * lj_sigmas["Cation"]}
 
 # Setup System
@@ -60,7 +60,7 @@ system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
 # Place particles
 for i in range(int(n_ionpairs)):
-    system.part.add(id=len(system.part), type=types["Anion"],  pos=numpy.random.random(
+    system.part.add(id=len(system.part), type=types["Anion"], pos=numpy.random.random(
         3) * box_l, q=charges["Anion"])
 for i in range(int(n_ionpairs)):
     system.part.add(id=len(system.part), type=types["Cation"], pos=numpy.random.random(
@@ -122,12 +122,13 @@ system.time = 0.0
 for i in range(int(num_steps_equilibration / 100)):
     temp_measured = system.analysis.energy(
     )['kinetic'] / ((3.0 / 2.0) * n_part)
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                                system.analysis.energy()[
-                                                                                    'total'],
-                                                                                system.analysis.energy()[
-                                                                                    'coulomb'],
-                                                                                temp_measured))
+    print(
+        "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
+                                                                              system.analysis.energy()[
+                                                                              'total'],
+                                                                              system.analysis.energy()[
+                                                                              'coulomb'],
+                                                                              temp_measured))
     system.integrator.run(100)
 
 print("\n--->Integration")
@@ -136,15 +137,16 @@ temp_measured = []
 for i in range(num_configs):
     temp_measured.append(system.analysis.energy()[
                          'kinetic'] / ((3.0 / 2.0) * n_part))
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                                system.analysis.energy()[
-                                                                                    'total'],
-                                                                                system.analysis.energy()[
-                                                                                    'coulomb'],
-                                                                                temp_measured[-1]))
+    print(
+        "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
+                                                                              system.analysis.energy()[
+                                                                              'total'],
+                                                                              system.analysis.energy()[
+                                                                              'coulomb'],
+                                                                              temp_measured[-1]))
     system.integrator.run(integ_steps_per_config)
 
-    # Interally append particle configuration
+    # Internally append particle configuration
     system.analysis.append()
 
 

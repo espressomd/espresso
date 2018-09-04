@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import numpy as np
 import copy
@@ -42,6 +58,7 @@ LB_VELOCITY_PROFILE_PARAMS = {
     'sampling_offset_y': 0.5 * AGRID,
     'sampling_offset_z': 0.5 * AGRID}
 
+
 class ObservableProfileLBCommon(object):
     lbf = None
     system = espressomd.System(box_l=[12.0, 12.0, 12.0])
@@ -57,7 +74,8 @@ class ObservableProfileLBCommon(object):
 
     def test_velocity_profile(self):
         self.set_fluid_velocities()
-        obs = espressomd.observables.LBVelocityProfile(**LB_VELOCITY_PROFILE_PARAMS)
+        obs = espressomd.observables.LBVelocityProfile(
+            **LB_VELOCITY_PROFILE_PARAMS)
         obs_data = np.array(obs.calculate())
         obs_data = obs_data.reshape((LB_VELOCITY_PROFILE_PARAMS['n_x_bins'],
                                      LB_VELOCITY_PROFILE_PARAMS['n_y_bins'],
@@ -65,8 +83,10 @@ class ObservableProfileLBCommon(object):
         for x in range(obs_data.shape[0]):
             for y in range(obs_data.shape[1]):
                 for z in range(obs_data.shape[2]):
-                    self.assertAlmostEqual(obs_data[x, y, z, 0], float(x), places=5)
-        self.assertEqual(obs.n_values(), LB_VELOCITY_PROFILE_PARAMS['n_x_bins'] * LB_VELOCITY_PROFILE_PARAMS['n_y_bins'] * LB_VELOCITY_PROFILE_PARAMS['n_z_bins'] * 3)
+                    self.assertAlmostEqual(
+                        obs_data[x, y, z, 0], float(x), places=5)
+        self.assertEqual(obs.n_values(), LB_VELOCITY_PROFILE_PARAMS[
+                         'n_x_bins'] * LB_VELOCITY_PROFILE_PARAMS['n_y_bins'] * LB_VELOCITY_PROFILE_PARAMS['n_z_bins'] * 3)
 
     def test_error_sampling_delta_of_0(self):
         lb_velocity_params_local = copy.copy(LB_VELOCITY_PROFILE_PARAMS)
@@ -74,35 +94,43 @@ class ObservableProfileLBCommon(object):
         lb_velocity_params_local['sampling_delta_y'] = 0.0
         lb_velocity_params_local['sampling_delta_z'] = 0.0
         with self.assertRaises(RuntimeError):
-            obs2 = espressomd.observables.LBVelocityProfile(**lb_velocity_params_local)
+            obs2 = espressomd.observables.LBVelocityProfile(
+                **lb_velocity_params_local)
 
     def test_error_if_no_LB(self):
         self.system.actors.clear()
-        obs = espressomd.observables.LBVelocityProfile(**LB_VELOCITY_PROFILE_PARAMS)
+        obs = espressomd.observables.LBVelocityProfile(
+            **LB_VELOCITY_PROFILE_PARAMS)
         with self.assertRaises(RuntimeError):
             obs.calculate()
 
     def test_error_if_empty_bin(self):
         lb_velocity_params_local = copy.copy(LB_VELOCITY_PROFILE_PARAMS)
         lb_velocity_params_local['sampling_delta_x'] = 3.0
-        obs = espressomd.observables.LBVelocityProfile(**lb_velocity_params_local)
+        obs = espressomd.observables.LBVelocityProfile(
+            **lb_velocity_params_local)
         with self.assertRaises(RuntimeError):
             obs.calculate()
-        
+
 
 @ut.skipIf(not espressomd.has_features(
     'LB') or espressomd.has_features('SHANCHEN'), "Skipping test due to missing features.")
 class LBCPU(ut.TestCase, ObservableProfileLBCommon):
+
     """Test for the CPU implementation of the LB."""
+
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
 
+
 @ut.skipIf(not espressomd.has_features(
     'LB_GPU') or espressomd.has_features('SHANCHEN'), "Skipping test due to missing features.")
 class LBGPU(ut.TestCase, ObservableProfileLBCommon):
+
     """Test for the GPU implementation of the LB."""
+
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
         self.system.actors.clear()

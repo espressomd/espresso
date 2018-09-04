@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import os
 import numpy as np
@@ -63,15 +79,16 @@ def params_match(inParams, outParams):
         if k not in outParams:
             print(k, "missing from returned parameters")
             return False
-        if type(inParams[k]) == float:
-          if abs(outParams[k] -inParams[k])>=1E-14:
-              print("Mismatch in parameter ", k, inParams[k], outParams[k],type(inParams[k]),type(outParams[k]),abs(inParams[k]-outParams[k]))
-              return False
+        if isinstance(inParams[k], float):
+            if abs(outParams[k] - inParams[k]) >= 1E-14:
+                print("Mismatch in parameter ", k, inParams[k], outParams[k], type(
+                    inParams[k]), type(outParams[k]), abs(inParams[k] - outParams[k]))
+                return False
         else:
-          if outParams[k] !=inParams[k]:
-              print("Mismatch in parameter ", k, inParams[k], outParams[k],type(inParams[k]),type(outParams[k]))
-              return False
-
+            if outParams[k] != inParams[k]:
+                print("Mismatch in parameter ", k, inParams[
+                      k], outParams[k], type(inParams[k]), type(outParams[k]))
+                return False
 
     return True
 
@@ -110,6 +127,7 @@ def generate_test_for_class(_system, _interClass, _params):
 
     return func
 
+
 def lj_force_vector(v_d, d, lj_params):
     """Returns lj force for distance d and distance vecotr v_d based on the given lj_params.
     Supports epsilon and cutoff."""
@@ -132,33 +150,30 @@ def verify_lj_forces(system, tolerance, ids_to_skip=[]):
         f_expected[id] = np.zeros(3)
 
     # Cache some stuff to speed up pair loop
-    dist_vec=system.distance_vec
-    norm=np.linalg.norm
-    non_bonded_inter=system.non_bonded_inter
+    dist_vec = system.distance_vec
+    norm = np.linalg.norm
+    non_bonded_inter = system.non_bonded_inter
     # lj parameters
-    lj_params={}
-    all_types=np.unique(system.part[:].type)
+    lj_params = {}
+    all_types = np.unique(system.part[:].type)
     for i in all_types:
         for j in all_types:
-            lj_params[i,j]=non_bonded_inter[int(i),int(j)].lennard_jones.get_params()
-            
-
-
-      
+            lj_params[i, j] = non_bonded_inter[
+                int(i), int(j)].lennard_jones.get_params()
 
     # Go over all pairs of particles
     for pair in system.part.pairs():
-        p0=pair[0]
-        p1=pair[1]
+        p0 = pair[0]
+        p1 = pair[1]
         if p0.id in ids_to_skip or p1.id in ids_to_skip:
             continue
 
         # Distance and distance vec
-        v_d = dist_vec(p0,p1)
+        v_d = dist_vec(p0, p1)
         d = norm(v_d)
 
         # calc and add expected lj force
-        f = lj_force_vector(v_d, d, lj_params[p0.type,p1.type])
+        f = lj_force_vector(v_d, d, lj_params[p0.type, p1.type])
         f_expected[p0.id] += f
         f_expected[p1.id] -= f
     # Check actual forces agaisnt expected
@@ -194,9 +209,10 @@ def transform_pos_from_cartesian_to_polar_coordinates(pos):
     """
     return np.array([np.sqrt(pos[0]**2.0 + pos[1]**2.0), np.arctan2(pos[1], pos[0]), pos[2]])
 
+
 def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
     """Transform the given cartesian velocities to polar velocities.
-    
+
     Parameters
     ----------
     pos : array_like :obj:`float`
@@ -207,10 +223,11 @@ def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
     """
     return np.array([
         (pos[0] * vel[0] + pos[1] *
-         vel[1]) / np.sqrt(pos[0]**2.0 + pos[1]**2.0),\
+         vel[1]) / np.sqrt(pos[0]**2.0 + pos[1]**2.0),
         (pos[0] * vel[1] - pos[1] *
-         vel[0]) / (pos[0]**2.0 + pos[1]**2.0),\
+         vel[0]) / (pos[0]**2.0 + pos[1]**2.0),
         vel[2]])
+
 
 def rotation_matrix(axis, theta):
     """
@@ -226,14 +243,15 @@ def rotation_matrix(axis, theta):
 
     """
     axis = np.asarray(axis)
-    axis = axis/np.sqrt(np.dot(axis, axis))
-    a = np.cos(theta/2.0)
-    b, c, d = -axis*np.sin(theta/2.0)
-    aa, bb, cc, dd = a*a, b*b, c*c, d*d
-    bc, ad, ac, ab, bd, cd = b*c, a*d, a*c, a*b, b*d, c*d
-    return np.array([[aa+bb-cc-dd, 2*(bc+ad), 2*(bd-ac)],
-                     [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)],
-                     [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
+    axis = axis / np.sqrt(np.dot(axis, axis))
+    a = np.cos(theta / 2.0)
+    b, c, d = -axis * np.sin(theta / 2.0)
+    aa, bb, cc, dd = a * a, b * b, c * c, d * d
+    bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
+    return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
+                     [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
+                     [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
+
 
 def rotation_matrix_quat(system, part):
     """
@@ -311,42 +329,50 @@ def get_cylindrical_bin_volume(
                                  (min_r + r_bin_size * i)**2.0) * \
             phi_bin_size / (2.0 * np.pi) * z_bin_size
     return bin_volume
-    
+
 #
 # Analytical Expressions for interactions
 #
 
 # Harmonic bond
 
+
 def harmonic_potential(scalar_r, k, r_0, r_cut):
     return 0.5 * k * (scalar_r - r_0)**2
+
 
 def harmonic_force(scalar_r, k, r_0, r_cut):
     return -k * (scalar_r - r_0)
 
 # FENE bond
 
+
 def fene_potential(scalar_r, k, d_r_max, r_0):
     return -0.5 * k * d_r_max**2 * np.log(1 - ((scalar_r - r_0) / d_r_max)**2)
+
 
 def fene_force(scalar_r, k, d_r_max, r_0):
     return k * (scalar_r - r_0) * d_r_max**2 / ((scalar_r - r_0)**2 - d_r_max**2)
 
+
 def fene_force2(bond_vector, k, d_r_max, r_0):
-    r=np.linalg.norm(bond_vector)
-    return k*(r-r_0)/(r*(1-((r-r_0)/d_r_max)**2))*np.array(bond_vector)
+    r = np.linalg.norm(bond_vector)
+    return k * (r - r_0) / (r * (1 - ((r - r_0) / d_r_max)**2)) * np.array(bond_vector)
 
 # Coulomb bond
 
+
 def coulomb_potential(scalar_r, k, q1, q2):
-    return k*q1*q2/scalar_r
+    return k * q1 * q2 / scalar_r
+
 
 def coulomb_force(scalar_r, k, q1, q2):
-    return k*q1*q2/scalar_r**2
+    return k * q1 * q2 / scalar_r**2
 
 
 # Generic Lennard-Jones
-def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12., e2=6., b1=4., b2=4., delta=0., lam=1.):
+def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12.,
+                         e2=6., b1=4., b2=4., delta=0., lam=1.):
     V = 0.
     if (r >= offset + cutoff):
         V = 0.
@@ -359,7 +385,9 @@ def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12., e2=6.
              b2 * np.power(sig / rroff, e2) + shift)
     return V
 
-def lj_generic_force(espressomd, r, eps, sig, cutoff, offset=0., e1=12, e2=6, b1=4., b2=4., delta=0., lam=1., generic=True):
+
+def lj_generic_force(espressomd, r, eps, sig, cutoff, offset=0., e1=12, e2=6,
+                     b1=4., b2=4., delta=0., lam=1., generic=True):
     f = 1.
     if (r >= offset + cutoff):
         f = 0.
@@ -372,23 +400,29 @@ def lj_generic_force(espressomd, r, eps, sig, cutoff, offset=0., e1=12, e2=6, b1
     return f
 
 # Lennard-Jones
+
+
 def lj_potential(r, eps, sig, cutoff, shift, offset=0.):
     V = lj_generic_potential(
         r, eps, sig, cutoff, offset=offset, shift=shift * 4.)
     return V
 
+
 def lj_force(espressomd, r, eps, sig, cutoff, offset=0.):
-    f = lj_generic_force(espressomd, r, eps, sig, cutoff, offset=offset, generic=False)
+    f = lj_generic_force(
+        espressomd, r, eps, sig, cutoff, offset=offset, generic=False)
     return f
 
 # Lennard-Jones Cosine
+
+
 def lj_cos_potential(r, eps, sig, cutoff, offset):
     V = 0.
     r_min = offset + np.power(2., 1. / 6.) * sig
     r_cut = cutoff + offset
     if (r < r_min):
         V = lj_potential(r, eps=eps, sig=sig,
-                              cutoff=cutoff, offset=offset, shift=0.)
+                         cutoff=cutoff, offset=offset, shift=0.)
     elif (r < r_cut):
         alpha = np.pi / \
             (np.power(r_cut - offset, 2) - np.power(r_min - offset, 2))
@@ -397,13 +431,14 @@ def lj_cos_potential(r, eps, sig, cutoff, offset):
             (np.cos(alpha * np.power(r - offset, 2) + beta) - 1.)
     return V
 
+
 def lj_cos_force(espressomd, r, eps, sig, cutoff, offset):
     f = 0.
     r_min = offset + np.power(2., 1. / 6.) * sig
     r_cut = cutoff + offset
     if (r < r_min):
         f = lj_force(espressomd, r, eps=eps, sig=sig,
-                          cutoff=cutoff, offset=offset)
+                     cutoff=cutoff, offset=offset)
     elif (r < r_cut):
         alpha = np.pi / \
             (np.power(r_cut - offset, 2) - np.power(r_min - offset, 2))
@@ -413,36 +448,43 @@ def lj_cos_force(espressomd, r, eps, sig, cutoff, offset):
     return f
 
 # Lennard-Jones Cosine^2
+
+
 def lj_cos2_potential(r, eps, sig, offset, width):
     V = 0.
     r_min = offset + np.power(2., 1. / 6.) * sig
     r_cut = r_min + width
     if (r < r_min):
         V = lj_potential(r, eps=eps, sig=sig,
-                              offset=offset, cutoff=r_cut, shift=0.)
+                         offset=offset, cutoff=r_cut, shift=0.)
     elif (r < r_cut):
         V = -eps * np.power(np.cos(np.pi /
-                                         (2. * width) * (r - r_min)), 2)
+                                   (2. * width) * (r - r_min)), 2)
     return V
+
 
 def lj_cos2_force(espressomd, r, eps, sig, offset, width):
     f = 0.
     r_min = offset + np.power(2., 1. / 6.) * sig
     r_cut = r_min + width
     if (r < r_min):
-        f = lj_force(espressomd, r, eps=eps, sig=sig, cutoff=r_cut, offset=offset)
+        f = lj_force(espressomd, r, eps=eps,
+                     sig=sig, cutoff=r_cut, offset=offset)
     elif (r < r_cut):
         f = - np.pi * eps * \
             np.sin(np.pi * (r - r_min) / width) / (2. * width)
     return f
 
 # Smooth-Step
+
+
 def smooth_step_potential(r, eps, sig, cutoff, d, n, k0):
     V = 0.
     if (r < cutoff):
         V = np.power(d / r, n) + eps / \
             (1 + np.exp(2 * k0 * (r - sig)))
     return V
+
 
 def smooth_step_force(r, eps, sig, cutoff, d, n, k0):
     f = 0.
@@ -452,6 +494,8 @@ def smooth_step_force(r, eps, sig, cutoff, d, n, k0):
     return f
 
 # BMHTF
+
+
 def bmhtf_potential(r, a, b, c, d, sig, cutoff):
     V = 0.
     if (r == cutoff):
@@ -463,6 +507,7 @@ def bmhtf_potential(r, a, b, c, d, sig, cutoff):
         V -= bmhtf_potential(cutoff, a, b, c, d, sig, cutoff)
     return V
 
+
 def bmhtf_force(r, a, b, c, d, sig, cutoff):
     f = 0.
     if (r < cutoff):
@@ -471,14 +516,17 @@ def bmhtf_force(r, a, b, c, d, sig, cutoff):
     return f
 
 # Morse
+
+
 def morse_potential(r, eps, alpha, cutoff, rmin=0):
     V = 0.
     if (r < cutoff):
         V = eps * (np.exp(-2. * alpha * (r - rmin)) -
                    2 * np.exp(-alpha * (r - rmin)))
         V -= eps * (np.exp(-2. * alpha * (cutoff - rmin)
-                              ) - 2 * np.exp(-alpha * (cutoff - rmin)))
+                           ) - 2 * np.exp(-alpha * (cutoff - rmin)))
     return V
+
 
 def morse_force(r, eps, alpha, cutoff, rmin=0):
     f = 0.
@@ -488,6 +536,8 @@ def morse_force(r, eps, alpha, cutoff, rmin=0):
     return f
 
 #  Buckingham
+
+
 def buckingham_potential(r, a, b, c, d, cutoff, discont, shift):
     V = 0.
     if (r < discont):
@@ -501,7 +551,8 @@ def buckingham_potential(r, a, b, c, d, cutoff, discont, shift):
             r, -6) - d * np.power(r, -4) + shift
     return V
 
-def buckingham_force( r, a, b, c, d, cutoff, discont, shift):
+
+def buckingham_force(r, a, b, c, d, cutoff, discont, shift):
     f = 0.
     if (r < discont):
         f = buckingham_force(
@@ -512,11 +563,14 @@ def buckingham_force( r, a, b, c, d, cutoff, discont, shift):
     return f
 
 # Soft-sphere
+
+
 def soft_sphere_potential(r, a, n, cutoff, offset=0):
     V = 0.
     if (r < offset + cutoff):
         V = a * np.power(r - offset, -n)
     return V
+
 
 def soft_sphere_force(r, a, n, cutoff, offset=0):
     f = 0.
@@ -525,11 +579,14 @@ def soft_sphere_force(r, a, n, cutoff, offset=0):
     return f
 
 # Hertzian
+
+
 def hertzian_potential(r, eps, sig):
     V = 0.
     if (r < sig):
         V = eps * np.power(1 - r / sig, 5. / 2.)
     return V
+
 
 def hertzian_force(r, eps, sig):
     f = 0.
@@ -538,11 +595,14 @@ def hertzian_force(r, eps, sig):
     return f
 
 # Gaussian
+
+
 def gaussian_potential(r, eps, sig, cutoff):
     V = 0.
     if (r < cutoff):
         V = eps * np.exp(-np.power(r / sig, 2) / 2)
     return V
+
 
 def gaussian_force(r, eps, sig, cutoff):
     f = 0.
@@ -550,3 +610,9 @@ def gaussian_force(r, eps, sig, cutoff):
         f = eps * r / sig**2 * np.exp(-np.power(r / sig, 2) / 2)
     return f
 
+
+class DynamicDict(dict):
+
+    def __getitem__(self, key):
+        value = super(DynamicDict, self).__getitem__(key)
+        return eval(value, self) if isinstance(value, str) else value

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -21,7 +21,7 @@
 #define UTILS_ENUMERATED_CONTAINER_HPP
 
 /** Keep a enumerated list of T objects, managed by the class.
-*/
+ */
 
 #include <cassert>
 #include <set>
@@ -71,7 +71,7 @@ public:
   /**
    * @brief Copy c into the container.
    *
-   * Asign a free id to c and copy it into the container.
+   * Assign a free id to c and copy it into the container.
    *
    * @param c The object to add.
    */
@@ -161,11 +161,11 @@ private:
    * @brief Get the next free index.
    *
    * This function gets the lowest free index by
-   * poping the first element from the ordered set
+   * popping the first element from the ordered set
    * of free indices.
    * If there is only 1 or less elements in the free
    * index set, we reused all indices that were ever
-   * freeed and we add a new one at the end of the set.
+   * freed and we add a new one at the end of the set.
    *
    * @return Free index.
    */
@@ -177,7 +177,7 @@ private:
     /** and remove it from the list */
     m_free_indices.erase(index);
 
-    /** If there is only on left, it is the highest ever seen, so we can savely
+    /** If there is only on left, it is the highest ever seen, so we can safely
      * add +1 */
     if (m_free_indices.size() == 1) {
       m_free_indices.insert(*(--m_free_indices.end()) + 1);
@@ -186,6 +186,6 @@ private:
     return index;
   }
 };
-}
+} // namespace Utils
 
 #endif

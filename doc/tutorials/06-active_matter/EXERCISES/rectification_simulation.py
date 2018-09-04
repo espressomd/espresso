@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010,2011,2012,2013,2014, 2015,2016 The ESPResSo project            #
+# Copyright (C) 2010-2018 The ESPResSo project            #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -21,7 +21,7 @@
 #                                                                              #
 #                     Active Matter: Rectification Tutorial                    #
 #                                                                              #
-################################################################################
+##########################################################################
 
 from __future__ import print_function
 
@@ -30,6 +30,7 @@ import numpy as np
 import os
 import sys
 
+import espressomd
 from espressomd import assert_features
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
@@ -56,7 +57,7 @@ def a2quat(phi, theta):
     return [q3w, q3x, q3y, q3z]
 
 
-################################################################################
+##########################################################################
 
 # Read in the active velocity from the command prompt
 
@@ -66,11 +67,11 @@ if len(sys.argv) != 2:
 
 vel = float(sys.argv[1])
 
-################################################################################
+##########################################################################
 
 # create an output folder
 
-outdir = "./RESULTS_ENHANCED_DIFFUSION/"
+outdir = "./RESULTS_RECTIFICATION"
 try:
     os.makedirs(outdir)
 except:
@@ -88,13 +89,13 @@ dt = 0.01
 # Setup the MD parameters
 
 system = System(box_l=[length, diameter + 4, diameter + 4])
-system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 0.5
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 ## Exercise 1 ##
-# Why are the langevin parameters chosen as such?
+# Why are the Langevin parameters chosen as such?
 
 
 ################################################################################
@@ -104,7 +105,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 # function used for the constraints is the same as the one used for the
 # LB boundaries.
 #
-################################################################################
+##########################################################################
 
 ## Exercise 2 ##
 # Complete the following from the LB-based Tcl
@@ -132,10 +133,10 @@ system.constraints.add(shape=hollow_cone, particle_type=4)
 ################################################################################
 #
 # We set up a WCA (almost-hard) interaction between the particles and the
-# the confining geometry. We do not have particle-particle interactions, which
+# confining geometry. We do not have particle-particle interactions, which
 # are not necessary to observe rectification.
 #
-################################################################################
+##########################################################################
 
 sig = 0.5
 cut = 1.12246 * sig
@@ -159,7 +160,7 @@ system.non_bonded_inter[0, 4].lennard_jones.set_params(
 # observe the effect of rectification. Note that they need to be able to
 # rotate freely, hence the command rotation=[1,1,1] is provided
 #
-################################################################################
+##########################################################################
 
 ## Exercise 3 ##
 # Setup two clouds with 250 particles each, mid-way of each
@@ -176,7 +177,7 @@ for cntr in range(npart):
     system.part.add(pos=[x, y, z], type=0, swimming={
                     'v_swim': vel}, quat=quats, rotation=[1, 1, 1])
 
-################################################################################
+##########################################################################
 
 # Equilibrate
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -18,14 +18,13 @@
 */
 #include "config.hpp"
 
-#include "initialize.hpp"
 #include "ScriptInterface.hpp"
+#include "initialize.hpp"
 
-#include "VirtualSitesOff.hpp"
-#include "VirtualSitesInertialessTracers.hpp"
-#include "VirtualSitesRelative.hpp"
 #include "ActiveVirtualSitesHandle.hpp"
-
+#include "VirtualSitesInertialessTracers.hpp"
+#include "VirtualSitesOff.hpp"
+#include "VirtualSitesRelative.hpp"
 
 namespace ScriptInterface {
 namespace VirtualSites {
@@ -33,20 +32,22 @@ namespace VirtualSites {
 void initialize() {
 #ifdef VIRTUAL_SITES
   ScriptInterface::register_new<ScriptInterface::VirtualSites::VirtualSitesOff>(
-    "VirtualSites::VirtualSitesOff");
+      "VirtualSites::VirtualSitesOff");
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  ScriptInterface::register_new<ScriptInterface::VirtualSites::VirtualSitesInertialessTracers>(
-    "VirtualSites::VirtualSitesInertialessTracers");
+  ScriptInterface::register_new<
+      ScriptInterface::VirtualSites::VirtualSitesInertialessTracers>(
+      "VirtualSites::VirtualSitesInertialessTracers");
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-  ScriptInterface::register_new<ScriptInterface::VirtualSites::VirtualSitesRelative>(
-    "VirtualSites::VirtualSitesRelative");
+  ScriptInterface::register_new<
+      ScriptInterface::VirtualSites::VirtualSitesRelative>(
+      "VirtualSites::VirtualSitesRelative");
 #endif
-  ScriptInterface::register_new<ScriptInterface::VirtualSites::ActiveVirtualSitesHandle>(
-    "VirtualSites::ActiveVirtualSitesHandle");
-#endif    
+  ScriptInterface::register_new<
+      ScriptInterface::VirtualSites::ActiveVirtualSitesHandle>(
+      "VirtualSites::ActiveVirtualSitesHandle");
+#endif
 }
 
-}
-}
-
+} // namespace VirtualSites
+} // namespace ScriptInterface

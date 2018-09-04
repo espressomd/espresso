@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2010-2018 The ESPResSo project
 
 #
 # This file is part of ESPResSo.
@@ -76,7 +76,8 @@ class Scafacos1d2d(ut.TestCase):
             data = np.genfromtxt(tests_common.abspath(
                 file_prefix + "_reference_data_forces_torques.dat"))
             for p in data[:, :]:
-                s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7],rotation=(1,1,1))
+                s.part.add(
+                    id=int(p[0]), pos=p[1:4], dip=p[4:7], rotation=(1, 1, 1))
 
             if dim == 2:
                 scafacos = magnetostatics.Scafacos(

@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import numpy as np
 import itertools
@@ -21,10 +37,13 @@ LB_PARAMETERS = {
     'tau': TAU
 }
 
+
 def velocity_profile(x):
-    return 1./(BOX_L- 2.*AGRID) * (x - AGRID)
+    return 1. / (BOX_L - 2. * AGRID) * (x - AGRID)
+
 
 class LBInterpolation(object):
+
     """
     Couette flow profile along x in z-direction. Check that velocity at shear plane next to
     the resting boundary is zero.
@@ -60,16 +79,18 @@ class LBInterpolation(object):
         #for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
         #    np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
         # Bulk
-        for pos in itertools.product(np.arange(1.5 * AGRID, BOX_L - 1.5*AGRID, 0.5 * AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
-            np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
+        for pos in itertools.product(np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
+            np.testing.assert_almost_equal(
+                self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
         # Shear plane for boundary 2
         #for pos in itertools.product((9 * AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
-        #    np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 1.0, decimal=4)
-
+        # np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2],
+        # 1.0, decimal=4)
 
 
 @ut.skipIf(not espressomd.has_features(['LB', 'LB_BOUNDARIES']), "Skipped, features missing.")
 class LBInterpolationCPU(ut.TestCase, LBInterpolation):
+
     def setUp(self):
         self.system.actors.clear()
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
@@ -78,6 +99,7 @@ class LBInterpolationCPU(ut.TestCase, LBInterpolation):
 
 @ut.skipIf(not espressomd.has_features(['LB_GPU', 'LB_BOUNDARIES_GPU']), "Skipped, features missing.")
 class LBInterpolationGPU(ut.TestCase, LBInterpolation):
+
     def setUp(self):
         self.system.actors.clear()
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMETERS)

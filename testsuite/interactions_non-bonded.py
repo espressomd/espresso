@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -57,7 +57,6 @@ class InteractionsNonBondedTest(ut.TestCase):
         for i, ai in enumerate(a):
             self.assertFractionAlmostEqual(ai, b[i])
 
-
     #
     # Tests
     #
@@ -93,9 +92,9 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * tests_common.lj_generic_force(espressomd, 
-                r=(i + 1) * self.step_width, eps=lj_eps,
-                sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2)
+            f1_ref = self.axis * tests_common.lj_generic_force(espressomd,
+                                                               r=(i + 1) * self.step_width, eps=lj_eps,
+                                                               sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -140,9 +139,9 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * tests_common.lj_generic_force(espressomd, 
-                r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
-                cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, delta=lj_delta, lam=lj_lam)
+            f1_ref = self.axis * tests_common.lj_generic_force(espressomd,
+                                                               r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
+                                                               cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, delta=lj_delta, lam=lj_lam)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -181,7 +180,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
                 tests_common.lj_force(espressomd, r=(i + 1) * self.step_width,
-                              eps=lj_eps, sig=lj_sig, cutoff=lj_cut)
+                                      eps=lj_eps, sig=lj_sig, cutoff=lj_cut)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -217,7 +216,8 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * tests_common.lj_cos_force(espressomd, (i + 1) * self.step_width,
+            f1_ref = self.axis * tests_common.lj_cos_force(
+                espressomd, (i + 1) * self.step_width,
                                                    eps=ljcos_eps, sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset)
 
             # Check that energies match, ...
@@ -256,8 +256,8 @@ class InteractionsNonBondedTest(ut.TestCase):
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
-                tests_common.lj_cos2_force(espressomd, 
-                    r=(i + 1) * self.step_width, eps=ljcos2_eps, sig=ljcos2_sig, offset=ljcos2_offset, width=ljcos2_width)
+                tests_common.lj_cos2_force(espressomd,
+                                           r=(i + 1) * self.step_width, eps=ljcos2_eps, sig=ljcos2_sig, offset=ljcos2_offset, width=ljcos2_width)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -336,7 +336,8 @@ class InteractionsNonBondedTest(ut.TestCase):
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
-                tests_common.bmhtf_force(r=(i + 1) * self.step_width, a=bmhtf_a,
+                tests_common.bmhtf_force(
+                    r=(i + 1) * self.step_width, a=bmhtf_a,
                                  b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
 
             # Check that energies match, ...
@@ -374,7 +375,8 @@ class InteractionsNonBondedTest(ut.TestCase):
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
-                tests_common.morse_force(r=(i + 1) * self.step_width, eps=m_eps,
+                tests_common.morse_force(
+                    r=(i + 1) * self.step_width, eps=m_eps,
                                  alpha=m_alpha, cutoff=m_cut, rmin=m_rmin)
 
             # Check that energies match, ...
@@ -532,7 +534,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
                 tests_common.gaussian_force(r=(i + 1) * self.step_width,
-                                    eps=g_eps, sig=g_sig, cutoff=g_cut)
+                                            eps=g_eps, sig=g_sig, cutoff=g_cut)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
