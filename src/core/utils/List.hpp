@@ -108,7 +108,7 @@ private:
    * @brief Realloc memory in an exception safe way.
    *
    * If Utils::realloc fails, the original memory block
-   * is unchanged an still vaild, but Utils::realloc will
+   * is unchanged an still valid, but Utils::realloc will
    * throw. Because this->e is then not updated the List
    * actually stays unchanged, so that
    * we can give the strong exception safety guarantee here.

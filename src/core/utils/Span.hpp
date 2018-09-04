@@ -38,7 +38,7 @@ using has_data =
 } // namespace detail
 
 /**
- * @brief A sripped-down version of std::span from C++17.
+ * @brief A stripped-down version of std::span from C++17.
  *
  * Behaves like a std::span where implemented.
  */

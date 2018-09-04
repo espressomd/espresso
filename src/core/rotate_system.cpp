@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace mpi = boost::mpi;
 
 void local_rotate_system(double phi, double theta, double alpha) {
-  // Culculate center of mass
+  // Calculate center of mass
   Vector3d local_com{};
   double local_mass = 0.0;
 
@@ -44,7 +44,7 @@ void local_rotate_system(double phi, double theta, double alpha) {
   auto const com =
       mpi::all_reduce(comm_cart, local_com, std::plus<Vector3d>()) / total_mass;
 
-  // Rotation axis in carthesian coordinates
+  // Rotation axis in Cartesian coordinates
   double axis[3];
   axis[0] = sin(theta) * cos(phi);
   axis[1] = sin(theta) * sin(phi);

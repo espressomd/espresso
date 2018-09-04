@@ -1215,7 +1215,7 @@ class openGLLive(object):
     def _modulo_indexing(self, l, t):
         return l[t % len(l)]
 
-    # FADE PARTICE CHARGE COLOR FROM WHITE (q=0) to PLUSCOLOR (q=q_max) RESP
+    # FADE PARTICLE CHARGE COLOR FROM WHITE (q=0) to PLUSCOLOR (q=q_max) RESP
     # MINUSCOLOR (q=q_min)
     def _color_by_charge(self, q):
         if q < 0:

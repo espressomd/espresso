@@ -39,7 +39,7 @@ struct function_remove_const<R(Args...) const> {
 };
 
 /**
- * @brief True iff T is an innstantiation of of Template.
+ * @brief True iff T is an instantiation of Template.
  */
 template <typename T, template <typename...> class Template>
 struct is_instance_of : public std::false_type {};

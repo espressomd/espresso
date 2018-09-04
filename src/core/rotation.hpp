@@ -43,7 +43,7 @@ constexpr const int ROTATION_Z = 8;
 /** Propagate angular velocities and update quaternions on a particle */
 void propagate_omega_quat_particle(Particle *p);
 
-/** Convert torques to the body-fixed frame and propogate
+/** Convert torques to the body-fixed frame and propagate
     angular velocities */
 void convert_torques_propagate_omega();
 

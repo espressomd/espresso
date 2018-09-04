@@ -402,7 +402,7 @@ static double dipole_energy() {
 
     /* counter the P3M homogeneous background contribution to the
        boundaries.  We never need that, since a homogeneous background
-       spanning the artifical boundary layers is aphysical. */
+       spanning the artificial boundary layers is aphysical. */
     eng += pref *
            (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
             (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] * Utils::sqr(box_l[2]));
@@ -1182,7 +1182,7 @@ int ELC_sanity_checks() {
     return 1;
   }
 
-  // ELC with nonneutal systems and no fully metallic boundaries does not work
+  // ELC with non-neutral systems and no fully metallic boundaries does not work
   if (elc_params.dielectric_contrast_on && !elc_params.const_pot &&
       p3m.square_sum_q > ROUND_ERROR_PREC) {
     runtimeErrorMsg() << "ELC does not work for non-neutral systems and "
@@ -1268,7 +1268,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
     elc_params.delta_mid_top = delta_top;
     elc_params.delta_mid_bot = delta_bot;
 
-    // neutralize is automatical with dielectric contrast
+    // neutralize is automatic with dielectric contrast
     elc_params.neutralize = 0;
     // initial setup of parameters, may change later when P3M is finally tuned
     // set the space_layer to be 1/3 of the gap size, so that box = layer

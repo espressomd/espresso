@@ -100,7 +100,7 @@ boost::mpi::communicator comm_cart;
 namespace Communication {
 std::unique_ptr<MpiCallbacks> m_callbacks;
 
-/* We use a singelton callback class for now. */
+/* We use a singleton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
   assert(m_callbacks && "Mpi not initialized!");
 

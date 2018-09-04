@@ -48,7 +48,7 @@ typedef struct {
       cutoff will be adapted if important parameters, such as the box
      dimensions, change. */
   int far_calculated;
-  /** if true, use a homogenous neutralizing background for nonneutral systems.
+  /** if true, use a homogeneous neutralizing background for nonneutral systems.
      Unlike
       the 3d case, this background adds an additional force pointing towards the
      system

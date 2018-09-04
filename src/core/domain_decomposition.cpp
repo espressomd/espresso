@@ -185,7 +185,7 @@ void dd_create_cell_grid() {
     }
   }
 
-  /* quit program if unsuccesful */
+  /* quit program if unsuccessful */
   if (n_local_cells > max_num_cells) {
     runtimeErrorMsg() << "no suitable cell grid found ";
   }
@@ -334,7 +334,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
 
-          /* place recieve cells after send cells */
+          /* place receive cells after send cells */
           dd_fill_comm_cell_lists(
               &comm->comm[cnt].part_lists[n_comm_cells[dir]], lc, hc);
           CELL_TRACE(fprintf(
@@ -961,7 +961,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
       }
     }
 
-    /* Communicate wether particle exchange is finished */
+    /* Communicate whether particle exchange is finished */
     if (global_flag == CELL_GLOBAL_EXCHANGE) {
       if (this_node == 0) {
         int sum;

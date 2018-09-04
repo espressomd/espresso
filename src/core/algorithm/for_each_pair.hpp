@@ -38,7 +38,7 @@ namespace Algorithm {
  *
  * Requirements on the types:
  * The Cell type has to provide a function neighbors() that returns
- * a cell range coprised of the topological neighbors of the cell,
+ * a cell range comprised of the topological neighbors of the cell,
  * excluding the cell itself. The cells have to provide a m_verlet_list
  * container that can be used to store particle pairs. It can be empty and is
  * not touched if use_verlet_list is false.

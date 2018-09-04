@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(completeness) {
   auto begin = iterator(cells.begin(), cells.end(), 0);
   auto end = iterator(cells.end(), cells.end(), 0);
 
-  /* Iterator over parts and count occurence */
+  /* Iterator over parts and count occurrence */
   for (; begin != end; ++begin) {
     counts[begin->identity()]++;
   }

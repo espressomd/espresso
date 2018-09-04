@@ -26,7 +26,7 @@
     It is the header file for \ref communication.cpp "communication.c".
 
     The asynchronous MPI communication is used during the script
-    evaluation. Except for the master node that interpretes the Tcl
+    evaluation. Except for the master node that interprets the Tcl
     script, all other nodes wait in mpi_loop() for the master node to
     issue an action using mpi_call(). \ref mpi_loop immediately
     executes an MPI_Bcast and therefore waits for the master node to
@@ -300,7 +300,7 @@ void mpi_send_dip(int node, int part, double dip[3]);
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
-    \param dipm its new dipole moment (absolut value).
+    \param dipm its new dipole moment (absolute value).
 */
 void mpi_send_dipm(int node, int part, double dipm);
 #endif
@@ -342,7 +342,7 @@ void mpi_send_mol_id(int node, int part, int mid);
     \param pnode    node it is attached to.
     \param part     identity of principal atom of the bond.
     \param bond     field containing the bond type number and the identity of
-   all bond partners (secundary atoms of the bond).
+   all bond partners (secondary atoms of the bond).
     \param _delete   if true, do not add the bond, rather delete it if found
     \return 1 on success or 0 if not (e. g. bond to delete does not exist)
 */
@@ -351,7 +351,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int _delete);
 /** Issue REQ_SET_EXCLUSION: send exclusions.
     Also calls \ref on_particle_change.
     \param part     identity of first particle of the exclusion.
-    \param part2    identity of secnd particle of the exclusion.
+    \param part2    identity of second particle of the exclusion.
     \param _delete   if true, do not add the exclusion, rather delete it if
    found
 */

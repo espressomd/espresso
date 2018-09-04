@@ -165,7 +165,7 @@ inline int tab_bond_energy(Particle *p1, Particle *p2,
     p_right acts perpendicular to the connecting vector between the
     particle and p_mid and in the plane defined by the three
     particles. The force on the middle particle balances the other two
-    forces. The forces are scaled with the invers length of the
+    forces. The forces are scaled with the inverse length of the
     connecting vectors. It is assumed that the potential is tabulated
     for all angles between 0 and Pi.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
@@ -189,7 +189,7 @@ inline int calc_tab_angle_force(Particle *p_mid, Particle *p_left,
   d2i = 1.0 / sqrt(dist2);
   for (j = 0; j < 3; j++)
     vec2[j] *= d2i;
-  /* scalar produvt of vec1 and vec2 */
+  /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
 #ifdef TABANGLEMINUS
   phi = acos(-cosine);
