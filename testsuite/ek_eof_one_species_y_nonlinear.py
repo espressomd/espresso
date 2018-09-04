@@ -48,7 +48,7 @@ class ek_eof_one_species_x(ut.TestCase):
         padding = 6
         box_x = width + 2 * padding
 
-# Set the electrokinetic parameters
+        # Set the electrokinetic parameters
         agrid = 0.5
         dt = 1.0 / 5.0
         force = 0.13
@@ -65,25 +65,19 @@ class ek_eof_one_species_x(ut.TestCase):
         system.box_l = [box_x, box_y, box_z]
 
 
-# Set the simulation parameters
-
+        # Set the simulation parameters
         system.time_step = dt
         system.cell_system.skin = 0.1
         system.thermostat.turn_off()
-        integration_length = 10000
+        integration_length = 1500
 
-# Output density, velocity, and pressure tensor profiles
 
-        output_profiles = 1
-
-# Set up the charged and neutral species
-
+        # Set up the charged and neutral species
         density_water = 26.15
         density_counterions = -2.0 * float(sigma) / float(width)
         valency = 1.0
 
-# Set up the (LB) electrokinetics fluid
-
+        # Set up the (LB) electrokinetics fluid
         ek = espressomd.electrokinetics.Electrokinetics(
             agrid=agrid,
             lb_density=density_water,
@@ -104,8 +98,7 @@ class ek_eof_one_species_x(ut.TestCase):
         ek.add_species(counterions)
 
 
-# Set up the walls confining the fluid and carrying charge
-
+        # Set up the walls confining the fluid and carrying charge
         ek_wall1 = espressomd.ekboundaries.EKBoundary(
             charge_density=sigma /
             (padding),
@@ -122,12 +115,10 @@ class ek_eof_one_species_x(ut.TestCase):
 
         system.actors.add(ek)
 
-# Integrate the system
-
+        # Integrate the system
         system.integrator.run(integration_length)
 
-# compare the various quantities to the analytic results
-
+        # compare the various quantities to the analytic results
         total_velocity_difference = 0.0
         total_density_difference = 0.0
         total_pressure_difference_xx = 0.0
@@ -137,18 +128,16 @@ class ek_eof_one_species_x(ut.TestCase):
         total_pressure_difference_yz = 0.0
         total_pressure_difference_xz = 0.0
 
-# initial parameters for bisection scheme
+        # initial parameters for bisection scheme
         size = pi / (2.0 * width)
 
         pnt0 = 0.0
         pntm = pnt0 + size
         pnt1 = pnt0 + 1.9 * size
 
-# the bisection scheme
-
+        # the bisection scheme
         tol = 1.0e-08
         while (size > tol):
-
             val0 = ek_common.solve(pnt0, width, bjerrum_length, sigma, valency)
             val1 = ek_common.solve(pnt1, width, bjerrum_length, sigma, valency)
             valm = ek_common.solve(pntm, width, bjerrum_length, sigma, valency)
@@ -175,27 +164,22 @@ class ek_eof_one_species_x(ut.TestCase):
                 sys.exit(
                     "Bisection method fails:\nTuning of domain boundaries may be required.")
 
-# obtain the desired xi value
-
+        # obtain the desired xi value
         xi = pntm
 
-        if (output_profiles):
-            fp = open("ek_eof_profile.dat", "w")
-
         for i in range(int(box_x / agrid)):
-
             if (i * agrid >= padding and i * agrid < box_x - padding):
                 xvalue = i * agrid - padding
                 position = i * agrid - padding - width / 2.0 + agrid / 2.0
 
-            # density
+                # density
                 measured_density = counterions[i, int(
                     box_y / (2 * agrid)), int(box_z / (2 * agrid))].density
                 calculated_density = ek_common.density(position, xi, bjerrum_length)
                 density_difference = abs(measured_density - calculated_density)
                 total_density_difference = total_density_difference + \
                     density_difference
-            # velocity
+                # velocity
                 measured_velocity = ek[i, int(
                     box_y / (2 * agrid)), int(box_z / (2 * agrid))].velocity[1]
                 calculated_velocity = ek_common.velocity(
@@ -211,8 +195,7 @@ class ek_eof_one_species_x(ut.TestCase):
                 total_velocity_difference = total_velocity_difference + \
                     velocity_difference
 
-            # diagonal pressure tensor
-
+                # diagonal pressure tensor
                 measured_pressure_xx = ek[i, int(
                     box_y / (2 * agrid)), int(box_z / (2 * agrid))].pressure[(0, 0)]
                 calculated_pressure_xx = ek_common.hydrostatic_pressure_non_lin(
@@ -240,7 +223,7 @@ class ek_eof_one_species_x(ut.TestCase):
                 total_pressure_difference_zz = total_pressure_difference_zz + \
                     pressure_difference_zz
 
-            # xy component pressure tensor
+                # xy component pressure tensor
                 measured_pressure_xy = ek[i, int(
                     box_y / (2 * agrid)), int(box_z / (2 * agrid))].pressure[(0, 1)]
                 calculated_pressure_xy = ek_common.pressure_tensor_offdiagonal(
@@ -250,7 +233,7 @@ class ek_eof_one_species_x(ut.TestCase):
                 total_pressure_difference_xy = total_pressure_difference_xy + \
                     pressure_difference_xy
 
-            # yz component pressure tensor
+                # yz component pressure tensor
                 measured_pressure_yz = ek[i, int(
                     box_y / (2 * agrid)), int(box_z / (2 * agrid))].pressure[(1, 2)]
                 calculated_pressure_yz = 0.0
@@ -259,7 +242,7 @@ class ek_eof_one_species_x(ut.TestCase):
                 total_pressure_difference_yz = total_pressure_difference_yz + \
                     pressure_difference_yz
 
-            # xz component pressure tensor
+                # xz component pressure tensor
                 measured_pressure_xz = ek[i, int(
                     box_y / (2 * agrid)), int(box_z / (2 * agrid))].pressure[(0, 2)]
                 calculated_pressure_xz = 0.0
@@ -268,30 +251,7 @@ class ek_eof_one_species_x(ut.TestCase):
                 total_pressure_difference_xz = total_pressure_difference_xz + \
                     pressure_difference_xz
 
-                if (output_profiles):
-                    fp.write(
-                        "{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n".format(
-                            position,
-                            measured_density,
-                            calculated_density,
-                            measured_velocity,
-                            calculated_velocity,
-                            measured_pressure_xy,
-                            calculated_pressure_xy,
-                            measured_pressure_yz,
-                            calculated_pressure_yz,
-                            measured_pressure_xz,
-                            calculated_pressure_xz,
-                            measured_pressure_xx,
-                            calculated_pressure_xx,
-                            measured_pressure_yy,
-                            calculated_pressure_yy,
-                            measured_pressure_zz,
-                            calculated_pressure_zz))
-
-        if (output_profiles):
-            fp.close()
-
+                
         total_density_difference = agrid * total_density_difference / width
         total_velocity_difference = agrid * total_velocity_difference / width
         total_pressure_difference_xx = agrid * \
@@ -306,21 +266,6 @@ class ek_eof_one_species_x(ut.TestCase):
             total_pressure_difference_yz / width
         total_pressure_difference_xz = agrid * \
             total_pressure_difference_xz / width
-
-        print("Density deviation: {}".format(total_density_difference))
-        print("Velocity deviation: {}".format(total_velocity_difference))
-        print("Pressure deviation xx component: {}".format(
-            total_pressure_difference_xx))
-        print("Pressure deviation yy component: {}".format(
-            total_pressure_difference_yy))
-        print("Pressure deviation zz component: {}".format(
-            total_pressure_difference_zz))
-        print("Pressure deviation xy component: {}".format(
-            total_pressure_difference_xy))
-        print("Pressure deviation yz component: {}".format(
-            total_pressure_difference_yz))
-        print("Pressure deviation xz component: {}".format(
-            total_pressure_difference_xz))
 
         self.assertLess(total_density_difference, 1.0e-04,
                         "Density accuracy not achieved")
@@ -338,7 +283,6 @@ class ek_eof_one_species_x(ut.TestCase):
                         "Pressure accuracy yz component not achieved")
         self.assertLess(total_pressure_difference_xz, 1.0e-04,
                         "Pressure accuracy xz component not achieved")
-
 
 if __name__ == "__main__":
     ut.main()
