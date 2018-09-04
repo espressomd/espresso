@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -29,7 +29,6 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "dihedral.hpp"
-#include "thermalized_bond.hpp"
 #include "fene.hpp"
 #include "gaussian.hpp"
 #include "gb.hpp"
@@ -48,8 +47,9 @@
 #include "statistics.hpp"
 #include "steppot.hpp"
 #include "tab.hpp"
-#include "thole.hpp"
+#include "thermalized_bond.hpp"
 #include "thermostat.hpp"
+#include "thole.hpp"
 #include "umbrella.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
@@ -63,14 +63,12 @@
 #include "angledist.hpp"
 #include "debye_hueckel.hpp"
 #include "elc.hpp"
-#include "hydrogen_bond.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "morse.hpp"
 #include "reaction_field.hpp"
 #include "scafacos.hpp"
 #include "subt_lj.hpp"
-#include "twist_stack.hpp"
 
 #include "energy.hpp"
 
@@ -83,9 +81,11 @@
     @param dist2     distance squared between p1 and p2.
     @return the short ranged interaction energy between the two particles
 */
-inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
-                                          const IA_parameters *ia_params, const double d[3],
-                                          double dist, double dist2) {
+inline double calc_non_bonded_pair_energy(const Particle *p1,
+                                          const Particle *p2,
+                                          const IA_parameters *ia_params,
+                                          const double d[3], double dist,
+                                          double dist2) {
   double ret = 0;
 
 #ifdef NO_INTRA_NB
@@ -193,8 +193,8 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
-  *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
-      calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
+    *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
+        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
 
 #ifdef ELECTROSTATICS
   if (coulomb.method != COULOMB_NONE) {
@@ -264,9 +264,6 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 
 inline void add_bonded_energy(Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
-#ifdef TWIST_STACK
-  Particle *p5 = nullptr, *p6 = nullptr, *p7 = nullptr, *p8 = nullptr;
-#endif
   Bonded_ia_parameters *iaparams;
   int i, bond_broken;
   double ret = 0, dx[3] = {0, 0, 0};
@@ -310,24 +307,6 @@ inline void add_bonded_energy(Particle *p1) {
         return;
       }
     }
-#ifdef TWIST_STACK
-    if (n_partners >= 7) {
-      p5 = local_particles[p1->bl.e[i++]];
-      p6 = local_particles[p1->bl.e[i++]];
-      p7 = local_particles[p1->bl.e[i++]];
-      p8 = local_particles[p1->bl.e[i++]];
-
-      if (!p4 || !p5 || !p6 || !p7 || !p8) {
-        runtimeErrorMsg() << "bond broken between particles" << p1->p.identity
-                          << ", " << p1->bl.e[i - 7] << ", " << p1->bl.e[i - 6]
-                          << ", " << p1->bl.e[i - 5] << ", " << p1->bl.e[i - 4]
-                          << ", " << p1->bl.e[i - 3] << ", " << p1->bl.e[i - 2]
-                          << ", " << p1->bl.e[i - 1]
-                          << " (particles not stored on the same node)";
-        return;
-      }
-    }
-#endif
     /* similar to the force, we prepare the center-center vector */
     if (n_partners == 1)
       get_mi_vector(dx, p1->r.p, p2->r.p);
@@ -357,23 +336,13 @@ inline void add_bonded_energy(Particle *p1) {
 #endif
 #ifdef P3M
     case BONDED_IA_BONDED_COULOMB_P3M_SR:
-      bond_broken = bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
+      bond_broken =
+          bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
-#endif
-#ifdef TWIST_STACK
-    case BONDED_IA_CG_DNA_STACKING:
-      bond_broken = calc_twist_stack_energy(p1, p2, p3, p4, p5, p6, p7, p8,
-                                            iaparams, &ret);
-      break;
-#endif
-#ifdef HYDROGEN_BOND
-    case BONDED_IA_CG_DNA_BASEPAIR:
-      bond_broken = calc_hydrogen_bond_energy(p1, p2, p3, p4, iaparams, &ret);
       break;
 #endif
 #ifdef BOND_ANGLE
@@ -473,18 +442,18 @@ inline void add_kinetic_energy(Particle *p1) {
 #endif
 
   /* kinetic energy */
-  energy.data.e[0] +=
-      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * 0.5 * p1->p.mass;
+  energy.data.e[0] += (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) +
+                       Utils::sqr(p1->m.v[2])) *
+                      0.5 * p1->p.mass;
 
 #ifdef ROTATION
-  if (p1->p.rotation)
-  {
+  if (p1->p.rotation) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
     energy.data.e[0] += 0.5 * (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
-                         Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
-                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]);
+                               Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
+                               Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]);
   }
 #endif
 }

@@ -11,7 +11,7 @@ performing simulations using models with different levels of coarse-graining.
 It also includes modern and efficient algorithms for treatment of
 :ref:`electrostatics` (P3M, MMM-type algorithms, constant potential
 simulations, dielectric interfaces, …), hydrodynamic interactions
-(:ref:`DPD<Dissipative Particle Dynamics (DPD)>`, :ref:`Lattice-Boltzmann`),
+(:ref:`DPD<Dissipative Particle Dynamics (DPD)>`, :ref:`Lattice Boltzmann`),
 and :ref:`magnetic interactions<Magnetostatics / Dipolar interactions>`, only
 to name a few.  It is designed to exploit the capabilities of parallel
 computational environments.  The program is being continuously extended to keep
@@ -32,7 +32,7 @@ Guiding principles
 how to use this tool. However, it should be borne in mind that being able to
 operate a tool is not sufficient to obtain physically meaningful results. It is
 always the responsibility of the user to understand the principles behind the
-model, simulation and analysis methods he or she is using. 
+model, simulation and analysis methods he or she is using.
 
 It is expected that the users of |es| and readers of this user guide have a
 thorough understanding of simulation methods and algorithms they are planning
@@ -61,10 +61,10 @@ An example can be the implementation of the Generic Lennard-Jones potential
 described in section :ref:`Generic Lennard-Jones interaction` where the user
 can change all available parameters. Where possible, default values are
 avoided, providing the user with the possibility of choice. |es| cannot be
-aware whether your particles are representing atoms or billard balls, so it
-cannot check if the chosen parameters make sense and it is the user’s
-responsibility to make sure they do. In fact, |es| can be used to play billard
-(see the sample script in ``samples/billard.py``)!
+aware whether your particles are representing atoms or billiard balls, so it
+cannot check if the chosen parameters make sense and it is the user's
+responsibility to make sure they do. In fact, |es| can be used to play billiard
+(see the sample script in :file:`samples/billard.py`)!
 
 On the other hand, flexibility of |es| stems from the employment of a scripting
 language at the steering level. Apart from the ability to modify the simulation
@@ -72,7 +72,7 @@ and system parameters at runtime, many simple tasks which are not
 computationally critical can be implemented at this level, without even
 touching the C++-kernel. For example, simple problem-specific analysis routines
 can be implemented in this way and made interact with the simulation core.
-Another example of the program’s flexibility is the possibility to integrate
+Another example of the program's flexibility is the possibility to integrate
 system setup, simulation and analysis in one single control script. |es|
 provides commands to create particles and set up interactions between them.
 Capping of forces helps prevent system blow-up when initially some particles
@@ -92,7 +92,7 @@ control level is interfaced to the kernel via an interpreter of Python
 scripting languages.
 
 The kernel performs all computationally demanding tasks. Before all,
-integration of Newton’s equations of motion, including calculation of energies
+integration of Newton's equations of motion, including calculation of energies
 and forces. It also takes care of internal organization of data, storing the
 data about particles, communication between different processors or cells of
 the cell-system. The kernel is modularized so that basic functions are accessed
@@ -122,12 +122,12 @@ Basic python simulation script
 
 In this section, a brief overview is given over the most important components
 of the Python interface. Their usage is illustrated by short examples, which
-can be put together to a demo script. 
+can be put together to a demo script.
 
 .. rubric:: Imports
 
 As usual, the Python script starts by importing the necessary modules.  The
-|es| interface is contained in the espressomd Python module, which needs to be
+|es| interface is contained in the :mod:`espressomd` Python module, which needs to be
 imported, before anything related can be done. ::
 
     import espressomd
@@ -135,14 +135,14 @@ imported, before anything related can be done. ::
 This should be followed by further necessary imports of the example at hand: ::
 
     from espressomd.interactions import HarmonicBond
-    from espressomd.electrostatics import P3M 
+    from espressomd.electrostatics import P3M
 
 .. rubric:: espressomd.System
 
-Access to the simulation system is provided via the System class. As a
+Access to the simulation system is provided via the :class:`~espressomd.system.System` class. As a
 first step, an instance of this class needs to be created. ::
 
-    system = espressomd.System(box_l = [10,10,10])
+    system = espressomd.System(box_l=[10, 10, 10])
 
 Note that only one instance of the System class can be created due to
 limitations in the simulation core. :ref:`Properties of the System
@@ -155,15 +155,15 @@ concerning the simulation system such as box geometry, time step or :ref:`cell-s
 
 .. rubric:: Particles
 
-The particles in the simulation are accessed via ``system.part``, an instance of the ParticleList class. Use
-the `add` method to :ref:`create new particles<Adding particles>`: ::
+The particles in the simulation are accessed via ``system.part``, an instance of the :class:`~espressomd.particle_data.ParticleList` class. Use
+the ``add`` method to :ref:`create new particles<Adding particles>`: ::
 
-    system.part.add(id = 0, pos = [1.0, 1.0, 1.0], type = 0) 
-    system.part.add(id = 1, pos = [1.0, 1.0, 2.0], type = 0) 
+    system.part.add(id=0, pos=[1.0, 1.0, 1.0], type=0)
+    system.part.add(id=1, pos=[1.0, 1.0, 2.0], type=0)
 
 Individual particles can be retrieved by their numerical id using angular
 brackets::
-    
+
     system.part[1].pos = [1.0, 1.0, 2.0]
 
 It is also possible to :ref:`loop<Iterating over particles and pairs of
@@ -172,9 +172,8 @@ particles>` over all particles::
     for p in system.part:
         print("Particle id {}, type {}".format(p.id, p.type))
 
-An individual particle is represented by an instance of ParticleHandle.
-The properties of the particle (see
-:class:`espressomd.particle_data.ParticleHandle`) are implemented as Python
+An individual particle is represented by an instance of :class:`~espressomd.particle_data.ParticleHandle`.
+The properties of the particle are implemented as Python
 properties. ::
 
     particle = system.part[0]
@@ -199,60 +198,61 @@ In |es|, interactions between particles usually fall in three categories:
    chain.
 
 -  Long-range interactions act between all particles with specific
-   properties in the entire system. An example is the :ref:`coulomb
+   properties in the entire system. An example is the :ref:`Coulomb
    interaction<Electrostatics>`.
 
 .. rubric:: Non-bonded interaction
 
 Non-bonded interactions are represented as subclasses of
-:class:`espressomd.interactions.NonBondedInteraction`, e.g.
-:class:`espressomd.interactions.LennardJonesInteraction`.
+:class:`~espressomd.interactions.NonBondedInteraction`, e.g.
+:class:`~espressomd.interactions.LennardJonesInteraction`.
 Instances of these classes for a given pair of particle types are accessed via
-the non_bonded_inter attribute of the System class. This sets up a Lennard Jones
+the non_bonded_inter attribute of the System class. This sets up a Lennard-Jones
 interaction between all particles of type 0 with the given parameters: ::
 
-    system.non_bonded_inter[0,0].lennard_jones.set_params(epsilon = 1, sigma = 1, cutoff = 5.0, shift = "auto")
+    system.non_bonded_inter[0, 0].lennard_jones.set_params(
+        epsilon=1, sigma=1, cutoff=5.0, shift="auto")
 
 .. rubric:: Bonded interaction
 
-Next, we add another pair of partices with a different type to later add 
+Next, we add another pair of particles with a different type to later add
 a :ref:`harmonic bond<Harmonic bond>` between them: ::
 
-    system.part.add(id = 2, pos = [7.0, 7.0, 7.0], type = 1) 
-    system.part.add(id = 3, pos = [7.0, 7.0, 8.0], type = 1) 
+    system.part.add(id=2, pos=[7.0, 7.0, 7.0], type=1)
+    system.part.add(id=3, pos=[7.0, 7.0, 8.0], type=1)
 
 To set up a bonded interaction, first an instance of the appropriate
 class is created with the desired parameters: ::
-    
-    harmonic = HarmonicBond(k = 1.0, r_0 = 0.5)
+
+    harmonic = HarmonicBond(k=1.0, r_0=0.5)
 
 Then, the bonded interaction is registered in the simulation core
-by adding the instance to `bonded_inter`: ::
-    
+by adding the instance to :attr:`~espressomd.system.System.bonded_inter`: ::
+
     system.bonded_inter.add(harmonic)
 
-Finally, the bond can be added to particles using the add_bond()-method of
-ParticleHandle with the instance of the bond class and the id of the bond
+Finally, the bond can be added to particles using the :meth:`~espressomd.particle_data.ParticleHandle.add_bond()` method of
+:class:`~espressomd.particle_data.ParticleHandle` with the instance of the bond class and the id of the bond
 partner particle: ::
-    
+
     system.part[2].add_bond((harmonic, 3))
 
 .. rubric:: Charges
 
 Now we want to setup a pair of charged particles treated by the P3M
 electrostatics solver. We start by adding the particles: ::
-    
-    system.part.add(id = 4, pos = [4.0, 1.0, 1.0], type = 2, q = 1.0) 
-    system.part.add(id = 5, pos = [6.0, 1.0, 1.0], type = 2, q = -1.0) 
+
+    system.part.add(id=4, pos=[4.0, 1.0, 1.0], type=2, q=1.0)
+    system.part.add(id=5, pos=[6.0, 1.0, 1.0], type=2, q=-1.0)
 
 Long-range interactions and other methods that might be mutually exclusive
 are treated as so-called *actors*. They are used by first creating an instance
 of the desired actor::
-    
-    p3m = P3M(accuracy = 1e-3, prefactor = 1.0) 
+
+    p3m = P3M(accuracy=1e-3, prefactor=1.0)
 
 and then adding it to the system: ::
-   
+
     print("Tuning p3m...")
     system.actors.add(p3m)
 
@@ -260,7 +260,7 @@ and then adding it to the system: ::
 
 So far we just *added* particles and interactions, but did not propagate the
 system. This is done by the `integrator`.  It uses by default the velocity
-verlet algorithm and is already created by the system class. To perform an
+Verlet algorithm and is already created by the system class. To perform an
 integration step, just execute::
 
     system.integrator.run(1)
@@ -273,152 +273,153 @@ of the system are printed: ::
     num_steps = 1000
 
     for i in range(num_configs):
-
         system.integrator.run(num_steps)
-
-    	energy = system.analysis.energy()
+        energy = system.analysis.energy()
         print("System time: {}".format(system.time))
-        print("Energy of the LJ interaction: {}".format(energy["non_bonded"])) 
-        print("Energy of the harmonic bond: {}".format(energy["bonded"])) 
-        print("Energy of the Coulomb interaction: {}".format(energy["coulomb"])) 
+        print("Energy of the LJ interaction: {}".format(energy["non_bonded"]))
+        print("Energy of the harmonic bond: {}".format(energy["bonded"]))
+        print("Energy of the Coulomb interaction: {}".format(energy["coulomb"]))
 
 .. _Tutorials:
 
 Tutorials
 ---------
 
-There is a number of tutorials that guide you through the different features of |es|:
+There are a number of tutorials that introduce the use of |es| for different
+physical systems. You can also find the tutorials and related scripts in the
+directory :file:`/doc/tutorials` or `online on GitHub <https://github.com/espressomd/espresso/blob/python/doc/tutorials/>`_.
+Currently, the following tutorials are available:
 
-* `Building |es|						  <https://github.com/espressomd/espresso/blob/python/doc/tutorials/00-building_espresso/00-building_espresso.pdf>`_
-* `Simulate a simple Lennard-Jones liquid <https://github.com/espressomd/espresso/blob/python/doc/tutorials/01-lennard_jones/01-lennard_jones.pdf>`_
-* `Charged systems                        <https://github.com/espressomd/espresso/blob/python/doc/tutorials/02-charged_system/02-charged_system.pdf>`_
-* `Lattice Boltzmann                      <https://github.com/espressomd/espresso/blob/python/doc/tutorials/04-lattice_boltzmann/04-lattice_boltzmann.pdf>`_
-* `Raspberry electrophoresis              <https://github.com/espressomd/espresso/blob/python/doc/tutorials/05-raspberry_electrophoresis/05-raspberry_electrophoresis.pdf>`_
-* `Electrokinetics                        <https://github.com/espressomd/espresso/blob/python/doc/tutorials/07-electrokinetics/07-electrokinetics.pdf>`_
-* `Visualization                          <https://github.com/espressomd/espresso/blob/python/doc/tutorials/08-visualization/08-visualization.pdf>`_
-* `Swimmer reactions                    <https://github.com/espressomd/espresso/blob/python/doc/tutorials/09-swimmer_reactions/09-swimmer_reactions.pdf>`_
-
-You can also find the tutorials and related scripts in the directory ``/doc/tutorials``.
+* :file:`01-lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid.
+* :file:`02-charged_system`: Modelling of charged systems such as ionic crystals.
+* :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice Boltzmann method.
+* :file:`05-raspberry_electrophoresis`: Extended objects in a lattice Boltzmann fluid, raspberry particles.
+* :file:`06-active_matter`: Modelling of self-propelling particles.
+* :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
+* :file:`08-visualization`: Using the online visualizers of |es|.
+* :file:`09-swimmer_reactions`: Further modelling of self-propelling particles.
+* :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble.
 
 .. _Sample scripts:
 
 Sample scripts
 --------------
 
-Several scripts that can serve as usage examples can be found in the directory ``/samples``,
+Several scripts that can serve as usage examples can be found in the directory :file:`/samples`,
 or in the `git repository <https://github.com/espressomd/espresso/blob/python/samples/>`_.
 
-* ``billard.py`` 
-    A simple billard game, needs the Python ``pypopengl`` module
+* :file:`billard.py`
+    A simple billiard game, needs the Python ``pypopengl`` module
 
-* ``bonds-tst.py``
+* :file:`bonds-tst.py`
    Test script that manually creates and deletes different bonds between particles (see :ref:`Bonded interactions`). This script performs:
-  
-   * print defined bonded interactions 
+
+   * print defined bonded interactions
    * print bonds on a particle
    * delete bonds by index or name
    * save/load a bond to/from a variable
- 
 
-* ``cellsystem_test.py``
-    Test script that changes the skin depth parameter.  This should not be seen as a benchmark, but rather as a rough estimate of the effect of the cellsystem.     
+
+* :file:`cellsystem_test.py`
+    Test script that changes the skin depth parameter.  This should not be seen as a benchmark, but rather as a rough estimate of the effect of the cellsystem.
     .. todo:: implement the older [tune_cells] call
     .. todo:: add save/load optimal cell parameters from tune_skin()
-    
 
-* ``coulomb_debye_hueckel.py``,  ``debye_hueckel.py``
+
+* :file:`debye_hueckel.py`
     Charged beads with a WCA interaction are simulated using the screened Debye-Hückel potential. See :ref:`Debye-Hückel potential`
 
 
-* ``ekboundaries.py``
+* :file:`ekboundaries.py`
 
-* ``electrophoresis.py``
+* :file:`electrophoresis.py`
 
-* ``h5md.py``
+* :file:`h5md.py`
 
-* ``lbf.py``
+* :file:`lbf.py`
 
-* ``lj-demo.py``
+* :file:`lj-demo.py`
     Lennard-Jones liquid used for demonstration purposes to showcase |es|.
     Sliders from a MIDI controller can change system variables such as
     temperature and volume. Some thermodynamic observables are analyzed and
     plotted live.
 
-* ``lj_liquid_distribution.py``
+* :file:`lj_liquid_distribution.py`
     Uses ``analysis.distribution`` (See :ref:`Particle distribution`) to analyze a simple Lennard-Jones liquid.
 
-* ``lj_liquid.py``
+* :file:`lj_liquid.py`
     Simple Lennard-Jones particle liquid. Shows the basic features of how to:
 
     * set up system parameters, particles and interactions.
-    * warm up and integrate. 
+    * warm up and integrate.
     * write parameters, configurations and observables to files
 
-* ``lj_liquid_structurefactor.py``
+* :file:`lj_liquid_structurefactor.py`
     Uses ``analysis.structure_factor`` (See :ref:`Structure factor`) to analyze a simple Lennard-Jones liquid.
 
 
-* ``load_bonds.py``,  ``store_bonds.py``
+* :file:`load_bonds.py`, :file:`store_bonds.py`
     Uses the Python ``pickle`` module to store and load bond information.
 
-* ``load_checkpoint.py``,  ``save_checkpoint.py``
-   Basing usage of the checkpointing feature. Shows how to write/load the state of:   
+* :file:`load_checkpoint.py`,  :file:`save_checkpoint.py`
+   Basing usage of the checkpointing feature. Shows how to write/load the state of:
+
    * custom user variables
    * non bonded interactions
    * particles
-   * P3M paremeters
+   * P3M parameters
    * thermostat
 
-* ``load_properties.py``,  ``store_properties.py``
+* :file:`load_properties.py`,  :file:`store_properties.py`
     Uses the Python ``pickle`` module to store and load system information.
 
-* ``MDAnalysisIntegration.py``.
-    Shows how to expose configuration to ``MDAnalysis`` at run time. The functions of ``MDAnalysis`` can be used to perform some analysis or 
+* :file:`MDAnalysisIntegration.py`
+    Shows how to expose configuration to ``MDAnalysis`` at run time. The functions of ``MDAnalysis`` can be used to perform some analysis or
     convert the frame to other formats (CHARMM, GROMACS, ...)
 
-* ``minimal-charged-particles.py``
-   Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions. 
+* :file:`minimal-charged-particles.py`
+   Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions.
 
-* ``minimal-diamond.py``
+* :file:`minimal-diamond.py`
 
-* ``minimal-polymer.py``
-   Sets up a single dilute bead-spring polymer. Shows the basic usage of ``create_polymer``.
+* :file:`minimal-polymer.py`
+   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.create_polymer`.
 
-* ``minimal_random_number_generator.py``
+* :file:`minimal_random_number_generator.py`
 
-* ``observables_correlators.py``
+* :file:`observables_correlators.py`
 
-* ``p3m.py``
-   Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions. 
+* :file:`p3m.py`
+   Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions.
 
-* ``slice_input.py``
+* :file:`slice_input.py`
     Uses python array slicing to set and extract various particle properties.
 
-* ``visualization.py``
-    A visualization for mayavi/opengl of the lj-liquid with interactive plotting.
+* :file:`visualization.py`
+    A visualization for Mayavi/OpenGL of the LJ-liquid with interactive plotting.
 
-* ``visualization_bonded.py``
-    Opengl visualization for bonds.
+* :file:`visualization_bonded.py`
+    OpenGL visualization for bonds.
 
-* ``visualization_interactive.py``
-    Sample for an interactive opengl visualization with user-defined keyboard- and timed callbacks.
+* :file:`visualization_interactive.py`
+    Sample for an interactive OpenGL visualization with user-defined keyboard- and timed callbacks.
 
-* ``visualization_npt.py``
+* :file:`visualization_npt.py`
     Simple test visualization for the NPT ensemble.
 
-* ``visualization_poisseuille.py``
-    Visualization for poisseuille flow with Lattice-Boltzmann.
+* :file:`visualization_poisseuille.py`
+    Visualization for Poiseuille flow with lattice Boltzmann.
 
-* ``visualization_constraints.py``
-    Constraint visualization with opengl with all available constraints (commented out).
+* :file:`visualization_constraints.py`
+    Constraint visualization with OpenGL with all available constraints (commented out).
 
-* ``visualization_mmm2d.py``
+* :file:`visualization_mmm2d.py`
     A visual sample for a constant potential plate capacitor simulated with mmm2d.
 
-* ``visualization_charged.py``
+* :file:`visualization_charged.py`
     Molten NaCl and larger, charged particles simulated with p3m.
 
-* ``visualization_cellsystem.py``
+* :file:`visualization_cellsystem.py`
     Node grid and cell grid visualization. Run in parallel for particle coloring by node.
 
 .. _On units:
@@ -462,7 +463,7 @@ mass of 1, so that the mass unit is simply the mass of all particles.
 Combined with the energy and length scale, this is sufficient to derive
 the resulting time scale:
 
-.. math:: 
+.. math::
 
     [\mathrm{time}] = [\mathrm{length}]\sqrt{\frac{[\mathrm{mass}]}{[\mathrm{energy}]}}
 
@@ -473,22 +474,22 @@ This means, that if you measure lengths in Ångström, energies in
 On the other hand, if you want a particular time scale, then the mass
 scale can be derived from the time, energy and length scales as
 
-.. math:: 
+.. math::
 
     [\mathrm{mass}] = [\mathrm{energy}]\frac{[\mathrm{time}]^2}{[\mathrm{length}]^2}.
 
-By activating the feature MASSES, you can specify particle masses in
+By activating the feature ``MASS``, you can specify particle masses in
 the chosen unit system.
 
 A special note is due regarding the temperature, which is coupled to the
-energy scale by Boltzmann’s constant. However, since |es| does not enforce a
-particular unit system, we also don’t know the numerical value of the
+energy scale by Boltzmann's constant. However, since |es| does not enforce a
+particular unit system, we also don't know the numerical value of the
 Boltzmann constant in the current unit system. Therefore, when
 specifying the temperature of a thermostat, you actually do not define
 the temperature, but the value of the thermal energy :math:`k_B T` in
 the current unit system. For example, if you measure energy in units of
 :math:`\mathrm{kJ/mol}` and your real temperature should be 300K, then
-you need to set the thermostat’s effective temperature to
+you need to set the thermostat's effective temperature to
 :math:`k_B 300\, K \mathrm{mol / kJ} = 2.494`.
 
 As long as one remains within the same unit system throughout the whole
@@ -542,7 +543,7 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+------------+
 | Isotropic NPT                  | None                   | Single           | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Quarternion Integrator         | Core                   | Good             | Yes        |
+| Quaternion Integrator          | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 |                                **Interactions**                                         |
 +--------------------------------+------------------------+------------------+------------+
@@ -570,15 +571,15 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+------------+
 | MMM1D on GPU                   | Single                 | Single           | No         |
 +--------------------------------+------------------------+------------------+------------+
-| ELC                            | Good                   | Good             | Yes        | 
+| ELC                            | Good                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | ICC*                           | Group                  | Group            | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 |                         **Hydrodynamic Interaction**                                    |
 +--------------------------------+------------------------+------------------+------------+
-| Lattice-Boltzmann              | Core                   | Core             | Yes        |
+| Lattice Boltzmann              | Core                   | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Lattice-Boltzmann on GPU       | Group                  | Core             | Yes        |
+| Lattice Boltzmann on GPU       | Group                  | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 |                              **Input/Output**                                           |
 +--------------------------------+------------------------+------------------+------------+
@@ -611,8 +612,8 @@ report so to the developers.
 | DPD                            | Single                 | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 
-.. 
-    Features subject for removal / no python support / fate unclear 
+..
+    Features subject for removal / no python support / fate unclear
 
     +--------------------------------+------------------------+------------------+------------+
     | **No Python support**                                                                   |
@@ -631,7 +632,7 @@ report so to the developers.
     +--------------------------------+------------------------+------------------+------------+
     | Directional Lennard-Jones      | Single                 | Single           | No         |
     +--------------------------------+------------------------+------------------+------------+
-    | MEMD                           | Single                 | Group            | Yes        | 
+    | MEMD                           | Single                 | Group            | Yes        |
     +--------------------------------+------------------------+------------------+------------+
     | Shan-Chen Multicomponent Fluid | Group                  | Group            | No         |
     +--------------------------------+------------------------+------------------+------------+
@@ -650,16 +651,16 @@ Intended interface compatibility between ESPResSo versions
 We use the following versioning scheme:
 major.minor.patch_level
 
-With regards to the stability of the Python interface, we plan the following guidelines: 
+With regards to the stability of the Python interface, we plan the following guidelines:
 
   * patch_level: The Python interface will not change, if only the patch_level number is different. Example: 4.0.0 -> 4.0.1.
 
   * minor: There will be no silent interface changes between two versions with different minor numbers. I.e., a simulation script will not silently produce different results with the new version. The interface can, however, be extended. In important cases, the interface can change in such a way that using the old interface produces a clear error message and the simulation is terminated. Example: 4.0.1 -> 4.1.0
 
-  * major: No guarantees are made for a transition between major versions. Example 4.1.2 -> 5.0. 
+  * major: No guarantees are made for a transition between major versions. Example 4.1.2 -> 5.0.
 
   * No guarantees are made with regards to the development branch on GitHub.
 
-  * No guarantees are made with respect to the C++ bindings in the simulation core. 
+  * No guarantees are made with respect to the C++ bindings in the simulation core.
 
 

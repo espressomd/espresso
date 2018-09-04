@@ -2,7 +2,7 @@
 This sample simulates a Lennard-Jones fluid maintained at a fixed temperature by a Langevin thermostat.
 """
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -56,7 +56,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
@@ -138,7 +138,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(steps=warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
-#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
+# print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" %
+# (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
 #   write observables
@@ -152,7 +153,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
-state=system.__getstate__()
+state = system.__getstate__()
 pprint.pprint(state)
 
 # write parameter file

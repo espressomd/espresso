@@ -1,8 +1,8 @@
 """
-This sample sets up a Lennard-Jones fluid. The particles in the system are of two types: Type 0 and Type 1. Type 0 particles interact with each other via a repulsive WCA interaction. Type 1 particles neither interact with themselves nor with Type 0 particles. The distribution of minimum distances between particles of Type 0 and Type 1 is recorded. 
+This sample sets up a Lennard-Jones fluid. The particles in the system are of two types: Type 0 and Type 1. Type 0 particles interact with each other via a repulsive WCA interaction. Type 1 particles neither interact with themselves nor with Type 0 particles. The distribution of minimum distances between particles of Type 0 and Type 1 is recorded.
 """
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -56,7 +56,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
@@ -159,7 +159,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
-#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
+# print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" %
+# (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
 #   write observables
@@ -203,7 +204,8 @@ for i in range(0, int_n_times):
 
     system.integrator.run(int_steps)
 
-    r, dist = system.analysis.distribution(type_list_a=distr_type_list_a, type_list_b=distr_type_list_b,
+    r, dist = system.analysis.distribution(
+        type_list_a=distr_type_list_a, type_list_b=distr_type_list_b,
                                            r_min=distr_r_min, r_max=distr_r_max, r_bins=distr_r_bins,
                                            log_flag=distr_log_flag, int_flag=distr_int_flag)
     distr_r = r

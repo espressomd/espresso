@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2010-2018 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -28,7 +28,7 @@ from time import sleep
 assert_features(["ELECTROSTATICS", "CONSTRAINTS", "MASS", "LENNARD_JONES"])
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 numpy.random.seed(system.seed)
 
 print("\n--->Setup system")
@@ -47,17 +47,17 @@ Ez = 0
 num_steps_equilibration = 500
 
 # Particle parameters
-types = {"Cl":          0, "Na": 1, "Electrode": 2}
+types = {"Cl": 0, "Na": 1, "Electrode": 2}
 numbers = {"Cl": n_ionpairs, "Na": n_ionpairs}
 charges = {"Cl": -1.0, "Na": 1.0}
-lj_sigmas = {"Cl":       3.85, "Na": 2.52,  "Electrode": 3.37}
-lj_epsilons = {"Cl":     192.45, "Na": 17.44, "Electrode": 24.72}
+lj_sigmas = {"Cl": 3.85, "Na": 2.52, "Electrode": 3.37}
+lj_epsilons = {"Cl": 192.45, "Na": 17.44, "Electrode": 24.72}
 
-lj_cuts = {"Cl":        3.0 * lj_sigmas["Cl"],
-           "Na":        3.0 * lj_sigmas["Na"],
+lj_cuts = {"Cl": 3.0 * lj_sigmas["Cl"],
+           "Na": 3.0 * lj_sigmas["Na"],
            "Electrode": 3.0 * lj_sigmas["Electrode"]}
 
-masses = {"Cl":     35.453, "Na": 22.99, "Electrode": 12.01}
+masses = {"Cl": 35.453, "Na": 22.99, "Electrode": 12.01}
 
 # Setup System
 box_l = (n_ionpairs * sum(masses.values()) / density)**(1. / 3.)
@@ -85,12 +85,12 @@ for i in range(int(n_ionpairs)):
     p = numpy.random.random(3) * box_l
     p[2] += lj_sigmas["Electrode"]
     system.part.add(id=len(system.part),
-                    type=types["Cl"],  pos=p, q=charges["Cl"], mass=masses["Cl"])
+                    type=types["Cl"], pos=p, q=charges["Cl"], mass=masses["Cl"])
 for i in range(int(n_ionpairs)):
     p = numpy.random.random(3) * box_l
     p[2] += lj_sigmas["Electrode"]
     system.part.add(id=len(system.part),
-                    type=types["Na"],  pos=p, q=charges["Na"], mass=masses["Na"])
+                    type=types["Na"], pos=p, q=charges["Na"], mass=masses["Na"])
 
 # Lennard-Jones interactions parameters
 
@@ -162,7 +162,7 @@ def main():
         visualizer.update()
 
 
-# Start simulation in seperate thread
+# Start simulation in separate thread
 t = Thread(target=main)
 t.daemon = True
 t.start()

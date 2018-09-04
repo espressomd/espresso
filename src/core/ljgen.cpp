@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -26,7 +26,7 @@
  *  eps * [ b1 * (sigma/(r-r_offset))^a1 - b2 * (sigma/(r-r_offset))^a2 + shift]
  *
  *  \ref forces.cpp
-*/
+ */
 
 #include "config.hpp"
 
@@ -38,14 +38,14 @@
 #include "ljgen.hpp"
 
 int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
-                     double cut, double shift, double offset, double a1, double a2,
-                     double b1, double b2
+                     double cut, double shift, double offset, double a1,
+                     double a2, double b1, double b2
 
 #ifdef LJGEN_SOFTCORE
                      ,
                      double lambda, double softrad
 #endif
-                     ) {
+) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
   if (!data)

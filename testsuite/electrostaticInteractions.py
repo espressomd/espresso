@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -83,13 +83,11 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         # need to update forces
         self.system.integrator.run(0)
         np.testing.assert_allclose(np.copy(self.system.part[0].f),
-                                    [p3m_force, 0, 0],atol=1E-5)
+                                   [p3m_force, 0, 0], atol=1E-5)
         np.testing.assert_allclose(np.copy(self.system.part[1].f),
-                                    [-p3m_force, 0, 0],atol=1E-10)
+                                   [-p3m_force, 0, 0], atol=1E-10)
         self.system.actors.remove(p3m)
 
-    @ut.skipIf( espressomd.has_features(["COULOMB_DEBYE_HUECKEL"]),
-           "Features not available, skipping test!")
     def test_dh(self):
         dh_params = dict(prefactor=1.0,
                          kappa=2.0,
@@ -124,11 +122,11 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             f_dh_core[i] = self.system.part[0].f[0]
 
         np.testing.assert_allclose(u_dh_core,
-                                    u_dh,
-                                    atol=1e-7)
+                                   u_dh,
+                                   atol=1e-7)
         np.testing.assert_allclose(f_dh_core,
-                                    -f_dh,
-                                    atol=1e-2)
+                                   -f_dh,
+                                   atol=1e-2)
         self.system.actors.remove(dh)
 
 

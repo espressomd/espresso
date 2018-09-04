@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -68,23 +68,22 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_b2
         double LJGEN_lambda
         double LJGEN_softrad
-        
-        int affinity_type;
-        double affinity_kappa;
-        double affinity_r0;
-        double affinity_Kon;
-        double affinity_Koff;
-        double affinity_maxBond;
-        double affinity_cut;
-        double membrane_a;
-        double membrane_n;
-        double membrane_cut;
-        double membrane_offset;
-        double soft_a;
-        double soft_n;
-        double soft_cut;
-        double soft_offset;
 
+        int affinity_type
+        double affinity_kappa
+        double affinity_r0
+        double affinity_Kon
+        double affinity_Koff
+        double affinity_maxBond
+        double affinity_cut
+        double membrane_a
+        double membrane_n
+        double membrane_cut
+        double membrane_offset
+        double soft_a
+        double soft_n
+        double soft_cut
+        double soft_offset
 
         TabulatedPotential TAB
 
@@ -103,12 +102,12 @@ cdef extern from "interaction_data.hpp":
         int SmSt_n
         double SmSt_k0
 
-        double BMHTF_A;
-        double BMHTF_B;
-        double BMHTF_C;
-        double BMHTF_D;
-        double BMHTF_sig;
-        double BMHTF_cut;
+        double BMHTF_A
+        double BMHTF_B
+        double BMHTF_C
+        double BMHTF_D
+        double BMHTF_sig
+        double BMHTF_cut
 
         double MORSE_eps
         double MORSE_alpha
@@ -123,7 +122,6 @@ cdef extern from "interaction_data.hpp":
         double BUCK_cut
         double BUCK_discont
         double BUCK_shift
-
 
         double Hertzian_eps
         double Hertzian_sig
@@ -164,7 +162,7 @@ IF LJCOS:
     cdef extern from "ljcos.hpp":
         cdef int ljcos_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig,
-                                  double cut, double offset);
+                                  double cut, double offset)
 
 IF LJCOS2:
     cdef extern from "ljcos2.hpp":
@@ -177,11 +175,11 @@ IF GAY_BERNE:
         int gay_berne_set_params(int part_type_a, int part_type_b,
                                  double eps, double sig, double cut,
                                  double k1, double k2,
-                                 double mu, double nu);
+                                 double mu, double nu)
 
 IF THOLE:
     cdef extern from "thole.hpp":
-        int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, double q1q2);
+        int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, double q1q2)
 
 cdef extern from "ljgen.hpp":
     IF LJGEN_SOFTCORE:
@@ -201,39 +199,39 @@ IF SMOOTH_STEP:
         int smooth_step_set_params(int part_type_a, int part_type_b,
                                    double d, int n, double eps,
                                    double k0, double sig,
-                                   double cut);
+                                   double cut)
 IF BMHTF_NACL:
     cdef extern from "bmhtf-nacl.hpp":
         int BMHTF_set_params(int part_type_a, int part_type_b,
                              double A, double B, double C,
-                             double D, double sig, double cut);
+                             double D, double sig, double cut)
 
 IF MORSE:
     cdef extern from "morse.hpp":
         int morse_set_params(int part_type_a, int part_type_b,
                              double eps, double alpha,
-                             double rmin, double cut);
+                             double rmin, double cut)
 
 IF BUCKINGHAM:
     cdef extern from "buckingham.hpp":
         int buckingham_set_params(int part_type_a, int part_type_b,
                                   double A, double B, double C, double D, double cut,
-                                  double discont, double shift);
+                                  double discont, double shift)
 
 IF SOFT_SPHERE:
     cdef extern from "soft_sphere.hpp":
         int soft_sphere_set_params(int part_type_a, int part_type_b,
-                                   double a, double n, double cut, double offset);
+                                   double a, double n, double cut, double offset)
 
 IF HERTZIAN:
     cdef extern from "hertzian.hpp":
         int hertzian_set_params(int part_type_a, int part_type_b,
-                                double eps, double sig);
+                                double eps, double sig)
 
 IF GAUSSIAN:
     cdef extern from "gaussian.hpp":
         int gaussian_set_params(int part_type_a, int part_type_b,
-                                double eps, double sig, double cut);
+                                double eps, double sig, double cut)
 
 IF DPD:
     cdef extern from "dpd.hpp":
@@ -248,27 +246,28 @@ IF HAT:
 
 IF MEMBRANE_COLLISION:
     cdef extern from "object-in-fluid/membrane_collision.hpp":
-        cdef int membrane_collision_set_params(int part_type_a, int part_type_b,
-                                               double a, double n, 
+        cdef int membrane_collision_set_params(int part_type_a,
+                                               int part_type_b,
+                                               double a, double n,
                                                double cut, double offset)
 
 IF SOFT_SPHERE:
     cdef extern from "soft_sphere.hpp":
         cdef int soft_sphere_set_params(int part_type_a, int part_type_b,
-                                               double a, double n,
-                                               double cut, double offset)
+                                        double a, double n,
+                                        double cut, double offset)
 
 IF AFFINITY:
     cdef extern from "object-in-fluid/affinity.hpp":
         cdef int affinity_set_params(int part_type_a, int part_type_b,
-                                     int afftype, double kappa, double r0, 
+                                     int afftype, double kappa, double r0,
                                      double Kon, double Koff, double maxBond, double cut)
 IF TABULATED:
     cdef extern from "tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b,
                                  double min, double max,
                                  vector[double] energy,
-                                 vector[double] force);
+                                 vector[double] force)
 IF ROTATION:
     cdef extern from "interaction_data.hpp":
     #* Parameters for the harmonic dumbbell bond potential */
@@ -384,7 +383,6 @@ cdef extern from "interaction_data.hpp":
         double mult
         double bend
         double phase
-
 
 
 #* Parameters for n-body overlapped potential (n=2,3,4). */
@@ -532,7 +530,6 @@ cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
         void volume_conservation_set_params(const int bond_type, const int softID, const double kappaV)
 
 
-
 cdef extern from "immersed_boundary/ibm_triel.hpp":
     int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
 cdef extern from "immersed_boundary/ibm_tribend.hpp":
@@ -552,7 +549,7 @@ IF TABULATED:
 IF ELECTROSTATICS:
     cdef extern from "bonded_coulomb.hpp":
         int bonded_coulomb_set_params(int bond_type, double prefactor)
-    
+
 
 cdef extern from "interaction_data.hpp":
     int virtual_set_params(int bond_type)
@@ -579,9 +576,6 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_OIF_LOCAL_FORCES,
         BONDED_IA_OIF_GLOBAL_FORCES,
         BONDED_IA_OIF_OUT_DIRECTION,
-        BONDED_IA_CG_DNA_BASEPAIR,
-        BONDED_IA_CG_DNA_STACKING,
-        BONDED_IA_CG_DNA_BACKBONE,
         BONDED_IA_IBM_TRIEL,
         BONDED_IA_IBM_TRIBEND,
         BONDED_IA_IBM_VOLUME_CONSERVATION,

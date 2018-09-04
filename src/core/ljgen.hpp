@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -32,7 +32,7 @@
  *  eps * [ b1 * (sigma/(r-r_offset))^a1 - b2 * (sigma/(r-r_offset))^a2 + shift]
  *
  *  \ref forces.cpp
-*/
+ */
 
 #include "debug.hpp"
 #include "interaction_data.hpp"
@@ -47,7 +47,7 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      ,
                      double lambda, double softrad
 #endif
-                     );
+);
 
 /** Calculate lennard Jones force between particle p1 and p2 */
 inline void add_ljgen_pair_force(const Particle *const p1,
@@ -86,13 +86,15 @@ inline void add_ljgen_pair_force(const Particle *const p1,
               this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
 #endif
     ONEPART_TRACE(if (p1->p.identity == check_id)
-                      fprintf(stderr, "%d: OPT: LJGEN   f = (%.3e,%.3e,%.3e) "
-                                      "with part id=%d at dist %f fac %.3e\n",
+                      fprintf(stderr,
+                              "%d: OPT: LJGEN   f = (%.3e,%.3e,%.3e) "
+                              "with part id=%d at dist %f fac %.3e\n",
                               this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                               p2->p.identity, dist, fac));
     ONEPART_TRACE(if (p2->p.identity == check_id)
-                      fprintf(stderr, "%d: OPT: LJGEN   f = (%.3e,%.3e,%.3e) "
-                                      "with part id=%d at dist %f fac %.3e\n",
+                      fprintf(stderr,
+                              "%d: OPT: LJGEN   f = (%.3e,%.3e,%.3e) "
+                              "with part id=%d at dist %f fac %.3e\n",
                               this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                               p1->p.identity, dist, fac));
 

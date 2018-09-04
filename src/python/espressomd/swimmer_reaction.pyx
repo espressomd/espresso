@@ -15,8 +15,8 @@ IF SWIMMER_REACTIONS:
 
         .. note::
            Requires the features SWIMMER_REACTIONS.
-           
-           Keep in mind, that there may be only one reaction enabled. 
+
+           Keep in mind, that there may be only one reaction enabled.
            There can be only one.
 
         Parameters
@@ -148,7 +148,7 @@ IF SWIMMER_REACTIONS:
 
             # There can only be one reaction
             global __reaction_is_initiated
-            if __reaction_is_initiated == True:
+            if __reaction_is_initiated:
                 raise ThereCanOnlyBeOne(self.__class__)
             __reaction_is_initiated = True
 

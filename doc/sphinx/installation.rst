@@ -1,6 +1,6 @@
 .. _Installation:
 
-Installation 
+Installation
 ============
 
 This chapter will describe how to get, compile and run the software.
@@ -11,7 +11,7 @@ is tested and known to run on a number of platforms.
 Alternatively, people that want to use the newest features of |es| or that
 want to start contributing to the software can instead obtain the
 current development code via the version control system software  [2]_
-from |es| ’s project page at Github  [3]_. This code might be not as well
+from |es| 's project page at Github  [3]_. This code might be not as well
 tested and documented as the release code; it is recommended to use this
 code only if you have already gained some experience in using |es|.
 
@@ -25,7 +25,7 @@ performance of the code. Therefore it is not possible to build a single
 binary that can satisfy all needs. For performance reasons a user
 should always activate only those features that are actually needed.
 This means, however, that learning how to compile is a necessary evil.
-The build system of |es| uses `cmake` [4]_ to compile
+The build system of |es| uses ``cmake`` [4]_ to compile
 software easily on a wide range of platforms.
 
 .. _Requirements:
@@ -46,7 +46,7 @@ Boost
     A number of advanced C++ features used by ESPResSo is provided by Boost.
 
 FFTW
-    For some algorithms (P:math:`^3`\ M), ESPResSo needs the FFTW library
+    For some algorithms (P\ :math:`^3`\ M), ESPResSo needs the FFTW library
     version 3 or later  [5]_ for Fourier transforms, including header
     files.
 
@@ -73,20 +73,20 @@ installed with:
     sudo apt install build-essential cmake cython python-numpy \
     libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
     doxygen python-opengl python-sphinx python-pip libgsl-dev
-    
+
 
 Optionally the ccmake utility can be installed for easier configuration:
 
 .. code-block:: bash
 
-    $ sudo apt install cmake-curses-gui
+    sudo apt install cmake-curses-gui
 
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:
 
 .. code-block:: bash
 
-    $ sudo apt install nvidia-cuda-toolkit
+    sudo apt install nvidia-cuda-toolkit
 
 .. _Installing Requirements on Mac OS X:
 
@@ -151,7 +151,7 @@ command in |es| 's source directory:
 
     pip install -r requirements.txt --user --upgrade
 
-Please note that on some systems, `pip` has to be replaced by `pip2` to install Python 2 versions of the packages.
+Please note that on some systems, ``pip`` has to be replaced by ``pip2`` to install Python 2 versions of the packages.
 
 .. _Quick installation:
 
@@ -160,7 +160,7 @@ Quick installation
 
 If you have installed the requirements (see section :ref:`Requirements
 <requirements>` ) in standard locations, to compile, it is usually enough to
-create a build directory and call ``cmake`` and ``make`` (optional steps 
+create a build directory and call ``cmake`` and ``make`` (optional steps
 which modify the build process are commented out):
 
 .. code-block:: bash
@@ -174,13 +174,13 @@ which modify the build process are commented out):
     make
 
 This will build |es| with a default feature set, namely
-:file:`src/core/myconfig-default.hpp`. This file is a ``c++`` header file, 
+:file:`src/core/myconfig-default.hpp`. This file is a ``c++`` header file,
 which defines the features that should be compiled in.
 You may want to adjust the feature set to your needs. This can be easily done
-by copying the `myconfig-sample.hpp` which has been created in the build 
-directory to `myconfig.hpp` and only uncomment the features you want to use in your simulation.
+by copying the :file:`myconfig-sample.hpp` which has been created in the :file:`build`
+directory to :file:`myconfig.hpp` and only uncomment the features you want to use in your simulation.
 
-The ``cmake`` command looks for libraries and tools needed by |es|. So |es| 
+The ``cmake`` command looks for libraries and tools needed by |es|. So |es|
 can only be built if ``cmake`` reports no errors.
 
 The command ``make`` will compile the source code. Depending on the
@@ -191,12 +191,14 @@ other things:
    However, normally it is not necessary to actually *install* to run
    it: ``make install``
 
-*  It can invoke code checks: ``make check`` 
+*  It can invoke code checks: ``make check``
 
 *  It can build this documentation: ``make sphinx``
 
 When these steps have successfully completed, |es| can be started with the
-command::
+command:
+
+.. code-block:: bash
 
     ./pypresso <SCRIPT>
 
@@ -207,7 +209,7 @@ have compiled with *Open MPI*, and need to tell MPI to run in parallel. The actu
 invocation is implementation dependent, but in many cases, such as
 *Open MPI*, you can use
 
-::
+.. code-block:: bash
 
     mpirun -n <N> ./pypresso <SCRIPT>
 
@@ -221,8 +223,8 @@ Configuring
 
 .. _myconfig.hpp\: Activating and deactivating features:
 
-``myconfig.hpp``: Activating and deactivating features
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:file:`myconfig.hpp`: Activating and deactivating features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 |es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
@@ -233,11 +235,11 @@ one, e.g. . For the developers, it is also possible to turn on or off a
 number of debugging messages. The features and debug messages can be
 controlled via a configuration header file that contains C-preprocessor
 declarations. Appendix lists and describes all available features. The
-file ``myconfig-sample.hpp`` that configure will generate in the build
+file :file:`myconfig-sample.hpp` that configure will generate in the build
 directory contains a list of all possible features that can be copied
 into your own configuration file. When no configuration header is
 provided by the user, a default header, found in
-``src/core/myconfig-default.hpp``, will be used that turns on the
+:file:`src/core/myconfig-default.hpp`, will be used that turns on the
 default features.
 
 When you distinguish between the build and the source directory, the
@@ -245,27 +247,29 @@ configuration header can be put in either of these. Note, however, that
 when a configuration header is found in both directories, the one in the
 build directory will be used.
 
-By default, the configuration header is called ``myconfig.hpp``.
+By default, the configuration header is called :file:`myconfig.hpp`.
 The configuration header can be used to compile different binary
 versions of with a different set of features from the same source
-directory. Suppose that you have a source directory ``$srcdir`` and two
-build directories ``$builddir1`` and ``$builddir2`` that contain
+directory. Suppose that you have a source directory :file:`$srcdir` and two
+build directories :file:`$builddir1` and :file:`$builddir2` that contain
 different configuration headers:
 
-*  ``$builddir1/myconfig.hpp``:
+*  :file:`$builddir1/myconfig.hpp`:
 
-.. code-block:: c
+  .. code-block:: c++
 
     #define ELECTROSTATICS
     #define LENNARD-JONES
 
-*  ``$builddir2/myconfig.hpp``:
+*  :file:`$builddir2/myconfig.hpp`:
 
-.. code-block:: c
+  .. code-block:: c++
 
-   #define LJCOS
+    #define LJCOS
 
-Then you can simply compile two different versions of via::
+Then you can simply compile two different versions of via:
+
+.. code-block:: bash
 
     cd builddir1
     cmake ..
@@ -275,11 +279,15 @@ Then you can simply compile two different versions of via::
     cmake ..
     make
 
-To see, what features were activated in myconfig.hpp, run:::
+To see, what features were activated in :file:`myconfig.hpp`, run:
+
+.. code-block:: bash
 
     ./pypresso
 
-and then in the Python interpreter::
+and then in the Python interpreter:
+
+.. code-block:: python
 
     import espressomd
     print(espressomd.features())
@@ -291,13 +299,13 @@ Features
 
 This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
-will negatively effect |es| ’s performance.
+will negatively effect |es| 's performance.
 
-Features can be activated in the configuration header ``myconfig.hpp`` (see
+Features can be activated in the configuration header :file:`myconfig.hpp` (see
 section :ref:`myconfig.hpp\: Activating and deactivating features`). To
 activate ``FEATURE``, add the following line to the header file:
 
-::
+.. code-block:: c++
 
     #define FEATURE
 
@@ -328,19 +336,19 @@ General features
 -  ``DIPOLES`` This activates the dipole-moment property of particles; In addition,
    the various magnetostatics algorithms, such as P3M are switched on.
 
-   .. seealso:: 
-   
+   .. seealso::
+
        :ref:`Magnetostatics / Dipolar interactions`
        :ref:`Electrostatics`
 
 -  ``SCAFACOS_DIPOLES``
 
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
-   the corresponding quaternion integrator. 
-   
+   the corresponding quaternion integrator.
+
    .. seealso:: :ref:`Setting up particles`
 
-   .. note:: 
+   .. note::
       Note, that when the feature is activated, every particle has three
       additional degrees of freedom, which for example means that the
       kinetic energy changes at constant temperature is twice as large.
@@ -356,7 +364,7 @@ General features
 
 -  ``CONSTRAINTS`` Turns on various spatial constraints such as spherical compartments
    or walls. This constraints interact with the particles through
-   regular short ranged potentials such as the Lennard–Jones potential.
+   regular short ranged potentials such as the Lennard-Jones potential.
    See section for possible constraint forms.
 
 -  ``MASS`` Allows particles to have individual masses. Note that some analysis
@@ -382,15 +390,15 @@ General features
    placed using the position (and orientation) of other particles. The
    feature allows to place a virtual particle into the center of mass of
    a set of other particles.
-   
-   .. seealso:: :ref:`Virtual sites` 
+
+   .. seealso:: :ref:`Virtual sites`
 
 -  ``VIRTUAL_SITES_RELATIVE`` Virtual sites are particles, the position and velocity of which is
    not obtained by integrating equations of motion. Rather, they are
    placed using the position (and orientation) of other particles. The
    feature allows for rigid arrangements of particles.
 
-   .. seealso:: :ref:`Virtual sites` 
+   .. seealso:: :ref:`Virtual sites`
 
 -  ``METADYNAMICS``
 
@@ -400,7 +408,7 @@ General features
    constant. It is also possible to set up a chemical equilibrium
    reaction between the reactants and products, with another rate
    constant. Be careful the model makes usage of the word catalyst. This usage of the word cannot be brought into agreement with the correct usage of the word catalyst.
-   
+
    .. seealso:: :ref:`Swimmer reactions`
 
 -  ``OVERLAPPED``
@@ -419,8 +427,8 @@ integrator or thermostat:
 
        .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibrium MD`
 
--  ``NPT`` Enables an on–the–fly NPT integration scheme.
-   
+-  ``NPT`` Enables an on-the-fly NPT integration scheme.
+
    .. seealso:: :ref:`Isotropic NPT thermostat`
 
 
@@ -446,13 +454,13 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
--  ``LB`` Enables the lattice-Boltzmann fluid code.
+-  ``LB`` Enables the lattice Boltzmann fluid code.
 
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice-Boltzmann`
+   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
 
--  ``LB_GPU`` Enables the lattice-Boltzmann fluid code support for GPU.
+-  ``LB_GPU`` Enables the lattice Boltzmann fluid code support for GPU.
 
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice-Boltzmann`
+   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
 
 -  ``LB_BOUNDARIES``
 
@@ -490,16 +498,16 @@ Interaction features
 The following switches turn on various short ranged interactions (see
 section :ref:`Isotropic non-bonded interactions`):
 
--  ``TABULATED`` Enable support for user–defined interactions.
+-  ``TABULATED`` Enable support for user-defined interactions.
 
--  ``LENNARD_JONES`` Enable the Lennard–Jones potential.
+-  ``LENNARD_JONES`` Enable the Lennard-Jones potential.
 
--  ``LENNARD_JONES_GENERIC`` Enable the generic Lennard–Jones potential with configurable
+-  ``LENNARD_JONES_GENERIC`` Enable the generic Lennard-Jones potential with configurable
    exponents and individual prefactors for the two terms.
 
--  ``LJCOS`` Enable the Lennard–Jones potential with a cosine–tail.
+-  ``LJCOS`` Enable the Lennard-Jones potential with a cosine-tail.
 
--  ``LJCOS2`` Same as LJCOS, but using a slightly different way of smoothing the
+-  ``LJCOS2`` Same as ``LJCOS``, but using a slightly different way of smoothing the
    connection to 0.
 
 -  ``GAY_BERNE`` (experimental)
@@ -522,7 +530,7 @@ section :ref:`Isotropic non-bonded interactions`):
 
 Some of the short range interactions have additional features:
 
--  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard–Jones potentials that
+-  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard-Jones potentials that
    prints a warning if particles come too close so that the simulation
    becomes unphysical.
 
@@ -549,30 +557,16 @@ following features.
 
 -  ``UMBRELLA`` (experimental)
 
-
-.. _DNA Model:
-
-DNA Model
-^^^^^^^^^
-
--  ``CG_DNA``
-
--  ``TWIST_STACK``
-
--  ``HYDROGEN_BOND``
-
--  ``COULOMB_DEBYE_HUECKEL``
-
 .. _Miscellaneous:
 
 Miscellaneous
 ^^^^^^^^^^^^^
 
--  ``FLATNOISE`` Shape of the noise in ther (LB) thermostat.
+-  ``FLATNOISE`` Shape of the noise in the (LB) thermostat.
 
--  ``GAUSSRANDOM`` Shape of the noise in ther (LB) thermostat.
+-  ``GAUSSRANDOM`` Shape of the noise in the (LB) thermostat.
 
--  ``GAUSSRANDOMCUT`` Shape of the noise in ther (LB) thermostat.
+-  ``GAUSSRANDOMCUT`` Shape of the noise in the (LB) thermostat.
 
 
 
@@ -585,7 +579,7 @@ Finally, there are a number of flags for debugging. The most important
 one are
 
 -  ``ADDITIONAL_CHECKS`` Enables numerous additional checks which can detect inconsistencies
-   especially in the cell systems. This checks are however too slow to
+   especially in the cell systems. These checks are however too slow to
    be enabled in production runs.
 
 The following flags control the debug output of various sections of
@@ -594,9 +588,9 @@ looking directly at the code.
 
 -  ``COMM_DEBUG`` Output from the asynchronous communication code.
 
--  ``EVENT_DEBUG`` Notifications for event calls, i. e. the ``on_...`` functions in
+-  ``EVENT_DEBUG`` Notifications for event calls, i.e. the ``on_...`` functions in
    ``initialize.c``. Useful if some module does not correctly respond to
-   changes of e. g. global variables.
+   changes of e.g. global variables.
 
 -  ``INTEG_DEBUG`` Integrator output.
 
@@ -622,7 +616,7 @@ looking directly at the code.
 
 -  ``ESR_DEBUG`` debugging of P\ :math:`^3`\ Ms real space part.
 
--  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` –space part.
+-  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
 
 -  ``FFT_DEBUG`` Output from the unified FFT code.
 
@@ -636,7 +630,7 @@ looking directly at the code.
 
 -  ``THERMO_DEBUG`` Output from the thermostats.
 
--  ``LJ_DEBUG`` Output from the Lennard–Jones code.
+-  ``LJ_DEBUG`` Output from the Lennard-Jones code.
 
 -  ``MORSE_DEBUG`` Output from the Morse code.
 
@@ -651,12 +645,12 @@ looking directly at the code.
 
 -  ``MOLFORCES_DEBUG``
 
--  ``LB_DEBUG`` Output from the lattice–Boltzmann code.
+-  ``LB_DEBUG`` Output from the lattice Boltzmann code.
 
 -  ``VIRTUAL_SITES_DEBUG``
 
 -  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps
-   in detection of mismatching communication.
+   in the detection of mismatching communication.
 
 -  ``FORCE_CORE`` Causes |es| to try to provoke a core dump when exiting unexpectedly.
 
@@ -679,7 +673,7 @@ looking directly at the code.
 
 Features marked as experimental
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define `EXPERIMENTAL_FEATURES` in myconfig.hpp.
+Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define ``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
 
 
@@ -691,8 +685,8 @@ cmake
 In order to build the first step is to create a build directory in which
 cmake can be executed. In cmake, the *source directory* (that contains
 all the source files) is completely separated from the *build directory*
-(where the files created by the build process are put). `cmake` is
-designed to *not* be executed in the source directory. `cmake` will
+(where the files created by the build process are put). ``cmake`` is
+designed to *not* be executed in the source directory. ``cmake`` will
 determine how to use and where to find the compiler, as well as the
 different libraries and tools required by the compilation process. By
 having multiple build directories you can build several variants of |es|,
@@ -701,19 +695,19 @@ platforms as you want.
 
 **Example:**
 
-When the source directory is ``srcdir`` (the files where unpacked to this
-directory), then the user can create a build directory ``build`` below that
-path by calling ``mkdir srcdir/build``. In the build directory `cmake` is to be
-executed, followed by a call of make. None of the files in the source directory
-is ever modified when by the build process.
+When the source directory is :file:`srcdir` (the files where unpacked to this
+directory), then the user can create a build directory :file:`build` below that
+path by calling :file:`mkdir srcdir/build`. In the build directory ``cmake`` is to be
+executed, followed by a call to make. None of the files in the source directory
+are ever modified by the build process.
 
 .. code-block:: bash
 
-    $ cd build 
-    $ cmake .. 
-    $ make
+    cd build
+    cmake ..
+    make
 
-Afterwards Espresso can be run via calling ``./pypresso`` from the command
+Afterwards Espresso can be run via calling :file:`./pypresso` from the command
 line.
 
 .. _ccmake:
@@ -721,20 +715,20 @@ line.
 ccmake
 ~~~~~~
 
-Optionally and for easier use the curses interface to cmake can be used
+Optionally and for easier use, the curses interface to cmake can be used
 to configure |es| interactively.
 
 **Example:**
 
-Alternatively to the previous example instead of , the executable is
-called in the build directory to configure ESPResSo previous to its
-compilation followed by a call of make:
+Alternatively to the previous example, instead of cmake, the ccmake executable is
+called in the build directory to configure ESPResSo,
+followed by a call to make:
 
 .. code-block:: bash
 
-    $ cd build 
-    $ ccmake .. 
-    $ make
+    cd build
+    ccmake ..
+    make
 
 Fig. :ref:`ccmake-figure` shows the interactive ccmake UI.
 
@@ -753,25 +747,27 @@ Fig. :ref:`ccmake-figure` shows the interactive ccmake UI.
 Options and Variables
 ^^^^^^^^^^^^^^^^^^^^^
 
-The behavior of |es| can be controlled by the means of options and variables
-in the CMakeLists.txt file. Also options are defined there. The following
+The behavior of |es| can be controlled by means of options and variables
+in the :file:`CMakeLists.txt` file. Also options are defined there. The following
 options are available:
 
-* WITH\_CUDA: Build with GPU support
+* ``WITH_CUDA``: Build with GPU support
 
-* WITH\_HDF5: Build with HDF5
+* ``WITH_HDF5``: Build with HDF5
 
-* WITH\_TESTS: Enable tests
+* ``WITH_TESTS``: Enable tests
 
-* WITH\_SCAFACOS: Build with Scafacos support
+* ``WITH_SCAFACOS``: Build with Scafacos support
 
-* WITH\_VALGRIND\_INSTRUMENTATION: Build with valgrind instrumentation
+* ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 
-When the value in the CMakeLists.txt file is set to ON the corresponding
+When the value in the :file:`CMakeLists.txt` file is set to ON the corresponding
 option is created if the value of the option is set to OFF the
 corresponding option is not created. These options can also be modified
-by calling cmake with the command line argument ``-D``::
+by calling ``cmake`` with the command line argument ``-D``:
+
+.. code-block:: bash
 
     cmake -D WITH_HDF5=OFF srcdir
 
@@ -783,7 +779,7 @@ build directory and create a new one.
 
 .. _make\: Compiling, testing and installing:
 
-``make``: Compiling, testing and installing 
+``make``: Compiling, testing and installing
 --------------------------------------------
 
 The command ``make`` is mainly used to compile the source code, but it
@@ -792,7 +788,7 @@ command is:
 
 .. code-block:: bash
 
-    $ make [options] [target] [variable=value]
+    make [options] [target] [variable=value]
 
 When no target is given, the target ``all`` is used. The following
 targets are available:
@@ -804,35 +800,35 @@ targets are available:
 ``check``
     Runs the testsuite. By default, all available tests will be run on
     1, 2, 3, 4, 6, or 8 processors.
-    
+
 ``clean``
     Deletes all files that were created during the compilation.
 
 ``install``
-    Install |es|. 
-    Use ``make DESTDIR=/home/john install`` to install to a 
+    Install |es|.
+    Use ``make DESTDIR=/home/john install`` to install to a
     specific directory.
 
 ``doxygen``
-    Creates the Doxygen code documentation in the ``doc/doxygen``
+    Creates the Doxygen code documentation in the :file:`doc/doxygen`
     subdirectory.
 
 ``sphinx``
-    Creates the `sphinx` code documentation in the ``doc/sphinx``
+    Creates the `sphinx` code documentation in the :file:`doc/sphinx`
     subdirectory.
 
 ``tutorials``
-    Creates the tutorials in the ``doc/tutorials`` subdirectory.
+    Creates the tutorials in the :file:`doc/tutorials` subdirectory.
 
 ``doc``
-    Creates all documentation in the ``doc`` subdirectory (only when
+    Creates all documentation in the :file:`doc` subdirectory (only when
     using the development sources).
 
 A number of options are available when calling ``make``. The most
 interesting option is probably ``-j num_jobs``, which can be used for
 parallel compilation on computers that have more than one CPU or core.
-*num\_jobs* specifies the maximal number of jobs that will be run.
-Setting *num\_jobs* to the number of available processors speeds up the
+*num_jobs* specifies the maximal number of jobs that will be run.
+Setting *num_jobs* to the number of available processors speeds up the
 compilation process significantly.
 
 .. _Running es:
@@ -851,13 +847,13 @@ src/python folder under the build directory. A convenient way to run
 python with the correct path is to use the pypresso script located in
 the build directory.
 
-::
+.. code-block:: bash
 
     ./pypresso simulation.py
 
 The ``pypresso`` script is just a wrapper in order to expose our
 self built python modules to the systems python interpreter by
-modifying the  ``PYTHONPATH``.
+modifying the  ``$PYTHONPATH``.
 Please see the following chapters describing how to actually write
 a simulation script for |es|.
 
@@ -869,10 +865,10 @@ Debugging |es|
 Exceptional situations occur in every program.  If |es| crashes with a
 segmentation fault that means that there was a memory fault in the
 simulation core which requires running the program in a debugger.  The
-`pypresso` executable file is actually not a program but a script
+``pypresso`` executable file is actually not a program but a script
 which sets the Python path appropriately and starts the Python
 interpreter with your arguments.  Thus it is not possible to directly
-run `pypresso` in a debugger.  However, we provide some useful
+run ``pypresso`` in a debugger.  However, we provide some useful
 commandline options for the most common tools.
 
 .. code-block:: bash
@@ -881,7 +877,7 @@ commandline options for the most common tools.
 
 where ``--tool`` can be any from the following table.  You can only
 use one tool at a time.
-  
+
 +---------------------+----------------------------------------------+
 | Tool                | Effect                                       |
 +=====================+==============================================+

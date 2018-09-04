@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .particle_data import ParticleHandle
 
@@ -24,46 +40,48 @@ class _PairCriterion(ScriptInterfaceHelper):
 
 @script_interface_register
 class DistanceCriterion(_PairCriterion):
+
     """Pair criterion returning true, if particles are closer than a cut off.
        Periodic boundaries are treated via minimum image convention.
 
-       The following parameters can be passed to the constructor, changed via set_params() 
+       The following parameters can be passed to the constructor, changed via set_params()
        and retrieved via get_params()
 
        cut_off : float
            distance cut off for the criterion
     """
     _so_name = "PairCriteria::DistanceCriterion"
-    _so_creation_policy="LOCAL"
-    
+    _so_creation_policy = "LOCAL"
 
 
 @script_interface_register
 class EnergyCriterion(_PairCriterion):
+
     """Pair criterion returning true, if the short range energy between the particles is >= the cutoff
 
        Be aware that the short range energy contains the short range part of dipolar and electrostatic interactions,
        but not the long range part.
 
-       The following parameters can be passed to the constructor, changed via set_params() 
+       The following parameters can be passed to the constructor, changed via set_params()
        and retrieved via get_params()
 
        cut_off : float
            energy cut off for the criterion
     """
     _so_name = "PairCriteria::EnergyCriterion"
-    _so_creation_policy="LOCAL"
+    _so_creation_policy = "LOCAL"
 
 
 @script_interface_register
 class BondCriterion(_PairCriterion):
+
     """Pair criterion returning true, if a pair bond of given type exists between them
 
-       The following parameters can be passed to the constructor, changed via set_params() 
+       The following parameters can be passed to the constructor, changed via set_params()
        and retrieved via get_params()
 
        bond_type : int
-           numeric type of the bond 
+           numeric type of the bond
     """
     _so_name = "PairCriteria::BondCriterion"
-    _so_creation_policy="LOCAL"
+    _so_creation_policy = "LOCAL"

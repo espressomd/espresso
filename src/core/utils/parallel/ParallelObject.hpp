@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -30,13 +30,11 @@ class ParallelObject {
 public:
   ParallelObject() = delete;
 
-  static void register_callback(Communication::MpiCallbacks & cb) {
+  static void register_callback(Communication::MpiCallbacks &cb) {
     cb.add(&mpi_callback);
   }
 
-  static void make(Communication::MpiCallbacks & cb) {
-    cb.call(&mpi_callback);
-  }
+  static void make(Communication::MpiCallbacks &cb) { cb.call(&mpi_callback); }
 
 private:
   /* Supported callback types. Currently we can only create new instances. */

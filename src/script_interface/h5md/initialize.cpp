@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -19,10 +19,10 @@
 
 #include "config.hpp"
 #ifdef H5MD
-#include "initialize.hpp"
 #include "ParallelScriptInterface.hpp"
-#include "io/writer/h5md/h5md_core.hpp"
 #include "h5md.hpp"
+#include "initialize.hpp"
+#include "io/writer/h5md/h5md_core.hpp"
 
 namespace ScriptInterface {
 namespace Writer {

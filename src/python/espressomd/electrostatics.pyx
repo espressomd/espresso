@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -35,8 +35,8 @@ from .particle_data cimport particle
 
 IF ELECTROSTATICS == 1:
     def check_neutrality(_params):
-        if "check_neutrality" in _params: 
-            if(_params["check_neutrality"]==True):
+        if "check_neutrality" in _params:
+            if(_params["check_neutrality"]):
                 if not checks.check_charge_neutrality[PartCfg](partCfg()):
                     raise Exception("""
                     The system is not charge neutral. Please
@@ -69,18 +69,19 @@ IF ELECTROSTATICS == 1:
 
         def tune(self, **tune_params_subset):
             if tune_params_subset is not None:
-                if all (k in self.valid_keys() for k in tune_params_subset):
+                if all(k in self.valid_keys() for k in tune_params_subset):
                     self._params.update(tune_params_subset)
                 else:
-                    raise ValueError("Invalid parameter given to tune function.")
+                    raise ValueError(
+                        "Invalid parameter given to tune function.")
             self._tune()
 
-IF COULOMB_DEBYE_HUECKEL:
-    cdef class CDH(ElectrostaticInteraction):
-        """ Hybrid method to solve electrostatic interactions, on short length
-        scales the full Coulomb potential is used and on longer length scales
-        Debye-Hueckel is applied.  For more details see the formula in the user
-        guide under :ref:`Debye-Hückel potential`.
+
+IF ELECTROSTATICS:
+    cdef class DH(ElectrostaticInteraction):
+        """
+        Solve electrostatics in the Debye-Hueckel framework see
+        :ref:`Debye-Hückel potential` for more details.
 
         Parameters
         ----------
@@ -90,50 +91,27 @@ IF COULOMB_DEBYE_HUECKEL:
             Inverse Debye screening length.
         r_cut : :obj:`float`
             Cut off radius for this interaction.
-        eps_int : :obj:`float`
-            Relative permitivity in the interior region r<r1.
-        eps_ext : :obj:`float`
-            Relative permitivity in the exterior region r>r1.
-        r0 : :obj:`float`
-            Radius that defines the region where electrostatics are not
-            screened, classical Coulomb potential.
-        r1 : :obj:`float`
-            Radius for the transition region from pure Coulomb to Debye-Hueckel.
-        alpha : :obj:`float`
-            Controls the transition between the pure Coulomb and Debye Hueckel
-            regions.
 
         """
+
         def validate_params(self):
             if (self._params["prefactor"] <= 0):
-                raise ValueError("Prefactor should be a positive float")
+                raise ValueError(
+                    "prefactor should be a positive float")
             if (self._params["kappa"] < 0):
                 raise ValueError("kappa should be a non-negative double")
             if (self._params["r_cut"] < 0):
                 raise ValueError("r_cut should be a non-negative double")
-            if (self._params["eps_int"] <= 0):
-                raise ValueError("eps_int should be a positive double")
-            if (self._params["eps_ext"] <= 0):
-                raise ValueError("eps_ext should be a positive double")
-            if (self._params["r0"] <= 0 or self._params["r0"] >= self._params["r1"]):
-                raise ValueError(
-                    "r0 should be a positive double smaller than r1")
-            if (self._params["r1"] <= 0 or self._params["r1"] >= self._params["r_cut"]):
-                raise ValueError(
-                    "r1 should be a positive double larger than r0 and smaller than r_cut")
-            if (self._params["alpha"] < 0):
-                raise ValueError("alpha should be a non-negative double")
 
         def valid_keys(self):
-            return "prefactor", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha", "check_neutrality"
+            return "prefactor", "kappa", "r_cut", "check_neutrality"
 
         def required_keys(self):
-            return "prefactor", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha"
+            return "prefactor", "kappa", "r_cut"
 
         def _set_params_in_es_core(self):
             coulomb_set_prefactor(self._params["prefactor"])
-            dh_set_params_cdh(self._params["kappa"], self._params["r_cut"], self._params[
-                              "eps_int"], self._params["eps_ext"], self._params["r0"], self._params["r1"], self._params["alpha"])
+            dh_set_params(self._params["kappa"], self._params["r_cut"])
 
         def _get_params_from_es_core(self):
             params = {}
@@ -149,64 +127,7 @@ IF COULOMB_DEBYE_HUECKEL:
             return {"prefactor": -1,
                     "kappa": -1,
                     "r_cut": -1,
-                    "eps_int": -1,
-                    "eps_ext": -1,
-                    "r0": -1,
-                    "r1": -1,
-                    "alpha": -1,
                     "check_neutrality": True}
-
-ELSE:
-    IF ELECTROSTATICS:
-        cdef class DH(ElectrostaticInteraction):
-            """
-            Solve electrostatics in the Debye-Hueckel framework see
-            :ref:`Debye-Hückel potential` for more details.
-
-            Parameters
-            ----------
-            prefactor : :obj:`float`
-                Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-            kappa : :obj:`float`
-                Inverse Debye sreening length.
-            r_cut : :obj:`float`
-                Cut off radius for this interaction.
-
-            """
-            def validate_params(self):
-                if (self._params["prefactor"] <= 0):
-                    raise ValueError(
-                        "prefactor should be a positive float")
-                if (self._params["kappa"] < 0):
-                    raise ValueError("kappa should be a non-negative double")
-                if (self._params["r_cut"] < 0):
-                    raise ValueError("r_cut should be a non-negative double")
-
-            def valid_keys(self):
-                return "prefactor", "kappa", "r_cut", "check_neutrality"
-
-            def required_keys(self):
-                return "prefactor", "kappa", "r_cut"
-
-            def _set_params_in_es_core(self):
-                coulomb_set_prefactor(self._params["prefactor"])
-                dh_set_params(self._params["kappa"], self._params["r_cut"])
-
-            def _get_params_from_es_core(self):
-                params = {}
-                params.update(dh_params)
-                return params
-
-            def _activate_method(self):
-                check_neutrality(self._params)
-                coulomb.method = COULOMB_DH
-                self._set_params_in_es_core()
-
-            def default_params(self):
-                return {"prefactor": -1,
-                        "kappa": -1,
-                        "r_cut": -1,
-                        "check_neutrality": True}
 
 
 IF P3M == 1:
@@ -320,8 +241,8 @@ IF P3M == 1:
             coulomb_set_prefactor(self._params["prefactor"])
             #Sets cdef vars and calls p3m_set_params() in core
             python_p3m_set_params(self._params["r_cut"],
-                        self._params["mesh"], self._params["cao"],
-                        self._params["alpha"], self._params["accuracy"])
+                                  self._params["mesh"], self._params["cao"],
+                                  self._params["alpha"], self._params["accuracy"])
             #p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts
             #Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
             #         which resets r_cut if lb is zero. OK.
@@ -474,7 +395,7 @@ IF P3M == 1:
                 p3m_set_eps(self._params["epsilon"])
                 p3m_set_ninterpol(self._params["inter"])
                 python_p3m_set_mesh_offset(self._params["mesh_off"])
-                handle_errors("p3m gpu init" )
+                handle_errors("p3m gpu init")
 
 IF ELECTROSTATICS:
     cdef class MMM1D(ElectrostaticInteraction):
@@ -523,7 +444,8 @@ IF ELECTROSTATICS:
         def _get_params_from_es_core(self):
             params = {}
             params.update(mmm1d_params)
-            params["far_switch_radius"] = np.sqrt(params["far_switch_radius_2"])
+            params["far_switch_radius"] = np.sqrt(
+                params["far_switch_radius_2"])
             del params["far_switch_radius_2"]
             params["prefactor"] = coulomb.prefactor
             params["tune"] = self._params["tune"]
@@ -650,14 +572,14 @@ IF ELECTROSTATICS:
             Selector parameter for setting the dielectric constants manually
             (top, mid, bottom), mutually exclusive with dielectric-contrast
         top : :obj:`float`, optional
-            If dielectric is specified this paramter sets the dielectric
+            If dielectric is specified this parameter sets the dielectric
             constant *above* the simulation box
             :math:`\\varepsilon_\\mathrm{top}`
         mid : :obj:`float`, optional
-            If dielectric is specified this paramter sets the dielectric
+            If dielectric is specified this parameter sets the dielectric
             constant *in* the simulation box :math:`\\varepsilon_\\mathrm{mid}`.
         bottom : :obj:`float`, optional
-            If dielectric is specified this paramter sets the dielectric
+            If dielectric is specified this parameter sets the dielectric
             constant *below* the simulation box
             :math:`\\varepsilon_\\mathrm{bot}`.
         dielectric_contrast_on : :obj:`int`, optional
@@ -682,6 +604,7 @@ IF ELECTROSTATICS:
             Cut off radius, use with care, intended for testing purposes.
 
         """
+
         def validate_params(self):
             default_params = self.default_params()
             if self._params["prefactor"] <= 0:
@@ -740,8 +663,9 @@ IF ELECTROSTATICS:
                 self._params["delta_mid_bot"] = -1
 
             res = MMM2D_set_params(self._params["maxPWerror"],
-            self._params["far_cut"], self._params["delta_mid_top"],
-            self._params["delta_mid_bot"], self._params["const_pot"], self._params["pot_diff"])
+                                   self._params["far_cut"], self._params[
+                                       "delta_mid_top"],
+                                   self._params["delta_mid_bot"], self._params["const_pot"], self._params["pot_diff"])
             handle_errors("MMM2d setup")
             if res:
                 raise Exception("MMM2D setup failed")
@@ -752,16 +676,16 @@ IF ELECTROSTATICS:
             self._set_params_in_es_core()
             MMM2D_init()
             handle_errors("MMM2d setup")
-            res=MMM2D_sanity_checks()
+            res = MMM2D_sanity_checks()
             handle_errors("MMM2d setup")
             if res:
                 raise Exception("MMM2D sanity checks failed.")
             mpi_bcast_coulomb_params()
             handle_errors("MMM2d setup")
 
-
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
+
             """Calculates Coulomb interactions using method from the SCAFACOs library."""
             dipolar = False
 
@@ -779,6 +703,6 @@ IF ELECTROSTATICS:
                 return {}
 
             def _deactivate_method(self):
-                super(Scafacos,self)._deactivate_method()
+                super(Scafacos, self)._deactivate_method()
                 scafacos.free_handle()
                 mpi_bcast_coulomb_params()

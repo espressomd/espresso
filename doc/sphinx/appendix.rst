@@ -20,7 +20,7 @@ idea what this acronym stands for). Instead of defining the summation
 order, one multiplies each summand by a continuous factor
 :math:`c(\beta,r_{ij},n_{klm})` such that the sum is absolutely
 convergent for :math:`\beta>0`, but :math:`c(0,.,.)=1`. The energy is
-then defined as the limit :math:`\beta\rightarrow 0` of the sum, i. e.
+then defined as the limit :math:`\beta\rightarrow 0` of the sum, i.e.
 :math:`\beta` is an artificial convergence parameter. For a convergence
 factor of :math:`e^{-\beta n_{klm}^2}` the limit is the same as the spherical
 limit, and one can derive the classical Ewald method quite conveniently through
@@ -37,8 +37,8 @@ one has to use a different convergence factor, namely
    q_iq_j\phi_\beta(x_{ij}, y_{ij},z_{ij}).
 
 :math:`\phi_\beta` is given by
-:math:` \phi_\beta(x,y,z)=\,\tilde\phi_\beta(x,y,z)
-+ \frac{e^{-\beta r}}{r} ` for :math:`(x,y,z)\neq 0` and
+:math:`\phi_\beta(x,y,z)=\,\tilde\phi_\beta(x,y,z)
++ \frac{e^{-\beta r}}{r}` for :math:`(x,y,z)\neq 0` and
 :math:`\phi_\beta(0,0,0)=\,\tilde\phi_\beta(0,0,0)`, where
 
 .. math::
@@ -80,9 +80,9 @@ transform the potential along both x and y. We obtain the far formula as
        - 1\right)} e^{2\pi i u_y q y}e^{2\pi i u_x p x} + 2\pi u_x
    u_y\left(u_z z^2 - z + \frac{\lambda_z}{6}\right).
 
-where :math:`\lambda_{x,y,z}` are the box dimensions, :math:` f_{pq} =\,
-\sqrt{(u_x p)^2 + (u_y q)^2},\quad f_p =\, u_x p,\quad f_q =\, u_x q
-`, :math:` \omega_p=2\pi u_x p` and :math:`\omega_q=2\pi u_y q`. The
+where :math:`\lambda_{x,y,z}` are the box dimensions, :math:`f_{pq} =\,
+\sqrt{(u_x p)^2 + (u_y q)^2},\quad f_p =\, u_x p,\quad f_q =\, u_x q`,
+:math:`\omega_p=2\pi u_x p` and :math:`\omega_q=2\pi u_y q`. The
 advantage of this formula is that it allows for a product decomposition
 into components of the particles. For example
 
@@ -97,7 +97,7 @@ together, which can be done in :math:`O(N)` computation time. As can be
 seen easily, the convergence of the series is excellent as long as z is
 sufficiently large. By symmetry one can choose the coordinate with the
 largest distance as z to optimize the convergence. Similar to the Lekner
-sum, we need a different formula if all coordinates are small, i. e. for
+sum, we need a different formula if all coordinates are small, i.e. for
 particles close to each other. For sufficiently small :math:`u_y\rho`
 and :math:`u_xx` we obtain the near formula as
 
@@ -116,7 +116,7 @@ and :math:`u_xx` we obtain the near formula as
      2\log(4\pi). \end{array}
 
 Note that this time we calculate :math:`\tilde{\phi}` instead of
-:math:`\phi`, i. e. we omit the contribution of the primary simulation
+:math:`\phi`, i.e. we omit the contribution of the primary simulation
 box. This is very convenient as it includes the case of self energy and
 makes :math:`\tilde{\phi}` a smooth function. To obtain :math:`\phi` one
 has to add the :math:`1/r` contribution of the primary box. The self
@@ -136,7 +136,7 @@ argument does not hold.
 
 To obtain the :math:`O(N\log N)` scaling, some algorithm tricks are
 needed, which are not used in MMM1D, MMM2D or ELC and are therefore not
-discussed here. For details, see :cite:`strebel99a`. 
+discussed here. For details, see :cite:`strebel99a`.
 
 .. _MMM2D theory:
 
@@ -191,11 +191,11 @@ The implementation of the near formula is relatively straight forward
 and can be treated as any short ranged force is treated using the link
 cell algorithm, here in the layered variant. The special functions in
 the formula are somewhat demanding, but for the polygamma functions
-Taylor series can be achieved, which are implemented in mmm-common.h.
+Taylor series can be achieved, which are implemented in :file:`mmm-common.h`.
 The Bessel functions are calculated using a Chebychev series.
 
 The treatment of the far formula is algorithmically more complicated.
-For a particle i in layer :math:` S_i`, the formula can product
+For a particle i in layer :math:`S_i`, the formula can product
 decomposed, as in
 
 .. math::
@@ -391,7 +391,7 @@ charge neutral, the additional image layers (those layers above or below
 the original slab system) are charge neutral, too. Now let us consider
 the n-th image layer which has an offset of :math:`n\lambda_z` to the
 original layer. If :math:`n\lambda_z` is large enough, each particle of
-charge q\_j at position :math:`(x_j,y_j,z_j+n\lambda_z)` and its
+charge :math:`q\_j` at position :math:`(x_j,y_j,z_j+n\lambda_z)` and its
 replicas in the xy-plane can be viewed as constituting a homogeneous
 charged sheet of charge density
 :math:`\sigma_j = \frac{q_j}{\lambda_x\lambda_y}`. The potential of such
@@ -419,13 +419,13 @@ distance :math:`n\lambda_z` from the central layer.
 However, in a naive implementation, even large gap sizes will result in
 large errors. This is due to the order of summation for the standard
 Ewald sum, which is spherical, while the above approach orders the cells
-in layers, called slab–wise summation. Smith has shown that by adding to
+in layers, called slab-wise summation. Smith has shown that by adding to
 the Ewald energy the term
 
 .. math:: E_c=2\pi M_z^2 - \frac{2\pi M^2}{3},
 
 where M is the total dipole moment, one obtains the result of a
-slab–wise summation instead of the spherical limit
+slab-wise summation instead of the spherical limit
 :cite:`smith81a`. Although this is a major change in the
 summation order, the difference is a very simple term. In fact, Smith
 shows that changes of the summation order always result in a difference
@@ -476,7 +476,7 @@ estimates is of little importance here, for details see
 One important aspect is that the error estimates are also exponential in
 the non-periodic coordinate. Since the number of close by and far away
 particles is different for particles near the border and in the center
-of the system, the error distribution is highly non–homogeneous. This is
+of the system, the error distribution is highly non-homogeneous. This is
 unproblematic as long as the maximal error is really much smaller than
 the thermal energy. However, one cannot interpret the error simply as an
 additional error source.
@@ -499,11 +499,11 @@ computationally cheap.
     -------------------------------------------
 
     In this chapter, we want to give a more thorough introduction to the
-    MEMD (or “Maggs”) algorithm for the calculation of Coulomb interactions
+    MEMD (or "Maggs") algorithm for the calculation of Coulomb interactions
     that is implemented in |es|. For an even more detailed description, we refer
     to the publications :cite:`maggs02a,pasichnyk04a`. The method is intimately
-    related to the Car–Parrinello approach, while being equivalent to solving
-    Maxwell’s equations with freely adjustable speed of light.
+    related to the Car--Parrinello approach, while being equivalent to solving
+    Maxwell's equations with freely adjustable speed of light.
 
     .. _Equations of motion:
 
@@ -523,7 +523,7 @@ computationally cheap.
          \dot{\vec p}_i & = & - \frac{\partial U}{\partial \vec r_i} + q_i \vec E (\vec r_i)- \frac{\zeta}{m_i} \vec p_i
                                + \vec f_i \\
          \dot{\vec A} & = & - \vec E \\
-         \dot{\vec E} & = & 
+         \dot{\vec E} & = &
          c^2 \vec \nabla \times \left( \vec \nabla \times \vec A \right)
          - \frac{1}{\epsilon_0} \vec j ,\end{aligned}
 
@@ -568,7 +568,7 @@ computationally cheap.
 
     In the implementation of the algorithm we assume that particles with
     masses :math:`m_i` and charges :math:`q_i` live in the continuum
-    (off–lattice approach). The charges are interpolated on the lattice with
+    (off-lattice approach). The charges are interpolated on the lattice with
     grid spacing :math:`a` using a linear interpolation scheme.
 
     .. _Initialization of the algorithm:
@@ -579,8 +579,8 @@ computationally cheap.
     The algorithm as it is implemented only calculates step-wise time updates
     of the exact field solution. Therefore in order to start the simulation
     for the given random distribution of charges we have to calculate the
-    initial electrostatic field, i. e. the exact solution of the
-    electrostatic problem. We find a particular solution of Gauss’ law as
+    initial electrostatic field, i.e. the exact solution of the
+    electrostatic problem. We find a particular solution of Gauss' law as
     the result of the following recursive procedure (see
     Fig. [fig:maggs-initialization]):
 
@@ -611,14 +611,14 @@ computationally cheap.
 
        .. math:: E_x^2=E_x^1+\frac{q_\text{vertex}}{\epsilon_0a^2}
 
-    This scheme is repeated until the fields are completely relaxed (i. e.
+    This scheme is repeated until the fields are completely relaxed (i.e.
     the energy is minimized). During repetition, the spatial dimensions are
     permutated to avoid a drift in one direction.
 
     .. figure:: figures/maggs-initial-scheme.pdf
-       :alt: Recursive solution of Gauss’ law
+       :alt: Recursive solution of Gauss' law
 
-       Recursive solution of Gauss’ law
+       Recursive solution of Gauss' law
 
     .. _Time integrator:
 
@@ -627,7 +627,7 @@ computationally cheap.
 
     For the time discretization we have adopted the elegant solution which
     was found by Rottler and Maggs :cite:`maggs02a` and allows
-    to conserve *both* time–reversibility and phase–space volume
+    to conserve *both* time-reversibility and phase-space volume
     conservation:
 
     #. Update the particle momenta by half a time step.
@@ -666,17 +666,17 @@ computationally cheap.
 
     #. Update the particle momenta by half a time step.
 
-    .. _Self–energy:
+    .. _Self-energy:
 
-    Self–energy
+    Self-energy
     ~~~~~~~~~~~
 
     The interpolation of the charges onto the lattice gives rise to the
     artificial force exerted on the particle by its own field. In order to
-    cure this remedy, the direct subtraction of the self–energy is
+    cure this remedy, the direct subtraction of the self-energy is
     introduced.
 
-    For the interpolated charge cloud the self–energy can be directly
+    For the interpolated charge cloud the self-energy can be directly
     calculated. For the simple cubic lattice in three dimensions the linear
     interpolation will give 8 charges which are placed at the corners of the
     cube with edge length :math:`a` (see Fig. [fig:charge-assignment]).

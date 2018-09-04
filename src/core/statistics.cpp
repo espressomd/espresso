@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -135,39 +135,37 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
     agg_size[i] = 0;
   }
 
-  short_range_loop(Utils::NoOp{},
-                   [&](Particle &p1, Particle &p2, Distance &d) {
-                     auto p1molid = p1.p.mol_id;
-                     auto p2molid = p2.p.mol_id;
-                     if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
-                         ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-                       if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
+  short_range_loop(Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
+    auto p1molid = p1.p.mol_id;
+    auto p2molid = p2.p.mol_id;
+    if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
+        ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
+      if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
 #ifdef ELECTROSTATICS
-                         if (charge && (p1.p.q * p2.p.q >= 0)) {
-                           return;
-                         }
+        if (charge && (p1.p.q * p2.p.q >= 0)) {
+          return;
+        }
 #endif
-                         if (d.dist2 < dist_criteria2) {
-                           if (p1molid > p2molid) {
-                             ind = p1molid * topology.size() + p2molid;
-                           } else {
-                             ind = p2molid * topology.size() + p1molid;
-                           }
-                           if (min_contact > 1) {
-                             contact_num[ind]++;
-                             if (contact_num[ind] >= min_contact) {
-                               merge_aggregate_lists(head_list, agg_id_list,
-                                                     p1molid, p2molid,
-                                                     link_list);
-                             }
-                           } else {
-                             merge_aggregate_lists(head_list, agg_id_list,
-                                                   p1molid, p2molid, link_list);
-                           }
-                         }
-                       }
-                     }
-                   });
+        if (d.dist2 < dist_criteria2) {
+          if (p1molid > p2molid) {
+            ind = p1molid * topology.size() + p2molid;
+          } else {
+            ind = p2molid * topology.size() + p1molid;
+          }
+          if (min_contact > 1) {
+            contact_num[ind]++;
+            if (contact_num[ind] >= min_contact) {
+              merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
+                                    link_list);
+            }
+          } else {
+            merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
+                                  link_list);
+          }
+        }
+      }
+    }
+  });
 
   /* count number of aggregates
      find aggregate size
@@ -713,8 +711,8 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
 }
 
 int calc_cylindrical_average(
-    PartCfg &partCfg, std::vector<double> center_,
-    std::vector<double> direction_, double length, double radius,
+    PartCfg &partCfg, std::vector<double> const &center_,
+    std::vector<double> const &direction_, double length, double radius,
     int bins_axial, int bins_radial, std::vector<int> types,
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution) {
@@ -723,8 +721,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{std::move(center_)};
-  auto direction = Vector3d{std::move(direction_)};
+  auto center = Vector3d{center_};
+  auto direction = Vector3d{direction_};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -796,7 +794,7 @@ int calc_cylindrical_average(
   }
 
   // Now we turn the counts into densities by dividing by one radial
-  // bin (binvolume).  We also divide the velocites by the counts.
+  // bin (binvolume).  We also divide the velocities by the counts.
   double binvolume;
   for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
     for (int index_radial = 0; index_radial < bins_radial; index_radial++) {
@@ -1110,14 +1108,14 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                                int n_non_bonded, int n_coulomb, int n_dipolar,
                                int n_vs, int c_size) {
 
-  int i;
   // Number of doubles to store pressure in
-  int total = c_size * (n_pre + bonded_ia_params.size() + n_non_bonded + n_coulomb +
-                        n_dipolar + n_vs);
+  const int total =
+      c_size * (n_pre + bonded_ia_params.size() + n_non_bonded + n_coulomb +
+                n_dipolar + n_vs + Observable_stat::n_external_field);
 
   // Allocate mem for the double list
   stat->data.resize(total);
-  
+
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
   stat->chunk_size = c_size;
 
@@ -1132,9 +1130,10 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
   stat->coulomb = stat->non_bonded + c_size * n_non_bonded;
   stat->dipolar = stat->coulomb + c_size * n_coulomb;
   stat->virtual_sites = stat->dipolar + c_size * n_dipolar;
+  stat->external_fields = stat->virtual_sites + c_size * n_vs;
 
-  // Set all obseravables to zero
-  for (i = 0; i < total; i++)
+  // Set all observables to zero
+  for (int i = 0; i < total; i++)
     stat->data[i] = 0.0;
 }
 
