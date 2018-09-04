@@ -109,18 +109,26 @@ dtemp = 1000.0
 zoom = 10
 
 visualizer = espressomd.visualization_opengl.openGLLive(system,
-                        window_size=[800, 600],
-                        draw_axis=False,
-                        particle_sizes=[
-                            snake_head_sigma * 0.5, snake_bead_sigma * 0.5,
-                                        cylinder_sigma, bubble_sigma * 0.5, temp_change_radius, temp_change_radius],
-                        particle_type_colors=[[1, 1, 0], [1, 0, 1], [0, 0, 1], [
-                            0, 1, 1], [0, 1, 0], [1, 0, 0], [0.5, 0, 1]],
-                        constraint_type_colors=[[1, 1, 1]],
-                        camera_position=[snake_startpos[0],
-                                         snake_startpos[
-                                             1], system.box_l[2] * zoom],
-                        camera_target=snake_startpos)
+                                                        window_size=[800, 600],
+                                                        draw_axis=False,
+                                                        particle_sizes=[
+                                                        snake_head_sigma *
+                                                            0.5, snake_bead_sigma *
+                                                                0.5,
+                                                        cylinder_sigma, bubble_sigma * 0.5, temp_change_radius, temp_change_radius],
+                                                        particle_type_colors=[[1, 1, 0], [1, 0, 1], [0, 0, 1], [
+                                                                              0, 1, 1], [
+                                                                              0, 1, 0], [
+                                                                              1, 0, 0], [
+                                                                              0.5, 0, 1]],
+                                                        constraint_type_colors=[
+                                                        [1, 1, 1]],
+                                                        camera_position=[
+                                                        snake_startpos[0],
+                                                        snake_startpos[
+                                                        1], system.box_l[
+                                                        2] * zoom],
+                                                        camera_target=snake_startpos)
 
 
 # JOYPAD CONTROL
@@ -484,8 +492,12 @@ def main():
         if has_pygame:
             if joystick_control:
                 pygame.event.get()
-                axis_l = np.array([joystick.get_axis(0), -joystick.get_axis(1)])
-                axis_r = np.array([joystick.get_axis(3), -joystick.get_axis(4)])
+                axis_l = np.array(
+                    [joystick.get_axis(0),
+                     -joystick.get_axis(1)])
+                axis_r = np.array(
+                    [joystick.get_axis(3),
+                     -joystick.get_axis(4)])
 
                 button_A = joystick.get_button(0)
                 button_Start = joystick.get_button(7)

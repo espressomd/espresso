@@ -48,7 +48,8 @@ for i in range(300):
     system.part.add(pos=rpos, type=0, q=qion)
     qion *= -1
 
-system.constraints.add(shape=espressomd.shapes.Wall(dist=0, normal=[0, 0, 1]), particle_type=1)
+system.constraints.add(shape=espressomd.shapes.Wall(
+    dist=0, normal=[0, 0, 1]), particle_type=1)
 system.constraints.add(
     shape=espressomd.shapes.Wall(dist=-box_l, normal=[0, 0, -1]), particle_type=1)
 

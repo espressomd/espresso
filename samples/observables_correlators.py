@@ -49,12 +49,14 @@ print(p.calculate())
 
 # Instance a correlator correlating the p observable with itself,
 # calculating the mean squared displacement (msd).
-c = espressomd.accumulators.Correlator(tau_lin=16, tau_max=1000, delta_N=1, obs1=p,
-               corr_operation="square_distance_componentwise", compress1="discard1")
+c = espressomd.accumulators.Correlator(
+    tau_lin=16, tau_max=1000, delta_N=1, obs1=p,
+                                      corr_operation="square_distance_componentwise", compress1="discard1")
 # Instance a correlator calculating the FCS autocorrelation function from
 # particle positions, using the symmetric focal spot with wx=wy=wz=10
 # (sigma)
-fcs = espressomd.accumulators.Correlator(tau_lin=16, tau_max=10000, delta_N=10, obs1=p,
+fcs = espressomd.accumulators.Correlator(
+    tau_lin=16, tau_max=10000, delta_N=10, obs1=p,
                  corr_operation="fcs_acf", args=[10, 10, 10], compress1="discard2")
 # Ask the correlator for its parameters
 print(c.get_params())

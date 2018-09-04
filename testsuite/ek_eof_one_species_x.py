@@ -32,7 +32,9 @@ params_x = dict([
     ('calculated_pressure_yz', 0.0)
 ])
 
+
 class eof_x(ek_eof_one_species):
+
     def test(self):
         self.run_test(params_x)
 

@@ -36,17 +36,20 @@ system.time_step = 0.01
 system.cell_system.skin = 0.2
 
 visualizer = espressomd.visualization_opengl.openGLLive(system,
-                        LB_draw_boundaries=True,
-                        LB_draw_velocity_plane=True,
-                        LB_plane_dist=8,
-                        LB_plane_axis=1,
-                        LB_vel_scale=1e2,
-                        LB_plane_ngrid=15,
-                        camera_position=[8, 16, 50],
-                        velocity_arrows=True,
-                        velocity_arrows_type_scale=[20.],
-                        velocity_arrows_type_radii=[0.1],
-                        velocity_arrows_type_colors=[[0, 1, 0]])
+                                                        LB_draw_boundaries=True,
+                                                        LB_draw_velocity_plane=True,
+                                                        LB_plane_dist=8,
+                                                        LB_plane_axis=1,
+                                                        LB_vel_scale=1e2,
+                                                        LB_plane_ngrid=15,
+                                                        camera_position=[
+                                                        8, 16, 50],
+                                                        velocity_arrows=True,
+                                                        velocity_arrows_type_scale=[
+                                                        20.],
+                                                        velocity_arrows_type_radii=[
+                                                        0.1],
+                                                        velocity_arrows_type_colors=[[0, 1, 0]])
 
 lbf = lb.LBFluid(agrid=1.0, fric=1.0, dens=1.0,
                  visc=1.0, tau=0.1, ext_force_density=[0, 0.003, 0])

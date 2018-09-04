@@ -582,7 +582,9 @@ def gaussian_force(r, eps, sig, cutoff):
         f = eps * r / sig**2 * np.exp(-np.power(r / sig, 2) / 2)
     return f
 
+
 class DynamicDict(dict):
+
     def __getitem__(self, key):
         value = super(DynamicDict, self).__getitem__(key)
         return eval(value, self) if isinstance(value, str) else value

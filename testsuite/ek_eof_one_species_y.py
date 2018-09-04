@@ -34,6 +34,7 @@ params_y = dict([
 
 
 class eof_y(ek_eof_one_species):
+
     def test(self):
         self.run_test(params_y)
 

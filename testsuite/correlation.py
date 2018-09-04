@@ -44,8 +44,9 @@ class CorrelatorTest(ut.TestCase):
         s.part.add(id=0, pos=(0, 0, 0), v=(1, 2, 3))
 
         O = espressomd.observables.ParticlePositions(ids=(0,))
-        C2 = espressomd.accumulators.Correlator(obs1=O, tau_lin=10, tau_max=10.0, delta_N=1,
-                        corr_operation="square_distance_componentwise")
+        C2 = espressomd.accumulators.Correlator(
+            obs1=O, tau_lin=10, tau_max=10.0, delta_N=1,
+                                               corr_operation="square_distance_componentwise")
 
         s.integrator.run(1000)
         s.auto_update_accumulators.add(C2)

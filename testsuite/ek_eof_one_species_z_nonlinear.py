@@ -30,6 +30,7 @@ import ek_common
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field inside outside the slit
 
+
 @ut.skipIf(not espressomd.has_features(["ELECTROKINETICS", "EK_BOUNDARIES"]),
            "Features not available, skipping test!")
 class ek_eof_one_species_x(ut.TestCase):
@@ -63,7 +64,6 @@ class ek_eof_one_species_x(ut.TestCase):
 
         system.box_l = [box_x, box_y, box_z]
 
-
         # Set the simulation parameters
         system.time_step = dt
         system.cell_system.skin = 0.1
@@ -94,7 +94,6 @@ class ek_eof_one_species_x(ut.TestCase):
                 0,
                 force])
         ek.add_species(counterions)
-
 
         # Set up the walls confining the fluid and carrying charge
         ek_wall1 = espressomd.ekboundaries.EKBoundary(
@@ -174,7 +173,8 @@ class ek_eof_one_species_x(ut.TestCase):
                 # density
                 measured_density = counterions[int(
                     box_x / (2 * agrid)), i, int(box_z / (2 * agrid))].density
-                calculated_density = ek_common.density(position, xi, bjerrum_length)
+                calculated_density = ek_common.density(
+                    position, xi, bjerrum_length)
                 density_difference = abs(measured_density - calculated_density)
                 total_density_difference = total_density_difference + \
                     density_difference

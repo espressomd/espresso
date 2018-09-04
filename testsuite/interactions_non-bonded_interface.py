@@ -24,6 +24,7 @@ import numpy as np
 import espressomd
 import espressomd.interactions
 
+
 class Non_bonded_interactionsTests(ut.TestCase):
     system = espressomd.System(box_l=[20.0, 20.0, 20.0])
 

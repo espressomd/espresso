@@ -117,7 +117,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         self.system.cell_system.node_grid = buf_node_grid
         self.system.periodicity = [1, 1, 1]
         p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=self.acc,
-                  mesh=[16, 16, 24], cao=6)
+                                            mesh=[16, 16, 24], cao=6)
         self.system.actors.add(p3m)
 
         elc = electrostatic_extensions.ELC(**elc_param_sets["inert"])

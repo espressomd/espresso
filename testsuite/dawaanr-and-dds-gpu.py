@@ -27,10 +27,11 @@ import espressomd.magnetostatics
 import espressomd.analyze
 import tests_common
 
+
 @ut.skipIf(not espressomd.has_features(["DIPOLES",
-                             "CUDA",
-                             "PARTIAL_PERIODIC",
-                             "ROTATION"]),
+                                        "CUDA",
+                                        "PARTIAL_PERIODIC",
+                                        "ROTATION"]),
            "Features not available, skipping test!")
 class DDSGPUTest(ut.TestCase):
     # Handle for espresso system
@@ -89,7 +90,8 @@ class DDSGPUTest(ut.TestCase):
             # and torque
             self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
-            dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=pf_dawaanr)
+            dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(
+                prefactor=pf_dawaanr)
             self.es.actors.add(dds_cpu)
             self.es.integrator.run(steps=0, recalc_forces=True)
 
@@ -106,7 +108,8 @@ class DDSGPUTest(ut.TestCase):
                 self.es.actors.remove(self.es.actors.active_actors[i])
 
             self.es.integrator.run(steps=0, recalc_forces=True)
-            dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=pf_dds_gpu)
+            dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(
+                prefactor=pf_dds_gpu)
             self.es.actors.add(dds_gpu)
             self.es.integrator.run(steps=0, recalc_forces=True)
 

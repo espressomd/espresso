@@ -27,6 +27,7 @@ import espressomd.magnetostatics
 import espressomd.analyze
 import tests_common
 
+
 def stopAll(system):
     system.part[:].v = np.zeros(3)
     system.part[:].omega_body = np.zeros(3)
@@ -93,7 +94,8 @@ class BHGPUTest(ut.TestCase):
             # and torque
             self.system.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
-            dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=pf_dawaanr)
+            dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(
+                prefactor=pf_dawaanr)
             self.system.actors.add(dds_cpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
@@ -103,7 +105,8 @@ class BHGPUTest(ut.TestCase):
             for i in range(n):
                 dawaanr_f.append(self.system.part[i].f)
                 dawaanr_t.append(self.system.part[i].torque_lab)
-            dawaanr_e = espressomd.analyze.Analysis(self.system).energy()["total"]
+            dawaanr_e = espressomd.analyze.Analysis(
+                self.system).energy()["total"]
 
             del dds_cpu
             self.system.actors.clear()
@@ -120,7 +123,8 @@ class BHGPUTest(ut.TestCase):
             for i in range(n):
                 bhgpu_f.append(self.system.part[i].f)
                 bhgpu_t.append(self.system.part[i].torque_lab)
-            bhgpu_e = espressomd.analyze.Analysis(self.system).energy()["total"]
+            bhgpu_e = espressomd.analyze.Analysis(
+                self.system).energy()["total"]
 
             # compare
             for i in range(n):

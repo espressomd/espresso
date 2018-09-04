@@ -26,6 +26,7 @@ from numpy.random import random, seed
 import espressomd
 import espressomd.magnetostatics
 
+
 @ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT"]),
            "Features not available, skipping test!")
 class BHGPUPerfTest(ut.TestCase):
@@ -98,7 +99,8 @@ class BHGPUPerfTest(ut.TestCase):
             # and torque
             self.system.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
-            dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=pf_dds_gpu)
+            dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(
+                prefactor=pf_dds_gpu)
             self.system.actors.add(dds_gpu)
             t1 = tm.time()
             self.system.integrator.run(steps=0, recalc_forces=True)

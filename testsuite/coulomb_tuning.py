@@ -77,8 +77,9 @@ class CoulombCloudWallTune(ut.TestCase):
         def test_p3m(self):
             # We have to add some tolerance here, because the reference
             # system is not homogeneous
-            self.system.actors.add(espressomd.electrostatics.P3M(prefactor=1., accuracy=5e-4,
-                                       tune=True))
+            self.system.actors.add(
+                espressomd.electrostatics.P3M(prefactor=1., accuracy=5e-4,
+                                              tune=True))
             self.system.integrator.run(0)
             self.compare("p3m")
 
@@ -86,8 +87,9 @@ class CoulombCloudWallTune(ut.TestCase):
         def test_p3m_gpu(self):
             # We have to add some tolerance here, because the reference
             # system is not homogeneous
-            self.system.actors.add(espressomd.electrostatics.P3MGPU(prefactor=1., accuracy=5e-4,
-                                          tune=True))
+            self.system.actors.add(
+                espressomd.electrostatics.P3MGPU(prefactor=1., accuracy=5e-4,
+                                                 tune=True))
             self.system.integrator.run(0)
             self.compare("p3m_gpu")
 

@@ -76,7 +76,7 @@ class InteractionsBondedTest(ut.TestCase):
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
                 tests_common.harmonic_force(scalar_r=(i + 1) * self.step_width,
-                               k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
+                                            k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)
@@ -116,7 +116,7 @@ class InteractionsBondedTest(ut.TestCase):
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
                 tests_common.fene_force(scalar_r=(i + 1) * self.step_width,
-                           k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
+                                        k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)

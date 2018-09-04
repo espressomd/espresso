@@ -64,13 +64,11 @@ class ek_eof_one_species_x(ut.TestCase):
 
         system.box_l = [box_x, box_y, box_z]
 
-
         # Set the simulation parameters
         system.time_step = dt
         system.cell_system.skin = 0.1
         system.thermostat.turn_off()
         integration_length = 1500
-
 
         # Set up the charged and neutral species
         density_water = 26.15
@@ -96,7 +94,6 @@ class ek_eof_one_species_x(ut.TestCase):
                 force,
                 0])
         ek.add_species(counterions)
-
 
         # Set up the walls confining the fluid and carrying charge
         ek_wall1 = espressomd.ekboundaries.EKBoundary(
@@ -175,7 +172,8 @@ class ek_eof_one_species_x(ut.TestCase):
                 # density
                 measured_density = counterions[i, int(
                     box_y / (2 * agrid)), int(box_z / (2 * agrid))].density
-                calculated_density = ek_common.density(position, xi, bjerrum_length)
+                calculated_density = ek_common.density(
+                    position, xi, bjerrum_length)
                 density_difference = abs(measured_density - calculated_density)
                 total_density_difference = total_density_difference + \
                     density_difference
@@ -251,7 +249,6 @@ class ek_eof_one_species_x(ut.TestCase):
                 total_pressure_difference_xz = total_pressure_difference_xz + \
                     pressure_difference_xz
 
-                
         total_density_difference = agrid * total_density_difference / width
         total_velocity_difference = agrid * total_velocity_difference / width
         total_pressure_difference_xx = agrid * \

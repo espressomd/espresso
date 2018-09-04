@@ -51,6 +51,7 @@ IF LB_GPU or LB:
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
 
         """
+
         def __reduce__(self):
             return _construct, (self.__class__, self._params), None
 
@@ -311,7 +312,7 @@ IF LB_GPU:
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_lbfluid_get_interpolated_velocity_at_positions( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            lb_lbfluid_get_interpolated_velocity_at_positions(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities
 
 IF LB or LB_GPU:

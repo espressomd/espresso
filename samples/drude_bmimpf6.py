@@ -83,16 +83,17 @@ if args.visu:
     c_com = [0, 0, 0, 1]
     c_cat = [0, 1, 0, 1]
     visualizer = espressomd.visualization_opengl.openGLLive(system,
-                            background_color=[1, 1, 1],
-                            drag_enabled=True,
-                            ext_force_arrows=True,
-                            drag_force=10,
-                            draw_bonds=False,
-                            quality_particles=32,
-                            particle_coloring='type',
-                            particle_type_colors=[
-                            c_ani, c_cat, c_cat, c_cat, c_com, c_dru, c_dru, c_dru, c_dru],
-                            particle_sizes=[0.5 * 5.06, 0.5 * 4.38, 0.5 * 3.41, 0.5 * 5.04, 0.1, d_scale * 5.06, d_scale * 4.38, d_scale * 3.41, d_scale * 5.04])
+                                                            background_color=[
+                                                            1, 1, 1],
+                                                            drag_enabled=True,
+                                                            ext_force_arrows=True,
+                                                            drag_force=10,
+                                                            draw_bonds=False,
+                                                            quality_particles=32,
+                                                            particle_coloring='type',
+                                                            particle_type_colors=[
+                                                            c_ani, c_cat, c_cat, c_cat, c_com, c_dru, c_dru, c_dru, c_dru],
+                                                            particle_sizes=[0.5 * 5.06, 0.5 * 4.38, 0.5 * 3.41, 0.5 * 5.04, 0.1, d_scale * 5.06, d_scale * 4.38, d_scale * 3.41, d_scale * 5.04])
 
 args.path = os.path.join(args.path, '')
 if not os.path.exists(args.path):

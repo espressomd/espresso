@@ -22,6 +22,7 @@ import espressomd
 import espressomd.electrostatics
 from espressomd import electrostatic_extensions
 
+
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
 class ELC_vs_MMM2D_neutral(ut.TestCase):
@@ -108,7 +109,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         self.system.cell_system.node_grid = buf_node_grid
         self.system.periodicity = [1, 1, 1]
         p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=self.acc,
-                  mesh=[20, 20, 32], cao=7, check_neutrality=False)
+                                            mesh=[20, 20, 32], cao=7, check_neutrality=False)
         self.system.actors.add(p3m)
 
         elc = electrostatic_extensions.ELC(**elc_param_sets["inert"])

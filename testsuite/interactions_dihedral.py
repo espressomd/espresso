@@ -28,6 +28,7 @@ import tests_common
 # I also found that as the dihedral angle approaches to 0, the simulation
 # values deviate from the analytic values by roughly 10%.
 
+
 def rotate_vector(v, k, phi):
     """Rotates vector v around unit vector k by angle phi.
     Uses Rodrigues' rotation formula."""
@@ -35,11 +36,13 @@ def rotate_vector(v, k, phi):
         np.sin(phi) + k * np.dot(k, v) * (1.0 - np.cos(phi))
     return vrot
 
+
 def dihedral_potential(k, phi, n, phase):
     if phi == -1:
         return 0
     else:
         return k * (1 - np.cos(n * phi - phase))
+
 
 def dihedral_force(k, n, phase, p1, p2, p3, p4):
     v12 = p2 - p1
@@ -72,6 +75,7 @@ def dihedral_force(k, n, phase, p1, p2, p3, p4):
         force3 = coeff * (v12Xf1 - v23Xf4 - v34Xf4)
         return force1, force2, force3
 
+
 class InteractionsBondedTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(seed=system.seed)
@@ -97,7 +101,6 @@ class InteractionsBondedTest(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-
 
     @ut.skipIf(not espressomd.has_features(["BOND_ANGLE"]),
                "Features not available, skipping test!")
@@ -157,10 +160,10 @@ class InteractionsBondedTest(ut.TestCase):
             # Calculate forces
             f2_sim = self.system.part[1].f
             _, f2_ref, _ = dihedral_force(dh_k, dh_n, dh_phase,
-                                               self.system.part[0].pos,
-                                               self.system.part[1].pos,
-                                               self.system.part[2].pos,
-                                               self.system.part[3].pos)
+                                          self.system.part[0].pos,
+                                          self.system.part[1].pos,
+                                          self.system.part[2].pos,
+                                          self.system.part[3].pos)
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)
