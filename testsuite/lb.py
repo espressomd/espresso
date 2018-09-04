@@ -57,10 +57,7 @@ class TestLB(object):
     if espressomd.has_features("SHANCHEN"):
         params.update({"dens": 2 * [params["dens"]]})
 
-    if espressomd.has_features("ROTATION"):
-        dof = 6.
-    else:
-        dof = 3.
+    dof = 3.
 
     system.box_l = [
         params['box_l'],
