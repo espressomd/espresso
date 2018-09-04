@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -60,7 +60,7 @@ CellStructure cell_structure = {/* type */ CELL_STRUCTURE_NONEYET,
 
 double max_range = 0.0;
 
-/** On of Cells::Resort, annouces the level of resort needed.
+/** On of Cells::Resort, announces the level of resort needed.
  */
 unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
@@ -151,7 +151,7 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 }
 
 /************************************************************/
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -174,8 +174,9 @@ static void topology_release(int cs) {
     layered_topology_release();
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an "
-                    "unknown way (%d)\n",
+    fprintf(stderr,
+            "INTERNAL ERROR: attempting to sort the particles in an "
+            "unknown way (%d)\n",
             cs);
     errexit();
   }
@@ -203,8 +204,9 @@ void topology_init(int cs, CellPList *local) {
     layered_topology_init(local);
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an "
-                    "unknown way (%d)\n",
+    fprintf(stderr,
+            "INTERNAL ERROR: attempting to sort the particles in an "
+            "unknown way (%d)\n",
             cs);
     errexit();
   }
@@ -396,4 +398,16 @@ void cells_update_ghosts() {
   } else
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
+}
+
+Cell *find_current_cell(const Particle &p) {
+  auto c = cell_structure.position_to_cell(p.r.p.data());
+  if (c) {
+    return c;
+  } else if (!p.l.ghost) {
+    // Old pos must lie within the cell system
+    return cell_structure.position_to_cell(p.l.p_old.data());
+  } else {
+    return nullptr;
+  }
 }

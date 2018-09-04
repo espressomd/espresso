@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -27,10 +27,9 @@
 #ifdef BUCKINGHAM
 #include "communication.hpp"
 
-int buckingham_set_params(int part_type_a, int part_type_b,
-			  double A, double B, double C, double D, double cut,
-			  double discont, double shift)
-{
+int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
+                          double C, double D, double cut, double discont,
+                          double shift) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
   if (!data)

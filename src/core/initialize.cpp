@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -108,9 +108,6 @@ void on_program_start() {
   if (this_node == 0) {
     //   lb_pre_init_gpu();
   }
-#endif
-#ifdef LB
-  lb_pre_init();
 #endif
 
 #ifdef SWIMMER_REACTIONS
@@ -388,7 +385,6 @@ void on_constraint_change() {
 void on_lbboundary_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
   invalidate_obs();
-  
 
 #ifdef LB_BOUNDARIES
   if (lattice_switch & LATTICE_LB) {
@@ -504,7 +500,7 @@ void on_cell_structure_change() {
 /* Now give methods a chance to react to the change in cell
    structure.  Most ES methods need to reinitialize, as they depend
    on skin, node grid and so on. Only for a change in box length we
-   have separate, faster methods, as this might happend frequently
+   have separate, faster methods, as this might happen frequently
    in a NpT simulation. */
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -588,6 +584,7 @@ void on_parameter_change(int field) {
     break;
   case FIELD_SKIN:
     cells_on_geometry_change(0);
+    break;
   case FIELD_PERIODIC:
 #ifdef SCAFACOS
 #ifdef ELECTROSTATICS
@@ -611,6 +608,7 @@ void on_parameter_change(int field) {
   case FIELD_MINNUMCELLS:
   case FIELD_MAXNUMCELLS:
     cells_re_init(CELL_STRUCTURE_CURRENT);
+    break;
   case FIELD_TEMPERATURE:
     on_temperature_change();
     reinit_thermo = 1;
@@ -728,7 +726,7 @@ void on_ghost_flags_change() {
     ghosts_have_v = 1;
 #endif
 #ifdef DPD
-  // maybe we have to add a new global to differ between compile in and acctual
+  // maybe we have to add a new global to differ between compile in and actual
   // use.
   if (thermo_switch & THERMO_DPD)
     ghosts_have_v = 1;

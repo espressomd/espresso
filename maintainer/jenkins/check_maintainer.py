@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from __future__ import print_function
-import sys, os, subprocess
+import sys
+import os
+import subprocess
 
 # Test for precious files in commit
 current_commit = os.environ["GIT_COMMIT"]
@@ -17,5 +19,5 @@ files = gitout.split()
 warnings = []
 for fname in files:
     if fname.startswith('maintainer/') or \
-          fname == "src/myconfig-default.hpp":
+            fname == "src/myconfig-default.hpp":
     print("check_maintainer.py: Precious file was modified: {}".format(fname))

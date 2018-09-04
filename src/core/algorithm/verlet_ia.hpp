@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef CORE_ALGORITHM_VERLET_IA_HPP
 #define CORE_ALGORITHM_VERLET_IA_HPP
 
@@ -32,7 +50,7 @@ void update_and_kernel(CellIterator first, CellIterator last,
       }
 
       /* Pairs with neighbors */
-      for (auto &neighbor : first->neighbors()) {
+      for (auto &neighbor : first->neighbors().red()) {
         for (int j = 0; j < neighbor->n; j++) {
           auto &p2 = neighbor->part[j];
           auto dist = distance_function(p1, p2);
@@ -62,7 +80,7 @@ void kernel(CellIterator first, CellIterator last,
     }
   }
 }
-}
+} // namespace detail
 
 /**
  * @brief Iterates over all particles in the cell range
@@ -88,6 +106,6 @@ void verlet_ia(CellIterator first, CellIterator last,
                    std::forward<DistanceFunction>(distance_function));
   }
 }
-}
+} // namespace Algorithm
 
 #endif

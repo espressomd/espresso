@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+   Copyright (C) 2010-2018 The ESPResSo project
 
    This file is part of ESPResSo.
 
@@ -189,16 +189,14 @@ template <int cao_value, typename T> __device__ T caf(int i, T x) {
     case 0:
       return (1.0 +
               x * (-12.0 +
-                   x * (60.0 +
-                        x * (-160.0 +
-                             x * (240.0 + x * (-192.0 + x * 64.0)))))) /
+                   x * (60.0 + x * (-160.0 +
+                                    x * (240.0 + x * (-192.0 + x * 64.0)))))) /
              46080.0;
     case 1:
-      return (361.0 +
-              x * (-1416.0 +
-                   x * (2220.0 +
-                        x * (-1600.0 +
-                             x * (240.0 + x * (384.0 - x * 192.0)))))) /
+      return (361.0 + x * (-1416.0 +
+                           x * (2220.0 +
+                                x * (-1600.0 +
+                                     x * (240.0 + x * (384.0 - x * 192.0)))))) /
              23040.0;
     case 2:
       return (10543.0 +
@@ -367,13 +365,13 @@ __device__ inline int linear_index_r(P3MGpuData const &p, int i, int j, int k) {
 }
 
 __device__ inline int linear_index_k(P3MGpuData const &p, int i, int j, int k) {
-  return p.mesh[1] * (p.mesh[2] / 2 + 1) * i +
-                           (p.mesh[2] / 2 + 1) * j + k;
+  return p.mesh[1] * (p.mesh[2] / 2 + 1) * i + (p.mesh[2] / 2 + 1) * j + k;
 }
-}
+} // namespace
 
 __global__ void apply_diff_op(const P3MGpuData p) {
-  const int linear_index = linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
+  const int linear_index =
+      linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
 
   const int nx =
       (blockIdx.x > p.mesh[0] / 2) ? blockIdx.x - p.mesh[0] : blockIdx.x;
@@ -406,7 +404,8 @@ __device__ inline int wrap_index(const int ind, const int mesh) {
 }
 
 __global__ void apply_influence_function(const P3MGpuData p) {
-  const int linear_index = linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
+  const int linear_index =
+      linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
 
   p.charge_mesh[linear_index].x *= p.G_hat[linear_index];
   p.charge_mesh[linear_index].y *= p.G_hat[linear_index];
@@ -506,34 +505,29 @@ void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
     assign_charge_kernel<2, false><<<grid, block>>>(pdata, p, parts_per_block);
     break;
   case 3:
-    assign_charge_kernel<
-        3,
-        true><<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
-        pdata, p, parts_per_block);
+    assign_charge_kernel<3, true>
+        <<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
+            pdata, p, parts_per_block);
     break;
   case 4:
-    assign_charge_kernel<
-        4,
-        true><<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
-        pdata, p, parts_per_block);
+    assign_charge_kernel<4, true>
+        <<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
+            pdata, p, parts_per_block);
     break;
   case 5:
-    assign_charge_kernel<
-        5,
-        true><<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
-        pdata, p, parts_per_block);
+    assign_charge_kernel<5, true>
+        <<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
+            pdata, p, parts_per_block);
     break;
   case 6:
-    assign_charge_kernel<
-        6,
-        true><<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
-        pdata, p, parts_per_block);
+    assign_charge_kernel<6, true>
+        <<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
+            pdata, p, parts_per_block);
     break;
   case 7:
-    assign_charge_kernel<
-        7,
-        true><<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
-        pdata, p, parts_per_block);
+    assign_charge_kernel<7, true>
+        <<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
+            pdata, p, parts_per_block);
     break;
   default:
     break;
@@ -648,29 +642,29 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
         pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 3:
-    assign_forces_kernel<
-        3, true><<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
-        pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    assign_forces_kernel<3, true>
+        <<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
+            pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 4:
-    assign_forces_kernel<
-        4, true><<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
-        pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    assign_forces_kernel<4, true>
+        <<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
+            pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 5:
-    assign_forces_kernel<
-        5, true><<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
-        pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    assign_forces_kernel<5, true>
+        <<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
+            pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 6:
-    assign_forces_kernel<
-        6, true><<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
-        pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    assign_forces_kernel<6, true>
+        <<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
+            pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 7:
-    assign_forces_kernel<
-        7, true><<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
-        pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    assign_forces_kernel<7, true>
+        <<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
+            pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   default:
     break;

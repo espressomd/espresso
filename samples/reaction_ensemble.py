@@ -1,5 +1,9 @@
+"""
+This sample simulates the reaction ensemble. It also illustrates how the constant pH method can be used.
+"""
+
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,7 +27,6 @@ import espressomd
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
-from espressomd.interactions import *
 from espressomd import reaction_ensemble
 
 
@@ -33,7 +36,7 @@ box_l = 35
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
@@ -46,7 +49,7 @@ system.cell_system.max_num_cells = 2744
 #############################################################
 #  Setup System                                             #
 #############################################################
-mode="reaction_ensemble"
+mode = "reaction_ensemble"
 #mode="constant_pH_ensemble"
 
 # Particle setup
@@ -63,14 +66,15 @@ for i in range(N0):
 for i in range(N0, 2 * N0):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=2)
 
-RE=None
-if(mode=="reaction_ensemble"):
+RE = None
+if(mode == "reaction_ensemble"):
     RE = reaction_ensemble.ReactionEnsemble(temperature=1, exclusion_radius=1)
 elif(mode == "constant_pH_ensemble"):
-    RE = reaction_ensemble.ConstantpHEnsemble(temperature=1, exclusion_radius=1)
-    RE.constant_pH=2
+    RE = reaction_ensemble.ConstantpHEnsemble(
+        temperature=1, exclusion_radius=1)
+    RE.constant_pH = 2
 RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
-       1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
+    1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 

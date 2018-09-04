@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -38,11 +38,16 @@
 #ifndef LBBOUNDARIES_H
 #define LBBOUNDARIES_H
 
-#include "utils.hpp"
 #include "lbboundaries/LBBoundary.hpp"
+#include "utils.hpp"
 
+#include "utils/Span.hpp"
+
+#include <array>
 
 namespace LBBoundaries {
+using LB_Fluid = std::array<Utils::Span<double>, 19>;
+
 extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 /*@}*/
@@ -52,12 +57,13 @@ extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
  *  and marks them with a corresponding flag.
  */
 void lb_init_boundaries();
-void lbboundary_mindist_position(const Vector3d& pos, double *mindist,
+void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
                                  double distvec[3], int *no);
 
 int lbboundary_get_force(int no, double *f);
 
-
+void add(const std::shared_ptr<LBBoundary> &);
+void remove(const std::shared_ptr<LBBoundary> &);
 
 #ifdef LB_BOUNDARIES
 /** Bounce back boundary conditions.
@@ -67,11 +73,10 @@ int lbboundary_get_force(int no, double *f);
  *
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  */
-void lb_bounce_back();
+void lb_bounce_back(LB_Fluid &lbfluid);
 
 #endif /* LB_BOUNDARIES */
 
-
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
-}
+} // namespace LBBoundaries
 #endif /* LB_BOUNDARIES_H */

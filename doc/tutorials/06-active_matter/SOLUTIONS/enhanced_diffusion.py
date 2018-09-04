@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010-2017 The ESPResSo project                                 #
+# Copyright (C) 2010-2018 The ESPResSo project                                 #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -21,7 +21,7 @@
 #                                                                              #
 #                  Active Matter: Enhanced Diffusion Tutorial                  #
 #                                                                              #
-################################################################################
+##########################################################################
 
 from __future__ import print_function
 
@@ -30,12 +30,13 @@ import os
 import sys
 import time
 
+import espressomd
 from espressomd import assert_features
 from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
-from espressomd.correlators import Correlator
+from espressomd.accumulators import Correlator
 
-
-assert_features(["ENGINE","ROTATION"])
+required_features = ["ENGINE", "ROTATION"]
+assert_features(required_features)
 
 # create an output folder
 
@@ -45,21 +46,21 @@ try:
 except:
     print("INFO: Directory \"{}\" exists".format(outdir))
 
-################################################################################
+##########################################################################
 
 # Read in the active velocity from the command prompt
 
 if len(sys.argv) != 2:
-    print("Usage:",sys.argv[0],"<vel> (0 <= vel < 10.0)")
+    print("Usage:", sys.argv[0], "<vel> (0 <= vel < 10.0)")
     exit()
 
 vel = float(sys.argv[1])
 
 # Set the basic simulation parameters
 
-sampsteps  = 5000
+sampsteps = 5000
 samplength = 1000
-tstep      = 0.01
+tstep = 0.01
 
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.cell_system.skin = 0.3
@@ -71,12 +72,12 @@ system.time_step = tstep
 # several times, which is accomplished by this loop. Do not increase
 # this number too much, as it will slow down the simulation.
 #
-################################################################################
+##########################################################################
 
 for run in range(5):
     # Set up a random seed (a new one for each run)
 
-    system.seed = np.random.randint(0,2**31-1)
+    system.seed = np.random.randint(0, 2**31 - 1)
 
     # Use the Langevin thermostat (no hydrodynamics)
 
@@ -84,55 +85,57 @@ for run in range(5):
 
     # Place a single active particle (that can rotate freely! rotation=[1,1,1])
 
-    system.part.add(pos=[5.0, 5.0, 5.0],swimming={ 'v_swim' : vel },rotation=[1,1,1])
+    system.part.add(pos=[5.0, 5.0, 5.0], swimming={
+                    'v_swim': vel}, rotation=[1, 1, 1])
 
     # Initialize the mean squared displacement (MSD) correlator
 
-    tmax = tstep*sampsteps
+    tmax = tstep * sampsteps
 
     pos_id = ParticlePositions(ids=[0])
-    msd    = Correlator(obs1=pos_id,
-                        corr_operation="square_distance_componentwise",
-                        dt=tstep,
-                        tau_max=tmax,
-                        tau_lin=16)
-    system.auto_update_correlators.add(msd)
+    msd = Correlator(obs1=pos_id,
+                     corr_operation="square_distance_componentwise",
+                     delta_N=1,
+                     tau_max=tmax,
+                     tau_lin=16)
+    system.auto_update_accumulators.add(msd)
 
     # Initialize the velocity auto-correlation function (VACF) correlator
 
     vel_id = ParticleVelocities(ids=[0])
-    vacf   = Correlator(obs1=vel_id,
-                        corr_operation="scalar_product",
-                        dt=tstep,
-                        tau_max=tmax,
-                        tau_lin=16)
-    system.auto_update_correlators.add(vacf)
+    vacf = Correlator(obs1=vel_id,
+                      corr_operation="scalar_product",
+                      delta_N=1,
+                      tau_max=tmax,
+                      tau_lin=16)
+    system.auto_update_accumulators.add(vacf)
 
-    # Initialize the angular velocity auto-correlation function (AVACF) correlator
+    # Initialize the angular velocity auto-correlation function (AVACF)
+    # correlator
 
     ang_id = ParticleAngularVelocities(ids=[0])
-    avacf  = Correlator(obs1=ang_id,
-                        corr_operation="scalar_product",
-                        dt=tstep,
-                        tau_max=tmax,
-                        tau_lin=16)
-    system.auto_update_correlators.add(avacf)
+    avacf = Correlator(obs1=ang_id,
+                       corr_operation="scalar_product",
+                       delta_N=1,
+                       tau_max=tmax,
+                       tau_lin=16)
+    system.auto_update_accumulators.add(avacf)
 
     # Integrate 5,000,000 steps. This can be done in one go as well.
 
     for i in range(sampsteps):
         system.integrator.run(samplength)
 
-    # Finalize the correlators and write to disk
+    # Finalize the accumulators and write to disk
 
-    system.auto_update_correlators.remove(msd)
+    system.auto_update_accumulators.remove(msd)
     msd.finalize()
-    np.savetxt("{}/msd_{}_{}.dat".format(outdir,vel,run),msd.result())
+    np.savetxt("{}/msd_{}_{}.dat".format(outdir, vel, run), msd.result())
 
-    system.auto_update_correlators.remove(vacf)
+    system.auto_update_accumulators.remove(vacf)
     vacf.finalize()
-    np.savetxt("{}/vacf_{}_{}.dat".format(outdir,vel,run),vacf.result())
+    np.savetxt("{}/vacf_{}_{}.dat".format(outdir, vel, run), vacf.result())
 
-    system.auto_update_correlators.remove(avacf)
+    system.auto_update_accumulators.remove(avacf)
     avacf.finalize()
-    np.savetxt("{}/avacf_{}_{}.dat".format(outdir,vel,run),avacf.result())
+    np.savetxt("{}/avacf_{}_{}.dat".format(outdir, vel, run), avacf.result())

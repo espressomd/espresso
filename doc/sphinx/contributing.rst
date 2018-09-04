@@ -15,7 +15,7 @@ information about the following topics there:
 
 -  Obtaining development version of
 
--  Archives of both developers’ and users’ mailing lists
+-  Archives of both developers' and users' mailing lists
 
 -  Registering to mailing lists
 
@@ -69,7 +69,7 @@ It is also generally a good idea to contact the mailing lists before you
 start major coding projects. It might be that someone else is already
 working on the problem or has a solution at hand.
 
-You find more detailed information on our developement processes in the
+You find more detailed information on our development processes in the
 :ref:`Developers guide`.
 
 .. _github: https://github.com/espressomd/espresso/blob/python/CONTRIBUTING.md
@@ -86,5 +86,7 @@ contribute to the guide and have others benefit from your knowledge.
 For this, you should also checkout the development version as described
 on the homepage. You can then build the documentation by typing
 
-make sphinx
+.. code-block:: bash
+
+    make sphinx
 

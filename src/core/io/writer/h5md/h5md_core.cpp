@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -19,9 +19,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <vector>
 #include "h5md_core.hpp"
 #include "core/interaction_data.hpp"
+#include <vector>
 
 namespace Writer {
 namespace H5md {
@@ -34,7 +34,7 @@ static void backup_file(const std::string &from, const std::string &to) {
     /*
      * If the file itself *and* a backup file exists something must
      * went wrong before.
-    */
+     */
     boost::filesystem::path pfrom(from), pto(to);
     try {
       boost::filesystem::copy_file(
@@ -98,7 +98,7 @@ void File::InitFile() {
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
   m_backup_filename = m_filename + ".bak";
-  // use a seperate mpi communicator if we want to write out ordered data. This
+  // use a separate mpi communicator if we want to write out ordered data. This
   // is in order to avoid  blocking by collective functions
   if (m_write_ordered == true)
     MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &m_hdf5_comm);
@@ -131,7 +131,7 @@ void File::InitFile() {
        * backup of it.  This has the advantage, that the new file can
        * just be deleted if the simulation crashes at some point and we
        * still have a valid trajectory, we can start from.
-      */
+       */
       if (this_node == 0)
         backup_file(m_filename, m_backup_filename);
       load_file(m_filename);
@@ -206,12 +206,14 @@ void File::create_datasets(bool only_load) {
       auto chunk_dims = create_chunk_dims(descr.dim, chunk_size, 1);
       auto maxdims = create_maxdims(descr.dim);
       auto storage = h5xx::policy::storage::chunked(chunk_dims);
-      if(descr.type.get_type_id()==H5T_NATIVE_INT)
+      if (descr.type.get_type_id() == H5T_NATIVE_INT)
         storage.set(h5xx::policy::storage::fill_value(static_cast<int>(-10)));
-      else if(descr.type.get_type_id()==H5T_NATIVE_DOUBLE)
-        storage.set(h5xx::policy::storage::fill_value(static_cast<double>(-10)));
+      else if (descr.type.get_type_id() == H5T_NATIVE_DOUBLE)
+        storage.set(
+            h5xx::policy::storage::fill_value(static_cast<double>(-10)));
       else
-        throw std::runtime_error("H5MD writing dataset of this type is not implemented\n");
+        throw std::runtime_error(
+            "H5MD writing dataset of this type is not implemented\n");
       auto dataspace = h5xx::dataspace(dims, maxdims);
       hid_t lcpl_id = H5Pcreate(H5P_LINK_CREATE);
       H5Pset_create_intermediate_group(lcpl_id, 1);
@@ -301,9 +303,9 @@ void File::create_new_file(const std::string &filename) {
   h5xx::write_attribute(group, "dimension", 3);
   h5xx::write_attribute(group, "boundary", "periodic");
   std::string path_edges = "particles/atoms/box/edges";
-  int change_extent_box =
-      3; // for three entries for cuboid box box_l_x, box_l_y, box_l_z
-  ExtendDataset(path_edges, &change_extent_box);
+  std::vector<int> change_extent_box = {
+      3}; // for three entries for cuboid box box_l_x, box_l_y, box_l_z
+  ExtendDataset(path_edges, change_extent_box);
   h5xx::write_dataset(datasets[path_edges], boxvec);
 }
 
@@ -339,7 +341,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   /* store folded particle positions. */
   if (write_pos) {
     Vector3d p = current_particle.r.p;
-    Vector<3, int> i= current_particle.l.i;
+    Vector<3, int> i = current_particle.l.i;
     fold_position(p, i);
 
     pos[0][particle_index][0] = p[0];
@@ -426,8 +428,8 @@ void File::Write(int write_dat, PartCfg &partCfg) {
       int particle_index = 0;
       for (auto const &current_particle : partCfg) {
         fill_arrays_for_h5md_write_with_particle_property(
-            particle_index++, id, typ, mass, pos, image, vel, f,
-            charge, current_particle, write_dat, bond);
+            particle_index++, id, typ, mass, pos, image, vel, f, charge,
+            current_particle, write_dat, bond);
       }
     }
   } else {
@@ -474,9 +476,9 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   }
   int extent_particle_number = m_max_n_part - old_max_n_part;
 
-  int change_extent_1d[1] = {1};
-  int change_extent_2d[2] = {1, extent_particle_number};
-  int change_extent_3d[3] = {1, extent_particle_number, 0};
+  std::vector<int> change_extent_1d = {1};
+  std::vector<int> change_extent_2d = {1, extent_particle_number};
+  std::vector<int> change_extent_3d = {1, extent_particle_number, 0};
 
   if (!m_already_wrote_bonds) {
     // communicate the total number of bonds to all processes since extending is
@@ -492,7 +494,7 @@ void File::Write(int write_dat, PartCfg &partCfg) {
     }
     hsize_t offset_bonds[2] = {(hsize_t)prefix_bonds, 0};
     hsize_t count_bonds[2] = {(hsize_t)nbonds_local, 2};
-    int change_extent_bonds[2] = {nbonds_total, 2};
+    std::vector<int> change_extent_bonds = {nbonds_total, 2};
     WriteDataset(bond, "connectivity/atoms", change_extent_bonds, offset_bonds,
                  count_bonds);
     m_already_wrote_bonds = true;
@@ -535,7 +537,8 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   }
 }
 
-void File::ExtendDataset(const std::string & path, int *change_extent) {
+void File::ExtendDataset(const std::string &path,
+                         const std::vector<int> &change_extent) {
   /* Until now the h5xx does not support dataset extending, so we
      have to use the lower level hdf5 library functions. */
   auto &dataset = datasets[path];
@@ -547,15 +550,16 @@ void File::ExtendDataset(const std::string & path, int *change_extent) {
   H5Sclose(ds);
   /* Extend the dataset for another timestep (extent = 1) */
   for (int i = 0; i < rank; i++) {
-    dims[i] += change_extent[i]; // NOLINT
+    dims[i] += change_extent[i];
   }
   H5Dset_extent(dataset.hid(), dims.data()); // extend all dims is collective
 }
 
 /* data is assumed to be three dimensional */
 template <typename T>
-void File::WriteDataset(T &data, const std::string &path, int *change_extent,
-                        hsize_t *offset, hsize_t *count) {
+void File::WriteDataset(T &data, const std::string &path,
+                        const std::vector<int> &change_extent, hsize_t *offset,
+                        hsize_t *count) {
 #ifdef H5MD_DEBUG
   /* Turn on hdf5 error messages */
   H5Eset_auto(H5E_DEFAULT, (H5E_auto_t)H5Eprint, stderr);
@@ -651,7 +655,7 @@ File::File() {
 #endif
 }
 
-/* Desctructor */
+/* Destructor */
 File::~File() {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;

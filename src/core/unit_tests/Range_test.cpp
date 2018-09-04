@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 /** \file NumeratedContainer_test.cpp Unit tests for the
  * Utils::NumeratedContainer class.
  *
-*/
+ */
 
 #include <utility>
 

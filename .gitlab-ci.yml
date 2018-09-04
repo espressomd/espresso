@@ -1,4 +1,4 @@
-image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-cuda:latest
+image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:18.04
 
 stages:
   - permission
@@ -19,86 +19,168 @@ check_permission:
   allow_failure: false
   script:
     - exit 0
+  tags:
+    - linux
 
 status_pending:
   stage: prepare
   script: bash maintainer/gh_post_status.sh pending
+  tags:
+    - linux
 
-no_cuda_default:
+### Builds without CUDA
+
+default:
   stage: build
   script:
-    - export with_cuda=false
-    - export myconfig=default with_coverage=true
+    - export with_cuda=false myconfig=default with_coverage=true
     - bash maintainer/CI/build_cmake.sh
-
-no_cuda_maxset:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:latest
-  script:
-    - export with_cuda=false
-    - export myconfig=maxset with_coverage=true
-    - bash maintainer/CI/build_cmake.sh
-
-no_cuda_maxset_python3:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:latest
-  script:
-    - export with_cuda=false
-    - export myconfig=maxset python_version=3
-    - bash maintainer/CI/build_cmake.sh
-
-no_cuda_maxset_debian:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/debian:latest
-  script:
-    - export with_cuda=false
-    - export myconfig=maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-
-no_cuda_maxset_opensuse:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/opensuse:latest
-  script:
-    - export with_cuda=false
-    - export myconfig=maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-
-no_cuda_maxset_centos:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos:latest
-  script:
-    - export with_cuda=false
-    - export myconfig=maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-
-no_cuda_nocheckmaxset:
-  stage: build
-  script:
-    - export with_cuda=false
-    - export myconfig=nocheck-maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-
-shanchen:
-  stage: build
-  script:
-    - export myconfig=shanchen with_coverage=true
-    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
 
 maxset:
   stage: build
+  script:
+    - export with_cuda=false myconfig=maxset with_coverage=true
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
+maxset-python3:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
+  script:
+    - export myconfig=maxset with_coverage=true python_version=3
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
+nocheckmaxset:
+  stage: build
+  script:
+    - export with_cuda=false myconfig=nocheck-maxset make_check=false
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
+### Builds with different Distributions
+
+#debian:8 removed: similar to ubuntu:1404
+
+debian:9:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export with_cuda=false
+    - export myconfig=maxset make_check=false
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
+opensuse:42.3:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export with_cuda=false myconfig=maxset make_check=false
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
+opensuse:15.0:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export with_cuda=false myconfig=maxset make_check=false
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
+centos:7:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export with_cuda=false myconfig=maxset make_check=false
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
+fedora:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos:next
+  script:
+    - export with_cuda=false myconfig=maxset make_check=false
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
+#ubuntu:1404 not needed: used in cuda:8.0
+#ubuntu:1604 not needed: used in cuda:9.0
+#ubuntu:1804 not needed: default used in non-CUDA builds
+
+### Builds with CUDA
+
+cuda-shanchen:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  script:
+    - export myconfig=shanchen with_coverage=true python_version=3
+    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+
+cuda-maxset:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  script:
+    - export myconfig=maxset with_coverage=true python_version=3
+    - bash maintainer/cuda_build.sh
+  artifacts:
+    paths:
+    - build/
+    expire_in: 1 week
+  tags:
+    - docker
+    - linux
+    - cuda
+
+cuda8-maxset:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
   script:
     - export myconfig=maxset with_coverage=true
     - bash maintainer/cuda_build.sh
   artifacts:
     paths:
     - build/
-    expire_in: 4 weeks
+    expire_in: 1 week
+  tags:
+    - docker
+    - linux
+    - cuda
 
 empty:
   stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
-    - export myconfig=empty
+    - export myconfig=empty python_version=3
     - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+
+### Builds with OS X
 
 osx:
   stage: build
@@ -124,41 +206,101 @@ osx-cuda:
   tags:
     - mac
 
-clang-static-analysis:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-clang-cuda:latest
-  script:
-    - export myconfig=maxset with_coverage=false with_static_analysis=true
-    - bash maintainer/cuda_build.sh
+### Builds with different compilers
 
-intel:
+clang:6.0:
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-intel:latest
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export myconfig=maxset with_coverage=false
+    - export myconfig=maxset with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true
     - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+    - ptrace
+
+intel:15:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
+    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+
+intel:17:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
+    - export cxx_flags=-O2
+    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+
+### Other builds
+
+style:
+  stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
+  dependencies: []
+  before_script:
+    - git submodule deinit .
+  script:
+    - maintainer/CI/fix_style.sh
+    - git --no-pager diff > style.patch
+    - git diff-index --quiet HEAD -- || (echo "Failed style check. Download $CI_JOB_URL/artifacts/raw/style.patch to see which changes are necessary." && exit 1)
+    - echo "Passed style check"
+  tags:
+    - docker
+    - linux
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  artifacts:
+    paths:
+    - style.patch
+    expire_in: 1 week
+    when: on_failure
 
 check_sphinx:
   stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
   dependencies:
-  - maxset
+  - cuda8-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
+  tags:
+    - docker
+    - linux
+    - cuda
 
 check_with_odd_no_of_processors:
   stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
   dependencies:
-  - maxset
+  - cuda-maxset
   script:
-    - export build_procs=3 check_procs=3 check_odd_only=true
+    - export myconfig=maxset with_coverage=true python_version=3 build_procs=3 check_procs=3 check_odd_only=true
     - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+    - cuda
 
 deploy_documentation:
   stage: deploy
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
   only:
     - python
+  dependencies:
+    - cuda8-maxset
   before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
@@ -172,13 +314,24 @@ deploy_documentation:
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
     - cd ../../doxygen/html &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
+  tags:
+    - docker
+    - linux
+    - cuda
 
 status_success:
   stage: result
   script: bash maintainer/gh_post_status.sh success
   when: on_success
+  tags:
+    - linux
+  dependencies: []
 
 status_failure:
   stage: result
   script: bash maintainer/gh_post_status.sh failure
   when: on_failure
+  tags:
+    - linux
+  dependencies: []
+

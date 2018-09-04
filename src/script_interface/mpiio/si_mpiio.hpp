@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -22,22 +22,20 @@
 #ifndef ESPRESSO_SCRIPTINTERFACE_MPIIO_HPP
 #define ESPRESSO_SCRIPTINTERFACE_MPIIO_HPP
 
-#include "config.hpp"
 #include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
+#include "config.hpp"
 #include "get_value.hpp"
 #include "io/mpiio/mpiio.hpp"
 
-#define field_value(use, v) ((use)? (v): 0u)
+#define field_value(use, v) ((use) ? (v) : 0u)
 
 namespace ScriptInterface {
 namespace MPIIO {
 
 class MPIIOScript : public AutoParameters<MPIIOScript> {
 public:
-  MPIIOScript() {
-    add_parameters({});
-  }
+  MPIIOScript() { add_parameters({}); }
 
   Variant call_method(const std::string &name,
                       const VariantMap &parameters) override {
@@ -48,10 +46,10 @@ public:
     auto typ = get_value<bool>(parameters.at("typ"));
     auto bond = get_value<bool>(parameters.at("bond"));
 
-    unsigned v = field_value(pos, Mpiio::MPIIO_OUT_POS)
-                 | field_value(vel, Mpiio::MPIIO_OUT_VEL)
-                 | field_value(typ, Mpiio::MPIIO_OUT_TYP)
-                 | field_value(bond, Mpiio::MPIIO_OUT_BND);
+    unsigned v = field_value(pos, Mpiio::MPIIO_OUT_POS) |
+                 field_value(vel, Mpiio::MPIIO_OUT_VEL) |
+                 field_value(typ, Mpiio::MPIIO_OUT_TYP) |
+                 field_value(bond, Mpiio::MPIIO_OUT_BND);
 
     if (name == "write")
       Mpiio::mpi_mpiio_common_write(pref.c_str(), v);
@@ -62,8 +60,7 @@ public:
   }
 };
 
-}
-}
-
+} // namespace MPIIO
+} // namespace ScriptInterface
 
 #endif

@@ -1,4 +1,4 @@
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -19,7 +19,8 @@
 # Check whether all features used in the code are defined
 #
 from __future__ import print_function
-import sys, os
+import sys
+import os
 sys.path.append(os.path.join(sys.path[0], '..', 'config'))
 
 import featuredefs
@@ -29,5 +30,3 @@ if len(sys.argv) != 2:
     exit(2)
 
 fdefs = featuredefs.defs(sys.argv[1])
-
-

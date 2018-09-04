@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -36,6 +36,6 @@ void auto_update();
 inline bool auto_update_enabled() {
   return auto_update_accumulators.size() > 0;
 }
-}
+} // namespace Accumulators
 
 #endif // ESPRESSO_ACCUMULATORS_HPP

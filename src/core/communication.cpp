@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -50,8 +50,6 @@
 #include "interaction_data.hpp"
 #include "io/mpiio/mpiio.hpp"
 #include "lb.hpp"
-#include "lbboundaries.hpp"
-#include "lbboundaries/LBBoundary.hpp"
 #include "lj.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
@@ -61,7 +59,6 @@
 #include "minimize_energy.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
-#include "molforces.hpp"
 #include "morse.hpp"
 #include "npt.hpp"
 #include "p3m-dipolar.hpp"
@@ -84,6 +81,7 @@
 #include "utils/make_unique.hpp"
 #include "utils/serialization/IA_parameters.hpp"
 #include "utils/serialization/Particle.hpp"
+#include "utils/serialization/ParticleParametersSwimming.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
@@ -94,20 +92,20 @@ using namespace std;
 namespace Communication {
 auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
 std::unique_ptr<boost::mpi::environment> mpi_env;
-}
+} // namespace Communication
 
 boost::mpi::communicator comm_cart;
 
 namespace Communication {
 std::unique_ptr<MpiCallbacks> m_callbacks;
 
-/* We use a singelton callback class for now. */
+/* We use a singleton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
   assert(m_callbacks && "Mpi not initialized!");
 
   return *m_callbacks;
 }
-}
+} // namespace Communication
 
 using Communication::mpiCallbacks;
 
@@ -218,7 +216,7 @@ std::vector<SlaveCallback *> slave_callbacks{CALLBACK_LIST};
 
 std::vector<std::string> names{CALLBACK_LIST};
 #endif
-}
+} // namespace
 
 /** Forward declarations */
 
@@ -248,8 +246,9 @@ void mpi_init() {
     handle = dlopen(_openmpi_info.dli_fname, mode);
 
   if (!handle) {
-    fprintf(stderr, "%d: Aborting because unable to load libmpi into the "
-                    "global symbol space.\n",
+    fprintf(stderr,
+            "%d: Aborting because unable to load libmpi into the "
+            "global symbol space.\n",
             this_node);
     errexit();
   }
@@ -394,13 +393,13 @@ void mpi_place_new_particle_slave(int pnode, int part) {
 }
 
 /****************** REQ_SET_V ************/
-void mpi_send_v(int pnode, int part, double* v) {
+void mpi_send_v(int pnode, int part, double *v) {
   mpi_call(mpi_send_v_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
 
-    p->m.v = {v[0],v[1],v[2]};
+    p->m.v = {v[0], v[1], v[2]};
   } else
     MPI_Send(v, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
 
@@ -410,14 +409,16 @@ void mpi_send_v(int pnode, int part, double* v) {
 void mpi_send_v_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->m.v.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(p->m.v.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+             MPI_STATUS_IGNORE);
   }
 
   on_particle_change();
 }
 
 /****************** REQ_SET_SWIMMING ************/
-void mpi_send_swimming(int pnode, int part, ParticleParametersSwimming swim) {
+void mpi_send_swimming(int pnode, int part,
+                       const ParticleParametersSwimming &swim) {
 #ifdef ENGINE
   mpi_call(mpi_send_swimming_slave, pnode, part);
 
@@ -425,8 +426,7 @@ void mpi_send_swimming(int pnode, int part, ParticleParametersSwimming swim) {
     Particle *p = local_particles[part];
     p->swim = swim;
   } else {
-    MPI_Send(&swim, sizeof(ParticleParametersSwimming), MPI_BYTE, pnode,
-             SOME_TAG, comm_cart);
+    comm_cart.send(pnode, SOME_TAG, swim);
   }
 
   on_particle_change();
@@ -437,8 +437,9 @@ void mpi_send_swimming_slave(int pnode, int part) {
 #ifdef ENGINE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->swim, sizeof(ParticleParametersSwimming), MPI_BYTE, 0,
-             SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    ParticleParametersSwimming swim;
+    comm_cart.recv(0, SOME_TAG, swim);
+    p->swim = swim;
   }
 
   on_particle_change();
@@ -1339,8 +1340,9 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
                              int periodic[3], double range_start[3],
                              double range[3]) {
 
-  PTENSOR_TRACE(fprintf(stderr, "%d: mpi_local_stress_tensor: Broadcasting "
-                                "local_stress_tensor parameters\n",
+  PTENSOR_TRACE(fprintf(stderr,
+                        "%d: mpi_local_stress_tensor: Broadcasting "
+                        "local_stress_tensor parameters\n",
                         this_node));
 
   mpi_call(mpi_local_stress_tensor_slave, -1, 0);
@@ -1355,8 +1357,9 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
       this_node));
   local_stress_tensor_calc(TensorInBin, bins, periodic, range_start, range);
 
-  PTENSOR_TRACE(fprintf(stderr, "%d: mpi_local_stress_tensor: Reduce local "
-                                "stress tensors with MPI_Reduce\n",
+  PTENSOR_TRACE(fprintf(stderr,
+                        "%d: mpi_local_stress_tensor: Reduce local "
+                        "stress tensors with MPI_Reduce\n",
                         this_node));
   for (int i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
     MPI_Reduce(MPI_IN_PLACE, TensorInBin[i].e, 9, MPI_DOUBLE, MPI_SUM, 0,
@@ -1478,8 +1481,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm) {
               comm_cart);
     break;
   default:
-    fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast coulomb params for "
-                    "unknown method %d\n",
+    fprintf(stderr,
+            "%d: INTERNAL ERROR: cannot bcast coulomb params for "
+            "unknown method %d\n",
             this_node, coulomb.method);
     errexit();
   }
@@ -1515,8 +1519,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm) {
   case DIPOLAR_SCAFACOS:
     break;
   default:
-    fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast dipolar params for "
-                    "unknown method %d\n",
+    fprintf(stderr,
+            "%d: INTERNAL ERROR: cannot bcast dipolar params for "
+            "unknown method %d\n",
             this_node, coulomb.Dmethod);
     errexit();
   }
@@ -1592,7 +1597,7 @@ void mpi_send_ext_torque(int pnode, int part, int flag, int mask,
     p->p.ext_flag |= flag;
 
     if (mask & PARTICLE_EXT_TORQUE)
-      p->p.ext_torque ={torque[0],torque[1],torque[2]};
+      p->p.ext_torque = {torque[0], torque[1], torque[2]};
   } else {
     int s_buf[2];
     s_buf[0] = flag;
@@ -1641,7 +1646,7 @@ void mpi_send_ext_force(int pnode, int part, int flag, int mask,
     /* set new values */
     p->p.ext_flag |= flag;
     if (mask & PARTICLE_EXT_FORCE)
-      p->p.ext_force ={force[0],force[1],force[2]};
+      p->p.ext_force = {force[0], force[1], force[2]};
   } else {
     int s_buf[2];
     s_buf[0] = flag;
@@ -1746,22 +1751,6 @@ int mpi_sync_topo_part_info() {
     molsize = topology[i].part.n;
     moltype = topology[i].type;
 
-#ifdef MOLFORCES
-    MPI_Bcast(&(topology[i].trap_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(topology[i].trap_center, 3, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].trap_spring_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].drag_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].noforce_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].isrelative), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].favcounter), 1, MPI_INT, 0, comm_cart);
-    if (topology[i].favcounter == -1)
-      MPI_Bcast(topology[i].fav, 3, MPI_DOUBLE, 0, comm_cart);
-    /* check if any molecules are trapped */
-    if ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
-      IsTrapped = 1;
-    }
-#endif
-
     MPI_Bcast(&molsize, 1, MPI_INT, 0, comm_cart);
     MPI_Bcast(&moltype, 1, MPI_INT, 0, comm_cart);
     MPI_Bcast(topology[i].part.e, topology[i].part.n, MPI_INT, 0, comm_cart);
@@ -1782,22 +1771,6 @@ void mpi_sync_topo_part_info_slave(int node, int parm) {
   MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
   realloc_topology(n_mols);
   for (i = 0; i < n_mols; i++) {
-
-#ifdef MOLFORCES
-    MPI_Bcast(&(topology[i].trap_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(topology[i].trap_center, 3, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].trap_spring_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].drag_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].noforce_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].isrelative), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].favcounter), 1, MPI_INT, 0, comm_cart);
-    if (topology[i].favcounter == -1)
-      MPI_Bcast(topology[i].fav, 3, MPI_DOUBLE, 0, comm_cart);
-    /* check if any molecules are trapped */
-    if ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
-      IsTrapped = 1;
-    }
-#endif
 
     MPI_Bcast(&molsize, 1, MPI_INT, 0, comm_cart);
     MPI_Bcast(&moltype, 1, MPI_INT, 0, comm_cart);
@@ -1866,7 +1839,9 @@ void mpi_send_exclusion_slave(int part1, int part2) {
 }
 
 /************** REQ_SET_FLUID **************/
-void mpi_send_fluid(int node, int index, double rho, double *j, double *pi) {
+void mpi_send_fluid(int node, int index, double rho,
+                    const std::array<double, 3> &j,
+                    const std::array<double, 6> &pi) {
 #ifdef LB
   if (node == this_node) {
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
@@ -1884,8 +1859,10 @@ void mpi_send_fluid_slave(int node, int index) {
   if (node == this_node) {
     double data[10];
     MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-
-    lb_calc_n_from_rho_j_pi(index, data[0], &data[1], &data[4]);
+    std::array<double, 3> j = {{data[1], data[2], data[3]}};
+    std::array<double, 6> pi = {
+        {data[4], data[5], data[6], data[7], data[8], data[9]}};
+    lb_calc_n_from_rho_j_pi(index, data[0], j, pi);
   }
 #endif
 }
@@ -2042,6 +2019,7 @@ void mpi_send_fluid_populations(int node, int index, double *pop) {
     mpi_call(mpi_send_fluid_populations_slave, node, index);
     MPI_Send(pop, 19 * LB_COMPONENTS, MPI_DOUBLE, node, SOME_TAG, comm_cart);
   }
+  lbpar.resend_halo = 1;
 #endif
 }
 
@@ -2053,6 +2031,7 @@ void mpi_send_fluid_populations_slave(int node, int index) {
              MPI_STATUS_IGNORE);
     lb_set_populations(index, data);
   }
+  lbpar.resend_halo = 1;
 #endif
 }
 

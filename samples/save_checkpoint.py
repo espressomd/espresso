@@ -1,13 +1,37 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+This samples demonstrates how to checkpoint a simulation.
+"""
+
 import espressomd
+
+required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import electrostatics
 from espressomd import checkpointing
 
 import numpy as np
 import signal
 
-checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
+checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
 
-if not len(checkpoint.checkpoint_signals):
+if not checkpoint.checkpoint_signals:
     checkpoint.register_signal(signal.SIGINT)
 
 # test for user data
@@ -18,7 +42,7 @@ myvar = "updated value"  # demo of how the register function works
 # test for "system"
 box_l = 10.7437
 
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)

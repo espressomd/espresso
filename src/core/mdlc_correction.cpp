@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -29,19 +29,19 @@
  *	      cut-off necessary to attend a certain accuracy.
  *
  *  Restrictions: the slab must be such that the z is the short
- *                direction. Othewise we get trash.
+ *                direction. Otherwise we get trash.
  *
  */
 
 #include "mdlc_correction.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "p3m-dipolar.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
-#include "debug.hpp"
 
 #ifdef DIPOLES
 
@@ -124,18 +124,22 @@ double slab_dip_count_mu(double *mt, double *mx, double *my) {
    ****************************************************************************************************
    */
 
-double get_DLC_dipolar(int kcut, std::vector<double> & fx, std::vector<double> & fy, std::vector<double> & fz,
-                       std::vector<double> & tx, std::vector<double> & ty, std::vector<double> & tz) {
+double get_DLC_dipolar(int kcut, std::vector<double> &fx,
+                       std::vector<double> &fy, std::vector<double> &fz,
+                       std::vector<double> &tx, std::vector<double> &ty,
+                       std::vector<double> &tz) {
 
   int ix, iy, ip;
   double gx, gy, gr;
 
-  double S[4] = {0.0, 0.0, 0.0, 0.0}; // S of Brodka methode, oder is S[4] =
+  double S[4] = {0.0, 0.0, 0.0, 0.0}; // S of Brodka method, or is S[4] =
                                       // {Re(S+), Im(S+), Re(S-), Im(S-)}
   std::vector<double> ReSjp(n_local_particles), ReSjm(n_local_particles);
   std::vector<double> ImSjp(n_local_particles), ImSjm(n_local_particles);
-  std::vector<double> ReGrad_Mup(n_local_particles), ImGrad_Mup(n_local_particles);
-  std::vector<double> ReGrad_Mum(n_local_particles), ImGrad_Mum(n_local_particles);
+  std::vector<double> ReGrad_Mup(n_local_particles),
+      ImGrad_Mup(n_local_particles);
+  std::vector<double> ReGrad_Mum(n_local_particles),
+      ImGrad_Mum(n_local_particles);
   double a, b, c, d, er, ez, f, fa1;
   double s1, s2, s3, s4;
   double s1z, s2z, s3z, s4z;
@@ -254,7 +258,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> & fx, std::vector<double> &
   // for
   // the torques ....
 
-  // printf("Electical field: Ex %le, Ey %le, Ez
+  // printf("Electrical field: Ex %le, Ey %le, Ez
   // %le",-tx[0]*M_PI/(box_l[0]*box_l[1]),-ty[0]*M_PI/(box_l[0]*box_l[1]),
   //-tz[0]*M_PI/(box_l[0]*box_l[1])  );
 
@@ -388,8 +392,10 @@ double get_DLC_energy_dipolar(int kcut) {
 void add_mdlc_force_corrections() {
   int i, ip;
   int dip_DLC_kcut;
-  std::vector<double> dip_DLC_f_x(n_part), dip_DLC_f_y(n_part), dip_DLC_f_z(n_part);
-  std::vector<double> dip_DLC_t_x(n_part), dip_DLC_t_y(n_part), dip_DLC_t_z(n_part);
+  std::vector<double> dip_DLC_f_x(n_part), dip_DLC_f_y(n_part),
+      dip_DLC_f_z(n_part);
+  std::vector<double> dip_DLC_t_x(n_part), dip_DLC_t_y(n_part),
+      dip_DLC_t_z(n_part);
   double dip_DLC_energy = 0.0;
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
 #if defined(ROTATION) && defined(DP3M)
@@ -429,7 +435,7 @@ void add_mdlc_force_corrections() {
   // Now we compute the the correction like Yeh and Klapp to take into account
   // the fact that you are using a
   // 3D PBC method which uses spherical summation instead of slab-wise
-  // sumation.
+  // summation.
   // Slab-wise summation is the one
   // required to apply DLC correction.  This correction is often called SDC =
   // Shape Dependent Correction.
@@ -529,7 +535,7 @@ double add_mdlc_energy_corrections() {
   // Now we compute the the correction like Yeh and Klapp to take into account
   // the fact that you are using a
   // 3D PBC method which uses spherical summation instead of slab-wise
-  // sumation.
+  // summation.
   // Slab-wise summation is the one
   // required to apply DLC correction.  This correction is often called SDC =
   // Shape Dependent Correction.
@@ -569,7 +575,7 @@ double add_mdlc_energy_corrections() {
    same
    value of the dipolar momentum modulus (mu_max). mu_max is taken as the
    largest value of
-   mu inside the sytem. If we assum the gap has a width gap_size (within which
+   mu inside the system. If we assum the gap has a width gap_size (within which
    there is no particles)
 
    Lz=h+gap_size
@@ -577,7 +583,7 @@ double add_mdlc_energy_corrections() {
    BE CAREFUL:  (1) We assum the short distance for the slab to be in the Z
    direction
    (2) You must also tune the other 3D method to the same accuracy, otherwise
-   it has no sense to have a good accurated result for DLC-dipolar.
+   it has no sense to have a good accurate result for DLC-dipolar.
 
    ----------------------------------------------------------------------------------
    */

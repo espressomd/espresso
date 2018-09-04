@@ -1,5 +1,9 @@
+"""
+This sample sets up a diamond-structured polymer network.
+"""
+
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -52,24 +56,25 @@ system.non_bonded_inter[1, 1].lennard_jones.set_params(
 fene = interactions.FeneBond(k=30, d_r_max=1.5)
 system.bonded_inter.add(fene)
 
-# The call to diamond.Diamond() creates 16 connected polymers. 
+# The call to diamond.Diamond() creates 16 connected polymers.
 # These polymers are initialized in a straight line connected to crosslink nodes
 # Furthermore they are connected to one another across simulation boxes in a periodic fashion.
-# It is crucial that the simulation box, chain length and a-parameters be chosen such that the arangement will not break bonds.
+# It is crucial that the simulation box, chain length and a-parameters be
+# chosen such that the arangement will not break bonds.
 
 # monomers per chain
-MPC=15
+MPC = 15
 
 # length for Kremer-Grest chain
-bond_length=0.966
+bond_length = 0.966
 
 # The physical distance beween nodes such that a line of monomers "fit" needs to be worked out.
 # This is done via the unit diamond lattice size parameter "a".
-a = (MPC+1)*bond_length / (0.25*np.sqrt(3))
+a = (MPC + 1) * bond_length / (0.25 * np.sqrt(3))
 
 # Lastly, the created periodic connections requires a specific simulation box.
-system.box_l= [a,a,a]
-print("box now at ",system.box_l)
+system.box_l = [a, a, a]
+print("box now at ", system.box_l)
 
 # We can now call diamond to place the monomers, crosslinks and bonds.
 diamond.Diamond(a=a, bond_length=bond_length, MPC=MPC)
@@ -80,7 +85,7 @@ diamond.Diamond(a=a, bond_length=bond_length, MPC=MPC)
 #############################################################
 
 print("Warming up...")
-warm_steps=10
+warm_steps = 10
 lj_cap = 1
 system.force_cap = lj_cap
 act_min_dist = system.analysis.min_dist()
@@ -89,38 +94,38 @@ act_min_dist = system.analysis.min_dist()
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
 # slowly ramp up the cap
-while ( lj_cap < 5):
+while (lj_cap < 5):
     system.integrator.run(warm_steps)
-    system.part[:].v=[0,0,0]
-    lj_cap = lj_cap*1.1
+    system.part[:].v = [0, 0, 0]
+    lj_cap = lj_cap * 1.1
     system.force_cap = lj_cap
 
-#remove force cap
+# remove force cap
 lj_cap = 0
 system.force_cap = lj_cap
-system.integrator.run(warm_steps*10)
+system.integrator.run(warm_steps * 10)
 
 # restore simulation temperature
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
-system.integrator.run(warm_steps*10)
+system.integrator.run(warm_steps * 10)
 print("Finished warmup")
-
 
 
 #############################################################
 #      Integration                                          #
 #############################################################
 
-sim_steps=100
+sim_steps = 100
 print("simulating...")
 system.integrator.run(sim_steps)
 
 # because stretched polymers are not too impressive...
 print("simulating a slow compression...")
-for d in np.arange(1,15):
-   system.change_volume_and_rescale_particles(d_new=system.box_l[0]-1, dir='xyz')
-   print("box now at ",system.box_l)
-   system.integrator.run(sim_steps)
+for d in np.arange(1, 15):
+    system.change_volume_and_rescale_particles(
+        d_new=system.box_l[0] - 1, dir='xyz')
+    print("box now at ", system.box_l)
+    system.integrator.run(sim_steps)
 
 # visualize at a smaller box size
 outfile = open('diamond.vtf', 'w')
@@ -132,4 +137,3 @@ for t in range(t_steps):
     system.integrator.run(sim_steps)
     vtf.writevcf(system, outfile)
 outfile.close()
-

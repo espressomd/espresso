@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group,
 
@@ -27,18 +27,19 @@
 
 #include "config.hpp"
 
-#include <limits>
-
 #include "communication.hpp"
-#include "constraints.hpp"
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
+#include "grid.hpp"
+#include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "lb.hpp"
 #include "lbboundaries.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 #include "lbgpu.hpp"
-#include "utils.hpp"
+
+#include <algorithm>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -47,7 +48,21 @@ namespace LBBoundaries {
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
-void lbboundary_mindist_position(const Vector3d& pos, double *mindist,
+void add(const std::shared_ptr<LBBoundary> &b) {
+  lbboundaries.emplace_back(b);
+
+  on_lbboundary_change();
+}
+
+void remove(const std::shared_ptr<LBBoundary> &b) {
+  auto &lbb = lbboundaries;
+
+  lbboundaries.erase(std::remove(lbb.begin(), lbb.end(), b), lbb.end());
+
+  on_lbboundary_change();
+}
+
+void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
                                  double distvec[3], int *no) {
 
   double vec[3] = {std::numeric_limits<double>::infinity(),
@@ -245,11 +260,10 @@ void lb_init_boundaries() {
     boundary_velocity[3 * lbboundaries.size() + 1] = 0.0f;
     boundary_velocity[3 * lbboundaries.size() + 2] = 0.0f;
 
-    if (lbboundaries.size() || pdb_boundary_lattice) {
-      lb_init_boundaries_GPU(lbboundaries.size(), number_of_boundnodes,
-                             host_boundary_node_list, host_boundary_index_list,
-                             boundary_velocity);
-    }
+    lb_init_boundaries_GPU(lbboundaries.size(), number_of_boundnodes,
+                           host_boundary_node_list, host_boundary_index_list,
+                           boundary_velocity);
+
     free(boundary_velocity);
     free(host_boundary_node_list);
     free(host_boundary_index_list);
@@ -331,7 +345,7 @@ int lbboundary_get_force(void *lbb, double *f) {
                              "lbboundary that was not added to "
                              "system.lbboundaries.");
 
-  std::vector<double> forces(3*lbboundaries.size());
+  std::vector<double> forces(3 * lbboundaries.size());
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)
@@ -366,7 +380,7 @@ int lbboundary_get_force(void *lbb, double *f) {
 
 #ifdef LB_BOUNDARIES
 
-void lb_bounce_back() {
+void lb_bounce_back(LB_Fluid &lbfluid) {
 
 #ifdef D3Q19
 #ifndef PULL
@@ -431,13 +445,12 @@ void lb_bounce_back() {
                 for (l = 0; l < 3; l++) {
                   (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
                       .force()[l] += // TODO
-                      (2 * lbfluid[1][i][k] + population_shift) *
-                      lbmodel.c[i][l];
+                      (2 * lbfluid[i][k] + population_shift) * lbmodel.c[i][l];
                 }
-                lbfluid[1][reverse[i]][k - next[i]] =
-                    lbfluid[1][i][k] + population_shift;
+                lbfluid[reverse[i]][k - next[i]] =
+                    lbfluid[i][k] + population_shift;
               } else {
-                lbfluid[1][reverse[i]][k - next[i]] = lbfluid[1][i][k] = 0.0;
+                lbfluid[reverse[i]][k - next[i]] = lbfluid[i][k] = 0.0;
               }
             }
           }
@@ -454,4 +467,4 @@ void lb_bounce_back() {
 }
 
 #endif
-} // namespace
+} // namespace LBBoundaries

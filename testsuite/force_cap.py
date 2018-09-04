@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 The ESPResSo project
+# Copyright (C) 2017-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,9 +22,11 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
            "Skipped because of LENNARD_JONES ")
 class ForceCap(ut.TestCase):
+
     """Tests the force capping mechanism.
 
     """
@@ -49,7 +51,7 @@ class ForceCap(ut.TestCase):
         s = self.s
         s.part.clear()
         s.time_step = 0.1
-        s.box_l = 3*[10.]
+        s.box_l = 3 * [10.]
         s.part.add(pos=10. * np.random.random((N, 3)))
 
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(

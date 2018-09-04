@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
   Max-Planck-Institute for Polymer Research, Theory Group
 
   This file is part of ESPResSo.
@@ -22,8 +22,8 @@
 #define UTILS_MPI_DETAIL_SIZE_AND_OFFSET_HPP
 
 #include <algorithm>
-#include <vector>
 #include <numeric>
+#include <vector>
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/communicator.hpp>
@@ -34,7 +34,8 @@ namespace detail {
 
 template <typename T>
 int size_and_offset(std::vector<int> &sizes, std::vector<int> &displ,
-                    int n_elem, const boost::mpi::communicator &comm, int root = 0) {
+                    int n_elem, const boost::mpi::communicator &comm,
+                    int root = 0) {
   sizes.resize(comm.size());
   displ.resize(comm.size());
 
@@ -52,12 +53,13 @@ int size_and_offset(std::vector<int> &sizes, std::vector<int> &displ,
   return total_size;
 }
 
-inline void size_and_offset(int n_elem, const boost::mpi::communicator &comm, int root = 0) {
+inline void size_and_offset(int n_elem, const boost::mpi::communicator &comm,
+                            int root = 0) {
   /* Send local size */
   boost::mpi::gather(comm, n_elem, root);
 }
-}
-}
-}
+} // namespace detail
+} // namespace Mpi
+} // namespace Utils
 
 #endif

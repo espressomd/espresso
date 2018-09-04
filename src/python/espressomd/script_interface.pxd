@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -62,7 +62,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass ObjectId:
         string to_string()
-        bool operator==(const ObjectId& rhs) 
+        bool operator == (const ObjectId & rhs)
 
     Variant make_variant[T](const T & x)
 
@@ -79,8 +79,9 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         void set_state(map[string, Variant]) except +
         map[string, Variant] get_state() except +
         string serialize() except +
+
         @staticmethod
-        shared_ptr[ScriptInterfaceBase] unserialize(const string &state) except +
+        shared_ptr[ScriptInterfaceBase] unserialize(const string & state) except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
     cdef cppclass CreationPolicy:
@@ -96,7 +97,6 @@ cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
     cdef map[string, Parameter] parameters
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
-    cdef variant_to_python_object(self, Variant value)  except +
+    cdef variant_to_python_object(self, Variant value) except +
     cdef Variant python_object_to_variant(self, value)
     cdef map[string, Variant] _sanitize_params(self, in_params) except *
-
