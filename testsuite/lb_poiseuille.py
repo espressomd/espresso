@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import numpy as np
 
@@ -47,6 +63,7 @@ def poiseuille_flow(z, H, ext_force_density, dyn_visc):
 
 
 class LBPoiseuilleCommon(object):
+
     """Base class of the test that holds the test logic."""
     lbf = None
     system = espressomd.System(box_l=[12.0, 3.0, 3.0])
@@ -99,7 +116,8 @@ class LBPoiseuilleCommon(object):
 
         v_measured = velocities[1:-1, 1]
         v_expected = poiseuille_flow(velocities[1:-1,
-                                                0] - 0.5 * self.system.box_l[0],
+                                                0] - 0.5 * self.system.box_l[
+                                                    0],
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
                                      VISC * DENS)
@@ -110,7 +128,9 @@ class LBPoiseuilleCommon(object):
 @ut.skipIf(not espressomd.has_features(
     ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+
     """Test for the CPU implementation of the LB."""
+
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
@@ -118,7 +138,9 @@ class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 @ut.skipIf(not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+
     """Test for the GPU implementation of the LB."""
+
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 

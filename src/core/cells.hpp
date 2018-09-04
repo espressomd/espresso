@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -32,7 +32,7 @@
     <ul>
     <li> domain decomposition: The simulation box is divided spatially
     ino cells (see \ref domain_decomposition.hpp). This is suitable for
-    short range interctions.
+    short range interactions.
     <li> nsquare: The particles are distributed equally on all nodes
     regardless their spatial position (see \ref nsquare.hpp). This is
     suitable for long range interactions that can not be treated by a
@@ -74,7 +74,7 @@
 /** Flag indicating that there is no cell system yet. Only at the
     VERY beginning of the code startup. */
 #define CELL_STRUCTURE_NONEYET -1
-/** Flag indicating that the current cell structure will be used furthor on */
+/** Flag indicating that the current cell structure will be used further on */
 #define CELL_STRUCTURE_CURRENT 0
 /** cell structure domain decomposition */
 #define CELL_STRUCTURE_DOMDEC 1
@@ -84,7 +84,7 @@
 #define CELL_STRUCTURE_LAYERED 3
 /*@}*/
 
-/** \name Flags for exchange_and_sort_particles: wether to do a global exchange
+/** \name Flags for exchange_and_sort_particles: whether to do a global exchange
     or assume that particles did not move much (faster, used during integration,
     where moving far is a catastrophe anyways). */
 /*@{*/
@@ -95,7 +95,11 @@
 #define CELL_NEIGHBOR_EXCHANGE 0
 
 namespace Cells {
-enum Resort : unsigned { RESORT_NONE = 0u, RESORT_LOCAL = 1u, RESORT_GLOBAL = 2u };
+enum Resort : unsigned {
+  RESORT_NONE = 0u,
+  RESORT_LOCAL = 1u,
+  RESORT_GLOBAL = 2u
+};
 }
 
 /** \name Flags for cells_on_geometry_change */
@@ -133,7 +137,7 @@ struct CellPList {
     between different nodes and the relation between particle
     positions and the cell system. All other properties of the cell
     system which are not common between different cell systems have to
-    be stored in seperate structures. */
+    be stored in separate structures. */
 struct CellStructure {
   /** type descriptor */
   int type;
@@ -171,7 +175,7 @@ struct CellStructure {
       \param  pos Position of a particle.
       \return pointer to cell  where to put the particle.
   */
-  Cell *(*position_to_cell)(double pos[3]);
+  Cell *(*position_to_cell)(const double pos[3]);
 };
 
 /*@}*/
@@ -242,7 +246,7 @@ inline void realloc_cellplist(CellPList *cpl, int size) {
    structures.
     @param global_flag if this is CELLS_GLOBAL_EXCHANGE, particle positions can
    have changed
-    arbitrarly, otherwise the change should have been smaller then skin.  */
+    arbitrarily, otherwise the change should have been smaller then skin.  */
 void cells_resort_particles(int global_flag);
 
 /** this function is called whenever the cell system has to be
@@ -254,7 +258,7 @@ void cells_resort_particles(int global_flag);
     If bit CELL_FLAG_FAST is set, the routine should try to save time.
     Currently this means that if the maximal range decreased, it does
     not reorganize the particles. This is used in the NpT algorithm to
-    avoid frequent reorganizaion of particles.
+    avoid frequent reorganization of particles.
 
     If bit CELL_FLAG_GRIDCHANGED is set, it means the nodes' topology
     has changed, i. e. the grid or periodicity. In this case a full
@@ -288,13 +292,13 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 /**
  * @brief Increase the local resort level at least to level.
  *
- * The changed level has to be commuicated via annouce_resort_particles.
+ * The changed level has to be communicated via annouce_resort_particles.
  */
-  void set_resort_particles(Cells::Resort level);
+void set_resort_particles(Cells::Resort level);
 
 /**
  * @brief Get the currently scheduled resort level.
-  */
+ */
 unsigned const &get_resort_particles();
 
 /** spread the particle resorting criterion across the nodes. */
@@ -307,5 +311,14 @@ void check_resort_particles();
 void local_sort_particles();
 
 /*@}*/
+
+/* @brief Finds the cell in which a particle is stored
+
+   Uses position_to_cell on p.r.p. If this is not on the node's domain,
+   uses position at last Verlet list rebuild (p.l.p_old).
+
+   @return pointer to the cell or nullptr if the particle is not on the node
+*/
+Cell *find_current_cell(const Particle &p);
 
 #endif

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -30,6 +30,7 @@ from espressomd.observables import ParticleVelocities, ParticleBodyAngularVeloci
 @ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"),
            "Skipped because of THERMOSTAT_IGNORE_NON_VIRTUAL")
 class LangevinThermostat(ut.TestCase):
+
     """Tests the velocity distribution created by the Langevin thermostat against
        the single component Maxwell distribution."""
 
@@ -73,7 +74,7 @@ class LangevinThermostat(ut.TestCase):
         N = 200
         system = self.system
         system.part.clear()
-        system.time_step = 0.04
+        system.time_step = 0.06
 
         # Place particles
         system.part.add(pos=np.random.random((N, 3)))
@@ -82,8 +83,8 @@ class LangevinThermostat(ut.TestCase):
         if espressomd.has_features("ROTATION"):
             system.part[:].rotation = 1, 1, 1
 
-        kT = 2.3
-        gamma = 1.5
+        kT = 1.1
+        gamma = 3.5
         system.thermostat.set_langevin(kT=kT, gamma=gamma)
 
         # Warmup
@@ -100,8 +101,8 @@ class LangevinThermostat(ut.TestCase):
                 omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
 
         v_minmax = 5
-        bins = 5
-        error_tol = 0.015
+        bins = 4
+        error_tol = 0.016
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
         if espressomd.has_features("ROTATION"):
@@ -117,26 +118,27 @@ class LangevinThermostat(ut.TestCase):
         N = 400
         system = self.system
         system.part.clear()
-        system.time_step = 0.04
+        system.time_step = 0.06
         system.part.add(pos=np.random.random((N, 3)))
         if espressomd.has_features("ROTATION"):
             system.part[:].rotation = 1, 1, 1
 
-        kT = 2.3
-        gamma = 1.5
-        gamma2 = 2.3
+        kT = 0.9
+        gamma = 3.2
+        gamma2 = 4.3
         kT2 = 1.5
         system.thermostat.set_langevin(kT=kT, gamma=gamma)
         # Set different kT on 2nd half of particles
         system.part[int(N / 2):].temp = kT2
         # Set different gamma on half of the partiles (overlap over both kTs)
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
-            system.part[int(N / 4):int(3 * N / 4)].gamma = gamma2, gamma2, gamma2
+            system.part[
+                int(N / 4):int(3 * N / 4)].gamma = gamma2, gamma2, gamma2
         else:
             system.part[int(N / 4):int(3 * N / 4)].gamma = gamma2
 
         system.integrator.run(50)
-        loops = 400
+        loops = 600
 
         v_kT = np.zeros((int(N / 2) * loops, 3))
         v_kT2 = np.zeros((int(N / 2 * loops), 3))
@@ -158,8 +160,8 @@ class LangevinThermostat(ut.TestCase):
                 omega_kT2[int(i * N / 2):int((i + 1) * N / 2),
                           :] = system.part[int(N / 2):].omega_body
         v_minmax = 5
-        bins = 5
-        error_tol = 0.014
+        bins = 4
+        error_tol = 0.016
         self.check_velocity_distribution(v_kT, v_minmax, bins, error_tol, kT)
         self.check_velocity_distribution(v_kT2, v_minmax, bins, error_tol, kT2)
 
@@ -192,8 +194,8 @@ class LangevinThermostat(ut.TestCase):
         gamma = 3.1
 
         # Rotational gamma
-        gamma_rot_i = 0.7
-        gamma_rot_a = 0.7, 1, 1.2
+        gamma_rot_i = 4.7
+        gamma_rot_a = 4.2, 1, 1.2
 
         # If we have langevin per particle:
         # per particle kT
@@ -201,8 +203,8 @@ class LangevinThermostat(ut.TestCase):
         # Translation
         per_part_gamma = 1.63
         # Rotational
-        per_part_gamma_rot_i = 0.6
-        per_part_gamma_rot_a = 0.4, 0.8, 1.1
+        per_part_gamma_rot_i = 2.6
+        per_part_gamma_rot_a = 2.4, 3.8, 1.1
 
         # Particle with global thermostat params
         p_global = system.part.add(pos=(0, 0, 0))
@@ -253,7 +255,7 @@ class LangevinThermostat(ut.TestCase):
             system.thermostat.set_langevin(kT=kT, gamma=gamma)
 
         system.cell_system.skin = 0.4
-        system.integrator.run(500)
+        system.integrator.run(100)
 
         # Correlators
         vel_obs = {}
@@ -268,17 +270,18 @@ class LangevinThermostat(ut.TestCase):
 
         # linear vel
         vel_obs = ParticleVelocities(ids=system.part[:].id)
-        corr_vel = Correlator(obs1=vel_obs, tau_lin=20, tau_max=1.9, delta_N=1,
+        corr_vel = Correlator(obs1=vel_obs, tau_lin=20, tau_max=1.4, delta_N=1,
                               corr_operation="componentwise_product", compress1="discard1")
         system.auto_update_accumulators.add(corr_vel)
         # angular vel
         if espressomd.has_features("ROTATION"):
             omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
-            corr_omega = Correlator(obs1=omega_obs, tau_lin=40, tau_max=3.9, delta_N=1,
+            corr_omega = Correlator(
+                obs1=omega_obs, tau_lin=20, tau_max=1.5, delta_N=1,
                                     corr_operation="componentwise_product", compress1="discard1")
             system.auto_update_accumulators.add(corr_omega)
 
-        system.integrator.run(400000)
+        system.integrator.run(150000)
 
         system.auto_update_accumulators.remove(corr_vel)
         corr_vel.finalize()
@@ -288,7 +291,8 @@ class LangevinThermostat(ut.TestCase):
 
         # Verify diffusion
         # Translation
-        # Cast gammas to vector, to make checks independent of PARTICLE_ANISOTROPY
+        # Cast gammas to vector, to make checks independent of
+        # PARTICLE_ANISOTROPY
         gamma = np.ones(3) * gamma
         per_part_gamma = np.ones(3) * per_part_gamma
         self.verify_diffusion(p_global, corr_vel, kT, gamma)
@@ -300,7 +304,8 @@ class LangevinThermostat(ut.TestCase):
 
         # Rotation
         if espressomd.has_features("ROTATION"):
-            # Decide on effective gamma rotation, since for rotation it is direction dependent
+            # Decide on effective gamma rotation, since for rotation it is
+            # direction dependent
             eff_gamma_rot = None
             per_part_eff_gamma_rot = None
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
@@ -327,7 +332,8 @@ class LangevinThermostat(ut.TestCase):
         """
         c = corr
         # Integral of vacf via Green-Kubo
-        # D= int_0^infty <v(t_0)v(t_0+t)> dt     (o 1/3, since we work componentwise)
+        # D= int_0^infty <v(t_0)v(t_0+t)> dt     (o 1/3, since we work
+        # componentwise)
         i = p.id
         acf = c.result()[:, [0, 2 + 3 * i, 2 + 3 * i + 1, 2 + 3 * i + 2]]
         np.savetxt("acf.dat", acf)
@@ -382,7 +388,8 @@ class LangevinThermostat(ut.TestCase):
 
         system.time_step = 0.0005
         system.part.clear()
-        system.part.add(pos=(0, 0, 0), omega_body=(o0, o0, o0), rotation=(1, 1, 1))
+        system.part.add(
+            pos=(0, 0, 0), omega_body=(o0, o0, o0), rotation=(1, 1, 1))
         if espressomd.has_features("ROTATIONAL_INERTIA"):
             system.part[0].rinertia = 2, 2, 2
         if espressomd.has_features("PARTICLE_ANISOTROPY"):

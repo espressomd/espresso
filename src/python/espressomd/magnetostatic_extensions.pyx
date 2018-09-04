@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -28,6 +28,7 @@ IF DIPOLES == 1:
         pass
 
     class DLC(MagnetostaticExtension):
+
         """Provide the Dipolar Layer Correction (DLC) method.
 
         DLC works like ELC for electrostatics

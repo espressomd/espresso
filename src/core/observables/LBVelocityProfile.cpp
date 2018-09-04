@@ -1,11 +1,28 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+#include "LBVelocityProfile.hpp"
 #include "lb.hpp"
 #include "utils/Histogram.hpp"
-#include "LBVelocityProfile.hpp"
 
 namespace Observables {
 
-std::vector<double> LBVelocityProfile::
-operator()(PartCfg &partCfg) const {
+std::vector<double> LBVelocityProfile::operator()(PartCfg &partCfg) const {
   std::array<size_t, 3> n_bins{{static_cast<size_t>(n_x_bins),
                                 static_cast<size_t>(n_y_bins),
                                 static_cast<size_t>(n_z_bins)}};
@@ -24,19 +41,21 @@ operator()(PartCfg &partCfg) const {
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #if defined(LB)
-    for (size_t ind=0; ind < m_sample_positions.size(); ind +=3) {
+    for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
       Vector3d pos_tmp = {m_sample_positions[ind + 0],
-                           m_sample_positions[ind + 1],
-                           m_sample_positions[ind + 2]};
+                          m_sample_positions[ind + 1],
+                          m_sample_positions[ind + 2]};
       lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
     }
 #endif
   } else {
-    throw std::runtime_error("Either CPU LB or GPU LB has to be active for this observable to work.");
+    throw std::runtime_error("Either CPU LB or GPU LB has to be active for "
+                             "this observable to work.");
   }
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
-    const Vector3d position = {
-        {m_sample_positions[ind + 0], m_sample_positions[ind + 1], m_sample_positions[ind + 2]}};
+    const Vector3d position = {{m_sample_positions[ind + 0],
+                                m_sample_positions[ind + 1],
+                                m_sample_positions[ind + 2]}};
     const Vector3d velocity = {
         {velocities[ind + 0], velocities[ind + 1], velocities[ind + 2]}};
     histogram.update(position, velocity);
@@ -45,7 +64,8 @@ operator()(PartCfg &partCfg) const {
   auto const tot_count = histogram.get_tot_count();
   for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
     if (tot_count[ind] == 0 and not allow_empty_bins) {
-      auto const error = "Decrease sampling delta(s), bin " + std::to_string(ind) + " has no hit";
+      auto const error = "Decrease sampling delta(s), bin " +
+                         std::to_string(ind) + " has no hit";
       throw std::runtime_error(error);
     }
     if (tot_count[ind] > 0) {
@@ -55,4 +75,4 @@ operator()(PartCfg &partCfg) const {
   return hist_tmp;
 }
 
-}
+} // namespace Observables

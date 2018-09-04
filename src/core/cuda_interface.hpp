@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2013-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -23,8 +23,8 @@
 
 #ifdef CUDA
 
-#include "SystemInterface.hpp"
 #include "ParticleRange.hpp"
+#include "SystemInterface.hpp"
 
 #ifdef ENGINE
 // velocities which need to be copied from the GPU to the CPU to calculate a
@@ -69,7 +69,7 @@ struct CUDA_particle_data {
   /** particle position given from md part*/
   float p[3];
 
-#if defined(LB_GPU) 
+#if defined(LB_GPU)
   /** particle momentum struct velocity p.m->v*/
   float v[3];
 #endif
@@ -106,11 +106,15 @@ struct CUDA_particle_data {
 };
 
 /** data structure for the different kinds of energies */
-typedef struct { float bonded, non_bonded, coulomb, dipolar; } CUDA_energy;
+typedef struct {
+  float bonded, non_bonded, coulomb, dipolar;
+} CUDA_energy;
 
 /** Note the particle's seed gets its own struct since it doesn't get copied
  * back and forth from the GPU */
-typedef struct { unsigned int seed; } CUDA_particle_seed;
+typedef struct {
+  unsigned int seed;
+} CUDA_particle_seed;
 
 extern CUDA_particle_data *particle_data_host;
 
@@ -158,9 +162,9 @@ void copy_part_data_to_gpu(ParticleRange particles);
  * @brief Distribute forces to the slaves, and and them to the particles.
  *
  * @param particles The particles the forces (and torques should be added to)
- * @param host_forces The forces as flat array of size 3 * particls.size(),
+ * @param host_forces The forces as flat array of size 3 * particles.size(),
  only relevant on the master.
- * @param host_torques The torques as flat array of size 3 * particls.size(),
+ * @param host_torques The torques as flat array of size 3 * particles.size(),
  *                this is only touched if ROTATION is active. Only relevant
  on the master.
  *

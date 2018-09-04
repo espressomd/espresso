@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -27,5 +27,5 @@ void initialize() {
   ScriptInterface::register_new<ScriptInterface::MPIIO::MPIIOScript>(
       "ScriptInterface::MPIIO::MPIIOScript");
 }
-}
-}
+} // namespace MPIIO
+} // namespace ScriptInterface

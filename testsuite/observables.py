@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,23 +25,26 @@ from numpy.random import random
 from espressomd.interactions import FeneBond
 import espressomd.observables
 
+
 def calc_com_x(system, x):
     if espressomd.has_features(["MASS"]):
-        com_x = np.average(getattr(system.part[:], x), weights=system.part[:].mass, axis=0)
+        com_x = np.average(
+            getattr(system.part[:], x), weights=system.part[:].mass, axis=0)
     else:
         com_x = np.average(getattr(system.part[:], x), axis=0)
     return com_x
+
 
 class Observables(ut.TestCase):
     N_PART = 1000
     # Handle for espresso system
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-    
+
     def setUp(self):
-        if not len(self.system.part):
+        if not self.system.part:
             for i in range(self.N_PART):
-                self.system.part.add(pos=random(3)*10, v=random(3), id=i)
+                self.system.part.add(pos=random(3) * 10, v=random(3), id=i)
                 if espressomd.has_features(["MASS"]):
                     self.system.part[i].mass = random()
                 if espressomd.has_features(["DIPOLES"]):
@@ -90,34 +93,44 @@ class Observables(ut.TestCase):
 
         return func
 
-    test_pos = generate_test_for_pid_observable(espressomd.observables.ParticlePositions, "pos")
-    test_v = generate_test_for_pid_observable(espressomd.observables.ParticleVelocities, "v")
-    test_f = generate_test_for_pid_observable(espressomd.observables.ParticleForces, "f")
-    test_com_position = generate_test_for_pid_observable(espressomd.observables.ComPosition, 'pos', 'com')
-    test_com_velocity = generate_test_for_pid_observable(espressomd.observables.ComVelocity, 'v', 'com')
-    test_com_force = generate_test_for_pid_observable(espressomd.observables.ComForce, 'f', 'com')
+    test_pos = generate_test_for_pid_observable(
+        espressomd.observables.ParticlePositions, "pos")
+    test_v = generate_test_for_pid_observable(
+        espressomd.observables.ParticleVelocities, "v")
+    test_f = generate_test_for_pid_observable(
+        espressomd.observables.ParticleForces, "f")
+    test_com_position = generate_test_for_pid_observable(
+        espressomd.observables.ComPosition, 'pos', 'com')
+    test_com_velocity = generate_test_for_pid_observable(
+        espressomd.observables.ComVelocity, 'v', 'com')
+    test_com_force = generate_test_for_pid_observable(
+        espressomd.observables.ComForce, 'f', 'com')
 
     if espressomd.has_features(["DIPOLES"]):
         test_mag_dip = generate_test_for_pid_observable(
             espressomd.observables.MagneticDipoleMoment, "dip", "sum")
 
     if espressomd.has_features(["ROTATION"]):
-        test_body_angular_velocity = generate_test_for_pid_observable(espressomd.observables.ParticleBodyAngularVelocities, "omega_body")
-        test_lab_angular_velocity = generate_test_for_pid_observable(espressomd.observables.ParticleAngularVelocities, "omega_lab")
+        test_body_angular_velocity = generate_test_for_pid_observable(
+            espressomd.observables.ParticleBodyAngularVelocities, "omega_body")
+        test_lab_angular_velocity = generate_test_for_pid_observable(
+            espressomd.observables.ParticleAngularVelocities, "omega_lab")
 
         def test_particle_body_velocities(self):
-            obs = espressomd.observables.ParticleBodyVelocities(ids=range(self.N_PART))
+            obs = espressomd.observables.ParticleBodyVelocities(
+                ids=range(self.N_PART))
             obs_data = obs.calculate()
-            part_data = np.array([p.convert_vector_space_to_body(p.v) for p in self.system.part])
+            part_data = np.array([p.convert_vector_space_to_body(p.v)
+                                 for p in self.system.part])
             np.testing.assert_array_almost_equal(part_data.flatten(), obs_data,
-                err_msg="Data did not agree for observable ParticleBodyVelocities and particle derived values.",
-                decimal=9)
-
+                                                 err_msg="Data did not agree for observable ParticleBodyVelocities and particle derived values.",
+                                                 decimal=9)
 
     def test_stress_tensor(self):
         s = self.system.analysis.stress_tensor()["total"].reshape(9)
         obs_data = np.array(espressomd.observables.StressTensor().calculate())
-        self.assertEqual(espressomd.observables.StressTensor().n_values(), len(s))
+        self.assertEqual(
+            espressomd.observables.StressTensor().n_values(), len(s))
         np.testing.assert_array_almost_equal(
             s,
             obs_data,
@@ -126,10 +139,13 @@ class Observables(ut.TestCase):
 
     @ut.skipIf(not espressomd.has_features('ELECTROSTATICS'), "Skipping test for Current observable due to missing features.")
     def test_current(self):
-        obs_data = espressomd.observables.Current(ids=range(self.N_PART)).calculate()
+        obs_data = espressomd.observables.Current(
+            ids=range(self.N_PART)).calculate()
         part_data = self.system.part[:].q.dot(self.system.part[:].v)
-        self.assertEqual(espressomd.observables.Current(ids=range(self.N_PART)).n_values(), len(part_data.flatten()))
-        np.testing.assert_array_almost_equal(obs_data, part_data, err_msg="Data did not agree for observable 'Current'", decimal=9)
+        self.assertEqual(espressomd.observables.Current(
+            ids=range(self.N_PART)).n_values(), len(part_data.flatten()))
+        np.testing.assert_array_almost_equal(
+            obs_data, part_data, err_msg="Data did not agree for observable 'Current'", decimal=9)
 
     @ut.skipIf(not espressomd.has_features('ELECTROSTATICS'), "Skipping test for DipoleMoment observable due to missing features.")
     def test_dipolemoment(self):
@@ -137,7 +153,8 @@ class Observables(ut.TestCase):
         obs_data = obs.calculate()
         part_data = self.system.part[:].q.dot(self.system.part[:].pos)
         self.assertEqual(obs.n_values(), len(part_data.flatten()))
-        np.testing.assert_array_almost_equal(obs_data, part_data, err_msg="Data did not agree for observable 'DipoleMoment'", decimal=9)
+        np.testing.assert_array_almost_equal(
+            obs_data, part_data, err_msg="Data did not agree for observable 'DipoleMoment'", decimal=9)
 
 
 if __name__ == "__main__":

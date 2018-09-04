@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef CORE_EXTERNAL_FIELD_FIELDS_INTERPOLATED_HPP
 #define CORE_EXTERNAL_FIELD_FIELDS_INTERPOLATED_HPP
 
@@ -30,14 +48,14 @@ void deep_copy(boost::multi_array<T, 3> &dst,
   dst.reindex(std::array<typename boost::multi_array<T, 3>::index, 3>{
       {b[0], b[1], b[2]}});
 }
-}
+} // namespace detail
 
 /**
-* @brief A vector field interpolated from a regular grid.
-*
-* This is an interpolation wrapper around a boost::multi_array,
-* which can be evaluated on any point in space by spline interpolation.
-*/
+ * @brief A vector field interpolated from a regular grid.
+ *
+ * This is an interpolation wrapper around a boost::multi_array,
+ * which can be evaluated on any point in space by spline interpolation.
+ */
 template <typename T, size_t codim> class Interpolated {
 public:
   using value_type = typename decay_to_scalar<Vector<codim, T>>::type;
@@ -107,7 +125,7 @@ public:
            ((m_origin + grid_size) >= box);
   }
 };
-}
-}
+} // namespace Fields
+} // namespace FieldCoupling
 
 #endif

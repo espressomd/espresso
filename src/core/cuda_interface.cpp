@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -17,14 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "cuda_interface.hpp"
 
 #ifdef CUDA
 
-#include "utils/serialization/CUDA_particle_data.hpp"
-#include "utils/mpi/gather_buffer.hpp"
-#include "utils/mpi/scatter_buffer.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "debug.hpp"
@@ -32,7 +28,9 @@
 #include "grid.hpp"
 #include "interaction_data.hpp"
 #include "random.hpp"
-
+#include "utils/mpi/gather_buffer.hpp"
+#include "utils/mpi/scatter_buffer.hpp"
+#include "utils/serialization/CUDA_particle_data.hpp"
 
 /// MPI tag for cuda particle gathering
 #define REQ_CUDAGETPARTS 0xcc01
@@ -150,8 +148,8 @@ void cuda_mpi_get_particles(ParticleRange particles,
  * @brief Add a flat force (and torque) array to a range of particles.
  *
  * @param particles The particles the forces (and torques should be added to)
- * @param forces The forces as flat array of size 3 * particls.size()
- * @param torques The torques as flat array of size 3 * particls.size(),
+ * @param forces The forces as flat array of size 3 * particles.size()
+ * @param torques The torques as flat array of size 3 * particles.size(),
  *                this is only touched if ROTATION is active.
  */
 static void add_forces_and_torques(ParticleRange particles, float *forces,
@@ -239,7 +237,7 @@ void set_v_cs(ParticleRange particles, CUDA_v_cs *v_cs) {
     v_cs++;
   }
 }
-}
+} // namespace
 
 void cuda_mpi_send_v_cs(ParticleRange particles, CUDA_v_cs *host_v_cs) {
   // first collect number of particles on each node
@@ -266,9 +264,9 @@ on mpi.h. */
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host) {
   energy.bonded[0] += energy_host.bonded;
   energy.non_bonded[0] += energy_host.non_bonded;
-  if (energy.n_coulomb>=1)
+  if (energy.n_coulomb >= 1)
     energy.coulomb[0] += energy_host.coulomb;
-  if (energy.n_dipolar >=2)
+  if (energy.n_dipolar >= 2)
     energy.dipolar[1] += energy_host.dipolar;
 }
 

@@ -1,6 +1,6 @@
 
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,10 +26,11 @@ import numpy as np
 
 class DomainDecomposition(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    
+
     def setUp(self):
         self.system.part.clear()
-        self.system.cell_system.set_domain_decomposition(use_verlet_lists=False)
+        self.system.cell_system.set_domain_decomposition(
+            use_verlet_lists=False)
 
     def test_resort(self):
         n_part = 2351
@@ -61,7 +62,7 @@ class DomainDecomposition(ut.TestCase):
 
         self.assertEqual(cs.min_num_cells, 23)
         cell_grid = cs.get_state()['cell_grid']
-        n_cells = cell_grid[0]*cell_grid[1]*cell_grid[2]
+        n_cells = cell_grid[0] * cell_grid[1] * cell_grid[2]
         # Check that we have neither too few nor too many cells
         self.assertGreaterEqual(n_cells, cs.min_num_cells)
         self.assertLessEqual(n_cells, cs.max_num_cells)

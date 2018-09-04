@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -32,8 +32,8 @@
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
 #include "grid.hpp"
-#include <memory>
 #include "shapes/Wall.hpp"
+#include <memory>
 
 int angledist_set_params(int bond_type, double bend, double phimin,
                          double distmin, double phimax, double distmax) {
@@ -82,16 +82,18 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   const double distmx = iaparams->p.angledist.distmax;
 
   /* folds coordinates of p_mid into original box */
-  Vector3d folded_pos =folded_position(*p_mid);
+  Vector3d folded_pos = folded_position(*p_mid);
 
   double pwdistmin = std::numeric_limits<double>::infinity();
   double pwdistmin_d = 0.0;
 
   for (auto const &c : Constraints::constraints) {
-    auto cs = std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
+    auto cs =
+        std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
     if (cs) {
-      if (dynamic_cast<const Shapes::Wall*>(&(cs->shape()))) {
-        const Shapes::Wall* wall = dynamic_cast<const Shapes::Wall*>(&(cs->shape()));
+      if (dynamic_cast<const Shapes::Wall *>(&(cs->shape()))) {
+        const Shapes::Wall *wall =
+            dynamic_cast<const Shapes::Wall *>(&(cs->shape()));
         double dist = -wall->d();
         for (int j = 0; j < 3; j++) {
           dist += folded_pos[j] * (wall->n())[j];
@@ -185,7 +187,7 @@ int angledist_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
   d2i = 1.0 / sqrt(dist2);
   for (j = 0; j < 3; j++)
     vec2[j] *= d2i;
-  /* scalar produvt of vec1 and vec2 */
+  /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
   if (cosine > TINY_COS_VALUE)
     cosine = TINY_COS_VALUE;

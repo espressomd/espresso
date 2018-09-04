@@ -59,7 +59,7 @@ python_test(FILE save_checkpoint.py MAX_NUM_PROC 4)
 python_test(FILE test_checkpoint.py MAX_NUM_PROC 4)
 python_test(FILE cellsystem.py MAX_NUM_PROC 4)
 python_test(FILE constraint_homogeneous_magnetic_field.py MAX_NUM_PROC 4)
-python_test(FILE constraint_shape_based.py MAX_NUM_PROC 4)
+python_test(FILE constraint_shape_based.py MAX_NUM_PROC 2)
 python_test(FILE coulomb_cloud_wall.py MAX_NUM_PROC 4)
 python_test(FILE coulomb_tuning.py MAX_NUM_PROC 4)
 python_test(FILE correlation.py MAX_NUM_PROC 4)
@@ -122,7 +122,7 @@ python_test(FILE analyze_itensor.py MAX_NUM_PROC 4)
 python_test(FILE rdf.py MAX_NUM_PROC 1)
 python_test(FILE coulomb_mixed_periodicity.py MAX_NUM_PROC 4)
 python_test(FILE coulomb_cloud_wall_duplicated.py MAX_NUM_PROC 4)
-python_test(FILE collision_detection.py MAX_NUM_PROC 1)
+python_test(FILE collision_detection.py MAX_NUM_PROC 4)
 python_test(FILE lb_get_u_at_pos.py MAX_NUM_PROC 4)
 python_test(FILE lj.py MAX_NUM_PROC 4)
 python_test(FILE pairs.py MAX_NUM_PROC 4)
@@ -174,7 +174,9 @@ add_custom_target(python_test_data
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/data
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/tests_common.py ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites_tracers_common.py ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py ${CMAKE_CURRENT_BINARY_DIR})
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 add_custom_target(check_python_serial COMMAND ${CMAKE_CTEST_COMMAND} -C serial --output-on-failure)
 add_dependencies(check_python_serial pypresso python_test_data)

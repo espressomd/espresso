@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -37,7 +37,7 @@
  *  - a harmonic potential with a restlength of zero on the molecular centre of
  * mass
  *  - a drag on the molecular velocity
- *  - a cancelation of the total force on the molecule (including thermostat
+ *  - a cancellation of the total force on the molecule (including thermostat
  * forces)
  *  The centre of mass can be fixed to an absolute position or to a relative
  * position in the
@@ -225,7 +225,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   for (i = 1; i < n_nodes; i++) {
     sum_n_local_mols += n_local_mols[i];
   }
-  std::vector<int>local_mols(sum_n_local_mols);
+  std::vector<int> local_mols(sum_n_local_mols);
 
   /* Everyone tells me which trapped molecules are on their node */
   count = 0;
@@ -307,7 +307,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
 }
 
 /* Send molecule information to the master node.
-   Recieve the combined molecule information and the trap forces */
+   Receive the combined molecule information and the trap forces */
 
 void mpi_comm_mol_info_slave(IntList *local_trapped_mols) {
   int i, mol;

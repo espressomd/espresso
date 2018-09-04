@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -194,7 +194,10 @@ BOOST_AUTO_TEST_CASE(make_shared_from_args_test) {
 
 BOOST_AUTO_TEST_CASE(call_with_args_test) {
   struct C {
-    int mem(std::string s) { s.clear(); return 12; }
+    int mem(std::string s) {
+      s.clear();
+      return 12;
+    }
   };
 
   VariantMap vals{{"s", std::string()}};

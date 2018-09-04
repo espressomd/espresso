@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -121,12 +121,26 @@ class ParticleProperties(ut.TestCase):
             if espressomd.has_features(["PARTICLE_ANISOTROPY"]):
                 test_gamma = generateTestForVectorProperty(
                     "gamma", np.array([2., 9., 0.23]))
+
+                def test_gamma_single(self):
+                    self.system.part[self.pid].gamma = 17.4
+                    np.testing.assert_array_equal(
+                        np.copy(self.system.part[self.pid].gamma),
+                                                  np.array([17.4, 17.4, 17.4]),
+                                                  "gamma: value set and value gotten back differ.")
             else:
                 test_gamma = generateTestForScalarProperty("gamma", 17.3)
 
             if espressomd.has_features(["PARTICLE_ANISOTROPY"]):
                 test_gamma_rot = generateTestForVectorProperty(
                     "gamma_rot", np.array([5., 10., 0.33]))
+
+                def test_gamma_rot_single(self):
+                    self.system.part[self.pid].gamma_rot = 15.4
+                    np.testing.assert_array_equal(
+                        np.copy(self.system.part[self.pid].gamma_rot),
+                                                  np.array([15.4, 15.4, 15.4]),
+                                                  "gamma_rot: value set and value gotten back differ.")
             else:
                 test_gamma_rot = generateTestForScalarProperty(
                     "gamma_rot", 14.23)
@@ -148,7 +162,8 @@ class ParticleProperties(ut.TestCase):
             self.system.part.add(id=1, pos=(0, 0, 0))
             self.system.part[1].vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
             self.system.part[1].vs_quat = [1, 2, 3, 4]
-            np.testing.assert_array_equal(self.system.part[1].vs_quat, [1, 2, 3, 4])
+            np.testing.assert_array_equal(
+                self.system.part[1].vs_quat, [1, 2, 3, 4])
             res = self.system.part[1].vs_relative
             self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
             self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
@@ -224,25 +239,27 @@ class ParticleProperties(ut.TestCase):
             handle_to_non_existing_particle.id
 
     def test_parallel_property_setters(self):
-        s= self.system
+        s = self.system
         s.part.clear()
-        s.part.add(pos=s.box_l*np.random.random((100, 3)))
+        s.part.add(pos=s.box_l * np.random.random((100, 3)))
 
         # Copy individual properties of particle 0
-        print("If this test hangs, there is an mpi deadlock in a particle property setter." )
+        print(
+            "If this test hangs, there is an mpi deadlock in a particle property setter.")
         for p in espressomd.particle_data.particle_attributes:
             # Uncomment to identify guilty property
             #print( p)
-            
-            if not hasattr(s.part[0],p):
-                raise Exception("Inconsistency between ParticleHandle and particle_data.particle_attributes")
-            try: 
+
+            if not hasattr(s.part[0], p):
+                raise Exception(
+                    "Inconsistency between ParticleHandle and particle_data.particle_attributes")
+            try:
                 setattr(s.part[:], p, getattr(s.part[0], p))
             except AttributeError:
                 print("Skipping read-only", p)
             # Cause a differtn mpi callback to uncover deadlock immediately
-            x = getattr(s.part[:],p)
-            
+            x = getattr(s.part[:], p)
+
 
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())

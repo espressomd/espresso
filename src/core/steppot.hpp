@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -25,11 +25,11 @@
  *  Routines to calculate the smooth step potential energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp
-*/
+ */
 
-#include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
+#include "utils.hpp"
 
 #ifdef SMOOTH_STEP
 
@@ -46,14 +46,14 @@ inline void add_SmSt_pair_force(const Particle *const p1,
     return;
 
   int j;
-  double frac, fracP, fac = 0.0, er;
+  double frac, fracP, er;
   frac = ia_params->SmSt_d / dist;
   fracP = pow(frac, ia_params->SmSt_n);
   er = exp(2. * ia_params->SmSt_k0 * (dist - ia_params->SmSt_sig));
-  fac = (ia_params->SmSt_n * fracP +
-         2. * ia_params->SmSt_eps * ia_params->SmSt_k0 * dist * er /
-             Utils::sqr(1.0 + er)) /
-        dist2;
+  double fac = (ia_params->SmSt_n * fracP + 2. * ia_params->SmSt_eps *
+                                                ia_params->SmSt_k0 * dist * er /
+                                                Utils::sqr(1.0 + er)) /
+               dist2;
 
   for (j = 0; j < 3; j++)
     force[j] += fac * d[j];

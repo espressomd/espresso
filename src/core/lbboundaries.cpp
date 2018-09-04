@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group,
 
@@ -30,18 +30,18 @@
 #include "communication.hpp"
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
+#include "grid.hpp"
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "lb.hpp"
 #include "lbboundaries.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 #include "lbgpu.hpp"
-#include "grid.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <vector>
-#include <limits>
 
 namespace LBBoundaries {
 
@@ -467,4 +467,4 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
 }
 
 #endif
-} // namespace
+} // namespace LBBoundaries

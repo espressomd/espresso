@@ -13,7 +13,7 @@ For understanding this chapter, it is helpful to be aware of the Python classes 
 * :class:`espressomd.particle_data.ParticleList` provides access to all particles in the simulation
 * :class:`espressomd.particle_data.ParticleSlice` provides access to a subset of particles in the simulation identified by a list of ids.
 
-in almost no case have these classes to be instanced explicitly by the user. 
+in almost no case have these classes to be instantiated explicitly by the user.
 Rather, access is provided via the :attr:`espressomd.system.System.part` attribute.
 The details are explained in the following sections.
 
@@ -25,21 +25,21 @@ In order to add particles to the system, call
 :meth:`espressomd.particle_data.ParticleList.add`::
 
     import espressomd
-    system=espressomd.System()
+    system = espressomd.System()
     system.part.add(pos=[1.0, 1.0, 1.0], id=0, type=0)
 
 This command adds a single particle to the system with properties given
 as arguments. The pos property is required, the id can be omitted, in which case it is chosen automatically.
 All available particle properties are members of :class:`espressomd.particle_data.ParticleHandle`.
 
-It is also possible to add several particles at once:::
+It is also possible to add several particles at once::
 
     import numpy as np
-    system.part.add(pos=np.random.random((10,3)*box_length))
+    system.part.add(pos=np.random.random((10, 3) * box_length))
 
-Furthermore, the :meth:`espressomd.particle_data.ParticleList.add` method returns the added particle(s):::
+Furthermore, the :meth:`espressomd.particle_data.ParticleList.add` method returns the added particle(s)::
 
-    tracer=system.part.add(pos=(0,0,0))
+    tracer = system.part.add(pos=(0, 0, 0))
     print(tracer.pos)
 
 Note that the instance of :class:`espressomd.particle_data.ParticleHandle` returned by :meth:`espressomd.particle_data.ParticleList.add` are handles for the live particles in the simulation, rather than offline copies. Changing their properties will affect the simulation.
@@ -61,10 +61,7 @@ For example, to print the current position of the particle with index 0 in the s
 
 Similarly, the position can be set::
 
-    system.part[0].pos=(1,2.5,3)
-    system.part[0].id=4
-
-Note that the index and the property ID are not necessarily the same.
+    system.part[0].pos = (1, 2.5, 3)
 
 .. _Vectorial properties:
 
@@ -74,7 +71,7 @@ Vectorial properties
 For vectorial particle properties, component-wise manipulation like ``system.part[0].pos[0]
 = 1`` or in-place operators like ``+=`` or ``*=`` are not allowed and result in an error.
 This behavior is inherited, so the same applies to ``a`` after ``a =
-system.part[0].pos``. If you want to use an vectorial property for further
+system.part[0].pos``. If you want to use a vectorial property for further
 calculations, you should explicitly make a copy e.g. via
 ``a = numpy.copy(system.part[0].pos)``.
 
@@ -86,14 +83,14 @@ Interacting with groups of particles
 The :class:`espressomd.particle_data.ParticleList` support slicing similarly to lists and NumPy arrays. To access all existing particles, use a colon::
 
     print(sysstem.part[:].pos)
-    system.part[:].q=0
+    system.part[:].q = 0
 
 To access particles with indices ranging from 0 to 9, use::
-    
+
     system.part[0:10].pos
 
 Note that, like in other cases in Python, the lower bound is inclusive and the upper bound is non-inclusive.
-Setting slices can be done by 
+Setting slices can be done by
 
 - supplying a *single value* that is assigned to each entry of the slice, e.g.::
 
@@ -119,9 +116,9 @@ by the length of the input, as slice length and input length can be equal. Here,
 
     system.part[2:4].exclusions = [[0, 1], [0, 1]]
 
-The above code snippet would lead the the same exclusions as the one before.
-The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with 
-the tuple ``(bond, partners)``. 
+The above code snippet would lead to the same exclusions as the one before.
+The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with
+the tuple ``(bond, partners)``.
 
 You can select a subset of particles via using the select method. For example you can obtain a list of particles with charge -1 via using ::
 
@@ -137,7 +134,7 @@ Deleting particles
 Particles can be easily deleted in Python using particle ids or ranges of particle ids.
 For example, to delete all particles with particle index greater than 10, run::
 
-    >>> system.part[10:].remove()
+    system.part[10:].remove()
 
 To delete all particles, use::
 
@@ -151,27 +148,27 @@ You can iterate over all particles or over a subset of particles as follows::
 
     for p in system.part:
         print(p.pos)
-    
+
     for p in system.part[0:10]:
         print(p.pos)
 
 You can iterate over all pairs of particles using::
-    
-    for pair in system.part.pairs():
-        print(pair[0].id,pair[1].id)
 
-        
+    for pair in system.part.pairs():
+        print(pair[0].id, pair[1].id)
+
+
 .. _Exclusions:
 
 Exclusions
 ----------
 
 Particles can have an exclusion list of all other particles where non-bonded interactions are ignored.
-This is typically used in atomistic simulations, 
+This is typically used in atomistic simulations,
 where nearest and next nearest neighbor interactions along the chain have to be omitted since they are included in the bonding potentials.
 Exclusions do not apply to the short range part of electrostatics and magnetostatics methods, e.g. to P3M.
 
-  ::
+::
 
     system.part[0].add_exclusion(1)
 
@@ -180,7 +177,7 @@ Create exclusions for particles pairs 0 and 1.
 
 To delete the exclusion, simply use
 
-  ::
+::
 
     system.part[0].delete_exclusion(1)
 
@@ -208,7 +205,7 @@ arguments.
 The distance between adjacent monomers
 during the course of the simulation depends on the applied potentials.
 For fixed bond length please refer to the Rattle Shake
-algorithm:raw-latex:`\cite{andersen83a}`. The algorithm is based on
+algorithm\ :cite:`andersen83a`. The algorithm is based on
 Verlet algorithm and satisfy internal constraints for molecular models
 with internal constraints, using Lagrange multipliers.
 
@@ -216,11 +213,11 @@ The polymer can be created using several different random walk modes (via the pa
 
  (Random walk)
     ``mode = 1`` The monomers are randomly placed by a random walk with a
-    steps size of ``bond_length``.
+    step size of ``bond_length``.
 
  (Pruned self-avoiding walk)
-    ``mode = 2`` The position of a monomer is randomly chosen in a distance
-    of to the previous monomer. If the position is closer to another
+    ``mode = 2`` The position of a monomer is randomly chosen within a distance
+    to the previous monomer. If the position is closer to another
     particle than ``shield``, the attempt is repeated up to ``max_tries`` times. Note, that this
     is not a real self-avoiding random walk, as the particle
     distribution is not the same. If you want a real self-avoiding walk, use
@@ -266,7 +263,7 @@ See :meth:`espressomd.diamond.Diamond` for more details.
     Cross-linking polymers
     ~~~~~~~~~~~~~~~~~~~~~~
 
-            :todo: `This is not implemented in Python` 
+            :todo: `This is not implemented in Python`
 
     crosslink
 
@@ -315,18 +312,18 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
     import espressomd
     from espressomd.virtual_sites import VirtualSitesOff, VirtualSitesRelative
 
-    s=espressomd.System()
-    s.virtual_sites=VirtualSitesRelative(have_velocity=True, have_quaternion=False)
+    s = espressomd.System()
+    s.virtual_sites = VirtualSitesRelative(have_velocity=True, have_quaternion=False)
     # or
-    s.virtual_sites=VirtualSitesOff()
+    s.virtual_sites = VirtualSitesOff()
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
-The `have_velocity` parameter determines whether or not the velocity of virtual sites is calculated, which carries a performance cost.
-The `have_quaternion` parameter determines whether the quaternion of the virtual particle is updated (usefull in combination with the
+The ``have_velocity`` parameter determines whether or not the velocity of virtual sites is calculated, which carries a performance cost.
+The ``have_quaternion`` parameter determines whether the quaternion of the virtual particle is updated (useful in combination with the
 :attr:`espressomd.particle_data.ParticleHandle.vs_quat` property of the virtual particle which defines the orientation of the virtual particle
 in the body fixed frame of the related real particle.
 
-.. _Rigid arrangements of particles: 
+.. _Rigid arrangements of particles:
 
 Rigid arrangements of particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -351,7 +348,7 @@ site is placed at a fixed distance from the non-virtual particle. When
 the non-virtual particle rotates, the virtual sites rotates on an orbit
 around the non-virtual particles center.
 
-To use this implementation of virtual sites, activate the feature VIRTUAL_SITES_RELATIVE. Furthermore, an instance of :class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the active virtual sites scheme (see above).
+To use this implementation of virtual sites, activate the feature ``VIRTUAL_SITES_RELATIVE``. Furthermore, an instance of :class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the active virtual sites scheme (see above).
 To set up a virtual site,
 
 #. Place the particle to which the virtual site should be related. It
@@ -360,12 +357,12 @@ To set up a virtual site,
 
 #. Place a particle at the desired relative position, make it virtual
    and relate it to the first particle::
-       
-       p=system.part.add(pos=(1,2,3))
+
+       p = system.part.add(pos=(1, 2, 3))
        p.vs_auto_relate_to(<ID>)
 
    where <ID> is the id of the central particle. This will also set the :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on the particle to 1.
-  
+
 #. Repeat the previous step with more virtual sites, if desired.
 
 #. To update the positions of all virtual sites, call
@@ -378,8 +375,8 @@ Please note:
    from the non-virtual particle, the id of the non-virtual particle and
    a quaternion which defines the vector from non-virtual particle to
    virtual site in the non-virtual particles body-fixed frame. This
-   information is saved in the virtual site's`espressomd.particle_data.ParticleHandle.vs_relative` attribute.
-   Take care, not to overwrite it after using vs\_auto\_relate.
+   information is saved in the virtual site's `espressomd.particle_data.ParticleHandle.vs_relative` attribute.
+   Take care, not to overwrite it after using ``vs_auto_relate``.
 
 -  Virtual sites can not be placed relative to other virtual sites, as
    the order in which the positions of virtual sites are updated is not
@@ -393,7 +390,7 @@ Please note:
    to be larger than the largest distance between a non-virtual particle
    and its associated virtual sites. To this aim, when running on more than one core,
    you need to set the
-   system's :attr:`espressomd.system.System.min_global_cut` attribute to this largest distance. 
+   system's :attr:`espressomd.system.System.min_global_cut` attribute to this largest distance.
    An error is generated when this requirement is not met.
 
 -  If the virtual sites represent actual particles carrying a mass, the
@@ -403,20 +400,20 @@ Please note:
 -  The presence of rigid bodies constructed by means of virtual sites
    adds a contribution to the pressure and stress tensor.
 
-.. _Inertialess Lattice-Boltzmann tracers:
+.. _Inertialess lattice Boltzmann tracers:
 
-Inertialess Lattice-Boltzmann tracers
+Inertialess lattice Boltzmann tracers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`espressomd.virtual_sites.VirtualSitesInertialessTracers`
 
-When this implementation is selected, the virtual sites follow the motion of a Lattice Botzmann fluid (both, Cpu and Gpu). This is achieved by integrating their position using the fluid velocity at the virtual sites' position.
-Forces acting on the virtual sites are directly transferred as force density onto the Lattice Boltzmann fluid, making the coupling free of inertia.
+When this implementation is selected, the virtual sites follow the motion of a lattice Boltzmann fluid (both, CPU and GPU). This is achieved by integrating their position using the fluid velocity at the virtual sites' position.
+Forces acting on the virtual sites are directly transferred as force density onto the lattice Boltzmann fluid, making the coupling free of inertia.
 The feature stems from the implementation of the :ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
 
 For correct results, the LB thermostat has to be deactivated for virtual sites::
 
-   system.thermostat.set_lb(kT=0,act_on_virtual=False)
+   system.thermostat.set_lb(kT=0, act_on_virtual=False)
 
 Please note that the velocity attribute of the virtual particles does not carry valid information for this virtual sites scheme.
 
@@ -429,7 +426,7 @@ Please note that the velocity attribute of the virtual particles does not carry 
 
     :todo: `This is not implemented in Python, yet`
 
-    To activate this implementation, enable the feature VIRTUAL_SITES_COM in myconfig.hpp. Virtual sites are then placed in the center of mass of
+    To activate this implementation, enable the feature ``VIRTUAL_SITES_COM`` in :file:`myconfig.hpp`. Virtual sites are then placed in the center of mass of
     a set of particles (as defined below). Their velocity will also be that
     of the center of mass. Forces accumulating on the virtual sites are
     distributed back to the particles which form the molecule. To place a
@@ -490,14 +487,14 @@ Please note that the velocity attribute of the virtual particles does not carry 
     ~~~~~~~~~~~~~~~~~~~
 
     The behavior of virtual sites can be fine-tuned with the following
-    switches in ``myconfig.hpp``.
+    switches in :file:`myconfig.hpp`.
 
-    - VIRTUAL_SITES_NO_VELOCITY specifies that the velocity of virtual sites is not computed
+    - ``VIRTUAL_SITES_NO_VELOCITY`` specifies that the velocity of virtual sites is not computed
 
-    - VIRTUAL_SITES_THERMOSTAT specifies that the Langevin thermostat should also act on virtual
+    - ``VIRTUAL_SITES_THERMOSTAT`` specifies that the Langevin thermostat should also act on virtual
        sites
 
-    - THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
+    - ``THERMOSTAT_IGNORE_NON_VIRTUAL`` specifies that the thermostat does not act on non-virtual particles
 
 .. _Particle number counting feature:
 
@@ -518,7 +515,7 @@ individual type and so random ids of particles of a certain type can be
 drawn.  ::
 
     import espressomd
-    system=espressomd.System()
+    system = espressomd.System()
     system.setup_type_map([_type])
     system.find_particle(_type)
     system.number_of_particles(_type)
@@ -536,11 +533,11 @@ chosen particle id, for a particle of the given type. The keyword
 particles which have the given type. For counting the number of particles of a given type you could also use :meth:`espressomd.particle_data.ParticleList.select` ::
 
     import espressomd
-    system=espressomd.System()
+    system = espressomd.System()
     ...
-    number_of_particles=len(system.part.select(type=type))
+    number_of_particles = len(system.part.select(type=type))
 
-However calling select(type=type) results in looping over all particles. Therefore calling select() is slow compared to using :meth:`espressomd.system.System.number_of_particles` which directly can return the number of particles with that type.
+However calling ``select(type=type)`` results in looping over all particles. Therefore calling ``select()`` is slow compared to using :meth:`espressomd.system.System.number_of_particles` which directly can return the number of particles with that type.
 
 .. _Self-propelled swimmers:
 
@@ -567,7 +564,7 @@ Langevin swimmers
 
     system = espressomd.System()
 
-    system.part.add(id=0, pos=[1,0,0], swimming={'f_swim':0.03})
+    system.part.add(id=0, pos=[1, 0, 0], swimming={'f_swim': 0.03})
 
 This enables the particle to be self-propelled in the direction determined by
 its quaternion. For setting the particle's quaternion see
@@ -583,9 +580,9 @@ same time. Note that there is no real difference between ``v_swim`` and
 ``f_swim``, since the latter may always be chosen such that the same terminal
 velocity is achieved for a given friction coefficient.
 
-.. _Lattice-Boltzmann (LB) swimmers:
+.. _Lattice Boltzmann (LB) swimmers:
 
-Lattice-Boltzmann (LB) swimmers
+Lattice Boltzmann (LB) swimmers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
@@ -594,11 +591,11 @@ Lattice-Boltzmann (LB) swimmers
 
     system = espressomd.System()
 
-    system.part.add(id=1, pos=[2,0,0], rotation=[1,1,1], swimming={
-       'f_swim':0.01, 'mode':'pusher', 'dipole_length':2.0, 'rotational_friction':20})
+    system.part.add(id=1, pos=[2, 0, 0], rotation=[1, 1, 1], swimming={
+        'f_swim': 0.01, 'mode': 'pusher', 'dipole_length': 2.0, 'rotational_friction': 20})
 
 For an explanation of the parameters ``v_swim`` and ``f_swim`` see the previous
-item. In lattice-Boltzmann self-propulsion is less trivial than for regular MD,
+item. In lattice Boltzmann self-propulsion is less trivial than for regular MD,
 because the self-propulsion is achieved by a force-free mechanism, which has
 strong implications for the far-field hydrodynamic flow field induced by the
 self-propelled particle. In |es| only the dipolar component of the flow field
@@ -615,8 +612,8 @@ flow. The torque on the particle is determined by taking the cross product of
 the difference between the fluid velocity at the center of the particle and at
 the source point and the vector connecting the center and source.
 
-You may ask: “Why are there two methods ``v_swim`` and ``f_swim`` for the
-self-propulsion using the lattice-Boltzmann algorithm?” The answer is
+You may ask: "Why are there two methods ``v_swim`` and ``f_swim`` for the
+self-propulsion using the lattice Boltzmann algorithm?" The answer is
 straightforward. When a particle is accelerating, it has a monopolar flow-field
 contribution which vanishes when it reaches its terminal velocity (for which
 there will only be a dipolar flow field). The major difference between the

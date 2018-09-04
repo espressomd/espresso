@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
 import numpy as np
@@ -322,8 +338,13 @@ class ThermoTest(ut.TestCase):
                     sigma2_tr[k] = 0.0
                     for j in range(3):
                         sigma2_tr[k] += self.D_tran_p_validate[k,
-                                                               j] * (2.0 * dt + dt0[k,
-                                                                                    j] * (- 3.0 + 4.0 * math.exp(- dt / dt0[k,
+                                                               j] * (
+                                                                   2.0 * dt + dt0[
+                                                                       k,
+                                                                       j] * (
+                                                                           - 3.0 + 4.0 * math.exp(
+                                                                               - dt / dt0[
+                                                                                   k,
                                                                                                                             j]) - math.exp(- 2.0 * dt / dt0[k,
                                                                                                                                                             j])))
                     dr_norm[k] += (sum(dr2[k, :]) -

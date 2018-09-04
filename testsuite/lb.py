@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 
 import itertools
@@ -24,12 +40,13 @@ class TestLB(object):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = range(n_nodes)
+    np.random.seed = 1
     params = {'int_steps': 25,
               'int_times': 10,
               'time_step': 0.01,
               'tau': 0.02,
               'agrid': 0.5,
-              'box_l': 12.0,
+              'box_l': 9.0,
               'dens': 0.85,
               'viscosity': 30.0,
               'friction': 2.0,
@@ -38,12 +55,9 @@ class TestLB(object):
               'skin': 0.2,
               'temp_confidence': 10}
     if espressomd.has_features("SHANCHEN"):
-       params.update({"dens":2*[params["dens"]]})
-     
-    if espressomd.has_features("ROTATION"):
-        dof = 6.
-    else:
-        dof = 3.
+        params.update({"dens": 2 * [params["dens"]]})
+
+    dof = 3.
 
     system.box_l = [
         params['box_l'],
@@ -56,27 +70,13 @@ class TestLB(object):
     def test_mass_momentum_thermostat(self):
         self.system.actors.clear()
         self.system.part.clear()
-        # import particle data
-        self.data = np.genfromtxt(abspath("data/lb_system.data"))
+        self.n_col_part = 1000
+        self.system.part.add(pos=np.random.random(
+            (self.n_col_part, 3)) * self.params["box_l"])
+        if espressomd.has_features("MASS"):
+            self.system.part[:].mass = 0.1 + np.random.random(
+                len(self.system.part))
 
-        for particle in self.data:
-            id = particle[0]
-            typ = particle[1]
-            pos = particle[3:6]
-            f = particle[9:]
-            v = particle[6:9]
-            p = self.system.part.add(id=int(id), pos=pos, v=v, type=int(typ))
-            if espressomd.has_features("ROTATION"):
-                p.rotation = [1, 1, 1]
-
-        self.n_col_part = len(self.system.part)
-
-        self.system.thermostat.set_langevin(
-            kT=self.params['temp'], gamma=self.params['gamma'])
-        self.system.integrator.run(50)
-        # kill particle motion
-        for i in range(self.n_col_part):
-            self.system.part[i].v = [0.0, 0.0, 0.0]
         self.system.thermostat.turn_off()
 
         self.lbf = self.lb_class(
@@ -88,20 +88,28 @@ class TestLB(object):
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(kT=self.params['temp'])
         # give particles a push
-        for i in range(self.n_col_part):
-            self.system.part[i].v = self.system.part[i].v + [0.1, 0.0, 0.0]
+        for p in self.system.part:
+            p.v = p.v + [0.1, 0.0, 0.0]
 
         self.fluidmass = self.params['dens']
         self.tot_mom = [0.0, 0.0, 0.0]
-        for i in range(self.n_col_part):
-            self.tot_mom = self.tot_mom + self.system.part[i].v
+        for p in self.system.part:
+            self.tot_mom += p.v * p.mass
 
-        self.system.integrator.run(50)
+        self.system.integrator.run(100)
 
         self.max_dmass = 0.0
         self.max_dm = [0, 0, 0]
         self.avg_temp = 0.0
         self.avg_fluid_temp = 0.0
+
+        # Cache the lb nodes
+        lb_nodes = []
+        n_nodes = int(self.params['box_l'] / self.params['agrid'])
+        for i in range(n_nodes):
+            for j in range(n_nodes):
+                for k in range(n_nodes):
+                    lb_nodes.append(self.lbf[i, j, k])
 
         # Integration
         for i in range(self.params['int_times']):
@@ -110,16 +118,12 @@ class TestLB(object):
             fluid_temp_sim = 0.0
             node_v_list = []
             node_dens_list = []
-            n_nodes = int(self.params['box_l'] / self.params['agrid'])
-            for i in range(n_nodes):
-                for j in range(n_nodes):
-                    for k in range(n_nodes):
-                        node_v_list.append(self.lbf[i, j, k].velocity)
-                        node_dens_list.append(self.lbf[i, j, k].density[0])
+            for lb_node in lb_nodes:
+                node_v_list.append(lb_node.velocity)
+                node_dens_list.append(lb_node.density[0])
 
             # check mass conversation
-            fluidmass_sim = sum(node_dens_list) / len(node_dens_list)
-
+            fluidmass_sim = np.average(node_dens_list)
             dmass = abs(fluidmass_sim - self.fluidmass)  # /len(node_dens_list)
             if dmass > self.max_dmass:
                 self.max_dmass = dmass
@@ -156,8 +160,11 @@ class TestLB(object):
                 fluid_temp / self.params['int_times']
 
         temp_dev = (2.0 / (self.n_col_part * 3.0))**0.5
+        temp_dev_fluid = (2.0 / (len(lb_nodes) * 3.0))**0.5
         temp_prec = self.params['temp_confidence'] * \
             temp_dev / (self.params['int_times'])**0.5
+        temp_prec_fluid = self.params['temp_confidence'] * \
+            temp_dev_fluid / (self.params['int_times'])**0.5
 
         self.assertTrue(
             abs(
@@ -171,12 +178,12 @@ class TestLB(object):
         self.assertTrue(
             abs(
                 self.avg_fluid_temp -
-                self.params['temp']) < temp_prec,
+                self.params['temp']) < temp_prec_fluid,
             msg="fluid temperature deviation too high\ndeviation: {}  accepted deviation: {}".format(
                 abs(
                     self.avg_fluid_temp -
                     self.params['temp']),
-                temp_prec))
+                temp_prec_fluid))
 
     def test_set_get_u(self):
         self.system.actors.clear()
@@ -212,7 +219,7 @@ class TestLB(object):
         self.lbf[0, 0, 0].velocity = v_fluid
         self.system.integrator.run(1)
         np.testing.assert_allclose(
-            np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid),atol=1E-6)
+            np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
     def test_a_ext_force_density(self):
         self.system.thermostat.turn_off()
@@ -234,22 +241,27 @@ class TestLB(object):
             n_time_steps - 0.5) / self.params['dens']
         for n in list(itertools.combinations(range(int(self.system.box_l[0] / self.params['agrid'])), 3)):
             np.testing.assert_allclose(
-                np.copy(self.lbf[n].velocity), fluid_velocity,atol=1E-6)
+                np.copy(self.lbf[n].velocity), fluid_velocity, atol=1E-6)
 
 
 @ut.skipIf(not espressomd.has_features(["LB"]),
            "Features not available, skipping test!")
 class TestLBCPU(TestLB, ut.TestCase):
+
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluid
-        self.params.update({"mom_prec":1E-9,"mass_prec_per_node":5E-8})
+        self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
 
-@ut.skipIf(not espressomd.has_features(["LB_GPU"]) or espressomd.has_features('SHANCHEN'),
+
+@ut.skipIf(
+    not espressomd.has_features(
+        ["LB_GPU"]) or espressomd.has_features('SHANCHEN'),
            "Features not available, skipping test!")
 class TestLBGPU(TestLB, ut.TestCase):
+
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidGPU
-        self.params.update({"mom_prec":1E-3,"mass_prec_per_node":1E-5})
+        self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
 
 if __name__ == "__main__":

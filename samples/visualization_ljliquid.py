@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-""" Visualization sample for a Lennard Jones liquid with live plotting via matplotlib.  
+""" Visualization sample for a Lennard Jones liquid with live plotting via matplotlib.
 """
 
 from __future__ import print_function
@@ -60,7 +60,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
@@ -139,7 +139,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
-#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
+# print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" %
+# (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
 #   Increase LJ cap
@@ -197,6 +198,7 @@ def main_loop():
     energies = system.analysis.energy()
     plot.set_xdata(np.append(plot.get_xdata(), system.time))
     plot.set_ydata(np.append(plot.get_ydata(), energies['total']))
+
 
 def main_thread():
     for i in range(0, int_n_times):

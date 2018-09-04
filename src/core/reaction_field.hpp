@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -26,12 +26,12 @@
  *  M. Neumann, J. Chem. Phys 82, 5663 (1985)
  *  \ref forces.cpp
  *
-*/
+ */
 
 #include "debug.hpp"
-#include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
+#include "utils.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -73,13 +73,15 @@ inline void add_rf_coulomb_pair_force_no_cutoff(const Particle *const p1,
     force[j] += fac * d[j];
 
   ONEPART_TRACE(if (p1->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: RF   f = (%.3e,%.3e,%.3e) with "
-                                    "part id=%d at dist %f fac %.3e\n",
+                    fprintf(stderr,
+                            "%d: OPT: RF   f = (%.3e,%.3e,%.3e) with "
+                            "part id=%d at dist %f fac %.3e\n",
                             this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                             p2->p.identity, dist, fac));
   ONEPART_TRACE(if (p2->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: RF   f = (%.3e,%.3e,%.3e) with "
-                                    "part id=%d at dist %f fac %.3e\n",
+                    fprintf(stderr,
+                            "%d: OPT: RF   f = (%.3e,%.3e,%.3e) with "
+                            "part id=%d at dist %f fac %.3e\n",
                             this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                             p1->p.identity, dist, fac));
 }
@@ -99,7 +101,8 @@ inline void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 }
 
-inline double rf_coulomb_pair_energy_no_cutoff(const Particle *p1, const Particle *p2,
+inline double rf_coulomb_pair_energy_no_cutoff(const Particle *p1,
+                                               const Particle *p2,
                                                double dist) {
   double fac;
   fac = 1.0 / dist -
@@ -138,22 +141,23 @@ inline void add_interrf_pair_force(const Particle *const p1,
   }
 
   ONEPART_TRACE(if (p1->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) "
-                                    "with part id=%d at dist %f fac %.3e\n",
+                    fprintf(stderr,
+                            "%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) "
+                            "with part id=%d at dist %f fac %.3e\n",
                             this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                             p2->p.identity, dist, fac));
   ONEPART_TRACE(if (p2->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) "
-                                    "with part id=%d at dist %f fac %.3e\n",
+                    fprintf(stderr,
+                            "%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) "
+                            "with part id=%d at dist %f fac %.3e\n",
                             this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                             p1->p.identity, dist, fac));
 }
 
 inline double interrf_pair_energy(const Particle *p1, const Particle *p2,
                                   const IA_parameters *ia_params, double dist) {
-  double val;
   if ((ia_params->rf_on == 1) && (dist < rf_params.r_cut)) {
-    val = rf_coulomb_pair_energy_no_cutoff(p1, p2, dist);
+    double val = rf_coulomb_pair_energy_no_cutoff(p1, p2, dist);
     return val;
   }
   return 0.0;
