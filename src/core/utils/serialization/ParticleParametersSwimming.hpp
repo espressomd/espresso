@@ -27,23 +27,25 @@ namespace boost {
 namespace serialization {
 /* Pod serialize for ParticleParametersSwimming */
 template <typename Archive>
-void load(Archive &ar, ParticleParametersSwimming &swim, const unsigned int /* file_version */) {
-  ar >> make_array(reinterpret_cast<char *>(&swim), sizeof(ParticleParametersSwimming));
+void load(Archive &ar, ParticleParametersSwimming &swim,
+          const unsigned int /* file_version */) {
+  ar >> make_array(reinterpret_cast<char *>(&swim),
+                   sizeof(ParticleParametersSwimming));
 }
 
 template <typename Archive>
 void save(Archive &ar, ParticleParametersSwimming const &swim,
           const unsigned int /* file_version */) {
-  ar << make_array(reinterpret_cast<char const *>(&swim), sizeof(ParticleParametersSwimming));
-
+  ar << make_array(reinterpret_cast<char const *>(&swim),
+                   sizeof(ParticleParametersSwimming));
 }
 
 template <class Archive>
-void serialize(Archive &ar, ParticleParametersSwimming &swim, const unsigned int file_version) {
+void serialize(Archive &ar, ParticleParametersSwimming &swim,
+               const unsigned int file_version) {
   split_free(ar, swim, file_version);
 }
 } // namespace serialization
 } // namespace boost
 
 #endif
-

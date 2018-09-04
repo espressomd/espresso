@@ -70,13 +70,14 @@ inline void add_ljgen_pair_force(const Particle *const p1,
     frac = ia_params->LJGEN_sig / r_off;
     double fac = ia_params->LJGEN_eps
 #ifdef LJGEN_SOFTCORE
-          * ia_params->LJGEN_lambda * (dist - ia_params->LJGEN_offset) / r_off
+                 * ia_params->LJGEN_lambda * (dist - ia_params->LJGEN_offset) /
+                 r_off
 #endif
-          * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 *
-                 pow(frac, ia_params->LJGEN_a1) -
-             ia_params->LJGEN_b2 * ia_params->LJGEN_a2 *
-                 pow(frac, ia_params->LJGEN_a2)) /
-          (r_off * dist);
+                 * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 *
+                        pow(frac, ia_params->LJGEN_a1) -
+                    ia_params->LJGEN_b2 * ia_params->LJGEN_a2 *
+                        pow(frac, ia_params->LJGEN_a2)) /
+                 (r_off * dist);
     for (j = 0; j < 3; j++)
       force[j] += fac * d[j];
 

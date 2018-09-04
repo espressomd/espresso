@@ -185,9 +185,11 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
 
     // Calculate scalar multiplications for vectors mi, mj, rij
     double mimj = p1->r.dip[0] * p2->r.dip[0] + p1->r.dip[1] * p2->r.dip[1] +
-            p1->r.dip[2] * p2->r.dip[2];
-    double mir = p1->r.dip[0] * d[0] + p1->r.dip[1] * d[1] + p1->r.dip[2] * d[2];
-    double mjr = p2->r.dip[0] * d[0] + p2->r.dip[1] * d[1] + p2->r.dip[2] * d[2];
+                  p1->r.dip[2] * p2->r.dip[2];
+    double mir =
+        p1->r.dip[0] * d[0] + p1->r.dip[1] * d[1] + p1->r.dip[2] * d[2];
+    double mjr =
+        p2->r.dip[0] * d[0] + p2->r.dip[1] * d[1] + p2->r.dip[2] * d[2];
 
     coeff = 2.0 * dp3m.params.alpha * wupii;
     double dist2i = 1 / dist2;
@@ -232,7 +234,8 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
 #endif
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
-    double fac1 = coulomb.Dprefactor * p1->p.dipm * p2->p.dipm * exp(-adist * adist);
+    double fac1 =
+        coulomb.Dprefactor * p1->p.dipm * p2->p.dipm * exp(-adist * adist);
 #else
     double fac1 = coulomb.Dprefactor * p1->p.dipm * p2->p.dipm;
 #endif

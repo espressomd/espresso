@@ -226,7 +226,8 @@ void vec_rotate(const T1 &axis, double alpha, const T2 &vector, T3 &result) {
 }
 
 /** rotates vector around axis by alpha */
-inline ::Vector<3, double> vec_rotate(const ::Vector<3, double> &axis, double alpha,
+inline ::Vector<3, double> vec_rotate(const ::Vector<3, double> &axis,
+                                      double alpha,
                                       const ::Vector<3, double> &vector) {
   ::Vector<3, double> result;
   vec_rotate(axis, alpha, vector, result);

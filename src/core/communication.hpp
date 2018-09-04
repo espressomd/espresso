@@ -172,7 +172,8 @@ void mpi_send_v(int node, int part, double v[3]);
     \param node the node it is attached to.
     \param swim struct containing swimming parameters
 */
-void mpi_send_swimming(int node, int part, const ParticleParametersSwimming &swim);
+void mpi_send_swimming(int node, int part,
+                       const ParticleParametersSwimming &swim);
 
 /** Issue REQ_SET_F: send particle force.
     Also calls \ref on_particle_change.

@@ -130,7 +130,7 @@ public:
   }
 
   Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+                      VariantMap const &parameters) override {
     if (method == "calculate") {
       return profile_observable()->operator()(partCfg());
     }
@@ -140,8 +140,7 @@ public:
     return {};
   }
 
-  std::shared_ptr<::Observables::Observable>
-  observable() const override {
+  std::shared_ptr<::Observables::Observable> observable() const override {
     return m_observable;
   }
 

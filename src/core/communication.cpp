@@ -418,7 +418,8 @@ void mpi_send_v_slave(int pnode, int part) {
 }
 
 /****************** REQ_SET_SWIMMING ************/
-void mpi_send_swimming(int pnode, int part, const ParticleParametersSwimming &swim) {
+void mpi_send_swimming(int pnode, int part,
+                       const ParticleParametersSwimming &swim) {
 #ifdef ENGINE
   mpi_call(mpi_send_swimming_slave, pnode, part);
 

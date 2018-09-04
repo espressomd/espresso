@@ -33,7 +33,7 @@ class Cluster : public AutoParameters<Cluster> {
 public:
   Cluster(){};
   Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+                      VariantMap const &parameters) override {
     if (method == "particle_ids") {
       return m_cluster->particles;
     }

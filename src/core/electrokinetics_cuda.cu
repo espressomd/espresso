@@ -91,7 +91,6 @@ unsigned int old_number_of_boundaries = 0;
 
 FdElectrostatics *electrostatics = nullptr;
 
-
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_node_force_density_gpu node_f, node_f_buf;
 extern LB_nodes_gpu *current_nodes;
@@ -2324,7 +2323,6 @@ void ek_integrate() {
   /* Integrate Navier-Stokes */
 
   lb_integrate_GPU();
-
 }
 
 #ifdef EK_BOUNDARIES

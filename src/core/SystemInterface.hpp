@@ -29,7 +29,8 @@ class SystemInterface {
 public:
   SystemInterface()
       : m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false),
-        m_needsQuatuGpu(false), m_needsFGpu(false), m_needsDipGpu(false), m_needsTorqueGpu(false){};
+        m_needsQuatuGpu(false), m_needsFGpu(false), m_needsDipGpu(false),
+        m_needsTorqueGpu(false){};
   typedef Vector3d Vector3;
   typedef double Real;
 
