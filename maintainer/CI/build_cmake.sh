@@ -243,10 +243,10 @@ fi
 
 if $with_coverage; then
     cd $builddir
-    lcov --directory . --capture --output-file coverage.info # capture coverage info
-    lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
-    lcov --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
-    lcov --remove coverage.info '*/unit_tests/*' --output-file coverage.info # filter out unit test
+    lcov -q --directory . --capture --output-file coverage.info # capture coverage info
+    lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+    lcov -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
+    lcov -q --remove coverage.info '*/unit_tests/*' --output-file coverage.info # filter out unit test
     lcov --list coverage.info #debug info
     # Uploading report to CodeCov
     if [ -z "$CODECOV_TOKEN" ]; then
