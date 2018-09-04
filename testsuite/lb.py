@@ -73,9 +73,11 @@ class TestLB(object):
         self.system.actors.clear()
         self.system.part.clear()
         self.n_col_part = 1000
-        self.system.part.add(pos=np.random.random((self.n_col_part,3))*self.params["box_l"])
+        self.system.part.add(pos=np.random.random(
+            (self.n_col_part, 3)) * self.params["box_l"])
         if espressomd.has_features("MASS"):
-            self.system.part[:].mass=0.1+np.random.random(len(self.system.part))
+            self.system.part[:].mass = 0.1 + np.random.random(
+                len(self.system.part))
 
         self.system.thermostat.turn_off()
 
@@ -104,12 +106,12 @@ class TestLB(object):
         self.avg_fluid_temp = 0.0
 
         # Cache the lb nodes
-        lb_nodes=[]
+        lb_nodes = []
         n_nodes = int(self.params['box_l'] / self.params['agrid'])
         for i in range(n_nodes):
             for j in range(n_nodes):
                 for k in range(n_nodes):
-                    lb_nodes.append(self.lbf[i,j,k])
+                    lb_nodes.append(self.lbf[i, j, k])
 
         # Integration
         for i in range(self.params['int_times']):
