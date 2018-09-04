@@ -163,4 +163,25 @@ inline double collision_detection_cutoff() {
   return 0.;
 }
 
+
+/** @brief Whether or not the verlet criterion mathes particle types */
+inline
+bool collision_detection_match_part_type() {
+  return collision_params.mode == COLLISION_MODE_GLUE_TO_SURF;
+}
+
+/** @brief first particle type for verlet criterion */
+inline
+int collision_detection_part_type1() {
+  return collision_params.part_type_to_attach_vs_to;
+}
+
+/** @brief second particle type for verlet criterion */
+inline
+int collision_detection_part_type2() {
+  return collision_params.part_type_to_be_glued;
+}
+
+
+
 #endif

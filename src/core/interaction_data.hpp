@@ -925,16 +925,23 @@ class VerletCriterion {
   const double m_eff_max_cut2;
   const double m_eff_coulomb_cut2 = 0.;
   const double m_eff_dipolar_cut2 = 0.;
-  const double m_collision_cut2 = 0.;
+  const double m_eff_collision_cut2 = 0.;
+  const bool m_collision_match_part_type = false;
+  const int m_collision_part_type1 = -1;
+  const int m_collision_part_type2  = -1;
 
 public:
   VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
                   double dipolar_cut = 0.,
-                  double collision_detection_cutoff = 0.)
+                  double collision_detection_cutoff = 0., bool collision_detection_match_part_type=false,int collision_detection_part_type1=0,int collision_detection_part_type2=0)
       : m_skin(skin), m_eff_max_cut2(Utils::sqr(max_cut + m_skin)),
         m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
         m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)),
-        m_collision_cut2(Utils::sqr(collision_detection_cutoff)) {}
+        m_eff_collision_cut2(Utils::sqr(collision_detection_cutoff + m_skin)),
+        m_collision_match_part_type(collision_detection_match_part_type),
+        m_collision_part_type1(collision_detection_part_type1),
+        m_collision_part_type2(collision_detection_part_type2)
+        {}
 
   template <typename Distance>
   bool operator()(const Particle &p1, const Particle &p2,
@@ -957,8 +964,12 @@ public:
 
 // Collision detection
 #ifdef COLLISION_DETECTION
-    if (dist2 <= m_collision_cut2)
-      return true;
+    if (dist2 <= m_eff_collision_cut2) {
+      if (!m_collision_match_part_type) return true;
+      if ((p1.p.type==m_collision_part_type1 && p2.p.type==m_collision_part_type2) ||
+        (p2.p.type==m_collision_part_type1 && p1.p.type==m_collision_part_type2))
+        return true;
+  }
 #endif
 
     // Within short-range distance (incl dpd and the like)
