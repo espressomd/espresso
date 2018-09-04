@@ -43,37 +43,6 @@ struct Molecule {
   int type;
   /** List of particle identities contained in that molecule */
   IntList part;
-
-#ifdef MOLFORCES
-  /** Total force on the molecule */
-  double f[3] = {0., 0., 0.};
-  /** Sum of forces on molecule over the last favcounter time steps*/
-  double fav[3] = {0., 0., 0.};
-  /** counter for fav */
-  int favcounter = -1;
-  /** Total mass of the molecule */
-  double mass;
-  /** Center of mass position */
-  double com[3];
-  /** velocity of particle*/
-  double v[3];
-  /** Whether to trap motion in a direction with a harmonic well*/
-  int trap_flag = 32;
-  /** Location of a harmonic trap for this molecule */
-  double trap_center[3];
-  /** Trap stiffness */
-  double trap_spring_constant;
-  /** viscous drag applied to this molecule */
-  double drag_constant;
-  /** Whether to adjust forces on particles so that net force on molecule is 0
-   */
-  int noforce_flag = 32;
-  /** whether trap_center is relative (i.e. fraction of box_length) (1)  or
-   * absolute (0)*/
-  int isrelative;
-  /** the force applied by the trap on the molecule */
-  double trap_force[3] = {0., 0., 0.};
-#endif
 };
 
 /*@}*/
@@ -101,10 +70,6 @@ extern int topo_part_info_synced;
 void realloc_topology(int new_size);
 
 void sync_topo_part_info();
-
-int set_molecule_trap(int mol_num, int trap_flag, DoubleList *trap_center,
-                      double spring_constant, double drag_constant,
-                      int noforce_flag, int isrelative);
 /*@}*/
 
 #endif

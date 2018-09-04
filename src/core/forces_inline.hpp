@@ -23,10 +23,6 @@
 
 #include "config.hpp"
 
-#ifdef MOLFORCES
-#include "topology.hpp"
-#endif
-
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -53,7 +49,6 @@
 #include "metadynamics.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
-#include "molforces.hpp"
 #include "morse.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/affinity.hpp"
