@@ -41,12 +41,12 @@ class Stokes(ut.TestCase):
         # System setup
         agrid = 1
         radius = 5.5
-        box_width = 64
+        box_width = 54
         real_width = box_width + 2 * agrid
-        box_length = 64
+        box_length = 54
         system = espressomd.System(box_l=[real_width, real_width, box_length])
         system.box_l = [real_width, real_width, box_length]
-        system.time_step = 0.2
+        system.time_step = 0.4
         system.cell_system.skin = 0.4
 
         # The temperature is zero.
@@ -54,7 +54,7 @@ class Stokes(ut.TestCase):
 
         # LB Parameters
         v = [0, 0, 0.01]  # The boundary slip
-        kinematic_visc = 1.0
+        kinematic_visc = 5.0
 
         # Invoke LB fluid
         lbf = lb.LBFluidGPU(visc=kinematic_visc, dens=1,
@@ -99,16 +99,17 @@ class Stokes(ut.TestCase):
                 tmp += k * k
             return np.sqrt(tmp)
 
-        system.integrator.run(4000)
+        system.integrator.run(800)
 
-        print("\nIntegration finished.")
-
-        # get force that is exerted on the sphere
-        force = sphere.get_force()
-        print("Measured force: f=%f" % size(force))
         stokes_force = 6 * np.pi * kinematic_visc * radius * size(v)
         print("Stokes' Law says: f=%f" % stokes_force)
-        self.assertLess(abs(1.0 - size(force) / stokes_force), 0.06)
+        
+        # get force that is exerted on the sphere
+        for i in range(5):
+            system.integrator.run(200)
+            force = sphere.get_force()
+            print("Measured force: f=%f" % size(force))
+            self.assertLess(abs(1.0 - size(force) / stokes_force), 0.06)
 
 
 if __name__ == "__main__":

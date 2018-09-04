@@ -1,3 +1,18 @@
+# Copyright (C) 2011-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+
 import unittest as ut
 
 from ek_eof_one_species_base import ek_eof_one_species
@@ -16,7 +31,6 @@ params_x = dict([
     ('calculated_pressure_xy', 0.0),
     ('calculated_pressure_yz', 0.0)
 ])
-
 
 class eof_x(ek_eof_one_species):
     def test(self):
