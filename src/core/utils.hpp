@@ -173,9 +173,8 @@ template <typename T> double sqrlen(T const &v) {
 
 /** calculates unit vector */
 inline void unit_vector(double v[3], double y[3]) {
-  double d = 0.0;
+  double d = sqrt(sqrlen(v));
   int i;
-  d = sqrt(sqrlen(v));
 
   for (i = 0; i < 3; i++)
     y[i] = v[i] / d;
@@ -227,8 +226,9 @@ void vec_rotate(const T1 &axis, double alpha, const T2 &vector, T3 &result) {
 }
 
 /** rotates vector around axis by alpha */
-inline ::Vector<3, double> vec_rotate(::Vector<3, double> axis, double alpha,
-                                      ::Vector<3, double> vector) {
+inline ::Vector<3, double> vec_rotate(const ::Vector<3, double> &axis,
+                                      double alpha,
+                                      const ::Vector<3, double> &vector) {
   ::Vector<3, double> result;
   vec_rotate(axis, alpha, vector, result);
   return result;

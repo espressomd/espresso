@@ -59,7 +59,7 @@ class WangLandauReactionEnsemble;
 
 struct EnergyCollectiveVariable : public CollectiveVariable {
   std::string energy_boundaries_filename;
-  virtual double determine_current_state() override {
+  double determine_current_state() override {
     return calculate_current_potential_energy_of_system();
   }
   void
@@ -69,7 +69,7 @@ struct EnergyCollectiveVariable : public CollectiveVariable {
 struct DegreeOfAssociationCollectiveVariable : public CollectiveVariable {
   std::vector<int> corresponding_acid_types;
   int associated_type;
-  virtual double determine_current_state() override {
+  double determine_current_state() override {
     return calculate_degree_of_association();
   }
 

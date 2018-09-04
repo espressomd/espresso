@@ -141,7 +141,7 @@ typedef struct {
 #define EK_LINK_DUU 25
 
 extern EK_parameters ek_parameters;
-extern int ek_initialized;
+extern bool ek_initialized;
 
 void ek_integrate();
 void ek_print_parameters();

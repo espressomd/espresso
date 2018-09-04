@@ -173,8 +173,7 @@ inline int calc_tab_angle_force(Particle *p_mid, Particle *p_left,
                                 Particle *p_right,
                                 Bonded_ia_parameters *iaparams,
                                 double force1[3], double force2[3]) {
-  double cosine, phi, invsinphi, vec1[3], vec2[3], d1i, d2i, dist2, fac,
-      f1 = 0.0, f2 = 0.0;
+  double cosine, phi, invsinphi, vec1[3], vec2[3], d1i, d2i, dist2, fac;
   int j;
   auto const *tab_pot = iaparams->p.tab.pot;
 
@@ -205,8 +204,8 @@ inline int calc_tab_angle_force(Particle *p_mid, Particle *p_left,
   fac = tab_pot->force(phi);
   /* apply bend forces */
   for (j = 0; j < 3; j++) {
-    f1 = fac * (cosine * vec1[j] - vec2[j]) * invsinphi * d1i;
-    f2 = fac * (cosine * vec2[j] - vec1[j]) * invsinphi * d2i;
+    double f1 = fac * (cosine * vec1[j] - vec2[j]) * invsinphi * d1i;
+    double f2 = fac * (cosine * vec2[j] - vec1[j]) * invsinphi * d2i;
     force1[j] = (f1 - f2);
     force2[j] = -f1;
   }

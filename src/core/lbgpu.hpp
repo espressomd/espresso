@@ -231,7 +231,7 @@ extern int transfer_momentum_gpu;
 extern LB_extern_nodeforcedensity_gpu *extern_node_force_densities_gpu;
 #ifdef ELECTROKINETICS
 extern LB_node_force_density_gpu node_f;
-extern int ek_initialized;
+extern bool ek_initialized;
 #endif
 
 /*@}*/

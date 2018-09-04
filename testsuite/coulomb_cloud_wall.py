@@ -22,8 +22,9 @@ from __future__ import print_function
 import os
 import unittest as ut
 import numpy as np
+
 import espressomd
-from espressomd.electrostatics import *
+import espressomd.electrostatics
 from espressomd import scafacos
 import tests_common
 
@@ -49,7 +50,7 @@ class CoulombCloudWall(ut.TestCase):
         self.S.cell_system.skin = 0.4
 
         #  Clear actors that might be left from prev tests
-        if len(self.S.actors):
+        if self.S.actors:
             del self.S.actors[0]
         self.S.part.clear()
         data = np.genfromtxt(tests_common.abspath(
@@ -101,15 +102,17 @@ class CoulombCloudWall(ut.TestCase):
 
     if espressomd.has_features(["P3M"]):
         def test_p3m(self):
-            self.S.actors.add(P3M(prefactor=3, r_cut=1.001, accuracy=1e-3,
-                                  mesh=64, cao=7, alpha=2.70746, tune=False))
+            self.S.actors.add(
+                espressomd.electrostatics.P3M(
+                    prefactor=3, r_cut=1.001, accuracy=1e-3,
+                                              mesh=64, cao=7, alpha=2.70746, tune=False))
             self.S.integrator.run(0)
             self.compare("p3m", energy=True, prefactor=3)
 
     if espressomd.has_features(["ELECTROSTATICS", "CUDA"]):
         def test_p3m_gpu(self):
             self.S.actors.add(
-                P3MGPU(
+                espressomd.electrostatics.P3MGPU(
                     prefactor=2.2,
                     r_cut=1.001,
                     accuracy=1e-3,
@@ -124,7 +127,7 @@ class CoulombCloudWall(ut.TestCase):
         if "p3m" in scafacos.available_methods():
             def test_scafacos_p3m(self):
                 self.S.actors.add(
-                    Scafacos(
+                    espressomd.electrostatics.Scafacos(
                         prefactor=0.5,
                         method_name="p3m",
                         method_params={
@@ -138,7 +141,7 @@ class CoulombCloudWall(ut.TestCase):
         if "p2nfft" in scafacos.available_methods():
             def test_scafacos_p2nfft(self):
                 self.S.actors.add(
-                    Scafacos(
+                    espressomd.electrostatics.Scafacos(
                         prefactor=2.8,
                         method_name="p2nfft",
                         method_params={
@@ -153,7 +156,6 @@ class CoulombCloudWall(ut.TestCase):
         self.S.integrator.run(0, recalc_forces=True)
         for p in self.S.part:
             self.assertAlmostEqual(np.linalg.norm(p.f), 0, places=11)
-
 
 if __name__ == "__main__":
     ut.main()

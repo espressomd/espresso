@@ -19,7 +19,6 @@ import unittest as ut
 import numpy as np
 import espressomd
 import espressomd.lb
-from espressomd import *
 from tests_common import abspath
 from itertools import product
 

@@ -51,7 +51,7 @@ public:
     m_shape = shape;
   }
 
-  void set_velocity(Vector3d velocity) {
+  void set_velocity(const Vector3d &velocity) {
     m_velocity = velocity;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
     lb_init_boundaries();

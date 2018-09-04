@@ -202,7 +202,7 @@ public:
    * the correlation estimates have to be updated.
    *
    */
-  virtual void update() override;
+  void update() override;
 
   /** At the end of data collection, go through the whole hierarchy and
    * correlate data left there

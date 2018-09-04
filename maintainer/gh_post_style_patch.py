@@ -40,6 +40,7 @@ if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
     comment += '`curl ' + os.environ['CI_JOB_URL'] + \
                '/artifacts/raw/style.patch | git apply -`.\n'
     comment += '- You can run `maintainer/CI/fix_style.sh` to automatically fix your coding style. This is the same command that I have executed to generate the patch above, but it requires certain tools to be installed on your computer.\n\n'
+    comment += 'You can run `gitlab-runner exec docker style` afterwards to check if your changes worked out properly.\n\n'
     comment += 'Please note that there are often multiple ways to correctly format code. As I am just a robot, I sometimes fail to identify the most aesthetically pleasing way. So please look over my suggested changes and adapt them where the style does not make sense.'
 
     if len(patch) > 0:

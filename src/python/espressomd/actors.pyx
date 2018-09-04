@@ -162,7 +162,6 @@ cdef class Actor(object):
 
 
 class Actors(object):
-
     active_actors = []
 
     def __getstate__(self):
