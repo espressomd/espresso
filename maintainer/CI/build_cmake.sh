@@ -247,7 +247,7 @@ if $with_coverage; then
     lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
     lcov -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
     lcov -q --remove coverage.info '*/unit_tests/*' --output-file coverage.info # filter out unit test
-    lcov --list coverage.info #debug info
+    # lcov --list coverage.info #debug info
     # Uploading report to CodeCov
     if [ -z "$CODECOV_TOKEN" ]; then
         bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
