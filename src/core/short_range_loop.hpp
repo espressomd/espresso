@@ -112,13 +112,14 @@ void short_range_loop(ParticleKernel &&particle_kernel,
 
   auto first = boost::make_indirect_iterator(local_cells.begin());
   auto last = boost::make_indirect_iterator(local_cells.end());
-  auto verlet_crit = 
-        VerletCriterion{
-          skin, max_cut, coulomb_cutoff, dipolar_cutoff,
-          collision_detection_cutoff(),
-          collision_detection_match_part_type(),
-          collision_detection_part_type1(),
-          collision_detection_part_type2()};
+  auto verlet_crit = VerletCriterion{skin,
+                                     max_cut,
+                                     coulomb_cutoff,
+                                     dipolar_cutoff,
+                                     collision_detection_cutoff(),
+                                     collision_detection_match_part_type(),
+                                     collision_detection_part_type1(),
+                                     collision_detection_part_type2()};
 
   /* In this case we reset l.p_old on the particles */
   if (rebuild_verletlist) {
@@ -133,10 +134,9 @@ void short_range_loop(ParticleKernel &&particle_kernel,
     /* Now everything is up-to-date */
     rebuild_verletlist = 0;
   } else {
-    detail::decide_distance(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), verlet_crit);
-       
+    detail::decide_distance(first, last,
+                            std::forward<ParticleKernel>(particle_kernel),
+                            std::forward<PairKernel>(pair_kernel), verlet_crit);
   }
 }
 
