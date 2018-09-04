@@ -29,7 +29,7 @@
 namespace Shapes {
 
 /**
- * @brief Dummy shape that is infinitly far away from everything.
+ * @brief Dummy shape that is infinitely far away from everything.
  *
  */
 class NoWhere : public Shape {

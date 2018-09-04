@@ -36,8 +36,8 @@ using namespace ::FieldCoupling::Coupling;
  * @brief ScriptInterface implementations for the
  *        various couplings provided.
  *
- * These are seperated from the Contraints because
- * they can be reused togher with the couplings themselfes.
+ * These are separated from the Constraints because
+ * they can be reused together with the couplings themselves.
  */
 
 /**

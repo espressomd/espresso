@@ -41,7 +41,7 @@
 int nemd_method = NEMD_METHOD_OFF;
 Nemd nemddata = {-1, 0, 0, 0.0, 1.0, nullptr, 0, 0, nullptr, 0.0, 0.0, 0.0, 0};
 
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -81,7 +81,7 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate) {
     return;
   }
 
-  /* first free old structures befor initializing new ones */
+  /* first free old structures before initializing new ones */
   if (nemddata.n_slabs > -1)
     nemd_free();
   /* exit nemd integration */

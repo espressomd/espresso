@@ -130,7 +130,7 @@ static void p3m_gather_fft_grid(double *mesh);
 
 /** Spread force grid.
  *  After the k-space calculations each node needs to get all force
- *  information to reassigne the forces from the grid to the
+ *  information to reassign the forces from the grid to the
  *  particles.
  */
 static void p3m_spread_force_grid(double *mesh);
@@ -864,7 +864,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
       ind++;
     }
 
-    /* === 3 Fold backward 3D FFT (Force Component Meshs) === */
+    /* === 3 Fold backward 3D FFT (Force Component Meshes) === */
 
     /* Force component loop */
     for (d = 0; d < 3; d++) {
@@ -877,7 +877,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
 
       /* direction in k space: */
       d_rs = (d + p3m.ks_pnum) % 3;
-      /* srqt(-1)*k differentiation */
+      /* sqrt(-1)*k differentiation */
       ind = 0;
       for (j[0] = 0; j[0] < fft.plan[3].new_mesh[0]; j[0]++) {
         for (j[1] = 0; j[1] < fft.plan[3].new_mesh[1]; j[1]++) {
@@ -1452,7 +1452,7 @@ static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL,
     a simple bisection. Returns -1 if the force evaluation does not work, -2
    if
    there is no valid r_cut, and -3 if
-    the charge assigment order is to large for this grid */
+    the charge assignment order is too large for this grid */
 static double p3m_mc_time(char **log, int mesh[3], int cao, double r_cut_iL_min,
                           double r_cut_iL_max, double *_r_cut_iL,
                           double *_alpha_L, double *_accuracy) {
@@ -1865,7 +1865,7 @@ int p3m_adaptive_tune(char **log) {
     tmp_time =
         p3m_m_time(log, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
                    r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
-    /* some error occured during the tuning force evaluation */
+    /* some error occurred during the tuning force evaluation */
     P3M_TRACE(fprintf(stderr, "delta_accuracy: %lf tune time: %lf\n",
                       p3m.params.accuracy - tmp_accuracy, tmp_time));
     //    if (tmp_time == -1) con;
@@ -2406,7 +2406,7 @@ void p3m_calc_kspace_stress(double *stress) {
 
 /************************************************/
 
-/*********************** miscelanea of functions
+/*********************** miscellanea of functions
  * *************************************/
 
 /************************************************

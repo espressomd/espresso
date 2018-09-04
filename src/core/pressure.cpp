@@ -654,7 +654,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
   double entry[3],
       exit[3]; /* the positions at which the line enters and exits the cube */
   int startx, endx;     /* x-bins in which the line starts and ends in */
-  int occupiedxbins;    /* number of x-bins occuped by the line */
+  int occupiedxbins;    /* number of x-bins occupied by the line */
   int totoccupiedybins; /* total number of y-bins through which the line passes
                          */
   int xbin, ybin,

@@ -96,7 +96,7 @@ cdef class Actor(object):
                         "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
 
         self._params.update(p)
-        # vaidate updated parameters
+        # validate updated parameters
         self.validate_params()
         # Put in values given by the user
         if self.is_active():

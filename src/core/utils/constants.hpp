@@ -32,9 +32,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /** Pi to the power 1/3. */
 #define driwu2 1.25992104989487316476721060728
 
-/// error code if no error occured
+/// error code if no error occurred
 #define ES_OK 0
-/// error code if an error occured
+/// error code if an error occurred
 #define ES_ERROR 1
 
 /** space necessary for an (64-bit) integer with sprintf.

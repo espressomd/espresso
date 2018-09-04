@@ -797,7 +797,7 @@ int calc_cylindrical_average(
   }
 
   // Now we turn the counts into densities by dividing by one radial
-  // bin (binvolume).  We also divide the velocites by the counts.
+  // bin (binvolume).  We also divide the velocities by the counts.
   double binvolume;
   for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
     for (int index_radial = 0; index_radial < bins_radial; index_radial++) {
@@ -1135,7 +1135,7 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
   stat->virtual_sites = stat->dipolar + c_size * n_dipolar;
   stat->external_fields = stat->virtual_sites + c_size * n_vs;
 
-  // Set all obseravables to zero
+  // Set all observables to zero
   for (int i = 0; i < total; i++)
     stat->data[i] = 0.0;
 }
