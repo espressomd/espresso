@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/version.hpp>
 
-/* New versions of boost alrady containt this
+/* New versions of boost already contain this
  * function
  * */
 #if BOOST_VERSION < 105600

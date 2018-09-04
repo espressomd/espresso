@@ -604,7 +604,7 @@ void analyze_formfactor(PartCfg &partCfg, double qmin, double qmax, int qbins,
     ff[qi] = 0.0;
   for (k = 0; k < chain_n_chains; k++) {
     cnt = 0;
-    /* Prepare distance matrice r_ij for current chain k */
+    /* Prepare distance matrix r_ij for current chain k */
     for (i = chain_start + k * chain_length;
          i < chain_start + (k + 1) * chain_length; i++) {
       for (j = i + 1; j < chain_start + (k + 1) * chain_length; j++) {
@@ -648,7 +648,7 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
   for (n = 0; n < n_configs; n++) {
     for (k = 0; k < chain_n_chains; k++) {
       cnt = 0;
-      /* Prepare distance matrice r_ij for current chain k of configuration n */
+      /* Prepare distance matrix r_ij for current chain k of configuration n */
       for (i = chain_start + k * chain_length;
            i < chain_start + (k + 1) * chain_length; i++) {
         for (j = i + 1; j < chain_start + (k + 1) * chain_length; j++) {

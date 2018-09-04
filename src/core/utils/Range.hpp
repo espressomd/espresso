@@ -57,7 +57,7 @@ public:
 /**
  * @brief Return a range for a pair of iterators.
  *
- * This is a convinence function so we can template
+ * This is a convenience function so we can template
  * argument deduction to figure out the Range type.
  */
 template <typename Iterator>

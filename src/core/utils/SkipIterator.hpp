@@ -34,7 +34,7 @@ namespace Utils {
  *    auto a = {1, 2, ,3 ,4 ,5};
  *    it = make_skip_iterator(std::begin(a), std::end(a), [](int i) { return i %
  * 2 != 0;});
- *    Then the resuting range is {2, 4}.
+ *    Then the resulting range is {2, 4}.
  */
 template <typename ForwardIterator, typename Predicate,
           typename ValueType =

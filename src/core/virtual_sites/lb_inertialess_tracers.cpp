@@ -293,7 +293,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
         index = node_index[(z * 2 + y) * 2 + x];
         f = lbfields[index].force_density_buf;
 
-// This can be done easier withouth copying the code twice
+// This can be done easier without copying the code twice
 // We probably can even set the boundary velocity directly
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {

@@ -111,7 +111,7 @@ class ShapeBasedConstraint(Constraint):
     particle_type : int
       Interaction type of the constraint.
     particle_velocity : array of :obj:`float`
-      Interaction velocity of the boudary
+      Interaction velocity of the boundary
     penetrable : bool
       Whether particles are allowed to penetrate the
       constraint.
@@ -131,7 +131,7 @@ class ShapeBasedConstraint(Constraint):
     >>> # create first a shape-object to define the constraint surface
     >>> spherical_cavity = shapes.Sphere(center=[5,5,5], radius=5.0, direction=-1.0)
     >>>
-    >>> # now create an un-penetrable shape-based contraint of type 0
+    >>> # now create an un-penetrable shape-based constraint of type 0
     >>> spherical_constraint = system.constraints.add(particle_type=0, penetrable=0, shape=spherical_cavity)
     >>>
     >>> #place a trapped particle inside this sphere
@@ -212,7 +212,7 @@ class _Interpolated(Constraint):
     """
     Tabulated field data.
     The actual field value is calculated by linear
-    intepolation (force fields) or gradient linear
+    interpolation (force fields) or gradient linear
     interpolation.
 
     The data has to have one point of halo in each direction,
@@ -220,8 +220,8 @@ class _Interpolated(Constraint):
     so that the element (0,0,0) has coordinates -0.5 * grid_spacing.
     The numer of points has to be such that the data spanc the whole
     box, e.g. the most up right back point has to be at least at
-    box + 0.5 * grid_spacing. There are convenienc function on this
-    class that can calulate the required grid dimensions and the coordinates.
+    box + 0.5 * grid_spacing. There are convenience functions on this
+    class that can calculate the required grid dimensions and the coordinates.
     See also the examples on ForceField.
 
     Attributes
@@ -338,7 +338,7 @@ class ForceField(_Interpolated):
     particle_scales: array_like (:obj:`int`, :obj:`float`)
         A list of tuples of ids and scaling factors. For
         particles in the list the interaction is scaled with
-        their individual scaling factor befor it is applied.
+        their individual scaling factor before it is applied.
 
     """
 
@@ -366,7 +366,7 @@ class PotentialField(_Interpolated):
     particle_scales: array_like (:obj:`int`, :obj:`float`)
         A list of tuples of ids and scaling factors. For
         particles in the list the interaction is scaled with
-        their individual scaling factor befor it is applied.
+        their individual scaling factor before it is applied.
 
     """
 
@@ -409,7 +409,7 @@ class LinearElectricPotential(Constraint):
 
       phi = -E * x + phi0,
 
-    resulting in the electic field E
+    resulting in the electric field E
     everywhere. (E.g. in a plate capacitor).
     The resulting force on the particles are then
 

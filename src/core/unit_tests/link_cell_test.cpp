@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(link_cell) {
       [&id_counts](Particle const &p) { id_counts[p.p.identity]++; },
       [&lc_pairs](Particle const &p1, Particle const &p2,
                   std::pair<int, int> d) {
-        /* Check that the "distance function" has been called with the corect
+        /* Check that the "distance function" has been called with the correct
          * arguments */
         BOOST_CHECK((d.first == p1.p.identity) && (d.second == p2.p.identity));
         if (p1.p.identity <= p2.p.identity)

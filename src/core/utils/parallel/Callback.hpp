@@ -27,8 +27,8 @@ namespace Parallel {
 /**
  * @brief Add a mpi callback to a class.
  *
- * This is a RAII class to register a mpi callbcack
- * per instance. The callback has the same livetime as
+ * This is a RAII class to register a mpi callback
+ * per instance. The callback has the same lifetime as
  * the instance: It is created in the constructor
  * and removed in the destructor.
  */

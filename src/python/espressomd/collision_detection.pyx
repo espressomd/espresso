@@ -51,7 +51,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         raise Exception(
             "Please et all parameters at once via collision_detection.set_params()")
 
-    # Override to call validat after parameter update
+    # Override to call validate after parameter update
     def set_params(self, **kwargs):
         """
         Set the parameters for the collision detection
@@ -62,7 +62,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         Parameters
         ----------
         mode : One of "off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"
-               Collision deteciton mode
+               Collision detection mode
 
         distance : :obj:`float`
                Distance below which a pair of particles is considered in the collision detection
@@ -86,14 +86,14 @@ class CollisionDetection(ScriptInterfaceHelper):
                particle type for "glue_to_surface|" mode. See user guide.
 
         distance_glued_particle_to_vs : :obj:`float`
-               Distnace for "glue_to_surface" mode. See user guide.
+               Distance for "glue_to_surface" mode. See user guide.
 
         bond_three_particles : Instance of :class:`espressomd.interactions.BondedInteraction`
                First angular bond for the "bind_three_particles" mode. See user guide
 
         three_particle_binding_angle_resolution : :obj:`int`
               Resolution for the angular bonds (mode "bind_three_particles").
-              Resolution+1 bonds are needed to accomodate the case of a 180 degrees
+              Resolution+1 bonds are needed to accommodate the case of a 180 degrees
 
         """
 
@@ -132,7 +132,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         for k in res.keys():
             res[k] = self._convert_param(k, res[k])
 
-        # Filter key-value paris according to active mode
+        # Filter key-value pairs according to active mode
         return {k: res[k] for k in self._params_for_mode(res["mode"])}
 
     def _convert_param(self, name, value):

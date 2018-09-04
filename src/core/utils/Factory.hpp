@@ -89,7 +89,7 @@ public:
    */
   template <class Derived> static T *builder() {
     /* This produces nicer error messages if the requirements are not
-     * fullfilled. */
+     * fulfilled. */
     static_assert(std::is_base_of<T, Derived>::value,
                   "Class to build needs to be a subclass of the class the "
                   "factory is for.");

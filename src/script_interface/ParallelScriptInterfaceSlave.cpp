@@ -32,7 +32,7 @@ VariantMap ParallelScriptInterfaceSlave::bcast_variant_map() const {
   VariantMap ret;
   boost::mpi::broadcast(m_cb->comm(), ret, 0);
 
-  /* If the parameter is a object we have to tranlate it first to a
+  /* If the parameter is a object we have to translate it first to a
      local id.
   */
   for (auto &p : ret) {
@@ -77,7 +77,7 @@ void ParallelScriptInterfaceSlave::mpi_slave(int action, int) {
     std::pair<std::string, Variant> d;
     boost::mpi::broadcast(m_cb->comm(), d, 0);
 
-    /* If the parameter is a object we have to tranlate it first to a
+    /* If the parameter is a object we have to translate it first to a
        local id.
     */
     translate_id(d.second);

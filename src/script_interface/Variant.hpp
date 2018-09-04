@@ -180,7 +180,7 @@ bool is_vector(Variant const &v);
 void transform_vectors(Variant &v);
 
 /**
- * @brief Recursivly print the type of a variant.
+ * @brief Recursively print the type of a variant.
  */
 std::string print_variant_types(Variant const &v);
 
