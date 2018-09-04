@@ -166,7 +166,13 @@ while (i < warm_n_times or act_min_dist < min_dist):
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
     i += 1
-    print("i =", i, "system.analysis.min_dist() = ", system.analysis.min_dist(), "lj_cap = ", lj_cap)
+    print(
+        "i =",
+        i,
+     "system.analysis.min_dist() = ",
+     system.analysis.min_dist(),
+     "lj_cap = ",
+     lj_cap)
 #   Increase LJ cap
     lj_cap += 20
     system.force_cap = lj_cap
