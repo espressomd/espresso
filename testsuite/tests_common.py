@@ -281,6 +281,7 @@ def rotation_matrix_quat(system, part):
 
     return A
 
+
 def get_cylindrical_bin_volume(
         n_r_bins,
         n_phi_bins,
