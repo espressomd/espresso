@@ -36,7 +36,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     """
     Adds a drude particle with specified id, type, and mass to the system.
     Checks if different Drude particles have different types.
-    Collects types/charges/polarizations/Thole factors for intramol. core-Drude short-range exculsion and Thole interaction.
+    Collects types/charges/polarizations/Thole factors for intramol. core-Drude short-range exclusion and Thole interaction.
 
     Attributes
     ----------
@@ -96,7 +96,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     # drude types if this type is seen for the first time
     if not type_drude in drude_dict:
 
-        # Bookkepping of q, alphas and damping parameter
+        # Bookkeeping of q, alphas and damping parameter
         drude_dict[type_drude] = {}
         drude_dict[type_drude]["q"] = q_drude
         drude_dict[type_drude]["qc"] = p_core.q
@@ -155,7 +155,7 @@ def add_thole_pair_damping(system, t1, t2, verbose=False):
 
 def add_all_thole(system, verbose=False):
     """
-    Calls add_thole_pair_damping() for all necassary combinations to create the interactions.
+    Calls add_thole_pair_damping() for all necessary combinations to create the interactions.
 
     Attributes
     ----------

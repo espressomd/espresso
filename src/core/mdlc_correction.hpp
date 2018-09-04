@@ -31,7 +31,7 @@
  *	      cut-off necessary to attend a certain accuracy.
  *
  *  Restrictions: the slab must be such that the z is the short
- *                direction. Othewise we get trash.
+ *                direction. Otherwise we get trash.
  *
  *  Limitations:  at this moment it is restricted to work with 1 cpu
  */

@@ -153,7 +153,7 @@ typedef struct {
 
   /** density of the node */
   float rho[LB_COMPONENTS];
-  /** veolcity of the node */
+  /** velocity of the node */
 
   float v[3];
 
@@ -164,7 +164,7 @@ typedef struct {
 typedef struct {
   /** density of the node */
   float rho[LB_COMPONENTS];
-  /** veolcity of the node */
+  /** velocity of the node */
   float v[3];
   /** pressure tensor */
   float pi[6];

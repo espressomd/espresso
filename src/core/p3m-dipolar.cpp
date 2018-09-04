@@ -102,7 +102,7 @@ static void dp3m_gather_fft_grid(double *mesh);
 
 /** Spread force grid.
  *  After the k-space calculations each node needs to get all force
- *  information to reassigne the forces from the grid to the
+ *  information to reassign the forces from the grid to the
  *  particles.
  */
 static void dp3m_spread_force_grid(double *mesh);
@@ -231,7 +231,7 @@ static double dp3m_sumi1(double alpha_L){
            k2=kx2+ky2+kz*kz;
            suma+=exp(-PI*PI*k2/(alpha_L*alpha_L));
        }}}
-       suma-=1; //It's easier to substract the term k=0 later than put an if
+       suma-=1; //It's easier to subtract the term k=0 later than put an if
 inside the loops
 
 
@@ -263,7 +263,7 @@ static double dp3m_sumi2(double alpha_L){
            n2=nx2+ny2+nz*nz;
            suma+=exp(-alpha_L*alpha_L*n2);
        }}}
-       suma-=1; //It's easier to substract the term n=0 later than put an if
+       suma-=1; //It's easier to subtract the term n=0 later than put an if
 inside the loops
 
 
@@ -1214,7 +1214,6 @@ double calc_surface_term(int force_flag, int energy_flag) {
   }
 #ifdef ROTATION
   if (force_flag) {
-    // fprintf(stderr," number of particles= %d ",n_part);
 
     std::vector<double> sumix(n_local_part);
     std::vector<double> sumiy(n_local_part);
@@ -1225,11 +1224,6 @@ double calc_surface_term(int force_flag, int energy_flag) {
       sumiy[i] = mz[i] * a[0] - mx[i] * a[2];
       sumiz[i] = mx[i] * a[1] - my[i] * a[0];
     }
-
-    // for (i = 0; i < n_part; i++){
-    //    fprintf(stderr,"part %d, correccions torque  x:%le, y:%le,
-    //    z:%le\n",i,sumix[i],sumiy[i],sumiz[i]);
-    // }
 
     ip = 0;
     for (auto &p : local_cells.particles()) {
@@ -1557,7 +1551,7 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
 /*****************************************************************************/
 
 /************************************************
- * Functions for dipoloar P3M Parameter tuning
+ * Functions for dipolar P3M Parameter tuning
  * This tuning is based on the P3M tuning of the charges
  which in turn is based on the P3M_tune by M. Deserno
  ************************************************/
@@ -1590,7 +1584,7 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
    that the
     error contributions of real and reciprocal space should be equal.
 
-    After checking if the total error fulfils the accuracy goal the
+    After checking if the total error fulfills the accuracy goal the
     time needed for one force calculation (including verlet list
     update) is measured via \ref mpi_integrate (0).
 
@@ -1677,7 +1671,7 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
 /** get the optimal alpha and the corresponding computation time for
     fixed mesh, cao. The r_cut is determined via a simple
     bisection. Returns -1 if the force evaluation does not work, -2 if
-    there is no valid r_cut, and -3 if the charge assigment order is
+    there is no valid r_cut, and -3 if the charge assignment order is
     to large for this grid */
 static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
                            double r_cut_iL_max, double *_r_cut_iL,
@@ -2035,7 +2029,7 @@ int dp3m_adaptive_tune(char **logger) {
     tmp_time =
         dp3m_m_time(logger, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
                     r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
-    /* some error occured during the tuning force evaluation */
+    /* some error occurred during the tuning force evaluation */
     if (tmp_time == -1)
       return ES_ERROR;
     /* this mesh does not work at all */
@@ -2196,12 +2190,12 @@ void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
 
 //----------------------------------------------------------
 //  Function used to calculate the value of the errors
-//  for the REAL part of the force in terms of the Spliting parameter alpha of
+//  for the REAL part of the force in terms of the splitting parameter alpha of
 //  Ewald
 //  based on the formulas 33, the paper of Zuowei-HolmJCP, 115,6351,(2001).
 
 //  Please, notice than in this more refined approach we don't use
-//  formulas 37, but 33 which mantains all the powers in alpha
+//  formulas 37, but 33 which maintains all the powers in alpha
 
 //------------------------------------------------------------
 
@@ -2557,7 +2551,7 @@ void dp3m_scaleby_box_l() {
 
 /*****************************************************************************/
 
-/* fucntion to give the dipolar-P3M energy  correction -------*/
+/* function to give the dipolar-P3M energy  correction -------*/
 void dp3m_compute_constants_energy_dipolar() {
   double Eself, Ukp3m;
 

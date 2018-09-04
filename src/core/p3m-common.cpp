@@ -105,7 +105,7 @@ void p3m_add_block(double *in, double *out, int start[3], int size[3],
   int f, m, s;
   /* linear index of in grid, linear index of out grid */
   int li_in = 0, li_out = 0;
-  /* offsets for indizes in output grid */
+  /* offsets for indices in output grid */
   int m_out_offset, s_out_offset;
 
   li_out = start[2] + (dim[2] * (start[1] + (dim[1] * start[0])));

@@ -66,7 +66,7 @@ struct ScafacosData {
 static Scafacos *scafacos = 0;
 static ScafacosData particles;
 
-/** \brief Collect particle data in continous arrays as required by fcs */
+/** \brief Collect particle data in continuous arrays as required by fcs */
 int ScafacosData::update_particle_data() {
   positions.clear();
 
@@ -123,7 +123,7 @@ void ScafacosData::update_particle_forces() const {
       double t[3];
       Utils::cross_product(p.r.dip, &(potentials[it_p]), t);
       // The force is given by G m, where G is a matrix
-      // which comes from teh "fields" output of scafacos like this
+      // which comes from the "fields" output of scafacos like this
       // 0 1 2
       // 1 3 4
       // 2 4 5
@@ -384,7 +384,7 @@ void set_parameters(const std::string &method, const std::string &params,
   mpi_call(mpi_scafacos_set_parameters_slave, method.size(), params.size());
 
   /** This requires C++11, otherwise this is undefined because std::string was
-   * not required to have conitnuous memory before. */
+   * not required to have continuous memory before. */
   /* const_cast is ok, this code runs only on rank 0 where the mpi call does not
    * modify the buffer */
   MPI_Bcast(const_cast<char *>(&(*method.begin())), method.size(), MPI_CHAR, 0,
@@ -453,7 +453,7 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
   params.resize(n_params);
 
   /** This requires C++11, otherwise this is undefined because std::string was
-   * not required to have conitnuous memory before. */
+   * not required to have continuous memory before. */
   MPI_Bcast(&(*method.begin()), n_method, MPI_CHAR, 0, comm_cart);
   MPI_Bcast(&(*params.begin()), n_params, MPI_CHAR, 0, comm_cart);
   bool dip = false;

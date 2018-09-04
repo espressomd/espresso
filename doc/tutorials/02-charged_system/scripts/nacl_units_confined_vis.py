@@ -162,7 +162,7 @@ def main():
         visualizer.update()
 
 
-# Start simulation in seperate thread
+# Start simulation in separate thread
 t = Thread(target=main)
 t.daemon = True
 t.start()

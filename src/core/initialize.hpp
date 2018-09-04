@@ -103,7 +103,7 @@ void on_parameter_change(int parameter);
 /** called every time the number of particle types has changed (increased) */
 void on_max_seen_particle_type_change();
 
-/** call this if you want to change ghost flags, e.g. wether ghosts
+/** call this if you want to change ghost flags, e.g. whether ghosts
     have velocities or not.  This is a opt-in process, i. e. all
     features are turned off and have to be reactivated if necessary
     inside this procedure.  */

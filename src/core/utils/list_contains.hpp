@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "List.hpp"
 
 namespace Utils {
-/** @brief Check wether an @ref Utils::List contains the value c. */
+/** @brief Check whether an @ref Utils::List contains the value c. */
 template <typename T> bool list_contains(List<T> const &l, T const &c) {
   return std::any_of(l.begin(), l.end(), [c](T const &e) { return e == c; });
 }

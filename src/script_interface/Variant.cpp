@@ -85,13 +85,13 @@ void transform_vectors(Variant &v) {
   if (is_vector(v)) {
     auto &variant_vector = boost::get<std::vector<Variant>>(v);
 
-    /* only int, tranform to vector<int> */
+    /* only int, transform to vector<int> */
     if (std::all_of(variant_vector.begin(), variant_vector.end(), is_int)) {
       v = to_vector<int>(variant_vector);
       return;
     }
 
-    /* only double, tranform to vector<double> */
+    /* only double, transform to vector<double> */
     if (std::all_of(variant_vector.begin(), variant_vector.end(), is_double)) {
       v = to_vector<double>(variant_vector);
       return;

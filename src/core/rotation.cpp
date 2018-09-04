@@ -59,7 +59,7 @@
 
 #ifdef ROTATION
 
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 

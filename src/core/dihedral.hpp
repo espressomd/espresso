@@ -38,7 +38,7 @@ int dihedral_set_params(int bond_type, int mult, double bend, double phase);
 /** Calculates the dihedral angle between particle quadruple p1, p2,
 p3 and p4. The dihedral angle is the angle between the planes
 specified by the particle triples (p1,p2,p3) and (p2,p3,p4).
-Vectors a, b and c are the bond vectors between consequtive particles.
+Vectors a, b and c are the bond vectors between consecutive particles.
 If the a,b or b,c are parallel the dihedral angle is not defined in which
 case the routine returns phi=-1. Calling functions should check for that
 (Written by: Arijit Maitra) */

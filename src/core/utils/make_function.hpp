@@ -38,7 +38,7 @@ template <class T, class C> struct function_traits<T(C::*)> { typedef T type; };
    member , a lambda or std::function,
    and creates a corresponding std::function. This is needed to solve some
    issues with
-   template parameer deduction if the type is not now beforehand. */
+   template parameter deduction if the type is not now beforehand. */
 
 /**
  * @brief Given a std::function, return a copy.

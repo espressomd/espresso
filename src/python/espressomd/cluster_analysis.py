@@ -85,7 +85,7 @@ class ClusterStructure(ScriptInterfaceHelper):
 
     def run_for_all_pairs(self):
         """
-        Runs the clsuter analysis, considering all pairs of particles in the system
+        Runs the cluster analysis, considering all pairs of particles in the system
 
         """
         return self.call_method("run_for_all_pairs")

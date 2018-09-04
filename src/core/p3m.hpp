@@ -153,9 +153,9 @@ int p3m_sanity_checks();
 void p3m_count_charged_particles();
 
 /** Error Codes for p3m tuning (version 2) :
-    P3M_TUNE_FAIL: force evaluation failes,
-    P3M_TUNE_NO_CUTOFF: could not finde a valid realspace cutoff radius,
-    P3M_TUNE_CAOTOLARGE: Charge asignment order to large for mesh size,
+    P3M_TUNE_FAIL: force evaluation failed,
+    P3M_TUNE_NO_CUTOFF: could not find a valid realspace cutoff radius,
+    P3M_TUNE_CAOTOLARGE: Charge assignment order to large for mesh size,
     P3M_TUNE_ELCTEST: conflict with ELC gap size.
 */
 
@@ -190,7 +190,7 @@ enum P3M_TUNE_ERROR {
     For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming
    that the error contributions of real and reciprocal space should be equal.
 
-    After checking if the total error fulfils the accuracy goal the
+    After checking if the total error fulfills the accuracy goal the
     time needed for one force calculation (including verlet list
     update) is measured via \ref mpi_integrate (0).
 

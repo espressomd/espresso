@@ -173,12 +173,12 @@ c = 0
 for i in range(12000):
     RE.reaction()
     system.integrator.run(
-        500)  # this is for tutorial only, too less integrations
+        500)  # this is for tutorial only, too few integration steps
     print(
         i, ") HA", system.number_of_particles(type=type_HA), "A-", system.number_of_particles(
             type=type_A), "H+", system.number_of_particles(type=type_H),
           'OH-', system.number_of_particles(type=type_OH), 'Cl-', system.number_of_particles(type=type_Cl), 'NA+', system.number_of_particles(type=type_Na))
-    if (i > 2000):  # just a bit of thermalization before starting to gain informations abount the properties of the sysem
+    if (i > 2000):  # just a bit of thermalization before starting to gain informations about the properties of the system
         alpha.append(system.number_of_particles(type=type_A) / N0)
         nHA.append(system.number_of_particles(type=type_HA))
         nA.append(system.number_of_particles(type=type_A))

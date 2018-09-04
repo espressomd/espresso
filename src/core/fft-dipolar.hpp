@@ -30,7 +30,7 @@
  *  The 3D-FFT is split into 3 ond dimensional FFTs. The data is
  *  distributed in such a way, that for the actual direction of the
  *  FFT each node has a certain number of rows for which it performs a
- *  1D-FFT. After performing the FFT on theat direction the data is
+ *  1D-FFT. After performing the FFT on that direction the data is
  *  redistributed.
  *
  *  For simplicity at the moment I have implemented a full complex to
