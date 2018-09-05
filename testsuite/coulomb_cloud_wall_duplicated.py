@@ -1,6 +1,6 @@
 
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,9 +20,10 @@
 # Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
-import espressomd
 import numpy as np
-from espressomd.electrostatics import *
+
+import espressomd
+import espressomd.electrostatics
 from espressomd import scafacos
 from tests_common import abspath
 
@@ -47,7 +48,7 @@ class CoulombCloudWall(ut.TestCase):
             self.S.cell_system.skin = 0.4
 
             #  Clear actors that might be left from prev tests
-            if len(self.S.actors):
+            if self.S.actors:
                 del self.S.actors[0]
             self.S.part.clear()
             data = np.genfromtxt(
@@ -65,7 +66,6 @@ class CoulombCloudWall(ut.TestCase):
 
         def compare(self, method_name, energy=True):
             # Compare forces and energy now in the system to stored ones
-
             # Force
             force_abs_diff = 0.
             for p in self.S.part:
@@ -73,13 +73,10 @@ class CoulombCloudWall(ut.TestCase):
                     np.sqrt(sum((p.f - self.forces[p.id])**2)))
             force_abs_diff /= len(self.S.part)
 
-            print(method_name, "force difference", force_abs_diff)
-
             # Energy
             if energy:
                 energy_abs_diff = abs(
                     self.S.analysis.energy()["total"] - self.reference_energy)
-                print(method_name, "energy difference", energy_abs_diff)
                 self.assertTrue(energy_abs_diff <= self.tolerance, "Absolte energy difference " +
                                 str(energy_abs_diff) + " too large for " + method_name)
             self.assertTrue(force_abs_diff <= self.tolerance, "Asbolute force difference " +
@@ -90,15 +87,16 @@ class CoulombCloudWall(ut.TestCase):
         if "P3M" in espressomd.features():
             def test_p3m(self):
                 self.S.actors.add(
-                    P3M(prefactor=1, r_cut=1.001, accuracy=1e-3,
-                        mesh=[64, 64, 128], cao=7, alpha=2.70746, tune=False))
+                    espressomd.electrostatics.P3M(
+                        prefactor=1, r_cut=1.001, accuracy=1e-3,
+                                 mesh=[64, 64, 128], cao=7, alpha=2.70746, tune=False))
                 self.S.integrator.run(0)
                 self.compare("p3m", energy=True)
 
         if espressomd.has_features(["ELECTROSTATICS", "CUDA"]):
             def test_p3m_gpu(self):
                 self.S.actors.add(
-                    P3MGPU(
+                    espressomd.electrostatics.P3MGPU(
                         prefactor=1,
                         r_cut=1.001,
                         accuracy=1e-3,
@@ -112,7 +110,6 @@ class CoulombCloudWall(ut.TestCase):
         def test_zz_deactivation(self):
             # Is the energy 0, if no methods active
             self.assertTrue(self.S.analysis.energy()["total"] == 0.0)
-
 
 if __name__ == "__main__":
     ut.main()

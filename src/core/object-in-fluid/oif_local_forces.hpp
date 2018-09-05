@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2012-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -193,7 +193,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
     // denote p vector between p2 and p3
     // denote v the velocity difference between the points p2 and p3
     // denote alpha the angle between p and v
-    // denote x the projevted v onto p
+    // denote x the projected v onto p
     // cos alpha = |x|/|v|
     // cos alpha = (v,p)/(|v||p|)
     // together we get |x|=(v,p)/|p|

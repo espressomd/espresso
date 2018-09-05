@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -26,7 +26,7 @@
  *   Assumes minimum image convention for those axis in which the
  *   system is periodic as defined by setmd.
  *
- *   MDDS => Calculates dipole-dipole interaction of a perioidic system
+ *   MDDS => Calculates dipole-dipole interaction of a periodic system
  *   by explicitly summing the dipole-dipole interaction over several copies of
  * the system
  *   Uses spherical summation order

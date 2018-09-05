@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -72,7 +72,7 @@ inline int calc_angle_harmonic_force(Particle *p_mid, Particle *p_left,
   d2i = 1.0 / sqrt(dist2);
   for (j = 0; j < 3; j++)
     vec2[j] *= d2i;
-  /* scalar produvt of vec1 and vec2 */
+  /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
   fac = iaparams->p.angle_harmonic.bend;
 
@@ -201,7 +201,7 @@ inline int angle_harmonic_energy(Particle *p_mid, Particle *p_left,
   d2i = 1.0 / sqrt(dist2);
   for (j = 0; j < 3; j++)
     vec2[j] *= d2i;
-  /* scalar produvt of vec1 and vec2 */
+  /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
   if (cosine > TINY_COS_VALUE)
     cosine = TINY_COS_VALUE;

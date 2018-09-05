@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field outside the slit
 import numpy as np
@@ -100,7 +116,7 @@ def pressure_tensor_offdiagonal(x=None, xi=None, bjerrum_length=None,
 
 # function to calculate the hydrostatic pressure
 
-# Technically, the LB simulates a compressible fluid, whiches pressure
+# Technically, the LB simulates a compressible fluid, whose pressure
 # tensor contains an additional term on the diagonal, proportional to
 # the divergence of the velocity. We neglect this (small) contribution.
 # The LB pressure tensor also contains the convective acceleration, which

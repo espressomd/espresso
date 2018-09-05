@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -29,7 +29,7 @@
  *	      cut-off necessary to attend a certain accuracy.
  *
  *  Restrictions: the slab must be such that the z is the short
- *                direction. Othewise we get trash.
+ *                direction. Otherwise we get trash.
  *
  */
 
@@ -132,7 +132,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
   int ix, iy, ip;
   double gx, gy, gr;
 
-  double S[4] = {0.0, 0.0, 0.0, 0.0}; // S of Brodka methode, oder is S[4] =
+  double S[4] = {0.0, 0.0, 0.0, 0.0}; // S of Brodka method, or is S[4] =
                                       // {Re(S+), Im(S+), Re(S-), Im(S-)}
   std::vector<double> ReSjp(n_local_particles), ReSjm(n_local_particles);
   std::vector<double> ImSjp(n_local_particles), ImSjm(n_local_particles);
@@ -258,7 +258,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
   // for
   // the torques ....
 
-  // printf("Electical field: Ex %le, Ey %le, Ez
+  // printf("Electrical field: Ex %le, Ey %le, Ez
   // %le",-tx[0]*M_PI/(box_l[0]*box_l[1]),-ty[0]*M_PI/(box_l[0]*box_l[1]),
   //-tz[0]*M_PI/(box_l[0]*box_l[1])  );
 
@@ -435,7 +435,7 @@ void add_mdlc_force_corrections() {
   // Now we compute the the correction like Yeh and Klapp to take into account
   // the fact that you are using a
   // 3D PBC method which uses spherical summation instead of slab-wise
-  // sumation.
+  // summation.
   // Slab-wise summation is the one
   // required to apply DLC correction.  This correction is often called SDC =
   // Shape Dependent Correction.
@@ -535,7 +535,7 @@ double add_mdlc_energy_corrections() {
   // Now we compute the the correction like Yeh and Klapp to take into account
   // the fact that you are using a
   // 3D PBC method which uses spherical summation instead of slab-wise
-  // sumation.
+  // summation.
   // Slab-wise summation is the one
   // required to apply DLC correction.  This correction is often called SDC =
   // Shape Dependent Correction.
@@ -575,7 +575,7 @@ double add_mdlc_energy_corrections() {
    same
    value of the dipolar momentum modulus (mu_max). mu_max is taken as the
    largest value of
-   mu inside the sytem. If we assum the gap has a width gap_size (within which
+   mu inside the system. If we assum the gap has a width gap_size (within which
    there is no particles)
 
    Lz=h+gap_size
@@ -583,7 +583,7 @@ double add_mdlc_energy_corrections() {
    BE CAREFUL:  (1) We assum the short distance for the slab to be in the Z
    direction
    (2) You must also tune the other 3D method to the same accuracy, otherwise
-   it has no sense to have a good accurated result for DLC-dipolar.
+   it has no sense to have a good accurate result for DLC-dipolar.
 
    ----------------------------------------------------------------------------------
    */

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -52,7 +52,8 @@ class ReactionEnsembleTest(ut.TestCase):
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(seed=system.seed)
     system.time_step = 0.01
-    system.cell_system.skin = 0.4
+    system.cell_system.skin = 0
+    system.cell_system.set_n_square(use_verlet_lists=False)
 
     #
     # Setup System
@@ -92,7 +93,7 @@ class ReactionEnsembleTest(ut.TestCase):
         while True:
             try:
                 self.RE.reaction()
-                for i in range(3):
+                for i in range(2):
                     self.RE.displacement_mc_move_for_particles_of_type(3)
             except reaction_ensemble.WangLandauHasConverged:  # only catch my exception
                 break

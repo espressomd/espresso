@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include "config.hpp"
 
@@ -28,7 +46,7 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   get_mi_vector(vec2, p3->r.p, p1->r.p);
   const double l = sqrt(sqrlen(vec2));
 
-  // lp = lenght between 1 and 2
+  // lp = length between 1 and 2
   double vec1[3] = {0., 0., 0.};
   get_mi_vector(vec1, p2->r.p, p1->r.p);
   const double lp = sqrt(sqrlen(vec1));
@@ -124,7 +142,7 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
 
   // Calculate forces per area in rotated system: chain rule as in appendix C of
   // Krüger (chain rule applied in eq. (C.13), but for the energy density). Only
-  // two nodes are needed, third one is calcualted from momentum conservation
+  // two nodes are needed, third one is calculated from momentum conservation
   // Note: If you calculate the derivatives in a straightforward manner, you get
   // 8 terms (done here). Krueger exploits the symmetry of the G-matrix, which
   // results in 6 elements, but with an additional factor 2 for the xy-elements
@@ -265,12 +283,12 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
   auto part2 = get_particle_data(ind2);
   auto part3 = get_particle_data(ind3);
 
-  // Calculate equilibrium lenghts and angle; Note the sequence of the points!
-  // lo = lenght between 1 and 3
+  // Calculate equilibrium lengths and angle; Note the sequence of the points!
+  // lo = length between 1 and 3
   double templo[3];
   get_mi_vector(templo, part3.r.p, part1.r.p);
   const double l0 = sqrt(sqrlen(templo));
-  // lpo = lenght between 1 and 2
+  // lpo = length between 1 and 2
   double templpo[3];
   get_mi_vector(templpo, part2.r.p, part1.r.p);
   const double lp0 = sqrt(sqrlen(templpo));
@@ -341,7 +359,7 @@ void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
 
   // yu needs to be orthogonal to xu, and point in the direction of node 3 in
   // Krueger, Fig. 7.1b. Therefore: First get the projection of v13 onto v12:
-  // The direction is definied by xu, the length by the scalar product (scalar
+  // The direction is defined by xu, the length by the scalar product (scalar
   // product can be interpreted as a projection, after all). --> sca * xu Then:
   // v13 - sca * xu gives the component of v13 orthogonal to v12, i..e.
   // perpendicular to the x-axis --> yu Last: Normalize yu.

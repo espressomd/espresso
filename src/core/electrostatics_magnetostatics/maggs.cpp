@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2010,2011 Florian Fahrenberger
   Copyright (C) 2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
@@ -67,7 +67,7 @@
 #define REQ_MAGGS_SPREAD 300
 #define REQ_MAGGS_EQUIL 301
 
-/* Factors for self-influence currection */
+/* Factors for self-influence correction */
 /* (stemming from epsilon_zero and 4*pi) */
 #define SELF_FACTOR_1 1.57364595
 #define SELF_FACTOR_2 1.5078141
@@ -113,7 +113,7 @@ typedef int t_dirs[NDIRS];           /* integer vector for directions */
 typedef struct {
   t_dvector left_down_position; /* spatial position of left down grid point */
   t_dvector
-      upper_right_position;  /* spatial positon of upper right grid point */
+      upper_right_position;  /* spatial position of upper right grid point */
   int inner_left_down[3];    /* inner left down grid point    */
   int inner_up_right[3];     /* inner up right grid point + (1,1,1) */
   int halo_left_down[3];     /* halo-region left down grid point  */
@@ -179,7 +179,7 @@ static t_dirs *neighbor;
 // int maggs_get_linear_index(int x, int y, int z, int latticedim[SPACE_DIM]);
 // /* linear indexing for speed */ int maggs_count_charged_particles(); /*
 // global number of charges */ int maggs_get_offset(int index_shift, int
-// index_base, int axes, int adim[3]); /* offset of currect lattice site */ void
+// index_base, int axes, int adim[3]); /* offset of current lattice site */ void
 // maggs_calc_directions(int j, int* dir1, int*dir2); /* for a given direction,
 // give back the other two */ double maggs_calc_curl(int mue, int nue, double*
 // field, int* Neighbor, int index); /* calculate curl in real space */ double
@@ -205,7 +205,7 @@ static t_dirs *neighbor;
 // double maggs_interpol1D(double x); /* interpolate charge linearly in one
 // direction */ void maggs_interpolate_charge(int *first, double *rel, double
 // q); /* interpolate all charges */ void maggs_accumulate_charge_from_ghosts();
-// /* interplate ghost charges */ void maggs_distribute_particle_charges(); /*
+// /* interpolate ghost charges */ void maggs_distribute_particle_charges(); /*
 // find cube and call interpolation */ void maggs_calc_charge_gradients(double
 // *rel, double q, double *grad); /* calculate gradients */ void
 // maggs_update_charge_gradients(double *grad); /* find cube and call calculate
@@ -847,7 +847,7 @@ double maggs_set_adaptive_permittivity(int node_x, int node_y, int node_z) {
     works for D- and B-fields.
     @param field   Field to communicate. Can be B- or D-field.
     @param dim     Dimension in which to communicate
-    @param e_equil Flag if field is already equilibated
+    @param e_equil Flag if field is already equilibrated
 */
 void maggs_exchange_surface_patch(double *field, int dim, int e_equil) {
   static int init = 1;
@@ -2314,7 +2314,7 @@ double maggs_electric_energy() {
   return globalresult;
 }
 
-/** Public funxtion.
+/** Public function.
     Integrates the B-field over the whole system to get the
     energy of the magnetic field.
     @return returns magnetic energy

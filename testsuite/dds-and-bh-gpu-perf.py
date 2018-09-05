@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 
 import time as tm
@@ -8,17 +24,12 @@ from numpy import linalg as la
 from numpy.random import random, seed
 
 import espressomd
-from espressomd.interactions import *
-from espressomd.magnetostatics import *
-from espressomd.analyze import *
-from tests_common import *
-from espressomd import assert_features, has_features, missing_features
+import espressomd.magnetostatics
 
 
-@ut.skipIf(not has_features(["DIPOLAR_BARNES_HUT"]),
+@ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT"]),
            "Features not available, skipping test!")
 class BHGPUPerfTest(ut.TestCase):
-    longMessage = True
     # Handle for espresso system
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 
@@ -26,10 +37,7 @@ class BHGPUPerfTest(ut.TestCase):
         tol = 15E-2
         vec_len = la.norm(a - b)
         rel = 2 * vec_len / (la.norm(a) + la.norm(b))
-        if rel <= tol:
-            return True
-        else:
-            return False
+        return rel <= tol
 
     def stopAll(self):
         for i in range(len(self.system.part)):
@@ -38,11 +46,7 @@ class BHGPUPerfTest(ut.TestCase):
 
     def run_test_case(self):
         seed(1)
-        print("----------------------------------------------")
-        print("- Scalability and performance testing: manual durable run only")
-        print("- Testcase dds-and-bh-gpu-perf.py")
-        print("----------------------------------------------")
-
+    
         pf_bh_gpu = 2.34
         pf_dds_gpu = 3.524
         ratio_dds_gpu_bh_gpu = pf_dds_gpu / pf_bh_gpu
@@ -54,7 +58,6 @@ class BHGPUPerfTest(ut.TestCase):
         part_dip = np.zeros((3))
 
         for n in [26487, 147543]:
-            print("{0} particles".format(n))
             force_mag_average = 0.0
             torque_mag_average = 0.0
             dipole_modulus = 1.3
@@ -96,7 +99,8 @@ class BHGPUPerfTest(ut.TestCase):
             # and torque
             self.system.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
-            dds_gpu = DipolarDirectSumGpu(prefactor=pf_dds_gpu)
+            dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(
+                prefactor=pf_dds_gpu)
             self.system.actors.add(dds_gpu)
             t1 = tm.time()
             self.system.integrator.run(steps=0, recalc_forces=True)
@@ -109,14 +113,13 @@ class BHGPUPerfTest(ut.TestCase):
             for i in range(n):
                 dds_gpu_f.append(self.system.part[i].f)
                 dds_gpu_t.append(self.system.part[i].torque_lab)
-            dds_gpu_e = Analysis(self.system).energy()["total"]
+            dds_gpu_e = self.system.analysis.energy()["total"]
 
             del dds_gpu
-            for i in range(len(self.system.actors.active_actors)):
-                self.system.actors.remove(self.system.actors.active_actors[i])
+            self.system.actors.clear()
 
             self.system.integrator.run(steps=0, recalc_forces=True)
-            bh_gpu = DipolarBarnesHutGpu(
+            bh_gpu = espressomd.magnetostatics.DipolarBarnesHutGpu(
                 prefactor=pf_bh_gpu, epssq=400.0, itolsq=36.0)
             self.system.actors.add(bh_gpu)
             t1 = tm.time()
@@ -130,7 +133,7 @@ class BHGPUPerfTest(ut.TestCase):
             for i in range(n):
                 bhgpu_f.append(self.system.part[i].f)
                 bhgpu_t.append(self.system.part[i].torque_lab)
-            bhgpu_e = Analysis(self.system).energy()["total"]
+            bhgpu_e = self.system.analysis.energy()["total"]
 
             for i in range(n):
                 force_mag_average += la.norm(dds_gpu_f[i])
@@ -180,5 +183,4 @@ class BHGPUPerfTest(ut.TestCase):
             self.run_test_case()
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()

@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef PAIR_CRITERIA_HPP
 #define PAIR_CRITERIA_HPP
 
@@ -41,11 +59,11 @@ private:
   double m_cut_off;
 };
 
-/** True if the short range energy is largern than a cut_off */
+/** True if the short range energy is larger than a cut_off */
 class EnergyCriterion : public PairCriterion {
 public:
   bool decide(const Particle &p1, const Particle &p2) const override {
-    // Distnace between particles
+    // Distance between particles
     double vec21[3];
     get_mi_vector(vec21, p1.r.p, p2.r.p);
     const double dist_betw_part = sqrt(sqrlen(vec21));

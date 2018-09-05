@@ -4,7 +4,7 @@ particles using the reaction ensemble method.
 """
 
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,16 +26,14 @@ import numpy as np
 import sys
 
 import espressomd
-
-required_features = ["LENNARD_JONES", "ELECTROSTATICS"]
-espressomd.assert_features(required_features)
-
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
-from espressomd.interactions import *
 from espressomd import reaction_ensemble
 from espressomd import electrostatics
+
+required_features = ["LENNARD_JONES", "ELECTROSTATICS"]
+espressomd.assert_features(required_features)
 
 # System parameters
 #############################################################

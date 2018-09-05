@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2010,2011,2012,2014,2015,2016 The ESPResSo project
+   Copyright (C) 2010-2018 The ESPResSo project
 
    This file is part of ESPResSo.
 
@@ -141,7 +141,7 @@ typedef struct {
 #define EK_LINK_DUU 25
 
 extern EK_parameters ek_parameters;
-extern int ek_initialized;
+extern bool ek_initialized;
 
 void ek_integrate();
 void ek_print_parameters();

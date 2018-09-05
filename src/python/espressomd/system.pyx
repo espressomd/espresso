@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -462,9 +462,9 @@ cdef class System(object):
         Parameters
         ----------
         phi : :obj:`float`
-                Angle between the z-axis and the roation axis.
+                Angle between the z-axis and the rotation axis.
         theta : :obj:`float`
-                Rotaton of the axis around the y-axis.
+                Rotation of the axis around the y-axis.
         alpha : :obj:`float`
                 How much to rotate
 
@@ -481,7 +481,7 @@ cdef class System(object):
             Parameters
             ----------
             distance : :obj:`int`
-                       Bond distance upto which the exlucsions should be added.
+                       Bond distance upto which the exclusions should be added.
 
             """
             auto_exclusions(distance)

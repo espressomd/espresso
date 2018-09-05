@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
 
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
@@ -68,7 +68,7 @@ void mpi_random_seed(int cnt, std::vector<int> &seeds);
 std::string mpi_random_get_stat();
 
 /**
- * @brief Set the seeds on all the node to the state representet
+ * @brief Set the seeds on all the node to the state represented
  *        by the string.
  * The string representation must be one that was returned by
  * mpi_random_get_stat.
@@ -82,7 +82,7 @@ void mpi_random_set_stat(const std::vector<std::string> &stat);
 int get_state_size_of_generator();
 
 /**
- * @bief Initialize PRNG with MPI rank as seed.
+ * @brief Initialize PRNG with MPI rank as seed.
  */
 void init_random(void);
 

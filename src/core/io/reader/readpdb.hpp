@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -36,7 +36,7 @@ struct PdbLJInteraction {
     @param pdb_file Filename of the pdb file.
     @first_id Id of the first particle to add.
     @type Type for the particles.
-    @lennard_jones Should lj iteractions be added from the itp file.
+    @lennard_jones Should lj interactions be added from the itp file.
     @fit Should the box be rescaled to hold the particles.
     @lj_internal Should LJ interactions within the molecule be added.
     @lj_diagonal Just the diagonal interaction terms oh lj_internal.

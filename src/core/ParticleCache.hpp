@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef CORE_PARTICLE_CACHE_HPP
 #define CORE_PARTICLE_CACHE_HPP
 
@@ -54,7 +72,7 @@ template <typename Container, typename Compare> class Merge {
   Compare m_comp;
 
 public:
-  Merge(Compare &&comp = Compare{}) : m_comp(comp) {}
+  explicit Merge(Compare &&comp = Compare{}) : m_comp(comp) {}
   Container operator()(Container const &a, Container const &b) const {
     Container ret;
     ret.reserve(a.size() + b.size());
@@ -118,9 +136,9 @@ struct is_commutative<::detail::Merge<Container, ::detail::IdCompare>,
  *
  * To update the cache particles are sorted by id on the nodes,
  * and the sorted arrays a merged in a reduction tree, until the
- * master node recives a complete and sorted particle array.
+ * master node receives a complete and sorted particle array.
  *
- * This class can be customized by running a unary opration on
+ * This class can be customized by running a unary operation on
  * the particles. This op is run on all the nodes. It can be used
  * e.g. to fold or unfold the coordinates on the fly.
  *
@@ -209,7 +227,7 @@ class ParticleCache {
    *
    * This gets a new particle range, packs
    * the particles into a buffer and then
-   * merges these buffers hierachicaly to the
+   * merges these buffers hierarchically to the
    * master node
    */
   void m_update() {

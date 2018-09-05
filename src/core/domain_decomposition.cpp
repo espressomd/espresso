@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -31,7 +31,7 @@
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr
     pointer. */
-Cell *dd_save_position_to_cell(double pos[3]);
+Cell *dd_save_position_to_cell(const double pos[3]);
 
 /************************************************/
 /** \name Defines */
@@ -185,7 +185,7 @@ void dd_create_cell_grid() {
     }
   }
 
-  /* quit program if unsuccesful */
+  /* quit program if unsuccessful */
   if (n_local_cells > max_num_cells) {
     runtimeErrorMsg() << "no suitable cell grid found ";
   }
@@ -334,7 +334,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
 
-          /* place recieve cells after send cells */
+          /* place receive cells after send cells */
           dd_fill_comm_cell_lists(
               &comm->comm[cnt].part_lists[n_comm_cells[dir]], lc, hc);
           CELL_TRACE(fprintf(
@@ -526,7 +526,7 @@ void dd_init_cell_interactions() {
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr
     pointer. */
-Cell *dd_save_position_to_cell(double pos[3]) {
+Cell *dd_save_position_to_cell(const double pos[3]) {
   int i, cpos[3];
 
   for (i = 0; i < 3; i++) {
@@ -961,7 +961,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
       }
     }
 
-    /* Communicate wether particle exchange is finished */
+    /* Communicate whether particle exchange is finished */
     if (global_flag == CELL_GLOBAL_EXCHANGE) {
       if (this_node == 0) {
         int sum;

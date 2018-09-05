@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021
   Mainz, Germany
@@ -79,7 +79,7 @@ void momentum_flip();
 /************************************************************/
 
 /************************************************************/
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -137,7 +137,7 @@ void hamiltonian_calc(int ekin_update_flag) {
   }
 }
 
-// get local temperature - here for debbuging purposes
+// get local temperature - here for debugging purposes
 double calc_local_temp() {
   int tot_np = 0;
   double temp = 0.0;

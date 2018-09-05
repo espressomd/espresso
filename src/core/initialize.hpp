@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -103,7 +103,7 @@ void on_parameter_change(int parameter);
 /** called every time the number of particle types has changed (increased) */
 void on_max_seen_particle_type_change();
 
-/** call this if you want to change ghost flags, e.g. wether ghosts
+/** call this if you want to change ghost flags, e.g. whether ghosts
     have velocities or not.  This is a opt-in process, i. e. all
     features are turned off and have to be reactivated if necessary
     inside this procedure.  */

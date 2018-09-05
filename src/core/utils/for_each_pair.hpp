@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -29,7 +29,7 @@ namespace Utils {
  *
  * Diagonal elements are excluded. Pair are traversed ordered, so that
  * for op(*it, *jt), it holds that distance(it - first) < distance(jt - first),
- * and distance(it_n - first) < distance(it_n+1 - first) for consequtive calls.
+ * and distance(it_n - first) < distance(it_n+1 - first) for consecutive calls.
  */
 template <typename ForwardIterator, typename BinaryOp>
 void for_each_pair(ForwardIterator first, ForwardIterator last, BinaryOp op) {

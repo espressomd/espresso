@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -34,7 +34,7 @@ cdef extern from "particle_data.hpp":
 
     # Note: Conditional compilation is not possible within ctypedef blocks.
     # Therefore, only member variables are imported here, which are always compiled into Espresso.
-    # For all other properties, getter-funcionts have to be used on the c
+    # For all other properties, getter-functions have to be used on the c
     # level.
     ctypedef struct particle_properties "ParticleProperties":
         int    identity

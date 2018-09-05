@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -71,7 +71,7 @@ enum CoulombMethod {
 /************************************************************/
 /*@{*/
 enum DipolarInteraction {
-  /** dipolar interation switched off (NONE). */
+  /** dipolar interaction switched off (NONE). */
   DIPOLAR_NONE = 0,
   /** dipolar method is P3M. */
   DIPOLAR_P3M,
@@ -415,7 +415,7 @@ extern int ia_excl;
 /** @brief Set the electrostatics prefactor */
 int coulomb_set_prefactor(double prefactor);
 
-/** @brief Deactivates the current Coulomb mhthod
+/** @brief Deactivates the current Coulomb method
     This was part of coulomb_set_bjerrum()
 */
 void deactivate_coulomb_method();
@@ -521,13 +521,13 @@ public:
       return true;
 #endif
 
-// Within dipolar cutoff and both cary magnetic moments
+// Within dipolar cutoff and both carry magnetic moments
 #ifdef DIPOLES
     if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
       return true;
 #endif
 
-// Collision detectoin
+// Collision detection
 #ifdef COLLISION_DETECTION
     if (dist2 <= m_collision_cut2)
       return true;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -21,7 +21,7 @@
 #ifndef _THOLE_H
 #define _THOLE_H
 /** \file thole.hpp
- *  Routines to calculate the thole dampingi energy and/or force
+ *  Routines to calculate the thole damping energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp
  */

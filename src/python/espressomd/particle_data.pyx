@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -1559,7 +1559,7 @@ cdef class ParticleHandle(object):
         >>> print(bonds)
         ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 1), (HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2))
 
-        delete the bond betwen particle 0 and particle 1
+        delete the bond between particle 0 and particle 1
 
         >>> system.part[0].delete_bond(bonds[0])
         >>> print(system.part[0].bonds)
@@ -2092,7 +2092,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         ----------
         Either:
 
-            a keywor arguments in which the keys are names of particle properties
+            a keyword arguments in which the keys are names of particle properties
             and the values are the values to filter for. E.g.,::
 
                 type=0,q=1
@@ -2166,7 +2166,7 @@ def _add_particle_slice_properties():
         Setter function that sets attribute on every member of particle_slice.
         If values contains only one element, all members are set to it. If it
         contains as many elements as there are members, each of them gets set
-        to the corresponding one. For attributes that are lists of various lenght,
+        to the corresponding one. For attributes that are lists of various length,
         (bonds, exclusions) the nesting level decides if it is one-for-all or one-for-each.
 
         """

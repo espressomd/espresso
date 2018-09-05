@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010-2017 The ESPResSo project                                 #
+# Copyright (C) 2010-2018 The ESPResSo project                                 #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -30,9 +30,13 @@ import os
 import sys
 import time
 
-from espressomd.observables import ParticlePositions
-from espressomd.correlators import Correlator
+import espressomd
+from espressomd import assert_features
+from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
+from espressomd.accumulators import Correlator
 
+required_features = ["ENGINE", "ROTATION"]
+assert_features(required_features)
 
 # create an output folder
 
@@ -103,13 +107,13 @@ for ...:
     pos_id = ParticlePositions(ids=[0])
     msd = Correlator(obs1=pos_id,
                      corr_operation="square_distance_componentwise",
-                     dt=tstep,
+                     delta_N=1,
                      tau_max=tmax,
                      tau_lin=16)
-    system.auto_update_correlators.add(msd)
+    system.auto_update_accumulators.add(msd)
 
 ## Exercise 3 ##
-# Construct the auto-correlators for the VACF and AVACF,
+# Construct the auto-accumulators for the VACF and AVACF,
 # using the example of the MSD
 
     # Initialize the velocity auto-correlation function (VACF) correlator
@@ -126,9 +130,9 @@ for ...:
     for i in range(sampsteps):
         system.integrator.run(samplength)
 
-    # Finalize the correlators and write to disk
+    # Finalize the accumulators and write to disk
 
-    system.auto_update_correlators.remove(msd)
+    system.auto_update_accumulators.remove(msd)
     msd.finalize()
     np.savetxt("{}/msd_{}_{}.dat".format(outdir, vel, run), msd.result())
 

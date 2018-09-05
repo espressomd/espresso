@@ -1,6 +1,6 @@
 
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -89,7 +89,7 @@ public:
    */
   template <class Derived> static T *builder() {
     /* This produces nicer error messages if the requirements are not
-     * fullfilled. */
+     * fulfilled. */
     static_assert(std::is_base_of<T, Derived>::value,
                   "Class to build needs to be a subclass of the class the "
                   "factory is for.");

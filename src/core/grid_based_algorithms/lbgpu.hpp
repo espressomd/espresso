@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+   Copyright (C) 2010-2018 The ESPResSo project
 
    This file is part of ESPResSo.
 
@@ -153,7 +153,7 @@ typedef struct {
 
   /** density of the node */
   float rho[LB_COMPONENTS];
-  /** veolcity of the node */
+  /** velocity of the node */
 
   float v[3];
 
@@ -164,7 +164,7 @@ typedef struct {
 typedef struct {
   /** density of the node */
   float rho[LB_COMPONENTS];
-  /** veolcity of the node */
+  /** velocity of the node */
   float v[3];
   /** pressure tensor */
   float pi[6];
@@ -231,7 +231,7 @@ extern int transfer_momentum_gpu;
 extern LB_extern_nodeforcedensity_gpu *extern_node_force_densities_gpu;
 #ifdef ELECTROKINETICS
 extern LB_node_force_density_gpu node_f;
-extern int ek_initialized;
+extern bool ek_initialized;
 #endif
 
 /*@}*/

@@ -1,3 +1,21 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 def vtf_pid_map(system, types='all'):
     """
     Generates a VTF particle index map to ESPResSo ``id``.
@@ -12,7 +30,7 @@ def vtf_pid_map(system, types='all'):
             the one used in writevsf() and writevsf().
     Returns
     -------
-    dict:   A dictionary where the values are the VTF indicies and the keys are the ESPresSo particle ``id``
+    dict:   A dictionary where the values are the VTF indices and the keys are the ESPresSo particle ``id``
     """
 
     if not hasattr(types, '__iter__'):
@@ -60,7 +78,7 @@ def writevsf(system, fp, types='all'):
 def writevcf(system, fp, types='all'):
     """
     writes a VCF (VTF Coordinate Format) to a file.
-    This can be used to write a stimestep to a VTF file.
+    This can be used to write a timestep to a VTF file.
 
     Parameters
     ----------

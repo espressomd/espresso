@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010,2011,2012,2013,2014, 2015,2016 The ESPResSo project            #
+# Copyright (C) 2010-2018 The ESPResSo project            #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -30,6 +30,7 @@ import numpy as np
 import os
 import sys
 
+import espressomd
 from espressomd import assert_features
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
@@ -70,7 +71,7 @@ vel = float(sys.argv[1])
 
 # create an output folder
 
-outdir = "./RESULTS_ENHANCED_DIFFUSION/"
+outdir = "./RESULTS_RECTIFICATION"
 try:
     os.makedirs(outdir)
 except:
@@ -94,7 +95,7 @@ system.time_step = dt
 system.min_global_cut = 0.5
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 ## Exercise 1 ##
-# Why are the langevin parameters chosen as such?
+# Why are the Langevin parameters chosen as such?
 
 
 ################################################################################
@@ -132,7 +133,7 @@ system.constraints.add(shape=hollow_cone, particle_type=4)
 ################################################################################
 #
 # We set up a WCA (almost-hard) interaction between the particles and the
-# the confining geometry. We do not have particle-particle interactions, which
+# confining geometry. We do not have particle-particle interactions, which
 # are not necessary to observe rectification.
 #
 ##########################################################################

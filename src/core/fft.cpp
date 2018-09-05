@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -430,8 +430,8 @@ void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
   MPI_Status status;
   double *tmp_ptr;
 
-  /* Back means: Use the send/recieve stuff from the forward plan but
-     replace the recieve blocks by the send blocks and vice
+  /* Back means: Use the send/receive stuff from the forward plan but
+     replace the receive blocks by the send blocks and vice
      versa. Attention then also new_mesh and old_mesh are exchanged */
 
   for (i = 0; i < plan_f.g_size; i++) {

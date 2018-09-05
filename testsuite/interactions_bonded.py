@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,24 +19,26 @@
 from __future__ import print_function
 
 import unittest as ut
-import numpy
+import numpy as np
 
 import espressomd
-from tests_common import *
+import tests_common
 
 
 class InteractionsBondedTest(ut.TestCase):
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    system.seed = range(system.cell_system.get_state()['n_nodes'])
-    numpy.random.seed(seed=system.seed)
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    np.random.seed(seed=system.seed)
 
-    start_pos = numpy.random.rand(3) * system.box_l
-    axis = numpy.random.rand(3)
-    axis /= numpy.linalg.norm(axis)
+    box_l = 10.
+
+    start_pos = np.random.rand(3) * box_l
+    axis = np.random.rand(3)
+    axis /= np.linalg.norm(axis)
     step = axis * 0.01
-    step_width = numpy.linalg.norm(step)
+    step_width = np.linalg.norm(step)
 
     def setUp(self):
+        self.system.box_l = [self.box_l] * 3
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
 
@@ -63,15 +65,15 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["bonded"]
-            E_ref = harmonic_potential(
+            E_ref = tests_common.harmonic_potential(
                 scalar_r=(i + 1) * self.step_width, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
-                harmonic_force(scalar_r=(i + 1) * self.step_width,
-                               k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
+                tests_common.harmonic_force(scalar_r=(i + 1) * self.step_width,
+                                            k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)
@@ -103,15 +105,15 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["bonded"]
-            E_ref = fene_potential(
+            E_ref = tests_common.fene_potential(
                 scalar_r=(i + 1) * self.step_width, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
-                fene_force(scalar_r=(i + 1) * self.step_width,
-                           k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
+                tests_common.fene_force(scalar_r=(i + 1) * self.step_width,
+                                        k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)
@@ -145,13 +147,13 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["bonded"]
-            E_ref = coulomb_potential(
+            E_ref = tests_common.coulomb_potential(
                 scalar_r=(i + 1) * self.step_width, k=coulomb_k, q1=q1, q2=q2)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * coulomb_force(
+            f1_ref = self.axis * tests_common.coulomb_force(
                 scalar_r=(i + 1) * self.step_width,
                                 k=coulomb_k, q1=q1, q2=q2)
 
@@ -162,7 +164,6 @@ class InteractionsBondedTest(ut.TestCase):
             # and has correct value.
             f1_sim_copy = np.copy(f1_sim)
             np.testing.assert_almost_equal(f1_sim_copy, f1_ref)
-
 
 if __name__ == '__main__':
     ut.main()

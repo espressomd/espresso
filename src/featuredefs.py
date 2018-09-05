@@ -1,4 +1,4 @@
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -67,7 +67,7 @@ class defs(object):
         for line in fileinput.input(filename):
             line = line.strip()
             # Ignore empty and comment lines
-            if len(line) == 0 or line.startswith('#') \
+            if not line or line.startswith('#') \
                     or line.startswith('//') or line.startswith('/*'):
                     continue
 
@@ -79,9 +79,9 @@ class defs(object):
             allfeatures.add(feature)
 
             # get the keyword
-            if len(tokens) > 0:
+            if tokens:
                 keyword = tokens.pop(0)
-                if len(tokens) == 0:
+                if not tokens:
                     rest = None
                 else:
                     rest = tokens[0]

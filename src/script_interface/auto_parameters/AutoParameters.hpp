@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 #define SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 
@@ -12,7 +30,7 @@ namespace ScriptInterface {
 /**
  * @brief Bind parameters in the script interface.
  *
- * This class implementes @c ScriptInterfaceBase, binding
+ * This class implements @c ScriptInterfaceBase, binding
  * the parameters added by add_parameters or by the constructor.
  * To use, derive from this class and add parameters. For example,
  * given a class A
@@ -64,8 +82,8 @@ namespace ScriptInterface {
  * int m_i;
  * };
  * ~~~
- * (this has to be caputerd in the lambdas to have acces to the member functions
- * of the class).
+ * (this has to be captured in the lambdas to have access to the member
+ * functions of the class).
  */
 template <typename Derived, typename Base = ScriptInterfaceBase>
 class AutoParameters : public Base {

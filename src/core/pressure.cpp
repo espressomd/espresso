@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -644,7 +644,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
   double entry[3],
       exit[3]; /* the positions at which the line enters and exits the cube */
   int startx, endx;     /* x-bins in which the line starts and ends in */
-  int occupiedxbins;    /* number of x-bins occuped by the line */
+  int occupiedxbins;    /* number of x-bins occupied by the line */
   int totoccupiedybins; /* total number of y-bins through which the line passes
                          */
   int xbin, ybin,

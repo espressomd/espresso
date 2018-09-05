@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -56,7 +56,7 @@ inline void add_ljgen_pair_force(const Particle *const p1,
                                  double dist, double force[3]) {
   if ((dist < ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
     int j;
-    double r_off, frac, fac = 0.0;
+    double r_off, frac;
     r_off = dist - ia_params->LJGEN_offset;
 
     r_off *= r_off;
@@ -68,15 +68,16 @@ inline void add_ljgen_pair_force(const Particle *const p1,
        using an odd m, n coefficient. */
     r_off = sqrt(r_off);
     frac = ia_params->LJGEN_sig / r_off;
-    fac = ia_params->LJGEN_eps
+    double fac = ia_params->LJGEN_eps
 #ifdef LJGEN_SOFTCORE
-          * ia_params->LJGEN_lambda * (dist - ia_params->LJGEN_offset) / r_off
+                 * ia_params->LJGEN_lambda * (dist - ia_params->LJGEN_offset) /
+                 r_off
 #endif
-          * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 *
-                 pow(frac, ia_params->LJGEN_a1) -
-             ia_params->LJGEN_b2 * ia_params->LJGEN_a2 *
-                 pow(frac, ia_params->LJGEN_a2)) /
-          (r_off * dist);
+                 * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 *
+                        pow(frac, ia_params->LJGEN_a1) -
+                    ia_params->LJGEN_b2 * ia_params->LJGEN_a2 *
+                        pow(frac, ia_params->LJGEN_a2)) /
+                 (r_off * dist);
     for (j = 0; j < 3; j++)
       force[j] += fac * d[j];
 
@@ -110,10 +111,8 @@ inline void add_ljgen_pair_force(const Particle *const p1,
 inline double ljgen_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist) {
-  double r_off, frac;
-
   if ((dist < ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
-    r_off = dist - ia_params->LJGEN_offset;
+    double r_off = dist - ia_params->LJGEN_offset;
     r_off *= r_off;
 #ifdef LJGEN_SOFTCORE
     r_off += pow(ia_params->LJGEN_sig, 2) * (1.0 - ia_params->LJGEN_lambda) *
@@ -122,7 +121,7 @@ inline double ljgen_pair_energy(const Particle *p1, const Particle *p2,
    using an odd m, n coefficient. */
 #endif
     r_off = sqrt(r_off);
-    frac = ia_params->LJGEN_sig / r_off;
+    double frac = ia_params->LJGEN_sig / r_off;
     return ia_params->LJGEN_eps
 #ifdef LJGEN_SOFTCORE
            * ia_params->LJGEN_lambda

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,7 +25,6 @@ espressomd.assert_features(required_features)
 
 from espressomd import thermostat
 from espressomd import analyze
-from samples_common import open
 
 print("""
 =======================================================

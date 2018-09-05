@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -826,7 +826,7 @@ void local_remove_particle(int part) {
 
   /* the tricky - say ugly - part: determine
      the cell the particle is located in by checking
-     wether the particle address is inside the array */
+     whether the particle address is inside the array */
   for (c = 0; c < local_cells.n; c++) {
     tmp = local_cells.cell[c];
     ind = p - tmp->part;
@@ -1175,7 +1175,7 @@ void auto_exclusions(int distance) {
 
   /* setup the exclusions and clear the arrays. We do not setup the exclusions
      up there, since on_part_change clears the partCfg, so that we would have to
-     restore it continously. Of course this could be optimized by bundling the
+     restore it continuously. Of course this could be optimized by bundling the
      exclusions, but this is only done once and the overhead is as much as for
      setting the bonds, which the user apparently accepted.
   */

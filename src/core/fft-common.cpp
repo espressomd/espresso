@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -61,9 +61,9 @@ void fft_pack_block(double *in, double *out, int start[3], int size[3],
   int li_in, li_out = 0;
   /* copy size */
   int copy_size;
-  /* offsets for indizes in input grid */
+  /* offsets for indices in input grid */
   int m_in_offset, s_in_offset;
-  /* offsets for indizes in output grid */
+  /* offsets for indices in output grid */
   int m_out_offset;
 
   copy_size = element * size[2] * sizeof(double);
@@ -88,7 +88,7 @@ void fft_pack_block_permute1(double *in, double *out, int start[3], int size[3],
   int s, m, f, e;
   /* linear index of in grid, linear index of out grid */
   int li_in, li_out = 0;
-  /* offsets for indizes in input grid */
+  /* offsets for indices in input grid */
   int m_in_offset, s_in_offset;
   /* offset for mid changing indices of output grid */
   int m_out_offset;
@@ -118,7 +118,7 @@ void fft_pack_block_permute2(double *in, double *out, int start[3], int size[3],
   int s, m, f, e;
   /* linear index of in grid, linear index of out grid */
   int li_in, li_out = 0;
-  /* offsets for indizes in input grid */
+  /* offsets for indices in input grid */
   int m_in_offset, s_in_offset;
   /* offset for slow changing index of output grid */
   int s_out_offset;
@@ -153,9 +153,9 @@ void fft_unpack_block(double *in, double *out, int start[3], int size[3],
   int li_in = 0, li_out;
   /* copy size */
   int copy_size;
-  /* offset for indizes in input grid */
+  /* offset for indices in input grid */
   int m_in_offset;
-  /* offsets for indizes in output grid */
+  /* offsets for indices in output grid */
   int m_out_offset, s_out_offset;
 
   copy_size = element * (size[2] * sizeof(double));
@@ -175,7 +175,7 @@ void fft_unpack_block(double *in, double *out, int start[3], int size[3],
 }
 
 /************************************************
- * privat functions
+ * private functions
  ************************************************/
 
 int fft_find_comm_groups(int grid1[3], int grid2[3], int *node_list1,

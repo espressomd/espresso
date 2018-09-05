@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import espressomd.interactions
 from espressomd import has_features
@@ -20,7 +36,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     """
     Adds a drude particle with specified id, type, and mass to the system.
     Checks if different Drude particles have different types.
-    Collects types/charges/polarizations/Thole factors for intramol. core-Drude short-range exculsion and Thole interaction.
+    Collects types/charges/polarizations/Thole factors for intramol. core-Drude short-range exclusion and Thole interaction.
 
     Attributes
     ----------
@@ -80,7 +96,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     # drude types if this type is seen for the first time
     if not type_drude in drude_dict:
 
-        # Bookkepping of q, alphas and damping parameter
+        # Bookkeeping of q, alphas and damping parameter
         drude_dict[type_drude] = {}
         drude_dict[type_drude]["q"] = q_drude
         drude_dict[type_drude]["qc"] = p_core.q
@@ -139,7 +155,7 @@ def add_thole_pair_damping(system, t1, t2, verbose=False):
 
 def add_all_thole(system, verbose=False):
     """
-    Calls add_thole_pair_damping() for all necassary combinations to create the interactions.
+    Calls add_thole_pair_damping() for all necessary combinations to create the interactions.
 
     Attributes
     ----------

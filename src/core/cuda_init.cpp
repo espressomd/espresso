@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -67,7 +67,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
     proc_name[63] = 0;
 
   for (int i = 0; i < n_gpus; ++i) {
-    /* Check if device has at least mininum compute capability */
+    /* Check if device has at least minimum compute capability */
     if (cuda_check_gpu(i) == ES_OK) {
       EspressoGpuDevice device;
       if (cuda_get_device_props(i, device) == ES_OK) {

@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include "grid.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
@@ -38,7 +56,7 @@ Cluster::center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids) {
     total_mass += partCfg()[pid].p.mass;
   }
 
-  // Normalize by numer of particles
+  // Normalize by number of particles
   com = com * 1. / total_mass;
 
   // Re-add reference position
@@ -108,7 +126,7 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   // gyration against the number of particles in sub-clusters. Particles are
   // included step by step from the center of mass outwards
 
-  // Distnaces of particles from the center of mass
+  // Distances of particles from the center of mass
   std::vector<double> distances;
 
   for (auto const &it : particles) {

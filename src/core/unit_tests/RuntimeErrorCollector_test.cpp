@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(count) {
 
   Testing::reduce_and_check(world, rec.count() == 0);
 
-  /** MPI guanrantees that size >= 1 and rank 0 exists. */
+  /** MPI guarantees that size >= 1 and rank 0 exists. */
   if (world.rank() == (world.size() - 1)) {
     rec.error("Test_error", "Test_functions", "Test_file", 42);
   }
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(count) {
   /** There should now be one error and world.size() warnings */
   Testing::reduce_and_check(world,
                             rec.count(RuntimeError::ErrorLevel::ERROR) == 1);
-  /** All messages are at leaste WARNING or higher. */
+  /** All messages are at least WARNING or higher. */
   {
     /* Beware of the execution order */
     int total = rec.count();

@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 /* maximal set of features usable at the same time plus all debug switches */
 /* Do not run the testsuite with this set, only compile it. */
 #define PARTIAL_PERIODIC
@@ -10,7 +28,6 @@
 
 #define MASS
 #define EXCLUSIONS
-#define MOLFORCES
 
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
@@ -84,7 +101,6 @@
 #define GHOST_FORCE_DEBUG
 #define STAT_DEBUG
 #define POLY_DEBUG
-#define MOLFORCES_DEBUG
 #define PTENSOR_DEBUG
 #define MAGGS_DEBUG
 #define LB_DEBUG

@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include "ClusterStructure.hpp"
 #include "Cluster.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -92,8 +110,8 @@ void ClusterStructure::add_pair(const Particle &p1, const Particle &p2) {
         (part_of_cluster(p1) && part_of_cluster(p2) &&
          cluster_id.at(p1.p.identity) != cluster_id.at(p2.p.identity)) {
       // Clusters of p1 and p2 are one and the same. Add an identity to the list
-      // The higher number must be inserted as first value of tjhe pair
-      // because the substituions later have to be done in descending order
+      // The higher number must be inserted as first value of the pair
+      // because the substitutions later have to be done in descending order
       const int cid1 = find_id_for(cluster_id.at(p1.p.identity));
       const int cid2 = find_id_for(cluster_id.at(p2.p.identity));
       if (cid1 > cid2) {
@@ -148,7 +166,7 @@ void ClusterStructure::merge_clusters() {
     clusters[it.second]->particles.push_back(it.first);
   }
 
-  // Sort particles ids in the cluters
+  // Sort particles ids in the clusters
   for (auto c : clusters) {
     std::sort(c.second->particles.begin(), c.second->particles.end());
   }

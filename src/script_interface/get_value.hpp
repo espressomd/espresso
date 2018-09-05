@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -80,10 +80,10 @@ template <> struct get_value_helper<std::vector<double>, void> {
    an ObjectId variant. If the type is a derived type, the type is
    also checked.
 
-   We do a couple of checks: First we check if the id is actualy the
+   We do a couple of checks: First we check if the id is actually the
    empty id, which means None and is a valid value, represented by
    an empty ptr.
-   If the id is not empty, we try to retieve an instance for that id.
+   If the id is not empty, we try to retrieve an instance for that id.
    If it does not exist we throw, this means the caller supplied an id
    with no corresponding instance.
    If we can find an instance, we check if it has the right
@@ -131,7 +131,7 @@ template <typename T> T get_value(Variant const &v) {
 
 /**
  * @brief Get a value from a VariantMap by name, or throw
- *        if it does not exist or is not convertiable to
+ *        if it does not exist or is not convertible to
  *        the target type.
  *
  */
@@ -151,7 +151,7 @@ T get_value(VariantMap const &vals, std::string const &name) {
 
 /**
  * @brief Get a value from a VariantMap by name, or return a default
- *        value if it does not exsist.
+ *        value if it does not exist.
  */
 template <typename T>
 T get_value_or(VariantMap const &vals, std::string const &name,

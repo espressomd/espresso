@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import espressomd
 import numpy as np
 from .oif_utils import *
@@ -503,7 +519,7 @@ class Mesh(object):
         tmp_triangle_list_ok.append(tmp_triangle_list[0])
         tmp_triangle_list.pop(0)
 
-        while len(tmp_triangle_list) != 0:
+        while tmp_triangle_list:
             i = 0
             while i < len(tmp_triangle_list):
                 tmp_triangle = tmp_triangle_list[i]
@@ -1012,7 +1028,6 @@ class OifCell(object):
         if data is None:
             raise Exception(
                 "OifCell: append_point_data_to_vtk: No data provided. Quitting.")
-            return
         if data_name is None:
             raise Exception(
                 "OifCell: append_point_data_to_vtk: No data_name provided. Quitting.")

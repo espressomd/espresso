@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -101,7 +101,7 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
 }
 
 vector<RuntimeError> mpi_gather_runtime_errors() {
-  // Tell other processors to send their erros
+  // Tell other processors to send their errors
   m_callbacks->call(mpi_gather_runtime_errors_slave, -1, 0);
   return runtimeErrorCollector->gather();
 }

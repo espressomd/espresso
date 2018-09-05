@@ -1,14 +1,31 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """ Visualization sample of a simple plate capacitor with applied potential difference and charged particles.
 """
 
 from __future__ import print_function
-from espressomd import *
-from espressomd.shapes import *
-from espressomd import electrostatics
 import numpy
+import math
 from threading import Thread
-from math import *
-from espressomd.visualization_opengl import *
+
+import espressomd
+import espressomd.shapes
+from espressomd import electrostatics
+import espressomd.visualization_opengl
 
 required_features = ["PARTIAL_PERIODIC", "ELECTROSTATICS", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
@@ -31,9 +48,10 @@ for i in range(300):
     system.part.add(pos=rpos, type=0, q=qion)
     qion *= -1
 
-system.constraints.add(shape=Wall(dist=0, normal=[0, 0, 1]), particle_type=1)
+system.constraints.add(shape=espressomd.shapes.Wall(
+    dist=0, normal=[0, 0, 1]), particle_type=1)
 system.constraints.add(
-    shape=Wall(dist=-box_l, normal=[0, 0, -1]), particle_type=1)
+    shape=espressomd.shapes.Wall(dist=-box_l, normal=[0, 0, -1]), particle_type=1)
 
 WCA_cut = 2.**(1. / 6.)
 system.non_bonded_inter[0, 1].lennard_jones.set_params(

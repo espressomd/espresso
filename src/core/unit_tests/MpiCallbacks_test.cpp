@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
     Max-Planck-Institute for Polymer Research, Theory Group
 
   This file is part of ESPResSo.
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(add_dynamic_callback) {
 }
 
 /**
- * Check wether removing a dynamic callback
+ * Check whether removing a dynamic callback
  * works.
  */
 BOOST_AUTO_TEST_CASE(remove_dynamic_callback) {
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(destructor) {
   communicator world;
 
   {
-    /* Will be detroyed on scope exit */
+    /* Will be destroyed on scope exit */
     MpiCallbacks callbacks(world);
 
     if (world.rank() == 0) {

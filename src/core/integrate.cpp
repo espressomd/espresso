@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -96,7 +96,7 @@ double db_max_force = 0.0, db_max_vel = 0.0;
 int db_maxf_id = 0, db_maxv_id = 0;
 #endif
 
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -114,7 +114,7 @@ void propagate_pos();
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
 void propagate_vel_pos();
 /** Integration step 4 of the Velocity Verletintegrator and finalize
-    instantanious pressure calculation:<br>
+    instantaneous pressure calculation:<br>
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
 void propagate_vel_finalize_p_inst();
 
@@ -400,7 +400,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-    // progagate one-step functionalities
+    // propagate one-step functionalities
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef LB
@@ -507,7 +507,7 @@ void rescale_velocities(double scale) {
   }
 }
 
-/* Privat functions */
+/* Private functions */
 /************************************************************/
 
 void propagate_vel_finalize_p_inst() {

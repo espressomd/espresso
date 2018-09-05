@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010-2017 The ESPResSo project                                 #
+# Copyright (C) 2010-2018 The ESPResSo project                                 #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -29,6 +29,7 @@ import numpy as np
 import os
 import sys
 
+import espressomd
 from espressomd import assert_features, lb
 
 
@@ -78,7 +79,7 @@ sph_mass = 4.8
 Ixyz = 4.8
 force = 0.1
 
-# Setup the particle particle
+# Setup the particle
 
 system.part.add(
     pos=[x0, y0, z0], type=0, mass=sph_mass, rinertia=[Ixyz, Ixyz, Ixyz],

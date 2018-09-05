@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -113,7 +113,7 @@ double max_cut_bonded;
     electrostatics and DPD*/
 double max_cut_global;
 /** Everything which is in the global cutoff except real space cutoffs
-    of dipolar and Coulomb mehtods */
+    of dipolar and Coulomb methods */
 double max_cut_global_without_coulomb_and_dipolar;
 
 // Real space cutoff of long range methods
@@ -219,7 +219,7 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
   max_cut_global = min_global_cut;
 
   // global cutoff without dipolar and coulomb methods is needed
-  // for more selective additoin of particle pairs to verlet lists
+  // for more selective addition of particle pairs to verlet lists
   max_cut_global_without_coulomb_and_dipolar = max_cut_global;
 
   // Electrostatics and magnetostatics
@@ -524,7 +524,7 @@ int coulomb_set_prefactor(double prefactor) {
   return ES_OK;
 }
 
-/** @brief Deactivates the current Coulomb mhthod
+/** @brief Deactivates the current Coulomb method
     This was part of coulomb_set_bjerrum()
 */
 void deactivate_coulomb_method() {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -54,7 +54,7 @@ struct Observable_stat {
   int n_dipolar;
   /** number of non bonded interactions */
   int n_non_bonded;
-  /** Number of virtual sites relative (rigid body) conributions */
+  /** Number of virtual sites relative (rigid body) contributions */
   int n_virtual_sites;
   /** Number of external field contributions */
   const static int n_external_field = 1;
@@ -195,8 +195,8 @@ void analyze_remove(int ind);
     Calculates the distance distribution of particles with types given
     in the p1_types list around particles with types given in the
     p2_types list. The distances range from r_min to r_max, binned
-    into r_bins bins which are either aequidistant (log_flag==0)or
-    logarithmically aequidistant (log_flag==1). The result is stored
+    into r_bins bins which are either equidistant (log_flag==0)or
+    logarithmically equidistant (log_flag==1). The result is stored
     in the array dist.
     @param p1_types list with types of particles to find the distribution for.
     @param n_p1     length of p1_types.
@@ -206,7 +206,7 @@ void analyze_remove(int ind);
     @param r_min    Minimal distance for the distribution.
     @param r_max    Maximal distance for the distribution.
     @param r_bins   Number of bins.
-    @param log_flag Wether the bins are (logarithmically) aequidistant.
+    @param log_flag Whether the bins are (logarithmically) equidistant.
     @param low      particles closer than r_min
     @param dist     Array to store the result (size: r_bins).
  */
@@ -266,7 +266,7 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
                  int r_bins, std::vector<double> &rdf, int n_conf);
 
 /** Calculates the van Hove auto correlation function and as a side product the
-   mean sqaure displacement (msd).
+   mean square displacement (msd).
 
     Calculates the van Hove auto correlation function (acf)  G(r,t) which is the
    probability that a particle has moved

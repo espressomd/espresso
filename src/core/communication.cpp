@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -100,7 +100,7 @@ boost::mpi::communicator comm_cart;
 namespace Communication {
 std::unique_ptr<MpiCallbacks> m_callbacks;
 
-/* We use a singelton callback class for now. */
+/* We use a singleton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
   assert(m_callbacks && "Mpi not initialized!");
 
@@ -418,7 +418,8 @@ void mpi_send_v_slave(int pnode, int part) {
 }
 
 /****************** REQ_SET_SWIMMING ************/
-void mpi_send_swimming(int pnode, int part, ParticleParametersSwimming swim) {
+void mpi_send_swimming(int pnode, int part,
+                       const ParticleParametersSwimming &swim) {
 #ifdef ENGINE
   mpi_call(mpi_send_swimming_slave, pnode, part);
 
@@ -426,8 +427,7 @@ void mpi_send_swimming(int pnode, int part, ParticleParametersSwimming swim) {
     Particle *p = local_particles[part];
     p->swim = swim;
   } else {
-    MPI_Send(&swim, sizeof(ParticleParametersSwimming), MPI_BYTE, pnode,
-             SOME_TAG, comm_cart);
+    comm_cart.send(pnode, SOME_TAG, swim);
   }
 
   on_particle_change();
@@ -438,8 +438,9 @@ void mpi_send_swimming_slave(int pnode, int part) {
 #ifdef ENGINE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->swim, sizeof(ParticleParametersSwimming), MPI_BYTE, 0,
-             SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    ParticleParametersSwimming swim;
+    comm_cart.recv(0, SOME_TAG, swim);
+    p->swim = swim;
   }
 
   on_particle_change();

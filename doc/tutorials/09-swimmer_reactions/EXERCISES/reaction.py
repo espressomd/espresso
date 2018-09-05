@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project        #
+# Copyright (C) 2010-2018 The ESPResSo project        #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -220,7 +220,7 @@ cat_range = radius + 1.0 * sig
 cat_rate = rate
 
 ## Exercise 4 ##
-# We have read the acticity parameter from the command line into
+# We have read the activity parameter from the command line into
 # $active, where 0 means off and 1 means on.  When $active = 0 we can
 # simply go on, but when $active = 1 we have to set up the reaction.
 # Check the $active parameter and setup a reaction for the catalyzer

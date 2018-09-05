@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -79,7 +79,7 @@ typedef struct {
 
 /** Additional information for backwards FFT.*/
 typedef struct {
-  /** plan direction. (e.g. fftw makro)*/
+  /** plan direction. (e.g. fftw macro)*/
   int dir;
   /** plan for fft. */
   fftw_plan our_fftw_plan;
@@ -135,9 +135,9 @@ typedef struct {
 /** Initialize FFT data structure. */
 void fft_common_pre_init(fft_data_struct *fft);
 
-/** This ugly function does the bookkepping which nodes have to
+/** This ugly function does the bookkeeping which nodes have to
  *  communicate to each other, when you change the node grid.
- *  Changing the domain decomposition requieres communication. This
+ *  Changing the domain decomposition requires communication. This
  *  function finds (hopefully) the best way to do this. As input it
  *  needs the two grids (grid1, grid2) and a linear list (node_list1)
  *  with the node identities for grid1. The linear list (node_list2)
@@ -226,7 +226,7 @@ void fft_pack_block(double *in, double *out, int start[3], int size[3],
 /** pack a block with dimensions (size[0] * size[1] * aize[2]) starting
  *  at start[3] of an input 3d-grid with dimension dim[3] into an
  *  output 3d-grid with dimensions (size[2] * size[0] * size[1]) with
- *  a simulatanous one-fold permutation of the indices.
+ *  a simultaneous one-fold permutation of the indices.
  *
  * The permutation is defined as:
  * slow_in -> fast_out, mid_in ->slow_out, fast_in -> mid_out
@@ -252,7 +252,7 @@ void fft_pack_block_permute1(double *in, double *out, int start[3], int size[3],
 /** pack a block with dimensions (size[0] * size[1] * aize[2]) starting
  *  at start[3] of an input 3d-grid with dimension dim[3] into an
  *  output 3d-grid with dimensions (size[2] * size[0] * size[1]), this
- *  is a simulatanous two-fold permutation of the indices.
+ *  is a simultaneous two-fold permutation of the indices.
  *
  * The permutation is defined as:
  * slow_in -> mid_out, mid_in ->fast_out, fast_in -> slow_out
@@ -291,12 +291,13 @@ void fft_unpack_block(double *in, double *out, int start[3], int size[3],
                       int dim[3], int element);
 
 /** Debug function to print global fft mesh.
-    Print a globaly distributed mesh contained in data. Element size is element.
+ *  Print a globally distributed mesh contained in data. Element size is
+ *  element.
  * \param plan     fft/communication plan (see \ref fft_forw_plan).
  * \param data     mesh data.
  * \param element  element size.
  * \param num      element index to print.
-*/
+ */
 void fft_print_global_fft_mesh(fft_forw_plan plan, double *data, int element,
                                int num);
 

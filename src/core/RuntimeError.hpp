@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -28,7 +28,7 @@ namespace ErrorHandling {
 
 /** \brief A runtime error.
  * This class describes an runtime error,
- * including where it occured and its
+ * including where it occurred and its
  * severity.
  */
 struct RuntimeError {
@@ -48,11 +48,11 @@ struct RuntimeError {
   int who() const { return m_who; }
   /** The Error Message */
   std::string what() const { return m_what; }
-  /** The function where the error occured. */
+  /** The function where the error occurred. */
   std::string function() const { return m_function; }
-  /** The file where the error occured. */
+  /** The file where the error occurred. */
   std::string file() const { return m_file; }
-  /** The line where the error occured. */
+  /** The line where the error occurred. */
   int line() const { return m_line; }
   /** Get a string representation */
   std::string format() const;

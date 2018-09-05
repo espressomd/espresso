@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -1586,7 +1586,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(lblattice.grid[0] + 1, 0, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (y = 0; y < lblattice.halo_grid[1]; y++) {
-
       buffer[0] = lbfluid[1][index];
       buffer[1] = lbfluid[7][index];
       buffer[2] = lbfluid[9][index];
@@ -1609,7 +1608,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(1, 0, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (y = 0; y < lblattice.halo_grid[1]; y++) {
-
       lbfluid[1][index] = buffer[0];
       lbfluid[7][index] = buffer[1];
       lbfluid[9][index] = buffer[2];
@@ -1629,7 +1627,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(0, 0, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (y = 0; y < lblattice.halo_grid[1]; y++) {
-
       buffer[0] = lbfluid[2][index];
       buffer[1] = lbfluid[8][index];
       buffer[2] = lbfluid[10][index];
@@ -1652,7 +1649,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(lblattice.grid[0], 0, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (y = 0; y < lblattice.halo_grid[1]; y++) {
-
       lbfluid[2][index] = buffer[0];
       lbfluid[8][index] = buffer[1];
       lbfluid[10][index] = buffer[2];
@@ -1679,7 +1675,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(0, lblattice.grid[1] + 1, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
-
       buffer[0] = lbfluid[3][index];
       buffer[1] = lbfluid[7][index];
       buffer[2] = lbfluid[10][index];
@@ -1703,7 +1698,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(0, 1, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
-
       lbfluid[3][index] = buffer[0];
       lbfluid[7][index] = buffer[1];
       lbfluid[10][index] = buffer[2];
@@ -1724,7 +1718,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(0, 0, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
-
       buffer[0] = lbfluid[4][index];
       buffer[1] = lbfluid[8][index];
       buffer[2] = lbfluid[9][index];
@@ -1748,7 +1741,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(0, lblattice.grid[1], 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
-
       lbfluid[4][index] = buffer[0];
       lbfluid[8][index] = buffer[1];
       lbfluid[9][index] = buffer[2];
@@ -1776,7 +1768,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(0, 0, lblattice.grid[2] + 1, lblattice.halo_grid);
   for (y = 0; y < lblattice.halo_grid[1]; y++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
-
       buffer[0] = lbfluid[5][index];
       buffer[1] = lbfluid[11][index];
       buffer[2] = lbfluid[14][index];
@@ -1799,7 +1790,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(0, 0, 1, lblattice.halo_grid);
   for (y = 0; y < lblattice.halo_grid[1]; y++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
-
       lbfluid[5][index] = buffer[0];
       lbfluid[11][index] = buffer[1];
       lbfluid[14][index] = buffer[2];
@@ -1819,7 +1809,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(0, 0, 0, lblattice.halo_grid);
   for (y = 0; y < lblattice.halo_grid[1]; y++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
-
       buffer[0] = lbfluid[6][index];
       buffer[1] = lbfluid[12][index];
       buffer[2] = lbfluid[13][index];
@@ -1842,7 +1831,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   index = get_linear_index(0, 0, lblattice.grid[2], lblattice.halo_grid);
   for (y = 0; y < lblattice.halo_grid[1]; y++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
-
       lbfluid[6][index] = buffer[0];
       lbfluid[12][index] = buffer[1];
       lbfluid[13][index] = buffer[2];

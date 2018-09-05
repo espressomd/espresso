@@ -5,11 +5,11 @@ Analysis
 
 |es| provides two concepts of system analysis:
 
-- :ref:`Direct analysis routines`: The :mod:`espressomd.analyze` module provides 
-  online-calculation of specialized local and global observables with 
+- :ref:`Direct analysis routines`: The :mod:`espressomd.analyze` module provides
+  online-calculation of specialized local and global observables with
   calculation and data accumulation performed in the core.
-- :ref:`Observables and correlators`: This provides a more flexible concept of 
-  in-core analysis, where a certain observable (:ref:`Available observables`), 
+- :ref:`Observables and correlators`: This provides a more flexible concept of
+  in-core analysis, where a certain observable (:ref:`Available observables`),
   a rule for data accumulation (ref Accumulators) and/or correlation (:ref:`Correlations`) can be defined.
 
 
@@ -18,7 +18,7 @@ Analysis
 Direct analysis routines
 ------------------------
 
-The direct analysis commands can be classified into two types: 
+The direct analysis commands can be classified into two types:
 
 - Instantaneous analysis routines, that only take into account the current configuration of the system:
 
@@ -37,7 +37,7 @@ The direct analysis commands can be classified into two types:
     - :ref:`Stress Tensor`
     - :ref:`Local Stress Tensor`
 
-- Analysis on stored configurations, added by :meth:`espressomd.analyze.append()`:
+- Analysis on stored configurations, added by :meth:`espressomd.analyze.Analysis.append`:
     - :ref:`Radial distribution function` with ``rdf_type='<rdf>'``
     - :ref:`Chains`
 
@@ -48,7 +48,7 @@ Energies
 :meth:`espressomd.analyze.Analysis.energy`
 
 Returns the energies of the system.
-The the different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, coublomb))
+The different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, Coulomb).
 
 For example, ::
 
@@ -66,7 +66,7 @@ Momentum of the System
 :meth:`espressomd.analyze.Analysis.analyze_linear_momentum`
 
 This command returns the total linear momentum of the particles and the
-lattice-Boltzmann (LB) fluid, if one exists. Giving the optional
+lattice Boltzmann (LB) fluid, if one exists. Giving the optional
 parameters either causes the command to ignore the contribution of LB or
 of the particles.
 
@@ -81,10 +81,10 @@ Returns the minimal distance between all particles in the system.
 When used with type-lists as arguments, then the minimal distance between particles of only those types is determined.
 
 
-:meth:`espressomd.analyze.Analysis.dist_to()`
+:meth:`espressomd.analyze.Analysis.dist_to`
 
-Returns the minimal distance of all particles to either a particle (when used with an argument `id`) 
-or a position coordinate when used with a vector `pos`.
+Returns the minimal distance of all particles to either a particle (when used with an argument ``id``)
+or a position coordinate when used with a vector ``pos``.
 
 For example, ::
 
@@ -92,14 +92,14 @@ For example, ::
     >>> system = espressomd.System()
     >>> system.box_l = [100, 100, 100]
     >>> for i in range(10):
-    >>>     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
+    ...     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
     >>> system.analysis.dist_to(id=4)
     7.0
-    >>> system.analysis.dist_to(pos=[0,0,0])
+    >>> system.analysis.dist_to(pos=[0, 0, 0])
     1.4142135623730951
     >>> system.analysis.mindist()
     1.0
-    
+
 
 .. _Particles in the neighborhood:
 
@@ -107,11 +107,11 @@ Particles in the neighborhood
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :meth:`espressomd.analyze.Analysis.nbhood`
- 
+
 Returns a list of the particle ids of that fall within a given radius of a target position.
 For example, ::
 
-    idlist = system.analysis.nbhood(pos = system.box_l*0.5, r_catch=5.0)
+    idlist = system.analysis.nbhood(pos=system.box_l * 0.5, r_catch=5.0)
 
 .. _Particle distribution:
 
@@ -122,18 +122,19 @@ Particle distribution
 Returns the distance distribution of particles
 (probability of finding a particle of a certain type at a specified distance around
 a particle of another specified type, disregarding the fact that a spherical shell of a
-larger radius covers a larger volume). 
+larger radius covers a larger volume).
 The distance is defined as the *minimal* distance between a particle of one group to any of the other
 group.
 
 Two arrays are returned corresponding to the normalized distribution and the bins midpoints, for example ::
 
     >>> system = espressomd.System()
-    >>> box_l=10.
+    >>> box_l = 10.
     >>> system.box_l = [box_l, box_l, box_l]
     >>> for i in range(5):
-    >>>     system.part.add(id=i, pos=i*system.box_l, type=0)
-    >>> bins, count=system.analysis.distribution(type_list_a=[0], type_list_b=[0], r_min=0.0, r_max = 10.0, r_bins=10)
+    ...     system.part.add(id=i, pos=i * system.box_l, type=0)
+    >>> bins, count = system.analysis.distribution(type_list_a=[0], type_list_b=[0],
+    ...                                            r_min=0.0, r_max=10.0, r_bins=10)
     >>>
     >>> print(bins)
     [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
@@ -195,9 +196,9 @@ Cylindrical Average
 
 Calculates the particle distribution using cylindrical binning.
 
-The volume considered is inside a cylinder defined by the parameters `center`, `axis`, `length` and  `radius`.
+The volume considered is inside a cylinder defined by the parameters ``center``, ``axis``, ``length`` and  ``radius``.
 
-The geometrical details of the cylindrical binning is defined using ` bins_axial` and `bins_radial` which are the number bins in the axial and radial directions (respectively).
+The geometrical details of the cylindrical binning is defined using ``bins_axial`` and ``bins_radial`` which are the number bins in the axial and radial directions (respectively).
 See figure :ref:`cylindrical_average` for a visual representation of the binning geometry.
 
 .. _cylindrical_average:
@@ -215,7 +216,7 @@ combined whereas each inner list contains one line. Each lines stores a
 different combination of the radial and axial index. The output might
 look something like this
 
-::
+.. code-block:: numpy
 
     [ [ 0 0 0.05 -0.25 0.0314159 0 0 0 0 0 0 ]
       [ 0 1 0.05 0.25 0.0314159 31.831 1.41421 1 0 0 0 ]
@@ -225,15 +226,15 @@ In this case two different particle types were present.
 The columns of the respective lines are coded like this
 
 =============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
-index_radial     index_axial   pos_radial   pos_axial   binvolume  density  v_radial   v_axial   density  v_radial   v_axial 
+index_radial     index_axial   pos_radial   pos_axial   binvolume  density  v_radial   v_axial   density  v_radial   v_axial
 =============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
-0                0             0.05         -0.25       0.0314159  0        0          0         0        0          0      
-0                1             0.05         0.25        0.0314159  31.831   1.41421    1         0        0          0      
+0                0             0.05         -0.25       0.0314159  0        0          0         0        0          0
+0                1             0.05         0.25        0.0314159  31.831   1.41421    1         0        0          0
 =============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
 
 As one can see the columns `density`, `v_radial` and `v_axial` appear twice.
-The order of appearance corresponds to the order of the types in the argument `types`.
-For example if was set to `types=[0, 1]` then the first triple is associated to type 0 and
+The order of appearance corresponds to the order of the types in the argument ``types``.
+For example if was set to ``types=[0, 1]`` then the first triple is associated to type 0 and
 the second triple to type 1.
 
 ..
@@ -250,9 +251,9 @@ the second triple to type 1.
 	:math:`V \times \kappa_T = \beta \left(\langle V^2\rangle - \langle V \rangle^2\right)`
 	:cite:`kolb99a`. Given no arguments this function calculates
 	and returns the current value of the running average for the volume
-	fluctuations.The `mode=reset` argument clears the currently stored values. With `mode=read` the
+	fluctuations. The ``mode=reset`` argument clears the currently stored values. With ``mode=read`` the
 	cumulative mean volume, cumulative mean squared volume and how many
-	samples were used can be retrieved. Likewise the option `mode=set` enables you to
+	samples were used can be retrieved. Likewise the option ``mode=set`` enables you to
 	set those.
 
 
@@ -263,19 +264,20 @@ Radial distribution function
 :meth:`espressomd.analyze.Analysis.rdf`
 
 Calculates a radial distribution function for given particle type and binning.
-The `rdf_type` defines if the analysis is performed on the current configuration (`rdf_type='rdf'`)
-or on averaged configurations stored with `analyze.append()` (`rdf_type='<rdf>'`).
+The ``rdf_type`` defines if the analysis is performed on the current configuration (``rdf_type='rdf'``)
+or on averaged configurations stored with :meth:`analyze.append() <espressomd.analyze.Analysis.append>` (``rdf_type='<rdf>'``).
 
 For example, ::
 
-	rdf_bins = 100
-	r_min  = 0.0
-	r_max  = system.box_l[0]/2.0
-	r, rdf_01 = S.analysis.rdf(rdf_type='<rdf>', type_list_a=[0], type_list_b=[1], r_min=r_min, r_max=r_max, r_bins=rdf_bins)
-	rdf_fp = open("rdf.dat", 'w')
-	for i in range(rdf_bins):
-		rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" % (r[i], rdf_01[i]))
-	rdf_fp.close()
+    rdf_bins = 100
+    r_min = 0.0
+    r_max = system.box_l[0] / 2.0
+    r, rdf_01 = S.analysis.rdf(rdf_type='<rdf>', type_list_a=[0], type_list_b=[1],
+                               r_min=r_min, r_max=r_max, r_bins=rdf_bins)
+    rdf_fp = open("rdf.dat", 'w')
+    for i in range(rdf_bins):
+        rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" % (r[i], rdf_01[i]))
+    rdf_fp.close()
 
 
 .. _Structure factor:
@@ -329,7 +331,7 @@ Center of mass
 ~~~~~~~~~~~~~~
 :meth:`espressomd.analyze.Analysis.center_of_mass`
 
-Returns the center of mass of particles of the given type given by `part_type`.
+Returns the center of mass of particles of the given type given by ``part_type``.
 
 
 .. _Moment of inertia matrix:
@@ -388,7 +390,7 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
     (or the ones you are interested in) particle types in your system and a
     fictitious particle type. Practically one uses the van der Waals radius
     of the particles plus the size of the probe you want to use as the
-    Lennard Jones cutoff. The mesh spacing is the box length divided by the
+    Lennard-Jones cutoff. The mesh spacing is the box length divided by the
     .
 
     { { } { } { } }
@@ -404,13 +406,13 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
     in the order x, y, z). Attention: the algorithm assumes a cubic box.
     Surface results have not been tested. .
 
-	.. _Temperature of the lb fluid:
+	.. _Temperature of the LB fluid:
 
 	Temperature of the LB fluid
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	.. todo:: This feature is not implemented
 
-	This command returns the temperature of the lattice-Boltzmann (LB)
+	This command returns the temperature of the lattice Boltzmann (LB)
 	fluid, see Chapter [sec:lb], by averaging over the fluid nodes. In case
 	or are compiled in and boundaries are defined, only the available fluid
 	volume is taken into account.
@@ -447,10 +449,10 @@ are calculated is beyond the scope of this manual. Three body potentials
 are implemented following the procedure in
 Ref. :cite:`thompson09a`. A different formula is used to
 calculate contribution from electrostatic interactions. For
-electrostatic interactions in P3M, the :math:`k`-space contribution is implemented according to :cite:`essmann1995smooth`. 
-The implementation of the Coulomb P3M pressure is tested against LAMMPS. 
+electrostatic interactions in P3M, the :math:`k`-space contribution is implemented according to :cite:`essmann1995smooth`.
+The implementation of the Coulomb P3M pressure is tested against LAMMPS.
 
-Four-body dihedral potentials are not included. Except of 
+Four-body dihedral potentials are not included. Except of
 VIRTUAL\_SITES\_RELATIVE constraints all other
 constraints of any kind are not currently accounted for in the pressure
 calculations. The pressure is no longer correct, e.g., when particles
@@ -465,7 +467,7 @@ Stress Tensor
 :meth:`espressomd.analyze.Analysis.stress_tensor`
 
 Computes the volume averaged instantaneous stress tensor of the system with options which are
-described by in :meth: espressomd.System.analysis.stress_tensor. It is called a stress tensor but the sign convention follows that of a pressure tensor.
+described by in :meth:`espressomd.System.analysis.stress_tensor`. It is called a stress tensor but the sign convention follows that of a pressure tensor.
 In general do only use it for (on average) homogeneous systems. For inhomogeneous systems you need to use the local stress tensor.
 
 The instantaneous virial stress tensor is calculated by
@@ -490,7 +492,7 @@ The long ranged (kspace) part is given by:
 
 .. math :: p^\text{Coulomb, P3M, rec}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2 \pi V^2} \sum_{\vec{k} \neq \vec{0}} \frac{\exp(-\pi^2 \vec{k}^2/\beta^2)}{\vec{k}^2} |S(\vec{k})|^2 \cdot (\delta_{k,l}-2\frac{1+\pi^2\vec{k}^2/\beta^2}{\vec{k}^2} \vec{k}_k \vec{k}_l),
 
-where :math:`S(\vec{k})` is the fourier transformed charge density. Compared to Essmann we do not have a the contribution :math:`p^\text{corr}_{k,l}` since we want to calculate the pressure that arises from all particles in the system.
+where :math:`S(\vec{k})` is the Fourier transformed charge density. Compared to Essmann we do not have the contribution :math:`p^\text{corr}_{k,l}` since we want to calculate the pressure that arises from all particles in the system.
 
 Note: The different contributions which are returned are the summands that arise from force splitting :math:`\vec{F}_{i,j}={\vec{F}_{i,j}}_\text{bonded}+{\vec{F}_{i,j}}_\text{nonbonded}+...` in the virial stress tensor formula.
 Later when the user calculates the stress tensor via :math:`\langle p_{(k,l)}\rangle  \approx 1/N \sum_{i=1}^N p_{k,l}` however the ensemble average with all interactions present is performed.
@@ -510,7 +512,7 @@ Local Stress Tensor
 
 A cuboid is defined in the system and divided into bins.
 For each of these bins an instantaneous stress tensor is calculated using the Irving Kirkwood method.
-That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles that is within the bin.
+That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles within that bin.
 
 If the P3M and MMM1D electrostatic methods are used, these interactions
 are not included in the local stress tensor. The DH and RF methods, in
@@ -642,7 +644,7 @@ Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give n
 	want to look only at specific chains, use the optional arguments,
 	:math:`\var{chain\_start} =
 	2*\var{MPC}` and :math:`\var{n\_chains} = 1` to only include the third
-	chain’s monomers. If is used, the value will be averaged over all stored
+	chain's monomers. If is used, the value will be averaged over all stored
 	configurations (see section ). This function assumes linear chain
 	topology and does not check if the bonds really exist!
 
@@ -676,19 +678,6 @@ Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give n
 	with :math:`q \in \{\var{qmin},\dots,\var{qmax}\}`.
 
 
-.. _Chain radial distribution function:
-
-Chain radial distribution function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-:meth:`espressomd.analyze.Analysis.rdf_chain`
-
-Returns three radial distribution functions (rdf) for the chains.
-The first rdf is calculated for monomers belonging to different chains,
-the second rdf is for the centers of mass of the chains and 
-the third one is the distribution of the closest distances between the chains (the
-shortest monomer-monomer distances).
-
 .. _Observables and correlators:
 
 Observables and correlators
@@ -708,12 +697,12 @@ performed too often.
 Some observables in the core have their corresponding counterparts in
 the :mod:`espressomd.analysis` module. However, only the core-observables can be used
 on the fly with the toolbox of the correlator and on the fly analysis of
-time series. 
+time series.
 Similarly, some special cases of using the correlator have
 their redundant counterparts in :mod:`espressomd.analysis`,
 but the correlator provides a general and
 versatile toolbox which can be used with any implemented
-core-observables. 
+core-observables.
 
 The first step of the core analysis is to create an observable.
 An observable in the sense of the core analysis can be considered as a
@@ -724,7 +713,7 @@ complex shape (tensor, complex number, …) must be compatible to this
 prerequisite. Every observable however documents the storage order.
 
 The observables can be used in parallel simulations. However,
-not all observables carry out their calculations in parallel. 
+not all observables carry out their calculations in parallel.
 Instead, the entire particle configuration is collected on the head node, and the calculations are carried out there.
 This is only performance-relevant if the number of processor cores is large and/or interactions are calculated very frequently.
 
@@ -734,19 +723,19 @@ Creating an observable
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The observables are represented as Python classes derived from :class:`espressomd.observables.Observable`. They are contained in
-the ``espressomd.observables`` module. An observable is instanced as
+the ``espressomd.observables`` module. An observable is instantiated as
 follows
 
 ::
 
     from espressomd.observables import ParticlePositions
-    part_pos=ParticlePositions(ids=(1,2,3,4,5))
+    part_pos = ParticlePositions(ids=(1, 2, 3, 4, 5))
 
 Here, the keyword argument ``ids`` specifies the ids of the particles,
 which the observable should take into account.
 
 The current value of an observable can be obtained using its calculate()-method::
-    
+
     print(par_pos.calculate())
 
 .. _Available observables:
@@ -770,26 +759,26 @@ The following observables are available:
      :math:`v_{x1},\ v_{y1},\ v_{z1},\ v_{x2},\ v_{y2},\ v_{z2},\ \dots\ v_{xn},\ v_{yn},\ v_{zn}`.
      The particles are ordered according to the list of ids passed to the observable.
    - ParticleAngularVelocities: The particles' angular velocities in the space-fixed frame
-     :math:`\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2, \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n`. 
+     :math:`\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2, \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n`.
      The particles are ordered according to the list of ids passed to the observable.
    - ParticleBodyAngularVelocities: As above, but in the particles' body-fixed frame.
    - ParticleCurrent: Product of the particles' velocity and charge
-     :math:`m_1 v^x_1, m_1 v^y_1, m_1 v^z_1, \ldots` 
+     :math:`m_1 v^x_1, m_1 v^y_1, m_1 v^z_1, \ldots`
      The particles are ordered according to the list of ids passed to the observable.
    - Current: Total current of the system
-     :math:`\sum_i m_i v^x_i, \sum_i m_i v^y_i, \sum_i m_i v^z_i, \ldots` 
+     :math:`\sum_i m_i v^x_i, \sum_i m_i v^y_i, \sum_i m_i v^z_i, \ldots`
    - DipoleMoment: Total electric dipole moment of the system obtained based on unfolded positions
-     :math:`\sum_i q_i r^x_i, \sum_i q_i r^y_i, \sum_i q_i r^z_i` 
+     :math:`\sum_i q_i r^x_i, \sum_i q_i r^y_i, \sum_i q_i r^z_i`
    - MagneticDipoleMoment: Total magnetic dipole moment of the system based on the :attr:`espressomd.particle_data.ParticleHandle.dip` property.
-     :math:`\sum_i \mu^x_i, \sum_i \mu^y_i, \sum_i \mu^z_i` 
+     :math:`\sum_i \mu^x_i, \sum_i \mu^y_i, \sum_i \mu^z_i`
    - ComPosition: The system's center of mass based on unfolded coordinates
-     :math:`\frac{1}{\sum_i m_i} \left( \sum_i m_i r^x_i, \sum_i m_i r^y_i, \sum_i m_i r^z_i\right)` 
+     :math:`\frac{1}{\sum_i m_i} \left( \sum_i m_i r^x_i, \sum_i m_i r^y_i, \sum_i m_i r^z_i\right)`
    - ComVelocity: Velocity of the center of mass
-     :math:`\frac{1}{\sum_i m_i} \left( \sum_i m_i v^x_i, \sum_i m_i v^y_i, \sum_i m_i v^z_i\right)` 
+     :math:`\frac{1}{\sum_i m_i} \left( \sum_i m_i v^x_i, \sum_i m_i v^y_i, \sum_i m_i v^z_i\right)`
    - ComForce: Sum of the forces on the particles
-     :math:`\sum_i f^x_i, \sum_i f^y_i, \sum_i f^z_i` 
+     :math:`\sum_i f^x_i, \sum_i f^y_i, \sum_i f^z_i`
 
-- Profile observables sampling the spacial profile of various quantities
+- Profile observables sampling the spatial profile of various quantities
 
    -  DensityProfile
 
@@ -830,8 +819,8 @@ Correlation functions describing dynamics of large and complex molecules
 such as polymers span many orders of magnitude, ranging from MD time
 step up to the total simulation time.
 
-A correlator takes one or two observables, obtains values from them during the simulation and 
-finally uses a fast correlation algorithm which enables efficient computation 
+A correlator takes one or two observables, obtains values from them during the simulation and
+finally uses a fast correlation algorithm which enables efficient computation
 of correlation functions spanning many orders of magnitude in the lag time.
 
 The implementation for computing averages and error estimates of a time series
@@ -840,7 +829,7 @@ respective autocorrelation times. The correlator provides the same
 functionality as a by-product of computing the correlation function.
 
 An example of the usage of observables and correlations is provided in
-the script ``samples/observables_correlators.py``.
+the script :file:`samples/observables_correlators.py`.
 
 .. _Creating a correlation:
 
@@ -856,11 +845,11 @@ integration by adding them to :attr:`espressomd.system.System.auto_update_accumu
 
     system.auto_update_accumulators.add(corr)
 
-Alternatively, an update can triggered by calling the update()-method of the correlator instance. In that case, one has to make sure to call the update in the correct time intervals.
+Alternatively, an update can triggered by calling the ``update()`` method of the correlator instance. In that case, one has to make sure to call the update in the correct time intervals.
 
 
-The current on-the-fly correlation result can of a correlator can be obtained using its result()-method.
-The final result (including the latest data in the buffers) is obtained using the finalize()-method. After this, no further update of the correlator is possible.
+The current on-the-fly correlation result can of a correlator can be obtained using its ``result()`` method.
+The final result (including the latest data in the buffers) is obtained using the ``finalize()`` method. After this, no further update of the correlator is possible.
 
 .. _Example\: Calculating a particle's diffusion coefficient:
 
@@ -869,17 +858,17 @@ Example: Calculating a particle's diffusion coefficient
 
 For setting up an observable and correlator to obtain the mean square displacement of particle 0, use::
 
-    pos_obs=ParticlePositions(ids=(0,))
+    pos_obs = ParticlePositions(ids=(0,))
     c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
-        corr_operation="square_distance_componentwise", compress1="discard1")
+                       corr_operation="square_distance_componentwise", compress1="discard1")
 
 To obtain the velocity auto-correlation function of particle 0, use::
 
-    obs=ParticleVelocities(ids=(0,))
+    obs = ParticleVelocities(ids=(0,))
     c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
-        corr_operation="scalar_product", compress1="discard1")
+                       corr_operation="scalar_product", compress1="discard1")
 
-The full example can be found in ``samples/diffusion_coefficient.py``.
+The full example can be found in :file:`samples/diffusion_coefficient.py`.
 
 
 .. _Details of the multiple tau correlation algorithm:
@@ -968,7 +957,7 @@ be safely used or not, depends on the properties of the difference
 
 .. math::
 
-   \frac{1}{2} (A_i \otimes B_{i+p} + A_{i+1} \otimes B_{i+p+1} ) - 
+   \frac{1}{2} (A_i \otimes B_{i+p} + A_{i+1} \otimes B_{i+p+1} ) -
    \frac{1}{2} (A_i + A_{i+1} ) \otimes \frac{1}{2} (B_{i+p} +  B_{i+p+1})
    \label{eq:difference}
 
@@ -1001,13 +990,14 @@ In order to calculate the running mean and variance of an observable
     system.time_step = 0.01
     system.part.add(id=0, pos=[5.0, 5.0, 5.0])
     position_observable = espressomd.observables.ParticlePositions(ids=(0,))
-    accumulator = espressomd.accumulators.MeanVarianceCalculator(obs=position_observable, delta_N=1)
+    accumulator = espressomd.accumulators.MeanVarianceCalculator(
+        obs=position_observable, delta_N=1)
     system.auto_update_accumulators.add(accumulator)
     # Perform integration (not shown)
     print accumulator.get_mean()
     print accumulator.get_variance()
 
-In the example above the automatic update of the accumulator is used. However, 
+In the example above the automatic update of the accumulator is used. However,
 it's also possible to manually update the accumulator by calling
 :meth:`espressomd.accumulators.MeanVarianceCalculator.update`.
 
@@ -1023,13 +1013,13 @@ Whether or not two particles are neighbors is defined by a pair criterion. The a
 For example, a distance criterion which will consider particles as neighbors if they are closer than 0.11 is created as follows::
 
     from espressomd.pair_criteria import DistanceCriterion
-    dc=DistanceCriterion(cut_off=0.11)
-    
+    dc = DistanceCriterion(cut_off=0.11)
+
 To obtain the cluster structure of a system, an instance of :class:`espressomd.cluster_analysis.ClusterStructure` has to be created.
-To to create a cluster structure with above criterion:::
+To to create a cluster structure with above criterion::
 
     from espressomd.cluster_analysis import ClusterStructure
-    cs=ClusterStructure(distance_criterion=dc)
+    cs = ClusterStructure(distance_criterion=dc)
 
 In most cases, the cluster analysis is carried out by calling the :any:`espressomd.cluster_analysis.ClusterStructure.run_for_all_pairs` method. When the pair criterion is purely based on bonds,  :any:`espressomd.cluster_analysis.ClusterStructure.run_for_bonded_particles` can be used.
 
@@ -1037,7 +1027,7 @@ The results can be accessed via ClusterStructure.clusters, which is an instance 
 :any:`espressomd.cluster_analysis.Clusters`.
 
 
-Individual clusters are represented by instances of  
+Individual clusters are represented by instances of
 :any:`espressomd.cluster_analysis.Cluster`, which provides access to the particles contained in a cluster as well as per-cluster analysis routines such as radius of gyration, center of mass and longest distance.
 Note that the cluster objects do not contain copies of the particles, but refer to the particles in the simulation. Hence, the objects become outdated if the simulation system changes. On the other hand, it is possible to directly manipulate the particles contained in a cluster.
 

@@ -22,7 +22,7 @@ cdef class ReactionAlgorithm(object):
     temperature : :obj:`float`
                   The temperature at which the reaction is performed.
     exclusion_radius : :obj:`float`
-                       Minimal distance from any particle, whithin which new
+                       Minimal distance from any particle, within which new
                        particle will not be inserted. This is useful to avoid
                        integrator failures if particles are too close and there
                        is a diverging repulsive interaction, or to prevent two
@@ -256,8 +256,8 @@ cdef class ReactionAlgorithm(object):
     def displacement_mc_move_for_particles_of_type(self, type_mc,
                                                    particle_number_to_be_changed=1):
         """
-        Perfoms a diplacemenet Monte Carlo move for particles of given type. New positions
-        of the displaced particles are chosen from the whole box with a uniform probablity distribution.
+        Performs a displacement Monte Carlo move for particles of given type. New positions
+        of the displaced particles are chosen from the whole box with a uniform probability distribution.
         If there are multiple types, that are being moved in a simulation, they should be moved in a
         random order to avoid artefacts.
 
@@ -423,7 +423,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         """
         Performs reaction_steps reactions. Sets the number of reaction steps which are
         performed at once. Do not use too many reaction steps
-        steps consequetively without having conformation
+        steps consecutively without having conformation
         changing steps in between (especially important for the Wang Landau reaction ensemble). Providing a number for the parameter reaction steps reduces the need for the interpreter to be
         called between consecutive reactions.
 
@@ -593,7 +593,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         degree of association in a preliminary Wang-Landau reaction ensemble
         simulation where the acceptance probability includes the factor
         :math:`\exp(-\\beta \\Delta E_{pot})`. The minimal and maximal
-        potential energys which occur in the system are needed for the energy
+        potential energies which occur in the system are needed for the energy
         reweighting simulations where the factor :math:`\exp(-\\beta \\Delta E_{pot})`
         is not included in the acceptance probability in
         order to avoid choosing the wrong potential energy boundaries.

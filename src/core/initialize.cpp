@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -500,7 +500,7 @@ void on_cell_structure_change() {
 /* Now give methods a chance to react to the change in cell
    structure.  Most ES methods need to reinitialize, as they depend
    on skin, node grid and so on. Only for a change in box length we
-   have separate, faster methods, as this might happend frequently
+   have separate, faster methods, as this might happen frequently
    in a NpT simulation. */
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -726,7 +726,7 @@ void on_ghost_flags_change() {
     ghosts_have_v = 1;
 #endif
 #ifdef DPD
-  // maybe we have to add a new global to differ between compile in and acctual
+  // maybe we have to add a new global to differ between compile in and actual
   // use.
   if (thermo_switch & THERMO_DPD)
     ghosts_have_v = 1;

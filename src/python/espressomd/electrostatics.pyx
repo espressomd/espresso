@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -88,7 +88,7 @@ IF ELECTROSTATICS:
         prefactor : :obj:`float`
             Electrostatics prefactor (see :eq:`coulomb_prefactor`).
         kappa : :obj:`float`
-            Inverse Debye sreening length.
+            Inverse Debye screening length.
         r_cut : :obj:`float`
             Cut off radius for this interaction.
 
@@ -572,14 +572,14 @@ IF ELECTROSTATICS:
             Selector parameter for setting the dielectric constants manually
             (top, mid, bottom), mutually exclusive with dielectric-contrast
         top : :obj:`float`, optional
-            If dielectric is specified this paramter sets the dielectric
+            If dielectric is specified this parameter sets the dielectric
             constant *above* the simulation box
             :math:`\\varepsilon_\\mathrm{top}`
         mid : :obj:`float`, optional
-            If dielectric is specified this paramter sets the dielectric
+            If dielectric is specified this parameter sets the dielectric
             constant *in* the simulation box :math:`\\varepsilon_\\mathrm{mid}`.
         bottom : :obj:`float`, optional
-            If dielectric is specified this paramter sets the dielectric
+            If dielectric is specified this parameter sets the dielectric
             constant *below* the simulation box
             :math:`\\varepsilon_\\mathrm{bot}`.
         dielectric_contrast_on : :obj:`int`, optional

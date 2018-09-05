@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -20,7 +20,7 @@
 */
 /** \file mpiio.cpp
  *
- * Concerning the file layots.
+ * Concerning the file layouts.
  * - Scalar arrays are written like this:
  *   rank0 --- rank1 --- rank2 ...
  *   where each rank dumps its scalars in the ordering of the particles.
@@ -29,7 +29,7 @@
  *   looks like this:
  *   v1[0] v1[1] v1[2] v2[0] v2[1] v2[2] v3[0] ...
  *
- * To be able to determine the rank bondaries (a multiple of
+ * To be able to determine the rank boundaries (a multiple of
  * nlocalparts), the file 1.pref is written, which dumps the Exscan
  * results of nlocalparts, i.e. the prefixes in scalar arrays:
  * - 1.prefs looks like this:

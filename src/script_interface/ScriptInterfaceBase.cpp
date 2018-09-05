@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -74,7 +74,7 @@ ScriptInterfaceBase::get_instance(ObjectId id) {
 /**
  * @brief  Return a Variant representation of the state of the object.
  *
- * This should returne the internal state of the instance, so that
+ * This should return the internal state of the instance, so that
  * the instance can be restored from this information.  The default
  * implementation stores all the public parameters, including object
  * parameters that are captured by calling get_state on them.

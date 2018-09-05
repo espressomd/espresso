@@ -1,8 +1,25 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
-import espressomd
 import numpy as np
-from espressomd.electrostatics import *
+
+import espressomd
+import espressomd.electrostatics
 from espressomd import electrostatic_extensions
 
 
@@ -19,7 +36,6 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
     system.cell_system.skin = 0.1
 
     def test_elc_vs_mmm2d(self):
-
         elc_param_sets = {
             "inert": {
                 "gap_size": self.elc_gap,
@@ -70,7 +86,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         self.system.part.add(id=3, pos=(5.0, 2.0, 7.0), q=q / 3.0)
 
         #MMM2D
-        mmm2d = MMM2D(**mmm2d_param_sets["inert"])
+        mmm2d = espressomd.electrostatics.MMM2D(**mmm2d_param_sets["inert"])
         self.system.actors.add(mmm2d)
         mmm2d_res = {}
         mmm2d_res["inert"] = self.scan()
@@ -92,8 +108,8 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             use_verlet_lists=True)
         self.system.cell_system.node_grid = buf_node_grid
         self.system.periodicity = [1, 1, 1]
-        p3m = P3M(prefactor=1.0, accuracy=self.acc,
-                  mesh=[20, 20, 32], cao=7, check_neutrality=False)
+        p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=self.acc,
+                                            mesh=[20, 20, 32], cao=7, check_neutrality=False)
         self.system.actors.add(p3m)
 
         elc = electrostatic_extensions.ELC(**elc_param_sets["inert"])
@@ -131,5 +147,4 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         return res
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

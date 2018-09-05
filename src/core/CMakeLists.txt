@@ -85,7 +85,6 @@ add_custom_command(
   COMMAND ${CMAKE_SOURCE_DIR}/config/genversion.sh -c > ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
 )
 
-
 add_library(EspressoConfig SHARED config-features.cpp)
 add_dependencies(EspressoConfig myconfig check_myconfig generate_config_features)
 install(TARGETS EspressoConfig LIBRARY DESTINATION ${LIBDIR})

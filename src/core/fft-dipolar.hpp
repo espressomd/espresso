@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -30,7 +30,7 @@
  *  The 3D-FFT is split into 3 ond dimensional FFTs. The data is
  *  distributed in such a way, that for the actual direction of the
  *  FFT each node has a certain number of rows for which it performs a
- *  1D-FFT. After performing the FFT on theat direction the data is
+ *  1D-FFT. After performing the FFT on that direction the data is
  *  redistributed.
  *
  *  For simplicity at the moment I have implemented a full complex to

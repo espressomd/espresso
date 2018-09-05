@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
     Max-Planck-Institute for Polymer Research, Theory Group
 
   This file is part of ESPResSo.
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(iterators) {
       id_counts[p.identity()]++;
     }
 
-    /* Every id should have been visitied exactly once... */
+    /* Every id should have been visited exactly once... */
     BOOST_CHECK(std::all_of(id_counts.begin(), id_counts.end(),
                             [](int count) { return count == 1; }));
     /* and in the correct order. */

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -152,9 +152,9 @@ int p3m_sanity_checks();
 void p3m_count_charged_particles();
 
 /** Error Codes for p3m tuning (version 2) :
-    P3M_TUNE_FAIL: force evaluation failes,
-    P3M_TUNE_NO_CUTOFF: could not finde a valid realspace cutoff radius,
-    P3M_TUNE_CAOTOLARGE: Charge asignment order to large for mesh size,
+    P3M_TUNE_FAIL: force evaluation failed,
+    P3M_TUNE_NO_CUTOFF: could not find a valid realspace cutoff radius,
+    P3M_TUNE_CAOTOLARGE: Charge assignment order to large for mesh size,
     P3M_TUNE_ELCTEST: conflict with ELC gap size.
 */
 
@@ -189,7 +189,7 @@ enum P3M_TUNE_ERROR {
     For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming
    that the error contributions of real and reciprocal space should be equal.
 
-    After checking if the total error fulfils the accuracy goal the
+    After checking if the total error fulfills the accuracy goal the
     time needed for one force calculation (including verlet list
     update) is measured via \ref mpi_integrate (0).
 
@@ -260,15 +260,13 @@ int p3m_set_ninterpol(int n);
 
 /** Calculate real space contribution of coulomb pair energy. */
 inline double p3m_pair_energy(double chgfac, double dist) {
-  double adist, erfc_part_ri;
-
   if (dist < p3m.params.r_cut && dist != 0) {
-    adist = p3m.params.alpha * dist;
+    double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-    erfc_part_ri = AS_erfc_part(adist) / dist;
+    double erfc_part_ri = AS_erfc_part(adist) / dist;
     return coulomb.prefactor * chgfac * erfc_part_ri * exp(-adist * adist);
 #else
-    erfc_part_ri = erfc(adist) / dist;
+    double erfc_part_ri = erfc(adist) / dist;
     return coulomb.prefactor * chgfac * erfc_part_ri;
 #endif
   }

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -25,32 +25,75 @@
 using Utils::Interpolation::bspline_3d;
 using Utils::Interpolation::bspline_3d_accumulate;
 using Utils::Interpolation::detail::ll_and_dist;
-using Utils::Interpolation::detail::pos_shift;
 
 #include "common/gaussian.hpp"
 
 #include <limits>
 
-BOOST_AUTO_TEST_CASE(pos_shift_test) {
-  BOOST_CHECK(pos_shift<2>() == 0.0);
-  BOOST_CHECK(pos_shift<3>() == 0.5);
-}
+BOOST_AUTO_TEST_CASE(ll_and_dist_test_1) {
+  auto const block = ll_and_dist<1>(/* pos */ Vector3d{.4, .5, .6},
+                                    /* grid_spaceing */ Vector3d{1.0, 1.0, 1.0},
+                                    /* offset */ {});
 
-BOOST_AUTO_TEST_CASE(ll_and_dist_test) {
-  auto const block = ll_and_dist<3>(
-      Vector3d{.1, .2, .3}, Vector3d{0.5, 0.5, 0.5}, Vector3d{-1., -3., -2.});
-
-  /* Pos with offset is {1.1, 3.2, 2.3} */
-  /* nmp is {2, 6, 5} @ {1.0, 3.0, 2.5} */
-  /* block.distanceance in lattice units is +.1/.5, +.2/.5, -.2/.5 = {.2, .4,
-   * -.4} */
-  BOOST_CHECK_CLOSE(block.distance[0], .2, 1e-13);
-  BOOST_CHECK_CLOSE(block.distance[1], .4, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[0], +.4, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[1], -.5, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[2], -.4, 1e-13);
 
-  BOOST_CHECK(block.corner[0] == 1);
-  BOOST_CHECK(block.corner[1] == 5);
-  BOOST_CHECK(block.corner[2] == 4);
+  BOOST_CHECK(block.corner[0] == 0);
+  BOOST_CHECK(block.corner[1] == 1);
+  BOOST_CHECK(block.corner[2] == 1);
+}
+
+BOOST_AUTO_TEST_CASE(ll_and_dist_test_2) {
+  auto const block = ll_and_dist<2>(/* pos */ Vector3d{.4, .5, .6},
+                                    /* grid_spaceing */ Vector3d{1.0, 1.0, 1.0},
+                                    /* offset */ {});
+  BOOST_CHECK_CLOSE(block.distance[0], -.1, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[1], 0.0, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[2], +.1, 1e-13);
+
+  BOOST_CHECK_EQUAL(block.corner[0], 0);
+  BOOST_CHECK_EQUAL(block.corner[1], 0);
+  BOOST_CHECK_EQUAL(block.corner[2], 0);
+}
+
+BOOST_AUTO_TEST_CASE(ll_and_dist_test_3) {
+  auto const block = ll_and_dist<3>(/* pos */ Vector3d{.4, .5, .6},
+                                    /* grid_spaceing */ Vector3d{1.0, 1.0, 1.0},
+                                    /* offset */ {});
+  BOOST_CHECK_CLOSE(block.distance[0], +.4, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[1], -.5, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[2], -.4, 1e-13);
+
+  BOOST_CHECK_EQUAL(block.corner[0], -1);
+  BOOST_CHECK_EQUAL(block.corner[1], 0);
+  BOOST_CHECK_EQUAL(block.corner[2], 0);
+}
+
+BOOST_AUTO_TEST_CASE(ll_and_dist_test_4) {
+  auto const block = ll_and_dist<4>(/* pos */ Vector3d{.4, .5, .6},
+                                    /* grid_spaceing */ Vector3d{1.0, 1.0, 1.0},
+                                    /* offset */ {});
+  BOOST_CHECK_CLOSE(block.distance[0], -.1, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[1], 0.0, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[2], +.1, 1e-13);
+
+  BOOST_CHECK_EQUAL(block.corner[0], -1);
+  BOOST_CHECK_EQUAL(block.corner[1], -1);
+  BOOST_CHECK_EQUAL(block.corner[2], -1);
+}
+
+BOOST_AUTO_TEST_CASE(ll_and_dist_test_5) {
+  auto const block = ll_and_dist<5>(/* pos */ Vector3d{.4, .5, .6},
+                                    /* grid_spaceing */ Vector3d{1.0, 1.0, 1.0},
+                                    /* offset */ {});
+  BOOST_CHECK_CLOSE(block.distance[0], +.4, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[1], -.5, 1e-13);
+  BOOST_CHECK_CLOSE(block.distance[2], -.4, 1e-13);
+
+  BOOST_CHECK_EQUAL(block.corner[0], -2);
+  BOOST_CHECK_EQUAL(block.corner[1], -1);
+  BOOST_CHECK_EQUAL(block.corner[2], -1);
 }
 
 BOOST_AUTO_TEST_CASE(number_of_points) {
@@ -62,7 +105,16 @@ BOOST_AUTO_TEST_CASE(number_of_points) {
   BOOST_CHECK(5 * 5 * 5 == count);
 }
 
-BOOST_AUTO_TEST_CASE(sum_of_weights) {
+BOOST_AUTO_TEST_CASE(sum_of_weights_even) {
+  double sum = 0.0;
+  auto summer = [&sum](const std::array<int, 3> &, double w) { sum += w; };
+
+  bspline_3d<4>({.1, .2, .3}, summer, {4., 5., 6.}, {7., 8., 9.});
+
+  BOOST_CHECK_CLOSE(sum, 1.0, 1e-12);
+}
+
+BOOST_AUTO_TEST_CASE(sum_of_weights_odd) {
   double sum = 0.0;
   auto summer = [&sum](const std::array<int, 3> &, double w) { sum += w; };
 
@@ -98,8 +150,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_3) {
   /* pos - offset = {-5., 6., -8} */
   /* nmp = {-5, 3, -3 } @ pos {-5., 6., -9.} */
   /* minus order / 2 (= 1) = {-6, 2, -4} */
-  std::array<int, 3> lower_left = {{-5, 2, -3}};
-  /* upper limit = {-6, 2, -4} + order = {-3, 5, -1} */
+  std::array<int, 3> lower_left = {{-6, 2, -4}};
 
   auto it = int_points.begin();
   for (int i = 0; i < 3; i++)
@@ -123,11 +174,10 @@ BOOST_AUTO_TEST_CASE(interpolation_points_2) {
                 /* offset */ {10., 0., 15.});
 
   /* pos - offset = {-5., 6., -8} */
-  /* shited pos = {-4.5, 6.5, -7.5} */
+  /* shifted pos = {-4.5, 6.5, -7.5} */
   /* nmp = {-4, 4, -2 } @ pos {-4., 8., -6.} */
   /* ll = nmp - order / 2 (= 1) = {-5, 3, -3} */
-  std::array<int, 3> lower_left = {{-5, 3, -2}};
-  /* upper limit = {-5, 2, -3} + order = {-3, 4, -1} */
+  std::array<int, 3> lower_left = {{-5, 3, -3}};
 
   auto it = int_points.begin();
   for (int i = 0; i < 2; i++)

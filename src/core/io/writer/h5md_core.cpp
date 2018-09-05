@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -98,7 +98,7 @@ void File::InitFile() {
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
   m_backup_filename = m_filename + ".bak";
-  // use a seperate mpi communicator if we want to write out ordered data. This
+  // use a separate mpi communicator if we want to write out ordered data. This
   // is in order to avoid  blocking by collective functions
   if (m_write_ordered == true)
     MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &m_hdf5_comm);
@@ -655,7 +655,7 @@ File::File() {
 #endif
 }
 
-/* Desctructor */
+/* Destructor */
 File::~File() {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;

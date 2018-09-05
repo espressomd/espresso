@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -115,7 +115,7 @@ def create_polymer(**kwargs):
     charge_distance : :obj:`int`, optional
         Distance between charged monomers along the chain. Default is 1
     type_poly_neutral : :obj:`int`, optional
-        Particle type of neutal monomers, default is 0.
+        Particle type of neutral monomers, default is 0.
     type_poly_charged : :obj:`int`, optional
         Particle type for charged monomers, default is 1
     angle : :obj:`float`, optional
@@ -142,7 +142,7 @@ def create_polymer(**kwargs):
 
     Note that a the first monomer of a polymer is always assigned the type `type_poly_charge`.
     The next `charge_distance` monomers have type `type_poly_neutral`.
-    This process repeats untill all monomers are placed.
+    This process repeats until all monomers are placed.
     Afterwards, all monomers of type `type_poly_charge` are assigned the charge `val_poly`.
     Thus the following example creates a single uncharged polymer where all monomers are of `type=0`:
 

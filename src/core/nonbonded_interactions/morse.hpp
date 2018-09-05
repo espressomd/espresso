@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -44,15 +44,14 @@ inline void add_morse_pair_force(const Particle *const p1,
                                  const Particle *const p2,
                                  IA_parameters *ia_params, double d[3],
                                  double dist, double force[3]) {
-  double add1, add2, fac = 0.0;
-  int j;
   if ((dist < ia_params->MORSE_cut)) {
-    add1 = exp(-2.0 * ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    add2 = exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    fac = -ia_params->MORSE_eps * 2.0 * ia_params->MORSE_alpha * (add2 - add1) /
-          dist;
+    double add1 =
+        exp(-2.0 * ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
+    double add2 = exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
+    double fac = -ia_params->MORSE_eps * 2.0 * ia_params->MORSE_alpha *
+                 (add2 - add1) / dist;
 
-    for (j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
 #ifdef MORSE_WARN_WHEN_CLOSE
     if (fac * dist > 1000)
@@ -83,13 +82,12 @@ inline void add_morse_pair_force(const Particle *const p1,
 inline double morse_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist) {
-
-  double add1, add2, fac;
-
   if ((dist < ia_params->MORSE_cut)) {
-    add1 = exp(-2.0 * ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    add2 = 2.0 * exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    fac = ia_params->MORSE_eps * (add1 - add2) - ia_params->MORSE_rest;
+    double add1 =
+        exp(-2.0 * ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
+    double add2 =
+        2.0 * exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
+    double fac = ia_params->MORSE_eps * (add1 - add2) - ia_params->MORSE_rest;
     return fac;
   }
   return 0.0;

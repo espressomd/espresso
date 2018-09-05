@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -48,7 +48,7 @@
  * their compressed average value. All As and Bs older than 2*tau_lin
  * are compressed in blocks of four etc.
  *
- * This leads to a hiearchical "history": on level 0 the last tau_lin values
+ * This leads to a hierarchical "history": on level 0 the last tau_lin values
  * are stored. This is done in a cyclic array: The newest is always appended
  * at the end of the array, and if the array length is reached, values
  * are appended at the beginning, overwriting older values. We therefore
@@ -61,7 +61,7 @@
  * on level 0, because we have saved them. Always if necessary
  * we produce space on level 0 by compressing to level 1. On
  * level 1 also an array with tau_lin entries is available to store
- * the level-1-compresssed values. It is sucessivly filled
+ * the level-1-compressed values. It is successively filled
  * and also cyclic. When it is filled, the values are stored
  * on level 2 and so on.
  *
@@ -72,7 +72,7 @@
  * tau=1,2,..,tau_lin the values are taken from level 1.
  * For tau=tau_lin, tau_lin+2, .., 2*tau_lin we take the values
  * from level 2. On level 2 we halso have values for 0,..tau_lin-2,
- * but these are discared as we have "better" estimates on level 1.
+ * but these are discarded as we have "better" estimates on level 1.
  *
  * The functions A and B can get extra arguments. This can e.g. be an
  * integer describing to the "type" of the particles to be considered,
@@ -150,7 +150,7 @@ class Correlator : public AccumulatorBase {
 public:
   /**
    * The initialization procedure for the correlation object. All important
-   * parameters have to be speciefied
+   * parameters have to be specified
    * at the same time. They can not be change later, so every instance of the
    * correlation class
    * has to be fed with correct data from the very beginning.
@@ -202,7 +202,7 @@ public:
    * the correlation estimates have to be updated.
    *
    */
-  virtual void update() override;
+  void update() override;
 
   /** At the end of data collection, go through the whole hierarchy and
    * correlate data left there
@@ -263,7 +263,7 @@ public:
   void set_internal_state(std::string const &);
 
 private:
-  unsigned int finalized; // non-zero of correlation is finialized
+  unsigned int finalized; // non-zero of correlation is finalized
   unsigned int t;         // global time in number of frames
 
   Vector3d m_correlation_args; // additional arguments, which the correlation

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -57,10 +57,10 @@
 #define PARTICLE_EXT_FORCE 1
 /** \ref ParticleLocal::ext_flag "ext_flag" value for fixed coordinate coord. */
 #define COORD_FIXED(coord) (2L << coord)
-/** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether any of the
+/** \ref ParticleLocal::ext_flag "ext_flag" mask to check whether any of the
  * coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-/** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether all of the
+/** \ref ParticleLocal::ext_flag "ext_flag" mask to check whether all of the
  * coordinates are fixed. */
 #define COORDS_ALL_FIXED (COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2))
 
@@ -119,7 +119,7 @@ struct ParticleProperties {
   Vector3d out_direction = {0., 0., 0.};
 #endif
 
-  // Determines, wether a particle's rotational degrees of freedom are
+  // Determines, whether a particle's rotational degrees of freedom are
   // integrated
   short int rotation = 0;
 
@@ -216,7 +216,7 @@ struct ParticlePosition {
 #endif
 
 #ifdef DIPOLES
-  /** dipol moment. This is synchronized with quatu and quat. */
+  /** dipole moment. This is synchronized with quatu and quat. */
   Vector3d dip = {0., 0., 0.};
 #endif
 
@@ -262,7 +262,7 @@ struct ParticleForce {
 
 /** Momentum information on a particle. Information not contained in
     communication of ghost particles so far, but a communication would
-    be necessary for velocity dependend potentials. */
+    be necessary for velocity dependent potentials. */
 struct ParticleMomentum {
   /** velocity. */
   Vector3d v = {0., 0., 0.};
@@ -277,7 +277,7 @@ struct ParticleMomentum {
 /** Information on a particle that is needed only on the
     node the particle belongs to */
 struct ParticleLocal {
-  /** position in the last time step befor last Verlet list update. */
+  /** position in the last time step before last Verlet list update. */
   Vector3d p_old = {0, 0, 0};
   /** index of the simulation box image where the particle really sits. */
   Vector<3, int> i = {0, 0, 0};
@@ -287,7 +287,7 @@ struct ParticleLocal {
 
 #ifdef GHMC
   /** Data for the ghmc thermostat, last saved
-      position and monentum of particle */
+      position and momentum of particle */
   ParticlePosition r_ls;
   ParticleMomentum m_ls;
 #endif
@@ -336,7 +336,7 @@ struct Particle {
    *
    * This creates a copy of the particle with
    * only the parts than can be copied w/o heap
-   * allocation, e.g. w/o bonds and exlusions.
+   * allocation, e.g. w/o bonds and exclusions.
    * This is more efficient if these parts are
    * not actually needed.
    */
@@ -501,7 +501,7 @@ void init_particlelist(ParticleList *pList);
     \param plist the list on which to operate
     \param size the size to provide at least. It is rounded
     up to multiples of \ref PART_INCREMENT.
-    \return true iff particle adresses have changed */
+    \return true iff particle addresses have changed */
 int realloc_particlelist(ParticleList *plist, int size);
 
 /** Search for a specific particle.
@@ -757,7 +757,7 @@ int set_particle_torque_body(int part, double torque[3]);
 */
 int set_particle_dip(int part, double dip[3]);
 
-/** Call only on the master node: set particle dipole moment (absolut value).
+/** Call only on the master node: set particle dipole moment (absolute value).
     @param part the particle.
     @param dipm its new dipole moment.
     @return ES_OK if particle existed
@@ -766,7 +766,7 @@ int set_particle_dipm(int part, double dipm);
 #endif
 
 #ifdef VIRTUAL_SITES
-/** Call only on the master node: set particle dipole moment (absolut value).
+/** Call only on the master node: set particle dipole moment (absolute value).
     @param part the particle.
     @param is_virtual its new is_virtual.
     @return ES_OK if particle existed
@@ -835,7 +835,7 @@ int set_particle_fix(int part, int flag);
 /** Call only on the master node: change particle bond.
     @param part     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
-    identity of all bond partners (secundary atoms of the bond). If nullptr,
+    identity of all bond partners (secondary atoms of the bond). If nullptr,
    delete
    all bonds.
     @param _delete   if true, do not add the bond, rather delete it if found
@@ -936,7 +936,7 @@ void send_particles(ParticleList *particles, int node);
 /** Synchronous receive of a particle buffer from another node. The other node
     MUST call \ref send_particles when this is called. Particles needs to
    initialized,
-    it is realloced to the correct size and the content is overwritten. */
+    it is reallocated to the correct size and the content is overwritten. */
 void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS

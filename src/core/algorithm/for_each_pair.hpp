@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef CORE_ALGORITHM_PAIR_LOOP_HPP
 #define CORE_ALGORITHM_PAIR_LOOP_HPP
 
@@ -20,7 +38,7 @@ namespace Algorithm {
  *
  * Requirements on the types:
  * The Cell type has to provide a function neighbors() that returns
- * a cell range coprised of the topological neighbors of the cell,
+ * a cell range comprised of the topological neighbors of the cell,
  * excluding the cell itself. The cells have to provide a m_verlet_list
  * container that can be used to store particle pairs. It can be empty and is
  * not touched if use_verlet_list is false.

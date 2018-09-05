@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -37,7 +37,6 @@ struct BoundingBox {
 
 typedef struct {
   int i; // index
-  int m; // model index
   float x, y, z;
 } pdb_atom;
 

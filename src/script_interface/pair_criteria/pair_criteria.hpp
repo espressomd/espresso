@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -33,8 +33,8 @@ class PairCriterion : public AutoParameters<PairCriterion> {
 public:
   virtual std::shared_ptr<::PairCriteria::PairCriterion>
   pair_criterion() const = 0;
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
     if (method == "decide") {
       return pair_criterion()->decide(boost::get<int>(parameters.at("id1")),
                                       boost::get<int>(parameters.at("id2")));

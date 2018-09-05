@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -43,7 +43,7 @@ constexpr const int ROTATION_Z = 8;
 /** Propagate angular velocities and update quaternions on a particle */
 void propagate_omega_quat_particle(Particle *p);
 
-/** Convert torques to the body-fixed frame and propogate
+/** Convert torques to the body-fixed frame and propagate
     angular velocities */
 void convert_torques_propagate_omega();
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -29,7 +29,8 @@ class SystemInterface {
 public:
   SystemInterface()
       : m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false),
-        m_needsQuatuGpu(false), m_needsDipGpu(false){};
+        m_needsQuatuGpu(false), m_needsFGpu(false), m_needsDipGpu(false),
+        m_needsTorqueGpu(false){};
   typedef Vector3d Vector3;
   typedef double Real;
 

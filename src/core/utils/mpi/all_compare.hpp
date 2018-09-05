@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -42,7 +42,7 @@ template <typename T>
 bool all_compare(boost::mpi::communicator const &comm, T const &value) {
   T root_value{};
 
-  /* Arbitraty pick the value on rank 0, and broadcast it */
+  /* Arbitrary pick the value on rank 0, and broadcast it */
   if (comm.rank() == 0) {
     root_value = value;
   }

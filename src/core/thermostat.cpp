@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -38,7 +38,7 @@ int thermo_switch = THERMO_OFF;
 /** Temperature */
 double temperature = 0.0;
 
-/** True if the thermostat should acton on virtual particles. */
+/** True if the thermostat should act on virtual particles. */
 bool thermo_virtual = true;
 
 using Thermostat::GammaType;

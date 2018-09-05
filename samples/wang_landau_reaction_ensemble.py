@@ -3,7 +3,7 @@ This sample simulates the Wang-Landau Reaction Ensemble for a harmonic bond.
 """
 
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,13 +21,13 @@ This sample simulates the Wang-Landau Reaction Ensemble for a harmonic bond.
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
+import numpy as np
+
 import espressomd
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
-from espressomd.interactions import *
 from espressomd import reaction_ensemble
-import numpy as np
 
 # System parameters
 #############################################################

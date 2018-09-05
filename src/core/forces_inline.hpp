@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -22,10 +22,6 @@
 #define _FORCES_INLINE_HPP
 
 #include "config.hpp"
-
-#ifdef MOLFORCES
-#include "topology.hpp"
-#endif
 
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
@@ -50,7 +46,6 @@
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "forces.hpp"
 #include "metadynamics.hpp"
-#include "molforces.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -681,7 +676,7 @@ inline void add_bonded_force(Particle *p1) {
         force[0] = force[1] = force[2] = 0.0;
         break;
       default:
-        runtimeErrorMsg() << "add_bonded_force: tabulated bond type of atom "
+        runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                           << p1->p.identity << " unknown\n";
         return;
       }
