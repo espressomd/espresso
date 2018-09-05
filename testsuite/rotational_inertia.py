@@ -30,6 +30,8 @@ class RotationalInertia(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.skin = 0
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+    # Particle's angular momentum
+    L_0_lab = np.zeros((3))
 
     def convert_vec_body_to_space(self, part, vec):
         A = tests_common.rotation_matrix_quat(self.system, part)
@@ -39,6 +41,11 @@ class RotationalInertia(ut.TestCase):
     def L_body(self, part):
         return self.system.part[part].omega_body[:] * \
             self.system.part[part].rinertia[:]
+
+    # Set the initial angular momentum
+    def set_L_0(self,part):
+        L_0_body = self.L_body(part)
+        self.L_0_lab = self.convert_vec_body_to_space(part, L_0_body)
 
     def test_stability(self):
         self.system.part.clear()
@@ -53,17 +60,14 @@ class RotationalInertia(ut.TestCase):
         # < J[0] < J[2].
         J = np.array([5, 0.5, 18.5])
 
+        self.system.part[0].rinertia = J[:]
         # Validation of J[1] stability
         # ----------------------------
         self.system.time_step = 0.0006
         # Stable omega component should be larger than other components.
         stable_omega = 57.65
         self.system.part[0].omega_body = np.array([0.15, stable_omega, -0.043])
-        self.system.part[0].rinertia = J[:]
-
-        # Angular momentum
-        L_0_body = self.L_body(0)
-        L_0_lab = self.convert_vec_body_to_space(0, L_0_body)
+        self.set_L_0(0)
 
         for i in range(100):
             L_body = self.L_body(0)
@@ -72,12 +76,12 @@ class RotationalInertia(ut.TestCase):
                 self.assertLessEqual(
                     abs(
                         L_lab[k] -
-                        L_0_lab[k]),
+                        self.L_0_lab[k]),
                     tol,
                     msg='Inertial motion around stable axis J1: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(
                         i,
                         k,
-                        L_0_lab[k],
+                        self.L_0_lab[k],
                         L_lab[k]))
             self.assertLessEqual(
                 abs(
@@ -97,10 +101,7 @@ class RotationalInertia(ut.TestCase):
         stable_omega = 3.2
         self.system.part[0].omega_body = np.array(
             [0.011, -0.043, stable_omega])
-        self.system.part[0].rinertia = J[:]
-
-        L_0_body = self.L_body(0)
-        L_0_lab = self.convert_vec_body_to_space(0, L_0_body)
+        self.set_L_0(0)
 
         for i in range(100):
             L_body = self.L_body(0)
@@ -109,12 +110,12 @@ class RotationalInertia(ut.TestCase):
                 self.assertLessEqual(
                     abs(
                         L_lab[k] -
-                        L_0_lab[k]),
+                        self.L_0_lab[k]),
                     tol,
                     msg='Inertial motion around stable axis J2: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(
                         i,
                         k,
-                        L_0_lab[k],
+                        self.L_0_lab[k],
                         L_lab[k]))
             self.assertLessEqual(
                 abs(
@@ -134,10 +135,7 @@ class RotationalInertia(ut.TestCase):
         unstable_omega = 5.76
         self.system.part[0].omega_body = np.array(
             [unstable_omega, -0.043, 0.15])
-        self.system.part[0].rinertia = J[:]
-
-        L_0_body = self.L_body(0)
-        L_0_lab = self.convert_vec_body_to_space(0, L_0_body)
+        self.set_L_0(0)
 
         for i in range(100):
             L_body = self.L_body(0)
@@ -146,12 +144,12 @@ class RotationalInertia(ut.TestCase):
                 self.assertLessEqual(
                     abs(
                         L_lab[k] -
-                        L_0_lab[k]),
+                        self.L_0_lab[k]),
                     tol,
                     msg='Inertial motion around stable axis J0: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(
                         i,
                         k,
-                        L_0_lab[k],
+                        self.L_0_lab[k],
                         L_lab[k]))
             self.system.integrator.run(10)
 
