@@ -333,8 +333,8 @@ Use these two files as templates for your interaction.
 
 Notes:
 
-* The names of function arguments mentioned below are taken from the FENE bond in :file:``src/core/bonded_interactions/fene.cpp`` and ``src/core/bonded_interactions/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction. 
-* The recommended signatures of the force and energy functions are::
+* The names of function arguments mentioned below are taken from the FENE bond in :file:``src/core/bonded_interactions/fene.cpp`` and :file:``src/core/bonded_interactions/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction. 
+* The recommended signatures of the force and energy functions are:
 
   .. code-block:: c++
 
