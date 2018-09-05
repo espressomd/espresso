@@ -95,7 +95,8 @@ class RotationalInertia(ut.TestCase):
         self.system.time_step = 0.01
         # Stable omega component should be larger than other components.
         stable_omega = 3.2
-        self.system.part[0].omega_body = np.array([0.011, -0.043, stable_omega])
+        self.system.part[0].omega_body = np.array(
+            [0.011, -0.043, stable_omega])
         self.system.part[0].rinertia = J[:]
 
         L_0_body = self.L_body(0)
@@ -131,7 +132,8 @@ class RotationalInertia(ut.TestCase):
         self.system.time_step = 0.001
         # Unstable omega component should be larger than other components.
         unstable_omega = 5.76
-        self.system.part[0].omega_body = np.array([unstable_omega, -0.043, 0.15])
+        self.system.part[0].omega_body = np.array(
+            [unstable_omega, -0.043, 0.15])
         self.system.part[0].rinertia = J[:]
 
         L_0_body = self.L_body(0)
