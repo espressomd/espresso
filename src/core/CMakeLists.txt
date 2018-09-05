@@ -31,7 +31,6 @@ set(EspressoCore_SRC
     layered.cpp
     metadynamics.cpp
     minimize_energy.cpp
-    molforces.cpp
     MpiCallbacks.cpp
     nemd.cpp
     npt.cpp

@@ -56,7 +56,6 @@
 #include "integrate.hpp"
 #include "io/mpiio/mpiio.hpp"
 #include "minimize_energy.hpp"
-#include "molforces.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gb.hpp"
 #include "nonbonded_interactions/lj.hpp"
@@ -83,6 +82,7 @@
 #include "utils/make_unique.hpp"
 #include "utils/serialization/IA_parameters.hpp"
 #include "utils/serialization/Particle.hpp"
+#include "utils/serialization/ParticleParametersSwimming.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
