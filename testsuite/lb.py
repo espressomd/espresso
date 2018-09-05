@@ -40,7 +40,7 @@ class TestLB(object):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = range(n_nodes)
-    #np.random.seed = 1
+    np.random.seed = 1
     params = {'int_steps': 25,
               'int_times': 10,
               'time_step': 0.01,
@@ -114,45 +114,49 @@ class TestLB(object):
         # Integration
         for i in range(self.params['int_times']):
             self.system.integrator.run(self.params['int_steps'])
-            
+
             # Summation vars
             fluid_mass = 0.0
             fluid_temp = 0.0
-            
+
             # Go over lb lattice
             for lb_node in lb_nodes:
                 fluid_mass += lb_node.density[0]
-                fluid_temp += np.sum(lb_node.velocity**2) *lb_node.density[0] 
-            
+                fluid_temp += np.sum(lb_node.velocity**2) * lb_node.density[0]
+
             # Normalize
-            fluid_mass/=len(lb_nodes)
-            fluid_temp *=  self.system.volume() /(3. * len(lb_nodes)**2)
+            fluid_mass /= len(lb_nodes)
+            fluid_temp *= self.system.volume() / (3. * len(lb_nodes)**2)
 
             # check mass conversation
-            self.assertAlmostEqual(fluid_mass,self.params["dens"],delta=self.params["mass_prec_per_node"])
+            self.assertAlmostEqual(fluid_mass, self.params[
+                                   "dens"], delta=self.params["mass_prec_per_node"])
 
             # check momentum conservation
             np.testing.assert_allclose(
-                self.system.analysis.analyze_linear_momentum(),self.tot_mom,
+                self.system.analysis.analyze_linear_momentum(), self.tot_mom,
                 atol=self.params['mom_prec'])
 
             # Calc particle temperature
             e = self.system.analysis.energy()
             temp_particle = 2.0 / self.dof * e["kinetic"] / self.n_col_part
-           
+
             # Update lists
             all_temp_particle.append(temp_particle)
             all_temp_fluid.append(fluid_temp)
 
-        #import scipy.stats
-        #temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"], scale=np.std(all_temp_particle,ddof=1))[1] -self.params["temp"]
-        #temp_prec_fluid = scipy.stats.norm.interval(0.95, loc=self.params["temp"], scale=np.std(all_temp_fluid,ddof=1))[1] -self.params["temp"]
-        temp_prec_particle=0.05*self.params["temp"]
-        temp_prec_fluid=0.05*self.params["temp"]
+        # import scipy.stats
+        # temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"], scale=np.std(all_temp_particle,ddof=1))[1] -self.params["temp"]
+        # temp_prec_fluid = scipy.stats.norm.interval(0.95,
+        # loc=self.params["temp"], scale=np.std(all_temp_fluid,ddof=1))[1]
+        # -self.params["temp"]
+        temp_prec_particle = 0.05 * self.params["temp"]
+        temp_prec_fluid = 0.05 * self.params["temp"]
 
-
-        self.assertAlmostEqual(np.mean(all_temp_fluid),self.params["temp"],delta=temp_prec_fluid)
-        self.assertAlmostEqual(np.mean(all_temp_particle),self.params["temp"],delta=temp_prec_particle)
+        self.assertAlmostEqual(
+            np.mean(all_temp_fluid), self.params["temp"], delta=temp_prec_fluid)
+        self.assertAlmostEqual(
+            np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
     def test_set_get_u(self):
         self.system.actors.clear()
