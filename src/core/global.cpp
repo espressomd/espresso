@@ -239,6 +239,10 @@ std::size_t hash_value(Datafield const &field) {
     auto ptr = reinterpret_cast<double *>(field.data);
     return hash_range(ptr, ptr + field.dimension);
   }
+  case Datafield::Type::LEES_EDWARDS_MPI: {
+    auto ptr = reinterpret_cast<int *>(field.data);
+    return hash_range(ptr, ptr + field.dimension);
+  }
   default:
     throw std::runtime_error("Unknown type.");
   };

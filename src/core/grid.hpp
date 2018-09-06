@@ -47,6 +47,9 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "utils.hpp"
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
 
 #include <climits>
 
@@ -184,7 +187,9 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++)
     res[i] = a[i] - b[i];
 
+#ifdef LEES_EDWARDS
   auto const dy = res[1];
+#endif
 
   for (int i = 0; i < 3; i++)
     if (PERIODIC(i))
@@ -198,7 +203,10 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
     auto offset = lees_edwards_protocol.offset;
     auto shift =
         Utils::sgn(dy) * (offset - dround(offset * box_l_i[1]) * box_l[1]);
+
     res[0] -= shift;
+    res[0] -= dround(res[0] * box_l_i[0]) * box_l[0];
+
   }
 #endif
 }
