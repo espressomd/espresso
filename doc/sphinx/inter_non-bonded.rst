@@ -826,7 +826,7 @@ and
      \epsilon(\mathbf{\hat{r}}, \mathbf{\hat{u}}_i,
      \mathbf{\hat{u}}_j) = \\
      \epsilon_0 \left( 1- \chi^{2}(\mathbf{\hat{u}}_i
-       \cdot \mathbf{\hat{u}}_j) \right)^{-\frac {\nu}{2}} \left[1-\frac
+       \cdot \mathbf{\hat{u}}_j)^{2} \right)^{-\frac {\nu}{2}} \left[1-\frac
        {\chi'}{2} \left( \frac { (\mathbf{\hat{r}} \cdot
            \mathbf{\hat{u}}_i+ \mathbf{\hat{r}} \cdot
            \mathbf{\hat{u}}_j)^{2}} {1+\chi' \, \mathbf{\hat{u}}_i \cdot
