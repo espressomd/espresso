@@ -44,11 +44,11 @@ class TestLB(object):
     params = {'int_steps': 25,
               'int_times': 10,
               'time_step': 0.01,
-              'tau': 0.02,
+              'tau': 0.01,
               'agrid': 0.5,
               'box_l': 9.0,
               'dens': 0.85,
-              'viscosity': 30.0,
+              'viscosity': 3.0,
               'friction': 2.0,
               'temp': 1.5,
               'gamma': 1.5,
@@ -100,8 +100,8 @@ class TestLB(object):
 
         self.max_dmass = 0.0
         self.max_dm = [0, 0, 0]
-        self.avg_temp = 0.0
-        self.avg_fluid_temp = 0.0
+        all_temp_particle = []
+        all_temp_fluid = []
 
         # Cache the lb nodes
         lb_nodes = []
@@ -114,76 +114,49 @@ class TestLB(object):
         # Integration
         for i in range(self.params['int_times']):
             self.system.integrator.run(self.params['int_steps'])
-            fluidmass_sim = 0.0
-            fluid_temp_sim = 0.0
-            node_v_list = []
-            node_dens_list = []
+
+            # Summation vars
+            fluid_mass = 0.0
+            fluid_temp = 0.0
+
+            # Go over lb lattice
             for lb_node in lb_nodes:
-                node_v_list.append(lb_node.velocity)
-                node_dens_list.append(lb_node.density[0])
+                fluid_mass += lb_node.density[0]
+                fluid_temp += np.sum(lb_node.velocity**2) * lb_node.density[0]
+
+            # Normalize
+            fluid_mass /= len(lb_nodes)
+            fluid_temp *= self.system.volume() / (3. * len(lb_nodes)**2)
 
             # check mass conversation
-            fluidmass_sim = np.average(node_dens_list)
-            dmass = abs(fluidmass_sim - self.fluidmass)  # /len(node_dens_list)
-            if dmass > self.max_dmass:
-                self.max_dmass = dmass
-            self.assertTrue(
-                self.max_dmass < self.params['mass_prec_per_node'],
-                msg="fluid mass deviation too high\ndeviation: {}   accepted deviation: {}".format(
-                    self.max_dmass,
-                    self.params['mass_prec_per_node']))
+            self.assertAlmostEqual(fluid_mass, self.params[
+                                   "dens"], delta=self.params["mass_prec_per_node"])
 
             # check momentum conservation
-            c_mom = self.system.analysis.analyze_linear_momentum()
-            dm = abs(c_mom - self.tot_mom)
-            for j in range(3):
-                if dm[j] > self.max_dm[j]:
-                    self.max_dm[j] = dm[j]
-            self.assertTrue(
-                self.max_dm[0] <= self.params['mom_prec'] and self.max_dm[1] <= self.params[
-                    'mom_prec'] and self.max_dm[2] <= self.params['mom_prec'],
-                msg="momentum deviation too high\ndeviation: {}  accepted deviation: {}".format(
-                    self.max_dm,
-                    self.params['mom_prec']))
+            np.testing.assert_allclose(
+                self.system.analysis.analyze_linear_momentum(), self.tot_mom,
+                atol=self.params['mom_prec'])
 
-            # check temp of particles
+            # Calc particle temperature
             e = self.system.analysis.energy()
             temp_particle = 2.0 / self.dof * e["kinetic"] / self.n_col_part
-            self.avg_temp = self.avg_temp + \
-                temp_particle / self.params['int_times']
-            # check temp of fluid
-            fluid_temp = 0
-            for j in range(len(node_dens_list)):
-                fluid_temp = fluid_temp + (1.0 / 3.0) * (node_v_list[j][0]**2.0 + node_v_list[j][1] ** 2.0 +
-                                                         node_v_list[j][2]**2.0) * node_dens_list[j] * (self.params['box_l'])**3 / len(node_dens_list)**2
-            self.avg_fluid_temp = self.avg_fluid_temp + \
-                fluid_temp / self.params['int_times']
 
-        temp_dev = (2.0 / (self.n_col_part * 3.0))**0.5
-        temp_dev_fluid = (2.0 / (len(lb_nodes) * 3.0))**0.5
-        temp_prec = self.params['temp_confidence'] * \
-            temp_dev / (self.params['int_times'])**0.5
-        temp_prec_fluid = self.params['temp_confidence'] * \
-            temp_dev_fluid / (self.params['int_times'])**0.5
+            # Update lists
+            all_temp_particle.append(temp_particle)
+            all_temp_fluid.append(fluid_temp)
 
-        self.assertTrue(
-            abs(
-                self.avg_temp -
-                self.params['temp']) < temp_prec,
-            msg="particle temperature deviation too high\ndeviation: {}  accepted deviation: {}".format(
-                abs(
-                    self.avg_temp -
-                    self.params['temp']),
-                temp_prec))
-        self.assertTrue(
-            abs(
-                self.avg_fluid_temp -
-                self.params['temp']) < temp_prec_fluid,
-            msg="fluid temperature deviation too high\ndeviation: {}  accepted deviation: {}".format(
-                abs(
-                    self.avg_fluid_temp -
-                    self.params['temp']),
-                temp_prec_fluid))
+        # import scipy.stats
+        # temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"], scale=np.std(all_temp_particle,ddof=1))[1] -self.params["temp"]
+        # temp_prec_fluid = scipy.stats.norm.interval(0.95,
+        # loc=self.params["temp"], scale=np.std(all_temp_fluid,ddof=1))[1]
+        # -self.params["temp"]
+        temp_prec_particle = 0.05 * self.params["temp"]
+        temp_prec_fluid = 0.05 * self.params["temp"]
+
+        self.assertAlmostEqual(
+            np.mean(all_temp_fluid), self.params["temp"], delta=temp_prec_fluid)
+        self.assertAlmostEqual(
+            np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
     def test_set_get_u(self):
         self.system.actors.clear()
