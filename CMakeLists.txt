@@ -25,7 +25,7 @@ include(cmake/FindPythonModule.cmake)
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "4.0-dev")
+set(PROJECT_VERSION "4.0.0")
 string(REGEX REPLACE "^([1-9]+)\\.[0-9]+.*$" "\\1" SOVERSION "${PROJECT_VERSION}")
 if (NOT ${SOVERSION} MATCHES "^[1-9]+$")
   message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
@@ -52,7 +52,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 # Parse repository info from git if available
-include(version)
+if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  include(version)
+endif()
 
 configure_file(
   ${CMAKE_SOURCE_DIR}/src/version.hpp.in
@@ -242,17 +244,24 @@ endif(WITH_HDF5)
 
 # Check for the h5xx submodule
 # and try to check it out if not found or update it if found.
-if(WITH_HDF5 AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
-  # Try to find git
-  find_package(Git)
-  if(GIT_FOUND)
-    if (NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/h5xx/.git")
-      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/h5xx
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-    else()
-      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update -- libs/h5xx
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+if(WITH_HDF5)
+  if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+    # Try to find git
+    find_package(Git)
+    if(GIT_FOUND)
+      if (NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/h5xx/.git")
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/h5xx
+          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+      else()
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update -- libs/h5xx
+          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+      endif()
     endif()
+  endif()
+  if(NOT EXISTS ${CMAKE_SOURCE_DIR}/libs/h5xx/h5xx/h5xx.hpp)
+    message(WARNING "h5xx library is not available, HDF5 will be disabled")
+    unset(H5MD)
+    unset(HDF5_FOUND)
   endif()
 endif()
 
