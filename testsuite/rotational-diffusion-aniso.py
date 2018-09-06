@@ -18,14 +18,14 @@ class RotDiffAniso(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.skin = 5.0
     system.seed = 5
-    
+
     # The NVT thermostat parameters
     kT = 0.0
     gamma_global = np.zeros((3))
-    
+
     # Particle properties
     J = 0.0, 0.0, 0.0
-    
+
     @classmethod
     def setUpClass(cls):
         seed(4)
@@ -38,7 +38,7 @@ class RotDiffAniso(ut.TestCase):
         """
         Setup the parameters for the rotational diffusion
         test check_rot_diffusion().
-    
+
         Parameters
         ----------
         n : :obj:`int`
@@ -46,17 +46,17 @@ class RotDiffAniso(ut.TestCase):
 
         """
 
-        ## Time
+        # Time
         # The time step should be less than t0 ~ mass / gamma
         self.system.time_step = 3E-3
-        
-        ## Space
+
+        # Space
         box = 10.0
         self.system.box_l = box, box, box
         if espressomd.has_features(("PARTIAL_PERIODIC",)):
             self.system.periodicity = 0, 0, 0
-        
-        ## NVT thermostat
+
+        # NVT thermostat
         # Just some temperature range to cover by the test:
         self.kT = uniform(1.5, 6.5)
         # Note: here & hereinafter specific variations in the random parameter ranges are related to
@@ -71,8 +71,8 @@ class RotDiffAniso(ut.TestCase):
         # in a contrast of the eq. (10.2.26) [N. Pottier,
         # https://doi.org/10.1007/s10955-010-0114-6 (2010)].
         self.gamma_global = 1E2 * uniform(0.35, 1.05, (3))
-        
-        ## Particles
+
+        # Particles
         # As far as the problem characteristic time is t0 ~ J / gamma
         # and the Langevin equation finite-difference approximation is stable
         # only for time_step << t0, it is needed to set the moment of inertia higher than
@@ -95,7 +95,7 @@ class RotDiffAniso(ut.TestCase):
         [Perrin, F. (1936) Journal de Physique et Le Radium, 7(1), 1-11. https://doi.org/10.1051/jphysrad:01936007010100]
         with a theoretical background of
         [Perrin, F. (1934) Journal de Physique et Le Radium, 5(10), 497-511. https://doi.org/10.1051/jphysrad:01934005010049700]
-        
+
         Parameters
         ----------
         n : :obj:`int`
@@ -117,7 +117,7 @@ class RotDiffAniso(ut.TestCase):
         # its physical context.
         for ind in range(n):
             self.system.part[ind].quat = 1.0, 0.0, 0.0, 0.0
-        ## Average direction cosines
+        # Average direction cosines
         # Diagonal ones:
         dcosjj_validate = np.zeros((3))
         dcosjj_dev = np.zeros((3))
@@ -133,7 +133,7 @@ class RotDiffAniso(ut.TestCase):
         # The non-diagonal elements to the power of 2
         dcosij2_validate = np.ones((3, 3))
         dcosij2_dev = np.zeros((3, 3))
-        
+
         self.system.time = 0.0
         int_steps = 10
         loops = 100
@@ -185,14 +185,14 @@ class RotDiffAniso(ut.TestCase):
             dcosijpp /= n
             dcosijnn /= n
             dcosij2 /= n
-            
-            ### Actual comparison.
-            
+
+            # Actual comparison.
+
             tolerance = 0.195
             # Too small values of the direction cosines are out of interest
             # compare to 0..1 range.
             min_value = 0.14
-            
+
             # Eq. (23) [Perrin1936].
             dcosjj_validate[0] = np.exp(-(D[1] + D[2]) * self.system.time)
             dcosjj_validate[1] = np.exp(-(D[0] + D[2]) * self.system.time)
@@ -202,7 +202,7 @@ class RotDiffAniso(ut.TestCase):
             for j in range(3):
                 if np.absolute(dcosjj_validate[j]) < min_value:
                     dcosjj_dev[j] = 0.0
-            
+
             # Eq. (24) [Perrin1936].
             dcosijpp_validate[0, 1] = np.exp(
                 -(4 * D[2] + D[1] + D[0]) * self.system.time)
@@ -222,7 +222,7 @@ class RotDiffAniso(ut.TestCase):
                 for j in range(3):
                     if np.absolute(dcosijpp_validate[i, j]) < min_value:
                         dcosijpp_dev[i, j] = 0.0
-            
+
             # Eq. (25) [Perrin1936].
             dcosijnn_validate[0, 1] = np.exp(-(D[1] + D[0]) * self.system.time)
             dcosijnn_validate[1, 0] = np.exp(-(D[1] + D[0]) * self.system.time)
@@ -236,7 +236,7 @@ class RotDiffAniso(ut.TestCase):
                 for j in range(3):
                     if np.absolute(dcosijnn_validate[i, j]) < min_value:
                         dcosijnn_dev[i, j] = 0.0
-            
+
             # Eq. (30) [Perrin1936].
             D0 = sum(D[:]) / 3.0
             D1D1 = 0.0
@@ -255,20 +255,20 @@ class RotDiffAniso(ut.TestCase):
             for j in range(3):
                 if np.absolute(dcosjj2_validate[j]) < min_value:
                     dcosjj2_dev[j] = 0.0
-            
+
             # Eq. (33) [Perrin1936].
             dcosij2_validate[0, 1] = 1. / 3. - (1. / 6.) * (1. - (D[2] - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
                 * np.exp(-6. * (D0 - np.sqrt(D0**2 - D1D1)) * self.system.time) \
                 - (1. / 6.) * (1. + (D[2] - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
                 * np.exp(-6. * (D0 + np.sqrt(D0**2 - D1D1)) * self.system.time)
             dcosij2_validate[1, 0] = dcosij2_validate[0, 1]
-            
+
             dcosij2_validate[0, 2] = 1. / 3. - (1. / 6.) * (1. - (D[1] - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
                 * np.exp(-6. * (D0 - np.sqrt(D0**2 - D1D1)) * self.system.time) \
                 - (1. / 6.) * (1. + (D[1] - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
                 * np.exp(-6. * (D0 + np.sqrt(D0**2 - D1D1)) * self.system.time)
             dcosij2_validate[2, 0] = dcosij2_validate[0, 2]
-            
+
             dcosij2_validate[1, 2] = 1. / 3. - (1. / 6.) * (1. - (D[0] - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
                 * np.exp(-6. * (D0 - np.sqrt(D0**2 - D1D1)) * self.system.time) \
                 - (1. / 6.) * (1. + (D[0] - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
@@ -280,20 +280,22 @@ class RotDiffAniso(ut.TestCase):
                 for j in range(3):
                     if np.absolute(dcosij2_validate[i, j]) < min_value:
                         dcosij2_dev[i, j] = 0.0
-            
+
             for j in range(3):
                 self.assertLessEqual(
                     abs(
                         dcosjj_dev[j]),
-                        tolerance,
-                        msg='Relative deviation dcosjj_dev[{0}] in a rotational diffusion is too large: {1}'.format(
-                            j, dcosjj_dev[j]))
+                    tolerance,
+                    msg='Relative deviation dcosjj_dev[{0}] in a rotational diffusion is too large: {1}'.format(
+                        j,
+                        dcosjj_dev[j]))
                 self.assertLessEqual(
                     abs(
                         dcosjj2_dev[j]),
-                        tolerance,
-                        msg='Relative deviation dcosjj2_dev[{0}] in a rotational diffusion is too large: {1}'.format(
-                            j, dcosjj2_dev[j]))
+                    tolerance,
+                    msg='Relative deviation dcosjj2_dev[{0}] in a rotational diffusion is too large: {1}'.format(
+                        j,
+                        dcosjj2_dev[j]))
                 for i in range(3):
                     if i != j:
                         self.assertLessEqual(
@@ -322,6 +324,7 @@ class RotDiffAniso(ut.TestCase):
             kT=self.kT, gamma=self.gamma_global)
         # Actual integration and validation run
         self.check_rot_diffusion(n)
+
 
 if __name__ == '__main__':
     ut.main()

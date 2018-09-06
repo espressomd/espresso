@@ -44,11 +44,11 @@ class RotationalInertia(ut.TestCase):
             self.system.part[part].rinertia[:]
 
     # Set the angular momentum
-    def set_L_0(self,part):
+    def set_L_0(self, part):
         L_0_body = self.L_body(part)
         self.L_0_lab = self.convert_vec_body_to_space(part, L_0_body)
 
-    def set_L(self,part):
+    def set_L(self, part):
         L_body = self.L_body(part)
         self.L_lab = self.convert_vec_body_to_space(part, L_body)
 
