@@ -48,8 +48,10 @@
 #include "algorithm/periodic_fold.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include <utils/Span.hpp>
-#include <utils/Vector.hpp>
+#include "utils.hpp"
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
 
 #include <limits>
 
