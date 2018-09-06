@@ -23,8 +23,8 @@
  *  Implementation of \ref membrane_collision.hpp
  */
 #include "membrane_collision.hpp"
-#include "../communication.hpp"
-#include "interaction_data.hpp"
+#include "communication.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #ifdef MEMBRANE_COLLISION
 

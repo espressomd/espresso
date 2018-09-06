@@ -30,7 +30,8 @@
 
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
-#include "interaction_data.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 extern ActorList forceActors;
 

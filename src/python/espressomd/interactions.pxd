@@ -38,7 +38,7 @@ cdef extern from "TabulatedPotential.hpp":
         vector[double] energy_tab
         vector[double] force_tab
 
-cdef extern from "interaction_data.hpp":
+cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef struct IA_parameters:
         double LJ_eps
         double LJ_sig
@@ -149,39 +149,41 @@ cdef extern from "interaction_data.hpp":
 
     cdef IA_parameters * get_ia_param(int i, int j)
     cdef IA_parameters * get_ia_param_safe(int i, int j)
-    cdef void make_bond_type_exist(int type)
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
 
-cdef extern from "lj.hpp":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
+    cdef void make_bond_type_exist(int type)
+
+cdef extern from "nonbonded_interactions/lj.hpp":
     cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
                                       double eps, double sig, double cut,
                                       double shift, double offset,
                                       double min)
 IF LJCOS:
-    cdef extern from "ljcos.hpp":
+    cdef extern from "nonbonded_interactions/ljcos.hpp":
         cdef int ljcos_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig,
                                   double cut, double offset)
 
 IF LJCOS2:
-    cdef extern from "ljcos2.hpp":
+    cdef extern from "nonbonded_interactions/ljcos2.hpp":
         cdef int ljcos2_set_params(int part_type_a, int part_type_b,
                                    double eps, double sig, double offset,
                                    double w)
 
 IF GAY_BERNE:
-    cdef extern from "gb.hpp":
+    cdef extern from "nonbonded_interactions/gb.hpp":
         int gay_berne_set_params(int part_type_a, int part_type_b,
                                  double eps, double sig, double cut,
                                  double k1, double k2,
                                  double mu, double nu)
 
 IF THOLE:
-    cdef extern from "thole.hpp":
+    cdef extern from "nonbonded_interactions/thole.hpp":
         int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, double q1q2)
 
-cdef extern from "ljgen.hpp":
+cdef extern from "nonbonded_interactions/ljgen.hpp":
     IF LJGEN_SOFTCORE:
         cdef int ljgen_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig, double cut,
@@ -195,41 +197,41 @@ cdef extern from "ljgen.hpp":
                                   double a1, double a2, double b1, double b2)
 
 IF SMOOTH_STEP:
-    cdef extern from "steppot.hpp":
+    cdef extern from "nonbonded_interactions/steppot.hpp":
         int smooth_step_set_params(int part_type_a, int part_type_b,
                                    double d, int n, double eps,
                                    double k0, double sig,
                                    double cut)
 IF BMHTF_NACL:
-    cdef extern from "bmhtf-nacl.hpp":
+    cdef extern from "nonbonded_interactions/bmhtf-nacl.hpp":
         int BMHTF_set_params(int part_type_a, int part_type_b,
                              double A, double B, double C,
                              double D, double sig, double cut)
 
 IF MORSE:
-    cdef extern from "morse.hpp":
+    cdef extern from "nonbonded_interactions/morse.hpp":
         int morse_set_params(int part_type_a, int part_type_b,
                              double eps, double alpha,
                              double rmin, double cut)
 
 IF BUCKINGHAM:
-    cdef extern from "buckingham.hpp":
+    cdef extern from "nonbonded_interactions/buckingham.hpp":
         int buckingham_set_params(int part_type_a, int part_type_b,
                                   double A, double B, double C, double D, double cut,
                                   double discont, double shift)
 
 IF SOFT_SPHERE:
-    cdef extern from "soft_sphere.hpp":
+    cdef extern from "nonbonded_interactions/soft_sphere.hpp":
         int soft_sphere_set_params(int part_type_a, int part_type_b,
                                    double a, double n, double cut, double offset)
 
 IF HERTZIAN:
-    cdef extern from "hertzian.hpp":
+    cdef extern from "nonbonded_interactions/hertzian.hpp":
         int hertzian_set_params(int part_type_a, int part_type_b,
                                 double eps, double sig)
 
 IF GAUSSIAN:
-    cdef extern from "gaussian.hpp":
+    cdef extern from "nonbonded_interactions/gaussian.hpp":
         int gaussian_set_params(int part_type_a, int part_type_b,
                                 double eps, double sig, double cut)
 
@@ -240,7 +242,7 @@ IF DPD:
                            double tgamma, double tr_c, int twf)
 
 IF HAT:
-    cdef extern from "hat.hpp":
+    cdef extern from "nonbonded_interactions/hat.hpp":
         int hat_set_params(int part_type_a, int part_type_b,
                            double Fmax, double r)
 
@@ -252,7 +254,7 @@ IF MEMBRANE_COLLISION:
                                                double cut, double offset)
 
 IF SOFT_SPHERE:
-    cdef extern from "soft_sphere.hpp":
+    cdef extern from "nonbonded_interactions/soft_sphere.hpp":
         cdef int soft_sphere_set_params(int part_type_a, int part_type_b,
                                         double a, double n,
                                         double cut, double offset)
@@ -263,13 +265,13 @@ IF AFFINITY:
                                      int afftype, double kappa, double r0,
                                      double Kon, double Koff, double maxBond, double cut)
 IF TABULATED:
-    cdef extern from "tab.hpp":
+    cdef extern from "nonbonded_interactions/nonbonded_tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b,
                                  double min, double max,
                                  vector[double] energy,
                                  vector[double] force)
 IF ROTATION:
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     #* Parameters for the harmonic dumbbell bond potential */
         cdef struct Harmonic_dumbbell_bond_parameters:
             double k1
@@ -284,7 +286,7 @@ ELSE:
         double r_cut
 
 IF TABULATED:
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     #* Parameters for n-body tabulated potential (n=2,3,4). */
         cdef struct Tabulated_bond_parameters:
             int type
@@ -295,7 +297,7 @@ ELSE:
         TabulatedPotential * pot
 
 IF P3M:
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         #* Parameters for Bonded coulomb p3m sr */
         cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
             double q1q2
@@ -303,7 +305,7 @@ ELSE:
     cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
         double q1q2
 
-cdef extern from "interaction_data.hpp":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef struct Fene_bond_parameters:
         double k
         double drmax
@@ -491,25 +493,25 @@ cdef extern from "interaction_data.hpp":
 
     vector[Bonded_ia_parameters] bonded_ia_params
 
-cdef extern from "interaction_data.hpp" namespace "tElasticLaw":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp" namespace "tElasticLaw":
     cdef tElasticLaw NeoHookean
     cdef tElasticLaw Skalak
 
-cdef extern from "fene.hpp":
+cdef extern from "bonded_interactions/fene.hpp":
     int fene_set_params(int bond_type, double k, double drmax, double r0)
-cdef extern from "harmonic.hpp":
+cdef extern from "bonded_interactions/harmonic.hpp":
     int harmonic_set_params(int bond_type, double k, double r, double r_cut)
-cdef extern from "dihedral.hpp":
+cdef extern from "bonded_interactions/dihedral.hpp":
     int dihedral_set_params(int bond_type, int mult, double bend, double phase)
-cdef extern from "angle_harmonic.hpp":
+cdef extern from "bonded_interactions/angle_harmonic.hpp":
     int angle_harmonic_set_params(int bond_type, double bend, double phi0)
 cdef extern from "rattle.hpp":
     int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol)
-cdef extern from "angle_cosine.hpp":
+cdef extern from "bonded_interactions/angle_cosine.hpp":
     int angle_cosine_set_params(int bond_type, double bend, double phi0)
-cdef extern from "angle_cossquare.hpp":
+cdef extern from "bonded_interactions/angle_cossquare.hpp":
     int angle_cossquare_set_params(int bond_type, double bend, double phi0)
-cdef extern from "subt_lj.hpp":
+cdef extern from "bonded_interactions/subt_lj.hpp":
     int subt_lj_set_params(int bond_type)
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
@@ -517,11 +519,11 @@ cdef extern from "object-in-fluid/oif_local_forces.hpp":
     int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal, double kvisc)
 cdef extern from "object-in-fluid/out_direction.hpp":
     int oif_out_direction_set_params(int bond_type)
-cdef extern from "thermalized_bond.hpp":
+cdef extern from "bonded_interactions/thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
-cdef extern from "bonded_coulomb.hpp":
+cdef extern from "bonded_interactions/bonded_coulomb.hpp":
     int bonded_coulomb_set_params(int bond_type, double prefactor)
-cdef extern from "bonded_coulomb_p3m_sr.hpp":
+cdef extern from "bonded_interactions/bonded_coulomb_p3m_sr.hpp":
     int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
 
 
@@ -536,26 +538,26 @@ cdef extern from "immersed_boundary/ibm_tribend.hpp":
     int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const bool flat)
 
 IF ROTATION:
-    cdef extern from "harmonic_dumbbell.hpp":
+    cdef extern from "bonded_interactions/harmonic_dumbbell.hpp":
         int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, double r_cut)
 
 IF TABULATED:
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         cdef enum TabulatedBondedInteraction:
             TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
-    cdef extern from "tab.hpp":
+    cdef extern from "bonded_interactions/bonded_tab.hpp":
         int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, double min, double max, vector[double] energy, vector[double] force)
 
 IF ELECTROSTATICS:
-    cdef extern from "bonded_coulomb.hpp":
+    cdef extern from "bonded_interactions/bonded_coulomb.hpp":
         int bonded_coulomb_set_params(int bond_type, double prefactor)
 
 
-cdef extern from "interaction_data.hpp":
+cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     int virtual_set_params(int bond_type)
 
 
-cdef extern from "interaction_data.hpp":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef enum enum_bonded_interaction "BondedInteraction":
         BONDED_IA_NONE = -1,
         BONDED_IA_FENE,

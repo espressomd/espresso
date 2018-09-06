@@ -26,7 +26,7 @@
 */
 
 #include "Vector.hpp"
-#include "gb.hpp"
+#include "nonbonded_interactions/gb.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"

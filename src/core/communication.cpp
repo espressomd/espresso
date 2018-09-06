@@ -32,48 +32,49 @@
 #include "errorhandling.hpp"
 
 #include "EspressoSystemInterface.hpp"
-#include "buckingham.hpp"
+#include "bonded_interactions/bonded_tab.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "cuda_interface.hpp"
-#include "debye_hueckel.hpp"
-#include "elc.hpp"
+#include "electrostatics_magnetostatics/debye_hueckel.hpp"
+#include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/icc.hpp"
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "galilei.hpp"
-#include "gb.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "iccp3m.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
 #include "io/mpiio/mpiio.hpp"
-#include "lb.hpp"
-#include "lj.hpp"
-#include "ljcos.hpp"
-#include "ljcos2.hpp"
-#include "ljgen.hpp"
-#include "maggs.hpp"
-#include "mdlc_correction.hpp"
 #include "minimize_energy.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
-#include "morse.hpp"
+#include "nonbonded_interactions/buckingham.hpp"
+#include "nonbonded_interactions/gb.hpp"
+#include "nonbonded_interactions/lj.hpp"
+#include "nonbonded_interactions/ljcos.hpp"
+#include "nonbonded_interactions/ljcos2.hpp"
+#include "nonbonded_interactions/ljgen.hpp"
+#include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp"
-#include "p3m-dipolar.hpp"
-#include "p3m.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
-#include "reaction_field.hpp"
 #include "rotation.hpp"
-#include "scafacos.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
 #include "statistics_fluid.hpp"
 #include "swimmer_reaction.hpp"
-#include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
 
@@ -1751,6 +1752,22 @@ int mpi_sync_topo_part_info() {
     molsize = topology[i].part.n;
     moltype = topology[i].type;
 
+#ifdef MOLFORCES
+    MPI_Bcast(&(topology[i].trap_flag), 1, MPI_INT, 0, comm_cart);
+    MPI_Bcast(topology[i].trap_center, 3, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&(topology[i].trap_spring_constant), 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&(topology[i].drag_constant), 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&(topology[i].noforce_flag), 1, MPI_INT, 0, comm_cart);
+    MPI_Bcast(&(topology[i].isrelative), 1, MPI_INT, 0, comm_cart);
+    MPI_Bcast(&(topology[i].favcounter), 1, MPI_INT, 0, comm_cart);
+    if (topology[i].favcounter == -1)
+      MPI_Bcast(topology[i].fav, 3, MPI_DOUBLE, 0, comm_cart);
+    /* check if any molecules are trapped */
+    if ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
+      IsTrapped = 1;
+    }
+#endif
+
     MPI_Bcast(&molsize, 1, MPI_INT, 0, comm_cart);
     MPI_Bcast(&moltype, 1, MPI_INT, 0, comm_cart);
     MPI_Bcast(topology[i].part.e, topology[i].part.n, MPI_INT, 0, comm_cart);
@@ -1771,6 +1788,22 @@ void mpi_sync_topo_part_info_slave(int node, int parm) {
   MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
   realloc_topology(n_mols);
   for (i = 0; i < n_mols; i++) {
+
+#ifdef MOLFORCES
+    MPI_Bcast(&(topology[i].trap_flag), 1, MPI_INT, 0, comm_cart);
+    MPI_Bcast(topology[i].trap_center, 3, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&(topology[i].trap_spring_constant), 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&(topology[i].drag_constant), 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&(topology[i].noforce_flag), 1, MPI_INT, 0, comm_cart);
+    MPI_Bcast(&(topology[i].isrelative), 1, MPI_INT, 0, comm_cart);
+    MPI_Bcast(&(topology[i].favcounter), 1, MPI_INT, 0, comm_cart);
+    if (topology[i].favcounter == -1)
+      MPI_Bcast(topology[i].fav, 3, MPI_DOUBLE, 0, comm_cart);
+    /* check if any molecules are trapped */
+    if ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
+      IsTrapped = 1;
+    }
+#endif
 
     MPI_Bcast(&molsize, 1, MPI_INT, 0, comm_cart);
     MPI_Bcast(&moltype, 1, MPI_INT, 0, comm_cart);

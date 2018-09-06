@@ -86,7 +86,6 @@ outp insource srcdir builddir make_check \
     cmake_params with_fftw \
     with_python_interface with_coverage \
     with_ubsan with_asan \
-    with_static_analysis myconfig check_procs \
     build_procs check_odd_only \
     with_static_analysis myconfig \
     check_procs build_procs \

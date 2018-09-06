@@ -25,10 +25,10 @@
  * (Dupin2007) \ref forces.cpp
  */
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "config.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
 

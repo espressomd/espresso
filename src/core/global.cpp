@@ -23,19 +23,19 @@
 */
 #include "global.hpp"
 
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "ghmc.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
 #include "lattice.hpp"
 #include "layered.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "rattle.hpp"
-#include "thermalized_bond.hpp"
 #include "tuning.hpp"
 #include "utils/mpi/all_compare.hpp"
 

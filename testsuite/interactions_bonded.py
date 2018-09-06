@@ -38,7 +38,6 @@ class InteractionsBondedTest(ut.TestCase):
     step_width = np.linalg.norm(step)
 
     def setUp(self):
-
         self.system.box_l = [self.box_l] * 3
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
@@ -47,12 +46,10 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.part.add(id=1, pos=self.start_pos, type=0)
 
     def tearDown(self):
-
         self.system.part.clear()
 
     # Test Harmonic Bond
     def test_harmonic(self):
-
         hb_k = 5
         hb_r_0 = 1.5
         hb_r_cut = 3.355
