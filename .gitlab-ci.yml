@@ -132,7 +132,7 @@ cuda-shanchen:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
-    - export myconfig=shanchen with_coverage=true python_version=3
+    - export myconfig=shanchen with_coverage=true python_version=3 make_check=false
     - bash maintainer/cuda_build.sh
   tags:
     - docker
