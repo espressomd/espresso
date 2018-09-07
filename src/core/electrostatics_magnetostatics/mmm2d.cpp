@@ -203,10 +203,12 @@ typedef struct {
 } SCCache;
 
 /** sin/cos caching */
-static SCCache *scxcache = nullptr;
+static std::vector<SCCache> scxcache;
+/* _Not_ the size of scxcache */
 static int n_scxcache;
 /** sin/cos caching */
-static SCCache *scycache = nullptr;
+static std::vector<SCCache> scycache;
+/* _Not_ the size of scycache */
 static int n_scycache;
 
 /** \name Local functions for the near formula */
@@ -1972,10 +1974,8 @@ void MMM2D_on_resort_particles() {
     n_localpart = cells_get_n_particles();
     n_scxcache = (int)(ceil(mmm2d_params.far_cut / ux) + 1);
     n_scycache = (int)(ceil(mmm2d_params.far_cut / uy) + 1);
-    scxcache =
-        Utils::realloc(scxcache, n_scxcache * n_localpart * sizeof(SCCache));
-    scycache =
-        Utils::realloc(scycache, n_scycache * n_localpart * sizeof(SCCache));
+    scxcache.resize(n_scxcache * n_localpart);
+    scycache.resize(n_scycache * n_localpart);
 
     partblk = Utils::realloc(partblk, n_localpart * 8 * sizeof(double));
     lclcblk = Utils::realloc(lclcblk, cells.size() * 8 * sizeof(double));
