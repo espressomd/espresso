@@ -198,9 +198,9 @@ static double *gblcblk = nullptr;
 /** contribution from the image charges */
 static double lclimge[8];
 
-typedef struct {
+struct SCCache {
   double s, c;
-} SCCache;
+};
 
 /** sin/cos caching */
 static std::vector<SCCache> scxcache;
@@ -294,48 +294,34 @@ void MMM2D_setup_constants() {
  * FAR FORMULA
  ****************************************/
 
-static void prepare_scx_cache() {
-  int np, c, i, ic, freq, o;
-  double pref, arg;
-  Particle *part;
+static SCCache sc(double arg) { return {sin(arg), cos(arg)}; }
 
-  for (freq = 1; freq <= n_scxcache; freq++) {
-    pref = C_2PI * ux * freq;
-    o = (freq - 1) * n_localpart;
-    ic = 0;
-    for (c = 1; c <= n_layers; c++) {
-      np = cells[c].n;
-      part = cells[c].part;
-      for (i = 0; i < np; i++) {
-        arg = pref * part[i].r.p[0];
-        scxcache[o + ic].s = sin(arg);
-        scxcache[o + ic].c = cos(arg);
+template <size_t dir>
+static void prepare_sc_cache(std::vector<SCCache> &sccache, double u,
+                             int n_sccache) {
+  for (int freq = 1; freq <= n_sccache; freq++) {
+    auto const pref = C_2PI * u * freq;
+    auto const o = (freq - 1) * n_localpart;
+
+    int ic = 0;
+    for (int c = 1; c <= n_layers; c++) {
+      auto const np = cells[c].n;
+      auto part = cells[c].part;
+      for (int i = 0; i < np; i++) {
+        auto const arg = pref * part[i].r.p[dir];
+        sccache[o + ic] = sc(arg);
         ic++;
       }
     }
   }
 }
 
-static void prepare_scy_cache() {
-  int np, c, i, ic, freq, o;
-  double pref, arg;
-  Particle *part;
+static void prepare_scx_cache() {
+  prepare_sc_cache<0>(scxcache, ux, n_scxcache);
+}
 
-  for (freq = 1; freq <= n_scycache; freq++) {
-    pref = C_2PI * uy * freq;
-    o = (freq - 1) * n_localpart;
-    ic = 0;
-    for (c = 1; c <= n_layers; c++) {
-      np = cells[c].n;
-      part = cells[c].part;
-      for (i = 0; i < np; i++) {
-        arg = pref * part[i].r.p[1];
-        scycache[o + ic].s = sin(arg);
-        scycache[o + ic].c = cos(arg);
-        ic++;
-      }
-    }
-  }
+static void prepare_scy_cache() {
+  prepare_sc_cache<1>(scycache, uy, n_scycache);
 }
 
 /*****************************************************************/
@@ -822,6 +808,9 @@ static void setup_Q(int q, double omega, double fac) {
     clear_vec(lclimge, size);
 
   if (this_node == 0) {
+    /* on the lowest node, clear the lclcblk below, which only contains the
+       images of the lowest layer
+       if there is dielectric contrast, otherwise it is empty */
     lclimgebot = block(lclcblk, 0, size);
     clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
@@ -848,6 +837,7 @@ static void setup_Q(int q, double omega, double fac) {
       partblk[size * ic + POQECM] = part[i].p.q * scycache[o + ic].c / e;
       partblk[size * ic + POQECP] = part[i].p.q * scycache[o + ic].c * e;
 
+      /* take images due to different dielectric constants into account */
       if (mmm2d_params.dielectric_contrast_on) {
         if (c == 1 && this_node == 0) {
           e_di_l = (exp(omega * (-part[i].r.p[2] - 2 * h + layer_h)) *
@@ -870,7 +860,6 @@ static void setup_Q(int q, double omega, double fac) {
                         mmm2d_params.delta_mid_top +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h))) *
                    fac_delta;
-
           e = exp(omega * (part[i].r.p[2] - h + layer_h)) *
               mmm2d_params.delta_mid_top;
 
@@ -1339,18 +1328,16 @@ static double energy_contribution(int p, int q) {
 }
 
 double MMM2D_add_far(int f, int e) {
-  double eng;
   int p, q;
   double R, dR, q2;
-  int *undone;
 
   // It's not really far...
-  eng = e ? self_energy : 0;
+  auto eng = e ? self_energy : 0;
 
   if (mmm2d_params.far_cut == 0.0)
     return 0.5 * eng;
 
-  undone = (int *)Utils::malloc((n_scxcache + 1) * sizeof(int));
+  auto undone = std::vector<int>(n_scxcache + 1);
 
   prepare_scx_cache();
   prepare_scy_cache();
@@ -1403,8 +1390,6 @@ double MMM2D_add_far(int f, int e) {
         eng += energy_contribution(p, q);
     }
   }
-
-  free(undone);
 
   return 0.5 * eng;
 }
