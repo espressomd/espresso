@@ -149,11 +149,16 @@ Vector3d dpd_pair_force(const Particle *p1, const Particle *p2,
     // DPD part
     // friction force prefactor
     double vel12_dot_d12 = 0.0;
-    auto const v12 = vel_diff(p1->r.p, p2->r.p, p1->m.v, p2->m.v);
-    for (int j = 0; j < 3; j++)
-      vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
-    auto const friction =
-        ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
+#ifdef LEES_EDWARDS
+  auto const v12 = vel_diff(p1->r.p, p2->r.p, p1->m.v, p2->m.v);
+  for (int j = 0; j < 3; j++)
+      vel12_dot_d12 += v12[j] * d[j];
+#endif
+#ifndef LEES_EDWARDS
+ 	for (int j = 0; j < 3; j++)
+		vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j]; 
+#endif
+    auto const friction = ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
     // random force prefactor
     double noise;
     if (ia_params->dpd_pref2 > 0.0) {
