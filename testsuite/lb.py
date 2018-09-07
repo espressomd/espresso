@@ -194,6 +194,8 @@ class TestLB(object):
         np.testing.assert_allclose(
             np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
+    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
+               "Features not available, skipping test!")
     def test_a_ext_force_density(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()

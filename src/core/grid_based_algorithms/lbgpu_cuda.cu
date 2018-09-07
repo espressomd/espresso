@@ -3559,10 +3559,8 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     if (para.fluct) {
       thermalize_modes(mode, index, &rng);
     }
-#if defined(EXTERNAL_FORCES) || defined(SHANCHEN)
     /**if external force is used apply node force */
-    apply_forces(index, mode, node_f, d_v);
-#endif
+    if (para.number_of_particles) apply_forces(index, mode, node_f, d_v);
     /**lb_calc_n_from_modes_push*/
     normalize_modes(mode);
     /**calc of velocity densities and streaming with pbc*/
