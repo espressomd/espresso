@@ -798,23 +798,20 @@ static void setup_Q(int q, double omega, double fac) {
   setup(q, omega, fac, n_scycache, scycache);
 }
 
-static void add_P_force() {
-  int np, c, i, ic;
-  Particle *part;
-  double *othcblk;
-  int size = 4;
+template <size_t dir> static void add_force() {
+  constexpr const auto size = 4;
 
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-    othcblk = block(gblcblk, c - 1, size);
+  auto ic = 0;
+  for (int c = 1; c <= n_layers; c++) {
+    auto const np = cells[c].n;
+    auto const part = cells[c].part;
+    auto const othcblk = block(gblcblk, c - 1, size);
 
-    for (i = 0; i < np; i++) {
-      part[i].f.f[0] += partblk[size * ic + POQESM] * othcblk[POQECP] -
-                        partblk[size * ic + POQECM] * othcblk[POQESP] +
-                        partblk[size * ic + POQESP] * othcblk[POQECM] -
-                        partblk[size * ic + POQECP] * othcblk[POQESM];
+    for (int i = 0; i < np; i++) {
+      part[i].f.f[dir] += partblk[size * ic + POQESM] * othcblk[POQECP] -
+                          partblk[size * ic + POQECM] * othcblk[POQESP] +
+                          partblk[size * ic + POQESP] * othcblk[POQECM] -
+                          partblk[size * ic + POQECP] * othcblk[POQESM];
       part[i].f.f[2] += partblk[size * ic + POQECM] * othcblk[POQECP] +
                         partblk[size * ic + POQESM] * othcblk[POQESP] -
                         partblk[size * ic + POQECP] * othcblk[POQECM] -
@@ -827,6 +824,9 @@ static void add_P_force() {
     }
   }
 }
+
+static void add_P_force() { add_force<0>(); }
+static void add_Q_force() { add_force<1>(); }
 
 static double P_energy(double omega) {
   int np, c, i, ic;
@@ -848,36 +848,6 @@ static double P_energy(double omega) {
     }
   }
   return eng;
-}
-
-static void add_Q_force() {
-  int np, c, i, ic;
-  Particle *part;
-  double *othcblk;
-  int size = 4;
-
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-    othcblk = block(gblcblk, c - 1, size);
-
-    for (i = 0; i < np; i++) {
-      part[i].f.f[1] += partblk[size * ic + POQESM] * othcblk[POQECP] -
-                        partblk[size * ic + POQECM] * othcblk[POQESP] +
-                        partblk[size * ic + POQESP] * othcblk[POQECM] -
-                        partblk[size * ic + POQECP] * othcblk[POQESM];
-      part[i].f.f[2] += partblk[size * ic + POQECM] * othcblk[POQECP] +
-                        partblk[size * ic + POQESM] * othcblk[POQESP] -
-                        partblk[size * ic + POQECP] * othcblk[POQECM] -
-                        partblk[size * ic + POQESP] * othcblk[POQESM];
-
-      LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
-                         this_node, part[i].p.identity, part[i].f.f[0],
-                         part[i].f.f[1], part[i].f.f[2]));
-      ic++;
-    }
-  }
 }
 
 static double Q_energy(double omega) {
