@@ -196,12 +196,10 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
 #endif
 
   for (int i = 0; i < 3; i++)
-    if (PERIODIC(i))
+    if (std::fabs(res[i]) > half_box_l[i] && PERIODIC(i))
       res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
 
-
 #ifdef LEES_EDWARDS
-
   if (std::abs(dy) > half_box_l[1]) {
     
     auto offset = lees_edwards_protocol.offset;
@@ -209,7 +207,8 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
         Utils::sgn(dy) * (offset - dround(offset * box_l_i[1]) * box_l[1]);
 
     res[0] -= shift;
-    res[0] -= dround(res[0] * box_l_i[0]) * box_l[0];
+    if (PERIODIC(1))
+      res[0] -= dround(res[0] * box_l_i[0]) * box_l[0];
 
   }
 #endif    
