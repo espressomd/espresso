@@ -826,9 +826,15 @@ void propagate_vel_pos() {
       }
     }
 #endif
-  }
 
-  set_resort_particles(Cells::RESORT_LOCAL);
+  /* Verlet criterion check*/
+  if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
+        Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
+        Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
+      skin2)
+    set_resort_particles(Cells::RESORT_LOCAL);
+  
+  }
   announce_resort_particles();
 
 #ifdef ADDITIONAL_CHECKS
