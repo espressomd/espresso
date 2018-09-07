@@ -144,11 +144,17 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
     Particle *const p = cell->part;
     for (int j = 0; j < cell->n; j++)
       if (p[j].p.is_virtual) {
+#ifdef EXTERNAL_FORCES
         if (!(p[j].p.ext_flag & 2))
+#endif
           p[j].r.p[0] = p[j].r.p[0] + p[j].m.v[0] * time_step;
+#ifdef EXTERNAL_FORCES
         if (!(p[j].p.ext_flag & 4))
+#endif
           p[j].r.p[1] = p[j].r.p[1] + p[j].m.v[1] * time_step;
+#ifdef EXTERNAL_FORCES
         if (!(p[j].p.ext_flag & 8))
+#endif
           p[j].r.p[2] = p[j].r.p[2] + p[j].m.v[2] * time_step;
 
         // Check if the particle might have crossed a box border (criterion see
