@@ -329,19 +329,11 @@ endif()
 # Paths
 #######################################################################
 
-if (NOT DEFINED DATA)
-  set(DATA "share/espresso")
-endif(NOT DEFINED DATA)
-
-if (NOT DEFINED LIBDIR)
-  set(LIBDIR "lib")
-endif(NOT DEFINED LIBDIR)
-
 if (NOT DEFINED BINDIR)
   set(BINDIR "bin")
 endif(NOT DEFINED BINDIR)
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 
 
 #######################################################################
