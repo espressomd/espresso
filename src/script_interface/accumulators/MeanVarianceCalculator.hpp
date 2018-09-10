@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -42,65 +42,68 @@ public:
   }
 
   void construct(VariantMap const &params) override {
-      set_from_args(m_obs, params, "obs");
+    set_from_args(m_obs, params, "obs");
 
-      if (m_obs)
-        m_accumulator =
-            std::make_shared<::Accumulators::MeanVarianceCalculator>(
-                m_obs->observable(), get_value_or<int>(params, "delta_N", 1));
+    if (m_obs)
+      m_accumulator = std::make_shared<::Accumulators::MeanVarianceCalculator>(
+          m_obs->observable(), get_value_or<int>(params, "delta_N", 1));
   }
 
-  std::shared_ptr<::Accumulators::MeanVarianceCalculator> mean_variance_calculator() {
-      return m_accumulator;
-  }
-  
-  std::shared_ptr<const ::Accumulators::MeanVarianceCalculator> mean_variance_calculator() const {
-      return m_accumulator;
+  std::shared_ptr<::Accumulators::MeanVarianceCalculator>
+  mean_variance_calculator() {
+    return m_accumulator;
   }
 
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
-      if (method == "update") {
-        mean_variance_calculator()->update();
-      }
-      if (method == "get_mean")
-        return mean_variance_calculator()->get_mean();
+  std::shared_ptr<const ::Accumulators::MeanVarianceCalculator>
+  mean_variance_calculator() const {
+    return m_accumulator;
+  }
 
-      if (method == "get_variance")
-        return mean_variance_calculator()->get_variance();
-      return {};
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
+    if (method == "update") {
+      mean_variance_calculator()->update();
+    }
+    if (method == "get_mean")
+      return mean_variance_calculator()->get_mean();
+
+    if (method == "get_variance")
+      return mean_variance_calculator()->get_variance();
+    return {};
   }
 
   Variant get_state() const override {
-      std::vector<Variant> state(2);
-      state[0] = ScriptInterfaceBase::get_state();
-      state[1] = mean_variance_calculator()->get_internal_state();
-      return state;
-  }
-  
-  std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
-    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_accumulator);
+    std::vector<Variant> state(2);
+    state[0] = ScriptInterfaceBase::get_state();
+    state[1] = mean_variance_calculator()->get_internal_state();
+    return state;
   }
 
-  std::shared_ptr<const ::Accumulators::AccumulatorBase> accumulator() const override {
-    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_accumulator);
+  std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(
+        m_accumulator);
+  }
+
+  std::shared_ptr<const ::Accumulators::AccumulatorBase>
+  accumulator() const override {
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(
+        m_accumulator);
   }
 
 private:
   void set_state(Variant const &state) override {
-      auto const &state_vec = boost::get<std::vector<Variant>>(state);
-      ScriptInterfaceBase::set_state(state_vec.at(0));
-      mean_variance_calculator()->set_internal_state(
-          boost::get<std::string>(state_vec.at(1)));
+    auto const &state_vec = boost::get<std::vector<Variant>>(state);
+    ScriptInterfaceBase::set_state(state_vec.at(0));
+    mean_variance_calculator()->set_internal_state(
+        boost::get<std::string>(state_vec.at(1)));
   }
 
   /* The actual accumulator */
   std::shared_ptr<::Accumulators::MeanVarianceCalculator> m_accumulator;
   std::shared_ptr<Observables::Observable> m_obs;
+};
 
-  };
-
-} /* namespace Accumulator */
+} // namespace Accumulators
 } /* namespace ScriptInterface */
 
 #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -164,16 +164,18 @@ public:
           }}});
   }
 
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
     if (method == "calculate") {
       return cylindrical_profile_observable()->operator()(partCfg());
+    }
+    if (method == "n_values") {
+      return cylindrical_profile_observable()->n_values();
     }
     return {};
   }
 
-  virtual std::shared_ptr<::Observables::Observable>
-  observable() const override {
+  std::shared_ptr<::Observables::Observable> observable() const override {
     return m_observable;
   }
 

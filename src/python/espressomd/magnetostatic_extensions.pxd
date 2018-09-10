@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,7 +25,7 @@ from espressomd.utils cimport *
 
 IF DIPOLES == 1:
 
-    cdef extern from "mdlc_correction.hpp":
+    cdef extern from "electrostatics_magnetostatics/mdlc_correction.hpp":
         ctypedef struct dlc_struct "DLC_struct":
             double maxPWerror
             double gap_size

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,7 +26,7 @@ from espressomd.electrostatics cimport *
 
 IF ELECTROSTATICS and P3M:
 
-    cdef extern from "elc.hpp":
+    cdef extern from "electrostatics_magnetostatics/elc.hpp":
         ctypedef struct ELC_struct:
             double maxPWerror
             double gap_size
@@ -38,12 +38,12 @@ IF ELECTROSTATICS and P3M:
             double pot_diff
 
         int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-        int neutralize, double delta_mid_top, double delta_mid_bot, int const_pot, double pot_diff)
+                           int neutralize, double delta_mid_top, double delta_mid_bot, int const_pot, double pot_diff)
 
         # links intern C-struct with python object
         ELC_struct elc_params
 
-    cdef extern from "iccp3m.hpp":
+    cdef extern from "electrostatics_magnetostatics/icc.hpp":
         ctypedef struct iccp3m_struct:
             int n_ic
             int num_iteration

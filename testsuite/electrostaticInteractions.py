@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,10 +18,11 @@
 #
 from __future__ import print_function
 import unittest as ut
-import espressomd
 import numpy as np
+
+import espressomd
 from espressomd import electrostatics
-from tests_common import *
+import tests_common
 
 
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
@@ -29,7 +30,6 @@ from tests_common import *
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.system.box_l = [20, 20, 20]
@@ -61,7 +61,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         # results,
         p3m_energy = -0.501062398379
         p3m_force = 2.48921612e-01
-        test_P3M = generate_test_for_class(
+        test_P3M = tests_common.generate_test_for_class(
             self.system,
             electrostatics.P3M,
             dict(
@@ -84,18 +84,16 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         # need to update forces
         self.system.integrator.run(0)
         np.testing.assert_allclose(np.copy(self.system.part[0].f),
-                                    [p3m_force, 0, 0],atol=1E-5)
+                                   [p3m_force, 0, 0], atol=1E-5)
         np.testing.assert_allclose(np.copy(self.system.part[1].f),
-                                    [-p3m_force, 0, 0],atol=1E-10)
+                                   [-p3m_force, 0, 0], atol=1E-10)
         self.system.actors.remove(p3m)
 
-    @ut.skipIf( espressomd.has_features(["COULOMB_DEBYE_HUECKEL"]),
-           "Features not available, skipping test!")
     def test_dh(self):
         dh_params = dict(prefactor=1.0,
                          kappa=2.0,
                          r_cut=2.0)
-        test_DH = generate_test_for_class(
+        test_DH = tests_common.generate_test_for_class(
             self.system,
             electrostatics.DH,
             dh_params)
@@ -125,11 +123,11 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             f_dh_core[i] = self.system.part[0].f[0]
 
         np.testing.assert_allclose(u_dh_core,
-                                    u_dh,
-                                    atol=1e-7)
+                                   u_dh,
+                                   atol=1e-7)
         np.testing.assert_allclose(f_dh_core,
-                                    -f_dh,
-                                    atol=1e-2)
+                                   -f_dh,
+                                   atol=1e-2)
         self.system.actors.remove(dh)
 
 

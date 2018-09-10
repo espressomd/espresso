@@ -1,4 +1,4 @@
-from espressomd.utils import to_char_pointer, to_str,handle_errors
+from espressomd.utils import to_char_pointer, to_str, handle_errors
 import numpy as np
 from espressomd.utils import is_valid_type
 
@@ -44,9 +44,9 @@ cdef class PScriptInterface(object):
         self.sip = sip
         self.parameters = self.sip.get().valid_parameters()
 
-    def set_sip_via_oid(self,PObjectId id):
+    def set_sip_via_oid(self, PObjectId id):
         """Set the shared_ptr to the script object in the core via the object id"""
-        oid=id.id
+        oid = id.id
         try:
             ptr = get_instance(oid).lock()
             self.set_sip(ptr)
@@ -70,9 +70,11 @@ cdef class PScriptInterface(object):
         cdef map[string, Variant] parameters
 
         for name in kwargs:
-            parameters[to_char_pointer(name)] = self.python_object_to_variant(kwargs[name])
+            parameters[to_char_pointer(name)] = self.python_object_to_variant(
+                kwargs[name])
 
-        res= self.variant_to_python_object(self.sip.get().call_method(to_char_pointer(method), parameters))
+        res = self.variant_to_python_object(
+            self.sip.get().call_method(to_char_pointer(method), parameters))
         handle_errors("")
         return res
 
@@ -99,27 +101,29 @@ cdef class PScriptInterface(object):
                 raise ValueError("Unknown parameter %s" % name)
 
             # Check number of elements if applicable
-            if < int > ptype in [ < int > INT_VECTOR, < int > DOUBLE_VECTOR]:
+            if < int > ptype in [< int > INT_VECTOR, < int > DOUBLE_VECTOR]:
                 n_elements = self.parameters[name].n_elements()
-                if n_elements!=0 and not (len(in_params[pname]) == n_elements):
+                if n_elements != 0 and not (len(in_params[pname]) == n_elements):
                     raise ValueError(
                         "Value of %s expected to be %i elements" % (name, n_elements))
 
             # We accept ints for floats (but not the other way round)
-            if <int> ptype == <int> DOUBLE and is_valid_type(in_params[pname], int):
+            if < int > ptype == <int > DOUBLE and is_valid_type(in_params[pname], int):
                 in_params[pname] = float(in_params[pname])
-            # We already know that the argument is an iterable of the correct length
-            elif <int> ptype == <int> DOUBLE_VECTOR:
+            # We already know that the argument is an iterable of the correct
+            # length
+            elif < int > ptype == <int > DOUBLE_VECTOR:
                 for i in range(len(in_params[pname])):
                     if is_valid_type(in_params[pname][i], int):
                         in_params[pname][i] = float(in_params[pname][i])
 
             v = self.python_object_to_variant(in_params[pname])
 
-            if v.which() == <int> ptype:
+            if v.which() == <int > ptype:
                 out_params[name] = v
             else:
-                raise ValueError("Wrong type for parameter '%s': Expected %s, but got %s" % (pname, get_type_label(ptype), get_type_label(v)))
+                raise ValueError("Wrong type for parameter '%s': Expected %s, but got %s" %
+                                 (pname, get_type_label(ptype), get_type_label(v)))
 
         return out_params
 
@@ -182,22 +186,24 @@ cdef class PScriptInterface(object):
         if < int > type == <int > DOUBLE_VECTOR:
             return get[vector[double]](value)
         if < int > type == <int > OBJECTID:
-            # Get the id and build a curresponding object
+            # Get the id and build a corresponding object
             try:
                 oid = get[ObjectId](value)
                 ptr = get_instance(oid).lock()
                 if ptr != shared_ptr[ScriptInterfaceBase]():
-                    so_name=to_str(ptr.get().name())
+                    so_name = to_str(ptr.get().name())
                     if not so_name:
-                        raise Exception("Script object without name returned from the core")
-                    # Fallback class, if nothing more specific is registered for the script object name
-                    pclass=ScriptInterfaceHelper
+                        raise Exception(
+                            "Script object without name returned from the core")
+                    # Fallback class, if nothing more specific is registered
+                    # for the script object name
+                    pclass = ScriptInterfaceHelper
                     # Look up class
                     if so_name in _python_class_by_so_name:
-                        pclass =_python_class_by_so_name[so_name]
+                        pclass = _python_class_by_so_name[so_name]
                     pobj = pclass()
-                    poid=PObjectId()
-                    poid.id=ptr.get().id()
+                    poid = PObjectId()
+                    poid.id = ptr.get().id()
                     pobj.set_sip_via_oid(poid)
                     return pobj
                 else:
@@ -223,32 +229,36 @@ cdef class PScriptInterface(object):
         cdef map[string, Variant] params = self.sip.get().get_parameters()
         odict = {}
         for pair in params:
-            odict[to_str(pair.first)] = self.variant_to_python_object(pair.second)
+            odict[to_str(pair.first)] = self.variant_to_python_object(
+                pair.second)
 
         return odict
+
 
 def _unpickle_so_class(so_name, state):
     cdef shared_ptr[ScriptInterfaceBase] sip = ScriptInterfaceBase.unserialize(state)
 
-    poid=PObjectId()
-    poid.id=sip.get().id()
+    poid = PObjectId()
+    poid.id = sip.get().id()
 
     so = _python_class_by_so_name[so_name](oid=poid)
     so.define_bound_methods()
 
     return so
 
+
 class ScriptInterfaceHelper(PScriptInterface):
     _so_name = None
-    _so_bind_methods =()
+    _so_bind_methods = ()
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, **kwargs):
-        super(ScriptInterfaceHelper,self).__init__(self._so_name, policy=self._so_creation_policy, **kwargs)
+        super(ScriptInterfaceHelper, self).__init__(
+            self._so_name, policy=self._so_creation_policy, **kwargs)
         self.define_bound_methods()
 
     def __reduce__(self):
-        return (_unpickle_so_class , (self._so_name, self._serialize()))
+        return (_unpickle_so_class, (self._so_name, self._serialize()))
 
     def __dir__(self):
         return self.__dict__.keys() + self._valid_parameters()
@@ -260,37 +270,41 @@ class ScriptInterfaceHelper(PScriptInterface):
             try:
                 return self.__dict__[attr]
             except KeyError:
-                raise AttributeError("Class "+self.__class__.__name__+" does not have an attribute "+attr)
+                raise AttributeError(
+                    "Class " + self.__class__.__name__ + " does not have an attribute " + attr)
 
     def __setattr__(self, attr, value):
         if attr in self._valid_parameters():
-            self.set_params(**{attr:value})
+            self.set_params(**{attr: value})
         else:
             self.__dict__[attr] = value
 
-    def generate_caller(self,method_name):
+    def generate_caller(self, method_name):
         def template_method(**kwargs):
-            res=self.call_method(method_name,**kwargs)
+            res = self.call_method(method_name, **kwargs)
             return res
 
         return template_method
 
     def define_bound_methods(self):
         for method_name in self._so_bind_methods:
-            setattr(self,method_name,self.generate_caller(method_name))
+            setattr(self, method_name, self.generate_caller(method_name))
 
 # Map from script object names to corresponding python classes
-_python_class_by_so_name ={}
+_python_class_by_so_name = {}
+
 
 def script_interface_register(c):
     """Decorator used to register script interface classes
        This will store a name<->class relationship in a registry, so that parameters
-       of type object can be instanciated as the correct python class
+       of type object can be instantiated as the correct python class
     """
-    if not hasattr(c,"_so_name"):
-        raise Exception("Python classes representing a script object must define an _so_name attribute at class level")
-    _python_class_by_so_name[c._so_name]=c
+    if not hasattr(c, "_so_name"):
+        raise Exception(
+            "Python classes representing a script object must define an _so_name attribute at class level")
+    _python_class_by_so_name[c._so_name] = c
     return c
+
 
 def init():
     initialize()

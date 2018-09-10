@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -34,9 +34,10 @@ public:
                          int delta_N)
       : AccumulatorBase(delta_N), m_obs(obs), m_acc(obs->n_values()) {}
 
-  virtual void update() override;
+  void update() override;
   std::vector<double> get_mean();
   std::vector<double> get_variance();
+  std::vector<double> get_std_error();
   /* Partial serialization of state that is not accessible
      via the interface. */
   std::string get_internal_state() const;

@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+   Copyright (C) 2010-2018 The ESPResSo project
 
    This file is part of ESPResSo.
 
@@ -24,14 +24,14 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
-#include "interaction_data.hpp"
-#include "random.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
+#include <random>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-static int max_ran = 1000000;
 static CUDA_global_part_vars global_part_vars_host = {0, 0, 0};
 static __device__ __constant__ CUDA_global_part_vars global_part_vars_device;
 
@@ -75,8 +75,9 @@ void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
   } else {
     CU_err = cudaGetLastError();
     if (CU_err != cudaSuccess) {
-      fprintf(stderr, "Error found during memory operation. Possibly however "
-                      "from an failed operation before. %s:%u.\n",
+      fprintf(stderr,
+              "Error found during memory operation. Possibly however "
+              "from an failed operation before. %s:%u.\n",
               file, line);
       printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
       if (CU_err == cudaErrorInvalidValue)
@@ -99,8 +100,9 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
 #endif
   CU_err = cudaGetLastError();
   if (CU_err != cudaSuccess) {
-    fprintf(stderr, "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d "
-                    "%d in %s:%u\n",
+    fprintf(stderr,
+            "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d "
+            "%d in %s:%u\n",
             this_node, cudaGetErrorString(CU_err), function, block.x, block.y,
             block.z, grid.x, grid.y, grid.z, file, line);
     errexit();
@@ -120,7 +122,7 @@ __device__ unsigned int getThreadIndex() {
  * rn
  * seed
  * storearray (Output)
-*/
+ */
 __global__ void init_particle_force(float *particle_forces_device,
                                     float *particle_torques_device,
                                     CUDA_particle_seed *particle_seeds_device) {
@@ -145,7 +147,7 @@ __global__ void init_particle_force(float *particle_forces_device,
 
 /** kernel for the initalisation of the fluid composition
  * @param *fluid_composition_device Pointer to local fluid composition (Output)
-*/
+ */
 __global__ void
 init_fluid_composition(CUDA_fluid_composition *fluid_composition_device) {
 
@@ -163,7 +165,7 @@ init_fluid_composition(CUDA_fluid_composition *fluid_composition_device) {
 
 /** kernel for the initalisation of the partikel force array
  * @param *particle_forces_device	pointer to local particle force (Input)
-*/
+ */
 __global__ void reset_particle_force(float *particle_forces_device,
                                      float *particle_torques_device) {
 
@@ -197,7 +199,7 @@ void gpu_change_number_of_part_to_comm() {
   if (global_part_vars_host.number_of_particles != n_part &&
       global_part_vars_host.communication_enabled == 1 && this_node == 0) {
 
-    global_part_vars_host.seed = (unsigned int)i_random(max_ran);
+    global_part_vars_host.seed = (unsigned int)std::random_device{}();
     global_part_vars_host.number_of_particles = n_part;
 
     cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device,
@@ -205,34 +207,54 @@ void gpu_change_number_of_part_to_comm() {
                                      sizeof(CUDA_global_part_vars)));
 
     // if the arrays exists free them to prevent memory leaks
-    if (particle_forces_host)
-      cudaFreeHost(particle_forces_host);
-    if (particle_data_host)
-      cudaFreeHost(particle_data_host);
-    if (particle_forces_device)
+    if (particle_forces_host) {
+      cuda_safe_mem(cudaFreeHost(particle_forces_host));
+      particle_forces_host = nullptr;
+    }
+    if (particle_data_host) {
+      cuda_safe_mem(cudaFreeHost(particle_data_host));
+      particle_data_host = nullptr;
+    }
+    if (particle_forces_device) {
       cudaFree(particle_forces_device);
-    if (particle_data_device)
+      particle_forces_device = nullptr;
+    }
+    if (particle_data_device) {
       cudaFree(particle_data_device);
-    if (particle_seeds_device)
-      cudaFree(particle_seeds_device);
+      particle_data_device = nullptr;
+    }
+    if (particle_seeds_device) {
+      cuda_safe_mem(cudaFree(particle_seeds_device));
+      particle_seeds_device = nullptr;
+    }
 #ifdef ENGINE
-    if (host_v_cs)
+    if (host_v_cs) {
       cudaFreeHost(host_v_cs);
+      host_v_cs = nullptr;
+    }
 #endif
 #if (defined DIPOLES || defined ROTATION)
-    if (particle_torques_host)
+    if (particle_torques_host) {
       cudaFreeHost(particle_torques_host);
+      particle_torques_host = nullptr;
+    }
 #endif
 #ifdef SHANCHEN
-    if (fluid_composition_host)
-      cudaFreeHost(fluid_composition_host);
-    if (fluid_composition_device)
-      cudaFree(fluid_composition_device);
+    if (fluid_composition_host) {
+      cuda_safe_mem(cudaFreeHost(fluid_composition_host));
+      fluid_composition_host = nullptr;
+    }
+    if (fluid_composition_device) {
+      cuda_safe_mem(cudaFree(fluid_composition_device));
+      fluid_composition_device = nullptr;
+    }
 #endif
 
 #ifdef ROTATION
-    if (particle_torques_device)
-      cudaFree(particle_torques_device);
+    if (particle_torques_device) {
+      cuda_safe_mem(cudaFree(particle_torques_device));
+      particle_torques_device = nullptr;
+    }
 #endif
 
     if (global_part_vars_host.number_of_particles) {

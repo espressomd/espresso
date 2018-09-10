@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -18,19 +18,18 @@
 */
 #include "config.hpp"
 
-#include "initialize.hpp"
 #include "ScriptInterface.hpp"
+#include "initialize.hpp"
 
 #include "CollisionDetection.hpp"
-
 
 namespace ScriptInterface {
 namespace CollisionDetection {
 
-
 void initialize() {
 #ifdef COLLISION_DETECTION
-  ScriptInterface::register_new<ScriptInterface::CollisionDetection::CollisionDetection>(
+  ScriptInterface::register_new<
+      ScriptInterface::CollisionDetection::CollisionDetection>(
       "CollisionDetection::CollisionDetection");
 #endif
 }

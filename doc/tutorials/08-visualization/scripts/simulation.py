@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 
 from matplotlib import pyplot
@@ -25,6 +41,7 @@ lj_cap = 20
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l, box_l, box_l])
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -63,8 +80,7 @@ for i in range(n_part):
     system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
 system.analysis.dist_to(0)
-act_min_dist = system.analysis.mindist()
-system.cell_system.max_num_cells = 2744
+act_min_dist = system.analysis.min_dist()
 
 #############################################################
 #  Warmup Integration                                       #
@@ -79,7 +95,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
     i += 1
 
 #   Increase LJ cap
@@ -93,6 +109,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 # remove force capping
 lj_cap = 0
 system.force_cap = lj_cap
+
 
 def main():
     for i in range(0, int_n_times):

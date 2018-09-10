@@ -1,5 +1,8 @@
+"""
+This sample sets up a Lennard-Jones fluid. The particles in the system are of two types: Type 0 and Type 1. Type 0 particles interact with each other via a repulsive WCA interaction. Type 1 particles neither interact with themselves nor with Type 0 particles. The distribution of minimum distances between particles of Type 0 and Type 1 is recorded.
+"""
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,8 +22,11 @@
 from __future__ import print_function
 import numpy as np
 import espressomd
+
+required_features = ["LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import thermostat
-from samples_common import open
 
 print("""
 =======================================================
@@ -49,7 +55,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
@@ -61,7 +67,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 # warmup integration (with capped LJ potential)
 warm_steps = 100
 warm_n_times = 30
-# do the warmup until the particles have at least the distance min__dist
+# do the warmup until the particles have at least the distance min_dist
 min_dist = 0.9
 
 # integration
@@ -116,7 +122,7 @@ for i in range(n_part):
             type=1, id=i, pos=np.random.random(3) * system.box_l)
 
 
-print("Simulate {} particles in a cubic simulation box {} at density {}."
+print("Simulate {} particles in a cubic simulation box of length {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
@@ -152,7 +158,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
-#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
+# print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" %
+# (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
 #   write observables
@@ -196,7 +203,8 @@ for i in range(0, int_n_times):
 
     system.integrator.run(int_steps)
 
-    r, dist = system.analysis.distribution(type_list_a=distr_type_list_a, type_list_b=distr_type_list_b,
+    r, dist = system.analysis.distribution(
+        type_list_a=distr_type_list_a, type_list_b=distr_type_list_b,
                                            r_min=distr_r_min, r_max=distr_r_max, r_bins=distr_r_bins,
                                            log_flag=distr_log_flag, int_flag=distr_int_flag)
     distr_r = r
@@ -238,7 +246,6 @@ for i in range(n_part):
 obs_file.close()
 set_file.close()
 end_file.close()
-# es._espressoHandle.die()
 
 # terminate program
 print("\nFinished.")
