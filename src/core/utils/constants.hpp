@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef UTILS_CONSTANTS_HPP
 #define UTILS_CONSTANTS_HPP
 
@@ -14,9 +32,9 @@
 /** Pi to the power 1/3. */
 #define driwu2 1.25992104989487316476721060728
 
-/// error code if no error occured
+/// error code if no error occurred
 #define ES_OK 0
-/// error code if an error occured
+/// error code if an error occurred
 #define ES_ERROR 1
 
 /** space necessary for an (64-bit) integer with sprintf.

@@ -21,38 +21,40 @@
 
 #ifdef DIPOLAR_BARNES_HUT
 
-#include "errorhandling.hpp"
-#include "SystemInterface.hpp"
-#include "EspressoSystemInterface.hpp"
-#include <iostream>
 #include "Actor.hpp"
 #include "DipolarBarnesHut_cuda.cuh"
-#include "grid.hpp"
+#include "EspressoSystemInterface.hpp"
+#include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
-#include "interaction_data.hpp"
+#include "errorhandling.hpp"
+#include "grid.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include <iostream>
 
 #ifndef ACTOR_DIPOLARBARNESHUT_HPP
 #define ACTOR_DIPOLARBARNESHUT_HPP
 
-//This needs to be done in the .cu file too
+// This needs to be done in the .cu file too
 typedef float dds_float;
 
 class DipolarBarnesHut : public Actor {
 public:
-  DipolarBarnesHut(SystemInterface &s, float epssq, float itolsq)
-  {
-	k = coulomb.Dprefactor;
-	m_epssq = epssq;
-	m_itolsq = itolsq;
-	setBHPrecision(&m_epssq,&m_itolsq);
-	if(!s.requestFGpu())
-      std::cerr << "DipolarBarnesHut needs access to forces on GPU!" << std::endl;
+  DipolarBarnesHut(SystemInterface &s, float epssq, float itolsq) {
+    k = coulomb.Dprefactor;
+    m_epssq = epssq;
+    m_itolsq = itolsq;
+    setBHPrecision(&m_epssq, &m_itolsq);
+    if (!s.requestFGpu())
+      std::cerr << "DipolarBarnesHut needs access to forces on GPU!"
+                << std::endl;
 
-    if(!s.requestRGpu())
-      std::cerr << "DipolarBarnesHut needs access to positions on GPU!" << std::endl;
+    if (!s.requestRGpu())
+      std::cerr << "DipolarBarnesHut needs access to positions on GPU!"
+                << std::endl;
 
-    if(!s.requestDipGpu())
-      std::cerr << "DipolarBarnesHut needs access to dipoles on GPU!" << std::endl;
+    if (!s.requestDipGpu())
+      std::cerr << "DipolarBarnesHut needs access to dipoles on GPU!"
+                << std::endl;
 
     allocBHmemCopy(s.npart_gpu(), &m_bh_data);
   };
@@ -60,14 +62,16 @@ public:
   void computeForces(SystemInterface &s) {
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
-	buildBoxBH(m_bh_data.blocks);
-	buildTreeBH(m_bh_data.blocks);
-	summarizeBH(m_bh_data.blocks);
-	sortBH(m_bh_data.blocks);
-	if (forceBH(&m_bh_data,k,s.fGpuBegin(),s.torqueGpuBegin())) {
-	     fprintf(stderr, "forceBH: some of kernels encounter the algorithm functional error");
-	     errexit();
-	}
+    buildBoxBH(m_bh_data.blocks);
+    buildTreeBH(m_bh_data.blocks);
+    summarizeBH(m_bh_data.blocks);
+    sortBH(m_bh_data.blocks);
+    if (forceBH(&m_bh_data, k, s.fGpuBegin(), s.torqueGpuBegin())) {
+      fprintf(
+          stderr,
+          "forceBH: some of kernels encounter the algorithm functional error");
+      errexit();
+    }
   };
   void computeEnergy(SystemInterface &s) {
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
@@ -76,17 +80,19 @@ public:
     buildTreeBH(m_bh_data.blocks);
     summarizeBH(m_bh_data.blocks);
     sortBH(m_bh_data.blocks);
-    if (energyBH(&m_bh_data,k,(&(((CUDA_energy*)s.eGpu())->dipolar)))) {
-             fprintf(stderr, "energyBH: some of kernels encounter the algorithm functional error");
-             errexit();
+    if (energyBH(&m_bh_data, k, (&(((CUDA_energy *)s.eGpu())->dipolar)))) {
+      fprintf(
+          stderr,
+          "energyBH: some of kernels encounter the algorithm functional error");
+      errexit();
     }
- };
+  };
 
 protected:
   float k;
   float m_epssq;
   float m_itolsq;
-  BHData m_bh_data = {0,0,0,0,0,0,0,0,0,0,0,0,0};
+  BHData m_bh_data = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 };
 
 void activate_dipolar_barnes_hut(float epssq, float itolsq);

@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2010-2018 The ESPResSo project
 
 #
 # This file is part of ESPResSo.
@@ -39,6 +39,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
        3d: As long as the independently written p3m and p2nfft agree, we are save.
     """
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    s.seed  = s.cell_system.get_state()['n_nodes'] * [1234]
     s.time_step = 0.01
     s.cell_system.skin = .4
     s.periodicity = 1, 1, 1
@@ -63,9 +64,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
 
         # Particles
         data = np.genfromtxt(abspath("data/mdlc_reference_data_forces_torques.dat"))
-        for p in data[:, :]:
+        for p in data[:,:]:
             s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7])
-        s.part[:].rotation=(1,1,1)
+        s.part[:].rotation = (1, 1, 1)
 
         p3m = magnetostatics.DipolarP3M(prefactor=1, mesh=32, accuracy=1E-4)
         dlc = magnetostatic_extensions.DLC(maxPWerror=1E-5, gap_size=2.)
@@ -110,9 +111,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
 
         # Particles
         data = np.genfromtxt(abspath("data/p3m_magnetostatics_system.data"))
-        for p in data[:, :]:
+        for p in data[:,:]:
             s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7])
-        s.part[:].rotation=(1,1,1)
+        s.part[:].rotation = (1, 1, 1)
 
         p3m = magnetostatics.DipolarP3M(
             prefactor=1, mesh=32, accuracy=1E-6, epsilon="metallic")
@@ -158,8 +159,8 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
 
         # Particles
         data = np.genfromtxt(abspath("data/p3m_magnetostatics_system.data"))
-        for p in data[:, :]:
-            s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7],rotation=(1,1,1))
+        for p in data[:,:]:
+            s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7], rotation=(1, 1, 1))
 
         scafacos = magnetostatics.Scafacos(
             prefactor=1,

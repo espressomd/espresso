@@ -1,13 +1,33 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+This sample demonstrates how new bonds can be added between particles and how existing bond between particles can be deleted.
+"""
+
 from __future__ import print_function
 import espressomd
-from espressomd.interactions import *
+from espressomd import assert_features
 
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
-h = HarmonicBond(r_0=0, k=1)
-f = FeneBond(k=1, d_r_max=1)
-f2 = FeneBond(k=2, d_r_max=1)
+h = espressomd.interactions.HarmonicBond(r_0=0, k=1)
+f = espressomd.interactions.FeneBond(k=1, d_r_max=1)
+f2 = espressomd.interactions.FeneBond(k=2, d_r_max=1)
 
 print("\n**Defined three bond types:")
 print(h)

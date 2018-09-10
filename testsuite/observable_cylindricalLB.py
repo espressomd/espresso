@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 import sys
 import numpy as np
 import unittest as ut
@@ -16,7 +32,7 @@ class TestCylindricalLBObservable(ut.TestCase):
     Testcase for the CylindricalFluxDensityObservable.
 
     """
-    system = espressomd.System(box_l=(10,10,10))
+    system = espressomd.System(box_l=(10, 10, 10))
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     positions = []
@@ -67,7 +83,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         for i, p in enumerate(self.positions):
             tmp = p - np.array(self.params['center'])
             tmp = self.swap_axis_inverse(tmp, self.params['axis'])
-            positions[i, :] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(
+            positions[i,:] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(
                 tmp)
         return positions
 
@@ -131,7 +147,7 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['max_z'])
         # Normalization
         for i in range(self.params['n_r_bins']):
-            histogram[i, :, :] /= bin_volume[i]
+            histogram[i,:,:] /= bin_volume[i]
         return histogram
 
     def LB_fluxdensity_profile_test(self):
@@ -146,9 +162,9 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['n_phi_bins'],
             self.params['n_z_bins'],
             3)
-        core_hist_v_r = core_hist[:, :, :, 0]
-        core_hist_v_phi = core_hist[:, :, :, 1]
-        core_hist_v_z = core_hist[:, :, :, 2]
+        core_hist_v_r = core_hist[:,:,:, 0]
+        core_hist_v_phi = core_hist[:,:,:, 1]
+        core_hist_v_z = core_hist[:,:,:, 2]
         self.pol_positions = self.pol_coords()
         np_hist, _ = np.histogramdd(self.pol_positions, bins=(self.params['n_r_bins'],
                                                               self.params['n_phi_bins'],
@@ -164,6 +180,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(
             np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
+        self.assertEqual(p.n_values(), len(np_hist.flatten())*3)
 
     def LB_velocity_profile_at_particle_positions_test(self):
         self.set_fluid_velocity()
@@ -177,9 +194,9 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['n_phi_bins'],
             self.params['n_z_bins'],
             3)
-        core_hist_v_r = core_hist[:, :, :, 0]
-        core_hist_v_phi = core_hist[:, :, :, 1]
-        core_hist_v_z = core_hist[:, :, :, 2]
+        core_hist_v_r = core_hist[:,:,:, 0]
+        core_hist_v_phi = core_hist[:,:,:, 1]
+        core_hist_v_z = core_hist[:,:,:, 2]
         self.pol_positions = self.pol_coords()
         np_hist, _ = np.histogramdd(self.pol_positions, bins=(self.params['n_r_bins'],
                                                               self.params['n_phi_bins'],
@@ -196,6 +213,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
+        self.assertEqual(p.n_values(), len(np_hist.flatten())*3)
     
     def LB_velocity_profile_test(self):
         self.set_fluid_velocity_on_all_nodes()
@@ -217,9 +235,9 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['n_phi_bins'],
             self.params['n_z_bins'],
             3)
-        core_hist_v_r = core_hist[:, :, :, 0]
-        core_hist_v_phi = core_hist[:, :, :, 1]
-        core_hist_v_z = core_hist[:, :, :, 2]
+        core_hist_v_r = core_hist[:,:,:, 0]
+        core_hist_v_phi = core_hist[:,:,:, 1]
+        core_hist_v_z = core_hist[:,:,:, 2]
         self.pol_positions = self.pol_coords()
         np_hist, _ = np.histogramdd(self.pol_positions, bins=(self.params['n_r_bins'],
                                                               self.params['n_phi_bins'],
@@ -236,6 +254,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
+        self.assertEqual(p.n_values(), len(np_hist.flatten())*3)
 
     def test_x_axis(self):
         self.params['axis'] = 'x'

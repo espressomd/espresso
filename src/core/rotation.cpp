@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -29,7 +29,7 @@
  *  treated as 3D objects with 3 translational and 3 rotational degrees of
  * freedom if ROTATION
  *  flag is set in \ref config.hpp "config.h".
-*/
+ */
 
 #include "rotation.hpp"
 #include "cells.hpp"
@@ -38,10 +38,9 @@
 #include "forces.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
-#include "p3m.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
@@ -59,7 +58,7 @@
 
 #ifdef ROTATION
 
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -72,7 +71,7 @@ static void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
 
 /** convert quaternions to the director */
 /** Convert director to quaternions */
-int convert_quatu_to_quat(const Vector3d& d, Vector<4,double>& quat) {
+int convert_quatu_to_quat(const Vector3d &d, Vector<4, double> &quat) {
   double d_xy, dm;
   double theta2, phi2;
 
@@ -118,31 +117,30 @@ int convert_quatu_to_quat(const Vector3d& d, Vector<4,double>& quat) {
     the body-fixed frames.
     Taken from "Goldstein - Classical Mechanics" (Chapter 4.6 Eq. 4.47).
 */
-void define_rotation_matrix(Particle const &p, double A[9])
-{
-  double q0q0 =p.r.quat[0];
-  q0q0 *=q0q0;
+void define_rotation_matrix(Particle const &p, double A[9]) {
+  double q0q0 = p.r.quat[0];
+  q0q0 *= q0q0;
 
-  double q1q1 =p.r.quat[1];
-  q1q1 *=q1q1;
+  double q1q1 = p.r.quat[1];
+  q1q1 *= q1q1;
 
-  double q2q2 =p.r.quat[2];
-  q2q2 *=q2q2;
+  double q2q2 = p.r.quat[2];
+  q2q2 *= q2q2;
 
-  double q3q3 =p.r.quat[3];
-  q3q3 *=q3q3;
+  double q3q3 = p.r.quat[3];
+  q3q3 *= q3q3;
 
-  A[0 + 3*0] = q0q0 + q1q1 - q2q2 - q3q3;
-  A[1 + 3*1] = q0q0 - q1q1 + q2q2 - q3q3;
-  A[2 + 3*2] = q0q0 - q1q1 - q2q2 + q3q3;
+  A[0 + 3 * 0] = q0q0 + q1q1 - q2q2 - q3q3;
+  A[1 + 3 * 1] = q0q0 - q1q1 + q2q2 - q3q3;
+  A[2 + 3 * 2] = q0q0 - q1q1 - q2q2 + q3q3;
 
-  A[0 + 3*1] = 2*(p.r.quat[1]*p.r.quat[2] + p.r.quat[0]*p.r.quat[3]);
-  A[0 + 3*2] = 2*(p.r.quat[1]*p.r.quat[3] - p.r.quat[0]*p.r.quat[2]);
-  A[1 + 3*0] = 2*(p.r.quat[1]*p.r.quat[2] - p.r.quat[0]*p.r.quat[3]);
+  A[0 + 3 * 1] = 2 * (p.r.quat[1] * p.r.quat[2] + p.r.quat[0] * p.r.quat[3]);
+  A[0 + 3 * 2] = 2 * (p.r.quat[1] * p.r.quat[3] - p.r.quat[0] * p.r.quat[2]);
+  A[1 + 3 * 0] = 2 * (p.r.quat[1] * p.r.quat[2] - p.r.quat[0] * p.r.quat[3]);
 
-  A[1 + 3*2] = 2*(p.r.quat[2]*p.r.quat[3] + p.r.quat[0]*p.r.quat[1]);
-  A[2 + 3*0] = 2*(p.r.quat[1]*p.r.quat[3] + p.r.quat[0]*p.r.quat[2]);
-  A[2 + 3*1] = 2*(p.r.quat[2]*p.r.quat[3] - p.r.quat[0]*p.r.quat[1]);
+  A[1 + 3 * 2] = 2 * (p.r.quat[2] * p.r.quat[3] + p.r.quat[0] * p.r.quat[1]);
+  A[2 + 3 * 0] = 2 * (p.r.quat[1] * p.r.quat[3] + p.r.quat[0] * p.r.quat[2]);
+  A[2 + 3 * 1] = 2 * (p.r.quat[2] * p.r.quat[3] - p.r.quat[0] * p.r.quat[1]);
 }
 
 /** calculate the second derivative of the quaternion of a given particle
@@ -150,7 +148,8 @@ void define_rotation_matrix(Particle const &p, double A[9])
 void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
                 double Wd[3]) {
   /* calculate the first derivative of the quaternion */
-  /* Taken from "An improved algorithm for molecular dynamics simulation of rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
+  /* Taken from "An improved algorithm for molecular dynamics simulation of
+   * rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
   Qd[0] = 0.5 * (-p->r.quat[1] * p->m.omega[0] - p->r.quat[2] * p->m.omega[1] -
                  p->r.quat[3] * p->m.omega[2]);
 
@@ -164,24 +163,32 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
                  p->r.quat[0] * p->m.omega[2]);
 
   /* Calculate the angular acceleration. */
-  /* Taken from "An improved algorithm for molecular dynamics simulation of rigid molecules", Sonnenschein, Roland (1985), Eq. 5.*/
+  /* Taken from "An improved algorithm for molecular dynamics simulation of
+   * rigid molecules", Sonnenschein, Roland (1985), Eq. 5.*/
   if (p->p.rotation & ROTATION_X)
-    Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(p->p.rinertia[1]-p->p.rinertia[2]))/p->p.rinertia[0];
+    Wd[0] = (p->f.torque[0] + p->m.omega[1] * p->m.omega[2] *
+                                  (p->p.rinertia[1] - p->p.rinertia[2])) /
+            p->p.rinertia[0];
   else
     Wd[0] = 0.0;
   if (p->p.rotation & ROTATION_Y)
-    Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(p->p.rinertia[2]-p->p.rinertia[0]))/p->p.rinertia[1];
+    Wd[1] = (p->f.torque[1] + p->m.omega[2] * p->m.omega[0] *
+                                  (p->p.rinertia[2] - p->p.rinertia[0])) /
+            p->p.rinertia[1];
   else
     Wd[1] = 0.0;
   if (p->p.rotation & ROTATION_Z)
-    Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(p->p.rinertia[0]-p->p.rinertia[1]))/p->p.rinertia[2];
+    Wd[2] = (p->f.torque[2] + p->m.omega[0] * p->m.omega[1] *
+                                  (p->p.rinertia[0] - p->p.rinertia[1])) /
+            p->p.rinertia[2];
   else
     Wd[2] = 0.0;
 
   auto const S1 = Qd[0] * Qd[0] + Qd[1] * Qd[1] + Qd[2] * Qd[2] + Qd[3] * Qd[3];
 
   /* Calculate the second derivative of the quaternion. */
-  /* Taken from "An improved algorithm for molecular dynamics simulation of rigid molecules", Sonnenschein, Roland (1985), Eq. 8.*/
+  /* Taken from "An improved algorithm for molecular dynamics simulation of
+   * rigid molecules", Sonnenschein, Roland (1985), Eq. 8.*/
   Qdd[0] = 0.5 * (-p->r.quat[1] * Wd[0] - p->r.quat[2] * Wd[1] -
                   p->r.quat[3] * Wd[2]) -
            p->r.quat[0] * S1;
@@ -214,25 +221,21 @@ void propagate_omega_quat_particle(Particle *p) {
     return;
 
   // Clear rotational velocity for blocked rotation axes.
-  if (! (p->p.rotation & ROTATION_X))
-    p->m.omega[0]=0;
-  if (! (p->p.rotation & ROTATION_Y))
-    p->m.omega[1]=0;
-  if (! (p->p.rotation & ROTATION_Z))
-    p->m.omega[2]=0;
+  if (!(p->p.rotation & ROTATION_X))
+    p->m.omega[0] = 0;
+  if (!(p->p.rotation & ROTATION_Y))
+    p->m.omega[1] = 0;
+  if (!(p->p.rotation & ROTATION_Z))
+    p->m.omega[2] = 0;
 
-
-  
   define_Qdd(p, Qd, Qdd, S, Wd);
 
   /* Taken from "On the numerical integration of motion for rigid polyatomics:
    * The modified quaternion approach", Omeylan, Igor (1998), Eq. 12.*/
   lambda = 1 - S[0] * time_step_squared_half -
-           sqrt(1 -
-                time_step_squared *
-                    (S[0] +
-                     time_step *
-                         (S[1] + time_step_half / 2. * (S[2] - S[0] * S[0]))));
+           sqrt(1 - time_step_squared *
+                        (S[0] + time_step * (S[1] + time_step_half / 2. *
+                                                        (S[2] - S[0] * S[0]))));
 
   for (int j = 0; j < 3; j++) {
     p->m.omega[j] += time_step_half * Wd[j];
@@ -280,7 +283,7 @@ void convert_torques_propagate_omega() {
     // Skip particle if rotation is turned off entirely for it.
     if (!p.p.rotation)
       continue;
-    
+
     double A[9];
     define_rotation_matrix(p, A);
 
@@ -293,7 +296,7 @@ void convert_torques_propagate_omega() {
 
     if (thermo_switch & THERMO_LANGEVIN) {
 #if defined(VIRTUAL_SITES) && defined(THERMOSTAT_IGNORE_NON_VIRTUAL)
-      if (!p.p.isVirtual)
+      if (!p.p.is_virtual)
 #endif
       {
         friction_thermo_langevin_rotation(&p);
@@ -316,7 +319,6 @@ void convert_torques_propagate_omega() {
 
     if (!(p.p.rotation & ROTATION_Z))
       p.f.torque[2] = 0;
-
 
 #if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
     double omega_swim[3] = {0, 0, 0};
@@ -455,7 +457,6 @@ void convert_initial_torques() {
     if (!(p.p.rotation & ROTATION_Z))
       p.f.torque[2] = 0;
 
-
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
         this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
@@ -476,35 +477,30 @@ void convert_omega_body_to_space(const Particle *p, double *omega) {
              A[2 + 3 * 2] * p->m.omega[2];
 }
 
-Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& vec) {
-  Vector3d res={0,0,0};
+Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &vec) {
+  Vector3d res = {0, 0, 0};
   double A[9];
   define_rotation_matrix(p, A);
 
-  res[0] = A[0 + 3 * 0] * vec[0] + A[1 + 3 * 0] * vec[1] +
-             A[2 + 3 * 0] * vec[2];
-  res[1] = A[0 + 3 * 1] * vec[0] + A[1 + 3 * 1] * vec[1] +
-             A[2 + 3 * 1] * vec[2];
-  res[2] = A[0 + 3 * 2] * vec[0] + A[1 + 3 * 2] * vec[1] +
-             A[2 + 3 * 2] * vec[2];
-  
+  res[0] =
+      A[0 + 3 * 0] * vec[0] + A[1 + 3 * 0] * vec[1] + A[2 + 3 * 0] * vec[2];
+  res[1] =
+      A[0 + 3 * 1] * vec[0] + A[1 + 3 * 1] * vec[1] + A[2 + 3 * 1] * vec[2];
+  res[2] =
+      A[0 + 3 * 2] * vec[0] + A[1 + 3 * 2] * vec[1] + A[2 + 3 * 2] * vec[2];
+
   return res;
 }
 
-Vector3d convert_vector_space_to_body(const Particle& p, const Vector3d& v) {
-  Vector3d res={0,0,0};
+Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v) {
+  Vector3d res = {0, 0, 0};
   double A[9];
   define_rotation_matrix(p, A);
-  res[0] = A[0 + 3 * 0] * v[0] + A[0 + 3 * 1] * v[1] +
-                A[0 + 3 * 2] * v[2];
-  res[1] = A[1 + 3 * 0] * v[0] + A[1 + 3 * 1] * v[1] +
-                A[1 + 3 * 2] * v[2];
-  res[2] = A[2 + 3 * 0] * v[0] + A[2 + 3 * 1] * v[1] +
-                 A[2 + 3 * 2] * v[2];
+  res[0] = A[0 + 3 * 0] * v[0] + A[0 + 3 * 1] * v[1] + A[0 + 3 * 2] * v[2];
+  res[1] = A[1 + 3 * 0] * v[0] + A[1 + 3 * 1] * v[1] + A[1 + 3 * 2] * v[2];
+  res[2] = A[2 + 3 * 0] * v[0] + A[2 + 3 * 1] * v[1] + A[2 + 3 * 2] * v[2];
   return res;
 }
-
-
 
 void convert_torques_body_to_space(const Particle *p, double *torque) {
   double A[9];
@@ -537,16 +533,6 @@ void convert_vec_space_to_body(Particle *p, double const *v, double *res) {
   res[0] = A[0 + 3 * 0] * v[0] + A[0 + 3 * 1] * v[1] + A[0 + 3 * 2] * v[2];
   res[1] = A[1 + 3 * 0] * v[0] + A[1 + 3 * 1] * v[1] + A[1 + 3 * 2] * v[2];
   res[2] = A[2 + 3 * 0] * v[0] + A[2 + 3 * 1] * v[1] + A[2 + 3 * 2] * v[2];
-}
-
-void convert_vec_body_to_space(Particle *p, double const *v,double* res)
-{
-  double A[9];
-  define_rotation_matrix(*p, A);
-
-  res[0] = A[0 + 3*0]*v[0] + A[1 + 3*0]*v[1] + A[2 + 3*0]*v[2];
-  res[1] = A[0 + 3*1]*v[0] + A[1 + 3*1]*v[1] + A[2 + 3*1]*v[2];
-  res[2] = A[0 + 3*2]*v[0] + A[1 + 3*2]*v[1] + A[2 + 3*2]*v[2];
 }
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi

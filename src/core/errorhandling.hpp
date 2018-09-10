@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -103,9 +103,9 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
       ErrorHandling::RuntimeError::ErrorLevel::ERROR, __FILE__, __LINE__,      \
       __PRETTYFUNC__)
 
-#define runtimeWarningMsg()                                                      \
+#define runtimeWarningMsg()                                                    \
   ErrorHandling::_runtimeMessageStream(                                        \
-      ErrorHandling::RuntimeError::ErrorLevel::WARNING, __FILE__, __LINE__,      \
+      ErrorHandling::RuntimeError::ErrorLevel::WARNING, __FILE__, __LINE__,    \
       __PRETTYFUNC__)
 
 #define debugMsg()                                                             \
@@ -115,6 +115,6 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
 
 std::vector<RuntimeError> mpi_gather_runtime_errors();
 
-} /* ErrorHandling */
+} // namespace ErrorHandling
 
 #endif

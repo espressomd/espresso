@@ -1,11 +1,27 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 import numpy as np
 
 
-
 @script_interface_register
 class MeanVarianceCalculator(ScriptInterfaceHelper):
+
     """
     Accumulates results from observables.
 
@@ -35,9 +51,9 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
     _so_creation_policy = "LOCAL"
 
 
-
 @script_interface_register
 class Correlator(ScriptInterfaceHelper):
+
     """
     Calculates correlations based on results from observables.
 
@@ -74,8 +90,8 @@ class Correlator(ScriptInterfaceHelper):
                            consist of a complex and real part
                            :math:`A=(A_x+iA_y)`, and :math:`B=(B_x+iB_y)`, this
                            operation computes the result :math:`C=(C_x+iC_y)`,
-                           as: 
-                           
+                           as:
+
                            .. math::
 
                                 C_x = A_xB_x + A_yB_y\\\\
@@ -115,7 +131,7 @@ class Correlator(ScriptInterfaceHelper):
 
                            The values of :math:`w_x`, :math:`w_y`, and :math:`w_z`
                            are passed to the correlator as `args`
-                           
+
                            The above equations are a
                            generalization of the formula presented by Hoefling
                            et. al. :cite:`hofling11a`. For more information, see
@@ -124,7 +140,7 @@ class Correlator(ScriptInterfaceHelper):
                            is produced. If `fcs_acf` is used with other
                            observables than `ParticlePositions`, the physical
                            meaning of the result is unclear.
-    
+
     delta_N : :obj:`int`
         Number of timesteps between subsequent samples for the auto update mechanism.
 
@@ -153,14 +169,14 @@ class Correlator(ScriptInterfaceHelper):
                               going to the next level of the multiple tau
                               correlator. This is done by producing one value out of two.
                               The following compression functions are available:
-                                
+
                                 * `discard2`: (default value) discard the second value from the time series, use the first value as the result
 
                                 * `discard1`: discard the first value from the time series, use the second value as the result
-                                
+
                                 * `linear`: make a linear combination (average) of the two values
-                              
-                              If only `compress1` is specified, then 
+
+                              If only `compress1` is specified, then
                               the same compression function is used for both
                               observables. If both `compress1` and `compress2` are specified,
                               then `compress1` is used for `obs1` and `compress2` for `obs2`.
@@ -193,8 +209,10 @@ class Correlator(ScriptInterfaceHelper):
         res = np.array(self.call_method("get_correlation"))
         return res.reshape((self.n_result, 2 + self.dim_corr))
 
+
 @script_interface_register
 class AutoUpdateAccumulators(ScriptInterfaceHelper):
+
     """
     Class for handling auto-update of Accumulators used by
     :class:`espressomd.System`.

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -22,8 +22,8 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 
-#include "config.hpp"
 #include "VirtualSites.hpp"
+#include "config.hpp"
 #include "core/virtual_sites/VirtualSitesOff.hpp"
 #ifdef VIRTUAL_SITES
 
@@ -32,10 +32,12 @@ namespace VirtualSites {
 
 class VirtualSitesOff : public VirtualSites {
 public:
-  VirtualSitesOff()
-      : m_virtual_sites(new ::VirtualSitesOff()) {};
+  VirtualSitesOff() : m_virtual_sites(new ::VirtualSitesOff()){};
   /** Vs implementation we are wrapping */
-  std::shared_ptr<::VirtualSites> virtual_sites() override { return m_virtual_sites;};
+  std::shared_ptr<::VirtualSites> virtual_sites() override {
+    return m_virtual_sites;
+  };
+
 private:
   std::shared_ptr<::VirtualSitesOff> m_virtual_sites;
 };
@@ -44,4 +46,3 @@ private:
 } /* namespace ScriptInterface */
 #endif
 #endif
-

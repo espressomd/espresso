@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -72,7 +72,7 @@ cdef class Thermostat(object):
         """Recover a suspended thermostat
 
         If the thermostat had been suspended using .suspend(), it can
-        be reovered with this method.
+        be recovered with this method.
 
         """
         if self._state is not None:
@@ -93,9 +93,10 @@ cdef class Thermostat(object):
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
                 self.set_langevin(kT=thmst["kT"], gamma=thmst[
-                                  "gamma"], gamma_rotation=thmst["gamma_rotation"])
+                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"])
             if thmst["type"] == "LB":
-                self.set_lb(kT=thmst["kT"])
+                self.set_lb(
+                    kT=thmst["kT"], act_on_virtual=thmst["act_on_virtual"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])
@@ -119,6 +120,7 @@ cdef class Thermostat(object):
             lang_dict = {}
             lang_dict["type"] = "LANGEVIN"
             lang_dict["kT"] = temperature
+            lang_dict["act_on_virtual"] = thermo_virtual
             IF PARTICLE_ANISOTROPY:
                 lang_dict["gamma"] = [langevin_gamma[0],
                                       langevin_gamma[1],
@@ -140,6 +142,7 @@ cdef class Thermostat(object):
             lb_dict = {}
             lb_dict["type"] = "LB"
             lb_dict["kT"] = temperature
+            lb_dict["act_on_virtual"] = thermo_virtual
             thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
             npt_dict = {}
@@ -164,11 +167,14 @@ cdef class Thermostat(object):
     def turn_off(self):
         """
         Turns off all the thermostat and sets all the thermostat variables to zero.
-        
+
         """
 
         global temperature
+        global thermo_virtual
+        thermo_virtual = True
         temperature = 0.
+        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         global langevin_gamma
         IF PARTICLE_ANISOTROPY:
@@ -189,11 +195,11 @@ cdef class Thermostat(object):
         global thermo_switch
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-        # here other thermostats stuff
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
-    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
+    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None,
+                     act_on_virtual=False):
         """
         Sets the Langevin thermostat with required parameters 'kT' 'gamma'
         and optional parameter 'gamma_rotation'.
@@ -210,6 +216,8 @@ cdef class Thermostat(object):
                          The same applies to 'gamma_rotation', which requires the feature
                          'ROTATION' to work properly. But also accepts three floating point numbers
                          if 'PARTICLE_ANISOTROPY' is also compiled in.
+        act_on_virtual : :obj:`bool`, optional
+                If true the thermostat will act on virtual sites, default is off.
 
         """
 
@@ -314,13 +322,18 @@ cdef class Thermostat(object):
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
+
+        global thermo_virtual
+        thermo_virtual = act_on_virtual
+        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+
         IF ROTATION:
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
         return True
 
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
-        def set_lb(self, kT=None):
+        def set_lb(self, kT=None, act_on_virtual=True):
             """
             Sets the LB thermostat with required parameter 'kT'.
 
@@ -330,6 +343,8 @@ cdef class Thermostat(object):
             ----------
             kT : :obj:`float`
                  Specifies the thermal energy of the heat bath.
+            act_on_virtual : :obj:`bool`, optional
+                If true the thermostat will act on virtual sites, default is on.
 
             """
 
@@ -346,6 +361,11 @@ cdef class Thermostat(object):
             thermo_switch = (thermo_switch or THERMO_LB)
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_TEMPERATURE)
+
+            global thermo_virtual
+            thermo_virtual = act_on_virtual
+            mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+
             return True
 
     IF NPT:

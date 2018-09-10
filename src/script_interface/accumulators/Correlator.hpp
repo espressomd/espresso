@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -78,8 +78,8 @@ public:
     return m_correlator;
   }
 
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
     if (method == "update")
       correlator()->update();
     if (method == "finalize")
@@ -99,11 +99,14 @@ public:
   }
 
   std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
-    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_correlator);
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(
+        m_correlator);
   }
 
-  std::shared_ptr<const ::Accumulators::AccumulatorBase> accumulator() const override {
-    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_correlator);
+  std::shared_ptr<const ::Accumulators::AccumulatorBase>
+  accumulator() const override {
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(
+        m_correlator);
   }
 
 private:
@@ -121,7 +124,7 @@ private:
   std::shared_ptr<Observables::Observable> m_obs2;
 };
 
-} /* namespace Correlators */
+} // namespace Accumulators
 } /* namespace ScriptInterface */
 
 #endif
