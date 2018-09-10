@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -35,7 +35,7 @@
 
 Cell *local;
 
-Cell *nsq_position_to_cell(double pos[3]) { return local; }
+Cell *nsq_position_to_cell(const double pos[3]) { return local; }
 
 void nsq_topology_release() {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_release:\n", this_node));
@@ -66,9 +66,6 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
 }
 
 void nsq_topology_init(CellPList *old) {
-  Particle *part;
-  int n, p, np, diff;
-
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
@@ -82,27 +79,35 @@ void nsq_topology_init(CellPList *old) {
   realloc_cellplist(&local_cells, local_cells.n = 1);
   local_cells.cell[0] = local;
 
-  cells[this_node].m_neighbors.clear();
-
   realloc_cellplist(&ghost_cells, ghost_cells.n = n_nodes - 1);
-  auto c = 0;
-  for (n = 0; n < n_nodes; n++)
+  int c = 0;
+  for (int n = 0; n < n_nodes; n++)
     if (n != this_node)
       ghost_cells.cell[c++] = &cells[n];
 
-  /* distribute force calculation work  */
+  std::vector<Cell *> red_neighbors;
+  std::vector<Cell *> black_neighbors;
 
-  for (n = 0; n < n_nodes; n++) {
-    diff = n - this_node;
+  /* distribute force calculation work  */
+  for (int n = 0; n < n_nodes; n++) {
+    auto const diff = n - this_node;
     /* simple load balancing formula. Basically diff % n, where n >= n_nodes, n
        odd.
        The node itself is also left out, as it is treated differently */
+    if (diff == 0) {
+      continue;
+    }
+
     if (((diff > 0 && (diff % 2) == 0) || (diff < 0 && ((-diff) % 2) == 1))) {
       CELL_TRACE(
           fprintf(stderr, "%d: doing interactions with %d\n", this_node, n));
-      cells[this_node].m_neighbors.push_back(&cells[n]);
+      red_neighbors.push_back(&cells.at(n));
+    } else {
+      black_neighbors.push_back(&cells.at(n));
     }
   }
+
+  local->m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
 
   /* create communicators */
   nsq_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
@@ -113,7 +118,7 @@ void nsq_topology_init(CellPList *old) {
 
   /* here we just decide what to transfer where */
   if (n_nodes > 1) {
-    for (n = 0; n < n_nodes; n++) {
+    for (int n = 0; n < n_nodes; n++) {
       /* use the prefetched send buffers. Node 0 transmits first and never
        * prefetches. */
       if (this_node == 0 || this_node != n) {
@@ -139,10 +144,10 @@ void nsq_topology_init(CellPList *old) {
   }
 
   /* copy particles */
-  for (c = 0; c < old->n; c++) {
-    part = old->cell[c]->part;
-    np = old->cell[c]->n;
-    for (p = 0; p < np; p++)
+  for (int c = 0; c < old->n; c++) {
+    auto part = old->cell[c]->part;
+    auto np = old->cell[c]->n;
+    for (int p = 0; p < np; p++)
       append_unindexed_particle(local, std::move(part[p]));
   }
   update_local_particles(local);

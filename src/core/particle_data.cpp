@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -31,12 +31,13 @@
 */
 #include "particle_data.hpp"
 #include "PartCfg.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
 #include "virtual_sites.hpp"
@@ -168,7 +169,7 @@ void build_particle_node() { mpi_who_has(); }
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
-*/
+ */
 int get_particle_node(int id) {
   if ((id < 0) or (id > max_seen_particle))
     throw std::runtime_error("Invalid particle id!");
@@ -316,7 +317,7 @@ namespace {
 /* Limit cache to 100 MiB */
 std::size_t const max_cache_size = (100ul * 1048576ul) / sizeof(Particle);
 Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
-}
+} // namespace
 
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 
@@ -335,14 +336,10 @@ const Particle &get_particle_data(int part) {
   }
 
   /* Cache miss, fetch the particle,
-  * put it into the cache and return a pointer into the cache. */
+   * put it into the cache and return a pointer into the cache. */
   auto const cache_ptr =
       particle_fetch_cache.put(part, mpi_recv_part(pnode, part));
   return *cache_ptr;
-}
-
-const Particle *get_particle_data_ptr(int part) {
-  return &get_particle_data(part);
 }
 
 void mpi_get_particles_slave(int, int) {
@@ -512,6 +509,8 @@ int set_particle_rotational_inertia(int part, double rinertia[3]) {
   mpi_send_rotational_inertia(pnode, part, rinertia);
   return ES_OK;
 }
+#else
+const constexpr double ParticleProperties::rinertia[3];
 #endif
 #ifdef ROTATION
 int set_particle_rotation(int part, int rot) {
@@ -567,10 +566,12 @@ int set_particle_dip(int part, double dip[3]) {
 #endif
 
 #ifdef VIRTUAL_SITES
-int set_particle_virtual(int part, int isVirtual) {
+int set_particle_virtual(int part, int is_virtual) {
   auto const pnode = get_particle_node(part);
 
-  mpi_send_virtual(pnode, part, isVirtual);
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_virtual(pnode, part, is_virtual);
   return ES_OK;
 }
 #endif
@@ -624,7 +625,7 @@ int set_particle_type(int p_id, int type) {
     // it from the list which contains it
     auto const &cur_par = get_particle_data(p_id);
     int prev_type = cur_par.p.type;
-    if (prev_type != type ) {
+    if (prev_type != type) {
       // particle existed before so delete it from the list
       remove_id_from_map(p_id, prev_type);
     }
@@ -782,7 +783,7 @@ int change_particle_bond(int part, int *bond, int _delete) {
     _delete = 1;
 
   if (bond != nullptr) {
-    if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
+    if (bond[0] < 0 || bond[0] >= bonded_ia_params.size()) {
       runtimeErrorMsg() << "invalid/unknown bonded interaction type "
                         << bond[0];
       return ES_ERROR;
@@ -825,7 +826,7 @@ void local_remove_particle(int part) {
 
   /* the tricky - say ugly - part: determine
      the cell the particle is located in by checking
-     wether the particle address is inside the array */
+     whether the particle address is inside the array */
   for (c = 0; c < local_cells.n; c++) {
     tmp = local_cells.cell[c];
     ind = p - tmp->part;
@@ -876,8 +877,9 @@ void local_place_particle(int part, const double p[3], int _new) {
     /* allocate particle anew */
     cell = cell_structure.position_to_cell(pp);
     if (!cell) {
-      fprintf(stderr, "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
-                      "does not belong on this node\n",
+      fprintf(stderr,
+              "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
+              "does not belong on this node\n",
               this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
       errexit();
     }
@@ -895,12 +897,6 @@ void local_place_particle(int part, const double p[3], int _new) {
   PART_TRACE(fprintf(
       stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
       this_node, part, p[0], p[1], p[2]));
-
-#ifdef LEES_EDWARDS
-  pt->m.v[0] += vv[0];
-  pt->m.v[1] += vv[1];
-  pt->m.v[2] += vv[2];
-#endif
 
   memmove(pt->r.p.data(), pp, 3 * sizeof(double));
   memmove(pt->l.i.data(), i, 3 * sizeof(int));
@@ -1019,8 +1015,9 @@ void remove_all_bonds_to(int identity) {
         i += 1 + partners;
     }
     if (i != bl->n) {
-      fprintf(stderr, "%d: INTERNAL ERROR: bond information corrupt for "
-                      "particle %d, exiting...\n",
+      fprintf(stderr,
+              "%d: INTERNAL ERROR: bond information corrupt for "
+              "particle %d, exiting...\n",
               this_node, p.p.identity);
       errexit();
     }
@@ -1111,7 +1108,7 @@ void add_partner(IntList *il, int i, int j, int distance) {
   il->push_back(j);
   il->push_back(distance);
 }
-}
+} // namespace
 
 int change_exclusion(int part1, int part2, int _delete) {
   if (particle_exists(part1) && particle_exists(part2)) {
@@ -1178,7 +1175,7 @@ void auto_exclusions(int distance) {
 
   /* setup the exclusions and clear the arrays. We do not setup the exclusions
      up there, since on_part_change clears the partCfg, so that we would have to
-     restore it continously. Of course this could be optimized by bundling the
+     restore it continuously. Of course this could be optimized by bundling the
      exclusions, but this is only done once and the overhead is as much as for
      setting the bonds, which the user apparently accepted.
   */
@@ -1207,7 +1204,7 @@ void init_type_map(int type) {
 }
 
 void remove_id_from_map(int part_id, int type) {
-  if(particle_type_map.find(type)!=particle_type_map.end())
+  if (particle_type_map.find(type) != particle_type_map.end())
     particle_type_map.at(type).erase(part_id);
 }
 
@@ -1219,7 +1216,7 @@ int get_random_p_id(int type) {
 }
 
 void add_id_to_type_map(int part_id, int type) {
-  if(particle_type_map.find(type)!=particle_type_map.end())
+  if (particle_type_map.find(type) != particle_type_map.end())
     particle_type_map.at(type).insert(part_id);
 }
 
@@ -1241,7 +1238,9 @@ void pointer_to_torque_lab(Particle const *p, double const *&res) {
   res = p->f.torque.data();
 }
 
-void pointer_to_quat(Particle const *p, double const *&res) { res = p->r.quat.data(); }
+void pointer_to_quat(Particle const *p, double const *&res) {
+  res = p->r.quat.data();
+}
 
 void pointer_to_quatu(Particle const *p, double const *&res) {
   res = p->r.quatu.data();
@@ -1254,7 +1253,7 @@ void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 
 #ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, int const *&res) {
-  res = &(p->p.isVirtual);
+  res = &(p->p.is_virtual);
 }
 #endif
 
@@ -1272,7 +1271,9 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
 #endif
 
 #ifdef DIPOLES
-void pointer_to_dip(Particle const *p, double const *&res) { res = p->r.dip.data(); }
+void pointer_to_dip(Particle const *p, double const *&res) {
+  res = p->r.dip.data();
+}
 
 void pointer_to_dipm(Particle const *p, double const *&res) {
   res = &(p->p.dipm);
@@ -1339,18 +1340,16 @@ void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
 #endif
 
 #ifdef AFFINITY
-void pointer_to_bond_site(Particle const* p, double const*& res) {
-  res =p->p.bond_site.data();
+void pointer_to_bond_site(Particle const *p, double const *&res) {
+  res = p->p.bond_site.data();
 }
 #endif
 
 #ifdef MEMBRANE_COLLISION
-void pointer_to_out_direction(const Particle* p, const double*& res) {
- res = p->p.out_direction.data();
+void pointer_to_out_direction(const Particle *p, const double *&res) {
+  res = p->p.out_direction.data();
 }
 #endif
-
-
 
 bool particle_exists(int part_id) {
   if (particle_node.empty())

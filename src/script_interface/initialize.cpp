@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -17,21 +17,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-#include "config.hpp"
 #include "initialize.hpp"
 #include "cluster_analysis/initialize.hpp"
+#include "config.hpp"
 #include "constraints/initialize.hpp"
-#include "shapes/initialize.hpp"
 #include "pair_criteria/initialize.hpp"
+#include "shapes/initialize.hpp"
 #ifdef H5MD
 #include "h5md/initialize.hpp"
 #endif
-#include "observables/initialize.hpp"
 #include "accumulators/initialize.hpp"
-#include "lbboundaries/initialize.hpp"
 #include "collision_detection/initialize.hpp"
+#include "lbboundaries/initialize.hpp"
 #include "mpiio/initialize.hpp"
+#include "observables/initialize.hpp"
 
 #include "ComFixed.hpp"
 
@@ -59,9 +58,9 @@ void initialize() {
   VirtualSites::initialize();
   MPIIO::initialize();
   CollisionDetection::initialize();
- 
 
-  ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
+  ScriptInterface::register_new<Testing::VariantTester>(
+      "Testing::VariantTester");
   ScriptInterface::register_new<ComFixed>("ComFixed");
 }
 

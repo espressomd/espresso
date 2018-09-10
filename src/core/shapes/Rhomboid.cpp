@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -26,7 +26,8 @@
 using namespace std;
 
 namespace Shapes {
-int Rhomboid::calculate_dist(const double *ppos, double *dist, double *vec) const {
+int Rhomboid::calculate_dist(const double *ppos, double *dist,
+                             double *vec) const {
   double axb[3], bxc[3], axc[3];
   double A, B, C;
   double a_dot_bxc, b_dot_axc, c_dot_axb;
@@ -81,13 +82,16 @@ int Rhomboid::calculate_dist(const double *ppos, double *dist, double *vec) cons
 
   // check for cone at pos+a
 
-  A = (ppos[0] - m_pos[0] - m_a[0]) * bxc[0] + (ppos[1] - m_pos[1] - m_a[1]) * bxc[1] +
+  A = (ppos[0] - m_pos[0] - m_a[0]) * bxc[0] +
+      (ppos[1] - m_pos[1] - m_a[1]) * bxc[1] +
       (ppos[2] - m_pos[2] - m_a[2]) * bxc[2];
   A /= a_dot_bxc;
-  B = (ppos[0] - m_pos[0] - m_a[0]) * axc[0] + (ppos[1] - m_pos[1] - m_a[1]) * axc[1] +
+  B = (ppos[0] - m_pos[0] - m_a[0]) * axc[0] +
+      (ppos[1] - m_pos[1] - m_a[1]) * axc[1] +
       (ppos[2] - m_pos[2] - m_a[2]) * axc[2];
   B /= b_dot_axc;
-  C = (ppos[0] - m_pos[0] - m_a[0]) * axb[0] + (ppos[1] - m_pos[1] - m_a[1]) * axb[1] +
+  C = (ppos[0] - m_pos[0] - m_a[0]) * axb[0] +
+      (ppos[1] - m_pos[1] - m_a[1]) * axb[1] +
       (ppos[2] - m_pos[2] - m_a[2]) * axb[2];
   C /= c_dot_axb;
 
@@ -104,13 +108,16 @@ int Rhomboid::calculate_dist(const double *ppos, double *dist, double *vec) cons
 
   // check for cone at pos+b
 
-  A = (ppos[0] - m_pos[0] - m_b[0]) * bxc[0] + (ppos[1] - m_pos[1] - m_b[1]) * bxc[1] +
+  A = (ppos[0] - m_pos[0] - m_b[0]) * bxc[0] +
+      (ppos[1] - m_pos[1] - m_b[1]) * bxc[1] +
       (ppos[2] - m_pos[2] - m_b[2]) * bxc[2];
   A /= a_dot_bxc;
-  B = (ppos[0] - m_pos[0] - m_b[0]) * axc[0] + (ppos[1] - m_pos[1] - m_b[1]) * axc[1] +
+  B = (ppos[0] - m_pos[0] - m_b[0]) * axc[0] +
+      (ppos[1] - m_pos[1] - m_b[1]) * axc[1] +
       (ppos[2] - m_pos[2] - m_b[2]) * axc[2];
   B /= b_dot_axc;
-  C = (ppos[0] - m_pos[0] - m_b[0]) * axb[0] + (ppos[1] - m_pos[1] - m_b[1]) * axb[1] +
+  C = (ppos[0] - m_pos[0] - m_b[0]) * axb[0] +
+      (ppos[1] - m_pos[1] - m_b[1]) * axb[1] +
       (ppos[2] - m_pos[2] - m_b[2]) * axb[2];
   C /= c_dot_axb;
 
@@ -127,13 +134,16 @@ int Rhomboid::calculate_dist(const double *ppos, double *dist, double *vec) cons
 
   // check for cone at pos+c
 
-  A = (ppos[0] - m_pos[0] - m_c[0]) * bxc[0] + (ppos[1] - m_pos[1] - m_c[1]) * bxc[1] +
+  A = (ppos[0] - m_pos[0] - m_c[0]) * bxc[0] +
+      (ppos[1] - m_pos[1] - m_c[1]) * bxc[1] +
       (ppos[2] - m_pos[2] - m_c[2]) * bxc[2];
   A /= a_dot_bxc;
-  B = (ppos[0] - m_pos[0] - m_c[0]) * axc[0] + (ppos[1] - m_pos[1] - m_c[1]) * axc[1] +
+  B = (ppos[0] - m_pos[0] - m_c[0]) * axc[0] +
+      (ppos[1] - m_pos[1] - m_c[1]) * axc[1] +
       (ppos[2] - m_pos[2] - m_c[2]) * axc[2];
   B /= b_dot_axc;
-  C = (ppos[0] - m_pos[0] - m_c[0]) * axb[0] + (ppos[1] - m_pos[1] - m_c[1]) * axb[1] +
+  C = (ppos[0] - m_pos[0] - m_c[0]) * axb[0] +
+      (ppos[1] - m_pos[1] - m_c[1]) * axb[1] +
       (ppos[2] - m_pos[2] - m_c[2]) * axb[2];
   C /= c_dot_axb;
 
@@ -326,15 +336,18 @@ int Rhomboid::calculate_dist(const double *ppos, double *dist, double *vec) cons
 
   // check for prism at edge m_pos+a, b
 
-  A = (ppos[0] - m_pos[0] - m_a[0]) * bxc[0] + (ppos[1] - m_pos[1] - m_a[1]) * bxc[1] +
+  A = (ppos[0] - m_pos[0] - m_a[0]) * bxc[0] +
+      (ppos[1] - m_pos[1] - m_a[1]) * bxc[1] +
       (ppos[2] - m_pos[2] - m_a[2]) * bxc[2];
   A /= a_dot_bxc;
-  C = (ppos[0] - m_pos[0] - m_a[0]) * axb[0] + (ppos[1] - m_pos[1] - m_a[1]) * axb[1] +
+  C = (ppos[0] - m_pos[0] - m_a[0]) * axb[0] +
+      (ppos[1] - m_pos[1] - m_a[1]) * axb[1] +
       (ppos[2] - m_pos[2] - m_a[2]) * axb[2];
   C /= c_dot_axb;
 
   if (A >= 0 && C <= 0) {
-    tmp = (ppos[0] - m_pos[0] - m_a[0]) * m_b[0] + (ppos[1] - m_pos[1] - m_a[1]) * m_b[1] +
+    tmp = (ppos[0] - m_pos[0] - m_a[0]) * m_b[0] +
+          (ppos[1] - m_pos[1] - m_a[1]) * m_b[1] +
           (ppos[2] - m_pos[2] - m_a[2]) * m_b[2];
     tmp /= m_b[0] * m_b[0] + m_b[1] * m_b[1] + m_b[2] * m_b[2];
 
@@ -350,15 +363,18 @@ int Rhomboid::calculate_dist(const double *ppos, double *dist, double *vec) cons
 
   // check for prism at edge m_pos+a, c
 
-  A = (ppos[0] - m_pos[0] - m_a[0]) * bxc[0] + (ppos[1] - m_pos[1] - m_a[1]) * bxc[1] +
+  A = (ppos[0] - m_pos[0] - m_a[0]) * bxc[0] +
+      (ppos[1] - m_pos[1] - m_a[1]) * bxc[1] +
       (ppos[2] - m_pos[2] - m_a[2]) * bxc[2];
   A /= a_dot_bxc;
-  B = (ppos[0] - m_pos[0] - m_a[0]) * axc[0] + (ppos[1] - m_pos[1] - m_a[1]) * axc[1] +
+  B = (ppos[0] - m_pos[0] - m_a[0]) * axc[0] +
+      (ppos[1] - m_pos[1] - m_a[1]) * axc[1] +
       (ppos[2] - m_pos[2] - m_a[2]) * axc[2];
   B /= b_dot_axc;
 
   if (A >= 0 && B <= 0) {
-    tmp = (ppos[0] - m_pos[0] - m_a[0]) * m_c[0] + (ppos[1] - m_pos[1] - m_a[1]) * m_c[1] +
+    tmp = (ppos[0] - m_pos[0] - m_a[0]) * m_c[0] +
+          (ppos[1] - m_pos[1] - m_a[1]) * m_c[1] +
           (ppos[2] - m_pos[2] - m_a[2]) * m_c[2];
     tmp /= m_c[0] * m_c[0] + m_c[1] * m_c[1] + m_c[2] * m_c[2];
 
@@ -773,4 +789,4 @@ int Rhomboid::calculate_dist(const double *ppos, double *dist, double *vec) cons
   return 0;
 }
 
-}
+} // namespace Shapes

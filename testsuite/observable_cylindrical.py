@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import numpy as np
 import unittest as ut
@@ -6,7 +22,9 @@ import espressomd.observables
 from espressomd import utils
 import tests_common
 
+
 class TestCylindricalObservable(ut.TestCase):
+
     """
     Testcase for the cylindrical observables.
 
@@ -33,16 +51,20 @@ class TestCylindricalObservable(ut.TestCase):
 
     def swap_axis(self, arr, axis):
         if axis == 'x':
-            arr = np.dot(tests_common.rotation_matrix([0, 1, 0], np.pi/2.0), arr)
+            arr = np.dot(
+                tests_common.rotation_matrix([0, 1, 0], np.pi / 2.0), arr)
         elif axis == 'y':
-            arr = np.dot(tests_common.rotation_matrix([1, 0, 0], -np.pi/2.0), arr)
+            arr = np.dot(
+                tests_common.rotation_matrix([1, 0, 0], -np.pi / 2.0), arr)
         return arr
 
     def swap_axis_inverse(self, arr, axis):
         if axis == 'x':
-            arr = np.dot(tests_common.rotation_matrix([0, 1, 0], -np.pi/2.0), arr)
+            arr = np.dot(
+                tests_common.rotation_matrix([0, 1, 0], -np.pi / 2.0), arr)
         elif axis == 'y':
-            arr = np.dot(tests_common.rotation_matrix([1, 0, 0], np.pi/2.0), arr)
+            arr = np.dot(
+                tests_common.rotation_matrix([1, 0, 0], np.pi / 2.0), arr)
         return arr
 
     def pol_coords(self):
@@ -50,7 +72,8 @@ class TestCylindricalObservable(ut.TestCase):
         for i, p in enumerate(self.system.part):
             tmp = p.pos - np.array(self.params['center'])
             tmp = self.swap_axis_inverse(tmp, self.params['axis'])
-            positions[i, :] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(tmp)
+            positions[
+                i, :] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(tmp)
         return positions
 
     def set_particles(self):
@@ -75,13 +98,13 @@ class TestCylindricalObservable(ut.TestCase):
                                         np.pi /
                                         (len(self.params['ids']) +
                                          1)), i *
-                                  (self.params['max_z'] - self.params['min_z'])/
+                                 (self.params['max_z'] - self.params['min_z']) /
                                  (len(self.params['ids']) +
                                      1) - self.params['center'][2]])
-            v_y = (position[0] * np.sqrt(position[0]**2.0 + position[1]**2.0) * \
+            v_y = (position[0] * np.sqrt(position[0]**2.0 + position[1]**2.0) *
                    self.v_phi + position[1] * self.v_r) / np.sqrt(position[0]**2.0 + position[1]**2.0)
             v_x = (self.v_r * np.sqrt(position[0]**2.0 + position[1] **
-                                 2.0) - position[1] * v_y) / position[0]
+                                      2.0) - position[1] * v_y) / position[0]
             velocity = np.array([v_x, v_y, self.v_z])
             velocity = self.swap_axis(velocity, self.params['axis'])
             position = self.swap_axis(position, self.params['axis'])
@@ -90,8 +113,13 @@ class TestCylindricalObservable(ut.TestCase):
 
     def calculate_numpy_histogram(self):
         pol_positions = self.pol_coords()
-        np_hist, _ = np.histogramdd(pol_positions, bins=(self.params['n_r_bins'], self.params['n_phi_bins'], self.params['n_z_bins']),
-                                    range=[(self.params['min_r'], self.params['max_r']), (self.params['min_phi'], self.params['max_phi']),
+        np_hist, _ = np.histogramdd(
+            pol_positions, bins=(
+                self.params[
+                    'n_r_bins'], self.params['n_phi_bins'], self.params['n_z_bins']),
+                                    range=[(
+                                        self.params[
+                                            'min_r'], self.params['max_r']), (self.params['min_phi'], self.params['max_phi']),
                                            (self.params['min_z'], self.params['max_z'])])
         return np_hist
 
@@ -122,7 +150,7 @@ class TestCylindricalObservable(ut.TestCase):
         np_hist = self.calculate_numpy_histogram()
         np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist, core_hist)
-
+        self.assertEqual(obs.n_values(), len(np_hist.flatten()))
 
     def velocity_profile_test(self):
         self.set_particles()
@@ -142,13 +170,16 @@ class TestCylindricalObservable(ut.TestCase):
             if x[...] > 0.0:
                 x[...] /= x[...]
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
-        np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
+        np.testing.assert_array_almost_equal(
+            np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
+        self.assertEqual(obs.n_values(), len(np_hist.flatten()) * 3)
 
     def flux_density_profile_test(self):
         self.set_particles()
         # Set up the Observable.
-        obs = espressomd.observables.CylindricalFluxDensityProfile(**self.params)
+        obs = espressomd.observables.CylindricalFluxDensityProfile(
+            **self.params)
         core_hist = np.array(
             obs.calculate()).reshape(
             self.params['n_r_bins'],
@@ -161,8 +192,10 @@ class TestCylindricalObservable(ut.TestCase):
         np_hist = self.calculate_numpy_histogram()
         np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
-        np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
+        np.testing.assert_array_almost_equal(
+            np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
+        self.assertEqual(obs.n_values(), len(np_hist.flatten()) * 3)
 
     def test_hist_x(self):
         self.params['axis'] = 'x'

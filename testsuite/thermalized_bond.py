@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -64,18 +64,18 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
     def test_com_langevin(self):
         """Test for COM thermalization."""
 
-        N = 100
+        N = 200
         N2 = int(N/2)
         self.system.part.clear()
         self.system.time_step = 0.02
         
         if espressomd.has_features("PARTIAL_PERIODIC"):
-            self.system.periodicity = 0,0,0
+            self.system.periodicity = 0, 0, 0
         
         m1 = 1.0
         m2 = 10.0
         # Place particles
-        for i in range(0,N,2):
+        for i in range(0, N, 2):
             self.system.part.add(pos=np.random.random(3), mass = m1)
             self.system.part.add(pos=np.random.random(3), mass = m2)
 
@@ -87,8 +87,8 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         thermalized_dist_bond = espressomd.interactions.ThermalizedBond(temp_com = t_com, gamma_com = g_com, temp_distance = t_dist, gamma_distance = g_dist, r_cut = 2.0)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
-        for i in range(0,N,2):
-            self.system.part[i].add_bond((thermalized_dist_bond,i+1))
+        for i in range(0, N, 2):
+            self.system.part[i].add_bond((thermalized_dist_bond, i+1))
         
         # Warmup
         self.system.integrator.run(50)
@@ -99,11 +99,11 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         for i in range(loops):
             self.system.integrator.run(12)
             v_com = 1.0/(m1+m2)*(m1*self.system.part[::2].v+m2*self.system.part[1::2].v)
-            v_stored[i * N2:(i + 1) * N2, :] = v_com 
+            v_stored[i * N2:(i + 1) * N2,:] = v_com 
 
         v_minmax = 5
         bins = 50
-        error_tol = 0.015
+        error_tol = 0.017
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, t_com)
 
@@ -114,12 +114,12 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         N2 = int(N/2)
         self.system.part.clear()
         self.system.time_step = 0.02
-        self.system.periodicity = 1,1,1
+        self.system.periodicity = 1, 1, 1
         
         m1 = 1.0
         m2 = 10.0
         # Place particles
-        for i in range(0,N,2):
+        for i in range(0, N, 2):
             self.system.part.add(pos=np.random.random(3), mass = m1)
             self.system.part.add(pos=np.random.random(3), mass = m2)
 
@@ -131,8 +131,8 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         thermalized_dist_bond = espressomd.interactions.ThermalizedBond(temp_com = t_com, gamma_com = g_com, temp_distance = t_dist, gamma_distance = g_dist, r_cut = 9)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
-        for i in range(0,N,2):
-            self.system.part[i].add_bond((thermalized_dist_bond,i+1))
+        for i in range(0, N, 2):
+            self.system.part[i].add_bond((thermalized_dist_bond, i+1))
         
         # Warmup
         self.system.integrator.run(50)
@@ -143,7 +143,7 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         for i in range(loops):
             self.system.integrator.run(12)
             v_dist = self.system.part[1::2].v - self.system.part[::2].v 
-            v_stored[i * N2:(i + 1) * N2, :] = v_dist 
+            v_stored[i * N2:(i + 1) * N2,:] = v_dist 
 
         v_minmax = 5
         bins = 50

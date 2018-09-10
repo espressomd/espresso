@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from ..script_interface import PScriptInterface
 
 
@@ -15,7 +31,8 @@ class Mpiio(object):
         self._instance = PScriptInterface(
             "ScriptInterface::MPIIO::MPIIOScript")
 
-    def write(self, prefix=None, positions=False, velocities=False, types=False, bonds=False):
+    def write(self, prefix=None, positions=False, velocities=False,
+              types=False, bonds=False):
         """MPI-IO write.
 
         Outputs binary data using MPI-IO to several files starting with prefix.
@@ -61,7 +78,8 @@ class Mpiio(object):
         self._instance.call_method(
             "write", prefix=prefix, pos=positions, vel=velocities, typ=types, bond=bonds)
 
-    def read(self, prefix=None, positions=False, velocities=False, types=False, bonds=False):
+    def read(self, prefix=None, positions=False, velocities=False,
+             types=False, bonds=False):
         """MPI-IO read.
 
         This function reads data dumped by `write`. See the write documentation

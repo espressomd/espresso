@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright (C) 2013,2014 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
@@ -16,16 +17,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# This script appends the sample list of features to the file 
+# This script appends the sample list of features to the file
 #   myconfig-sample.h.
 #
 from __future__ import print_function
-import time, string, fileinput
-import inspect, sys, os 
-# find featuredefs.py 
+import time
+import string
+import fileinput
+import inspect
+import sys
+import os
+# find featuredefs.py
 moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
 sys.path.append(os.path.join(moduledir, '..', 'src'))
-import featuredefs 
+import featuredefs
 
 if len(sys.argv) != 2:
     print("Usage: {} DEFFILE".format(sys.argv[0]), file=sys.stderr)
@@ -44,8 +49,8 @@ for line in fileinput.input(deffilename):
     line = line.strip()
 
     # Handle empty and comment lines
-    if len(line) == 0:
-        print() 
+    if not line:
+        print()
         continue
     elif line.startswith('#'):
         continue

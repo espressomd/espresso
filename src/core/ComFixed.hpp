@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -22,8 +22,8 @@
 #include "Vector.hpp"
 #include "utils/keys.hpp"
 
-#include <boost/mpi/communicator.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/communicator.hpp>
 
 #include <unordered_map>
 #include <vector>

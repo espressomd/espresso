@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -18,15 +18,16 @@
 */
 
 #include "initialize.hpp"
-#include "ScriptInterface.hpp"
 #include "Cluster.hpp"
 #include "ClusterStructure.hpp"
+#include "ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {
 
 void initialize() {
-  ScriptInterface::register_new<ScriptInterface::ClusterAnalysis::ClusterStructure>(
+  ScriptInterface::register_new<
+      ScriptInterface::ClusterAnalysis::ClusterStructure>(
       "ClusterAnalysis::ClusterStructure");
   ScriptInterface::register_new<ScriptInterface::ClusterAnalysis::Cluster>(
       "ClusterAnalysis::Cluster");

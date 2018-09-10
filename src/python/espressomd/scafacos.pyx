@@ -6,7 +6,7 @@ from espressomd.actors cimport Actor
 from libcpp.string cimport string  # import std::string
 cimport electrostatics
 cimport magnetostatics
-from espressomd.utils import to_char_pointer,to_str
+from espressomd.utils import to_char_pointer, to_str
 
 from espressomd.utils cimport handle_errors
 
@@ -18,19 +18,20 @@ include "myconfig.pxi"
 
 IF SCAFACOS == 1:
     class ScafacosConnector(Actor):
+
         """Scafacos interface class shared by charge and dipole methods. Do not use directly.
-        
+
         """
 
         def get_params(self):
             return self._get_params_from_es_core()
-       
-        def set_params(self,params):
-            self._params=params
+
+        def set_params(self, params):
+            self._params = params
             self._set_params_in_es_core()
 
         def valid_keys(self):
-            tmp= ["method_name", "method_params", "prefactor"]
+            tmp = ["method_name", "method_params", "prefactor"]
             if not self.dipolar:
                 tmp.append("check_neutrality")
             return tmp
@@ -48,58 +49,62 @@ IF SCAFACOS == 1:
             p = to_str(get_method_and_parameters().split(" "))
             res = {}
             res["method_name"] = p[0]
-            
-            
-            method_params={}
-            i=1
-            while i<len(p):
-                pname =p[i]
-                i+=1
-                
-                # The first item after the parameter name is alsways a value
+
+            method_params = {}
+            i = 1
+            while i < len(p):
+                pname = p[i]
+                i += 1
+
+                # The first item after the parameter name is always a value
                 # But in the case of array-like properties, there can also
                 # follow several values. Therefore, we treat the next
                 # words as part of the value, if they begin with a digit
-                pvalues=[p[i]]
-                i+=1
-                if i>=len(p):
+                pvalues = [p[i]]
+                i += 1
+                if i >= len(p):
                     break
                 while p[i][:1] in "-0123456789":
                     pvalues.append(p[i])
-                    i+=1
-                
+                    i += 1
+
                 # If there is one value, cast away the list
-                if len(pvalues)==1:
-                    pvalues=pvalues[0]
+                if len(pvalues) == 1:
+                    pvalues = pvalues[0]
                 else:
                     # Cast array elements to strings and join them by commata
                     # to achieve consistency with setting array-likes
                     # such as "pnfft_n":"128,128,128"
                     for j in range(len(pvalues)):
-                        pvalues[j]=str(pvalues[j])
-                    pvalues=",".join(pvalues)
-                method_params[pname]=pvalues
-            
-            res["method_params"]=method_params
-            
+                        pvalues[j] = str(pvalues[j])
+                    pvalues = ",".join(pvalues)
+                method_params[pname] = pvalues
+
+            res["method_params"] = method_params
+
             # Re-add the prefactor to the parameter set
-            if self.dipolar: 
-                res["prefactor"] =magnetostatics.coulomb.Dprefactor
+            if self.dipolar:
+                IF DIPOLES == 1:
+                    res["prefactor"] = magnetostatics.coulomb.Dprefactor
+                pass
             else:
-                res["prefactor"] =electrostatics.coulomb.prefactor
+                IF ELECTROSTATICS == 1:
+                    res["prefactor"] = electrostatics.coulomb.prefactor
+                pass
             return res
 
         def _set_params_in_es_core(self):
-            # Verify that scafacos is not used for elecrostatics and dipoles
+            # Verify that scafacos is not used for electrostatics and dipoles
             # at the same time
             IF ELECTROSTATICS == 1:
-                if self.dipolar and <int>electrostatics.coulomb.method ==<int>electrostatics.COULOMB_SCAFACOS:
-                    raise Exception("Scafacos cannot be used for dipoles and charges at the same time")
+                if self.dipolar and < int > electrostatics.coulomb.method == <int > electrostatics.COULOMB_SCAFACOS:
+                    raise Exception(
+                        "Scafacos cannot be used for dipoles and charges at the same time")
 
             IF DIPOLES == 1:
-                if not self.dipolar and <int>magnetostatics.coulomb.Dmethod ==<int>magnetostatics.DIPOLAR_SCAFACOS:
-                    raise Exception("Scafacos cannot be used for dipoles and charges at the same time")
-
+                if not self.dipolar and < int > magnetostatics.coulomb.Dmethod == <int > magnetostatics.DIPOLAR_SCAFACOS:
+                    raise Exception(
+                        "Scafacos cannot be used for dipoles and charges at the same time")
 
             # Convert the parameter dictionary to a list of strings
             method_params = self._params["method_params"]
@@ -115,16 +120,16 @@ IF SCAFACOS == 1:
             handle_errors("Scafacos not initialized.")
 
         def default_params(self):
-            if not self.dipolar: 
-                return {"check_neutrality":True}
+            if not self.dipolar:
+                return {"check_neutrality": True}
             return {}
 
     def available_methods():
         """Lists long range methods available in the Scafacos library.
-        
+
         """
-        methods=available_methods_core()
-        res=[]
+        methods = available_methods_core()
+        res = []
         for m in methods:
             res.append(to_str(m))
         return res

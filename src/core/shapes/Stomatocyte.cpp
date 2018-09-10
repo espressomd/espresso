@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -283,7 +283,7 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist,
   yd = m_orientation[1] / m_orientation.norm();
   zd = m_orientation[2] / m_orientation.norm();
 
-  // We now establish the rotion matrix required to go
+  // We now establish the rotation matrix required to go
   // form {0,0,1} to {xd,yd,zd}
 
   double matrix[9];

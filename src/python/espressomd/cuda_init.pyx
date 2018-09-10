@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -63,7 +63,7 @@ cdef class CudaInitHandle(object):
                 List of available CUDA devices.
 
             """
-            cdef char gpu_name_buffer[4+64]
+            cdef char gpu_name_buffer[4 + 64]
             devices = dict()
             for i in range(cuda_get_n_gpus()):
                 cuda_get_gpu_name(i, gpu_name_buffer)

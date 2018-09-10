@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -31,7 +31,7 @@ namespace ErrorHandling {
 
 class RuntimeErrorCollector {
 public:
-  RuntimeErrorCollector(const boost::mpi::communicator &comm);
+  explicit RuntimeErrorCollector(const boost::mpi::communicator &comm);
   ~RuntimeErrorCollector();
 
   void message(RuntimeError message);
@@ -81,6 +81,6 @@ private:
   boost::mpi::communicator m_comm;
 };
 
-} /* ErrorHandling */
+} // namespace ErrorHandling
 
 #endif

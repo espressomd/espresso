@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -20,7 +20,7 @@
 /** \file None_test.cpp Unit tests for the
  * ScriptInterface::None class.
  *
-*/
+ */
 
 #define BOOST_TEST_MODULE None test
 #define BOOST_TEST_DYN_LINK

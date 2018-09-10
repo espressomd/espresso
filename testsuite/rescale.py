@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 The ESPResSo project
+# Copyright (C) 2017-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,24 +22,27 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+
 class RescaleTest(ut.TestCase):
+
     """Test the global box and particle rescaling.
 
     """
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.cell_system.skin=0.0
+    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
+    s.cell_system.skin = 0.0
     s.time_step = 0.01
 
     def setUp(self):
         N = 100
         self.s.box_l = 3 * [10]
-        self.s.part.add(pos=self.s.box_l * np.random.random((N,3)))
+        self.s.part.add(pos=self.s.box_l * np.random.random((N, 3)))
 
     def test_iso(self):
         """Test 'isotropic' case (dir="xyz").
         """
         s = self.s
-        scale=1.3
+        scale = 1.3
         new_box_l = scale * s.box_l[0]
 
         old_pos = s.part[:].pos
@@ -62,7 +65,8 @@ class RescaleTest(ut.TestCase):
 
         for i in range(3):
             if i == dir:
-                max_diff = np.max(np.abs(new_pos[:, i] / old_pos[:, i] - scale))
+                max_diff = np.max(
+                    np.abs(new_pos[:, i] / old_pos[:, i] - scale))
             else:
                 max_diff = np.max(np.abs(new_pos[:, i] - old_pos[:, i]))
 

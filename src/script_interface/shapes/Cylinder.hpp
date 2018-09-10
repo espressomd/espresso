@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -31,14 +31,16 @@ namespace Shapes {
 class Cylinder : public Shape {
   using CoreShape = ::Shapes::Cylinder;
   std::shared_ptr<::Shapes::Cylinder> m_cylinder;
+
 public:
   Cylinder() : m_cylinder(new ::Shapes::Cylinder()) {
-    add_parameters({{"radius", m_cylinder, &CoreShape::set_radius, &CoreShape::radius},
-         {"length",    m_cylinder, &CoreShape::set_length, &CoreShape::length},
-         {"axis",      m_cylinder, &CoreShape::set_axis, &CoreShape::axis},
-         {"center",    m_cylinder, &CoreShape::center},
+    add_parameters(
+        {{"radius", m_cylinder, &CoreShape::set_radius, &CoreShape::radius},
+         {"length", m_cylinder, &CoreShape::set_length, &CoreShape::length},
+         {"axis", m_cylinder, &CoreShape::set_axis, &CoreShape::axis},
+         {"center", m_cylinder, &CoreShape::center},
          {"direction", m_cylinder, &CoreShape::direction},
-         {"open",      m_cylinder, &CoreShape::open}});
+         {"open", m_cylinder, &CoreShape::open}});
   }
 
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_cylinder; }

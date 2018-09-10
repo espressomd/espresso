@@ -1,5 +1,9 @@
+"""
+This samples sets up a Lattice-Boltzmann fluid and applies an external force density on it.
+"""
+
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,6 +26,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import espressomd
+
+required_features = ["LB"]
+espressomd.assert_features(required_features)
+
 import espressomd.lb
 
 
@@ -35,7 +43,7 @@ print(espressomd.features())
 
 
 box_l = 50
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 

@@ -1,46 +1,29 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef CONSTRAINTS_HPP
 #define CONSTRAINTS_HPP
 
-#include "ObjectRegistry.hpp"
-#include "config.hpp"
-
-#include <memory>
-#include <vector>
-
+#include "ParticleRange.hpp"
 #include "constraints/Constraint.hpp"
-#include "energy.hpp"
-#include "particle_data.hpp"
+#include "constraints/Constraints.hpp"
 
 namespace Constraints {
-extern ObjectRegistry<std::vector<std::shared_ptr<Constraint>>> constraints;
+extern Constraints<ParticleRange, Constraint> constraints;
 }
-#ifdef CONSTRAINTS
-
-inline void add_constraints_forces(Particle *p) {
-  // Copy position and image count so as not to modify particle when folding
-  // position
-  auto const pos=folded_position(p);
-  ParticleForce force{};
-  for (auto const &c : Constraints::constraints) {
-    force += c->force(p, pos);
-  }
-
-  p->f += force;
-}
-
-inline void init_constraint_forces() {
-  for (auto const &c : Constraints::constraints) {
-    c->reset_force();
-  }
-}
-
-inline void add_constraints_energy(const Particle *p) {
-  auto const pos = folded_position(*p);
-
-  for (auto const &c : Constraints::constraints) {
-    c->add_energy(p, pos, energy);
-  }
-}
-
-#endif
 #endif
