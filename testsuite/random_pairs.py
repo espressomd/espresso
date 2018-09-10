@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
 import espressomd
@@ -7,6 +23,7 @@ import collections
 
 
 class RandomPairTest(ut.TestCase):
+
     """This test creates a system of random particles.
        Then the interaction paris for a certain cutoff
        are calculated by brute force in python (pairs_n2),
@@ -15,11 +32,11 @@ class RandomPairTest(ut.TestCase):
        repeated for all valid combination of periodicities.
 
     """
-    system = espressomd.System(box_l = 3 * [10.])
-        
+    system = espressomd.System(box_l=3 * [10.])
+
     def setUp(self):
         s = self.system
-        s.time_step = 1.
+        s.time_step = .1
         s.cell_system.skin = 0.0
         s.min_global_cut = 1.5
         n_part = 500
@@ -27,20 +44,29 @@ class RandomPairTest(ut.TestCase):
         np.random.seed(2)
 
         s.part.add(pos=s.box_l * np.random.random((n_part, 3)))
+        self.all_pairs = []
+
+        dist_func = self.system.distance
+        for pair in self.system.part.pairs():
+                if dist_func(pair[0], pair[1]) < 1.5:
+                    self.all_pairs.append((pair[0].id, pair[1].id))
+
+        self.all_pairs = set(self.all_pairs)
+        self.assertTrue(len(self.all_pairs))
 
     def tearDown(self):
         self.system.part.clear()
 
     def pairs_n2(self, dist):
-        parts = self.system.part
+        # Go through list of all possible pairs for full periodicy
+        # and skip those that ar not within the desired distance
+        # for the current periodicity
 
         pairs = []
-        for i in range(len(parts)):
-            for j in range(i + 1, len(parts)):
-                if self.system.distance(parts[i], parts[j]) < dist:
-                    pairs.append((i, j))
-
-        self.assertTrue(len(pairs))
+        parts = self.system.part
+        for p in self.all_pairs:
+            if self.system.distance(parts[p[0]], parts[p[1]]) <= dist:
+                pairs.append(p)
         return set(pairs)
 
     def check_duplicates(self, l):

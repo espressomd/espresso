@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -70,19 +70,13 @@ void local_kill_particle_forces(int torque) {
 /* Calculate the CMS of the system */
 void local_system_CMS(double *sdata) {
   double x = 0.0, y = 0.0, z = 0.0;
-  double ppos[3];
-  int img[3];
-
   double mass = 0.0;
-  double M;
 
   for (auto const &p : local_cells.particles()) {
-    M = p.p.mass;
+    double M = p.p.mass;
     mass += M;
 
-    memmove(ppos, p.r.p, 3 * sizeof(double));
-    memmove(img, p.l.i, 3 * sizeof(int));
-    unfold_position(ppos, img);
+    Vector3d ppos = unfolded_position(p);
 
     x += M * ppos[0];
     y += M * ppos[1];
@@ -98,12 +92,10 @@ void local_system_CMS(double *sdata) {
 /* Calculate the CMS velocity of the system */
 void local_system_CMS_velocity(double *sdata) {
   double x = 0.0, y = 0.0, z = 0.0;
-
   double mass = 0.0;
-  double M;
 
   for (auto const &p : local_cells.particles()) {
-    M = p.p.mass;
+    double M = p.p.mass;
     mass += M;
 
     x += M * p.m.v[0];

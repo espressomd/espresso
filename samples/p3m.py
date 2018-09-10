@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,10 +19,13 @@
 from __future__ import print_function
 import numpy as np
 import espressomd
+
+required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import thermostat
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
-from samples_common import open
 
 print("""
 =======================================================
@@ -36,20 +39,20 @@ print(espressomd.features())
 #############################################################
 
 # 10 000  Particles
-box_l = 10.7437
-density = 0.7
+box_l = 10
+density = 0.3
 
 # Interaction parameters (repulsive Lennard Jones)
 #############################################################
 
-lj_eps = 1.0
+lj_eps = 10.0
 lj_sig = 1.0
 lj_cut = 1.12246
 lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
@@ -61,8 +64,8 @@ thermostat.Thermostat().set_langevin(1.0, 1.0)
 # warmup integration (with capped LJ potential)
 warm_steps = 100
 warm_n_times = 30
-# do the warmup until the particles have at least the distance min__dist
-min_dist = 0.9
+# do the warmup until the particles have at least the distance min_dist
+min_dist = 0.7
 
 # integration
 int_steps = 1000
@@ -115,7 +118,7 @@ for i in range(n_part // 2 - 1):
 
 print("\nSCRIPT--->Create p3m\n")
 #p3m = electrostatics.P3M_GPU(prefactor=2.0, accuracy=1e-2)
-p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 
 print("\nSCRIPT--->Add actor\n")
 system.actors.add(p3m)
@@ -126,7 +129,7 @@ for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
 print("\nSCRIPT--->Explicit tune call\n")
-p3m.Tune(accuracy=1e3)
+p3m.tune(accuracy=1e3)
 
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
@@ -158,14 +161,20 @@ print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # Warmup Integration Loop
 i = 0
-while (i < warm_n_times and act_min_dist < min_dist):
+while (i < warm_n_times or act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
     i += 1
-
+    print(
+        "i =",
+        i,
+     "system.analysis.min_dist() = ",
+     system.analysis.min_dist(),
+     "lj_cap = ",
+     lj_cap)
 #   Increase LJ cap
-    lj_cap = lj_cap + 10
+    lj_cap += 20
     system.force_cap = lj_cap
 
 # Just to see what else we may get from the c code

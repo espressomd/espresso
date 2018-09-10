@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 The ESPResSo project
+# Copyright (C) 2017-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,12 +22,12 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
            "Skipped because of not LENNARD_JONES")
 class SubtLjTest(ut.TestCase):
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.box_l = 3*[10]
-    system.time_step = 1.
+    system = espressomd.System(box_l=[10, 10, 10])
+    system.time_step = .1
 
     def setUp(self):
         self.system.part.clear()
@@ -57,7 +57,7 @@ class SubtLjTest(ut.TestCase):
         print(s.analysis.energy())
 
         self.assertAlmostEqual(f, 0, places=10)
-        self.assertAlmostEqual(s.analysis.energy()['total'] , 0, places=10)
+        self.assertAlmostEqual(s.analysis.energy()['total'], 0, places=10)
 
 if __name__ == "__main__":
     ut.main()

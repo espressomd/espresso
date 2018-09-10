@@ -75,22 +75,23 @@ ESPResSo determines the strength of the electrostatic interactions via the Bjerr
 k_B T=\frac{e^2}{4\pi\varepsilon_0\varepsilon_r}\cdot\frac 1 {l_B}.
 \end{align*}
 %
-For water at $300\U{K}$ with $\varepsilon_r = 78.54$ it is $l_B\approx0.7095\U{nm}$.
+This yields for water at $300\U{K}$, with $\varepsilon_r = 78.54$, a Bjerrum length of $l_B\approx0.7095\U{nm}$.
 
 
 \subsection{Setting up the slip pore system}
 
 The script for this simulation comes with this tutorial and is called \texttt{eof\_electrokinetics.py}. All used commands are documented in the User's Guide in the section called ``Electrokinetics''.
 
-We first set up a periodic simulation box of the desired dimensions. Note that the dimensions are of course given in simulation units.
+We first set up a periodic simulation box of the desired dimensions. Note that the dimensions are, of course, given in simulation units.
 
 \begin{lstlisting}
 # Initializing espresso modules and the numpy package
-from espressomd import System, electrokinetics, shapes
+import sys
 import numpy as np
+from espressomd import System, electrokinetics, shapes
 
-# Set the slit pore geometry the width is the non-periodic part of the geometry
-# the padding is used to ensure that there is no field outside the slit
+# Set the slit pore geometry where the width is the non-periodic part of the geometry
+# the padding is used to ensure that there is no field outside the slit since the electrostatics is used with a 3D periodic FFT solver.
 
 box_x = 6
 box_y = 6
@@ -99,8 +100,7 @@ width = 50
 padding = 1
 box_z = width + 2*padding
 
-system = System()
-system.box_l = [box_x, box_y, box_z]
+system = System(box_l = [box_x, box_y, box_z])
 \end{lstlisting}
 
 We then store all the parameters we calculated in section~\ref{sec:units}. At this point, these parameters only reside in Python variables. They will only be used by \ES{} once they are being passed to the respective initialization functions.
@@ -117,7 +117,7 @@ valency = 1.0
 viscosity_dynamic = 79.53
 density_water = 26.15
 sigma = -0.05
-ext_force = 0.1
+ext_force_density = 0.1
 \end{lstlisting}
 
 Before we initialize the actual electrokinetics algorithm, we need to set the time step and some other parameters that are not actually used, but would otherwise lead to error messages.
@@ -136,7 +136,7 @@ We can now set up the electrokinetics algorithm. All functionality pertaining to
 \begin{lstlisting}[firstnumber=39]
 # Set up the (LB) electrokinetics fluid
 viscosity_kinematic = viscosity_dynamic / density_water
-ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water, viscosity = viscosity_kinematic, friction = 1.0, T = kT, bjerrum_length = bjerrum_length)
+ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water, viscosity = viscosity_kinematic, friction = 1.0, T = kT, prefactor = bjerrum_length)
 \end{lstlisting}
 
 The value of the friction parameter in the previous setup command is irrelevant, since we don't include any explicit particles in our simulation, but it's needed to pass the sanity check of the LB.
@@ -146,7 +146,7 @@ Next, we set up the individual ionic species. In this case, we only set up one s
 \begin{lstlisting}[firstnumber=45]
 # Set up the charged and neutral species
 density_counterions  = -2.0 * sigma / width
-counterions = electrokinetics.Species(density=density_counterions, D=D, valency=valency, ext_force=[ext_force, 0, 0])
+counterions = electrokinetics.Species(density=density_counterions, D=D, valency=valency, ext_force_density=[ext_force_density, 0, 0])
 
 ek.add_species(counterions)
 \end{lstlisting}

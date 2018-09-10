@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,10 +19,12 @@
 from __future__ import print_function, absolute_import
 
 from libcpp.string cimport string
+import collections
 
 include "myconfig.pxi"
 from . import utils
 from espressomd.utils import is_valid_type
+from globals cimport immersed_boundaries
 
 
 # Non-bonded interactions
@@ -37,14 +39,15 @@ cdef class NonBondedInteraction(object):
     """
 
     cdef public object _part_types
-    cdef object _params
+    cdef public object _params
 
     # init dict to access all user defined nonbonded-inters via
     # user_interactions[type1][type2][parameter]
-    user_interactions = {}
+    cdef public object user_interactions
 
     def __init__(self, *args, **kwargs):
-
+        if self.user_interactions is None:
+            self.user_interactions = {}
         # Interaction id as argument
         if len(args) == 2 and is_valid_type(args[0], int) and is_valid_type(args[1], int):
             self._part_types = args
@@ -65,10 +68,7 @@ cdef class NonBondedInteraction(object):
                         "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
 
             self._params.update(kwargs)
-
-            # Validation of parameters
             self.validate_params()
-
         else:
             raise Exception(
                 "The constructor has to be called either with two particle type ids (as integer), or with a set of keyword arguments describing a new interaction")
@@ -77,14 +77,9 @@ cdef class NonBondedInteraction(object):
         """Check, if the data stored in the instance still matches what is in Espresso.
 
         """
-
-        # check, if the bond parameters saved in the class still match those
-        # saved in Espresso
         temp_params = self._get_params_from_es_core()
         if self._params != temp_params:
             return False
-
-        # If we're still here, the instance is valid
         return True
 
     def get_params(self):
@@ -95,17 +90,22 @@ cdef class NonBondedInteraction(object):
         # current parameters from there
         if self._part_types[0] >= 0 and self._part_types[1] >= 0:
             self._params = self._get_params_from_es_core()
-
         return self._params
 
     def __str__(self):
         return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
     def __getstate__(self):
-        return self.get_params()
+        odict = collections.OrderedDict()
+        odict['user_interactions'] = self.user_interactions
+        odict['_part_types'] = self._part_types
+        odict['params'] = self.get_params()
+        return odict
 
-    def __setstate__(self, p):
-        self.set_params(p)
+    def __setstate__(self, state):
+        self.user_interactions = state['user_interactions']
+        self._part_types = state['_part_types']
+        self._params = state['params']
 
     def set_params(self, **p):
         """Update the given parameters.
@@ -237,7 +237,7 @@ IF LENNARD_JONES == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -347,7 +347,7 @@ IF LENNARD_JONES_GENERIC == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -489,7 +489,7 @@ IF LJCOS:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -526,7 +526,8 @@ IF LJCOS:
                                 self._params["sigma"],
                                 self._params["cutoff"],
                                 self._params["offset"]):
-                raise Exception("Could not set Lennard Jones Cosine parameters")
+                raise Exception(
+                    "Could not set Lennard Jones Cosine parameters")
 
         def default_params(self):
             return {
@@ -569,7 +570,7 @@ IF LJCOS2:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -595,7 +596,7 @@ IF LJCOS2:
             offset : :obj:`float`
                      Offset distance of the interaction.
             width : :obj:`float`
-                     Width of interaction. 
+                     Width of interaction.
             """
             super(LennardJonesCos2Interaction, self).set_params(**kwargs)
 
@@ -606,7 +607,8 @@ IF LJCOS2:
                                  self._params["sigma"],
                                  self._params["offset"],
                                  self._params["width"]):
-                raise Exception("Could not set Lennard Jones Cosine2 parameters")
+                raise Exception(
+                    "Could not set Lennard Jones Cosine2 parameters")
 
         def default_params(self):
             return {
@@ -643,7 +645,7 @@ IF HAT == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
@@ -700,7 +702,7 @@ IF GAY_BERNE:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -791,7 +793,7 @@ IF DPD:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
@@ -878,7 +880,7 @@ IF SMOOTH_STEP == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -980,7 +982,7 @@ IF BMHTF_NACL == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1080,7 +1082,7 @@ IF MORSE == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1172,7 +1174,7 @@ IF BUCKINGHAM == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1277,7 +1279,7 @@ IF SOFT_SPHERE == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1348,6 +1350,122 @@ IF SOFT_SPHERE == 1:
             """
             return "a", "n", "cutoff"
 
+IF AFFINITY == 1:
+    cdef class AffinityInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            if self._params["affinity_cut"] < 0:
+                raise ValueError("Affinity cutoff has to be >=0")
+            if self._params["affinity_type"] < 0:
+                raise ValueError("Affinity type has to be >=0")
+            if self._params["affinity_kappa"] < 0:
+                raise ValueError("Affinity kappa has to be >=0")
+            if self._params["affinity_r0"] < 0:
+                raise ValueError("Affinity r0 has to be >=0")
+            if self._params["affinity_Kon"] < 0:
+                raise ValueError("Affinity Kon has to be >=0")
+            if self._params["affinity_Koff"] < 0:
+                raise ValueError("Affinity Koff has to be >=0")
+            if self._params["affinity_maxBond"] < 0:
+                raise ValueError("Affinity maxBond has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef IA_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0], self._part_types[1])
+            return {
+                "affinity_type": ia_params.affinity_type,
+                "affinity_kappa": ia_params.affinity_kappa,
+                "affinity_r0": ia_params.affinity_r0,
+                "affinity_Kon": ia_params.affinity_Kon,
+                "affinity_Koff": ia_params.affinity_Koff,
+                "affinity_maxBond": ia_params.affinity_maxBond,
+                "affinity_cut": ia_params.affinity_cut}
+
+        def is_active(self):
+            return (self._params["affinity_kappa"] > 0)
+
+        def _set_params_in_es_core(self):
+            if affinity_set_params(self._part_types[0], self._part_types[1],
+                                   self._params["affinity_type"],
+                                   self._params["affinity_kappa"],
+                                   self._params["affinity_r0"],
+                                   self._params["affinity_Kon"],
+                                   self._params["affinity_Koff"],
+                                   self._params["affinity_maxBond"],
+                                   self._params["affinity_cut"]):
+                raise Exception("Could not set Affinity parameters")
+
+        def default_params(self):
+            return {
+                "affinity_type": 0,
+                "affinity_kappa": 0.,
+                "affinity_r0": 0.,
+                "affinity_Kon": 0.,
+                "affinity_Koff": 0.,
+                "affinity_maxBond": 0.,
+                "affinity_cut": 0.}
+
+        def type_name(self):
+            return "Affinity"
+
+        def valid_keys(self):
+            return "affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"
+
+        def required_keys(self):
+            return "affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"
+
+
+IF MEMBRANE_COLLISION == 1:
+    cdef class MembraneCollisionInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            if self._params["cutoff"] < 0:
+                raise ValueError("Membrane Collision cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef IA_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0], self._part_types[1])
+            return {
+                "a": ia_params.membrane_a,
+                "n": ia_params.membrane_n,
+                "cutoff": ia_params.membrane_cut,
+                "offset": ia_params.membrane_offset}
+
+        def is_active(self):
+            return (self._params["a"] > 0)
+
+        def _set_params_in_es_core(self):
+            if membrane_collision_set_params(
+                self._part_types[0], self._part_types[1],
+                                        self._params["a"],
+                                        self._params["n"],
+                                        self._params["cutoff"],
+                                        self._params["offset"]):
+                raise Exception("Could not set Membrane Collision parameters")
+
+        def default_params(self):
+            return {
+                "a": 0.,
+                "n": 1.,
+                "cutoff": 0.,
+                "offset": 0.}
+
+        def type_name(self):
+            return "MembraneCollision"
+
+        def valid_keys(self):
+            return "a", "n", "cutoff", "offset"
+
+        def required_keys(self):
+            return "a", "n", "cutoff"
+
+# Gay-Berne
+
+
 # Hertzian
 
 IF HERTZIAN == 1:
@@ -1365,7 +1483,7 @@ IF HERTZIAN == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1445,7 +1563,7 @@ IF GAUSSIAN == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1493,7 +1611,7 @@ IF GAUSSIAN == 1:
             eps : :obj:`float`
                   Overlap energy epsilon.
             sig : :obj:`float`
-                  Variance sigma of the Gaussian interactin.
+                  Variance sigma of the Gaussian interaction.
             cutoff : :obj:`float`
                      Cutoff distance of the interaction.
 
@@ -1514,6 +1632,7 @@ IF GAUSSIAN == 1:
 
 
 class NonBondedInteractionHandle(object):
+
     """
     Provides access to all Non-bonded interactions between
     two particle types.
@@ -1536,6 +1655,8 @@ class NonBondedInteractionHandle(object):
     hertzian = None
     gaussian = None
     tabulated = None
+    soft_sphere = None
+    membrane_collision = None
     gay_berne = None
     dpd = None
     hat = None
@@ -1551,6 +1672,13 @@ class NonBondedInteractionHandle(object):
         # Here, add one line for each nonbonded ia
         IF LENNARD_JONES:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
+        IF MEMBRANE_COLLISION:
+            self.membrane_collision = MembraneCollisionInteraction(
+                _type1, _type2)
+        IF SOFT_SPHERE:
+            self.soft_sphere = SoftSphereInteraction(_type1, _type2)
+        IF AFFINITY:
+            self.affinity = AffinityInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
@@ -1573,7 +1701,7 @@ class NonBondedInteractionHandle(object):
             self.hertzian = HertzianInteraction(_type1, _type2)
         IF GAUSSIAN:
             self.gaussian = GaussianInteraction(_type1, _type2)
-        IF TABULATED == 1:
+        IF TABULATED:
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:
             self.gay_berne = GayBerneInteraction(_type1, _type2)
@@ -1603,13 +1731,13 @@ cdef class NonBondedInteractions(object):
         return NonBondedInteractionHandle(key[0], key[1])
 
     def __getstate__(self):
-        cdef string state
-        state = ia_params_get_state()
-        return state
+        cdef string core_state
+        core_state = ia_params_get_state()
+        return core_state
 
-    def __setstate__(self, odict):
-        cdef string odict_string  = odict
-        ia_params_set_state(odict_string)
+    def __setstate__(self, core_state):
+        cdef string state = core_state
+        ia_params_set_state(state)
 
 
 cdef class BondedInteraction(object):
@@ -1658,6 +1786,9 @@ cdef class BondedInteraction(object):
         else:
             raise Exception(
                 "The constructor has to be called either with a bond id (as interger), or with a set of keyword arguments describing a new interaction")
+
+    def __reduce__(self):
+        return (self.__class__, (self._bond_id,))
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso.
@@ -1819,7 +1950,7 @@ class FeneBond(BondedInteraction):
 
     def __init__(self, *args, **kwargs):
         """
-        FeneBond initializer. Used to instatiate a FeneBond identifier
+        FeneBond initializer. Used to instantiate a FeneBond identifier
         with a given set of parameters.
 
         Parameters
@@ -1881,7 +2012,7 @@ class HarmonicBond(BondedInteraction):
 
     def __init__(self, *args, **kwargs):
         """
-        HarmonicBond initializer. Used to instatiate a HarmonicBond identifier
+        HarmonicBond initializer. Used to instantiate a HarmonicBond identifier
         with a given set of parameters.
 
         Parameters
@@ -1938,9 +2069,9 @@ if ELECTROSTATICS:
     class BondedCoulomb(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
-            """ 
-            BondedCoulombBond initialiser. Used to instatiate a BondedCoulombBond identifier
-            with a given set of parameters. 
+            """
+            BondedCoulombBond initialiser. Used to instantiate a BondedCoulombBond identifier
+            with a given set of parameters.
 
             Parameters
             ----------
@@ -1949,7 +2080,6 @@ if ELECTROSTATICS:
                         Sets the coulomb prefactor of the bonded coulomb interaction.
             """
             super(BondedCoulomb, self).__init__(*args, **kwargs)
-
 
         def type_number(self):
             return BONDED_IA_BONDED_COULOMB
@@ -1968,18 +2098,19 @@ if ELECTROSTATICS:
 
         def _get_params_from_es_core(self):
             return \
-                {"prefactor": bonded_ia_params[self._bond_id].p.bonded_coulomb.prefactor}
+                {"prefactor": bonded_ia_params[
+                    self._bond_id].p.bonded_coulomb.prefactor}
 
         def _set_params_in_es_core(self):
             bonded_coulomb_set_params(
-                self._bond_id,  self._params["prefactor"])
+                self._bond_id, self._params["prefactor"])
 
 if P3M:
     class BondedCoulombP3MSRBond(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
-            """ 
-            BondedCoulombP3MSRBond initialiser. Used to instatiate a BondedCoulombP3MSRBond identifier
+            """
+            BondedCoulombP3MSRBond initialiser. Used to instantiate a BondedCoulombP3MSRBond identifier
             with a given set of parameters. Calculates ony the P3M shortrange part.
 
             Parameters
@@ -1989,7 +2120,6 @@ if P3M:
                    Sets the charge factor of the involved particle pair. Not the particle charges are used to allow e.g. only partial subtraction of the involved charges.
             """
             super(BondedCoulombP3MSRBond, self).__init__(*args, **kwargs)
-
 
         def type_number(self):
             return BONDED_IA_BONDED_COULOMB_P3M_SR
@@ -2008,35 +2138,36 @@ if P3M:
 
         def _get_params_from_es_core(self):
             return \
-                {"q1q2": bonded_ia_params[self._bond_id].p.bonded_coulomb_p3m_sr.q1q2}
+                {"q1q2": bonded_ia_params[
+                    self._bond_id].p.bonded_coulomb_p3m_sr.q1q2}
 
         def _set_params_in_es_core(self):
             bonded_coulomb_p3m_sr_set_params(
-                self._bond_id,  self._params["q1q2"])
-    
+                self._bond_id, self._params["q1q2"])
+
+
 class ThermalizedBond(BondedInteraction):
 
     def __init__(self, *args, **kwargs):
-        """ 
-        ThermalizedBond initialiser. Used to instatiate a ThermalizedBond identifier
-        with a given set of parameters. 
+        """
+        ThermalizedBond initialiser. Used to instantiate a ThermalizedBond identifier
+        with a given set of parameters.
 
         Parameters
         ----------
 
         temp_com : :obj:`float`
-                    Sets the temerature of the Langevin thermostat for the com of the particle pair.
+                    Sets the temperature of the Langevin thermostat for the com of the particle pair.
         gamma_com: :obj:`float`
                     Sets the friction coefficient of the Langevin thermostat for the com of the particle pair.
-        temp_distance: :obj:`float` 
-                    Sets the temerature of the Langevin thermostat for the distance vector of the particle pair.
-        gamma_distance: :obj:`float` 
+        temp_distance: :obj:`float`
+                    Sets the temperature of the Langevin thermostat for the distance vector of the particle pair.
+        gamma_distance: :obj:`float`
                      Sets the friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
         r_cut: :obj:`float`, optional
                 Specifies maximum distance beyond which the bond is considered broken.
         """
         super(ThermalizedBond, self).__init__(*args, **kwargs)
-
 
     def type_number(self):
         return BONDED_IA_THERMALIZED_DIST
@@ -2051,19 +2182,25 @@ class ThermalizedBond(BondedInteraction):
         return "temp_com", "gamma_com", "temp_distance", "gamma_distance"
 
     def set_default_params(self):
-        self._params = {"temp_com": 1., "gamma_com": 1., "temp_distance": 1., "gamma_distance": 1., "r_cut": 0.}
+        self._params = {"temp_com": 1., "gamma_com": 1.,
+                        "temp_distance": 1., "gamma_distance": 1., "r_cut": 0.}
 
     def _get_params_from_es_core(self):
         return \
             {"temp_com": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_com,
-             "gamma_com": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_com,
-             "temp_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_distance,
-             "gamma_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_distance,
+             "gamma_com":
+                 bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_com,
+             "temp_distance":
+                 bonded_ia_params[
+                     self._bond_id].p.thermalized_bond.temp_distance,
+             "gamma_distance":
+                 bonded_ia_params[
+                     self._bond_id].p.thermalized_bond.gamma_distance,
              "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut}
 
     def _set_params_in_es_core(self):
         thermalized_bond_set_params(
-            self._bond_id,  self._params["temp_com"],  self._params["gamma_com"],  self._params["temp_distance"],  self._params["gamma_distance"], self._params["r_cut"])
+            self._bond_id, self._params["temp_com"], self._params["gamma_com"], self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"])
 
 IF THOLE:
     cdef class TholeInteraction(NonBondedInteraction):
@@ -2072,8 +2209,9 @@ IF THOLE:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
-            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            cdef IA_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0], self._part_types[1])
             return {
                 "scaling_coeff": ia_params.THOLE_scaling_coeff,
                 "q1q2": ia_params.THOLE_q1q2
@@ -2088,15 +2226,15 @@ IF THOLE:
             Parameters
             ----------
             scaling_coeff : :obj:`float`
-                            The facor used in the thole damping function between 
-                            polarizable particles i and j. Usually caluclated by 
-                            the polarizabilities alpha_i, alpha_j and damping 
+                            The facor used in the thole damping function between
+                            polarizable particles i and j. Usually calculated by
+                            the polarizabilities alpha_i, alpha_j and damping
                             parameters  a_i, a_j via
                             scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
             q1q2: :obj:`float`
-                  charge factor of the involved charges. Has to be set because 
-                  it acts only on the portion of the drude core charge that is 
-                  associated to the dipole of the atom. For charged, polarizable 
+                  charge factor of the involved charges. Has to be set because
+                  it acts only on the portion of the drude core charge that is
+                  associated to the dipole of the atom. For charged, polarizable
                   atoms that charge is not equal to the particle charge property.
 
             """
@@ -2105,8 +2243,8 @@ IF THOLE:
         def _set_params_in_es_core(self):
             # Handle the case of shift="auto"
             if thole_set_params(self._part_types[0], self._part_types[1],
-                                        self._params["scaling_coeff"],
-                                        self._params["q1q2"]):
+                                self._params["scaling_coeff"],
+                                self._params["q1q2"]):
                 raise Exception("Could not set Thole parameters")
 
         def default_params(self):
@@ -2126,7 +2264,7 @@ IF ROTATION:
 
         def __init__(self, *args, **kwargs):
             """
-            HarmonicDumbbellBond initializer. Used to instatiate a
+            HarmonicDumbbellBond initializer. Used to instantiate a
             HarmonicDumbbellBond identifier with a given set of parameters.
 
             Parameters
@@ -2188,7 +2326,7 @@ IF ROTATION != 1:
 
         def __init__(self, *args, **kwargs):
             """
-            HarmonicDumbbellBond initializer. Used to instatiate a
+            HarmonicDumbbellBond initializer. Used to instantiate a
             HarmonicDumbbellBond identifier with a given set of parameters.
 
             Parameters
@@ -2410,9 +2548,10 @@ IF TABULATED == 1:
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
                  "min": bonded_ia_params[self._bond_id].p.tab.pot.minval,
                  "max": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
-                 "energy": bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
+                 "energy":
+                     bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
                  "force": bonded_ia_params[self._bond_id].p.tab.pot.force_tab
-                }
+                 }
             if res["type"] == 1:
                 res["type"] = "distance"
             if res["type"] == 2:
@@ -2440,7 +2579,8 @@ IF TABULATED == 1:
                 self._params["force"])
 
             if res == 1:
-                raise Exception("Could not setup tabulated bond. Invalid bond type.")
+                raise Exception(
+                    "Could not setup tabulated bond. Invalid bond type.")
             # Retrieve some params, Es calculates.
             self._params = self._get_params_from_es_core()
 
@@ -2497,7 +2637,7 @@ IF TABULATED == 1:
             self._params = {'min': -1., 'max': -1, 'energy': [], 'force': []}
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params = get_ia_param_safe(
+            cdef IA_parameters * ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
 
@@ -2523,6 +2663,7 @@ IF TABULATED == 1:
 
 IF TABULATED != 1:
     class Tabulated(BondedInteraction):
+
         def type_number(self):
             raise Exception("TABULATED has to be defined in myconfig.hpp.")
 
@@ -2559,6 +2700,7 @@ IF TABULATED != 1:
 
 IF LENNARD_JONES == 1:
     class SubtLJ(BondedInteraction):
+
         def __init__(self, *args, **kwargs):
             super(SubtLJ, self).__init__(*args, **kwargs)
 
@@ -2597,6 +2739,7 @@ IF LENNARD_JONES == 1:
 
 
 class Virtual(BondedInteraction):
+
     def __init__(self, *args, **kwargs):
         """
         VirtualBond initializer. Used to instantiate a VirtualBond identifier.
@@ -2636,101 +2779,9 @@ class Virtual(BondedInteraction):
     def _set_params_in_es_core(self):
         virtual_set_params(self._bond_id)
 
-
-IF BOND_ENDANGLEDIST == 1:
-    class Endangledist(BondedInteraction):
-
-        def type_number(self):
-            return BONDED_IA_ENDANGLEDIST
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "ENDANGLEDIST"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "bend", "phi0", "distmin", "distmax"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "bend", "phi0", "distmin", "distmax"
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {"bend": 0, "phi0": 0, "distmin": 0, "distmax": 1}
-
-        def _get_params_from_es_core(self):
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.endangledist.bend,
-                 "phi0": bonded_ia_params[self._bond_id].p.endangledist.phi0,
-                 "distmin":
-                     bonded_ia_params[self._bond_id].p.endangledist.distmin,
-                 "distmax": bonded_ia_params[self._bond_id].p.endangledist.distmax}
-
-        def _set_params_in_es_core(self):
-            endangledist_set_params(
-                self._bond_id, self._params["bend"], self._params[
-                    "phi0"], self._params["distmin"],
-                self._params["distmax"])
-
-ELSE:
-    class Endangledist(BondedInteractionNotDefined):
-        name = "BOND_ENDANGLEDIST"
-
-IF OVERLAPPED == 1:
-    class Overlapped(BondedInteraction):
-
-        def type_number(self):
-            return BONDED_IA_OVERLAPPED
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "OVERLAPPED"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "overlap_type", "filename"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "overlap_type", "filename"
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {"overlap_type": 0, "filename": ""}
-
-        def _get_params_from_es_core(self):
-            make_bond_type_exist(self._bond_id)
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.overlap.type,
-                 "phi0": utils.to_str(bonded_ia_params[self._bond_id].p.overlap.filename)}
-
-        def _set_params_in_es_core(self):
-            overlapped_bonded_set_params(
-                self._bond_id, self._params["overlap_type"], utils.to_char_pointer(self._params["filename"]))
-
-ELSE:
-    class Overlapped(BondedInteractionNotDefined):
-        name = "OVERLAPPED"
-
 IF BOND_ANGLE == 1:
     class AngleHarmonic(BondedInteraction):
+
         """
         Bond angle dependent harmonic potential.
 
@@ -2779,6 +2830,7 @@ ELSE:
 
 IF BOND_ANGLE == 1:
     class AngleCosine(BondedInteraction):
+
         """
         Bond angle dependent ine potential.
 
@@ -2827,6 +2879,7 @@ ELSE:
 
 IF BOND_ANGLE == 1:
     class AngleCossquare(BondedInteraction):
+
         """
         Bond angle dependent cos^2 potential.
 
@@ -2873,13 +2926,170 @@ ELSE:
     class AngleCossquare(BondedInteractionNotDefined):
         name = "AngleCossquare"
 
+# IBM triel
+IF IMMERSED_BOUNDARY:
+    class IBM_Triel(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """
+            IBM_Triel initializer. Used to instantiate an IBM_Triel identifier
+            with a given set of parameters.
+
+            Parameters
+            ----------
+            indX : :obj:`int`
+                  Specify first, second and third bonding partner. Used for initializing reference state
+            k1 : :obj:`float`
+                  Specifies shear elasticity for Skalak and Neo-Hookean
+            k2 : :obj:`float`
+                  Specifies area resistance for Skalak
+            maxDist : :obj:`float`
+                  Gives an error if an edge becomes longer than maxDist
+            elasticLaw : :obj:`string`
+                  Specify NeoHookean or Skalak
+
+            """
+            super(IBM_Triel, self).__init__(*args, **kwargs)
+
+        def type_number(self):
+            return BONDED_IA_IBM_TRIEL
+
+        def type_name(self):
+            return "IBM_Triel"
+
+        def valid_keys(self):
+            return "ind1", "ind2", "ind3", "k1", "k2", "maxDist", "elasticLaw"
+
+        def required_keys(self):
+            return "ind1", "ind2", "ind3", "k1", "maxDist", "elasticLaw"
+
+        def set_default_params(self):
+            self._params = {"k2": 0}
+
+        def _get_params_from_es_core(self):
+            return \
+                {"maxDist": bonded_ia_params[self._bond_id].p.ibm_triel.maxDist,
+                 "k1": bonded_ia_params[self._bond_id].p.ibm_triel.k1,
+                 "k2": bonded_ia_params[self._bond_id].p.ibm_triel.k2,
+                 "elasticLaw": < int > bonded_ia_params[self._bond_id].p.ibm_triel.elasticLaw}
+
+        def _set_params_in_es_core(self):
+            cdef tElasticLaw el
+            if self._params["elasticLaw"] == "NeoHookean":
+                el = NeoHookean
+            if self._params["elasticLaw"] == "Skalak":
+                el = Skalak
+            IBM_Triel_SetParams(self._bond_id, self._params["ind1"], self._params["ind2"], self._params[
+                                "ind3"], self._params["maxDist"], el, self._params["k1"], self._params["k2"])
+ELSE:
+    class IBM_Triel(BondedInteractionNotDefined):
+        name = "IBM_TRIEL"
+
+# IBM tribend
+IF IMMERSED_BOUNDARY == 1:
+    class IBM_Tribend(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """
+            IBM_Tribend initializer. Used to instantiate an IBM_Tribend identifier
+            with a given set of parameters.
+
+            Parameters
+            ----------
+            indX : :obj:`int`
+                  Specify first, second, third and fourth bonding partner. Used for initializing reference state
+            kb : :obj:`float`
+                  Specifies bending modulus
+            refShape : :obj:`string`
+                  Flat or Initial
+
+            """
+            super(IBM_Tribend, self).__init__(*args, **kwargs)
+
+        def type_number(self):
+            return BONDED_IA_IBM_TRIBEND
+
+        def type_name(self):
+            return "IBM_Tribend"
+
+        def valid_keys(self):
+            return "ind1", "ind2", "ind3", "ind4", "kb", "refShape"
+
+        def required_keys(self):
+            return "ind1", "ind2", "ind3", "ind4", "kb"
+
+        def set_default_params(self):
+            self._params = {"flat": False}
+
+        def _get_params_from_es_core(self):
+            return \
+                {"kb": bonded_ia_params[self._bond_id].p.ibm_tribend.kb,
+                 "theta0": bonded_ia_params[self._bond_id].p.ibm_tribend.theta0}
+
+        def _set_params_in_es_core(self):
+            if self._params["refShape"] == "Flat":
+                flat = True
+            if self._params["refShape"] == "Initial":
+                flat = False
+            IBM_Tribend_SetParams(self._bond_id, self._params["ind1"], self._params[
+                                  "ind2"], self._params["ind3"], self._params["ind4"], self._params["kb"], flat)
+ELSE:
+    class IBM_Tribend(BondedInteractionNotDefined):
+        name = "IBM_TRIBEND"
+
+# IBM VolCons
+IF IMMERSED_BOUNDARY == 1:
+    class IBM_VolCons(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """
+            IBM_VolCons initializer. Used to instantiate an IBM_VolCons identifier
+            with a given set of parameters.
+
+            Parameters
+            ----------
+            softID : :obj:`int`
+                  Used to identify the object to which this bond belongs. Each object (cell) needs its own ID
+            kappaV : :obj:`float`
+                  Modulus for volume force
+
+            """
+            super(IBM_VolCons, self).__init__(*args, **kwargs)
+
+        def type_number(self):
+            return BONDED_IA_IBM_VOLUME_CONSERVATION
+
+        def type_name(self):
+            return "IBM_VolCons"
+
+        def valid_keys(self):
+            return "softID", "kappaV"
+
+        def required_keys(self):
+            return "softID", "kappaV"
+
+        def set_default_params(self):
+            self._params = {}
+
+        def _get_params_from_es_core(self):
+            return \
+                {"softID": bonded_ia_params[self._bond_id].p.ibmVolConsParameters.softID,
+                 "kappaV": bonded_ia_params[self._bond_id].p.ibmVolConsParameters.kappaV}
+
+        def _set_params_in_es_core(self):
+            immersed_boundaries.volume_conservation_set_params(
+                self._bond_id, self._params["softID"], self._params["kappaV"])
+ELSE:
+    class IBM_VolCons(BondedInteractionNotDefined):
+        name = "IBM_VOLCONS"
+
 
 class OifGlobalForces(BondedInteraction):
+
     """
     Part of the :ref:`Object-in-fluid` method.
 
     """
-
 
     def type_number(self):
         return BONDED_IA_OIF_GLOBAL_FORCES
@@ -2921,6 +3131,7 @@ class OifGlobalForces(BondedInteraction):
 
 
 class OifLocalForces(BondedInteraction):
+
     """
     Part of the :ref:`Object-in-fluid` method.
 
@@ -2939,20 +3150,20 @@ class OifLocalForces(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
+        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
+        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
 
         """
         self._params = {"r0": 1., "ks": 0., "kslin": 0.,
-                        "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
+                        "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0., "kvisc": 0.}
 
     def _get_params_from_es_core(self):
         return \
@@ -2963,12 +3174,42 @@ class OifLocalForces(BondedInteraction):
              "kb": bonded_ia_params[self._bond_id].p.oif_local_forces.kb,
              "A01": bonded_ia_params[self._bond_id].p.oif_local_forces.A01,
              "A02": bonded_ia_params[self._bond_id].p.oif_local_forces.A02,
-             "kal": bonded_ia_params[self._bond_id].p.oif_local_forces.kal}
+             "kal": bonded_ia_params[self._bond_id].p.oif_local_forces.kal,
+             "kvisc": bonded_ia_params[self._bond_id].p.oif_local_forces.kvisc}
 
     def _set_params_in_es_core(self):
         oif_local_forces_set_params(
-            self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"])
+            self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"], self._params["kvisc"])
 
+IF MEMBRANE_COLLISION == 1:
+    class OifOutDirection(BondedInteraction):
+
+        def type_number(self):
+            return BONDED_IA_OIF_OUT_DIRECTION
+
+        def type_name(self):
+            return "OIF_OUT_DIRECTION"
+
+        def valid_keys(self):
+            return ""
+
+        def required_keys(self):
+            return ""
+
+        def set_default_params(self):
+            self._params = {}
+
+        def _get_params_from_es_core(self):
+            return \
+                {}
+
+        def _set_params_in_es_core(self):
+            oif_out_direction_set_params(
+                self._bond_id)
+
+ELSE:
+    class OifOutDirection(BondedInteractionNotDefined):
+        name = "OIF_OUT_DIRECTION"
 
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
@@ -2978,13 +3219,15 @@ bonded_interaction_classes = {
     int(BONDED_IA_DIHEDRAL): Dihedral,
     int(BONDED_IA_TABULATED): Tabulated,
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
-    int(BONDED_IA_ENDANGLEDIST): Endangledist,
-    int(BONDED_IA_OVERLAPPED): Overlapped,
     int(BONDED_IA_ANGLE_HARMONIC): AngleHarmonic,
     int(BONDED_IA_ANGLE_COSINE): AngleCosine,
     int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,
     int(BONDED_IA_OIF_GLOBAL_FORCES): OifGlobalForces,
     int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
+    int(BONDED_IA_OIF_OUT_DIRECTION): OifOutDirection,
+    int(BONDED_IA_IBM_TRIEL): IBM_Triel,
+    int(BONDED_IA_IBM_TRIBEND): IBM_Tribend,
+    int(BONDED_IA_IBM_VOLUME_CONSERVATION): IBM_VolCons,
     int(BONDED_IA_THERMALIZED_DIST): ThermalizedBond
 }
 IF LENNARD_JONES:
@@ -2992,9 +3235,12 @@ IF LENNARD_JONES:
 IF ELECTROSTATICS:
     bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulomb
 IF P3M:
-    bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB_P3M_SR)] = BondedCoulombP3MSRBond
+    bonded_interaction_classes[
+        int(BONDED_IA_BONDED_COULOMB_P3M_SR)] = BondedCoulombP3MSRBond
+
 
 class BondedInteractions(object):
+
     """Represents the bonded interactions.
 
     Individual interactions can be accessed using
@@ -3007,7 +3253,7 @@ class BondedInteractions(object):
                 "Index to BondedInteractions[] has to be an integer referring to a bond id")
 
         # Find out the type of the interaction from Espresso
-        if key >= n_bonded_ia:
+        if key >= bonded_ia_params.size():
             raise IndexError(
                 "Index to BondedInteractions[] out of range")
         bond_type = bonded_ia_params[key].type
@@ -3044,17 +3290,17 @@ class BondedInteractions(object):
         value._set_params_in_es_core()
 
     def __len__(self):
-        return n_bonded_ia
+        return bonded_ia_params.size()
 
     # Support iteration over active bonded interactions
     def __iter__(self):
-        for i in range(n_bonded_ia):
+        for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != -1:
                 yield self[i]
 
     def add(self, bonded_ia):
         """Add a bonded ia to the simulation>"""
-        self[n_bonded_ia] = bonded_ia
+        self[bonded_ia_params.size()] = bonded_ia
 
     def __getstate__(self):
         params = {}

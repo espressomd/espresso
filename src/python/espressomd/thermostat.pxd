@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,21 +17,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
-include "myconfig.pxi"
 
-cdef extern from "Vector.hpp":
-    cppclass Vector3d:
-        double & operator[](int i)
+from libcpp cimport bool as cbool
+
+include "myconfig.pxi"
+from .utils cimport Vector3d
 
 cdef extern from "thermostat.hpp":
     double temperature
     int thermo_switch
+    cbool thermo_virtual
     int THERMO_OFF
     int THERMO_LANGEVIN
     int THERMO_LB
     int THERMO_NPT_ISO
-    int THERMO_DPD
-    int THERMO_INTER_DPD
     int THERMO_DPD
 
     IF PARTICLE_ANISOTROPY:

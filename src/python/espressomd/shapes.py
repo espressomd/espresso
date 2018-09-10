@@ -1,8 +1,25 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
 @script_interface_register
 class Cylinder(ScriptInterfaceHelper):
+
     """
     A cylinder shape.
 
@@ -10,15 +27,17 @@ class Cylinder(ScriptInterfaceHelper):
     ----------
     center : array_like :obj:`float`
              Coordinates of the center of the cylinder.
-    axis : array_like :obj:`int`
+    axis : array_like :obj:`float`
            Axis of the cylinder.
-    direction : :obj:`int`
-                Surface orientation, for +1 the normal points
-                out of the mantel, for -1 it points inward.
     radius : :obj:`float`
              Radius of the cylinder.
     length : :obj:`float`
              Length of the cylinder.
+    direction : :obj:`int`
+                Surface orientation, for +1 the normal points
+                out of the mantel, for -1 it points inward.
+    open : :obj:`bool`
+            cylinder is open or has caps.
 
     """
     _so_name = "Shapes::Cylinder"
@@ -26,6 +45,7 @@ class Cylinder(ScriptInterfaceHelper):
 
 @script_interface_register
 class Ellipsoid(ScriptInterfaceHelper):
+
     """
     An ellipsoid.
 
@@ -49,6 +69,7 @@ class Ellipsoid(ScriptInterfaceHelper):
 
 @script_interface_register
 class HollowCone(ScriptInterfaceHelper):
+
     """
     A hollow cone shape.
 
@@ -76,6 +97,7 @@ class HollowCone(ScriptInterfaceHelper):
 
 @script_interface_register
 class Maze(ScriptInterfaceHelper):
+
     """
     Spherical cavities on a regular grid that are
     connected by tubes.
@@ -97,6 +119,7 @@ class Maze(ScriptInterfaceHelper):
 
 @script_interface_register
 class Rhomboid(ScriptInterfaceHelper):
+
     """
     An parallelepiped.
 
@@ -120,6 +143,7 @@ class Rhomboid(ScriptInterfaceHelper):
 
 @script_interface_register
 class Slitpore(ScriptInterfaceHelper):
+
     """
 
     .. image:: figures/slitpore.png
@@ -140,6 +164,7 @@ class Slitpore(ScriptInterfaceHelper):
 
 @script_interface_register
 class Sphere(ScriptInterfaceHelper):
+
     """
     A sphere.
 
@@ -159,6 +184,7 @@ class Sphere(ScriptInterfaceHelper):
 
 @script_interface_register
 class SpheroCylinder(ScriptInterfaceHelper):
+
     """
     A cylinder with hemispheres as caps.
 
@@ -166,13 +192,13 @@ class SpheroCylinder(ScriptInterfaceHelper):
     ----------
     center : array_like :obj:`float`
              Coordinates of the center of the cylinder.
-    axis : array_like :obj:`int`
+    axis : array_like :obj:`float`
            Axis of the cylinder.
+    radius : :obj:`float`
+             Radius of the cylinder.
     direction : :obj:`int`
                 Surface orientation, for +1 the normal points
                 out of the mantel, for -1 it points inward.
-    radius : :obj:`float`
-             Radius of the cylinder.
     length : :obj:`float`
              Length of the cylinder (not including the caps).
 
@@ -182,6 +208,7 @@ class SpheroCylinder(ScriptInterfaceHelper):
 
 @script_interface_register
 class Stomatocyte(ScriptInterfaceHelper):
+
     """
     Attributes
     ----------
@@ -206,6 +233,7 @@ class Stomatocyte(ScriptInterfaceHelper):
 
 @script_interface_register
 class Wall(ScriptInterfaceHelper):
+
     """
     An infinite plane.
 
@@ -222,6 +250,7 @@ class Wall(ScriptInterfaceHelper):
 
 @script_interface_register
 class SimplePore(ScriptInterfaceHelper):
+
     """
     Two parallel infinite planes, and a cylindrical orfice connecting them.
     The cylinder and the planes are connected by torus segments with an

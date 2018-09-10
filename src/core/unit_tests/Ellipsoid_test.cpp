@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -35,7 +35,7 @@ bool check_distance_function(const Shapes::Shape &s) {
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
       double theta = 2. * i / N * M_PI;
-      double v = j / (N - 1);
+      double v = j / (N - 1.);
 
       double dist[3];
       double d;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -41,6 +41,13 @@ extern const char *ESPRESSO_VERSION;
 /** \name Parameters from myconfig.hpp that need to be set */
 /*********************************************************/
 /*@{*/
+
+#ifdef SCAFACOS
+#include "fcs_config.h"
+#if defined(FCS_ENABLE_DIPOLES) && defined(DIPOLES)
+#define SCAFACOS_DIPOLES
+#endif
+#endif
 
 #ifndef ONEPART_DEBUG_ID
 #define ONEPART_DEBUG_ID 13

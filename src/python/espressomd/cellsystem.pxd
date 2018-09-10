@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -41,7 +41,6 @@ cdef extern from "cells.hpp":
 cdef extern from "layered.hpp":
     int determine_n_layers
     int n_layers_ "n_layers"
-    int determine_n_layers
 
 cdef extern from "grid.hpp":
     int node_grid[3]

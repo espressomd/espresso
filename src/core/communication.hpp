@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -26,7 +26,7 @@
     It is the header file for \ref communication.cpp "communication.c".
 
     The asynchronous MPI communication is used during the script
-    evaluation. Except for the master node that interpretes the Tcl
+    evaluation. Except for the master node that interprets the Tcl
     script, all other nodes wait in mpi_loop() for the master node to
     issue an action using mpi_call(). \ref mpi_loop immediately
     executes an MPI_Bcast and therefore waits for the master node to
@@ -90,7 +90,7 @@ namespace Communication {
  *
  */
 MpiCallbacks &mpiCallbacks();
-}
+} // namespace Communication
 
 /**************************************************
  * for every procedure requesting a MPI negotiation
@@ -125,8 +125,8 @@ void mpi_finalize();
  * and node grid.
  */
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity = {{1, 1,
-                                                                       1}});
+                              std::array<int, 3> const &periodicity = {
+                                  {1, 1, 1}});
 
 /** Issue REQ_EVENT: tells all clients of some system change.
     The events are:
@@ -172,7 +172,8 @@ void mpi_send_v(int node, int part, double v[3]);
     \param node the node it is attached to.
     \param swim struct containing swimming parameters
 */
-void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
+void mpi_send_swimming(int node, int part,
+                       const ParticleParametersSwimming &swim);
 
 /** Issue REQ_SET_F: send particle force.
     Also calls \ref on_particle_change.
@@ -180,7 +181,7 @@ void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
     \param node the node it is attached to.
     \param F its new force.
 */
-void mpi_send_f(int node, int part, double F[3]);
+void mpi_send_f(int node, int part, const Vector3d &F);
 
 /** issue req_set_solv: send particle solvation free energy
     also calls \ref on_particle_change.
@@ -222,6 +223,16 @@ void mpi_send_mu_E(int node, int part, double mu_E[3]);
     \param rinertia its new rotational inertia.
 */
 void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
+#endif
+#ifdef ROTATION
+/** Mpi call for rotating a single particle
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param axis rotation axis
+    \param angle rotation angle
+*/
+void mpi_rotate_particle(int node, int part, double axis[3], double angle);
 #endif
 
 #ifdef AFFINITY
@@ -290,7 +301,7 @@ void mpi_send_dip(int node, int part, double dip[3]);
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
-    \param dipm its new dipole moment (absolut value).
+    \param dipm its new dipole moment (absolute value).
 */
 void mpi_send_dipm(int node, int part, double dipm);
 #endif
@@ -300,26 +311,15 @@ void mpi_send_dipm(int node, int part, double dipm);
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
-    \param isVirtual its new isVirtual.
+    \param is_virtual its new is_virtual.
 */
-void mpi_send_virtual(int node, int part, int isVirtual);
+void mpi_send_virtual(int node, int part, int is_virtual);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void mpi_send_vs_quat(int node, int part, double *vs_quat);
 void mpi_send_vs_relative(int node, int part, int vs_relative_to,
-                          double vs_distance, double* rel_ori);
-#endif
-
-#ifdef MULTI_TIMESTEP
-/** Issue REQ_SET_SMALLER_TIMESTEP: send smaller time step value.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param smaller_timestep its new smaller_timestep.
-*/
-void mpi_send_smaller_timestep_flag(int node, int part,
-                                    int smaller_timestep_flag);
+                          double vs_distance, double *rel_ori);
 #endif
 
 /** Issue REQ_SET_TYPE: send particle type.
@@ -343,7 +343,7 @@ void mpi_send_mol_id(int node, int part, int mid);
     \param pnode    node it is attached to.
     \param part     identity of principal atom of the bond.
     \param bond     field containing the bond type number and the identity of
-   all bond partners (secundary atoms of the bond).
+   all bond partners (secondary atoms of the bond).
     \param _delete   if true, do not add the bond, rather delete it if found
     \return 1 on success or 0 if not (e. g. bond to delete does not exist)
 */
@@ -352,7 +352,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int _delete);
 /** Issue REQ_SET_EXCLUSION: send exclusions.
     Also calls \ref on_particle_change.
     \param part     identity of first particle of the exclusion.
-    \param part2    identity of secnd particle of the exclusion.
+    \param part2    identity of second particle of the exclusion.
     \param _delete   if true, do not add the exclusion, rather delete it if
    found
 */
@@ -388,6 +388,8 @@ int mpi_integrate(int n_steps, int reuse_forces);
  */
 int mpi_minimize_energy(void);
 
+void mpi_bcast_all_ia_params();
+
 /** Issue REQ_BCAST_IA: send new ia params.
     Also calls \ref on_short_range_ia_change.
 
@@ -405,7 +407,7 @@ void mpi_bcast_ia_params(int i, int j);
 /** Issue REQ_BCAST_IA_SIZE: send new size of \ref ia_params.
     \param s the new size for \ref ia_params.
 */
-void mpi_bcast_n_particle_types(int s);
+void mpi_bcast_max_seen_particle_type(int s);
 
 /** Issue REQ_GATHER: gather data for analysis in analyze.
     \param job what to do:
@@ -462,12 +464,6 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
     velocities accordingly.
 */
 void mpi_set_time_step(double time_step);
-
-#ifdef MULTI_TIMESTEP
-/** Issue REQ_SET_SMALLER_TIME_STEP: send new \ref smaller_time_step.
-    Requires MULTI_TIMESTEP feature. */
-void mpi_set_smaller_time_step(double smaller_time_step);
-#endif
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_coulomb_params();
@@ -532,7 +528,7 @@ int mpi_sync_topo_part_info(void);
 
 /** Issue REQ_BCAST_LBPAR: Broadcast a parameter for Lattice Boltzmann.
  * @param field References the parameter field to be broadcasted. The references
- * are defined in \ref lb.hpp "lb.hpp"
+ * are defined in \ref lb.hpp "grid_based_algorithms/lb.hpp"
  */
 void mpi_bcast_lb_params(int field, int value = -1);
 
@@ -547,7 +543,9 @@ void mpi_bcast_cuda_global_part_vars();
  * @param j     local fluid velocity
  * @param pi    local fluid pressure
  */
-void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
+void mpi_send_fluid(int node, int index, double rho,
+                    const std::array<double, 3> &j,
+                    const std::array<double, 6> &pi);
 
 /** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
  * @param node  processor to send to

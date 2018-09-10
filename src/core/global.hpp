@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -62,8 +62,6 @@ enum Fields {
   FIELD_CELLSIZE,
   /** index of \ref langevin_gamma in  \ref #fields */
   FIELD_LANGEVIN_GAMMA,
-  /** index of \ref lees_edwards_offset in \ref #fields */
-  FIELD_LEES_EDWARDS_OFFSET,
   /** index of \ref integ_switch in \ref #fields */
   FIELD_INTEG_SWITCH,
   /** index of \ref local_box_l in \ref #fields */
@@ -86,7 +84,7 @@ enum Fields {
   FIELD_NNODES,
   /** index of \ref n_part in  \ref #fields */
   FIELD_NPART,
-  /** index of \ref n_particle_types in \ref #fields */
+  /** index of \ref max_seen_particle_type in \ref #fields */
   FIELD_NPARTTYPE,
   /** index of \ref n_rigidbonds in \ref #fields */
   FIELD_RIGIDBONDS,
@@ -142,17 +140,17 @@ enum Fields {
   FIELD_GHMC_SCALE,
   /** index of \ref warnings in \ref #fields */
   FIELD_WARNINGS,
-  /** index of \ref smaller_timestep in \ref #fields */
-  FIELD_SMALLERTIMESTEP,
   /** index of \ref langevin_trans in \ref #fields */
   FIELD_LANGEVIN_TRANS_SWITCH,
   /** index of \ref langevin_rotate in \ref #fields */
   FIELD_LANGEVIN_ROT_SWITCH,
   /** index of \ref langevin_gamma_rotation in  \ref #fields */
   FIELD_LANGEVIN_GAMMA_ROTATION,
+  FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
   /** index of \ref n_thermalized_bonds in \ref #fields */
   FIELD_THERMALIZEDBONDS,
-  FIELD_FORCE_CAP
+  FIELD_FORCE_CAP,
+  FIELD_THERMO_VIRTUAL
 };
 /*@}*/
 

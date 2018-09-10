@@ -1,13 +1,37 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+""" Visualization sample for charged particles. Simulates a pool of particles with various charges, LJ parameters and masses.
+"""
+
 import espressomd
 from espressomd.visualization_opengl import openGLLive
 from espressomd import electrostatics
 import numpy as np
+
+required_features = ["ELECTROSTATICS", "LENNARD_JONES", "MASS"]
+espressomd.assert_features(required_features)
 
 box = [40, 40, 40]
 system = espressomd.System(box_l=box)
 system.cell_system.set_domain_decomposition(use_verlet_lists=True)
 visualizer = openGLLive(system, background_color=[
                         1, 1, 1], drag_enabled=True, drag_force=10)
+
+system.set_random_state_PRNG()
 
 # TIMESTEP
 time_step_fs = 1.0
@@ -19,20 +43,21 @@ SI_temperature = 400.0
 kb_kjmol = 0.0083145
 temperature = SI_temperature * kb_kjmol
 
-# COULOMB PREFACTOR (elementary charge)^2 / (4*pi*epsilon_0) in Angstrom * kJ/mol
+# COULOMB PREFACTOR (elementary charge)^2 / (4*pi*epsilon_0) in Angstrom *
+# kJ/mol
 epsilon_r = 4.0
 coulomb_prefactor = 1.67101e5 * kb_kjmol / epsilon_r
 
 # FORCE FIELDS
 species = ["Cl", "Na", "Colloid", "Solvent"]
-types = {"Cl":          0, "Na": 1, "Colloid": 2, "Solvent": 3}
+types = {"Cl": 0, "Na": 1, "Colloid": 2, "Solvent": 3}
 charges = {"Cl": -1.0, "Na": 1.0, "Colloid": -3.0, "Solvent": 0.0}
-lj_sigmas = {"Cl":       3.85, "Na": 2.52, "Colloid": 10.0, "Solvent": 1.5}
-lj_epsilons = {"Cl":     192.45, "Na": 17.44,
+lj_sigmas = {"Cl": 3.85, "Na": 2.52, "Colloid": 10.0, "Solvent": 1.5}
+lj_epsilons = {"Cl": 192.45, "Na": 17.44,
                "Colloid": 100.0, "Solvent": 50.0}
-lj_cuts = {"Cl":  2.0 * lj_sigmas["Cl"], "Na": 2.0 * lj_sigmas["Na"],
+lj_cuts = {"Cl": 2.0 * lj_sigmas["Cl"], "Na": 2.0 * lj_sigmas["Na"],
            "Colloid": 1.5 * lj_sigmas["Colloid"], "Solvent": 2.0 * lj_sigmas["Solvent"]}
-masses = {"Cl":        35.453, "Na": 22.99, "Colloid": 300, "Solvent": 18.0}
+masses = {"Cl": 35.453, "Na": 22.99, "Colloid": 300, "Solvent": 18.0}
 
 n_ionpairs = 50
 for i in range(n_ionpairs):

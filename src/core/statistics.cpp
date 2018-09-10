@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -26,9 +26,9 @@
 #include "communication.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
-#include "lb.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
@@ -55,13 +55,6 @@ int n_part_conf = 0;
 /****************************************************************************************
  *                                 helper functions
  ****************************************************************************************/
-
-double min_distance2(double const pos1[3], double const pos2[3]) {
-  double diff[3];
-  get_mi_vector(diff, pos1, pos2);
-  return sqrlen(diff);
-}
-
 /****************************************************************************************
  *                                 basic observables calculation
  ****************************************************************************************/
@@ -142,39 +135,37 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
     agg_size[i] = 0;
   }
 
-  short_range_loop(Utils::NoOp{},
-                   [&](Particle &p1, Particle &p2, Distance &d) {
-                     auto p1molid = p1.p.mol_id;
-                     auto p2molid = p2.p.mol_id;
-                     if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
-                         ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-                       if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
+  short_range_loop(Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
+    auto p1molid = p1.p.mol_id;
+    auto p2molid = p2.p.mol_id;
+    if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
+        ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
+      if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
 #ifdef ELECTROSTATICS
-                         if (charge && (p1.p.q * p2.p.q >= 0)) {
-                           return;
-                         }
+        if (charge && (p1.p.q * p2.p.q >= 0)) {
+          return;
+        }
 #endif
-                         if (d.dist2 < dist_criteria2) {
-                           if (p1molid > p2molid) {
-                             ind = p1molid * topology.size() + p2molid;
-                           } else {
-                             ind = p2molid * topology.size() + p1molid;
-                           }
-                           if (min_contact > 1) {
-                             contact_num[ind]++;
-                             if (contact_num[ind] >= min_contact) {
-                               merge_aggregate_lists(head_list, agg_id_list,
-                                                     p1molid, p2molid,
-                                                     link_list);
-                             }
-                           } else {
-                             merge_aggregate_lists(head_list, agg_id_list,
-                                                   p1molid, p2molid, link_list);
-                           }
-                         }
-                       }
-                     }
-                   });
+        if (d.dist2 < dist_criteria2) {
+          if (p1molid > p2molid) {
+            ind = p1molid * topology.size() + p2molid;
+          } else {
+            ind = p2molid * topology.size() + p1molid;
+          }
+          if (min_contact > 1) {
+            contact_num[ind]++;
+            if (contact_num[ind] >= min_contact) {
+              merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
+                                    link_list);
+            }
+          } else {
+            merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
+                                  link_list);
+          }
+        }
+      }
+    }
+  });
 
   /* count number of aggregates
      find aggregate size
@@ -212,17 +203,12 @@ void predict_momentum_particles(double *result) {
   double momentum[3] = {0.0, 0.0, 0.0};
 
   for (auto const &p : local_cells.particles()) {
-    // Due to weird scaling of units the following is actually correct
     auto const mass = p.p.mass;
 
-    momentum[0] += mass * (p.m.v[0] + p.f.f[0]);
-    momentum[1] += mass * (p.m.v[1] + p.f.f[1]);
-    momentum[2] += mass * (p.m.v[2] + p.f.f[2]);
+    momentum[0] += mass * (p.m.v[0] + p.f.f[0] * 0.5 * time_step / p.p.mass);
+    momentum[1] += mass * (p.m.v[1] + p.f.f[1] * 0.5 * time_step / p.p.mass);
+    momentum[2] += mass * (p.m.v[2] + p.f.f[2] * 0.5 * time_step / p.p.mass);
   }
-
-  momentum[0] /= time_step;
-  momentum[1] /= time_step;
-  momentum[2] /= time_step;
 
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
@@ -341,70 +327,6 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   MofImatrix[3] = MofImatrix[1];
   MofImatrix[6] = MofImatrix[2];
   MofImatrix[7] = MofImatrix[5];
-}
-
-void calc_gyration_tensor(PartCfg &partCfg, int type, std::vector<double> &gt) {
-  int i, j, count;
-  std::vector<double> com(3);
-  double eva[3], eve0[3], eve1[3], eve2[3];
-  double tmp;
-  double Smatrix[9], p1[3];
-
-  for (i = 0; i < 9; i++)
-    Smatrix[i] = 0;
-  /* 3*ev, rg, b, c, kappa, eve0[3], eve1[3], eve2[3]*/
-  gt.resize(16);
-
-  /* Calculate the position of COM */
-  com = centerofmass(partCfg, type);
-
-  /* Calculate the gyration tensor Smatrix */
-  count = 0;
-  for (auto const &p : partCfg) {
-    if ((p.p.type == type) || (type == -1)) {
-      for (j = 0; j < 3; j++) {
-        p1[j] = p.r.p[j] - com[j];
-      }
-      count++;
-      Smatrix[0] += p1[0] * p1[0];
-      Smatrix[1] += p1[0] * p1[1];
-      Smatrix[2] += p1[0] * p1[2];
-      Smatrix[4] += p1[1] * p1[1];
-      Smatrix[5] += p1[1] * p1[2];
-      Smatrix[8] += p1[2] * p1[2];
-    }
-  }
-  /* use symmetry */
-  Smatrix[3] = Smatrix[1];
-  Smatrix[6] = Smatrix[2];
-  Smatrix[7] = Smatrix[5];
-  for (i = 0; i < 9; i++) {
-    Smatrix[i] /= count;
-  }
-
-  /* Calculate the eigenvalues of Smatrix */
-  i = calc_eigenvalues_3x3(Smatrix, eva);
-  tmp = 0.0;
-  for (i = 0; i < 3; i++) {
-    /* Eigenvalues */
-    gt[i] = eva[i];
-    tmp += eva[i];
-  }
-
-  i = calc_eigenvector_3x3(Smatrix, eva[0], eve0);
-  i = calc_eigenvector_3x3(Smatrix, eva[1], eve1);
-  i = calc_eigenvector_3x3(Smatrix, eva[2], eve2);
-  gt[3] = tmp;                              /* Squared Radius of Gyration */
-  gt[4] = eva[0] - 0.5 * (eva[1] + eva[2]); /* Asphericity */
-  gt[5] = eva[1] - eva[2];                  /* Acylindricity */
-  gt[6] = (gt[4] * gt[4] + 0.75 * gt[5] * gt[5]) /
-          (gt[3] * gt[3]); /* Relative shape anisotropy */
-  /* Eigenvectors */
-  for (j = 0; j < 3; j++) {
-    gt[7 + j] = eve0[j];
-    gt[10 + j] = eve1[j];
-    gt[13 + j] = eve2[j];
-  }
 }
 
 IntList nbhood(PartCfg &partCfg, double pt[3], double r, int planedims[3]) {
@@ -664,7 +586,7 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
   ff[2 * order2] = 0;
   twoPI_L = 2 * PI / box_l[0];
 
-  if ((n_types < 0) || (n_types > n_particle_types)) {
+  if ((n_types < 0) || (n_types > max_seen_particle_type)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
     fflush(nullptr);
     errexit();
@@ -789,8 +711,8 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
 }
 
 int calc_cylindrical_average(
-    PartCfg &partCfg, std::vector<double> center_,
-    std::vector<double> direction_, double length, double radius,
+    PartCfg &partCfg, std::vector<double> const &center_,
+    std::vector<double> const &direction_, double length, double radius,
     int bins_axial, int bins_radial, std::vector<int> types,
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution) {
@@ -799,8 +721,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{std::move(center_)};
-  auto direction = Vector3d{std::move(direction_)};
+  auto center = Vector3d{center_};
+  auto direction = Vector3d{direction_};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -872,7 +794,7 @@ int calc_cylindrical_average(
   }
 
   // Now we turn the counts into densities by dividing by one radial
-  // bin (binvolume).  We also divide the velocites by the counts.
+  // bin (binvolume).  We also divide the velocities by the counts.
   double binvolume;
   for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
     for (int index_radial = 0; index_radial < bins_radial; index_radial++) {
@@ -1186,14 +1108,14 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                                int n_non_bonded, int n_coulomb, int n_dipolar,
                                int n_vs, int c_size) {
 
-  int i;
   // Number of doubles to store pressure in
-  int total = c_size * (n_pre + n_bonded_ia + n_non_bonded + n_coulomb +
-                        n_dipolar + n_vs);
+  const int total =
+      c_size * (n_pre + bonded_ia_params.size() + n_non_bonded + n_coulomb +
+                n_dipolar + n_vs + Observable_stat::n_external_field);
 
   // Allocate mem for the double list
   stat->data.resize(total);
-  
+
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
   stat->chunk_size = c_size;
 
@@ -1204,13 +1126,14 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
   stat->n_virtual_sites = n_vs;
   // Pointers to the start of different contributions
   stat->bonded = stat->data.e + c_size * n_pre;
-  stat->non_bonded = stat->bonded + c_size * n_bonded_ia;
+  stat->non_bonded = stat->bonded + c_size * bonded_ia_params.size();
   stat->coulomb = stat->non_bonded + c_size * n_non_bonded;
   stat->dipolar = stat->coulomb + c_size * n_coulomb;
   stat->virtual_sites = stat->dipolar + c_size * n_dipolar;
+  stat->external_fields = stat->virtual_sites + c_size * n_vs;
 
-  // Set all obseravables to zero
-  for (i = 0; i < total; i++)
+  // Set all observables to zero
+  for (int i = 0; i < total; i++)
     stat->data[i] = 0.0;
 }
 

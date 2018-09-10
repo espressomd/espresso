@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -37,7 +37,7 @@ public:
         m_shape(nullptr) {
     add_parameters({{"only_positive", m_constraint->only_positive()},
                     {"penetrable", m_constraint->penetrable()},
-                    {"particle_type", 
+                    {"particle_type",
                      [this](Variant const &value) {
                        m_constraint->set_type(get_value<int>(value));
                      },
@@ -52,7 +52,8 @@ public:
                      },
                      [this]() {
                        return (m_shape != nullptr) ? m_shape->id() : ObjectId();
-                     }}});
+                     }},
+                    {"particle_velocity", m_constraint->velocity()}});
   }
 
   Variant call_method(std::string const &name, VariantMap const &) override {
@@ -61,6 +62,9 @@ public:
     }
     if (name == "min_dist") {
       return shape_based_constraint()->min_dist();
+    }
+    if (name == "total_normal_force") {
+      return shape_based_constraint()->total_normal_force();
     }
 
     return none;

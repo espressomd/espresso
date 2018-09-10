@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2012-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -21,20 +21,20 @@
  *  Routines to calculate the OIF_GLOBAL_FORCES energy or/and and force
  *  for a particle triple (triangle from mesh). (Dupin2007)
  *  \ref forces.cpp
-*/
+ */
 
 #include "oif_global_forces.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
 
 /** set parameters for the OIF_GLOBAL_FORCES potential.
-*/
+ */
 int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
                                  double V0, double kv) {
   if (bond_type < 0)
@@ -75,7 +75,7 @@ void calc_oif_global(double *area_volume,
 
   /** loop over particles */
   Particle *p1, *p2, *p3;
-  double p11[3], p22[3], p33[3];
+  Vector3d p11, p22, p33;
   int img[3];
   double AA[3], BB[3];
   Bonded_ia_parameters *iaparams;
@@ -111,27 +111,24 @@ void calc_oif_global(double *area_volume,
         // if(n_partners>2){
         p3 = local_particles[p1->bl.e[j++]];
         if (!p3) {
-          runtimeErrorMsg()
-              << "oif global calc: bond broken between particles "
-              << p1->p.identity << ", " << p1->bl.e[j - 2] << " and "
-              << p1->bl.e[j - 1] << " (particles not stored on the same node - "
-                                    "oif_global_forces1); n "
-              << p1->bl.n << " max " << p1->bl.max;
+          runtimeErrorMsg() << "oif global calc: bond broken between particles "
+                            << p1->p.identity << ", " << p1->bl.e[j - 2]
+                            << " and " << p1->bl.e[j - 1]
+                            << " (particles not stored on the same node - "
+                               "oif_global_forces1); n "
+                            << p1->bl.n << " max " << p1->bl.max;
           return;
         }
-// remaining neighbors fetched
+        // remaining neighbors fetched
 
-// getting unfolded positions of all particles
-#ifdef GHOST_FLAG
+        // getting unfolded positions of all particles
         // first find out which particle out of p1, p2 (possibly p3, p4) is not
         // a ghost particle. In almost all cases it is p1, however, it might be
         // other one. we call this particle reference particle.
         if (p1->l.ghost != 1) {
           // unfold non-ghost particle using image, because for physical
           // particles, the structure p->l.i is correctly set
-          memmove(p11, p1->r.p, 3 * sizeof(double));
-          memmove(img, p1->l.i, 3 * sizeof(int));
-          unfold_position(p11, img);
+          p11 = unfolded_position(p1);
           // other coordinates are obtained from its relative positions to the
           // reference particle
           get_mi_vector(AA, p2->r.p, p11);
@@ -143,9 +140,7 @@ void calc_oif_global(double *area_volume,
         } else {
           // in case the first particle is a ghost particle
           if (p2->l.ghost != 1) {
-            memmove(p22, p2->r.p, 3 * sizeof(double));
-            memmove(img, p2->l.i, 3 * sizeof(int));
-            unfold_position(p22, img);
+            p22 = unfolded_position(p2);
             get_mi_vector(AA, p1->r.p, p22);
             get_mi_vector(BB, p3->r.p, p22);
             for (int i = 0; i < 3; i++) {
@@ -155,9 +150,7 @@ void calc_oif_global(double *area_volume,
           } else {
             // in case the first and the second particle are ghost particles
             if (p3->l.ghost != 1) {
-              memmove(p33, p3->r.p, 3 * sizeof(double));
-              memmove(img, p3->l.i, 3 * sizeof(int));
-              unfold_position(p33, img);
+              p33 = unfolded_position(p3);
               get_mi_vector(AA, p1->r.p, p33);
               get_mi_vector(BB, p2->r.p, p33);
               for (int i = 0; i < 3; i++) {
@@ -172,22 +165,7 @@ void calc_oif_global(double *area_volume,
             }
           }
         }
-#endif
-#ifndef GHOST_FLAG
-        // if ghost flag was not defined we have no other option than to assume
-        // the first particle is a physical one.
-        memmove(p11, p1->r.p, 3 * sizeof(double));
-        memmove(img, p1->l.i, 3 * sizeof(int));
-        unfold_position(p11, img);
-        // other coordinates are obtained from its relative positions to the
-        // reference particle
-        get_mi_vector(AA, p2->r.p, p11);
-        get_mi_vector(BB, p3->r.p, p11);
-        for (int i = 0; i < 3; i++) {
-          p22[i] = p11[i] + AA[i];
-          p33[i] = p11[i] + BB[i];
-        }
-#endif
+
         // unfolded positions correct
         VOL_A = area_triangle(p11, p22, p33);
         partArea += VOL_A;
@@ -216,12 +194,15 @@ void add_oif_global_forces(double *area_volume,
   double VOL_force[3];
   double VOL_A, VOL_norm[3], VOL_dn, VOL_vv;
 
-  double aa, force1[3], force2[3], force3[3], rh[3], hn, h[3];
+  double m1[3], m2[3], m3[3];
+  double m1_length, m2_length, m3_length, t, fac;
+
+  double deltaA, force1[3], force2[3], force3[3], rh[3], hn, h[3];
   int k;
 
   /** loop over particles */
   Particle *p1, *p2, *p3;
-  double p11[3], p22[3], p33[3];
+  Vector3d p11, p22, p33;
   double AA[3], BB[3];
   int img[3];
 
@@ -234,7 +215,6 @@ void add_oif_global_forces(double *area_volume,
   for (auto &p : local_cells.particles()) {
     int j = 0;
     p1 = &p;
-    // printf("i=%d neigh=%d\n", i, p1->bl.n);
     while (j < p1->bl.n) {
       /* bond type */
       type_num = p1->bl.e[j++];
@@ -242,8 +222,6 @@ void add_oif_global_forces(double *area_volume,
       type = iaparams->type;
       n_partners = iaparams->num;
       id = p1->p.mol_id;
-      // printf("neigh=%d, type=%d type_num=%d\n", p1->bl.n-1, type, type_num);
-      // printf("id %d molType %d\n", id, molType);
       if (type == BONDED_IA_OIF_GLOBAL_FORCES &&
           id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
         test++;
@@ -269,17 +247,14 @@ void add_oif_global_forces(double *area_volume,
           return;
         }
 
-// getting unfolded positions of all particles
-#ifdef GHOST_FLAG
+        // getting unfolded positions of all particles
         // first find out which particle out of p1, p2 (possibly p3, p4) is not
         // a ghost particle. In almost all cases it is p1, however, it might be
         // other one. we call this particle reference particle.
         if (p1->l.ghost != 1) {
           // unfold non-ghost particle using image, because for physical
           // particles, the structure p->l.i is correctly set
-          memmove(p11, p1->r.p, 3 * sizeof(double));
-          memmove(img, p1->l.i, 3 * sizeof(int));
-          unfold_position(p11, img);
+          p11 = unfolded_position(*p1);
           // other coordinates are obtained from its relative positions to the
           // reference particle
           get_mi_vector(AA, p2->r.p, p11);
@@ -291,9 +266,7 @@ void add_oif_global_forces(double *area_volume,
         } else {
           // in case the first particle is a ghost particle
           if (p2->l.ghost != 1) {
-            memmove(p22, p2->r.p, 3 * sizeof(double));
-            memmove(img, p2->l.i, 3 * sizeof(int));
-            unfold_position(p22, img);
+            p22 = unfolded_position(p2);
             get_mi_vector(AA, p1->r.p, p22);
             get_mi_vector(BB, p3->r.p, p22);
             for (int i = 0; i < 3; i++) {
@@ -303,9 +276,7 @@ void add_oif_global_forces(double *area_volume,
           } else {
             // in case the first and the second particle are ghost particles
             if (p3->l.ghost != 1) {
-              memmove(p33, p3->r.p, 3 * sizeof(double));
-              memmove(img, p3->l.i, 3 * sizeof(int));
-              unfold_position(p33, img);
+              p33 = unfolded_position(p3);
               get_mi_vector(AA, p1->r.p, p33);
               get_mi_vector(BB, p2->r.p, p33);
               for (int i = 0; i < 3; i++) {
@@ -320,22 +291,7 @@ void add_oif_global_forces(double *area_volume,
             }
           }
         }
-#endif
-#ifndef GHOST_FLAG
-        // if ghost flag was not defined we have no other option than to assume
-        // the first particle is a physical one.
-        memmove(p11, p1->r.p, 3 * sizeof(double));
-        memmove(img, p1->l.i, 3 * sizeof(int));
-        unfold_position(p11, img);
-        // other coordinates are obtained from its relative positions to the
-        // reference particle
-        get_mi_vector(AA, p2->r.p, p11);
-        get_mi_vector(BB, p3->r.p, p11);
-        for (int i = 0; i < 3; i++) {
-          p22[i] = p11[i] + AA[i];
-          p33[i] = p11[i] + BB[i];
-        }
-#endif
+
         // unfolded positions correct
         /// starting code from volume force
         get_n_triangle(p11, p22, p33, VOL_norm);
@@ -346,7 +302,6 @@ void add_oif_global_forces(double *area_volume,
         for (k = 0; k < 3; k++) {
           VOL_force[k] = iaparams->p.oif_global_forces.kv * VOL_vv * VOL_A *
                          VOL_norm[k] / VOL_dn * 1.0 / 3.0;
-          // printf("%e ",force[k]);
           p1->f.f[k] += VOL_force[k];
           p2->f.f[k] += VOL_force[k];
           p3->f.f[k] += VOL_force[k];
@@ -356,33 +311,28 @@ void add_oif_global_forces(double *area_volume,
         for (k = 0; k < 3; k++) {
           h[k] = 1.0 / 3.0 * (p11[k] + p22[k] + p33[k]);
         }
+        deltaA = (area - iaparams->p.oif_global_forces.A0_g) /
+                 iaparams->p.oif_global_forces.A0_g;
+        vecsub(h, p11, m1);
+        vecsub(h, p22, m2);
+        vecsub(h, p33, m3);
 
-        aa = (area - iaparams->p.oif_global_forces.A0_g) /
-             iaparams->p.oif_global_forces.A0_g;
+        m1_length = normr(m1);
+        m2_length = normr(m2);
+        m3_length = normr(m3);
 
-        // aminusb(3,h,p11,rh);				// area_forces for each
-        // triangle node
-        vecsub(h, p11, rh); // area_forces for each triangle node
-        hn = normr(rh);
-        for (k = 0; k < 3; k++) {
-          force1[k] = iaparams->p.oif_global_forces.ka_g * aa * rh[k] / hn;
-          //(&part1)->f.f[k]+=force[k];
+        fac = iaparams->p.oif_global_forces.ka_g * VOL_A * deltaA /
+              (m1_length * m1_length + m2_length * m2_length +
+               m3_length * m3_length);
+
+        for (k = 0; k < 3; k++) { // local area force for p1
+          force1[k] = fac * m1[k];
         }
-        // aminusb(3,h,p22,rh);				// area_forces for each
-        // triangle node
-        vecsub(h, p22, rh); // area_forces for each triangle node
-        hn = normr(rh);
-        for (k = 0; k < 3; k++) {
-          force2[k] = iaparams->p.oif_global_forces.ka_g * aa * rh[k] / hn;
-          //(&part2)->f.f[k]+=force[k];
+        for (k = 0; k < 3; k++) { // local area force for p2
+          force2[k] = fac * m2[k];
         }
-        // aminusb(3,h,p33,rh);				// area_forces for each
-        // triangle node
-        vecsub(h, p33, rh); // area_forces for each triangle node
-        hn = normr(rh);
-        for (k = 0; k < 3; k++) {
-          force3[k] = iaparams->p.oif_global_forces.ka_g * aa * rh[k] / hn;
-          //(&part3)->f.f[k]+=force[k];
+        for (k = 0; k < 3; k++) { // local area force for p3
+          force3[k] = fac * m3[k];
         }
 
         for (k = 0; k < 3; k++) {
@@ -390,10 +340,11 @@ void add_oif_global_forces(double *area_volume,
           p2->f.f[k] += force2[k];
           p3->f.f[k] += force3[k];
         }
-
       } else {
         j += n_partners;
       }
     }
   }
 }
+
+int max_oif_objects = 0;

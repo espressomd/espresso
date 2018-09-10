@@ -1,5 +1,8 @@
+"""
+This sample simulates a Lennard-Jones fluid maintained at a fixed temperature by a Langevin thermostat.
+"""
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,8 +22,11 @@
 from __future__ import print_function
 import numpy as np
 import espressomd
+
+required_features = ["LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import thermostat
-from samples_common import open
 
 print("""
 =======================================================
@@ -49,7 +55,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
@@ -62,7 +68,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 # warmup integration (with capped LJ potential)
 warm_steps = 100
 warm_n_times = 30
-# do the warmup until the particles have at least the distance min__dist
+# do the warmup until the particles have at least the distance min_dist
 min_dist = 0.9
 
 # integration
@@ -95,7 +101,7 @@ for i in range(n_part):
 
 system.analysis.dist_to(0)
 
-print("Simulate {} particles in a cubic simulation box {} at density {}."
+print("Simulate {} particles in a cubic simulation box of length {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
@@ -131,7 +137,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(steps=warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
-#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
+# print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" %
+# (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
 #   write observables
@@ -145,7 +152,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
-state=system.__getstate__()
+state = system.__getstate__()
 pprint.pprint(state)
 
 # write parameter file

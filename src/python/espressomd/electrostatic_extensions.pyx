@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -24,15 +24,16 @@ from espressomd cimport actors
 from . import actors
 import numpy as np
 from espressomd.utils cimport handle_errors
-from espressomd.electrostatics import check_neutrality
 
 IF ELECTROSTATICS and P3M:
+    from espressomd.electrostatics import check_neutrality
+
     cdef class ElectrostaticExtensions(actors.Actor):
         pass
-        
+
     cdef class ELC(ElectrostaticExtensions):
         """
-        Electrostatics solver for systems with two periodic dimensions. 
+        Electrostatics solver for systems with two periodic dimensions.
 
         Parameters
         ----------
@@ -72,7 +73,7 @@ IF ELECTROSTATICS and P3M:
                                   probably want to disable the neutralization for non-neutral systems.
                                   This corresponds then to a formal regularization of the forces and
                                   energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
-                                  explicitely as constraints, you have to disable the neutralization.
+                                  explicitly as constraints, you have to disable the neutralization.
                                   When using a dielectric contrast or full metallic walls (`delta_mid_top
                                   != 0` or `delta_mid_bot != 0` or `const_pot_on=1`), `neutralize` is
                                   overwritten and switched off internally. Note that the special case of
@@ -80,9 +81,8 @@ IF ELECTROSTATICS and P3M:
                                   `delta_mid_top` or `delta_mid_bot` in `]-1,1[`) is not covered by the
                                   algorithm and will throw an error.
         far_cut                 : float, optional
-                                  Cut off radius, use with care, intended for testing purposes. 
+                                  Cut off radius, use with care, intended for testing purposes.
         """
-
 
         def validate_params(self):
             default_params = self.default_params()
@@ -123,24 +123,25 @@ IF ELECTROSTATICS and P3M:
             if coulomb.method == COULOMB_P3M_GPU:
                 raise Exception(
                     "ELC tuning failed, ELC is not set up to work with the GPU P3M")
-            
+
             if self._params["const_pot"]:
                 self._params["delta_mid_top"] = -1
                 self._params["delta_mid_bot"] = -1
 
             if ELC_set_params(
                 self._params["maxPWerror"],
-                self._params["gap_size"], 
-                self._params["far_cut"], 
-                int(self._params["neutralize"]), 
-                self._params["delta_mid_top"], 
-                self._params["delta_mid_bot"], 
+                self._params["gap_size"],
+                self._params["far_cut"],
+                int(self._params["neutralize"]),
+                self._params["delta_mid_top"],
+                self._params["delta_mid_bot"],
                 int(self._params["const_pot"]),
-                self._params["pot_diff"]):
-                handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
+                    self._params["pot_diff"]):
+                handle_errors(
+                    "ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
@@ -149,12 +150,11 @@ IF ELECTROSTATICS and P3M:
 
     cdef class ICC(ElectrostaticExtensions):
         """
-        Interface to the induced charge calculatino scheme for dielectric interfaces
-        
+        Interface to the induced charge calculation scheme for dielectric interfaces
+
         See :ref:`Dielectric interfaces with the ICC algorithm`
 
         """
-
 
         def validate_params(self):
             default_params = self.default_params()
@@ -297,7 +297,7 @@ IF ELECTROSTATICS and P3M:
             mpi_iccp3m_init(0)
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             self._set_params_in_es_core()
 
         def _deactivate_method(self):

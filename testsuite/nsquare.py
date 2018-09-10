@@ -1,6 +1,6 @@
 
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,6 +26,7 @@ import numpy as np
 
 class NSquare(ut.TestCase):
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.S.part.clear()

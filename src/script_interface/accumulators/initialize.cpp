@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -20,8 +20,9 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
-#include "Accumulator.hpp"
 #include "AutoUpdateAccumulators.hpp"
+#include "Correlator.hpp"
+#include "MeanVarianceCalculator.hpp"
 
 namespace ScriptInterface {
 namespace Accumulators {
@@ -32,9 +33,11 @@ void initialize() {
       "Accumulators::AutoUpdateAccumulators");
 
   ScriptInterface::register_new<
-      ScriptInterface::Accumulators::Accumulator>(
-      "Accumulators::Accumulator");
+      ScriptInterface::Accumulators::MeanVarianceCalculator>(
+      "Accumulators::MeanVarianceCalculator");
 
+  ScriptInterface::register_new<ScriptInterface::Accumulators::Correlator>(
+      "Accumulators::Correlator");
 }
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */

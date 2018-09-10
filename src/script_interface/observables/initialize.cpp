@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -20,8 +20,9 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
-#include "CylindricalPidProfileObservable.hpp"
 #include "CylindricalLBProfileObservable.hpp"
+#include "CylindricalPidProfileObservable.hpp"
+#include "LBProfileObservable.hpp"
 #include "ParamlessObservable.hpp"
 #include "PidObservable.hpp"
 #include "PidProfileObservable.hpp"
@@ -31,17 +32,16 @@
 #include "core/observables/ComPosition.hpp"
 #include "core/observables/ComVelocity.hpp"
 #include "core/observables/Current.hpp"
+#include "core/observables/CylindricalLBVelocityProfile.hpp"
 #include "core/observables/DipoleMoment.hpp"
+#include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/MagneticDipoleMoment.hpp"
 #include "core/observables/ParticleAngularVelocities.hpp"
 #include "core/observables/ParticleBodyAngularVelocities.hpp"
 #include "core/observables/ParticleBodyVelocities.hpp"
-#include "core/observables/ParticleCurrents.hpp"
 #include "core/observables/ParticleForces.hpp"
 #include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
-#include "core/observables/CylindricalLBVelocityProfile.hpp"
-
 
 namespace ScriptInterface {
 namespace Observables {
@@ -49,24 +49,30 @@ namespace Observables {
 #define REGISTER(name)                                                         \
   ScriptInterface::register_new<name>("Observables::" #name "");
 
-#define REGISTER_PROFILE_OBS(name)                                                 \
-  ScriptInterface::register_new<ProfileObservable<::Observables::name>>(           \
+#define REGISTER_PROFILE_OBS(name)                                             \
+  ScriptInterface::register_new<ProfileObservable<::Observables::name>>(       \
       "Observables::" #name "");
 
 #define REGISTER_PID_OBS(name)                                                 \
   ScriptInterface::register_new<PidObservable<::Observables::name>>(           \
       "Observables::" #name "");
 
-#define REGISTER_PID_PROFILE_OBS(name)                                                 \
-  ScriptInterface::register_new<PidProfileObservable<::Observables::name>>(           \
+#define REGISTER_PID_PROFILE_OBS(name)                                         \
+  ScriptInterface::register_new<PidProfileObservable<::Observables::name>>(    \
       "Observables::" #name "");
 
-#define REGISTER_CYLPID_PROFILE_OBS(name)                                                 \
-  ScriptInterface::register_new<CylindricalPidProfileObservable<::Observables::name>>(           \
+#define REGISTER_CYLPID_PROFILE_OBS(name)                                      \
+  ScriptInterface::register_new<                                               \
+      CylindricalPidProfileObservable<::Observables::name>>(                   \
       "Observables::" #name "");
 
-#define REGISTER_CYLLB_OBS(name)                                                 \
-  ScriptInterface::register_new<CylindricalLBProfileObservable<::Observables::name>>(           \
+#define REGISTER_CYLLB_OBS(name)                                               \
+  ScriptInterface::register_new<                                               \
+      CylindricalLBProfileObservable<::Observables::name>>(                    \
+      "Observables::" #name "");
+
+#define REGISTER_LB_OBS(name)                                                  \
+  ScriptInterface::register_new<LBProfileObservable<::Observables::name>>(     \
       "Observables::" #name "");
 
 void initialize() {
@@ -81,7 +87,6 @@ void initialize() {
   REGISTER_PID_OBS(ParticleBodyVelocities);
   REGISTER_PID_OBS(ParticleAngularVelocities);
   REGISTER_PID_OBS(ParticleBodyAngularVelocities);
-  REGISTER_PID_OBS(ParticleCurrent);
   REGISTER_PID_OBS(Current);
   REGISTER_PID_OBS(DipoleMoment);
   REGISTER_PID_OBS(MagneticDipoleMoment);
@@ -91,11 +96,12 @@ void initialize() {
   REGISTER_PID_PROFILE_OBS(DensityProfile);
   REGISTER_PID_PROFILE_OBS(ForceDensityProfile);
   REGISTER_PID_PROFILE_OBS(FluxDensityProfile);
-  REGISTER_PROFILE_OBS(LBVelocityProfile);
+  REGISTER_LB_OBS(LBVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalDensityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);
-  REGISTER_CYLPID_PROFILE_OBS(CylindricalLBFluxDensityProfileAtParticlePositions);
+  REGISTER_CYLPID_PROFILE_OBS(
+      CylindricalLBFluxDensityProfileAtParticlePositions);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalLBVelocityProfileAtParticlePositions);
   REGISTER_CYLLB_OBS(CylindricalLBVelocityProfile);
 
