@@ -287,7 +287,7 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 
 find_package(MPI REQUIRED)
 # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
-foreach(_MPI_FLAG ${MPI_COMPILE_FLAGS})
+foreach(_MPI_FLAG ${MPI_CXX_COMPILE_FLAGS})
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_MPI_FLAG}")
 endforeach()
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
