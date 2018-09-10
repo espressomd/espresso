@@ -116,7 +116,7 @@ fedora:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos:next
   script:
-    - export with_cuda=false myconfig=maxset make_check=false
+    - export with_cuda=false myconfig=maxset
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
