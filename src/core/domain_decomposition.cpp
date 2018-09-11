@@ -475,7 +475,7 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
 
 #include "utils/print.hpp"
 
-#include <boost/container/flat_set.hpp>
+#include <boost/container/flat_map.hpp>
 
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
