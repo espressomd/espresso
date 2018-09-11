@@ -86,6 +86,22 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT APPLE )
   option(WITH_MSAN "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)" OFF)
 endif()
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
+option(WITH_CCACHE "Use ccache compiler invocation." OFF)
+
+if(WITH_CCACHE)
+  find_program(CCACHE ccache)
+  if(CCACHE)
+    if(CMAKE_VERSION VERSION_LESS 3.4)
+      set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+      set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+    else()
+      set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE} CACHE STRING "ccache executable")
+    endif()
+  else()
+      message(FATAL_ERROR "ccache not found.")
+  endif(CCACHE)
+endif(WITH_CCACHE)
+
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
