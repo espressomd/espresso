@@ -16,6 +16,7 @@ class BDThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0,1.0,1.0])
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
     es.cell_system.skin = 5.0
     
     # The NVT thermostat parameters
@@ -371,11 +372,11 @@ class BDThermoTest(ut.TestCase):
 
         loops = 2
         # Thermalizing...
-        therm_steps = 20
+        therm_steps = 2
         self.es.integrator.run(therm_steps)
         # Measuring...
 
-        int_steps = 5
+        int_steps = 19
         for i in range(loops):
             self.es.integrator.run(int_steps)
             # Get kinetic energy in each degree of freedom for all particles
