@@ -68,6 +68,8 @@ double max_range = 0.0;
 unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
 
+#include "utils/print.hpp"
+
 /**
  * @brief Get pairs closer than distance from the cells.
  *
@@ -85,8 +87,10 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
 
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
-    if (dist2 < cutoff2)
+    if (dist2 < cutoff2) {
+      Utils::print("Found pair", p1.p.identity, p2.p.identity);
       ret.emplace_back(p1.p.identity, p2.p.identity);
+    }
   };
 
   switch (cell_structure.type) {
@@ -95,7 +99,10 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           return (p1.r.p - p2.r.p).norm2();
+                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p);
+                           vec21[2] = p1.r.p[2] - p2.r.p[2];
+
+                           return vec21.norm2();
                          });
     break;
   case CELL_STRUCTURE_NSQUARE:
@@ -173,9 +180,8 @@ static void topology_release(int cs) {
     layered_topology_release();
     break;
   default:
-    fprintf(stderr,
-            "INTERNAL ERROR: attempting to sort the particles in an "
-            "unknown way (%d)\n",
+    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an "
+                    "unknown way (%d)\n",
             cs);
     errexit();
   }
@@ -202,9 +208,8 @@ void topology_init(int cs, CellPList *local) {
     layered_topology_init(local, node_grid);
     break;
   default:
-    fprintf(stderr,
-            "INTERNAL ERROR: attempting to sort the particles in an "
-            "unknown way (%d)\n",
+    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an "
+                    "unknown way (%d)\n",
             cs);
     errexit();
   }
