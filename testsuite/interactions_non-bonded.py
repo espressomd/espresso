@@ -422,6 +422,15 @@ class InteractionsNonBondedTest(ut.TestCase):
                 tests_common.buckingham_force(
                     r=(i + 1) * self.step_width, a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift)
 
+            try:
+                self.assertFractionAlmostEqual(E_sim, E_ref)
+            except:
+                p1 = self.system.part[0]
+                p2 = self.system.part[1]
+                print("x", p1.pos)
+                print("y", p2.pos)
+                print("d", self.system.distance_vec(p1, p2))
+
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...

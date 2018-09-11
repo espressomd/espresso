@@ -299,10 +299,13 @@ class VirtualSites(ut.TestCase):
         system.cell_system.skin = 0.4
         system.cell_system.set_n_square(use_verlet_lists=True)
         self.run_test_lj()
+	print("n2")
         system.cell_system.set_domain_decomposition(use_verlet_lists=True)
         self.run_test_lj()
+	print("dd-vl")
         system.cell_system.set_domain_decomposition(use_verlet_lists=False)
         self.run_test_lj()
+	print("dd")
 
     def test_zz_stress_tensor(self):
         system = self.system

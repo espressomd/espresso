@@ -81,12 +81,12 @@ void decide_distance(CellIterator first, CellIterator last,
                      VerletCriterion &&verlet_criterion) {
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), EuclidianDistance{},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-    break;
+    // Algorithm::for_each_pair(
+    //     first, last, std::forward<ParticleKernel>(particle_kernel),
+    //     std::forward<PairKernel>(pair_kernel), EuclidianDistance{},
+    //     std::forward<VerletCriterion>(verlet_criterion),
+    //     cell_structure.use_verlet_list, rebuild_verletlist);
+    // break;
   case CELL_STRUCTURE_NSQUARE:
     Algorithm::for_each_pair(
         first, last, std::forward<ParticleKernel>(particle_kernel),
