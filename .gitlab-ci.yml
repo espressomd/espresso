@@ -61,7 +61,7 @@ maxset-python3:
 nocheckmaxset:
   stage: build
   script:
-    - export CCACHE_DIR=/cache with_cuda=false myconfig=nocheck-maxset make_check=false
+    - export with_ccache=true CCACHE_DIR=/cache with_cuda=false myconfig=nocheck-maxset make_check=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
