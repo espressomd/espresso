@@ -207,8 +207,8 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
         Utils::sgn(dy) * (offset - dround(offset * box_l_i[1]) * box_l[1]);
 
     res[0] -= shift;
-    if (PERIODIC(1))
-      res[0] -= dround(res[0] * box_l_i[0]) * box_l[0];
+//    if (PERIODIC(1))
+//      res[0] -= dround(res[0] * box_l_i[0]) * box_l[0];
 
   }
 #endif    
