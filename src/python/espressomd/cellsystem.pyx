@@ -109,24 +109,6 @@ cdef class CellSystem(object):
             raise Exception("Broadcasting the node grid failed")
         return True
 
-    def set_columnar(self, use_verlet_lists=True):
-          """
-          Activates the nsquare force calculation.
-
-          Parameters
-          ----------
-          'use_verlet_lists' : :obj:`bool`, optional
-                               Activates or deactivates the usage of the verlet
-                               lists for this algorithm.
-
-          """
-          cell_structure.use_verlet_list = use_verlet_lists
-
-          mpi_bcast_cell_structure(CELL_STRUCTURE_COLUMNAR)
-          # @TODO: gathering should be interface independent
-          # return mpi_gather_runtime_errors(interp, TCL_OK)
-          return True
-
     def get_state(self):
         s = {"use_verlet_list": cell_structure.use_verlet_list}
 

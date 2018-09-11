@@ -82,8 +82,6 @@
 #define CELL_STRUCTURE_NSQUARE 2
 /** cell structure layered */
 #define CELL_STRUCTURE_LAYERED 3
-/** cell structure columnar */
-#define CELL_STRUCTURE_COLUMNAR 4
 /*@}*/
 
 /** \name Flags for exchange_and_sort_particles: whether to do a global exchange
