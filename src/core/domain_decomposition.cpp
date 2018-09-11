@@ -485,7 +485,7 @@ void dd_update_communicators_w_boxl() {
 
 #include "utils/print.hpp"
 
-#include <boost/container/flat_set.hpp>
+#include <boost/container/flat_map.hpp>
 
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
@@ -497,32 +497,33 @@ void dd_init_cell_interactions() {
 
   std::array<int, 3> local_halo_origin;
   int global_size[3];
-  for(int i = 0; i < 3; i++) {
-	local_halo_origin[i] = node_pos[i] * dd.cell_grid[i] - 1;
-	global_size[i] = node_grid[i] * dd.cell_grid[i];
+  for (int i = 0; i < 3; i++) {
+    local_halo_origin[i] = node_pos[i] * dd.cell_grid[i] - 1;
+    global_size[i] = node_grid[i] * dd.cell_grid[i];
   }
 
-  auto global_index = [&](std::array<int, 3> const& local_index) {
-	  std::array<int, 3> ind;
+  auto global_index = [&](std::array<int, 3> const &local_index) {
+    std::array<int, 3> ind;
 
-	  for(int i = 0; i < 3; i++)
-	 	ind[i] = (local_halo_origin[i] + local_index[i] + global_size[i]) % global_size[i];
+    for (int i = 0; i < 3; i++)
+      ind[i] = (local_halo_origin[i] + local_index[i] + global_size[i]) %
+               global_size[i];
 
-	  return get_linear_index(ind[0], ind[1], ind[2], global_size);
+    return get_linear_index(ind[0], ind[1], ind[2], global_size);
   };
 
   DD_CELLS_LOOP(m, n, o) {
     cells[get_linear_index(m, n, o, dd.ghost_cell_grid)].local_position = {m, n,
                                                                            o};
-    Utils::print(this_node, "cell", m, n, o, "global_index", global_index({m, n, o}));
+    Utils::print(this_node, "cell", m, n, o, "global_index",
+                 global_index({m, n, o}));
   }
 
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
-    auto const lind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
     auto const gind1 = global_index({m, n, o});
 
-    boost::container::flat_set<int> neighbors;
+    boost::container::flat_map<int, int> neighbors;
     std::vector<Cell *> red_neighbors;
     std::vector<Cell *> black_neighbors;
 
@@ -530,15 +531,30 @@ void dd_init_cell_interactions() {
     for (int p = o - 1; p <= o + 1; p++)
       for (int q = n - 1; q <= n + 1; q++)
         for (int r = m - 1; r <= m + 1; r++) {
-	  auto const gind2 = global_index({r, q, p});
+          auto const gind2 = global_index({r, q, p});
+          auto const lind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
 
-	  if(gind1 == gind2) {
-	    continue;
-	  } else {
-            neighbors.insert(gind2);
-          }	
-	}
-    cells[lind1].m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
+          if (gind1 == gind2) {
+            continue;
+          } else {
+            neighbors[gind2] = lind2;
+          }
+        }
+
+    auto const lind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
+
+    for (auto const &kv : neighbors) {
+      assert(kv.first != gind1);
+      auto cp = &cells.at(kv.second);
+      if (kv.first < gind1) {
+        red_neighbors.push_back(cp);
+      } else {
+        black_neighbors.push_back(cp);
+      }
+    }
+
+    cells[lind1].m_neighbors =
+        Neighbors<Cell *>(red_neighbors, black_neighbors);
   }
 }
 
@@ -571,7 +587,8 @@ Cell *dd_save_position_to_cell(const double pos[3]) {
         return nullptr;
     }
   }
-  auto const ind = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
+  auto const ind =
+      get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
   return &(cells.at(ind));
 }
 
