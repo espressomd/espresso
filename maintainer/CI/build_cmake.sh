@@ -93,7 +93,7 @@ outp insource srcdir builddir make_check \
     build_procs check_odd_only \
     with_static_analysis myconfig \
     check_procs build_procs \
-    python_version with_cuda
+    python_version with_cuda with_ccache
 
 # check indentation of python files
 pep8_command () {
