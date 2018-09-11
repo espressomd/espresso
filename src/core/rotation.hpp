@@ -63,9 +63,6 @@ Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v);
     to the body-fixed frame */
 void convert_vel_space_to_body(const Particle *p, double *vel_body);
 
-/** convert a vector from the body-fixed frames to space-fixed coordinates */
-void convert_vec_body_to_space(Particle *p, double const *v,double* res);
-
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to
     the body-fixed frames */

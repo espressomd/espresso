@@ -1114,7 +1114,7 @@ void bd_random_walk(Particle &p, double dt) {
 #endif
 
 #ifdef PARTICLE_ANISOTROPY
-  double delta_pos_body[3] = { 0.0, 0.0, 0.0 }, delta_pos_lab[3] = { 0.0, 0.0, 0.0 };
+  Vector3d delta_pos_body, delta_pos_lab;
 #endif
 
   // Eq. (14.37) is factored by the Gaussian noise (12.22) with its squared magnitude defined in the second eq. (14.38), Schlick2010.
@@ -1140,7 +1140,7 @@ void bd_random_walk(Particle &p, double dt) {
   }
 
   if (aniso_flag) {
-    convert_vec_body_to_space(&(p), delta_pos_body, delta_pos_lab);
+    delta_pos_lab = convert_vector_body_to_space(p, delta_pos_body);
   }
 
   for (int j = 0; j < 3; j++) {
