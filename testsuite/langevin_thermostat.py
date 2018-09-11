@@ -69,6 +69,37 @@ class LangevinThermostat(ut.TestCase):
         self.assertLessEqual(
             abs(self.single_component_maxwell(-10, 10, 4.) - 1.), 1E-4)
 
+    def global_langevin_run_check(self, N, kT, loops):
+        """Sampling for the global Langevin parameters test.
+
+        Parameters
+        ----------
+        N :       :obj:`int`
+                  Number of particles.
+        kT :      :obj:`float`
+                  Temperature.
+        loops :   :obj:`int`
+                  Number of integration steps to sample.
+
+        """
+        system = self.system
+        v_stored = np.zeros((N * loops, 3))
+        omega_stored = np.zeros((N * loops, 3))
+        for i in range(loops):
+            system.integrator.run(1)
+            v_stored[i * N:(i + 1) * N, :] = system.part[:].v
+            if espressomd.has_features("ROTATION"):
+                omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
+
+        v_minmax = 5
+        bins = 4
+        error_tol = 0.016
+        self.check_velocity_distribution(
+            v_stored, v_minmax, bins, error_tol, kT)
+        if espressomd.has_features("ROTATION"):
+            self.check_velocity_distribution(
+                omega_stored, v_minmax, bins, error_tol, kT)
+
     def test_global_langevin(self):
         """Test for global Langevin parameters."""
         N = 200
@@ -90,24 +121,24 @@ class LangevinThermostat(ut.TestCase):
         # Warmup
         system.integrator.run(100)
 
-        # Sampling
-        loops = 400
-        v_stored = np.zeros((N * loops, 3))
-        omega_stored = np.zeros((N * loops, 3))
-        for i in range(loops):
-            system.integrator.run(1)
-            v_stored[i * N:(i + 1) * N, :] = system.part[:].v
-            if espressomd.has_features("ROTATION"):
-                omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
+        self.global_langevin_run_check(N, kT, 400)
 
-        v_minmax = 5
-        bins = 4
-        error_tol = 0.016
-        self.check_velocity_distribution(
-            v_stored, v_minmax, bins, error_tol, kT)
-        if espressomd.has_features("ROTATION"):
-            self.check_velocity_distribution(
-                omega_stored, v_minmax, bins, error_tol, kT)
+        if espressomd.has_features("BROWNIAN_DYNAMICS"):
+            # Large time-step is OK for BD.
+            system.time_step = 7.214
+            system.part[:].v = np.zeros((3))
+            system.part[:].omega_body = np.zeros((3))
+            system.thermostat.turn_off()
+            system.thermostat.set_brownian(kT=kT, gamma=gamma)
+            # Warmup
+            # The BD does not require so the warmup. Only 1 step is enough.
+            # More steps are taken just to be sure that they will not lead
+            # to wrong results.
+            system.integrator.run(3)
+            # Less number of loops are needed in case of BD because the velocity
+            # distribution is already as required. It is not a result of a real dynamics.
+            self.global_langevin_run_check(N, kT, 40)
+            system.thermostat.turn_off()
 
     @ut.skipIf(not espressomd.has_features("LANGEVIN_PER_PARTICLE"),
                "Test requires LANGEVIN_PER_PARTICLE")
