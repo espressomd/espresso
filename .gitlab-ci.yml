@@ -10,6 +10,8 @@ stages:
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  CCACHE_DIR: /cache
+  with_ccache: true
 
 check_permission:
   stage: permission
@@ -61,7 +63,7 @@ maxset-python3:
 nocheckmaxset:
   stage: build
   script:
-    - export with_ccache=true CCACHE_DIR=/cache with_cuda=false myconfig=nocheck-maxset make_check=false
+    - export with_cuda=false myconfig=nocheck-maxset make_check=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
