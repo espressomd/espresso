@@ -75,6 +75,7 @@ fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=$build_type -DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
 cmake_params="$cmake_params -DCMAKE_CXX_FLAGS=$cxx_flags"
+cmake_params="$cmake_params -DCMAKE_CXX_COMPILER_LAUCHER=ccache"
 
 if $insource; then
     builddir=$srcdir
