@@ -11,7 +11,7 @@ stages:
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   CCACHE_DIR: /cache
-  with_ccache: true
+  with_ccache: "true"
 
 check_permission:
   stage: permission
