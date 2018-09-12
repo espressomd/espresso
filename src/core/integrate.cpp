@@ -1087,7 +1087,11 @@ void bd_random_walk(Particle &p, double dt) {
       }
     } else
     // Default temperature but particle-specific gamma
-      brown_sigma_pos_temp_inv = sqrt(p.p.gamma / (langevin_temp_coeff * temperature));
+      if (temperature > 0.0) {
+        brown_sigma_pos_temp_inv = sqrt(p.p.gamma / (langevin_temp_coeff * temperature));
+      } else {
+        brown_sigma_pos_temp_inv = brown_gammatype_nan;
+      }
   } // particle specific gamma
   else
   {
