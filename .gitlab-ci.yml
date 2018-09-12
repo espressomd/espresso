@@ -12,6 +12,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   CCACHE_DIR: /cache
   CCACHE_MAXSIZE: 100G
+  CCACHE_CPP2: "yes"
   with_ccache: "true"
 
 check_permission:
