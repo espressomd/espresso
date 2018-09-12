@@ -28,6 +28,8 @@
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 
+#include <boost/container/flat_map.hpp>
+
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr
     pointer. */
@@ -77,12 +79,6 @@ double max_skin = 0.0;
 #define DD_IS_LOCAL_CELL(m, n, o)                                              \
   (m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&                          \
    n < dd.ghost_cell_grid[1] - 1 && o > 0 && o < dd.ghost_cell_grid[2] - 1)
-
-/** Convenient replace for ghost cell check. usage: if(DD_IS_GHOST_CELL(m,n,o))
- * {...} */
-#define DD_IS_GHOST_CELL(m, n, o)                                              \
-  (m == 0 || m == dd.ghost_cell_grid[0] - 1 || n == 0 ||                       \
-   n >= dd.ghost_cell_grid[1] - 1 || o == 0 || o == dd.ghost_cell_grid[2] - 1)
 
 /** Calculate cell grid dimensions, cell sizes and number of cells.
  *  Calculates the cell grid, based on \ref local_box_l and \ref
@@ -436,57 +432,6 @@ void dd_assign_prefetches(GhostCommunicator *comm) {
   }
 }
 
-/** update the 'shift' member of those GhostCommunicators, which use
-    that value to speed up the folding process of its ghost members
-    (see \ref dd_prepare_comm for the original), i.e. all which have
-    GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
-    dd_prepare_comm. */
-void dd_update_communicators_w_boxl() {
-  int cnt = 0;
-
-  /* direction loop: x, y, z */
-  for (int dir = 0; dir < 3; dir++) {
-    /* lr loop: left right */
-    for (int lr = 0; lr < 2; lr++) {
-      if (node_grid[dir] == 1) {
-        if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
-          /* prepare folding of ghost positions */
-          if (boundary[2 * dir + lr] != 0) {
-            cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
-                boundary[2 * dir + lr] * box_l[dir];
-            cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                boundary[2 * dir + lr] * box_l[dir];
-          }
-          cnt++;
-        }
-      } else {
-        /* i: send/recv loop */
-        for (int i = 0; i < 2; i++) {
-          if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0))
-            if ((node_pos[dir] + i) % 2 == 0) {
-              /* prepare folding of ghost positions */
-              if (boundary[2 * dir + lr] != 0) {
-                cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
-                cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
-              }
-              cnt++;
-            }
-          if (PERIODIC(dir) || (boundary[2 * dir + (1 - lr)] == 0))
-            if ((node_pos[dir] + (1 - i)) % 2 == 0) {
-              cnt++;
-            }
-        }
-      }
-    }
-  }
-}
-
-#include "utils/print.hpp"
-
-#include <boost/container/flat_map.hpp>
-
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
  * created list of interacting neighbor cells is used by the verlet
@@ -511,13 +456,6 @@ void dd_init_cell_interactions() {
 
     return get_linear_index(ind[0], ind[1], ind[2], global_size);
   };
-
-  DD_CELLS_LOOP(m, n, o) {
-    cells[get_linear_index(m, n, o, dd.ghost_cell_grid)].local_position = {m, n,
-                                                                           o};
-    Utils::print(this_node, "cell", m, n, o, "global_index",
-                 global_index({m, n, o}));
-  }
 
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
@@ -723,7 +661,6 @@ void dd_on_geometry_change(int flags) {
       return;
     }
   }
-  dd_update_communicators_w_boxl();
 }
 
 /************************************************************/
