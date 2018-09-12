@@ -110,8 +110,6 @@ public:
   void resize(size_t size) {
     realloc_particlelist(static_cast<ParticleList *>(this), this->n = size);
   }
-
-  std::array<int, 3> local_position;
 };
 
 #endif
