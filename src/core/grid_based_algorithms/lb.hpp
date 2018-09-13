@@ -115,6 +115,7 @@ struct LB_FluidNode {
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
   int boundary;
+  Vector3d boundary_velocity;
 #endif // LB_BOUNDARIES
 
   /** local force density */
@@ -383,7 +384,7 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 
 #ifdef LB_BOUNDARIES
   if (lbfields[index].boundary) {
-    *rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+    *rho = lbpar.rho *lbpar.agrid *lbpar.agrid *lbpar.agrid;
     j[0] = 0.;
     j[1] = 0.;
     j[2] = 0.;
@@ -402,7 +403,7 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
   double modes_from_pi_eq[6];
   lb_calc_modes(index, mode);
 
-  *rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  *rho = mode[0] + lbpar.rho *lbpar.agrid *lbpar.agrid *lbpar.agrid;
 
   j[0] = mode[1] + 0.5 * lbfields[index].force_density[0];
   j[1] = mode[2] + 0.5 * lbfields[index].force_density[1];
