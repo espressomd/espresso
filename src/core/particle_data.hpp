@@ -123,9 +123,11 @@ struct ParticleProperties {
   // integrated
   short int rotation = 0;
 
-#ifdef ELECTROSTATICS
   /** charge. */
+#ifdef ELECTROSTATICS
   double q = 0.0;
+#else
+  static constexpr double q = 0.0;
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
@@ -991,9 +993,7 @@ void pointer_to_quatu(Particle const *p, double const *&res);
 
 #endif
 
-#ifdef ELECTROSTATICS
 void pointer_to_q(Particle const *p, double const *&res);
-#endif
 
 #ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, int const *&res);
