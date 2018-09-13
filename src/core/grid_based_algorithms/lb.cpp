@@ -661,11 +661,10 @@ int lb_lbfluid_print_vtk_boundary(char *filename) {
 
     int j;
     /** print of the calculated phys values */
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbboundaries\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\n"
-            "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
+    fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\n"
+                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\n"
+                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\n"
+                "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
             lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
             lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5,
             lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
@@ -686,11 +685,10 @@ int lb_lbfluid_print_vtk_boundary(char *filename) {
     gridsize[1] = box_l[1] / lbpar.agrid;
     gridsize[2] = box_l[2] / lbpar.agrid;
 
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbboundaries\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
-            "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
+    fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\n"
+                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
+                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
+                "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
             gridsize[0], gridsize[1], gridsize[2], lblattice.agrid[0] * 0.5,
             lblattice.agrid[1] * 0.5, lblattice.agrid[2] * 0.5,
             lblattice.agrid[0], lblattice.agrid[1], lblattice.agrid[2],
@@ -730,11 +728,10 @@ int lb_lbfluid_print_vtk_density(char **filename) {
       host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
       lb_get_values_GPU(host_values);
 
-      fprintf(fp,
-              "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET "
-              "STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f "
-              "%f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS density float "
-              "1\nLOOKUP_TABLE default\n",
+      fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET "
+                  "STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f "
+                  "%f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS density float "
+                  "1\nLOOKUP_TABLE default\n",
               lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
               lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5,
               lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid, lbpar_gpu.agrid,
@@ -798,11 +795,10 @@ int lb_lbfluid_print_vtk_velocity(char *filename, std::vector<int> bb1,
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
     host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
     lb_get_values_GPU(host_values);
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbfluid_gpu\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
-            "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
+    fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\n"
+                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
+                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
+                "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
             bb_high[0] - bb_low[0] + 1, bb_high[1] - bb_low[1] + 1,
             bb_high[2] - bb_low[2] + 1, (bb_low[0] + 0.5) * lbpar_gpu.agrid,
             (bb_low[1] + 0.5) * lbpar_gpu.agrid,
@@ -824,11 +820,10 @@ int lb_lbfluid_print_vtk_velocity(char *filename, std::vector<int> bb1,
 #ifdef LB
     double u[3];
 
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbfluid_cpu\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
-            "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
+    fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\n"
+                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
+                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
+                "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
             bb_high[0] - bb_low[0] + 1, bb_high[1] - bb_low[1] + 1,
             bb_high[2] - bb_low[2] + 1, (bb_low[0] + 0.5) * lblattice.agrid[0],
             (bb_low[1] + 0.5) * lblattice.agrid[1],
@@ -1964,17 +1959,19 @@ void lb_reinit_parameters() {
   if (lbpar.viscosity > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     // unit conversion: viscosity
-    lbpar.gamma_shear = 1. - 2. / (6. * lbpar.viscosity * lbpar.tau /
-                                       (lbpar.agrid * lbpar.agrid) +
-                                   1.);
+    lbpar.gamma_shear =
+        1. -
+        2. / (6. * lbpar.viscosity * lbpar.tau / (lbpar.agrid * lbpar.agrid) +
+              1.);
   }
 
   if (lbpar.bulk_viscosity > 0.0) {
     /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     // unit conversion: viscosity
-    lbpar.gamma_bulk = 1. - 2. / (9. * lbpar.bulk_viscosity * lbpar.tau /
-                                      (lbpar.agrid * lbpar.agrid) +
-                                  1.);
+    lbpar.gamma_bulk = 1. -
+                       2. / (9. * lbpar.bulk_viscosity * lbpar.tau /
+                                 (lbpar.agrid * lbpar.agrid) +
+                             1.);
   }
 
   if (lbpar.is_TRT) {
@@ -2556,7 +2553,6 @@ void lattice_boltzmann_update() {
 /** Resets the forces on the fluid nodes */
 void lb_reinit_force_densities() {
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
-
        index++) {
     lb_reset_force_densities(index);
   }
@@ -2586,38 +2582,14 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   double delta[6];
   double *local_f, interpolated_u[3], delta_j[3];
 
-#ifdef EXTERNAL_FORCES
-  if (!(p->p.ext_flag & COORD_FIXED(0)) && !(p->p.ext_flag & COORD_FIXED(1)) &&
-      !(p->p.ext_flag & COORD_FIXED(2))) {
-    ONEPART_TRACE(if (p->p.identity == check_id) {
-      fprintf(stderr, "%d: OPT: f = (%.3e,%.3e,%.3e)\n", this_node, p->f.f[0],
-              p->f.f[1], p->f.f[2]);
-    });
-  }
-#endif
-
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
   lblattice.map_position_to_lattice(p->r.p, node_index, delta);
-
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr,
-            "%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) "
-            "pos=(%.3f,%.3f,%.3f)\n",
-            this_node, delta[0], delta[1], delta[2], delta[3], delta[4],
-            delta[5], p->r.p[0], p->r.p[1], p->r.p[2]);
-  });
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
-
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB u = (%.16e,%.3e,%.3e) v = (%.16e,%.3e,%.3e)\n",
-            this_node, interpolated_u[0], interpolated_u[1], interpolated_u[2],
-            p->m.v[0], p->m.v[1], p->m.v[2]);
-  });
 
   /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
@@ -2648,24 +2620,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   force[2] = -lbpar.friction * (velocity[2] - interpolated_u[2]);
 #endif
 
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB f_drag = (%.6e,%.3e,%.3e)\n", this_node,
-            force[0], force[1], force[2]);
-  });
-
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB f_random = (%.6e,%.3e,%.3e)\n", this_node,
-            p->lc.f_random[0], p->lc.f_random[1], p->lc.f_random[2]);
-  });
-
   force[0] = force[0] + p->lc.f_random[0];
   force[1] = force[1] + p->lc.f_random[1];
   force[2] = force[2] + p->lc.f_random[2];
-
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB f_tot = (%.6e,%.3e,%.3e)\n", this_node,
-            force[0], force[1], force[2]);
-  });
 
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
@@ -2687,8 +2644,6 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
       }
     }
   }
-
-  // map_position_to_lattice: position ... not inside a local plaquette in ...
 
 #ifdef ENGINE
   if (p->swim.swimming) {
