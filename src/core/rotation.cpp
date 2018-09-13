@@ -219,6 +219,10 @@ void propagate_omega_quat_particle(Particle *p) {
   // If rotation for the particle is disabled entirely, return early.
   if (!p->p.rotation)
     return;
+#ifdef BROWNIAN_DYNAMICS
+  if (thermo_switch & THERMO_BROWNIAN)
+    return;
+#endif // BROWNIAN_DYNAMICS
 
   // Clear rotational velocity for blocked rotation axes.
   if (!(p->p.rotation & ROTATION_X))
@@ -535,25 +539,36 @@ void convert_vec_space_to_body(Particle *p, double const *v, double *res) {
   res[2] = A[2 + 3 * 0] * v[0] + A[2 + 3 * 1] * v[1] + A[2 + 3 * 2] * v[2];
 }
 
+/** Fixing the per-particle per-axis rotations
+ */
+void rotation_fix(Particle &p, double *a) {
+  // Per coordinate fixing
+  if (!(p.p.rotation & ROTATION_X))
+    a[0] = 0;
+  if (!(p.p.rotation & ROTATION_Y))
+    a[1] = 0;
+  if (!(p.p.rotation & ROTATION_Z))
+    a[2] = 0;
+}
+
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
 void local_rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
   // Convert rotation axis to body-fixed frame
   double a[3];
   convert_vec_space_to_body(p, aSpaceFrame, a);
+  rotate_particle_body(p, a, phi);
+}
 
+/** Rotate the particle p around the body axis "a" by amount phi */
+void rotate_particle_body(Particle* p, double* a, double phi)
+{
   //  printf("%g %g %g - ",a[0],a[1],a[2]);
   // Rotation turned off entirely?
   if (!p->p.rotation)
     return;
 
-  // Per coordinate fixing
-  if (!(p->p.rotation & ROTATION_X))
-    a[0] = 0;
-  if (!(p->p.rotation & ROTATION_Y))
-    a[1] = 0;
-  if (!(p->p.rotation & ROTATION_Z))
-    a[2] = 0;
+  rotation_fix(*p, a);
   // Re-normalize rotation axis
   double l = sqrt(sqrlen(a));
   // Check, if the rotation axis is nonzero
@@ -578,50 +593,6 @@ void local_rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
   multiply_quaternions(p->r.quat, q, qn);
   for (int k = 0; k < 4; k++)
     p->r.quat[k] = qn[k];
-  convert_quat_to_quatu(p->r.quat, p->r.quatu);
-#ifdef DIPOLES
-  // When dipoles are enabled, update dipole moment
-  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
-#endif
-}
-
-/** Rotate the particle p around the body axis "a" by amount phi */
-void rotate_particle_body(Particle* p, double* a, double phi)
-{
-  // Apply restrictions from the rotation_per_particle feature
-#ifdef ROTATION_PER_PARTICLE
-  // Rotation turned off entirely?
-  if (p->p.rotation <2) return;
-
-  // Per coordinate fixing
-  if (!(p->p.rotation & 2)) a[0]=0;
-  if (!(p->p.rotation & 4)) a[1]=0;
-  if (!(p->p.rotation & 8)) a[2]=0;
-  // Re-normalize rotation axis
-  double l=sqrt(sqrlen(a));
-  // Check, if the rotation axis is nonzero
-  if (l<1E-10) return;
-
-  for (int i=0;i<3;i++)
-    a[i]/=l;
-
-#endif
-
-  double q[] = {
-      cos(phi / 2),
-      sin(phi / 2) * a[0],
-      sin(phi / 2) * a[1],
-      sin(phi / 2) * a[2]
-  };
-
-  // Normalize
-  normalize_quaternion(q);
-
-  // Rotate the particle
-  double qn[4]; // Resulting quaternion
-  multiply_quaternions(p->r.quat,q,qn);
-  for (int k=0; k<4; k++)
-    p->r.quat[k]=qn[k];
   convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
   // When dipoles are enabled, update dipole moment
@@ -655,16 +626,7 @@ void bd_drag_rot(Particle &p, double dt) {
   Thermostat::GammaType local_gamma;
 
   a[0] = a[1] = a[2] = 1.0;
-#ifdef ROTATION_PER_PARTICLE
-  if (!p.p.rotation)
-    return;
-  if (!(p.p.rotation & 2))
-    a[0] = 0.0;
-  if (!(p.p.rotation & 4))
-    a[1] = 0.0;
-  if (!(p.p.rotation & 8))
-    a[2] = 0.0;
-#endif
+  rotation_fix(p, a);
 
   if(p.p.gamma_rot >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma_rot;
@@ -710,16 +672,7 @@ void bd_drag_vel_rot(Particle &p, double dt) {
   Thermostat::GammaType local_gamma;
 
   a[0] = a[1] = a[2] = 1.0;
-#ifdef ROTATION_PER_PARTICLE
-  if (!p.p.rotation)
-    return;
-  if (!(p.p.rotation & 2))
-    a[0] = 0.0;
-  if (!(p.p.rotation & 4))
-    a[1] = 0.0;
-  if (!(p.p.rotation & 8))
-    a[2] = 0.0;
-#endif
+  rotation_fix(p, a);
 
   if(p.p.gamma_rot >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma_rot;
@@ -761,16 +714,7 @@ void bd_random_walk_rot(Particle &p, double dt) {
   Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
 
   a[0] = a[1] = a[2] = 1.0;
-#ifdef ROTATION_PER_PARTICLE
-  if (!p.p.rotation)
-    return;
-  if (!(p.p.rotation & 2))
-    a[0] = 0.0;
-  if (!(p.p.rotation & 4))
-    a[1] = 0.0;
-  if (!(p.p.rotation & 8))
-    a[2] = 0.0;
-#endif
+  rotation_fix(p, a);
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
@@ -848,16 +792,7 @@ void bd_random_walk_vel_rot(Particle &p, double dt) {
   double brown_sigma_vel_temp = brown_sigma_vel_rotation;
 
   a[0] = a[1] = a[2] = 1.0;
-#ifdef ROTATION_PER_PARTICLE
-  if (!p.p.rotation)
-    return;
-  if (!(p.p.rotation & 2))
-    a[0] = 0.0;
-  if (!(p.p.rotation & 4))
-    a[1] = 0.0;
-  if (!(p.p.rotation & 8))
-    a[2] = 0.0;
-#endif
+  rotation_fix(p, a);
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE

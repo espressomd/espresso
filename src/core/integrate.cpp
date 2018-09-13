@@ -124,8 +124,14 @@ void force_and_velocity_display();
 
 void finalize_p_inst_npt();
 
+#ifdef BROWNIAN_DYNAMICS
 /** Propagate position: random walk part.*/
 void bd_random_walk(Particle &p, double dt);
+/** Propagate velocities: all parts.*/
+void bd_vel_steps(Particle &p, double dt);
+/** Propagate positions: all parts.*/
+void bd_pos_steps(Particle &p, double dt);
+#endif
 
 /*@}*/
 
@@ -699,12 +705,7 @@ void propagate_vel() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef ROTATION
-#ifdef BROWNIAN_DYNAMICS
-  if (!(thermo_switch & THERMO_BROWNIAN))
-#endif // BROWNIAN_DYNAMICS
-  {
     propagate_omega_quat_particle(&p);
-  }
 #endif
 
 // Don't propagate translational degrees of freedom of vs
@@ -713,12 +714,7 @@ void propagate_vel() {
       continue;
 #endif
 #ifdef BROWNIAN_DYNAMICS
-    if (thermo_switch & THERMO_BROWNIAN) {
-      bd_drag_vel(p,0.5 * time_step);
-      bd_drag_vel_rot(p,0.5 * time_step);
-      bd_random_walk_vel(p,0.5 * time_step);
-      bd_random_walk_vel_rot(p,0.5 * time_step);
-    }
+    bd_vel_steps(p, 0.5 * time_step);
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -781,12 +777,7 @@ void propagate_pos() {
         continue;
 #endif
 #ifdef BROWNIAN_DYNAMICS
-      if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drag(p, time_step);
-        bd_drag_rot(p, time_step);
-        bd_random_walk(p, time_step);
-        bd_random_walk_rot(p, time_step);
-      }
+      bd_pos_steps(p, time_step);
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -826,12 +817,7 @@ void propagate_vel_pos() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef ROTATION
-#ifdef BROWNIAN_DYNAMICS
-      if (!(thermo_switch & THERMO_BROWNIAN))
-#endif // BROWNIAN_DYNAMICS
-      {
-        propagate_omega_quat_particle(&p);
-      }
+    propagate_omega_quat_particle(&p);
 #endif
 
 // Don't propagate translational degrees of freedom of vs
@@ -840,16 +826,8 @@ void propagate_vel_pos() {
       continue;
 #endif
 #ifdef BROWNIAN_DYNAMICS
-      if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drag_vel(p,0.5 * time_step);
-        bd_drag_vel_rot(p,0.5 * time_step);
-        bd_random_walk_vel(p,0.5 * time_step);
-        bd_random_walk_vel_rot(p,0.5 * time_step);
-        bd_drag(p, time_step);
-        bd_drag_rot(p, time_step);
-        bd_random_walk(p, time_step);
-        bd_random_walk_rot(p, time_step);
-      }
+    bd_vel_steps(p, 0.5 * time_step);
+    bd_pos_steps(p, time_step);
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -1054,6 +1032,38 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 }
 
 #ifdef BROWNIAN_DYNAMICS
+/** Propagate the velocities: all parts.*/
+/*********************************************************/
+/** \name bd_vel_steps */
+/*********************************************************/
+/**
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_vel_steps(Particle &p, double dt) {
+  if (thermo_switch & THERMO_BROWNIAN) {
+    bd_drag_vel(p, dt);
+    bd_drag_vel_rot(p, dt);
+    bd_random_walk_vel(p, dt);
+    bd_random_walk_vel_rot(p, dt);
+  }
+}
+/** Propagate the positions: all parts.*/
+/*********************************************************/
+/** \name bd_pos_steps */
+/*********************************************************/
+/**
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_pos_steps(Particle &p, double dt) {
+  if (thermo_switch & THERMO_BROWNIAN) {
+    bd_drag(p, dt);
+    bd_drag_rot(p, dt);
+    bd_random_walk(p, dt);
+    bd_random_walk_rot(p, dt);
+  }
+}
 /** Propagate the positions: random walk part.*/
 /*********************************************************/
 /** \name bd_drag_vel */
