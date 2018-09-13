@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
-#include "halo.hpp"
+#include "grid_based_algorithms/halo.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"

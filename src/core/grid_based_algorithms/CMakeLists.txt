@@ -53,6 +53,7 @@ add_dependencies(lbboundaries_interface EspressoConfig)
 add_library(lbcpu SHARED
   lb.cpp
   lb-d3q19.cpp
+  halo.cpp
 )
 target_include_directories(lbcpu PRIVATE
   ${CMAKE_SOURCE_DIR}/src/core
