@@ -52,7 +52,7 @@ typedef struct {
 } itp_atomtype;
 
 struct itp_atomtype_compare {
-  bool operator() (const itp_atomtype &a, const itp_atomtype &b) const {
+  bool operator()(const itp_atomtype &a, const itp_atomtype &b) const {
     return a.id < b.id;
   }
 };
