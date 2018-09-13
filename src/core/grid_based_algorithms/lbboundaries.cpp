@@ -37,10 +37,46 @@
 #include "initialize.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
+#include <boost/range/algorithm.hpp>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <vector>
+
+namespace LBBoundaries {
+std::vector<int> raster(std::vector<const LBBoundary *> const &boundaries,
+                        Vector3d const &offset) {
+  std::vector<int> ids(lblattice.halo_grid_volume, no_boundary);
+
+  for (int z = 0; z < lblattice.grid[2] + 2; z++) {
+    for (int y = 0; y < lblattice.grid[1] + 2; y++) {
+      for (int x = 0; x < lblattice.grid[0] + 2; x++) {
+        double pos[3];
+        pos[0] = x * lblattice.agrid[0] - offset[0];
+        pos[1] = y * lblattice.agrid[1] - offset[1];
+        pos[2] = z * lblattice.agrid[2] - offset[2];
+
+        auto it = boost::find_if(boundaries, [&pos](const LBBoundary *b) {
+          double dist;
+          double dist_vec[3];
+
+          b->calc_dist(pos, &dist, dist_vec);
+
+          return dist <= 0.;
+        });
+
+        if (it != boundaries.end()) {
+          ids[get_linear_index(x, y, z, lblattice.halo_grid)] =
+              std::distance(boundaries.begin(), it);
+        }
+      }
+    }
+  }
+
+  return ids;
+}
+}
 
 namespace LBBoundaries {
 
@@ -278,54 +314,22 @@ void lb_init_boundaries() {
 #endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
   } else {
 #if defined(LB) && defined(LB_BOUNDARIES)
-    int node_domain_position[3], offset[3];
-    int the_boundary = -1;
-    map_node_array(this_node, node_domain_position);
+    std::vector<const LBBoundary *> boundaries(lbboundaries.size());
+    boost::transform(
+        lbboundaries, boundaries.begin(),
+        [](std::shared_ptr<LBBoundary> const &b) { return b.get(); });
 
-    offset[0] = node_domain_position[0] * lblattice.grid[0];
-    offset[1] = node_domain_position[1] * lblattice.grid[1];
-    offset[2] = node_domain_position[2] * lblattice.grid[2];
+    Vector3d offset;
+    for (int i = 0; i < 3; i++)
+      offset[i] = (-node_pos[i] * lblattice.grid[i] + 0.5) * lblattice.agrid[i];
 
-    for (int n = 0; n < lblattice.halo_grid_volume; n++) {
-      lbfields[n].boundary = 0;
-    }
+    auto const ids = raster(boundaries, offset);
+    boost::transform(ids, lbfields, lbfields.begin(),
+                     [](int id, LB_FluidNode node) {
+                       node.boundary = (id == no_boundary) ? 0 : id + 1;
 
-    if (lblattice.halo_grid_volume == 0)
-      return;
-
-    for (int z = 0; z < lblattice.grid[2] + 2; z++) {
-      for (int y = 0; y < lblattice.grid[1] + 2; y++) {
-        for (int x = 0; x < lblattice.grid[0] + 2; x++) {
-          pos[0] = (offset[0] + (x - 0.5)) * lblattice.agrid[0];
-          pos[1] = (offset[1] + (y - 0.5)) * lblattice.agrid[1];
-          pos[2] = (offset[2] + (z - 0.5)) * lblattice.agrid[2];
-
-          double dist = 1e99;
-          double dist_tmp = 0.0;
-          double dist_vec[3];
-
-          int n = 0;
-          for (auto it = lbboundaries.begin(); it != lbboundaries.end();
-               ++it, ++n) {
-            (**it).calc_dist(pos, &dist_tmp, dist_vec);
-
-            if (dist_tmp < dist || n == 0) {
-              dist = dist_tmp;
-              the_boundary = n;
-            }
-          }
-
-          if (dist <= 0 && the_boundary >= 0 &&
-              LBBoundaries::lbboundaries.size() > 0) {
-            lbfields[get_linear_index(x, y, z, lblattice.halo_grid)].boundary =
-                the_boundary + 1;
-          } else {
-            lbfields[get_linear_index(x, y, z, lblattice.halo_grid)].boundary =
-                0;
-          }
-        }
-      }
-    }
+                       return node;
+                     });
 #endif
   }
 }
