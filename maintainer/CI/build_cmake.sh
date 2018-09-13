@@ -7,6 +7,8 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
+set -e
+
 # HELPER FUNCTIONS
 
 # output value of env variables
