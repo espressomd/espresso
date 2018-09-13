@@ -450,12 +450,10 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
             double population_shift = 0;
 
             for (int l = 0; l < 3; l++) {
-              population_shift -=
-                  lbpar.agrid * lbpar.agrid * lbpar.agrid * lbpar.rho * 2 *
-                  c[i][l] * lbmodel.w[i] *
-                  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
-                      .velocity()[l] *
-                  (lbpar.tau / lbpar.agrid) / lbmodel.c_sound_sq;
+              population_shift -= lbpar.agrid * lbpar.agrid * lbpar.agrid *
+                                  lbpar.rho * 2 * c[i][l] * lbmodel.w[i] *
+                                  lbfields[k].boundary_velocity[l] /
+                                  lbmodel.c_sound_sq;
             }
 
             if (x - c[i][0] > 0 && x - c[i][0] < lblattice.grid[0] + 1 &&
