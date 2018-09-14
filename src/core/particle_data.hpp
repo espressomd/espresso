@@ -127,7 +127,7 @@ struct ParticleProperties {
 #ifdef ELECTROSTATICS
   double q = 0.0;
 #else
-  static constexpr double q = 0.0;
+  constexpr static double q{0.0};
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS

@@ -598,6 +598,10 @@ int set_particle_q(int part, double q) {
   mpi_send_q(pnode, part, q);
   return ES_OK;
 }
+#ifndef ELECTROSTATICS
+const constexpr double ParticleProperties::q;
+#endif
+
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 int set_particle_mu_E(int part, double mu_E[3]) {
