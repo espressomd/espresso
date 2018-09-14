@@ -74,7 +74,6 @@ if [ -z "$cxx_flags" ]; then
     else
         if $make_check; then
             cxx_flags="-O3"
-            fdsasdf
         else
             cxx_flags="-O0"
         fi
