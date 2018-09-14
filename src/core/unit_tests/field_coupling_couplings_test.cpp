@@ -78,10 +78,10 @@ BOOST_AUTO_TEST_CASE(scaled) {
       const int m_id;
     };
 
-    BOOST_CHECK((1.23 * 2.) == scaled_coupling(Particle(0), 2.));
-    BOOST_CHECK((default_val * 3.) == scaled_coupling(Particle(1), 3.));
-    BOOST_CHECK((3.45 * 4.) == scaled_coupling(Particle(2), 4.));
-    BOOST_CHECK((default_val * 5.) == scaled_coupling(Particle(3), 5.));
+    BOOST_CHECK_CLOSE(1.23 * 2., scaled_coupling(Particle(0), 2.), 1e-14);
+    BOOST_CHECK_CLOSE(default_val * 3., scaled_coupling(Particle(1), 3.), 1e-14);
+    BOOST_CHECK_CLOSE(3.45 * 4., scaled_coupling(Particle(2), 4.), 1e-14);
+    BOOST_CHECK_CLOSE(default_val * 5., scaled_coupling(Particle(3), 5.), 1e-14);
   }
 }
 
