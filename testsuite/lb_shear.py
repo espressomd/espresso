@@ -85,8 +85,10 @@ class LBShearCommon(object):
         the exact solution.
 
         """
+        self.system.lbboundaries.clear()
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
+
         wall_shape1 = espressomd.shapes.Wall(normal=[1, 0, 0], dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(self.system.box_l[0] - AGRID))
@@ -98,19 +100,20 @@ class LBShearCommon(object):
         self.system.lbboundaries.add(wall1)
         self.system.lbboundaries.add(wall2)
 
-        sample_points = int(H / AGRID) - 2
+        t0 = self.system.time
+        sample_points = int(H / AGRID)
 
         for i in range(10):
             self.system.integrator.run(100)
 
             v_measured = np.zeros(sample_points)
             x = np.zeros(sample_points)
-            for j in range(0, sample_points):
-                v_measured[j] = self.lbf[j + 2, 1, 1].velocity[2]
-                x[j] = (j + 1.5) * AGRID
+            for j in range(1, sample_points + 1):
+                v_measured[j - 1] = self.lbf[j, 1, 1].velocity[2]
+                x[j - 1] = (j - 1 + 0.5) * AGRID
 
             v_expected = shear_flow(x=x,
-                                    t=self.system.time,
+                                    t=self.system.time - t0,
                                     nu=VISC,
                                     v=SHEAR_RATE,
                                     h=H,
@@ -128,7 +131,6 @@ class LBCPUShear(ut.TestCase, LBShearCommon):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
-
 
 @ut.skipIf(not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features.")
