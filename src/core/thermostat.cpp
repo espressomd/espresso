@@ -195,9 +195,26 @@ void thermo_init_brownian() {
   } else {
     brown_sigma_pos_rotation_inv = brown_gammatype_nan; // just an indication of the infinity
   }
+#endif // ROTATION
+#ifdef PARTICLE_ANISOTROPY
+  THERMO_TRACE(fprintf(stderr,
+                       "%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos_inv=(%f,%f,%f)",
+                       this_node,
+                       brown_sigma_vel,
+                       brown_sigma_pos_inv[0], brown_sigma_pos_inv[1], brown_sigma_pos_inv[2]));
+#ifdef ROTATION
+  THERMO_TRACE(fprintf(stderr,
+                         "%d: thermo_init_bd: brown_sigma_vel_rotation=%f, brown_sigma_pos_rotation_inv=(%f,%f,%f)",
+                         this_node,
+                         brown_sigma_vel_rotation,
+                         brown_sigma_pos_rotation_inv[0], brown_sigma_pos_rotation_inv[1], brown_sigma_pos_rotation_inv[2]));
+#endif // ROTATION
+#else
+  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos=%f",this_node,brown_sigma_vel,brown_sigma_pos_inv));
+#ifdef ROTATION
   THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel_rotation=%f, brown_sigma_pos_rotation=%f",this_node, brown_sigma_vel_rotation,brown_sigma_pos_rotation_inv));
 #endif // ROTATION
-  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos=%f",this_node,brown_sigma_vel,brown_sigma_pos_inv));
+#endif // PARTICLE_ANISOTROPY
 }
 #endif // BROWNIAN_DYNAMICS
 
