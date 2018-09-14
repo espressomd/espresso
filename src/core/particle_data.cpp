@@ -599,7 +599,7 @@ int set_particle_q(int part, double q) {
   return ES_OK;
 }
 #ifndef ELECTROSTATICS
-const constexpr double ParticleProperties::q;
+constexpr double ParticleProperties::q;
 #endif
 
 
