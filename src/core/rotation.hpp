@@ -118,9 +118,9 @@ inline void convert_quatu_to_dip(const Vector3d &quatu, double dipm,
 /** Rotate the particle p around the NORMALIZED axis a by amount phi */
 void local_rotate_particle(Particle *p, double *a, double phi);
 /** Rotate the particle p around the body axis "a" by amount phi */
-void rotate_particle_body(Particle* p, double* a, double phi);
+void rotate_particle_body(Particle *p, double *a, double phi);
 /** Rotate the particle p around the j-th body axis by amount phi */
-void rotate_particle_body_j(Particle* p, int j, double phi);
+void rotate_particle_body_j(Particle *p, int j, double phi);
 
 inline void normalize_quaternion(double *q) {
   double tmp = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);

@@ -167,20 +167,25 @@ void thermo_init_npt_isotropic() {
 // brown_sigma_pos determines here the BD position random walk dispersion
 // default particle mass is assumed to be unitary in this global parameters
 void thermo_init_brownian() {
-  // Dispersions correspond to the Gaussian noise only which is only valid for the BD.
-  // Just a square root of kT, see (10.2.17) and comments in 2 paragraphs afterwards, Pottier2010 https://doi.org/10.1007/s10955-010-0114-6
+  // Dispersions correspond to the Gaussian noise only which is only valid for
+  // the BD. Just a square root of kT, see (10.2.17) and comments in 2
+  // paragraphs afterwards, Pottier2010
+  // https://doi.org/10.1007/s10955-010-0114-6
   brown_sigma_vel = sqrt(temperature);
-  // Position dispersion is defined by the second eq. (14.38) of Schlick2010 https://doi.org/10.1007/978-1-4419-6351-2.
-  // Its time interval factor will be added in the Brownian Dynamics functions.
-  // Its square root is the standard deviation. A multiplicative inverse of the position standard deviation:
+  // Position dispersion is defined by the second eq. (14.38) of Schlick2010
+  // https://doi.org/10.1007/978-1-4419-6351-2. Its time interval factor will be
+  // added in the Brownian Dynamics functions. Its square root is the standard
+  // deviation. A multiplicative inverse of the position standard deviation:
   if (temperature > 0.0) {
     brown_sigma_pos_inv = sqrt(langevin_gamma / (2.0 * temperature));
   } else {
-    brown_sigma_pos_inv = brown_gammatype_nan; // just an indication of the infinity
+    brown_sigma_pos_inv =
+        brown_gammatype_nan; // just an indication of the infinity
   }
 #ifdef ROTATION
   // Note: the BD thermostat assigns the langevin viscous parameters as well.
-  // They correspond to the friction tensor Z from the eq. (14.31) of Schlick2010:
+  // They correspond to the friction tensor Z from the eq. (14.31) of
+  // Schlick2010:
   /* If gamma_rotation is not set explicitly,
      we use the translational one. */
   if (langevin_gamma_rotation < GammaType{}) {
@@ -189,30 +194,39 @@ void thermo_init_brownian() {
   brown_sigma_vel_rotation = sqrt(temperature);
   // Position dispersion is defined by the second eq. (14.38) of Schlick2010.
   // Its time interval factor will be added in the Brownian Dynamics functions.
-  // Its square root is the standard deviation. A multiplicative inverse of the position standard deviation:
+  // Its square root is the standard deviation. A multiplicative inverse of the
+  // position standard deviation:
   if (temperature > 0.0) {
     brown_sigma_pos_rotation_inv = sqrt(langevin_gamma / (2.0 * temperature));
   } else {
-    brown_sigma_pos_rotation_inv = brown_gammatype_nan; // just an indication of the infinity
+    brown_sigma_pos_rotation_inv =
+        brown_gammatype_nan; // just an indication of the infinity
   }
 #endif // ROTATION
 #ifdef PARTICLE_ANISOTROPY
-  THERMO_TRACE(fprintf(stderr,
-                       "%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos_inv=(%f,%f,%f)",
-                       this_node,
-                       brown_sigma_vel,
-                       brown_sigma_pos_inv[0], brown_sigma_pos_inv[1], brown_sigma_pos_inv[2]));
+  THERMO_TRACE(fprintf(
+      stderr,
+      "%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos_inv=(%f,%f,%f)",
+      this_node, brown_sigma_vel, brown_sigma_pos_inv[0],
+      brown_sigma_pos_inv[1], brown_sigma_pos_inv[2]));
 #ifdef ROTATION
-  THERMO_TRACE(fprintf(stderr,
-                         "%d: thermo_init_bd: brown_sigma_vel_rotation=%f, brown_sigma_pos_rotation_inv=(%f,%f,%f)",
-                         this_node,
-                         brown_sigma_vel_rotation,
-                         brown_sigma_pos_rotation_inv[0], brown_sigma_pos_rotation_inv[1], brown_sigma_pos_rotation_inv[2]));
+  THERMO_TRACE(fprintf(
+      stderr,
+      "%d: thermo_init_bd: brown_sigma_vel_rotation=%f, "
+      "brown_sigma_pos_rotation_inv=(%f,%f,%f)",
+      this_node, brown_sigma_vel_rotation, brown_sigma_pos_rotation_inv[0],
+      brown_sigma_pos_rotation_inv[1], brown_sigma_pos_rotation_inv[2]));
 #endif // ROTATION
 #else
-  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos=%f",this_node,brown_sigma_vel,brown_sigma_pos_inv));
+  THERMO_TRACE(fprintf(
+      stderr, "%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos=%f",
+      this_node, brown_sigma_vel, brown_sigma_pos_inv));
 #ifdef ROTATION
-  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel_rotation=%f, brown_sigma_pos_rotation=%f",this_node, brown_sigma_vel_rotation,brown_sigma_pos_rotation_inv));
+  THERMO_TRACE(fprintf(stderr,
+                       "%d: thermo_init_bd: brown_sigma_vel_rotation=%f, "
+                       "brown_sigma_pos_rotation=%f",
+                       this_node, brown_sigma_vel_rotation,
+                       brown_sigma_pos_rotation_inv));
 #endif // ROTATION
 #endif // PARTICLE_ANISOTROPY
 }
@@ -243,7 +257,7 @@ void thermo_init() {
     thermo_init_ghmc();
 #endif
 #ifdef BROWNIAN_DYNAMICS
-  if(thermo_switch & THERMO_BROWNIAN)
+  if (thermo_switch & THERMO_BROWNIAN)
     thermo_init_brownian();
 #endif
 }

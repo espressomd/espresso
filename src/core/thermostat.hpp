@@ -51,7 +51,8 @@
 
 namespace Thermostat {
 static auto noise = []() { return (d_random() - 0.5); };
-// Only Gaussian noise is allowed for the BD, otherwise the Maxwell distribution will fail.
+// Only Gaussian noise is allowed for the BD, otherwise the Maxwell distribution
+// will fail.
 static auto noise_g = []() { return gaussian_random(); };
 
 #ifdef PARTICLE_ANISOTROPY

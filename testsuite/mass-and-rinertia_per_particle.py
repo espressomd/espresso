@@ -110,8 +110,8 @@ class ThermoTest(ut.TestCase):
 
         # Global NVT thermostat parameters are assigning by default
         for k in range(2):
-            self.gamma_tran_p_validate[k, :] = self.gamma_global[:]
-            self.gamma_rot_p_validate[k, :] = self.gamma_global[:]
+            self.gamma_tran_p_validate[k,:] = self.gamma_global[:]
+            self.gamma_rot_p_validate[k,:] = self.gamma_global[:]
             self.halfkT_p_validate[k] = self.kT / 2.0
 
     def set_langevin_global_defaults_rot_differ(self):
@@ -122,8 +122,8 @@ class ThermoTest(ut.TestCase):
         """
         # Global NVT thermostat parameters are assigning by default
         for k in range(2):
-            self.gamma_tran_p_validate[k, :] = self.gamma_global[:]
-            self.gamma_rot_p_validate[k, :] = self.gamma_global_rot[:]
+            self.gamma_tran_p_validate[k,:] = self.gamma_global[:]
+            self.gamma_rot_p_validate[k,:] = self.gamma_global_rot[:]
             self.halfkT_p_validate[k] = self.kT / 2.0
 
     def dissipation_param_setup(self):
@@ -171,7 +171,7 @@ class ThermoTest(ut.TestCase):
         self.gamma_tran_p[0, 0] = self.generate_scalar_ranged_rnd(0.5, 1.0)
         self.gamma_tran_p[0, 1] = self.gamma_tran_p[0, 0]
         self.gamma_tran_p[0, 2] = self.gamma_tran_p[0, 0]
-        self.gamma_rot_p[0, :] = self.generate_vec_ranged_rnd(0.5, 2.0 / 3.0)
+        self.gamma_rot_p[0,:] = self.generate_vec_ranged_rnd(0.5, 2.0 / 3.0)
         self.gamma_tran_p[1, 0] = self.generate_scalar_ranged_rnd(0.5, 1.0)
         self.gamma_tran_p[1, 1] = self.gamma_tran_p[1, 0]
         self.gamma_tran_p[1, 2] = self.gamma_tran_p[1, 0]
@@ -207,7 +207,7 @@ class ThermoTest(ut.TestCase):
         self.gamma_global_rot[1] = self.gamma_global_rot[0]
         self.gamma_global_rot[2] = self.gamma_global_rot[0]
         # Isotropy is required here for the drag tests
-        self.gamma_rot_p[0, 0] = self.generate_scalar_ranged_rnd(0.5,2.0/3.0)
+        self.gamma_rot_p[0, 0] = self.generate_scalar_ranged_rnd(0.5, 2.0/3.0)
         self.gamma_rot_p[0, 1] = self.gamma_rot_p[0, 0]
         self.gamma_rot_p[0, 2] = self.gamma_rot_p[0, 0]
 
@@ -243,8 +243,8 @@ class ThermoTest(ut.TestCase):
         # Per-particle parameters
         self.kT_p = 2.5, 2.0
         for k in range(2):
-            self.gamma_tran_p[k, :] = self.generate_vec_ranged_rnd(0.4, 10.0)
-            self.gamma_rot_p[k, :] = self.generate_vec_ranged_rnd(0.2, 20.0)
+            self.gamma_tran_p[k,:] = self.generate_vec_ranged_rnd(0.4, 10.0)
+            self.gamma_rot_p[k,:] = self.generate_vec_ranged_rnd(0.2, 20.0)
 
         # Particles
         # As far as the problem characteristic time is t0 ~ mass / gamma
@@ -315,20 +315,20 @@ class ThermoTest(ut.TestCase):
                 system.part[k].v = np.zeros((3))
                 system.part[k].omega_body = np.zeros((3))
             # Just some random forces
-            f0 = -1.2,58.3578,0.002
-            f1 = -15.112,-2.0,368.0
+            f0 = -1.2, 58.3578, 0.002
+            f1 = -15.112, -2.0, 368.0
             system.part[0].ext_force = f0
             system.part[1].ext_force = f1
             if "ROTATION" in espressomd.features():
                 # Just some random torques
-                tor0 = 12,0.022,87
-                tor1 = -0.03,-174,368
+                tor0 = 12, 0.022, 87
+                tor1 = -0.03, -174, 368
                 system.part[0].ext_torque = tor0
                 system.part[1].ext_torque = tor1
                 # Let's set the dipole perpendicular to the torque
                 if "DIPOLES" in espressomd.features():
-                    dip0 = 0.0,tor0[2],-tor0[1]
-                    dip1 = -tor1[2],0.0,tor1[0]
+                    dip0 = 0.0, tor0[2], -tor0[1]
+                    dip1 = -tor1[2], 0.0, tor1[0]
                     system.part[0].dip = dip0
                     system.part[1].dip = dip1
                     tmp_axis0 = np.cross(tor0, dip0) / (np.linalg.norm(tor0) * np.linalg.norm(dip0))
@@ -366,12 +366,12 @@ class ThermoTest(ut.TestCase):
                 if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
                     # Same, a rotational analogy. One is implemented using a simple linear algebra;
                     # the polar angles with a sign control just for a correct inverse trigonometric functions application.
-                    cos_alpha0 = np.dot(dip0,system.part[0].dip) / (np.linalg.norm(dip0) * system.part[0].dipm)
+                    cos_alpha0 = np.dot(dip0, system.part[0].dip) / (np.linalg.norm(dip0) * system.part[0].dipm)
                     cos_alpha0_test = np.cos(system.time * np.linalg.norm(tor0) / self.gamma_rot_p_validate[0, 0])
                     sgn0 = np.sign(np.dot(system.part[0].dip, tmp_axis0))
                     sgn0_test = np.sign(np.sin(system.time * np.linalg.norm(tor0) / self.gamma_rot_p_validate[0, 0]))
                     
-                    cos_alpha1 = np.dot(dip1,system.part[1].dip) / (np.linalg.norm(dip1) * system.part[1].dipm)
+                    cos_alpha1 = np.dot(dip1, system.part[1].dip) / (np.linalg.norm(dip1) * system.part[1].dipm)
                     cos_alpha1_test = np.cos(system.time * np.linalg.norm(tor1) / self.gamma_rot_p_validate[1, 0])
                     sgn1 = np.sign(np.dot(system.part[1].dip, tmp_axis1))
                     sgn1_test = np.sign(np.sin(system.time * np.linalg.norm(tor1) / self.gamma_rot_p_validate[1, 0]))
@@ -416,7 +416,7 @@ class ThermoTest(ut.TestCase):
         for p in range(n):
             for k in range(2):
                 ind = p + k * n
-                pos0[ind, :] = system.part[ind].pos
+                pos0[ind,:] = system.part[ind].pos
         dt0 = self.mass / self.gamma_tran_p_validate
 
         system.integrator.run(therm_steps)
@@ -431,10 +431,10 @@ class ThermoTest(ut.TestCase):
                     v = system.part[ind].v
                     if "ROTATION" in espressomd.features():
                         o = system.part[ind].omega_body
-                        o2[k, :] = o2[k, :] + np.power(o[:], 2)
+                        o2[k,:] = o2[k,:] + np.power(o[:], 2)
                     pos = system.part[ind].pos
-                    v2[k, :] = v2[k, :] + np.power(v[:], 2)
-                    dr2[k, :] = np.power((pos[:] - pos0[ind, :]), 2)
+                    v2[k,:] = v2[k,:] + np.power(v[:], 2)
+                    dr2[k,:] = np.power((pos[:] - pos0[ind,:]), 2)
                     dt = (int_steps * (i + 1) + therm_steps) * \
                         system.time_step
                     # translational diffusion variance: after a closed-form
@@ -454,7 +454,7 @@ class ThermoTest(ut.TestCase):
                                                                                    k,
                                                                                                                             j]) - math.exp(- 2.0 * dt / dt0[k,
                                                                                                                                                             j])))
-                    dr_norm[k] += (sum(dr2[k, :]) -
+                    dr_norm[k] += (sum(dr2[k,:]) -
                                    sigma2_tr[k]) / sigma2_tr[k]
 
         tolerance = 0.15
@@ -464,9 +464,9 @@ class ThermoTest(ut.TestCase):
         do = np.zeros((2))
         do_vec = np.zeros((2, 3))
         for k in range(2):
-            dv[k] = sum(Ev[k, :]) / (3.0 * self.halfkT_p_validate[k]) - 1.0
-            do[k] = sum(Eo[k, :]) / (3.0 * self.halfkT_p_validate[k]) - 1.0
-            do_vec[k, :] = Eo[k, :] / self.halfkT_p_validate[k] - 1.0
+            dv[k] = sum(Ev[k,:]) / (3.0 * self.halfkT_p_validate[k]) - 1.0
+            do[k] = sum(Eo[k,:]) / (3.0 * self.halfkT_p_validate[k]) - 1.0
+            do_vec[k,:] = Eo[k,:] / self.halfkT_p_validate[k] - 1.0
         dr_norm /= (n * loops)
 
         for k in range(2):
@@ -508,13 +508,13 @@ class ThermoTest(ut.TestCase):
         """
 
         for k in range(2):
-            self.gamma_tran_p_validate[k, :] = self.gamma_tran_p[k, :]
-            self.gamma_rot_p_validate[k, :] = self.gamma_rot_p[k, :]
+            self.gamma_tran_p_validate[k,:] = self.gamma_tran_p[k,:]
+            self.gamma_rot_p_validate[k,:] = self.gamma_rot_p[k,:]
             for i in range(n):
                 ind = i + k * n
-                self.system.part[ind].gamma = self.gamma_tran_p[k, :]
+                self.system.part[ind].gamma = self.gamma_tran_p[k,:]
                 if "ROTATION" in espressomd.features():
-                    self.system.part[ind].gamma_rot = self.gamma_rot_p[k, :]
+                    self.system.part[ind].gamma_rot = self.gamma_rot_p[k,:]
 
     def set_particle_specific_temperature(self, n):
         """
@@ -541,8 +541,8 @@ class ThermoTest(ut.TestCase):
 
         for k in range(2):
             # Translational diffusivity for a validation
-            self.D_tran_p_validate[k, :] = 2.0 * \
-                self.halfkT_p_validate[k] / self.gamma_tran_p_validate[k, :]
+            self.D_tran_p_validate[k,:] = 2.0 * \
+                self.halfkT_p_validate[k] / self.gamma_tran_p_validate[k,:]
 
     if "BROWNIAN_DYNAMICS" in espressomd.features():
         def check_fluctuation_dissipation_bd(self, n):

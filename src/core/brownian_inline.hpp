@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016,2017,2018 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -38,7 +38,7 @@ inline void bd_drag(Particle &p, double dt) {
   // The friction tensor Z from the Eq. (14.31) of Schlick2010:
   Thermostat::GammaType local_gamma;
 
-  if(p.p.gamma >= Thermostat::GammaType{}) {
+  if (p.p.gamma >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma;
   } else {
     local_gamma = langevin_gamma;
@@ -72,7 +72,7 @@ inline void bd_drag_vel(Particle &p, double dt) {
   // The friction tensor Z from the eq. (14.31) of Schlick2010:
   Thermostat::GammaType local_gamma;
 
-  if(p.p.gamma >= Thermostat::GammaType{}) {
+  if (p.p.gamma >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma;
   } else {
     local_gamma = langevin_gamma;
@@ -85,9 +85,10 @@ inline void bd_drag_vel(Particle &p, double dt) {
     } else
 #endif
     {
-      // First (deterministic) term of the eq. (14.34) of Schlick2010 taking into account eq. (14.35).
-      // Only conservative part of the force is used here
-      // NOTE: velocity is assigned here and propagated by thermal part further on top of it
+      // First (deterministic) term of the eq. (14.34) of Schlick2010 taking
+      // into account eq. (14.35). Only conservative part of the force is used
+      // here NOTE: velocity is assigned here and propagated by thermal part
+      // further on top of it
 #ifndef PARTICLE_ANISOTROPY
       p.m.v[j] = p.f.f[j] / (local_gamma);
 #else
@@ -106,7 +107,8 @@ inline void bd_drag_vel(Particle &p, double dt) {
  * @param dt              Time interval (Input)
  */
 inline void bd_random_walk_vel(Particle &p, double dt) {
-  // Just a square root of kT, see eq. (10.2.17) and comments in 2 paragraphs afterwards, Pottier2010
+  // Just a square root of kT, see eq. (10.2.17) and comments in 2 paragraphs
+  // afterwards, Pottier2010
   extern double brown_sigma_vel;
   // first, set defaults
   double brown_sigma_vel_temp = brown_sigma_vel;
@@ -127,11 +129,14 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
     if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-      // Random (heat) velocity is added here. It is already initialized in the terminal drag part.
-      // See eq. (10.2.16) taking into account eq. (10.2.18) and (10.2.29), Pottier2010.
-      // Note, that the Pottier2010 units system (see Eq. (10.1.1) there) has been adapted towards the ESPResSo and the referenced above Schlick2010 one,
-      // which is defined by the eq. (14.31) of Schlick2010. A difference is the mass factor to the friction tensor.
-      // The noise is Gaussian according to the convention at p. 237 (last paragraph), Pottier2010.
+      // Random (heat) velocity is added here. It is already initialized in the
+      // terminal drag part. See eq. (10.2.16) taking into account eq. (10.2.18)
+      // and (10.2.29), Pottier2010. Note, that the Pottier2010 units system
+      // (see Eq. (10.1.1) there) has been adapted towards the ESPResSo and the
+      // referenced above Schlick2010 one, which is defined by the eq. (14.31)
+      // of Schlick2010. A difference is the mass factor to the friction tensor.
+      // The noise is Gaussian according to the convention at p. 237 (last
+      // paragraph), Pottier2010.
       p.m.v[j] += brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p.p.mass);
     }
   }

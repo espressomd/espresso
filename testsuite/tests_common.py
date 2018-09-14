@@ -228,6 +228,7 @@ def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
          vel[0]) / (pos[0]**2.0 + pos[1]**2.0),
         vel[2]])
 
+
 def define_rotation_matrix(system, part):
         A = np.zeros((3, 3))
         quat = system.part[part].quat
@@ -247,9 +248,11 @@ def define_rotation_matrix(system, part):
 
         return A
 
+
 def convert_vec_body_to_space(system, part, vec):
         A = define_rotation_matrix(system, part)
         return np.dot(A.transpose(), vec)
+
 
 def rotation_matrix(axis, theta):
     """

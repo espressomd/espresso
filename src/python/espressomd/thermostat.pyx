@@ -466,11 +466,14 @@ cdef class Thermostat(object):
                 else:
                     scalar_gamma_rot_def = True
 
-
             if kT is None or gamma is None:
                 raise ValueError(
                     "Both, kT and gamma have to be given as keyword args")
-            utils.check_type_or_throw_except(kT, 1, float, "kT must be a number")
+            utils.check_type_or_throw_except(
+                kT,
+                1,
+                float,
+                "kT must be a number")
             if scalar_gamma_def:
                 utils.check_type_or_throw_except(
                     gamma, 1, float, "gamma must be a number")

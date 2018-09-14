@@ -136,7 +136,8 @@ class LangevinThermostat(ut.TestCase):
             # to wrong results.
             system.integrator.run(3)
             # Less number of loops are needed in case of BD because the velocity
-            # distribution is already as required. It is not a result of a real dynamics.
+            # distribution is already as required. It is not a result of a real
+            # dynamics.
             self.global_langevin_run_check(N, kT, 40)
             system.thermostat.turn_off()
 
