@@ -268,3 +268,5 @@ if $with_coverage; then
         bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" || echo "Codecov did not collect coverage reports"
     fi
 fi
+
+trap : 0
