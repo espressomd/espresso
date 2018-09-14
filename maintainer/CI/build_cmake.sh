@@ -7,6 +7,14 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
+abort()
+{
+    echo "An error occurred. Exiting..." >&2
+    echo "Command that failed: $BASH_COMMAND" >&2
+    exit 1
+}
+
+trap 'abort' 0
 set -e
 
 # HELPER FUNCTIONS
@@ -66,6 +74,7 @@ if [ -z "$cxx_flags" ]; then
     else
         if $make_check; then
             cxx_flags="-O3"
+            fdsasdf
         else
             cxx_flags="-O0"
         fi
