@@ -25,9 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "cells.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/halo.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
-#include "grid_based_algorithms/halo.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
@@ -233,44 +233,8 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
   int x, y, z;
   double *f;
 
-  double lbboundary_mindist, distvec[3];
   Vector3d pos;
-
 #ifdef LB_BOUNDARIES
-
-  // This is the interpolation scheme from lb_lbfluid_get_interpolated_velocity
-  // in lb.cpp
-  // It is buggy and has therefore been removed
-
-  /* int boundary_no;
-    int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if
-    0<dist<agrid/2, 2 if dist <0
-
-    LBBoundaries::lbboundary_mindist_position(p, &lbboundary_mindist, distvec,
-    &boundary_no);
-    if (lbboundary_mindist>lbpar.agrid/2) {
-      boundary_flag=0;
-      pos[0]=p[0];
-      pos[1]=p[1];
-      pos[2]=p[2];
-
-    } else if (lbboundary_mindist > 0 ) {
-      boundary_flag=1;
-      pos[0]=p[0] - distvec[0]+ distvec[0]/lbboundary_mindist*lbpar.agrid/2.;
-      pos[1]=p[1] - distvec[1]+ distvec[1]/lbboundary_mindist*lbpar.agrid/2.;
-      pos[2]=p[2] - distvec[2]+ distvec[2]/lbboundary_mindist*lbpar.agrid/2.;
-
-    } else {
-      boundary_flag=2;
-      v[0]=
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0]*lbpar.agrid/lbpar.tau;
-      v[1]=
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1]*lbpar.agrid/lbpar.tau;
-      v[2]=
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2]*lbpar.agrid/lbpar.tau;
-      return; // we can return without interpolating
-    }*/
-
   pos[0] = p[0];
   pos[1] = p[1];
   pos[2] = p[2];
@@ -363,20 +327,6 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
     }
   }
 #ifdef LB_BOUNDARIES
-  // Again the interpolation scheme has been removed
-  /*  if (boundary_flag==1) {
-      v[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0]+(1-lbboundary_mindist/(lbpar.agrid/2.))*
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0];
-      v[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1]+(1-lbboundary_mindist/(lbpar.agrid/2.))*
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1];
-      v[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2]+(1-lbboundary_mindist/(lbpar.agrid/2.))*
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2];
-
-    } else {
-      v[0] = interpolated_u[0];
-      v[1] = interpolated_u[1];
-      v[2] = interpolated_u[2];
-    }*/
   v[0] = interpolated_u[0];
   v[1] = interpolated_u[1];
   v[2] = interpolated_u[2];

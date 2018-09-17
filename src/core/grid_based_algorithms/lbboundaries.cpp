@@ -45,6 +45,8 @@
 #include <vector>
 
 namespace LBBoundaries {
+constexpr const int no_boundary = -1;
+
 std::vector<int> raster(std::vector<const LBBoundary *> const &boundaries,
                         Vector3d const &offset) {
   std::vector<int> ids(lblattice.halo_grid_volume, no_boundary);
