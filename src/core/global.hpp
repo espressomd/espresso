@@ -66,6 +66,8 @@ enum Fields {
   FIELD_INTEG_SWITCH,
   /** index of \ref local_box_l in \ref #fields */
   FIELD_LBOXL,
+  /** index of \ref XXX #fields */
+  FIELD_LEES_EDWARDS,
   /** index of \ref max_cut in \ref #fields */
   FIELD_MCUT,
   /** index of \ref max_num_cells  in \ref #fields */

@@ -39,6 +39,10 @@
 #include "tuning.hpp"
 #include "utils/mpi/all_compare.hpp"
 
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
+
 #include <boost/functional/hash.hpp>
 
 #include <functional>
@@ -51,7 +55,7 @@ namespace {
 /** Type describing global variables. These are accessible from the
     front end, and are distributed to all compute nodes. */
 typedef struct {
-  enum class Type { INT = 0, DOUBLE = 1, BOOL = 2 };
+  enum class Type { INT = 0, DOUBLE = 1, BOOL = 2, LEES_EDWARDS_MPI = 3};
   /** Physical address of the variable. */
   void *data;
   /** Type of the variable, either \ref TYPE_INT or \ref TYPE_DOUBLE.*/
