@@ -132,6 +132,7 @@ class LBCPUShear(ut.TestCase, LBShearCommon):
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
+
 @ut.skipIf(not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features.")
 class LBGPUShear(ut.TestCase, LBShearCommon):
