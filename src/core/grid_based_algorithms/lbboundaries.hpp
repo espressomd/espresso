@@ -39,7 +39,6 @@
 #define LBBOUNDARIES_H
 
 #include "lbboundaries/LBBoundary.hpp"
-#include "utils.hpp"
 
 #include "utils/Span.hpp"
 

@@ -30,6 +30,8 @@
 
 #include "PdbParser.hpp"
 
+#include "utils/memory.hpp"
+
 #ifdef EK_BOUNDARIES
 
 /* Replacements for bool variables */
