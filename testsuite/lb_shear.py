@@ -25,7 +25,6 @@ import espressomd.shapes
 Check the Lattice Boltzmann lid driven shear flow in a slab system
 by comparing to the analytical solution.
 
-
 """
 
 
