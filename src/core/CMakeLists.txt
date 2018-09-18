@@ -29,6 +29,7 @@ set(EspressoCore_SRC
     integrate.cpp
     lattice.cpp
     layered.cpp
+    lees_edwards.cpp
     metadynamics.cpp
     minimize_energy.cpp
     MpiCallbacks.cpp
