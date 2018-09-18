@@ -5,7 +5,13 @@ source BashUnitTests.sh
 
 # test if Python module can be imported
 function test_Python() {
-  assert_return_code "@PYTHON_EXECUTABLE@" -c "import sys;sys.path.insert(0, '@DESTDIR@/usr/local/lib/python@PYTHON_VERSION_MAJOR@.@PYTHON_VERSION_MINOR@/site-packages');import espressomd"
+  # test espresso installation via `make install DESTDIR=/some/dir`
+  assert_return_code "@PYTHON_EXECUTABLE@" -c "import sys;sys.path.insert(0, '@DESTDIR@/@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@');import espressomd"
+  # test espresso installation via `cmake -DCMAKE_INSTALL_PREFIX=/some/dir ..`
+  if [ "@CMAKE_INSTALL_PREFIX@" = "/tmp/espresso-unit-tests" ]
+  then
+    assert_return_code "@PYTHON_EXECUTABLE@" -c "import sys;sys.path.insert(0, '@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@');import espressomd"
+  fi
 }
 
 # run tests

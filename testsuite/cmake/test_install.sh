@@ -1,20 +1,15 @@
 #!/usr/bin/env bash
 
-# load bash unit testing library
-source BashUnitTests.sh
-
-# test binaries and libraries are correclty installed
-function test_install() {
-  local filepaths=("@DESTDIR@/usr/local/bin/ipypresso" \
-                   "@DESTDIR@/usr/local/bin/pypresso" \
-                   "@DESTDIR@/usr/local/lib/libEspressoCore.so" \
-                   "@DESTDIR@/usr/local/lib/libEspressoCore.so"
+# test espresso installation
+function helper_test_install_common() {
+  local root=$1
+  local filepaths=("${root}/bin/pypresso" \
+                   "${root}/lib/libEspressoCore.so" \
                   )
-  if [ ! -z "@PYTHON_VERSION_STRING@" ]
+  if [ "@TESTING_PYTHON@" = "TRUE" ]
   then
-    local python_dir="@DESTDIR@/usr/local/lib/python@PYTHON_VERSION_MAJOR@.@PYTHON_VERSION_MINOR@"
-    filepaths+=("${python_dir}/site-packages/espressomd/_init.so" \
-                "${python_dir}/site-packages/espressomd/__init__.py"
+    filepaths+=("${root}/@Python_SITEARCH@/espressomd/_init.so" \
+                "${root}/@Python_SITEARCH@/espressomd/__init__.py"
                )
   fi
   for filepath in ${filepaths[@]}
@@ -22,7 +17,4 @@ function test_install() {
     assert_file_exists "${filepath}"
   done
 }
-
-# run tests
-run_test_suite
 

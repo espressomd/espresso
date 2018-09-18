@@ -49,18 +49,38 @@ function(CMAKE_TEST)
   set(cmake_tests ${cmake_tests} ${TEST_FILE} PARENT_SCOPE)
 endfunction(CMAKE_TEST)
 
-find_package(PythonInterp REQUIRED)
 find_package(Doxygen)
 find_package(Sphinx 1.6.6)
+if(WITH_PYTHON AND PYTHONINTERP_FOUND)
+  set(TESTING_PYTHON TRUE)
+  # obtain Python*_SITEARCH without find_package(Python*)
+  execute_process(
+    COMMAND "${PYTHON_EXECUTABLE}" -c "from distutils import sysconfig as sc;print(sc.get_python_lib(prefix='', plat_specific=True, standard_lib=False))"
+    OUTPUT_VARIABLE Python_SITEARCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  find_program(IPYTHON_EXECUTABLE NAMES ipython)
+else()
+  set(TESTING_PYTHON FALSE)
+endif()
 set(DESTDIR "${CMAKE_CURRENT_BINARY_DIR}/install")
 
-cmake_test(FILE test_install.sh MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES BashUnitTests.sh)
-add_custom_target(setup_install COMMAND make install DESTDIR="${DESTDIR}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-cmake_test(FILE test_python_bindings.sh MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES BashUnitTests.sh)
+add_custom_target(setup_install)
+add_custom_target(setup_install_destdir COMMAND make install DESTDIR="${DESTDIR}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_dependencies(setup_install setup_install_destdir)
+cmake_test(FILE test_install_destdir.sh MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES BashUnitTests.sh test_install.sh)
+if(CMAKE_INSTALL_PREFIX STREQUAL "/tmp/espresso-unit-tests")
+  add_custom_target(setup_install_cmake_install_prefix COMMAND make install WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+  add_dependencies(setup_install setup_install_cmake_install_prefix)
+  cmake_test(FILE test_install_prefix.sh MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES BashUnitTests.sh)
+endif()
+
+if(TESTING_PYTHON)
+  cmake_test(FILE test_python_bindings.sh MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES BashUnitTests.sh)
+endif(TESTING_PYTHON)
 
 if(DOXYGEN_FOUND)
 cmake_test(FILE test_doxygen.sh MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES BashUnitTests.sh)
-add_custom_target(setup_doxygen COMMAND make doc WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_custom_target(setup_doxygen COMMAND make doxygen WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 endif(DOXYGEN_FOUND)
 
 if(SPHINX_FOUND)

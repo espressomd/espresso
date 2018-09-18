@@ -395,7 +395,7 @@ function assert_zero() {
 function assert_return_code() {
   try_catch_silent "$@"
   local retcode=$?
-  local message="non-zero return code (${retcode}) for command \`$@\`"
+  local message="non-zero return code (${retcode}) for command \`$*\`"
   if [ "${retcode}" -eq "0" ]
   then
     log_success
