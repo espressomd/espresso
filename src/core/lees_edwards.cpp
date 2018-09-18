@@ -45,14 +45,14 @@ void setup_lees_edwards_protocol() {
   } 
 
   else if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_STEADY_SHEAR) {
-    lees_edwards_protocol.offset = (lees_edwards_protocol.velocity / box_l_y) * sim_time;
+    lees_edwards_protocol.offset = (lees_edwards_protocol.velocity / box_l_y) * (sim_time-lees_edwards_protocol.time0);
     lees_edwards_protocol.amplitude = 0.0;
     lees_edwards_protocol.frequency = 0.0;
   } 
   
   else if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_OSC_SHEAR) {
-    lees_edwards_protocol.offset = (lees_edwards_protocol.amplitude / box_l_y) * std::sin(lees_edwards_protocol.frequency*sim_time);
-    lees_edwards_protocol.velocity = (lees_edwards_protocol.amplitude / box_l_y) * std::cos(lees_edwards_protocol.frequency*sim_time); 
+    lees_edwards_protocol.offset = (lees_edwards_protocol.amplitude / box_l_y) * std::sin(lees_edwards_protocol.frequency*(sim_time-lees_edwards_protocol.time0));
+    lees_edwards_protocol.velocity = (lees_edwards_protocol.amplitude / box_l_y) * std::cos(lees_edwards_protocol.frequency*(sim_time-lees_edwards_protocol.time0)); 
   } 
 
   else {
