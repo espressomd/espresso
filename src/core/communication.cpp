@@ -227,7 +227,7 @@ int mpi_check_runtime_errors(void);
  * procedures
  **********************************************/
 
-#if defined(OPEN_MPI) && defined(MPI_T_ERR_NOT_INITIALIZED)
+#if defined(OPEN_MPI)
 /*! Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
     appears when CUDA is used. This is a bug in OpenMPI 2.0-2.1.2 and 3.0.0
     according to
@@ -244,73 +244,17 @@ static void openmpi_fix_vader() {
       (OMPI_MINOR_VERSION > 0 || OMPI_RELEASE_VERSION > 0))
     return;
 
-  const char *varname = "btl_vader_single_copy_mechanism";
-  const char *varval = "none";
-  int varvali = -1;
+  std::string varname = "btl_vader_single_copy_mechanism";
+  std::string varval = "none";
 
-  // initialize the MPI_T interface
-  int provided;
-  if (MPI_T_init_thread(MPI_THREAD_SINGLE, &provided) != MPI_SUCCESS)
-    return; // interface not available, so we can't do anything
-
-  // get the variable ID
-  int cvar;
-  if (MPI_T_cvar_get_index(varname, &cvar) != MPI_SUCCESS)
-    return; // only one rank is used or vader is disabled
-
-  // get a handle to the variable
-  MPI_T_cvar_handle cvar_handle;
-  int count;
-  if (MPI_T_cvar_handle_alloc(cvar, NULL, &cvar_handle, &count) !=
-      MPI_SUCCESS || count != 1) {
-    std::cerr << "Failed to allocate handle to " << varname << std::endl;
-    return;
-  }
-
-  // get the value index inside the enum
-  MPI_T_enum enumtype;
-  MPI_T_cvar_get_info(cvar, NULL, NULL, NULL, NULL, &enumtype, NULL, NULL, NULL,
-                      NULL);
-  for (int i = 0; true; ++i) {
-    char name[10];
-    int name_len = sizeof(name);
-    int newval = -1;
-    if (MPI_T_enum_get_item(enumtype, i, &newval, name, &name_len) !=
-        MPI_SUCCESS)
-      break;
-    if (std::string(name) == varval)
-      varvali = newval;
-  }
-
-  // check whether we found a match inside the enum
-  if (varvali < 0) {
-    std::cerr << "Failed to find " << varval << " for " << varname << std::endl;
-    return;
-  }
-
-  // set the variable
-  if (MPI_T_cvar_write(cvar_handle, &varvali) != MPI_SUCCESS) {
-    std::cerr << "Failed to set " << varname << " to " << varval << " ("
-              << varvali << ")" << std::endl;
-  }
-
-  // check whether we successfully set the variable
-  int varvali2 = -1;
-  if (MPI_T_cvar_read(cvar_handle, &varvali2) != MPI_SUCCESS ||
-      varvali != varvali2) {
-    std::cerr << "Value of " << varname << " does not match intended " << varval
-              << std::endl;
-    return;
-  }
-
-  // clean up
-  MPI_T_cvar_handle_free(&cvar_handle);
-  MPI_T_finalize();
+  setenv((std::string("OMPI_MCA_") + varname).c_str(), varval.c_str(), 0);
 }
 #endif
 
 void mpi_init() {
 #ifdef OPEN_MPI
+  openmpi_fix_vader();
+
   void *handle = 0;
   int mode = RTLD_NOW | RTLD_GLOBAL;
 #ifdef RTLD_NOLOAD
@@ -344,10 +288,6 @@ void mpi_init() {
   char **argv{};
   Communication::mpi_env =
       Utils::make_unique<boost::mpi::environment>(argc, argv);
-#endif
-
-#if defined(OPEN_MPI) && defined(MPI_T_ERR_NOT_INITIALIZED)
-  openmpi_fix_vader();
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
