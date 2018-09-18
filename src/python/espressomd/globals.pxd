@@ -139,3 +139,20 @@ cdef extern from "object-in-fluid/oif_global_forces.hpp":
 cdef extern from "forcecap.hpp":
     double forcecap_get()
     void forcecap_set(double forcecap)
+
+cdef extern from "lees_edwards.hpp":
+    cdef enum LeesEdwardsProtocolType:
+        LEES_EDWARDS_PROTOCOL_OFF,
+        LEES_EDWARDS_PROTOCOL_STEP,
+        LEES_EDWARDS_PROTOCOL_STEADY_SHEAR,
+        LEES_EDWARDS_PROTOCOL_OSC_SHEAR
+
+    ctypedef struct lees_edwards_protocol_struct:
+        LeesEdwardsProtocolType type
+        double time0
+        double offset
+        double velocity
+        double amplitude
+        double frequency
+
+    cdef extern lees_edwards_protocol_struct lees_edwards_protocol
