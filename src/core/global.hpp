@@ -21,6 +21,8 @@
 #ifndef _GLOBAL_HPP
 #define _GLOBAL_HPP
 
+#include <mpi.h>
+
 /** \file global.hpp This file contains the code for access to globally
     defined variables using the script command setmd. Please refer to
     the Developer's guide, section "Adding global variables", for
