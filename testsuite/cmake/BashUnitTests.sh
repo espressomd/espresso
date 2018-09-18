@@ -131,12 +131,44 @@ function check_namespace() {
 # exit now if test_* functions already exist
 check_namespace
 
+## @defgroup TryCatch Bash try/catch statement
+##
+## Bash implementation of a try/catch statement: run a command in a subshell,
+## optionally with modifiers, exiting the subshell on first error.
+## Returns the subshell error code.
+##
+## When dispatching unit test scripts with Open MPI, there is a risk that a
+## script freezes indefinitely if two calls are made to a try/catch statement.
+## For that reason, try/catch functions will exit gracefully if Open MPI
+## environmental variables are detected.
+## @{
+
+
+## @brief Detect if the bash script is run by an Open MPI program
+##
+## Open MPI programs (orterun, mpirun, mpiexec) declare [environmental
+## variables](https://www.open-mpi.org/faq/?category=running#mpi-environmental-variables)
+## that can easily be checked for.
+## @returns 1 if MPI is used, 0 otherwise
+function detect_open_mpi() {
+  if [ -z "${OMPI_COMM_WORLD_SIZE}" ] && [ -z "${OMPI_COMM_WORLD_RANK}" ] \
+  && [ -z "${OMPI_COMM_WORLD_LOCAL_RANK}" ] && [ -z "${OMPI_UNIVERSE_SIZE}" ] \
+  && [ -z "${OMPI_COMM_WORLD_LOCAL_SIZE}" ] && [ -z "${OMPI_COMM_WORLD_NODE_RANK}" ]
+  then
+    return 0
+  else
+    error_log+=("Runtime error: cannot run this job from MPI, there is a conflict with")
+    error_log+=("${FUNCNAME[1]}() that can cause this job to freeze indefinitely.")
+    return 1
+  fi
+}
+
 ## @brief Try/Catch statement in Bash
 ##
-## Run a command in a subshell, exiting the subshell on first error.
 ## @param $@ Command to run, possibly with modifiers
 ## @returns Error code returned by the command
 function try_catch() {
+  detect_open_mpi || return 1
   (
     set -e  # exit from current subshell on first error
     "$@"
@@ -150,12 +182,15 @@ function try_catch() {
 ## @param $@ Command to run, possibly with modifiers
 ## @returns Error code returned by the command
 function try_catch_silent() {
+  detect_open_mpi || return 1
   (
     set -e  # exit from current subshell on first error
     "$@" 1>/dev/null 2>/dev/null
   )
   return $?
 }
+
+## @}
 
 ## @brief Run the set_up() function if it exists
 ## @returns Error code returned by setUp()
@@ -354,6 +389,8 @@ function assert_zero() {
 }
 
 ## @brief Check if a return code is zero
+##
+## Cannot be used in a script run by Open MPI (see \ref TryCatch).
 ## @param $@ Command to run, possibly with modifiers
 function assert_return_code() {
   try_catch_silent "$@"
