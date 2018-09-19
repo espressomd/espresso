@@ -442,6 +442,14 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
   const int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
   auto const next = push_stencil(yperiod, zperiod);
 
+  std::array<Vector3d, 19> pop_shifts;
+  boost::transform(lbmodel.c, lbmodel.w, pop_shifts.begin(),
+                   [](std::array<double, 3> const &c_i, double w_i) {
+                     return (lbpar.agrid * lbpar.agrid * lbpar.agrid *
+                             lbpar.rho * 2. / lbmodel.c_sound_sq) *
+                            w_i * Vector3d{c_i[0], c_i[1], c_i[2]};
+                   });
+
   /* bottom-up sweep */
   for (int z = 0; z < lblattice.halo_grid[2]; z++) {
     for (int y = 0; y < lblattice.halo_grid[1]; y++) {
@@ -449,20 +457,14 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
         auto const k = get_linear_index(x, y, z, lblattice.halo_grid);
         if (lbfields[k].boundary) {
           for (int i = 0; i < 19; i++) {
-            double population_shift = 0;
-
-            for (int l = 0; l < 3; l++) {
-              population_shift -= lbpar.agrid * lbpar.agrid * lbpar.agrid *
-                                  lbpar.rho * 2 * c[i][l] * lbmodel.w[i] *
-                                  lbfields[k].boundary_velocity[l] /
-                                  lbmodel.c_sound_sq;
-            }
-
             if (x - c[i][0] > 0 && x - c[i][0] < lblattice.grid[0] + 1 &&
                 y - c[i][1] > 0 && y - c[i][1] < lblattice.grid[1] + 1 &&
                 z - c[i][2] > 0 && z - c[i][2] < lblattice.grid[2] + 1) {
               auto const stream_to = k - next[i];
               if (!lbfields[stream_to].boundary) {
+                auto const population_shift =
+                    -(pop_shifts[i] * lbfields[k].boundary_velocity);
+
                 lbfluid[reverse[i]][stream_to] =
                     lbfluid[i][k] + population_shift;
               } else {

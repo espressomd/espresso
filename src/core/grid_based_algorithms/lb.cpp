@@ -118,6 +118,7 @@ LB_Fluid lbfluid_post;
 
 /** Pointer to the hydrodynamic fields of the fluid nodes */
 std::vector<LB_FluidNode> lbfields;
+std::vector<Vector3d> lb_u;
 
 /** Communicator for halo exchange between processors */
 HaloCommunicator update_halo_comm = {0, nullptr};
@@ -1899,6 +1900,7 @@ static void lb_realloc_fluid() {
   }
 
   lbfields.resize(lblattice.halo_grid_volume);
+  lb_u.resize(lblattice.halo_grid_volume);
 }
 
 /** Sets up the structures for exchange of the halo regions.
@@ -2451,9 +2453,6 @@ inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
 
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
-  Lattice::index_t index;
-  double modes[19];
-
 /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
   for (auto it = LBBoundaries::lbboundaries.begin();
@@ -2476,7 +2475,7 @@ inline void lb_collide_stream() {
   }
 #endif
 
-  index = lblattice.halo_offset;
+  auto index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
       for (int x = 1; x <= lblattice.grid[0]; x++) {
@@ -2487,6 +2486,7 @@ inline void lb_collide_stream() {
 #endif // LB_BOUNDARIES
         {
           /* calculate modes locally */
+          double modes[19];
           lb_calc_modes(index, modes);
 
           /* deterministic collisions */
