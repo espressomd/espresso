@@ -2713,6 +2713,8 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   Vector3d interpolated_u{};
 
+  auto const rho_bulk = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+
   for (int z = 0; z < 2; z++) {
     for (int y = 0; y < 2; y++) {
       for (int x = 0; x < 2; x++) {
@@ -2721,16 +2723,12 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
         double modes[19];
         lb_calc_modes(index, modes);
 
-        auto const local_rho =
-            lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
-        auto const local_j = Vector3d{modes[1], modes[2], modes[3]} / local_rho;
+        auto const rho = rho_bulk + modes[0];
+        auto const j = Vector3d{modes[1], modes[2], modes[3]};
+        auto const weight =
+            delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
 
-        interpolated_u[0] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[0] / (local_rho);
-        interpolated_u[1] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[1] / (local_rho);
-        interpolated_u[2] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[2] / (local_rho);
+        interpolated_u += weight * j / rho;
       }
     }
   }
