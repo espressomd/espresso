@@ -2700,17 +2700,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 #endif
 }
 
-void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v) {
-  Lattice::index_t node_index[8], index;
+void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
+  Lattice::index_t node_index[8];
   double delta[6];
-  double local_rho, local_j[3], interpolated_u[3];
-  double modes[19];
-  int x, y, z;
-  Vector3d pos;
-
-  pos[0] = p[0];
-  pos[1] = p[1];
-  pos[2] = p[2];
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
@@ -2719,19 +2711,19 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0;
+  Vector3d interpolated_u{};
 
-  for (z = 0; z < 2; z++) {
-    for (y = 0; y < 2; y++) {
-      for (x = 0; x < 2; x++) {
-        index = node_index[(z * 2 + y) * 2 + x];
+  for (int z = 0; z < 2; z++) {
+    for (int y = 0; y < 2; y++) {
+      for (int x = 0; x < 2; x++) {
+        auto const index = node_index[(z * 2 + y) * 2 + x];
 
+        double modes[19];
         lb_calc_modes(index, modes);
-        local_rho =
+
+        auto const local_rho =
             lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
-        local_j[0] = modes[1];
-        local_j[1] = modes[2];
-        local_j[2] = modes[3];
+        auto const local_j = Vector3d{modes[1], modes[2], modes[3]} / local_rho;
 
         interpolated_u[0] += delta[3 * x + 0] * delta[3 * y + 1] *
                              delta[3 * z + 2] * local_j[0] / (local_rho);
@@ -2749,7 +2741,6 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v) {
   v[0] *= lbpar.agrid / lbpar.tau;
   v[1] *= lbpar.agrid / lbpar.tau;
   v[2] *= lbpar.agrid / lbpar.tau;
-  return;
 }
 
 /** Calculate particle lattice interactions.
