@@ -166,6 +166,7 @@ python_test(FILE field_test.py MAX_NUM_PROC 1)
 python_test(FILE lb_boundary.py MAX_NUM_PROC 2)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 4)
 python_test(FILE lb_shear.py MAX_NUM_PROC 2)
+python_test(FILE lees_edwards.py MAX_NUM_PROC 4)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
