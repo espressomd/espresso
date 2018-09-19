@@ -7,6 +7,16 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
+abort()
+{
+    echo "An error occurred. Exiting..." >&2
+    echo "Command that failed: $BASH_COMMAND" >&2
+    exit 1
+}
+
+trap 'abort' 0
+set -e
+
 # HELPER FUNCTIONS
 
 # output value of env variables
@@ -258,3 +268,5 @@ if $with_coverage; then
         bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" || echo "Codecov did not collect coverage reports"
     fi
 fi
+
+trap : 0

@@ -25,7 +25,6 @@ import espressomd.shapes
 Check the Lattice Boltzmann lid driven shear flow in a slab system
 by comparing to the analytical solution.
 
-
 """
 
 
@@ -51,14 +50,20 @@ def shear_flow(x, t, nu, v, h, k_max):
     ----------
     x : :obj:`float`
         Position from the left plane.
+    t : :obj:`float`
+        Time since start of the shearing.
     nu : :obj:`float`
         Kinematic viscosity.
     v : :obj:`float`
         Shear rate.
     h : :obj:`float`
         Distance between the plates.
-    k_max: :obj:`int`
+    k_max : :obj:`int`
         Maximum considered wave number.
+
+    Returns
+    -------
+    :obj:`double` : Analytical velocity
 
     """
 
