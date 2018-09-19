@@ -1,51 +1,12 @@
-if(NOT DEFINED TEST_NP)
-  include(ProcessorCount)
-  ProcessorCount(NP)
-  math(EXPR TEST_NP "${NP}/2 + 1")
-endif()
-
-if(EXISTS ${MPIEXEC})
-  # OpenMPI 3.0 and higher checks the number of processes against the number of CPUs
-  execute_process(COMMAND ${MPIEXEC} --version RESULT_VARIABLE mpi_version_result OUTPUT_VARIABLE mpi_version_output ERROR_VARIABLE mpi_version_output)
-  if (mpi_version_result EQUAL 0 AND mpi_version_output MATCHES "\\(Open(RTE| MPI)\\) ([3-9]\\.|1[0-9])")
-    set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
-  else()
-    set(MPIEXEC_OVERSUBSCRIBE "")
-  endif()
-endif()
-
 function(CMAKE_TEST)
-    cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;RUN_WITH_MPI" "DEPENDENCIES;CONFIGURATIONS" ${ARGN})
+    cmake_parse_arguments(TEST "" "FILE" "DEPENDENCIES" ${ARGN})
   get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
   configure_file(${TEST_FILE} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE} @ONLY)
   foreach(dependency IN LISTS TEST_DEPENDENCIES)
       configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency} @ONLY)
   endforeach(dependency)
   set(TEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}")
-
-  # Default values
-  if (NOT DEFINED TEST_RUN_WITH_MPI)
-    set(TEST_RUN_WITH_MPI TRUE)
-  endif()
-  set(TEST_CONFIGURATIONS ${TEST_CONFIGURATIONS} "serial")
-
-  if(${TEST_MAX_NUM_PROC} LESS ${TEST_NP})
-    set(TEST_NUM_PROC ${TEST_MAX_NUM_PROC})
-  else()
-    set(TEST_NUM_PROC ${TEST_NP})
-  endif()
-
-  if(EXISTS ${MPIEXEC} AND ${TEST_RUN_WITH_MPI})
-    add_test(NAME ${TEST_NAME}
-      COMMAND
-      ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${TEST_FILE}
-      CONFIGURATIONS
-      ${TEST_CONFIGURATIONS}
-      )
-  else()
-    add_test(NAME ${TEST_NAME} COMMAND ${TEST_FILE})
-  endif()
-
+  add_test(NAME ${TEST_NAME} COMMAND ${TEST_FILE})
   set(cmake_tests ${cmake_tests} ${TEST_FILE} PARENT_SCOPE)
 endfunction(CMAKE_TEST)
 
@@ -67,24 +28,24 @@ set(DESTDIR "${CMAKE_CURRENT_BINARY_DIR}/install")
 add_custom_target(setup_install)
 add_custom_target(setup_install_destdir COMMAND make install DESTDIR="${DESTDIR}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(setup_install setup_install_destdir)
-cmake_test(FILE test_install_destdir.sh MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES BashUnitTests.sh test_install.sh)
+cmake_test(FILE test_install_destdir.sh DEPENDENCIES BashUnitTests.sh test_install.sh)
 if(CMAKE_INSTALL_PREFIX STREQUAL "/tmp/espresso-unit-tests")
   add_custom_target(setup_install_cmake_install_prefix COMMAND make install WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
   add_dependencies(setup_install setup_install_cmake_install_prefix)
-  cmake_test(FILE test_install_prefix.sh MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES BashUnitTests.sh)
+  cmake_test(FILE test_install_prefix.sh DEPENDENCIES BashUnitTests.sh)
 endif()
 
 if(TESTING_PYTHON)
-  cmake_test(FILE test_python_bindings.sh MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES BashUnitTests.sh)
+  cmake_test(FILE test_python_bindings.sh DEPENDENCIES BashUnitTests.sh)
 endif(TESTING_PYTHON)
 
 if(DOXYGEN_FOUND)
-cmake_test(FILE test_doxygen.sh MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES BashUnitTests.sh)
+cmake_test(FILE test_doxygen.sh DEPENDENCIES BashUnitTests.sh)
 add_custom_target(setup_doxygen COMMAND make doxygen WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 endif(DOXYGEN_FOUND)
 
 if(SPHINX_FOUND)
-cmake_test(FILE test_sphinx.sh MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES BashUnitTests.sh)
+cmake_test(FILE test_sphinx.sh DEPENDENCIES BashUnitTests.sh)
 add_custom_target(setup_sphinx COMMAND make sphinx WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 endif(SPHINX_FOUND)
 
