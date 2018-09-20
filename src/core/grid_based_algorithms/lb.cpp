@@ -2583,37 +2583,14 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   double delta[6];
   double *local_f, interpolated_u[3], delta_j[3];
 
-#ifdef EXTERNAL_FORCES
-  if (!(p->p.ext_flag & COORD_FIXED(0)) && !(p->p.ext_flag & COORD_FIXED(1)) &&
-      !(p->p.ext_flag & COORD_FIXED(2))) {
-    ONEPART_TRACE(if (p->p.identity == check_id) {
-      fprintf(stderr, "%d: OPT: f = (%.3e,%.3e,%.3e)\n", this_node, p->f.f[0],
-              p->f.f[1], p->f.f[2]);
-    });
-  }
-#endif
-
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
   lblattice.map_position_to_lattice(p->r.p, node_index, delta);
-
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) "
-                    "pos=(%.3f,%.3f,%.3f)\n",
-            this_node, delta[0], delta[1], delta[2], delta[3], delta[4],
-            delta[5], p->r.p[0], p->r.p[1], p->r.p[2]);
-  });
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
-
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB u = (%.16e,%.3e,%.3e) v = (%.16e,%.3e,%.3e)\n",
-            this_node, interpolated_u[0], interpolated_u[1], interpolated_u[2],
-            p->m.v[0], p->m.v[1], p->m.v[2]);
-  });
 
   /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
@@ -2644,24 +2621,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   force[2] = -lbpar.friction * (velocity[2] - interpolated_u[2]);
 #endif
 
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB f_drag = (%.6e,%.3e,%.3e)\n", this_node,
-            force[0], force[1], force[2]);
-  });
-
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB f_random = (%.6e,%.3e,%.3e)\n", this_node,
-            p->lc.f_random[0], p->lc.f_random[1], p->lc.f_random[2]);
-  });
-
   force[0] = force[0] + p->lc.f_random[0];
   force[1] = force[1] + p->lc.f_random[1];
   force[2] = force[2] + p->lc.f_random[2];
-
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB f_tot = (%.6e,%.3e,%.3e)\n", this_node,
-            force[0], force[1], force[2]);
-  });
 
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
