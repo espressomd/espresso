@@ -220,6 +220,8 @@ int iccp3m_iteration() {
   auto const pref = 1.0 / (coulomb.prefactor * 6.283185307);
   iccp3m_cfg.citeration = 0;
 
+  double globalmax = 1e100;
+
   for (int j = 0; j < iccp3m_cfg.num_iteration; j++) {
     double hmax = 0.;
 
