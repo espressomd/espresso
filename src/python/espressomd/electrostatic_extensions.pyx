@@ -297,4 +297,6 @@ IF ELECTROSTATICS and P3M:
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
-            raise Exception("ICC cannot be deactivated.")
+            iccp3m_cfg.n_ic = 0
+            # Allocate ICC lists
+            iccp3m_alloc_lists()
