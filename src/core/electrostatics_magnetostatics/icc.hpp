@@ -58,27 +58,51 @@
 #if defined(ELECTROSTATICS)
 
 /* iccp3m data structures*/
-typedef struct {
+struct iccp3m_struct {
   int initialized;
-  int n_ic;          /* Last induced id (can not be smaller then 2) */
-  int num_iteration; /* Number of max iterations                    */
-  double eout;       /* Dielectric constant of the bulk             */
-  double *areas;     /* Array of area of the grid elements          */
-  double *ein;       /* Array of dielectric constants at each surface element */
-  double *sigma;     /* Surface Charge density */
-  double convergence; /* Convergence criterion                       */
-  double *nvectorx;
-  double *nvectory;
-  double *nvectorz; /* Surface normal vectors                      */
-  double extx;
-  double exty;
-  double extz;    /* External field                              */
-  double relax;   /* relaxation parameter for iterative                       */
-  int citeration; /* current number of iterations*/
-  int set_flag;   /* flag that indicates if ICCP3M has been initialized properly
-                   */
-  int first_id;
-} iccp3m_struct;
+  int n_ic;                  /* Last induced id (can not be smaller then 2) */
+  int num_iteration = 30;    /* Number of max iterations                    */
+  double eout = 1;           /* Dielectric constant of the bulk             */
+  std::vector<double> areas; /* Array of area of the grid elements          */
+  std::vector<double>
+      ein; /* Array of dielectric constants at each surface element */
+  std::vector<double> sigma; /* Surface Charge density */
+  double convergence = 1e-2; /* Convergence criterion                       */
+  std::vector<double> nvectorx;
+  std::vector<double> nvectory;
+  std::vector<double> nvectorz; /* Surface normal vectors */
+  double extx = 0.;
+  double exty = 0.;
+  double extz = 0.;   /* External field                              */
+  double relax = 0.7; /* relaxation parameter for iterative */
+  int citeration = 0; /* current number of iterations*/
+  int set_flag =
+      0; /* flag that indicates if ICCP3M has been initialized properly
+      */
+  int first_id = 0;
+
+  template <typename Archive>
+  void serialize(Archive &ar, long int /* version */) {
+    ar &initialized;
+    ar &n_ic;
+    ar &num_iteration;
+    ar &first_id;
+    ar &convergence;
+    ar &eout;
+    ar &relax;
+    ar &areas;
+    ar &ein;
+    ar &nvectorx;
+    ar &nvectory;
+    ar &nvectorz;
+    ar &sigma;
+    ar &extx;
+    ar &exty;
+    ar &extz;
+    ar &citeration;
+    ar &set_flag;
+  }
+};
 extern iccp3m_struct iccp3m_cfg; /* global variable with ICCP3M configuration */
 extern int iccp3m_initialized;
 
@@ -88,10 +112,6 @@ int bcast_iccp3m_cfg();
  * self-consistently.
  */
 int iccp3m_iteration();
-
-/** The initialisation of ICCP3M with zero values for all variables
- */
-void iccp3m_init();
 
 /** The allocation of ICCP3M lists for python interface
  */

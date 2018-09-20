@@ -124,83 +124,15 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
 
 void iccp3m_set_initialized() { iccp3m_initialized = 1; }
 
-void iccp3m_init(void) {
-  iccp3m_cfg.set_flag = 0;
-  iccp3m_cfg.areas = nullptr;
-  iccp3m_cfg.ein = nullptr;
-  iccp3m_cfg.nvectorx = nullptr;
-  iccp3m_cfg.nvectory = nullptr;
-  iccp3m_cfg.nvectorz = nullptr;
-  iccp3m_cfg.extx = 0;
-  iccp3m_cfg.exty = 0;
-  iccp3m_cfg.extz = 0;
-  iccp3m_cfg.first_id = 0;
-  iccp3m_cfg.num_iteration = 30;
-  iccp3m_cfg.convergence = 1e-2;
-  iccp3m_cfg.relax = 0.7;
-  iccp3m_cfg.eout = 1;
-  iccp3m_cfg.citeration = 0;
-}
-
 void iccp3m_alloc_lists() {
-  iccp3m_cfg.areas = (double *)Utils::realloc(
-      iccp3m_cfg.areas, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.ein = (double *)Utils::realloc(iccp3m_cfg.ein,
-                                            (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.nvectorx = (double *)Utils::realloc(
-      iccp3m_cfg.nvectorx, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.nvectory = (double *)Utils::realloc(
-      iccp3m_cfg.nvectory, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.nvectorz = (double *)Utils::realloc(
-      iccp3m_cfg.nvectorz, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.sigma = (double *)Utils::realloc(
-      iccp3m_cfg.sigma, (iccp3m_cfg.n_ic) * sizeof(double));
-}
+  auto const n_ic = iccp3m_cfg.n_ic;
 
-int bcast_iccp3m_cfg(void) {
-  int i;
-  MPI_Bcast((int *)&iccp3m_cfg.n_ic, 1, MPI_INT, 0, comm_cart);
-  /* allocates Memory on slave nodes
-   * */
-  if (this_node != 0) {
-    iccp3m_cfg.areas = (double *)Utils::realloc(
-        iccp3m_cfg.areas, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.ein = (double *)Utils::realloc(
-        iccp3m_cfg.ein, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectorx = (double *)Utils::realloc(
-        iccp3m_cfg.nvectorx, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectory = (double *)Utils::realloc(
-        iccp3m_cfg.nvectory, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectorz = (double *)Utils::realloc(
-        iccp3m_cfg.nvectorz, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.sigma = (double *)Utils::realloc(
-        iccp3m_cfg.sigma, (iccp3m_cfg.n_ic) * sizeof(double));
-  }
-
-  MPI_Bcast((int *)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, comm_cart);
-  MPI_Bcast((int *)&iccp3m_cfg.first_id, 1, MPI_INT, 0, comm_cart);
-  MPI_Bcast((double *)&iccp3m_cfg.convergence, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast((double *)&iccp3m_cfg.eout, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast((double *)&iccp3m_cfg.relax, 1, MPI_DOUBLE, 0, comm_cart);
-
-  /* broadcast the vectors element by element. This is slow
-   * but safe and only performed at the beginning of each simulation*/
-  for (i = 0; i < iccp3m_cfg.n_ic; i++) {
-    MPI_Bcast((double *)&iccp3m_cfg.areas[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double *)&iccp3m_cfg.ein[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double *)&iccp3m_cfg.nvectorx[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double *)&iccp3m_cfg.nvectory[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double *)&iccp3m_cfg.nvectorz[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double *)&iccp3m_cfg.sigma[i], 1, MPI_DOUBLE, 0, comm_cart);
-  }
-  MPI_Bcast((double *)&iccp3m_cfg.extx, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast((double *)&iccp3m_cfg.exty, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast((double *)&iccp3m_cfg.extz, 1, MPI_DOUBLE, 0, comm_cart);
-
-  MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_INT, 0, comm_cart);
-  MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_INT, 0, comm_cart);
-
-  return 0;
+  iccp3m_cfg.areas.resize(n_ic);
+  iccp3m_cfg.ein.resize(n_ic);
+  iccp3m_cfg.nvectorx.resize(n_ic);
+  iccp3m_cfg.nvectory.resize(n_ic);
+  iccp3m_cfg.nvectorz.resize(n_ic);
+  iccp3m_cfg.sigma.resize(n_ic);
 }
 
 int iccp3m_iteration() {
@@ -257,7 +189,7 @@ int iccp3m_iteration() {
         hmax = std::max(hmax, std::abs(hold));
 
         auto const f1 = del_eps * fdot * pref;
-        auto const f2 = (iccp3m_cfg.sigma != 0)
+        auto const f2 = (not iccp3m_cfg.sigma.empty())
                             ? (2 * iccp3m_cfg.eout) /
                                   (iccp3m_cfg.eout + iccp3m_cfg.ein[id]) *
                                   (iccp3m_cfg.sigma[id])
