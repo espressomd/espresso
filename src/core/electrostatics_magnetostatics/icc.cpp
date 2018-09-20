@@ -221,6 +221,8 @@ int iccp3m_iteration() {
         }
       }
     } /* cell particles */
+    /* Update charges on ghosts. */
+    ghost_communicator(&cell_structure.exchange_ghosts_comm);
 
     iccp3m_cfg.citeration++;
 
@@ -231,9 +233,6 @@ int iccp3m_iteration() {
     if (diff > 1e89) {
       return iccp3m_cfg.citeration++;
     }
-
-    /* Update charges on ghosts. */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm);
   } /* iteration */
 
   if (globalmax > iccp3m_cfg.convergence) {
