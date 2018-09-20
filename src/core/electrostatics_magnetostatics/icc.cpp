@@ -133,6 +133,9 @@ void iccp3m_alloc_lists() {
 }
 
 int iccp3m_iteration() {
+  if (iccp3m_cfg.n_ic == 0)
+    return 0;
+
   iccp3m_sanity_check();
 
   if ((iccp3m_cfg.eout <= 0)) {
