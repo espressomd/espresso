@@ -59,7 +59,6 @@
 
 /* iccp3m data structures*/
 struct iccp3m_struct {
-  int initialized;
   int n_ic;                  /* Last induced id (can not be smaller then 2) */
   int num_iteration = 30;    /* Number of max iterations                    */
   double eout = 1;           /* Dielectric constant of the bulk             */
@@ -83,7 +82,6 @@ struct iccp3m_struct {
 
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &initialized;
     ar &n_ic;
     ar &num_iteration;
     ar &first_id;
@@ -104,9 +102,6 @@ struct iccp3m_struct {
   }
 };
 extern iccp3m_struct iccp3m_cfg; /* global variable with ICCP3M configuration */
-extern int iccp3m_initialized;
-
-int bcast_iccp3m_cfg();
 
 /** The main iterative scheme, where the surface element charges are calculated
  * self-consistently.
@@ -116,10 +111,6 @@ int iccp3m_iteration();
 /** The allocation of ICCP3M lists for python interface
  */
 void iccp3m_alloc_lists();
-
-/** The set of the init flag from python interface
- */
-void iccp3m_set_initialized();
 
 /** check sanity of parameters for use with ICCP3M
  */

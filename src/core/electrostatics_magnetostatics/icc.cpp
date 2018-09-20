@@ -54,7 +54,6 @@
 
 iccp3m_struct iccp3m_cfg;
 
-int iccp3m_initialized = 0;
 /* functions that are used in icc* to compute the electric field acting on the
  * induced charges, excluding forces other than the electrostatic ones */
 void init_forces_iccp3m();
@@ -121,8 +120,6 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   }
   /***********************************************/
 }
-
-void iccp3m_set_initialized() { iccp3m_initialized = 1; }
 
 void iccp3m_alloc_lists() {
   auto const n_ic = iccp3m_cfg.n_ic;

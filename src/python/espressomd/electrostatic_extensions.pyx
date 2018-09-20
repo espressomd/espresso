@@ -265,7 +265,6 @@ IF ELECTROSTATICS and P3M:
             return params
 
         def _set_params_in_es_core(self):
-
             # First set number of icc particles
             iccp3m_cfg.n_ic = self._params["n_icc"]
             # Allocate ICC lists
@@ -290,11 +289,8 @@ IF ELECTROSTATICS and P3M:
             iccp3m_cfg.eout = self._params["eps_out"]
             iccp3m_cfg.citeration = 0
 
-            iccp3m_set_initialized()
-            iccp3m_cfg.set_flag = 1
-
             # Broadcasts vars
-            mpi_iccp3m_init(0)
+            mpi_iccp3m_init()
 
         def _activate_method(self):
             check_neutrality(self._params)

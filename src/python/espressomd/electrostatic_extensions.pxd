@@ -23,6 +23,7 @@ include "myconfig.pxi"
 from espressomd.system cimport *
 from espressomd.utils cimport *
 from espressomd.electrostatics cimport *
+from libcpp cimport vector
 
 IF ELECTROSTATICS and P3M:
 
@@ -48,29 +49,25 @@ IF ELECTROSTATICS and P3M:
             int n_ic
             int num_iteration
             double eout
-            double * areas
-            double * ein
-            double * sigma
+            vector[double] areas
+            vector[double] ein
+            vector[double] sigma
             double convergence
-            double * nvectorx
-            double * nvectory
-            double * nvectorz
+            vector[double] nvectorx
+            vector[double] nvectory
+            vector[double] nvectorz
             double extx
             double exty
             double extz
             double relax
             int citeration
-            int set_flag
-            double * fx
-            double * fy
-            double * fz
             int first_id
 
         # links intern C-struct with python object
         iccp3m_struct iccp3m_cfg
 
-        void iccp3m_set_initialized()
         void iccp3m_alloc_lists()
 
     cdef extern from "communication.hpp":
-        int mpi_iccp3m_init(int dummy)
+        int mpi_iccp3m_init()
+        int mpi_iccp3m_iteration()

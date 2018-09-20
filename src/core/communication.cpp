@@ -1981,7 +1981,7 @@ void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
 }
 
 /********************* REQ_ICCP3M_ITERATION ********/
-int mpi_iccp3m_iteration(int dummy) {
+int mpi_iccp3m_iteration() {
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_iteration_slave, -1, 0);
 
@@ -1996,7 +1996,7 @@ int mpi_iccp3m_iteration(int dummy) {
 #endif
 }
 
-void mpi_iccp3m_iteration_slave(int dummy, int dummy2) {
+void mpi_iccp3m_iteration_slave(int, int) {
 #ifdef ELECTROSTATICS
   iccp3m_iteration();
   COMM_TRACE(
@@ -2007,13 +2007,13 @@ void mpi_iccp3m_iteration_slave(int dummy, int dummy2) {
 }
 
 /********************* REQ_ICCP3M_INIT********/
-int mpi_iccp3m_init(int n_induced_charges) {
+int mpi_iccp3m_init() {
 #ifdef ELECTROSTATICS
   /* nothing has to be done on the master node, this
    * passes only the number of induced charges, in order for
    * slaves to allocate memory */
 
-  mpi_call(mpi_iccp3m_init_slave, -1, n_induced_charges);
+  mpi_call(mpi_iccp3m_init_slave, -1, -1);
 
   boost::mpi::broadcast(comm_cart, iccp3m_cfg, 0);
 
@@ -2023,7 +2023,7 @@ int mpi_iccp3m_init(int n_induced_charges) {
 #endif
 }
 
-void mpi_iccp3m_init_slave(int node, int dummy) {
+void mpi_iccp3m_init_slave(int, int) {
 #ifdef ELECTROSTATICS
   boost::mpi::broadcast(comm_cart, iccp3m_cfg, 0);
 
