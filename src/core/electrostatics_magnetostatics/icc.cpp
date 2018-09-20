@@ -29,7 +29,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <ctime>
 
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
@@ -47,12 +46,9 @@
 #include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include "short_range_loop.hpp"
 #include "utils/NoOp.hpp"
-
-using std::ostringstream;
 
 #ifdef ELECTROSTATICS
 
@@ -211,10 +207,9 @@ int iccp3m_iteration() {
   iccp3m_sanity_check();
 
   if ((iccp3m_cfg.eout <= 0)) {
-    ostringstream msg;
-    msg << "ICCP3M: nonpositive dielectric constant is not allowed. Put a "
+    runtimeErrorMsg()
+        << "ICCP3M: nonpositive dielectric constant is not allowed. Put a "
            "decent exception here\n";
-    runtimeError(msg);
   }
 
   auto const pref = 1.0 / (coulomb.prefactor * 6.283185307);
@@ -347,17 +342,13 @@ void calc_long_range_forces_iccp3m() {
   if (!(coulomb.method == COULOMB_ELC_P3M ||
         coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_P3M ||
         coulomb.method == COULOMB_MMM2D || coulomb.method == COULOMB_MMM1D)) {
-    ostringstream msg;
-    msg << "ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ";
-    runtimeError(msg);
+    runtimeErrorMsg() << "ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ";
   }
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
     if (elc_params.dielectric_contrast_on) {
-      ostringstream msg;
-      msg << "ICCP3M conflicts with ELC dielectric constrast";
-      runtimeError(msg);
+      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric constrast";
     }
     p3m_charge_assign();
     p3m_calc_kspace_forces(1, 0);
@@ -397,24 +388,18 @@ int iccp3m_sanity_check() {
 #ifdef P3M
   case COULOMB_ELC_P3M: {
     if (elc_params.dielectric_contrast_on) {
-      ostringstream msg;
-      msg << "ICCP3M conflicts with ELC dielectric constrast";
-      runtimeError(msg);
+      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric constrast";
       return 1;
     }
     break;
   }
 #endif
   case COULOMB_DH: {
-    ostringstream msg;
-    msg << "ICCP3M does not work with Debye-Hueckel iccp3m.h";
-    runtimeError(msg);
+    runtimeErrorMsg() << "ICCP3M does not work with Debye-Hueckel iccp3m.h";
     return 1;
   }
   case COULOMB_RF: {
-    ostringstream msg;
-    msg << "ICCP3M does not work with COULOMB_RF iccp3m.h";
-    runtimeError(msg);
+    runtimeErrorMsg() << "ICCP3M does not work with COULOMB_RF iccp3m.h";
     return 1;
   }
   default:
@@ -423,9 +408,7 @@ int iccp3m_sanity_check() {
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    ostringstream msg;
-    msg << "ICCP3M does not work in the NPT ensemble";
-    runtimeError(msg);
+    runtimeErrorMsg() << "ICCP3M does not work in the NPT ensemble";
     return 1;
   }
 #endif

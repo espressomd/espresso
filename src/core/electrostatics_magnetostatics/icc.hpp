@@ -50,25 +50,12 @@
     particle data organisation schemes this is performed differently.
     */
 
-#ifndef _ICCP3M_H
-#define _ICCP3M_H
+#ifndef CORE_ICCP3M_HPP
+#define CORE_ICCP3M_HPP
 
 #include "config.hpp"
 
 #if defined(ELECTROSTATICS)
-
-#include "cells.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "ghosts.hpp"
-#include "global.hpp"
-#include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
-#include "topology.hpp"
-#include "utils.hpp"
-#include <ctime>
 
 /* iccp3m data structures*/
 typedef struct {
@@ -90,16 +77,12 @@ typedef struct {
   int citeration; /* current number of iterations*/
   int set_flag;   /* flag that indicates if ICCP3M has been initialized properly
                    */
-
-  double *fx;
-  double *fy;
-  double *fz;
   int first_id;
 } iccp3m_struct;
 extern iccp3m_struct iccp3m_cfg; /* global variable with ICCP3M configuration */
 extern int iccp3m_initialized;
 
-int bcast_iccp3m_cfg(void);
+int bcast_iccp3m_cfg();
 
 /** The main iterative scheme, where the surface element charges are calculated
  * self-consistently.
@@ -108,7 +91,7 @@ int iccp3m_iteration();
 
 /** The initialisation of ICCP3M with zero values for all variables
  */
-void iccp3m_init(void);
+void iccp3m_init();
 
 /** The allocation of ICCP3M lists for python interface
  */
