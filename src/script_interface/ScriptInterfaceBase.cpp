@@ -110,7 +110,7 @@ void ScriptInterfaceBase::set_state(Variant const &state) {
 
 /**
  * @brief Returns a binary representation of the state often
- *        the instance, as returned by @f get_state().
+ *        the instance, as returned by get_state().
  */
 std::string ScriptInterfaceBase::serialize() const {
   std::stringstream ss;
@@ -123,7 +123,7 @@ std::string ScriptInterfaceBase::serialize() const {
 
 /**
  * @brief Creates a new instance from a binary state,
- *        as returned by @f serialize().
+ *        as returned by serialize().
  */
 std::shared_ptr<ScriptInterfaceBase>
 ScriptInterfaceBase::unserialize(std::string const &state) {

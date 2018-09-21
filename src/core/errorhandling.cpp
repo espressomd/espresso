@@ -44,7 +44,7 @@ void mpi_gather_runtime_errors_slave(int node, int parm);
 namespace {
 /** RuntimeErrorCollector instance.
  *  This is a weak pointer so we don't
- *  leak on repeated calls of @f init_error_handling.
+ *  leak on repeated calls of init_error_handling.
  */
 unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 

@@ -587,7 +587,7 @@ const Particle &get_particle_data(int part);
  */
 void prefetch_particle_data(std::vector<int> ids);
 
-/** @brief Invalidate the fetch cache for @f get_particle_data. */
+/** @brief Invalidate the fetch cache for get_particle_data. */
 void invalidate_fetch_cache();
 
 /** Call only on the master node.
