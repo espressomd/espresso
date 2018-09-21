@@ -73,9 +73,6 @@ struct iccp3m_struct {
   Vector3d ext_field = {0, 0, 0}; /* External field */
   double relax = 0.7; /* relaxation parameter for iterative */
   int citeration = 0; /* current number of iterations*/
-  int set_flag =
-      0; /* flag that indicates if ICCP3M has been initialized properly
-          */
   int first_id = 0;
 
   template <typename Archive>
@@ -92,7 +89,6 @@ struct iccp3m_struct {
     ar &sigma;
     ar &ext_field;
     ar &citeration;
-    ar &set_flag;
   }
 };
 extern iccp3m_struct iccp3m_cfg; /* global variable with ICCP3M configuration */
