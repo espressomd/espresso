@@ -471,9 +471,12 @@ static int is_recv_op(int comm_type, int node) {
 }
 
 void ghost_communicator(GhostCommunicator *gc) {
+  ghost_communicator(gc, gc->data_parts);
+}
+
+void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   MPI_Status status;
   int n, n2;
-  int data_parts = gc->data_parts;
   /* if ghosts should have uptodate velocities, they have to be updated like
      positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
