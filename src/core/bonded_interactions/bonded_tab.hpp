@@ -43,7 +43,6 @@
 
     @param part_type_a particle type for which the interaction is defined
     @param part_type_b particle type for which the interaction is defined
-    @param filename from which file to fetch the data
 
     @return <ul>
     <li> 0 on success
@@ -66,7 +65,6 @@ int tabulated_set_params(int part_type_a, int part_type_b, double min,
     @param bond_type bond type for which the interaction is defined
     @param tab_type table type, TAB_BOND_LENGTH, TAB_BOND_ANGLE,
    TAB_BOND_DIHEDRAL
-    @param filename from which file to fetch the data
 
     @return <ul>
     <li> 0 on success

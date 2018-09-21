@@ -370,7 +370,6 @@ void mpi_remove_particle(int node, int id);
     and exclusions are left over.
     \param part the particle.
     \param node the node it is attached to.
-    \param part_data where to store the received data.
     \note Gets a copy of the particle data not a pointer to the actual particle
     used in integration
 */

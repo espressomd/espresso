@@ -365,7 +365,6 @@ void make_bond_type_exist(int type);
 /** @brief Checks if particle has a pair bond with a given partner
  *  Note that bonds are stored only on one of the two particles in Espresso
  *
- * @param P
  * @param p          particle on which the bond may be stored
  * @param partner    bond partner
  * @param bond_type  numerical bond type */
@@ -390,9 +389,8 @@ inline bool pair_bond_exists_on(const Particle *const p,
 /** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if
  * particles are ghosts.
  *
- * @param P
- * @param p1          particle on which the bond may be stored
- * @param p2    	     bond partner
+ * @param p_bond      particle on which the bond may be stored
+ * @param p_partner   bond partner
  * @param bond        enum bond type */
 inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
                                      const Particle *const p_partner,
@@ -414,10 +412,9 @@ inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
 /** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if
  * particles are ghosts.
  *
- * @param P
- * @param p1          particle on which the bond may be stored
- * @param p2    	     particle on which the bond may be stored
- * @param bond_type   numerical bond type */
+ * @param p1     particle on which the bond may be stored
+ * @param p2     particle on which the bond may be stored
+ * @param bond   numerical bond type */
 inline bool pair_bond_enum_exists_between(const Particle *const p1,
                                           const Particle *const p2,
                                           BondedInteraction bond) {

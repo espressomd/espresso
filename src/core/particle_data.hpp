@@ -514,7 +514,7 @@ Particle *got_particle(ParticleList *plist, int id);
 /** Append a particle at the end of a particle List.
     reallocates particles if necessary!
     This procedure does not care for \ref local_particles.
-    \param plist List to append the particle to.
+    \param l List to append the particle to.
     \param part  Particle to append. */
 void append_unindexed_particle(ParticleList *l, Particle &&part);
 
@@ -699,7 +699,7 @@ void get_particle_mu_E(int part, double (&mu_E)[3]);
 #endif
 
 /** Call only on the master node: set particle type.
-    @param part the particle.
+    @param p_id the particle.
     @param type its new type.
     @return ES_OK if particle existed
 */

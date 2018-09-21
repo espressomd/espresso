@@ -141,7 +141,7 @@ public:
    * @brief Get single parameter.
    *
    * @param name Name of the parameter
-   * @return Value of parameter @param name.
+   * @return Value of parameter @p name
    */
   virtual Variant get_parameter(const std::string &name) const {
     return get_parameters().at(name);
@@ -161,7 +161,7 @@ public:
    * every
    * element of the map.
    *
-   * @param Parameters Parameters to set.
+   * @param parameters Parameters to set.
    */
   virtual void set_parameters(const VariantMap &parameters) {
     for (auto const &it : parameters) {

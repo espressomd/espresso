@@ -216,7 +216,7 @@ void predict_momentum_particles(double *result) {
 /** Calculate total momentum of the system (particles & LB fluid)
  * inputs are bools to include particles and fluid in the linear momentum
  * calculation
- * @param momentum Result for this processor (Output)
+ * @return Result for this processor (Output)
  */
 std::vector<double> calc_linear_momentum(int include_particles,
                                          int include_lbfluid) {

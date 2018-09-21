@@ -355,8 +355,7 @@ double min_distance(T1 const pos1, T2 const pos2) {
 }
 
 /** calculate the center of mass of a special type of the current configuration
- *  \param type  type of the particle
- *  \param com   center of mass position
+ *  \param part_type  type of the particle
  */
 std::vector<double> centerofmass(PartCfg &, int part_type);
 
@@ -374,7 +373,7 @@ void angularmomentum(PartCfg &, int type, double *com);
 
 /** calculate the center of mass of a special type of a saved configuration
  *  \param k       number of the saved configuration
- *  \param type_1  type of the particle, -1 for all
+ *  \param type    type of the particle, -1 for all
  *  \param com     center of mass position
  */
 

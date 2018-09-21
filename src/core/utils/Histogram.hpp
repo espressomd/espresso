@@ -53,9 +53,10 @@ inline size_t ravel_index(std::vector<size_t> unravelled_indices,
  * \brief Returns the unraveled index of the provided flat index.
  *        Therefore is the inversion of flattening an ndims dimensional index.
  * \param len_dims an int array of length ndims containing the lengths of the
- * dimensions. (Input) \param ndims int denoting the number of dimensions.
- * (Input) \flattened_index an int denoting the flat index. (Input)
- * \unravelled_index_out an int array with length ndims where the unflat indices
+ * dimensions. (Input)
+ * \param ndims int denoting the number of dimensions. (Input)
+ * \param flattened_index an int denoting the flat index. (Input)
+ * \param unravelled_index_out an int array with length ndims where the unflat indices
  * are written to. (Output)
  */
 inline void unravel_index(const int *const len_dims, const int ndims,

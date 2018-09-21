@@ -273,7 +273,6 @@ template <typename T> __device__ void index_to_xyz(T index, T *xyz) {
 
 /**transformation from xyz to 1d array-index
  * @param xyz     Pointer xyz array (Input)
- * @param index   Calculated node index / thread index (Output)
  */
 template <typename T> __device__ T xyz_to_index(T *xyz) {
   T x = (xyz[0] + para.dim_x) % para.dim_x;
@@ -1930,15 +1929,14 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a,
 /** \name interpolation_three_point_coupling */
 /*********************************************************/
 /**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
- * @param n_a             Pointer to local node residing in array a (Input)
- * @param *delta          Pointer for the weighting of particle position
- * (Output)
- * @param *particle_data  Pointer to the particle position and velocity (Input)
- * @param *particle_force Pointer to the particle force (Input)
- * @param part_index      particle id / thread id (Input)
- * @param node_index      node index around (8) particle (Output)
- * @param *d_v            Pointer to local device values
- * @param *interpolated_u Pointer to the interpolated velocity (Output)
+ * @param[in]  n_a                Local node residing in array a
+ * @param[out] delta              Weighting of particle position
+ * @param[in]  particle_position  Particle position and velocity
+ * @param[in]  particle_force     Particle force
+ * @param[in]  part_index         Particle id / thread id
+ * @param[out] node_index         Node index around (8) particle
+ * @param      d_v                Local device values
+ * @param[out] interpolated_u     Interpolated velocity
  */
 __device__ __inline__ void
 interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
@@ -4694,7 +4692,7 @@ __global__ void lb_lbfluid_set_population_kernel(LB_nodes_gpu n_a,
 
 /**interface to set the populations of a specific node for the GPU
  * @param xyz            coordinates of node (Input)
- * @param population     Pointer to population (Input)
+ * @param population_host     Pointer to population (Input)
  * @param c              LB component (for SHANCHEN) (Input)
  */
 void lb_lbfluid_set_population(int xyz[3], float population_host[LBQ], int c) {
@@ -4731,7 +4729,7 @@ __global__ void lb_lbfluid_get_population_kernel(LB_nodes_gpu n_a,
 
 /**interface to get the populations of a specific node for the GPU
  * @param xyz            coordinates of node (Input)
- * @param population     Pointer to population (Output)
+ * @param population_host     Pointer to population (Output)
  * @param c              LB component (for SHANCHEN) (Input)
  */
 void lb_lbfluid_get_population(int xyz[3], float population_host[LBQ], int c) {
