@@ -39,7 +39,7 @@
  *  \todo The packing routines could be moved to utils.hpp when they are needed
  * elsewhere.
  *
- *  For more information about FFT usage, see \ref fft.cpp "fft.c".
+ *  For more information about FFT usage, see \ref fft.cpp "fft.cpp".
  */
 
 #include "config.hpp"

@@ -21,7 +21,7 @@
 */
 /** \file forces.cpp Force calculation.
  *
- *  For more information see \ref forces.hpp "forces.h".
+ *  For more information see \ref forces.hpp "forces.hpp".
  */
 
 #include "EspressoSystemInterface.hpp"

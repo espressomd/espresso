@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file pressure.hpp
-    Pressure calculation. Really similar to \ref energy.hpp "energy.h".
+    Pressure calculation. Really similar to \ref energy.hpp "energy.hpp".
 */
 
 #ifndef CORE_PRESSURE_HPP

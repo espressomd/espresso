@@ -22,7 +22,7 @@
     This file contains implementations for some special functions which are
    needed by the MMM family of algorithms. This are the modified Hurwitz zeta
    function and the modified Bessel functions of first and second kind. The
-   implementations are based on the GSL code (see \ref specfunc.cpp "specfunc.c"
+   implementations are based on the GSL code (see \ref specfunc.cpp "specfunc.cpp"
     for the original GSL header).
 
     The Hurwitz zeta function is evaluated using the Euler-MacLaurin summation

@@ -24,7 +24,7 @@
 #define THERMALIZED_DIST_H
 /** \file thermalized_bond.hpp
  *  Routines to thermalize the com and distance of a particle pair.
- *  \ref forces.c
+ *  \ref forces.cpp
  */
 
 /** number of thermalized bonds */

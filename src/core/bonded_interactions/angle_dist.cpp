@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file angledist.cpp
+/** \file angle_dist.cpp
  *
- *  Implementation of \ref angledist.hpp
+ *  Implementation of \ref angle_dist.hpp
  */
 #include "angle_dist.hpp"
 

@@ -41,11 +41,11 @@
 int bonded_coulomb_set_params(int bond_type, double prefactor);
 
 /** Computes the BONDED_COULOMB pair force and adds this
-    force to the particle forces (see \ref interaction_data.cpp).
+    force to the particle forces (see \ref nonbonded_interaction_data.cpp).
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
     @param iaparams  bond type number of the angle interaction (see \ref
-   interaction_data.cpp).
+   nonbonded_interaction_data.cpp).
     @param dx        particle distance vector
     @param force     returns force of particle 1
     @return 0.

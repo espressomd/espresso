@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file tab.cpp
+/** \file nonbonded_tab.cpp
  *
- *  Implementation of \ref tab.hpp
+ *  Implementation of \ref nonbonded_tab.hpp
  */
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 

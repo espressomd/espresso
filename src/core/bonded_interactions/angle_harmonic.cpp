@@ -20,7 +20,7 @@
 */
 /** \file angle_harmonic.cpp
  *
- *  Implementation of \ref angle.hpp
+ *  Implementation of \ref angle_harmonic.hpp
  */
 #include "angle_harmonic.hpp"
 

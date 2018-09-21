@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file thermostat.cpp
-    Implementation of \ref thermostat.hpp "thermostat.h"
+    Implementation of \ref thermostat.hpp "thermostat.hpp"
  */
 #include "thermostat.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"

@@ -16,9 +16,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file comfixed.cpp
+/** \file comfixed_global.cpp
  *
- *  Implementation of \ref comfixed.hpp
+ *  Implementation of \ref comfixed_global.hpp
  */
 #include "comfixed_global.hpp"
 

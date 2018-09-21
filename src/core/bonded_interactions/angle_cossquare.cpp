@@ -20,7 +20,7 @@
 */
 /** \file angle_cossquare.cpp
  *
- *  Implementation of \ref angle.hpp
+ *  Implementation of \ref angle_cossquare.hpp
  */
 #include "angle_cossquare.hpp"
 

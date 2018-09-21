@@ -28,7 +28,7 @@
  * all particles are
  *  treated as 3D objects with 3 translational and 3 rotational degrees of
  * freedom if ROTATION
- *  flag is set in \ref config.hpp "config.h".
+ *  flag is set in \ref config.hpp "config.hpp".
  */
 
 #include "rotation.hpp"

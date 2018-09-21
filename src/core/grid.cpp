@@ -21,7 +21,7 @@
 /** \file grid.cpp   Domain decomposition for parallel computing.
  *
  *  For more information on the domain decomposition,
- *  see \ref grid.hpp "grid.h".
+ *  see \ref grid.hpp "grid.hpp".
  */
 
 #include "grid.hpp"

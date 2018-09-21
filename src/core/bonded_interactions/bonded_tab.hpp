@@ -21,7 +21,7 @@
 #ifndef CORE_BONDED_INTERACTIONS_TABULATED_HPP
 #define CORE_BONDED_INTERACTIONS_TABULATED_HPP
 
-/** \file tab.hpp
+/** \file bonded_tab.hpp
  *  Routines to calculate the  energy and/or  force
  *  for a particle pair or bonds via interpolating from lookup tables.
  *  \ref forces.cpp

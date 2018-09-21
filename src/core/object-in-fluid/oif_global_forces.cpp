@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file oif_global_forces.hpp
+/** \file oif_global_forces.cpp
  *  Routines to calculate the OIF_GLOBAL_FORCES energy or/and and force
  *  for a particle triple (triangle from mesh). (Dupin2007)
  *  \ref forces.cpp

@@ -21,7 +21,7 @@
 #ifndef VIRTUAL_SITES_VIRTUAL_SITES_HPP
 #define VIRTUAL_SITES_VIRTUAL_SITES_HPP
 
-/** \file virtual_sites.hpp
+/** \file
  *  This file contains routine to handle virtual sites
  *  Virtual sites are like particles, but they will be not integrated.
  *  Step performed for virtual sites:

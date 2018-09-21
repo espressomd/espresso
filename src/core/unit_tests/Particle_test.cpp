@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file Vector_test.cpp Unit tests for the Utils::Vector class.
+/** \file Particle_test.cpp Unit tests for the Particle struct.
  *
  */
 

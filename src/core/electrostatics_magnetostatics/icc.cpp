@@ -19,9 +19,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file iccp3m.cpp
+/** \file icc.cpp
   Detailed Information about the method is included in the corresponding header
-  file \ref iccp3m.hpp.
+  file \ref icc.hpp.
 */
 
 #include <cmath>

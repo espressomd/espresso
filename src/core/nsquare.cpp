@@ -20,7 +20,7 @@
 */
 /** \file nsquare.cpp
  *
- *  Implementation of  \ref nsquare.hpp "nsquare.h".
+ *  Implementation of  \ref nsquare.hpp "nsquare.hpp".
  */
 
 #include "nsquare.hpp"

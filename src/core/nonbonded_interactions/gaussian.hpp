@@ -21,7 +21,7 @@
 #ifndef GAUSSIAN_H
 #define GAUSSIAN_H
 
-/** \file gaussian.hpp
+/** \file
  *  Routines to calculate the Gaussian energy and/or force
  *  for a particle pair.
  */

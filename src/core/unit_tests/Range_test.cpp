@@ -15,8 +15,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file NumeratedContainer_test.cpp Unit tests for the
- * Utils::NumeratedContainer class.
+/** \file Range_test.cpp Unit tests for the
+ * Utils::Range class.
  *
  */
 

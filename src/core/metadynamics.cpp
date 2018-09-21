@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
-/** \file metadynamics.hpp
+/** \file metadynamics.cpp
  *
  *  This file contains routines to perform metadynamics.  Right now, the
  *  reaction coordinate is defined between two particles (either distance

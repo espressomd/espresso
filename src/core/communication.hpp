@@ -23,7 +23,7 @@
 /** \file communication.hpp
     This file contains the asynchronous MPI communication.
 
-    It is the header file for \ref communication.cpp "communication.c".
+    It is the header file for \ref communication.cpp "communication.cpp".
 
     The asynchronous MPI communication is used during the script
     evaluation. Except for the master node that interprets the Tcl

@@ -22,7 +22,7 @@
 #define _PARTICLE_DATA_H
 /** \file particle_data.hpp
     For more information on particle_data,
-    see \ref particle_data.cpp "particle_data.c"
+    see \ref particle_data.cpp "particle_data.cpp"
 */
 
 #include "Vector.hpp"
@@ -52,20 +52,20 @@
 #define WITH_BONDS 1
 
 #ifdef EXTERNAL_FORCES
-/** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an
+/** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to an
  * external force. */
 #define PARTICLE_EXT_FORCE 1
-/** \ref ParticleLocal::ext_flag "ext_flag" value for fixed coordinate coord. */
+/** \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate coord. */
 #define COORD_FIXED(coord) (2L << coord)
-/** \ref ParticleLocal::ext_flag "ext_flag" mask to check whether any of the
+/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of the
  * coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-/** \ref ParticleLocal::ext_flag "ext_flag" mask to check whether all of the
+/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether all of the
  * coordinates are fixed. */
 #define COORDS_ALL_FIXED (COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2))
 
 #ifdef ROTATION
-/** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an
+/** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to an
  * external torque. */
 #define PARTICLE_EXT_TORQUE 16
 #endif
@@ -186,17 +186,17 @@ struct ParticleProperties {
   /** flag whether to fix a particle in space.
       Values:
       <ul> <li> 0 no external influence
-           <li> 1 apply external force \ref ParticleLocal::ext_force
+           <li> 1 apply external force \ref ParticleProperties::ext_force
            <li> 2,3,4 fix particle coordinate 0,1,2
-           <li> 5 apply external torque \ref ParticleLocal::ext_torque
+           <li> 5 apply external torque \ref ParticleProperties::ext_torque
       </ul>
   */
   int ext_flag = 0;
-  /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
+  /** External force, apply if \ref ParticleProperties::ext_flag == 1. */
   Vector3d ext_force = {0, 0, 0};
 
 #ifdef ROTATION
-  /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
+  /** External torque, apply if \ref ParticleProperties::ext_flag == 16. */
   Vector3d ext_torque = {0, 0, 0};
 #endif
 #endif

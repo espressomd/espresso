@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file pressure.cpp
-    Implementation of \ref pressure.hpp "pressure.h".
+    Implementation of \ref pressure.hpp "pressure.hpp".
 */
 
 #include "cells.hpp"
