@@ -181,11 +181,11 @@ inline void calc_non_bonded_pair_force_parts(
   if (p1->p.mol_id == p2->p.mol_id)
     return;
 #endif
-/* lennard jones */
+/* lennard-jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* lennard jones generic */
+/* lennard-jones generic */
 #ifdef LENNARD_JONES_GENERIC
   add_ljgen_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
@@ -225,11 +225,11 @@ inline void calc_non_bonded_pair_force_parts(
 #ifdef HAT
   add_hat_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* lennard jones cosine */
+/* lennard-jones cosine */
 #ifdef LJCOS
   add_ljcos_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* lennard jones cosine */
+/* lennard-jones cosine */
 #ifdef LJCOS2
   add_ljcos2_pair_force(p1, p2, ia_params, d, dist, force);
 #endif

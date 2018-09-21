@@ -576,12 +576,12 @@ double add_mdlc_energy_corrections() {
    same
    value of the dipolar momentum modulus (mu_max). mu_max is taken as the
    largest value of
-   mu inside the system. If we assum the gap has a width gap_size (within which
+   mu inside the system. If we assume the gap has a width gap_size (within which
    there is no particles)
 
    Lz=h+gap_size
 
-   BE CAREFUL:  (1) We assum the short distance for the slab to be in the Z
+   BE CAREFUL:  (1) We assume the short distance for the slab to be in the Z
    direction
    (2) You must also tune the other 3D method to the same accuracy, otherwise
    it has no sense to have a good accurate result for DLC-dipolar.

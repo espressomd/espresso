@@ -12,7 +12,7 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-/** @TODO: Extend to hight order. This comes from some 1/sin expansion in
+/** @todo Extend to higher order. This comes from some 1/sin expansion in
  * Hockney/Eastwood */
 
 template <int cao>

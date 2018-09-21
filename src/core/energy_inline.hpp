@@ -97,12 +97,12 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef LENNARD_JONES
-  /* lennard jones */
+  /* lennard-jones */
   ret += lj_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
-  /* Generic lennard jones */
+  /* Generic lennard-jones */
   ret += ljgen_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -132,7 +132,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef BUCKINGHAM
-  /* lennard jones */
+  /* Buckingham */
   ret += buck_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -147,7 +147,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef LJCOS2
-  /* lennard jones */
+  /* lennard-jones */
   ret += ljcos2_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -162,7 +162,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef LJCOS
-  /* lennard jones cosine */
+  /* lennard-jones cosine */
   ret += ljcos_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 

@@ -27,7 +27,7 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-// These functions will split the paritlce data structure into individual arrays
+// These functions will split the particle data structure into individual arrays
 // for each property
 
 // Position and charge

@@ -412,9 +412,9 @@ struct Particle {
 /**
  * These functions cause a compile time error if
  * Particles are copied by memmove or memcpy,
- * which does not keep class invariants.
+ * which do not keep class invariants.
  *
- * These are templates so that the error is cause
+ * These are templates so that the error is caused
  * at the place they are used.
  */
 template <typename Size> void memmove(Particle *, Particle *, Size) {

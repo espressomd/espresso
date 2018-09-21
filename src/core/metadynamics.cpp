@@ -85,7 +85,7 @@ void meta_init() {
                          sizeof *meta_acc_fprofile);
   }
 
-  /* Check that the simulation uses onle a single processor. Otherwise exit.
+  /* Check that the simulation uses only a single processor. Otherwise exit.
    *  MPI interface *not* implemented. */
   if (n_nodes != 1) {
     runtimeErrorMsg() << "Can't use metadynamics on more than one processor.\n";
@@ -141,7 +141,7 @@ void meta_perform() {
 
   /* Now update free energy profile
    * Here, we're following the functional form of
-   * Marsili etal., J Comp. Chem, 31 (2009).
+   * Marsili et al., J Comp Chem, 31 (2009).
    * Instead of gaussians, we use so-called Lucy's functions */
 
   for (int i = 0; i < meta_xi_num_bins; ++i) {

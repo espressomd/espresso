@@ -48,7 +48,7 @@ template <typename T> Variant make_variant(const T &x) { return Variant(x); }
 /**
  * @brief Base class for generic script interface.
  *
- * @TODO Add extensive documentation.
+ * @todo Add extensive documentation.
  *
  */
 class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {

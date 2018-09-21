@@ -31,7 +31,7 @@ from globals cimport immersed_boundaries
 
 cdef class NonBondedInteraction(object):
     """
-    Represents an instance of a non-bonded interaction, such as lennard jones
+    Represents an instance of a non-bonded interaction, such as lennard-jones
     Either called with two particle type id, in which case, the interaction
     will represent the bonded interaction as it is defined in Espresso core
     Or called with keyword arguments describing a new interaction.
@@ -292,7 +292,7 @@ IF LENNARD_JONES == 1:
                     self._params["shift"],
                     self._params["offset"],
                     self._params["min"]):
-                raise Exception("Could not set Lennard Jones parameters")
+                raise Exception("Could not set Lennard-Jones parameters")
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -324,7 +324,7 @@ IF LENNARD_JONES == 1:
             """
             return "epsilon", "sigma", "cutoff", "shift"
 
-# Generic Lennard Jones
+# Generic Lennard-Jones
 
 IF LENNARD_JONES_GENERIC == 1:
 
@@ -391,7 +391,7 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["lam"],
                                     self._params["delta"]):
                     raise Exception(
-                        "Could not set Generic Lennard Jones parameters")
+                        "Could not set Generic Lennard-Jones parameters")
             ELSE:
                 if ljgen_set_params(self._part_types[0], self._part_types[1],
                                     self._params["epsilon"],
@@ -405,7 +405,7 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["b2"],
                                     ):
                     raise Exception(
-                        "Could not set Generic Lennard Jones parameters")
+                        "Could not set Generic Lennard-Jones parameters")
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -527,7 +527,7 @@ IF LJCOS:
                                 self._params["cutoff"],
                                 self._params["offset"]):
                 raise Exception(
-                    "Could not set Lennard Jones Cosine parameters")
+                    "Could not set Lennard-Jones Cosine parameters")
 
         def default_params(self):
             return {
@@ -608,7 +608,7 @@ IF LJCOS2:
                                  self._params["offset"],
                                  self._params["width"]):
                 raise Exception(
-                    "Could not set Lennard Jones Cosine2 parameters")
+                    "Could not set Lennard-Jones Cosine2 parameters")
 
         def default_params(self):
             return {
@@ -2226,7 +2226,7 @@ IF THOLE:
             Parameters
             ----------
             scaling_coeff : :obj:`float`
-                            The facor used in the thole damping function between
+                            The factor used in the thole damping function between
                             polarizable particles i and j. Usually calculated by
                             the polarizabilities alpha_i, alpha_j and damping
                             parameters  a_i, a_j via

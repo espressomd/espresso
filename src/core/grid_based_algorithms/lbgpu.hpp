@@ -38,7 +38,7 @@
 #define D3Q19
 #define LBQ 19
 
-/** Note these are usef for binary logic so should be powers of 2 */
+/** Note these are used for binary logic so should be powers of 2 */
 #define LB_COUPLE_NULL 1
 #define LB_COUPLE_TWO_POINT 2
 #define LB_COUPLE_THREE_POINT 4

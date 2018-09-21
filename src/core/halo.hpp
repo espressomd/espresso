@@ -98,8 +98,8 @@ typedef struct {
   unsigned long s_offset; /**< offset for send buffer */
   unsigned long r_offset; /**< offset for receive buffer */
 
-  Fieldtype fieldtype;   /**< type layout of the data beeing exchanged */
-  MPI_Datatype datatype; /**< MPI datatype of data beeing communicated */
+  Fieldtype fieldtype;   /**< type layout of the data being exchanged */
+  MPI_Datatype datatype; /**< MPI datatype of data being communicated */
 
 } HaloInfo;
 
@@ -142,7 +142,7 @@ void halo_free_fieldtype(Fieldtype *ftype);
 
 /** Preparation of a certain halo parallelizations scheme. Sets up the
  *  necessary datastructures for \ref halo_communication
- * @param hc         halo communicator beeing created (Input/Output)
+ * @param hc         halo communicator being created (Input/Output)
  * @param lattice    lattice the communication is created for (Input)
  * @param fieldtype  field layout of the lattice data (Input)
  * @param datatype   MPI datatype for the lattice data (Input)

@@ -25,7 +25,7 @@
     This file contains everything needed to create a start-up
     configuration of (partially charged) polymer chains with
     counterions and salt molecules, assigning velocities to the
-    particles and crosslinking the polymers if necessary.
+    particles and cross-linking the polymers if necessary.
 
     For more information on polymer, see \ref polymer.cpp "polymer.cpp"
 */
@@ -98,7 +98,7 @@ int constraint_collision(double *p1, double *p2);
  *  @param  constr      = shall constraints be respected when setting up
  *  polymer?  (0=no, 1=yes, default: 0)
  *  @return Returns how often the attempt to place a monomer failed in the
- *  worstcase. <br>
+ *  worst case. <br>
  *  If val_cM \< 1e-10, the charge is assumed to be zero, and type_cM = type_nM.
  */
 int polymerC(PartCfg &, int N_P, int MPC, double bond_length, int part_id,

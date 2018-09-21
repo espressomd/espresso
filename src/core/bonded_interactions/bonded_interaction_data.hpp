@@ -13,7 +13,7 @@ enum BondedInteraction {
   /** This bonded interaction was not set. */
   BONDED_IA_NONE = -1,
   /** Type of bonded interaction is a FENE potential
-      (to be combined with Lennard Jones). */
+      (to be combined with Lennard-Jones). */
   BONDED_IA_FENE,
   /** Type of bonded interaction is a HARMONIC potential. */
   BONDED_IA_HARMONIC,
@@ -78,7 +78,7 @@ enum TabulatedBondedInteraction {
 /*@}*/
 /** Parameters for FENE bond Potential.
 k - spring constant.
-drmax - maximal bond streching.
+drmax - maximal bond stretching.
 r0 - equilibrium bond length.
 drmax2 - square of drmax (internal parameter).
 */
@@ -350,7 +350,7 @@ struct Bonded_ia_parameters {
   Bond_parameters p;
 };
 
-/** Field containing the paramters of the bonded ia types */
+/** Field containing the parameters of the bonded ia types */
 extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 
 /** Maximal interaction cutoff (real space/short range bonded interactions). */

@@ -52,7 +52,7 @@ inline void add_hertzian_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate Lennard jones energy between particle p1 and p2. */
+/** calculate Lennard-jones energy between particle p1 and p2. */
 inline double hertzian_pair_energy(const Particle *p1, const Particle *p2,
                                    const IA_parameters *ia_params,
                                    const double d[3], double dist,

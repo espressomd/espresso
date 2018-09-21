@@ -26,7 +26,7 @@
 #ifdef LENNARD_JONES_GENERIC
 
 /** \file
- *  Routines to calculate the generalized lennard jones
+ *  Routines to calculate the generalized lennard-jones
  *  energy and/or force for a particle pair. "Generalized" here means
  *  that the LJ energy is of the form
  *
@@ -50,7 +50,7 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
 #endif
 );
 
-/** Calculate lennard Jones force between particle p1 and p2 */
+/** Calculate lennard-Jones force between particle p1 and p2 */
 inline void add_ljgen_pair_force(const Particle *const p1,
                                  const Particle *const p2,
                                  IA_parameters *ia_params, double d[3],
@@ -108,7 +108,7 @@ inline void add_ljgen_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate Lennard jones energy between particle p1 and p2. */
+/** calculate Lennard-jones energy between particle p1 and p2. */
 inline double ljgen_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist) {

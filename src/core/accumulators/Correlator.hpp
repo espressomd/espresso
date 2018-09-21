@@ -71,7 +71,7 @@
  * Correlations are only calculated on each level: For
  * tau=1,2,..,tau_lin the values are taken from level 1.
  * For tau=tau_lin, tau_lin+2, .., 2*tau_lin we take the values
- * from level 2. On level 2 we halso have values for 0,..tau_lin-2,
+ * from level 2. On level 2 we also have values for 0,..tau_lin-2,
  * but these are discarded as we have "better" estimates on level 1.
  *
  * The functions A and B can get extra arguments. This can e.g. be an

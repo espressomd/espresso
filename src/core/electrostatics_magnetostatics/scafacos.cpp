@@ -314,7 +314,7 @@ void tune() {
   /** Check if there is a user supplied cutoff */
   if ((scafacos->has_near) && (scafacos->r_cut() <= 0.0)) {
     // Tuning of r_cut needs to run on the master node because it relies on
-    // master-slve mode communication
+    // master-slave mode communication
     if (this_node == 0) {
       tune_r_cut();
     } else {

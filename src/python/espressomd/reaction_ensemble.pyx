@@ -424,7 +424,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         Performs reaction_steps reactions. Sets the number of reaction steps which are
         performed at once. Do not use too many reaction steps
         steps consecutively without having conformation
-        changing steps in between (especially important for the Wang Landau reaction ensemble). Providing a number for the parameter reaction steps reduces the need for the interpreter to be
+        changing steps in between (especially important for the Wang-Landau reaction ensemble). Providing a number for the parameter reaction steps reduces the need for the interpreter to be
         called between consecutive reactions.
 
         """
@@ -478,7 +478,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def add_collective_variable_potential_energy(self, *args, **kwargs):
         """
-        Adds the potential energy as a collective variable (reaction coordinate) for the Wang Landau Reaction Ensemble.
+        Adds the potential energy as a collective variable (reaction coordinate) for the Wang-Landau Reaction Ensemble.
         Several collective variables can be set simultaneously.
 
         Parameters
@@ -571,7 +571,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def load_wang_landau_checkpoint(self):
         """
-        Loads the dumped wang landau potential file.
+        Loads the dumped wang-landau potential file.
 
         """
         checkpoint_name = "checkpoint".encode("utf-8")
@@ -579,7 +579,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def write_wang_landau_checkpoint(self):
         """
-        Dumps the wang landau potential to a checkpoint file. Can be used to
+        Dumps the wang-landau potential to a checkpoint file. Can be used to
         checkpoint the Wang-Landau histogram, potential, parameter and the
         number of executed trial moves.
 
@@ -613,7 +613,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def write_wang_landau_results_to_file(self, filename):
         """
-        This writes out the wang landau potential as a function of the used
+        This writes out the wang-landau potential as a function of the used
         collective variables.
 
         """

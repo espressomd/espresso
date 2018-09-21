@@ -1534,7 +1534,7 @@ __global__ void ek_calculate_quantities(unsigned int species_index,
 
     /* Calculate the diffusive fluxes between this node and its neighbors. Only
        the 9 fluxes along the directions of the LB velocities c_i with i odd are
-       stored with a node to avoid redundencies. */
+       stored with a node to avoid redundancies. */
 
     neighborindex[EK_LINK_U00] = rhoindex_cartesian2linear(
         (coord[0] + 1) % ek_parameters_gpu.dim_x, coord[1], coord[2]);

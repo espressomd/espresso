@@ -233,7 +233,7 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
 
 /** Preparation of the halo parallelization scheme. Sets up the
  *  necessary datastructures for \ref halo_communication
- * @param hc         halo communicator beeing created (Input/Output)
+ * @param hc         halo communicator being created (Input/Output)
  * @param lattice    lattice the communication is created for (Input)
  * @param fieldtype  field layout of the lattice data (Input)
  * @param datatype   MPI datatype for the lattice data (Input)

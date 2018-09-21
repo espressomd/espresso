@@ -72,7 +72,7 @@ IF SCAFACOS == 1:
                 if len(pvalues) == 1:
                     pvalues = pvalues[0]
                 else:
-                    # Cast array elements to strings and join them by commata
+                    # Cast array elements to strings and join them by commas
                     # to achieve consistency with setting array-likes
                     # such as "pnfft_n":"128,128,128"
                     for j in range(len(pvalues)):

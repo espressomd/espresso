@@ -130,7 +130,7 @@ double dipolar_cutoff;
 static void recalc_global_maximal_nonbonded_cutoff();
 
 /*****************************************
- * general lowlevel functions
+ * general low-level functions
  *****************************************/
 
 IA_parameters *get_ia_param_safe(int i, int j) {

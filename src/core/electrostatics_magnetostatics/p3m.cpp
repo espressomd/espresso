@@ -1576,7 +1576,7 @@ static double p3m_m_time(char **log, int mesh[3], int cao_min, int cao_max,
                          double *_accuracy) {
   double best_time = -1, tmp_time, tmp_r_cut_iL = 0.0, tmp_alpha_L = 0.0,
          tmp_accuracy = 0.0;
-  /* in which direction improvement is possible. Initially, we dont know it
+  /* in which direction improvement is possible. Initially, we don't know it
    * yet.
    */
   int final_dir = 0;

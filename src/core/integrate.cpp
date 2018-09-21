@@ -836,7 +836,7 @@ void force_and_velocity_display() {
 #endif
 }
 
-/** @TODO: This needs to go!! */
+/** @todo This needs to go!! */
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   int reuse_forces = 0;

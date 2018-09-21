@@ -65,4 +65,4 @@ BOOST_AUTO_TEST_CASE(dist_function) {
   BOOST_CHECK(check_distance_function(w));
 }
 
-/* @TODO: Functional unit test of the distance function */
+/* @todo  Functional unit test of the distance function */

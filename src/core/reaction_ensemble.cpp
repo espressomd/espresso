@@ -409,7 +409,7 @@ void WangLandauReactionEnsemble::on_reaction_entry(int &old_state_index) {
 void WangLandauReactionEnsemble::on_reaction_rejection_directly_after_entry(
     int &old_state_index) {
   update_wang_landau_potential_and_histogram(
-      old_state_index); // increase the wang landau potential and histogram at
+      old_state_index); // increase the wang-landau potential and histogram at
                         // the current nbar (this case covers the cases nbar=0
                         // or nbar=1)
 }
@@ -500,7 +500,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     // accept
     accepted_state = new_state_index;
 
-    // delete hidden reactant_particles (remark: dont delete changed particles)
+    // delete hidden reactant_particles (remark: don't delete changed particles)
     // extract ids of to be deleted particles
     int len_hidden_particles_properties =
         static_cast<int>(hidden_particles_properties.size());
@@ -1095,7 +1095,7 @@ int WangLandauReactionEnsemble::get_num_needed_bins() {
 }
 
 void WangLandauReactionEnsemble::invalidate_bins() {
-  // make values in histogram and wang landau potential negative if they are not
+  // make values in histogram and wang-landau potential negative if they are not
   // allowed at the given degree of association, because the energy boundaries
   // prohibit them
 
@@ -1205,7 +1205,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
     std::map<int, int> &old_particle_numbers, int old_state_index,
     int new_state_index, bool only_make_configuration_changing_move) {
   /**determine the acceptance probabilities of the reaction move
-   * in wang landau reaction ensemble
+   * in wang-landau reaction ensemble
    */
   double beta = 1.0 / temperature;
   double bf;
@@ -1277,7 +1277,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
  *  no-energy-reweighting case, or with the functions
  *  do_global_mc_move_for_particles_of_type
  *
- *  perform additional Monte-carlo moves to to sample configurational
+ *  perform additional Monte carlo moves to to sample configurational
  *  partition function according to "Density-of-states Monte Carlo method
  *  for simulation of fluids"
  *
@@ -1304,7 +1304,7 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
       refine_wang_landau_parameter_one_over_t();
     }
   }
-  // shift wang landau potential minimum to zero
+  // shift wang-landau potential minimum to zero
   if (m_WL_tries % (std::max(90000, 9 * reaction_steps)) == 0) {
     // for numerical stability here we also subtract the minimum positive value
     // of the wang_landau_potential from the wang_landau potential, allowed
@@ -1327,7 +1327,7 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
 
 void WangLandauReactionEnsemble::update_wang_landau_potential_and_histogram(
     int index_of_state_after_acceptance_or_rejection) {
-  /**increase the wang landau potential and histogram at the current nbar */
+  /**increase the wang-landau potential and histogram at the current nbar */
   if (index_of_state_after_acceptance_or_rejection >= 0) {
     if (histogram[index_of_state_after_acceptance_or_rejection] >= 0) {
       histogram[index_of_state_after_acceptance_or_rejection] += 1;
@@ -1426,7 +1426,7 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
                // double_fill_value. This if ensures
                // that for the energy observable not allowed energies (energies
                // in the interval [global_E_min, global_E_max]) in the
-               // multidimensional wang landau potential are printed out, since
+               // multidimensional wang-landau potential are printed out, since
                // the range [E_min(nbar), E_max(nbar)] for each nbar may be a
                // different one
         std::vector<int> unraveled_index(collective_variables.size());
@@ -1568,7 +1568,7 @@ int WangLandauReactionEnsemble::
 /** remove bins from the range of to be sampled values if they have not been
  *  sampled.
  *  use with caution otherwise you produce unphysical results, do only use
- *  when you know what you want to do. This can make wang landau converge on a
+ *  when you know what you want to do. This can make wang-landau converge on a
  *  reduced set gamma. use this function e.g. in do_reaction_wang_landau() for
  *  the diprotonic acid compare "Wang-Landau sampling with self-adaptive range"
  *  by Troester and Dellago
@@ -1599,7 +1599,7 @@ int WangLandauReactionEnsemble::write_wang_landau_checkpoint(
     const std::string &identifier) {
   std::ofstream outfile;
 
-  // write current wang landau parameters (wang_landau_parameter,
+  // write current wang-landau parameters (wang_landau_parameter,
   // monte_carlo_trial_moves, flat_index_of_current_state)
   outfile.open(std::string("checkpoint_wang_landau_parameters_") + identifier);
   outfile << wang_landau_parameter << " " << monte_carlo_trial_moves << " "
@@ -1612,7 +1612,7 @@ int WangLandauReactionEnsemble::write_wang_landau_checkpoint(
     outfile << histogram[i] << "\n";
   }
   outfile.close();
-  // write wang landau potential
+  // write wang-landau potential
   outfile.open(std::string("checkpoint_wang_landau_potential_") + identifier);
   for (int i = 0; i < wang_landau_potential.size(); i++) {
     outfile << wang_landau_potential[i] << "\n";
@@ -1628,7 +1628,7 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     const std::string &identifier) {
   std::ifstream infile;
 
-  // restore wang landau parameters
+  // restore wang-landau parameters
   infile.open(std::string("checkpoint_wang_landau_parameters_") + identifier);
   if (infile.is_open()) {
 
@@ -1666,7 +1666,7 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
                              identifier);
   }
 
-  // restore wang landau potential
+  // restore wang-landau potential
   infile.open(std::string("checkpoint_wang_landau_potential_") + identifier);
   if (infile.is_open()) {
     double wang_landau_potential_entry;

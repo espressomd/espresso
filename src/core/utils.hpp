@@ -21,7 +21,7 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 /** \file
- *    Small functions that are useful not only for one modul.
+ *    Small functions that are useful not only for one module.
 
  *  just some nice utilities...
  *  and some constants...

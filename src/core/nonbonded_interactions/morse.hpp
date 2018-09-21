@@ -22,7 +22,7 @@
 #define _MORSE_H
 
 /** \file
- *  Routines to calculate the lennard jones energy and/or  force
+ *  Routines to calculate the lennard-jones energy and/or  force
  *  for a particle pair.
  *  \ref forces.cpp
  */
