@@ -24,8 +24,6 @@
 #include "integrate.hpp"
 
 lees_edwards_protocol_struct lees_edwards_protocol;
-extern double box_l[3];
-double const box_l_y = box_l[1];
 
 /* Functions to determine the current offset and shear rate with respect to the chosen protocol */
 
