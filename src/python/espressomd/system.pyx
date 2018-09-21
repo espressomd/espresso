@@ -399,7 +399,7 @@ cdef class System(object):
             lees_edwards_protocol.frequency = _lees_edwards[1]
             lees_edwards_protocol.amplitude = _lees_edwards[2]
           else:
-            raise ValueError("The lees_edwards has to be either: off, step, steady_shear or oscillatory_shear. See the documentation for the arguments.")
+            raise Exception("The lees_edwards has to be either: off, step, steady_shear or oscillatory_shear. See the documentation for the arguments.")
 
           lees_edwards_protocol.time0 = sim_time
 
