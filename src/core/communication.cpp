@@ -1987,9 +1987,6 @@ int mpi_iccp3m_iteration() {
 
   iccp3m_iteration();
 
-  COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node,
-                     dummy));
-
   return check_runtime_errors();
 #else
   return 0;
@@ -1999,8 +1996,6 @@ int mpi_iccp3m_iteration() {
 void mpi_iccp3m_iteration_slave(int, int) {
 #ifdef ELECTROSTATICS
   iccp3m_iteration();
-  COMM_TRACE(
-      fprintf(stderr, "%d: iccp3m iteration task %d done.\n", dummy, dummy2));
 
   check_runtime_errors();
 #endif
