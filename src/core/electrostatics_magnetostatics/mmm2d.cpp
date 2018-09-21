@@ -198,15 +198,17 @@ static double *gblcblk = nullptr;
 /** contribution from the image charges */
 static double lclimge[8];
 
-typedef struct {
+struct SCCache {
   double s, c;
-} SCCache;
+};
 
 /** sin/cos caching */
-static SCCache *scxcache = nullptr;
+static std::vector<SCCache> scxcache;
+/* _Not_ the size of scxcache */
 static int n_scxcache;
 /** sin/cos caching */
-static SCCache *scycache = nullptr;
+static std::vector<SCCache> scycache;
+/* _Not_ the size of scycache */
 static int n_scycache;
 
 /** \name Local functions for the near formula */
@@ -292,48 +294,34 @@ void MMM2D_setup_constants() {
  * FAR FORMULA
  ****************************************/
 
-static void prepare_scx_cache() {
-  int np, c, i, ic, freq, o;
-  double pref, arg;
-  Particle *part;
+static SCCache sc(double arg) { return {sin(arg), cos(arg)}; }
 
-  for (freq = 1; freq <= n_scxcache; freq++) {
-    pref = C_2PI * ux * freq;
-    o = (freq - 1) * n_localpart;
-    ic = 0;
-    for (c = 1; c <= n_layers; c++) {
-      np = cells[c].n;
-      part = cells[c].part;
-      for (i = 0; i < np; i++) {
-        arg = pref * part[i].r.p[0];
-        scxcache[o + ic].s = sin(arg);
-        scxcache[o + ic].c = cos(arg);
+template <size_t dir>
+static void prepare_sc_cache(std::vector<SCCache> &sccache, double u,
+                             int n_sccache) {
+  for (int freq = 1; freq <= n_sccache; freq++) {
+    auto const pref = C_2PI * u * freq;
+    auto const o = (freq - 1) * n_localpart;
+
+    int ic = 0;
+    for (int c = 1; c <= n_layers; c++) {
+      auto const np = cells[c].n;
+      auto part = cells[c].part;
+      for (int i = 0; i < np; i++) {
+        auto const arg = pref * part[i].r.p[dir];
+        sccache[o + ic] = sc(arg);
         ic++;
       }
     }
   }
 }
 
-static void prepare_scy_cache() {
-  int np, c, i, ic, freq, o;
-  double pref, arg;
-  Particle *part;
+static void prepare_scx_cache() {
+  prepare_sc_cache<0>(scxcache, ux, n_scxcache);
+}
 
-  for (freq = 1; freq <= n_scycache; freq++) {
-    pref = C_2PI * uy * freq;
-    o = (freq - 1) * n_localpart;
-    ic = 0;
-    for (c = 1; c <= n_layers; c++) {
-      np = cells[c].n;
-      part = cells[c].part;
-      for (i = 0; i < np; i++) {
-        arg = pref * part[i].r.p[1];
-        scycache[o + ic].s = sin(arg);
-        scycache[o + ic].c = cos(arg);
-        ic++;
-      }
-    }
-  }
+static void prepare_scy_cache() {
+  prepare_sc_cache<1>(scycache, uy, n_scycache);
 }
 
 /*****************************************************************/
@@ -680,10 +668,8 @@ static double z_energy() {
   return eng;
 }
 
-/*****************************************************************/
-/* PoQ exp sum */
-/*****************************************************************/
-static void setup_P(int p, double omega, double fac) {
+static void setup(int p, double omega, double fac, int n_sccache,
+                  Utils::Span<const SCCache> sccache) {
   int np, c, i, ic, o = (p - 1) * n_localpart;
   Particle *part;
   double pref = coulomb.prefactor * 4 * M_PI * ux * uy * fac * fac;
@@ -726,10 +712,10 @@ static void setup_P(int p, double omega, double fac) {
     for (i = 0; i < np; i++) {
       e = exp(omega * (part[i].r.p[2] - layer_top));
 
-      partblk[size * ic + POQESM] = part[i].p.q * scxcache[o + ic].s / e;
-      partblk[size * ic + POQESP] = part[i].p.q * scxcache[o + ic].s * e;
-      partblk[size * ic + POQECM] = part[i].p.q * scxcache[o + ic].c / e;
-      partblk[size * ic + POQECP] = part[i].p.q * scxcache[o + ic].c * e;
+      partblk[size * ic + POQESM] = part[i].p.q * sccache[o + ic].s / e;
+      partblk[size * ic + POQESP] = part[i].p.q * sccache[o + ic].s * e;
+      partblk[size * ic + POQECM] = part[i].p.q * sccache[o + ic].c / e;
+      partblk[size * ic + POQECP] = part[i].p.q * sccache[o + ic].c * e;
 
       /* take images due to different dielectric constants into account */
       if (mmm2d_params.dielectric_contrast_on) {
@@ -743,8 +729,8 @@ static void setup_P(int p, double omega, double fac) {
 
           e = exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
 
-          lclimgebot[POQESP] += part[i].p.q * scxcache[o + ic].s * e;
-          lclimgebot[POQECP] += part[i].p.q * scxcache[o + ic].c * e;
+          lclimgebot[POQESP] += part[i].p.q * sccache[o + ic].s * e;
+          lclimgebot[POQECP] += part[i].p.q * sccache[o + ic].c * e;
         } else
           /* There are image charges at -(z) and -(2h-z) etc. layer_h included
            * due to the shift in z */
@@ -766,8 +752,8 @@ static void setup_P(int p, double omega, double fac) {
           e = exp(omega * (part[i].r.p[2] - h + layer_h)) *
               mmm2d_params.delta_mid_top;
 
-          lclimgetop[POQESM] += part[i].p.q * scxcache[o + ic].s * e;
-          lclimgetop[POQECM] += part[i].p.q * scxcache[o + ic].c * e;
+          lclimgetop[POQESM] += part[i].p.q * sccache[o + ic].s * e;
+          lclimgetop[POQECM] += part[i].p.q * sccache[o + ic].c * e;
         } else
           /* There are image charges at (h-z) and (h+z) from the top layer etc.
              layer_h included due to the shift in z */
@@ -776,10 +762,10 @@ static void setup_P(int p, double omega, double fac) {
                         mmm2d_params.delta_mid_bot) *
                    fac_delta_mid_top;
 
-        lclimge[POQESP] += part[i].p.q * scxcache[o + ic].s * e_di_l;
-        lclimge[POQECP] += part[i].p.q * scxcache[o + ic].c * e_di_l;
-        lclimge[POQESM] += part[i].p.q * scxcache[o + ic].s * e_di_h;
-        lclimge[POQECM] += part[i].p.q * scxcache[o + ic].c * e_di_h;
+        lclimge[POQESP] += part[i].p.q * sccache[o + ic].s * e_di_l;
+        lclimge[POQECP] += part[i].p.q * sccache[o + ic].c * e_di_l;
+        lclimge[POQESM] += part[i].p.q * sccache[o + ic].s * e_di_h;
+        lclimge[POQECM] += part[i].p.q * sccache[o + ic].c * e_di_h;
       }
 
       add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
@@ -798,129 +784,34 @@ static void setup_P(int p, double omega, double fac) {
     if (this_node == n_nodes - 1)
       scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
+}
+
+/*****************************************************************/
+/* PoQ exp sum */
+/*****************************************************************/
+static void setup_P(int p, double omega, double fac) {
+  setup(p, omega, fac, n_scxcache, scxcache);
 }
 
 /* compare setup_P */
 static void setup_Q(int q, double omega, double fac) {
-  int np, c, i, ic, o = (q - 1) * n_localpart;
-  Particle *part;
-  double pref = coulomb.prefactor * 4 * M_PI * ux * uy * fac * fac;
-  double h = box_l[2];
-  double fac_imgsum = 1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
-  double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
-  double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
-  double fac_delta = mmm2d_params.delta_mult * fac_imgsum;
-  double layer_top;
-  double e, e_di_l, e_di_h;
-  double *llclcblk;
-  double *lclimgebot = nullptr, *lclimgetop = nullptr;
-  int e_size = 2, size = 4;
-
-  if (mmm2d_params.dielectric_contrast_on)
-    clear_vec(lclimge, size);
-
-  if (this_node == 0) {
-    lclimgebot = block(lclcblk, 0, size);
-    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
-  }
-
-  if (this_node == n_nodes - 1) {
-    lclimgetop = block(lclcblk, n_layers + 1, size);
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
-  }
-
-  layer_top = my_left[2] + layer_h;
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-    llclcblk = block(lclcblk, c, size);
-
-    clear_vec(llclcblk, size);
-
-    for (i = 0; i < np; i++) {
-      e = exp(omega * (part[i].r.p[2] - layer_top));
-
-      partblk[size * ic + POQESM] = part[i].p.q * scycache[o + ic].s / e;
-      partblk[size * ic + POQESP] = part[i].p.q * scycache[o + ic].s * e;
-      partblk[size * ic + POQECM] = part[i].p.q * scycache[o + ic].c / e;
-      partblk[size * ic + POQECP] = part[i].p.q * scycache[o + ic].c * e;
-
-      if (mmm2d_params.dielectric_contrast_on) {
-        if (c == 1 && this_node == 0) {
-          e_di_l = (exp(omega * (-part[i].r.p[2] - 2 * h + layer_h)) *
-                        mmm2d_params.delta_mid_bot +
-                    exp(omega * (part[i].r.p[2] - 2 * h + layer_h))) *
-                   fac_delta;
-
-          e = exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
-
-          lclimgebot[POQESP] += part[i].p.q * scycache[o + ic].s * e;
-          lclimgebot[POQECP] += part[i].p.q * scycache[o + ic].c * e;
-        } else
-          e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
-                    exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
-                        mmm2d_params.delta_mid_top) *
-                   fac_delta_mid_bot;
-
-        if (c == n_layers && this_node == n_nodes - 1) {
-          e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
-                        mmm2d_params.delta_mid_top +
-                    exp(omega * (-part[i].r.p[2] - h + 2 * layer_h))) *
-                   fac_delta;
-
-          e = exp(omega * (part[i].r.p[2] - h + layer_h)) *
-              mmm2d_params.delta_mid_top;
-
-          lclimgetop[POQESM] += part[i].p.q * scycache[o + ic].s * e;
-          lclimgetop[POQECM] += part[i].p.q * scycache[o + ic].c * e;
-        } else
-          e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
-                    exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
-                        mmm2d_params.delta_mid_bot) *
-                   fac_delta_mid_top;
-
-        lclimge[POQESP] += part[i].p.q * scycache[o + ic].s * e_di_l;
-        lclimge[POQECP] += part[i].p.q * scycache[o + ic].c * e_di_l;
-        lclimge[POQESM] += part[i].p.q * scycache[o + ic].s * e_di_h;
-        lclimge[POQECM] += part[i].p.q * scycache[o + ic].c * e_di_h;
-      }
-
-      add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
-      ic++;
-    }
-    scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
-    scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
-
-    layer_top += layer_h;
-  }
-
-  if (mmm2d_params.dielectric_contrast_on) {
-    scale_vec(pref, lclimge, size);
-    if (this_node == 0)
-      scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
-    if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
-  }
+  setup(q, omega, fac, n_scycache, scycache);
 }
 
-static void add_P_force() {
-  int np, c, i, ic;
-  Particle *part;
-  double *othcblk;
-  int size = 4;
+template <size_t dir> static void add_force() {
+  constexpr const auto size = 4;
 
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-    othcblk = block(gblcblk, c - 1, size);
+  auto ic = 0;
+  for (int c = 1; c <= n_layers; c++) {
+    auto const np = cells[c].n;
+    auto const part = cells[c].part;
+    auto const othcblk = block(gblcblk, c - 1, size);
 
-    for (i = 0; i < np; i++) {
-      part[i].f.f[0] += partblk[size * ic + POQESM] * othcblk[POQECP] -
-                        partblk[size * ic + POQECM] * othcblk[POQESP] +
-                        partblk[size * ic + POQESP] * othcblk[POQECM] -
-                        partblk[size * ic + POQECP] * othcblk[POQESM];
+    for (int i = 0; i < np; i++) {
+      part[i].f.f[dir] += partblk[size * ic + POQESM] * othcblk[POQECP] -
+                          partblk[size * ic + POQECM] * othcblk[POQESP] +
+                          partblk[size * ic + POQESP] * othcblk[POQECM] -
+                          partblk[size * ic + POQECP] * othcblk[POQESM];
       part[i].f.f[2] += partblk[size * ic + POQECM] * othcblk[POQECP] +
                         partblk[size * ic + POQESM] * othcblk[POQESP] -
                         partblk[size * ic + POQECP] * othcblk[POQECM] -
@@ -933,6 +824,9 @@ static void add_P_force() {
     }
   }
 }
+
+static void add_P_force() { add_force<0>(); }
+static void add_Q_force() { add_force<1>(); }
 
 static double P_energy(double omega) {
   int np, c, i, ic;
@@ -954,36 +848,6 @@ static double P_energy(double omega) {
     }
   }
   return eng;
-}
-
-static void add_Q_force() {
-  int np, c, i, ic;
-  Particle *part;
-  double *othcblk;
-  int size = 4;
-
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-    othcblk = block(gblcblk, c - 1, size);
-
-    for (i = 0; i < np; i++) {
-      part[i].f.f[1] += partblk[size * ic + POQESM] * othcblk[POQECP] -
-                        partblk[size * ic + POQECM] * othcblk[POQESP] +
-                        partblk[size * ic + POQESP] * othcblk[POQECM] -
-                        partblk[size * ic + POQECP] * othcblk[POQESM];
-      part[i].f.f[2] += partblk[size * ic + POQECM] * othcblk[POQECP] +
-                        partblk[size * ic + POQESM] * othcblk[POQESP] -
-                        partblk[size * ic + POQECP] * othcblk[POQECM] -
-                        partblk[size * ic + POQESP] * othcblk[POQESM];
-
-      LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
-                         this_node, part[i].p.identity, part[i].f.f[0],
-                         part[i].f.f[1], part[i].f.f[2]));
-      ic++;
-    }
-  }
 }
 
 static double Q_energy(double omega) {
@@ -1337,18 +1201,16 @@ static double energy_contribution(int p, int q) {
 }
 
 double MMM2D_add_far(int f, int e) {
-  double eng;
   int p, q;
   double R, dR, q2;
-  int *undone;
 
   // It's not really far...
-  eng = e ? self_energy : 0;
+  auto eng = e ? self_energy : 0;
 
   if (mmm2d_params.far_cut == 0.0)
     return 0.5 * eng;
 
-  undone = (int *)Utils::malloc((n_scxcache + 1) * sizeof(int));
+  auto undone = std::vector<int>(n_scxcache + 1);
 
   prepare_scx_cache();
   prepare_scy_cache();
@@ -1401,8 +1263,6 @@ double MMM2D_add_far(int f, int e) {
         eng += energy_contribution(p, q);
     }
   }
-
-  free(undone);
 
   return 0.5 * eng;
 }
@@ -1972,10 +1832,8 @@ void MMM2D_on_resort_particles() {
     n_localpart = cells_get_n_particles();
     n_scxcache = (int)(ceil(mmm2d_params.far_cut / ux) + 1);
     n_scycache = (int)(ceil(mmm2d_params.far_cut / uy) + 1);
-    scxcache =
-        Utils::realloc(scxcache, n_scxcache * n_localpart * sizeof(SCCache));
-    scycache =
-        Utils::realloc(scycache, n_scycache * n_localpart * sizeof(SCCache));
+    scxcache.resize(n_scxcache * n_localpart);
+    scycache.resize(n_scycache * n_localpart);
 
     partblk = Utils::realloc(partblk, n_localpart * 8 * sizeof(double));
     lclcblk = Utils::realloc(lclcblk, cells.size() * 8 * sizeof(double));
