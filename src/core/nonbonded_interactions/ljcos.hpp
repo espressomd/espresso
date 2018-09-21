@@ -20,7 +20,7 @@
 */
 #ifndef _LJCOS_H
 #define _LJCOS_H
-/** \file ljcos.hpp
+/** \file
  *  Routines to calculate the lennard jones+cosine energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp

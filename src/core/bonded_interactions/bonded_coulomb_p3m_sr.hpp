@@ -20,7 +20,7 @@
 */
 #ifndef _BONDED_COULOMB_P3M_SR_HPP
 #define _BONDED_COULOMB_P3M_SR_HPP
-/** \file bonded_coulomb_p3m_sr.hpp
+/** \file
  *  Routines to calculate the BONDED_COULOMB_P3M_SR Energy or/and
  * BONDED_COULOMB_P3M_SR force for a particle pair. This is only the shortrange
  * part of P3M and first used to subtract certain intramolecular interactions in

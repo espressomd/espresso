@@ -20,7 +20,7 @@
 */
 #ifndef _HARMONIC_HPP
 #define _HARMONIC_HPP
-/** \file harmonic.hpp
+/** \file
  *  Routines to calculate the HARMONIC Energy or/and HARMONIC force
  *  for a particle pair.
  *  \ref forces.cpp

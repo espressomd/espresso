@@ -20,7 +20,8 @@
 */
 #ifndef _GHOSTS_H
 #define _GHOSTS_H
-/** \file ghosts.hpp    Ghost particles and particle exchange.
+/** \file
+ *  Ghost particles and particle exchange.
 
 In this file you find everything concerning the exchange of
 particle data (particles, ghosts, positions and forces) for short

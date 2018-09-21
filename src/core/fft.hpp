@@ -20,7 +20,7 @@
 */
 #ifndef _FFT_H
 #define _FFT_H
-/** \file fft.hpp
+/** \file
  *
  *  Routines, row decomposition, data structures and communication for the
  * 3D-FFT.

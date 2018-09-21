@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file tensor_product_test.cpp Unit tests for the
- * Utils::tensor_product class.
+/** \file
+ * Unit tests for the Utils::tensor_product class.
  *
  */
 

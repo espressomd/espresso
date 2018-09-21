@@ -20,7 +20,7 @@
 */
 #ifndef _BONDED_COULOMB_HPP
 #define _BONDED_COULOMB_HPP
-/** \file bonded_coulomb.hpp
+/** \file
  *  Routines to calculate the BONDED_COULOMB Energy or/and BONDED_COULOMB force
  *  for a particle pair.
  *  \ref forces.cpp

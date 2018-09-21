@@ -20,7 +20,7 @@
 */
 #ifndef POLYMER_H
 #define POLYMER_H
-/** \file polymer.hpp
+/** \file
 
     This file contains everything needed to create a start-up
     configuration of (partially charged) polymer chains with

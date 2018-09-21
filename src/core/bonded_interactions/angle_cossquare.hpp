@@ -20,7 +20,7 @@
 */
 #ifndef ANGLE_COSSQUARE_H
 #define ANGLE_COSSQUARE_H
-/** \file angle_cossquare.hpp
+/** \file
  *  Routines to calculate the angle energy or/and and force
  *  for a particle triple.
  *  \ref forces.cpp

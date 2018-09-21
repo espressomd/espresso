@@ -21,7 +21,7 @@
 #ifndef _DOMAIN_DECOMPOSITION_H
 #define _DOMAIN_DECOMPOSITION_H
 
-/** \file domain_decomposition.hpp
+/** \file
  *
  *  This file contains everything related to the cell system: domain
  * decomposition.

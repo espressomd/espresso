@@ -20,7 +20,7 @@
 */
 //
 
-/** \file icc.hpp
+/** \file
 
     ICCP3M is a method that allows to take into account the influence
     of arbitrarily shaped dielectric interfaces.  The dielectric

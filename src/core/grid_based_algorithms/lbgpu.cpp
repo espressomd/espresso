@@ -17,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file lbgpu.cpp
+/** \file
  *
  * C file for the Lattice Boltzmann implementation on GPUs.
  * Header file for \ref lbgpu.hpp.

@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file None_test.cpp Unit tests for the
- * ScriptInterface::None class.
+/** \file
+ * Unit tests for the ScriptInterface::None class.
  *
  */
 

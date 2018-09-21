@@ -20,7 +20,7 @@
 */
 #ifndef _QUARTIC_HPP
 #define _QUARTIC_HPP
-/** \file quartic.hpp
+/** \file
  *  Routines to calculate the HARMONIC Energy or/and HARMONIC force
  *  for a particle pair.
  *  \ref forces.cpp

@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file ljcos2.cpp
+/** \file
  *
  *  Routines to calculate the lennard-jones with cosine tail energy and/or force
  *  for a particle pair.  Cosine tail is different from that in ljcos.hpp

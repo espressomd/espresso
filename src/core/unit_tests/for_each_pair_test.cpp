@@ -17,7 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file for_each_pair_test.cpp Unit tests for the Utils::for_each_pair.
+/** \file
+ * Unit tests for the Utils::for_each_pair.
  *
  */
 

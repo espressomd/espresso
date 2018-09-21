@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file mmm2d.cpp  MMM2D algorithm for long range coulomb interaction.
+/** \file
+ *  MMM2D algorithm for long range coulomb interaction.
  *
  *  For more information about MMM2D, see \ref mmm2d.hpp "mmm2d.hpp".
  */

@@ -20,7 +20,7 @@
 */
 #ifndef _INTERACTION_DATA_H
 #define _INTERACTION_DATA_H
-/** \file nonbonded_interaction_data.hpp
+/** \file
     Various procedures concerning interactions between particles.
 */
 

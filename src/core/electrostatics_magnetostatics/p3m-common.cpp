@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file p3m-common.cpp P3M main file.
+/** \file
+ *  P3M main file.
  */
 #include "p3m-common.hpp"
 

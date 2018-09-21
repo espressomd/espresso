@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file specfunc.hpp
+/** \file
     This file contains implementations for some special functions which are
    needed by the MMM family of algorithms. This are the modified Hurwitz zeta
    function and the modified Bessel functions of first and second kind. The

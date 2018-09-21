@@ -21,7 +21,7 @@
 #ifndef _CONFIG_HPP
 #define _CONFIG_HPP
 
-/** \file config.hpp
+/** \file
 
     This file contains the defaults for Espresso. To modify them, add
     an appropriate line in myconfig.hpp. To find a list of features that

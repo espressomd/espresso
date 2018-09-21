@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file p3m-dipolar.cpp  P3M algorithm for long range magnetic dipole-dipole
+/** \file
+ *  P3M algorithm for long range magnetic dipole-dipole
  interaction.
  *
  NB: In general the magnetic dipole-dipole functions bear the same

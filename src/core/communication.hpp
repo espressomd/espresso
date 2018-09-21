@@ -20,7 +20,7 @@
 */
 #ifndef _COMMUNICATION_HPP
 #define _COMMUNICATION_HPP
-/** \file communication.hpp
+/** \file
     This file contains the asynchronous MPI communication.
 
     It is the header file for \ref communication.cpp "communication.cpp".

@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lbboundaries.cpp
+/** \file
  *
  * Boundary conditions for Lattice Boltzmann fluid dynamics.
  * Header file for \ref lbboundaries.hpp.

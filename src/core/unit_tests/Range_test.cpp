@@ -15,8 +15,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file Range_test.cpp Unit tests for the
- * Utils::Range class.
+/** \file
+ * Unit tests for the Utils::Range class.
  *
  */
 

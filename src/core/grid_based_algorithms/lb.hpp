@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lb.hpp
+/** \file
  * Header file for lb.cpp
  *
  * This is the header file for the Lattice Boltzmann implementation in lb.cpp

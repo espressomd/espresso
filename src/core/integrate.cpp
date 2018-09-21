@@ -19,7 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file integrate.cpp   Molecular dynamics integrator.
+/** \file
+ *  Molecular dynamics integrator.
  *
  *  For more information about the integrator
  *  see \ref integrate.hpp "integrate.hpp".

@@ -21,7 +21,7 @@
 #ifndef MEMBRANE_COLLISION_H
 #define MEMBRANE_COLLISION_H
 
-/** \file membrane_collision.hpp
+/** \file
  *  Routines to calculate the membrane collision force
  *  for a particle pair.
  *  \ref forces.cpp

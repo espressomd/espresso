@@ -20,7 +20,7 @@
 */
 #ifndef SWIMMER_REACTION_H
 #define SWIMMER_REACTION_H
-/** \file swimmer_reaction.hpp
+/** \file
  *
  */
 

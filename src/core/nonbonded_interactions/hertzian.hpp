@@ -21,7 +21,7 @@
 #ifndef HERTZIAN_H
 #define HERTZIAN_H
 
-/** \file hertzian.hpp
+/** \file
  *  Routines to calculate the Hertzian energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp

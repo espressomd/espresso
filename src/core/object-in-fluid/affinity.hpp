@@ -21,7 +21,7 @@
 #ifndef AFFINITY_H
 #define AFFINITY_H
 
-/** \file affinity.hpp
+/** \file
  *  Routines to calculate the affinity  force
  *  for a particle pair.
  *  \ref forces.cpp

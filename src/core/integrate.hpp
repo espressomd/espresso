@@ -21,7 +21,8 @@
 #ifndef INTEGRATE_H
 #define INTEGRATE_H
 
-/** \file integrate.hpp    Molecular dynamics integrator.
+/** \file
+ *  Molecular dynamics integrator.
  *
  *  For more information see \ref integrate.cpp "integrate.cpp".
  */

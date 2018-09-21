@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file thermostat.cpp
+/** \file
     Implementation of \ref thermostat.hpp "thermostat.hpp"
  */
 #include "thermostat.hpp"

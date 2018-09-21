@@ -19,7 +19,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file icc.cpp
+/** \file
   Detailed Information about the method is included in the corresponding header
   file \ref icc.hpp.
 */

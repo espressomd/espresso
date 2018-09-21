@@ -20,7 +20,7 @@
 */
 #ifndef _FENE_HPP
 #define _FENE_HPP
-/** \file fene.hpp
+/** \file
  *  Routines to calculate the FENE Energy or/and FENE force
  *  for a particle pair.
  *  \ref forces.cpp

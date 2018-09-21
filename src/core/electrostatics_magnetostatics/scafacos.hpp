@@ -19,7 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file scafacos.hpp This file contains the c-type wrapper interface to the (oop-) scafacos
+/** \file
+ * This file contains the c-type wrapper interface to the (oop-) scafacos
  * interface. */
 
 #ifndef __SCAFACOS_HPP

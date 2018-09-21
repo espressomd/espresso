@@ -20,7 +20,8 @@
 */
 #ifndef _P3M_H
 #define _P3M_H
-/** \file p3m.hpp P3M algorithm for long range coulomb interaction.
+/** \file
+ *  P3M algorithm for long range coulomb interaction.
  *
  *  We use a P3M (Particle-Particle Particle-Mesh) method based on the
  *  Ewald summation. Details of the used method can be found in

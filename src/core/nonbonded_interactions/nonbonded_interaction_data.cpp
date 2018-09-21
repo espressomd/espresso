@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file nonbonded_interaction_data.cpp
+/** \file
     Implementation of nonbonded_interaction_data.hpp
  */
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"

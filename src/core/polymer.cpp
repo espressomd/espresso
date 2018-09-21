@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file polymer.cpp
+/** \file
     This file contains everything needed to create a start-up configuration
     of (partially charged) polymer chains with counterions and salt molecules,
     assigning velocities to the particles and crosslinking the polymers if

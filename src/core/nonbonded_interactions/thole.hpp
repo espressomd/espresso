@@ -20,7 +20,7 @@
 */
 #ifndef _THOLE_H
 #define _THOLE_H
-/** \file thole.hpp
+/** \file
  *  Routines to calculate the thole damping energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp

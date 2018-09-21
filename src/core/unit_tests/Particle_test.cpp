@@ -17,7 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file Particle_test.cpp Unit tests for the Particle struct.
+/** \file
+ * Unit tests for the Particle struct.
  *
  */
 

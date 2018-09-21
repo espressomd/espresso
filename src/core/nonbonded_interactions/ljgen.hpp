@@ -25,7 +25,8 @@
 
 #ifdef LENNARD_JONES_GENERIC
 
-/** \file ljgen.hpp Routines to calculate the generalized lennard jones
+/** \file
+ *  Routines to calculate the generalized lennard jones
  *  energy and/or force for a particle pair. "Generalized" here means
  *  that the LJ energy is of the form
  *

@@ -20,7 +20,7 @@
 */
 #ifndef _CELLS_H
 #define _CELLS_H
-/** \file cells.hpp
+/** \file
     This file contains everything related to the cell structure / cell
     system.
 

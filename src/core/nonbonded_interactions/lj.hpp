@@ -25,7 +25,7 @@
 
 #ifdef LENNARD_JONES
 
-/** \file lj.hpp
+/** \file
  *  Routines to calculate the lennard jones energy and/or  force
  *  for a particle pair.
  *  \ref forces.cpp

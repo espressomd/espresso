@@ -20,7 +20,7 @@
 */
 #ifndef _ANGLEDIST_H
 #define _ANGLEDIST_H
-/** \file angle_dist.hpp
+/** \file
  *  Routines to calculate the angle and distance dependent (from a constraint)
  * energy or/and and force
  *  for a particle triple.

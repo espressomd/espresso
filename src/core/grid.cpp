@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file grid.cpp   Domain decomposition for parallel computing.
+/** \file
+ *  Domain decomposition for parallel computing.
  *
  *  For more information on the domain decomposition,
  *  see \ref grid.hpp "grid.hpp".
