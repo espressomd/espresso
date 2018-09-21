@@ -1,34 +1,66 @@
-#!/usr/bin/env python
-
-
 from __future__ import print_function
 
 import espressomd
 import unittest as ut
+import numpy as np
 
+@ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
+  "Feature not available, skipping test!")
+class LeesEdwards(ut.TestCase):
 
-@ut.skipIf(True or not espressomd.has_features(['LEES_EDWARDS']),
-  'Feature not available, skipping test!')
+  system = espressomd.System(box_l=[5.0, 5.0, 5.0])
+  system.cell_system.skin = 0.0
+  system.cell_system.set_n_square()
+  system.set_random_state_PRNG()
 
-class LeesEdwardsTest(ut.TestCase):
+  tol = 1e-15
+  time_step = 1.0
+  system.time_step = time_step
 
-  def test(self):
+  def ProtocolTest(self):
+    """This test calculates if the offset and velocity of the Lees Edwards
+    function are calculated correctly based on the input variables"""
+
+    #Protocol should be off by default
+    assertEqual(system.lees_edwards[0], "off")
+
+    #One shouldn't be able to set a random protocol
+    with self.assertRaises(Exception):
+      system.lees_edwards = ["oscillatory_shear", 50.]
+
+    #Check if the setted protocol is stored correctly
+    system.lees_edwards = ["steady_shear", 1.2]
+    assertEqual(system.lees_edwards[0], "steady_shear")
+    assertEqual(system.lees_edwards[1], 1.2)
+
+    system.lees_edwards = ["oscillatory_shear", 1.2, 5.6]
+    assertEqual(system.lees_edwards[0], "oscillatory_shear")
+    assertEqual(system.lees_edwards[1], 1.2)
+    assertEqual(system.lees_edwards[2], 5.6)
+
+    system.time = 5.0
+
+    #Check if the offset is determined correctly
+    frequency = 3.7
+    amplitude = 1.6
+    system.lees_edwards = ["oscillatory_shear", frequency, amplitude]
+    assertEqual(system.lees_edwards[0], "oscillatory_shear")
+    for time in np.range(0.0, 100.0, 10.0):
+      offset = amplitude * np.sin(frequency * t)
+      velocity = omega * amplitude * np.cos(omega * t)
+
+      np.testing.assert_equal(system.lees_edwards[3], velocity)
+      np.testing.assert_equal(system.lees_edwards[4], offset)
+      system.integrator.run(10)
+
+  def BoundaryCrossingTest(self):
     """The test calculates a particle's position for different lees_edwards_offsets
     while crossing the upper and lower boundary in the y-direction. The
     obtained positions as well as the velocity of the particle is checked via a 
     comparison with the expected value."""
 
-    # Systemclass
-    system = espressomd.System(box_l=[5.0, 5.0, 5.0])
-    system.cell_system.skin = 0.0
-    system.cell_system.set_n_square()
-
-    tol = 10e-15
-    time_step = 1.0
-    system.time_step = time_step
-    
     # Check if coordinates are folded correctly
-    system.lees_edwards_offset = 0.1
+    system.lees_edwards = ["steady_shear", 0.1]
     
     # Particle placement
     system.part.add(pos=[2.5, 6.0, 2.5], v=[0.05, 0.1, 0.05], id=0, type=0)
