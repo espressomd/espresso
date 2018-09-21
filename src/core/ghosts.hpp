@@ -216,7 +216,6 @@ void ghost_communicator(GhostCommunicator *gc);
  */
 void ghost_communicator(GhostCommunicator *gc, int data_parts);
 
-
 /** Go through \ref ghost_cells and remove the ghost entries from \ref
     local_particles. Part of \ref dd_exchange_and_sort_particles.*/
 void invalidate_ghosts();

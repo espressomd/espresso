@@ -474,8 +474,7 @@ void ghost_communicator(GhostCommunicator *gc) {
   ghost_communicator(gc, gc->data_parts);
 }
 
-void ghost_communicator(GhostCommunicator *gc, int data_parts)
-{
+void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   MPI_Status status;
   int n, n2;
   /* if ghosts should have uptodate velocities, they have to be updated like
