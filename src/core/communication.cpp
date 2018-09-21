@@ -273,8 +273,9 @@ void mpi_init() {
     handle = dlopen(_openmpi_info.dli_fname, mode);
 
   if (!handle) {
-    fprintf(stderr, "%d: Aborting because unable to load libmpi into the "
-                    "global symbol space.\n",
+    fprintf(stderr,
+            "%d: Aborting because unable to load libmpi into the "
+            "global symbol space.\n",
             this_node);
     errexit();
   }
@@ -363,8 +364,7 @@ void mpi_bcast_event_slave(int node, int event) {
     break;
 #endif
 
-  default:
-    ;
+  default:;
   }
 }
 
@@ -1367,8 +1367,9 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
                              int periodic[3], double range_start[3],
                              double range[3]) {
 
-  PTENSOR_TRACE(fprintf(stderr, "%d: mpi_local_stress_tensor: Broadcasting "
-                                "local_stress_tensor parameters\n",
+  PTENSOR_TRACE(fprintf(stderr,
+                        "%d: mpi_local_stress_tensor: Broadcasting "
+                        "local_stress_tensor parameters\n",
                         this_node));
 
   mpi_call(mpi_local_stress_tensor_slave, -1, 0);
@@ -1383,8 +1384,9 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
       this_node));
   local_stress_tensor_calc(TensorInBin, bins, periodic, range_start, range);
 
-  PTENSOR_TRACE(fprintf(stderr, "%d: mpi_local_stress_tensor: Reduce local "
-                                "stress tensors with MPI_Reduce\n",
+  PTENSOR_TRACE(fprintf(stderr,
+                        "%d: mpi_local_stress_tensor: Reduce local "
+                        "stress tensors with MPI_Reduce\n",
                         this_node));
   for (int i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
     MPI_Reduce(MPI_IN_PLACE, TensorInBin[i].e, 9, MPI_DOUBLE, MPI_SUM, 0,
@@ -1506,8 +1508,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm) {
               comm_cart);
     break;
   default:
-    fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast coulomb params for "
-                    "unknown method %d\n",
+    fprintf(stderr,
+            "%d: INTERNAL ERROR: cannot bcast coulomb params for "
+            "unknown method %d\n",
             this_node, coulomb.method);
     errexit();
   }
@@ -1543,8 +1546,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm) {
   case DIPOLAR_SCAFACOS:
     break;
   default:
-    fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast dipolar params for "
-                    "unknown method %d\n",
+    fprintf(stderr,
+            "%d: INTERNAL ERROR: cannot bcast dipolar params for "
+            "unknown method %d\n",
             this_node, coulomb.Dmethod);
     errexit();
   }

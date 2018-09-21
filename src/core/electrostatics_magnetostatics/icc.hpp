@@ -77,7 +77,7 @@ struct iccp3m_struct {
   int citeration = 0; /* current number of iterations*/
   int set_flag =
       0; /* flag that indicates if ICCP3M has been initialized properly
-      */
+          */
   int first_id = 0;
 
   template <typename Archive>

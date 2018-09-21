@@ -214,7 +214,8 @@ int iccp3m_iteration() {
         if (std::abs(p.p.q) > 1e6) {
           runtimeErrorMsg()
               << "too big charge assignment in iccp3m! q >1e6 , assigned "
-                 "charge= " << p.p.q << "\n";
+                 "charge= "
+              << p.p.q << "\n";
 
           diff = 1e90; /* A very high value is used as error code */
           break;
