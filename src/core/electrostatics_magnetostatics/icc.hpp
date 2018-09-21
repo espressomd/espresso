@@ -57,6 +57,8 @@
 
 #if defined(ELECTROSTATICS)
 
+#include "Vector.hpp"
+
 /* iccp3m data structures*/
 struct iccp3m_struct {
   int n_ic;                  /* Last induced id (can not be smaller then 2) */
@@ -67,12 +69,8 @@ struct iccp3m_struct {
       ein; /* Array of dielectric constants at each surface element */
   std::vector<double> sigma; /* Surface Charge density */
   double convergence = 1e-2; /* Convergence criterion                       */
-  std::vector<double> nvectorx;
-  std::vector<double> nvectory;
-  std::vector<double> nvectorz; /* Surface normal vectors */
-  double extx = 0.;
-  double exty = 0.;
-  double extz = 0.;   /* External field                              */
+  std::vector<Vector3d> normals; /* Surface normal vectors */
+  Vector3d ext_field = {0, 0, 0}; /* External field */
   double relax = 0.7; /* relaxation parameter for iterative */
   int citeration = 0; /* current number of iterations*/
   int set_flag =
@@ -90,13 +88,9 @@ struct iccp3m_struct {
     ar &relax;
     ar &areas;
     ar &ein;
-    ar &nvectorx;
-    ar &nvectory;
-    ar &nvectorz;
+    ar &normals;
     ar &sigma;
-    ar &extx;
-    ar &exty;
-    ar &extz;
+    ar &ext_field;
     ar &citeration;
     ar &set_flag;
   }

@@ -126,9 +126,7 @@ void iccp3m_alloc_lists() {
 
   iccp3m_cfg.areas.resize(n_ic);
   iccp3m_cfg.ein.resize(n_ic);
-  iccp3m_cfg.nvectorx.resize(n_ic);
-  iccp3m_cfg.nvectory.resize(n_ic);
-  iccp3m_cfg.nvectorz.resize(n_ic);
+  iccp3m_cfg.normals.resize(n_ic);
   iccp3m_cfg.sigma.resize(n_ic);
 }
 
@@ -166,29 +164,21 @@ int iccp3m_iteration() {
         auto const del_eps = (iccp3m_cfg.ein[id] - iccp3m_cfg.eout) /
                              (iccp3m_cfg.ein[id] + iccp3m_cfg.eout);
         /* calculate the electric field at the certain position */
-        auto const ex = p.f.f[0] / p.p.q + iccp3m_cfg.extx;
-        auto const ey = p.f.f[1] / p.p.q + iccp3m_cfg.exty;
-        auto const ez = p.f.f[2] / p.p.q + iccp3m_cfg.exty;
-        /* let's add the contribution coming from the external field */
+        auto const E = p.f.f / p.p.q + iccp3m_cfg.ext_field;
 
-        if (ex == 0 && ey == 0 && ez == 0) {
+        if (E[0] == 0 && E[1] == 0 && E[2] == 0) {
           runtimeErrorMsg()
               << "ICCP3M found zero electric field on a charge. This must "
                  "never happen";
         }
 
-        /* the dot product   */
-        auto const fdot = ex * iccp3m_cfg.nvectorx[id] +
-                          ey * iccp3m_cfg.nvectory[id] +
-                          ez * iccp3m_cfg.nvectorz[id];
         /* recalculate the old charge density */
         auto const hold = p.p.q / iccp3m_cfg.areas[id];
         /* determine if it is higher than the previously highest charge
          * density */
-
         hmax = std::max(hmax, std::abs(hold));
 
-        auto const f1 = del_eps * fdot * pref;
+        auto const f1 = del_eps * pref * (E * iccp3m_cfg.normals[id]);
         auto const f2 = (not iccp3m_cfg.sigma.empty())
                             ? (2 * iccp3m_cfg.eout) /
                                   (iccp3m_cfg.eout + iccp3m_cfg.ein[id]) *
@@ -214,8 +204,7 @@ int iccp3m_iteration() {
         if (std::abs(p.p.q) > 1e6) {
           runtimeErrorMsg()
               << "too big charge assignment in iccp3m! q >1e6 , assigned "
-                 "charge= "
-              << p.p.q << "\n";
+                 "charge= " << p.p.q << "\n";
 
           diff = 1e90; /* A very high value is used as error code */
           break;

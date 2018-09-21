@@ -24,6 +24,7 @@ from espressomd.system cimport *
 from espressomd.utils cimport *
 from espressomd.electrostatics cimport *
 from libcpp cimport vector
+from utils cimport Vector3d
 
 IF ELECTROSTATICS and P3M:
 
@@ -53,12 +54,8 @@ IF ELECTROSTATICS and P3M:
             vector[double] ein
             vector[double] sigma
             double convergence
-            vector[double] nvectorx
-            vector[double] nvectory
-            vector[double] nvectorz
-            double extx
-            double exty
-            double extz
+            vector[Vector3d] normals
+            Vector3d ext_field
             double relax
             int citeration
             int first_id
