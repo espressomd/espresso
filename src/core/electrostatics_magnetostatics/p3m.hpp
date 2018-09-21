@@ -21,7 +21,7 @@
 #ifndef _P3M_H
 #define _P3M_H
 /** \file
- *  P3M algorithm for long range coulomb interaction.
+ *  P3M algorithm for long range Coulomb interaction.
  *
  *  We use a P3M (Particle-Particle Particle-Mesh) method based on the
  *  Ewald summation. Details of the used method can be found in
@@ -191,7 +191,7 @@ enum P3M_TUNE_ERROR {
    that the error contributions of real and reciprocal space should be equal.
 
     After checking if the total error fulfills the accuracy goal the
-    time needed for one force calculation (including verlet list
+    time needed for one force calculation (including Verlet list
     update) is measured via \ref mpi_integrate (0).
 
     The function returns a log of the performed tuning.
@@ -214,7 +214,7 @@ void p3m_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
 /** shrink wrap the charge grid */
 void p3m_shrink_wrap_charge_grid(int n_charges);
 
-/** Calculate real space contribution of coulomb pair forces.
+/** Calculate real space contribution of Coulomb pair forces.
     If NPT is compiled in, it returns the energy, which is needed for NPT. */
 inline double p3m_add_pair_force(double chgfac, double *d, double dist2,
                                  double dist, double force[3]) {
@@ -259,7 +259,7 @@ int p3m_set_eps(double eps);
 
 int p3m_set_ninterpol(int n);
 
-/** Calculate real space contribution of coulomb pair energy. */
+/** Calculate real space contribution of Coulomb pair energy. */
 inline double p3m_pair_energy(double chgfac, double dist) {
   if (dist < p3m.params.r_cut && dist != 0) {
     double adist = p3m.params.alpha * dist;

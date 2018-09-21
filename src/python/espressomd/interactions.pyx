@@ -31,7 +31,7 @@ from globals cimport immersed_boundaries
 
 cdef class NonBondedInteraction(object):
     """
-    Represents an instance of a non-bonded interaction, such as lennard-jones
+    Represents an instance of a non-bonded interaction, such as Lennard-Jones
     Either called with two particle type id, in which case, the interaction
     will represent the bonded interaction as it is defined in Espresso core
     Or called with keyword arguments describing a new interaction.
@@ -2077,7 +2077,7 @@ if ELECTROSTATICS:
             ----------
 
             prefactor : :obj:`float`
-                        Sets the coulomb prefactor of the bonded coulomb interaction.
+                        Sets the Coulomb prefactor of the bonded Coulomb interaction.
             """
             super(BondedCoulomb, self).__init__(*args, **kwargs)
 
@@ -2226,14 +2226,14 @@ IF THOLE:
             Parameters
             ----------
             scaling_coeff : :obj:`float`
-                            The factor used in the thole damping function between
+                            The factor used in the Thole damping function between
                             polarizable particles i and j. Usually calculated by
                             the polarizabilities alpha_i, alpha_j and damping
                             parameters  a_i, a_j via
                             scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
             q1q2: :obj:`float`
                   charge factor of the involved charges. Has to be set because
-                  it acts only on the portion of the drude core charge that is
+                  it acts only on the portion of the Drude core charge that is
                   associated to the dipole of the atom. For charged, polarizable
                   atoms that charge is not equal to the particle charge property.
 

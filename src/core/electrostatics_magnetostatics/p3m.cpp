@@ -207,11 +207,11 @@ double p3m_perform_aliasing_sums_energy(int n[3]);
 /** Calculates the real space contribution to the rms error in the force (as
    described
    by Kolafa and Perram).
-   \param prefac   Prefactor of coulomb interaction.
+   \param prefac   Prefactor of Coulomb interaction.
    \param r_cut_iL rescaled real space cutoff for p3m method.
    \param n_c_part number of charged particles in the system.
    \param sum_q2   sum of square of charges in the system
-   \param alpha_L  rescaled ewald splitting parameter.
+   \param alpha_L  rescaled Ewald splitting parameter.
    \return real space error
 */
 static double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
@@ -221,12 +221,12 @@ static double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
     P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
     order to obtain the rms error in the force for a system of N
     randomly distributed particles in a cubic box (k space part).
-    \param prefac   Prefactor of coulomb interaction.
+    \param prefac   Prefactor of Coulomb interaction.
     \param mesh     number of mesh points in one direction.
     \param cao      charge assignment order.
     \param n_c_part number of charged particles in the system.
     \param sum_q2   sum of square of charges in the system
-    \param alpha_L  rescaled ewald splitting parameter.
+    \param alpha_L  rescaled Ewald splitting parameter.
     \return reciprocal (k) space error
 */
 static double p3m_k_space_error(double prefac, int mesh[3], int cao,
@@ -2332,7 +2332,7 @@ void p3m_calc_kspace_stress(double *stress) {
     double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz;
 
     int j[3], i, ind = 0;
-    // ordering after fourier transform
+    // ordering after Fourier transform
     node_k_space_stress = (double *)Utils::malloc(9 * sizeof(double));
     k_space_stress = (double *)Utils::malloc(9 * sizeof(double));
 

@@ -465,7 +465,7 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
 */
 void mpi_set_time_step(double time_step);
 
-/** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
+/** Issue REQ_BCAST_COULOMB: send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
 /** send new collision parameters. */

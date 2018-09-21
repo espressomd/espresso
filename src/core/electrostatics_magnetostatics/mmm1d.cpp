@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
- *  MMM1D algorithm for long range coulomb interaction.
+ *  MMM1D algorithm for long range Coulomb interaction.
  *
  *  For more information about MMM1D, see \ref mmm1d.hpp "mmm1d.hpp".
  */
@@ -64,7 +64,7 @@ static double uz, L2, uz2, prefuz2, prefL3_i;
 /*@}*/
 
 MMM1D_struct mmm1d_params = {0.05, 1e-5};
-/** From which distance a certain bessel cutoff is valid. Can't be part of the
+/** From which distance a certain Bessel cutoff is valid. Can't be part of the
     params since these get broadcasted. */
 static double *bessel_radii;
 

@@ -219,14 +219,14 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
   mmm1dgpu_real maxrad = host_boxz;
 
   if (_far_switch_radius < 0 && _bessel_cutoff < 0)
-  // autodetermine switching radius and bessel cutoff
+  // autodetermine switching radius and Bessel cutoff
   {
     mmm1dgpu_real bestrad = 0, besttime = INFINITY;
 
     for (far_switch_radius = 0.05 * maxrad; far_switch_radius < maxrad;
          far_switch_radius += 0.05 * maxrad) {
       set_params(0, 0, _maxPWerror, far_switch_radius, bessel_cutoff);
-      tune(s, _maxPWerror, far_switch_radius, -2); // tune bessel cutoff
+      tune(s, _maxPWerror, far_switch_radius, -2); // tune Bessel cutoff
       int runtime = force_benchmark(s);
       if (runtime < besttime) {
         besttime = runtime;
@@ -236,11 +236,11 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
     far_switch_radius = bestrad;
 
     set_params(0, 0, _maxPWerror, far_switch_radius, bessel_cutoff);
-    tune(s, _maxPWerror, far_switch_radius, -2); // tune bessel cutoff
+    tune(s, _maxPWerror, far_switch_radius, -2); // tune Bessel cutoff
   }
 
   else if (_bessel_cutoff < 0)
-  // autodetermine bessel cutoff
+  // autodetermine Bessel cutoff
   {
     int *dev_cutoff;
     int maxCut = 30;

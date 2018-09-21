@@ -492,7 +492,7 @@ void dd_update_communicators_w_boxl() {
 
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
- * created list of interacting neighbor cells is used by the verlet
+ * created list of interacting neighbor cells is used by the Verlet
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
 void dd_init_cell_interactions() {

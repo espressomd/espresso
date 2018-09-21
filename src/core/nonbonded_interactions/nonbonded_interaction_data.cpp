@@ -218,8 +218,8 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
    for the relative virtual sites algorithm. */
   max_cut_global = min_global_cut;
 
-  // global cutoff without dipolar and coulomb methods is needed
-  // for more selective addition of particle pairs to verlet lists
+  // global cutoff without dipolar and Coulomb methods is needed
+  // for more selective addition of particle pairs to Verlet lists
   max_cut_global_without_coulomb_and_dipolar = max_cut_global;
 
   // Electrostatics and magnetostatics

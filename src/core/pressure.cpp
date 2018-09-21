@@ -254,7 +254,7 @@ void calc_long_range_virials() {
 /************************************************************/
 void init_virials(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
-  // bonded, nonbonded, coulomb, dipolar, rigid bodies
+  // bonded, nonbonded, Coulomb, dipolar, rigid bodies
   int n_pre, n_non_bonded, n_coulomb, n_dipolar, n_vs;
 
   n_pre = 1;
@@ -320,7 +320,7 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
 /***************************/
 void init_p_tensor(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
-  // bonded, nonbonded, coulomb, dipolar, rigid bodies
+  // bonded, nonbonded, Coulomb, dipolar, rigid bodies
   int n_pre, n_non_bonded, n_coulomb, n_dipolar, n_vs;
 
   n_pre = 1;

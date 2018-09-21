@@ -178,7 +178,7 @@ __device__ void random_01(LB_randomnr_gpu *rn) {
 __device__ void gaussian_random_cut(LB_randomnr_gpu *rn) {
   float x1, x2;
   float r2, fac;
-  /** On every second call two gaussian random numbers are calculated
+  /** On every second call two Gaussian random numbers are calculated
    via the Box-Muller transformation.*/
   /** draw two uniform random numbers in the unit circle */
   do {
@@ -220,13 +220,13 @@ __device__ void gaussian_random_cut(LB_randomnr_gpu *rn) {
   }
 }
 
-/** gaussian random number generator for thermalisation
+/** Gaussian random number generator for thermalisation
  * @param *rn Pointer to random number array of the local node node or particle
  */
 __device__ void gaussian_random(LB_randomnr_gpu *rn) {
   float x1, x2;
   float r2, fac;
-  /** On every second call two gaussian random numbers are calculated
+  /** On every second call two Gaussian random numbers are calculated
    via the Box-Muller transformation.*/
   /** draw two uniform random numbers in the unit circle */
   do {
@@ -826,7 +826,7 @@ __device__ void relax_modes(float *mode, unsigned int index,
   }
 }
 
-/**thermalization of the modes with gaussian random numbers
+/**thermalization of the modes with Gaussian random numbers
  * @param index   node index / thread index (Input)
  * @param mode    Pointer to the local register values mode (Input/Output)
  * @param *rn     Pointer to random number array of the local node
@@ -3959,7 +3959,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
 
 #ifdef SHANCHEN
 // TODO FIXME:
-/* We must add shan-chen forces, which are zero only if the densities are
+/* We must add Shan-Chen forces, which are zero only if the densities are
  * uniform*/
 #endif
 

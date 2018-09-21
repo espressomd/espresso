@@ -27,7 +27,7 @@
 #include "particle_data.hpp"
 
 /** broadcasts reaction parameters and sets up an entry in the ia_params, so
-    that the verlet radius is equal or bigger than the reaction range.
+    that the Verlet radius is equal or bigger than the reaction range.
 **/
 void local_kill_particle_motion(int);
 void local_kill_particle_forces(int);

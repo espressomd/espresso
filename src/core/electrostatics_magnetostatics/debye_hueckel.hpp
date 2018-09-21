@@ -68,7 +68,7 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
       fac = coulomb.prefactor * p1->p.q * p2->p.q *
             (exp(-kappa_dist) / (dist * dist * dist)) * (1.0 + kappa_dist);
     } else {
-      /* pure coulomb case: */
+      /* pure Coulomb case: */
       fac = coulomb.prefactor * p1->p.q * p2->p.q / (dist * dist * dist);
     }
     for (int j = 0; j < 3; j++)

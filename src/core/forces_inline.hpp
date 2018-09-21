@@ -181,11 +181,11 @@ inline void calc_non_bonded_pair_force_parts(
   if (p1->p.mol_id == p2->p.mol_id)
     return;
 #endif
-/* lennard-jones */
+/* Lennard-Jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* lennard-jones generic */
+/* Lennard-Jones generic */
 #ifdef LENNARD_JONES_GENERIC
   add_ljgen_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
@@ -205,11 +205,11 @@ inline void calc_non_bonded_pair_force_parts(
 #ifdef BMHTF_NACL
   add_BMHTF_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 #endif
-/* buckingham*/
+/* Buckingham*/
 #ifdef BUCKINGHAM
   add_buck_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* morse*/
+/* Morse*/
 #ifdef MORSE
   add_morse_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
@@ -225,15 +225,15 @@ inline void calc_non_bonded_pair_force_parts(
 #ifdef HAT
   add_hat_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* lennard-jones cosine */
+/* Lennard-Jones cosine */
 #ifdef LJCOS
   add_ljcos_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* lennard-jones cosine */
+/* Lennard-Jones cosine */
 #ifdef LJCOS2
   add_ljcos2_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* thole damping */
+/* Thole damping */
 #ifdef THOLE
   add_thole_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
@@ -346,7 +346,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /***********************************************/
 
 #ifdef ELECTROSTATICS
-  /* real space coulomb */
+  /* real space Coulomb */
   const double q1q2 = p1->p.q * p2->p.q;
 
   switch (coulomb.method) {

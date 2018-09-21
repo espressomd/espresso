@@ -137,7 +137,7 @@ extern const char *ESPRESSO_VERSION;
 #define MAX_OBJECTS_IN_FLUID 10000
 #endif
 
-/** number of fluid components for lattice boltzmann  */
+/** number of fluid components for lattice Boltzmann  */
 #ifndef LB_COMPONENTS
 #ifdef SHANCHEN
 #define LB_COMPONENTS 2

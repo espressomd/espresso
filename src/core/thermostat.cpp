@@ -45,7 +45,7 @@ using Thermostat::GammaType;
 
 namespace {
 /* These functions return the sentinel value for the
-   langevin params, indicating that they have not been
+   Langevin params, indicating that they have not been
    set yet. */
 constexpr double sentinel(double) { return -1.0; }
 Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }

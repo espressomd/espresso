@@ -53,7 +53,7 @@ void init_forces() {
     nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
 #endif
 
-  /* initialize forces with langevin thermostat forces
+  /* initialize forces with Langevin thermostat forces
      or zero depending on the thermostat
      set torque to zero for all and rescale quaternions
   */

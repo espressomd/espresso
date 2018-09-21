@@ -571,7 +571,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def load_wang_landau_checkpoint(self):
         """
-        Loads the dumped wang-landau potential file.
+        Loads the dumped Wang-Landau potential file.
 
         """
         checkpoint_name = "checkpoint".encode("utf-8")
@@ -579,7 +579,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def write_wang_landau_checkpoint(self):
         """
-        Dumps the wang-landau potential to a checkpoint file. Can be used to
+        Dumps the Wang-Landau potential to a checkpoint file. Can be used to
         checkpoint the Wang-Landau histogram, potential, parameter and the
         number of executed trial moves.
 
@@ -613,7 +613,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def write_wang_landau_results_to_file(self, filename):
         """
-        This writes out the wang-landau potential as a function of the used
+        This writes out the Wang-Landau potential as a function of the used
         collective variables.
 
         """

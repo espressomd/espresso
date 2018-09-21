@@ -204,7 +204,7 @@ void lattice_boltzmann_calc_shanchen_gpu(void) {
 }
 #endif // SHANCHEN
 
-/** lattice boltzmann update gpu called from integrate.cpp
+/** lattice Boltzmann update gpu called from integrate.cpp
  */
 
 void lattice_boltzmann_update_gpu() {

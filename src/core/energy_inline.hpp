@@ -97,12 +97,12 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef LENNARD_JONES
-  /* lennard-jones */
+  /* Lennard-Jones */
   ret += lj_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
-  /* Generic lennard-jones */
+  /* Generic Lennard-Jones */
   ret += ljgen_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -127,7 +127,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef MORSE
-  /* morse */
+  /* Morse */
   ret += morse_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -147,12 +147,12 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef LJCOS2
-  /* lennard-jones */
+  /* Lennard-Jones */
   ret += ljcos2_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef THOLE
-  /* thole damping */
+  /* Thole damping */
   ret += thole_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -162,7 +162,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef LJCOS
-  /* lennard-jones cosine */
+  /* Lennard-Jones cosine */
   ret += ljcos_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -178,7 +178,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
   return ret;
 }
 
-/** Add non bonded energies and short range coulomb between a pair of particles.
+/** Add non bonded energies and short range Coulomb between a pair of particles.
     @param p1        pointer to particle 1.
     @param p2        pointer to particle 2.
     @param d         vector between p1 and p2.
@@ -201,7 +201,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 
 #ifdef ELECTROSTATICS
   if (coulomb.method != COULOMB_NONE) {
-    /* real space coulomb */
+    /* real space Coulomb */
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_P3M_GPU:

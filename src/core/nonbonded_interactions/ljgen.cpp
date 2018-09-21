@@ -20,7 +20,7 @@
 */
 
 /** \file
- *  Routines to calculate the generalized lennard-jones
+ *  Routines to calculate the generalized Lennard-Jones
  *  energy and/or force for a particle pair. "Generalized" here means
  *  that the LJ energy is of the form
  *

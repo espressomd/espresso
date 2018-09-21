@@ -736,7 +736,7 @@ void propagate_pos() {
   if (integ_switch == INTEG_METHOD_NPT_ISO)
     /* Special propagator for NPT ISOTROPIC */
     /* Propagate pressure, box_length (2 times) and positions, rescale
-       positions and velocities and check verlet list criterion (only NPT) */
+       positions and velocities and check Verlet list criterion (only NPT) */
     propagate_press_box_pos_and_rescale_npt();
   else {
     for (auto &p : local_cells.particles()) {

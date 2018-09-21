@@ -75,7 +75,7 @@ inline void init_ghost_force_iccp3m(Particle *part);
  */
 void force_calc_iccp3m();
 
-/** Variant of add_non_bonded_pair_force where only coulomb
+/** Variant of add_non_bonded_pair_force where only Coulomb
  *  contributions are calculated   */
 inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
                                              double d[3], double dist,
@@ -90,7 +90,7 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   /* long range electrostatics                   */
   /***********************************************/
 
-  /* real space coulomb */
+  /* real space Coulomb */
   auto const q1q2 = p1->p.q * p2->p.q;
   switch (coulomb.method) {
 #ifdef P3M

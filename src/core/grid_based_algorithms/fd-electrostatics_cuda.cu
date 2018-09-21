@@ -129,7 +129,7 @@ __global__ void createGreensfcn() {
                   (fde_parameters_gpu.dim_x / 2 + 1)) {
 
     if (index == 0) {
-      // setting 0th fourier mode to 0 enforces charge neutrality
+      // setting 0th Fourier mode to 0 enforces charge neutrality
       fde_parameters_gpu.greensfcn[index] = 0.0f;
     } else {
       fde_parameters_gpu.greensfcn[index] =

@@ -2791,7 +2791,7 @@ int ek_node_print_density(int species, int x, int y, int z, double *density) {
 int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
 
   ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
-                                   // into cartesian coordinates for output
+                                   // into Cartesian coordinates for output
   unsigned int coord[3];
 
   coord[0] = x;
@@ -3017,7 +3017,7 @@ int ek_print_vtk_flux(int species, char *filename) {
 
   FILE *fp = fopen(filename, "w");
   ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
-                                   // into cartesian coordinates for output
+                                   // into Cartesian coordinates for output
 
   unsigned int coord[3];
 

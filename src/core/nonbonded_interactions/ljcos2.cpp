@@ -21,7 +21,7 @@
 
 /** \file
  *
- *  Routines to calculate the lennard-jones with cosine tail energy and/or force
+ *  Routines to calculate the Lennard-Jones with cosine tail energy and/or force
  *  for a particle pair.  Cosine tail is different from that in ljcos.hpp
  *  Used for attractive tail/tail interactions in lipid bilayer calculations
  *  \ref forces.cpp

@@ -148,13 +148,13 @@ struct Quartic_bond_parameters {
   double r_cut;
 };
 
-/** Parameters for coulomb bond Potential */
+/** Parameters for Coulomb bond Potential */
 struct Bonded_coulomb_bond_parameters {
   double prefactor;
 };
 
 #ifdef P3M
-/** Parameters for coulomb bond p3m shortrange Potential */
+/** Parameters for Coulomb bond p3m shortrange Potential */
 struct Bonded_coulomb_p3m_sr_bond_parameters {
   double q1q2;
 };

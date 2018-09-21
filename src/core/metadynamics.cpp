@@ -142,7 +142,7 @@ void meta_perform() {
   /* Now update free energy profile
    * Here, we're following the functional form of
    * Marsili et al., J Comp Chem, 31 (2009).
-   * Instead of gaussians, we use so-called Lucy's functions */
+   * Instead of Gaussians, we use so-called Lucy's functions */
 
   for (int i = 0; i < meta_xi_num_bins; ++i) {
     if (meta_switch == META_DIST) {

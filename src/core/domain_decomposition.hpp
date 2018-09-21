@@ -27,14 +27,14 @@
  * decomposition.
  *
  *  The simulation box is split into spatial domains for each node
- *  according to a cartesian node grid (\ref node_grid).
+ *  according to a Cartesian node grid (\ref node_grid).
  *
  *  The domain of a node is split into a 3D cell grid with dimension
  *  \ref DomainDecomposition::cell_grid. Together with one ghost cell
  *  layer on each side the overall dimension of the ghost cell grid is
  *  \ref DomainDecomposition::ghost_cell_grid. The domain
  *  decomposition enables one the use of the linked cell algorithm
- *  which is in turn used for setting up the verlet list for the
+ *  which is in turn used for setting up the Verlet list for the
  *  system. You can see a 2D graphical representation of the linked
  *  cell grid below.
  *

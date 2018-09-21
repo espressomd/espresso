@@ -48,7 +48,7 @@ struct Observable_stat {
   /** Array for observables on each node. */
   DoubleList data;
 
-  /** number of coulomb interactions */
+  /** number of Coulomb interactions */
   int n_coulomb;
   /** number of dipolar interactions */
   int n_dipolar;
@@ -63,9 +63,9 @@ struct Observable_stat {
   double *bonded;
   /** start of observables for non-bonded interactions. */
   double *non_bonded;
-  /** start of observables for coulomb interaction. */
+  /** start of observables for Coulomb interaction. */
   double *coulomb;
-  /** start of observables for coulomb interaction. */
+  /** start of observables for Coulomb interaction. */
   double *dipolar;
   /** Start of observables for virtual sites relative (rigid bodies) */
   double *virtual_sites;
@@ -271,7 +271,7 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
     Calculates the van Hove auto correlation function (acf)  G(r,t) which is the
    probability that a particle has moved
     a distance r after time t. In the case of a random walk G(r,t)/(4 pi r*r) is
-   a gaussian. The mean square
+   a Gaussian. The mean square
     displacement (msd) is connected to the van Hove acf via sqrt(msd(t)) = int
    G(r,t) dr. This is very useful for
     the investigation of diffusion processes.

@@ -353,14 +353,14 @@ extern std::vector<IA_parameters> ia_params;
 /*@{*/
 
 /** field containing the interaction parameters for
- *  the coulomb  interaction.  */
+ *  the Coulomb  interaction.  */
 struct Coulomb_parameters {
 
 #ifdef ELECTROSTATICS
   /** bjerrum length times temperature. */
   double prefactor;
 
-  /** Method to treat coulomb interaction. */
+  /** Method to treat Coulomb interaction. */
   CoulombMethod method;
 #endif
 
@@ -386,7 +386,7 @@ extern double field_applied;
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
 
-/** Structure containing the coulomb parameters. */
+/** Structure containing the Coulomb parameters. */
 extern Coulomb_parameters coulomb;
 
 /** Maximal interaction cutoff (real space/short range interactions). */
@@ -394,7 +394,7 @@ extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded interactions).
  */
 extern double max_cut_nonbonded;
-/** Cutoff of coulomb real space part */
+/** Cutoff of Coulomb real space part */
 extern double coulomb_cutoff;
 /** Cutoff of dipolar real space part */
 extern double dipolar_cutoff;
@@ -465,7 +465,7 @@ void realloc_ia_params(int nsize);
     electrostatics. The result is stored in the global variable
     max_cut. The maximal cutoff of the non-bonded + real space
     electrostatic interactions is stored in max_cut_non_bonded. This
-    value is used in the verlet pair list algorithm. */
+    value is used in the Verlet pair list algorithm. */
 void recalc_maximal_cutoff();
 
 /** check whether all force calculation routines are properly initialized. */

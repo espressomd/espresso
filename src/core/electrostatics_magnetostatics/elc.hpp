@@ -20,7 +20,7 @@
 */
 /** \file
    ELC algorithm for long range
-   coulomb interactions. Implementation of the ELC method for the calculation of
+   Coulomb interactions. Implementation of the ELC method for the calculation of
    the electrostatic interaction in two dimensional periodic systems. For
     details on the method see MMM in general. The ELC method works
     together with any three dimensional method, which in Espresso is

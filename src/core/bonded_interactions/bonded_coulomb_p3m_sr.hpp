@@ -24,7 +24,7 @@
  *  Routines to calculate the BONDED_COULOMB_P3M_SR Energy or/and
  * BONDED_COULOMB_P3M_SR force for a particle pair. This is only the shortrange
  * part of P3M and first used to subtract certain intramolecular interactions in
- * combination with thole damping \ref forces.cpp
+ * combination with Thole damping \ref forces.cpp
  */
 
 /************************************************************/

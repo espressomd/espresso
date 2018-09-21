@@ -21,7 +21,7 @@
 #ifndef _THOLE_H
 #define _THOLE_H
 /** \file
- *  Routines to calculate the thole damping energy and/or force
+ *  Routines to calculate the Thole damping energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp
  */
@@ -53,7 +53,7 @@ inline void add_thole_pair_force(const Particle *const p1,
     double dist2 = dist * dist;
 
     // Subtract p3m shortrange (dipole-dipole charge portion) to add damped
-    // coulomb later
+    // Coulomb later
     p3m_add_pair_force(-thole_q1q2, d, dist2, dist, force);
 
     // Calc damping function (see doi.org/10.1016/0301-0104(81)85176-2)

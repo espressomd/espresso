@@ -81,7 +81,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
   }
 
 #ifdef ELECTROSTATICS
-  /* real space coulomb */
+  /* real space Coulomb */
   if (coulomb.method != COULOMB_NONE) {
     switch (coulomb.method) {
 #ifdef P3M

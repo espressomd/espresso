@@ -61,7 +61,7 @@ extern bool skin_set;
 
 /** If non-zero, the forces will be recalculated before the next integration. */
 extern int recalc_forces;
-/** Average number of integration steps the verlet list has been re
+/** Average number of integration steps the Verlet list has been re
     used. */
 extern double verlet_reuse;
 
@@ -80,7 +80,7 @@ void integrator_npt_sanity_checks();
 /** Initialize the used thermodynamic Ensemble (NVT or NPT) */
 void integrate_ensemble_init();
 
-/** integrate with velocity verlet integrator.
+/** integrate with velocity Verlet integrator.
     \param n_steps number of steps to integrate.
     \param reuse_forces if nonzero, blindly trust
     the forces still stored with the particles for the first time step.
