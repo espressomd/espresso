@@ -2950,11 +2950,14 @@ void calc_particle_lattice_ia() {
 #endif // ADDITIONAL_CHECKS
       }
 
-      /* communicate the random numbers */
-      ghost_communicator(&cell_structure.ghost_lbcoupling_comm);
 #ifdef ENGINE
-      ghost_communicator(&cell_structure.ghost_swimming_comm);
+      const int data_parts = GHOSTTRANS_COUPLING | GHOSTTRANS_SWIMMING;
+#else
+      const int data_parts = GHOSTTRANS_COUPLING;
 #endif
+
+      /* communicate the random numbers */
+      ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
 
       /* local cells */
       for (auto &p : local_cells.particles()) {
@@ -2975,7 +2978,6 @@ void calc_particle_lattice_ia() {
 
       /* ghost cells */
       for (auto &p : ghost_cells.particles()) {
-
         /* for ghost particles we have to check if they lie
          * in the range of the local lattice nodes */
         if (p.r.p[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&

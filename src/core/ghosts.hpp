@@ -202,8 +202,19 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
 /** Free a communicator. */
 void free_comm(GhostCommunicator *comm);
 
-/** do a ghost communication */
+/** Initialize ghosts. */
+void ghost_init();
+
+/**
+ * @brief do a ghost communication with the data parts specified
+ *        in the communicator.
+ */
 void ghost_communicator(GhostCommunicator *gc);
+
+/**
+ * @brief Do a ghost communication with caller specified data parts.
+ */
+void ghost_communicator(GhostCommunicator *gc, int data_parts);
 
 /** Go through \ref ghost_cells and remove the ghost entries from \ref
     local_particles. Part of \ref dd_exchange_and_sort_particles.*/
