@@ -45,8 +45,33 @@ class VirtualSitesTracersCommon(object):
             isinstance(self.system.virtual_sites, VirtualSitesInertialessTracers))
         self.assertEqual(self.system.virtual_sites.have_velocity, True)
 
-    def test_advection(self):
+    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
+               "Skipping due to missing features.")
+    def test_momentum_conservation(self):
+        # System setup
+        system = self.system
+        box_lw = self.box_lw
+        box_height = self.box_height
+        system.part.clear()
+        self.stop_fluid()
 
+        system.virtual_sites = VirtualSitesInertialessTracers()
+        self.lbf.set_params(ext_force_density=(0, 0, 0))
+
+        force = np.array([.1, .1, .1])
+
+        system.part.add(pos=(0, 0, 0), virtual=1, ext_force=force)
+        system.time = 0
+
+        system.integrator.run(steps=100)
+
+        p_fluid = system.analysis.analyze_linear_momentum(False, True)
+        p_expected = system.time * force
+        rms = np.sum((p_fluid - p_expected)**2)**0.5
+
+        self.assertAlmostEqual(rms, 0)
+
+    def test_advection(self):
         # System setup
         system = self.system
         box_lw = self.box_lw
