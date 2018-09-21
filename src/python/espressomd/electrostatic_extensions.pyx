@@ -300,3 +300,6 @@ IF ELECTROSTATICS and P3M:
             iccp3m_cfg.n_ic = 0
             # Allocate ICC lists
             iccp3m_alloc_lists()
+
+            # Broadcasts vars
+            mpi_iccp3m_init()
