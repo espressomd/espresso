@@ -190,6 +190,22 @@ function try_catch_silent() {
   return $?
 }
 
+## @brief Try/Catch statement in Bash while logging stdout/stderr
+##
+## Run a command in a subshell, exiting the subshell on first error,
+## logging stdout/stderr to the temporary file at #TMPNAME.
+## @param $@ Command to run, possibly with modifiers
+## @returns Error code returned by the command
+function try_catch_capture_output() {
+  detect_open_mpi || return 1
+  rm -f ${TMPNAME}
+  (
+    set -e  # exit from current subshell on first error
+    "$@" 2>>${TMPNAME} 1>>${TMPNAME}
+  )
+  return $?
+}
+
 ## @}
 
 ## @brief Run the set_up() function if it exists
@@ -198,7 +214,7 @@ function run_set_up() {
   if [ "$(type -t set_up)" = "function" ]
   then
     try_catch set_up
-    local retcode=$?
+    local -r retcode=$?
     if [ "${retcode}" -ne "0" ]
     then
       stderr "Failed to run set_up()"
@@ -211,6 +227,7 @@ function run_set_up() {
 ## @brief Run the tear_down() function if it exists
 ## @returns Error code returned by tear_down()
 function run_tear_down() {
+  rm -f ${TMPNAME}
   if [ "$(type -t tear_down)" = "function" ]
   then
     try_catch tear_down
@@ -246,6 +263,10 @@ total_tests=0
 ## @brief Number of errors
 error_counter=0
 
+## @var TMPNAME
+## @brief Name of a temporary file where to log Try/Catch output
+readonly TMPNAME=$(mktemp -u)
+
 ## @brief Start a test
 ##
 ## Print the test name and clear @ref error_log
@@ -274,9 +295,9 @@ function log_success() {
 }
 
 ## @brief Log a failed assertion
-## @param $1 Description of the failure
+## @param $* Description of the failure
 function log_failure() {
-  local message=$1
+  local message=$*
   echo -n 'x'
   error_log+=("${message}")
   error_counter=$((error_counter + 1))
@@ -318,7 +339,7 @@ function run_test_suite() {
 ## @param $1 Filepath
 ## @param $2 Message on failure (optional)
 function assert_file_exists() {
-  local filepath=$1
+  local -r filepath=$1
   local message=$2
   if [ -z "${message}" ]
   then
@@ -337,8 +358,8 @@ function assert_file_exists() {
 ## @param $2 Expected result
 ## @param $3 Message on failure (optional)
 function assert_equal() {
-  local result=$1
-  local expected=$2
+  local -r result=$1
+  local -r expected=$2
   local message=$3
   if [ -z "${message}" ]
   then
@@ -356,7 +377,7 @@ function assert_equal() {
 ## @param $1 Obtained result
 ## @param $2 Message on failure (optional)
 function assert_non_zero() {
-  local result=$1
+  local -r result=$1
   local message=$2
   if [ -z "${message}" ]
   then
@@ -374,7 +395,7 @@ function assert_non_zero() {
 ## @param $1 Obtained result
 ## @param $2 Message on failure (optional)
 function assert_zero() {
-  local result=$1
+  local -r result=$1
   local message=$2
   if [ -z "${message}" ]
   then
@@ -393,14 +414,15 @@ function assert_zero() {
 ## Cannot be used in a script run by Open MPI (see \ref TryCatch).
 ## @param $@ Command to run, possibly with modifiers
 function assert_return_code() {
-  try_catch_silent "$@"
-  local retcode=$?
-  local message="non-zero return code (${retcode}) for command \`$*\`"
+  try_catch_capture_output "$@"
+  local -r retcode=$?
   if [ "${retcode}" -eq "0" ]
   then
     log_success
   else
-    log_failure "${message}"
+    local message="non-zero return code (${retcode}) for command \`$*\`"
+    local logfile=$(cat ${TMPNAME} | sed 's/^/        /')
+    log_failure "${message}"$'\n'"${logfile}"
   fi
 }
 
