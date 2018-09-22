@@ -315,4 +315,3 @@ IF ELECTROSTATICS and P3M:
 
             """
             return iccp3m_cfg.citeration
-

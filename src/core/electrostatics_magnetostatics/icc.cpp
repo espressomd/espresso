@@ -37,8 +37,8 @@
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "icc.hpp"
 
-#include "communication.hpp"
 #include "cells.hpp"
+#include "communication.hpp"
 #include "config.hpp"
 #include "forces.hpp"
 #include "global.hpp"
@@ -202,7 +202,8 @@ int iccp3m_iteration() {
         if (std::abs(p.p.q) > 1e6) {
           runtimeErrorMsg()
               << "too big charge assignment in iccp3m! q >1e6 , assigned "
-                 "charge= " << p.p.q;
+                 "charge= "
+              << p.p.q;
 
           diff = 1e90; /* A very high value is used as error code */
           break;
