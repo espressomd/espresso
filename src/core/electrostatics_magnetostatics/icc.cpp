@@ -138,8 +138,7 @@ int iccp3m_iteration() {
 
   if ((iccp3m_cfg.eout <= 0)) {
     runtimeErrorMsg()
-        << "ICCP3M: nonpositive dielectric constant is not allowed. Put a "
-           "decent exception here\n";
+        << "ICCP3M: nonpositive dielectric constant is not allowed.";
   }
 
   auto const pref = 1.0 / (coulomb.prefactor * 6.283185307);
@@ -204,7 +203,7 @@ int iccp3m_iteration() {
         if (std::abs(p.p.q) > 1e6) {
           runtimeErrorMsg()
               << "too big charge assignment in iccp3m! q >1e6 , assigned "
-                 "charge= " << p.p.q << "\n";
+                 "charge= " << p.p.q;
 
           diff = 1e90; /* A very high value is used as error code */
           break;
@@ -309,18 +308,18 @@ int iccp3m_sanity_check() {
 #ifdef P3M
   case COULOMB_ELC_P3M: {
     if (elc_params.dielectric_contrast_on) {
-      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric constrast";
+      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric contrast";
       return 1;
     }
     break;
   }
 #endif
   case COULOMB_DH: {
-    runtimeErrorMsg() << "ICCP3M does not work with Debye-Hueckel iccp3m.h";
+    runtimeErrorMsg() << "ICCP3M does not work with Debye-Hueckel.";
     return 1;
   }
   case COULOMB_RF: {
-    runtimeErrorMsg() << "ICCP3M does not work with COULOMB_RF iccp3m.h";
+    runtimeErrorMsg() << "ICCP3M does not work with COULOMB_RF.";
     return 1;
   }
   default:

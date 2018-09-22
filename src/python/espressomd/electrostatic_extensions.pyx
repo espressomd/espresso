@@ -288,7 +288,6 @@ IF ELECTROSTATICS and P3M:
             iccp3m_cfg.convergence = self._params["convergence"]
             iccp3m_cfg.relax = self._params["relaxation"]
             iccp3m_cfg.eout = self._params["eps_out"]
-            iccp3m_cfg.citeration = 0
 
             # Broadcasts vars
             mpi_iccp3m_init()

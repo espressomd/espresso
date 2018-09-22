@@ -2008,14 +2008,9 @@ void mpi_iccp3m_iteration_slave(int, int) {
 /********************* REQ_ICCP3M_INIT********/
 int mpi_iccp3m_init() {
 #ifdef ELECTROSTATICS
-  /* nothing has to be done on the master node, this
-   * passes only the number of induced charges, in order for
-   * slaves to allocate memory */
-
   mpi_call(mpi_iccp3m_init_slave, -1, -1);
 
   boost::mpi::broadcast(comm_cart, iccp3m_cfg, 0);
-
   return check_runtime_errors();
 #else
   return 0;
