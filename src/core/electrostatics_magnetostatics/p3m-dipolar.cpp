@@ -1782,7 +1782,8 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
                           double *_accuracy) {
   double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L = 0.0,
          tmp_accuracy = 0.0;
-  /* in which direction improvement is possible. Initially, we don't know it yet.
+  /* in which direction improvement is possible. Initially, we don't know it
+   * yet.
    */
   int final_dir = 0;
   int cao = *_cao;

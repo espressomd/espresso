@@ -56,8 +56,8 @@ inline size_t ravel_index(std::vector<size_t> unravelled_indices,
  * dimensions. (Input)
  * \param ndims int denoting the number of dimensions. (Input)
  * \param flattened_index an int denoting the flat index. (Input)
- * \param unravelled_index_out an int array with length ndims where the unflat indices
- * are written to. (Output)
+ * \param unravelled_index_out an int array with length ndims where the unflat
+ * indices are written to. (Output)
  */
 inline void unravel_index(const int *const len_dims, const int ndims,
                           const int flattened_index,

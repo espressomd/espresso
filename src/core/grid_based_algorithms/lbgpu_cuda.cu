@@ -18,9 +18,8 @@
 */
 
 /** \file
- *
- * Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
- * Header file for \ref lbgpu.hpp.
+ *  Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
+ *  Header file for \ref lbgpu.hpp.
  */
 
 #include "config.hpp"
@@ -59,26 +58,29 @@ int extended_values_flag = 0; /* TODO: this has to be set to one by
                                  the need to compute pi at every
                                  step (e.g. moving boundaries)*/
 
-/**defining structures residing in global memory */
+/** defining structures residing in global memory */
 
 /** device_rho_v: struct for hydrodynamic fields: this is for internal use
-    (i.e. stores values in LB units) and should not used for
-    printing values  */
+ *  (i.e. stores values in LB units) and should not used for
+ *  printing values
+ */
 static LB_rho_v_gpu *device_rho_v = nullptr;
 
 /** device_rho_v_pi: extended struct for hydrodynamic fields: this is the
-   interface and stores values in MD units. It should not be used as an input
-   for any LB calculations. TODO: This structure is not yet used, and it is here
-   to allow access to the stress tensor at any timestep, e.g. for future
-   implementations of moving boundary codes */
+ *  interface and stores values in MD units. It should not be used as an input
+ *  for any LB calculations. TODO: This structure is not yet used, and it is
+ *  here to allow access to the stress tensor at any timestep, e.g. for future
+ *  implementations of moving boundary codes
+ */
 static LB_rho_v_pi_gpu *device_rho_v_pi = nullptr;
 
 /** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
-    and stores values in MD units. It should not used
-    as an input for any LB calculations. TODO: in the future,
-    one might want to have several structures for printing
-    separately rho, v, pi without having to compute/store
-    the complete set. */
+ *  and stores values in MD units. It should not used
+ *  as an input for any LB calculations. TODO: in the future,
+ *  one might want to have several structures for printing
+ *  separately rho, v, pi without having to compute/store
+ *  the complete set.
+ */
 static LB_rho_v_pi_gpu *print_rho_v_pi = nullptr;
 
 /** structs for velocity densities */
@@ -952,7 +954,8 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
 }
 
 /*-------------------------------------------------------*/
-/**normalization of the modes need before back-transformation into velocity space
+/**normalization of the modes need before back-transformation into velocity
+ * space
  * @param mode    Pointer to the local register values mode (Input/Output)
  */
 __device__ void normalize_modes(float *mode) {
@@ -982,8 +985,8 @@ __device__ void normalize_modes(float *mode) {
 }
 
 /*-------------------------------------------------------*/
-/**back-transformation from modespace to densityspace and streaming with the push
- * method using pbc
+/**back-transformation from modespace to densityspace and streaming with the
+ * push method using pbc
  * @param index   node index / thread index (Input)
  * @param mode    Pointer to the local register values mode (Input)
  * @param *n_b    Pointer to local node residing in array b (Output)
@@ -2208,13 +2211,13 @@ __device__ void calc_viscous_force_three_point_couple(
 }
 
 /**calculation of the node force caused by the particles, with atomicadd due to
- avoiding race conditions (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225
- (1999))
+ * avoiding race conditions (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225
+ * (1999))
  * @param *delta    Pointer for the weighting of particle position (Input)
  * @param *delta_j    Pointer for the weighting of particle momentum (Input)
  * @param node_index    node index around (8) particle (Input)
  * @param node_f        Pointer to the node force (Output).
-*/
+ */
 __device__ void
 calc_node_force_three_point_couple(float *delta, float *delta_j,
                                    unsigned int *node_index,

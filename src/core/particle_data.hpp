@@ -21,9 +21,9 @@
 #ifndef _PARTICLE_DATA_H
 #define _PARTICLE_DATA_H
 /** \file
-    For more information on particle_data,
-    see \ref particle_data.cpp "particle_data.cpp"
-*/
+ *  For more information on particle_data,
+ *  see \ref particle_data.cpp "particle_data.cpp"
+ */
 
 #include "Vector.hpp"
 #include "config.hpp"
@@ -44,29 +44,33 @@
 /// ok code for \ref place_particle, particle is new
 #define ES_PART_CREATED 1
 
-/**  bonds_flag "bonds_flag" value for updating particle config without bonding
- * information */
+/** bonds_flag "bonds_flag" value for updating particle config without bonding
+ *  information
+ */
 #define WITHOUT_BONDS 0
-/**  bonds_flag "bonds_flag" value for updating particle config with bonding
- * information */
+/** bonds_flag "bonds_flag" value for updating particle config with bonding
+ *  information
+ */
 #define WITH_BONDS 1
 
 #ifdef EXTERNAL_FORCES
-/** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to an
- * external force. */
+/** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
+ *  an external force
+ */
 #define PARTICLE_EXT_FORCE 1
-/** \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate coord. */
+/** \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
+ *  coord. */
 #define COORD_FIXED(coord) (2L << coord)
-/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of the
- * coordinates is fixed. */
+/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
+ *  the coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether all of the
- * coordinates are fixed. */
+/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether all of
+ *  the coordinates are fixed. */
 #define COORDS_ALL_FIXED (COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2))
 
 #ifdef ROTATION
-/** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to an
- * external torque. */
+/** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
+ *  an external torque. */
 #define PARTICLE_EXT_TORQUE 16
 #endif
 
@@ -77,11 +81,11 @@
  ************************************************/
 
 /** Properties of a particle which are not supposed to
-    change during the integration, but have to be known
-    for all ghosts. Ghosts are particles which are
-    needed in the interaction calculation, but are just copies of
-    particles stored on different nodes.
-*/
+ *  change during the integration, but have to be known
+ *  for all ghosts. Ghosts are particles which are
+ *  needed in the interaction calculation, but are just copies of
+ *  particles stored on different nodes.
+ */
 struct ParticleProperties {
   /** unique identifier for the particle. */
   int identity = -1;
@@ -372,10 +376,12 @@ struct Particle {
 #ifdef LB
   ParticleLatticeCoupling lc;
 #endif
-  /** bonded interactions list. The format is pretty simple:
-      Just the bond type, and then the particle ids. The number of particle ids
-     can be determined
-      easily from the bonded_ia_params entry for the type. */
+  /** Bonded interactions list
+   *
+   *  The format is pretty simple: just the bond type, and then the particle
+   *  ids. The number of particle ids can be determined easily from the
+   *  bonded_ia_params entry for the type.
+   */
   IntList bl;
 
   IntList &bonds() { return bl; }
@@ -399,7 +405,7 @@ struct Particle {
 
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no nonbonded
-   * interactions
+   *  interactions
    */
   IntList el;
 #endif
@@ -442,9 +448,9 @@ void MPI_Send(Particle const *, Size, Ts...) {
 }
 
 /** List of particles. The particle array is resized using a sophisticated
-    (we hope) algorithm to avoid unnecessary resizes.
-    Access using \ref realloc_particlelist, \ref got_particle,...
-*/
+ *  (we hope) algorithm to avoid unnecessary resizes.
+ *  Access using \ref realloc_particlelist, \ref got_particle, ...
+ */
 struct ParticleList {
   ParticleList() : part{nullptr}, n{0}, max{0} {}
   /** The particles payload */
