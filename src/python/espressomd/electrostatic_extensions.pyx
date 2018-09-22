@@ -303,3 +303,16 @@ IF ELECTROSTATICS and P3M:
 
             # Broadcasts vars
             mpi_iccp3m_init()
+
+        def last_iterations(self):
+            """
+            Number of iterations needed in last relaxation to
+            reach the convergence criterion.
+
+            Returns
+            -------
+            :obj:`int` : Number of iterations
+
+            """
+            return iccp3m_cfg.citeration
+

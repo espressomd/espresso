@@ -38,7 +38,6 @@
 #include "icc.hpp"
 
 #include "communication.hpp"
-
 #include "cells.hpp"
 #include "config.hpp"
 #include "forces.hpp"
@@ -268,7 +267,7 @@ void calc_long_range_forces_iccp3m() {
 #ifdef P3M
   case COULOMB_ELC_P3M:
     if (elc_params.dielectric_contrast_on) {
-      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric constrast";
+      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric contrast";
     }
     p3m_charge_assign();
     p3m_calc_kspace_forces(1, 0);
