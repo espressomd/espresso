@@ -1985,14 +1985,11 @@ void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
 }
 
 /********************* REQ_ICCP3M_ITERATION ********/
-int mpi_iccp3m_iteration(int dummy) {
+int mpi_iccp3m_iteration() {
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_iteration_slave, -1, 0);
 
   iccp3m_iteration();
-
-  COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node,
-                     dummy));
 
   return check_runtime_errors();
 #else
@@ -2000,47 +1997,29 @@ int mpi_iccp3m_iteration(int dummy) {
 #endif
 }
 
-void mpi_iccp3m_iteration_slave(int dummy, int dummy2) {
+void mpi_iccp3m_iteration_slave(int, int) {
 #ifdef ELECTROSTATICS
   iccp3m_iteration();
-  COMM_TRACE(
-      fprintf(stderr, "%d: iccp3m iteration task %d done.\n", dummy, dummy2));
 
   check_runtime_errors();
 #endif
 }
 
 /********************* REQ_ICCP3M_INIT********/
-int mpi_iccp3m_init(int n_induced_charges) {
+int mpi_iccp3m_init() {
 #ifdef ELECTROSTATICS
-  /* nothing has to be done on the master node, this
-   * passes only the number of induced charges, in order for
-   * slaves to allocate memory */
+  mpi_call(mpi_iccp3m_init_slave, -1, -1);
 
-  mpi_call(mpi_iccp3m_init_slave, -1, n_induced_charges);
-
-  bcast_iccp3m_cfg();
-
-  COMM_TRACE(fprintf(stderr, "%d: iccp3m init task %d done.\n", this_node,
-                     n_induced_charges));
-
+  boost::mpi::broadcast(comm_cart, iccp3m_cfg, 0);
   return check_runtime_errors();
 #else
   return 0;
 #endif
 }
 
-void mpi_iccp3m_init_slave(int node, int dummy) {
+void mpi_iccp3m_init_slave(int, int) {
 #ifdef ELECTROSTATICS
-  COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node,
-                     dummy));
-
-  if (iccp3m_initialized == 0) {
-    iccp3m_init();
-    iccp3m_initialized = 1;
-  }
-
-  bcast_iccp3m_cfg();
+  boost::mpi::broadcast(comm_cart, iccp3m_cfg, 0);
 
   check_runtime_errors();
 #endif
