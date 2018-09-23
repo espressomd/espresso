@@ -17,12 +17,14 @@ class LeesEdwards(ut.TestCase):
   time_step = 1.0
   system.time_step = time_step
 
-  def ProtocolTest(self):
+  def test_Protocol(self):
     """This test calculates if the offset and velocity of the Lees Edwards
     function are calculated correctly based on the input variables"""
 
+    system = self.system
+
     #Protocol should be off by default
-    assertEqual(system.lees_edwards[0], "off")
+    self.assertEqual(system.lees_edwards[0], "off")
 
     #One shouldn't be able to set a random protocol
     with self.assertRaises(Exception):
@@ -30,24 +32,25 @@ class LeesEdwards(ut.TestCase):
 
     #Check if the setted protocol is stored correctly
     system.lees_edwards = ["steady_shear", 1.2]
-    assertEqual(system.lees_edwards[0], "steady_shear")
-    assertEqual(system.lees_edwards[1], 1.2)
+    self.assertEqual(system.lees_edwards[0], "steady_shear")
+    self.assertEqual(system.lees_edwards[1], 1.2)
 
     system.lees_edwards = ["oscillatory_shear", 1.2, 5.6]
-    assertEqual(system.lees_edwards[0], "oscillatory_shear")
-    assertEqual(system.lees_edwards[1], 1.2)
-    assertEqual(system.lees_edwards[2], 5.6)
+    self.assertEqual(system.lees_edwards[0], "oscillatory_shear")
+    self.assertEqual(system.lees_edwards[1], 1.2)
+    self.assertEqual(system.lees_edwards[2], 5.6)
 
     system.time = 5.0
 
     #Check if the offset is determined correctly
     frequency = 3.7
+    omega = 2*np.pi*frequency
     amplitude = 1.6
     system.lees_edwards = ["oscillatory_shear", frequency, amplitude]
-    assertEqual(system.lees_edwards[0], "oscillatory_shear")
-    for time in np.range(0.0, 100.0, 10.0):
-      offset = amplitude * np.sin(frequency * t)
-      velocity = omega * amplitude * np.cos(omega * t)
+    self.assertEqual(system.lees_edwards[0], "oscillatory_shear")
+    for time in np.arange(0.0, 100.0, 10.0):
+      offset = amplitude * np.sin(frequency * time)
+      velocity = omega * amplitude * np.cos(omega * time)
 
       np.testing.assert_equal(system.lees_edwards[3], velocity)
       np.testing.assert_equal(system.lees_edwards[4], offset)
