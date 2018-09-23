@@ -56,11 +56,14 @@ class LeesEdwards(ut.TestCase):
       np.testing.assert_equal(system.lees_edwards[4], offset)
       system.integrator.run(10)
 
-  def BoundaryCrossingTest(self):
+  def test_BoundaryCrossing(self):
     """The test calculates a particle's position for different lees_edwards_offsets
     while crossing the upper and lower boundary in the y-direction. The
     obtained positions as well as the velocity of the particle is checked via a 
     comparison with the expected value."""
+
+    system = self.system
+    tol = self.tol
 
     # Check if coordinates are folded correctly
     system.lees_edwards = ["steady_shear", 0.1]
