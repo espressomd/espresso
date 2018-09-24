@@ -46,6 +46,10 @@
 #include "nonbonded_interactions/ljcos.hpp"
 #include "nonbonded_interactions/ljcos2.hpp"
 #include "nonbonded_interactions/ljgen.hpp"
+#include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "nonbonded_interactions/soft_sphere.hpp"
+#include "nonbonded_interactions/steppot.hpp"
 #ifdef DIPOLAR_BARNES_HUT
 #include "actor/DipolarBarnesHut.hpp"
 #endif
@@ -54,10 +58,7 @@
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
-#include "nonbonded_interactions/morse.hpp"
-#include "nonbonded_interactions/nonbonded_tab.hpp"
-#include "nonbonded_interactions/soft_sphere.hpp"
-#include "nonbonded_interactions/steppot.hpp"
+#include "layered.hpp"
 #include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
 #include "pressure.hpp"
@@ -66,6 +67,7 @@
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "utils/serialization/IA_parameters.hpp"
+
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
@@ -169,6 +171,8 @@ double calc_electrostatics_cutoff() {
 #ifdef P3M
   case COULOMB_ELC_P3M:
     return std::max(elc_params.space_layer, p3m.params.r_cut_iL * box_l[0]);
+  case COULOMB_MMM2D:
+    return layer_h - skin;
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     /* do not use precalculated r_cut here, might not be set yet */
@@ -548,6 +552,8 @@ void deactivate_coulomb_method() {
     rf_params.B = 0.0;
   case COULOMB_MMM1D:
     mmm1d_params.maxPWerror = 1e40;
+  case COULOMB_MMM2D:
+    mmm2d_params.far_cut = 0;
   default:
     break;
   }
