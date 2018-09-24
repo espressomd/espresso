@@ -2580,43 +2580,18 @@ void lb_reinit_force_densities() {
  * @param force      Coupling force between particle and fluid (Output).
  */
 inline void lb_viscous_coupling(Particle *p, double force[3]) {
-  int x, y, z;
   Lattice::index_t node_index[8];
   double delta[6];
   double *local_f, interpolated_u[3], delta_j[3];
-
-#ifdef EXTERNAL_FORCES
-  if (!(p->p.ext_flag & COORD_FIXED(0)) && !(p->p.ext_flag & COORD_FIXED(1)) &&
-      !(p->p.ext_flag & COORD_FIXED(2))) {
-    ONEPART_TRACE(if (p->p.identity == check_id) {
-      fprintf(stderr, "%d: OPT: f = (%.3e,%.3e,%.3e)\n", this_node, p->f.f[0],
-              p->f.f[1], p->f.f[2]);
-    });
-  }
-#endif
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
   lblattice.map_position_to_lattice(p->r.p, node_index, delta);
 
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr,
-            "%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) "
-            "pos=(%.3f,%.3f,%.3f)\n",
-            this_node, delta[0], delta[1], delta[2], delta[3], delta[4],
-            delta[5], p->r.p[0], p->r.p[1], p->r.p[2]);
-  });
-
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
-
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB u = (%.16e,%.3e,%.3e) v = (%.16e,%.3e,%.3e)\n",
-            this_node, interpolated_u[0], interpolated_u[1], interpolated_u[2],
-            p->m.v[0], p->m.v[1], p->m.v[2]);
-  });
 
   /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
@@ -2647,24 +2622,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   force[2] = -lbpar.friction * (velocity[2] - interpolated_u[2]);
 #endif
 
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB f_drag = (%.6e,%.3e,%.3e)\n", this_node,
-            force[0], force[1], force[2]);
-  });
-
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB f_random = (%.6e,%.3e,%.3e)\n", this_node,
-            p->lc.f_random[0], p->lc.f_random[1], p->lc.f_random[2]);
-  });
-
   force[0] = force[0] + p->lc.f_random[0];
   force[1] = force[1] + p->lc.f_random[1];
   force[2] = force[2] + p->lc.f_random[2];
-
-  ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr, "%d: OPT: LB f_tot = (%.6e,%.3e,%.3e)\n", this_node,
-            force[0], force[1], force[2]);
-  });
 
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
@@ -2672,16 +2632,16 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   delta_j[1] = -force[1] * time_step * lbpar.tau / lbpar.agrid;
   delta_j[2] = -force[2] * time_step * lbpar.tau / lbpar.agrid;
 
-  for (z = 0; z < 2; z++) {
-    for (y = 0; y < 2; y++) {
-      for (x = 0; x < 2; x++) {
-        local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
+  for (int z = 0; z < 2; z++) {
+    for (int y = 0; y < 2; y++) {
+      for (int x = 0; x < 2; x++) {
+        auto &node = lbfields[node_index[(z * 2 + y) * 2 + x]];
 
-        local_f[0] +=
+        node.force_density[0] +=
             delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * delta_j[0];
-        local_f[1] +=
+        node.force_density[1] +=
             delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * delta_j[1];
-        local_f[2] +=
+        node.force_density[2] +=
             delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * delta_j[2];
       }
     }
