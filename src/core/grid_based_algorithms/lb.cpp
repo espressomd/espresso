@@ -2556,7 +2556,6 @@ void lattice_boltzmann_update() {
 /** Resets the forces on the fluid nodes */
 void lb_reinit_force_densities() {
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
-
        index++) {
     lb_reset_force_densities(index);
   }
@@ -2745,50 +2744,29 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 #endif
 }
 
-void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v) {
+namespace {
+Vector3d node_u(Lattice::index_t index) {
+#ifdef LB_BOUNDARIES
+  if (lbfields[index].boundary) {
+    return lbfields[index].slip_velocity;
+  }
+#endif // LB_BOUNDARIES
+
+  double modes[19];
+  lb_calc_modes(index, modes);
+  auto const local_rho =
+      lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
+
+  return Vector3d{modes[1], modes[2], modes[3]} / local_rho;
+}
+} // namespace
+
+void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
   Lattice::index_t node_index[8], index;
   double delta[6];
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
   int x, y, z;
-  Vector3d pos;
-
-#ifdef LB_BOUNDARIES
-  double lbboundary_mindist, distvec[3];
-  int boundary_no;
-  int boundary_flag = -1; // 0 if more than agrid/2 away from the boundary, 1 if
-                          // 0<dist<agrid/2, 2 if dist <0
-
-  LBBoundaries::lbboundary_mindist_position(p, &lbboundary_mindist, distvec,
-                                            &boundary_no);
-  if (lbboundary_mindist > 0.5 * lbpar.agrid) {
-    boundary_flag = 0;
-    pos[0] = p[0];
-    pos[1] = p[1];
-    pos[2] = p[2];
-  } else if (lbboundary_mindist > 0) {
-    boundary_flag = 1;
-    pos[0] =
-        p[0] - distvec[0] + distvec[0] / lbboundary_mindist * lbpar.agrid / 2.;
-    pos[1] =
-        p[1] - distvec[1] + distvec[1] / lbboundary_mindist * lbpar.agrid / 2.;
-    pos[2] =
-        p[2] - distvec[2] + distvec[2] / lbboundary_mindist * lbpar.agrid / 2.;
-  } else {
-    boundary_flag = 2;
-    v[0] = (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0] *
-           lbpar.agrid / lbpar.tau;
-    v[1] = (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1] *
-           lbpar.agrid / lbpar.tau;
-    v[2] = (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2] *
-           lbpar.agrid / lbpar.tau;
-    return; // we can return without interpolating
-  }
-#else  // LB_BOUNDARIES
-  pos[0] = p[0];
-  pos[1] = p[1];
-  pos[2] = p[2];
-#endif // LB_BOUNDARIES
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
@@ -2802,69 +2780,20 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v) {
   for (z = 0; z < 2; z++) {
     for (y = 0; y < 2; y++) {
       for (x = 0; x < 2; x++) {
-        index = node_index[(z * 2 + y) * 2 + x];
+        auto const index = node_index[(z * 2 + y) * 2 + x];
+        auto const local_u = node_u(index);
+        auto const w = delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
 
-#ifdef LB_BOUNDARIES
-        if (lbfields[index].boundary) {
-          local_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-          local_j[0] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[0]; // TODO
-          local_j[1] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[1]; // TODO This might not work properly
-          local_j[2] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[2]; // TODO
-        } else {
-          lb_calc_modes(index, modes);
-          local_rho =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
-          local_j[0] = modes[1];
-          local_j[1] = modes[2];
-          local_j[2] = modes[3];
-        }
-#else  // LB_BOUNDARIES
-        lb_calc_modes(index, modes);
-        local_rho =
-            lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
-        local_j[0] = modes[1];
-        local_j[1] = modes[2];
-        local_j[2] = modes[3];
-#endif // LB_BOUNDARIES
-        interpolated_u[0] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[0] / (local_rho);
-        interpolated_u[1] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[1] / (local_rho);
-        interpolated_u[2] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[2] / (local_rho);
+        interpolated_u[0] += w * local_u[0];
+        interpolated_u[1] += w * local_u[1];
+        interpolated_u[2] += w * local_u[2];
       }
     }
   }
-#ifdef LB_BOUNDARIES
-  if (boundary_flag == 1) {
-    v[0] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[0] +
-           (1 - lbboundary_mindist / (0.5 * lbpar.agrid)) *
-               (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0];
-    v[1] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[1] +
-           (1 - lbboundary_mindist / (0.5 * lbpar.agrid)) *
-               (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1];
-    v[2] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[2] +
-           (1 - lbboundary_mindist / (0.5 * lbpar.agrid)) *
-               (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2];
-  } else {
-    v[0] = interpolated_u[0];
-    v[1] = interpolated_u[1];
-    v[2] = interpolated_u[2];
-  }
-#else  // LB_BOUNDARIES
+
   v[0] = interpolated_u[0];
   v[1] = interpolated_u[1];
   v[2] = interpolated_u[2];
-#endif // LB_BOUNDARIES
   v[0] *= lbpar.agrid / lbpar.tau;
   v[1] *= lbpar.agrid / lbpar.tau;
   v[2] *= lbpar.agrid / lbpar.tau;

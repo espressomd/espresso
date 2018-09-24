@@ -317,8 +317,12 @@ void lb_init_boundaries() {
 
           if (dist <= 0 && the_boundary >= 0 &&
               LBBoundaries::lbboundaries.size() > 0) {
-            lbfields[get_linear_index(x, y, z, lblattice.halo_grid)].boundary =
-                the_boundary + 1;
+            auto const index = get_linear_index(x, y, z, lblattice.halo_grid);
+            auto &node = lbfields[index];
+            node.boundary = the_boundary + 1;
+            node.slip_velocity =
+                LBBoundaries::lbboundaries[the_boundary]->velocity() *
+                (lbpar.agrid / lbpar.tau);
           } else {
             lbfields[get_linear_index(x, y, z, lblattice.halo_grid)].boundary =
                 0;
