@@ -27,12 +27,12 @@
  *  \ref forces.cpp
  */
 
-#include "../grid.hpp"
-#include "../integrate.hpp"
-#include "../interaction_data.hpp"
-#include "../particle_data.hpp"
-#include "../random.hpp"
-#include "../utils.hpp"
+#include "grid.hpp"
+#include "integrate.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
+#include "random.hpp"
+#include "utils.hpp"
 
 #ifdef AFFINITY
 
@@ -471,8 +471,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
                 p1->p.bond_site[j] = -1;
-              // printf("bond broken. Poff = %f, F = %f, Koff = %f, K0 = %f, len
-              // = %f\n", Poff, tmpF, tmpKoff, tmpK0, len);
             }
 
           } else {
@@ -585,7 +583,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j] / len;
-            // ftemp += abs(fac * vec[j] / len);
           }
           // if (ftemp > 0.000000000000001) printf("%f ",fac);
           // Decision whether I should break the bond:
@@ -610,8 +607,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
                 p1->p.bond_site[j] = -1;
-              // printf("bond broken. Poff = %f, F = %f, Koff = %f, K0 = %f, len
-              // = %f\n", Poff, tmpF, tmpKoff, tmpK0, len);
             }
 
           } else {
@@ -730,7 +725,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j] / len;
-            // ftemp += abs(fac * vec[j] / len);
           }
           // if (ftemp > 0.000000000000001) printf("%f ",fac);
           // Decision whether I should break the bond:
@@ -755,8 +749,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
                 p1->p.bond_site[j] = -1;
-              // printf("bond broken. Poff = %f, F = %f, Koff = %f, K0 = %f, len
-              // = %f\n", Poff, tmpF, tmpKoff, tmpK0, len);
             }
 
           } else {

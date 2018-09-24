@@ -6,7 +6,7 @@ IF DIPOLES == 1:
     cdef extern from "communication.hpp":
         void mpi_bcast_coulomb_params()
 
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         ctypedef enum dipolar_interaction "DipolarInteraction":
             DIPOLAR_NONE = 0,
             DIPOLAR_P3M,
@@ -23,7 +23,7 @@ IF DIPOLES == 1:
             dipolar_interaction Dmethod
         cdef extern coulomb_parameters coulomb
 
-    cdef extern from "magnetic_non_p3m_methods.hpp":
+    cdef extern from "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp":
         int dawaanr_set_params()
         int mdds_set_params(int n_cut)
         int Ncut_off_magnetic_dipolar_direct_sum
@@ -42,7 +42,7 @@ IF DIPOLES == 1:
 IF DP3M == 1:
     from p3m_common cimport p3m_parameter_struct
 
-    cdef extern from "p3m-dipolar.hpp":
+    cdef extern from "electrostatics_magnetostatics/p3m-dipolar.hpp":
         int dp3m_set_params(double r_cut, int mesh, int cao, double alpha, double accuracy)
         void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha, double accuracy, int n_interpol)
         int dp3m_set_mesh_offset(double x, double y, double z)

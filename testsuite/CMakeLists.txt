@@ -165,6 +165,7 @@ python_test(FILE simple_pore.py MAX_NUM_PROC 1)
 python_test(FILE field_test.py MAX_NUM_PROC 1)
 python_test(FILE lb_boundary.py MAX_NUM_PROC 2)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 4)
+python_test(FILE lb_shear.py MAX_NUM_PROC 2)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
@@ -174,15 +175,17 @@ add_custom_target(python_test_data
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/data
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/tests_common.py ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites_tracers_common.py ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py ${CMAKE_CURRENT_BINARY_DIR})
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py ${CMAKE_CURRENT_BINARY_DIR}
+)
 
-add_custom_target(check_python_serial COMMAND ${CMAKE_CTEST_COMMAND} -C serial --output-on-failure)
+add_custom_target(check_python_serial COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) -C serial --output-on-failure)
 add_dependencies(check_python_serial pypresso python_test_data)
 
-add_custom_target(check_python_parallel COMMAND ${CMAKE_CTEST_COMMAND} -C parallel --output-on-failure)
+add_custom_target(check_python_parallel COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) -C parallel --output-on-failure)
 add_dependencies(check_python_parallel pypresso python_test_data)
 
-add_custom_target(check_python_parallel_odd COMMAND ${CMAKE_CTEST_COMMAND} -C parallel_odd --output-on-failure)
+add_custom_target(check_python_parallel_odd COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) -C parallel_odd --output-on-failure)
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
 
 add_custom_target(check_python)

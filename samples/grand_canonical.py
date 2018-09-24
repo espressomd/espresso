@@ -24,16 +24,14 @@ import numpy as np
 import sys
 
 import espressomd
-
-required_features = ["ELECTROSTATICS", "EXTERNAL_FORCES", "LENNARD_JONES"]
-espressomd.assert_features(required_features)
-
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
-from espressomd.interactions import *
 from espressomd import reaction_ensemble
 from espressomd import electrostatics
+
+required_features = ["ELECTROSTATICS", "EXTERNAL_FORCES", "LENNARD_JONES"]
+espressomd.assert_features(required_features)
 
 # print help message if proper command-line arguments are not provided
 if (len(sys.argv) != 3):

@@ -42,7 +42,7 @@ class Observables(ut.TestCase):
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
-        if not len(self.system.part):
+        if not self.system.part:
             for i in range(self.N_PART):
                 self.system.part.add(pos=random(3) * 10, v=random(3), id=i)
                 if espressomd.has_features(["MASS"]):

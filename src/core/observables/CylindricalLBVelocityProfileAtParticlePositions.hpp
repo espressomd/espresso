@@ -28,10 +28,8 @@ namespace Observables {
 class CylindricalLBVelocityProfileAtParticlePositions
     : public CylindricalPidProfileObservable {
 public:
-  virtual std::vector<double> operator()(PartCfg &partCfg) const override;
-  virtual int n_values() const override {
-    return 3 * n_r_bins * n_phi_bins * n_z_bins;
-  }
+  std::vector<double> operator()(PartCfg &partCfg) const override;
+  int n_values() const override { return 3 * n_r_bins * n_phi_bins * n_z_bins; }
 };
 
 } // Namespace Observables

@@ -23,10 +23,12 @@ include "myconfig.pxi"
 from espressomd.system cimport *
 from espressomd.utils cimport *
 from espressomd.electrostatics cimport *
+from libcpp cimport vector
+from utils cimport Vector3d
 
 IF ELECTROSTATICS and P3M:
 
-    cdef extern from "elc.hpp":
+    cdef extern from "electrostatics_magnetostatics/elc.hpp":
         ctypedef struct ELC_struct:
             double maxPWerror
             double gap_size
@@ -43,34 +45,26 @@ IF ELECTROSTATICS and P3M:
         # links intern C-struct with python object
         ELC_struct elc_params
 
-    cdef extern from "iccp3m.hpp":
+    cdef extern from "electrostatics_magnetostatics/icc.hpp":
         ctypedef struct iccp3m_struct:
             int n_ic
             int num_iteration
             double eout
-            double * areas
-            double * ein
-            double * sigma
+            vector[double] areas
+            vector[double] ein
+            vector[double] sigma
             double convergence
-            double * nvectorx
-            double * nvectory
-            double * nvectorz
-            double extx
-            double exty
-            double extz
+            vector[Vector3d] normals
+            Vector3d ext_field
             double relax
             int citeration
-            int set_flag
-            double * fx
-            double * fy
-            double * fz
             int first_id
 
         # links intern C-struct with python object
         iccp3m_struct iccp3m_cfg
 
-        void iccp3m_set_initialized()
         void iccp3m_alloc_lists()
 
     cdef extern from "communication.hpp":
-        int mpi_iccp3m_init(int dummy)
+        int mpi_iccp3m_init()
+        int mpi_iccp3m_iteration()

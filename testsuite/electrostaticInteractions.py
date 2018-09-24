@@ -18,10 +18,11 @@
 #
 from __future__ import print_function
 import unittest as ut
-import espressomd
 import numpy as np
+
+import espressomd
 from espressomd import electrostatics
-from tests_common import *
+import tests_common
 
 
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
@@ -60,7 +61,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         # results,
         p3m_energy = -0.501062398379
         p3m_force = 2.48921612e-01
-        test_P3M = generate_test_for_class(
+        test_P3M = tests_common.generate_test_for_class(
             self.system,
             electrostatics.P3M,
             dict(
@@ -92,7 +93,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         dh_params = dict(prefactor=1.0,
                          kappa=2.0,
                          r_cut=2.0)
-        test_DH = generate_test_for_class(
+        test_DH = tests_common.generate_test_for_class(
             self.system,
             electrostatics.DH,
             dh_params)

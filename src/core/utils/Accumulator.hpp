@@ -41,7 +41,7 @@ private:
 
 class Accumulator {
 public:
-  Accumulator(std::size_t N) : m_n(0), m_acc_data(N) {}
+  explicit Accumulator(std::size_t N) : m_n(0), m_acc_data(N) {}
   void operator()(const std::vector<double> &);
   std::vector<double> get_mean() const;
   std::vector<double> get_variance() const;

@@ -19,17 +19,14 @@
 # Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
-import espressomd
 import numpy as np
-from espressomd.interactions import *
+
+import espressomd
+import espressomd.interactions
 
 
 class Non_bonded_interactionsTests(ut.TestCase):
-    #  def __init__(self,particleId):
-    #    self.pid=particleId
-
-    # Handle to espresso system
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[20.0, 20.0, 20.0])
 
     def intersMatch(self, inType, outType, inParams, outParams):
         """Check, if the interaction type set and gotten back as well as the bond
@@ -100,45 +97,44 @@ class Non_bonded_interactionsTests(ut.TestCase):
 
     if espressomd.has_features(["LENNARD_JONES"]):
         test_lj1 = generateTestForNon_bonded_interaction(
-            0, 0, LennardJonesInteraction,
+            0, 0, espressomd.interactions.LennardJonesInteraction,
             {"epsilon": 1., "sigma": 2., "cutoff": 3.,
              "shift": 4., "offset": 5., "min": 7.},
             "lennard_jones")
         test_lj2 = generateTestForNon_bonded_interaction(
-            0, 0, LennardJonesInteraction,
+            0, 0, espressomd.interactions.LennardJonesInteraction,
             {"epsilon": 1.3, "sigma": 2.2, "cutoff": 3.4,
              "shift": 4.1, "offset": 5.1, "min": 7.1},
             "lennard_jones")
         test_lj3 = generateTestForNon_bonded_interaction(
-            0, 0, LennardJonesInteraction,
+            0, 0, espressomd.interactions.LennardJonesInteraction,
             {"epsilon": 1.3, "sigma": 2.2, "cutoff": 3.4,
              "shift": 4.1, "offset": 5.1, "min": 7.1},
             "lennard_jones")
 
     if espressomd.has_features(["LENNARD_JONES_GENERIC"]):
         test_ljgen1 = generateTestForNon_bonded_interaction(
-            0, 0, GenericLennardJonesInteraction,
+            0, 0, espressomd.interactions.GenericLennardJonesInteraction,
             {"epsilon": 1., "sigma": 2., "cutoff": 3., "shift": 4., "offset": 5.,
              "e1": 7, "e2": 8, "b1": 9., "b2": 10.},
             "generic_lennard_jones")
         test_ljgen2 = generateTestForNon_bonded_interaction(
-            0, 0, GenericLennardJonesInteraction,
+            0, 0, espressomd.interactions.GenericLennardJonesInteraction,
             {"epsilon": 1.1, "sigma": 2.1, "cutoff": 3.1, "shift": 4.1, "offset": 5.1,
              "e1": 71, "e2": 81, "b1": 9.1, "b2": 10.1},
             "generic_lennard_jones")
         test_ljgen3 = generateTestForNon_bonded_interaction(
-            0, 0, GenericLennardJonesInteraction,
+            0, 0, espressomd.interactions.GenericLennardJonesInteraction,
             {"epsilon": 1.2, "sigma": 2.2, "cutoff": 3.2, "shift": 4.2, "offset": 5.2,
              "e1": 72, "e2": 82, "b1": 9.2, "b2": 10.2},
             "generic_lennard_jones")
 
     if espressomd.has_features(["GAY_BERNE"]):
         test_gb = generateTestForNon_bonded_interaction(
-            0, 0, GayBerneInteraction,
+            0, 0, espressomd.interactions.GayBerneInteraction,
             {"eps": 1.0, "sig": 1.0, "cut": 4.0, "k1": 3.0,
                 "k2": 5.0, "mu": 2.0, "nu": 1.0},
             "gay_berne")
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

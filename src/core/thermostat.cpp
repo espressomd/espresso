@@ -22,12 +22,12 @@
     Implementation of \ref thermostat.hpp "thermostat.h"
  */
 #include "thermostat.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "ghmc.hpp"
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "npt.hpp"
-#include "thermalized_bond.hpp"
 
 #include <fstream>
 #include <iostream>

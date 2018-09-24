@@ -172,7 +172,8 @@ void mpi_send_v(int node, int part, double v[3]);
     \param node the node it is attached to.
     \param swim struct containing swimming parameters
 */
-void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
+void mpi_send_swimming(int node, int part,
+                       const ParticleParametersSwimming &swim);
 
 /** Issue REQ_SET_F: send particle force.
     Also calls \ref on_particle_change.
@@ -527,7 +528,7 @@ int mpi_sync_topo_part_info(void);
 
 /** Issue REQ_BCAST_LBPAR: Broadcast a parameter for Lattice Boltzmann.
  * @param field References the parameter field to be broadcasted. The references
- * are defined in \ref lb.hpp "lb.hpp"
+ * are defined in \ref lb.hpp "grid_based_algorithms/lb.hpp"
  */
 void mpi_bcast_lb_params(int field, int value = -1);
 
@@ -566,12 +567,12 @@ void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary);
 /** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
     @return nonzero on error
 */
-int mpi_iccp3m_iteration(int dummy);
+int mpi_iccp3m_iteration();
 
 /** Issue REQ_ICCP3M_INIT: performs iccp3m initialization
     @return nonzero on error
 */
-int mpi_iccp3m_init(int dummy);
+int mpi_iccp3m_init();
 
 /** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
  * @param node  processor to send to

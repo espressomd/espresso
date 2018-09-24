@@ -25,10 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "cells.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbboundaries.hpp"
 #include "halo.hpp"
 #include "integrate.hpp"
-#include "lb.hpp"
-#include "lbboundaries.hpp"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
@@ -66,7 +66,7 @@ void IBM_ForcesIntoFluid_CPU() {
   }
 
   // Update the forces on the ghost particles
-  ghost_communicator(&cell_structure.vs_inertialess_tracers_ghost_force_comm);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_FORCE);
 
   // Loop over local cells
   for (int c = 0; c < local_cells.n; c++) {
@@ -144,11 +144,17 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
     Particle *const p = cell->part;
     for (int j = 0; j < cell->n; j++)
       if (p[j].p.is_virtual) {
+#ifdef EXTERNAL_FORCES
         if (!(p[j].p.ext_flag & 2))
+#endif
           p[j].r.p[0] = p[j].r.p[0] + p[j].m.v[0] * time_step;
+#ifdef EXTERNAL_FORCES
         if (!(p[j].p.ext_flag & 4))
+#endif
           p[j].r.p[1] = p[j].r.p[1] + p[j].m.v[1] * time_step;
+#ifdef EXTERNAL_FORCES
         if (!(p[j].p.ext_flag & 8))
+#endif
           p[j].r.p[2] = p[j].r.p[2] + p[j].m.v[2] * time_step;
 
         // Check if the particle might have crossed a box border (criterion see

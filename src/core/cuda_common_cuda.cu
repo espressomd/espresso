@@ -24,7 +24,7 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <random>
 

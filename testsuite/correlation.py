@@ -26,8 +26,8 @@ import pickle
 
 import espressomd
 from espressomd.interactions import FeneBond
-from espressomd.observables import *
-from espressomd.accumulators import *
+import espressomd.observables
+import espressomd.accumulators
 
 
 class CorrelatorTest(ut.TestCase):
@@ -43,9 +43,10 @@ class CorrelatorTest(ut.TestCase):
         s.thermostat.turn_off()
         s.part.add(id=0, pos=(0, 0, 0), v=(1, 2, 3))
 
-        O = ParticlePositions(ids=(0,))
-        C2 = Correlator(obs1=O, tau_lin=10, tau_max=10.0, delta_N=1,
-                        corr_operation="square_distance_componentwise")
+        O = espressomd.observables.ParticlePositions(ids=(0,))
+        C2 = espressomd.accumulators.Correlator(
+            obs1=O, tau_lin=10, tau_max=10.0, delta_N=1,
+                                               corr_operation="square_distance_componentwise")
 
         s.integrator.run(1000)
         s.auto_update_accumulators.add(C2)
@@ -62,7 +63,6 @@ class CorrelatorTest(ut.TestCase):
             self.assertAlmostEqual(corr[i, 2], t * t, places=3)
             self.assertAlmostEqual(corr[i, 3], 4 * t * t, places=3)
             self.assertAlmostEqual(corr[i, 4], 9 * t * t, places=3)
-
 
 if __name__ == "__main__":
     ut.main()

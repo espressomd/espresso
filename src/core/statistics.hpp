@@ -26,11 +26,10 @@
 
 #include "PartCfg.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
-
 #include <map>
 #include <string>
 #include <vector>

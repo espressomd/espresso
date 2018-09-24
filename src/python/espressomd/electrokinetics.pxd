@@ -2,7 +2,7 @@ include "myconfig.pxi"
 from libcpp cimport bool
 
 IF ELECTROKINETICS and CUDA:
-    cdef extern from "electrokinetics.hpp":
+    cdef extern from "grid_based_algorithms/electrokinetics.hpp":
 
         IF EK_DOUBLE_PREC:
             ctypedef double ekfloat
@@ -109,6 +109,6 @@ IF ELECTROKINETICS and CUDA:
         IF EK_BOUNDARIES:
             void ek_init_species_density_wallcharge(ekfloat * wallcharge_species_density, int wallcharge_species)
 
-    cdef extern from "lb.hpp":
+    cdef extern from "grid_based_algorithms/lb.hpp":
         int lb_lbfluid_print_vtk_boundary(char * filename)
         int lb_lbnode_get_pi(int * ind, double * p_pi)
