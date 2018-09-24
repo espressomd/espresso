@@ -817,10 +817,10 @@ void propagate_vel_pos() {
     {
       auto shear_velocity = lees_edwards_protocol.velocity;
       auto offset = lees_edwards_protocol.offset;
-      if (p.r.p[1] > box_l[1]) {
+      if (p.r.p[1] >= box_l[1]) {
         p.m.v[0] -= shear_velocity;
         p.r.p[0] += (offset - dround(offset * box_l_i[0]) * box_l[0]);
-      } else if (p.r.p[1] < 0.) {
+      } else if (p.r.p[1] <= 0.) {
         p.m.v[0] += shear_velocity;
         p.r.p[0] -= (offset - dround(offset * box_l_i[0]) * box_l[0]);
       }
