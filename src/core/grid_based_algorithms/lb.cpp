@@ -2582,7 +2582,7 @@ void lb_reinit_force_densities() {
 inline void lb_viscous_coupling(Particle *p, double force[3]) {
   Lattice::index_t node_index[8];
   double delta[6];
-  double *local_f, interpolated_u[3], delta_j[3];
+  double interpolated_u[3], delta_j[3];
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
@@ -2601,11 +2601,10 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   velocity[1] = p->m.v[1];
   velocity[2] = p->m.v[2];
 
+  Vector3d v_drift = {interpolated_u[0], interpolated_u[1], interpolated_u[2]};
 #ifdef ENGINE
   if (p->swim.swimming) {
-    velocity[0] -= p->swim.v_swim * p->r.quatu[0];
-    velocity[1] -= p->swim.v_swim * p->r.quatu[1];
-    velocity[2] -= p->swim.v_swim * p->r.quatu[2];
+    v_drift += p->swim.v_swim * p->r.quatu;
     p->swim.v_center[0] = interpolated_u[0];
     p->swim.v_center[1] = interpolated_u[1];
     p->swim.v_center[2] = interpolated_u[2];
@@ -2613,14 +2612,12 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  force[0] = -lbpar.friction * (velocity[0] - interpolated_u[0] - p->p.mu_E[0]);
-  force[1] = -lbpar.friction * (velocity[1] - interpolated_u[1] - p->p.mu_E[1]);
-  force[2] = -lbpar.friction * (velocity[2] - interpolated_u[2] - p->p.mu_E[2]);
-#else
-  force[0] = -lbpar.friction * (velocity[0] - interpolated_u[0]);
-  force[1] = -lbpar.friction * (velocity[1] - interpolated_u[1]);
-  force[2] = -lbpar.friction * (velocity[2] - interpolated_u[2]);
+  v_drift += p->p.mu_E;
 #endif
+
+  force[0] = -lbpar.friction * (velocity[0] - v_drift[0]);
+  force[1] = -lbpar.friction * (velocity[1] - v_drift[1]);
+  force[2] = -lbpar.friction * (velocity[2] - v_drift[2]);
 
   force[0] = force[0] + p->lc.f_random[0];
   force[1] = force[1] + p->lc.f_random[1];
@@ -2636,13 +2633,11 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     for (int y = 0; y < 2; y++) {
       for (int x = 0; x < 2; x++) {
         auto &node = lbfields[node_index[(z * 2 + y) * 2 + x]];
+        auto const w = delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
 
-        node.force_density[0] +=
-            delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * delta_j[0];
-        node.force_density[1] +=
-            delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * delta_j[1];
-        node.force_density[2] +=
-            delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * delta_j[2];
+        node.force_density[0] += w * delta_j[0];
+        node.force_density[1] += w * delta_j[1];
+        node.force_density[2] += w * delta_j[2];
       }
     }
   }
@@ -2722,14 +2717,12 @@ Vector3d node_u(Lattice::index_t index) {
 } // namespace
 
 void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
-  Lattice::index_t node_index[8], index;
-  double delta[6];
-  double local_rho, local_j[3], interpolated_u[3];
-  double modes[19];
-  int x, y, z;
+  double interpolated_u[3];
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
+  Lattice::index_t node_index[8];
+  double delta[6];
   lblattice.map_position_to_lattice(pos, node_index, delta);
 
   /* calculate fluid velocity at particle's position
@@ -2737,9 +2730,9 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0;
 
-  for (z = 0; z < 2; z++) {
-    for (y = 0; y < 2; y++) {
-      for (x = 0; x < 2; x++) {
+  for (int z = 0; z < 2; z++) {
+    for (int y = 0; y < 2; y++) {
+      for (int x = 0; x < 2; x++) {
         auto const index = node_index[(z * 2 + y) * 2 + x];
         auto const local_u = node_u(index);
         auto const w = delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
