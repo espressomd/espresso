@@ -224,7 +224,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
   if (insert - s_buffer != n_s_buffer) {
     fprintf(stderr,
             "%d: INTERNAL ERROR: send buffer size %d "
-            "differs from what I put in (%ld)\n",
+            "differs from what I put in (%td)\n",
             this_node, n_s_buffer, insert - s_buffer);
     errexit();
   }
@@ -349,13 +349,13 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
   if (retrieve - r_buffer != n_r_buffer) {
     fprintf(stderr,
             "%d: recv buffer size %d differs "
-            "from what I read out (%ld)\n",
+            "from what I read out (%td)\n",
             this_node, n_r_buffer, retrieve - r_buffer);
     errexit();
   }
   if (bond_retrieve != r_bondbuffer.end()) {
     fprintf(stderr,
-            "%d: recv bond buffer was not used up, %ld elements remain\n",
+            "%d: recv bond buffer was not used up, %td elements remain\n",
             this_node, r_bondbuffer.end() - bond_retrieve);
     errexit();
   }
@@ -381,7 +381,7 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
   if (retrieve - r_buffer != n_r_buffer) {
     fprintf(stderr,
             "%d: recv buffer size %d differs "
-            "from what I put in %ld\n",
+            "from what I put in %td\n",
             this_node, n_r_buffer, retrieve - r_buffer);
     errexit();
   }
@@ -471,9 +471,12 @@ static int is_recv_op(int comm_type, int node) {
 }
 
 void ghost_communicator(GhostCommunicator *gc) {
+  ghost_communicator(gc, gc->data_parts);
+}
+
+void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   MPI_Status status;
   int n, n2;
-  int data_parts = gc->data_parts;
   /* if ghosts should have uptodate velocities, they have to be updated like
      positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
