@@ -602,7 +602,6 @@ int set_particle_q(int part, double q) {
 constexpr double ParticleProperties::q;
 #endif
 
-
 #ifdef LB_ELECTROHYDRODYNAMICS
 int set_particle_mu_E(int part, double mu_E[3]) {
   auto const pnode = get_particle_node(part);
