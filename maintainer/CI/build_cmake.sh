@@ -245,7 +245,7 @@ if $make_check; then
         done
     fi
     cmd "make -j${build_procs} check_unit_tests $make_params" || exit 1
-    cmd "make -j${build_procs} check_cmake_install $make_params" || exit 1
+    cmd "make check_cmake_install $make_params" || exit 1
 
     end "TEST"
 else
