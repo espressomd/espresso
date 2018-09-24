@@ -483,8 +483,6 @@ void dd_update_communicators_w_boxl() {
   }
 }
 
-#include "utils/print.hpp"
-
 #include <boost/container/flat_map.hpp>
 
 /** Init cell interactions for cell system domain decomposition.
@@ -511,13 +509,6 @@ void dd_init_cell_interactions() {
 
     return get_linear_index(ind[0], ind[1], ind[2], global_size);
   };
-
-  DD_CELLS_LOOP(m, n, o) {
-    cells[get_linear_index(m, n, o, dd.ghost_cell_grid)].local_position = {m, n,
-                                                                           o};
-    Utils::print(this_node, "cell", m, n, o, "global_index",
-                 global_index({m, n, o}));
-  }
 
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
