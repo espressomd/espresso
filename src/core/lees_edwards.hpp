@@ -21,5 +21,7 @@ typedef struct {
 
 extern lees_edwards_protocol_struct lees_edwards_protocol;
 void setup_lees_edwards_protocol();
+double lees_edwards_get_offset(double time);
+double lees_edwards_get_velocity(double time);
 
 #endif
