@@ -461,6 +461,12 @@ void propagate_vel_finalize_p_inst() {
 #endif
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+#ifdef LEES_EDWARDS
+	  if (p.p.lees_edwards_flag != 0) {
+	    p.m.v[j] -= p.p.lees_edwards_flag*lees_edwards_get_velocity(sim_time + time_step)/2 ;
+          }
+#endif
+
 #ifdef EXTERNAL_FORCES
       }
 #endif
@@ -708,14 +714,23 @@ void propagate_vel_pos() {
 #ifdef LEES_EDWARDS
     /* LE Push */
     {
-      auto shear_velocity = lees_edwards_protocol.velocity;
-      auto offset = lees_edwards_protocol.offset;
+      // Lees-Edwards acts at the zero step for the velocity half update and at the midstep
+      // for the position.
+      //
+      // The update of the velocity at the end of the time step is triggered by the flag and
+      // occurs in propagate_vel_finalize_p_inst
+      auto shear_velocity = lees_edwards_get_velocity(sim_time + time_step/2);
+      auto offset_at_half_time_step = lees_edwards_get_offset(sim_time + time_step/2);
       if (p.r.p[1] >= box_l[1]) {
-        p.m.v[0] -= shear_velocity;
-        p.r.p[0] += (offset - dround(offset * box_l_i[0]) * box_l[0]);
+	p.m.v[0] -= shear_velocity/2 ;
+	p.r.p[0] += (offset_at_half_time_step - dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
+	p.p.lees_edwards_flag = 1;
       } else if (p.r.p[1] <= 0.) {
-        p.m.v[0] += shear_velocity;
-        p.r.p[0] -= (offset - dround(offset * box_l_i[0]) * box_l[0]);
+        p.m.v[0] += shear_velocity/2 ;
+        p.r.p[0] -= (offset_at_half_time_step - dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
+	p.p.lees_edwards_flag = -1;
+      } else {
+	p.p.lees_edwards_flag = 0;
       }
     }
 #endif
