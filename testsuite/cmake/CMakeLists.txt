@@ -33,9 +33,7 @@ if(CMAKE_INSTALL_PREFIX STREQUAL "/tmp/espresso-unit-tests")
   cmake_test(FILE test_install_prefix.sh DEPENDENCIES BashUnitTests.sh)
 endif()
 
-if(TESTING_PYTHON AND NOT WITH_UBSAN AND NOT WITH_ASAN)
-  cmake_test(FILE test_python_bindings.sh DEPENDENCIES BashUnitTests.sh)
-endif()
+cmake_test(FILE test_python_bindings.sh DEPENDENCIES BashUnitTests.sh)
 
 add_custom_target(check_cmake_install COMMAND ${CMAKE_CTEST_COMMAND} -C serial --output-on-failure)
 add_dependencies(check_cmake_install setup_install)
