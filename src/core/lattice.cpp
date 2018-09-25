@@ -83,7 +83,8 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
 }
 
 void Lattice::map_position_to_lattice(const Vector3d &pos,
-                                      index_t node_index[8], double delta[6]) const {
+                                      index_t node_index[8],
+                                      double delta[6]) const {
   int ind[3];
 
   /* determine the elementary lattice cell containing the particle
