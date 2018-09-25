@@ -227,8 +227,34 @@ int mpi_check_runtime_errors(void);
  * procedures
  **********************************************/
 
+#if defined(OPEN_MPI)
+/*! Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
+    appears when CUDA is used. This is a bug in OpenMPI 2.0-2.1.2 and 3.0.0
+    according to
+    https://www.mail-archive.com/users@lists.open-mpi.org/msg32357.html,
+    so we set btl_vader_single_copy_mechanism = none.
+*/
+static void openmpi_fix_vader() {
+  if (OMPI_MAJOR_VERSION < 2 || OMPI_MAJOR_VERSION > 3)
+    return;
+  if (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION == 1 &&
+      OMPI_RELEASE_VERSION >= 3)
+    return;
+  if (OMPI_MAJOR_VERSION == 3 &&
+      (OMPI_MINOR_VERSION > 0 || OMPI_RELEASE_VERSION > 0))
+    return;
+
+  std::string varname = "btl_vader_single_copy_mechanism";
+  std::string varval = "none";
+
+  setenv((std::string("OMPI_MCA_") + varname).c_str(), varval.c_str(), 0);
+}
+#endif
+
 void mpi_init() {
 #ifdef OPEN_MPI
+  openmpi_fix_vader();
+
   void *handle = 0;
   int mode = RTLD_NOW | RTLD_GLOBAL;
 #ifdef RTLD_NOLOAD
@@ -1959,14 +1985,11 @@ void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
 }
 
 /********************* REQ_ICCP3M_ITERATION ********/
-int mpi_iccp3m_iteration(int dummy) {
+int mpi_iccp3m_iteration() {
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_iteration_slave, -1, 0);
 
   iccp3m_iteration();
-
-  COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node,
-                     dummy));
 
   return check_runtime_errors();
 #else
@@ -1974,47 +1997,29 @@ int mpi_iccp3m_iteration(int dummy) {
 #endif
 }
 
-void mpi_iccp3m_iteration_slave(int dummy, int dummy2) {
+void mpi_iccp3m_iteration_slave(int, int) {
 #ifdef ELECTROSTATICS
   iccp3m_iteration();
-  COMM_TRACE(
-      fprintf(stderr, "%d: iccp3m iteration task %d done.\n", dummy, dummy2));
 
   check_runtime_errors();
 #endif
 }
 
 /********************* REQ_ICCP3M_INIT********/
-int mpi_iccp3m_init(int n_induced_charges) {
+int mpi_iccp3m_init() {
 #ifdef ELECTROSTATICS
-  /* nothing has to be done on the master node, this
-   * passes only the number of induced charges, in order for
-   * slaves to allocate memory */
+  mpi_call(mpi_iccp3m_init_slave, -1, -1);
 
-  mpi_call(mpi_iccp3m_init_slave, -1, n_induced_charges);
-
-  bcast_iccp3m_cfg();
-
-  COMM_TRACE(fprintf(stderr, "%d: iccp3m init task %d done.\n", this_node,
-                     n_induced_charges));
-
+  boost::mpi::broadcast(comm_cart, iccp3m_cfg, 0);
   return check_runtime_errors();
 #else
   return 0;
 #endif
 }
 
-void mpi_iccp3m_init_slave(int node, int dummy) {
+void mpi_iccp3m_init_slave(int, int) {
 #ifdef ELECTROSTATICS
-  COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node,
-                     dummy));
-
-  if (iccp3m_initialized == 0) {
-    iccp3m_init();
-    iccp3m_initialized = 1;
-  }
-
-  bcast_iccp3m_cfg();
+  boost::mpi::broadcast(comm_cart, iccp3m_cfg, 0);
 
   check_runtime_errors();
 #endif

@@ -110,8 +110,7 @@ void force_calc() {
 #endif // LB_GPU
 
 #ifdef ELECTROSTATICS
-  if (iccp3m_initialized && iccp3m_cfg.set_flag)
-    iccp3m_iteration();
+  iccp3m_iteration();
 #endif
   init_forces();
 

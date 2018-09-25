@@ -29,7 +29,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <ctime>
 
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
@@ -38,27 +37,22 @@
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "icc.hpp"
 
-#include "communication.hpp"
-
 #include "cells.hpp"
+#include "communication.hpp"
 #include "config.hpp"
 #include "forces.hpp"
 #include "global.hpp"
 #include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include "short_range_loop.hpp"
 #include "utils/NoOp.hpp"
-
-using std::ostringstream;
 
 #ifdef ELECTROSTATICS
 
 iccp3m_struct iccp3m_cfg;
 
-int iccp3m_initialized = 0;
 /* functions that are used in icc* to compute the electric field acting on the
  * induced charges, excluding forces other than the electrostatic ones */
 void init_forces_iccp3m();
@@ -126,184 +120,101 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   /***********************************************/
 }
 
-void iccp3m_set_initialized() { iccp3m_initialized = 1; }
-
-void iccp3m_init(void) {
-  iccp3m_cfg.set_flag = 0;
-  iccp3m_cfg.areas = nullptr;
-  iccp3m_cfg.ein = nullptr;
-  iccp3m_cfg.nvectorx = nullptr;
-  iccp3m_cfg.nvectory = nullptr;
-  iccp3m_cfg.nvectorz = nullptr;
-  iccp3m_cfg.extx = 0;
-  iccp3m_cfg.exty = 0;
-  iccp3m_cfg.extz = 0;
-  iccp3m_cfg.first_id = 0;
-  iccp3m_cfg.num_iteration = 30;
-  iccp3m_cfg.convergence = 1e-2;
-  iccp3m_cfg.relax = 0.7;
-  iccp3m_cfg.eout = 1;
-  iccp3m_cfg.citeration = 0;
-}
-
 void iccp3m_alloc_lists() {
-  iccp3m_cfg.areas = (double *)Utils::realloc(
-      iccp3m_cfg.areas, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.ein = (double *)Utils::realloc(iccp3m_cfg.ein,
-                                            (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.nvectorx = (double *)Utils::realloc(
-      iccp3m_cfg.nvectorx, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.nvectory = (double *)Utils::realloc(
-      iccp3m_cfg.nvectory, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.nvectorz = (double *)Utils::realloc(
-      iccp3m_cfg.nvectorz, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.sigma = (double *)Utils::realloc(
-      iccp3m_cfg.sigma, (iccp3m_cfg.n_ic) * sizeof(double));
-}
+  auto const n_ic = iccp3m_cfg.n_ic;
 
-int bcast_iccp3m_cfg(void) {
-  int i;
-  MPI_Bcast((int *)&iccp3m_cfg.n_ic, 1, MPI_INT, 0, comm_cart);
-  /* allocates Memory on slave nodes
-   * */
-  if (this_node != 0) {
-    iccp3m_cfg.areas = (double *)Utils::realloc(
-        iccp3m_cfg.areas, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.ein = (double *)Utils::realloc(
-        iccp3m_cfg.ein, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectorx = (double *)Utils::realloc(
-        iccp3m_cfg.nvectorx, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectory = (double *)Utils::realloc(
-        iccp3m_cfg.nvectory, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectorz = (double *)Utils::realloc(
-        iccp3m_cfg.nvectorz, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.sigma = (double *)Utils::realloc(
-        iccp3m_cfg.sigma, (iccp3m_cfg.n_ic) * sizeof(double));
-  }
-
-  MPI_Bcast((int *)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, comm_cart);
-  MPI_Bcast((int *)&iccp3m_cfg.first_id, 1, MPI_INT, 0, comm_cart);
-  MPI_Bcast((double *)&iccp3m_cfg.convergence, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast((double *)&iccp3m_cfg.eout, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast((double *)&iccp3m_cfg.relax, 1, MPI_DOUBLE, 0, comm_cart);
-
-  /* broadcast the vectors element by element. This is slow
-   * but safe and only performed at the beginning of each simulation*/
-  for (i = 0; i < iccp3m_cfg.n_ic; i++) {
-    MPI_Bcast((double *)&iccp3m_cfg.areas[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double *)&iccp3m_cfg.ein[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double *)&iccp3m_cfg.nvectorx[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double *)&iccp3m_cfg.nvectory[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double *)&iccp3m_cfg.nvectorz[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double *)&iccp3m_cfg.sigma[i], 1, MPI_DOUBLE, 0, comm_cart);
-  }
-  MPI_Bcast((double *)&iccp3m_cfg.extx, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast((double *)&iccp3m_cfg.exty, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast((double *)&iccp3m_cfg.extz, 1, MPI_DOUBLE, 0, comm_cart);
-
-  MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_INT, 0, comm_cart);
-  MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_INT, 0, comm_cart);
-
-  return 0;
+  iccp3m_cfg.areas.resize(n_ic);
+  iccp3m_cfg.ein.resize(n_ic);
+  iccp3m_cfg.normals.resize(n_ic);
+  iccp3m_cfg.sigma.resize(n_ic);
 }
 
 int iccp3m_iteration() {
-  double fdot, hold, hnew, del_eps, diff = 0.0, difftemp = 0.0, ex, ey, ez,
-                                    pref;
-  Cell *cell;
-  int c, np;
-  Particle *part;
-  int i, j, id;
-  double globalmax = 0;
-  double f1, f2 = 0;
+  if (iccp3m_cfg.n_ic == 0)
+    return 0;
 
   iccp3m_sanity_check();
 
   if ((iccp3m_cfg.eout <= 0)) {
-    ostringstream msg;
-    msg << "ICCP3M: nonpositive dielectric constant is not allowed. Put a "
-           "decent exception here\n";
-    runtimeError(msg);
+    runtimeErrorMsg()
+        << "ICCP3M: nonpositive dielectric constant is not allowed.";
   }
 
-  pref = 1.0 / (coulomb.prefactor * 6.283185307);
+  auto const pref = 1.0 / (coulomb.prefactor * 6.283185307);
   iccp3m_cfg.citeration = 0;
 
-  for (j = 0; j < iccp3m_cfg.num_iteration; j++) {
+  double globalmax = 1e100;
+
+  for (int j = 0; j < iccp3m_cfg.num_iteration; j++) {
     double hmax = 0.;
 
     force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding
                             source source interaction*/
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
-    diff = 0;
-    for (c = 0; c < local_cells.n; c++) {
-      cell = local_cells.cell[c];
-      part = cell->part;
-      np = cell->n;
-      for (i = 0; i < np; i++) {
-        if (part[i].p.identity < iccp3m_cfg.n_ic + iccp3m_cfg.first_id &&
-            part[i].p.identity >= iccp3m_cfg.first_id) {
-          id = part[i].p.identity - iccp3m_cfg.first_id;
-          /* the dielectric-related prefactor: */
-          del_eps = (iccp3m_cfg.ein[id] - iccp3m_cfg.eout) /
-                    (iccp3m_cfg.ein[id] + iccp3m_cfg.eout);
-          /* calculate the electric field at the certain position */
-          ex = part[i].f.f[0] / part[i].p.q;
-          ey = part[i].f.f[1] / part[i].p.q;
-          ez = part[i].f.f[2] / part[i].p.q;
-          /* let's add the contribution coming from the external field */
-          ex += iccp3m_cfg.extx;
-          ey += iccp3m_cfg.exty;
-          ez += iccp3m_cfg.extz;
-          if (ex == 0 && ey == 0 && ez == 0) {
-            ostringstream msg;
-            msg << "ICCP3M found zero electric field on a charge. This must "
-                   "never happen";
-            runtimeError(msg);
-          }
-          /* the dot product   */
-          fdot = ex * iccp3m_cfg.nvectorx[id] + ey * iccp3m_cfg.nvectory[id] +
-                 ez * iccp3m_cfg.nvectorz[id];
-          /* recalculate the old charge density */
-          hold = part[i].p.q / iccp3m_cfg.areas[id];
-          /* determine if it is higher than the previously highest charge
-           * density */
-          if (fabs(hold) > hmax)
-            hmax = fabs(hold);
-          f1 = del_eps * fdot * pref;
-          if (iccp3m_cfg.sigma != 0)
-            f2 = (2 * iccp3m_cfg.eout) /
-                 (iccp3m_cfg.eout + iccp3m_cfg.ein[id]) *
-                 (iccp3m_cfg.sigma[id]);
-          /* relative variation: never use an estimator which can be negative
-           * here */
-          hnew =
-              (1. - iccp3m_cfg.relax) * hold + (iccp3m_cfg.relax) * (f1 + f2);
-          difftemp = fabs(1 * (hnew - hold) / (hmax + fabs(hnew + hold)));
-          // if(difftemp > diff && part[i].p.q > 1e-5)
-          if (difftemp > diff)
-            diff =
-                difftemp; /* Take the largest error to check for convergence */
-          part[i].p.q = hnew * iccp3m_cfg.areas[id];
+    double diff = 0;
 
-          /* check if the charge now is more than 1e6, to determine if ICC still
-           * leads to reasonable results */
-          /* this is kind a arbitrary measure but, does a good job spotting
-           * divergence !*/
-          if (fabs(part[i].p.q) > 1e6) {
-            ostringstream msg;
-            msg << "too big charge assignment in iccp3m! q >1e6 , assigned "
-                   "charge= "
-                << part[i].p.q << "\n";
-            runtimeError(msg);
-            diff = 1e90; /* A very high value is used as error code */
-            break;
-          }
+    for (auto &p : local_cells.particles()) {
+      if (p.p.identity < iccp3m_cfg.n_ic + iccp3m_cfg.first_id &&
+          p.p.identity >= iccp3m_cfg.first_id) {
+        auto const id = p.p.identity - iccp3m_cfg.first_id;
+        /* the dielectric-related prefactor: */
+        auto const del_eps = (iccp3m_cfg.ein[id] - iccp3m_cfg.eout) /
+                             (iccp3m_cfg.ein[id] + iccp3m_cfg.eout);
+        /* calculate the electric field at the certain position */
+        auto const E = p.f.f / p.p.q + iccp3m_cfg.ext_field;
+
+        if (E[0] == 0 && E[1] == 0 && E[2] == 0) {
+          runtimeErrorMsg()
+              << "ICCP3M found zero electric field on a charge. This must "
+                 "never happen";
         }
-      } /* cell particles */
-    }   /* local cells */
+
+        /* recalculate the old charge density */
+        auto const hold = p.p.q / iccp3m_cfg.areas[id];
+        /* determine if it is higher than the previously highest charge
+         * density */
+        hmax = std::max(hmax, std::abs(hold));
+
+        auto const f1 = del_eps * pref * (E * iccp3m_cfg.normals[id]);
+        auto const f2 = (not iccp3m_cfg.sigma.empty())
+                            ? (2 * iccp3m_cfg.eout) /
+                                  (iccp3m_cfg.eout + iccp3m_cfg.ein[id]) *
+                                  (iccp3m_cfg.sigma[id])
+                            : 0.;
+        /* relative variation: never use an estimator which can be negative
+         * here */
+        auto const hnew =
+            (1. - iccp3m_cfg.relax) * hold + (iccp3m_cfg.relax) * (f1 + f2);
+
+        /* Take the largest error to check for convergence */
+        auto const relative_difference =
+            std::abs(1 * (hnew - hold) / (hmax + std::abs(hnew + hold)));
+
+        diff = std::max(diff, relative_difference);
+
+        p.p.q = hnew * iccp3m_cfg.areas[id];
+
+        /* check if the charge now is more than 1e6, to determine if ICC still
+         * leads to reasonable results */
+        /* this is kind a arbitrary measure but, does a good job spotting
+         * divergence !*/
+        if (std::abs(p.p.q) > 1e6) {
+          runtimeErrorMsg()
+              << "too big charge assignment in iccp3m! q >1e6 , assigned "
+                 "charge= "
+              << p.p.q;
+
+          diff = 1e90; /* A very high value is used as error code */
+          break;
+        }
+      }
+    } /* cell particles */
+    /* Update charges on ghosts. */
+    ghost_communicator(&cell_structure.exchange_ghosts_comm);
+
     iccp3m_cfg.citeration++;
+
     MPI_Allreduce(&diff, &globalmax, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
 
     if (globalmax < iccp3m_cfg.convergence)
@@ -311,9 +222,6 @@ int iccp3m_iteration() {
     if (diff > 1e89) {
       return iccp3m_cfg.citeration++;
     }
-
-    /* Update charges on ghosts. */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm);
   } /* iteration */
 
   if (globalmax > iccp3m_cfg.convergence) {
@@ -354,17 +262,13 @@ void calc_long_range_forces_iccp3m() {
   if (!(coulomb.method == COULOMB_ELC_P3M ||
         coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_P3M ||
         coulomb.method == COULOMB_MMM2D || coulomb.method == COULOMB_MMM1D)) {
-    ostringstream msg;
-    msg << "ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ";
-    runtimeError(msg);
+    runtimeErrorMsg() << "ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ";
   }
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
     if (elc_params.dielectric_contrast_on) {
-      ostringstream msg;
-      msg << "ICCP3M conflicts with ELC dielectric constrast";
-      runtimeError(msg);
+      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric contrast";
     }
     p3m_charge_assign();
     p3m_calc_kspace_forces(1, 0);
@@ -404,24 +308,18 @@ int iccp3m_sanity_check() {
 #ifdef P3M
   case COULOMB_ELC_P3M: {
     if (elc_params.dielectric_contrast_on) {
-      ostringstream msg;
-      msg << "ICCP3M conflicts with ELC dielectric constrast";
-      runtimeError(msg);
+      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric contrast";
       return 1;
     }
     break;
   }
 #endif
   case COULOMB_DH: {
-    ostringstream msg;
-    msg << "ICCP3M does not work with Debye-Hueckel iccp3m.h";
-    runtimeError(msg);
+    runtimeErrorMsg() << "ICCP3M does not work with Debye-Hueckel.";
     return 1;
   }
   case COULOMB_RF: {
-    ostringstream msg;
-    msg << "ICCP3M does not work with COULOMB_RF iccp3m.h";
-    runtimeError(msg);
+    runtimeErrorMsg() << "ICCP3M does not work with COULOMB_RF.";
     return 1;
   }
   default:
@@ -430,9 +328,7 @@ int iccp3m_sanity_check() {
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    ostringstream msg;
-    msg << "ICCP3M does not work in the NPT ensemble";
-    runtimeError(msg);
+    runtimeErrorMsg() << "ICCP3M does not work in the NPT ensemble";
     return 1;
   }
 #endif
