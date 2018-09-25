@@ -2567,6 +2567,30 @@ void lb_reinit_force_densities() {
 #endif // LB_BOUNDARIES
 }
 
+namespace {
+template <typename Op>
+void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
+                           Op &&op) {
+  Lattice::index_t node_index[8];
+  double delta[6];
+
+  /* determine elementary lattice cell surrounding the particle
+     and the relative position of the particle in this cell */
+  lattice.map_position_to_lattice(pos, node_index, delta);
+
+  for (int z = 0; z < 2; z++) {
+    for (int y = 0; y < 2; y++) {
+      for (int x = 0; x < 2; x++) {
+        auto &index = node_index[(z * 2 + y) * 2 + x];
+        auto const w = delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
+
+        op(index, w);
+      }
+    }
+  }
+}
+} // namespace
+
 /***********************************************************************/
 /** \name Coupling part */
 /***********************************************************************/
@@ -2580,13 +2604,7 @@ void lb_reinit_force_densities() {
  * @param force      Coupling force between particle and fluid (Output).
  */
 inline void lb_viscous_coupling(Particle *p, double force[3]) {
-  Lattice::index_t node_index[8];
-  double delta[6];
   double interpolated_u[3], delta_j[3];
-
-  /* determine elementary lattice cell surrounding the particle
-     and the relative position of the particle in this cell */
-  lblattice.map_position_to_lattice(p->r.p, node_index, delta);
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
@@ -2629,18 +2647,14 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   delta_j[1] = -force[1] * time_step * lbpar.tau / lbpar.agrid;
   delta_j[2] = -force[2] * time_step * lbpar.tau / lbpar.agrid;
 
-  for (int z = 0; z < 2; z++) {
-    for (int y = 0; y < 2; y++) {
-      for (int x = 0; x < 2; x++) {
-        auto &node = lbfields[node_index[(z * 2 + y) * 2 + x]];
-        auto const w = delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
+  lattice_interpolation(lblattice, p->r.p,
+                        [&delta_j](Lattice::index_t index, double w) {
+                          auto &node = lbfields[index];
 
-        node.force_density[0] += w * delta_j[0];
-        node.force_density[1] += w * delta_j[1];
-        node.force_density[2] += w * delta_j[2];
-      }
-    }
-  }
+                          node.force_density[0] += w * delta_j[0];
+                          node.force_density[1] += w * delta_j[1];
+                          node.force_density[2] += w * delta_j[2];
+                        });
 
   // map_position_to_lattice: position ... not inside a local plaquette in ...
 
@@ -2666,10 +2680,6 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     int corner[3] = {0, 0, 0};
     fold_position(source_position, corner);
 
-    // get lattice cell corresponding to source position and interpolate
-    // velocity
-    lblattice.map_position_to_lattice(Vector3d(source_position), node_index,
-                                      delta);
     lb_lbfluid_get_interpolated_velocity(Vector3d(source_position),
                                          p->swim.v_source.data());
 
@@ -2681,20 +2691,14 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     delta_j[2] =
         -p->swim.f_swim * p->r.quatu[2] * time_step * lbpar.tau / lbpar.agrid;
 
-    for (z = 0; z < 2; z++) {
-      for (y = 0; y < 2; y++) {
-        for (x = 0; x < 2; x++) {
-          local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
+    lattice_interpolation(lblattice, source_position,
+                          [&delta_j](Lattice::index_t index, double w) {
+                            auto &node = lbfields[index];
 
-          local_f[0] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
-                        delta_j[0];
-          local_f[1] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
-                        delta_j[1];
-          local_f[2] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
-                        delta_j[2];
-        }
-      }
-    }
+                            node.force_density[0] += w * delta_j[0];
+                            node.force_density[1] += w * delta_j[1];
+                            node.force_density[2] += w * delta_j[2];
+                          });
   }
 #endif
 }
@@ -2717,32 +2721,17 @@ Vector3d node_u(Lattice::index_t index) {
 } // namespace
 
 void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
-  double interpolated_u[3];
-
-  /* determine elementary lattice cell surrounding the particle
-     and the relative position of the particle in this cell */
-  Lattice::index_t node_index[8];
-  double delta[6];
-  lblattice.map_position_to_lattice(pos, node_index, delta);
+  Vector3d interpolated_u{};
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0;
+  lattice_interpolation(lblattice, pos,
+                        [&interpolated_u](Lattice::index_t index, double w) {
+                          auto &node = lbfields[index];
 
-  for (int z = 0; z < 2; z++) {
-    for (int y = 0; y < 2; y++) {
-      for (int x = 0; x < 2; x++) {
-        auto const index = node_index[(z * 2 + y) * 2 + x];
-        auto const local_u = node_u(index);
-        auto const w = delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
-
-        interpolated_u[0] += w * local_u[0];
-        interpolated_u[1] += w * local_u[1];
-        interpolated_u[2] += w * local_u[2];
-      }
-    }
-  }
+                          interpolated_u += w * node_u(index);
+                        });
 
   v[0] = interpolated_u[0];
   v[1] = interpolated_u[1];
@@ -2750,7 +2739,6 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
   v[0] *= lbpar.agrid / lbpar.tau;
   v[1] *= lbpar.agrid / lbpar.tau;
   v[2] *= lbpar.agrid / lbpar.tau;
-  return;
 }
 
 /** Calculate particle lattice interactions.
