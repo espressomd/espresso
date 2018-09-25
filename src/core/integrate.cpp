@@ -557,8 +557,8 @@ void propagate_vel_finalize_p_inst() {
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 #ifdef LEES_EDWARDS
-	  if (p.p.lees_edwards_flag != 0) {
-	    p.m.v[j] -= p.p.lees_edwards_flag*lees_edwards_get_velocity(sim_time + time_step)/2 ;
+	if (j==0 && p.p.lees_edwards_flag != 0) {
+	    p.m.v[0] += p.p.lees_edwards_flag*lees_edwards_get_velocity(sim_time + time_step)/2 ;
           }
 #endif
 
@@ -836,12 +836,12 @@ void propagate_vel_pos() {
       auto offset_at_half_time_step = lees_edwards_get_offset(sim_time + time_step/2);
       if (p.r.p[1] >= box_l[1]) {
 	p.m.v[0] -= shear_velocity/2 ;
-	p.r.p[0] += (offset_at_half_time_step - dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
-	p.p.lees_edwards_flag = 1;
+	p.r.p[0] -= (offset_at_half_time_step - dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
+	p.p.lees_edwards_flag = -1;
       } else if (p.r.p[1] <= 0.) {
         p.m.v[0] += shear_velocity/2 ;
-        p.r.p[0] -= (offset_at_half_time_step - dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
-	p.p.lees_edwards_flag = -1;
+        p.r.p[0] += (offset_at_half_time_step - dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
+	p.p.lees_edwards_flag = 1;
       } else {
 	p.p.lees_edwards_flag = 0;
       }
