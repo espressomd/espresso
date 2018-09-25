@@ -322,7 +322,7 @@ void lb_init_boundaries() {
             node.boundary = the_boundary + 1;
             node.slip_velocity =
                 LBBoundaries::lbboundaries[the_boundary]->velocity() *
-                (lbpar.agrid / lbpar.tau);
+                (lbpar.tau / lbpar.agrid);
           } else {
             lbfields[get_linear_index(x, y, z, lblattice.halo_grid)].boundary =
                 0;
@@ -429,13 +429,10 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
           for (i = 0; i < 19; i++) {
             population_shift = 0;
             for (l = 0; l < 3; l++) {
-              population_shift -=
-                  lbpar.agrid * lbpar.agrid * lbpar.agrid * lbpar.rho * 2 *
-                  lbmodel.c[i][l] * lbmodel.w[i] *
-                  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
-                      .velocity()[l] *
-                  (lbpar.tau / lbpar.agrid) / // TODO
-                  lbmodel.c_sound_sq;
+              population_shift -= lbpar.agrid * lbpar.agrid * lbpar.agrid *
+                                  lbpar.rho * 2 * lbmodel.c[i][l] *
+                                  lbmodel.w[i] * lbfields[k].slip_velocity[l] /
+                                  lbmodel.c_sound_sq;
             }
 
             if (x - lbmodel.c[i][0] > 0 &&
