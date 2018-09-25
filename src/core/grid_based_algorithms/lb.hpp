@@ -115,6 +115,7 @@ struct LB_FluidNode {
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
   int boundary;
+  Vector3d slip_velocity = {};
 #endif // LB_BOUNDARIES
 
   /** local force density */
