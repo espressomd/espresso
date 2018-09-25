@@ -57,6 +57,8 @@ void initialize() {
       "Shapes::Stomatocyte");
   ScriptInterface::register_new<ScriptInterface::Shapes::SimplePore>(
       "Shapes::SimplePore");
+  ScriptInterface::register_new<ScriptInterface::Shapes::Torus>(
+      "Shapes::Torus");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */
