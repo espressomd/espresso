@@ -69,9 +69,9 @@ class LeesEdwards(ut.TestCase):
     system.lees_edwards = ["steady_shear", 0.1]
     system.part.add(pos=[2.5, 4.9, 2.5], v=[0.0, 0.1, 0.0], id=0, type=0)
 
-    system.integrator.run(2)
+    system.integrator.run(1)
 
-    expected_pos = [2.4, 5.1, 2.5]
+    expected_pos = [2.45, 5.0, 2.5]
     expected_vel = [-0.1, 0.1, 0.0]
     
     np.testing.assert_almost_equal(system.part[0].pos, expected_pos)
@@ -84,12 +84,12 @@ class LeesEdwards(ut.TestCase):
     system.time = 0.0
     system.part.add(pos=[2.5, 0.1, 2.5], v=[0.0, -0.1, 0.0], id=0, type=0)
 
-    system.integrator.run()
+    system.integrator.run(1)
 
-    expected_pos = [2.6, -0.1, 2.5]
+    expected_pos = [2.55, 0., 2.5]
     expected_vel = [0.1, -0.1, 0.0]
     
-    print(system.part[0])
+    print(system.part[0].pos_folded)
 
     np.testing.assert_almost_equal(system.part[0].pos, expected_pos)
     np.testing.assert_almost_equal(system.part[0].v, expected_vel)
