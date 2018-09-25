@@ -30,6 +30,7 @@
 #include "Sphere.hpp"
 #include "SpheroCylinder.hpp"
 #include "Stomatocyte.hpp"
+#include "Torus.hpp"
 #include "Wall.hpp"
 
 namespace ScriptInterface {
