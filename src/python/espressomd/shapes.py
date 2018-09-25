@@ -232,7 +232,6 @@ class Stomatocyte(ScriptInterfaceHelper):
 
 
 @script_interface_register
-
 class Torus(ScriptInterfaceHelper):
 
     """

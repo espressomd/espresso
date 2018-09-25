@@ -22,15 +22,14 @@ public:
   Vector3d e_z;
 
   /** @brief Calculate derived parameters. */
-  void precalc() {
-    e_z = m_normal / m_normal.norm();
-  }
+  void precalc() { e_z = m_normal / m_normal.norm(); }
 
 public:
   Torus()
       : m_center({0.0, 0.0, 0.0}), m_normal({1.0, 0.0, 0.0}), m_rad(0.0),
-        m_tube_rad(0.0), m_direction(1.0) { precalc(); }
-
+        m_tube_rad(0.0), m_direction(1.0) {
+    precalc();
+  }
 
   double radius() const { return m_rad; }
   void set_radius(double const &radius) {
@@ -55,7 +54,6 @@ public:
 
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;
-
 };
-}
+} // namespace Shapes
 #endif
