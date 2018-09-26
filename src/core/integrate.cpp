@@ -837,11 +837,13 @@ void propagate_vel_pos() {
       if (p.r.p[1] >= box_l[1]) {
 	p.m.v[0] -= shear_velocity/2 ;
 	p.r.p[0] -= (offset_at_half_time_step - dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
-	p.p.lees_edwards_flag = -1;
+	p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
+                                    // propagate_vel_finalize_p_inst
       } else if (p.r.p[1] <= 0.) {
         p.m.v[0] += shear_velocity/2 ;
         p.r.p[0] += (offset_at_half_time_step - dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
-	p.p.lees_edwards_flag = 1;
+	p.p.lees_edwards_flag = 1; // perform a positive half velocity shift in
+                                   // propagate_vel_finalize_p_inst
       } else {
 	p.p.lees_edwards_flag = 0;
       }
