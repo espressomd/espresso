@@ -17,7 +17,6 @@ if(WITH_PYTHON AND PYTHONINTERP_FOUND)
     COMMAND "${PYTHON_EXECUTABLE}" -c "from distutils import sysconfig as sc;print(sc.get_python_lib(prefix='', plat_specific=True, standard_lib=False))"
     OUTPUT_VARIABLE Python_SITEARCH
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-  find_program(IPYTHON_EXECUTABLE NAMES ipython)
 else()
   set(TESTING_PYTHON FALSE)
 endif()
