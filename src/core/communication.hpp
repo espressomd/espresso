@@ -567,12 +567,12 @@ void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary);
 /** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
     @return nonzero on error
 */
-int mpi_iccp3m_iteration(int dummy);
+int mpi_iccp3m_iteration();
 
 /** Issue REQ_ICCP3M_INIT: performs iccp3m initialization
     @return nonzero on error
 */
-int mpi_iccp3m_init(int dummy);
+int mpi_iccp3m_init();
 
 /** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
  * @param node  processor to send to

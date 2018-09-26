@@ -1,19 +1,19 @@
 # Copyright (C) 2010-2018 The ESPResSo project
-#  
+#
 # This file is part of ESPResSo.
-#  
+#
 # ESPResSo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#  
+#
 # ESPResSo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import numpy as np
 import unittest as ut
@@ -25,9 +25,14 @@ import tests_common
 
 
 @ut.skipIf(
-    not espressomd.has_features('LB_GPU') or espressomd.has_features('SHANCHEN'),
-    "LB_GPU not compiled in or SHANCHEN activated, can not check functionality.")
+    not (
+        espressomd.has_features(
+            'LB') or espressomd.has_features(
+            'LB_GPU')) or espressomd.has_features(
+                'SHANCHEN'),
+           "Both LB and LB_GPU not compiled in or SHANCHEN activated, can not check functionality.")
 class TestCylindricalLBObservable(ut.TestCase):
+
     """
     Testcase for the CylindricalFluxDensityObservable.
 
@@ -54,9 +59,13 @@ class TestCylindricalLBObservable(ut.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.lbf_gpu = espressomd.lb.LBFluidGPU(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
-        self.lbf_cpu = espressomd.lb.LBFluid(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
-    
+        if espressomd.has_features('LB_GPU'):
+            self.lbf_gpu = espressomd.lb.LBFluidGPU(
+                agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+        if espressomd.has_features('LB'):
+            self.lbf_cpu = espressomd.lb.LBFluid(
+                agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+
     def tearDown(self):
         del self.positions[:]
 
@@ -83,7 +92,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         for i, p in enumerate(self.positions):
             tmp = p - np.array(self.params['center'])
             tmp = self.swap_axis_inverse(tmp, self.params['axis'])
-            positions[i,:] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(
+            positions[i, :] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(
                 tmp)
         return positions
 
@@ -104,8 +113,8 @@ class TestCylindricalLBObservable(ut.TestCase):
                 [node_positions[i], node_positions[i], node_positions[i]])
             v_y = (position[0] * np.sqrt(position[0]**2.0 + position[1]**2.0) * self.v_phi +
                    position[1] * self.v_r) / np.sqrt(position[0]**2.0 + position[1]**2.0)
-            v_x = (self.v_r * np.sqrt(position[0]**2.0 + position[1] **
-                                      2.0) - position[1] * v_y) / position[0]
+            v_x = (
+                self.v_r * np.sqrt(position[0]**2.0 + position[1]**2.0) - position[1] * v_y) / position[0]
             velocity = np.array([v_x, v_y, self.v_z])
             velocity = self.swap_axis(velocity, self.params['axis'])
             position = self.swap_axis(position, self.params['axis'])
@@ -125,8 +134,8 @@ class TestCylindricalLBObservable(ut.TestCase):
                     position = np.array([x, y, z])
                     v_y = (position[0] * np.sqrt(position[0]**2.0 + position[1]**2.0) * self.v_phi +
                            position[1] * self.v_r) / np.sqrt(position[0]**2.0 + position[1]**2.0)
-                    v_x = (self.v_r * np.sqrt(position[0]**2.0 + position[1] **
-                                      2.0) - position[1] * v_y) / position[0]
+                    v_x = (
+                        self.v_r * np.sqrt(position[0]**2.0 + position[1]**2.0) - position[1] * v_y) / position[0]
                     velocity = np.array([v_x, v_y, self.v_z])
                     velocity = self.swap_axis(velocity, self.params['axis'])
                     position = self.swap_axis(position, self.params['axis'])
@@ -147,7 +156,7 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['max_z'])
         # Normalization
         for i in range(self.params['n_r_bins']):
-            histogram[i,:,:] /= bin_volume[i]
+            histogram[i, :, :] /= bin_volume[i]
         return histogram
 
     def LB_fluxdensity_profile_test(self):
@@ -162,13 +171,16 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['n_phi_bins'],
             self.params['n_z_bins'],
             3)
-        core_hist_v_r = core_hist[:,:,:, 0]
-        core_hist_v_phi = core_hist[:,:,:, 1]
-        core_hist_v_z = core_hist[:,:,:, 2]
+        core_hist_v_r = core_hist[:, :, :, 0]
+        core_hist_v_phi = core_hist[:, :, :, 1]
+        core_hist_v_z = core_hist[:, :, :, 2]
         self.pol_positions = self.pol_coords()
-        np_hist, _ = np.histogramdd(self.pol_positions, bins=(self.params['n_r_bins'],
-                                                              self.params['n_phi_bins'],
-                                                              self.params['n_z_bins']),
+        np_hist, _ = np.histogramdd(
+            self.pol_positions, bins=(self.params['n_r_bins'],
+                                      self.params[
+                                      'n_phi_bins'],
+                                      self.params[
+                                      'n_z_bins']),
                                     range=[(self.params['min_r'],
                                             self.params['max_r']),
                                            (self.params['min_phi'],
@@ -180,7 +192,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(
             np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
-        self.assertEqual(p.n_values(), len(np_hist.flatten())*3)
+        self.assertEqual(p.n_values(), len(np_hist.flatten()) * 3)
 
     def LB_velocity_profile_at_particle_positions_test(self):
         self.set_fluid_velocity()
@@ -194,13 +206,16 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['n_phi_bins'],
             self.params['n_z_bins'],
             3)
-        core_hist_v_r = core_hist[:,:,:, 0]
-        core_hist_v_phi = core_hist[:,:,:, 1]
-        core_hist_v_z = core_hist[:,:,:, 2]
+        core_hist_v_r = core_hist[:, :, :, 0]
+        core_hist_v_phi = core_hist[:, :, :, 1]
+        core_hist_v_z = core_hist[:, :, :, 2]
         self.pol_positions = self.pol_coords()
-        np_hist, _ = np.histogramdd(self.pol_positions, bins=(self.params['n_r_bins'],
-                                                              self.params['n_phi_bins'],
-                                                              self.params['n_z_bins']),
+        np_hist, _ = np.histogramdd(
+            self.pol_positions, bins=(self.params['n_r_bins'],
+                                      self.params[
+                                      'n_phi_bins'],
+                                      self.params[
+                                      'n_z_bins']),
                                     range=[(self.params['min_r'],
                                             self.params['max_r']),
                                            (self.params['min_phi'],
@@ -211,10 +226,11 @@ class TestCylindricalLBObservable(ut.TestCase):
             if x[...] > 0.0:
                 x[...] /= x[...]
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
-        np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
+        np.testing.assert_array_almost_equal(
+            np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
-        self.assertEqual(p.n_values(), len(np_hist.flatten())*3)
-    
+        self.assertEqual(p.n_values(), len(np_hist.flatten()) * 3)
+
     def LB_velocity_profile_test(self):
         self.set_fluid_velocity_on_all_nodes()
         # Set up the Observable.
@@ -235,13 +251,16 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.params['n_phi_bins'],
             self.params['n_z_bins'],
             3)
-        core_hist_v_r = core_hist[:,:,:, 0]
-        core_hist_v_phi = core_hist[:,:,:, 1]
-        core_hist_v_z = core_hist[:,:,:, 2]
+        core_hist_v_r = core_hist[:, :, :, 0]
+        core_hist_v_phi = core_hist[:, :, :, 1]
+        core_hist_v_z = core_hist[:, :, :, 2]
         self.pol_positions = self.pol_coords()
-        np_hist, _ = np.histogramdd(self.pol_positions, bins=(self.params['n_r_bins'],
-                                                              self.params['n_phi_bins'],
-                                                              self.params['n_z_bins']),
+        np_hist, _ = np.histogramdd(
+            self.pol_positions, bins=(self.params['n_r_bins'],
+                                      self.params[
+                                      'n_phi_bins'],
+                                      self.params[
+                                      'n_z_bins']),
                                     range=[(self.params['min_r'],
                                             self.params['max_r']),
                                            (self.params['min_phi'],
@@ -252,11 +271,43 @@ class TestCylindricalLBObservable(ut.TestCase):
             if x[...] > 0.0:
                 x[...] /= x[...]
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
-        np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
+        np.testing.assert_array_almost_equal(
+            np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
-        self.assertEqual(p.n_values(), len(np_hist.flatten())*3)
+        self.assertEqual(p.n_values(), len(np_hist.flatten()) * 3)
 
-    def test_x_axis(self):
+    @ut.skipIf(not espressomd.has_features('LB'), "LB not compiled in, skipping test.")
+    def test_x_axis_cpu(self):
+        self.params['axis'] = 'x'
+        self.lbf = self.lbf_cpu
+        self.system.actors.add(self.lbf)
+        self.LB_fluxdensity_profile_test()
+        self.LB_velocity_profile_test()
+        self.LB_velocity_profile_at_particle_positions_test()
+        self.system.actors.remove(self.lbf)
+
+    @ut.skipIf(not espressomd.has_features('LB'), "LB not compiled in, skipping test.")
+    def test_y_axis_cpu(self):
+        self.params['axis'] = 'y'
+        self.lbf = self.lbf_cpu
+        self.system.actors.add(self.lbf)
+        self.LB_fluxdensity_profile_test()
+        self.LB_velocity_profile_test()
+        self.LB_velocity_profile_at_particle_positions_test()
+        self.system.actors.remove(self.lbf)
+
+    @ut.skipIf(not espressomd.has_features('LB'), "LB not compiled in, skipping test.")
+    def test_z_axis_cpu(self):
+        self.params['axis'] = 'z'
+        self.lbf = self.lbf_cpu
+        self.system.actors.add(self.lbf)
+        self.LB_fluxdensity_profile_test()
+        self.LB_velocity_profile_test()
+        self.LB_velocity_profile_at_particle_positions_test()
+        self.system.actors.remove(self.lbf)
+
+    @ut.skipIf(not espressomd.has_features('LB_GPU'), "LB_GPU not compiled in, skipping test.")
+    def test_x_axis_gpu(self):
         self.params['axis'] = 'x'
         self.lbf = self.lbf_gpu
         self.system.actors.add(self.lbf)
@@ -264,14 +315,9 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.LB_velocity_profile_at_particle_positions_test()
         self.LB_velocity_profile_test()
         self.system.actors.remove(self.lbf)
-        self.lbf = self.lbf_cpu
-        self.system.actors.add(self.lbf)
-        self.LB_fluxdensity_profile_test()
-        self.LB_velocity_profile_test()
-        self.LB_velocity_profile_at_particle_positions_test()
-        self.system.actors.remove(self.lbf)
 
-    def test_y_axis(self):
+    @ut.skipIf(not espressomd.has_features('LB_GPU'), "LB_GPU not compiled in, skipping test.")
+    def test_y_axis_gpu(self):
         self.params['axis'] = 'y'
         self.lbf = self.lbf_gpu
         self.system.actors.add(self.lbf)
@@ -279,14 +325,9 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.LB_velocity_profile_at_particle_positions_test()
         self.LB_velocity_profile_test()
         self.system.actors.remove(self.lbf)
-        self.lbf = self.lbf_cpu
-        self.system.actors.add(self.lbf)
-        self.LB_fluxdensity_profile_test()
-        self.LB_velocity_profile_test()
-        self.LB_velocity_profile_at_particle_positions_test()
-        self.system.actors.remove(self.lbf)
 
-    def test_z_axis(self):
+    @ut.skipIf(not espressomd.has_features('LB_GPU'), "LB_GPU not compiled in, skipping test.")
+    def test_z_axis_gpu(self):
         self.params['axis'] = 'z'
         self.lbf = self.lbf_gpu
         self.system.actors.add(self.lbf)
@@ -294,12 +335,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.LB_velocity_profile_at_particle_positions_test()
         self.LB_velocity_profile_test()
         self.system.actors.remove(self.lbf)
-        self.lbf = self.lbf_cpu
-        self.system.actors.add(self.lbf)
-        self.LB_fluxdensity_profile_test()
-        self.LB_velocity_profile_test()
-        self.LB_velocity_profile_at_particle_positions_test()
-        self.system.actors.remove(self.lbf)
+
 
 if __name__ == "__main__":
     suite = ut.TestSuite()

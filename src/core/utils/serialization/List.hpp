@@ -20,6 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define CORE_UTILS_SERIALIZATION_LIST_HPP
 
 #include <boost/serialization/array.hpp>
+#if BOOST_VERSION >= 106400 && BOOST_VERSION < 106500
+#include <boost/serialization/array_wrapper.hpp>
+#endif
 #include <boost/serialization/split_free.hpp>
 
 #include "core/utils/List.hpp"

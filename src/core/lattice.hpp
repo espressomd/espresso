@@ -94,8 +94,7 @@ public:
    *                   elementary cell, 6 directions (Output)
    */
   void map_position_to_lattice(const Vector3d &pos, index_t node_index[8],
-                               double delta[6]);
-
+                               double delta[6]) const;
   /********************** Inline Functions **********************/
 
   /** Map a global lattice site to the node grid.

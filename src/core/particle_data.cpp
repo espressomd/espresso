@@ -598,6 +598,9 @@ int set_particle_q(int part, double q) {
   mpi_send_q(pnode, part, q);
   return ES_OK;
 }
+#ifndef ELECTROSTATICS
+constexpr double ParticleProperties::q;
+#endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 int set_particle_mu_E(int part, double mu_E[3]) {
@@ -1247,9 +1250,7 @@ void pointer_to_quatu(Particle const *p, double const *&res) {
 }
 #endif
 
-#ifdef ELECTROSTATICS
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
-#endif
 
 #ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, int const *&res) {
