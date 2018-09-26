@@ -507,7 +507,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
   // Necessary so that the Python interface is up-to-date
   setup_lees_edwards_protocol();
 #endif
-
 }
 
 /************************************************************/
@@ -557,9 +556,10 @@ void propagate_vel_finalize_p_inst() {
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 #ifdef LEES_EDWARDS
-	if (j==0 && p.p.lees_edwards_flag != 0) {
-	    p.m.v[0] += p.p.lees_edwards_flag*lees_edwards_get_velocity(sim_time + time_step)/2 ;
-          }
+        if (j == 0 && p.p.lees_edwards_flag != 0) {
+          p.m.v[0] += p.p.lees_edwards_flag *
+                      lees_edwards_get_velocity(sim_time + time_step) / 2;
+        }
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -823,40 +823,42 @@ void propagate_vel_pos() {
     ONEPART_TRACE(if (p.p.identity == check_id)
                       fprintf(stderr, "%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",
                               this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
-  
+
 #ifdef LEES_EDWARDS
     /* LE Push */
     {
-      // Lees-Edwards acts at the zero step for the velocity half update and at the midstep
-      // for the position.
+      // Lees-Edwards acts at the zero step for the velocity half update and at
+      // the midstep for the position.
       //
-      // The update of the velocity at the end of the time step is triggered by the flag and
-      // occurs in propagate_vel_finalize_p_inst
-      auto shear_velocity = lees_edwards_get_velocity(sim_time + time_step/2);
-      auto offset_at_half_time_step = lees_edwards_get_offset(sim_time + time_step/2);
+      // The update of the velocity at the end of the time step is triggered by
+      // the flag and occurs in propagate_vel_finalize_p_inst
+      auto shear_velocity = lees_edwards_get_velocity(sim_time + time_step / 2);
+      auto offset_at_half_time_step =
+          lees_edwards_get_offset(sim_time + time_step / 2);
       if (p.r.p[1] >= box_l[1]) {
-	p.m.v[0] -= shear_velocity/2 ;
-	p.r.p[0] -= (offset_at_half_time_step - dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
-	p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
+        p.m.v[0] -= shear_velocity / 2;
+        p.r.p[0] -= (offset_at_half_time_step -
+                     dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
+        p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
                                     // propagate_vel_finalize_p_inst
       } else if (p.r.p[1] <= 0.) {
-        p.m.v[0] += shear_velocity/2 ;
-        p.r.p[0] += (offset_at_half_time_step - dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
-	p.p.lees_edwards_flag = 1; // perform a positive half velocity shift in
+        p.m.v[0] += shear_velocity / 2;
+        p.r.p[0] += (offset_at_half_time_step -
+                     dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
+        p.p.lees_edwards_flag = 1; // perform a positive half velocity shift in
                                    // propagate_vel_finalize_p_inst
       } else {
-	p.p.lees_edwards_flag = 0;
+        p.p.lees_edwards_flag = 0;
       }
     }
 #endif
 
-  /* Verlet criterion check*/
-  if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
-        Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
-        Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
-      skin2)
-    set_resort_particles(Cells::RESORT_LOCAL);
-  
+    /* Verlet criterion check*/
+    if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
+            Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
+            Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
+        skin2)
+      set_resort_particles(Cells::RESORT_LOCAL);
   }
   announce_resort_particles();
 
