@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -18,57 +18,56 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file initialize.cpp
+/** \file
     Implementation of \ref initialize.hpp "initialize.hpp"
 */
 #include "initialize.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "correlators/Correlator.hpp"
-#include "accumulators/Accumulator.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
-#include "debye_hueckel.hpp"
-#include "elc.hpp"
+#include "dpd.hpp"
+#include "electrostatics_magnetostatics/debye_hueckel.hpp"
+#include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/icc.hpp" /* -iccp3m- */
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/p3m_gpu.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
-#include "external_potential.hpp"
 #include "forces.hpp"
 #include "ghmc.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "iccp3m.hpp" /* -iccp3m- */
+#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbboundaries.hpp"
 #include "lattice.hpp"
-#include "lb.hpp"
-#include "lbboundaries.hpp"
-#include "maggs.hpp"
 #include "metadynamics.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
 #include "nemd.hpp"
+#include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
 #include "observables/Observable.hpp"
-#include "p3m-dipolar.hpp"
-#include "p3m.hpp"
-#include "p3m_gpu.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"
-#include "reaction.hpp"
 #include "reaction_ensemble.hpp"
-#include "reaction_field.hpp"
 #include "rotation.hpp"
-#include "scafacos.hpp"
 #include "statistics.hpp"
+#include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
-#include "thermalized_bond.hpp"
 #include "utils.hpp"
-#include "global.hpp"
-#include "utils/mpi/all_compare.hpp" 
+#include "virtual_sites.hpp"
+
+#include "utils/mpi/all_compare.hpp"
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -98,26 +97,20 @@ void on_program_start() {
   /* initially go for domain decomposition */
   topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
-  ghost_init();
-
 #ifdef P3M
   p3m_pre_init();
 #endif
 #ifdef DP3M
   dp3m_pre_init();
 #endif
-  external_potential_pre_init();
 
 #ifdef LB_GPU
   if (this_node == 0) {
     //   lb_pre_init_gpu();
   }
 #endif
-#ifdef LB
-  lb_pre_init();
-#endif
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   reaction.eq_rate = 0.0;
   reaction.sing_mult = 0;
   reaction.swap = 0;
@@ -148,7 +141,7 @@ void on_integration_start() {
   integrator_npt_sanity_checks();
 #endif
   interactions_sanity_checks();
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   reactions_sanity_checks();
 #endif
 #ifdef LB
@@ -162,9 +155,9 @@ void on_integration_start() {
   }
 #endif
 
-/********************************************/
-/* end sanity checks                        */
-/********************************************/
+  /********************************************/
+  /* end sanity checks                        */
+  /********************************************/
 
 #ifdef LB_GPU
   if (lattice_switch & LATTICE_LB_GPU && this_node == 0) {
@@ -206,24 +199,24 @@ void on_integration_start() {
 
 #ifdef ADDITIONAL_CHECKS
 
-  if(!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
+  if (!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
     runtimeErrorMsg() << "Nodes disagree about cell system type.";
   }
 
-  if(!Utils::Mpi::all_compare(comm_cart, get_resort_particles())) {
+  if (!Utils::Mpi::all_compare(comm_cart, get_resort_particles())) {
     runtimeErrorMsg() << "Nodes disagree about resort type.";
   }
 
-  if(!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
+  if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }
 
 #ifdef ELECTROSTATICS
-  if (!Utils::Mpi::all_compare(comm_cart,coulomb.method))
+  if (!Utils::Mpi::all_compare(comm_cart, coulomb.method))
     runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
 #endif
 #ifdef DIPOLES
-  if (!Utils::Mpi::all_compare(comm_cart,coulomb.Dmethod))
+  if (!Utils::Mpi::all_compare(comm_cart, coulomb.Dmethod))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
   check_global_consistency();
@@ -435,6 +428,12 @@ void on_resort_particles() {
 void on_boxl_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_boxl_change\n", this_node));
 
+  grid_changed_box_l();
+  /* Electrostatics cutoffs mostly depend on the system size,
+     therefore recalculate them. */
+  recalc_maximal_cutoff();
+  cells_on_geometry_change(0);
+
 /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -456,6 +455,11 @@ void on_boxl_change() {
   case COULOMB_MAGGS:
     maggs_init();
     break;
+#ifdef SCAFACOS
+  case COULOMB_SCAFACOS:
+    Scafacos::update_system_params();
+    break;
+#endif
   default:
     break;
   }
@@ -468,6 +472,11 @@ void on_boxl_change() {
   // fall through
   case DIPOLAR_P3M:
     dp3m_scaleby_box_l();
+    break;
+#endif
+#ifdef SCAFACOS
+  case DIPOLAR_SCAFACOS:
+    Scafacos::update_system_params();
     break;
 #endif
   default:
@@ -491,7 +500,7 @@ void on_cell_structure_change() {
 /* Now give methods a chance to react to the change in cell
    structure.  Most ES methods need to reinitialize, as they depend
    on skin, node grid and so on. Only for a change in box length we
-   have separate, faster methods, as this might happend frequently
+   have separate, faster methods, as this might happen frequently
    in a NpT simulation. */
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -559,7 +568,6 @@ void on_temperature_change() {
     }
   }
 #endif
-
 }
 
 void on_parameter_change(int field) {
@@ -568,24 +576,7 @@ void on_parameter_change(int field) {
 
   switch (field) {
   case FIELD_BOXL:
-    grid_changed_box_l();
-#ifdef SCAFACOS
-    #ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_SCAFACOS) {
-      Scafacos::update_system_params(); 
-    }
-    #endif
-    #ifdef DIPOLES
-    if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
-      Scafacos::update_system_params(); 
-    }
-    #endif
-
-#endif
-    /* Electrostatics cutoffs mostly depend on the system size,
-       therefore recalculate them. */
-    recalc_maximal_cutoff();
-    cells_on_geometry_change(0);
+    on_boxl_change();
     break;
   case FIELD_MIN_GLOBAL_CUT:
     recalc_maximal_cutoff();
@@ -593,18 +584,19 @@ void on_parameter_change(int field) {
     break;
   case FIELD_SKIN:
     cells_on_geometry_change(0);
+    break;
   case FIELD_PERIODIC:
 #ifdef SCAFACOS
-    #ifdef ELECTROSTATICS
+#ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_SCAFACOS) {
-      Scafacos::update_system_params(); 
+      Scafacos::update_system_params();
     }
-    #endif
-    #ifdef DIPOLES
+#endif
+#ifdef DIPOLES
     if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
-      Scafacos::update_system_params(); 
+      Scafacos::update_system_params();
     }
-    #endif
+#endif
 
 #endif
     cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
@@ -616,15 +608,11 @@ void on_parameter_change(int field) {
   case FIELD_MINNUMCELLS:
   case FIELD_MAXNUMCELLS:
     cells_re_init(CELL_STRUCTURE_CURRENT);
+    break;
   case FIELD_TEMPERATURE:
     on_temperature_change();
     reinit_thermo = 1;
     break;
-#ifdef LEES_EDWARDS
-  case FIELD_LEES_EDWARDS_OFFSET:
-    lees_edwards_step_boundaries();
-    break;
-#endif
   case FIELD_TIMESTEP:
 #ifdef LB_GPU
     if (this_node == 0) {
@@ -738,7 +726,7 @@ void on_ghost_flags_change() {
     ghosts_have_v = 1;
 #endif
 #ifdef DPD
-  // maybe we have to add a new global to differ between compile in and acctual
+  // maybe we have to add a new global to differ between compile in and actual
   // use.
   if (thermo_switch & THERMO_DPD)
     ghosts_have_v = 1;
@@ -749,8 +737,7 @@ void on_ghost_flags_change() {
     ghosts_have_v = 1;
   };
 #endif
-  //THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
+  // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
   if (n_thermalized_bonds)
     ghosts_have_v = 1;
-
 }

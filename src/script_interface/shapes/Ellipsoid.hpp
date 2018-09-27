@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -33,15 +33,15 @@ public:
   Ellipsoid() : m_ellipsoid(new ::Shapes::Ellipsoid()) {
     add_parameters({{"center", m_ellipsoid->center()},
                     {"a",
-		     [this](Variant const &v) {
-		       m_ellipsoid->set_semiaxis_a(get_value<double>(v));
-		     },
-		     [this]() { return m_ellipsoid->semiaxis_a(); }},
+                     [this](Variant const &v) {
+                       m_ellipsoid->set_semiaxis_a(get_value<double>(v));
+                     },
+                     [this]() { return m_ellipsoid->semiaxis_a(); }},
                     {"b",
-		     [this](Variant const &v) {
-		       m_ellipsoid->set_semiaxis_b(get_value<double>(v));
-		     },
-		     [this]() { return m_ellipsoid->semiaxis_b(); }},
+                     [this](Variant const &v) {
+                       m_ellipsoid->set_semiaxis_b(get_value<double>(v));
+                     },
+                     [this]() { return m_ellipsoid->semiaxis_b(); }},
                     {"direction", m_ellipsoid->direction()}});
   }
 

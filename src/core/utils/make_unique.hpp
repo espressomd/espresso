@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -30,8 +30,7 @@ namespace Utils {
  * This function is part of the standard from c++14 on.
  */
 template <typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args &&... args)
-{
+std::unique_ptr<T> make_unique(Args &&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 

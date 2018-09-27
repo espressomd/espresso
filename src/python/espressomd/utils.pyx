@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -118,8 +118,8 @@ cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
 
 cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
     """
-    Checks that x is in range [v_min,v_max] (inlude boundaries via
-    inlc_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to
+    Checks that x is in range [v_min,v_max] (include boundaries via
+    incl_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to
     disable limit.
 
     """
@@ -175,10 +175,11 @@ def to_str(s):
 
 
 class array_locked(np.ndarray):
+
     """
     Returns a non-writable numpy.ndarray with a special error message upon usage
     of __setitem__  or in-place operators. Cast return in __get__ of array
-    properties to array_locked to prevent these operations. 
+    properties to array_locked to prevent these operations.
 
     """
 
@@ -265,11 +266,12 @@ cpdef handle_errors(msg):
     for err in errors:
     # Cast because cython does not support typed enums completely
         if < int > err.level() == <int > ERROR:
-            raise Exception(msg)
+            raise Exception("{}: {}".format(msg, err.format()))
+
 
 def get_unravelled_index(len_dims, n_dims, flattened_index):
     """
-    Getting the unravelled index for a given flattened index in ``n_dims`` dimensions.
+    Getting the unraveled index for a given flattened index in ``n_dims`` dimensions.
 
     Parameters
     ----------
@@ -294,29 +296,32 @@ def get_unravelled_index(len_dims, n_dims, flattened_index):
     cdef int c_flattened_index = flattened_index
     cdef vector[int] unravelled_index_out
     unravelled_index_out.assign(n_dims, 0)
-    unravel_index(c_len_dims.data(), c_n_dims, c_flattened_index, unravelled_index_out.data())
+    unravel_index(c_len_dims.data(), c_n_dims,
+                  c_flattened_index, unravelled_index_out.data())
     out = np.empty(n_dims)
     for i in range(n_dims):
         out[i] = unravelled_index_out[i]
     return out
-   
+
+
 def nesting_level(obj):
     """
     Returns the maximal nesting level of an object.
 
     """
 
-    if not isinstance(obj, (list,tuple)):
+    if not isinstance(obj, (list, tuple)):
         return 0
 
-    obj=list(obj)
+    obj = list(obj)
 
     max_level = 0
-    for item in obj: 
+    for item in obj:
         max_level = max(max_level, nesting_level(item))
 
     return max_level + 1
- 
+
+
 def is_valid_type(value, t):
     """
     Extended checks for numpy int and float types.
@@ -326,7 +331,8 @@ def is_valid_type(value, t):
     if t == int:
         return isinstance(value, (int, np.integer, np.long))
     elif t == float:
-        return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+        if hasattr(np, 'float128'):
+            return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+        return isinstance(value, (float, np.float16, np.float32, np.float64, np.longdouble))
     else:
         return isinstance(value, t)
-

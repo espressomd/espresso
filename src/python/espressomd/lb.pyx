@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -37,6 +37,12 @@ cdef class HydrodynamicInteraction(Actor):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
+
+def _construct(cls, params):
+    obj = cls(**params)
+    obj._params = params
+    return obj
+
 # LBFluid main class
 ####################################################
 IF LB_GPU or LB:
@@ -44,22 +50,28 @@ IF LB_GPU or LB:
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
 
-        """            
+        """
+
+        def __reduce__(self):
+            return _construct, (self.__class__, self._params), None
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
                 if len(key) == 3:
                     return LBFluidRoutines(np.array(key))
-            else: 
-                raise Exception("%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," %key)
+            else:
+                raise Exception(
+                    "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," % key)
 
-
-        # validate the given parameters on actor initalization
+        # validate the given parameters on actor initialization
         ####################################################
         def validate_params(self):
             default_params = self.default_params()
 
             IF SHANCHEN:
+                if not hasattr(self._params["dens"], "__getitem__"):
+                    raise ValueError(
+                        "Density must be two positive double (ShanChen)")
                 if not (self._params["dens"][0] > 0.0 and self._params["dens"][1] > 0.0):
                     raise ValueError(
                         "Density must be two positive double (ShanChen)")
@@ -73,9 +85,9 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force", "visc", "tau", "couple"
+            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even"
 
-        # list of esential keys required for the fluid
+        # list of essential keys required for the fluid
         ####################################################
         def required_keys(self):
             return ["dens", "agrid", "visc", "tau"]
@@ -87,7 +99,7 @@ IF LB_GPU or LB:
                 return {"agrid": -1.0,
                         "dens": [-1.0, -1.0],
                         "fric": [-1.0, -1.0],
-                        "ext_force": [0.0, 0.0, 0.0],
+                        "ext_force_density": [0.0, 0.0, 0.0],
                         "visc": [-1.0, -1.0],
                         "bulk_visc": [-1.0, -1.0],
                         "tau": -1.0,
@@ -96,7 +108,7 @@ IF LB_GPU or LB:
                 return {"agrid": -1.0,
                         "dens": -1.0,
                         "fric": -1.0,
-                        "ext_force": [0.0, 0.0, 0.0],
+                        "ext_force_density": [0.0, 0.0, 0.0],
                         "visc": -1.0,
                         "bulk_visc": -1.0,
                         "tau": -1.0,
@@ -120,25 +132,32 @@ IF LB_GPU or LB:
             if python_lbfluid_set_visc(self._params["visc"]):
                 raise Exception("lb_lbfluid_set_visc error")
 
-            if not self._params["bulk_visc"] == default_params["bulk_visc"]:
+            if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
                 if python_lbfluid_set_bulk_visc(self._params["bulk_visc"]):
                     raise Exception("lb_lbfluid_set_bulk_visc error")
 
             if python_lbfluid_set_agrid(self._params["agrid"]):
                 raise Exception("lb_lbfluid_set_agrid error")
 
-            if not self._params["fric"] == default_params["fric"]:
+            if self._params["fric"] != default_params["fric"]:
                 if python_lbfluid_set_friction(self._params["fric"]):
                     raise Exception("lb_lbfluid_set_friction error")
 
-            if not self._params["ext_force"] == default_params["ext_force"]:
-                if python_lbfluid_set_ext_force(self._params["ext_force"]):
-                    raise Exception("lb_lbfluid_set_ext_force error")
+            if python_lbfluid_set_ext_force_density(self._params["ext_force_density"]):
+                raise Exception("lb_lbfluid_set_ext_force_density error")
 
-            if not self._params["couple"] == default_params["couple"]:
-                if python_lbfluid_set_couple_flag(self._params["couple"]):
-                    raise Exception("lb_lbfluid_set_couple_flag error")
-            utils.handle_errors("LB activation")
+            if python_lbfluid_set_couple_flag(self._params["couple"]):
+                raise Exception("lb_lbfluid_set_couple_flag error")
+
+            if "gamma_odd" in self._params:
+                if python_lbfluid_set_gamma_odd(self._params["gamma_odd"]):
+                    raise Exception("lb_lbfluid_set_gamma_odd error")
+
+            if "gamma_even" in self._params:
+                if python_lbfluid_set_gamma_even(self._params["gamma_even"]):
+                    raise Exception("lb_lbfluid_set_gamma_even error")
+
+            utils.handle_errors("LB fluid activation")
 
         # function that calls wrapper functions which get the parameters from C-Level
         ####################################################
@@ -165,15 +184,38 @@ IF LB_GPU or LB:
                 if python_lbfluid_get_friction(self._params["fric"]):
                     raise Exception("lb_lbfluid_set_friction error")
 
-            if not self._params["ext_force"] == default_params["ext_force"]:
-                if python_lbfluid_get_ext_force(self._params["ext_force"]):
-                    raise Exception("lb_lbfluid_set_ext_force error")
+            if not self._params["ext_force_density"] == default_params["ext_force_density"]:
+                if python_lbfluid_get_ext_force_density(self._params["ext_force_density"]):
+                    raise Exception("lb_lbfluid_set_ext_force_density error")
 
             if not self._params["couple"] == default_params["couple"]:
                 if python_lbfluid_get_couple_flag(self._params["couple"]):
                     raise Exception("lb_lbfluid_get_couple_flag error")
 
             return self._params
+
+        def get_interpolated_velocity(self, pos):
+            """Get LB fluid velocity at specified position.
+
+            Parameters
+            ----------
+            pos : array_like :obj:`float`
+                  The position at which velocity is requested.
+
+            Returns
+            -------
+            v : array_like :obj:`float`
+                The LB fluid velocity at ``pos``.
+
+            """
+            cdef Vector3d p
+            cdef double[3] v
+
+            for i in range(3):
+                p[i] = pos[i]
+
+            lb_lbfluid_get_interpolated_velocity_global(p, v)
+            return v
 
         # input/output function wrappers for whole LB fields
         ####################################################
@@ -185,17 +227,23 @@ IF LB_GPU or LB:
             else:
                 bb1_vec = bb1
                 bb2_vec = bb2
-                lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path), bb1_vec, bb2_vec)
+                lb_lbfluid_print_vtk_velocity(
+                    utils.to_char_pointer(path), bb1_vec, bb2_vec)
+
         def print_vtk_boundary(self, path):
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
+
         def print_velocity(self, path):
             lb_lbfluid_print_velocity(utils.to_char_pointer(path))
+
         def print_boundary(self, path):
             lb_lbfluid_print_boundary(utils.to_char_pointer(path))
+
         def save_checkpoint(self, path, binary):
             tmp_path = path + ".__tmp__"
             lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
             os.rename(tmp_path, path)
+
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
 
@@ -203,8 +251,9 @@ IF LB_GPU or LB:
         ####################################################
         def _activate_method(self):
             self.validate_params()
-            self._set_params_in_es_core()
             self._set_lattice_switch()
+            self._set_params_in_es_core()
+            utils.handle_errors("LB fluid activation")
             IF LB:
                 return
             ELSE:
@@ -221,12 +270,12 @@ IF LB_GPU:
 
         """
 
+        def remove_total_momentum(self):
+            lb_lbfluid_remove_total_momentum()
+
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
-
-        def remove_total_momentum(self):
-            lb_lbfluid_remove_total_momentum()
 
         def _activate_method(self):
             self.validate_params()
@@ -236,25 +285,6 @@ IF LB_GPU:
                 return
             ELSE:
                 raise Exception("LB_GPU not compiled in")
-            
-        def get_interpolated_velocity(self, pos):
-            """Get LB fluid velocity at specified position.
-
-            Parameters
-            ----------
-            pos : array_like :obj:`float`
-                  The position at which velocity is requested.
-
-            Returns
-            -------
-            v : array_like :obj:`float`
-                The LB fluid velocity at ``pos``.
-
-            """
-            cdef double[3] p = pos
-            cdef double[3] v
-            lb_lbfluid_get_interpolated_velocity_global(p, v)
-            return v
 
         @cython.boundscheck(False)
         @cython.wraparound(False)
@@ -277,18 +307,21 @@ IF LB_GPU:
                 If shape of ``positions`` not (N,3).
 
             """
-            assert positions.shape[1] == 3, "The input array must have shape (N,3)"
+            assert positions.shape[
+                1] == 3, "The input array must have shape (N,3)"
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_lbfluid_get_interpolated_velocity_at_positions(<double *>np.PyArray_GETPTR2(positions, 0, 0), <double *>np.PyArray_GETPTR2(velocities, 0, 0), length)
+            lb_lbfluid_get_interpolated_velocity_at_positions(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):
         cdef int node[3]
+
         def __init__(self, key):
-            utils.check_type_or_throw_except(key,3,int, "The index of an lb fluid node consists of three integers.")
+            utils.check_type_or_throw_except(
+                key, 3, int, "The index of an lb fluid node consists of three integers.")
             self.node[0] = key[0]
             self.node[1] = key[1]
             self.node[2] = key[2]
@@ -299,18 +332,14 @@ IF LB or LB_GPU:
                 lb_lbnode_get_u(self.node, double_return)
                 return array_locked(double_return)
 
-            IF LB_GPU:
-                def __set__(self, value):
-                    cdef double[3] host_velocity
-                    if all(is_valid_type(v, float) for v in value) and len(value) == 3:
-                        host_velocity = value
-                        lb_lbnode_set_u(self.node, host_velocity)
-                    else:
-                        raise ValueError("Velocity has to be of shape 3 and type float.")
-            ELSE:
-                def __set__(self, value):
-                    raise NotImplementedError("Not implemented for CPU LB.")
-
+            def __set__(self, value):
+                cdef double[3] host_velocity
+                if all(is_valid_type(v, float) for v in value) and len(value) == 3:
+                    host_velocity = value
+                    lb_lbnode_set_u(self.node, host_velocity)
+                else:
+                    raise ValueError(
+                        "Velocity has to be of shape 3 and type float.")
         property density:
             def __get__(self):
                 cdef double[3] double_return
@@ -320,14 +349,13 @@ IF LB or LB_GPU:
             def __set__(self, value):
                 raise NotImplementedError
 
-
         property pi:
             def __get__(self):
                 cdef double[6] pi
                 lb_lbnode_get_pi(self.node, pi)
-                return array_locked(np.array([[pi[0],pi[1],pi[3]],
-                                              [pi[1],pi[2],pi[4]],
-                                              [pi[3],pi[4],pi[5]]]))
+                return array_locked(np.array([[pi[0], pi[1], pi[3]],
+                                              [pi[1], pi[2], pi[4]],
+                                              [pi[3], pi[4], pi[5]]]))
 
             def __set__(self, value):
                 raise NotImplementedError
@@ -336,9 +364,9 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[6] pi
                 lb_lbnode_get_pi_neq(self.node, pi)
-                return array_locked(np.array([[pi[0],pi[1],pi[3]],
-                                              [pi[1],pi[2],pi[4]],
-                                              [pi[3],pi[4],pi[5]]]))
+                return array_locked(np.array([[pi[0], pi[1], pi[3]],
+                                              [pi[1], pi[2], pi[4]],
+                                              [pi[3], pi[4], pi[5]]]))
 
             def __set__(self, value):
                 raise NotImplementedError
@@ -350,13 +378,15 @@ IF LB or LB_GPU:
                 return array_locked(double_return)
 
             def __set__(self, value):
-                cdef double[19] double_return = value
+                cdef double[19] double_return
+                for i in range(19):
+                    double_return[i] = value[i]
                 lb_lbnode_set_pop(self.node, double_return)
 
         property boundary:
             def __get__(self):
                 cdef int int_return
-                lb_lbnode_get_boundary(self.node, &int_return)
+                lb_lbnode_get_boundary(self.node, & int_return)
                 return int_return
 
             def __set__(self, value):

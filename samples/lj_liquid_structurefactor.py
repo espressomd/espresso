@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,9 +19,12 @@
 from __future__ import print_function
 import numpy as np
 import espressomd
+
+required_features = ["LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import thermostat
 from espressomd import analyze
-from samples_common import open
 
 print("""
 =======================================================
@@ -50,7 +53,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
@@ -63,7 +66,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 # warmup integration (with capped LJ potential)
 warm_steps = 100
 warm_n_times = 30
-# do the warmup until the particles have at least the distance min__dist
+# do the warmup until the particles have at least the distance min_dist
 min_dist = 0.9
 
 # integration
@@ -75,7 +78,7 @@ int_n_times = 20
 #  Setup System                                             #
 #############################################################
 
-# structurefactor file
+# structure factor file
 structurefactor_type_list = [0, 1]
 structurefactor_order = 20
 
@@ -157,7 +160,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 # Just to see what else we may get from the c code
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+pprint.pprint(system.__getstate__())
 
 
 # write parameter file

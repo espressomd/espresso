@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016,2017 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -18,14 +18,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file forcecap.cpp force cap calculation.
+/** \file
+ *  force cap calculation.
  *
- *  For more information see \ref forcecap.hpp "forcecap.h".
-*/
+ *  For more information see \ref forcecap.hpp "forcecap.hpp".
+ */
 
 #include "forcecap.hpp"
-#include "utils.hpp"
 #include "global.hpp"
+#include "utils.hpp"
 
 double force_cap = 0.0;
 
@@ -34,9 +35,7 @@ void forcecap_set(double forcecap) {
   mpi_bcast_parameter(FIELD_FORCE_CAP);
 }
 
-double forcecap_get() {
-  return force_cap;
-}
+double forcecap_get() { return force_cap; }
 
 void forcecap_cap(ParticleRange particles) {
   if (force_cap <= 0) {

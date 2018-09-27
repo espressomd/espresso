@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -20,14 +20,14 @@
 */
 #ifndef GALILEI_H
 #define GALILEI_H
-/** \file galilei.hpp
+/** \file
  *
  */
 
 #include "particle_data.hpp"
 
 /** broadcasts reaction parameters and sets up an entry in the ia_params, so
-    that the verlet radius is equal or bigger than the reaction range.
+    that the Verlet radius is equal or bigger than the reaction range.
 **/
 void local_kill_particle_motion(int);
 void local_kill_particle_forces(int);

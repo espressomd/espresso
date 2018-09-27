@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
-# Copyright (C) 2016 The ESPResSo project
+# Copyright (C) 2016-2018 The ESPResSo project
 # Copyright (C) 2014 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
+
+abort()
+{
+    echo "An error occurred. Exiting..." >&2
+    echo "Command that failed: $BASH_COMMAND" >&2
+    exit 1
+}
+
+trap 'abort' 0
+set -e
 
 # HELPER FUNCTIONS
 
@@ -43,6 +53,8 @@ function cmd {
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$with_coverage" ] && with_coverage="false"
+[ -z "$with_ubsan" ] && with_ubsan="false"
+[ -z "$with_asan" ] && with_asan="false"
 [ -z "$with_static_analysis" ] && with_static_analysis="false"
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
@@ -51,12 +63,32 @@ function cmd {
 [ -z "$check_odd_only" ] && check_odd_only="false"
 [ -z "$python_version" ] && python_version="2"
 [ -z "$with_cuda" ] && with_cuda="true"
+[ -z "$build_type" ] && build_type="Debug"
+[ -z "$with_ccache" ] && with_ccache="false"
+
+# If there are no user-provided flags they
+# are added according to with_coverage.
+if [ -z "$cxx_flags" ]; then
+    if $with_coverage; then
+        cxx_flags="-Og"
+    else
+        if $make_check; then
+            cxx_flags="-O3"
+        else
+            cxx_flags="-O0"
+        fi
+    fi
+fi
 
 if [[ ! -z ${with_coverage+x} ]]; then
   bash <(curl -s https://codecov.io/env) &> /dev/null;
 fi
 
-cmake_params="-DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
+cmake_params="-DCMAKE_BUILD_TYPE=$build_type -DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
+cmake_params="$cmake_params -DCMAKE_CXX_FLAGS=$cxx_flags"
+if $with_ccache; then
+  cmake_params="$cmake_params -DWITH_CCACHE=ON"
+fi
 
 if $insource; then
     builddir=$srcdir
@@ -66,13 +98,26 @@ fi
 
 outp insource srcdir builddir make_check \
     cmake_params with_fftw \
-    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs  check_odd_only \
+    with_python_interface with_coverage \
+    with_ubsan with_asan \
+    build_procs check_odd_only \
     with_static_analysis myconfig \
     check_procs build_procs \
-    python_version with_cuda
+    python_version with_cuda with_ccache
 
 # check indentation of python files
-pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
+pep8_command () {
+    if hash pep8 2> /dev/null; then
+        pep8 "$@"
+    elif hash pycodestyle 2> /dev/null; then
+        pycodestyle "$@"
+    else
+        echo "pep8 not found";
+        exit 1
+    fi
+}
+
+pep8_command --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
 ec=$?
 if [ $ec -eq 0 ]; then
     echo ""
@@ -90,6 +135,10 @@ pylint_command () {
         pylint "$@"
     elif hash pylint3 2> /dev/null; then
         pylint3 "$@"
+    elif hash pylint-2 2> /dev/null; then
+        pylint-2 "$@"
+    elif hash pylint-3 2> /dev/null; then
+        pylint-3 "$@"
     else
         echo "pylint not found";
         exit 1
@@ -116,7 +165,7 @@ fi
 # load MPI module if necessary
 if [ -f "/etc/os-release" ]; then
     grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
-    grep -q rhel /etc/os-release && source /etc/profile.d/modules.sh && module load mpi
+    grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do source $f; done && module load mpi
 fi
 
 # CONFIGURE
@@ -136,6 +185,14 @@ fi
 
 if [ $with_coverage = "true" ]; then
     cmake_params="-DWITH_COVERAGE=ON $cmake_params"
+fi
+
+if [ $with_asan = "true" ]; then
+    cmake_params="-DWITH_ASAN=ON $cmake_params"
+fi
+
+if [ $with_ubsan = "true" ]; then
+    cmake_params="-DWITH_UBSAN=ON $cmake_params"
 fi
 
 if [ $with_static_analysis = "true" ]; then
@@ -199,11 +256,11 @@ fi
 
 if $with_coverage; then
     cd $builddir
-    lcov --directory . --capture --output-file coverage.info # capture coverage info
-    lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
-    lcov --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
-    lcov --remove coverage.info '*/unit_tests/*' --output-file coverage.info # filter out unit test
-    lcov --list coverage.info #debug info
+    lcov -q --directory . --capture --output-file coverage.info # capture coverage info
+    lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+    lcov -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
+    lcov -q --remove coverage.info '*/unit_tests/*' --output-file coverage.info # filter out unit test
+    # lcov --list coverage.info #debug info
     # Uploading report to CodeCov
     if [ -z "$CODECOV_TOKEN" ]; then
         bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
@@ -211,3 +268,5 @@ if $with_coverage; then
         bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" || echo "Codecov did not collect coverage reports"
     fi
 fi
+
+trap : 0

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -25,70 +25,69 @@
 
 using namespace std;
 
-
 namespace Shapes {
-int Cylinder::calculate_dist(const double *ppos, double *dist,
-                             double *vec) const {
-  double d_per, d_par, d_real, d_per_vec[3], d_par_vec[3], d_real_vec[3];
-  auto const half_length = 0.5 * m_length;
 
-  d_real = 0.0;
-  for (int i = 0; i < 3; i++) {
-    d_real_vec[i] = ppos[i] - m_pos[i];
-    d_real += Utils::sqr(d_real_vec[i]);
-  }
-  d_real = sqrt(d_real);
+std::pair<double, double> Cylinder::dist_half_pore(double r, double z) const {
+  assert(z >= 0.0);
+  assert(r >= 0.0);
 
-  d_par = 0.;
-  for (int i = 0; i < 3; i++) {
-    d_par += (d_real_vec[i] * m_axis[i]);
-  }
-
-  for (int i = 0; i < 3; i++) {
-    d_par_vec[i] = d_par * m_axis[i];
-    d_per_vec[i] = ppos[i] - (m_pos[i] + d_par_vec[i]);
-  }
-
-  d_per = sqrt(Utils::sqr(d_real) - Utils::sqr(d_par));
-  d_par = fabs(d_par);
-
-  if (m_direction == -1) {
-    /* apply force towards inside cylinder */
-    d_per = m_rad - d_per;
-    d_par = half_length - d_par;
-    if (d_per < d_par or m_open) {
-      *dist = d_per;
-      for (int i = 0; i < 3; i++) {
-        vec[i] = -d_per_vec[i] * d_per / (m_rad - d_per);
-      }
+  if (z >= m_half_length || r >= m_rad) {
+    /* Outside */
+    if (!m_open && z >= m_half_length && r < m_rad) {
+      /* Closest feature: cap */
+      return {0, -(z - m_half_length)};
+    } else if (z >= m_half_length && (m_open || r >= m_rad)) {
+      /* Closest feature: ring */
+      return {-(r - m_rad), -(z - m_half_length)};
     } else {
-      *dist = d_par;
-      for (int i = 0; i < 3; i++) {
-        vec[i] = -d_par_vec[i] * d_par / (half_length - d_par);
-      }
+      /* Closest feature: cylinder */
+      return {-(r - m_rad), 0};
     }
   } else {
-    /* apply force towards outside cylinder */
-    d_per = d_per - m_rad;
-    d_par = d_par - half_length;
-    if (d_par < 0) {
-      *dist = d_per;
-      for (int i = 0; i < 3; i++) {
-        vec[i] = d_per_vec[i] * d_per / (d_per + m_rad);
-      }
-    } else if (d_per < 0) {
-      *dist = d_par;
-      for (int i = 0; i < 3; i++) {
-        vec[i] = d_par_vec[i] * d_par / (d_par + half_length);
-      }
+    /* Inside */
+    if (!m_open && z >= m_half_length - m_rad &&
+        r < (z - (m_half_length - m_rad))) {
+      /* Closest feature: cap */
+      return {0, m_half_length - z};
     } else {
-      *dist = sqrt(Utils::sqr(d_par) + Utils::sqr(d_per));
-      for (int i = 0; i < 3; i++) {
-        vec[i] = d_per_vec[i] * d_per / (d_per + m_rad) +
-                 d_par_vec[i] * d_par / (d_par + half_length);
-      }
+      /* Closest feature: cylinder */
+      return {m_rad - r, 0};
     }
   }
+}
+
+int Cylinder::calculate_dist(const double *ppos, double *dist,
+                             double *vec) const {
+  /* Coordinate transform to cylinder coords
+     with origin at m_center. */
+  Vector3d const c_dist = Vector3d(ppos, ppos + 3) - m_center;
+  auto const z = e_z * c_dist;
+  auto const r_vec = c_dist - z * e_z;
+  auto const r = r_vec.norm();
+
+  /* If exactly on the axis, chose e_r orthogonal
+     to e_z. */
+  auto const e_r = (r == 0) ? e_r_axis : r_vec / r;
+
+  /* The pore has mirror symmetry in z with regard to
+     the center in the {r,z} system. We calculate always
+     for the z > 0 case, and flip the result if appropriate. */
+  double dr, dz;
+  std::tie(dr, dz) = dist_half_pore(r, std::abs(z));
+
+  double side = -1;
+  if (std::abs(z) >= m_half_length || r >= m_rad) /* outside */
+    side = 1;
+
+  if (z <= 0.0) {
+    dz *= -1;
+  }
+
+  *dist = std::sqrt(dr * dr + dz * dz) * m_direction * side;
+  for (int i = 0; i < 3; i++) {
+    vec[i] = (-dr * e_r[i] + -dz * e_z[i]);
+  }
+
   return 0;
 }
-}
+} // namespace Shapes

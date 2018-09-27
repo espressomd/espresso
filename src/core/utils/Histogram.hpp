@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -28,7 +28,6 @@
 #include <numeric>
 #include <vector>
 
-
 namespace Utils {
 
 inline size_t calculate_bin_index(double value, double bin_size,
@@ -51,13 +50,14 @@ inline size_t ravel_index(std::vector<size_t> unravelled_indices,
 }
 
 /**
- * \brief Returns the unravelled index of the provided flat index.
+ * \brief Returns the unraveled index of the provided flat index.
  *        Therefore is the inversion of flattening an ndims dimensional index.
  * \param len_dims an int array of length ndims containing the lengths of the
- * dimensions. (Input) \param ndims int denoting the number of dimensions.
- * (Input) \flattened_index an int denoting the flat index. (Input)
- * \unravelled_index_out an int array with length ndims where the unflat indices
- * are written to. (Output)
+ * dimensions. (Input)
+ * \param ndims int denoting the number of dimensions. (Input)
+ * \param flattened_index an int denoting the flat index. (Input)
+ * \param unravelled_index_out an int array with length ndims where the unflat
+ * indices are written to. (Output)
  */
 inline void unravel_index(const int *const len_dims, const int ndims,
                           const int flattened_index,
@@ -79,8 +79,9 @@ inline void unravel_index(const int *const len_dims, const int ndims,
  * \return The bin sizes for each dimension.
  */
 template <typename T, size_t Dims>
-std::array<T, Dims> calc_bin_sizes(std::array<std::pair<T, T>, Dims> const &limits,
-                              std::array<size_t, Dims> const &n_bins) {
+std::array<T, Dims>
+calc_bin_sizes(std::array<std::pair<T, T>, Dims> const &limits,
+               std::array<size_t, Dims> const &n_bins) {
   std::array<T, Dims> tmp;
   for (size_t ind = 0; ind < Dims; ++ind) {
     tmp[ind] = (limits[ind].second - limits[ind].first) / n_bins[ind];
@@ -147,8 +148,9 @@ protected:
  *        histogram.
  */
 template <typename T, size_t Dims>
-Histogram<T, Dims>::Histogram(std::array<size_t, Dims> n_bins, size_t n_dims_data,
-                        std::array<std::pair<T, T>, Dims> limits)
+Histogram<T, Dims>::Histogram(std::array<size_t, Dims> n_bins,
+                              size_t n_dims_data,
+                              std::array<std::pair<T, T>, Dims> limits)
     : m_n_bins(n_bins), m_limits(limits), m_n_dims_data(n_dims_data) {
   if (n_bins.size() != limits.size()) {
     throw std::invalid_argument("Argument for number of bins and limits do "
@@ -168,7 +170,8 @@ Histogram<T, Dims>::Histogram(std::array<size_t, Dims> n_bins, size_t n_dims_dat
  *              The size of the given vector has to match the number
  *              of dimensions of the histogram.
  */
-template <typename T, size_t Dims> void Histogram<T, Dims>::update(std::vector<T> const &data) {
+template <typename T, size_t Dims>
+void Histogram<T, Dims>::update(std::vector<T> const &data) {
   if (check_limits(data, m_limits)) {
     std::vector<T> weights(m_n_dims_data, static_cast<T>(1.0));
     update(data, weights);
@@ -184,14 +187,15 @@ template <typename T, size_t Dims> void Histogram<T, Dims>::update(std::vector<T
  */
 template <typename T, size_t Dims>
 void Histogram<T, Dims>::update(std::vector<T> const &data,
-                          std::vector<T> const &weights) {
+                                std::vector<T> const &weights) {
   if (check_limits(data, m_limits)) {
     std::vector<size_t> index;
     for (size_t dim = 0; dim < m_n_bins.size(); ++dim) {
       index.push_back(calculate_bin_index(data[dim], m_bin_sizes[dim],
                                           m_limits[dim].first));
     }
-    size_t flat_index = m_n_dims_data * ::Utils::ravel_index<Dims>(index, m_n_bins);
+    size_t flat_index =
+        m_n_dims_data * ::Utils::ravel_index<Dims>(index, m_n_bins);
     if (weights.size() != m_n_dims_data)
       throw std::invalid_argument("Wrong dimensions of given weights!");
     for (size_t ind = 0; ind < m_n_dims_data; ++ind) {
@@ -204,14 +208,16 @@ void Histogram<T, Dims>::update(std::vector<T> const &data,
 /**
  * \brief Get the bin sizes.
  */
-template <typename T, size_t Dims> std::array<T, Dims> Histogram<T, Dims>::get_bin_sizes() const {
+template <typename T, size_t Dims>
+std::array<T, Dims> Histogram<T, Dims>::get_bin_sizes() const {
   return m_bin_sizes;
 }
 
 /**
  * \brief Get the number of bins for each dimension.
  */
-template <typename T, size_t Dims> std::array<size_t, Dims> Histogram<T, Dims>::get_n_bins() const {
+template <typename T, size_t Dims>
+std::array<size_t, Dims> Histogram<T, Dims>::get_n_bins() const {
   return m_n_bins;
 }
 
@@ -226,21 +232,25 @@ std::array<std::pair<T, T>, Dims> Histogram<T, Dims>::get_limits() const {
 /**
  * \brief Get the histogram data.
  */
-template <typename T, size_t Dims> std::vector<T> Histogram<T, Dims>::get_histogram() const {
+template <typename T, size_t Dims>
+std::vector<T> Histogram<T, Dims>::get_histogram() const {
   return m_hist;
 }
 
 /**
  * \brief Get the histogram count data.
  */
-template <typename T, size_t Dims> std::vector<size_t> Histogram<T, Dims>::get_tot_count() const {
+template <typename T, size_t Dims>
+std::vector<size_t> Histogram<T, Dims>::get_tot_count() const {
   return m_tot_count;
 }
 /**
  * \brief Histogram normalization. (private member function can be overridden by
  * subclasses).
  */
-template <typename T, size_t Dims> void Histogram<T, Dims>::normalize() { do_normalize(); }
+template <typename T, size_t Dims> void Histogram<T, Dims>::normalize() {
+  do_normalize();
+}
 
 /**
  * \brief Histogram normalization.
@@ -250,10 +260,11 @@ template <typename T, size_t Dims> void Histogram<T, Dims>::do_normalize() {
   T bin_volume = std::accumulate(m_bin_sizes.begin(), m_bin_sizes.end(),
                                  static_cast<T>(1.0), std::multiplies<T>());
   std::transform(m_hist.begin(), m_hist.end(), m_hist.begin(),
-                 [this, bin_volume](T v) { return v / bin_volume; });
+                 [bin_volume](T v) { return v / bin_volume; });
 }
 
-template <typename T, size_t Dims> class CylindricalHistogram : public Histogram<T, Dims> {
+template <typename T, size_t Dims>
+class CylindricalHistogram : public Histogram<T, Dims> {
 public:
   using Histogram<T, Dims>::Histogram;
   using Histogram<T, Dims>::get_n_bins;
@@ -272,7 +283,7 @@ private:
     std::vector<int> len_bins(len_bins_u.begin(), len_bins_u.end());
     len_bins.push_back(m_n_dims_data);
     for (size_t ind = 0; ind < m_hist.size(); ind += m_n_dims_data) {
-      // Get the unravelled indices and calculate the bin volume.
+      // Get the unraveled indices and calculate the bin volume.
       ::Utils::unravel_index(len_bins.data(), 4, ind, unravelled_index);
       r_bin = unravelled_index[0];
       min_r = get_limits()[0].first;
@@ -280,9 +291,10 @@ private:
       phi_bin_size = get_bin_sizes()[1];
       z_bin_size = get_bin_sizes()[2];
       bin_volume =
-          PI * ((min_r + (r_bin + 1) * r_bin_size) *
-                    (min_r + (r_bin + 1) * r_bin_size) -
-                (min_r + r_bin * r_bin_size) * (min_r + r_bin * r_bin_size)) *
+          PI *
+          ((min_r + (r_bin + 1) * r_bin_size) *
+               (min_r + (r_bin + 1) * r_bin_size) -
+           (min_r + r_bin * r_bin_size) * (min_r + r_bin * r_bin_size)) *
           z_bin_size * phi_bin_size / (2 * PI);
       for (size_t dim = 0; dim < m_n_dims_data; ++dim) {
         m_hist[ind + dim] /= bin_volume;

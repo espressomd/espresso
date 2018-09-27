@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -35,7 +35,7 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-                Magnetostatics prefactor
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
 
         """
 
@@ -48,8 +48,8 @@ IF DIPOLES == 1:
 
         def set_magnetostatics_prefactor(self):
             """
-            Set the magnetostatics prefactor 
-            
+            Set the magnetostatics prefactor
+
             """
             if dipolar_set_Dprefactor(self._params["prefactor"]):
                     raise Exception(
@@ -75,6 +75,8 @@ IF DP3M == 1:
 
         Attributes
         ----------
+        prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
         accuracy : :obj:`float`
                    P3M tunes its parameters to provide this target accuracy.
         alpha : :obj:`float`
@@ -164,7 +166,7 @@ IF DP3M == 1:
                 "cao"], self._params["alpha"], self._params["accuracy"])
 
         def _tune(self):
-            self.set_magnetostatics_prefactor() 
+            self.set_magnetostatics_prefactor()
             dp3m_set_eps(self._params["epsilon"])
             self.python_dp3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
                 "cao"], -1.0, self._params["accuracy"], self._params["inter"])
@@ -192,11 +194,13 @@ IF DP3M == 1:
         def python_dp3m_adaptive_tune(self):
             cdef char * log = NULL
             cdef int response
-            response = dp3m_adaptive_tune( & log)
-            handle_errors("dipolar P3M_init: k-space cutoff is larger than half of box dimension")
+            response = dp3m_adaptive_tune(& log)
+            handle_errors(
+                "dipolar P3M_init: k-space cutoff is larger than half of box dimension")
             return response, log
 
-        def python_dp3m_set_params(self, p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
+        def python_dp3m_set_params(self, p_r_cut, p_mesh, p_cao, p_alpha,
+                                   p_accuracy):
             cdef int mesh
             cdef double r_cut
             cdef int cao
@@ -212,7 +216,8 @@ IF DP3M == 1:
                 mesh = p_mesh
             dp3m_set_params(r_cut, mesh, cao, alpha, accuracy)
 
-        def python_dp3m_set_tune_params(self, p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy, p_n_interpol):
+        def python_dp3m_set_tune_params(self, p_r_cut, p_mesh, p_cao, p_alpha,
+                                        p_accuracy, p_n_interpol):
             # cdef  python_p3m_set_tune_params():
             cdef int mesh
             cdef double r_cut
@@ -235,6 +240,12 @@ IF DIPOLES == 1:
         If the system has periodic boundaries, the minimum image convention is applied
         in the respective directions.
 
+        Attributes
+        ----------
+
+        prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+
         """
 
         def default_params(self):
@@ -244,7 +255,7 @@ IF DIPOLES == 1:
             return ()
 
         def valid_keys(self):
-            return ("prefactor",) 
+            return ("prefactor",)
 
         def _get_params_from_es_core(self):
             return {"prefactor": coulomb.Dprefactor}
@@ -267,6 +278,8 @@ IF DIPOLES == 1:
 
         Attributes
         ----------
+        prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
         n_replica : :obj:`int`
                     Number of replicas to be taken into account at periodic boundaries.
 
@@ -295,9 +308,18 @@ IF DIPOLES == 1:
                     "Could not activate magnetostatics method " + self.__class__.__name__)
     IF SCAFACOS_DIPOLES == 1:
         class Scafacos(ScafacosConnector, MagnetostaticInteraction):
+
             """
             Calculates dipolar interactions using dipoles-capable method from the SCAFACOs library.
-            
+            prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            method_name : :obj:`str`
+                Name of the method as defined in Scafacos
+            method_params : :obj:`dict`
+                Dictionary with the key-value pairs of the method parameters as defined in Scafacos. Note that the values are cast to strings to match Scafacos' interface
+
+
+
             """
 
             dipolar = True
@@ -309,7 +331,7 @@ IF DIPOLES == 1:
             def _activate_method(self):
                 dipolar_set_Dprefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
-            
+
             def _deactivate_method(self):
                 coulomb.Dmethod = DIPOLAR_NONE
                 scafacos.free_handle()
@@ -318,68 +340,74 @@ IF DIPOLES == 1:
             def default_params(self):
                 return {}
 
-    IF (CUDA == 1) and (DIPOLES == 1) and (ROTATION == 1):
+    IF(CUDA == 1) and (DIPOLES == 1) and (ROTATION == 1):
         cdef class DipolarDirectSumGpu(MagnetostaticInteraction):
             """Calculate magnetostatic interactions by direct summation over all pairs.
 
             If the system has periodic boundaries, the minimum image convention is applied
             in the respective directions.
 
-            GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu`.
+            This is the GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu` but uses floating point precision.
+
+            Attributes
+            ----------
+            prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
 
             """
 
             def default_params(self):
                 return {}
-    
+
             def required_keys(self):
                 return ()
-    
+
             def valid_keys(self):
                 return ("prefactor",)
-    
+
             def _get_params_from_es_core(self):
                 return {"prefactor": coulomb.Dprefactor}
-    
+
             def _activate_method(self):
                 self._set_params_in_es_core()
-                
+
             def _deactivate_method(self):
-                super(type(self),self)._deactivate_method()
+                super(type(self), self)._deactivate_method()
                 deactivate_dipolar_direct_sum_gpu()
-    
+
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
                 activate_dipolar_direct_sum_gpu()
 
-    IF (DIPOLAR_BARNES_HUT == 1):
+    IF(DIPOLAR_BARNES_HUT == 1):
         cdef class DipolarBarnesHutGpu(MagnetostaticInteraction):
-    
+
             """Calculates magnetostatic interactions by direct summation over all
             pairs. TODO: If the system has periodic boundaries, the minimum image
             convention is applied."""
-    
+
             def default_params(self):
                 return {"epssq": 100.0,
                         "itolsq": 4.0}
-    
+
             def required_keys(self):
                 return ()
-    
+
             def valid_keys(self):
                 return ("prefactor", "epssq", "itolsq")
-    
+
             def _get_params_from_es_core(self):
                 return {"prefactor": coulomb.Dprefactor}
-    
+
             def _activate_method(self):
                 self._set_params_in_es_core()
-            
+
             def _deactivate_method(self):
-                super(type(self),self)._deactivate_method()
+                super(type(self), self)._deactivate_method()
                 deactivate_dipolar_barnes_hut()
-    
+
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
-                activate_dipolar_barnes_hut(self._params["epssq"],self._params["itolsq"])
+                activate_dipolar_barnes_hut(
+                    self._params["epssq"], self._params["itolsq"])
                 #activate_dipolar_barnes_hut()

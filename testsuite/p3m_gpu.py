@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -27,10 +27,12 @@ from tests_common import *
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "CUDA"]),
            "Features not available, skipping test!")
 class P3MGPU_test(ut.TestCase):
+
     def runTest(self):
         from espressomd.electrostatics import P3MGPU
 
         es = espressomd.System(box_l=[10.0, 10.0, 10.0])
+        es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
         test_params = {}
         test_params["prefactor"] = 2
         test_params["cao"] = 2

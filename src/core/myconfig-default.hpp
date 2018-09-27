@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -29,7 +29,6 @@
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define EXTERNAL_FORCES
-#define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
 #define NPT
@@ -53,14 +52,13 @@
 #define LB
 #define LB_BOUNDARIES
 #ifdef CUDA
-  #define LB_GPU
-  #define LB_BOUNDARIES_GPU
-#endif  
+#define LB_GPU
+#define LB_BOUNDARIES_GPU
+#endif
 
 // Electrokinetics
 #ifdef CUDA
-  #define ELECTROKINETICS
-  #define EK_BOUNDARIES
-  #define EK_ELECTROSTATIC_COUPLING
+#define ELECTROKINETICS
+#define EK_BOUNDARIES
+#define EK_ELECTROSTATIC_COUPLING
 #endif
-

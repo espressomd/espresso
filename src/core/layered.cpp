@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file layered.cpp
-    Implementation of \ref layered.hpp "layered.h".
+/** \file
+    Implementation of \ref layered.hpp "layered.hpp".
  */
 #include "layered.hpp"
 #include "cells.hpp"
@@ -29,6 +29,7 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "utils.hpp"
+
 #include <cstring>
 #include <mpi.h>
 
@@ -60,9 +61,9 @@
 
 */
 
-/** wether we are the lowest node */
+/** whether we are the lowest node */
 #define LAYERED_BOTTOM 1
-/** wether we are the highest node */
+/** whether we are the highest node */
 #define LAYERED_TOP 2
 /** same as PERIODIC(2) */
 #define LAYERED_PERIODIC 4
@@ -91,7 +92,7 @@ void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
   res[2] = a[2] - b[2];
 }
 
-Cell *layered_position_to_cell(double pos[3]) {
+Cell *layered_position_to_cell(const Vector3d & pos) {
   int cpos =
       static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
   if (cpos < 1) {
@@ -118,7 +119,6 @@ void layered_topology_release() {
 }
 
 static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
-  int even_odd;
   int c, n;
 
   if (n_nodes > 1) {
@@ -146,7 +146,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
     CELL_TRACE(
         fprintf(stderr, "%d: ghostrec new comm of size %d\n", this_node, n));
     /* downwards */
-    for (even_odd = 0; even_odd < 2; even_odd++) {
+    for (int even_odd = 0; even_odd < 2; even_odd++) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comm->comm[c].type = GHOST_SEND;
@@ -197,7 +197,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
     CELL_TRACE(fprintf(stderr, "%d: ghostrec upwards\n", this_node));
     /* upwards */
-    for (even_odd = 0; even_odd < 2; even_odd++) {
+    for (int even_odd = 0; even_odd < 2; even_odd++) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comm->comm[c].type = GHOST_SEND;
@@ -300,8 +300,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 }
 
 void layered_topology_init(CellPList *old) {
-  Particle *part;
-  int c, p, np;
+  int c, p;
 
   CELL_TRACE(fprintf(
       stderr, "%d: layered_topology_init, %d old particle lists max_range %g\n",
@@ -335,7 +334,7 @@ void layered_topology_init(CellPList *old) {
   }
   MPI_Bcast(&n_layers, 1, MPI_INT, 0, comm_cart);
 
-  /* check wether node is top and/or bottom */
+  /* check whether node is top and/or bottom */
   layered_flags = 0;
   if (this_node == 0)
     layered_flags |= LAYERED_BOTTOM;
@@ -366,9 +365,12 @@ void layered_topology_init(CellPList *old) {
   /* allocate cells and mark them */
   realloc_cells(n_layers + 2);
   realloc_cellplist(&local_cells, local_cells.n = n_layers);
-  for (c = 0; c < n_layers; c++) {
-    local_cells.cell[c] = &cells[c + 1];
-    cells[c + 1].m_neighbors.push_back(std::ref(cells[c]));
+  for (c = 1; c <= n_layers; c++) {
+    Cell *red[] = {&cells[c - 1]};
+    Cell *black[] = {&cells[c + 1]};
+
+    local_cells.cell[c - 1] = &cells.at(c);
+    cells[c].m_neighbors = Neighbors<Cell *>(red, black);
   }
 
   realloc_cellplist(&ghost_cells, ghost_cells.n = 2);
@@ -386,8 +388,8 @@ void layered_topology_init(CellPList *old) {
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {
-    part = old->cell[c]->part;
-    np = old->cell[c]->n;
+    Particle *part = old->cell[c]->part;
+    int np = old->cell[c]->n;
     for (p = 0; p < np; p++) {
       Cell *nc = layered_position_to_cell(part[p].r.p);
       /* particle does not belong to this node. Just stow away
@@ -420,7 +422,8 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(up, pl, p);
     } else
-      move_indexed_particle(layered_position_to_cell(pl->part[p].r.p), pl, p);
+      move_indexed_particle(layered_position_to_cell(pl->part[p].r.p),
+                            pl, p);
     /* same particle again, as this is now a new one */
     if (p < pl->n)
       p--;
@@ -440,7 +443,6 @@ void layered_exchange_and_sort_particles(int global_flag,
                      global_flag));
 
   /* sort local particles */
-
   for (p = 0; p < displaced_parts->n; p++) {
     part = &displaced_parts->part[p];
 

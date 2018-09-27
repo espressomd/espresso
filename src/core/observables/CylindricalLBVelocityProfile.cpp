@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -17,7 +17,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "CylindricalLBVelocityProfile.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
 
@@ -32,13 +34,27 @@ operator()(PartCfg &partCfg) const {
       {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
        std::make_pair(min_z, max_z)}};
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
-#ifdef LB_GPU
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
   std::vector<double> velocities(m_sample_positions.size());
-  lb_lbfluid_get_interpolated_velocity_at_positions(
-      m_sample_positions.data(), velocities.data(),
-      m_sample_positions.size() / 3);
+  if (lattice_switch & LATTICE_LB_GPU) {
+#if defined(LB_GPU)
+    lb_lbfluid_get_interpolated_velocity_at_positions(
+        m_sample_positions.data(), velocities.data(),
+        m_sample_positions.size() / 3);
+#endif
+  } else if (lattice_switch & LATTICE_LB) {
+#if defined(LB)
+    for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
+      Vector3d pos_tmp = {m_sample_positions[ind + 0],
+                          m_sample_positions[ind + 1],
+                          m_sample_positions[ind + 2]};
+      lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
+    }
+#endif
+  } else {
+    return histogram.get_histogram();
+  }
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
     const Vector3d pos_shifted = {{m_sample_positions[ind + 0] - center[0],
                                    m_sample_positions[ind + 1] - center[1],
@@ -56,15 +72,11 @@ operator()(PartCfg &partCfg) const {
     if (tot_count[ind] == 0 and not allow_empty_bins)
       throw std::runtime_error("Decrease sampling delta(s), bin without hit "
                                "found!");
-    if (hist_tmp[ind] > 0.0) {
+    if (tot_count[ind] > 0) {
       hist_tmp[ind] /= tot_count[ind];
     }
   }
   return hist_tmp;
-#endif // LB_GPU
-#ifndef LB_GPU
-  return histogram.get_histogram();
-#endif
 }
 
 } // namespace Observables

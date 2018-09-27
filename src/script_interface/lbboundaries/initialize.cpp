@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -20,8 +20,8 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
-#include "LBBoundary.hpp"
 #include "LBBoundaries.hpp"
+#include "LBBoundary.hpp"
 
 namespace ScriptInterface {
 namespace LBBoundaries {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -54,9 +54,9 @@ public:
 private:
   std::shared_ptr<::Shapes::Stomatocyte> m_stomatocyte;
 };
-}
+} // namespace Shapes
 /* namespace Shapes */
-}
+} // namespace ScriptInterface
 /* namespace ScriptInterface */
 
 #endif

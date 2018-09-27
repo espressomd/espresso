@@ -1,5 +1,9 @@
+"""
+This sample simulates charged particles that interact via repulsive WCA potential. Electrostatic interactions are included using the P3M solver. Relevant properties of the simulation is stored as a pickle file.
+"""
+
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,9 +23,12 @@
 from __future__ import print_function
 import numpy as np
 import espressomd
+
+required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
-from samples_common import open
 
 print("""
 =======================================================
@@ -30,7 +37,6 @@ print("""
 
 Program Information:""")
 print(espressomd.features())
-espressomd.assert_features(["ELECTROSTATICS"])
 
 dev = "cpu"
 
@@ -153,7 +159,7 @@ import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 pprint.pprint(system.thermostat.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+pprint.pprint(system.__getstate__())
 
 
 # Pickle data
@@ -163,19 +169,19 @@ try:
 except ImportError:
     import pickle
 
-with open("particle_save", "w") as particle_save:
+with open("particle_save", "wb") as particle_save:
     pickle.dump(system.part, particle_save, -1)
 
-with open("p3m_save", "w") as p3m_save:
+with open("p3m_save", "wb") as p3m_save:
     pickle.dump(p3m, p3m_save, -1)
 
-with open("system_save", "w") as system_save:
+with open("system_save", "wb") as system_save:
     pickle.dump(system, system_save, -1)
 
-with open("thermostat_save", "w") as thermostat_save:
+with open("thermostat_save", "wb") as thermostat_save:
     pickle.dump(system.thermostat, thermostat_save, -1)
 
-with open("nonBondedInter_save", "w") as bond_save:
+with open("nonBondedInter_save", "wb") as bond_save:
     pickle.dump(system.non_bonded_inter, bond_save, -1)
 
 # terminate program

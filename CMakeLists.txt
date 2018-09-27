@@ -1,4 +1,4 @@
-# Copyright (C) 2009,2010,2011,2012,2015,2016 The ESPResSo project
+# Copyright (C) 2009-2018 The ESPResSo project
 # Copyright (C) 2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -74,11 +74,35 @@ option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
-option(WITH_COVERAGE "Generate code coverage report" OFF)
 if( CMAKE_VERSION VERSION_GREATER 3.5.2 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
+if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+  option(WITH_COVERAGE "Generate code coverage report" OFF)
+  option(WITH_ASAN "Build with address sanitizer" OFF)
+  option(WITH_UBSAN "Build with undefined behavior sanitizer" OFF)
+endif()
+if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT APPLE )
+  option(WITH_MSAN "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)" OFF)
+endif()
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
+option(WITH_CCACHE "Use ccache compiler invocation." OFF)
+
+if(WITH_CCACHE)
+  find_program(CCACHE ccache)
+  if(CCACHE)
+    message(STATUS "Found ccache ${CCACHE}")
+    if(CMAKE_VERSION VERSION_LESS 3.4)
+      set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE})
+      set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE})
+    else()
+      set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE} CACHE STRING "ccache executable")
+    endif()
+  else()
+      message(FATAL_ERROR "ccache not found.")
+  endif(CCACHE)
+endif(WITH_CCACHE)
+
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -116,7 +140,7 @@ if (WITH_CUDA)
   if (EXISTS "$ENV{NVCC}" AND NOT CUDA_NVCC_EXECUTABLE)
     set(CUDA_NVCC_EXECUTABLE $ENV{NVCC} CACHE FILEPATH "Path to CUDA compiler.")
   endif()
-  if (CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_C_COMPILER OR CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
+  if (CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
     message(STATUS "Found CUDA-capable host compiler: ${CUDA_NVCC_EXECUTABLE}")
     if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
         execute_process(COMMAND ${CUDA_NVCC_EXECUTABLE} ${CMAKE_CXX_FLAGS} --verbose
@@ -197,6 +221,10 @@ if (WITH_PYTHON)
   else()
     set(CYTHON_FLAGS "-3" CACHE STRING "Flags used by the Cython compiler during all build types.")
   endif()
+
+  if(WARNINGS_ARE_ERRORS)
+    set(CYTHON_FLAGS "--warning-errors;${CYTHON_FLAGS}")
+  endif()
 endif(WITH_PYTHON)
 
 
@@ -275,7 +303,10 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 #######################################################################
 
 find_package(MPI REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
+# Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
+foreach(_MPI_FLAG ${MPI_CXX_COMPILE_FLAGS})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_MPI_FLAG}")
+endforeach()
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 list(APPEND LIBRARIES ${MPI_LIBRARIES})
@@ -294,6 +325,9 @@ endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   set(BOOST_MINIMUM_VERSION "1.65.0")
+  if (CUDA_FOUND AND NOT CUDA_VERSION VERSION_LESS "9.0")
+    set(BOOST_MINIMUM_VERSION "1.66.0")
+  endif()
 else()
   set(BOOST_MINIMUM_VERSION "1.53.0")
 endif()
@@ -342,6 +376,7 @@ if(CMAKE_VERSION VERSION_LESS 3.1)
   include(RequireCXX11)
 endif()
 
+
 if(APPLE)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
 endif()
@@ -351,11 +386,18 @@ endif()
 
 if(WARNINGS_ARE_ERRORS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-  if (NOT CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_C_COMPILER AND NOT CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
+  if (NOT CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
   endif()
 endif(WARNINGS_ARE_ERRORS)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -Wno-unused-function -Wno-unused-private-field -Wno-unused-variable")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -Wno-unused-function -Wno-unused-variable")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+endif()
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  # G++ and Intel don't know this flag
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
+endif()
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.8.5")
   # older versions don't support -Wno-pedantic which we need in src/python
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
@@ -366,6 +408,21 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION VERSIO
 endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)
+
+if( WITH_ASAN AND WITH_MSAN )
+  message(FATAL_ERROR "Address sanitizer and memory sanitizer cannot be enabled simultaneously")
+endif()
+if( WITH_ASAN )
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+endif()
+if( WITH_MSAN )
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=memory -fno-omit-frame-pointer")
+endif()
+if( WITH_UBSAN )
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+endif()
 
 #######################################################################
 # Testing
@@ -382,7 +439,7 @@ if( WITH_CLANG_TIDY )
     message(STATUS "clang-tidy not found.")
   else()
     message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
-    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*,-misc-unused-*,-google-*,-llvm-*,-modernize-*,-readability-*,-cppcoreguidelines-*,-clang-analyzer-deadcode*,-cert-*,-clang-analyzer-core.NullDereference,-clang-analyzer-core.DivideZero,-misc-misplaced-widening-cast,-misc-macro-parentheses,-clang-analyzer-security.FloatLoopCounter,-clang-analyzer-optin.mpi.MPI-Checker,-boost-use-to-string" "-header-filter=.*" "-warnings-as-errors=*")
+    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*,-misc-unused-*,-android-*,-fuchsia-*,-google-*,-llvm-*,-modernize-*,-readability-*,-cppcoreguidelines-*,-clang-analyzer-deadcode*,-cert-*,-clang-analyzer-core.NullDereference,-clang-analyzer-core.DivideZero,-misc-misplaced-widening-cast,-misc-macro-parentheses,-clang-analyzer-security.FloatLoopCounter,-clang-analyzer-optin.mpi.MPI-Checker,-boost-use-to-string,-hicpp-*" "-header-filter=.*" "-warnings-as-errors=*")
   endif()
 endif()
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -163,10 +163,10 @@ protected:
   static EspressoSystemInterface *m_instance;
   EspressoSystemInterface()
       : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0),
-        m_dip_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),
-        m_q_gpu_end(0), m_quatu_gpu_begin(0), m_quatu_gpu_end(0),
-        m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)
-        {};
+        m_dip_gpu_begin(0), m_dip_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0),
+        m_q_gpu_begin(0), m_q_gpu_end(0), m_quatu_gpu_begin(0),
+        m_quatu_gpu_end(0), m_needsParticleStructGpu(false),
+        m_splitParticleStructGpu(false){};
   virtual ~EspressoSystemInterface() {}
 
   void gatherParticles();

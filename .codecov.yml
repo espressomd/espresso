@@ -3,6 +3,8 @@ codecov:
   branch: python
   notify:
     require_ci_to_pass: yes
+  ci:
+    - !travis-ci.org
 
 coverage:
   precision: 0
@@ -11,7 +13,15 @@ coverage:
 
   status:
     project:
-      default:
+      default: false
+      tests:
+        paths:
+          - src/core/unit_tests/
+        enabled: yes
+        threshold: 1%
+      core:
+        paths:
+          - !src/core/unit_tests/
         enabled: yes
         threshold: 1%
     patch:

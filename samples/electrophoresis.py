@@ -1,5 +1,9 @@
+"""
+This sample simulates electrophoresis using P3M solver.
+"""
+
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,6 +22,10 @@
 #
 from __future__ import print_function
 import espressomd
+
+required_features = ["ELECTROSTATICS", "EXTERNAL_FORCES", "LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import electrostatics
@@ -30,7 +38,6 @@ except ImportError:
 import os
 
 print(espressomd.features())
-
 
 # System parameters
 #############################################################
@@ -101,16 +108,16 @@ for i in range(n_monomers):
     if i > 0:
         system.part[i].add_bond((harmonic, i - 1))
 
-for i in range(1,n_monomers-1):
-    system.part[i].add_bond((harmonicangle,i - 1, i + 1))
+for i in range(1, n_monomers-1):
+    system.part[i].add_bond((harmonicangle, i - 1, i + 1))
 
 system.part[:n_monomers].q = -np.ones(n_monomers)
 
 # Create counterions
 ###################################################################
 system.part.add(pos=np.random.random((n_monomers, 3)) * system.box_l,
-                q=np.ones(n_monomers,dtype=int),
-                type=np.ones(n_monomers,dtype=int))
+                q=np.ones(n_monomers, dtype=int),
+                type=np.ones(n_monomers, dtype=int))
 
 # Create ions
 ###############################################################
@@ -154,9 +161,9 @@ print("\nWarmup finished!\n")
 #############################################################
 read_checkpoint = False
 # Load checkpointed p3m class
-if os.path.isfile("p3m_checkpoint") and read_checkpoint == True:
+if os.path.isfile("p3m_checkpoint") and read_checkpoint is True:
     print("reading p3m from file")
-    p3m = pickle.load(open("p3m_checkpoint", "r"))
+    p3m = pickle.load(open("p3m_checkpoint", "rb"))
 else:
     p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     print("Tuning P3M")
@@ -164,7 +171,7 @@ else:
 system.actors.add(p3m)
 
 # Checkpoint AFTER tuning (adding method to actors)
-pickle.dump(p3m, open("p3m_checkpoint", "w"), -1)
+pickle.dump(p3m, open("p3m_checkpoint", "wb"), -1)
 
 print("P3M parameter:\n")
 p3m_params = p3m.get_params()
@@ -173,7 +180,7 @@ for key in list(p3m_params.keys()):
 
 print(system.actors)
 
-# Apply external Force
+# Apply external force
 #############################################################
 n_part = len(system.part)
 system.part[:].ext_force = np.dstack(
@@ -229,7 +236,7 @@ if float(np.version.version.split(".")[1]) >= 10:
     from numpy.linalg import norm
 
     # First get bond vectors
-    bond_vec = pos_list[:, 1:, :] - pos_list[:, :-1, :]
+    bond_vec = pos_list[:, 1:,:] - pos_list[:, :-1,:]
     bond_abs = norm(bond_vec, axis=2, keepdims=True)
     bond_abs_avg = bond_abs.mean(axis=0)[:, 0]
 
@@ -241,7 +248,7 @@ if float(np.version.version.split(".")[1]) >= 10:
 
     bv_zero = np.empty_like(bv_norm)
     for i in range(bv_zero.shape[1]):
-        bv_zero[:, i, :] = bv_norm[:, 0, :]
+        bv_zero[:, i,:] = bv_norm[:, 0,:]
 
     # Calculate <cos(theta)>
     cos_theta = (bv_zero * bv_norm).sum(axis=2).mean(axis=0)

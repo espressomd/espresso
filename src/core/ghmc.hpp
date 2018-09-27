@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021
   Mainz, Germany
@@ -21,7 +21,7 @@
 */
 #ifndef GHMC_H
 #define GHMC_H
-/** \file ghmc.hpp
+/** \file
 
     This file contains the implementation of the GHMC (Generalized
     Hybrid Monte Carlo) thermostat.
@@ -44,7 +44,7 @@
 /** \name Data Types */
 /************************************************/
 /*@{*/
-/** Data structure describing a slab and the velocities occuring their in. */
+/** Data structure describing a slab and the velocities occurring their in. */
 typedef struct {
 
   /** MC  statistics variables */
@@ -77,10 +77,10 @@ extern int ghmc_mc_res;
 
 #ifdef GHMC
 
-/**  initilize global thermostat parameters*/
+/**  initialize global thermostat parameters*/
 void thermo_init_ghmc();
 
-/**  initilize ghmc during integration*/
+/**  initialize ghmc during integration*/
 void ghmc_init();
 
 /**  momentum update step of ghmc */

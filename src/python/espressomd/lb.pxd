@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,6 +21,7 @@ include "myconfig.pxi"
 from libcpp cimport bool
 from libcpp.vector cimport vector
 from .actors cimport Actor
+from .utils cimport Vector3d
 
 cdef class HydrodynamicInteraction(Actor):
     pass
@@ -33,7 +34,7 @@ IF LB_GPU or LB:
     #
     ##############################################
 
-    cdef extern from "lb.hpp":
+    cdef extern from "grid_based_algorithms/lb.hpp":
 
         ##############################################
         #
@@ -47,7 +48,7 @@ IF LB_GPU or LB:
             double agrid
             double tau
             double friction[2]
-            double ext_force[3]
+            double ext_force_density[3]
             double rho_lb_units[2]
             double gamma_odd[2]
             double gamma_even[2]
@@ -79,12 +80,12 @@ IF LB_GPU or LB:
         int lb_lbfluid_get_gamma_odd(double * c_gamma_odd)
         int lb_lbfluid_set_gamma_even(double * c_gamma_even)
         int lb_lbfluid_get_gamma_even(double * c_gamma_even)
-        int lb_lbfluid_set_ext_force(int component, double c_fx, double c_fy, double c_fz)
-        int lb_lbfluid_get_ext_force(double * c_f)
+        int lb_lbfluid_set_ext_force_density(int component, double c_fx, double c_fy, double c_fz)
+        int lb_lbfluid_get_ext_force_density(double * c_f)
         int lb_lbfluid_set_bulk_visc(double * c_bulk_visc)
         int lb_lbfluid_get_bulk_visc(double * c_bulk_visc)
         int lb_lbfluid_print_vtk_velocity(char * filename)
-        int lb_lbfluid_print_vtk_velocity(char* filename, vector[int] bb1, vector[int] bb2)
+        int lb_lbfluid_print_vtk_velocity(char * filename, vector[int] bb1, vector[int] bb2)
         int lb_lbfluid_print_vtk_boundary(char * filename)
         int lb_lbfluid_print_velocity(char * filename)
         int lb_lbfluid_print_boundary(char * filename)
@@ -93,7 +94,7 @@ IF LB_GPU or LB:
         int lb_set_lattice_switch(int py_switch)
         int lb_get_lattice_switch(int * py_switch)
         int lb_lbnode_get_u(int * coord, double * double_return)
-        int lb_lbnode_set_u(int *ind, double *u);
+        int lb_lbnode_set_u(int * ind, double * u);
         int lb_lbnode_get_rho(int * coord, double * double_return)
         int lb_lbnode_get_pi(int * coord, double * double_return)
         int lb_lbnode_get_pi_neq(int * coord, double * double_return)
@@ -102,11 +103,11 @@ IF LB_GPU or LB:
         int lb_lbnode_get_boundary(int * coord, int * int_return)
         int lb_lbfluid_set_couple_flag(int c_couple_flag)
         int lb_lbfluid_get_couple_flag(int * c_couple_flag)
-        int lb_lbfluid_get_interpolated_velocity_global(double *p, double *v)
+        int lb_lbfluid_get_interpolated_velocity_global(Vector3d & p, double * v)
 
-    cdef extern from "lbgpu.hpp":
+    cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()
-        void lb_lbfluid_get_interpolated_velocity_at_positions(double *positions, double *velocities, int length);
+        void lb_lbfluid_get_interpolated_velocity_at_positions(double * positions, double * velocities, int length);
 
     ###############################################
     #
@@ -215,22 +216,56 @@ IF LB_GPU or LB:
 
         return 0
 
+    cdef inline python_lbfluid_set_gamma_odd(gamma_odd):
+        IF SHANCHEN:
+            cdef double c_gamma_odd[2]
+        ELSE:
+            cdef double c_gamma_odd[1]
+        # get pointers
+        if isinstance(gamma_odd, float) or isinstance(gamma_odd, int):
+            c_gamma_odd[0] = <float > gamma_odd
+        else:
+            c_gamma_odd = gamma_odd
+        # call c-function
+        if(lb_lbfluid_set_gamma_odd(c_gamma_odd)):
+            raise Exception(
+                "lb_fluid_set_gamma_odd error at C-level interface")
+
+        return 0
+
+    cdef inline python_lbfluid_set_gamma_even(gamma_even):
+        IF SHANCHEN:
+            cdef double c_gamma_even[2]
+        ELSE:
+            cdef double c_gamma_even[1]
+        # get pointers
+        if isinstance(gamma_even, float) or isinstance(gamma_even, int):
+            c_gamma_even[0] = <float > gamma_even
+        else:
+            c_gamma_even = gamma_even
+        # call c-function
+        if(lb_lbfluid_set_gamma_even(c_gamma_even)):
+            raise Exception(
+                "lb_fluid_set_gamma_even error at C-level interface")
+
+        return 0
+
 ###############################################
 
-    cdef inline python_lbfluid_set_ext_force(p_ext_force):
+    cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density):
 
-        cdef double c_ext_force[3]
+        cdef double c_ext_force_density[3]
         # get pointers
-        c_ext_force = p_ext_force
+        c_ext_force_density = p_ext_force_density
         # call c-function
         IF SHANCHEN:
-            if(lb_lbfluid_set_ext_force(1, c_ext_force[0], c_ext_force[1], c_ext_force[2])):
+            if(lb_lbfluid_set_ext_force_density(1, c_ext_force_density[0], c_ext_force_density[1], c_ext_force_density[2])):
                 raise Exception(
-                    "lb_fluid_set_ext_force error at C-level interface")
+                    "lb_fluid_set_ext_force_density error at C-level interface")
         ELSE:
-            if(lb_lbfluid_set_ext_force(0, c_ext_force[0], c_ext_force[1], c_ext_force[2])):
+            if(lb_lbfluid_set_ext_force_density(0, c_ext_force_density[0], c_ext_force_density[1], c_ext_force_density[2])):
                 raise Exception(
-                    "lb_fluid_set_ext_force error at C-level interface")
+                    "lb_fluid_set_ext_force_density error at C-level interface")
 
         return 0
 
@@ -258,7 +293,7 @@ IF LB_GPU or LB:
     cdef inline python_lbfluid_get_couple_flag(p_couple_flag):
 
         cdef int c_couple_flag;
-        if(lb_lbfluid_get_couple_flag(&c_couple_flag)):
+        if(lb_lbfluid_get_couple_flag( & c_couple_flag)):
             raise Exception(
                 "lb_lbfluid_get_couple_flag error at C-level interface")
         p_couple_flag = c_couple_flag
@@ -374,13 +409,13 @@ IF LB_GPU or LB:
 
 ###############################################
 
-    cdef inline python_lbfluid_get_ext_force(p_ext_force):
+    cdef inline python_lbfluid_get_ext_force_density(p_ext_force_density):
 
-        cdef double c_ext_force[3]
+        cdef double c_ext_force_density[3]
         # call c-function
-        if(lb_lbfluid_get_ext_force(c_ext_force)):
+        if(lb_lbfluid_get_ext_force_density(c_ext_force_density)):
             raise Exception(
-                "lb_fluid_get_ext_force error at C-level interface")
-        p_ext_force = c_ext_force
+                "lb_fluid_get_ext_force_density error at C-level interface")
+        p_ext_force_density = c_ext_force_density
 
         return 0
