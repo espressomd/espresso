@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file rotation.cpp  Molecular dynamics integrator for rotational motion.
+/** \file
+ *  Molecular dynamics integrator for rotational motion.
  *
  *  A velocity Verlet <a
  * HREF="http://ciks.cbt.nist.gov/~garbocz/dpd1/dpd.html">algorithm</a>
@@ -28,7 +29,7 @@
  * all particles are
  *  treated as 3D objects with 3 translational and 3 rotational degrees of
  * freedom if ROTATION
- *  flag is set in \ref config.hpp "config.h".
+ *  flag is set in \ref config.hpp "config.hpp".
  */
 
 #include "rotation.hpp"

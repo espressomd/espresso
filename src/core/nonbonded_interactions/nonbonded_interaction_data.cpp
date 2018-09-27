@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file interaction_data.cpp
+/** \file
     Implementation of nonbonded_interaction_data.hpp
  */
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -130,7 +130,7 @@ double dipolar_cutoff;
 static void recalc_global_maximal_nonbonded_cutoff();
 
 /*****************************************
- * general lowlevel functions
+ * general low-level functions
  *****************************************/
 
 IA_parameters *get_ia_param_safe(int i, int j) {
@@ -218,8 +218,8 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
    for the relative virtual sites algorithm. */
   max_cut_global = min_global_cut;
 
-  // global cutoff without dipolar and coulomb methods is needed
-  // for more selective addition of particle pairs to verlet lists
+  // global cutoff without dipolar and Coulomb methods is needed
+  // for more selective addition of particle pairs to Verlet lists
   max_cut_global_without_coulomb_and_dipolar = max_cut_global;
 
   // Electrostatics and magnetostatics

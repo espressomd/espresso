@@ -20,7 +20,7 @@
 */
 #ifndef _FENE_HPP
 #define _FENE_HPP
-/** \file fene.hpp
+/** \file
  *  Routines to calculate the FENE Energy or/and FENE force
  *  for a particle pair.
  *  \ref forces.cpp
@@ -39,11 +39,11 @@
 int fene_set_params(int bond_type, double k, double drmax, double r0);
 
 /** Computes the FENE pair force and adds this
-    force to the particle forces (see \ref interaction_data.cpp).
+    force to the particle forces (see \ref bonded_interaction_data.cpp).
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
     @param iaparams  bond type number of the angle interaction (see \ref
-   interaction_data.cpp).
+   bonded_interaction_data.cpp).
     @param dx        particle distance vector
     @param force     returns force of particle 1
     @return true if the bond is broken

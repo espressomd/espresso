@@ -413,7 +413,7 @@ and the parameters:
     * ``ext_pressure``:  (float) The external pressure as float variable.
     * ``piston``:        (float) The mass of the applied piston as float variable.
 
-This thermostat is based on the Anderson thermostat (see
+This thermostat is based on the Andersen thermostat (see
 :cite:`andersen80a,mann05d`) and will thermalize the box
 geometry. It will only do isotropic changes of the box.
 See this code snippet for the two commands::

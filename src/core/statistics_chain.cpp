@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file statistics_chain.cpp
+/** \file
     Implementation of \ref statistics_chain.hpp "statistics_chain.hpp".
 */
 #include "PartCfg.hpp"

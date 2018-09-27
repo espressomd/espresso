@@ -19,9 +19,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file forces.cpp Force calculation.
+/** \file
+ *  Force calculation.
  *
- *  For more information see \ref forces.hpp "forces.h".
+ *  For more information see \ref forces.hpp "forces.hpp".
  */
 
 #include "EspressoSystemInterface.hpp"
@@ -52,7 +53,7 @@ void init_forces() {
     nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
 #endif
 
-  /* initialize forces with langevin thermostat forces
+  /* initialize forces with Langevin thermostat forces
      or zero depending on the thermostat
      set torque to zero for all and rescale quaternions
   */

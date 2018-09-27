@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file errorhandling.hpp
+/** \file
     This file contains the errorhandling code for severe errors, like
     a broken bond or illegal parameter combinations. See section
     "Errorhandling for developers" for details on the error format and

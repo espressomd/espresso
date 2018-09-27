@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file p3m-dipolar.cpp  P3M algorithm for long range magnetic dipole-dipole
+/** \file
+ *  P3M algorithm for long range magnetic dipole-dipole
  interaction.
  *
  NB: In general the magnetic dipole-dipole functions bear the same
@@ -1585,7 +1586,7 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
     error contributions of real and reciprocal space should be equal.
 
     After checking if the total error fulfills the accuracy goal the
-    time needed for one force calculation (including verlet list
+    time needed for one force calculation (including Verlet list
     update) is measured via \ref mpi_integrate (0).
 
     The function returns a log of the performed tuning.
@@ -1781,7 +1782,8 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
                           double *_accuracy) {
   double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L = 0.0,
          tmp_accuracy = 0.0;
-  /* in which direction improvement is possible. Initially, we dont know it yet.
+  /* in which direction improvement is possible. Initially, we don't know it
+   * yet.
    */
   int final_dir = 0;
   int cao = *_cao;

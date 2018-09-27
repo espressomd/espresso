@@ -69,7 +69,7 @@ int ObservableStructureFactor::actual_calculate(PartCfg &partCfg) {
   }
   l = 0;
   for (int k = 0; k < n; k++) {
-    // devide by the sqrt(number_of_particle) due to complex product and no
+    // divide by the sqrt(number_of_particle) due to complex product and no
     // k-vector averaging so far
     A[k] /= sqrt(n_part);
   }

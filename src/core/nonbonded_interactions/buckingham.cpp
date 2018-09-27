@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file buckingham.cpp
+/** \file
  *
  *  Implementation of \ref buckingham.hpp
  */
@@ -43,7 +43,7 @@ int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
   data->BUCK_discont = discont;
   data->BUCK_shift = shift;
 
-  /* Replace the buckingham potential for interatomic dist. less
+  /* Replace the Buckingham potential for interatomic dist. less
      than or equal to discontinuity by a straight line (F1+F2*r) */
   double F1;
   double F2;

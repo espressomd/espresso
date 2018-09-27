@@ -21,7 +21,7 @@
 */
 #ifndef GHMC_H
 #define GHMC_H
-/** \file ghmc.hpp
+/** \file
 
     This file contains the implementation of the GHMC (Generalized
     Hybrid Monte Carlo) thermostat.

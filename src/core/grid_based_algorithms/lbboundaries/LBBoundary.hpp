@@ -92,7 +92,7 @@ private:
 
   /** Private data members */
   std::shared_ptr<Shapes::Shape>
-      m_shape; // TODO: I dont like this being a pointer just to get around the
+      m_shape; // TODO: I don't like this being a pointer just to get around the
                // virtual limitations
   Vector3d m_velocity;
   Vector3d m_force;

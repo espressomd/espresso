@@ -18,9 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file mmm2d.cpp  MMM2D algorithm for long range coulomb interaction.
+/** \file
+ *  MMM2D algorithm for long range Coulomb interaction.
  *
- *  For more information about MMM2D, see \ref mmm2d.hpp "mmm2d.h".
+ *  For more information about MMM2D, see \ref mmm2d.hpp "mmm2d.hpp".
  */
 
 #include "electrostatics_magnetostatics/mmm2d.hpp"
@@ -106,7 +107,7 @@ char const *mmm2d_errors[] = {
 /** up to that error the sums in the NF are evaluated */
 static double part_error;
 
-/** cutoffs for the bessel sum */
+/** cutoffs for the Bessel sum */
 static IntList besselCutoff;
 
 /** cutoffs for the complex sum */
@@ -120,7 +121,7 @@ static double ux, ux2, uy, uy2, uz;
 /*@}*/
 
 /** maximal z for near formula, minimal z for far formula.
-    Is identical in the theory, but with the verlet tricks
+    Is identical in the theory, but with the Verlet tricks
     this is no longer true, the skin has to be added/subtracted */
 /*@{*/
 static double max_near, min_far;
@@ -137,7 +138,7 @@ MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, 0, 0, 0, 1, 1, 1};
 #define ERROR_LARGE 1
 /** box too large */
 #define ERROR_BOXL 2
-/** no reasonable bessel cutoff found */
+/** no reasonable Bessel cutoff found */
 #define ERROR_BESSEL 3
 /** no reasonable polygamma cutoff found */
 #define ERROR_POLY 4
@@ -1307,7 +1308,7 @@ static int MMM2D_tune_near(double error) {
     return ERROR_BOXL;
 
   /* error is split into three parts:
-     one part for bessel, one for complex
+     one part for Bessel, one for complex
      and one for polygamma cutoff */
   part_error = error / 3;
 
@@ -1383,7 +1384,7 @@ static void prepareBernoulliNumbers(int bon_order) {
 
   bon.resize(bon_order);
 
-  /* the ux is multiplied in to bessel, complex and psi at once, not here,
+  /* the ux is multiplied in to Bessel, complex and psi at once, not here,
      and we use uy*(z + iy), so the uy is also treated below */
   for (l = 1; (l <= bon_order) && (l < 34); l++)
     bon[l - 1] = 2 * uy * bon_table[l];
@@ -1457,7 +1458,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
         k1ySum += k1 * ypl;
       }
 
-      /* the ux is multiplied in to bessel, complex and psi at once, not here */
+      /* the ux is multiplied in to Bessel, complex and psi at once, not here */
       c = 4 * freq * cos(freq * d[0]);
       s = 4 * freq * sin(freq * d[0]);
       F[0] += s * k0Sum;
@@ -1513,7 +1514,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
     double mpe, mpo;
 
     /* n = 0 inflicts only Fx and pot */
-    /* one ux is multiplied in to bessel, complex and psi at once, not here */
+    /* one ux is multiplied in to Bessel, complex and psi at once, not here */
     F[0] += ux * mod_psi_odd(0, uxx);
 
     uxrho_2nm2 = 1.0;
@@ -1598,7 +1599,7 @@ inline double calc_mmm2d_copy_pair_energy(double d[3]) {
         k0Sum += K0(freq * rho_l);
       }
 
-      /* the ux is multiplied in to bessel, complex and psi at once, not here */
+      /* the ux is multiplied in to Bessel, complex and psi at once, not here */
       c = 4 * cos(freq * d[0]);
       eng += c * k0Sum;
     }
@@ -1648,7 +1649,7 @@ inline double calc_mmm2d_copy_pair_energy(double d[3]) {
     double uxrho_2n;
 
     /* n = 0 inflicts only Fx and pot */
-    /* one ux is multiplied in to bessel, complex and psi at once, not here */
+    /* one ux is multiplied in to Bessel, complex and psi at once, not here */
     eng -= mod_psi_even(0, uxx);
 
     uxrho_2n = uxrho2;

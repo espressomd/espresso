@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file particle_data.cpp
+/** \file
     This file contains everything related to particle storage. If you want to
    add a new property to the particles, it is probably a good idea to modify
    \ref Particle to give scripts access to that property. You always have to

@@ -258,7 +258,7 @@ int populate_lattice(PdbParser::PdbParser &parser, double scale) {
         (lowernode[1] + 1) % ek_parameters.dim_y,
         (lowernode[2] + 1) % ek_parameters.dim_z)] +=
         b.charge * cellpos[0] * cellpos[1] * cellpos[2];
-    // Interpolate lennard-jones parameters to boundary
+    // Interpolate Lennard-Jones parameters to boundary
     float r = pow(2, 1. / 6.) * c.sigma * 10 / scale;
 
     a_x_shifted = (a_x_scaled + shift[0]) / ek_parameters.agrid - 0.5f;

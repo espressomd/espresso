@@ -25,8 +25,8 @@
 
 #ifdef LENNARD_JONES
 
-/** \file lj.hpp
- *  Routines to calculate the lennard jones energy and/or  force
+/** \file
+ *  Routines to calculate the Lennard-Jones energy and/or  force
  *  for a particle pair.
  *  \ref forces.cpp
  */
@@ -40,7 +40,7 @@ int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
                              double sig, double cut, double shift,
                              double offset, double min);
 
-/** Calculate lennard Jones force between particle p1 and p2 */
+/** Calculate Lennard-Jones force between particle p1 and p2 */
 inline void add_lj_pair_force(const Particle *const p1,
                               const Particle *const p2,
                               IA_parameters *ia_params, double const d[3],
@@ -102,7 +102,7 @@ inline void add_lj_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate Lennard jones energy between particle p1 and p2. */
+/** calculate Lennard-Jones energy between particle p1 and p2. */
 inline double lj_pair_energy(const Particle *p1, const Particle *p2,
                              const IA_parameters *ia_params, const double d[3],
                              double dist) {

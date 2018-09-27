@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lb.cpp
+/** \file
  *
  * Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *
@@ -126,7 +126,7 @@ HaloCommunicator update_halo_comm = {0, nullptr};
 
 /** amplitude of the fluctuations in the viscous coupling */
 static double lb_coupl_pref = 0.0;
-/** amplitude of the fluctuations in the viscous coupling with gaussian random
+/** amplitude of the fluctuations in the viscous coupling with Gaussian random
  * numbers */
 static double lb_coupl_pref2 = 0.0;
 /*@}*/
