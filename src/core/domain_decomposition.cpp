@@ -703,6 +703,17 @@ void dd_topology_release() {
 }
 
 namespace {
+/**
+ * @brief Move particles into the cell system if
+ *        it belongs to this node.
+ *
+ * Moves all particles from src into the local cell
+ * system if they do belong here. Otherwise the
+ * particles are moved into rest.
+ *
+ * @param src Particles to move.
+ * @param rest Output list for left-over particles.
+ */
 void move_if_local(ParticleList &src, ParticleList &rest) {
   for (int i = 0; i < src.n; i++) {
     auto &part = src.part[i];
@@ -722,6 +733,19 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
   realloc_particlelist(&src, src.n = 0);
 }
 
+/**
+ * @brief Split particle list by direction.
+ *
+ * Moves all particles from src into left
+ * and right depending if they belong to
+ * the left or right side from local node
+ * in direction dir.
+ *
+ * @param src Particles to sort.
+ * @param left Particles that should go to the left
+ * @param right Particles that should go to the right
+ * @param dir Direction to consider.
+ */
 void move_left_or_right(ParticleList &src, ParticleList &left,
                         ParticleList &right, int dir) {
   for (int i = 0; i < src.n; i++) {
@@ -798,9 +822,11 @@ void exchange_neighbors(ParticleList *pl) {
 
 void dd_exchange_and_sort_particles(int global, ParticleList *pl) {
   if (global) {
-    /* Worst case we need node_grid - 1 rounds per direction. */
+    /* Worst case we need node_grid - 1 rounds per direction.
+     * This correctly implies that if there is only one node,
+     * no action should be taken. */
     int rounds_left = node_grid[0] + node_grid[1] + node_grid[2] - 3;
-    while (rounds_left--) {
+    for (; rounds_left > 0; rounds_left--) {
       exchange_neighbors(pl);
 
       auto left_over =

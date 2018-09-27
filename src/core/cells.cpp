@@ -304,6 +304,10 @@ int cells_get_n_particles() {
 /*************************************************/
 
 namespace {
+/**
+ * @brief Fold coordinates to box and reset the
+ *        old position.
+ */
 void fold_and_reset(Particle &p) {
   fold_position(p.r.p, p.l.i);
 
@@ -312,6 +316,12 @@ void fold_and_reset(Particle &p) {
   }
 }
 
+/**
+ * @brief Extract an indexed particle from a list.
+ *
+ * Removes a particle from a particle list and
+ * from the particle index.
+ */
 Particle extract_indexed_particle(ParticleList *sl, int i) {
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
@@ -334,11 +344,20 @@ Particle extract_indexed_particle(ParticleList *sl, int i) {
 }
 } // namespace
 
-/**
- * @TODO:
- *  - Swtich to async comm.
- */
 
+/**
+ * @brief Sort and fold particles.
+ *
+ * This function folds the positions of all particles back into
+ * the box and puts them back into the correct cells. Particles
+ * that do not belong to this node are removed from the cell
+ * and returned.
+ *
+ * @param cs The cell system to be used.
+ * @param cells Cells to iterate over.
+ *
+ * @returns List of Particles that do not belong on this node.
+ */
 ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
   ParticleList displaced_parts;
 
