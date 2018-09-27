@@ -92,7 +92,7 @@ void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
   res[2] = a[2] - b[2];
 }
 
-Cell *layered_position_to_cell(const Vector3d & pos) {
+Cell *layered_position_to_cell(const Vector3d &pos) {
   int cpos =
       static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
   if (cpos < 1) {
@@ -413,17 +413,18 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
   for (p = 0; p < pl->n; p++) {
     fold_position(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i);
 
-    if (LAYERED_BTM_NEIGHBOR && (get_mi_coord(pl->part[p].r.p[2], my_left[2], 2) < 0.0)) {
+    if (LAYERED_BTM_NEIGHBOR &&
+        (get_mi_coord(pl->part[p].r.p[2], my_left[2], 2) < 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node below\n",
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(dn, pl, p);
-    } else if (LAYERED_TOP_NEIGHBOR && (get_mi_coord(pl->part[p].r.p[2], my_right[2], 2) >= 0.0)) {
+    } else if (LAYERED_TOP_NEIGHBOR &&
+               (get_mi_coord(pl->part[p].r.p[2], my_right[2], 2) >= 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node above\n",
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(up, pl, p);
     } else
-      move_indexed_particle(layered_position_to_cell(pl->part[p].r.p),
-                            pl, p);
+      move_indexed_particle(layered_position_to_cell(pl->part[p].r.p), pl, p);
     /* same particle again, as this is now a new one */
     if (p < pl->n)
       p--;
@@ -446,7 +447,8 @@ void layered_exchange_and_sort_particles(int global_flag,
   for (p = 0; p < displaced_parts->n; p++) {
     part = &displaced_parts->part[p];
 
-    if (n_nodes != 1 && LAYERED_BTM_NEIGHBOR && (get_mi_coord(part->r.p[2], my_left[2], 2) < 0.0)) {
+    if (n_nodes != 1 && LAYERED_BTM_NEIGHBOR &&
+        (get_mi_coord(part->r.p[2], my_left[2], 2) < 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: send part %d down\n", this_node,
                          part->p.identity));
       move_indexed_particle(&send_buf_dn, displaced_parts, p);
@@ -509,8 +511,9 @@ void layered_exchange_and_sort_particles(int global_flag,
     } else {
       if (recv_buf_up.n != 0 || recv_buf_dn.n != 0 || send_buf_dn.n != 0 ||
           send_buf_up.n != 0) {
-        fprintf(stderr, "1 node but transfer buffers are not empty. send up "
-                        "%d, down %d, recv up %d recv dn %d\n",
+        fprintf(stderr,
+                "1 node but transfer buffers are not empty. send up "
+                "%d, down %d, recv up %d recv dn %d\n",
                 send_buf_up.n, send_buf_dn.n, recv_buf_up.n, recv_buf_dn.n);
         errexit();
       }
