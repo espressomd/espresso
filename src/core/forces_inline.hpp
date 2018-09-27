@@ -647,15 +647,15 @@ inline void add_bonded_force(Particle *p1) {
 #endif
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
-        switch (iaparams->p.tab.type) {
-        case TAB_BOND_LENGTH:
+        switch (iaparams->num) {
+        case 1:
           bond_broken = calc_tab_bond_force(p1, p2, iaparams, dx, force);
           break;
-        case TAB_BOND_ANGLE:
+        case 2:
           bond_broken =
               calc_tab_angle_force(p1, p2, p3, iaparams, force, force2);
           break;
-        case TAB_BOND_DIHEDRAL:
+        case 3:
           bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force,
                                                 force2, force3);
           break;
