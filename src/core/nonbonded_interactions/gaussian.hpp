@@ -21,7 +21,7 @@
 #ifndef GAUSSIAN_H
 #define GAUSSIAN_H
 
-/** \file gaussian.hpp
+/** \file
  *  Routines to calculate the Gaussian energy and/or force
  *  for a particle pair.
  */
@@ -53,7 +53,7 @@ inline void add_gaussian_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate Lennard jones energy between particle p1 and p2. */
+/** calculate Lennard-Jones energy between particle p1 and p2. */
 inline double gaussian_pair_energy(const Particle *p1, const Particle *p2,
                                    const IA_parameters *ia_params,
                                    const double d[3], double dist,

@@ -20,7 +20,7 @@
 */
 #ifndef ROTATION_H
 #define ROTATION_H
-/** \file rotation.hpp
+/** \file
     This file contains all subroutines required to process rotational motion.
 
 */

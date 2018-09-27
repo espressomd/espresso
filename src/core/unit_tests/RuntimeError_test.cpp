@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file RuntimeError_test.cpp Unit tests for the ErrorHandling::RuntimeError
- * class.
+/** \file
+ * Unit tests for the ErrorHandling::RuntimeError class.
  *
  */
 

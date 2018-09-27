@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file mmm1d.hpp MMM1D algorithm for long range coulomb interactions.
+/** \file
+    MMM1D algorithm for long range Coulomb interactions.
     Implementation of the MMM1D method for the calculation of the electrostatic
     interaction in one dimensionally periodic systems. For details on the
     method see MMM in general. The MMM1D method works only with the nsquared,
@@ -39,7 +40,7 @@ typedef struct {
   double far_switch_radius_2;
   /** required accuracy */
   double maxPWerror;
-  /** cutoff of the bessel sum. only used by the GPU implementation */
+  /** cutoff of the Bessel sum. only used by the GPU implementation */
   int bessel_cutoff;
 } MMM1D_struct;
 extern MMM1D_struct mmm1d_params;

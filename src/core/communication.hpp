@@ -20,10 +20,10 @@
 */
 #ifndef _COMMUNICATION_HPP
 #define _COMMUNICATION_HPP
-/** \file communication.hpp
+/** \file
     This file contains the asynchronous MPI communication.
 
-    It is the header file for \ref communication.cpp "communication.c".
+    It is the header file for \ref communication.cpp "communication.cpp".
 
     The asynchronous MPI communication is used during the script
     evaluation. Except for the master node that interprets the Tcl
@@ -370,7 +370,6 @@ void mpi_remove_particle(int node, int id);
     and exclusions are left over.
     \param part the particle.
     \param node the node it is attached to.
-    \param part_data where to store the received data.
     \note Gets a copy of the particle data not a pointer to the actual particle
     used in integration
 */
@@ -465,7 +464,7 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
 */
 void mpi_set_time_step(double time_step);
 
-/** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
+/** Issue REQ_BCAST_COULOMB: send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
 /** send new collision parameters. */
@@ -567,12 +566,12 @@ void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary);
 /** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
     @return nonzero on error
 */
-int mpi_iccp3m_iteration(int dummy);
+int mpi_iccp3m_iteration();
 
 /** Issue REQ_ICCP3M_INIT: performs iccp3m initialization
     @return nonzero on error
 */
-int mpi_iccp3m_init(int dummy);
+int mpi_iccp3m_init();
 
 /** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
  * @param node  processor to send to

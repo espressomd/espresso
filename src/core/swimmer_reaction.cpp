@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file reaction.cpp
+/** \file
  *
  */
 
@@ -78,7 +78,7 @@ void local_setup_reaction() {
   IA_parameters *data =
       get_ia_param_safe(reaction.reactant_type, reaction.catalyzer_type);
 
-  /* Used for the range of the verlet lists */
+  /* Used for the range of the Verlet lists */
   data->REACTION_range = reaction.range;
 
   /* Broadcast interaction parameters */

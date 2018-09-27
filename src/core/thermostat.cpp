@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file thermostat.cpp
-    Implementation of \ref thermostat.hpp "thermostat.h"
+/** \file
+    Implementation of \ref thermostat.hpp "thermostat.hpp"
  */
 #include "thermostat.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
@@ -45,7 +45,7 @@ using Thermostat::GammaType;
 
 namespace {
 /* These functions return the sentinel value for the
-   langevin params, indicating that they have not been
+   Langevin params, indicating that they have not been
    set yet. */
 constexpr double sentinel(double) { return -1.0; }
 Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }

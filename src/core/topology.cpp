@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file topology.cpp
+/** \file
  *
  *  This file contains functions for handling the system topology.
  *

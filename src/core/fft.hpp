@@ -20,7 +20,7 @@
 */
 #ifndef _FFT_H
 #define _FFT_H
-/** \file fft.hpp
+/** \file
  *
  *  Routines, row decomposition, data structures and communication for the
  * 3D-FFT.
@@ -39,7 +39,7 @@
  *  \todo The packing routines could be moved to utils.hpp when they are needed
  * elsewhere.
  *
- *  For more information about FFT usage, see \ref fft.cpp "fft.c".
+ *  For more information about FFT usage, see \ref fft.cpp "fft.cpp".
  */
 
 #include "config.hpp"

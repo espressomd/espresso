@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file maggs.cpp
+/** \file
  *  Maxwell Equations Molecular Dynamics (MEMD) method for electrostatic
  *  interactions.
  *

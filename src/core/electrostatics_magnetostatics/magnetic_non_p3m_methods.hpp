@@ -20,7 +20,8 @@
 */
 #ifndef MAG_NON_P3M_H
 #define MAG_NON_P3M_H
-/** \file electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp   Header of
+/** \file
+ * Header of
  * all 3d non P3M methods to deal with the magnetic dipoles
  *
  *  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA

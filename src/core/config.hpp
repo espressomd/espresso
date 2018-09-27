@@ -21,7 +21,7 @@
 #ifndef _CONFIG_HPP
 #define _CONFIG_HPP
 
-/** \file config.hpp
+/** \file
 
     This file contains the defaults for Espresso. To modify them, add
     an appropriate line in myconfig.hpp. To find a list of features that
@@ -137,7 +137,7 @@ extern const char *ESPRESSO_VERSION;
 #define MAX_OBJECTS_IN_FLUID 10000
 #endif
 
-/** number of fluid components for lattice boltzmann  */
+/** number of fluid components for lattice Boltzmann  */
 #ifndef LB_COMPONENTS
 #ifdef SHANCHEN
 #define LB_COMPONENTS 2

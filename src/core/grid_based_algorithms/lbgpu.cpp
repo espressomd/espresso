@@ -17,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file lbgpu.cpp
+/** \file
  *
  * C file for the Lattice Boltzmann implementation on GPUs.
  * Header file for \ref lbgpu.hpp.
@@ -204,7 +204,7 @@ void lattice_boltzmann_calc_shanchen_gpu(void) {
 }
 #endif // SHANCHEN
 
-/** lattice boltzmann update gpu called from integrate.cpp
+/** lattice Boltzmann update gpu called from integrate.cpp
  */
 
 void lattice_boltzmann_update_gpu() {

@@ -9,6 +9,7 @@ set(Shapes_SRC
     Sphere.cpp
     SpheroCylinder.cpp
     Stomatocyte.cpp
+    Torus.cpp
     Wall.cpp
 )
 add_library(Shapes SHARED ${Shapes_SRC})
