@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file ghosts.cpp   Ghost particles and particle exchange.
+/** \file
+ *  Ghost particles and particle exchange.
  *
  *  For more information on ghosts,
  *  see \ref ghosts.hpp "ghosts.hpp"

@@ -21,7 +21,7 @@
 #ifndef CORE_TABULATED_HPP
 #define CORE_TABULATED_HPP
 
-/** \file tab.hpp
+/** \file
  *  Routines to calculate the  energy and/or  force
  *  for a particle pair or bonds via interpolating from lookup tables.
  *  \ref forces.cpp

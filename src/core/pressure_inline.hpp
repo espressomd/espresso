@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file pressure_inline.hpp
-    Pressure calculation. Really similar to \ref energy.hpp "energy.h".
+/** \file
+    Pressure calculation. Really similar to \ref energy.hpp "energy.hpp".
 */
 
 #ifndef CORE_PRESSURE_INLINE_HPP
@@ -81,7 +81,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
   }
 
 #ifdef ELECTROSTATICS
-  /* real space coulomb */
+  /* real space Coulomb */
   if (coulomb.method != COULOMB_NONE) {
     switch (coulomb.method) {
 #ifdef P3M

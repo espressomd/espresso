@@ -17,10 +17,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file lbgpu_cuda.cu
- *
- * Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
- * Header file for \ref lbgpu.hpp.
+/** \file
+ *  Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
+ *  Header file for \ref lbgpu.hpp.
  */
 
 #include "config.hpp"
@@ -59,26 +58,29 @@ int extended_values_flag = 0; /* TODO: this has to be set to one by
                                  the need to compute pi at every
                                  step (e.g. moving boundaries)*/
 
-/**defining structures residing in global memory */
+/** defining structures residing in global memory */
 
 /** device_rho_v: struct for hydrodynamic fields: this is for internal use
-    (i.e. stores values in LB units) and should not used for
-    printing values  */
+ *  (i.e. stores values in LB units) and should not used for
+ *  printing values
+ */
 static LB_rho_v_gpu *device_rho_v = nullptr;
 
 /** device_rho_v_pi: extended struct for hydrodynamic fields: this is the
-   interface and stores values in MD units. It should not be used as an input
-   for any LB calculations. TODO: This structure is not yet used, and it is here
-   to allow access to the stress tensor at any timestep, e.g. for future
-   implementations of moving boundary codes */
+ *  interface and stores values in MD units. It should not be used as an input
+ *  for any LB calculations. TODO: This structure is not yet used, and it is
+ *  here to allow access to the stress tensor at any timestep, e.g. for future
+ *  implementations of moving boundary codes
+ */
 static LB_rho_v_pi_gpu *device_rho_v_pi = nullptr;
 
 /** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
-    and stores values in MD units. It should not used
-    as an input for any LB calculations. TODO: in the future,
-    one might want to have several structures for printing
-    separately rho, v, pi without having to compute/store
-    the complete set. */
+ *  and stores values in MD units. It should not used
+ *  as an input for any LB calculations. TODO: in the future,
+ *  one might want to have several structures for printing
+ *  separately rho, v, pi without having to compute/store
+ *  the complete set.
+ */
 static LB_rho_v_pi_gpu *print_rho_v_pi = nullptr;
 
 /** structs for velocity densities */
@@ -127,7 +129,7 @@ static const float c_sound_sq = 1.0f / 3.0f;
 
 /*-------------------------------------------------------*/
 
-/** atomic add function for sveral cuda architectures
+/** atomic add function for several cuda architectures
  */
 __device__ inline void atomicadd(float *address, float value) {
 #if !defined __CUDA_ARCH__ ||                                                  \
@@ -156,8 +158,8 @@ __device__ inline void atomicadd(double *address, double value) {
   }
 }
 
-/**randomgenerator which generates numbers [0,1]
- * @param *rn Pointer to randomnumber array of the local node or particle
+/**random generator which generates numbers [0,1]
+ * @param *rn Pointer to random number array of the local node or particle
  */
 __device__ void random_01(LB_randomnr_gpu *rn) {
   const float mxi = 1.0f / (float)(1ul << 31);
@@ -170,15 +172,15 @@ __device__ void random_01(LB_randomnr_gpu *rn) {
   rn->seed = curr;
 }
 
-/**randomgenerator which generates numbers between -2 sigma and 2 sigma in the
+/**random generator which generates numbers between -2 sigma and 2 sigma in the
  * form of a Gaussian with standard deviation sigma=1.118591404 resulting in an
  * actual standard deviation of 1.
- * @param *rn Pointer to randomnumber array of the local node or particle
+ * @param *rn Pointer to random number array of the local node or particle
  */
 __device__ void gaussian_random_cut(LB_randomnr_gpu *rn) {
   float x1, x2;
   float r2, fac;
-  /** On every second call two gaussian random numbers are calculated
+  /** On every second call two Gaussian random numbers are calculated
    via the Box-Muller transformation.*/
   /** draw two uniform random numbers in the unit circle */
   do {
@@ -220,13 +222,13 @@ __device__ void gaussian_random_cut(LB_randomnr_gpu *rn) {
   }
 }
 
-/** gaussian random nummber generator for thermalisation
- * @param *rn Pointer to randomnumber array of the local node node or particle
+/** Gaussian random number generator for thermalisation
+ * @param *rn Pointer to random number array of the local node node or particle
  */
 __device__ void gaussian_random(LB_randomnr_gpu *rn) {
   float x1, x2;
   float r2, fac;
-  /** On every second call two gaussian random numbers are calculated
+  /** On every second call two Gaussian random numbers are calculated
    via the Box-Muller transformation.*/
   /** draw two uniform random numbers in the unit circle */
   do {
@@ -259,7 +261,7 @@ __device__ void random_wrapper(LB_randomnr_gpu *rn) {
 #endif
 }
 
-/**tranformation from 1d array-index to xyz
+/**transformation from 1d array-index to xyz
  * @param index   node index / thread index (Input)
  * @param xyz     Pointer to calculated xyz array (Output)
  */
@@ -271,9 +273,8 @@ template <typename T> __device__ void index_to_xyz(T index, T *xyz) {
   xyz[2] = index;
 }
 
-/**tranformation from xyz to 1d array-index
+/**transformation from xyz to 1d array-index
  * @param xyz     Pointer xyz array (Input)
- * @param index   Calculated node index / thread index (Output)
  */
 template <typename T> __device__ T xyz_to_index(T *xyz) {
   T x = (xyz[0] + para.dim_x) % para.dim_x;
@@ -715,7 +716,7 @@ __device__ void update_rho_v(float *mode, unsigned int index,
     u_tot[2] += mode[3 + ii * LBQ];
 
     /** if forces are present, the momentum density is redefined to
-     * inlcude one half-step of the force action.  See the
+     * include one half-step of the force action.  See the
      * Chapman-Enskog expansion in [Ladd & Verberg]. */
 
     u_tot[0] +=
@@ -826,10 +827,10 @@ __device__ void relax_modes(float *mode, unsigned int index,
   }
 }
 
-/**thermalization of the modes with gaussian random numbers
+/**thermalization of the modes with Gaussian random numbers
  * @param index   node index / thread index (Input)
  * @param mode    Pointer to the local register values mode (Input/Output)
- * @param *rn     Pointer to randomnumber array of the local node
+ * @param *rn     Pointer to random number array of the local node
  */
 __device__ void thermalize_modes(float *mode, unsigned int index,
                                  LB_randomnr_gpu *rn) {
@@ -953,7 +954,8 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
 }
 
 /*-------------------------------------------------------*/
-/**normalization of the modes need befor backtransformation into velocity space
+/**normalization of the modes need before back-transformation into velocity
+ * space
  * @param mode    Pointer to the local register values mode (Input/Output)
  */
 __device__ void normalize_modes(float *mode) {
@@ -983,8 +985,8 @@ __device__ void normalize_modes(float *mode) {
 }
 
 /*-------------------------------------------------------*/
-/**backtransformation from modespace to desityspace and streaming with the push
- * method using pbc
+/**back-transformation from modespace to densityspace and streaming with the
+ * push method using pbc
  * @param index   node index / thread index (Input)
  * @param mode    Pointer to the local register values mode (Input)
  * @param *n_b    Pointer to local node residing in array b (Output)
@@ -1599,7 +1601,7 @@ calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_pi_gpu *d_p_v,
          m8 = pi_xz
          m9 = pi_yz */
 
-      // and pluggin in the Euler stress for the equilibrium:
+      // and plugging in the Euler stress for the equilibrium:
       // pi_eq = rho_0*c_s^2*I3 + (j \otimes j)/rho
       // with I3 the 3D identity matrix and
       // rho = \trace(rho_0*c_s^2*I3), which yields
@@ -1697,7 +1699,7 @@ __device__ void calc_values_from_m_in_LB_units(float *mode_single,
   // stress calculation
 
   for (int ii = 0; ii < LB_COMPONENTS; ii++) {
-    // Set the rho ouput value
+    // Set the rho output value
 
     Rho = d_v_single->rho[ii];
     rho_out[ii] = Rho;
@@ -1804,7 +1806,7 @@ __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_rho_v_gpu *d_v,
       u_tot[2] += mode[3 + ii * 4];
 
       /** if forces are present, the momentum density is redefined to
-       * inlcude one half-step of the force action.  See the
+       * include one half-step of the force action.  See the
        * Chapman-Enskog expansion in [Ladd & Verberg]. */
 
       u_tot[0] +=
@@ -1930,15 +1932,14 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a,
 /** \name interpolation_three_point_coupling */
 /*********************************************************/
 /**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
- * @param n_a             Pointer to local node residing in array a (Input)
- * @param *delta          Pointer for the weighting of particle position
- * (Output)
- * @param *particle_data  Pointer to the particle position and velocity (Input)
- * @param *particle_force Pointer to the particle force (Input)
- * @param part_index      particle id / thread id (Input)
- * @param node_index      node index around (8) particle (Output)
- * @param *d_v            Pointer to local device values
- * @param *interpolated_u Pointer to the interpolated velocity (Output)
+ * @param[in]  n_a                Local node residing in array a
+ * @param[out] delta              Weighting of particle position
+ * @param[in]  particle_position  Particle position and velocity
+ * @param[in]  particle_force     Particle force
+ * @param[in]  part_index         Particle id / thread id
+ * @param[out] node_index         Node index around (8) particle
+ * @param      d_v                Local device values
+ * @param[out] interpolated_u     Interpolated velocity
  */
 __device__ __inline__ void
 interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
@@ -2033,7 +2034,7 @@ interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
  * @param *delta_j           Pointer for the weighting of particle momentum
  * (Output)
  * @param *particle_position Pointer to the particle position (Input)
- * @param *rn_part           Pointer to randomnumber array of the particle
+ * @param *rn_part           Pointer to random number array of the particle
  * @param node_index         node index around (8) particle (Output)
  * @param *d_v               Pointer to local device values
  * @param flag_cs            Determine if we are at the centre (0, typical) or
@@ -2209,14 +2210,14 @@ __device__ void calc_viscous_force_three_point_couple(
   }
 }
 
-/**calcutlation of the node force caused by the particles, with atomicadd due to
- avoiding race conditions (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225
- (1999))
+/**calculation of the node force caused by the particles, with atomicadd due to
+ * avoiding race conditions (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225
+ * (1999))
  * @param *delta    Pointer for the weighting of particle position (Input)
  * @param *delta_j    Pointer for the weighting of particle momentum (Input)
  * @param node_index    node index around (8) particle (Input)
  * @param node_f        Pointer to the node force (Output).
-*/
+ */
 __device__ void
 calc_node_force_three_point_couple(float *delta, float *delta_j,
                                    unsigned int *node_index,
@@ -2386,7 +2387,7 @@ __device__ __inline__ void interpolation_two_point_coupling(
  * @param *particle_force       Pointer to the particle force (Input)
  * @param *fluid_composition    Pointer to the fluid composition (Input)
  * @param part_index            particle id / thread id (Input)
- * @param *rn_part              Pointer to randomnumber array of the particle
+ * @param *rn_part              Pointer to random number array of the particle
  * @param node_index            node index around (8) particle (Output)
  * @param *d_v                  Pointer to local device values
  * @param flag_cs               Determine if we are at the centre (0, typical)
@@ -3529,7 +3530,7 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b) {
     n_a.boundary[index] = n_b.boundary[index] = 0;
 }
 
-/** integrationstep of the lb-fluid-solver
+/** integration step of the lb-fluid-solver
  * @param n_a     Pointer to local node residing in array a (Input)
  * @param n_b     Pointer to local node residing in array b (Input)
  * @param *d_v    Pointer to local device values (Input)
@@ -3899,7 +3900,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   size_of_rho_v_pi = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_pi_gpu);
 
   /** Allocate structs in device memory*/
-  /* see the notes to the stucture device_rho_v_pi above...*/
+  /* see the notes to the structure device_rho_v_pi above...*/
   if (extended_values_flag == 0) {
     free_realloc_and_clear(device_rho_v, size_of_rho_v);
   } else {
@@ -3959,7 +3960,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
 
 #ifdef SHANCHEN
 // TODO FIXME:
-/* We must add shan-chen forces, which are zero only if the densities are
+/* We must add Shan-Chen forces, which are zero only if the densities are
  * uniform*/
 #endif
 
@@ -4241,7 +4242,7 @@ void lb_print_node_GPU(int single_nodeindex,
 }
 
 /** setup and call kernel to calculate the total momentum of the hole fluid
- * @param *mass value of the mass calcutated on the GPU
+ * @param *mass value of the mass calculated on the GPU
  */
 void lb_calc_fluid_mass_GPU(double *mass) {
   float *tot_mass;
@@ -4269,7 +4270,7 @@ void lb_calc_fluid_mass_GPU(double *mass) {
 }
 
 /** setup and call kernel to calculate the total momentum of the whole fluid
- *  @param host_mom value of the momentum calcutated on the GPU
+ *  @param host_mom value of the momentum calculated on the GPU
  */
 void lb_calc_fluid_momentum_GPU(double *host_mom) {
   float *tot_momentum;
@@ -4328,7 +4329,7 @@ void lb_remove_fluid_momentum_GPU(void) {
 }
 
 /** setup and call kernel to calculate the temperature of the hole fluid
- *  @param host_temp value of the temperatur calcutated on the GPU
+ *  @param host_temp value of the temperature calculated on the GPU
  */
 void lb_calc_fluid_temperature_GPU(double *host_temp) {
   int host_number_of_non_boundary_nodes = 0;
@@ -4518,7 +4519,7 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
 }
 
 /** reinit of params
- * @param *lbpar_gpu struct containing the paramters of the fluid
+ * @param *lbpar_gpu struct containing the parameters of the fluid
  */
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu) {
   /**write parameters in const memory*/
@@ -4613,7 +4614,7 @@ void lb_lbfluid_remove_total_momentum() {
 
   /* Momentum fraction of the particles */
   auto const part_frac = particles_mass / (fluid_mass + particles_mass);
-  /* Mometum per particle */
+  /* Momentum per particle */
   float momentum_particles[3] = {-total_momentum[0] * part_frac,
                                  -total_momentum[1] * part_frac,
                                  -total_momentum[2] * part_frac};
@@ -4694,7 +4695,7 @@ __global__ void lb_lbfluid_set_population_kernel(LB_nodes_gpu n_a,
 
 /**interface to set the populations of a specific node for the GPU
  * @param xyz            coordinates of node (Input)
- * @param population     Pointer to population (Input)
+ * @param population_host     Pointer to population (Input)
  * @param c              LB component (for SHANCHEN) (Input)
  */
 void lb_lbfluid_set_population(int xyz[3], float population_host[LBQ], int c) {
@@ -4731,7 +4732,7 @@ __global__ void lb_lbfluid_get_population_kernel(LB_nodes_gpu n_a,
 
 /**interface to get the populations of a specific node for the GPU
  * @param xyz            coordinates of node (Input)
- * @param population     Pointer to population (Output)
+ * @param population_host     Pointer to population (Output)
  * @param c              LB component (for SHANCHEN) (Input)
  */
 void lb_lbfluid_get_population(int xyz[3], float population_host[LBQ], int c) {

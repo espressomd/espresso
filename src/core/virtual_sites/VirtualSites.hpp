@@ -21,7 +21,7 @@
 #ifndef VIRTUAL_SITES_VIRTUAL_SITES_HPP
 #define VIRTUAL_SITES_VIRTUAL_SITES_HPP
 
-/** \file virtual_sites.hpp
+/** \file
  *  This file contains routine to handle virtual sites
  *  Virtual sites are like particles, but they will be not integrated.
  *  Step performed for virtual sites:
@@ -42,7 +42,7 @@ public:
   /** @brief Update positions and/or velocities of virtual sites
 
   * Velocities are only updated if have_velocity() returns true.
-  * @param recalc_positions can be used to skip the reculation of positions.
+  * @param recalc_positions can be used to skip the recalculation of positions.
   */
   virtual void update(bool recalc_positions = true) const = 0;
   /** Back-transfer forces (and torques) to non-virtual particles. */

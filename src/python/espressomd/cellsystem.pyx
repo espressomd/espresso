@@ -52,7 +52,7 @@ cdef class CellSystem(object):
         Parameters
         ----------
         'use_verlet_lists' : :obj:`bool`, optional
-                             Activates or deactivates the usage of the verlet
+                             Activates or deactivates the usage of the Verlet
                              lists for this algorithm.
 
         """
@@ -73,7 +73,7 @@ cdef class CellSystem(object):
         'n_layers': :obj:`int`, optional, positive
                     Sets the number of layers in the z-direction.
         'use_verlet_lists' : :obj:`bool`, optional
-                             Activates or deactivates the usage of the verlet
+                             Activates or deactivates the usage of the Verlet
                              lists for this algorithm.
 
         """

@@ -20,7 +20,7 @@
 */
 //
 
-/** \file iccp3m.hpp
+/** \file
 
     ICCP3M is a method that allows to take into account the influence
     of arbitrarily shaped dielectric interfaces.  The dielectric
@@ -43,8 +43,8 @@
     it can be tolerated.
 
     For the determination of the induced charges only the forces
-    acting on the induced charges has to be determined. As P3M an the
-    other coulomb solvers calculate all mutual forces, the force
+    acting on the induced charges has to be determined. As P3M and the
+    other Coulomb solvers calculate all mutual forces, the force
     calculation was modified to avoid the calculation of the short
     range part of the source-source force calculation.  For different
     particle data organisation schemes this is performed differently.

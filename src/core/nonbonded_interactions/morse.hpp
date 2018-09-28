@@ -21,8 +21,8 @@
 #ifndef _MORSE_H
 #define _MORSE_H
 
-/** \file morse.hpp
- *  Routines to calculate the lennard jones energy and/or  force
+/** \file
+ *  Routines to calculate the Lennard-Jones energy and/or  force
  *  for a particle pair.
  *  \ref forces.cpp
  */

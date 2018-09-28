@@ -21,7 +21,7 @@
 #ifndef HERTZIAN_H
 #define HERTZIAN_H
 
-/** \file hertzian.hpp
+/** \file
  *  Routines to calculate the Hertzian energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp
@@ -52,7 +52,7 @@ inline void add_hertzian_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate Lennard jones energy between particle p1 and p2. */
+/** calculate Lennard-Jones energy between particle p1 and p2. */
 inline double hertzian_pair_energy(const Particle *p1, const Particle *p2,
                                    const IA_parameters *ia_params,
                                    const double d[3], double dist,
