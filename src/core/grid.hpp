@@ -204,9 +204,11 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
     
     auto offset = lees_edwards_protocol.offset;
     auto shift =
-        Utils::sgn(dy) * (offset - dround(offset * box_l_i[1]) * box_l[1]);
+        Utils::sgn(dy) * (offset - dround(offset * box_l_i[0]) * box_l[0]);
 
     res[0] -= shift;
+    //TODO: The box should be added here via p->l.i[i]
+    //res[0] -= shift + (p.l.i[0]  * box_l[0]);
 
   }
 #endif    
