@@ -31,7 +31,7 @@ from globals cimport immersed_boundaries
 
 cdef class NonBondedInteraction(object):
     """
-    Represents an instance of a non-bonded interaction, such as lennard jones
+    Represents an instance of a non-bonded interaction, such as Lennard-Jones
     Either called with two particle type id, in which case, the interaction
     will represent the bonded interaction as it is defined in Espresso core
     Or called with keyword arguments describing a new interaction.
@@ -292,7 +292,7 @@ IF LENNARD_JONES == 1:
                     self._params["shift"],
                     self._params["offset"],
                     self._params["min"]):
-                raise Exception("Could not set Lennard Jones parameters")
+                raise Exception("Could not set Lennard-Jones parameters")
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -324,7 +324,7 @@ IF LENNARD_JONES == 1:
             """
             return "epsilon", "sigma", "cutoff", "shift"
 
-# Generic Lennard Jones
+# Generic Lennard-Jones
 
 IF LENNARD_JONES_GENERIC == 1:
 
@@ -391,7 +391,7 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["lam"],
                                     self._params["delta"]):
                     raise Exception(
-                        "Could not set Generic Lennard Jones parameters")
+                        "Could not set Generic Lennard-Jones parameters")
             ELSE:
                 if ljgen_set_params(self._part_types[0], self._part_types[1],
                                     self._params["epsilon"],
@@ -405,7 +405,7 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["b2"],
                                     ):
                     raise Exception(
-                        "Could not set Generic Lennard Jones parameters")
+                        "Could not set Generic Lennard-Jones parameters")
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -527,7 +527,7 @@ IF LJCOS:
                                 self._params["cutoff"],
                                 self._params["offset"]):
                 raise Exception(
-                    "Could not set Lennard Jones Cosine parameters")
+                    "Could not set Lennard-Jones Cosine parameters")
 
         def default_params(self):
             return {
@@ -608,7 +608,7 @@ IF LJCOS2:
                                  self._params["offset"],
                                  self._params["width"]):
                 raise Exception(
-                    "Could not set Lennard Jones Cosine2 parameters")
+                    "Could not set Lennard-Jones Cosine2 parameters")
 
         def default_params(self):
             return {
@@ -2077,7 +2077,7 @@ if ELECTROSTATICS:
             ----------
 
             prefactor : :obj:`float`
-                        Sets the coulomb prefactor of the bonded coulomb interaction.
+                        Sets the Coulomb prefactor of the bonded Coulomb interaction.
             """
             super(BondedCoulomb, self).__init__(*args, **kwargs)
 
@@ -2226,14 +2226,14 @@ IF THOLE:
             Parameters
             ----------
             scaling_coeff : :obj:`float`
-                            The facor used in the thole damping function between
+                            The factor used in the Thole damping function between
                             polarizable particles i and j. Usually calculated by
                             the polarizabilities alpha_i, alpha_j and damping
                             parameters  a_i, a_j via
                             scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
             q1q2: :obj:`float`
                   charge factor of the involved charges. Has to be set because
-                  it acts only on the portion of the drude core charge that is
+                  it acts only on the portion of the Drude core charge that is
                   associated to the dipole of the atom. For charged, polarizable
                   atoms that charge is not equal to the particle charge property.
 

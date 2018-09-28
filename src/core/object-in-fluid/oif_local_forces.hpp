@@ -19,7 +19,7 @@
 #ifndef _OBJECT_IN_FLUID_OIF_LOCAL_FORCES_H
 #define _OBJECT_IN_FLUID_OIF_LOCAL_FORCES_H
 
-/** \file oif_local_forces.hpp
+/** \file
  *  Routines to calculate the OIF_LOCAL_FORCES
  *  for a particle quadruple (two neighboring triangles with common edge).
  * (Dupin2007) \ref forces.cpp

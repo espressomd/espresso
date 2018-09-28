@@ -71,7 +71,7 @@ typedef std::map<std::string, Variant> VariantMap;
 
 namespace detail {
 /**
- * @brief Implementation of @f infer_type.
+ * @brief Implementation of infer_type.
  *
  * Helper struct is needed because particle specialization
  * of functions is not allowed. Every specialization deals

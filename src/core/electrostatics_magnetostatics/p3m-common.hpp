@@ -20,7 +20,8 @@
 */
 #ifndef _P3M_COMMON_H
 #define _P3M_COMMON_H
-/** \file p3m-common.hpp   common functions for dipolar and charge p3m.
+/** \file
+ *  common functions for dipolar and charge p3m.
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the Ewald summation. Details of the used method can be found in

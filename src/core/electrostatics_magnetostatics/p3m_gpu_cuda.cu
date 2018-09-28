@@ -17,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file p3m_gpu_cuda.cu
+/** \file
  *
  * Cuda (.cu) file for the P3M electrostatics method.
  * Header file \ref p3m_gpu.hpp .

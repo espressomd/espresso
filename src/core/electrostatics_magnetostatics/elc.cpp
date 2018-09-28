@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file elc.cpp
+/** \file
  *
  *  For more information about ELC, see \ref
  * electrostatics_magnetostatics/elc.hpp

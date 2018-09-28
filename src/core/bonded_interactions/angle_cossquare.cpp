@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file angle_cossquare.cpp
+/** \file
  *
- *  Implementation of \ref angle.hpp
+ *  Implementation of \ref angle_cossquare.hpp
  */
 #include "angle_cossquare.hpp"
 

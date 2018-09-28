@@ -10,6 +10,9 @@ stages:
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  CCACHE_DIR: /cache
+  CCACHE_MAXSIZE: 100G
+  with_ccache: "true"
 
 check_permission:
   stage: permission
@@ -132,7 +135,7 @@ cuda-shanchen:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
-    - export myconfig=shanchen with_coverage=true python_version=3 make_check=false
+    - export myconfig=shanchen python_version=3 make_check=false
     - bash maintainer/cuda_build.sh
   tags:
     - docker
@@ -185,7 +188,7 @@ empty:
 osx:
   stage: build
   script:
-    - export myconfig=maxset with_cuda=false
+    - export with_ccache=false myconfig=maxset with_cuda=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - mac
@@ -193,7 +196,7 @@ osx:
 osx-python3:
   stage: build
   script:
-    - export myconfig=maxset with_cuda=false python_version=3
+    - export with_ccache=false myconfig=maxset with_cuda=false python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - mac
@@ -201,7 +204,7 @@ osx-python3:
 osx-cuda:
   stage: build
   script:
-    - export myconfig=maxset with_cuda=true make_check=false
+    - export with_ccache=false myconfig=maxset with_cuda=true make_check=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - mac

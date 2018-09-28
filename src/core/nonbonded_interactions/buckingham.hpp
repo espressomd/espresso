@@ -20,7 +20,7 @@
 */
 #ifndef BUCKINGHAM_H
 #define BUCKINGHAM_H
-/** \file buckingham.hpp
+/** \file
  *  Routines to calculate the Buckingham energy and/or  force
  *  for a particle pair.
  *  \ref forces.cpp
@@ -37,12 +37,12 @@ int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
                           double C, double D, double cut, double discont,
                           double shift);
 
-/**Resultant Force due to a buckingham potential between two particles at
+/**Resultant Force due to a Buckingham potential between two particles at
  * interatomic separation r greater than or equal to discont*/
 inline double buck_force_r(double A, double B, double C, double D, double r) {
   return (A * B * exp(-B * r) - 6.0 * C / pow(r, 7) - 4.0 * D / pow(r, 5));
 }
-/**Potential Energy due to a buckingham potential between two particles at
+/**Potential Energy due to a Buckingham potential between two particles at
  * interatomic separation r greater than or equal to discont*/
 inline double buck_energy_r(double A, double B, double C, double D,
                             double shift, double r) {
@@ -57,7 +57,7 @@ inline void add_buck_pair_force(const Particle *const p1,
                                 double dist, double force[3]) {
   if ((dist < ia_params->BUCK_cut)) {
     /* case: resulting force/energy greater than discontinuity and
-             less than cutoff (true buckingham region) */
+             less than cutoff (true Buckingham region) */
     double fac;
     if (dist > ia_params->BUCK_discont) {
       fac = buck_force_r(ia_params->BUCK_A, ia_params->BUCK_B,
@@ -105,7 +105,7 @@ inline double buck_pair_energy(const Particle *p1, const Particle *p2,
                                const double d[3], double dist) {
   if ((dist < ia_params->BUCK_cut)) {
     /* case: resulting force/energy greater than discont and
-             less than cutoff (true buckingham region) */
+             less than cutoff (true Buckingham region) */
     if (dist > ia_params->BUCK_discont)
       return buck_energy_r(ia_params->BUCK_A, ia_params->BUCK_B,
                            ia_params->BUCK_C, ia_params->BUCK_D,

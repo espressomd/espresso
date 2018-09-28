@@ -376,7 +376,7 @@ double ReactionEnsemble::calculate_acceptance_probability(
       calculate_factorial_expression(current_reaction, old_particle_numbers);
 
   const double beta = 1.0 / temperature;
-  // calculate boltzmann factor
+  // calculate Boltzmann factor
   return std::pow(volume, current_reaction.nu_bar) * current_reaction.gamma *
          factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
 }
@@ -409,7 +409,7 @@ void WangLandauReactionEnsemble::on_reaction_entry(int &old_state_index) {
 void WangLandauReactionEnsemble::on_reaction_rejection_directly_after_entry(
     int &old_state_index) {
   update_wang_landau_potential_and_histogram(
-      old_state_index); // increase the wang landau potential and histogram at
+      old_state_index); // increase the Wang-Landau potential and histogram at
                         // the current nbar (this case covers the cases nbar=0
                         // or nbar=1)
 }
@@ -500,7 +500,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     // accept
     accepted_state = new_state_index;
 
-    // delete hidden reactant_particles (remark: dont delete changed particles)
+    // delete hidden reactant_particles (remark: don't delete changed particles)
     // extract ids of to be deleted particles
     int len_hidden_particles_properties =
         static_cast<int>(hidden_particles_properties.size());
@@ -676,7 +676,7 @@ std::vector<double> ReactionAlgorithm::
   double random_radius =
       cyl_radius *
       d_random(); // for enhanced proposal of small radii, needs correction
-                  // within metropolis hasting algorithm, proposal density is
+                  // within Metropolis hasting algorithm, proposal density is
                   // p(x,y)=1/(2*pi*cyl_radius*r(x,y)), that means small radii
                   // are proposed more often
   double phi = 2.0 * PI * d_random();
@@ -871,7 +871,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
                                                                    // symmetric
   }
 
-  //	//correct for enhanced proposal of small radii by using the metropolis
+  //	//correct for enhanced proposal of small radii by using the Metropolis
   // hastings algorithm for asymmetric proposal densities.
   //	double
   // old_radius=std::sqrt(std::pow(particle_positions[0]-cyl_x,2)+std::pow(particle_positions[1]-cyl_y,2));
@@ -1095,7 +1095,7 @@ int WangLandauReactionEnsemble::get_num_needed_bins() {
 }
 
 void WangLandauReactionEnsemble::invalidate_bins() {
-  // make values in histogram and wang landau potential negative if they are not
+  // make values in histogram and Wang-Landau potential negative if they are not
   // allowed at the given degree of association, because the energy boundaries
   // prohibit them
 
@@ -1178,13 +1178,13 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
       1; //+1 for collective variables which are of type degree of association
 
   // construct (possibly higher dimensional) histogram over gamma (the room
-  // which should be equally sampled when the wang-landau algorithm has
+  // which should be equally sampled when the Wang-Landau algorithm has
   // converged)
   int needed_bins = get_num_needed_bins();
   histogram.resize(needed_bins, 0); // initialize new values with 0
 
   // construct (possibly higher dimensional) wang_landau potential over gamma
-  // (the room which should be equally sampled when the wang-landau algorithm
+  // (the room which should be equally sampled when the Wang-Landau algorithm
   // has converged)
   wang_landau_potential.resize(needed_bins, 0); // initialize new values with 0
 
@@ -1205,7 +1205,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
     std::map<int, int> &old_particle_numbers, int old_state_index,
     int new_state_index, bool only_make_configuration_changing_move) {
   /**determine the acceptance probabilities of the reaction move
-   * in wang landau reaction ensemble
+   * in Wang-Landau reaction ensemble
    */
   double beta = 1.0 / temperature;
   double bf;
@@ -1233,9 +1233,9 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
       bf = std::min(1.0,
                     bf * exp(wang_landau_potential[old_state_index] -
                              wang_landau_potential[new_state_index])); // modify
-      // boltzmann
+      // Boltzmann
       // factor
-      // according to wang-landau
+      // according to Wang-Landau
       // algorithm, according to
       // grand canonical simulation
       // paper "Density-of-states
@@ -1277,7 +1277,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
  *  no-energy-reweighting case, or with the functions
  *  do_global_mc_move_for_particles_of_type
  *
- *  perform additional Monte-carlo moves to to sample configurational
+ *  perform additional Monte Carlo moves to to sample configurational
  *  partition function according to "Density-of-states Monte Carlo method
  *  for simulation of fluids"
  *
@@ -1304,7 +1304,7 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
       refine_wang_landau_parameter_one_over_t();
     }
   }
-  // shift wang landau potential minimum to zero
+  // shift Wang-Landau potential minimum to zero
   if (m_WL_tries % (std::max(90000, 9 * reaction_steps)) == 0) {
     // for numerical stability here we also subtract the minimum positive value
     // of the wang_landau_potential from the wang_landau potential, allowed
@@ -1317,7 +1317,7 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
                                          // variable
         wang_landau_potential[i] -= minimum_wang_landau_potential;
     }
-    // write out preliminary wang-landau potential results
+    // write out preliminary Wang-Landau potential results
     write_wang_landau_results_to_file(output_filename);
   }
   return 0;
@@ -1327,7 +1327,7 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
 
 void WangLandauReactionEnsemble::update_wang_landau_potential_and_histogram(
     int index_of_state_after_acceptance_or_rejection) {
-  /**increase the wang landau potential and histogram at the current nbar */
+  /**increase the Wang-Landau potential and histogram at the current nbar */
   if (index_of_state_after_acceptance_or_rejection >= 0) {
     if (histogram[index_of_state_after_acceptance_or_rejection] >= 0) {
       histogram[index_of_state_after_acceptance_or_rejection] += 1;
@@ -1426,7 +1426,7 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
                // double_fill_value. This if ensures
                // that for the energy observable not allowed energies (energies
                // in the interval [global_E_min, global_E_max]) in the
-               // multidimensional wang landau potential are printed out, since
+               // multidimensional Wang-Landau potential are printed out, since
                // the range [E_min(nbar), E_max(nbar)] for each nbar may be a
                // different one
         std::vector<int> unraveled_index(collective_variables.size());
@@ -1568,7 +1568,7 @@ int WangLandauReactionEnsemble::
 /** remove bins from the range of to be sampled values if they have not been
  *  sampled.
  *  use with caution otherwise you produce unphysical results, do only use
- *  when you know what you want to do. This can make wang landau converge on a
+ *  when you know what you want to do. This can make Wang-Landau converge on a
  *  reduced set gamma. use this function e.g. in do_reaction_wang_landau() for
  *  the diprotonic acid compare "Wang-Landau sampling with self-adaptive range"
  *  by Troester and Dellago
@@ -1599,7 +1599,7 @@ int WangLandauReactionEnsemble::write_wang_landau_checkpoint(
     const std::string &identifier) {
   std::ofstream outfile;
 
-  // write current wang landau parameters (wang_landau_parameter,
+  // write current Wang-Landau parameters (wang_landau_parameter,
   // monte_carlo_trial_moves, flat_index_of_current_state)
   outfile.open(std::string("checkpoint_wang_landau_parameters_") + identifier);
   outfile << wang_landau_parameter << " " << monte_carlo_trial_moves << " "
@@ -1612,7 +1612,7 @@ int WangLandauReactionEnsemble::write_wang_landau_checkpoint(
     outfile << histogram[i] << "\n";
   }
   outfile.close();
-  // write wang landau potential
+  // write Wang-Landau potential
   outfile.open(std::string("checkpoint_wang_landau_potential_") + identifier);
   for (int i = 0; i < wang_landau_potential.size(); i++) {
     outfile << wang_landau_potential[i] << "\n";
@@ -1628,7 +1628,7 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     const std::string &identifier) {
   std::ifstream infile;
 
-  // restore wang landau parameters
+  // restore Wang-Landau parameters
   infile.open(std::string("checkpoint_wang_landau_parameters_") + identifier);
   if (infile.is_open()) {
 
@@ -1666,7 +1666,7 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
                              identifier);
   }
 
-  // restore wang landau potential
+  // restore Wang-Landau potential
   infile.open(std::string("checkpoint_wang_landau_potential_") + identifier);
   if (infile.is_open()) {
     double wang_landau_potential_entry;

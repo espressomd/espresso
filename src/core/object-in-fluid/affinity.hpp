@@ -21,9 +21,8 @@
 #ifndef AFFINITY_H
 #define AFFINITY_H
 
-/** \file affinity.hpp
- *  Routines to calculate the affinity  force
- *  for a particle pair.
+/** \file
+ *  Routines to calculate the affinity force for a particle pair.
  *  \ref forces.cpp
  */
 
@@ -60,28 +59,29 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Here I can implement the affinity force.
      * I have the position of the particle - p1, and under p1->p.bond_site I
-     *have the coordinate of the bond_site. Also, under d[3] I have the vector
-     *towards the constraint meaning that force on p1 should be in the direction
-     *of d[3].
+     * have the coordinate of the bond_site. Also, under d[3] I have the vector
+     * towards the constraint meaning that force on p1 should be in the
+     * direction of d[3].
      *
      * Algorithm:
      * 1. First check is, whether I am in the cut-off radius: ?dist <
-     *affinity_cut?.
+     *    affinity_cut?.
      * 2. Then I check whether there exists a bond from the current particle:
-     *?bond_site != -1?
+     *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
-     *decide whether the bond will brake or not.
+     *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity_r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
-     *create or does not create the bond.
+     *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
      *
      * comments:
-     * 	strength of the force is proportional to the difference of actual bond
-     *length and relaxed bond length bond is always created, no probability is
-     *involved if bondlength reaches maxBond, the bond immediately ruptures. No
-     *probability is involved
+     * - strength of the force is proportional to the difference of
+     *   actual bond length and relaxed bond length
+     * - bond is always created, no probability is involved
+     * - if bond length reaches maxBond, the bond immediately ruptures,
+     *   no probability is involved
      *********************/
     int j;
     double fac = 0.0;
@@ -111,11 +111,11 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
           } else
             fac = 0.0;
-          //				double ftemp = 0;
+          // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j] / len;
           }
-          //				printf("%f ",ftemp);
+          // printf("%f ",ftemp);
           // Decision whether I should break the bond: if the bond length is
           // greater than maxBond, it breaks.
           if (len > ia_params->affinity_maxBond) {
@@ -124,9 +124,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside of
-                                        // possible bond creation area, lets
-                                        // talk about creating a bond
+                       ->affinity_r0) { // Bond does not exist, we are inside
+                                        // of possible bond creation area,
+                                        // lets talk about creating a bond
           // This implementation creates bond always
           Vector3d unfolded_pos = unfolded_position(p1);
           for (j = 0; j < 3; j++)
@@ -140,34 +140,37 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Here I can implement the affinity force.
      * I have the position of the particle - p1, and under p1->p.bond_site I
-     *have the coordinate of the bond_site. Also, under d[3] I have the vector
-     *towards the constraint meaning that force on p1 should be in the direction
-     *of d[3].
+     * have the coordinate of the bond_site. Also, under d[3] I have the vector
+     * towards the constraint meaning that force on p1 should be in the
+     * direction of d[3].
      *
      * Algorithm:
      * 1. First check is whether I am in the cut-off radius: ?dist <
-     *affinity_cut?.
+     *    affinity_cut?.
      * 2. Then I check whether there exists a bond from the current particle:
-     *?bond_site != -1?
+     *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
-     *decide whether the bond will brake or not.
+     *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity_r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
-     *create or does not create the bond.
+     *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
      *
      *
      * comments:
-     * 	strength of the force is proportional to the difference of actual bond
-     *length and relaxed bond length bond is created with probability
-     *1-exp(-Kon*timestep) maxBond is not used, we use probability
-     *1-exp(-Koff*timestep) to brake the bond Koff depends on the bondlenth via
-     *Koff = K0*exp(F/Fd) = K0*exp(kappa(r-r0)/Fd) here, ia_params->Koff gives
-     *us K_0, off rate when bond is relaxed. here, maxBond is used as detachment
-     *force F_d. The original check for ensuring, that particle flows out of the
-     *cut-off radius and the bond remains active is replaced with fixed check,
-     *that bond length must not be greater that 0.8 cut_off
+     * - strength of the force is proportional to the difference of actual
+     *   bond length and relaxed bond length
+     * - bond is created with probability 1-exp(-Kon*timestep)
+     * - maxBond is not used, we use probability 1-exp(-Koff*timestep) to
+     *   break the bond
+     * - Koff depends on the bond length via Koff = K0*exp(F/Fd) =
+     *   K0*exp(kappa(r-r0)/Fd)
+     * - here, ia_params->Koff gives us K_0, off rate when bond is relaxed
+     * - here, maxBond is used as detachment force F_d
+     * - the original check for ensuring, that particle flows out of the
+     *   cut-off radius and the bond remains active is replaced with fixed
+     *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
     int j;
     double fac = 0.0;
@@ -250,9 +253,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside of
-                                        // possible bond creation area, lets
-                                        // talk about creating a bond
+                       ->affinity_r0) { // Bond does not exist, we are inside
+                                        // of possible bond creation area,
+                                        // lets talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -282,37 +285,39 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Here I can implement the affinity force.
      * I have the position of the particle - p1, and under p1->p.bond_site I
-     *have the coordinate of the bond_site. Also, under d[3] I have the vector
-     *towards the constraint meaning that force on p1 should be in the direction
-     *of d[3].
+     * have the coordinate of the bond_site. Also, under d[3] I have the vector
+     * towards the constraint meaning that force on p1 should be in the
+     * direction of d[3].
      *
      * Algorithm:
      * 1. First check is whether I am in the cut-off radius: ?dist <
-     *affinity_cut?.
+     *    affinity_cut?.
      * 2. Then I check whether there exists a bond from the current particle:
-     *?bond_site != -1?
+     *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
-     *decide whether the bond will brake or not.
+     *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity_r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
-     *create or does not create the bond.
+     *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
      *
      *
      * comments:
-     * 	strength of the force is proportional to the difference of actual bond
-     *length and relaxed bond length bond is created with probability
-     *1-exp(-Kon*timestep) bond is ruptured with probability
-     *1-exp(-Koff*timestep) to brake the bond Koff is given as parameter, is not
-     *dependent on the force nor the bond length here, maxBond stands for
-     *ensuring, that particle flows out of the cut-off radius and the bond
-     *remains active. maxBond should be always less than cut_off radius
+     * - strength of the force is proportional to the difference of
+     *   actual bond length and relaxed bond length
+     * - bond is created with probability 1-exp(-Kon*timestep)
+     * - bond is ruptured with probability 1-exp(-Koff*timestep)
+     * - to break the bond Koff is given as parameter, is not
+     *   dependent on the force nor the bond length
+     * - here, maxBond stands for ensuring, that particle flows out of the
+     *   cut-off radius and the bond remains active
+     * - maxBond should be always less than cut_off radius
      *********************/
     int j;
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
-                                            // interaction cut-off radius.
+    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside
+                                            // the interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
         // %f\n",p1->p.bond_site[0],p1->p.bond_site[1],p1->p.bond_site[2]);
@@ -336,11 +341,11 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
           } else
             fac = 0.0;
-          //				double ftemp = 0;
+          // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j];
           }
-          //				printf("%f ",ftemp);
+          // printf("%f ",ftemp);
           // Decision whether I should break the bond:
           // The random decision algorithm is much more complicated with Fd
           // detachment force etc. Here, I use much simpler rule, the same as
@@ -362,9 +367,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside of
-                                        // possible bond creation area, lets
-                                        // talk about creating a bond
+                       ->affinity_r0) { // Bond does not exist, we are inside
+                                        // of possible bond creation area,
+                                        // lets talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -394,34 +399,36 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Here I can implement the affinity force.
      * I have the position of the particle - p1, and under p1->p.bond_site I
-     *have the coordinate of the bond_site. Also, under d[3] I have the vector
-     *towards the constraint meaning that force on p1 should be in the direction
-     *of d[3].
+     * have the coordinate of the bond_site. Also, under d[3] I have the vector
+     * towards the constraint meaning that force on p1 should be in the
+     * direction of d[3].
      *
      * Algorithm:
      * 1. First check is whether I am in the cut-off radius: ?dist <
-     *affinity_cut?.
+     *    affinity_cut?.
      * 2. Then I check whether there exists a bond from the current particle:
-     *?bond_site != -1?
+     *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
-     *decide whether the bond will brake or not.
+     *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity_r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
-     *create or does not create the bond.
+     *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
      *
      *
      * comments:
-     * 	strength of the force is proportional to the actual bond length
-     * 	bond is created with probability 1-exp(-Kon*timestep)
-     * 	maxBond is not used, we use probability 1-exp(-Koff*timestep) to brake
-     *the bond Koff depends on the bondlength via Koff = K0*exp(F/Fd) =
-     *K0*exp(kappa*r/Fd) here, ia_params->Koff gives us K_0, off rate when bond
-     *is relaxed. here, maxBond is used as detachment force F_d. The original
-     *check for ensuring, that particle flows out of the cut-off radius and the
-     *bond remains active is replaced with fixed check, that bond length must
-     *not be greater that 0.8 cut_off
+     * - strength of the force is proportional to the actual bond length
+     * - bond is created with probability 1-exp(-Kon*timestep)
+     * - maxBond is not used, we use probability 1-exp(-Koff*timestep) to
+     *   break the bond
+     * - Koff depends on the bond length via Koff = K0*exp(F/Fd) =
+     *   K0*exp(kappa*r/Fd)
+     * - here, ia_params->Koff gives us K_0, off rate when bond is relaxed
+     * - here, maxBond is used as detachment force F_d
+     * - the original check for ensuring, that particle flows out of the
+     *   cut-off radius and the bond remains active is replaced with fixed
+     *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
     int j;
     double fac = 0.0;
@@ -495,9 +502,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside of
-                                        // possible bond creation area, lets
-                                        // talk about creating a bond
+                       ->affinity_r0) { // Bond does not exist, we are inside
+                                        // of possible bond creation area,
+                                        // lets talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -524,34 +531,37 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Here I can implement the affinity force.
      * I have the position of the particle - p1, and under p1->p.bond_site I
-     *have the coordinate of the bond_site. Also, under d[3] I have the vector
-     *towards the constraint meaning that force on p1 should be in the direction
-     *of d[3].
+     * have the coordinate of the bond_site. Also, under d[3] I have the vector
+     * towards the constraint meaning that force on p1 should be in the
+     * direction of d[3].
      *
      * Algorithm:
      * 1. First check is whether I am in the cut-off radius: ?dist <
-     *affinity_cut?.
+     *    affinity_cut?.
      * 2. Then I check whether there exists a bond from the current particle:
-     *?bond_site != -1?
+     *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
-     *decide whether the bond will brake or not.
+     *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity_r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
-     *create or does not create the bond.
+     *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
      *
      *
      * comments:
-     * 	strength of the force is proportional to the difference of actual bond
-     *length and 75% of the relaxed bond length bond is created with probability
-     *1-exp(-Kon*timestep) maxBond is not used, we use probability
-     *1-exp(-Koff*timestep) to brake the bond Koff depends on the bondlenth via
-     *Koff = K0*exp(F/Fd) = K0*exp(kappa(r-0.75*r0)/Fd) here, ia_params->Koff
-     *gives us K_0, off rate when bond is relaxed. here, maxBond is used as
-     *detachment force F_d. The original check for ensuring, that particle flows
-     *out of the cut-off radius and the bond remains active is replaced with
-     *fixed check, that bond length must not be greater that 0.8 cut_off
+     * - strength of the force is proportional to the difference of actual
+     *   bond length and 75% of the relaxed bond length
+     * - bond is created with probability 1-exp(-Kon*timestep)
+     * - maxBond is not used, we use probability 1-exp(-Koff*timestep) to
+     *   break the bond
+     * - Koff depends on the bond length via Koff = K0*exp(F/Fd) =
+     *   K0*exp(kappa(r-0.75*r0)/Fd)
+     * - here, ia_params->Koff gives us K_0, off rate when bond is relaxed
+     * - here, maxBond is used as detachment force F_d
+     * - the original check for ensuring, that particle flows out of the
+     *   cut-off radius and the bond remains active is replaced with fixed
+     *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
     int j;
     double fac = 0.0;
@@ -632,9 +642,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside of
-                                        // possible bond creation area, lets
-                                        // talk about creating a bond
+                       ->affinity_r0) { // Bond does not exist, we are inside
+                                        // of possible bond creation area,
+                                        // lets talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -664,34 +674,37 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Here I can implement the affinity force.
      * I have the position of the particle - p1, and under p1->p.bond_site I
-     *have the coordinate of the bond_site. Also, under d[3] I have the vector
-     *towards the constraint meaning that force on p1 should be in the direction
-     *of d[3].
+     * have the coordinate of the bond_site. Also, under d[3] I have the vector
+     * towards the constraint meaning that force on p1 should be in the
+     * direction of d[3].
      *
      * Algorithm:
      * 1. First check is whether I am in the cut-off radius: ?dist <
-     *affinity_cut?.
+     *    affinity_cut?.
      * 2. Then I check whether there exists a bond from the current particle:
-     *?bond_site != -1?
+     *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
-     *decide whether the bond will brake or not.
+     *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity_r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
-     *create or does not create the bond.
+     *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
      *
      *
      * comments:
-     * 	strength of the force is proportional to the difference of actual bond
-     *length and the relaxed bond length bond is created with probability
-     *1-exp(-Kon*timestep) maxBond is not used, we use probability
-     *1-exp(-Koff*timestep) to brake the bond Koff depends on the bondlenth via
-     *Koff = K0*exp(F/Fd) = K0*exp(kappa(r-0.75*r0)/Fd) here, ia_params->Koff
-     *gives us K_0, off rate when bond is relaxed. here, maxBond is used as
-     *detachment force F_d. The original check for ensuring, that particle flows
-     *out of the cut-off radius and the bond remains active is replaced with
-     *fixed check, that bond length must not be greater that 0.8 cut_off
+     * - strength of the force is proportional to the difference of
+     *   actual bond length and the relaxed bond length
+     * - bond is created with probability 1-exp(-Kon*timestep)
+     * - maxBond is not used, we use probability 1-exp(-Koff*timestep) to
+     *   break the bond
+     * - Koff depends on the bond length via Koff = K0*exp(F/Fd) =
+     *   K0*exp(kappa(r-0.75*r0)/Fd)
+     * - here, ia_params->Koff gives us K_0, off rate when bond is relaxed
+     * - here, maxBond is used as detachment force F_d
+     * - the original check for ensuring, that particle flows out of the
+     *   cut-off radius and the bond remains active is replaced with fixed
+     *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
     int j;
     double fac = 0.0;
@@ -774,9 +787,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside of
-                                        // possible bond creation area, lets
-                                        // talk about creating a bond
+                       ->affinity_r0) { // Bond does not exist, we are inside
+                                        // of possible bond creation area,
+                                        // lets talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.

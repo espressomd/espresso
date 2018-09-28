@@ -21,7 +21,7 @@
 set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL ON)
 
 # Target for the unit tests
-add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
+add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) --output-on-failure)
 
 # Run unit tests on check
 add_dependencies(check check_unit_tests)

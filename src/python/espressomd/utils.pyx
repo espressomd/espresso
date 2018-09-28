@@ -331,6 +331,8 @@ def is_valid_type(value, t):
     if t == int:
         return isinstance(value, (int, np.integer, np.long))
     elif t == float:
-        return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+        if hasattr(np, 'float128'):
+            return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+        return isinstance(value, (float, np.float16, np.float32, np.float64, np.longdouble))
     else:
         return isinstance(value, t)

@@ -510,7 +510,7 @@ particles of the types ``type1`` and ``type2``. The Hertzian potential is define
      \end{cases}
 
 The potential has no singularity and is defined everywhere; the
-potential has a nondifferentiable maximum at :math:`r=0`, where the force
+potential has a non-differentiable maximum at :math:`r=0`, where the force
 is undefined.
 
 .. _Gaussian:

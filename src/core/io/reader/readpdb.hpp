@@ -34,12 +34,12 @@ struct PdbLJInteraction {
 
 /** Call only on the master node: Parse pdb file and add contained particles.
     @param pdb_file Filename of the pdb file.
-    @first_id Id of the first particle to add.
-    @type Type for the particles.
-    @lennard_jones Should lj interactions be added from the itp file.
-    @fit Should the box be rescaled to hold the particles.
-    @lj_internal Should LJ interactions within the molecule be added.
-    @lj_diagonal Just the diagonal interaction terms oh lj_internal.
+    @param first_id Id of the first particle to add.
+    @param type Type for the particles.
+    @param lennard_jones Should lj interactions be added from the itp file.
+    @param fit Should the box be rescaled to hold the particles.
+    @param lj_internal Should LJ interactions within the molecule be added.
+    @param lj_diagonal Just the diagonal interaction terms of lj_internal.
     @return Number of particles that were added.
  */
 

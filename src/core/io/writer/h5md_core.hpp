@@ -55,7 +55,7 @@ class File {
 public:
   /**
    * Constructor/destructor without arguments (due to script_interface).
-   * @brief Constructor of the "File" class.
+   * @brief Constructor of the File class.
    */
   File();
   ~File();
@@ -80,13 +80,14 @@ public:
   /**
    * @brief General method to write to the datasets which calls more specific
    * write methods.
-   * @param Boolean values for position, velocity, force and mass.
+   * Boolean values for position, velocity, force and mass.
    */
   void Write(int write_dat, PartCfg &partCfg);
 
   /**
    * @brief Method to write the energy contributions to the H5MD file.
-   * @param Boolean values for total, kinetic.
+   * @param total Boolean values for total energy
+   * @param kinetic Boolean values for kinetic energy
    * \todo Implement this method.
    */
   void WriteEnergy(bool total = true, bool kinetic = true);

@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file p3m.hpp  code for calculating the MDLC (magnetic dipolar layer
+/** \file
+ * code for calculating the MDLC (magnetic dipolar layer
  *correction).
  *  Purpose:   get the corrections for dipolar 3D algorithms
  *             when applied to a slab geometry and dipolar
@@ -575,12 +576,12 @@ double add_mdlc_energy_corrections() {
    same
    value of the dipolar momentum modulus (mu_max). mu_max is taken as the
    largest value of
-   mu inside the system. If we assum the gap has a width gap_size (within which
+   mu inside the system. If we assume the gap has a width gap_size (within which
    there is no particles)
 
    Lz=h+gap_size
 
-   BE CAREFUL:  (1) We assum the short distance for the slab to be in the Z
+   BE CAREFUL:  (1) We assume the short distance for the slab to be in the Z
    direction
    (2) You must also tune the other 3D method to the same accuracy, otherwise
    it has no sense to have a good accurate result for DLC-dipolar.

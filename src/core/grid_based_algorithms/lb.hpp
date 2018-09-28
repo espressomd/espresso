@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lb.hpp
+/** \file
  * Header file for lb.cpp
  *
  * This is the header file for the Lattice Boltzmann implementation in lb.cpp
@@ -115,6 +115,7 @@ struct LB_FluidNode {
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
   int boundary;
+  Vector3d slip_velocity = {};
 #endif // LB_BOUNDARIES
 
   /** local force density */

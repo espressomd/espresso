@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file cells.cpp
+/** \file
  *
  *  This file contains functions for the cell system.
  *
@@ -185,7 +185,7 @@ static void topology_release(int cs) {
 /** Switch for choosing the topology init function of a certain
     cell system. */
 void topology_init(int cs, CellPList *local) {
-  /** broadcast the flag for using verlet list */
+  /** broadcast the flag for using Verlet list */
   boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
 
   switch (cs) {
@@ -333,7 +333,7 @@ void cells_resort_particles(int global_flag) {
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
 
-  /* Particles are now sorted, but verlet lists are invalid
+  /* Particles are now sorted, but Verlet lists are invalid
      and p_old has to be reset. */
   resort_particles = Cells::RESORT_NONE;
   rebuild_verletlist = 1;
