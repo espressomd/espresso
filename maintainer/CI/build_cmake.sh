@@ -75,6 +75,7 @@ fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=$build_type -DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
 cmake_params="$cmake_params -DCMAKE_CXX_FLAGS=$cxx_flags"
+cmake_params="$cmake_params -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 
 if $insource; then
     builddir=$srcdir
@@ -231,12 +232,13 @@ if $make_check; then
         done
     fi
     cmd "make -j${build_procs} check_unit_tests $make_params" || exit 1
+    cmd "make check_cmake_install $make_params" || exit 1
 
     end "TEST"
 else
     start "TEST"
 
-    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/particle.py" || exit 1
+    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/python/particle.py" || exit 1
 
     end "TEST"
 fi
