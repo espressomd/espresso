@@ -364,6 +364,110 @@ struct Particle {
     return ret;
   }
 
+  // default constructor
+  Particle()
+    : p{}
+    , r{}
+    , m{}
+    , f{}
+    , l{}
+#ifdef LB
+    , lc{}
+#endif
+    , bl{}
+#ifdef EXCLUSIONS
+    , el{}
+#endif
+#ifdef ENGINE
+    , swim{}
+#endif
+    {}
+
+  // copy constructor
+  Particle(const Particle &rhs)
+    : p(rhs.p)
+    , r(rhs.r)
+    , m(rhs.m)
+    , f(rhs.f)
+    , l(rhs.l)
+#ifdef LB
+    , lc(rhs.lc)
+#endif
+    , bl(rhs.bl)
+#ifdef EXCLUSIONS
+    , el(rhs.el)
+#endif
+#ifdef ENGINE
+    , swim(rhs.swim)
+#endif
+    {}
+
+  // move constructor
+  Particle(Particle &&rhs)
+    : p(std::move(rhs.p))
+    , r(std::move(rhs.r))
+    , m(std::move(rhs.m))
+    , f(std::move(rhs.f))
+    , l(std::move(rhs.l))
+#ifdef LB
+    , lc(rhs.lc)
+#endif
+    , bl(std::move(rhs.bl))
+#ifdef EXCLUSIONS
+    , el(std::move(rhs.el))
+#endif
+#ifdef ENGINE
+    , swim(std::move(rhs.swim))
+#endif
+    {}
+
+  // copy assignment operator
+  Particle &operator=(const Particle &rhs) {
+    if (this != &rhs) {
+      p = rhs.p;
+      r = rhs.r;
+      m = rhs.m;
+      f = rhs.f;
+      l = rhs.l;
+#ifdef LB
+      lc = rhs.lc;
+#endif
+      bl = rhs.bl;
+#ifdef EXCLUSIONS
+      el = rhs.el;
+#endif
+#ifdef ENGINE
+      swim = rhs.swim;
+#endif
+    }
+    return *this;
+  }
+
+  // move assignment operator
+  Particle &operator=(Particle &&rhs) {
+    if (this != &rhs) {
+      p = std::move(rhs.p);
+      r = std::move(rhs.r);
+      m = std::move(rhs.m);
+      f = std::move(rhs.f);
+      l = std::move(rhs.l);
+#ifdef LB
+      lc = std::move(rhs.lc);
+#endif
+      bl = std::move(rhs.bl);
+#ifdef EXCLUSIONS
+      el = std::move(rhs.el);
+#endif
+#ifdef ENGINE
+      swim = std::move(rhs.swim);
+#endif
+    }
+    return *this;
+  }
+
+  // destructor
+  ~Particle() {}
+
   ///
   ParticleProperties p;
   ///
