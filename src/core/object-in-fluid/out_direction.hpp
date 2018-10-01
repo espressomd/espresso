@@ -18,7 +18,8 @@
 */
 #ifndef _OBJECT_IN_FLUID_OUT_DIRECTION_H
 #define _OBJECT_IN_FLUID_OUT_DIRECTION_H
-/** \file out_direction.hpp Routines to calculate the outward direction of the
+/** \file
+ * Routines to calculate the outward direction of the
  * membrane using a particle quadruple (one particle and its 3 strategically
  * placed neighbors)
  */

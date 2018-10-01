@@ -1383,7 +1383,7 @@ class openGLLive(object):
             return
 
         def redraw_on_idle():
-            # DONT REPOST FASTER THAN 60 FPS
+            # DON'T REPOST FASTER THAN 60 FPS
             self.draw_elapsed += (time.time() - self.draw_timer)
             if self.draw_elapsed > 1.0 / 60.0:
                 self.draw_elapsed = 0

@@ -273,7 +273,7 @@ system.integrator.set_vv()
 
 ## Answer 6 ##
 # Because of the use of minimize_energy. Had we instead used force
-# capping, a separate integration loop with thermostating would have
+# capping, a separate integration loop with thermostatting would have
 # been used to remove offending configurations.
 
 system.thermostat.set_langevin(kT=temp, gamma=frict_trans_colloid)

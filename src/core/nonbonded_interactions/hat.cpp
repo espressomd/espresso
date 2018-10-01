@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file soft_sphere.cpp
+/** \file
  *
- *  Implementation of \ref soft_sphere.hpp
+ *  Implementation of \ref hat.hpp
  */
 
 #include "config.hpp"

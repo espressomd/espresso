@@ -21,7 +21,7 @@
 #ifndef CORE_TOPOLOGY_HPP
 #define CORE_TOPOLOGY_HPP
 
-/** \file topology.hpp
+/** \file
  *
  *  This file contains functions for handling the system topology.
  */

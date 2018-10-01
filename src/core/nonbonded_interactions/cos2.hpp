@@ -21,7 +21,7 @@
 #ifndef _COS2_H
 #define _COS2_H
 
-/** \file cos2.hpp
+/** \file
  *  Routines to calculate a flat potential with cosine tail energy and/or  force
  *  for a particle pair.  Cosine tail is different from that in ljcos.hpp
  *  Used for attractive tail/tail interactions in lipid bilayer calculations.

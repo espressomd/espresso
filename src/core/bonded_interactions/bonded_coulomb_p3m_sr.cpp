@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file bonded_coulomb.cpp
+/** \file
  *
- *  Implementation of \ref bonded_coulomb.hpp
+ *  Implementation of \ref bonded_coulomb_p3m_sr.hpp
  */
 #include "bonded_coulomb_p3m_sr.hpp"
 #include "communication.hpp"

@@ -20,7 +20,7 @@
 */
 #ifndef ANGLE_COSINE_H
 #define ANGLE_COSINE_H
-/** \file angle_cosine.hpp
+/** \file
  *  Routines to calculate the angle energy or/and and force
  *  for a particle triple.
  *  \ref forces.cpp

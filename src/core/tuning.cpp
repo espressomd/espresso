@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file tuning.cpp
+/** \file
     Implementation of tuning.hpp .
 */
 #include "communication.hpp"
@@ -37,7 +37,7 @@ int timing_samples = 10;
  * \brief Time the force calculation.
  * This times the force calculation without
  * propagating the system. It therefore does
- * not include e.g. verlet list updates.
+ * not include e.g. Verlet list updates.
  *
  * @return Time per integration in ms.
  */

@@ -21,10 +21,10 @@
 #ifndef umbrella_H
 #define umbrella_H
 
-/** \file umbrella.hpp
+/** \file
  *  Routines to calculate the umbrella energy and/or  force
  *  for a particle pair: harmonic interaction in only one
- *  cartesian direction. Useful for umbrella sampling simulations.
+ *  Cartesian direction. Useful for umbrella sampling simulations.
  *  \ref forces.cpp
  */
 

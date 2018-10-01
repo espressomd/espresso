@@ -869,7 +869,7 @@ simulation core which requires running the program in a debugger.  The
 which sets the Python path appropriately and starts the Python
 interpreter with your arguments.  Thus it is not possible to directly
 run ``pypresso`` in a debugger.  However, we provide some useful
-commandline options for the most common tools.
+command line options for the most common tools.
 
 .. code-block:: bash
 

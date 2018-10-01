@@ -21,7 +21,7 @@
 #ifndef hat_H
 #define hat_H
 
-/** \file soft_sphere.hpp
+/** \file
  *  Routines to calculate the soft-sphere energy and/or  force
  *  for a particle pair.
  *  \ref forces.cpp

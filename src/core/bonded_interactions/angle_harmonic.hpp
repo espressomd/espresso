@@ -20,7 +20,7 @@
 */
 #ifndef ANGLE_HARMONIC_H
 #define ANGLE_HARMONIC_H
-/** \file angle_harmonic.hpp
+/** \file
  *  Routines to calculate the angle energy or/and and force
  *  for a particle triple.
  *  \ref forces.cpp

@@ -21,7 +21,7 @@
 #ifndef _GB_HPP
 #define _GB_HPP
 
-/** \file gb.hpp
+/** \file
  *  Routines to calculate the Gay-Berne energy and force
  *  for a pair of particles.
  *  \ref forces.cpp

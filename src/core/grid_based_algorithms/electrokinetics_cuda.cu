@@ -1534,7 +1534,7 @@ __global__ void ek_calculate_quantities(unsigned int species_index,
 
     /* Calculate the diffusive fluxes between this node and its neighbors. Only
        the 9 fluxes along the directions of the LB velocities c_i with i odd are
-       stored with a node to avoid redundencies. */
+       stored with a node to avoid redundancies. */
 
     neighborindex[EK_LINK_U00] = rhoindex_cartesian2linear(
         (coord[0] + 1) % ek_parameters_gpu.dim_x, coord[1], coord[2]);
@@ -2791,7 +2791,7 @@ int ek_node_print_density(int species, int x, int y, int z, double *density) {
 int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
 
   ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
-                                   // into cartesian coordinates for output
+                                   // into Cartesian coordinates for output
   unsigned int coord[3];
 
   coord[0] = x;
@@ -3017,7 +3017,7 @@ int ek_print_vtk_flux(int species, char *filename) {
 
   FILE *fp = fopen(filename, "w");
   ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
-                                   // into cartesian coordinates for output
+                                   // into Cartesian coordinates for output
 
   unsigned int coord[3];
 

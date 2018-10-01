@@ -298,7 +298,7 @@ ELSE:
 
 IF P3M:
     cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
-        #* Parameters for Bonded coulomb p3m sr */
+        #* Parameters for Bonded Coulomb p3m sr */
         cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
             double q1q2
 ELSE:
@@ -348,7 +348,7 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double gamma_distance
         double r_cut
 
-#* Parameters for Bonded coulomb */
+#* Parameters for Bonded Coulomb */
     cdef struct Bonded_coulomb_bond_parameters:
         double prefactor
 

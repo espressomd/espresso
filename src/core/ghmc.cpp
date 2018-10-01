@@ -19,7 +19,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file ghmc.cpp
+/** \file
 
     For more information see \ref ghmc.hpp
  */
@@ -371,7 +371,7 @@ void ghmc_close() {
   ghmc_acc += ghmcdata.acc;
 }
 
-/* monte carlo step of ghmc - evaluation stage */
+/* Monte Carlo step of ghmc - evaluation stage */
 void ghmc_mc() {
   INTEG_TRACE(fprintf(stderr, "%d: ghmc_mc:\n", this_node));
 
@@ -383,7 +383,7 @@ void ghmc_mc() {
 
     ghmcdata.att++;
 
-    // metropolis algorithm
+    // Metropolis algorithm
     double boltzmann = ghmcdata.hmlt_new - ghmcdata.hmlt_old;
     if (boltzmann < 0)
       boltzmann = 1.0;
