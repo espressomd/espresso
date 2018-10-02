@@ -85,6 +85,7 @@ SHANCHEN                        requires not ELECTROKINETICS and EXPERIMENTAL_FE
 /* Interaction features */
 TABULATED
 LENNARD_JONES
+WCA
 LJ_WARN_WHEN_CLOSE
 LENNARD_JONES_GENERIC           implies LENNARD_JONES
 LJCOS

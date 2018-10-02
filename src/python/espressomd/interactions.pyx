@@ -324,8 +324,87 @@ IF LENNARD_JONES == 1:
             """
             return "epsilon", "sigma", "cutoff", "shift"
 
-# Generic Lennard-Jones
+IF WCA == 1:
+    cdef class WCAInteraction(NonBondedInteraction):
 
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            Raises
+            ------
+            ValueError
+                If not true.
+            """
+            if self._params["epsilon"] < 0:
+                raise ValueError("WCA eps has to be >=0")
+            if self._params["sigma"] < 0:
+                raise ValueError("WCA sigma has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef IA_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "epsilon": ia_params.WCA_eps,
+                "sigma": ia_params.WCA_sig,
+                "cutoff": ia_params.WCA_cut}
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return (self._params["epsilon"] > 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the WCA interaction.
+
+            Parameters
+            ----------
+
+            epsilon : :obj:`float`
+                      The magnitude of the interaction.
+            sigma : :obj:`float`
+                    Determines the interaction length scale.
+
+            """
+            super(WCAInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            if wca_set_params(
+                    self._part_types[0], self._part_types[1],
+                    self._params["epsilon"],
+                    self._params["sigma"]):
+                raise Exception("Could not set WCA parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "epsilon": 0.,
+                "sigma": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "WCA"
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "epsilon", "sigma"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "epsilon", "sigma"
+
+# Generic Lennard-Jones
 IF LENNARD_JONES_GENERIC == 1:
 
     cdef class GenericLennardJonesInteraction(NonBondedInteraction):
@@ -1672,6 +1751,8 @@ class NonBondedInteractionHandle(object):
         # Here, add one line for each nonbonded ia
         IF LENNARD_JONES:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
+        IF WCA:
+            self.wca = WCAInteraction(_type1, _type2)
         IF MEMBRANE_COLLISION:
             self.membrane_collision = MembraneCollisionInteraction(
                 _type1, _type2)

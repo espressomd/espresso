@@ -255,6 +255,10 @@ static void recalc_maximal_cutoff_nonbonded() {
         max_cut_current = (data->LJ_cut + data->LJ_offset);
 #endif
 
+#ifdef WCA
+      max_cut_current = std::max(max_cut_current,  data->WCA_cut);
+#endif
+
 #ifdef DPD
       max_cut_current = std::max(max_cut_current,
                                  std::max(data->dpd_r_cut, data->dpd_tr_cut));
