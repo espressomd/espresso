@@ -174,7 +174,7 @@ void ImmersedBoundaries::calc_volumes() {
         const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
         const int type = iaparams.type;
         if (type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
-          if (p1.p.is_virtual)
+          if (p1.p->is_virtual)
             softID = iaparams.p.ibmVolConsParameters.softID;
           else {
             printf("Error. Encountered non-virtual particle with "
@@ -202,7 +202,7 @@ void ImmersedBoundaries::calc_volumes() {
             if (!p2) {
               runtimeErrorMsg()
                   << "{IBM_calc_volumes: 078 bond broken between particles "
-                  << p1.p.identity << " and " << p1.bl.e[j + 1]
+                  << p1.p->identity << " and " << p1.bl.e[j + 1]
                   << " (particles not stored on the same node)} ";
               return;
             }
@@ -210,7 +210,7 @@ void ImmersedBoundaries::calc_volumes() {
             if (!p3) {
               runtimeErrorMsg()
                   << "{IBM_calc_volumes: 078 bond broken between particles "
-                  << p1.p.identity << " and " << p1.bl.e[j + 2]
+                  << p1.p->identity << " and " << p1.bl.e[j + 2]
                   << " (particles not stored on the same node)} ";
               return;
             }
@@ -219,7 +219,7 @@ void ImmersedBoundaries::calc_volumes() {
             // this is to get a continuous trajectory with no jumps when box
             // boundaries are crossed
             double x1[3] = {p1.r.p[0], p1.r.p[1], p1.r.p[2]};
-            int img[3] = {p1.l.i[0], p1.l.i[1], p1.l.i[2]};
+            int img[3] = {p1.l->i[0], p1.l->i[1], p1.l->i[2]};
             unfold_position(x1, img);
 
             // Unfolding seems to work only for the first particle of a triel
@@ -302,7 +302,7 @@ void ImmersedBoundaries::calc_volume_force() {
         const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
         const int type = iaparams.type;
         if (type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
-          if (!p1.p.is_virtual) {
+          if (!p1.p->is_virtual) {
             printf("Error. Encountered non-virtual particle with "
                    "VOLUME_CONSERVATION_IBM\n");
             exit(1);
@@ -334,7 +334,7 @@ void ImmersedBoundaries::calc_volume_force() {
             // this is to get a continuous trajectory with no jumps when box
             // boundaries are crossed
             double x1[3] = {p1.r.p[0], p1.r.p[1], p1.r.p[2]};
-            int img[3] = {p1.l.i[0], p1.l.i[1], p1.l.i[2]};
+            int img[3] = {p1.l->i[0], p1.l->i[1], p1.l->i[2]};
             unfold_position(x1, img);
 
             // Unfolding seems to work only for the first particle of a triel
@@ -361,11 +361,11 @@ void ImmersedBoundaries::calc_volume_force() {
 
              double n[3];
              vector_product(x3, x2, n);
-             for (int k=0; k < 3; k++) p1.f.f[k] += fact*n[k];
+             for (int k=0; k < 3; k++) p1.f->f[k] += fact*n[k];
              vector_product(x1, x3, n);
-             for (int k=0; k < 3; k++) p2->f.f[k] += fact*n[k];
+             for (int k=0; k < 3; k++) p2->f->f[k] += fact*n[k];
              vector_product(x2, x1, n);
-             for (int k=0; k < 3; k++) p3->f.f[k] += fact*n[k];*/
+             for (int k=0; k < 3; k++) p3->f->f[k] += fact*n[k];*/
 
             // This is Dupin 2008. I guess the result will be very similar as
             // the code above
@@ -387,9 +387,9 @@ void ImmersedBoundaries::calc_volume_force() {
 
             // Add forces
             for (int k = 0; k < 3; k++) {
-              p1.f.f[k] += force[k];
-              p2->f.f[k] += force[k];
-              p3->f.f[k] += force[k];
+              p1.f->f[k] += force[k];
+              p2->f->f[k] += force[k];
+              p3->f->f[k] += force[k];
             }
           }
           // Iterate, increase by the number of partners of this bond + 1 for

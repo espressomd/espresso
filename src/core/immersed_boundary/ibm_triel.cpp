@@ -207,9 +207,9 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
 
   // Calculate f3 from equilibrium and add
   for (int i = 0; i < 3; i++) {
-    p1->f.f[i] += force1[i];
-    p2->f.f[i] += force2[i];
-    p3->f.f[i] += -force1[i] - force2[i];
+    p1->f->f[i] += force1[i];
+    p2->f->f[i] += force2[i];
+    p3->f->f[i] += -force1[i] - force2[i];
   }
 
   return 0;

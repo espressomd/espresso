@@ -558,7 +558,7 @@ static void setup_z_force() {
     part = cells[c].part;
     lclcblk[size * c] = 0;
     for (i = 0; i < np; i++) {
-      lclcblk[size * c] += part[i].p.q;
+      lclcblk[size * c] += part[i].p->q;
     }
     lclcblk[size * c] *= pref;
     lclcblk[size * c + 1] = lclcblk[size * c];
@@ -576,7 +576,7 @@ static void add_z_force() {
     double gbl_dm_z = 0;
     double lcl_dm_z = 0;
     for (auto const &p : local_cells.particles()) {
-      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_l[2]);
+      lcl_dm_z += p.p->q * (p.r.p[2] + p.l->i[2] * box_l[2]);
     }
 
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
@@ -592,10 +592,10 @@ static void add_z_force() {
     auto np = cells[c].n;
     auto part = cells[c].part;
     for (int i = 0; i < np; i++) {
-      part[i].f.f[2] += part[i].p.q * (add + field_tot);
+      part[i].f->f[2] += part[i].p->q * (add + field_tot);
       LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
-                         this_node, part[i].p.identity, part[i].f.f[0],
-                         part[i].f.f[1], part[i].f.f[2]));
+                         this_node, part[i].p->identity, part[i].f->f[0],
+                         part[i].f->f[1], part[i].f->f[2]));
     }
   }
 }
@@ -621,8 +621,8 @@ static void setup_z_energy() {
     part = cells[c].part;
     clear_vec(blwentry(lclcblk, c, e_size), e_size);
     for (i = 0; i < np; i++) {
-      lclcblk[size * c + ABEQQP] += part[i].p.q;
-      lclcblk[size * c + ABEQZP] += part[i].p.q * part[i].r.p[2];
+      lclcblk[size * c + ABEQQP] += part[i].p->q;
+      lclcblk[size * c + ABEQZP] += part[i].p->q * part[i].r.p[2];
     }
     scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
     /* just to be able to use the standard distribution. Here below
@@ -643,7 +643,7 @@ static double z_energy() {
     np = cells[c].n;
     part = cells[c].part;
     for (i = 0; i < np; i++) {
-      eng += part[i].p.q * (part[i].r.p[2] * othcblk[ABEQQP] - othcblk[ABEQZP] -
+      eng += part[i].p->q * (part[i].r.p[2] * othcblk[ABEQQP] - othcblk[ABEQZP] -
                             part[i].r.p[2] * othcblk[ABEQQM] + othcblk[ABEQZM]);
     }
   }
@@ -654,7 +654,7 @@ static double z_energy() {
     double lcl_dm_z = 0;
 
     for (auto &p : local_cells.particles()) {
-      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_l[2]);
+      lcl_dm_z += p.p->q * (p.r.p[2] + p.l->i[2] * box_l[2]);
     }
 
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
@@ -713,10 +713,10 @@ static void setup(int p, double omega, double fac, int n_sccache,
     for (i = 0; i < np; i++) {
       e = exp(omega * (part[i].r.p[2] - layer_top));
 
-      partblk[size * ic + POQESM] = part[i].p.q * sccache[o + ic].s / e;
-      partblk[size * ic + POQESP] = part[i].p.q * sccache[o + ic].s * e;
-      partblk[size * ic + POQECM] = part[i].p.q * sccache[o + ic].c / e;
-      partblk[size * ic + POQECP] = part[i].p.q * sccache[o + ic].c * e;
+      partblk[size * ic + POQESM] = part[i].p->q * sccache[o + ic].s / e;
+      partblk[size * ic + POQESP] = part[i].p->q * sccache[o + ic].s * e;
+      partblk[size * ic + POQECM] = part[i].p->q * sccache[o + ic].c / e;
+      partblk[size * ic + POQECP] = part[i].p->q * sccache[o + ic].c * e;
 
       /* take images due to different dielectric constants into account */
       if (mmm2d_params.dielectric_contrast_on) {
@@ -730,8 +730,8 @@ static void setup(int p, double omega, double fac, int n_sccache,
 
           e = exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
 
-          lclimgebot[POQESP] += part[i].p.q * sccache[o + ic].s * e;
-          lclimgebot[POQECP] += part[i].p.q * sccache[o + ic].c * e;
+          lclimgebot[POQESP] += part[i].p->q * sccache[o + ic].s * e;
+          lclimgebot[POQECP] += part[i].p->q * sccache[o + ic].c * e;
         } else
           /* There are image charges at -(z) and -(2h-z) etc. layer_h included
            * due to the shift in z */
@@ -753,8 +753,8 @@ static void setup(int p, double omega, double fac, int n_sccache,
           e = exp(omega * (part[i].r.p[2] - h + layer_h)) *
               mmm2d_params.delta_mid_top;
 
-          lclimgetop[POQESM] += part[i].p.q * sccache[o + ic].s * e;
-          lclimgetop[POQECM] += part[i].p.q * sccache[o + ic].c * e;
+          lclimgetop[POQESM] += part[i].p->q * sccache[o + ic].s * e;
+          lclimgetop[POQECM] += part[i].p->q * sccache[o + ic].c * e;
         } else
           /* There are image charges at (h-z) and (h+z) from the top layer etc.
              layer_h included due to the shift in z */
@@ -763,10 +763,10 @@ static void setup(int p, double omega, double fac, int n_sccache,
                         mmm2d_params.delta_mid_bot) *
                    fac_delta_mid_top;
 
-        lclimge[POQESP] += part[i].p.q * sccache[o + ic].s * e_di_l;
-        lclimge[POQECP] += part[i].p.q * sccache[o + ic].c * e_di_l;
-        lclimge[POQESM] += part[i].p.q * sccache[o + ic].s * e_di_h;
-        lclimge[POQECM] += part[i].p.q * sccache[o + ic].c * e_di_h;
+        lclimge[POQESP] += part[i].p->q * sccache[o + ic].s * e_di_l;
+        lclimge[POQECP] += part[i].p->q * sccache[o + ic].c * e_di_l;
+        lclimge[POQESM] += part[i].p->q * sccache[o + ic].s * e_di_h;
+        lclimge[POQECM] += part[i].p->q * sccache[o + ic].c * e_di_h;
       }
 
       add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
@@ -809,18 +809,18 @@ template <size_t dir> static void add_force() {
     auto const othcblk = block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
-      part[i].f.f[dir] += partblk[size * ic + POQESM] * othcblk[POQECP] -
+      part[i].f->f[dir] += partblk[size * ic + POQESM] * othcblk[POQECP] -
                           partblk[size * ic + POQECM] * othcblk[POQESP] +
                           partblk[size * ic + POQESP] * othcblk[POQECM] -
                           partblk[size * ic + POQECP] * othcblk[POQESM];
-      part[i].f.f[2] += partblk[size * ic + POQECM] * othcblk[POQECP] +
+      part[i].f->f[2] += partblk[size * ic + POQECM] * othcblk[POQECP] +
                         partblk[size * ic + POQESM] * othcblk[POQESP] -
                         partblk[size * ic + POQECP] * othcblk[POQECM] -
                         partblk[size * ic + POQESP] * othcblk[POQESM];
 
       LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
-                         this_node, part[i].p.identity, part[i].f.f[0],
-                         part[i].f.f[1], part[i].f.f[2]));
+                         this_node, part[i].p->identity, part[i].f->f[0],
+                         part[i].f->f[1], part[i].f->f[2]));
       ic++;
     }
   }
@@ -920,22 +920,22 @@ static void setup_PQ(int p, int q, double omega, double fac) {
       e = exp(omega * (part[i].r.p[2] - layer_top));
 
       partblk[size * ic + PQESSM] =
-          scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q / e;
+          scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p->q / e;
       partblk[size * ic + PQESCM] =
-          scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q / e;
+          scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p->q / e;
       partblk[size * ic + PQECSM] =
-          scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q / e;
+          scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p->q / e;
       partblk[size * ic + PQECCM] =
-          scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q / e;
+          scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p->q / e;
 
       partblk[size * ic + PQESSP] =
-          scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
+          scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p->q * e;
       partblk[size * ic + PQESCP] =
-          scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
+          scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p->q * e;
       partblk[size * ic + PQECSP] =
-          scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
+          scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p->q * e;
       partblk[size * ic + PQECCP] =
-          scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
+          scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p->q * e;
 
       if (mmm2d_params.dielectric_contrast_on) {
         if (c == 1 && this_node == 0) {
@@ -947,13 +947,13 @@ static void setup_PQ(int p, int q, double omega, double fac) {
           e = exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
 
           lclimgebot[PQESSP] +=
-              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p->q * e;
           lclimgebot[PQESCP] +=
-              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p->q * e;
           lclimgebot[PQECSP] +=
-              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p->q * e;
           lclimgebot[PQECCP] +=
-              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p->q * e;
         } else
           e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
@@ -970,13 +970,13 @@ static void setup_PQ(int p, int q, double omega, double fac) {
               mmm2d_params.delta_mid_top;
 
           lclimgetop[PQESSM] +=
-              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p->q * e;
           lclimgetop[PQESCM] +=
-              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p->q * e;
           lclimgetop[PQECSM] +=
-              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p->q * e;
           lclimgetop[PQECCM] +=
-              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p->q * e;
         } else
           e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
@@ -984,22 +984,22 @@ static void setup_PQ(int p, int q, double omega, double fac) {
                    fac_delta_mid_top;
 
         lclimge[PQESSP] +=
-            scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di_l;
+            scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p->q * e_di_l;
         lclimge[PQESCP] +=
-            scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di_l;
+            scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p->q * e_di_l;
         lclimge[PQECSP] +=
-            scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di_l;
+            scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p->q * e_di_l;
         lclimge[PQECCP] +=
-            scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_l;
+            scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p->q * e_di_l;
 
         lclimge[PQESSM] +=
-            scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di_h;
+            scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p->q * e_di_h;
         lclimge[PQESCM] +=
-            scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di_h;
+            scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p->q * e_di_h;
         lclimge[PQECSM] +=
-            scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di_h;
+            scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p->q * e_di_h;
         lclimge[PQECCM] +=
-            scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_h;
+            scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p->q * e_di_h;
       }
 
       add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
@@ -1036,7 +1036,7 @@ static void add_PQ_force(int p, int q, double omega) {
     othcblk = block(gblcblk, c - 1, size);
 
     for (i = 0; i < np; i++) {
-      part[i].f.f[0] +=
+      part[i].f->f[0] +=
           pref_x * (partblk[size * ic + PQESCM] * othcblk[PQECCP] +
                     partblk[size * ic + PQESSM] * othcblk[PQECSP] -
                     partblk[size * ic + PQECCM] * othcblk[PQESCP] -
@@ -1045,7 +1045,7 @@ static void add_PQ_force(int p, int q, double omega) {
                     partblk[size * ic + PQESSP] * othcblk[PQECSM] -
                     partblk[size * ic + PQECCP] * othcblk[PQESCM] -
                     partblk[size * ic + PQECSP] * othcblk[PQESSM]);
-      part[i].f.f[1] +=
+      part[i].f->f[1] +=
           pref_y * (partblk[size * ic + PQECSM] * othcblk[PQECCP] +
                     partblk[size * ic + PQESSM] * othcblk[PQESCP] -
                     partblk[size * ic + PQECCM] * othcblk[PQECSP] -
@@ -1054,7 +1054,7 @@ static void add_PQ_force(int p, int q, double omega) {
                     partblk[size * ic + PQESSP] * othcblk[PQESCM] -
                     partblk[size * ic + PQECCP] * othcblk[PQECSM] -
                     partblk[size * ic + PQESCP] * othcblk[PQESSM]);
-      part[i].f.f[2] += (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
+      part[i].f->f[2] += (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
                          partblk[size * ic + PQECSM] * othcblk[PQECSP] +
                          partblk[size * ic + PQESCM] * othcblk[PQESCP] +
                          partblk[size * ic + PQESSM] * othcblk[PQESSP] -
@@ -1064,8 +1064,8 @@ static void add_PQ_force(int p, int q, double omega) {
                          partblk[size * ic + PQESSP] * othcblk[PQESSM]);
 
       LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
-                         this_node, part[i].p.identity, part[i].f.f[0],
-                         part[i].f.f[1], part[i].f.f[2]));
+                         this_node, part[i].p->identity, part[i].f->f[0],
+                         part[i].f->f[1], part[i].f->f[2]));
       ic++;
     }
   }
@@ -1702,7 +1702,7 @@ void MMM2D_self_energy() {
   auto parts = local_cells.particles();
   self_energy = std::accumulate(parts.begin(), parts.end(), 0.0,
                                 [seng](double sum, Particle const &p) {
-                                  return sum + seng * Utils::sqr(p.p.q);
+                                  return sum + seng * Utils::sqr(p.p->q);
                                 });
 }
 
@@ -1876,14 +1876,14 @@ void MMM2D_dielectric_layers_force_contribution() {
         a[2] = -pl[j].r.p[2];
         layered_get_mi_vector(d, p1->r.p.data(), a);
         dist2 = sqrlen(d);
-        charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_bot;
+        charge_factor = p1->p->q * pl[j].p->q * mmm2d_params.delta_mid_bot;
         add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2,
                                      force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] -= pref * charge_factor;
       }
       for (j = 0; j < 3; j++) {
-        p1->f.f[j] += force[j];
+        p1->f->f[j] += force[j];
       }
     }
   }
@@ -1905,14 +1905,14 @@ void MMM2D_dielectric_layers_force_contribution() {
         a[2] = 2 * box_l[2] - pl[j].r.p[2];
         layered_get_mi_vector(d, p1->r.p.data(), a);
         dist2 = sqrlen(d);
-        charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_top;
+        charge_factor = p1->p->q * pl[j].p->q * mmm2d_params.delta_mid_top;
         add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2,
                                      force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] += pref * charge_factor;
       }
       for (j = 0; j < 3; j++) {
-        p1->f.f[j] += force[j];
+        p1->f->f[j] += force[j];
       }
     }
   }
@@ -1946,7 +1946,7 @@ double MMM2D_dielectric_layers_energy_contribution() {
         a[2] = -pl[j].r.p[2];
         layered_get_mi_vector(d, p1->r.p.data(), a);
         dist2 = sqrlen(d);
-        charge_factor = mmm2d_params.delta_mid_bot * p1->p.q * pl[j].p.q;
+        charge_factor = mmm2d_params.delta_mid_bot * p1->p->q * pl[j].p->q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
         eng += mmm2d_coulomb_pair_energy(charge_factor, d, dist2, sqrt(dist2)) +
@@ -1968,7 +1968,7 @@ double MMM2D_dielectric_layers_energy_contribution() {
         a[2] = 2 * box_l[2] - pl[j].r.p[2];
         layered_get_mi_vector(d, p1->r.p.data(), a);
         dist2 = sqrlen(d);
-        charge_factor = mmm2d_params.delta_mid_top * p1->p.q * pl[j].p.q;
+        charge_factor = mmm2d_params.delta_mid_top * p1->p->q * pl[j].p->q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
         eng += mmm2d_coulomb_pair_energy(charge_factor, d, dist2, sqrt(dist2)) -

@@ -166,7 +166,7 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
     If NPT is compiled in, it returns the energy, which is needed for NPT. */
 inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
                                   double dist2, double dist, double force[3]) {
-  if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.))
+  if ((p1->p->dipm == 0.) || (p2->p->dipm == 0.))
     return 0.;
 
   double coeff, exp_adist2;
@@ -227,18 +227,18 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
 
     // Calculate real-space torques
     for (int j = 0; j < 3; j++) {
-      p1->f.torque[j] +=
+      p1->f->torque[j] +=
           coulomb.Dprefactor * (-mixmj[j] * B_r + mixr[j] * mjr * C_r);
-      p2->f.torque[j] +=
+      p2->f->torque[j] +=
           coulomb.Dprefactor * (mixmj[j] * B_r + mjxr[j] * mir * C_r);
     }
 #endif
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
     double fac1 =
-        coulomb.Dprefactor * p1->p.dipm * p2->p.dipm * exp(-adist * adist);
+        coulomb.Dprefactor * p1->p->dipm * p2->p->dipm * exp(-adist * adist);
 #else
-    double fac1 = coulomb.Dprefactor * p1->p.dipm * p2->p.dipm;
+    double fac1 = coulomb.Dprefactor * p1->p->dipm * p2->p->dipm;
 #endif
     return fac1 * (mimj * B_r - mir * mjr * C_r);
 #endif
@@ -260,11 +260,11 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
 
 #if USE_ERFC_APPROXIMATION
     erfc_part_ri = AS_erfc_part(adist) / dist;
-    /*  fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */ /* *exp(-adist*adist);
+    /*  fac1 = coulomb.Dprefactor * p1->p->dipm*p2->p->dipm; IT WAS WRONG */ /* *exp(-adist*adist);
                                                                             */
 #else
     erfc_part_ri = erfc(adist) / dist;
-/* fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/
+/* fac1 = coulomb.Dprefactor * p1->p->dipm*p2->p->dipm;  IT WAS WRONG*/
 #endif
 
     // Calculate scalar multiplications for vectors mi, mj, rij
@@ -286,7 +286,7 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
 
     /*
       printf("(%4i %4i) pair energy = %f (B_r=%15.12f
-      C_r=%15.12f)\n",p1->p.identity,p2->p.identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
+      C_r=%15.12f)\n",p1->p->identity,p2->p->identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
     */
 
     /* old line return fac1 * ( mimj*B_r - mir*mjr * C_r );*/

@@ -66,18 +66,18 @@ inline void add_thole_pair_force(const Particle *const p1,
     // Add damped p3m shortrange of dipole term
     p3m_add_pair_force(thole_q1q2 * dS_r, d, dist2, dist, force);
 
-    ONEPART_TRACE(if (p1->p.identity == check_id)
+    ONEPART_TRACE(if (p1->p->identity == check_id)
                       fprintf(stderr,
                               "%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) with part "
                               "id=%d at dist %f fac %.3e\n",
-                              this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                              p2->p.identity, dist, thole_s));
-    ONEPART_TRACE(if (p2->p.identity == check_id)
+                              this_node, p1->f->f[0], p1->f->f[1], p1->f->f[2],
+                              p2->p->identity, dist, thole_s));
+    ONEPART_TRACE(if (p2->p->identity == check_id)
                       fprintf(stderr,
                               "%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) with part "
                               "id=%d at dist %f fac %.3e\n",
-                              this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                              p1->p.identity, dist, thole_s));
+                              this_node, p2->f->f[0], p2->f->f[1], p2->f->f[2],
+                              p1->p->identity, dist, thole_s));
   }
 }
 
@@ -93,7 +93,7 @@ inline double thole_pair_energy(const Particle *p1, const Particle *p2,
       !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
 
     double dist2 = dist * dist;
-    double chgfac = p1->p.q * p2->p.q;
+    double chgfac = p1->p->q * p2->p->q;
 
     // Subtract p3m shortrange energy
     e_thole += p3m_pair_energy(-chgfac, dist);

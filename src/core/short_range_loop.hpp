@@ -119,7 +119,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
         first, last,
         /* Create a new functor that first runs the position
            copy and then the actual kernel. */
-        make_batch([](Particle &p) { p.l.p_old = p.r.p; },
+        make_batch([](Particle &p) { p.l->p_old = p.r.p; },
                    std::forward<ParticleKernel>(particle_kernel)),
         std::forward<PairKernel>(pair_kernel),
         VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff,

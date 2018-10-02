@@ -74,18 +74,18 @@ void force_calc_iccp3m();
 inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
                                              double d[3], double dist,
                                              double dist2) {
-  /* IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);*/
+  /* IA_parameters *ia_params = get_ia_param(p1->p->type,p2->p->type);*/
   double force[3] = {0, 0, 0};
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
-                      p1->p.identity, p2->p.identity, dist));
+                      p1->p->identity, p2->p->identity, dist));
 
   /***********************************************/
   /* long range electrostatics                   */
   /***********************************************/
 
   /* real space Coulomb */
-  auto const q1q2 = p1->p.q * p2->p.q;
+  auto const q1q2 = p1->p->q * p2->p->q;
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -114,8 +114,8 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   /* add total nonbonded forces to particle      */
   /***********************************************/
   for (int j = 0; j < 3; j++) {
-    p1->f.f[j] += force[j];
-    p2->f.f[j] -= force[j];
+    p1->f->f[j] += force[j];
+    p2->f->f[j] -= force[j];
   }
   /***********************************************/
 }
@@ -155,14 +155,14 @@ int iccp3m_iteration() {
     double diff = 0;
 
     for (auto &p : local_cells.particles()) {
-      if (p.p.identity < iccp3m_cfg.n_ic + iccp3m_cfg.first_id &&
-          p.p.identity >= iccp3m_cfg.first_id) {
-        auto const id = p.p.identity - iccp3m_cfg.first_id;
+      if (p.p->identity < iccp3m_cfg.n_ic + iccp3m_cfg.first_id &&
+          p.p->identity >= iccp3m_cfg.first_id) {
+        auto const id = p.p->identity - iccp3m_cfg.first_id;
         /* the dielectric-related prefactor: */
         auto const del_eps = (iccp3m_cfg.ein[id] - iccp3m_cfg.eout) /
                              (iccp3m_cfg.ein[id] + iccp3m_cfg.eout);
         /* calculate the electric field at the certain position */
-        auto const E = p.f.f / p.p.q + iccp3m_cfg.ext_field;
+        auto const E = p.f->f / p.p->q + iccp3m_cfg.ext_field;
 
         if (E[0] == 0 && E[1] == 0 && E[2] == 0) {
           runtimeErrorMsg()
@@ -171,7 +171,7 @@ int iccp3m_iteration() {
         }
 
         /* recalculate the old charge density */
-        auto const hold = p.p.q / iccp3m_cfg.areas[id];
+        auto const hold = p.p->q / iccp3m_cfg.areas[id];
         /* determine if it is higher than the previously highest charge
          * density */
         hmax = std::max(hmax, std::abs(hold));
@@ -193,17 +193,17 @@ int iccp3m_iteration() {
 
         diff = std::max(diff, relative_difference);
 
-        p.p.q = hnew * iccp3m_cfg.areas[id];
+        p.p->q = hnew * iccp3m_cfg.areas[id];
 
         /* check if the charge now is more than 1e6, to determine if ICC still
          * leads to reasonable results */
         /* this is kind a arbitrary measure but, does a good job spotting
          * divergence !*/
-        if (std::abs(p.p.q) > 1e6) {
+        if (std::abs(p.p->q) > 1e6) {
           runtimeErrorMsg()
               << "too big charge assignment in iccp3m! q >1e6 , assigned "
                  "charge= "
-              << p.p.q;
+              << p.p->q;
 
           diff = 1e90; /* A very high value is used as error code */
           break;
@@ -248,11 +248,11 @@ void force_calc_iccp3m() {
 
 void init_forces_iccp3m() {
   for (auto &p : local_cells.particles()) {
-    p.f = ParticleForce{};
+    *(p.f) = ParticleForce{};
   }
 
   for (auto &p : ghost_cells.particles()) {
-    p.f = ParticleForce{};
+    *(p.f) = ParticleForce{};
   }
 }
 

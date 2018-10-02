@@ -167,12 +167,12 @@ void nemd_change_momentum() {
     /* perform momentum exchange */
     for (i = 0; i < nemddata.n_exchange; i++) {
       /* store momentum change */
-      nemddata.momentum += local_particles[top_slab->fastest[i]]->m.v[0];
-      nemddata.momentum -= local_particles[mid_slab->fastest[i]]->m.v[0];
-      tmp_v0 = local_particles[mid_slab->fastest[i]]->m.v[0];
-      local_particles[mid_slab->fastest[i]]->m.v[0] =
-          local_particles[top_slab->fastest[i]]->m.v[0];
-      local_particles[top_slab->fastest[i]]->m.v[0] = tmp_v0;
+      nemddata.momentum += local_particles[top_slab->fastest[i]]->m->v[0];
+      nemddata.momentum -= local_particles[mid_slab->fastest[i]]->m->v[0];
+      tmp_v0 = local_particles[mid_slab->fastest[i]]->m->v[0];
+      local_particles[mid_slab->fastest[i]]->m->v[0] =
+          local_particles[top_slab->fastest[i]]->m->v[0];
+      local_particles[top_slab->fastest[i]]->m->v[0] = tmp_v0;
     }
 
     /* prepare next round */

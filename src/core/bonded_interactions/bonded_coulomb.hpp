@@ -59,22 +59,22 @@ inline int calc_bonded_coulomb_pair_force(Particle *p1, Particle *p2,
   double dist = sqrt(dist2);
 
   fac =
-      iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / (dist * dist2);
+      iaparams->p.bonded_coulomb.prefactor * p1->p->q * p2->p->q / (dist * dist2);
 
   for (i = 0; i < 3; i++)
     force[i] = fac * dx[i];
-  ONEPART_TRACE(if (p1->p.identity == check_id)
+  ONEPART_TRACE(if (p1->p->identity == check_id)
                     fprintf(stderr,
                             "%d: OPT: BONDED_COULOMB f = (%.3e,%.3e,%.3e) with "
                             "part id=%d at dist %f fac %.3e\n",
-                            this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                            p2->p.identity, dist2, fac));
-  ONEPART_TRACE(if (p2->p.identity == check_id)
+                            this_node, p1->f->f[0], p1->f->f[1], p1->f->f[2],
+                            p2->p->identity, dist2, fac));
+  ONEPART_TRACE(if (p2->p->identity == check_id)
                     fprintf(stderr,
                             "%d: OPT: BONDED_COULOMB f = (%.3e,%.3e,%.3e) with "
                             "part id=%d at dist %f fac %.3e\n",
-                            this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                            p1->p.identity, dist2, fac));
+                            this_node, p2->f->f[0], p2->f->f[1], p2->f->f[2],
+                            p1->p->identity, dist2, fac));
 
   return 0;
 }
@@ -84,7 +84,7 @@ inline int bonded_coulomb_pair_energy(Particle *p1, Particle *p2,
                                       double dx[3], double *_energy) {
   double dist = sqrt(sqrlen(dx));
 
-  *_energy = iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / dist;
+  *_energy = iaparams->p.bonded_coulomb.prefactor * p1->p->q * p2->p->q / dist;
   return 0;
 }
 

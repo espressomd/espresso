@@ -32,9 +32,9 @@ public:
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ROTATION
-      res[3 * i + 0] = partCfg[ids()[i]].m.omega[0];
-      res[3 * i + 1] = partCfg[ids()[i]].m.omega[1];
-      res[3 * i + 2] = partCfg[ids()[i]].m.omega[2];
+      res[3 * i + 0] = partCfg[ids()[i]].m->omega[0];
+      res[3 * i + 1] = partCfg[ids()[i]].m->omega[1];
+      res[3 * i + 2] = partCfg[ids()[i]].m->omega[2];
 #endif
     }
     return res;

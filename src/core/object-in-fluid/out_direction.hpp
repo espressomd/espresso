@@ -60,9 +60,9 @@ inline int calc_out_direction(
   // first find out which particle out of p1, p2 (possibly p3, p4) is not a
   // ghost particle. In almost all cases it is p2, however, it might be other
   // one. we call this particle reference particle.
-  if (p2->l.ghost != 1) {
+  if (p2->l->ghost != 1) {
     // unfold non-ghost particle using image, because for physical particles,
-    // the structure p->l.i is correctly set
+    // the structure p->l->i is correctly set
     fp2 = unfolded_position(p2);
     // other coordinates are obtained from its relative positions to the
     // reference particle
@@ -76,7 +76,7 @@ inline int calc_out_direction(
     }
   } else {
     // in case  particle p2 is a ghost particle
-    if (p1->l.ghost != 1) {
+    if (p1->l->ghost != 1) {
       fp1 = unfolded_position(p1);
       get_mi_vector(AA, p2->r.p, fp1);
       get_mi_vector(BB, p3->r.p, fp1);
@@ -88,7 +88,7 @@ inline int calc_out_direction(
       }
     } else {
       // in case the first and the second particle are ghost particles
-      if (p3->l.ghost != 1) {
+      if (p3->l->ghost != 1) {
         fp3 = unfolded_position(p3);
         get_mi_vector(AA, p1->r.p, fp3);
         get_mi_vector(BB, p2->r.p, fp3);
@@ -100,7 +100,7 @@ inline int calc_out_direction(
         }
       } else {
         // in case the first and the second particle are ghost particles
-        if (p4->l.ghost != 1) {
+        if (p4->l->ghost != 1) {
           fp4 = unfolded_position(p4);
           get_mi_vector(AA, p1->r.p, fp4);
           get_mi_vector(BB, p2->r.p, fp4);
@@ -126,7 +126,7 @@ inline int calc_out_direction(
     printf("out_direction.hpp, calc_out_direction: Length of outward vector is "
            "close to zero!\n");
   for (j = 0; j < 3; j++) {
-    p1->p.out_direction[j] = n[j] / dn;
+    p1->p->out_direction[j] = n[j] / dn;
   }
   return 0;
 }

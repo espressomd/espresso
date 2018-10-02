@@ -123,7 +123,7 @@ void mpi_who_has_slave(int node, int param) {
 
   auto end = std::transform(local_cells.particles().begin(),
                             local_cells.particles().end(), sendbuf,
-                            [](Particle const &p) { return p.p.identity; });
+                            [](Particle const &p) { return p.p->identity; });
 
   auto npart = std::distance(sendbuf, end);
   MPI_Send(sendbuf, npart, MPI_INT, 0, SOME_TAG, comm_cart);
@@ -146,7 +146,7 @@ void mpi_who_has() {
         fprintf(stderr, "node %d reports %d particles\n", pnode, sizes[pnode]));
     if (pnode == this_node) {
       for (auto const &p : local_cells.particles())
-        particle_node[p.p.identity] = this_node;
+        particle_node[p.p->identity] = this_node;
 
     } else if (sizes[pnode] > 0) {
       if (pdata_s < sizes[pnode]) {
@@ -232,11 +232,19 @@ int realloc_particlelist(ParticleList *l, int size) {
       l->max =
           PART_INCREMENT *
           (((l->max + size + 1) / 2 + PART_INCREMENT - 1) / PART_INCREMENT);
-  } else
+  } else {
     /* round up */
     l->max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
-  if (l->max != old_max)
+  }
+  if (l->max != old_max) {
     l->part = Utils::realloc(l->part, sizeof(Particle) * l->max);
+    if (l->max > old_max) {
+      // zero-out newly allocated space
+      std::memset(
+        (char*) static_cast<void *>(l->part) + old_max * sizeof(Particle),
+        0, (l->max - old_max) * sizeof(Particle));
+    }
+  }
   return l->part != old_start;
 }
 
@@ -244,14 +252,14 @@ void update_local_particles(ParticleList *pl) {
   Particle *p = pl->part;
   int n = pl->n, i;
   for (i = 0; i < n; i++)
-    local_particles[p[i].p.identity] = &p[i];
+    local_particles[p[i].p->identity] = &p[i];
 }
 
 Particle *got_particle(ParticleList *l, int id) {
   int i;
 
   for (i = 0; i < l->n; i++)
-    if (l->part[i].p.identity == id)
+    if (l->part[i].p->identity == id)
       break;
   if (i == l->n)
     return nullptr;
@@ -270,7 +278,7 @@ Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
   if (re)
     update_local_particles(l);
   else
-    local_particles[p->p.identity] = p;
+    local_particles[p->p->identity] = p;
   return p;
 }
 
@@ -300,7 +308,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   if (re) {
     update_local_particles(dl);
   } else {
-    local_particles[dst->p.identity] = dst;
+    local_particles[dst->p->identity] = dst;
   }
   if (src != end) {
     new (src) Particle(std::move(*end));
@@ -308,7 +316,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   if (realloc_particlelist(sl, --sl->n)) {
     update_local_particles(sl);
   } else if (src != end) {
-    local_particles[src->p.identity] = src;
+    local_particles[src->p->identity] = src;
   }
   return dst;
 }
@@ -614,7 +622,7 @@ void get_particle_mu_E(int part, double (&mu_E)[3]) {
   auto const &p = get_particle_data(part);
 
   for (int i = 0; i < 3; i++) {
-    mu_E[i] = p.p.mu_E[i];
+    mu_E[i] = p.p->mu_E[i];
   }
 }
 #endif
@@ -627,7 +635,7 @@ int set_particle_type(int p_id, int type) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
     auto const &cur_par = get_particle_data(p_id);
-    int prev_type = cur_par.p.type;
+    int prev_type = cur_par.p->type;
     if (prev_type != type) {
       // particle existed before so delete it from the list
       remove_id_from_map(p_id, prev_type);
@@ -804,7 +812,7 @@ int remove_particle(int p_id) {
   auto const &cur_par = get_particle_data(p_id);
   if (type_list_enable == true) {
     // remove particle from its current type_list
-    int type = cur_par.p.type;
+    int type = cur_par.p->type;
     remove_id_from_map(p_id, type);
   }
 
@@ -845,17 +853,16 @@ void local_remove_particle(int part) {
     errexit();
   }
 
-  free_particle(p);
-
   /* remove local_particles entry */
-  local_particles[p->p.identity] = nullptr;
+  local_particles[p->p->identity] = nullptr;
+  free_particle(p);
 
   if (&pl->part[pl->n - 1] != p) {
     /* move last particle to free position */
     *p = pl->part[pl->n - 1];
 
     /* update the local_particles array for the moved particle */
-    local_particles[p->p.identity] = p;
+    local_particles[p->p->identity] = p;
   }
   pl->n--;
 }
@@ -889,11 +896,11 @@ void local_place_particle(int part, const double p[3], int _new) {
     rl = realloc_particlelist(cell, ++cell->n);
     pt = new (&cell->part[cell->n - 1]) Particle;
 
-    pt->p.identity = part;
+    pt->p->identity = part;
     if (rl)
       update_local_particles(cell);
     else
-      local_particles[pt->p.identity] = pt;
+      local_particles[pt->p->identity] = pt;
   } else
     pt = local_particles[part];
 
@@ -902,7 +909,7 @@ void local_place_particle(int part, const double p[3], int _new) {
       this_node, part, p[0], p[1], p[2]));
 
   memmove(pt->r.p.data(), pp, 3 * sizeof(double));
-  memmove(pt->l.i.data(), i, 3 * sizeof(int));
+  memmove(pt->l->i.data(), i, 3 * sizeof(int));
 #ifdef BOND_CONSTRAINT
   memmove(pt->r.p_old.data(), pp, 3 * sizeof(double));
 #endif
@@ -1021,7 +1028,7 @@ void remove_all_bonds_to(int identity) {
       fprintf(stderr,
               "%d: INTERNAL ERROR: bond information corrupt for "
               "particle %d, exiting...\n",
-              this_node, p.p.identity);
+              this_node, p.p->identity);
       errexit();
     }
   }
@@ -1081,7 +1088,7 @@ void send_particles(ParticleList *particles, int node) {
 
   /* remove particles from this nodes local list and free data */
   for (int pc = 0; pc < particles->n; pc++) {
-    local_particles[particles->part[pc].p.identity] = nullptr;
+    local_particles[particles->part[pc].p->identity] = nullptr;
     free_particle(&particles->part[pc]);
   }
 
@@ -1137,7 +1144,7 @@ void auto_exclusions(int distance) {
 
   /* determine initial connectivity */
   for (auto const &part1 : partCfg()) {
-    p1 = part1.p.identity;
+    p1 = part1.p->identity;
     for (i = 0; i < part1.bl.n;) {
       ia_params = &bonded_ia_params[part1.bl.e[i++]];
       if (ia_params->num == 1) {
@@ -1201,8 +1208,8 @@ void init_type_map(int type) {
     particle_type_map[type] = std::unordered_set<int>();
 
   for (auto const &p : partCfg()) {
-    if (p.p.type == type)
-      particle_type_map.at(type).insert(p.p.identity);
+    if (p.p->type == type)
+      particle_type_map.at(type).insert(p.p->identity);
   }
 }
 
@@ -1234,11 +1241,11 @@ int number_of_particles_with_type(int type) {
 
 #ifdef ROTATION
 void pointer_to_omega_body(Particle const *p, double const *&res) {
-  res = p->m.omega.data();
+  res = p->m->omega.data();
 }
 
 void pointer_to_torque_lab(Particle const *p, double const *&res) {
-  res = p->f.torque.data();
+  res = p->f->torque.data();
 }
 
 void pointer_to_quat(Particle const *p, double const *&res) {
@@ -1250,24 +1257,24 @@ void pointer_to_quatu(Particle const *p, double const *&res) {
 }
 #endif
 
-void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
+void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p->q); }
 
 #ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, int const *&res) {
-  res = &(p->p.is_virtual);
+  res = &(p->p->is_virtual);
 }
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void pointer_to_vs_quat(Particle const *p, double const *&res) {
-  res = (p->p.vs_quat);
+  res = (p->p->vs_quat);
 }
 
 void pointer_to_vs_relative(Particle const *p, int const *&res1,
                             double const *&res2, double const *&res3) {
-  res1 = &(p->p.vs_relative_to_particle_id);
-  res2 = &(p->p.vs_relative_distance);
-  res3 = (p->p.vs_relative_rel_orientation);
+  res1 = &(p->p->vs_relative_to_particle_id);
+  res2 = &(p->p->vs_relative_distance);
+  res3 = (p->p->vs_relative_rel_orientation);
 }
 #endif
 
@@ -1277,78 +1284,78 @@ void pointer_to_dip(Particle const *p, double const *&res) {
 }
 
 void pointer_to_dipm(Particle const *p, double const *&res) {
-  res = &(p->p.dipm);
+  res = &(p->p->dipm);
 }
 #endif
 
 #ifdef EXTERNAL_FORCES
 void pointer_to_ext_force(Particle const *p, int const *&res1,
                           double const *&res2) {
-  res1 = &(p->p.ext_flag);
-  res2 = p->p.ext_force.data();
+  res1 = &(p->p->ext_flag);
+  res2 = p->p->ext_force.data();
 }
 #ifdef ROTATION
 void pointer_to_ext_torque(Particle const *p, int const *&res1,
                            double const *&res2) {
-  res1 = &(p->p.ext_flag);
-  res2 = p->p.ext_torque.data();
+  res1 = &(p->p->ext_flag);
+  res2 = p->p->ext_torque.data();
 }
 #endif
 void pointer_to_fix(Particle const *p, int const *&res) {
-  res = &(p->p.ext_flag);
+  res = &(p->p->ext_flag);
 }
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
 void pointer_to_gamma(Particle const *p, double const *&res) {
 #ifndef PARTICLE_ANISOTROPY
-  res = &(p->p.gamma);
+  res = &(p->p->gamma);
 #else
-  res = p->p.gamma.data(); // array [3]
+  res = p->p->gamma.data(); // array [3]
 #endif // PARTICLE_ANISTROPY
 }
 
 #ifdef ROTATION
 void pointer_to_gamma_rot(Particle const *p, double const *&res) {
 #ifndef PARTICLE_ANISOTROPY
-  res = &(p->p.gamma_rot);
+  res = &(p->p->gamma_rot);
 #else
-  res = p->p.gamma_rot.data(); // array [3]
+  res = p->p->gamma_rot.data(); // array [3]
 #endif // ROTATIONAL_INERTIA
 }
 #endif // ROTATION
 
 void pointer_to_temperature(Particle const *p, double const *&res) {
-  res = &(p->p.T);
+  res = &(p->p->T);
 }
 #endif // LANGEVIN_PER_PARTICLE
 
 void pointer_to_rotation(Particle const *p, short int const *&res) {
-  res = &(p->p.rotation);
+  res = &(p->p->rotation);
 }
 
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,
                          ParticleParametersSwimming const *&swim) {
-  swim = &(p->swim);
+  swim = p->swim;
 }
 #endif
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
-  res = p->p.rinertia.data();
+  res = p->p->rinertia.data();
 }
 #endif
 
 #ifdef AFFINITY
 void pointer_to_bond_site(Particle const *p, double const *&res) {
-  res = p->p.bond_site.data();
+  res = p->p->bond_site.data();
 }
 #endif
 
 #ifdef MEMBRANE_COLLISION
 void pointer_to_out_direction(const Particle *p, const double *&res) {
-  res = p->p.out_direction.data();
+  res = p->p->out_direction.data();
 }
 #endif
 

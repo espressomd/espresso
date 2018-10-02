@@ -110,7 +110,7 @@ void meta_perform() {
   Particle *p1 = nullptr, *p2 = nullptr;
 
   for (auto &p : local_cells.particles()) {
-    if (p.p.identity == meta_pid1) {
+    if (p.p->identity == meta_pid1) {
       flag1 = 1;
       p1 = &p;
       ppos1 = unfolded_position(p);
@@ -121,7 +121,7 @@ void meta_perform() {
         break;
       }
     }
-    if (p.p.identity == meta_pid2) {
+    if (p.p->identity == meta_pid2) {
       flag2 = 1;
       p2 = &p;
       ppos2 = unfolded_position(p);
@@ -201,8 +201,8 @@ void meta_perform() {
 
   /* cancel previous force to external force of particle */
   for (int i = 0; i < 3; ++i) {
-    p1->f.f[i] += factor * meta_apply_direction[i];
-    p2->f.f[i] += -1. * factor * meta_apply_direction[i];
+    p1->f->f[i] += factor * meta_apply_direction[i];
+    p2->f->f[i] += -1. * factor * meta_apply_direction[i];
   }
 }
 

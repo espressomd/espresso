@@ -63,11 +63,11 @@ static void pack_particles(ParticleRange particles,
     buffer[i].p[2] = static_cast<float>(pos[2]);
 
 #ifdef LB_GPU
-    buffer[i].v[0] = static_cast<float>(part.m.v[0]);
-    buffer[i].v[1] = static_cast<float>(part.m.v[1]);
-    buffer[i].v[2] = static_cast<float>(part.m.v[2]);
+    buffer[i].v[0] = static_cast<float>(part.m->v[0]);
+    buffer[i].v[1] = static_cast<float>(part.m->v[1]);
+    buffer[i].v[2] = static_cast<float>(part.m->v[2]);
 #ifdef VIRTUAL_SITES
-    buffer[i].is_virtual = part.p.is_virtual;
+    buffer[i].is_virtual = part.p->is_virtual;
 
 #endif
 #endif
@@ -81,22 +81,22 @@ static void pack_particles(ParticleRange particles,
 #ifdef SHANCHEN
     // SAW TODO: does this really need to be copied every time?
     for (int ii = 0; ii < 2 * LB_COMPONENTS; ii++) {
-      buffer[i].solvation[ii] = static_cast<float>(part.p.solvation[ii]);
+      buffer[i].solvation[ii] = static_cast<float>(part.p->solvation[ii]);
     }
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-    buffer[i].mu_E[0] = static_cast<float>(part.p.mu_E[0]);
-    buffer[i].mu_E[1] = static_cast<float>(part.p.mu_E[1]);
-    buffer[i].mu_E[2] = static_cast<float>(part.p.mu_E[2]);
+    buffer[i].mu_E[0] = static_cast<float>(part.p->mu_E[0]);
+    buffer[i].mu_E[1] = static_cast<float>(part.p->mu_E[1]);
+    buffer[i].mu_E[2] = static_cast<float>(part.p->mu_E[2]);
 #endif
 
 #ifdef ELECTROSTATICS
-    buffer[i].q = static_cast<float>(part.p.q);
+    buffer[i].q = static_cast<float>(part.p->q);
 #endif
 
 #ifdef MASS
-    buffer[i].mass = static_cast<float>(part.p.mass);
+    buffer[i].mass = static_cast<float>(part.p->mass);
 #endif
 
 #ifdef ROTATION
@@ -106,16 +106,16 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef ENGINE
-    buffer[i].swim.v_swim = static_cast<float>(part.swim.v_swim);
-    buffer[i].swim.f_swim = static_cast<float>(part.swim.f_swim);
+    buffer[i].swim.v_swim = static_cast<float>(part.swim->v_swim);
+    buffer[i].swim.f_swim = static_cast<float>(part.swim->f_swim);
     buffer[i].swim.quatu[0] = static_cast<float>(part.r.quatu[0]);
     buffer[i].swim.quatu[1] = static_cast<float>(part.r.quatu[1]);
     buffer[i].swim.quatu[2] = static_cast<float>(part.r.quatu[2]);
 #if defined(LB) || defined(LB_GPU)
-    buffer[i].swim.push_pull = part.swim.push_pull;
-    buffer[i].swim.dipole_length = static_cast<float>(part.swim.dipole_length);
+    buffer[i].swim.push_pull = part.swim->push_pull;
+    buffer[i].swim.dipole_length = static_cast<float>(part.swim->dipole_length);
 #endif
-    buffer[i].swim.swimming = part.swim.swimming;
+    buffer[i].swim.swimming = part.swim->swimming;
 #endif
     i++;
   }
@@ -157,9 +157,9 @@ static void add_forces_and_torques(ParticleRange particles, float *forces,
   int i = 0;
   for (auto &part : particles) {
     for (int j = 0; j < 3; j++) {
-      part.f.f[j] += forces[3 * i + j];
+      part.f->f[j] += forces[3 * i + j];
 #ifdef ROTATION
-      part.f.torque[j] += torques[3 * i + j];
+      part.f->torque[j] += torques[3 * i + j];
 #endif
     }
     i++;
@@ -231,8 +231,8 @@ namespace {
 void set_v_cs(ParticleRange particles, CUDA_v_cs *v_cs) {
   for (auto &p : particles) {
     for (int i = 0; i < 3; i++) {
-      p.swim.v_center[i] = v_cs->v_cs[0 + i];
-      p.swim.v_source[i] = v_cs->v_cs[3 + i];
+      p.swim->v_center[i] = v_cs->v_cs[0 + i];
+      p.swim->v_source[i] = v_cs->v_cs[3 + i];
     }
     v_cs++;
   }

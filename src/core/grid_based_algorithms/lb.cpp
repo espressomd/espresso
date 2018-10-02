@@ -2615,31 +2615,31 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
    * take care to rescale velocities with time_step and transform to MD units
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   double velocity[3];
-  velocity[0] = p->m.v[0];
-  velocity[1] = p->m.v[1];
-  velocity[2] = p->m.v[2];
+  velocity[0] = p->m->v[0];
+  velocity[1] = p->m->v[1];
+  velocity[2] = p->m->v[2];
 
   Vector3d v_drift = {interpolated_u[0], interpolated_u[1], interpolated_u[2]};
 #ifdef ENGINE
-  if (p->swim.swimming) {
-    v_drift += p->swim.v_swim * p->r.quatu;
-    p->swim.v_center[0] = interpolated_u[0];
-    p->swim.v_center[1] = interpolated_u[1];
-    p->swim.v_center[2] = interpolated_u[2];
+  if (p->swim->swimming) {
+    v_drift += p->swim->v_swim * p->r.quatu;
+    p->swim->v_center[0] = interpolated_u[0];
+    p->swim->v_center[1] = interpolated_u[1];
+    p->swim->v_center[2] = interpolated_u[2];
   }
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  v_drift += p->p.mu_E;
+  v_drift += p->p->mu_E;
 #endif
 
   force[0] = -lbpar.friction * (velocity[0] - v_drift[0]);
   force[1] = -lbpar.friction * (velocity[1] - v_drift[1]);
   force[2] = -lbpar.friction * (velocity[2] - v_drift[2]);
 
-  force[0] = force[0] + p->lc.f_random[0];
-  force[1] = force[1] + p->lc.f_random[1];
-  force[2] = force[2] + p->lc.f_random[2];
+  force[0] = force[0] + p->lc->f_random[0];
+  force[1] = force[1] + p->lc->f_random[1];
+  force[2] = force[2] + p->lc->f_random[2];
 
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
@@ -2659,7 +2659,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   // map_position_to_lattice: position ... not inside a local plaquette in ...
 
 #ifdef ENGINE
-  if (p->swim.swimming) {
+  if (p->swim->swimming) {
     // TODO: Fix LB mapping
     if (n_nodes > 1) {
       if (this_node == 0) {
@@ -2672,7 +2672,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 
     // calculate source position
     Vector3d source_position;
-    double direction = double(p->swim.push_pull) * p->swim.dipole_length;
+    double direction = double(p->swim->push_pull) * p->swim->dipole_length;
     source_position[0] = p->r.p[0] + direction * p->r.quatu[0];
     source_position[1] = p->r.p[1] + direction * p->r.quatu[1];
     source_position[2] = p->r.p[2] + direction * p->r.quatu[2];
@@ -2681,15 +2681,15 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     fold_position(source_position, corner);
 
     lb_lbfluid_get_interpolated_velocity(Vector3d(source_position),
-                                         p->swim.v_source.data());
+                                         p->swim->v_source.data());
 
     // calculate and set force at source position
     delta_j[0] =
-        -p->swim.f_swim * p->r.quatu[0] * time_step * lbpar.tau / lbpar.agrid;
+        -p->swim->f_swim * p->r.quatu[0] * time_step * lbpar.tau / lbpar.agrid;
     delta_j[1] =
-        -p->swim.f_swim * p->r.quatu[1] * time_step * lbpar.tau / lbpar.agrid;
+        -p->swim->f_swim * p->r.quatu[1] * time_step * lbpar.tau / lbpar.agrid;
     delta_j[2] =
-        -p->swim.f_swim * p->r.quatu[2] * time_step * lbpar.tau / lbpar.agrid;
+        -p->swim->f_swim * p->r.quatu[2] * time_step * lbpar.tau / lbpar.agrid;
 
     lattice_interpolation(lblattice, source_position,
                           [&delta_j](Lattice::index_t index, double w) {
@@ -2797,19 +2797,19 @@ void calc_particle_lattice_ia() {
     for (auto &p : local_cells.particles()) {
       if (lb_coupl_pref2 > 0.0) {
 #ifdef GAUSSRANDOM
-        p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random();
-        p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random();
-        p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random();
+        p.lc->f_random[0] = lb_coupl_pref2 * gaussian_random();
+        p.lc->f_random[1] = lb_coupl_pref2 * gaussian_random();
+        p.lc->f_random[2] = lb_coupl_pref2 * gaussian_random();
 #elif defined(GAUSSRANDOMCUT)
-        p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random_cut();
-        p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random_cut();
-        p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random_cut();
+        p.lc->f_random[0] = lb_coupl_pref2 * gaussian_random_cut();
+        p.lc->f_random[1] = lb_coupl_pref2 * gaussian_random_cut();
+        p.lc->f_random[2] = lb_coupl_pref2 * gaussian_random_cut();
 #elif defined(FLATNOISE)
-        p.lc.f_random[0] = lb_coupl_pref * (d_random() - 0.5);
-        p.lc.f_random[1] = lb_coupl_pref * (d_random() - 0.5);
-        p.lc.f_random[2] = lb_coupl_pref * (d_random() - 0.5);
+        p.lc->f_random[0] = lb_coupl_pref * (d_random() - 0.5);
+        p.lc->f_random[1] = lb_coupl_pref * (d_random() - 0.5);
+        p.lc->f_random[2] = lb_coupl_pref * (d_random() - 0.5);
       } else {
-        p.lc.f_random = {0.0, 0.0, 0.0};
+        p.lc->f_random = {0.0, 0.0, 0.0};
       }
 #else // GAUSSRANDOM
 #error No noise type defined for the CPU LB
@@ -2831,17 +2831,17 @@ void calc_particle_lattice_ia() {
 
       /* local cells */
       for (auto &p : local_cells.particles()) {
-        if (!p.p.is_virtual || thermo_virtual) {
+        if (!p.p->is_virtual || thermo_virtual) {
           lb_viscous_coupling(&p, force);
 
           /* add force to the particle */
-          p.f.f[0] += force[0];
-          p.f.f[1] += force[1];
-          p.f.f[2] += force[2];
+          p.f->f[0] += force[0];
+          p.f->f[1] += force[1];
+          p.f->f[2] += force[2];
 
-          ONEPART_TRACE(if (p.p.identity == check_id) {
+          ONEPART_TRACE(if (p.p->identity == check_id) {
             fprintf(stderr, "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n", this_node,
-                    p.f.f[0], p.f.f[1], p.f.f[2]);
+                    p.f->f[0], p.f->f[1], p.f->f[2]);
           });
         }
       }
@@ -2856,18 +2856,18 @@ void calc_particle_lattice_ia() {
             p.r.p[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
             p.r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
             p.r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
-          ONEPART_TRACE(if (p.p.identity == check_id) {
+          ONEPART_TRACE(if (p.p->identity == check_id) {
             fprintf(stderr, "%d: OPT: LB coupling of ghost particle:\n",
                     this_node);
           });
-          if (!p.p.is_virtual || thermo_virtual) {
+          if (!p.p->is_virtual || thermo_virtual) {
             lb_viscous_coupling(&p, force);
           }
 
           /* ghosts must not have the force added! */
-          ONEPART_TRACE(if (p.p.identity == check_id) {
+          ONEPART_TRACE(if (p.p->identity == check_id) {
             fprintf(stderr, "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n", this_node,
-                    p.f.f[0], p.f.f[1], p.f.f[2]);
+                    p.f->f[0], p.f->f[1], p.f->f[2]);
           });
         }
       }

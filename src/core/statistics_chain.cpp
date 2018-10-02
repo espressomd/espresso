@@ -44,7 +44,7 @@ int chain_length = 0;
 
 void update_mol_ids_setchains() {
   for (auto &p : local_cells.particles()) {
-    p.p.mol_id = floor((p.p.identity - chain_start) / (double)chain_length);
+    p.p->mol_id = floor((p.p->identity - chain_start) / (double)chain_length);
   }
 }
 
@@ -118,10 +118,10 @@ void calc_rg(PartCfg &partCfg, double **_rg) {
     IdoubMPC = 1. / (double)chain_length;
     for (j = 0; j < chain_length; j++) {
       p = chain_start + i * chain_length + j;
-      r_CM_x += partCfg[p].r.p[0] * (partCfg[p]).p.mass;
-      r_CM_y += partCfg[p].r.p[1] * (partCfg[p]).p.mass;
-      r_CM_z += partCfg[p].r.p[2] * (partCfg[p]).p.mass;
-      M += (partCfg[p]).p.mass;
+      r_CM_x += partCfg[p].r.p[0] * (partCfg[p]).p->mass;
+      r_CM_y += partCfg[p].r.p[1] * (partCfg[p]).p->mass;
+      r_CM_z += partCfg[p].r.p[2] * (partCfg[p]).p->mass;
+      M += (partCfg[p]).p->mass;
     }
     r_CM_x /= M;
     r_CM_y /= M;
@@ -161,10 +161,10 @@ void calc_rg_av(PartCfg &partCfg, double **_rg) {
       r_CM_x = r_CM_y = r_CM_z = 0.0;
       for (j = 0; j < chain_length; j++) {
         p = chain_start + i * chain_length + j;
-        r_CM_x += configs[k][3 * p] * (partCfg[p]).p.mass;
-        r_CM_y += configs[k][3 * p + 1] * (partCfg[p]).p.mass;
-        r_CM_z += configs[k][3 * p + 2] * (partCfg[p]).p.mass;
-        M += (partCfg[p]).p.mass;
+        r_CM_x += configs[k][3 * p] * (partCfg[p]).p->mass;
+        r_CM_y += configs[k][3 * p + 1] * (partCfg[p]).p->mass;
+        r_CM_z += configs[k][3 * p + 2] * (partCfg[p]).p->mass;
+        M += (partCfg[p]).p->mass;
       }
       r_CM_x /= M;
       r_CM_y /= M;
@@ -434,12 +434,12 @@ void init_g123(PartCfg &partCfg) {
     for (i = 0; i < chain_length; i++) {
       p = chain_start + j * chain_length + i;
       partCoord_g[3 * p] = partCfg[p].r.p[0];
-      cm_tmp[0] += partCfg[p].r.p[0] * (partCfg[p]).p.mass;
+      cm_tmp[0] += partCfg[p].r.p[0] * (partCfg[p]).p->mass;
       partCoord_g[3 * p + 1] = partCfg[p].r.p[1];
-      cm_tmp[1] += partCfg[p].r.p[1] * (partCfg[p]).p.mass;
+      cm_tmp[1] += partCfg[p].r.p[1] * (partCfg[p]).p->mass;
       partCoord_g[3 * p + 2] = partCfg[p].r.p[2];
-      cm_tmp[2] += partCfg[p].r.p[2] * (partCfg[p]).p.mass;
-      M += (partCfg[p]).p.mass;
+      cm_tmp[2] += partCfg[p].r.p[2] * (partCfg[p]).p->mass;
+      M += (partCfg[p]).p->mass;
     }
     partCM_g[3 * j] = cm_tmp[0] / M;
     partCM_g[3 * j + 1] = cm_tmp[1] / M;
@@ -460,10 +460,10 @@ void calc_g123(PartCfg &partCfg, double *_g1, double *_g2, double *_g3) {
     M = 0.0;
     for (i = 0; i < chain_length; i++) {
       p = chain_start + j * chain_length + i;
-      cm_tmp[0] += partCfg[p].r.p[0] * (partCfg[p]).p.mass;
-      cm_tmp[1] += partCfg[p].r.p[1] * (partCfg[p]).p.mass;
-      cm_tmp[2] += partCfg[p].r.p[2] * (partCfg[p]).p.mass;
-      M += (partCfg[p]).p.mass;
+      cm_tmp[0] += partCfg[p].r.p[0] * (partCfg[p]).p->mass;
+      cm_tmp[1] += partCfg[p].r.p[1] * (partCfg[p]).p->mass;
+      cm_tmp[2] += partCfg[p].r.p[2] * (partCfg[p]).p->mass;
+      M += (partCfg[p]).p->mass;
     }
     cm_tmp[0] /= M;
     cm_tmp[1] /= M;
@@ -530,12 +530,12 @@ void calc_g2_av(PartCfg &partCfg, double **_g2, int window, double weights[3]) {
         for (i = 0; i < chain_length; i++) {
           p = chain_start + j * chain_length + i;
           cm_tmp[0] +=
-              (configs[t + k][3 * p] - configs[t][3 * p]) * (partCfg[p]).p.mass;
+              (configs[t + k][3 * p] - configs[t][3 * p]) * (partCfg[p]).p->mass;
           cm_tmp[1] += (configs[t + k][3 * p + 1] - configs[t][3 * p + 1]) *
-                       (partCfg[p]).p.mass;
+                       (partCfg[p]).p->mass;
           cm_tmp[2] += (configs[t + k][3 * p + 2] - configs[t][3 * p + 2]) *
-                       (partCfg[p]).p.mass;
-          M += (partCfg[p]).p.mass;
+                       (partCfg[p]).p->mass;
+          M += (partCfg[p]).p->mass;
         }
         cm_tmp[0] /= M;
         cm_tmp[1] /= M;
@@ -574,12 +574,12 @@ void calc_g3_av(PartCfg &partCfg, double **_g3, int window, double weights[3]) {
         for (i = 0; i < chain_length; i++) {
           p = chain_start + j * chain_length + i;
           cm_tmp[0] +=
-              (configs[t + k][3 * p] - configs[t][3 * p]) * (partCfg[p]).p.mass;
+              (configs[t + k][3 * p] - configs[t][3 * p]) * (partCfg[p]).p->mass;
           cm_tmp[1] += (configs[t + k][3 * p + 1] - configs[t][3 * p + 1]) *
-                       (partCfg[p]).p.mass;
+                       (partCfg[p]).p->mass;
           cm_tmp[2] += (configs[t + k][3 * p + 2] - configs[t][3 * p + 2]) *
-                       (partCfg[p]).p.mass;
-          M += (partCfg[p]).p.mass;
+                       (partCfg[p]).p->mass;
+          M += (partCfg[p]).p->mass;
         }
         g3[k] += (weights[0] * Utils::sqr(cm_tmp[0]) +
                   weights[1] * Utils::sqr(cm_tmp[1]) +

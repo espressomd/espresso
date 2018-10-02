@@ -60,7 +60,7 @@ int mindist3(PartCfg &partCfg, int part_id, double r_catch, int *ids) {
   for (auto const &p : partCfg) {
     if (p != part) {
       if (get_mi_vector(part.r.p, p.r.p).norm2() < r_catch2)
-        ids[caught++] = p.p.identity;
+        ids[caught++] = p.p->identity;
     }
   }
 

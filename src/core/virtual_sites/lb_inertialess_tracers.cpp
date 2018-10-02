@@ -75,7 +75,7 @@ void IBM_ForcesIntoFluid_CPU() {
     const int np = cell->n;
 
     for (int i = 0; i < np; i++)
-      if (p[i].p.is_virtual)
+      if (p[i].p->is_virtual)
         CoupleIBMParticleToFluid(&p[i]);
   }
 
@@ -95,7 +95,7 @@ void IBM_ForcesIntoFluid_CPU() {
           p[i].r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
           p[i].r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
 
-        if (p[i].p.is_virtual)
+        if (p[i].p->is_virtual)
           CoupleIBMParticleToFluid(&p[i]);
       }
     }
@@ -143,24 +143,24 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
     const Cell *const cell = local_cells.cell[c];
     Particle *const p = cell->part;
     for (int j = 0; j < cell->n; j++)
-      if (p[j].p.is_virtual) {
+      if (p[j].p->is_virtual) {
 #ifdef EXTERNAL_FORCES
-        if (!(p[j].p.ext_flag & 2))
+        if (!(p[j].p->ext_flag & 2))
 #endif
-          p[j].r.p[0] = p[j].r.p[0] + p[j].m.v[0] * time_step;
+          p[j].r.p[0] = p[j].r.p[0] + p[j].m->v[0] * time_step;
 #ifdef EXTERNAL_FORCES
-        if (!(p[j].p.ext_flag & 4))
+        if (!(p[j].p->ext_flag & 4))
 #endif
-          p[j].r.p[1] = p[j].r.p[1] + p[j].m.v[1] * time_step;
+          p[j].r.p[1] = p[j].r.p[1] + p[j].m->v[1] * time_step;
 #ifdef EXTERNAL_FORCES
-        if (!(p[j].p.ext_flag & 8))
+        if (!(p[j].p->ext_flag & 8))
 #endif
-          p[j].r.p[2] = p[j].r.p[2] + p[j].m.v[2] * time_step;
+          p[j].r.p[2] = p[j].r.p[2] + p[j].m->v[2] * time_step;
 
         // Check if the particle might have crossed a box border (criterion see
         // e-mail Axel 28.8.2014)
         // if possible resort_particles = 1
-        const double dist2 = distance2(p[j].r.p, p[j].l.p_old);
+        const double dist2 = distance2(p[j].r.p, p[j].l->p_old);
         if (dist2 > skin2) {
           set_resort_particles(Cells::RESORT_LOCAL);
         }
@@ -181,9 +181,9 @@ CPU
 void CoupleIBMParticleToFluid(Particle *p) {
   // Convert units from MD to LB
   double delta_j[3];
-  delta_j[0] = p->f.f[0] * lbpar.tau * lbpar.tau / lbpar.agrid;
-  delta_j[1] = p->f.f[1] * lbpar.tau * lbpar.tau / lbpar.agrid;
-  delta_j[2] = p->f.f[2] * lbpar.tau * lbpar.tau / lbpar.agrid;
+  delta_j[0] = p->f->f[0] * lbpar.tau * lbpar.tau / lbpar.agrid;
+  delta_j[1] = p->f->f[1] * lbpar.tau * lbpar.tau / lbpar.agrid;
+  delta_j[2] = p->f->f[2] * lbpar.tau * lbpar.tau / lbpar.agrid;
 
   // Get indices and weights of affected nodes using discrete delta function
   Lattice::index_t node_index[8];
@@ -388,11 +388,11 @@ void ParticleVelocitiesFromLB_CPU() {
     const Cell *const cell = local_cells.cell[c];
     Particle *const p = cell->part;
     for (int j = 0; j < cell->n; j++)
-      if (p[j].p.is_virtual) {
+      if (p[j].p->is_virtual) {
         double dummy[3];
         // Get interpolated velocity and store in the force (!) field
         // for later communication (see below)
-        GetIBMInterpolatedVelocity(p[j].r.p.data(), p[j].f.f.data(), dummy);
+        GetIBMInterpolatedVelocity(p[j].r.p.data(), p[j].f->f.data(), dummy);
       }
   }
 
@@ -411,7 +411,7 @@ void ParticleVelocitiesFromLB_CPU() {
           p[j].r.p[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
           p[j].r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
           p[j].r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
-        if (p[j].p.is_virtual) {
+        if (p[j].p->is_virtual) {
           double dummy[3];
           double force[3] = {0, 0,
                              0}; // The force stemming from the ghost particle
@@ -419,16 +419,16 @@ void ParticleVelocitiesFromLB_CPU() {
 
           // Rescale and store in the force field of the particle (for
           // communication, see below)
-          p[j].f.f[0] = force[0] * lbpar.agrid / lbpar.tau;
-          p[j].f.f[1] = force[1] * lbpar.agrid / lbpar.tau;
-          p[j].f.f[2] = force[2] * lbpar.agrid / lbpar.tau;
+          p[j].f->f[0] = force[0] * lbpar.agrid / lbpar.tau;
+          p[j].f->f[1] = force[1] * lbpar.agrid / lbpar.tau;
+          p[j].f->f[2] = force[2] * lbpar.agrid / lbpar.tau;
         } else {
-          p[j].f.f[0] = p[j].f.f[1] = p[j].f.f[2] = 0;
+          p[j].f->f[0] = p[j].f->f[1] = p[j].f->f[2] = 0;
         } // Reset, necessary because we add all forces below. Also needs to be
           // done for the real particles!
 
       } else {
-        p[j].f.f[0] = p[j].f.f[1] = p[j].f.f[2] = 0;
+        p[j].f->f[0] = p[j].f->f[1] = p[j].f->f[2] = 0;
       } // Reset, necessary because we add all forces below
   }
 
@@ -449,10 +449,10 @@ void ParticleVelocitiesFromLB_CPU() {
     const Cell *const cell = local_cells.cell[c];
     Particle *const p = cell->part;
     for (int j = 0; j < cell->n; j++)
-      if (p[j].p.is_virtual) {
-        p[j].m.v[0] = p[j].f.f[0];
-        p[j].m.v[1] = p[j].f.f[1];
-        p[j].m.v[2] = p[j].f.f[2];
+      if (p[j].p->is_virtual) {
+        p[j].m->v[0] = p[j].f->f[0];
+        p[j].m->v[1] = p[j].f->f[1];
+        p[j].m->v[2] = p[j].f->f[2];
       }
   }
 }

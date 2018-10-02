@@ -87,15 +87,15 @@ void momentum_flip();
 
 void save_last_state() {
   for (auto &p : local_cells.particles()) {
-    memmove(&p.l.r_ls, &p.r, sizeof(ParticlePosition));
-    memmove(&p.l.m_ls, &p.m, sizeof(ParticleMomentum));
+    memmove(&p.l->r_ls, &p.r, sizeof(ParticlePosition));
+    memmove(&p.l->m_ls, p.m, sizeof(ParticleMomentum));
   }
 }
 
 void load_last_state() {
   for (auto &p : local_cells.particles()) {
-    memmove(&p.r, &p.l.r_ls, sizeof(ParticlePosition));
-    memmove(&p.m, &p.l.m_ls, sizeof(ParticleMomentum));
+    memmove(&p.r, &p.l->r_ls, sizeof(ParticlePosition));
+    memmove(p.m, &p.l->m_ls, sizeof(ParticleMomentum));
   }
 }
 
@@ -144,9 +144,9 @@ double calc_local_temp() {
 
   for (auto &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++) {
-      temp += p.p.mass * Utils::sqr(p.m.v[j] / time_step);
+      temp += p.p->mass * Utils::sqr(p.m->v[j] / time_step);
 #ifdef ROTATION
-      temp += Utils::sqr(p.m.omega[j]);
+      temp += Utils::sqr(p.m->omega[j]);
 #endif
     }
   }
@@ -163,19 +163,19 @@ void calc_kinetic(double *ek_trans, double *ek_rot) {
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (p.p.is_virtual)
+    if (p.p->is_virtual)
       continue;
 #endif
 
     /* kinetic energy */
-    et += (Utils::sqr(p.m.v[0]) + Utils::sqr(p.m.v[1]) + Utils::sqr(p.m.v[2])) *
-          (p).p.mass;
+    et += (Utils::sqr(p.m->v[0]) + Utils::sqr(p.m->v[1]) + Utils::sqr(p.m->v[2])) *
+          (p).p->mass;
 
 /* rotational energy */
 #ifdef ROTATION
-    er += Utils::sqr(p.m.omega[0]) * p.p.rinertia[0] +
-          Utils::sqr(p.m.omega[1]) * p.p.rinertia[1] +
-          Utils::sqr(p.m.omega[2]) * p.p.rinertia[2];
+    er += Utils::sqr(p.m->omega[0]) * p.p->rinertia[0] +
+          Utils::sqr(p.m->omega[1]) * p.p->rinertia[1] +
+          Utils::sqr(p.m->omega[2]) * p.p->rinertia[2];
 #endif
   }
 
@@ -228,23 +228,23 @@ void tscale_momentum_update() {
 
   for (auto &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++) {
-      p.m.v[j] *= scalet;
+      p.m->v[j] *= scalet;
 #ifdef ROTATION
-      p.m.omega[j] *= scaler;
+      p.m->omega[j] *= scaler;
 #endif
     }
   }
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (p.p.is_virtual)
+    if (p.p->is_virtual)
       continue;
 #endif
 
     for (int j = 0; j < 3; j++) {
-      p.m.v[j] = cosp * (p.l.m_ls.v[j]) + sinp * (p.m.v[j]);
+      p.m->v[j] = cosp * (p.l->m_ls.v[j]) + sinp * (p.m->v[j]);
 #ifdef ROTATION
-      p.m.omega[j] = cosp * (p.l.m_ls.omega[j]) + sinp * (p.m.omega[j]);
+      p.m->omega[j] = cosp * (p.l->m_ls.omega[j]) + sinp * (p.m->omega[j]);
 #endif
     }
   }
@@ -259,23 +259,23 @@ void simple_momentum_update() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (p.p.is_virtual)
+    if (p.p->is_virtual)
       continue;
 #endif
 
 #ifdef MASS
-    sigmat = sqrt(temperature / (p).p.mass);
+    sigmat = sqrt(temperature / (p).p->mass);
 #endif
     for (int j = 0; j < 3; j++) {
       if (sigmat > 0.0) {
-        p.m.v[j] = sigmat * gaussian_random() * time_step;
+        p.m->v[j] = sigmat * gaussian_random() * time_step;
       }
 #ifdef ROTATION
 #ifdef ROTATIONAL_INERTIA
-      sigmar = sqrt(temperature / p.p.rinertia[j]);
+      sigmar = sqrt(temperature / p.p->rinertia[j]);
 #endif
       if (sigmar > 0.0) {
-        p.m.omega[j] = sigmar * gaussian_random();
+        p.m->omega[j] = sigmar * gaussian_random();
       }
 #endif
     }
@@ -291,24 +291,24 @@ void partial_momentum_update() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef MASS
-    sigmat = sqrt(temperature / (p).p.mass);
+    sigmat = sqrt(temperature / (p).p->mass);
 #endif
     for (int j = 0; j < 3; j++) {
       if (sigmat > 0.0) {
-        p.m.v[j] =
-            cosp * (p.m.v[j]) + sinp * (sigmat * gaussian_random() * time_step);
+        p.m->v[j] =
+            cosp * (p.m->v[j]) + sinp * (sigmat * gaussian_random() * time_step);
       } else {
-        p.m.v[j] = cosp * p.m.v[j];
+        p.m->v[j] = cosp * p.m->v[j];
       }
 #ifdef ROTATION
 #ifdef ROTATIONAL_INERTIA
-      sigmar = sqrt(temperature / p.p.rinertia[j]);
+      sigmar = sqrt(temperature / p.p->rinertia[j]);
 #endif
       if (sigmar > 0.0) {
-        p.m.omega[j] =
-            cosp * (p.m.omega[j]) + sinp * (sigmar * gaussian_random());
+        p.m->omega[j] =
+            cosp * (p.m->omega[j]) + sinp * (sigmar * gaussian_random());
       } else {
-        p.m.omega[j] = cosp * p.m.omega[j];
+        p.m->omega[j] = cosp * p.m->omega[j];
       }
 #endif
     }
@@ -321,9 +321,9 @@ void momentum_flip() {
 
   for (auto &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++) {
-      p.m.v[j] = -(p.m.v[j]);
+      p.m->v[j] = -(p.m->v[j]);
 #ifdef ROTATION
-      p.m.omega[j] = -(p.m.omega[j]);
+      p.m->omega[j] = -(p.m->omega[j]);
 #endif
     }
   }

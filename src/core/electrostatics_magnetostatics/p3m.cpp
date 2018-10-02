@@ -552,8 +552,8 @@ template <int cao> void p3m_do_charge_assign() {
     p3m.rs_mesh[i] = 0.0;
 
   for (auto &p : local_cells.particles()) {
-    if (p.p.q != 0.0) {
-      p3m_do_assign_charge<cao>(p.p.q, p.r.p, cp_cnt);
+    if (p.p->q != 0.0) {
+      p3m_do_assign_charge<cao>(p.p->q, p.r.p, cp_cnt);
       cp_cnt++;
     }
   }
@@ -713,14 +713,14 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
   int q_ind = 0;
 
   for (auto &p : local_cells.particles()) {
-    auto const q = p.p.q;
+    auto const q = p.p->q;
     if (q != 0.0) {
 #ifdef P3M_STORE_CA_FRAC
       q_ind = p3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < cao; i0++) {
         for (int i1 = 0; i1 < cao; i1++) {
           for (int i2 = 0; i2 < cao; i2++) {
-            p.f.f[d_rs] -=
+            p.f->f[d_rs] -=
                 force_prefac * p3m.ca_frac[cf_cnt] * p3m.rs_mesh[q_ind];
             q_ind++;
             cf_cnt++;
@@ -759,7 +759,7 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
             tmp1 = tmp0 * p3m_caf(i1, dist[1], cao);
             for (int i2 = 0; i2 < cao; i2++) {
               cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
-              p.f.f[d_rs] -=
+              p.f->f[d_rs] -=
                   force_prefac * cur_ca_frac_val * p3m.rs_mesh[q_ind];
               q_ind++;
             }
@@ -774,7 +774,7 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
             tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
             for (int i2 = 0; i2 < cao; i2++) {
               cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
-              p.f.f[d_rs] -=
+              p.f->f[d_rs] -=
                   force_prefac * cur_ca_frac_val * p3m.rs_mesh[q_ind];
               q_ind++;
             }
@@ -785,9 +785,9 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
       }
 #endif
 
-      ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
+      ONEPART_TRACE(if (p.p->identity == check_id) fprintf(
           stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n", this_node,
-          p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
+          p.f->f[0], p.f->f[1], p.f->f[2], d_rs));
     }
   }
 }
@@ -947,7 +947,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   for (auto const &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++)
       /* dipole moment with unfolded coordinates */
-      lcl_dm[j] += p.p.q * (p.r.p[j] + p.l.i[j] * box_l[j]);
+      lcl_dm[j] += p.p->q * (p.r.p[j] + p.l->i[j] * box_l[j]);
   }
 
   MPI_Allreduce(lcl_dm, gbl_dm, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
@@ -963,7 +963,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
       gbl_dm[j] *= pref;
     for (auto &p : local_cells.particles()) {
       for (int j = 0; j < 3; j++)
-        p.f.f[j] -= gbl_dm[j] * p.p.q;
+        p.f->f[j] -= gbl_dm[j] * p.p->q;
     }
     return en;
   }
@@ -1950,10 +1950,10 @@ void p3m_count_charged_particles() {
   }
 
   for (auto const &p : local_cells.particles()) {
-    if (p.p.q != 0.0) {
+    if (p.p->q != 0.0) {
       node_sums[0] += 1.0;
-      node_sums[1] += Utils::sqr(p.p.q);
-      node_sums[2] += p.p.q;
+      node_sums[1] += Utils::sqr(p.p->q);
+      node_sums[2] += p.p->q;
     }
   }
 

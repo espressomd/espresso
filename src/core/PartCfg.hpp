@@ -37,7 +37,7 @@ class GetLocalParts {
   class SkipIfNullOrGhost {
   public:
     bool operator()(Particle const *p_ptr) const {
-      return (p_ptr == nullptr) or (p_ptr->l.ghost);
+      return (p_ptr == nullptr) or (p_ptr->l->ghost);
     }
   };
 

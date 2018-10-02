@@ -313,7 +313,7 @@ void unfold_position(T1 &pos, T2 &vel, T3 &image_box) {
 inline Vector3d unfolded_position(Particle const *p) {
   Vector3d pos{p->r.p};
   for (int i = 0; i < 3; i++) {
-    pos[i] += p->l.i[i] * box_l[i];
+    pos[i] += p->l->i[i] * box_l[i];
   }
 
   return pos;
@@ -339,14 +339,14 @@ void unfold_position(T1 &pos, T2 &image_box) {
 class PositionUnfolder {
 public:
   template <typename Particle> void operator()(Particle &p) const {
-    unfold_position(p.r.p, p.l.i);
+    unfold_position(p.r.p, p.l->i);
   }
 };
 
 class PositionFolder {
 public:
   template <typename Particle> void operator()(Particle &p) const {
-    fold_position(p.r.p, p.l.i);
+    fold_position(p.r.p, p.l->i);
   }
 };
 

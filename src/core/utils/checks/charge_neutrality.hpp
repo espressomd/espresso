@@ -37,7 +37,7 @@ bool check_charge_neutrality(ParticleRange &prange,
   auto q_min = std::numeric_limits<double>::infinity();
 
   for (auto const &p : prange) {
-    auto const &q = p.p.q;
+    auto const &q = p.p->q;
 
     if (q) {
       q_sum(q);

@@ -98,7 +98,7 @@ void save_old_pos() {
 void init_correction_vector() {
   auto reset_force = [](Particle &p) {
     for (int j = 0; j < 3; j++)
-      p.f.f[j] = 0.0;
+      p.f->f[j] = 0.0;
   };
 
   for (auto &p : local_cells.particles())
@@ -125,7 +125,7 @@ void compute_pos_corr_vec(int *repeat_) {
         p2 = local_particles[p1->bl.e[k++]];
         if (!p2) {
           runtimeErrorMsg() << "rigid bond broken between particles "
-                            << p1->p.identity << " and " << p1->bl.e[k - 1]
+                            << p1->p->identity << " and " << p1->bl.e[k - 1]
                             << " (particles not stored on the same node)";
           return;
         }
@@ -138,14 +138,14 @@ void compute_pos_corr_vec(int *repeat_) {
           r_ij_dot = scalar(r_ij_t, r_ij);
           G = 0.50 * (ia_params->p.rigid_bond.d2 - r_ij2) / r_ij_dot;
 #ifdef MASS
-          G /= ((*p1).p.mass + (*p2).p.mass);
+          G /= ((*p1).p->mass + (*p2).p->mass);
 #else
           G /= 2;
 #endif
           for (j = 0; j < 3; j++) {
             pos_corr = G * r_ij_t[j];
-            p1->f.f[j] += pos_corr * (*p2).p.mass;
-            p2->f.f[j] -= pos_corr * (*p1).p.mass;
+            p1->f->f[j] += pos_corr * (*p2).p->mass;
+            p2->f->f[j] -= pos_corr * (*p1).p->mass;
           }
           /*Increase the 'repeat' flag by one */
           *repeat_ = *repeat_ + 1;
@@ -162,8 +162,8 @@ void app_pos_correction() {
   /*Apply corrections*/
   for (auto &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++) {
-      p.r.p[j] += p.f.f[j];
-      p.m.v[j] += p.f.f[j];
+      p.r.p[j] += p.f->f[j];
+      p.m->v[j] += p.f->f[j];
     }
     /**Completed for one particle*/
   } // for i loop
@@ -205,8 +205,8 @@ void correct_pos_shake() {
 void transfer_force_init_vel() {
   auto copy_reset = [](Particle &p) {
     for (int j = 0; j < 3; j++) {
-      p.r.p_old[j] = p.f.f[j];
-      p.f.f[j] = 0.0;
+      p.r.p_old[j] = p.f->f[j];
+      p.f->f[j] = 0.0;
     }
   };
 
@@ -233,24 +233,24 @@ void compute_vel_corr_vec(int *repeat_) {
         p2 = local_particles[p1->bl.e[k++]];
         if (!p2) {
           runtimeErrorMsg() << "rigid bond broken between particles "
-                            << p1->p.identity << " and " << p1->bl.e[k - 1]
+                            << p1->p->identity << " and " << p1->bl.e[k - 1]
                             << " (particles not stored on the same node)";
           return;
         }
 
-        vecsub(p1->m.v, p2->m.v, v_ij);
+        vecsub(p1->m->v, p2->m->v, v_ij);
         get_mi_vector(r_ij, p1->r.p, p2->r.p);
         if (fabs(scalar(v_ij, r_ij)) > ia_params->p.rigid_bond.v_tol) {
           K = scalar(v_ij, r_ij) / ia_params->p.rigid_bond.d2;
 #ifdef MASS
-          K /= ((*p1).p.mass + (*p2).p.mass);
+          K /= ((*p1).p->mass + (*p2).p->mass);
 #else
           K /= 2.0;
 #endif
           for (j = 0; j < 3; j++) {
             vel_corr = K * r_ij[j];
-            p1->f.f[j] -= vel_corr * (*p2).p.mass;
-            p2->f.f[j] += vel_corr * (*p1).p.mass;
+            p1->f->f[j] -= vel_corr * (*p2).p->mass;
+            p2->f->f[j] += vel_corr * (*p1).p->mass;
           }
           *repeat_ = *repeat_ + 1;
         }
@@ -265,7 +265,7 @@ void apply_vel_corr() {
   /*Apply corrections*/
   for (auto &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++) {
-      p.m.v[j] += p.f.f[j];
+      p.m->v[j] += p.f->f[j];
     }
     /**Completed for one particle*/
   } // for i loop
@@ -275,7 +275,7 @@ void apply_vel_corr() {
 void revert_force() {
   auto revert = [](Particle &p) {
     for (int j = 0; j < 3; j++)
-      p.f.f[j] = p.r.p_old[j];
+      p.f->f[j] = p.r.p_old[j];
   };
 
   for (auto &p : local_cells.particles())

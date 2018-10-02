@@ -280,7 +280,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
 
 double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3],
                                  double r2, double r) {
-  double chpref = p1->p.q * p2->p.q;
+  double chpref = p1->p->q * p2->p->q;
   double rxy2, rxy2_d, z_d;
   double E;
 

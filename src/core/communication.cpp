@@ -426,7 +426,7 @@ void mpi_send_v(int pnode, int part, double *v) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
 
-    p->m.v = {v[0], v[1], v[2]};
+    p->m->v = {v[0], v[1], v[2]};
   } else
     MPI_Send(v, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
 
@@ -436,7 +436,7 @@ void mpi_send_v(int pnode, int part, double *v) {
 void mpi_send_v_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->m.v.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->m->v.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -451,7 +451,7 @@ void mpi_send_swimming(int pnode, int part,
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->swim = swim;
+    *(p->swim) = swim;
   } else {
     comm_cart.send(pnode, SOME_TAG, swim);
   }
@@ -466,7 +466,7 @@ void mpi_send_swimming_slave(int pnode, int part) {
     Particle *p = local_particles[part];
     ParticleParametersSwimming swim;
     comm_cart.recv(0, SOME_TAG, swim);
-    p->swim = swim;
+    *(p->swim) = swim;
   }
 
   on_particle_change();
@@ -479,7 +479,7 @@ void mpi_send_f(int pnode, int part, const Vector3d &F) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->f.f = F;
+    p->f->f = F;
   } else {
     comm_cart.send(pnode, SOME_TAG, F);
   }
@@ -493,7 +493,7 @@ void mpi_send_f_slave(int pnode, int part) {
     Vector3d F;
     comm_cart.recv(0, SOME_TAG, F);
 
-    p->f.f = F;
+    p->f->f = F;
   }
 
   on_particle_change();
@@ -506,7 +506,7 @@ void mpi_send_q(int pnode, int part, double q) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.q = q;
+    p->p->q = q;
   } else {
     MPI_Send(&q, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -519,7 +519,7 @@ void mpi_send_q_slave(int pnode, int part) {
 #ifdef ELECTROSTATICS
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->p.q, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(&p->p->q, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
 
   on_particle_charge_change();
@@ -533,9 +533,9 @@ void mpi_send_mu_E(int pnode, int part, double mu_E[3]) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.mu_E[0] = mu_E[0];
-    p->p.mu_E[1] = mu_E[1];
-    p->p.mu_E[2] = mu_E[2];
+    p->p->mu_E[0] = mu_E[0];
+    p->p->mu_E[1] = mu_E[1];
+    p->p->mu_E[2] = mu_E[2];
   } else {
     MPI_Send(mu_E, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -548,7 +548,7 @@ void mpi_send_mu_E_slave(int pnode, int part) {
 #ifdef LB_ELECTROHYDRODYNAMICS
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.mu_E.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p->mu_E.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -564,7 +564,7 @@ void mpi_send_solvation(int pnode, int part, double *solvation) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     for (int ii = 0; ii < 2 * LB_COMPONENTS; ii++)
-      p->p.solvation[ii] = solvation[ii];
+      p->p->solvation[ii] = solvation[ii];
   } else {
     MPI_Send(&solvation, LB_COMPONENTS, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -577,7 +577,7 @@ void mpi_send_solvation_slave(int pnode, int part) {
 #ifdef SHANCHEN
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->p.solvation, 2 * LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG,
+    MPI_Recv(&p->p->solvation, 2 * LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG,
              comm_cart, MPI_STATUS_IGNORE);
   }
 
@@ -592,7 +592,7 @@ void mpi_send_mass(int pnode, int part, double mass) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.mass = mass;
+    p->p->mass = mass;
   } else {
     MPI_Send(&mass, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -605,7 +605,7 @@ void mpi_send_mass_slave(int pnode, int part) {
 #ifdef MASS
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->p.mass, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(&p->p->mass, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -621,9 +621,9 @@ void mpi_send_rotational_inertia(int pnode, int part, double rinertia[3]) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.rinertia[0] = rinertia[0];
-    p->p.rinertia[1] = rinertia[1];
-    p->p.rinertia[2] = rinertia[2];
+    p->p->rinertia[0] = rinertia[0];
+    p->p->rinertia[1] = rinertia[1];
+    p->p->rinertia[2] = rinertia[2];
   } else {
     MPI_Send(rinertia, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -636,7 +636,7 @@ void mpi_send_rotational_inertia_slave(int pnode, int part) {
 #ifdef ROTATIONAL_INERTIA
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.rinertia.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p->rinertia.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -680,7 +680,7 @@ void mpi_send_affinity_slave(int pnode, int part) {
 #ifdef AFFINITY
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.bond_site.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p->bond_site.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -694,9 +694,9 @@ void mpi_send_affinity(int pnode, int part, double bond_site[3]) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.bond_site[0] = bond_site[0];
-    p->p.bond_site[1] = bond_site[1];
-    p->p.bond_site[2] = bond_site[2];
+    p->p->bond_site[0] = bond_site[0];
+    p->p->bond_site[1] = bond_site[1];
+    p->p->bond_site[2] = bond_site[2];
   } else {
     MPI_Send(bond_site, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -713,9 +713,9 @@ void mpi_send_out_direction(int pnode, int part, double out_direction[3]) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.out_direction[0] = out_direction[0];
-    p->p.out_direction[1] = out_direction[1];
-    p->p.out_direction[2] = out_direction[2];
+    p->p->out_direction[0] = out_direction[0];
+    p->p->out_direction[1] = out_direction[1];
+    p->p->out_direction[2] = out_direction[2];
   } else {
     MPI_Send(out_direction, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -728,7 +728,7 @@ void mpi_send_out_direction_slave(int pnode, int part) {
 #ifdef MEMBRANE_COLLISION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.out_direction.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p->out_direction.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -742,7 +742,7 @@ void mpi_send_type(int pnode, int part, int type) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.type = type;
+    p->p->type = type;
   } else
     MPI_Send(&type, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
 
@@ -752,7 +752,7 @@ void mpi_send_type(int pnode, int part, int type) {
 void mpi_send_type_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->p.type, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(&p->p->type, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
 
   on_particle_change();
@@ -764,7 +764,7 @@ void mpi_send_mol_id(int pnode, int part, int mid) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.mol_id = mid;
+    p->p->mol_id = mid;
   } else
     MPI_Send(&mid, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
 
@@ -774,7 +774,7 @@ void mpi_send_mol_id(int pnode, int part, int mid) {
 void mpi_send_mol_id_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->p.mol_id, 1, MPI_INT, 0, SOME_TAG, comm_cart,
+    MPI_Recv(&p->p->mol_id, 1, MPI_INT, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -795,7 +795,7 @@ void mpi_send_quat(int pnode, int part, double quat[4]) {
     p->r.quat[3] = quat[3];
     convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
-    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+    convert_quatu_to_dip(p->r.quatu, p->p->dipm, p->r.dip);
 #endif
   } else {
     MPI_Send(quat, 4, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -813,7 +813,7 @@ void mpi_send_quat_slave(int pnode, int part) {
              MPI_STATUS_IGNORE);
     convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
-    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+    convert_quatu_to_dip(p->r.quatu, p->p->dipm, p->r.dip);
 #endif
   }
 
@@ -830,9 +830,9 @@ void mpi_send_omega(int pnode, int part, double omega[3]) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     /*  memmove(p->omega, omega, 3*sizeof(double));*/
-    p->m.omega[0] = omega[0];
-    p->m.omega[1] = omega[1];
-    p->m.omega[2] = omega[2];
+    p->m->omega[0] = omega[0];
+    p->m->omega[1] = omega[1];
+    p->m->omega[2] = omega[2];
   } else {
     MPI_Send(omega, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -845,7 +845,7 @@ void mpi_send_omega_slave(int pnode, int part) {
 #ifdef ROTATION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->m.omega.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->m->omega.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -861,9 +861,9 @@ void mpi_send_torque(int pnode, int part, double torque[3]) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->f.torque[0] = torque[0];
-    p->f.torque[1] = torque[1];
-    p->f.torque[2] = torque[2];
+    p->f->torque[0] = torque[0];
+    p->f->torque[1] = torque[1];
+    p->f->torque[2] = torque[2];
   } else {
     MPI_Send(torque, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -876,7 +876,7 @@ void mpi_send_torque_slave(int pnode, int part) {
 #ifdef ROTATION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->f.torque.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->f->torque.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -896,10 +896,10 @@ void mpi_send_dip(int pnode, int part, double dip[3]) {
     p->r.dip[1] = dip[1];
     p->r.dip[2] = dip[2];
 #ifdef ROTATION
-    convert_dip_to_quat(p->r.dip, p->r.quat, &p->p.dipm);
+    convert_dip_to_quat(p->r.dip, p->r.quat, &p->p->dipm);
     convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #else
-    p->p.dipm = sqrt(p->r.dip[0] * p->r.dip[0] + p->r.dip[1] * p->r.dip[1] +
+    p->p->dipm = sqrt(p->r.dip[0] * p->r.dip[0] + p->r.dip[1] * p->r.dip[1] +
                      p->r.dip[2] * p->r.dip[2]);
 #endif
   } else {
@@ -917,10 +917,10 @@ void mpi_send_dip_slave(int pnode, int part) {
     MPI_Recv(p->r.dip.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
 #ifdef ROTATION
-    convert_dip_to_quat(p->r.dip, p->r.quat, &p->p.dipm);
+    convert_dip_to_quat(p->r.dip, p->r.quat, &p->p->dipm);
     convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #else
-    p->p.dipm = sqrt(p->r.dip[0] * p->r.dip[0] + p->r.dip[1] * p->r.dip[1] +
+    p->p->dipm = sqrt(p->r.dip[0] * p->r.dip[0] + p->r.dip[1] * p->r.dip[1] +
                      p->r.dip[2] * p->r.dip[2]);
 #endif
   }
@@ -937,9 +937,9 @@ void mpi_send_dipm(int pnode, int part, double dipm) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.dipm = dipm;
+    p->p->dipm = dipm;
 #ifdef ROTATION
-    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+    convert_quatu_to_dip(p->r.quatu, p->p->dipm, p->r.dip);
 #endif
   } else {
     MPI_Send(&dipm, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -953,10 +953,10 @@ void mpi_send_dipm_slave(int pnode, int part) {
 #ifdef DIPOLES
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->p.dipm, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(&p->p->dipm, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
 #ifdef ROTATION
-    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+    convert_quatu_to_dip(p->r.quatu, p->p->dipm, p->r.dip);
 #endif
   }
 
@@ -972,7 +972,7 @@ void mpi_send_virtual(int pnode, int part, int is_virtual) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.is_virtual = is_virtual;
+    p->p->is_virtual = is_virtual;
   } else {
     MPI_Send(&is_virtual, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
   }
@@ -985,7 +985,7 @@ void mpi_send_virtual_slave(int pnode, int part) {
 #ifdef VIRTUAL_SITES
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&(p->p.is_virtual), 1, MPI_INT, 0, SOME_TAG, comm_cart,
+    MPI_Recv(&(p->p->is_virtual), 1, MPI_INT, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -1000,7 +1000,7 @@ void mpi_send_vs_quat(int pnode, int part, double *vs_quat) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     for (int i = 0; i < 4; ++i) {
-      p->p.vs_quat[i] = vs_quat[i];
+      p->p->vs_quat[i] = vs_quat[i];
     }
   } else {
     MPI_Send(vs_quat, 4, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -1013,7 +1013,7 @@ void mpi_send_vs_quat_slave(int pnode, int part) {
 #ifdef VIRTUAL_SITES_RELATIVE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.vs_quat, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p->vs_quat, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -1030,10 +1030,10 @@ void mpi_send_vs_relative(int pnode, int part, int vs_relative_to,
   // set the values locally
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.vs_relative_to_particle_id = vs_relative_to;
-    p->p.vs_relative_distance = vs_distance;
+    p->p->vs_relative_to_particle_id = vs_relative_to;
+    p->p->vs_relative_distance = vs_distance;
     for (int i = 0; i < 4; i++) {
-      p->p.vs_relative_rel_orientation[i] = rel_ori[i];
+      p->p->vs_relative_rel_orientation[i] = rel_ori[i];
     }
   } else {
     MPI_Send(&vs_relative_to, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
@@ -1049,11 +1049,11 @@ void mpi_send_vs_relative_slave(int pnode, int part) {
 #ifdef VIRTUAL_SITES_RELATIVE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->p.vs_relative_to_particle_id, 1, MPI_INT, 0, SOME_TAG,
+    MPI_Recv(&p->p->vs_relative_to_particle_id, 1, MPI_INT, 0, SOME_TAG,
              comm_cart, MPI_STATUS_IGNORE);
-    MPI_Recv(&p->p.vs_relative_distance, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(&p->p->vs_relative_distance, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
-    MPI_Recv(p->p.vs_relative_rel_orientation, 4, MPI_DOUBLE, 0, SOME_TAG,
+    MPI_Recv(p->p->vs_relative_rel_orientation, 4, MPI_DOUBLE, 0, SOME_TAG,
              comm_cart, MPI_STATUS_IGNORE);
   }
 
@@ -1068,7 +1068,7 @@ void mpi_send_rotation(int pnode, int part, short int rot) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.rotation = rot;
+    p->p->rotation = rot;
   } else {
     MPI_Send(&rot, 1, MPI_SHORT, pnode, SOME_TAG, MPI_COMM_WORLD);
   }
@@ -1080,7 +1080,7 @@ void mpi_send_rotation_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&p->p.rotation, 1, MPI_SHORT, 0, SOME_TAG, MPI_COMM_WORLD,
+    MPI_Recv(&p->p->rotation, 1, MPI_SHORT, 0, SOME_TAG, MPI_COMM_WORLD,
              &status);
   }
 
@@ -1619,12 +1619,12 @@ void mpi_send_ext_torque(int pnode, int part, int flag, int mask,
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     /* mask out old flags */
-    p->p.ext_flag &= ~mask;
+    p->p->ext_flag &= ~mask;
     /* set new values */
-    p->p.ext_flag |= flag;
+    p->p->ext_flag |= flag;
 
     if (mask & PARTICLE_EXT_TORQUE)
-      p->p.ext_torque = {torque[0], torque[1], torque[2]};
+      p->p->ext_torque = {torque[0], torque[1], torque[2]};
   } else {
     int s_buf[2];
     s_buf[0] = flag;
@@ -1647,12 +1647,12 @@ void mpi_send_ext_torque_slave(int pnode, int part) {
     Particle *p = local_particles[part];
     MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     /* mask out old flags */
-    p->p.ext_flag &= ~s_buf[1];
+    p->p->ext_flag &= ~s_buf[1];
     /* set new values */
-    p->p.ext_flag |= s_buf[0];
+    p->p->ext_flag |= s_buf[0];
 
     if (s_buf[1] & PARTICLE_EXT_TORQUE)
-      MPI_Recv(p->p.ext_torque.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+      MPI_Recv(p->p->ext_torque.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
   }
 
@@ -1669,11 +1669,11 @@ void mpi_send_ext_force(int pnode, int part, int flag, int mask,
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     /* mask out old flags */
-    p->p.ext_flag &= ~mask;
+    p->p->ext_flag &= ~mask;
     /* set new values */
-    p->p.ext_flag |= flag;
+    p->p->ext_flag |= flag;
     if (mask & PARTICLE_EXT_FORCE)
-      p->p.ext_force = {force[0], force[1], force[2]};
+      p->p->ext_force = {force[0], force[1], force[2]};
   } else {
     int s_buf[2];
     s_buf[0] = flag;
@@ -1694,12 +1694,12 @@ void mpi_send_ext_force_slave(int pnode, int part) {
     Particle *p = local_particles[part];
     MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     /* mask out old flags */
-    p->p.ext_flag &= ~s_buf[1];
+    p->p->ext_flag &= ~s_buf[1];
     /* set new values */
-    p->p.ext_flag |= s_buf[0];
+    p->p->ext_flag |= s_buf[0];
 
     if (s_buf[1] & PARTICLE_EXT_FORCE)
-      MPI_Recv(p->p.ext_force.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+      MPI_Recv(p->p->ext_force.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
   }
 
@@ -2102,7 +2102,7 @@ void mpi_set_particle_temperature(int pnode, int part, double _T) {
     Particle *p = local_particles[part];
     /* here the setting actually happens, if the particle belongs to the local
      * node */
-    p->p.T = _T;
+    p->p->T = _T;
   } else {
     MPI_Send(&_T, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -2119,7 +2119,7 @@ void mpi_set_particle_temperature_slave(int pnode, int part) {
     MPI_Status status;
     MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     /* here the setting happens for nonlocal nodes */
-    p->p.T = s_buf;
+    p->p->T = s_buf;
   }
 
   on_particle_change();
@@ -2138,7 +2138,7 @@ void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma) {
     Particle *p = local_particles[part];
     /* here the setting actually happens, if the particle belongs to the local
      * node */
-    p->p.gamma = gamma;
+    p->p->gamma = gamma;
   } else {
     comm_cart.send(pnode, SOME_TAG, gamma);
   }
@@ -2151,7 +2151,7 @@ void mpi_set_particle_gamma_slave(int pnode, int part) {
 #ifdef LANGEVIN_PER_PARTICLE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    comm_cart.recv(0, SOME_TAG, p->p.gamma);
+    comm_cart.recv(0, SOME_TAG, p->p->gamma);
   }
 
   on_particle_change();
@@ -2171,7 +2171,7 @@ void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot)
     Particle *p = local_particles[part];
     /* here the setting actually happens, if the particle belongs to the local
      * node */
-    p->p.gamma_rot = gamma_rot;
+    p->p->gamma_rot = gamma_rot;
   } else {
     comm_cart.send(pnode, SOME_TAG, gamma_rot);
   }
@@ -2184,7 +2184,7 @@ void mpi_set_particle_gamma_rot_slave(int pnode, int part) {
 #if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    comm_cart.recv(0, SOME_TAG, p->p.gamma_rot);
+    comm_cart.recv(0, SOME_TAG, p->p->gamma_rot);
   }
 
   on_particle_change();

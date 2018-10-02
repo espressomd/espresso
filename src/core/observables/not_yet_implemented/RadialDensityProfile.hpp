@@ -44,7 +44,7 @@ int ObservableRadialDensityProfile::actual_calculate(PartCfg &partCfg) {
       return 1;
     /* We use folded coordinates here */
     memmove(ppos, partCfg[ids->e[i]].r.p, 3 * sizeof(double));
-    memmove(img, partCfg[ids->e[i]].l.i, 3 * sizeof(int));
+    memmove(img, partCfg[ids->e[i]].l->i, 3 * sizeof(int));
     fold_position(ppos, img);
     transform_to_cylinder_coordinates(ppos[0] - pdata->center[0],
                                       ppos[1] - pdata->center[1],

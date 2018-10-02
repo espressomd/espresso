@@ -161,7 +161,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
       for (int p = 0; p < np; p++) {
         Particle *pt = &part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memmove(insert, &pt->p, sizeof(ParticleProperties));
+          memmove(insert, pt->p, sizeof(ParticleProperties));
           insert += sizeof(ParticleProperties);
 #ifdef GHOSTS_HAVE_BONDS
           *(int *)insert = pt->bl.n;
@@ -193,22 +193,22 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           insert += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memmove(insert, &pt->m, sizeof(ParticleMomentum));
+          memmove(insert, pt->m, sizeof(ParticleMomentum));
           insert += sizeof(ParticleMomentum);
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memmove(insert, &pt->f, sizeof(ParticleForce));
+          memmove(insert, pt->f, sizeof(ParticleForce));
           insert += sizeof(ParticleForce);
         }
 #ifdef LB
         if (data_parts & GHOSTTRANS_COUPLING) {
-          memmove(insert, &pt->lc, sizeof(ParticleLatticeCoupling));
+          memmove(insert, pt->lc, sizeof(ParticleLatticeCoupling));
           insert += sizeof(ParticleLatticeCoupling);
         }
 #endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
-          memmove(insert, &pt->swim, sizeof(ParticleParametersSwimming));
+          memmove(insert, pt->swim, sizeof(ParticleParametersSwimming));
           insert += sizeof(ParticleParametersSwimming);
         }
 #endif
@@ -251,7 +251,7 @@ static void prepare_ghost_cell(Cell *cell, int size) {
       Particle *pt = new (&part[p]) Particle();
 
       // init ghost variable
-      pt->l.ghost = 1;
+      pt->l->ghost = 1;
     }
   }
 }
@@ -288,7 +288,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
       for (int p = 0; p < np; p++) {
         Particle *pt = &part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memmove(&pt->p, retrieve, sizeof(ParticleProperties));
+          memmove(pt->p, retrieve, sizeof(ParticleProperties));
           retrieve += sizeof(ParticleProperties);
 #ifdef GHOSTS_HAVE_BONDS
           int n_bonds;
@@ -310,8 +310,8 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
           }
 #endif
 #endif
-          if (local_particles[pt->p.identity] == nullptr) {
-            local_particles[pt->p.identity] = pt;
+          if (local_particles[pt->p->identity] == nullptr) {
+            local_particles[pt->p->identity] = pt;
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
@@ -319,22 +319,22 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
           retrieve += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memmove(&pt->m, retrieve, sizeof(ParticleMomentum));
+          memmove(pt->m, retrieve, sizeof(ParticleMomentum));
           retrieve += sizeof(ParticleMomentum);
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memmove(&pt->f, retrieve, sizeof(ParticleForce));
+          memmove(pt->f, retrieve, sizeof(ParticleForce));
           retrieve += sizeof(ParticleForce);
         }
 #ifdef LB
         if (data_parts & GHOSTTRANS_COUPLING) {
-          memmove(&pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
+          memmove(pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
           retrieve += sizeof(ParticleLatticeCoupling);
         }
 #endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
-          memmove(&pt->swim, retrieve, sizeof(ParticleParametersSwimming));
+          memmove(pt->swim, retrieve, sizeof(ParticleParametersSwimming));
           retrieve += sizeof(ParticleParametersSwimming);
         }
 #endif
@@ -375,7 +375,7 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
     part = gc->part_lists[pl]->part;
     for (p = 0; p < np; p++) {
       pt = &part[p];
-      pt->f += *(reinterpret_cast<ParticleForce *>(retrieve));
+      *(pt->f) += *(reinterpret_cast<ParticleForce *>(retrieve));
       retrieve += sizeof(ParticleForce);
     }
   }
@@ -411,7 +411,7 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         pt1 = &part1[p];
         pt2 = &part2[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memmove(&pt2->p, &pt1->p, sizeof(ParticleProperties));
+          memmove(pt2->p, pt1->p, sizeof(ParticleProperties));
 #ifdef GHOSTS_HAVE_BONDS
           pt2->bl = pt1->bl;
 #ifdef EXCLUSIONS
@@ -428,18 +428,18 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         } else if (data_parts & GHOSTTRANS_POSITION)
           memmove(&pt2->r, &pt1->r, sizeof(ParticlePosition));
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memmove(&pt2->m, &pt1->m, sizeof(ParticleMomentum));
+          memmove(pt2->m, pt1->m, sizeof(ParticleMomentum));
         }
         if (data_parts & GHOSTTRANS_FORCE)
-          pt2->f += pt1->f;
+          *(pt2->f) += *(pt1->f);
 
 #ifdef LB
         if (data_parts & GHOSTTRANS_COUPLING)
-          memmove(&pt2->lc, &pt1->lc, sizeof(ParticleLatticeCoupling));
+          memmove(pt2->lc, pt1->lc, sizeof(ParticleLatticeCoupling));
 #endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING)
-          memmove(&pt2->swim, &pt1->swim, sizeof(ParticleParametersSwimming));
+          memmove(pt2->swim, pt1->swim, sizeof(ParticleParametersSwimming));
 #endif
       }
     }
@@ -698,8 +698,8 @@ void invalidate_ghosts() {
       /* Particle is stored as ghost in the local_particles array,
          if the pointer stored there belongs to a ghost cell
          particle array. */
-      if (&(part[p]) == local_particles[part[p].p.identity])
-        local_particles[part[p].p.identity] = nullptr;
+      if (&(part[p]) == local_particles[part[p].p->identity])
+        local_particles[part[p].p->identity] = nullptr;
       free_particle(part + p);
     }
     ghost_cells.cell[c]->n = 0;

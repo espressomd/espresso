@@ -75,7 +75,7 @@ public:
         force += c->force(p, pos);
       }
 
-      p.f += force;
+      *(p.f) += force;
     }
   }
 

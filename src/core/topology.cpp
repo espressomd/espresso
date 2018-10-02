@@ -45,7 +45,7 @@ void sync_topo_part_info() {
       auto p = local_particles[pid];
 
       if (p) {
-        p->p.mol_id = molid;
+        p->p->mol_id = molid;
       }
     }
   }

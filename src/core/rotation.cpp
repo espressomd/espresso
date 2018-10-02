@@ -151,37 +151,37 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
   /* calculate the first derivative of the quaternion */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
-  Qd[0] = 0.5 * (-p->r.quat[1] * p->m.omega[0] - p->r.quat[2] * p->m.omega[1] -
-                 p->r.quat[3] * p->m.omega[2]);
+  Qd[0] = 0.5 * (-p->r.quat[1] * p->m->omega[0] - p->r.quat[2] * p->m->omega[1] -
+                 p->r.quat[3] * p->m->omega[2]);
 
-  Qd[1] = 0.5 * (p->r.quat[0] * p->m.omega[0] - p->r.quat[3] * p->m.omega[1] +
-                 p->r.quat[2] * p->m.omega[2]);
+  Qd[1] = 0.5 * (p->r.quat[0] * p->m->omega[0] - p->r.quat[3] * p->m->omega[1] +
+                 p->r.quat[2] * p->m->omega[2]);
 
-  Qd[2] = 0.5 * (p->r.quat[3] * p->m.omega[0] + p->r.quat[0] * p->m.omega[1] -
-                 p->r.quat[1] * p->m.omega[2]);
+  Qd[2] = 0.5 * (p->r.quat[3] * p->m->omega[0] + p->r.quat[0] * p->m->omega[1] -
+                 p->r.quat[1] * p->m->omega[2]);
 
-  Qd[3] = 0.5 * (-p->r.quat[2] * p->m.omega[0] + p->r.quat[1] * p->m.omega[1] +
-                 p->r.quat[0] * p->m.omega[2]);
+  Qd[3] = 0.5 * (-p->r.quat[2] * p->m->omega[0] + p->r.quat[1] * p->m->omega[1] +
+                 p->r.quat[0] * p->m->omega[2]);
 
   /* Calculate the angular acceleration. */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 5.*/
-  if (p->p.rotation & ROTATION_X)
-    Wd[0] = (p->f.torque[0] + p->m.omega[1] * p->m.omega[2] *
-                                  (p->p.rinertia[1] - p->p.rinertia[2])) /
-            p->p.rinertia[0];
+  if (p->p->rotation & ROTATION_X)
+    Wd[0] = (p->f->torque[0] + p->m->omega[1] * p->m->omega[2] *
+                                  (p->p->rinertia[1] - p->p->rinertia[2])) /
+            p->p->rinertia[0];
   else
     Wd[0] = 0.0;
-  if (p->p.rotation & ROTATION_Y)
-    Wd[1] = (p->f.torque[1] + p->m.omega[2] * p->m.omega[0] *
-                                  (p->p.rinertia[2] - p->p.rinertia[0])) /
-            p->p.rinertia[1];
+  if (p->p->rotation & ROTATION_Y)
+    Wd[1] = (p->f->torque[1] + p->m->omega[2] * p->m->omega[0] *
+                                  (p->p->rinertia[2] - p->p->rinertia[0])) /
+            p->p->rinertia[1];
   else
     Wd[1] = 0.0;
-  if (p->p.rotation & ROTATION_Z)
-    Wd[2] = (p->f.torque[2] + p->m.omega[0] * p->m.omega[1] *
-                                  (p->p.rinertia[0] - p->p.rinertia[1])) /
-            p->p.rinertia[2];
+  if (p->p->rotation & ROTATION_Z)
+    Wd[2] = (p->f->torque[2] + p->m->omega[0] * p->m->omega[1] *
+                                  (p->p->rinertia[0] - p->p->rinertia[1])) /
+            p->p->rinertia[2];
   else
     Wd[2] = 0.0;
 
@@ -218,16 +218,16 @@ void propagate_omega_quat_particle(Particle *p) {
 
   double Qd[4], Qdd[4], S[3], Wd[3];
   // If rotation for the particle is disabled entirely, return early.
-  if (!p->p.rotation)
+  if (!p->p->rotation)
     return;
 
   // Clear rotational velocity for blocked rotation axes.
-  if (!(p->p.rotation & ROTATION_X))
-    p->m.omega[0] = 0;
-  if (!(p->p.rotation & ROTATION_Y))
-    p->m.omega[1] = 0;
-  if (!(p->p.rotation & ROTATION_Z))
-    p->m.omega[2] = 0;
+  if (!(p->p->rotation & ROTATION_X))
+    p->m->omega[0] = 0;
+  if (!(p->p->rotation & ROTATION_Y))
+    p->m->omega[1] = 0;
+  if (!(p->p->rotation & ROTATION_Z))
+    p->m->omega[2] = 0;
 
   define_Qdd(p, Qd, Qdd, S, Wd);
 
@@ -239,11 +239,11 @@ void propagate_omega_quat_particle(Particle *p) {
                                                         (S[2] - S[0] * S[0]))));
 
   for (int j = 0; j < 3; j++) {
-    p->m.omega[j] += time_step_half * Wd[j];
+    p->m->omega[j] += time_step_half * Wd[j];
   }
-  ONEPART_TRACE(if (p->p.identity == check_id)
+  ONEPART_TRACE(if (p->p->identity == check_id)
                     fprintf(stderr, "%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",
-                            this_node, p->m.v[0], p->m.v[1], p->m.v[2]));
+                            this_node, p->m->v[0], p->m->v[1], p->m->v[2]));
 
   p->r.quat[0] +=
       time_step * (Qd[0] + time_step_half * Qdd[0]) - lambda * p->r.quat[0];
@@ -257,10 +257,10 @@ void propagate_omega_quat_particle(Particle *p) {
   convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
   // When dipoles are enabled, update dipole moment
-  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+  convert_quatu_to_dip(p->r.quatu, p->p->dipm, p->r.dip);
 #endif
 
-  ONEPART_TRACE(if (p->p.identity == check_id)
+  ONEPART_TRACE(if (p->p->identity == check_id)
                     fprintf(stderr, "%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",
                             this_node, p->r.p[0], p->r.p[1], p->r.p[2]));
 }
@@ -282,61 +282,61 @@ void convert_torques_propagate_omega() {
 
   for (auto &p : local_cells.particles()) {
     // Skip particle if rotation is turned off entirely for it.
-    if (!p.p.rotation)
+    if (!p.p->rotation)
       continue;
 
     double A[9];
     define_rotation_matrix(p, A);
 
-    tx = A[0 + 3 * 0] * p.f.torque[0] + A[0 + 3 * 1] * p.f.torque[1] +
-         A[0 + 3 * 2] * p.f.torque[2];
-    ty = A[1 + 3 * 0] * p.f.torque[0] + A[1 + 3 * 1] * p.f.torque[1] +
-         A[1 + 3 * 2] * p.f.torque[2];
-    tz = A[2 + 3 * 0] * p.f.torque[0] + A[2 + 3 * 1] * p.f.torque[1] +
-         A[2 + 3 * 2] * p.f.torque[2];
+    tx = A[0 + 3 * 0] * p.f->torque[0] + A[0 + 3 * 1] * p.f->torque[1] +
+         A[0 + 3 * 2] * p.f->torque[2];
+    ty = A[1 + 3 * 0] * p.f->torque[0] + A[1 + 3 * 1] * p.f->torque[1] +
+         A[1 + 3 * 2] * p.f->torque[2];
+    tz = A[2 + 3 * 0] * p.f->torque[0] + A[2 + 3 * 1] * p.f->torque[1] +
+         A[2 + 3 * 2] * p.f->torque[2];
 
     if (thermo_switch & THERMO_LANGEVIN) {
 #if defined(VIRTUAL_SITES) && defined(THERMOSTAT_IGNORE_NON_VIRTUAL)
-      if (!p.p.is_virtual)
+      if (!p.p->is_virtual)
 #endif
       {
         friction_thermo_langevin_rotation(&p);
 
-        p.f.torque[0] += tx;
-        p.f.torque[1] += ty;
-        p.f.torque[2] += tz;
+        p.f->torque[0] += tx;
+        p.f->torque[1] += ty;
+        p.f->torque[2] += tz;
       }
     } else {
-      p.f.torque[0] = tx;
-      p.f.torque[1] = ty;
-      p.f.torque[2] = tz;
+      p.f->torque[0] = tx;
+      p.f->torque[1] = ty;
+      p.f->torque[2] = tz;
     }
 
-    if (!(p.p.rotation & ROTATION_X))
-      p.f.torque[0] = 0;
+    if (!(p.p->rotation & ROTATION_X))
+      p.f->torque[0] = 0;
 
-    if (!(p.p.rotation & ROTATION_Y))
-      p.f.torque[1] = 0;
+    if (!(p.p->rotation & ROTATION_Y))
+      p.f->torque[1] = 0;
 
-    if (!(p.p.rotation & ROTATION_Z))
-      p.f.torque[2] = 0;
+    if (!(p.p->rotation & ROTATION_Z))
+      p.f->torque[2] = 0;
 
 #if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
     double omega_swim[3] = {0, 0, 0};
     double omega_swim_body[3] = {0, 0, 0};
-    if (p.swim.swimming && lattice_switch != 0) {
+    if (p.swim->swimming && lattice_switch != 0) {
       double dip[3];
       double diff[3];
       double cross[3];
       double l_diff, l_cross;
 
-      dip[0] = p.swim.dipole_length * p.r.quatu[0];
-      dip[1] = p.swim.dipole_length * p.r.quatu[1];
-      dip[2] = p.swim.dipole_length * p.r.quatu[2];
+      dip[0] = p.swim->dipole_length * p.r.quatu[0];
+      dip[1] = p.swim->dipole_length * p.r.quatu[1];
+      dip[2] = p.swim->dipole_length * p.r.quatu[2];
 
-      diff[0] = (p.swim.v_center[0] - p.swim.v_source[0]);
-      diff[1] = (p.swim.v_center[1] - p.swim.v_source[1]);
-      diff[2] = (p.swim.v_center[2] - p.swim.v_source[2]);
+      diff[0] = (p.swim->v_center[0] - p.swim->v_source[0]);
+      diff[1] = (p.swim->v_center[1] - p.swim->v_source[1]);
+      diff[2] = (p.swim->v_center[2] - p.swim->v_source[2]);
 
       cross[0] = diff[1] * dip[2] - diff[2] * dip[1];
       cross[1] = diff[0] * dip[2] - diff[2] * dip[0];
@@ -346,10 +346,10 @@ void convert_torques_propagate_omega() {
       l_cross =
           sqrt(cross[0] * cross[0] + cross[1] * cross[1] + cross[2] * cross[2]);
 
-      if (l_cross > 0 && p.swim.dipole_length > 0) {
-        omega_swim[0] = l_diff * cross[0] / (l_cross * p.swim.dipole_length);
-        omega_swim[1] = l_diff * cross[1] / (l_cross * p.swim.dipole_length);
-        omega_swim[2] = l_diff * cross[2] / (l_cross * p.swim.dipole_length);
+      if (l_cross > 0 && p.swim->dipole_length > 0) {
+        omega_swim[0] = l_diff * cross[0] / (l_cross * p.swim->dipole_length);
+        omega_swim[1] = l_diff * cross[1] / (l_cross * p.swim->dipole_length);
+        omega_swim[2] = l_diff * cross[2] / (l_cross * p.swim->dipole_length);
 
         omega_swim_body[0] = A[0 + 3 * 0] * omega_swim[0] +
                              A[0 + 3 * 1] * omega_swim[1] +
@@ -361,27 +361,27 @@ void convert_torques_propagate_omega() {
                              A[2 + 3 * 1] * omega_swim[1] +
                              A[2 + 3 * 2] * omega_swim[2];
 
-        p.f.torque[0] +=
-            p.swim.rotational_friction * (omega_swim_body[0] - p.m.omega[0]);
-        p.f.torque[1] +=
-            p.swim.rotational_friction * (omega_swim_body[1] - p.m.omega[1]);
-        p.f.torque[2] +=
-            p.swim.rotational_friction * (omega_swim_body[2] - p.m.omega[2]);
+        p.f->torque[0] +=
+            p.swim->rotational_friction * (omega_swim_body[0] - p.m->omega[0]);
+        p.f->torque[1] +=
+            p.swim->rotational_friction * (omega_swim_body[1] - p.m->omega[1]);
+        p.f->torque[2] +=
+            p.swim->rotational_friction * (omega_swim_body[2] - p.m->omega[2]);
       }
     }
 #endif
 
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
+    ONEPART_TRACE(if (p.p->identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
+        this_node, p.f->f[0], p.f->f[1], p.f->f[2], p.m->v[0], p.m->v[1], p.m->v[2]));
 
-    p.m.omega[0] += time_step_half * p.f.torque[0] / p.p.rinertia[0];
-    p.m.omega[1] += time_step_half * p.f.torque[1] / p.p.rinertia[1];
-    p.m.omega[2] += time_step_half * p.f.torque[2] / p.p.rinertia[2];
+    p.m->omega[0] += time_step_half * p.f->torque[0] / p.p->rinertia[0];
+    p.m->omega[1] += time_step_half * p.f->torque[1] / p.p->rinertia[1];
+    p.m->omega[2] += time_step_half * p.f->torque[2] / p.p->rinertia[2];
 
     // zeroth estimate of omega
     for (int j = 0; j < 3; j++)
-      omega_0[j] = p.m.omega[j];
+      omega_0[j] = p.m->omega[j];
 
     /* if the tensor of inertia is isotropic, the following refinement is not
        needed.
@@ -391,23 +391,23 @@ void convert_torques_propagate_omega() {
       double Wd[3];
 
       Wd[0] =
-          (p.m.omega[1] * p.m.omega[2] * (p.p.rinertia[1] - p.p.rinertia[2])) /
-          p.p.rinertia[0];
+          (p.m->omega[1] * p.m->omega[2] * (p.p->rinertia[1] - p.p->rinertia[2])) /
+          p.p->rinertia[0];
       Wd[1] =
-          (p.m.omega[2] * p.m.omega[0] * (p.p.rinertia[2] - p.p.rinertia[0])) /
-          p.p.rinertia[1];
+          (p.m->omega[2] * p.m->omega[0] * (p.p->rinertia[2] - p.p->rinertia[0])) /
+          p.p->rinertia[1];
       Wd[2] =
-          (p.m.omega[0] * p.m.omega[1] * (p.p.rinertia[0] - p.p.rinertia[1])) /
-          p.p.rinertia[2];
+          (p.m->omega[0] * p.m->omega[1] * (p.p->rinertia[0] - p.p->rinertia[1])) /
+          p.p->rinertia[2];
 
-      p.m.omega[0] = omega_0[0] + time_step_half * Wd[0];
-      p.m.omega[1] = omega_0[1] + time_step_half * Wd[1];
-      p.m.omega[2] = omega_0[2] + time_step_half * Wd[2];
+      p.m->omega[0] = omega_0[0] + time_step_half * Wd[0];
+      p.m->omega[1] = omega_0[1] + time_step_half * Wd[1];
+      p.m->omega[2] = omega_0[2] + time_step_half * Wd[2];
     }
 
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
-        p.m.v[1], p.m.v[2]));
+    ONEPART_TRACE(if (p.p->identity == check_id) fprintf(
+        stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m->v[0],
+        p.m->v[1], p.m->v[2]));
   }
 }
 
@@ -417,42 +417,42 @@ void convert_initial_torques() {
 
   INTEG_TRACE(fprintf(stderr, "%d: convert_initial_torques:\n", this_node));
   for (auto &p : local_cells.particles()) {
-    if (!p.p.rotation)
+    if (!p.p->rotation)
       continue;
     double A[9];
     define_rotation_matrix(p, A);
 
-    tx = A[0 + 3 * 0] * p.f.torque[0] + A[0 + 3 * 1] * p.f.torque[1] +
-         A[0 + 3 * 2] * p.f.torque[2];
-    ty = A[1 + 3 * 0] * p.f.torque[0] + A[1 + 3 * 1] * p.f.torque[1] +
-         A[1 + 3 * 2] * p.f.torque[2];
-    tz = A[2 + 3 * 0] * p.f.torque[0] + A[2 + 3 * 1] * p.f.torque[1] +
-         A[2 + 3 * 2] * p.f.torque[2];
+    tx = A[0 + 3 * 0] * p.f->torque[0] + A[0 + 3 * 1] * p.f->torque[1] +
+         A[0 + 3 * 2] * p.f->torque[2];
+    ty = A[1 + 3 * 0] * p.f->torque[0] + A[1 + 3 * 1] * p.f->torque[1] +
+         A[1 + 3 * 2] * p.f->torque[2];
+    tz = A[2 + 3 * 0] * p.f->torque[0] + A[2 + 3 * 1] * p.f->torque[1] +
+         A[2 + 3 * 2] * p.f->torque[2];
 
     if (thermo_switch & THERMO_LANGEVIN) {
 
       friction_thermo_langevin_rotation(&p);
-      p.f.torque[0] += tx;
-      p.f.torque[1] += ty;
-      p.f.torque[2] += tz;
+      p.f->torque[0] += tx;
+      p.f->torque[1] += ty;
+      p.f->torque[2] += tz;
     } else {
-      p.f.torque[0] = tx;
-      p.f.torque[1] = ty;
-      p.f.torque[2] = tz;
+      p.f->torque[0] = tx;
+      p.f->torque[1] = ty;
+      p.f->torque[2] = tz;
     }
 
-    if (!(p.p.rotation & ROTATION_X))
-      p.f.torque[0] = 0;
+    if (!(p.p->rotation & ROTATION_X))
+      p.f->torque[0] = 0;
 
-    if (!(p.p.rotation & ROTATION_Y))
-      p.f.torque[1] = 0;
+    if (!(p.p->rotation & ROTATION_Y))
+      p.f->torque[1] = 0;
 
-    if (!(p.p.rotation & ROTATION_Z))
-      p.f.torque[2] = 0;
+    if (!(p.p->rotation & ROTATION_Z))
+      p.f->torque[2] = 0;
 
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
+    ONEPART_TRACE(if (p.p->identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
+        this_node, p.f->f[0], p.f->f[1], p.f->f[2], p.m->v[0], p.m->v[1], p.m->v[2]));
   }
 }
 
@@ -462,12 +462,12 @@ void convert_omega_body_to_space(const Particle *p, double *omega) {
   double A[9];
   define_rotation_matrix(*p, A);
 
-  omega[0] = A[0 + 3 * 0] * p->m.omega[0] + A[1 + 3 * 0] * p->m.omega[1] +
-             A[2 + 3 * 0] * p->m.omega[2];
-  omega[1] = A[0 + 3 * 1] * p->m.omega[0] + A[1 + 3 * 1] * p->m.omega[1] +
-             A[2 + 3 * 1] * p->m.omega[2];
-  omega[2] = A[0 + 3 * 2] * p->m.omega[0] + A[1 + 3 * 2] * p->m.omega[1] +
-             A[2 + 3 * 2] * p->m.omega[2];
+  omega[0] = A[0 + 3 * 0] * p->m->omega[0] + A[1 + 3 * 0] * p->m->omega[1] +
+             A[2 + 3 * 0] * p->m->omega[2];
+  omega[1] = A[0 + 3 * 1] * p->m->omega[0] + A[1 + 3 * 1] * p->m->omega[1] +
+             A[2 + 3 * 1] * p->m->omega[2];
+  omega[2] = A[0 + 3 * 2] * p->m->omega[0] + A[1 + 3 * 2] * p->m->omega[1] +
+             A[2 + 3 * 2] * p->m->omega[2];
 }
 
 Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &vec) {
@@ -499,24 +499,24 @@ void convert_torques_body_to_space(const Particle *p, double *torque) {
   double A[9];
   define_rotation_matrix(*p, A);
 
-  torque[0] = A[0 + 3 * 0] * p->f.torque[0] + A[1 + 3 * 0] * p->f.torque[1] +
-              A[2 + 3 * 0] * p->f.torque[2];
-  torque[1] = A[0 + 3 * 1] * p->f.torque[0] + A[1 + 3 * 1] * p->f.torque[1] +
-              A[2 + 3 * 1] * p->f.torque[2];
-  torque[2] = A[0 + 3 * 2] * p->f.torque[0] + A[1 + 3 * 2] * p->f.torque[1] +
-              A[2 + 3 * 2] * p->f.torque[2];
+  torque[0] = A[0 + 3 * 0] * p->f->torque[0] + A[1 + 3 * 0] * p->f->torque[1] +
+              A[2 + 3 * 0] * p->f->torque[2];
+  torque[1] = A[0 + 3 * 1] * p->f->torque[0] + A[1 + 3 * 1] * p->f->torque[1] +
+              A[2 + 3 * 1] * p->f->torque[2];
+  torque[2] = A[0 + 3 * 2] * p->f->torque[0] + A[1 + 3 * 2] * p->f->torque[1] +
+              A[2 + 3 * 2] * p->f->torque[2];
 }
 
 void convert_vel_space_to_body(const Particle *p, double *vel_body) {
   double A[9];
   define_rotation_matrix(*p, A);
 
-  vel_body[0] = A[0 + 3 * 0] * p->m.v[0] + A[0 + 3 * 1] * p->m.v[1] +
-                A[0 + 3 * 2] * p->m.v[2];
-  vel_body[1] = A[1 + 3 * 0] * p->m.v[0] + A[1 + 3 * 1] * p->m.v[1] +
-                A[1 + 3 * 2] * p->m.v[2];
-  vel_body[2] = A[2 + 3 * 0] * p->m.v[0] + A[2 + 3 * 1] * p->m.v[1] +
-                A[2 + 3 * 2] * p->m.v[2];
+  vel_body[0] = A[0 + 3 * 0] * p->m->v[0] + A[0 + 3 * 1] * p->m->v[1] +
+                A[0 + 3 * 2] * p->m->v[2];
+  vel_body[1] = A[1 + 3 * 0] * p->m->v[0] + A[1 + 3 * 1] * p->m->v[1] +
+                A[1 + 3 * 2] * p->m->v[2];
+  vel_body[2] = A[2 + 3 * 0] * p->m->v[0] + A[2 + 3 * 1] * p->m->v[1] +
+                A[2 + 3 * 2] * p->m->v[2];
 }
 
 void convert_vec_space_to_body(Particle *p, double *v, double *res) {
@@ -537,15 +537,15 @@ void local_rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
 
   //  printf("%g %g %g - ",a[0],a[1],a[2]);
   // Rotation turned off entirely?
-  if (!p->p.rotation)
+  if (!p->p->rotation)
     return;
 
   // Per coordinate fixing
-  if (!(p->p.rotation & ROTATION_X))
+  if (!(p->p->rotation & ROTATION_X))
     a[0] = 0;
-  if (!(p->p.rotation & ROTATION_Y))
+  if (!(p->p->rotation & ROTATION_Y))
     a[1] = 0;
-  if (!(p->p.rotation & ROTATION_Z))
+  if (!(p->p->rotation & ROTATION_Z))
     a[2] = 0;
   // Re-normalize rotation axis
   double l = sqrt(sqrlen(a));
@@ -574,7 +574,7 @@ void local_rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
   convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
   // When dipoles are enabled, update dipole moment
-  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+  convert_quatu_to_dip(p->r.quatu, p->p->dipm, p->r.dip);
 #endif
 }
 

@@ -1047,8 +1047,8 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force,
   force[1] = 0;
   force[2] = 0;
 
-  if ((p1->p.identity != p2->p.identity) &&
-      (checkIfParticlesInteract(p1->p.type, p2->p.type))) {
+  if ((p1->p->identity != p2->p->identity) &&
+      (checkIfParticlesInteract(p1->p->type, p2->p->type))) {
     /* distance calculation */
     get_mi_vector(d, p1->r.p, p2->r.p);
     dist2 = Utils::sqr(d[0]) + Utils::sqr(d[1]) + Utils::sqr(d[2]);
@@ -1183,7 +1183,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
       for (int k = 0; k < 3; k++) {
         for (int l = 0; l < 3; l++) {
           TensorInBin[bin].e[k * 3 + l] +=
-              (p.m.v[k]) * (p.m.v[l]) * p.p.mass / time_step / time_step;
+              (p.m->v[k]) * (p.m->v[l]) * p.p->mass / time_step / time_step;
         }
       }
     }
@@ -1203,7 +1203,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
       calc_bonded_force(&p, p2, iaparams, &j, dx, force.data());
       PTENSOR_TRACE(
           fprintf(stderr, "%d: Bonded to particle %d with force %f %f %f\n",
-                  this_node, p2->p.identity, force[0], force[1], force[2]));
+                  this_node, p2->p->identity, force[0], force[1], force[2]));
       if ((pow(force[0], 2) + pow(force[1], 2) + pow(force[2], 2)) > 0) {
         if (distribute_tensors(TensorInBin, force.data(), bins, range_start,
                                range, p.r.p.data(), p2->r.p.data()) != 1)

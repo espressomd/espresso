@@ -410,15 +410,15 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
 
   CELL_TRACE(fprintf(stderr, "%d: sorting in %d\n", this_node, pl->n));
   for (p = 0; p < pl->n; p++) {
-    fold_position(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i);
+    fold_position(pl->part[p].r.p, pl->part[p].m->v, pl->part[p].l->i);
 
     if (LAYERED_BTM_NEIGHBOR && pl->part[p].r.p[2] < my_left[2]) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node below\n",
-                         this_node, pl->part[p].p.identity));
+                         this_node, pl->part[p].p->identity));
       move_indexed_particle(dn, pl, p);
     } else if (LAYERED_TOP_NEIGHBOR && pl->part[p].r.p[2] >= my_right[2]) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node above\n",
-                         this_node, pl->part[p].p.identity));
+                         this_node, pl->part[p].p->identity));
       move_indexed_particle(up, pl, p);
     } else
       move_indexed_particle(layered_position_to_cell(pl->part[p].r.p.data()),
@@ -450,20 +450,20 @@ void layered_exchange_and_sort_particles(int global_flag) {
 
       if (n_nodes != 1 && LAYERED_BTM_NEIGHBOR && part->r.p[2] < my_left[2]) {
         CELL_TRACE(fprintf(stderr, "%d: send part %d down\n", this_node,
-                           part->p.identity));
+                           part->p->identity));
         move_indexed_particle(&send_buf_dn, oc, p);
         if (p < oc->n)
           p--;
       } else if (n_nodes != 1 && LAYERED_TOP_NEIGHBOR &&
                  part->r.p[2] >= my_right[2]) {
         CELL_TRACE(fprintf(stderr, "%d: send part %d up\n", this_node,
-                           part->p.identity));
+                           part->p->identity));
         move_indexed_particle(&send_buf_up, oc, p);
         if (p < oc->n)
           p--;
       } else {
         /* particle stays here. Fold anyways to get x,y correct */
-        fold_position(part->r.p, part->m.v, part->l.i);
+        fold_position(part->r.p, part->m->v, part->l->i);
 
         nc = layered_position_to_cell(part->r.p.data());
         if (nc != oc) {

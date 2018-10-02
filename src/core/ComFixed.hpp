@@ -40,9 +40,9 @@ private:
 
     for (auto const &p : particles) {
       /* Check if type is of interest */
-      auto it = m_type_index.find(p.p.type);
+      auto it = m_type_index.find(p.p->type);
       if (it != m_type_index.end()) {
-        ret[it->second] += Vector3d{p.f.f};
+        ret[it->second] += Vector3d{p.f->f};
       }
     }
 
@@ -54,9 +54,9 @@ private:
 
     for (auto const &p : particles) {
       /* Check if type is of interest */
-      auto it = m_type_index.find(p.p.type);
+      auto it = m_type_index.find(p.p->type);
       if (it != m_type_index.end()) {
-        ret[it->second] += p.p.mass;
+        ret[it->second] += p.p->mass;
       }
     }
 
@@ -95,12 +95,12 @@ public:
 
     for (auto &p : particles) {
       /* Check if type is of interest */
-      auto it = m_type_index.find(p.p.type);
+      auto it = m_type_index.find(p.p->type);
       if (it != m_type_index.end()) {
-        auto const mass_frac = p.p.mass / masses[it->second];
+        auto const mass_frac = p.p->mass / masses[it->second];
         auto const &type_force = forces[it->second];
         for (int i = 0; i < 3; i++) {
-          p.f.f[i] -= mass_frac * type_force[i];
+          p.f->f[i] -= mass_frac * type_force[i];
         }
       }
     }
