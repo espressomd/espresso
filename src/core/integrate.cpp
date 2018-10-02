@@ -523,6 +523,9 @@ void rescale_velocities(double scale) {
 /************************************************************/
 
 void propagate_vel_finalize_p_inst() {
+
+double le_vel = lees_edwards_get_velocity(sim_time + time_step) /2;
+
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
@@ -558,7 +561,7 @@ void propagate_vel_finalize_p_inst() {
 #ifdef LEES_EDWARDS
         if (j == 0 && p.p.lees_edwards_flag != 0) {
           p.m.v[0] += p.p.lees_edwards_flag *
-                      lees_edwards_get_velocity(sim_time + time_step) / 2;
+                      le_vel;
         }
 #endif
 
@@ -788,6 +791,9 @@ void propagate_pos() {
 void propagate_vel_pos() {
   INTEG_TRACE(fprintf(stderr, "%d: propagate_vel_pos:\n", this_node));
 
+double shear_velocity = lees_edwards_get_velocity(sim_time + time_step / 2);
+double offset_at_half_time_step =
+          lees_edwards_get_offset(sim_time + time_step / 2);
 #ifdef ADDITIONAL_CHECKS
   db_max_force = db_max_vel = 0;
   db_maxf_id = db_maxv_id = -1;
@@ -832,9 +838,6 @@ void propagate_vel_pos() {
       //
       // The update of the velocity at the end of the time step is triggered by
       // the flag and occurs in propagate_vel_finalize_p_inst
-      auto shear_velocity = lees_edwards_get_velocity(sim_time + time_step / 2);
-      auto offset_at_half_time_step =
-          lees_edwards_get_offset(sim_time + time_step / 2);
       if (p.r.p[1] >= box_l[1]) {
         p.m.v[0] -= shear_velocity / 2;
         p.r.p[0] -= (offset_at_half_time_step -

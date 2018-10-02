@@ -23,7 +23,7 @@
 #include "lees_edwards.hpp"
 #include "integrate.hpp"
 
-lees_edwards_protocol_struct lees_edwards_protocol;
+lees_edwards_protocol_struct lees_edwards_protocol = {LEES_EDWARDS_PROTOCOL_OFF, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 /* Functions to determine the current offset and shear rate with respect to the chosen protocol */
 

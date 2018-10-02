@@ -120,7 +120,6 @@ void on_program_start() {
 #endif
 
 #ifdef LEES_EDWARDS
-  lees_edwards_protocol.type = LEES_EDWARDS_PROTOCOL_OFF;
   int le_count = 6;
   int le_blocklengths[] = {1, 1, 1, 1, 1, 1};
   MPI_Aint le_displacements[] = \
