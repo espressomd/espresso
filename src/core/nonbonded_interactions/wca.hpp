@@ -50,8 +50,7 @@ inline double wca_pair_energy(const Particle *p1, const Particle *p2,
   if (dist < ia_params->WCA_cut) {
     auto const frac2 = Utils::sqr(ia_params->WCA_sig / dist);
     auto const frac6 = frac2 * frac2 * frac2;
-    return 4.0 * ia_params->WCA_eps *
-           (Utils::sqr(frac6) - frac6 + .25);
+    return 4.0 * ia_params->WCA_eps * (Utils::sqr(frac6) - frac6 + .25);
   }
   return 0.0;
 }

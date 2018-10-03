@@ -112,13 +112,13 @@ class InteractionsNonBondedTest(ut.TestCase):
     def test_wca(self):
         wca_eps = 2.12
         wca_sig = 1.37
-        wca_cutoff = wca_sig * 2.**(1./6.)
+        wca_cutoff = wca_sig * 2.**(1. / 6.)
 
         wca_shift = -((wca_sig / wca_cutoff)**12 - (
             wca_sig / wca_cutoff)**6)
 
-        self.system.non_bonded_inter[0,0].wca.set_params(epsilon=wca_eps,
-                                                         sigma=wca_sig)
+        self.system.non_bonded_inter[0, 0].wca.set_params(epsilon=wca_eps,
+                                                          sigma=wca_sig)
 
         for i in range(231):
             self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -144,7 +144,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
         self.system.non_bonded_inter[0, 0].wca.set_params(
-            epsilon=0.,sigma=1.)
+            epsilon=0., sigma=1.)
 
     # Test Generic Lennard-Jones Softcore Potential
     @ut.skipIf(not espressomd.has_features("LJGEN_SOFTCORE"),
