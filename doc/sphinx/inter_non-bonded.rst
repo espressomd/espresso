@@ -219,7 +219,7 @@ on/off during a simulation.
 .. _Weeks-Chandler-Anderson interaction:
 
 Weeks-Chandler-Anderson interaction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
     Feature ``WCA`` required.
