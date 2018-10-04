@@ -216,22 +216,22 @@ interaction, while :math:`\delta` varies how smoothly the potential goes to zero
 alchemical transformations, where a group of atoms can be slowly turned
 on/off during a simulation.
 
-.. _Weeks-Chandler-Anderson interaction:
+.. _Weeks-Chandler-Andersen interaction:
 
-Weeks-Chandler-Anderson interaction
+Weeks-Chandler-Andersen interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
     Feature ``WCA`` required.
 
 
-The interface for the Weeks-Chandler-Anderson interactions is implemented in
+The interface for the Weeks-Chandler-Andersen interactions is implemented in
 :class:`espressomd.interactions.WCAInteraction`. They
 are configured via the syntax::
 
     system.non_bonded_inter[type1, type2].wca.set_params(**kwargs)
 
-This command defines a Weeks-Chandler-Anderson interaction between particles of the
+This command defines a Weeks-Chandler-Andersen interaction between particles of the
 types ``type1`` and ``type2``. The potential is defined by
 
 .. math::
