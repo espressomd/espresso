@@ -348,26 +348,20 @@ struct Particle {
    */
   Particle flat_copy() const {
     Particle ret;
-    delete ret.p;
-    ret.p = new ParticleProperties(*p);
+    ret.p.reset(new ParticleProperties(*p));
     ret.r = r;
-    delete ret.m;
-    ret.m = new ParticleMomentum(*m);
-    delete ret.f;
-    ret.f = new ParticleForce(*f);
-    delete ret.l;
-    ret.l = new ParticleLocal(*l);
+    ret.m.reset(new ParticleMomentum(*m));
+    ret.f.reset(new ParticleForce(*f));
+    ret.l.reset(new ParticleLocal(*l));
 #ifdef LB
-    delete ret.lc;
-    ret.lc = new ParticleLatticeCoupling(*lc);
+    ret.lc.reset(new ParticleLatticeCoupling(*lc));
 #endif
     ret.bl = bl;
 #ifdef EXCLUSIONS
     ret.el = el;
 #endif
 #ifdef ENGINE
-    delete ret.swim;
-    ret.swim = new ParticleParametersSwimming(*swim);
+    ret.swim.reset(new ParticleParametersSwimming(*swim));
 #endif
 
     return ret;
@@ -413,97 +407,62 @@ struct Particle {
 
   // move constructor
   Particle(Particle &&rhs) noexcept
-    : p(rhs.p)
+    : p(std::move(rhs.p))
     , r(rhs.r)
-    , m(rhs.m)
-    , f(rhs.f)
-    , l(rhs.l)
+    , m(std::move(rhs.m))
+    , f(std::move(rhs.f))
+    , l(std::move(rhs.l))
 #ifdef LB
-    , lc(rhs.lc)
+    , lc(std::move(rhs.lc))
 #endif
     , bl(std::move(rhs.bl))
 #ifdef EXCLUSIONS
     , el(std::move(rhs.el))
 #endif
 #ifdef ENGINE
-    , swim(rhs.swim)
+    , swim(std::move(rhs.swim))
 #endif
-    {
-      rhs.p = nullptr;
-      rhs.m = nullptr;
-      rhs.f = nullptr;
-      rhs.l = nullptr;
-#ifdef LB
-      rhs.lc = nullptr;
-#endif
-#ifdef ENGINE
-      rhs.swim = nullptr;
-#endif
-    }
+    {}
 
   // copy assignment operator
   Particle &operator=(const Particle &rhs) {
     if (this != &rhs) {
-      auto p_ = new ParticleProperties(*rhs.p);
-      delete p;
-      p = p_;
+      p.reset(new ParticleProperties(*rhs.p));
       r = rhs.r;
-      auto m_ = new ParticleMomentum(*rhs.m);
-      delete m;
-      m = m_;
-      auto f_ = new ParticleForce(*rhs.f);
-      delete f;
-      f = f_;
-      auto l_ = new ParticleLocal(*rhs.l);
-      delete l;
-      l = l_;
+      m.reset(new ParticleMomentum(*rhs.m));
+      f.reset(new ParticleForce(*rhs.f));
+      l.reset(new ParticleLocal(*rhs.l));
 #ifdef LB
-      auto lc_ = new ParticleLatticeCoupling(*rhs.lc);
-      delete lc;
-      lc = lc_;
+      lc.reset(new ParticleLatticeCoupling(*rhs.lc));
 #endif
       bl = rhs.bl;
 #ifdef EXCLUSIONS
       el = rhs.el;
 #endif
 #ifdef ENGINE
-      auto swim_ = new ParticleParametersSwimming(*rhs.swim);
-      delete swim;
-      swim = swim_;
+      swim.reset(new ParticleParametersSwimming(*rhs.swim));
 #endif
     }
     return *this;
   }
 
   // move assignment operator
-  Particle &operator=(Particle &&rhs) {
+  Particle &operator=(Particle &&rhs) noexcept {
     if (this != &rhs) {
-      delete p;
-      p = rhs.p;
-      rhs.p = nullptr;
+      p = std::move(rhs.p);
       r = rhs.r;
-      delete m;
-      m = rhs.m;
-      rhs.m = nullptr;
-      delete f;
-      f = rhs.f;
-      rhs.f = nullptr;
-      delete l;
-      l = rhs.l;
-      rhs.l = nullptr;
+      m = std::move(rhs.m);
+      f = std::move(rhs.f);
+      l = std::move(rhs.l);
 #ifdef LB
-      delete lc;
-      lc = rhs.lc;
-      rhs.lc = nullptr;
+      lc = std::move(rhs.lc);
 #endif
       bl = std::move(rhs.bl);
 #ifdef EXCLUSIONS
       el = std::move(rhs.el);
 #endif
 #ifdef ENGINE
-      delete swim;
-      swim = rhs.swim;
-      rhs.swim = nullptr;
+      swim = std::move(rhs.swim);
 #endif
     }
     return *this;
@@ -511,38 +470,32 @@ struct Particle {
 
   // destructor
   ~Particle() {
-    delete p;
-    p = nullptr;
-    delete m;
-    m = nullptr;
-    delete f;
-    f = nullptr;
-    delete l;
-    l = nullptr;
+    p.reset();
+    m.reset();
+    f.reset();
+    l.reset();
 #ifdef LB
-    delete lc;
-    lc = nullptr;
+    lc.reset();
 #endif
 #ifdef ENGINE
-    delete swim;
-    swim = nullptr;
+    swim.reset();
 #endif
   }
 
   ///
-  ParticleProperties* p;
+  std::unique_ptr<ParticleProperties> p;
   ///
   ParticlePosition r;
   ///
-  ParticleMomentum* m;
+  std::unique_ptr<ParticleMomentum> m;
   ///
-  ParticleForce* f;
+  std::unique_ptr<ParticleForce> f;
   ///
-  ParticleLocal* l;
+  std::unique_ptr<ParticleLocal> l;
 
 ///
 #ifdef LB
-  ParticleLatticeCoupling* lc;
+  std::unique_ptr<ParticleLatticeCoupling> lc;
 #endif
   /** Bonded interactions list
    *
@@ -579,7 +532,7 @@ struct Particle {
 #endif
 
 #ifdef ENGINE
-  ParticleParametersSwimming* swim;
+  std::unique_ptr<ParticleParametersSwimming> swim;
 #endif
 };
 

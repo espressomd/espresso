@@ -1337,7 +1337,7 @@ void pointer_to_rotation(Particle const *p, short int const *&res) {
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,
                          ParticleParametersSwimming const *&swim) {
-  swim = p->swim;
+  swim = p->swim.get();
 }
 #endif
 

@@ -88,14 +88,14 @@ void momentum_flip();
 void save_last_state() {
   for (auto &p : local_cells.particles()) {
     memmove(&p.l->r_ls, &p.r, sizeof(ParticlePosition));
-    memmove(&p.l->m_ls, p.m, sizeof(ParticleMomentum));
+    memmove(&p.l->m_ls, p.m.get(), sizeof(ParticleMomentum));
   }
 }
 
 void load_last_state() {
   for (auto &p : local_cells.particles()) {
     memmove(&p.r, &p.l->r_ls, sizeof(ParticlePosition));
-    memmove(p.m, &p.l->m_ls, sizeof(ParticleMomentum));
+    memmove(p.m.get(), &p.l->m_ls, sizeof(ParticleMomentum));
   }
 }
 

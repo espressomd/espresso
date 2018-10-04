@@ -29,28 +29,30 @@ namespace serialization {
 template <typename Archive>
 void load(Archive &ar, Particle &p, const unsigned int /* file_version */) {
   /* Cruel but effective */
-  p.~Particle();
-  ar >> make_array(reinterpret_cast<char *>(&p), sizeof(Particle));
-  p.p = new ParticleProperties;
-  ar >> make_array(reinterpret_cast<char *>(p.p), sizeof(ParticleProperties));
-  p.m = new ParticleMomentum;
-  ar >> make_array(reinterpret_cast<char *>(p.m), sizeof(ParticleMomentum));
-  p.f = new ParticleForce;
-  ar >> make_array(reinterpret_cast<char *>(p.f), sizeof(ParticleForce));
-  p.l = new ParticleLocal;
-  ar >> make_array(reinterpret_cast<char *>(p.l), sizeof(ParticleLocal));
+  ar >> make_array(reinterpret_cast<char *>(&p.r), sizeof(ParticlePosition));
+  p.p.reset(new ParticleProperties{});
+  ar >> make_array(reinterpret_cast<char *>(p.p.get()), sizeof(ParticleProperties));
+  p.m.reset(new ParticleMomentum{});
+  ar >> make_array(reinterpret_cast<char *>(p.m.get()), sizeof(ParticleMomentum));
+  p.f.reset(new ParticleForce{});
+  ar >> make_array(reinterpret_cast<char *>(p.f.get()), sizeof(ParticleForce));
+  p.l.reset(new ParticleLocal{});
+  ar >> make_array(reinterpret_cast<char *>(p.l.get()), sizeof(ParticleLocal));
 #ifdef LB
-  p.lc = new ParticleLatticeCoupling;
-  ar >> make_array(reinterpret_cast<char *>(p.lc), sizeof(ParticleLatticeCoupling));
+  p.lc.reset(new ParticleLatticeCoupling{});
+  ar >> make_array(reinterpret_cast<char *>(p.lc.get()), sizeof(ParticleLatticeCoupling));
 #endif
 #ifdef ENGINE
-  p.swim = new ParticleParametersSwimming;
-  ar >> make_array(reinterpret_cast<char *>(p.swim), sizeof(ParticleParametersSwimming));
+  p.swim.reset(new ParticleParametersSwimming{});
+  ar >> make_array(reinterpret_cast<char *>(p.swim.get()), sizeof(ParticleParametersSwimming));
 #endif
-  new (&(p.bl)) IntList(p.bl.size());
+  uint32_t n;
+  ar >> n;
+  new (&(p.bl)) IntList(n);
   ar >> p.bl;
 #ifdef EXCLUSIONS
-  new (&(p.el)) IntList(p.el.size());
+  ar >> n;
+  new (&(p.el)) IntList(n);
   ar >> p.el;
 #endif
 }
@@ -59,19 +61,21 @@ template <typename Archive>
 void save(Archive &ar, Particle const &p,
           const unsigned int /* file_version */) {
   /* Cruel but effective */
-  ar << make_array(reinterpret_cast<char const *>(&p), sizeof(Particle));
-  ar << make_array(reinterpret_cast<char const *>(p.p), sizeof(ParticleProperties));
-  ar << make_array(reinterpret_cast<char const *>(p.m), sizeof(ParticleMomentum));
-  ar << make_array(reinterpret_cast<char const *>(p.f), sizeof(ParticleForce));
-  ar << make_array(reinterpret_cast<char const *>(p.l), sizeof(ParticleLocal));
+  ar << make_array(reinterpret_cast<char const *>(&p.r), sizeof(ParticlePosition));
+  ar << make_array(reinterpret_cast<char const *>(p.p.get()), sizeof(ParticleProperties));
+  ar << make_array(reinterpret_cast<char const *>(p.m.get()), sizeof(ParticleMomentum));
+  ar << make_array(reinterpret_cast<char const *>(p.f.get()), sizeof(ParticleForce));
+  ar << make_array(reinterpret_cast<char const *>(p.l.get()), sizeof(ParticleLocal));
 #ifdef LB
-  ar << make_array(reinterpret_cast<char const *>(p.lc), sizeof(ParticleLatticeCoupling));
+  ar << make_array(reinterpret_cast<char const *>(p.lc.get()), sizeof(ParticleLatticeCoupling));
 #endif
 #ifdef ENGINE
-  ar << make_array(reinterpret_cast<char const *>(p.swim), sizeof(ParticleParametersSwimming));
+  ar << make_array(reinterpret_cast<char const *>(p.swim.get()), sizeof(ParticleParametersSwimming));
 #endif
+  ar << p.bl.n;
   ar << p.bl;
 #ifdef EXCLUSIONS
+  ar << p.el.n;
   ar << p.el;
 #endif
 }

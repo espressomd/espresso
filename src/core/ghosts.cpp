@@ -161,7 +161,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
       for (int p = 0; p < np; p++) {
         Particle *pt = &part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memmove(insert, pt->p, sizeof(ParticleProperties));
+          memmove(insert, pt->p.get(), sizeof(ParticleProperties));
           insert += sizeof(ParticleProperties);
 #ifdef GHOSTS_HAVE_BONDS
           *(int *)insert = pt->bl.n;
@@ -193,22 +193,22 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           insert += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memmove(insert, pt->m, sizeof(ParticleMomentum));
+          memmove(insert, pt->m.get(), sizeof(ParticleMomentum));
           insert += sizeof(ParticleMomentum);
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memmove(insert, pt->f, sizeof(ParticleForce));
+          memmove(insert, pt->f.get(), sizeof(ParticleForce));
           insert += sizeof(ParticleForce);
         }
 #ifdef LB
         if (data_parts & GHOSTTRANS_COUPLING) {
-          memmove(insert, pt->lc, sizeof(ParticleLatticeCoupling));
+          memmove(insert, pt->lc.get(), sizeof(ParticleLatticeCoupling));
           insert += sizeof(ParticleLatticeCoupling);
         }
 #endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
-          memmove(insert, pt->swim, sizeof(ParticleParametersSwimming));
+          memmove(insert, pt->swim.get(), sizeof(ParticleParametersSwimming));
           insert += sizeof(ParticleParametersSwimming);
         }
 #endif
@@ -288,7 +288,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
       for (int p = 0; p < np; p++) {
         Particle *pt = &part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memmove(pt->p, retrieve, sizeof(ParticleProperties));
+          memmove(pt->p.get(), retrieve, sizeof(ParticleProperties));
           retrieve += sizeof(ParticleProperties);
 #ifdef GHOSTS_HAVE_BONDS
           int n_bonds;
@@ -319,22 +319,22 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
           retrieve += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memmove(pt->m, retrieve, sizeof(ParticleMomentum));
+          memmove(pt->m.get(), retrieve, sizeof(ParticleMomentum));
           retrieve += sizeof(ParticleMomentum);
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memmove(pt->f, retrieve, sizeof(ParticleForce));
+          memmove(pt->f.get(), retrieve, sizeof(ParticleForce));
           retrieve += sizeof(ParticleForce);
         }
 #ifdef LB
         if (data_parts & GHOSTTRANS_COUPLING) {
-          memmove(pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
+          memmove(pt->lc.get(), retrieve, sizeof(ParticleLatticeCoupling));
           retrieve += sizeof(ParticleLatticeCoupling);
         }
 #endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
-          memmove(pt->swim, retrieve, sizeof(ParticleParametersSwimming));
+          memmove(pt->swim.get(), retrieve, sizeof(ParticleParametersSwimming));
           retrieve += sizeof(ParticleParametersSwimming);
         }
 #endif
@@ -411,7 +411,7 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         pt1 = &part1[p];
         pt2 = &part2[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memmove(pt2->p, pt1->p, sizeof(ParticleProperties));
+          memmove(pt2->p.get(), pt1->p.get(), sizeof(ParticleProperties));
 #ifdef GHOSTS_HAVE_BONDS
           pt2->bl = pt1->bl;
 #ifdef EXCLUSIONS
@@ -428,18 +428,18 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         } else if (data_parts & GHOSTTRANS_POSITION)
           memmove(&pt2->r, &pt1->r, sizeof(ParticlePosition));
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memmove(pt2->m, pt1->m, sizeof(ParticleMomentum));
+          memmove(pt2->m.get(), pt1->m.get(), sizeof(ParticleMomentum));
         }
         if (data_parts & GHOSTTRANS_FORCE)
           *(pt2->f) += *(pt1->f);
 
 #ifdef LB
         if (data_parts & GHOSTTRANS_COUPLING)
-          memmove(pt2->lc, pt1->lc, sizeof(ParticleLatticeCoupling));
+          memmove(pt2->lc.get(), pt1->lc.get(), sizeof(ParticleLatticeCoupling));
 #endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING)
-          memmove(pt2->swim, pt1->swim, sizeof(ParticleParametersSwimming));
+          memmove(pt2->swim.get(), pt1->swim.get(), sizeof(ParticleParametersSwimming));
 #endif
       }
     }
