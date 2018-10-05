@@ -515,7 +515,8 @@ class openGLLive(object):
             # DEPTH BUFFER
             dbo = OpenGL.GL.glGenRenderbuffers(1)
             OpenGL.GL.glBindRenderbuffer(OpenGL.GL.GL_RENDERBUFFER, dbo)
-            OpenGL.GL.glRenderbufferStorage(OpenGL.GL.GL_RENDERBUFFER, OpenGL.GL.GL_DEPTH_COMPONENT,
+            OpenGL.GL.glRenderbufferStorage(
+                OpenGL.GL.GL_RENDERBUFFER, OpenGL.GL.GL_DEPTH_COMPONENT,
                                   self.specs['window_size'][0], self.specs['window_size'][1])
             OpenGL.GL.glFramebufferRenderbuffer(
                 OpenGL.GL.GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, OpenGL.GL.GL_RENDERBUFFER, dbo)
@@ -529,7 +530,8 @@ class openGLLive(object):
         self._initial_espresso_updates()
 
         # DRAW
-        OpenGL.GL.glClear(OpenGL.GL.GL_COLOR_BUFFER_BIT | OpenGL.GL.GL_DEPTH_BUFFER_BIT)
+        OpenGL.GL.glClear(
+            OpenGL.GL.GL_COLOR_BUFFER_BIT | OpenGL.GL.GL_DEPTH_BUFFER_BIT)
         OpenGL.GL.glLoadMatrixf(self.camera.modelview)
         self._draw_system()
 
@@ -864,7 +866,13 @@ class openGLLive(object):
                     for p in b[1:]:
                         self.bonds.append([i, p, t])
 
-    def _draw_text(self, x, y, text, color, font=OpenGL.GLUT.GLUT_BITMAP_9_BY_15):
+    def _draw_text(
+        self,
+        x,
+     y,
+     text,
+     color,
+     font=OpenGL.GLUT.GLUT_BITMAP_9_BY_15):
         OpenGL.GL.glColor(color)
         OpenGL.GL.glWindowPos2f(x, y)
         for ch in text:
@@ -940,7 +948,9 @@ class openGLLive(object):
         # CLIP BORDERS OF SIMULATION BOX
         for i in range(6):
             OpenGL.GL.glEnable(OpenGL.GL.OpenGL.GL.GL_CLIP_PLANE0 + i)
-            OpenGL.GL.glClipPlane(OpenGL.GL.OpenGL.GL.GL_CLIP_PLANE0 + i, self.box_eqn[i])
+            OpenGL.GL.glClipPlane(
+                OpenGL.GL.OpenGL.GL.GL_CLIP_PLANE0 + i,
+                self.box_eqn[i])
 
         # NEEDS ADDITIONAL CLIP PLANES
         for s in self.shapes['Shapes::SimplePore']:
@@ -959,7 +969,9 @@ class openGLLive(object):
         # RESET CLIP BORDERS
         for i in range(6):
             OpenGL.GL.glEnable(OpenGL.GL.GL_CLIP_PLANE0 + i)
-            OpenGL.GL.glClipPlane(OpenGL.GL.GL_CLIP_PLANE0 + i, self.box_eqn[i])
+            OpenGL.GL.glClipPlane(
+                OpenGL.GL.GL_CLIP_PLANE0 + i,
+                self.box_eqn[i])
 
         for s in self.shapes['Shapes::Ellipsoid']:
             draw_ellipsoid(
@@ -1256,7 +1268,8 @@ class openGLLive(object):
 
     def _display_all(self):
 
-        OpenGL.GL.glClear(OpenGL.GL.GL_COLOR_BUFFER_BIT | OpenGL.GL.GL_DEPTH_BUFFER_BIT)
+        OpenGL.GL.glClear(
+            OpenGL.GL.GL_COLOR_BUFFER_BIT | OpenGL.GL.GL_DEPTH_BUFFER_BIT)
 
         OpenGL.GL.glLoadMatrixf(self.camera.modelview)
 
@@ -1417,7 +1430,10 @@ class openGLLive(object):
         # TIMERS FOR register_callback
         def dummy_timer(index):
             self.timers[index][1]()
-            OpenGL.GLUT.glutTimerFunc(self.timers[index][0], dummy_timer, index)
+            OpenGL.GLUT.glutTimerFunc(
+                self.timers[index][0],
+                dummy_timer,
+                index)
 
         index = 0
         for t in self.timers:
@@ -1450,7 +1466,8 @@ class openGLLive(object):
     def _get_particle_id(self, pos, pos_old):
 
         OpenGL.GL.glClearColor(0.0, 0.0, 0.0, 1.0)
-        OpenGL.GL.glClear(OpenGL.GL.GL_COLOR_BUFFER_BIT | OpenGL.GL.GL_DEPTH_BUFFER_BIT)
+        OpenGL.GL.glClear(
+            OpenGL.GL.GL_COLOR_BUFFER_BIT | OpenGL.GL.GL_DEPTH_BUFFER_BIT)
 
         OpenGL.GL.glLoadMatrixf(self.camera.modelview)
 
@@ -1473,8 +1490,8 @@ class openGLLive(object):
         if self.specs['spotlight_enabled']:
             OpenGL.GL.glEnable(OpenGL.GL.GL_LIGHT1)
         OpenGL.GL.glClearColor(self.specs['background_color'][0],
-                     self.specs['background_color'][1],
-                     self.specs['background_color'][2], 1.)
+                               self.specs['background_color'][1],
+                               self.specs['background_color'][2], 1.)
 
         return pid, depth
 
@@ -1699,7 +1716,10 @@ class openGLLive(object):
             p = self.camera.camPos
             fp = [p[0], p[1], p[2], 1]
             OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_POSITION, fp)
-            OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_SPOT_DIRECTION, self.camera.state_target)
+            OpenGL.GL.glLightfv(
+                OpenGL.GL.GL_LIGHT1,
+                OpenGL.GL.GL_SPOT_DIRECTION,
+                self.camera.state_target)
 
     def _init_camera(self):
         b = np.array(self.system.box_l)
@@ -1723,18 +1743,21 @@ class openGLLive(object):
 
     def _init_opengl(self):
         OpenGL.GLUT.glutInit(self.specs['name'])
-        OpenGL.GLUT.glutInitDisplayMode(OpenGL.GLUT.GLUT_DOUBLE | OpenGL.GLUT.GLUT_RGB | OpenGL.GLUT.GLUT_DEPTH)
+        OpenGL.GLUT.glutInitDisplayMode(
+            OpenGL.GLUT.GLUT_DOUBLE | OpenGL.GLUT.GLUT_RGB | OpenGL.GLUT.GLUT_DEPTH)
 
         OpenGL.GLUT.glutInitWindowSize(self.specs['window_size'][
-                           0], self.specs['window_size'][1])
+            0], self.specs['window_size'][1])
 
         OpenGL.GLUT.glutCreateWindow(b"ESPResSo visualization")
 
         OpenGL.GL.glClearColor(self.specs['background_color'][0], self.specs[
-                     'background_color'][1], self.specs['background_color'][2], 1.)
+            'background_color'][1], self.specs['background_color'][2], 1.)
 
         OpenGL.GL.glEnable(OpenGL.GL.GL_BLEND)
-        OpenGL.GL.glBlendFunc(OpenGL.GL.GL_SRC_ALPHA, OpenGL.GL.GL_ONE_MINUS_SRC_ALPHA)
+        OpenGL.GL.glBlendFunc(
+            OpenGL.GL.GL_SRC_ALPHA,
+            OpenGL.GL.GL_ONE_MINUS_SRC_ALPHA)
 
         OpenGL.GL.glEnable(OpenGL.GL.GL_POINT_SMOOTH)
         OpenGL.GL.glEnable(OpenGL.GL.GL_LINE_SMOOTH)
@@ -1762,36 +1785,74 @@ class openGLLive(object):
                 self.specs['light_pos']).tolist())
         else:
             OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_POSITION,
-                      (np.array(self.system.box_l) * 1.1).tolist())
+                                (np.array(self.system.box_l) * 1.1).tolist())
 
-        OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_AMBIENT, self.specs['light_colors'][0])
-        OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_DIFFUSE, self.specs['light_colors'][1])
-        OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_SPECULAR, self.specs['light_colors'][2])
+        OpenGL.GL.glLightfv(
+            OpenGL.GL.GL_LIGHT0,
+            OpenGL.GL.GL_AMBIENT,
+            self.specs['light_colors'][0])
+        OpenGL.GL.glLightfv(
+            OpenGL.GL.GL_LIGHT0,
+            OpenGL.GL.GL_DIFFUSE,
+            self.specs['light_colors'][1])
+        OpenGL.GL.glLightfv(
+            OpenGL.GL.GL_LIGHT0,
+            OpenGL.GL.GL_SPECULAR,
+            self.specs['light_colors'][2])
 
-        OpenGL.GL.glLightf(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_CONSTANT_ATTENUATION,
+        OpenGL.GL.glLightf(
+            OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_CONSTANT_ATTENUATION,
                  1.0 / self.specs['light_brightness'])
-        OpenGL.GL.glLightf(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_LINEAR_ATTENUATION,
+        OpenGL.GL.glLightf(
+            OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_LINEAR_ATTENUATION,
                  1.0 / self.specs['light_size'])
         OpenGL.GL.glEnable(OpenGL.GL.GL_LIGHT0)
 
         # LIGHT1: SPOTLIGHT ON CAMERA IN LOOK DIRECTION
         if self.specs['spotlight_enabled']:
-            OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_POSITION, [0, 0, 0, 1])
+            OpenGL.GL.glLightfv(
+                OpenGL.GL.GL_LIGHT1,
+                OpenGL.GL.GL_POSITION,
+                [0,
+                 0,
+                 0,
+                 1])
 
-            OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_AMBIENT, self.specs['spotlight_colors'][0])
-            OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_DIFFUSE, self.specs['spotlight_colors'][1])
+            OpenGL.GL.glLightfv(
+                OpenGL.GL.GL_LIGHT1,
+                OpenGL.GL.GL_AMBIENT,
+                self.specs['spotlight_colors'][0])
+            OpenGL.GL.glLightfv(
+                OpenGL.GL.GL_LIGHT1,
+                OpenGL.GL.GL_DIFFUSE,
+                self.specs['spotlight_colors'][1])
             OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_SPECULAR,
-                      self.specs['spotlight_colors'][2])
+                                self.specs['spotlight_colors'][2])
 
-            OpenGL.GL.glLightf(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_SPOT_CUTOFF, self.specs['spotlight_angle'])
-            OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_SPOT_DIRECTION, [1.0, 1.0, 1.0])
+            OpenGL.GL.glLightf(
+                OpenGL.GL.GL_LIGHT1,
+                OpenGL.GL.GL_SPOT_CUTOFF,
+                self.specs['spotlight_angle'])
+            OpenGL.GL.glLightfv(
+                OpenGL.GL.GL_LIGHT1,
+                OpenGL.GL.GL_SPOT_DIRECTION,
+                [1.0,
+                 1.0,
+                 1.0])
             OpenGL.GL.glLightf(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_SPOT_EXPONENT,
-                     self.specs['spotlight_focus'])
+                               self.specs['spotlight_focus'])
 
-            OpenGL.GL.glLightf(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_CONSTANT_ATTENUATION,
+            OpenGL.GL.glLightf(
+                OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_CONSTANT_ATTENUATION,
                      1.0 / self.specs['spotlight_brightness'])
-            OpenGL.GL.glLightf(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_LINEAR_ATTENUATION, 0.0)
-            OpenGL.GL.glLightf(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_QUADRATIC_ATTENUATION, 0.0)
+            OpenGL.GL.glLightf(
+                OpenGL.GL.GL_LIGHT1,
+                OpenGL.GL.GL_LINEAR_ATTENUATION,
+                0.0)
+            OpenGL.GL.glLightf(
+                OpenGL.GL.GL_LIGHT1,
+                OpenGL.GL.GL_QUADRATIC_ATTENUATION,
+                0.0)
             OpenGL.GL.glEnable(OpenGL.GL.GL_LIGHT1)
 
         self.dl_sphere = OpenGL.GL.glGenLists(1)
@@ -1803,12 +1864,15 @@ class openGLLive(object):
 
 def set_solid_material(color, material=[0.6, 1.0, 0.1, 0.4, 1.0]):
     OpenGL.GL.glMaterialfv(OpenGL.GL.GL_FRONT_AND_BACK, OpenGL.GL.GL_AMBIENT, [
-                 color[0] * material[0], color[1] * material[0], color[2] * material[0], material[4]])
+        color[0] * material[0], color[1] * material[0], color[2] * material[0], material[4]])
     OpenGL.GL.glMaterialfv(OpenGL.GL.GL_FRONT_AND_BACK, OpenGL.GL.GL_DIFFUSE, [
-                 color[0] * material[1], color[1] * material[1], color[2] * material[1], material[4]])
+        color[0] * material[1], color[1] * material[1], color[2] * material[1], material[4]])
     OpenGL.GL.glMaterialfv(OpenGL.GL.GL_FRONT_AND_BACK, OpenGL.GL.GL_SPECULAR, [
-                 color[0] * material[2], color[1] * material[2], color[2] * material[2], material[4]])
-    OpenGL.GL.glMaterialf(OpenGL.GL.GL_FRONT_AND_BACK, OpenGL.GL.GL_SHININESS, int(material[3] * 128))
+        color[0] * material[2], color[1] * material[2], color[2] * material[2], material[4]])
+    OpenGL.GL.glMaterialf(
+        OpenGL.GL.GL_FRONT_AND_BACK,
+        OpenGL.GL.GL_SHININESS,
+     int(material[3] * 128))
 
 
 def draw_box(p0, s, color, material, width):
@@ -1941,29 +2005,29 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     # cylinder
     OpenGL.GL.OpenGL.GL.glTranslate(0, 0, -0.5 * length + smoothing_radius)
     OpenGL.GLU.gluCylinder(quadric, radius, radius, length - 2 *
-                smoothing_radius, quality, quality)
+                           smoothing_radius, quality, quality)
     # torus segment
 
     OpenGL.GL.glEnable(clip_plane)
     OpenGL.GL.glClipPlane(clip_plane, (0, 0, -1, 0))
     OpenGL.GLUT.glutSolidTorus(smoothing_radius, (radius +
-                                      smoothing_radius), quality, quality)
+                                                  smoothing_radius), quality, quality)
     OpenGL.GL.glDisable(clip_plane)
     # wall
     OpenGL.GL.OpenGL.GL.glTranslate(0, 0, -smoothing_radius)
     OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
-                   2.0 * max_box_l, quality, 1, 0, 360)
+                              2.0 * max_box_l, quality, 1, 0, 360)
     # torus segment
     OpenGL.GL.glTranslate(0, 0, length - smoothing_radius)
     OpenGL.GL.glEnable(clip_plane)
     OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
     OpenGL.GLUT.glutSolidTorus(smoothing_radius, (radius +
-                                      smoothing_radius), quality, quality)
+                                                  smoothing_radius), quality, quality)
     OpenGL.GL.glDisable(clip_plane)
     # wall
     OpenGL.GL.glTranslate(0, 0, smoothing_radius)
     OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
-                   2.0 * max_box_l, quality, 1, 0, 360)
+                              2.0 * max_box_l, quality, 1, 0, 360)
 
     OpenGL.GL.glPopMatrix()
 
