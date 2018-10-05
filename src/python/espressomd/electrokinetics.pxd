@@ -75,6 +75,7 @@ IF ELECTROKINETICS and CUDA:
         int ek_print_vtk_flux_fluc(int species, char* filename)
         int ek_print_vtk_flux_link(int species, char* filename)
         int ek_print_vtk_potential(char* filename)
+        int ek_print_vtk_efield(char* filename)
         int ek_print_vtk_lbforce(char* filename)
         int ek_lb_print_vtk_density(char* filename)
         int ek_lb_print_vtk_velocity(char* filename)

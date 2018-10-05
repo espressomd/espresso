@@ -813,7 +813,7 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(unsigned int
 
   flux = ( ek_parameters_gpu.rho[species_index][index] -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_UD0]]
-         ) * 0.5f;
+         ) * 0.5f * agrid_inv;
 
   force = ( ek_parameters_gpu.valency[species_index] *
             ( ((cufftReal*) ek_parameters_gpu.charge_potential)[index_padded] -
@@ -850,7 +850,7 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(unsigned int
   //edge in y
   flux = ( ek_parameters_gpu.rho[species_index][index] -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0U]]
-         ) * 0.5f;
+         ) * 0.5f * agrid_inv;
 
   force = ( ek_parameters_gpu.valency[species_index] *
             ( ((cufftReal*) ek_parameters_gpu.charge_potential)[index_padded] -
@@ -886,7 +886,7 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(unsigned int
 
   flux = ( ek_parameters_gpu.rho[species_index][index] -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U0D]]
-         ) * 0.5f;
+         ) * 0.5f * agrid_inv;
 
   force = ( ek_parameters_gpu.valency[species_index] *
             ( ((cufftReal*) ek_parameters_gpu.charge_potential)[index_padded] -
@@ -923,7 +923,7 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(unsigned int
   //edge in x
   flux = ( ek_parameters_gpu.rho[species_index][index] -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UU]]
-         ) * 0.5f;
+         ) * 0.5f * agrid_inv;
 
   force = ( ek_parameters_gpu.valency[species_index] *
             ( ((cufftReal*) ek_parameters_gpu.charge_potential)[index_padded] -
@@ -959,7 +959,7 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(unsigned int
 
   flux = ( ek_parameters_gpu.rho[species_index][index] -
            ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0UD]]
-         ) * 0.5f;
+         ) * 0.5f * agrid_inv;
 
   force = ( ek_parameters_gpu.valency[species_index] *
             ( ((cufftReal*) ek_parameters_gpu.charge_potential)[index_padded] -
@@ -2381,6 +2381,7 @@ void ek_integrate_electrostatics() {
   }
   
   electrostatics->calculatePotential();
+  //KERNELCALL( ek_calc_electric_field, dim_grid, threads_per_block, (ek_parameters.charge_potential));
 }
 
 
@@ -2436,7 +2437,6 @@ void ek_integrate() {
   ek_integrate_electrostatics();
   
   /* Integrate Navier-Stokes */
-  
   lb_integrate_GPU();
 
   
@@ -2609,6 +2609,9 @@ int ek_init() {
 
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.lb_force_previous,
                              ek_parameters.number_of_nodes * 3 * sizeof( float ) ) );
+
+    //cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.electric_field,
+                               //ek_parameters.number_of_nodes * 3 * sizeof( float ) ) );
 
 
     if(ek_parameters.es_coupling) {
@@ -3098,6 +3101,56 @@ int ek_node_set_density(int species, int x, int y, int z, double density) {
   }
   else
     return 1;
+  
+  return 0;
+}
+
+
+int ek_print_vtk_efield(char* filename ) {
+
+  FILE* fp = fopen( filename, "w" );
+
+  if( fp == nullptr ){
+    return 1;
+  }
+
+  float* electricfield = (float*) Utils::malloc( ek_parameters.number_of_nodes * 3 * sizeof( float ) );
+    
+  cuda_safe_mem( cudaMemcpy( electricfield, 
+                             ek_parameters.electric_field,
+                             ek_parameters.number_of_nodes * 3*sizeof( float ),
+                             cudaMemcpyDeviceToHost )
+                 );
+  
+  fprintf( fp, "\
+# vtk DataFile Version 2.0\n\
+Efield\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\n\
+POINT_DATA %u\n\
+SCALARS Efield float 3\n\
+LOOKUP_TABLE default\n",
+           ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
+           ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f,
+           ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
+           ek_parameters.number_of_nodes                                         );
+
+  for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) 
+  {    
+
+    fprintf( fp, "%e %e %e\n",
+             electricfield[3*i+0] /*/ ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid )*/,
+             electricfield[3*i+1] /*/ ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid )*/,
+             electricfield[3*i+2] /*/ ( ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid )*/ );
+  }
+  
+  free( electricfield );
+  fclose( fp );
   
   return 0;
 }

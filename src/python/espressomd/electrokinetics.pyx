@@ -74,7 +74,7 @@ IF ELECTROKINETICS:
                     "advection": True,
                     "fluid_coupling": "friction",
                     "fluctuations" : False,
-                    "fluctuation_amplitude" : 0.0}
+                    "fluctuation_amplitude" : 0.0,
                     "es_coupling": False}
 
         def _get_params_from_es_core(self):
@@ -105,7 +105,7 @@ IF ELECTROKINETICS:
                     "advection": ek_parameters.advection,
                     "fluid_coupling": fluid_coupling,
                     "fluctuations": ek_parameters.fluctuations,
-                    "fluctuation_amplitude": ek_parameters.fluctuation_amplitude}
+                    "fluctuation_amplitude": ek_parameters.fluctuation_amplitude,
                     "es_coupling": ek_parameters.es_coupling}
 
 
@@ -292,6 +292,19 @@ IF ELECTROKINETICS:
             """
 
             ek_print_vtk_potential(utils.to_char_pointer(path))
+
+        def print_vtk_efield(self, path):
+            """
+            Writes the electrostatic field into a vtk-file.
+            
+            Parameters
+            ----------
+            path : :obj:`string`
+                   The path and vtk-file name the electrostatic field is written to.
+                   
+            """
+
+            ek_print_vtk_efield(utils.to_char_pointer(path))
 
         def print_vtk_lbforce(self, path):
             """
