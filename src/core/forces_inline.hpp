@@ -61,6 +61,7 @@
 #include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/steppot.hpp"
 #include "nonbonded_interactions/thole.hpp"
+#include "nonbonded_interactions/wca.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
@@ -184,6 +185,10 @@ inline void calc_non_bonded_pair_force_parts(
 /* Lennard-Jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1, p2, ia_params, d, dist, force);
+#endif
+/* WCA */
+#ifdef WCA
+  add_wca_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
 /* Lennard-Jones generic */
 #ifdef LENNARD_JONES_GENERIC

@@ -58,6 +58,7 @@
 #include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/steppot.hpp"
 #include "nonbonded_interactions/thole.hpp"
+#include "nonbonded_interactions/wca.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
 #endif
@@ -99,6 +100,10 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #ifdef LENNARD_JONES
   /* Lennard-Jones */
   ret += lj_pair_energy(p1, p2, ia_params, d, dist);
+#endif
+#ifdef WCA
+  /* WCA */
+  ret += wca_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
