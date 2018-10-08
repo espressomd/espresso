@@ -333,31 +333,6 @@ __device__ double atomicAdd(double *address, double val) {
 }
 #endif
 
-/** atomic add function for several cuda architectures
- */
-
-#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
-#define THREADS_PER_BLOCK 1024
-#else
-#define THREADS_PER_BLOCK 512
-#endif
-
-#if !defined __CUDA_ARCH__ ||                                                  \
-    __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
-// atomicAdd supports floats already, do nothing
-#elif __CUDA_ARCH__ >= 110
-#warning Using slower atomicAdd emulation
-__device__ inline void atomicAdd(float *address, float value) {
-  // float-atomic-add from
-  // [url="http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561"]
-  float old = value;
-  while ((old = atomicExch(address, atomicExch(address, 0.0f) + old)) != 0.0f)
-    ;
-}
-#else
-#error I need at least compute capability 1.1
-#endif
-
 namespace {
 __device__ inline int linear_index_r(P3MGpuData const &p, int i, int j, int k) {
   return p.mesh[1] * p.mesh_z_padded * i + p.mesh_z_padded * j + k;
@@ -474,7 +449,7 @@ void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
   const int cao = p.cao;
   int parts_per_block = 1, n_blocks = 1;
 
-  while ((parts_per_block + 1) * cao3 <= THREADS_PER_BLOCK) {
+  while ((parts_per_block + 1) * cao3 <= 1024) {
     parts_per_block++;
   }
   if ((p.n_part % parts_per_block) == 0)

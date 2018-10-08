@@ -39,22 +39,6 @@ float multigpu_factors[] = {1.0};
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-__device__ inline void atomicadd(float *address, float value) {
-#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
-  atomicAdd(address, value);
-#elif __CUDA_ARCH__ >= 110
-  int oldval, newval, readback;
-  oldval = __float_as_int(*address);
-  newval = __float_as_int(__int_as_float(oldval) + value);
-  while ((readback = atomicCAS((int *)address, oldval, newval)) != oldval) {
-    oldval = readback;
-    newval = __float_as_int(__int_as_float(oldval) + value);
-  }
-#else
-#error atomicAdd needs compute capability 1.1 or higher
-#endif
-}
-
 const mmm1dgpu_real C_GAMMAf = C_GAMMA;
 const mmm1dgpu_real C_2PIf = C_2PI;
 
@@ -404,15 +388,9 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
       force[3 * (p1 + p2 * N - tStart) + 1] = pref * sum_r / rxy * y;
       force[3 * (p1 + p2 * N - tStart) + 2] = pref * sum_z;
     } else {
-#ifdef ELECTROSTATICS_GPU_DOUBLE_PRECISION
-      atomicadd8(&force[3 * p2], pref * sum_r / rxy * x);
-      atomicadd8(&force[3 * p2 + 1], pref * sum_r / rxy * y);
-      atomicadd8(&force[3 * p2 + 2], pref * sum_z);
-#else
-      atomicadd(&force[3 * p2], pref * sum_r / rxy * x);
-      atomicadd(&force[3 * p2 + 1], pref * sum_r / rxy * y);
-      atomicadd(&force[3 * p2 + 2], pref * sum_z);
-#endif
+      atomicAdd(&force[3 * p2], pref * sum_r / rxy * x);
+      atomicAdd(&force[3 * p2 + 1], pref * sum_r / rxy * y);
+      atomicAdd(&force[3 * p2 + 2], pref * sum_z);
     }
   }
 }

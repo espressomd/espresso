@@ -259,7 +259,6 @@ void gpu_change_number_of_part_to_comm() {
 
     if (global_part_vars_host.number_of_particles) {
 
-#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
       /**pinned memory mode - use special function to get OS-pinned memory*/
       cuda_safe_mem(cudaHostAlloc((void **)&particle_data_host,
                                   global_part_vars_host.number_of_particles *
@@ -289,29 +288,6 @@ void gpu_change_number_of_part_to_comm() {
                                       sizeof(CUDA_fluid_composition),
                                   cudaHostAllocWriteCombined));
 #endif
-#else // __CUDA_ARCH__
-      cuda_safe_mem(cudaMallocHost((void **)&particle_data_host,
-                                   global_part_vars_host.number_of_particles *
-                                       sizeof(CUDA_particle_data)));
-      cuda_safe_mem(cudaMallocHost(
-          (void **)&particle_forces_host,
-          3 * global_part_vars_host.number_of_particles * sizeof(float)));
-#ifdef ENGINE
-      cuda_safe_mem(cudaMallocHost((void **)&host_v_cs,
-                                   global_part_vars_host.number_of_particles *
-                                       sizeof(CUDA_v_cs)));
-#endif
-#if (defined DIPOLES || defined ROTATION)
-      cuda_safe_mem(cudaMallocHost((void **)&particle_torques_host,
-                                   global_part_vars_host.number_of_particles *
-                                       3 * sizeof(float)));
-#endif
-#ifdef SHANCHEN
-      cuda_safe_mem(cudaMallocHost((void **)&fluid_composition_host,
-                                   global_part_vars_host.number_of_particles *
-                                       sizeof(CUDA_fluid_composition)));
-#endif
-#endif // __CUDA_ARCH__
 
       cuda_safe_mem(cudaMalloc((void **)&particle_forces_device,
                                3 * global_part_vars_host.number_of_particles *

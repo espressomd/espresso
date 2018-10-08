@@ -128,35 +128,6 @@ static const float c_sound_sq = 1.0f / 3.0f;
 
 /*-------------------------------------------------------*/
 
-/** atomic add function for several cuda architectures
- */
-__device__ inline void atomicadd(float *address, float value) {
-#if !defined __CUDA_ARCH__ ||                                                  \
-    __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
-  atomicAdd(address, value);
-#elif __CUDA_ARCH__ >= 110
-#warning Using slower atomicAdd emulation
-  // float-atomic-add from
-  // [url="http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561"]
-  float old = value;
-  while ((old = atomicExch(address, atomicExch(address, 0.0f) + old)) != 0.0f)
-    ;
-#else
-#error I need at least compute capability 1.1
-#endif
-}
-
-__device__ inline void atomicadd(double *address, double value) {
-  unsigned long long oldval, newval, readback;
-  oldval = __double_as_longlong(*address);
-  newval = __double_as_longlong(__longlong_as_double(oldval) + value);
-  while ((readback = atomicCAS((unsigned long long *)address, oldval,
-                               newval)) != oldval) {
-    oldval = readback;
-    newval = __double_as_longlong(__longlong_as_double(oldval) + value);
-  }
-}
-
 /**random generator which generates numbers [0,1]
  * @param *rn Pointer to random number array of the local node or particle
  */
@@ -1416,11 +1387,11 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index,
     inverse = 18;
     BOUNCEBACK();
 
-    atomicadd(&lb_boundary_force[3 * (n_curr.boundary[index] - 1) + 0],
+    atomicAdd(&lb_boundary_force[3 * (n_curr.boundary[index] - 1) + 0],
               boundary_force[0]);
-    atomicadd(&lb_boundary_force[3 * (n_curr.boundary[index] - 1) + 1],
+    atomicAdd(&lb_boundary_force[3 * (n_curr.boundary[index] - 1) + 1],
               boundary_force[1]);
-    atomicadd(&lb_boundary_force[3 * (n_curr.boundary[index] - 1) + 2],
+    atomicAdd(&lb_boundary_force[3 * (n_curr.boundary[index] - 1) + 2],
               boundary_force[2]);
   }
 }
@@ -2209,7 +2180,7 @@ __device__ void calc_viscous_force_three_point_couple(
   }
 }
 
-/**calculation of the node force caused by the particles, with atomicadd due to
+/**calculation of the node force caused by the particles, with atomicAdd due to
  * avoiding race conditions (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225
  * (1999))
  * @param *delta    Pointer for the weighting of particle position (Input)
@@ -2225,13 +2196,13 @@ calc_node_force_three_point_couple(float *delta, float *delta_j,
   for (int i = -1; i <= 1; i++) {
     for (int j = -1; j <= 1; j++) {
       for (int k = -1; k <= 1; k++) {
-        atomicadd(&(node_f.force_density[0 * para.number_of_nodes +
+        atomicAdd(&(node_f.force_density[0 * para.number_of_nodes +
                                          node_index[i + 3 * j + 9 * k + 13]]),
                   (delta[i + 3 * j + 9 * k + 13] * delta_j[0]));
-        atomicadd(&(node_f.force_density[1 * para.number_of_nodes +
+        atomicAdd(&(node_f.force_density[1 * para.number_of_nodes +
                                          node_index[i + 3 * j + 9 * k + 13]]),
                   (delta[i + 3 * j + 9 * k + 13] * delta_j[1]));
-        atomicadd(&(node_f.force_density[2 * para.number_of_nodes +
+        atomicAdd(&(node_f.force_density[2 * para.number_of_nodes +
                                          node_index[i + 3 * j + 9 * k + 13]]),
                   (delta[i + 3 * j + 9 * k + 13] * delta_j[2]));
       }
@@ -2255,7 +2226,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared,
       for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
         calc_mode(mode, n_a, index, ii);
         jsquared = mode[1] * mode[1] + mode[2] * mode[2] + mode[3] * mode[3];
-        atomicadd(cpu_jsquared, jsquared);
+        atomicAdd(cpu_jsquared, jsquared);
         atomicAdd(number_of_non_boundary_nodes, 1);
       }
     }
@@ -2723,7 +2694,7 @@ __device__ void calc_viscous_force(
 #endif
 }
 
-/**calculation of the node force caused by the particles, with atomicadd due to
+/**calculation of the node force caused by the particles, with atomicAdd due to
  avoiding race conditions (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225
  (1999))
  * @param *delta        Pointer for the weighting of particle position (Input)
@@ -2743,83 +2714,83 @@ __device__ void calc_node_force(float *delta, float *delta_j, float *partgrad1,
      in calc_node_force. Alternatively one
      could specialize this function to the single component LB */
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
-    atomicadd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
                                      node_index[0]]),
               (delta[0] * delta_j[0 + ii * 3] + partgrad1[ii * 8 + 0]));
-    atomicadd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
                                      node_index[0]]),
               (delta[0] * delta_j[1 + ii * 3] + partgrad2[ii * 8 + 0]));
-    atomicadd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
                                      node_index[0]]),
               (delta[0] * delta_j[2 + ii * 3] + partgrad3[ii * 8 + 0]));
 
-    atomicadd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
                                      node_index[1]]),
               (delta[1] * delta_j[0 + ii * 3] + partgrad1[ii * 8 + 1]));
-    atomicadd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
                                      node_index[1]]),
               (delta[1] * delta_j[1 + ii * 3] + partgrad2[ii * 8 + 1]));
-    atomicadd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
                                      node_index[1]]),
               (delta[1] * delta_j[2 + ii * 3] + partgrad3[ii * 8 + 1]));
 
-    atomicadd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
                                      node_index[2]]),
               (delta[2] * delta_j[0 + ii * 3] + partgrad1[ii * 8 + 2]));
-    atomicadd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
                                      node_index[2]]),
               (delta[2] * delta_j[1 + ii * 3] + partgrad2[ii * 8 + 2]));
-    atomicadd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
                                      node_index[2]]),
               (delta[2] * delta_j[2 + ii * 3] + partgrad3[ii * 8 + 2]));
 
-    atomicadd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
                                      node_index[3]]),
               (delta[3] * delta_j[0 + ii * 3] + partgrad1[ii * 8 + 3]));
-    atomicadd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
                                      node_index[3]]),
               (delta[3] * delta_j[1 + ii * 3] + partgrad2[ii * 8 + 3]));
-    atomicadd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
                                      node_index[3]]),
               (delta[3] * delta_j[2 + ii * 3] + partgrad3[ii * 8 + 3]));
 
-    atomicadd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
                                      node_index[4]]),
               (delta[4] * delta_j[0 + ii * 3] + partgrad1[ii * 8 + 4]));
-    atomicadd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
                                      node_index[4]]),
               (delta[4] * delta_j[1 + ii * 3] + partgrad2[ii * 8 + 4]));
-    atomicadd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
                                      node_index[4]]),
               (delta[4] * delta_j[2 + ii * 3] + partgrad3[ii * 8 + 4]));
 
-    atomicadd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
                                      node_index[5]]),
               (delta[5] * delta_j[0 + ii * 3] + partgrad1[ii * 8 + 5]));
-    atomicadd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
                                      node_index[5]]),
               (delta[5] * delta_j[1 + ii * 3] + partgrad2[ii * 8 + 5]));
-    atomicadd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
                                      node_index[5]]),
               (delta[5] * delta_j[2 + ii * 3] + partgrad3[ii * 8 + 5]));
 
-    atomicadd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
                                      node_index[6]]),
               (delta[6] * delta_j[0 + ii * 3] + partgrad1[ii * 8 + 6]));
-    atomicadd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
                                      node_index[6]]),
               (delta[6] * delta_j[1 + ii * 3] + partgrad2[ii * 8 + 6]));
-    atomicadd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
                                      node_index[6]]),
               (delta[6] * delta_j[2 + ii * 3] + partgrad3[ii * 8 + 6]));
 
-    atomicadd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(0 + ii * 3) * para.number_of_nodes +
                                      node_index[7]]),
               (delta[7] * delta_j[0 + ii * 3] + partgrad1[ii * 8 + 7]));
-    atomicadd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(1 + ii * 3) * para.number_of_nodes +
                                      node_index[7]]),
               (delta[7] * delta_j[1 + ii * 3] + partgrad2[ii * 8 + 7]));
-    atomicadd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
+    atomicAdd(&(node_f.force_density[(2 + ii * 3) * para.number_of_nodes +
                                      node_index[7]]),
               (delta[7] * delta_j[2 + ii * 3] + partgrad3[ii * 8 + 7]));
   }
@@ -3145,7 +3116,7 @@ __global__ void calc_mass(LB_nodes_gpu n_a, float *sum) {
     for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
       calc_mode(mode, n_a, index, ii);
       float Rho = mode[0] + para.rho[ii] * para.agrid * para.agrid * para.agrid;
-      atomicadd(&(sum[0]), Rho);
+      atomicAdd(&(sum[0]), Rho);
     }
   }
 }
@@ -3820,9 +3791,9 @@ __global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
       j[0] = j[1] = j[2] = 0.0f;
 #endif
 
-    atomicadd(&(sum[0]), j[0]);
-    atomicadd(&(sum[1]), j[1]);
-    atomicadd(&(sum[2]), j[2]);
+    atomicAdd(&(sum[0]), j[0]);
+    atomicAdd(&(sum[1]), j[1]);
+    atomicAdd(&(sum[2]), j[2]);
   }
 }
 __global__ void remove_momentum(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
@@ -3978,12 +3949,10 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   // lbpar_gpu->number_of_nodes);
   cudaThreadSynchronize();
 
-#if __CUDA_ARCH__ >= 200
   if (!h_gpu_check[0]) {
     fprintf(stderr, "initialization of lb gpu code failed! \n");
     errexit();
   }
-#endif
 }
 
 /** reinitialization for the lb gpu fluid called from host
@@ -4159,12 +4128,10 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
                   couple_virtual));
     } else { /** only other option is the three point coupling scheme */
 #ifdef SHANCHEN
-#if __CUDA_ARCH__ >= 200
       fprintf(stderr, "The three point particle coupling is not currently "
                       "compatible with the Shan-Chen implementation "
                       "of the LB\n");
       errexit();
-#endif
 #endif
       KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles,
                  threads_per_block_particles,

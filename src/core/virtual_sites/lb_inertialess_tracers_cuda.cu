@@ -32,7 +32,6 @@ __global__ void
 ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
                        LB_node_force_density_gpu node_f,
                        const LB_parameters_gpu *const paraP);
-__device__ inline void atomicadd(float *address, float value);
 
 // ***** Other functions for internal use *****
 void InitCUDA_IBM(const int numParticles);
@@ -385,13 +384,13 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
     for (int i = 0; i < 8; ++i) {
 
       // Atomic add is essential because this runs in parallel!
-      atomicadd(
+      atomicAdd(
           &(node_f.force_density[0 * para.number_of_nodes + node_index[i]]),
           (particleForce[0] * delta[i]));
-      atomicadd(
+      atomicAdd(
           &(node_f.force_density[1 * para.number_of_nodes + node_index[i]]),
           (particleForce[1] * delta[i]));
-      atomicadd(
+      atomicAdd(
           &(node_f.force_density[2 * para.number_of_nodes + node_index[i]]),
           (particleForce[2] * delta[i]));
     }
@@ -559,32 +558,6 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
       }
     }
   }
-}
-
-/************
-   atomicadd
-This is a copy of the atomicadd from lbgpu_cuda.cu
-*************/
-
-__device__ inline void atomicadd(float *address, float value) {
-
-#if !defined __CUDA_ARCH__ ||                                                  \
-    __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
-  atomicAdd(address, value);
-#elif __CUDA_ARCH__ >= 110
-
-#warning Using slower atomicAdd emulation
-
-  // float-atomic-add from
-  //[url="http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561"]
-
-  float old = value;
-  while ((old = atomicExch(address, atomicExch(address, 0.0f) + old)) != 0.0f)
-    ;
-
-#else
-#error CUDA compute capability 1.1 or higher required
-#endif
 }
 
 #endif
