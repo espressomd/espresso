@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 // TODO: throw exceptions upon errors initialization
 
 #include "grid_based_algorithms/fd-electrostatics.hpp"
@@ -58,29 +59,29 @@ FdElectrostatics::~FdElectrostatics() {
 
   void *symbol;
   cudaGetSymbolAddress(&symbol, "fde_parameters_gpu");
-  cuda_safe_mem(cudaFree(symbol));
+  cuda_safe_mem(hipFree(symbol));
 
-  cuda_safe_mem(cudaFree(parameters.greensfcn));
-  cuda_safe_mem(cudaFree(parameters.charge_potential));
+  cuda_safe_mem(hipFree(parameters.greensfcn));
+  cuda_safe_mem(hipFree(parameters.charge_potential));
 }
 
 FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
-                                   cudaStream_t stream)
+                                   hipStream_t stream)
     : parameters(inputParameters), cuda_stream(stream) {
-  cuda_safe_mem(cudaMalloc((void **)&parameters.charge_potential,
+  cuda_safe_mem(hipMalloc((void **)&parameters.charge_potential,
                            sizeof(cufftComplex) * parameters.dim_z *
                                parameters.dim_y * (parameters.dim_x / 2 + 1)));
 
-  cuda_safe_mem(cudaMalloc((void **)&parameters.greensfcn,
+  cuda_safe_mem(hipMalloc((void **)&parameters.greensfcn,
                            sizeof(cufftReal) * parameters.dim_z *
                                parameters.dim_y * (parameters.dim_x / 2 + 1)));
 
-  if (cudaGetLastError() != cudaSuccess) {
+  if (hipGetLastError() != hipSuccess) {
     throw "Failed to allocate\n";
   }
 
   cuda_safe_mem(
-      cudaMemcpyToSymbol(fde_parameters_gpu, &parameters, sizeof(Parameters)));
+      hipMemcpyToSymbol(fde_parameters_gpu, &parameters, sizeof(Parameters)));
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;

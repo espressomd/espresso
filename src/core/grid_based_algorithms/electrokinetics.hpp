@@ -36,7 +36,7 @@ typedef float ekfloat;
 
 #define MAX_NUMBER_OF_SPECIES 10
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 #include <cufft.h>
 #else
 typedef void cufftComplex;

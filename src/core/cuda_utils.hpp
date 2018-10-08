@@ -19,15 +19,15 @@
 #ifndef _CUDA_UTILS_HPP
 #define _CUDA_UTILS_HPP
 
-#ifndef __CUDACC__
+#ifndef __HIPCC__
 #error Do not include CUDA headers in normal C++-code!!!
 #endif
 
 /**cuda streams for parallel computing on cpu and gpu */
-extern cudaStream_t stream[1];
+extern hipStream_t stream[1];
 
-extern cudaError_t CU_err;
-extern cudaError_t _err;
+extern hipError_t CU_err;
+extern hipError_t _err;
 
 /**erroroutput for memory allocation and memory copy
  * @param err cuda error code
@@ -35,7 +35,7 @@ extern cudaError_t _err;
  * @param line line of the file were the error took place
  */
 
-void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line);
+void _cuda_safe_mem(hipError_t err, const char *file, unsigned int line);
 
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,
                         const char *function, const char *file,

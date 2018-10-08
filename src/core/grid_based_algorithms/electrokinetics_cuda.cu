@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /*
    Copyright (C) 2010-2018 The ESPResSo project
 
@@ -2218,10 +2219,10 @@ void ek_integrate_electrostatics() {
 
 #ifdef EK_ELECTROSTATIC_COUPLING
   if (ek_parameters.es_coupling) {
-    cuda_safe_mem(cudaMemcpy(ek_parameters.charge_potential_buffer,
+    cuda_safe_mem(hipMemcpy(ek_parameters.charge_potential_buffer,
                              ek_parameters.charge_potential,
                              ek_parameters.number_of_nodes * sizeof(cufftReal),
-                             cudaMemcpyDeviceToDevice));
+                             hipMemcpyDeviceToDevice));
     electrostatics->calculatePotential(
         (cufftComplex *)ek_parameters.charge_potential_buffer);
     KERNELCALL(ek_calc_electric_field, dim_grid, threads_per_block,
@@ -2308,10 +2309,10 @@ void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
              (*current_nodes));
 
   if (wallcharge_species != -1) {
-    cuda_safe_mem(cudaMemcpy(ek_parameters.rho[wallcharge_species],
+    cuda_safe_mem(hipMemcpy(ek_parameters.rho[wallcharge_species],
                              wallcharge_species_density,
                              ek_parameters.number_of_nodes * sizeof(ekfloat),
-                             cudaMemcpyHostToDevice));
+                             hipMemcpyHostToDevice));
   }
 }
 #endif
@@ -2325,7 +2326,7 @@ void ek_init_species(int species) {
     ek_parameters.species_index[species] = ek_parameters.number_of_species;
     ek_parameters.number_of_species++;
 
-    cuda_safe_mem(cudaMalloc(
+    cuda_safe_mem(hipMalloc(
         (void **)&ek_parameters.rho[ek_parameters.species_index[species]],
         ek_parameters.number_of_nodes * sizeof(ekfloat)));
 
@@ -2360,7 +2361,7 @@ int ek_init() {
 
   if (!ek_initialized) {
     if (cudaGetSymbolAddress((void **)&ek_parameters_gpu_pointer,
-                             ek_parameters_gpu) != cudaSuccess) {
+                             ek_parameters_gpu) != hipSuccess) {
       fprintf(stderr, "ERROR: Fetching constant memory pointer\n");
 
       return 1;
@@ -2420,25 +2421,25 @@ int ek_init() {
         ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
 
     cuda_safe_mem(
-        cudaMalloc((void **)&ek_parameters.j,
+        hipMalloc((void **)&ek_parameters.j,
                    ek_parameters.number_of_nodes * 13 * sizeof(ekfloat)));
-    cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+    cuda_safe_mem(hipMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
                                      sizeof(EK_parameters)));
 
     lb_get_para_pointer(&ek_lbparameters_gpu);
     lb_set_ek_pointer(ek_parameters_gpu_pointer);
 
     cuda_safe_mem(
-        cudaMalloc((void **)&ek_parameters.lb_force_density_previous,
+        hipMalloc((void **)&ek_parameters.lb_force_density_previous,
                    ek_parameters.number_of_nodes * 3 * sizeof(float)));
 
 #ifdef EK_ELECTROSTATIC_COUPLING
     if (ek_parameters.es_coupling) {
       cuda_safe_mem(
-          cudaMalloc((void **)&ek_parameters.charge_potential_buffer,
+          hipMalloc((void **)&ek_parameters.charge_potential_buffer,
                      ek_parameters.number_of_nodes * sizeof(cufftComplex)));
       cuda_safe_mem(
-          cudaMalloc((void **)&ek_parameters.electric_field,
+          hipMalloc((void **)&ek_parameters.electric_field,
                      ek_parameters.number_of_nodes * 3 * sizeof(float)));
     }
 
@@ -2446,16 +2447,16 @@ int ek_init() {
 
     lb_get_device_values_pointer(&ek_lb_device_values);
 
-    if (cudaGetLastError() != cudaSuccess) {
+    if (hipGetLastError() != hipSuccess) {
       fprintf(stderr, "ERROR: Failed to allocate\n");
       return 1;
     }
 
-    cudaMallocHost((void **)&ek_parameters.node_is_catalyst,
+    hipHostMalloc((void **)&ek_parameters.node_is_catalyst,
                    sizeof(char) * ek_parameters.dim_z * ek_parameters.dim_y *
                        ek_parameters.dim_x);
 
-    if (cudaGetLastError() != cudaSuccess) {
+    if (hipGetLastError() != hipSuccess) {
       fprintf(stderr, "ERROR: Failed to allocate\n");
       return 1;
     }
@@ -2478,7 +2479,7 @@ int ek_init() {
     }
 
     ek_parameters.charge_potential = electrostatics->getGrid().grid;
-    cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+    cuda_safe_mem(hipMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
                                      sizeof(EK_parameters)));
 
     // clear initial LB force and finish up
@@ -2502,14 +2503,14 @@ int ek_init() {
 
       return 1;
     } else {
-      cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+      cuda_safe_mem(hipMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
                                        sizeof(EK_parameters)));
 
 #ifdef EK_BOUNDARIES
       LBBoundaries::lb_init_boundaries();
       lb_get_boundary_force_pointer(&ek_lb_boundary_force);
 
-      cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+      cuda_safe_mem(hipMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
                                        sizeof(EK_parameters)));
 #else
       blocks_per_grid_x = (ek_parameters.number_of_nodes +
@@ -2695,10 +2696,10 @@ int ek_print_vtk_density(int species, char *filename) {
       (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
 
   if (ek_parameters.species_index[species] != -1) {
-    cuda_safe_mem(cudaMemcpy(
+    cuda_safe_mem(hipMemcpy(
         densities, ek_parameters.rho[ek_parameters.species_index[species]],
         ek_parameters.number_of_nodes * sizeof(ekfloat),
-        cudaMemcpyDeviceToHost));
+        hipMemcpyDeviceToHost));
   } else
     return 1;
 
@@ -2739,10 +2740,10 @@ int ek_node_print_density(int species, int x, int y, int z, double *density) {
       (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
 
   if (ek_parameters.species_index[species] != -1) {
-    cuda_safe_mem(cudaMemcpy(
+    cuda_safe_mem(hipMemcpy(
         densities, ek_parameters.rho[ek_parameters.species_index[species]],
         ek_parameters.number_of_nodes * sizeof(ekfloat),
-        cudaMemcpyDeviceToHost));
+        hipMemcpyDeviceToHost));
   } else
     return 1;
 
@@ -2788,9 +2789,9 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
 #endif
 
     cuda_safe_mem(
-        cudaMemcpy(fluxes, ek_parameters.j,
+        hipMemcpy(fluxes, ek_parameters.j,
                    ek_parameters.number_of_nodes * 13 * sizeof(ekfloat),
-                   cudaMemcpyDeviceToHost));
+                   hipMemcpyDeviceToHost));
   } else
     return 1;
 
@@ -2971,9 +2972,9 @@ int ek_node_set_density(int species, int x, int y, int z, double density) {
     ekfloat num_particles = density * ek_parameters.agrid *
                             ek_parameters.agrid * ek_parameters.agrid;
 
-    cuda_safe_mem(cudaMemcpy(
+    cuda_safe_mem(hipMemcpy(
         &ek_parameters.rho[ek_parameters.species_index[species]][index],
-        &num_particles, sizeof(ekfloat), cudaMemcpyHostToDevice));
+        &num_particles, sizeof(ekfloat), hipMemcpyHostToDevice));
   } else
     return 1;
 
@@ -3015,9 +3016,9 @@ int ek_print_vtk_flux(int species, char *filename) {
 #endif
 
     cuda_safe_mem(
-        cudaMemcpy(fluxes, ek_parameters.j,
+        hipMemcpy(fluxes, ek_parameters.j,
                    ek_parameters.number_of_nodes * 13 * sizeof(ekfloat),
-                   cudaMemcpyDeviceToHost));
+                   hipMemcpyDeviceToHost));
   } else
     return 1;
 
@@ -3217,8 +3218,8 @@ int ek_node_print_potential(int x, int y, int z, double *potential) {
           y * ek_parameters.dim_x_padded + x;
   float pot;
 
-  cuda_safe_mem(cudaMemcpy(&pot, &ek_parameters.charge_potential[i],
-                           1 * sizeof(cufftReal), cudaMemcpyDeviceToHost));
+  cuda_safe_mem(hipMemcpy(&pot, &ek_parameters.charge_potential[i],
+                           1 * sizeof(cufftReal), hipMemcpyDeviceToHost));
 
   *potential = pot;
   return 0;
@@ -3235,12 +3236,12 @@ int ek_print_vtk_potential(char *filename) {
   float *potential =
       (float *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(cufftReal));
 
-  cuda_safe_mem(cudaMemcpy2D(potential, ek_parameters.dim_x * sizeof(cufftReal),
+  cuda_safe_mem(hipMemcpy2D(potential, ek_parameters.dim_x * sizeof(cufftReal),
                              ek_parameters.charge_potential,
                              ek_parameters.dim_x_padded * sizeof(cufftReal),
                              ek_parameters.dim_x * sizeof(cufftReal),
                              ek_parameters.dim_z * ek_parameters.dim_y,
-                             cudaMemcpyDeviceToHost));
+                             hipMemcpyDeviceToHost));
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
@@ -3282,12 +3283,12 @@ int ek_print_vtk_particle_potential(char *filename) {
   float *potential =
       (float *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(cufftReal));
 
-  cuda_safe_mem(cudaMemcpy2D(potential, ek_parameters.dim_x * sizeof(cufftReal),
+  cuda_safe_mem(hipMemcpy2D(potential, ek_parameters.dim_x * sizeof(cufftReal),
                              ek_parameters.charge_potential_buffer,
                              ek_parameters.dim_x_padded * sizeof(cufftReal),
                              ek_parameters.dim_x * sizeof(cufftReal),
                              ek_parameters.dim_z * ek_parameters.dim_y,
-                             cudaMemcpyDeviceToHost));
+                             hipMemcpyDeviceToHost));
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
@@ -3333,9 +3334,9 @@ int ek_print_vtk_lbforce_density(char *filename) {
       ek_parameters.number_of_nodes * 3 * sizeof(lbForceFloat));
 
   cuda_safe_mem(
-      cudaMemcpy(lbforce_density, node_f.force_density_buf,
+      hipMemcpy(lbforce_density, node_f.force_density_buf,
                  ek_parameters.number_of_nodes * 3 * sizeof(lbForceFloat),
-                 cudaMemcpyDeviceToHost));
+                 hipMemcpyDeviceToHost));
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
@@ -3685,8 +3686,8 @@ ekfloat ek_get_particle_charge() {
 
 ekfloat ek_calculate_net_charge() {
   ekfloat charge = 0.0f;
-  cuda_safe_mem(cudaMemcpyToSymbol(charge_gpu, &charge, sizeof(ekfloat), 0,
-                                   cudaMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(charge_gpu, &charge, sizeof(ekfloat), 0,
+                                   hipMemcpyHostToDevice));
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
@@ -3698,7 +3699,7 @@ ekfloat ek_calculate_net_charge() {
   KERNELCALL(ek_calculate_system_charge, dim_grid, threads_per_block, ());
 
   cuda_safe_mem(cudaMemcpyFromSymbol(&charge, charge_gpu, sizeof(ekfloat), 0,
-                                     cudaMemcpyDeviceToHost));
+                                     hipMemcpyDeviceToHost));
 
 #ifdef EK_ELECTROSTATIC_COUPLING
   charge += ek_get_particle_charge();
@@ -3762,9 +3763,9 @@ int ek_save_checkpoint(char *filename) {
       (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
 
   for (int i = 0; i < ek_parameters.number_of_species; i++) {
-    cuda_safe_mem(cudaMemcpy(densities, ek_parameters.rho[i],
+    cuda_safe_mem(hipMemcpy(densities, ek_parameters.rho[i],
                              ek_parameters.number_of_nodes * sizeof(ekfloat),
-                             cudaMemcpyDeviceToHost));
+                             hipMemcpyDeviceToHost));
 
     if (!fout.write((char *)densities,
                     sizeof(ekfloat) * ek_parameters.number_of_nodes)) {
@@ -3797,9 +3798,9 @@ int ek_load_checkpoint(char *filename) {
       return 1;
     }
 
-    cuda_safe_mem(cudaMemcpy(ek_parameters.rho[i], densities,
+    cuda_safe_mem(hipMemcpy(ek_parameters.rho[i], densities,
                              ek_parameters.number_of_nodes * sizeof(ekfloat),
-                             cudaMemcpyHostToDevice));
+                             hipMemcpyHostToDevice));
   }
 
   free(densities);

@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /*
    Copyright (C) 2010-2018 The ESPResSo project
 
@@ -3832,7 +3833,7 @@ __global__ void lb_get_boundary_flag(int single_nodeindex,
 /**********************************************************************/
 
 void lb_get_para_pointer(LB_parameters_gpu **pointeradress) {
-  if (cudaGetSymbolAddress((void **)pointeradress, para) != cudaSuccess) {
+  if (cudaGetSymbolAddress((void **)pointeradress, para) != hipSuccess) {
     fprintf(stderr,
             "Trouble getting address of LB parameters.\n"); // TODO give proper
                                                             // error message
@@ -3861,9 +3862,9 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
 #define free_realloc_and_clear(var, size)                                      \
   {                                                                            \
     if ((var) != nullptr)                                                      \
-      cuda_safe_mem(cudaFree((var)));                                          \
-    cuda_safe_mem(cudaMalloc((void **)&var, size));                            \
-    cudaMemset(var, 0, size);                                                  \
+      cuda_safe_mem(hipFree((var)));                                          \
+    cuda_safe_mem(hipMalloc((void **)&var, size));                            \
+    hipMemset(var, 0, size);                                                  \
   }
 
   size_of_rho_v = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_gpu);
@@ -3908,7 +3909,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
 
   /**write parameters in const memory*/
-  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   /**check flag if lb gpu init works*/
   free_realloc_and_clear(gpu_check, sizeof(int));
@@ -3944,10 +3945,10 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   current_nodes = &nodes_a;
   h_gpu_check[0] = 0;
   cuda_safe_mem(
-      cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
+      hipMemcpy(h_gpu_check, gpu_check, sizeof(int), hipMemcpyDeviceToHost));
   // fprintf(stderr, "initialization of lb gpu code %i\n",
   // lbpar_gpu->number_of_nodes);
-  cudaThreadSynchronize();
+  hipDeviceSynchronize();
 
   if (!h_gpu_check[0]) {
     fprintf(stderr, "initialization of lb gpu code failed! \n");
@@ -3960,7 +3961,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
  */
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
   /**write parameters in const memory*/
-  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -3978,7 +3979,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
 
 void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu) {
   // copy parameters, especially number of parts to gpu mem
-  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 }
 
 #ifdef LB_BOUNDARIES_GPU
@@ -3999,20 +4000,20 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
     return;
 
   size_of_boundindex = number_of_boundnodes * sizeof(int);
-  cuda_safe_mem(cudaMalloc((void **)&boundary_node_list, size_of_boundindex));
-  cuda_safe_mem(cudaMalloc((void **)&boundary_index_list, size_of_boundindex));
-  cuda_safe_mem(cudaMemcpy(boundary_index_list, host_boundary_index_list,
-                           size_of_boundindex, cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpy(boundary_node_list, host_boundary_node_list,
-                           size_of_boundindex, cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMalloc((void **)&lb_boundary_force,
+  cuda_safe_mem(hipMalloc((void **)&boundary_node_list, size_of_boundindex));
+  cuda_safe_mem(hipMalloc((void **)&boundary_index_list, size_of_boundindex));
+  cuda_safe_mem(hipMemcpy(boundary_index_list, host_boundary_index_list,
+                           size_of_boundindex, hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpy(boundary_node_list, host_boundary_node_list,
+                           size_of_boundindex, hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMalloc((void **)&lb_boundary_force,
                            3 * host_n_lb_boundaries * sizeof(float)));
-  cuda_safe_mem(cudaMalloc((void **)&lb_boundary_velocity,
+  cuda_safe_mem(hipMalloc((void **)&lb_boundary_velocity,
                            3 * host_n_lb_boundaries * sizeof(float)));
   cuda_safe_mem(
-      cudaMemcpy(lb_boundary_velocity, host_lb_boundary_velocity,
+      hipMemcpy(lb_boundary_velocity, host_lb_boundary_velocity,
                  3 * LBBoundaries::lbboundaries.size() * sizeof(float),
-                 cudaMemcpyHostToDevice));
+                 hipMemcpyHostToDevice));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -4025,7 +4026,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
   if (LBBoundaries::lbboundaries.size() == 0 && !pdb_boundary_lattice) {
-    cudaThreadSynchronize();
+    hipDeviceSynchronize();
     return;
   }
 
@@ -4047,14 +4048,14 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
                 nodes_a, nodes_b));
   }
 
-  cudaThreadSynchronize();
+  hipDeviceSynchronize();
 }
 #endif
 /**setup and call extern single node force initialization from the host
  * @param *lbpar_gpu    Pointer to host parameter struct
  */
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu) {
-  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -4080,13 +4081,13 @@ void lb_init_extern_nodeforcedensities_GPU(
 
   size_of_extern_node_force_densities =
       n_extern_node_force_densities * sizeof(LB_extern_nodeforcedensity_gpu);
-  cuda_safe_mem(cudaMalloc((void **)&extern_node_force_densities,
+  cuda_safe_mem(hipMalloc((void **)&extern_node_force_densities,
                            size_of_extern_node_force_densities));
   cuda_safe_mem(
-      cudaMemcpy(extern_node_force_densities, host_extern_node_force_densities,
-                 size_of_extern_node_force_densities, cudaMemcpyHostToDevice));
+      hipMemcpy(extern_node_force_densities, host_extern_node_force_densities,
+                 size_of_extern_node_force_densities, hipMemcpyHostToDevice));
 
-  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   int threads_per_block_exf = 64;
   int blocks_per_grid_exf_y = 4;
@@ -4100,7 +4101,7 @@ void lb_init_extern_nodeforcedensities_GPU(
   KERNELCALL(
       init_extern_node_force_densities, dim_grid_exf, threads_per_block_exf,
       (n_extern_node_force_densities, extern_node_force_densities, node_f));
-  cudaFree(extern_node_force_densities);
+  hipFree(extern_node_force_densities);
 }
 
 /**setup and call particle kernel from the host
@@ -4156,8 +4157,8 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values) {
 
   KERNELCALL(get_mesoscopic_values_in_MD_units, dim_grid, threads_per_block,
              (*current_nodes, print_rho_v_pi, device_rho_v, node_f));
-  cuda_safe_mem(cudaMemcpy(host_values, print_rho_v_pi, size_of_rho_v_pi,
-                           cudaMemcpyDeviceToHost));
+  cuda_safe_mem(hipMemcpy(host_values, print_rho_v_pi, size_of_rho_v_pi,
+                           hipMemcpyDeviceToHost));
 }
 
 /** get all the boundary flags for all nodes
@@ -4165,7 +4166,7 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values) {
  */
 void lb_get_boundary_flags_GPU(unsigned int *host_bound_array) {
   unsigned int *device_bound_array;
-  cuda_safe_mem(cudaMalloc((void **)&device_bound_array,
+  cuda_safe_mem(hipMalloc((void **)&device_bound_array,
                            lbpar_gpu.number_of_nodes * sizeof(unsigned int)));
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -4178,11 +4179,11 @@ void lb_get_boundary_flags_GPU(unsigned int *host_bound_array) {
   KERNELCALL(lb_get_boundaries, dim_grid, threads_per_block,
              (*current_nodes, device_bound_array));
 
-  cuda_safe_mem(cudaMemcpy(host_bound_array, device_bound_array,
+  cuda_safe_mem(hipMemcpy(host_bound_array, device_bound_array,
                            lbpar_gpu.number_of_nodes * sizeof(unsigned int),
-                           cudaMemcpyDeviceToHost));
+                           hipMemcpyDeviceToHost));
 
-  cudaFree(device_bound_array);
+  hipFree(device_bound_array);
 }
 
 /** setup and call kernel for getting macroscopic fluid values of a single
@@ -4191,7 +4192,7 @@ void lb_print_node_GPU(int single_nodeindex,
                        LB_rho_v_pi_gpu *host_print_values) {
   LB_rho_v_pi_gpu *device_print_values;
   cuda_safe_mem(
-      cudaMalloc((void **)&device_print_values, sizeof(LB_rho_v_pi_gpu)));
+      hipMalloc((void **)&device_print_values, sizeof(LB_rho_v_pi_gpu)));
   int threads_per_block_print = 1;
   int blocks_per_grid_print_y = 1;
   int blocks_per_grid_print_x = 1;
@@ -4202,9 +4203,9 @@ void lb_print_node_GPU(int single_nodeindex,
              (single_nodeindex, device_print_values, *current_nodes,
               device_rho_v, node_f));
 
-  cuda_safe_mem(cudaMemcpy(host_print_values, device_print_values,
-                           sizeof(LB_rho_v_pi_gpu), cudaMemcpyDeviceToHost));
-  cudaFree(device_print_values);
+  cuda_safe_mem(hipMemcpy(host_print_values, device_print_values,
+                           sizeof(LB_rho_v_pi_gpu), hipMemcpyDeviceToHost));
+  hipFree(device_print_values);
 }
 
 /** setup and call kernel to calculate the total momentum of the hole fluid
@@ -4213,9 +4214,9 @@ void lb_print_node_GPU(int single_nodeindex,
 void lb_calc_fluid_mass_GPU(double *mass) {
   float *tot_mass;
   float cpu_mass = 0.0f;
-  cuda_safe_mem(cudaMalloc((void **)&tot_mass, sizeof(float)));
+  cuda_safe_mem(hipMalloc((void **)&tot_mass, sizeof(float)));
   cuda_safe_mem(
-      cudaMemcpy(tot_mass, &cpu_mass, sizeof(float), cudaMemcpyHostToDevice));
+      hipMemcpy(tot_mass, &cpu_mass, sizeof(float), hipMemcpyHostToDevice));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -4229,9 +4230,9 @@ void lb_calc_fluid_mass_GPU(double *mass) {
              (*current_nodes, tot_mass));
 
   cuda_safe_mem(
-      cudaMemcpy(&cpu_mass, tot_mass, sizeof(float), cudaMemcpyDeviceToHost));
+      hipMemcpy(&cpu_mass, tot_mass, sizeof(float), hipMemcpyDeviceToHost));
 
-  cudaFree(tot_mass);
+  hipFree(tot_mass);
   mass[0] = (double)(cpu_mass);
 }
 
@@ -4241,9 +4242,9 @@ void lb_calc_fluid_mass_GPU(double *mass) {
 void lb_calc_fluid_momentum_GPU(double *host_mom) {
   float *tot_momentum;
   float host_momentum[3] = {0.0f, 0.0f, 0.0f};
-  cuda_safe_mem(cudaMalloc((void **)&tot_momentum, 3 * sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(tot_momentum, host_momentum, 3 * sizeof(float),
-                           cudaMemcpyHostToDevice));
+  cuda_safe_mem(hipMalloc((void **)&tot_momentum, 3 * sizeof(float)));
+  cuda_safe_mem(hipMemcpy(tot_momentum, host_momentum, 3 * sizeof(float),
+                           hipMemcpyHostToDevice));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -4256,10 +4257,10 @@ void lb_calc_fluid_momentum_GPU(double *host_mom) {
   KERNELCALL(momentum, dim_grid, threads_per_block,
              (*current_nodes, device_rho_v, node_f, tot_momentum));
 
-  cuda_safe_mem(cudaMemcpy(host_momentum, tot_momentum, 3 * sizeof(float),
-                           cudaMemcpyDeviceToHost));
+  cuda_safe_mem(hipMemcpy(host_momentum, tot_momentum, 3 * sizeof(float),
+                           hipMemcpyDeviceToHost));
 
-  cudaFree(tot_momentum);
+  hipFree(tot_momentum);
   host_mom[0] = (double)(host_momentum[0] * lbpar_gpu.agrid / lbpar_gpu.tau);
   host_mom[1] = (double)(host_momentum[1] * lbpar_gpu.agrid / lbpar_gpu.tau);
   host_mom[2] = (double)(host_momentum[2] * lbpar_gpu.agrid / lbpar_gpu.tau);
@@ -4270,9 +4271,9 @@ void lb_calc_fluid_momentum_GPU(double *host_mom) {
 void lb_remove_fluid_momentum_GPU(void) {
   float *tot_momentum;
   float host_momentum[3] = {0.0f, 0.0f, 0.0f};
-  cuda_safe_mem(cudaMalloc((void **)&tot_momentum, 3 * sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(tot_momentum, host_momentum, 3 * sizeof(float),
-                           cudaMemcpyHostToDevice));
+  cuda_safe_mem(hipMalloc((void **)&tot_momentum, 3 * sizeof(float)));
+  cuda_safe_mem(hipMemcpy(tot_momentum, host_momentum, 3 * sizeof(float),
+                           hipMemcpyHostToDevice));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -4285,13 +4286,13 @@ void lb_remove_fluid_momentum_GPU(void) {
   KERNELCALL(momentum, dim_grid, threads_per_block,
              (*current_nodes, device_rho_v, node_f, tot_momentum));
 
-  cuda_safe_mem(cudaMemcpy(host_momentum, tot_momentum, 3 * sizeof(float),
-                           cudaMemcpyDeviceToHost));
+  cuda_safe_mem(hipMemcpy(host_momentum, tot_momentum, 3 * sizeof(float),
+                           hipMemcpyDeviceToHost));
 
   KERNELCALL(remove_momentum, dim_grid, threads_per_block,
              (*current_nodes, device_rho_v, node_f, tot_momentum));
 
-  cudaFree(tot_momentum);
+  hipFree(tot_momentum);
 }
 
 /** setup and call kernel to calculate the temperature of the hole fluid
@@ -4301,16 +4302,16 @@ void lb_calc_fluid_temperature_GPU(double *host_temp) {
   int host_number_of_non_boundary_nodes = 0;
   int *device_number_of_non_boundary_nodes;
   cuda_safe_mem(
-      cudaMalloc((void **)&device_number_of_non_boundary_nodes, sizeof(int)));
-  cuda_safe_mem(cudaMemcpy(device_number_of_non_boundary_nodes,
+      hipMalloc((void **)&device_number_of_non_boundary_nodes, sizeof(int)));
+  cuda_safe_mem(hipMemcpy(device_number_of_non_boundary_nodes,
                            &host_number_of_non_boundary_nodes, sizeof(int),
-                           cudaMemcpyHostToDevice));
+                           hipMemcpyHostToDevice));
 
   float host_jsquared = 0.0f;
   float *device_jsquared;
-  cuda_safe_mem(cudaMalloc((void **)&device_jsquared, sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(device_jsquared, &host_jsquared, sizeof(float),
-                           cudaMemcpyHostToDevice));
+  cuda_safe_mem(hipMalloc((void **)&device_jsquared, sizeof(float)));
+  cuda_safe_mem(hipMemcpy(device_jsquared, &host_jsquared, sizeof(float),
+                           hipMemcpyHostToDevice));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -4324,11 +4325,11 @@ void lb_calc_fluid_temperature_GPU(double *host_temp) {
       temperature, dim_grid, threads_per_block,
       (*current_nodes, device_jsquared, device_number_of_non_boundary_nodes));
 
-  cuda_safe_mem(cudaMemcpy(&host_number_of_non_boundary_nodes,
+  cuda_safe_mem(hipMemcpy(&host_number_of_non_boundary_nodes,
                            device_number_of_non_boundary_nodes, sizeof(int),
-                           cudaMemcpyDeviceToHost));
-  cuda_safe_mem(cudaMemcpy(&host_jsquared, device_jsquared, sizeof(float),
-                           cudaMemcpyDeviceToHost));
+                           hipMemcpyDeviceToHost));
+  cuda_safe_mem(hipMemcpy(&host_jsquared, device_jsquared, sizeof(float),
+                           hipMemcpyDeviceToHost));
 
   // TODO: check that temperature calculation is properly implemented for
   // shanchen
@@ -4357,7 +4358,7 @@ void lb_calc_shanchen_GPU() {
   if (LBBoundaries::lbboundaries.size() != 0) {
     KERNELCALL(lb_shanchen_set_boundaries, dim_grid, threads_per_block,
                (*current_nodes));
-    cudaThreadSynchronize();
+    hipDeviceSynchronize();
   }
 #endif
   KERNELCALL(lb_shanchen_GPU, dim_grid, threads_per_block,
@@ -4377,18 +4378,18 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_seed,
                             unsigned int *host_checkpoint_boundary,
                             lbForceFloat *host_checkpoint_force) {
-  cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd,
+  cuda_safe_mem(hipMemcpy(host_checkpoint_vd, current_nodes->vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
-                           cudaMemcpyDeviceToHost));
-  cuda_safe_mem(cudaMemcpy(host_checkpoint_seed, current_nodes->seed,
+                           hipMemcpyDeviceToHost));
+  cuda_safe_mem(hipMemcpy(host_checkpoint_seed, current_nodes->seed,
                            lbpar_gpu.number_of_nodes * sizeof(unsigned int),
-                           cudaMemcpyDeviceToHost));
-  cuda_safe_mem(cudaMemcpy(host_checkpoint_boundary, current_nodes->boundary,
+                           hipMemcpyDeviceToHost));
+  cuda_safe_mem(hipMemcpy(host_checkpoint_boundary, current_nodes->boundary,
                            lbpar_gpu.number_of_nodes * sizeof(unsigned int),
-                           cudaMemcpyDeviceToHost));
-  cuda_safe_mem(cudaMemcpy(host_checkpoint_force, node_f.force_density,
+                           hipMemcpyDeviceToHost));
+  cuda_safe_mem(hipMemcpy(host_checkpoint_force, node_f.force_density,
                            lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat),
-                           cudaMemcpyDeviceToHost));
+                           hipMemcpyDeviceToHost));
 }
 
 /** setup and call kernel for setting macroscopic fluid values of all nodes
@@ -4405,19 +4406,19 @@ void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
   current_nodes = &nodes_a;
   intflag = 1;
 
-  cuda_safe_mem(cudaMemcpy(current_nodes->vd, host_checkpoint_vd,
+  cuda_safe_mem(hipMemcpy(current_nodes->vd, host_checkpoint_vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
-                           cudaMemcpyHostToDevice));
+                           hipMemcpyHostToDevice));
 
-  cuda_safe_mem(cudaMemcpy(current_nodes->seed, host_checkpoint_seed,
+  cuda_safe_mem(hipMemcpy(current_nodes->seed, host_checkpoint_seed,
                            lbpar_gpu.number_of_nodes * sizeof(unsigned int),
-                           cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpy(current_nodes->boundary, host_checkpoint_boundary,
+                           hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpy(current_nodes->boundary, host_checkpoint_boundary,
                            lbpar_gpu.number_of_nodes * sizeof(unsigned int),
-                           cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpy(node_f.force_density, host_checkpoint_force,
+                           hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpy(node_f.force_density, host_checkpoint_force,
                            lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat),
-                           cudaMemcpyHostToDevice));
+                           hipMemcpyHostToDevice));
 }
 
 /** setup and call kernel to get the boundary flag of a single node
@@ -4426,7 +4427,7 @@ void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
  */
 void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag) {
   unsigned int *device_flag;
-  cuda_safe_mem(cudaMalloc((void **)&device_flag, sizeof(unsigned int)));
+  cuda_safe_mem(hipMalloc((void **)&device_flag, sizeof(unsigned int)));
   int threads_per_block_flag = 1;
   int blocks_per_grid_flag_y = 1;
   int blocks_per_grid_flag_x = 1;
@@ -4436,10 +4437,10 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag) {
   KERNELCALL(lb_get_boundary_flag, dim_grid_flag, threads_per_block_flag,
              (single_nodeindex, device_flag, *current_nodes));
 
-  cuda_safe_mem(cudaMemcpy(host_flag, device_flag, sizeof(unsigned int),
-                           cudaMemcpyDeviceToHost));
+  cuda_safe_mem(hipMemcpy(host_flag, device_flag, sizeof(unsigned int),
+                           hipMemcpyDeviceToHost));
 
-  cudaFree(device_flag);
+  hipFree(device_flag);
 }
 
 /** set the density at a single node
@@ -4449,9 +4450,9 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag) {
 void lb_set_node_rho_GPU(int single_nodeindex, float *host_rho) {
   float *device_rho;
   cuda_safe_mem(
-      cudaMalloc((void **)&device_rho, LB_COMPONENTS * sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(device_rho, host_rho, LB_COMPONENTS * sizeof(float),
-                           cudaMemcpyHostToDevice));
+      hipMalloc((void **)&device_rho, LB_COMPONENTS * sizeof(float)));
+  cuda_safe_mem(hipMemcpy(device_rho, host_rho, LB_COMPONENTS * sizeof(float),
+                           hipMemcpyHostToDevice));
   int threads_per_block_flag = 1;
   int blocks_per_grid_flag_y = 1;
   int blocks_per_grid_flag_x = 1;
@@ -4459,7 +4460,7 @@ void lb_set_node_rho_GPU(int single_nodeindex, float *host_rho) {
       make_uint3(blocks_per_grid_flag_x, blocks_per_grid_flag_y, 1);
   KERNELCALL(set_rho, dim_grid_flag, threads_per_block_flag,
              (*current_nodes, device_rho_v, single_nodeindex, device_rho));
-  cudaFree(device_rho);
+  hipFree(device_rho);
 }
 
 /** set the net velocity at a single node
@@ -4468,9 +4469,9 @@ void lb_set_node_rho_GPU(int single_nodeindex, float *host_rho) {
  */
 void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
   float *device_velocity;
-  cuda_safe_mem(cudaMalloc((void **)&device_velocity, 3 * sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(device_velocity, host_velocity, 3 * sizeof(float),
-                           cudaMemcpyHostToDevice));
+  cuda_safe_mem(hipMalloc((void **)&device_velocity, 3 * sizeof(float)));
+  cuda_safe_mem(hipMemcpy(device_velocity, host_velocity, 3 * sizeof(float),
+                           hipMemcpyHostToDevice));
   int threads_per_block_flag = 1;
   int blocks_per_grid_flag_y = 1;
   int blocks_per_grid_flag_x = 1;
@@ -4481,7 +4482,7 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
              (*current_nodes, single_nodeindex, device_velocity, device_rho_v,
               node_f));
 
-  cudaFree(device_velocity);
+  hipFree(device_velocity);
 }
 
 /** reinit of params
@@ -4489,7 +4490,7 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
  */
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu) {
   /**write parameters in const memory*/
-  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 }
 
 /**integration kernel for the lb gpu fluid update called from host */
@@ -4505,7 +4506,7 @@ void lb_integrate_GPU() {
 #ifdef LB_BOUNDARIES_GPU
   if (LBBoundaries::lbboundaries.size() > 0) {
     cuda_safe_mem(
-        cudaMemset(lb_boundary_force, 0,
+        hipMemset(lb_boundary_force, 0,
                    3 * LBBoundaries::lbboundaries.size() * sizeof(float)));
   }
 #endif
@@ -4540,9 +4541,9 @@ void lb_gpu_get_boundary_forces(double *forces) {
   float *temp = (float *)Utils::malloc(3 * LBBoundaries::lbboundaries.size() *
                                        sizeof(float));
   cuda_safe_mem(
-      cudaMemcpy(temp, lb_boundary_force,
+      hipMemcpy(temp, lb_boundary_force,
                  3 * LBBoundaries::lbboundaries.size() * sizeof(float),
-                 cudaMemcpyDeviceToHost));
+                 hipMemcpyDeviceToHost));
 
   for (int i = 0; i < 3 * LBBoundaries::lbboundaries.size(); i++) {
     forces[i] = (double)temp[i];
@@ -4625,9 +4626,9 @@ lb_lbfluid_fluid_add_momentum_kernel(float momentum[3], LB_nodes_gpu n_a,
 
 void lb_lbfluid_fluid_add_momentum(float momentum_host[3]) {
   float *momentum_device;
-  cuda_safe_mem(cudaMalloc((void **)&momentum_device, 3 * sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(momentum_device, momentum_host, 3 * sizeof(float),
-                           cudaMemcpyHostToDevice));
+  cuda_safe_mem(hipMalloc((void **)&momentum_device, 3 * sizeof(float)));
+  cuda_safe_mem(hipMemcpy(momentum_device, momentum_host, 3 * sizeof(float),
+                           hipMemcpyHostToDevice));
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
@@ -4666,15 +4667,15 @@ __global__ void lb_lbfluid_set_population_kernel(LB_nodes_gpu n_a,
  */
 void lb_lbfluid_set_population(int xyz[3], float population_host[LBQ], int c) {
   float *population_device;
-  cuda_safe_mem(cudaMalloc((void **)&population_device, LBQ * sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(population_device, population_host,
-                           LBQ * sizeof(float), cudaMemcpyHostToDevice));
+  cuda_safe_mem(hipMalloc((void **)&population_device, LBQ * sizeof(float)));
+  cuda_safe_mem(hipMemcpy(population_device, population_host,
+                           LBQ * sizeof(float), hipMemcpyHostToDevice));
 
   dim3 dim_grid = make_uint3(1, 1, 1);
   KERNELCALL(lb_lbfluid_set_population_kernel, dim_grid, 1,
              (*current_nodes, population_device, xyz[0], xyz[1], xyz[2], c));
 
-  cuda_safe_mem(cudaFree(population_device));
+  cuda_safe_mem(hipFree(population_device));
 }
 
 /**get the populations of a specific node on the GPU
@@ -4703,16 +4704,16 @@ __global__ void lb_lbfluid_get_population_kernel(LB_nodes_gpu n_a,
  */
 void lb_lbfluid_get_population(int xyz[3], float population_host[LBQ], int c) {
   float *population_device;
-  cuda_safe_mem(cudaMalloc((void **)&population_device, LBQ * sizeof(float)));
+  cuda_safe_mem(hipMalloc((void **)&population_device, LBQ * sizeof(float)));
 
   dim3 dim_grid = make_uint3(1, 1, 1);
   KERNELCALL(lb_lbfluid_get_population_kernel, dim_grid, 1,
              (*current_nodes, population_device, xyz[0], xyz[1], xyz[2], c));
 
-  cuda_safe_mem(cudaMemcpy(population_host, population_device,
-                           LBQ * sizeof(float), cudaMemcpyDeviceToHost));
+  cuda_safe_mem(hipMemcpy(population_host, population_device,
+                           LBQ * sizeof(float), hipMemcpyDeviceToHost));
 
-  cuda_safe_mem(cudaFree(population_device));
+  cuda_safe_mem(hipFree(population_device));
 }
 
 struct two_point_interpolation {

@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef _FD_ELECTROSTATICS_HPP
 #define _FD_ELECTROSTATICS_HPP
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 
 #include <cuda.h>
 #include <cufft.h>
@@ -64,20 +64,20 @@ public:
   };
 
   ~FdElectrostatics();
-  FdElectrostatics(InputParameters inputParameters, cudaStream_t stream);
+  FdElectrostatics(InputParameters inputParameters, hipStream_t stream);
   void calculatePotential();
   void calculatePotential(cufftComplex *charge_potential);
   Grid getGrid();
 
 private:
   Parameters parameters;
-  cudaStream_t cuda_stream;
+  hipStream_t cuda_stream;
   cufftHandle plan_fft;
   cufftHandle plan_ifft;
   bool initialized;
 };
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 
 // extern __device__ __constant__ FdElectrostatics::Parameters
 // fde_parameters_gpu;
@@ -87,6 +87,6 @@ __device__ cufftReal fde_getNode(int i);
 __device__ void fde_setNode(int x, int y, int z, cufftReal value);
 __device__ void fde_setNode(int i, cufftReal value);
 
-#endif //__CUDACC__
+#endif //__HIPCC__
 
 #endif

@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /*
    Copyright (C) 2010-2018 The ESPResSo project
 
@@ -92,7 +93,7 @@ struct p3m_gpu_fft_plans_t {
 
 static char p3m_gpu_data_initialized = 0;
 
-extern __shared__ float weights[];
+HIP_DYNAMIC_SHARED( float, weights)
 
 template <int cao_value, typename T> __device__ T caf(int i, T x) {
   switch (cao_value) {
@@ -473,34 +474,29 @@ void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
 
   switch (cao) {
   case 1:
-    assign_charge_kernel<1, false><<<grid, block>>>(pdata, p, parts_per_block);
+    hipLaunchKernelGGL((assign_charge_kernel<1, false>), dim3(grid), dim3(block), 0, 0, pdata, p, parts_per_block);
     break;
   case 2:
-    assign_charge_kernel<2, false><<<grid, block>>>(pdata, p, parts_per_block);
+    hipLaunchKernelGGL((assign_charge_kernel<2, false>), dim3(grid), dim3(block), 0, 0, pdata, p, parts_per_block);
     break;
   case 3:
-    assign_charge_kernel<3, true>
-        <<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
+    hipLaunchKernelGGL((assign_charge_kernel<3, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, 
             pdata, p, parts_per_block);
     break;
   case 4:
-    assign_charge_kernel<4, true>
-        <<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
+    hipLaunchKernelGGL((assign_charge_kernel<4, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, 
             pdata, p, parts_per_block);
     break;
   case 5:
-    assign_charge_kernel<5, true>
-        <<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
+    hipLaunchKernelGGL((assign_charge_kernel<5, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, 
             pdata, p, parts_per_block);
     break;
   case 6:
-    assign_charge_kernel<6, true>
-        <<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
+    hipLaunchKernelGGL((assign_charge_kernel<6, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, 
             pdata, p, parts_per_block);
     break;
   case 7:
-    assign_charge_kernel<7, true>
-        <<<grid, block, 3 * parts_per_block * cao * sizeof(REAL_TYPE)>>>(
+    hipLaunchKernelGGL((assign_charge_kernel<7, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, 
             pdata, p, parts_per_block);
     break;
   default:
@@ -608,36 +604,31 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
    * > 2 */
   switch (cao) {
   case 1:
-    assign_forces_kernel<1, false><<<grid, block>>>(
+    hipLaunchKernelGGL((assign_forces_kernel<1, false>), dim3(grid), dim3(block), 0, 0, 
         pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 2:
-    assign_forces_kernel<2, false><<<grid, block>>>(
+    hipLaunchKernelGGL((assign_forces_kernel<2, false>), dim3(grid), dim3(block), 0, 0, 
         pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 3:
-    assign_forces_kernel<3, true>
-        <<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
+    hipLaunchKernelGGL((assign_forces_kernel<3, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(float), 0, 
             pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 4:
-    assign_forces_kernel<4, true>
-        <<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
+    hipLaunchKernelGGL((assign_forces_kernel<4, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(float), 0, 
             pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 5:
-    assign_forces_kernel<5, true>
-        <<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
+    hipLaunchKernelGGL((assign_forces_kernel<5, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(float), 0, 
             pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 6:
-    assign_forces_kernel<6, true>
-        <<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
+    hipLaunchKernelGGL((assign_forces_kernel<6, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(float), 0, 
             pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 7:
-    assign_forces_kernel<7, true>
-        <<<grid, block, 3 * parts_per_block * cao * sizeof(float)>>>(
+    hipLaunchKernelGGL((assign_forces_kernel<7, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(float), 0, 
             pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   default:
@@ -698,15 +689,15 @@ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
     }
 
     if ((p3m_gpu_data_initialized == 1) && (mesh_changed == 1)) {
-      cuda_safe_mem(cudaFree(p3m_gpu_data.charge_mesh));
+      cuda_safe_mem(hipFree(p3m_gpu_data.charge_mesh));
       p3m_gpu_data.charge_mesh = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_x));
+      cuda_safe_mem(hipFree(p3m_gpu_data.force_mesh_x));
       p3m_gpu_data.force_mesh_x = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_y));
+      cuda_safe_mem(hipFree(p3m_gpu_data.force_mesh_y));
       p3m_gpu_data.force_mesh_y = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_z));
+      cuda_safe_mem(hipFree(p3m_gpu_data.force_mesh_z));
       p3m_gpu_data.force_mesh_z = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.G_hat));
+      cuda_safe_mem(hipFree(p3m_gpu_data.G_hat));
       p3m_gpu_data.G_hat = 0;
 
       cufftDestroy(p3m_gpu_fft_plans.forw_plan);
@@ -720,15 +711,15 @@ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
       const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
                              (p3m_gpu_data.mesh[2] / 2 + 1);
 
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),
+      cuda_safe_mem(hipMalloc((void **)&(p3m_gpu_data.charge_mesh),
                                cmesh_size * sizeof(CUFFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x),
+      cuda_safe_mem(hipMalloc((void **)&(p3m_gpu_data.force_mesh_x),
                                cmesh_size * sizeof(CUFFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_y),
+      cuda_safe_mem(hipMalloc((void **)&(p3m_gpu_data.force_mesh_y),
                                cmesh_size * sizeof(CUFFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_z),
+      cuda_safe_mem(hipMalloc((void **)&(p3m_gpu_data.force_mesh_z),
                                cmesh_size * sizeof(CUFFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.G_hat),
+      cuda_safe_mem(hipMalloc((void **)&(p3m_gpu_data.G_hat),
                                cmesh_size * sizeof(REAL_TYPE)));
 
       cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2],
@@ -810,7 +801,7 @@ void p3m_gpu_add_farfield_force() {
       coulomb.prefactor /
       (p3m_gpu_data.box[0] * p3m_gpu_data.box[1] * p3m_gpu_data.box[2] * 2.0);
 
-  cuda_safe_mem(cudaMemset(p3m_gpu_data.charge_mesh, 0,
+  cuda_safe_mem(hipMemset(p3m_gpu_data.charge_mesh, 0,
                            p3m_gpu_data.mesh_size * sizeof(REAL_TYPE)));
 
   /** Interpolate the charges to the mesh */

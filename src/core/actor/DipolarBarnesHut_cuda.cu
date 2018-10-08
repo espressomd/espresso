@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /*
   Copyright (C) 2016,2017,2018 The ESPResSo project
   Copyright (C) 2012 Alexander (Polyakov) Peletskyi
@@ -882,7 +883,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
       node[MAXDEPTH * THREADS5 / WARPSIZE];
   __shared__ float dq[MAXDEPTH * THREADS5 / WARPSIZE];
   dds_float sum = 0.0;
-  extern __shared__ dds_float res[];
+  HIP_DYNAMIC_SHARED( dds_float, res)
 
   float b, d1, dd5;
 
@@ -1022,14 +1023,14 @@ void initBHgpu(int blocks) {
   KERNELCALL(initializationKernel, grid, block, ());
 
   // According to the experimental performance optimization:
-  cudaFuncSetCacheConfig(boundingBoxKernel, cudaFuncCachePreferShared);
-  cudaFuncSetCacheConfig(treeBuildingKernel, cudaFuncCachePreferL1);
-  cudaFuncSetCacheConfig(summarizationKernel, cudaFuncCachePreferShared);
-  cudaFuncSetCacheConfig(sortKernel, cudaFuncCachePreferL1);
-  cudaFuncSetCacheConfig(forceCalculationKernel, cudaFuncCachePreferL1);
-  cudaFuncSetCacheConfig(energyCalculationKernel, cudaFuncCachePreferL1);
+  hipFuncSetCacheConfig(boundingBoxKernel, hipFuncCachePreferShared);
+  hipFuncSetCacheConfig(treeBuildingKernel, hipFuncCachePreferL1);
+  hipFuncSetCacheConfig(summarizationKernel, hipFuncCachePreferShared);
+  hipFuncSetCacheConfig(sortKernel, hipFuncCachePreferL1);
+  hipFuncSetCacheConfig(forceCalculationKernel, hipFuncCachePreferL1);
+  hipFuncSetCacheConfig(energyCalculationKernel, hipFuncCachePreferL1);
 
-  cudaGetLastError(); // reset error value
+  hipGetLastError(); // reset error value
 }
 
 // Building Barnes-Hut spatial min/max position box
@@ -1040,9 +1041,9 @@ void buildBoxBH(int blocks) {
   grid.x = blocks * FACTOR1;
   block.x = THREADS1;
 
-  cudaThreadSynchronize();
+  hipDeviceSynchronize();
   KERNELCALL(boundingBoxKernel, grid, block, ());
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(hipDeviceSynchronize());
 }
 
 // Building Barnes-Hut tree in a linear childd array representation
@@ -1055,7 +1056,7 @@ void buildTreeBH(int blocks) {
   block.x = THREADS2;
 
   KERNELCALL(treeBuildingKernel, grid, block, ());
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(hipDeviceSynchronize());
 }
 
 // Calculate octant cells masses and cell index counts.
@@ -1069,7 +1070,7 @@ void summarizeBH(int blocks) {
   block.x = THREADS3;
 
   KERNELCALL(summarizationKernel, grid, block, ());
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(hipDeviceSynchronize());
 }
 
 // Sort particle indexes according to the BH tree representation.
@@ -1083,7 +1084,7 @@ void sortBH(int blocks) {
   block.x = THREADS4;
 
   KERNELCALL(sortKernel, grid, block, ());
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(hipDeviceSynchronize());
 }
 
 // Force calculation.
@@ -1096,10 +1097,10 @@ int forceBH(BHData *bh_data, dds_float k, float *f, float *torque) {
   block.x = THREADS5;
 
   KERNELCALL(forceCalculationKernel, grid, block, (k, f, torque));
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(hipDeviceSynchronize());
 
-  cuda_safe_mem(cudaMemcpy(&error_code, bh_data->err, sizeof(int),
-                           cudaMemcpyDeviceToHost));
+  cuda_safe_mem(hipMemcpy(&error_code, bh_data->err, sizeof(int),
+                           hipMemcpyDeviceToHost));
   return error_code;
 }
 
@@ -1113,32 +1114,32 @@ int energyBH(BHData *bh_data, dds_float k, float *E) {
   block.x = THREADS5;
 
   dds_float *energySum;
-  cuda_safe_mem(cudaMalloc(&energySum, (int)(sizeof(dds_float) * grid.x)));
+  cuda_safe_mem(hipMalloc(&energySum, (int)(sizeof(dds_float) * grid.x)));
   // cleanup the memory for the energy sum
-  cuda_safe_mem(cudaMemset(energySum, 0, (int)(sizeof(dds_float) * grid.x)));
+  cuda_safe_mem(hipMemset(energySum, 0, (int)(sizeof(dds_float) * grid.x)));
 
   KERNELCALL_shared(energyCalculationKernel, grid, block,
                     block.x * sizeof(dds_float), (k, energySum));
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(hipDeviceSynchronize());
 
   // Sum the results of all blocks
   // One energy part per block in the prev kernel
   thrust::device_ptr<dds_float> t(energySum);
   float x = thrust::reduce(t, t + grid.x);
-  cuda_safe_mem(cudaMemcpy(E, &x, sizeof(float), cudaMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpy(E, &x, sizeof(float), hipMemcpyHostToDevice));
 
-  cuda_safe_mem(cudaFree(energySum));
-  cuda_safe_mem(cudaMemcpy(&error_code, bh_data->err, sizeof(int),
-                           cudaMemcpyDeviceToHost));
+  cuda_safe_mem(hipFree(energySum));
+  cuda_safe_mem(hipMemcpy(&error_code, bh_data->err, sizeof(int),
+                           hipMemcpyDeviceToHost));
   return error_code;
 }
 
 // Function to set the BH method parameters.
 void setBHPrecision(float *epssq, float *itolsq) {
-  cuda_safe_mem(cudaMemcpyToSymbol(epssqd, epssq, sizeof(float), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(itolsqd, itolsq, sizeof(float), 0,
-                                   cudaMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(epssqd, epssq, sizeof(float), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(itolsqd, itolsq, sizeof(float), 0,
+                                   hipMemcpyHostToDevice));
 }
 
 // An allocation of the GPU device memory and an initialization where it is
@@ -1163,33 +1164,33 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
   bh_data->nnodes--;
 
   if (bh_data->err != 0)
-    cuda_safe_mem(cudaFree(bh_data->err));
-  cuda_safe_mem(cudaMalloc((void **)&(bh_data->err), sizeof(int)));
+    cuda_safe_mem(hipFree(bh_data->err));
+  cuda_safe_mem(hipMalloc((void **)&(bh_data->err), sizeof(int)));
 
   if (bh_data->child != 0)
-    cuda_safe_mem(cudaFree(bh_data->child));
-  cuda_safe_mem(cudaMalloc((void **)&(bh_data->child),
+    cuda_safe_mem(hipFree(bh_data->child));
+  cuda_safe_mem(hipMalloc((void **)&(bh_data->child),
                            sizeof(int) * (bh_data->nnodes + 1) * 8));
 
   if (bh_data->count != 0)
-    cuda_safe_mem(cudaFree(bh_data->count));
-  cuda_safe_mem(cudaMalloc((void **)&(bh_data->count),
+    cuda_safe_mem(hipFree(bh_data->count));
+  cuda_safe_mem(hipMalloc((void **)&(bh_data->count),
                            sizeof(int) * (bh_data->nnodes + 1)));
 
   if (bh_data->start != 0)
-    cuda_safe_mem(cudaFree(bh_data->start));
-  cuda_safe_mem(cudaMalloc((void **)&(bh_data->start),
+    cuda_safe_mem(hipFree(bh_data->start));
+  cuda_safe_mem(hipMalloc((void **)&(bh_data->start),
                            sizeof(int) * (bh_data->nnodes + 1)));
 
   if (bh_data->sort != 0)
-    cuda_safe_mem(cudaFree(bh_data->sort));
-  cuda_safe_mem(cudaMalloc((void **)&(bh_data->sort),
+    cuda_safe_mem(hipFree(bh_data->sort));
+  cuda_safe_mem(hipMalloc((void **)&(bh_data->sort),
                            sizeof(int) * (bh_data->nnodes + 1)));
 
   // Weight coefficients of m_bhnnodes nodes: both particles and octant cells
   if (bh_data->mass != 0)
-    cuda_safe_mem(cudaFree(bh_data->mass));
-  cuda_safe_mem(cudaMalloc((void **)&(bh_data->mass),
+    cuda_safe_mem(hipFree(bh_data->mass));
+  cuda_safe_mem(hipMalloc((void **)&(bh_data->mass),
                            sizeof(float) * (bh_data->nnodes + 1)));
 
   // n particles have unitary weight coefficients.
@@ -1198,69 +1199,69 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
   for (int i = 0; i < bh_data->nbodies; i++) {
     mass_tmp[i] = 1.0f;
   }
-  cuda_safe_mem(cudaMemcpy(bh_data->mass, mass_tmp,
+  cuda_safe_mem(hipMemcpy(bh_data->mass, mass_tmp,
                            sizeof(float) * bh_data->nbodies,
-                           cudaMemcpyHostToDevice));
+                           hipMemcpyHostToDevice));
   delete[] mass_tmp;
   // (max[3*i], max[3*i+1], max[3*i+2])
   // are the octree box dynamical spatial constraints
   // this array is updating per each block at each interaction calculation
   // within the boundingBoxKernel
   if (bh_data->maxp != 0)
-    cuda_safe_mem(cudaFree(bh_data->maxp));
-  cuda_safe_mem(cudaMalloc((void **)&(bh_data->maxp),
+    cuda_safe_mem(hipFree(bh_data->maxp));
+  cuda_safe_mem(hipMalloc((void **)&(bh_data->maxp),
                            sizeof(float) * bh_data->blocks * FACTOR1 * 3));
   // (min[3*i], min[3*i+1], min[3*i+2])
   // are the octree box dynamical spatial constraints
   // this array is updating per each block at each interaction calculation
   // within the boundingBoxKernel
   if (bh_data->minp != 0)
-    cuda_safe_mem(cudaFree(bh_data->minp));
-  cuda_safe_mem(cudaMalloc((void **)&(bh_data->minp),
+    cuda_safe_mem(hipFree(bh_data->minp));
+  cuda_safe_mem(hipMalloc((void **)&(bh_data->minp),
                            sizeof(float) * bh_data->blocks * FACTOR1 * 3));
 
   if (bh_data->r != 0)
-    cuda_safe_mem(cudaFree(bh_data->r));
+    cuda_safe_mem(hipFree(bh_data->r));
   cuda_safe_mem(
-      cudaMalloc(&(bh_data->r), 3 * (bh_data->nnodes + 1) * sizeof(float)));
+      hipMalloc(&(bh_data->r), 3 * (bh_data->nnodes + 1) * sizeof(float)));
 
   if (bh_data->u != 0)
-    cuda_safe_mem(cudaFree(bh_data->u));
+    cuda_safe_mem(hipFree(bh_data->u));
   cuda_safe_mem(
-      cudaMalloc(&(bh_data->u), 3 * (bh_data->nnodes + 1) * sizeof(float)));
+      hipMalloc(&(bh_data->u), 3 * (bh_data->nnodes + 1) * sizeof(float)));
 }
 
 // Populating of array pointers allocated in GPU device before.
 // Copy the particle data to the Barnes-Hut related arrays.
 void fillConstantPointers(float *r, float *dip, BHData bh_data) {
-  cuda_safe_mem(cudaMemcpyToSymbol(nnodesd, &(bh_data.nnodes), sizeof(int), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(nbodiesd, &(bh_data.nbodies), sizeof(int), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(errd, &(bh_data.err), sizeof(void *), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(sortd, &(bh_data.sort), sizeof(void *), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(childd, &(bh_data.child), sizeof(void *), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(countd, &(bh_data.count), sizeof(void *), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(startd, &(bh_data.start), sizeof(void *), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(xd, &(bh_data.r), sizeof(float *), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(uxd, &(bh_data.u), sizeof(float *), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(massd, &(bh_data.mass), sizeof(void *), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(maxd, &(bh_data.maxp), sizeof(void *), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(mind, &(bh_data.minp), sizeof(void *), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpy(bh_data.r, r, 3 * bh_data.nbodies * sizeof(float),
-                           cudaMemcpyDeviceToDevice));
-  cuda_safe_mem(cudaMemcpy(bh_data.u, dip, 3 * bh_data.nbodies * sizeof(float),
-                           cudaMemcpyDeviceToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(nnodesd, &(bh_data.nnodes), sizeof(int), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(nbodiesd, &(bh_data.nbodies), sizeof(int), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(errd, &(bh_data.err), sizeof(void *), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(sortd, &(bh_data.sort), sizeof(void *), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(childd, &(bh_data.child), sizeof(void *), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(countd, &(bh_data.count), sizeof(void *), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(startd, &(bh_data.start), sizeof(void *), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(xd, &(bh_data.r), sizeof(float *), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(uxd, &(bh_data.u), sizeof(float *), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(massd, &(bh_data.mass), sizeof(void *), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(maxd, &(bh_data.maxp), sizeof(void *), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpyToSymbol(mind, &(bh_data.minp), sizeof(void *), 0,
+                                   hipMemcpyHostToDevice));
+  cuda_safe_mem(hipMemcpy(bh_data.r, r, 3 * bh_data.nbodies * sizeof(float),
+                           hipMemcpyDeviceToDevice));
+  cuda_safe_mem(hipMemcpy(bh_data.u, dip, 3 * bh_data.nbodies * sizeof(float),
+                           hipMemcpyDeviceToDevice));
 }
 
 #endif // BARNES_HUT

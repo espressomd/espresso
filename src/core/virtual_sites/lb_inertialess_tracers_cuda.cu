@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 
 // *******
 // This is an internal file of the IMMERSED BOUNDARY implementation
@@ -102,10 +103,10 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
   if (this_node == 0 && numParticles > 0) {
 
     // Copy data to device
-    cuda_safe_mem(cudaMemcpy(IBM_ParticleDataInput_device,
+    cuda_safe_mem(hipMemcpy(IBM_ParticleDataInput_device,
                              IBM_ParticleDataInput_host,
                              numParticles * sizeof(IBM_CUDA_ParticleDataInput),
-                             cudaMemcpyHostToDevice));
+                             hipMemcpyHostToDevice));
 
     // Kernel call for spreading the forces on the LB grid
     int threads_per_block_particles = 64;
@@ -136,28 +137,28 @@ void InitCUDA_IBM(const int numParticles) {
     if (IBM_ParticleDataInput_host != NULL) {
       delete[] IBM_ParticleDataInput_host;
       delete[] IBM_ParticleDataOutput_host;
-      cuda_safe_mem(cudaFree(IBM_ParticleDataInput_device));
-      cuda_safe_mem(cudaFree(IBM_ParticleDataOutput_device));
-      cuda_safe_mem(cudaFree(paraIBM));
-      cuda_safe_mem(cudaFree(lb_boundary_velocity_IBM));
+      cuda_safe_mem(hipFree(IBM_ParticleDataInput_device));
+      cuda_safe_mem(hipFree(IBM_ParticleDataOutput_device));
+      cuda_safe_mem(hipFree(paraIBM));
+      cuda_safe_mem(hipFree(lb_boundary_velocity_IBM));
     }
 
     // Back and forth communication of positions and velocities
     IBM_ParticleDataInput_host = new IBM_CUDA_ParticleDataInput[numParticles];
     cuda_safe_mem(
-        cudaMalloc((void **)&IBM_ParticleDataInput_device,
+        hipMalloc((void **)&IBM_ParticleDataInput_device,
                    numParticles * sizeof(IBM_CUDA_ParticleDataInput)));
     cuda_safe_mem(
-        cudaMalloc((void **)&IBM_ParticleDataOutput_device,
+        hipMalloc((void **)&IBM_ParticleDataOutput_device,
                    numParticles * sizeof(IBM_CUDA_ParticleDataOutput)));
     IBM_ParticleDataOutput_host = new IBM_CUDA_ParticleDataOutput[numParticles];
 
     // Copy parameters to the GPU
     LB_parameters_gpu *para_gpu;
     lb_get_para_pointer(&para_gpu);
-    cuda_safe_mem(cudaMalloc((void **)&paraIBM, sizeof(LB_parameters_gpu)));
-    cuda_safe_mem(cudaMemcpy(paraIBM, para_gpu, sizeof(LB_parameters_gpu),
-                             cudaMemcpyHostToDevice));
+    cuda_safe_mem(hipMalloc((void **)&paraIBM, sizeof(LB_parameters_gpu)));
+    cuda_safe_mem(hipMemcpy(paraIBM, para_gpu, sizeof(LB_parameters_gpu),
+                             hipMemcpyHostToDevice));
 
     // Copy boundary velocities to the GPU
     // First put them into correct format
@@ -179,12 +180,12 @@ void InitCUDA_IBM(const int numParticles) {
     host_lb_boundary_velocity[3 * LBBoundaries::lbboundaries.size() + 2] = 0.0f;
 
     cuda_safe_mem(
-        cudaMalloc((void **)&lb_boundary_velocity_IBM,
+        hipMalloc((void **)&lb_boundary_velocity_IBM,
                    3 * LBBoundaries::lbboundaries.size() * sizeof(float)));
     cuda_safe_mem(
-        cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity,
+        hipMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity,
                    3 * LBBoundaries::lbboundaries.size() * sizeof(float),
-                   cudaMemcpyHostToDevice));
+                   hipMemcpyHostToDevice));
 
     delete[] host_lb_boundary_velocity;
 #endif
@@ -297,10 +298,10 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
                 paraIBM));
 
     // Copy velocities from device to host
-    cuda_safe_mem(cudaMemcpy(IBM_ParticleDataOutput_host,
+    cuda_safe_mem(hipMemcpy(IBM_ParticleDataOutput_host,
                              IBM_ParticleDataOutput_device,
                              numParticles * sizeof(IBM_CUDA_ParticleDataOutput),
-                             cudaMemcpyDeviceToHost));
+                             hipMemcpyDeviceToHost));
   }
 
   // ***** Back to all nodes ****

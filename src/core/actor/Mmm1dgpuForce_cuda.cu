@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /*
   Copyright (C) 2014-2018 The ESPResSo project
 
@@ -28,7 +29,7 @@
 // the code is mostly multi-GPU capable, but Espresso is not yet
 const int deviceCount = 1;
 float multigpu_factors[] = {1.0};
-#define cudaSetDevice(d)
+#define hipSetDevice(d)
 
 #include "EspressoSystemInterface.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
@@ -98,10 +99,10 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
   // do the latter.
   pairs = 2;
   for (int d = 0; d < deviceCount; d++) {
-    cudaSetDevice(d);
+    hipSetDevice(d);
 
     size_t freeMem, totalMem;
-    cudaMemGetInfo(&freeMem, &totalMem);
+    hipMemGetInfo(&freeMem, &totalMem);
     if (freeMem / 2 <
         3 * s.npart_gpu() * s.npart_gpu() *
             sizeof(
@@ -114,16 +115,16 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
     }
   }
   if (dev_forcePairs)
-    cudaFree(dev_forcePairs);
+    hipFree(dev_forcePairs);
   if (pairs) // we need memory to store force pairs
   {
     cuda_safe_mem(
-        cudaMalloc((void **)&dev_forcePairs,
+        hipMalloc((void **)&dev_forcePairs,
                    3 * s.npart_gpu() * s.npart_gpu() * sizeof(mmm1dgpu_real)));
   }
   if (dev_energyBlocks)
-    cudaFree(dev_energyBlocks);
-  cuda_safe_mem(cudaMalloc((void **)&dev_energyBlocks,
+    hipFree(dev_energyBlocks);
+  cuda_safe_mem(hipMalloc((void **)&dev_energyBlocks,
                            numBlocks(s) * sizeof(mmm1dgpu_real)));
   host_npart = s.npart_gpu();
 }
@@ -137,7 +138,7 @@ unsigned int Mmm1dgpuForce::numBlocks(SystemInterface &s) {
 
 Mmm1dgpuForce::~Mmm1dgpuForce() {
   modpsi_destroy();
-  cudaFree(dev_forcePairs);
+  hipFree(dev_forcePairs);
 }
 
 __forceinline__ __device__ mmm1dgpu_real sqpow(mmm1dgpu_real x) {
@@ -160,7 +161,7 @@ __device__ void sumReduction(mmm1dgpu_real *input, mmm1dgpu_real *sum) {
 }
 
 __global__ void sumKernel(mmm1dgpu_real *data, int N) {
-  extern __shared__ mmm1dgpu_real partialsums[];
+  HIP_DYNAMIC_SHARED( mmm1dgpu_real, partialsums)
   if (blockIdx.x != 0)
     return;
   int tid = threadIdx.x;
@@ -228,11 +229,11 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
   {
     int *dev_cutoff;
     int maxCut = 30;
-    cuda_safe_mem(cudaMalloc((void **)&dev_cutoff, sizeof(int)));
-    besselTuneKernel<<<1, 1>>>(dev_cutoff, far_switch_radius, maxCut);
-    cuda_safe_mem(cudaMemcpy(&bessel_cutoff, dev_cutoff, sizeof(int),
-                             cudaMemcpyDeviceToHost));
-    cudaFree(dev_cutoff);
+    cuda_safe_mem(hipMalloc((void **)&dev_cutoff, sizeof(int)));
+    hipLaunchKernelGGL((besselTuneKernel), dim3(1), dim3(1), 0, 0, dev_cutoff, far_switch_radius, maxCut);
+    cuda_safe_mem(hipMemcpy(&bessel_cutoff, dev_cutoff, sizeof(int),
+                             hipMemcpyDeviceToHost));
+    hipFree(dev_cutoff);
     if (_bessel_cutoff != -2 &&
         bessel_cutoff >=
             maxCut) // we already have our switching radius and only need to
@@ -262,7 +263,7 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
   for (int d = 0; d < deviceCount; d++) {
     // double colons are needed to access the constant memory variables because
     // they are file globals and we have identically named class variables
-    cudaSetDevice(d);
+    hipSetDevice(d);
     if (manual) // tuning needs to be performed again
     {
       far_switch_radius = _far_switch_radius;
@@ -271,29 +272,29 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
     if (_far_switch_radius >= 0) {
       mmm1d_params.far_switch_radius_2 =
           _far_switch_radius * _far_switch_radius;
-      cuda_safe_mem(cudaMemcpyToSymbol(
+      cuda_safe_mem(hipMemcpyToSymbol(
           ::far_switch_radius_2, &_far_switch_radius_2, sizeof(mmm1dgpu_real)));
       far_switch_radius = _far_switch_radius;
     }
     if (_boxz > 0) {
       host_boxz = _boxz;
-      cuda_safe_mem(cudaMemcpyToSymbol(::boxz, &_boxz, sizeof(mmm1dgpu_real)));
-      cuda_safe_mem(cudaMemcpyToSymbol(::uz, &_uz, sizeof(mmm1dgpu_real)));
+      cuda_safe_mem(hipMemcpyToSymbol(::boxz, &_boxz, sizeof(mmm1dgpu_real)));
+      cuda_safe_mem(hipMemcpyToSymbol(::uz, &_uz, sizeof(mmm1dgpu_real)));
     }
     if (_coulomb_prefactor != 0) {
-      cuda_safe_mem(cudaMemcpyToSymbol(::coulomb_prefactor, &_coulomb_prefactor,
+      cuda_safe_mem(hipMemcpyToSymbol(::coulomb_prefactor, &_coulomb_prefactor,
                                        sizeof(mmm1dgpu_real)));
       coulomb_prefactor = _coulomb_prefactor;
     }
     if (_bessel_cutoff > 0) {
       mmm1d_params.bessel_cutoff = _bessel_cutoff;
       cuda_safe_mem(
-          cudaMemcpyToSymbol(::bessel_cutoff, &_bessel_cutoff, sizeof(int)));
+          hipMemcpyToSymbol(::bessel_cutoff, &_bessel_cutoff, sizeof(int)));
       bessel_cutoff = _bessel_cutoff;
     }
     if (_maxPWerror > 0) {
       mmm1d_params.maxPWerror = _maxPWerror;
-      cuda_safe_mem(cudaMemcpyToSymbol(::maxPWerror, &_maxPWerror,
+      cuda_safe_mem(hipMemcpyToSymbol(::maxPWerror, &_maxPWerror,
                                        sizeof(mmm1dgpu_real)));
       maxPWerror = _maxPWerror;
     }
@@ -402,7 +403,7 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
   if (tStop < 0)
     tStop = N * N;
 
-  extern __shared__ mmm1dgpu_real partialsums[];
+  HIP_DYNAMIC_SHARED( mmm1dgpu_real, partialsums)
   if (!pairs) {
     partialsums[threadIdx.x] = 0;
     __syncthreads();
@@ -551,23 +552,23 @@ void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
 }
 
 float Mmm1dgpuForce::force_benchmark(SystemInterface &s) {
-  cudaEvent_t eventStart, eventStop;
+  hipEvent_t eventStart, eventStop;
   float elapsedTime;
   mmm1dgpu_real *dev_f_benchmark;
 
-  cuda_safe_mem(cudaMalloc((void **)&dev_f_benchmark,
+  cuda_safe_mem(hipMalloc((void **)&dev_f_benchmark,
                            3 * s.npart_gpu() * sizeof(mmm1dgpu_real)));
-  cuda_safe_mem(cudaEventCreate(&eventStart));
-  cuda_safe_mem(cudaEventCreate(&eventStop));
-  cuda_safe_mem(cudaEventRecord(eventStart, stream[0]));
+  cuda_safe_mem(hipEventCreate(&eventStart));
+  cuda_safe_mem(hipEventCreate(&eventStop));
+  cuda_safe_mem(hipEventRecord(eventStart, stream[0]));
   KERNELCALL(forcesKernel, numBlocks(s), numThreads,
              (s.rGpuBegin(), s.qGpuBegin(), dev_f_benchmark, s.npart_gpu(), 0))
-  cuda_safe_mem(cudaEventRecord(eventStop, stream[0]));
-  cuda_safe_mem(cudaEventSynchronize(eventStop));
-  cuda_safe_mem(cudaEventElapsedTime(&elapsedTime, eventStart, eventStop));
-  cuda_safe_mem(cudaEventDestroy(eventStart));
-  cuda_safe_mem(cudaEventDestroy(eventStop));
-  cuda_safe_mem(cudaFree(dev_f_benchmark));
+  cuda_safe_mem(hipEventRecord(eventStop, stream[0]));
+  cuda_safe_mem(hipEventSynchronize(eventStop));
+  cuda_safe_mem(hipEventElapsedTime(&elapsedTime, eventStart, eventStop));
+  cuda_safe_mem(hipEventDestroy(eventStart));
+  cuda_safe_mem(hipEventDestroy(eventStop));
+  cuda_safe_mem(hipFree(dev_f_benchmark));
 
   return elapsedTime;
 }

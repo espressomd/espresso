@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 #include <stdio.h>
 #include <thrust/device_vector.h>
 #include <thrust/reduce.h>

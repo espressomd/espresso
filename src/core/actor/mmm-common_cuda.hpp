@@ -67,7 +67,7 @@ int modpsi_init() {
   }
 
   for (int d = 0; d < deviceCount; d++) {
-    cudaSetDevice(d);
+    hipSetDevice(d);
 
     // copy to GPU
     int linModPsiSize = linModPsi_offsets[2 * n_modPsi - 1] +
@@ -76,15 +76,15 @@ int modpsi_init() {
       printf("ERROR: __constant__ device_linModPsi[] is not large enough\n");
       exit(EXIT_FAILURE);
     }
-    cuda_safe_mem(cudaMemcpyToSymbol(device_linModPsi_offsets,
+    cuda_safe_mem(hipMemcpyToSymbol(device_linModPsi_offsets,
                                      linModPsi_offsets,
                                      2 * n_modPsi * sizeof(int)));
-    cuda_safe_mem(cudaMemcpyToSymbol(device_linModPsi_lengths,
+    cuda_safe_mem(hipMemcpyToSymbol(device_linModPsi_lengths,
                                      linModPsi_lengths,
                                      2 * n_modPsi * sizeof(int)));
-    cuda_safe_mem(cudaMemcpyToSymbol(device_linModPsi, linModPsi,
+    cuda_safe_mem(hipMemcpyToSymbol(device_linModPsi, linModPsi,
                                      linModPsiSize * sizeof(mmm1dgpu_real)));
-    cuda_safe_mem(cudaMemcpyToSymbol(device_n_modPsi, &n_modPsi, sizeof(int)));
+    cuda_safe_mem(hipMemcpyToSymbol(device_n_modPsi, &n_modPsi, sizeof(int)));
   }
 
   return 0;
