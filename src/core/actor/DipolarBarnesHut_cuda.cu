@@ -21,10 +21,8 @@
 #include "../cuda_init.hpp"
 #include "../cuda_utils.hpp"
 #include "config.hpp"
-#include "cuda.h"
-#include "thrust/device_ptr.h"
-#include "thrust/reduce.h"
-#include <cuda_runtime_api.h>
+#include <thrust/device_ptr.h>
+#include <thrust/reduce.h>
 #include <curand.h>
 #include <curand_kernel.h>
 

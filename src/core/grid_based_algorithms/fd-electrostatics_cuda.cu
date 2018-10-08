@@ -1,8 +1,7 @@
 // TODO: throw exceptions upon errors initialization
 
 #include "grid_based_algorithms/fd-electrostatics.hpp"
-#include <cuda.h>
-#include <cuda_utils.hpp>
+#include "cuda_utils.hpp"
 #include <cufft.h>
 #include <string>
 //#include <cuda_interface.hpp>

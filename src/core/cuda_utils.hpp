@@ -23,9 +23,6 @@
 #error Do not include CUDA headers in normal C++-code!!!
 #endif
 
-#include <cuda.h>
-#include <cuda_runtime.h>
-
 /**cuda streams for parallel computing on cpu and gpu */
 extern cudaStream_t stream[1];
 

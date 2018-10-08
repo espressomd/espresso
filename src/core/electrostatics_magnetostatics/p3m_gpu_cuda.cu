@@ -38,7 +38,6 @@
 
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
-#include <cuda.h>
 #include <cufft.h>
 
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"

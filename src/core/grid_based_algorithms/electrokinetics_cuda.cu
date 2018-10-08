@@ -20,7 +20,6 @@
 #ifdef CUDA            /* Terminates at end of file */
 #ifdef ELECTROKINETICS /* Terminates at end of file */
 
-#include <cuda.h>
 #include <cufft.h>
 #include <fstream>
 #include <iostream>

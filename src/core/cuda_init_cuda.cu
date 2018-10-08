@@ -28,8 +28,6 @@
 
 #ifdef CUDA
 
-#include <cuda.h>
-
 /** \name minimally required compute capability. */
 /*@{*/
 static const int computeCapabilityMinMajor = 1;
