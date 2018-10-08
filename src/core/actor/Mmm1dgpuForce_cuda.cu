@@ -273,28 +273,28 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
       mmm1d_params.far_switch_radius_2 =
           _far_switch_radius * _far_switch_radius;
       cuda_safe_mem(hipMemcpyToSymbol(
-          ::far_switch_radius_2, &_far_switch_radius_2, sizeof(mmm1dgpu_real)));
+          &::far_switch_radius_2, &_far_switch_radius_2, sizeof(mmm1dgpu_real)));
       far_switch_radius = _far_switch_radius;
     }
     if (_boxz > 0) {
       host_boxz = _boxz;
-      cuda_safe_mem(hipMemcpyToSymbol(::boxz, &_boxz, sizeof(mmm1dgpu_real)));
-      cuda_safe_mem(hipMemcpyToSymbol(::uz, &_uz, sizeof(mmm1dgpu_real)));
+      cuda_safe_mem(hipMemcpyToSymbol(&::boxz, &_boxz, sizeof(mmm1dgpu_real)));
+      cuda_safe_mem(hipMemcpyToSymbol(&::uz, &_uz, sizeof(mmm1dgpu_real)));
     }
     if (_coulomb_prefactor != 0) {
-      cuda_safe_mem(hipMemcpyToSymbol(::coulomb_prefactor, &_coulomb_prefactor,
+      cuda_safe_mem(hipMemcpyToSymbol(&::coulomb_prefactor, &_coulomb_prefactor,
                                        sizeof(mmm1dgpu_real)));
       coulomb_prefactor = _coulomb_prefactor;
     }
     if (_bessel_cutoff > 0) {
       mmm1d_params.bessel_cutoff = _bessel_cutoff;
       cuda_safe_mem(
-          hipMemcpyToSymbol(::bessel_cutoff, &_bessel_cutoff, sizeof(int)));
+          hipMemcpyToSymbol(&::bessel_cutoff, &_bessel_cutoff, sizeof(int)));
       bessel_cutoff = _bessel_cutoff;
     }
     if (_maxPWerror > 0) {
       mmm1d_params.maxPWerror = _maxPWerror;
-      cuda_safe_mem(hipMemcpyToSymbol(::maxPWerror, &_maxPWerror,
+      cuda_safe_mem(hipMemcpyToSymbol(&::maxPWerror, &_maxPWerror,
                                        sizeof(mmm1dgpu_real)));
       maxPWerror = _maxPWerror;
     }

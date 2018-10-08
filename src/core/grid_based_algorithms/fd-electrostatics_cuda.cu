@@ -81,7 +81,7 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
   }
 
   cuda_safe_mem(
-      hipMemcpyToSymbol(fde_parameters_gpu, &parameters, sizeof(Parameters)));
+      hipMemcpyToSymbol(&fde_parameters_gpu, &parameters, sizeof(Parameters)));
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;

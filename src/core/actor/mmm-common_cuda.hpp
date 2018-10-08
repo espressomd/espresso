@@ -84,7 +84,7 @@ int modpsi_init() {
                                      2 * n_modPsi * sizeof(int)));
     cuda_safe_mem(hipMemcpyToSymbol(device_linModPsi, linModPsi,
                                      linModPsiSize * sizeof(mmm1dgpu_real)));
-    cuda_safe_mem(hipMemcpyToSymbol(device_n_modPsi, &n_modPsi, sizeof(int)));
+    cuda_safe_mem(hipMemcpyToSymbol(&device_n_modPsi, &n_modPsi, sizeof(int)));
   }
 
   return 0;

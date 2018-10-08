@@ -3833,7 +3833,7 @@ __global__ void lb_get_boundary_flag(int single_nodeindex,
 /**********************************************************************/
 
 void lb_get_para_pointer(LB_parameters_gpu **pointeradress) {
-  if (cudaGetSymbolAddress((void **)pointeradress, para) != hipSuccess) {
+  if (cudaGetSymbolAddress((void **)pointeradress, para) != cudaSuccess) {
     fprintf(stderr,
             "Trouble getting address of LB parameters.\n"); // TODO give proper
                                                             // error message
@@ -3909,7 +3909,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
 
   /**write parameters in const memory*/
-  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(&para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   /**check flag if lb gpu init works*/
   free_realloc_and_clear(gpu_check, sizeof(int));
@@ -3961,7 +3961,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
  */
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
   /**write parameters in const memory*/
-  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(&para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -3979,7 +3979,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
 
 void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu) {
   // copy parameters, especially number of parts to gpu mem
-  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(&para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 }
 
 #ifdef LB_BOUNDARIES_GPU
@@ -4055,7 +4055,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
  * @param *lbpar_gpu    Pointer to host parameter struct
  */
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu) {
-  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(&para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -4087,7 +4087,7 @@ void lb_init_extern_nodeforcedensities_GPU(
       hipMemcpy(extern_node_force_densities, host_extern_node_force_densities,
                  size_of_extern_node_force_densities, hipMemcpyHostToDevice));
 
-  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(&para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   int threads_per_block_exf = 64;
   int blocks_per_grid_exf_y = 4;
@@ -4490,7 +4490,7 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
  */
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu) {
   /**write parameters in const memory*/
-  cuda_safe_mem(hipMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(hipMemcpyToSymbol(&para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 }
 
 /**integration kernel for the lb gpu fluid update called from host */

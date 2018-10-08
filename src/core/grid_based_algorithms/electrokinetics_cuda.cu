@@ -2361,7 +2361,7 @@ int ek_init() {
 
   if (!ek_initialized) {
     if (cudaGetSymbolAddress((void **)&ek_parameters_gpu_pointer,
-                             ek_parameters_gpu) != hipSuccess) {
+                             ek_parameters_gpu) != cudaSuccess) {
       fprintf(stderr, "ERROR: Fetching constant memory pointer\n");
 
       return 1;
@@ -2423,7 +2423,7 @@ int ek_init() {
     cuda_safe_mem(
         hipMalloc((void **)&ek_parameters.j,
                    ek_parameters.number_of_nodes * 13 * sizeof(ekfloat)));
-    cuda_safe_mem(hipMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+    cuda_safe_mem(hipMemcpyToSymbol(&ek_parameters_gpu, &ek_parameters,
                                      sizeof(EK_parameters)));
 
     lb_get_para_pointer(&ek_lbparameters_gpu);
@@ -2479,7 +2479,7 @@ int ek_init() {
     }
 
     ek_parameters.charge_potential = electrostatics->getGrid().grid;
-    cuda_safe_mem(hipMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+    cuda_safe_mem(hipMemcpyToSymbol(&ek_parameters_gpu, &ek_parameters,
                                      sizeof(EK_parameters)));
 
     // clear initial LB force and finish up
@@ -2503,14 +2503,14 @@ int ek_init() {
 
       return 1;
     } else {
-      cuda_safe_mem(hipMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+      cuda_safe_mem(hipMemcpyToSymbol(&ek_parameters_gpu, &ek_parameters,
                                        sizeof(EK_parameters)));
 
 #ifdef EK_BOUNDARIES
       LBBoundaries::lb_init_boundaries();
       lb_get_boundary_force_pointer(&ek_lb_boundary_force);
 
-      cuda_safe_mem(hipMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+      cuda_safe_mem(hipMemcpyToSymbol(&ek_parameters_gpu, &ek_parameters,
                                        sizeof(EK_parameters)));
 #else
       blocks_per_grid_x = (ek_parameters.number_of_nodes +
@@ -3686,7 +3686,7 @@ ekfloat ek_get_particle_charge() {
 
 ekfloat ek_calculate_net_charge() {
   ekfloat charge = 0.0f;
-  cuda_safe_mem(hipMemcpyToSymbol(charge_gpu, &charge, sizeof(ekfloat), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&charge_gpu, &charge, sizeof(ekfloat), 0,
                                    hipMemcpyHostToDevice));
 
   int threads_per_block = 64;
@@ -3698,7 +3698,7 @@ ekfloat ek_calculate_net_charge() {
 
   KERNELCALL(ek_calculate_system_charge, dim_grid, threads_per_block, ());
 
-  cuda_safe_mem(cudaMemcpyFromSymbol(&charge, charge_gpu, sizeof(ekfloat), 0,
+  cuda_safe_mem(hipMemcpyFromSymbol(&charge, &charge_gpu, sizeof(ekfloat), 0,
                                      hipMemcpyDeviceToHost));
 
 #ifdef EK_ELECTROSTATIC_COUPLING

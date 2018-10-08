@@ -1022,13 +1022,15 @@ void initBHgpu(int blocks) {
 
   KERNELCALL(initializationKernel, grid, block, ());
 
+#ifdef __CUDACC__
   // According to the experimental performance optimization:
-  hipFuncSetCacheConfig(boundingBoxKernel, hipFuncCachePreferShared);
-  hipFuncSetCacheConfig(treeBuildingKernel, hipFuncCachePreferL1);
-  hipFuncSetCacheConfig(summarizationKernel, hipFuncCachePreferShared);
-  hipFuncSetCacheConfig(sortKernel, hipFuncCachePreferL1);
-  hipFuncSetCacheConfig(forceCalculationKernel, hipFuncCachePreferL1);
-  hipFuncSetCacheConfig(energyCalculationKernel, hipFuncCachePreferL1);
+  cudaFuncSetCacheConfig(boundingBoxKernel, cudaFuncCachePreferShared);
+  cudaFuncSetCacheConfig(treeBuildingKernel, cudaFuncCachePreferL1);
+  cudaFuncSetCacheConfig(summarizationKernel, cudaFuncCachePreferShared);
+  cudaFuncSetCacheConfig(sortKernel, cudaFuncCachePreferL1);
+  cudaFuncSetCacheConfig(forceCalculationKernel, cudaFuncCachePreferL1);
+  cudaFuncSetCacheConfig(energyCalculationKernel, cudaFuncCachePreferL1);
+#endif
 
   hipGetLastError(); // reset error value
 }
@@ -1136,9 +1138,9 @@ int energyBH(BHData *bh_data, dds_float k, float *E) {
 
 // Function to set the BH method parameters.
 void setBHPrecision(float *epssq, float *itolsq) {
-  cuda_safe_mem(hipMemcpyToSymbol(epssqd, epssq, sizeof(float), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&epssqd, epssq, sizeof(float), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(itolsqd, itolsq, sizeof(float), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&itolsqd, itolsq, sizeof(float), 0,
                                    hipMemcpyHostToDevice));
 }
 
@@ -1234,29 +1236,29 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
 // Populating of array pointers allocated in GPU device before.
 // Copy the particle data to the Barnes-Hut related arrays.
 void fillConstantPointers(float *r, float *dip, BHData bh_data) {
-  cuda_safe_mem(hipMemcpyToSymbol(nnodesd, &(bh_data.nnodes), sizeof(int), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&nnodesd, &(bh_data.nnodes), sizeof(int), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(nbodiesd, &(bh_data.nbodies), sizeof(int), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&nbodiesd, &(bh_data.nbodies), sizeof(int), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(errd, &(bh_data.err), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&errd, &(bh_data.err), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(sortd, &(bh_data.sort), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&sortd, &(bh_data.sort), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(childd, &(bh_data.child), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&childd, &(bh_data.child), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(countd, &(bh_data.count), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&countd, &(bh_data.count), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(startd, &(bh_data.start), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&startd, &(bh_data.start), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(xd, &(bh_data.r), sizeof(float *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&xd, &(bh_data.r), sizeof(float *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(uxd, &(bh_data.u), sizeof(float *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&uxd, &(bh_data.u), sizeof(float *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(massd, &(bh_data.mass), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&massd, &(bh_data.mass), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(maxd, &(bh_data.maxp), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&maxd, &(bh_data.maxp), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(mind, &(bh_data.minp), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(&mind, &(bh_data.minp), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
   cuda_safe_mem(hipMemcpy(bh_data.r, r, 3 * bh_data.nbodies * sizeof(float),
                            hipMemcpyDeviceToDevice));
