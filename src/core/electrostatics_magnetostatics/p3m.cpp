@@ -720,7 +720,7 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
       for (int i0 = 0; i0 < cao; i0++) {
         for (int i1 = 0; i1 < cao; i1++) {
           for (int i2 = 0; i2 < cao; i2++) {
-            p.f->f[d_rs] -=
+            p.f.f[d_rs] -=
                 force_prefac * p3m.ca_frac[cf_cnt] * p3m.rs_mesh[q_ind];
             q_ind++;
             cf_cnt++;
@@ -759,7 +759,7 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
             tmp1 = tmp0 * p3m_caf(i1, dist[1], cao);
             for (int i2 = 0; i2 < cao; i2++) {
               cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
-              p.f->f[d_rs] -=
+              p.f.f[d_rs] -=
                   force_prefac * cur_ca_frac_val * p3m.rs_mesh[q_ind];
               q_ind++;
             }
@@ -774,7 +774,7 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
             tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
             for (int i2 = 0; i2 < cao; i2++) {
               cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
-              p.f->f[d_rs] -=
+              p.f.f[d_rs] -=
                   force_prefac * cur_ca_frac_val * p3m.rs_mesh[q_ind];
               q_ind++;
             }
@@ -787,7 +787,7 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
 
       ONEPART_TRACE(if (p.p->identity == check_id) fprintf(
           stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n", this_node,
-          p.f->f[0], p.f->f[1], p.f->f[2], d_rs));
+          p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
   }
 }
@@ -963,7 +963,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
       gbl_dm[j] *= pref;
     for (auto &p : local_cells.particles()) {
       for (int j = 0; j < 3; j++)
-        p.f->f[j] -= gbl_dm[j] * p.p->q;
+        p.f.f[j] -= gbl_dm[j] * p.p->q;
     }
     return en;
   }

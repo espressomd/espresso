@@ -36,9 +36,9 @@ int ObservableBlockedComForce::actual_calculate(PartCfg &partCfg) {
       id = ids->e[block * blocksize + i];
       if (ids->e[i] >= n_part)
         return 1;
-      A[3 * block + 0] += partCfg[id].f->f[0] / time_step / time_step * 2;
-      A[3 * block + 1] += partCfg[id].f->f[1] / time_step / time_step * 2;
-      A[3 * block + 2] += partCfg[id].f->f[2] / time_step / time_step * 2;
+      A[3 * block + 0] += partCfg[id].f.f[0] / time_step / time_step * 2;
+      A[3 * block + 1] += partCfg[id].f.f[1] / time_step / time_step * 2;
+      A[3 * block + 2] += partCfg[id].f.f[2] / time_step / time_step * 2;
     }
   }
   return 0;

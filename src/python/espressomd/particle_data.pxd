@@ -58,7 +58,7 @@ cdef extern from "particle_data.hpp":
         particle_properties* p
         particle_position r
         particle_momentum* m
-        particle_force* f
+        particle_force f
         particle_local* l
         int_list bl
         int_list exclusions() except +

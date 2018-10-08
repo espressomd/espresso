@@ -358,9 +358,9 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     vel[0][particle_index][2] = current_particle.m->v[2];
   }
   if (write_force) {
-    f[0][particle_index][0] = current_particle.f->f[0];
-    f[0][particle_index][1] = current_particle.f->f[1];
-    f[0][particle_index][2] = current_particle.f->f[2];
+    f[0][particle_index][0] = current_particle.f.f[0];
+    f[0][particle_index][1] = current_particle.f.f[1];
+    f[0][particle_index][2] = current_particle.f.f[2];
   }
   if (write_charge) {
 #ifdef ELECTROSTATICS

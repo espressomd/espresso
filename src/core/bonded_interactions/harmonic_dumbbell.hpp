@@ -89,21 +89,21 @@ inline int calc_harmonic_dumbbell_pair_force(Particle *p1, Particle *p2,
   da[1] = dhat[2] * p1->r.quatu[0] - dhat[0] * p1->r.quatu[2];
   da[2] = dhat[0] * p1->r.quatu[1] - dhat[1] * p1->r.quatu[0];
 
-  p1->f->torque[0] += iaparams->p.harmonic_dumbbell.k2 * da[0];
-  p1->f->torque[1] += iaparams->p.harmonic_dumbbell.k2 * da[1];
-  p1->f->torque[2] += iaparams->p.harmonic_dumbbell.k2 * da[2];
+  p1->f.torque[0] += iaparams->p.harmonic_dumbbell.k2 * da[0];
+  p1->f.torque[1] += iaparams->p.harmonic_dumbbell.k2 * da[1];
+  p1->f.torque[2] += iaparams->p.harmonic_dumbbell.k2 * da[2];
 
   ONEPART_TRACE(if (p1->p->identity == check_id)
                     fprintf(stderr,
                             "%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part "
                             "id=%d at dist %f fac %.3e\n",
-                            this_node, p1->f->f[0], p1->f->f[1], p1->f->f[2],
+                            this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                             p2->p->identity, dist2, fac));
   ONEPART_TRACE(if (p2->p->identity == check_id)
                     fprintf(stderr,
                             "%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part "
                             "id=%d at dist %f fac %.3e\n",
-                            this_node, p2->f->f[0], p2->f->f[1], p2->f->f[2],
+                            this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                             p1->p->identity, dist2, fac));
 
   return 0;

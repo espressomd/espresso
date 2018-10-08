@@ -351,7 +351,7 @@ struct Particle {
     ret.p.reset(new ParticleProperties(*p));
     ret.r = r;
     ret.m.reset(new ParticleMomentum(*m));
-    ret.f.reset(new ParticleForce(*f));
+    ret.f = f;
     ret.l.reset(new ParticleLocal(*l));
 #ifdef LB
     ret.lc.reset(new ParticleLatticeCoupling(*lc));
@@ -372,7 +372,7 @@ struct Particle {
     : p(new ParticleProperties{})
     , r{}
     , m(new ParticleMomentum{})
-    , f(new ParticleForce{})
+    , f{}
     , l(new ParticleLocal{})
 #ifdef LB
     , lc(new ParticleLatticeCoupling{})
@@ -391,7 +391,7 @@ struct Particle {
     : p(new ParticleProperties(*rhs.p))
     , r(rhs.r)
     , m(new ParticleMomentum(*rhs.m))
-    , f(new ParticleForce(*rhs.f))
+    , f(rhs.f)
     , l(new ParticleLocal(*rhs.l))
 #ifdef LB
     , lc(new ParticleLatticeCoupling(*rhs.lc))
@@ -410,7 +410,7 @@ struct Particle {
     : p(std::move(rhs.p))
     , r(rhs.r)
     , m(std::move(rhs.m))
-    , f(std::move(rhs.f))
+    , f(rhs.f)
     , l(std::move(rhs.l))
 #ifdef LB
     , lc(std::move(rhs.lc))
@@ -430,7 +430,7 @@ struct Particle {
       p.reset(new ParticleProperties(*rhs.p));
       r = rhs.r;
       m.reset(new ParticleMomentum(*rhs.m));
-      f.reset(new ParticleForce(*rhs.f));
+      f = rhs.f;
       l.reset(new ParticleLocal(*rhs.l));
 #ifdef LB
       lc.reset(new ParticleLatticeCoupling(*rhs.lc));
@@ -452,7 +452,7 @@ struct Particle {
       p = std::move(rhs.p);
       r = rhs.r;
       m = std::move(rhs.m);
-      f = std::move(rhs.f);
+      f = rhs.f;
       l = std::move(rhs.l);
 #ifdef LB
       lc = std::move(rhs.lc);
@@ -472,7 +472,6 @@ struct Particle {
   ~Particle() {
     p.reset();
     m.reset();
-    f.reset();
     l.reset();
 #ifdef LB
     lc.reset();
@@ -489,7 +488,7 @@ struct Particle {
   ///
   std::unique_ptr<ParticleMomentum> m;
   ///
-  std::unique_ptr<ParticleForce> f;
+  ParticleForce f;
   ///
   std::unique_ptr<ParticleLocal> l;
 

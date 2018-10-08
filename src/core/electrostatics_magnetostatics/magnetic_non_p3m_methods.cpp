@@ -84,12 +84,12 @@ double calc_dipole_dipole_ia(Particle *p1, Particle *p2, int force_flag) {
     ffy = ab * dr[1] + cc * p1->r.dip[1] + d * p2->r.dip[1];
     ffz = ab * dr[2] + cc * p1->r.dip[2] + d * p2->r.dip[2];
     // Add the force to the particles
-    p1->f->f[0] += coulomb.Dprefactor * ffx;
-    p1->f->f[1] += coulomb.Dprefactor * ffy;
-    p1->f->f[2] += coulomb.Dprefactor * ffz;
-    p2->f->f[0] -= coulomb.Dprefactor * ffx;
-    p2->f->f[1] -= coulomb.Dprefactor * ffy;
-    p2->f->f[2] -= coulomb.Dprefactor * ffz;
+    p1->f.f[0] += coulomb.Dprefactor * ffx;
+    p1->f.f[1] += coulomb.Dprefactor * ffy;
+    p1->f.f[2] += coulomb.Dprefactor * ffz;
+    p2->f.f[0] -= coulomb.Dprefactor * ffx;
+    p2->f.f[1] -= coulomb.Dprefactor * ffy;
+    p2->f.f[2] -= coulomb.Dprefactor * ffz;
 //    if (p1->p->identity==248)
 //    {
 //      printf("xxx %g %g %g\n", dr[0],dr[1],dr[2]);
@@ -113,18 +113,18 @@ double calc_dipole_dipole_ia(Particle *p1, Particle *p2, int force_flag) {
     by = dr[0] * p1->r.dip[2] - p1->r.dip[0] * dr[2];
     bz = p1->r.dip[0] * dr[1] - dr[0] * p1->r.dip[1];
 
-    p1->f->torque[0] += coulomb.Dprefactor * (-ax / r3 + bx * cc);
-    p1->f->torque[1] += coulomb.Dprefactor * (-ay / r3 + by * cc);
-    p1->f->torque[2] += coulomb.Dprefactor * (-az / r3 + bz * cc);
+    p1->f.torque[0] += coulomb.Dprefactor * (-ax / r3 + bx * cc);
+    p1->f.torque[1] += coulomb.Dprefactor * (-ay / r3 + by * cc);
+    p1->f.torque[2] += coulomb.Dprefactor * (-az / r3 + bz * cc);
 
     // 2nd particle
     bx = p2->r.dip[1] * dr[2] - dr[1] * p2->r.dip[2];
     by = dr[0] * p2->r.dip[2] - p2->r.dip[0] * dr[2];
     bz = p2->r.dip[0] * dr[1] - dr[0] * p2->r.dip[1];
 
-    p2->f->torque[0] += coulomb.Dprefactor * (ax / r3 + bx * d);
-    p2->f->torque[1] += coulomb.Dprefactor * (ay / r3 + by * d);
-    p2->f->torque[2] += coulomb.Dprefactor * (az / r3 + bz * d);
+    p2->f.torque[0] += coulomb.Dprefactor * (ax / r3 + bx * d);
+    p2->f.torque[1] += coulomb.Dprefactor * (ay / r3 + by * d);
+    p2->f.torque[2] += coulomb.Dprefactor * (az / r3 + bz * d);
 #endif
   }
 
@@ -384,14 +384,14 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
     for (auto &p : local_cells.particles()) {
       if (p.p->dipm != 0.0) {
 
-        p.f->f[0] += coulomb.Dprefactor * fx[dip_particles2];
-        p.f->f[1] += coulomb.Dprefactor * fy[dip_particles2];
-        p.f->f[2] += coulomb.Dprefactor * fz[dip_particles2];
+        p.f.f[0] += coulomb.Dprefactor * fx[dip_particles2];
+        p.f.f[1] += coulomb.Dprefactor * fy[dip_particles2];
+        p.f.f[2] += coulomb.Dprefactor * fz[dip_particles2];
 
 #ifdef ROTATION
-        p.f->torque[0] += coulomb.Dprefactor * tx[dip_particles2];
-        p.f->torque[1] += coulomb.Dprefactor * ty[dip_particles2];
-        p.f->torque[2] += coulomb.Dprefactor * tz[dip_particles2];
+        p.f.torque[0] += coulomb.Dprefactor * tx[dip_particles2];
+        p.f.torque[1] += coulomb.Dprefactor * ty[dip_particles2];
+        p.f.torque[2] += coulomb.Dprefactor * tz[dip_particles2];
 #endif
         dip_particles2++;
       }

@@ -70,13 +70,13 @@ inline void add_thole_pair_force(const Particle *const p1,
                       fprintf(stderr,
                               "%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) with part "
                               "id=%d at dist %f fac %.3e\n",
-                              this_node, p1->f->f[0], p1->f->f[1], p1->f->f[2],
+                              this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
                               p2->p->identity, dist, thole_s));
     ONEPART_TRACE(if (p2->p->identity == check_id)
                       fprintf(stderr,
                               "%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) with part "
                               "id=%d at dist %f fac %.3e\n",
-                              this_node, p2->f->f[0], p2->f->f[1], p2->f->f[2],
+                              this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                               p1->p->identity, dist, thole_s));
   }
 }

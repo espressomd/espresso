@@ -504,11 +504,11 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
     if (v_comp)
       virials.data.e[0] +=
           (Utils::sqr(p1->m->v[0] * time_step -
-                      p1->f->f[0] * 0.5 * time_step * time_step / p1->p->mass) +
+                      p1->f.f[0] * 0.5 * time_step * time_step / p1->p->mass) +
            Utils::sqr(p1->m->v[1] * time_step -
-                      p1->f->f[1] * 0.5 * time_step * time_step / p1->p->mass) +
+                      p1->f.f[1] * 0.5 * time_step * time_step / p1->p->mass) +
            Utils::sqr(p1->m->v[2] * time_step -
-                      p1->f->f[2] * 0.5 * time_step * time_step / p1->p->mass)) *
+                      p1->f.f[2] * 0.5 * time_step * time_step / p1->p->mass)) *
           (*p1).p->mass;
     else
       virials.data.e[0] += (Utils::sqr(p1->m->v[0] * time_step) +

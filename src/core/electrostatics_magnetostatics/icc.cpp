@@ -114,8 +114,8 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   /* add total nonbonded forces to particle      */
   /***********************************************/
   for (int j = 0; j < 3; j++) {
-    p1->f->f[j] += force[j];
-    p2->f->f[j] -= force[j];
+    p1->f.f[j] += force[j];
+    p2->f.f[j] -= force[j];
   }
   /***********************************************/
 }
@@ -162,7 +162,7 @@ int iccp3m_iteration() {
         auto const del_eps = (iccp3m_cfg.ein[id] - iccp3m_cfg.eout) /
                              (iccp3m_cfg.ein[id] + iccp3m_cfg.eout);
         /* calculate the electric field at the certain position */
-        auto const E = p.f->f / p.p->q + iccp3m_cfg.ext_field;
+        auto const E = p.f.f / p.p->q + iccp3m_cfg.ext_field;
 
         if (E[0] == 0 && E[1] == 0 && E[2] == 0) {
           runtimeErrorMsg()
@@ -248,11 +248,11 @@ void force_calc_iccp3m() {
 
 void init_forces_iccp3m() {
   for (auto &p : local_cells.particles()) {
-    *(p.f) = ParticleForce{};
+    p.f = ParticleForce{};
   }
 
   for (auto &p : ghost_cells.particles()) {
-    *(p.f) = ParticleForce{};
+    p.f = ParticleForce{};
   }
 }
 

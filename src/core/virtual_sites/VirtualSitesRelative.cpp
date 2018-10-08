@@ -178,12 +178,12 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 
       // Calculate torque to be added on real particle
       double tmp[3];
-      vector_product(d, p.f->f, tmp);
+      vector_product(d, p.f.f, tmp);
 
       // Add forces and torques
       for (int j = 0; j < 3; j++) {
-        p_real->f->torque[j] += tmp[j] + p.f->torque[j];
-        p_real->f->f[j] += p.f->f[j];
+        p_real->f.torque[j] += tmp[j] + p.f.torque[j];
+        p_real->f.f[j] += p.f.f[j];
       }
     }
   }
@@ -216,11 +216,11 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     // Stress tensor contribution
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        stress_tensor[k * 3 + l] += p.f->f[k] * d[l];
+        stress_tensor[k * 3 + l] += p.f.f[k] * d[l];
 
     // Pressure = 1/3 trace of stress tensor
     // but the 1/3 is applied somewhere else.
-    *pressure += (p.f->f[0] * d[0] + p.f->f[1] * d[1] + p.f->f[2] * d[2]);
+    *pressure += (p.f.f[0] * d[0] + p.f.f[1] * d[1] + p.f.f[2] * d[2]);
   }
 }
 

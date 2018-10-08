@@ -78,10 +78,10 @@ bool steepest_descent_step(void) {
 #endif
         {
           // Square of force on particle
-          f += Utils::sqr(p.f->f[j]);
+          f += Utils::sqr(p.f.f[j]);
 
           // Positional increment
-          dp = params->gamma * p.f->f[j];
+          dp = params->gamma * p.f.f[j];
           if (fabs(dp) > params->max_displacement)
             // Crop to maximum allowed by user
             dp = sgn<double>(dp) * params->max_displacement;
@@ -90,7 +90,7 @@ bool steepest_descent_step(void) {
           // Move particle
           p.r.p[j] += dp;
           MINIMIZE_ENERGY_TRACE(printf("part %d dim %d dp %e gamma*f %e\n", i,
-                                       j, dp, params->gamma * p.f->f[j]));
+                                       j, dp, params->gamma * p.f.f[j]));
         }
     }
 #ifdef ROTATION
@@ -100,10 +100,10 @@ bool steepest_descent_step(void) {
     for (int j = 0; j < 3; j++) {
       dq[j] = 0;
       // Square of torque
-      t += Utils::sqr(p.f->torque[j]);
+      t += Utils::sqr(p.f.torque[j]);
 
       // Rotational increment
-      dq[j] = params->gamma * p.f->torque[j];
+      dq[j] = params->gamma * p.f.torque[j];
     }
     // Normalize rotation axis and compute amount of rotation
     double l = normr(dq);

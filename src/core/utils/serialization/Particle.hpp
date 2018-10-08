@@ -34,8 +34,7 @@ void load(Archive &ar, Particle &p, const unsigned int /* file_version */) {
   ar >> make_array(reinterpret_cast<char *>(p.p.get()), sizeof(ParticleProperties));
   p.m.reset(new ParticleMomentum{});
   ar >> make_array(reinterpret_cast<char *>(p.m.get()), sizeof(ParticleMomentum));
-  p.f.reset(new ParticleForce{});
-  ar >> make_array(reinterpret_cast<char *>(p.f.get()), sizeof(ParticleForce));
+  ar >> make_array(reinterpret_cast<char *>(&p.f), sizeof(ParticleForce));
   p.l.reset(new ParticleLocal{});
   ar >> make_array(reinterpret_cast<char *>(p.l.get()), sizeof(ParticleLocal));
 #ifdef LB
@@ -64,7 +63,7 @@ void save(Archive &ar, Particle const &p,
   ar << make_array(reinterpret_cast<char const *>(&p.r), sizeof(ParticlePosition));
   ar << make_array(reinterpret_cast<char const *>(p.p.get()), sizeof(ParticleProperties));
   ar << make_array(reinterpret_cast<char const *>(p.m.get()), sizeof(ParticleMomentum));
-  ar << make_array(reinterpret_cast<char const *>(p.f.get()), sizeof(ParticleForce));
+  ar << make_array(reinterpret_cast<char const *>(&p.f), sizeof(ParticleForce));
   ar << make_array(reinterpret_cast<char const *>(p.l.get()), sizeof(ParticleLocal));
 #ifdef LB
   ar << make_array(reinterpret_cast<char const *>(p.lc.get()), sizeof(ParticleLatticeCoupling));

@@ -59,7 +59,7 @@ void update_mol_pos_particle(Particle *p) {
 void distribute_mol_force() {
   for (auto &p : local_cells.particles()) {
     if (p.p->is_virtual) {
-      if (sqrlen(p.f->f) != 0) {
+      if (sqrlen(p.f.f) != 0) {
         put_mol_force_on_parts(&p);
       }
     }
@@ -165,8 +165,8 @@ void put_mol_force_on_parts(Particle *p_com) {
 #endif
   mol_id = p_com->p->mol_id;
   for (i = 0; i < 3; i++) {
-    force[i] = p_com->f->f[i];
-    p_com->f->f[i] = 0.0;
+    force[i] = p_com->f.f[i];
+    p_com->f.f[i] = 0.0;
   }
 #ifdef MASS
   M = 0;
@@ -199,7 +199,7 @@ void put_mol_force_on_parts(Particle *p_com) {
 #endif
     if (!p->p->is_virtual) {
       for (j = 0; j < 3; j++) {
-        p->f->f[j] += (*p).p->mass * force[j] / M;
+        p->f.f[j] += (*p).p->mass * force[j] / M;
       }
 #ifdef VIRTUAL_SITES_DEBUG
       count++;

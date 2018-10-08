@@ -142,13 +142,13 @@ void IBM_Tribend_CalcForce(Particle *p1, const int numPartners,
   vector_product(tmp, v1, term1);
   vector_product(tmp2, v2, term2);
   for (int i = 0; i < 3; i++)
-    p1->f->f[i] += Pre * (term1[i] / Ai + term2[i] / Aj);
+    p1->f.f[i] += Pre * (term1[i] / Ai + term2[i] / Aj);
 
   // Force for particle 2:
   get_mi_vector(tmp, p3->r.p, p1->r.p);
   vector_product(tmp, v1, term1);
   for (int i = 0; i < 3; i++)
-    p2->f->f[i] += Pre * (term1[i] / Ai);
+    p2->f.f[i] += Pre * (term1[i] / Ai);
 
   // Force for Particle 3:
   get_mi_vector(tmp, p1->r.p, p2->r.p);
@@ -156,13 +156,13 @@ void IBM_Tribend_CalcForce(Particle *p1, const int numPartners,
   vector_product(tmp, v1, term1);
   vector_product(tmp2, v2, term2);
   for (int i = 0; i < 3; i++)
-    p3->f->f[i] += Pre * (term1[i] / Ai + term2[i] / Aj);
+    p3->f.f[i] += Pre * (term1[i] / Ai + term2[i] / Aj);
 
   // Force for Particle 4:
   get_mi_vector(tmp, p1->r.p, p3->r.p);
   vector_product(tmp, v2, term1);
   for (int i = 0; i < 3; i++)
-    p4->f->f[i] += Pre * (term1[i] / Aj);
+    p4->f.f[i] += Pre * (term1[i] / Aj);
 }
 
 /****************

@@ -810,28 +810,28 @@ static void P3M_assign_torques(double prefac, int d_rs) {
             The following line would fill the torque with the k-space electric
             field
             (without the self-field term) [notice the minus sign!]:
-                                p.f->torque[d_rs] -=
+                                p.f.torque[d_rs] -=
             prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];;
             Since the torque is the dipole moment cross-product with E, we
             have:
             */
             switch (d_rs) {
             case 0: // E_x
-              p.f->torque[1] -= p.r.dip[2] * prefac * dp3m.ca_frac[cf_cnt] *
+              p.f.torque[1] -= p.r.dip[2] * prefac * dp3m.ca_frac[cf_cnt] *
                                dp3m.rs_mesh[q_ind];
-              p.f->torque[2] += p.r.dip[1] * prefac * dp3m.ca_frac[cf_cnt] *
+              p.f.torque[2] += p.r.dip[1] * prefac * dp3m.ca_frac[cf_cnt] *
                                dp3m.rs_mesh[q_ind];
               break;
             case 1: // E_y
-              p.f->torque[0] += p.r.dip[2] * prefac * dp3m.ca_frac[cf_cnt] *
+              p.f.torque[0] += p.r.dip[2] * prefac * dp3m.ca_frac[cf_cnt] *
                                dp3m.rs_mesh[q_ind];
-              p.f->torque[2] -= p.r.dip[0] * prefac * dp3m.ca_frac[cf_cnt] *
+              p.f.torque[2] -= p.r.dip[0] * prefac * dp3m.ca_frac[cf_cnt] *
                                dp3m.rs_mesh[q_ind];
               break;
             case 2: // E_z
-              p.f->torque[0] -= p.r.dip[1] * prefac * dp3m.ca_frac[cf_cnt] *
+              p.f.torque[0] -= p.r.dip[1] * prefac * dp3m.ca_frac[cf_cnt] *
                                dp3m.rs_mesh[q_ind];
-              p.f->torque[1] += p.r.dip[0] * prefac * dp3m.ca_frac[cf_cnt] *
+              p.f.torque[1] += p.r.dip[0] * prefac * dp3m.ca_frac[cf_cnt] *
                                dp3m.rs_mesh[q_ind];
             }
             q_ind++;
@@ -845,7 +845,7 @@ static void P3M_assign_torques(double prefac, int d_rs) {
 
       ONEPART_TRACE(if (p.p->identity == check_id) fprintf(
           stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n", this_node,
-          p.f->f[0], p.f->f[1], p.f->f[2], d_rs));
+          p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
   }
 }
@@ -870,7 +870,7 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs) {
       for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
         for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
           for (int i2 = 0; i2 < dp3m.params.cao; i2++) {
-            p.f->f[d_rs] += prefac * dp3m.ca_frac[cf_cnt] *
+            p.f.f[d_rs] += prefac * dp3m.ca_frac[cf_cnt] *
                            (dp3m.rs_mesh_dip[0][q_ind] * p.r.dip[0] +
                             dp3m.rs_mesh_dip[1][q_ind] * p.r.dip[1] +
                             dp3m.rs_mesh_dip[2][q_ind] * p.r.dip[2]);
@@ -885,7 +885,7 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs) {
 
       ONEPART_TRACE(if (p.p->identity == check_id) fprintf(
           stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n", this_node,
-          p.f->f[0], p.f->f[1], p.f->f[2], d_rs));
+          p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
   }
 }
@@ -1228,9 +1228,9 @@ double calc_surface_term(int force_flag, int energy_flag) {
 
     ip = 0;
     for (auto &p : local_cells.particles()) {
-      p.f->torque[0] -= pref * sumix[ip];
-      p.f->torque[1] -= pref * sumiy[ip];
-      p.f->torque[2] -= pref * sumiz[ip];
+      p.f.torque[0] -= pref * sumix[ip];
+      p.f.torque[1] -= pref * sumiy[ip];
+      p.f.torque[2] -= pref * sumiz[ip];
       ip++;
     }
   }

@@ -66,9 +66,9 @@ void pack_particles(ParticleRange particles,
     buffer[i].pos[1] = (float)pos[1];
     buffer[i].pos[2] = (float)pos[2];
 
-    buffer[i].f[0] = (float)part.f->f[0];
-    buffer[i].f[1] = (float)part.f->f[1];
-    buffer[i].f[2] = (float)part.f->f[2];
+    buffer[i].f[0] = (float)part.f.f[0];
+    buffer[i].f[1] = (float)part.f.f[1];
+    buffer[i].f[2] = (float)part.f.f[2];
 
     buffer[i].is_virtual = part.p->is_virtual;
 

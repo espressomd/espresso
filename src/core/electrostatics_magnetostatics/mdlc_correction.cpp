@@ -467,9 +467,9 @@ void add_mdlc_force_corrections() {
   for (auto &p : local_cells.particles()) {
     if ((p.p->dipm) != 0.0) {
 
-      p.f->f[0] += coulomb.Dprefactor * dip_DLC_f_x[ip];
-      p.f->f[1] += coulomb.Dprefactor * dip_DLC_f_y[ip];
-      p.f->f[2] += coulomb.Dprefactor *
+      p.f.f[0] += coulomb.Dprefactor * dip_DLC_f_x[ip];
+      p.f.f[1] += coulomb.Dprefactor * dip_DLC_f_y[ip];
+      p.f.f[2] += coulomb.Dprefactor *
                   dip_DLC_f_z[ip]; // SDC correction term is zero for the forces
 
 #if defined(ROTATION) && defined(DP3M)
@@ -483,11 +483,11 @@ void add_mdlc_force_corrections() {
         dy = 0.0;
         dz = correc * (-1.0) * mz;
 
-        p.f->torque[0] += coulomb.Dprefactor *
+        p.f.torque[0] += coulomb.Dprefactor *
                          (dip_DLC_t_x[ip] + p.r.dip[1] * dz - p.r.dip[2] * dy);
-        p.f->torque[1] += coulomb.Dprefactor *
+        p.f.torque[1] += coulomb.Dprefactor *
                          (dip_DLC_t_y[ip] + p.r.dip[2] * dx - p.r.dip[0] * dz);
-        p.f->torque[2] += coulomb.Dprefactor *
+        p.f.torque[2] += coulomb.Dprefactor *
                          (dip_DLC_t_z[ip] + p.r.dip[0] * dy - p.r.dip[1] * dx);
 
       } else {
@@ -497,11 +497,11 @@ void add_mdlc_force_corrections() {
         dy = correps * my;
         dz = correc * (-1.0 + 1. / (2.0 * dp3m.params.epsilon + 1.0)) * mz;
 
-        p.f->torque[0] += coulomb.Dprefactor *
+        p.f.torque[0] += coulomb.Dprefactor *
                          (dip_DLC_t_x[ip] + p.r.dip[1] * dz - p.r.dip[2] * dy);
-        p.f->torque[1] += coulomb.Dprefactor *
+        p.f.torque[1] += coulomb.Dprefactor *
                          (dip_DLC_t_y[ip] + p.r.dip[2] * dx - p.r.dip[0] * dz);
-        p.f->torque[2] += coulomb.Dprefactor *
+        p.f.torque[2] += coulomb.Dprefactor *
                          (dip_DLC_t_z[ip] + p.r.dip[0] * dy - p.r.dip[1] * dx);
       }
 #endif

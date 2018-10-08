@@ -53,15 +53,15 @@ void local_kill_particle_motion(int omega) {
    to zero */
 void local_kill_particle_forces(int torque) {
   for (auto &p : local_cells.particles()) {
-    p.f->f[0] = 0.0;
-    p.f->f[1] = 0.0;
-    p.f->f[2] = 0.0;
+    p.f.f[0] = 0.0;
+    p.f.f[1] = 0.0;
+    p.f.f[2] = 0.0;
 
     if (torque != 0) {
 #ifdef ROTATION
-      p.f->torque[0] = 0.0;
-      p.f->torque[1] = 0.0;
-      p.f->torque[2] = 0.0;
+      p.f.torque[0] = 0.0;
+      p.f.torque[1] = 0.0;
+      p.f.torque[2] = 0.0;
 #endif
     }
   }

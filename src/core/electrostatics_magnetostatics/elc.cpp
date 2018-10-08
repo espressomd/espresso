@@ -269,10 +269,10 @@ static void checkpoint(char *text, int p, int q, int e_size) {
 static void clear_log_forces(char *where) {
   fprintf(stderr, "%s\n", where);
   for (auto &p : local_cells.particles()) {
-    fprintf(stderr, "%d %g %g %g\n", p.p->identity, p.f->f[0], p.f->f[1],
-            p.f->f[2]);
+    fprintf(stderr, "%d %g %g %g\n", p.p->identity, p.f.f[0], p.f.f[1],
+            p.f.f[2]);
     for (int j = 0; j < 3; j++)
-      p.f->f[j] = 0;
+      p.f.f[j] = 0;
   }
 }
 #else
@@ -333,11 +333,11 @@ static void add_dipole_force() {
   }
 
   for (auto &p : local_cells.particles()) {
-    p.f->f[2] -= field_tot * p.p->q;
+    p.f.f[2] -= field_tot * p.p->q;
 
     if (!elc_params.neutralize) {
       // SUBTRACT the forces of the P3M homogeneous neutralizing background
-      p.f->f[2] += gblcblk[2] * p.p->q * (p.r.p[2] - shift);
+      p.f.f[2] += gblcblk[2] * p.p->q * (p.r.p[2] - shift);
     }
   }
 }
@@ -557,7 +557,7 @@ static void add_z_force() {
     distribute(size);
 
     for (auto &p : local_cells.particles()) {
-      p.f->f[2] += gblcblk[0] * p.p->q;
+      p.f.f[2] += gblcblk[0] * p.p->q;
     }
   }
 }
@@ -786,11 +786,11 @@ static void add_P_force() {
 
   ic = 0;
   for (auto &p : local_cells.particles()) {
-    p.f->f[0] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
+    p.f.f[0] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
                 partblk[size * ic + POQECM] * gblcblk[POQESP] +
                 partblk[size * ic + POQESP] * gblcblk[POQECM] -
                 partblk[size * ic + POQECP] * gblcblk[POQESM];
-    p.f->f[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
+    p.f.f[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
                 partblk[size * ic + POQESM] * gblcblk[POQESP] -
                 partblk[size * ic + POQECP] * gblcblk[POQECM] -
                 partblk[size * ic + POQESP] * gblcblk[POQESM];
@@ -819,11 +819,11 @@ static void add_Q_force() {
 
   ic = 0;
   for (auto &p : local_cells.particles()) {
-    p.f->f[1] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
+    p.f.f[1] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
                 partblk[size * ic + POQECM] * gblcblk[POQESP] +
                 partblk[size * ic + POQESP] * gblcblk[POQECM] -
                 partblk[size * ic + POQECP] * gblcblk[POQESM];
-    p.f->f[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
+    p.f.f[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
                 partblk[size * ic + POQESM] * gblcblk[POQESP] -
                 partblk[size * ic + POQECP] * gblcblk[POQECM] -
                 partblk[size * ic + POQESP] * gblcblk[POQESM];
@@ -987,7 +987,7 @@ static void add_PQ_force(int p, int q, double omega) {
 
   ic = 0;
   for (auto &p : local_cells.particles()) {
-    p.f->f[0] += pref_x * (partblk[size * ic + PQESCM] * gblcblk[PQECCP] +
+    p.f.f[0] += pref_x * (partblk[size * ic + PQESCM] * gblcblk[PQECCP] +
                           partblk[size * ic + PQESSM] * gblcblk[PQECSP] -
                           partblk[size * ic + PQECCM] * gblcblk[PQESCP] -
                           partblk[size * ic + PQECSM] * gblcblk[PQESSP] +
@@ -995,7 +995,7 @@ static void add_PQ_force(int p, int q, double omega) {
                           partblk[size * ic + PQESSP] * gblcblk[PQECSM] -
                           partblk[size * ic + PQECCP] * gblcblk[PQESCM] -
                           partblk[size * ic + PQECSP] * gblcblk[PQESSM]);
-    p.f->f[1] += pref_y * (partblk[size * ic + PQECSM] * gblcblk[PQECCP] +
+    p.f.f[1] += pref_y * (partblk[size * ic + PQECSM] * gblcblk[PQECCP] +
                           partblk[size * ic + PQESSM] * gblcblk[PQESCP] -
                           partblk[size * ic + PQECCM] * gblcblk[PQECSP] -
                           partblk[size * ic + PQESCM] * gblcblk[PQESSP] +
@@ -1003,7 +1003,7 @@ static void add_PQ_force(int p, int q, double omega) {
                           partblk[size * ic + PQESSP] * gblcblk[PQESCM] -
                           partblk[size * ic + PQECCP] * gblcblk[PQECSM] -
                           partblk[size * ic + PQESCP] * gblcblk[PQESSM]);
-    p.f->f[2] += (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
+    p.f.f[2] += (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
                  partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
                  partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
                  partblk[size * ic + PQESSM] * gblcblk[PQESSP] -
@@ -1345,7 +1345,7 @@ void ELC_P3M_self_forces() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      p3m_add_pair_force(q, d, dist2, dist, p.f->f.data());
+      p3m_add_pair_force(q, d, dist2, dist, p.f.f.data());
     }
     if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
       q = elc_params.delta_mid_top * p.p->q * p.p->q;
@@ -1355,7 +1355,7 @@ void ELC_P3M_self_forces() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      p3m_add_pair_force(q, d, dist2, dist, p.f->f.data());
+      p3m_add_pair_force(q, d, dist2, dist, p.f.f.data());
     }
   }
 }

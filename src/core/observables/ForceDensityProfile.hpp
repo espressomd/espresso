@@ -39,8 +39,8 @@ public:
     for (auto const &id : ids()) {
       auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
       histogram.update(
-          ppos, ::Vector<3, double>{{partCfg[id].f->f[0], partCfg[id].f->f[1],
-                                     partCfg[id].f->f[2]}});
+          ppos, ::Vector<3, double>{{partCfg[id].f.f[0], partCfg[id].f.f[1],
+                                     partCfg[id].f.f[2]}});
     }
     histogram.normalize();
     return histogram.get_histogram();

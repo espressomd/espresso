@@ -109,7 +109,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
   m_outer_normal_force -= outer_normal_vec * force;
 
 #ifdef ROTATION
-  part_rep.f->torque += torque2;
+  part_rep.f.torque += torque2;
   return {force, torque1};
 #else
   return force;

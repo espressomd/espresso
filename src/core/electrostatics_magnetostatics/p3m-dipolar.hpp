@@ -227,9 +227,9 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
 
     // Calculate real-space torques
     for (int j = 0; j < 3; j++) {
-      p1->f->torque[j] +=
+      p1->f.torque[j] +=
           coulomb.Dprefactor * (-mixmj[j] * B_r + mixr[j] * mjr * C_r);
-      p2->f->torque[j] +=
+      p2->f.torque[j] +=
           coulomb.Dprefactor * (mixmj[j] * B_r + mjxr[j] * mir * C_r);
     }
 #endif

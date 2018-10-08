@@ -1245,7 +1245,7 @@ void pointer_to_omega_body(Particle const *p, double const *&res) {
 }
 
 void pointer_to_torque_lab(Particle const *p, double const *&res) {
-  res = p->f->torque.data();
+  res = p->f.torque.data();
 }
 
 void pointer_to_quat(Particle const *p, double const *&res) {

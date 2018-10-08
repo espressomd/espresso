@@ -205,9 +205,9 @@ void predict_momentum_particles(double *result) {
   for (auto const &p : local_cells.particles()) {
     auto const mass = p.p->mass;
 
-    momentum[0] += mass * (p.m->v[0] + p.f->f[0] * 0.5 * time_step / p.p->mass);
-    momentum[1] += mass * (p.m->v[1] + p.f->f[1] * 0.5 * time_step / p.p->mass);
-    momentum[2] += mass * (p.m->v[2] + p.f->f[2] * 0.5 * time_step / p.p->mass);
+    momentum[0] += mass * (p.m->v[0] + p.f.f[0] * 0.5 * time_step / p.p->mass);
+    momentum[1] += mass * (p.m->v[1] + p.f.f[1] * 0.5 * time_step / p.p->mass);
+    momentum[2] += mass * (p.m->v[2] + p.f.f[2] * 0.5 * time_step / p.p->mass);
   }
 
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);

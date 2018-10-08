@@ -157,9 +157,9 @@ static void add_forces_and_torques(ParticleRange particles, float *forces,
   int i = 0;
   for (auto &part : particles) {
     for (int j = 0; j < 3; j++) {
-      part.f->f[j] += forces[3 * i + j];
+      part.f.f[j] += forces[3 * i + j];
 #ifdef ROTATION
-      part.f->torque[j] += torques[3 * i + j];
+      part.f.torque[j] += torques[3 * i + j];
 #endif
     }
     i++;

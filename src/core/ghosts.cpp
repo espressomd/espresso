@@ -197,7 +197,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           insert += sizeof(ParticleMomentum);
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memmove(insert, pt->f.get(), sizeof(ParticleForce));
+          memmove(insert, &pt->f, sizeof(ParticleForce));
           insert += sizeof(ParticleForce);
         }
 #ifdef LB
@@ -323,7 +323,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
           retrieve += sizeof(ParticleMomentum);
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memmove(pt->f.get(), retrieve, sizeof(ParticleForce));
+          memmove(&pt->f, retrieve, sizeof(ParticleForce));
           retrieve += sizeof(ParticleForce);
         }
 #ifdef LB
@@ -375,7 +375,7 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
     part = gc->part_lists[pl]->part;
     for (p = 0; p < np; p++) {
       pt = &part[p];
-      *(pt->f) += *(reinterpret_cast<ParticleForce *>(retrieve));
+      pt->f += *(reinterpret_cast<ParticleForce *>(retrieve));
       retrieve += sizeof(ParticleForce);
     }
   }
@@ -431,7 +431,7 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
           memmove(pt2->m.get(), pt1->m.get(), sizeof(ParticleMomentum));
         }
         if (data_parts & GHOSTTRANS_FORCE)
-          *(pt2->f) += *(pt1->f);
+          pt2->f += pt1->f;
 
 #ifdef LB
         if (data_parts & GHOSTTRANS_COUPLING)

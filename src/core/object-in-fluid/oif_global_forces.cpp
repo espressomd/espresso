@@ -302,9 +302,9 @@ void add_oif_global_forces(double *area_volume,
         for (k = 0; k < 3; k++) {
           VOL_force[k] = iaparams->p.oif_global_forces.kv * VOL_vv * VOL_A *
                          VOL_norm[k] / VOL_dn * 1.0 / 3.0;
-          p1->f->f[k] += VOL_force[k];
-          p2->f->f[k] += VOL_force[k];
-          p3->f->f[k] += VOL_force[k];
+          p1->f.f[k] += VOL_force[k];
+          p2->f.f[k] += VOL_force[k];
+          p3->f.f[k] += VOL_force[k];
         }
         ///  ending code from volume force
 
@@ -336,9 +336,9 @@ void add_oif_global_forces(double *area_volume,
         }
 
         for (k = 0; k < 3; k++) {
-          p1->f->f[k] += force1[k];
-          p2->f->f[k] += force2[k];
-          p3->f->f[k] += force3[k];
+          p1->f.f[k] += force1[k];
+          p2->f.f[k] += force2[k];
+          p3->f.f[k] += force3[k];
         }
       } else {
         j += n_partners;

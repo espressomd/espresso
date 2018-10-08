@@ -98,7 +98,7 @@ void save_old_pos() {
 void init_correction_vector() {
   auto reset_force = [](Particle &p) {
     for (int j = 0; j < 3; j++)
-      p.f->f[j] = 0.0;
+      p.f.f[j] = 0.0;
   };
 
   for (auto &p : local_cells.particles())
@@ -144,8 +144,8 @@ void compute_pos_corr_vec(int *repeat_) {
 #endif
           for (j = 0; j < 3; j++) {
             pos_corr = G * r_ij_t[j];
-            p1->f->f[j] += pos_corr * (*p2).p->mass;
-            p2->f->f[j] -= pos_corr * (*p1).p->mass;
+            p1->f.f[j] += pos_corr * (*p2).p->mass;
+            p2->f.f[j] -= pos_corr * (*p1).p->mass;
           }
           /*Increase the 'repeat' flag by one */
           *repeat_ = *repeat_ + 1;
@@ -162,8 +162,8 @@ void app_pos_correction() {
   /*Apply corrections*/
   for (auto &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++) {
-      p.r.p[j] += p.f->f[j];
-      p.m->v[j] += p.f->f[j];
+      p.r.p[j] += p.f.f[j];
+      p.m->v[j] += p.f.f[j];
     }
     /**Completed for one particle*/
   } // for i loop
@@ -205,8 +205,8 @@ void correct_pos_shake() {
 void transfer_force_init_vel() {
   auto copy_reset = [](Particle &p) {
     for (int j = 0; j < 3; j++) {
-      p.r.p_old[j] = p.f->f[j];
-      p.f->f[j] = 0.0;
+      p.r.p_old[j] = p.f.f[j];
+      p.f.f[j] = 0.0;
     }
   };
 
@@ -249,8 +249,8 @@ void compute_vel_corr_vec(int *repeat_) {
 #endif
           for (j = 0; j < 3; j++) {
             vel_corr = K * r_ij[j];
-            p1->f->f[j] -= vel_corr * (*p2).p->mass;
-            p2->f->f[j] += vel_corr * (*p1).p->mass;
+            p1->f.f[j] -= vel_corr * (*p2).p->mass;
+            p2->f.f[j] += vel_corr * (*p1).p->mass;
           }
           *repeat_ = *repeat_ + 1;
         }
@@ -265,7 +265,7 @@ void apply_vel_corr() {
   /*Apply corrections*/
   for (auto &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++) {
-      p.m->v[j] += p.f->f[j];
+      p.m->v[j] += p.f.f[j];
     }
     /**Completed for one particle*/
   } // for i loop
@@ -275,7 +275,7 @@ void apply_vel_corr() {
 void revert_force() {
   auto revert = [](Particle &p) {
     for (int j = 0; j < 3; j++)
-      p.f->f[j] = p.r.p_old[j];
+      p.f.f[j] = p.r.p_old[j];
   };
 
   for (auto &p : local_cells.particles())

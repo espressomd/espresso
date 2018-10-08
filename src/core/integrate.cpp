@@ -524,7 +524,7 @@ void propagate_vel_finalize_p_inst() {
   for (auto &p : local_cells.particles()) {
     ONEPART_TRACE(if (p.p->identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-        this_node, p.f->f[0], p.f->f[1], p.f->f[2], p.m->v[0], p.m->v[1], p.m->v[2]));
+        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m->v[0], p.m->v[1], p.m->v[2]));
 #ifdef VIRTUAL_SITES
     // Virtual sites are not propagated during integration
     if (p.p->is_virtual)
@@ -538,12 +538,12 @@ void propagate_vel_finalize_p_inst() {
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
           nptiso.p_vel[j] += Utils::sqr(p.m->v[j] * time_step) * p.p->mass;
-          p.m->v[j] += 0.5 * time_step / p.p->mass * p.f->f[j] +
+          p.m->v[j] += 0.5 * time_step / p.p->mass * p.f.f[j] +
                       friction_therm0_nptiso(p.m->v[j]) / p.p->mass;
         } else
 #endif
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
-          p.m->v[j] += 0.5 * time_step * p.f->f[j] / p.p->mass;
+          p.m->v[j] += 0.5 * time_step * p.f.f[j] / p.p->mass;
 #ifdef EXTERNAL_FORCES
       }
 #endif
@@ -699,13 +699,13 @@ void propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-          p.m->v[j] += p.f->f[j] * 0.5 * time_step / p.p->mass +
+          p.m->v[j] += p.f.f[j] * 0.5 * time_step / p.p->mass +
                       friction_therm0_nptiso(p.m->v[j]) / p.p->mass;
           nptiso.p_vel[j] += Utils::sqr(p.m->v[j] * time_step) * p.p->mass;
         } else
 #endif
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
-          p.m->v[j] += 0.5 * time_step * p.f->f[j] / p.p->mass;
+          p.m->v[j] += 0.5 * time_step * p.f.f[j] / p.p->mass;
 
 /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
@@ -791,7 +791,7 @@ void propagate_vel_pos() {
 #endif
       {
         /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
-        p.m->v[j] += 0.5 * time_step * p.f->f[j] / p.p->mass;
+        p.m->v[j] += 0.5 * time_step * p.f.f[j] / p.p->mass;
 
         /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
          * v(t+0.5*dt) */
@@ -825,9 +825,9 @@ void force_and_velocity_display() {
 #ifdef ADDITIONAL_CHECKS
   if (db_max_force > skin2)
     fprintf(stderr, "%d: max_force=%e, part=%d f=(%e,%e,%e)\n", this_node,
-            sqrt(db_max_force), db_maxf_id, local_particles[db_maxf_id]->f->f[0],
-            local_particles[db_maxf_id]->f->f[1],
-            local_particles[db_maxf_id]->f->f[2]);
+            sqrt(db_max_force), db_maxf_id, local_particles[db_maxf_id]->f.f[0],
+            local_particles[db_maxf_id]->f.f[1],
+            local_particles[db_maxf_id]->f.f[2]);
   if (db_max_vel > skin2)
     fprintf(stderr, "%d: max_vel=%e, part=%d v=(%e,%e,%e)\n", this_node,
             sqrt(db_max_vel), db_maxv_id, local_particles[db_maxv_id]->m->v[0],
