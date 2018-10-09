@@ -32,14 +32,18 @@ class LeesEdwards(ut.TestCase):
             system.lees_edwards = ["oscillatory_shear", 50.]
 
         # Check if the setted protocol is stored correctly
-        system.lees_edwards = ["steady_shear", 1.2]
+        system.lees_edwards = ["steady_shear", 1.2, 2, 0]
         self.assertEqual(system.lees_edwards[0], "steady_shear")
         self.assertEqual(system.lees_edwards[1], 1.2)
+        self.assertEqual(system.lees_edwards[3], 2)
+        self.assertEqual(system.lees_edwards[4], 0)
 
-        system.lees_edwards = ["oscillatory_shear", 1.2, 5.6]
+        system.lees_edwards = ["oscillatory_shear", 1.2, 5.6, 0, 1]
         self.assertEqual(system.lees_edwards[0], "oscillatory_shear")
         self.assertEqual(system.lees_edwards[1], 1.2)
         self.assertEqual(system.lees_edwards[2], 5.6)
+        self.assertEqual(system.lees_edwards[5], 0)
+        self.assertEqual(system.lees_edwards[6], 1)
 
         system.time = 0.0
 
@@ -47,7 +51,9 @@ class LeesEdwards(ut.TestCase):
         frequency = 3.7
         omega = 2 * np.pi * frequency
         amplitude = 1.6
-        system.lees_edwards = ["oscillatory_shear", omega, amplitude]
+        sheardir = 0 
+        shearplanenormal = 1
+        system.lees_edwards = ["oscillatory_shear", omega, amplitude, sheardir, shearplanenormal]
         self.assertEqual(system.lees_edwards[0], "oscillatory_shear")
         for time in np.arange(10., 100.0, 10.0):
             system.integrator.run(10)
@@ -67,7 +73,7 @@ class LeesEdwards(ut.TestCase):
 
         # Set up a one particle system and check the position offset after crossing the boundary
         # Test for upper boundary
-        system.lees_edwards = ["steady_shear", 0.1]
+        system.lees_edwards = ["steady_shear", 0.1, 0, 1]
         system.part.add(pos=[2.5, 4.9, 2.5], v=[0.0, 0.1, 0.0], id=0, type=0)
 
         system.integrator.run(1)

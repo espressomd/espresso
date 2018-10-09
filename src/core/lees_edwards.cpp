@@ -23,7 +23,7 @@
 #include "lees_edwards.hpp"
 #include "integrate.hpp"
 
-lees_edwards_protocol_struct lees_edwards_protocol = {LEES_EDWARDS_PROTOCOL_OFF, 0.0, 0.0, 0.0, 0.0, 0.0};
+lees_edwards_protocol_struct lees_edwards_protocol = {LEES_EDWARDS_PROTOCOL_OFF, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 1};
 
 /* Functions to determine the current offset and shear rate with respect to the chosen protocol */
 
@@ -56,7 +56,6 @@ void setup_lees_edwards_protocol() {
     lees_edwards_protocol.offset = 0.0;
     lees_edwards_protocol.velocity = 0.0;
   }
-
 }
 
 double lees_edwards_get_offset(double time) {
@@ -69,8 +68,9 @@ double lees_edwards_get_offset(double time) {
     return lees_edwards_protocol.velocity * (time-lees_edwards_protocol.time0);
   } else if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_OSC_SHEAR) {
     return lees_edwards_protocol.amplitude * std::sin(lees_edwards_protocol.frequency*(time-lees_edwards_protocol.time0));
-  }
-
+  } else {
+    return 0.0;
+  }  
 }
 
 double lees_edwards_get_velocity(double time) {
@@ -82,6 +82,7 @@ double lees_edwards_get_velocity(double time) {
     return lees_edwards_protocol.velocity;
   } else if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_OSC_SHEAR) {
     return lees_edwards_protocol.frequency * lees_edwards_protocol.amplitude * std::cos(lees_edwards_protocol.frequency*(time-lees_edwards_protocol.time0));
-  }
-
+  } else {
+    return 0.0;
+  }  
 }

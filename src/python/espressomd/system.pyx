@@ -388,16 +388,22 @@ cdef class System(object):
         def __set__(self, list _lees_edwards):
           if str(_lees_edwards[0]) == str("off") and len(_lees_edwards) == 1:
             lees_edwards_protocol.type = LEES_EDWARDS_PROTOCOL_OFF
-          elif str(_lees_edwards[0]) == "step" and  len(_lees_edwards) == 2:
+          elif str(_lees_edwards[0]) == "step" and  len(_lees_edwards) == 4:
             lees_edwards_protocol.type = LEES_EDWARDS_PROTOCOL_STEP
             lees_edwards_protocol.offset = _lees_edwards[1]
-          elif str(_lees_edwards[0]) == "steady_shear" and len(_lees_edwards) == 2:
+            lees_edwards_protocol.sheardir = _lees_edwards[2]
+            lees_edwards_protocol.shearplanenormal = _lees_edwards[3] 
+          elif str(_lees_edwards[0]) == "steady_shear" and len(_lees_edwards) == 4:
             lees_edwards_protocol.type = LEES_EDWARDS_PROTOCOL_STEADY_SHEAR
             lees_edwards_protocol.velocity = _lees_edwards[1]
-          elif str(_lees_edwards[0]) == "oscillatory_shear" and len(_lees_edwards) == 3:
+            lees_edwards_protocol.sheardir = _lees_edwards[2]
+            lees_edwards_protocol.shearplanenormal = _lees_edwards[3] 
+          elif str(_lees_edwards[0]) == "oscillatory_shear" and len(_lees_edwards) == 5:
             lees_edwards_protocol.type = LEES_EDWARDS_PROTOCOL_OSC_SHEAR
             lees_edwards_protocol.frequency = _lees_edwards[1]
             lees_edwards_protocol.amplitude = _lees_edwards[2]
+            lees_edwards_protocol.sheardir = _lees_edwards[3]
+            lees_edwards_protocol.shearplanenormal = _lees_edwards[4] 
           else:
             raise Exception("The lees_edwards has to be either: off, step, steady_shear or oscillatory_shear. See the documentation for the arguments.")
 
@@ -409,11 +415,11 @@ cdef class System(object):
             if lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_OFF:
                 return ['off']
             elif lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_STEP:
-                return ['step', lees_edwards_protocol.offset]
+                return ['step', lees_edwards_protocol.offset, lees_edwards_protocol.sheardir, lees_edwards_protocol.shearplanenormal]
             elif lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_STEADY_SHEAR:
-                return ['steady_shear', lees_edwards_protocol.velocity, lees_edwards_protocol.offset]
+                return ['steady_shear', lees_edwards_protocol.velocity, lees_edwards_protocol.offset, lees_edwards_protocol.sheardir, lees_edwards_protocol.shearplanenormal]
             elif lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_OSC_SHEAR:
-                return ['oscillatory_shear', lees_edwards_protocol.frequency, lees_edwards_protocol.amplitude, lees_edwards_protocol.velocity, lees_edwards_protocol.offset]
+                return ['oscillatory_shear', lees_edwards_protocol.frequency, lees_edwards_protocol.amplitude, lees_edwards_protocol.velocity, lees_edwards_protocol.offset, lees_edwards_protocol.sheardir, lees_edwards_protocol.shearplanenormal]
 
 
     IF VIRTUAL_SITES:
