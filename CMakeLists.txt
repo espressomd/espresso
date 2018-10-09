@@ -273,6 +273,24 @@ if(WITH_HDF5 AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
   endif()
 endif()
 
+# Check for the HIP submodule
+# and try to check it out if not found or update it if found.
+# TODO: don't do this if hipcc is used
+if(CUDA AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  # Try to find git
+  find_package(Git)
+  if(GIT_FOUND)
+    if (NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/HIP/.git")
+      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/HIP
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    else()
+      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update -- libs/HIP
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    endif()
+  endif()
+  include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/libs/HIP/include")
+endif()
+
 if(WITH_SCAFACOS)
   find_package(PkgConfig)
   pkg_check_modules(SCAFACOS scafacos)
