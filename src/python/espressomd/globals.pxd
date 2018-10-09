@@ -154,5 +154,7 @@ cdef extern from "lees_edwards.hpp":
         double velocity
         double amplitude
         double frequency
+        int sheardir
+        int shearplanenormal
 
     cdef extern lees_edwards_protocol_struct lees_edwards_protocol

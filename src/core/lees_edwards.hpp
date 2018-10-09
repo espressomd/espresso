@@ -17,6 +17,8 @@ typedef struct {
   double velocity;
   double amplitude;
   double frequency;
+  int sheardir;
+  int shearplanenormal; 
 } lees_edwards_protocol_struct;
 
 extern lees_edwards_protocol_struct lees_edwards_protocol;
