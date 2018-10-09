@@ -85,9 +85,10 @@ inline int calc_harmonic_dumbbell_pair_force(Particle *p1, Particle *p2,
   dhat[2] = dx[2] / dist;
 
   double da[3];
-  da[0] = dhat[1] * p1->r.quatu[2] - dhat[2] * p1->r.quatu[1];
-  da[1] = dhat[2] * p1->r.quatu[0] - dhat[0] * p1->r.quatu[2];
-  da[2] = dhat[0] * p1->r.quatu[1] - dhat[1] * p1->r.quatu[0];
+  const Vector3d quatu1=p1->r.calc_quatu();
+  da[0] = dhat[1] * quatu1[2] - dhat[2] * quatu1[1];
+  da[1] = dhat[2] * quatu1[0] - dhat[0] * quatu1[2];
+  da[2] = dhat[0] * quatu1[1] - dhat[1] * quatu1[0];
 
   p1->f.torque[0] += iaparams->p.harmonic_dumbbell.k2 * da[0];
   p1->f.torque[1] += iaparams->p.harmonic_dumbbell.k2 * da[1];
@@ -125,9 +126,10 @@ inline int harmonic_dumbbell_pair_energy(Particle *p1, Particle *p2,
   dhat[2] = dx[2] / dist;
 
   double da[3];
-  da[0] = dhat[1] * p1->r.quatu[2] - dhat[2] * p1->r.quatu[1];
-  da[1] = dhat[2] * p1->r.quatu[0] - dhat[0] * p1->r.quatu[2];
-  da[2] = dhat[0] * p1->r.quatu[1] - dhat[1] * p1->r.quatu[0];
+  const Vector3d quatu1=p1->r.calc_quatu();
+  da[0] = dhat[1] * quatu1[2] - dhat[2] * quatu1[1];
+  da[1] = dhat[2] * quatu1[0] - dhat[0] * quatu1[2];
+  da[2] = dhat[0] * quatu1[1] - dhat[1] * quatu1[0];
 
   double torque[3];
   torque[0] = iaparams->p.harmonic_dumbbell.k2 * da[0];
@@ -135,9 +137,9 @@ inline int harmonic_dumbbell_pair_energy(Particle *p1, Particle *p2,
   torque[2] = iaparams->p.harmonic_dumbbell.k2 * da[2];
 
   double diff[3];
-  diff[0] = dhat[0] - p1->r.quatu[0];
-  diff[1] = dhat[1] - p1->r.quatu[1];
-  diff[2] = dhat[2] - p1->r.quatu[2];
+  diff[0] = dhat[0] - quatu1[0];
+  diff[1] = dhat[1] - quatu1[1];
+  diff[2] = dhat[2] - quatu1[2];
 
   *_energy =
       0.5 * iaparams->p.harmonic_dumbbell.k1 *

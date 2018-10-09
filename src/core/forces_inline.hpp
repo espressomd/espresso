@@ -153,9 +153,10 @@ inline void init_local_particle_force(Particle *part) {
     // apply a swimming force in the direction of
     // the particle's orientation axis
     if (part->swim.swimming) {
-      part->f.f[0] += part->swim.f_swim * part->r.quatu[0];
-      part->f.f[1] += part->swim.f_swim * part->r.quatu[1];
-      part->f.f[2] += part->swim.f_swim * part->r.quatu[2];
+      const Vector3d quatu=part->r.calc_quatu();
+      part->f.f[0] += part->swim.f_swim * quatu[0];
+      part->f.f[1] += part->swim.f_swim * quatu[1];
+      part->f.f[2] += part->swim.f_swim * quatu[2];
     }
 #endif
 

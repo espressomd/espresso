@@ -464,9 +464,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double * x = NULL
-                pointer_to_quatu(self.particle_data, x)
-                return np.array([x[0], x[1], x[2]])
+                return make_array_locked(self.particle_data.r.calc_quatu())
 
     # ROTATIONAL_INERTIA
         property omega_body:
@@ -801,9 +799,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
 
-                cdef const double * x = NULL
-                pointer_to_dip(self.particle_data, x)
-                return array_locked([x[0], x[1], x[2]])
+                return make_array_locked(self.particle_data.calc_dip())
 
         # Scalar magnitude of dipole moment
         property dipm:

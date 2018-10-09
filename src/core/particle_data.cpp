@@ -1245,9 +1245,6 @@ void pointer_to_quat(Particle const *p, double const *&res) {
   res = p->r.quat.data();
 }
 
-void pointer_to_quatu(Particle const *p, double const *&res) {
-  res = p->r.quatu.data();
-}
 #endif
 
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
@@ -1272,9 +1269,6 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
 #endif
 
 #ifdef DIPOLES
-void pointer_to_dip(Particle const *p, double const *&res) {
-  res = p->r.dip.data();
-}
 
 void pointer_to_dipm(Particle const *p, double const *&res) {
   res = &(p->p.dipm);

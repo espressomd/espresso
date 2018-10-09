@@ -43,7 +43,7 @@ _P3M_GPU_FLOAT                  requires CUDA and ELECTROSTATICS
 
 
 /* Magnetostatics */
-DIPOLES
+DIPOLES                         implies ROTATION
 DP3M                            equals DIPOLES and FFTW
 DIPOLAR_DIRECT_SUM              requires CUDA
 DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA

@@ -254,10 +254,8 @@ void propagate_omega_quat_particle(Particle *p) {
   p->r.quat[3] +=
       time_step * (Qd[3] + time_step_half * Qdd[3]) - lambda * p->r.quat[3];
   // Update the director
-  convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
   // When dipoles are enabled, update dipole moment
-  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
 #endif
 
   ONEPART_TRACE(if (p->p.identity == check_id)
@@ -330,9 +328,10 @@ void convert_torques_propagate_omega() {
       double cross[3];
       double l_diff, l_cross;
 
-      dip[0] = p.swim.dipole_length * p.r.quatu[0];
-      dip[1] = p.swim.dipole_length * p.r.quatu[1];
-      dip[2] = p.swim.dipole_length * p.r.quatu[2];
+      const Vector3d quatu=p.r.calc_quatu();
+      dip[0] = p.swim.dipole_length * quatu[0];
+      dip[1] = p.swim.dipole_length * quatu[1];
+      dip[2] = p.swim.dipole_length * quatu[2];
 
       diff[0] = (p.swim.v_center[0] - p.swim.v_source[0]);
       diff[1] = (p.swim.v_center[1] - p.swim.v_source[1]);
@@ -571,11 +570,6 @@ void local_rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
   multiply_quaternions(p->r.quat, q, qn);
   for (int k = 0; k < 4; k++)
     p->r.quat[k] = qn[k];
-  convert_quat_to_quatu(p->r.quat, p->r.quatu);
-#ifdef DIPOLES
-  // When dipoles are enabled, update dipole moment
-  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
-#endif
 }
 
 #endif

@@ -44,6 +44,8 @@ cdef extern from "particle_data.hpp":
 
     ctypedef struct particle_position "ParticlePosition":
         Vector3d p
+        Vector3d calc_quatu()
+
 
     ctypedef struct particle_force "ParticleForce":
         Vector3d f
@@ -62,6 +64,7 @@ cdef extern from "particle_data.hpp":
         particle_local l
         int_list bl
         int_list exclusions() except +
+        Vector3d calc_dip()
 
     IF ENGINE:
         IF LB or LB_GPU:
@@ -122,7 +125,6 @@ cdef extern from "particle_data.hpp":
     IF ROTATION:
         int set_particle_quat(int part, double quat[4])
         void pointer_to_quat(const particle * p, const double * & res)
-        void pointer_to_quatu(const particle * p, const double * & res)
         int set_particle_omega_lab(int part, double omega[3])
         int set_particle_omega_body(int part, double omega[3])
         int set_particle_torque_lab(int part, double torque[3])
@@ -143,7 +145,6 @@ cdef extern from "particle_data.hpp":
 
     IF DIPOLES:
         int set_particle_dip(int part, double dip[3])
-        void pointer_to_dip(const particle * P, const double * & res)
 
         int set_particle_dipm(int part, double dipm)
         void pointer_to_dipm(const particle * P, const double * & res)
