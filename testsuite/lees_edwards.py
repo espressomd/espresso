@@ -73,34 +73,63 @@ class LeesEdwards(ut.TestCase):
 
         # Set up a one particle system and check the position offset after crossing the boundary
         # Test for upper boundary
-        system.lees_edwards = ["steady_shear", 0.1, 0, 1]
-        system.part.add(pos=[2.5, 4.9, 2.5], v=[0.0, 0.1, 0.0], id=0, type=0)
 
-        system.integrator.run(1)
+        velocity = 0.1
+        dir = [0, 1, 2]
 
-        expected_pos = [2.45, 5.0, 2.5]
-        expected_vel = [-0.1, 0.1, 0.0]
+        for sheardir in dir:
+          for shearplanenormal in dir:
+            if sheardir != shearplanenormal:
 
-        np.testing.assert_almost_equal(system.part[0].pos, expected_pos)
-        np.testing.assert_almost_equal(system.part[0].v, expected_vel)
+              system.time = 0.0
+              system.lees_edwards = ["steady_shear", velocity, sheardir, shearplanenormal]
 
-        system.part.clear()
+              pos = np.full([3], 2.5)
+              pos[shearplanenormal] = system.box_l[shearplanenormal] - 0.1
+              vel = np.zeros([3])
+              vel[shearplanenormal] = 0.1
+              system.part.add(pos=pos, v=vel, id=0, type=0)
 
-        # Test for lower boundary
+              pos_change = np.zeros([3])
+              pos_change[sheardir] = -0.5*system.time_step*velocity
+              pos_change[shearplanenormal] = velocity*system.time_step
+              vel_change = np.zeros([3])
+              vel_change[sheardir] = -velocity
 
-        system.time = 0.0
-        system.part.add(pos=[2.5, 0.1, 2.5], v=[0.0, -0.1, 0.0], id=0, type=0)
+              expected_pos = system.part[0].pos + pos_change
+              expected_vel = system.part[0].v + vel_change
 
-        system.integrator.run(1)
+              system.integrator.run(1)
 
-        expected_pos = [2.55, 0., 2.5]
-        expected_vel = [0.1, -0.1, 0.0]
+              np.testing.assert_almost_equal(system.part[0].pos, expected_pos)
+              np.testing.assert_almost_equal(system.part[0].v, expected_vel)
 
-        print(system.part[0].pos_folded)
+              system.part.clear()
 
-        np.testing.assert_almost_equal(system.part[0].pos, expected_pos)
-        np.testing.assert_almost_equal(system.part[0].v, expected_vel)
+              # Test for lower boundary
 
+              system.time = 0.0
+              pos = np.full([3], 2.5)
+              pos[shearplanenormal] = 0.1
+              vel = np.zeros([3])
+              vel[shearplanenormal] = -0.1
+              system.part.add(pos=pos, v=vel, id=0, type=0)
+
+              pos_change = np.zeros([3])
+              pos_change[sheardir] = 0.5*system.time_step*velocity
+              pos_change[shearplanenormal] = -velocity*system.time_step
+              vel_change = np.zeros([3])
+              vel_change[sheardir] = velocity
+
+              expected_pos = system.part[0].pos + pos_change
+              expected_vel = system.part[0].v + vel_change
+
+              system.integrator.run(1)
+
+              np.testing.assert_almost_equal(system.part[0].pos, expected_pos)
+              np.testing.assert_almost_equal(system.part[0].v, expected_vel)
+
+              system.part.clear()
 
 if __name__ == "__main__":
     ut.main()
