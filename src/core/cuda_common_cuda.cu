@@ -34,7 +34,7 @@
 #endif
 
 static CUDA_global_part_vars global_part_vars_host = {0, 0, 0};
-static __device__ __constant__ CUDA_global_part_vars global_part_vars_device;
+static __device__ __constant__ CUDA_global_part_vars global_part_vars_device[1];
 
 /** struct for particle force */
 static float *particle_forces_device = nullptr;
@@ -130,7 +130,7 @@ __global__ void init_particle_force(float *particle_forces_device,
 
   unsigned int part_index = getThreadIndex();
 
-  if (part_index < global_part_vars_device.number_of_particles) {
+  if (part_index < global_part_vars_device->number_of_particles) {
     particle_forces_device[3 * part_index + 0] = 0.0f;
     particle_forces_device[3 * part_index + 1] = 0.0f;
     particle_forces_device[3 * part_index + 2] = 0.0f;
@@ -142,7 +142,7 @@ __global__ void init_particle_force(float *particle_forces_device,
 #endif
 
     particle_seeds_device[part_index].seed =
-        global_part_vars_device.seed + part_index;
+        global_part_vars_device->seed + part_index;
   }
 }
 
@@ -157,7 +157,7 @@ init_fluid_composition(CUDA_fluid_composition *fluid_composition_device) {
            particles have been created after the fluid */
   unsigned int part_index = getThreadIndex();
 
-  if (part_index < global_part_vars_device.number_of_particles) {
+  if (part_index < global_part_vars_device->number_of_particles) {
     for (int ii = 0; ii < LB_COMPONENTS; ii++) {
       fluid_composition_device[part_index].weight[ii] = 0.0f;
     }
@@ -172,7 +172,7 @@ __global__ void reset_particle_force(float *particle_forces_device,
 
   unsigned int part_index = getThreadIndex();
 
-  if (part_index < global_part_vars_device.number_of_particles) {
+  if (part_index < global_part_vars_device->number_of_particles) {
     particle_forces_device[3 * part_index + 0] = 0.0f;
     particle_forces_device[3 * part_index + 1] = 0.0f;
     particle_forces_device[3 * part_index + 2] = 0.0f;
@@ -203,7 +203,7 @@ void gpu_change_number_of_part_to_comm() {
     global_part_vars_host.seed = (unsigned int)std::random_device{}();
     global_part_vars_host.number_of_particles = n_part;
 
-    cuda_safe_mem(hipMemcpyToSymbol(&global_part_vars_device,
+    cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(global_part_vars_device),
                                      &global_part_vars_host,
                                      sizeof(CUDA_global_part_vars)));
 
@@ -375,7 +375,7 @@ CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host() {
   return &global_part_vars_host;
 }
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer() {
-  return &global_part_vars_device;
+  return global_part_vars_device;
 }
 float *gpu_get_particle_force_pointer() { return particle_forces_device; }
 CUDA_energy *gpu_get_energy_pointer() { return energy_device; }

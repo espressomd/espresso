@@ -15,7 +15,7 @@
 __global__ void createGreensfcn();
 __global__ void multiplyGreensfcn(cufftComplex *charge_potential);
 
-__device__ __constant__ FdElectrostatics::Parameters fde_parameters_gpu;
+__device__ __constant__ FdElectrostatics::Parameters fde_parameters_gpu[1];
 
 __device__ unsigned int fde_getThreadIndex() {
 
@@ -25,41 +25,37 @@ __device__ unsigned int fde_getThreadIndex() {
 
 __device__ cufftReal fde_getNode(int x, int y, int z) {
   cufftReal *field =
-      reinterpret_cast<cufftReal *>(fde_parameters_gpu.charge_potential);
-  return field[fde_parameters_gpu.dim_y * fde_parameters_gpu.dim_x_padded * z +
-               fde_parameters_gpu.dim_x_padded * y + x];
+      reinterpret_cast<cufftReal *>(fde_parameters_gpu->charge_potential);
+  return field[fde_parameters_gpu->dim_y * fde_parameters_gpu->dim_x_padded * z +
+               fde_parameters_gpu->dim_x_padded * y + x];
 }
 
 __device__ void fde_setNode(int x, int y, int z, cufftReal value) {
   cufftReal *field =
-      reinterpret_cast<cufftReal *>(fde_parameters_gpu.charge_potential);
-  field[fde_parameters_gpu.dim_y * fde_parameters_gpu.dim_x_padded * z +
-        fde_parameters_gpu.dim_x_padded * y + x] = value;
+      reinterpret_cast<cufftReal *>(fde_parameters_gpu->charge_potential);
+  field[fde_parameters_gpu->dim_y * fde_parameters_gpu->dim_x_padded * z +
+        fde_parameters_gpu->dim_x_padded * y + x] = value;
 }
 
 __device__ cufftReal fde_getNode(int i) {
-  int x = i % fde_parameters_gpu.dim_x_padded;
-  i /= fde_parameters_gpu.dim_x_padded;
-  int y = i % fde_parameters_gpu.dim_y;
-  int z = i / fde_parameters_gpu.dim_y;
+  int x = i % fde_parameters_gpu->dim_x_padded;
+  i /= fde_parameters_gpu->dim_x_padded;
+  int y = i % fde_parameters_gpu->dim_y;
+  int z = i / fde_parameters_gpu->dim_y;
   return fde_getNode(x, y, z);
 }
 
 __device__ void fde_setNode(int i, cufftReal value) {
-  int x = i % fde_parameters_gpu.dim_x_padded;
-  i /= fde_parameters_gpu.dim_x_padded;
-  int y = i % fde_parameters_gpu.dim_y;
-  int z = i / fde_parameters_gpu.dim_y;
+  int x = i % fde_parameters_gpu->dim_x_padded;
+  i /= fde_parameters_gpu->dim_x_padded;
+  int y = i % fde_parameters_gpu->dim_y;
+  int z = i / fde_parameters_gpu->dim_y;
   fde_setNode(x, y, z, value);
 }
 
 FdElectrostatics::~FdElectrostatics() {
   cufftDestroy(plan_ifft);
   cufftDestroy(plan_fft);
-
-  void *symbol;
-  cudaGetSymbolAddress(&symbol, "fde_parameters_gpu");
-  cuda_safe_mem(hipFree(symbol));
 
   cuda_safe_mem(hipFree(parameters.greensfcn));
   cuda_safe_mem(hipFree(parameters.charge_potential));
@@ -81,7 +77,7 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
   }
 
   cuda_safe_mem(
-      hipMemcpyToSymbol(&fde_parameters_gpu, &parameters, sizeof(Parameters)));
+      hipMemcpyToSymbol(HIP_SYMBOL(fde_parameters_gpu), &parameters, sizeof(Parameters)));
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
@@ -120,33 +116,33 @@ __global__ void createGreensfcn() {
   unsigned int tmp;
   unsigned int coord[3];
 
-  coord[0] = index % (fde_parameters_gpu.dim_x / 2 + 1);
-  tmp = index / (fde_parameters_gpu.dim_x / 2 + 1);
-  coord[1] = tmp % fde_parameters_gpu.dim_y;
-  coord[2] = tmp / fde_parameters_gpu.dim_y;
+  coord[0] = index % (fde_parameters_gpu->dim_x / 2 + 1);
+  tmp = index / (fde_parameters_gpu->dim_x / 2 + 1);
+  coord[1] = tmp % fde_parameters_gpu->dim_y;
+  coord[2] = tmp / fde_parameters_gpu->dim_y;
 
-  if (index < fde_parameters_gpu.dim_z * fde_parameters_gpu.dim_y *
-                  (fde_parameters_gpu.dim_x / 2 + 1)) {
+  if (index < fde_parameters_gpu->dim_z * fde_parameters_gpu->dim_y *
+                  (fde_parameters_gpu->dim_x / 2 + 1)) {
 
     if (index == 0) {
       // setting 0th Fourier mode to 0 enforces charge neutrality
-      fde_parameters_gpu.greensfcn[index] = 0.0f;
+      fde_parameters_gpu->greensfcn[index] = 0.0f;
     } else {
-      fde_parameters_gpu.greensfcn[index] =
-          -4.0f * PI_FLOAT * fde_parameters_gpu.prefactor *
-          fde_parameters_gpu.agrid * fde_parameters_gpu.agrid * 0.5f /
+      fde_parameters_gpu->greensfcn[index] =
+          -4.0f * PI_FLOAT * fde_parameters_gpu->prefactor *
+          fde_parameters_gpu->agrid * fde_parameters_gpu->agrid * 0.5f /
           (cos(2.0f * PI_FLOAT * coord[0] /
-               (cufftReal)fde_parameters_gpu.dim_x) +
+               (cufftReal)fde_parameters_gpu->dim_x) +
            cos(2.0f * PI_FLOAT * coord[1] /
-               (cufftReal)fde_parameters_gpu.dim_y) +
+               (cufftReal)fde_parameters_gpu->dim_y) +
            cos(2.0f * PI_FLOAT * coord[2] /
-               (cufftReal)fde_parameters_gpu.dim_z) -
+               (cufftReal)fde_parameters_gpu->dim_z) -
            3.0f) /
-          (fde_parameters_gpu.dim_x * fde_parameters_gpu.dim_y *
-           fde_parameters_gpu.dim_z);
+          (fde_parameters_gpu->dim_x * fde_parameters_gpu->dim_y *
+           fde_parameters_gpu->dim_z);
     }
 
-    // fde_parameters_gpu.greensfcn[index] = 0.0f; //TODO delete
+    // fde_parameters_gpu->greensfcn[index] = 0.0f; //TODO delete
   }
 }
 
@@ -154,10 +150,10 @@ __global__ void multiplyGreensfcn(cufftComplex *charge_potential) {
 
   unsigned int index = fde_getThreadIndex();
 
-  if (index < fde_parameters_gpu.dim_z * fde_parameters_gpu.dim_y *
-                  (fde_parameters_gpu.dim_x / 2 + 1)) {
-    charge_potential[index].x *= fde_parameters_gpu.greensfcn[index];
-    charge_potential[index].y *= fde_parameters_gpu.greensfcn[index];
+  if (index < fde_parameters_gpu->dim_z * fde_parameters_gpu->dim_y *
+                  (fde_parameters_gpu->dim_x / 2 + 1)) {
+    charge_potential[index].x *= fde_parameters_gpu->greensfcn[index];
+    charge_potential[index].y *= fde_parameters_gpu->greensfcn[index];
   }
 }
 

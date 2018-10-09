@@ -44,15 +44,13 @@ typedef float dds_float;
 
 using namespace std;
 
-// CUDA blocks
-__constant__ int blocks;
 // each node corresponds to a split of the cubic box in 3D space to equal cubic
 // boxes hence, 8 octant nodes per particle is a theoretical octree limit: a
 // maximal number of octree nodes is "nnodesd" and a number of particles
 // "nbodiesd" respectively.
-__constant__ int nnodesd, nbodiesd;
+__constant__ int nnodesd[1], nbodiesd[1];
 // Method performance/accuracy parameters
-__constant__ float epssqd, itolsqd;
+__constant__ float epssqd[1], itolsqd[1];
 // blkcntd is a factual blocks' count.
 // bottomd is a bottom Barnes-Hut node (the division octant cell) in a linear
 // array representation. maxdepthd is a largest length of the octree "branch"
@@ -142,7 +140,7 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
   // THREADS1. NOTE: this loop is extrema search among all particles of the
   // given thread in the present block. However, one is not among all threads of
   // this block.
-  for (j = i + blockIdx.x * THREADS1; j < nbodiesd; j += inc)
+  for (j = i + blockIdx.x * THREADS1; j < *nbodiesd; j += inc)
     for (l = 0; l < 3; l++) {
       val = xd[3 * j + l];
       minp[l] = min(minp[l], val);
@@ -208,7 +206,7 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
       // Present code fragment will be executed once: in zero thread of the last
       // block.
 
-      k = nnodesd;
+      k = *nnodesd;
       // Create the root node of the Barnes-Hut octree.
       // Bottom node is defined with max possible index just to start
       // It will be updated within further tree building in
@@ -249,7 +247,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
   // The root node has been created at the end of the boundingBoxKernel.
   // Cache the root data:
   for (l = 0; l < 3; l++)
-    root[l] = xd[3 * nnodesd + l];
+    root[l] = xd[3 * *nnodesd + l];
   // Maximum tree depth within the given thread.
   localmaxdepth = 1;
   // Skip the branch following and start from the root.
@@ -262,7 +260,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
   i = threadIdx.x + blockIdx.x * blockDim.x;
 
   // Iterate over all bodies assigned to thread.
-  while (i < nbodiesd) {
+  while (i < *nbodiesd) {
     if (skip != 0) {
       // New body, so start traversing at root. Skip it further.
       skip = 0;
@@ -270,7 +268,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
       for (l = 0; l < 3; l++)
         p[l] = xd[3 * i + l];
       // Let's start a moving via the tree from the root node 8 * nbodiesd:
-      n = nnodesd;
+      n = *nnodesd;
       depth = 1;
       r = radius;
       // Determine which child to follow.
@@ -289,7 +287,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
     // Actually, we need nnodesd == 8 * nbodiesd nodes for the cells storage.
     // Let's iterate this "while" loop before we will reach the particle
     // or an absence of a child:
-    while (ch >= nbodiesd) {
+    while (ch >= *nbodiesd) {
       n = ch;
       depth++;
       // Going down through the octree depth: radius split corresponds to the
@@ -342,10 +340,10 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // sortKernel later.
             depth++;
             cell = atomicSub((int *)&bottomd, 1) - 1;
-            if (cell <= nbodiesd) {
+            if (cell <= *nbodiesd) {
               // This should not happen. A cell cannot have such index. Error.
               *errd = 1;
-              bottomd = nnodesd;
+              bottomd = *nnodesd;
             }
             // The "patch" is saving the information about a first cell created
             // in the current thread before it continues to dive into the tree
@@ -498,7 +496,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
   missing = 0;
   //__syncthreads();    // throttle
   // Iterate over all cells (not particles) assigned to the thread:
-  while (k <= nnodesd) {
+  while (k <= *nnodesd) {
     // iteration++;
     if (missing == 0) {
       // New cell, so initialize:
@@ -536,7 +534,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
             // that its' children total mass is already calculated.
             // Hence, below command "countd[k] = cnt" is already executed by
             // other threads/blocks and we can add this count
-            if (ch >= nbodiesd) { // count bodies (needed later)
+            if (ch >= *nbodiesd) { // count bodies (needed later)
               // As far as a child is a cell, its "countd" was already
               // calculated.
               cnt += countd[ch] - 1;
@@ -569,7 +567,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
           // child is now ready
           missing--;
           // The child is a cell, not a body (ch >= nbodiesd).
-          if (ch >= nbodiesd) {
+          if (ch >= *nbodiesd) {
             // count bodies (needed later)
             cnt += countd[ch] - 1;
           }
@@ -625,7 +623,7 @@ __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
   // to the root have a larger count of entities inside (countd[k]).
   // Particles should be sorted over all entities count in the tree array
   // representation made by treeBuildingKernel.
-  k = nnodesd + 1 - dec + threadIdx.x + blockIdx.x * blockDim.x;
+  k = *nnodesd + 1 - dec + threadIdx.x + blockIdx.x * blockDim.x;
 
   // iterate over all cells assigned to thread
   while (k >= bottom) {
@@ -635,7 +633,7 @@ __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
     if (start >= 0) {
       for (i = 0; i < 8; i++) {
         ch = childd[k * 8 + i];
-        if (ch >= nbodiesd) {
+        if (ch >= *nbodiesd) {
           // child is a cell
           startd[ch] = start;  // set start ID of child
           start += countd[ch]; // add # of bodies in subtree
@@ -695,12 +693,12 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
     // Original tree box edge (2*radiusd) should be divided *0.5
     // as much as the tree depth takes place.
     tmp = radiusd;
-    dq[0] = tmp * tmp * itolsqd;
+    dq[0] = tmp * tmp * *itolsqd;
     for (i = 1; i < maxdepthd; i++) {
       dq[i] = dq[i - 1] * 0.25f;
-      dq[i - 1] += epssqd;
+      dq[i - 1] += *epssqd;
     }
-    dq[i - 1] += epssqd;
+    dq[i - 1] += *epssqd;
 
     // Only maximal Barnes-Hut tree depth is allowed.
     // This error is technically possible, however, most applications
@@ -732,7 +730,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
     __syncthreads();
 
     // Iterate over all bodies assigned to thread:
-    for (k = threadIdx.x + blockIdx.x * blockDim.x; k < nbodiesd;
+    for (k = threadIdx.x + blockIdx.x * blockDim.x; k < *nbodiesd;
          k += blockDim.x * gridDim.x) {
       // Sorted body indexes assigned to me:
       i = sortd[k]; // get permuted/sorted index
@@ -750,7 +748,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
       // Let's start from zero octant.
       depth = j;
       if (sbase == threadIdx.x) {
-        node[j] = nnodesd;
+        node[j] = *nnodesd;
         pos[j] = 0;
       }
 
@@ -796,10 +794,10 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
             // Check if all threads agree that cell is far enough away (or is a
             // body, i.e. n < nbodiesd).
 #if CUDA_VERSION >= 9000
-            if ((n < nbodiesd) ||
+            if ((n < *nbodiesd) ||
                 __all_sync(__activemask(), tmp >= dq[depth])) {
 #else
-            if ((n < nbodiesd) || __all(tmp >= dq[depth])) {
+            if ((n < *nbodiesd) || __all(tmp >= dq[depth])) {
 #endif
               if (n != i) {
 
@@ -890,12 +888,12 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
   if (0 == threadIdx.x) {
     tmp = radiusd;
     // precompute values that depend only on tree level
-    dq[0] = tmp * tmp * itolsqd;
+    dq[0] = tmp * tmp * *itolsqd;
     for (i = 1; i < maxdepthd; i++) {
       dq[i] = dq[i - 1] * 0.25f;
-      dq[i - 1] += epssqd;
+      dq[i - 1] += *epssqd;
     }
-    dq[i - 1] += epssqd;
+    dq[i - 1] += *epssqd;
 
     if (maxdepthd > MAXDEPTH) {
       *errd = maxdepthd;
@@ -917,7 +915,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
     __syncthreads();
 
     // iterate over all bodies assigned to thread
-    for (k = threadIdx.x + blockIdx.x * blockDim.x; k < nbodiesd;
+    for (k = threadIdx.x + blockIdx.x * blockDim.x; k < *nbodiesd;
          k += blockDim.x * gridDim.x) {
       i = sortd[k]; // get permuted/sorted index
       // cache position info
@@ -929,7 +927,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
       // initialize iteration stack, i.e., push root node onto stack
       depth = j;
       if (sbase == threadIdx.x) {
-        node[j] = nnodesd;
+        node[j] = *nnodesd;
         pos[j] = 0;
       }
 
@@ -949,13 +947,13 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
               tmp += dr[l] * dr[l];
             }
 #if CUDA_VERSION >= 9000
-            if ((n < nbodiesd) ||
+            if ((n < *nbodiesd) ||
                 __all_sync(
                     __activemask(),
                     tmp >= dq[depth])) { // check if all threads agree that cell
                                          // is far enough away (or is a body)
 #else
-            if ((n < nbodiesd) ||
+            if ((n < *nbodiesd) ||
                 __all(tmp >=
                       dq[depth])) { // check if all threads agree that cell is
                                     // far enough away (or is a body)
@@ -1138,9 +1136,9 @@ int energyBH(BHData *bh_data, dds_float k, float *E) {
 
 // Function to set the BH method parameters.
 void setBHPrecision(float *epssq, float *itolsq) {
-  cuda_safe_mem(hipMemcpyToSymbol(&epssqd, epssq, sizeof(float), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(epssqd), epssq, sizeof(float), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&itolsqd, itolsq, sizeof(float), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(itolsqd), itolsq, sizeof(float), 0,
                                    hipMemcpyHostToDevice));
 }
 
@@ -1236,29 +1234,29 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
 // Populating of array pointers allocated in GPU device before.
 // Copy the particle data to the Barnes-Hut related arrays.
 void fillConstantPointers(float *r, float *dip, BHData bh_data) {
-  cuda_safe_mem(hipMemcpyToSymbol(&nnodesd, &(bh_data.nnodes), sizeof(int), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(nnodesd), &(bh_data.nnodes), sizeof(int), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&nbodiesd, &(bh_data.nbodies), sizeof(int), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(nbodiesd), &(bh_data.nbodies), sizeof(int), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&errd, &(bh_data.err), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(errd), &(bh_data.err), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&sortd, &(bh_data.sort), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(sortd), &(bh_data.sort), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&childd, &(bh_data.child), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(childd), &(bh_data.child), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&countd, &(bh_data.count), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(countd), &(bh_data.count), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&startd, &(bh_data.start), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(startd), &(bh_data.start), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&xd, &(bh_data.r), sizeof(float *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(xd), &(bh_data.r), sizeof(float *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&uxd, &(bh_data.u), sizeof(float *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(uxd), &(bh_data.u), sizeof(float *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&massd, &(bh_data.mass), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(massd), &(bh_data.mass), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&maxd, &(bh_data.maxp), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(maxd), &(bh_data.maxp), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpyToSymbol(&mind, &(bh_data.minp), sizeof(void *), 0,
+  cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(mind), &(bh_data.minp), sizeof(void *), 0,
                                    hipMemcpyHostToDevice));
   cuda_safe_mem(hipMemcpy(bh_data.r, r, 3 * bh_data.nbodies * sizeof(float),
                            hipMemcpyDeviceToDevice));
