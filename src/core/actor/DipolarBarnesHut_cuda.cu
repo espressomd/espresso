@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 /*
   Copyright (C) 2016,2017,2018 The ESPResSo project
   Copyright (C) 2012 Alexander (Polyakov) Peletskyi
@@ -18,6 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#include <hip/hip_runtime.h>
 
 #include "../cuda_init.hpp"
 #include "../cuda_utils.hpp"

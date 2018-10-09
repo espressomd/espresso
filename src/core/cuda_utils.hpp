@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 /*
   Copyright (C) 2013-2018 The ESPResSo project
 

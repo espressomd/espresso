@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 /*
   Copyright (C) 2014-2018 The ESPResSo project
 
@@ -17,6 +16,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#include <hip/hip_runtime.h>
+
 #include "actor/Mmm1dgpuForce.hpp"
 #include "cuda_utils.hpp"
 
@@ -230,7 +232,7 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
     int *dev_cutoff;
     int maxCut = 30;
     cuda_safe_mem(hipMalloc((void **)&dev_cutoff, sizeof(int)));
-    hipLaunchKernelGGL((besselTuneKernel), dim3(1), dim3(1), 0, 0, dev_cutoff, far_switch_radius, maxCut);
+    besselTuneKernel<<<1, 1>>>(dev_cutoff, far_switch_radius, maxCut);
     cuda_safe_mem(hipMemcpy(&bessel_cutoff, dev_cutoff, sizeof(int),
                             hipMemcpyDeviceToHost));
     hipFree(dev_cutoff);

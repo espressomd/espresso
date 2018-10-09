@@ -1,4 +1,4 @@
-#include "hip/hip_runtime.h"
+#include <hip/hip_runtime.h>
 
 // *******
 // This is an internal file of the IMMERSED BOUNDARY implementation

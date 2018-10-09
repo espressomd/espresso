@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 /*
    Copyright (C) 2010-2018 The ESPResSo project
 
@@ -22,6 +21,8 @@
  *  Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
  *  Header file for \ref lbgpu.hpp.
  */
+
+#include <hip/hip_runtime.h>
 
 #include "config.hpp"
 

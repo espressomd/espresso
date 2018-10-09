@@ -1,4 +1,5 @@
-#include "hip/hip_runtime.h"
+#include <hip/hip_runtime.h>
+
 // TODO: throw exceptions upon errors initialization
 
 #include "grid_based_algorithms/fd-electrostatics.hpp"

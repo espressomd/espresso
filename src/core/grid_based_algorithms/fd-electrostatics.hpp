@@ -20,15 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define _FD_ELECTROSTATICS_HPP
 
 #ifdef __HIPCC__
-
-#include <cuda.h>
 #include <cufft.h>
-
 #else
-
 typedef void cufftComplex;
 typedef void cufftReal;
-
 #endif
 
 #define PI_FLOAT 3.14159265358979323846f

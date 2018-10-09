@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 /*
   Copyright (C) 2014-2018 The ESPResSo project
 
@@ -17,6 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#include <hip/hip_runtime.h>
 
 #include "EspressoSystemInterface.hpp"
 #include "cuda_init.hpp"
@@ -178,27 +179,27 @@ void EspressoSystemInterface::split_particle_struct() {
   dim3 block(512, 1, 1);
 
   if (m_needsQGpu && m_needsRGpu)
-    hipLaunchKernelGGL((split_kernel_rq), dim3(grid), dim3(block), 0, 0, gpu_get_particle_pointer(), m_r_gpu_begin,
+    split_kernel_rq<<<grid, block>>>(gpu_get_particle_pointer(), m_r_gpu_begin,
                                      m_q_gpu_begin, n);
   if (m_needsQGpu && !m_needsRGpu)
-    hipLaunchKernelGGL((split_kernel_q), dim3(grid), dim3(block), 0, 0, gpu_get_particle_pointer(), m_q_gpu_begin,
+    split_kernel_q<<<grid, block>>>(gpu_get_particle_pointer(), m_q_gpu_begin,
                                     n);
   if (!m_needsQGpu && m_needsRGpu)
-    hipLaunchKernelGGL((split_kernel_r), dim3(grid), dim3(block), 0, 0, gpu_get_particle_pointer(), m_r_gpu_begin,
+    split_kernel_r<<<grid, block>>>(gpu_get_particle_pointer(), m_r_gpu_begin,
                                     n);
 #ifdef LB_GPU
   if (m_needsVGpu)
-    hipLaunchKernelGGL((split_kernel_v), dim3(grid), dim3(block), 0, 0, gpu_get_particle_pointer(), m_v_gpu_begin,
+    split_kernel_v<<<grid, block>>>(gpu_get_particle_pointer(), m_v_gpu_begin,
                                     n);
 #endif
 #ifdef DIPOLES
   if (m_needsDipGpu)
-    hipLaunchKernelGGL((split_kernel_dip), dim3(grid), dim3(block), 0, 0, gpu_get_particle_pointer(),
+    split_kernel_dip<<<grid, block>>>(gpu_get_particle_pointer(),
                                       m_dip_gpu_begin, n);
 
 #endif
 
   if (m_needsQuatuGpu)
-    hipLaunchKernelGGL((split_kernel_quatu), dim3(grid), dim3(block), 0, 0, gpu_get_particle_pointer(),
+    split_kernel_quatu<<<grid, block>>>(gpu_get_particle_pointer(),
                                         m_quatu_gpu_begin, n);
 }

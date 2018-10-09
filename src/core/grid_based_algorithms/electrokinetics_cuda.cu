@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 /*
    Copyright (C) 2010-2018 The ESPResSo project
 
@@ -17,6 +16,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#include <hip/hip_runtime.h>
+
 #include "config.hpp"
 #ifdef CUDA            /* Terminates at end of file */
 #ifdef ELECTROKINETICS /* Terminates at end of file */
