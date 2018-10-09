@@ -524,8 +524,9 @@ void rescale_velocities(double scale) {
 
 void propagate_vel_finalize_p_inst() {
 
+#ifdef LEES_EDWARDS
 double le_vel = lees_edwards_get_velocity(sim_time + time_step) /2;
-
+#endif
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
@@ -790,10 +791,11 @@ void propagate_pos() {
 
 void propagate_vel_pos() {
   INTEG_TRACE(fprintf(stderr, "%d: propagate_vel_pos:\n", this_node));
-
+#ifdef LEES_EDWARDS
 double shear_velocity = lees_edwards_get_velocity(sim_time + time_step / 2);
 double offset_at_half_time_step =
           lees_edwards_get_offset(sim_time + time_step / 2);
+#endif
 #ifdef ADDITIONAL_CHECKS
   db_max_force = db_max_vel = 0;
   db_maxf_id = db_maxv_id = -1;
