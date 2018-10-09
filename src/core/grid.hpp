@@ -192,7 +192,7 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
     res[i] = a[i] - b[i];
 
 #ifdef LEES_EDWARDS
-  auto const dy = res[1];
+  double const dy = res[lees_edwards_protocol.shearplanenormal];
 #endif
 
   for (int i = 0; i < 3; i++)
@@ -200,13 +200,13 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
       res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
 
 #ifdef LEES_EDWARDS
-  if (std::abs(dy) > half_box_l[1]) {
+  if (std::abs(dy) > half_box_l[lees_edwards_protocol.shearplanenormal]) {
     
-    auto offset = lees_edwards_protocol.offset;
-    auto shift =
-        Utils::sgn(dy) * (offset - dround(offset * box_l_i[0]) * box_l[0]);
+    double offset = lees_edwards_protocol.offset;
+    double shift =
+        Utils::sgn(dy) * (offset - dround(offset * box_l_i[lees_edwards_protocol.sheardir]) * box_l[lees_edwards_protocol.sheardir]);
 
-    res[0] -= shift;
+    res[lees_edwards_protocol.sheardir] -= shift;
     //TODO: The box should be added here via p->l.i[i]
     //res[0] -= shift + (p.l.i[0]  * box_l[0]);
 
