@@ -559,8 +559,8 @@ double le_vel = lees_edwards_get_velocity(sim_time + time_step) /2;
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 #ifdef LEES_EDWARDS
-        if (j == 0 && p.p.lees_edwards_flag != 0) {
-          p.m.v[0] += p.p.lees_edwards_flag *
+        if (j == lees_edwards_protocol.sheardir && p.p.lees_edwards_flag != 0) {
+          p.m.v[lees_edwards_protocol.sheardir] += p.p.lees_edwards_flag *
                       le_vel;
         }
 #endif
@@ -838,16 +838,16 @@ double offset_at_half_time_step =
       //
       // The update of the velocity at the end of the time step is triggered by
       // the flag and occurs in propagate_vel_finalize_p_inst
-      if (p.r.p[1] >= box_l[1]) {
-        p.m.v[0] -= shear_velocity / 2;
-        p.r.p[0] -= (offset_at_half_time_step -
-                     dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
+      if (p.r.p[lees_edwards_protocol.shearplanenormal] >= box_l[lees_edwards_protocol.shearplanenormal]) {
+        p.m.v[lees_edwards_protocol.sheardir] -= shear_velocity / 2;
+        p.r.p[lees_edwards_protocol.sheardir] -= (offset_at_half_time_step -
+                     dround(offset_at_half_time_step * box_l_i[lees_edwards_protocol.sheardir]) * box_l[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
                                     // propagate_vel_finalize_p_inst
-      } else if (p.r.p[1] <= 0.) {
-        p.m.v[0] += shear_velocity / 2;
-        p.r.p[0] += (offset_at_half_time_step -
-                     dround(offset_at_half_time_step * box_l_i[0]) * box_l[0]);
+      } else if (p.r.p[lees_edwards_protocol.shearplanenormal] <= 0.) {
+        p.m.v[lees_edwards_protocol.sheardir] += shear_velocity / 2;
+        p.r.p[lees_edwards_protocol.sheardir] += (offset_at_half_time_step -
+                     dround(offset_at_half_time_step * box_l_i[lees_edwards_protocol.sheardir]) * box_l[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = 1; // perform a positive half velocity shift in
                                    // propagate_vel_finalize_p_inst
       } else {
