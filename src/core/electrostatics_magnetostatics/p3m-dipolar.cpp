@@ -2029,7 +2029,7 @@ int dp3m_adaptive_tune(char **logger) {
                                   "    Drs_err    Dks_err    time [ms]\n");
 
   /* mesh loop */
-  for (; tmp_mesh <= mesh_max; tmp_mesh *= 2) {
+  for (; tmp_mesh <= mesh_max; tmp_mesh +=2) {
     tmp_cao = cao;
     tmp_time =
         dp3m_m_time(logger, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
