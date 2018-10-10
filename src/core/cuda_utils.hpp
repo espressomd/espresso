@@ -29,6 +29,10 @@ extern hipStream_t stream[1];
 extern hipError_t CU_err;
 extern hipError_t _err;
 
+#ifndef __CUDACC__
+#define make_uint3 dim3
+#endif
+
 /**erroroutput for memory allocation and memory copy
  * @param err cuda error code
  * @param *file .cu file were the error took place
@@ -43,15 +47,17 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
 
 #define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
 
-#define KERNELCALL_shared(_f, _a, _b, _s, _params)                             \
-  _f<<<_a, _b, _s, stream[0]>>> _params;                                       \
+#define KERNELCALL_shared(_f, _a, _b, _s, ...)                                 \
+  hipLaunchKernelGGL(_f, _a, _b, _s, stream[0], ##__VA_ARGS__);                  \
   _cuda_check_errors(_a, _b, #_f, __FILE__, __LINE__);
 
-#define KERNELCALL_stream(_function, _grid, _block, _stream, _params)          \
-  _function<<<_grid, _block, 0, _stream>>> _params;                            \
+#define KERNELCALL_stream(_function, _grid, _block, _stream, ...)              \
+  hipLaunchKernelGGL(_function, _grid, _block, 0, _stream, ##__VA_ARGS__);       \
   _cuda_check_errors(_grid, _block, #_function, __FILE__, __LINE__);
 
-#define KERNELCALL(_f, _a, _b, _params)                                        \
-  KERNELCALL_shared(_f, _a, _b, 0, _params)
+#define KERNELCALL(_f, _a, _b, ...)                                            \
+  KERNELCALL_shared(_f, _a, _b, 0, ##__VA_ARGS__)
+
 
 #endif
+

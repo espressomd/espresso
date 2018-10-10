@@ -79,5 +79,5 @@ void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k,
   }
 
   KERNELCALL(HarmonicOrientationWell_kernel, grid, block,
-             (x, y, z, k, n, quatu, torque))
+             x, y, z, k, n, quatu, torque)
 }

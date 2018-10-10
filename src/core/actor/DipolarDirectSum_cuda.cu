@@ -306,7 +306,7 @@ void DipolarDirectSum_kernel_wrapper_force(dds_float k, int n, float *pos,
 
   // printf("box_l: %f %f %f\n",box_l[0],box_l[1],box_l[2]);
   KERNELCALL(DipolarDirectSum_kernel_force, grid, block,
-             (k, n, pos, dip, f, torque, box_l_gpu, periodic_gpu));
+             k, n, pos, dip, f, torque, box_l_gpu, periodic_gpu);
   hipFree(box_l_gpu);
   hipFree(periodic_gpu);
 }
@@ -347,12 +347,12 @@ void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos,
   // This will sum the energies up to the block level
   KERNELCALL_shared(DipolarDirectSum_kernel_energy, grid, block,
                     bs * sizeof(dds_float),
-                    (k, n, pos, dip, box_l_gpu, periodic_gpu, energySum));
+                    k, n, pos, dip, box_l_gpu, periodic_gpu, energySum);
 
   // printf(" Still here after energy kernel\n");
   // Sum the results of all blocks
   // One thread per block in the prev kernel
-  // KERNELCALL(sumKernel,1,1,(energySum,block.x,E));
+  // KERNELCALL(sumKernel,1,1,energySum,block.x,E);
   thrust::device_ptr<dds_float> t(energySum);
   float x = thrust::reduce(t, t + grid.x);
   cuda_safe_mem(hipMemcpy(E, &x, sizeof(float), hipMemcpyHostToDevice));

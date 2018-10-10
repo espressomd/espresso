@@ -70,7 +70,7 @@ void IBM_ResetLBForces_GPU() {
     dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
     KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block,
-               (node_f, paraIBM));
+               node_f, paraIBM);
   }
 }
 
@@ -120,7 +120,7 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
 
     KERNELCALL(ForcesIntoFluid_Kernel, dim_grid_particles,
                threads_per_block_particles,
-               (IBM_ParticleDataInput_device, node_f, paraIBM));
+               IBM_ParticleDataInput_device, node_f, paraIBM);
   }
 }
 
@@ -293,9 +293,9 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
         make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
     KERNELCALL(ParticleVelocitiesFromLB_Kernel, dim_grid_particles,
                threads_per_block_particles,
-               (*current_nodes, IBM_ParticleDataInput_device,
-                IBM_ParticleDataOutput_device, node_f, lb_boundary_velocity_IBM,
-                paraIBM));
+               *current_nodes, IBM_ParticleDataInput_device,
+               IBM_ParticleDataOutput_device, node_f, lb_boundary_velocity_IBM,
+               paraIBM);
 
     // Copy velocities from device to host
     cuda_safe_mem(hipMemcpy(IBM_ParticleDataOutput_host,

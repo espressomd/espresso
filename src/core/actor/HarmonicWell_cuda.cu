@@ -57,5 +57,5 @@ void HarmonicWell_kernel_wrapper(float x, float y, float z, float k, int n,
     block.x = 512;
   }
 
-  KERNELCALL(HarmonicWell_kernel, grid, block, (x, y, z, k, n, pos, f))
+  KERNELCALL(HarmonicWell_kernel, grid, block, x, y, z, k, n, pos, f)
 }

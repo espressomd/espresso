@@ -232,7 +232,7 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
     int *dev_cutoff;
     int maxCut = 30;
     cuda_safe_mem(hipMalloc((void **)&dev_cutoff, sizeof(int)));
-    besselTuneKernel<<<1, 1>>>(dev_cutoff, far_switch_radius, maxCut);
+    hipLaunchKernelGGL(besselTuneKernel, dim3(1), dim3(1), 0, 0, dev_cutoff, far_switch_radius, maxCut);
     cuda_safe_mem(hipMemcpy(&bessel_cutoff, dev_cutoff, sizeof(int),
                             hipMemcpyDeviceToHost));
     hipFree(dev_cutoff);
@@ -506,13 +506,13 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s) {
     int blocksRed = s.npart_gpu() / numThreads + 1;
     KERNELCALL(
         forcesKernel, numBlocks(s), numThreads,
-        (s.rGpuBegin(), s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs))
+        s.rGpuBegin(), s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs)
     KERNELCALL(vectorReductionKernel, blocksRed, numThreads,
-               (dev_forcePairs, s.fGpuBegin(), s.npart_gpu()))
+               dev_forcePairs, s.fGpuBegin(), s.npart_gpu())
   } else {
     KERNELCALL(
         forcesKernel, numBlocks(s), numThreads,
-        (s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), pairs))
+        s.rGpuBegin(), s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), pairs)
   }
 }
 
@@ -543,12 +543,12 @@ void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
 
   KERNELCALL_shared(
       energiesKernel, numBlocks(s), numThreads, shared,
-      (s.rGpuBegin(), s.qGpuBegin(), dev_energyBlocks, s.npart_gpu(), 0));
+      s.rGpuBegin(), s.qGpuBegin(), dev_energyBlocks, s.npart_gpu(), 0);
   KERNELCALL_shared(sumKernel, 1, numThreads, shared,
-                    (dev_energyBlocks, numBlocks(s)));
+                    dev_energyBlocks, numBlocks(s));
   KERNELCALL(scaleAndAddKernel, 1, 1,
-             (&(((CUDA_energy *)s.eGpu())->coulomb), &dev_energyBlocks[0], 1,
-              0.5)); // we have counted every interaction twice, so halve the
+             &(((CUDA_energy *)s.eGpu())->coulomb), &dev_energyBlocks[0], 1,
+              0.5); // we have counted every interaction twice, so halve the
                      // total energy
 }
 
@@ -563,7 +563,7 @@ float Mmm1dgpuForce::force_benchmark(SystemInterface &s) {
   cuda_safe_mem(hipEventCreate(&eventStop));
   cuda_safe_mem(hipEventRecord(eventStart, stream[0]));
   KERNELCALL(forcesKernel, numBlocks(s), numThreads,
-             (s.rGpuBegin(), s.qGpuBegin(), dev_f_benchmark, s.npart_gpu(), 0))
+             s.rGpuBegin(), s.qGpuBegin(), dev_f_benchmark, s.npart_gpu(), 0)
   cuda_safe_mem(hipEventRecord(eventStop, stream[0]));
   cuda_safe_mem(hipEventSynchronize(eventStop));
   cuda_safe_mem(hipEventElapsedTime(&elapsedTime, eventStart, eventStop));

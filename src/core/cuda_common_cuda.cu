@@ -324,12 +324,12 @@ void gpu_change_number_of_part_to_comm() {
 
       KERNELCALL(init_particle_force, dim_grid_particles,
                  threads_per_block_particles,
-                 (particle_forces_device, particle_torques_device,
-                  particle_seeds_device));
+                 particle_forces_device, particle_torques_device,
+                 particle_seeds_device);
 
 #ifdef SHANCHEN
       KERNELCALL(init_fluid_composition, dim_grid_particles,
-                 threads_per_block_particles, (fluid_composition_device));
+                 threads_per_block_particles, fluid_composition_device);
 #endif
     }
   }
@@ -448,7 +448,7 @@ void copy_forces_from_GPU(ParticleRange particles) {
 
       KERNELCALL(reset_particle_force, dim_grid_particles,
                  threads_per_block_particles,
-                 (particle_forces_device, particle_torques_device));
+                 particle_forces_device, particle_torques_device);
       hipDeviceSynchronize();
     }
 

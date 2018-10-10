@@ -664,7 +664,7 @@ void reset_LB_force_densities_GPU(bool buffer) {
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(reset_LB_force_densities_kernel, dim_grid, threads_per_block,
-             (node_f, buffer));
+             node_f, buffer);
 }
 
 __device__ void update_rho_v(float *mode, unsigned int index,
@@ -3833,13 +3833,17 @@ __global__ void lb_get_boundary_flag(int single_nodeindex,
 /* Host functions to setup and call kernels*/
 /**********************************************************************/
 
+__global__ void copy_lb_parameters_pointer(LB_parameters_gpu** ptr) {
+  *ptr = &para[0];
+}
+
 void lb_get_para_pointer(LB_parameters_gpu **pointeradress) {
-  if (cudaGetSymbolAddress((void **)pointeradress, para) != cudaSuccess) {
-    fprintf(stderr,
-            "Trouble getting address of LB parameters.\n"); // TODO give proper
-                                                            // error message
-    errexit();
-  }
+  LB_parameters_gpu** ptr_gpu;
+  cuda_safe_mem(hipMalloc((void **)&ptr_gpu, sizeof(LB_parameters_gpu*)));
+  KERNELCALL(copy_lb_parameters_pointer, 1, 1, ptr_gpu);
+  cuda_safe_mem(hipMemcpy(pointeradress, ptr_gpu,
+                          sizeof(LB_parameters_gpu*), hipMemcpyDeviceToHost));
+  hipFree(ptr_gpu);
 }
 
 void lb_get_lbpar_pointer(LB_parameters_gpu **pointeradress) {
@@ -3928,7 +3932,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
       (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
+  KERNELCALL(reset_boundaries, dim_grid, threads_per_block, nodes_a, nodes_b);
 
 #ifdef SHANCHEN
 // TODO FIXME:
@@ -3940,7 +3944,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
    * Node_Force array with zero */
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
   KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block,
-             (nodes_a, device_rho_v, node_f, gpu_check));
+             nodes_a, device_rho_v, node_f, gpu_check);
 
   intflag = 1;
   current_nodes = &nodes_a;
@@ -3975,7 +3979,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
   /** calc of velocity densities from given parameters and initialize the
    * Node_Force array with zero */
   KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block,
-             (nodes_a, device_rho_v, node_f, gpu_check));
+             nodes_a, device_rho_v, node_f, gpu_check);
 }
 
 void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu) {
@@ -4024,7 +4028,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
       (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
+  KERNELCALL(reset_boundaries, dim_grid, threads_per_block, nodes_a, nodes_b);
 
   if (LBBoundaries::lbboundaries.size() == 0 && !pdb_boundary_lattice) {
     hipDeviceSynchronize();
@@ -4045,8 +4049,8 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
         make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
 
     KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound,
-               (boundary_node_list, boundary_index_list, number_of_boundnodes,
-                nodes_a, nodes_b));
+               boundary_node_list, boundary_index_list, number_of_boundnodes,
+               nodes_a, nodes_b);
   }
 
   hipDeviceSynchronize();
@@ -4066,7 +4070,7 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu) {
       (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
+  KERNELCALL(reinit_node_force, dim_grid, threads_per_block, node_f);
 }
 /**setup and call extern single node force initialization from the host
  * @param n_extern_node_force_densities       number of nodes on which the
@@ -4101,7 +4105,7 @@ void lb_init_extern_nodeforcedensities_GPU(
 
   KERNELCALL(
       init_extern_node_force_densities, dim_grid_exf, threads_per_block_exf,
-      (n_extern_node_force_densities, extern_node_force_densities, node_f));
+      n_extern_node_force_densities, extern_node_force_densities, node_f);
   hipFree(extern_node_force_densities);
 }
 
@@ -4123,11 +4127,11 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
     if (lbpar_gpu.lb_couple_switch & LB_COUPLE_TWO_POINT) {
       KERNELCALL(calc_fluid_particle_ia, dim_grid_particles,
                  threads_per_block_particles,
-                 (*current_nodes, gpu_get_particle_pointer(),
-                  gpu_get_particle_force_pointer(),
-                  gpu_get_fluid_composition_pointer(), node_f,
-                  gpu_get_particle_seed_pointer(), device_rho_v,
-                  couple_virtual));
+                 *current_nodes, gpu_get_particle_pointer(),
+                 gpu_get_particle_force_pointer(),
+                 gpu_get_fluid_composition_pointer(), node_f,
+                 gpu_get_particle_seed_pointer(), device_rho_v,
+                 couple_virtual);
     } else { /** only other option is the three point coupling scheme */
 #ifdef SHANCHEN
       fprintf(stderr, "The three point particle coupling is not currently "
@@ -4137,9 +4141,9 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
 #endif
       KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles,
                  threads_per_block_particles,
-                 (*current_nodes, gpu_get_particle_pointer(),
-                  gpu_get_particle_force_pointer(), node_f,
-                  gpu_get_particle_seed_pointer(), device_rho_v));
+                 *current_nodes, gpu_get_particle_pointer(),
+                 gpu_get_particle_force_pointer(), node_f,
+                 gpu_get_particle_seed_pointer(), device_rho_v);
     }
   }
 }
@@ -4157,7 +4161,7 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values) {
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(get_mesoscopic_values_in_MD_units, dim_grid, threads_per_block,
-             (*current_nodes, print_rho_v_pi, device_rho_v, node_f));
+             *current_nodes, print_rho_v_pi, device_rho_v, node_f);
   cuda_safe_mem(hipMemcpy(host_values, print_rho_v_pi, size_of_rho_v_pi,
                            hipMemcpyDeviceToHost));
 }
@@ -4178,7 +4182,7 @@ void lb_get_boundary_flags_GPU(unsigned int *host_bound_array) {
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(lb_get_boundaries, dim_grid, threads_per_block,
-             (*current_nodes, device_bound_array));
+             *current_nodes, device_bound_array);
 
   cuda_safe_mem(hipMemcpy(host_bound_array, device_bound_array,
                            lbpar_gpu.number_of_nodes * sizeof(unsigned int),
@@ -4201,8 +4205,8 @@ void lb_print_node_GPU(int single_nodeindex,
       make_uint3(blocks_per_grid_print_x, blocks_per_grid_print_y, 1);
 
   KERNELCALL(lb_print_node, dim_grid_print, threads_per_block_print,
-             (single_nodeindex, device_print_values, *current_nodes,
-              device_rho_v, node_f));
+             single_nodeindex, device_print_values, *current_nodes,
+             device_rho_v, node_f);
 
   cuda_safe_mem(hipMemcpy(host_print_values, device_print_values,
                            sizeof(LB_rho_v_pi_gpu), hipMemcpyDeviceToHost));
@@ -4228,7 +4232,7 @@ void lb_calc_fluid_mass_GPU(double *mass) {
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(calc_mass, dim_grid, threads_per_block,
-             (*current_nodes, tot_mass));
+             *current_nodes, tot_mass);
 
   cuda_safe_mem(
       hipMemcpy(&cpu_mass, tot_mass, sizeof(float), hipMemcpyDeviceToHost));
@@ -4256,7 +4260,7 @@ void lb_calc_fluid_momentum_GPU(double *host_mom) {
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(momentum, dim_grid, threads_per_block,
-             (*current_nodes, device_rho_v, node_f, tot_momentum));
+             *current_nodes, device_rho_v, node_f, tot_momentum);
 
   cuda_safe_mem(hipMemcpy(host_momentum, tot_momentum, 3 * sizeof(float),
                            hipMemcpyDeviceToHost));
@@ -4285,13 +4289,13 @@ void lb_remove_fluid_momentum_GPU(void) {
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(momentum, dim_grid, threads_per_block,
-             (*current_nodes, device_rho_v, node_f, tot_momentum));
+             *current_nodes, device_rho_v, node_f, tot_momentum);
 
   cuda_safe_mem(hipMemcpy(host_momentum, tot_momentum, 3 * sizeof(float),
                            hipMemcpyDeviceToHost));
 
   KERNELCALL(remove_momentum, dim_grid, threads_per_block,
-             (*current_nodes, device_rho_v, node_f, tot_momentum));
+             *current_nodes, device_rho_v, node_f, tot_momentum);
 
   hipFree(tot_momentum);
 }
@@ -4324,7 +4328,7 @@ void lb_calc_fluid_temperature_GPU(double *host_temp) {
 
   KERNELCALL(
       temperature, dim_grid, threads_per_block,
-      (*current_nodes, device_jsquared, device_number_of_non_boundary_nodes));
+      *current_nodes, device_jsquared, device_number_of_non_boundary_nodes);
 
   cuda_safe_mem(hipMemcpy(&host_number_of_non_boundary_nodes,
                            device_number_of_non_boundary_nodes, sizeof(int),
@@ -4358,12 +4362,12 @@ void lb_calc_shanchen_GPU() {
 #ifdef LB_BOUNDARIES_GPU
   if (LBBoundaries::lbboundaries.size() != 0) {
     KERNELCALL(lb_shanchen_set_boundaries, dim_grid, threads_per_block,
-               (*current_nodes));
+               *current_nodes);
     hipDeviceSynchronize();
   }
 #endif
   KERNELCALL(lb_shanchen_GPU, dim_grid, threads_per_block,
-             (*current_nodes, node_f));
+             *current_nodes, node_f);
 }
 
 #endif // SHANCHEN
@@ -4436,7 +4440,7 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag) {
       make_uint3(blocks_per_grid_flag_x, blocks_per_grid_flag_y, 1);
 
   KERNELCALL(lb_get_boundary_flag, dim_grid_flag, threads_per_block_flag,
-             (single_nodeindex, device_flag, *current_nodes));
+             single_nodeindex, device_flag, *current_nodes);
 
   cuda_safe_mem(hipMemcpy(host_flag, device_flag, sizeof(unsigned int),
                            hipMemcpyDeviceToHost));
@@ -4460,7 +4464,7 @@ void lb_set_node_rho_GPU(int single_nodeindex, float *host_rho) {
   dim3 dim_grid_flag =
       make_uint3(blocks_per_grid_flag_x, blocks_per_grid_flag_y, 1);
   KERNELCALL(set_rho, dim_grid_flag, threads_per_block_flag,
-             (*current_nodes, device_rho_v, single_nodeindex, device_rho));
+             *current_nodes, device_rho_v, single_nodeindex, device_rho);
   hipFree(device_rho);
 }
 
@@ -4480,8 +4484,8 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
       make_uint3(blocks_per_grid_flag_x, blocks_per_grid_flag_y, 1);
 
   KERNELCALL(set_u_from_rho_v_pi, dim_grid_flag, threads_per_block_flag,
-             (*current_nodes, single_nodeindex, device_velocity, device_rho_v,
-              node_f));
+             *current_nodes, single_nodeindex, device_velocity, device_rho_v,
+             node_f);
 
   hipFree(device_velocity);
 }
@@ -4519,12 +4523,12 @@ void lb_integrate_GPU() {
      extended_values_flag */
   if (intflag == 1) {
     KERNELCALL(integrate, dim_grid, threads_per_block,
-               (nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu));
+               nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu);
     current_nodes = &nodes_b;
     intflag = 0;
   } else {
     KERNELCALL(integrate, dim_grid, threads_per_block,
-               (nodes_b, nodes_a, device_rho_v, node_f, lb_ek_parameters_gpu));
+               nodes_b, nodes_a, device_rho_v, node_f, lb_ek_parameters_gpu);
     current_nodes = &nodes_a;
     intflag = 1;
   }
@@ -4532,7 +4536,7 @@ void lb_integrate_GPU() {
 #ifdef LB_BOUNDARIES_GPU
   if (LBBoundaries::lbboundaries.size() > 0) {
     KERNELCALL(apply_boundaries, dim_grid, threads_per_block,
-               (*current_nodes, lb_boundary_velocity, lb_boundary_force));
+               *current_nodes, lb_boundary_velocity, lb_boundary_force);
   }
 #endif
 }
@@ -4639,7 +4643,7 @@ void lb_lbfluid_fluid_add_momentum(float momentum_host[3]) {
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(lb_lbfluid_fluid_add_momentum_kernel, dim_grid, threads_per_block,
-             (momentum_device, *current_nodes, node_f, device_rho_v));
+             momentum_device, *current_nodes, node_f, device_rho_v);
 }
 
 /**set the populations of a specific node on the GPU
@@ -4674,7 +4678,7 @@ void lb_lbfluid_set_population(int xyz[3], float population_host[LBQ], int c) {
 
   dim3 dim_grid = make_uint3(1, 1, 1);
   KERNELCALL(lb_lbfluid_set_population_kernel, dim_grid, 1,
-             (*current_nodes, population_device, xyz[0], xyz[1], xyz[2], c));
+             *current_nodes, population_device, xyz[0], xyz[1], xyz[2], c);
 
   cuda_safe_mem(hipFree(population_device));
 }
@@ -4709,7 +4713,7 @@ void lb_lbfluid_get_population(int xyz[3], float population_host[LBQ], int c) {
 
   dim3 dim_grid = make_uint3(1, 1, 1);
   KERNELCALL(lb_lbfluid_get_population_kernel, dim_grid, 1,
-             (*current_nodes, population_device, xyz[0], xyz[1], xyz[2], c));
+             *current_nodes, population_device, xyz[0], xyz[1], xyz[2], c);
 
   cuda_safe_mem(hipMemcpy(population_host, population_device,
                            LBQ * sizeof(float), hipMemcpyDeviceToHost));

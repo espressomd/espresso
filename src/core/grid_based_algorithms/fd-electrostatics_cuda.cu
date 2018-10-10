@@ -87,7 +87,7 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
        threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-  KERNELCALL_stream(createGreensfcn, dim_grid, threads_per_block, stream, ());
+  KERNELCALL_stream(createGreensfcn, dim_grid, threads_per_block, stream);
 
   /* create 3D FFT plans */
 
@@ -179,7 +179,7 @@ void FdElectrostatics::calculatePotential(hipfftComplex *charge_potential) {
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(multiplyGreensfcn, dim_grid, threads_per_block,
-             (charge_potential));
+             charge_potential);
 
   if (hipfftExecC2R(plan_ifft, charge_potential,
                    (hipfftReal *)charge_potential) != HIPFFT_SUCCESS) {

@@ -2203,8 +2203,8 @@ void ek_calculate_electrostatic_coupling() {
   dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(ek_spread_particle_force, dim_grid, threads_per_block,
-             (gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-              ek_lbparameters_gpu));
+             gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
+             ek_lbparameters_gpu);
 }
 #endif
 
@@ -2217,7 +2217,7 @@ void ek_integrate_electrostatics() {
                           (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(ek_gather_species_charge_density, dim_grid, threads_per_block, ());
+  KERNELCALL(ek_gather_species_charge_density, dim_grid, threads_per_block);
 
 #ifdef EK_ELECTROSTATIC_COUPLING
   if (ek_parameters.es_coupling) {
@@ -2228,7 +2228,7 @@ void ek_integrate_electrostatics() {
     electrostatics->calculatePotential(
         (hipfftComplex *)ek_parameters.charge_potential_buffer);
     KERNELCALL(ek_calc_electric_field, dim_grid, threads_per_block,
-               (ek_parameters.charge_potential_buffer));
+               ek_parameters.charge_potential_buffer);
   }
 #endif
 
@@ -2243,7 +2243,7 @@ void ek_integrate_electrostatics() {
     particle_data_gpu = gpu_get_particle_pointer();
 
     KERNELCALL(ek_gather_particle_charge_density, dim_grid, threads_per_block,
-               (particle_data_gpu, ek_lbparameters_gpu));
+               particle_data_gpu, ek_lbparameters_gpu);
   }
 
   electrostatics->calculatePotential();
@@ -2265,25 +2265,25 @@ void ek_integrate() {
      (in ek_calculate_quantities / ek_displacement), which is copied in this
      routine */
 
-  // KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, ( node_f ) );
+  // KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, node_f );
 
   /* Integrate diffusion-advection */
 
   for (int i = 0; i < ek_parameters.number_of_species; i++) {
 
-    KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block, ());
+    KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(
         ek_calculate_quantities, dim_grid, threads_per_block,
-        (i, *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values));
+        i, *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values);
 
 #ifdef EK_BOUNDARIES
     if (ek_parameters.stencil == 1) {
       KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
-                 (i, *current_nodes, node_f));
+                 i, *current_nodes, node_f);
     }
 #endif
 
-    KERNELCALL(ek_propagate_densities, dim_grid, threads_per_block, (i));
+    KERNELCALL(ek_propagate_densities, dim_grid, threads_per_block, i);
   }
 
   /* Integrate electrostatics */
@@ -2305,10 +2305,9 @@ void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
                           (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(ek_init_species_density_homogeneous, dim_grid, threads_per_block,
-             ());
+  KERNELCALL(ek_init_species_density_homogeneous, dim_grid, threads_per_block);
   KERNELCALL(ek_clear_boundary_densities, dim_grid, threads_per_block,
-             (*current_nodes));
+             *current_nodes);
 
   if (wallcharge_species != -1) {
     cuda_safe_mem(hipMemcpy(ek_parameters.rho[wallcharge_species],
@@ -2347,6 +2346,19 @@ void ek_init_species(int species) {
   }
 }
 
+__global__ void copy_ek_parameters_pointer(EK_parameters** ptr) {
+  *ptr = &ek_parameters_gpu[0];
+}
+
+static void fetch_ek_parameters_pointer() {
+  EK_parameters** ptr_gpu;
+  cuda_safe_mem(hipMalloc((void **)&ptr_gpu, sizeof(EK_parameters*)));
+  KERNELCALL(copy_ek_parameters_pointer, 1, 1, ptr_gpu);
+  cuda_safe_mem(hipMemcpy(ek_parameters_gpu_pointer, ptr_gpu,
+                          sizeof(EK_parameters*), hipMemcpyDeviceToHost));
+  hipFree(ptr_gpu);
+}
+
 int ek_init() {
   if (ek_parameters.agrid < 0.0 || ek_parameters.viscosity < 0.0 ||
       ek_parameters.T < 0.0 || ek_parameters.prefactor < 0.0) {
@@ -2362,12 +2374,7 @@ int ek_init() {
   dim3 dim_grid;
 
   if (!ek_initialized) {
-    if (cudaGetSymbolAddress((void **)&ek_parameters_gpu_pointer,
-                             ek_parameters_gpu) != cudaSuccess) {
-      fprintf(stderr, "ERROR: Fetching constant memory pointer\n");
-
-      return 1;
-    }
+    fetch_ek_parameters_pointer();
 
     for (int i = 0; i < MAX_NUMBER_OF_SPECIES; i++) {
       ek_parameters.species_index[i] = -1;
@@ -2492,7 +2499,7 @@ int ek_init() {
          threads_per_block * blocks_per_grid_y - 1) /
         (threads_per_block * blocks_per_grid_y);
     dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-    KERNELCALL(ek_clear_node_force, dim_grid, threads_per_block, (node_f));
+    KERNELCALL(ek_clear_node_force, dim_grid, threads_per_block, node_f);
 
     ek_initialized = true;
   } else {
@@ -2523,7 +2530,7 @@ int ek_init() {
       dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
       KERNELCALL(ek_init_species_density_homogeneous, dim_grid,
-                 threads_per_block, ());
+                 threads_per_block);
 #endif
 
       ek_integrate_electrostatics();
@@ -2781,15 +2788,15 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
                             (threads_per_block * blocks_per_grid_y);
     dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-    KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block, ());
+    KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
-               (ek_parameters.species_index[species], *current_nodes, node_f,
-                ek_lbparameters_gpu, ek_lb_device_values));
+               ek_parameters.species_index[species], *current_nodes, node_f,
+               ek_lbparameters_gpu, ek_lb_device_values);
     reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
     KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
-               (ek_parameters.species_index[species], *current_nodes, node_f));
+               ek_parameters.species_index[species], *current_nodes, node_f);
 #endif
 
     cuda_safe_mem(
@@ -3008,15 +3015,15 @@ int ek_print_vtk_flux(int species, char *filename) {
                             (threads_per_block * blocks_per_grid_y);
     dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-    KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block, ());
+    KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
-               (ek_parameters.species_index[species], *current_nodes, node_f,
-                ek_lbparameters_gpu, ek_lb_device_values));
+               ek_parameters.species_index[species], *current_nodes, node_f,
+               ek_lbparameters_gpu, ek_lb_device_values);
     reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
     KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
-               (ek_parameters.species_index[species], *current_nodes, node_f));
+               ek_parameters.species_index[species], *current_nodes, node_f);
 #endif
 
     cuda_safe_mem(
@@ -3698,7 +3705,7 @@ ekfloat ek_calculate_net_charge() {
                           (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(ek_calculate_system_charge, dim_grid, threads_per_block, (charge_gpu));
+  KERNELCALL(ek_calculate_system_charge, dim_grid, threads_per_block, charge_gpu);
 
   ekfloat charge;
   cuda_safe_mem(hipMemcpy(&charge, charge_gpu, sizeof(ekfloat),

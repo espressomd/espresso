@@ -993,7 +993,7 @@ void initBHgpu(int blocks) {
   grid.x = blocks * FACTOR5;
   block.x = THREADS5;
 
-  KERNELCALL(initializationKernel, grid, block, ());
+  KERNELCALL(initializationKernel, grid, block);
 
 #ifdef __CUDACC__
   // According to the experimental performance optimization:
@@ -1017,7 +1017,7 @@ void buildBoxBH(int blocks) {
   block.x = THREADS1;
 
   hipDeviceSynchronize();
-  KERNELCALL(boundingBoxKernel, grid, block, ());
+  KERNELCALL(boundingBoxKernel, grid, block);
   cuda_safe_mem(hipDeviceSynchronize());
 }
 
@@ -1030,7 +1030,7 @@ void buildTreeBH(int blocks) {
   grid.x = blocks * FACTOR2;
   block.x = THREADS2;
 
-  KERNELCALL(treeBuildingKernel, grid, block, ());
+  KERNELCALL(treeBuildingKernel, grid, block);
   cuda_safe_mem(hipDeviceSynchronize());
 }
 
@@ -1044,7 +1044,7 @@ void summarizeBH(int blocks) {
   grid.x = blocks * FACTOR3;
   block.x = THREADS3;
 
-  KERNELCALL(summarizationKernel, grid, block, ());
+  KERNELCALL(summarizationKernel, grid, block);
   cuda_safe_mem(hipDeviceSynchronize());
 }
 
@@ -1058,7 +1058,7 @@ void sortBH(int blocks) {
   grid.x = blocks * FACTOR4;
   block.x = THREADS4;
 
-  KERNELCALL(sortKernel, grid, block, ());
+  KERNELCALL(sortKernel, grid, block);
   cuda_safe_mem(hipDeviceSynchronize());
 }
 
@@ -1071,7 +1071,7 @@ int forceBH(BHData *bh_data, dds_float k, float *f, float *torque) {
   grid.x = bh_data->blocks * FACTOR5;
   block.x = THREADS5;
 
-  KERNELCALL(forceCalculationKernel, grid, block, (k, f, torque));
+  KERNELCALL(forceCalculationKernel, grid, block, k, f, torque);
   cuda_safe_mem(hipDeviceSynchronize());
 
   cuda_safe_mem(hipMemcpy(&error_code, bh_data->err, sizeof(int),
@@ -1094,7 +1094,7 @@ int energyBH(BHData *bh_data, dds_float k, float *E) {
   cuda_safe_mem(hipMemset(energySum, 0, (int)(sizeof(dds_float) * grid.x)));
 
   KERNELCALL_shared(energyCalculationKernel, grid, block,
-                    block.x * sizeof(dds_float), (k, energySum));
+                    block.x * sizeof(dds_float), k, energySum);
   cuda_safe_mem(hipDeviceSynchronize());
 
   // Sum the results of all blocks
