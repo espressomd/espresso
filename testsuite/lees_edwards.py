@@ -1,6 +1,8 @@
 from __future__ import print_function
 
 import espressomd
+from espressomd.interactions import HarmonicBond
+
 import unittest as ut
 import numpy as np
 
@@ -130,6 +132,62 @@ class LeesEdwards(ut.TestCase):
               np.testing.assert_almost_equal(system.part[0].v, expected_vel)
 
               system.part.clear()
+
+    def test_c_interactions(self):
+        """We place two particles crossing a boundary and connect them with an unbonded
+           and bonded interaction. We test with the resulting stress tensor if the offset
+           is included properly"""
+
+        system = self.system
+        dir = [0, 1, 2]
+
+        for sheardir in dir:
+          for shearplanenormal in dir:
+            if sheardir != shearplanenormal:
+
+              offset = 1.0
+              system.lees_edwards = ['step', offset, sheardir, shearplanenormal]
+
+              pos1 = np.full([3], 2.5)
+              pos1[shearplanenormal] = 4.75
+              pos2 = np.full([3], 2.5)
+              pos2[shearplanenormal] = 0.25
+
+              system.part.add(id=0, pos=pos1, fix=[1,1,1])
+              system.part.add(id=1, pos=pos2, fix=[1,1,1])
+              r = system.part[1].pos - system.part[0].pos
+              r[sheardir] += offset
+              r[shearplanenormal] += system.box_l[0]
+
+              k = 1000
+              r_cut = 1.5
+              harm = HarmonicBond(k=k, r_0 = 0.0)
+              system.bonded_inter.add(harm)
+              system.part[0].add_bond((harm, 1))
+              system.non_bonded_inter[0, 0].soft_sphere.set_params(a = k, n = -2 , cutoff = r_cut)
+
+              system.integrator.run(0, recalc_forces = True)
+
+              simulated_bondedstress = np.abs(system.analysis.stress_tensor()['bonded'])
+              simulated_nonbondedstress = np.abs(system.analysis.stress_tensor()['non_bonded'])
+
+              analytical_bondedstress= np.zeros([3,3])
+              for i in range(3):
+                for j in range(3):
+                  analytical_bondedstress[i,j] += k*r[i]*r[j]
+              analytical_bondedstress /= (system.box_l[0]**3.0)
+
+              analytical_nonbondedstress = np.zeros([3,3])
+              for i in range(3):
+                for j in range(3):
+                  analytical_nonbondedstress[i,j] += 2*k*r[i]*r[j]
+              analytical_nonbondedstress /= (system.box_l[0]**3.0)
+
+              np.testing.assert_array_equal(simulated_bondedstress, analytical_bondedstress)
+              np.testing.assert_array_equal(simulated_nonbondedstress, analytical_nonbondedstress)
+
+              system.part.clear()
+
 
 if __name__ == "__main__":
     ut.main()
