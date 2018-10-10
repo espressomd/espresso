@@ -19,13 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef _FD_ELECTROSTATICS_HPP
 #define _FD_ELECTROSTATICS_HPP
 
-#ifdef __HIPCC__
-#include <cufft.h>
-#else
-typedef void cufftComplex;
-typedef void cufftReal;
-#endif
-
 #define PI_FLOAT 3.14159265358979323846f
 
 class FdElectrostatics {
@@ -45,8 +38,8 @@ public:
       dim_x_padded = (inputParameters.dim_x / 2 + 1) * 2;
     }
 
-    cufftComplex *charge_potential;
-    cufftReal *greensfcn;
+    hipfftComplex *charge_potential;
+    hipfftReal *greensfcn;
     int dim_x_padded;
   };
 
@@ -61,27 +54,23 @@ public:
   ~FdElectrostatics();
   FdElectrostatics(InputParameters inputParameters, hipStream_t stream);
   void calculatePotential();
-  void calculatePotential(cufftComplex *charge_potential);
+  void calculatePotential(hipfftComplex *charge_potential);
   Grid getGrid();
 
 private:
   Parameters parameters;
   hipStream_t cuda_stream;
-  cufftHandle plan_fft;
-  cufftHandle plan_ifft;
+  hipfftHandle plan_fft;
+  hipfftHandle plan_ifft;
   bool initialized;
 };
-
-#ifdef __HIPCC__
 
 // extern __device__ __constant__ FdElectrostatics::Parameters
 // fde_parameters_gpu;
 
-__device__ cufftReal fde_getNode(int x, int y, int z);
-__device__ cufftReal fde_getNode(int i);
-__device__ void fde_setNode(int x, int y, int z, cufftReal value);
-__device__ void fde_setNode(int i, cufftReal value);
-
-#endif //__HIPCC__
+__device__ hipfftReal fde_getNode(int x, int y, int z);
+__device__ hipfftReal fde_getNode(int i);
+__device__ void fde_setNode(int x, int y, int z, hipfftReal value);
+__device__ void fde_setNode(int i, hipfftReal value);
 
 #endif

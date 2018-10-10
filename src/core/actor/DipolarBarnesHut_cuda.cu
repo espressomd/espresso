@@ -25,8 +25,6 @@
 #include "config.hpp"
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>
-#include <curand.h>
-#include <curand_kernel.h>
 
 typedef float dds_float;
 

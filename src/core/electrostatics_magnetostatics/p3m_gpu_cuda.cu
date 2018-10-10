@@ -40,7 +40,7 @@
 
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
-#include <cufft.h>
+#include <hipfft.h>
 
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
@@ -57,11 +57,11 @@ extern double box_l[3];
 
 struct P3MGpuData {
   /** Charge mesh */
-  CUFFT_TYPE_COMPLEX *charge_mesh;
+  FFT_TYPE_COMPLEX *charge_mesh;
   /** Force meshes */
-  CUFFT_TYPE_COMPLEX *force_mesh_x;
-  CUFFT_TYPE_COMPLEX *force_mesh_y;
-  CUFFT_TYPE_COMPLEX *force_mesh_z;
+  FFT_TYPE_COMPLEX *force_mesh_x;
+  FFT_TYPE_COMPLEX *force_mesh_y;
+  FFT_TYPE_COMPLEX *force_mesh_z;
   /** Influence Function */
   REAL_TYPE *G_hat;
   /** Charge assignment order */
@@ -88,8 +88,8 @@ P3MGpuData p3m_gpu_data;
 
 struct p3m_gpu_fft_plans_t {
   /** FFT plans */
-  cufftHandle forw_plan;
-  cufftHandle back_plan;
+  hipfftHandle forw_plan;
+  hipfftHandle back_plan;
 } p3m_gpu_fft_plans;
 
 static char p3m_gpu_data_initialized = 0;
@@ -320,8 +320,6 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
   }
 }
 
-// NOTE :if one wants to use the function below it requires cuda compute
-// capability 1.3
 #ifdef _P3M_GPU_REAL_DOUBLE
 __device__ double atomicAdd(double *address, double val) {
   unsigned long long int *address_as_ull = (unsigned long long int *)address;
@@ -355,8 +353,8 @@ __global__ void apply_diff_op(const P3MGpuData p) {
       (blockIdx.y > p.mesh[1] / 2) ? blockIdx.y - p.mesh[1] : blockIdx.y;
   const int nz = threadIdx.x;
 
-  const CUFFT_TYPE_COMPLEX meshw = p.charge_mesh[linear_index];
-  CUFFT_TYPE_COMPLEX buf;
+  const FFT_TYPE_COMPLEX meshw = p.charge_mesh[linear_index];
+  FFT_TYPE_COMPLEX buf;
   buf.x = -2.0 * PI * meshw.y;
   buf.y = 2.0 * PI * meshw.x;
 
@@ -652,7 +650,7 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
  * Mainly allocation on the device and influence function calculation.
  * Be advised: this needs mesh^3*5*sizeof(REAL_TYPE) of device memory.
  * We use real to complex FFTs, so the size of the reciprocal mesh
- * is (cuFFT convention) Nx x Ny x [ Nz /2 + 1 ].
+ * is (hipfft convention) Nx x Ny x [ Nz /2 + 1 ].
  */
 
 void p3m_gpu_init(int cao, int mesh[3], double alpha) {
@@ -711,8 +709,8 @@ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
       cuda_safe_mem(hipFree(p3m_gpu_data.G_hat));
       p3m_gpu_data.G_hat = 0;
 
-      cufftDestroy(p3m_gpu_fft_plans.forw_plan);
-      cufftDestroy(p3m_gpu_fft_plans.back_plan);
+      hipfftDestroy(p3m_gpu_fft_plans.forw_plan);
+      hipfftDestroy(p3m_gpu_fft_plans.back_plan);
 
       p3m_gpu_data_initialized = 0;
     }
@@ -723,20 +721,20 @@ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
                              (p3m_gpu_data.mesh[2] / 2 + 1);
 
       cuda_safe_mem(hipMalloc((void **)&(p3m_gpu_data.charge_mesh),
-                               cmesh_size * sizeof(CUFFT_TYPE_COMPLEX)));
+                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
       cuda_safe_mem(hipMalloc((void **)&(p3m_gpu_data.force_mesh_x),
-                               cmesh_size * sizeof(CUFFT_TYPE_COMPLEX)));
+                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
       cuda_safe_mem(hipMalloc((void **)&(p3m_gpu_data.force_mesh_y),
-                               cmesh_size * sizeof(CUFFT_TYPE_COMPLEX)));
+                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
       cuda_safe_mem(hipMalloc((void **)&(p3m_gpu_data.force_mesh_z),
-                               cmesh_size * sizeof(CUFFT_TYPE_COMPLEX)));
+                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
       cuda_safe_mem(hipMalloc((void **)&(p3m_gpu_data.G_hat),
                                cmesh_size * sizeof(REAL_TYPE)));
 
-      cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2],
-                  CUFFT_PLAN_FORW_FLAG);
-      cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
-                  CUFFT_PLAN_BACK_FLAG);
+      hipfftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2],
+                  FFT_PLAN_FORW_FLAG);
+      hipfftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
+                  FFT_PLAN_BACK_FLAG);
     }
 
     if (((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) &&
@@ -819,10 +817,10 @@ void p3m_gpu_add_farfield_force() {
   assign_charges(lb_particle_gpu, p3m_gpu_data);
 
   /** Do forward FFT of the charge mesh */
-  if (CUFFT_FORW_FFT(p3m_gpu_fft_plans.forw_plan,
+  if (FFT_FORW_FFT(p3m_gpu_fft_plans.forw_plan,
                      (REAL_TYPE *)p3m_gpu_data.charge_mesh,
-                     p3m_gpu_data.charge_mesh) != CUFFT_SUCCESS) {
-    fprintf(stderr, "CUFFT error: Forward FFT failed\n");
+                     p3m_gpu_data.charge_mesh) != HIPFFT_SUCCESS) {
+    fprintf(stderr, "hipfft error: Forward FFT failed\n");
     return;
   }
 
@@ -833,11 +831,11 @@ void p3m_gpu_add_farfield_force() {
   KERNELCALL(apply_diff_op, gridConv, threadsConv, (p3m_gpu_data));
 
   /** Transform the components of the electric field back */
-  CUFFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_x,
+  FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_x,
                  (REAL_TYPE *)p3m_gpu_data.force_mesh_x);
-  CUFFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_y,
+  FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_y,
                  (REAL_TYPE *)p3m_gpu_data.force_mesh_y);
-  CUFFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_z,
+  FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_z,
                  (REAL_TYPE *)p3m_gpu_data.force_mesh_z);
 
   /** Assign the forces from the mesh back to the particles */

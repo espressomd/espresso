@@ -4,3 +4,6 @@
 [submodule "libs/HIP"]
 	path = libs/HIP
 	url = https://github.com/ROCm-Developer-Tools/HIP
+[submodule "libs/rocFFT"]
+	path = libs/rocFFT
+	url = https://github.com/ROCmSoftwarePlatform/rocFFT

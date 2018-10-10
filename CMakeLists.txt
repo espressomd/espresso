@@ -280,15 +280,18 @@ if(CUDA AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
   # Try to find git
   find_package(Git)
   if(GIT_FOUND)
-    if (NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/HIP/.git")
-      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/HIP
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-    else()
-      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update -- libs/HIP
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-    endif()
+    foreach(sm IN ITEMS HIP rocFFT)
+      if (NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/HIP/.git")
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/${sm}
+          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+      else()
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update -- libs/${sm}
+          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+      endif()
+    endforeach(sm)
   endif()
   include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/libs/HIP/include")
+  include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/libs/rocFFT/library/include")
 endif()
 
 if(WITH_SCAFACOS)
