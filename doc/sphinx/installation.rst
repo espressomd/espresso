@@ -362,11 +362,6 @@ General features
    individually. Also allows to fix individual coordinates of particles,
    keep them at a fixed position or within a plane.
 
--  ``CONSTRAINTS`` Turns on various spatial constraints such as spherical compartments
-   or walls. This constraints interact with the particles through
-   regular short ranged potentials such as the Lennard-Jones potential.
-   See section for possible constraint forms.
-
 -  ``MASS`` Allows particles to have individual masses. Note that some analysis
    procedures have not yet been adapted to take the masses into account
    correctly.
