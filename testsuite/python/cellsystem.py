@@ -39,6 +39,12 @@ class CellSystem(ut.TestCase):
         self.assertEqual(
             [s['use_verlet_list'], s['type']], [1, "domain_decomposition"])
 
+    def test_dd_fully_conected(self):
+
+        self.system.cell_system.set_domain_decomposition(fully_connected=[True,False,False])
+        s = self.system.cell_system.get_state()
+        self.assertSequenceEqual(
+          s['fully_connected'], [True, False, False])
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
