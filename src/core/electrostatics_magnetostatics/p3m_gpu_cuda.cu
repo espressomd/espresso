@@ -94,8 +94,6 @@ struct p3m_gpu_fft_plans_t {
 
 static char p3m_gpu_data_initialized = 0;
 
-HIP_DYNAMIC_SHARED( float, weights)
-
 template <int cao_value, typename T> __device__ T caf(int i, T x) {
   switch (cao_value) {
   case 1:
@@ -422,6 +420,8 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
 
   const int ind = linear_index_r(par, nmp_x, nmp_y, nmp_z);
 
+  HIP_DYNAMIC_SHARED(float, weights);
+
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
       weights[3 * cao * part_in_block + 3 * cao_id_x + threadIdx.y] =
@@ -541,6 +541,8 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
 
   REAL_TYPE c;
   const int index = linear_index_r(par, nmp_x, nmp_y, nmp_z);
+
+  HIP_DYNAMIC_SHARED(float, weights);
 
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
