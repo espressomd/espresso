@@ -25,7 +25,8 @@ import numpy as np
 
 
 class CellSystem(ut.TestCase):
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[5.0, 5.0, 5.0])
+    system.cell_system.skin = 0.0
 
     def test_cell_system(self):
         self.system.cell_system.set_n_square(use_verlet_lists=False)
@@ -57,6 +58,21 @@ class CellSystem(ut.TestCase):
         with self.assertRaises(Exception):
             self.system.cell_system.set_domain_decomposition(
                 fully_connected=[False, False, True])
+
+    def test_particle_pair(self):
+        n_nodes = self.system.cell_system.get_state()['n_nodes']
+        if n_nodes == 1:
+            return
+
+        self.system.cell_system.node_grid = [1, 1, n_nodes]
+        self.system.cell_system.set_domain_decomposition(
+            fully_connected=[True, True, False])
+
+        self.system.part.add(id=0, pos=[2.5, 4.75, 2.5], fix=[1, 1, 1])
+        self.system.part.add(id=1, pos=[1.0, 5.25, 2.5], fix=[1, 1, 1])
+
+        pairs = self.system.cell_system.get_pairs_(2.5)
+        np.testing.assert_array_equal(pairs, [[0, 1]])
 
 
 if __name__ == "__main__":
