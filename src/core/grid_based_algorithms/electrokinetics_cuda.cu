@@ -2354,7 +2354,7 @@ static void fetch_ek_parameters_pointer() {
   EK_parameters** ptr_gpu;
   cuda_safe_mem(cudaMalloc((void **)&ptr_gpu, sizeof(EK_parameters*)));
   KERNELCALL(copy_ek_parameters_pointer, 1, 1, ptr_gpu);
-  cuda_safe_mem(cudaMemcpy(ptr_gpu, &ek_parameters_gpu_pointer,
+  cuda_safe_mem(cudaMemcpy(&ek_parameters_gpu_pointer, ptr_gpu,
                           sizeof(EK_parameters*), cudaMemcpyDeviceToHost));
   cudaFree(ptr_gpu);
 }

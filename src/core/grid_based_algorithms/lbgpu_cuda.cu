@@ -3841,7 +3841,7 @@ void lb_get_para_pointer(LB_parameters_gpu **pointeradress) {
   LB_parameters_gpu** ptr_gpu;
   cuda_safe_mem(cudaMalloc((void **)&ptr_gpu, sizeof(LB_parameters_gpu*)));
   KERNELCALL(copy_lb_parameters_pointer, 1, 1, ptr_gpu);
-  cuda_safe_mem(cudaMemcpy(ptr_gpu, pointeradress,
+  cuda_safe_mem(cudaMemcpy(pointeradress, ptr_gpu,
                           sizeof(LB_parameters_gpu*), cudaMemcpyDeviceToHost));
   cudaFree(ptr_gpu);
 }
