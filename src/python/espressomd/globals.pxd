@@ -63,6 +63,7 @@ cdef extern from "domain_decomposition.hpp":
     ctypedef struct  DomainDecomposition:
         int cell_grid[3]
         double cell_size[3]
+        bool fully_connected[3]
 
     extern DomainDecomposition dd
     extern int max_num_cells

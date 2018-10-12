@@ -13,7 +13,7 @@ class LeesEdwards(ut.TestCase):
 
     system = espressomd.System(box_l=[5.0, 5.0, 5.0])
     system.cell_system.skin = 0.0
-    system.cell_system.set_n_square()
+#    system.cell_system.set_n_square()
     system.set_random_state_PRNG()
 
     tol = 1e-15
