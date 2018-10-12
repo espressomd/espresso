@@ -46,6 +46,17 @@ class CellSystem(ut.TestCase):
         self.assertSequenceEqual(
           s['fully_connected'], [True, False, False])
 
+    def test_node_grid(self):
+        self.system.cell_system.set_domain_decomposition(fully_connected=[True,False,False])
+        n_nodes = self.system.cell_system.get_state()['n_nodes']
+        if n_nodes == 1:
+            return
+        self.system.cell_system.node_grid = [n_nodes, 1, 1]      
+        s = self.system.cell_system.get_state()
+        np.testing.assert_array_equal(
+          s['node_grid'], [n_nodes, 1, 1])
+
+
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
     ut.main()
