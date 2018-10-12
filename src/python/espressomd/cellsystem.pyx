@@ -42,8 +42,7 @@ cdef class CellSystem(object):
         # grid.h::node_grid
         mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC)
 
-        # @TODO: gathering should be interface independent
-        # return mpi_gather_runtime_errors(interp, TCL_OK)
+        handle_errors("Error while initializing the cell system.")
         return True
 
     def set_n_square(self, use_verlet_lists=True):
