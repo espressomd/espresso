@@ -51,6 +51,8 @@ class CellSystem(ut.TestCase):
 
     def test_fully_connected_node_grid(self):
         n_nodes = self.system.cell_system.get_state()['n_nodes']
+        if n_nodes == 1:
+            return
         self.system.cell_system.node_grid = [1, 1, n_nodes]
         with self.assertRaises(Exception):
             self.system.cell_system.set_domain_decomposition(
