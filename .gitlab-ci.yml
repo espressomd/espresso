@@ -183,6 +183,19 @@ empty:
     - linux
     - cuda
 
+### Builds with ROCm
+
+rocm-maxset:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/rocm:latest
+  script:
+    - export myconfig=maxset
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+    - rocm
+
 ### Builds with OS X
 
 osx:

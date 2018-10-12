@@ -419,6 +419,9 @@ if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID STREQ
   # G++ and Intel don't know this flag
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
 endif()
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-zero-variadic-macro-arguments")
+endif()
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.8.5")
   # older versions don't support -Wno-pedantic which we need in src/python
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
