@@ -35,7 +35,7 @@
 #endif
 
 static CUDA_global_part_vars global_part_vars_host = {0, 0, 0};
-static __device__ __constant__ CUDA_global_part_vars global_part_vars_device[1];
+__device__ __constant__ CUDA_global_part_vars global_part_vars_device[1];
 
 /** struct for particle force */
 static float *particle_forces_device = nullptr;

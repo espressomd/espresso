@@ -119,7 +119,7 @@ static size_t size_of_rho_v_pi;
 static size_t size_of_extern_node_force_densities;
 
 /**parameters residing in constant memory */
-static __device__ __constant__ LB_parameters_gpu para[1];
+__device__ __constant__ LB_parameters_gpu para[1];
 static const float c_sound_sq = 1.0f / 3.0f;
 
 /*-------------------------------------------------------*/
@@ -3841,7 +3841,7 @@ void lb_get_para_pointer(LB_parameters_gpu **pointeradress) {
   LB_parameters_gpu** ptr_gpu;
   cuda_safe_mem(hipMalloc((void **)&ptr_gpu, sizeof(LB_parameters_gpu*)));
   KERNELCALL(copy_lb_parameters_pointer, 1, 1, ptr_gpu);
-  cuda_safe_mem(hipMemcpy(pointeradress, ptr_gpu,
+  cuda_safe_mem(hipMemcpy(ptr_gpu, pointeradress,
                           sizeof(LB_parameters_gpu*), hipMemcpyDeviceToHost));
   hipFree(ptr_gpu);
 }

@@ -81,7 +81,7 @@ EK_parameters ek_parameters = {
 #endif
 };
 
-static __device__ __constant__ EK_parameters ek_parameters_gpu[1];
+__device__ __constant__ EK_parameters ek_parameters_gpu[1];
 ekfloat *charge_gpu;
 EK_parameters *ek_parameters_gpu_pointer;
 LB_parameters_gpu *ek_lbparameters_gpu;
@@ -2354,7 +2354,7 @@ static void fetch_ek_parameters_pointer() {
   EK_parameters** ptr_gpu;
   cuda_safe_mem(hipMalloc((void **)&ptr_gpu, sizeof(EK_parameters*)));
   KERNELCALL(copy_ek_parameters_pointer, 1, 1, ptr_gpu);
-  cuda_safe_mem(hipMemcpy(ek_parameters_gpu_pointer, ptr_gpu,
+  cuda_safe_mem(hipMemcpy(ptr_gpu, &ek_parameters_gpu_pointer,
                           sizeof(EK_parameters*), hipMemcpyDeviceToHost));
   hipFree(ptr_gpu);
 }
