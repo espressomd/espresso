@@ -1,4 +1,4 @@
-#include <hip/hip_runtime.h>
+#include "cuda_wrapper.hpp"
 
 #include "config.hpp"
 #include <thrust/device_ptr.h>
@@ -297,18 +297,18 @@ void DipolarDirectSum_kernel_wrapper_force(dds_float k, int n, float *pos,
 
   dds_float *box_l_gpu;
   int *periodic_gpu;
-  cuda_safe_mem(hipMalloc((void **)&box_l_gpu, 3 * sizeof(dds_float)));
-  cuda_safe_mem(hipMalloc((void **)&periodic_gpu, 3 * sizeof(int)));
-  cuda_safe_mem(hipMemcpy(box_l_gpu, box_l, 3 * sizeof(dds_float),
-                           hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpy(periodic_gpu, periodic, 3 * sizeof(int),
-                           hipMemcpyHostToDevice));
+  cuda_safe_mem(cudaMalloc((void **)&box_l_gpu, 3 * sizeof(dds_float)));
+  cuda_safe_mem(cudaMalloc((void **)&periodic_gpu, 3 * sizeof(int)));
+  cuda_safe_mem(cudaMemcpy(box_l_gpu, box_l, 3 * sizeof(dds_float),
+                           cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpy(periodic_gpu, periodic, 3 * sizeof(int),
+                           cudaMemcpyHostToDevice));
 
   // printf("box_l: %f %f %f\n",box_l[0],box_l[1],box_l[2]);
   KERNELCALL(DipolarDirectSum_kernel_force, grid, block,
              k, n, pos, dip, f, torque, box_l_gpu, periodic_gpu);
-  hipFree(box_l_gpu);
-  hipFree(periodic_gpu);
+  cudaFree(box_l_gpu);
+  cudaFree(periodic_gpu);
 }
 
 void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos,
@@ -332,15 +332,15 @@ void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos,
 
   dds_float *box_l_gpu;
   int *periodic_gpu;
-  cuda_safe_mem(hipMalloc((void **)&box_l_gpu, 3 * sizeof(dds_float)));
-  cuda_safe_mem(hipMalloc((void **)&periodic_gpu, 3 * sizeof(int)));
+  cuda_safe_mem(cudaMalloc((void **)&box_l_gpu, 3 * sizeof(dds_float)));
+  cuda_safe_mem(cudaMalloc((void **)&periodic_gpu, 3 * sizeof(int)));
   cuda_safe_mem(
-      hipMemcpy(box_l_gpu, box_l, 3 * sizeof(float), hipMemcpyHostToDevice));
-  cuda_safe_mem(hipMemcpy(periodic_gpu, periodic, 3 * sizeof(int),
-                           hipMemcpyHostToDevice));
+      cudaMemcpy(box_l_gpu, box_l, 3 * sizeof(float), cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpy(periodic_gpu, periodic, 3 * sizeof(int),
+                           cudaMemcpyHostToDevice));
 
   dds_float *energySum;
-  cuda_safe_mem(hipMalloc(&energySum, (int)(sizeof(dds_float) * grid.x)));
+  cuda_safe_mem(cudaMalloc(&energySum, (int)(sizeof(dds_float) * grid.x)));
 
   // printf("box_l: %f %f %f\n",box_l[0],box_l[1],box_l[2]);
 
@@ -355,11 +355,11 @@ void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos,
   // KERNELCALL(sumKernel,1,1,energySum,block.x,E);
   thrust::device_ptr<dds_float> t(energySum);
   float x = thrust::reduce(t, t + grid.x);
-  cuda_safe_mem(hipMemcpy(E, &x, sizeof(float), hipMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpy(E, &x, sizeof(float), cudaMemcpyHostToDevice));
 
-  cuda_safe_mem(hipFree(energySum));
-  cuda_safe_mem(hipFree(box_l_gpu));
-  cuda_safe_mem(hipFree(periodic_gpu));
+  cuda_safe_mem(cudaFree(energySum));
+  cuda_safe_mem(cudaFree(box_l_gpu));
+  cuda_safe_mem(cudaFree(periodic_gpu));
 }
 
 #endif

@@ -17,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <hip/hip_runtime.h>
+#include "cuda_wrapper.hpp"
 
 #include "config.hpp"
 #include "debug.hpp"
@@ -61,28 +61,28 @@ CUDA_v_cs *host_v_cs = nullptr;
 #endif
 
 /**cuda streams for parallel computing on cpu and gpu */
-hipStream_t stream[1];
+cudaStream_t stream[1];
 
-hipError_t _err;
-hipError_t CU_err;
+cudaError_t _err;
+cudaError_t CU_err;
 
-void _cuda_safe_mem(hipError_t CU_err, const char *file, unsigned int line) {
-  if (hipSuccess != CU_err) {
+void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
+  if (cudaSuccess != CU_err) {
     fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
-    printf("CUDA error: %s\n", hipGetErrorString(CU_err));
-    if (CU_err == hipErrorInvalidValue)
+    printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
+    if (CU_err == cudaErrorInvalidValue)
       fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n",
               file, line);
     errexit();
   } else {
-    CU_err = hipGetLastError();
-    if (CU_err != hipSuccess) {
+    CU_err = cudaGetLastError();
+    if (CU_err != cudaSuccess) {
       fprintf(stderr,
               "Error found during memory operation. Possibly however "
               "from an failed operation before. %s:%u.\n",
               file, line);
-      printf("CUDA error: %s\n", hipGetErrorString(CU_err));
-      if (CU_err == hipErrorInvalidValue)
+      printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
+      if (CU_err == cudaErrorInvalidValue)
         fprintf(stderr,
                 "You may have tried to allocate zero memory before %s:%u.\n",
                 file, line);
@@ -98,14 +98,14 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
  * errors. This removes parallelism between host and device and should only be
  * enabled while debugging. */
 #ifdef CUDA_DEBUG
-  hipDeviceSynchronize();
+  cudaThreadSynchronize();
 #endif
-  CU_err = hipGetLastError();
-  if (CU_err != hipSuccess) {
+  CU_err = cudaGetLastError();
+  if (CU_err != cudaSuccess) {
     fprintf(stderr,
             "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d "
             "%d in %s:%u\n",
-            this_node, hipGetErrorString(CU_err), function, block.x, block.y,
+            this_node, cudaGetErrorString(CU_err), function, block.x, block.y,
             block.z, grid.x, grid.y, grid.z, file, line);
     errexit();
   }
@@ -204,57 +204,57 @@ void gpu_change_number_of_part_to_comm() {
     global_part_vars_host.seed = (unsigned int)std::random_device{}();
     global_part_vars_host.number_of_particles = n_part;
 
-    cuda_safe_mem(hipMemcpyToSymbol(HIP_SYMBOL(global_part_vars_device),
+    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(global_part_vars_device),
                                      &global_part_vars_host,
                                      sizeof(CUDA_global_part_vars)));
 
     // if the arrays exists free them to prevent memory leaks
     if (particle_forces_host) {
-      cuda_safe_mem(hipHostFree(particle_forces_host));
+      cuda_safe_mem(cudaFreeHost(particle_forces_host));
       particle_forces_host = nullptr;
     }
     if (particle_data_host) {
-      cuda_safe_mem(hipHostFree(particle_data_host));
+      cuda_safe_mem(cudaFreeHost(particle_data_host));
       particle_data_host = nullptr;
     }
     if (particle_forces_device) {
-      hipFree(particle_forces_device);
+      cudaFree(particle_forces_device);
       particle_forces_device = nullptr;
     }
     if (particle_data_device) {
-      hipFree(particle_data_device);
+      cudaFree(particle_data_device);
       particle_data_device = nullptr;
     }
     if (particle_seeds_device) {
-      cuda_safe_mem(hipFree(particle_seeds_device));
+      cuda_safe_mem(cudaFree(particle_seeds_device));
       particle_seeds_device = nullptr;
     }
 #ifdef ENGINE
     if (host_v_cs) {
-      hipHostFree(host_v_cs);
+      cudaFreeHost(host_v_cs);
       host_v_cs = nullptr;
     }
 #endif
 #if (defined DIPOLES || defined ROTATION)
     if (particle_torques_host) {
-      hipHostFree(particle_torques_host);
+      cudaFreeHost(particle_torques_host);
       particle_torques_host = nullptr;
     }
 #endif
 #ifdef SHANCHEN
     if (fluid_composition_host) {
-      cuda_safe_mem(hipHostFree(fluid_composition_host));
+      cuda_safe_mem(cudaFreeHost(fluid_composition_host));
       fluid_composition_host = nullptr;
     }
     if (fluid_composition_device) {
-      cuda_safe_mem(hipFree(fluid_composition_device));
+      cuda_safe_mem(cudaFree(fluid_composition_device));
       fluid_composition_device = nullptr;
     }
 #endif
 
 #ifdef ROTATION
     if (particle_torques_device) {
-      cuda_safe_mem(hipFree(particle_torques_device));
+      cuda_safe_mem(cudaFree(particle_torques_device));
       particle_torques_device = nullptr;
     }
 #endif
@@ -262,52 +262,52 @@ void gpu_change_number_of_part_to_comm() {
     if (global_part_vars_host.number_of_particles) {
 
       /**pinned memory mode - use special function to get OS-pinned memory*/
-      cuda_safe_mem(hipHostMalloc((void **)&particle_data_host,
+      cuda_safe_mem(cudaHostAlloc((void **)&particle_data_host,
                                   global_part_vars_host.number_of_particles *
                                       sizeof(CUDA_particle_data),
-                                  hipHostMallocWriteCombined));
-      cuda_safe_mem(hipHostMalloc(
+                                  cudaHostAllocWriteCombined));
+      cuda_safe_mem(cudaHostAlloc(
           (void **)&particle_forces_host,
           3 * global_part_vars_host.number_of_particles * sizeof(float),
-          hipHostMallocWriteCombined));
+          cudaHostAllocWriteCombined));
 
 #ifdef ENGINE
-      cuda_safe_mem(hipHostMalloc((void **)&host_v_cs,
+      cuda_safe_mem(cudaHostAlloc((void **)&host_v_cs,
                                   global_part_vars_host.number_of_particles *
                                       sizeof(CUDA_v_cs),
-                                  hipHostMallocWriteCombined));
+                                  cudaHostAllocWriteCombined));
 #endif
 #if (defined DIPOLES || defined ROTATION)
-      hipHostMalloc((void **)&particle_torques_host,
+      cudaHostAlloc((void **)&particle_torques_host,
                     global_part_vars_host.number_of_particles * 3 *
                         sizeof(float),
-                    hipHostMallocWriteCombined);
+                    cudaHostAllocWriteCombined);
 #endif
 
 #ifdef SHANCHEN
-      cuda_safe_mem(hipHostMalloc((void **)&fluid_composition_host,
+      cuda_safe_mem(cudaHostAlloc((void **)&fluid_composition_host,
                                   global_part_vars_host.number_of_particles *
                                       sizeof(CUDA_fluid_composition),
-                                  hipHostMallocWriteCombined));
+                                  cudaHostAllocWriteCombined));
 #endif
 
-      cuda_safe_mem(hipMalloc((void **)&particle_forces_device,
+      cuda_safe_mem(cudaMalloc((void **)&particle_forces_device,
                                3 * global_part_vars_host.number_of_particles *
                                    sizeof(float)));
 #ifdef ROTATION
-      cuda_safe_mem(hipMalloc((void **)&particle_torques_device,
+      cuda_safe_mem(cudaMalloc((void **)&particle_torques_device,
                                3 * global_part_vars_host.number_of_particles *
                                    sizeof(float)));
 #endif
 
-      cuda_safe_mem(hipMalloc((void **)&particle_data_device,
+      cuda_safe_mem(cudaMalloc((void **)&particle_data_device,
                                global_part_vars_host.number_of_particles *
                                    sizeof(CUDA_particle_data)));
-      cuda_safe_mem(hipMalloc((void **)&particle_seeds_device,
+      cuda_safe_mem(cudaMalloc((void **)&particle_seeds_device,
                                global_part_vars_host.number_of_particles *
                                    sizeof(CUDA_particle_seed)));
 #ifdef SHANCHEN
-      cuda_safe_mem(hipMalloc((void **)&fluid_composition_device,
+      cuda_safe_mem(cudaMalloc((void **)&fluid_composition_device,
                                global_part_vars_host.number_of_particles *
                                    sizeof(CUDA_fluid_composition)));
 #endif
@@ -401,10 +401,10 @@ void copy_part_data_to_gpu(ParticleRange particles) {
 
     /** get espresso md particle values*/
     if (this_node == 0)
-      hipMemcpyAsync(particle_data_device, particle_data_host,
+      cudaMemcpyAsync(particle_data_device, particle_data_host,
                       global_part_vars_host.number_of_particles *
                           sizeof(CUDA_particle_data),
-                      hipMemcpyHostToDevice, stream[0]);
+                      cudaMemcpyHostToDevice, stream[0]);
   }
 }
 
@@ -417,21 +417,21 @@ void copy_forces_from_GPU(ParticleRange particles) {
 
     /** Copy result from device memory to host memory*/
     if (this_node == 0) {
-      cuda_safe_mem(hipMemcpy(particle_forces_host, particle_forces_device,
+      cuda_safe_mem(cudaMemcpy(particle_forces_host, particle_forces_device,
                                3 * global_part_vars_host.number_of_particles *
                                    sizeof(float),
-                               hipMemcpyDeviceToHost));
+                               cudaMemcpyDeviceToHost));
 #ifdef ROTATION
-      cuda_safe_mem(hipMemcpy(particle_torques_host, particle_torques_device,
+      cuda_safe_mem(cudaMemcpy(particle_torques_host, particle_torques_device,
                                global_part_vars_host.number_of_particles * 3 *
                                    sizeof(float),
-                               hipMemcpyDeviceToHost));
+                               cudaMemcpyDeviceToHost));
 #endif
 #ifdef SHANCHEN
-      cuda_safe_mem(hipMemcpy(fluid_composition_host, fluid_composition_device,
+      cuda_safe_mem(cudaMemcpy(fluid_composition_host, fluid_composition_device,
                                global_part_vars_host.number_of_particles *
                                    sizeof(CUDA_fluid_composition),
-                               hipMemcpyDeviceToHost));
+                               cudaMemcpyDeviceToHost));
 #endif
 
       /** values for the particle kernel */
@@ -449,7 +449,7 @@ void copy_forces_from_GPU(ParticleRange particles) {
       KERNELCALL(reset_particle_force, dim_grid_particles,
                  threads_per_block_particles,
                  particle_forces_device, particle_torques_device);
-      hipDeviceSynchronize();
+      cudaThreadSynchronize();
     }
 
     cuda_mpi_send_forces(particles, particle_forces_host,
@@ -467,10 +467,10 @@ void copy_v_cs_from_GPU(ParticleRange particles) {
       global_part_vars_host.number_of_particles) {
     // Copy result from device memory to host memory
     if (this_node == 0) {
-      cuda_safe_mem(hipMemcpy2D(
+      cuda_safe_mem(cudaMemcpy2D(
           host_v_cs, sizeof(CUDA_v_cs), particle_data_device,
           sizeof(CUDA_particle_data), sizeof(CUDA_v_cs),
-          global_part_vars_host.number_of_particles, hipMemcpyDeviceToHost));
+          global_part_vars_host.number_of_particles, cudaMemcpyDeviceToHost));
     }
     cuda_mpi_send_v_cs(particles, host_v_cs);
   }
@@ -482,26 +482,26 @@ void clear_energy_on_GPU() {
     // || !global_part_vars_host.number_of_particles )
     return;
   if (energy_device == nullptr)
-    cuda_safe_mem(hipMalloc((void **)&energy_device, sizeof(CUDA_energy)));
-  cuda_safe_mem(hipMemset(energy_device, 0, sizeof(CUDA_energy)));
+    cuda_safe_mem(cudaMalloc((void **)&energy_device, sizeof(CUDA_energy)));
+  cuda_safe_mem(cudaMemset(energy_device, 0, sizeof(CUDA_energy)));
 }
 
 void copy_energy_from_GPU() {
   if (!global_part_vars_host.communication_enabled ||
       !global_part_vars_host.number_of_particles)
     return;
-  cuda_safe_mem(hipMemcpy(&energy_host, energy_device, sizeof(CUDA_energy),
-                           hipMemcpyDeviceToHost));
+  cuda_safe_mem(cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy),
+                           cudaMemcpyDeviceToHost));
   copy_CUDA_energy_to_energy(energy_host);
 }
 
 /** Generic copy functions from an to device **/
 
 void cuda_copy_to_device(void *host_data, void *device_data, size_t n) {
-  cuda_safe_mem(hipMemcpy(host_data, device_data, n, hipMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpy(host_data, device_data, n, cudaMemcpyHostToDevice));
 }
 
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n) {
   cuda_safe_mem(
-      hipMemcpy(host_device, device_host, n, hipMemcpyDeviceToHost));
+      cudaMemcpy(host_device, device_host, n, cudaMemcpyDeviceToHost));
 }

@@ -1,4 +1,4 @@
-#include <hip/hip_runtime.h>
+#include "cuda_wrapper.hpp"
 
 #include <stdio.h>
 #include <thrust/device_vector.h>

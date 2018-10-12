@@ -24,20 +24,20 @@
 
 #ifdef _P3M_GPU_FLOAT
 #define REAL_TYPE float
-#define FFT_TYPE_COMPLEX hipfftComplex
-#define FFT_FORW_FFT hipfftExecR2C
-#define FFT_BACK_FFT hipfftExecC2R
-#define FFT_PLAN_FORW_FLAG HIPFFT_R2C
-#define FFT_PLAN_BACK_FLAG HIPFFT_C2R
+#define FFT_TYPE_COMPLEX cufftComplex
+#define FFT_FORW_FFT cufftExecR2C
+#define FFT_BACK_FFT cufftExecC2R
+#define FFT_PLAN_FORW_FLAG CUFFT_R2C
+#define FFT_PLAN_BACK_FLAG CUFFT_C2R
 #endif
 
 #ifdef _P3M_GPU_REAL_DOUBLE
 #define REAL_TYPE double
-#define FFT_TYPE_COMPLEX hipfftDoubleComplex
-#define FFT_FORW_FFT hipfftExecD2Z
-#define FFT_BACK_FFT hipfftExecZ2D
-#define FFT_PLAN_FORW_FLAG HIPFFT_D2Z
-#define FFT_PLAN_BACK_FLAG HIPFFT_Z2D
+#define FFT_TYPE_COMPLEX cufftDoubleComplex
+#define FFT_FORW_FFT cufftExecD2Z
+#define FFT_BACK_FFT cufftExecZ2D
+#define FFT_PLAN_FORW_FLAG CUFFT_D2Z
+#define FFT_PLAN_BACK_FLAG CUFFT_Z2D
 #endif
 
 void p3m_gpu_init(int cao, int mesh[3], double alpha);

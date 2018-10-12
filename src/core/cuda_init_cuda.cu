@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <hip/hip_runtime.h>
+#include "cuda_wrapper.hpp"
 
 #include "cuda_init.hpp"
 #include "cuda_utils.hpp"
@@ -38,24 +38,24 @@ static const int computeCapabilityMinMinor = 1;
 
 const char *cuda_error;
 
-void cuda_init() { hipStreamCreate(&stream[0]); }
+void cuda_init() { cudaStreamCreate(&stream[0]); }
 
 /// get the number of CUDA devices.
 int cuda_get_n_gpus() {
   int deviceCount;
-  hipError_t error = hipGetDeviceCount(&deviceCount);
-  if (error != hipSuccess) {
-    cuda_error = hipGetErrorString(error);
+  cudaError_t error = cudaGetDeviceCount(&deviceCount);
+  if (error != cudaSuccess) {
+    cuda_error = cudaGetErrorString(error);
     return -1;
   }
   return deviceCount;
 }
 
 int cuda_check_gpu(int dev) {
-  hipDeviceProp_t deviceProp;
-  hipError_t error = hipGetDeviceProperties(&deviceProp, dev);
-  if (error != hipSuccess) {
-    cuda_error = hipGetErrorString(error);
+  cudaDeviceProp deviceProp;
+  cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
+  if (error != cudaSuccess) {
+    cuda_error = cudaGetErrorString(error);
     return ES_ERROR;
   }
   if (deviceProp.major < computeCapabilityMinMajor ||
@@ -68,10 +68,10 @@ int cuda_check_gpu(int dev) {
 }
 
 void cuda_get_gpu_name(int dev, char name[64]) {
-  hipDeviceProp_t deviceProp;
-  hipError_t error = hipGetDeviceProperties(&deviceProp, dev);
-  if (error != hipSuccess) {
-    cuda_error = hipGetErrorString(error);
+  cudaDeviceProp deviceProp;
+  cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
+  if (error != cudaSuccess) {
+    cuda_error = cudaGetErrorString(error);
     strcpy(name, "no GPU");
     return;
   }
@@ -80,10 +80,10 @@ void cuda_get_gpu_name(int dev, char name[64]) {
 }
 
 int cuda_get_device_props(const int dev, EspressoGpuDevice &d) {
-  hipDeviceProp_t deviceProp;
-  hipError_t error = hipGetDeviceProperties(&deviceProp, dev);
-  if (error != hipSuccess) {
-    cuda_error = hipGetErrorString(error);
+  cudaDeviceProp deviceProp;
+  cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
+  if (error != cudaSuccess) {
+    cuda_error = cudaGetErrorString(error);
     return ES_ERROR;
   }
   strncpy(d.name, deviceProp.name, 64);
@@ -98,12 +98,12 @@ int cuda_get_device_props(const int dev, EspressoGpuDevice &d) {
 }
 
 int cuda_set_device(int dev) {
-  hipSetDevice(dev);
-  hipStreamDestroy(stream[0]);
-  hipError_t error = hipStreamCreate(&stream[0]);
+  cudaSetDevice(dev);
+  cudaStreamDestroy(stream[0]);
+  cudaError_t error = cudaStreamCreate(&stream[0]);
 
-  if (error != hipSuccess) {
-    cuda_error = hipGetErrorString(error);
+  if (error != cudaSuccess) {
+    cuda_error = cudaGetErrorString(error);
     throw std::runtime_error(cuda_error);
   }
 
@@ -112,9 +112,9 @@ int cuda_set_device(int dev) {
 
 int cuda_get_device() {
   int dev;
-  hipError_t error = hipGetDevice(&dev);
-  if (error != hipSuccess) {
-    cuda_error = hipGetErrorString(error);
+  cudaError_t error = cudaGetDevice(&dev);
+  if (error != cudaSuccess) {
+    cuda_error = cudaGetErrorString(error);
     return -1;
   } else
     return dev;
@@ -123,26 +123,26 @@ int cuda_get_device() {
 int cuda_test_device_access() {
   int *d = 0;
   int h = 42;
-  hipError_t err;
+  cudaError_t err;
 
-  err = hipMalloc((void **)&d, sizeof(int));
-  if (err != hipSuccess) {
-    cuda_error = hipGetErrorString(err);
+  err = cudaMalloc((void **)&d, sizeof(int));
+  if (err != cudaSuccess) {
+    cuda_error = cudaGetErrorString(err);
     return ES_ERROR;
   }
-  err = hipMemcpy(d, &h, sizeof(int), hipMemcpyHostToDevice);
-  if (err != hipSuccess) {
-    cuda_error = hipGetErrorString(err);
+  err = cudaMemcpy(d, &h, sizeof(int), cudaMemcpyHostToDevice);
+  if (err != cudaSuccess) {
+    cuda_error = cudaGetErrorString(err);
     return ES_ERROR;
   }
   h = 0;
-  err = hipMemcpy(&h, d, sizeof(int), hipMemcpyDeviceToHost);
-  hipFree(d);
+  err = cudaMemcpy(&h, d, sizeof(int), cudaMemcpyDeviceToHost);
+  cudaFree(d);
 
-  if ((h == 42) && (err == hipSuccess))
+  if ((h == 42) && (err == cudaSuccess))
     return ES_OK;
   else {
-    cuda_error = hipGetErrorString(err);
+    cuda_error = cudaGetErrorString(err);
     return ES_ERROR;
   }
 }

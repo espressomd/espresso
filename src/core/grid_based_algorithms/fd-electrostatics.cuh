@@ -38,8 +38,8 @@ public:
       dim_x_padded = (inputParameters.dim_x / 2 + 1) * 2;
     }
 
-    hipfftComplex *charge_potential;
-    hipfftReal *greensfcn;
+    cufftComplex *charge_potential;
+    cufftReal *greensfcn;
     int dim_x_padded;
   };
 
@@ -52,25 +52,25 @@ public:
   };
 
   ~FdElectrostatics();
-  FdElectrostatics(InputParameters inputParameters, hipStream_t stream);
+  FdElectrostatics(InputParameters inputParameters, cudaStream_t stream);
   void calculatePotential();
-  void calculatePotential(hipfftComplex *charge_potential);
+  void calculatePotential(cufftComplex *charge_potential);
   Grid getGrid();
 
 private:
   Parameters parameters;
-  hipStream_t cuda_stream;
-  hipfftHandle plan_fft;
-  hipfftHandle plan_ifft;
+  cudaStream_t cuda_stream;
+  cufftHandle plan_fft;
+  cufftHandle plan_ifft;
   bool initialized;
 };
 
 // extern __device__ __constant__ FdElectrostatics::Parameters
 // fde_parameters_gpu;
 
-__device__ hipfftReal fde_getNode(int x, int y, int z);
-__device__ hipfftReal fde_getNode(int i);
-__device__ void fde_setNode(int x, int y, int z, hipfftReal value);
-__device__ void fde_setNode(int i, hipfftReal value);
+__device__ cufftReal fde_getNode(int x, int y, int z);
+__device__ cufftReal fde_getNode(int i);
+__device__ void fde_setNode(int x, int y, int z, cufftReal value);
+__device__ void fde_setNode(int i, cufftReal value);
 
 #endif
