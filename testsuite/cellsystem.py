@@ -39,22 +39,22 @@ class CellSystem(ut.TestCase):
         self.assertEqual(
             [s['use_verlet_list'], s['type']], [1, "domain_decomposition"])
 
-    def test_dd_fully_conected(self):
-
-        self.system.cell_system.set_domain_decomposition(fully_connected=[True,False,False])
-        s = self.system.cell_system.get_state()
-        self.assertSequenceEqual(
-          s['fully_connected'], [True, False, False])
-
     def test_node_grid(self):
-        self.system.cell_system.set_domain_decomposition(fully_connected=[True,False,False])
+        self.system.cell_system.set_domain_decomposition()
         n_nodes = self.system.cell_system.get_state()['n_nodes']
         if n_nodes == 1:
             return
-        self.system.cell_system.node_grid = [n_nodes, 1, 1]      
+        self.system.cell_system.node_grid = [n_nodes, 1, 1]
         s = self.system.cell_system.get_state()
         np.testing.assert_array_equal(
-          s['node_grid'], [n_nodes, 1, 1])
+            s['node_grid'], [n_nodes, 1, 1])
+
+    def test_fully_connected_node_grid(self):
+        n_nodes = self.system.cell_system.get_state()['n_nodes']
+        self.system.cell_system.node_grid = [1, 1, n_nodes]
+        with self.assertRaises(Exception):
+            self.system.cell_system.set_domain_decomposition(
+                fully_connected=[False, False, True])
 
 
 if __name__ == "__main__":

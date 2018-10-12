@@ -498,6 +498,12 @@ void dd_update_communicators_w_boxl() {
 void dd_init_cell_interactions() {
   int m, n, o, p, q, r, ind1, ind2;
 
+for(int i=0; i<3; i++) {
+  if (dd.fully_connected[i] == true and node_grid[i] != 1) {
+    runtimeErrorMsg() << "Node grid not compatible with fully_connected property"; 
+    }
+  }
+
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
 
