@@ -30,6 +30,7 @@
 #include <numeric>
 #include <vector>
 
+#include <boost/serialization/access.hpp>
 #include "utils/serialization/array.hpp"
 
 template <size_t n, typename Scalar> class Vector {
