@@ -19,7 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file integrate.cpp   Molecular dynamics integrator.
+/** \file
+ *  Molecular dynamics integrator.
  *
  *  For more information about the integrator
  *  see \ref integrate.hpp "integrate.hpp".
@@ -27,25 +28,26 @@
 
 #include "integrate.hpp"
 #include "accumulators.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
-#include "electrokinetics.hpp"
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "ghmc.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/electrokinetics.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
 #include "lattice.hpp"
-#include "lb.hpp"
-#include "maggs.hpp"
 #include "minimize_energy.hpp"
 #include "nemd.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
-#include "p3m.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
@@ -95,7 +97,7 @@ double db_max_force = 0.0, db_max_vel = 0.0;
 int db_maxf_id = 0, db_maxv_id = 0;
 #endif
 
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -113,7 +115,7 @@ void propagate_pos();
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
 void propagate_vel_pos();
 /** Integration step 4 of the Velocity Verletintegrator and finalize
-    instantanious pressure calculation:<br>
+    instantaneous pressure calculation:<br>
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
 void propagate_vel_finalize_p_inst();
 
@@ -399,7 +401,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-    // progagate one-step functionalities
+    // propagate one-step functionalities
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef LB
@@ -506,7 +508,7 @@ void rescale_velocities(double scale) {
   }
 }
 
-/* Privat functions */
+/* Private functions */
 /************************************************************/
 
 void propagate_vel_finalize_p_inst() {
@@ -734,7 +736,7 @@ void propagate_pos() {
   if (integ_switch == INTEG_METHOD_NPT_ISO)
     /* Special propagator for NPT ISOTROPIC */
     /* Propagate pressure, box_length (2 times) and positions, rescale
-       positions and velocities and check verlet list criterion (only NPT) */
+       positions and velocities and check Verlet list criterion (only NPT) */
     propagate_press_box_pos_and_rescale_npt();
   else {
     for (auto &p : local_cells.particles()) {
@@ -834,7 +836,7 @@ void force_and_velocity_display() {
 #endif
 }
 
-/** @TODO: This needs to go!! */
+/** @todo This needs to go!! */
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   int reuse_forces = 0;

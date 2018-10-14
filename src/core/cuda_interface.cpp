@@ -26,7 +26,7 @@
 #include "debug.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/mpi/scatter_buffer.hpp"
@@ -148,8 +148,8 @@ void cuda_mpi_get_particles(ParticleRange particles,
  * @brief Add a flat force (and torque) array to a range of particles.
  *
  * @param particles The particles the forces (and torques should be added to)
- * @param forces The forces as flat array of size 3 * particls.size()
- * @param torques The torques as flat array of size 3 * particls.size(),
+ * @param forces The forces as flat array of size 3 * particles.size()
+ * @param torques The torques as flat array of size 3 * particles.size(),
  *                this is only touched if ROTATION is active.
  */
 static void add_forces_and_torques(ParticleRange particles, float *forces,

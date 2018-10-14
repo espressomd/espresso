@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file pressure.hpp
-    Pressure calculation. Really similar to \ref energy.hpp "energy.h".
+/** \file
+    Pressure calculation. Really similar to \ref energy.hpp "energy.hpp".
 */
 
 #ifndef CORE_PRESSURE_HPP
@@ -48,7 +48,7 @@ void master_pressure_calc(int v_comp);
 
 /** Calculates the pressure in the system from a virial expansion using the
    terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials
-   dependeing on the used cell system.<BR>
+   depending on the used cell system.<BR>
     @param result here the data about the scalar pressure are stored
     @param result_t here the data about the stress tensor are stored
     @param result_nb here the data about the intra- and inter- molecular

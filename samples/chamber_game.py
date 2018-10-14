@@ -18,14 +18,14 @@
 """
 
 from __future__ import print_function
+from threading import Thread
+import numpy as np
+
 import espressomd
 from espressomd import thermostat
-from espressomd.shapes import *
 from espressomd import integrate
-import numpy as np
-from threading import Thread
-from math import *
-from espressomd.visualization_opengl import *
+import espressomd.shapes
+import espressomd.visualization_opengl
 
 required_features = ["LENNARD_JONES", "MASS",
                      "EXTERNAL_FORCES", "LANGEVIN_PER_PARTICLE"]
@@ -108,19 +108,27 @@ dtemp = 1000.0
 # VISUALIZER
 zoom = 10
 
-visualizer = openGLLive(system,
-                        window_size=[800, 600],
-                        draw_axis=False,
-                        particle_sizes=[
-                            snake_head_sigma * 0.5, snake_bead_sigma * 0.5,
-                                        cylinder_sigma, bubble_sigma * 0.5, temp_change_radius, temp_change_radius],
-                        particle_type_colors=[[1, 1, 0], [1, 0, 1], [0, 0, 1], [
-                            0, 1, 1], [0, 1, 0], [1, 0, 0], [0.5, 0, 1]],
-                        constraint_type_colors=[[1, 1, 1]],
-                        camera_position=[snake_startpos[0],
-                                         snake_startpos[
-                                             1], system.box_l[2] * zoom],
-                        camera_target=snake_startpos)
+visualizer = espressomd.visualization_opengl.openGLLive(system,
+                                                        window_size=[800, 600],
+                                                        draw_axis=False,
+                                                        particle_sizes=[
+                                                        snake_head_sigma *
+                                                            0.5, snake_bead_sigma *
+                                                                0.5,
+                                                        cylinder_sigma, bubble_sigma * 0.5, temp_change_radius, temp_change_radius],
+                                                        particle_type_colors=[[1, 1, 0], [1, 0, 1], [0, 0, 1], [
+                                                                              0, 1, 1], [
+                                                                              0, 1, 0], [
+                                                                              1, 0, 0], [
+                                                                              0.5, 0, 1]],
+                                                        constraint_type_colors=[
+                                                        [1, 1, 1]],
+                                                        camera_position=[
+                                                        snake_startpos[0],
+                                                        snake_startpos[
+                                                        1], system.box_l[
+                                                        2] * zoom],
+                                                        camera_target=snake_startpos)
 
 
 # JOYPAD CONTROL
@@ -158,10 +166,6 @@ for i in range(snake_n):
     if i == 0:
         p_head = system.part.add(pos=snake_startpos, type=snake_head_type, fix=[
                                  0, 0, 1], mass=snake_head_mass, temp=temperature_snake, gamma=gamma_snake_head)
-#    elif i == snake_n - 1:
-# system.part.add(pos = snake_startpos,type = snake_head_type, fix =
-# [0,0,1], mass = snake_head_mass, bonds = (harmonic_bead if (i > 1) else
-# harmonic_head, i - 1))
     else:
         system.part.add(pos=snake_startpos + np.array([0, -1, 0]) * (0.5 * (snake_head_sigma + snake_bead_sigma) + (i - 1) * snake_bead_sigma), bonds=(
             harmonic_bead if (i > 1) else harmonic_head, i - 1), type=snake_bead_type, fix=[0, 0, 1], mass=snake_bead_mass, temp=temperature_snake, gamma=gamma_snake_bead)
@@ -205,16 +209,16 @@ system.non_bonded_inter[bubble_type, bubble_type].lennard_jones.set_params(
 
 # CONSTRAINTS
 
-system.constraints.add(shape=Wall(
+system.constraints.add(shape=espressomd.shapes.Wall(
     dist=0, normal=[1, 0, 0]), particle_type=cylinder_type, penetrable=True)
-system.constraints.add(shape=Wall(
+system.constraints.add(shape=espressomd.shapes.Wall(
     dist=-box[0], normal=[-1, 0, 0]), particle_type=cylinder_type, penetrable=True)
-system.constraints.add(shape=Wall(
+system.constraints.add(shape=espressomd.shapes.Wall(
     dist=0, normal=[0, 1, 0]), particle_type=cylinder_type, penetrable=True)
-system.constraints.add(shape=Wall(
+system.constraints.add(shape=espressomd.shapes.Wall(
     dist=-box[1], normal=[0, -1, 0]), particle_type=cylinder_type, penetrable=True)
 
-system.constraints.add(shape=SimplePore(center=0.5 * box, axis=[
+system.constraints.add(shape=espressomd.shapes.SimplePore(center=0.5 * box, axis=[
                        1, 0, 0], length=pore_length, radius=pore_radius, smoothing_radius=5), particle_type=cylinder_type, penetrable=True)
 
 
@@ -335,28 +339,28 @@ def explode():
 
 # KEYBOARD CONTROLS
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('i', KeyboardFireEvent.Pressed, move_up_set))
+    espressomd.visualization_opengl.KeyboardButtonEvent('i', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, move_up_set))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('k', KeyboardFireEvent.Pressed, move_down_set))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent(
-    'i', KeyboardFireEvent.Released, move_updown_reset))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent(
-    'k', KeyboardFireEvent.Released, move_updown_reset))
+    espressomd.visualization_opengl.KeyboardButtonEvent('k', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, move_down_set))
+visualizer.keyboardManager.register_button(espressomd.visualization_opengl.KeyboardButtonEvent(
+    'i', espressomd.visualization_opengl.KeyboardFireEvent.Released, move_updown_reset))
+visualizer.keyboardManager.register_button(espressomd.visualization_opengl.KeyboardButtonEvent(
+    'k', espressomd.visualization_opengl.KeyboardFireEvent.Released, move_updown_reset))
 
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('j', KeyboardFireEvent.Pressed, move_left_set))
+    espressomd.visualization_opengl.KeyboardButtonEvent('j', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, move_left_set))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('l', KeyboardFireEvent.Pressed, move_right_set))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent(
-    'j', KeyboardFireEvent.Released, move_leftright_reset))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent(
-    'l', KeyboardFireEvent.Released, move_leftright_reset))
+    espressomd.visualization_opengl.KeyboardButtonEvent('l', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, move_right_set))
+visualizer.keyboardManager.register_button(espressomd.visualization_opengl.KeyboardButtonEvent(
+    'j', espressomd.visualization_opengl.KeyboardFireEvent.Released, move_leftright_reset))
+visualizer.keyboardManager.register_button(espressomd.visualization_opengl.KeyboardButtonEvent(
+    'l', espressomd.visualization_opengl.KeyboardFireEvent.Released, move_leftright_reset))
 
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('p', KeyboardFireEvent.Pressed, explode))
+    espressomd.visualization_opengl.KeyboardButtonEvent('p', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, explode))
 
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('b', KeyboardFireEvent.Pressed, restart))
+    espressomd.visualization_opengl.KeyboardButtonEvent('b', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, restart))
 
 # MAIN LOOP
 
@@ -485,27 +489,31 @@ def main():
 
         # VISUALIZER
         visualizer.update()
+        if has_pygame:
+            if joystick_control:
+                pygame.event.get()
+                axis_l = np.array(
+                    [joystick.get_axis(0),
+                     -joystick.get_axis(1)])
+                axis_r = np.array(
+                    [joystick.get_axis(3),
+                     -joystick.get_axis(4)])
 
-        if joystick_control:
-            pygame.event.get()
-            axis_l = np.array([joystick.get_axis(0), -joystick.get_axis(1)])
-            axis_r = np.array([joystick.get_axis(3), -joystick.get_axis(4)])
+                button_A = joystick.get_button(0)
+                button_Start = joystick.get_button(7)
 
-            button_A = joystick.get_button(0)
-            button_Start = joystick.get_button(7)
+                if not button_A_old and button_A:
+                    explode()
+                if not button_Start_old and button_Start:
+                    restart()
 
-            if not button_A_old and button_A:
-                explode()
-            if not button_Start_old and button_Start:
-                restart()
+                button_A_old = button_A
+                button_Start_old = button_A
 
-            button_A_old = button_A
-            button_Start_old = button_A
+                hat = joystick.get_hat(0)
+                F_act_j = np.clip(np.array(hat) + axis_l + axis_r, -1, 1)
 
-            hat = joystick.get_hat(0)
-            F_act_j = np.clip(np.array(hat) + axis_l + axis_r, -1, 1)
-
-            set_particle_force()
+                set_particle_force()
 
 
 t = Thread(target=main)

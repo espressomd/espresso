@@ -20,17 +20,16 @@
 */
 #ifndef _STATISTICS_H
 #define _STATISTICS_H
-/** \file statistics.hpp
+/** \file
     This file contains the code for statistics on the data.
 */
 
 #include "PartCfg.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
-
 #include <map>
 #include <string>
 #include <vector>
@@ -49,13 +48,13 @@ struct Observable_stat {
   /** Array for observables on each node. */
   DoubleList data;
 
-  /** number of coulomb interactions */
+  /** number of Coulomb interactions */
   int n_coulomb;
   /** number of dipolar interactions */
   int n_dipolar;
   /** number of non bonded interactions */
   int n_non_bonded;
-  /** Number of virtual sites relative (rigid body) conributions */
+  /** Number of virtual sites relative (rigid body) contributions */
   int n_virtual_sites;
   /** Number of external field contributions */
   const static int n_external_field = 1;
@@ -64,9 +63,9 @@ struct Observable_stat {
   double *bonded;
   /** start of observables for non-bonded interactions. */
   double *non_bonded;
-  /** start of observables for coulomb interaction. */
+  /** start of observables for Coulomb interaction. */
   double *coulomb;
-  /** start of observables for coulomb interaction. */
+  /** start of observables for Coulomb interaction. */
   double *dipolar;
   /** Start of observables for virtual sites relative (rigid bodies) */
   double *virtual_sites;
@@ -196,8 +195,8 @@ void analyze_remove(int ind);
     Calculates the distance distribution of particles with types given
     in the p1_types list around particles with types given in the
     p2_types list. The distances range from r_min to r_max, binned
-    into r_bins bins which are either aequidistant (log_flag==0)or
-    logarithmically aequidistant (log_flag==1). The result is stored
+    into r_bins bins which are either equidistant (log_flag==0)or
+    logarithmically equidistant (log_flag==1). The result is stored
     in the array dist.
     @param p1_types list with types of particles to find the distribution for.
     @param n_p1     length of p1_types.
@@ -207,7 +206,7 @@ void analyze_remove(int ind);
     @param r_min    Minimal distance for the distribution.
     @param r_max    Maximal distance for the distribution.
     @param r_bins   Number of bins.
-    @param log_flag Wether the bins are (logarithmically) aequidistant.
+    @param log_flag Whether the bins are (logarithmically) equidistant.
     @param low      particles closer than r_min
     @param dist     Array to store the result (size: r_bins).
  */
@@ -267,12 +266,12 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
                  int r_bins, std::vector<double> &rdf, int n_conf);
 
 /** Calculates the van Hove auto correlation function and as a side product the
-   mean sqaure displacement (msd).
+   mean square displacement (msd).
 
     Calculates the van Hove auto correlation function (acf)  G(r,t) which is the
    probability that a particle has moved
     a distance r after time t. In the case of a random walk G(r,t)/(4 pi r*r) is
-   a gaussian. The mean square
+   a Gaussian. The mean square
     displacement (msd) is connected to the van Hove acf via sqrt(msd(t)) = int
    G(r,t) dr. This is very useful for
     the investigation of diffusion processes.
@@ -351,8 +350,7 @@ double min_distance(T1 const pos1, T2 const pos2) {
 }
 
 /** calculate the center of mass of a special type of the current configuration
- *  \param type  type of the particle
- *  \param com   center of mass position
+ *  \param part_type  type of the particle
  */
 std::vector<double> centerofmass(PartCfg &, int part_type);
 
@@ -370,7 +368,7 @@ void angularmomentum(PartCfg &, int type, double *com);
 
 /** calculate the center of mass of a special type of a saved configuration
  *  \param k       number of the saved configuration
- *  \param type_1  type of the particle, -1 for all
+ *  \param type    type of the particle, -1 for all
  *  \param com     center of mass position
  */
 

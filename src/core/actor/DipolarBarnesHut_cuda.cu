@@ -839,7 +839,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
             }
           } else {
             // Early out because all remaining children are also zero.
-            // We shuld move to the next octant or to the next depth if other
+            // We should move to the next octant or to the next depth if other
             // threads already checked other octants:
             depth = max(j, depth - 1);
           }
@@ -1075,7 +1075,7 @@ void summarizeBH(int blocks) {
 }
 
 // Sort particle indexes according to the BH tree representation.
-// Crucial for the per-warp perfomance tuning of forceCalculationKernel and
+// Crucial for the per-warp performance tuning of forceCalculationKernel and
 // energyCalculationKernel.
 void sortBH(int blocks) {
   dim3 grid(1, 1, 1);

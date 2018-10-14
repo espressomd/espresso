@@ -21,20 +21,20 @@
 #ifndef _DOMAIN_DECOMPOSITION_H
 #define _DOMAIN_DECOMPOSITION_H
 
-/** \file domain_decomposition.hpp
+/** \file
  *
  *  This file contains everything related to the cell system: domain
  * decomposition.
  *
  *  The simulation box is split into spatial domains for each node
- *  according to a cartesian node grid (\ref node_grid).
+ *  according to a Cartesian node grid (\ref node_grid).
  *
  *  The domain of a node is split into a 3D cell grid with dimension
  *  \ref DomainDecomposition::cell_grid. Together with one ghost cell
  *  layer on each side the overall dimension of the ghost cell grid is
  *  \ref DomainDecomposition::ghost_cell_grid. The domain
  *  decomposition enables one the use of the linked cell algorithm
- *  which is in turn used for setting up the verlet list for the
+ *  which is in turn used for setting up the Verlet list for the
  *  system. You can see a 2D graphical representation of the linked
  *  cell grid below.
  *
@@ -45,8 +45,8 @@
  *
  * Each cell has 3^D neighbor cells (For cell 14 they are
  * marked). Since we deal with pair forces, it is sufficient to
- * calculate only half of the interactions (Newtons law: actio =
- * reactio). We have chosen the upper half e.g. all neighbor cells with
+ * calculate only half of the interactions (Newtons law: action =
+ * reaction). We have chosen the upper half e.g. all neighbor cells with
  * a higher linear index (For cell 14 they are marked in light
  * blue). Caution: This implementation needs double sided ghost
  * communication! For single sided ghost communication one would need
@@ -65,7 +65,8 @@
  * decomposition. */
 struct DomainDecomposition {
   DomainDecomposition()
-      : cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{0, 0, 0} {}
+      : cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{0, 0, 0},
+        inv_cell_size{0, 0, 0} {}
   /** linked cell grid in nodes spatial domain. */
   int cell_grid[3];
   /** linked cell grid with ghost frame. */
@@ -86,7 +87,7 @@ struct DomainDecomposition {
 /** Information about the domain decomposition. */
 extern DomainDecomposition dd;
 
-/** Maximal skin size. This is a global variable wwhich can be read
+/** Maximal skin size. This is a global variable which can be read
     out by the user via the TCL command setmd in order to optimize the
     cell grid */
 extern double max_skin;

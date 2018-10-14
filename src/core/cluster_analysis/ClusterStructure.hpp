@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 
 #include "Cluster.hpp"
-#include "interaction_data.hpp"
 #include "pair_criteria/pair_criteria.hpp"
 #include "particle_data.hpp"
 
@@ -37,14 +36,14 @@ namespace ClusterAnalysis {
 class ClusterStructure {
 public:
   ClusterStructure();
-  /** @brief Map holding the individual clusters. The key is an interger cluster
+  /** @brief Map holding the individual clusters. The key is an integer cluster
    * id */
   std::map<int, std::shared_ptr<Cluster>> clusters;
   /** @brief Map between particle ids and corresponding cluster ids */
   std::map<int, int> cluster_id;
-  /** @brief Clear data strucutres */
+  /** @brief Clear data structures */
   void clear();
-  /** @brief Run cluster analysis, consider all aprticle pairs */
+  /** @brief Run cluster analysis, consider all particle pairs */
   void run_for_all_pairs();
   /** @brief Run cluster analysis, consider pairs of particles connected by a
    * bonded interaction */
@@ -68,7 +67,7 @@ private:
    */
   std::map<int, int> m_cluster_identities;
 
-  /** @brief pari criterion which decides whether two particles are neighbors */
+  /** @brief pair criterion which decides whether two particles are neighbors */
   std::shared_ptr<PairCriteria::PairCriterion> m_pair_criterion;
 
   /** @brief Consider an individual pair of particles during cluster analysis */
@@ -77,7 +76,7 @@ private:
   void merge_clusters();
   /** @brief Follow a chain of cluster identities during analysis */
   inline int find_id_for(int x);
-  /** @brief Get next free lucster id */
+  /** @brief Get next free cluster id */
   inline int get_next_free_cluster_id();
 };
 

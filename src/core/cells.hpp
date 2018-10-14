@@ -20,7 +20,7 @@
 */
 #ifndef _CELLS_H
 #define _CELLS_H
-/** \file cells.hpp
+/** \file
     This file contains everything related to the cell structure / cell
     system.
 
@@ -32,7 +32,7 @@
     <ul>
     <li> domain decomposition: The simulation box is divided spatially
     ino cells (see \ref domain_decomposition.hpp). This is suitable for
-    short range interctions.
+    short range interactions.
     <li> nsquare: The particles are distributed equally on all nodes
     regardless their spatial position (see \ref nsquare.hpp). This is
     suitable for long range interactions that can not be treated by a
@@ -74,7 +74,7 @@
 /** Flag indicating that there is no cell system yet. Only at the
     VERY beginning of the code startup. */
 #define CELL_STRUCTURE_NONEYET -1
-/** Flag indicating that the current cell structure will be used furthor on */
+/** Flag indicating that the current cell structure will be used further on */
 #define CELL_STRUCTURE_CURRENT 0
 /** cell structure domain decomposition */
 #define CELL_STRUCTURE_DOMDEC 1
@@ -84,7 +84,7 @@
 #define CELL_STRUCTURE_LAYERED 3
 /*@}*/
 
-/** \name Flags for exchange_and_sort_particles: wether to do a global exchange
+/** \name Flags for exchange_and_sort_particles: whether to do a global exchange
     or assume that particles did not move much (faster, used during integration,
     where moving far is a catastrophe anyways). */
 /*@{*/
@@ -137,7 +137,7 @@ struct CellPList {
     between different nodes and the relation between particle
     positions and the cell system. All other properties of the cell
     system which are not common between different cell systems have to
-    be stored in seperate structures. */
+    be stored in separate structures. */
 struct CellStructure {
   /** type descriptor */
   int type;
@@ -152,17 +152,6 @@ struct CellStructure {
   GhostCommunicator update_ghost_pos_comm;
   /** Communicator to collect ghost forces. */
   GhostCommunicator collect_ghost_force_comm;
-#ifdef LB
-  /** Communicator for particle data used by lattice Boltzmann */
-  GhostCommunicator ghost_lbcoupling_comm;
-#endif
-#ifdef ENGINE
-  // Communicator for particle data used by ENGINE feature
-  GhostCommunicator ghost_swimming_comm;
-#endif
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  GhostCommunicator vs_inertialess_tracers_ghost_force_comm;
-#endif
 
   /** Cell system dependent function to find the right node for a
       particle at position pos.
@@ -246,7 +235,7 @@ inline void realloc_cellplist(CellPList *cpl, int size) {
    structures.
     @param global_flag if this is CELLS_GLOBAL_EXCHANGE, particle positions can
    have changed
-    arbitrarly, otherwise the change should have been smaller then skin.  */
+    arbitrarily, otherwise the change should have been smaller then skin.  */
 void cells_resort_particles(int global_flag);
 
 /** this function is called whenever the cell system has to be
@@ -258,7 +247,7 @@ void cells_resort_particles(int global_flag);
     If bit CELL_FLAG_FAST is set, the routine should try to save time.
     Currently this means that if the maximal range decreased, it does
     not reorganize the particles. This is used in the NpT algorithm to
-    avoid frequent reorganizaion of particles.
+    avoid frequent reorganization of particles.
 
     If bit CELL_FLAG_GRIDCHANGED is set, it means the nodes' topology
     has changed, i. e. the grid or periodicity. In this case a full
@@ -292,7 +281,7 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 /**
  * @brief Increase the local resort level at least to level.
  *
- * The changed level has to be commuicated via annouce_resort_particles.
+ * The changed level has to be communicated via annouce_resort_particles.
  */
 void set_resort_particles(Cells::Resort level);
 

@@ -20,7 +20,8 @@
 */
 #ifndef INITIALZE_H
 #define INITIALZE_H
-/** \file initialize.hpp This file contains the hook procedures. These
+/** \file
+    This file contains the hook procedures. These
     are the ones with names on_* and are called whenever something is
     changed in Espresso which might influence other parts. For
     example, the P3M code has to be reinitialized whenever the box
@@ -67,7 +68,7 @@ void on_particle_charge_change();
 /** called every time the particles are resorted from node to node. */
 void on_resort_particles();
 
-/** called every time the coulomb parameters are changed. */
+/** called every time the Coulomb parameters are changed. */
 void on_coulomb_change();
 
 /** called every time short ranged interaction parameters are changed. */
@@ -103,7 +104,7 @@ void on_parameter_change(int parameter);
 /** called every time the number of particle types has changed (increased) */
 void on_max_seen_particle_type_change();
 
-/** call this if you want to change ghost flags, e.g. wether ghosts
+/** call this if you want to change ghost flags, e.g. whether ghosts
     have velocities or not.  This is a opt-in process, i. e. all
     features are turned off and have to be reactivated if necessary
     inside this procedure.  */

@@ -32,49 +32,49 @@
 #include "errorhandling.hpp"
 
 #include "EspressoSystemInterface.hpp"
-#include "buckingham.hpp"
+#include "bonded_interactions/bonded_tab.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "cuda_interface.hpp"
-#include "debye_hueckel.hpp"
-#include "elc.hpp"
+#include "electrostatics_magnetostatics/debye_hueckel.hpp"
+#include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/icc.hpp"
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "galilei.hpp"
-#include "gb.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "iccp3m.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
 #include "io/mpiio/mpiio.hpp"
-#include "lb.hpp"
-#include "lj.hpp"
-#include "ljcos.hpp"
-#include "ljcos2.hpp"
-#include "ljgen.hpp"
-#include "maggs.hpp"
-#include "mdlc_correction.hpp"
 #include "minimize_energy.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
-#include "molforces.hpp"
-#include "morse.hpp"
+#include "nonbonded_interactions/buckingham.hpp"
+#include "nonbonded_interactions/gb.hpp"
+#include "nonbonded_interactions/lj.hpp"
+#include "nonbonded_interactions/ljcos.hpp"
+#include "nonbonded_interactions/ljcos2.hpp"
+#include "nonbonded_interactions/ljgen.hpp"
+#include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp"
-#include "p3m-dipolar.hpp"
-#include "p3m.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
-#include "reaction_field.hpp"
 #include "rotation.hpp"
-#include "scafacos.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
 #include "statistics_fluid.hpp"
 #include "swimmer_reaction.hpp"
-#include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
 
@@ -82,6 +82,7 @@
 #include "utils/make_unique.hpp"
 #include "utils/serialization/IA_parameters.hpp"
 #include "utils/serialization/Particle.hpp"
+#include "utils/serialization/ParticleParametersSwimming.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
@@ -99,7 +100,7 @@ boost::mpi::communicator comm_cart;
 namespace Communication {
 std::unique_ptr<MpiCallbacks> m_callbacks;
 
-/* We use a singelton callback class for now. */
+/* We use a singleton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
   assert(m_callbacks && "Mpi not initialized!");
 
@@ -226,8 +227,34 @@ int mpi_check_runtime_errors(void);
  * procedures
  **********************************************/
 
+#if defined(OPEN_MPI)
+/*! Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
+    appears when CUDA is used. This is a bug in OpenMPI 2.0-2.1.2 and 3.0.0
+    according to
+    https://www.mail-archive.com/users@lists.open-mpi.org/msg32357.html,
+    so we set btl_vader_single_copy_mechanism = none.
+*/
+static void openmpi_fix_vader() {
+  if (OMPI_MAJOR_VERSION < 2 || OMPI_MAJOR_VERSION > 3)
+    return;
+  if (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION == 1 &&
+      OMPI_RELEASE_VERSION >= 3)
+    return;
+  if (OMPI_MAJOR_VERSION == 3 &&
+      (OMPI_MINOR_VERSION > 0 || OMPI_RELEASE_VERSION > 0))
+    return;
+
+  std::string varname = "btl_vader_single_copy_mechanism";
+  std::string varval = "none";
+
+  setenv((std::string("OMPI_MCA_") + varname).c_str(), varval.c_str(), 0);
+}
+#endif
+
 void mpi_init() {
 #ifdef OPEN_MPI
+  openmpi_fix_vader();
+
   void *handle = 0;
   int mode = RTLD_NOW | RTLD_GLOBAL;
 #ifdef RTLD_NOLOAD
@@ -417,7 +444,8 @@ void mpi_send_v_slave(int pnode, int part) {
 }
 
 /****************** REQ_SET_SWIMMING ************/
-void mpi_send_swimming(int pnode, int part, ParticleParametersSwimming swim) {
+void mpi_send_swimming(int pnode, int part,
+                       const ParticleParametersSwimming &swim) {
 #ifdef ENGINE
   mpi_call(mpi_send_swimming_slave, pnode, part);
 
@@ -425,8 +453,7 @@ void mpi_send_swimming(int pnode, int part, ParticleParametersSwimming swim) {
     Particle *p = local_particles[part];
     p->swim = swim;
   } else {
-    MPI_Send(&swim, sizeof(ParticleParametersSwimming), MPI_BYTE, pnode,
-             SOME_TAG, comm_cart);
+    comm_cart.send(pnode, SOME_TAG, swim);
   }
 
   on_particle_change();
@@ -437,8 +464,9 @@ void mpi_send_swimming_slave(int pnode, int part) {
 #ifdef ENGINE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->swim, sizeof(ParticleParametersSwimming), MPI_BYTE, 0,
-             SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    ParticleParametersSwimming swim;
+    comm_cart.recv(0, SOME_TAG, swim);
+    p->swim = swim;
   }
 
   on_particle_change();
@@ -1957,14 +1985,11 @@ void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
 }
 
 /********************* REQ_ICCP3M_ITERATION ********/
-int mpi_iccp3m_iteration(int dummy) {
+int mpi_iccp3m_iteration() {
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_iteration_slave, -1, 0);
 
   iccp3m_iteration();
-
-  COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node,
-                     dummy));
 
   return check_runtime_errors();
 #else
@@ -1972,47 +1997,29 @@ int mpi_iccp3m_iteration(int dummy) {
 #endif
 }
 
-void mpi_iccp3m_iteration_slave(int dummy, int dummy2) {
+void mpi_iccp3m_iteration_slave(int, int) {
 #ifdef ELECTROSTATICS
   iccp3m_iteration();
-  COMM_TRACE(
-      fprintf(stderr, "%d: iccp3m iteration task %d done.\n", dummy, dummy2));
 
   check_runtime_errors();
 #endif
 }
 
 /********************* REQ_ICCP3M_INIT********/
-int mpi_iccp3m_init(int n_induced_charges) {
+int mpi_iccp3m_init() {
 #ifdef ELECTROSTATICS
-  /* nothing has to be done on the master node, this
-   * passes only the number of induced charges, in order for
-   * slaves to allocate memory */
+  mpi_call(mpi_iccp3m_init_slave, -1, -1);
 
-  mpi_call(mpi_iccp3m_init_slave, -1, n_induced_charges);
-
-  bcast_iccp3m_cfg();
-
-  COMM_TRACE(fprintf(stderr, "%d: iccp3m init task %d done.\n", this_node,
-                     n_induced_charges));
-
+  boost::mpi::broadcast(comm_cart, iccp3m_cfg, 0);
   return check_runtime_errors();
 #else
   return 0;
 #endif
 }
 
-void mpi_iccp3m_init_slave(int node, int dummy) {
+void mpi_iccp3m_init_slave(int, int) {
 #ifdef ELECTROSTATICS
-  COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node,
-                     dummy));
-
-  if (iccp3m_initialized == 0) {
-    iccp3m_init();
-    iccp3m_initialized = 1;
-  }
-
-  bcast_iccp3m_cfg();
+  boost::mpi::broadcast(comm_cart, iccp3m_cfg, 0);
 
   check_runtime_errors();
 #endif

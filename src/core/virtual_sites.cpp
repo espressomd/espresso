@@ -66,15 +66,15 @@ void calculate_vs_relate_to_params(const Particle &p_current,
   }
 
   // Now, calculate the quaternions which specify the angle between
-  // the director of the particel we relate to and the vector
+  // the director of the particle we relate to and the vector
   // (paritlce_we_relate_to - this_particle)
-  // The vs_relative implemnation later obtains the direcotr by multiplying
+  // The vs_relative implementation later obtains the director by multiplying
   // the quaternions representing the orientation of the real particle
   // with those in the virtual particle. The re quulting quaternion is then
   // converted to a director.
-  // Whe have quat_(real particle) *quat_(virtual particle)
+  // We have quat_(real particle) *quat_(virtual particle)
   // = quat_(obtained from desired director)
-  // Resolving this for the quat_(virtaul particle)
+  // Resolving this for the quat_(virtual particle)
 
   // Normalize desired director
   int i;
@@ -128,9 +128,9 @@ void calculate_vs_relate_to_params(const Particle &p_current,
 }
 
 // Setup the virtual_sites_relative properties of a particle so that the given
-// virtaul particle will follow the given real particle
+// virtual particle will follow the given real particle
 int vs_relate_to(int part_num, int relate_to) {
-  // Get the data for the particle we act on and the one we wnat to relate
+  // Get the data for the particle we act on and the one we want to relate
   // it to.
   auto const &p_current = get_particle_data(part_num);
   auto const &p_relate_to = get_particle_data(relate_to);
@@ -170,7 +170,7 @@ int local_vs_relate_to(int part_num, int relate_to) {
   double l;
   calculate_vs_relate_to_params(*p_current, *p_relate_to, l, quat);
 
-  // Set the particle id of the particle we want to relate to, the distnace
+  // Set the particle id of the particle we want to relate to, the distance
   // and the relative orientation
   p_current->p.vs_relative_to_particle_id = relate_to;
   p_current->p.vs_relative_distance = l;

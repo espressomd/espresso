@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
-/** \file metadynamics.hpp
+/** \file
  *
  *  This file contains routines to perform metadynamics.  Right now, the
  *  reaction coordinate is defined between two particles (either distance
@@ -85,7 +85,7 @@ void meta_init() {
                          sizeof *meta_acc_fprofile);
   }
 
-  /* Check that the simulation uses onle a single processor. Otherwise exit.
+  /* Check that the simulation uses only a single processor. Otherwise exit.
    *  MPI interface *not* implemented. */
   if (n_nodes != 1) {
     runtimeErrorMsg() << "Can't use metadynamics on more than one processor.\n";
@@ -141,8 +141,8 @@ void meta_perform() {
 
   /* Now update free energy profile
    * Here, we're following the functional form of
-   * Marsili etal., J Comp. Chem, 31 (2009).
-   * Instead of gaussians, we use so-called Lucy's functions */
+   * Marsili et al., J Comp Chem, 31 (2009).
+   * Instead of Gaussians, we use so-called Lucy's functions */
 
   for (int i = 0; i < meta_xi_num_bins; ++i) {
     if (meta_switch == META_DIST) {

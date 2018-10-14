@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file domain_decomposition.cpp
+/** \file
  *
  *  This file contains everything related to the cell system: domain
  * decomposition.
@@ -185,7 +185,7 @@ void dd_create_cell_grid() {
     }
   }
 
-  /* quit program if unsuccesful */
+  /* quit program if unsuccessful */
   if (n_local_cells > max_num_cells) {
     runtimeErrorMsg() << "no suitable cell grid found ";
   }
@@ -334,7 +334,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
 
-          /* place recieve cells after send cells */
+          /* place receive cells after send cells */
           dd_fill_comm_cell_lists(
               &comm->comm[cnt].part_lists[n_comm_cells[dir]], lc, hc);
           CELL_TRACE(fprintf(
@@ -492,7 +492,7 @@ void dd_update_communicators_w_boxl() {
 
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
- * created list of interacting neighbor cells is used by the verlet
+ * created list of interacting neighbor cells is used by the Verlet
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
 void dd_init_cell_interactions() {
@@ -732,28 +732,6 @@ void dd_topology_init(CellPList *old) {
   dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
-#ifdef LB
-  dd_prepare_comm(&cell_structure.ghost_lbcoupling_comm, GHOSTTRANS_COUPLING);
-  dd_assign_prefetches(&cell_structure.ghost_lbcoupling_comm);
-#endif
-
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  // Inertialess tracers (and hence Immersed boundary) needs to communicate
-  // the forces from but also to the ghosts
-  // This is different than usual collect_ghost_force_comm (not in reverse
-  // order)
-  // Therefore we need our own communicator
-  dd_prepare_comm(&cell_structure.vs_inertialess_tracers_ghost_force_comm,
-                  GHOSTTRANS_FORCE);
-  dd_assign_prefetches(&cell_structure.vs_inertialess_tracers_ghost_force_comm);
-#endif
-
-#ifdef ENGINE
-  dd_prepare_comm(&cell_structure.ghost_swimming_comm, GHOSTTRANS_SWIMMING);
-  dd_assign_prefetches(&cell_structure.ghost_swimming_comm);
-#endif
-
-  /* initialize cell neighbor structures */
   dd_init_cell_interactions();
 
   /* copy particles */
@@ -787,15 +765,6 @@ void dd_topology_release() {
   free_comm(&cell_structure.exchange_ghosts_comm);
   free_comm(&cell_structure.update_ghost_pos_comm);
   free_comm(&cell_structure.collect_ghost_force_comm);
-#ifdef LB
-  free_comm(&cell_structure.ghost_lbcoupling_comm);
-#endif
-#ifdef ENGINE
-  free_comm(&cell_structure.ghost_swimming_comm);
-#endif
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  free_comm(&cell_structure.vs_inertialess_tracers_ghost_force_comm);
-#endif
 }
 
 /************************************************************/
@@ -961,7 +930,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
       }
     }
 
-    /* Communicate wether particle exchange is finished */
+    /* Communicate whether particle exchange is finished */
     if (global_flag == CELL_GLOBAL_EXCHANGE) {
       if (this_node == 0) {
         int sum;

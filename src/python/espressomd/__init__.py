@@ -45,7 +45,7 @@ def missing_features(*args):
 
 
 def assert_features(*args):
-    """Raises an excpetion when a list of features is not a subset of the compiled-in features"""
+    """Raises an exception when a list of features is not a subset of the compiled-in features"""
 
     if not has_features(*args):
         raise Exception(

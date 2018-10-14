@@ -18,22 +18,19 @@
 """
 
 from __future__ import print_function
+import numpy as np
+import math
+from threading import Thread
+
 import espressomd
-
-required_features = ["LENNARD_JONES", "EXTERNAL_FORCES"]
-espressomd.assert_features(required_features)
-
 from espressomd import thermostat
 from espressomd import analyze
 from espressomd import integrate
 from espressomd import electrostatics
 from espressomd import minimize_energy
-from espressomd.interactions import *
-import numpy as np
-from threading import Thread
-from math import *
-from espressomd.visualization_opengl import *
-from espressomd.shapes import *
+import espressomd.interactions
+import espressomd.visualization_opengl
+import espressomd.shapes
 
 required_features = ["LENNARD_JONES", "MASS", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
@@ -47,27 +44,35 @@ system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 table_dim = [2.24, 1.12]
 system.box_l = [table_dim[0], 3, table_dim[1]]
 
-visualizer = openGLLive(system,
-                        ext_force_arrows=True,
-                        ext_force_arrows_type_scale=[0.02],
-                        ext_force_arrows_type_radii=[0.01],
-                        background_color=[0.5, 0.4, 0.5],
-                        drag_enabled=False,
-                        particle_type_materials=[
-                            'medium', 'bright', 'bright', 'medium'],
-                        particle_type_colors=[
-                        [1, 1, 1], [0.5, 0.1, 0.1], [0.1, 0.2, 0.4], [0.2, 0.2, 0.2]],
-                        constraint_type_materials=['dark'],
-                        constraint_type_colors=[
-                            [0.1, 0.424, 0.011], [0.1, 0.1, 0.1]],
-                        camera_position=[1.12, 2.8, 0.56],
-                        window_size=[1000, 600],
-                        draw_axis=False,
-                        light_pos=[
-                            table_dim[0] * 0.5, 1.0, table_dim[1] * 0.5],
-                        light_colors=[
-                            [0.8, 0.8, 0.8], [0.9, 0.9, 0.9], [1.0, 1.0, 1.0]],
-                        light_brightness=1.0)
+visualizer = espressomd.visualization_opengl.openGLLive(system,
+                                                        ext_force_arrows=True,
+                                                        ext_force_arrows_type_scale=[
+                                                        0.02],
+                                                        ext_force_arrows_type_radii=[
+                                                        0.01],
+                                                        background_color=[
+                                                        0.5, 0.4, 0.5],
+                                                        drag_enabled=False,
+                                                        particle_type_materials=[
+                                                        'medium', 'bright', 'bright', 'medium'],
+                                                        particle_type_colors=[
+                                                        [1, 1, 1], [0.5, 0.1, 0.1], [0.1, 0.2, 0.4], [0.2, 0.2, 0.2]],
+                                                        constraint_type_materials=[
+                                                        'dark'],
+                                                        constraint_type_colors=[
+                                                        [0.1, 0.424, 0.011], [0.1, 0.1, 0.1]],
+                                                        camera_position=[
+                                                        1.12, 2.8, 0.56],
+                                                        window_size=[
+                                                            1000, 600],
+                                                        draw_axis=False,
+                                                        light_pos=[
+                                                        table_dim[
+                                                            0] * 0.5, 1.0, table_dim[
+                                                                1] * 0.5],
+                                                        light_colors=[
+                                                        [0.8, 0.8, 0.8], [0.9, 0.9, 0.9], [1.0, 1.0, 1.0]],
+                                                        light_brightness=1.0)
 
 stopped = True
 angle = np.pi * 0.5
@@ -79,7 +84,7 @@ def decreaseAngle():
     if stopped:
         angle += 0.01
         system.part[0].ext_force = impulse * \
-            np.array([sin(angle), 0, cos(angle)])
+            np.array([math.sin(angle), 0, math.cos(angle)])
 
 
 def increaseAngle():
@@ -87,7 +92,7 @@ def increaseAngle():
     if stopped:
         angle -= 0.01
         system.part[0].ext_force = impulse * \
-            np.array([sin(angle), 0, cos(angle)])
+            np.array([math.sin(angle), 0, math.cos(angle)])
 
 
 def decreaseImpulse():
@@ -95,7 +100,7 @@ def decreaseImpulse():
     if stopped:
         impulse -= 0.5
         system.part[0].ext_force = impulse * \
-            np.array([sin(angle), 0, cos(angle)])
+            np.array([math.sin(angle), 0, math.cos(angle)])
 
 
 def increaseImpulse():
@@ -103,7 +108,7 @@ def increaseImpulse():
     if stopped:
         impulse += 0.5
         system.part[0].ext_force = impulse * \
-            np.array([sin(angle), 0, cos(angle)])
+            np.array([math.sin(angle), 0, math.cos(angle)])
 
 
 def fire():
@@ -111,20 +116,20 @@ def fire():
     if stopped:
         stopped = False
         system.part[0].v = system.part[0].v + \
-            impulse * np.array([sin(angle), 0, cos(angle)])
+            impulse * np.array([math.sin(angle), 0, math.cos(angle)])
         system.part[0].fix = [0, 1, 0]
         system.part[0].ext_force = [0, 0, 0]
 
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('4', KeyboardFireEvent.Hold, decreaseAngle))
+    espressomd.visualization_opengl.KeyboardButtonEvent('4', espressomd.visualization_opengl.KeyboardFireEvent.Hold, decreaseAngle))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('6', KeyboardFireEvent.Hold, increaseAngle))
+    espressomd.visualization_opengl.KeyboardButtonEvent('6', espressomd.visualization_opengl.KeyboardFireEvent.Hold, increaseAngle))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('2', KeyboardFireEvent.Hold, decreaseImpulse))
+    espressomd.visualization_opengl.KeyboardButtonEvent('2', espressomd.visualization_opengl.KeyboardFireEvent.Hold, decreaseImpulse))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('8', KeyboardFireEvent.Hold, increaseImpulse))
+    espressomd.visualization_opengl.KeyboardButtonEvent('8', espressomd.visualization_opengl.KeyboardFireEvent.Hold, increaseImpulse))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('5', KeyboardFireEvent.Pressed, fire))
+    espressomd.visualization_opengl.KeyboardButtonEvent('5', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, fire))
 
 
 def main():
@@ -148,18 +153,18 @@ def main():
              2, 'black_ball': 3, 'table': 4, 'wall': 5, 'hole': 6}
 
     system.constraints.add(
-        shape=Wall(dist=table_h, normal=[0.0, 1.0, 0.0]), particle_type=types['table'], penetrable=True)
+        shape=espressomd.shapes.Wall(dist=table_h, normal=[0.0, 1.0, 0.0]), particle_type=types['table'], penetrable=True)
 
     system.constraints.add(
-        shape=Wall(dist=0.01, normal=[1.0, 0.0, 0.0]), particle_type=types['wall'], penetrable=True)
-    system.constraints.add(shape=Wall(dist=-(table_dim[0] - 0.01), normal=[
+        shape=espressomd.shapes.Wall(dist=0.01, normal=[1.0, 0.0, 0.0]), particle_type=types['wall'], penetrable=True)
+    system.constraints.add(shape=espressomd.shapes.Wall(dist=-(table_dim[0] - 0.01), normal=[
                            -1.0, 0.0, 0.0]), particle_type=types['wall'], penetrable=True)
     system.constraints.add(
-        shape=Wall(dist=0.01, normal=[0.0, 0.0, 1.0]), particle_type=types['wall'], penetrable=True)
+        shape=espressomd.shapes.Wall(dist=0.01, normal=[0.0, 0.0, 1.0]), particle_type=types['wall'], penetrable=True)
     system.constraints.add(
-        shape=Wall(dist=-(table_dim[1] - 0.01), normal=[0.0, 0.0, -1.0]), particle_type=types['wall'], penetrable=True)
+        shape=espressomd.shapes.Wall(dist=-(table_dim[1] - 0.01), normal=[0.0, 0.0, -1.0]), particle_type=types['wall'], penetrable=True)
     for h in hole_pos:
-        system.constraints.add(shape=Cylinder(center=(np.array(h) - np.array([0, table_h * 0.5, 0])).tolist(), axis=[
+        system.constraints.add(shape=espressomd.shapes.Cylinder(center=(np.array(h) - np.array([0, table_h * 0.5, 0])).tolist(), axis=[
                                0, 1, 0], radius=hole_rad, length=1.02 * table_h, direction=1), particle_type=types['hole'], penetrable=True)
 
     lj_eps = np.array([1])
@@ -172,10 +177,11 @@ def main():
 
     #LENNARD JONES
     def mix_eps(eps1, eps2, rule='LB'):
-        return sqrt(eps1 * eps2)
+        return math.sqrt(eps1 * eps2)
 
     def mix_sig(sig1, sig2, rule='LB'):
         return 0.5 * (sig1 + sig2)
+
     for t1 in range(4):
         for t2 in range(6):
             system.non_bonded_inter[t1, t2].lennard_jones.set_params(
@@ -195,8 +201,8 @@ def main():
     ball = system.part[0]
 
     d = lj_sig[0] * 1.15
-    a1 = np.array([d * sqrt(3) / 2.0, 0, -0.5 * d])
-    a2 = np.array([d * sqrt(3) / 2.0, 0, 0.5 * d])
+    a1 = np.array([d * math.sqrt(3) / 2.0, 0, -0.5 * d])
+    a2 = np.array([d * math.sqrt(3) / 2.0, 0, 0.5 * d])
     sp = [system.box_l[0] * 0.7, ball_y,
           system.box_l[2] * 0.5 + lj_sig[0] * 0.5]
     pid = 1
@@ -218,7 +224,7 @@ def main():
             spawnpos.append(pos)
             pid += 1
 
-    ball.ext_force = impulse * np.array([sin(angle), 0, cos(angle)])
+    ball.ext_force = impulse * np.array([math.sin(angle), 0, math.cos(angle)])
     ball.fix = [1, 1, 1]
     system.thermostat.set_langevin(kT=0, gamma=0.8)
     #ELECTROSTATICS
@@ -248,7 +254,7 @@ def main():
                             p.fix = [0, 1, 0]
                         ball.fix = [1, 1, 1]
                         ball.ext_force = impulse * \
-                            np.array([sin(angle), 0, cos(angle)])
+                            np.array([math.sin(angle), 0, math.cos(angle)])
                         stoppen = True
                     else:
                         t = p.type - 1
@@ -266,7 +272,8 @@ def main():
             ball.fix = [1, 1, 1]
             for p in system.part:
                 p.v = [0, 0, 0]
-            ball.ext_force = impulse * np.array([sin(angle), 0, cos(angle)])
+            ball.ext_force = impulse * \
+                np.array([math.sin(angle), 0, math.cos(angle)])
 
         visualizer.update()
 

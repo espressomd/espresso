@@ -29,6 +29,7 @@
 #include "utils/math/permute_ifield.hpp"
 
 #include <array>
+#include <numeric>
 
 BOOST_AUTO_TEST_CASE(check_permu) {
   std::array<int, 11> f;

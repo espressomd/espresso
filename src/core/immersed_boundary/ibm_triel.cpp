@@ -17,13 +17,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ibm_triel.hpp"
+#include "config.hpp"
 
 #ifdef IMMERSED_BOUNDARY
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "immersed_boundary/ibm_triel.hpp"
 #include "particle_data.hpp"
 
 namespace {
@@ -176,7 +177,7 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
 
   // Calculate forces per area in rotated system: chain rule as in appendix C of
   // Krüger (chain rule applied in eq. (C.13), but for the energy density). Only
-  // two nodes are needed, third one is calcualted from momentum conservation
+  // two nodes are needed, third one is calculated from momentum conservation
   // Note: If you calculate the derivatives in a straightforward manner, you get
   // 8 terms (done here). Krueger exploits the symmetry of the G-matrix, which
   // results in 6 elements, but with an additional factor 2 for the xy-elements
@@ -317,12 +318,12 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
   auto part2 = get_particle_data(ind2);
   auto part3 = get_particle_data(ind3);
 
-  // Calculate equilibrium lenghts and angle; Note the sequence of the points!
-  // lo = lenght between 1 and 3
+  // Calculate equilibrium lengths and angle; Note the sequence of the points!
+  // lo = length between 1 and 3
   double templo[3];
   get_mi_vector(templo, part3.r.p, part1.r.p);
   const double l0 = sqrt(sqrlen(templo));
-  // lpo = lenght between 1 and 2
+  // lpo = length between 1 and 2
   double templpo[3];
   get_mi_vector(templpo, part2.r.p, part1.r.p);
   const double lp0 = sqrt(sqrlen(templpo));
@@ -367,5 +368,4 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
 
   return ES_OK;
 }
-
 #endif

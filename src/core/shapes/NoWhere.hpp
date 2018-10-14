@@ -29,12 +29,12 @@
 namespace Shapes {
 
 /**
- * @brief Dummy shape that is infinitly far away from everything.
+ * @brief Dummy shape that is infinitely far away from everything.
  *
  */
 class NoWhere : public Shape {
 public:
-  int calculate_dist(const double *, double *dist, double *vec) const {
+  int calculate_dist(const double *, double *dist, double *vec) const override {
     *dist = std::numeric_limits<double>::infinity();
 
     for (int i = 0; i < 3; i++) {

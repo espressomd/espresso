@@ -22,7 +22,7 @@ cdef class ReactionAlgorithm(object):
     temperature : :obj:`float`
                   The temperature at which the reaction is performed.
     exclusion_radius : :obj:`float`
-                       Minimal distance from any particle, whithin which new
+                       Minimal distance from any particle, within which new
                        particle will not be inserted. This is useful to avoid
                        integrator failures if particles are too close and there
                        is a diverging repulsive interaction, or to prevent two
@@ -256,8 +256,8 @@ cdef class ReactionAlgorithm(object):
     def displacement_mc_move_for_particles_of_type(self, type_mc,
                                                    particle_number_to_be_changed=1):
         """
-        Perfoms a diplacemenet Monte Carlo move for particles of given type. New positions
-        of the displaced particles are chosen from the whole box with a uniform probablity distribution.
+        Performs a displacement Monte Carlo move for particles of given type. New positions
+        of the displaced particles are chosen from the whole box with a uniform probability distribution.
         If there are multiple types, that are being moved in a simulation, they should be moved in a
         random order to avoid artefacts.
 
@@ -423,8 +423,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         """
         Performs reaction_steps reactions. Sets the number of reaction steps which are
         performed at once. Do not use too many reaction steps
-        steps consequetively without having conformation
-        changing steps in between (especially important for the Wang Landau reaction ensemble). Providing a number for the parameter reaction steps reduces the need for the interpreter to be
+        steps consecutively without having conformation
+        changing steps in between (especially important for the Wang-Landau reaction ensemble). Providing a number for the parameter reaction steps reduces the need for the interpreter to be
         called between consecutive reactions.
 
         """
@@ -478,7 +478,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def add_collective_variable_potential_energy(self, *args, **kwargs):
         """
-        Adds the potential energy as a collective variable (reaction coordinate) for the Wang Landau Reaction Ensemble.
+        Adds the potential energy as a collective variable (reaction coordinate) for the Wang-Landau Reaction Ensemble.
         Several collective variables can be set simultaneously.
 
         Parameters
@@ -571,7 +571,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def load_wang_landau_checkpoint(self):
         """
-        Loads the dumped wang landau potential file.
+        Loads the dumped Wang-Landau potential file.
 
         """
         checkpoint_name = "checkpoint".encode("utf-8")
@@ -579,7 +579,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def write_wang_landau_checkpoint(self):
         """
-        Dumps the wang landau potential to a checkpoint file. Can be used to
+        Dumps the Wang-Landau potential to a checkpoint file. Can be used to
         checkpoint the Wang-Landau histogram, potential, parameter and the
         number of executed trial moves.
 
@@ -593,7 +593,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         degree of association in a preliminary Wang-Landau reaction ensemble
         simulation where the acceptance probability includes the factor
         :math:`\exp(-\\beta \\Delta E_{pot})`. The minimal and maximal
-        potential energys which occur in the system are needed for the energy
+        potential energies which occur in the system are needed for the energy
         reweighting simulations where the factor :math:`\exp(-\\beta \\Delta E_{pot})`
         is not included in the acceptance probability in
         order to avoid choosing the wrong potential energy boundaries.
@@ -613,7 +613,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def write_wang_landau_results_to_file(self, filename):
         """
-        This writes out the wang landau potential as a function of the used
+        This writes out the Wang-Landau potential as a function of the used
         collective variables.
 
         """

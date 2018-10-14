@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file mpiio.hpp
- *  Implements binary output unsing MPI-IO.
+/** \file
+ *  Implements binary output using MPI-IO.
  */
 
 #ifndef _MPIIO_HPP

@@ -48,7 +48,7 @@
  * their compressed average value. All As and Bs older than 2*tau_lin
  * are compressed in blocks of four etc.
  *
- * This leads to a hiearchical "history": on level 0 the last tau_lin values
+ * This leads to a hierarchical "history": on level 0 the last tau_lin values
  * are stored. This is done in a cyclic array: The newest is always appended
  * at the end of the array, and if the array length is reached, values
  * are appended at the beginning, overwriting older values. We therefore
@@ -61,7 +61,7 @@
  * on level 0, because we have saved them. Always if necessary
  * we produce space on level 0 by compressing to level 1. On
  * level 1 also an array with tau_lin entries is available to store
- * the level-1-compresssed values. It is sucessivly filled
+ * the level-1-compressed values. It is successively filled
  * and also cyclic. When it is filled, the values are stored
  * on level 2 and so on.
  *
@@ -71,8 +71,8 @@
  * Correlations are only calculated on each level: For
  * tau=1,2,..,tau_lin the values are taken from level 1.
  * For tau=tau_lin, tau_lin+2, .., 2*tau_lin we take the values
- * from level 2. On level 2 we halso have values for 0,..tau_lin-2,
- * but these are discared as we have "better" estimates on level 1.
+ * from level 2. On level 2 we also have values for 0,..tau_lin-2,
+ * but these are discarded as we have "better" estimates on level 1.
  *
  * The functions A and B can get extra arguments. This can e.g. be an
  * integer describing to the "type" of the particles to be considered,
@@ -150,28 +150,24 @@ class Correlator : public AccumulatorBase {
 public:
   /**
    * The initialization procedure for the correlation object. All important
-   * parameters have to be speciefied
+   * parameters have to be specified
    * at the same time. They can not be change later, so every instance of the
    * correlation class
    * has to be fed with correct data from the very beginning.
    *
-   * @param _delta_N: The number of time steps between subsequent updates
-   * @param _tau_lin: The linear part of the correlation function.
-   * @param _tau_max: maximal time delay tau to sample
-   * @param _window_distance: The distance in time domain between update of the
+   * @param delta_N The number of time steps between subsequent updates
+   * @param tau_lin The linear part of the correlation function.
+   * @param tau_max maximal time delay tau to sample
+   * @param window_distance: The distance in time domain between update of the
    * correlation estimate
-   * @param _dim_A: The dimension of the A vector
-   * @param _dim_B: The dimension of the B vector
-   * @param _A: First observable to correlate
-   * @param _B: Second observable to correlate
-   * @param _dim_corr: The dimension of the correlation to be calculated
-   * @param _corr_operation_name: how to correlate the two observables A and B
+   * @param obs1 First observable to correlate
+   * @param obs2 Second observable to correlate
+   * @param corr_operation how to correlate the two observables A and B
    *     (this has no default)
-   * @param _compressA_name: how the A values should be compressed (usually
+   * @param compress1_ how the A values should be compressed (usually
    *     the linear compression method)
-   * @param _compressB_name: how the B values should be compressed (usually
+   * @param compress2_ how the B values should be compressed (usually
    *     the linear compression method)
-   * @param _args: the parameters of the observables
    *
    */
   Correlator(int tau_lin, double tau_max, int delta_N,
@@ -202,7 +198,7 @@ public:
    * the correlation estimates have to be updated.
    *
    */
-  virtual void update() override;
+  void update() override;
 
   /** At the end of data collection, go through the whole hierarchy and
    * correlate data left there
@@ -263,7 +259,7 @@ public:
   void set_internal_state(std::string const &);
 
 private:
-  unsigned int finalized; // non-zero of correlation is finialized
+  unsigned int finalized; // non-zero of correlation is finalized
   unsigned int t;         // global time in number of frames
 
   Vector3d m_correlation_args; // additional arguments, which the correlation

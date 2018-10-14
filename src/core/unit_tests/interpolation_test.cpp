@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_2) {
                 /* offset */ {10., 0., 15.});
 
   /* pos - offset = {-5., 6., -8} */
-  /* shited pos = {-4.5, 6.5, -7.5} */
+  /* shifted pos = {-4.5, 6.5, -7.5} */
   /* nmp = {-4, 4, -2 } @ pos {-4., 8., -6.} */
   /* ll = nmp - order / 2 (= 1) = {-5, 3, -3} */
   std::array<int, 3> lower_left = {{-5, 3, -3}};

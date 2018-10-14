@@ -18,7 +18,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file MpiCallbacks_test.cpp Unit tests for the MpiCallbacks class.
+/** \file
+ * Unit tests for the MpiCallbacks class.
  *
  */
 
@@ -199,7 +200,7 @@ BOOST_AUTO_TEST_CASE(iterators) {
       id_counts[p.identity()]++;
     }
 
-    /* Every id should have been visitied exactly once... */
+    /* Every id should have been visited exactly once... */
     BOOST_CHECK(std::all_of(id_counts.begin(), id_counts.end(),
                             [](int count) { return count == 1; }));
     /* and in the correct order. */

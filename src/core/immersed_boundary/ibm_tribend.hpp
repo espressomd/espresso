@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef IMMERSED_BOUNDARY
 
-#include "interaction_data.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 
 // DEBUG stuff
 extern double maxBendingForce, maxBendingDist, maxX;

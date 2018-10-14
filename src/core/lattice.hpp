@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lattice.hpp
+/** \file
  *
  * Lattice class definition
  * Contains the lattice layout and pointers to the data fields.
@@ -94,8 +94,7 @@ public:
    *                   elementary cell, 6 directions (Output)
    */
   void map_position_to_lattice(const Vector3d &pos, index_t node_index[8],
-                               double delta[6]);
-
+                               double delta[6]) const;
   /********************** Inline Functions **********************/
 
   /** Map a global lattice site to the node grid.

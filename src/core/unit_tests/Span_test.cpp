@@ -45,26 +45,6 @@ BOOST_AUTO_TEST_CASE(array_ctor) {
   BOOST_CHECK_EQUAL(s.size(), 4);
 }
 
-BOOST_AUTO_TEST_CASE(const_expr_ctor) {
-  static_assert(4 == Span<int>(nullptr, 4).size(), "");
-}
-
-BOOST_AUTO_TEST_CASE(array_ctor) {
-  BOOST_CHECK((std::is_constructible<Span<const int>, int[3]>::value));
-  BOOST_CHECK(
-          (std::is_constructible<Span<const int>, const int[3]>::value));
-  BOOST_CHECK(not (std::is_constructible<Span<int>, const int[3]>::value));
-  BOOST_CHECK((std::is_convertible<int[3], Span<const int>>::value));
-  BOOST_CHECK(
-          (std::is_convertible<const int[3], Span<const int>>::value));
-
-  int a[4] = {1, 2, 3, 4};
-  Span<int> s(a);
-
-  BOOST_CHECK_EQUAL(s.data(), a);
-  BOOST_CHECK_EQUAL(s.size(), 4);
-}
-
 BOOST_AUTO_TEST_CASE(ctor) {
   /* Container conversion rules */
   {

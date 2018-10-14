@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file particle_data.cpp
+/** \file
     This file contains everything related to particle storage. If you want to
    add a new property to the particles, it is probably a good idea to modify
    \ref Particle to give scripts access to that property. You always have to
@@ -31,12 +31,13 @@
 */
 #include "particle_data.hpp"
 #include "PartCfg.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
 #include "virtual_sites.hpp"
@@ -597,6 +598,9 @@ int set_particle_q(int part, double q) {
   mpi_send_q(pnode, part, q);
   return ES_OK;
 }
+#ifndef ELECTROSTATICS
+constexpr double ParticleProperties::q;
+#endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 int set_particle_mu_E(int part, double mu_E[3]) {
@@ -825,7 +829,7 @@ void local_remove_particle(int part) {
 
   /* the tricky - say ugly - part: determine
      the cell the particle is located in by checking
-     wether the particle address is inside the array */
+     whether the particle address is inside the array */
   for (c = 0; c < local_cells.n; c++) {
     tmp = local_cells.cell[c];
     ind = p - tmp->part;
@@ -1174,7 +1178,7 @@ void auto_exclusions(int distance) {
 
   /* setup the exclusions and clear the arrays. We do not setup the exclusions
      up there, since on_part_change clears the partCfg, so that we would have to
-     restore it continously. Of course this could be optimized by bundling the
+     restore it continuously. Of course this could be optimized by bundling the
      exclusions, but this is only done once and the overhead is as much as for
      setting the bonds, which the user apparently accepted.
   */
@@ -1246,9 +1250,7 @@ void pointer_to_quatu(Particle const *p, double const *&res) {
 }
 #endif
 
-#ifdef ELECTROSTATICS
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
-#endif
 
 #ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, int const *&res) {

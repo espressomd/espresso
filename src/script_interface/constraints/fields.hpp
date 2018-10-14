@@ -37,8 +37,8 @@ using namespace ::FieldCoupling::Fields;
  * @brief ScriptInterface implementations for the
  *        various fields provided.
  *
- * These are seperated from the Contraints because
- * they can be reused togher with the fields themselfes.
+ * These are separated from the Constraints because
+ * they can be reused together with the fields themselves.
  */
 template <typename Field> struct field_params_impl;
 

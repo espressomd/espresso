@@ -18,16 +18,16 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file thermostat.cpp
-    Implementation of \ref thermostat.hpp "thermostat.h"
+/** \file
+    Implementation of \ref thermostat.hpp "thermostat.hpp"
  */
 #include "thermostat.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "ghmc.hpp"
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "npt.hpp"
-#include "thermalized_bond.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -38,14 +38,14 @@ int thermo_switch = THERMO_OFF;
 /** Temperature */
 double temperature = 0.0;
 
-/** True if the thermostat should acton on virtual particles. */
+/** True if the thermostat should act on virtual particles. */
 bool thermo_virtual = true;
 
 using Thermostat::GammaType;
 
 namespace {
 /* These functions return the sentinel value for the
-   langevin params, indicating that they have not been
+   Langevin params, indicating that they have not been
    set yet. */
 constexpr double sentinel(double) { return -1.0; }
 Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }

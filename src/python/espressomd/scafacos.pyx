@@ -56,7 +56,7 @@ IF SCAFACOS == 1:
                 pname = p[i]
                 i += 1
 
-                # The first item after the parameter name is alsways a value
+                # The first item after the parameter name is always a value
                 # But in the case of array-like properties, there can also
                 # follow several values. Therefore, we treat the next
                 # words as part of the value, if they begin with a digit
@@ -72,7 +72,7 @@ IF SCAFACOS == 1:
                 if len(pvalues) == 1:
                     pvalues = pvalues[0]
                 else:
-                    # Cast array elements to strings and join them by commata
+                    # Cast array elements to strings and join them by commas
                     # to achieve consistency with setting array-likes
                     # such as "pnfft_n":"128,128,128"
                     for j in range(len(pvalues)):
@@ -94,7 +94,7 @@ IF SCAFACOS == 1:
             return res
 
         def _set_params_in_es_core(self):
-            # Verify that scafacos is not used for elecrostatics and dipoles
+            # Verify that scafacos is not used for electrostatics and dipoles
             # at the same time
             IF ELECTROSTATICS == 1:
                 if self.dipolar and < int > electrostatics.coulomb.method == <int > electrostatics.COULOMB_SCAFACOS:

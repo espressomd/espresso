@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "energy_inline.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include <stdexcept>
 
@@ -60,11 +59,11 @@ private:
   double m_cut_off;
 };
 
-/** True if the short range energy is largern than a cut_off */
+/** True if the short range energy is larger than a cut_off */
 class EnergyCriterion : public PairCriterion {
 public:
   bool decide(const Particle &p1, const Particle &p2) const override {
-    // Distnace between particles
+    // Distance between particles
     double vec21[3];
     get_mi_vector(vec21, p1.r.p, p2.r.p);
     const double dist_betw_part = sqrt(sqrlen(vec21));

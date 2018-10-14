@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file halo.hpp
+/** \file
  *
  * Halo scheme for parallelization of lattice algorithms.
  * Header file for \ref halo.cpp.
@@ -98,8 +98,8 @@ typedef struct {
   unsigned long s_offset; /**< offset for send buffer */
   unsigned long r_offset; /**< offset for receive buffer */
 
-  Fieldtype fieldtype;   /**< type layout of the data beeing exchanged */
-  MPI_Datatype datatype; /**< MPI datatype of data beeing communicated */
+  Fieldtype fieldtype;   /**< type layout of the data being exchanged */
+  MPI_Datatype datatype; /**< MPI datatype of data being communicated */
 
 } HaloInfo;
 
@@ -115,7 +115,7 @@ typedef struct {
 
 /** Creates a fieldtype describing the data layout
  *  @param count   number of subtypes (Input)
- *  @param lengths array of lenghts of the subtytpes (Input)
+ *  @param lengths array of lengths of the subtypes (Input)
  *  @param disps   array of displacements the subtypes (Input)
  *  @param extent  extent of the whole new fieldtype (Input)
  *  @param newtype newly created fieldtype (Input/Output)
@@ -142,15 +142,15 @@ void halo_free_fieldtype(Fieldtype *ftype);
 
 /** Preparation of a certain halo parallelizations scheme. Sets up the
  *  necessary datastructures for \ref halo_communication
- * @param hc         halo communicator beeing created (Input/Output)
- * @param lattice    lattice the communcation is created for (Input)
+ * @param hc         halo communicator being created (Input/Output)
+ * @param lattice    lattice the communication is created for (Input)
  * @param fieldtype  field layout of the lattice data (Input)
  * @param datatype   MPI datatype for the lattice data (Input)
  */
 void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype);
 
-/** Frees datastrutures associated with a halo communicator
+/** Frees datastructures associated with a halo communicator
  * @param hc halo communicator to be released
  */
 void release_halo_communication(HaloCommunicator *hc);

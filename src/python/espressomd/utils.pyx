@@ -118,8 +118,8 @@ cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
 
 cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
     """
-    Checks that x is in range [v_min,v_max] (inlude boundaries via
-    inlc_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to
+    Checks that x is in range [v_min,v_max] (include boundaries via
+    incl_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to
     disable limit.
 
     """
@@ -271,7 +271,7 @@ cpdef handle_errors(msg):
 
 def get_unravelled_index(len_dims, n_dims, flattened_index):
     """
-    Getting the unravelled index for a given flattened index in ``n_dims`` dimensions.
+    Getting the unraveled index for a given flattened index in ``n_dims`` dimensions.
 
     Parameters
     ----------
@@ -331,6 +331,8 @@ def is_valid_type(value, t):
     if t == int:
         return isinstance(value, (int, np.integer, np.long))
     elif t == float:
-        return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+        if hasattr(np, 'float128'):
+            return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+        return isinstance(value, (float, np.float16, np.float32, np.float64, np.longdouble))
     else:
         return isinstance(value, t)

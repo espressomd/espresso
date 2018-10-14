@@ -94,8 +94,6 @@ struct CUDA_particle_data {
   float mass;
 #endif
 
-  unsigned int fixed;
-
 #ifdef VIRTUAL_SITES
   bool is_virtual;
 #endif
@@ -162,9 +160,9 @@ void copy_part_data_to_gpu(ParticleRange particles);
  * @brief Distribute forces to the slaves, and and them to the particles.
  *
  * @param particles The particles the forces (and torques should be added to)
- * @param host_forces The forces as flat array of size 3 * particls.size(),
+ * @param host_forces The forces as flat array of size 3 * particles.size(),
  only relevant on the master.
- * @param host_torques The torques as flat array of size 3 * particls.size(),
+ * @param host_torques The torques as flat array of size 3 * particles.size(),
  *                this is only touched if ROTATION is active. Only relevant
  on the master.
  *

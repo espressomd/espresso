@@ -21,7 +21,7 @@
 set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL ON)
 
 # Target for the unit tests
-add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
+add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) --output-on-failure)
 
 # Run unit tests on check
 add_dependencies(check check_unit_tests)
@@ -30,7 +30,20 @@ add_dependencies(check check_unit_tests)
 function(UNIT_TEST)
   cmake_parse_arguments(TEST "" "NAME;NUM_PROC" "SRC" ${ARGN} )
   add_executable(${TEST_NAME} ${TEST_SRC})
-  target_link_libraries(${TEST_NAME} ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+  target_link_libraries(${TEST_NAME} PRIVATE ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+  if(WITH_COVERAGE)
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<CONFIG:Release>:-g>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<CONFIG:Release>:-O0>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fprofile-instr-generate>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fcoverage-mapping>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:--coverage>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-fprofile-arcs>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-ftest-coverage>")
+    if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+      target_link_libraries(${TEST_NAME} PUBLIC gcov)
+    endif()
+  endif()
+  target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
   add_dependencies(${TEST_NAME} EspressoConfig)
 
   # If NUM_PROC is given, set up MPI parallel test case

@@ -20,7 +20,7 @@
 */
 #ifndef _THERMOSTAT_H
 #define _THERMOSTAT_H
-/** \file thermostat.hpp
+/** \file
 
 */
 
@@ -72,7 +72,7 @@ extern int thermo_switch;
 /** temperature. */
 extern double temperature;
 
-/** True if the thermostat should acton on virtual particles. */
+/** True if the thermostat should act on virtual particles. */
 extern bool thermo_virtual;
 
 /** Langevin friction coefficient gamma. */
@@ -89,7 +89,7 @@ extern double nptiso_gammav;
 
 /** Number of NVE-MD steps in GHMC Cycle*/
 extern int ghmc_nmd;
-/** Phi parameter for GHMC partial momenum update step */
+/** Phi parameter for GHMC partial momentum update step */
 extern double ghmc_phi;
 
 /************************************************
@@ -175,7 +175,7 @@ inline void thermo_convert_vel_space_to_body(Particle *p,
 #endif // ROTATION
 
 #ifdef NPT
-/** add velocity-dependend noise and friction for NpT-sims to the particle's
+/** add velocity-dependent noise and friction for NpT-sims to the particle's
    velocity
     @param vj     j-component of the velocity
     @return       j-component of the noise added to the velocity, also scaled by
@@ -192,7 +192,7 @@ inline double friction_therm0_nptiso(double vj) {
   return 0.0;
 }
 
-/** add p_diff-dependend noise and friction for NpT-sims to \ref
+/** add p_diff-dependent noise and friction for NpT-sims to \ref
  * nptiso_struct::p_diff */
 inline double friction_thermV_nptiso(double p_diff) {
   extern double nptiso_pref3, nptiso_pref4;
@@ -264,7 +264,7 @@ inline void friction_thermo_langevin(Particle *p) {
       langevin_pref2_temp =
           sqrt(langevin_temp_coeff * p->p.T * langevin_gamma / time_step);
     else
-      // Defaut values for both
+      // Default values for both
       langevin_pref2_temp = langevin_pref2;
   }
 

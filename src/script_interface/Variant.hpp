@@ -71,7 +71,7 @@ typedef std::map<std::string, Variant> VariantMap;
 
 namespace detail {
 /**
- * @brief Implementation of @f infer_type.
+ * @brief Implementation of infer_type.
  *
  * Helper struct is needed because particle specialization
  * of functions is not allowed. Every specialization deals
@@ -180,7 +180,7 @@ bool is_vector(Variant const &v);
 void transform_vectors(Variant &v);
 
 /**
- * @brief Recursivly print the type of a variant.
+ * @brief Recursively print the type of a variant.
  */
 std::string print_variant_types(Variant const &v);
 

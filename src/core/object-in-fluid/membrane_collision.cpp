@@ -18,13 +18,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file membrane_collision.cpp
+/** \file
  *
  *  Implementation of \ref membrane_collision.hpp
  */
 #include "membrane_collision.hpp"
-#include "../communication.hpp"
-#include "interaction_data.hpp"
+#include "communication.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #ifdef MEMBRANE_COLLISION
 

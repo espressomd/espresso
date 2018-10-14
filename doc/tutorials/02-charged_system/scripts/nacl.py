@@ -146,7 +146,7 @@ for i in range(num_configs):
                                                                               temp_measured[-1]))
     system.integrator.run(integ_steps_per_config)
 
-    # Interally append particle configuration
+    # Internally append particle configuration
     system.analysis.append()
 
 

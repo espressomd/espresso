@@ -222,7 +222,7 @@ cat_range = radius + 1.0 * sig
 cat_rate = rate
 
 ## Exercise 4 ##
-# We have read the acticity parameter from the command line into
+# We have read the activity parameter from the command line into
 # $active, where 0 means off and 1 means on.  When $active = 0 we can
 # simply go on, but when $active = 1 we have to set up the reaction.
 # Check the $active parameter and setup a reaction for the catalyzer
@@ -273,7 +273,7 @@ system.integrator.set_vv()
 
 ## Answer 6 ##
 # Because of the use of minimize_energy. Had we instead used force
-# capping, a seperate integration loop with thermostating would have
+# capping, a separate integration loop with thermostatting would have
 # been used to remove offending configurations.
 
 system.thermostat.set_langevin(kT=temp, gamma=frict_trans_colloid)

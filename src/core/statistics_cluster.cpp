@@ -21,7 +21,7 @@
 
 #include "statistics_cluster.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 /** nullptr terminated linked list of elements of a cluster (indices in particle
  * list) */
@@ -133,7 +133,7 @@ int cluster_free_volume_grid(IntList mesh, int dim[3], int ***holes) {
 
   // step 1 go through all mesh points
   while (i < (dim[0] * dim[1] * dim[2])) {
-    // step 2 test if mesh point is occupied or allready assigned
+    // step 2 test if mesh point is occupied or already assigned
     if (mesh.e[i] == -2 || mesh.e[i] >= 0) {
       i++;
     } else {
@@ -199,7 +199,7 @@ void cluster_free_volume_surface(IntList mesh, int dim[3], int nholes,
   for (i = 0; i < nholes; i++)
     surface[i] = 0;
 
-  // go through all ellements
+  // go through all elements
   for (i = 0; i < (dim[0] * dim[1] * dim[2]); i++) {
     n = mesh.e[i];
     // check all cluster elements

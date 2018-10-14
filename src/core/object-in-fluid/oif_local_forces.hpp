@@ -19,14 +19,16 @@
 #ifndef _OBJECT_IN_FLUID_OIF_LOCAL_FORCES_H
 #define _OBJECT_IN_FLUID_OIF_LOCAL_FORCES_H
 
-/** \file oif_local_forces.hpp
+/** \file
  *  Routines to calculate the OIF_LOCAL_FORCES
  *  for a particle quadruple (two neighboring triangles with common edge).
  * (Dupin2007) \ref forces.cpp
  */
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "config.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "integrate.hpp"
 #include "particle_data.hpp"
 
 #include "utils/math/triangle_functions.hpp"
@@ -122,7 +124,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
     // denote p vector between p2 and p3
     // denote v the velocity difference between the points p2 and p3
     // denote alpha the angle between p and v
-    // denote x the projevted v onto p
+    // denote x the projected v onto p
     // cos alpha = |x|/|v|
     // cos alpha = (v,p)/(|v||p|)
     // together we get |x|=(v,p)/|p|

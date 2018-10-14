@@ -67,7 +67,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
     proc_name[63] = 0;
 
   for (int i = 0; i < n_gpus; ++i) {
-    /* Check if device has at least mininum compute capability */
+    /* Check if device has at least minimum compute capability */
     if (cuda_check_gpu(i) == ES_OK) {
       EspressoGpuDevice device;
       if (cuda_get_device_props(i, device) == ES_OK) {

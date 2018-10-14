@@ -24,14 +24,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VirtualSites.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-/** @brief Virtual sites which are advected with an lb fuid. Forces on them are
+/** @brief Virtual sites which are advected with an lb fluid. Forces on them are
  * instantaneously transferred to the fluid
  */
 class VirtualSitesInertialessTracers : public VirtualSites {
   /** @brief Update positions and/or velocities of virtual sites
 
   * Velocities are only updated update_velocities() return true
-  * @param recalc_positions can be used to skip the reculation of positions
+  * @param recalc_positions can be used to skip the recalculation of positions
   */
   void update(bool recalc_positions = true) const override{};
   /** Back-transfer forces (and torques) to non-virtual particles */

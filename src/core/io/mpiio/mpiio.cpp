@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file mpiio.cpp
+/** \file
  *
- * Concerning the file layots.
+ * Concerning the file layouts.
  * - Scalar arrays are written like this:
  *   rank0 --- rank1 --- rank2 ...
  *   where each rank dumps its scalars in the ordering of the particles.
@@ -29,7 +29,7 @@
  *   looks like this:
  *   v1[0] v1[1] v1[2] v2[0] v2[1] v2[2] v3[0] ...
  *
- * To be able to determine the rank bondaries (a multiple of
+ * To be able to determine the rank boundaries (a multiple of
  * nlocalparts), the file 1.pref is written, which dumps the Exscan
  * results of nlocalparts, i.e. the prefixes in scalar arrays:
  * - 1.prefs looks like this:
@@ -50,11 +50,11 @@
 
 #include "config.hpp"
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
 #include "mpiio.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
@@ -298,7 +298,7 @@ static void mpiio_read_array(const std::string &fn, T *arr, size_t len,
  *
  * \param fn Filename of the head file
  * \param rank The rank of the current process in MPI_COMM_WORLD
- * \param file Pointer to store the fields to
+ * \param fields Pointer to store the fields to
  */
 static void read_head(const std::string &fn, int rank, unsigned *fields) {
   FILE *f = nullptr;
@@ -325,7 +325,7 @@ static void read_head(const std::string &fn, int rank, unsigned *fields) {
  * \param rank The rank of the current process in MPI_COMM_WORLD
  * \param size The size of MPI_COMM_WORLD
  * \param nglobalpart The global amount of particles
- * \param prefs Pointer to store the prefix to
+ * \param pref Pointer to store the prefix to
  * \param nlocalpart Pointer to store the amount of local particles to
  */
 static void read_prefs(const std::string &fn, int rank, int size,

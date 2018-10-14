@@ -22,10 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef IMMERSED_BOUNDARY
 
 #include "ImmersedBoundaries.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
 #include "particle_data.hpp"
 
 /************

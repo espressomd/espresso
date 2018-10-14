@@ -20,13 +20,13 @@
 */
 #ifndef _COMMUNICATION_HPP
 #define _COMMUNICATION_HPP
-/** \file communication.hpp
+/** \file
     This file contains the asynchronous MPI communication.
 
-    It is the header file for \ref communication.cpp "communication.c".
+    It is the header file for \ref communication.cpp "communication.cpp".
 
     The asynchronous MPI communication is used during the script
-    evaluation. Except for the master node that interpretes the Tcl
+    evaluation. Except for the master node that interprets the Tcl
     script, all other nodes wait in mpi_loop() for the master node to
     issue an action using mpi_call(). \ref mpi_loop immediately
     executes an MPI_Bcast and therefore waits for the master node to
@@ -172,7 +172,8 @@ void mpi_send_v(int node, int part, double v[3]);
     \param node the node it is attached to.
     \param swim struct containing swimming parameters
 */
-void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
+void mpi_send_swimming(int node, int part,
+                       const ParticleParametersSwimming &swim);
 
 /** Issue REQ_SET_F: send particle force.
     Also calls \ref on_particle_change.
@@ -300,7 +301,7 @@ void mpi_send_dip(int node, int part, double dip[3]);
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
-    \param dipm its new dipole moment (absolut value).
+    \param dipm its new dipole moment (absolute value).
 */
 void mpi_send_dipm(int node, int part, double dipm);
 #endif
@@ -342,7 +343,7 @@ void mpi_send_mol_id(int node, int part, int mid);
     \param pnode    node it is attached to.
     \param part     identity of principal atom of the bond.
     \param bond     field containing the bond type number and the identity of
-   all bond partners (secundary atoms of the bond).
+   all bond partners (secondary atoms of the bond).
     \param _delete   if true, do not add the bond, rather delete it if found
     \return 1 on success or 0 if not (e. g. bond to delete does not exist)
 */
@@ -351,7 +352,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int _delete);
 /** Issue REQ_SET_EXCLUSION: send exclusions.
     Also calls \ref on_particle_change.
     \param part     identity of first particle of the exclusion.
-    \param part2    identity of secnd particle of the exclusion.
+    \param part2    identity of second particle of the exclusion.
     \param _delete   if true, do not add the exclusion, rather delete it if
    found
 */
@@ -369,7 +370,6 @@ void mpi_remove_particle(int node, int id);
     and exclusions are left over.
     \param part the particle.
     \param node the node it is attached to.
-    \param part_data where to store the received data.
     \note Gets a copy of the particle data not a pointer to the actual particle
     used in integration
 */
@@ -464,7 +464,7 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
 */
 void mpi_set_time_step(double time_step);
 
-/** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
+/** Issue REQ_BCAST_COULOMB: send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
 /** send new collision parameters. */
@@ -527,7 +527,7 @@ int mpi_sync_topo_part_info(void);
 
 /** Issue REQ_BCAST_LBPAR: Broadcast a parameter for Lattice Boltzmann.
  * @param field References the parameter field to be broadcasted. The references
- * are defined in \ref lb.hpp "lb.hpp"
+ * are defined in \ref lb.hpp "grid_based_algorithms/lb.hpp"
  */
 void mpi_bcast_lb_params(int field, int value = -1);
 
@@ -566,12 +566,12 @@ void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary);
 /** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
     @return nonzero on error
 */
-int mpi_iccp3m_iteration(int dummy);
+int mpi_iccp3m_iteration();
 
 /** Issue REQ_ICCP3M_INIT: performs iccp3m initialization
     @return nonzero on error
 */
-int mpi_iccp3m_init(int dummy);
+int mpi_iccp3m_init();
 
 /** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
  * @param node  processor to send to

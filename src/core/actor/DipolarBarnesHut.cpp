@@ -18,7 +18,6 @@
 */
 
 #include "DipolarBarnesHut.hpp"
-#include "../forces.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
 #include "config.hpp"

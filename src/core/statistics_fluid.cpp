@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file statistics_fluid.cpp
+/** \file
  *
  * Fluid related analysis functions.
  * Implementation of \ref statistics_fluid.hpp.
@@ -30,12 +30,12 @@
 #ifdef LB
 
 #include "communication.hpp"
-#include "lb.hpp"
-#include "lbboundaries.hpp"
+#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbboundaries.hpp"
 #include "utils.hpp"
 #include <mpi.h>
 
-/** Caclulate mass of the LB fluid.
+/** Calculate mass of the LB fluid.
  * \param result Fluid mass
  */
 void lb_calc_fluid_mass(double *result) {

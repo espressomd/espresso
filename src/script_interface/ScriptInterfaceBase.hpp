@@ -31,14 +31,14 @@
 
 namespace ScriptInterface {
 /**
- * Convinience typedefs.
+ * Convenience typedefs.
  */
 typedef std::map<std::string, Parameter> ParameterMap;
 
 /**
  * @brief Make a Variant from argument.
  *
- * This is a convinience function, so that
+ * This is a convenience function, so that
  * rather involved constructors from
  * boost::variant are not needed in the
  * script interfaces.
@@ -48,7 +48,7 @@ template <typename T> Variant make_variant(const T &x) { return Variant(x); }
 /**
  * @brief Base class for generic script interface.
  *
- * @TODO Add extensive documentation.
+ * @todo Add extensive documentation.
  *
  */
 class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {
@@ -69,7 +69,7 @@ public:
   static std::weak_ptr<ScriptInterfaceBase> &get_instance(ObjectId id);
 
 private:
-  /* Memers related to object construction, they are
+  /* Members related to object construction, they are
      only to be used internally. */
 
   std::string m_name;
@@ -82,7 +82,7 @@ public:
   /**
    * @brief Name of the object.
    *
-   * This is the name by which this instance was construted.
+   * This is the name by which this instance was constructed.
    *
    * @return Name of the object.
    */
@@ -100,7 +100,7 @@ public:
    * provided parameters. This can be used if the SO has required parameters,
    * it represents some type that can not reasonably be default constructed,
    * or if the core implementation has to be chosen by a parameter.
-   * It is guarantueed that no getter or setter functions from this interface
+   * It is guaranteed that no getter or setter functions from this interface
    * is called before construct (only name() and valid_parameters()),
    * and it is only called once.
    *
@@ -129,9 +129,9 @@ public:
   }
 
   /**
-   * @brief Get requiered and optional parameters for class
+   * @brief Get required and optional parameters for class
    *
-   * Get requiered and optional parameters for class.
+   * Get required and optional parameters for class.
    *
    * @return Expected parameters.
    */
@@ -141,7 +141,7 @@ public:
    * @brief Get single parameter.
    *
    * @param name Name of the parameter
-   * @return Value of parameter @param name.
+   * @return Value of parameter @p name
    */
   virtual Variant get_parameter(const std::string &name) const {
     return get_parameters().at(name);
@@ -161,7 +161,7 @@ public:
    * every
    * element of the map.
    *
-   * @param Paramters Parameters to set.
+   * @param parameters Parameters to set.
    */
   virtual void set_parameters(const VariantMap &parameters) {
     for (auto const &it : parameters) {
@@ -172,7 +172,7 @@ public:
   /**
    * @brief Call a method on the object.
    *
-   * If not overriden by the implementation,
+   * If not overridden by the implementation,
    * this does nothing.
    */
   virtual Variant call_method(const std::string &, const VariantMap &) {

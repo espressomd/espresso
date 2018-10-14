@@ -519,7 +519,7 @@ class Mesh(object):
         tmp_triangle_list_ok.append(tmp_triangle_list[0])
         tmp_triangle_list.pop(0)
 
-        while len(tmp_triangle_list) != 0:
+        while tmp_triangle_list:
             i = 0
             while i < len(tmp_triangle_list):
                 tmp_triangle = tmp_triangle_list[i]
@@ -1028,7 +1028,6 @@ class OifCell(object):
         if data is None:
             raise Exception(
                 "OifCell: append_point_data_to_vtk: No data provided. Quitting.")
-            return
         if data_name is None:
             raise Exception(
                 "OifCell: append_point_data_to_vtk: No data_name provided. Quitting.")

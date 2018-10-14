@@ -31,7 +31,7 @@ from globals cimport immersed_boundaries
 
 cdef class NonBondedInteraction(object):
     """
-    Represents an instance of a non-bonded interaction, such as lennard jones
+    Represents an instance of a non-bonded interaction, such as Lennard-Jones
     Either called with two particle type id, in which case, the interaction
     will represent the bonded interaction as it is defined in Espresso core
     Or called with keyword arguments describing a new interaction.
@@ -292,7 +292,7 @@ IF LENNARD_JONES == 1:
                     self._params["shift"],
                     self._params["offset"],
                     self._params["min"]):
-                raise Exception("Could not set Lennard Jones parameters")
+                raise Exception("Could not set Lennard-Jones parameters")
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -324,8 +324,87 @@ IF LENNARD_JONES == 1:
             """
             return "epsilon", "sigma", "cutoff", "shift"
 
-# Generic Lennard Jones
+IF WCA == 1:
+    cdef class WCAInteraction(NonBondedInteraction):
 
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            Raises
+            ------
+            ValueError
+                If not true.
+            """
+            if self._params["epsilon"] < 0:
+                raise ValueError("WCA eps has to be >=0")
+            if self._params["sigma"] < 0:
+                raise ValueError("WCA sigma has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef IA_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "epsilon": ia_params.WCA_eps,
+                "sigma": ia_params.WCA_sig,
+                "cutoff": ia_params.WCA_cut}
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return (self._params["epsilon"] > 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the WCA interaction.
+
+            Parameters
+            ----------
+
+            epsilon : :obj:`float`
+                      The magnitude of the interaction.
+            sigma : :obj:`float`
+                    Determines the interaction length scale.
+
+            """
+            super(WCAInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            if wca_set_params(
+                    self._part_types[0], self._part_types[1],
+                    self._params["epsilon"],
+                    self._params["sigma"]):
+                raise Exception("Could not set WCA parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "epsilon": 0.,
+                "sigma": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "WCA"
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "epsilon", "sigma"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "epsilon", "sigma"
+
+# Generic Lennard-Jones
 IF LENNARD_JONES_GENERIC == 1:
 
     cdef class GenericLennardJonesInteraction(NonBondedInteraction):
@@ -391,7 +470,7 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["lam"],
                                     self._params["delta"]):
                     raise Exception(
-                        "Could not set Generic Lennard Jones parameters")
+                        "Could not set Generic Lennard-Jones parameters")
             ELSE:
                 if ljgen_set_params(self._part_types[0], self._part_types[1],
                                     self._params["epsilon"],
@@ -405,7 +484,7 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["b2"],
                                     ):
                     raise Exception(
-                        "Could not set Generic Lennard Jones parameters")
+                        "Could not set Generic Lennard-Jones parameters")
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -527,7 +606,7 @@ IF LJCOS:
                                 self._params["cutoff"],
                                 self._params["offset"]):
                 raise Exception(
-                    "Could not set Lennard Jones Cosine parameters")
+                    "Could not set Lennard-Jones Cosine parameters")
 
         def default_params(self):
             return {
@@ -608,7 +687,7 @@ IF LJCOS2:
                                  self._params["offset"],
                                  self._params["width"]):
                 raise Exception(
-                    "Could not set Lennard Jones Cosine2 parameters")
+                    "Could not set Lennard-Jones Cosine2 parameters")
 
         def default_params(self):
             return {
@@ -1611,7 +1690,7 @@ IF GAUSSIAN == 1:
             eps : :obj:`float`
                   Overlap energy epsilon.
             sig : :obj:`float`
-                  Variance sigma of the Gaussian interactin.
+                  Variance sigma of the Gaussian interaction.
             cutoff : :obj:`float`
                      Cutoff distance of the interaction.
 
@@ -1672,6 +1751,8 @@ class NonBondedInteractionHandle(object):
         # Here, add one line for each nonbonded ia
         IF LENNARD_JONES:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
+        IF WCA:
+            self.wca = WCAInteraction(_type1, _type2)
         IF MEMBRANE_COLLISION:
             self.membrane_collision = MembraneCollisionInteraction(
                 _type1, _type2)
@@ -1950,7 +2031,7 @@ class FeneBond(BondedInteraction):
 
     def __init__(self, *args, **kwargs):
         """
-        FeneBond initializer. Used to instatiate a FeneBond identifier
+        FeneBond initializer. Used to instantiate a FeneBond identifier
         with a given set of parameters.
 
         Parameters
@@ -2012,7 +2093,7 @@ class HarmonicBond(BondedInteraction):
 
     def __init__(self, *args, **kwargs):
         """
-        HarmonicBond initializer. Used to instatiate a HarmonicBond identifier
+        HarmonicBond initializer. Used to instantiate a HarmonicBond identifier
         with a given set of parameters.
 
         Parameters
@@ -2070,14 +2151,14 @@ if ELECTROSTATICS:
 
         def __init__(self, *args, **kwargs):
             """
-            BondedCoulombBond initialiser. Used to instatiate a BondedCoulombBond identifier
+            BondedCoulombBond initialiser. Used to instantiate a BondedCoulombBond identifier
             with a given set of parameters.
 
             Parameters
             ----------
 
             prefactor : :obj:`float`
-                        Sets the coulomb prefactor of the bonded coulomb interaction.
+                        Sets the Coulomb prefactor of the bonded Coulomb interaction.
             """
             super(BondedCoulomb, self).__init__(*args, **kwargs)
 
@@ -2110,7 +2191,7 @@ if P3M:
 
         def __init__(self, *args, **kwargs):
             """
-            BondedCoulombP3MSRBond initialiser. Used to instatiate a BondedCoulombP3MSRBond identifier
+            BondedCoulombP3MSRBond initialiser. Used to instantiate a BondedCoulombP3MSRBond identifier
             with a given set of parameters. Calculates ony the P3M shortrange part.
 
             Parameters
@@ -2150,18 +2231,18 @@ class ThermalizedBond(BondedInteraction):
 
     def __init__(self, *args, **kwargs):
         """
-        ThermalizedBond initialiser. Used to instatiate a ThermalizedBond identifier
+        ThermalizedBond initialiser. Used to instantiate a ThermalizedBond identifier
         with a given set of parameters.
 
         Parameters
         ----------
 
         temp_com : :obj:`float`
-                    Sets the temerature of the Langevin thermostat for the com of the particle pair.
+                    Sets the temperature of the Langevin thermostat for the com of the particle pair.
         gamma_com: :obj:`float`
                     Sets the friction coefficient of the Langevin thermostat for the com of the particle pair.
         temp_distance: :obj:`float`
-                    Sets the temerature of the Langevin thermostat for the distance vector of the particle pair.
+                    Sets the temperature of the Langevin thermostat for the distance vector of the particle pair.
         gamma_distance: :obj:`float`
                      Sets the friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
         r_cut: :obj:`float`, optional
@@ -2226,14 +2307,14 @@ IF THOLE:
             Parameters
             ----------
             scaling_coeff : :obj:`float`
-                            The facor used in the thole damping function between
-                            polarizable particles i and j. Usually caluclated by
+                            The factor used in the Thole damping function between
+                            polarizable particles i and j. Usually calculated by
                             the polarizabilities alpha_i, alpha_j and damping
                             parameters  a_i, a_j via
                             scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
             q1q2: :obj:`float`
                   charge factor of the involved charges. Has to be set because
-                  it acts only on the portion of the drude core charge that is
+                  it acts only on the portion of the Drude core charge that is
                   associated to the dipole of the atom. For charged, polarizable
                   atoms that charge is not equal to the particle charge property.
 
@@ -2264,7 +2345,7 @@ IF ROTATION:
 
         def __init__(self, *args, **kwargs):
             """
-            HarmonicDumbbellBond initializer. Used to instatiate a
+            HarmonicDumbbellBond initializer. Used to instantiate a
             HarmonicDumbbellBond identifier with a given set of parameters.
 
             Parameters
@@ -2326,7 +2407,7 @@ IF ROTATION != 1:
 
         def __init__(self, *args, **kwargs):
             """
-            HarmonicDumbbellBond initializer. Used to instatiate a
+            HarmonicDumbbellBond initializer. Used to instantiate a
             HarmonicDumbbellBond identifier with a given set of parameters.
 
             Parameters
@@ -2932,7 +3013,7 @@ IF IMMERSED_BOUNDARY:
 
         def __init__(self, *args, **kwargs):
             """
-            IBM_Triel initializer. Used to instatiate an IBM_Triel identifier
+            IBM_Triel initializer. Used to instantiate an IBM_Triel identifier
             with a given set of parameters.
 
             Parameters
@@ -2991,7 +3072,7 @@ IF IMMERSED_BOUNDARY == 1:
 
         def __init__(self, *args, **kwargs):
             """
-            IBM_Tribend initializer. Used to instatiate an IBM_Tribend identifier
+            IBM_Tribend initializer. Used to instantiate an IBM_Tribend identifier
             with a given set of parameters.
 
             Parameters
@@ -3043,7 +3124,7 @@ IF IMMERSED_BOUNDARY == 1:
 
         def __init__(self, *args, **kwargs):
             """
-            IBM_VolCons initializer. Used to instatiate an IBM_VolCons identifier
+            IBM_VolCons initializer. Used to instantiate an IBM_VolCons identifier
             with a given set of parameters.
 
             Parameters

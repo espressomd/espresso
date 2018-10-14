@@ -44,8 +44,8 @@ public:
           },
           [this]() { return (m_pc != nullptr) ? m_pc->id() : ObjectId(); }}});
   };
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
     if (method == "get_cluster") {
 
       // Note: Cluster objects are generated on the fly, to avoid having to
@@ -62,8 +62,8 @@ public:
       // This ensures, that the reference count of the shared_ptr doesn't go
       // to zero, while it is passed to Python.
       // (At some point, it is converted to an ObjectId, which is passed
-      //  to Python, where a new script object is construted. While it is
-      // passed as ObjectId, noone holds an instance of the shared_ptr)
+      //  to Python, where a new script object is constructed. While it is
+      // passed as ObjectId, no one holds an instance of the shared_ptr)
       m_tmp_cluster = c;
       return m_tmp_cluster->id();
     }

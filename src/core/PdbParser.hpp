@@ -37,7 +37,6 @@ struct BoundingBox {
 
 typedef struct {
   int i; // index
-  int m; // model index
   float x, y, z;
 } pdb_atom;
 
@@ -53,7 +52,7 @@ typedef struct {
 } itp_atomtype;
 
 struct itp_atomtype_compare {
-  bool operator()(const itp_atomtype &a, const itp_atomtype &b) {
+  bool operator()(const itp_atomtype &a, const itp_atomtype &b) const {
     return a.id < b.id;
   }
 };

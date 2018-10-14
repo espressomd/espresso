@@ -34,7 +34,7 @@ cdef extern from "particle_data.hpp":
 
     # Note: Conditional compilation is not possible within ctypedef blocks.
     # Therefore, only member variables are imported here, which are always compiled into Espresso.
-    # For all other properties, getter-funcionts have to be used on the c
+    # For all other properties, getter-functions have to be used on the c
     # level.
     ctypedef struct particle_properties "ParticleProperties":
         int    identity
@@ -109,8 +109,7 @@ cdef extern from "particle_data.hpp":
         int set_particle_rotation(int part, int rot)
         void pointer_to_rotation(const particle * p, const short int * & res)
 
-    IF ELECTROSTATICS:
-        int set_particle_q(int part, double q)
+    int set_particle_q(int part, double q)
 
     IF LB_ELECTROHYDRODYNAMICS:
         int set_particle_mu_E(int part, double mu_E[3])
@@ -178,8 +177,7 @@ cdef extern from "particle_data.hpp":
         int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double * rel_ori)
         void set_particle_vs_quat(int part, double * vs_quat)
 
-    IF ELECTROSTATICS:
-        void pointer_to_q(const particle * P, const double * & res)
+    void pointer_to_q(const particle * P, const double * & res)
 
     IF EXTERNAL_FORCES:
         IF ROTATION:

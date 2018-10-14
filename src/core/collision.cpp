@@ -25,7 +25,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "utils/mpi/all_compare.hpp"
@@ -57,7 +57,7 @@ Collision_parameters collision_params;
  * needs to be placed. At this point, all modes need this */
 inline bool bind_centers() {
   // Note that the glue to surface mode adds bonds between the centers
-  // but does so later in the process. This is needed to gaurantee that
+  // but does so later in the process. This is needed to guarantee that
   // a particle can only be glued once, even if queued twice in a single
   // time step
   return collision_params.mode != COLLISION_MODE_OFF &&
@@ -83,7 +83,7 @@ bool validate_collision_parameters() {
   }
 
 #ifndef VIRTUAL_SITES_RELATIVE
-  // The collision modes involving virutal istes also requires the creation of a
+  // The collision modes involving virtual sites also require the creation of a
   // bond between the colliding
   // If we don't have virtual sites, virtual site binding isn't possible.
   if ((collision_params.mode & COLLISION_MODE_VS) ||
@@ -227,7 +227,7 @@ void queue_collision(const int part1, const int part2) {
 }
 
 /** @brief Calculate position of vs for GLUE_TO_SURFACE mode
- *    Reutnrs id of particle to bind vs to */
+ *    Returns id of particle to bind vs to */
 const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
                                             const Particle &p2, Vector3d &pos) {
   double vec21[3];
@@ -333,7 +333,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   for (int j = 0; j < 3; j++)
     vec2[j] *= d2i;
 
-  /* scalar produvt of vec1 and vec2 */
+  /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
 
   // Handle case where cosine is nearly 1 or nearly -1
@@ -466,7 +466,7 @@ std::vector<collision_struct> gather_global_collision_queue() {
 
   res.resize(total_collisions);
 
-  // Gather collision informtion from all nodes and send it to all nodes
+  // Gather collision information from all nodes and send it to all nodes
   MPI_Allgatherv(&(local_collision_queue[0]), byte_counts[this_node], MPI_BYTE,
                  &(res[0]), &(byte_counts[0]), &(displacements[0]), MPI_BYTE,
                  comm_cart);
@@ -549,7 +549,7 @@ void handle_collisions() {
   }
 
   // Note that the glue to surface mode adds bonds between the centers
-  // but does so later in the process. This is needed to gaurantee that
+  // but does so later in the process. This is needed to guarantee that
   // a particle can only be glued once, even if queued twice in a single
   // time step
   if (bind_centers()) {
@@ -565,12 +565,12 @@ void handle_collisions() {
     }
   }
 
-// Virtual sites based collision schemese
+// Virtual sites based collision schemes
 #ifdef VIRTUAL_SITES_RELATIVE
   if ((collision_params.mode & COLLISION_MODE_VS) ||
       (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
-    // Gather the global collision queue, because only one node hsa a collision
-    // across node boundaries in its cueue.
+    // Gather the global collision queue, because only one node has a collision
+    // across node boundaries in its queue.
     // The other node might still have to change particle properties on its
     // non-ghost particle
     auto gathered_queue = gather_global_collision_queue();
@@ -706,7 +706,7 @@ void handle_collisions() {
             local_change_bond(c.pp1, bondG, 0);
           }
 
-          // Change type of partilce being attached, to make it inert
+          // Change type of particle being attached, to make it inert
           if (p1->p.type == collision_params.part_type_to_be_glued) {
             p1->p.type = collision_params.part_type_after_glueing;
           }

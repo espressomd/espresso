@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file statistics.cpp
+/** \file
     This is the place for analysis (so far...).
     Implementation of statistics.hpp
 */
@@ -26,9 +26,9 @@
 #include "communication.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
-#include "lb.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
@@ -216,7 +216,7 @@ void predict_momentum_particles(double *result) {
 /** Calculate total momentum of the system (particles & LB fluid)
  * inputs are bools to include particles and fluid in the linear momentum
  * calculation
- * @param momentum Result for this processor (Output)
+ * @return Result for this processor (Output)
  */
 std::vector<double> calc_linear_momentum(int include_particles,
                                          int include_lbfluid) {
@@ -794,7 +794,7 @@ int calc_cylindrical_average(
   }
 
   // Now we turn the counts into densities by dividing by one radial
-  // bin (binvolume).  We also divide the velocites by the counts.
+  // bin (binvolume).  We also divide the velocities by the counts.
   double binvolume;
   for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
     for (int index_radial = 0; index_radial < bins_radial; index_radial++) {
@@ -999,7 +999,7 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
   stat->virtual_sites = stat->dipolar + c_size * n_dipolar;
   stat->external_fields = stat->virtual_sites + c_size * n_vs;
 
-  // Set all obseravables to zero
+  // Set all observables to zero
   for (int i = 0; i < total; i++)
     stat->data[i] = 0.0;
 }

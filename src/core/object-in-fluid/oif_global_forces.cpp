@@ -17,20 +17,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file oif_global_forces.hpp
+/** \file
  *  Routines to calculate the OIF_GLOBAL_FORCES energy or/and and force
  *  for a particle triple (triangle from mesh). (Dupin2007)
  *  \ref forces.cpp
  */
 
 #include "oif_global_forces.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include "utils/math/triangle_functions.hpp"
 using Utils::angle_btw_triangles;

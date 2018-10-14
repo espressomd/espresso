@@ -18,17 +18,26 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file initialize.cpp
+/** \file
     Implementation of \ref initialize.hpp "initialize.hpp"
 */
 #include "initialize.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
-#include "debye_hueckel.hpp"
 #include "dpd.hpp"
-#include "elc.hpp"
+#include "electrostatics_magnetostatics/debye_hueckel.hpp"
+#include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/icc.hpp" /* -iccp3m- */
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/p3m_gpu.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
@@ -36,33 +45,24 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "iccp3m.hpp" /* -iccp3m- */
+#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbboundaries.hpp"
 #include "lattice.hpp"
-#include "lb.hpp"
-#include "lbboundaries.hpp"
-#include "maggs.hpp"
 #include "metadynamics.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
 #include "nemd.hpp"
+#include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
 #include "observables/Observable.hpp"
-#include "p3m-dipolar.hpp"
-#include "p3m.hpp"
-#include "p3m_gpu.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"
 #include "reaction_ensemble.hpp"
-#include "reaction_field.hpp"
 #include "rotation.hpp"
-#include "scafacos.hpp"
 #include "statistics.hpp"
 #include "swimmer_reaction.hpp"
-#include "thermalized_bond.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "virtual_sites.hpp"
@@ -500,7 +500,7 @@ void on_cell_structure_change() {
 /* Now give methods a chance to react to the change in cell
    structure.  Most ES methods need to reinitialize, as they depend
    on skin, node grid and so on. Only for a change in box length we
-   have separate, faster methods, as this might happend frequently
+   have separate, faster methods, as this might happen frequently
    in a NpT simulation. */
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -726,7 +726,7 @@ void on_ghost_flags_change() {
     ghosts_have_v = 1;
 #endif
 #ifdef DPD
-  // maybe we have to add a new global to differ between compile in and acctual
+  // maybe we have to add a new global to differ between compile in and actual
   // use.
   if (thermo_switch & THERMO_DPD)
     ghosts_have_v = 1;

@@ -22,7 +22,7 @@
 #ifndef RANDOM_H
 #define RANDOM_H
 
-/** \file random.hpp
+/** \file
 
     A random generator
 */
@@ -68,7 +68,7 @@ void mpi_random_seed(int cnt, std::vector<int> &seeds);
 std::string mpi_random_get_stat();
 
 /**
- * @brief Set the seeds on all the node to the state representet
+ * @brief Set the seeds on all the node to the state represented
  *        by the string.
  * The string representation must be one that was returned by
  * mpi_random_get_stat.
@@ -82,7 +82,7 @@ void mpi_random_set_stat(const std::vector<std::string> &stat);
 int get_state_size_of_generator();
 
 /**
- * @bief Initialize PRNG with MPI rank as seed.
+ * @brief Initialize PRNG with MPI rank as seed.
  */
 void init_random(void);
 

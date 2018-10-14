@@ -174,10 +174,10 @@ class Analysis(object):
         Parameters
         ----------
         include_particles : :obj:`bool`, optional
-                            wether to include the particles contribution to the linear
+                            whether to include the particles contribution to the linear
                             momentum.
         include_lbfluid : :obj:`bool`, optional
-                          wether to include the Lattice Boltzmann fluid
+                          whether to include the Lattice Boltzmann fluid
                           contribution to the linear momentum.
 
         Returns
@@ -380,9 +380,9 @@ class Analysis(object):
         * "bonded" , total bonded pressure
         * "bonded", bond_type , bonded pressure which arises from the given bond_type
         * "nonbonded", total nonbonded pressure
-        * "nonbonded", type_i, type_j, nonboned pressure which arises from the interactions between type_i and type_j
-        * "nonbonded_intra", type_i, type_j, nonboned pressure between short ranged forces between type i and j and with the same mol_id
-        * "nonbonded_inter" type_i, type_j", nonboned pressure between short ranged forces between type i and j and different mol_ids
+        * "nonbonded", type_i, type_j, nonbonded pressure which arises from the interactions between type_i and type_j
+        * "nonbonded_intra", type_i, type_j, nonbonded pressure between short ranged forces between type i and j and with the same mol_id
+        * "nonbonded_inter" type_i, type_j", nonbonded pressure between short ranged forces between type i and j and different mol_ids
         * "coulomb", Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the coulomb stress tensor. For how the stress tensor is calculated see below. The averaged value in an isotropic NVT simulation is equivalent to the average of :math:`E^{coulomb}/(3V)`, see :cite:`brown1995general`.
         * "dipolar", TODO
         * "virtual_sites", Stress contribution due to virtual sites
@@ -485,9 +485,9 @@ class Analysis(object):
         * "bonded" , total bonded stress tensor
         * "{bonded, bond_type}" , bonded stress tensor which arises from the given bond_type
         * "nonbonded", total nonbonded stress tensor
-        * "nonbonded type_i", type_j, nonboned stress tensor which arises from the interactions between type_i and type_j
-        * "nonbonded_intra type_i" type_j, nonboned stress tensor between short ranged forces between type i and j and with the same mol_id
-        * "nonbonded_inter type_i", type_j, nonboned stress tensor between short ranged forces between type i and j and different mol_ids
+        * "nonbonded type_i", type_j, nonbonded stress tensor which arises from the interactions between type_i and type_j
+        * "nonbonded_intra type_i" type_j, nonbonded stress tensor between short ranged forces between type i and j and with the same mol_id
+        * "nonbonded_inter type_i", type_j, nonbonded stress tensor between short ranged forces between type i and j and different mol_ids
         * "coulomb", Maxwell stress tensor, how it is calculated depends on the method
         * "dipolar", TODO
         * "virtual_sites", Stress tensor contribution for virtual sites
@@ -631,7 +631,7 @@ class Analysis(object):
         stress_range : array_like :obj:`float`
                        The range of the cuboid.
         bins : array_like :obj:`int`
-               A list condaining the number of bins for each direction.
+               A list containing the number of bins for each direction.
 
         """
 
@@ -699,7 +699,7 @@ class Analysis(object):
             c_analyze.master_energy_calc()
             handle_errors("calc_long_range_energies failed")
 
-        # Individual components of the pressur
+        # Individual components of the pressure
 
         # Total energy
         cdef int i
@@ -902,7 +902,7 @@ class Analysis(object):
         spherically averaged structure factor of particles specified in
         `types`.  The structure factor is calculated for all possible wave
         vectors q up to `order` Do not choose parameter `order` too large
-        because the number of calculations gros as `order` to the third power.
+        because the number of calculations grows as `order` to the third power.
 
         Parameters
         ----------
@@ -1185,7 +1185,7 @@ class Analysis(object):
 
     def moment_of_inertia_matrix(self, p_type=None):
         """
-        Returns the 3x3 moment of interia matrix for particles of a given type.
+        Returns the 3x3 moment of inertia matrix for particles of a given type.
 
         Parameters
         ----------
@@ -1216,94 +1216,6 @@ class Analysis(object):
             MofImatrix_np[i] = MofImatrix[i]
 
         return MofImatrix_np.reshape((3, 3))
-
-    #
-    # rdfchain
-    #
-
-    def rdf_chain(self, r_min=None, r_max=None, r_bins=None,
-                  chain_start=None, number_of_chains=None, chain_length=None):
-        """
-        Returns three radial distribution functions (rdf) for the chains.  The
-        first rdf is calculated for monomers belonging to different chains, the
-        second rdf is for the centers of mass of the chains and the third one
-        is the distribution of the closest distances between the chains (the
-        shortest monomer-monomer distances).  The result is normalized by the
-        spherical bin shell, the total number of pairs and the system volume.
-
-        The distance range is given by `r_min` and `r_max` and it is divided
-        into `r_bins` equidistant bins.
-
-        This requires that a set of chains of equal length which start with the
-        particle with particle number `chain_start` and are consecutively
-        numbered (the last particle in that topology has id number :
-        `chain_start`+ `number_of_chains`*`chain_length`-1.
-
-        Parameters
-        ----------
-        r_min : :obj:`float`
-                Minimal distance to consider.
-        r_max : :obj:`float`
-                Maximal distance to consider.
-        r_bins : :obj:`int`
-                 Number of bins.
-        chain_start : :obj:`int`
-                      The id of the first monomer of the first chain.
-        number_of_chains : :obj:`int`.
-                           Number of chains contained in the range.
-        chain_length : :obj:`int`.
-                       The length of every chain.
-
-        Returns
-        -------
-        array_like
-            Where [0] is the bins used
-            [1] is the first rdf: monomers belonging to different chains,
-            [2] is the second rdf: from the centers of mass of the chains,
-            [3] is the third rdf: from the shortest monomer-monomer distances.
-
-        """
-        cdef vector[double] f1
-        cdef vector[double] f2
-        cdef vector[double] f3
-
-        check_type_or_throw_except(r_min, 1, float, "r_min has to be a float")
-        check_type_or_throw_except(r_max, 1, float, "r_max has to be a float")
-        check_type_or_throw_except(r_bins, 1, int, "r_bins has to be an int")
-
-        self.check_topology(chain_start=chain_start,
-                            number_of_chains=number_of_chains, chain_length=chain_length)
-
-        if (c_analyze.chain_n_chains == 0 or chain_length == 0):
-            raise Exception("The chain topology has not been set")
-        if (r_bins <= 0):
-            raise Exception(
-                "Nothing to be done - choose <r_bins> greater zero!")
-        if (r_min < 0.):
-            raise Exception("<r_min> has to be positive")
-        if (r_max <= r_min):
-            raise Exception("<r_max> has to be larger than <r_min>")
-
-        c_analyze.analyze_rdfchain(
-    c_analyze.partCfg(),
-     r_min,
-     r_max,
-     r_bins,
-     f1,
-     f2,
-     f3)
-
-        rdfchain = np.empty((r_bins, 4))
-        bin_width = (r_max - r_min) / float(r_bins)
-        r = r_min + bin_width / 2.0
-        for i in range(r_bins):
-            rdfchain[i, 0] = r
-            rdfchain[i, 1] = f1[i]
-            rdfchain[i, 2] = f2[i]
-            rdfchain[i, 3] = f3[i]
-            r += bin_width
-
-        return rdfchain
 
     #
     # Vkappa
