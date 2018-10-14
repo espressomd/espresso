@@ -223,7 +223,7 @@ inline void friction_thermo_langevin(Particle *p) {
 
   // Get velocity effective in the thermostatting
   Vector3d velocity;
-  const Vector3d quatu=p->r.calc_director();
+  const Vector3d director=p->r.calc_director();
   for (int i = 0; i < 3; i++) {
     // Particle velocity
     velocity[i] = p->m.v[i];
@@ -231,7 +231,7 @@ inline void friction_thermo_langevin(Particle *p) {
     // In case of the engine feature, the velocity is relaxed
     // towards a swimming velocity oriented parallel to the
     // particles director
-    velocity[i] -= p->swim.v_swim * quatu[i];
+    velocity[i] -= p->swim.v_swim * director[i];
 #endif
 
   } // for

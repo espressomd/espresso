@@ -101,18 +101,18 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef ROTATION
-    const Vector3d quatu=part.r.calc_director();
-    buffer[i].quatu[0] = static_cast<float>(quatu[0]);
-    buffer[i].quatu[1] = static_cast<float>(quatu[1]);
-    buffer[i].quatu[2] = static_cast<float>(quatu[2]);
+    const Vector3d director=part.r.calc_director();
+    buffer[i].director[0] = static_cast<float>(director[0]);
+    buffer[i].director[1] = static_cast<float>(director[1]);
+    buffer[i].director[2] = static_cast<float>(director[2]);
 #endif
 
 #ifdef ENGINE
     buffer[i].swim.v_swim = static_cast<float>(part.swim.v_swim);
     buffer[i].swim.f_swim = static_cast<float>(part.swim.f_swim);
-    buffer[i].swim.quatu[0] = static_cast<float>(quatu[0]);
-    buffer[i].swim.quatu[1] = static_cast<float>(quatu[1]);
-    buffer[i].swim.quatu[2] = static_cast<float>(quatu[2]);
+    buffer[i].swim.director[0] = static_cast<float>(director[0]);
+    buffer[i].swim.director[1] = static_cast<float>(director[1]);
+    buffer[i].swim.director[2] = static_cast<float>(director[2]);
 #if defined(LB) || defined(LB_GPU)
     buffer[i].swim.push_pull = part.swim.push_pull;
     buffer[i].swim.dipole_length = static_cast<float>(part.swim.dipole_length);

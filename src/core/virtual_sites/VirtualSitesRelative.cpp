@@ -87,7 +87,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   multiply_quaternions(p_real->r.quat, p.p.vs_relative_rel_orientation, q);
   // Calculate the director resulting from the quaternions
   Vector3d director = {0, 0, 0};
-  convert_quat_to_quatu(q, director);
+  convert_quat_to_director(q, director);
   // normalize
   double l = sqrt(sqrlen(director));
   // Division comes in the loop below
