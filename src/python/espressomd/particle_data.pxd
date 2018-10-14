@@ -44,7 +44,7 @@ cdef extern from "particle_data.hpp":
 
     ctypedef struct particle_position "ParticlePosition":
         Vector3d p
-        Vector3d calc_quatu()
+        Vector3d calc_director()
 
 
     ctypedef struct particle_force "ParticleForce":

@@ -327,7 +327,7 @@ void convert_torques_propagate_omega() {
       double cross[3];
       double l_diff, l_cross;
 
-      auto const dip = p.swim.dipole_length * p.r.calc_quatu();
+      auto const dip = p.swim.dipole_length * p.r.calc_director();
 
       diff[0] = (p.swim.v_center[0] - p.swim.v_source[0]);
       diff[1] = (p.swim.v_center[1] - p.swim.v_source[1]);

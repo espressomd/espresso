@@ -54,12 +54,12 @@ add_gb_pair_force(const Particle *const p1, const Particle *const p2,
       FikX, FikY, FikZ,           /*  help for forces        */
       Gx, Gy, Gz;                 /*  help for torques       */
 
-  u1x = p1->r.calc_quatu()[0];
-  u1y = p1->r.calc_quatu()[1];
-  u1z = p1->r.calc_quatu()[2];
-  u2x = p2->r.calc_quatu()[0];
-  u2y = p2->r.calc_quatu()[1];
-  u2z = p2->r.calc_quatu()[2];
+  u1x = p1->r.calc_director()[0];
+  u1y = p1->r.calc_director()[1];
+  u1z = p1->r.calc_director()[2];
+  u2x = p2->r.calc_director()[0];
+  u2y = p2->r.calc_director()[1];
+  u2z = p2->r.calc_director()[2];
 
   a = d[0] * u1x + d[1] * u1y + d[2] * u1z;
   b = d[0] * u2x + d[1] * u2y + d[2] * u2z;
@@ -169,12 +169,12 @@ inline double gb_pair_energy(const Particle *p1, const Particle *p2,
   double a, b, c, X, Xcut, Brack, BrackCut, u1x, u1y, u1z, u2x, u2y, u2z, E, E1,
       E2, Sigma, Plus1, Minus1, Plus2, Minus2;
 
-  u1x = p1->r.calc_quatu()[0];
-  u1y = p1->r.calc_quatu()[1];
-  u1z = p1->r.calc_quatu()[2];
-  u2x = p2->r.calc_quatu()[0];
-  u2y = p2->r.calc_quatu()[1];
-  u2z = p2->r.calc_quatu()[2];
+  u1x = p1->r.calc_director()[0];
+  u1y = p1->r.calc_director()[1];
+  u1z = p1->r.calc_director()[2];
+  u2x = p2->r.calc_director()[0];
+  u2y = p2->r.calc_director()[1];
+  u2z = p2->r.calc_director()[2];
 
   a = d[0] * u1x + d[1] * u1y + d[2] * u1z;
   b = d[0] * u2x + d[1] * u2y + d[2] * u2z;

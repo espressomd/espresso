@@ -464,7 +464,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                return make_array_locked(self.particle_data.r.calc_quatu())
+                return make_array_locked(self.particle_data.r.calc_director())
 
     # ROTATIONAL_INERTIA
         property omega_body:

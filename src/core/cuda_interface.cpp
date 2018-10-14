@@ -101,7 +101,7 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef ROTATION
-    const Vector3d quatu=part.r.calc_quatu();
+    const Vector3d quatu=part.r.calc_director();
     buffer[i].quatu[0] = static_cast<float>(quatu[0]);
     buffer[i].quatu[1] = static_cast<float>(quatu[1]);
     buffer[i].quatu[2] = static_cast<float>(quatu[2]);

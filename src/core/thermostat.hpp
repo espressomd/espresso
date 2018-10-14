@@ -223,7 +223,7 @@ inline void friction_thermo_langevin(Particle *p) {
 
   // Get velocity effective in the thermostatting
   Vector3d velocity;
-  const Vector3d quatu=p->r.calc_quatu();
+  const Vector3d quatu=p->r.calc_director();
   for (int i = 0; i < 3; i++) {
     // Particle velocity
     velocity[i] = p->m.v[i];

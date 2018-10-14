@@ -219,7 +219,7 @@ struct ParticlePosition {
   Vector<4, double> quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
   inline
-  const Vector3d calc_quatu() const {
+  const Vector3d calc_director() const {
     return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
            2 * (quat[2] * quat[3] - quat[0] * quat[1]),
            quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
@@ -371,7 +371,7 @@ struct Particle {
   ParticlePosition r;
   #ifdef DIPOLES
   inline const Vector3d calc_dip() const {
-     return r.calc_quatu()*p.dipm;
+     return r.calc_director()*p.dipm;
   }
   #endif
   ///
