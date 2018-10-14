@@ -43,32 +43,31 @@
 #ifdef DIPOLES
 
 // Calculates dipolar energy and/or force between two particles
-double calc_dipole_dipole_ia(Particle *p1, const Vector3d dip1, Particle *p2, int force_flag) {
+double calc_dipole_dipole_ia(Particle *p1, const Vector3d& dip1, Particle *p2, int force_flag) {
   double u, r, pe1, pe2, pe3, pe4, r3, r5, r2, r7, a, b, cc, d, ab;
 #ifdef ROTATION
   double bx, by, bz, ax, ay, az;
 #endif
   double ffx, ffy, ffz;
-  double dr[3];
 
   // Cache dipole momente
   const Vector3d dip2 =p2->calc_dip();
   
   // Distance between particles
+  Vector3d dr;
   get_mi_vector(dr, p1->r.p, p2->r.p);
 
   // Powers of distance
-  r2 = dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2];
+  r2 = dr*dr;
   r = sqrt(r2);
   r3 = r2 * r;
   r5 = r3 * r2;
   r7 = r5 * r2;
 
   // Dot products
-  pe1 = dip1[0] * dip2[0] + dip1[1] * dip2[1] +
-        dip1[2] * dip2[2];
-  pe2 = dip1[0] * dr[0] + dip1[1] * dr[1] + dip1[2] * dr[2];
-  pe3 = dip2[0] * dr[0] + dip2[1] * dr[1] + dip2[2] * dr[2];
+  pe1 = dip1 * dip2;
+  pe2 = dip1*dr;
+  pe3 = dip2*dr;
   pe4 = 3.0 / r5;
 
   // Energy, if requested
@@ -93,18 +92,6 @@ double calc_dipole_dipole_ia(Particle *p1, const Vector3d dip1, Particle *p2, in
     p2->f.f[0] -= coulomb.Dprefactor * ffx;
     p2->f.f[1] -= coulomb.Dprefactor * ffy;
     p2->f.f[2] -= coulomb.Dprefactor * ffz;
-//    if (p1->p.identity==248)
-//    {
-//      printf("xxx %g %g %g\n", dr[0],dr[1],dr[2]);
-//      printf("%d %g %g %g - %g %g
-//      %g\n",p2->p.identity,ffx,ffy,ffz,p2->r.p[0],p2->r.p[1],p2->r.p[2]);
-//     }
-//    if (p2->p.identity==248)
-//   {
-//      printf("xxx %g %g %g\n", dr[0],dr[1],dr[2]);
-//      printf("%d %g %g %g - %g %g
-//      %g\n",p1->p.identity,-ffx,-ffy,-ffz,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-//     }
 
 // Torques
 #ifdef ROTATION

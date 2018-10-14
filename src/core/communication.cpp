@@ -885,8 +885,6 @@ void mpi_send_dip(int pnode, int part, double dip[3]) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     convert_dip_to_quat(Vector3d({dip[0],dip[1],dip[2]}), p->r.quat, &p->p.dipm);
-    p->p.dipm = sqrt(p->calc_dip()[0] * p->calc_dip()[0] + p->calc_dip()[1] * p->calc_dip()[1] +
-                     p->calc_dip()[2] * p->calc_dip()[2]);
   } else {
     MPI_Send(dip, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -903,7 +901,6 @@ void mpi_send_dip_slave(int pnode, int part) {
     MPI_Recv(dip.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
     convert_dip_to_quat(dip, p->r.quat, &p->p.dipm);
-    p->p.dipm = dip.norm();
   }
 
   on_particle_change();

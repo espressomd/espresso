@@ -323,15 +323,11 @@ void convert_torques_propagate_omega() {
     double omega_swim[3] = {0, 0, 0};
     double omega_swim_body[3] = {0, 0, 0};
     if (p.swim.swimming && lattice_switch != 0) {
-      double dip[3];
       double diff[3];
       double cross[3];
       double l_diff, l_cross;
 
-      const Vector3d quatu=p.r.calc_quatu();
-      dip[0] = p.swim.dipole_length * quatu[0];
-      dip[1] = p.swim.dipole_length * quatu[1];
-      dip[2] = p.swim.dipole_length * quatu[2];
+      auto const dip = p.swim.dipole_length * p.r.calc_quatu();
 
       diff[0] = (p.swim.v_center[0] - p.swim.v_source[0]);
       diff[1] = (p.swim.v_center[1] - p.swim.v_source[1]);

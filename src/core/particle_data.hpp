@@ -219,12 +219,12 @@ struct ParticlePosition {
   Vector<4, double> quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
   inline
-  Vector3d calc_quatu() const {
-    return Vector3d({{2 * (quat[1] * quat[3] + quat[0] * quat[2]),
+  const Vector3d calc_quatu() const {
+    return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
            2 * (quat[2] * quat[3] - quat[0] * quat[1]),
            quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
-                         quat[3] * quat[3]}});
-                  }
+                         quat[3] * quat[3]};
+                         };
 #endif
 
 #ifdef BOND_CONSTRAINT
@@ -370,7 +370,7 @@ struct Particle {
   ///
   ParticlePosition r;
   #ifdef DIPOLES
-  inline Vector3d calc_dip() const {
+  inline const Vector3d calc_dip() const {
      return r.calc_quatu()*p.dipm;
   }
   #endif
@@ -1065,7 +1065,4 @@ bool particle_exists(int part);
 int get_particle_node(int id);
 
 
-struct pair_ia_lhs_cache {
-  Vector3d dip;
-};
 #endif

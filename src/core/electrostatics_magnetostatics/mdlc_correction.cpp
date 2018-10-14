@@ -92,8 +92,8 @@ double slab_dip_count_mu(double *mt, double *mx, double *my) {
   tot_sums[2] = 0.0;
 
   for (auto const &p : local_cells.particles()) {
-    const Vector3d dip=p.calc_dip();
     if (p.p.dipm != 0.0) {
+      auto const dip =p.calc_dip();
       node_sums[0] += dip[0];
       node_sums[1] += dip[1];
       node_sums[2] += dip[2];
