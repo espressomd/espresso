@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(nonempty) {
   const char *left = "left";
   const char *right = "right";
   char *str = static_cast<char *>(Utils::malloc(5));
-  strcpy(str, left);
+  strncpy(str, left, 5);
 
   auto res = strcat_alloc(str, right);
 
