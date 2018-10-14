@@ -2684,12 +2684,12 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
                                          p->swim.v_source.data());
 
     // calculate and set force at source position
-    delta_j[0] =
-        -p->swim.f_swim * p->r.calc_director()[0] * time_step * lbpar.tau / lbpar.agrid;
-    delta_j[1] =
-        -p->swim.f_swim * p->r.calc_director()[1] * time_step * lbpar.tau / lbpar.agrid;
-    delta_j[2] =
-        -p->swim.f_swim * p->r.calc_director()[2] * time_step * lbpar.tau / lbpar.agrid;
+    delta_j[0] = -p->swim.f_swim * p->r.calc_director()[0] * time_step *
+                 lbpar.tau / lbpar.agrid;
+    delta_j[1] = -p->swim.f_swim * p->r.calc_director()[1] * time_step *
+                 lbpar.tau / lbpar.agrid;
+    delta_j[2] = -p->swim.f_swim * p->r.calc_director()[2] * time_step *
+                 lbpar.tau / lbpar.agrid;
 
     lattice_interpolation(lblattice, source_position,
                           [&delta_j](Lattice::index_t index, double w) {

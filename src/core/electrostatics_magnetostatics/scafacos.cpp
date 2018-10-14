@@ -87,7 +87,7 @@ int ScafacosData::update_particle_data() {
       charges.push_back(p.p.q);
     } else {
 #ifdef SCAFACOS_DIPOLES
-    const Vector3d dip=p.calc_dip();
+      const Vector3d dip = p.calc_dip();
       dipoles.push_back(dip[0]);
       dipoles.push_back(dip[1]);
       dipoles.push_back(dip[2]);
@@ -122,7 +122,7 @@ void ScafacosData::update_particle_forces() const {
       // field
       // So, the torques are given by m \times B
       double t[3];
-      const Vector3d dip=p.calc_dip();
+      const Vector3d dip = p.calc_dip();
       Utils::cross_product(dip, &(potentials[it_p]), t);
       // The force is given by G m, where G is a matrix
       // which comes from the "fields" output of scafacos like this

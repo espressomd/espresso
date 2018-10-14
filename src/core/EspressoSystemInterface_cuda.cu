@@ -110,8 +110,8 @@ __global__ void split_kernel_dip(CUDA_particle_data *particles, float *dip,
 }
 #endif
 
-__global__ void split_kernel_director(CUDA_particle_data *particles, float *director,
-                                   int n) {
+__global__ void split_kernel_director(CUDA_particle_data *particles,
+                                      float *director, int n) {
 #ifdef ROTATION
   int idx = blockDim.x * blockIdx.x + threadIdx.x;
   if (idx >= n)
@@ -156,7 +156,8 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
     m_q_gpu_end = m_q_gpu_begin + 3 * n;
   }
 
-  if (m_needsDirectorGpu && ((n != m_gpu_npart) || (m_director_gpu_begin == 0))) {
+  if (m_needsDirectorGpu &&
+      ((n != m_gpu_npart) || (m_director_gpu_begin == 0))) {
     if (m_director_gpu_begin != 0)
       cuda_safe_mem(cudaFree(m_director_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_director_gpu_begin, 3 * n * sizeof(float)));
@@ -199,5 +200,5 @@ void EspressoSystemInterface::split_particle_struct() {
 
   if (m_needsDirectorGpu)
     split_kernel_director<<<grid, block>>>(gpu_get_particle_pointer(),
-                                        m_director_gpu_begin, n);
+                                           m_director_gpu_begin, n);
 }

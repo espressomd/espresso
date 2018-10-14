@@ -218,13 +218,12 @@ struct ParticlePosition {
   /** quaternions to define particle orientation */
   Vector<4, double> quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
-  inline
-  const Vector3d calc_director() const {
+  inline const Vector3d calc_director() const {
     return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
-           2 * (quat[2] * quat[3] - quat[0] * quat[1]),
-           quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
-                         quat[3] * quat[3]};
-                         };
+            2 * (quat[2] * quat[3] - quat[0] * quat[1]),
+            quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
+                quat[3] * quat[3]};
+  };
 #endif
 
 #ifdef BOND_CONSTRAINT
@@ -369,11 +368,9 @@ struct Particle {
   ParticleProperties p;
   ///
   ParticlePosition r;
-  #ifdef DIPOLES
-  inline const Vector3d calc_dip() const {
-     return r.calc_director()*p.dipm;
-  }
-  #endif
+#ifdef DIPOLES
+  inline const Vector3d calc_dip() const { return r.calc_director() * p.dipm; }
+#endif
   ///
   ParticleMomentum m;
   ///
@@ -1063,6 +1060,5 @@ bool particle_exists(int part);
  *  @brief Get the mpi rank which owns the particle with id.
  */
 int get_particle_node(int id);
-
 
 #endif

@@ -69,12 +69,12 @@ void convert_vel_space_to_body(const Particle *p, double *vel_body);
 void define_rotation_matrix(Particle const &p, double A[9]);
 
 inline void convert_quat_to_director(const Vector<4, double> &quat,
-                                  Vector3d &director) {
+                                     Vector3d &director) {
   /* director */
   director[0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2]);
   director[1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1]);
   director[2] = (quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
-              quat[3] * quat[3]);
+                 quat[3] * quat[3]);
 }
 
 /** Multiply two quaternions */
@@ -106,7 +106,7 @@ inline int convert_dip_to_quat(const Vector3d &dip, Vector<4, double> &quat,
 
 /** convert quaternion director to the dipole moment */
 inline void convert_director_to_dip(const Vector3d &director, double dipm,
-                                 Vector3d &dip) {
+                                    Vector3d &dip) {
   /* dipole moment */
   dip[0] = director[0] * dipm;
   dip[1] = director[1] * dipm;

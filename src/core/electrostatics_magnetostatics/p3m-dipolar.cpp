@@ -802,7 +802,7 @@ static void P3M_assign_torques(double prefac, int d_rs) {
 
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
-      const Vector3d dip=p.calc_dip();
+      const Vector3d dip = p.calc_dip();
       q_ind = dp3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
         for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
@@ -818,22 +818,22 @@ static void P3M_assign_torques(double prefac, int d_rs) {
             */
             switch (d_rs) {
             case 0: // E_x
-              p.f.torque[1] -= dip[2] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
-              p.f.torque[2] += dip[1] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
+              p.f.torque[1] -=
+                  dip[2] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
+              p.f.torque[2] +=
+                  dip[1] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
               break;
             case 1: // E_y
-              p.f.torque[0] += dip[2] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
-              p.f.torque[2] -= dip[0] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
+              p.f.torque[0] +=
+                  dip[2] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
+              p.f.torque[2] -=
+                  dip[0] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
               break;
             case 2: // E_z
-              p.f.torque[0] -= dip[1] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
-              p.f.torque[1] += dip[0] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
+              p.f.torque[0] -=
+                  dip[1] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
+              p.f.torque[1] +=
+                  dip[0] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
             }
             q_ind++;
             cf_cnt++;
@@ -867,7 +867,7 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs) {
 
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
-      const Vector3d dip=p.calc_dip();
+      const Vector3d dip = p.calc_dip();
       q_ind = dp3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
         for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
@@ -1184,7 +1184,7 @@ double calc_surface_term(int force_flag, int energy_flag) {
 
   int ip = 0;
   for (auto const &p : local_cells.particles()) {
-    const Vector3d dip=p.calc_dip();
+    const Vector3d dip = p.calc_dip();
     mx[ip] = dip[0];
     my[ip] = dip[1];
     mz[ip] = dip[2];
@@ -2029,7 +2029,7 @@ int dp3m_adaptive_tune(char **logger) {
                                   "    Drs_err    Dks_err    time [ms]\n");
 
   /* mesh loop */
-  for (; tmp_mesh <= mesh_max; tmp_mesh +=2) {
+  for (; tmp_mesh <= mesh_max; tmp_mesh += 2) {
     tmp_cao = cao;
     tmp_time =
         dp3m_m_time(logger, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,

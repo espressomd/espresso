@@ -2082,9 +2082,12 @@ __device__ void calc_viscous_force_three_point_couple(
                     particle_data[part_index].swim.dipole_length;
   // Extrapolate position by dipole length if we are at the centre of the
   // particle
-  position[0] += flag_cs * direction * particle_data[part_index].swim.director[0];
-  position[1] += flag_cs * direction * particle_data[part_index].swim.director[1];
-  position[2] += flag_cs * direction * particle_data[part_index].swim.director[2];
+  position[0] +=
+      flag_cs * direction * particle_data[part_index].swim.director[0];
+  position[1] +=
+      flag_cs * direction * particle_data[part_index].swim.director[1];
+  position[2] +=
+      flag_cs * direction * particle_data[part_index].swim.director[2];
 #endif
 
   // Do the velocity interpolation
@@ -2450,9 +2453,12 @@ __device__ void calc_viscous_force(
                     particle_data[part_index].swim.dipole_length;
   // Extrapolate position by dipole length if we are at the centre of the
   // particle
-  position[0] += flag_cs * direction * particle_data[part_index].swim.director[0];
-  position[1] += flag_cs * direction * particle_data[part_index].swim.director[1];
-  position[2] += flag_cs * direction * particle_data[part_index].swim.director[2];
+  position[0] +=
+      flag_cs * direction * particle_data[part_index].swim.director[0];
+  position[1] +=
+      flag_cs * direction * particle_data[part_index].swim.director[1];
+  position[2] +=
+      flag_cs * direction * particle_data[part_index].swim.director[2];
 #endif
 
   // Do the velocity interpolation

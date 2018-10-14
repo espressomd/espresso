@@ -29,7 +29,8 @@
 #include <iostream>
 
 void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k,
-                                            int n, float *director, float *torque);
+                                            int n, float *director,
+                                            float *torque);
 
 class HarmonicOrientationWell : public Actor {
 public:

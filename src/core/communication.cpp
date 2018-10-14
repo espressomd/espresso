@@ -884,7 +884,8 @@ void mpi_send_dip(int pnode, int part, double dip[3]) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    convert_dip_to_quat(Vector3d({dip[0],dip[1],dip[2]}), p->r.quat, &p->p.dipm);
+    convert_dip_to_quat(Vector3d({dip[0], dip[1], dip[2]}), p->r.quat,
+                        &p->p.dipm);
   } else {
     MPI_Send(dip, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }

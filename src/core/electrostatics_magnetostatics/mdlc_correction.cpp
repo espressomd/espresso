@@ -93,7 +93,7 @@ double slab_dip_count_mu(double *mt, double *mx, double *my) {
 
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
-      auto const dip =p.calc_dip();
+      auto const dip = p.calc_dip();
       node_sums[0] += dip[0];
       node_sums[1] += dip[1];
       node_sums[2] += dip[2];
@@ -174,7 +174,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
 
         for (auto const &p : local_cells.particles()) {
           if (p.p.dipm > 0) {
-            const Vector3d dip=p.calc_dip();
+            const Vector3d dip = p.calc_dip();
 
             a = gx * dip[0] + gy * dip[1];
             b = gr * dip[2];
@@ -268,7 +268,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
   ip = 0;
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm > 0) {
-      const Vector3d dip=p.calc_dip();
+      const Vector3d dip = p.calc_dip();
       a = dip[1] * tz[ip] - dip[2] * ty[ip];
       b = dip[2] * tx[ip] - dip[0] * tz[ip];
       c = dip[0] * ty[ip] - dip[1] * tx[ip];
@@ -349,7 +349,7 @@ double get_DLC_energy_dipolar(int kcut) {
 
         for (auto const &p : local_cells.particles()) {
           if (p.p.dipm > 0) {
-            const Vector3d dip=p.calc_dip();
+            const Vector3d dip = p.calc_dip();
 
             a = gx * dip[0] + gy * dip[1];
             {
@@ -470,7 +470,7 @@ void add_mdlc_force_corrections() {
   ip = 0;
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
-      const Vector3d dip=p.calc_dip();
+      const Vector3d dip = p.calc_dip();
 
       p.f.f[0] += coulomb.Dprefactor * dip_DLC_f_x[ip];
       p.f.f[1] += coulomb.Dprefactor * dip_DLC_f_y[ip];
@@ -488,12 +488,12 @@ void add_mdlc_force_corrections() {
         dy = 0.0;
         dz = correc * (-1.0) * mz;
 
-        p.f.torque[0] += coulomb.Dprefactor *
-                         (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
-        p.f.torque[1] += coulomb.Dprefactor *
-                         (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
-        p.f.torque[2] += coulomb.Dprefactor *
-                         (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
+        p.f.torque[0] +=
+            coulomb.Dprefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
+        p.f.torque[1] +=
+            coulomb.Dprefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
+        p.f.torque[2] +=
+            coulomb.Dprefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
 
       } else {
 
@@ -502,12 +502,12 @@ void add_mdlc_force_corrections() {
         dy = correps * my;
         dz = correc * (-1.0 + 1. / (2.0 * dp3m.params.epsilon + 1.0)) * mz;
 
-        p.f.torque[0] += coulomb.Dprefactor *
-                         (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
-        p.f.torque[1] += coulomb.Dprefactor *
-                         (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
-        p.f.torque[2] += coulomb.Dprefactor *
-                         (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
+        p.f.torque[0] +=
+            coulomb.Dprefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
+        p.f.torque[1] +=
+            coulomb.Dprefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
+        p.f.torque[2] +=
+            coulomb.Dprefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
       }
 #endif
     }
