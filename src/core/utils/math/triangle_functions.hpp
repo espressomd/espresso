@@ -63,10 +63,9 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
     tmp11 = M_PI;
   }
   auto const phi =
-      M_PI -
-      std::acos(tmp11); // The angle between the faces (not considering the
-                        // orientation, always less or equal to Pi) is
-                        // equal to Pi minus angle between the normals
+      M_PI - std::acos(tmp11); // The angle between the faces (not considering
+                               // the orientation, always less or equal to Pi)
+                               // is equal to Pi minus angle between the normals
 
   // Now we need to determine, if the angle btw two triangles is less than Pi or
   // more than Pi. To do this we check,
@@ -84,6 +83,6 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
   else
     return phi;
 }
-}
+} // namespace Utils
 
 #endif

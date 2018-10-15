@@ -472,7 +472,7 @@ inline void add_bonded_force(Particle *p1) {
     int type = iaparams->type;
     int n_partners = iaparams->num;
 
-    Particle* p2=nullptr;
+    Particle *p2 = nullptr;
     if (n_partners) {
       p2 = local_particles[p1->bl.e[i++]];
       if (!p2) {
@@ -551,7 +551,7 @@ inline void add_bonded_force(Particle *p1) {
 #endif
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
-        if (iaparams->num==1) 
+        if (iaparams->num == 1)
           bond_broken = calc_tab_bond_force(p1, p2, iaparams, dx, force);
         break;
 #endif
@@ -570,7 +570,7 @@ inline void add_bonded_force(Particle *p1) {
         force[1] = force2[1] = force3[1] = 0;
         force[2] = force2[2] = force3[2] = 0;
         break;
-#endif        
+#endif
 #ifdef BOND_CONSTRAINT
       case BONDED_IA_RIGID_BOND:
         // add_rigid_bond_pair_force(p1,p2, iaparams, force, force2);
@@ -591,11 +591,10 @@ inline void add_bonded_force(Particle *p1) {
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                           << p1->p.identity << " unknown\n";
         return;
-    }
+      }
     } // 1 partner
-    else
-    if (n_partners==2) {
-        switch(type) {
+    else if (n_partners == 2) {
+      switch (type) {
 #ifdef BOND_ANGLE
       case BONDED_IA_ANGLE_HARMONIC:
         bond_broken =
@@ -612,17 +611,17 @@ inline void add_bonded_force(Particle *p1) {
 #endif
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
-        if (iaparams->num==2) 
+        if (iaparams->num == 2)
           bond_broken =
               calc_tab_angle_force(p1, p2, p3, iaparams, force, force2);
-          break;
-#endif 
+        break;
+#endif
 #ifdef BOND_ANGLEDIST
       case BONDED_IA_ANGLEDIST:
         bond_broken = calc_angledist_force(p1, p2, p3, iaparams, force, force2);
         break;
 #endif
-#ifdef IMMERSED_BOUNDARY        
+#ifdef IMMERSED_BOUNDARY
       case BONDED_IA_IBM_TRIEL:
         bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
         // These may be added later on, but we set them to zero because the
@@ -631,16 +630,15 @@ inline void add_bonded_force(Particle *p1) {
         force[1] = force2[1] = force3[1] = 0;
         force[2] = force2[2] = force3[2] = 0;
         break;
-#endif        
+#endif
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                           << p1->p.identity << " unknown\n";
         return;
-        }
+      }
     } // 2 partners (angel bonds...)
-    else
-    if (n_partners == 3) {
-        switch(type) {
+    else if (n_partners == 3) {
+      switch (type) {
 #ifdef MEMBRANE_COLLISION
       case BONDED_IA_OIF_OUT_DIRECTION:
         bond_broken = calc_out_direction(p1, p2, p3, p4, iaparams);
@@ -687,7 +685,7 @@ inline void add_bonded_force(Particle *p1) {
         break;
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
-        if (iaparams->num==3) 
+        if (iaparams->num == 3)
           bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force,
                                                 force2, force3);
         break;
@@ -697,92 +695,92 @@ inline void add_bonded_force(Particle *p1) {
                           << p1->p.identity << " unknown\n";
         return;
       }
-  } // 3 bond partners
+    } // 3 bond partners
 
-      switch (n_partners) {
-      case 1:
-        if (bond_broken) {
-          runtimeErrorMsg()
-              << "bond broken between particles " << p1->p.identity << " and "
-              << p2->p.identity << ". Distance vector: " << dx[0] << " "
-              << dx[1] << " " << dx[2];
-          continue;
-        }
+    switch (n_partners) {
+    case 1:
+      if (bond_broken) {
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+                          << " and " << p2->p.identity
+                          << ". Distance vector: " << dx[0] << " " << dx[1]
+                          << " " << dx[2];
+        continue;
+      }
 
-        for (j = 0; j < 3; j++) {
-          switch (type) {
-          case BONDED_IA_THERMALIZED_DIST:
-            p1->f.f[j] += force[j];
-            p2->f.f[j] += force2[j];
-            break;
-          default:
-            p1->f.f[j] += force[j];
-            p2->f.f[j] -= force[j];
+      for (j = 0; j < 3; j++) {
+        switch (type) {
+        case BONDED_IA_THERMALIZED_DIST:
+          p1->f.f[j] += force[j];
+          p2->f.f[j] += force2[j];
+          break;
+        default:
+          p1->f.f[j] += force[j];
+          p2->f.f[j] -= force[j];
 #ifdef ROTATION
-            p1->f.torque[j] += torque1[j];
-            p2->f.torque[j] += torque2[j];
+          p1->f.torque[j] += torque1[j];
+          p2->f.torque[j] += torque2[j];
 #endif
-          }
+        }
 
 #ifdef NPT
-          if (integ_switch == INTEG_METHOD_NPT_ISO)
-            nptiso.p_vir[j] += force[j] * dx[j];
+        if (integ_switch == INTEG_METHOD_NPT_ISO)
+          nptiso.p_vir[j] += force[j] * dx[j];
 #endif
-        }
-        break;
-      case 2:
-        if (bond_broken) {
-          runtimeErrorMsg()
-              << "bond broken between particles " << p1->p.identity << ", "
-              << p2->p.identity << " and " << p3->p.identity;
-          continue;
-        }
+      }
+      break;
+    case 2:
+      if (bond_broken) {
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+                          << ", " << p2->p.identity << " and "
+                          << p3->p.identity;
+        continue;
+      }
 
-        for (j = 0; j < 3; j++) {
-          switch (type) {
-#ifdef OIF_GLOBAL_FORCES
-          case BONDED_IA_OIF_GLOBAL_FORCES:
-            break;
-#endif
-          default:
-            p1->f.f[j] += force[j];
-            p2->f.f[j] += force2[j];
-            p3->f.f[j] -= (force[j] + force2[j]);
-          }
-        }
-        break;
-      case 3:
-        if (bond_broken) {
-          runtimeErrorMsg() << "bond broken between particles "
-                            << p1->p.identity << ", " << p2->p.identity << ", "
-                            << p3->p.identity << " and " << p4->p.identity;
-          continue;
-        }
-
+      for (j = 0; j < 3; j++) {
         switch (type) {
-        case BONDED_IA_DIHEDRAL:
-          for (j = 0; j < 3; j++) {
-            p1->f.f[j] += force[j];
-            p2->f.f[j] += force2[j];
-            p3->f.f[j] += force3[j];
-            p4->f.f[j] -= force[j] + force2[j] + force3[j];
-          }
+#ifdef OIF_GLOBAL_FORCES
+        case BONDED_IA_OIF_GLOBAL_FORCES:
           break;
+#endif
+        default:
+          p1->f.f[j] += force[j];
+          p2->f.f[j] += force2[j];
+          p3->f.f[j] -= (force[j] + force2[j]);
+        }
+      }
+      break;
+    case 3:
+      if (bond_broken) {
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+                          << ", " << p2->p.identity << ", " << p3->p.identity
+                          << " and " << p4->p.identity;
+        continue;
+      }
+
+      switch (type) {
+      case BONDED_IA_DIHEDRAL:
+        for (j = 0; j < 3; j++) {
+          p1->f.f[j] += force[j];
+          p2->f.f[j] += force2[j];
+          p3->f.f[j] += force3[j];
+          p4->f.f[j] -= force[j] + force2[j] + force3[j];
+        }
+        break;
 
 #ifdef OIF_LOCAL_FORCES
-        case BONDED_IA_OIF_LOCAL_FORCES:
-          for (j = 0; j < 3; j++) {
-            p1->f.f[j] += force2[j];
-            p2->f.f[j] += force[j];
-            p3->f.f[j] += force3[j];
-            p4->f.f[j] += force4[j];
-          }
-          break;
-#endif
+      case BONDED_IA_OIF_LOCAL_FORCES:
+        for (j = 0; j < 3; j++) {
+          p1->f.f[j] += force2[j];
+          p2->f.f[j] += force[j];
+          p3->f.f[j] += force3[j];
+          p4->f.f[j] += force4[j];
         }
         break;
+#endif
       }
+      break;
     }
+  }
 }
 
 inline void check_particle_force(Particle *part) {

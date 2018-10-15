@@ -135,40 +135,41 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
     agg_size[i] = 0;
   }
 
-  // Calculate pair contributions if max_cut is >0. No single particle 
+  // Calculate pair contributions if max_cut is >0. No single particle
   // contributions apply here
-  if (max_cut >0)
-    short_range_loop(Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
-      auto p1molid = p1.p.mol_id;
-      auto p2molid = p2.p.mol_id;
-      if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
-          ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-        if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
+  if (max_cut > 0)
+    short_range_loop(
+        Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
+          auto p1molid = p1.p.mol_id;
+          auto p2molid = p2.p.mol_id;
+          if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
+              ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
+            if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
 #ifdef ELECTROSTATICS
-          if (charge && (p1.p.q * p2.p.q >= 0)) {
-            return;
-          }
-#endif
-          if (d.dist2 < dist_criteria2) {
-            if (p1molid > p2molid) {
-              ind = p1molid * topology.size() + p2molid;
-            } else {
-              ind = p2molid * topology.size() + p1molid;
-            }
-            if (min_contact > 1) {
-              contact_num[ind]++;
-              if (contact_num[ind] >= min_contact) {
-                merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
-                                      link_list);
+              if (charge && (p1.p.q * p2.p.q >= 0)) {
+                return;
               }
-            } else {
-              merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
-                                    link_list);
+#endif
+              if (d.dist2 < dist_criteria2) {
+                if (p1molid > p2molid) {
+                  ind = p1molid * topology.size() + p2molid;
+                } else {
+                  ind = p2molid * topology.size() + p1molid;
+                }
+                if (min_contact > 1) {
+                  contact_num[ind]++;
+                  if (contact_num[ind] >= min_contact) {
+                    merge_aggregate_lists(head_list, agg_id_list, p1molid,
+                                          p2molid, link_list);
+                  }
+                } else {
+                  merge_aggregate_lists(head_list, agg_id_list, p1molid,
+                                        p2molid, link_list);
+                }
+              }
             }
           }
-        }
-      }
-    });
+        });
 
   /* count number of aggregates
      find aggregate size

@@ -128,13 +128,13 @@ void force_calc() {
   // Only calculate pair forces if the maximum cutoff is >0
   if (max_cut > 0) {
     short_range_loop([](Particle &p) { add_single_particle_force(&p); },
-                   [](Particle &p1, Particle &p2, Distance &d) {
-                     add_non_bonded_pair_force(&(p1), &(p2), d.vec21.data(),
-                                               sqrt(d.dist2), d.dist2);
-                   });
+                     [](Particle &p1, Particle &p2, Distance &d) {
+                       add_non_bonded_pair_force(&(p1), &(p2), d.vec21.data(),
+                                                 sqrt(d.dist2), d.dist2);
+                     });
   } else {
     // Otherwise only do single-particle contributions
-    for (auto& p: local_cells.particles()) {
+    for (auto &p : local_cells.particles()) {
       add_single_particle_force(&p);
     }
   }
