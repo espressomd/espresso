@@ -120,6 +120,12 @@ struct IA_parameters {
 
 #endif
 
+#ifdef WCA
+  double WCA_eps = 0.0;
+  double WCA_sig = 0.0;
+  double WCA_cut = INACTIVE_CUTOFF;
+#endif
+
   /** flag that tells whether there is any short-ranged interaction,
       i.e. one that contributes to the "nonbonded" section of the
       energy/pressure. Note that even if there is no short-ranged
