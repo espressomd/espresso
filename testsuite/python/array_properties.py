@@ -306,7 +306,7 @@ class ArrayPropertyTest(ut.TestCase):
         # Particle
         self.system.part[0].dip = [2, 2, 2]
         np.testing.assert_allclose(
-            [2, 2, 2], self.system.part[0].dip, atol=1E-15)
+            [2, 2, 2], np.copy(self.system.part[0].dip), atol=1E-15)
         
         # Check if copy is settable
         # Particle
