@@ -86,6 +86,23 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT APPLE )
   option(WITH_MSAN "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)" OFF)
 endif()
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
+option(WITH_CCACHE "Use ccache compiler invocation." OFF)
+
+if(WITH_CCACHE)
+  find_program(CCACHE ccache)
+  if(CCACHE)
+    message(STATUS "Found ccache ${CCACHE}")
+    if(CMAKE_VERSION VERSION_LESS 3.4)
+      set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE})
+      set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE})
+    else()
+      set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE} CACHE STRING "ccache executable")
+    endif()
+  else()
+      message(FATAL_ERROR "ccache not found.")
+  endif(CCACHE)
+endif(WITH_CCACHE)
+
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -286,7 +303,10 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 #######################################################################
 
 find_package(MPI REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
+# Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
+foreach(_MPI_FLAG ${MPI_CXX_COMPILE_FLAGS})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_MPI_FLAG}")
+endforeach()
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 list(APPEND LIBRARIES ${MPI_LIBRARIES})
@@ -356,6 +376,7 @@ if(CMAKE_VERSION VERSION_LESS 3.1)
   include(RequireCXX11)
 endif()
 
+
 if(APPLE)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
 endif()
@@ -370,6 +391,9 @@ if(WARNINGS_ARE_ERRORS)
   endif()
 endif(WARNINGS_ARE_ERRORS)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -Wno-unused-function -Wno-unused-variable")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+endif()
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   # G++ and Intel don't know this flag
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")

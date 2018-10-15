@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "communication.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
 
 #ifdef MMM1D_GPU
 

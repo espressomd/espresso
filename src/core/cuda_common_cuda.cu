@@ -24,7 +24,7 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <random>
 
@@ -39,7 +39,7 @@ static __device__ __constant__ CUDA_global_part_vars global_part_vars_device;
 static float *particle_forces_device = nullptr;
 static float *particle_torques_device = nullptr;
 
-/** struct for particle position and veloctiy */
+/** struct for particle position and velocity */
 static CUDA_particle_data *particle_data_device = nullptr;
 /** struct for storing particle rn seed */
 static CUDA_particle_seed *particle_seeds_device = nullptr;
@@ -115,7 +115,7 @@ __device__ unsigned int getThreadIndex() {
          threadIdx.x;
 }
 
-/** kernel for the initalisation of the particle force array
+/** kernel for the initialisation of the particle force array
  * @param *particle_forces_device	    Pointer to local particle force
  * (Output)
  * @param *particle_seeds_device			Pointer to the particle
@@ -145,7 +145,7 @@ __global__ void init_particle_force(float *particle_forces_device,
   }
 }
 
-/** kernel for the initalisation of the fluid composition
+/** kernel for the initialisation of the fluid composition
  * @param *fluid_composition_device Pointer to local fluid composition (Output)
  */
 __global__ void
@@ -163,7 +163,7 @@ init_fluid_composition(CUDA_fluid_composition *fluid_composition_device) {
   }
 }
 
-/** kernel for the initalisation of the partikel force array
+/** kernel for the initialisation of the particle force array
  * @param *particle_forces_device	pointer to local particle force (Input)
  */
 __global__ void reset_particle_force(float *particle_forces_device,

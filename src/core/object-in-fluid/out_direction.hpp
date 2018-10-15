@@ -18,7 +18,8 @@
 */
 #ifndef _OBJECT_IN_FLUID_OUT_DIRECTION_H
 #define _OBJECT_IN_FLUID_OUT_DIRECTION_H
-/** \file out_direction.hpp Routines to calculate the outward direction of the
+/** \file
+ * Routines to calculate the outward direction of the
  * membrane using a particle quadruple (one particle and its 3 strategically
  * placed neighbors)
  */
@@ -27,8 +28,8 @@
 
 #ifdef MEMBRANE_COLLISION
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
 

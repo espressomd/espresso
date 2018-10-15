@@ -25,7 +25,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "utils/mpi/all_compare.hpp"
@@ -57,7 +57,7 @@ Collision_parameters collision_params;
  * needs to be placed. At this point, all modes need this */
 inline bool bind_centers() {
   // Note that the glue to surface mode adds bonds between the centers
-  // but does so later in the process. This is needed to gaurantee that
+  // but does so later in the process. This is needed to guarantee that
   // a particle can only be glued once, even if queued twice in a single
   // time step
   return collision_params.mode != COLLISION_MODE_OFF &&
@@ -549,7 +549,7 @@ void handle_collisions() {
   }
 
   // Note that the glue to surface mode adds bonds between the centers
-  // but does so later in the process. This is needed to gaurantee that
+  // but does so later in the process. This is needed to guarantee that
   // a particle can only be glued once, even if queued twice in a single
   // time step
   if (bind_centers()) {

@@ -20,7 +20,7 @@
 */
 #ifndef CORE_DPD_HPP
 #define CORE_DPD_HPP
-/** \file dpd.hpp
+/** \file
  *  Routines to use dpd as thermostat or pair force
  *  T. Soddemann, B. Duenweg and K. Kremer, Phys. Rev. E 68, 046702 (2003)
  *  \ref forces.cpp
@@ -30,7 +30,7 @@
 
 #ifdef DPD
 
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
 void dpd_heat_up();

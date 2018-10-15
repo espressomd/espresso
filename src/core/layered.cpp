@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file layered.cpp
-    Implementation of \ref layered.hpp "layered.h".
+/** \file
+    Implementation of \ref layered.hpp "layered.hpp".
  */
 #include "layered.hpp"
 #include "cells.hpp"
