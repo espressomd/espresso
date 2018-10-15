@@ -472,8 +472,9 @@ inline void add_bonded_force(Particle *p1) {
     int type = iaparams->type;
     int n_partners = iaparams->num;
 
+    Particle* p2=nullptr;
     if (n_partners) {
-      Particle *p2 = local_particles[p1->bl.e[i++]];
+      p2 = local_particles[p1->bl.e[i++]];
       if (!p2) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity;
         return;
@@ -503,7 +504,7 @@ inline void add_bonded_force(Particle *p1) {
         }
       }
 
-      if (n_partners == 1) {
+      if (n_partners <= 1) {
         /* because of the NPT pressure calculation for pair forces, we need the
            1->2 distance vector here. For many body interactions this vector is
            not needed,
@@ -543,14 +544,106 @@ inline void add_bonded_force(Particle *p1) {
             calc_bonded_coulomb_p3m_sr_pair_force(p1, p2, iaparams, dx, force);
         break;
 #endif
-#ifdef MEMBRANE_COLLISION
-      case BONDED_IA_OIF_OUT_DIRECTION:
-        bond_broken = calc_out_direction(p1, p2, p3, p4, iaparams);
+#ifdef LENNARD_JONES
+      case BONDED_IA_SUBT_LJ:
+        bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
+        break;
+#endif
+#ifdef TABULATED
+      case BONDED_IA_TABULATED:
+        if (iaparams->num==1) 
+          bond_broken = calc_tab_bond_force(p1, p2, iaparams, dx, force);
         break;
 #endif
 #ifdef OIF_GLOBAL_FORCES
       case BONDED_IA_OIF_GLOBAL_FORCES:
         bond_broken = 0;
+        break;
+#endif
+#ifdef IMMERSED_BOUNDARY
+      case BONDED_IA_IBM_VOLUME_CONSERVATION:
+        bond_broken = 0;
+        // Don't do anything here. We calculate and add the global volume forces
+        // in IBM_VolumeConservation. They cannot be calculated on a per-bond
+        // basis
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+#endif        
+#ifdef BOND_CONSTRAINT
+      case BONDED_IA_RIGID_BOND:
+        // add_rigid_bond_pair_force(p1,p2, iaparams, force, force2);
+        bond_broken = 0;
+        force[0] = force[1] = force[2] = 0.0;
+        break;
+#endif
+#ifdef UMBRELLA
+      case BONDED_IA_UMBRELLA:
+        bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
+        break;
+#endif
+      case BONDED_IA_VIRTUAL_BOND:
+        bond_broken = 0;
+        force[0] = force[1] = force[2] = 0.0;
+        break;
+      default:
+        runtimeErrorMsg() << "add_bonded_force: bond type of atom "
+                          << p1->p.identity << " unknown\n";
+        return;
+    }
+    } // 1 partner
+    else
+    if (n_partners==2) {
+        switch(type) {
+#ifdef BOND_ANGLE
+      case BONDED_IA_ANGLE_HARMONIC:
+        bond_broken =
+            calc_angle_harmonic_force(p1, p2, p3, iaparams, force, force2);
+        break;
+      case BONDED_IA_ANGLE_COSINE:
+        bond_broken =
+            calc_angle_cosine_force(p1, p2, p3, iaparams, force, force2);
+        break;
+      case BONDED_IA_ANGLE_COSSQUARE:
+        bond_broken =
+            calc_angle_cossquare_force(p1, p2, p3, iaparams, force, force2);
+        break;
+#endif
+#ifdef TABULATED
+      case BONDED_IA_TABULATED:
+        if (iaparams->num==2) 
+          bond_broken =
+              calc_tab_angle_force(p1, p2, p3, iaparams, force, force2);
+          break;
+#endif 
+#ifdef BOND_ANGLEDIST
+      case BONDED_IA_ANGLEDIST:
+        bond_broken = calc_angledist_force(p1, p2, p3, iaparams, force, force2);
+        break;
+#endif
+#ifdef IMMERSED_BOUNDARY        
+      case BONDED_IA_IBM_TRIEL:
+        bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
+        // These may be added later on, but we set them to zero because the
+        // force has already been added in IBM_Triel_CalcForce
+        force[0] = force2[0] = force3[0] = 0;
+        force[1] = force2[1] = force3[1] = 0;
+        force[2] = force2[2] = force3[2] = 0;
+        break;
+#endif        
+      default:
+        runtimeErrorMsg() << "add_bonded_force: bond type of atom "
+                          << p1->p.identity << " unknown\n";
+        return;
+        }
+    } // 2 partners (angel bonds...)
+    else
+    if (n_partners == 3) {
+        switch(type) {
+#ifdef MEMBRANE_COLLISION
+      case BONDED_IA_OIF_OUT_DIRECTION:
+        bond_broken = calc_out_direction(p1, p2, p3, p4, iaparams);
         break;
 #endif
 #ifdef OIF_LOCAL_FORCES
@@ -561,32 +654,6 @@ inline void add_bonded_force(Particle *p1) {
 #endif
 // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
-      /*      case BONDED_IA_IBM_WALL_REPULSION:
-              IBM_WallRepulsion_CalcForce(p1, iaparams);
-              bond_broken = 0;
-              // These may be added later on, but we set them to zero because
-         the force has already been added in IBM_WallRepulsion_CalcForce
-              force[0] = force2[0] = force3[0] = 0;
-              force[1] = force2[1] = force3[1] = 0;
-              force[2] = force2[2] = force3[2] = 0;
-              break;*/
-      case BONDED_IA_IBM_TRIEL:
-        bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
-        // These may be added later on, but we set them to zero because the
-        // force has already been added in IBM_Triel_CalcForce
-        force[0] = force2[0] = force3[0] = 0;
-        force[1] = force2[1] = force3[1] = 0;
-        force[2] = force2[2] = force3[2] = 0;
-        break;
-      case BONDED_IA_IBM_VOLUME_CONSERVATION:
-        bond_broken = 0;
-        // Don't do anything here. We calculate and add the global volume forces
-        // in IBM_VolumeConservation. They cannot be calculated on a per-bond
-        // basis
-        force[0] = force2[0] = force3[0] = 0;
-        force[1] = force2[1] = force3[1] = 0;
-        force[2] = force2[2] = force3[2] = 0;
-        break;
       case BONDED_IA_IBM_TRIBEND: {
         // First build neighbor list. This includes all nodes around the central
         // node.
@@ -614,77 +681,23 @@ inline void add_bonded_force(Particle *p1) {
         break;
       }
 #endif
-
-#ifdef LENNARD_JONES
-      case BONDED_IA_SUBT_LJ:
-        bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
-        break;
-#endif
-#ifdef BOND_ANGLE
-      case BONDED_IA_ANGLE_HARMONIC:
-        bond_broken =
-            calc_angle_harmonic_force(p1, p2, p3, iaparams, force, force2);
-        break;
-      case BONDED_IA_ANGLE_COSINE:
-        bond_broken =
-            calc_angle_cosine_force(p1, p2, p3, iaparams, force, force2);
-        break;
-      case BONDED_IA_ANGLE_COSSQUARE:
-        bond_broken =
-            calc_angle_cossquare_force(p1, p2, p3, iaparams, force, force2);
-        break;
-#endif
-#ifdef BOND_ANGLEDIST
-      case BONDED_IA_ANGLEDIST:
-        bond_broken = calc_angledist_force(p1, p2, p3, iaparams, force, force2);
-        break;
-#endif
       case BONDED_IA_DIHEDRAL:
         bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force,
                                           force2, force3);
         break;
-#ifdef BOND_CONSTRAINT
-      case BONDED_IA_RIGID_BOND:
-        // add_rigid_bond_pair_force(p1,p2, iaparams, force, force2);
-        bond_broken = 0;
-        force[0] = force[1] = force[2] = 0.0;
-        break;
-#endif
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
-        switch (iaparams->num) {
-        case 1:
-          bond_broken = calc_tab_bond_force(p1, p2, iaparams, dx, force);
-          break;
-        case 2:
-          bond_broken =
-              calc_tab_angle_force(p1, p2, p3, iaparams, force, force2);
-          break;
-        case 3:
+        if (iaparams->num==3) 
           bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force,
                                                 force2, force3);
-          break;
-        default:
-          runtimeErrorMsg() << "add_bonded_force: tabulated bond type of atom "
-                            << p1->p.identity << " unknown\n";
-          return;
-        }
         break;
 #endif
-#ifdef UMBRELLA
-      case BONDED_IA_UMBRELLA:
-        bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
-        break;
-#endif
-      case BONDED_IA_VIRTUAL_BOND:
-        bond_broken = 0;
-        force[0] = force[1] = force[2] = 0.0;
-        break;
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                           << p1->p.identity << " unknown\n";
         return;
       }
+  } // 3 bond partners
 
       switch (n_partners) {
       case 1:
@@ -770,7 +783,6 @@ inline void add_bonded_force(Particle *p1) {
         break;
       }
     }
-  }
 }
 
 inline void check_particle_force(Particle *part) {
