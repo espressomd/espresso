@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file polymer.cpp
+/** \file
     This file contains everything needed to create a start-up configuration
     of (partially charged) polymer chains with counterions and salt molecules,
-    assigning velocities to the particles and crosslinking the polymers if
+    assigning velocities to the particles and cross-linking the polymers if
    necessary.
 
     The corresponding header file is polymer.hpp.
@@ -34,6 +34,7 @@
 #include <cstring>
 
 #include "PartCfg.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
@@ -41,7 +42,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
 #include "utils.hpp"

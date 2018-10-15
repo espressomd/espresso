@@ -25,13 +25,14 @@ int n_rigidbonds = 0;
 
 #ifdef BOND_CONSTRAINT
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
 #include <cmath>

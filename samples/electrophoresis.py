@@ -161,7 +161,7 @@ print("\nWarmup finished!\n")
 #############################################################
 read_checkpoint = False
 # Load checkpointed p3m class
-if os.path.isfile("p3m_checkpoint") and read_checkpoint == True:
+if os.path.isfile("p3m_checkpoint") and read_checkpoint is True:
     print("reading p3m from file")
     p3m = pickle.load(open("p3m_checkpoint", "rb"))
 else:

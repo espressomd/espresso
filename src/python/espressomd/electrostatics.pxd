@@ -42,7 +42,7 @@ IF ELECTROSTATICS:
 
     IF P3M:
         from p3m_common cimport p3m_parameter_struct
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         cdef enum CoulombMethod:
             COULOMB_NONE, \
                 COULOMB_DH, \
@@ -68,7 +68,7 @@ IF ELECTROSTATICS:
         cdef extern Coulomb_parameters coulomb
 
     IF P3M:
-        cdef extern from "p3m-common.hpp":
+        cdef extern from "electrostatics_magnetostatics/p3m-common.hpp":
             ctypedef struct p3m_parameter_struct:
                 double alpha_L
                 double r_cut_iL
@@ -87,7 +87,7 @@ IF ELECTROSTATICS:
                 int    cao3
                 double additional_mesh[3]
 
-        cdef extern from "p3m.hpp":
+        cdef extern from "electrostatics_magnetostatics/p3m.hpp":
             int p3m_set_params(double r_cut, int * mesh, int cao, double alpha, double accuracy)
             void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha, double accuracy, int n_interpol)
             int p3m_set_mesh_offset(double x, double y, double z)
@@ -102,7 +102,7 @@ IF ELECTROSTATICS:
             cdef extern p3m_data_struct p3m
 
         IF CUDA:
-            cdef extern from "p3m_gpu.hpp":
+            cdef extern from "electrostatics_magnetostatics/p3m_gpu.hpp":
                 void p3m_gpu_init(int cao, int * mesh, double alpha)
 
             cdef inline python_p3m_gpu_init(params):
@@ -178,7 +178,7 @@ IF ELECTROSTATICS:
 
             p3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy, n_interpol)
 
-    cdef extern from "debye_hueckel.hpp":
+    cdef extern from "electrostatics_magnetostatics/debye_hueckel.hpp":
         ctypedef struct Debye_hueckel_params:
             double r_cut
             double kappa
@@ -188,7 +188,7 @@ IF ELECTROSTATICS:
         int dh_set_params(double kappa, double r_cut)
 
 IF ELECTROSTATICS:
-    cdef extern from "mmm1d.hpp":
+    cdef extern from "electrostatics_magnetostatics/mmm1d.hpp":
         ctypedef struct MMM1D_struct:
             double far_switch_radius_2;
             double maxPWerror;
@@ -201,7 +201,7 @@ IF ELECTROSTATICS:
         int MMM1D_sanity_checks();
         int mmm1d_tune(char ** log);
 
-    cdef extern from "interaction_data.hpp":
+    cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int coulomb_set_prefactor(double prefactor)
 
     cdef inline pyMMM1D_tune():
@@ -217,7 +217,7 @@ IF ELECTROSTATICS:
         return resp
 
 IF ELECTROSTATICS:
-    cdef extern from "mmm2d.hpp":
+    cdef extern from "electrostatics_magnetostatics/mmm2d.hpp":
         ctypedef struct MMM2D_struct:
             double maxPWerror;
             double far_cut;

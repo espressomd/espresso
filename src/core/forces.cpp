@@ -19,23 +19,24 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file forces.cpp Force calculation.
+/** \file
+ *  Force calculation.
  *
- *  For more information see \ref forces.hpp "forces.h".
+ *  For more information see \ref forces.hpp "forces.hpp".
  */
 
 #include "EspressoSystemInterface.hpp"
 
 #include "comfixed_global.hpp"
 #include "constraints.hpp"
-#include "electrokinetics.hpp"
+#include "electrostatics_magnetostatics/icc.hpp"
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
-#include "iccp3m.hpp"
+#include "grid_based_algorithms/electrokinetics.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "immersed_boundaries.hpp"
-#include "lb.hpp"
-#include "maggs.hpp"
-#include "p3m_gpu.hpp"
 #include "short_range_loop.hpp"
 
 #include <cassert>
@@ -52,7 +53,7 @@ void init_forces() {
     nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
 #endif
 
-  /* initialize forces with langevin thermostat forces
+  /* initialize forces with Langevin thermostat forces
      or zero depending on the thermostat
      set torque to zero for all and rescale quaternions
   */
@@ -110,8 +111,7 @@ void force_calc() {
 #endif // LB_GPU
 
 #ifdef ELECTROSTATICS
-  if (iccp3m_initialized && iccp3m_cfg.set_flag)
-    iccp3m_iteration();
+  iccp3m_iteration();
 #endif
   init_forces();
 
@@ -187,11 +187,6 @@ void force_calc() {
 
   // Communication Step: ghost forces
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
-
-// apply trap forces to trapped molecules
-#ifdef MOLFORCES
-  calc_and_apply_mol_constraints();
-#endif
 
   auto local_particles = local_cells.particles();
   // should be pretty late, since it needs to zero out the total force

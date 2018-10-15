@@ -20,7 +20,8 @@
 */
 #ifndef _GRID_H
 #define _GRID_H
-/** \file grid.hpp   Domain decomposition for parallel computing.
+/** \file
+ *  Domain decomposition for parallel computing.
  *
  *  The primary simulation box is divided into orthogonal rectangular
  *  subboxes which are assigned to the different nodes (or processes

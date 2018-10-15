@@ -28,7 +28,7 @@
 #include "cuda_interface.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include <iostream>
 
 #ifndef ACTOR_DIPOLARBARNESHUT_HPP

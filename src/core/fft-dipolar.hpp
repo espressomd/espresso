@@ -22,7 +22,7 @@
 #ifndef _FFT_MAGNETOSTATICS_H
 #define _FFT_MAGNETOSTATICS_H
 
-/** \file fft-dipolar.hpp
+/** \file
  *
  *  Routines, row decomposition, data structures and communication for the
  * 3D-FFT.

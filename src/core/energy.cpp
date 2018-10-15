@@ -18,20 +18,20 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file energy.cpp
+/** \file
     Implementation of \ref energy.hpp "energy.hpp".
 */
 
 #include "EspressoSystemInterface.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+#include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy_inline.hpp"
 #include "forces.hpp"
 #include "initialize.hpp"
-#include "maggs.hpp"
-#include "magnetic_non_p3m_methods.hpp"
-#include "mdlc_correction.hpp"
-#include "scafacos.hpp"
 #include <cassert>
 
 #include "short_range_loop.hpp"

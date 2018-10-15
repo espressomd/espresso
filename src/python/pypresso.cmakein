@@ -98,6 +98,6 @@ case $1 in
         exec cuda-memcheck ${options} @PYTHON_FRONTEND@ $@
         ;;
     *)
-        exec @PYTHON_FRONTEND@ $@
+        exec @PYTHON_FRONTEND@ "$@"
         ;;
 esac

@@ -18,12 +18,13 @@
 """
 
 from __future__ import print_function
+import numpy as np
+from threading import Thread
+
 import espressomd
 from espressomd import thermostat
 from espressomd.interactions import HarmonicBond
-from espressomd.visualization_opengl import *
-import numpy as np
-from threading import Thread
+import espressomd.visualization_opengl
 
 required_features = ["NPT", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
@@ -33,7 +34,7 @@ system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 
-visualizer = openGLLive(
+visualizer = espressomd.visualization_opengl.openGLLive(
     system, background_color=[1, 1, 1], bond_type_radius=[0.2])
 
 system.time_step = 0.0005
@@ -77,7 +78,6 @@ def main():
 
         visualizer.update()
         cnt += 1
-
 
 # Start simulation in seperate thread
 t = Thread(target=main)

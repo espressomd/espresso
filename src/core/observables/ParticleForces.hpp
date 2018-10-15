@@ -28,7 +28,7 @@ namespace Observables {
 
 class ParticleForces : public PidObservable {
 public:
-  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
       res[3 * i + 0] = partCfg[ids()[i]].f.f[0];
@@ -37,7 +37,7 @@ public:
     }
     return res;
   };
-  virtual int n_values() const override { return 3 * ids().size(); }
+  int n_values() const override { return 3 * ids().size(); }
 };
 
 } // Namespace Observables

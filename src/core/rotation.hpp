@@ -20,13 +20,13 @@
 */
 #ifndef ROTATION_H
 #define ROTATION_H
-/** \file rotation.hpp
+/** \file
     This file contains all subroutines required to process rotational motion.
 
 */
 
 #include "Vector.hpp"
-#include "gb.hpp"
+#include "nonbonded_interactions/gb.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"

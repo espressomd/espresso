@@ -115,8 +115,7 @@ public:
     });
   };
 
-  virtual std::shared_ptr<::Observables::Observable>
-  observable() const override {
+  std::shared_ptr<::Observables::Observable> observable() const override {
     return m_observable;
   }
 

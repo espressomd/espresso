@@ -71,7 +71,7 @@
  * Correlations are only calculated on each level: For
  * tau=1,2,..,tau_lin the values are taken from level 1.
  * For tau=tau_lin, tau_lin+2, .., 2*tau_lin we take the values
- * from level 2. On level 2 we halso have values for 0,..tau_lin-2,
+ * from level 2. On level 2 we also have values for 0,..tau_lin-2,
  * but these are discarded as we have "better" estimates on level 1.
  *
  * The functions A and B can get extra arguments. This can e.g. be an
@@ -155,23 +155,19 @@ public:
    * correlation class
    * has to be fed with correct data from the very beginning.
    *
-   * @param _delta_N: The number of time steps between subsequent updates
-   * @param _tau_lin: The linear part of the correlation function.
-   * @param _tau_max: maximal time delay tau to sample
-   * @param _window_distance: The distance in time domain between update of the
+   * @param delta_N The number of time steps between subsequent updates
+   * @param tau_lin The linear part of the correlation function.
+   * @param tau_max maximal time delay tau to sample
+   * @param window_distance: The distance in time domain between update of the
    * correlation estimate
-   * @param _dim_A: The dimension of the A vector
-   * @param _dim_B: The dimension of the B vector
-   * @param _A: First observable to correlate
-   * @param _B: Second observable to correlate
-   * @param _dim_corr: The dimension of the correlation to be calculated
-   * @param _corr_operation_name: how to correlate the two observables A and B
+   * @param obs1 First observable to correlate
+   * @param obs2 Second observable to correlate
+   * @param corr_operation how to correlate the two observables A and B
    *     (this has no default)
-   * @param _compressA_name: how the A values should be compressed (usually
+   * @param compress1_ how the A values should be compressed (usually
    *     the linear compression method)
-   * @param _compressB_name: how the B values should be compressed (usually
+   * @param compress2_ how the B values should be compressed (usually
    *     the linear compression method)
-   * @param _args: the parameters of the observables
    *
    */
   Correlator(int tau_lin, double tau_max, int delta_N,
@@ -202,7 +198,7 @@ public:
    * the correlation estimates have to be updated.
    *
    */
-  virtual void update() override;
+  void update() override;
 
   /** At the end of data collection, go through the whole hierarchy and
    * correlate data left there
