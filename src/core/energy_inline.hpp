@@ -319,6 +319,7 @@ inline void add_bonded_energy(Particle *p1) {
     if (n_partners == 1)
       get_mi_vector(dx, p1->r.p, p2->r.p);
 
+    if (n_partners==1) {
     switch (type) {
     case BONDED_IA_FENE:
       bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
@@ -353,6 +354,36 @@ inline void add_bonded_energy(Particle *p1) {
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
+#ifdef BOND_CONSTRAINT
+    case BONDED_IA_RIGID_BOND:
+      bond_broken = 0;
+      ret = 0;
+      break;
+#endif
+#ifdef TABULATED
+    case BONDED_IA_TABULATED:
+      if (iaparams->num==1) 
+        bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#endif
+#ifdef UMBRELLA
+    case BONDED_IA_UMBRELLA:
+      bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#endif
+    case BONDED_IA_VIRTUAL_BOND:
+      bond_broken = 0;
+      ret = 0;
+      break;
+    default:
+      runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
+                        << ") of atom " << p1->p.identity << " unknown\n";
+      return;
+        }
+   } // 1 partner
+   else
+   if (n_partners==2) {
+     switch (type) {
 #ifdef BOND_ANGLE
     case BONDED_IA_ANGLE_HARMONIC:
       bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);
@@ -369,48 +400,36 @@ inline void add_bonded_energy(Particle *p1) {
       bond_broken = angledist_energy(p1, p2, p3, iaparams, &ret);
       break;
 #endif
+#ifdef TABULATED
+    case BONDED_IA_TABULATED:
+      if (iaparams->num==2) 
+        bond_broken = tab_bond_angle_energy(p1, p2, p3,iaparams, dx, &ret);
+      break;
+#endif
+    default:
+      runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
+                        << ") of atom " << p1->p.identity << " unknown\n";
+      return;
+        }
+   } // 2 partner
+    else
+    if (n_partners==3) {
+    switch (type) {
     case BONDED_IA_DIHEDRAL:
       bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
       break;
-#ifdef BOND_CONSTRAINT
-    case BONDED_IA_RIGID_BOND:
-      bond_broken = 0;
-      ret = 0;
-      break;
-#endif
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
-      switch (iaparams->num) {
-      case 1:
-        bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
-        break;
-      case 2:
-        bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
-        break;
-      case 3:
-        bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
-        break;
-      default:
-        runtimeErrorMsg() << "add_bonded_energy: tabulated bond type of atom "
-                          << p1->p.identity << " unknown\n";
-        return;
-      }
+      if (iaparams->num==3) 
+        bond_broken = tab_bond_dihedral_energy(p1, p2, p3,p4,iaparams, dx, &ret);
       break;
 #endif
-#ifdef UMBRELLA
-    case BONDED_IA_UMBRELLA:
-      bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
-#endif
-    case BONDED_IA_VIRTUAL_BOND:
-      bond_broken = 0;
-      ret = 0;
-      break;
     default:
       runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
                         << ") of atom " << p1->p.identity << " unknown\n";
       return;
     }
+    } // 3 partners
 
     if (bond_broken) {
       switch (n_partners) {
