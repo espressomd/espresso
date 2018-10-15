@@ -402,7 +402,7 @@ inline void add_bonded_energy(Particle *p1) {
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 2)
-          bond_broken = tab_bond_angle_energy(p1, p2, p3, iaparams, dx, &ret);
+          bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
         break;
 #endif
       default:
@@ -420,7 +420,7 @@ inline void add_bonded_energy(Particle *p1) {
       case BONDED_IA_TABULATED:
         if (iaparams->num == 3)
           bond_broken =
-              tab_bond_dihedral_energy(p1, p2, p3, p4, iaparams, dx, &ret);
+              tab_dihedral_energy(p1, p2, p3, p4, iaparams, &ret);
         break;
 #endif
       default:
