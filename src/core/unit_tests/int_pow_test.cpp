@@ -26,23 +26,22 @@
 #include "utils/math/int_pow.hpp"
 using Utils::int_pow;
 
+#include <limits>
+
+auto const eps = std::numeric_limits<double>::epsilon();
+
 BOOST_AUTO_TEST_CASE(even) {
   const double x = 3.14159;
 
-  /* We check here for bitwise identity on
-     purpose: The function should produce
-     exactly the same expressions. */
   BOOST_CHECK(1 == int_pow<0>(x));
-  BOOST_CHECK(x * x == int_pow<2>(x));
-  /* Brackets are important to get the same
-   * order of operations as in the squaring tree. */
-  BOOST_CHECK((x * x) * (x * x) == int_pow<4>(x));
+  BOOST_CHECK_CLOSE(x * x, int_pow<2>(x), eps);
+  BOOST_CHECK_CLOSE((x * x) * (x * x), int_pow<4>(x), eps);
 }
 
 BOOST_AUTO_TEST_CASE(odd) {
   const double x = 3.14159;
 
   BOOST_CHECK(x == int_pow<1>(x));
-  BOOST_CHECK((x * x) * x == int_pow<3>(x));
-  BOOST_CHECK((x * x) * (x * x) * x == int_pow<5>(x));
+  BOOST_CHECK_CLOSE((x * x) * x, int_pow<3>(x), eps);
+  BOOST_CHECK_CLOSE((x * x) * (x * x) * x, int_pow<5>(x), eps);
 }
