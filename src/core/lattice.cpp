@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lattice.cpp
+/** \file
  *
  * Lattice class definition
  *
@@ -83,14 +83,15 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
 }
 
 void Lattice::map_position_to_lattice(const Vector3d &pos,
-                                      index_t node_index[8], double delta[6]) {
+                                      index_t node_index[8],
+                                      double delta[6]) const {
   int ind[3];
 
   /* determine the elementary lattice cell containing the particle
      and the relative position of the particle in this cell */
   for (int dir = 0; dir < 3; dir++) {
-    double lpos = pos[dir] - my_left[dir];
-    double rel = lpos / this->agrid[dir] + 0.5; // +1 for halo offset
+    const double lpos = pos[dir] - my_left[dir];
+    const double rel = lpos / this->agrid[dir] + 0.5; // +1 for halo offset
     ind[dir] = (int)floor(rel);
 
     /* surrounding elementary cell is not completely inside this box,

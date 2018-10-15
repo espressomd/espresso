@@ -18,7 +18,7 @@
 */
 #ifndef _OBJECT_IN_FLUID_OIF_GLOBAL_FORCES_H
 #define _OBJECT_IN_FLUID_OIF_GLOBAL_FORCES_H
-/** \file oif_global_forces.hpp
+/** \file
  *  Routines to calculate the OIF_GLOBAL_FORCES energy or/and and force
  *  for a particle triple (triangle from mesh). (Dupin2007)
  *  \ref forces.cpp

@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define MASS
 #define EXCLUSIONS
-#define MOLFORCES
 
 #define BOND_CONSTRAINT
 #define COLLISION_DETECTION

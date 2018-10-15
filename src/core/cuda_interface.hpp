@@ -94,8 +94,6 @@ struct CUDA_particle_data {
   float mass;
 #endif
 
-  unsigned int fixed;
-
 #ifdef VIRTUAL_SITES
   bool is_virtual;
 #endif

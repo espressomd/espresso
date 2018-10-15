@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cmath>
 #include <cstring>
 
-/** \file metadynamics.hpp
+/** \file
  *
  *  This file contains routines to perform metadynamics.  Right now, the
  *  reaction coordinate is defined between two particles. Note that these

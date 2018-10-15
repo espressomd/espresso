@@ -20,17 +20,16 @@
 */
 #ifndef _STATISTICS_H
 #define _STATISTICS_H
-/** \file statistics.hpp
+/** \file
     This file contains the code for statistics on the data.
 */
 
 #include "PartCfg.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
-
 #include <map>
 #include <string>
 #include <vector>
@@ -49,7 +48,7 @@ struct Observable_stat {
   /** Array for observables on each node. */
   DoubleList data;
 
-  /** number of coulomb interactions */
+  /** number of Coulomb interactions */
   int n_coulomb;
   /** number of dipolar interactions */
   int n_dipolar;
@@ -64,9 +63,9 @@ struct Observable_stat {
   double *bonded;
   /** start of observables for non-bonded interactions. */
   double *non_bonded;
-  /** start of observables for coulomb interaction. */
+  /** start of observables for Coulomb interaction. */
   double *coulomb;
-  /** start of observables for coulomb interaction. */
+  /** start of observables for Coulomb interaction. */
   double *dipolar;
   /** Start of observables for virtual sites relative (rigid bodies) */
   double *virtual_sites;
@@ -272,7 +271,7 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
     Calculates the van Hove auto correlation function (acf)  G(r,t) which is the
    probability that a particle has moved
     a distance r after time t. In the case of a random walk G(r,t)/(4 pi r*r) is
-   a gaussian. The mean square
+   a Gaussian. The mean square
     displacement (msd) is connected to the van Hove acf via sqrt(msd(t)) = int
    G(r,t) dr. This is very useful for
     the investigation of diffusion processes.
@@ -356,8 +355,7 @@ double min_distance(T1 const pos1, T2 const pos2) {
 }
 
 /** calculate the center of mass of a special type of the current configuration
- *  \param type  type of the particle
- *  \param com   center of mass position
+ *  \param part_type  type of the particle
  */
 std::vector<double> centerofmass(PartCfg &, int part_type);
 
@@ -375,7 +373,7 @@ void angularmomentum(PartCfg &, int type, double *com);
 
 /** calculate the center of mass of a special type of a saved configuration
  *  \param k       number of the saved configuration
- *  \param type_1  type of the particle, -1 for all
+ *  \param type    type of the particle, -1 for all
  *  \param com     center of mass position
  */
 

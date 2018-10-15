@@ -23,64 +23,60 @@
 
 #include "config.hpp"
 
-#ifdef MOLFORCES
-#include "topology.hpp"
-#endif
-
-#include "angle_cosine.hpp"
-#include "angle_cossquare.hpp"
-#include "angle_harmonic.hpp"
-#include "angledist.hpp"
-#include "bmhtf-nacl.hpp"
-#include "buckingham.hpp"
+#include "bonded_interactions/angle_cosine.hpp"
+#include "bonded_interactions/angle_cossquare.hpp"
+#include "bonded_interactions/angle_dist.hpp"
+#include "bonded_interactions/angle_harmonic.hpp"
+#include "bonded_interactions/bonded_tab.hpp"
+#include "bonded_interactions/dihedral.hpp"
+#include "bonded_interactions/fene.hpp"
+#include "bonded_interactions/harmonic.hpp"
+#include "bonded_interactions/harmonic_dumbbell.hpp"
+#include "bonded_interactions/quartic.hpp"
+#include "bonded_interactions/subt_lj.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
+#include "bonded_interactions/umbrella.hpp"
 #include "collision.hpp"
-#include "dihedral.hpp"
-#include "elc.hpp"
-#include "fene.hpp"
+#include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+#include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 #include "forces.hpp"
-#include "gaussian.hpp"
-#include "gb.hpp"
-#include "harmonic.hpp"
-#include "harmonic_dumbbell.hpp"
-#include "hat.hpp"
-#include "hertzian.hpp"
-#include "lj.hpp"
-#include "ljcos.hpp"
-#include "ljcos2.hpp"
-#include "ljgen.hpp"
-#include "magnetic_non_p3m_methods.hpp"
-#include "mdlc_correction.hpp"
 #include "metadynamics.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
-#include "molforces.hpp"
-#include "morse.hpp"
+#include "nonbonded_interactions/bmhtf-nacl.hpp"
+#include "nonbonded_interactions/buckingham.hpp"
+#include "nonbonded_interactions/gaussian.hpp"
+#include "nonbonded_interactions/gb.hpp"
+#include "nonbonded_interactions/hat.hpp"
+#include "nonbonded_interactions/hertzian.hpp"
+#include "nonbonded_interactions/lj.hpp"
+#include "nonbonded_interactions/ljcos.hpp"
+#include "nonbonded_interactions/ljcos2.hpp"
+#include "nonbonded_interactions/ljgen.hpp"
+#include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "nonbonded_interactions/soft_sphere.hpp"
+#include "nonbonded_interactions/steppot.hpp"
+#include "nonbonded_interactions/thole.hpp"
+#include "nonbonded_interactions/wca.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/out_direction.hpp"
-#include "p3m-dipolar.hpp"
-#include "p3m.hpp"
-#include "quartic.hpp"
-#include "soft_sphere.hpp"
-#include "steppot.hpp"
-#include "subt_lj.hpp"
-#include "tab.hpp"
-#include "thermalized_bond.hpp"
 #include "thermostat.hpp"
-#include "thole.hpp"
-
-#include "umbrella.hpp"
 #ifdef ELECTROSTATICS
-#include "bonded_coulomb.hpp"
-#include "debye_hueckel.hpp"
-#include "reaction_field.hpp"
-#include "scafacos.hpp"
+#include "bonded_interactions/bonded_coulomb.hpp"
+#include "electrostatics_magnetostatics/debye_hueckel.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
+#include "nonbonded_interactions/reaction_field.hpp"
 #endif
 #ifdef P3M
-#include "bonded_coulomb_p3m_sr.hpp"
+#include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
 #include "immersed_boundary/ibm_tribend.hpp"
@@ -186,11 +182,15 @@ inline void calc_non_bonded_pair_force_parts(
   if (p1->p.mol_id == p2->p.mol_id)
     return;
 #endif
-/* lennard jones */
+/* Lennard-Jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* lennard jones generic */
+/* WCA */
+#ifdef WCA
+  add_wca_pair_force(p1, p2, ia_params, d, dist, force);
+#endif
+/* Lennard-Jones generic */
 #ifdef LENNARD_JONES_GENERIC
   add_ljgen_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
@@ -210,11 +210,11 @@ inline void calc_non_bonded_pair_force_parts(
 #ifdef BMHTF_NACL
   add_BMHTF_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 #endif
-/* buckingham*/
+/* Buckingham*/
 #ifdef BUCKINGHAM
   add_buck_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* morse*/
+/* Morse*/
 #ifdef MORSE
   add_morse_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
@@ -230,15 +230,15 @@ inline void calc_non_bonded_pair_force_parts(
 #ifdef HAT
   add_hat_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* lennard jones cosine */
+/* Lennard-Jones cosine */
 #ifdef LJCOS
   add_ljcos_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* lennard jones cosine */
+/* Lennard-Jones cosine */
 #ifdef LJCOS2
   add_ljcos2_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
-/* thole damping */
+/* Thole damping */
 #ifdef THOLE
   add_thole_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
@@ -351,7 +351,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /***********************************************/
 
 #ifdef ELECTROSTATICS
-  /* real space coulomb */
+  /* real space Coulomb */
   const double q1q2 = p1->p.q * p2->p.q;
 
   switch (coulomb.method) {

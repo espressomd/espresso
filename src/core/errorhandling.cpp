@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file errorhandling.cpp
+/** \file
     Implementation of \ref errorhandling.hpp.
 */
 #include <csignal>
@@ -44,7 +44,7 @@ void mpi_gather_runtime_errors_slave(int node, int parm);
 namespace {
 /** RuntimeErrorCollector instance.
  *  This is a weak pointer so we don't
- *  leak on repeated calls of @f init_error_handling.
+ *  leak on repeated calls of init_error_handling.
  */
 unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 

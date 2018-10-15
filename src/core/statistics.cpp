@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file statistics.cpp
+/** \file
     This is the place for analysis (so far...).
     Implementation of statistics.hpp
 */
@@ -26,9 +26,9 @@
 #include "communication.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
-#include "lb.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
@@ -216,7 +216,7 @@ void predict_momentum_particles(double *result) {
 /** Calculate total momentum of the system (particles & LB fluid)
  * inputs are bools to include particles and fluid in the linear momentum
  * calculation
- * @param momentum Result for this processor (Output)
+ * @return Result for this processor (Output)
  */
 std::vector<double> calc_linear_momentum(int include_particles,
                                          int include_lbfluid) {
