@@ -376,7 +376,7 @@ inline bool pair_bond_exists_on(const Particle *const p,
     while (i < p->bl.n) {
       int size = bonded_ia_params[p->bl.e[i]].num;
 
-      if (p->bl.e[i] == bond_type && p->bl.e[i + 1] == partner->p->identity) {
+      if (p->bl.e[i] == bond_type && p->bl.e[i + 1] == partner->e->p.identity) {
         // There's a bond, already. Nothing to do for these particles
         return true;
       }
@@ -400,7 +400,7 @@ inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
     int type_num = p_bond->bl.e[i];
     Bonded_ia_parameters *iaparams = &bonded_ia_params[type_num];
     if (iaparams->type == (int)bond &&
-        p_bond->bl.e[i + 1] == p_partner->p->identity) {
+        p_bond->bl.e[i + 1] == p_partner->e->p.identity) {
       return true;
     } else {
       i += iaparams->num + 1;

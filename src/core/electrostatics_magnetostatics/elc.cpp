@@ -269,7 +269,7 @@ static void checkpoint(char *text, int p, int q, int e_size) {
 static void clear_log_forces(char *where) {
   fprintf(stderr, "%s\n", where);
   for (auto &p : local_cells.particles()) {
-    fprintf(stderr, "%d %g %g %g\n", p.p->identity, p.f.f[0], p.f.f[1],
+    fprintf(stderr, "%d %g %g %g\n", p.e->p.identity, p.f.f[0], p.f.f[1],
             p.f.f[2]);
     for (int j = 0; j < 3; j++)
       p.f.f[j] = 0;
@@ -299,19 +299,19 @@ static void add_dipole_force() {
   gblcblk[2] = 0; // sum q_i
 
   for (auto const &p : local_cells.particles()) {
-    gblcblk[0] += p.p->q * (p.r.p[2] - shift);
-    gblcblk[1] += p.p->q * p.r.p[2];
-    gblcblk[2] += p.p->q;
+    gblcblk[0] += p.e->p.q * (p.r.p[2] - shift);
+    gblcblk[1] += p.e->p.q * p.r.p[2];
+    gblcblk[2] += p.e->p.q;
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) {
-        gblcblk[0] += elc_params.delta_mid_bot * p.p->q * (-p.r.p[2] - shift);
-        gblcblk[2] += elc_params.delta_mid_bot * p.p->q;
+        gblcblk[0] += elc_params.delta_mid_bot * p.e->p.q * (-p.r.p[2] - shift);
+        gblcblk[2] += elc_params.delta_mid_bot * p.e->p.q;
       }
       if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-        gblcblk[0] += elc_params.delta_mid_top * p.p->q *
+        gblcblk[0] += elc_params.delta_mid_top * p.e->p.q *
                       (2 * elc_params.h - p.r.p[2] - shift);
-        gblcblk[2] += elc_params.delta_mid_top * p.p->q;
+        gblcblk[2] += elc_params.delta_mid_top * p.e->p.q;
       }
     }
   }
@@ -333,11 +333,11 @@ static void add_dipole_force() {
   }
 
   for (auto &p : local_cells.particles()) {
-    p.f.f[2] -= field_tot * p.p->q;
+    p.f.f[2] -= field_tot * p.e->p.q;
 
     if (!elc_params.neutralize) {
       // SUBTRACT the forces of the P3M homogeneous neutralizing background
-      p.f.f[2] += gblcblk[2] * p.p->q * (p.r.p[2] - shift);
+      p.f.f[2] += gblcblk[2] * p.e->p.q * (p.r.p[2] - shift);
     }
   }
 }
@@ -360,23 +360,23 @@ static double dipole_energy() {
   gblcblk[6] = 0; // sum q_i z_i           primary box
 
   for (auto &p : local_cells.particles()) {
-    gblcblk[0] += p.p->q;
-    gblcblk[2] += p.p->q * (p.r.p[2] - shift);
-    gblcblk[4] += p.p->q * (Utils::sqr(p.r.p[2] - shift));
-    gblcblk[6] += p.p->q * p.r.p[2];
+    gblcblk[0] += p.e->p.q;
+    gblcblk[2] += p.e->p.q * (p.r.p[2] - shift);
+    gblcblk[4] += p.e->p.q * (Utils::sqr(p.r.p[2] - shift));
+    gblcblk[6] += p.e->p.q * p.r.p[2];
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) {
-        gblcblk[1] += elc_params.delta_mid_bot * p.p->q;
-        gblcblk[3] += elc_params.delta_mid_bot * p.p->q * (-p.r.p[2] - shift);
+        gblcblk[1] += elc_params.delta_mid_bot * p.e->p.q;
+        gblcblk[3] += elc_params.delta_mid_bot * p.e->p.q * (-p.r.p[2] - shift);
         gblcblk[5] +=
-            elc_params.delta_mid_bot * p.p->q * (Utils::sqr(-p.r.p[2] - shift));
+            elc_params.delta_mid_bot * p.e->p.q * (Utils::sqr(-p.r.p[2] - shift));
       }
       if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-        gblcblk[1] += elc_params.delta_mid_top * p.p->q;
-        gblcblk[3] += elc_params.delta_mid_top * p.p->q *
+        gblcblk[1] += elc_params.delta_mid_top * p.e->p.q;
+        gblcblk[3] += elc_params.delta_mid_top * p.e->p.q *
                       (2 * elc_params.h - p.r.p[2] - shift);
-        gblcblk[5] += elc_params.delta_mid_top * p.p->q *
+        gblcblk[5] += elc_params.delta_mid_top * p.e->p.q *
                       (Utils::sqr(2 * elc_params.h - p.r.p[2] - shift));
       }
     }
@@ -447,15 +447,15 @@ static double z_energy() {
     if (elc_params.const_pot) {
       clear_vec(gblcblk, size);
       for (auto &p : local_cells.particles()) {
-        gblcblk[0] += p.p->q;
-        gblcblk[1] += p.p->q * (p.r.p[2] - shift);
+        gblcblk[0] += p.e->p.q;
+        gblcblk[1] += p.e->p.q * (p.r.p[2] - shift);
         if (p.r.p[2] < elc_params.space_layer) {
-          gblcblk[2] -= elc_params.delta_mid_bot * p.p->q;
-          gblcblk[3] -= elc_params.delta_mid_bot * p.p->q * (-p.r.p[2] - shift);
+          gblcblk[2] -= elc_params.delta_mid_bot * p.e->p.q;
+          gblcblk[3] -= elc_params.delta_mid_bot * p.e->p.q * (-p.r.p[2] - shift);
         }
         if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-          gblcblk[2] += elc_params.delta_mid_top * p.p->q;
-          gblcblk[3] += elc_params.delta_mid_top * p.p->q *
+          gblcblk[2] += elc_params.delta_mid_top * p.e->p.q;
+          gblcblk[3] += elc_params.delta_mid_top * p.e->p.q *
                         (2 * elc_params.h - p.r.p[2] - shift);
         }
       }
@@ -467,35 +467,35 @@ static double z_energy() {
 
       clear_vec(gblcblk, size);
       for (auto &p : local_cells.particles()) {
-        gblcblk[0] += p.p->q;
-        gblcblk[1] += p.p->q * (p.r.p[2] - shift);
+        gblcblk[0] += p.e->p.q;
+        gblcblk[1] += p.e->p.q * (p.r.p[2] - shift);
         if (elc_params.dielectric_contrast_on) {
           if (p.r.p[2] < elc_params.space_layer) {
-            gblcblk[2] += fac_delta * (elc_params.delta_mid_bot + 1) * p.p->q;
+            gblcblk[2] += fac_delta * (elc_params.delta_mid_bot + 1) * p.e->p.q;
             gblcblk[3] +=
-                p.p->q * (image_sum_b(elc_params.delta_mid_bot * delta,
+                p.e->p.q * (image_sum_b(elc_params.delta_mid_bot * delta,
                                      -(2 * elc_params.h + p.r.p[2])) +
                          image_sum_b(delta, -(2 * elc_params.h - p.r.p[2])));
           } else {
             gblcblk[2] +=
-                fac_delta_mid_bot * (1 + elc_params.delta_mid_top) * p.p->q;
+                fac_delta_mid_bot * (1 + elc_params.delta_mid_top) * p.e->p.q;
             gblcblk[3] +=
-                p.p->q * (image_sum_b(elc_params.delta_mid_bot, -p.r.p[2]) +
+                p.e->p.q * (image_sum_b(elc_params.delta_mid_bot, -p.r.p[2]) +
                          image_sum_b(delta, -(2 * elc_params.h - p.r.p[2])));
           }
           if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
             // note the minus sign here which is required due to |z_i-z_j|
-            gblcblk[2] -= fac_delta * (elc_params.delta_mid_top + 1) * p.p->q;
+            gblcblk[2] -= fac_delta * (elc_params.delta_mid_top + 1) * p.e->p.q;
             gblcblk[3] -=
-                p.p->q * (image_sum_t(elc_params.delta_mid_top * delta,
+                p.e->p.q * (image_sum_t(elc_params.delta_mid_top * delta,
                                      4 * elc_params.h - p.r.p[2]) +
                          image_sum_t(delta, 2 * elc_params.h + p.r.p[2]));
           } else {
             // note the minus sign here which is required due to |z_i-z_j|
             gblcblk[2] -=
-                fac_delta_mid_top * (1 + elc_params.delta_mid_bot) * p.p->q;
+                fac_delta_mid_top * (1 + elc_params.delta_mid_bot) * p.e->p.q;
             gblcblk[3] -=
-                p.p->q * (image_sum_t(elc_params.delta_mid_top,
+                p.e->p.q * (image_sum_t(elc_params.delta_mid_top,
                                      2 * elc_params.h - p.r.p[2]) +
                          image_sum_t(delta, 2 * elc_params.h + p.r.p[2]));
           }
@@ -522,9 +522,9 @@ static void add_z_force() {
       /* just counter the 2 pi |z| contribution stemming from P3M */
       for (auto &p : local_cells.particles()) {
         if (p.r.p[2] < elc_params.space_layer)
-          gblcblk[0] -= elc_params.delta_mid_bot * p.p->q;
+          gblcblk[0] -= elc_params.delta_mid_bot * p.e->p.q;
         if (p.r.p[2] > (elc_params.h - elc_params.space_layer))
-          gblcblk[0] += elc_params.delta_mid_top * p.p->q;
+          gblcblk[0] += elc_params.delta_mid_top * p.e->p.q;
       }
     } else {
       double delta = elc_params.delta_mid_top * elc_params.delta_mid_bot;
@@ -535,19 +535,19 @@ static void add_z_force() {
       clear_vec(gblcblk, size);
       for (auto &p : local_cells.particles()) {
         if (p.r.p[2] < elc_params.space_layer) {
-          gblcblk[0] += fac_delta * (elc_params.delta_mid_bot + 1) * p.p->q;
+          gblcblk[0] += fac_delta * (elc_params.delta_mid_bot + 1) * p.e->p.q;
         } else {
           gblcblk[0] +=
-              fac_delta_mid_bot * (1 + elc_params.delta_mid_top) * p.p->q;
+              fac_delta_mid_bot * (1 + elc_params.delta_mid_top) * p.e->p.q;
         }
 
         if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
           // note the minus sign here which is required due to |z_i-z_j|
-          gblcblk[0] -= fac_delta * (elc_params.delta_mid_top + 1) * p.p->q;
+          gblcblk[0] -= fac_delta * (elc_params.delta_mid_top + 1) * p.e->p.q;
         } else {
           // note the minus sign here which is required due to |z_i-z_j|
           gblcblk[0] -=
-              fac_delta_mid_top * (1 + elc_params.delta_mid_bot) * p.p->q;
+              fac_delta_mid_top * (1 + elc_params.delta_mid_bot) * p.e->p.q;
         }
       }
     }
@@ -557,7 +557,7 @@ static void add_z_force() {
     distribute(size);
 
     for (auto &p : local_cells.particles()) {
-      p.f.f[2] += gblcblk[0] * p.p->q;
+      p.f.f[2] += gblcblk[0] * p.e->p.q;
     }
   }
 }
@@ -592,10 +592,10 @@ static void setup_P(int p, double omega) {
   for (auto &p : local_cells.particles()) {
     double e = exp(omega * p.r.p[2]);
 
-    partblk[size * ic + POQESM] = p.p->q * scxcache[o + ic].s / e;
-    partblk[size * ic + POQESP] = p.p->q * scxcache[o + ic].s * e;
-    partblk[size * ic + POQECM] = p.p->q * scxcache[o + ic].c / e;
-    partblk[size * ic + POQECP] = p.p->q * scxcache[o + ic].c * e;
+    partblk[size * ic + POQESM] = p.e->p.q * scxcache[o + ic].s / e;
+    partblk[size * ic + POQESP] = p.e->p.q * scxcache[o + ic].s * e;
+    partblk[size * ic + POQECM] = p.e->p.q * scxcache[o + ic].c / e;
+    partblk[size * ic + POQECP] = p.e->p.q * scxcache[o + ic].c * e;
 
     add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
 
@@ -606,7 +606,7 @@ static void setup_P(int p, double omega) {
 
         e = exp(-omega * p.r.p[2]);
 
-        scale = p.p->q * elc_params.delta_mid_bot;
+        scale = p.e->p.q * elc_params.delta_mid_bot;
 
         lclimgebot[POQESM] = scxcache[o + ic].s / e;
         lclimgebot[POQESP] = scxcache[o + ic].s * e;
@@ -628,15 +628,15 @@ static void setup_P(int p, double omega) {
             fac_delta_mid_bot;
       }
 
-      lclimge[POQESP] += p.p->q * scxcache[o + ic].s * e;
-      lclimge[POQECP] += p.p->q * scxcache[o + ic].c * e;
+      lclimge[POQESP] += p.e->p.q * scxcache[o + ic].s * e;
+      lclimge[POQECP] += p.e->p.q * scxcache[o + ic].c * e;
 
       if (p.r.p[2] > (elc_params.h -
                       elc_params.space_layer)) { // handle the upper case now
 
         e = exp(omega * (2 * elc_params.h - p.r.p[2]));
 
-        scale = p.p->q * elc_params.delta_mid_top;
+        scale = p.e->p.q * elc_params.delta_mid_top;
 
         lclimgetop[POQESM] = scxcache[o + ic].s / e;
         lclimgetop[POQESP] = scxcache[o + ic].s * e;
@@ -658,8 +658,8 @@ static void setup_P(int p, double omega) {
             fac_delta_mid_top;
       }
 
-      lclimge[POQESM] += p.p->q * scxcache[o + ic].s * e;
-      lclimge[POQECM] += p.p->q * scxcache[o + ic].c * e;
+      lclimge[POQESM] += p.e->p.q * scxcache[o + ic].s * e;
+      lclimge[POQECM] += p.e->p.q * scxcache[o + ic].c * e;
     }
 
     ic++;
@@ -698,10 +698,10 @@ static void setup_Q(int q, double omega) {
   for (auto &p : local_cells.particles()) {
     double e = exp(omega * p.r.p[2]);
 
-    partblk[size * ic + POQESM] = p.p->q * scycache[o + ic].s / e;
-    partblk[size * ic + POQESP] = p.p->q * scycache[o + ic].s * e;
-    partblk[size * ic + POQECM] = p.p->q * scycache[o + ic].c / e;
-    partblk[size * ic + POQECP] = p.p->q * scycache[o + ic].c * e;
+    partblk[size * ic + POQESM] = p.e->p.q * scycache[o + ic].s / e;
+    partblk[size * ic + POQESP] = p.e->p.q * scycache[o + ic].s * e;
+    partblk[size * ic + POQECM] = p.e->p.q * scycache[o + ic].c / e;
+    partblk[size * ic + POQECP] = p.e->p.q * scycache[o + ic].c * e;
 
     add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
 
@@ -713,7 +713,7 @@ static void setup_Q(int q, double omega) {
 
         e = exp(-omega * p.r.p[2]);
 
-        scale = p.p->q * elc_params.delta_mid_bot;
+        scale = p.e->p.q * elc_params.delta_mid_bot;
 
         lclimgebot[POQESM] = scycache[o + ic].s / e;
         lclimgebot[POQESP] = scycache[o + ic].s * e;
@@ -735,15 +735,15 @@ static void setup_Q(int q, double omega) {
             fac_delta_mid_bot;
       }
 
-      lclimge[POQESP] += p.p->q * scycache[o + ic].s * e;
-      lclimge[POQECP] += p.p->q * scycache[o + ic].c * e;
+      lclimge[POQESP] += p.e->p.q * scycache[o + ic].s * e;
+      lclimge[POQECP] += p.e->p.q * scycache[o + ic].c * e;
 
       if (p.r.p[2] > (elc_params.h -
                       elc_params.space_layer)) { // handle the upper case now
 
         e = exp(omega * (2 * elc_params.h - p.r.p[2]));
 
-        scale = p.p->q * elc_params.delta_mid_top;
+        scale = p.e->p.q * elc_params.delta_mid_top;
 
         lclimgetop[POQESM] = scycache[o + ic].s / e;
         lclimgetop[POQESP] = scycache[o + ic].s * e;
@@ -765,8 +765,8 @@ static void setup_Q(int q, double omega) {
             fac_delta_mid_top;
       }
 
-      lclimge[POQESM] += p.p->q * scycache[o + ic].s * e;
-      lclimge[POQECM] += p.p->q * scycache[o + ic].c * e;
+      lclimge[POQESM] += p.e->p.q * scycache[o + ic].s * e;
+      lclimge[POQECM] += p.e->p.q * scycache[o + ic].c * e;
     }
 
     ic++;
@@ -875,22 +875,22 @@ static void setup_PQ(int p, int q, double omega) {
     double e = exp(omega * p.r.p[2]);
 
     partblk[size * ic + PQESSM] =
-        scxcache[ox + ic].s * scycache[oy + ic].s * p.p->q / e;
+        scxcache[ox + ic].s * scycache[oy + ic].s * p.e->p.q / e;
     partblk[size * ic + PQESCM] =
-        scxcache[ox + ic].s * scycache[oy + ic].c * p.p->q / e;
+        scxcache[ox + ic].s * scycache[oy + ic].c * p.e->p.q / e;
     partblk[size * ic + PQECSM] =
-        scxcache[ox + ic].c * scycache[oy + ic].s * p.p->q / e;
+        scxcache[ox + ic].c * scycache[oy + ic].s * p.e->p.q / e;
     partblk[size * ic + PQECCM] =
-        scxcache[ox + ic].c * scycache[oy + ic].c * p.p->q / e;
+        scxcache[ox + ic].c * scycache[oy + ic].c * p.e->p.q / e;
 
     partblk[size * ic + PQESSP] =
-        scxcache[ox + ic].s * scycache[oy + ic].s * p.p->q * e;
+        scxcache[ox + ic].s * scycache[oy + ic].s * p.e->p.q * e;
     partblk[size * ic + PQESCP] =
-        scxcache[ox + ic].s * scycache[oy + ic].c * p.p->q * e;
+        scxcache[ox + ic].s * scycache[oy + ic].c * p.e->p.q * e;
     partblk[size * ic + PQECSP] =
-        scxcache[ox + ic].c * scycache[oy + ic].s * p.p->q * e;
+        scxcache[ox + ic].c * scycache[oy + ic].s * p.e->p.q * e;
     partblk[size * ic + PQECCP] =
-        scxcache[ox + ic].c * scycache[oy + ic].c * p.p->q * e;
+        scxcache[ox + ic].c * scycache[oy + ic].c * p.e->p.q * e;
 
     add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
 
@@ -899,7 +899,7 @@ static void setup_PQ(int p, int q, double omega) {
         // change e to take into account the z position of the images
 
         e = exp(-omega * p.r.p[2]);
-        scale = p.p->q * elc_params.delta_mid_bot;
+        scale = p.e->p.q * elc_params.delta_mid_bot;
 
         lclimgebot[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
         lclimgebot[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;
@@ -916,14 +916,14 @@ static void setup_PQ(int p, int q, double omega) {
         e = (exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
                  elc_params.delta_mid_bot +
              exp(omega * (p.r.p[2] - 2 * elc_params.h))) *
-            fac_delta * p.p->q;
+            fac_delta * p.e->p.q;
 
       } else {
 
         e = (exp(omega * (-p.r.p[2])) +
              exp(omega * (p.r.p[2] - 2 * elc_params.h)) *
                  elc_params.delta_mid_top) *
-            fac_delta_mid_bot * p.p->q;
+            fac_delta_mid_bot * p.e->p.q;
       }
 
       lclimge[PQESSP] += scxcache[ox + ic].s * scycache[oy + ic].s * e;
@@ -935,7 +935,7 @@ static void setup_PQ(int p, int q, double omega) {
                       elc_params.space_layer)) { // handle the upper case now
 
         e = exp(omega * (2 * elc_params.h - p.r.p[2]));
-        scale = p.p->q * elc_params.delta_mid_top;
+        scale = p.e->p.q * elc_params.delta_mid_top;
 
         lclimgetop[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
         lclimgetop[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;
@@ -952,14 +952,14 @@ static void setup_PQ(int p, int q, double omega) {
         e = (exp(omega * (p.r.p[2] - 4 * elc_params.h)) *
                  elc_params.delta_mid_top +
              exp(omega * (-p.r.p[2] - 2 * elc_params.h))) *
-            fac_delta * p.p->q;
+            fac_delta * p.e->p.q;
 
       } else {
 
         e = (exp(omega * (p.r.p[2] - 2 * elc_params.h)) +
              exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
                  elc_params.delta_mid_bot) *
-            fac_delta_mid_top * p.p->q;
+            fac_delta_mid_top * p.e->p.q;
       }
 
       lclimge[PQESSM] += scxcache[ox + ic].s * scycache[oy + ic].s * e;
@@ -1338,7 +1338,7 @@ void ELC_P3M_self_forces() {
 
   for (auto &p : local_cells.particles()) {
     if (p.r.p[2] < elc_params.space_layer) {
-      q = elc_params.delta_mid_bot * p.p->q * p.p->q;
+      q = elc_params.delta_mid_bot * p.e->p.q * p.e->p.q;
       pos[0] = p.r.p[0];
       pos[1] = p.r.p[1];
       pos[2] = -p.r.p[2];
@@ -1348,7 +1348,7 @@ void ELC_P3M_self_forces() {
       p3m_add_pair_force(q, d, dist2, dist, p.f.f.data());
     }
     if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-      q = elc_params.delta_mid_top * p.p->q * p.p->q;
+      q = elc_params.delta_mid_top * p.e->p.q * p.e->p.q;
       pos[0] = p.r.p[0];
       pos[1] = p.r.p[1];
       pos[2] = 2 * elc_params.h - p.r.p[2];
@@ -1371,11 +1371,11 @@ void ELC_p3m_charge_assign_both() {
     p3m.rs_mesh[i] = 0.0;
 
   for (auto &p : local_cells.particles()) {
-    if (p.p->q != 0.0) {
-      p3m_assign_charge(p.p->q, p.r.p, cp_cnt);
+    if (p.e->p.q != 0.0) {
+      p3m_assign_charge(p.e->p.q, p.r.p, cp_cnt);
 
       if (p.r.p[2] < elc_params.space_layer) {
-        double q = elc_params.delta_mid_bot * p.p->q;
+        double q = elc_params.delta_mid_bot * p.e->p.q;
         pos[0] = p.r.p[0];
         pos[1] = p.r.p[1];
         pos[2] = -p.r.p[2];
@@ -1383,7 +1383,7 @@ void ELC_p3m_charge_assign_both() {
       }
 
       if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-        double q = elc_params.delta_mid_top * p.p->q;
+        double q = elc_params.delta_mid_top * p.e->p.q;
         pos[0] = p.r.p[0];
         pos[1] = p.r.p[1];
         pos[2] = 2 * elc_params.h - p.r.p[2];
@@ -1405,10 +1405,10 @@ void ELC_p3m_charge_assign_image() {
     p3m.rs_mesh[i] = 0.0;
 
   for (auto &p : local_cells.particles()) {
-    if (p.p->q != 0.0) {
+    if (p.e->p.q != 0.0) {
 
       if (p.r.p[2] < elc_params.space_layer) {
-        double q = elc_params.delta_mid_bot * p.p->q;
+        double q = elc_params.delta_mid_bot * p.e->p.q;
         pos[0] = p.r.p[0];
         pos[1] = p.r.p[1];
         pos[2] = -p.r.p[2];
@@ -1416,7 +1416,7 @@ void ELC_p3m_charge_assign_image() {
       }
 
       if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-        double q = elc_params.delta_mid_top * p.p->q;
+        double q = elc_params.delta_mid_top * p.e->p.q;
         pos[0] = p.r.p[0];
         pos[1] = p.r.p[1];
         pos[2] = 2 * elc_params.h - p.r.p[2];
@@ -1438,7 +1438,7 @@ void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
   tp2 = p2->r.p[2];
 
   if (p1->r.p[2] < elc_params.space_layer) {
-    q = elc_params.delta_mid_bot * p1->p->q * p2->p->q;
+    q = elc_params.delta_mid_bot * p1->e->p.q * p2->e->p.q;
     pos[0] = p1->r.p[0];
     pos[1] = p1->r.p[1];
     pos[2] = -p1->r.p[2];
@@ -1449,7 +1449,7 @@ void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
   }
 
   if (p1->r.p[2] > (elc_params.h - elc_params.space_layer)) {
-    q = elc_params.delta_mid_top * p1->p->q * p2->p->q;
+    q = elc_params.delta_mid_top * p1->e->p.q * p2->e->p.q;
     pos[0] = p1->r.p[0];
     pos[1] = p1->r.p[1];
     pos[2] = 2 * elc_params.h - p1->r.p[2];
@@ -1460,7 +1460,7 @@ void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
   }
 
   if (tp2 < elc_params.space_layer) {
-    q = elc_params.delta_mid_bot * p1->p->q * p2->p->q;
+    q = elc_params.delta_mid_bot * p1->e->p.q * p2->e->p.q;
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
     pos[2] = -tp2;
@@ -1471,7 +1471,7 @@ void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
   }
 
   if (tp2 > (elc_params.h - elc_params.space_layer)) {
-    q = elc_params.delta_mid_top * p1->p->q * p2->p->q;
+    q = elc_params.delta_mid_top * p1->e->p.q * p2->e->p.q;
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
     pos[2] = 2 * elc_params.h - tp2;
@@ -1494,7 +1494,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
   tp2 = p2->r.p[2];
 
   if (p1->r.p[2] < elc_params.space_layer) {
-    q = elc_params.delta_mid_bot * p1->p->q * p2->p->q;
+    q = elc_params.delta_mid_bot * p1->e->p.q * p2->e->p.q;
     pos[0] = p1->r.p[0];
     pos[1] = p1->r.p[1];
     pos[2] = -p1->r.p[2];
@@ -1505,7 +1505,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
   }
 
   if (p1->r.p[2] > (elc_params.h - elc_params.space_layer)) {
-    q = elc_params.delta_mid_top * p1->p->q * p2->p->q;
+    q = elc_params.delta_mid_top * p1->e->p.q * p2->e->p.q;
     pos[0] = p1->r.p[0];
     pos[1] = p1->r.p[1];
     pos[2] = 2 * elc_params.h - p1->r.p[2];
@@ -1516,7 +1516,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
   }
 
   if (tp2 < elc_params.space_layer) {
-    q = elc_params.delta_mid_bot * p1->p->q * p2->p->q;
+    q = elc_params.delta_mid_bot * p1->e->p.q * p2->e->p.q;
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
     pos[2] = -tp2;
@@ -1527,7 +1527,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
   }
 
   if (tp2 > (elc_params.h - elc_params.space_layer)) {
-    q = elc_params.delta_mid_top * p1->p->q * p2->p->q;
+    q = elc_params.delta_mid_top * p1->e->p.q * p2->e->p.q;
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
     pos[2] = 2 * elc_params.h - tp2;
@@ -1553,7 +1553,7 @@ double ELC_P3M_dielectric_layers_energy_self() {
     // Loop neighbor cell particles
 
     if (p.r.p[2] < elc_params.space_layer) {
-      q = elc_params.delta_mid_bot * p.p->q * p.p->q;
+      q = elc_params.delta_mid_bot * p.e->p.q * p.e->p.q;
       pos[0] = p.r.p[0];
       pos[1] = p.r.p[1];
       pos[2] = -p.r.p[2];
@@ -1565,7 +1565,7 @@ double ELC_P3M_dielectric_layers_energy_self() {
     }
 
     if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-      q = elc_params.delta_mid_top * p.p->q * p.p->q;
+      q = elc_params.delta_mid_top * p.e->p.q * p.e->p.q;
       pos[0] = p.r.p[0];
       pos[1] = p.r.p[1];
       pos[2] = 2 * elc_params.h - p.r.p[2];
@@ -1590,23 +1590,23 @@ void ELC_P3M_modify_p3m_sums_both() {
   }
 
   for (auto &p : local_cells.particles()) {
-    if (p.p->q != 0.0) {
+    if (p.e->p.q != 0.0) {
 
       node_sums[0] += 1.0;
-      node_sums[1] += Utils::sqr(p.p->q);
-      node_sums[2] += p.p->q;
+      node_sums[1] += Utils::sqr(p.e->p.q);
+      node_sums[2] += p.e->p.q;
 
       if (p.r.p[2] < elc_params.space_layer) {
 
         node_sums[0] += 1.0;
-        node_sums[1] += Utils::sqr(elc_params.delta_mid_bot * p.p->q);
-        node_sums[2] += elc_params.delta_mid_bot * p.p->q;
+        node_sums[1] += Utils::sqr(elc_params.delta_mid_bot * p.e->p.q);
+        node_sums[2] += elc_params.delta_mid_bot * p.e->p.q;
       }
       if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
 
         node_sums[0] += 1.0;
-        node_sums[1] += Utils::sqr(elc_params.delta_mid_top * p.p->q);
-        node_sums[2] += elc_params.delta_mid_top * p.p->q;
+        node_sums[1] += Utils::sqr(elc_params.delta_mid_top * p.e->p.q);
+        node_sums[2] += elc_params.delta_mid_top * p.e->p.q;
       }
     }
   }
@@ -1626,19 +1626,19 @@ void ELC_P3M_modify_p3m_sums_image() {
   }
 
   for (auto &p : local_cells.particles()) {
-    if (p.p->q != 0.0) {
+    if (p.e->p.q != 0.0) {
 
       if (p.r.p[2] < elc_params.space_layer) {
 
         node_sums[0] += 1.0;
-        node_sums[1] += Utils::sqr(elc_params.delta_mid_bot * p.p->q);
-        node_sums[2] += elc_params.delta_mid_bot * p.p->q;
+        node_sums[1] += Utils::sqr(elc_params.delta_mid_bot * p.e->p.q);
+        node_sums[2] += elc_params.delta_mid_bot * p.e->p.q;
       }
       if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
 
         node_sums[0] += 1.0;
-        node_sums[1] += Utils::sqr(elc_params.delta_mid_top * p.p->q);
-        node_sums[2] += elc_params.delta_mid_top * p.p->q;
+        node_sums[1] += Utils::sqr(elc_params.delta_mid_top * p.e->p.q);
+        node_sums[2] += elc_params.delta_mid_top * p.e->p.q;
       }
     }
   }
@@ -1660,11 +1660,11 @@ void ELC_P3M_restore_p3m_sums() {
   }
 
   for (auto &p : local_cells.particles()) {
-    if (p.p->q != 0.0) {
+    if (p.e->p.q != 0.0) {
 
       node_sums[0] += 1.0;
-      node_sums[1] += Utils::sqr(p.p->q);
-      node_sums[2] += p.p->q;
+      node_sums[1] += Utils::sqr(p.e->p.q);
+      node_sums[2] += p.e->p.q;
     }
   }
 

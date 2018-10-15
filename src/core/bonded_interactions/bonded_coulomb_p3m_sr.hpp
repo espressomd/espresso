@@ -64,16 +64,16 @@ inline int calc_bonded_coulomb_p3m_sr_pair_force(Particle *p1, Particle *p2,
     p3m_add_pair_force(iaparams->p.bonded_coulomb_p3m_sr.q1q2, dx, dist2, dist,
                        force);
 
-    ONEPART_TRACE(if (p1->p->identity == check_id) fprintf(
+    ONEPART_TRACE(if (p1->e->p.identity == check_id) fprintf(
         stderr,
         "%d: OPT: BONDED_COULOMB_P3M_SR f = (%.3e,%.3e,%.3e) with part id=%d "
         "at dist %f\n",
-        this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2], p2->p->identity, dist2));
-    ONEPART_TRACE(if (p2->p->identity == check_id) fprintf(
+        this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2], p2->e->p.identity, dist2));
+    ONEPART_TRACE(if (p2->e->p.identity == check_id) fprintf(
         stderr,
         "%d: OPT: BONDED_COULOMB_P3M_SR f = (%.3e,%.3e,%.3e) with part id=%d "
         "at dist %f\n",
-        this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2], p1->p->identity, dist2));
+        this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2], p1->e->p.identity, dist2));
   }
 
   return 0;

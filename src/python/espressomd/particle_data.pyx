@@ -115,7 +115,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.type
+            return self.particle_data.e.p.type
 
     # Particle MolId
     property mol_id:
@@ -142,7 +142,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.mol_id
+            return self.particle_data.e.p.mol_id
 
     # Position
     property pos:
@@ -221,9 +221,9 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return array_locked([self.particle_data.l.i[0],
-                                 self.particle_data.l.i[1],
-                                 self.particle_data.l.i[2]])
+            return array_locked([self.particle_data.e.l.i[0],
+                                 self.particle_data.e.l.i[1],
+                                 self.particle_data.e.l.i[2]])
 
     # Velocity
     property v:
@@ -249,7 +249,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(self.particle_data.m.v)
+            return make_array_locked(self.particle_data.e.m.v)
 
     # Force
     property f:
@@ -376,7 +376,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.mass
+            return self.particle_data.e.p.mass
 
     IF ROTATION:
         property omega_lab:

@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(link_cell) {
     c.n = c.max = n_part_per_cell;
 
     for (unsigned i = 0; i < n_part_per_cell; ++i) {
-      c.part[i].p->identity = id++;
+      c.part[i].e->p.identity = id++;
     }
   }
 
@@ -60,17 +60,17 @@ BOOST_AUTO_TEST_CASE(link_cell) {
 
   Algorithm::link_cell(
       cells.begin(), cells.end(),
-      [&id_counts](Particle const &p) { id_counts[p.p->identity]++; },
+      [&id_counts](Particle const &p) { id_counts[p.e->p.identity]++; },
       [&lc_pairs](Particle const &p1, Particle const &p2,
                   std::pair<int, int> d) {
         /* Check that the "distance function" has been called with the correct
          * arguments */
-        BOOST_CHECK((d.first == p1.p->identity) && (d.second == p2.p->identity));
-        if (p1.p->identity <= p2.p->identity)
-          lc_pairs.emplace_back(p1.p->identity, p2.p->identity);
+        BOOST_CHECK((d.first == p1.e->p.identity) && (d.second == p2.e->p.identity));
+        if (p1.e->p.identity <= p2.e->p.identity)
+          lc_pairs.emplace_back(p1.e->p.identity, p2.e->p.identity);
       },
       [](Particle const &p1, Particle const &p2) {
-        return std::make_pair(p1.p->identity, p2.p->identity);
+        return std::make_pair(p1.e->p.identity, p2.e->p.identity);
       });
 
   /* Check that the particle kernel has been executed exactly once for every

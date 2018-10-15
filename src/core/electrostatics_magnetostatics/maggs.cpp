@@ -273,7 +273,7 @@ int maggs_count_charged_particles() {
   tot_sum = 0.0;
 
   for (auto const &p : local_cells.particles())
-    if (p.p->q != 0.0)
+    if (p.e->p.q != 0.0)
       node_sum += 1.0;
 
   MPI_Reduce(&node_sum, &tot_sum, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
@@ -429,7 +429,7 @@ int maggs_sanity_checks() {
 #ifdef EXTERNAL_FORCES
   /** check for fixed particles */
   for (auto const &p : local_cells.particles()) {
-    if ((p.p->q != 0.0) & p.p->ext_flag & COORDS_FIX_MASK) {
+    if ((p.e->p.q != 0.0) & p.e->p.ext_flag & COORDS_FIX_MASK) {
       runtimeErrorMsg() << "MEMD does not work with fixed particles.";
       ret = -1;
     }
@@ -454,7 +454,7 @@ void maggs_compute_dipole_correction() {
   /* Compute the global dipole moment */
   for (auto const &p : local_cells.particles())
     for (int dim = 0; dim < 3; dim++)
-      local_dipole_moment[dim] += p.r.p[dim] * p.p->q;
+      local_dipole_moment[dim] += p.r.p[dim] * p.e->p.q;
 
   MPI_Allreduce(local_dipole_moment, dipole_moment, 3, MPI_DOUBLE, MPI_SUM,
                 comm_cart);
@@ -466,7 +466,7 @@ void maggs_compute_dipole_correction() {
   /* apply correction to all particles: */
   for (auto &p : local_cells.particles())
     for (int dim = 0; dim < 3; dim++)
-      p.f.f[dim] += p.p->q * dipole_prefactor * dipole_moment[dim];
+      p.f.f[dim] += p.e->p.q * dipole_prefactor * dipole_moment[dim];
 }
 
 /*******************************/
@@ -807,7 +807,7 @@ double maggs_set_adaptive_permittivity(int node_x, int node_y, int node_z) {
     np = cell->n;
 
     for (i = 0; i < np; i++) {
-      concentration += p[i].p->q;
+      concentration += p[i].e->p.q;
     }
   }
 
@@ -1055,7 +1055,7 @@ void maggs_accumulate_charge_from_ghosts() {
 
   /** loop over ghost cells */
   for (auto const &p : ghost_cells.particles()) {
-    if ((q = p.p->q) != 0.0) {
+    if ((q = p.e->p.q) != 0.0) {
       flag_inner = 1;
       int d;
       FOR3D(d) {
@@ -1091,7 +1091,7 @@ void maggs_distribute_particle_charges() {
     lattice[i].charge = 0.;
   /** === charge assignment === */
   for (auto const &p : local_cells.particles()) {
-    if ((q = p.p->q) != 0.0) {
+    if ((q = p.e->p.q) != 0.0) {
       int d;
       FOR3D(d) {
         pos[d] = (p.r.p[d] - lparams.left_down_position[d]) * maggs.inva;
@@ -1147,7 +1147,7 @@ void maggs_update_charge_gradients(double *grad) {
   /* === grad assignment for real particles and self-force === */
   int ip = 0;
   for (auto const &p : local_cells.particles()) {
-    if ((q = p.p->q) != 0.0) {
+    if ((q = p.e->p.q) != 0.0) {
       int d;
       FOR3D(d) {
         pos[d] = (p.r.p[d] - lparams.left_down_position[d]) * maggs.inva;
@@ -1827,7 +1827,7 @@ void maggs_add_current_on_segment(Particle *p, int ghost_cell) {
     r_temp[d] =
         pos[d] - first[d]; /* it is the updated coord (we have to go back) */
     help[d] = 1. - r_temp[d];
-    v_inva[d] = maggs.inva * p->m->v[d];
+    v_inva[d] = maggs.inva * p->e->m.v[d];
     v_invasq[d] = maggs.inva * v_inva[d];
   }
 
@@ -1857,11 +1857,11 @@ void maggs_add_current_on_segment(Particle *p, int ghost_cell) {
       delta = 0.5 * v_inva[icoord];
 
     f_crossing = maggs_check_intersect_1D(
-        delta, r_temp[icoord], icoord, first[icoord], &t_step, p->p->identity);
+        delta, r_temp[icoord], icoord, first[icoord], &t_step, p->e->p.identity);
 
     /* calculate flux */
     if (flag_update_flux) {
-      maggs_calc_charge_fluxes_1D(p->p->q, help, flux, icoord);
+      maggs_calc_charge_fluxes_1D(p->e->p.q, help, flux, icoord);
 
       v = t_step * v_invasq[icoord];
       maggs_calc_e_field_on_link_1D(lat_index, flux, v, icoord);
@@ -1895,7 +1895,7 @@ void maggs_add_current_on_segment(Particle *p, int ghost_cell) {
             break;
           }
           if (flag_update_flux)
-            maggs_calc_charge_fluxes_1D(p->p->q, help, flux, icoord);
+            maggs_calc_charge_fluxes_1D(p->e->p.q, help, flux, icoord);
         }
       }
 
@@ -1921,19 +1921,19 @@ void maggs_couple_current_to_Dfield() {
 
   /** loop over real particles */
   for (auto &p : local_cells.particles()) {
-    if ((q = p.p->q) != 0.) {
+    if ((q = p.e->p.q) != 0.) {
       maggs_add_current_on_segment(&p, 0);
     } /* if particle.q != ZERO */
   }
 
   /** loop over ghost particles */
   for (auto &p : ghost_cells.particles()) {
-    if ((q = p.p->q) != 0.) {
+    if ((q = p.e->p.q) != 0.) {
       flag_inner = 1;
       int d;
       FOR3D(d) {
         r2 = p.r.p[d];
-        r1 = r2 - p.m->v[d];
+        r1 = r2 - p.e->m.v[d];
         if (((r2 < lparams.left_down_position[d]) &&
              (r1 < lparams.left_down_position[d])) ||
             ((r2 >= lparams.upper_right_position[d] &&
@@ -2140,7 +2140,7 @@ void maggs_calc_self_influence(Particle *P) {
   //	int index = 0;
   //	int globalindex = 0;
   double local_force[SPACE_DIM];
-  double particle_charge = P->p->q;
+  double particle_charge = P->e->p.q;
 
   /* calculate position in cell, normalized to lattice size: */
   FOR3D(k) {
@@ -2269,7 +2269,7 @@ void maggs_calc_forces() {
 
   ip = 0;
   for (auto &p : local_cells.particles()) {
-    q = p.p->q;
+    q = p.e->p.q;
     if (fabs(q) > 1.0e-5) {
       FOR3D(d) {
         pos[d] = (p.r.p[d] - lparams.left_down_position[d]) * maggs.inva;

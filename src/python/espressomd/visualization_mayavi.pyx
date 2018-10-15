@@ -182,7 +182,7 @@ cdef class mayaviLive(object):
                 continue
 
             coords[j, :] = numpy.array([p.r.p[0], p.r.p[1], p.r.p[2]])
-            t = p.p.type
+            t = p.e.p.type
             types[j] = t + 1
             radii[j] = self._determine_radius(t)
 

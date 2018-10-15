@@ -46,7 +46,7 @@ int test_mesh_elements(PartCfg &partCfg, double pos[3], int probe_part_type) {
   double dist, vec[3];
 
   for (auto &p : partCfg) {
-    IA_parameters *ia_params = get_ia_param(p.p->type, probe_part_type);
+    IA_parameters *ia_params = get_ia_param(p.e->p.type, probe_part_type);
     get_mi_vector(vec, pos, p.r.p);
     dist = sqrt(sqrlen(vec));
 

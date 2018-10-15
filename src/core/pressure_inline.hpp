@@ -49,34 +49,34 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 #endif
   {
     calc_non_bonded_pair_force(p1, p2, d, dist, dist2, force);
-    *obsstat_nonbonded(&virials, p1->p->type, p2->p->type) +=
+    *obsstat_nonbonded(&virials, p1->e->p.type, p2->e->p.type) +=
         d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
 
     /* stress tensor part */
     for (k = 0; k < 3; k++)
       for (l = 0; l < 3; l++)
-        obsstat_nonbonded(&p_tensor, p1->p->type, p2->p->type)[k * 3 + l] +=
+        obsstat_nonbonded(&p_tensor, p1->e->p.type, p2->e->p.type)[k * 3 + l] +=
             force[k] * d[l];
 
-    p1molid = p1->p->mol_id;
-    p2molid = p2->p->mol_id;
+    p1molid = p1->e->p.mol_id;
+    p2molid = p2->e->p.mol_id;
     if (p1molid == p2molid) {
-      *obsstat_nonbonded_intra(&virials_non_bonded, p1->p->type, p2->p->type) +=
+      *obsstat_nonbonded_intra(&virials_non_bonded, p1->e->p.type, p2->e->p.type) +=
           d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
 
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
-          obsstat_nonbonded_intra(&p_tensor_non_bonded, p1->p->type,
-                                  p2->p->type)[k * 3 + l] += force[k] * d[l];
+          obsstat_nonbonded_intra(&p_tensor_non_bonded, p1->e->p.type,
+                                  p2->e->p.type)[k * 3 + l] += force[k] * d[l];
     }
     if (p1molid != p2molid) {
-      *obsstat_nonbonded_inter(&virials_non_bonded, p1->p->type, p2->p->type) +=
+      *obsstat_nonbonded_inter(&virials_non_bonded, p1->e->p.type, p2->e->p.type) +=
           d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
 
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
-          obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->p->type,
-                                  p2->p->type)[k * 3 + l] += force[k] * d[l];
+          obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->e->p.type,
+                                  p2->e->p.type)[k * 3 + l] += force[k] * d[l];
     }
   }
 
@@ -98,8 +98,8 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
       force[0] = 0.0;
       force[1] = 0.0;
       force[2] = 0.0;
-      p3m_add_pair_force(p1->p->q * p2->p->q, d, dist2, dist, force);
-      virials.coulomb[0] += p3m_pair_energy(p1->p->q * p2->p->q, dist);
+      p3m_add_pair_force(p1->e->p.q * p2->e->p.q, d, dist2, dist, force);
+      virials.coulomb[0] += p3m_pair_energy(p1->e->p.q * p2->e->p.q, dist);
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
           p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
@@ -200,7 +200,7 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
 #ifdef TABULATED
   case BONDED_IA_TABULATED:
     // printf("BONDED TAB, Particle: %d, P2: %d TYPE_TAB:
-    // %d\n",p1->p->identity,p2->p->identity,iparams->p.tab.type);
+    // %d\n",p1->e->p.identity,p2->e->p.identity,iparams->p.tab.type);
     switch (iaparams->p.tab.type) {
     case TAB_BOND_LENGTH:
       calc_tab_bond_force(p1, p2, iaparams, dx, force);
@@ -215,7 +215,7 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
       break;
     default:
       runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
-                        << p1->p->identity << " unknown\n";
+                        << p1->e->p.identity << " unknown\n";
       return;
     }
     break;
@@ -230,11 +230,11 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
     break;
   default:
     //      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d
-    //      unhandled\n",bonded_ia_params[type_num].type,p1->p->identity);
+    //      unhandled\n",bonded_ia_params[type_num].type,p1->e->p.identity);
     fprintf(stderr,
             "add_bonded_virials: WARNING: Bond type %d , atom %d unhandled, "
             "Atom 2: %d\n",
-            iaparams->type, p1->p->identity, p2->p->identity);
+            iaparams->type, p1->e->p.identity, p2->e->p.identity);
     force[0] = force[1] = force[2] = 0;
     break;
   }
@@ -286,7 +286,7 @@ inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2,
       break;
     default:
       runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
-                        << p1->p->identity << " unknown\n";
+                        << p1->e->p.identity << " unknown\n";
       return;
     }
     break;
@@ -294,7 +294,7 @@ inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2,
   default:
     fprintf(stderr, "calc_three_body_bonded_forces: \
             WARNING: Bond type %d , atom %d unhandled, Atom 2: %d\n",
-            iaparams->type, p1->p->identity, p2->p->identity);
+            iaparams->type, p1->e->p.identity, p2->e->p.identity);
     break;
   }
 }
@@ -327,7 +327,7 @@ inline void add_bonded_virials(Particle *p1) {
       // cutoff, see calc_maximal_cutoff()
       if ((type_num == BONDED_IA_HARMONIC) && (iaparams->p.harmonic.r_cut > 0))
         return;
-      runtimeErrorMsg() << "bond broken between particles " << p1->p->identity
+      runtimeErrorMsg() << "bond broken between particles " << p1->e->p.identity
                         << " and " << p1->bl.e[i - 1]
                         << " (particles not stored on the same node)";
       return;
@@ -471,7 +471,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
       } else {
         runtimeErrorMsg()
             << "add_three_body_bonded_stress: match not found for particle "
-            << p1->p->identity << ".\n";
+            << p1->e->p.identity << ".\n";
       }
     }
 #endif
@@ -485,7 +485,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     } else {
       runtimeErrorMsg()
           << "add_three_body_bonded_stress: match not found for particle "
-          << p1->p->identity << ".\n";
+          << p1->e->p.identity << ".\n";
     }
   }
 }
@@ -503,18 +503,18 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
   {
     if (v_comp)
       virials.data.e[0] +=
-          (Utils::sqr(p1->m->v[0] * time_step -
-                      p1->f.f[0] * 0.5 * time_step * time_step / p1->p->mass) +
-           Utils::sqr(p1->m->v[1] * time_step -
-                      p1->f.f[1] * 0.5 * time_step * time_step / p1->p->mass) +
-           Utils::sqr(p1->m->v[2] * time_step -
-                      p1->f.f[2] * 0.5 * time_step * time_step / p1->p->mass)) *
-          (*p1).p->mass;
+          (Utils::sqr(p1->e->m.v[0] * time_step -
+                      p1->f.f[0] * 0.5 * time_step * time_step / p1->e->p.mass) +
+           Utils::sqr(p1->e->m.v[1] * time_step -
+                      p1->f.f[1] * 0.5 * time_step * time_step / p1->e->p.mass) +
+           Utils::sqr(p1->e->m.v[2] * time_step -
+                      p1->f.f[2] * 0.5 * time_step * time_step / p1->e->p.mass)) *
+          (*p1).e->p.mass;
     else
-      virials.data.e[0] += (Utils::sqr(p1->m->v[0] * time_step) +
-                            Utils::sqr(p1->m->v[1] * time_step) +
-                            Utils::sqr(p1->m->v[2] * time_step)) *
-                           (*p1).p->mass;
+      virials.data.e[0] += (Utils::sqr(p1->e->m.v[0] * time_step) +
+                            Utils::sqr(p1->e->m.v[1] * time_step) +
+                            Utils::sqr(p1->e->m.v[2] * time_step)) *
+                           (*p1).e->p.mass;
   }
 
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step'
@@ -522,7 +522,7 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
   for (k = 0; k < 3; k++)
     for (l = 0; l < 3; l++)
       p_tensor.data.e[k * 3 + l] +=
-          (p1->m->v[k] * time_step) * (p1->m->v[l] * time_step) * (*p1).p->mass;
+          (p1->e->m.v[k] * time_step) * (p1->e->m.v[l] * time_step) * (*p1).e->p.mass;
 }
 
 #endif

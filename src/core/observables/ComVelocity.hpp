@@ -32,10 +32,10 @@ public:
     std::vector<double> res(n_values());
     double total_mass = 0;
     for (int i = 0; i < ids().size(); i++) {
-      double mass = partCfg[ids()[i]].p->mass;
-      res[0] += mass * partCfg[ids()[i]].m->v[0];
-      res[1] += mass * partCfg[ids()[i]].m->v[1];
-      res[2] += mass * partCfg[ids()[i]].m->v[2];
+      double mass = partCfg[ids()[i]].e->p.mass;
+      res[0] += mass * partCfg[ids()[i]].e->m.v[0];
+      res[1] += mass * partCfg[ids()[i]].e->m.v[1];
+      res[2] += mass * partCfg[ids()[i]].e->m.v[2];
       total_mass += mass;
     }
     res[0] /= total_mass;

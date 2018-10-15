@@ -66,7 +66,7 @@ inline void add_ljcos_pair_force(const Particle *const p1,
 #ifdef LJ_WARN_WHEN_CLOSE
       if (fac * dist > 1000)
         fprintf(stderr, "%d: LJCOS-Warning: Pair (%d-%d) force=%f dist=%f\n",
-                this_node, p1->p->identity, p2->p->identity, fac * dist, dist);
+                this_node, p1->e->p.identity, p2->e->p.identity, fac * dist, dist);
 #endif
     }
   }

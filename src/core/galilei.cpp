@@ -35,15 +35,15 @@ galilei_struct gal;
    velocity of each particle to zero */
 void local_kill_particle_motion(int omega) {
   for (auto &p : local_cells.particles()) {
-    p.m->v[0] = 0.0;
-    p.m->v[1] = 0.0;
-    p.m->v[2] = 0.0;
+    p.e->m.v[0] = 0.0;
+    p.e->m.v[1] = 0.0;
+    p.e->m.v[2] = 0.0;
 
     if (omega != 0) {
 #ifdef ROTATION
-      p.m->omega[0] = 0.0;
-      p.m->omega[1] = 0.0;
-      p.m->omega[2] = 0.0;
+      p.e->m.omega[0] = 0.0;
+      p.e->m.omega[1] = 0.0;
+      p.e->m.omega[2] = 0.0;
 #endif
     }
   }
@@ -73,7 +73,7 @@ void local_system_CMS(double *sdata) {
   double mass = 0.0;
 
   for (auto const &p : local_cells.particles()) {
-    double M = p.p->mass;
+    double M = p.e->p.mass;
     mass += M;
 
     Vector3d ppos = unfolded_position(p);
@@ -95,12 +95,12 @@ void local_system_CMS_velocity(double *sdata) {
   double mass = 0.0;
 
   for (auto const &p : local_cells.particles()) {
-    double M = p.p->mass;
+    double M = p.e->p.mass;
     mass += M;
 
-    x += M * p.m->v[0];
-    y += M * p.m->v[1];
-    z += M * p.m->v[2];
+    x += M * p.e->m.v[0];
+    y += M * p.e->m.v[1];
+    z += M * p.e->m.v[2];
   }
 
   sdata[0] = x;
@@ -112,8 +112,8 @@ void local_system_CMS_velocity(double *sdata) {
 /* Remove the CMS velocity */
 void local_galilei_transform(double *sdata) {
   for (auto &p : local_cells.particles()) {
-    p.m->v[0] -= sdata[0];
-    p.m->v[1] -= sdata[1];
-    p.m->v[2] -= sdata[2];
+    p.e->m.v[0] -= sdata[0];
+    p.e->m.v[1] -= sdata[1];
+    p.e->m.v[2] -= sdata[2];
   }
 }

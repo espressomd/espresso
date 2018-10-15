@@ -333,15 +333,15 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   bool write_mass = write_dat & W_MASS;
   bool write_charge = write_dat & W_CHARGE;
 
-  id[0][particle_index][0] = current_particle.p->identity;
+  id[0][particle_index][0] = current_particle.e->p.identity;
   if (write_species)
-    typ[0][particle_index][0] = current_particle.p->type;
+    typ[0][particle_index][0] = current_particle.e->p.type;
   if (write_mass)
-    mass[0][particle_index][0] = current_particle.p->mass;
+    mass[0][particle_index][0] = current_particle.e->p.mass;
   /* store folded particle positions. */
   if (write_pos) {
     Vector3d p = current_particle.r.p;
-    Vector<3, int> i = current_particle.l->i;
+    Vector<3, int> i = current_particle.e->l.i;
     fold_position(p, i);
 
     pos[0][particle_index][0] = p[0];
@@ -353,9 +353,9 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
 
   if (write_vel) {
-    vel[0][particle_index][0] = current_particle.m->v[0];
-    vel[0][particle_index][1] = current_particle.m->v[1];
-    vel[0][particle_index][2] = current_particle.m->v[2];
+    vel[0][particle_index][0] = current_particle.e->m.v[0];
+    vel[0][particle_index][1] = current_particle.e->m.v[1];
+    vel[0][particle_index][2] = current_particle.e->m.v[2];
   }
   if (write_force) {
     f[0][particle_index][0] = current_particle.f.f[0];
@@ -364,7 +364,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
   if (write_charge) {
 #ifdef ELECTROSTATICS
-    charge[0][particle_index][0] = current_particle.p->q;
+    charge[0][particle_index][0] = current_particle.e->p.q;
 #endif
   }
 
@@ -377,7 +377,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
 
       if (1 == n_partners) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);
-        bond[0][nbonds_local][0] = current_particle.p->identity;
+        bond[0][nbonds_local][0] = current_particle.e->p.identity;
         bond[0][nbonds_local][1] = *it++;
         nbonds_local++;
       } else {

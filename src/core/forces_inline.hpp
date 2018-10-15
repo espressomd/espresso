@@ -125,10 +125,10 @@ inline void init_local_particle_force(Particle *part) {
   }
 
 #ifdef EXTERNAL_FORCES
-  if (part->p->ext_flag & PARTICLE_EXT_FORCE) {
-    part->f.f[0] += part->p->ext_force[0];
-    part->f.f[1] += part->p->ext_force[1];
-    part->f.f[2] += part->p->ext_force[2];
+  if (part->e->p.ext_flag & PARTICLE_EXT_FORCE) {
+    part->f.f[0] += part->e->p.ext_force[0];
+    part->f.f[1] += part->e->p.ext_force[1];
+    part->f.f[2] += part->e->p.ext_force[2];
   }
 #endif
 
@@ -141,20 +141,20 @@ inline void init_local_particle_force(Particle *part) {
     part->f.torque[2] = 0;
 
 #ifdef EXTERNAL_FORCES
-    if (part->p->ext_flag & PARTICLE_EXT_TORQUE) {
-      part->f.torque[0] += part->p->ext_torque[0];
-      part->f.torque[1] += part->p->ext_torque[1];
-      part->f.torque[2] += part->p->ext_torque[2];
+    if (part->e->p.ext_flag & PARTICLE_EXT_TORQUE) {
+      part->f.torque[0] += part->e->p.ext_torque[0];
+      part->f.torque[1] += part->e->p.ext_torque[1];
+      part->f.torque[2] += part->e->p.ext_torque[2];
     }
 #endif
 
 #ifdef ENGINE
     // apply a swimming force in the direction of
     // the particle's orientation axis
-    if (part->swim->swimming) {
-      part->f.f[0] += part->swim->f_swim * part->r.quatu[0];
-      part->f.f[1] += part->swim->f_swim * part->r.quatu[1];
-      part->f.f[2] += part->swim->f_swim * part->r.quatu[2];
+    if (part->e->swim.swimming) {
+      part->f.f[0] += part->e->swim.f_swim * part->r.quatu[0];
+      part->f.f[1] += part->e->swim.f_swim * part->r.quatu[1];
+      part->f.f[2] += part->e->swim.f_swim * part->r.quatu[2];
     }
 #endif
 
@@ -178,7 +178,7 @@ inline void calc_non_bonded_pair_force_parts(
     IA_parameters *ia_params, double d[3], double dist, double dist2,
     double force[3], double torque1[3] = nullptr, double torque2[3] = nullptr) {
 #ifdef NO_INTRA_NB
-  if (p1->p->mol_id == p2->p->mol_id)
+  if (p1->e->p.mol_id == p2->e->p.mol_id)
     return;
 #endif
 /* Lennard-Jones */
@@ -262,7 +262,7 @@ inline void calc_non_bonded_pair_force(const Particle *p1, const Particle *p2,
 inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                        double dist, double dist2,
                                        double force[3]) {
-  IA_parameters *ia_params = get_ia_param(p1->p->type, p2->p->type);
+  IA_parameters *ia_params = get_ia_param(p1->e->p.type, p2->e->p.type);
   calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 }
 
@@ -275,7 +275,7 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
 
-  IA_parameters *ia_params = get_ia_param(p1->p->type, p2->p->type);
+  IA_parameters *ia_params = get_ia_param(p1->e->p.type, p2->e->p.type);
   Vector3d force{};
   double torque1[3] = {0., 0., 0.};
   double torque2[3] = {0., 0., 0.};
@@ -296,7 +296,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 #endif
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
-                      p1->p->identity, p2->p->identity, dist));
+                      p1->e->p.identity, p2->e->p.identity, dist));
 
   /***********************************************/
   /* non bonded pair potentials                  */
@@ -347,7 +347,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 
 #ifdef ELECTROSTATICS
   /* real space Coulomb */
-  const double q1q2 = p1->p->q * p2->p->q;
+  const double q1q2 = p1->e->p.q * p2->e->p.q;
 
   switch (coulomb.method) {
 #ifdef P3M
@@ -470,7 +470,7 @@ inline void add_bonded_force(Particle *p1) {
     if (n_partners) {
       Particle *p2 = local_particles[p1->bl.e[i++]];
       if (!p2) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p->identity;
+        runtimeErrorMsg() << "bond broken between particles " << p1->e->p.identity;
         return;
       }
 
@@ -479,7 +479,7 @@ inline void add_bonded_force(Particle *p1) {
         p3 = local_particles[p1->bl.e[i++]];
         if (!p3) {
           runtimeErrorMsg()
-              << "bond broken between particles " << p1->p->identity << ", "
+              << "bond broken between particles " << p1->e->p.identity << ", "
               << p1->bl.e[i - 2] << " and " << p1->bl.e[i - 1]
               << " (particles are not stored on the same node)";
           return;
@@ -491,7 +491,7 @@ inline void add_bonded_force(Particle *p1) {
         p4 = local_particles[p1->bl.e[i++]];
         if (!p4) {
           runtimeErrorMsg()
-              << "bond broken between particles " << p1->p->identity << ", "
+              << "bond broken between particles " << p1->e->p.identity << ", "
               << p1->bl.e[i - 3] << ", " << p1->bl.e[i - 2] << " and "
               << p1->bl.e[i - 1] << " (particles not stored on the same node)";
           return;
@@ -661,7 +661,7 @@ inline void add_bonded_force(Particle *p1) {
           break;
         default:
           runtimeErrorMsg() << "add_bonded_force: tabulated bond type of atom "
-                            << p1->p->identity << " unknown\n";
+                            << p1->e->p.identity << " unknown\n";
           return;
         }
         break;
@@ -677,7 +677,7 @@ inline void add_bonded_force(Particle *p1) {
         break;
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
-                          << p1->p->identity << " unknown\n";
+                          << p1->e->p.identity << " unknown\n";
         return;
       }
 
@@ -685,8 +685,8 @@ inline void add_bonded_force(Particle *p1) {
       case 1:
         if (bond_broken) {
           runtimeErrorMsg()
-              << "bond broken between particles " << p1->p->identity << " and "
-              << p2->p->identity << ". Distance vector: " << dx[0] << " "
+              << "bond broken between particles " << p1->e->p.identity << " and "
+              << p2->e->p.identity << ". Distance vector: " << dx[0] << " "
               << dx[1] << " " << dx[2];
           continue;
         }
@@ -715,8 +715,8 @@ inline void add_bonded_force(Particle *p1) {
       case 2:
         if (bond_broken) {
           runtimeErrorMsg()
-              << "bond broken between particles " << p1->p->identity << ", "
-              << p2->p->identity << " and " << p3->p->identity;
+              << "bond broken between particles " << p1->e->p.identity << ", "
+              << p2->e->p.identity << " and " << p3->e->p.identity;
           continue;
         }
 
@@ -736,8 +736,8 @@ inline void add_bonded_force(Particle *p1) {
       case 3:
         if (bond_broken) {
           runtimeErrorMsg() << "bond broken between particles "
-                            << p1->p->identity << ", " << p2->p->identity << ", "
-                            << p3->p->identity << " and " << p4->p->identity;
+                            << p1->e->p.identity << ", " << p2->e->p.identity << ", "
+                            << p3->e->p.identity << " and " << p4->e->p.identity;
           continue;
         }
 
@@ -771,7 +771,7 @@ inline void add_bonded_force(Particle *p1) {
 inline void check_particle_force(Particle *part) {
   for (int i = 0; i < 3; i++) {
     if (std::isnan(part->f.f[i])) {
-      runtimeErrorMsg() << "force on particle " << part->p->identity
+      runtimeErrorMsg() << "force on particle " << part->e->p.identity
                         << " was NAN.";
     }
   }
@@ -779,7 +779,7 @@ inline void check_particle_force(Particle *part) {
 #ifdef ROTATION
   for (int i = 0; i < 3; i++) {
     if (std::isnan(part->f.torque[i])) {
-      runtimeErrorMsg() << "torque on particle " << part->p->identity
+      runtimeErrorMsg() << "torque on particle " << part->e->p.identity
                         << " was NAN.";
     }
   }

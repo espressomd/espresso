@@ -58,7 +58,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
     /************************
      *
      * Here I can implement the affinity force.
-     * I have the position of the particle - p1, and under p1->p->bond_site I
+     * I have the position of the particle - p1, and under p1->e->p.bond_site I
      * have the coordinate of the bond_site. Also, under d[3] I have the vector
      * towards the constraint meaning that force on p1 should be in the
      * direction of d[3].
@@ -89,9 +89,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                             // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
-        // %f\n",p1->p->bond_site[0],p1->p->bond_site[1],p1->p->bond_site[2]);
-        if ((p1->p->bond_site[0] >= 0) && (p1->p->bond_site[1] >= 0) &&
-            (p1->p->bond_site[2] >= 0)) // Checking whether any bond exists
+        // %f\n",p1->e->p.bond_site[0],p1->e->p.bond_site[1],p1->e->p.bond_site[2]);
+        if ((p1->e->p.bond_site[0] >= 0) && (p1->e->p.bond_site[1] >= 0) &&
+            (p1->e->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
           double folded_pos[3], vec[3], len2, len;
           int img[3];
@@ -101,7 +101,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
           for (j = 0; j < 3; j++)
             vec[j] =
-                p1->p->bond_site[j] -
+                p1->e->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
                                  // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
@@ -120,7 +120,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // greater than maxBond, it breaks.
           if (len > ia_params->affinity_maxBond) {
             for (j = 0; j < 3; j++)
-              p1->p->bond_site[j] = -1;
+              p1->e->p.bond_site[j] = -1;
           }
         } else if (dist <
                    ia_params
@@ -130,7 +130,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // This implementation creates bond always
           Vector3d unfolded_pos = unfolded_position(p1);
           for (j = 0; j < 3; j++)
-            p1->p->bond_site[j] = unfolded_pos[j] - d[j];
+            p1->e->p.bond_site[j] = unfolded_pos[j] - d[j];
         }
       }
     }
@@ -139,7 +139,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
     /************************
      *
      * Here I can implement the affinity force.
-     * I have the position of the particle - p1, and under p1->p->bond_site I
+     * I have the position of the particle - p1, and under p1->e->p.bond_site I
      * have the coordinate of the bond_site. Also, under d[3] I have the vector
      * towards the constraint meaning that force on p1 should be in the
      * direction of d[3].
@@ -178,9 +178,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                             // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
-        // %f\n",p1->p->bond_site[0],p1->p->bond_site[1],p1->p->bond_site[2]);
-        if ((p1->p->bond_site[0] >= 0) && (p1->p->bond_site[1] >= 0) &&
-            (p1->p->bond_site[2] >= 0)) // Checking whether any bond exists
+        // %f\n",p1->e->p.bond_site[0],p1->e->p.bond_site[1],p1->e->p.bond_site[2]);
+        if ((p1->e->p.bond_site[0] >= 0) && (p1->e->p.bond_site[1] >= 0) &&
+            (p1->e->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
           double folded_pos[3], vec[3], len2, len;
           int img[3];
@@ -188,7 +188,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           Vector3d unfolded_pos = unfolded_position(p1);
           for (j = 0; j < 3; j++)
             vec[j] =
-                p1->p->bond_site[j] -
+                p1->e->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
                                  // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
@@ -225,14 +225,14 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             double decide = d_random();
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
-                p1->p->bond_site[j] = -1;
+                p1->e->p.bond_site[j] = -1;
               // printf("bond broken. Poff = %f, F = %f, Koff = %f, K0 = %f, len
               // = %f\n", Poff, tmpF, tmpKoff, tmpK0, len);
             }
 
           } else {
             for (j = 0; j < 3; j++)
-              p1->p->bond_site[j] = -1;
+              p1->e->p.bond_site[j] = -1;
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
@@ -247,7 +247,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params->affinity_Kon, p1->p->identity, Poff,
+                      tmpPon, ia_params->affinity_Kon, p1->e->p.identity, Poff,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
@@ -271,7 +271,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]); printf("d: %f
             // %f %f\n",d[0],d[1],d[2]);
             for (j = 0; j < 3; j++)
-              p1->p->bond_site[j] = unfolded_pos[j] - d[j];
+              p1->e->p.bond_site[j] = unfolded_pos[j] - d[j];
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);
@@ -284,7 +284,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
     /************************
      *
      * Here I can implement the affinity force.
-     * I have the position of the particle - p1, and under p1->p->bond_site I
+     * I have the position of the particle - p1, and under p1->e->p.bond_site I
      * have the coordinate of the bond_site. Also, under d[3] I have the vector
      * towards the constraint meaning that force on p1 should be in the
      * direction of d[3].
@@ -320,9 +320,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                             // the interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
-        // %f\n",p1->p->bond_site[0],p1->p->bond_site[1],p1->p->bond_site[2]);
-        if ((p1->p->bond_site[0] >= 0) && (p1->p->bond_site[1] >= 0) &&
-            (p1->p->bond_site[2] >= 0)) // Checking whether any bond exists
+        // %f\n",p1->e->p.bond_site[0],p1->e->p.bond_site[1],p1->e->p.bond_site[2]);
+        if ((p1->e->p.bond_site[0] >= 0) && (p1->e->p.bond_site[1] >= 0) &&
+            (p1->e->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
           double folded_pos[3], vec[3], len2, len;
           int img[3];
@@ -330,7 +330,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           Vector3d unfolded_pos = unfolded_position(p1);
           for (j = 0; j < 3; j++)
             vec[j] =
-                p1->p->bond_site[j] -
+                p1->e->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
                                  // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
@@ -357,12 +357,12 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             double decide = d_random();
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
-                p1->p->bond_site[j] = -1;
+                p1->e->p.bond_site[j] = -1;
             }
 
           } else {
             for (j = 0; j < 3; j++)
-              p1->p->bond_site[j] = -1;
+              p1->e->p.bond_site[j] = -1;
             // printf("breaking: out of cut");
           }
         } else if (dist <
@@ -385,7 +385,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]); printf("d: %f
             // %f %f\n",d[0],d[1],d[2]);
             for (j = 0; j < 3; j++)
-              p1->p->bond_site[j] = unfolded_pos[j] - d[j];
+              p1->e->p.bond_site[j] = unfolded_pos[j] - d[j];
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);
@@ -398,7 +398,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
     /************************
      *
      * Here I can implement the affinity force.
-     * I have the position of the particle - p1, and under p1->p->bond_site I
+     * I have the position of the particle - p1, and under p1->e->p.bond_site I
      * have the coordinate of the bond_site. Also, under d[3] I have the vector
      * towards the constraint meaning that force on p1 should be in the
      * direction of d[3].
@@ -436,9 +436,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                             // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
-        // %f\n",p1->p->bond_site[0],p1->p->bond_site[1],p1->p->bond_site[2]);
-        if ((p1->p->bond_site[0] >= 0) && (p1->p->bond_site[1] >= 0) &&
-            (p1->p->bond_site[2] >= 0)) // Checking whether any bond exists
+        // %f\n",p1->e->p.bond_site[0],p1->e->p.bond_site[1],p1->e->p.bond_site[2]);
+        if ((p1->e->p.bond_site[0] >= 0) && (p1->e->p.bond_site[1] >= 0) &&
+            (p1->e->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
           double folded_pos[3], vec[3], len2, len;
           int img[3];
@@ -446,7 +446,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           Vector3d unfolded_pos = unfolded_position(p1);
           for (j = 0; j < 3; j++)
             vec[j] =
-                p1->p->bond_site[j] -
+                p1->e->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
                                  // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
@@ -477,12 +477,12 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             double decide = d_random();
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
-                p1->p->bond_site[j] = -1;
+                p1->e->p.bond_site[j] = -1;
             }
 
           } else {
             for (j = 0; j < 3; j++)
-              p1->p->bond_site[j] = -1;
+              p1->e->p.bond_site[j] = -1;
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
@@ -496,7 +496,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params->affinity_Kon, p1->p->identity, Poff,
+                      tmpPon, ia_params->affinity_Kon, p1->e->p.identity, Poff,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
@@ -517,7 +517,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             /* fold the coordinates of the particle */
             Vector3d unfolded_pos = unfolded_position(p1);
             for (j = 0; j < 3; j++)
-              p1->p->bond_site[j] = unfolded_pos[j] - d[j];
+              p1->e->p.bond_site[j] = unfolded_pos[j] - d[j];
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);
@@ -530,7 +530,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
     /************************
      *
      * Here I can implement the affinity force.
-     * I have the position of the particle - p1, and under p1->p->bond_site I
+     * I have the position of the particle - p1, and under p1->e->p.bond_site I
      * have the coordinate of the bond_site. Also, under d[3] I have the vector
      * towards the constraint meaning that force on p1 should be in the
      * direction of d[3].
@@ -569,9 +569,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                             // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
-        // %f\n",p1->p->bond_site[0],p1->p->bond_site[1],p1->p->bond_site[2]);
-        if ((p1->p->bond_site[0] >= 0) && (p1->p->bond_site[1] >= 0) &&
-            (p1->p->bond_site[2] >= 0)) // Checking whether any bond exists
+        // %f\n",p1->e->p.bond_site[0],p1->e->p.bond_site[1],p1->e->p.bond_site[2]);
+        if ((p1->e->p.bond_site[0] >= 0) && (p1->e->p.bond_site[1] >= 0) &&
+            (p1->e->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
           double folded_pos[3], vec[3], len2, len;
           int img[3];
@@ -579,7 +579,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           Vector3d unfolded_pos = unfolded_position(p1);
           for (j = 0; j < 3; j++)
             vec[j] =
-                p1->p->bond_site[j] -
+                p1->e->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
                                  // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
@@ -616,12 +616,12 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             double decide = d_random();
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
-                p1->p->bond_site[j] = -1;
+                p1->e->p.bond_site[j] = -1;
             }
 
           } else {
             for (j = 0; j < 3; j++)
-              p1->p->bond_site[j] = -1;
+              p1->e->p.bond_site[j] = -1;
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
@@ -636,7 +636,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params->affinity_Kon, p1->p->identity, Poff,
+                      tmpPon, ia_params->affinity_Kon, p1->e->p.identity, Poff,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
@@ -660,7 +660,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]); printf("d: %f
             // %f %f\n",d[0],d[1],d[2]);
             for (j = 0; j < 3; j++)
-              p1->p->bond_site[j] = unfolded_pos[j] - d[j];
+              p1->e->p.bond_site[j] = unfolded_pos[j] - d[j];
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);
@@ -673,7 +673,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
     /************************
      *
      * Here I can implement the affinity force.
-     * I have the position of the particle - p1, and under p1->p->bond_site I
+     * I have the position of the particle - p1, and under p1->e->p.bond_site I
      * have the coordinate of the bond_site. Also, under d[3] I have the vector
      * towards the constraint meaning that force on p1 should be in the
      * direction of d[3].
@@ -712,9 +712,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                             // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
-        // %f\n",p1->p->bond_site[0],p1->p->bond_site[1],p1->p->bond_site[2]);
-        if ((p1->p->bond_site[0] >= 0) && (p1->p->bond_site[1] >= 0) &&
-            (p1->p->bond_site[2] >= 0)) // Checking whether any bond exists
+        // %f\n",p1->e->p.bond_site[0],p1->e->p.bond_site[1],p1->e->p.bond_site[2]);
+        if ((p1->e->p.bond_site[0] >= 0) && (p1->e->p.bond_site[1] >= 0) &&
+            (p1->e->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
           double folded_pos[3], vec[3], len2, len;
           int img[3];
@@ -724,7 +724,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
           for (j = 0; j < 3; j++)
             vec[j] =
-                p1->p->bond_site[j] -
+                p1->e->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
                                  // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
@@ -761,12 +761,12 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             double decide = d_random();
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
-                p1->p->bond_site[j] = -1;
+                p1->e->p.bond_site[j] = -1;
             }
 
           } else {
             for (j = 0; j < 3; j++)
-              p1->p->bond_site[j] = -1;
+              p1->e->p.bond_site[j] = -1;
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
@@ -781,7 +781,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params->affinity_Kon, p1->p->identity, Poff,
+                      tmpPon, ia_params->affinity_Kon, p1->e->p.identity, Poff,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
@@ -803,7 +803,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]); printf("d: %f
             // %f %f\n",d[0],d[1],d[2]);
             for (j = 0; j < 3; j++)
-              p1->p->bond_site[j] = unfolded_pos[j] - d[j];
+              p1->e->p.bond_site[j] = unfolded_pos[j] - d[j];
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);

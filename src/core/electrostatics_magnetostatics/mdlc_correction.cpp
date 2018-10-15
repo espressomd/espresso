@@ -54,7 +54,7 @@ static double mu_max;
 void calc_mu_max() {
   mu_max = std::accumulate(
       local_cells.particles().begin(), local_cells.particles().end(), 0.0,
-      [](double mu, Particle const &p) { return std::max(mu, p.p->dipm); });
+      [](double mu, Particle const &p) { return std::max(mu, p.e->p.dipm); });
 
   MPI_Allreduce(MPI_IN_PLACE, &mu_max, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
 }
@@ -92,7 +92,7 @@ double slab_dip_count_mu(double *mt, double *mx, double *my) {
   tot_sums[2] = 0.0;
 
   for (auto const &p : local_cells.particles()) {
-    if (p.p->dipm != 0.0) {
+    if (p.e->p.dipm != 0.0) {
       node_sums[0] += p.r.dip[0];
       node_sums[1] += p.r.dip[1];
       node_sums[2] += p.r.dip[2];
@@ -172,7 +172,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
         ip = 0;
 
         for (auto const &p : local_cells.particles()) {
-          if (p.p->dipm > 0) {
+          if (p.e->p.dipm > 0) {
 
             a = gx * p.r.dip[0] + gy * p.r.dip[1];
             b = gr * p.r.dip[2];
@@ -211,7 +211,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
         // g-value
         ip = 0;
         for (auto &p : local_cells.particles()) {
-          if (p.p->dipm > 0) {
+          if (p.e->p.dipm > 0) {
             // We compute the contributions to the forces ............
 
             s1 = -(-ReSjp[ip] * S[3] + ImSjp[ip] * S[2]);
@@ -265,7 +265,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
 
   ip = 0;
   for (auto const &p : local_cells.particles()) {
-    if (p.p->dipm > 0) {
+    if (p.e->p.dipm > 0) {
       a = p.r.dip[1] * tz[ip] - p.r.dip[2] * ty[ip];
       b = p.r.dip[2] * tx[ip] - p.r.dip[0] * tz[ip];
       c = p.r.dip[0] * ty[ip] - p.r.dip[1] * tx[ip];
@@ -345,7 +345,7 @@ double get_DLC_energy_dipolar(int kcut) {
         ip = 0;
 
         for (auto const &p : local_cells.particles()) {
-          if (p.p->dipm > 0) {
+          if (p.e->p.dipm > 0) {
 
             a = gx * p.r.dip[0] + gy * p.r.dip[1];
             {
@@ -465,7 +465,7 @@ void add_mdlc_force_corrections() {
 
   ip = 0;
   for (auto &p : local_cells.particles()) {
-    if ((p.p->dipm) != 0.0) {
+    if ((p.e->p.dipm) != 0.0) {
 
       p.f.f[0] += coulomb.Dprefactor * dip_DLC_f_x[ip];
       p.f.f[1] += coulomb.Dprefactor * dip_DLC_f_y[ip];

@@ -492,11 +492,11 @@ void lb_lbfluid_particles_add_momentum(float momentum[3]) {
 
   size_t i = 0;
   for (auto const &p : parts) {
-    new_velocity[i].first = p.p->identity;
-    const auto factor = 1 / (p.p->mass * n_part);
-    new_velocity[i].second[0] = p.m->v[0] + momentum[0] * factor;
-    new_velocity[i].second[1] = p.m->v[1] + momentum[1] * factor;
-    new_velocity[i].second[2] = p.m->v[2] + momentum[2] * factor;
+    new_velocity[i].first = p.e->p.identity;
+    const auto factor = 1 / (p.e->p.mass * n_part);
+    new_velocity[i].second[0] = p.e->m.v[0] + momentum[0] * factor;
+    new_velocity[i].second[1] = p.e->m.v[1] + momentum[1] * factor;
+    new_velocity[i].second[2] = p.e->m.v[2] + momentum[2] * factor;
     ++i;
   }
   for (auto &p : new_velocity) {

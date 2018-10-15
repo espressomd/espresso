@@ -71,21 +71,21 @@ inline int calc_quartic_pair_force(Particle *p1, Particle *p2,
     force[i] = -fac * dx[i];
 
   //  printf("Quartic (%d-%d), dist %e, dx %e %e %e, dr %e, f %e %e %e\n",
-  //  p1->p->identity, p2->p->identity, dist, dx[0], dx[1], dx[2], dr, force[0],
+  //  p1->e->p.identity, p2->e->p.identity, dist, dx[0], dx[1], dx[2], dr, force[0],
   //  force[1], force[2]);
 
-  ONEPART_TRACE(if (p1->p->identity == check_id)
+  ONEPART_TRACE(if (p1->e->p.identity == check_id)
                     fprintf(stderr,
                             "%d: OPT: QUARTIC f = (%.3e,%.3e,%.3e) with part "
                             "id=%d at dist %f fac %.3e\n",
                             this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                            p2->p->identity, dist2, fac));
-  ONEPART_TRACE(if (p2->p->identity == check_id)
+                            p2->e->p.identity, dist2, fac));
+  ONEPART_TRACE(if (p2->e->p.identity == check_id)
                     fprintf(stderr,
                             "%d: OPT: QUARTIC f = (%.3e,%.3e,%.3e) with part "
                             "id=%d at dist %f fac %.3e\n",
                             this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                            p1->p->identity, dist2, fac));
+                            p1->e->p.identity, dist2, fac));
 
   return 0;
 }

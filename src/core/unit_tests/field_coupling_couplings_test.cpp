@@ -33,15 +33,17 @@ BOOST_AUTO_TEST_CASE(charge) {
 
   struct P {
     struct M {
-      const double q = 1.23;
-    } * p;
-    P(): p{new M{}} {}
+      struct N {
+        const double q = 1.23;
+      } p;
+    } * e;
+    P(): e{new M{}} {}
     ~P() {
-      delete p;
+      delete e;
     }
   } p;
 
-  BOOST_CHECK((p.p->q * 2.0) == Charge()(p, 2.0));
+  BOOST_CHECK((p.e->p.q * 2.0) == Charge()(p, 2.0));
 }
 
 BOOST_AUTO_TEST_CASE(mass) {
@@ -49,15 +51,17 @@ BOOST_AUTO_TEST_CASE(mass) {
 
   struct P {
     struct M {
-      const double mass = 1.23;
-    } * p;
-    P(): p(new M) {}
+      struct N {
+        const double mass = 1.23;
+      } p;
+    } * e;
+    P(): e(new M) {}
     ~P() {
-      delete p;
+      delete e;
     }
   } p;
 
-  BOOST_CHECK((p.p->mass * 2.0) == Mass()(p, 2.0));
+  BOOST_CHECK((p.e->p.mass * 2.0) == Mass()(p, 2.0));
 }
 
 BOOST_AUTO_TEST_CASE(direct) {
@@ -107,16 +111,18 @@ BOOST_AUTO_TEST_CASE(viscous) {
   {
     struct P {
       struct M {
-        const Vector3d v = {1., 2., 3.};
-      } * m;
-      P(): m{new M{}} {}
+        struct N {
+          const Vector3d v = {1., 2., 3.};
+        } m;
+      } * e;
+      P(): e{new M{}} {}
       ~P() {
-        delete m;
+        delete e;
       }
     } p;
 
     auto const u = Vector3d{4., 5., 6.};
 
-    BOOST_CHECK((-gamma * (p.m->v - u)) == viscous_coupling(p, u));
+    BOOST_CHECK((-gamma * (p.e->m.v - u)) == viscous_coupling(p, u));
   }
 }

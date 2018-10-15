@@ -34,9 +34,9 @@ void local_rotate_system(double phi, double theta, double alpha) {
 
   for (auto const &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++) {
-      local_com[j] += p.p->mass * p.r.p[j];
+      local_com[j] += p.e->p.mass * p.r.p[j];
     }
-    local_mass += p.p->mass;
+    local_mass += p.e->p.mass;
   }
 
   auto const total_mass =

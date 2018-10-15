@@ -54,12 +54,15 @@ cdef extern from "particle_data.hpp":
     ctypedef struct particle_local "ParticleLocal":
         int i[3]
 
+    ctypedef struct particle_extended "ParticleExtended":
+        particle_properties p
+        particle_momentum m
+        particle_local l
+
     ctypedef struct particle "Particle":
-        particle_properties* p
+        particle_extended* e
         particle_position r
-        particle_momentum* m
         particle_force f
-        particle_local* l
         int_list bl
         int_list exclusions() except +
 

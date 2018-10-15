@@ -32,7 +32,7 @@ int ObbservableSpatialPolymerProperties::actual_calculate(PartCfg &partCfg) {
   spatial_polym_data *p_data = (spatial_polym_data *)container;
   IntList *ids = p_data->id_list;
   for (int i = 0; i < ids->n; i++) {
-    A[i % poly_len] += partCfg[ids->e[i]].p->q / ((double)p_data->npoly);
+    A[i % poly_len] += partCfg[ids->e[i]].e->p.q / ((double)p_data->npoly);
   }
 #endif
   return 0;

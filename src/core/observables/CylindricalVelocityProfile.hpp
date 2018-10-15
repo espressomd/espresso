@@ -42,9 +42,9 @@ public:
     std::vector<::Vector<3, double>> velocities;
     std::transform(ids().begin(), ids().end(), std::back_inserter(velocities),
                    [&partCfg](int id) {
-                     return ::Vector<3, double>{{partCfg[id].m->v[0],
-                                                 partCfg[id].m->v[1],
-                                                 partCfg[id].m->v[2]}};
+                     return ::Vector<3, double>{{partCfg[id].e->m.v[0],
+                                                 partCfg[id].e->m.v[1],
+                                                 partCfg[id].e->m.v[2]}};
                    });
     for (auto &p : folded_positions)
       p -= center;

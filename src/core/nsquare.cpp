@@ -158,7 +158,7 @@ void nsq_balance_particles(int global_flag) {
 
   /* Refold positions in any case, this is always safe. */
   for (auto &p : local_cells.particles()) {
-    fold_position(p.r.p, p.l->i);
+    fold_position(p.r.p, p.e->l.i);
   }
 
   /* we don't have the concept of neighbors, and therefore don't need that.

@@ -107,7 +107,7 @@ void integrate_reaction_noswap() {
       auto np = cell->n;
 
       for (int i = 0; i < np; i++) {
-        if (p1[i].p->type == reaction.catalyzer_type) {
+        if (p1[i].e->p.type == reaction.catalyzer_type) {
           check_catalyzer = 1;
           break;
         }
@@ -120,10 +120,10 @@ void integrate_reaction_noswap() {
           auto p1 = pair.first;  // pointer to particle 1
           auto p2 = pair.second; // pointer to particle 2
 
-          if ((p1->p->type == reaction.reactant_type &&
-               p2->p->type == reaction.catalyzer_type) ||
-              (p2->p->type == reaction.reactant_type &&
-               p1->p->type == reaction.catalyzer_type)) {
+          if ((p1->e->p.type == reaction.reactant_type &&
+               p2->e->p.type == reaction.catalyzer_type) ||
+              (p2->e->p.type == reaction.reactant_type &&
+               p1->e->p.type == reaction.catalyzer_type)) {
             get_mi_vector(vec21, p1->r.p, p2->r.p);
             dist2 = sqrlen(vec21);
 
@@ -131,10 +131,10 @@ void integrate_reaction_noswap() {
                checked against a catalyst */
             if (dist2 < reaction.range * reaction.range) {
 
-              if (p1->p->type == reaction.reactant_type) {
-                p1->p->catalyzer_count++;
+              if (p1->e->p.type == reaction.reactant_type) {
+                p1->e->p.catalyzer_count++;
               } else {
-                p2->p->catalyzer_count++;
+                p2->e->p.catalyzer_count++;
               }
             }
           }
@@ -149,17 +149,17 @@ void integrate_reaction_noswap() {
       auto np = cell->n;
 
       for (int i = 0; i < np; i++) {
-        if (p1[i].p->type == reaction.reactant_type) {
+        if (p1[i].e->p.type == reaction.reactant_type) {
 
-          if (p1[i].p->catalyzer_count > 0) {
+          if (p1[i].e->p.catalyzer_count > 0) {
 
             if (reaction.sing_mult == 0) {
               rand = d_random();
 
-              bernoulli = pow(ct_ratexp, p1[i].p->catalyzer_count);
+              bernoulli = pow(ct_ratexp, p1[i].e->p.catalyzer_count);
 
               if (rand > bernoulli) {
-                p1[i].p->type = reaction.product_type;
+                p1[i].e->p.type = reaction.product_type;
               }
 
             } else /* We only consider each reactant once */
@@ -167,11 +167,11 @@ void integrate_reaction_noswap() {
               rand = d_random();
 
               if (rand > ct_ratexp) {
-                p1[i].p->type = reaction.product_type;
+                p1[i].e->p.type = reaction.product_type;
               }
             }
 
-            p1[i].p->catalyzer_count = 0;
+            p1[i].e->p.catalyzer_count = 0;
           }
         }
       }
@@ -192,17 +192,17 @@ void integrate_reaction_noswap() {
            according to the specified rate constant */
         for (int i = 0; i < np; i++) {
 
-          if (p1[i].p->type == reaction.product_type) {
+          if (p1[i].e->p.type == reaction.product_type) {
             rand = d_random();
 
             if (rand > eq_ratexp) {
-              p1[i].p->type = reaction.reactant_type;
+              p1[i].e->p.type = reaction.reactant_type;
             }
-          } else if (p1[i].p->type == reaction.reactant_type) {
+          } else if (p1[i].e->p.type == reaction.reactant_type) {
             rand = d_random();
 
             if (rand > eq_ratexp) {
-              p1[i].p->type = reaction.product_type;
+              p1[i].e->p.type = reaction.product_type;
             }
           }
         }
@@ -275,7 +275,7 @@ void integrate_reaction_swap() {
       // reaction procedure
       catalyzers.clear();
       for (int i = 0; i < np; i++) {
-        if (p_local[i].p->type == reaction.catalyzer_type)
+        if (p_local[i].e->p.type == reaction.catalyzer_type)
           catalyzers.push_back(i);
       }
       std::shuffle(catalyzers.begin(), catalyzers.end(), rng);
@@ -302,22 +302,22 @@ void integrate_reaction_swap() {
             // check if no reaction has taken place on the particle in
             // the current step
             if (dist2 < reaction.range * reaction.range &&
-                p_neigh[i].p->catalyzer_count == 0) {
+                p_neigh[i].e->p.catalyzer_count == 0) {
               // If the particle is of correct type AND resides in the
               // correct half space, append it to the lists of viable
               // reaction candidates
-              if (p_neigh[i].p->type == reaction.reactant_type &&
+              if (p_neigh[i].e->p.type == reaction.reactant_type &&
                   in_lower_half_space(p_local[*id], p_neigh[i])) {
                 reactants.push_back(i);
 #ifdef ELECTROSTATICS
-                reactant_q = p_neigh[i].p->q;
+                reactant_q = p_neigh[i].e->p.q;
 #endif // ELECTROSTATICS
               }
-              if (p_neigh[i].p->type == reaction.product_type &&
+              if (p_neigh[i].e->p.type == reaction.product_type &&
                   !in_lower_half_space(p_local[*id], p_neigh[i]))
                 products.push_back(i);
 #ifdef ELECTROSTATICS
-              product_q = p_neigh[i].p->q;
+              product_q = p_neigh[i].e->p.q;
 #endif // ELECTROSTATICS
             }
           }
@@ -340,7 +340,7 @@ void integrate_reaction_swap() {
                 rand = d_random();
                 if (rand > ct_ratexp) {
                   // ...tag the particle for modification...
-                  p_neigh[*rt].p->catalyzer_count = 1;
+                  p_neigh[*rt].e->p.catalyzer_count = 1;
                   n_reactions++;
                 }
               }
@@ -349,7 +349,7 @@ void integrate_reaction_swap() {
               // at random
               std::shuffle(products.begin(), products.end(), rng);
               for (int p = 0; p < n_reactions; p++)
-                p_neigh[products[p]].p->catalyzer_count = 1;
+                p_neigh[products[p]].e->p.catalyzer_count = 1;
             } else {
               // Same as above, but for the case that the number of
               // reactants is greater than the number of products
@@ -357,14 +357,14 @@ void integrate_reaction_swap() {
                    pt < products.end(); pt++) {
                 rand = d_random();
                 if (rand > ct_ratexp) {
-                  p_neigh[*pt].p->catalyzer_count = 1;
+                  p_neigh[*pt].e->p.catalyzer_count = 1;
                   n_reactions++;
                 }
               }
 
               std::shuffle(reactants.begin(), reactants.end(), rng);
               for (int p = 0; p < n_reactions; p++)
-                p_neigh[reactants[p]].p->catalyzer_count = 1;
+                p_neigh[reactants[p]].e->p.catalyzer_count = 1;
             }
           }
         }
@@ -381,21 +381,21 @@ void integrate_reaction_swap() {
       // Particle list loop
       for (int i = 0; i < np; i++) {
         // If the particle has been tagged we perform the changes
-        if (p_local[i].p->catalyzer_count != 0) {
+        if (p_local[i].e->p.catalyzer_count != 0) {
           // Flip type and charge
-          if (p_local[i].p->type == reaction.reactant_type) {
-            p_local[i].p->type = reaction.product_type;
+          if (p_local[i].e->p.type == reaction.reactant_type) {
+            p_local[i].e->p.type = reaction.product_type;
 #ifdef ELECTROSTATICS
-            p_local[i].p->q = product_q;
+            p_local[i].e->p.q = product_q;
 #endif // ELECTROSTATICS
           } else {
-            p_local[i].p->type = reaction.reactant_type;
+            p_local[i].e->p.type = reaction.reactant_type;
 #ifdef ELECTROSTATICS
-            p_local[i].p->q = reactant_q;
+            p_local[i].e->p.q = reactant_q;
 #endif // ELECTROSTATICS
           }
           // Reset the tag for the next step
-          p_local[i].p->catalyzer_count = 0;
+          p_local[i].e->p.catalyzer_count = 0;
         }
       }
     }

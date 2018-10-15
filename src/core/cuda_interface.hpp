@@ -70,7 +70,7 @@ struct CUDA_particle_data {
   float p[3];
 
 #if defined(LB_GPU)
-  /** particle momentum struct velocity p.m->v*/
+  /** particle momentum struct velocity p.e->m.v*/
   float v[3];
 #endif
 

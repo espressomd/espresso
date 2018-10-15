@@ -29,22 +29,10 @@ namespace serialization {
 template <typename Archive>
 void load(Archive &ar, Particle &p, const unsigned int /* file_version */) {
   /* Cruel but effective */
+  p.e.reset(new ParticleExtended{});
+  ar >> make_array(reinterpret_cast<char *>(p.e.get()), sizeof(ParticleExtended));
   ar >> make_array(reinterpret_cast<char *>(&p.r), sizeof(ParticlePosition));
-  p.p.reset(new ParticleProperties{});
-  ar >> make_array(reinterpret_cast<char *>(p.p.get()), sizeof(ParticleProperties));
-  p.m.reset(new ParticleMomentum{});
-  ar >> make_array(reinterpret_cast<char *>(p.m.get()), sizeof(ParticleMomentum));
   ar >> make_array(reinterpret_cast<char *>(&p.f), sizeof(ParticleForce));
-  p.l.reset(new ParticleLocal{});
-  ar >> make_array(reinterpret_cast<char *>(p.l.get()), sizeof(ParticleLocal));
-#ifdef LB
-  p.lc.reset(new ParticleLatticeCoupling{});
-  ar >> make_array(reinterpret_cast<char *>(p.lc.get()), sizeof(ParticleLatticeCoupling));
-#endif
-#ifdef ENGINE
-  p.swim.reset(new ParticleParametersSwimming{});
-  ar >> make_array(reinterpret_cast<char *>(p.swim.get()), sizeof(ParticleParametersSwimming));
-#endif
   uint32_t n;
   ar >> n;
   new (&(p.bl)) IntList(n);
@@ -60,17 +48,9 @@ template <typename Archive>
 void save(Archive &ar, Particle const &p,
           const unsigned int /* file_version */) {
   /* Cruel but effective */
+  ar << make_array(reinterpret_cast<char const *>(p.e.get()), sizeof(ParticleExtended));
   ar << make_array(reinterpret_cast<char const *>(&p.r), sizeof(ParticlePosition));
-  ar << make_array(reinterpret_cast<char const *>(p.p.get()), sizeof(ParticleProperties));
-  ar << make_array(reinterpret_cast<char const *>(p.m.get()), sizeof(ParticleMomentum));
   ar << make_array(reinterpret_cast<char const *>(&p.f), sizeof(ParticleForce));
-  ar << make_array(reinterpret_cast<char const *>(p.l.get()), sizeof(ParticleLocal));
-#ifdef LB
-  ar << make_array(reinterpret_cast<char const *>(p.lc.get()), sizeof(ParticleLatticeCoupling));
-#endif
-#ifdef ENGINE
-  ar << make_array(reinterpret_cast<char const *>(p.swim.get()), sizeof(ParticleParametersSwimming));
-#endif
   ar << p.bl.n;
   ar << p.bl;
 #ifdef EXCLUSIONS

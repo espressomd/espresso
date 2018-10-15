@@ -112,10 +112,10 @@ void queue_collision(const int part1, const int part2);
 /** @brief Check additional criteria for the glue_to_surface collision mode */
 inline bool glue_to_surface_criterion(const Particle *const p1,
                                       const Particle *const p2) {
-  return (((p1->p->type == collision_params.part_type_to_be_glued) &&
-           (p2->p->type == collision_params.part_type_to_attach_vs_to)) ||
-          ((p2->p->type == collision_params.part_type_to_be_glued) &&
-           (p1->p->type == collision_params.part_type_to_attach_vs_to)));
+  return (((p1->e->p.type == collision_params.part_type_to_be_glued) &&
+           (p2->e->p.type == collision_params.part_type_to_attach_vs_to)) ||
+          ((p2->e->p.type == collision_params.part_type_to_be_glued) &&
+           (p1->e->p.type == collision_params.part_type_to_attach_vs_to)));
 }
 
 /** @brief Detect (and queue) a collision between the given particles. */
@@ -132,7 +132,7 @@ inline void detect_collision(const Particle *const p1, const Particle *const p2,
 
 #ifdef VIRTUAL_SITES_RELATIVE
   // Ignore virtual particles
-  if ((p1->p->is_virtual) || (p2->p->is_virtual))
+  if ((p1->e->p.is_virtual) || (p2->e->p.is_virtual))
     return;
 #endif
 
@@ -147,10 +147,10 @@ inline void detect_collision(const Particle *const p1, const Particle *const p2,
      we have a new collision */
 
   // do not create bond between ghost particles
-  if (p1->l->ghost && p2->l->ghost) {
+  if (p1->e->l.ghost && p2->e->l.ghost) {
     return;
   }
-  queue_collision(p1->p->identity, p2->p->identity);
+  queue_collision(p1->e->p.identity, p2->e->p.identity);
 }
 
 #endif

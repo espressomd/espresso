@@ -92,7 +92,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
   double ret = 0;
 
 #ifdef NO_INTRA_NB
-  if (p1->p->mol_id == p2->p->mol_id)
+  if (p1->e->p.mol_id == p2->e->p.mol_id)
     return 0;
 #endif
 
@@ -187,7 +187,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 */
 inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
                                        double dist, double dist2) {
-  IA_parameters *ia_params = get_ia_param(p1->p->type, p2->p->type);
+  IA_parameters *ia_params = get_ia_param(p1->e->p.type, p2->e->p.type);
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
   double ret = 0;
@@ -196,7 +196,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
-    *obsstat_nonbonded(&energy, p1->p->type, p2->p->type) +=
+    *obsstat_nonbonded(&energy, p1->e->p.type, p2->e->p.type) +=
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
 
 #ifdef ELECTROSTATICS
@@ -206,10 +206,10 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
-      ret = p3m_pair_energy(p1->p->q * p2->p->q, dist);
+      ret = p3m_pair_energy(p1->e->p.q * p2->e->p.q, dist);
       break;
     case COULOMB_ELC_P3M:
-      ret = p3m_pair_energy(p1->p->q * p2->p->q, dist);
+      ret = p3m_pair_energy(p1->e->p.q * p2->e->p.q, dist);
       if (elc_params.dielectric_contrast_on)
         ret += 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2);
       break;
@@ -233,7 +233,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
       ret = mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
       break;
     case COULOMB_MMM2D:
-      ret = mmm2d_coulomb_pair_energy(p1->p->q * p2->p->q, d, dist2, dist);
+      ret = mmm2d_coulomb_pair_energy(p1->e->p.q * p2->e->p.q, d, dist2, dist);
       break;
     default:
       ret = 0.;
@@ -281,7 +281,7 @@ inline void add_bonded_energy(Particle *p1) {
     /* fetch particle 2, which is always needed */
     Particle *p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      runtimeErrorMsg() << "bond broken between particles " << p1->p->identity
+      runtimeErrorMsg() << "bond broken between particles " << p1->e->p.identity
                         << " and " << p1->bl.e[i - 1]
                         << " (particles not stored on the same node)";
       return;
@@ -291,7 +291,7 @@ inline void add_bonded_energy(Particle *p1) {
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p->identity
+        runtimeErrorMsg() << "bond broken between particles " << p1->e->p.identity
                           << ", " << p1->bl.e[i - 2] << " and "
                           << p1->bl.e[i - 1]
                           << " (particles not stored on the same node)";
@@ -303,7 +303,7 @@ inline void add_bonded_energy(Particle *p1) {
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p->identity
+        runtimeErrorMsg() << "bond broken between particles " << p1->e->p.identity
                           << ", " << p1->bl.e[i - 3] << ", " << p1->bl.e[i - 2]
                           << " and " << p1->bl.e[i - 1]
                           << " (particles not stored on the same node)";
@@ -387,7 +387,7 @@ inline void add_bonded_energy(Particle *p1) {
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: tabulated bond type of atom "
-                          << p1->p->identity << " unknown\n";
+                          << p1->e->p.identity << " unknown\n";
         return;
       }
       break;
@@ -403,27 +403,27 @@ inline void add_bonded_energy(Particle *p1) {
       break;
     default:
       runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
-                        << ") of atom " << p1->p->identity << " unknown\n";
+                        << ") of atom " << p1->e->p.identity << " unknown\n";
       return;
     }
 
     if (bond_broken) {
       switch (n_partners) {
       case 1: {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p->identity
-                          << " and " << p2->p->identity;
+        runtimeErrorMsg() << "bond broken between particles " << p1->e->p.identity
+                          << " and " << p2->e->p.identity;
         break;
       }
       case 2: {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p->identity
-                          << ", " << p2->p->identity << " and "
-                          << p3->p->identity;
+        runtimeErrorMsg() << "bond broken between particles " << p1->e->p.identity
+                          << ", " << p2->e->p.identity << " and "
+                          << p3->e->p.identity;
         break;
       }
       case 3: {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p->identity
-                          << ", " << p2->p->identity << ", " << p3->p->identity
-                          << " and " << p4->p->identity;
+        runtimeErrorMsg() << "bond broken between particles " << p1->e->p.identity
+                          << ", " << p2->e->p.identity << ", " << p3->e->p.identity
+                          << " and " << p4->e->p.identity;
         break;
       }
       }
@@ -440,23 +440,23 @@ inline void add_bonded_energy(Particle *p1) {
 */
 inline void add_kinetic_energy(Particle *p1) {
 #ifdef VIRTUAL_SITES
-  if (p1->p->is_virtual)
+  if (p1->e->p.is_virtual)
     return;
 #endif
 
   /* kinetic energy */
-  energy.data.e[0] += (Utils::sqr(p1->m->v[0]) + Utils::sqr(p1->m->v[1]) +
-                       Utils::sqr(p1->m->v[2])) *
-                      0.5 * p1->p->mass;
+  energy.data.e[0] += (Utils::sqr(p1->e->m.v[0]) + Utils::sqr(p1->e->m.v[1]) +
+                       Utils::sqr(p1->e->m.v[2])) *
+                      0.5 * p1->e->p.mass;
 
 #ifdef ROTATION
-  if (p1->p->rotation) {
+  if (p1->e->p.rotation) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
-    energy.data.e[0] += 0.5 * (Utils::sqr(p1->m->omega[0]) * p1->p->rinertia[0] +
-                               Utils::sqr(p1->m->omega[1]) * p1->p->rinertia[1] +
-                               Utils::sqr(p1->m->omega[2]) * p1->p->rinertia[2]);
+    energy.data.e[0] += 0.5 * (Utils::sqr(p1->e->m.omega[0]) * p1->e->p.rinertia[0] +
+                               Utils::sqr(p1->e->m.omega[1]) * p1->e->p.rinertia[1] +
+                               Utils::sqr(p1->e->m.omega[2]) * p1->e->p.rinertia[2]);
   }
 #endif
 }

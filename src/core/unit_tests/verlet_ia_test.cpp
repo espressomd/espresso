@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
     c.n = c.max = n_part_per_cell;
 
     for (unsigned i = 0; i < n_part_per_cell; ++i) {
-      c.part[i].p->identity = id++;
+      c.part[i].e->p.identity = id++;
     }
   }
 
@@ -85,12 +85,12 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
   /* Build VL */
   Algorithm::verlet_ia(
       cells.begin(), cells.end(),
-      [&id_counts](Particle const &p) { id_counts[p.p->identity]++; },
+      [&id_counts](Particle const &p) { id_counts[p.e->p.identity]++; },
       [&pairs](Particle const &p1, Particle const &p2, Distance const &) {
-        pairs.emplace_back(p1.p->identity, p2.p->identity);
+        pairs.emplace_back(p1.e->p.identity, p2.e->p.identity);
       },
       [](Particle const &p1, Particle const &p2) {
-        return Distance{p1.p->identity <= p2.p->identity};
+        return Distance{p1.e->p.identity <= p2.e->p.identity};
       },
       VerletCriterion{}, /* rebuild */ true);
 
@@ -108,12 +108,12 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
   /* Now check the Verlet lists */
   Algorithm::verlet_ia(
       cells.begin(), cells.end(),
-      [&id_counts](Particle const &p) { id_counts[p.p->identity]++; },
+      [&id_counts](Particle const &p) { id_counts[p.e->p.identity]++; },
       [&pairs](Particle const &p1, Particle const &p2, Distance const &) {
-        pairs.emplace_back(p1.p->identity, p2.p->identity);
+        pairs.emplace_back(p1.e->p.identity, p2.e->p.identity);
       },
       [](Particle const &p1, Particle const &p2) {
-        return Distance{p1.p->identity <= p2.p->identity};
+        return Distance{p1.e->p.identity <= p2.e->p.identity};
       },
       VerletCriterion{}, /* rebuild */ false);
 
@@ -131,12 +131,12 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
   /* Rebuild again */
   Algorithm::verlet_ia(
       cells.begin(), cells.end(),
-      [&id_counts](Particle const &p) { id_counts[p.p->identity]++; },
+      [&id_counts](Particle const &p) { id_counts[p.e->p.identity]++; },
       [&pairs](Particle const &p1, Particle const &p2, Distance const &) {
-        pairs.emplace_back(p1.p->identity, p2.p->identity);
+        pairs.emplace_back(p1.e->p.identity, p2.e->p.identity);
       },
       [](Particle const &p1, Particle const &p2) {
-        return Distance{p1.p->identity <= p2.p->identity};
+        return Distance{p1.e->p.identity <= p2.e->p.identity};
       },
       VerletCriterion{}, /* rebuild */ true);
 

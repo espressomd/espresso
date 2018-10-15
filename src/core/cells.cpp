@@ -83,7 +83,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
     if (dist2 < cutoff2)
-      ret.emplace_back(p1.p->identity, p2.p->identity);
+      ret.emplace_back(p1.e->p.identity, p2.e->p.identity);
   };
 
   switch (cell_structure.type) {
@@ -377,7 +377,7 @@ void check_resort_particles() {
   resort_particles |= (std::any_of(local_cells.particles().begin(),
                                    local_cells.particles().end(),
                                    [&skin2](Particle const &p) {
-                                     return distance2(p.r.p, p.l->p_old) > skin2;
+                                     return distance2(p.r.p, p.e->l.p_old) > skin2;
                                    }))
                           ? Cells::RESORT_LOCAL
                           : Cells::RESORT_NONE;
@@ -404,9 +404,9 @@ Cell *find_current_cell(const Particle &p) {
   auto c = cell_structure.position_to_cell(p.r.p.data());
   if (c) {
     return c;
-  } else if (!p.l->ghost) {
+  } else if (!p.e->l.ghost) {
     // Old pos must lie within the cell system
-    return cell_structure.position_to_cell(p.l->p_old.data());
+    return cell_structure.position_to_cell(p.e->l.p_old.data());
   } else {
     return nullptr;
   }

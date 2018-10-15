@@ -1732,7 +1732,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
                                                  // reaction is attempted.
       auto part = get_particle_data(random_p_id);
 
-      int type_of_random_p_id = part.p->type;
+      int type_of_random_p_id = part.e->p.type;
 
       // construct list of reactions with the above reactant type
       for (int reaction_i = 0; reaction_i < reactions.size(); reaction_i++) {

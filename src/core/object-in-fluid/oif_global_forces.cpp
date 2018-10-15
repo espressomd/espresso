@@ -93,7 +93,7 @@ void calc_oif_global(double *area_volume,
       iaparams = &bonded_ia_params[type_num];
       type = iaparams->type;
       n_partners = iaparams->num;
-      id = p1->p->mol_id;
+      id = p1->e->p.mol_id;
       if (type == BONDED_IA_OIF_GLOBAL_FORCES &&
           id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
         test++;
@@ -101,7 +101,7 @@ void calc_oif_global(double *area_volume,
         p2 = local_particles[p1->bl.e[j++]];
         if (!p2) {
           runtimeErrorMsg() << "oif global calc: bond broken between particles "
-                            << p1->p->identity << " and " << p1->bl.e[j - 1]
+                            << p1->e->p.identity << " and " << p1->bl.e[j - 1]
                             << " (particles not stored on the same node - "
                                "oif_global_forces1); n "
                             << p1->bl.n << " max " << p1->bl.max;
@@ -112,7 +112,7 @@ void calc_oif_global(double *area_volume,
         p3 = local_particles[p1->bl.e[j++]];
         if (!p3) {
           runtimeErrorMsg() << "oif global calc: bond broken between particles "
-                            << p1->p->identity << ", " << p1->bl.e[j - 2]
+                            << p1->e->p.identity << ", " << p1->bl.e[j - 2]
                             << " and " << p1->bl.e[j - 1]
                             << " (particles not stored on the same node - "
                                "oif_global_forces1); n "
@@ -125,9 +125,9 @@ void calc_oif_global(double *area_volume,
         // first find out which particle out of p1, p2 (possibly p3, p4) is not
         // a ghost particle. In almost all cases it is p1, however, it might be
         // other one. we call this particle reference particle.
-        if (p1->l->ghost != 1) {
+        if (p1->e->l.ghost != 1) {
           // unfold non-ghost particle using image, because for physical
-          // particles, the structure p->l->i is correctly set
+          // particles, the structure p->e->l.i is correctly set
           p11 = unfolded_position(p1);
           // other coordinates are obtained from its relative positions to the
           // reference particle
@@ -139,7 +139,7 @@ void calc_oif_global(double *area_volume,
           }
         } else {
           // in case the first particle is a ghost particle
-          if (p2->l->ghost != 1) {
+          if (p2->e->l.ghost != 1) {
             p22 = unfolded_position(p2);
             get_mi_vector(AA, p1->r.p, p22);
             get_mi_vector(BB, p3->r.p, p22);
@@ -149,7 +149,7 @@ void calc_oif_global(double *area_volume,
             }
           } else {
             // in case the first and the second particle are ghost particles
-            if (p3->l->ghost != 1) {
+            if (p3->e->l.ghost != 1) {
               p33 = unfolded_position(p3);
               get_mi_vector(AA, p1->r.p, p33);
               get_mi_vector(BB, p2->r.p, p33);
@@ -221,7 +221,7 @@ void add_oif_global_forces(double *area_volume,
       iaparams = &bonded_ia_params[type_num];
       type = iaparams->type;
       n_partners = iaparams->num;
-      id = p1->p->mol_id;
+      id = p1->e->p.mol_id;
       if (type == BONDED_IA_OIF_GLOBAL_FORCES &&
           id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
         test++;
@@ -229,7 +229,7 @@ void add_oif_global_forces(double *area_volume,
         p2 = local_particles[p1->bl.e[j++]];
         if (!p2) {
           runtimeErrorMsg() << "add area: bond broken between particles "
-                            << p1->p->identity << " and " << p1->bl.e[j - 1]
+                            << p1->e->p.identity << " and " << p1->bl.e[j - 1]
                             << " (particles not stored on the same node - "
                                "oif_globalforce2); n "
                             << p1->bl.n << " max " << p1->bl.max;
@@ -240,7 +240,7 @@ void add_oif_global_forces(double *area_volume,
         p3 = local_particles[p1->bl.e[j++]];
         if (!p3) {
           runtimeErrorMsg()
-              << "add area: bond broken between particles " << p1->p->identity
+              << "add area: bond broken between particles " << p1->e->p.identity
               << ", " << p1->bl.e[j - 2] << " and " << p1->bl.e[j - 1]
               << " (particles not stored on the same node); n " << p1->bl.n
               << " max " << p1->bl.max;
@@ -251,9 +251,9 @@ void add_oif_global_forces(double *area_volume,
         // first find out which particle out of p1, p2 (possibly p3, p4) is not
         // a ghost particle. In almost all cases it is p1, however, it might be
         // other one. we call this particle reference particle.
-        if (p1->l->ghost != 1) {
+        if (p1->e->l.ghost != 1) {
           // unfold non-ghost particle using image, because for physical
-          // particles, the structure p->l->i is correctly set
+          // particles, the structure p->e->l.i is correctly set
           p11 = unfolded_position(*p1);
           // other coordinates are obtained from its relative positions to the
           // reference particle
@@ -265,7 +265,7 @@ void add_oif_global_forces(double *area_volume,
           }
         } else {
           // in case the first particle is a ghost particle
-          if (p2->l->ghost != 1) {
+          if (p2->e->l.ghost != 1) {
             p22 = unfolded_position(p2);
             get_mi_vector(AA, p1->r.p, p22);
             get_mi_vector(BB, p3->r.p, p22);
@@ -275,7 +275,7 @@ void add_oif_global_forces(double *area_volume,
             }
           } else {
             // in case the first and the second particle are ghost particles
-            if (p3->l->ghost != 1) {
+            if (p3->e->l.ghost != 1) {
               p33 = unfolded_position(p3);
               get_mi_vector(AA, p1->r.p, p33);
               get_mi_vector(BB, p2->r.p, p33);

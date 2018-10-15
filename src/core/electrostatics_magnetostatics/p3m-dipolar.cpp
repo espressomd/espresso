@@ -643,8 +643,8 @@ void dp3m_dipole_assign(void) {
       dp3m.rs_mesh_dip[i][j] = 0.0;
 
   for (auto const &p : local_cells.particles()) {
-    if (p.p->dipm != 0.0) {
-      dp3m_assign_dipole(p.r.p.data(), p.p->dipm, p.r.dip.data(), cp_cnt);
+    if (p.e->p.dipm != 0.0) {
+      dp3m_assign_dipole(p.r.p.data(), p.e->p.dipm, p.r.dip.data(), cp_cnt);
       cp_cnt++;
     }
   }
@@ -801,7 +801,7 @@ static void P3M_assign_torques(double prefac, int d_rs) {
   cf_cnt = 0;
 
   for (auto &p : local_cells.particles()) {
-    if ((p.p->dipm) != 0.0) {
+    if ((p.e->p.dipm) != 0.0) {
       q_ind = dp3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
         for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
@@ -843,7 +843,7 @@ static void P3M_assign_torques(double prefac, int d_rs) {
       }
       cp_cnt++;
 
-      ONEPART_TRACE(if (p.p->identity == check_id) fprintf(
+      ONEPART_TRACE(if (p.e->p.identity == check_id) fprintf(
           stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n", this_node,
           p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
@@ -865,7 +865,7 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs) {
   cf_cnt = 0;
 
   for (auto &p : local_cells.particles()) {
-    if ((p.p->dipm) != 0.0) {
+    if ((p.e->p.dipm) != 0.0) {
       q_ind = dp3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
         for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
@@ -883,7 +883,7 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs) {
       }
       cp_cnt++;
 
-      ONEPART_TRACE(if (p.p->identity == check_id) fprintf(
+      ONEPART_TRACE(if (p.e->p.identity == check_id) fprintf(
           stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n", this_node,
           p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
@@ -2107,7 +2107,7 @@ void dp3m_count_magnetic_particles() {
   }
 
   for (auto const &p : local_cells.particles()) {
-    if (p.p->dipm != 0.0) {
+    if (p.e->p.dipm != 0.0) {
       node_sums[0] += Utils::sqr(p.r.dip[0]) + Utils::sqr(p.r.dip[1]) +
                       Utils::sqr(p.r.dip[2]);
       node_sums[1] += 1.0;

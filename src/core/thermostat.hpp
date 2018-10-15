@@ -214,7 +214,7 @@ inline void friction_thermo_langevin(Particle *p) {
   extern Thermostat::GammaType langevin_pref1, langevin_pref2;
   Thermostat::GammaType langevin_pref1_temp, langevin_pref2_temp;
 
-  if (p->p->is_virtual && !thermo_virtual) {
+  if (p->e->p.is_virtual && !thermo_virtual) {
     for (int j = 0; j < 3; j++)
       p->f.f[j] = 0;
 
@@ -225,12 +225,12 @@ inline void friction_thermo_langevin(Particle *p) {
   Vector3d velocity;
   for (int i = 0; i < 3; i++) {
     // Particle velocity
-    velocity[i] = p->m->v[i];
+    velocity[i] = p->e->m.v[i];
 #ifdef ENGINE
     // In case of the engine feature, the velocity is relaxed
     // towards a swimming velocity oriented parallel to the
     // particles director
-    velocity[i] -= p->swim->v_swim * p->r.quatu[i];
+    velocity[i] -= p->e->swim.v_swim * p->r.quatu[i];
 #endif
 
   } // for
@@ -245,24 +245,24 @@ inline void friction_thermo_langevin(Particle *p) {
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 24.0;
 
-  if (p->p->gamma >= Thermostat::GammaType{}) {
-    langevin_pref1_temp = -p->p->gamma;
+  if (p->e->p.gamma >= Thermostat::GammaType{}) {
+    langevin_pref1_temp = -p->e->p.gamma;
     // Is a particle-specific temperature also specified?
-    if (p->p->T >= 0.)
+    if (p->e->p.T >= 0.)
       langevin_pref2_temp =
-          sqrt(langevin_temp_coeff * p->p->T * p->p->gamma / time_step);
+          sqrt(langevin_temp_coeff * p->e->p.T * p->e->p.gamma / time_step);
     else
       // Default temperature but particle-specific gamma
       langevin_pref2_temp =
-          sqrt(langevin_temp_coeff * temperature * p->p->gamma / time_step);
+          sqrt(langevin_temp_coeff * temperature * p->e->p.gamma / time_step);
 
   } // particle specific gamma
   else {
     langevin_pref1_temp = -langevin_gamma;
     // No particle-specific gamma, but is there particle-specific temperature
-    if (p->p->T >= 0.)
+    if (p->e->p.T >= 0.)
       langevin_pref2_temp =
-          sqrt(langevin_temp_coeff * p->p->T * langevin_gamma / time_step);
+          sqrt(langevin_temp_coeff * p->e->p.T * langevin_gamma / time_step);
     else
       // Default values for both
       langevin_pref2_temp = langevin_pref2;
@@ -286,7 +286,7 @@ inline void friction_thermo_langevin(Particle *p) {
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     // If individual coordinates are fixed, set force to 0.
-    if ((p->p->ext_flag & COORD_FIXED(j)))
+    if ((p->e->p.ext_flag & COORD_FIXED(j)))
       p->f.f[j] = 0;
     else
 #endif
@@ -328,7 +328,7 @@ inline void friction_thermo_langevin(Particle *p) {
     thermo_convert_forces_body_to_space(p, particle_force);
     for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-      if (!(p->p->ext_flag & COORD_FIXED(j)))
+      if (!(p->e->p.ext_flag & COORD_FIXED(j)))
 #endif
       {
         p->f.f[j] = particle_force[j];
@@ -337,13 +337,13 @@ inline void friction_thermo_langevin(Particle *p) {
   }
 #endif // PARTICLE_ANISOTROPY
 
-  // printf("%d: %e %e %e %e %e %e\n",p->p->identity,
-  // p->f.f[0],p->f.f[1],p->f.f[2], p->m->v[0],p->m->v[1],p->m->v[2]);
-  ONEPART_TRACE(if (p->p->identity == check_id)
+  // printf("%d: %e %e %e %e %e %e\n",p->e->p.identity,
+  // p->f.f[0],p->f.f[1],p->f.f[2], p->e->m.v[0],p->e->m.v[1],p->e->m.v[2]);
+  ONEPART_TRACE(if (p->e->p.identity == check_id)
                     fprintf(stderr, "%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",
                             this_node, p->f.f[0], p->f.f[1], p->f.f[2]));
   THERMO_TRACE(fprintf(stderr, "%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",
-                       this_node, p->p->identity, p->f.f[0], p->f.f[1],
+                       this_node, p->e->p.identity, p->f.f[0], p->f.f[1],
                        p->f.f[2]));
 }
 
@@ -364,23 +364,23 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
   // If a particle-specific gamma is given
   auto const constexpr langevin_temp_coeff = 24.0;
 
-  if (p->p->gamma_rot >= Thermostat::GammaType{}) {
-    langevin_pref1_temp = p->p->gamma_rot;
+  if (p->e->p.gamma_rot >= Thermostat::GammaType{}) {
+    langevin_pref1_temp = p->e->p.gamma_rot;
     // Is a particle-specific temperature also specified?
-    if (p->p->T >= 0.)
+    if (p->e->p.T >= 0.)
       langevin_pref2_temp =
-          sqrt(langevin_temp_coeff * p->p->T * p->p->gamma_rot / time_step);
+          sqrt(langevin_temp_coeff * p->e->p.T * p->e->p.gamma_rot / time_step);
     else
       // Default temperature but particle-specific gamma
       langevin_pref2_temp =
-          sqrt(langevin_temp_coeff * temperature * p->p->gamma_rot / time_step);
+          sqrt(langevin_temp_coeff * temperature * p->e->p.gamma_rot / time_step);
 
   } // particle specific gamma
   else {
     langevin_pref1_temp = langevin_gamma_rotation;
     // No particle-specific gamma, but is there particle-specific temperature
-    if (p->p->T >= 0.)
-      langevin_pref2_temp = sqrt(langevin_temp_coeff * p->p->T *
+    if (p->e->p.T >= 0.)
+      langevin_pref2_temp = sqrt(langevin_temp_coeff * p->e->p.T *
                                  langevin_gamma_rotation / time_step);
     else
       // Default values for both
@@ -395,26 +395,26 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
   for (int j = 0; j < 3; j++) {
 #ifdef PARTICLE_ANISOTROPY
     if (langevin_pref2_temp[j] > 0.0) {
-      p->f.torque[j] = -langevin_pref1_temp[j] * p->m->omega[j] +
+      p->f.torque[j] = -langevin_pref1_temp[j] * p->e->m.omega[j] +
                        langevin_pref2_temp[j] * Thermostat::noise();
     } else {
-      p->f.torque[j] = -langevin_pref1_temp[j] * p->m->omega[j];
+      p->f.torque[j] = -langevin_pref1_temp[j] * p->e->m.omega[j];
     }
 #else
     if (langevin_pref2_temp > 0.0) {
-      p->f.torque[j] = -langevin_pref1_temp * p->m->omega[j] +
+      p->f.torque[j] = -langevin_pref1_temp * p->e->m.omega[j] +
                        langevin_pref2_temp * Thermostat::noise();
     } else {
-      p->f.torque[j] = -langevin_pref1_temp * p->m->omega[j];
+      p->f.torque[j] = -langevin_pref1_temp * p->e->m.omega[j];
     }
 #endif
   }
 
-  ONEPART_TRACE(if (p->p->identity == check_id)
+  ONEPART_TRACE(if (p->e->p.identity == check_id)
                     fprintf(stderr, "%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",
                             this_node, p->f.f[0], p->f.f[1], p->f.f[2]));
   THERMO_TRACE(fprintf(stderr, "%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",
-                       this_node, p->p->identity, p->f.f[0], p->f.f[1],
+                       this_node, p->e->p.identity, p->f.f[0], p->f.f[1],
                        p->f.f[2]));
 }
 

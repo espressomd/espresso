@@ -134,7 +134,7 @@ Vector3d dpd_pair_force(const Particle *p1, const Particle *p2,
     // friction force prefactor
     double vel12_dot_d12 = 0.0;
     for (int j = 0; j < 3; j++)
-      vel12_dot_d12 += (p1->m->v[j] - p2->m->v[j]) * d[j];
+      vel12_dot_d12 += (p1->e->m.v[j] - p2->e->m.v[j]) * d[j];
     auto const friction =
         ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
     // random force prefactor
@@ -178,7 +178,7 @@ Vector3d dpd_pair_force(const Particle *p1, const Particle *p2,
       // Random force
       f_R[i] = 0;
       for (int j = 0; j < 3; j++) {
-        f_D[i] += P_times_dist_sqr[i][j] * (p1->m->v[j] - p2->m->v[j]);
+        f_D[i] += P_times_dist_sqr[i][j] * (p1->e->m.v[j] - p2->e->m.v[j]);
         f_R[i] += P_times_dist_sqr[i][j] * noise_vec[j];
       }
       // NOTE: velocity are scaled with time_step

@@ -70,7 +70,7 @@ void pack_particles(ParticleRange particles,
     buffer[i].f[1] = (float)part.f.f[1];
     buffer[i].f[2] = (float)part.f.f[2];
 
-    buffer[i].is_virtual = part.p->is_virtual;
+    buffer[i].is_virtual = part.e->p.is_virtual;
 
     i++;
   }
@@ -111,9 +111,9 @@ void set_velocities(ParticleRange particles,
                     IBM_CUDA_ParticleDataOutput *buffer) {
   int i = 0;
   for (auto &part : particles) {
-    if (part.p->is_virtual)
+    if (part.e->p.is_virtual)
       for (int j = 0; j < 3; j++)
-        part.m->v[j] = buffer[i].v[j];
+        part.e->m.v[j] = buffer[i].v[j];
 
     i++;
   }

@@ -51,10 +51,10 @@ int ObservableRadialDensityDistribution::actual_calculate(PartCfg &partCfg) {
     // Using particle_ids to specify the start and endpoints
     memmove(start_point, partCfg[r_data->start_point_id].r.p,
             3 * sizeof(double));
-    memmove(image_box, partCfg[r_data->start_point_id].l->i, 3 * sizeof(int));
+    memmove(image_box, partCfg[r_data->start_point_id].e->l.i, 3 * sizeof(int));
     unfold_position(start_point, image_box);
     memmove(end_point, partCfg[r_data->end_point_id].r.p, 3 * sizeof(double));
-    memmove(image_box, partCfg[r_data->end_point_id].l->i, 3 * sizeof(int));
+    memmove(image_box, partCfg[r_data->end_point_id].e->l.i, 3 * sizeof(int));
     unfold_position(end_point, image_box);
   } else {
     memmove(start_point, r_data->start_point, 3 * sizeof(double));

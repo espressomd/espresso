@@ -84,7 +84,7 @@ int ScafacosData::update_particle_data() {
     positions.push_back(pos[1]);
     positions.push_back(pos[2]);
     if (!dipolar()) {
-      charges.push_back(p.p->q);
+      charges.push_back(p.e->p.q);
     } else {
 #ifdef SCAFACOS_DIPOLES
       dipoles.push_back(p.r.dip[0]);
@@ -106,9 +106,9 @@ void ScafacosData::update_particle_forces() const {
 
   for (auto &p : local_cells.particles()) {
     if (!dipolar()) {
-      p.f.f[0] += coulomb.prefactor * p.p->q * fields[it++];
-      p.f.f[1] += coulomb.prefactor * p.p->q * fields[it++];
-      p.f.f[2] += coulomb.prefactor * p.p->q * fields[it++];
+      p.f.f[0] += coulomb.prefactor * p.e->p.q * fields[it++];
+      p.f.f[1] += coulomb.prefactor * p.e->p.q * fields[it++];
+      p.f.f[2] += coulomb.prefactor * p.e->p.q * fields[it++];
     } else {
 #ifdef SCAFACOS_DIPOLES
       // Indices
@@ -163,7 +163,7 @@ void add_pair_force(Particle *p1, Particle *p2, double *d, double dist,
 
   assert(scafacos);
   const double field = scafacos->pair_force(dist);
-  const double fak = p2->p->q * p1->p->q * field * coulomb.prefactor / dist;
+  const double fak = p2->e->p.q * p1->e->p.q * field * coulomb.prefactor / dist;
 
   for (int i = 0; i < 3; i++) {
     p1->f.f[i] -= fak * d[i];
@@ -173,7 +173,7 @@ void add_pair_force(Particle *p1, Particle *p2, double *d, double dist,
 
 double pair_energy(Particle *p1, Particle *p2, double dist) {
   if (dist <= get_r_cut())
-    return coulomb.prefactor * p1->p->q * p2->p->q * scafacos->pair_energy(dist);
+    return coulomb.prefactor * p1->e->p.q * p2->e->p.q * scafacos->pair_energy(dist);
   else
     return 0.;
 }

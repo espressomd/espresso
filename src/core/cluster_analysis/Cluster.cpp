@@ -52,8 +52,8 @@ Cluster::center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids) {
     const Vector3d folded_pos = folded_position(partCfg()[pid]);
     get_mi_vector(dist_to_reference, folded_pos,
                   reference_position); // add current particle positions
-    com = com + dist_to_reference * partCfg()[pid].p->mass;
-    total_mass += partCfg()[pid].p->mass;
+    com = com + dist_to_reference * partCfg()[pid].e->p.mass;
+    total_mass += partCfg()[pid].e->p.mass;
   }
 
   // Normalize by number of particles

@@ -177,19 +177,19 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields) {
   // Esp. rescale the velocities.
   int i1 = 0, i3 = 0;
   for (auto const &p : local_cells.particles()) {
-    id[i1] = p.p->identity;
+    id[i1] = p.e->p.identity;
     if (fields & MPIIO_OUT_POS) {
       pos[i3] = p.r.p[0];
       pos[i3 + 1] = p.r.p[1];
       pos[i3 + 2] = p.r.p[2];
     }
     if (fields & MPIIO_OUT_VEL) {
-      vel[i3] = p.m->v[0];
-      vel[i3 + 1] = p.m->v[1];
-      vel[i3 + 2] = p.m->v[2];
+      vel[i3] = p.e->m.v[0];
+      vel[i3 + 1] = p.e->m.v[1];
+      vel[i3 + 2] = p.e->m.v[2];
     }
     if (fields & MPIIO_OUT_TYP) {
-      type[i1] = p.p->type;
+      type[i1] = p.e->p.type;
     }
     if (fields & MPIIO_OUT_BND) {
       boff[i1 + 1] = p.bl.n;
@@ -409,7 +409,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
                           MPI_INT);
 
     for (int i = 0; i < nlocalpart; ++i)
-      local_particles[id[i]]->p->type = type[i];
+      local_particles[id[i]]->e->p.type = type[i];
   }
 
   if (fields & MPIIO_OUT_VEL) {
@@ -421,7 +421,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
     for (int i = 0; i < nlocalpart; ++i)
       for (int k = 0; k < 3; ++k)
-        local_particles[id[i]]->m->v[k] = vel[3 * i + k];
+        local_particles[id[i]]->e->m.v[k] = vel[3 * i + k];
   }
 
   if (fields & MPIIO_OUT_BND) {

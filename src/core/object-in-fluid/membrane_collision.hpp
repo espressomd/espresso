@@ -57,7 +57,7 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
    * Description of implementation:
    * We have two particles, each belongs to the membrane of a different immersed
    *object For both particles we have the position of the particle - p, and in
-   *part->p->out_direction are the coordinates of the outward normal vector (with
+   *part->e->p.out_direction are the coordinates of the outward normal vector (with
    *respect to the immersed object).
    *
    * Algorithm:
@@ -81,8 +81,8 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
 
     if (r_off > 0.0) {
 
-      out1 = p1->p->out_direction;
-      out2 = p2->p->out_direction;
+      out1 = p1->e->p.out_direction;
+      out2 = p2->e->p.out_direction;
       // check whether out_direction was set
       if (fabs(out1[0]) + fabs(out1[1]) + fabs(out1[2]) + fabs(out2[0]) +
               fabs(out2[1]) + fabs(out2[2]) <

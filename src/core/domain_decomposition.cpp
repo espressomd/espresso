@@ -566,7 +566,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
 
   for (p = 0; p < pl->n; p++) {
     if (boundary[fold_dir] != 0) {
-      fold_coordinate(pl->part[p].r.p, pl->part[p].m->v, pl->part[p].l->i,
+      fold_coordinate(pl->part[p].r.p, pl->part[p].e->m.v, pl->part[p].e->l.i,
                       fold_coord);
     }
 
@@ -590,7 +590,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
             fprintf(stderr,
                     "%d: dd_append_particles: particle %d (%f,%f,%f) "
                     "not inside node domain.\n",
-                    this_node, pl->part[p].p->identity, pl->part[p].r.p[0],
+                    this_node, pl->part[p].e->p.identity, pl->part[p].r.p[0],
                     pl->part[p].r.p[1], pl->part[p].r.p[2]);
           });
         }
@@ -602,7 +602,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
             fprintf(stderr,
                     "%d: dd_append_particles: particle %d (%f,%f,%f) "
                     "not inside node domain.\n",
-                    this_node, pl->part[p].p->identity, pl->part[p].r.p[0],
+                    this_node, pl->part[p].e->p.identity, pl->part[p].r.p[0],
                     pl->part[p].r.p[1], pl->part[p].r.p[2]);
           });
         }
@@ -612,7 +612,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
     CELL_TRACE(fprintf(
         stderr,
         "%d: dd_append_particles: Append Part id=%d to cell %d cpos %d %d %d\n",
-        this_node, pl->part[p].p->identity, c, cpos[0], cpos[1], cpos[2]));
+        this_node, pl->part[p].e->p.identity, c, cpos[0], cpos[1], cpos[2]));
     append_indexed_particle(&cells[c], std::move(pl->part[p]));
   }
   CELL_TRACE(
@@ -805,8 +805,8 @@ void dd_exchange_and_sort_particles(int global_flag) {
               if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
                 CELL_TRACE(fprintf(stderr,
                                    "%d: dd_ex_and_sort_p: send part left %d\n",
-                                   this_node, part->p->identity));
-                local_particles[part->p->identity] = nullptr;
+                                   this_node, part->e->p.identity));
+                local_particles[part->e->p.identity] = nullptr;
                 move_indexed_particle(&send_buf_l, cell, p);
                 if (p < cell->n)
                   p--;
@@ -819,8 +819,8 @@ void dd_exchange_and_sort_particles(int global_flag) {
               if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
                 CELL_TRACE(fprintf(stderr,
                                    "%d: dd_ex_and_sort_p: send part right %d\n",
-                                   this_node, part->p->identity));
-                local_particles[part->p->identity] = nullptr;
+                                   this_node, part->e->p.identity));
+                local_particles[part->e->p.identity] = nullptr;
                 move_indexed_particle(&send_buf_r, cell, p);
                 if (p < cell->n)
                   p--;
@@ -840,7 +840,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
                                      "dd_exchange_and_sort_particles: "
                                      "CP1 Particle %d (%f,%f,%f) not "
                                      "inside node domain.\n",
-                                     this_node, part->p->identity, part->r.p[0],
+                                     this_node, part->e->p.identity, part->r.p[0],
                                      part->r.p[1], part->r.p[2]));
                   finished = 0;
                   sort_cell = local_cells.cell[0];
@@ -893,7 +893,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
           for (p = 0; p < cell->n; p++) {
             part = &cell->part[p];
             if (PERIODIC(dir)) {
-              fold_coordinate(part->r.p, part->m->v, part->l->i, dir);
+              fold_coordinate(part->r.p, part->e->m.v, part->e->l.i, dir);
             }
             if (dir == 2) {
               sort_cell = dd_save_position_to_cell(part->r.p.data());
@@ -904,7 +904,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
                                      "dd_exchange_and_sort_particles: "
                                      "CP2 Particle %d (%f,%f,%f) not "
                                      "inside node domain.\n",
-                                     this_node, part->p->identity, part->r.p[0],
+                                     this_node, part->e->p.identity, part->r.p[0],
                                      part->r.p[1], part->r.p[2]));
                   finished = 0;
                   sort_cell = local_cells.cell[0];
@@ -918,7 +918,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
                                      "%d: "
                                      "dd_exchange_and_sort_particles: "
                                      "move particle id %d\n",
-                                     this_node, part->p->identity));
+                                     this_node, part->e->p.identity));
                   move_indexed_particle(sort_cell, cell, p);
                   if (p < cell->n)
                     p--;

@@ -70,11 +70,11 @@ bool steepest_descent_step(void) {
     for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
       // Skip, if coordinate is fixed
-      if (!(p.p->ext_flag & COORD_FIXED(j)))
+      if (!(p.e->p.ext_flag & COORD_FIXED(j)))
 #endif
 #ifdef VIRTUAL_SITES
         // Skip positional increments of virtual particles
-        if (!p.p->is_virtual)
+        if (!p.e->p.is_virtual)
 #endif
         {
           // Square of force on particle

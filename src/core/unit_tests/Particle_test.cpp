@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   Utils::List<int> bl = {1, 2, 3, 4};
   Utils::List<int> el = {5, 6, 7, 8};
 
-  p.p->identity = 15;
+  p.e->p.identity = 15;
   p.bl = bl;
 #ifdef EXCLUSIONS
   p.el = el;
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   auto q = Particle();
   in_ar >> q;
 
-  BOOST_CHECK(q.p->identity == p.p->identity);
+  BOOST_CHECK(q.e->p.identity == p.e->p.identity);
   BOOST_CHECK(q.bl == bl);
 
 #ifdef EXCLUSIONS

@@ -236,11 +236,11 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
   const double dist_betw_part = sqrt(sqrlen(vec21));
 
   // Find out, which is the particle to be glued.
-  if ((p1.p->type == collision_params.part_type_to_be_glued) &&
-      (p2.p->type == collision_params.part_type_to_attach_vs_to)) {
+  if ((p1.e->p.type == collision_params.part_type_to_be_glued) &&
+      (p2.e->p.type == collision_params.part_type_to_attach_vs_to)) {
     c = 1 - collision_params.dist_glued_part_to_vs / dist_betw_part;
-  } else if ((p2.p->type == collision_params.part_type_to_be_glued) &&
-             (p1.p->type == collision_params.part_type_to_attach_vs_to)) {
+  } else if ((p2.e->p.type == collision_params.part_type_to_be_glued) &&
+             (p1.e->p.type == collision_params.part_type_to_attach_vs_to)) {
     c = collision_params.dist_glued_part_to_vs / dist_betw_part;
   } else {
     throw std::runtime_error("This should never be thrown. Bug.");
@@ -248,7 +248,7 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
   for (int i = 0; i < 3; i++) {
     pos[i] = p2.r.p[i] + vec21[i] * c;
   }
-  if (p1.p->type == collision_params.part_type_to_attach_vs_to)
+  if (p1.e->p.type == collision_params.part_type_to_attach_vs_to)
     return p1;
   else
     return p2;
@@ -299,10 +299,10 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
                  collision_params.three_particle_angle_resolution)) {
           // check, if p1 and p2 are the bond partners, (in any order)
           // if yes, skip triplet
-          if (((p.bl.e[b + 1] == p1.p->identity) &&
-               (p.bl.e[b + 2] == p2.p->identity)) ||
-              ((p.bl.e[b + 1] == p2.p->identity) &&
-               (p.bl.e[b + 2] == p1.p->identity)))
+          if (((p.bl.e[b + 1] == p1.e->p.identity) &&
+               (p.bl.e[b + 2] == p2.e->p.identity)) ||
+              ((p.bl.e[b + 1] == p2.e->p.identity) &&
+               (p.bl.e[b + 2] == p1.e->p.identity)))
             return;
         } // if bond type
       }   // if size==2
@@ -359,10 +359,10 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // First, fill bond data structure
   int bondT[3];
   bondT[0] = bond_id;
-  bondT[1] = p1.p->identity;
-  bondT[2] = p2.p->identity;
+  bondT[1] = p1.e->p.identity;
+  bondT[2] = p2.e->p.identity;
 
-  local_change_bond(p.p->identity, bondT, 0);
+  local_change_bond(p.e->p.identity, bondT, 0);
 }
 
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -379,8 +379,8 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   local_particles[current_vs_pid]->r.p = pos;
   local_vs_relate_to(current_vs_pid, relate_to);
 
-  (local_particles[max_seen_particle])->p->is_virtual = 1;
-  (local_particles[max_seen_particle])->p->type =
+  (local_particles[max_seen_particle])->e->p.is_virtual = 1;
+  (local_particles[max_seen_particle])->e->p.type =
       collision_params.vs_particle_type;
 }
 
@@ -421,10 +421,10 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
   // Create bond between the virtual particles
   bondG[0] = collision_params.bond_vs;
   bondG[1] = vs_pid_plus_one - 1;
-  if (p1->p->type == collision_params.part_type_after_glueing) {
-    local_change_bond(p1->p->identity, bondG, 0);
+  if (p1->e->p.type == collision_params.part_type_after_glueing) {
+    local_change_bond(p1->e->p.identity, bondG, 0);
   } else {
-    local_change_bond(p2->p->identity, bondG, 0);
+    local_change_bond(p2->e->p.identity, bondG, 0);
   }
 }
 
@@ -481,7 +481,7 @@ static void three_particle_binding_do_search(Cell *basecell, Particle &p1,
       auto &P = c->part[p_id];
 
       // Skip collided particles themselves
-      if ((P.p->identity == p1.p->identity) || (P.p->identity == p2.p->identity)) {
+      if ((P.e->p.identity == p1.e->p.identity) || (P.e->p.identity == p2.e->p.identity)) {
         continue;
       }
 
@@ -490,15 +490,15 @@ static void three_particle_binding_do_search(Cell *basecell, Particle &p1,
       // non-cyclic permutations).
       // coldet_do_three_particle_bond checks the bonding criterion and if
       // the involved particles are not already bonded before it binds them.
-      if (!P.l->ghost) {
+      if (!P.e->l.ghost) {
         coldet_do_three_particle_bond(P, p1, p2);
       }
 
-      if (!p1.l->ghost) {
+      if (!p1.e->l.ghost) {
         coldet_do_three_particle_bond(p1, P, p2);
       }
 
-      if (!p2.l->ghost) {
+      if (!p2.e->l.ghost) {
         coldet_do_three_particle_bond(p2, P, p1);
       }
     }
@@ -555,7 +555,7 @@ void handle_collisions() {
   if (bind_centers()) {
     for (auto &c : local_collision_queue) {
       // put the bond to the non-ghost particle; at least one partner always is
-      if (local_particles[c.pp1]->l->ghost) {
+      if (local_particles[c.pp1]->e->l.ghost) {
         std::swap(c.pp1, c.pp2);
       }
       int bondG[2];
@@ -598,7 +598,7 @@ void handle_collisions() {
       // ore one is ghost and one is not accessible
       // we only increase the counter for the ext id to use based on the
       // number of particles created by other nodes
-      if (((!p1 or p1->l->ghost) and (!p2 or p2->l->ghost)) or !p1 or !p2) {
+      if (((!p1 or p1->e->l.ghost) and (!p2 or p2->e->l.ghost)) or !p1 or !p2) {
         // Increase local counters
         if (collision_params.mode & COLLISION_MODE_VS) {
           added_particle(current_vs_pid);
@@ -609,12 +609,12 @@ void handle_collisions() {
         current_vs_pid++;
         if (collision_params.mode == COLLISION_MODE_GLUE_TO_SURF) {
           if (p1)
-            if (p1->p->type == collision_params.part_type_to_be_glued) {
-              p1->p->type = collision_params.part_type_after_glueing;
+            if (p1->e->p.type == collision_params.part_type_to_be_glued) {
+              p1->e->p.type = collision_params.part_type_after_glueing;
             }
           if (p2)
-            if (p2->p->type == collision_params.part_type_to_be_glued) {
-              p2->p->type = collision_params.part_type_after_glueing;
+            if (p2->e->p.type == collision_params.part_type_to_be_glued) {
+              p2->e->p.type = collision_params.part_type_after_glueing;
             }
         } // mode glue to surface
 
@@ -626,7 +626,7 @@ void handle_collisions() {
         // Vs is moved afterwards and resorted after all collision s are handled
         // Use position of non-ghost colliding particle.
         Vector3d initial_pos;
-        if (p1->l->ghost)
+        if (p1->e->l.ghost)
           initial_pos = p2->r.p;
         else
           initial_pos = p1->r.p;
@@ -637,15 +637,15 @@ void handle_collisions() {
           Vector3d pos1, pos2;
 
           // Enable rotation on the particles to which vs will be attached
-          p1->p->rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
-          p2->p->rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
+          p1->e->p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
+          p2->e->p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
 
           // Positions of the virtual sites
           bind_at_point_of_collision_calc_vs_pos(p1, p2, pos1, pos2);
 
           // place virtual sites on the node where the base particle is not a
           // ghost
-          if (!p1->l->ghost) {
+          if (!p1->e->l.ghost) {
             place_vs_and_relate_to_particle(current_vs_pid, pos1, c.pp1,
                                             initial_pos);
             // Particle storage locations may have changed due to
@@ -659,7 +659,7 @@ void handle_collisions() {
           current_vs_pid++;
 
           // Same for particle 2
-          if (!p2->l->ghost) {
+          if (!p2->e->l.ghost) {
             place_vs_and_relate_to_particle(current_vs_pid, pos2, c.pp2,
                                             initial_pos);
             // Particle storage locations may have changed due to
@@ -684,8 +684,8 @@ void handle_collisions() {
           // can not always know whether or not a vs is placed
           if (collision_params.part_type_after_glueing !=
               collision_params.part_type_to_be_glued) {
-            if ((p1->p->type == collision_params.part_type_after_glueing) ||
-                (p2->p->type == collision_params.part_type_after_glueing)) {
+            if ((p1->e->p.type == collision_params.part_type_after_glueing) ||
+                (p2->e->p.type == collision_params.part_type_after_glueing)) {
 
               added_particle(current_vs_pid);
               current_vs_pid++;
@@ -699,7 +699,7 @@ void handle_collisions() {
 
           // Add a bond between the centers of the colliding particles
           // The bond is placed on the node that has p1
-          if (!p1->l->ghost) {
+          if (!p1->e->l.ghost) {
             int bondG[2];
             bondG[0] = collision_params.bond_centers;
             bondG[1] = c.pp2;
@@ -707,17 +707,17 @@ void handle_collisions() {
           }
 
           // Change type of particle being attached, to make it inert
-          if (p1->p->type == collision_params.part_type_to_be_glued) {
-            p1->p->type = collision_params.part_type_after_glueing;
+          if (p1->e->p.type == collision_params.part_type_to_be_glued) {
+            p1->e->p.type = collision_params.part_type_after_glueing;
           }
-          if (p2->p->type == collision_params.part_type_to_be_glued) {
-            p2->p->type = collision_params.part_type_after_glueing;
+          if (p2->e->p.type == collision_params.part_type_to_be_glued) {
+            p2->e->p.type = collision_params.part_type_after_glueing;
           }
 
           // Vs placement happens on the node that has p1
-          if (!attach_vs_to.l->ghost) {
+          if (!attach_vs_to.e->l.ghost) {
             place_vs_and_relate_to_particle(
-                current_vs_pid, pos, attach_vs_to.p->identity, initial_pos);
+                current_vs_pid, pos, attach_vs_to.e->p.identity, initial_pos);
             // Particle storage locations may have changed due to
             // added particle
             p1 = local_particles[c.pp1];
