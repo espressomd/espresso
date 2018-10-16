@@ -450,6 +450,12 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 */
 
 inline void add_bonded_force(Particle *p1) {
+  Particle *p3 = nullptr, *p4 = nullptr;
+  Bonded_ia_parameters *iaparams;
+  int i, j, bond_broken = 1;
+
+  i = 0;
+  while (i < p1->bl.n) {
   double dx[3] = {0., 0., 0.};
   double force[3] = {0., 0., 0.};
   double force2[3] = {0., 0., 0.};
@@ -461,12 +467,6 @@ inline void add_bonded_force(Particle *p1) {
   double torque1[3] = {0., 0., 0.};
   double torque2[3] = {0., 0., 0.};
 #endif
-  Particle *p3 = nullptr, *p4 = nullptr;
-  Bonded_ia_parameters *iaparams;
-  int i, j, bond_broken = 1;
-
-  i = 0;
-  while (i < p1->bl.n) {
     int type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
     int type = iaparams->type;
@@ -558,11 +558,6 @@ inline void add_bonded_force(Particle *p1) {
           bond_broken = calc_tab_bond_force(p1, p2, iaparams, dx, force);
         break;
 #endif
-#ifdef OIF_GLOBAL_FORCES
-      case BONDED_IA_OIF_GLOBAL_FORCES:
-        bond_broken = 0;
-        break;
-#endif
 #ifdef IMMERSED_BOUNDARY
       case BONDED_IA_IBM_VOLUME_CONSERVATION:
         bond_broken = 0;
@@ -592,9 +587,9 @@ inline void add_bonded_force(Particle *p1) {
         break;
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
-                          << p1->p.identity << " unknown\n";
+                          << p1->p.identity << " unknown "<<type<<","<<n_partners<<"\n";
         return;
-      }
+      } // switch type
     } // 1 partner
     else if (n_partners == 2) {
       switch (type) {
@@ -610,6 +605,11 @@ inline void add_bonded_force(Particle *p1) {
       case BONDED_IA_ANGLE_COSSQUARE:
         bond_broken =
             calc_angle_cossquare_force(p1, p2, p3, iaparams, force, force2);
+        break;
+#endif
+#ifdef OIF_GLOBAL_FORCES
+      case BONDED_IA_OIF_GLOBAL_FORCES:
+        bond_broken = 0;
         break;
 #endif
 #ifdef TABULATED
@@ -636,7 +636,7 @@ inline void add_bonded_force(Particle *p1) {
 #endif
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
-                          << p1->p.identity << " unknown\n";
+                          << p1->p.identity << " unknown " <<type<<","<<n_partners<<"\n";
         return;
       }
     } // 2 partners (angel bonds...)
@@ -695,7 +695,7 @@ inline void add_bonded_force(Particle *p1) {
 #endif
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
-                          << p1->p.identity << " unknown\n";
+                          << p1->p.identity << " unknown " <<type<<","<<n_partners<< "\n";
         return;
       }
     } // 3 bond partners
@@ -741,10 +741,6 @@ inline void add_bonded_force(Particle *p1) {
 
       for (j = 0; j < 3; j++) {
         switch (type) {
-#ifdef OIF_GLOBAL_FORCES
-        case BONDED_IA_OIF_GLOBAL_FORCES:
-          break;
-#endif
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
@@ -780,10 +776,10 @@ inline void add_bonded_force(Particle *p1) {
         }
         break;
 #endif
-      }
+      } // Switch type of 4-particle bond
       break;
-    }
-  }
+    } // switch number of partners (add forces to particles)
+  } // loop over the particle's bond list
 }
 
 inline void check_particle_force(Particle *part) {
