@@ -114,12 +114,14 @@ public:
   inline Scalar norm2() const { return (*this) * (*this); }
   inline Scalar norm() const { return sqrt(norm2()); }
 
-  inline void normalize(void) {
+  inline Vector<n, Scalar> &normalize() {
     const auto N = norm();
     if (N > Scalar(0)) {
       for (int i = 0; i < n; i++)
         d[i] /= N;
     }
+
+    return *this;
   }
 
   /**

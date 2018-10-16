@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014-2018 The ESPResSo project
+  Copyright (C) 2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -16,24 +16,25 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "HarmonicOrientationWell.hpp"
-#include "EspressoSystemInterface.hpp"
-#include "forces.hpp"
 
-#ifdef CUDA
-#ifdef ROTATION
+#include "config.hpp"
 
-HarmonicOrientationWell::HarmonicOrientationWell(float x1, float x2, float x3,
-                                                 float _k, SystemInterface &s)
-    : x(x1), y(x2), z(x3), k(_k) {
-  if (!s.requestDirectorGpu())
-    std::cerr << "HarmonicOrientationWell needs access to director on GPU!"
-              << std::endl;
+#ifdef WCA
+#include "wca.hpp"
 
-  if (!s.requestTorqueGpu())
-    std::cerr << "HarmonicOrientationWell needs access to torques on GPU!"
-              << std::endl;
+#include "communication.hpp"
+
+int wca_set_params(int part_type_a, int part_type_b, double eps, double sig) {
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
+
+  data->WCA_eps = eps;
+  data->WCA_sig = sig;
+  data->WCA_cut = sig * std::pow(2., 1. / 6.);
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+
+  return ES_OK;
 }
 
-#endif
-#endif
+#endif /* ifdef WCA */

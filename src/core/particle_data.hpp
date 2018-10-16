@@ -218,12 +218,12 @@ struct ParticlePosition {
   /** quaternions to define particle orientation */
   Vector<4, double> quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
-  Vector3d quatu{0., 0., 1.};
-#endif
-
-#ifdef DIPOLES
-  /** dipole moment. This is synchronized with quatu and quat. */
-  Vector3d dip = {0., 0., 0.};
+  inline const Vector3d calc_director() const {
+    return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
+            2 * (quat[2] * quat[3] - quat[0] * quat[1]),
+            quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
+                quat[3] * quat[3]};
+  };
 #endif
 
 #ifdef BOND_CONSTRAINT
@@ -368,6 +368,9 @@ struct Particle {
   ParticleProperties p;
   ///
   ParticlePosition r;
+#ifdef DIPOLES
+  inline const Vector3d calc_dip() const { return r.calc_director() * p.dipm; }
+#endif
   ///
   ParticleMomentum m;
   ///
@@ -995,7 +998,6 @@ void pointer_to_omega_body(Particle const *p, double const *&res);
 void pointer_to_torque_lab(Particle const *p, double const *&res);
 
 void pointer_to_quat(Particle const *p, double const *&res);
-void pointer_to_quatu(Particle const *p, double const *&res);
 
 #endif
 

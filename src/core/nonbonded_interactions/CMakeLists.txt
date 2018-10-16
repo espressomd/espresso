@@ -17,6 +17,7 @@ add_library(nonbonded_interactions SHARED
     soft_sphere.cpp
     steppot.cpp
     thole.cpp
+    wca.cpp
 )
 
 add_dependencies(nonbonded_interactions EspressoConfig)

@@ -47,11 +47,11 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.part.clear()
 
     # Required, since assertAlmostEqual does NOT check significant places
-    def assertFractionAlmostEqual(self, a, b):
+    def assertFractionAlmostEqual(self, a, b, **args):
         if abs(b) < 1E-8:
-            self.assertAlmostEqual(a, b)
+            self.assertAlmostEqual(a, b, **args)
         else:
-            self.assertAlmostEqual(a / b, 1.)
+            self.assertAlmostEqual(a / b, 1., **args)
 
     def assertItemsFractionAlmostEqual(self, a, b):
         for i, ai in enumerate(a):
@@ -105,6 +105,46 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(
             epsilon=0.)
+
+    # Test WCA Potential
+    @ut.skipIf(not espressomd.has_features("WCA"),
+               "Features not available, skipping test!")
+    def test_wca(self):
+        wca_eps = 2.12
+        wca_sig = 1.37
+        wca_cutoff = wca_sig * 2.**(1. / 6.)
+
+        wca_shift = -((wca_sig / wca_cutoff)**12 - (
+            wca_sig / wca_cutoff)**6)
+
+        self.system.non_bonded_inter[0, 0].wca.set_params(epsilon=wca_eps,
+                                                          sigma=wca_sig)
+
+        for i in range(231):
+            self.system.part[1].pos = self.system.part[1].pos + self.step
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["non_bonded"]
+            E_ref = tests_common.lj_generic_potential(
+                r=(i + 1) * self.step_width, eps=wca_eps, sig=wca_sig,
+                cutoff=wca_cutoff, shift=4. * wca_shift)
+
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f1_ref = self.axis * tests_common.lj_generic_force(espressomd,
+                                                               r=(i + 1) * self.step_width, eps=wca_eps,
+                                                               sig=wca_sig, cutoff=wca_cutoff)
+            # Check that energies match, ...
+            self.assertFractionAlmostEqual(E_sim, E_ref)
+            # force equals minus the counter-force  ...
+            self.assertTrue((f0_sim == -f1_sim).all())
+            # and has correct value.
+            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+
+        self.system.non_bonded_inter[0, 0].wca.set_params(
+            epsilon=0., sigma=1.)
 
     # Test Generic Lennard-Jones Softcore Potential
     @ut.skipIf(not espressomd.has_features("LJGEN_SOFTCORE"),

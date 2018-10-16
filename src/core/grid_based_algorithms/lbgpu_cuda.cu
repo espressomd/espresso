@@ -2082,9 +2082,12 @@ __device__ void calc_viscous_force_three_point_couple(
                     particle_data[part_index].swim.dipole_length;
   // Extrapolate position by dipole length if we are at the centre of the
   // particle
-  position[0] += flag_cs * direction * particle_data[part_index].swim.quatu[0];
-  position[1] += flag_cs * direction * particle_data[part_index].swim.quatu[1];
-  position[2] += flag_cs * direction * particle_data[part_index].swim.quatu[2];
+  position[0] +=
+      flag_cs * direction * particle_data[part_index].swim.director[0];
+  position[1] +=
+      flag_cs * direction * particle_data[part_index].swim.director[1];
+  position[2] +=
+      flag_cs * direction * particle_data[part_index].swim.director[2];
 #endif
 
   // Do the velocity interpolation
@@ -2093,11 +2096,11 @@ __device__ void calc_viscous_force_three_point_couple(
 
 #ifdef ENGINE
   velocity[0] -= (particle_data[part_index].swim.v_swim) *
-                 particle_data[part_index].swim.quatu[0];
+                 particle_data[part_index].swim.director[0];
   velocity[1] -= (particle_data[part_index].swim.v_swim) *
-                 particle_data[part_index].swim.quatu[1];
+                 particle_data[part_index].swim.director[1];
   velocity[2] -= (particle_data[part_index].swim.v_swim) *
-                 particle_data[part_index].swim.quatu[2];
+                 particle_data[part_index].swim.director[2];
 
   // The first three components are v_center, the last three v_source
   // Do not use within LB, because these have already been converted back to MD
@@ -2198,13 +2201,13 @@ __device__ void calc_viscous_force_three_point_couple(
 #ifdef ENGINE
     // add swimming force to source position
     delta_j[0 + 3 * ii] -= flag_cs * particle_data[part_index].swim.f_swim *
-                           particle_data[part_index].swim.quatu[0] *
+                           particle_data[part_index].swim.director[0] *
                            para.time_step * para.tau / para.agrid;
     delta_j[1 + 3 * ii] -= flag_cs * particle_data[part_index].swim.f_swim *
-                           particle_data[part_index].swim.quatu[1] *
+                           particle_data[part_index].swim.director[1] *
                            para.time_step * para.tau / para.agrid;
     delta_j[2 + 3 * ii] -= flag_cs * particle_data[part_index].swim.f_swim *
-                           particle_data[part_index].swim.quatu[2] *
+                           particle_data[part_index].swim.director[2] *
                            para.time_step * para.tau / para.agrid;
 #endif
   }
@@ -2450,9 +2453,12 @@ __device__ void calc_viscous_force(
                     particle_data[part_index].swim.dipole_length;
   // Extrapolate position by dipole length if we are at the centre of the
   // particle
-  position[0] += flag_cs * direction * particle_data[part_index].swim.quatu[0];
-  position[1] += flag_cs * direction * particle_data[part_index].swim.quatu[1];
-  position[2] += flag_cs * direction * particle_data[part_index].swim.quatu[2];
+  position[0] +=
+      flag_cs * direction * particle_data[part_index].swim.director[0];
+  position[1] +=
+      flag_cs * direction * particle_data[part_index].swim.director[1];
+  position[2] +=
+      flag_cs * direction * particle_data[part_index].swim.director[2];
 #endif
 
   // Do the velocity interpolation
@@ -2461,11 +2467,11 @@ __device__ void calc_viscous_force(
 
 #ifdef ENGINE
   velocity[0] -= particle_data[part_index].swim.v_swim *
-                 particle_data[part_index].swim.quatu[0];
+                 particle_data[part_index].swim.director[0];
   velocity[1] -= particle_data[part_index].swim.v_swim *
-                 particle_data[part_index].swim.quatu[1];
+                 particle_data[part_index].swim.director[1];
   velocity[2] -= particle_data[part_index].swim.v_swim *
-                 particle_data[part_index].swim.quatu[2];
+                 particle_data[part_index].swim.director[2];
 
   // The first three components are v_center, the last three v_source
   // Do not use within LB, because these have already been converted back to MD
@@ -2702,13 +2708,13 @@ __device__ void calc_viscous_force(
 #ifdef ENGINE
     // add swimming force to source position
     delta_j[0 + 3 * ii] -= flag_cs * particle_data[part_index].swim.f_swim *
-                           particle_data[part_index].swim.quatu[0] *
+                           particle_data[part_index].swim.director[0] *
                            para.time_step * para.tau / para.agrid;
     delta_j[1 + 3 * ii] -= flag_cs * particle_data[part_index].swim.f_swim *
-                           particle_data[part_index].swim.quatu[1] *
+                           particle_data[part_index].swim.director[1] *
                            para.time_step * para.tau / para.agrid;
     delta_j[2 + 3 * ii] -= flag_cs * particle_data[part_index].swim.f_swim *
-                           particle_data[part_index].swim.quatu[2] *
+                           particle_data[part_index].swim.director[2] *
                            para.time_step * para.tau / para.agrid;
 #endif
   }
