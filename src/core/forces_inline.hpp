@@ -456,16 +456,16 @@ inline void add_bonded_force(Particle *p1) {
 
   i = 0;
   while (i < p1->bl.n) {
-  double dx[3] = {0., 0., 0.};
-  double force[3] = {0., 0., 0.};
-  double force2[3] = {0., 0., 0.};
-  double force3[3] = {0., 0., 0.};
+    double dx[3] = {0., 0., 0.};
+    double force[3] = {0., 0., 0.};
+    double force2[3] = {0., 0., 0.};
+    double force3[3] = {0., 0., 0.};
 #if defined(OIF_LOCAL_FORCES)
-  double force4[3] = {0., 0., 0.};
+    double force4[3] = {0., 0., 0.};
 #endif
 #ifdef ROTATION
-  double torque1[3] = {0., 0., 0.};
-  double torque2[3] = {0., 0., 0.};
+    double torque1[3] = {0., 0., 0.};
+    double torque2[3] = {0., 0., 0.};
 #endif
     int type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
@@ -503,18 +503,17 @@ inline void add_bonded_force(Particle *p1) {
           return;
         }
       }
+    }
 
-      }
+    if (n_partners == 1) {
+      /* because of the NPT pressure calculation for pair forces, we need the
+         1->2 distance vector here. For many body interactions this vector is
+         not needed,
+         and the pressure calculation not yet clear. */
+      get_mi_vector(dx, p1->r.p, p2->r.p);
+    }
 
-      if (n_partners == 1) {
-        /* because of the NPT pressure calculation for pair forces, we need the
-           1->2 distance vector here. For many body interactions this vector is
-           not needed,
-           and the pressure calculation not yet clear. */
-        get_mi_vector(dx, p1->r.p, p2->r.p);
-      }
-
-      if (n_partners <=1) {
+    if (n_partners <= 1) {
       switch (type) {
       case BONDED_IA_FENE:
         bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
@@ -587,10 +586,11 @@ inline void add_bonded_force(Particle *p1) {
         break;
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
-                          << p1->p.identity << " unknown "<<type<<","<<n_partners<<"\n";
+                          << p1->p.identity << " unknown " << type << ","
+                          << n_partners << "\n";
         return;
       } // switch type
-    } // 1 partner
+    }   // 1 partner
     else if (n_partners == 2) {
       switch (type) {
 #ifdef BOND_ANGLE
@@ -636,7 +636,8 @@ inline void add_bonded_force(Particle *p1) {
 #endif
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
-                          << p1->p.identity << " unknown " <<type<<","<<n_partners<<"\n";
+                          << p1->p.identity << " unknown " << type << ","
+                          << n_partners << "\n";
         return;
       }
     } // 2 partners (angel bonds...)
@@ -695,7 +696,8 @@ inline void add_bonded_force(Particle *p1) {
 #endif
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
-                          << p1->p.identity << " unknown " <<type<<","<<n_partners<< "\n";
+                          << p1->p.identity << " unknown " << type << ","
+                          << n_partners << "\n";
         return;
       }
     } // 3 bond partners
@@ -779,7 +781,7 @@ inline void add_bonded_force(Particle *p1) {
       } // Switch type of 4-particle bond
       break;
     } // switch number of partners (add forces to particles)
-  } // loop over the particle's bond list
+  }   // loop over the particle's bond list
 }
 
 inline void check_particle_force(Particle *part) {
