@@ -273,7 +273,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 inline void add_bonded_energy(Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
-  int i, bond_broken=1;
+  int i, bond_broken = 1;
   double ret = 0, dx[3] = {0, 0, 0};
 
   i = 0;
@@ -419,8 +419,7 @@ inline void add_bonded_energy(Particle *p1) {
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 3)
-          bond_broken =
-              tab_dihedral_energy(p1, p2, p3, p4, iaparams, &ret);
+          bond_broken = tab_dihedral_energy(p1, p2, p3, p4, iaparams, &ret);
         break;
 #endif
       default:

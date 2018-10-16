@@ -463,7 +463,7 @@ inline void add_bonded_force(Particle *p1) {
 #endif
   Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
-  int i, j, bond_broken=1;
+  int i, j, bond_broken = 1;
 
   i = 0;
   while (i < p1->bl.n) {
