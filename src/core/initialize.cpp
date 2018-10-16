@@ -420,7 +420,7 @@ void on_resort_particles() {
   }
 #endif /* ifdef ELECTROSTATICS */
 
-  /* DIPOLAR interactions so far don't need this */
+  build_particle_index();
 
   recalc_forces = 1;
 }

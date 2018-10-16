@@ -545,6 +545,11 @@ Particle *move_indexed_particle(ParticleList *destList,
 /*    Other Functions                           */
 /************************************************/
 
+/**
+ * @brief Fill local_particles.
+ */
+void build_particle_index();
+
 /** Update the entries in \ref local_particles for all particles in the list pl.
     @param pl the list to put in.
 */

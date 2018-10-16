@@ -193,6 +193,27 @@ void clear_particle_node() { particle_node.clear(); }
  * organizational functions
  ************************************************/
 
+void build_particle_index() {
+    local_particles.clear();
+
+    auto update_index = [](Particle &p) {
+        auto const id = p.p.identity;
+        if(id >= local_particles.size()) {
+            local_particles.resize(id + 1);
+        }
+
+        local_particles.at(id) = &p;
+    };
+
+    for(auto &p : ghost_cells.particles()) {
+        update_index(p);
+    }
+
+    for(auto &p : local_cells.particles()) {
+        update_index(p);
+    }
+}
+
 /** resize \ref local_particles.
     \param part the highest existing particle
 */
