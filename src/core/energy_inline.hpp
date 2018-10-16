@@ -273,7 +273,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 inline void add_bonded_energy(Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
-  int i, bond_broken;
+  int i, bond_broken=1;
   double ret = 0, dx[3] = {0, 0, 0};
 
   i = 0;
