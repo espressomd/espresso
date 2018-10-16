@@ -59,7 +59,10 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
+
 #include <mpi.h>
+
+#include <boost/range/algorithm.hpp>
 
 #include <cstring>
 #include <errno.h>
@@ -377,10 +380,9 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   read_prefs(fnam + ".pref", rank, size, nglobalpart, &pref, &nlocalpart);
 
   // Prepare ESPResSo data structures
-  local_particles =
-      Utils::realloc(local_particles, sizeof(Particle *) * nglobalpart);
-  for (int i = 0; i < nglobalpart; ++i)
-    local_particles[i] = nullptr;
+  local_particles.resize(nglobalpart);
+  boost::fill(local_particles, nullptr);
+
   n_part = nglobalpart;
   max_seen_particle = nglobalpart;
 

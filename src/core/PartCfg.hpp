@@ -41,24 +41,18 @@ class GetLocalParts {
     }
   };
 
-  using skip_it = Utils::SkipIterator<Particle **, SkipIfNullOrGhost>;
+  using skip_it = Utils::SkipIterator<LocalParticles::iterator, SkipIfNullOrGhost>;
   using iterator = boost::indirect_iterator<skip_it>;
   using Range = Utils::Range<iterator>;
 
 public:
   Range operator()() const {
-    if (local_particles == nullptr) {
-      auto begin = skip_it(nullptr, nullptr, SkipIfNullOrGhost());
-      return Utils::make_range(make_indirect_iterator(begin),
-                               make_indirect_iterator(begin));
-    }
-
     auto begin =
-        skip_it(local_particles, local_particles + max_seen_particle + 1,
+        skip_it(local_particles.begin(), local_particles.end(),
                 SkipIfNullOrGhost());
     auto end =
-        skip_it(local_particles + max_seen_particle + 1,
-                local_particles + max_seen_particle + 1, SkipIfNullOrGhost());
+        skip_it(local_particles.end(),
+                local_particles.end(), SkipIfNullOrGhost());
 
     return Utils::make_range(make_indirect_iterator(begin),
                              make_indirect_iterator(end));

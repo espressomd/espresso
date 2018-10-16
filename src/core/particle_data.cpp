@@ -47,6 +47,8 @@
 #include "utils/make_unique.hpp"
 #include "utils/mpi/gatherv.hpp"
 
+#include <boost/range/algorithm.hpp>
+
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -65,8 +67,6 @@
 /************************************************
  * variables
  ************************************************/
-// List of particles for grandcanonical simulations
-int number_of_type_lists;
 bool type_list_enable;
 std::unordered_map<int, std::unordered_set<int>> particle_type_map{};
 void remove_id_from_map(int part_id, int type);
@@ -80,7 +80,7 @@ int n_part = 0;
 std::unordered_map<int, int> particle_node;
 
 int max_local_particles = 0;
-Particle **local_particles = nullptr;
+LocalParticles local_particles;
 
 /************************************************
  * local functions
@@ -201,8 +201,7 @@ void realloc_local_particles(int part) {
     /* round up part + 1 in granularity PART_INCREMENT */
     max_local_particles =
         PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
-    local_particles = Utils::realloc(local_particles,
-                                     sizeof(Particle *) * max_local_particles);
+    local_particles.resize(max_local_particles);
 
     /* Set new memory to 0 */
     for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
@@ -245,17 +244,6 @@ void update_local_particles(ParticleList *pl) {
   int n = pl->n, i;
   for (i = 0; i < n; i++)
     local_particles[p[i].p.identity] = &p[i];
-}
-
-Particle *got_particle(ParticleList *l, int id) {
-  int i;
-
-  for (i = 0; i < l->n; i++)
-    if (l->part[i].p.identity == id)
-      break;
-  if (i == l->n)
-    return nullptr;
-  return &(l->part[i]);
 }
 
 void append_unindexed_particle(ParticleList *l, Particle &&part) {
@@ -913,7 +901,7 @@ void local_remove_all_particles() {
   int c;
   n_part = 0;
   max_seen_particle = -1;
-  std::fill(local_particles, local_particles + max_local_particles, nullptr);
+  boost::fill(local_particles, nullptr);
 
   for (c = 0; c < local_cells.n; c++) {
     Particle *p;

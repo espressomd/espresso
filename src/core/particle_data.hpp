@@ -44,15 +44,6 @@
 /// ok code for \ref place_particle, particle is new
 #define ES_PART_CREATED 1
 
-/** bonds_flag "bonds_flag" value for updating particle config without bonding
- *  information
- */
-#define WITHOUT_BONDS 0
-/** bonds_flag "bonds_flag" value for updating particle config with bonding
- *  information
- */
-#define WITH_BONDS 1
-
 #ifdef EXTERNAL_FORCES
 /** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
  *  an external force
@@ -482,13 +473,9 @@ extern int n_part;
 
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
-extern Particle **local_particles;
+using LocalParticles = std::vector<Particle *>;
+extern LocalParticles local_particles;
 extern int max_local_particles;
-
-/** Particles' current bond partners. \ref partBondPartners is
-    sorted by particle order, and the particles are stored
-    consecutively starting with 0. This array is global to all nodes*/
-extern int *partBondPartners;
 
 /************************************************
  * Functions
@@ -514,13 +501,6 @@ void init_particlelist(ParticleList *pList);
     up to multiples of \ref PART_INCREMENT.
     \return true iff particle addresses have changed */
 int realloc_particlelist(ParticleList *plist, int size);
-
-/** Search for a specific particle.
-    \param plist the list on which to operate
-    \param id the identity of the particle to search
-    \return a pointer to the particle structure or nullptr if particle is
-    not in this list */
-Particle *got_particle(ParticleList *plist, int id);
 
 /** Append a particle at the end of a particle List.
     reallocates particles if necessary!
