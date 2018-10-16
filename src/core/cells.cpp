@@ -344,7 +344,6 @@ Particle extract_indexed_particle(ParticleList *sl, int i) {
 }
 } // namespace
 
-
 /**
  * @brief Sort and fold particles.
  *
