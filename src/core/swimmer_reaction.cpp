@@ -221,7 +221,7 @@ bool in_lower_half_space(Particle p1, Particle p2) {
   // This function determines whether the particle p2 is in the lower
   // half space of particle p1
   auto const distvec = get_mi_vector(p1.r.p, p2.r.p);
-  double dot = p1.r.quatu * distvec;
+  double dot = p1.r.calc_director() * distvec;
   int sgn = Utils::sgn(dot);
   return (sgn + 1) / 2;
 }

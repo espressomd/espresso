@@ -25,16 +25,11 @@
  * (Dupin2007) \ref forces.cpp
  */
 
+#include "Vector.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "config.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
 #include "particle_data.hpp"
-
 #include "utils/math/triangle_functions.hpp"
-using Utils::angle_btw_triangles;
-using Utils::area_triangle;
-using Utils::get_n_triangle;
 
 // set parameters for local forces
 int oif_local_forces_set_params(int bond_type, double r0, double ks,
@@ -124,7 +119,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
     // denote p vector between p2 and p3
     // denote v the velocity difference between the points p2 and p3
     // denote alpha the angle between p and v
-    // denote x the projected v onto p
+    // denote x the projevted v onto p
     // cos alpha = |x|/|v|
     // cos alpha = (v,p)/(|v||p|)
     // together we get |x|=(v,p)/|p|
@@ -147,14 +142,13 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
      force for triangle p2,p3,p4 p1 += forceT1; p2 -= 0.5*forceT1+0.5*forceT2;
      p3 -= 0.5*forceT1+0.5*forceT2; p4 += forceT2; */
   if (iaparams->p.oif_local_forces.kb > TINY_OIF_ELASTICITY_COEFFICIENT) {
-    auto const n1 = get_n_triangle(fp2, fp1, fp3).normalize();
-    auto const n2 = get_n_triangle(fp2, fp3, fp4).normalize();
+    auto const n1 = Utils::get_n_triangle(fp2, fp1, fp3).normalize();
+    auto const n2 = Utils::get_n_triangle(fp2, fp3, fp4).normalize();
 
-    auto const phi = angle_btw_triangles(fp1, fp2, fp3, fp4);
-    auto const aa = (phi -
-                     iaparams->p.oif_local_forces
-                         .phi0); // no renormalization by phi0, to be
-                                 // consistent with Krueger and Fedosov
+    auto const phi = Utils::angle_btw_triangles(fp1, fp2, fp3, fp4);
+    auto const aa = (phi - iaparams->p.oif_local_forces
+                               .phi0); // no renormalization by phi0, to be
+                                       // consistent with Krueger and Fedosov
     auto const fac = iaparams->p.oif_local_forces.kb * aa;
 
     for (int i = 0; i < 3; i++) {
@@ -183,7 +177,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
                               double force1[3], double force2[3],
                               double force3[3]) {
       auto const h = (1. / 3.) * (fp1 + fp2 + fp3);
-      auto const A = area_triangle(fp1, fp2, fp3);
+      auto const A = Utils::area_triangle(fp1, fp2, fp3);
       auto const t = sqrt(A / A0) - 1.0;
 
       auto const m1 = h - fp1;

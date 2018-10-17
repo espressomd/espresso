@@ -26,8 +26,8 @@
 HarmonicOrientationWell::HarmonicOrientationWell(float x1, float x2, float x3,
                                                  float _k, SystemInterface &s)
     : x(x1), y(x2), z(x3), k(_k) {
-  if (!s.requestQuatuGpu())
-    std::cerr << "HarmonicOrientationWell needs access to quatu on GPU!"
+  if (!s.requestDirectorGpu())
+    std::cerr << "HarmonicOrientationWell needs access to director on GPU!"
               << std::endl;
 
   if (!s.requestTorqueGpu())

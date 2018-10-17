@@ -793,10 +793,6 @@ void mpi_send_quat(int pnode, int part, double quat[4]) {
     p->r.quat[1] = quat[1];
     p->r.quat[2] = quat[2];
     p->r.quat[3] = quat[3];
-    convert_quat_to_quatu(p->r.quat, p->r.quatu);
-#ifdef DIPOLES
-    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
-#endif
   } else {
     MPI_Send(quat, 4, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -811,10 +807,6 @@ void mpi_send_quat_slave(int pnode, int part) {
     Particle *p = local_particles[part];
     MPI_Recv(p->r.quat.data(), 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
-    convert_quat_to_quatu(p->r.quat, p->r.quatu);
-#ifdef DIPOLES
-    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
-#endif
   }
 
   on_particle_change();
@@ -892,16 +884,8 @@ void mpi_send_dip(int pnode, int part, double dip[3]) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->r.dip[0] = dip[0];
-    p->r.dip[1] = dip[1];
-    p->r.dip[2] = dip[2];
-#ifdef ROTATION
-    convert_dip_to_quat(p->r.dip, p->r.quat, &p->p.dipm);
-    convert_quat_to_quatu(p->r.quat, p->r.quatu);
-#else
-    p->p.dipm = sqrt(p->r.dip[0] * p->r.dip[0] + p->r.dip[1] * p->r.dip[1] +
-                     p->r.dip[2] * p->r.dip[2]);
-#endif
+    convert_dip_to_quat(Vector3d({dip[0], dip[1], dip[2]}), p->r.quat,
+                        &p->p.dipm);
   } else {
     MPI_Send(dip, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -914,15 +898,10 @@ void mpi_send_dip_slave(int pnode, int part) {
 #ifdef DIPOLES
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->r.dip.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    Vector3d dip;
+    MPI_Recv(dip.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
-#ifdef ROTATION
-    convert_dip_to_quat(p->r.dip, p->r.quat, &p->p.dipm);
-    convert_quat_to_quatu(p->r.quat, p->r.quatu);
-#else
-    p->p.dipm = sqrt(p->r.dip[0] * p->r.dip[0] + p->r.dip[1] * p->r.dip[1] +
-                     p->r.dip[2] * p->r.dip[2]);
-#endif
+    convert_dip_to_quat(dip, p->r.quat, &p->p.dipm);
   }
 
   on_particle_change();
@@ -939,7 +918,6 @@ void mpi_send_dipm(int pnode, int part, double dipm) {
     Particle *p = local_particles[part];
     p->p.dipm = dipm;
 #ifdef ROTATION
-    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
 #endif
   } else {
     MPI_Send(&dipm, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -955,9 +933,6 @@ void mpi_send_dipm_slave(int pnode, int part) {
     Particle *p = local_particles[part];
     MPI_Recv(&p->p.dipm, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
-#ifdef ROTATION
-    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
-#endif
   }
 
   on_particle_change();
