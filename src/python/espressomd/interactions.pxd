@@ -47,6 +47,10 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double LJ_offset
         double LJ_min
 
+        double WCA_eps
+        double WCA_sig
+        double WCA_cut
+
         double LJCOS_eps
         double LJCOS_sig
         double LJCOS_cut
@@ -160,6 +164,10 @@ cdef extern from "nonbonded_interactions/lj.hpp":
                                       double eps, double sig, double cut,
                                       double shift, double offset,
                                       double min)
+
+cdef extern from "nonbonded_interactions/wca.hpp":
+    cdef int wca_set_params(int part_type_a, int part_type_b,
+                            double eps, double sig)
 IF LJCOS:
     cdef extern from "nonbonded_interactions/ljcos.hpp":
         cdef int ljcos_set_params(int part_type_a, int part_type_b,

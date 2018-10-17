@@ -2622,7 +2622,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   Vector3d v_drift = {interpolated_u[0], interpolated_u[1], interpolated_u[2]};
 #ifdef ENGINE
   if (p->swim.swimming) {
-    v_drift += p->swim.v_swim * p->r.quatu;
+    v_drift += p->swim.v_swim * p->r.calc_director();
     p->swim.v_center[0] = interpolated_u[0];
     p->swim.v_center[1] = interpolated_u[1];
     p->swim.v_center[2] = interpolated_u[2];
@@ -2673,9 +2673,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     // calculate source position
     Vector3d source_position;
     double direction = double(p->swim.push_pull) * p->swim.dipole_length;
-    source_position[0] = p->r.p[0] + direction * p->r.quatu[0];
-    source_position[1] = p->r.p[1] + direction * p->r.quatu[1];
-    source_position[2] = p->r.p[2] + direction * p->r.quatu[2];
+    source_position[0] = p->r.p[0] + direction * p->r.calc_director()[0];
+    source_position[1] = p->r.p[1] + direction * p->r.calc_director()[1];
+    source_position[2] = p->r.p[2] + direction * p->r.calc_director()[2];
 
     int corner[3] = {0, 0, 0};
     fold_position(source_position, corner);
@@ -2684,12 +2684,12 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
                                          p->swim.v_source.data());
 
     // calculate and set force at source position
-    delta_j[0] =
-        -p->swim.f_swim * p->r.quatu[0] * time_step * lbpar.tau / lbpar.agrid;
-    delta_j[1] =
-        -p->swim.f_swim * p->r.quatu[1] * time_step * lbpar.tau / lbpar.agrid;
-    delta_j[2] =
-        -p->swim.f_swim * p->r.quatu[2] * time_step * lbpar.tau / lbpar.agrid;
+    delta_j[0] = -p->swim.f_swim * p->r.calc_director()[0] * time_step *
+                 lbpar.tau / lbpar.agrid;
+    delta_j[1] = -p->swim.f_swim * p->r.calc_director()[1] * time_step *
+                 lbpar.tau / lbpar.agrid;
+    delta_j[2] = -p->swim.f_swim * p->r.calc_director()[2] * time_step *
+                 lbpar.tau / lbpar.agrid;
 
     lattice_interpolation(lblattice, source_position,
                           [&delta_j](Lattice::index_t index, double w) {

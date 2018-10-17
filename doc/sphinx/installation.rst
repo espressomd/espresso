@@ -60,10 +60,10 @@ Python
 Cython
     Cython is used for connecting the C++ core to Python
 
-.. _Installing Requirements on Ubuntu 16.04 LTS:
+.. _Installing Requirements on Ubuntu Linux:
 
-Installing Requirements on Ubuntu 16.04 LTS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing Requirements on Ubuntu Linux
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To make ESPResSo run on Ubuntu 16.04 LTS or 18.04 LTS, its dependencies can be
 installed with:
@@ -87,6 +87,13 @@ CUDA SDK to make use of GPU computation:
 .. code-block:: bash
 
     sudo apt install nvidia-cuda-toolkit
+
+On Ubuntu 18.04, you need to modify a file to make CUDA work with the default compiler:
+
+.. code-block:: bash
+
+    sudo sed 's/__GNUC__ > 6/__GNUC__ > 7/g' /usr/include/crt/host_config.h
+    sudo sed 's/than 6/than 7/g' /usr/include/crt/host_config.h
 
 .. _Installing Requirements on Mac OS X:
 
@@ -361,11 +368,6 @@ General features
 -  ``EXTERNAL_FORCES`` Allows to define an arbitrary constant force for each particle
    individually. Also allows to fix individual coordinates of particles,
    keep them at a fixed position or within a plane.
-
--  ``CONSTRAINTS`` Turns on various spatial constraints such as spherical compartments
-   or walls. This constraints interact with the particles through
-   regular short ranged potentials such as the Lennard-Jones potential.
-   See section for possible constraint forms.
 
 -  ``MASS`` Allows particles to have individual masses. Note that some analysis
    procedures have not yet been adapted to take the masses into account

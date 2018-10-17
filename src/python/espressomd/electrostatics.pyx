@@ -191,7 +191,7 @@ IF P3M == 1:
                 raise ValueError(
                     "P3M cao has to be an integer between -1 and 7")
 
-            if not (self._params["accuracy"] >= 0):
+            if self._params["tune"] and not (self._params["accuracy"] >= 0):
                 raise ValueError("P3M accuracy has to be positive")
 
             if self._params["epsilon"] == "metallic":

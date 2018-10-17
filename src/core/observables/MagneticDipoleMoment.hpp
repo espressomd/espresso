@@ -32,9 +32,9 @@ public:
     std::vector<double> res(n_values(), 0.0);
     for (int i = 0; i < ids().size(); i++) {
 #ifdef DIPOLES
-      res[0] += partCfg[ids()[i]].r.dip[0];
-      res[1] += partCfg[ids()[i]].r.dip[1];
-      res[2] += partCfg[ids()[i]].r.dip[2];
+      res[0] += partCfg[ids()[i]].calc_dip()[0];
+      res[1] += partCfg[ids()[i]].calc_dip()[1];
+      res[2] += partCfg[ids()[i]].calc_dip()[2];
 #endif
     }
     return res;
