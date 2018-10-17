@@ -2343,9 +2343,6 @@ void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
                            threads_per_block * blocks_per_grid_y - 1) /
                           (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-  printf("%f\t%f\n",ek_parameters.density[ek_parameters.species_index[1]],ek_parameters.density[ek_parameters.species_index[2]]);
-//  KERNELCALL(ek_init_species_density_homogeneous, dim_grid, threads_per_block,
-//             ());
   KERNELCALL(ek_clear_boundary_densities, dim_grid, threads_per_block,
              (*current_nodes));
 
