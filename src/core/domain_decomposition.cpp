@@ -782,13 +782,8 @@ void exchange_neighbors(ParticleList *pl) {
       ParticleList send_buf, recv_buf;
       move_left_or_right(*pl, send_buf, send_buf, dir);
 
-      if (node_pos[dir] % 2 == 0) {
-        comm_cart.send(node_neighbors[2 * dir], 0xaa, send_buf);
-        comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf);
-      } else {
-        comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf);
-        comm_cart.send(node_neighbors[2 * dir], 0xaa, send_buf);
-      }
+      comm_cart.sendrecv(node_neighbors[2 * dir], 0xaa, send_buf,
+                         node_neighbors[2 * dir], 0xaa, recv_buf);
 
       realloc_particlelist(&send_buf, 0);
 
@@ -798,17 +793,10 @@ void exchange_neighbors(ParticleList *pl) {
 
       move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
 
-      if (node_pos[dir] % 2 == 0) {
-        comm_cart.send(node_neighbors[2 * dir], 0xaa, send_buf_l);
-        comm_cart.recv(node_neighbors[2 * dir + 1], 0xaa, recv_buf_r);
-        comm_cart.send(node_neighbors[2 * dir + 1], 0xaa, send_buf_r);
-        comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf_l);
-      } else {
-        comm_cart.recv(node_neighbors[2 * dir + 1], 0xaa, recv_buf_r);
-        comm_cart.send(node_neighbors[2 * dir], 0xaa, send_buf_l);
-        comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf_l);
-        comm_cart.send(node_neighbors[2 * dir + 1], 0xaa, send_buf_r);
-      }
+      comm_cart.sendrecv(node_neighbors[2 * dir], 0xaa, send_buf_l,
+                         node_neighbors[2 * dir], 0xaa, recv_buf_l);
+      comm_cart.sendrecv(node_neighbors[2 * dir + 1], 0xaa, send_buf_r,
+                         node_neighbors[2 * dir + 1], 0xaa, recv_buf_r);
 
       realloc_particlelist(&send_buf_l, 0);
       realloc_particlelist(&send_buf_r, 0);
