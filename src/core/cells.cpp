@@ -413,14 +413,6 @@ void cells_resort_particles(int global_flag) {
     break;
   }
 
-#ifdef ADDITIONAL_CHECKS
-  /* at the end of the day, everything should be consistent again */
-  /* These have to be run before we put the particles that we already
-   * know are displaced back, otherwise they will trigger different errors.*/
-  check_particle_consistency();
-  check_particle_sorting();
-#endif
-
   if (0 != displaced_parts.n) {
     for (int i = 0; i < displaced_parts.n; i++) {
       auto &part = displaced_parts.part[i];
@@ -431,6 +423,13 @@ void cells_resort_particles(int global_flag) {
       append_indexed_particle(local_cells.cell[0], std::move(part));
     }
   }
+
+  #ifdef ADDITIONAL_CHECKS
+  /* at the end of the day, everything should be consistent again */
+  check_particle_consistency();
+  check_particle_sorting();
+#endif
+
 
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
