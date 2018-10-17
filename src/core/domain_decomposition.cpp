@@ -795,8 +795,8 @@ void exchange_neighbors(ParticleList *pl) {
       move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
       auto reqs_l = Utils::Mpi::isendrecv(comm_cart, node_neighbors[2 * dir], 0xaa, send_buf_l,
                                          node_neighbors[2 * dir], 0xaa, recv_buf_l);
-      comm_cart.sendrecv(node_neighbors[2 * dir + 1], 0xaa, send_buf_r,
-                         node_neighbors[2 * dir + 1], 0xaa, recv_buf_r);
+      Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir + 1], 0xaa, send_buf_r,
+              node_neighbors[2 * dir + 1], 0xaa, recv_buf_r);
       boost::mpi::wait_all(reqs_l.begin(), reqs_l.end());
 
       realloc_particlelist(&send_buf_l, 0);

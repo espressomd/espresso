@@ -424,12 +424,11 @@ void cells_resort_particles(int global_flag) {
     }
   }
 
-  #ifdef ADDITIONAL_CHECKS
+#ifdef ADDITIONAL_CHECKS
   /* at the end of the day, everything should be consistent again */
   check_particle_consistency();
   check_particle_sorting();
 #endif
-
 
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
