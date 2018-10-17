@@ -36,7 +36,7 @@ template <typename T>
 std::array<mpi::request, 2> isendrecv_impl(mpi::communicator const &comm,
                                            int dest, int stag, const T &sval,
                                            int src, int rtag, T &rval) {
-  return {comm.isend(dest, stag, sval), comm.irecv(src, rtag, rval)};
+  return {{comm.isend(dest, stag, sval), comm.irecv(src, rtag, rval)}};
 }
 
 template <typename T>
