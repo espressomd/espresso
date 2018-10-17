@@ -72,7 +72,7 @@ void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
 
   int n = 0;
   for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end(); ++lbb, n++) {
-    (**lbb).calc_dist(pos.data(), &dist, vec);
+    (**lbb).calc_dist(pos, &dist, vec);
 
     if (dist < *mindist || lbb == lbboundaries.begin()) {
       *no = n;
@@ -86,8 +86,6 @@ void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
 
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
-
-  double pos[3];
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_GPU) && defined(LB_BOUNDARIES_GPU)
     int number_of_boundnodes = 0;
@@ -296,6 +294,7 @@ void lb_init_boundaries() {
     for (int z = 0; z < lblattice.grid[2] + 2; z++) {
       for (int y = 0; y < lblattice.grid[1] + 2; y++) {
         for (int x = 0; x < lblattice.grid[0] + 2; x++) {
+          Vector3d pos;
           pos[0] = (offset[0] + (x - 0.5)) * lblattice.agrid[0];
           pos[1] = (offset[1] + (y - 0.5)) * lblattice.agrid[1];
           pos[2] = (offset[2] + (z - 0.5)) * lblattice.agrid[2];
