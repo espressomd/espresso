@@ -50,8 +50,8 @@ public:
   double min_dist();
 
   /* Calculate distance from the constraint */
-  int calc_dist(const double *pos, double *dist, double *vec) const {
-    return m_shape->calculate_dist(pos, dist, vec);
+  void calc_dist(const Vector3d &pos, double *dist, double *vec) const {
+    m_shape->calculate_dist(pos, dist, vec);
   }
 
   void set_shape(std::shared_ptr<Shapes::Shape> const &shape) {

@@ -26,14 +26,14 @@
 using namespace std;
 
 namespace Shapes {
-int Sphere::calculate_dist(const double *ppos, double *dist,
-                           double *vec) const {
+void Sphere::calculate_dist(const Vector3d &pos, double *dist,
+                            double *vec) const {
   int i;
   double fac, c_dist;
 
   c_dist = 0.0;
   for (i = 0; i < 3; i++) {
-    vec[i] = m_pos[i] - ppos[i];
+    vec[i] = m_pos[i] - pos[i];
     c_dist += Utils::sqr(vec[i]);
   }
   c_dist = sqrt(c_dist);
@@ -51,6 +51,6 @@ int Sphere::calculate_dist(const double *ppos, double *dist,
     for (i = 0; i < 3; i++)
       vec[i] *= -fac;
   }
-  return 0;
+  return;
 }
 } // namespace Shapes
