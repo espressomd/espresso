@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file statistics.cpp
+/** \file
     This is the place for analysis (so far...).
     Implementation of statistics.hpp
 */
@@ -26,9 +26,9 @@
 #include "communication.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
-#include "lb.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
@@ -135,37 +135,41 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
     agg_size[i] = 0;
   }
 
-  short_range_loop(Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
-    auto p1molid = p1.p.mol_id;
-    auto p2molid = p2.p.mol_id;
-    if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
-        ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-      if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
+  // Calculate pair contributions if max_cut is >0. No single particle
+  // contributions apply here
+  if (max_cut > 0)
+    short_range_loop(
+        Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
+          auto p1molid = p1.p.mol_id;
+          auto p2molid = p2.p.mol_id;
+          if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
+              ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
+            if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
 #ifdef ELECTROSTATICS
-        if (charge && (p1.p.q * p2.p.q >= 0)) {
-          return;
-        }
+              if (charge && (p1.p.q * p2.p.q >= 0)) {
+                return;
+              }
 #endif
-        if (d.dist2 < dist_criteria2) {
-          if (p1molid > p2molid) {
-            ind = p1molid * topology.size() + p2molid;
-          } else {
-            ind = p2molid * topology.size() + p1molid;
-          }
-          if (min_contact > 1) {
-            contact_num[ind]++;
-            if (contact_num[ind] >= min_contact) {
-              merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
-                                    link_list);
+              if (d.dist2 < dist_criteria2) {
+                if (p1molid > p2molid) {
+                  ind = p1molid * topology.size() + p2molid;
+                } else {
+                  ind = p2molid * topology.size() + p1molid;
+                }
+                if (min_contact > 1) {
+                  contact_num[ind]++;
+                  if (contact_num[ind] >= min_contact) {
+                    merge_aggregate_lists(head_list, agg_id_list, p1molid,
+                                          p2molid, link_list);
+                  }
+                } else {
+                  merge_aggregate_lists(head_list, agg_id_list, p1molid,
+                                        p2molid, link_list);
+                }
+              }
             }
-          } else {
-            merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
-                                  link_list);
           }
-        }
-      }
-    }
-  });
+        });
 
   /* count number of aggregates
      find aggregate size
@@ -216,7 +220,7 @@ void predict_momentum_particles(double *result) {
 /** Calculate total momentum of the system (particles & LB fluid)
  * inputs are bools to include particles and fluid in the linear momentum
  * calculation
- * @param momentum Result for this processor (Output)
+ * @return Result for this processor (Output)
  */
 std::vector<double> calc_linear_momentum(int include_particles,
                                          int include_lbfluid) {

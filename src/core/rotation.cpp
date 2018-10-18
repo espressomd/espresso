@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file rotation.cpp  Molecular dynamics integrator for rotational motion.
+/** \file
+ *  Molecular dynamics integrator for rotational motion.
  *
  *  A velocity Verlet <a
  * HREF="http://ciks.cbt.nist.gov/~garbocz/dpd1/dpd.html">algorithm</a>
@@ -28,7 +29,7 @@
  * all particles are
  *  treated as 3D objects with 3 translational and 3 rotational degrees of
  * freedom if ROTATION
- *  flag is set in \ref config.hpp "config.h".
+ *  flag is set in \ref config.hpp "config.hpp".
  */
 
 #include "rotation.hpp"
@@ -38,10 +39,9 @@
 #include "forces.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
-#include "lb.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
@@ -72,7 +72,7 @@ static void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
 
 /** convert quaternions to the director */
 /** Convert director to quaternions */
-int convert_quatu_to_quat(const Vector3d &d, Vector<4, double> &quat) {
+int convert_director_to_quat(const Vector3d &d, Vector<4, double> &quat) {
   double d_xy, dm;
   double theta2, phi2;
 
@@ -254,10 +254,8 @@ void propagate_omega_quat_particle(Particle *p) {
   p->r.quat[3] +=
       time_step * (Qd[3] + time_step_half * Qdd[3]) - lambda * p->r.quat[3];
   // Update the director
-  convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
   // When dipoles are enabled, update dipole moment
-  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
 #endif
 
   ONEPART_TRACE(if (p->p.identity == check_id)
@@ -325,14 +323,11 @@ void convert_torques_propagate_omega() {
     double omega_swim[3] = {0, 0, 0};
     double omega_swim_body[3] = {0, 0, 0};
     if (p.swim.swimming && lattice_switch != 0) {
-      double dip[3];
       double diff[3];
       double cross[3];
       double l_diff, l_cross;
 
-      dip[0] = p.swim.dipole_length * p.r.quatu[0];
-      dip[1] = p.swim.dipole_length * p.r.quatu[1];
-      dip[2] = p.swim.dipole_length * p.r.quatu[2];
+      auto const dip = p.swim.dipole_length * p.r.calc_director();
 
       diff[0] = (p.swim.v_center[0] - p.swim.v_source[0]);
       diff[1] = (p.swim.v_center[1] - p.swim.v_source[1]);
@@ -571,11 +566,6 @@ void local_rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
   multiply_quaternions(p->r.quat, q, qn);
   for (int k = 0; k < 4; k++)
     p->r.quat[k] = qn[k];
-  convert_quat_to_quatu(p->r.quat, p->r.quatu);
-#ifdef DIPOLES
-  // When dipoles are enabled, update dipole moment
-  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
-#endif
 }
 
 #endif

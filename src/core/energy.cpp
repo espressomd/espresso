@@ -18,20 +18,20 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file energy.cpp
+/** \file
     Implementation of \ref energy.hpp "energy.hpp".
 */
 
 #include "EspressoSystemInterface.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+#include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy_inline.hpp"
 #include "forces.hpp"
 #include "initialize.hpp"
-#include "maggs.hpp"
-#include "magnetic_non_p3m_methods.hpp"
-#include "mdlc_correction.hpp"
-#include "scafacos.hpp"
 #include <cassert>
 
 #include "short_range_loop.hpp"
@@ -141,12 +141,19 @@ void energy_calc(double *result) {
 
   on_observable_calc();
 
-  short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
-                   [](Particle &p1, Particle &p2, Distance &d) {
-                     add_non_bonded_pair_energy(&p1, &p2, d.vec21.data(),
-                                                sqrt(d.dist2), d.dist2);
-                   });
-
+  // Execute short range loop if the cutoff is >0
+  if (max_cut > 0) {
+    short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
+                     [](Particle &p1, Particle &p2, Distance &d) {
+                       add_non_bonded_pair_energy(&p1, &p2, d.vec21.data(),
+                                                  sqrt(d.dist2), d.dist2);
+                     });
+  } else {
+    // Otherwise, only do the single-particle contribution
+    for (auto &p : local_cells.particles()) {
+      add_single_particle_energy(&p);
+    }
+  }
   calc_long_range_energies();
 
   auto local_parts = local_cells.particles();

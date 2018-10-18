@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
   pairs.clear();
   std::fill(id_counts.begin(), id_counts.end(), 0);
 
-  /* Now check the verlet lists */
+  /* Now check the Verlet lists */
   Algorithm::verlet_ia(
       cells.begin(), cells.end(),
       [&id_counts](Particle const &p) { id_counts[p.p.identity]++; },

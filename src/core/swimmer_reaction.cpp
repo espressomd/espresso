@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file reaction.cpp
+/** \file
  *
  */
 
@@ -78,7 +78,7 @@ void local_setup_reaction() {
   IA_parameters *data =
       get_ia_param_safe(reaction.reactant_type, reaction.catalyzer_type);
 
-  /* Used for the range of the verlet lists */
+  /* Used for the range of the Verlet lists */
   data->REACTION_range = reaction.range;
 
   /* Broadcast interaction parameters */
@@ -219,7 +219,7 @@ bool in_lower_half_space(Particle p1, Particle p2) {
   // This function determines whether the particle p2 is in the lower
   // half space of particle p1
   auto const distvec = get_mi_vector(p1.r.p, p2.r.p);
-  double dot = p1.r.quatu * distvec;
+  double dot = p1.r.calc_director() * distvec;
   int sgn = Utils::sgn(dot);
   return (sgn + 1) / 2;
 }

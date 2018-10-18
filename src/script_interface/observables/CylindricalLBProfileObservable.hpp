@@ -164,8 +164,8 @@ public:
           }}});
   }
 
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
     if (method == "calculate") {
       return cylindrical_profile_observable()->operator()(partCfg());
     }
@@ -175,8 +175,7 @@ public:
     return {};
   }
 
-  virtual std::shared_ptr<::Observables::Observable>
-  observable() const override {
+  std::shared_ptr<::Observables::Observable> observable() const override {
     return m_observable;
   }
 

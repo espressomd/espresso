@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(parameter_lifetime) {
 }
 
 int main(int argc, char **argv) {
-  mpi::environment mpi_env;
+  mpi::environment mpi_env(argc, argv);
   mpi::communicator world;
   callbacks = Utils::make_unique<Communication::MpiCallbacks>(
       world, /* abort_on_exit */ false);

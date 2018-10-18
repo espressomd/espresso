@@ -18,16 +18,16 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file pressure.cpp
-    Implementation of \ref pressure.hpp "pressure.h".
+/** \file
+    Implementation of \ref pressure.hpp "pressure.hpp".
 */
 
 #include "cells.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
-#include "p3m-dipolar.hpp"
-#include "p3m.hpp"
 #include "pressure_inline.hpp"
 #include "virtual_sites.hpp"
 
@@ -94,6 +94,16 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 /*********************************/
 /* Scalar and Tensorial Pressure */
 /*********************************/
+inline void add_single_particle_virials(int v_comp, Particle &p) {
+  add_kinetic_virials(&p, v_comp);
+  add_bonded_virials(&p);
+#ifdef BOND_ANGLE_OLD
+  add_three_body_bonded_stress(&p);
+#endif
+#ifdef BOND_ANGLE
+  add_three_body_bonded_stress(&p);
+#endif
+}
 
 void pressure_calc(double *result, double *result_t, double *result_nb,
                    double *result_t_nb, int v_comp) {
@@ -112,23 +122,20 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   init_p_tensor_non_bonded(&p_tensor_non_bonded);
 
   on_observable_calc();
-
-  short_range_loop(
-      [&v_comp](Particle &p) {
-        add_kinetic_virials(&p, v_comp);
-        add_bonded_virials(&p);
-#ifdef BOND_ANGLE_OLD
-        add_three_body_bonded_stress(&p);
-#endif
-#ifdef BOND_ANGLE
-        add_three_body_bonded_stress(&p);
-#endif
-      },
-      [](Particle &p1, Particle &p2, Distance &d) {
-        add_non_bonded_pair_virials(&(p1), &(p2), d.vec21.data(), sqrt(d.dist2),
-                                    d.dist2);
-      });
-
+  // Run short-range loop if max cut >0
+  if (max_cut > 0) {
+    short_range_loop(
+        [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
+        [](Particle &p1, Particle &p2, Distance &d) {
+          add_non_bonded_pair_virials(&(p1), &(p2), d.vec21.data(),
+                                      sqrt(d.dist2), d.dist2);
+        });
+  } else {
+    // Only add single particle virials
+    for (auto &p : local_cells.particles()) {
+      add_single_particle_virials(v_comp, p);
+    }
+  }
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);
 
@@ -254,7 +261,7 @@ void calc_long_range_virials() {
 /************************************************************/
 void init_virials(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
-  // bonded, nonbonded, coulomb, dipolar, rigid bodies
+  // bonded, nonbonded, Coulomb, dipolar, rigid bodies
   int n_pre, n_non_bonded, n_coulomb, n_dipolar, n_vs;
 
   n_pre = 1;
@@ -320,7 +327,7 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
 /***************************/
 void init_p_tensor(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
-  // bonded, nonbonded, coulomb, dipolar, rigid bodies
+  // bonded, nonbonded, Coulomb, dipolar, rigid bodies
   int n_pre, n_non_bonded, n_coulomb, n_dipolar, n_vs;
 
   n_pre = 1;

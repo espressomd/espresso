@@ -464,9 +464,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double * x = NULL
-                pointer_to_quatu(self.particle_data, x)
-                return np.array([x[0], x[1], x[2]])
+                return make_array_locked(self.particle_data.r.calc_director())
 
     # ROTATIONAL_INERTIA
         property omega_body:
@@ -609,31 +607,30 @@ cdef class ParticleHandle(object):
 
 
 # Charge
-    IF ELECTROSTATICS:
-        property q:
-            """
-            Particle charge.
+    property q:
+        """
+        Particle charge.
 
-            q : :obj:`float`
+        q : :obj:`float`
 
-            .. note::
-               This needs the feature ELECTROSTATICS.
+        .. note::
+           This needs the feature ELECTROSTATICS.
 
-            """
+        """
 
-            def __set__(self, _q):
-                cdef double myq
-                check_type_or_throw_except(
-                    _q, 1, float, "Charge has to be floats.")
-                myq = _q
-                if set_particle_q(self._id, myq) == 1:
-                    raise Exception("Set particle position first.")
+        def __set__(self, _q):
+            cdef double myq
+            check_type_or_throw_except(
+                _q, 1, float, "Charge has to be floats.")
+            myq = _q
+            if set_particle_q(self._id, myq) == 1:
+                raise Exception("Set particle position first.")
 
-            def __get__(self):
-                self.update_particle_data()
-                cdef const double * x = NULL
-                pointer_to_q(self.particle_data, x)
-                return x[0]
+        def __get__(self):
+            self.update_particle_data()
+            cdef const double * x = NULL
+            pointer_to_q(self.particle_data, x)
+            return x[0]
 
     IF LB_ELECTROHYDRODYNAMICS:
         property mu_E:
@@ -802,9 +799,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
 
-                cdef const double * x = NULL
-                pointer_to_dip(self.particle_data, x)
-                return array_locked([x[0], x[1], x[2]])
+                return make_array_locked(self.particle_data.calc_dip())
 
         # Scalar magnitude of dipole moment
         property dipm:

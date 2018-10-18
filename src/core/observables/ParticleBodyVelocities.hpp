@@ -29,7 +29,7 @@ namespace Observables {
 
 class ParticleBodyVelocities : public PidObservable {
 public:
-  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ROTATION
@@ -58,7 +58,7 @@ public:
     }
     return res;
   }
-  virtual int n_values() const override { return 3 * ids().size(); }
+  int n_values() const override { return 3 * ids().size(); }
 };
 
 } // Namespace Observables

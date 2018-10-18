@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "energy_inline.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include <stdexcept>
 

@@ -18,9 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file forcecap.cpp force cap calculation.
+/** \file
+ *  force cap calculation.
  *
- *  For more information see \ref forcecap.hpp "forcecap.h".
+ *  For more information see \ref forcecap.hpp "forcecap.hpp".
  */
 
 #include "forcecap.hpp"

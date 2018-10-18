@@ -20,13 +20,13 @@
 */
 #ifndef ROTATION_H
 #define ROTATION_H
-/** \file rotation.hpp
+/** \file
     This file contains all subroutines required to process rotational motion.
 
 */
 
 #include "Vector.hpp"
-#include "gb.hpp"
+#include "nonbonded_interactions/gb.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
@@ -68,13 +68,13 @@ void convert_vel_space_to_body(const Particle *p, double *vel_body);
     the body-fixed frames */
 void define_rotation_matrix(Particle const &p, double A[9]);
 
-inline void convert_quat_to_quatu(const Vector<4, double> &quat,
-                                  Vector3d &quatu) {
+inline void convert_quat_to_director(const Vector<4, double> &quat,
+                                     Vector3d &director) {
   /* director */
-  quatu[0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2]);
-  quatu[1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1]);
-  quatu[2] = (quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
-              quat[3] * quat[3]);
+  director[0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2]);
+  director[1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1]);
+  director[2] = (quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
+                 quat[3] * quat[3]);
 }
 
 /** Multiply two quaternions */
@@ -88,7 +88,7 @@ void multiply_quaternions(const T1 &a, const T2 &b, T3 &result) {
 }
 
 /** Convert director to quaternions */
-int convert_quatu_to_quat(const Vector3d &d, Vector<4, double> &quat);
+int convert_director_to_quat(const Vector3d &d, Vector<4, double> &quat);
 
 #ifdef DIPOLES
 
@@ -99,18 +99,18 @@ inline int convert_dip_to_quat(const Vector3d &dip, Vector<4, double> &quat,
   // Calculate magnitude of dipole moment
   dm = sqrt(dip[0] * dip[0] + dip[1] * dip[1] + dip[2] * dip[2]);
   *dipm = dm;
-  convert_quatu_to_quat(dip, quat);
+  convert_director_to_quat(dip, quat);
 
   return 0;
 }
 
 /** convert quaternion director to the dipole moment */
-inline void convert_quatu_to_dip(const Vector3d &quatu, double dipm,
-                                 Vector3d &dip) {
+inline void convert_director_to_dip(const Vector3d &director, double dipm,
+                                    Vector3d &dip) {
   /* dipole moment */
-  dip[0] = quatu[0] * dipm;
-  dip[1] = quatu[1] * dipm;
-  dip[2] = quatu[2] * dipm;
+  dip[0] = director[0] * dipm;
+  dip[1] = director[1] * dipm;
+  dip[2] = director[2] * dipm;
 }
 
 #endif

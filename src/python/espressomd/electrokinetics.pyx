@@ -11,7 +11,6 @@ IF ELECTROKINETICS:
         Creates the electrokinetic method using the GPU unit.
 
         """
-
         species_list = []
 
         def __getitem__(self, key):
@@ -27,7 +26,6 @@ IF ELECTROKINETICS:
             Checks if the parameters for "stencil" and "fluid_coupling" are valid.
 
             """
-
             default_params = self.default_params()
 
             if not (self._params["stencil"] in ["linkcentered", "nonlinear", "nodecentered"]):
@@ -43,7 +41,6 @@ IF ELECTROKINETICS:
             Returns the valid options used for the electrokinetic method.
 
             """
-
             return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling"
 
         def required_keys(self):
@@ -51,7 +48,6 @@ IF ELECTROKINETICS:
             Returns the necessary options to initialize the electrokinetic method.
 
             """
-
             return ["agrid", "lb_density", "viscosity", "friction", "T", "prefactor"]
 
         def default_params(self):
@@ -59,7 +55,6 @@ IF ELECTROKINETICS:
             Returns the default parameters.
 
             """
-
             return {"agrid": -1,
                     "lb_density": -1,
                     "viscosity": -1,
@@ -178,7 +173,6 @@ IF ELECTROKINETICS:
                    an exception will be raised.
 
             """
-
             err = ek_neutralize_system(species.id)
 
             if err == 1:
@@ -201,7 +195,6 @@ IF ELECTROKINETICS:
             This automatically initializes the lattice Boltzmann method on the GPU.
 
             """
-
             err = ek_init()
             if err == 2:
                 raise Exception(
@@ -219,7 +212,6 @@ IF ELECTROKINETICS:
                       Species to be initialized.
 
             """
-
             self.species_list.append(species)
 
         def get_params(self):
@@ -227,7 +219,6 @@ IF ELECTROKINETICS:
             Prints out the parameters of the electrokinetic system.
 
             """
-
             self._params.update(self._get_params_from_es_core())
             return self._params
 
@@ -241,7 +232,6 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the boundary is written to.
 
             """
-
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
 
         def print_vtk_velocity(self, path):
@@ -254,7 +244,6 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the velocity is written to.
 
             """
-
             ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
 
         def print_vtk_density(self, path):
@@ -267,7 +256,6 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the LB density is written to.
 
             """
-
             ek_lb_print_vtk_density(utils.to_char_pointer(path))
 
         def print_vtk_potential(self, path):
@@ -280,7 +268,6 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the electrostatic potential is written to.
 
             """
-
             ek_print_vtk_potential(utils.to_char_pointer(path))
 
         def print_vtk_lbforce_density(self, path):
@@ -293,7 +280,6 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the LB force is written to.
 
             """
-
             ek_print_vtk_lbforce_density(utils.to_char_pointer(path))
 
         def print_vtk_particle_potential(self, path):
@@ -308,7 +294,6 @@ IF ELECTROKINETICS:
             note : This only works if 'EK_ELECTROSTATIC_COUPLING' is active.
 
             """
-
             IF EK_ELECTROSTATIC_COUPLING:
                 ek_print_vtk_particle_potential(utils.to_char_pointer(path))
             ELSE:
@@ -405,7 +390,6 @@ IF ELECTROKINETICS:
             Returns the valid keys for the species.
 
             """
-
             return "density", "D", "valency", "ext_force_density"
 
         def required_keys(self):
@@ -413,7 +397,6 @@ IF ELECTROKINETICS:
             Returns the required keys for the species.
 
             """
-
             return ["density", "D", "valency"]
 
         def default_params(self):
@@ -421,7 +404,6 @@ IF ELECTROKINETICS:
             Returns the default parameters for the species.
 
             """
-
             return {"ext_force_density": [0, 0, 0]}
 
         def _get_params_from_es_core(self):
@@ -452,7 +434,6 @@ IF ELECTROKINETICS:
             Returns the parameters of the species.
 
             """
-
             self._params.update(self._get_params_from_es_core())
             return self._params
 
@@ -466,7 +447,6 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the species density is written to.
 
             """
-
             ek_print_vtk_density(self.id, utils.to_char_pointer(path))
 
         def print_vtk_flux(self, path):
@@ -479,7 +459,6 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the species flux is written to.
 
             """
-
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
 
     cdef class SpecieRoutines(object):
@@ -495,7 +474,6 @@ IF ELECTROKINETICS:
                 if is_valid_type(value, float) or is_valid_type(value, int):
                     if ek_node_set_density(self.id, self.node[0], self.node[1], self.node[2], value) != 0:
                         raise Exception("Species has not been added to EK.")
-
                 else:
                     raise ValueError(
                         "Type of property is wrong. Expected: float.")

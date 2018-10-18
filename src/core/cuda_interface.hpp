@@ -50,7 +50,7 @@ typedef struct {
   float v_cs[6];
   float v_swim;
   float f_swim;
-  float quatu[3];
+  float director[3];
   int push_pull;
   float dipole_length;
   bool swimming;
@@ -75,7 +75,7 @@ struct CUDA_particle_data {
 #endif
 
 #ifdef ROTATION
-  float quatu[3];
+  float director[3];
 #endif
 
 #ifdef SHANCHEN
@@ -93,8 +93,6 @@ struct CUDA_particle_data {
 #ifdef MASS
   float mass;
 #endif
-
-  unsigned int fixed;
 
 #ifdef VIRTUAL_SITES
   bool is_virtual;

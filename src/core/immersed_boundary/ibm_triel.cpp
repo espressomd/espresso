@@ -17,13 +17,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ibm_triel.hpp"
+#include "config.hpp"
 
 #ifdef IMMERSED_BOUNDARY
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "immersed_boundary/ibm_triel.hpp"
 #include "particle_data.hpp"
 
 // Internal function

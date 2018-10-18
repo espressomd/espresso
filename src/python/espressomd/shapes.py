@@ -232,6 +232,29 @@ class Stomatocyte(ScriptInterfaceHelper):
 
 
 @script_interface_register
+class Torus(ScriptInterfaceHelper):
+
+    """
+    A torus shape.
+    Attributes
+    ----------
+    center : array_like :obj:`float`
+             Coordinates of the center of the torus.
+    normal : array_like :obj:`float`
+           Normal axis of the torus.
+    radius : :obj:`float`
+             Radius of the torus.
+    tube_radius : :obj:`float`
+             Radius of the tube.
+    direction : :obj:`int`
+                Surface orientation, for +1 the normal points
+                out of the mantel, for -1 it points inward.
+
+    """
+    _so_name = "Shapes::Torus"
+
+
+@script_interface_register
 class Wall(ScriptInterfaceHelper):
 
     """

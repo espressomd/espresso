@@ -18,24 +18,24 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file global.cpp
-    Implementation of \ref global.hpp "global.h".
+/** \file
+    Implementation of \ref global.hpp "global.hpp".
 */
 #include "global.hpp"
 
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "ghmc.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
 #include "lattice.hpp"
 #include "layered.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "rattle.hpp"
-#include "thermalized_bond.hpp"
 #include "tuning.hpp"
 #include "utils/mpi/all_compare.hpp"
 
@@ -147,7 +147,7 @@ const std::unordered_map<int, Datafield> fields{
      {&nptiso.piston, Datafield::Type::DOUBLE, 1,
       "npt_piston"}}, /* 27 from pressure.cpp */
     {FIELD_PERIODIC,
-     {&periodic, Datafield::Type::BOOL, 3,
+     {&periodic, Datafield::Type::INT, 1,
       "periodicity"}}, /* 28 from grid.cpp */
     {FIELD_SKIN,
      {&skin, Datafield::Type::DOUBLE, 1, "skin"}}, /* 29 from integrate.cpp */

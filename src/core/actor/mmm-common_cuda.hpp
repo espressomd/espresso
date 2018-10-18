@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "cuda_utils.hpp"
-#include "mmm-common.hpp"
+#include "electrostatics_magnetostatics/mmm-common.hpp"
 #include "specfunc_cuda.hpp"
 
 // order hardcoded. mmm1d_recalcTables() typically does order less than 30.
