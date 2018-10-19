@@ -28,57 +28,57 @@
 
 #include "core/utils/mpi/sendrecv.hpp"
 
-using Utils::Mpi::sendrecv;
 using Utils::Mpi::isendrecv;
+using Utils::Mpi::sendrecv;
 
 namespace mpi = boost::mpi;
 
 BOOST_AUTO_TEST_CASE(blocking) {
-    mpi::communicator world;
-    auto const rank = world.rank();
-    auto const size = world.size();
-    auto const left = (rank - 1 + size) % size;
-    auto const right = (rank + 1) % size;
+  mpi::communicator world;
+  auto const rank = world.rank();
+  auto const size = world.size();
+  auto const left = (rank - 1 + size) % size;
+  auto const right = (rank + 1) % size;
 
-    /* MPI datatype */
-    {
-        const int send = rank;
-        int recv;
-
-        sendrecv(world, left, 42, send, right, 42, recv);
-
-        BOOST_CHECK_EQUAL(recv, right);
-    }
-
-    /* Non-MPI datatype */
-    {
-        const std::string send = std::to_string(right);
-        std::string recv;
-
-        sendrecv(world, left, 42, send, right, 42, recv);
-
-        BOOST_CHECK_EQUAL(recv, std::to_string(right));
-    }
-}
-
-BOOST_AUTO_TEST_CASE(non_blocking) {
-    mpi::communicator world;
-    auto const rank = world.rank();
-    auto const size = world.size();
-    auto const left = (rank - 1 + size) % size;
-    auto const right = (rank + 1) % size;
-
+  /* MPI datatype */
+  {
     const int send = rank;
     int recv;
 
-    auto req = isendrecv(world, left, 42, send, right, 42, recv);
-    mpi::wait_all(req.begin(), req.end());
+    sendrecv(world, left, 42, send, right, 42, recv);
 
     BOOST_CHECK_EQUAL(recv, right);
+  }
+
+  /* Non-MPI datatype */
+  {
+    const std::string send = std::to_string(right);
+    std::string recv;
+
+    sendrecv(world, left, 42, send, right, 42, recv);
+
+    BOOST_CHECK_EQUAL(recv, std::to_string(right));
+  }
+}
+
+BOOST_AUTO_TEST_CASE(non_blocking) {
+  mpi::communicator world;
+  auto const rank = world.rank();
+  auto const size = world.size();
+  auto const left = (rank - 1 + size) % size;
+  auto const right = (rank + 1) % size;
+
+  const int send = rank;
+  int recv;
+
+  auto req = isendrecv(world, left, 42, send, right, 42, recv);
+  mpi::wait_all(req.begin(), req.end());
+
+  BOOST_CHECK_EQUAL(recv, right);
 }
 
 int main(int argc, char **argv) {
-    mpi::environment mpi_env(argc, argv);
+  mpi::environment mpi_env(argc, argv);
 
-    return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
