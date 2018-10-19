@@ -31,9 +31,7 @@ namespace Constraints {
 
 class ShapeBasedConstraint : public Constraint {
 public:
-  enum class ReflectionType { NONE, NORMAL, NORMAL_TANGENTIAL };
-
-  ShapeBasedConstraint()
+    ShapeBasedConstraint()
       : m_shape(std::make_shared<Shapes::NoWhere>()), m_penetrable(false),
         m_only_positive(false) {
     ShapeBasedConstraint::reset_force();
