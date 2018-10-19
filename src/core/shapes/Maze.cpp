@@ -26,7 +26,8 @@
 using namespace std;
 
 namespace Shapes {
-void Maze::calculate_dist(const Vector3d &pos, double *dist, double *vec) const {
+void Maze::calculate_dist(const Vector3d &pos, double *dist,
+                          double *vec) const {
   int i, min_axis, cursph[3];
   double diasph, fac, c_dist, sph_dist, cyl_dist, temp_dis;
   double sph_vec[3], cyl_vec[3];

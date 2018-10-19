@@ -63,9 +63,8 @@ void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
   if (pos[2] > c11[1]) {
     // Feel the upper smoothing
     if (pos[0] < box_l_x / 2) {
-      *dist =
-          sqrt(Utils::sqr(c11[0] - pos[0]) + Utils::sqr(c11[1] - pos[2])) -
-          m_upper_smoothing_radius;
+      *dist = sqrt(Utils::sqr(c11[0] - pos[0]) + Utils::sqr(c11[1] - pos[2])) -
+              m_upper_smoothing_radius;
       vec[0] =
           -(c11[0] - pos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
       vec[1] = 0;
@@ -73,9 +72,8 @@ void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
           -(c11[1] - pos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
       return;
     } else {
-      *dist =
-          sqrt(Utils::sqr(c21[0] - pos[0]) + Utils::sqr(c21[1] - pos[2])) -
-          m_upper_smoothing_radius;
+      *dist = sqrt(Utils::sqr(c21[0] - pos[0]) + Utils::sqr(c21[1] - pos[2])) -
+              m_upper_smoothing_radius;
       vec[0] =
           -(c21[0] - pos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
       vec[1] = 0;

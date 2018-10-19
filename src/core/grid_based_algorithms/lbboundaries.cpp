@@ -133,7 +133,9 @@ void lb_init_boundaries() {
     for (int z = 0; z < int(lbpar_gpu.dim_z); z++) {
       for (int y = 0; y < int(lbpar_gpu.dim_y); y++) {
         for (int x = 0; x < int(lbpar_gpu.dim_x); x++) {
-            auto const pos = static_cast<double>(lbpar_gpu.agrid) * (Vector3d{1. * x, 1. * y, 1. * z} + Vector3d::broadcast(0.5));
+          auto const pos =
+              static_cast<double>(lbpar_gpu.agrid) *
+              (Vector3d{1. * x, 1. * y, 1. * z} + Vector3d::broadcast(0.5));
 
           double dist = 1e99;
           double dist_tmp = 0.0;

@@ -4,7 +4,8 @@
 
 namespace Shapes {
 
-void Torus::calculate_dist(const Vector3d &pos, double *dist, double *vec) const {
+void Torus::calculate_dist(const Vector3d &pos, double *dist,
+                           double *vec) const {
   /* Coordinate transform to cylinder coords
      with origin at m_center. */
   Vector3d const c_dist = pos - m_center;

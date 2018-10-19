@@ -23,7 +23,8 @@
 
 namespace Shapes {
 
-void Wall::calculate_dist(const Vector3d &pos, double *dist, double *vec) const {
+void Wall::calculate_dist(const Vector3d &pos, double *dist,
+                          double *vec) const {
   int i;
 
   *dist = -m_d;
