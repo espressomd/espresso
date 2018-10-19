@@ -25,7 +25,12 @@ from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
 
 cdef class CellSystem(object):
-    def set_domain_decomposition(self, use_verlet_lists=True, fully_connected=[False, False, False]):
+    def set_domain_decomposition(
+        self,
+        use_verlet_lists=True,
+     fully_connected=[False,
+                      False,
+                      False]):
         """
         Activates domain decomposition cell system.
 
