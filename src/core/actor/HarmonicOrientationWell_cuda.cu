@@ -29,7 +29,7 @@
 #endif
 
 __global__ void HarmonicOrientationWell_kernel(float x, float y, float z,
-                                               float k, int n, float *quatu,
+                                               float k, int n, float *director,
                                                float *torque) {
 
   int id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -38,17 +38,17 @@ __global__ void HarmonicOrientationWell_kernel(float x, float y, float z,
     return;
 
   float normdir = 1.0f / sqrt(x * x + y * y + z * z);
-  float normori = 1.0f / sqrt(quatu[3 * id + 0] * quatu[3 * id + 0] +
-                              quatu[3 * id + 1] * quatu[3 * id + 1] +
-                              quatu[3 * id + 2] * quatu[3 * id + 2]);
+  float normori = 1.0f / sqrt(director[3 * id + 0] * director[3 * id + 0] +
+                              director[3 * id + 1] * director[3 * id + 1] +
+                              director[3 * id + 2] * director[3 * id + 2]);
 
   float xn = x * normdir;
   float yn = y * normdir;
   float zn = z * normdir;
 
-  float qn = quatu[3 * id + 0] * normori;
-  float rn = quatu[3 * id + 1] * normori;
-  float sn = quatu[3 * id + 2] * normori;
+  float qn = director[3 * id + 0] * normori;
+  float rn = director[3 * id + 1] * normori;
+  float sn = director[3 * id + 2] * normori;
 
   float sgndir = signbit(xn * qn + yn * rn + zn * sn);
 
@@ -62,7 +62,7 @@ __global__ void HarmonicOrientationWell_kernel(float x, float y, float z,
 }
 
 void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k,
-                                            int n, float *quatu,
+                                            int n, float *director,
                                             float *torque) {
   dim3 grid(1, 1, 1);
   dim3 block(1, 1, 1);
@@ -78,6 +78,6 @@ void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k,
     block.x = 512;
   }
 
-  KERNELCALL(HarmonicOrientationWell_kernel, grid, block, x, y, z, k, n, quatu,
-             torque)
+  KERNELCALL(HarmonicOrientationWell_kernel, grid, block, x, y, z, k, n,
+             director, torque)
 }

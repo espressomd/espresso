@@ -202,14 +202,14 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
     // printf("BONDED TAB, Particle: %d, P2: %d TYPE_TAB:
     // %d\n",p1->p.identity,p2->p.identity,iparams->p.tab.type);
     switch (iaparams->p.tab.type) {
-    case TAB_BOND_LENGTH:
+    case 1:
       calc_tab_bond_force(p1, p2, iaparams, dx, force);
       break;
-    case TAB_BOND_ANGLE:
+    case 2:
       (*i)++;
       force[0] = force[1] = force[2] = 0;
       break;
-    case TAB_BOND_DIHEDRAL:
+    case 3:
       (*i) += 2;
       force[0] = force[1] = force[2] = 0;
       break;

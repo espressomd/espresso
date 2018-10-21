@@ -52,10 +52,8 @@ void VirtualSitesRelative::update_virtual_particle_quaternion(
         "particle associated with virtual site.\n");
   }
   multiply_quaternions(p_real->r.quat, p.p.vs_quat, p.r.quat);
-  convert_quat_to_quatu(p.r.quat, p.r.quatu);
 #ifdef DIPOLES
   // When dipoles are enabled, update dipole moment
-  convert_quatu_to_dip(p.r.quatu, p.p.dipm, p.r.dip);
 #endif
 }
 
@@ -89,7 +87,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   multiply_quaternions(p_real->r.quat, p.p.vs_relative_rel_orientation, q);
   // Calculate the director resulting from the quaternions
   Vector3d director = {0, 0, 0};
-  convert_quat_to_quatu(q, director);
+  convert_quat_to_director(q, director);
   // normalize
   double l = sqrt(sqrlen(director));
   // Division comes in the loop below
