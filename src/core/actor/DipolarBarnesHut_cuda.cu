@@ -363,7 +363,8 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // octants. Now, the child (cell) octants centers are deriving from
             // the parent (n) octant center:
             for (l = 0; l < 3; l++)
-              pos[l] = bhpara->r[3 * cell + l] = bhpara->r[3 * n + l] - r + pos[l];
+              pos[l] = bhpara->r[3 * cell + l] =
+                  bhpara->r[3 * n + l] - r + pos[l];
 
             // By default, the new cell has no children in all k-th octants:
             for (k = 0; k < 8; k++)
@@ -1207,8 +1208,8 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
 // Populating of array pointers allocated in GPU device before.
 // Copy the particle data to the Barnes-Hut related arrays.
 void fillConstantPointers(float *r, float *dip, BHData bh_data) {
-  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(bhpara), &bh_data,
-                                   sizeof(BHData), 0, cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(bhpara), &bh_data, sizeof(BHData),
+                                   0, cudaMemcpyHostToDevice));
   cuda_safe_mem(cudaMemcpy(bh_data.r, r, 3 * bh_data.nbodies * sizeof(float),
                            cudaMemcpyDeviceToDevice));
   cuda_safe_mem(cudaMemcpy(bh_data.u, dip, 3 * bh_data.nbodies * sizeof(float),
