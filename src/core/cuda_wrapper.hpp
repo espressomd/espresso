@@ -15,7 +15,7 @@
 #define cudaEventSynchronize hipEventSynchronize
 #define cudaEvent_t hipEvent_t
 #define cudaFree hipFree
-#define cudaFuncSetCacheConfig(a,b)
+#define cudaFuncSetCacheConfig(a, b)
 #define cudaGetDevice hipGetDevice
 #define cudaGetDeviceCount hipGetDeviceCount
 #define cudaGetDeviceProperties hipGetDeviceProperties
@@ -44,9 +44,9 @@
 
 #else // Nvidia via CUDA
 
-#define hipLaunchKernelGGL(kernel, blocks, threads, mem, stream, ...)  \
-  do {                                                                 \
-    kernel<<<blocks, threads, mem, stream>>>(__VA_ARGS__);             \
+#define hipLaunchKernelGGL(kernel, blocks, threads, mem, stream, ...)          \
+  do {                                                                         \
+    kernel<<<blocks, threads, mem, stream>>>(__VA_ARGS__);                     \
   } while (0)
 #define HIP_DYNAMIC_SHARED(type, var) extern __shared__ type var[];
 #define HIP_SYMBOL(X) X
@@ -57,10 +57,9 @@
 
 #define make_uint3 dim3
 
-inline cudaError_t cudaGetSymbolAddress(void ** devPtr, const char * symbol) {
+inline cudaError_t cudaGetSymbolAddress(void **devPtr, const char *symbol) {
   size_t bytes = 0;
   return hipModuleGetGlobal(devPtr, &bytes, 0, symbol);
 }
 
 #endif
-

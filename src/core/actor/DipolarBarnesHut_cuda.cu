@@ -827,8 +827,8 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
       for (l = 0; l < 3; l++) {
         if (f[l] != f[l] || h[l] != h[l]) { // nan
           printf("Force Kernel: NAN in particle[%d]\n", i);
-          printf("x = %f, y = %f, z = %f,\n", para->u[3 * i + 0], para->u[3 * i + 1],
-                 para->u[3 * i + 2]);
+          printf("x = %f, y = %f, z = %f,\n", para->u[3 * i + 0],
+                 para->u[3 * i + 1], para->u[3 * i + 2]);
           printf("fx = %f, fy = %f, fz = %f,\n", f[0], f[1], f[2]);
           printf("hx = %f, hy = %f, hz = %f,\n", h[0], h[1], h[2]);
         }
@@ -856,7 +856,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
       node[MAXDEPTH * THREADS5 / WARPSIZE];
   __shared__ float dq[MAXDEPTH * THREADS5 / WARPSIZE];
   dds_float sum = 0.0;
-  HIP_DYNAMIC_SHARED( dds_float, res)
+  HIP_DYNAMIC_SHARED(dds_float, res)
 
   float b, d1, dd5;
 
@@ -965,8 +965,8 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
         sum += -u[l] * h[l];
         if (h[l] != h[l]) { // nan
           printf("Energy Kernel: NAN in particle[%d]\n", i);
-          printf("x = %f, y = %f, z = %f,\n", para->u[3 * i + 0], para->u[3 * i + 1],
-                 para->u[3 * i + 2]);
+          printf("x = %f, y = %f, z = %f,\n", para->u[3 * i + 0],
+                 para->u[3 * i + 1], para->u[3 * i + 2]);
           printf("hx = %f, hy = %f, hz = %f,\n", h[0], h[1], h[2]);
         }
       }
@@ -1111,8 +1111,8 @@ int energyBH(BHData *bh_data, dds_float k, float *E) {
 void setBHPrecision(float *epssq, float *itolsq) {
   cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(epssqd), epssq, sizeof(float), 0,
                                    cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(itolsqd), itolsq, sizeof(float), 0,
-                                   cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(itolsqd), itolsq, sizeof(float),
+                                   0, cudaMemcpyHostToDevice));
 }
 
 // An allocation of the GPU device memory and an initialization where it is
@@ -1207,8 +1207,8 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
 // Populating of array pointers allocated in GPU device before.
 // Copy the particle data to the Barnes-Hut related arrays.
 void fillConstantPointers(float *r, float *dip, BHData bh_data) {
-  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(para), &bh_data, sizeof(BHData), 0,
-                                   cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(para), &bh_data, sizeof(BHData),
+                                   0, cudaMemcpyHostToDevice));
   cuda_safe_mem(cudaMemcpy(bh_data.r, r, 3 * bh_data.nbodies * sizeof(float),
                            cudaMemcpyDeviceToDevice));
   cuda_safe_mem(cudaMemcpy(bh_data.u, dip, 3 * bh_data.nbodies * sizeof(float),

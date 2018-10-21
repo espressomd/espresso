@@ -323,9 +323,8 @@ void gpu_change_number_of_part_to_comm() {
                                            blocks_per_grid_particles_y, 1);
 
       KERNELCALL(init_particle_force, dim_grid_particles,
-                 threads_per_block_particles,
-                 particle_forces_device, particle_torques_device,
-                 particle_seeds_device);
+                 threads_per_block_particles, particle_forces_device,
+                 particle_torques_device, particle_seeds_device);
 
 #ifdef SHANCHEN
       KERNELCALL(init_fluid_composition, dim_grid_particles,
@@ -447,8 +446,8 @@ void copy_forces_from_GPU(ParticleRange particles) {
       /** reset part forces with zero*/
 
       KERNELCALL(reset_particle_force, dim_grid_particles,
-                 threads_per_block_particles,
-                 particle_forces_device, particle_torques_device);
+                 threads_per_block_particles, particle_forces_device,
+                 particle_torques_device);
       cudaThreadSynchronize();
     }
 

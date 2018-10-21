@@ -2,9 +2,9 @@
 
 // TODO: throw exceptions upon errors initialization
 
+#include "cuda_utils.hpp"
 #include "cufft_wrapper.hpp"
 #include "grid_based_algorithms/fd-electrostatics.cuh"
-#include "cuda_utils.hpp"
 #include <string>
 //#include <cuda_interface.hpp>
 #include <cstdio>
@@ -27,7 +27,8 @@ __device__ unsigned int fde_getThreadIndex() {
 __device__ cufftReal fde_getNode(int x, int y, int z) {
   cufftReal *field =
       reinterpret_cast<cufftReal *>(fde_parameters_gpu->charge_potential);
-  return field[fde_parameters_gpu->dim_y * fde_parameters_gpu->dim_x_padded * z +
+  return field[fde_parameters_gpu->dim_y * fde_parameters_gpu->dim_x_padded *
+                   z +
                fde_parameters_gpu->dim_x_padded * y + x];
 }
 
@@ -77,8 +78,8 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
     throw "Failed to allocate\n";
   }
 
-  cuda_safe_mem(
-      cudaMemcpyToSymbol(HIP_SYMBOL(fde_parameters_gpu), &parameters, sizeof(Parameters)));
+  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(fde_parameters_gpu), &parameters,
+                                   sizeof(Parameters)));
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
@@ -178,8 +179,7 @@ void FdElectrostatics::calculatePotential(cufftComplex *charge_potential) {
       (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(multiplyGreensfcn, dim_grid, threads_per_block,
-             charge_potential);
+  KERNELCALL(multiplyGreensfcn, dim_grid, threads_per_block, charge_potential);
 
   if (cufftExecC2R(plan_ifft, charge_potential,
                    (cufftReal *)charge_potential) != CUFFT_SUCCESS) {

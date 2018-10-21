@@ -44,16 +44,14 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
 #define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
 
 #define KERNELCALL_shared(_f, _a, _b, _s, ...)                                 \
-  hipLaunchKernelGGL(_f, _a, _b, _s, stream[0], ##__VA_ARGS__);                  \
+  hipLaunchKernelGGL(_f, _a, _b, _s, stream[0], ##__VA_ARGS__);                \
   _cuda_check_errors(_a, _b, #_f, __FILE__, __LINE__);
 
 #define KERNELCALL_stream(_function, _grid, _block, _stream, ...)              \
-  hipLaunchKernelGGL(_function, _grid, _block, 0, _stream, ##__VA_ARGS__);       \
+  hipLaunchKernelGGL(_function, _grid, _block, 0, _stream, ##__VA_ARGS__);     \
   _cuda_check_errors(_grid, _block, #_function, __FILE__, __LINE__);
 
 #define KERNELCALL(_f, _a, _b, ...)                                            \
   KERNELCALL_shared(_f, _a, _b, 0, ##__VA_ARGS__)
 
-
 #endif
-

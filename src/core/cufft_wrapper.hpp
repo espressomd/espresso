@@ -27,4 +27,3 @@
 #include <cufft.h>
 
 #endif
-

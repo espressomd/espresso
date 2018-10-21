@@ -473,30 +473,37 @@ void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
 
   switch (cao) {
   case 1:
-    hipLaunchKernelGGL((assign_charge_kernel<1, false>), dim3(grid), dim3(block), 0, 0, pdata, p, parts_per_block);
+    hipLaunchKernelGGL((assign_charge_kernel<1, false>), dim3(grid),
+                       dim3(block), 0, 0, pdata, p, parts_per_block);
     break;
   case 2:
-    hipLaunchKernelGGL((assign_charge_kernel<2, false>), dim3(grid), dim3(block), 0, 0, pdata, p, parts_per_block);
+    hipLaunchKernelGGL((assign_charge_kernel<2, false>), dim3(grid),
+                       dim3(block), 0, 0, pdata, p, parts_per_block);
     break;
   case 3:
-    hipLaunchKernelGGL((assign_charge_kernel<3, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(REAL_TYPE), 0,
-            pdata, p, parts_per_block);
+    hipLaunchKernelGGL((assign_charge_kernel<3, true>), dim3(grid), dim3(block),
+                       3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
+                       p, parts_per_block);
     break;
   case 4:
-    hipLaunchKernelGGL((assign_charge_kernel<4, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(REAL_TYPE), 0,
-            pdata, p, parts_per_block);
+    hipLaunchKernelGGL((assign_charge_kernel<4, true>), dim3(grid), dim3(block),
+                       3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
+                       p, parts_per_block);
     break;
   case 5:
-    hipLaunchKernelGGL((assign_charge_kernel<5, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(REAL_TYPE), 0,
-            pdata, p, parts_per_block);
+    hipLaunchKernelGGL((assign_charge_kernel<5, true>), dim3(grid), dim3(block),
+                       3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
+                       p, parts_per_block);
     break;
   case 6:
-    hipLaunchKernelGGL((assign_charge_kernel<6, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(REAL_TYPE), 0,
-            pdata, p, parts_per_block);
+    hipLaunchKernelGGL((assign_charge_kernel<6, true>), dim3(grid), dim3(block),
+                       3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
+                       p, parts_per_block);
     break;
   case 7:
-    hipLaunchKernelGGL((assign_charge_kernel<7, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(REAL_TYPE), 0,
-            pdata, p, parts_per_block);
+    hipLaunchKernelGGL((assign_charge_kernel<7, true>), dim3(grid), dim3(block),
+                       3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
+                       p, parts_per_block);
     break;
   default:
     break;
@@ -605,32 +612,39 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
    * > 2 */
   switch (cao) {
   case 1:
-    hipLaunchKernelGGL((assign_forces_kernel<1, false>), dim3(grid), dim3(block), 0, 0,
-        pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    hipLaunchKernelGGL((assign_forces_kernel<1, false>), dim3(grid),
+                       dim3(block), 0, 0, pdata, p, lb_particle_force_gpu,
+                       prefactor, parts_per_block);
     break;
   case 2:
-    hipLaunchKernelGGL((assign_forces_kernel<2, false>), dim3(grid), dim3(block), 0, 0,
-        pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    hipLaunchKernelGGL((assign_forces_kernel<2, false>), dim3(grid),
+                       dim3(block), 0, 0, pdata, p, lb_particle_force_gpu,
+                       prefactor, parts_per_block);
     break;
   case 3:
-    hipLaunchKernelGGL((assign_forces_kernel<3, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(float), 0,
-            pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    hipLaunchKernelGGL((assign_forces_kernel<3, true>), dim3(grid), dim3(block),
+                       3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
+                       lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 4:
-    hipLaunchKernelGGL((assign_forces_kernel<4, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(float), 0,
-            pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    hipLaunchKernelGGL((assign_forces_kernel<4, true>), dim3(grid), dim3(block),
+                       3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
+                       lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 5:
-    hipLaunchKernelGGL((assign_forces_kernel<5, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(float), 0,
-            pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    hipLaunchKernelGGL((assign_forces_kernel<5, true>), dim3(grid), dim3(block),
+                       3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
+                       lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 6:
-    hipLaunchKernelGGL((assign_forces_kernel<6, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(float), 0,
-            pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    hipLaunchKernelGGL((assign_forces_kernel<6, true>), dim3(grid), dim3(block),
+                       3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
+                       lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 7:
-    hipLaunchKernelGGL((assign_forces_kernel<7, true>), dim3(grid), dim3(block), 3 * parts_per_block * cao * sizeof(float), 0,
-            pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
+    hipLaunchKernelGGL((assign_forces_kernel<7, true>), dim3(grid), dim3(block),
+                       3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
+                       lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   default:
     break;
@@ -810,8 +824,8 @@ void p3m_gpu_add_farfield_force() {
 
   /** Do forward FFT of the charge mesh */
   if (FFT_FORW_FFT(p3m_gpu_fft_plans.forw_plan,
-                  (REAL_TYPE *)p3m_gpu_data.charge_mesh,
-                  p3m_gpu_data.charge_mesh) != CUFFT_SUCCESS) {
+                   (REAL_TYPE *)p3m_gpu_data.charge_mesh,
+                   p3m_gpu_data.charge_mesh) != CUFFT_SUCCESS) {
     fprintf(stderr, "CUFFT error: Forward FFT failed\n");
     return;
   }
@@ -824,11 +838,11 @@ void p3m_gpu_add_farfield_force() {
 
   /** Transform the components of the electric field back */
   FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_x,
-                 (REAL_TYPE *)p3m_gpu_data.force_mesh_x);
+               (REAL_TYPE *)p3m_gpu_data.force_mesh_x);
   FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_y,
-                 (REAL_TYPE *)p3m_gpu_data.force_mesh_y);
+               (REAL_TYPE *)p3m_gpu_data.force_mesh_y);
   FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_z,
-                 (REAL_TYPE *)p3m_gpu_data.force_mesh_z);
+               (REAL_TYPE *)p3m_gpu_data.force_mesh_z);
 
   /** Assign the forces from the mesh back to the particles */
   assign_forces(lb_particle_gpu, p3m_gpu_data, lb_particle_force_gpu,
