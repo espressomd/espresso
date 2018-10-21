@@ -3833,17 +3833,13 @@ __global__ void lb_get_boundary_flag(int single_nodeindex,
 /* Host functions to setup and call kernels*/
 /**********************************************************************/
 
-__global__ void copy_lb_parameters_pointer(LB_parameters_gpu** ptr) {
-  *ptr = &para[0];
-}
-
 void lb_get_para_pointer(LB_parameters_gpu **pointeradress) {
-  LB_parameters_gpu** ptr_gpu;
-  cuda_safe_mem(cudaMalloc((void **)&ptr_gpu, sizeof(LB_parameters_gpu*)));
-  KERNELCALL(copy_lb_parameters_pointer, 1, 1, ptr_gpu);
-  cuda_safe_mem(cudaMemcpy(pointeradress, ptr_gpu,
-                          sizeof(LB_parameters_gpu*), cudaMemcpyDeviceToHost));
-  cudaFree(ptr_gpu);
+  if (cudaGetSymbolAddress((void **)pointeradress, HIP_SYMBOL(para)) != cudaSuccess) {
+    fprintf(stderr,
+            "Trouble getting address of LB parameters.\n"); // TODO give proper
+                                                            // error message
+    errexit();
+  }
 }
 
 void lb_get_lbpar_pointer(LB_parameters_gpu **pointeradress) {

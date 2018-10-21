@@ -2346,19 +2346,6 @@ void ek_init_species(int species) {
   }
 }
 
-__global__ void copy_ek_parameters_pointer(EK_parameters** ptr) {
-  *ptr = &ek_parameters_gpu[0];
-}
-
-static void fetch_ek_parameters_pointer() {
-  EK_parameters** ptr_gpu;
-  cuda_safe_mem(cudaMalloc((void **)&ptr_gpu, sizeof(EK_parameters*)));
-  KERNELCALL(copy_ek_parameters_pointer, 1, 1, ptr_gpu);
-  cuda_safe_mem(cudaMemcpy(&ek_parameters_gpu_pointer, ptr_gpu,
-                          sizeof(EK_parameters*), cudaMemcpyDeviceToHost));
-  cudaFree(ptr_gpu);
-}
-
 int ek_init() {
   if (ek_parameters.agrid < 0.0 || ek_parameters.viscosity < 0.0 ||
       ek_parameters.T < 0.0 || ek_parameters.prefactor < 0.0) {
@@ -2374,7 +2361,12 @@ int ek_init() {
   dim3 dim_grid;
 
   if (!ek_initialized) {
-    fetch_ek_parameters_pointer();
+    if (cudaGetSymbolAddress((void **)&ek_parameters_gpu_pointer,
+                             HIP_SYMBOL(ek_parameters_gpu)) != cudaSuccess) {
+      fprintf(stderr, "ERROR: Fetching constant memory pointer\n");
+
+      return 1;
+    }
 
     for (int i = 0; i < MAX_NUMBER_OF_SPECIES; i++) {
       ek_parameters.species_index[i] = -1;

@@ -57,5 +57,10 @@
 
 #define make_uint3 dim3
 
+inline cudaError_t cudaGetSymbolAddress(void ** devPtr, const char * symbol) {
+  size_t bytes = 0;
+  return hipModuleGetGlobal(devPtr, &bytes, 0, symbol);
+}
+
 #endif
 

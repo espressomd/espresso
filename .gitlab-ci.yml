@@ -189,12 +189,11 @@ rocm-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/rocm:latest
   script:
-    - export myconfig=maxset
+    - export myconfig=maxset make_check=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
     - linux
-    - rocm
 
 ### Builds with OS X
 
