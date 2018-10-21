@@ -51,7 +51,7 @@ extern LB_nodes_gpu *current_nodes;
 // ** These variables are static in lbgpu_cuda.cu, so we need to duplicate them
 // here They are initialized in ForcesIntoFluid The pointers are on the host,
 // but point into device memory
-LB_parameters_gpu *paraIBM = nullptr;
+LB_parameters_gpu *para_gpu = nullptr;
 float *lb_boundary_velocity_IBM = nullptr;
 
 /****************
@@ -70,7 +70,7 @@ void IBM_ResetLBForces_GPU() {
     dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
     KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block, node_f,
-               paraIBM);
+               para_gpu);
   }
 }
 
@@ -120,7 +120,7 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
 
     KERNELCALL(ForcesIntoFluid_Kernel, dim_grid_particles,
                threads_per_block_particles, IBM_ParticleDataInput_device,
-               node_f, paraIBM);
+               node_f, para_gpu);
   }
 }
 
@@ -139,7 +139,6 @@ void InitCUDA_IBM(const int numParticles) {
       delete[] IBM_ParticleDataOutput_host;
       cuda_safe_mem(cudaFree(IBM_ParticleDataInput_device));
       cuda_safe_mem(cudaFree(IBM_ParticleDataOutput_device));
-      cuda_safe_mem(cudaFree(paraIBM));
       cuda_safe_mem(cudaFree(lb_boundary_velocity_IBM));
     }
 
@@ -153,12 +152,8 @@ void InitCUDA_IBM(const int numParticles) {
                    numParticles * sizeof(IBM_CUDA_ParticleDataOutput)));
     IBM_ParticleDataOutput_host = new IBM_CUDA_ParticleDataOutput[numParticles];
 
-    // Copy parameters to the GPU
-    LB_parameters_gpu *para_gpu;
+    // Use LB parameters
     lb_get_para_pointer(&para_gpu);
-    cuda_safe_mem(cudaMalloc((void **)&paraIBM, sizeof(LB_parameters_gpu)));
-    cuda_safe_mem(cudaMemcpy(paraIBM, para_gpu, sizeof(LB_parameters_gpu),
-                             cudaMemcpyHostToDevice));
 
     // Copy boundary velocities to the GPU
     // First put them into correct format
@@ -294,7 +289,7 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
     KERNELCALL(ParticleVelocitiesFromLB_Kernel, dim_grid_particles,
                threads_per_block_particles, *current_nodes,
                IBM_ParticleDataInput_device, IBM_ParticleDataOutput_device,
-               node_f, lb_boundary_velocity_IBM, paraIBM);
+               node_f, lb_boundary_velocity_IBM, para_gpu);
 
     // Copy velocities from device to host
     cuda_safe_mem(cudaMemcpy(IBM_ParticleDataOutput_host,
