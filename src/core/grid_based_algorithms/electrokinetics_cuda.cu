@@ -2330,9 +2330,9 @@ void ek_gather_wallcharge_species_density(ekfloat *wallcharge_species_density,
                                           int wallcharge_species) {
   if (wallcharge_species != -1) {
     cuda_safe_mem(cudaMemcpy(wallcharge_species_density,
-            ek_parameters.rho[wallcharge_species],
-            ek_parameters.number_of_nodes * sizeof(ekfloat),
-            cudaMemcpyDeviceToHost));
+                             ek_parameters.rho[wallcharge_species],
+                             ek_parameters.number_of_nodes * sizeof(ekfloat),
+                             cudaMemcpyDeviceToHost));
   }
 }
 void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
