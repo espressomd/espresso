@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CUDA_WRAPPER_HPP
+#define CUDA_WRAPPER_HPP
 
 #if defined(__HIPCC__) // AMD or Nvidia via HIP
 
@@ -63,3 +64,5 @@ inline cudaError_t cudaGetSymbolAddress(void **devPtr, const char *symbol) {
 }
 
 #endif
+
+#endif // CUDA_WRAPPER_HPP

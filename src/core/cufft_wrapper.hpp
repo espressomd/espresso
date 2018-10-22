@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CUFFT_WRAPPER_HPP
+#define CUFFT_WRAPPER_HPP
 
 #if defined(__HIPCC__) // AMD or Nvidia via HIP
 
@@ -27,3 +28,5 @@
 #include <cufft.h>
 
 #endif
+
+#endif // CUFFT_WRAPPER_HPP
