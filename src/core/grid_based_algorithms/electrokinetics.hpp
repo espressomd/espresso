@@ -192,6 +192,8 @@ int ek_save_checkpoint(char *filename);
 int ek_load_checkpoint(char *filename);
 
 #ifdef EK_BOUNDARIES
+void ek_gather_wallcharge_species_density(ekfloat *wallcharge_species_density,
+                                          int wallcharge_species);
 void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
                                         int wallcharge_species);
 #endif

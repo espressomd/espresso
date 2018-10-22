@@ -126,6 +126,9 @@ void lb_init_boundaries() {
           break;
         }
 
+      ek_gather_wallcharge_species_density(host_wallcharge_species_density,
+                                           wallcharge_species);
+
       if (wallcharge_species == -1 && charged_boundaries) {
         runtimeErrorMsg()
             << "no charged species available to create wall charge\n";
@@ -145,9 +148,6 @@ void lb_init_boundaries() {
 
 #ifdef EK_BOUNDARIES
           if (ek_initialized) {
-            host_wallcharge_species_density[ek_parameters.dim_y *
-                                                ek_parameters.dim_x * z +
-                                            ek_parameters.dim_x * y + x] = 0.0f;
             node_charged = 0;
             node_wallcharge = 0.0f;
           }
@@ -225,18 +225,6 @@ void lb_init_boundaries() {
                                                     ek_parameters.dim_x * z +
                                                 ek_parameters.dim_x * y + x] =
                     node_wallcharge / ek_parameters.valency[wallcharge_species];
-              else if (dist <= 0)
-                host_wallcharge_species_density[ek_parameters.dim_y *
-                                                    ek_parameters.dim_x * z +
-                                                ek_parameters.dim_x * y + x] =
-                    0.0f;
-              else
-                host_wallcharge_species_density[ek_parameters.dim_y *
-                                                    ek_parameters.dim_x * z +
-                                                ek_parameters.dim_x * y + x] =
-                    ek_parameters.density[wallcharge_species] *
-                    ek_parameters.agrid * ek_parameters.agrid *
-                    ek_parameters.agrid;
             }
           }
 #endif
