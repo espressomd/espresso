@@ -2304,6 +2304,15 @@ void ek_integrate() {
 }
 
 #ifdef EK_BOUNDARIES
+void ek_gather_wallcharge_species_density(ekfloat *wallcharge_species_density,
+                                          int wallcharge_species) {
+  if (wallcharge_species != -1) {
+    cuda_safe_mem(cudaMemcpy(wallcharge_species_density,
+                             ek_parameters.rho[wallcharge_species],
+                             ek_parameters.number_of_nodes * sizeof(ekfloat),
+                             cudaMemcpyDeviceToHost));
+  }
+}
 void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
                                         int wallcharge_species) {
   int threads_per_block = 64;
@@ -2313,7 +2322,6 @@ void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
                           (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(ek_init_species_density_homogeneous, dim_grid, threads_per_block);
   KERNELCALL(ek_clear_boundary_densities, dim_grid, threads_per_block,
              *current_nodes);
 
@@ -2517,13 +2525,6 @@ int ek_init() {
       cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
                                        &ek_parameters, sizeof(EK_parameters)));
 
-#ifdef EK_BOUNDARIES
-      LBBoundaries::lb_init_boundaries();
-      lb_get_boundary_force_pointer(&ek_lb_boundary_force);
-
-      cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
-                                       &ek_parameters, sizeof(EK_parameters)));
-#else
       blocks_per_grid_x = (ek_parameters.number_of_nodes +
                            threads_per_block * blocks_per_grid_y - 1) /
                           (threads_per_block * blocks_per_grid_y);
@@ -2531,6 +2532,13 @@ int ek_init() {
 
       KERNELCALL(ek_init_species_density_homogeneous, dim_grid,
                  threads_per_block);
+
+#ifdef EK_BOUNDARIES
+      LBBoundaries::lb_init_boundaries();
+      lb_get_boundary_force_pointer(&ek_lb_boundary_force);
+
+      cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
+                                       &ek_parameters, sizeof(EK_parameters)));
 #endif
 
       ek_integrate_electrostatics();
