@@ -50,7 +50,7 @@ public:
 
   int grid[3]; /** number of local lattice sites in each direction (excluding
                   halo) */
-  int global_grid[3];
+  Vector3i global_grid;
   double agrid[3]; /** lattice constant */
 
   int halo_grid[3]; /** number of lattice sites in each direction including halo
@@ -129,7 +129,7 @@ public:
    *                   elementary cell, 6 directions (Output)
    * \param tmp_agrid  lattice mesh distance
    */
-  static void map_position_to_lattice_global(Vector3d &pos, int ind[3],
+  static void map_position_to_lattice_global(Vector3d &pos, Vector3i ind,
                                              double delta[6], double tmp_agrid);
 };
 
