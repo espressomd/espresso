@@ -1278,7 +1278,7 @@ int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v) {
   double local_v[3] = {0, 0, 0},
          delta[6]{}; // velocity field, relative positions to surrounding nodes
   Vector3i ind = {0, 0, 0}, tmpind; // node indices
-  int x, y, z;                         // counters
+  int x, y, z;                      // counters
 
   // convert the position into lower left grid point
   if (lattice_switch & LATTICE_LB_GPU) {
