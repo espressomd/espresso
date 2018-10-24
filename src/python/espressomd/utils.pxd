@@ -92,6 +92,10 @@ cdef extern from "<limits>" namespace "std" nogil:
         T max()
 
 cdef extern from "Vector.hpp":
+    cppclass Vector3i:
+        int& operator[](int i)
+        int* data()
+
     cppclass Vector3d:
         double & operator[](int i)
         double * data()
