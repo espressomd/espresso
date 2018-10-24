@@ -47,6 +47,7 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
+#include "grid_based_algorithms/lbgpu.hpp"
 #include "lattice.hpp"
 #include "metadynamics.hpp"
 #include "nemd.hpp"
