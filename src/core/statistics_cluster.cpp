@@ -124,8 +124,7 @@ void cluster_neighbors(int point, const Vector3i &dim, int neighbors[6]) {
 /** hole cluster algorithm.
     returns the number of holes and a list of mesh points belonging to each of
    them */
-int cluster_free_volume_grid(IntList mesh, const Vector3i &dim,
-                             int ***holes) {
+int cluster_free_volume_grid(IntList mesh, const Vector3i &dim, int ***holes) {
   int i = 0, j, k, n = -1, li;
   int neighbors[6];
 
@@ -193,8 +192,8 @@ int cluster_free_volume_grid(IntList mesh, const Vector3i &dim,
 }
 
 /** Calculates the surface to volume ratios of the holes */
-void cluster_free_volume_surface(IntList mesh, const Vector3i &dim,
-                                 int nholes, int **holes, int *surface) {
+void cluster_free_volume_surface(IntList mesh, const Vector3i &dim, int nholes,
+                                 int **holes, int *surface) {
   int i, j, n, neighbors[6], inner;
 
   for (i = 0; i < nholes; i++)

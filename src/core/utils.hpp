@@ -266,8 +266,7 @@ inline int get_linear_index(int a, int b, int c, const Vector3i &adim) {
  * @param c       z position (return value)
  * @param adim    dimensions of the underlying grid
  */
-inline void get_grid_pos(int i, int *a, int *b, int *c,
-                         const Vector3i &adim) {
+inline void get_grid_pos(int i, int *a, int *b, int *c, const Vector3i &adim) {
   *a = i % adim[0];
   i /= adim[0];
   *b = i % adim[1];
