@@ -22,6 +22,7 @@ from libcpp cimport bool
 from libcpp.vector cimport vector
 from .actors cimport Actor
 from .utils cimport Vector3d
+from .utils cimport Vector3i
 
 cdef class HydrodynamicInteraction(Actor):
     pass
@@ -93,14 +94,15 @@ IF LB_GPU or LB:
         int lb_lbfluid_load_checkpoint(char * filename, int binary)
         int lb_set_lattice_switch(int py_switch)
         int lb_get_lattice_switch(int * py_switch)
-        int lb_lbnode_get_u(int * coord, double * double_return)
-        int lb_lbnode_set_u(int * ind, double * u);
-        int lb_lbnode_get_rho(int * coord, double * double_return)
-        int lb_lbnode_get_pi(int * coord, double * double_return)
-        int lb_lbnode_get_pi_neq(int * coord, double * double_return)
-        int lb_lbnode_get_pop(int * coord, double * double_return)
-        int lb_lbnode_set_pop(int * coord, double * double_return)
-        int lb_lbnode_get_boundary(int * coord, int * int_return)
+        bool lb_lbnode_is_index_valid(const Vector3i& ind)
+        int lb_lbnode_get_u(const Vector3i& ind, double * double_return)
+        int lb_lbnode_set_u(const Vector3i& ind, double * u);
+        int lb_lbnode_get_rho(const Vector3i& ind, double * double_return)
+        int lb_lbnode_get_pi(const Vector3i& ind, double * double_return)
+        int lb_lbnode_get_pi_neq(const Vector3i& ind, double * double_return)
+        int lb_lbnode_get_pop(const Vector3i& ind, double * double_return)
+        int lb_lbnode_set_pop(const Vector3i& ind, double * double_return)
+        int lb_lbnode_get_boundary(const Vector3i& ind, int * int_return)
         int lb_lbfluid_set_couple_flag(int c_couple_flag)
         int lb_lbfluid_get_couple_flag(int * c_couple_flag)
         int lb_lbfluid_get_interpolated_velocity_global(Vector3d & p, double * v)
