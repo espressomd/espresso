@@ -172,6 +172,22 @@ class TestLB(object):
         np.testing.assert_allclose(
             np.copy(self.lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
 
+    def test_grid_index(self):
+        self.system.actors.clear()
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step,
+            fric=self.params['friction'], ext_force_density=[0, 0, 0])
+        self.system.actors.add(self.lbf)
+        with self.assertRaises(ValueError):
+            v = self.lbf[int(self.params['box_l']/self.params['agrid'])+1, 0, 0].velocity
+        with self.assertRaises(ValueError):
+            v = self.lbf[0, int(self.params['box_l']/self.params['agrid'])+1, 0].velocity
+        with self.assertRaises(ValueError):
+            v = self.lbf[0, 0, int(self.params['box_l']/self.params['agrid'])+1].velocity
+
     @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
                "Features not available, skipping test!")
     def test_viscous_coupling(self):
