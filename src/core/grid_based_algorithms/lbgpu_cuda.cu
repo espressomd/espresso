@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <vector>
 
+#include "Vector.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "debug.hpp"
@@ -4703,7 +4704,8 @@ __global__ void lb_lbfluid_set_population_kernel(LB_nodes_gpu n_a,
  * @param population_host     Pointer to population (Input)
  * @param c              LB component (for SHANCHEN) (Input)
  */
-void lb_lbfluid_set_population(int xyz[3], float population_host[LBQ], int c) {
+void lb_lbfluid_set_population(const Vector3i &xyz,
+                               float population_host[LBQ], int c) {
   float *population_device;
   cuda_safe_mem(cudaMalloc((void **)&population_device, LBQ * sizeof(float)));
   cuda_safe_mem(cudaMemcpy(population_device, population_host,
@@ -4740,7 +4742,8 @@ __global__ void lb_lbfluid_get_population_kernel(LB_nodes_gpu n_a,
  * @param population_host     Pointer to population (Output)
  * @param c              LB component (for SHANCHEN) (Input)
  */
-void lb_lbfluid_get_population(int xyz[3], float population_host[LBQ], int c) {
+void lb_lbfluid_get_population(const Vector3i &xyz,
+                               float population_host[LBQ], int c) {
   float *population_device;
   cuda_safe_mem(cudaMalloc((void **)&population_device, LBQ * sizeof(float)));
 
