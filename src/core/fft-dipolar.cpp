@@ -98,7 +98,8 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
   for (i = 0; i < n_nodes; i++) {
     map_node_array(i, &(n_pos[0][3 * i + 0]));
     n_id[0][get_linear_index(n_pos[0][3 * i + 0], n_pos[0][3 * i + 1],
-                             n_pos[0][3 * i + 2], n_grid[0])] = i;
+                             n_pos[0][3 * i + 2],
+                             {n_grid[0][0], n_grid[0][1], n_grid[0][2]})] = i;
   }
 
   /* FFT node grids (n_grid[1 - 3]) */
@@ -120,18 +121,20 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
   for (i = 0; i < 3; i++)
     dfft.plan[0].new_mesh[i] = local_mesh_dim[i];
   for (i = 1; i < 4; i++) {
-    dfft.plan[i].g_size =
-        fft_find_comm_groups(n_grid[i - 1], n_grid[i], n_id[i - 1], n_id[i],
-                             dfft.plan[i].group, n_pos[i], my_pos[i]);
+    dfft.plan[i].g_size = fft_find_comm_groups(
+        {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+        {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+        dfft.plan[i].group, n_pos[i], my_pos[i]);
     if (dfft.plan[i].g_size == -1) {
       /* try permutation */
       j = n_grid[i][(dfft.plan[i].row_dir + 1) % 3];
       n_grid[i][(dfft.plan[i].row_dir + 1) % 3] =
           n_grid[i][(dfft.plan[i].row_dir + 2) % 3];
       n_grid[i][(dfft.plan[i].row_dir + 2) % 3] = j;
-      dfft.plan[i].g_size =
-          fft_find_comm_groups(n_grid[i - 1], n_grid[i], n_id[i - 1], n_id[i],
-                               dfft.plan[i].group, n_pos[i], my_pos[i]);
+      dfft.plan[i].g_size = fft_find_comm_groups(
+          {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+          dfft.plan[i].group, n_pos[i], my_pos[i]);
       if (dfft.plan[i].g_size == -1) {
         fprintf(stderr,
                 "%d: dipolar INTERNAL ERROR: fft_find_comm_groups error\n",

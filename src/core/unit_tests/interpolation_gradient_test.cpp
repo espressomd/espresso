@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(interpolation_gradient_vec_integration_test_odd) {
   Vector3d x0[2] = {0.12 * a, -3. * a};
   auto const sigma = Vector2d{2., 3.};
 
-  boost::multi_array<Vector2d, 3> data(Vector<3, int>{10, 10, 10});
+  boost::multi_array<Vector2d, 3> data(Vector3i{10, 10, 10});
   for (int i = 0; i < 10; i++)
     for (int j = 0; j < 10; j++)
       for (int k = 0; k < 10; k++) {

@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
   /* Ctor */
   {
-    boost::multi_array<double, 3> data(Vector<3, int>{10, 11, 12});
+    boost::multi_array<double, 3> data(Vector3i{10, 11, 12});
     data[5][5][5] = -1. / 12.;
 
     const Vector3d grid_spacing = {.1, .2, .3};
@@ -327,7 +327,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
     auto const sigma = Vector2d{2., 3.};
 
     boost::multi_array<Vector2d, 3> data(
-        Vector<3, int>{n_nodes, n_nodes, n_nodes});
+        Vector3i{n_nodes, n_nodes, n_nodes});
     for (int i = 0; i < n_nodes; i++)
       for (int j = 0; j < n_nodes; j++)
         for (int k = 0; k < n_nodes; k++) {
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
     auto const sigma = Vector2d{2., 3.};
 
     boost::multi_array<Vector2d, 3> data(
-        Vector<3, int>{n_nodes, n_nodes, n_nodes});
+        Vector3i{n_nodes, n_nodes, n_nodes});
     for (int i = 0; i < n_nodes; i++)
       for (int j = 0; j < n_nodes; j++)
         for (int k = 0; k < n_nodes; k++) {

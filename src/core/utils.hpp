@@ -250,7 +250,7 @@ inline ::Vector<3, double> vec_rotate(const ::Vector<3, double> &axis,
  * @param c       z position
  * @param adim    dimensions of the underlying grid
  */
-inline int get_linear_index(int a, int b, int c, const int adim[3]) {
+inline int get_linear_index(int a, int b, int c, const Vector3i &adim) {
   assert((a >= 0) && (a < adim[0]));
   assert((b >= 0) && (b < adim[1]));
   assert((c >= 0) && (c < adim[2]));
@@ -266,7 +266,8 @@ inline int get_linear_index(int a, int b, int c, const int adim[3]) {
  * @param c       z position (return value)
  * @param adim    dimensions of the underlying grid
  */
-inline void get_grid_pos(int i, int *a, int *b, int *c, int adim[3]) {
+inline void get_grid_pos(int i, int *a, int *b, int *c,
+                         const Vector3i &adim) {
   *a = i % adim[0];
   i /= adim[0];
   *b = i % adim[1];
