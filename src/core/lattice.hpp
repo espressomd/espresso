@@ -130,7 +130,7 @@ public:
    *                   elementary cell, 6 directions (Output)
    * \param tmp_agrid  lattice mesh distance
    */
-  static void map_position_to_lattice_global(Vector3d &pos, Vector3i ind,
+  static void map_position_to_lattice_global(Vector3d &pos, Vector3i &ind,
                                              double delta[6], double tmp_agrid);
 };
 
