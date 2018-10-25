@@ -133,7 +133,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
 
 /********************** static Functions **********************/
 
-void Lattice::map_position_to_lattice_global(Vector3d &pos, Vector3i ind,
+void Lattice::map_position_to_lattice_global(Vector3d &pos, Vector3i &ind,
                                              double delta[6],
                                              double tmp_agrid) {
   // not sure why I don't have access to agrid here so I make a temp var and
