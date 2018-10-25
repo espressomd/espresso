@@ -3,7 +3,6 @@ image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:18.04
 stages:
   - permission
   - prepare
-  - pre_build_checks
   - build
   - additional_checks
   - deploy
@@ -33,7 +32,7 @@ status_pending:
     - linux
 
 style:
-  stage: pre_build_checks
+  stage: prepare
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
   dependencies: []
   before_script:
