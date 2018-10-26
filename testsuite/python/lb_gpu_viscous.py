@@ -24,7 +24,7 @@ import espressomd.lb
 
 @ut.skipIf(
     not espressomd.has_features(
-        ['LB_GPU']) or espressomd.has_features("SHANCHEN"),
+        ['LB_GPU', 'EXTERNAL_FORCES']) or espressomd.has_features("SHANCHEN"),
            "Features not available, skipping test!")
 class LBGPUViscous(ut.TestCase):
     system = espressomd.System(box_l=[10.0] * 3)
