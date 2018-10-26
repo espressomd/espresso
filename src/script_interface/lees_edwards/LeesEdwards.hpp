@@ -13,12 +13,12 @@ public:
     add_parameters(
 	{{"type", lees_edwards_protocol.type},
 	 {"time0", lees_edwards_protocol.time0},
-         {"offset", lees_edwards_protocol.offset},
-         {"velocity", lees_edwards_protocol.velocity},
-         {"amplitude", lees_edwards_protocol.amplitude},
-         {"frequency", lees_edwards_protocol.frequency},
-         {"sheardir", lees_edwards_protocol.sheardir},
-         {"shearplanenormal", lees_edwards_protocol.shearplanenormal}});
+   {"offset", lees_edwards_protocol.offset},
+   {"velocity", lees_edwards_protocol.velocity},
+   {"amplitude", lees_edwards_protocol.amplitude},
+   {"frequency", lees_edwards_protocol.frequency},
+   {"sheardir", lees_edwards_protocol.sheardir},
+   {"shearplanenormal", lees_edwards_protocol.shearplanenormal}});
   };
 
 }; // Class LeesEdwards

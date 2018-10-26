@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(
     description=__doc__,
     formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument(
-    "protocol_type",
+    "protocol",
     choices=[
         "steady_shear",
         "oscillatory_shear",
@@ -60,7 +60,7 @@ pos = system.box_l * np.random.random((n_part, 3))
 system.part.add(pos=pos)
 
 if args.protocol == 'steady_shear':
-    system.lees_edwards.set_params(type=args.protocol_type, velocity=args.parameters[0])
+    system.lees_edwards.set_params(type=args.protocol, velocity=args.parameters[0])
 else:
     raise Exception('not impl')
 

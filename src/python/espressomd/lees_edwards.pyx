@@ -81,6 +81,7 @@ class LeesEdwards(ScriptInterfaceHelper):
                Direction normal to the shear flow
 
         """
+        kwargs["type"] = lees_edwards_type_dict[kwargs["type"]]
 
         if not ("type" in kwargs):
             raise Exception(
@@ -94,20 +95,18 @@ class LeesEdwards(ScriptInterfaceHelper):
                 raise Exception('No velocity given for steady shear')
         elif kwargs['type'] == 'oscillatory_shear':
             if 'amplitude' not in kwargs or 'frequency' not in kwargs:
-                raise Exception('No velocity given for oscillatory shear')
+                raise Exception('No amplitude or frequency given for oscillatory shear')
         else:
-            raise Exception('Lees-Edwards protocol '+kwargs['type']+' unknown')
+            raise Exception('Lees-Edwards protocol '+ str(kwargs['type']) +' unknown')
 
         if 'sheardir' not in kwargs:
             kwargs['sheardir'] = 0
 
         if 'shearplanenormal' not in kwargs:
-            kwargs['sheardir'] = 1
+            kwargs['shearplanenormal'] = 1
 
         kwargs['time0'] = sim_time
 
-        kwargs["type"] = lees_edwards_type_dict[kwargs["type"]]
-            
         super(type(self), self).set_params(**kwargs)
 
         self.validate()
@@ -131,12 +130,7 @@ class LeesEdwards(ScriptInterfaceHelper):
         return {k: res[k] for k in self._params_for_mode(res["type"])}
 
     def _convert_param(self, name, value):
-        """Handles type conversion core -> python
-
-            Bond types: int -> BondedInteraction
-            mode: int -> string
-
-            """
+        """Handles type conversion core -> python"""
         # Py3: Cast from binary to normal string. Don't understand, why a
         # binary string can even occur, here, but it does.
         name = to_str(name)
@@ -160,7 +154,7 @@ class LeesEdwards(ScriptInterfaceHelper):
         if type == "oscillatory":
             return ("type", "amplitude", "frequency", "sheardir", "shearplanenormal")
 
-        raise Exception("Type not hanled: " + type.__str__())
+        raise Exception("Type not handled: " + type.__str__())
 
     def _str_type(self, int_type):
         """String type name from int ones provided by the core

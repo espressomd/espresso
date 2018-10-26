@@ -28,6 +28,7 @@
 #endif
 #include "accumulators/initialize.hpp"
 #include "collision_detection/initialize.hpp"
+#include "lees_edwards/initialize.hpp"
 #include "lbboundaries/initialize.hpp"
 #include "mpiio/initialize.hpp"
 #include "observables/initialize.hpp"
@@ -58,6 +59,7 @@ void initialize() {
   VirtualSites::initialize();
   MPIIO::initialize();
   CollisionDetection::initialize();
+  LeesEdwards::initialize();
 
   ScriptInterface::register_new<Testing::VariantTester>(
       "Testing::VariantTester");
