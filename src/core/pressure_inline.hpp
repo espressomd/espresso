@@ -422,9 +422,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
       i = i + 2;
     }
 #endif
-    else if (type == BONDED_IA_ANGLEDIST) {
-      i = i + 3;
-    } else if (type == BONDED_IA_DIHEDRAL) {
+    else if (type == BONDED_IA_DIHEDRAL) {
       i = i + 4;
     }
 #ifdef TABULATED
