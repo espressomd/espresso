@@ -11,7 +11,7 @@ enum LeesEdwardsProtocolType {
 };
 
 typedef struct {
-  LeesEdwardsProtocolType type;
+  int type;
   double time0;
   double offset;
   double velocity;

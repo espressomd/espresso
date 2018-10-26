@@ -59,7 +59,10 @@ system.non_bonded_inter[0, 0].hat.set_params(F_max=F_max,
 pos = system.box_l * np.random.random((n_part, 3))
 system.part.add(pos=pos)
 
-system.lees_edwards = [args.protocol_type, *args.parameters]
+if args.protocol == 'steady_shear':
+    system.lees_edwards.set_params(type=args.protocol_type, velocity=args.parameters[0])
+else:
+    raise Exception('not impl')
 
 # for i in range(1000):
 #  system.integrator.run(steps=100)
