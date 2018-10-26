@@ -12,7 +12,7 @@ lees_edwards_type_dict = {'off': LEES_EDWARDS_PROTOCOL_OFF,
 @script_interface_register
 class LeesEdwards(ScriptInterfaceHelper):
 
-    """Inteface to the Lees-Edwards binding.
+    """Interface to the Lees-Edwards binding.
 
        See documentation.
 
@@ -81,12 +81,12 @@ class LeesEdwards(ScriptInterfaceHelper):
                Direction normal to the shear flow
 
         """
-        kwargs["type"] = lees_edwards_type_dict[kwargs["type"]]
 
         if not ("type" in kwargs):
             raise Exception(
                 "Lees-Edwards protocol type must be specified via the type keyword argument")
-
+        if kwargs['type'] == 'off':
+            return
         if kwargs['type'] == 'step':
             if 'offset' not in kwargs:
                 raise Exception('No offset given for step strain')
@@ -97,7 +97,7 @@ class LeesEdwards(ScriptInterfaceHelper):
             if 'amplitude' not in kwargs or 'frequency' not in kwargs:
                 raise Exception('No amplitude or frequency given for oscillatory shear')
         else:
-            raise Exception('Lees-Edwards protocol '+ str(kwargs['type']) +' unknown')
+            raise Exception('Lees-Edwards protocol '+ kwargs['type'] +' unknown')
 
         if 'sheardir' not in kwargs:
             kwargs['sheardir'] = 0
@@ -106,6 +106,8 @@ class LeesEdwards(ScriptInterfaceHelper):
             kwargs['shearplanenormal'] = 1
 
         kwargs['time0'] = sim_time
+
+        kwargs['type'] = lees_edwards_type_dict[kwargs['type']]
 
         super(type(self), self).set_params(**kwargs)
 
