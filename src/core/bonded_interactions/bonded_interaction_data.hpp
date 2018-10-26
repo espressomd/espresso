@@ -36,9 +36,6 @@ enum BondedInteraction {
   BONDED_IA_RIGID_BOND,
   /** Type of a virtual bond*/
   BONDED_IA_VIRTUAL_BOND,
-  /** Type of bonded interaction is a bond angle -- constraint distance
-     potential. */
-  BONDED_IA_ANGLEDIST,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
   /** Type of bonded interaction is a bond angle cosine potential. */

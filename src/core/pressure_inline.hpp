@@ -188,10 +188,6 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
     (*i)++;
     force[0] = force[1] = force[2] = 0;
     break;
-  case BONDED_IA_ANGLEDIST:
-    (*i)++;
-    force[0] = force[1] = force[2] = 0;
-    break;
   case BONDED_IA_DIHEDRAL:
     (*i) += 2;
     force[0] = force[1] = force[2] = 0;
