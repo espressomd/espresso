@@ -56,11 +56,11 @@ std::pair<double, double> Cylinder::dist_half_pore(double r, double z) const {
   }
 }
 
-int Cylinder::calculate_dist(const double *ppos, double *dist,
-                             double *vec) const {
+void Cylinder::calculate_dist(const Vector3d &pos, double *dist,
+                              double *vec) const {
   /* Coordinate transform to cylinder coords
      with origin at m_center. */
-  Vector3d const c_dist = Vector3d(ppos, ppos + 3) - m_center;
+  Vector3d const c_dist = pos - m_center;
   auto const z = e_z * c_dist;
   auto const r_vec = c_dist - z * e_z;
   auto const r = r_vec.norm();
@@ -87,7 +87,5 @@ int Cylinder::calculate_dist(const double *ppos, double *dist,
   for (int i = 0; i < 3; i++) {
     vec[i] = (-dr * e_r[i] + -dz * e_z[i]);
   }
-
-  return 0;
 }
 } // namespace Shapes

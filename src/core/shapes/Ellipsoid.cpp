@@ -25,11 +25,11 @@
 #include <cmath>
 
 namespace Shapes {
-int Ellipsoid::calculate_dist(const double *ppos, double *dist,
-                              double *vec) const {
+void Ellipsoid::calculate_dist(const Vector3d &pos, double *dist,
+                               double *vec) const {
 
   /* get particle position in reference frame of ellipsoid */
-  Vector3d const ppos_e = Vector3d(ppos, ppos + 3) - m_center;
+  Vector3d const ppos_e = pos - m_center;
 
   /* set appropriate initial point for Newton's method */
   double l0, l = 0.;
@@ -63,8 +63,6 @@ int Ellipsoid::calculate_dist(const double *ppos, double *dist,
   }
 
   *dist = distance_prefactor * m_direction * std::sqrt(distance);
-
-  return 0;
 }
 
 bool Ellipsoid::inside_ellipsoid(const Vector3d &ppos) const {
