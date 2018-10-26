@@ -545,10 +545,6 @@ following features.
 
 -  ``BOND_ANGLE``
 
--  ``BOND_ANGLEDIST``
-
--  ``BOND_ANGLEDIST_HARMONIC``
-
 -  ``LJGEN_SOFTCORE``
 
 -  ``COS2``
