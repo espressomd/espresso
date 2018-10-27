@@ -579,7 +579,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_SUBT_LJ,
         BONDED_IA_RIGID_BOND,
         BONDED_IA_VIRTUAL_BOND,
-        BONDED_IA_ANGLEDIST,
         BONDED_IA_ANGLE_HARMONIC,
         BONDED_IA_ANGLE_COSINE,
         BONDED_IA_ANGLE_COSSQUARE,

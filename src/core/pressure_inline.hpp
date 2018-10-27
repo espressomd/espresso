@@ -188,10 +188,6 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
     (*i)++;
     force[0] = force[1] = force[2] = 0;
     break;
-  case BONDED_IA_ANGLEDIST:
-    (*i)++;
-    force[0] = force[1] = force[2] = 0;
-    break;
   case BONDED_IA_DIHEDRAL:
     (*i) += 2;
     force[0] = force[1] = force[2] = 0;
@@ -426,9 +422,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
       i = i + 2;
     }
 #endif
-    else if (type == BONDED_IA_ANGLEDIST) {
-      i = i + 3;
-    } else if (type == BONDED_IA_DIHEDRAL) {
+    else if (type == BONDED_IA_DIHEDRAL) {
       i = i + 4;
     }
 #ifdef TABULATED

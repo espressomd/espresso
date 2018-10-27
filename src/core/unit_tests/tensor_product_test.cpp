@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(square) {
 }
 
 BOOST_AUTO_TEST_CASE(non_square) {
-  Vector<3, int> x{1, 2, 3};
+  Vector3i x{1, 2, 3};
   Vector<4, int> y{5, 6, 7, 8};
 
   using expected_type = Vector<3, Vector<4, int>>;
