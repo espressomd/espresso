@@ -116,9 +116,6 @@ MEMBRANE_COLLISION
 
 BOND_ANGLE                      requires not BOND_ANGLE_OLD
 
-BOND_ANGLEDIST
-BOND_ANGLEDIST_HARMONIC         implies BOND_ANGLEDIST
-
 /* Immersed-Boundary Bayreuth version */
 IMMERSED_BOUNDARY
 IMMERSED_BOUNDARY               requires VIRTUAL_SITES

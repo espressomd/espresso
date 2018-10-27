@@ -25,7 +25,6 @@
 
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
-#include "bonded_interactions/angle_dist.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
 #include "bonded_interactions/dihedral.hpp"
@@ -615,11 +614,6 @@ inline void add_bonded_force(Particle *p1) {
         if (iaparams->num == 2)
           bond_broken =
               calc_tab_angle_force(p1, p2, p3, iaparams, force, force2);
-        break;
-#endif
-#ifdef BOND_ANGLEDIST
-      case BONDED_IA_ANGLEDIST:
-        bond_broken = calc_angledist_force(p1, p2, p3, iaparams, force, force2);
         break;
 #endif
 #ifdef IMMERSED_BOUNDARY
