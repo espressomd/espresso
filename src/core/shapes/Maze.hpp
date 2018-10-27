@@ -29,8 +29,8 @@ class Maze : public Shape {
 public:
   Maze() : m_nsphere(0), m_dim(0), m_sphrad(0), m_cylrad(0) {}
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 
   int &nsphere() { return m_nsphere; }
   double &dim() { return m_dim; }

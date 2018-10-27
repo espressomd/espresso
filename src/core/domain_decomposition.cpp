@@ -258,7 +258,9 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
   for (o = lc[0]; o <= hc[0]; o++)
     for (n = lc[1]; n <= hc[1]; n++)
       for (m = lc[2]; m <= hc[2]; m++) {
-        i = get_linear_index(o, n, m, dd.ghost_cell_grid);
+        i = get_linear_index(o, n, m,
+                             {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
+                              dd.ghost_cell_grid[2]});
         CELL_TRACE(fprintf(stderr, "%d: dd_fill_comm_cell_list: add cell %d\n",
                            this_node, i));
         part_lists[c] = &cells[i];
@@ -512,7 +514,9 @@ void dd_init_cell_interactions() {
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
 
-    ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
+    ind1 = get_linear_index(
+        m, n, o,
+        {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]});
 
     std::vector<Cell *> red_neighbors;
     std::vector<Cell *> black_neighbors;
@@ -531,7 +535,9 @@ void dd_init_cell_interactions() {
     for (p = lower_index[2]; p <= upper_index[2]; p++)
       for (q = lower_index[1]; q <= upper_index[1]; q++)
         for (r = lower_index[0]; r <= upper_index[0]; r++) {
-          ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
+          ind2 = get_linear_index(r, q, p,
+                                  {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
+                                   dd.ghost_cell_grid[2]});
           if (ind2 > ind1) {
             red_neighbors.push_back(&cells[ind2]);
           } else {
@@ -569,8 +575,9 @@ Cell *dd_save_position_to_cell(const Vector3d &pos) {
     }
   }
 
-  auto const ind =
-      get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
+  auto const ind = get_linear_index(
+      cpos[0], cpos[1], cpos[2],
+      {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]});
   return &(cells[ind]);
 }
 

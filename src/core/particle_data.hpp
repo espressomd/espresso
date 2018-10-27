@@ -286,7 +286,7 @@ struct ParticleLocal {
   /** position in the last time step before last Verlet list update. */
   Vector3d p_old = {0, 0, 0};
   /** index of the simulation box image where the particle really sits. */
-  Vector<3, int> i = {0, 0, 0};
+  Vector3i i = {0, 0, 0};
 
   /** check whether a particle is a ghost or not */
   int ghost = 0;
