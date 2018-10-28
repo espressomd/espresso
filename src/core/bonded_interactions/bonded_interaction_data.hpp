@@ -246,10 +246,6 @@ struct Rigid_bond_parameters {
         dist0 - equilibrium distance (no default) */
 struct Angledist_bond_parameters {
   double bend;
-  double phimin;
-  double distmin;
-  double phimax;
-  double distmax;
   double cos_phi0;
   double sin_phi0;
 };
@@ -331,7 +327,6 @@ union Bond_parameters {
 #endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
-  Angledist_bond_parameters angledist;
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;
