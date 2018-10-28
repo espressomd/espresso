@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "errorhandling.hpp"
 #include "lattice.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
+#include <algorithm>
 
 void VirtualSitesInertialessTracers::after_force_calc() {
   // Now the forces are computed and need to go into the LB fluid
@@ -39,12 +40,12 @@ void VirtualSitesInertialessTracers::after_force_calc() {
     return;
   }
 #endif
-  for (auto &p : local_cells.particles()) {
-    if (p.p.is_virtual) {
-      runtimeErrorMsg() << "Inertialess Tracers: No LB method was active but "
-                           "virtual sites present.";
-      return;
-    }
+  if (std::any_of(local_cells.particles().begin(),
+                  local_cells.particles().end(),
+                  [](Particle &p) { return p.p.is_virtual != 0; })) {
+    runtimeErrorMsg() << "Inertialess Tracers: No LB method was active but "
+                         "virtual sites present.";
+    return;
   }
 }
 
