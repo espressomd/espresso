@@ -39,7 +39,13 @@ void VirtualSitesInertialessTracers::after_force_calc() {
     return;
   }
 #endif
-  runtimeErrorMsg() << "Inertialess Tracers: No LB method was active.";
+  for (auto &p : local_cells.particles()) {
+    if (p.p.is_virtual) {
+      runtimeErrorMsg() << "Inertialess Tracers: No LB method was active but "
+                           "virtual sites present.";
+      return;
+    }
+  }
 }
 
 void VirtualSitesInertialessTracers::after_lb_propagation() {
