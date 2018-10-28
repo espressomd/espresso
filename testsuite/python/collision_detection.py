@@ -52,11 +52,10 @@ class CollisionDetection(ut.TestCase):
     part_type_after_glueing = 3
     other_type = 5
 
-
     def get_state_set_state_consistency(self):
-        state=self.s.collision_detection.get_params()
+        state = self.s.collision_detection.get_params()
         self.s.collision_detection.set_params(**state)
-        self.assertEqual(state,self.s.collision_detection.get_params())
+        self.assertEqual(state, self.s.collision_detection.get_params())
 
     def test_00_interface_and_defaults(self):
         # Is it off by default
@@ -730,14 +729,12 @@ class CollisionDetection(ut.TestCase):
     def test_zz_serialization(self):
         self.s.collision_detection.set_params(
             mode="bind_centers", distance=0.11, bond_centers=self.H)
-        reduce=self.s.collision_detection.__reduce__()
-        res=reduce[0](reduce[1][0])
-        self.assertEqual(res.__class__.__name__,"CollisionDetection")
-        self.assertEqual(res.mode,"bind_centers")
-        self.assertAlmostEqual(res.distance,0.11,delta=1E-9)
-        self.assertEqual(res.bond_centers,self.H)
-
-
+        reduce = self.s.collision_detection.__reduce__()
+        res = reduce[0](reduce[1][0])
+        self.assertEqual(res.__class__.__name__, "CollisionDetection")
+        self.assertEqual(res.mode, "bind_centers")
+        self.assertAlmostEqual(res.distance, 0.11, delta=1E-9)
+        self.assertEqual(res.bond_centers, self.H)
 
 
 if __name__ == "__main__":
