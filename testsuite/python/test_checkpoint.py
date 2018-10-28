@@ -112,6 +112,17 @@ class CheckpointTest(ut.TestCase):
     def test_p3m(self):
         self.assertTrue(any(isinstance(actor, espressomd.electrostatics.P3M)
                             for actor in system.actors.active_actors))
+    
+    
+    
+    @ut.skipIf(not espressomd.has_features("COLLISION_DETECTION"),"skipped for missing features")
+    def test_collision_detection(self):
+        coldet=system.collision_detection
+        self.assertEqual(coldet.mode,"bind_centers")
+        self.assertAlmostEqual(coldet.distance,0.11,delta=1E-9)
+        self.assertTrue(coldet.bond_centers,system.bonded_inter[0])
+
+
 
 
 if __name__ == '__main__':

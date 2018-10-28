@@ -731,7 +731,7 @@ class CollisionDetection(ut.TestCase):
         self.s.collision_detection.set_params(
             mode="bind_centers", distance=0.11, bond_centers=self.H)
         reduce=self.s.collision_detection.__reduce__()
-        res=reduce[0](reduce[1])
+        res=reduce[0](reduce[1][0])
         self.assertEqual(res.__class__.__name__,"CollisionDetection")
         self.assertEqual(res.mode,"bind_centers")
         self.assertAlmostEqual(res.distance,0.11,delta=1E-9)
