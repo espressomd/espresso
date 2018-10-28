@@ -77,6 +77,7 @@ struct DomainDecomposition {
   double cell_size[3];
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   double inv_cell_size[3];
+  bool fully_connected[3];
 };
 
 /************************************************************/

@@ -16,6 +16,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#include "cuda_wrapper.hpp"
+
 #include "HarmonicOrientationWell.hpp"
 
 #include "cuda_utils.hpp"
@@ -75,6 +78,6 @@ void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k,
     block.x = 512;
   }
 
-  KERNELCALL(HarmonicOrientationWell_kernel, grid, block,
-             (x, y, z, k, n, director, torque))
+  KERNELCALL(HarmonicOrientationWell_kernel, grid, block, x, y, z, k, n,
+             director, torque)
 }

@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "cuda_wrapper.hpp"
+
 #include "EspressoSystemInterface.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
@@ -178,27 +180,28 @@ void EspressoSystemInterface::split_particle_struct() {
   dim3 block(512, 1, 1);
 
   if (m_needsQGpu && m_needsRGpu)
-    split_kernel_rq<<<grid, block>>>(gpu_get_particle_pointer(), m_r_gpu_begin,
-                                     m_q_gpu_begin, n);
+    hipLaunchKernelGGL(split_kernel_rq, dim3(grid), dim3(block), 0, 0,
+                       gpu_get_particle_pointer(), m_r_gpu_begin, m_q_gpu_begin,
+                       n);
   if (m_needsQGpu && !m_needsRGpu)
-    split_kernel_q<<<grid, block>>>(gpu_get_particle_pointer(), m_q_gpu_begin,
-                                    n);
+    hipLaunchKernelGGL(split_kernel_q, dim3(grid), dim3(block), 0, 0,
+                       gpu_get_particle_pointer(), m_q_gpu_begin, n);
   if (!m_needsQGpu && m_needsRGpu)
-    split_kernel_r<<<grid, block>>>(gpu_get_particle_pointer(), m_r_gpu_begin,
-                                    n);
+    hipLaunchKernelGGL(split_kernel_r, dim3(grid), dim3(block), 0, 0,
+                       gpu_get_particle_pointer(), m_r_gpu_begin, n);
 #ifdef LB_GPU
   if (m_needsVGpu)
-    split_kernel_v<<<grid, block>>>(gpu_get_particle_pointer(), m_v_gpu_begin,
-                                    n);
+    hipLaunchKernelGGL(split_kernel_v, dim3(grid), dim3(block), 0, 0,
+                       gpu_get_particle_pointer(), m_v_gpu_begin, n);
 #endif
 #ifdef DIPOLES
   if (m_needsDipGpu)
-    split_kernel_dip<<<grid, block>>>(gpu_get_particle_pointer(),
-                                      m_dip_gpu_begin, n);
+    hipLaunchKernelGGL(split_kernel_dip, dim3(grid), dim3(block), 0, 0,
+                       gpu_get_particle_pointer(), m_dip_gpu_begin, n);
 
 #endif
 
   if (m_needsDirectorGpu)
-    split_kernel_director<<<grid, block>>>(gpu_get_particle_pointer(),
-                                           m_director_gpu_begin, n);
+    hipLaunchKernelGGL(split_kernel_director, dim3(grid), dim3(block), 0, 0,
+                       gpu_get_particle_pointer(), m_director_gpu_begin, n);
 }

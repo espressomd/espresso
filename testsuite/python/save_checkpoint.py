@@ -44,7 +44,13 @@ if espressomd.has_features('ELECTROSTATICS'):
     system.part[0].q = 1
     system.part[1].q = -1
     p3m = espressomd.electrostatics.P3M(
-        prefactor=1.0, accuracy=0.1, mesh=10, cao=1, alpha=1.0, r_cut=1.0, tune=False)
+        prefactor=1.0,
+        accuracy=0.1,
+        mesh=10,
+        cao=1,
+        alpha=1.0,
+        r_cut=1.0,
+        tune=False)
     system.actors.add(p3m)
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
 acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
@@ -56,8 +62,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=2.0)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
-        have_velocity=True,
-                                                                        have_quaternion=True)
+        have_velocity=True, have_quaternion=True)
     system.part[1].vs_auto_relate_to(0)
 if espressomd.has_features(['LENNARD_JONES']):
     system.non_bonded_inter[0, 0].lennard_jones.set_params(

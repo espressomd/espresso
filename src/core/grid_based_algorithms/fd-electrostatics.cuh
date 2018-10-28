@@ -19,18 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef _FD_ELECTROSTATICS_HPP
 #define _FD_ELECTROSTATICS_HPP
 
-#ifdef __CUDACC__
-
-#include <cuda.h>
-#include <cufft.h>
-
-#else
-
-typedef void cufftComplex;
-typedef void cufftReal;
-
-#endif
-
 #define PI_FLOAT 3.14159265358979323846f
 
 class FdElectrostatics {
@@ -77,8 +65,6 @@ private:
   bool initialized;
 };
 
-#ifdef __CUDACC__
-
 // extern __device__ __constant__ FdElectrostatics::Parameters
 // fde_parameters_gpu;
 
@@ -86,7 +72,5 @@ __device__ cufftReal fde_getNode(int x, int y, int z);
 __device__ cufftReal fde_getNode(int i);
 __device__ void fde_setNode(int x, int y, int z, cufftReal value);
 __device__ void fde_setNode(int i, cufftReal value);
-
-#endif //__CUDACC__
 
 #endif

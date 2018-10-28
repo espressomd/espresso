@@ -36,6 +36,7 @@
 #include "forces_inline.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbgpu.hpp"
 #include "immersed_boundaries.hpp"
 #include "short_range_loop.hpp"
 

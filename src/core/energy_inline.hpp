@@ -28,7 +28,6 @@
 
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
-#include "bonded_interactions/angle_dist.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
@@ -392,11 +391,6 @@ inline void add_bonded_energy(Particle *p1) {
         break;
       case BONDED_IA_ANGLE_COSSQUARE:
         bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
-        break;
-#endif
-#ifdef BOND_ANGLEDIST
-      case BONDED_IA_ANGLEDIST:
-        bond_broken = angledist_energy(p1, p2, p3, iaparams, &ret);
         break;
 #endif
 #ifdef TABULATED

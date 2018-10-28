@@ -92,8 +92,8 @@ On Ubuntu 18.04, you need to modify a file to make CUDA work with the default co
 
 .. code-block:: bash
 
-    sudo sed 's/__GNUC__ > 6/__GNUC__ > 7/g' /usr/include/crt/host_config.h
-    sudo sed 's/than 6/than 7/g' /usr/include/crt/host_config.h
+    sudo sed -i 's/__GNUC__ > 6/__GNUC__ > 7/g' /usr/include/crt/host_config.h
+    sudo sed -i 's/than 6/than 7/g' /usr/include/crt/host_config.h
 
 .. _Installing Requirements on Mac OS X:
 
@@ -544,10 +544,6 @@ If you want to use bond-angle potentials (see section :ref:`Bond-angle interacti
 following features.
 
 -  ``BOND_ANGLE``
-
--  ``BOND_ANGLEDIST``
-
--  ``BOND_ANGLEDIST_HARMONIC``
 
 -  ``LJGEN_SOFTCORE``
 
