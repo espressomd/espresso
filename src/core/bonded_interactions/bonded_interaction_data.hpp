@@ -235,21 +235,6 @@ struct Rigid_bond_parameters {
   double v_tol;
 };
 
-/** Parameters for three body angular potential (bond-angle potentials) that
-    depends on distance to wall constraint.
-        ATTENTION: Note that there are different implementations of the bond
-   angle
-        potential which you may chose with a compiler flag in the file \ref
-   config.hpp !
-        bend - bending constant.
-        phi0 - equilibrium angle (default is 180 degrees / Pi)
-        dist0 - equilibrium distance (no default) */
-struct Angledist_bond_parameters {
-  double bend;
-  double cos_phi0;
-  double sin_phi0;
-};
-
 enum class tElasticLaw { NeoHookean, Skalak };
 
 /** Parameters for IBM elastic triangle (triel) **/

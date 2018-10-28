@@ -428,13 +428,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         #*Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections */
         double v_tol
 
-#* Parameters for three body angular potential (bond-angle potentials) that
-    cdef struct Angledist_bond_parameters:
-        double bend
-        double cos_phi0
-        double sin_phi0
-
-
 #* Parameters for IBM Triel  */
     cdef cppclass tElasticLaw:
         pass
