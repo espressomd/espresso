@@ -189,3 +189,12 @@ class CollisionDetection(ScriptInterfaceHelper):
             if self._int_mode[key] == int_mode:
                 return key
         raise Exception("Unknown integer collision mode %d" % int_mode)
+
+# Pickle support
+    def __reduce__(self):
+        return _restore_collision_detection, (self.get_params(),)
+
+
+def _restore_collision_detection(params):
+    print(params)
+    return CollisionDetection(**params)
