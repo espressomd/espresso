@@ -59,6 +59,6 @@ template <typename T> inline T sinc(T d) {
     return T(1) + PId2 * (c2 + PId2 * (c4 + PId2 * (c6 + PId2 * c8)));
   }
 }
-}
+} // namespace Utils
 
 #endif

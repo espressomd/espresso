@@ -19,9 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "p3m.hpp"
-
 
 #ifdef P3M
 

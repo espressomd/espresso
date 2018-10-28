@@ -43,7 +43,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "p3m-common.hpp"
 
-#include  "utils/math/AS_erfc_part.hpp"
+#include "utils/math/AS_erfc_part.hpp"
 
 typedef struct {
   p3m_parameter_struct params;

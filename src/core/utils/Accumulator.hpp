@@ -21,10 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/serialization/access.hpp>
 
-#include <cmath>
-#include <vector>
-#include <stdexcept>
 #include <algorithm>
+#include <cmath>
+#include <stdexcept>
+#include <vector>
 
 namespace Utils {
 

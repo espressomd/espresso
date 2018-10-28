@@ -67,7 +67,7 @@ void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
   f2[1] = (f2_rot[0] * xu[1]) + (f2_rot[1] * yu[1]);
   f2[2] = (f2_rot[0] * xu[2]) + (f2_rot[1] * yu[2]);
 }
-}
+} // namespace
 
 /*************
    IBM_Triel_CalcForce

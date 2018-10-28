@@ -17,7 +17,7 @@
 
 /** \file int_pow_test.cpp Unit tests for the
  * Utils::int_pow function.
-*/
+ */
 
 #define BOOST_TEST_MODULE Utils::sgn test
 #define BOOST_TEST_DYN_LINK

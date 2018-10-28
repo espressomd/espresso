@@ -40,7 +40,6 @@ using Utils::permute_ifield;
 #include <fftw3.h>
 #include <mpi.h>
 
-
 /************************************************
  * variables
  ************************************************/

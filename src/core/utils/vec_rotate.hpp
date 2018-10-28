@@ -2,8 +2,8 @@
 #define UTILS_VEC_ROTATE_HPP
 
 #include "Vector.hpp"
-#include "utils/math/sqr.hpp"
 #include "utils.hpp"
+#include "utils/math/sqr.hpp"
 
 namespace Utils {
 /** rotates vector around axis by alpha */
@@ -35,10 +35,10 @@ void vec_rotate(const T1 &axis, double alpha, const T2 &vector, T3 &result) {
 inline ::Vector<3, double> vec_rotate(::Vector<3, double> axis, double alpha,
                                       ::Vector<3, double> vector) {
   ::Vector<3, double> result;
-   vec_rotate(axis, alpha, vector, result);
+  vec_rotate(axis, alpha, vector, result);
   return result;
 }
 
-}
+} // namespace Utils
 
 #endif

@@ -78,7 +78,6 @@ BOOST_AUTO_TEST_CASE(ctor) {
     BOOST_CHECK(v.size() == s.size());
     BOOST_CHECK(v.data() == s.data());
   }
-
 }
 
 BOOST_AUTO_TEST_CASE(iterators) {
