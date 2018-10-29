@@ -521,14 +521,10 @@ cdef extern from "thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
 cdef extern from "bonded_coulomb.hpp":
     int bonded_coulomb_set_params(int bond_type, double prefactor)
-cdef extern from "bonded_coulomb_p3m_sr.hpp":
-    int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
-
 
 cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
     cppclass ImmersedBoundaries:
         void volume_conservation_set_params(const int bond_type, const int softID, const double kappaV)
-
 
 cdef extern from "immersed_boundary/ibm_triel.hpp":
     int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
@@ -550,6 +546,9 @@ IF ELECTROSTATICS:
     cdef extern from "bonded_coulomb.hpp":
         int bonded_coulomb_set_params(int bond_type, double prefactor)
 
+IF P3M:
+    cdef extern from "bonded_interactions/bonded_coulomb_p3m_sr.hpp":
+        int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
 
 cdef extern from "interaction_data.hpp":
     int virtual_set_params(int bond_type)
