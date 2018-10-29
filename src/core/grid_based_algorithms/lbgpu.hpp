@@ -173,7 +173,7 @@ typedef struct {
 /** Data structure holding the velocity densities for the Lattice Boltzmann
  * system. */
 typedef struct {
-  
+
   /** velocity density of the node */
   float *vd;
   /** seed for the random gen */
