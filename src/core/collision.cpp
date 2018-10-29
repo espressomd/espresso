@@ -598,15 +598,10 @@ void handle_collisions() {
       } else { // We consider the pair because one particle
                // is local to the node and the other is local or ghost
 
-        // Calculate initial position for new vs, which is in the local node's
+        // Use initial position for new vs, which is in the local node's
         // domain
         // Vs is moved afterwards and resorted after all collision s are handled
-        // Use position of non-ghost colliding particle.
-        Vector3d initial_pos;
-        if (p1->l.ghost)
-          initial_pos = p2->r.p;
-        else
-          initial_pos = p1->r.p;
+        const Vector3d initial_pos{my_left[0], my_left[1], my_left[2]};
 
         // If we are in the two vs mode
         // Virtual site related to first particle in the collision
