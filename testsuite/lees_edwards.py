@@ -27,44 +27,43 @@ class LeesEdwards(ut.TestCase):
         system = self.system
 
         # Protocol should be off by default
-        self.assertEqual(system.lees_edwards[0], "off")
+        self.assertEqual(self.system.lees_edwards.type, "off")
 
         # One shouldn't be able to set a random protocol
         with self.assertRaises(Exception):
-            system.lees_edwards = ["oscillatory_shear", 50.]
+            system.lees_edwards.set_params(type = "oscillatory_shear", velocity = 50)
 
         # Check if the setted protocol is stored correctly
-        system.lees_edwards = ["steady_shear", 1.2, 2, 0]
-        self.assertEqual(system.lees_edwards[0], "steady_shear")
-        self.assertEqual(system.lees_edwards[1], 1.2)
-        self.assertEqual(system.lees_edwards[3], 2)
-        self.assertEqual(system.lees_edwards[4], 0)
+        system.lees_edwards.set_params(type = "steady_shear", velocity = 1.2, sheardir = 2, shearplanenormal = 0)
+        self.assertEqual(system.lees_edwards.type, "steady_shear")
+        self.assertAlmostEqual(system.lees_edwards.velocity, 1.2)
+        self.assertEqual(system.lees_edwards.sheardir, 2)
+        self.assertEqual(system.lees_edwards.shearplanenormal, 0)
 
-        system.lees_edwards = ["oscillatory_shear", 1.2, 5.6, 0, 1]
-        self.assertEqual(system.lees_edwards[0], "oscillatory_shear")
-        self.assertEqual(system.lees_edwards[1], 1.2)
-        self.assertEqual(system.lees_edwards[2], 5.6)
-        self.assertEqual(system.lees_edwards[5], 0)
-        self.assertEqual(system.lees_edwards[6], 1)
+        system.lees_edwards.set_params(type = "oscillatory_shear", frequency = 1.2, amplitude = 5.5, sheardir = 0, shearplanenormal = 1)
+        self.assertEqual(system.lees_edwards.type, "oscillatory_shear")
+        self.assertAlmostEqual(system.lees_edwards.frequency, 1.2)
+        self.assertAlmostEqual(system.lees_edwards.amplitude, 5.5)
+        self.assertEqual(system.lees_edwards.sheardir, 0)
+        self.assertEqual(system.lees_edwards.shearplanenormal, 1)
 
         system.time = 0.0
 
         # Check if the offset is determined correctly
-        frequency = 3.7
+        frequency = 3.5
         omega = 2 * np.pi * frequency
-        amplitude = 1.6
+        amplitude = 1.3
         sheardir = 0
         shearplanenormal = 1
-        system.lees_edwards = ["oscillatory_shear",
-                               omega, amplitude, sheardir, shearplanenormal]
-        self.assertEqual(system.lees_edwards[0], "oscillatory_shear")
+        system.lees_edwards.set_params(type = "oscillatory_shear", frequency = omega, amplitude = amplitude, sheardir = sheardir, shearplanenormal = shearplanenormal)
+        self.assertEqual(system.lees_edwards.type, "oscillatory_shear")
         for time in np.arange(10., 100.0, 10.0):
             system.integrator.run(10)
             offset = amplitude * np.sin(omega * time)
             velocity = omega * amplitude * np.cos(omega * time)
 
-            np.testing.assert_almost_equal(system.lees_edwards[3], velocity)
-            np.testing.assert_almost_equal(system.lees_edwards[4], offset)
+            self.assertAlmostEqual(system.lees_edwards.velocity, velocity)
+            self.assertAlmostEqual(system.lees_edwards.offset, offset)
 
     def test_b_BoundaryCrossing(self):
         """A particle crosses the upper and lower boundary to test if position
@@ -85,8 +84,7 @@ class LeesEdwards(ut.TestCase):
                 if sheardir != shearplanenormal:
 
                     system.time = 0.0
-                    system.lees_edwards = ["steady_shear",
-                                           velocity, sheardir, shearplanenormal]
+                    system.lees_edwards.set_params(type = "steady_shear", velocity = velocity, sheardir = sheardir, shearplanenormal = shearplanenormal)
 
                     pos = np.full([3], 2.5)
                     pos[shearplanenormal] = system.box_l[shearplanenormal] - 0.1
@@ -153,8 +151,7 @@ class LeesEdwards(ut.TestCase):
                 if sheardir != shearplanenormal:
 
                     offset = 1.0
-                    system.lees_edwards = [
-                        'step', offset, sheardir, shearplanenormal]
+                    system.lees_edwards.set_params(type = 'step', offset = offset, sheardir = sheardir, shearplanenormal = shearplanenormal)
 
                     pos1 = np.full([3], 2.5)
                     pos1[shearplanenormal] = 4.75
