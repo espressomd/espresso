@@ -68,8 +68,8 @@ class CellSystem(ut.TestCase):
         self.system.cell_system.set_domain_decomposition(
             fully_connected=[True, True, False])
 
-        self.system.part.add(id=0, pos=[2.5, 4.75, 2.5], fix=[1, 1, 1])
-        self.system.part.add(id=1, pos=[1.0, 5.25, 2.5], fix=[1, 1, 1])
+        self.system.part.add(id=0, pos=[2.5, 4.75, 2.5])
+        self.system.part.add(id=1, pos=[1.0, 5.25, 2.5])
 
         pairs = self.system.cell_system.get_pairs_(2.5)
         np.testing.assert_array_equal(pairs, [[0, 1]])
