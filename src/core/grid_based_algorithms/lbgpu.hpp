@@ -30,7 +30,7 @@
 #include "config.hpp"
 #include "utils.hpp"
 #ifdef LB_GPU
-
+#include <curand_kernel.h>
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
  * explicitly. This saves a lot of multiplications with 1's and 0's
@@ -173,13 +173,14 @@ typedef struct {
 /** Data structure holding the velocity densities for the Lattice Boltzmann
  * system. */
 typedef struct {
-
+  
   /** velocity density of the node */
   float *vd;
   /** seed for the random gen */
   unsigned int *seed;
   /** flag indicating whether this site belongs to a boundary */
   unsigned int *boundary;
+  curandStatePhilox4_32_10_t *philox_state;
 
 } LB_nodes_gpu;
 

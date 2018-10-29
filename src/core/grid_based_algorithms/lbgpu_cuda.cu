@@ -41,6 +41,7 @@
 #include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 
+#include <curand_kernel.h>
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
 #include <thrust/functional.h>
@@ -2964,6 +2965,7 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
 
       /**set different seed for randomgen on every node */
       n_a.seed[index] = para->your_seed + index;
+      curand_init(para->your_seed + index, 0, 0, &n_a.philox_state[index]);
     }
 
     calc_m_from_n(n_a, index, mode);
@@ -3571,6 +3573,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     calc_n_from_modes_push(n_b, mode, index);
     /** rewriting the seed back to the global memory*/
     n_b.seed[index] = rng.seed;
+    n_b.philox_state[index] = n_a.philox_state[index];
   }
 }
 
@@ -3936,11 +3939,14 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
                                                      3 * LB_COMPONENTS *
                                                      sizeof(float));
 #endif
-
+  free_realloc_and_clear(nodes_a.philox_state,
+                         lbpar_gpu->number_of_nodes * sizeof(curandStatePhilox4_32_10_t));
   free_realloc_and_clear(nodes_a.seed,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
   free_realloc_and_clear(nodes_a.boundary,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
+  free_realloc_and_clear(nodes_b.philox_state,
+                         lbpar_gpu->number_of_nodes * sizeof(curandStatePhilox4_32_10_t));
   free_realloc_and_clear(nodes_b.seed,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
   free_realloc_and_clear(nodes_b.boundary,
