@@ -218,6 +218,14 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn) {
   rn->randomnr[1] = x1 * fac;
 }
 /* wrapper */
+__device__ LB_randomnr_gpu random_wrapper_philox(curandStatePhilox4_32_10_t *state) {
+#define sqrt12 3.46410161514f
+  LB_randomnr_gpu rn;
+  rn.randomnr[0] = (curand_uniform(state) - 0.5f) * sqrt12;
+  rn.randomnr[1] = (curand_uniform(state) - 0.5f) * sqrt12;
+  return rn;
+}
+
 __device__ void random_wrapper(LB_randomnr_gpu *rn) {
 #if defined(FLATNOISE)
 #define sqrt12 3.46410161514f
@@ -234,6 +242,7 @@ __device__ void random_wrapper(LB_randomnr_gpu *rn) {
 #error No noise type defined for the GPU LB
 #endif
 }
+
 
 /**transformation from 1d array-index to xyz
  * @param index   node index / thread index (Input)
@@ -807,7 +816,7 @@ __device__ void relax_modes(float *mode, unsigned int index,
  * @param *rn     Pointer to random number array of the local node
  */
 __device__ void thermalize_modes(float *mode, unsigned int index,
-                                 LB_randomnr_gpu *rn) {
+                                 LB_randomnr_gpu *rn, LB_nodes_gpu n_a) {
   float Rho;
 #ifdef SHANCHEN
   float Rho_tot = 0.0, c;
@@ -849,87 +858,87 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
     /** momentum modes */
 
     /** stress modes */
-    random_wrapper(rn);
+    auto rn = random_wrapper_philox(&n_a.philox_state[index]);
     mode[4 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_bulk[ii] * para->gamma_bulk[ii])))) *
-        rn->randomnr[0];
+        rn.randomnr[0];
     mode[5 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (4.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        rn->randomnr[1];
+        rn.randomnr[1];
 
-    random_wrapper(rn);
+    rn = random_wrapper_philox(&n_a.philox_state[index]);
     mode[6 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (4.0f / 3.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        rn->randomnr[0];
+        rn.randomnr[0];
     mode[7 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (1.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        rn->randomnr[1];
+        rn.randomnr[1];
 
-    random_wrapper(rn);
+    rn = random_wrapper_philox(&n_a.philox_state[index]);
     mode[8 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (1.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        rn->randomnr[0];
+        rn.randomnr[0];
     mode[9 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (1.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        rn->randomnr[1];
+        rn.randomnr[1];
 
     /** ghost modes */
-    random_wrapper(rn);
+    rn = random_wrapper_philox(&n_a.philox_state[index]);
     mode[10 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        rn->randomnr[0];
+        rn.randomnr[0];
     mode[11 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        rn->randomnr[1];
+        rn.randomnr[1];
 
-    random_wrapper(rn);
+    rn = random_wrapper_philox(&n_a.philox_state[index]);
     mode[12 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        rn->randomnr[0];
+        rn.randomnr[0];
     mode[13 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 9.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        rn->randomnr[1];
+        rn.randomnr[1];
 
-    random_wrapper(rn);
+    rn = random_wrapper_philox(&n_a.philox_state[index]);
     mode[14 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 9.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        rn->randomnr[0];
+        rn.randomnr[0];
     mode[15 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 9.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        rn->randomnr[1];
+        rn.randomnr[1];
 
-    random_wrapper(rn);
+    rn = random_wrapper_philox(&n_a.philox_state[index]);
     mode[16 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f) *
                      (1.0f - (para->gamma_even[ii] * para->gamma_even[ii])))) *
-        rn->randomnr[0];
+        rn.randomnr[0];
     mode[17 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (4.0f / 9.0f) *
                      (1.0f - (para->gamma_even[ii] * para->gamma_even[ii])))) *
-        rn->randomnr[1];
+        rn.randomnr[1];
 
-    random_wrapper(rn);
+    rn = random_wrapper_philox(&n_a.philox_state[index]);
     mode[18 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (4.0f / 3.0f) *
                      (1.0f - (para->gamma_even[ii] * para->gamma_even[ii])))) *
-        rn->randomnr[0];
+        rn.randomnr[0];
   }
 }
 
@@ -3564,7 +3573,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     relax_modes(mode, index, node_f, d_v);
     /**lb_thermalize_modes */
     if (para->fluct) {
-      thermalize_modes(mode, index, &rng);
+      thermalize_modes(mode, index, &rng, n_a);
     }
     apply_forces(index, mode, node_f, d_v);
     /**lb_calc_n_from_modes_push*/
