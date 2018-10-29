@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include "boost/mpi/collectives.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -29,7 +30,9 @@
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "utils/mpi/all_compare.hpp"
+#include "utils/mpi/gather_buffer.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
+#include <boost/serialization/serialization.hpp>
 
 #ifdef COLLISION_DETECTION_DEBUG
 #define TRACE(a) a
@@ -44,6 +47,16 @@ typedef struct {
   int pp1; // 1st particle id
   int pp2; // 2nd particle id
 } collision_struct;
+
+namespace boost {
+namespace serialization {
+template <typename Archive>
+void serialize(Archive &ar, collision_struct &c, const unsigned int) {
+  ar &c.pp1;
+  ar &c.pp2;
+}
+} // namespace serialization
+} // namespace boost
 
 // During force calculation, colliding particles are recorded in the queue
 // The queue is processed after force calculation, when it is save to add
@@ -431,45 +444,9 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
 #endif
 
 std::vector<collision_struct> gather_global_collision_queue() {
-  std::vector<collision_struct> res;
-
-  std::vector<int> displacements(n_nodes); // offsets into collisions
-
-  // Initialize number of collisions gathered from all processors
-  std::vector<int> counts(n_nodes);
-  // Total number of collisions
-  int total_collisions;
-  int local_queue_size = local_collision_queue.size();
-  MPI_Allreduce(&local_queue_size, &total_collisions, 1, MPI_INT, MPI_SUM,
-                comm_cart);
-
-  if (total_collisions == 0)
-    return res;
-
-  // Gather number of collisions
-  MPI_Allgather(&local_queue_size, 1, MPI_INT, &(counts[0]), 1, MPI_INT,
-                comm_cart);
-
-  // initialize displacement information for all nodes
-  displacements[0] = 0;
-
-  // Find where to place collision information for each processor
-  std::vector<int> byte_counts(n_nodes);
-  for (int k = 1; k < n_nodes; k++)
-    displacements[k] =
-        displacements[k - 1] + (counts[k - 1]) * sizeof(collision_struct);
-
-  for (int k = 0; k < n_nodes; k++)
-    byte_counts[k] = counts[k] * sizeof(collision_struct);
-
-  // Allocate mem for the new collision info
-
-  res.resize(total_collisions);
-
-  // Gather collision information from all nodes and send it to all nodes
-  MPI_Allgatherv(&(local_collision_queue[0]), byte_counts[this_node], MPI_BYTE,
-                 &(res[0]), &(byte_counts[0]), &(displacements[0]), MPI_BYTE,
-                 comm_cart);
+  std::vector<collision_struct> res = local_collision_queue;
+  Utils::Mpi::gather_buffer(res, comm_cart);
+  boost::mpi::broadcast(comm_cart, res, 0);
 
   return res;
 }
