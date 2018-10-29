@@ -49,6 +49,7 @@ IF DP3M == 1:
         int dp3m_set_eps(double eps)
         int dp3m_set_ninterpol(int n)
         int dp3m_adaptive_tune(char ** log)
+        int dp3m_deactivate()
 
         ctypedef struct dp3m_data_struct:
             p3m_parameter_struct params
