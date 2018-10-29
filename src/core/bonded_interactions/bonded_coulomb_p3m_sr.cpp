@@ -25,7 +25,7 @@
 #include "bonded_coulomb_p3m_sr.hpp"
 #include "communication.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef P3M
 
 int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2) {
   if (bond_type < 0)
