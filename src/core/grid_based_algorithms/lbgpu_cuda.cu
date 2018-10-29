@@ -240,7 +240,6 @@ __device__ void random_wrapper(LB_randomnr_gpu *rn) {
 #endif
 }
 
-
 /**transformation from 1d array-index to xyz
  * @param index   node index / thread index (Input)
  * @param xyz     Pointer to calculated xyz array (Output)
@@ -3936,13 +3935,15 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
                                                      sizeof(float));
 #endif
   free_realloc_and_clear(nodes_a.philox_state,
-                         lbpar_gpu->number_of_nodes * sizeof(curandStatePhilox4_32_10_t));
+                         lbpar_gpu->number_of_nodes *
+                             sizeof(curandStatePhilox4_32_10_t));
   free_realloc_and_clear(nodes_a.seed,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
   free_realloc_and_clear(nodes_a.boundary,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
   free_realloc_and_clear(nodes_b.philox_state,
-                         lbpar_gpu->number_of_nodes * sizeof(curandStatePhilox4_32_10_t));
+                         lbpar_gpu->number_of_nodes *
+                             sizeof(curandStatePhilox4_32_10_t));
   free_realloc_and_clear(nodes_b.seed,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
   free_realloc_and_clear(nodes_b.boundary,
