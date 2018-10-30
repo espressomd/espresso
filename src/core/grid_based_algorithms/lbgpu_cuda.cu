@@ -813,7 +813,10 @@ __device__ void relax_modes(float *mode, unsigned int index,
  */
 __device__ void thermalize_modes(float *mode, unsigned int index,
                                  LB_randomnr_gpu *rn, LB_nodes_gpu n_a) {
-  auto random_philox = [n_a](unsigned int index) -> float {return random_wrapper_philox(&(static_cast<curandStatePhilox4_32_10_t*>(n_a.philox_state)[index]));};
+  auto random_philox = [n_a](unsigned int index) -> float {
+    return random_wrapper_philox(
+        &(static_cast<curandStatePhilox4_32_10_t *>(n_a.philox_state)[index]));
+  };
   float Rho;
 #ifdef SHANCHEN
   float Rho_tot = 0.0, c;
@@ -830,7 +833,9 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
                (1.0f - (para->gamma_mobility[0] * para->gamma_mobility[0])))) *
-        (2 * ii - 1) * random_wrapper_philox(&(static_cast<curandStatePhilox4_32_10_t*>(n_a.philox_state)[index]));
+        (2 * ii - 1) *
+        random_wrapper_philox(&(static_cast<curandStatePhilox4_32_10_t *>(
+            n_a.philox_state)[index]));
     mode[2 + ii * LBQ] +=
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
@@ -2961,7 +2966,9 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
 
       /**set different seed for randomgen on every node */
       n_a.seed[index] = para->your_seed + index;
-      curand_init(para->your_seed + index, 0, 0, &(static_cast<curandStatePhilox4_32_10_t*>(n_a.philox_state)[index]));
+      curand_init(para->your_seed + index, 0, 0,
+                  &(static_cast<curandStatePhilox4_32_10_t *>(
+                      n_a.philox_state)[index]));
     }
 
     calc_m_from_n(n_a, index, mode);
@@ -3569,7 +3576,8 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     calc_n_from_modes_push(n_b, mode, index);
     /** rewriting the seed back to the global memory*/
     n_b.seed[index] = rng.seed;
-    static_cast<curandStatePhilox4_32_10_t*>(n_b.philox_state)[index] = static_cast<curandStatePhilox4_32_10_t*>(n_a.philox_state)[index];
+    static_cast<curandStatePhilox4_32_10_t *>(n_b.philox_state)[index] =
+        static_cast<curandStatePhilox4_32_10_t *>(n_a.philox_state)[index];
   }
 }
 
