@@ -176,29 +176,30 @@ class VirtualSites(ut.TestCase):
         for i in 2, 3, 4:
             self.verify_vs(system.part[i])
 
-        # Test transfer of forces accumulating on virtual sites
-        # to central particle
-        f2 = np.array((3, 4, 5))
-        f3 = np.array((-4, 5, 6))
-        # Add forces to vs
-        system.part[2].ext_force = f2
-        system.part[3].ext_force = f3
-        system.integrator.run(0)
-        # get force/torques on non-vs
-        f = system.part[1].f
-        t = system.part[1].torque_lab
+        if espressomd.has_features("EXTERNAL_FORCES"):
+            # Test transfer of forces accumulating on virtual sites
+            # to central particle
+            f2 = np.array((3, 4, 5))
+            f3 = np.array((-4, 5, 6))
+            # Add forces to vs
+            system.part[2].ext_force = f2
+            system.part[3].ext_force = f3
+            system.integrator.run(0)
+            # get force/torques on non-vs
+            f = system.part[1].f
+            t = system.part[1].torque_lab
 
-        # Expected force = sum of the forces on the vs
-        self.assertLess(np.linalg.norm(f - f2 - f3), 1E-6)
+            # Expected force = sum of the forces on the vs
+            self.assertLess(np.linalg.norm(f - f2 - f3), 1E-6)
 
-        # Expected torque
-        # Radial components of forces on a rigid body add to the torque
-        t_exp = np.cross(system.distance_vec(
-            system.part[1], system.part[2]), f2)
-        t_exp += np.cross(system.distance_vec(
-            system.part[1], system.part[3]), f3)
-        # Check
-        self.assertLessEqual(np.linalg.norm(t_exp - t), 1E-6)
+            # Expected torque
+            # Radial components of forces on a rigid body add to the torque
+            t_exp = np.cross(system.distance_vec(
+                system.part[1], system.part[2]), f2)
+            t_exp += np.cross(system.distance_vec(
+                system.part[1], system.part[3]), f3)
+            # Check
+            self.assertLessEqual(np.linalg.norm(t_exp - t), 1E-6)
 
         # Check virtual sites without velocity
         system.virtual_sites.have_velocity = False
@@ -241,7 +242,7 @@ class VirtualSites(ut.TestCase):
             # Type=1, i.e., no lj ia for the center of mass particles
             system.part.add(
                 rotation=(1, 1, 1), id=3 * i, pos=random.random(3) * l, type=1,
-                            omega_lab=0.3 * random.random(3), v=random.random(3))
+                omega_lab=0.3 * random.random(3), v=random.random(3))
             # lj spheres
             system.part.add(rotation=(1, 1, 1), id=3 * i + 1,
                             pos=system.part[3 * i].pos +
@@ -304,6 +305,7 @@ class VirtualSites(ut.TestCase):
         system.cell_system.set_domain_decomposition(use_verlet_lists=False)
         self.run_test_lj()
 
+    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"), "skipped due to missing external forces.")
     def test_zz_stress_tensor(self):
         system = self.system
         system.time_step = 0.01
