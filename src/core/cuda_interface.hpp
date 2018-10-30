@@ -82,7 +82,7 @@ struct CUDA_particle_data {
   float solvation[2 * LB_COMPONENTS];
 #endif
 
-#if defined(LB_ELECTROHYDRODYNAMICS)
+#if defined(LB_ELECTROHYDRODYNAMICS) && (defined(LB) || defined(LB_GPU))
   float mu_E[3];
 #endif
 
