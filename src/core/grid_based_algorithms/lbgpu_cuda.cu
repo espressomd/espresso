@@ -23,6 +23,7 @@
  */
 
 #include "cuda_wrapper.hpp"
+#include "curand_wrapper.hpp"
 
 #include "config.hpp"
 
@@ -41,7 +42,6 @@
 #include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 
-#include <curand_kernel.h>
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
 #include <thrust/functional.h>
@@ -813,6 +813,7 @@ __device__ void relax_modes(float *mode, unsigned int index,
  */
 __device__ void thermalize_modes(float *mode, unsigned int index,
                                  LB_randomnr_gpu *rn, LB_nodes_gpu n_a) {
+  auto random_philox = [n_a](unsigned int index) -> float {return random_wrapper_philox(&(static_cast<curandStatePhilox4_32_10_t*>(n_a.philox_state)[index]));};
   float Rho;
 #ifdef SHANCHEN
   float Rho_tot = 0.0, c;
@@ -829,7 +830,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
                (1.0f - (para->gamma_mobility[0] * para->gamma_mobility[0])))) *
-        (2 * ii - 1) * random_wrapper_philox(&n_a.philox_state[index]);
+        (2 * ii - 1) * random_wrapper_philox(&(static_cast<curandStatePhilox4_32_10_t*>(n_a.philox_state)[index]));
     mode[2 + ii * LBQ] +=
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
@@ -855,76 +856,76 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
     mode[4 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_bulk[ii] * para->gamma_bulk[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
     mode[5 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (4.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
 
     mode[6 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (4.0f / 3.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
     mode[7 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (1.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
 
     mode[8 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (1.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
     mode[9 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (1.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
 
     /** ghost modes */
     mode[10 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
     mode[11 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
 
     mode[12 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
     mode[13 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 9.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
 
     mode[14 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 9.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
     mode[15 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 9.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
 
     mode[16 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f) *
                      (1.0f - (para->gamma_even[ii] * para->gamma_even[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
     mode[17 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (4.0f / 9.0f) *
                      (1.0f - (para->gamma_even[ii] * para->gamma_even[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
 
     mode[18 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (4.0f / 3.0f) *
                      (1.0f - (para->gamma_even[ii] * para->gamma_even[ii])))) *
-        random_wrapper_philox(&n_a.philox_state[index]);
+        random_philox(index);
   }
 }
 
@@ -2960,7 +2961,7 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
 
       /**set different seed for randomgen on every node */
       n_a.seed[index] = para->your_seed + index;
-      curand_init(para->your_seed + index, 0, 0, &n_a.philox_state[index]);
+      curand_init(para->your_seed + index, 0, 0, &(static_cast<curandStatePhilox4_32_10_t*>(n_a.philox_state)[index]));
     }
 
     calc_m_from_n(n_a, index, mode);
@@ -3568,7 +3569,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     calc_n_from_modes_push(n_b, mode, index);
     /** rewriting the seed back to the global memory*/
     n_b.seed[index] = rng.seed;
-    n_b.philox_state[index] = n_a.philox_state[index];
+    static_cast<curandStatePhilox4_32_10_t*>(n_b.philox_state)[index] = static_cast<curandStatePhilox4_32_10_t*>(n_a.philox_state)[index];
   }
 }
 
