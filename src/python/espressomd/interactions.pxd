@@ -547,7 +547,7 @@ IF ELECTROSTATICS:
         int bonded_coulomb_set_params(int bond_type, double prefactor)
 
 IF P3M:
-    cdef extern from "bonded_interactions/bonded_coulomb_p3m_sr.hpp":
+    cdef extern from "bonded_coulomb_p3m_sr.hpp":
         int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
 
 cdef extern from "interaction_data.hpp":
