@@ -250,7 +250,7 @@ call the H5md objects :meth:`espressomd.io.writer.h5md.H5md.write` method withou
 After the last write call, you have to call the ``close()`` method to remove
 the backup file and to close the datasets etc.
 
-H5MD files can be read and modified with the python module h5py. For example all positions stored in the file called "h5mdfile.h5" can be read using
+H5MD files can be read and modified with the python module h5py (for documentation see `h5py <http://docs.h5py.org/en/stable/>`_). For example all positions stored in the file called "h5mdfile.h5" can be read using
 
 .. code:: python
     
