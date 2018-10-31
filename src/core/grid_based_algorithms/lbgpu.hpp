@@ -169,7 +169,6 @@ typedef struct {
   float pi[6];
 } LB_rho_v_pi_gpu;
 
-
 /** Data structure for the randomnr and the seed. */
 typedef struct {
 

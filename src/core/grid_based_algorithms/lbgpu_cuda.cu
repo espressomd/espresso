@@ -40,8 +40,8 @@
 #include "errorhandling.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
+#include "grid_based_algorithms/lbgpu.hpp"
 
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
@@ -219,23 +219,23 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn) {
   rn->randomnr[1] = x1 * fac;
 }
 
-
 __device__ static volatile unsigned int philox_counter = 0;
 __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode) {
   unsigned int xyz[3];
   index_to_xyz(index, xyz);
-  uint4 rnd_ints = curand_Philox4x32_10(make_uint4(xyz[0], xyz[1], xyz[2], mode), make_uint2(philox_counter, para->your_seed));
+  uint4 rnd_ints =
+      curand_Philox4x32_10(make_uint4(xyz[0], xyz[1], xyz[2], mode),
+                           make_uint2(philox_counter, para->your_seed));
   float4 rnd_floats;
-  rnd_floats.w = rnd_ints.w * CURAND_2POW32_INV + (CURAND_2POW32_INV/2.0f);
-  rnd_floats.x = rnd_ints.x * CURAND_2POW32_INV + (CURAND_2POW32_INV/2.0f);
-  rnd_floats.y = rnd_ints.y * CURAND_2POW32_INV + (CURAND_2POW32_INV/2.0f);
-  rnd_floats.z = rnd_ints.z * CURAND_2POW32_INV + (CURAND_2POW32_INV/2.0f);
+  rnd_floats.w = rnd_ints.w * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
+  rnd_floats.x = rnd_ints.x * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
+  rnd_floats.y = rnd_ints.y * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
+  rnd_floats.z = rnd_ints.z * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   constexpr float sqrt12 = 3.46410161514f;
   philox_counter += 1;
-  return make_float4((rnd_floats.w - 0.5f) * sqrt12,
-                     (rnd_floats.x - 0.5f) * sqrt12,
-                     (rnd_floats.y - 0.5f) * sqrt12,
-                     (rnd_floats.z - 0.5f) * sqrt12);
+  return make_float4(
+      (rnd_floats.w - 0.5f) * sqrt12, (rnd_floats.x - 0.5f) * sqrt12,
+      (rnd_floats.y - 0.5f) * sqrt12, (rnd_floats.z - 0.5f) * sqrt12);
 }
 
 __device__ void random_wrapper(LB_randomnr_gpu *rn) {
@@ -846,8 +846,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
                (1.0f - (para->gamma_mobility[0] * para->gamma_mobility[0])))) *
-        (2 * ii - 1) *
-        random_floats.w;
+        (2 * ii - 1) * random_floats.w;
     mode[2 + ii * LBQ] +=
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
