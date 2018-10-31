@@ -222,10 +222,8 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn) {
 static unsigned int philox_counter = 0;
 __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
                                         unsigned int philox_counter) {
-  unsigned int xyz[3];
-  index_to_xyz(index, xyz);
   uint4 rnd_ints =
-      curand_Philox4x32_10(make_uint4(xyz[0], xyz[1], xyz[2], mode),
+      curand_Philox4x32_10(make_uint4(index, 0, 0, mode),
                            make_uint2(philox_counter, para->your_seed));
   float4 rnd_floats;
   rnd_floats.w = rnd_ints.w * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
