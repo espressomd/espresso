@@ -85,7 +85,7 @@ static void pack_particles(ParticleRange particles,
     }
 #endif
 
-#ifdef LB_ELECTROHYDRODYNAMICS
+#if defined(LB_ELECTROHYDRODYNAMICS) && defined(LB_GPU)
     buffer[i].mu_E[0] = static_cast<float>(part.p.mu_E[0]);
     buffer[i].mu_E[1] = static_cast<float>(part.p.mu_E[1]);
     buffer[i].mu_E[2] = static_cast<float>(part.p.mu_E[2]);
