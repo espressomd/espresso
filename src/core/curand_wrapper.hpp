@@ -3,7 +3,7 @@
 
 #if defined(__HIPCC__) // AMD or Nvidia via HIP
 
-#include <hiprand_kernel.h>
+#include <hiprand/hiprand_kernel.h>
 
 #else
 
