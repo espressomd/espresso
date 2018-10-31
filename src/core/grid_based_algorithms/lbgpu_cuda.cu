@@ -827,7 +827,7 @@ __device__ void relax_modes(float *mode, unsigned int index,
  * @param *rn     Pointer to random number array of the local node
  */
 __device__ void thermalize_modes(float *mode, unsigned int index,
-                                 LB_randomnr_gpu *rn, LB_nodes_gpu n_a,
+                                 LB_randomnr_gpu *rn,
                                  unsigned int philox_counter) {
   float Rho;
   float4 random_floats;
@@ -3581,7 +3581,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     relax_modes(mode, index, node_f, d_v);
     /**lb_thermalize_modes */
     if (para->fluct) {
-      thermalize_modes(mode, index, &rng, n_a, philox_counter);
+      thermalize_modes(mode, index, &rng, philox_counter);
     }
     apply_forces(index, mode, node_f, d_v);
     /**lb_calc_n_from_modes_push*/
