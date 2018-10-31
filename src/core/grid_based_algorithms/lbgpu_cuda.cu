@@ -219,8 +219,8 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn) {
   rn->randomnr[1] = x1 * fac;
 }
 
-__device__ static volatile unsigned int philox_counter = 0;
-__device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode) {
+static unsigned int philox_counter = 0;
+__device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode, unsigned int philox_counter) {
   unsigned int xyz[3];
   index_to_xyz(index, xyz);
   uint4 rnd_ints =
@@ -232,7 +232,6 @@ __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode) {
   rnd_floats.y = rnd_ints.y * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   rnd_floats.z = rnd_ints.z * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   constexpr float sqrt12 = 3.46410161514f;
-  philox_counter += 1;
   return make_float4(
       (rnd_floats.w - 0.5f) * sqrt12, (rnd_floats.x - 0.5f) * sqrt12,
       (rnd_floats.y - 0.5f) * sqrt12, (rnd_floats.z - 0.5f) * sqrt12);
@@ -827,7 +826,7 @@ __device__ void relax_modes(float *mode, unsigned int index,
  * @param *rn     Pointer to random number array of the local node
  */
 __device__ void thermalize_modes(float *mode, unsigned int index,
-                                 LB_randomnr_gpu *rn, LB_nodes_gpu n_a) {
+                                 LB_randomnr_gpu *rn, LB_nodes_gpu n_a, unsigned int philox_counter) {
   float Rho;
   float4 random_floats;
 #ifdef SHANCHEN
@@ -841,7 +840,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
        para->rho[0] * para->agrid * para->agrid * para->agrid) /
       Rho_tot;
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
-    random_floats = random_wrapper_philox(index, 1);
+    random_floats = random_wrapper_philox(index, 1*ii*LBQ, philox_counter);
     mode[1 + ii * LBQ] +=
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
@@ -869,7 +868,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
     /** momentum modes */
 
     /** stress modes */
-    random_floats = random_wrapper_philox(index, 4);
+    random_floats = random_wrapper_philox(index, 4*ii*LBQ, philox_counter);
     mode[4 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_bulk[ii] * para->gamma_bulk[ii])))) *
@@ -891,7 +890,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
         random_floats.z;
 
-    random_floats = random_wrapper_philox(index, 8);
+    random_floats = random_wrapper_philox(index, 8*ii*LBQ, philox_counter);
     mode[8 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (1.0f / 9.0f) *
@@ -913,7 +912,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
         random_floats.z;
 
-    random_floats = random_wrapper_philox(index, 12);
+    random_floats = random_wrapper_philox(index, 12*ii*LBQ, philox_counter);
     mode[12 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
@@ -932,7 +931,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
         random_floats.z;
 
-    random_floats = random_wrapper_philox(index, 16);
+    random_floats = random_wrapper_philox(index, 16*ii*LBQ, philox_counter);
     mode[16 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f) *
                      (1.0f - (para->gamma_even[ii] * para->gamma_even[ii])))) *
@@ -3562,7 +3561,7 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b) {
 
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f,
-                          EK_parameters *ek_parameters_gpu) {
+                          EK_parameters *ek_parameters_gpu, unsigned int philox_counter) {
   /**every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
@@ -3579,7 +3578,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     relax_modes(mode, index, node_f, d_v);
     /**lb_thermalize_modes */
     if (para->fluct) {
-      thermalize_modes(mode, index, &rng, n_a);
+      thermalize_modes(mode, index, &rng, n_a, philox_counter);
     }
     apply_forces(index, mode, node_f, d_v);
     /**lb_calc_n_from_modes_push*/
@@ -4557,7 +4556,6 @@ void lb_integrate_GPU() {
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-
 #ifdef LB_BOUNDARIES_GPU
   if (LBBoundaries::lbboundaries.size() > 0) {
     cuda_safe_mem(
@@ -4573,12 +4571,12 @@ void lb_integrate_GPU() {
      extended_values_flag */
   if (intflag == 1) {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-               device_rho_v, node_f, lb_ek_parameters_gpu);
+               device_rho_v, node_f, lb_ek_parameters_gpu, philox_counter);
     current_nodes = &nodes_b;
     intflag = 0;
   } else {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-               device_rho_v, node_f, lb_ek_parameters_gpu);
+               device_rho_v, node_f, lb_ek_parameters_gpu, philox_counter);
     current_nodes = &nodes_a;
     intflag = 1;
   }
@@ -4589,6 +4587,7 @@ void lb_integrate_GPU() {
                lb_boundary_velocity, lb_boundary_force);
   }
 #endif
+  philox_counter += 1;
 }
 
 void lb_gpu_get_boundary_forces(double *forces) {
