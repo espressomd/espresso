@@ -241,8 +241,8 @@ Setting up diamond polymer networks
 
 Creates a diamond-structured polymer network with 8 tetra-functional nodes
 connected by :math:`2*8` polymer chains of length (MPC) in a unit cell
-of length :math:`a`. The diamond command creates 16*MPC many particles 
-which are connected via the provided bond type.
+of length :math:`a`. The diamond command creates 16*MPC+8 many particles 
+which are connected via the provided bond type (the term plus 8 stems from adding 8 nodes which are connecting the chains).
 Chain monomers are placed at a mutual distance along the
 vector connecting network nodes. The polymer is created starting from
 particle ID 0. Nodes are assigned type 0, monomers (both charged and
