@@ -169,19 +169,6 @@ typedef struct {
   float pi[6];
 } LB_rho_v_pi_gpu;
 
-/** Data structure holding the velocity densities for the Lattice Boltzmann
- * system. */
-typedef struct {
-
-  /** velocity density of the node */
-  float *vd;
-  /** seed for the random gen */
-  unsigned int *seed;
-  /** flag indicating whether this site belongs to a boundary */
-  unsigned int *boundary;
-  void *philox_state;
-
-} LB_nodes_gpu;
 
 /** Data structure for the randomnr and the seed. */
 typedef struct {

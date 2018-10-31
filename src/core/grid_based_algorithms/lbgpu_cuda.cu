@@ -41,6 +41,7 @@
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
+#include "grid_based_algorithms/lbgpu.cuh"
 
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
