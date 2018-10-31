@@ -13,7 +13,6 @@ typedef struct {
   unsigned int *seed;
   /** flag indicating whether this site belongs to a boundary */
   unsigned int *boundary;
-  curandStatePhilox4_32_10_t *philox_state;
 
 } LB_nodes_gpu;
 
