@@ -13,6 +13,7 @@
 #include "cuda_utils.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
+#include "grid_based_algorithms/lbgpu.cuh"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
