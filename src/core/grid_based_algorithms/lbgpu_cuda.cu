@@ -220,7 +220,8 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn) {
 }
 
 static unsigned int philox_counter = 0;
-__device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode, unsigned int philox_counter) {
+__device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
+                                        unsigned int philox_counter) {
   unsigned int xyz[3];
   index_to_xyz(index, xyz);
   uint4 rnd_ints =
@@ -826,7 +827,8 @@ __device__ void relax_modes(float *mode, unsigned int index,
  * @param *rn     Pointer to random number array of the local node
  */
 __device__ void thermalize_modes(float *mode, unsigned int index,
-                                 LB_randomnr_gpu *rn, LB_nodes_gpu n_a, unsigned int philox_counter) {
+                                 LB_randomnr_gpu *rn, LB_nodes_gpu n_a,
+                                 unsigned int philox_counter) {
   float Rho;
   float4 random_floats;
 #ifdef SHANCHEN
@@ -840,7 +842,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
        para->rho[0] * para->agrid * para->agrid * para->agrid) /
       Rho_tot;
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
-    random_floats = random_wrapper_philox(index, 1*ii*LBQ, philox_counter);
+    random_floats = random_wrapper_philox(index, 1 * ii * LBQ, philox_counter);
     mode[1 + ii * LBQ] +=
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
@@ -868,7 +870,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
     /** momentum modes */
 
     /** stress modes */
-    random_floats = random_wrapper_philox(index, 4*ii*LBQ, philox_counter);
+    random_floats = random_wrapper_philox(index, 4 * ii * LBQ, philox_counter);
     mode[4 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_bulk[ii] * para->gamma_bulk[ii])))) *
@@ -890,7 +892,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
         random_floats.z;
 
-    random_floats = random_wrapper_philox(index, 8*ii*LBQ, philox_counter);
+    random_floats = random_wrapper_philox(index, 8 * ii * LBQ, philox_counter);
     mode[8 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (1.0f / 9.0f) *
@@ -912,7 +914,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
         random_floats.z;
 
-    random_floats = random_wrapper_philox(index, 12*ii*LBQ, philox_counter);
+    random_floats = random_wrapper_philox(index, 12 * ii * LBQ, philox_counter);
     mode[12 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
@@ -931,7 +933,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
         random_floats.z;
 
-    random_floats = random_wrapper_philox(index, 16*ii*LBQ, philox_counter);
+    random_floats = random_wrapper_philox(index, 16 * ii * LBQ, philox_counter);
     mode[16 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f) *
                      (1.0f - (para->gamma_even[ii] * para->gamma_even[ii])))) *
@@ -3561,7 +3563,8 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b) {
 
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f,
-                          EK_parameters *ek_parameters_gpu, unsigned int philox_counter) {
+                          EK_parameters *ek_parameters_gpu,
+                          unsigned int philox_counter) {
   /**every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
