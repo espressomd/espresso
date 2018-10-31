@@ -40,8 +40,8 @@
 #include "fd-electrostatics.cuh"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
+#include "grid_based_algorithms/lbgpu.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
