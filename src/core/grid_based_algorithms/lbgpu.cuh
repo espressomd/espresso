@@ -1,8 +1,12 @@
 #ifndef LBGPU_CUH
 #define LBGPU_CUH
 
+#include "config.hpp"
+
+#ifdef CUDA
 #include "curand_wrapper.hpp"
 
+#ifdef LB_GPU
 /** Data structure holding the velocity densities for the Lattice Boltzmann
  * system. */
 typedef struct {
@@ -15,5 +19,7 @@ typedef struct {
   unsigned int *boundary;
 
 } LB_nodes_gpu;
+#endif // LB_GPU
 
+#endif //CUDA
 #endif
