@@ -7,7 +7,7 @@
 
 #elif defined(__HIPCC__)
 
-#include <hiprand/hiprand_kernel.h>
+#include <rocrand/rocrand_kernel.h>
 
 class philox4x32_10_stateless : private rocrand_device::philox4x32_10_engine {
 public:
