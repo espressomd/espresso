@@ -9,6 +9,8 @@
 
 #include <rocrand/rocrand_kernel.h>
 
+#define CURAND_2POW32_INV ROCRAND_2POW32_INV
+
 class philox4x32_10_stateless : private rocrand_device::philox4x32_10_engine {
 public:
   FQUALIFIERS
