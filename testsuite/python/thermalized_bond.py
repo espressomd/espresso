@@ -23,6 +23,7 @@ import numpy as np
 import unittest as ut
 
 import espressomd
+from tests_common import single_component_maxwell
 
 @ut.skipIf(not espressomd.has_features(["MASS"]), "Features not available, skipping test!")
 class ThermalizedBond(ut.TestCase):
@@ -39,13 +40,6 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
     def setUpClass(cls):
         np.random.seed(42)
 
-    def single_component_maxwell(self, x1, x2, kT):
-        """Integrate the probability density from x1 to x2 using the trapez rule"""
-
-        x = np.linspace(x1, x2, 1000)
-        return np.trapz(np.exp(-x**2 / (2. * kT)), x) / \
-            np.sqrt(2. * np.pi * kT)
-
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
         """check the recorded particle distributions in vel againsta histogram with n_bins bins. Drop velocities outside minmax. Check individual histogram bins up to an accuracy of error_tol agaisnt the analytical result for kT."""
 
@@ -57,7 +51,7 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
             
             for j in range(n_bins):
                 found = data[j]
-                expected = self.single_component_maxwell(
+                expected = single_component_maxwell(
                     bins[j], bins[j + 1], kT)
                 self.assertLessEqual(abs(found - expected), error_tol)
 
