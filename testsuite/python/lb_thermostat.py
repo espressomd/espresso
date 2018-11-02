@@ -51,7 +51,8 @@ class LBThermostatCommon(object):
         self.system.set_random_state_PRNG()
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
-        self.system.part.add(pos=np.random.random((200,3)) * self.system.box_l)
+        self.system.part.add(
+            pos=np.random.random((200, 3)) * self.system.box_l)
         self.system.thermostat.set_lb(kT=KT)
 
     def test_velocity_distribution(self):
@@ -59,21 +60,23 @@ class LBThermostatCommon(object):
         self.system.integrator.run(100)
         N = len(self.system.part)
         loops = 250
-        v_stored = np.zeros((N*loops, 3))
+        v_stored = np.zeros((N * loops, 3))
         for i in range(loops):
             self.system.integrator.run(10)
-            v_stored[i*N:(i+1)*N,:] = self.system.part[:].v
+            v_stored[i * N:(i + 1) * N, :] = self.system.part[:].v
         minmax = 5
         n_bins = 5
         error_tol = 0.01
         for i in range(3):
-            hist = np.histogram(v_stored[:, i], range=(-minmax, minmax), bins=n_bins, normed=False)
-            data = hist[0]/float(v_stored.shape[0])
+            hist = np.histogram(v_stored[:, i], range=(
+                -minmax, minmax), bins=n_bins, normed=False)
+            data = hist[0] / float(v_stored.shape[0])
             bins = hist[1]
             for j in range(n_bins):
                 found = data[j]
-                expected = single_component_maxwell(bins[j], bins[j+1], KT)
+                expected = single_component_maxwell(bins[j], bins[j + 1], KT)
                 self.assertLessEqual(abs(found - expected), error_tol)
+
 
 @ut.skipIf(not espressomd.has_features(
     ['LB', 'LB_BOUNDARIES']), "Skipping test due to missing features.")
