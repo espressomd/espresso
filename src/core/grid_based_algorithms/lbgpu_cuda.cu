@@ -230,7 +230,6 @@ __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
   rnd_floats.x = rnd_ints.x * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   rnd_floats.y = rnd_ints.y * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   rnd_floats.z = rnd_ints.z * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  constexpr float sqrt12 = 3.46410161514f;
   return rnd_floats;
 }
 
