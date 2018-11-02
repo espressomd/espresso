@@ -133,92 +133,7 @@ static const float c_sound_sq = 1.0f / 3.0f;
 
 /*-------------------------------------------------------*/
 
-/**random generator which generates numbers [0,1]
- * @param *rn Pointer to random number array of the local node or particle
- */
-__device__ void random_01(LB_randomnr_gpu *rn) {
-  const float mxi = 1.0f / (float)(1ul << 31);
-  unsigned int curr = rn->seed;
-
-  curr = 1103515245 * curr + 12345;
-  rn->randomnr[0] = (float)(curr & ((1ul << 31) - 1)) * mxi;
-  curr = 1103515245 * curr + 12345;
-  rn->randomnr[1] = (float)(curr & ((1ul << 31) - 1)) * mxi;
-  rn->seed = curr;
-}
-
-/**random generator which generates numbers between -2 sigma and 2 sigma in the
- * form of a Gaussian with standard deviation sigma=1.118591404 resulting in an
- * actual standard deviation of 1.
- * @param *rn Pointer to random number array of the local node or particle
- */
-__device__ void gaussian_random_cut(LB_randomnr_gpu *rn) {
-  float x1, x2;
-  float r2, fac;
-  /** On every second call two Gaussian random numbers are calculated
-   via the Box-Muller transformation.*/
-  /** draw two uniform random numbers in the unit circle */
-  do {
-    random_01(rn);
-    x1 = 2.0f * rn->randomnr[0] - 1.0f;
-    x2 = 2.0f * rn->randomnr[1] - 1.0f;
-    r2 = x1 * x1 + x2 * x2;
-  } while (r2 >= 1.0f || r2 == 0.0f);
-
-  /** perform Box-Muller transformation and cutoff the ends and replace with
-   * flat noise */
-  /*
-  fac = sqrtf(-2.0f*__logf(r2)/r2)*1.118591404f;
-  rn->randomnr[0] = x2*fac;
-  rn->randomnr[1] = x1*fac;
-  random_01(rn);
-  if ( fabs(rn->randomnr[0]) > 2.0f*1.118591404f) {
-    rn->randomnr[0] = (2.0f*rn->randomnr[0]-1.0f)*2.0f*1.118591404f;
-  }
-  if ( fabs(rn->randomnr[1]) > 2.0f*1.118591404f ) {
-    rn->randomnr[0] = (2.0f*rn->randomnr[1]-1.0f)*2.0f*1.118591404f;
-  }
-  */
-
-  fac = sqrtf(-2.0f * __logf(r2) / r2) * 1.042267973f;
-  rn->randomnr[0] = x2 * fac;
-  rn->randomnr[1] = x1 * fac;
-  if (fabs(rn->randomnr[0]) > 2.0f * 1.042267973f) {
-    if (rn->randomnr[0] > 0)
-      rn->randomnr[0] = 2.0f * 1.042267973f;
-    else
-      rn->randomnr[0] = -2.0f * 1.042267973f;
-  }
-  if (fabs(rn->randomnr[1]) > 2.0f * 1.042267973f) {
-    if (rn->randomnr[1] > 0)
-      rn->randomnr[1] = 2.0f * 1.042267973f;
-    else
-      rn->randomnr[1] = -2.0f * 1.042267973f;
-  }
-}
-
-/** Gaussian random number generator for thermalisation
- * @param *rn Pointer to random number array of the local node node or particle
- */
-__device__ void gaussian_random(LB_randomnr_gpu *rn) {
-  float x1, x2;
-  float r2, fac;
-  /** On every second call two Gaussian random numbers are calculated
-   via the Box-Muller transformation.*/
-  /** draw two uniform random numbers in the unit circle */
-  do {
-    random_01(rn);
-    x1 = 2.0f * rn->randomnr[0] - 1.0f;
-    x2 = 2.0f * rn->randomnr[1] - 1.0f;
-    r2 = x1 * x1 + x2 * x2;
-  } while (r2 >= 1.0f || r2 == 0.0f);
-
-  /** perform Box-Muller transformation */
-  fac = sqrtf(-2.0f * __logf(r2) / r2);
-  rn->randomnr[0] = x2 * fac;
-  rn->randomnr[1] = x1 * fac;
-}
-
+static constexpr float sqrt12 = 3.4641016151377544f;
 static unsigned int philox_counter = 0;
 __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
                                         unsigned int philox_counter) {
@@ -231,23 +146,6 @@ __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
   rnd_floats.y = rnd_ints.y * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   rnd_floats.z = rnd_ints.z * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   return rnd_floats;
-}
-
-__device__ void random_wrapper(LB_randomnr_gpu *rn) {
-#if defined(FLATNOISE)
-#define sqrt12 3.46410161514f
-  random_01(rn);
-  rn->randomnr[0] -= 0.5f;
-  rn->randomnr[0] *= sqrt12;
-  rn->randomnr[1] -= 0.5f;
-  rn->randomnr[1] *= sqrt12;
-#elif defined(GAUSSRANDOMCUT)
-  gaussian_random_cut(rn);
-#elif defined(GAUSSRANDOM)
-  gaussian_random(rn);
-#else
-#error No noise type defined for the GPU LB
-#endif
 }
 
 /**transformation from 1d array-index to xyz
@@ -822,7 +720,6 @@ __device__ void relax_modes(float *mode, unsigned int index,
  * @param *rn     Pointer to random number array of the local node
  */
 __device__ void thermalize_modes(float *mode, unsigned int index,
-                                 LB_randomnr_gpu *rn,
                                  unsigned int philox_counter) {
   float Rho;
   float4 random_floats;
@@ -2038,7 +1935,6 @@ interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
  * @param *delta_j           Pointer for the weighting of particle momentum
  * (Output)
  * @param *particle_position Pointer to the particle position (Input)
- * @param *rn_part           Pointer to random number array of the particle
  * @param node_index         node index around (8) particle (Output)
  * @param *d_v               Pointer to local device values
  * @param flag_cs            Determine if we are at the centre (0, typical) or
@@ -2046,8 +1942,9 @@ interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
  */
 __device__ void calc_viscous_force_three_point_couple(
     LB_nodes_gpu n_a, float *delta, CUDA_particle_data *particle_data,
-    float *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part,
-    float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs) {
+    float *particle_force, unsigned int part_index, float *delta_j,
+    unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs,
+    unsigned int philox_counter) {
   float interpolated_u[3];
   float interpolated_rho[LB_COMPONENTS];
   float viscforce_density[3 * LB_COMPONENTS];
@@ -2154,36 +2051,14 @@ __device__ void calc_viscous_force_three_point_couple(
 #endif
 
     /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
-#ifdef FLATNOISE
-    random_01(rn_part);
+    float4 random_floats =
+        random_wrapper_philox(part_index, ii, philox_counter);
     viscforce_density[0 + ii * 3] +=
-        para->lb_coupl_pref[ii] * (rn_part->randomnr[0] - 0.5f);
+        para->lb_coupl_pref[ii] * (random_floats.w - 0.5f);
     viscforce_density[1 + ii * 3] +=
-        para->lb_coupl_pref[ii] * (rn_part->randomnr[1] - 0.5f);
-    random_01(rn_part);
+        para->lb_coupl_pref[ii] * (random_floats.x - 0.5f);
     viscforce_density[2 + ii * 3] +=
-        para->lb_coupl_pref[ii] * (rn_part->randomnr[0] - 0.5f);
-#elif defined(GAUSSRANDOMCUT)
-    gaussian_random_cut(rn_part);
-    viscforce_density[0 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[0];
-    viscforce_density[1 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[1];
-    gaussian_random_cut(rn_part);
-    viscforce_density[2 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[0];
-#elif defined(GAUSSRANDOM)
-    gaussian_random(rn_part);
-    viscforce_density[0 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[0];
-    viscforce_density[1 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[1];
-    gaussian_random(rn_part);
-    viscforce_density[2 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[0];
-#else
-#error No noise type defined for the GPU LB
-#endif
+        para->lb_coupl_pref[ii] * (random_floats.y - 0.5f);
     /** delta_j for transform momentum transfer to lattice units which is done
       in calc_node_force (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225
       (1999)) */
@@ -2407,8 +2282,8 @@ __device__ void calc_viscous_force(
     LB_nodes_gpu n_a, float *delta, float *partgrad1, float *partgrad2,
     float *partgrad3, CUDA_particle_data *particle_data, float *particle_force,
     CUDA_fluid_composition *fluid_composition, unsigned int part_index,
-    LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index,
-    LB_rho_v_gpu *d_v, int flag_cs, unsigned int philox_counter) {
+    float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs,
+    unsigned int philox_counter) {
   float interpolated_u[3];
   float interpolated_rho[LB_COMPONENTS];
   float viscforce_density[3 * LB_COMPONENTS];
@@ -2646,13 +2521,14 @@ __device__ void calc_viscous_force(
 #endif
 
     /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
-    float4 random_floats = random_wrapper_philox(part_index, ii, philox_counter);
+    float4 random_floats =
+        random_wrapper_philox(part_index, ii, philox_counter);
     viscforce_density[0 + ii * 3] +=
-        para->lb_coupl_pref[ii] * (random_floats.w / sqrt12);
+        para->lb_coupl_pref[ii] * (random_floats.w - 0.5f);
     viscforce_density[1 + ii * 3] +=
-        para->lb_coupl_pref[ii] * (random_floats.x / sqrt12);
+        para->lb_coupl_pref[ii] * (random_floats.x - 0.5f);
     viscforce_density[2 + ii * 3] +=
-        para->lb_coupl_pref[ii] * (random_floats.y / sqrt12);
+        para->lb_coupl_pref[ii] * (random_floats.y - 0.5f);
 
     /** delta_j for transform momentum transfer to lattice units which is done
       in calc_node_force (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225
@@ -2951,9 +2827,6 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
       n_a.vd[(18 + ii * LBQ) * para->number_of_nodes + index] =
           rho_times_coeff - 1.0f / 12.0f * (local_j[1] - local_j[2]) +
           1.0f / 8.0f * (tmp1 - tmp2) - 1.0f / 24.0f * trace;
-
-      /**set different seed for randomgen on every node */
-      n_a.seed[index] = para->your_seed + index;
     }
 
     calc_m_from_n(n_a, index, mode);
@@ -3542,26 +3415,21 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                        blockDim.x * blockIdx.x + threadIdx.x;
   /**the 19 moments (modes) are only temporary register values */
   float mode[19 * LB_COMPONENTS];
-  LB_randomnr_gpu rng;
 
   if (index < para->number_of_nodes) {
-    /** storing the seed into a register value*/
-    rng.seed = n_a.seed[index];
     /**calc_m_from_n*/
     calc_m_from_n(n_a, index, mode);
     /**lb_relax_modes*/
     relax_modes(mode, index, node_f, d_v);
     /**lb_thermalize_modes */
     if (para->fluct) {
-      thermalize_modes(mode, index, &rng, philox_counter);
+      thermalize_modes(mode, index, philox_counter);
     }
     apply_forces(index, mode, node_f, d_v);
     /**lb_calc_n_from_modes_push*/
     normalize_modes(mode);
     /**calc of velocity densities and streaming with pbc*/
     calc_n_from_modes_push(n_b, mode, index);
-    /** rewriting the seed back to the global memory*/
-    n_b.seed[index] = rng.seed;
   }
 }
 
@@ -3579,7 +3447,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
 __global__ void calc_fluid_particle_ia(
     LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,
     CUDA_fluid_composition *fluid_composition, LB_node_force_density_gpu node_f,
-    CUDA_particle_seed *part, LB_rho_v_gpu *d_v, bool couple_virtual, unsigned int philox_counter) {
+    LB_rho_v_gpu *d_v, bool couple_virtual, unsigned int philox_counter) {
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
@@ -3589,19 +3457,17 @@ __global__ void calc_fluid_particle_ia(
   float partgrad1[8 * LB_COMPONENTS];
   float partgrad2[8 * LB_COMPONENTS];
   float partgrad3[8 * LB_COMPONENTS];
-  LB_randomnr_gpu rng_part;
   if (part_index < para->number_of_particles) {
 #if defined(VIRTUAL_SITES)
     if (!particle_data[part_index].is_virtual || couple_virtual)
 #endif
     {
-      rng_part.seed = part[part_index].seed;
-
       /**force acting on the particle. delta_j will be used later to compute the
        * force that acts back onto the fluid. */
       calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3,
                          particle_data, particle_force, fluid_composition,
-                         part_index, &rng_part, delta_j, node_index, d_v, 0, philox_counter);
+                         part_index, delta_j, node_index, d_v, 0,
+                         philox_counter);
       calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3,
                       node_index, node_f);
 
@@ -3609,14 +3475,12 @@ __global__ void calc_fluid_particle_ia(
       if (particle_data[part_index].swim.swimming) {
         calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3,
                            particle_data, particle_force, fluid_composition,
-                           part_index, &rng_part, delta_j, node_index, d_v, 1, philox_counter);
+                           part_index, delta_j, node_index, d_v, 1,
+                           philox_counter);
         calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3,
                         node_index, node_f);
       }
 #endif
-
-      /**force which acts back to the fluid node */
-      part[part_index].seed = rng_part.seed;
     }
   }
 }
@@ -3632,34 +3496,29 @@ __global__ void calc_fluid_particle_ia(
  */
 __global__ void calc_fluid_particle_ia_three_point_couple(
     LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,
-    LB_node_force_density_gpu node_f, CUDA_particle_seed *part,
-    LB_rho_v_gpu *d_v) {
+    LB_node_force_density_gpu node_f, LB_rho_v_gpu *d_v,
+    unsigned int philox_counter) {
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[27];
   float delta[27];
   float delta_j[3 * LB_COMPONENTS];
-  LB_randomnr_gpu rng_part;
   if (part_index < para->number_of_particles) {
-    rng_part.seed = part[part_index].seed;
     /**force acting on the particle. delta_j will be used later to compute the
      * force that acts back onto the fluid. */
     calc_viscous_force_three_point_couple(n_a, delta, particle_data,
-                                          particle_force, part_index, &rng_part,
-                                          delta_j, node_index, d_v, 0);
+                                          particle_force, part_index, delta_j,
+                                          node_index, d_v, 0, philox_counter);
     calc_node_force_three_point_couple(delta, delta_j, node_index, node_f);
 
 #ifdef ENGINE
     if (particle_data[part_index].swim.swimming) {
-      calc_viscous_force_three_point_couple(
-          n_a, delta, particle_data, particle_force, part_index, &rng_part,
-          delta_j, node_index, d_v, 1);
+      calc_viscous_force_three_point_couple(n_a, delta, particle_data,
+                                            particle_force, part_index, delta_j,
+                                            node_index, d_v, 1, philox_counter);
       calc_node_force_three_point_couple(delta, delta_j, node_index, node_f);
     }
 #endif
-
-    /**force which acts back to the fluid node */
-    part[part_index].seed = rng_part.seed;
   }
 }
 
@@ -3927,11 +3786,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
                                                      3 * LB_COMPONENTS *
                                                      sizeof(float));
 #endif
-  free_realloc_and_clear(nodes_a.seed,
-                         lbpar_gpu->number_of_nodes * sizeof(unsigned int));
   free_realloc_and_clear(nodes_a.boundary,
-                         lbpar_gpu->number_of_nodes * sizeof(unsigned int));
-  free_realloc_and_clear(nodes_b.seed,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
   free_realloc_and_clear(nodes_b.boundary,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
@@ -4156,8 +4011,8 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
       KERNELCALL(calc_fluid_particle_ia, dim_grid_particles,
                  threads_per_block_particles, *current_nodes,
                  gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 gpu_get_fluid_composition_pointer(), node_f,
-                 gpu_get_particle_seed_pointer(), device_rho_v, couple_virtual, philox_counter);
+                 gpu_get_fluid_composition_pointer(), node_f, device_rho_v,
+                 couple_virtual, philox_counter);
     } else { /** only other option is the three point coupling scheme */
 #ifdef SHANCHEN
       fprintf(stderr, "The three point particle coupling is not currently "
@@ -4168,7 +4023,7 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
       KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles,
                  threads_per_block_particles, *current_nodes,
                  gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 node_f, gpu_get_particle_seed_pointer(), device_rho_v);
+                 node_f, device_rho_v, philox_counter);
     }
   }
 }
@@ -4397,20 +4252,14 @@ void lb_calc_shanchen_GPU() {
 
 /** setup and call kernel for getting macroscopic fluid values of all nodes
  * @param *host_checkpoint_vd struct to save the gpu populations
- * @param *host_checkpoint_seed struct to save the nodes' seeds for the lb on
- * the gpu
  * @param *host_checkpoint_boundary struct to save the boundary nodes
  * @param *host_checkpoint_force struct to save the forces on the nodes
  */
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_seed,
                             unsigned int *host_checkpoint_boundary,
                             lbForceFloat *host_checkpoint_force) {
   cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
-                           cudaMemcpyDeviceToHost));
-  cuda_safe_mem(cudaMemcpy(host_checkpoint_seed, current_nodes->seed,
-                           lbpar_gpu.number_of_nodes * sizeof(unsigned int),
                            cudaMemcpyDeviceToHost));
   cuda_safe_mem(cudaMemcpy(host_checkpoint_boundary, current_nodes->boundary,
                            lbpar_gpu.number_of_nodes * sizeof(unsigned int),
@@ -4422,13 +4271,10 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
 
 /** setup and call kernel for setting macroscopic fluid values of all nodes
  * @param *host_checkpoint_vd struct to save the gpu populations
- * @param *host_checkpoint_seed struct to save the nodes' seeds for the lb on
- * the gpu
  * @param *host_checkpoint_boundary struct to save the boundary nodes
  * @param *host_checkpoint_force struct to save the forces on the nodes
  */
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_seed,
                             unsigned int *host_checkpoint_boundary,
                             lbForceFloat *host_checkpoint_force) {
   current_nodes = &nodes_a;
@@ -4438,9 +4284,6 @@ void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
                            cudaMemcpyHostToDevice));
 
-  cuda_safe_mem(cudaMemcpy(current_nodes->seed, host_checkpoint_seed,
-                           lbpar_gpu.number_of_nodes * sizeof(unsigned int),
-                           cudaMemcpyHostToDevice));
   cuda_safe_mem(cudaMemcpy(current_nodes->boundary, host_checkpoint_boundary,
                            lbpar_gpu.number_of_nodes * sizeof(unsigned int),
                            cudaMemcpyHostToDevice));
