@@ -27,7 +27,7 @@ Check the Lattice Boltzmann thermostat with respect to the particle velocity dis
 """
 
 KT = 2.25
-AGRID = .5
+AGRID = 2.5
 VISC = .7
 DENS = 1.7
 TIME_STEP = 0.01
