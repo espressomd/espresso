@@ -26,6 +26,7 @@
 #ifdef DPD
 
 #include "communication.hpp"
+#include "grid.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
@@ -120,21 +121,6 @@ static double weight(int type, double r_cut, double dist_inv) {
     return dist_inv - 1.0 / r_cut;
   }
 }
-
-#ifdef LEES_EDWARDS
-static Vector3d vel_diff(Vector3d const &x, Vector3d const &y,
-                         Vector3d const &u, Vector3d const &v) {
-  auto shear_velocity = lees_edwards_protocol.velocity;
-  auto ret = u - v;
-
-  auto const dy = std::abs(x[lees_edwards_protocol.shearplanenormal] - y[lees_edwards_protocol.shearplanenormal]);
-  if(dy > 0.5 * box_l[lees_edwards_protocol.shearplanenormal]) {
-    ret[0] += Utils::sgn(dy) * shear_velocity;
-  }
-
-  return ret;
-}
-#endif
 
 Vector3d dpd_pair_force(const Particle *p1, const Particle *p2, 
                         IA_parameters *ia_params,
