@@ -591,6 +591,6 @@ class DynamicDict(dict):
 
 
 def single_component_maxwell(x1, x2, kT):
-    """Integrate the probability density from x1 to x2 using the trapez rule"""
+    """Integrate the probability density from x1 to x2 using the trapezoidal rule"""
     x = np.linspace(x1, x2, 1000)
     return np.trapz(np.exp(-x**2 / (2. * kT)), x) / np.sqrt(2. * np.pi * kT)
