@@ -2411,7 +2411,7 @@ __device__ void calc_viscous_force(
     float *partgrad3, CUDA_particle_data *particle_data, float *particle_force,
     CUDA_fluid_composition *fluid_composition, unsigned int part_index,
     LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index,
-    LB_rho_v_gpu *d_v, int flag_cs) {
+    LB_rho_v_gpu *d_v, int flag_cs, unsigned int philox_counter) {
   float interpolated_u[3];
   float interpolated_rho[LB_COMPONENTS];
   float viscforce_density[3 * LB_COMPONENTS];
@@ -2649,36 +2649,13 @@ __device__ void calc_viscous_force(
 #endif
 
     /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
-#ifdef FLATNOISE
-    random_01(rn_part);
+    float4 random_floats = random_wrapper_philox(part_index, ii, philox_counter);
     viscforce_density[0 + ii * 3] +=
-        para->lb_coupl_pref[ii] * (rn_part->randomnr[0] - 0.5f);
+        para->lb_coupl_pref[ii] * random_floats.w;
     viscforce_density[1 + ii * 3] +=
-        para->lb_coupl_pref[ii] * (rn_part->randomnr[1] - 0.5f);
-    random_01(rn_part);
+        para->lb_coupl_pref[ii] * random_floats.x;
     viscforce_density[2 + ii * 3] +=
-        para->lb_coupl_pref[ii] * (rn_part->randomnr[0] - 0.5f);
-#elif defined(GAUSSRANDOMCUT)
-    gaussian_random_cut(rn_part);
-    viscforce_density[0 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[0];
-    viscforce_density[1 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[1];
-    gaussian_random_cut(rn_part);
-    viscforce_density[2 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[0];
-#elif defined(GAUSSRANDOM)
-    gaussian_random(rn_part);
-    viscforce_density[0 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[0];
-    viscforce_density[1 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[1];
-    gaussian_random(rn_part);
-    viscforce_density[2 + ii * 3] +=
-        para->lb_coupl_pref2[ii] * rn_part->randomnr[0];
-#else
-#error No noise type defined for the GPU LB
-#endif
+        para->lb_coupl_pref[ii] * random_floats.y;
 
     /** delta_j for transform momentum transfer to lattice units which is done
       in calc_node_force (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225
@@ -3605,7 +3582,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
 __global__ void calc_fluid_particle_ia(
     LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,
     CUDA_fluid_composition *fluid_composition, LB_node_force_density_gpu node_f,
-    CUDA_particle_seed *part, LB_rho_v_gpu *d_v, bool couple_virtual) {
+    CUDA_particle_seed *part, LB_rho_v_gpu *d_v, bool couple_virtual, unsigned int philox_counter) {
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
@@ -3627,7 +3604,7 @@ __global__ void calc_fluid_particle_ia(
        * force that acts back onto the fluid. */
       calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3,
                          particle_data, particle_force, fluid_composition,
-                         part_index, &rng_part, delta_j, node_index, d_v, 0);
+                         part_index, &rng_part, delta_j, node_index, d_v, 0, philox_counter);
       calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3,
                       node_index, node_f);
 
@@ -3635,7 +3612,7 @@ __global__ void calc_fluid_particle_ia(
       if (particle_data[part_index].swim.swimming) {
         calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3,
                            particle_data, particle_force, fluid_composition,
-                           part_index, &rng_part, delta_j, node_index, d_v, 1);
+                           part_index, &rng_part, delta_j, node_index, d_v, 1, philox_counter);
         calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3,
                         node_index, node_f);
       }
@@ -4183,7 +4160,7 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
                  threads_per_block_particles, *current_nodes,
                  gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
                  gpu_get_fluid_composition_pointer(), node_f,
-                 gpu_get_particle_seed_pointer(), device_rho_v, couple_virtual);
+                 gpu_get_particle_seed_pointer(), device_rho_v, couple_virtual, philox_counter);
     } else { /** only other option is the three point coupling scheme */
 #ifdef SHANCHEN
       fprintf(stderr, "The three point particle coupling is not currently "
