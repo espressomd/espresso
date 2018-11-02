@@ -21,8 +21,7 @@ import espressomd.lb
 from tests_common import single_component_maxwell
 
 """
-Check the Lattice Boltzmann 'pressure' driven flow in a slab system
-by comparing to the analytical solution.
+Check the Lattice Boltzmann thermostat with respect to the particle velocity distribution.
 
 
 """
