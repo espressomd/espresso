@@ -56,6 +56,7 @@ static void pack_particles(ParticleRange particles,
                            CUDA_particle_data *buffer) {
   int i = 0;
   for (auto const &part : particles) {
+    buffer[i].identity = part.p.identity;
     auto const pos = folded_position(part);
 
     buffer[i].p[0] = static_cast<float>(pos[0]);

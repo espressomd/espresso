@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lb.cpp
+/** \file
  *
  * Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *
@@ -28,6 +28,7 @@
  */
 
 #include "lb.hpp"
+#include <cinttypes>
 
 #ifdef LB
 
@@ -983,20 +984,17 @@ int lb_lbfluid_save_checkpoint(char *filename, int binary) {
     }
     float *host_checkpoint_vd =
         (float *)Utils::malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
-    unsigned int *host_checkpoint_seed = (unsigned int *)Utils::malloc(
-        lbpar_gpu.number_of_nodes * sizeof(unsigned int));
     unsigned int *host_checkpoint_boundary = (unsigned int *)Utils::malloc(
         lbpar_gpu.number_of_nodes * sizeof(unsigned int));
     lbForceFloat *host_checkpoint_force = (lbForceFloat *)Utils::malloc(
         lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
-    lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed,
-                           host_checkpoint_boundary, host_checkpoint_force);
+    uint64_t host_checkpoint_philox_counter;
+    lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_boundary,
+                           host_checkpoint_force,
+                           &host_checkpoint_philox_counter);
     if (!binary) {
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         fprintf(cpfile, "%.8E \n", host_checkpoint_vd[n]);
-      }
-      for (int n = 0; n < int(lbpar_gpu.number_of_nodes); n++) {
-        fprintf(cpfile, "%u \n", host_checkpoint_seed[n]);
       }
       for (int n = 0; n < int(lbpar_gpu.number_of_nodes); n++) {
         fprintf(cpfile, "%u \n", host_checkpoint_boundary[n]);
@@ -1004,19 +1002,18 @@ int lb_lbfluid_save_checkpoint(char *filename, int binary) {
       for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
         fprintf(cpfile, "%.8E \n", host_checkpoint_force[n]);
       }
+      fprintf(cpfile, "%" PRIu64 "\n", host_checkpoint_philox_counter);
     } else {
       fwrite(host_checkpoint_vd, sizeof(float),
              19 * int(lbpar_gpu.number_of_nodes), cpfile);
-      fwrite(host_checkpoint_seed, sizeof(int), int(lbpar_gpu.number_of_nodes),
-             cpfile);
       fwrite(host_checkpoint_boundary, sizeof(int),
              int(lbpar_gpu.number_of_nodes), cpfile);
       fwrite(host_checkpoint_force, sizeof(lbForceFloat),
              3 * int(lbpar_gpu.number_of_nodes), cpfile);
+      fwrite(&host_checkpoint_philox_counter, sizeof(uint64_t), 1, cpfile);
     }
     fclose(cpfile);
     free(host_checkpoint_vd);
-    free(host_checkpoint_seed);
     free(host_checkpoint_boundary);
     free(host_checkpoint_force);
 #endif // LB_GPU
@@ -1069,33 +1066,29 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
       return ES_ERROR;
     }
     std::vector<float> host_checkpoint_vd(lbpar_gpu.number_of_nodes * 19);
-    std::vector<unsigned int> host_checkpoint_seed(lbpar_gpu.number_of_nodes);
     std::vector<unsigned int> host_checkpoint_boundary(
         lbpar_gpu.number_of_nodes);
     std::vector<lbForceFloat> host_checkpoint_force(lbpar_gpu.number_of_nodes *
                                                     3);
-
+    uint64_t host_checkpoint_philox_counter;
+    int res;
     if (!binary) {
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
-        assert(fscanf(cpfile, "%f", &host_checkpoint_vd[n]) != EOF);
+        res = fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
       }
       for (int n = 0; n < int(lbpar_gpu.number_of_nodes); n++) {
-        assert(fscanf(cpfile, "%u", &host_checkpoint_seed[n]) != EOF);
-      }
-      for (int n = 0; n < int(lbpar_gpu.number_of_nodes); n++) {
-        assert(fscanf(cpfile, "%u", &host_checkpoint_boundary[n]) != EOF);
+        res = fscanf(cpfile, "%u", &host_checkpoint_boundary[n]);
       }
       for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
-        assert(fscanf(cpfile, "%f", &host_checkpoint_force[n]) != EOF);
+        res = fscanf(cpfile, "%f", &host_checkpoint_force[n]);
       }
+      res = fscanf(cpfile, "%" SCNu64, &host_checkpoint_philox_counter);
+      if (res == EOF)
+        throw std::runtime_error("Error while reading LB checkpoint.");
     } else {
       if (fread(host_checkpoint_vd.data(), sizeof(float),
                 19 * int(lbpar_gpu.number_of_nodes),
                 cpfile) != (unsigned int)(19 * lbpar_gpu.number_of_nodes))
-        return ES_ERROR;
-      if (fread(host_checkpoint_seed.data(), sizeof(int),
-                int(lbpar_gpu.number_of_nodes),
-                cpfile) != (unsigned int)lbpar_gpu.number_of_nodes)
         return ES_ERROR;
       if (fread(host_checkpoint_boundary.data(), sizeof(int),
                 int(lbpar_gpu.number_of_nodes),
@@ -1109,10 +1102,15 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
         fclose(cpfile);
         return ES_ERROR;
       }
+      if (fread(&host_checkpoint_philox_counter, sizeof(uint64_t), 1, cpfile) !=
+          1) {
+        fclose(cpfile);
+        return ES_ERROR;
+      }
     }
     lb_load_checkpoint_GPU(
-        host_checkpoint_vd.data(), host_checkpoint_seed.data(),
-        host_checkpoint_boundary.data(), host_checkpoint_force.data());
+        host_checkpoint_vd.data(), host_checkpoint_boundary.data(),
+        host_checkpoint_force.data(), &host_checkpoint_philox_counter);
     fclose(cpfile);
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
@@ -2640,6 +2638,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   velocity[1] = p->m.v[1];
   velocity[2] = p->m.v[2];
 
+  Vector3d v_drift = {interpolated_u[0], interpolated_u[1], interpolated_u[2]};
 #ifdef ENGINE
   if (p->swim.swimming) {
     velocity[0] -= p->swim.v_swim * p->r.quatu[0];
@@ -2951,12 +2950,12 @@ void calc_particle_lattice_ia() {
         p.lc.f_random[0] = lb_coupl_pref * (d_random() - 0.5);
         p.lc.f_random[1] = lb_coupl_pref * (d_random() - 0.5);
         p.lc.f_random[2] = lb_coupl_pref * (d_random() - 0.5);
-      } else {
-        p.lc.f_random = {0.0, 0.0, 0.0};
-      }
 #else // GAUSSRANDOM
 #error No noise type defined for the CPU LB
 #endif // GAUSSRANDOM
+      } else {
+        p.lc.f_random = {0.0, 0.0, 0.0};
+      }
 
 #ifdef ADDITIONAL_CHECKS
         rancounter += 3;

@@ -12,6 +12,7 @@
 #include "cuda_utils.hpp"
 #include "lbboundaries.hpp"
 #include "lbgpu.hpp"
+#include "lbgpu.cuh"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
