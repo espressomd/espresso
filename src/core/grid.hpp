@@ -205,10 +205,7 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
     double offset = lees_edwards_protocol.offset;
     double shift =
         Utils::sgn(dy) * (offset - dround(offset * box_l_i[lees_edwards_protocol.sheardir]) * box_l[lees_edwards_protocol.sheardir]);
-
     res[lees_edwards_protocol.sheardir] -= shift;
-    //TODO: The box should be added here via p->l.i[i]
-    //res[0] -= shift + (p.l.i[0]  * box_l[0]);
 
   }
 #endif    
