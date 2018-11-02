@@ -2820,12 +2820,12 @@ void calc_particle_lattice_ia() {
         p.lc.f_random[0] = lb_coupl_pref * (d_random() - 0.5);
         p.lc.f_random[1] = lb_coupl_pref * (d_random() - 0.5);
         p.lc.f_random[2] = lb_coupl_pref * (d_random() - 0.5);
-      } else {
-        p.lc.f_random = {0.0, 0.0, 0.0};
-      }
 #else // GAUSSRANDOM
 #error No noise type defined for the CPU LB
 #endif // GAUSSRANDOM
+      } else {
+        p.lc.f_random = {0.0, 0.0, 0.0};
+      }
 
 #ifdef ADDITIONAL_CHECKS
         rancounter += 3;
