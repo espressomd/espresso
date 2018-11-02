@@ -2651,11 +2651,11 @@ __device__ void calc_viscous_force(
     /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
     float4 random_floats = random_wrapper_philox(part_index, ii, philox_counter);
     viscforce_density[0 + ii * 3] +=
-        para->lb_coupl_pref[ii] * random_floats.w;
+        para->lb_coupl_pref[ii] * (random_floats.w / sqrt12);
     viscforce_density[1 + ii * 3] +=
-        para->lb_coupl_pref[ii] * random_floats.x;
+        para->lb_coupl_pref[ii] * (random_floats.x / sqrt12);
     viscforce_density[2 + ii * 3] +=
-        para->lb_coupl_pref[ii] * random_floats.y;
+        para->lb_coupl_pref[ii] * (random_floats.y / sqrt12);
 
     /** delta_j for transform momentum transfer to lattice units which is done
       in calc_node_force (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225
