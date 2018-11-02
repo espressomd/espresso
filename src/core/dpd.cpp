@@ -127,8 +127,8 @@ static Vector3d vel_diff(Vector3d const &x, Vector3d const &y,
   auto shear_velocity = lees_edwards_protocol.velocity;
   auto ret = u - v;
 
-  auto const dy = std::abs(x[1] - y[1]);
-  if(dy > 0.5 * box_l[1] ) {
+  auto const dy = std::abs(x[lees_edwards_protocol.shearplanenormal] - y[lees_edwards_protocol.shearplanenormal]);
+  if(dy > 0.5 * box_l[lees_edwards_protocol.shearplanenormal]) {
     ret[0] += Utils::sgn(dy) * shear_velocity;
   }
 
