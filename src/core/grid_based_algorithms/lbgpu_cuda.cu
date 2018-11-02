@@ -231,9 +231,7 @@ __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
   rnd_floats.y = rnd_ints.y * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   rnd_floats.z = rnd_ints.z * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   constexpr float sqrt12 = 3.46410161514f;
-  return make_float4(
-      (rnd_floats.w - 0.5f) * sqrt12, (rnd_floats.x - 0.5f) * sqrt12,
-      (rnd_floats.y - 0.5f) * sqrt12, (rnd_floats.z - 0.5f) * sqrt12);
+  return rnd_floats;
 }
 
 __device__ void random_wrapper(LB_randomnr_gpu *rn) {
@@ -845,19 +843,19 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
                (1.0f - (para->gamma_mobility[0] * para->gamma_mobility[0])))) *
-        (2 * ii - 1) * random_floats.w;
+        (2 * ii - 1) * (random_floats.w - 0.5f) * sqrt12;
     mode[2 + ii * LBQ] +=
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
                (1.0f - (para->gamma_mobility[0] * para->gamma_mobility[0])))) *
-        (2 * ii - 1) * random_floats.x;
+        (2 * ii - 1) * (random_floats.x - 0.5f) * sqrt12;
   }
   for (int ii = 0; ii < LB_COMPONENTS; ++ii)
     mode[3 + ii * LBQ] +=
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
                (1.0f - (para->gamma_mobility[0] * para->gamma_mobility[0])))) *
-        (2 * ii - 1) * random_floats.y;
+        (2 * ii - 1) * (random_floats.y -0.5f) * sqrt12;
 #endif
 
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
@@ -872,79 +870,79 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
     mode[4 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_bulk[ii] * para->gamma_bulk[ii])))) *
-        random_floats.w;
+        (random_floats.w - 0.5f) * sqrt12;
     mode[5 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (4.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        random_floats.x;
+        (random_floats.x - 0.5f) * sqrt12;
 
     mode[6 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (4.0f / 3.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        random_floats.y;
+        (random_floats.y - 0.5f) * sqrt12;
     mode[7 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (1.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        random_floats.z;
+        (random_floats.z - 0.5f) * sqrt12;
 
     random_floats = random_wrapper_philox(index, 8 * ii * LBQ, philox_counter);
     mode[8 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (1.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        random_floats.w;
+        (random_floats.w - 0.5f) * sqrt12;
     mode[9 + ii * LBQ] +=
         sqrtf(Rho *
               (para->mu[ii] * (1.0f / 9.0f) *
                (1.0f - (para->gamma_shear[ii] * para->gamma_shear[ii])))) *
-        random_floats.x;
+        (random_floats.x - 0.5f) * sqrt12;
 
     /** ghost modes */
     mode[10 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_floats.y;
+        (random_floats.y - 0.5f) * sqrt12;
     mode[11 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_floats.z;
+        (random_floats.z - 0.5f) * sqrt12;
 
     random_floats = random_wrapper_philox(index, 12 * ii * LBQ, philox_counter);
     mode[12 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 3.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_floats.w;
+        (random_floats.w - 0.5f) * sqrt12;
     mode[13 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 9.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_floats.x;
+        (random_floats.x - 0.5f) * sqrt12;
 
     mode[14 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 9.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_floats.y;
+        (random_floats.y - 0.5f) * sqrt12;
     mode[15 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f / 9.0f) *
                      (1.0f - (para->gamma_odd[ii] * para->gamma_odd[ii])))) *
-        random_floats.z;
+        (random_floats.z - 0.5f) * sqrt12;
 
     random_floats = random_wrapper_philox(index, 16 * ii * LBQ, philox_counter);
     mode[16 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (2.0f) *
                      (1.0f - (para->gamma_even[ii] * para->gamma_even[ii])))) *
-        random_floats.w;
+        (random_floats.w - 0.5f) * sqrt12;
     mode[17 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (4.0f / 9.0f) *
                      (1.0f - (para->gamma_even[ii] * para->gamma_even[ii])))) *
-        random_floats.x;
+        (random_floats.x - 0.5f) * sqrt12;
 
     mode[18 + ii * LBQ] +=
         sqrtf(Rho * (para->mu[ii] * (4.0f / 3.0f) *
                      (1.0f - (para->gamma_even[ii] * para->gamma_even[ii])))) *
-        random_floats.y;
+        (random_floats.y - 0.5f) * sqrt12;
   }
 }
 
