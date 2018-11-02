@@ -41,8 +41,8 @@ class TestLB(object):
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = range(n_nodes)
     np.random.seed = 1
-    params = {'int_steps': 25,
-              'int_times': 10,
+    params = {'int_steps': 15,
+              'int_times': 30,
               'time_step': 0.01,
               'tau': 0.01,
               'agrid': 0.5,
@@ -121,8 +121,9 @@ class TestLB(object):
 
             # Go over lb lattice
             for lb_node in lb_nodes:
-                fluid_mass += lb_node.density[0]
-                fluid_temp += np.sum(lb_node.velocity**2) * lb_node.density[0]
+                dens = lb_node.density[0]
+                fluid_mass += dens
+                fluid_temp += np.sum(lb_node.velocity**2) * dens
 
             # Normalize
             fluid_mass /= len(lb_nodes)
@@ -250,7 +251,7 @@ class TestLBCPU(TestLB, ut.TestCase):
 @ut.skipIf(
     not espressomd.has_features(
         ["LB_GPU"]) or espressomd.has_features('SHANCHEN'),
-           "Features not available, skipping test!")
+    "Features not available, skipping test!")
 class TestLBGPU(TestLB, ut.TestCase):
 
     def setUp(self):
