@@ -855,7 +855,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
         sqrtf(c * (1 - c) * Rho_tot *
               (para->mu[ii] * (2.0f / 3.0f) *
                (1.0f - (para->gamma_mobility[0] * para->gamma_mobility[0])))) *
-        (2 * ii - 1) * (random_floats.y -0.5f) * sqrt12;
+        (2 * ii - 1) * (random_floats.y - 0.5f) * sqrt12;
 #endif
 
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
