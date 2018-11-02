@@ -431,7 +431,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 void propagate_vel_finalize_p_inst() {
 
 #ifdef LEES_EDWARDS
-double le_vel = lees_edwards_get_velocity(sim_time + time_step) /2;
+double le_vel = lees_edwards_get_velocity(sim_time + time_step / 2.);
 #endif
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
