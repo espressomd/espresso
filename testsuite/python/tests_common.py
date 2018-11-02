@@ -581,3 +581,16 @@ def gaussian_force(r, eps, sig, cutoff):
     if (r < cutoff):
         f = eps * r / sig**2 * np.exp(-np.power(r / sig, 2) / 2)
     return f
+
+
+class DynamicDict(dict):
+
+    def __getitem__(self, key):
+        value = super(DynamicDict, self).__getitem__(key)
+        return eval(value, self) if isinstance(value, str) else value
+
+
+def single_component_maxwell(x1, x2, kT):
+    """Integrate the probability density from x1 to x2 using the trapezoidal rule"""
+    x = np.linspace(x1, x2, 1000)
+    return np.trapz(np.exp(-x**2 / (2. * kT)), x) / np.sqrt(2. * np.pi * kT)
