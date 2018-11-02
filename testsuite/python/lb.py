@@ -40,8 +40,9 @@ class TestLB(object):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = range(n_nodes)
-    params = {'int_steps': 25,
-              'int_times': 10,
+    np.random.seed = 1
+    params = {'int_steps': 15,
+              'int_times': 30,
               'time_step': 0.01,
               'tau': 0.02,
               'agrid': 0.5,
@@ -122,16 +123,20 @@ class TestLB(object):
         # Integration
         for i in range(self.params['int_times']):
             self.system.integrator.run(self.params['int_steps'])
-            fluidmass_sim = 0.0
-            fluid_temp_sim = 0.0
-            node_v_list = []
-            node_dens_list = []
-            n_nodes = int(self.params['box_l'] / self.params['agrid'])
-            for i in range(n_nodes):
-                for j in range(n_nodes):
-                    for k in range(n_nodes):
-                        node_v_list.append(self.lbf[i, j, k].velocity)
-                        node_dens_list.append(self.lbf[i, j, k].density[0])
+
+            # Summation vars
+            fluid_mass = 0.0
+            fluid_temp = 0.0
+
+            # Go over lb lattice
+            for lb_node in lb_nodes:
+                dens = lb_node.density[0]
+                fluid_mass += dens
+                fluid_temp += np.sum(lb_node.velocity**2) * dens
+
+            # Normalize
+            fluid_mass /= len(lb_nodes)
+            fluid_temp *= self.system.volume() / (3. * len(lb_nodes)**2)
 
             # check mass conversation
             fluidmass_sim = sum(node_dens_list) / len(node_dens_list)
@@ -286,7 +291,7 @@ class TestLBCPU(TestLB, ut.TestCase):
 @ut.skipIf(
     not espressomd.has_features(
         ["LB_GPU"]) or espressomd.has_features('SHANCHEN'),
-           "Features not available, skipping test!")
+    "Features not available, skipping test!")
 class TestLBGPU(TestLB, ut.TestCase):
 
     def setUp(self):
