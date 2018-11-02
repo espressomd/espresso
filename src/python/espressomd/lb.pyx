@@ -344,13 +344,20 @@ IF LB or LB_GPU:
                         "Velocity has to be of shape 3 and type float.")
         property density:
             def __get__(self):
-                cdef double[3] double_return
+                cdef double[1] double_return
                 lb_lbnode_get_rho(self.node, double_return)
-                return array_locked(double_return)
+                return array_locked((double_return[0],))
 
             def __set__(self, value):
-                raise NotImplementedError
-
+                cdef double dens
+                if not (hasattr(value,"__getitem__") and len(value) != 1 and \
+                    is_valid_type(value[0], float)):
+                    print(value)
+                    dens=float(value[0])
+                    lb_lbnode_set_rho(self.node, &dens)
+                else:
+                    raise ValueError(
+                        "Density has to be a list/tuple containing a single float.")
         property pi:
             def __get__(self):
                 cdef double[6] pi

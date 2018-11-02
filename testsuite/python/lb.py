@@ -158,7 +158,7 @@ class TestLB(object):
         self.assertAlmostEqual(
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
-    def test_set_get_u(self):
+    def test_set_get_u_rho(self):
         self.system.actors.clear()
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
@@ -168,9 +168,14 @@ class TestLB(object):
             fric=self.params['friction'], ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
         v_fluid = np.array([1.2, 4.3, 0.2])
+        rho=3.2
         self.lbf[0, 0, 0].velocity = v_fluid
+        self.lbf[0, 0, 0].density = [rho]
         np.testing.assert_allclose(
             np.copy(self.lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
+        np.testing.assert_allclose(
+            np.copy(self.lbf[0, 0, 0].density), rho, atol=1e-4)
+
 
     def test_grid_index(self):
         self.system.actors.clear()

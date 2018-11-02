@@ -97,6 +97,7 @@ IF LB_GPU or LB:
         bool lb_lbnode_is_index_valid(const Vector3i & ind)
         int lb_lbnode_get_u(const Vector3i & ind, double * double_return)
         int lb_lbnode_set_u(const Vector3i & ind, double * u);
+        int lb_lbnode_set_rho(const Vector3i & ind, double * u);
         int lb_lbnode_get_rho(const Vector3i & ind, double * double_return)
         int lb_lbnode_get_pi(const Vector3i & ind, double * double_return)
         int lb_lbnode_get_pi_neq(const Vector3i & ind, double * double_return)
