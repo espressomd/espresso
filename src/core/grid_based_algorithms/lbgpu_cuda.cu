@@ -222,10 +222,8 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn) {
 static unsigned int philox_counter = 0;
 __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
                                         unsigned int philox_counter) {
-  unsigned int xyz[3];
-  index_to_xyz(index, xyz);
   uint4 rnd_ints =
-      curand_Philox4x32_10(make_uint4(xyz[0], xyz[1], xyz[2], mode),
+      curand_Philox4x32_10(make_uint4(index, 0, 0, mode),
                            make_uint2(philox_counter, para->your_seed));
   float4 rnd_floats;
   rnd_floats.w = rnd_ints.w * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
@@ -827,7 +825,7 @@ __device__ void relax_modes(float *mode, unsigned int index,
  * @param *rn     Pointer to random number array of the local node
  */
 __device__ void thermalize_modes(float *mode, unsigned int index,
-                                 LB_randomnr_gpu *rn, LB_nodes_gpu n_a,
+                                 LB_randomnr_gpu *rn,
                                  unsigned int philox_counter) {
   float Rho;
   float4 random_floats;
@@ -3581,7 +3579,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     relax_modes(mode, index, node_f, d_v);
     /**lb_thermalize_modes */
     if (para->fluct) {
-      thermalize_modes(mode, index, &rng, n_a, philox_counter);
+      thermalize_modes(mode, index, &rng, philox_counter);
     }
     apply_forces(index, mode, node_f, d_v);
     /**lb_calc_n_from_modes_push*/
