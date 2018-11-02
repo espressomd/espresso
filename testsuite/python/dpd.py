@@ -52,7 +52,7 @@ class DPDThermostat(ut.TestCase):
             bins = hist[1]
             for j in range(n_bins):
                 found = data[j]
-                expected = self.single_component_maxwell(bins[j], bins[j+1], kT)
+                expected = single_component_maxwell(bins[j], bins[j+1], kT)
                 self.assertLessEqual(abs(found - expected), error_tol)
 
     def test_aa_verify_single_component_maxwell(self):
