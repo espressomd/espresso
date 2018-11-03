@@ -121,9 +121,8 @@ void ScafacosData::update_particle_forces() const {
       // The scafacos term "potential" here in fact refers to the magnetic
       // field
       // So, the torques are given by m \times B
-      double t[3];
       const Vector3d dip = p.calc_dip();
-      Utils::cross_product(dip, &(potentials[it_p]), t);
+      auto const t = dip.cross(Vector3d(Utils::Span<const double>(&(potentials[it_p]), 3)));
       // The force is given by G m, where G is a matrix
       // which comes from the "fields" output of scafacos like this
       // 0 1 2
