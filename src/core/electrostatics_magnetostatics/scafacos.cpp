@@ -122,7 +122,8 @@ void ScafacosData::update_particle_forces() const {
       // field
       // So, the torques are given by m \times B
       const Vector3d dip = p.calc_dip();
-      auto const t = dip.cross(Vector3d(Utils::Span<const double>(&(potentials[it_p]), 3)));
+      auto const t = dip.cross(
+          Vector3d(Utils::Span<const double>(&(potentials[it_p]), 3)));
       // The force is given by G m, where G is a matrix
       // which comes from the "fields" output of scafacos like this
       // 0 1 2
