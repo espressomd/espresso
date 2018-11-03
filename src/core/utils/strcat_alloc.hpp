@@ -44,6 +44,6 @@ inline char *strcat_alloc(char *left, const char *right) {
     return res;
   }
 }
-}
+} // namespace Utils
 
 #endif

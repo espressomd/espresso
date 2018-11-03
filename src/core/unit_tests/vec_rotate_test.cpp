@@ -26,8 +26,8 @@ using Utils::vec_rotate;
 #include <limits>
 
 BOOST_AUTO_TEST_CASE(rotation) {
-  using std::sin;
   using std::cos;
+  using std::sin;
 
   /* Axis */
   auto const k = Vector3d{1, 2, 3}.normalize();

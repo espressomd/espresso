@@ -43,7 +43,7 @@ template <class T> struct int_pow_impl<T, 1> {
 template <class T> struct int_pow_impl<T, 0> {
   T operator()(T x) const { return T{1}; }
 };
-}
+} // namespace detail
 
 /**
  * \brief Calculate integer powers.
@@ -55,6 +55,6 @@ template <class T> struct int_pow_impl<T, 0> {
 template <unsigned n, typename T> inline T int_pow(T x) {
   return detail::int_pow_impl<T, n>{}(x);
 }
-}
+} // namespace Utils
 
 #endif

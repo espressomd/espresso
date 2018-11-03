@@ -16,6 +16,6 @@ inline void permute_ifield(int *field, int size, int permute) {
     permute--;
   }
 }
-}
+} // namespace Utils
 
 #endif

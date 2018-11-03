@@ -302,8 +302,9 @@ void correct_vel_shake() {
   }
 
   if (cnt >= SHAKE_MAX_ITERATIONS) {
-    fprintf(stderr, "%d: VEL CORRECTIONS IN RATTLE failed to converge after %d "
-                    "iterations !!\n",
+    fprintf(stderr,
+            "%d: VEL CORRECTIONS IN RATTLE failed to converge after %d "
+            "iterations !!\n",
             this_node, cnt);
     errexit();
   }

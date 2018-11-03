@@ -39,6 +39,6 @@ template <typename T> T AS_erfc_part(T d) {
 
   return t * (a1 + t * (a2 + t * (a3 + t * (a4 + t * a5))));
 }
-}
+} // namespace Utils
 
 #endif

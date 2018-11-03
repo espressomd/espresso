@@ -32,8 +32,8 @@
 #include "utils/constants.hpp"
 #include "utils/math/sqr.hpp"
 
-#include <cmath>
 #include <cassert>
+#include <cmath>
 
 /*************************************************************/
 /** \name Vector and matrix operations for three dimensons.  */
