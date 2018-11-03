@@ -25,6 +25,7 @@ from numpy.random import random, seed
 import espressomd
 import espressomd.magnetostatics
 import espressomd.analyze
+import espressomd.cuda_init
 import tests_common
 
 
@@ -35,6 +36,12 @@ def stopAll(system):
 
 @ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT"]),
            "Features not available, skipping test!")
+@ut.skipIf(espressomd.has_features(["CUDA"]) and
+           "Radeon" in ", ".join(
+           espressomd.cuda_init.CudaInitHandle(
+           ).device_list.values(
+           )),
+           "Feature not yet supported on AMD GPU, skipping test!")
 class BHGPUTest(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
