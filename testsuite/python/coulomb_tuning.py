@@ -85,7 +85,7 @@ class CoulombCloudWallTune(ut.TestCase):
             self.compare("p3m")
 
     if espressomd.has_features(["ELECTROSTATICS", "CUDA"]) and not \
-       "Radeon" in ", ".join(espressomd.cuda_init.CudaInitHandle().device_list.values()):
+       str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
         def test_p3m_gpu(self):
             # We have to add some tolerance here, because the reference
             # system is not homogeneous
