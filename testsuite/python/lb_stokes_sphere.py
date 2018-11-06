@@ -33,21 +33,22 @@ import numpy as np
 import sys
 
 # Define the LB Parameters
-TIME_STEP   = 0.4
-AGRID 	    = 1.0
-KVISC       = 5.0
-DENS	      = 1.0
-LB_PARAMS   = {'agrid': AGRID,
-               'dens':  DENS,
-               'visc':  KVISC,
-               'fric':  1.0,
-               'tau':   TIME_STEP}
+TIME_STEP = 0.4
+AGRID = 1.0
+KVISC = 5.0
+DENS = 1.0
+LB_PARAMS = {'agrid': AGRID,
+             'dens': DENS,
+             'visc': KVISC,
+             'fric': 1.0,
+             'tau': TIME_STEP}
 # System setup
-radius      = 5.4
-box_width   = 44
-real_width  = box_width + 2 * AGRID
-box_length  = 50
+radius = 5.4
+box_width = 44
+real_width = box_width + 2 * AGRID
+box_length = 50
 v = [0, 0, 0.01]  # The boundary slip
+
 
 class Stokes(object):
     lbf = None
@@ -67,7 +68,7 @@ class Stokes(object):
         # Setup walls
         walls = [None] * 4
         walls[0] = lbboundaries.LBBoundary(shape=shapes.Wall(
-        normal=[-1, 0, 0], dist=-(1 + box_width)), velocity=v)
+                                           normal=[-1, 0, 0], dist=-(1 + box_width)), velocity=v)
         walls[1] = lbboundaries.LBBoundary(
             shape=shapes.Wall(
                 normal=[
@@ -106,7 +107,7 @@ class Stokes(object):
 
         stokes_force = 6 * np.pi * KVISC * radius * size(v)
         print("Stokes' Law says: f=%f" % stokes_force)
-        
+
         # get force that is exerted on the sphere
         for i in range(4):
             self.system.integrator.run(200)
@@ -115,18 +116,24 @@ class Stokes(object):
             self.assertLess(abs(1.0 - size(force) / stokes_force), 0.06)
 
 ##Invoke the GPU LB
+
+
 @ut.skipIf(not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBGPUStokes(ut.TestCase, Stokes):
-  def setUp(self):
-    self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
 #Invoke the CPU LB
+
+
 @ut.skipIf(not espressomd.has_features(
     ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBCPUStokes(ut.TestCase, Stokes):
-  def setUp(self):
-    self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
 if __name__ == "__main__":
