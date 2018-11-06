@@ -56,7 +56,6 @@
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
 #endif
-template <typename T> __device__ void index_to_xyz(T index, T *xyz);
 int extended_values_flag = 0; /* TODO: this has to be set to one by
                                  appropriate functions if there is
                                  the need to compute pi at every
@@ -2052,7 +2051,7 @@ __device__ void calc_viscous_force_three_point_couple(
 
     /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
     float4 random_floats = random_wrapper_philox(
-        particle_data[part_index].identity, ii, philox_counter);
+        particle_data[part_index].identity, ii + LB_COMPONENTS * LBQ * 32, philox_counter);
     viscforce_density[0 + ii * 3] +=
         para->lb_coupl_pref[ii] * (random_floats.w - 0.5f);
     viscforce_density[1 + ii * 3] +=
@@ -2522,7 +2521,7 @@ __device__ void calc_viscous_force(
 
     /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
     float4 random_floats = random_wrapper_philox(
-        particle_data[part_index].identity, ii, philox_counter);
+        particle_data[part_index].identity, ii + LB_COMPONENTS * LBQ * 32, philox_counter);
     viscforce_density[0 + ii * 3] +=
         para->lb_coupl_pref[ii] * (random_floats.w - 0.5f);
     viscforce_density[1 + ii * 3] +=
