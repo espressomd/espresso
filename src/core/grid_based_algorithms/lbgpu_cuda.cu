@@ -2052,7 +2052,7 @@ __device__ void calc_viscous_force_three_point_couple(
 
     /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
     float4 random_floats =
-        random_wrapper_philox(part_index, ii, philox_counter);
+        random_wrapper_philox(particle_data[part_index].identity, ii, philox_counter);
     viscforce_density[0 + ii * 3] +=
         para->lb_coupl_pref[ii] * (random_floats.w - 0.5f);
     viscforce_density[1 + ii * 3] +=
@@ -2522,7 +2522,7 @@ __device__ void calc_viscous_force(
 
     /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
     float4 random_floats =
-        random_wrapper_philox(part_index, ii, philox_counter);
+        random_wrapper_philox(particle_data[part_index].identity, ii, philox_counter);
     viscforce_density[0 + ii * 3] +=
         para->lb_coupl_pref[ii] * (random_floats.w - 0.5f);
     viscforce_density[1 + ii * 3] +=
