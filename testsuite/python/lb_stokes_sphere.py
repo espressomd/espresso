@@ -57,13 +57,13 @@ class Stokes(object):
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4
 
-    # The temperature is zero.
-    system.thermostat.set_lb(kT=0)
 
     def test_stokes(self):
         self.system.actors.clear()
         self.system.lbboundaries.clear()
         self.system.actors.add(self.lbf)
+        # The temperature is zero.
+        self.system.thermostat.set_lb(kT=0)
 
         # Setup walls
         walls = [None] * 4
