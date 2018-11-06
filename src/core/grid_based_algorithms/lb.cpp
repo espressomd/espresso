@@ -1069,17 +1069,18 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
     std::vector<lbForceFloat> host_checkpoint_force(lbpar_gpu.number_of_nodes *
                                                     3);
     unsigned int host_checkpoint_philox_counter;
+    int res;
     if (!binary) {
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
-        fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
+        res = fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
       }
       for (int n = 0; n < int(lbpar_gpu.number_of_nodes); n++) {
-        fscanf(cpfile, "%u", &host_checkpoint_boundary[n]);
+        res = fscanf(cpfile, "%u", &host_checkpoint_boundary[n]);
       }
       for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
-        fscanf(cpfile, "%f", &host_checkpoint_force[n]);
+        res = fscanf(cpfile, "%f", &host_checkpoint_force[n]);
       }
-      auto res = fscanf(cpfile, "%u", &host_checkpoint_philox_counter);
+      res = fscanf(cpfile, "%u", &host_checkpoint_philox_counter);
       if (res == EOF)
         throw std::runtime_error("Error while reading LB checkpoint.");
     } else {
