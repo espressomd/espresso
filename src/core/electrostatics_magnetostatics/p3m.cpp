@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <mpi.h>
+
+#include "p3m.hpp"
+
+#ifdef P3M
 
 #include "cells.hpp"
 #include "communication.hpp"
@@ -41,7 +41,16 @@
 #include "p3m_gpu_error.hpp"
 #endif
 
-#ifdef P3M
+#include "utils/math/int_pow.hpp"
+#include "utils/math/sinc.hpp"
+using Utils::sinc;
+#include "utils/strcat_alloc.hpp"
+using Utils::strcat_alloc;
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <mpi.h>
 
 /************************************************
  * variables

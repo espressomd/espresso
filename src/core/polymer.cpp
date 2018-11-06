@@ -46,6 +46,9 @@
 #include "random.hpp"
 #include "utils.hpp"
 
+#include "utils/vec_rotate.hpp"
+using Utils::vec_rotate;
+
 /*************************************************************
  * Functions                                                 *
  * ---------                                                 *
@@ -91,11 +94,11 @@ double buf_mindist4(double pos[3], int n_add, double *add) {
     return (std::min(std::min(box_l[0], box_l[1]), box_l[2]));
   for (i = 0; i < n_add; i++) {
     dx = pos[0] - add[3 * i + 0];
-    dx -= dround(dx / box_l[0]) * box_l[0];
+    dx -= std::round(dx / box_l[0]) * box_l[0];
     dy = pos[1] - add[3 * i + 1];
-    dy -= dround(dy / box_l[1]) * box_l[1];
+    dy -= std::round(dy / box_l[1]) * box_l[1];
     dz = pos[2] - add[3 * i + 2];
-    dz -= dround(dz / box_l[2]) * box_l[2];
+    dz -= std::round(dz / box_l[2]) * box_l[2];
     mindist =
         std::min(mindist, Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
   }

@@ -185,7 +185,7 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++) {
     res[i] = a[i] - b[i];
     if (std::fabs(res[i]) > half_box_l[i] && PERIODIC(i))
-      res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
+      res[i] -= std::round(res[i] * box_l_i[i]) * box_l[i];
   }
 }
 
