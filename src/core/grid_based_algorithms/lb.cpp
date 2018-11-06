@@ -986,8 +986,9 @@ int lb_lbfluid_save_checkpoint(char *filename, int binary) {
         lbpar_gpu.number_of_nodes * sizeof(unsigned int));
     lbForceFloat *host_checkpoint_force = (lbForceFloat *)Utils::malloc(
         lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
+    unsigned int *host_checkpoint_philox_counter = (unsigned int *)Utils::malloc(sizeof(unsigned int));
     lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_boundary,
-                           host_checkpoint_force);
+                           host_checkpoint_force, host_checkpoint_philox_counter);
     if (!binary) {
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         fprintf(cpfile, "%.8E \n", host_checkpoint_vd[n]);
@@ -1005,11 +1006,14 @@ int lb_lbfluid_save_checkpoint(char *filename, int binary) {
              int(lbpar_gpu.number_of_nodes), cpfile);
       fwrite(host_checkpoint_force, sizeof(lbForceFloat),
              3 * int(lbpar_gpu.number_of_nodes), cpfile);
+      fwrite(host_checkpoint_philox_counter, sizeof(unsigned int),
+             1, cpfile);
     }
     fclose(cpfile);
     free(host_checkpoint_vd);
     free(host_checkpoint_boundary);
     free(host_checkpoint_force);
+    free(host_checkpoint_philox_counter);
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
@@ -1062,9 +1066,8 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
     std::vector<float> host_checkpoint_vd(lbpar_gpu.number_of_nodes * 19);
     std::vector<unsigned int> host_checkpoint_boundary(
         lbpar_gpu.number_of_nodes);
-    std::vector<lbForceFloat> host_checkpoint_force(lbpar_gpu.number_of_nodes *
-                                                    3);
-
+    std::vector<lbForceFloat> host_checkpoint_force(lbpar_gpu.number_of_nodes * 3);
+    unsigned int host_checkpoint_philox_counter;
     if (!binary) {
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         assert(fscanf(cpfile, "%f", &host_checkpoint_vd[n]) != EOF);
@@ -1092,10 +1095,16 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
         fclose(cpfile);
         return ES_ERROR;
       }
+      if (fread(&host_checkpoint_philox_counter, sizeof(unsigned int),
+                1,
+                cpfile) != 1) {
+        fclose(cpfile);
+        return ES_ERROR;
+      }
     }
     lb_load_checkpoint_GPU(host_checkpoint_vd.data(),
                            host_checkpoint_boundary.data(),
-                           host_checkpoint_force.data());
+                           host_checkpoint_force.data(), &host_checkpoint_philox_counter);
     fclose(cpfile);
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {

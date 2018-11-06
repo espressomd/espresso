@@ -4257,7 +4257,7 @@ void lb_calc_shanchen_GPU() {
  */
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force) {
+                            lbForceFloat *host_checkpoint_force, unsigned int *host_checkpoint_philox_counter) {
   cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
                            cudaMemcpyDeviceToHost));
@@ -4267,6 +4267,7 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
   cuda_safe_mem(cudaMemcpy(host_checkpoint_force, node_f.force_density,
                            lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat),
                            cudaMemcpyDeviceToHost));
+  host_checkpoint_philox_counter = &philox_counter;
 }
 
 /** setup and call kernel for setting macroscopic fluid values of all nodes
@@ -4276,7 +4277,7 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
  */
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force) {
+                            lbForceFloat *host_checkpoint_force, unsigned int *host_checkpoint_philox_counter) {
   current_nodes = &nodes_a;
   intflag = 1;
 
@@ -4290,6 +4291,7 @@ void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
   cuda_safe_mem(cudaMemcpy(node_f.force_density, host_checkpoint_force,
                            lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat),
                            cudaMemcpyHostToDevice));
+  philox_counter = *host_checkpoint_philox_counter;
 }
 
 /** setup and call kernel to get the boundary flag of a single node
