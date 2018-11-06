@@ -42,7 +42,7 @@ double ShapeBasedConstraint::min_dist() {
       parts.begin(), parts.end(), std::numeric_limits<double>::infinity(),
       [this](double min, Particle const &p) {
         IA_parameters *ia_params;
-        ia_params = get_ia_param(p.e->p.type, part_rep.e->p.type);
+        ia_params = get_ia_param(p.type, part_rep.type);
         if (checkIfInteraction(ia_params)) {
           double vec[3], dist;
           m_shape->calculate_dist(folded_position(p).data(), &dist, vec);
@@ -61,7 +61,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
   double dist = 0.;
   Vector3d dist_vec, force, torque1, torque2, outer_normal_vec;
 
-  IA_parameters *ia_params = get_ia_param(p.e->p.type, part_rep.e->p.type);
+  IA_parameters *ia_params = get_ia_param(p.type, part_rep.type);
 
   for (int j = 0; j < 3; j++) {
     force[j] = 0;
@@ -123,7 +123,7 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
   IA_parameters *ia_params;
   double nonbonded_en = 0.0;
 
-  ia_params = get_ia_param(p.e->p.type, part_rep.e->p.type);
+  ia_params = get_ia_param(p.type, part_rep.type);
 
   dist = 0.;
   if (checkIfInteraction(ia_params)) {
@@ -142,7 +142,7 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
                         << " violated by particle " << p.e->p.identity;
     }
   }
-  if (part_rep.e->p.type >= 0)
-    *obsstat_nonbonded(&energy, p.e->p.type, part_rep.e->p.type) += nonbonded_en;
+  if (part_rep.type >= 0)
+    *obsstat_nonbonded(&energy, p.type, part_rep.type) += nonbonded_en;
 }
 } // namespace Constraints

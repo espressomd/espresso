@@ -236,11 +236,11 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
   const double dist_betw_part = sqrt(sqrlen(vec21));
 
   // Find out, which is the particle to be glued.
-  if ((p1.e->p.type == collision_params.part_type_to_be_glued) &&
-      (p2.e->p.type == collision_params.part_type_to_attach_vs_to)) {
+  if ((p1.type == collision_params.part_type_to_be_glued) &&
+      (p2.type == collision_params.part_type_to_attach_vs_to)) {
     c = 1 - collision_params.dist_glued_part_to_vs / dist_betw_part;
-  } else if ((p2.e->p.type == collision_params.part_type_to_be_glued) &&
-             (p1.e->p.type == collision_params.part_type_to_attach_vs_to)) {
+  } else if ((p2.type == collision_params.part_type_to_be_glued) &&
+             (p1.type == collision_params.part_type_to_attach_vs_to)) {
     c = collision_params.dist_glued_part_to_vs / dist_betw_part;
   } else {
     throw std::runtime_error("This should never be thrown. Bug.");
@@ -248,7 +248,7 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
   for (int i = 0; i < 3; i++) {
     pos[i] = p2.r.p[i] + vec21[i] * c;
   }
-  if (p1.e->p.type == collision_params.part_type_to_attach_vs_to)
+  if (p1.type == collision_params.part_type_to_attach_vs_to)
     return p1;
   else
     return p2;
@@ -380,7 +380,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   local_vs_relate_to(current_vs_pid, relate_to);
 
   (local_particles[max_seen_particle])->e->p.is_virtual = 1;
-  (local_particles[max_seen_particle])->e->p.type =
+  (local_particles[max_seen_particle])->type =
       collision_params.vs_particle_type;
 }
 
@@ -421,7 +421,7 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
   // Create bond between the virtual particles
   bondG[0] = collision_params.bond_vs;
   bondG[1] = vs_pid_plus_one - 1;
-  if (p1->e->p.type == collision_params.part_type_after_glueing) {
+  if (p1->type == collision_params.part_type_after_glueing) {
     local_change_bond(p1->e->p.identity, bondG, 0);
   } else {
     local_change_bond(p2->e->p.identity, bondG, 0);
@@ -609,12 +609,12 @@ void handle_collisions() {
         current_vs_pid++;
         if (collision_params.mode == COLLISION_MODE_GLUE_TO_SURF) {
           if (p1)
-            if (p1->e->p.type == collision_params.part_type_to_be_glued) {
-              p1->e->p.type = collision_params.part_type_after_glueing;
+            if (p1->type == collision_params.part_type_to_be_glued) {
+              p1->type = collision_params.part_type_after_glueing;
             }
           if (p2)
-            if (p2->e->p.type == collision_params.part_type_to_be_glued) {
-              p2->e->p.type = collision_params.part_type_after_glueing;
+            if (p2->type == collision_params.part_type_to_be_glued) {
+              p2->type = collision_params.part_type_after_glueing;
             }
         } // mode glue to surface
 
@@ -684,8 +684,8 @@ void handle_collisions() {
           // can not always know whether or not a vs is placed
           if (collision_params.part_type_after_glueing !=
               collision_params.part_type_to_be_glued) {
-            if ((p1->e->p.type == collision_params.part_type_after_glueing) ||
-                (p2->e->p.type == collision_params.part_type_after_glueing)) {
+            if ((p1->type == collision_params.part_type_after_glueing) ||
+                (p2->type == collision_params.part_type_after_glueing)) {
 
               added_particle(current_vs_pid);
               current_vs_pid++;
@@ -707,11 +707,11 @@ void handle_collisions() {
           }
 
           // Change type of particle being attached, to make it inert
-          if (p1->e->p.type == collision_params.part_type_to_be_glued) {
-            p1->e->p.type = collision_params.part_type_after_glueing;
+          if (p1->type == collision_params.part_type_to_be_glued) {
+            p1->type = collision_params.part_type_after_glueing;
           }
-          if (p2->e->p.type == collision_params.part_type_to_be_glued) {
-            p2->e->p.type = collision_params.part_type_after_glueing;
+          if (p2->type == collision_params.part_type_to_be_glued) {
+            p2->type = collision_params.part_type_after_glueing;
           }
 
           // Vs placement happens on the node that has p1

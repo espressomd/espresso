@@ -67,7 +67,7 @@ inline void add_rf_coulomb_pair_force_no_cutoff(const Particle *const p1,
   double fac;
   fac = 1.0 / (dist * dist * dist) +
         rf_params.B / (rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
-  fac *= coulomb.prefactor * p1->e->p.q * p2->e->p.q;
+  fac *= coulomb.prefactor * p1->q * p2->q;
 
   for (j = 0; j < 3; j++)
     force[j] += fac * d[j];
@@ -110,7 +110,7 @@ inline double rf_coulomb_pair_energy_no_cutoff(const Particle *p1,
             (2 * rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
   // cut off part
   fac -= (1 - rf_params.B / 2) / rf_params.r_cut;
-  fac *= coulomb.prefactor * p1->e->p.q * p2->e->p.q;
+  fac *= coulomb.prefactor * p1->q * p2->q;
   return fac;
 }
 

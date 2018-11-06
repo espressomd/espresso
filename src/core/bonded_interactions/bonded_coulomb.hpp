@@ -59,7 +59,7 @@ inline int calc_bonded_coulomb_pair_force(Particle *p1, Particle *p2,
   double dist = sqrt(dist2);
 
   fac =
-      iaparams->p.bonded_coulomb.prefactor * p1->e->p.q * p2->e->p.q / (dist * dist2);
+      iaparams->p.bonded_coulomb.prefactor * p1->q * p2->q / (dist * dist2);
 
   for (i = 0; i < 3; i++)
     force[i] = fac * dx[i];
@@ -84,7 +84,7 @@ inline int bonded_coulomb_pair_energy(Particle *p1, Particle *p2,
                                       double dx[3], double *_energy) {
   double dist = sqrt(sqrlen(dx));
 
-  *_energy = iaparams->p.bonded_coulomb.prefactor * p1->e->p.q * p2->e->p.q / dist;
+  *_energy = iaparams->p.bonded_coulomb.prefactor * p1->q * p2->q / dist;
   return 0;
 }
 

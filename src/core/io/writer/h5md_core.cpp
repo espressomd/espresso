@@ -335,7 +335,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
 
   id[0][particle_index][0] = current_particle.e->p.identity;
   if (write_species)
-    typ[0][particle_index][0] = current_particle.e->p.type;
+    typ[0][particle_index][0] = current_particle.type;
   if (write_mass)
     mass[0][particle_index][0] = current_particle.e->p.mass;
   /* store folded particle positions. */
@@ -364,7 +364,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
   if (write_charge) {
 #ifdef ELECTROSTATICS
-    charge[0][particle_index][0] = current_particle.e->p.q;
+    charge[0][particle_index][0] = current_particle.q;
 #endif
   }
 

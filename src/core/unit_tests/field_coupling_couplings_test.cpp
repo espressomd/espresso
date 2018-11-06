@@ -31,19 +31,11 @@ using namespace FieldCoupling::Coupling;
 BOOST_AUTO_TEST_CASE(charge) {
   static_assert(Charge::is_linear, "");
 
-  struct P {
-    struct M {
-      struct N {
-        const double q = 1.23;
-      } p;
-    } * e;
-    P(): e{new M{}} {}
-    ~P() {
-      delete e;
-    }
+  struct {
+    const double q = 1.23;
   } p;
 
-  BOOST_CHECK((p.e->p.q * 2.0) == Charge()(p, 2.0));
+  BOOST_CHECK((p.q * 2.0) == Charge()(p, 2.0));
 }
 
 BOOST_AUTO_TEST_CASE(mass) {

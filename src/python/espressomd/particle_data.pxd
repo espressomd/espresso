@@ -39,7 +39,6 @@ cdef extern from "particle_data.hpp":
     ctypedef struct particle_properties "ParticleProperties":
         int    identity
         int    mol_id
-        int    type
         double mass
 
     ctypedef struct particle_position "ParticlePosition":
@@ -63,6 +62,7 @@ cdef extern from "particle_data.hpp":
         particle_extended* e
         particle_position r
         particle_force f
+        int type
         int_list bl
         int_list exclusions() except +
 

@@ -91,8 +91,6 @@ struct ParticleProperties {
   int identity = -1;
   /** Molecule identifier. */
   int mol_id = 0;
-  /** particle type, used for non bonded interactions. */
-  int type = 0;
 
 #ifdef MASS
   /** particle mass */
@@ -126,13 +124,6 @@ struct ParticleProperties {
   // Determines, whether a particle's rotational degrees of freedom are
   // integrated
   short int rotation = 0;
-
-  /** charge. */
-#ifdef ELECTROSTATICS
-  double q = 0.0;
-#else
-  constexpr static double q{0.0};
-#endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
   /** electrophoretic mobility times E-field: mu_0 * E */
@@ -445,6 +436,10 @@ struct Particle {
     ret.e.reset(new ParticleExtended(*e));
     ret.r = r;
     ret.f = f;
+    ret.type = type;
+#ifdef ELECTROSTATICS
+    ret.q = q;
+#endif
     ret.bl = bl;
 #ifdef EXCLUSIONS
     ret.el = el;
@@ -469,6 +464,10 @@ struct Particle {
     : e(new ParticleExtended(*rhs.e))
     , r(rhs.r)
     , f(rhs.f)
+    , type(rhs.type)
+#ifdef ELECTROSTATICS
+    , q(rhs.q)
+#endif
     , bl(rhs.bl)
 #ifdef EXCLUSIONS
     , el(rhs.el)
@@ -480,6 +479,10 @@ struct Particle {
     : e(std::move(rhs.e))
     , r(rhs.r)
     , f(rhs.f)
+    , type(rhs.type)
+#ifdef ELECTROSTATICS
+    , q(rhs.q)
+#endif
     , bl(std::move(rhs.bl))
 #ifdef EXCLUSIONS
     , el(std::move(rhs.el))
@@ -492,6 +495,10 @@ struct Particle {
       e.reset(new ParticleExtended(*rhs.e));
       r = rhs.r;
       f = rhs.f;
+      type = rhs.type;
+#ifdef ELECTROSTATICS
+      q = rhs.q;
+#endif
       bl = rhs.bl;
 #ifdef EXCLUSIONS
       el = rhs.el;
@@ -506,6 +513,10 @@ struct Particle {
       e = std::move(rhs.e);
       r = rhs.r;
       f = rhs.f;
+      type = rhs.type;
+#ifdef ELECTROSTATICS
+      q = rhs.q;
+#endif
       bl = std::move(rhs.bl);
 #ifdef EXCLUSIONS
       el = std::move(rhs.el);
@@ -525,6 +536,16 @@ struct Particle {
   ParticlePosition r;
   ///
   ParticleForce f;
+
+  /** particle type, used for non bonded interactions. */
+  int type = 0;
+
+  /** charge. */
+#ifdef ELECTROSTATICS
+  double q = 0.0;
+#else
+  constexpr static double q{0.0};
+#endif
 
   /** Bonded interactions list
    *

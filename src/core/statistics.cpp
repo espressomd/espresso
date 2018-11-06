@@ -73,9 +73,9 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
        bit 0: set1, bit1: set2
     */
     in_set = 0;
-    if (set1.empty() || list_contains(set1, jt->e->p.type))
+    if (set1.empty() || list_contains(set1, jt->type))
       in_set = 1;
-    if (set2.empty() || list_contains(set2, jt->e->p.type))
+    if (set2.empty() || list_contains(set2, jt->type))
       in_set |= 2;
     if (in_set == 0)
       continue;
@@ -83,8 +83,8 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
     for (auto it = std::next(jt); it != partCfg.end(); ++it)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice
        * versa. */
-      if (((in_set & 1) && (set2.empty() || list_contains(set2, it->e->p.type))) ||
-          ((in_set & 2) && (set1.empty() || list_contains(set1, it->e->p.type))))
+      if (((in_set & 1) && (set2.empty() || list_contains(set2, it->type))) ||
+          ((in_set & 2) && (set1.empty() || list_contains(set1, it->type))))
         mindist2 = std::min(mindist2, min_distance2(pt, it->r.p));
   }
 
@@ -142,7 +142,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
         ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
       if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
 #ifdef ELECTROSTATICS
-        if (charge && (p1.e->p.q * p2.e->p.q >= 0)) {
+        if (charge && (p1.q * p2.q >= 0)) {
           return;
         }
 #endif
@@ -252,7 +252,7 @@ std::vector<double> centerofmass(PartCfg &partCfg, int type) {
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
-    if ((p.e->p.type == type) || (type == -1)) {
+    if ((p.type == type) || (type == -1)) {
       for (int j = 0; j < 3; j++) {
         com[j] += p.r.p[j] * (p).e->p.mass;
       }
@@ -270,7 +270,7 @@ std::vector<double> centerofmass_vel(PartCfg &partCfg, int type) {
   int count = 0;
 
   for (auto const &p : partCfg) {
-    if (type == p.e->p.type) {
+    if (type == p.type) {
       for (int i = 0; i < 3; i++) {
         com_vel[i] += p.e->m.v[i];
       }
@@ -289,7 +289,7 @@ void angularmomentum(PartCfg &partCfg, int type, double *com) {
   com[0] = com[1] = com[2] = 0.;
 
   for (auto const &p : partCfg) {
-    if (type == p.e->p.type) {
+    if (type == p.type) {
       vector_product(p.r.p, p.e->m.v, tmp);
       for (int i = 0; i < 3; i++) {
         com[i] += tmp[i] * p.e->p.mass;
@@ -309,7 +309,7 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
     MofImatrix[i] = 0.;
   com = centerofmass(partCfg, type);
   for (auto const &p : partCfg) {
-    if (type == p.e->p.type) {
+    if (type == p.type) {
       count++;
       for (i = 0; i < 3; i++) {
         p1[i] = p.r.p[i] - com[i];
@@ -386,13 +386,13 @@ void calc_part_distribution(PartCfg &partCfg, int *p1_types, int n_p1,
   /* particle loop: p1_types*/
   for (auto const &p1 : partCfg) {
     for (t1 = 0; t1 < n_p1; t1++) {
-      if (p1.e->p.type == p1_types[t1]) {
+      if (p1.type == p1_types[t1]) {
         min_dist2 = start_dist2;
         /* particle loop: p2_types*/
         for (auto const &p2 : partCfg) {
           if (p1 != p2) {
             for (t2 = 0; t2 < n_p2; t2++) {
-              if (p2.e->p.type == p2_types[t2]) {
+              if (p2.type == p2_types[t2]) {
                 act_dist2 = min_distance2(p1.r.p, p2.r.p);
                 if (act_dist2 < min_dist2) {
                   min_dist2 = act_dist2;
@@ -456,14 +456,14 @@ void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
   /* particle loop: p1_types*/
   for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
     for (t1 = 0; t1 < n_p1; t1++) {
-      if (it->e->p.type == p1_types[t1]) {
+      if (it->type == p1_types[t1]) {
         /* distinguish mixed and identical rdf's */
         auto jt = (mixed_flag == 1) ? partCfg.begin() : std::next(it);
 
         /* particle loop: p2_types*/
         for (; jt != partCfg.end(); ++jt) {
           for (t2 = 0; t2 < n_p2; t2++) {
-            if (jt->e->p.type == p2_types[t2]) {
+            if (jt->type == p2_types[t2]) {
               dist = min_distance(it->r.p, jt->r.p);
               if (dist > r_min && dist < r_max) {
                 ind = (int)((dist - r_min) * inv_bin_width);
@@ -528,7 +528,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
     int i = 0;
     for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
       for (int t1 = 0; t1 < n_p1; t1++) {
-        if (it->e->p.type == p1_types[t1]) {
+        if (it->type == p1_types[t1]) {
           /* distinguish mixed and identical rdf's */
           auto jt = (mixed_flag == 1) ? partCfg.begin() : std::next(it);
           int j = (mixed_flag == 1) ? 0 : i + 1;
@@ -536,7 +536,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
           // particle loop: p2_types
           for (; jt != partCfg.end(); ++jt) {
             for (int t2 = 0; t2 < n_p2; t2++) {
-              if (jt->e->p.type == p2_types[t2]) {
+              if (jt->type == p2_types[t2]) {
                 p1[0] = configs[k][3 * i + 0];
                 p1[1] = configs[k][3 * i + 1];
                 p1[2] = configs[k][3 * i + 2];
@@ -607,7 +607,7 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
             C_sum = S_sum = 0.0;
             for (auto const &p : partCfg) {
               for (t = 0; t < n_types; t++) {
-                if (p.e->p.type == p_types[t]) {
+                if (p.type == p_types[t]) {
                   qr = twoPI_L * (i * p.r.p[0] + j * p.r.p[1] + k * p.r.p[2]);
                   C_sum += cos(qr);
                   S_sum += sin(qr);
@@ -623,7 +623,7 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
     n = 0;
     for (auto const &p : partCfg) {
       for (t = 0; t < n_types; t++) {
-        if (p.e->p.type == p_types[t])
+        if (p.type == p_types[t])
           n++;
       }
     }
@@ -687,7 +687,7 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
       n = 0;
       for (auto const &p : partCfg) {
         // com particles
-        if (p.e->p.type == type) {
+        if (p.type == type) {
           for (m = 0; m < 3; m++) {
             pos[m] = configs[k][3 * i + m];
             image_box[m] = 0;
@@ -755,7 +755,7 @@ int calc_cylindrical_average(
 
   for (auto const &p : partCfg) {
     for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
-      if (types[type_id] == p.e->p.type || all_types) {
+      if (types[type_id] == p.type || all_types) {
         auto const pos = folded_position(p);
 
         Vector3d vel{p.e->m.v};
@@ -849,7 +849,7 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
 
   for (auto const &pi : partCfg) {
     for (bi = 0; bi < nbeadtypes; bi++) {
-      if (beadids->e[bi] == pi.e->p.type) {
+      if (beadids->e[bi] == pi.type) {
         /* Find the vector from the point to the center */
         vecsub(center, folded_position(pi), pvector);
 
@@ -908,7 +908,7 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
      * over all particles */
     for (auto const &pi : partCfg) {
       for (bi = 0; bi < nbeadtypes; bi++) {
-        if (beadids->e[bi] == pi.e->p.type) {
+        if (beadids->e[bi] == pi.type) {
           vecsub(center, folded_position(pi), pvector);
           vector_product(axis, pvector, vectprod);
           xdist = sqrt(sqrlen(vectprod) / sqrlen(axis));
@@ -962,7 +962,7 @@ int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
   std::vector<int> ids;
 
   for (auto const &p : partCfg) {
-    if (p.e->p.type == ptype) {
+    if (p.type == ptype) {
       ids.push_back(p.e->p.identity);
     }
   }

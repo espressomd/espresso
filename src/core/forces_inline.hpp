@@ -262,7 +262,7 @@ inline void calc_non_bonded_pair_force(const Particle *p1, const Particle *p2,
 inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                        double dist, double dist2,
                                        double force[3]) {
-  IA_parameters *ia_params = get_ia_param(p1->e->p.type, p2->e->p.type);
+  IA_parameters *ia_params = get_ia_param(p1->type, p2->type);
   calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 }
 
@@ -275,7 +275,7 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
 
-  IA_parameters *ia_params = get_ia_param(p1->e->p.type, p2->e->p.type);
+  IA_parameters *ia_params = get_ia_param(p1->type, p2->type);
   Vector3d force{};
   double torque1[3] = {0., 0., 0.};
   double torque2[3] = {0., 0., 0.};
@@ -347,7 +347,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 
 #ifdef ELECTROSTATICS
   /* real space Coulomb */
-  const double q1q2 = p1->e->p.q * p2->e->p.q;
+  const double q1q2 = p1->q * p2->q;
 
   switch (coulomb.method) {
 #ifdef P3M

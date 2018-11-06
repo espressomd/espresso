@@ -27,7 +27,7 @@ public:
 
   template <typename T, typename Particle>
   T operator()(const Particle &p, const T &x) const {
-    return p.e->p.q * x;
+    return p.q * x;
   }
 };
 } // namespace Coupling

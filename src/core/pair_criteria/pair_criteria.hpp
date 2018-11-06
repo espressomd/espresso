@@ -69,7 +69,7 @@ public:
     const double dist_betw_part = sqrt(sqrlen(vec21));
 
     // Interaction parameters for particle types
-    IA_parameters *ia_params = get_ia_param(p1.e->p.type, p2.e->p.type);
+    IA_parameters *ia_params = get_ia_param(p1.type, p2.type);
 
     return (calc_non_bonded_pair_energy(
                &p1, &p2, ia_params, vec21, dist_betw_part,

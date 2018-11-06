@@ -49,34 +49,34 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 #endif
   {
     calc_non_bonded_pair_force(p1, p2, d, dist, dist2, force);
-    *obsstat_nonbonded(&virials, p1->e->p.type, p2->e->p.type) +=
+    *obsstat_nonbonded(&virials, p1->type, p2->type) +=
         d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
 
     /* stress tensor part */
     for (k = 0; k < 3; k++)
       for (l = 0; l < 3; l++)
-        obsstat_nonbonded(&p_tensor, p1->e->p.type, p2->e->p.type)[k * 3 + l] +=
+        obsstat_nonbonded(&p_tensor, p1->type, p2->type)[k * 3 + l] +=
             force[k] * d[l];
 
     p1molid = p1->e->p.mol_id;
     p2molid = p2->e->p.mol_id;
     if (p1molid == p2molid) {
-      *obsstat_nonbonded_intra(&virials_non_bonded, p1->e->p.type, p2->e->p.type) +=
+      *obsstat_nonbonded_intra(&virials_non_bonded, p1->type, p2->type) +=
           d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
 
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
-          obsstat_nonbonded_intra(&p_tensor_non_bonded, p1->e->p.type,
-                                  p2->e->p.type)[k * 3 + l] += force[k] * d[l];
+          obsstat_nonbonded_intra(&p_tensor_non_bonded, p1->type,
+                                  p2->type)[k * 3 + l] += force[k] * d[l];
     }
     if (p1molid != p2molid) {
-      *obsstat_nonbonded_inter(&virials_non_bonded, p1->e->p.type, p2->e->p.type) +=
+      *obsstat_nonbonded_inter(&virials_non_bonded, p1->type, p2->type) +=
           d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
 
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
-          obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->e->p.type,
-                                  p2->e->p.type)[k * 3 + l] += force[k] * d[l];
+          obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->type,
+                                  p2->type)[k * 3 + l] += force[k] * d[l];
     }
   }
 
@@ -98,8 +98,8 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
       force[0] = 0.0;
       force[1] = 0.0;
       force[2] = 0.0;
-      p3m_add_pair_force(p1->e->p.q * p2->e->p.q, d, dist2, dist, force);
-      virials.coulomb[0] += p3m_pair_energy(p1->e->p.q * p2->e->p.q, dist);
+      p3m_add_pair_force(p1->q * p2->q, d, dist2, dist, force);
+      virials.coulomb[0] += p3m_pair_energy(p1->q * p2->q, dist);
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
           p_tensor.coulomb[k * 3 + l] += force[k] * d[l];

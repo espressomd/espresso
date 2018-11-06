@@ -103,6 +103,8 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
     n_buffer_new = 0;
     if (data_parts & GHOSTTRANS_PROPRTS) {
       n_buffer_new += sizeof(ParticleProperties);
+      n_buffer_new += sizeof(int);
+      n_buffer_new += sizeof(double);
       // sending size of bond/exclusion lists
 #ifdef GHOSTS_HAVE_BONDS
       n_buffer_new += sizeof(int);
@@ -163,6 +165,10 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           memmove(insert, &pt->e->p, sizeof(ParticleProperties));
           insert += sizeof(ParticleProperties);
+          memmove(insert, &pt->type, sizeof(int));
+          insert += sizeof(int);
+          memmove(insert, &pt->q, sizeof(double));
+          insert += sizeof(double);
 #ifdef GHOSTS_HAVE_BONDS
           *(int *)insert = pt->bl.n;
           insert += sizeof(int);
@@ -290,6 +296,10 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           memmove(&pt->e->p, retrieve, sizeof(ParticleProperties));
           retrieve += sizeof(ParticleProperties);
+          memmove(&pt->type, retrieve, sizeof(int));
+          retrieve += sizeof(int);
+          memmove(&pt->q, retrieve, sizeof(double));
+          retrieve += sizeof(double);
 #ifdef GHOSTS_HAVE_BONDS
           int n_bonds;
           memmove(&n_bonds, retrieve, sizeof(int));
@@ -412,6 +422,8 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         pt2 = &part2[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
           memmove(&pt2->e->p, &pt1->e->p, sizeof(ParticleProperties));
+          memmove(&pt2->type, &pt1->type, sizeof(int));
+          memmove(&pt2->q, &pt1->q, sizeof(double));
 #ifdef GHOSTS_HAVE_BONDS
           pt2->bl = pt1->bl;
 #ifdef EXCLUSIONS

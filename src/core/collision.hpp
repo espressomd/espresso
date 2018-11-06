@@ -112,10 +112,10 @@ void queue_collision(const int part1, const int part2);
 /** @brief Check additional criteria for the glue_to_surface collision mode */
 inline bool glue_to_surface_criterion(const Particle *const p1,
                                       const Particle *const p2) {
-  return (((p1->e->p.type == collision_params.part_type_to_be_glued) &&
-           (p2->e->p.type == collision_params.part_type_to_attach_vs_to)) ||
-          ((p2->e->p.type == collision_params.part_type_to_be_glued) &&
-           (p1->e->p.type == collision_params.part_type_to_attach_vs_to)));
+  return (((p1->type == collision_params.part_type_to_be_glued) &&
+           (p2->type == collision_params.part_type_to_attach_vs_to)) ||
+          ((p2->type == collision_params.part_type_to_be_glued) &&
+           (p1->type == collision_params.part_type_to_attach_vs_to)));
 }
 
 /** @brief Detect (and queue) a collision between the given particles. */

@@ -1048,7 +1048,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force,
   force[2] = 0;
 
   if ((p1->e->p.identity != p2->e->p.identity) &&
-      (checkIfParticlesInteract(p1->e->p.type, p2->e->p.type))) {
+      (checkIfParticlesInteract(p1->type, p2->type))) {
     /* distance calculation */
     get_mi_vector(d, p1->r.p, p2->r.p);
     dist2 = Utils::sqr(d[0]) + Utils::sqr(d[1]) + Utils::sqr(d[2]);

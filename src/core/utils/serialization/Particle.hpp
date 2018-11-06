@@ -33,6 +33,8 @@ void load(Archive &ar, Particle &p, const unsigned int /* file_version */) {
   ar >> make_array(reinterpret_cast<char *>(p.e.get()), sizeof(ParticleExtended));
   ar >> make_array(reinterpret_cast<char *>(&p.r), sizeof(ParticlePosition));
   ar >> make_array(reinterpret_cast<char *>(&p.f), sizeof(ParticleForce));
+  ar >> p.type;
+  ar >> p.q;
   uint32_t n;
   ar >> n;
   new (&(p.bl)) IntList(n);
@@ -51,6 +53,8 @@ void save(Archive &ar, Particle const &p,
   ar << make_array(reinterpret_cast<char const *>(p.e.get()), sizeof(ParticleExtended));
   ar << make_array(reinterpret_cast<char const *>(&p.r), sizeof(ParticlePosition));
   ar << make_array(reinterpret_cast<char const *>(&p.f), sizeof(ParticleForce));
+  ar << p.type;
+  ar << p.q;
   ar << p.bl.n;
   ar << p.bl;
 #ifdef EXCLUSIONS

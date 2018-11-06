@@ -92,7 +92,7 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef ELECTROSTATICS
-    buffer[i].q = static_cast<float>(part.e->p.q);
+    buffer[i].q = static_cast<float>(part.q);
 #endif
 
 #ifdef MASS

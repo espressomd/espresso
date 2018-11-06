@@ -60,6 +60,10 @@ BOOST_AUTO_TEST_CASE(serialization) {
   Utils::List<int> el = {5, 6, 7, 8};
 
   p.e->p.identity = 15;
+  p.type = 1;
+#ifdef ELECTROSTATICS
+  p.q = 2.5;
+#endif
   p.bl = bl;
 #ifdef EXCLUSIONS
   p.el = el;
@@ -74,6 +78,9 @@ BOOST_AUTO_TEST_CASE(serialization) {
   in_ar >> q;
 
   BOOST_CHECK(q.e->p.identity == p.e->p.identity);
+  BOOST_CHECK(q.q == p.q);
+  BOOST_CHECK(q.type == p.type);
+  BOOST_CHECK(q.bl == bl);
   BOOST_CHECK(q.bl == bl);
 
 #ifdef EXCLUSIONS

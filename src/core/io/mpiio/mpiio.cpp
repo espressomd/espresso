@@ -189,7 +189,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields) {
       vel[i3 + 2] = p.e->m.v[2];
     }
     if (fields & MPIIO_OUT_TYP) {
-      type[i1] = p.e->p.type;
+      type[i1] = p.type;
     }
     if (fields & MPIIO_OUT_BND) {
       boff[i1 + 1] = p.bl.n;
@@ -409,7 +409,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
                           MPI_INT);
 
     for (int i = 0; i < nlocalpart; ++i)
-      local_particles[id[i]]->e->p.type = type[i];
+      local_particles[id[i]]->type = type[i];
   }
 
   if (fields & MPIIO_OUT_VEL) {

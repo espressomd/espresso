@@ -517,7 +517,7 @@ public:
 
 // Within real space cutoff of electrostatics and both charged
 #ifdef ELECTROSTATICS
-    if ((dist2 <= m_eff_coulomb_cut2) && (p1.e->p.q != 0) && (p2.e->p.q != 0))
+    if ((dist2 <= m_eff_coulomb_cut2) && (p1.q != 0) && (p2.q != 0))
       return true;
 #endif
 
@@ -534,7 +534,7 @@ public:
 #endif
 
     // Within short-range distance (incl dpd and the like)
-    auto const max_cut = get_ia_param(p1.e->p.type, p2.e->p.type)->max_cut;
+    auto const max_cut = get_ia_param(p1.type, p2.type)->max_cut;
     if ((max_cut != INACTIVE_CUTOFF) && (dist2 <= Utils::sqr(max_cut + m_skin)))
       return true;
 

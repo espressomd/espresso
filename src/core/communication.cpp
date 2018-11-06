@@ -506,7 +506,7 @@ void mpi_send_q(int pnode, int part, double q) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->e->p.q = q;
+    p->q = q;
   } else {
     MPI_Send(&q, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
@@ -519,7 +519,7 @@ void mpi_send_q_slave(int pnode, int part) {
 #ifdef ELECTROSTATICS
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->e->p.q, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(&p->q, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
 
   on_particle_charge_change();
@@ -742,7 +742,7 @@ void mpi_send_type(int pnode, int part, int type) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->e->p.type = type;
+    p->type = type;
   } else
     MPI_Send(&type, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
 
@@ -752,7 +752,7 @@ void mpi_send_type(int pnode, int part, int type) {
 void mpi_send_type_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->e->p.type, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(&p->type, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
 
   on_particle_change();

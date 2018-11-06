@@ -115,7 +115,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.e.p.type
+            return self.particle_data.type
 
     # Particle MolId
     property mol_id:

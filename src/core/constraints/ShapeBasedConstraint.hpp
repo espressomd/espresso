@@ -67,11 +67,11 @@ public:
 
   bool &only_positive() { return m_only_positive; }
   bool &penetrable() { return m_penetrable; }
-  int &type() { return part_rep.e->p.type; }
+  int &type() { return part_rep.type; }
   Vector3d &velocity() { return part_rep.e->m.v; }
 
   void set_type(const int &type) {
-    part_rep.e->p.type = type;
+    part_rep.type = type;
     make_particle_type_exist_local(type);
   }
 

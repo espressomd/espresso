@@ -607,7 +607,7 @@ int set_particle_q(int part, double q) {
   return ES_OK;
 }
 #ifndef ELECTROSTATICS
-constexpr double ParticleProperties::q;
+constexpr double Particle::q;
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
@@ -635,7 +635,7 @@ int set_particle_type(int p_id, int type) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
     auto const &cur_par = get_particle_data(p_id);
-    int prev_type = cur_par.e->p.type;
+    int prev_type = cur_par.type;
     if (prev_type != type) {
       // particle existed before so delete it from the list
       remove_id_from_map(p_id, prev_type);
@@ -812,7 +812,7 @@ int remove_particle(int p_id) {
   auto const &cur_par = get_particle_data(p_id);
   if (type_list_enable == true) {
     // remove particle from its current type_list
-    int type = cur_par.e->p.type;
+    int type = cur_par.type;
     remove_id_from_map(p_id, type);
   }
 
@@ -1208,7 +1208,7 @@ void init_type_map(int type) {
     particle_type_map[type] = std::unordered_set<int>();
 
   for (auto const &p : partCfg()) {
-    if (p.e->p.type == type)
+    if (p.type == type)
       particle_type_map.at(type).insert(p.e->p.identity);
   }
 }
@@ -1257,7 +1257,7 @@ void pointer_to_quatu(Particle const *p, double const *&res) {
 }
 #endif
 
-void pointer_to_q(Particle const *p, double const *&res) { res = &(p->e->p.q); }
+void pointer_to_q(Particle const *p, double const *&res) { res = &(p->q); }
 
 #ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, int const *&res) {

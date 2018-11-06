@@ -552,8 +552,8 @@ template <int cao> void p3m_do_charge_assign() {
     p3m.rs_mesh[i] = 0.0;
 
   for (auto &p : local_cells.particles()) {
-    if (p.e->p.q != 0.0) {
-      p3m_do_assign_charge<cao>(p.e->p.q, p.r.p, cp_cnt);
+    if (p.q != 0.0) {
+      p3m_do_assign_charge<cao>(p.q, p.r.p, cp_cnt);
       cp_cnt++;
     }
   }
@@ -713,7 +713,7 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
   int q_ind = 0;
 
   for (auto &p : local_cells.particles()) {
-    auto const q = p.e->p.q;
+    auto const q = p.q;
     if (q != 0.0) {
 #ifdef P3M_STORE_CA_FRAC
       q_ind = p3m.ca_fmp[cp_cnt];
@@ -947,7 +947,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   for (auto const &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++)
       /* dipole moment with unfolded coordinates */
-      lcl_dm[j] += p.e->p.q * (p.r.p[j] + p.e->l.i[j] * box_l[j]);
+      lcl_dm[j] += p.q * (p.r.p[j] + p.e->l.i[j] * box_l[j]);
   }
 
   MPI_Allreduce(lcl_dm, gbl_dm, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
@@ -963,7 +963,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
       gbl_dm[j] *= pref;
     for (auto &p : local_cells.particles()) {
       for (int j = 0; j < 3; j++)
-        p.f.f[j] -= gbl_dm[j] * p.e->p.q;
+        p.f.f[j] -= gbl_dm[j] * p.q;
     }
     return en;
   }
@@ -1950,10 +1950,10 @@ void p3m_count_charged_particles() {
   }
 
   for (auto const &p : local_cells.particles()) {
-    if (p.e->p.q != 0.0) {
+    if (p.q != 0.0) {
       node_sums[0] += 1.0;
-      node_sums[1] += Utils::sqr(p.e->p.q);
-      node_sums[2] += p.e->p.q;
+      node_sums[1] += Utils::sqr(p.q);
+      node_sums[2] += p.q;
     }
   }
 

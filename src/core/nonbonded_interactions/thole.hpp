@@ -93,7 +93,7 @@ inline double thole_pair_energy(const Particle *p1, const Particle *p2,
       !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
 
     double dist2 = dist * dist;
-    double chgfac = p1->e->p.q * p2->e->p.q;
+    double chgfac = p1->q * p2->q;
 
     // Subtract p3m shortrange energy
     e_thole += p3m_pair_energy(-chgfac, dist);

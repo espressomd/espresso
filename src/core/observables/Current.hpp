@@ -32,7 +32,7 @@ public:
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ELECTROSTATICS
-      double charge = partCfg[ids()[i]].e->p.q;
+      double charge = partCfg[ids()[i]].q;
       res[0] += charge * partCfg[ids()[i]].e->m.v[0];
       res[1] += charge * partCfg[ids()[i]].e->m.v[1];
       res[2] += charge * partCfg[ids()[i]].e->m.v[2];
