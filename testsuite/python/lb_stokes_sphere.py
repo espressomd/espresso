@@ -57,7 +57,6 @@ class Stokes(object):
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4
 
-
     def test_stokes(self):
         self.system.actors.clear()
         self.system.lbboundaries.clear()
