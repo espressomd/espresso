@@ -60,11 +60,11 @@ typedef struct {
 /** data structure which must be copied to the GPU at each step run on the GPU
  */
 struct CUDA_particle_data {
-  int identity;
 //   // This has to stay in front of the struct for memmove reasons
 #ifdef ENGINE
   CUDA_ParticleParametersSwimming swim;
 #endif
+  int identity;
 
   /** particle position given from md part*/
   float p[3];
