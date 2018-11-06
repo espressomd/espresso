@@ -2051,8 +2051,8 @@ __device__ void calc_viscous_force_three_point_couple(
 #endif
 
     /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
-    float4 random_floats =
-        random_wrapper_philox(particle_data[part_index].identity, ii, philox_counter);
+    float4 random_floats = random_wrapper_philox(
+        particle_data[part_index].identity, ii, philox_counter);
     viscforce_density[0 + ii * 3] +=
         para->lb_coupl_pref[ii] * (random_floats.w - 0.5f);
     viscforce_density[1 + ii * 3] +=
@@ -2521,8 +2521,8 @@ __device__ void calc_viscous_force(
 #endif
 
     /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
-    float4 random_floats =
-        random_wrapper_philox(particle_data[part_index].identity, ii, philox_counter);
+    float4 random_floats = random_wrapper_philox(
+        particle_data[part_index].identity, ii, philox_counter);
     viscforce_density[0 + ii * 3] +=
         para->lb_coupl_pref[ii] * (random_floats.w - 0.5f);
     viscforce_density[1 + ii * 3] +=
@@ -4257,7 +4257,8 @@ void lb_calc_shanchen_GPU() {
  */
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force, unsigned int *host_checkpoint_philox_counter) {
+                            lbForceFloat *host_checkpoint_force,
+                            unsigned int *host_checkpoint_philox_counter) {
   cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
                            cudaMemcpyDeviceToHost));
@@ -4277,7 +4278,8 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
  */
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force, unsigned int *host_checkpoint_philox_counter) {
+                            lbForceFloat *host_checkpoint_force,
+                            unsigned int *host_checkpoint_philox_counter) {
   current_nodes = &nodes_a;
   intflag = 1;
 
