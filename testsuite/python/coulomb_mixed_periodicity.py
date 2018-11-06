@@ -89,14 +89,14 @@ class CoulombMixedPeriodicity(ut.TestCase):
             self.assertLessEqual(
                 energy_abs_diff,
                 self.tolerance_energy,
-                "Absolte energy difference " +
+                "Absolute energy difference " +
                 str(energy_abs_diff) +
                 " too large for " +
                 method_name)
         self.assertLessEqual(
             rms_force_diff,
             self.tolerance_force,
-            "Asbolute force difference " +
+            "Absolute force difference " +
             str(rms_force_diff) +
             " too large for method " +
             method_name)

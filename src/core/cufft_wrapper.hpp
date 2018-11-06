@@ -13,7 +13,6 @@
 #define cufftExecR2C hipfftExecR2C
 #define cufftExecZ2D hipfftExecZ2D
 #define cufftHandle hipfftHandle
-#define cufftPlan hipfftPlan
 #define cufftPlan3d hipfftPlan3d
 #define cufftReal hipfftReal
 #define cufftSetStream hipfftSetStream

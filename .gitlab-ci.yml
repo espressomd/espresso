@@ -211,11 +211,10 @@ rocm-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/rocm:latest
   script:
-    - export myconfig=maxset make_check=false HIP_PLATFORM=hcc HCC_AMDGPU_TARGET=gfx900
+    - export myconfig=maxset
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
-    - linux
+    - amdgpu
 
 ### Builds with OS X
 
