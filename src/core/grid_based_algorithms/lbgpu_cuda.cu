@@ -722,7 +722,7 @@ __device__ void relax_modes(float *mode, unsigned int index,
  * @param *rn     Pointer to random number array of the local node
  */
 __device__ void thermalize_modes(float *mode, unsigned int index,
-                                 unsigned int philox_counter) {
+                                 uint64_t philox_counter) {
   float Rho;
   float4 random_floats;
 #ifdef SHANCHEN
