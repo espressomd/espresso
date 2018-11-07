@@ -169,15 +169,6 @@ typedef struct {
   float pi[6];
 } LB_rho_v_pi_gpu;
 
-/** Data structure for the randomnr and the seed. */
-typedef struct {
-
-  float randomnr[2];
-
-  unsigned int seed;
-
-} LB_randomnr_gpu;
-
 typedef struct {
 
   lbForceFloat *force_density;
@@ -297,13 +288,13 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]);
 void lb_gpu_get_boundary_forces(double *forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_seed,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
+                            lbForceFloat *host_checkpoint_force,
+                            uint64_t *philox_counter);
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_seed,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
+                            lbForceFloat *host_checkpoint_force,
+                            uint64_t *philox_counter);
 int lb_lbfluid_save_checkpoint_wrapper(char *filename, int binary);
 int lb_lbfluid_load_checkpoint_wrapper(char *filename, int binary);
 
