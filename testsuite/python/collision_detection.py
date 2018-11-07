@@ -586,8 +586,8 @@ class CollisionDetection(ut.TestCase):
                 sigma=0,
          cutoff=0)
 
-    #@ut.skipIf(not espressomd.has_features("AngleHarmonic"),"Tests skipped because AngleHarmonic not compiled in")
-    def test_AngleHarmonic(self):
+    @ut.skipIf(not espressomd.has_features("BOND_ANGLE"), "Tests skipped because AngleHarmonic not compiled in")
+    def test_bind_three_particles(self):
         # Setup particles
         self.s.part.clear()
         dx = np.array((1, 0, 0))
