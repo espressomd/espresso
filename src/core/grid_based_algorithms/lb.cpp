@@ -46,10 +46,10 @@
 #include <boost/multi_array.hpp>
 
 #include <cassert>
+#include <cinttypes>
 #include <cstdio>
 #include <iostream>
 #include <mpi.h>
-#include <cinttypes>
 
 #include "cuda_interface.hpp"
 
@@ -1101,8 +1101,8 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
         fclose(cpfile);
         return ES_ERROR;
       }
-      if (fread(&host_checkpoint_philox_counter, sizeof(uint64_t), 1,
-                cpfile) != 1) {
+      if (fread(&host_checkpoint_philox_counter, sizeof(uint64_t), 1, cpfile) !=
+          1) {
         fclose(cpfile);
         return ES_ERROR;
       }
