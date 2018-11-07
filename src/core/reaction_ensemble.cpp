@@ -1791,7 +1791,7 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
          // need to hide the particle and recover it
   make_reaction_attempt(current_reaction, changed_particles_properties,
                         p_ids_created_particles, hidden_particles_properties);
-  const double E_pot_new= calculate_current_potential_energy_of_system();
+  const double E_pot_new = calculate_current_potential_energy_of_system();
   // reverse reaction attempt
   // reverse reaction
   // 1) delete created product particles
