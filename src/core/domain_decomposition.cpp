@@ -27,6 +27,7 @@
 
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
+#include "grid.hpp"
 
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr

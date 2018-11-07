@@ -34,7 +34,6 @@
 
 #include "Vector.hpp"
 
-#include "grid.hpp"
 #include <cmath>
 
 /** \name Thermostat switches*/
