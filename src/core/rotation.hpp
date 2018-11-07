@@ -116,7 +116,7 @@ inline void convert_director_to_dip(const Vector3d &director, double dipm,
 #endif
 
 /** Rotate the particle p around the NORMALIZED axis a by amount phi */
-void local_rotate_particle(Particle *p, double *a, double phi);
+void local_rotate_particle(Particle *p, const Vector3d &a, double angle);
 
 inline void normalize_quaternion(double *q) {
   double tmp = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);

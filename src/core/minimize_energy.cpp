@@ -92,27 +92,25 @@ bool steepest_descent_step(void) {
         }
     }
 #ifdef ROTATION
-    // Rotational increment
-    auto const dq = params->gamma * p.f.torque; // Vector parallel to torque
-    auto t = 0.0;
+      {
+          // Rotational increment
+          auto const dq = params->gamma * p.f.torque; // Vector parallel to torque
+          auto const t = p.f.torque.norm2();
 
-    for (int j = 0; j < 3; j++) {
-      // Square of torque
-      t += Utils::sqr(p.f.torque[j]);
-    }
-    // Normalize rotation axis and compute amount of rotation
-    double l = dq.norm();
-    if (l > 0.0) {
-        auto axis = dq / l;
-        auto const angle = (std::abs(l) > params->max_displacement) ?
-                           sgn(l) * params->max_displacement :
-                           l;
+          // Normalize rotation axis and compute amount of rotation
+          auto const l = dq.norm();
+          if (l > 0.0) {
+              auto const axis = dq / l;
+              auto const angle = (std::abs(l) > params->max_displacement) ?
+                                 sgn(l) * params->max_displacement :
+                                 l;
 
-      // Rotate the particle around axis dq by amount l
-      local_rotate_particle(&(p), axis.data(), angle);
-    }
+              // Rotate the particle around axis dq by amount l
+              local_rotate_particle(&(p), axis, angle);
+          }
 
-    f_max = std::max(f_max, t);
+          f_max = std::max(f_max, t);
+      }
 #endif
     // Note maximum force/torque encountered
     f_max = std::max(f_max, f);

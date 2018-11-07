@@ -514,7 +514,7 @@ void convert_vel_space_to_body(const Particle *p, double *vel_body) {
                 A[2 + 3 * 2] * p->m.v[2];
 }
 
-void convert_vec_space_to_body(Particle *p, double *v, double *res) {
+void convert_vec_space_to_body(const Particle *p, const double *v, double *res) {
   double A[9];
   define_rotation_matrix(*p, A);
 
@@ -525,12 +525,11 @@ void convert_vec_space_to_body(Particle *p, double *v, double *res) {
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
-void local_rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
+void local_rotate_particle(Particle *p, const Vector3d &axis, double angle) {
   // Convert rotation axis to body-fixed frame
   double a[3];
-  convert_vec_space_to_body(p, aSpaceFrame, a);
+  convert_vec_space_to_body(p, axis.data(), a);
 
-  //  printf("%g %g %g - ",a[0],a[1],a[2]);
   // Rotation turned off entirely?
   if (!p->p.rotation)
     return;
@@ -552,8 +551,8 @@ void local_rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
     a[i] /= l;
 
   double q[4];
-  q[0] = cos(phi / 2);
-  double tmp = sin(phi / 2);
+  q[0] = cos(angle / 2);
+  double tmp = sin(angle / 2);
   q[1] = tmp * a[0];
   q[2] = tmp * a[1];
   q[3] = tmp * a[2];
