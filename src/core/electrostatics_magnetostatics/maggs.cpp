@@ -46,6 +46,7 @@
 #include "electrostatics_magnetostatics/maggs.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "errorhandling.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
@@ -54,7 +55,6 @@
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "debug.hpp"
 
 #include <cstdio>
 #include <cstdlib>
