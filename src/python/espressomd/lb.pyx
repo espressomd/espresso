@@ -350,11 +350,11 @@ IF LB or LB_GPU:
 
             def __set__(self, value):
                 cdef double dens
-                if not (hasattr(value,"__getitem__") and len(value) != 1 and \
+                if not (hasattr(value, "__getitem__") and len(value) != 1 and
                     is_valid_type(value[0], float)):
                     print(value)
-                    dens=float(value[0])
-                    lb_lbnode_set_rho(self.node, &dens)
+                    dens = float(value[0])
+                    lb_lbnode_set_rho(self.node, & dens)
                 else:
                     raise ValueError(
                         "Density has to be a list/tuple containing a single float.")
