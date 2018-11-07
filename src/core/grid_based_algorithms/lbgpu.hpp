@@ -290,11 +290,11 @@ void lb_gpu_get_boundary_forces(double *forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
                             lbForceFloat *host_checkpoint_force,
-                            unsigned int *philox_counter);
+                            uint64_t *philox_counter);
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
                             lbForceFloat *host_checkpoint_force,
-                            unsigned int *philox_counter);
+                            uint64_t *philox_counter);
 int lb_lbfluid_save_checkpoint_wrapper(char *filename, int binary);
 int lb_lbfluid_load_checkpoint_wrapper(char *filename, int binary);
 

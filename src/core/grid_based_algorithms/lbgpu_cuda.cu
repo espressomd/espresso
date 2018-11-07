@@ -133,12 +133,15 @@ static const float c_sound_sq = 1.0f / 3.0f;
 /*-------------------------------------------------------*/
 
 static constexpr float sqrt12 = 3.4641016151377544f;
-static unsigned int philox_counter = 0;
+static uint64_t philox_counter = 0;
 __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
-                                        unsigned int philox_counter) {
+                                        uint64_t philox_counter) {
+  // Split the 64 bit counter into two 32 bit ints.
+  uint32_t philox_counter_hi = static_cast<uint32_t>(philox_counter >> 32);
+  uint32_t philox_counter_low = static_cast<uint32_t>(philox_counter);
   uint4 rnd_ints =
-      curand_Philox4x32_10(make_uint4(index, 0, 0, mode),
-                           make_uint2(philox_counter, para->your_seed));
+      curand_Philox4x32_10(make_uint4(index, philox_counter_hi, 0, mode),
+                           make_uint2(philox_counter_low, para->your_seed));
   float4 rnd_floats;
   rnd_floats.w = rnd_ints.w * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   rnd_floats.x = rnd_ints.x * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
@@ -4259,7 +4262,7 @@ void lb_calc_shanchen_GPU() {
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
                             lbForceFloat *host_checkpoint_force,
-                            unsigned int *host_checkpoint_philox_counter) {
+                            uint64_t *host_checkpoint_philox_counter) {
   cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
                            cudaMemcpyDeviceToHost));
@@ -4280,7 +4283,7 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
                             lbForceFloat *host_checkpoint_force,
-                            unsigned int *host_checkpoint_philox_counter) {
+                            uint64_t *host_checkpoint_philox_counter) {
   current_nodes = &nodes_a;
   intflag = 1;
 
