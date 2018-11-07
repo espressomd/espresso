@@ -59,8 +59,6 @@ set(EspressoCore_SRC
     thermostat.cpp
     topology.cpp
     tuning.cpp
-    utils.cpp
-    Vector.cpp
     virtual_sites.cpp
 )
 
