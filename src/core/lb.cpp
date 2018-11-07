@@ -2650,7 +2650,6 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   velocity[1] = p->m.v[1];
   velocity[2] = p->m.v[2];
 
-  Vector3d v_drift = {interpolated_u[0], interpolated_u[1], interpolated_u[2]};
 #ifdef ENGINE
   if (p->swim.swimming) {
     velocity[0] -= p->swim.v_swim * p->r.quatu[0];
