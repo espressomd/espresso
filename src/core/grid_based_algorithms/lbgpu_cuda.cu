@@ -1946,7 +1946,7 @@ __device__ void calc_viscous_force_three_point_couple(
     LB_nodes_gpu n_a, float *delta, CUDA_particle_data *particle_data,
     float *particle_force, unsigned int part_index, float *delta_j,
     unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs,
-    unsigned int philox_counter) {
+    uint64_t philox_counter) {
   float interpolated_u[3];
   float interpolated_rho[LB_COMPONENTS];
   float viscforce_density[3 * LB_COMPONENTS];
@@ -2286,7 +2286,7 @@ __device__ void calc_viscous_force(
     float *partgrad3, CUDA_particle_data *particle_data, float *particle_force,
     CUDA_fluid_composition *fluid_composition, unsigned int part_index,
     float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs,
-    unsigned int philox_counter) {
+    uint64_t philox_counter) {
   float interpolated_u[3];
   float interpolated_rho[LB_COMPONENTS];
   float viscforce_density[3 * LB_COMPONENTS];
@@ -3451,7 +3451,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
 __global__ void calc_fluid_particle_ia(
     LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,
     CUDA_fluid_composition *fluid_composition, LB_node_force_density_gpu node_f,
-    LB_rho_v_gpu *d_v, bool couple_virtual, unsigned int philox_counter) {
+    LB_rho_v_gpu *d_v, bool couple_virtual, uint64_t philox_counter) {
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
@@ -3501,7 +3501,7 @@ __global__ void calc_fluid_particle_ia(
 __global__ void calc_fluid_particle_ia_three_point_couple(
     LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,
     LB_node_force_density_gpu node_f, LB_rho_v_gpu *d_v,
-    unsigned int philox_counter) {
+    uint64_t philox_counter) {
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[27];
