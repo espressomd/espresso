@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright (C) 2013-2018 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #

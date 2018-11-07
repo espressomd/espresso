@@ -226,8 +226,34 @@ int mpi_check_runtime_errors(void);
  * procedures
  **********************************************/
 
+#if defined(OPEN_MPI)
+/*! Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
+    appears when CUDA is used. This is a bug in OpenMPI 2.0-2.1.2 and 3.0.0
+    according to
+    https://www.mail-archive.com/users@lists.open-mpi.org/msg32357.html,
+    so we set btl_vader_single_copy_mechanism = none.
+*/
+static void openmpi_fix_vader() {
+  if (OMPI_MAJOR_VERSION < 2 || OMPI_MAJOR_VERSION > 3)
+    return;
+  if (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION == 1 &&
+      OMPI_RELEASE_VERSION >= 3)
+    return;
+  if (OMPI_MAJOR_VERSION == 3 &&
+      (OMPI_MINOR_VERSION > 0 || OMPI_RELEASE_VERSION > 0))
+    return;
+
+  std::string varname = "btl_vader_single_copy_mechanism";
+  std::string varval = "none";
+
+  setenv((std::string("OMPI_MCA_") + varname).c_str(), varval.c_str(), 0);
+}
+#endif
+
 void mpi_init() {
 #ifdef OPEN_MPI
+  openmpi_fix_vader();
+
   void *handle = 0;
   int mode = RTLD_NOW | RTLD_GLOBAL;
 #ifdef RTLD_NOLOAD

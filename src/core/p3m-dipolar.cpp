@@ -310,7 +310,7 @@ void dp3m_pre_init(void) {
   dfft_pre_init();
 }
 
-void dp3m_set_prefactor() {
+void dp3m_deactivate() {
   dp3m.params.alpha = 0.0;
   dp3m.params.alpha_L = 0.0;
   dp3m.params.r_cut = 0.0;
