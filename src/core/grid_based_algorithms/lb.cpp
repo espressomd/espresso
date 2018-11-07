@@ -30,6 +30,7 @@
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include <cinttypes>
 
 #ifdef LB
 
@@ -46,7 +47,6 @@
 #include <boost/multi_array.hpp>
 
 #include <cassert>
-#include <cinttypes>
 #include <cstdio>
 #include <iostream>
 #include <mpi.h>
