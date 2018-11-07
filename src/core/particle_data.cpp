@@ -41,6 +41,8 @@
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
 #include "virtual_sites.hpp"
+#include "debug.hpp"
+#include "random.hpp"
 
 #include "utils.hpp"
 #include "utils/Cache.hpp"

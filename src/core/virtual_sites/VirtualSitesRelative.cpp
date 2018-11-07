@@ -18,13 +18,15 @@
 */
 
 #include "VirtualSitesRelative.hpp"
+
+#ifdef VIRTUAL_SITES_RELATIVE
+
 #include "cells.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "rotation.hpp"
-
-#ifdef VIRTUAL_SITES_RELATIVE
+#include "integrate.hpp"
 
 void VirtualSitesRelative::update(bool recalc_positions) const {
 
