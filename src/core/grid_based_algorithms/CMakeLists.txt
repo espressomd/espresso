@@ -58,4 +58,5 @@ target_include_directories(lbcpu PRIVATE
   ${CMAKE_SOURCE_DIR}/src/core
   ${CMAKE_BINARY_DIR}/src/core
 )
-add_dependencies(lbcpu EspressoConfig Random123)
+target_link_libraries(lbcpu Random123)
+add_dependencies(lbcpu EspressoConfig)
