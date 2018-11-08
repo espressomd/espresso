@@ -2813,10 +2813,8 @@ void calc_particle_lattice_ia() {
   if (transfer_momentum) {
       using rng_type = r123::Philox4x64;
       using ctr_type = rng_type::ctr_type;
-      using ukey_type = rng_type::ukey_type;
       using key_type = rng_type::key_type;
 
-      rng_type rng;
       ctr_type c{rng_counter.value(), 0ul};
       rng_counter.increment();
 
@@ -2836,6 +2834,17 @@ void calc_particle_lattice_ia() {
       lbpar.resend_halo = 0;
     }
 
+    auto f_random = [&c] (int id) -> Vector3d {
+        rng_type rng;
+        key_type k{static_cast<uint32_t>(id)};
+
+        auto const noise = rng(c, k);
+
+        using Utils::uniform;
+
+        return Vector3d{uniform(noise[0]),uniform(noise[1]), uniform(noise[2])} - Vector3d::broadcast(0.5);
+    };
+
     /* draw random numbers for local particles */
     for (auto &p : local_cells.particles()) {
       if (lb_coupl_pref2 > 0.0) {
@@ -2848,15 +2857,7 @@ void calc_particle_lattice_ia() {
         p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random_cut();
         p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random_cut();
 #elif defined(FLATNOISE)
-       key_type k{static_cast<uint32_t>(p.identity())};
-
-       auto const noise = rng(c, k);
-
-       using Utils::uniform;
-
-        p.lc.f_random[0] = lb_coupl_pref * (uniform(noise[0]) - 0.5);
-        p.lc.f_random[1] = lb_coupl_pref * (uniform(noise[1]) - 0.5);
-        p.lc.f_random[2] = lb_coupl_pref * (uniform(noise[2]) - 0.5);
+       p.lc.f_random = lb_coupl_pref * f_random(p.identity());
 #else // GAUSSRANDOM
 #error No noise type defined for the CPU LB
 #endif // GAUSSRANDOM
