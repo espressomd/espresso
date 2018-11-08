@@ -2734,6 +2734,15 @@ Vector3d node_u(Lattice::index_t index) {
 
   return Vector3d{modes[1], modes[2], modes[3]} / local_rho;
 }
+
+bool in_local_domain(Vector3d const& pos) {
+    return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
+            pos[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
+            pos[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
+            pos[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
+            pos[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
+            pos[2] < my_right[2] + 0.5 * lblattice.agrid[2]);
+}
 } // namespace
 
 void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
@@ -2839,13 +2848,7 @@ void calc_particle_lattice_ia() {
     for (auto &p : ghost_cells.particles()) {
       /* for ghost particles we have to check if they lie
        * in the range of the local lattice nodes */
-      if (p.r.p[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
-          p.r.p[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
-          p.r.p[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
-          p.r.p[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
-          p.r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
-          p.r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
-
+      if (in_local_domain(p.r.p)) {
         if (!p.p.is_virtual || thermo_virtual) {
             p.lc.f_random = lb_coupl_pref * f_random(p.identity());
           lb_viscous_coupling(&p);
