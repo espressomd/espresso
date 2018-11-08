@@ -151,9 +151,6 @@ HaloCommunicator update_halo_comm = {0, nullptr};
 
 /** amplitude of the fluctuations in the viscous coupling */
 static double lb_coupl_pref = 0.0;
-/** amplitude of the fluctuations in the viscous coupling with Gaussian random
- * numbers */
-static double lb_coupl_pref2 = 0.0;
 /*@}*/
 
 /** measures the MD time since the last fluid update */
@@ -2056,7 +2053,7 @@ void lb_reinit_parameters() {
      * time_step comes from the discretization.
      */
     lb_coupl_pref = sqrt(12. * 2. * lbpar.friction * temperature / time_step);
-    lb_coupl_pref2 = sqrt(2. * lbpar.friction * temperature / time_step);
+
     LB_TRACE(fprintf(
         stderr,
         "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
@@ -2069,7 +2066,6 @@ void lb_reinit_parameters() {
     for (i = 0; i < lbmodel.n_veloc; i++)
       lbpar.phi[i] = 0.0;
     lb_coupl_pref = 0.0;
-    lb_coupl_pref2 = 0.0;
   }
 }
 
