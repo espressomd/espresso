@@ -2666,17 +2666,18 @@ namespace {
         if (p.swim.swimming) {
             // calculate source position
             const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
-            auto source_position = p.r.p + direction * p.r.calc_director();
+            auto const director = p.r.calc_director();
+            auto const source_position = p.r.p + direction * director;
 
             if(not in_local_domain(source_position))
             {
                 return;
             }
-            
+
             lb_lbfluid_get_interpolated_velocity(source_position,
                                                  p.swim.v_source.data());
 
-            add_md_force(source_position, p.swim.f_swim * p.r.calc_director());
+            add_md_force(source_position, p.swim.f_swim * director);
         }
     }
 }
