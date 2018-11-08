@@ -25,7 +25,6 @@
 #define cudaFreeHost hipHostFree
 #define cudaHostAlloc hipHostMalloc
 #define cudaHostAllocWriteCombined hipHostMallocWriteCombined
-#define cudaLaunchKernelGGL hipLaunchKernelGGL
 #define cudaMalloc hipMalloc
 #define cudaMallocHost hipHostMalloc
 #define cudaMemcpy hipMemcpy
