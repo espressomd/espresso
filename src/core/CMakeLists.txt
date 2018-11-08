@@ -84,13 +84,13 @@ add_custom_command(
 
 add_library(EspressoConfig SHARED config-features.cpp)
 add_dependencies(EspressoConfig myconfig check_myconfig generate_config_features)
-install(TARGETS EspressoConfig LIBRARY DESTINATION ${LIBDIR})
+install(TARGETS EspressoConfig LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(EspressoConfig PROPERTIES SOVERSION ${SOVERSION})
 target_include_directories(EspressoConfig PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(EspressoCore SHARED ${EspressoCore_SRC} config-version.cpp)
 add_dependencies(EspressoCore EspressoConfig)
-install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
+install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
@@ -130,7 +130,7 @@ if(CUDA)
   cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
   cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC})
-  install(TARGETS EspressoCuda DESTINATION ${LIBDIR})
+  install(TARGETS EspressoCuda DESTINATION ${PYTHON_INSTDIR}/espressomd)
   set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
   add_dependencies(EspressoCuda EspressoConfig)
 

@@ -13,7 +13,7 @@ set(Shapes_SRC
     Wall.cpp
 )
 add_library(Shapes SHARED ${Shapes_SRC})
-install(TARGETS Shapes LIBRARY DESTINATION ${LIBDIR})
+install(TARGETS Shapes LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(Shapes PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(Shapes EspressoConfig)
 target_include_directories(Shapes PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
