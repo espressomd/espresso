@@ -91,7 +91,7 @@ IF LB_GPU or LB:
         int lb_lbfluid_print_velocity(char * filename)
         int lb_lbfluid_print_boundary(char * filename)
         int lb_lbfluid_save_checkpoint(char * filename, int binary)
-        int lb_lbfluid_load_checkpoint(char * filename, int binary)
+        int lb_lbfluid_load_checkpoint(char * filename, int binary) except +
         int lb_set_lattice_switch(int py_switch)
         int lb_get_lattice_switch(int * py_switch)
         bool lb_lbnode_is_index_valid(const Vector3i & ind)
