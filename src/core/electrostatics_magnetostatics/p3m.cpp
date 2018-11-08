@@ -34,7 +34,6 @@
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
-#include "thermostat.hpp"
 #include "tuning.hpp"
 #include "utils.hpp"
 #ifdef CUDA

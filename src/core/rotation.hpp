@@ -25,11 +25,12 @@
 
 */
 
+#include "config.hpp"
+
+#ifdef ROTATION
+
 #include "Vector.hpp"
-#include "nonbonded_interactions/gb.hpp"
 #include "particle_data.hpp"
-#include "thermostat.hpp"
-#include "utils.hpp"
 
 constexpr const int ROTATION_X = 2;
 constexpr const int ROTATION_Y = 4;
@@ -126,4 +127,5 @@ inline void normalize_quaternion(double *q) {
   q[3] /= tmp;
 }
 
+#endif
 #endif
