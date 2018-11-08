@@ -2638,21 +2638,12 @@ void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
  * @param force      Coupling force between particle and fluid (Output).
  */
 inline Vector3d lb_viscous_coupling(Particle *p) {
-  double interpolated_u[3], delta_j[3];
-  Vector3d force;
+  double interpolated_u[3];
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
-
-  /* calculate viscous force
-   * take care to rescale velocities with time_step and transform to MD units
-   * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  double velocity[3];
-  velocity[0] = p->m.v[0];
-  velocity[1] = p->m.v[1];
-  velocity[2] = p->m.v[2];
 
   Vector3d v_drift = {interpolated_u[0], interpolated_u[1], interpolated_u[2]};
 #ifdef ENGINE
@@ -2668,19 +2659,14 @@ inline Vector3d lb_viscous_coupling(Particle *p) {
   v_drift += p->p.mu_E;
 #endif
 
-  force[0] = -lbpar.friction * (velocity[0] - v_drift[0]);
-  force[1] = -lbpar.friction * (velocity[1] - v_drift[1]);
-  force[2] = -lbpar.friction * (velocity[2] - v_drift[2]);
-
-  force[0] = force[0] + p->lc.f_random[0];
-  force[1] = force[1] + p->lc.f_random[1];
-  force[2] = force[2] + p->lc.f_random[2];
+    /* calculate viscous force
+   * take care to rescale velocities with time_step and transform to MD units
+   * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+    auto const force = -lbpar.friction * (p->m.v - v_drift) + p->lc.f_random;
 
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  delta_j[0] = -force[0] * time_step * lbpar.tau / lbpar.agrid;
-  delta_j[1] = -force[1] * time_step * lbpar.tau / lbpar.agrid;
-  delta_j[2] = -force[2] * time_step * lbpar.tau / lbpar.agrid;
+  auto const delta_j = - (time_step * lbpar.tau / lbpar.agrid) * force;
 
   lattice_interpolation(lblattice, p->r.p,
                         [&delta_j](Lattice::index_t index, double w) {
@@ -2706,25 +2692,17 @@ inline Vector3d lb_viscous_coupling(Particle *p) {
     }
 
     // calculate source position
-    Vector3d source_position;
-    double direction = double(p->swim.push_pull) * p->swim.dipole_length;
-    source_position[0] = p->r.p[0] + direction * p->r.calc_director()[0];
-    source_position[1] = p->r.p[1] + direction * p->r.calc_director()[1];
-    source_position[2] = p->r.p[2] + direction * p->r.calc_director()[2];
+    const double direction = double(p->swim.push_pull) * p->swim.dipole_length;
+    auto source_position = p->r.p + direction * p->r.calc_director();
 
     int corner[3] = {0, 0, 0};
     fold_position(source_position, corner);
 
-    lb_lbfluid_get_interpolated_velocity(Vector3d(source_position),
+    lb_lbfluid_get_interpolated_velocity(source_position,
                                          p->swim.v_source.data());
-
-    // calculate and set force at source position
-    delta_j[0] = -p->swim.f_swim * p->r.calc_director()[0] * time_step *
-                 lbpar.tau / lbpar.agrid;
-    delta_j[1] = -p->swim.f_swim * p->r.calc_director()[1] * time_step *
-                 lbpar.tau / lbpar.agrid;
-    delta_j[2] = -p->swim.f_swim * p->r.calc_director()[2] * time_step *
-                 lbpar.tau / lbpar.agrid;
+      // calculate and set force at source position
+    auto const delta_j = -p->swim.f_swim  * time_step *
+                         lbpar.tau / lbpar.agrid * p->r.calc_director();
 
     lattice_interpolation(lblattice, source_position,
                           [&delta_j](Lattice::index_t index, double w) {
@@ -2841,7 +2819,7 @@ void calc_particle_lattice_ia() {
         using Utils::uniform;
         return Vector3d{uniform(noise[0]),uniform(noise[1]), uniform(noise[2])} - Vector3d::broadcast(0.5);
     };
-    
+
 #ifdef ENGINE
       ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_SWIMMING);
 #endif
@@ -2866,10 +2844,7 @@ void calc_particle_lattice_ia() {
           p.r.p[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
           p.r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
           p.r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
-        ONEPART_TRACE(if (p.p.identity == check_id) {
-          fprintf(stderr, "%d: OPT: LB coupling of ghost particle:\n",
-                  this_node);
-        });
+
         if (!p.p.is_virtual || thermo_virtual) {
             p.lc.f_random = lb_coupl_pref * f_random(p.identity());
           lb_viscous_coupling(&p);
