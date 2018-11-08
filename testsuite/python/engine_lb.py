@@ -112,11 +112,8 @@ class SwimmerTest(ut.TestCase):
             agrid=1.0, tau=S.time_step, fric=0.5, visc=1.0, dens=1.0)
         S.actors.add(lbm)
 
-        if (S.cell_system.get_state()["n_nodes"] > 1):
-            print("NOTE: Ignoring testcase for n_nodes > 1")
-        else:
-            self.run_and_check(
-                S, lbm, tests_common.abspath("data/engine_lb.vtk"))
+        self.run_and_check(
+            S, lbm, tests_common.abspath("data/engine_lb.vtk"))
 
 
 if __name__ == '__main__':

@@ -2652,6 +2652,35 @@ namespace {
     }
 }
 
+namespace {
+    bool in_local_domain(Vector3d const& pos) {
+        return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
+                pos[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
+                pos[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
+                pos[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
+                pos[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
+                pos[2] < my_right[2] + 0.5 * lblattice.agrid[2]);
+    }
+
+    void add_swimmer_force(Particle & p) {
+        if (p.swim.swimming) {
+            // calculate source position
+            const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
+            auto source_position = p.r.p + direction * p.r.calc_director();
+
+            if(not in_local_domain(source_position))
+            {
+                return;
+            }
+            
+            lb_lbfluid_get_interpolated_velocity(source_position,
+                                                 p.swim.v_source.data());
+
+            add_md_force(source_position, p.swim.f_swim * p.r.calc_director());
+        }
+    }
+}
+
 /** Coupling of a single particle to viscous fluid with Stokesian friction.
  *
  * Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
@@ -2688,34 +2717,6 @@ inline Vector3d lb_viscous_coupling(Particle *p) {
 
     add_md_force(p->r.p, force);
 
-  // map_position_to_lattice: position ... not inside a local plaquette in ...
-
-#ifdef ENGINE
-  if (p->swim.swimming) {
-      // TODO: Fix LB mapping
-      if (n_nodes > 1) {
-          if (this_node == 0) {
-              fprintf(stderr, "ERROR: Swimming is not compatible with Open MPI and "
-                              "CPU LB on more than 1 node.\n");
-              fprintf(stderr, "       Please use LB_GPU instead.\n");
-          }
-          errexit();
-      }
-
-      // calculate source position
-      const double direction = double(p->swim.push_pull) * p->swim.dipole_length;
-      auto source_position = p->r.p + direction * p->r.calc_director();
-
-      int corner[3] = {0, 0, 0};
-      fold_position(source_position, corner);
-
-      lb_lbfluid_get_interpolated_velocity(source_position,
-                                           p->swim.v_source.data());
-
-      add_md_force(source_position, p->swim.f_swim * p->r.calc_director());
-  }
-#endif
-
   return force;
 }
 
@@ -2733,15 +2734,6 @@ Vector3d node_u(Lattice::index_t index) {
       lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
 
   return Vector3d{modes[1], modes[2], modes[3]} / local_rho;
-}
-
-bool in_local_domain(Vector3d const& pos) {
-    return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
-            pos[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
-            pos[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
-            pos[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
-            pos[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
-            pos[2] < my_right[2] + 0.5 * lblattice.agrid[2]);
 }
 } // namespace
 
@@ -2841,6 +2833,9 @@ void calc_particle_lattice_ia() {
         auto const force = lb_viscous_coupling(&p);
         /* add force to the particle */
         p.f.f += force;
+#ifdef ENGINE
+          add_swimmer_force(p);
+#endif
       }
     }
 
@@ -2852,6 +2847,9 @@ void calc_particle_lattice_ia() {
         if (!p.p.is_virtual || thermo_virtual) {
             p.lc.f_random = lb_coupl_pref * f_random(p.identity());
           lb_viscous_coupling(&p);
+#ifdef ENGINE
+            add_swimmer_force(p);
+#endif
         }
       }
     }
