@@ -164,8 +164,12 @@ void force_calc() {
 #endif
 
 #ifdef LB
-  if (lattice_switch & LATTICE_LB)
+  if (lattice_switch & LATTICE_LB) {
+#ifdef ENGINE
+    ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_SWIMMING);
+#endif
     calc_particle_lattice_ia();
+  }
 #endif
 
 #ifdef METADYNAMICS

@@ -117,10 +117,7 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
       n_buffer_new += sizeof(ParticleMomentum);
     if (data_parts & GHOSTTRANS_FORCE)
       n_buffer_new += sizeof(ParticleForce);
-#ifdef LB
-    if (data_parts & GHOSTTRANS_COUPLING)
-      n_buffer_new += sizeof(ParticleLatticeCoupling);
-#endif
+
 #ifdef ENGINE
     if (data_parts & GHOSTTRANS_SWIMMING)
       n_buffer_new += sizeof(ParticleParametersSwimming);
@@ -200,12 +197,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           memmove(insert, &pt->f, sizeof(ParticleForce));
           insert += sizeof(ParticleForce);
         }
-#ifdef LB
-        if (data_parts & GHOSTTRANS_COUPLING) {
-          memmove(insert, &pt->lc, sizeof(ParticleLatticeCoupling));
-          insert += sizeof(ParticleLatticeCoupling);
-        }
-#endif
+
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
           memmove(insert, &pt->swim, sizeof(ParticleParametersSwimming));
@@ -326,12 +318,6 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
           memmove(&pt->f, retrieve, sizeof(ParticleForce));
           retrieve += sizeof(ParticleForce);
         }
-#ifdef LB
-        if (data_parts & GHOSTTRANS_COUPLING) {
-          memmove(&pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
-          retrieve += sizeof(ParticleLatticeCoupling);
-        }
-#endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
           memmove(&pt->swim, retrieve, sizeof(ParticleParametersSwimming));
@@ -433,10 +419,6 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         if (data_parts & GHOSTTRANS_FORCE)
           pt2->f += pt1->f;
 
-#ifdef LB
-        if (data_parts & GHOSTTRANS_COUPLING)
-          memmove(&pt2->lc, &pt1->lc, sizeof(ParticleLatticeCoupling));
-#endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING)
           memmove(&pt2->swim, &pt1->swim, sizeof(ParticleParametersSwimming));

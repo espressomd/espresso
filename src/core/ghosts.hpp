@@ -138,11 +138,6 @@ further details.
 /// transfer \ref ParticleForce
 #define GHOSTTRANS_FORCE 16
 
-#ifdef LB
-/// transfer \ref ParticleLatticeCoupling
-#define GHOSTTRANS_COUPLING 32
-#endif
-
 /// resize the receiver particle arrays to the size of the senders
 #define GHOSTTRANS_PARTNUM 64
 
@@ -202,9 +197,6 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
 
 /** Free a communicator. */
 void free_comm(GhostCommunicator *comm);
-
-/** Initialize ghosts. */
-void ghost_init();
 
 /**
  * @brief do a ghost communication with the data parts specified

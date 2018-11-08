@@ -2689,7 +2689,7 @@ namespace {
  * @param p          The coupled particle (Input).
  * @param force      Coupling force between particle and fluid (Output).
  */
-inline Vector3d lb_viscous_coupling(Particle *p) {
+inline Vector3d lb_viscous_coupling(Particle *p, Vector3d const& f_random) {
   double interpolated_u[3];
 
   /* calculate fluid velocity at particle's position
@@ -2714,7 +2714,7 @@ inline Vector3d lb_viscous_coupling(Particle *p) {
     /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-    auto const force = -lbpar.friction * (p->m.v - v_drift) + p->lc.f_random;
+    auto const force = -lbpar.friction * (p->m.v - v_drift) + f_random;
 
     add_md_force(p->r.p, force);
 
@@ -2823,15 +2823,10 @@ void calc_particle_lattice_ia() {
         return Vector3d{uniform(noise[0]),uniform(noise[1]), uniform(noise[2])} - Vector3d::broadcast(0.5);
     };
 
-#ifdef ENGINE
-      ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_SWIMMING);
-#endif
-
     /* local cells */
     for (auto &p : local_cells.particles()) {
       if (!p.p.is_virtual || thermo_virtual) {
-          p.lc.f_random = lb_coupl_pref * f_random(p.identity());
-        auto const force = lb_viscous_coupling(&p);
+        auto const force = lb_viscous_coupling(&p, lb_coupl_pref * f_random(p.identity()));
         /* add force to the particle */
         p.f.f += force;
 #ifdef ENGINE
@@ -2846,8 +2841,7 @@ void calc_particle_lattice_ia() {
        * in the range of the local lattice nodes */
       if (in_local_domain(p.r.p)) {
         if (!p.p.is_virtual || thermo_virtual) {
-            p.lc.f_random = lb_coupl_pref * f_random(p.identity());
-          lb_viscous_coupling(&p);
+          lb_viscous_coupling(&p, lb_coupl_pref * f_random(p.identity()));
 #ifdef ENGINE
             add_swimmer_force(p);
 #endif
