@@ -2637,8 +2637,9 @@ void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
  * @param p          The coupled particle (Input).
  * @param force      Coupling force between particle and fluid (Output).
  */
-inline void lb_viscous_coupling(Particle *p, double force[3]) {
+inline Vector3d lb_viscous_coupling(Particle *p) {
   double interpolated_u[3], delta_j[3];
+  Vector3d force;
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
@@ -2735,6 +2736,8 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
                           });
   }
 #endif
+
+  return force;
 }
 
 namespace {
@@ -2762,8 +2765,6 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   lattice_interpolation(lblattice, pos,
                         [&interpolated_u](Lattice::index_t index, double w) {
-                          auto &node = lbfields[index];
-
                           interpolated_u += w * node_u(index);
                         });
 
@@ -2818,8 +2819,6 @@ void calc_particle_lattice_ia() {
       ctr_type c{rng_counter.value(), 0ul};
       rng_counter.increment();
 
-      double force[3];
-
     if (lbpar.resend_halo) { /* first MD step after last LB update */
 
       /* exchange halo regions (for fluid-particle coupling) */
@@ -2835,60 +2834,42 @@ void calc_particle_lattice_ia() {
     }
 
     auto f_random = [&c] (int id) -> Vector3d {
-        rng_type rng;
         key_type k{static_cast<uint32_t>(id)};
 
-        auto const noise = rng(c, k);
+        auto const noise = rng_type{}(c, k);
 
         using Utils::uniform;
-
         return Vector3d{uniform(noise[0]),uniform(noise[1]), uniform(noise[2])} - Vector3d::broadcast(0.5);
     };
 
     /* draw random numbers for local particles */
     for (auto &p : local_cells.particles()) {
       if (lb_coupl_pref2 > 0.0) {
-#ifdef GAUSSRANDOM
-        p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random();
-        p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random();
-        p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random();
-#elif defined(GAUSSRANDOMCUT)
-        p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random_cut();
-        p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random_cut();
-        p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random_cut();
-#elif defined(FLATNOISE)
        p.lc.f_random = lb_coupl_pref * f_random(p.identity());
-#else // GAUSSRANDOM
-#error No noise type defined for the CPU LB
-#endif // GAUSSRANDOM
       } else {
         p.lc.f_random = {0.0, 0.0, 0.0};
       }
     }
 
-#ifdef ENGINE
-    const int data_parts = GHOSTTRANS_COUPLING | GHOSTTRANS_SWIMMING;
-#else
-    const int data_parts = GHOSTTRANS_COUPLING;
-#endif
+      for (auto &p : ghost_cells.particles()) {
+          if (lb_coupl_pref2 > 0.0) {
+              p.lc.f_random = lb_coupl_pref * f_random(p.identity());
+          } else {
+              p.lc.f_random = {0.0, 0.0, 0.0};
+          }
+      }
 
-    /* communicate the random numbers */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
+
+#ifdef ENGINE
+      ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_SWIMMING);
+#endif
 
     /* local cells */
     for (auto &p : local_cells.particles()) {
       if (!p.p.is_virtual || thermo_virtual) {
-        lb_viscous_coupling(&p, force);
-
+        auto const force = lb_viscous_coupling(&p);
         /* add force to the particle */
-        p.f.f[0] += force[0];
-        p.f.f[1] += force[1];
-        p.f.f[2] += force[2];
-
-        ONEPART_TRACE(if (p.p.identity == check_id) {
-          fprintf(stderr, "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n", this_node,
-                  p.f.f[0], p.f.f[1], p.f.f[2]);
-        });
+        p.f.f += force;
       }
     }
 
@@ -2907,14 +2888,8 @@ void calc_particle_lattice_ia() {
                   this_node);
         });
         if (!p.p.is_virtual || thermo_virtual) {
-          lb_viscous_coupling(&p, force);
+          lb_viscous_coupling(&p);
         }
-
-        /* ghosts must not have the force added! */
-        ONEPART_TRACE(if (p.p.identity == check_id) {
-          fprintf(stderr, "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n", this_node,
-                  p.f.f[0], p.f.f[1], p.f.f[2]);
-        });
       }
     }
   }
