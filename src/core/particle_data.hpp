@@ -366,7 +366,7 @@ struct Particle {
   ParticleForce f;
   ///
   ParticleLocal l;
-///
+  ///
   /** Bonded interactions list
    *
    *  The format is pretty simple: just the bond type, and then the particle
