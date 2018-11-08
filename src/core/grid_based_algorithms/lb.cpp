@@ -2841,25 +2841,7 @@ void calc_particle_lattice_ia() {
         using Utils::uniform;
         return Vector3d{uniform(noise[0]),uniform(noise[1]), uniform(noise[2])} - Vector3d::broadcast(0.5);
     };
-
-    /* draw random numbers for local particles */
-    for (auto &p : local_cells.particles()) {
-      if (lb_coupl_pref2 > 0.0) {
-       p.lc.f_random = lb_coupl_pref * f_random(p.identity());
-      } else {
-        p.lc.f_random = {0.0, 0.0, 0.0};
-      }
-    }
-
-      for (auto &p : ghost_cells.particles()) {
-          if (lb_coupl_pref2 > 0.0) {
-              p.lc.f_random = lb_coupl_pref * f_random(p.identity());
-          } else {
-              p.lc.f_random = {0.0, 0.0, 0.0};
-          }
-      }
-
-
+    
 #ifdef ENGINE
       ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_SWIMMING);
 #endif
@@ -2867,6 +2849,7 @@ void calc_particle_lattice_ia() {
     /* local cells */
     for (auto &p : local_cells.particles()) {
       if (!p.p.is_virtual || thermo_virtual) {
+          p.lc.f_random = lb_coupl_pref * f_random(p.identity());
         auto const force = lb_viscous_coupling(&p);
         /* add force to the particle */
         p.f.f += force;
@@ -2888,6 +2871,7 @@ void calc_particle_lattice_ia() {
                   this_node);
         });
         if (!p.p.is_virtual || thermo_virtual) {
+            p.lc.f_random = lb_coupl_pref * f_random(p.identity());
           lb_viscous_coupling(&p);
         }
       }
