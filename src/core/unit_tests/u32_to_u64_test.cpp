@@ -30,6 +30,6 @@ BOOST_AUTO_TEST_CASE(u64_to_u32) {
     constexpr const uint64_t expected_low = 11u;
     constexpr const uint64_t expected_high = 4u;
     constexpr const uint64_t val = (expected_high << 32) | (expected_low);
-    
+
     static_assert(std::pair<uint32_t,uint32_t>{expected_high, expected_low} == Utils::u64_to_u32(val));
 }

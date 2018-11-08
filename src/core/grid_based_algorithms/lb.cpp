@@ -43,13 +43,17 @@
 #include "lb-d3q19.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "utils/u32_to_u64.hpp"
 
+#include <Random123/philox.h>
 #include <boost/multi_array.hpp>
 
+#include <cinttypes>
 #include <cassert>
 #include <cstdio>
 #include <iostream>
 #include <mpi.h>
+#include <core/utils/uniform.hpp>
 
 #include "cuda_interface.hpp"
 
@@ -60,6 +64,26 @@ void print_fluid();
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum = 0;
+
+/** Counter for the particle coupling RNG */
+namespace {
+class Counter {
+private:
+    uint64_t m_val;
+public:
+    Counter(uint64_t initial_value = 0ul) : m_val(initial_value) {}
+
+    void increment() {
+        ++m_val;
+    }
+
+    uint64_t value() const {
+        return m_val;
+    }
+};
+
+Counter rng_counter;
+}
 
 /** Struct holding the Lattice Boltzmann parameters */
 // LB_Parameters lbpar = { .rho={0.0}, .viscosity={0.0}, .bulk_viscosity={-1.0},
@@ -2787,7 +2811,16 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
 void calc_particle_lattice_ia() {
 
   if (transfer_momentum) {
-    double force[3];
+      using rng_type = r123::Philox4x64;
+      using ctr_type = rng_type::ctr_type;
+      using ukey_type = rng_type::ukey_type;
+      using key_type = rng_type::key_type;
+
+      rng_type rng;
+      ctr_type c{rng_counter.value(), 0ul};
+      rng_counter.increment();
+
+      double force[3];
 
     if (lbpar.resend_halo) { /* first MD step after last LB update */
 
@@ -2815,19 +2848,21 @@ void calc_particle_lattice_ia() {
         p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random_cut();
         p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random_cut();
 #elif defined(FLATNOISE)
-        p.lc.f_random[0] = lb_coupl_pref * (d_random() - 0.5);
-        p.lc.f_random[1] = lb_coupl_pref * (d_random() - 0.5);
-        p.lc.f_random[2] = lb_coupl_pref * (d_random() - 0.5);
+       key_type k{static_cast<uint32_t>(p.identity())};
+
+       auto const noise = rng(c, k);
+
+       using Utils::uniform;
+
+        p.lc.f_random[0] = lb_coupl_pref * (uniform(noise[0]) - 0.5);
+        p.lc.f_random[1] = lb_coupl_pref * (uniform(noise[1]) - 0.5);
+        p.lc.f_random[2] = lb_coupl_pref * (uniform(noise[2]) - 0.5);
 #else // GAUSSRANDOM
 #error No noise type defined for the CPU LB
 #endif // GAUSSRANDOM
       } else {
         p.lc.f_random = {0.0, 0.0, 0.0};
       }
-
-#ifdef ADDITIONAL_CHECKS
-      rancounter += 3;
-#endif // ADDITIONAL_CHECKS
     }
 
 #ifdef ENGINE
