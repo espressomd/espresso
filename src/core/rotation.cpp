@@ -514,7 +514,8 @@ void convert_vel_space_to_body(const Particle *p, double *vel_body) {
                 A[2 + 3 * 2] * p->m.v[2];
 }
 
-void convert_vec_space_to_body(const Particle *p, const double *v, double *res) {
+void convert_vec_space_to_body(const Particle *p, const double *v,
+                               double *res) {
   double A[9];
   define_rotation_matrix(*p, A);
 

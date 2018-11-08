@@ -28,9 +28,9 @@
 #include "utils.hpp"
 
 #include <algorithm>
-#include <limits>
-#include <boost/mpi/operations.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/operations.hpp>
+#include <limits>
 
 #ifdef MINIMIZE_ENERGY_DEBUG
 #define MINIMIZE_ENERGY_TRACE(A) A
@@ -61,7 +61,7 @@ bool steepest_descent_step(void) {
   // Iteration over all local particles
 
   for (auto &p : local_cells.particles()) {
-      auto f = 0.0;
+    auto f = 0.0;
 
     dp2 = 0.0;
     // For all Cartesian coordinates
@@ -92,25 +92,25 @@ bool steepest_descent_step(void) {
         }
     }
 #ifdef ROTATION
-      {
-          // Rotational increment
-          auto const dq = params->gamma * p.f.torque; // Vector parallel to torque
-          auto const t = p.f.torque.norm2();
+    {
+      // Rotational increment
+      auto const dq = params->gamma * p.f.torque; // Vector parallel to torque
+      auto const t = p.f.torque.norm2();
 
-          // Normalize rotation axis and compute amount of rotation
-          auto const l = dq.norm();
-          if (l > 0.0) {
-              auto const axis = dq / l;
-              auto const angle = (std::abs(l) > params->max_displacement) ?
-                                 sgn(l) * params->max_displacement :
-                                 l;
+      // Normalize rotation axis and compute amount of rotation
+      auto const l = dq.norm();
+      if (l > 0.0) {
+        auto const axis = dq / l;
+        auto const angle = (std::abs(l) > params->max_displacement)
+                               ? sgn(l) * params->max_displacement
+                               : l;
 
-              // Rotate the particle around axis dq by amount l
-              local_rotate_particle(&(p), axis, angle);
-          }
-
-          f_max = std::max(f_max, t);
+        // Rotate the particle around axis dq by amount l
+        local_rotate_particle(&(p), axis, angle);
       }
+
+      f_max = std::max(f_max, t);
+    }
 #endif
     // Note maximum force/torque encountered
     f_max = std::max(f_max, f);
@@ -123,9 +123,10 @@ bool steepest_descent_step(void) {
       printf("f_max %e resort_particles %d\n", f_max, resort_particles));
   announce_resort_particles();
 
-    // Synchronize maximum force/torque encountered
-    namespace mpi = boost::mpi;
-    auto const f_max_global = mpi::all_reduce(comm_cart, f_max, mpi::maximum<double>());
+  // Synchronize maximum force/torque encountered
+  namespace mpi = boost::mpi;
+  auto const f_max_global =
+      mpi::all_reduce(comm_cart, f_max, mpi::maximum<double>());
 
   // Return true, if the maximum force/torque encountered is below the user
   // limit.
