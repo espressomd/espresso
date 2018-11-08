@@ -2630,6 +2630,28 @@ void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
 /***********************************************************************/
 /*@{*/
 
+namespace {
+    /**
+     * @brief Add a force to the lattice force density.
+     * @param pos Position of the force
+     * @param force Force in MD units.
+     */
+    void add_md_force(Vector3d const& pos, Vector3d const& force) {
+        /* transform momentum transfer to lattice units
+           (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+        auto const delta_j = - (time_step * lbpar.tau / lbpar.agrid) * force;
+
+        lattice_interpolation(lblattice, pos,
+                              [&delta_j](Lattice::index_t index, double w) {
+                                  auto &node = lbfields[index];
+
+                                  node.force_density[0] += w * delta_j[0];
+                                  node.force_density[1] += w * delta_j[1];
+                                  node.force_density[2] += w * delta_j[2];
+                              });
+    }
+}
+
 /** Coupling of a single particle to viscous fluid with Stokesian friction.
  *
  * Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
@@ -2664,54 +2686,33 @@ inline Vector3d lb_viscous_coupling(Particle *p) {
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
     auto const force = -lbpar.friction * (p->m.v - v_drift) + p->lc.f_random;
 
-  /* transform momentum transfer to lattice units
-     (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  auto const delta_j = - (time_step * lbpar.tau / lbpar.agrid) * force;
-
-  lattice_interpolation(lblattice, p->r.p,
-                        [&delta_j](Lattice::index_t index, double w) {
-                          auto &node = lbfields[index];
-
-                          node.force_density[0] += w * delta_j[0];
-                          node.force_density[1] += w * delta_j[1];
-                          node.force_density[2] += w * delta_j[2];
-                        });
+    add_md_force(p->r.p, force);
 
   // map_position_to_lattice: position ... not inside a local plaquette in ...
 
 #ifdef ENGINE
   if (p->swim.swimming) {
-    // TODO: Fix LB mapping
-    if (n_nodes > 1) {
-      if (this_node == 0) {
-        fprintf(stderr, "ERROR: Swimming is not compatible with Open MPI and "
-                        "CPU LB on more than 1 node.\n");
-        fprintf(stderr, "       Please use LB_GPU instead.\n");
+      // TODO: Fix LB mapping
+      if (n_nodes > 1) {
+          if (this_node == 0) {
+              fprintf(stderr, "ERROR: Swimming is not compatible with Open MPI and "
+                              "CPU LB on more than 1 node.\n");
+              fprintf(stderr, "       Please use LB_GPU instead.\n");
+          }
+          errexit();
       }
-      errexit();
-    }
 
-    // calculate source position
-    const double direction = double(p->swim.push_pull) * p->swim.dipole_length;
-    auto source_position = p->r.p + direction * p->r.calc_director();
+      // calculate source position
+      const double direction = double(p->swim.push_pull) * p->swim.dipole_length;
+      auto source_position = p->r.p + direction * p->r.calc_director();
 
-    int corner[3] = {0, 0, 0};
-    fold_position(source_position, corner);
+      int corner[3] = {0, 0, 0};
+      fold_position(source_position, corner);
 
-    lb_lbfluid_get_interpolated_velocity(source_position,
-                                         p->swim.v_source.data());
-      // calculate and set force at source position
-    auto const delta_j = -p->swim.f_swim  * time_step *
-                         lbpar.tau / lbpar.agrid * p->r.calc_director();
+      lb_lbfluid_get_interpolated_velocity(source_position,
+                                           p->swim.v_source.data());
 
-    lattice_interpolation(lblattice, source_position,
-                          [&delta_j](Lattice::index_t index, double w) {
-                            auto &node = lbfields[index];
-
-                            node.force_density[0] += w * delta_j[0];
-                            node.force_density[1] += w * delta_j[1];
-                            node.force_density[2] += w * delta_j[2];
-                          });
+      add_md_force(source_position, p->swim.f_swim * p->r.calc_director());
   }
 #endif
 
