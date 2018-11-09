@@ -108,10 +108,4 @@ inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
   return 0;
 }
 
-inline int thermalized_bond_energy(const Particle *, const Particle *,
-                                   const Bonded_ia_parameters *, double[3],
-                                   double *) {
-  return 0;
-}
-
 #endif
