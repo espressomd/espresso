@@ -16,7 +16,6 @@ class LeesEdwards(ut.TestCase):
     system.cell_system.set_n_square()
     system.set_random_state_PRNG()
 
-    tol = 1e-15
     time_step = 1.0
     system.time_step = time_step
 
@@ -70,7 +69,7 @@ class LeesEdwards(ut.TestCase):
         and velocity are updated correctly."""
 
         system = self.system
-        tol = self.tol
+        system.part.clear()
         system.time = 0.0
 
         # Set up a one particle system and check the position offset after crossing the boundary
@@ -139,6 +138,8 @@ class LeesEdwards(ut.TestCase):
            is included properly"""
 
         system = self.system
+        system.part.clear()
+
         dir = [0, 1, 2]
 
         for sheardir in dir:
