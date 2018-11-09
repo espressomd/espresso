@@ -17,7 +17,7 @@ from espressomd.interactions import HarmonicBond
 required_features = ["LEES_EDWARDS", "HAT", "DPD"]
 espressomd.assert_features(required_features)
 
-parameters_help = """steady_shear: offset, oscillatory_shear: amplitude velocity, step: offset"""
+parameters_help = """steady_shear: velocity, oscillatory_shear: amplitude and frequency, step: offset"""
 
 parser = argparse.ArgumentParser(
     description=__doc__,
