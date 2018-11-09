@@ -119,25 +119,6 @@ void on_program_start() {
   reaction.swap = 0;
 #endif
 
-#ifdef LEES_EDWARDS
-  int le_count = 8;
-  int le_blocklengths[] = {1, 1, 1, 1, 1, 1, 1, 1};
-  MPI_Aint le_displacements[] = \
-    {offsetof(lees_edwards_protocol_struct, type),
-     offsetof(lees_edwards_protocol_struct, time0),
-     offsetof(lees_edwards_protocol_struct, offset),
-     offsetof(lees_edwards_protocol_struct, velocity),
-     offsetof(lees_edwards_protocol_struct, amplitude),
-     offsetof(lees_edwards_protocol_struct, frequency),
-     offsetof(lees_edwards_protocol_struct, sheardir),
-     offsetof(lees_edwards_protocol_struct, shearplanenormal)};
-
-  MPI_Datatype le_types[] = {MPI_INT, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_INT, MPI_INT};
-
-  MPI_Type_create_struct(le_count, le_blocklengths, le_displacements, le_types, &lees_edwards_mpi_data);
-  MPI_Type_commit(&lees_edwards_mpi_data);
-#endif
-
   /*
     call all initializations to do only on the master node here.
   */
@@ -689,11 +670,6 @@ void on_parameter_change(int field) {
     /* Thermalized distance bonds needs ghost velocities */
     on_ghost_flags_change();
     break;
-#ifdef LEES_EDWARDS
-  case FIELD_LEES_EDWARDS:
-    on_boxl_change();
-    break;
-#endif
   }
 }
 

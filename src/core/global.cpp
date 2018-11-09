@@ -55,7 +55,7 @@ namespace {
 /** Type describing global variables. These are accessible from the
     front end, and are distributed to all compute nodes. */
 typedef struct {
-  enum class Type { INT = 0, DOUBLE = 1, BOOL = 2, LEES_EDWARDS_MPI = 3};
+  enum class Type { INT = 0, DOUBLE = 1, BOOL = 2 };
   /** Physical address of the variable. */
   void *data;
   /** Type of the variable, either \ref TYPE_INT or \ref TYPE_DOUBLE.*/
@@ -89,11 +89,6 @@ const std::unordered_map<int, Datafield> fields{
      {langevin_gamma.data(), Datafield::Type::DOUBLE, 3,
       "gamma"}}, /* 5  from thermostat.cpp */
 #endif // PARTICLE_ANISOTROPY
-#ifdef LEES_EDWARDS
-     {FIELD_LEES_EDWARDS,
-     //TODO Send correct struct to all nodes
-     {&lees_edwards_protocol, Datafield::Type::LEES_EDWARDS_MPI, 1, "lees_edwards"}}, /* 6  from lees_edwards.cpp */
-#endif
     {FIELD_INTEG_SWITCH,
      {&integ_switch, Datafield::Type::INT, 1,
       "integ_switch"}}, /* 7  from integrate.cpp */
@@ -243,12 +238,6 @@ std::size_t hash_value(Datafield const &field) {
     auto ptr = reinterpret_cast<double *>(field.data);
     return hash_range(ptr, ptr + field.dimension);
   }
-#ifdef LEES_EDWARDS
-  case Datafield::Type::LEES_EDWARDS_MPI: {
-    auto ptr = reinterpret_cast<int *>(field.data);
-    return hash_range(ptr, ptr + field.dimension);
-  }
-#endif
   default:
     throw std::runtime_error("Unknown type.");
   };
@@ -269,12 +258,6 @@ void common_bcast_parameter(int i) {
     MPI_Bcast((double *)fields.at(i).data, fields.at(i).dimension, MPI_DOUBLE,
               0, comm_cart);
     break;
-#ifdef LEES_EDWARDS
-  case Datafield::Type::LEES_EDWARDS_MPI:
-    MPI_Bcast((void *)fields.at(i).data, fields.at(i).dimension, lees_edwards_mpi_data,
-              0, comm_cart);
-    break;
-#endif 
   default:
     throw std::runtime_error("Unknown type.");
     break;
@@ -321,6 +304,3 @@ int mpi_bcast_parameter(int i) {
 
   return check_runtime_errors();
 }
-#ifdef LEES_EDWARDS
-MPI_Datatype lees_edwards_mpi_data;
-#endif

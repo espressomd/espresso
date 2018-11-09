@@ -21,8 +21,6 @@
 #ifndef _GLOBAL_HPP
 #define _GLOBAL_HPP
 
-#include <mpi.h>
-
 /** \file global.hpp This file contains the code for access to globally
     defined variables using the script command setmd. Please refer to
     the Developer's guide, section "Adding global variables", for
@@ -68,8 +66,6 @@ enum Fields {
   FIELD_INTEG_SWITCH,
   /** index of \ref local_box_l in \ref #fields */
   FIELD_LBOXL,
-  /** index of \ref XXX #fields */
-  FIELD_LEES_EDWARDS,
   /** index of \ref max_cut in \ref #fields */
   FIELD_MCUT,
   /** index of \ref max_num_cells  in \ref #fields */
@@ -160,5 +156,4 @@ enum Fields {
 
 /** bool: whether to write out warnings or not */
 extern int warnings;
-extern MPI_Datatype lees_edwards_mpi_data;
 #endif
