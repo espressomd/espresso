@@ -290,21 +290,22 @@ inline Utils::Vector3d unfolded_position(Particle const &p) {
 }
 
 /** Calculate the velocity difference including the Lees Edwards velocity*/
-#ifdef LEES_EDWARDS
 inline static Vector3d vel_diff(Vector3d const &x, Vector3d const &y,
-                         Vector3d const &u, Vector3d const &v) {
-  auto shear_velocity = lees_edwards_protocol.velocity;
+                                Vector3d const &u, Vector3d const &v) {
+
   auto ret = u - v;
 
-  auto const dy = std::abs(x[lees_edwards_protocol.shearplanenormal] - y[lees_edwards_protocol.shearplanenormal]);
-  if(dy > 0.5 * box_l[lees_edwards_protocol.shearplanenormal]) {
+#ifdef LEES_EDWARDS
+  auto shear_velocity = lees_edwards_protocol.velocity;
+  auto const dy = std::abs(x[lees_edwards_protocol.shearplanenormal] -
+                           y[lees_edwards_protocol.shearplanenormal]);
+  if (dy > 0.5 * box_l[lees_edwards_protocol.shearplanenormal]) {
     ret[lees_edwards_protocol.sheardir] += Utils::sgn(dy) * shear_velocity;
   }
+#endif
 
   return ret;
 }
-#endif
-
 
 /** unfold coordinates to physical position.
     \param pos the position...
