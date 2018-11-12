@@ -30,8 +30,8 @@
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "random.hpp"
 #include "utils.hpp"
+#include "random.hpp"
 
 #ifdef AFFINITY
 
@@ -226,10 +226,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
                 p1->p.bond_site[j] = -1;
-              // printf("bond broken. Poff = %f, F = %f, Koff = %f, K0 = %f, len
-              // = %f\n", Poff, tmpF, tmpKoff, tmpK0, len);
             }
-
           } else {
             for (j = 0; j < 3; j++)
               p1->p.bond_site[j] = -1;
