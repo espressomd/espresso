@@ -31,7 +31,6 @@
 #include "bonded_interaction_data.hpp"
 #include "debug.hpp"
 #include "particle_data.hpp"
-#include "random.hpp"
 #include "utils.hpp"
 
 /// set the parameters for the quartic potential
