@@ -42,18 +42,18 @@
 #include "halo.hpp"
 #include "lb-d3q19.hpp"
 #include "thermostat.hpp"
-#include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "utils/u32_to_u64.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
 
-#include <cinttypes>
 #include <cassert>
+#include <cinttypes>
+#include <core/utils/uniform.hpp>
 #include <cstdio>
 #include <iostream>
 #include <mpi.h>
-#include <core/utils/uniform.hpp>
 
 #include "cuda_interface.hpp"
 
@@ -69,21 +69,18 @@ int transfer_momentum = 0;
 namespace {
 class Counter {
 private:
-    uint64_t m_val;
+  uint64_t m_val;
+
 public:
-    Counter(uint64_t initial_value = 0ul) : m_val(initial_value) {}
+  Counter(uint64_t initial_value = 0ul) : m_val(initial_value) {}
 
-    void increment() {
-        ++m_val;
-    }
+  void increment() { ++m_val; }
 
-    uint64_t value() const {
-        return m_val;
-    }
+  uint64_t value() const { return m_val; }
 };
 
 Counter rng_counter;
-}
+} // namespace
 
 /** Struct holding the Lattice Boltzmann parameters */
 // LB_Parameters lbpar = { .rho={0.0}, .viscosity={0.0}, .bulk_viscosity={-1.0},
@@ -2322,7 +2319,7 @@ inline void lb_relax_modes(Lattice::index_t index, double *mode) {
   mode[18] = lbpar.gamma_even * mode[18];
 }
 
-inline void lb_thermalize_modes(Lattice::index_t index, double *mode) {
+inline void lb_thermalize_modes(Lattice::index_t global_index, double *mode) {
   const double rootrho = std::sqrt(
       std::fabs(mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid));
 #ifdef GAUSSRANDOM
@@ -2484,9 +2481,6 @@ inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
 
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
-  Lattice::index_t index;
-  double modes[19];
-
 /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
   for (auto it = LBBoundaries::lbboundaries.begin();
@@ -2509,7 +2503,7 @@ inline void lb_collide_stream() {
   }
 #endif
 
-  index = lblattice.halo_offset;
+  Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
       for (int x = 1; x <= lblattice.grid[0]; x++) {
@@ -2519,6 +2513,8 @@ inline void lb_collide_stream() {
         if (!lbfields[index].boundary)
 #endif // LB_BOUNDARIES
         {
+          double modes[19];
+
           /* calculate modes locally */
           lb_calc_modes(index, modes);
 
@@ -2526,8 +2522,12 @@ inline void lb_collide_stream() {
           lb_relax_modes(index, modes);
 
           /* fluctuating hydrodynamics */
-          if (lbpar.fluct)
-            lb_thermalize_modes(index, modes);
+          if (lbpar.fluct) {
+            auto const global_index = get_linear_index(
+                lblattice.local_index_offset + Vector3i{x - 1, y - 1, z - 1},
+                lblattice.global_grid);
+            lb_thermalize_modes(global_index, modes);
+          }
 
           /* apply forces */
           lb_apply_forces(index, modes);
@@ -2627,56 +2627,55 @@ void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
 /*@{*/
 
 namespace {
-    /**
-     * @brief Add a force to the lattice force density.
-     * @param pos Position of the force
-     * @param force Force in MD units.
-     */
-    void add_md_force(Vector3d const& pos, Vector3d const& force) {
-        /* transform momentum transfer to lattice units
-           (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-        auto const delta_j = - (time_step * lbpar.tau / lbpar.agrid) * force;
+/**
+ * @brief Add a force to the lattice force density.
+ * @param pos Position of the force
+ * @param force Force in MD units.
+ */
+void add_md_force(Vector3d const &pos, Vector3d const &force) {
+  /* transform momentum transfer to lattice units
+     (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  auto const delta_j = -(time_step * lbpar.tau / lbpar.agrid) * force;
 
-        lattice_interpolation(lblattice, pos,
-                              [&delta_j](Lattice::index_t index, double w) {
-                                  auto &node = lbfields[index];
+  lattice_interpolation(lblattice, pos,
+                        [&delta_j](Lattice::index_t index, double w) {
+                          auto &node = lbfields[index];
 
-                                  node.force_density[0] += w * delta_j[0];
-                                  node.force_density[1] += w * delta_j[1];
-                                  node.force_density[2] += w * delta_j[2];
-                              });
-    }
+                          node.force_density[0] += w * delta_j[0];
+                          node.force_density[1] += w * delta_j[1];
+                          node.force_density[2] += w * delta_j[2];
+                        });
 }
+} // namespace
 
 namespace {
-    bool in_local_domain(Vector3d const& pos) {
-        return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
-                pos[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
-                pos[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
-                pos[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
-                pos[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
-                pos[2] < my_right[2] + 0.5 * lblattice.agrid[2]);
-    }
-
-    void add_swimmer_force(Particle & p) {
-        if (p.swim.swimming) {
-            // calculate source position
-            const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
-            auto const director = p.r.calc_director();
-            auto const source_position = p.r.p + direction * director;
-
-            if(not in_local_domain(source_position))
-            {
-                return;
-            }
-
-            lb_lbfluid_get_interpolated_velocity(source_position,
-                                                 p.swim.v_source.data());
-
-            add_md_force(source_position, p.swim.f_swim * director);
-        }
-    }
+bool in_local_domain(Vector3d const &pos) {
+  return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
+          pos[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
+          pos[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
+          pos[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
+          pos[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
+          pos[2] < my_right[2] + 0.5 * lblattice.agrid[2]);
 }
+
+void add_swimmer_force(Particle &p) {
+  if (p.swim.swimming) {
+    // calculate source position
+    const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
+    auto const director = p.r.calc_director();
+    auto const source_position = p.r.p + direction * director;
+
+    if (not in_local_domain(source_position)) {
+      return;
+    }
+
+    lb_lbfluid_get_interpolated_velocity(source_position,
+                                         p.swim.v_source.data());
+
+    add_md_force(source_position, p.swim.f_swim * director);
+  }
+}
+} // namespace
 
 /** Coupling of a single particle to viscous fluid with Stokesian friction.
  *
@@ -2685,7 +2684,7 @@ namespace {
  * @param p          The coupled particle (Input).
  * @param force      Coupling force between particle and fluid (Output).
  */
-inline Vector3d lb_viscous_coupling(Particle *p, Vector3d const& f_random) {
+inline Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
   double interpolated_u[3];
 
   /* calculate fluid velocity at particle's position
@@ -2707,12 +2706,12 @@ inline Vector3d lb_viscous_coupling(Particle *p, Vector3d const& f_random) {
   v_drift += p->p.mu_E;
 #endif
 
-    /* calculate viscous force
+  /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-    auto const force = -lbpar.friction * (p->m.v - v_drift) + f_random;
+  auto const force = -lbpar.friction * (p->m.v - v_drift) + f_random;
 
-    add_md_force(p->r.p, force);
+  add_md_force(p->r.p, force);
 
   return force;
 }
@@ -2789,12 +2788,12 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
 void calc_particle_lattice_ia() {
 
   if (transfer_momentum) {
-      using rng_type = r123::Philox4x64;
-      using ctr_type = rng_type::ctr_type;
-      using key_type = rng_type::key_type;
+    using rng_type = r123::Philox4x64;
+    using ctr_type = rng_type::ctr_type;
+    using key_type = rng_type::key_type;
 
-      ctr_type c{rng_counter.value(), 0ul};
-      rng_counter.increment();
+    ctr_type c{rng_counter.value(), 0ul};
+    rng_counter.increment();
 
     if (lbpar.resend_halo) { /* first MD step after last LB update */
 
@@ -2810,23 +2809,25 @@ void calc_particle_lattice_ia() {
       lbpar.resend_halo = 0;
     }
 
-    auto f_random = [&c] (int id) -> Vector3d {
-        key_type k{static_cast<uint32_t>(id)};
+    auto f_random = [&c](int id) -> Vector3d {
+      key_type k{static_cast<uint32_t>(id)};
 
-        auto const noise = rng_type{}(c, k);
+      auto const noise = rng_type{}(c, k);
 
-        using Utils::uniform;
-        return Vector3d{uniform(noise[0]),uniform(noise[1]), uniform(noise[2])} - Vector3d::broadcast(0.5);
+      using Utils::uniform;
+      return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
+             Vector3d::broadcast(0.5);
     };
 
     /* local cells */
     for (auto &p : local_cells.particles()) {
       if (!p.p.is_virtual || thermo_virtual) {
-        auto const force = lb_viscous_coupling(&p, lb_coupl_pref * f_random(p.identity()));
+        auto const force =
+            lb_viscous_coupling(&p, lb_coupl_pref * f_random(p.identity()));
         /* add force to the particle */
         p.f.f += force;
 #ifdef ENGINE
-          add_swimmer_force(p);
+        add_swimmer_force(p);
 #endif
       }
     }
@@ -2839,7 +2840,7 @@ void calc_particle_lattice_ia() {
         if (!p.p.is_virtual || thermo_virtual) {
           lb_viscous_coupling(&p, lb_coupl_pref * f_random(p.identity()));
 #ifdef ENGINE
-            add_swimmer_force(p);
+          add_swimmer_force(p);
 #endif
         }
       }
