@@ -330,7 +330,7 @@ cdef class Thermostat(object):
 
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
-        def set_lb(self, kT=None, act_on_virtual=True):
+        def set_lb(self, kT=None, seed=None, act_on_virtual=True):
             """
             Sets the LB thermostat with required parameter 'kT'.
 
@@ -352,6 +352,11 @@ cdef class Thermostat(object):
                 kT, 1, float, "kT must be a number")
             if float(kT) < 0.:
                 raise ValueError("temperature must be non-negative")
+
+            if not seed:
+                raise ValueError(
+                    "seed has to be given as keyword arg")
+
             global temperature
             temperature = float(kT)
             global thermo_switch
