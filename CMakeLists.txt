@@ -375,19 +375,11 @@ endif()
 # Paths
 #######################################################################
 
-if (NOT DEFINED DATA)
-  set(DATA "share/espresso")
-endif(NOT DEFINED DATA)
-
-if (NOT DEFINED LIBDIR)
-  set(LIBDIR "lib")
-endif(NOT DEFINED LIBDIR)
-
 if (NOT DEFINED BINDIR)
   set(BINDIR "bin")
 endif(NOT DEFINED BINDIR)
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 
 
 #######################################################################
@@ -409,6 +401,8 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
 endif()
+# drop 'lib' prefix from all libraries
+set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 if(WARNINGS_ARE_ERRORS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")

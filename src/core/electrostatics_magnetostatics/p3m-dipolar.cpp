@@ -43,7 +43,6 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
-#include "thermostat.hpp"
 #include "tuning.hpp"
 
 #include "utils/strcat_alloc.hpp"

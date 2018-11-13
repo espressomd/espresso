@@ -34,11 +34,13 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
+#include "random.hpp"
 #include "rotation.hpp"
 #include "virtual_sites.hpp"
 

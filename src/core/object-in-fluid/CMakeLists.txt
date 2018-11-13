@@ -6,7 +6,7 @@ set(ObjectInFluid_SRC
     out_direction.cpp
 )
 add_library(ObjectInFluid SHARED ${ObjectInFluid_SRC})
-install(TARGETS ObjectInFluid LIBRARY DESTINATION ${LIBDIR} ARCHIVE DESTINATION ${LIBDIR})
+install(TARGETS ObjectInFluid LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd ARCHIVE DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(ObjectInFluid PROPERTIES SOVERSION ${SOVERSION})
 target_include_directories(ObjectInFluid PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
 add_dependencies(ObjectInFluid EspressoConfig)

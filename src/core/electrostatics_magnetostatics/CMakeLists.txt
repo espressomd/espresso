@@ -25,7 +25,7 @@ if(CUDA)
   cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
   cuda_add_library(electrostatics_magnetostatics_core_cuda SHARED ${electrostatics_core_cuda_src})
-  install(TARGETS electrostatics_magnetostatics_core_cuda DESTINATION ${LIBDIR})
+  install(TARGETS electrostatics_magnetostatics_core_cuda DESTINATION ${PYTHON_INSTDIR}/espressomd)
   set_target_properties(electrostatics_magnetostatics_core_cuda PROPERTIES SOVERSION ${SOVERSION})
   add_dependencies(electrostatics_magnetostatics_core_cuda EspressoConfig)
 
