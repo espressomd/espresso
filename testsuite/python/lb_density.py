@@ -55,21 +55,24 @@ class LBThermostatCommon(object):
     def test_mass_conservation(self):
         self.prepare()
         self.system.integrator.run(1000)
-        nodes=[]
-        for i in range(int(self.system.box_l[0]/LB_PARAMS['agrid'])):
-          for j in range(int(self.system.box_l[1]/LB_PARAMS['agrid'])):
-            for k in range(int(self.system.box_l[2]/LB_PARAMS['agrid'])):
-              nodes.append(self.lbf[i,j,k])
-          
+        nodes = []
+        for i in range(int(self.system.box_l[0] / LB_PARAMS['agrid'])):
+            for j in range(int(self.system.box_l[1] / LB_PARAMS['agrid'])):
+                for k in range(int(self.system.box_l[2] / LB_PARAMS['agrid'])):
+                    nodes.append(self.lbf[i, j, k])
+
         result = np.zeros(10)
         for i in range(10):
-          self.system.integrator.run(10)
-          v=[]
-          for n in nodes:
-            v.append(n.density[0])
-          result[i] = np.mean(v)
-        np.testing.assert_allclose(result - DENS, np.zeros_like(result), atol=1e-7)
-        
+            self.system.integrator.run(10)
+            v = []
+            for n in nodes:
+                v.append(n.density[0])
+            result[i] = np.mean(v)
+        np.testing.assert_allclose(
+            result - DENS,
+            np.zeros_like(result),
+            atol=1e-7)
+
 
 @ut.skipIf(not espressomd.has_features(
     ['LB']) or espressomd.has_features("SHANCHEN"), "Skipping test due to missing features.")
