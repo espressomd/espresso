@@ -66,7 +66,6 @@
 #define LB_COUPLE_THREE_POINT 4
 
 #ifdef ADDITIONAL_CHECKS
-void print_fluid();
 #endif
 /*@}*/
 /** Some general remarks:

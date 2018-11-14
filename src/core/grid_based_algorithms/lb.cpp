@@ -59,7 +59,6 @@
 
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_halo_regions(const LB_Fluid &lbfluid);
-void print_fluid();
 #endif // ADDITIONAL_CHECKS
 
 /** Flag indicating momentum exchange between particles and fluid */
@@ -2871,20 +2870,6 @@ void lb_calc_average_rho() {
 }
 
 /*@}*/
-
-/*@}*/
-void print_fluid() {
-  for (int x = 0; x < lblattice.halo_grid[0]; ++x) {
-    for (int y = 0; y < lblattice.halo_grid[1]; ++y) {
-      for (int z = 0; z < lblattice.halo_grid[2]; ++z) {
-        int index = get_linear_index(x, y, z, lblattice.halo_grid);
-        for (int p = 0; p < lbmodel.n_veloc; ++p) {
-          printf("x %d y %d z %d pop %d: %f\n", x, y, z, p, lbfluid[p][index]);
-        }
-      }
-    }
-  }
-}
 
 static int compare_buffers(double *buf1, double *buf2, int size) {
   int ret;
