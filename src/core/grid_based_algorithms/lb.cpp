@@ -1874,41 +1874,38 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
 /***********************************************************************/
 
 /** Performs basic sanity checks. */
-int lb_sanity_checks() {
-  // char *errtext;
-  int ret = 0;
+void lb_sanity_checks() {
 
-  if (lbpar.agrid <= 0.0) {
+    if (lbpar.agrid <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann agrid not set";
-    ret = 1;
-  }
+    }
   if (lbpar.tau <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann time step not set";
-    ret = 1;
   }
   if (lbpar.rho <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann fluid density not set";
-    ret = 1;
   }
   if (lbpar.viscosity <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann fluid viscosity not set";
-    ret = 1;
   }
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     runtimeErrorMsg() << "LB requires domain-decomposition cellsystem";
-    ret = -1;
   }
   if (skin == 0.0) {
     runtimeErrorMsg() << "LB requires a positive skin";
-    ret = 1;
   }
   if (cell_structure.use_verlet_list && skin >= lbpar.agrid / 2.0) {
     runtimeErrorMsg() << "LB requires either no Verlet lists or that the skin "
                          "of the verlet list to be less than half of "
                          "lattice-Boltzmann grid spacing";
-    ret = -1;
   }
-  return ret;
+}
+
+void lb_on_integration_start() {
+    lb_sanity_checks();
+
+    halo_communication(&update_halo_comm,
+                       reinterpret_cast<char *>(lbfluid[0].data()));
 }
 
 /***********************************************************************/

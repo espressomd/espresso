@@ -147,7 +147,7 @@ void on_integration_start() {
 #endif
 #ifdef LB
   if (lattice_switch & LATTICE_LB) {
-    lb_sanity_checks();
+    lb_on_integration_start();
   }
 #endif
 #ifdef LB_GPU

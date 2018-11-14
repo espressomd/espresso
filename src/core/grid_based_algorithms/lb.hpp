@@ -224,8 +224,10 @@ void lb_reinit_parameters();
 /** (Re-)initializes the fluid. */
 void lb_reinit_fluid();
 
-/** Checks if all LB parameters are meaningful */
-int lb_sanity_checks();
+/**
+ * @brief Event handler for integration start.
+ */
+void lb_on_integration_start();
 
 /** Calculates the equilibrium distributions.
     @param index Index of the local site
