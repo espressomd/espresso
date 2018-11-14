@@ -38,7 +38,7 @@ LB_PARAMS = {'agrid': AGRID,
              'tau': TIME_STEP}
 
 
-class LBThermostatCommon(object):
+class LBMassCommon(object):
 
     """Base class of the test that holds the test logic."""
     lbf = None
@@ -76,7 +76,7 @@ class LBThermostatCommon(object):
 
 @ut.skipIf(not espressomd.has_features(
     ['LB']) or espressomd.has_features("SHANCHEN"), "Skipping test due to missing features.")
-class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
+class LBCPUMass(ut.TestCase, LBThermostatCommon):
 
     """Test for the CPU implementation of the LB."""
 
@@ -86,7 +86,7 @@ class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
 
 @ut.skipIf(not espressomd.has_features(
     ['LB_GPU']) or espressomd.has_features("SHANCHEN"), "Skipping test due to missing features.")
-class LBGPUThermostat(ut.TestCase, LBThermostatCommon):
+class LBGPUMass(ut.TestCase, LBThermostatCommon):
 
     """Test for the GPU implementation of the LB."""
 
