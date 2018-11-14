@@ -46,7 +46,8 @@ std::vector<double> LBVelocityProfile::operator()(PartCfg &partCfg) const {
       Vector3d pos_tmp = {m_sample_positions[ind + 0],
                           m_sample_positions[ind + 1],
                           m_sample_positions[ind + 2]};
-      lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
+      const auto v = lb_lbfluid_get_interpolated_velocity(pos_tmp);
+      std::copy_n(v.begin(), 3, &(velocities[ind + 0]));
     }
 #endif
   } else {
