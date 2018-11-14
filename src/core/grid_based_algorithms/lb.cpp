@@ -2541,8 +2541,15 @@ inline void lb_collide_stream() {
   /* swap the pointers for old and new population fields */
   std::swap(lbfluid, lbfluid_post);
 
-  /* halo region is invalid after update */
-  lbpar.resend_halo = 1;
+  halo_communication(&update_halo_comm,
+                     reinterpret_cast<char *>(lbfluid[0].data()));
+
+#ifdef ADDITIONAL_CHECKS
+    lb_check_halo_regions(lbfluid);
+#endif
+
+    /* halo region is invalid after update */
+  lbpar.resend_halo = 0;
 }
 
 /***********************************************************************/
@@ -2781,20 +2788,6 @@ void calc_particle_lattice_ia() {
 
     ctr_type c{rng_counter.value(), static_cast<uint64_t>(RNGSalt::PARTICLES)};
     rng_counter.increment();
-
-    if (lbpar.resend_halo) { /* first MD step after last LB update */
-
-      /* exchange halo regions (for fluid-particle coupling) */
-      halo_communication(&update_halo_comm,
-                         reinterpret_cast<char *>(lbfluid[0].data()));
-
-#ifdef ADDITIONAL_CHECKS
-      lb_check_halo_regions(lbfluid);
-#endif
-
-      /* halo is valid now */
-      lbpar.resend_halo = 0;
-    }
 
      /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
      * The factor 12 comes from the fact that we use random numbers

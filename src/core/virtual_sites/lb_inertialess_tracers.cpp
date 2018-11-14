@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
-#include "halo.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
@@ -44,9 +43,6 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
 // ***** Internal variables ******
 
 bool *isHaloCache = nullptr;
-
-// ******** Variables from other espresso files *****
-extern HaloCommunicator update_halo_comm;
 
 /****************
   IBM_ForcesIntoFluid_CPU
@@ -375,12 +371,6 @@ structure
 *****************/
 
 void ParticleVelocitiesFromLB_CPU() {
-  // Exchange halo. This is necessary because we have done LB collide-stream
-  if (lbpar.resend_halo) {
-    halo_communication(&update_halo_comm, (char *)lbfluid[0].data());
-    lbpar.resend_halo = 0;
-  }
-
   // Loop over particles in local cells
   // Here all contributions are included: velocity, external force and particle
   // force
