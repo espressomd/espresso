@@ -2652,8 +2652,7 @@ void add_swimmer_force(Particle &p) {
       return;
     }
 
-    lb_lbfluid_get_interpolated_velocity(source_position,
-                                         p.swim.v_source.data());
+    p.swim.v_source = lb_lbfluid_get_interpolated_velocity(source_position);
 
     add_md_force(source_position, p.swim.f_swim * director);
   }
@@ -2666,17 +2665,17 @@ void add_swimmer_force(Particle &p) {
  * Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
  *
  * @param p          The coupled particle (Input).
- * @param force      Coupling force between particle and fluid (Output).
+ * @param f_random   Additional force to be included.
+ *
+ * @return The viscous coupling force plus f_random.
  */
 inline Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
-  double interpolated_u[3];
-
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
+  auto const interpolated_u = lb_lbfluid_get_interpolated_velocity(p->r.p);
 
-  Vector3d v_drift = {interpolated_u[0], interpolated_u[1], interpolated_u[2]};
+  Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
   if (p->swim.swimming) {
     v_drift += p->swim.v_swim * p->r.calc_director();
@@ -2723,7 +2722,7 @@ Vector3d node_u(Lattice::index_t index) {
  * @param pos Position
  * @param v Interpolated velocity in MD units.
  */
-void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
+Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
   Vector3d interpolated_u{};
 
   /* calculate fluid velocity at particle's position
@@ -2734,12 +2733,7 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
                           interpolated_u += w * node_u(index);
                         });
 
-  v[0] = interpolated_u[0];
-  v[1] = interpolated_u[1];
-  v[2] = interpolated_u[2];
-  v[0] *= lbpar.agrid / lbpar.tau;
-  v[1] *= lbpar.agrid / lbpar.tau;
-  v[2] *= lbpar.agrid / lbpar.tau;
+  return (lbpar.agrid / lbpar.tau) * interpolated_u;
 }
 
 /** Calculate particle lattice interactions.

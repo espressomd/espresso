@@ -52,7 +52,7 @@ class LBThermostatCommon(object):
         self.system.actors.add(self.lbf)
         self.system.part.add(
             pos=np.random.random((250, 3)) * self.system.box_l)
-        self.system.thermostat.set_lb(kT=KT)
+        self.system.thermostat.set_lb(kT=KT, seed=5)
 
     def test_velocity_distribution(self):
         self.prepare()

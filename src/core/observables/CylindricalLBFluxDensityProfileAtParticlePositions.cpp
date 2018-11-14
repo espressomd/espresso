@@ -53,9 +53,7 @@ operator()(PartCfg &partCfg) const {
   } else if (lattice_switch & LATTICE_LB) {
 #if defined(LB)
       boost::transform(folded_positions, velocities.begin(), [](const Vector3d &pos){
-          Vector3d v;
-          lb_lbfluid_get_interpolated_velocity(pos, v.data());
-        return v;
+          return lb_lbfluid_get_interpolated_velocity(pos);
       });
 #endif
   } else {

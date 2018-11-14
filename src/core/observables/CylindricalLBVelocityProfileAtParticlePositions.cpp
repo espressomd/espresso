@@ -38,10 +38,10 @@ operator()(PartCfg &partCfg) const {
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
-  std::vector<Vector3d> folded_positions(ids.size());
+  std::vector<Vector3d> folded_positions(ids().size());
   boost::transform(ids(), folded_positions.begin(), [&partCfg](int id) {
     return folded_position(partCfg[id]);
-  })
+  });
 
   std::vector<Vector3d> velocities(ids().size());
   if (lattice_switch & LATTICE_LB_GPU) {
