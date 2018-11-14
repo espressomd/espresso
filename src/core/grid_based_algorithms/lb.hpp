@@ -145,15 +145,12 @@ typedef struct {
    *  Note: Has to be larger than MD time step! */
   double tau;
 
-  /** friction coefficient for viscous coupling (LJ units)
-   * Note that the friction coefficient is quite high and may
-   * lead to numerical artifacts with low order integrators */
+  /** friction coefficient for viscous coupling (LJ units) */
   double friction;
 
   /** external force density applied to the fluid at each lattice site (MD
    * units) */
-  double ext_force_density[3]; /* Open question: Do we want a local force or
-                          global force? */
+  double ext_force_density[3];
   double rho_lb_units;
   /** relaxation of the odd kinetic modes */
   double gamma_odd;

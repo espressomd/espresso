@@ -54,13 +54,6 @@ updating the lbfields structure
 *****************/
 
 void IBM_ForcesIntoFluid_CPU() {
-
-  // Halo has already been sent. Check for safety
-  if (lbpar.resend_halo) {
-    printf("Error. Halo should already be sent!\n");
-    exit(1);
-  }
-
   // Update the forces on the ghost particles
   ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_FORCE);
 
