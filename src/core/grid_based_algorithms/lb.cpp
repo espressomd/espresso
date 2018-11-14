@@ -72,7 +72,7 @@ private:
   uint64_t m_val;
 
 public:
-  Counter(uint64_t initial_value = 0ul) : m_val(initial_value) {}
+  explicit Counter(uint64_t initial_value = 0ul) noexcept : m_val(initial_value) {}
 
   void increment() { ++m_val; }
 
@@ -80,12 +80,20 @@ public:
 };
 
 Counter rng_counter;
+
+/*
+ * @brief Salt for the RNGs
+ *
+ * This is to avoid correlations between the
+ * noise on the particle coupling and the fluid
+ * thermalization.
+ */
+enum class RNGSalt {
+    PARTICLES
+};
 } // namespace
 
 /** Struct holding the Lattice Boltzmann parameters */
-// LB_Parameters lbpar = { .rho={0.0}, .viscosity={0.0}, .bulk_viscosity={-1.0},
-// .agrid=-1.0, .tau=-1.0, .friction={0.0}, .ext_force_density={ 0.0, 0.0,
-// 0.0},.rho_lb_units={0.},.gamma_odd={0.}, .gamma_even={0.} };
 LB_Parameters lbpar = {
     // rho
     0.0,
@@ -1166,8 +1174,6 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
       }
     }
     fclose(cpfile);
-//  lbpar.resend_halo=1;
-//  mpi_bcast_lb_params(0);
 #endif // LB
   } else {
     runtimeErrorMsg() << "To load an LB checkpoint one needs to have already "
@@ -1505,9 +1511,6 @@ int lb_lbnode_set_rho(const Vector3i &ind, double *p_rho) {
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
     rho = (*p_rho) * lbpar.agrid * lbpar.agrid * lbpar.agrid;
     mpi_send_fluid(node, index, rho, j, pi);
-
-//  lb_calc_average_rho();
-//  lb_reinit_parameters();
 #endif // LB
   }
   return 0;
@@ -2776,7 +2779,7 @@ void calc_particle_lattice_ia() {
     using ctr_type = rng_type::ctr_type;
     using key_type = rng_type::key_type;
 
-    ctr_type c{rng_counter.value(), 0ul};
+    ctr_type c{rng_counter.value(), static_cast<uint64_t>(RNGSalt::PARTICLES)};
     rng_counter.increment();
 
     if (lbpar.resend_halo) { /* first MD step after last LB update */
@@ -2793,8 +2796,7 @@ void calc_particle_lattice_ia() {
       lbpar.resend_halo = 0;
     }
 
-    /* lb_coupl_pref is stored in MD units (force)
-     * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+     /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
      * The factor 12 comes from the fact that we use random numbers
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
