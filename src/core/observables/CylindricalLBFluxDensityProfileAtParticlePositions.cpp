@@ -24,6 +24,8 @@
 #include "utils/Histogram.hpp"
 #include "utils/coordinate_transformation.hpp"
 
+#include <boost/range/algorithm.hpp>
+
 namespace Observables {
 
 std::vector<double> CylindricalLBFluxDensityProfileAtParticlePositions::
@@ -37,30 +39,24 @@ operator()(PartCfg &partCfg) const {
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
-  std::vector<::Vector<3, double>> folded_positions;
-  std::transform(ids().begin(), ids().end(),
-                 std::back_inserter(folded_positions), [&partCfg](int id) {
-                   return ::Vector<3, double>(folded_position(partCfg[id]));
-                 });
-  std::vector<double> ppos(3 * ids().size());
-  for (auto it = folded_positions.begin(); it != folded_positions.end(); ++it) {
-    size_t ind = std::distance(folded_positions.begin(), it);
-    ppos[3 * ind + 0] = (*it)[0];
-    ppos[3 * ind + 1] = (*it)[1];
-    ppos[3 * ind + 2] = (*it)[2];
-  }
-  std::vector<double> velocities(3 * ids().size());
+  std::vector<Vector3d> folded_positions(ids().size());
+  boost::transform(ids(), folded_positions.begin(), [&partCfg](int id) -> Vector3d {
+      return folded_position(partCfg[id]);
+  });
+
+  std::vector<Vector3d> velocities(folded_positions.size());
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_GPU)
     lb_lbfluid_get_interpolated_velocity_at_positions(
-        ppos.data(), velocities.data(), ppos.size() / 3);
+        folded_positions.front().data(), velocities.front().data(), folded_positions.size());
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #if defined(LB)
-    for (size_t ind = 0; ind < ppos.size(); ind += 3) {
-      Vector3d pos_tmp = {ppos[ind + 0], ppos[ind + 1], ppos[ind + 2]};
-      lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
-    }
+      boost::transform(folded_positions, velocities.begin(), [](const Vector3d &pos){
+          Vector3d v;
+          lb_lbfluid_get_interpolated_velocity(pos, v.data());
+        return v;
+      });
 #endif
   } else {
     throw std::runtime_error("Either CPU LB or GPU LB has to be active for "
@@ -72,9 +68,7 @@ operator()(PartCfg &partCfg) const {
     histogram.update(Utils::transform_pos_to_cylinder_coordinates(
                          folded_positions[ind], axis),
                      Utils::transform_vel_to_cylinder_coordinates(
-                         ::Vector<3, double>{{velocities[3 * ind + 0],
-                                              velocities[3 * ind + 1],
-                                              velocities[3 * ind + 2]}},
+                             velocities[ind],
                          axis, folded_positions[ind]));
   }
   histogram.normalize();
