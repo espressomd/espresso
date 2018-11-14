@@ -16,7 +16,7 @@ class LeesEdwards(ut.TestCase):
     system.cell_system.set_n_square()
     system.set_random_state_PRNG()
 
-    time_step = 1.0
+    time_step = 0.5
     system.time_step = time_step
 
     def test_a_Protocol(self):
