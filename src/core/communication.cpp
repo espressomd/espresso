@@ -2030,7 +2030,6 @@ void mpi_send_fluid_populations(int node, int index, double *pop) {
     mpi_call(mpi_send_fluid_populations_slave, node, index);
     MPI_Send(pop, 19 * LB_COMPONENTS, MPI_DOUBLE, node, SOME_TAG, comm_cart);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 
@@ -2042,7 +2041,6 @@ void mpi_send_fluid_populations_slave(int node, int index) {
              MPI_STATUS_IGNORE);
     lb_set_populations(index, data);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 

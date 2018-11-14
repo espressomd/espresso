@@ -1143,7 +1143,6 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
     Vector3i ind;
 
     int gridsize[3];
-    lbpar.resend_halo = 1;
     mpi_bcast_lb_params(0);
     gridsize[0] = box_l[0] / lbpar.agrid;
     gridsize[1] = box_l[1] / lbpar.agrid;
@@ -2073,7 +2072,6 @@ void lb_reinit_fluid() {
 #endif // LB_BOUNDARIES
   }
 
-  lbpar.resend_halo = 0;
 #ifdef LB_BOUNDARIES
   LBBoundaries::lb_init_boundaries();
 #endif // LB_BOUNDARIES
@@ -2544,9 +2542,6 @@ inline void lb_collide_stream() {
 #ifdef ADDITIONAL_CHECKS
     lb_check_halo_regions(lbfluid);
 #endif
-
-    /* halo region is invalid after update */
-  lbpar.resend_halo = 0;
 }
 
 /***********************************************************************/

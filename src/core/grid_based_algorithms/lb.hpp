@@ -168,8 +168,6 @@ typedef struct {
    *  bounce-back boundaries */
   bool is_TRT;
 
-  int resend_halo;
-
   /** \name Derived parameters */
   /** Flag indicating whether fluctuations are present. */
   int fluct;
