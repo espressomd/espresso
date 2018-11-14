@@ -340,6 +340,9 @@ cdef class Thermostat(object):
             ----------
             kT : :obj:`float`
                  Specifies the thermal energy of the heat bath.
+            seed : :obj:`int`
+                 Seed for the random number generator, required
+                 if kT > 0.
             act_on_virtual : :obj:`bool`, optional
                 If true the thermostat will act on virtual sites, default is on.
 
@@ -353,7 +356,7 @@ cdef class Thermostat(object):
             if float(kT) < 0.:
                 raise ValueError("temperature must be non-negative")
 
-            if not seed:
+            if kT > 0. and not seed:
                 raise ValueError(
                     "seed has to be given as keyword arg")
 

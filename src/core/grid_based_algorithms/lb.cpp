@@ -2640,6 +2640,7 @@ bool in_local_domain(Vector3d const &pos) {
           pos[2] < my_right[2] + 0.5 * lblattice.agrid[2]);
 }
 
+#ifdef ENGINE
 void add_swimmer_force(Particle &p) {
   if (p.swim.swimming) {
     // calculate source position
@@ -2657,6 +2658,7 @@ void add_swimmer_force(Particle &p) {
     add_md_force(source_position, p.swim.f_swim * director);
   }
 }
+#endif
 } // namespace
 
 /** Coupling of a single particle to viscous fluid with Stokesian friction.
@@ -2715,6 +2717,12 @@ Vector3d node_u(Lattice::index_t index) {
 }
 } // namespace
 
+/*
+ * @brief Interpolate the fluid velocity.
+ *
+ * @param pos Position
+ * @param v Interpolated velocity in MD units.
+ */
 void lb_lbfluid_get_interpolated_velocity(const Vector3d &pos, double *v) {
   Vector3d interpolated_u{};
 
