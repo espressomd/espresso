@@ -2009,7 +2009,6 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
     MPI_Recv(pop, 19 * LB_COMPONENTS, MPI_DOUBLE, node, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 
@@ -2020,7 +2019,6 @@ void mpi_recv_fluid_populations_slave(int node, int index) {
     lb_get_populations(index, data);
     MPI_Send(data, 19 * LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 

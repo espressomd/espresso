@@ -66,19 +66,20 @@ int transfer_momentum = 0;
 
 /** Counter for the particle coupling RNG */
 namespace {
+    template<typename T>
 class Counter {
 private:
-  uint64_t m_val;
+  T m_val;
 
 public:
-  explicit Counter(uint64_t initial_value = 0ul) noexcept : m_val(initial_value) {}
+  explicit Counter(T initial_value = T(0)) noexcept : m_val(initial_value) {}
 
   void increment() { ++m_val; }
 
-  uint64_t value() const { return m_val; }
+  T value() const { return m_val; }
 };
 
-Counter rng_counter;
+Counter<uint64_t> rng_counter;
 
 /*
  * @brief Salt for the RNGs
@@ -789,7 +790,7 @@ int lb_lbfluid_print_vtk_velocity(char *filename, std::vector<int> bb1,
   std::vector<int> bb_low;
   std::vector<int> bb_high;
 
-  for (std::vector<int>::iterator val1 = bb1.begin(), val2 = bb2.begin();
+  for (auto val1 = bb1.begin(), val2 = bb2.begin();
        val1 != bb1.end() && val2 != bb2.end(); ++val1, ++val2) {
     if (*val1 == -1 || *val2 == -1) {
       bb_low = {0, 0, 0};
@@ -2572,20 +2573,6 @@ void lattice_boltzmann_update() {
 
     lb_collide_stream();
   }
-}
-
-/** Resets the forces on the fluid nodes */
-void lb_reinit_force_densities() {
-  for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
-       index++) {
-    lb_reset_force_densities(index);
-  }
-#ifdef LB_BOUNDARIES
-  for (auto it = LBBoundaries::lbboundaries.begin();
-       it != LBBoundaries::lbboundaries.end(); ++it) {
-    (**it).reset_force();
-  }
-#endif // LB_BOUNDARIES
 }
 
 namespace {

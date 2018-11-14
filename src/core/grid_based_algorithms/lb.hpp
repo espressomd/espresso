@@ -227,9 +227,6 @@ void lb_reinit_parameters();
 /** (Re-)initializes the fluid. */
 void lb_reinit_fluid();
 
-/** Resets the force densities on the fluid nodes */
-void lb_reinit_force_densities();
-
 /** Checks if all LB parameters are meaningful */
 int lb_sanity_checks();
 
@@ -242,14 +239,6 @@ int lb_sanity_checks();
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              const std::array<double, 3> &j,
                              const std::array<double, 6> &pi);
-
-/** Propagates the Lattice Boltzmann system for one time step.
- * This function performs the collision step and the streaming step.
- * If external force densities are present, they are applied prior to the
- * collisions. If boundaries are present, it also applies the boundary
- * conditions.
- */
-void lb_propagate();
 
 /** Calculates the coupling of MD particles to the LB fluid.
  * This function  is called from \ref force_calc. The force is added
@@ -328,26 +317,6 @@ inline void lb_calc_local_j(Lattice::index_t index, double *j) {
          lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
          lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
          lbfluid[18][index];
-}
-
-/** Calculate the local fluid stress.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index The local lattice site (Input).
- * @param pi local fluid pressure
- */
-inline void lb_calc_local_pi(Lattice::index_t index, double *pi) {
-
-  double rho;
-  double j[3];
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_pi in " << __FILE__ << __LINE__
-                      << ": CPU LB not switched on.";
-    j[0] = j[1] = j[2] = 0;
-    return;
-  }
-
-  lb_calc_local_fields(index, &rho, j, pi);
 }
 
 /** Calculate the local fluid fields.
