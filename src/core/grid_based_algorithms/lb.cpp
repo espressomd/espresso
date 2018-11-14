@@ -144,12 +144,6 @@ std::vector<LB_FluidNode> lbfields;
 /** Communicator for halo exchange between processors */
 HaloCommunicator update_halo_comm = {0, nullptr};
 
-/*@{*/
-
-/** amplitude of the fluctuations in the viscous coupling */
-static double lb_coupl_pref = 0.0;
-/*@}*/
-
 /** measures the MD time since the last fluid update */
 static double fluidstep = 0.0;
 
@@ -2043,14 +2037,6 @@ void lb_reinit_parameters() {
       lbpar.phi[i] =
           sqrt(mu * lbmodel.e[19][i] * (1 - Utils::sqr(lbpar.gamma_even)));
 
-    /* lb_coupl_pref is stored in MD units (force)
-     * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
-     * The factor 12 comes from the fact that we use random numbers
-     * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-     * time_step comes from the discretization.
-     */
-    lb_coupl_pref = sqrt(12. * 2. * lbpar.friction * temperature / time_step);
-
     LB_TRACE(fprintf(
         stderr,
         "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
@@ -2062,7 +2048,6 @@ void lb_reinit_parameters() {
     lbpar.fluct = 0;
     for (i = 0; i < lbmodel.n_veloc; i++)
       lbpar.phi[i] = 0.0;
-    lb_coupl_pref = 0.0;
   }
 }
 
@@ -2523,10 +2508,7 @@ inline void lb_collide_stream() {
 
           /* fluctuating hydrodynamics */
           if (lbpar.fluct) {
-            auto const global_index = get_linear_index(
-                lblattice.local_index_offset + Vector3i{x - 1, y - 1, z - 1},
-                lblattice.global_grid);
-            lb_thermalize_modes(global_index, modes);
+            lb_thermalize_modes(index, modes);
           }
 
           /* apply forces */
@@ -2809,6 +2791,15 @@ void calc_particle_lattice_ia() {
       lbpar.resend_halo = 0;
     }
 
+    /* lb_coupl_pref is stored in MD units (force)
+     * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+     * The factor 12 comes from the fact that we use random numbers
+     * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
+     * time_step comes from the discretization.
+     */
+    auto const noise_amplitude =
+        sqrt(12. * 2. * lbpar.friction * temperature / time_step);
+
     auto f_random = [&c](int id) -> Vector3d {
       key_type k{static_cast<uint32_t>(id)};
 
@@ -2823,7 +2814,7 @@ void calc_particle_lattice_ia() {
     for (auto &p : local_cells.particles()) {
       if (!p.p.is_virtual || thermo_virtual) {
         auto const force =
-            lb_viscous_coupling(&p, lb_coupl_pref * f_random(p.identity()));
+            lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
         /* add force to the particle */
         p.f.f += force;
 #ifdef ENGINE
@@ -2838,7 +2829,7 @@ void calc_particle_lattice_ia() {
        * in the range of the local lattice nodes */
       if (in_local_domain(p.r.p)) {
         if (!p.p.is_virtual || thermo_virtual) {
-          lb_viscous_coupling(&p, lb_coupl_pref * f_random(p.identity()));
+          lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
 #ifdef ENGINE
           add_swimmer_force(p);
 #endif

@@ -92,7 +92,7 @@ void print_fluid();
  *  of the pseudo-equilibrium distribution */
 template <size_t N_vel = 19> struct LB_Model {
   /** number of velocities */
-  static const int n_veloc = static_cast<int>(N_vel);
+  static const constexpr int n_veloc = static_cast<int>(N_vel);
 
   /** unit vectors of the velocity sublattice */
   std::array<std::array<double, 3>, N_vel> c;
