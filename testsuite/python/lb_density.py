@@ -76,7 +76,7 @@ class LBMassCommon(object):
 
 @ut.skipIf(not espressomd.has_features(
     ['LB']) or espressomd.has_features("SHANCHEN"), "Skipping test due to missing features.")
-class LBCPUMass(ut.TestCase, LBThermostatCommon):
+class LBCPUMass(ut.TestCase, LBMassCommon):
 
     """Test for the CPU implementation of the LB."""
 
@@ -86,7 +86,7 @@ class LBCPUMass(ut.TestCase, LBThermostatCommon):
 
 @ut.skipIf(not espressomd.has_features(
     ['LB_GPU']) or espressomd.has_features("SHANCHEN"), "Skipping test due to missing features.")
-class LBGPUMass(ut.TestCase, LBThermostatCommon):
+class LBGPUMass(ut.TestCase, LBMassCommon):
 
     """Test for the GPU implementation of the LB."""
 
