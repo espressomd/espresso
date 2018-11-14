@@ -70,13 +70,15 @@ namespace {
 class Counter {
 private:
   T m_val;
+  T m_initial;
 
 public:
-  explicit Counter(T initial_value = T(0)) noexcept : m_val(initial_value) {}
+  explicit Counter(T initial_value = T(0)) noexcept : m_val(initial_value), m_initial(initial_value) {}
 
   void increment() { ++m_val; }
 
   T value() const { return m_val; }
+  T initial_value() const { return m_initial; }
 };
 
 Counter<uint64_t> rng_counter;
@@ -1907,6 +1909,25 @@ void lb_on_integration_start() {
                        reinterpret_cast<char *>(lbfluid[0].data()));
 }
 
+uint64_t lb_coupling_rng_state() {
+    return rng_counter.value();
+}
+
+void mpi_set_lb_coupling_counter(int high, int low) {
+    using Utils::u32_to_u64;
+
+    rng_counter = Counter<uint64_t>(Utils::u32_to_u64(static_cast<uint32_t>(high),
+                                                      static_cast<uint32_t>(low)));
+}
+
+void lb_coupling_set_rng_state(uint64_t counter) {
+    uint32_t high, low;
+    std::tie(high, low) = Utils::u64_to_u32(counter);
+    mpi_call(mpi_set_lb_coupling_counter, high, low);
+
+    rng_counter = Counter<uint64_t>(counter);
+}
+
 /***********************************************************************/
 
 /** (Re-)allocate memory for the fluid and initialize pointers. */
@@ -2678,8 +2699,8 @@ inline Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
 #endif
 
   /* calculate viscous force
-   * take care to rescale velocities with time_step and transform to MD units
-   * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+   * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
+   * */
   auto const force = -lbpar.friction * (p->m.v - v_drift) + f_random;
 
   add_md_force(p->r.p, force);

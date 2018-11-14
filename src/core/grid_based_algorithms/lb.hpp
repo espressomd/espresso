@@ -245,6 +245,9 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
  */
 void calc_particle_lattice_ia();
 
+uint64_t lb_coupling_rng_state();
+void lb_coupling_set_rng_state(uint64_t counter);
+
 /** calculates the fluid velocity at a given position of the
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. */
