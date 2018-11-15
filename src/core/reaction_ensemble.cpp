@@ -717,9 +717,9 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   // for components
   double vel[3];
   // we use mass=1 for all particles, think about adapting this
-  vel[0] = std::pow(2 * PI * temperature, -3.0 / 2.0) * gaussian_random();
-  vel[1] = std::pow(2 * PI * temperature, -3.0 / 2.0) * gaussian_random();
-  vel[2] = std::pow(2 * PI * temperature, -3.0 / 2.0) * gaussian_random();
+  vel[0] = std::sqrt(temperature) * gaussian_random();
+  vel[1] = std::sqrt(temperature) * gaussian_random();
+  vel[2] = std::sqrt(temperature) * gaussian_random();
 #ifdef ELECTROSTATICS
   double charge = charges_of_types[desired_type];
 #endif
