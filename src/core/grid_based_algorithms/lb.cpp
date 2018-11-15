@@ -66,22 +66,7 @@ int transfer_momentum = 0;
 
 /** Counter for the particle coupling RNG */
 namespace {
-    template<typename T>
-class Counter {
-private:
-  T m_val;
-  T m_initial;
-
-public:
-  explicit Counter(T initial_value = T(0)) noexcept : m_val(initial_value), m_initial(initial_value) {}
-
-  void increment() { ++m_val; }
-
-  T value() const { return m_val; }
-  T initial_value() const { return m_initial; }
-};
-
-Counter<uint64_t> rng_counter;
+    Utils::Counter<uint64_t> rng_counter;
 
 /*
  * @brief Salt for the RNGs

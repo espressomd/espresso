@@ -130,3 +130,5 @@ unit_test(NAME field_coupling_force_field SRC field_coupling_force_field_test.cp
 unit_test(NAME Span_test SRC Span_test.cpp)
 unit_test(NAME u32_to_u64_test SRC u32_to_u64_test.cpp)
 unit_test(NAME uniform_test SRC uniform_test.cpp)
+unit_test(NAME Counter_test SRC Counter_test.cpp)
+
