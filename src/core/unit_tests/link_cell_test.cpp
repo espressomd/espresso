@@ -89,5 +89,6 @@ BOOST_AUTO_TEST_CASE(link_cell) {
 
   for (auto &c : cells) {
     delete[] c.part;
+    c.part = nullptr;
   }
 }

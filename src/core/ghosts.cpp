@@ -239,26 +239,33 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 
 static void prepare_ghost_cell(Cell *cell, int size) {
 #ifdef GHOSTS_HAVE_BONDS
-  // free all allocated information, will be resent
+  // free allocated bond information, will be resent
   {
     int np = cell->n;
     Particle *part = cell->part;
     for (int p = 0; p < np; p++) {
-      free_particle(part + p);
+      part[p]->bl.clear();
+#ifdef EXCLUSIONS
+      part[p]->el.clear();
+#endif
     }
   }
 #endif
-  cell->resize(size);
-  // invalidate pointers etc
+  if (size > cell->max) {
+    cell->resize(size);
+  }
+  cell->n = size;
+  // call the constructor on newly allocated chunks, the rest is recycled
   {
     int np = cell->n;
     Particle *part = cell->part;
-    for (int p = 0; p < np; p++) {
+    for (int p = cell->already_constructed; p < np; p++) {
       Particle *pt = new (&part[p]) Particle();
-
-      // init ghost variable
       pt->e->l.ghost = 1;
     }
+  }
+  if (size > cell->already_constructed) {
+    cell->already_constructed = size;
   }
 }
 
@@ -712,7 +719,6 @@ void invalidate_ghosts() {
          particle array. */
       if (&(part[p]) == local_particles[part[p].e->p.identity])
         local_particles[part[p].e->p.identity] = nullptr;
-      free_particle(part + p);
     }
     ghost_cells.cell[c]->n = 0;
   }

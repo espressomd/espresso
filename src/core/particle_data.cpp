@@ -56,9 +56,6 @@
  * defines
  ************************************************/
 
-/** granularity of the particle buffers in particles */
-#define PART_INCREMENT 8
-
 /** my magic MPI code for send/recv_particles */
 #define REQ_SNDRCV_PART 0xaa
 
@@ -106,9 +103,6 @@ void auto_exclusion(int distance);
 /************************************************
  * particle initialization functions
  ************************************************/
-
-/** Deallocate the dynamic storage of a particle. */
-void free_particle(Particle *part) { part->~Particle(); }
 
 void mpi_who_has_slave(int node, int param) {
   static int *sendbuf;
@@ -217,35 +211,9 @@ void init_particlelist(ParticleList *pList) {
 }
 
 int realloc_particlelist(ParticleList *l, int size) {
-  int old_max = l->max;
-  Particle *old_start = l->part;
-
   PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n",
                      this_node, (void *)l, l->n, l->max, size));
-
-  if (size < l->max) {
-    if (size == 0)
-      /* to be able to free an array again */
-      l->max = 0;
-    else
-      /* shrink not as fast, just lose half, rounded up */
-      l->max =
-          PART_INCREMENT *
-          (((l->max + size + 1) / 2 + PART_INCREMENT - 1) / PART_INCREMENT);
-  } else {
-    /* round up */
-    l->max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
-  }
-  if (l->max != old_max) {
-    l->part = Utils::realloc(l->part, sizeof(Particle) * l->max);
-    if (l->max > old_max) {
-      // zero-out newly allocated space
-      std::memset(
-        (char*) static_cast<void *>(l->part) + old_max * sizeof(Particle),
-        0, (l->max - old_max) * sizeof(Particle));
-    }
-  }
-  return l->part != old_start;
+  return l->realloc(size);
 }
 
 void update_local_particles(ParticleList *pl) {

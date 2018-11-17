@@ -149,5 +149,6 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
 
   for (auto &c : cells) {
     delete[] c.part;
+    c.part = nullptr;
   }
 }

@@ -37,6 +37,9 @@
  * defines
  ************************************************/
 
+/** granularity of the particle buffers in particles */
+#define PART_INCREMENT 8
+
 /// ok code for \ref place_particle
 #define ES_PART_OK 0
 /// error code for \ref place_particle
@@ -614,6 +617,9 @@ void MPI_Send(Particle const *, Size, Ts...) {
   static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
 }
 
+/** Deallocate the dynamic storage of a particle. */
+inline void free_particle(Particle *part) { part->~Particle(); }
+
 /** List of particles. The particle array is resized using a sophisticated
  *  (we hope) algorithm to avoid unnecessary resizes.
  *  Access using \ref realloc_particlelist, \ref got_particle, ...
@@ -626,6 +632,53 @@ struct ParticleList {
   int n;
   /** Number of particles that fit in until a resize is needed */
   int max;
+  /** Number of particle objects that have already been constructed in the
+   *  allocated space
+   *
+   * This feature is only useful for ghost particles lists where particles can
+   * be safely recycled. This avoids un-necessary calls to destructors and
+   * constructors when resorting particles.
+   */
+  int already_constructed;
+
+  int realloc(int size) {
+      int old_max = this->max;
+      Particle *old_start = this->part;
+
+      if (size < this->max) {
+        if (size == 0)
+          /* to be able to free an array again */
+          this->max = 0;
+        else
+          /* shrink not as fast, just lose half, rounded up */
+          this->max =
+              PART_INCREMENT *
+              (((this->max + size + 1) / 2 + PART_INCREMENT - 1) / PART_INCREMENT);
+      } else {
+        /* round up */
+        this->max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
+      }
+      if (this->max != old_max) {
+        this->part = Utils::realloc(this->part, sizeof(Particle) * this->max);
+        if (this->max > old_max) {
+          // zero-out newly allocated space
+          std::memset(
+            (char*) static_cast<void *>(this->part) + old_max * sizeof(Particle),
+            0, (this->max - old_max) * sizeof(Particle));
+        }
+      }
+      return this->part != old_start;
+  }
+
+  ~ParticleList() {
+    if (part != nullptr) {
+      int size = std::max(n, already_constructed);
+      for (int p = 0; p < size; ++p)
+        free_particle(part + p);
+      realloc(n = 0);
+      part = nullptr;
+    }
+  }
 };
 
 /************************************************
@@ -656,11 +709,6 @@ extern int *partBondPartners;
  * Functions
  ************************************************/
 
-/*       Functions acting on Particles          */
-/************************************************/
-
-/** Deallocate the dynamic storage of a particle. */
-void free_particle(Particle *part);
 
 /*    Functions acting on Particle Lists        */
 /************************************************/
