@@ -162,21 +162,15 @@ inline void friction_thermo_langevin(Particle *p) {
   }
 
   // Get velocity effective in the thermostatting
-  Vector3d velocity;
+  Vector3d velocity=p->m.v;
 #ifdef ENGINE
-  const Vector3d director = p->r.calc_director();
+  if (p->swim.v_swim!=0) {
+      // In case of the engine feature, the velocity is relaxed
+      // towards a swimming velocity oriented parallel to the
+      // particles director
+      velocity -= p->swim.v_swim * p->r.calc_director();
+  }
 #endif
-  for (int i = 0; i < 3; i++) {
-    // Particle velocity
-    velocity[i] = p->m.v[i];
-#ifdef ENGINE
-    // In case of the engine feature, the velocity is relaxed
-    // towards a swimming velocity oriented parallel to the
-    // particles director
-    velocity[i] -= p->swim.v_swim * director[i];
-#endif
-
-  } // for
 
   // Determine prefactors for the friction and the noise term
 
@@ -219,8 +213,11 @@ inline void friction_thermo_langevin(Particle *p) {
                     (langevin_pref1_temp[1] != langevin_pref1_temp[2]) ||
                     (langevin_pref2_temp[0] != langevin_pref2_temp[1]) ||
                     (langevin_pref2_temp[1] != langevin_pref2_temp[2]);
-  auto const velocity_body =
-      (aniso_flag) ? convert_vector_space_to_body(*p, velocity) : Vector3d{};
+  Vector3d velocity_body;
+  if (aniso_flag) {
+    velocity_body =
+        (aniso_flag) ? convert_vector_space_to_body(*p, velocity) : Vector3d{};
+    }
 #endif
 
   // Do the actual thermostatting
