@@ -262,7 +262,7 @@ void calc_particle_lattice_ia();
  * position is not within the local lattice. */
 void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v);
 
-inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
+void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                                  double *pi);
 
 /** Calculation of hydrodynamic modes.
@@ -352,90 +352,8 @@ inline void lb_calc_local_pi(Lattice::index_t index, double *pi) {
  * @param j       local fluid speed
  * @param pi      local fluid pressure
  */
-inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
-                                 double *pi) {
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_fields in " << __FILE__
-                      << __LINE__ << ": CPU LB not switched on.";
-    *rho = 0;
-    j[0] = j[1] = j[2] = 0;
-    pi[0] = pi[1] = pi[2] = pi[3] = pi[4] = pi[5] = 0;
-    return;
-  }
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_pi in " << __FILE__ << __LINE__
-                      << ": CPU LB not switched on.";
-    j[0] = j[1] = j[2] = 0;
-    return;
-  }
-
-#ifdef LB_BOUNDARIES
-  if (lbfields[index].boundary) {
-    *rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-    j[0] = 0.;
-    j[1] = 0.;
-    j[2] = 0.;
-    if (pi) {
-      pi[0] = 0.;
-      pi[1] = 0.;
-      pi[2] = 0.;
-      pi[3] = 0.;
-      pi[4] = 0.;
-      pi[5] = 0.;
-    }
-    return;
-  }
-#endif
-  double modes_from_pi_eq[6];
-  std::array<double, 19> mode = lb_calc_modes(index);
-
-  *rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-
-  j[0] = mode[1] + 0.5 * lbfields[index].force_density[0];
-  j[1] = mode[2] + 0.5 * lbfields[index].force_density[1];
-  j[2] = mode[3] + 0.5 * lbfields[index].force_density[2];
-
-  if (!pi)
-    return;
-
-  /* equilibrium part of the stress modes */
-  modes_from_pi_eq[0] = scalar(j, j) / *rho;
-  modes_from_pi_eq[1] = (Utils::sqr(j[0]) - Utils::sqr(j[1])) / *rho;
-  modes_from_pi_eq[2] = (scalar(j, j) - 3.0 * Utils::sqr(j[2])) / *rho;
-  modes_from_pi_eq[3] = j[0] * j[1] / *rho;
-  modes_from_pi_eq[4] = j[0] * j[2] / *rho;
-  modes_from_pi_eq[5] = j[1] * j[2] / *rho;
-
-  /* Now we must predict the outcome of the next collision */
-  /* We immediately average pre- and post-collision. */
-  mode[4] = modes_from_pi_eq[0] +
-            (0.5 + 0.5 * lbpar.gamma_bulk) * (mode[4] - modes_from_pi_eq[0]);
-  mode[5] = modes_from_pi_eq[1] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[5] - modes_from_pi_eq[1]);
-  mode[6] = modes_from_pi_eq[2] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[6] - modes_from_pi_eq[2]);
-  mode[7] = modes_from_pi_eq[3] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[7] - modes_from_pi_eq[3]);
-  mode[8] = modes_from_pi_eq[4] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[8] - modes_from_pi_eq[4]);
-  mode[9] = modes_from_pi_eq[5] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[9] - modes_from_pi_eq[5]);
-
-  // Transform the stress tensor components according to the modes that
-  // correspond to those used by U. Schiller. In terms of populations this
-  // expression then corresponds exactly to those in Eqs. 116 - 121 in the
-  // Duenweg and Ladd paper, when these are written out in populations.
-  // But to ensure this, the expression in Schiller's modes has to be different!
-
-  pi[0] = (2.0 * (mode[0] + mode[4]) + mode[6] + 3.0 * mode[5]) / 6.0; // xx
-  pi[1] = mode[7];                                                     // xy
-  pi[2] = (2.0 * (mode[0] + mode[4]) + mode[6] - 3.0 * mode[5]) / 6.0; // yy
-  pi[3] = mode[8];                                                     // xz
-  pi[4] = mode[9];                                                     // yz
-  pi[5] = (mode[0] + mode[4] - mode[6]) / 3.0;                         // zz
-}
+void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
+                                 double *pi);
 
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,

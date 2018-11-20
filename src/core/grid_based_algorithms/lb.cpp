@@ -3068,5 +3068,166 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   free(r_buffer);
   free(s_buffer);
 }
+#ifdef LB_BOUNDARIES
 
+void lb_bounce_back(LB_Fluid &lbfluid) {
+  int k, i, l;
+  int yperiod = lblattice.halo_grid[0];
+  int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
+  int next[19];
+  int x, y, z;
+  double population_shift;
+  double modes[19];
+  next[0] = 0;                     // ( 0, 0, 0) =
+  next[1] = 1;                     // ( 1, 0, 0) +
+  next[2] = -1;                    // (-1, 0, 0)
+  next[3] = yperiod;               // ( 0, 1, 0) +
+  next[4] = -yperiod;              // ( 0,-1, 0)
+  next[5] = zperiod;               // ( 0, 0, 1) +
+  next[6] = -zperiod;              // ( 0, 0,-1)
+  next[7] = (1 + yperiod);         // ( 1, 1, 0) +
+  next[8] = -(1 + yperiod);        // (-1,-1, 0)
+  next[9] = (1 - yperiod);         // ( 1,-1, 0)
+  next[10] = -(1 - yperiod);       // (-1, 1, 0) +
+  next[11] = (1 + zperiod);        // ( 1, 0, 1) +
+  next[12] = -(1 + zperiod);       // (-1, 0,-1)
+  next[13] = (1 - zperiod);        // ( 1, 0,-1)
+  next[14] = -(1 - zperiod);       // (-1, 0, 1) +
+  next[15] = (yperiod + zperiod);  // ( 0, 1, 1) +
+  next[16] = -(yperiod + zperiod); // ( 0,-1,-1)
+  next[17] = (yperiod - zperiod);  // ( 0, 1,-1)
+  next[18] = -(yperiod - zperiod); // ( 0,-1, 1) +
+  int reverse[] = {0, 2,  1,  4,  3,  6,  5,  8,  7, 10,
+                   9, 12, 11, 14, 13, 16, 15, 18, 17};
+
+  /* bottom-up sweep */
+  //  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++)
+  for (z = 0; z < lblattice.grid[2] + 2; z++) {
+    for (y = 0; y < lblattice.grid[1] + 2; y++) {
+      for (x = 0; x < lblattice.grid[0] + 2; x++) {
+        k = get_linear_index(x, y, z, lblattice.halo_grid);
+
+        if (lbfields[k].boundary) {
+          lb_calc_modes(k, modes);
+
+          for (i = 0; i < 19; i++) {
+            population_shift = 0;
+            for (l = 0; l < 3; l++) {
+              population_shift -= lbpar.agrid * lbpar.agrid * lbpar.agrid *
+                                  lbpar.rho * 2 * lbmodel.c[i][l] *
+                                  lbmodel.w[i] * lbfields[k].slip_velocity[l] /
+                                  lbmodel.c_sound_sq;
+            }
+
+            if (x - lbmodel.c[i][0] > 0 &&
+                x - lbmodel.c[i][0] < lblattice.grid[0] + 1 &&
+                y - lbmodel.c[i][1] > 0 &&
+                y - lbmodel.c[i][1] < lblattice.grid[1] + 1 &&
+                z - lbmodel.c[i][2] > 0 &&
+                z - lbmodel.c[i][2] < lblattice.grid[2] + 1) {
+              if (!lbfields[k - next[i]].boundary) {
+                for (l = 0; l < 3; l++) {
+                  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
+                      .force()[l] += // TODO
+                      (2 * lbfluid[i][k] + population_shift) * lbmodel.c[i][l];
+                }
+                lbfluid[reverse[i]][k - next[i]] =
+                    lbfluid[i][k] + population_shift;
+              } else {
+                lbfluid[reverse[i]][k - next[i]] = lbfluid[i][k] = 0.0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+#endif
+
+void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
+                                 double *pi) {
+
+  if (!(lattice_switch & LATTICE_LB)) {
+    runtimeErrorMsg() << "Error in lb_calc_local_fields in " << __FILE__
+                      << __LINE__ << ": CPU LB not switched on.";
+    *rho = 0;
+    j[0] = j[1] = j[2] = 0;
+    pi[0] = pi[1] = pi[2] = pi[3] = pi[4] = pi[5] = 0;
+    return;
+  }
+
+  if (!(lattice_switch & LATTICE_LB)) {
+    runtimeErrorMsg() << "Error in lb_calc_local_pi in " << __FILE__ << __LINE__
+                      << ": CPU LB not switched on.";
+    j[0] = j[1] = j[2] = 0;
+    return;
+  }
+
+#ifdef LB_BOUNDARIES
+  if (lbfields[index].boundary) {
+    *rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+    j[0] = 0.;
+    j[1] = 0.;
+    j[2] = 0.;
+    if (pi) {
+      pi[0] = 0.;
+      pi[1] = 0.;
+      pi[2] = 0.;
+      pi[3] = 0.;
+      pi[4] = 0.;
+      pi[5] = 0.;
+    }
+    return;
+  }
+#endif
+  double modes_from_pi_eq[6];
+  std::array<double, 19> mode = lb_calc_modes(index);
+
+  *rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+
+  j[0] = mode[1] + 0.5 * lbfields[index].force_density[0];
+  j[1] = mode[2] + 0.5 * lbfields[index].force_density[1];
+  j[2] = mode[3] + 0.5 * lbfields[index].force_density[2];
+
+  if (!pi)
+    return;
+
+  /* equilibrium part of the stress modes */
+  modes_from_pi_eq[0] = scalar(j, j) / *rho;
+  modes_from_pi_eq[1] = (Utils::sqr(j[0]) - Utils::sqr(j[1])) / *rho;
+  modes_from_pi_eq[2] = (scalar(j, j) - 3.0 * Utils::sqr(j[2])) / *rho;
+  modes_from_pi_eq[3] = j[0] * j[1] / *rho;
+  modes_from_pi_eq[4] = j[0] * j[2] / *rho;
+  modes_from_pi_eq[5] = j[1] * j[2] / *rho;
+
+  /* Now we must predict the outcome of the next collision */
+  /* We immediately average pre- and post-collision. */
+  mode[4] = modes_from_pi_eq[0] +
+            (0.5 + 0.5 * lbpar.gamma_bulk) * (mode[4] - modes_from_pi_eq[0]);
+  mode[5] = modes_from_pi_eq[1] +
+            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[5] - modes_from_pi_eq[1]);
+  mode[6] = modes_from_pi_eq[2] +
+            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[6] - modes_from_pi_eq[2]);
+  mode[7] = modes_from_pi_eq[3] +
+            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[7] - modes_from_pi_eq[3]);
+  mode[8] = modes_from_pi_eq[4] +
+            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[8] - modes_from_pi_eq[4]);
+  mode[9] = modes_from_pi_eq[5] +
+            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[9] - modes_from_pi_eq[5]);
+
+  // Transform the stress tensor components according to the modes that
+  // correspond to those used by U. Schiller. In terms of populations this
+  // expression then corresponds exactly to those in Eqs. 116 - 121 in the
+  // Duenweg and Ladd paper, when these are written out in populations.
+  // But to ensure this, the expression in Schiller's modes has to be different!
+
+  pi[0] = (2.0 * (mode[0] + mode[4]) + mode[6] + 3.0 * mode[5]) / 6.0; // xx
+  pi[1] = mode[7];                                                     // xy
+  pi[2] = (2.0 * (mode[0] + mode[4]) + mode[6] - 3.0 * mode[5]) / 6.0; // yy
+  pi[3] = mode[8];                                                     // xz
+  pi[4] = mode[9];                                                     // yz
+  pi[5] = (mode[0] + mode[4] - mode[6]) / 3.0;                         // zz
+}
 #endif // LB
