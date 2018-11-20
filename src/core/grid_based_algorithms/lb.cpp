@@ -43,6 +43,7 @@
 #include "lb-d3q19.hpp"
 #include "thermostat.hpp"
 #include "utils/u32_to_u64.hpp"
+#include "utils/Counter.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include <Random123/philox.h>
@@ -1901,7 +1902,7 @@ uint64_t lb_coupling_rng_state() {
 void mpi_set_lb_coupling_counter(int high, int low) {
     using Utils::u32_to_u64;
 
-    rng_counter = Counter<uint64_t>(Utils::u32_to_u64(static_cast<uint32_t>(high),
+    rng_counter = Utils::Counter<uint64_t>(Utils::u32_to_u64(static_cast<uint32_t>(high),
                                                       static_cast<uint32_t>(low)));
 }
 
@@ -1910,7 +1911,7 @@ void lb_coupling_set_rng_state(uint64_t counter) {
     std::tie(high, low) = Utils::u64_to_u32(counter);
     mpi_call(mpi_set_lb_coupling_counter, high, low);
 
-    rng_counter = Counter<uint64_t>(counter);
+    rng_counter = Utils::Counter<uint64_t>(counter);
 }
 
 /***********************************************************************/
