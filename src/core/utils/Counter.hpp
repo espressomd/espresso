@@ -10,6 +10,7 @@ namespace Utils {
 
     public:
         explicit Counter(T initial_value = T(0)) noexcept : m_val(initial_value), m_initial(initial_value) {}
+      Counter (T initial_value, T value) noexcept : m_val(value), m_initial(initial_value) {}
 
         void increment() { ++m_val; }
 

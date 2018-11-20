@@ -27,14 +27,22 @@
 using Utils::Counter;
 
 BOOST_AUTO_TEST_CASE(ctor) {
+  {
     auto c = Counter<int>(5);
     BOOST_CHECK_EQUAL(c.value(), 5);
     BOOST_CHECK_EQUAL(c.initial_value(), 5);
+  }
+
+  {
+    auto c = Counter<int>(5, 6);
+    BOOST_CHECK_EQUAL(c.initial_value(), 5);
+    BOOST_CHECK_EQUAL(c.value(), 6);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(increment) {
-    auto c = Counter<int>(5);
-    c.increment();
-    BOOST_CHECK_EQUAL(c.value(), 6);
-    BOOST_CHECK_EQUAL(c.initial_value(), 5);
+  auto c = Counter<int>(5);
+  c.increment();
+  BOOST_CHECK_EQUAL(c.value(), 6);
+  BOOST_CHECK_EQUAL(c.initial_value(), 5);
 }
