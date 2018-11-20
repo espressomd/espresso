@@ -34,7 +34,6 @@
  * where the coefficients and the velocity vectors are hardcoded
  * explicitly. This saves a lot of multiplications with 1's and 0's
  * thus making the code more efficient. */
-#define D3Q19
 #define LBQ 19
 
 /** Note these are used for binary logic so should be powers of 2 */

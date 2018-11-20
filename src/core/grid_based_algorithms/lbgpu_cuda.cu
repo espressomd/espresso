@@ -53,9 +53,6 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
-#define FLATNOISE
-#endif
 int extended_values_flag = 0; /* TODO: this has to be set to one by
                                  appropriate functions if there is
                                  the need to compute pi at every
@@ -69,13 +66,6 @@ int extended_values_flag = 0; /* TODO: this has to be set to one by
  */
 static LB_rho_v_gpu *device_rho_v = nullptr;
 
-/** device_rho_v_pi: extended struct for hydrodynamic fields: this is the
- *  interface and stores values in MD units. It should not be used as an input
- *  for any LB calculations. TODO: This structure is not yet used, and it is
- *  here to allow access to the stress tensor at any timestep, e.g. for future
- *  implementations of moving boundary codes
- */
-static LB_rho_v_pi_gpu *device_rho_v_pi = nullptr;
 
 /** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
  *  and stores values in MD units. It should not used
@@ -3763,12 +3753,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   size_of_rho_v_pi = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_pi_gpu);
 
   /** Allocate structs in device memory*/
-  /* see the notes to the structure device_rho_v_pi above...*/
-  if (extended_values_flag == 0) {
-    free_realloc_and_clear(device_rho_v, size_of_rho_v);
-  } else {
-    free_realloc_and_clear(device_rho_v_pi, size_of_rho_v_pi);
-  }
+  free_realloc_and_clear(device_rho_v, size_of_rho_v);
 
   /* TODO: this is a almost a copy copy of  device_rho_v think about eliminating
    * it, and maybe pi can be added to device_rho_v in this case*/
@@ -4391,10 +4376,6 @@ void lb_integrate_GPU() {
 #endif
 
   /**call of fluid step*/
-  /* NOTE: if pi is needed at every integration step, one should call an
-     extended version of the integrate kernel, or pass also device_rho_v_pi and
-     make sure that either it or device_rho_v are nullptr depending on
-     extended_values_flag */
   if (intflag == 1) {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
                device_rho_v, node_f, lb_ek_parameters_gpu, philox_counter);

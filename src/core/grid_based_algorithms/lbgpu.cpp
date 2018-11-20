@@ -49,9 +49,6 @@
 #include <ctime>
 #include <random>
 
-#ifndef D3Q19
-#error The implementation only works for D3Q19 so far!
-#endif
 
 #if (LB_COMPONENTS == 1)
 #define SC0                                                                    \

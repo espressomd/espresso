@@ -49,7 +49,6 @@
 #include <cassert>
 #include <cstdio>
 #include <iostream>
-#include <mpi.h>
 
 #include "cuda_interface.hpp"
 
@@ -96,13 +95,12 @@ LB_Parameters lbpar = {
     0};
 
 /** The DnQm model to be used. */
-LB_Model<> lbmodel = {d3q19_lattice, d3q19_coefficients, d3q19_w,
-                      d3q19_modebase, 1. / 3.};
+LB_Model<> lbmodel = {::D3Q19::c, ::D3Q19::coefficients, ::D3Q19::w,
+                      ::D3Q19::e_ki, ::D3Q19::w_k, ::D3Q19::c_sound_sq};
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
-#endif // (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) &&
-       // !defined(GAUSSRANDOM))
+#endif 
 
 /** The underlying lattice structure */
 Lattice lblattice;
@@ -2013,17 +2011,17 @@ void lb_reinit_parameters() {
     for (i = 0; i < 4; i++)
       lbpar.phi[i] = 0.0;
     lbpar.phi[4] =
-        sqrt(mu * lbmodel.e[19][4] *
+        sqrt(mu * lbmodel.w_k[4] *
              (1. - Utils::sqr(lbpar.gamma_bulk))); // Utils::sqr(x) == x*x
     for (i = 5; i < 10; i++)
       lbpar.phi[i] =
-          sqrt(mu * lbmodel.e[19][i] * (1. - Utils::sqr(lbpar.gamma_shear)));
+          sqrt(mu * lbmodel.w_k[i] * (1. - Utils::sqr(lbpar.gamma_shear)));
     for (i = 10; i < 16; i++)
       lbpar.phi[i] =
-          sqrt(mu * lbmodel.e[19][i] * (1 - Utils::sqr(lbpar.gamma_odd)));
+          sqrt(mu * lbmodel.w_k[i] * (1 - Utils::sqr(lbpar.gamma_odd)));
     for (i = 16; i < 19; i++)
       lbpar.phi[i] =
-          sqrt(mu * lbmodel.e[19][i] * (1 - Utils::sqr(lbpar.gamma_even)));
+          sqrt(mu * lbmodel.w_k[i] * (1 - Utils::sqr(lbpar.gamma_even)));
 
     /* lb_coupl_pref is stored in MD units (force)
      * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -2419,7 +2417,7 @@ inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
 
   /* normalization factors enter in the back transformation */
   for (int i = 0; i < lbmodel.n_veloc; i++)
-    m[i] = (1. / lbmodel.e[19][i]) * m[i];
+    m[i] = (1. / lbmodel.w_k[i]) * m[i];
 
   lbfluid[0][next[0]] = m[0] - m[4] + m[16];
   lbfluid[1][next[1]] =

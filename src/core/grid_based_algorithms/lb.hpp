@@ -39,12 +39,6 @@
 
 #include <utils/Span.hpp>
 
-/* For the D3Q19 model most functions have a separate implementation
- * where the coefficients and the velocity vectors are hardcoded
- * explicitly. This saves a lot of multiplications with 1's and 0's
- * thus making the code more efficient. */
-#define D3Q19
-
 /** \name Parameter fields for Lattice Boltzmann
  * The numbers are referenced in \ref mpi_bcast_lb_params
  * to determine what actions have to take place upon change
@@ -104,7 +98,10 @@ template <size_t N_vel = 19> struct LB_Model {
   std::array<double, N_vel> w;
 
   /** basis of moment space */
-  std::array<std::array<double, N_vel>, N_vel + 1> e;
+  std::array<std::array<double, N_vel>, N_vel> e_ki;
+
+  /** normalization factors for the moment basis */
+  std::array<double, N_vel> w_k;
 
   /** speed of sound squared */
   double c_sound_sq;
@@ -306,10 +303,6 @@ inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
  * @param j local fluid speed
  */
 inline void lb_calc_local_j(Lattice::index_t index, double *j) {
-
-#ifndef D3Q19
-#error Only D3Q19 is implemened!
-#endif
   if (!(lattice_switch & LATTICE_LB)) {
     runtimeErrorMsg() << "Error in lb_calc_local_j in " << __FILE__ << __LINE__
                       << ": CPU LB not switched on.";
@@ -370,10 +363,6 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
     pi[0] = pi[1] = pi[2] = pi[3] = pi[4] = pi[5] = 0;
     return;
   }
-
-#ifndef D3Q19
-#error Only D3Q19 is implemened!
-#endif
 
   if (!(lattice_switch & LATTICE_LB)) {
     runtimeErrorMsg() << "Error in lb_calc_local_pi in " << __FILE__ << __LINE__
