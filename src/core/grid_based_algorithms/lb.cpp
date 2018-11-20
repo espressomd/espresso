@@ -2312,9 +2312,9 @@ inline std::array<double, 19> lb_thermalize_modes(Lattice::index_t index, const 
   return thermalized_modes;
 }
 
-inline std::array<double, 19> lb_apply_forces(Lattice::index_t index, const std::array<double, 19>& modes) {
-  std::array<double, 19> modes_with_forces = modes;
-  double rho, *f, u[3], C[6];
+template<typename T> std::array<T, 19> lb_apply_forces(Lattice::index_t index, const std::array<T, 19>& modes) {
+  std::array<T, 19> modes_with_forces = modes;
+  T rho, *f, u[3], C[6];
 
   f = lbfields[index].force_density;
 
@@ -2361,16 +2361,22 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
                                      lbpar.agrid * lbpar.tau * lbpar.tau;
 }
 
-template <typename T> std::array<T, 19> lb_calc_n_from_m(std::array<T, 19>& m) {
-  std::array<T, 19> ret;
+template <typename T> std::array<T, 19> normalize_modes(const std::array<T, 19>& modes) {
+  auto normalized_modes = modes;
+  for (int i=0; i<modes.size(); i++) {
+    normalized_modes[i] /= lbmodel.w_k[i];
+  }
+  return normalized_modes;
+}
 
-  for (int i = 0; i < 19; i++)
-    m[i] = (1. / lbmodel.w_k[i]) * m[i];
+template <typename T> std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19>& modes) {
+  std::array<T, 19> ret;
+  const auto normalized_modes = normalize_modes(modes);
 
   for (int i = 0; i < 19; i++) {
     ret[i] = 0;
     for (int j = 0; j < 19; j++) {
-      ret[i] += lbmodel.e_ki[j][i] * m[j];
+      ret[i] += lbmodel.e_ki[j][i] * normalized_modes[j];
     }
 
     ret[i] *= lbmodel.w[i];
