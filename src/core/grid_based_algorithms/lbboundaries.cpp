@@ -374,9 +374,6 @@ int lbboundary_get_force(void *lbb, double *f) {
 #ifdef LB_BOUNDARIES
 
 void lb_bounce_back(LB_Fluid &lbfluid) {
-
-#ifdef D3Q19
-#ifndef PULL
   int k, i, l;
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
@@ -448,12 +445,6 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
       }
     }
   }
-#else
-#error Bounce back boundary conditions are only implemented for PUSH scheme!
-#endif
-#else
-#error Bounce back boundary conditions are only implemented for D3Q19!
-#endif
 }
 
 #endif

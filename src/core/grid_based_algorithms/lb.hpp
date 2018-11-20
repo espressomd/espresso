@@ -270,7 +270,7 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
  *  @param index number of the node to calculate the modes for
  *  @param mode output pointer to a double[19]
  */
-void lb_calc_modes(Lattice::index_t index, double *mode);
+std::array<double, 19> lb_calc_modes(Lattice::index_t index);
 
 /** Calculate the local fluid density.
  * The calculation is implemented explicitly for the special case of D3Q19.
@@ -388,9 +388,8 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
     return;
   }
 #endif
-  double mode[19];
   double modes_from_pi_eq[6];
-  lb_calc_modes(index, mode);
+  std::array<double, 19> mode = lb_calc_modes(index);
 
   *rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 

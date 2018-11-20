@@ -3234,9 +3234,6 @@ __device__ __inline__ void calc_shanchen_contribution(LB_nodes_gpu n_a,
  */
 __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,
                                 LB_node_force_density_gpu node_f) {
-#ifndef D3Q19
-#error Lattices other than D3Q19 not supported
-#endif
 #if (LB_COMPONENTS == 1)
 #warning shanchen forces not implemented
 #else

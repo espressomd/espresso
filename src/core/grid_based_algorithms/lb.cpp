@@ -2206,70 +2206,37 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
 
 /*@}*/
 
-/** Calculation of hydrodynamic modes */
-void lb_calc_modes(Lattice::index_t index, double *mode) {
-  double n0, n1p, n1m, n2p, n2m, n3p, n3m, n4p, n4m, n5p, n5m, n6p, n6m, n7p,
-      n7m, n8p, n8m, n9p, n9m;
+#include <boost/range/numeric.hpp>
 
-  n0 = lbfluid[0][index];
-  n1p = lbfluid[1][index] + lbfluid[2][index];
-  n1m = lbfluid[1][index] - lbfluid[2][index];
-  n2p = lbfluid[3][index] + lbfluid[4][index];
-  n2m = lbfluid[3][index] - lbfluid[4][index];
-  n3p = lbfluid[5][index] + lbfluid[6][index];
-  n3m = lbfluid[5][index] - lbfluid[6][index];
-  n4p = lbfluid[7][index] + lbfluid[8][index];
-  n4m = lbfluid[7][index] - lbfluid[8][index];
-  n5p = lbfluid[9][index] + lbfluid[10][index];
-  n5m = lbfluid[9][index] - lbfluid[10][index];
-  n6p = lbfluid[11][index] + lbfluid[12][index];
-  n6m = lbfluid[11][index] - lbfluid[12][index];
-  n7p = lbfluid[13][index] + lbfluid[14][index];
-  n7m = lbfluid[13][index] - lbfluid[14][index];
-  n8p = lbfluid[15][index] + lbfluid[16][index];
-  n8m = lbfluid[15][index] - lbfluid[16][index];
-  n9p = lbfluid[17][index] + lbfluid[18][index];
-  n9m = lbfluid[17][index] - lbfluid[18][index];
-
-  /* mass mode */
-  mode[0] = n0 + n1p + n2p + n3p + n4p + n5p + n6p + n7p + n8p + n9p;
-
-  /* momentum modes */
-  mode[1] = n1m + n4m + n5m + n6m + n7m;
-  mode[2] = n2m + n4m - n5m + n8m + n9m;
-  mode[3] = n3m + n6m - n7m + n8m - n9m;
-
-  /* stress modes */
-  mode[4] = -n0 + n4p + n5p + n6p + n7p + n8p + n9p;
-  mode[5] = n1p - n2p + n6p + n7p - n8p - n9p;
-  mode[6] = n1p + n2p - n6p - n7p - n8p - n9p - 2. * (n3p - n4p - n5p);
-  mode[7] = n4p - n5p;
-  mode[8] = n6p - n7p;
-  mode[9] = n8p - n9p;
-
-  /* kinetic modes */
-  mode[10] = -2. * n1m + n4m + n5m + n6m + n7m;
-  mode[11] = -2. * n2m + n4m - n5m + n8m + n9m;
-  mode[12] = -2. * n3m + n6m - n7m + n8m - n9m;
-  mode[13] = n4m + n5m - n6m - n7m;
-  mode[14] = n4m - n5m - n8m - n9m;
-  mode[15] = n6m - n7m - n8m + n9m;
-  mode[16] = n0 + n4p + n5p + n6p + n7p + n8p + n9p - 2. * (n1p + n2p + n3p);
-  mode[17] = -n1p + n2p + n6p + n7p - n8p - n9p;
-  mode[18] = -n1p - n2p - n6p - n7p - n8p - n9p + 2. * (n3p + n4p + n5p);
+std::array<double, 19> lb_calc_m_from_n(const std::array<double, 19> n) {
+  std::array<double, 19> m;
+  for (int i=0; i<19; i++) {
+    m[i] = boost::inner_product(lbmodel.e_ki[i], n, 0.0);
+  }
+  return m;
 }
 
-inline void lb_relax_modes(Lattice::index_t index, double *mode) {
+/** Calculation of hydrodynamic modes */
+std::array<double, 19> lb_calc_modes(Lattice::index_t index) {
+  std::array<double, 19> n;
+  for (int i=0; i<19; i++) {
+    n[i] = lbfluid[i][index];
+  }
+  return lb_calc_m_from_n(n);
+}
+
+inline std::array<double, 19> lb_relax_modes(Lattice::index_t index, const std::array<double, 19>& modes) {
+  std::array<double, 19> relaxed_modes = modes;
   double rho, j[3], pi_eq[6];
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
    * equilibrium value */
-  rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  rho = modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
-  j[0] = mode[1] + 0.5 * lbfields[index].force_density[0];
-  j[1] = mode[2] + 0.5 * lbfields[index].force_density[1];
-  j[2] = mode[3] + 0.5 * lbfields[index].force_density[2];
+  j[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
+  j[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
+  j[2] = modes[3] + 0.5 * lbfields[index].force_density[2];
 
   /* equilibrium part of the stress modes */
   pi_eq[0] = scalar(j, j) / rho;
@@ -2280,29 +2247,31 @@ inline void lb_relax_modes(Lattice::index_t index, double *mode) {
   pi_eq[5] = j[1] * j[2] / rho;
 
   /* relax the stress modes */
-  mode[4] = pi_eq[0] + lbpar.gamma_bulk * (mode[4] - pi_eq[0]);
-  mode[5] = pi_eq[1] + lbpar.gamma_shear * (mode[5] - pi_eq[1]);
-  mode[6] = pi_eq[2] + lbpar.gamma_shear * (mode[6] - pi_eq[2]);
-  mode[7] = pi_eq[3] + lbpar.gamma_shear * (mode[7] - pi_eq[3]);
-  mode[8] = pi_eq[4] + lbpar.gamma_shear * (mode[8] - pi_eq[4]);
-  mode[9] = pi_eq[5] + lbpar.gamma_shear * (mode[9] - pi_eq[5]);
+  relaxed_modes[4] = pi_eq[0] + lbpar.gamma_bulk * (modes[4] - pi_eq[0]);
+  relaxed_modes[5] = pi_eq[1] + lbpar.gamma_shear * (modes[5] - pi_eq[1]);
+  relaxed_modes[6] = pi_eq[2] + lbpar.gamma_shear * (modes[6] - pi_eq[2]);
+  relaxed_modes[7] = pi_eq[3] + lbpar.gamma_shear * (modes[7] - pi_eq[3]);
+  relaxed_modes[8] = pi_eq[4] + lbpar.gamma_shear * (modes[8] - pi_eq[4]);
+  relaxed_modes[9] = pi_eq[5] + lbpar.gamma_shear * (modes[9] - pi_eq[5]);
 
   /* relax the ghost modes (project them out) */
   /* ghost modes have no equilibrium part due to orthogonality */
-  mode[10] = lbpar.gamma_odd * mode[10];
-  mode[11] = lbpar.gamma_odd * mode[11];
-  mode[12] = lbpar.gamma_odd * mode[12];
-  mode[13] = lbpar.gamma_odd * mode[13];
-  mode[14] = lbpar.gamma_odd * mode[14];
-  mode[15] = lbpar.gamma_odd * mode[15];
-  mode[16] = lbpar.gamma_even * mode[16];
-  mode[17] = lbpar.gamma_even * mode[17];
-  mode[18] = lbpar.gamma_even * mode[18];
+  relaxed_modes[10] = lbpar.gamma_odd * modes[10];
+  relaxed_modes[11] = lbpar.gamma_odd * modes[11];
+  relaxed_modes[12] = lbpar.gamma_odd * modes[12];
+  relaxed_modes[13] = lbpar.gamma_odd * modes[13];
+  relaxed_modes[14] = lbpar.gamma_odd * modes[14];
+  relaxed_modes[15] = lbpar.gamma_odd * modes[15];
+  relaxed_modes[16] = lbpar.gamma_even * modes[16];
+  relaxed_modes[17] = lbpar.gamma_even * modes[17];
+  relaxed_modes[18] = lbpar.gamma_even * modes[18];
+  return relaxed_modes;
 }
 
-inline void lb_thermalize_modes(Lattice::index_t index, double *mode) {
+inline std::array<double, 19> lb_thermalize_modes(Lattice::index_t index, const std::array<double, 19>& modes) {
+  std::array<double, 19> thermalized_modes = modes;
   const double rootrho = std::sqrt(
-      std::fabs(mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid));
+      std::fabs(modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid));
 #ifdef GAUSSRANDOM
   constexpr double variance = 1.0;
   auto rng = []() -> double { return gaussian_random(); };
@@ -2319,41 +2288,42 @@ inline void lb_thermalize_modes(Lattice::index_t index, double *mode) {
   auto const pref = std::sqrt(1. / variance) * rootrho;
 
   /* stress modes */
-  mode[4] += pref * lbpar.phi[4] * rng();
-  mode[5] += pref * lbpar.phi[5] * rng();
-  mode[6] += pref * lbpar.phi[6] * rng();
-  mode[7] += pref * lbpar.phi[7] * rng();
-  mode[8] += pref * lbpar.phi[8] * rng();
-  mode[9] += pref * lbpar.phi[9] * rng();
+  thermalized_modes[4] += pref * lbpar.phi[4] * rng();
+  thermalized_modes[5] += pref * lbpar.phi[5] * rng();
+  thermalized_modes[6] += pref * lbpar.phi[6] * rng();
+  thermalized_modes[7] += pref * lbpar.phi[7] * rng();
+  thermalized_modes[8] += pref * lbpar.phi[8] * rng();
+  thermalized_modes[9] += pref * lbpar.phi[9] * rng();
 
   /* ghost modes */
-  mode[10] += pref * lbpar.phi[10] * rng();
-  mode[11] += pref * lbpar.phi[11] * rng();
-  mode[12] += pref * lbpar.phi[12] * rng();
-  mode[13] += pref * lbpar.phi[13] * rng();
-  mode[14] += pref * lbpar.phi[14] * rng();
-  mode[15] += pref * lbpar.phi[15] * rng();
-  mode[16] += pref * lbpar.phi[16] * rng();
-  mode[17] += pref * lbpar.phi[17] * rng();
-  mode[18] += pref * lbpar.phi[18] * rng();
+  thermalized_modes[10] += pref * lbpar.phi[10] * rng();
+  thermalized_modes[11] += pref * lbpar.phi[11] * rng();
+  thermalized_modes[12] += pref * lbpar.phi[12] * rng();
+  thermalized_modes[13] += pref * lbpar.phi[13] * rng();
+  thermalized_modes[14] += pref * lbpar.phi[14] * rng();
+  thermalized_modes[15] += pref * lbpar.phi[15] * rng();
+  thermalized_modes[16] += pref * lbpar.phi[16] * rng();
+  thermalized_modes[17] += pref * lbpar.phi[17] * rng();
+  thermalized_modes[18] += pref * lbpar.phi[18] * rng();
 
 #ifdef ADDITIONAL_CHECKS
   rancounter += 15;
 #endif // ADDITIONAL_CHECKS
+  return thermalized_modes;
 }
 
-inline void lb_apply_forces(Lattice::index_t index, double *mode) {
-
+inline std::array<double, 19> lb_apply_forces(Lattice::index_t index, const std::array<double, 19>& modes) {
+  std::array<double, 19> modes_with_forces = modes;
   double rho, *f, u[3], C[6];
 
   f = lbfields[index].force_density;
 
-  rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  rho = modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
   /* hydrodynamic momentum density is redefined when external forces present */
-  u[0] = (mode[1] + 0.5 * f[0]) / rho;
-  u[1] = (mode[2] + 0.5 * f[1]) / rho;
-  u[2] = (mode[3] + 0.5 * f[2]) / rho;
+  u[0] = (modes[1] + 0.5 * f[0]) / rho;
+  u[1] = (modes[2] + 0.5 * f[1]) / rho;
+  u[2] = (modes[3] + 0.5 * f[2]) / rho;
 
   C[0] = (1. + lbpar.gamma_bulk) * u[0] * f[0] +
          1. / 3. * (lbpar.gamma_bulk - lbpar.gamma_shear) * scalar(u, f);
@@ -2366,17 +2336,18 @@ inline void lb_apply_forces(Lattice::index_t index, double *mode) {
   C[4] = 1. / 2. * (1. + lbpar.gamma_shear) * (u[1] * f[2] + u[2] * f[1]);
 
   /* update momentum modes */
-  mode[1] += f[0];
-  mode[2] += f[1];
-  mode[3] += f[2];
+  modes_with_forces[1] += f[0];
+  modes_with_forces[2] += f[1];
+  modes_with_forces[3] += f[2];
 
   /* update stress modes */
-  mode[4] += C[0] + C[2] + C[5];
-  mode[5] += C[0] - C[2];
-  mode[6] += C[0] + C[2] - 2. * C[5];
-  mode[7] += C[1];
-  mode[8] += C[3];
-  mode[9] += C[4];
+  modes_with_forces[4] += C[0] + C[2] + C[5];
+  modes_with_forces[5] += C[0] - C[2];
+  modes_with_forces[6] += C[0] + C[2] - 2. * C[5];
+  modes_with_forces[7] += C[1];
+  modes_with_forces[8] += C[3];
+  modes_with_forces[9] += C[4];
+  return modes_with_forces;
 }
 
 inline void lb_reset_force_densities(Lattice::index_t index) {
@@ -2390,80 +2361,37 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
                                      lbpar.agrid * lbpar.tau * lbpar.tau;
 }
 
-inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
-                                      double *m) {
-  int yperiod = lblattice.halo_grid[0];
-  int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
-  Lattice::index_t next[19];
-  next[0] = index;
-  next[1] = index + 1;
-  next[2] = index - 1;
-  next[3] = index + yperiod;
-  next[4] = index - yperiod;
-  next[5] = index + zperiod;
-  next[6] = index - zperiod;
-  next[7] = index + (1 + yperiod);
-  next[8] = index - (1 + yperiod);
-  next[9] = index + (1 - yperiod);
-  next[10] = index - (1 - yperiod);
-  next[11] = index + (1 + zperiod);
-  next[12] = index - (1 + zperiod);
-  next[13] = index + (1 - zperiod);
-  next[14] = index - (1 - zperiod);
-  next[15] = index + (yperiod + zperiod);
-  next[16] = index - (yperiod + zperiod);
-  next[17] = index + (yperiod - zperiod);
-  next[18] = index - (yperiod - zperiod);
+template <typename T> std::array<T, 19> lb_calc_n_from_m(std::array<T, 19>& m) {
+  std::array<T, 19> ret;
 
-  /* normalization factors enter in the back transformation */
-  for (int i = 0; i < lbmodel.n_veloc; i++)
+  for (int i = 0; i < 19; i++)
     m[i] = (1. / lbmodel.w_k[i]) * m[i];
 
-  lbfluid[0][next[0]] = m[0] - m[4] + m[16];
-  lbfluid[1][next[1]] =
-      m[0] + m[1] + m[5] + m[6] - m[17] - m[18] - 2. * (m[10] + m[16]);
-  lbfluid[2][next[2]] =
-      m[0] - m[1] + m[5] + m[6] - m[17] - m[18] + 2. * (m[10] - m[16]);
-  lbfluid[3][next[3]] =
-      m[0] + m[2] - m[5] + m[6] + m[17] - m[18] - 2. * (m[11] + m[16]);
-  lbfluid[4][next[4]] =
-      m[0] - m[2] - m[5] + m[6] + m[17] - m[18] + 2. * (m[11] - m[16]);
-  lbfluid[5][next[5]] = m[0] + m[3] - 2. * (m[6] + m[12] + m[16] - m[18]);
-  lbfluid[6][next[6]] = m[0] - m[3] - 2. * (m[6] - m[12] + m[16] - m[18]);
-  lbfluid[7][next[7]] = m[0] + m[1] + m[2] + m[4] + 2. * m[6] + m[7] + m[10] +
-                        m[11] + m[13] + m[14] + m[16] + 2. * m[18];
-  lbfluid[8][next[8]] = m[0] - m[1] - m[2] + m[4] + 2. * m[6] + m[7] - m[10] -
-                        m[11] - m[13] - m[14] + m[16] + 2. * m[18];
-  lbfluid[9][next[9]] = m[0] + m[1] - m[2] + m[4] + 2. * m[6] - m[7] + m[10] -
-                        m[11] + m[13] - m[14] + m[16] + 2. * m[18];
-  lbfluid[10][next[10]] = m[0] - m[1] + m[2] + m[4] + 2. * m[6] - m[7] - m[10] +
-                          m[11] - m[13] + m[14] + m[16] + 2. * m[18];
-  lbfluid[11][next[11]] = m[0] + m[1] + m[3] + m[4] + m[5] - m[6] + m[8] +
-                          m[10] + m[12] - m[13] + m[15] + m[16] + m[17] - m[18];
-  lbfluid[12][next[12]] = m[0] - m[1] - m[3] + m[4] + m[5] - m[6] + m[8] -
-                          m[10] - m[12] + m[13] - m[15] + m[16] + m[17] - m[18];
-  lbfluid[13][next[13]] = m[0] + m[1] - m[3] + m[4] + m[5] - m[6] - m[8] +
-                          m[10] - m[12] - m[13] - m[15] + m[16] + m[17] - m[18];
-  lbfluid[14][next[14]] = m[0] - m[1] + m[3] + m[4] + m[5] - m[6] - m[8] -
-                          m[10] + m[12] + m[13] + m[15] + m[16] + m[17] - m[18];
-  lbfluid[15][next[15]] = m[0] + m[2] + m[3] + m[4] - m[5] - m[6] + m[9] +
-                          m[11] + m[12] - m[14] - m[15] + m[16] - m[17] - m[18];
-  lbfluid[16][next[16]] = m[0] - m[2] - m[3] + m[4] - m[5] - m[6] + m[9] -
-                          m[11] - m[12] + m[14] + m[15] + m[16] - m[17] - m[18];
-  lbfluid[17][next[17]] = m[0] + m[2] - m[3] + m[4] - m[5] - m[6] - m[9] +
-                          m[11] - m[12] - m[14] + m[15] + m[16] - m[17] - m[18];
-  lbfluid[18][next[18]] = m[0] - m[2] + m[3] + m[4] - m[5] - m[6] - m[9] -
-                          m[11] + m[12] + m[14] - m[15] + m[16] - m[17] - m[18];
+  for (int i = 0; i < 19; i++) {
+    ret[i] = 0;
+    for (int j = 0; j < 19; j++) {
+      ret[i] += lbmodel.e_ki[j][i] * m[j];
+    }
 
-  /* weights enter in the back transformation */
-  for (int i = 0; i < lbmodel.n_veloc; i++)
-    lbfluid[i][next[i]] *= lbmodel.w[i];
+    ret[i] *= lbmodel.w[i];
+  }
+  return ret;
 }
+
+inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
+                                      std::array<double, 19> m) {
+  const std::array<int, 3> period = {1, lblattice.halo_grid[0], lblattice.halo_grid[0]*lblattice.halo_grid[1]};
+  auto const f = lb_calc_n_from_m(m);
+  for (int i=0; i<19; i++) {
+    auto const next = index + boost::inner_product(period, lbmodel.c[i], 0);
+    lbfluid[i][next] = f[i];
+  }
+}
+
 
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
   Lattice::index_t index;
-  double modes[19];
 
 /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
@@ -2498,17 +2426,17 @@ inline void lb_collide_stream() {
 #endif // LB_BOUNDARIES
         {
           /* calculate modes locally */
-          lb_calc_modes(index, modes);
+          std::array<double, 19> modes = lb_calc_modes(index);
 
           /* deterministic collisions */
-          lb_relax_modes(index, modes);
+          modes = lb_relax_modes(index, modes);
 
           /* fluctuating hydrodynamics */
           if (lbpar.fluct)
-            lb_thermalize_modes(index, modes);
+            modes = lb_thermalize_modes(index, modes);
 
           /* apply forces */
-          lb_apply_forces(index, modes);
+          modes = lb_apply_forces(index, modes);
 
           lb_reset_force_densities(index);
 
@@ -2719,8 +2647,7 @@ Vector3d node_u(Lattice::index_t index) {
   }
 #endif // LB_BOUNDARIES
 
-  double modes[19];
-  lb_calc_modes(index, modes);
+  std::array<double, 19> modes = lb_calc_modes(index);
   auto const local_rho =
       lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
 
