@@ -245,7 +245,10 @@ inline void calc_non_bonded_pair_force_parts(
 #endif
 /* Gay-Berne */
 #ifdef GAY_BERNE
-  add_gb_pair_force(p1, p2, ia_params, d, dist, force, torque1, torque2);
+  // The gb force function isn't inlined, probably due to its size
+  if (dist < ia_params->GB_cut) {
+    add_gb_pair_force(p1, p2, ia_params, d, dist, force, torque1, torque2);
+  }
 #endif
 #ifdef INTER_RF
   add_interrf_pair_force(p1, p2, ia_params, d, dist, force);
