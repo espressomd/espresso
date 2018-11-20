@@ -42,8 +42,8 @@
 #include "halo.hpp"
 #include "lb-d3q19.hpp"
 #include "thermostat.hpp"
-#include "utils/u32_to_u64.hpp"
 #include "utils/Counter.hpp"
+#include "utils/u32_to_u64.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include <Random123/philox.h>
@@ -67,7 +67,7 @@ int transfer_momentum = 0;
 
 /** Counter for the particle coupling RNG */
 namespace {
-    Utils::Counter<uint64_t> rng_counter;
+Utils::Counter<uint64_t> rng_counter;
 
 /*
  * @brief Salt for the RNGs
@@ -76,9 +76,7 @@ namespace {
  * noise on the particle coupling and the fluid
  * thermalization.
  */
-enum class RNGSalt {
-    PARTICLES
-};
+enum class RNGSalt { PARTICLES };
 } // namespace
 
 /** Struct holding the Lattice Boltzmann parameters */
@@ -995,10 +993,8 @@ int lb_lbfluid_save_checkpoint(char *filename, int binary) {
         lbpar_gpu.number_of_nodes * sizeof(unsigned int));
     lbForceFloat *host_checkpoint_force = (lbForceFloat *)Utils::malloc(
         lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
-    uint64_t host_checkpoint_philox_counter;
     lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_boundary,
-                           host_checkpoint_force,
-                           &host_checkpoint_philox_counter);
+                           host_checkpoint_force);
     if (!binary) {
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         fprintf(cpfile, "%.8E \n", host_checkpoint_vd[n]);
@@ -1009,7 +1005,6 @@ int lb_lbfluid_save_checkpoint(char *filename, int binary) {
       for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
         fprintf(cpfile, "%.8E \n", host_checkpoint_force[n]);
       }
-      fprintf(cpfile, "%" PRIu64 "\n", host_checkpoint_philox_counter);
     } else {
       fwrite(host_checkpoint_vd, sizeof(float),
              19 * int(lbpar_gpu.number_of_nodes), cpfile);
@@ -1017,7 +1012,6 @@ int lb_lbfluid_save_checkpoint(char *filename, int binary) {
              int(lbpar_gpu.number_of_nodes), cpfile);
       fwrite(host_checkpoint_force, sizeof(lbForceFloat),
              3 * int(lbpar_gpu.number_of_nodes), cpfile);
-      fwrite(&host_checkpoint_philox_counter, sizeof(uint64_t), 1, cpfile);
     }
     fclose(cpfile);
     free(host_checkpoint_vd);
@@ -1077,7 +1071,6 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
         lbpar_gpu.number_of_nodes);
     std::vector<lbForceFloat> host_checkpoint_force(lbpar_gpu.number_of_nodes *
                                                     3);
-    uint64_t host_checkpoint_philox_counter;
     int res;
     if (!binary) {
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
@@ -1089,8 +1082,7 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
       for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
         res = fscanf(cpfile, "%f", &host_checkpoint_force[n]);
       }
-      res = fscanf(cpfile, "%" SCNu64, &host_checkpoint_philox_counter);
-      if (res == EOF)
+      if (lbpar_gpu.number_of_nodes && res == EOF)
         throw std::runtime_error("Error while reading LB checkpoint.");
     } else {
       if (fread(host_checkpoint_vd.data(), sizeof(float),
@@ -1109,15 +1101,10 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
         fclose(cpfile);
         return ES_ERROR;
       }
-      if (fread(&host_checkpoint_philox_counter, sizeof(uint64_t), 1, cpfile) !=
-          1) {
-        fclose(cpfile);
-        return ES_ERROR;
-      }
     }
-    lb_load_checkpoint_GPU(
-        host_checkpoint_vd.data(), host_checkpoint_boundary.data(),
-        host_checkpoint_force.data(), &host_checkpoint_philox_counter);
+    lb_load_checkpoint_GPU(host_checkpoint_vd.data(),
+                           host_checkpoint_boundary.data(),
+                           host_checkpoint_force.data());
     fclose(cpfile);
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
@@ -1863,9 +1850,9 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
 /** Performs basic sanity checks. */
 void lb_sanity_checks() {
 
-    if (lbpar.agrid <= 0.0) {
+  if (lbpar.agrid <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann agrid not set";
-    }
+  }
   if (lbpar.tau <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann time step not set";
   }
@@ -1889,29 +1876,27 @@ void lb_sanity_checks() {
 }
 
 void lb_on_integration_start() {
-    lb_sanity_checks();
+  lb_sanity_checks();
 
-    halo_communication(&update_halo_comm,
-                       reinterpret_cast<char *>(lbfluid[0].data()));
+  halo_communication(&update_halo_comm,
+                     reinterpret_cast<char *>(lbfluid[0].data()));
 }
 
-uint64_t lb_coupling_rng_state() {
-    return rng_counter.value();
-}
+uint64_t lb_coupling_rng_state() { return rng_counter.value(); }
 
 void mpi_set_lb_coupling_counter(int high, int low) {
-    using Utils::u32_to_u64;
+  using Utils::u32_to_u64;
 
-    rng_counter = Utils::Counter<uint64_t>(Utils::u32_to_u64(static_cast<uint32_t>(high),
-                                                      static_cast<uint32_t>(low)));
+  rng_counter = Utils::Counter<uint64_t>(Utils::u32_to_u64(
+      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
 }
 
 void lb_coupling_set_rng_state(uint64_t counter) {
-    uint32_t high, low;
-    std::tie(high, low) = Utils::u64_to_u32(counter);
-    mpi_call(mpi_set_lb_coupling_counter, high, low);
+  uint32_t high, low;
+  std::tie(high, low) = Utils::u64_to_u32(counter);
+  mpi_call(mpi_set_lb_coupling_counter, high, low);
 
-    rng_counter = Utils::Counter<uint64_t>(counter);
+  rng_counter = Utils::Counter<uint64_t>(counter);
 }
 
 /***********************************************************************/
@@ -2547,7 +2532,7 @@ inline void lb_collide_stream() {
                      reinterpret_cast<char *>(lbfluid[0].data()));
 
 #ifdef ADDITIONAL_CHECKS
-    lb_check_halo_regions(lbfluid);
+  lb_check_halo_regions(lbfluid);
 #endif
 }
 
@@ -2774,7 +2759,7 @@ void calc_particle_lattice_ia() {
     ctr_type c{rng_counter.value(), static_cast<uint64_t>(RNGSalt::PARTICLES)};
     rng_counter.increment();
 
-     /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+    /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
      * The factor 12 comes from the fact that we use random numbers
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.

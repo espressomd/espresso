@@ -289,12 +289,10 @@ int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]);
 void lb_gpu_get_boundary_forces(double *forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force,
-                            uint64_t *philox_counter);
+                            lbForceFloat *host_checkpoint_force);
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force,
-                            uint64_t *philox_counter);
+                            lbForceFloat *host_checkpoint_force);
 int lb_lbfluid_save_checkpoint_wrapper(char *filename, int binary);
 int lb_lbfluid_load_checkpoint_wrapper(char *filename, int binary);
 
