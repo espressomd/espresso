@@ -290,10 +290,8 @@ void announce_resort_particles() {
 /*************************************************/
 
 int cells_get_n_particles() {
-  return  std::accumulate(local_cells.begin(), local_cells.end(),
-          0, [](int n, const Cell * c) {
-      return n + c->n;
-  });
+  return std::accumulate(local_cells.begin(), local_cells.end(), 0,
+                         [](int n, const Cell *c) { return n + c->n; });
 }
 
 /*************************************************/
