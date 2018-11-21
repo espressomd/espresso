@@ -39,6 +39,10 @@ extern std::mt19937 generator;
 extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
 extern bool user_has_seeded;
+inline void unseeded_error() {
+    runtimeErrorMsg() << "Please seed the random number generator.\nESPResSo "
+                         "can choose one for you with set_random_state_PRNG().";
+}
 
 /**
  * @brief checks the seeded state and throws error if unseeded
@@ -48,11 +52,11 @@ inline void check_user_has_seeded() {
   static bool unseeded_error_thrown = false;
   if (!user_has_seeded && !unseeded_error_thrown) {
     unseeded_error_thrown = true;
-    runtimeErrorMsg() << "Please seed the random number generator.\nESPResSo "
-                         "can choose one for you with set_random_state_PRNG().";
+    unseeded_error();
   }
   return;
 }
+
 
 /**
  * @brief Set seed of random number generators on each node.
