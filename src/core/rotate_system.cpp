@@ -18,10 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "initialize.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
+
+#include "utils/vec_rotate.hpp"
 
 #include <boost/mpi/collectives.hpp>
 
@@ -58,7 +61,7 @@ void local_rotate_system(double phi, double theta, double alpha) {
     }
     // Rotate
     double res[3];
-    vec_rotate(axis, alpha, p.r.p, res);
+    Utils::vec_rotate(axis, alpha, p.r.p, res);
     // Write back result and shift back the center of mass
     for (int j = 0; j < 3; j++) {
       p.r.p[j] = com[j] + res[j];

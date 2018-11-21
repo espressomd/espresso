@@ -4,7 +4,7 @@ set(ImmersedBoundary_SRC
     ImmersedBoundaries.cpp
 )
 add_library(ImmersedBoundary SHARED ${ImmersedBoundary_SRC})
-install(TARGETS ImmersedBoundary LIBRARY DESTINATION ${LIBDIR} ARCHIVE DESTINATION ${LIBDIR})
+install(TARGETS ImmersedBoundary LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd ARCHIVE DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(ImmersedBoundary PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(ImmersedBoundary EspressoConfig)
 set_target_properties(ImmersedBoundary PROPERTIES LINKER_LANGUAGE CXX)

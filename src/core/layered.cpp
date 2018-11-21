@@ -87,7 +87,7 @@ void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
   for (i = 0; i < 2; i++) {
     res[i] = a[i] - b[i];
     if (PERIODIC(i))
-      res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
+      res[i] -= std::round(res[i] * box_l_i[i]) * box_l[i];
   }
   res[2] = a[2] - b[2];
 }

@@ -27,7 +27,6 @@
 #include "energy.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "random.hpp"
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/mpi/scatter_buffer.hpp"
 #include "utils/serialization/CUDA_particle_data.hpp"
@@ -56,6 +55,7 @@ static void pack_particles(ParticleRange particles,
                            CUDA_particle_data *buffer) {
   int i = 0;
   for (auto const &part : particles) {
+    buffer[i].identity = part.p.identity;
     auto const pos = folded_position(part);
 
     buffer[i].p[0] = static_cast<float>(pos[0]);
@@ -86,7 +86,7 @@ static void pack_particles(ParticleRange particles,
     }
 #endif
 
-#ifdef LB_ELECTROHYDRODYNAMICS
+#if defined(LB_ELECTROHYDRODYNAMICS) && defined(LB_GPU)
     buffer[i].mu_E[0] = static_cast<float>(part.p.mu_E[0]);
     buffer[i].mu_E[1] = static_cast<float>(part.p.mu_E[1]);
     buffer[i].mu_E[2] = static_cast<float>(part.p.mu_E[2]);

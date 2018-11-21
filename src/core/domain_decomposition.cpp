@@ -27,6 +27,7 @@
 
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
+#include "grid.hpp"
 
 #include "utils/mpi/sendrecv.hpp"
 #include "utils/serialization/ParticleList.hpp"
