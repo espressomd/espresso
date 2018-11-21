@@ -178,7 +178,7 @@ inline double get_mi_coord(double a, double b, int dir) {
   auto dx = a - b;
 
   if (PERIODIC(dir) && std::fabs(dx) > half_box_l[dir])
-    dx -= dround(dx * box_l_i[dir]) * box_l[dir];
+    dx -= std::round(dx * box_l_i[dir]) * box_l[dir];
 
   return dx;
 }
