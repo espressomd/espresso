@@ -281,7 +281,10 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 
 /*affinity potential*/
 #ifdef AFFINITY
-  add_affinity_pair_force(p1, p2, ia_params, d, dist, force.data());
+  // Prevent jump to non-inlined function
+  if (dist < ia_params->affinity_cut) {
+    add_affinity_pair_force(p1, p2, ia_params, d, dist, force.data());
+  }
 #endif
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
@@ -781,6 +784,10 @@ inline void check_particle_force(Particle *part) {
 #endif
 }
 
-inline void add_single_particle_force(Particle *p) { add_bonded_force(p); }
+inline void add_single_particle_force(Particle *p) { 
+  if (p->bl.n) {
+    add_bonded_force(p); 
+  }
+}
 
 #endif
