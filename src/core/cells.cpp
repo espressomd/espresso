@@ -264,16 +264,8 @@ void realloc_cells(int size) {
   for (auto &c : cells) {
     c.resize(0);
   }
-
-  auto const old_size = cells.size();
-
   /* resize the cell list */
   cells.resize(size);
-
-  /* initialize new cells */
-  for (int i = old_size; i < size; i++) {
-    init_particlelist(&cells[i]);
-  }
 }
 
 /*************************************************/
