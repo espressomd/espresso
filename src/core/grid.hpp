@@ -105,9 +105,6 @@ extern double my_right[3];
     determine one automatically. */
 void init_node_grid();
 
-/** return whether node grid was set. */
-int node_grid_is_set();
-
 /** node mapping: array -> node.
  *
  * \param node   rank of the node you want to know the position for.

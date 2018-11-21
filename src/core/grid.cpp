@@ -70,8 +70,6 @@ void init_node_grid() {
   cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
 }
 
-int node_grid_is_set() { return (node_grid[0] > 0); }
-
 int map_position_node_array(const Vector3d &pos) {
   int i, im[3] = {0, 0, 0};
   double f_pos[3];
