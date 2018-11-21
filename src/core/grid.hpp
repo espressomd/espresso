@@ -174,7 +174,7 @@ int map_3don2d_grid(int g3d[3], int g2d[3], int mult[3]);
  * the particles accordingly */
 void rescale_boxl(int dir, double d_new);
 
-inline double get_mi_coord(double a, double b, int dir) {
+template <typename T> T get_mi_coord(T a, T b, int dir) {
   auto dx = a - b;
 
   if (PERIODIC(dir) && std::fabs(dx) > half_box_l[dir])
@@ -192,9 +192,7 @@ inline double get_mi_coord(double a, double b, int dir) {
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++) {
-    res[i] = a[i] - b[i];
-    if (PERIODIC(i) && std::fabs(res[i]) > half_box_l[i])
-      res[i] -= std::round(res[i] * box_l_i[i]) * box_l[i];
+    res[i] = get_mi_coord(a[i], b[i], i);
   }
 }
 
