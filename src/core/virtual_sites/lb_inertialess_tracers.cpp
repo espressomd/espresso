@@ -279,7 +279,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
         } else
 #endif
         {
-          lb_calc_modes(index, modes);
+          auto const modes = lb_calc_modes(index);
           local_rho =
               lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
 
