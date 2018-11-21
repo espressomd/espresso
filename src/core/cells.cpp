@@ -41,6 +41,7 @@
 #include "utils/mpi/gather_buffer.hpp"
 
 #include <boost/iterator/indirect_iterator.hpp>
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -289,9 +290,10 @@ void announce_resort_particles() {
 /*************************************************/
 
 int cells_get_n_particles() {
-  using std::distance;
-  return distance(local_cells.particles().begin(),
-                  local_cells.particles().end());
+  return  std::accumulate(local_cells.begin(), local_cells.end(),
+          0, [](int n, const Cell * c) {
+      return n + c->n;
+  });
 }
 
 /*************************************************/
@@ -304,9 +306,7 @@ namespace {
 void fold_and_reset(Particle &p) {
   fold_position(p.r.p, p.l.i);
 
-  for (int i = 0; i < 3; i++) {
-    p.l.p_old[i] = p.r.p[i];
-  }
+  p.l.p_old = p.r.p;
 }
 
 /**

@@ -296,9 +296,6 @@ void announce_resort_particles();
 /* Checks if a particle resorting is required. */
 void check_resort_particles();
 
-/* Do a strict particle sorting, including order in the cells. */
-void local_sort_particles();
-
 /*@}*/
 
 /* @brief Finds the cell in which a particle is stored
