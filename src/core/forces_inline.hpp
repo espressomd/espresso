@@ -92,25 +92,9 @@ inline void init_ghost_force(Particle *part) {
   part->f.f[2] = 0;
 
 #ifdef ROTATION
-  {
-    double scale;
-    /* set torque to zero */
     part->f.torque[0] = 0;
     part->f.torque[1] = 0;
     part->f.torque[2] = 0;
-
-    /* and rescale quaternion, so it is exactly of unit length */
-    scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
-                 Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
-    if (scale == 0) {
-      part->r.quat[0] = 1;
-    } else {
-      part->r.quat[0] /= scale;
-      part->r.quat[1] /= scale;
-      part->r.quat[2] /= scale;
-      part->r.quat[3] /= scale;
-    }
-  }
 #endif
 }
 
