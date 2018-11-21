@@ -92,9 +92,9 @@ inline void init_ghost_force(Particle *part) {
   part->f.f[2] = 0;
 
 #ifdef ROTATION
-    part->f.torque[0] = 0;
-    part->f.torque[1] = 0;
-    part->f.torque[2] = 0;
+  part->f.torque[0] = 0;
+  part->f.torque[1] = 0;
+  part->f.torque[2] = 0;
 #endif
 }
 
@@ -784,9 +784,9 @@ inline void check_particle_force(Particle *part) {
 #endif
 }
 
-inline void add_single_particle_force(Particle *p) { 
+inline void add_single_particle_force(Particle *p) {
   if (p->bl.n) {
-    add_bonded_force(p); 
+    add_bonded_force(p);
   }
 }
 
