@@ -97,7 +97,6 @@ therefore have a look at \ref dd_topology_init or \ref nsq_topology_init for
 further details.
 */
 #include "Cell.hpp"
-#include <mpi.h>
 
 /** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/
@@ -171,7 +170,7 @@ struct GhostCommunication {
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
      this is the shift vector. Normally this a integer multiple of the box
      length. The shift is done on the sender side */
-  double shift[3];
+  Vector3d shift;
 };
 
 /** Properties for a ghost communication. A ghost communication is defined */
