@@ -35,20 +35,7 @@ public:
 #ifdef ROTATION
 
       double RMat[9];
-      double vel_lab[3];
-      double vel_body[3];
-
-      vel_lab[0] = partCfg[ids()[i]].m.v[0];
-      vel_lab[1] = partCfg[ids()[i]].m.v[1];
-      vel_lab[2] = partCfg[ids()[i]].m.v[2];
-      define_rotation_matrix(partCfg[ids()[i]], RMat);
-
-      vel_body[0] = RMat[0 + 3 * 0] * vel_lab[0] +
-                    RMat[0 + 3 * 1] * vel_lab[1] + RMat[0 + 3 * 2] * vel_lab[2];
-      vel_body[1] = RMat[1 + 3 * 0] * vel_lab[0] +
-                    RMat[1 + 3 * 1] * vel_lab[1] + RMat[1 + 3 * 2] * vel_lab[2];
-      vel_body[2] = RMat[2 + 3 * 0] * vel_lab[0] +
-                    RMat[2 + 3 * 1] * vel_lab[1] + RMat[2 + 3 * 2] * vel_lab[2];
+      const Vector3d vel_body = convert_vector_space_to_body(partCfg[i],partCfg[i].m.v);
 
       res[3 * i + 0] = vel_body[0];
       res[3 * i + 1] = vel_body[1];

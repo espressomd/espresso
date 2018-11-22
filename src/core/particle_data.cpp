@@ -523,7 +523,7 @@ int set_particle_rotation(int part, int rot) {
 }
 #endif
 #ifdef ROTATION
-int rotate_particle(int part, double axis[3], double angle) {
+int rotate_particle(int part, const Vector3d& axis, double angle) {
   auto const pnode = get_particle_node(part);
 
   mpi_rotate_particle(pnode, part, axis, angle);
@@ -657,65 +657,35 @@ int set_particle_quat(int part, double quat[4]) {
   return ES_OK;
 }
 
-int set_particle_omega_lab(int part, double omega_lab[3]) {
+int set_particle_omega_lab(int part, const Vector3d& omega_lab) {
   auto const &particle = get_particle_data(part);
 
-  /* Internal functions require the body coordinates
-     so we need to convert to these from the lab frame */
-
-  double A[9];
-  double omega[3];
-
-  define_rotation_matrix(particle, A);
-
-  omega[0] = A[0 + 3 * 0] * omega_lab[0] + A[0 + 3 * 1] * omega_lab[1] +
-             A[0 + 3 * 2] * omega_lab[2];
-  omega[1] = A[1 + 3 * 0] * omega_lab[0] + A[1 + 3 * 1] * omega_lab[1] +
-             A[1 + 3 * 2] * omega_lab[2];
-  omega[2] = A[2 + 3 * 0] * omega_lab[0] + A[2 + 3 * 1] * omega_lab[1] +
-             A[2 + 3 * 2] * omega_lab[2];
-
   auto const pnode = get_particle_node(part);
-  mpi_send_omega(pnode, part, omega);
+  mpi_send_omega(pnode, part, convert_vector_space_to_body(particle,omega_lab).data());
   return ES_OK;
 }
 
-int set_particle_omega_body(int part, double omega[3]) {
+int set_particle_omega_body(int part, const Vector3d& omega) {
   auto const pnode = get_particle_node(part);
-  mpi_send_omega(pnode, part, omega);
+  mpi_send_omega(pnode, part, omega.data());
   return ES_OK;
 }
 
-int set_particle_torque_lab(int part, double torque_lab[3]) {
+int set_particle_torque_lab(int part, const Vector3d& torque_lab) {
   auto const &particle = get_particle_data(part);
 
-  /* Internal functions require the body coordinates
-     so we need to convert to these from the lab frame */
-
-  double A[9];
-  double torque[3];
-
-  define_rotation_matrix(particle, A);
-
-  torque[0] = A[0 + 3 * 0] * torque_lab[0] + A[0 + 3 * 1] * torque_lab[1] +
-              A[0 + 3 * 2] * torque_lab[2];
-  torque[1] = A[1 + 3 * 0] * torque_lab[0] + A[1 + 3 * 1] * torque_lab[1] +
-              A[1 + 3 * 2] * torque_lab[2];
-  torque[2] = A[2 + 3 * 0] * torque_lab[0] + A[2 + 3 * 1] * torque_lab[1] +
-              A[2 + 3 * 2] * torque_lab[2];
-
   auto const pnode = get_particle_node(part);
-  mpi_send_torque(pnode, part, torque);
+  mpi_send_torque(pnode, part, convert_vector_space_to_body(particle,torque_lab).data());
   return ES_OK;
 }
 
-int set_particle_torque_body(int part, double torque[3]) {
+int set_particle_torque_body(int part, const Vector3d& torque) {
   auto const pnode = get_particle_node(part);
 
   /* Nothing to be done but pass, since the coordinates
      are already in the proper frame */
 
-  mpi_send_torque(pnode, part, torque);
+  mpi_send_torque(pnode, part, torque.data());
   return ES_OK;
 }
 
@@ -1239,9 +1209,6 @@ void pointer_to_omega_body(Particle const *p, double const *&res) {
   res = p->m.omega.data();
 }
 
-void pointer_to_torque_lab(Particle const *p, double const *&res) {
-  res = p->f.torque.data();
-}
 
 void pointer_to_quat(Particle const *p, double const *&res) {
   res = p->r.quat.data();

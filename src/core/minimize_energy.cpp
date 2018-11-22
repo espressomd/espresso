@@ -95,7 +95,7 @@ bool steepest_descent_step(void) {
     }
 #ifdef ROTATION
     // Rotational increment
-    double dq[3]; // Vector parallel to torque
+    Vector3d dq; // Vector parallel to torque
 
     for (int j = 0; j < 3; j++) {
       dq[j] = 0;
@@ -106,7 +106,7 @@ bool steepest_descent_step(void) {
       dq[j] = params->gamma * p.f.torque[j];
     }
     // Normalize rotation axis and compute amount of rotation
-    double l = normr(dq);
+    double l = dq.norm();
     if (l > 0.0) {
       for (int j = 0; j < 3; j++)
         dq[j] /= l;
@@ -116,7 +116,7 @@ bool steepest_descent_step(void) {
         l = sgn(l) * params->max_displacement;
 
       // Rotate the particle around axis dq by amount l
-      local_rotate_particle(&(p), dq, l);
+      local_rotate_particle(p, dq, l);
     }
 #endif
 

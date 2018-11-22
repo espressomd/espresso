@@ -644,15 +644,15 @@ void mpi_send_rotational_inertia_slave(int pnode, int part) {
 #endif
 }
 
-void mpi_rotate_particle(int pnode, int part, double axis[3], double angle) {
+void mpi_rotate_particle(int pnode, int part, const Vector3d& axis, double angle) {
 #ifdef ROTATION
   mpi_call(mpi_rotate_particle_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    local_rotate_particle(p, axis, angle);
+    local_rotate_particle(*p, axis, angle);
   } else {
-    MPI_Send(axis, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    MPI_Send(axis.data(), 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
     MPI_Send(&angle, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
 
@@ -664,10 +664,11 @@ void mpi_rotate_particle_slave(int pnode, int part) {
 #ifdef ROTATION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    double axis[3], angle;
-    MPI_Recv(axis, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    Vector3d axis;
+    double angle;
+    MPI_Recv(axis.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     MPI_Recv(&angle, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    local_rotate_particle(p, axis, angle);
+    local_rotate_particle(*p, axis, angle);
   }
 
   on_particle_change();
@@ -815,7 +816,7 @@ void mpi_send_quat_slave(int pnode, int part) {
 
 /********************* REQ_SET_OMEGA ********/
 
-void mpi_send_omega(int pnode, int part, double omega[3]) {
+void mpi_send_omega(int pnode, int part, const double omega[3]) {
 #ifdef ROTATION
   mpi_call(mpi_send_omega_slave, pnode, part);
 
@@ -847,7 +848,7 @@ void mpi_send_omega_slave(int pnode, int part) {
 
 /********************* REQ_SET_TORQUE ********/
 
-void mpi_send_torque(int pnode, int part, double torque[3]) {
+void mpi_send_torque(int pnode, int part, const double torque[3]) {
 #ifdef ROTATION
   mpi_call(mpi_send_torque_slave, pnode, part);
 
