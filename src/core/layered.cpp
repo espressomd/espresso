@@ -117,7 +117,14 @@ void layered_topology_release() {
   free_comm(&cell_structure.collect_ghost_force_comm);
 }
 
-static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
+namespace {
+    enum class CommDirection {
+        LOCAL_TO_GHOST,
+        GHOST_TO_LOCAL
+    };
+}
+
+static void layered_prepare_comm(GhostCommunicator *comm, int data_parts, CommDirection direction) {
   int c, n;
 
   if (n_nodes > 1) {
@@ -152,7 +159,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c == 1)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = btm;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (direction == CommDirection::GHOST_TO_LOCAL) {
           comm->comm[c].part_lists[0] = &cells[0];
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send force to %d btmg\n",
                              this_node, btm));
@@ -176,7 +183,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c == 0)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = top;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (direction == CommDirection::GHOST_TO_LOCAL) {
           comm->comm[c].part_lists[0] = &cells[n_layers];
           CELL_TRACE(fprintf(stderr, "%d: ghostrec get force from %d topl\n",
                              this_node, top));
@@ -200,20 +207,18 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c % 2 == 1)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = top;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (direction == CommDirection::GHOST_TO_LOCAL) {
           comm->comm[c].part_lists[0] = &cells[n_layers + 1];
+          comm->comm[c].shift = Vector3d{0,0,box_l[2]};
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send force to %d topg\n",
                              this_node, top));
         } else {
           comm->comm[c].part_lists[0] = &cells[n_layers];
 
           /* if periodic and bottom or top, send shifted */
-          if (((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) &&
-              (data_parts & GHOSTTRANS_POSITION)) {
+          if ((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) {
             comm->comm[c].shift = Vector3d{0,0,-box_l[2]};
           }
-          CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f topl\n",
-                             this_node, top, comm->comm[c].shift[2]));
         }
         c++;
       }
@@ -226,14 +231,10 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c % 2 == 0)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = btm;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (direction == CommDirection::GHOST_TO_LOCAL) {
           comm->comm[c].part_lists[0] = &cells[1];
-          CELL_TRACE(fprintf(stderr, "%d: ghostrec get force from %d btml\n",
-                             this_node, btm));
         } else {
           comm->comm[c].part_lists[0] = &cells[0];
-          CELL_TRACE(fprintf(stderr, "%d: ghostrec recv from %d btmg\n",
-                             this_node, btm));
         }
         c++;
       }
@@ -257,31 +258,27 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
       /* downwards */
       comm->comm[c].type = GHOST_LOCL;
-      if (data_parts == GHOSTTRANS_FORCE) {
+      if (direction == CommDirection::GHOST_TO_LOCAL) {
         comm->comm[c].part_lists[0] = &cells[0];
         comm->comm[c].part_lists[1] = &cells[n_layers];
+        comm->comm[c].shift = Vector3d{0, 0, -box_l[2]};
       } else {
         comm->comm[c].part_lists[0] = &cells[1];
         comm->comm[c].part_lists[1] = &cells[n_layers + 1];
-        /* here it is periodic */
-        if (data_parts & GHOSTTRANS_POSITION) {
-            comm->comm[c].shift = Vector3d{0, 0, box_l[2]};
-        }
+        comm->comm[c].shift = Vector3d{0, 0, box_l[2]};
       }
       c++;
 
       /* upwards */
       comm->comm[c].type = GHOST_LOCL;
-      if (data_parts == GHOSTTRANS_FORCE) {
+      if (direction == CommDirection::GHOST_TO_LOCAL) {
         comm->comm[c].part_lists[0] = &cells[n_layers + 1];
         comm->comm[c].part_lists[1] = &cells[1];
+        comm->comm[c].shift = Vector3d{0, 0, box_l[2]};
       } else {
         comm->comm[c].part_lists[0] = &cells[n_layers];
         comm->comm[c].part_lists[1] = &cells[0];
-        /* here it is periodic */
-        if (data_parts & GHOSTTRANS_POSITION) {
-            comm->comm[c].shift = Vector3d{0, 0, -box_l[2]};
-        }
+        comm->comm[c].shift = Vector3d{0, 0, -box_l[2]};
       }
     }
   }
@@ -366,13 +363,15 @@ void layered_topology_init(CellPList *old) {
   ghost_cells.cell[1] = &cells.back();
 
   /* create communicators */
-  layered_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
-  layered_prepare_comm(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-  layered_prepare_comm(&cell_structure.update_ghost_pos_comm,
-                       GHOSTTRANS_POSITION);
-  layered_prepare_comm(&cell_structure.collect_ghost_force_comm,
-                       GHOSTTRANS_FORCE);
+    layered_prepare_comm(&cell_structure.ghost_to_local_comm, 0, CommDirection::GHOST_TO_LOCAL);
+    layered_prepare_comm(&cell_structure.local_to_ghost_comm, 0, CommDirection::LOCAL_TO_GHOST);
+    layered_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM, CommDirection::LOCAL_TO_GHOST);
+    layered_prepare_comm(&cell_structure.exchange_ghosts_comm,
+                         GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION, CommDirection::LOCAL_TO_GHOST);
+    layered_prepare_comm(&cell_structure.update_ghost_pos_comm,
+                         GHOSTTRANS_POSITION, CommDirection::LOCAL_TO_GHOST);
+    layered_prepare_comm(&cell_structure.collect_ghost_force_comm,
+                         GHOSTTRANS_FORCE, CommDirection::GHOST_TO_LOCAL);
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {

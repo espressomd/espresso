@@ -434,6 +434,9 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
   }
   /* exchange SEND/RECV */
   for (i = 0; i < comm->num; i++) {
+    if(comm->comm[i].shift) {
+      comm->comm[i].shift = -comm->comm[i].shift.get();
+    }
     if (comm->comm[i].type == GHOST_SEND)
       comm->comm[i].type = GHOST_RECV;
     else if (comm->comm[i].type == GHOST_RECV)
@@ -760,6 +763,10 @@ void dd_topology_init(CellPList *old) {
   exchange_data =
       (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
   update_data = (GHOSTTRANS_POSITION);
+
+  dd_prepare_comm(&cell_structure.local_to_ghost_comm, 0);
+  dd_prepare_comm(&cell_structure.ghost_to_local_comm, 0);
+  dd_revert_comm_order(&cell_structure.ghost_to_local_comm);
 
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data);
   dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
