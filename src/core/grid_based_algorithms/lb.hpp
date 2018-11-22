@@ -115,12 +115,12 @@ struct LB_FluidNode {
 #endif // LB_BOUNDARIES
 
   /** local force density */
-  double force_density[3];
+  Vector3d force_density;
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   // For particle update, we need the force on the nodes in LBM
   // Yet, Espresso resets the force immediately after the LBM update
   // Therefore we save it here
-  double force_density_buf[3];
+  Vector3d force_density_buf;
 #endif
 };
 
@@ -147,7 +147,7 @@ typedef struct {
 
   /** external force density applied to the fluid at each lattice site (MD
    * units) */
-  double ext_force_density[3];
+  Vector3d ext_force_density;
   double rho_lb_units;
   /** relaxation of the odd kinetic modes */
   double gamma_odd;
@@ -249,6 +249,10 @@ void lb_coupling_set_rng_state(uint64_t counter);
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. */
 Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &p);
+
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &p);
+#endif
 
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                                  double *pi);

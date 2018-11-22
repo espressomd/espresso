@@ -186,7 +186,7 @@ void CoupleIBMParticleToFluid(Particle *p) {
         // Do not put force into a halo node
         if (!IsHalo(node_index[(z * 2 + y) * 2 + x])) {
           // Add force into the lbfields structure
-          double *local_f =
+          auto &local_f =
               lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
           local_f[0] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
@@ -214,7 +214,6 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
   int x, y, z;
-  double *f;
 
   double lbboundary_mindist, distvec[3];
   Vector3d pos;
@@ -246,7 +245,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
       for (x = 0; x < 2; x++) {
 
         index = node_index[(z * 2 + y) * 2 + x];
-        f = lbfields[index].force_density_buf;
+        const auto& f = lbfields[index].force_density_buf;
 
 // This can be done easier without copying the code twice
 // We probably can even set the boundary velocity directly

@@ -2307,9 +2307,9 @@ inline std::array<double, 19> lb_thermalize_modes(Lattice::index_t index, const 
 
 template<typename T> std::array<T, 19> lb_apply_forces(Lattice::index_t index, const std::array<T, 19>& modes) {
   std::array<T, 19> modes_with_forces = modes;
-  T rho, *f, u[3], C[6];
+  T rho, u[3], C[6];
 
-  f = lbfields[index].force_density;
+  const auto& f = lbfields[index].force_density;
 
   rho = modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
@@ -2616,11 +2616,9 @@ Vector3d node_u(Lattice::index_t index) {
     return lbfields[index].slip_velocity;
   }
 #endif // LB_BOUNDARIES
-
   auto const modes = lb_calc_modes(index);
   auto const local_rho =
       lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
-
   return Vector3d{modes[1], modes[2], modes[3]} / local_rho;
 }
 } // namespace
@@ -2644,6 +2642,25 @@ Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
 
   return (lbpar.agrid / lbpar.tau) * interpolated_u;
 }
+
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &pos){
+  Vector3d interpolated_f{};
+  lattice_interpolation(lblattice, pos,
+                        [&interpolated_f](Lattice::index_t index, double w) {
+#ifdef LB_BOUNDARIES
+                        if (!lbfields[index].boundary) {
+#endif
+                        auto const modes = lb_calc_modes(index);
+                        auto const local_rho = modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+                        interpolated_f += w / 2 / local_rho * (lbfields[index].force_density_buf - (lbpar.ext_force_density * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau));
+#ifdef LB_BOUNDARIES
+                        }
+#endif
+  });
+  return interpolated_f;
+}
+#endif
 
 /** Calculate particle lattice interactions.
  * So far, only viscous coupling with Stokesian friction is
