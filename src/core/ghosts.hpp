@@ -98,6 +98,8 @@ further details.
 */
 #include "Cell.hpp"
 
+#include <boost/optional.hpp>
+
 /** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/
 /*@{*/
@@ -170,7 +172,7 @@ struct GhostCommunication {
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
      this is the shift vector. Normally this a integer multiple of the box
      length. The shift is done on the sender side */
-  Vector3d shift;
+  boost::optional<Vector3d> shift;
 };
 
 /** Properties for a ghost communication. A ghost communication is defined */

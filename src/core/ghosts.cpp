@@ -75,8 +75,7 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
   comm->comm =
       (GhostCommunication *)Utils::malloc(num * sizeof(GhostCommunication));
   for (int i = 0; i < num; i++) {
-    comm->comm[i].shift[0] = comm->comm[i].shift[1] = comm->comm[i].shift[2] =
-        0.0;
+    comm->comm[i].shift = boost::none;
     comm->comm[i].n_part_lists = 0;
     comm->comm[i].part_lists = nullptr;
   }
@@ -186,8 +185,9 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           ParticlePosition *pp = reinterpret_cast<ParticlePosition *>(insert);
           int i;
           *pp = pt->r;
-          for (i = 0; i < 3; i++)
-            pp->p[i] += gc->shift[i];
+          if(gc->shift) {
+              pp->p += gc->shift.get();
+          }
           insert += sizeof(ParticlePosition);
         } else if (data_parts & GHOSTTRANS_POSITION) {
           memcpy(insert, &pt->r, sizeof(ParticlePosition));
@@ -424,8 +424,9 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
           /* ok, this is not nice, but perhaps fast */
           int i;
           pt2->r = pt1->r;
-          for (i = 0; i < 3; i++)
-            pt2->r.p[i] += gc->shift[i];
+          if(gc->shift) {
+              pt2->r.p += gc->shift.get();
+          }
         } else if (data_parts & GHOSTTRANS_POSITION)
           pt2->r = pt1->r;
         if (data_parts & GHOSTTRANS_MOMENTUM) {
