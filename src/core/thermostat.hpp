@@ -213,11 +213,8 @@ inline void friction_thermo_langevin(Particle *p) {
                     (langevin_pref1_temp[1] != langevin_pref1_temp[2]) ||
                     (langevin_pref2_temp[0] != langevin_pref2_temp[1]) ||
                     (langevin_pref2_temp[1] != langevin_pref2_temp[2]);
-  Vector3d velocity_body;
-  if (aniso_flag) {
-    velocity_body =
-        (aniso_flag) ? convert_vector_space_to_body(*p, velocity) : Vector3d{};
-  }
+  auto const velocity_body =
+      (aniso_flag) ? convert_vector_space_to_body(*p, velocity) : Vector3d{};
 #endif
 
   // Do the actual thermostatting
