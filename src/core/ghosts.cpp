@@ -181,7 +181,6 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
-            //ParticlePosition *pp = reinterpret_cast<ParticlePosition *>(insert);
             auto pp = new (insert) ParticlePosition(pt->r);
 
             if (gc->shift) {
