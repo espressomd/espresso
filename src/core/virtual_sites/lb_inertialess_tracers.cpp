@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "lb_inertialess_tracers_cuda_interface.hpp"
 
 // ****** Functions for internal use ********
 
