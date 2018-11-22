@@ -137,7 +137,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
     for (c = 0; c < n; c++) {
       comm->comm[c].part_lists = (Cell **)Utils::malloc(sizeof(Cell *));
       comm->comm[c].n_part_lists = 1;
-      comm->comm[c].mpi_comm = comm_cart;
     }
 
     c = 0;
@@ -257,7 +256,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
       for (c = 0; c < n; c++) {
         comm->comm[c].part_lists = (Cell **)Utils::malloc(2 * sizeof(Cell *));
         comm->comm[c].n_part_lists = 2;
-        comm->comm[c].mpi_comm = comm_cart;
         comm->comm[c].node = this_node;
       }
 

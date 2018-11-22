@@ -61,7 +61,6 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
     comm->comm[n].part_lists[0] = &cells[n];
     comm->comm[n].n_part_lists = 1;
     comm->comm[n].node = n;
-    comm->comm[n].mpi_comm = comm_cart;
   }
 }
 

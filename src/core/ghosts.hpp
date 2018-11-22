@@ -156,17 +156,14 @@ further details.
 /************************************************************/
 /*@{*/
 
-typedef struct {
+struct GhostCommunication {
 
   /** Communication type. */
   int type;
   /** Node to communicate with (to use with all MPI operations). */
   int node;
-  /** MPI communicator handle (to use with GHOST_BCST, GHOST_GATH, GHOST_RDCE).
-   */
-  MPI_Comm mpi_comm;
 
-  /** Number of particle lists to communicate. */
+    /** Number of particle lists to communicate. */
   int n_part_lists;
   /** Pointer array to particle lists to communicate. */
   Cell **part_lists;
@@ -175,7 +172,7 @@ typedef struct {
      this is the shift vector. Normally this a integer multiple of the box
      length. The shift is done on the sender side */
   double shift[3];
-} GhostCommunication;
+};
 
 /** Properties for a ghost communication. A ghost communication is defined */
 typedef struct {
@@ -202,9 +199,6 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
 
 /** Free a communicator. */
 void free_comm(GhostCommunicator *comm);
-
-/** Initialize ghosts. */
-void ghost_init();
 
 /**
  * @brief do a ghost communication with the data parts specified
