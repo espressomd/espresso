@@ -32,10 +32,10 @@ print(espressomd.features())
 # Interaction parameters (repulsive Lennard-Jones)
 #############################################################
 
-lj_eps = 1.0 # LJ epsilon
-lj_sig = 1.0 # particle diameter
-lj_cap = 20. # force cap
-lj_cut = lj_sig * 2**(1. / 6.) # cutoff distance
+lj_eps = 1.0  # LJ epsilon
+lj_sig = 1.0  # particle diameter
+lj_cap = 20.  # force cap
+lj_cut = lj_sig * 2**(1. / 6.)  # cutoff distance
 
 # System parameters
 #############################################################
@@ -52,7 +52,7 @@ try:
         density = float(sys.argv[2])
     assert density > 0, "density must be a positive number"
     assert density < np.pi / (3 * np.sqrt(2)), \
-      "density exceeds the physical limit of sphere packing (~0.74)"
+        "density exceeds the physical limit of sphere packing (~0.74)"
     mode = "benchmark"
     if len(sys.argv) == 4:
         assert sys.argv[3] == "--visualize"
@@ -67,18 +67,17 @@ except (ValueError, IndexError) as err:
 
 measurement_steps = int(np.round(5e6 / n_part_per_core, -2))
 assert(measurement_steps >= 100), \
-  "{} steps per tick are too short".format(measurement_steps)
+    "{} steps per tick are too short".format(measurement_steps)
 # volume of N spheres with radius r: N * (4/3*pi*r^3)
-box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3 / density)**(1./3.)
+box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3 / density)**(1. / 3.)
 
 # System
 #############################################################
-system = espressomd.System(box_l=3*(box_l,))
+system = espressomd.System(box_l=3 * (box_l,))
 # PRNG seeds
 #############################################################
 system.random_number_generator_state = list(range(
-      nproc * (system._get_PRNG_state_size() + 1)))
-#system.random_number_generator_state = list(range(len(system.random_number_generator_state)))
+    nproc * (system._get_PRNG_state_size() + 1)))
 np.random.seed(1)
 # Integration parameters
 #############################################################
@@ -110,21 +109,32 @@ for i in range(n_part):
 #  Warmup Integration                                       #
 #############################################################
 
-system.integrator.set_steepest_descent(f_max=0, gamma=0.001, max_displacement=0.01)
+system.integrator.set_steepest_descent(
+    f_max=0,
+    gamma=0.001,
+    max_displacement=0.01)
 
 # warmup
 while system.analysis.energy()["total"] > 10 * n_part:
-  print('minimization: {:.1f}'.format(system.analysis.energy()["total"]))
-  system.integrator.run(10)
+    print('minimization: {:.1f}'.format(system.analysis.energy()["total"]))
+    system.integrator.run(10)
 print()
 system.integrator.set_vv()
 
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 # tune skin
-print('tune: {}'.format(system.cell_system.tune_skin(min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
+print('tune: {}'.format(system.cell_system.tune_skin(
+    min_skin=0.2,
+    max_skin=1,
+    tol=0.05,
+    int_steps=100)))
 system.integrator.run(min(30 * measurement_steps, 60000))
-print('tune: {}'.format(system.cell_system.tune_skin(min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
+print('tune: {}'.format(system.cell_system.tune_skin(
+    min_skin=0.2,
+    max_skin=1,
+    tol=0.05,
+    int_steps=100)))
 
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
@@ -145,9 +155,9 @@ if mode == 'benchmark':
         tick = time()
         system.integrator.run(measurement_steps)
         tock = time()
-        t = (tock-tick) / measurement_steps
-        print('step {}, time = {:.2e}, verlet: {:.2f}'.format(i, t,
-          system.cell_system.get_state()["verlet_reuse"]))
+        t = (tock - tick) / measurement_steps
+        print('step {}, time = {:.2e}, verlet: {:.2f}'
+              .format(i, t, system.cell_system.get_state()["verlet_reuse"]))
         all_t.append(t)
     main_tock = time()
     # average time
@@ -163,13 +173,13 @@ if mode == 'benchmark':
     # write report
     report = ('"{script}","{arguments}",{cores},"{mpi}",{mean:.3e},'
               '{ci:.3e},{n},{dur:.1f},{E1:.5e},{E2:.5e},{E3:.5e}\n'.format(
-              script=os.path.basename(sys.argv[0]),
-              arguments=" ".join(map(str, sys.argv[1:])),
-              cores=nproc, dur=main_tock - main_tick, n=measurement_steps,
-              mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci,
-              E1=system.analysis.energy()["total"],
-              E2=system.analysis.energy()["kinetic"],
-              E3=system.analysis.energy()["non_bonded"]))
+                  script=os.path.basename(sys.argv[0]),
+                  arguments=" ".join(map(str, sys.argv[1:])),
+                  cores=nproc, dur=main_tock - main_tick, n=measurement_steps,
+                  mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci,
+                  E1=system.analysis.energy()["total"],
+                  E2=system.analysis.energy()["kinetic"],
+                  E3=system.analysis.energy()["non_bonded"]))
     if not os.path.isfile(report_path):
         report = ('"script","arguments","cores","MPI","mean","ci",'
                   '"steps_per_tick","duration","E1","E2","E3"\n' + report)
@@ -183,11 +193,9 @@ else:
         while True:
             system.integrator.run(1)
             visualizer.update()
-            sleep(1/60.) # limit framerate to at most 60 FPS
+            sleep(1 / 60.)  # limit framerate to at most 60 FPS
 
     t = Thread(target=main_thread)
     t.daemon = True
     t.start()
     visualizer.start()
-
-
