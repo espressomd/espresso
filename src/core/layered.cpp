@@ -161,7 +161,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
           /* if periodic and bottom or top, send shifted */
           if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK)) {
-              comm->data_parts |= GHOSTTRANS_POSSHFTD;
               comm->comm[c].shift = Vector3d{0, 0, box_l[2]};
           }
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f btml\n",
@@ -211,7 +210,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
           /* if periodic and bottom or top, send shifted */
           if (((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) &&
               (data_parts & GHOSTTRANS_POSITION)) {
-            comm->data_parts |= GHOSTTRANS_POSSHFTD;
             comm->comm[c].shift = Vector3d{0,0,-box_l[2]};
           }
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f topl\n",
@@ -267,7 +265,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         comm->comm[c].part_lists[1] = &cells[n_layers + 1];
         /* here it is periodic */
         if (data_parts & GHOSTTRANS_POSITION) {
-            comm->data_parts |= GHOSTTRANS_POSSHFTD;
             comm->comm[c].shift = Vector3d{0, 0, box_l[2]};
         }
       }
@@ -283,7 +280,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         comm->comm[c].part_lists[1] = &cells[0];
         /* here it is periodic */
         if (data_parts & GHOSTTRANS_POSITION) {
-            comm->data_parts |= GHOSTTRANS_POSSHFTD;
             comm->comm[c].shift = Vector3d{0, 0, -box_l[2]};
         }
       }

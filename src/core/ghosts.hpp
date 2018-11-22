@@ -130,10 +130,6 @@ further details.
 #define GHOSTTRANS_PROPRTS 1
 /// transfer \ref ParticlePosition
 #define GHOSTTRANS_POSITION 2
-/** flag for \ref GHOSTTRANS_POSITION, shift the positions by \ref
-   GhostCommunication::shift. Must be or'd together with \ref
-   GHOSTTRANS_POSITION */
-#define GHOSTTRANS_POSSHFTD 4
 /// transfer \ref ParticleMomentum
 #define GHOSTTRANS_MOMENTUM 8
 /// transfer \ref ParticleForce
@@ -158,7 +154,6 @@ further details.
 /*@{*/
 
 struct GhostCommunication {
-
   /** Communication type. */
   int type;
   /** Node to communicate with (to use with all MPI operations). */
@@ -176,7 +171,7 @@ struct GhostCommunication {
 };
 
 /** Properties for a ghost communication. A ghost communication is defined */
-typedef struct {
+struct GhostCommunicator {
 
   /** Particle data parts to transfer */
   int data_parts;
@@ -187,7 +182,7 @@ typedef struct {
   /** List of ghost communications. */
   GhostCommunication *comm;
 
-} GhostCommunicator;
+};
 
 /*@}*/
 
