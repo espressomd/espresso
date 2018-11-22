@@ -180,18 +180,14 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 #endif
           }
         }
-        if (data_parts & GHOSTTRANS_POSSHFTD) {
-          /* ok, this is not nice, but perhaps fast */
-          ParticlePosition *pp = reinterpret_cast<ParticlePosition *>(insert);
-          int i;
-          *pp = pt->r;
-          if(gc->shift) {
-              pp->p += gc->shift.get();
-          }
-          insert += sizeof(ParticlePosition);
-        } else if (data_parts & GHOSTTRANS_POSITION) {
-          memcpy(insert, &pt->r, sizeof(ParticlePosition));
-          insert += sizeof(ParticlePosition);
+        if (data_parts & GHOSTTRANS_POSITION) {
+            //ParticlePosition *pp = reinterpret_cast<ParticlePosition *>(insert);
+            auto pp = new (insert) ParticlePosition(pt->r);
+
+            if (gc->shift) {
+                pp->p += gc->shift.get();
+            }
+            insert += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           memcpy(insert, &pt->m, sizeof(ParticleMomentum));
@@ -420,15 +416,12 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
 #endif
           }
         }
-        if (data_parts & GHOSTTRANS_POSSHFTD) {
-          /* ok, this is not nice, but perhaps fast */
-          int i;
-          pt2->r = pt1->r;
-          if(gc->shift) {
-              pt2->r.p += gc->shift.get();
-          }
-        } else if (data_parts & GHOSTTRANS_POSITION)
-          pt2->r = pt1->r;
+        if (data_parts & GHOSTTRANS_POSITION) {
+            pt2->r = pt1->r;
+            if (gc->shift) {
+                pt2->r.p += gc->shift.get();
+            }
+        }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           pt2->m = pt1->m;
         }
