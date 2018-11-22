@@ -1780,7 +1780,6 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
 std::pair<double, double>
 WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   SingleReaction &current_reaction = reactions[reaction_id];
-  particle_inserted_too_close_to_another_one = false;
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
   // make reaction attempt
@@ -1792,11 +1791,7 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
          // need to hide the particle and recover it
   make_reaction_attempt(current_reaction, changed_particles_properties,
                         p_ids_created_particles, hidden_particles_properties);
-  double E_pot_new;
-  if (particle_inserted_too_close_to_another_one == true)
-    E_pot_new = std::numeric_limits<double>::max();
-  else
-    E_pot_new = calculate_current_potential_energy_of_system();
+  const double E_pot_new = calculate_current_potential_energy_of_system();
   // reverse reaction attempt
   // reverse reaction
   // 1) delete created product particles

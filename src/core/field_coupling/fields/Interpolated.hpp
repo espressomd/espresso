@@ -91,7 +91,7 @@ public:
   Vector3d grid_spacing() const { return m_grid_spacing; }
   storage_type const &field_data() const { return m_global_field; }
   Vector3d origin() const { return m_origin; }
-  Vector<3, int> shape() const {
+  Vector3i shape() const {
     return {m_global_field.shape(), m_global_field.shape() + 3};
   }
 

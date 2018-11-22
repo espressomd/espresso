@@ -241,8 +241,8 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
 void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype) {
   int k, n, dir, lr, cnt, num = 0;
-  int *grid = lattice->grid;
-  int *period = lattice->halo_grid;
+  const auto grid = lattice->grid;
+  const auto period = lattice->halo_grid;
 
   for (n = 0; n < hc->num; n++) {
     MPI_Type_free(&(hc->halo_info[n].datatype));

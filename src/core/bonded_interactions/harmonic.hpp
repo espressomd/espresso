@@ -29,9 +29,7 @@
 /************************************************************/
 
 #include "bonded_interaction_data.hpp"
-#include "debug.hpp"
 #include "particle_data.hpp"
-#include "random.hpp"
 #include "utils.hpp"
 
 /// set the parameters for the harmonic potential
@@ -50,44 +48,22 @@ int harmonic_set_params(int bond_type, double k, double r, double r_cut);
 inline int calc_harmonic_pair_force(Particle *p1, Particle *p2,
                                     Bonded_ia_parameters *iaparams,
                                     double dx[3], double force[3]) {
-  int i;
-  double fac;
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
-  double dr;
 
   if ((iaparams->p.harmonic.r_cut > 0.0) && (dist > iaparams->p.harmonic.r_cut))
     return 1;
 
-  dr = dist - iaparams->p.harmonic.r;
-  fac = -iaparams->p.harmonic.k * dr;
-  if (fabs(dr) > ROUND_ERROR_PREC) {
-    if (dist > ROUND_ERROR_PREC) { /* Regular case */
-      fac /= dist;
-    } else { /* dx[] == 0: the force is undefined. Let's use a random direction
-              */
-      for (i = 0; i < 3; i++)
-        dx[i] = d_random() - 0.5;
-      fac /= sqrt(sqrlen(dx));
-    }
+  auto const dr = dist - iaparams->p.harmonic.r;
+  auto fac = -iaparams->p.harmonic.k * dr;
+  if (dist > ROUND_ERROR_PREC) { /* Regular case */
+    fac /= dist;
   } else {
     fac = 0;
   }
 
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     force[i] = fac * dx[i];
-  ONEPART_TRACE(if (p1->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part "
-                            "id=%d at dist %f fac %.3e\n",
-                            this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                            p2->p.identity, dist2, fac));
-  ONEPART_TRACE(if (p2->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part "
-                            "id=%d at dist %f fac %.3e\n",
-                            this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                            p1->p.identity, dist2, fac));
 
   return 0;
 }

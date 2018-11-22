@@ -36,9 +36,6 @@ enum BondedInteraction {
   BONDED_IA_RIGID_BOND,
   /** Type of a virtual bond*/
   BONDED_IA_VIRTUAL_BOND,
-  /** Type of bonded interaction is a bond angle -- constraint distance
-     potential. */
-  BONDED_IA_ANGLEDIST,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
   /** Type of bonded interaction is a bond angle cosine potential. */
@@ -238,25 +235,6 @@ struct Rigid_bond_parameters {
   double v_tol;
 };
 
-/** Parameters for three body angular potential (bond-angle potentials) that
-    depends on distance to wall constraint.
-        ATTENTION: Note that there are different implementations of the bond
-   angle
-        potential which you may chose with a compiler flag in the file \ref
-   config.hpp !
-        bend - bending constant.
-        phi0 - equilibrium angle (default is 180 degrees / Pi)
-        dist0 - equilibrium distance (no default) */
-struct Angledist_bond_parameters {
-  double bend;
-  double phimin;
-  double distmin;
-  double phimax;
-  double distmax;
-  double cos_phi0;
-  double sin_phi0;
-};
-
 enum class tElasticLaw { NeoHookean, Skalak };
 
 /** Parameters for IBM elastic triangle (triel) **/
@@ -334,7 +312,6 @@ union Bond_parameters {
 #endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
-  Angledist_bond_parameters angledist;
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;

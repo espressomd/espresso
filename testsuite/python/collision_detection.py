@@ -52,6 +52,11 @@ class CollisionDetection(ut.TestCase):
     part_type_after_glueing = 3
     other_type = 5
 
+    def get_state_set_state_consistency(self):
+        state = self.s.collision_detection.get_params()
+        self.s.collision_detection.set_params(**state)
+        self.assertEqual(state, self.s.collision_detection.get_params())
+
     def test_00_interface_and_defaults(self):
         # Is it off by default
         self.assertEqual(self.s.collision_detection.mode, "off")
@@ -84,6 +89,7 @@ class CollisionDetection(ut.TestCase):
         # Check that it cannot be activated
         self.s.collision_detection.set_params(
             mode="bind_centers", distance=0.11, bond_centers=self.H)
+        self.get_state_set_state_consistency()
         self.s.integrator.run(1, recalc_forces=True)
         bond0 = ((self.s.bonded_inter[0], 1),)
         bond1 = ((self.s.bonded_inter[0], 0),)
@@ -99,6 +105,7 @@ class CollisionDetection(ut.TestCase):
 
         # Check turning it off
         self.s.collision_detection.set_params(mode="off")
+        self.get_state_set_state_consistency()
         self.assertEqual(self.s.collision_detection.mode, "off")
 
     def run_test_bind_at_point_of_collision_for_pos(self, *positions):
@@ -119,6 +126,7 @@ class CollisionDetection(ut.TestCase):
 
         self.s.collision_detection.set_params(
             mode="bind_at_point_of_collision", distance=0.11, bond_centers=self.H, bond_vs=self.H2, part_type_vs=1, vs_placement=0.4)
+        self.get_state_set_state_consistency()
         self.s.integrator.run(0, recalc_forces=True)
         self.verify_state_after_bind_at_poc(expected_np)
 
@@ -265,6 +273,7 @@ class CollisionDetection(ut.TestCase):
             bond_vs=self.H2,
             part_type_vs=1,
             vs_placement=0.4)
+        self.get_state_set_state_consistency()
 
         # Integrate lj liquid
         self.s.integrator.set_vv()
@@ -344,6 +353,7 @@ class CollisionDetection(ut.TestCase):
 
         self.s.collision_detection.set_params(
             mode="glue_to_surface", distance=0.11, distance_glued_particle_to_vs=0.02, bond_centers=self.H, bond_vs=self.H2, part_type_vs=self.part_type_vs, part_type_to_attach_vs_to=self.part_type_to_attach_vs_to, part_type_to_be_glued=self.part_type_to_be_glued, part_type_after_glueing=self.part_type_after_glueing)
+        self.get_state_set_state_consistency()
         self.s.integrator.run(0, recalc_forces=True)
         self.verify_state_after_glue_to_surface(expected_np)
 
@@ -493,6 +503,7 @@ class CollisionDetection(ut.TestCase):
         # Collision detection
         self.s.collision_detection.set_params(
             mode="glue_to_surface", distance=0.11, distance_glued_particle_to_vs=0.02, bond_centers=self.H, bond_vs=self.H2, part_type_vs=self.part_type_vs, part_type_to_attach_vs_to=self.part_type_to_attach_vs_to, part_type_to_be_glued=self.part_type_to_be_glued, part_type_after_glueing=self.part_type_after_glueing)
+        self.get_state_set_state_consistency()
 
         # Integrate lj liquid
         self.s.integrator.set_vv()
@@ -575,8 +586,8 @@ class CollisionDetection(ut.TestCase):
                 sigma=0,
          cutoff=0)
 
-    #@ut.skipIf(not espressomd.has_features("AngleHarmonic"),"Tests skipped because AngleHarmonic not compiled in")
-    def test_AngleHarmonic(self):
+    @ut.skipIf(not espressomd.has_features("BOND_ANGLE"), "Tests skipped because AngleHarmonic not compiled in")
+    def test_bind_three_particles(self):
         # Setup particles
         self.s.part.clear()
         dx = np.array((1, 0, 0))
@@ -603,6 +614,7 @@ class CollisionDetection(ut.TestCase):
         self.s.collision_detection.set_params(
             mode="bind_three_particles", bond_centers=self.H,
                                               bond_three_particles=2, three_particle_binding_angle_resolution=res, distance=cutoff)
+        self.get_state_set_state_consistency()
         self.s.integrator.run(0, recalc_forces=True)
         self.verify_triangle_binding(cutoff, self.s.bonded_inter[2], res)
 
@@ -713,6 +725,16 @@ class CollisionDetection(ut.TestCase):
             print()
 
         self.assertEqual(expected_angle_bonds, found_angle_bonds)
+
+    def test_zz_serialization(self):
+        self.s.collision_detection.set_params(
+            mode="bind_centers", distance=0.11, bond_centers=self.H)
+        reduce = self.s.collision_detection.__reduce__()
+        res = reduce[0](reduce[1][0])
+        self.assertEqual(res.__class__.__name__, "CollisionDetection")
+        self.assertEqual(res.mode, "bind_centers")
+        self.assertAlmostEqual(res.distance, 0.11, delta=1E-9)
+        self.assertEqual(res.bond_centers, self.H)
 
 
 if __name__ == "__main__":

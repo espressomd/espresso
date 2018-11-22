@@ -20,7 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define CORE_UTILS_ACCUMULATOR
 
 #include <boost/serialization/access.hpp>
+
+#include <algorithm>
 #include <cmath>
+#include <stdexcept>
+#include <vector>
 
 namespace Utils {
 

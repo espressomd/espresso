@@ -24,6 +24,7 @@ import unittest as ut
 import numpy as np
 
 import espressomd
+import espressomd.cuda_init
 import espressomd.electrostatics
 from espressomd import scafacos
 import tests_common
@@ -86,14 +87,14 @@ class CoulombCloudWall(ut.TestCase):
             self.assertLessEqual(
                 energy_abs_diff,
                 self.tolerance,
-                "Absolte energy difference " +
+                "Absolute energy difference " +
                 str(energy_abs_diff) +
                 " too large for " +
                 method_name)
         self.assertLessEqual(
             force_abs_diff,
             self.tolerance,
-            "Asbolute force difference " +
+            "Absolute force difference " +
             str(force_abs_diff) +
             " too large for method " +
             method_name)
@@ -109,7 +110,8 @@ class CoulombCloudWall(ut.TestCase):
             self.S.integrator.run(0)
             self.compare("p3m", energy=True, prefactor=3)
 
-    if espressomd.has_features(["ELECTROSTATICS", "CUDA"]):
+    if espressomd.has_features(["ELECTROSTATICS", "CUDA"]) and not \
+       str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
         def test_p3m_gpu(self):
             self.S.actors.add(
                 espressomd.electrostatics.P3MGPU(

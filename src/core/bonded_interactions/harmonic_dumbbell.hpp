@@ -29,9 +29,7 @@
 /************************************************************/
 
 #include "bonded_interaction_data.hpp"
-#include "debug.hpp"
 #include "particle_data.hpp"
-#include "random.hpp"
 #include "utils.hpp"
 
 #ifdef ROTATION
@@ -53,59 +51,24 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
 inline int calc_harmonic_dumbbell_pair_force(Particle *p1, Particle *p2,
                                              Bonded_ia_parameters *iaparams,
                                              double dx[3], double force[3]) {
-  double fac;
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
-  double dr;
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic_dumbbell.r_cut))
     return 1;
 
-  dr = dist - iaparams->p.harmonic_dumbbell.r;
-  fac = -iaparams->p.harmonic_dumbbell.k1 * dr;
-  if (fabs(dr) > ROUND_ERROR_PREC) {
-    if (dist > ROUND_ERROR_PREC) /* Regular case */
-      fac /= dist;
-    else { /* dx[] == 0: the force is undefined. Let's use a random direction */
-      for (int i = 0; i < 3; i++)
-        dx[i] = d_random() - 0.5;
-      fac /= sqrt(sqrlen(dx));
-    }
-  } else {
-    fac = 0;
-  }
+  auto const dr = dist - iaparams->p.harmonic_dumbbell.r;
+  auto const normalizer = (dist > ROUND_ERROR_PREC) ? 1. / dist : 0.0;
+  auto const fac = -iaparams->p.harmonic_dumbbell.k1 * dr * normalizer;
 
   for (int i = 0; i < 3; i++)
     force[i] = fac * dx[i];
 
-  double dhat[3];
-  dhat[0] = dx[0] / dist;
-  dhat[1] = dx[1] / dist;
-  dhat[2] = dx[2] / dist;
+  auto const dhat = Vector3d{dx[0], dx[1], dx[2]} * normalizer;
+  auto const da = dhat.cross(p1->r.calc_director());
 
-  double da[3];
-  da[0] = dhat[1] * p1->r.quatu[2] - dhat[2] * p1->r.quatu[1];
-  da[1] = dhat[2] * p1->r.quatu[0] - dhat[0] * p1->r.quatu[2];
-  da[2] = dhat[0] * p1->r.quatu[1] - dhat[1] * p1->r.quatu[0];
-
-  p1->f.torque[0] += iaparams->p.harmonic_dumbbell.k2 * da[0];
-  p1->f.torque[1] += iaparams->p.harmonic_dumbbell.k2 * da[1];
-  p1->f.torque[2] += iaparams->p.harmonic_dumbbell.k2 * da[2];
-
-  ONEPART_TRACE(if (p1->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part "
-                            "id=%d at dist %f fac %.3e\n",
-                            this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                            p2->p.identity, dist2, fac));
-  ONEPART_TRACE(if (p2->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part "
-                            "id=%d at dist %f fac %.3e\n",
-                            this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                            p1->p.identity, dist2, fac));
-
+  p1->f.torque += iaparams->p.harmonic_dumbbell.k2 * da;
   return 0;
 }
 
@@ -125,9 +88,10 @@ inline int harmonic_dumbbell_pair_energy(Particle *p1, Particle *p2,
   dhat[2] = dx[2] / dist;
 
   double da[3];
-  da[0] = dhat[1] * p1->r.quatu[2] - dhat[2] * p1->r.quatu[1];
-  da[1] = dhat[2] * p1->r.quatu[0] - dhat[0] * p1->r.quatu[2];
-  da[2] = dhat[0] * p1->r.quatu[1] - dhat[1] * p1->r.quatu[0];
+  const Vector3d director1 = p1->r.calc_director();
+  da[0] = dhat[1] * director1[2] - dhat[2] * director1[1];
+  da[1] = dhat[2] * director1[0] - dhat[0] * director1[2];
+  da[2] = dhat[0] * director1[1] - dhat[1] * director1[0];
 
   double torque[3];
   torque[0] = iaparams->p.harmonic_dumbbell.k2 * da[0];
@@ -135,9 +99,9 @@ inline int harmonic_dumbbell_pair_energy(Particle *p1, Particle *p2,
   torque[2] = iaparams->p.harmonic_dumbbell.k2 * da[2];
 
   double diff[3];
-  diff[0] = dhat[0] - p1->r.quatu[0];
-  diff[1] = dhat[1] - p1->r.quatu[1];
-  diff[2] = dhat[2] - p1->r.quatu[2];
+  diff[0] = dhat[0] - director1[0];
+  diff[1] = dhat[1] - director1[1];
+  diff[2] = dhat[2] - director1[2];
 
   *_energy =
       0.5 * iaparams->p.harmonic_dumbbell.k1 *

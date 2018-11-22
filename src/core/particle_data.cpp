@@ -34,11 +34,13 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
+#include "random.hpp"
 #include "rotation.hpp"
 #include "virtual_sites.hpp"
 
@@ -1245,9 +1247,6 @@ void pointer_to_quat(Particle const *p, double const *&res) {
   res = p->r.quat.data();
 }
 
-void pointer_to_quatu(Particle const *p, double const *&res) {
-  res = p->r.quatu.data();
-}
 #endif
 
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
@@ -1272,9 +1271,6 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
 #endif
 
 #ifdef DIPOLES
-void pointer_to_dip(Particle const *p, double const *&res) {
-  res = p->r.dip.data();
-}
 
 void pointer_to_dipm(Particle const *p, double const *&res) {
   res = &(p->p.dipm);

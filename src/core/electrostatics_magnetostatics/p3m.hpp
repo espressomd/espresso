@@ -54,7 +54,8 @@
 #include "debug.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "p3m-common.hpp"
-#include "utils.hpp"
+
+#include "utils/math/AS_erfc_part.hpp"
 
 #ifdef P3M
 
@@ -222,7 +223,7 @@ inline double p3m_add_pair_force(double chgfac, double *d, double dist2,
     if (dist > 0.0) { // Vincent
       double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-      double erfc_part_ri = AS_erfc_part(adist) / dist;
+      double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
       double fac1 = coulomb.prefactor * chgfac * exp(-adist * adist);
       double fac2 =
           fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * wupii) / dist2;
@@ -264,7 +265,7 @@ inline double p3m_pair_energy(double chgfac, double dist) {
   if (dist < p3m.params.r_cut && dist != 0) {
     double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-    double erfc_part_ri = AS_erfc_part(adist) / dist;
+    double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
     return coulomb.prefactor * chgfac * erfc_part_ri * exp(-adist * adist);
 #else
     double erfc_part_ri = erfc(adist) / dist;

@@ -32,39 +32,42 @@ import unittest as ut
 import numpy as np
 import sys
 
+# Define the LB Parameters
+TIME_STEP = 0.4
+AGRID = 1.0
+KVISC = 5.0
+DENS = 1.0
+LB_PARAMS = {'agrid': AGRID,
+             'dens': DENS,
+             'visc': KVISC,
+             'fric': 1.0,
+             'tau': TIME_STEP}
+# System setup
+radius = 5.4
+box_width = 44
+real_width = box_width + 2 * AGRID
+box_length = 50
+v = [0, 0, 0.01]  # The boundary slip
 
-@ut.skipIf(not has_features(["LB_GPU", "LB_BOUNDARIES_GPU"]),
-           "Features not available, skipping test!")
-class Stokes(ut.TestCase):
+
+class Stokes(object):
+    lbf = None
+    system = espressomd.System(box_l=[real_width, real_width, box_length])
+    system.box_l = [real_width, real_width, box_length]
+    system.time_step = TIME_STEP
+    system.cell_system.skin = 0.4
 
     def test_stokes(self):
-        # System setup
-        agrid = 1
-        radius = 5.5
-        box_width = 54
-        real_width = box_width + 2 * agrid
-        box_length = 54
-        system = espressomd.System(box_l=[real_width, real_width, box_length])
-        system.box_l = [real_width, real_width, box_length]
-        system.time_step = 0.4
-        system.cell_system.skin = 0.4
-
+        self.system.actors.clear()
+        self.system.lbboundaries.clear()
+        self.system.actors.add(self.lbf)
         # The temperature is zero.
-        system.thermostat.set_lb(kT=0)
-
-        # LB Parameters
-        v = [0, 0, 0.01]  # The boundary slip
-        kinematic_visc = 5.0
-
-        # Invoke LB fluid
-        lbf = lb.LBFluidGPU(visc=kinematic_visc, dens=1,
-                            agrid=agrid, tau=system.time_step, fric=1)
-        system.actors.add(lbf)
+        self.system.thermostat.set_lb(kT=0)
 
         # Setup walls
         walls = [None] * 4
         walls[0] = lbboundaries.LBBoundary(shape=shapes.Wall(
-            normal=[-1, 0, 0], dist=-(1 + box_width)), velocity=v)
+                                           normal=[-1, 0, 0], dist=-(1 + box_width)), velocity=v)
         walls[1] = lbboundaries.LBBoundary(
             shape=shapes.Wall(
                 normal=[
@@ -85,13 +88,13 @@ class Stokes(ut.TestCase):
             velocity=v)
 
         for wall in walls:
-            system.lbboundaries.add(wall)
+            self.system.lbboundaries.add(wall)
 
         # setup sphere without slip in the middle
         sphere = lbboundaries.LBBoundary(shape=shapes.Sphere(
             radius=radius, center=[real_width / 2] * 2 + [box_length / 2], direction=1))
 
-        system.lbboundaries.add(sphere)
+        self.system.lbboundaries.add(sphere)
 
         def size(vector):
             tmp = 0
@@ -99,17 +102,37 @@ class Stokes(ut.TestCase):
                 tmp += k * k
             return np.sqrt(tmp)
 
-        system.integrator.run(800)
+        self.system.integrator.run(800)
 
-        stokes_force = 6 * np.pi * kinematic_visc * radius * size(v)
+        stokes_force = 6 * np.pi * KVISC * radius * size(v)
         print("Stokes' Law says: f=%f" % stokes_force)
-        
+
         # get force that is exerted on the sphere
-        for i in range(5):
-            system.integrator.run(200)
+        for i in range(4):
+            self.system.integrator.run(200)
             force = sphere.get_force()
             print("Measured force: f=%f" % size(force))
             self.assertLess(abs(1.0 - size(force) / stokes_force), 0.06)
+
+##Invoke the GPU LB
+
+
+@ut.skipIf(not espressomd.has_features(
+    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+class LBGPUStokes(ut.TestCase, Stokes):
+
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+
+#Invoke the CPU LB
+
+
+@ut.skipIf(not espressomd.has_features(
+    ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+class LBCPUStokes(ut.TestCase, Stokes):
+
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
 if __name__ == "__main__":
