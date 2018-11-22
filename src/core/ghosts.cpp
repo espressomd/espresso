@@ -184,7 +184,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           /* ok, this is not nice, but perhaps fast */
           ParticlePosition *pp = reinterpret_cast<ParticlePosition *>(insert);
           int i;
-          memcpy(pp, &pt->r, sizeof(ParticlePosition));
+          *pp = pt->r;
           for (i = 0; i < 3; i++)
             pp->p[i] += gc->shift[i];
           insert += sizeof(ParticlePosition);
@@ -411,7 +411,7 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         pt1 = &part1[p];
         pt2 = &part2[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memcpy(&pt2->p, &pt1->p, sizeof(ParticleProperties));
+          pt2->p =pt1->p;
 #ifdef GHOSTS_HAVE_BONDS
           pt2->bl = pt1->bl;
 #ifdef EXCLUSIONS
@@ -422,24 +422,24 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
           int i;
-          memcpy(&pt2->r, &pt1->r, sizeof(ParticlePosition));
+          pt2->r= pt1->r;
           for (i = 0; i < 3; i++)
             pt2->r.p[i] += gc->shift[i];
         } else if (data_parts & GHOSTTRANS_POSITION)
-          memcpy(&pt2->r, &pt1->r, sizeof(ParticlePosition));
+          pt2->r =pt1->r;
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memcpy(&pt2->m, &pt1->m, sizeof(ParticleMomentum));
+          pt2->m = pt1->m;
         }
         if (data_parts & GHOSTTRANS_FORCE)
           pt2->f += pt1->f;
 
 #ifdef LB
         if (data_parts & GHOSTTRANS_COUPLING)
-          memcpy(&pt2->lc, &pt1->lc, sizeof(ParticleLatticeCoupling));
+          pt2->lc =pt1->lc;
 #endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING)
-          memcpy(&pt2->swim, &pt1->swim, sizeof(ParticleParametersSwimming));
+          pt2->swim =pt1->swim;
 #endif
       }
     }
