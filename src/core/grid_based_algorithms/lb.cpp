@@ -1071,7 +1071,7 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
         lbpar_gpu.number_of_nodes);
     std::vector<lbForceFloat> host_checkpoint_force(lbpar_gpu.number_of_nodes *
                                                     3);
-    int res;
+    int res = EOF;
     if (!binary) {
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         res = fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
