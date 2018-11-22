@@ -194,7 +194,8 @@ static int terminated = 0;
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
-  CB(mpi_rotate_system_slave)
+  CB(mpi_rotate_system_slave) \
+  CB(mpi_set_lb_coupling_counter)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2009,7 +2010,6 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
     MPI_Recv(pop, 19 * LB_COMPONENTS, MPI_DOUBLE, node, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 
@@ -2020,7 +2020,6 @@ void mpi_recv_fluid_populations_slave(int node, int index) {
     lb_get_populations(index, data);
     MPI_Send(data, 19 * LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 
@@ -2032,7 +2031,6 @@ void mpi_send_fluid_populations(int node, int index, double *pop) {
     mpi_call(mpi_send_fluid_populations_slave, node, index);
     MPI_Send(pop, 19 * LB_COMPONENTS, MPI_DOUBLE, node, SOME_TAG, comm_cart);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 
@@ -2044,7 +2042,6 @@ void mpi_send_fluid_populations_slave(int node, int index) {
              MPI_STATUS_IGNORE);
     lb_set_populations(index, data);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 

@@ -96,7 +96,7 @@ cdef class Thermostat(object):
                                   "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"])
             if thmst["type"] == "LB":
                 self.set_lb(
-                    kT=thmst["kT"], act_on_virtual=thmst["act_on_virtual"])
+                    kT=thmst["kT"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["counter"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])
@@ -140,6 +140,7 @@ cdef class Thermostat(object):
             lb_dict["type"] = "LB"
             lb_dict["kT"] = temperature
             lb_dict["act_on_virtual"] = thermo_virtual
+            lb_dict["counter"] = lb_coupling_rng_state()
             thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
             npt_dict = {}
@@ -330,7 +331,7 @@ cdef class Thermostat(object):
 
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
-        def set_lb(self, kT=None, act_on_virtual=True):
+        def set_lb(self, kT=None, seed=None, act_on_virtual=True):
             """
             Sets the LB thermostat with required parameter 'kT'.
 
@@ -340,6 +341,9 @@ cdef class Thermostat(object):
             ----------
             kT : :obj:`float`
                  Specifies the thermal energy of the heat bath.
+            seed : :obj:`int`
+                 Seed for the random number generator, required
+                 if kT > 0.
             act_on_virtual : :obj:`bool`, optional
                 If true the thermostat will act on virtual sites, default is on.
 
@@ -352,6 +356,17 @@ cdef class Thermostat(object):
                 kT, 1, float, "kT must be a number")
             if float(kT) < 0.:
                 raise ValueError("temperature must be non-negative")
+
+            if LB:
+                if kT > 0. and not seed:
+                    raise ValueError(
+                        "seed has to be given as keyword arg")
+
+                if not seed:
+                    seed = 0
+
+                lb_coupling_set_rng_state(seed)
+
             global temperature
             temperature = float(kT)
             global thermo_switch

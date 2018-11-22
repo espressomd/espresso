@@ -43,6 +43,8 @@
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
 
+#include "utils/Counter.hpp"
+
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
 #include <thrust/functional.h>
@@ -123,7 +125,8 @@ static const float c_sound_sq = 1.0f / 3.0f;
 /*-------------------------------------------------------*/
 
 static constexpr float sqrt12 = 3.4641016151377544f;
-static uint64_t philox_counter = 0;
+static Utils::Counter<uint64_t> coupling_rng_counter;
+static Utils::Counter<uint64_t> fluid_rng_counter;
 __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
                                         uint64_t philox_counter) {
   // Split the 64 bit counter into two 32 bit ints.
@@ -3998,7 +4001,7 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
                  threads_per_block_particles, *current_nodes,
                  gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
                  gpu_get_fluid_composition_pointer(), node_f, device_rho_v,
-                 couple_virtual, philox_counter);
+                 couple_virtual, coupling_rng_counter.value());
     } else { /** only other option is the three point coupling scheme */
 #ifdef SHANCHEN
       fprintf(stderr, "The three point particle coupling is not currently "
@@ -4009,8 +4012,9 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
       KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles,
                  threads_per_block_particles, *current_nodes,
                  gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 node_f, device_rho_v, philox_counter);
+                 node_f, device_rho_v, coupling_rng_counter.value());
     }
+    coupling_rng_counter.increment();
   }
 }
 
@@ -4243,8 +4247,7 @@ void lb_calc_shanchen_GPU() {
  */
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force,
-                            uint64_t *host_checkpoint_philox_counter) {
+                            lbForceFloat *host_checkpoint_force) {
   cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
                            cudaMemcpyDeviceToHost));
@@ -4254,7 +4257,6 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
   cuda_safe_mem(cudaMemcpy(host_checkpoint_force, node_f.force_density,
                            lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat),
                            cudaMemcpyDeviceToHost));
-  host_checkpoint_philox_counter = &philox_counter;
 }
 
 /** setup and call kernel for setting macroscopic fluid values of all nodes
@@ -4264,8 +4266,8 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
  */
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force,
-                            uint64_t *host_checkpoint_philox_counter) {
+                            lbForceFloat *host_checkpoint_force
+                            ) {
   current_nodes = &nodes_a;
   intflag = 1;
 
@@ -4279,7 +4281,6 @@ void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
   cuda_safe_mem(cudaMemcpy(node_f.force_density, host_checkpoint_force,
                            lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat),
                            cudaMemcpyHostToDevice));
-  philox_counter = *host_checkpoint_philox_counter;
 }
 
 /** setup and call kernel to get the boundary flag of a single node
@@ -4375,12 +4376,12 @@ void lb_integrate_GPU() {
   /**call of fluid step*/
   if (intflag == 1) {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-               device_rho_v, node_f, lb_ek_parameters_gpu, philox_counter);
+               device_rho_v, node_f, lb_ek_parameters_gpu, fluid_rng_counter.value());
     current_nodes = &nodes_b;
     intflag = 0;
   } else {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-               device_rho_v, node_f, lb_ek_parameters_gpu, philox_counter);
+               device_rho_v, node_f, lb_ek_parameters_gpu, fluid_rng_counter.value());
     current_nodes = &nodes_a;
     intflag = 1;
   }
@@ -4391,7 +4392,7 @@ void lb_integrate_GPU() {
                lb_boundary_velocity, lb_boundary_force);
   }
 #endif
-  philox_counter += 1;
+  fluid_rng_counter.increment();
 }
 
 void lb_gpu_get_boundary_forces(double *forces) {

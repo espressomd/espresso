@@ -60,7 +60,6 @@
 #define LB_COUPLE_THREE_POINT 4
 
 #ifdef ADDITIONAL_CHECKS
-void print_fluid();
 #endif
 /*@}*/
 /** Some general remarks:
@@ -86,7 +85,7 @@ void print_fluid();
  *  of the pseudo-equilibrium distribution */
 template <size_t N_vel = 19> struct LB_Model {
   /** number of velocities */
-  static const int n_veloc = static_cast<int>(N_vel);
+  static const constexpr int n_veloc = static_cast<int>(N_vel);
 
   /** unit vectors of the velocity sublattice */
   std::array<std::array<double, 3>, N_vel> c;
@@ -143,15 +142,12 @@ typedef struct {
    *  Note: Has to be larger than MD time step! */
   double tau;
 
-  /** friction coefficient for viscous coupling (LJ units)
-   * Note that the friction coefficient is quite high and may
-   * lead to numerical artifacts with low order integrators */
+  /** friction coefficient for viscous coupling (LJ units) */
   double friction;
 
   /** external force density applied to the fluid at each lattice site (MD
    * units) */
-  double ext_force_density[3]; /* Open question: Do we want a local force or
-                          global force? */
+  double ext_force_density[3];
   double rho_lb_units;
   /** relaxation of the odd kinetic modes */
   double gamma_odd;
@@ -168,8 +164,6 @@ typedef struct {
    * at
    *  bounce-back boundaries */
   bool is_TRT;
-
-  int resend_halo;
 
   /** \name Derived parameters */
   /** Flag indicating whether fluctuations are present. */
@@ -225,11 +219,10 @@ void lb_reinit_parameters();
 /** (Re-)initializes the fluid. */
 void lb_reinit_fluid();
 
-/** Resets the force densities on the fluid nodes */
-void lb_reinit_force_densities();
-
-/** Checks if all LB parameters are meaningful */
-int lb_sanity_checks();
+/**
+ * @brief Event handler for integration start.
+ */
+void lb_on_integration_start();
 
 /** Calculates the equilibrium distributions.
     @param index Index of the local site
@@ -241,14 +234,6 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              const std::array<double, 3> &j,
                              const std::array<double, 6> &pi);
 
-/** Propagates the Lattice Boltzmann system for one time step.
- * This function performs the collision step and the streaming step.
- * If external force densities are present, they are applied prior to the
- * collisions. If boundaries are present, it also applies the boundary
- * conditions.
- */
-void lb_propagate();
-
 /** Calculates the coupling of MD particles to the LB fluid.
  * This function  is called from \ref force_calc. The force is added
  * to the particle force and the corresponding momentum exchange is
@@ -257,10 +242,13 @@ void lb_propagate();
  */
 void calc_particle_lattice_ia();
 
+uint64_t lb_coupling_rng_state();
+void lb_coupling_set_rng_state(uint64_t counter);
+
 /** calculates the fluid velocity at a given position of the
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. */
-void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v);
+Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &p);
 
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                                  double *pi);
@@ -322,26 +310,6 @@ inline void lb_calc_local_j(Lattice::index_t index, double *j) {
          lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
          lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
          lbfluid[18][index];
-}
-
-/** Calculate the local fluid stress.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index The local lattice site (Input).
- * @param pi local fluid pressure
- */
-inline void lb_calc_local_pi(Lattice::index_t index, double *pi) {
-
-  double rho;
-  double j[3];
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_pi in " << __FILE__ << __LINE__
-                      << ": CPU LB not switched on.";
-    j[0] = j[1] = j[2] = 0;
-    return;
-  }
-
-  lb_calc_local_fields(index, &rho, j, pi);
 }
 
 /** Calculate the local fluid fields.
