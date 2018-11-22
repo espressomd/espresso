@@ -67,6 +67,7 @@
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "virtual_sites.hpp"
+#include "collision.hpp"
 
 #include "utils/mpi/all_compare.hpp"
 /** whether the thermostat has to be reinitialized before integration */
@@ -709,8 +710,10 @@ void on_ghost_flags_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));
   /* that's all we change here */
   extern int ghosts_have_v;
+  extern int ghosts_have_bonds;
 
   ghosts_have_v = 0;
+  ghosts_have_bonds = 0;
 
 /* DPD and LB need also ghost velocities */
 #ifdef LB
@@ -739,6 +742,11 @@ void on_ghost_flags_change() {
   };
 #endif
   // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
-  if (n_thermalized_bonds)
+  if (n_thermalized_bonds) {
     ghosts_have_v = 1;
+    ghosts_have_bonds = 1;
+  }
+  if (collision_params.mode) {
+    ghosts_have_bonds = 1;
+  }
 }

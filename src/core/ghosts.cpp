@@ -62,6 +62,7 @@ std::vector<int> r_bondbuffer;
    !!!!
 */
 int ghosts_have_v = 0;
+int ghosts_have_bonds = 0;
 
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
   assert(comm);
@@ -104,12 +105,12 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
     if (data_parts & GHOSTTRANS_PROPRTS) {
       n_buffer_new += sizeof(ParticleProperties);
       // sending size of bond/exclusion lists
-#ifdef GHOSTS_HAVE_BONDS
+if (ghosts_have_bonds) {
       n_buffer_new += sizeof(int);
 #ifdef EXCLUSIONS
       n_buffer_new += sizeof(int);
 #endif
-#endif
+}
     }
     if (data_parts & GHOSTTRANS_POSITION)
       n_buffer_new += sizeof(ParticlePosition);
@@ -163,7 +164,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           memcpy(insert, &pt->p, sizeof(ParticleProperties));
           insert += sizeof(ParticleProperties);
-#ifdef GHOSTS_HAVE_BONDS
+if (ghosts_have_bonds) {
           *(int *)insert = pt->bl.n;
           insert += sizeof(int);
           if (pt->bl.n) {
@@ -178,7 +179,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
                                 pt->el.e + pt->el.n);
           }
 #endif
-#endif
+}
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
@@ -232,7 +233,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
-#ifdef GHOSTS_HAVE_BONDS
+if (ghosts_have_bonds) {
   // free all allocated information, will be resent
   {
     int np = cell->n;
@@ -241,7 +242,7 @@ static void prepare_ghost_cell(Cell *cell, int size) {
       free_particle(part + p);
     }
   }
-#endif
+}
   cell->resize(size);
   // invalidate pointers etc
   {
@@ -290,7 +291,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           memcpy(&pt->p, retrieve, sizeof(ParticleProperties));
           retrieve += sizeof(ParticleProperties);
-#ifdef GHOSTS_HAVE_BONDS
+if (ghosts_have_bonds) {
           int n_bonds;
           memcpy(&n_bonds, retrieve, sizeof(int));
           retrieve += sizeof(int);
@@ -309,7 +310,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
             bond_retrieve += n_exclusions;
           }
 #endif
-#endif
+}
           if (local_particles[pt->p.identity] == nullptr) {
             local_particles[pt->p.identity] = pt;
           }
@@ -412,12 +413,12 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         pt2 = &part2[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
           pt2->p =pt1->p;
-#ifdef GHOSTS_HAVE_BONDS
+if (ghosts_have_bonds) {
           pt2->bl = pt1->bl;
 #ifdef EXCLUSIONS
           pt2->el = pt1->el;
 #endif
-#endif
+}
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */

@@ -372,6 +372,11 @@ inline bool pair_bond_exists_on(const Particle *const p,
 inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
                                      const Particle *const p_partner,
                                      BondedInteraction bond) {
+  #ifdef ADDITIONAL_CHECKS
+  extern int ghosts_have_bonds;
+  assert(ghosts_have_bonds);
+  #endif
+  
   int i = 0;
   while (i < p_bond->bl.n) {
     int type_num = p_bond->bl.e[i];
