@@ -59,5 +59,4 @@ class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
         handle_errors("setup")
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

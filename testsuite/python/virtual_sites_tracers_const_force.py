@@ -71,6 +71,6 @@ class VirtualSitesTracers(ut.TestCase):
             system.integrator.run(500)
             print(
                 system.part[0].v, (system.part[0].pos - last_x) / (system.time - last_t))
+
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

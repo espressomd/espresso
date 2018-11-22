@@ -52,12 +52,10 @@ class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
         walls[0].set_params(shape=shapes.Wall(normal=[0, 0, 1], dist=0.5))
         walls[1].set_params(
             shape=shapes.Wall(normal=[0, 0, -1], dist=-box_height - 0.5))
-
         for wall in walls:
             system.lbboundaries.add(wall)
 
         handle_errors("setup")
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()
