@@ -47,7 +47,7 @@ try:
     if sys.argv[2] == 'gas':
         density = 0.02
     elif sys.argv[2] == 'liquid':
-        density = 0.30
+        density = 0.50
     else:
         density = float(sys.argv[2])
     assert density > 0, "density must be a positive number"
