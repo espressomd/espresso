@@ -95,7 +95,7 @@ inline int get_linear_index(int a, int b, int c, const Vector3i &adim) {
   return (a + adim[0] * (b + adim[1] * c));
 }
 
-inline int get_linear_index(const Vector3i & ind, const Vector3i &adim) {
+inline int get_linear_index(const Vector3i &ind, const Vector3i &adim) {
   return get_linear_index(ind[0], ind[1], ind[2], adim);
 }
 

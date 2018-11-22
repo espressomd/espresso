@@ -111,12 +111,13 @@ LB_Parameters lbpar = {
     0};
 
 /** The DnQm model to be used. */
-LB_Model<> lbmodel = {::D3Q19::c, ::D3Q19::coefficients, ::D3Q19::w,
-                      ::D3Q19::e_ki, ::D3Q19::w_k, ::D3Q19::c_sound_sq};
+LB_Model<> lbmodel = {::D3Q19::c,   ::D3Q19::coefficients,
+                      ::D3Q19::w,   ::D3Q19::e_ki,
+                      ::D3Q19::w_k, ::D3Q19::c_sound_sq};
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
-#endif 
+#endif
 
 /** The underlying lattice structure */
 Lattice lblattice;
@@ -2203,7 +2204,7 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
 
 std::array<double, 19> lb_calc_m_from_n(const std::array<double, 19> n) {
   std::array<double, 19> m;
-  for (int i=0; i<19; i++) {
+  for (int i = 0; i < 19; i++) {
     m[i] = boost::inner_product(lbmodel.e_ki[i], n, 0.0);
   }
   return m;
@@ -2212,13 +2213,14 @@ std::array<double, 19> lb_calc_m_from_n(const std::array<double, 19> n) {
 /** Calculation of hydrodynamic modes */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index) {
   std::array<double, 19> n;
-  for (int i=0; i<19; i++) {
+  for (int i = 0; i < 19; i++) {
     n[i] = lbfluid[i][index];
   }
   return lb_calc_m_from_n(n);
 }
 
-inline std::array<double, 19> lb_relax_modes(Lattice::index_t index, const std::array<double, 19>& modes) {
+inline std::array<double, 19>
+lb_relax_modes(Lattice::index_t index, const std::array<double, 19> &modes) {
   std::array<double, 19> relaxed_modes = modes;
   double rho, j[3], pi_eq[6];
 
@@ -2261,10 +2263,12 @@ inline std::array<double, 19> lb_relax_modes(Lattice::index_t index, const std::
   return relaxed_modes;
 }
 
-inline std::array<double, 19> lb_thermalize_modes(Lattice::index_t index, const std::array<double, 19>& modes) {
+inline std::array<double, 19>
+lb_thermalize_modes(Lattice::index_t index,
+                    const std::array<double, 19> &modes) {
   std::array<double, 19> thermalized_modes = modes;
-  const double rootrho = std::sqrt(
-      std::fabs(modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid));
+  const double rootrho = std::sqrt(std::fabs(
+      modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid));
 #ifdef GAUSSRANDOM
   constexpr double variance = 1.0;
   auto rng = []() -> double { return gaussian_random(); };
@@ -2305,11 +2309,13 @@ inline std::array<double, 19> lb_thermalize_modes(Lattice::index_t index, const 
   return thermalized_modes;
 }
 
-template<typename T> std::array<T, 19> lb_apply_forces(Lattice::index_t index, const std::array<T, 19>& modes) {
+template <typename T>
+std::array<T, 19> lb_apply_forces(Lattice::index_t index,
+                                  const std::array<T, 19> &modes) {
   std::array<T, 19> modes_with_forces = modes;
   T rho, u[3], C[6];
 
-  const auto& f = lbfields[index].force_density;
+  const auto &f = lbfields[index].force_density;
 
   rho = modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
@@ -2354,15 +2360,17 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
                                      lbpar.agrid * lbpar.tau * lbpar.tau;
 }
 
-template <typename T> std::array<T, 19> normalize_modes(const std::array<T, 19>& modes) {
+template <typename T>
+std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
   auto normalized_modes = modes;
-  for (int i=0; i<modes.size(); i++) {
+  for (int i = 0; i < modes.size(); i++) {
     normalized_modes[i] /= lbmodel.w_k[i];
   }
   return normalized_modes;
 }
 
-template <typename T> std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19>& modes) {
+template <typename T>
+std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
   std::array<T, 19> ret;
   const auto normalized_modes = normalize_modes(modes);
 
@@ -2379,9 +2387,11 @@ template <typename T> std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19>
 
 inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
                                       std::array<double, 19> m) {
-  const std::array<int, 3> period = {1, lblattice.halo_grid[0], lblattice.halo_grid[0]*lblattice.halo_grid[1]};
+  const std::array<int, 3> period = {1, lblattice.halo_grid[0],
+                                     lblattice.halo_grid[0] *
+                                         lblattice.halo_grid[1]};
   auto const f = lb_calc_n_from_m(m);
-  for (int i=0; i<19; i++) {
+  for (int i = 0; i < 19; i++) {
     auto const next = index + boost::inner_product(period, lbmodel.c[i], 0);
     lbfluid[i][next] = f[i];
   }
@@ -2644,20 +2654,24 @@ Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
 }
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &pos){
+Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &pos) {
   Vector3d interpolated_f{};
-  lattice_interpolation(lblattice, pos,
-                        [&interpolated_f](Lattice::index_t index, double w) {
+  lattice_interpolation(
+      lblattice, pos, [&interpolated_f](Lattice::index_t index, double w) {
 #ifdef LB_BOUNDARIES
-                        if (!lbfields[index].boundary) {
+        if (!lbfields[index].boundary) {
 #endif
-                        auto const modes = lb_calc_modes(index);
-                        auto const local_rho = modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-                        interpolated_f += w / 2 / local_rho * (lbfields[index].force_density_buf - (lbpar.ext_force_density * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau));
+          auto const modes = lb_calc_modes(index);
+          auto const local_rho =
+              modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+          interpolated_f += w / 2 / local_rho *
+                            (lbfields[index].force_density_buf -
+                             (lbpar.ext_force_density * lbpar.agrid *
+                              lbpar.agrid * lbpar.tau * lbpar.tau));
 #ifdef LB_BOUNDARIES
-                        }
+        }
 #endif
-  });
+      });
   return interpolated_f;
 }
 #endif
@@ -2993,7 +3007,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
 }
 
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
-                                 double *pi) {
+                          double *pi) {
 
   if (!(lattice_switch & LATTICE_LB)) {
     runtimeErrorMsg() << "Error in lb_calc_local_fields in " << __FILE__

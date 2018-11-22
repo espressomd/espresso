@@ -40,21 +40,23 @@ operator()(PartCfg &partCfg) const {
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
   std::vector<Vector3d> folded_positions(ids().size());
-  boost::transform(ids(), folded_positions.begin(), [&partCfg](int id) -> Vector3d {
-      return folded_position(partCfg[id]);
-  });
+  boost::transform(
+      ids(), folded_positions.begin(),
+      [&partCfg](int id) -> Vector3d { return folded_position(partCfg[id]); });
 
   std::vector<Vector3d> velocities(folded_positions.size());
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_GPU)
     lb_lbfluid_get_interpolated_velocity_at_positions(
-        folded_positions.front().data(), velocities.front().data(), folded_positions.size());
+        folded_positions.front().data(), velocities.front().data(),
+        folded_positions.size());
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #if defined(LB)
-      boost::transform(folded_positions, velocities.begin(), [](const Vector3d &pos){
-          return lb_lbfluid_get_interpolated_velocity(pos);
-      });
+    boost::transform(folded_positions, velocities.begin(),
+                     [](const Vector3d &pos) {
+                       return lb_lbfluid_get_interpolated_velocity(pos);
+                     });
 #endif
   } else {
     throw std::runtime_error("Either CPU LB or GPU LB has to be active for "
@@ -66,8 +68,7 @@ operator()(PartCfg &partCfg) const {
     histogram.update(Utils::transform_pos_to_cylinder_coordinates(
                          folded_positions[ind], axis),
                      Utils::transform_vel_to_cylinder_coordinates(
-                             velocities[ind],
-                         axis, folded_positions[ind]));
+                         velocities[ind], axis, folded_positions[ind]));
   }
   histogram.normalize();
   return histogram.get_histogram();

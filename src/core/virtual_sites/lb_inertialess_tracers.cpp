@@ -28,9 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "integrate.hpp"
+#include "lb_inertialess_tracers_cuda_interface.hpp"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
-#include "lb_inertialess_tracers_cuda_interface.hpp"
 
 // ****** Functions for internal use ********
 
@@ -245,7 +245,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
       for (x = 0; x < 2; x++) {
 
         index = node_index[(z * 2 + y) * 2 + x];
-        const auto& f = lbfields[index].force_density_buf;
+        const auto &f = lbfields[index].force_density_buf;
 
 // This can be done easier without copying the code twice
 // We probably can even set the boundary velocity directly

@@ -255,7 +255,7 @@ Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &p);
 #endif
 
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
-                                 double *pi);
+                          double *pi);
 
 /** Calculation of hydrodynamic modes.
  *
@@ -325,7 +325,7 @@ inline void lb_calc_local_j(Lattice::index_t index, double *j) {
  * @param pi      local fluid pressure
  */
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
-                                 double *pi);
+                          double *pi);
 
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,

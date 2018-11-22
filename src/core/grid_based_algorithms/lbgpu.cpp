@@ -49,7 +49,6 @@
 #include <ctime>
 #include <random>
 
-
 #if (LB_COMPONENTS == 1)
 #define SC0                                                                    \
   { 0.0 }

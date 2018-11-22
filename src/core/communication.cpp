@@ -194,7 +194,7 @@ static int terminated = 0;
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
-  CB(mpi_rotate_system_slave) \
+  CB(mpi_rotate_system_slave)                                                  \
   CB(mpi_set_lb_coupling_counter)
 
 // create the forward declarations

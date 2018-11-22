@@ -68,7 +68,6 @@ int extended_values_flag = 0; /* TODO: this has to be set to one by
  */
 static LB_rho_v_gpu *device_rho_v = nullptr;
 
-
 /** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
  *  and stores values in MD units. It should not used
  *  as an input for any LB calculations. TODO: in the future,
@@ -4266,8 +4265,7 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
  */
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force
-                            ) {
+                            lbForceFloat *host_checkpoint_force) {
   current_nodes = &nodes_a;
   intflag = 1;
 
@@ -4376,12 +4374,14 @@ void lb_integrate_GPU() {
   /**call of fluid step*/
   if (intflag == 1) {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-               device_rho_v, node_f, lb_ek_parameters_gpu, fluid_rng_counter.value());
+               device_rho_v, node_f, lb_ek_parameters_gpu,
+               fluid_rng_counter.value());
     current_nodes = &nodes_b;
     intflag = 0;
   } else {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-               device_rho_v, node_f, lb_ek_parameters_gpu, fluid_rng_counter.value());
+               device_rho_v, node_f, lb_ek_parameters_gpu,
+               fluid_rng_counter.value());
     current_nodes = &nodes_a;
     intflag = 1;
   }
