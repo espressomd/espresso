@@ -707,7 +707,6 @@ void on_lb_params_change_gpu(int field) {
 #endif
 
 void on_ghost_flags_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));
   /* that's all we change here */
   extern int ghosts_have_v;
   extern int ghosts_have_bonds;

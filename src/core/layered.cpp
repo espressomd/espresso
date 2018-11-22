@@ -162,8 +162,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
           /* if periodic and bottom or top, send shifted */
           comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-          if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) &&
-              (data_parts & GHOSTTRANS_POSITION)) {
+          if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK)) {
             comm->data_parts |= GHOSTTRANS_POSSHFTD;
             comm->comm[c].shift[2] = box_l[2];
           } else
