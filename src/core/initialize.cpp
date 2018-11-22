@@ -24,6 +24,7 @@
 #include "initialize.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
+#include "collision.hpp"
 #include "communication.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
@@ -67,7 +68,6 @@
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "virtual_sites.hpp"
-#include "collision.hpp"
 
 #include "utils/mpi/all_compare.hpp"
 /** whether the thermostat has to be reinitialized before integration */
