@@ -260,24 +260,10 @@ void propagate_omega_quat_particle(Particle *p) {
                             this_node, p->r.p[0], p->r.p[1], p->r.p[2]));
 }
 
-/** convert the torques to the body-fixed frames and propagate angular
- * velocities */
-void convert_torques_propagate_omega() {
-  INTEG_TRACE(
-      fprintf(stderr, "%d: convert_torques_propagate_omega:\n", this_node));
+inline
 
-#if defined(LB_GPU) && defined(ENGINE)
-  if (lattice_switch & LATTICE_LB_GPU) {
-    copy_v_cs_from_GPU(local_cells.particles());
-  }
-#endif
-
-  for (auto &p : local_cells.particles()) {
-    // Skip particle if rotation is turned off entirely for it.
-    if (!p.p.rotation)
-      continue;
-
-    double A[9];
+void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle& p)
+{
     auto const t=convert_vector_space_to_body(p, p.f.torque);
     p.f.torque = Vector3d{{0,0,0}};
     
@@ -302,6 +288,27 @@ void convert_torques_propagate_omega() {
 
     if (!(p.p.rotation & ROTATION_Z))
       p.f.torque[2] = 0;
+}
+
+
+/** convert the torques to the body-fixed frames and propagate angular
+ * velocities */
+void convert_torques_propagate_omega() {
+  INTEG_TRACE(
+      fprintf(stderr, "%d: convert_torques_propagate_omega:\n", this_node));
+
+#if defined(LB_GPU) && defined(ENGINE)
+  if (lattice_switch & LATTICE_LB_GPU) {
+    copy_v_cs_from_GPU(local_cells.particles());
+  }
+#endif
+
+  for (auto &p : local_cells.particles()) {
+    // Skip particle if rotation is turned off entirely for it.
+    if (!p.p.rotation)
+      continue;
+    
+    convert_torque_to_body_frame_apply_fix_and_thermostat(p);
 
 #if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
     if (p.swim.swimming && lattice_switch != 0) {
@@ -328,6 +335,8 @@ void convert_torques_propagate_omega() {
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
         this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
 
+    
+    // Propagation of angular velocities
     p.m.omega[0] += time_step_half * p.f.torque[0] / p.p.rinertia[0];
     p.m.omega[1] += time_step_half * p.f.torque[1] / p.p.rinertia[1];
     p.m.omega[2] += time_step_half * p.f.torque[2] / p.p.rinertia[2];
@@ -372,31 +381,10 @@ void convert_initial_torques() {
   for (auto &p : local_cells.particles()) {
     if (!p.p.rotation)
       continue;
-    Vector3d t=convert_vector_space_to_body(p, p.f.torque);
-    if (thermo_switch & THERMO_LANGEVIN) {
-
-      friction_thermo_langevin_rotation(&p);
-      p.f.torque += t;
-    } else {
-      p.f.torque = t;
-    }
-
-    if (!(p.p.rotation & ROTATION_X))
-      p.f.torque[0] = 0;
-
-    if (!(p.p.rotation & ROTATION_Y))
-      p.f.torque[1] = 0;
-
-    if (!(p.p.rotation & ROTATION_Z))
-      p.f.torque[2] = 0;
-
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
-  }
+    convert_torque_to_body_frame_apply_fix_and_thermostat(p);
 }
-
-/** convert from the body-fixed frames to space-fixed coordinates */
+}
+// Frame conversion routines
 
 
 Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &vec) {
@@ -424,15 +412,6 @@ Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v) {
   return res;
 }
 
-
-void convert_vec_space_to_body(Particle *p, double *v, double *res) {
-  double A[9];
-  define_rotation_matrix(*p, A);
-
-  res[0] = A[0 + 3 * 0] * v[0] + A[0 + 3 * 1] * v[1] + A[0 + 3 * 2] * v[2];
-  res[1] = A[1 + 3 * 0] * v[0] + A[1 + 3 * 1] * v[1] + A[1 + 3 * 2] * v[2];
-  res[2] = A[2 + 3 * 0] * v[0] + A[2 + 3 * 1] * v[1] + A[2 + 3 * 2] * v[2];
-}
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
