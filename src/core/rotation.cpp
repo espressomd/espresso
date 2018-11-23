@@ -262,34 +262,33 @@ void propagate_omega_quat_particle(Particle *p) {
 
 inline
 
-void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle& p)
-{
-    auto const t=convert_vector_space_to_body(p, p.f.torque);
-    p.f.torque = Vector3d{{0,0,0}};
-    
-    if (thermo_switch & THERMO_LANGEVIN) {
+    void
+    convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
+  auto const t = convert_vector_space_to_body(p, p.f.torque);
+  p.f.torque = Vector3d{{0, 0, 0}};
+
+  if (thermo_switch & THERMO_LANGEVIN) {
 #if defined(VIRTUAL_SITES) && defined(THERMOSTAT_IGNORE_NON_VIRTUAL)
-      if (!p.p.is_virtual)
+    if (!p.p.is_virtual)
 #endif
-      {
-        friction_thermo_langevin_rotation(&p);
+    {
+      friction_thermo_langevin_rotation(&p);
 
-        p.f.torque += t;
-      }
-    } else {
-      p.f.torque = t;
+      p.f.torque += t;
     }
+  } else {
+    p.f.torque = t;
+  }
 
-    if (!(p.p.rotation & ROTATION_X))
-      p.f.torque[0] = 0;
+  if (!(p.p.rotation & ROTATION_X))
+    p.f.torque[0] = 0;
 
-    if (!(p.p.rotation & ROTATION_Y))
-      p.f.torque[1] = 0;
+  if (!(p.p.rotation & ROTATION_Y))
+    p.f.torque[1] = 0;
 
-    if (!(p.p.rotation & ROTATION_Z))
-      p.f.torque[2] = 0;
+  if (!(p.p.rotation & ROTATION_Z))
+    p.f.torque[2] = 0;
 }
-
 
 /** convert the torques to the body-fixed frames and propagate angular
  * velocities */
@@ -307,7 +306,7 @@ void convert_torques_propagate_omega() {
     // Skip particle if rotation is turned off entirely for it.
     if (!p.p.rotation)
       continue;
-    
+
     convert_torque_to_body_frame_apply_fix_and_thermostat(p);
 
 #if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
@@ -322,9 +321,11 @@ void convert_torques_propagate_omega() {
       const double l_cross = cross.norm();
 
       if (l_cross > 0 && p.swim.dipole_length > 0) {
-        auto const omega_swim = l_diff / (l_cross * p.swim.dipole_length) *cross;
+        auto const omega_swim =
+            l_diff / (l_cross * p.swim.dipole_length) * cross;
 
-        auto const omega_swim_body = convert_vector_space_to_body(p, omega_swim);
+        auto const omega_swim_body =
+            convert_vector_space_to_body(p, omega_swim);
         p.f.torque +=
             p.swim.rotational_friction * (omega_swim_body - p.m.omega);
       }
@@ -335,7 +336,6 @@ void convert_torques_propagate_omega() {
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
         this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
 
-    
     // Propagation of angular velocities
     p.m.omega[0] += time_step_half * p.f.torque[0] / p.p.rinertia[0];
     p.m.omega[1] += time_step_half * p.f.torque[1] / p.p.rinertia[1];
@@ -348,25 +348,19 @@ void convert_torques_propagate_omega() {
        needed.
        Otherwise repeat this loop 2-3 times depending on the required accuracy
        */
-    
-    const double rinertia_diff_01=p.p.rinertia[0]-p.p.rinertia[1];
-    const double rinertia_diff_12=p.p.rinertia[1]-p.p.rinertia[2];
-    const double rinertia_diff_20=p.p.rinertia[2]-p.p.rinertia[0];
+
+    const double rinertia_diff_01 = p.p.rinertia[0] - p.p.rinertia[1];
+    const double rinertia_diff_12 = p.p.rinertia[1] - p.p.rinertia[2];
+    const double rinertia_diff_20 = p.p.rinertia[2] - p.p.rinertia[0];
     for (int times = 0; times <= 5; times++) {
       Vector3d Wd;
 
-      Wd[0] =
-          p.m.omega[1] * p.m.omega[2] * rinertia_diff_12 /
-          p.p.rinertia[0];
-      Wd[1] =
-          p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 /
-          p.p.rinertia[1];
-      Wd[2] =
-          p.m.omega[0] * p.m.omega[1] * rinertia_diff_01 /
-          p.p.rinertia[2];
+      Wd[0] = p.m.omega[1] * p.m.omega[2] * rinertia_diff_12 / p.p.rinertia[0];
+      Wd[1] = p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 / p.p.rinertia[1];
+      Wd[2] = p.m.omega[0] * p.m.omega[1] * rinertia_diff_01 / p.p.rinertia[2];
 
       p.m.omega = omega_0 + time_step_half * Wd;
-   }
+    }
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
         p.m.v[1], p.m.v[2]));
@@ -375,17 +369,15 @@ void convert_torques_propagate_omega() {
 
 /** convert the torques to the body-fixed frames before the integration loop */
 void convert_initial_torques() {
-  
 
   INTEG_TRACE(fprintf(stderr, "%d: convert_initial_torques:\n", this_node));
   for (auto &p : local_cells.particles()) {
     if (!p.p.rotation)
       continue;
     convert_torque_to_body_frame_apply_fix_and_thermostat(p);
-}
+  }
 }
 // Frame conversion routines
-
 
 Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &vec) {
   Vector3d res = {0, 0, 0};
@@ -412,10 +404,10 @@ Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v) {
   return res;
 }
 
-
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
-void local_rotate_particle(Particle& p, const Vector3d& a_space_frame, const double phi) {
+void local_rotate_particle(Particle &p, const Vector3d &a_space_frame,
+                           const double phi) {
   // Convert rotation axis to body-fixed frame
   Vector3d a = convert_vector_space_to_body(p, a_space_frame);
 
@@ -438,7 +430,7 @@ void local_rotate_particle(Particle& p, const Vector3d& a_space_frame, const dou
     return;
 
   a /= l;
-  
+
   double q[4];
   q[0] = cos(phi / 2);
   double tmp = sin(phi / 2);
