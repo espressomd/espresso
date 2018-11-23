@@ -24,9 +24,10 @@ from libc cimport stdint
 include "myconfig.pxi"
 from .utils cimport Vector3d
 
-cdef extern from "grid_based_algorithms/lb.hpp":
-    stdint.uint64_t lb_coupling_rng_state()
-    void lb_coupling_set_rng_state(stdint.uint64_t)
+IF LB:
+    cdef extern from "grid_based_algorithms/lb.hpp":
+        stdint.uint64_t lb_coupling_rng_state()
+        void lb_coupling_set_rng_state(stdint.uint64_t)
 
 cdef extern from "thermostat.hpp":
     double temperature

@@ -135,13 +135,14 @@ cdef class Thermostat(object):
                 lang_dict["gamma_rotation"] = None
 
             thermo_list.append(lang_dict)
-        if thermo_switch & THERMO_LB:
-            lb_dict = {}
-            lb_dict["type"] = "LB"
-            lb_dict["kT"] = temperature
-            lb_dict["act_on_virtual"] = thermo_virtual
-            lb_dict["counter"] = lb_coupling_rng_state()
-            thermo_list.append(lb_dict)
+        IF LB:
+            if thermo_switch & THERMO_LB:
+                lb_dict = {}
+                lb_dict["type"] = "LB"
+                lb_dict["kT"] = temperature
+                lb_dict["act_on_virtual"] = thermo_virtual
+                lb_dict["counter"] = lb_coupling_rng_state()
+                thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
             npt_dict = {}
             npt_dict["type"] = "NPT_ISO"
