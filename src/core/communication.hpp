@@ -232,7 +232,8 @@ void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
     \param axis rotation axis
     \param angle rotation angle
 */
-void mpi_rotate_particle(int pnode, int part, const Vector3d& axis, double angle);
+void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
+                         double angle);
 #endif
 
 #ifdef AFFINITY

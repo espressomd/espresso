@@ -644,7 +644,8 @@ void mpi_send_rotational_inertia_slave(int pnode, int part) {
 #endif
 }
 
-void mpi_rotate_particle(int pnode, int part, const Vector3d& axis, double angle) {
+void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
+                         double angle) {
 #ifdef ROTATION
   mpi_call(mpi_rotate_particle_slave, pnode, part);
 
@@ -666,7 +667,8 @@ void mpi_rotate_particle_slave(int pnode, int part) {
     Particle *p = local_particles[part];
     Vector3d axis;
     double angle;
-    MPI_Recv(axis.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(axis.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+             MPI_STATUS_IGNORE);
     MPI_Recv(&angle, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     local_rotate_particle(*p, axis, angle);
   }

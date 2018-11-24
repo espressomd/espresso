@@ -55,7 +55,6 @@ void convert_initial_torques();
 Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &v);
 Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v);
 
-
 inline void convert_quat_to_director(const Vector<4, double> &quat,
                                      Vector3d &director) {
   /* director */
@@ -92,11 +91,10 @@ inline int convert_dip_to_quat(const Vector3d &dip, Vector<4, double> &quat,
   return 0;
 }
 
-
 #endif
 
 /** Rotate the particle p around the NORMALIZED axis a by amount phi */
-void local_rotate_particle(Particle& p, const Vector3d& a, const double phi);
+void local_rotate_particle(Particle &p, const Vector3d &a, const double phi);
 
 inline void normalize_quaternion(double *q) {
   double tmp = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
