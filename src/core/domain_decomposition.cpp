@@ -768,6 +768,9 @@ void dd_topology_init(CellPList *old) {
   dd_prepare_comm(&cell_structure.ghost_to_local_comm, 0);
   dd_revert_comm_order(&cell_structure.ghost_to_local_comm);
 
+  dd_assign_prefetches(&cell_structure.local_to_ghost_comm);
+  dd_assign_prefetches(&cell_structure.ghost_to_local_comm);
+
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data);
   dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
   dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
@@ -779,6 +782,8 @@ void dd_topology_init(CellPList *old) {
   dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
   dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
+
+  std::cout << (cell_structure.exchange_ghosts_comm == cell_structure.local_to_ghost_comm) << std::endl;
 
   dd_init_cell_interactions();
 

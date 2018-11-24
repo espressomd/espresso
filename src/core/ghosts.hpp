@@ -168,6 +168,11 @@ struct GhostCommunication {
      this is the shift vector. Normally this a integer multiple of the box
      length. The shift is done on the sender side */
   boost::optional<Vector3d> shift;
+
+  bool operator==(GhostCommunication const& rhs) const {
+      return (type == rhs.type) && (node == rhs.node) && (n_part_lists == rhs.n_part_lists) &&
+      std::equal(part_lists, part_lists + n_part_lists, rhs.part_lists);
+  }
 };
 
 /** Properties for a ghost communication. A ghost communication is defined */
@@ -182,6 +187,9 @@ struct GhostCommunicator {
   /** List of ghost communications. */
   GhostCommunication *comm;
 
+  bool operator==(GhostCommunicator const& rhs) const {
+      return std::equal(comm, comm + num, rhs.comm);
+  }
 };
 
 /*@}*/
