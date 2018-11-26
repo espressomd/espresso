@@ -41,8 +41,8 @@
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
 #include "errorhandling.hpp"
-#include "lbgpu.hpp"
 #include "lbgpu.cuh"
+#include "lbgpu.hpp"
 
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
@@ -4040,10 +4040,11 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
 
     if (lbpar_gpu.lb_couple_switch & LB_COUPLE_TWO_POINT) {
       KERNELCALL(calc_fluid_particle_ia, dim_grid_particles,
-                 threads_per_block_particles, (*current_nodes,
-                 gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 gpu_get_fluid_composition_pointer(), node_f, device_rho_v,
-                 couple_virtual, philox_counter));
+                 threads_per_block_particles,
+                 (*current_nodes, gpu_get_particle_pointer(),
+                  gpu_get_particle_force_pointer(),
+                  gpu_get_fluid_composition_pointer(), node_f, device_rho_v,
+                  couple_virtual, philox_counter));
     } else { /** only other option is the three point coupling scheme */
 #ifdef SHANCHEN
 #if __CUDA_ARCH__ >= 200
@@ -4054,9 +4055,10 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
 #endif
 #endif
       KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles,
-                 threads_per_block_particles, (*current_nodes,
-                 gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 node_f, device_rho_v, philox_counter));
+                 threads_per_block_particles,
+                 (*current_nodes, gpu_get_particle_pointer(),
+                  gpu_get_particle_force_pointer(), node_f, device_rho_v,
+                  philox_counter));
     }
   }
 }
@@ -4436,13 +4438,15 @@ void lb_integrate_GPU() {
      make sure that either it or device_rho_v are nullptr depending on
      extended_values_flag */
   if (intflag == 1) {
-    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b,
-               device_rho_v, node_f, lb_ek_parameters_gpu, philox_counter));
+    KERNELCALL(integrate, dim_grid, threads_per_block,
+               (nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu,
+                philox_counter));
     current_nodes = &nodes_b;
     intflag = 0;
   } else {
-    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a,
-               device_rho_v, node_f, lb_ek_parameters_gpu, philox_counter));
+    KERNELCALL(integrate, dim_grid, threads_per_block,
+               (nodes_b, nodes_a, device_rho_v, node_f, lb_ek_parameters_gpu,
+                philox_counter));
     current_nodes = &nodes_a;
     intflag = 1;
   }

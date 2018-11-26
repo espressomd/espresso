@@ -255,7 +255,7 @@ void lb_reinit_fluid_gpu() {
   only the fluid-related memory on the gpu.*/
 void lb_release_gpu() {
 
-    if (host_values != nullptr) {
+  if (host_values != nullptr) {
     free(host_values);
     host_values = nullptr;
   }
