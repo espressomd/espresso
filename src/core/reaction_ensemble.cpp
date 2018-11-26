@@ -831,6 +831,12 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     p_id = p_id_s_changed_particles[i];
     // change particle position
     new_pos = get_random_position_in_box();
+    double vel[3];
+    // we use mass=1 for all particles, think about adapting this
+    vel[0] = std::sqrt(temperature) * gaussian_random();
+    vel[1] = std::sqrt(temperature) * gaussian_random();
+    vel[2] = std::sqrt(temperature) * gaussian_random();
+    set_particle_v(p_id, vel);
     // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
     // //enhanced proposal of small radii
     place_particle(p_id, new_pos.data());
