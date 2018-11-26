@@ -499,6 +499,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
     GHOST_TRACE(fprintf(stderr, "%d: ghost_comm shift %f %f %f\n", this_node,
                         gc->comm[n].shift[0], gc->comm[n].shift[1],
                         gc->comm[n].shift[2]));
+
     if (comm_type == GHOST_LOCL)
       cell_cell_transfer(gcn, data_parts);
     else {
