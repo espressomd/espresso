@@ -60,7 +60,7 @@ class LeesEdwards(ut.TestCase):
         system.lees_edwards.set_params(type="oscillatory_shear", frequency=omega,
                                        amplitude=amplitude, sheardir=sheardir, shearplanenormal=shearplanenormal)
         self.assertEqual(system.lees_edwards.type, "oscillatory_shear")
-        for time in np.arange(10., 100.0, 10.0):
+        for time in np.arange(system.time_step*10.0, 100.0, system.time_step*10):
             system.integrator.run(10)
             offset = amplitude * np.sin(omega * time)
             velocity = omega * amplitude * np.cos(omega * time)
@@ -201,16 +201,27 @@ class LeesEdwards(ut.TestCase):
                     system.part.clear()
 
     def test_d_vel_diff(self):
+
         system = self.system
+        system.part.clear()
 
         system.lees_edwards.set_params(
             type="steady_shear", velocity=1.5, sheardir=0, shearplanenormal=2)
-        system.part.add(id=0, pos=[1, 1, system.box_l[2]-1/2])
-        system.part.add(id=1, pos=[1, 1, 1/2])
+        system.part.add(id=0, pos=[1, 1, 0.9*system.box_l[2]])
+        system.part.add(id=1, pos=[1, 1, 0.1*system.box_l[2]])
 
         vel_diff = system.velocity_difference(system.part[0], system.part[1])
-        print(vel_diff)
-        print(system.lees_edwards.velocity)
+        np.testing.assert_array_equal(vel_diff, [1.5, 0, 0])
+
+        system.part.clear()
+        system.lees_edwards.set_params(type='off')
+
+        system.part.add(id=0, pos=[1, 1, 0.5], v=[0.4, 0.4, 0.4])
+        system.part.add(id=1, pos=[1, 1, 1.0], v=[0.1, 0.1, 0.1])
+        vel_diff = system.velocity_difference(system.part[0], system.part[1])
+        np.testing.assert_array_equal(vel_diff, system.part[0].v-system.part[1].v)
+
+        system.part.clear()
 
 if __name__ == "__main__":
     ut.main()
