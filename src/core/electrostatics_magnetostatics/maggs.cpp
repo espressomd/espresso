@@ -753,7 +753,6 @@ double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction,
   double node[3] = {(double)node_x, (double)node_y, (double)node_z};
 
   FOR3D(dim) {
-    position = (double)node[dim] / (double)lparams.dim[dim] * box_l[dim];
     position = node[dim];
     if (position >= lparams.halo_left_down[dim] &&
         position < lparams.halo_upper_right[dim]) {
@@ -816,7 +815,6 @@ double maggs_set_adaptive_permittivity(int node_x, int node_y, int node_z) {
   relative_epsilon = 78.5 / (1.0 + 0.278 * concentration) * maggs.scaling;
 
   FOR3D(dim) {
-    position = (double)node[dim] / (double)lparams.dim[dim] * box_l[dim];
     position = node[dim];
     if (position >= lparams.halo_left_down[dim] &&
         position < lparams.halo_upper_right[dim]) {

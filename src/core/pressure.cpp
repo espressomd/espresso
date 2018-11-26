@@ -262,14 +262,10 @@ void calc_long_range_virials() {
 void init_virials(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
   // bonded, nonbonded, Coulomb, dipolar, rigid bodies
-  int n_pre, n_non_bonded, n_coulomb, n_dipolar, n_vs;
+  int n_pre, n_non_bonded, n_coulomb(0), n_dipolar(0), n_vs(0);
 
   n_pre = 1;
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
-
-  n_coulomb = 0;
-  n_dipolar = 0;
-  n_vs = 0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -328,14 +324,10 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
 void init_p_tensor(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
   // bonded, nonbonded, Coulomb, dipolar, rigid bodies
-  int n_pre, n_non_bonded, n_coulomb, n_dipolar, n_vs;
+  int n_pre, n_non_bonded, n_coulomb(0), n_dipolar(0), n_vs(0);
 
   n_pre = 1;
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
-
-  n_coulomb = 0;
-  n_dipolar = 0;
-  n_vs = 0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -350,7 +342,6 @@ void init_p_tensor(Observable_stat *stat) {
     n_coulomb = 1;
   }
 #endif
-
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
@@ -690,7 +681,6 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
                         range_start[2], range[0], range[1], range[2], bins[0],
                         bins[1], bins[2]););
   /* work out what direction the line joining the particles goes in */
-  length = 0;
   get_mi_vector(temp, pos2, pos1);
   for (i = 0; i < 3; i++) {
     sign[i] = (temp[i] > 0) * 2 - 1;

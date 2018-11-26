@@ -89,7 +89,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
       if ((!m_only_positive) && (dist < 0)) {
         auto const dist2 = dist * dist;
         calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec.data(),
-                                   -1.0 * dist, dist * dist, force.data(),
+                                   -1.0 * dist, dist2, force.data(),
                                    torque1.data(), torque2.data());
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {

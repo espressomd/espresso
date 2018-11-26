@@ -612,7 +612,6 @@ void dp3m_interpolate_dipole_assignment_function() {
   int i;
   long j;
 
-  dInterpol = 0.5 / (double)dp3m.params.inter;
   if (dp3m.params.inter == 0)
     return;
 

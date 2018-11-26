@@ -146,8 +146,6 @@ void halo_free_fieldtype(Fieldtype *ftype) {
  * @param type halo field layout description
  */
 void halo_dtset(char *dest, int value, Fieldtype type) {
-  char *s;
-
   int vblocks = type->vblocks;
   int vstride = type->vstride;
   int vskip = type->vskip;
@@ -158,10 +156,8 @@ void halo_dtset(char *dest, int value, Fieldtype type) {
 
   for (int i = 0; i < vblocks; i++) {
     for (int j = 0; j < vstride; j++) {
-      s = dest;
       for (int k = 0; k < count; k++)
-        memset(s + disps[k], value, lens[k]);
-      s += extent;
+        memset(dest + disps[k], value, lens[k]);
     }
     dest += vskip * extent;
   }
@@ -393,7 +389,6 @@ void halo_communication(HaloCommunicator *hc, char *base) {
     case HALO_SEND:
       datatype = hc->halo_info[n].datatype;
       fieldtype = hc->halo_info[n].fieldtype;
-      s_node = hc->halo_info[n].source_node;
       r_node = hc->halo_info[n].dest_node;
 
       HALO_TRACE(
@@ -408,7 +403,6 @@ void halo_communication(HaloCommunicator *hc, char *base) {
     case HALO_RECV:
       datatype = hc->halo_info[n].datatype;
       s_node = hc->halo_info[n].source_node;
-      r_node = hc->halo_info[n].dest_node;
 
       HALO_TRACE(
           fprintf(stderr, "%d: halo_comm recv from %d.\n", this_node, s_node));
