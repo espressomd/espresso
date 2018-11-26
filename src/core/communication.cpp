@@ -653,8 +653,8 @@ void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
     Particle *p = local_particles[part];
     local_rotate_particle(*p, axis, angle);
   } else {
-    MPI_Send(axis.data(), 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-    MPI_Send(&angle, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    comm_cart.send(pnode, SOME_TAG, axis);
+    comm_cart.send(pnode, SOME_TAG, angle);
   }
 
   on_particle_change();
@@ -667,9 +667,8 @@ void mpi_rotate_particle_slave(int pnode, int part) {
     Particle *p = local_particles[part];
     Vector3d axis;
     double angle;
-    MPI_Recv(axis.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
-    MPI_Recv(&angle, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    comm_cart.recv(0, SOME_TAG, axis);
+    comm_cart.recv(0, SOME_TAG, angle);
     local_rotate_particle(*p, axis, angle);
   }
 

@@ -261,9 +261,7 @@ void propagate_omega_quat_particle(Particle *p) {
 }
 
 inline
-
-    void
-    convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
+void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
   auto const t = convert_vector_space_to_body(p, p.f.torque);
   p.f.torque = Vector3d{{0, 0, 0}};
 
@@ -406,10 +404,10 @@ Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v) {
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
-void local_rotate_particle(Particle &p, const Vector3d &a_space_frame,
+void local_rotate_particle(Particle &p, const Vector3d &axis_space_frame,
                            const double phi) {
   // Convert rotation axis to body-fixed frame
-  Vector3d a = convert_vector_space_to_body(p, a_space_frame);
+  Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
 
   //  printf("%g %g %g - ",a[0],a[1],a[2]);
   // Rotation turned off entirely?
@@ -418,25 +416,25 @@ void local_rotate_particle(Particle &p, const Vector3d &a_space_frame,
 
   // Per coordinate fixing
   if (!(p.p.rotation & ROTATION_X))
-    a[0] = 0;
+    axis[0] = 0;
   if (!(p.p.rotation & ROTATION_Y))
-    a[1] = 0;
+    axis[1] = 0;
   if (!(p.p.rotation & ROTATION_Z))
-    a[2] = 0;
+    axis[2] = 0;
   // Re-normalize rotation axis
-  double l = a.norm();
+  double l = axis.norm();
   // Check, if the rotation axis is nonzero
-  if (l < 1E-10)
+  if (l < std::numeric_limits<double>::epsilon())
     return;
 
-  a /= l;
+  axis /= l;
 
   double q[4];
   q[0] = cos(phi / 2);
   double tmp = sin(phi / 2);
-  q[1] = tmp * a[0];
-  q[2] = tmp * a[1];
-  q[3] = tmp * a[2];
+  q[1] = tmp * axis[0];
+  q[2] = tmp * axis[1];
+  q[3] = tmp * axis[2];
 
   // Normalize
   normalize_quaternion(q);

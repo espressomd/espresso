@@ -95,16 +95,9 @@ bool steepest_descent_step(void) {
     }
 #ifdef ROTATION
     // Rotational increment
-    Vector3d dq; // Vector parallel to torque
+    Vector3d dq = params->gamma * p.f.torque;
+    t += p.f.torque.norm2();
 
-    for (int j = 0; j < 3; j++) {
-      dq[j] = 0;
-      // Square of torque
-      t += Utils::sqr(p.f.torque[j]);
-
-      // Rotational increment
-      dq[j] = params->gamma * p.f.torque[j];
-    }
     // Normalize rotation axis and compute amount of rotation
     double l = dq.norm();
     if (l > 0.0) {
