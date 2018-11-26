@@ -169,7 +169,7 @@ typedef struct {
   /** Flag indicating whether fluctuations are present. */
   int fluct;
   /** amplitudes of the fluctuations of the modes */
-  double phi[19];
+  Vector<19, double> phi;
 } LB_Parameters;
 
 /** The DnQm model to be used. */
