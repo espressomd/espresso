@@ -200,5 +200,17 @@ class LeesEdwards(ut.TestCase):
 
                     system.part.clear()
 
+    def test_d_vel_diff(self):
+        system = self.system
+
+        system.lees_edwards.set_params(
+            type="steady_shear", velocity=1.5, sheardir=0, shearplanenormal=2)
+        system.part.add(id=0, pos=[1, 1, system.box_l[2]-1/2])
+        system.part.add(id=1, pos=[1, 1, 1/2])
+
+        vel_diff = system.velocity_difference(system.part[0], system.part[1])
+        print(vel_diff)
+        print(system.lees_edwards.velocity)
+
 if __name__ == "__main__":
     ut.main()
