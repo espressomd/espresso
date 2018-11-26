@@ -158,13 +158,13 @@ struct CellStructure {
       \param  pos Position of a particle.
       \return number of the node where to put the particle.
   */
-  int (*position_to_node)(double pos[3]);
+  int (*position_to_node)(const Vector3d &pos);
   /** Cell system dependent function to find the right cell for a
       particle at position pos.
       \param  pos Position of a particle.
       \return pointer to cell  where to put the particle.
   */
-  Cell *(*position_to_cell)(const double pos[3]);
+  Cell *(*position_to_cell)(const Vector3d &pos);
 };
 
 /*@}*/
@@ -295,9 +295,6 @@ void announce_resort_particles();
 
 /* Checks if a particle resorting is required. */
 void check_resort_particles();
-
-/* Do a strict particle sorting, including order in the cells. */
-void local_sort_particles();
 
 /*@}*/
 
