@@ -290,7 +290,7 @@ inline Utils::Vector3d unfolded_position(Particle const &p) {
 }
 
 /** Calculate the velocity difference including the Lees Edwards velocity*/
-inline static Vector3d vel_diff(Vector3d const &x, Vector3d const &y,
+inline Vector3d vel_diff(Vector3d const &x, Vector3d const &y,
                                 Vector3d const &u, Vector3d const &v) {
 
   auto ret = u - v;

@@ -462,6 +462,30 @@ cdef class System(object):
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))
     
+    def velocity_difference(self, p1, p2):
+        """Returns the velocity difference, including if necessary the Lees-Edwards velocity.
+
+        """
+
+        cdef Vector3d res, x1, x2, u1, u2
+
+        x1[0] = p1.pos_folded[0]
+        x1[1] = p1.pos_folded[1]
+        x1[2] = p1.pos_folded[2]
+        x2[0] = p2.pos_folded[0]
+        x2[1] = p2.pos_folded[1]
+        x2[2] = p2.pos_folded[2]
+        u1[0] = p1.v[0]
+        u1[1] = p1.v[1]
+        u1[2] = p1.v[2]
+        u2[0] = p2.v[0]
+        u2[1] = p2.v[1]
+        u2[2] = p2.v[2]
+
+        res = vel_diff(x1, x2, u1, u2)
+
+        return np.array([res[0], res[1], res[2]])
+
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.
 
