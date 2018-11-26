@@ -140,7 +140,8 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
   get_mi_vector(d, p.r.p, p_real->r.p);
 
   // Get omega of real particle in space-fixed frame
-  Vector3d omega_space_frame = convert_vector_body_to_space(*p_real, p_real->m.omega);
+  Vector3d omega_space_frame =
+      convert_vector_body_to_space(*p_real, p_real->m.omega);
   // Obtain velocity from v=v_real particle + omega_real_particle \times
   // director
   vector_product(omega_space_frame, d, p.m.v);

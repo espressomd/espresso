@@ -528,7 +528,8 @@ cdef class ParticleHandle(object):
                 cdef Vector3d torque_body
                 cdef Vector3d torque_space
                 torque_body = get_torque_body(self.particle_data[0])
-                torque_space=convert_vector_body_to_space(self.particle_data[0],torque_body)
+                torque_space = convert_vector_body_to_space(
+                    self.particle_data[0], torque_body)
 
                 return make_array_locked(torque_space)
 
