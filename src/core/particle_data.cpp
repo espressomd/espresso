@@ -523,7 +523,7 @@ int set_particle_rotation(int part, int rot) {
 }
 #endif
 #ifdef ROTATION
-int rotate_particle(int part, const Vector3d& axis, double angle) {
+int rotate_particle(int part, const Vector3d &axis, double angle) {
   auto const pnode = get_particle_node(part);
 
   mpi_rotate_particle(pnode, part, axis, angle);
@@ -657,35 +657,37 @@ int set_particle_quat(int part, double quat[4]) {
   return ES_OK;
 }
 
-int set_particle_omega_lab(int part, const Vector3d& omega_lab) {
+int set_particle_omega_lab(int part, const Vector3d &omega_lab) {
   auto const &particle = get_particle_data(part);
 
   auto const pnode = get_particle_node(part);
-  mpi_send_omega(pnode, part, convert_vector_space_to_body(particle,omega_lab).data());
+  mpi_send_omega(pnode, part,
+                 convert_vector_space_to_body(particle, omega_lab));
   return ES_OK;
 }
 
-int set_particle_omega_body(int part, const Vector3d& omega) {
+int set_particle_omega_body(int part, const Vector3d &omega) {
   auto const pnode = get_particle_node(part);
-  mpi_send_omega(pnode, part, omega.data());
+  mpi_send_omega(pnode, part, omega);
   return ES_OK;
 }
 
-int set_particle_torque_lab(int part, const Vector3d& torque_lab) {
+int set_particle_torque_lab(int part, const Vector3d &torque_lab) {
   auto const &particle = get_particle_data(part);
 
   auto const pnode = get_particle_node(part);
-  mpi_send_torque(pnode, part, convert_vector_space_to_body(particle,torque_lab).data());
+  mpi_send_torque(pnode, part,
+                  convert_vector_space_to_body(particle, torque_lab));
   return ES_OK;
 }
 
-int set_particle_torque_body(int part, const Vector3d& torque) {
+int set_particle_torque_body(int part, const Vector3d &torque) {
   auto const pnode = get_particle_node(part);
 
   /* Nothing to be done but pass, since the coordinates
      are already in the proper frame */
 
-  mpi_send_torque(pnode, part, torque.data());
+  mpi_send_torque(pnode, part, torque);
   return ES_OK;
 }
 
@@ -1208,7 +1210,6 @@ int number_of_particles_with_type(int type) {
 void pointer_to_omega_body(Particle const *p, double const *&res) {
   res = p->m.omega.data();
 }
-
 
 void pointer_to_quat(Particle const *p, double const *&res) {
   res = p->r.quat.data();
