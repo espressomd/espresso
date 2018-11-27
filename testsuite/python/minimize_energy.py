@@ -26,7 +26,7 @@ import espressomd
 class test_minimize_energy(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 
-    test_rotation = espressomd.has_features(("ROTATION","DIPOLES"))
+    test_rotation = espressomd.has_features(("ROTATION", "DIPOLES"))
     if test_rotation:
         from espressomd.constraints import HomogeneousMagneticField
 
@@ -51,7 +51,9 @@ class test_minimize_energy(ut.TestCase):
             epsilon=self.lj_eps, sigma=self.lj_sig,
             cutoff=self.lj_cut, shift="auto")
         if self.test_rotation:
-            self.system.constraints.add(self.HomogeneousMagneticField(H=[-0.5,0,0]))
+            self.system.constraints.add(
+                self.HomogeneousMagneticField(H=[-0.5, 0, 0]))
+
     def tearDown(self):
         self.system.part.clear()
         self.system.integrator.set_vv()
@@ -61,9 +63,9 @@ class test_minimize_energy(ut.TestCase):
             p = self.system.part.add(
                 id=i, pos=np.random.random(3) * self.system.box_l)
             if self.test_rotation:
-                p.dip=np.random.random(3)
-                p.dipm=1
-                p.rotation=(1,1,1)
+                p.dip = np.random.random(3)
+                p.dipm = 1
+                p.rotation = (1, 1, 1)
         # Remove external magnetic field
         
         self.assertNotAlmostEqual(
@@ -82,10 +84,8 @@ class test_minimize_energy(ut.TestCase):
         np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.)
         if self.test_rotation:
             np.testing.assert_allclose(np.copy(self.system.part[:].dip), 
-                np.hstack((-np.ones((self.n_part,1)),np.zeros((self.n_part,1)),np.zeros((self.n_part,1)))),atol=1E-9)
+                                       np.hstack((-np.ones((self.n_part, 1)), np.zeros((self.n_part, 1)), np.zeros((self.n_part, 1)))), atol=1E-9)
             
-
-
     def test_rescaling(self):
         self.system.part.add(pos=[5., 5., 4.9], type=0)
         self.system.part.add(pos=[5., 5., 5.1], type=0)

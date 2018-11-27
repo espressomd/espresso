@@ -260,8 +260,7 @@ void propagate_omega_quat_particle(Particle *p) {
                             this_node, p->r.p[0], p->r.p[1], p->r.p[2]));
 }
 
-inline
-void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
+inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
   auto const t = convert_vector_space_to_body(p, p.f.torque);
   p.f.torque = Vector3d{{0, 0, 0}};
 
