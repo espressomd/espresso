@@ -16,8 +16,9 @@ cdef class ReactionAlgorithm(object):
     reaction algorithm by setting the standard pressure, temperature, and the
     exclusion radius.
 
-    Note: When setting the velocities of the particles according the the
-    Maxwell distribution the mass of all particles is assumed to equal 1.
+    Note: When creating particles the velocities the new particles are set
+    according the Maxwell distribution. In this step the mass of the new particle
+    is assumed to equal 1.
 
 
     Parameters
