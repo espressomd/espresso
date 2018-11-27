@@ -510,7 +510,7 @@ inline void add_bonded_force(Particle *p1) {
       get_mi_vector(dx, p1->r.p, p2->r.p);
     }
 
-    if (n_partners <= 1) {
+    if (n_partners == 1) {
       switch (type) {
       case BONDED_IA_FENE:
         bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
