@@ -294,7 +294,7 @@ void convert_torques_propagate_omega() {
       fprintf(stderr, "%d: convert_torques_propagate_omega:\n", this_node));
 
 #if defined(LB_GPU) && defined(ENGINE)
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if ((lattice_switch & LATTICE_LB_GPU) && swimming_particles_exist) {
     copy_v_cs_from_GPU(local_cells.particles());
   }
 #endif
