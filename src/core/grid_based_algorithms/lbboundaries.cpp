@@ -378,7 +378,6 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
   int next[19];
-  int x, y, z;
   double population_shift;
   next[0] = 0;                     // ( 0, 0, 0) =
   next[1] = 1;                     // ( 1, 0, 0) +
@@ -404,9 +403,9 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
 
   /* bottom-up sweep */
   //  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++)
-  for (z = 0; z < lblattice.grid[2] + 2; z++) {
-    for (y = 0; y < lblattice.grid[1] + 2; y++) {
-      for (x = 0; x < lblattice.grid[0] + 2; x++) {
+  for (int z = 0; z < lblattice.grid[2] + 2; z++) {
+    for (int y = 0; y < lblattice.grid[1] + 2; y++) {
+      for (int x = 0; x < lblattice.grid[0] + 2; x++) {
         k = get_linear_index(x, y, z, lblattice.halo_grid);
 
         if (lbfields[k].boundary) {
