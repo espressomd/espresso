@@ -158,17 +158,6 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl);
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells();
 
-/** Fill a communication cell pointer list. Fill the cell pointers of
-    all cells which are inside a rectangular subgrid of the 3D cell
-    grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
-    lower left corner lc up to the high top corner hc. The cell
-    pointer list part_lists must already be large enough.
-    \param part_lists  List of cell pointers to store the result.
-    \param lc          lower left corner of the subgrid.
-    \param hc          high up corner of the subgrid.
- */
-int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]);
-
 /** Of every two communication rounds, set the first receivers to prefetch and
  * poststore */
 void dd_assign_prefetches(GhostCommunicator *comm);
