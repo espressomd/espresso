@@ -35,6 +35,7 @@
 #include "initialize.hpp"
 
 #include <boost/mpi/collectives.hpp>
+#include <boost/range/algorithm.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr
@@ -421,18 +422,14 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
     communicator is working in reverted order with exchanged
     communication types GHOST_SEND <-> GHOST_RECV. */
 void dd_revert_comm_order(GhostCommunicator *comm) {
-  int i, j, nlist2;
   CELL_TRACE(fprintf(stderr, "%d: dd_revert_comm_order: anz comm: %d\n",
                      this_node, comm->num));
 
   /* revert order */
-  for (i = 0; i < (comm->num / 2); i++) {
-    auto const tmp = comm->comm[i];
-    comm->comm[i] = comm->comm[comm->num - i - 1];
-    comm->comm[comm->num - i - 1] = tmp;
-  }
+  std::reverse(comm->comm, comm->comm + comm->num);
+
   /* exchange SEND/RECV */
-  for (i = 0; i < comm->num; i++) {
+  for (int i = 0; i < comm->num; i++) {
     if(comm->comm[i].shift) {
       comm->comm[i].shift = -comm->comm[i].shift.get();
     }
@@ -441,12 +438,10 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
     else if (comm->comm[i].type == GHOST_RECV)
       comm->comm[i].type = GHOST_SEND;
     else if (comm->comm[i].type == GHOST_LOCL) {
-      nlist2 = comm->comm[i].n_part_lists / 2;
-      for (j = 0; j < nlist2; j++) {
-        auto tmplist = comm->comm[i].part_lists[j];
-        comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j + nlist2];
-        comm->comm[i].part_lists[j + nlist2] = tmplist;
-      }
+      auto first_list = comm->comm[i].part_lists.begin();
+      auto last_list = comm->comm[i].part_lists.end();
+      auto const n_lists = std::distance(first_list, last_list);
+      std::rotate(first_list, first_list + (n_lists / 2), last_list);
     }
   }
 }
