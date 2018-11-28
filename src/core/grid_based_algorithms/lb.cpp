@@ -162,8 +162,8 @@ static int rancounter = 0;
 /*
  * set lattice switch on C-level
  */
-int lb_set_lattice_switch(int py_switch) {
-  switch (py_switch) {
+int lb_set_lattice_switch(int local_lattice_switch) {
+  switch (local_lattice_switch) {
   case 0:
     lattice_switch = LATTICE_OFF;
     mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
@@ -179,17 +179,6 @@ int lb_set_lattice_switch(int py_switch) {
   default:
     return 1;
   }
-}
-
-/*
- * get lattice switch on py-level
- */
-int lb_get_lattice_switch(int *py_switch) {
-  if (lattice_switch) {
-    *py_switch = lattice_switch;
-    return 0;
-  } else
-    return 1;
 }
 
 #ifdef SHANCHEN
@@ -2415,9 +2404,7 @@ inline void lb_collide_stream() {
   // particle update In the following loop the lbfields[XX].force are reset to
   // zero
   for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
-    lbfields[i].force_density_buf[0] = lbfields[i].force_density[0];
-    lbfields[i].force_density_buf[1] = lbfields[i].force_density[1];
-    lbfields[i].force_density_buf[2] = lbfields[i].force_density[2];
+    lbfields[i].force_density_buf = lbfields[i].force_density;
   }
 #endif
 
@@ -2773,15 +2760,14 @@ void calc_particle_lattice_ia() {
  * a local lattice site in order to set lbpar.rho consistently. */
 void lb_calc_average_rho() {
   Lattice::index_t index;
-  int x, y, z;
   double rho, local_rho, sum_rho;
 
   rho = 0.0;
   local_rho = 0.0;
   index = 0;
-  for (z = 1; z <= lblattice.grid[2]; z++) {
-    for (y = 1; y <= lblattice.grid[1]; y++) {
-      for (x = 1; x <= lblattice.grid[0]; x++) {
+  for (int z = 1; z <= lblattice.grid[2]; z++) {
+    for (int y = 1; y <= lblattice.grid[1]; y++) {
+      for (int x = 1; x <= lblattice.grid[0]; x++) {
         lb_calc_local_rho(index, &rho);
         local_rho += rho;
 

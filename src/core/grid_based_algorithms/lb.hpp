@@ -381,8 +381,7 @@ int lb_lbfluid_get_ext_force_density(double *p_f);
 int lb_lbfluid_set_shanchen_coupling(double *p_coupling);
 int lb_lbfluid_set_mobility(double *p_mobility);
 #endif
-int lb_set_lattice_switch(int py_switch);
-int lb_get_lattice_switch(int *py_switch);
+int lb_set_lattice_switch(int local_lattice_switch);
 
 /* IO routines */
 int lb_lbfluid_print_vtk_boundary(char *filename);
