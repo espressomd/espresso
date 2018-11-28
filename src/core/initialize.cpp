@@ -407,6 +407,8 @@ void on_lbboundary_change() {
 
 void on_resort_particles() {
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
+
+    clear_particle_node();
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
 #ifdef P3M
