@@ -340,8 +340,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
           comm->comm[cnt].node = this_node;
 
           /* Buffer has to contain Send and Recv cells -> factor 2 */
-          comm->comm[cnt].part_lists =
-              (Cell **)Utils::malloc(2 * n_comm_cells[dir] * sizeof(Cell *));
+          comm->comm[cnt].part_lists.resize(2 * n_comm_cells[dir]);
           comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
           /* prepare folding of ghost positions */
           if (boundary[2 * dir + lr] != 0) {
@@ -351,7 +350,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
+          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
           CELL_TRACE(fprintf(
               stderr,
               "%d: prep_comm %d copy to          grid (%d,%d,%d)-(%d,%d,%d)\n",
@@ -376,8 +375,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
             if ((node_pos[dir] + i) % 2 == 0) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
-              comm->comm[cnt].part_lists =
-                  (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
+              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
               comm->comm[cnt].n_part_lists = n_comm_cells[dir];
               /* prepare folding of ghost positions */
               if (boundary[2 * dir + lr] != 0) {
@@ -386,7 +384,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
 
               CELL_TRACE(fprintf(stderr,
                                  "%d: prep_comm %d send to   node %d "
@@ -399,13 +397,12 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               comm->comm[cnt].type = GHOST_RECV;
               comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
-              comm->comm[cnt].part_lists =
-                  (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
+              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
               comm->comm[cnt].n_part_lists = n_comm_cells[dir];
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
               CELL_TRACE(fprintf(stderr,
                                  "%d: prep_comm %d recv from node %d "
                                  "grid (%d,%d,%d)-(%d,%d,%d)\n",
@@ -425,14 +422,12 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
     communication types GHOST_SEND <-> GHOST_RECV. */
 void dd_revert_comm_order(GhostCommunicator *comm) {
   int i, j, nlist2;
-  GhostCommunication tmp;
-
   CELL_TRACE(fprintf(stderr, "%d: dd_revert_comm_order: anz comm: %d\n",
                      this_node, comm->num));
 
   /* revert order */
   for (i = 0; i < (comm->num / 2); i++) {
-    tmp = comm->comm[i];
+    auto const tmp = comm->comm[i];
     comm->comm[i] = comm->comm[comm->num - i - 1];
     comm->comm[comm->num - i - 1] = tmp;
   }

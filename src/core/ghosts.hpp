@@ -162,18 +162,12 @@ struct GhostCommunication {
     /** Number of particle lists to communicate. */
   int n_part_lists = 0;
   /** Pointer array to particle lists to communicate. */
-  Cell **part_lists = nullptr;
+  std::vector<Cell *> part_lists = {};
 
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
      this is the shift vector. Normally this a integer multiple of the box
      length. The shift is done on the sender side */
   boost::optional<Vector3d> shift = boost::none;
-
-  ~GhostCommunication() {
-      if(part_lists) {
-       free(part_lists);
-      }
-  }
 };
 
 /** Properties for a ghost communication. A ghost communication is defined */
