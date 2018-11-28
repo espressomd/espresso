@@ -170,7 +170,8 @@ struct GhostCommunication {
 
 /** Properties for a ghost communication. A ghost communication is defined */
 struct GhostCommunicator {
-
+    GhostCommunicator() = default;
+    GhostCommunicator(int data_parts, int num) : data_parts(data_parts), num(num), comm(num) {}
   /** Particle data parts to transfer */
   int data_parts;
 
@@ -178,7 +179,7 @@ struct GhostCommunicator {
   int num;
 
   /** List of ghost communications. */
-  GhostCommunication *comm;
+  std::vector<GhostCommunication> comm;
 };
 
 /*@}*/

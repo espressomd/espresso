@@ -74,11 +74,11 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
                       comm->data_parts));
 
   comm->num = num;
-  comm->comm = new GhostCommunication[num];
+  comm->comm = std::vector<GhostCommunication>(num);
 }
 
 void free_comm(GhostCommunicator *comm) {
-  delete[] comm->comm;
+  comm->comm.clear();
 }
 
 int calc_transmit_size(GhostCommunication *gc, int data_parts) {

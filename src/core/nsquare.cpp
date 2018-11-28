@@ -33,7 +33,7 @@
 #include <cstring>
 #include <mpi.h>
 
-Cell *local;
+static Cell *local;
 
 Cell *nsq_position_to_cell(const Vector3d &pos) { return local; }
 int nsq_position_to_node(const Vector3d &) { return this_node; }

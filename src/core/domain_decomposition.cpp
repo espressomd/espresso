@@ -423,20 +423,20 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
                      this_node, comm->num));
 
   /* revert order */
-  std::reverse(comm->comm, comm->comm + comm->num);
+  boost::reverse(comm->comm);
 
   /* exchange SEND/RECV */
-  for (int i = 0; i < comm->num; i++) {
-    if(comm->comm[i].shift) {
-      comm->comm[i].shift = -comm->comm[i].shift.get();
+  for (auto &c : comm->comm) {
+    if(c.shift) {
+      c.shift = -c.shift.get();
     }
-    if (comm->comm[i].type == GHOST_SEND)
-      comm->comm[i].type = GHOST_RECV;
-    else if (comm->comm[i].type == GHOST_RECV)
-      comm->comm[i].type = GHOST_SEND;
-    else if (comm->comm[i].type == GHOST_LOCL) {
-      auto first_list = comm->comm[i].part_lists.begin();
-      auto last_list = comm->comm[i].part_lists.end();
+    if (c.type == GHOST_SEND)
+      c.type = GHOST_RECV;
+    else if (c.type == GHOST_RECV)
+      c.type = GHOST_SEND;
+    else if (c.type == GHOST_LOCL) {
+      auto first_list = c.part_lists.begin();
+      auto last_list = c.part_lists.end();
       auto const n_lists = std::distance(first_list, last_list);
       std::rotate(first_list, first_list + (n_lists / 2), last_list);
     }
