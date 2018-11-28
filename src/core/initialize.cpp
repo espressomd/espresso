@@ -68,6 +68,7 @@
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "virtual_sites.hpp"
+#include "immersed_boundaries.hpp"
 
 #include "utils/mpi/all_compare.hpp"
 /** whether the thermostat has to be reinitialized before integration */
@@ -223,6 +224,13 @@ void on_integration_start() {
 #endif
   check_global_consistency();
 #endif /* ADDITIONAL_CHECKS */
+
+#ifdef IMMERSED_BOUNDARY
+  // Here we initialize volume conservation
+  // This function checks if the reference volumes have been set and if
+  // necessary calculates them
+  immersed_boundaries.init_volume_conservation();
+#endif
 
   on_observable_calc();
 }
