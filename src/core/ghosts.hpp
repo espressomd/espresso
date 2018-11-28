@@ -155,19 +155,25 @@ further details.
 
 struct GhostCommunication {
   /** Communication type. */
-  int type;
+  int type = 0;
   /** Node to communicate with (to use with all MPI operations). */
-  int node;
+  int node = 0;
 
     /** Number of particle lists to communicate. */
-  int n_part_lists;
+  int n_part_lists = 0;
   /** Pointer array to particle lists to communicate. */
-  Cell **part_lists;
+  Cell **part_lists = nullptr;
 
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
      this is the shift vector. Normally this a integer multiple of the box
      length. The shift is done on the sender side */
-  boost::optional<Vector3d> shift;
+  boost::optional<Vector3d> shift = boost::none;
+
+  ~GhostCommunication() {
+      if(part_lists) {
+       free(part_lists);
+      }
+  }
 };
 
 /** Properties for a ghost communication. A ghost communication is defined */
