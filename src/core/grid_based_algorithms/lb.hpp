@@ -269,24 +269,14 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index);
  * @param index the local lattice site (Input).
  * @param rho   local fluid density
  */
-inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
-  // unit conversion: mass density
+inline double lb_calc_local_rho(Lattice::index_t index) {
   if (!(lattice_switch & LATTICE_LB)) {
     runtimeErrorMsg() << "Error in lb_calc_local_rho in " << __FILE__
                       << __LINE__ << ": CPU LB not switched on.";
-    *rho = 0;
-    return;
+    return 0.0;
   }
-
-  double avg_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-
-  *rho = avg_rho + lbfluid[0][index] + lbfluid[1][index] + lbfluid[2][index] +
-         lbfluid[3][index] + lbfluid[4][index] + lbfluid[5][index] +
-         lbfluid[6][index] + lbfluid[7][index] + lbfluid[8][index] +
-         lbfluid[9][index] + lbfluid[10][index] + lbfluid[11][index] +
-         lbfluid[12][index] + lbfluid[13][index] + lbfluid[14][index] +
-         lbfluid[15][index] + lbfluid[16][index] + lbfluid[17][index] +
-         lbfluid[18][index];
+  const auto modes = lb_calc_modes(index);
+  return lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
 }
 
 /** Calculate the local fluid momentum.
@@ -294,14 +284,13 @@ inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
  * @param index The local lattice site (Input).
  * @param j local fluid speed
  */
-inline void lb_calc_local_j(Lattice::index_t index, double *j) {
+inline Vector3d lb_calc_local_j(Lattice::index_t index) {
   if (!(lattice_switch & LATTICE_LB)) {
     runtimeErrorMsg() << "Error in lb_calc_local_j in " << __FILE__ << __LINE__
                       << ": CPU LB not switched on.";
-    j[0] = j[1] = j[2] = 0;
-    return;
+    return {};
   }
-
+  Vector3d j{};
   j[0] = lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
          lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
          lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
@@ -314,6 +303,7 @@ inline void lb_calc_local_j(Lattice::index_t index, double *j) {
          lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
          lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
          lbfluid[18][index];
+  return j;
 }
 
 /** Calculate the local fluid fields.
