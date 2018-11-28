@@ -200,6 +200,24 @@ void topology_init(int cs, CellPList *local) {
   }
 }
 
+/** Go through \ref ghost_cells and remove the ghost entries from \ref
+    local_particles. Part of \ref dd_exchange_and_sort_particles.*/
+static void invalidate_ghosts() {
+  /* remove ghosts, but keep Real Particles */
+  for (int c = 0; c < ghost_cells.n; c++) {
+    Particle *part = ghost_cells.cell[c]->part;
+    int np = ghost_cells.cell[c]->n;
+    for (int p = 0; p < np; p++) {
+      /* Particle is stored as ghost in the local_particles array,
+         if the pointer stored there belongs to a ghost cell
+         particle array. */
+      if (&(part[p]) == local_particles[part[p].p.identity])
+        local_particles[part[p].p.identity] = nullptr;
+    }
+    ghost_cells.cell[c]->n = 0;
+  }
+}
+
 /*@}*/
 
 /************************************************************

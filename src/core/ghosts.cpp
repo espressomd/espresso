@@ -33,13 +33,14 @@
 #include "utils.hpp"
 
 #include <boost/range/numeric.hpp>
+#include <mpi.h>
 
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <mpi.h>
 #include <vector>
+#include <memory>
 
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100
@@ -204,28 +205,19 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
-  if (ghosts_have_bonds) {
-    // free all allocated information, will be resent
-    {
-      int np = cell->n;
-      Particle *part = cell->part;
-      for (int p = 0; p < np; p++) {
-        free_particle(part + p);
-      }
-    }
-  }
-  cell->resize(size);
-  // invalidate pointers etc
-  {
-    int np = cell->n;
-    Particle *part = cell->part;
-    for (int p = 0; p < np; p++) {
-      Particle *pt = new (&part[p]) Particle();
+    if(size > cell->max) {
+        auto const old_cap = cell->max;
+        cell->max = size;
+        cell->part = Utils::realloc(cell->part, size*sizeof(Particle));
 
-      // init ghost variable
-      pt->l.ghost = 1;
+        auto p = Particle();
+        p.p.identity = -1;
+        p.l.ghost = 1;
+
+        std::uninitialized_fill(cell->part + old_cap, cell->part + cell->max, p);
     }
-  }
+
+    cell->n = size;
 }
 
 void prepare_recv_buffer(GhostCommunication *gc, int data_parts) {
@@ -632,22 +624,3 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   }
 }
 
-/** Go through \ref ghost_cells and remove the ghost entries from \ref
-    local_particles. Part of \ref dd_exchange_and_sort_particles.*/
-void invalidate_ghosts() {
-  int c, p;
-  /* remove ghosts, but keep Real Particles */
-  for (c = 0; c < ghost_cells.n; c++) {
-    Particle *part = ghost_cells.cell[c]->part;
-    int np = ghost_cells.cell[c]->n;
-    for (p = 0; p < np; p++) {
-      /* Particle is stored as ghost in the local_particles array,
-         if the pointer stored there belongs to a ghost cell
-         particle array. */
-      if (&(part[p]) == local_particles[part[p].p.identity])
-        local_particles[part[p].p.identity] = nullptr;
-      free_particle(part + p);
-    }
-    ghost_cells.cell[c]->n = 0;
-  }
-}
