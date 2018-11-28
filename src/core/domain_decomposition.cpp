@@ -420,9 +420,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
     communicator is working in reverted order with exchanged
     communication types GHOST_SEND <-> GHOST_RECV. */
 void dd_revert_comm_order(GhostCommunicator *comm) {
-  CELL_TRACE(fprintf(stderr, "%d: dd_revert_comm_order: anz comm: %d\n",
-                     this_node, comm->num));
-
   /* revert order */
   boost::reverse(comm->comm);
 
@@ -447,13 +444,12 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
 /** Of every two communication rounds, set the first receivers to prefetch and
  * poststore */
 void dd_assign_prefetches(GhostCommunicator *comm) {
-  for (int cnt = 0; cnt < comm->num; cnt += 2) {
-    if (comm->comm[cnt].type == GHOST_RECV &&
-        comm->comm[cnt + 1].type == GHOST_SEND) {
-      comm->comm[cnt].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-      comm->comm[cnt + 1].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+    for(auto it = comm->comm.begin(); it != comm->comm.end(); it+=2) {
+        if((it->type == GHOST_RECV) and (std::next(it)->type == GHOST_SEND)) {
+            it->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+            std::next(it)->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        }
     }
-  }
 }
 
 /** update the 'shift' member of those GhostCommunicators, which use

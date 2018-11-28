@@ -424,13 +424,19 @@ static int is_recv_op(int comm_type, int node) {
           (comm_type == GHOST_RDCE && node == this_node));
 }
 
+namespace {
+    template<class Iter>
+    constexpr std::reverse_iterator<Iter> make_reverse_iterator(Iter i) {
+        return std::reverse_iterator<Iter>(i);
+    }
+}
+
 void ghost_communicator(GhostCommunicator *gc) {
   ghost_communicator(gc, gc->data_parts);
 }
 
 void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   MPI_Status status;
-  int n, n2;
   /* if ghosts should have up-to-date velocities, they have to be updated like
      positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
@@ -439,18 +445,12 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node,
                       (void *)gc, data_parts));
 
-  for (n = 0; n < gc->num; n++) {
-    GhostCommunication *gcn = &gc->comm[n];
+  for (auto it = gc->comm.begin(); it != gc->comm.end(); ++it) {
+    GhostCommunication *gcn = &(*it);
     int comm_type = gcn->type & GHOST_JOBMASK;
     int prefetch = gcn->type & GHOST_PREFETCH;
     int poststore = gcn->type & GHOST_PSTSTORE;
     int node = gcn->node;
-
-    GHOST_TRACE(fprintf(stderr, "%d: ghost_comm round %d, job %x\n", this_node,
-                        n, gc->comm[n].type));
-    GHOST_TRACE(fprintf(stderr, "%d: ghost_comm shift %f %f %f\n", this_node,
-                        gc->comm[n].shift[0], gc->comm[n].shift[1],
-                        gc->comm[n].shift[2]));
 
     if (comm_type == GHOST_LOCL)
       cell_cell_transfer(gcn, data_parts);
@@ -479,16 +479,12 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         /* we do not send this time, let's look for a prefetch */
         if (prefetch) {
           /* find next action where we send and which has PREFETCH set */
-          for (n2 = n + 1; n2 < gc->num; n2++) {
-            GhostCommunication *gcn2 = &gc->comm[n2];
+          for (auto jt = std::next(it); jt != gc->comm.end(); ++jt) {
+            GhostCommunication *gcn2 = &(*jt);
             int comm_type2 = gcn2->type & GHOST_JOBMASK;
             int prefetch2 = gcn2->type & GHOST_PREFETCH;
             int node2 = gcn2->node;
             if (is_send_op(comm_type2, node2) && prefetch2) {
-              GHOST_TRACE(fprintf(stderr,
-                                  "%d: ghost_comm prefetch operation %d, is "
-                                  "send/bcast to/from %d\n",
-                                  this_node, n2, node2));
               prepare_send_buffer(gcn2, data_parts);
               break;
             }
@@ -607,16 +603,12 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
          * prefetch send. */
         if (poststore) {
           /* find previous action where we recv and which has PSTSTORE set */
-          for (n2 = n - 1; n2 >= 0; n2--) {
-            GhostCommunication *gcn2 = &gc->comm[n2];
+          for (auto jt = make_reverse_iterator(it); jt != gc->comm.rend(); ++jt) {
+            GhostCommunication *gcn2 = &(*jt);
             int comm_type2 = gcn2->type & GHOST_JOBMASK;
             int poststore2 = gcn2->type & GHOST_PSTSTORE;
             int node2 = gcn2->node;
             if (is_recv_op(comm_type2, node2) && poststore2) {
-              GHOST_TRACE(fprintf(stderr,
-                                  "%d: ghost_comm storing delayed recv, "
-                                  "operation %d, from %d\n",
-                                  this_node, n2, node2));
 #ifdef ADDITIONAL_CHECKS
               if (n_r_buffer != calc_transmit_size(gcn2, data_parts)) {
                 fprintf(stderr,
