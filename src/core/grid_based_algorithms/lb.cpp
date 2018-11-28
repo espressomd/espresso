@@ -2773,18 +2773,15 @@ void calc_particle_lattice_ia() {
  * a local lattice site in order to set lbpar.rho consistently. */
 void lb_calc_average_rho() {
   Lattice::index_t index;
-  int x, y, z;
-  double rho, local_rho, sum_rho;
+  double local_rho;
 
-  rho = 0.0;
   local_rho = 0.0;
   index = 0;
-  for (z = 1; z <= lblattice.grid[2]; z++) {
-    for (y = 1; y <= lblattice.grid[1]; y++) {
-      for (x = 1; x <= lblattice.grid[0]; x++) {
-        lb_calc_local_rho(index, &rho);
+  for (int z = 1; z <= lblattice.grid[2]; z++) {
+    for (int y = 1; y <= lblattice.grid[1]; y++) {
+      for (int x = 1; x <= lblattice.grid[0]; x++) {
+        double rho = lb_calc_local_rho(index);
         local_rho += rho;
-
         index++;
       }
       // skip halo region
@@ -2793,7 +2790,8 @@ void lb_calc_average_rho() {
     // skip halo region
     index += 2 * lblattice.halo_grid[0];
   }
-  MPI_Allreduce(&rho, &sum_rho, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
+  double sum_rho;
+  MPI_Allreduce(&local_rho, &sum_rho, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 
   /* calculate average density in MD units */
   // TODO!!!
