@@ -342,7 +342,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
           /* Buffer has to contain Send and Recv cells -> factor 2 */
           comm->comm[cnt].part_lists.resize(2 * n_comm_cells[dir]);
-          comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
           /* prepare folding of ghost positions */
           if (boundary[2 * dir + lr] != 0) {
               update_component(comm->comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
@@ -377,7 +376,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
               comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
-              comm->comm[cnt].n_part_lists = n_comm_cells[dir];
               /* prepare folding of ghost positions */
               if (boundary[2 * dir + lr] != 0) {
                   update_component(comm->comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
@@ -399,7 +397,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
               comm->comm[cnt].type = GHOST_RECV;
               comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
               comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
-              comm->comm[cnt].n_part_lists = n_comm_cells[dir];
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 

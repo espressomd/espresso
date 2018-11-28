@@ -159,8 +159,6 @@ struct GhostCommunication {
   /** Node to communicate with (to use with all MPI operations). */
   int node = 0;
 
-    /** Number of particle lists to communicate. */
-  int n_part_lists = 0;
   /** Pointer array to particle lists to communicate. */
   std::vector<Cell *> part_lists = {};
 
