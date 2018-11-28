@@ -32,6 +32,8 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
+#include <boost/range/numeric.hpp>
+
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -83,11 +85,11 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
   int n_buffer_new;
 
   if (data_parts & GHOSTTRANS_PARTNUM)
-    n_buffer_new = sizeof(int) * gc->n_part_lists;
+    n_buffer_new = sizeof(int) * gc->part_lists.size();
   else {
-    int count = 0;
-    for (int p = 0; p < gc->n_part_lists; p++)
-      count += gc->part_lists[p]->n;
+      auto const count = boost::accumulate(gc->part_lists, 0, [](int sum, const Cell * c) {
+          return sum + c->n;
+      });
 
     n_buffer_new = 0;
     if (data_parts & GHOSTTRANS_PROPRTS) {
@@ -138,15 +140,15 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 
   /* put in data */
   char *insert = s_buffer;
-  for (int pl = 0; pl < gc->n_part_lists; pl++) {
-    int np = gc->part_lists[pl]->n;
+  for (auto const&pl : gc->part_lists) {
+    int np = pl->n;
     if (data_parts & GHOSTTRANS_PARTNUM) {
       *(int *)insert = np;
       insert += sizeof(int);
       GHOST_TRACE(
           fprintf(stderr, "%d: %d particles assigned\n", this_node, np));
     } else {
-      Particle *part = gc->part_lists[pl]->part;
+      Particle *part = pl->part;
       for (int p = 0; p < np; p++) {
         Particle *pt = &part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
@@ -259,17 +261,16 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
 
   std::vector<int>::const_iterator bond_retrieve = r_bondbuffer.begin();
 
-  for (int pl = 0; pl < gc->n_part_lists; pl++) {
-    auto cur_list = gc->part_lists[pl];
+  for (auto &pl : gc->part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
       GHOST_TRACE(fprintf(
           stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
           this_node, (void *)cur_list, *(int *)retrieve, gc->node));
-      prepare_ghost_cell(cur_list, *(int *)retrieve);
+      prepare_ghost_cell(pl, *(int *)retrieve);
       retrieve += sizeof(int);
     } else {
-      int np = cur_list->n;
-      Particle *part = cur_list->part;
+      int np = pl->n;
+      Particle *part = pl->part;
       for (int p = 0; p < np; p++) {
         Particle *pt = &part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
@@ -349,18 +350,16 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
 }
 
 void add_forces_from_recv_buffer(GhostCommunication *gc) {
-  int pl, p;
-  Particle *part, *pt;
   char *retrieve;
 
   /* put back data */
   retrieve = r_buffer;
-  for (pl = 0; pl < gc->n_part_lists; pl++) {
-    int np = gc->part_lists[pl]->n;
-    part = gc->part_lists[pl]->part;
-    for (p = 0; p < np; p++) {
-      pt = &part[p];
-      pt->f += *(reinterpret_cast<ParticleForce *>(retrieve));
+  for (auto &pl : gc->part_lists) {
+    int np = pl->n;
+    auto part = pl->part;
+    for (int p = 0; p < np; p++) {
+      auto &pt = part[p];
+      pt.f += *(reinterpret_cast<ParticleForce *>(retrieve));
       retrieve += sizeof(ParticleForce);
     }
   }
@@ -374,14 +373,14 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
 }
 
 void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
-  int pl, p, offset;
+  int pl, p;
   Particle *part1, *part2, *pt1, *pt2;
 
   GHOST_TRACE(fprintf(stderr, "%d: local_transfer: type %d data_parts %d\n",
                       this_node, gc->type, data_parts));
 
   /* transfer data */
-  offset = gc->n_part_lists / 2;
+  auto const offset = gc->part_lists.size() / 2;
   for (pl = 0; pl < offset; pl++) {
     Cell *src_list = gc->part_lists[pl];
     Cell *dst_list = gc->part_lists[pl + offset];
