@@ -20,9 +20,44 @@ from __future__ import print_function
 import os
 import sys
 import numpy as np
-import espressomd
 from time import time, sleep
+import argparse
+
+parser = argparse.ArgumentParser(description="Benchmark LJ simulations. "
+                                 "Save the results to a CSV file.")
+parser.add_argument("--particles_per_core", metavar="N", action="store",
+                    type=int, default=1000, required=False,
+                    help="Number of particles in the simulation box")
+parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
+                    type=float, default=0.50, required=False,
+                    help="Fraction of the simulation box volume occupied by "
+                    "particles (range: [0.01-0.74], default: 0.50)")
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--output", metavar="FILEPATH", action="store",
+                   type=str, required=False,
+                   help="Output file (default: benchmarks.csv)")
+group.add_argument("--visualizer", action="store_true",
+                   help="Starts the visualizer (for debugging purposes)")
+
+args = parser.parse_args()
+
+# process and check arguments
+n_proc = int(os.environ.get("OMPI_COMM_WORLD_SIZE", 1))
+n_part = n_proc * args.particles_per_core
+measurement_steps = int(np.round(5e6 / args.particles_per_core, -2))
+assert args.volume_fraction > 0, "volume_fraction must be a positive number"
+assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
+    "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
+if not args.visualizer:
+    assert(measurement_steps >= 100), \
+        "{} steps per tick are too short".format(measurement_steps)
+
+
+import espressomd
 from espressomd import thermostat
+if args.visualizer:
+    from espressomd import visualization
+    from threading import Thread
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
@@ -39,36 +74,9 @@ lj_cut = lj_sig * 2**(1. / 6.)  # cutoff distance
 # System parameters
 #############################################################
 
-try:
-    nproc = int(os.environ.get("OMPI_COMM_WORLD_SIZE", 1))
-    n_part_per_core = int(sys.argv[1])
-    n_part = nproc * n_part_per_core
-    if sys.argv[2] == 'gas':
-        density = 0.02
-    elif sys.argv[2] == 'liquid':
-        density = 0.50
-    else:
-        density = float(sys.argv[2])
-    assert density > 0, "density must be a positive number"
-    assert density < np.pi / (3 * np.sqrt(2)), \
-        "density exceeds the physical limit of sphere packing (~0.74)"
-    mode = "benchmark"
-    if len(sys.argv) == 4:
-        assert sys.argv[3] == "--visualize"
-        mode = "visualization"
-        from espressomd import visualization
-        from threading import Thread
-except (ValueError, IndexError) as err:
-    print(err.message)
-    print("\nUsage: [mpiexec -np <N cores>] pypresso lj.py "
-          "<N particles per core> <density> [--visualize]\n")
-    exit(1)
-
-measurement_steps = int(np.round(5e6 / n_part_per_core, -2))
-assert(measurement_steps >= 100), \
-    "{} steps per tick are too short".format(measurement_steps)
 # volume of N spheres with radius r: N * (4/3*pi*r^3)
-box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3 / density)**(1. / 3.)
+box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
+         / args.volume_fraction)**(1. / 3.)
 
 # System
 #############################################################
@@ -76,7 +84,7 @@ system = espressomd.System(box_l=3 * (box_l,))
 # PRNG seeds
 #############################################################
 system.random_number_generator_state = list(range(
-    nproc * (system._get_PRNG_state_size() + 1)))
+    n_proc * (system._get_PRNG_state_size() + 1)))
 np.random.seed(1)
 # Integration parameters
 #############################################################
@@ -114,7 +122,7 @@ system.integrator.set_steepest_descent(
 
 # warmup
 while system.analysis.energy()["total"] > 10 * n_part:
-    print('minimization: {:.1f}'.format(system.analysis.energy()["total"]))
+    print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
     system.integrator.run(10)
 print()
 system.integrator.set_vv()
@@ -122,13 +130,13 @@ system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 # tune skin
-print('tune: {}'.format(system.cell_system.tune_skin(
+print("tune: {}".format(system.cell_system.tune_skin(
     min_skin=0.2,
     max_skin=1,
     tol=0.05,
     int_steps=100)))
 system.integrator.run(min(30 * measurement_steps, 60000))
-print('tune: {}'.format(system.cell_system.tune_skin(
+print("tune: {}".format(system.cell_system.tune_skin(
     min_skin=0.2,
     max_skin=1,
     tol=0.05,
@@ -136,11 +144,7 @@ print('tune: {}'.format(system.cell_system.tune_skin(
 
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
-if mode == 'benchmark':
-    report_path = 'benchmarks.csv'
-    if '${CMAKE_BINARY_DIR}'[0] != '$':  # CMake variable
-        report_path = '${CMAKE_BINARY_DIR}/benchmarks.csv.part'
-
+if not args.visualizer:
     # print initial energies
     energies = system.analysis.energy()
     print(energies)
@@ -154,7 +158,7 @@ if mode == 'benchmark':
         system.integrator.run(measurement_steps)
         tock = time()
         t = (tock - tick) / measurement_steps
-        print('step {}, time = {:.2e}, verlet: {:.2f}'
+        print("step {}, time = {:.2e}, verlet: {:.2f}"
               .format(i, t, system.cell_system.get_state()["verlet_reuse"]))
         all_t.append(t)
     main_tock = time()
@@ -169,19 +173,19 @@ if mode == 'benchmark':
     print(energies)
 
     # write report
+    cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
     report = ('"{script}","{arguments}",{cores},"{mpi}",{mean:.3e},'
               '{ci:.3e},{n},{dur:.1f},{E1:.5e},{E2:.5e},{E3:.5e}\n'.format(
-                  script=os.path.basename(sys.argv[0]),
-                  arguments=" ".join(map(str, sys.argv[1:])),
-                  cores=nproc, dur=main_tock - main_tick, n=measurement_steps,
+                  script=os.path.basename(sys.argv[0]), arguments=cmd,
+                  cores=n_proc, dur=main_tock - main_tick, n=measurement_steps,
                   mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci,
                   E1=system.analysis.energy()["total"],
                   E2=system.analysis.energy()["kinetic"],
                   E3=system.analysis.energy()["non_bonded"]))
-    if not os.path.isfile(report_path):
+    if not os.path.isfile(args.output):
         report = ('"script","arguments","cores","MPI","mean","ci",'
                   '"steps_per_tick","duration","E1","E2","E3"\n' + report)
-    with open(report_path, 'a') as f:
+    with open(args.output, "a") as f:
         f.write(report)
 else:
     # use visualizer

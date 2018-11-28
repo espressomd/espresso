@@ -20,10 +20,49 @@ from __future__ import print_function
 import os
 import sys
 import numpy as np
+from time import time
+import argparse
+
+parser = argparse.ArgumentParser(description="Benchmark P3M simulations. "
+                                 "Save the results to a CSV file.")
+parser.add_argument("--particles_per_core", metavar="N", action="store",
+                    type=int, default=1000, required=False,
+                    help="Number of particles in the simulation box")
+parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
+                    type=float, default=0.25, required=False,
+                    help="Fraction of the simulation box volume occupied by "
+                    "particles (range: [0.01-0.74], default: 0.25)")
+parser.add_argument("--bjerrum_length", metavar="LENGTH", action="store",
+                    type=float, default=4., required=False,
+                    help="Bjerrum length (default: 4)")
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--output", metavar="FILEPATH", action="store",
+                   type=str, required=False,
+                   help="Output file (default: benchmarks.csv)")
+group.add_argument("--visualizer", action="store_true",
+                   help="Starts the visualizer (for debugging purposes)")
+
+args = parser.parse_args()
+
+# process and check arguments
+n_proc = int(os.environ.get("OMPI_COMM_WORLD_SIZE", 1))
+n_part = n_proc * args.particles_per_core
+measurement_steps = int(np.round(5e5 / args.particles_per_core, -1))
+assert args.bjerrum_length > 0, "bjerrum_length must be a positive number"
+assert args.volume_fraction > 0, "volume_fraction must be a positive number"
+assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
+    "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
+if not args.visualizer:
+    assert(measurement_steps >= 50), \
+        "{} steps per tick are too short".format(measurement_steps)
+
+
 import espressomd
-from time import time, sleep
 from espressomd import thermostat
 from espressomd import electrostatics
+if args.visualizer:
+    from espressomd import visualization
+    from threading import Thread
 
 required_features = ["ELECTROSTATICS", "LENNARD_JONES", "MASS"]
 espressomd.assert_features(required_features)
@@ -40,36 +79,16 @@ lj_sigmas = {"anion": 1.0, "cation": 1.0}
 lj_epsilons = {"anion": 1.0, "cation": 1.0}
 WCA_cut = 2.**(1. / 6.)
 lj_cuts = {"anion": WCA_cut * lj_sigmas["anion"],
-    "cation": WCA_cut * lj_sigmas["cation"]}
+           "cation": WCA_cut * lj_sigmas["cation"]}
 masses = {"anion": 1.0, "cation": 1.0}
 
 # System parameters
 #############################################################
 
-try:
-    nproc = int(os.environ.get("OMPI_COMM_WORLD_SIZE", 1))
-    n_part_per_core = int(sys.argv[1])
-    n_part = nproc * n_part_per_core
-    bjerrum_length = float(sys.argv[2])
-    mode = "benchmark"
-    if len(sys.argv) == 4:
-        assert sys.argv[3] == "--visualize"
-        mode = "visualization"
-        from espressomd import visualization
-        from threading import Thread
-except (ValueError, IndexError) as err:
-    print(err.message)
-    print("\nUsage: [mpiexec -np <N cores>] pypresso lj.py "
-          "<N particles per core> <bjerrum_length> [--visualize]\n")
-    exit(1)
-
-measurement_steps = int(np.round(5e5 / n_part_per_core, -1))
-assert(measurement_steps >= 50), \
-    "{} steps per tick are too short".format(measurement_steps)
 # volume of N spheres with radius r: N * (4/3*pi*r^3)
-density = 0.25
 lj_sig = (lj_sigmas["cation"] + lj_sigmas["anion"]) / 2
-box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3 / density)**(1. / 3.)
+box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
+         / args.volume_fraction)**(1. / 3.)
 
 # System
 #############################################################
@@ -78,7 +97,7 @@ system.cell_system.set_domain_decomposition(use_verlet_lists=True)
 # PRNG seeds
 #############################################################
 system.random_number_generator_state = list(range(
-    nproc * (system._get_PRNG_state_size() + 1)))
+    n_proc * (system._get_PRNG_state_size() + 1)))
 np.random.seed(1)
 # Integration parameters
 #############################################################
@@ -102,8 +121,8 @@ for i in range(len(species)):
         lj_cut = (lj_cuts[ion1] + lj_cuts[ion2]) / 2
         lj_eps = (lj_epsilons[ion1] * lj_epsilons[ion2])**(1. / 2.)
         system.non_bonded_inter[types[ion1],
-            types[ion2]].lennard_jones.set_params(
-                epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+                                types[ion2]].lennard_jones.set_params(
+            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 # Particle setup
 #############################################################
@@ -118,25 +137,22 @@ for i in range(0, n_part, len(species)):
 #############################################################
 
 energy = system.analysis.energy()
-print("Before Minimization: E_total = {}".format(energy['total']))
+print("Before Minimization: E_total = {}".format(energy["total"]))
 system.minimize_energy.init(f_max=1000, gamma=30.0,
                             max_steps=1000, max_displacement=0.05)
 system.minimize_energy.minimize()
 system.minimize_energy.minimize()
 energy = system.analysis.energy()
-print("After Minimization: E_total = {}".format(energy['total']))
+print("After Minimization: E_total = {}".format(energy["total"]))
 
 print("Tune p3m")
-p3m = electrostatics.P3M(prefactor=bjerrum_length, accuracy=1e-4)
+p3m = electrostatics.P3M(prefactor=args.bjerrum_length, accuracy=1e-4)
 system.actors.add(p3m)
 
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
-if mode == 'benchmark':
-    report_path = 'benchmarks.csv'
-    if '${CMAKE_BINARY_DIR}'[0] != '$':  # CMake variable
-        report_path = '${CMAKE_BINARY_DIR}/benchmarks.csv.part'
 
+if not args.visualizer:
     # print initial energies
     energies = system.analysis.energy()
     print(energies)
@@ -150,7 +166,7 @@ if mode == 'benchmark':
         system.integrator.run(measurement_steps)
         tock = time()
         t = (tock - tick) / measurement_steps
-        print('step {}, time = {:.2e}, verlet: {:.2f}'
+        print("step {}, time = {:.2e}, verlet: {:.2f}"
               .format(i, t, system.cell_system.get_state()["verlet_reuse"]))
         all_t.append(t)
     main_tock = time()
@@ -165,19 +181,19 @@ if mode == 'benchmark':
     print(energies)
 
     # write report
+    cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
     report = ('"{script}","{arguments}",{cores},"{mpi}",{mean:.3e},'
               '{ci:.3e},{n},{dur:.1f},{E1:.5e},{E2:.5e},{E3:.5e}\n'.format(
-                  script=os.path.basename(sys.argv[0]),
-                  arguments=" ".join(map(str, sys.argv[1:])),
-                  cores=nproc, dur=main_tock - main_tick, n=measurement_steps,
+                  script=os.path.basename(sys.argv[0]), arguments=cmd,
+                  cores=n_proc, dur=main_tock - main_tick, n=measurement_steps,
                   mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci,
                   E1=system.analysis.energy()["total"],
                   E2=system.analysis.energy()["coulomb"],
                   E3=system.analysis.energy()["non_bonded"]))
-    if not os.path.isfile(report_path):
+    if not os.path.isfile(args.output):
         report = ('"script","arguments","cores","MPI","mean","ci",'
                   '"steps_per_tick","duration","E1","E2","E3"\n' + report)
-    with open(report_path, 'a') as f:
+    with open(args.output, "a") as f:
         f.write(report)
 else:
     # use visualizer
