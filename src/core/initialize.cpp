@@ -745,7 +745,9 @@ void on_ghost_flags_change() {
     ghosts_have_v = 1;
     ghosts_have_bonds = 1;
   }
+#ifdef COLLISION_DETECTION
   if (collision_params.mode) {
     ghosts_have_bonds = 1;
   }
+#endif
 }
