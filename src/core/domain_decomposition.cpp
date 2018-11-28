@@ -486,6 +486,7 @@ void dd_update_communicators_w_boxl() {
         if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
           if (boundary[2 * dir + lr] != 0) {
+              update_component(cell_structure.local_to_ghost_comm.comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
               update_component(cell_structure.exchange_ghosts_comm.comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
               update_component(cell_structure.update_ghost_pos_comm.comm[cnt].shift,boundary[2 * dir + lr] * box_l[dir], dir);
           }
@@ -498,6 +499,7 @@ void dd_update_communicators_w_boxl() {
             if ((node_pos[dir] + i) % 2 == 0) {
               /* prepare folding of ghost positions */
               if (boundary[2 * dir + lr] != 0) {
+                  update_component(cell_structure.local_to_ghost_comm.comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
                   update_component(cell_structure.exchange_ghosts_comm.comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
                   update_component(cell_structure.update_ghost_pos_comm.comm[cnt].shift,boundary[2 * dir + lr] * box_l[dir], dir);
               }
