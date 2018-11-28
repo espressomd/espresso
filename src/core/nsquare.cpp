@@ -38,24 +38,15 @@ static Cell *local;
 Cell *nsq_position_to_cell(const Vector3d &pos) { return local; }
 int nsq_position_to_node(const Vector3d &) { return this_node; }
 
-void nsq_topology_release() {
-  CELL_TRACE(fprintf(stderr, "%d: nsq_topology_release:\n", this_node));
-  /* free ghost cell pointer list */
-  free_comm(&cell_structure.ghost_cells_comm);
-  free_comm(&cell_structure.exchange_ghosts_comm);
-  free_comm(&cell_structure.update_ghost_pos_comm);
-  free_comm(&cell_structure.collect_ghost_force_comm);
-}
-
 static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
   int n;
   /* no need for comm for only 1 node */
   if (n_nodes == 1) {
-    prepare_comm(comm, data_parts, 0);
+    *comm = GhostCommunicator(data_parts, 0);
     return;
   }
 
-  prepare_comm(comm, data_parts, n_nodes);
+  *comm = GhostCommunicator(data_parts, n_nodes);
   /* every node has its dedicated comm step */
   for (n = 0; n < n_nodes; n++) {
     comm->comm[n].part_lists.resize(1);

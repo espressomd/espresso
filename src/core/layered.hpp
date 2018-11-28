@@ -35,9 +35,6 @@ extern int n_layers, determine_n_layers;
 /** height of the layers, i. e. box_l[2]/n_nodes */
 extern double layer_h, layer_h_i;
 
-/// free all data structure that belong to this cell system
-void layered_topology_release();
-
 /// initialize the layered cell system and sort in the particles
 void layered_topology_init(CellPList *local);
 

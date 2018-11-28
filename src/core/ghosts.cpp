@@ -66,21 +66,6 @@ std::vector<int> r_bondbuffer;
 int ghosts_have_v = 0;
 int ghosts_have_bonds = 0;
 
-void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
-  assert(comm);
-  comm->data_parts = data_parts;
-
-  GHOST_TRACE(fprintf(stderr, "%d: prepare_comm, data_parts = %d\n", this_node,
-                      comm->data_parts));
-
-  comm->num = num;
-  comm->comm = std::vector<GhostCommunication>(num);
-}
-
-void free_comm(GhostCommunicator *comm) {
-  comm->comm.clear();
-}
-
 int calc_transmit_size(GhostCommunication *gc, int data_parts) {
   int n_buffer_new;
 

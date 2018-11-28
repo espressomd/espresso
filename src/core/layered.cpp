@@ -110,14 +110,6 @@ Cell *layered_position_to_cell(const Vector3d &pos) {
   return &(cells[cpos]);
 }
 
-void layered_topology_release() {
-  CELL_TRACE(fprintf(stderr, "%d: layered_topology_release:\n", this_node));
-  free_comm(&cell_structure.ghost_cells_comm);
-  free_comm(&cell_structure.exchange_ghosts_comm);
-  free_comm(&cell_structure.update_ghost_pos_comm);
-  free_comm(&cell_structure.collect_ghost_force_comm);
-}
-
 namespace {
     enum class CommDirection {
         LOCAL_TO_GHOST,
@@ -139,7 +131,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts, CommDi
     if (!LAYERED_BTM_NEIGHBOR)
       n -= 2;
 
-    prepare_comm(comm, data_parts, n);
+    *comm = GhostCommunicator(data_parts, n);
 
     /* always sending/receiving 1 cell per time step */
     for (c = 0; c < n; c++) {
@@ -244,7 +236,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts, CommDi
 
     n = (layered_flags & LAYERED_PERIODIC) ? 2 : 0;
 
-    prepare_comm(comm, data_parts, n);
+    *comm = GhostCommunicator(data_parts, n);
 
     if (n != 0) {
       /* two cells: from and to */

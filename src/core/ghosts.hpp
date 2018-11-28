@@ -188,12 +188,6 @@ struct GhostCommunicator {
 /************************************************************/
 /*@{*/
 
-/** Initialize a communicator. */
-void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
-
-/** Free a communicator. */
-void free_comm(GhostCommunicator *comm);
-
 /**
  * @brief do a ghost communication with the data parts specified
  *        in the communicator.

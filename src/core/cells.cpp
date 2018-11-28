@@ -159,29 +159,15 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 
 /** Switch for choosing the topology release function of a certain
     cell system. */
-static void topology_release(int cs) {
-  switch (cs) {
-  case CELL_STRUCTURE_NONEYET:
-    break;
-  case CELL_STRUCTURE_CURRENT:
-    topology_release(cell_structure.type);
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    dd_topology_release();
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    nsq_topology_release();
-    break;
-  case CELL_STRUCTURE_LAYERED:
-    layered_topology_release();
-    break;
-  default:
-    fprintf(stderr,
-            "INTERNAL ERROR: attempting to sort the particles in an "
-            "unknown way (%d)\n",
-            cs);
-    errexit();
-  }
+static void topology_release(int) {
+    cell_structure.ghost_cells_comm = {};
+    cell_structure.exchange_ghosts_comm = {};
+    cell_structure.update_ghost_pos_comm = {};
+    cell_structure.collect_ghost_force_comm = {};
+    cell_structure.local_to_ghost_comm = {};
+    cell_structure.ghost_to_local_comm = {};
+
+  realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
 }
 
 /** Switch for choosing the topology init function of a certain

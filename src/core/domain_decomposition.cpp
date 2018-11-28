@@ -294,13 +294,13 @@ namespace {
 /** Create communicators for cell structure domain decomposition. (see \ref
  * GhostCommunicator) */
 void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
-  int dir, lr, i, cnt, num, n_comm_cells[3];
+  int i, num;
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
   /* calculate number of communications */
   num = 0;
-  for (dir = 0; dir < 3; dir++) {
-    for (lr = 0; lr < 2; lr++) {
+  for (int dir = 0; dir < 3; dir++) {
+    for (int lr = 0; lr < 2; lr++) {
       /* No communication for border of non periodic direction */
       if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
         if (node_grid[dir] == 1)
@@ -315,16 +315,17 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
   CELL_TRACE(fprintf(stderr,
                      "%d Create Communicator: prep_comm data_parts %d num %d\n",
                      this_node, data_parts, num));
-  prepare_comm(comm, data_parts, num);
+  *comm = GhostCommunicator(data_parts, num);
 
   /* number of cells to communicate in a direction */
-  n_comm_cells[0] = dd.cell_grid[1] * dd.cell_grid[2];
-  n_comm_cells[1] = dd.cell_grid[2] * dd.ghost_cell_grid[0];
-  n_comm_cells[2] = dd.ghost_cell_grid[0] * dd.ghost_cell_grid[1];
+  auto const n_comm_cells = Vector3i{
+  dd.cell_grid[1] * dd.cell_grid[2],
+  dd.cell_grid[2] * dd.ghost_cell_grid[0],
+  dd.ghost_cell_grid[0] * dd.ghost_cell_grid[1]};
 
-  cnt = 0;
+  int cnt = 0;
   /* direction loop: x, y, z */
-  for (dir = 0; dir < 3; dir++) {
+  for (int dir = 0; dir < 3; dir++) {
     lc[(dir + 1) % 3] = 1 - done[(dir + 1) % 3];
     lc[(dir + 2) % 3] = 1 - done[(dir + 2) % 3];
     hc[(dir + 1) % 3] = dd.cell_grid[(dir + 1) % 3] + done[(dir + 1) % 3];
@@ -333,7 +334,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
     /* here we could in principle build in a one sided ghost
        communication, simply by taking the lr loop only over one
        value */
-    for (lr = 0; lr < 2; lr++) {
+    for (int lr = 0; lr < 2; lr++) {
       if (node_grid[dir] == 1) {
         /* just copy cells on a single node */
         if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
@@ -446,9 +447,7 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
 /** Of every two communication rounds, set the first receivers to prefetch and
  * poststore */
 void dd_assign_prefetches(GhostCommunicator *comm) {
-  int cnt;
-
-  for (cnt = 0; cnt < comm->num; cnt += 2) {
+  for (int cnt = 0; cnt < comm->num; cnt += 2) {
     if (comm->comm[cnt].type == GHOST_RECV &&
         comm->comm[cnt + 1].type == GHOST_SEND) {
       comm->comm[cnt].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
@@ -728,16 +727,6 @@ void dd_topology_init(CellPList *old) {
 
 /************************************************************/
 void dd_topology_release() {
-  CELL_TRACE(fprintf(stderr, "%d: dd_topology_release:\n", this_node));
-  /* release cell interactions */
-
-  /* free ghost cell pointer list */
-  realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
-  /* free ghost communicators */
-  free_comm(&cell_structure.ghost_cells_comm);
-  free_comm(&cell_structure.exchange_ghosts_comm);
-  free_comm(&cell_structure.update_ghost_pos_comm);
-  free_comm(&cell_structure.collect_ghost_force_comm);
 }
 
 namespace {
