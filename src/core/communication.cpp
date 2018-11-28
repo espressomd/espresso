@@ -1244,8 +1244,6 @@ void mpi_bcast_max_seen_particle_type_slave(int pnode, int ns) {
 /*************** REQ_GATHER ************/
 void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
                       void *result_t_nb) {
-  double tmp;
-  Vector3d tmp3d;
   switch (job) {
   case 1:
     mpi_call(mpi_gather_stats_slave, -1, 1);
@@ -1270,13 +1268,11 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
 #ifdef LB
   case 5:
     mpi_call(mpi_gather_stats_slave, -1, 5);
-    tmp = lb_calc_fluid_mass();
-    memcpy(result, static_cast<void*>(&tmp), sizeof(double));
+    lb_calc_fluid_mass((double *)result);
     break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
-    tmp3d = lb_calc_fluid_momentum();
-    memcpy(result, static_cast<void *>(tmp3d.data()), sizeof(Vector3d));
+    lb_calc_fluid_momentum((double *)result);
     break;
   case 7:
     mpi_call(mpi_gather_stats_slave, -1, 7);
@@ -1319,10 +1315,10 @@ void mpi_gather_stats_slave(int ana_num, int job) {
     break;
 #ifdef LB
   case 5:
-    lb_calc_fluid_mass();
+    lb_calc_fluid_mass(nullptr);
     break;
   case 6:
-    lb_calc_fluid_momentum();
+    lb_calc_fluid_momentum(nullptr);
     break;
   case 7:
     lb_calc_fluid_temp(nullptr);

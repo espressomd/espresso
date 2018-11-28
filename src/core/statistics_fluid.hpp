@@ -31,17 +31,16 @@
 #include "config.hpp"
 
 #ifdef LB
-#include "Vector.hpp"
 
 /** Calculate mass of the LB fluid.
  * \param result Fluid mass
  */
-double lb_calc_fluid_mass();
+void lb_calc_fluid_mass(double *result);
 
 /** Calculate momentum of the LB fluid.
  * \param result Fluid momentum
  */
-Vector3d lb_calc_fluid_momentum();
+void lb_calc_fluid_momentum(double *result);
 
 /** Calculate temperature of the LB fluid.
  * \param result Fluid temperature
