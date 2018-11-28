@@ -440,20 +440,6 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
   }
 }
 
-void reduce_forces_sum(void *add, void *to, int *len, MPI_Datatype *type) {
-  ParticleForce *cadd = static_cast<ParticleForce *>(add),
-                *cto = static_cast<ParticleForce *>(to);
-  int i, clen = *len / sizeof(ParticleForce);
-
-  if (*type != MPI_BYTE || (*len % sizeof(ParticleForce)) != 0) {
-    fprintf(stderr, "%d: transfer data type wrong\n", this_node);
-    errexit();
-  }
-
-  for (i = 0; i < clen; i++)
-    cto[i] += cadd[i];
-}
-
 static int is_send_op(int comm_type, int node) {
   return ((comm_type == GHOST_SEND) || (comm_type == GHOST_RDCE) ||
           (comm_type == GHOST_BCST && node == this_node));
@@ -472,7 +458,7 @@ void ghost_communicator(GhostCommunicator *gc) {
 void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   MPI_Status status;
   int n, n2;
-  /* if ghosts should have uptodate velocities, they have to be updated like
+  /* if ghosts should have up-to-date velocities, they have to be updated like
      positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
     data_parts |= GHOSTTRANS_MOMENTUM;

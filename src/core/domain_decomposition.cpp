@@ -718,8 +718,6 @@ void dd_topology_init(CellPList *old) {
   dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
-  std::cout << (cell_structure.exchange_ghosts_comm == cell_structure.local_to_ghost_comm) << std::endl;
-
   dd_init_cell_interactions();
 
   /* copy particles */
