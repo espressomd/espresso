@@ -1,4 +1,5 @@
 /*
+
   Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
@@ -60,9 +61,6 @@
 #include "cells.hpp"
 
 /** always returns the one local cell */
-Cell *nsq_position_to_cell(double pos[3]);
-
-/** always returns the one local cell */
 void nsq_topology_release();
 
 /** setup the nsquare topology */
@@ -70,14 +68,4 @@ void nsq_topology_init(CellPList *local);
 
 /** implements the load balancing as described above. */
 void nsq_balance_particles(int global_flag);
-
-/** n^2 force calculation */
-void nsq_calculate_ia();
-
-/** n^2 energy calculation */
-void nsq_calculate_energies();
-
-/** n^2 pressure calculation */
-void nsq_calculate_virials(int v_comp);
-
 #endif
