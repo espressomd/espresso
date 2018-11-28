@@ -33,15 +33,15 @@ print(espressomd.features())
 # Interaction parameters (repulsive Lennard-Jones)
 #############################################################
 
-lj_cap = 20.  # force cap
-species = ["Cl", "Na", "Solvent"]
-types = {"Cl": 0, "Na": 1, "Solvent": 2}
-charges = {"Cl": -1.0, "Na": 1.0, "Solvent": 0.0}
-lj_sigmas = {"Cl": 3.85, "Na": 2.52, "Solvent": 1.8}
-lj_epsilons = {"Cl": 192.45, "Na": 17.44, "Solvent": 50.0}
-lj_cuts = {"Cl": 2.0 * lj_sigmas["Cl"], "Na": 2.0 * lj_sigmas["Na"],
-           "Solvent": 2.0 * lj_sigmas["Solvent"]}
-masses = {"Cl": 35.453, "Na": 22.99, "Solvent": 18.0}
+species = ["anion", "cation"]
+types = {"anion": 0, "cation": 1}
+charges = {"anion": -1.0, "cation": 1.0}
+lj_sigmas = {"anion": 1.0, "cation": 1.0}
+lj_epsilons = {"anion": 1.0, "cation": 1.0}
+WCA_cut = 2.**(1. / 6.)
+lj_cuts = {"anion": WCA_cut * lj_sigmas["anion"],
+    "cation": WCA_cut * lj_sigmas["cation"]}
+masses = {"anion": 1.0, "cation": 1.0}
 
 # System parameters
 #############################################################
@@ -50,8 +50,7 @@ try:
     nproc = int(os.environ.get("OMPI_COMM_WORLD_SIZE", 1))
     n_part_per_core = int(sys.argv[1])
     n_part = nproc * n_part_per_core
-    sim_type = sys.argv[2]
-    assert sim_type in ('solution', 'gas')
+    bjerrum_length = float(sys.argv[2])
     mode = "benchmark"
     if len(sys.argv) == 4:
         assert sys.argv[3] == "--visualize"
@@ -61,38 +60,16 @@ try:
 except (ValueError, IndexError) as err:
     print(err.message)
     print("\nUsage: [mpiexec -np <N cores>] pypresso lj.py "
-          "<N particles per core> <type> [--visualize]\n")
+          "<N particles per core> <bjerrum_length> [--visualize]\n")
     exit(1)
 
-measurement_steps = int(np.round(2e6 / n_part_per_core, -2))
-assert(measurement_steps >= 100), \
+measurement_steps = int(np.round(5e5 / n_part_per_core, -1))
+assert(measurement_steps >= 50), \
     "{} steps per tick are too short".format(measurement_steps)
 # volume of N spheres with radius r: N * (4/3*pi*r^3)
 density = 0.25
-if sim_type == "gas":
-    lj_sig = lj_sigmas["Na"] + lj_sigmas["Cl"]
-else:
-    lj_sig = lj_sigmas["Solvent"]
+lj_sig = (lj_sigmas["cation"] + lj_sigmas["anion"]) / 2
 box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3 / density)**(1. / 3.)
-if sim_type == "gas":
-    species = ["Cl", "Na"]
-
-# electrostatics
-# E = 1 /(4*pi*e_0*e_r)*q1*q2/r
-# e_0 in F/m or C^2/N/m^2
-# E in N.M or J
-Na = 6.0221408e23           # Avogadro's constant
-epsilon_0 = 8.85419e-12     # vacuum permittivity
-epsilon_r = 4.0             # relative permittivity
-q = 1.6021766e-19           # elementary charge
-# Coulomb prefactor in kJ/mol, using Angstroms
-prefactor = 1 / (4 * np.pi * epsilon_0 * epsilon_r) * q**2 * Na * 1e-3 * 1e10
-
-# temperature
-kB = 1.38064852e-23         # Boltzmann's constant in J/K
-kB_kjmol = kB * Na / 1000   # Boltzmann's constant in kJ/mol/K
-SI_temperature = 400.0
-temperature = SI_temperature * kB_kjmol
 
 # System
 #############################################################
@@ -118,27 +95,23 @@ system.thermostat.turn_off()
 #############################################################
 
 for i in range(len(species)):
+    ion1 = species[i]
     for j in range(i, len(species)):
-        s = [species[i], species[j]]
-        lj_sig = (lj_sigmas[s[0]] + lj_sigmas[s[1]]) * 0.5
-        lj_cut = (lj_cuts[s[0]] + lj_cuts[s[1]]) * 0.5
-        lj_eps = (lj_epsilons[s[0]] * lj_epsilons[s[1]])**0.5
-        system.non_bonded_inter[types[s[0]], types[s[1]]].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+        ion2 = species[j]
+        lj_sig = (lj_sigmas[ion1] + lj_sigmas[ion2]) / 2
+        lj_cut = (lj_cuts[ion1] + lj_cuts[ion2]) / 2
+        lj_eps = (lj_epsilons[ion1] * lj_epsilons[ion2])**(1. / 2.)
+        system.non_bonded_inter[types[ion1],
+            types[ion2]].lennard_jones.set_params(
+                epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 # Particle setup
 #############################################################
 
-if sim_type == "gas":
-    for i in range(int(n_part / 2.)):
-        for t in ["Na", "Cl"]:
-            system.part.add(pos=np.random.random(3) * system.box_l,
-                            q=charges[t], type=types[t], mass=masses[t])
-else:
-    for i in range(int(n_part / 30.)):
-        for t in ["Na", "Cl"] + 28 * ["Solvent"]:
-            system.part.add(pos=np.random.random(3) * system.box_l,
-                            q=charges[t], type=types[t], mass=masses[t])
+for i in range(0, n_part, len(species)):
+    for t in species:
+        system.part.add(pos=np.random.random(3) * system.box_l,
+                        q=charges[t], type=types[t], mass=masses[t])
 
 #############################################################
 #  Warmup Integration                                       #
@@ -147,17 +120,17 @@ else:
 energy = system.analysis.energy()
 print("Before Minimization: E_total = {}".format(energy['total']))
 system.minimize_energy.init(f_max=1000, gamma=30.0,
-                            max_steps=1000, max_displacement=0.01)
+                            max_steps=1000, max_displacement=0.05)
+system.minimize_energy.minimize()
 system.minimize_energy.minimize()
 energy = system.analysis.energy()
 print("After Minimization: E_total = {}".format(energy['total']))
 
 print("Tune p3m")
-p3m = electrostatics.P3M(prefactor=prefactor, accuracy=1e-1)
+p3m = electrostatics.P3M(prefactor=bjerrum_length, accuracy=1e-4)
 system.actors.add(p3m)
 
-system.thermostat.set_langevin(kT=temperature, gamma=2.0)
-
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 if mode == 'benchmark':
     report_path = 'benchmarks.csv'

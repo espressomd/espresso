@@ -34,7 +34,6 @@ print(espressomd.features())
 
 lj_eps = 1.0  # LJ epsilon
 lj_sig = 1.0  # particle diameter
-lj_cap = 20.  # force cap
 lj_cut = lj_sig * 2**(1. / 6.)  # cutoff distance
 
 # System parameters
@@ -94,7 +93,6 @@ system.thermostat.turn_off()
 #############################################################
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
-system.force_cap = lj_cap
 
 print("LJ-parameters:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
