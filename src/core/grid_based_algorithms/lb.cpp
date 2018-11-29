@@ -2376,9 +2376,9 @@ std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
 
 inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
                                       std::array<double, 19> m) {
-  const std::array<int, 3> period = {{1, lblattice.halo_grid[0],
-                                     lblattice.halo_grid[0] *
-                                         lblattice.halo_grid[1]}};
+  const std::array<int, 3> period = {
+      {1, lblattice.halo_grid[0],
+       lblattice.halo_grid[0] * lblattice.halo_grid[1]}};
   auto const f = lb_calc_n_from_m(m);
   for (int i = 0; i < 19; i++) {
     auto const next = index + boost::inner_product(period, lbmodel.c[i], 0);
@@ -2703,7 +2703,8 @@ void calc_particle_lattice_ia() {
     using ctr_type = rng_type::ctr_type;
     using key_type = rng_type::key_type;
 
-    ctr_type c{{rng_counter.value(), static_cast<uint64_t>(RNGSalt::PARTICLES)}};
+    ctr_type c{
+        {rng_counter.value(), static_cast<uint64_t>(RNGSalt::PARTICLES)}};
     rng_counter.increment();
 
     /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
