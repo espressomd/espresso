@@ -183,7 +183,8 @@ int get_particle_node(int id) {
 
   // Check if particle has a node, if not, we assume it does not exist.
   if (needle == particle_node.end()) {
-    throw std::runtime_error("Particle node not found!");
+    throw std::runtime_error("Particle node for id " + std::to_string(id) +
+                             " not found!");
   } else {
     return needle->second;
   }
@@ -269,6 +270,8 @@ Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
   auto const re = realloc_particlelist(l, ++l->n);
   auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
 
+  assert(p->p.identity <= max_seen_particle);
+
   if (re)
     update_local_particles(l);
   else
@@ -299,6 +302,9 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   Particle *end = &sl->part[sl->n - 1];
 
   new (dst) Particle(std::move(*src));
+
+  assert(dst->p.identity <= max_seen_particle);
+
   if (re) {
     update_local_particles(dl);
   } else {
@@ -307,6 +313,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   if (src != end) {
     new (src) Particle(std::move(*end));
   }
+
   if (realloc_particlelist(sl, --sl->n)) {
     update_local_particles(sl);
   } else if (src != end) {
@@ -388,7 +395,7 @@ std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
   /* Copy local particles */
   std::transform(node_ids[this_node].cbegin(), node_ids[this_node].cend(),
                  parts.begin(), [](int id) {
-                   assert(id);
+                   assert(local_particles[id]);
                    return *local_particles[id];
                  });
 
@@ -447,7 +454,7 @@ int place_particle(int part, double p[3]) {
     mpi_place_particle(pnode, part, p);
   } else {
     /* new particle, node by spatial position */
-    pnode = cell_structure.position_to_node(p);
+    pnode = cell_structure.position_to_node(Vector3d{p, p + 3});
 
     /* master node specific stuff */
     particle_node[part] = pnode;
@@ -863,24 +870,19 @@ void local_remove_particle(int part) {
 }
 
 void local_place_particle(int part, const double p[3], int _new) {
-  Cell *cell;
-  double pp[3];
-  int i[3], rl;
+  int i[3];
   Particle *pt;
 
   i[0] = 0;
   i[1] = 0;
   i[2] = 0;
-  pp[0] = p[0];
-  pp[1] = p[1];
-  pp[2] = p[2];
-
+  Vector3d pp = {p[0], p[1], p[2]};
   double vv[3] = {0., 0., 0.};
   fold_position(pp, vv, i);
 
   if (_new) {
     /* allocate particle anew */
-    cell = cell_structure.position_to_cell(pp);
+    auto cell = cell_structure.position_to_cell(pp);
     if (!cell) {
       fprintf(stderr,
               "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
@@ -888,7 +890,7 @@ void local_place_particle(int part, const double p[3], int _new) {
               this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
       errexit();
     }
-    rl = realloc_particlelist(cell, ++cell->n);
+    auto rl = realloc_particlelist(cell, ++cell->n);
     pt = new (&cell->part[cell->n - 1]) Particle;
 
     pt->p.identity = part;
@@ -903,10 +905,10 @@ void local_place_particle(int part, const double p[3], int _new) {
       stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
       this_node, part, p[0], p[1], p[2]));
 
-  memmove(pt->r.p.data(), pp, 3 * sizeof(double));
+  pt->r.p = pp;
   memmove(pt->l.i.data(), i, 3 * sizeof(int));
 #ifdef BOND_CONSTRAINT
-  memmove(pt->r.p_old.data(), pp, 3 * sizeof(double));
+  pt->r.p_old = pp;
 #endif
 }
 
