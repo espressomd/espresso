@@ -1882,7 +1882,6 @@ void lb_on_integration_start() {
 
 uint64_t lb_coupling_rng_state() { return rng_counter.value(); }
 
-
 void lb_coupling_set_rng_state(uint64_t counter) {
   uint32_t high, low;
   std::tie(high, low) = Utils::u64_to_u32(counter);
