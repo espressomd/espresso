@@ -32,6 +32,15 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include <cinttypes>
 
+void mpi_set_lb_coupling_counter(int high, int low) {
+#ifdef LB
+  using Utils::u32_to_u64;
+
+  rng_counter = Utils::Counter<uint64_t>(Utils::u32_to_u64(
+      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
+#endif
+}
+
 #ifdef LB
 
 #include "cells.hpp"
@@ -1873,12 +1882,6 @@ void lb_on_integration_start() {
 
 uint64_t lb_coupling_rng_state() { return rng_counter.value(); }
 
-void mpi_set_lb_coupling_counter(int high, int low) {
-  using Utils::u32_to_u64;
-
-  rng_counter = Utils::Counter<uint64_t>(Utils::u32_to_u64(
-      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
-}
 
 void lb_coupling_set_rng_state(uint64_t counter) {
   uint32_t high, low;

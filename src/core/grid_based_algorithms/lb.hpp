@@ -31,6 +31,8 @@
 
 #include "lattice.hpp"
 
+void mpi_set_lb_coupling_counter(int high, int low);
+
 #ifdef LB
 
 #include "errorhandling.hpp"
