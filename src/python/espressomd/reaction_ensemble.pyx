@@ -226,6 +226,11 @@ cdef class ReactionAlgorithm(object):
                 "No dictionary for relation between types and default charges provided.")
         #check electroneutrality of the provided reaction
         if(self._params["check_for_electroneutrality"]):
+            charges = np.array(list(self._params["default_charges"].values()))
+            if(np.count_nonzero(charges) == 0):
+                # all partices have zero charge
+                # no need to check electroneutrality
+                return
             total_charge_change = 0.0
             for i in range(len(self._params["reactant_coefficients"])):
                 type_here = self._params["reactant_types"][i]
@@ -235,7 +240,6 @@ cdef class ReactionAlgorithm(object):
                 type_here = self._params["product_types"][j]
                 total_charge_change += self._params["product_coefficients"][
                     j] * self._params["default_charges"][type_here]
-            charges = np.array(list(self._params["default_charges"].values()))
             min_abs_nonzero_charge = np.min(
                 np.abs(charges[np.nonzero(charges)[0]]))
             if abs(total_charge_change) / min_abs_nonzero_charge > 1e-10:
