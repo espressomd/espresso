@@ -180,14 +180,14 @@ void force_calc() {
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
   if (virtual_sites()->need_ghost_comm_before_back_transfer()) {
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    ghost_communicator(cell_structure.ghost_to_local_comm, GHOSTTRANS_FORCE);
     init_forces_ghosts();
   }
   virtual_sites()->back_transfer_forces_and_torques();
 #endif
 
   // Communication Step: ghost forces
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  ghost_communicator(cell_structure.ghost_to_local_comm, GHOSTTRANS_FORCE);
 
   auto local_particles = local_cells.particles();
   // should be pretty late, since it needs to zero out the total force

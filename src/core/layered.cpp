@@ -361,8 +361,6 @@ void layered_topology_init(CellPList *old) {
                          GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION, CommDirection::LOCAL_TO_GHOST);
     layered_prepare_comm(&cell_structure.update_ghost_pos_comm,
                          GHOSTTRANS_POSITION, CommDirection::LOCAL_TO_GHOST);
-    layered_prepare_comm(&cell_structure.collect_ghost_force_comm,
-                         GHOSTTRANS_FORCE, CommDirection::GHOST_TO_LOCAL);
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {

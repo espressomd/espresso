@@ -442,7 +442,7 @@ void ParticleVelocitiesFromLB_CPU() {
   // real particles
   // This could be solved by keeping a backup of the local forces before this
   // operation is attempted
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  ghost_communicator(cell_structure.ghost_to_local_comm, GHOSTTRANS_FORCE);
 
   // Transfer to velocity field
   for (int c = 0; c < local_cells.n; c++) {

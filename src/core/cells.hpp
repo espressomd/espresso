@@ -153,8 +153,6 @@ struct CellStructure {
   GhostCommunicator exchange_ghosts_comm;
   /** Communicator to update ghost positions. */
   GhostCommunicator update_ghost_pos_comm;
-  /** Communicator to collect ghost forces. */
-  GhostCommunicator collect_ghost_force_comm;
 
   /** Cell system dependent function to find the right node for a
       particle at position pos.

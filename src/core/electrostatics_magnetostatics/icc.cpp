@@ -150,7 +150,7 @@ int iccp3m_iteration() {
 
     force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding
                             source source interaction*/
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    ghost_communicator(cell_structure.ghost_to_local_comm, GHOSTTRANS_FORCE);
 
     double diff = 0;
 

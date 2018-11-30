@@ -163,7 +163,6 @@ static void topology_release(int) {
     cell_structure.ghost_cells_comm = {};
     cell_structure.exchange_ghosts_comm = {};
     cell_structure.update_ghost_pos_comm = {};
-    cell_structure.collect_ghost_force_comm = {};
     cell_structure.local_to_ghost_comm = {};
     cell_structure.ghost_to_local_comm = {};
 

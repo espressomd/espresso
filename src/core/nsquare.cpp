@@ -104,7 +104,6 @@ void nsq_topology_init(CellPList *old) {
   nsq_prepare_comm(&cell_structure.exchange_ghosts_comm,
                    GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
   nsq_prepare_comm(&cell_structure.update_ghost_pos_comm, GHOSTTRANS_POSITION);
-  nsq_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
 
   nsq_prepare_comm(&cell_structure.local_to_ghost_comm, 0);
   nsq_prepare_comm(&cell_structure.ghost_to_local_comm, 0);
@@ -129,7 +128,6 @@ void nsq_topology_init(CellPList *old) {
             GHOST_BCST | GHOST_PREFETCH;
       }
       cell_structure.ghost_to_local_comm.comm[n].type = GHOST_RDCE;
-      cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
     }
     /* first round: all nodes except the first one prefetch their send data */
     if (this_node != 0) {

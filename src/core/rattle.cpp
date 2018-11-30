@@ -173,7 +173,7 @@ void correct_pos_shake() {
     init_correction_vector();
     repeat_ = 0;
     compute_pos_corr_vec(&repeat_);
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    ghost_communicator(cell_structure.ghost_to_local_comm, GHOSTTRANS_FORCE);
     app_pos_correction();
     /**Ghost Positions Update*/
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
@@ -289,7 +289,7 @@ void correct_vel_shake() {
     init_correction_vector();
     repeat_ = 0;
     compute_vel_corr_vec(&repeat_);
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    ghost_communicator(cell_structure.ghost_to_local_comm, GHOSTTRANS_FORCE);
     apply_vel_corr();
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     if (this_node == 0)
