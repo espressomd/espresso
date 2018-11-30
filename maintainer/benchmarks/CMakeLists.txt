@@ -1,4 +1,8 @@
-ProcessorCount(NP)
+if(NOT DEFINED TEST_NP)
+  include(ProcessorCount)
+  ProcessorCount(NP)
+  math(EXPR TEST_NP "${NP}/2 + 1")
+endif()
 
 if(EXISTS ${MPIEXEC})
   # OpenMPI 3.0 and higher checks the number of processes against the number of CPUs
@@ -9,8 +13,6 @@ if(EXISTS ${MPIEXEC})
     set(MPIEXEC_OVERSUBSCRIBE "")
   endif()
 endif()
-
-add_custom_target(benchmark_python)
 
 function(PYTHON_BENCHMARK)
   cmake_parse_arguments(BENCHMARK "" "FILE;RUN_WITH_MPI;MIN_NUM_PROC;MAX_NUM_PROC" "ARGUMENTS;DEPENDENCIES" ${ARGN})
@@ -57,15 +59,15 @@ function(PYTHON_BENCHMARK)
     endif()
     list(REMOVE_AT BENCHMARK_CONFIGURATIONS 0)
     foreach(nproc IN LISTS BENCHMARK_CONFIGURATIONS)
-      add_custom_target(${BENCHMARK_NAME}__parallel_${nproc}
-                        ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${nproc}
-                        ${CMAKE_BINARY_DIR}/pypresso ${BENCHMARK_FILE} ${BENCHMARK_ARGUMENTS})
-      add_dependencies(benchmark_python ${BENCHMARK_NAME}__parallel_${nproc})
+      add_test(NAME benchmark__${BENCHMARK_NAME}__parallel_${nproc}
+               COMMAND ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${nproc}
+                       ${CMAKE_BINARY_DIR}/pypresso ${BENCHMARK_FILE} ${BENCHMARK_ARGUMENTS}
+               CONFIGURATIONS "parallel")
     endforeach(nproc)
   else()
-      add_custom_target(${BENCHMARK_NAME}__serial
-                        ${CMAKE_BINARY_DIR}/pypresso ${BENCHMARK_FILE} ${BENCHMARK_ARGUMENTS})
-      add_dependencies(benchmark_python ${BENCHMARK_NAME}__serial)
+      add_test(NAME benchmark__${BENCHMARK_NAME}__serial
+               COMMAND ${CMAKE_BINARY_DIR}/pypresso ${BENCHMARK_FILE} ${BENCHMARK_ARGUMENTS}
+               CONFIGURATIONS "serial")
   endif()
 endfunction(PYTHON_BENCHMARK)
 
@@ -75,5 +77,18 @@ python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=10000;--volume_fract
 python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=10000;--volume_fraction=0.02")
 python_benchmark(FILE p3m.py ARGUMENTS "--particles_per_core=1000;--volume_fraction=0.25;--bjerrum_length=4")
 python_benchmark(FILE p3m.py ARGUMENTS "--particles_per_core=10000;--volume_fraction=0.25;--bjerrum_length=4")
+
+add_custom_target(benchmark_python_serial COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) -C serial --output-on-failure)
+add_dependencies(benchmark_python_serial pypresso)
+
+add_custom_target(benchmark_python_parallel COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) -C parallel --output-on-failure)
+add_dependencies(benchmark_python_parallel pypresso)
+
+add_custom_target(benchmark_python)
+if(EXISTS ${MPIEXEC})
+  add_dependencies(benchmark_python pypresso benchmark_python_parallel)
+else()
+  add_dependencies(benchmark_python pypresso benchmark_python_serial)
+endif()
 
 add_dependencies(benchmark benchmark_python)

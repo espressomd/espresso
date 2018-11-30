@@ -34,7 +34,7 @@ parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     "particles (range: [0.01-0.74], default: 0.50)")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--output", metavar="FILEPATH", action="store",
-                   type=str, required=False,
+                   type=str, required=False, default="benchmarks.csv",
                    help="Output file (default: benchmarks.csv)")
 group.add_argument("--visualizer", action="store_true",
                    help="Starts the visualizer (for debugging purposes)")

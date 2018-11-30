@@ -37,7 +37,7 @@ parser.add_argument("--bjerrum_length", metavar="LENGTH", action="store",
                     help="Bjerrum length (default: 4)")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--output", metavar="FILEPATH", action="store",
-                   type=str, required=False,
+                   type=str, required=False, default="benchmarks.csv",
                    help="Output file (default: benchmarks.csv)")
 group.add_argument("--visualizer", action="store_true",
                    help="Starts the visualizer (for debugging purposes)")
