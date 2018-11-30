@@ -1882,7 +1882,6 @@ void lb_coupling_set_rng_state(uint64_t counter) {
 }
 #endif
 
-
 void mpi_set_lb_coupling_counter(int high, int low) {
 #ifdef LB
   using Utils::u32_to_u64;
