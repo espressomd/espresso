@@ -828,7 +828,7 @@ void exchange_neighbors(ParticleList *pl) {
           isendrecv(comm_cart, node_neighbors[2 * dir + 1], 0, send_buf_r,
                     node_neighbors[2 * dir + 1], 0, recv_buf_r);
 
-      std::array<request, 4> reqs{req_l[0], req_l[1], req_r[0], req_r[1]};
+      std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
       boost::mpi::wait_all(reqs.begin(), reqs.end());
 
       move_if_local(recv_buf_l, *pl);
