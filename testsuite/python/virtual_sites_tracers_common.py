@@ -153,7 +153,7 @@ class VirtualSitesTracersCommon(object):
 
         ## Perform integrat[ion
         last_angle = self.compute_angle()
-        for i in range(8):
+        for i in range(6):
             system.integrator.run(500)
             angle = self.compute_angle()
             print("Angle after relaxation: ", angle)
@@ -201,7 +201,7 @@ class VirtualSitesTracersCommon(object):
 #        system.integrator.run(1)
 #        system.part[3:].pos =system.part[3:].pos +random.random((6,3)) -.5
 
-        system.integrator.run(8000)
+        system.integrator.run(6000)
 
         # For the cpu variant, check particle velocities
         if isinstance(self.lbf, lb.LBFluid):  # as opposed to LBFluidGPU
