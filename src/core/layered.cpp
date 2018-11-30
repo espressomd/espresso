@@ -356,7 +356,6 @@ void layered_topology_init(CellPList *old) {
   /* create communicators */
     layered_prepare_comm(&cell_structure.ghost_to_local_comm, 0, CommDirection::GHOST_TO_LOCAL);
     layered_prepare_comm(&cell_structure.local_to_ghost_comm, 0, CommDirection::LOCAL_TO_GHOST);
-    layered_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM, CommDirection::LOCAL_TO_GHOST);
     layered_prepare_comm(&cell_structure.exchange_ghosts_comm,
                          GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION, CommDirection::LOCAL_TO_GHOST);
 

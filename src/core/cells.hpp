@@ -147,8 +147,6 @@ struct CellStructure {
   GhostCommunicator local_to_ghost_comm;
   GhostCommunicator ghost_to_local_comm;
 
-  /** Communicator to exchange ghost cell information. */
-  GhostCommunicator ghost_cells_comm;
   /** Communicator to exchange ghost particles. */
   GhostCommunicator exchange_ghosts_comm;
 

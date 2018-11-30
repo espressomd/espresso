@@ -100,7 +100,6 @@ void nsq_topology_init(CellPList *old) {
   local->m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
 
   /* create communicators */
-  nsq_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
   nsq_prepare_comm(&cell_structure.exchange_ghosts_comm,
                    GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
 
@@ -114,12 +113,9 @@ void nsq_topology_init(CellPList *old) {
        * prefetches. */
       if (this_node == 0 || this_node != n) {
         cell_structure.local_to_ghost_comm.comm[n].type = GHOST_BCST;
-        cell_structure.ghost_cells_comm.comm[n].type = GHOST_BCST;
         cell_structure.exchange_ghosts_comm.comm[n].type = GHOST_BCST;
       } else {
         cell_structure.local_to_ghost_comm.comm[n].type = GHOST_BCST | GHOST_PREFETCH;
-        cell_structure.ghost_cells_comm.comm[n].type =
-            GHOST_BCST | GHOST_PREFETCH;
         cell_structure.exchange_ghosts_comm.comm[n].type =
             GHOST_BCST | GHOST_PREFETCH;
       }
@@ -128,7 +124,6 @@ void nsq_topology_init(CellPList *old) {
     /* first round: all nodes except the first one prefetch their send data */
     if (this_node != 0) {
       cell_structure.local_to_ghost_comm.comm[0].type |= GHOST_PREFETCH;
-      cell_structure.ghost_cells_comm.comm[0].type |= GHOST_PREFETCH;
       cell_structure.exchange_ghosts_comm.comm[0].type |= GHOST_PREFETCH;
     }
   }
