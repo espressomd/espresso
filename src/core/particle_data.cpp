@@ -1071,7 +1071,9 @@ void try_add_exclusion(Particle *part, int part2) {
 void try_delete_exclusion(Particle *part, int part2) {
   IntList &el = part->el;
 
-  el.erase(std::remove(el.begin(), el.end(), part2), el.end());
+  if (!el.empty()) {
+    el.erase(std::remove(el.begin(), el.end(), part2), el.end());
+  };
 }
 #endif
 
