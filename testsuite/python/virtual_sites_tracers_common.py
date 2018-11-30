@@ -141,7 +141,7 @@ class VirtualSitesTracersCommon(object):
 
         ## Perform integrat[ion
         last_angle = self.compute_angle()
-        for i in range(8):
+        for i in range(6):
             system.integrator.run(500)
             angle = self.compute_angle()
             self.assertLess(angle, last_angle)
@@ -184,7 +184,7 @@ class VirtualSitesTracersCommon(object):
         system.bonded_inter.add(triStrong)
         system.part[6].add_bond((triStrong, 7, 8))
         ## Perform integration
-        system.integrator.run(8000)
+        system.integrator.run(6000)
 
         # For the cpu variant, check particle velocities
         if isinstance(self.lbf, lb.LBFluid):  # as opposed to LBFluidGPU
