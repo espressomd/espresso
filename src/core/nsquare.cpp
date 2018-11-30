@@ -103,7 +103,6 @@ void nsq_topology_init(CellPList *old) {
   nsq_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
   nsq_prepare_comm(&cell_structure.exchange_ghosts_comm,
                    GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-  nsq_prepare_comm(&cell_structure.update_ghost_pos_comm, GHOSTTRANS_POSITION);
 
   nsq_prepare_comm(&cell_structure.local_to_ghost_comm, 0);
   nsq_prepare_comm(&cell_structure.ghost_to_local_comm, 0);
@@ -117,14 +116,11 @@ void nsq_topology_init(CellPList *old) {
         cell_structure.local_to_ghost_comm.comm[n].type = GHOST_BCST;
         cell_structure.ghost_cells_comm.comm[n].type = GHOST_BCST;
         cell_structure.exchange_ghosts_comm.comm[n].type = GHOST_BCST;
-        cell_structure.update_ghost_pos_comm.comm[n].type = GHOST_BCST;
       } else {
         cell_structure.local_to_ghost_comm.comm[n].type = GHOST_BCST | GHOST_PREFETCH;
         cell_structure.ghost_cells_comm.comm[n].type =
             GHOST_BCST | GHOST_PREFETCH;
         cell_structure.exchange_ghosts_comm.comm[n].type =
-            GHOST_BCST | GHOST_PREFETCH;
-        cell_structure.update_ghost_pos_comm.comm[n].type =
             GHOST_BCST | GHOST_PREFETCH;
       }
       cell_structure.ghost_to_local_comm.comm[n].type = GHOST_RDCE;
@@ -134,7 +130,6 @@ void nsq_topology_init(CellPList *old) {
       cell_structure.local_to_ghost_comm.comm[0].type |= GHOST_PREFETCH;
       cell_structure.ghost_cells_comm.comm[0].type |= GHOST_PREFETCH;
       cell_structure.exchange_ghosts_comm.comm[0].type |= GHOST_PREFETCH;
-      cell_structure.update_ghost_pos_comm.comm[0].type |= GHOST_PREFETCH;
     }
   }
 

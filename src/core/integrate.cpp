@@ -260,7 +260,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef VIRTUAL_SITES
     virtual_sites()->update();
     if (virtual_sites()->need_ghost_comm_after_pos_update()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+      ghost_communicator(cell_structure.local_to_ghost_comm, GHOSTTRANS_POSITION);
     }
 #endif
     force_calc();
@@ -365,7 +365,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef VIRTUAL_SITES
     virtual_sites()->update();
     if (virtual_sites()->need_ghost_comm_after_pos_update()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+      ghost_communicator(cell_structure.local_to_ghost_comm, GHOSTTRANS_POSITION);
     }
 #endif
     force_calc();
@@ -389,7 +389,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+      ghost_communicator(cell_structure.local_to_ghost_comm, GHOSTTRANS_POSITION);
       correct_vel_shake();
     }
 #endif
@@ -458,7 +458,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
   if (virtual_sites()->need_ghost_comm_before_vel_update()) {
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(cell_structure.local_to_ghost_comm, GHOSTTRANS_POSITION);
   }
   virtual_sites()->update(false); // Recalc positions = false
 #endif

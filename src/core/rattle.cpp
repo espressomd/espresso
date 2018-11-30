@@ -176,7 +176,7 @@ void correct_pos_shake() {
     ghost_communicator(cell_structure.ghost_to_local_comm, GHOSTTRANS_FORCE);
     app_pos_correction();
     /**Ghost Positions Update*/
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(cell_structure.local_to_ghost_comm, GHOSTTRANS_POSITION);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else
@@ -291,7 +291,7 @@ void correct_vel_shake() {
     compute_vel_corr_vec(&repeat_);
     ghost_communicator(cell_structure.ghost_to_local_comm, GHOSTTRANS_FORCE);
     apply_vel_corr();
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(cell_structure.local_to_ghost_comm, GHOSTTRANS_POSITION);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else
