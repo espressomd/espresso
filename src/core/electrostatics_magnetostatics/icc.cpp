@@ -211,7 +211,7 @@ int iccp3m_iteration() {
       }
     } /* cell particles */
     /* Update charges on ghosts. */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm);
+    ghost_communicator(cell_structure.local_to_ghost_comm, GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
 
     iccp3m_cfg.citeration++;
 

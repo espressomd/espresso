@@ -144,11 +144,9 @@ struct CellStructure {
 
   bool use_verlet_list;
 
+  /** Communicators to exchange ghost particles. */
   GhostCommunicator local_to_ghost_comm;
   GhostCommunicator ghost_to_local_comm;
-
-  /** Communicator to exchange ghost particles. */
-  GhostCommunicator exchange_ghosts_comm;
 
   /** Cell system dependent function to find the right node for a
       particle at position pos.

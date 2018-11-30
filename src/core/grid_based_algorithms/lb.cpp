@@ -2837,7 +2837,7 @@ void calc_particle_lattice_ia() {
 #endif
 
     /* communicate the random numbers */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
+    ghost_communicator(cell_structure.local_to_ghost_comm, data_parts);
 
     /* local cells */
     for (auto &p : local_cells.particles()) {

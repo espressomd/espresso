@@ -470,7 +470,6 @@ void dd_update_communicators_w_boxl() {
           if (boundary[2 * dir + lr] != 0) {
               update_component(cell_structure.local_to_ghost_comm.comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
               update_component(cell_structure.ghost_to_local_comm.comm[cnt].shift, -boundary[2 * dir + lr] * box_l[dir], dir);
-              update_component(cell_structure.exchange_ghosts_comm.comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
           }
           cnt++;
         }
@@ -483,7 +482,6 @@ void dd_update_communicators_w_boxl() {
               if (boundary[2 * dir + lr] != 0) {
                   update_component(cell_structure.local_to_ghost_comm.comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
                   update_component(cell_structure.ghost_to_local_comm.comm[cnt].shift, -boundary[2 * dir + lr] * box_l[dir], dir);
-                  update_component(cell_structure.exchange_ghosts_comm.comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
               }
               cnt++;
             }
@@ -655,9 +653,8 @@ void dd_on_geometry_change(int flags) {
 /************************************************************/
 void dd_topology_init(CellPList *old) {
   int c, p;
-  int exchange_data;
 
-  CELL_TRACE(fprintf(stderr,
+    CELL_TRACE(fprintf(stderr,
                      "%d: dd_topology_init: Number of recieved cells=%d\n",
                      this_node, old->n));
 
@@ -674,19 +671,12 @@ void dd_topology_init(CellPList *old) {
   /* mark cells */
   dd_mark_cells();
 
-  exchange_data =
-      (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-
-    dd_prepare_comm(&cell_structure.local_to_ghost_comm, 0);
+  dd_prepare_comm(&cell_structure.local_to_ghost_comm, 0);
   dd_prepare_comm(&cell_structure.ghost_to_local_comm, 0);
   dd_revert_comm_order(&cell_structure.ghost_to_local_comm);
 
   dd_assign_prefetches(&cell_structure.local_to_ghost_comm);
   dd_assign_prefetches(&cell_structure.ghost_to_local_comm);
-
-  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data);
-
-  dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
 
   dd_init_cell_interactions();
 
