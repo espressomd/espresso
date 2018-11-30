@@ -69,11 +69,11 @@ espressomd.assert_features(required_features)
 
 print(espressomd.features())
 
-# Interaction parameters (repulsive Lennard-Jones)
+# Interaction parameters (Lennard-Jones, Coulomb)
 #############################################################
 
 species = ["anion", "cation"]
-types = {"anion": 0, "cation": 1}
+types = {"anion": 0, "cation": 0}
 charges = {"anion": -1.0, "cation": 1.0}
 lj_sigmas = {"anion": 1.0, "cation": 1.0}
 lj_epsilons = {"anion": 1.0, "cation": 1.0}
@@ -145,9 +145,14 @@ system.minimize_energy.minimize()
 energy = system.analysis.energy()
 print("After Minimization: E_total = {}".format(energy["total"]))
 
+print("Tune skin: {}".format(system.cell_system.tune_skin(
+    min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100)))
 print("Tune p3m")
 p3m = electrostatics.P3M(prefactor=args.bjerrum_length, accuracy=1e-4)
 system.actors.add(p3m)
+system.integrator.run(min(3 * measurement_steps, 6000))
+print("Tune skin: {}".format(system.cell_system.tune_skin(
+    min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100)))
 
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 

@@ -64,7 +64,7 @@ espressomd.assert_features(required_features)
 
 print(espressomd.features())
 
-# Interaction parameters (repulsive Lennard-Jones)
+# Interaction parameters (Lennard-Jones)
 #############################################################
 
 lj_eps = 1.0  # LJ epsilon
@@ -130,17 +130,11 @@ system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 # tune skin
-print("tune: {}".format(system.cell_system.tune_skin(
-    min_skin=0.2,
-    max_skin=1,
-    tol=0.05,
-    int_steps=100)))
+print("Tune skin: {}".format(system.cell_system.tune_skin(
+    min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
 system.integrator.run(min(30 * measurement_steps, 60000))
-print("tune: {}".format(system.cell_system.tune_skin(
-    min_skin=0.2,
-    max_skin=1,
-    tol=0.05,
-    int_steps=100)))
+print("Tune skin: {}".format(system.cell_system.tune_skin(
+    min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
 
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
