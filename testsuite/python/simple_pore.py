@@ -31,7 +31,17 @@ from espressomd.shapes import SimplePore, Cylinder
            "Features not available, skipping test!")
 class SimplePoreConstraint(ut.TestCase):
 
-    def test(self):
+    def test_orientation(self):
+        pore = SimplePore(
+            axis=[1., 0., 0.], radius=2., smoothing_radius=.1, length=2., center=[5., 5., 5.])
+
+        d, _ = pore.call_method("calc_distance", position=[.0, .0, .0])
+        self.assertGreater(d, 0.)
+
+        d, _ = pore.call_method("calc_distance", position=[5., 5., .0])
+        self.assertLess(d, 0.)
+
+    def test_stability(self):
         s = espressomd.System(box_l=[1.0, 1.0, 1.0])
         s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
         box_yz = 15.
