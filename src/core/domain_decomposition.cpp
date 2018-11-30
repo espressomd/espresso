@@ -822,9 +822,8 @@ void exchange_neighbors(ParticleList *pl) {
 
       move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
 
-      auto req_l =
-        isendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf_l,
-                    node_neighbors[2 * dir], 0, recv_buf_l);
+      auto req_l = isendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf_l,
+                             node_neighbors[2 * dir], 0, recv_buf_l);
       auto req_r =
           isendrecv(comm_cart, node_neighbors[2 * dir + 1], 0, send_buf_r,
                     node_neighbors[2 * dir + 1], 0, recv_buf_r);
