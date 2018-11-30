@@ -199,7 +199,6 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           insert += sizeof(ParticleForce);
         }
 
-
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
           memcpy(insert, &pt->swim, sizeof(ParticleParametersSwimming));
@@ -421,7 +420,6 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         }
         if (data_parts & GHOSTTRANS_FORCE)
           pt2->f += pt1->f;
-
 
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING)
