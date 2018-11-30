@@ -34,11 +34,26 @@ std::pair<double, double> SimplePore::dist_half_pore(double r, double z) const {
   assert(z >= 0.0);
   assert(r >= 0.0);
 
-  if (z <= c_z) {
-    /* Cylinder section */
+  /*
+   *  We have to find the line that splits area 1 (r determines distance) from
+   *  area 2 (z determines distance) inside pore. In area 3 we have to consider
+   *  z and r to determine the distance.
+   *
+   *   |        x
+   *   |   2  x
+   *   |    x
+   *  _|_ x    1
+   *    \|       ^ r
+   *  3  |-------|
+   *     |   z <-
+   */
+
+  if ((z <= c_z) && (r <= (c_z + c_r - z))) {
+    /* Cylinder section, inner */
     return {m_rad - r, 0};
-  } else if ((r >= c_r) && (z >= m_half_length)) {
-    /* Wall section */
+  } else if (((z >= c_z) && (r >= c_r)) ||
+             ((z <= c_z) && (r > (c_z + c_r - z)))) {
+    /* Wall section and outer cylinder */
     return {0, m_half_length - z};
   } else {
     /* Smoothing area */
@@ -73,11 +88,27 @@ void SimplePore::calculate_dist(const Vector3d &pos, double *dist,
   double dr, dz;
   std::tie(dr, dz) = dist_half_pore(r, std::abs(z));
 
+  double side = -1;
+  if (((dz == 0) && (r <= m_rad)) ||                  // cylinder section
+      ((dr == 0) && (std::abs(z) > m_half_length))) { // ||
+    side = 1;
+  } else {
+    // smoothing area
+    if (std::abs(z) >= c_z) {
+      double angle = std::asin((std::abs(z) - c_z) / m_smoothing_rad);
+      double dist_offset =
+          m_smoothing_rad - (std::cos(angle) * m_smoothing_rad);
+      if (m_half_length < std::abs(z) || r <= (m_rad + dist_offset)) {
+        side = 1;
+      }
+    }
+  }
+
   if (z <= 0.0) {
     dz *= -1;
   }
 
-  *dist = std::sqrt(dr * dr + dz * dz);
+  *dist = std::sqrt(dr * dr + dz * dz) * side;
   for (int i = 0; i < 3; i++) {
     vec[i] = -dr * e_r[i] + -dz * e_z[i];
   }
