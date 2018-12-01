@@ -96,9 +96,12 @@ The ghost communicators are created in the init routines of the cell systems,
 therefore have a look at \ref dd_topology_init or \ref nsq_topology_init for
 further details.
 */
-#include "Cell.hpp"
+
+#include "Vector.hpp"
 
 #include <boost/optional.hpp>
+
+#include <vector>
 
 /** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/
@@ -134,24 +137,20 @@ further details.
 #define GHOSTTRANS_MOMENTUM 8
 /// transfer \ref ParticleForce
 #define GHOSTTRANS_FORCE 16
-
-#ifdef LB
 /// transfer \ref ParticleLatticeCoupling
 #define GHOSTTRANS_COUPLING 32
-#endif
-
 /// resize the receiver particle arrays to the size of the senders
 #define GHOSTTRANS_PARTNUM 64
-
-#ifdef ENGINE
 /// transfer \ref ParticleParametersSwimming
 #define GHOSTTRANS_SWIMMING 128
-#endif
+
 /*@}*/
 
 /** \name Data Types */
 /************************************************************/
 /*@{*/
+
+class Cell;
 
 struct GhostCommunication {
   /** Communication type. */

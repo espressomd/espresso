@@ -28,9 +28,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
-#include "errorhandling.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include <boost/range/numeric.hpp>
 #include <mpi.h>
@@ -39,7 +37,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <vector>
 #include <memory>
 
 /** Tag for communication in ghost_comm. */
@@ -326,13 +323,8 @@ static void add_forces_from_recv_buffer(GhostCommunication *gc) {
       retrieve += sizeof(ParticleForce);
     }
   }
-  if (retrieve - r_buffer != n_r_buffer) {
-    fprintf(stderr,
-            "%d: recv buffer size %d differs "
-            "from what I put in %td\n",
-            this_node, n_r_buffer, retrieve - r_buffer);
-    errexit();
-  }
+
+  assert((retrieve - r_buffer) == n_r_buffer);
 }
 
 static void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
@@ -443,15 +435,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
                               "%d: ghost_comm using prefetched data for "
                               "operation %d, sending to %d\n",
                               this_node, n, node));
-#ifdef ADDITIONAL_CHECKS
-          if (n_s_buffer != calc_transmit_size(gcn, data_parts)) {
-            fprintf(stderr,
-                    "%d: ghost_comm transmission size and current size of "
-                    "cells to transmit do not match\n",
-                    this_node);
-            errexit();
-          }
-#endif
+          assert(n_s_buffer == calc_transmit_size(gcn, data_parts));
         }
       } else {
         /* we do not send this time, let's look for a prefetch */
@@ -500,18 +484,11 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
                             this_node, node, n_s_buffer));
         MPI_Send(s_buffer, n_s_buffer, MPI_BYTE, node, REQ_GHOST_SEND,
                  comm_cart);
-        int n_bonds = s_bondbuffer.size();
-        if (!(data_parts & GHOSTTRANS_PROPRTS) && n_bonds > 0) {
-          fprintf(stderr,
-                  "%d: INTERNAL ERROR: not sending properties, but bond buffer "
-                  "not empty\n",
-                  this_node);
-          errexit();
-        }
-        GHOST_TRACE(fprintf(stderr, "%d: ghost_comm send to %d (%d ints)\n",
-                            this_node, node, n_bonds));
-        if (n_bonds) {
-          MPI_Send(&s_bondbuffer[0], n_bonds, MPI_INT, node, REQ_GHOST_SEND,
+
+        assert((data_parts & GHOSTTRANS_PROPRTS) or (s_bondbuffer.empty()));
+
+        if (not s_bondbuffer.empty()) {
+          MPI_Send(s_bondbuffer.data(), s_bondbuffer.size(), MPI_INT, node, REQ_GHOST_SEND,
                    comm_cart);
         }
         break;
@@ -522,17 +499,12 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
                             (node == this_node) ? n_s_buffer : n_r_buffer));
         if (node == this_node) {
           MPI_Bcast(s_buffer, n_s_buffer, MPI_BYTE, node, comm_cart);
-          int n_bonds = s_bondbuffer.size();
-          if (!(data_parts & GHOSTTRANS_PROPRTS) && n_bonds > 0) {
-            fprintf(stderr,
-                    "%d: INTERNAL ERROR: not sending properties, but bond "
-                    "buffer not empty\n",
-                    this_node);
-            errexit();
-          }
-          if (n_bonds) {
-            MPI_Bcast(&s_bondbuffer[0], n_bonds, MPI_INT, node, comm_cart);
-          }
+
+          assert((data_parts & GHOSTTRANS_PROPRTS) or (s_bondbuffer.empty()));
+            if (not s_bondbuffer.empty()) {
+                MPI_Send(s_bondbuffer.data(), s_bondbuffer.size(), MPI_INT, node, REQ_GHOST_SEND,
+                         comm_cart);
+            }
         } else {
           MPI_Bcast(r_buffer, n_r_buffer, MPI_BYTE, node, comm_cart);
           if (data_parts & GHOSTTRANS_PROPRTS) {
@@ -587,15 +559,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
             int poststore2 = gcn2->type & GHOST_PSTSTORE;
             int node2 = gcn2->node;
             if (is_recv_op(comm_type2, node2) && poststore2) {
-#ifdef ADDITIONAL_CHECKS
-              if (n_r_buffer != calc_transmit_size(gcn2, data_parts)) {
-                fprintf(stderr,
-                        "%d: ghost_comm transmission size and current size of "
-                        "cells to transmit do not match\n",
-                        this_node);
-                errexit();
-              }
-#endif
+                assert(n_r_buffer == calc_transmit_size(gcn2, data_parts));
               /* as above */
               if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
                 add_forces_from_recv_buffer(gcn2);
