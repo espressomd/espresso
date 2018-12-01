@@ -312,9 +312,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
   }
 
   /* prepare communicator */
-  CELL_TRACE(fprintf(stderr,
-                     "%d Create Communicator: prep_comm data_parts %d num %d\n",
-                     this_node, data_parts, num));
   *comm = GhostCommunicator(num);
 
   /* number of cells to communicate in a direction */
