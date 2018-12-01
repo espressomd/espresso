@@ -66,7 +66,7 @@ void IBM_ForcesIntoFluid_CPU() {
   }
 
   // Update the forces on the ghost particles
-  ghost_communicator(&cell_structure.local_to_ghost_comm, GHOSTTRANS_FORCE);
+  ghost_communicator(cell_structure.local_to_ghost_comm, GHOSTTRANS_FORCE);
 
   // Loop over local cells
   for (int c = 0; c < local_cells.n; c++) {

@@ -171,7 +171,7 @@ struct GhostCommunication {
 /** Properties for a ghost communication. A ghost communication is defined */
 struct GhostCommunicator {
     GhostCommunicator() = default;
-    GhostCommunicator(int data_parts, int num) : data_parts(data_parts), comm(num) {}
+    GhostCommunicator(int num) : comm(num) {}
   /** Particle data parts to transfer */
   int data_parts = 0;
 
@@ -184,12 +184,6 @@ struct GhostCommunicator {
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
-/**
- * @brief do a ghost communication with the data parts specified
- *        in the communicator.
- */
-void ghost_communicator(GhostCommunicator *gc);
 
 /**
  * @brief Do a ghost communication with caller specified data parts.

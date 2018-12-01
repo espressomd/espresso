@@ -420,7 +420,7 @@ void cells_resort_particles(int global_flag) {
 #endif
 
   ghost_communicator(cell_structure.local_to_ghost_comm, GHOSTTRANS_PARTNUM);
-  ghost_communicator(&cell_structure.local_to_ghost_comm, GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
+  ghost_communicator(cell_structure.local_to_ghost_comm, GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
 
   /* Particles are now sorted, but Verlet lists are invalid
      and p_old has to be reset. */

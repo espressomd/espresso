@@ -423,10 +423,6 @@ namespace {
     }
 }
 
-void ghost_communicator(GhostCommunicator *gc) {
-  ghost_communicator(gc, gc->data_parts);
-}
-
 void ghost_communicator(GhostCommunicator & gc, int data_parts) {
     ghost_communicator(&gc, data_parts);
 }
