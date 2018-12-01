@@ -62,9 +62,6 @@ void print_fluid();
 int transfer_momentum = 0;
 
 /** Struct holding the Lattice Boltzmann parameters */
-// LB_Parameters lbpar = { .rho={0.0}, .viscosity={0.0}, .bulk_viscosity={-1.0},
-// .agrid=-1.0, .tau=-1.0, .friction={0.0}, .ext_force_density={ 0.0, 0.0,
-// 0.0},.rho_lb_units={0.},.gamma_odd={0.}, .gamma_even={0.} };
 LB_Parameters lbpar = {
     // rho
     0.0,
@@ -93,7 +90,11 @@ LB_Parameters lbpar = {
     // is_TRT
     false,
     // resend_halo
-    0};
+    0,
+    // fluct
+    0,
+    // phi
+    {}};
 
 /** The DnQm model to be used. */
 LB_Model<> lbmodel = {d3q19_lattice, d3q19_coefficients, d3q19_w,

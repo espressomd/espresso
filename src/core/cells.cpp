@@ -57,8 +57,8 @@ CellPList local_cells = {nullptr, 0, 0};
 CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
-CellStructure cell_structure = {/* type */ CELL_STRUCTURE_NONEYET,
-                                /* use_verlet_list*/ true};
+CellStructure cell_structure = {
+    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr};
 
 double max_range = 0.0;
 

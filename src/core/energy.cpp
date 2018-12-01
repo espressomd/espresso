@@ -38,8 +38,8 @@
 
 ActorList energyActors;
 
-Observable_stat energy = {0, {}, 0, 0, 0};
-Observable_stat total_energy = {0, {}, 0, 0, 0};
+Observable_stat energy{};
+Observable_stat total_energy{};
 
 /************************************************************/
 

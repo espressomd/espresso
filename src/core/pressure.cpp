@@ -33,17 +33,17 @@
 
 #include "short_range_loop.hpp"
 
-Observable_stat virials = {0, {}, 0, 0, 0, 0, 0};
-Observable_stat total_pressure = {0, {}, 0, 0, 0, 0, 0};
-Observable_stat p_tensor = {0, {}, 0, 0, 0, 0, 0};
-Observable_stat total_p_tensor = {0, {}, 0, 0, 0, 0, 0};
+Observable_stat virials{};
+Observable_stat total_pressure{};
+Observable_stat p_tensor{};
+Observable_stat total_p_tensor{};
 
 /* Observables used in the calculation of intra- and inter- molecular
    non-bonded contributions to pressure and to stress tensor */
-Observable_stat_non_bonded virials_non_bonded = {0, {}, 0, 0, 0};
-Observable_stat_non_bonded total_pressure_non_bonded = {0, {}, 0, 0, 0};
-Observable_stat_non_bonded p_tensor_non_bonded = {0, {}, 0, 0, 0};
-Observable_stat_non_bonded total_p_tensor_non_bonded = {0, {}, 0, 0, 0};
+Observable_stat_non_bonded virials_non_bonded{};
+Observable_stat_non_bonded total_pressure_non_bonded{};
+Observable_stat_non_bonded p_tensor_non_bonded{};
+Observable_stat_non_bonded total_p_tensor_non_bonded{};
 
 nptiso_struct nptiso = {0.0,
                         0.0,
