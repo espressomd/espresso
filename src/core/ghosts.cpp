@@ -50,14 +50,14 @@ static int max_s_buffer = 0;
 /** send buffer. Just grows, which should be ok */
 static char *s_buffer = nullptr;
 
-std::vector<int> s_bondbuffer;
+static std::vector<int> s_bondbuffer;
 
 static int n_r_buffer = 0;
 static int max_r_buffer = 0;
 /** recv buffer. Just grows, which should be ok */
 static char *r_buffer = nullptr;
 
-std::vector<int> r_bondbuffer;
+static std::vector<int> r_bondbuffer;
 
 /** whether the ghosts should also have velocity information, e. g. for DPD or
    RATTLE. You need this whenever you need the relative velocity of two
@@ -67,7 +67,7 @@ std::vector<int> r_bondbuffer;
 int ghosts_have_v = 0;
 int ghosts_have_bonds = 0;
 
-int calc_transmit_size(GhostCommunication *gc, int data_parts) {
+static int calc_transmit_size(GhostCommunication *gc, int data_parts) {
   int n_buffer_new;
 
   if (data_parts & GHOSTTRANS_PARTNUM)
@@ -110,7 +110,7 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
   return n_buffer_new;
 }
 
-void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
+static void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
   GHOST_TRACE(fprintf(stderr, "%d: prepare sending to/bcast from %d\n",
                       this_node, gc->node));
 
@@ -195,13 +195,8 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
     insert += sizeof(int);
   }
 
-  if (insert - s_buffer != n_s_buffer) {
-    fprintf(stderr,
-            "%d: INTERNAL ERROR: send buffer size %d "
-            "differs from what I put in (%td)\n",
-            this_node, n_s_buffer, insert - s_buffer);
-    errexit();
-  }
+  /* Assert that the calculated and actual buffer size match. */
+  assert((insert - s_buffer) == n_s_buffer);
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
@@ -220,7 +215,7 @@ static void prepare_ghost_cell(Cell *cell, int size) {
     cell->n = size;
 }
 
-void prepare_recv_buffer(GhostCommunication *gc, int data_parts) {
+static void prepare_recv_buffer(GhostCommunication *gc, int data_parts) {
   GHOST_TRACE(
       fprintf(stderr, "%d: prepare receiving from %d\n", this_node, gc->node));
   /* reallocate recv buffer */
@@ -232,7 +227,7 @@ void prepare_recv_buffer(GhostCommunication *gc, int data_parts) {
   GHOST_TRACE(fprintf(stderr, "%d: will get %d\n", this_node, n_r_buffer));
 }
 
-void put_recv_buffer(GhostCommunication *gc, int data_parts) {
+static void put_recv_buffer(GhostCommunication *gc, int data_parts) {
   /* put back data */
   char *retrieve = r_buffer;
 
@@ -310,23 +305,14 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
     retrieve += sizeof(int);
   }
 
-  if (retrieve - r_buffer != n_r_buffer) {
-    fprintf(stderr,
-            "%d: recv buffer size %d differs "
-            "from what I read out (%td)\n",
-            this_node, n_r_buffer, retrieve - r_buffer);
-    errexit();
-  }
-  if (bond_retrieve != r_bondbuffer.end()) {
-    fprintf(stderr,
-            "%d: recv bond buffer was not used up, %td elements remain\n",
-            this_node, r_bondbuffer.end() - bond_retrieve);
-    errexit();
-  }
-  r_bondbuffer.resize(0);
+  /* Assert that the actual and calculated buffer size match */
+  assert((retrieve - r_buffer) == n_r_buffer);
+  /* Assert that all bonds have been consumed. */
+  assert(bond_retrieve == r_bondbuffer.end());
+  r_bondbuffer.clear();
 }
 
-void add_forces_from_recv_buffer(GhostCommunication *gc) {
+static void add_forces_from_recv_buffer(GhostCommunication *gc) {
   char *retrieve;
 
   /* put back data */
@@ -349,7 +335,7 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
   }
 }
 
-void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
+static void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
   int pl, p;
   Particle *part1, *part2, *pt1, *pt2;
 
