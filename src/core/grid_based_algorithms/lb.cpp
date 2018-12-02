@@ -141,11 +141,6 @@ HaloCommunicator update_halo_comm = {0, nullptr};
 /** measures the MD time since the last fluid update */
 static double fluidstep = 0.0;
 
-#ifdef ADDITIONAL_CHECKS
-/** counts the random numbers drawn for fluctuating LB and the coupling */
-static int rancounter = 0;
-#endif // ADDITIONAL_CHECKS
-
 /***********************************************************************/
 #endif // LB
 
@@ -676,25 +671,22 @@ int lb_lbfluid_print_vtk_boundary(char *filename) {
 #ifdef LB
     Vector3i pos;
     int boundary;
-    int gridsize[3];
 
-    gridsize[0] = box_l[0] / lbpar.agrid;
-    gridsize[1] = box_l[1] / lbpar.agrid;
-    gridsize[2] = box_l[2] / lbpar.agrid;
+    auto const grid_size = lblattice.global_grid;
 
     fprintf(fp,
             "# vtk DataFile Version 2.0\nlbboundaries\n"
             "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
             "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
             "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
-            gridsize[0], gridsize[1], gridsize[2], lblattice.agrid[0] * 0.5,
+            grid_size[0], grid_size[1], grid_size[2], lblattice.agrid[0] * 0.5,
             lblattice.agrid[1] * 0.5, lblattice.agrid[2] * 0.5,
             lblattice.agrid[0], lblattice.agrid[1], lblattice.agrid[2],
-            gridsize[0] * gridsize[1] * gridsize[2]);
+            grid_size[0] * grid_size[1] * grid_size[2]);
 
-    for (pos[2] = 0; pos[2] < gridsize[2]; pos[2]++) {
-      for (pos[1] = 0; pos[1] < gridsize[1]; pos[1]++) {
-        for (pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
+    for (pos[2] = 0; pos[2] < grid_size[2]; pos[2]++) {
+      for (pos[1] = 0; pos[1] < grid_size[1]; pos[1]++) {
+        for (pos[0] = 0; pos[0] < grid_size[0]; pos[0]++) {
           lb_lbnode_get_boundary(pos, &boundary);
           fprintf(fp, "%d \n", boundary);
         }
@@ -703,54 +695,6 @@ int lb_lbfluid_print_vtk_boundary(char *filename) {
 #endif // LB
   }
   fclose(fp);
-  return 0;
-}
-
-int lb_lbfluid_print_vtk_density(char **filename) {
-  int ii;
-
-  for (ii = 0; ii < LB_COMPONENTS; ++ii) {
-    FILE *fp = fopen(filename[ii], "w");
-
-    if (fp == nullptr) {
-      perror("lb_lbfluid_print_vtk_density");
-      return 1;
-    }
-
-    if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-
-      int j;
-      size_t size_of_values =
-          lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
-      host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
-      lb_get_values_GPU(host_values);
-
-      fprintf(fp,
-              "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET "
-              "STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f "
-              "%f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS density float "
-              "1\nLOOKUP_TABLE default\n",
-              lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
-              lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5,
-              lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid, lbpar_gpu.agrid,
-              lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
-
-      for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
-        /** print the calculated phys values */
-        fprintf(fp, "%f\n", host_values[j].rho[ii]);
-      }
-      free(host_values);
-
-#endif // LB_GPU
-    } else {
-#ifdef LB
-      fprintf(stderr, "Not implemented yet (%s:%d) ", __FILE__, __LINE__);
-      errexit();
-#endif // LB
-    }
-    fclose(fp);
-  }
   return 0;
 }
 
@@ -2296,9 +2240,6 @@ lb_thermalize_modes(Lattice::index_t index,
   thermalized_modes[17] += pref * lbpar.phi[17] * rng();
   thermalized_modes[18] += pref * lbpar.phi[18] * rng();
 
-#ifdef ADDITIONAL_CHECKS
-  rancounter += 15;
-#endif // ADDITIONAL_CHECKS
   return thermalized_modes;
 }
 
