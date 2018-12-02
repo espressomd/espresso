@@ -1815,9 +1815,9 @@ void lb_on_integration_start() {
                      reinterpret_cast<char *>(lbfluid[0].data()));
 }
 
-uint64_t lb_coupling_rng_state() { return rng_counter.value(); }
+uint64_t lb_coupling_rng_state_cpu() { return rng_counter.value(); }
 
-void lb_coupling_set_rng_state(uint64_t counter) {
+void lb_coupling_set_rng_state_cpu(uint64_t counter) {
   uint32_t high, low;
   std::tie(high, low) = Utils::u64_to_u32(counter);
   mpi_call(mpi_set_lb_coupling_counter, high, low);
@@ -1825,6 +1825,26 @@ void lb_coupling_set_rng_state(uint64_t counter) {
   rng_counter = Utils::Counter<uint64_t>(counter);
 }
 #endif
+
+uint64_t lb_coupling_rng_state() {
+    if(lattice_switch & LATTICE_LB) {
+        return lb_coupling_rng_state_cpu();
+    } else if(lattice_switch & LATTICE_LB_GPU) {
+    }
+    }
+}
+
+void lb_coupling_set_rng_state(uint64_t counter) {
+    if(lattice_switch & LATTICE_LB) {
+#ifdef LB
+        lb_coupling_set_rng_state_cpu(counter);
+#endif
+    } else if(lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+        lb_coupling_set_rng_state_gpu(counter);
+#endif
+    }
+}
 
 void mpi_set_lb_coupling_counter(int high, int low) {
 #ifdef LB
