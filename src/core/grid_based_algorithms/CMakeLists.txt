@@ -50,7 +50,9 @@ target_include_directories(lbboundaries_interface PRIVATE
 add_dependencies(lbboundaries_interface EspressoConfig)
 
 add_library(lbcpu SHARED
-  lb.cpp
+        lb.cpp
+        halo.cpp
+        lattice.cpp
 )
 target_include_directories(lbcpu PRIVATE
   ${CMAKE_SOURCE_DIR}/src/core

@@ -23,11 +23,9 @@ set(EspressoCore_SRC
     ghosts.cpp
     global.cpp
     grid.cpp
-    halo.cpp
     immersed_boundaries.cpp
     initialize.cpp
     integrate.cpp
-    lattice.cpp
     layered.cpp
     metadynamics.cpp
     minimize_energy.cpp

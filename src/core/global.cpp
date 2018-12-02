@@ -30,7 +30,7 @@
 #include "ghmc.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
-#include "lattice.hpp"
+#include "grid_based_algorithms/lattice.hpp"
 #include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"

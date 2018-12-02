@@ -55,7 +55,7 @@ cdef extern from "integrate.hpp":
     extern double verlet_reuse
     extern double skin
 
-cdef extern from "lattice.hpp":
+cdef extern from "grid_based_algorithms/lattice.hpp":
     extern int lattice_switch
 
 cdef extern from "domain_decomposition.hpp":
