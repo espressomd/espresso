@@ -401,11 +401,7 @@ namespace {
     }
 }
 
-void ghost_communicator(GhostCommunicator & gc, int data_parts) {
-    ghost_communicator(&gc, data_parts);
-}
-
-void ghost_communicator(GhostCommunicator *gc, int data_parts) {
+void ghost_communicator(GhostCommunicator &gc, int data_parts) {
   MPI_Status status;
   /* if ghosts should have up-to-date velocities, they have to be updated like
      positions (except for shifting...) */
@@ -415,7 +411,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node,
                       (void *)gc, data_parts));
 
-  for (auto it = gc->comm.begin(); it != gc->comm.end(); ++it) {
+  for (auto it = gc.comm.begin(); it != gc.comm.end(); ++it) {
     GhostCommunication *gcn = &(*it);
     int comm_type = gcn->type & GHOST_JOBMASK;
     int prefetch = gcn->type & GHOST_PREFETCH;
@@ -441,7 +437,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         /* we do not send this time, let's look for a prefetch */
         if (prefetch) {
           /* find next action where we send and which has PREFETCH set */
-          for (auto jt = std::next(it); jt != gc->comm.end(); ++jt) {
+          for (auto jt = std::next(it); jt != gc.comm.end(); ++jt) {
             GhostCommunication *gcn2 = &(*jt);
             int comm_type2 = gcn2->type & GHOST_JOBMASK;
             int prefetch2 = gcn2->type & GHOST_PREFETCH;
@@ -464,8 +460,9 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         GHOST_TRACE(fprintf(stderr,
                             "%d: ghost_comm receive from %d (%d bytes)\n",
                             this_node, node, n_r_buffer));
-        MPI_Recv(r_buffer, n_r_buffer, MPI_BYTE, node, REQ_GHOST_SEND,
-                 comm_cart, &status);
+            MPI_Recv(r_buffer, n_r_buffer, MPI_BYTE, node, REQ_GHOST_SEND,
+                     comm_cart, &status);
+        
         if (data_parts & GHOSTTRANS_PROPRTS) {
           int n_bonds = *(int *)(r_buffer + n_r_buffer - sizeof(int));
           GHOST_TRACE(fprintf(stderr,
@@ -482,8 +479,8 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
       case GHOST_SEND: {
         GHOST_TRACE(fprintf(stderr, "%d: ghost_comm send to %d (%d bytes)\n",
                             this_node, node, n_s_buffer));
-        MPI_Send(s_buffer, n_s_buffer, MPI_BYTE, node, REQ_GHOST_SEND,
-                 comm_cart);
+            MPI_Send(s_buffer, n_s_buffer, MPI_BYTE, node, REQ_GHOST_SEND,
+                     comm_cart);
 
         assert((data_parts & GHOSTTRANS_PROPRTS) or (s_bondbuffer.empty()));
 
@@ -553,7 +550,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
          * prefetch send. */
         if (poststore) {
           /* find previous action where we recv and which has PSTSTORE set */
-          for (auto jt = make_reverse_iterator(it); jt != gc->comm.rend(); ++jt) {
+          for (auto jt = make_reverse_iterator(it); jt != gc.comm.rend(); ++jt) {
             GhostCommunication *gcn2 = &(*jt);
             int comm_type2 = gcn2->type & GHOST_JOBMASK;
             int poststore2 = gcn2->type & GHOST_PSTSTORE;

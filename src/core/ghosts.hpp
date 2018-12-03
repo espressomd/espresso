@@ -185,7 +185,6 @@ struct GhostCommunicator {
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
-void ghost_communicator(GhostCommunicator *gc, int data_parts);
 void ghost_communicator(GhostCommunicator & gc, int data_parts);
 
 /*@}*/
