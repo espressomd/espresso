@@ -38,7 +38,7 @@ static Cell *local;
 Cell *nsq_position_to_cell(const Vector3d &pos) { return local; }
 int nsq_position_to_node(const Vector3d &) { return this_node; }
 
-static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
+static void nsq_prepare_comm(GhostCommunicator *comm) {
   int n;
   /* no need for comm for only 1 node */
   if (n_nodes == 1) {
@@ -100,8 +100,8 @@ void nsq_topology_init(CellPList *old) {
   local->m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
 
   /* create communicators */
-  nsq_prepare_comm(&cell_structure.local_to_ghost_comm, 0);
-  nsq_prepare_comm(&cell_structure.ghost_to_local_comm, 0);
+  nsq_prepare_comm(&cell_structure.local_to_ghost_comm);
+  nsq_prepare_comm(&cell_structure.ghost_to_local_comm);
 
   /* here we just decide what to transfer where */
   if (n_nodes > 1) {

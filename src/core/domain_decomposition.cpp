@@ -293,7 +293,7 @@ namespace {
 
 /** Create communicators for cell structure domain decomposition. (see \ref
  * GhostCommunicator) */
-void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
+void dd_prepare_comm(GhostCommunicator *comm) {
   int i, num;
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
@@ -668,8 +668,8 @@ void dd_topology_init(CellPList *old) {
   /* mark cells */
   dd_mark_cells();
 
-  dd_prepare_comm(&cell_structure.local_to_ghost_comm, 0);
-  dd_prepare_comm(&cell_structure.ghost_to_local_comm, 0);
+  dd_prepare_comm(&cell_structure.local_to_ghost_comm);
+  dd_prepare_comm(&cell_structure.ghost_to_local_comm);
   dd_revert_comm_order(&cell_structure.ghost_to_local_comm);
 
   dd_assign_prefetches(&cell_structure.local_to_ghost_comm);

@@ -117,7 +117,7 @@ namespace {
     };
 }
 
-static void layered_prepare_comm(GhostCommunicator *comm, int data_parts, CommDirection direction) {
+static void layered_prepare_comm(GhostCommunicator *comm, CommDirection direction) {
   int c, n;
 
   if (n_nodes > 1) {
@@ -354,8 +354,8 @@ void layered_topology_init(CellPList *old) {
   ghost_cells.cell[1] = &cells.back();
 
   /* create communicators */
-    layered_prepare_comm(&cell_structure.ghost_to_local_comm, 0, CommDirection::GHOST_TO_LOCAL);
-    layered_prepare_comm(&cell_structure.local_to_ghost_comm, 0, CommDirection::LOCAL_TO_GHOST);
+  layered_prepare_comm(&cell_structure.ghost_to_local_comm, CommDirection::GHOST_TO_LOCAL);
+  layered_prepare_comm(&cell_structure.local_to_ghost_comm, CommDirection::LOCAL_TO_GHOST);
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {
