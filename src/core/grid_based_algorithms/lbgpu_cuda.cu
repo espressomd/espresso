@@ -1647,69 +1647,6 @@ __device__ void calc_values_from_m_in_LB_units(float *mode_single,
   }
 }
 
-/**function used to calc physical values of every node
- * @param n_a     Pointer to local node residing in array a for boundary
- * flag(Input)
- * @param mode    Pointer to the local register values mode (Input)
- * @param d_v     Pointer to local device values (Input/Output)
- * @param node_f  Pointer to local node force (Input)
- * @param index   node index / thread index (Input)
- */
-
-/* FIXME this function is basically un-used, think about removing/replacing it
- */
-__device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_rho_v_gpu *d_v,
-                            LB_node_force_density_gpu node_f,
-                            unsigned int index) {
-  float Rho_tot = 0.0f;
-  float u_tot[3] = {0.0f, 0.0f, 0.0f};
-
-  if (n_a.boundary[index] != 1) {
-#pragma unroll
-    for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
-      /** re-construct the real density
-       * remember that the populations are stored as differences to their
-       * equilibrium value */
-      d_v[index].rho[ii] = mode[0 + ii * 4] + para->rho[ii] * para->agrid *
-                                                  para->agrid * para->agrid;
-      Rho_tot += mode[0 + ii * 4] +
-                 para->rho[ii] * para->agrid * para->agrid * para->agrid;
-      u_tot[0] += mode[1 + ii * 4];
-      u_tot[1] += mode[2 + ii * 4];
-      u_tot[2] += mode[3 + ii * 4];
-
-      /** if forces are present, the momentum density is redefined to
-       * include one half-step of the force action.  See the
-       * Chapman-Enskog expansion in [Ladd & Verberg]. */
-
-      u_tot[0] +=
-          0.5f *
-          node_f.force_density[(0 + ii * 3) * para->number_of_nodes + index];
-      u_tot[1] +=
-          0.5f *
-          node_f.force_density[(1 + ii * 3) * para->number_of_nodes + index];
-      u_tot[2] +=
-          0.5f *
-          node_f.force_density[(2 + ii * 3) * para->number_of_nodes + index];
-    }
-    u_tot[0] /= Rho_tot;
-    u_tot[1] /= Rho_tot;
-    u_tot[2] /= Rho_tot;
-
-    d_v[index].v[0] = u_tot[0];
-    d_v[index].v[1] = u_tot[1];
-    d_v[index].v[2] = u_tot[2];
-  } else {
-#pragma unroll
-    for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
-      d_v[index].rho[ii] = 1.;
-    }
-    d_v[index].v[0] = 0.0f;
-    d_v[index].v[1] = 0.0f;
-    d_v[index].v[2] = 0.0f;
-  }
-}
-
 /**
  * @param node_index  node index around (8) particle (Input)
  * @param *mode       Pointer to the local register values mode (Output)
