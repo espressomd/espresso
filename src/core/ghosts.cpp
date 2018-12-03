@@ -70,9 +70,8 @@ static int calc_transmit_size(GhostCommunication *gc, int data_parts) {
   if (data_parts & GHOSTTRANS_PARTNUM)
     n_buffer_new = sizeof(int) * gc->part_lists.size();
   else {
-      auto const count = boost::accumulate(gc->part_lists, 0, [](int sum, const Cell * c) {
-          return sum + c->n;
-      });
+    auto const count = boost::accumulate(
+        gc->part_lists, 0, [](int sum, const Cell *c) { return sum + c->n; });
 
     n_buffer_new = 0;
     if (data_parts & GHOSTTRANS_PROPRTS) {
@@ -120,7 +119,7 @@ static void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 
   /* put in data */
   char *insert = s_buffer;
-  for (auto const&pl : gc->part_lists) {
+  for (auto const &pl : gc->part_lists) {
     int np = pl->n;
     if (data_parts & GHOSTTRANS_PARTNUM) {
       *(int *)insert = np;
@@ -144,12 +143,12 @@ static void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
-            auto pp = new (insert) ParticlePosition(pt->r);
+          auto pp = new (insert) ParticlePosition(pt->r);
 
-            if (gc->shift) {
-                pp->p += gc->shift.get();
-            }
-            insert += sizeof(ParticlePosition);
+          if (gc->shift) {
+            pp->p += gc->shift.get();
+          }
+          insert += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           memcpy(insert, &pt->m, sizeof(ParticleMomentum));
@@ -186,19 +185,19 @@ static void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
-    if(size > cell->max) {
-        auto const old_cap = cell->max;
-        cell->max = size;
-        cell->part = Utils::realloc(cell->part, size*sizeof(Particle));
+  if (size > cell->max) {
+    auto const old_cap = cell->max;
+    cell->max = size;
+    cell->part = Utils::realloc(cell->part, size * sizeof(Particle));
 
-        auto p = Particle();
-        p.p.identity = -1;
-        p.l.ghost = 1;
+    auto p = Particle();
+    p.p.identity = -1;
+    p.l.ghost = 1;
 
-        std::uninitialized_fill(cell->part + old_cap, cell->part + cell->max, p);
-    }
+    std::uninitialized_fill(cell->part + old_cap, cell->part + cell->max, p);
+  }
 
-    cell->n = size;
+  cell->n = size;
 }
 
 static void prepare_recv_buffer(GhostCommunication *gc, int data_parts) {
@@ -335,10 +334,10 @@ static void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
-            pt2->r = pt1->r;
-            if (gc->shift) {
-                pt2->r.p += gc->shift.get();
-            }
+          pt2->r = pt1->r;
+          if (gc->shift) {
+            pt2->r.p += gc->shift.get();
+          }
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           pt2->m = pt1->m;
@@ -371,15 +370,15 @@ static int is_recv_op(int comm_type, int node) {
 }
 
 namespace {
-    template<class Iter>
-    constexpr std::reverse_iterator<Iter> make_reverse_iterator(Iter i) {
-        return std::reverse_iterator<Iter>(i);
-    }
+template <class Iter>
+constexpr std::reverse_iterator<Iter> make_reverse_iterator(Iter i) {
+  return std::reverse_iterator<Iter>(i);
 }
+} // namespace
 
 void ghost_communicator(GhostCommunicator &gc, int data_parts) {
-    /* if ghosts should have up-to-date velocities, they have to be updated like
-       positions (except for shifting...) */
+  /* if ghosts should have up-to-date velocities, they have to be updated like
+     positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
     data_parts |= GHOSTTRANS_MOMENTUM;
 
@@ -435,8 +434,8 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
         GHOST_TRACE(fprintf(stderr,
                             "%d: ghost_comm receive from %d (%d bytes)\n",
                             this_node, node, n_r_buffer));
-        if(n_r_buffer > 0) {
-            gc.mpi_comm.recv(node, REQ_GHOST_SEND, r_buffer, n_r_buffer);
+        if (n_r_buffer > 0) {
+          gc.mpi_comm.recv(node, REQ_GHOST_SEND, r_buffer, n_r_buffer);
         }
 
         if (data_parts & GHOSTTRANS_PROPRTS) {
@@ -446,7 +445,8 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
                               this_node, node, n_bonds));
           if (n_bonds) {
             r_bondbuffer.resize(n_bonds);
-            gc.mpi_comm.recv(node, REQ_GHOST_SEND, r_bondbuffer.data(), n_bonds);
+            gc.mpi_comm.recv(node, REQ_GHOST_SEND, r_bondbuffer.data(),
+                             n_bonds);
           }
         }
         break;
@@ -454,14 +454,15 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
       case GHOST_SEND: {
         GHOST_TRACE(fprintf(stderr, "%d: ghost_comm send to %d (%d bytes)\n",
                             this_node, node, n_s_buffer));
-        if(n_s_buffer > 0) {
-            gc.mpi_comm.send(node, REQ_GHOST_SEND, s_buffer, n_s_buffer);
+        if (n_s_buffer > 0) {
+          gc.mpi_comm.send(node, REQ_GHOST_SEND, s_buffer, n_s_buffer);
         }
 
         assert((data_parts & GHOSTTRANS_PROPRTS) or (s_bondbuffer.empty()));
 
         if (not s_bondbuffer.empty()) {
-            gc.mpi_comm.send(node, REQ_GHOST_SEND, s_bondbuffer.data(), s_bondbuffer.size());
+          gc.mpi_comm.send(node, REQ_GHOST_SEND, s_bondbuffer.data(),
+                           s_bondbuffer.size());
         }
         break;
       }
@@ -470,23 +471,25 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
                             this_node, node,
                             (node == this_node) ? n_s_buffer : n_r_buffer));
         if (node == this_node) {
-            if(n_s_buffer > 0) {
-                boost::mpi::broadcast(gc.mpi_comm, s_buffer, n_s_buffer, node);
-            }
+          if (n_s_buffer > 0) {
+            boost::mpi::broadcast(gc.mpi_comm, s_buffer, n_s_buffer, node);
+          }
 
           assert((data_parts & GHOSTTRANS_PROPRTS) or (s_bondbuffer.empty()));
-            if (not s_bondbuffer.empty()) {
-                boost::mpi::broadcast(gc.mpi_comm, s_bondbuffer.data(), s_bondbuffer.size(), node);
-            }
+          if (not s_bondbuffer.empty()) {
+            boost::mpi::broadcast(gc.mpi_comm, s_bondbuffer.data(),
+                                  s_bondbuffer.size(), node);
+          }
         } else {
-            if(n_r_buffer > 0) {
-                boost::mpi::broadcast(gc.mpi_comm, r_buffer, n_r_buffer, node);
-            }
+          if (n_r_buffer > 0) {
+            boost::mpi::broadcast(gc.mpi_comm, r_buffer, n_r_buffer, node);
+          }
           if (data_parts & GHOSTTRANS_PROPRTS) {
             int n_bonds = *(int *)(r_buffer + n_r_buffer - sizeof(int));
             if (n_bonds) {
               r_bondbuffer.resize(n_bonds);
-                boost::mpi::broadcast(gc.mpi_comm, r_bondbuffer.data(), r_bondbuffer.size(), node);
+              boost::mpi::broadcast(gc.mpi_comm, r_bondbuffer.data(),
+                                    r_bondbuffer.size(), node);
             }
           }
         }
@@ -496,19 +499,19 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
                             this_node, node, n_s_buffer));
 
         if (node == this_node) {
-            if (n_s_buffer > 0) {
+          if (n_s_buffer > 0) {
 
-                MPI_Reduce(reinterpret_cast<double *>(s_buffer),
-                           reinterpret_cast<double *>(r_buffer),
-                           n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
-                           gc.mpi_comm);
-            }
+            MPI_Reduce(reinterpret_cast<double *>(s_buffer),
+                       reinterpret_cast<double *>(r_buffer),
+                       n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
+                       gc.mpi_comm);
+          }
         } else {
-            if(n_s_buffer > 0) {
-                MPI_Reduce(reinterpret_cast<double *>(s_buffer), nullptr,
-                           n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
-                           gc.mpi_comm);
-            }
+          if (n_s_buffer > 0) {
+            MPI_Reduce(reinterpret_cast<double *>(s_buffer), nullptr,
+                       n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
+                       gc.mpi_comm);
+          }
         }
       } break;
       }
@@ -534,13 +537,14 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
          * prefetch send. */
         if (poststore) {
           /* find previous action where we recv and which has PSTSTORE set */
-          for (auto jt = make_reverse_iterator(it); jt != gc.comm.rend(); ++jt) {
+          for (auto jt = make_reverse_iterator(it); jt != gc.comm.rend();
+               ++jt) {
             GhostCommunication *gcn2 = &(*jt);
             int comm_type2 = gcn2->type & GHOST_JOBMASK;
             int poststore2 = gcn2->type & GHOST_PSTSTORE;
             int node2 = gcn2->node;
             if (is_recv_op(comm_type2, node2) && poststore2) {
-                assert(n_r_buffer == calc_transmit_size(gcn2, data_parts));
+              assert(n_r_buffer == calc_transmit_size(gcn2, data_parts));
               /* as above */
               if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
                 add_forces_from_recv_buffer(gcn2);
@@ -554,4 +558,3 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
     }
   }
 }
-

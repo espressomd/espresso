@@ -139,7 +139,7 @@ struct CellPList {
     system which are not common between different cell systems have to
     be stored in separate structures. */
 struct CellStructure {
-    /** type descriptor */
+  /** type descriptor */
   int type;
 
   bool use_verlet_list;

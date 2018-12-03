@@ -49,6 +49,7 @@
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
+#include "immersed_boundaries.hpp"
 #include "lattice.hpp"
 #include "metadynamics.hpp"
 #include "nemd.hpp"
@@ -68,7 +69,6 @@
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "virtual_sites.hpp"
-#include "immersed_boundaries.hpp"
 
 #include "utils/mpi/all_compare.hpp"
 /** whether the thermostat has to be reinitialized before integration */
@@ -416,7 +416,7 @@ void on_lbboundary_change() {
 void on_resort_particles() {
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 
-    clear_particle_node();
+  clear_particle_node();
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
 #ifdef P3M

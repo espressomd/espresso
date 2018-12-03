@@ -272,24 +272,24 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
 }
 
 namespace {
-    /**
-     * @brief Helper to update a single component in an optional Vector3d.
-     *
-     * Updates a single component of an optional value, leaving the other
-     * components unchanged if the optional had already a value, otherwise
-     * initializing them to the default value.
-     *
-     * @param o the optional to update
-     * @param value The updated value
-     * @param i which one
-     */
-     void update_component(boost::optional<Vector3d> &o, double val, int i) {
-         auto v = o.get_value_or({});
-         v[i] = val;
+/**
+ * @brief Helper to update a single component in an optional Vector3d.
+ *
+ * Updates a single component of an optional value, leaving the other
+ * components unchanged if the optional had already a value, otherwise
+ * initializing them to the default value.
+ *
+ * @param o the optional to update
+ * @param value The updated value
+ * @param i which one
+ */
+void update_component(boost::optional<Vector3d> &o, double val, int i) {
+  auto v = o.get_value_or({});
+  v[i] = val;
 
-        o = v;
-     }
+  o = v;
 }
+} // namespace
 
 /** Create communicators for cell structure domain decomposition. (see \ref
  * GhostCommunicator) */
@@ -315,10 +315,10 @@ void dd_prepare_comm(GhostCommunicator *comm) {
   *comm = GhostCommunicator(comm_cart, num);
 
   /* number of cells to communicate in a direction */
-  auto const n_comm_cells = Vector3i{
-  dd.cell_grid[1] * dd.cell_grid[2],
-  dd.cell_grid[2] * dd.ghost_cell_grid[0],
-  dd.ghost_cell_grid[0] * dd.ghost_cell_grid[1]};
+  auto const n_comm_cells =
+      Vector3i{dd.cell_grid[1] * dd.cell_grid[2],
+               dd.cell_grid[2] * dd.ghost_cell_grid[0],
+               dd.ghost_cell_grid[0] * dd.ghost_cell_grid[1]};
 
   int cnt = 0;
   /* direction loop: x, y, z */
@@ -342,7 +342,8 @@ void dd_prepare_comm(GhostCommunicator *comm) {
           comm->comm[cnt].part_lists.resize(2 * n_comm_cells[dir]);
           /* prepare folding of ghost positions */
           if (boundary[2 * dir + lr] != 0) {
-              update_component(comm->comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
+            update_component(comm->comm[cnt].shift,
+                             boundary[2 * dir + lr] * box_l[dir], dir);
           }
 
           /* fill send comm cells */
@@ -376,12 +377,14 @@ void dd_prepare_comm(GhostCommunicator *comm) {
               comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
               /* prepare folding of ghost positions */
               if (boundary[2 * dir + lr] != 0) {
-                  update_component(comm->comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
+                update_component(comm->comm[cnt].shift,
+                                 boundary[2 * dir + lr] * box_l[dir], dir);
               }
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
+                                      hc);
 
               CELL_TRACE(fprintf(stderr,
                                  "%d: prep_comm %d send to   node %d "
@@ -398,7 +401,8 @@ void dd_prepare_comm(GhostCommunicator *comm) {
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
+                                      hc);
               CELL_TRACE(fprintf(stderr,
                                  "%d: prep_comm %d recv from node %d "
                                  "grid (%d,%d,%d)-(%d,%d,%d)\n",
@@ -422,7 +426,7 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
 
   /* exchange SEND/RECV */
   for (auto &c : comm->comm) {
-    if(c.shift) {
+    if (c.shift) {
       c.shift = -c.shift.get();
     }
     if (c.type == GHOST_SEND)
@@ -441,12 +445,12 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
 /** Of every two communication rounds, set the first receivers to prefetch and
  * poststore */
 void dd_assign_prefetches(GhostCommunicator *comm) {
-    for(auto it = comm->comm.begin(); it != comm->comm.end(); it+=2) {
-        if((it->type == GHOST_RECV) and (std::next(it)->type == GHOST_SEND)) {
-            it->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-            std::next(it)->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-        }
+  for (auto it = comm->comm.begin(); it != comm->comm.end(); it += 2) {
+    if ((it->type == GHOST_RECV) and (std::next(it)->type == GHOST_SEND)) {
+      it->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+      std::next(it)->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
     }
+  }
 }
 
 /** update the 'shift' member of those GhostCommunicators, which use
@@ -465,8 +469,10 @@ void dd_update_communicators_w_boxl() {
         if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
           if (boundary[2 * dir + lr] != 0) {
-              update_component(cell_structure.local_to_ghost_comm.comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
-              update_component(cell_structure.ghost_to_local_comm.comm[cnt].shift, -boundary[2 * dir + lr] * box_l[dir], dir);
+            update_component(cell_structure.local_to_ghost_comm.comm[cnt].shift,
+                             boundary[2 * dir + lr] * box_l[dir], dir);
+            update_component(cell_structure.ghost_to_local_comm.comm[cnt].shift,
+                             -boundary[2 * dir + lr] * box_l[dir], dir);
           }
           cnt++;
         }
@@ -477,8 +483,12 @@ void dd_update_communicators_w_boxl() {
             if ((node_pos[dir] + i) % 2 == 0) {
               /* prepare folding of ghost positions */
               if (boundary[2 * dir + lr] != 0) {
-                  update_component(cell_structure.local_to_ghost_comm.comm[cnt].shift, boundary[2 * dir + lr] * box_l[dir], dir);
-                  update_component(cell_structure.ghost_to_local_comm.comm[cnt].shift, -boundary[2 * dir + lr] * box_l[dir], dir);
+                update_component(
+                    cell_structure.local_to_ghost_comm.comm[cnt].shift,
+                    boundary[2 * dir + lr] * box_l[dir], dir);
+                update_component(
+                    cell_structure.ghost_to_local_comm.comm[cnt].shift,
+                    -boundary[2 * dir + lr] * box_l[dir], dir);
               }
               cnt++;
             }
@@ -651,7 +661,7 @@ void dd_on_geometry_change(int flags) {
 void dd_topology_init(CellPList *old) {
   int c, p;
 
-    CELL_TRACE(fprintf(stderr,
+  CELL_TRACE(fprintf(stderr,
                      "%d: dd_topology_init: Number of recieved cells=%d\n",
                      this_node, old->n));
 
@@ -697,8 +707,7 @@ void dd_topology_init(CellPList *old) {
 }
 
 /************************************************************/
-void dd_topology_release() {
-}
+void dd_topology_release() {}
 
 namespace {
 /**

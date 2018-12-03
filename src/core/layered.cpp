@@ -111,13 +111,11 @@ Cell *layered_position_to_cell(const Vector3d &pos) {
 }
 
 namespace {
-    enum class CommDirection {
-        LOCAL_TO_GHOST,
-        GHOST_TO_LOCAL
-    };
+enum class CommDirection { LOCAL_TO_GHOST, GHOST_TO_LOCAL };
 }
 
-static void layered_prepare_comm(GhostCommunicator *comm, CommDirection direction) {
+static void layered_prepare_comm(GhostCommunicator *comm,
+                                 CommDirection direction) {
   int c, n;
 
   if (n_nodes > 1) {
@@ -160,7 +158,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, CommDirection directio
 
           /* if periodic and bottom or top, send shifted */
           if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK)) {
-              comm->comm[c].shift = Vector3d{0, 0, box_l[2]};
+            comm->comm[c].shift = Vector3d{0, 0, box_l[2]};
           }
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f btml\n",
                              this_node, btm, comm->comm[c].shift[2]));
@@ -201,7 +199,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, CommDirection directio
         comm->comm[c].node = top;
         if (direction == CommDirection::GHOST_TO_LOCAL) {
           comm->comm[c].part_lists[0] = &cells[n_layers + 1];
-          comm->comm[c].shift = Vector3d{0,0,box_l[2]};
+          comm->comm[c].shift = Vector3d{0, 0, box_l[2]};
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send force to %d topg\n",
                              this_node, top));
         } else {
@@ -209,7 +207,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, CommDirection directio
 
           /* if periodic and bottom or top, send shifted */
           if ((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) {
-            comm->comm[c].shift = Vector3d{0,0,-box_l[2]};
+            comm->comm[c].shift = Vector3d{0, 0, -box_l[2]};
           }
         }
         c++;
@@ -236,7 +234,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, CommDirection directio
 
     n = (layered_flags & LAYERED_PERIODIC) ? 2 : 0;
 
-    *comm = GhostCommunicator(comm_cart,n);
+    *comm = GhostCommunicator(comm_cart, n);
 
     if (n != 0) {
       /* two cells: from and to */
@@ -354,8 +352,10 @@ void layered_topology_init(CellPList *old) {
   ghost_cells.cell[1] = &cells.back();
 
   /* create communicators */
-  layered_prepare_comm(&cell_structure.ghost_to_local_comm, CommDirection::GHOST_TO_LOCAL);
-  layered_prepare_comm(&cell_structure.local_to_ghost_comm, CommDirection::LOCAL_TO_GHOST);
+  layered_prepare_comm(&cell_structure.ghost_to_local_comm,
+                       CommDirection::GHOST_TO_LOCAL);
+  layered_prepare_comm(&cell_structure.local_to_ghost_comm,
+                       CommDirection::LOCAL_TO_GHOST);
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {

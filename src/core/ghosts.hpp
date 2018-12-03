@@ -170,13 +170,14 @@ struct GhostCommunication {
 
 /** Properties for a ghost communication. A ghost communication is defined */
 struct GhostCommunicator {
-    GhostCommunicator() = default;
-    GhostCommunicator(const boost::mpi::communicator & mpi_comm, int num) : mpi_comm(mpi_comm), comm(num) {}
+  GhostCommunicator() = default;
+  GhostCommunicator(const boost::mpi::communicator &mpi_comm, int num)
+      : mpi_comm(mpi_comm), comm(num) {}
 
-    /** Mpi Communicator for this action. */
-    boost::mpi::communicator mpi_comm;
+  /** Mpi Communicator for this action. */
+  boost::mpi::communicator mpi_comm;
 
-    /** List of ghost communications. */
+  /** List of ghost communications. */
   std::vector<GhostCommunication> comm = {};
 };
 
@@ -189,7 +190,7 @@ struct GhostCommunicator {
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
-void ghost_communicator(GhostCommunicator & gc, int data_parts);
+void ghost_communicator(GhostCommunicator &gc, int data_parts);
 
 /*@}*/
 
