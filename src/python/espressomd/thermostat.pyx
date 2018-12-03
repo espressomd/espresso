@@ -23,6 +23,7 @@ include "myconfig.pxi"
 from globals cimport *
 import numpy as np
 from . cimport utils
+from .lb cimport *
 
 
 def AssertThermostatType(*allowedthermostats):

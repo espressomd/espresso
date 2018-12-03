@@ -17,9 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
+
 include "myconfig.pxi"
+
 from libcpp cimport bool
 from libcpp.vector cimport vector
+from libc cimport stdint
+
 from .actors cimport Actor
 from .utils cimport Vector3d
 from .utils cimport Vector3i
@@ -105,6 +109,8 @@ IF LB_GPU or LB:
         int lb_lbfluid_set_couple_flag(int c_couple_flag)
         int lb_lbfluid_get_couple_flag(int * c_couple_flag)
         int lb_lbfluid_get_interpolated_velocity_global(Vector3d & p, double * v)
+        stdint.uint64_t lb_coupling_rng_state()
+        void lb_coupling_set_rng_state(stdint.uint64_t)
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()

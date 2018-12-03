@@ -1828,9 +1828,12 @@ void lb_coupling_set_rng_state_cpu(uint64_t counter) {
 
 uint64_t lb_coupling_rng_state() {
     if(lattice_switch & LATTICE_LB) {
+#ifdef LB
         return lb_coupling_rng_state_cpu();
+#endif
     } else if(lattice_switch & LATTICE_LB_GPU) {
-    }
+#ifdef LB_GPU
+#endif
     }
 }
 

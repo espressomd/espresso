@@ -19,15 +19,9 @@
 from __future__ import print_function, absolute_import
 
 from libcpp cimport bool as cbool
-from libc cimport stdint
 
 include "myconfig.pxi"
 from .utils cimport Vector3d
-
-IF LB:
-    cdef extern from "grid_based_algorithms/lb.hpp":
-        stdint.uint64_t lb_coupling_rng_state()
-        void lb_coupling_set_rng_state(stdint.uint64_t)
 
 cdef extern from "thermostat.hpp":
     double temperature
