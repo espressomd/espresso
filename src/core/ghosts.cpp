@@ -64,14 +64,14 @@ static std::vector<int> r_bondbuffer;
 int ghosts_have_v = 0;
 int ghosts_have_bonds = 0;
 
-static int calc_transmit_size(GhostCommunication *gc, int data_parts) {
+static int calc_transmit_size(const std::vector<Cell *> &part_lists, int data_parts) {
   int n_buffer_new;
 
   if (data_parts & GHOSTTRANS_PARTNUM)
-    n_buffer_new = sizeof(int) * gc->part_lists.size();
+    n_buffer_new = sizeof(int) * part_lists.size();
   else {
     auto const count = boost::accumulate(
-        gc->part_lists, 0, [](int sum, const Cell *c) { return sum + c->n; });
+        part_lists, 0, [](int sum, const Cell *c) { return sum + c->n; });
 
     n_buffer_new = 0;
     if (data_parts & GHOSTTRANS_PROPRTS) {
@@ -103,12 +103,12 @@ static int calc_transmit_size(GhostCommunication *gc, int data_parts) {
   return n_buffer_new;
 }
 
-static void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
+static void prepare_send_buffer(GhostCommunication *gc, int data_parts, boost::optional<Vector3d> const& shift) {
   GHOST_TRACE(fprintf(stderr, "%d: prepare sending to/bcast from %d\n",
                       this_node, gc->node));
 
   /* reallocate send buffer */
-  n_s_buffer = calc_transmit_size(gc, data_parts);
+  n_s_buffer = calc_transmit_size(gc->part_lists, data_parts);
   if (n_s_buffer > max_s_buffer) {
     max_s_buffer = n_s_buffer;
     s_buffer = Utils::realloc(s_buffer, max_s_buffer);
@@ -145,8 +145,8 @@ static void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
         if (data_parts & GHOSTTRANS_POSITION) {
           auto pp = new (insert) ParticlePosition(pt->r);
 
-          if (gc->shift) {
-            pp->p += gc->shift.get();
+          if (shift) {
+            pp->p += shift.get();
           }
           insert += sizeof(ParticlePosition);
         }
@@ -204,7 +204,7 @@ static void prepare_recv_buffer(GhostCommunication *gc, int data_parts) {
   GHOST_TRACE(
       fprintf(stderr, "%d: prepare receiving from %d\n", this_node, gc->node));
   /* reallocate recv buffer */
-  n_r_buffer = calc_transmit_size(gc, data_parts);
+  n_r_buffer = calc_transmit_size(gc->part_lists, data_parts);
   if (n_r_buffer > max_r_buffer) {
     max_r_buffer = n_r_buffer;
     r_buffer = Utils::realloc(r_buffer, max_r_buffer);
@@ -399,13 +399,13 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
       if (is_send_op(comm_type, node)) {
         /* ok, we send this step, prepare send buffer if not yet done */
         if (!prefetch)
-          prepare_send_buffer(gcn, data_parts);
+          prepare_send_buffer(gcn, data_parts, gcn->shift);
         else {
           GHOST_TRACE(fprintf(stderr,
                               "%d: ghost_comm using prefetched data for "
                               "operation %d, sending to %d\n",
                               this_node, n, node));
-          assert(n_s_buffer == calc_transmit_size(gcn, data_parts));
+          assert(n_s_buffer == calc_transmit_size(gcn->part_lists, data_parts));
         }
       } else {
         /* we do not send this time, let's look for a prefetch */
@@ -417,7 +417,7 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
             int prefetch2 = gcn2->prefetch;
             int node2 = gcn2->node;
             if (is_send_op(comm_type2, node2) && prefetch2) {
-              prepare_send_buffer(gcn2, data_parts);
+              prepare_send_buffer(gcn2, data_parts, gcn2->shift);
               break;
             }
           }
@@ -544,7 +544,7 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
             int poststore2 = gcn2->poststore;
             int node2 = gcn2->node;
             if (is_recv_op(comm_type2, node2) && poststore2) {
-              assert(n_r_buffer == calc_transmit_size(gcn2, data_parts));
+              assert(n_r_buffer == calc_transmit_size(gcn2->part_lists, data_parts));
               /* as above */
               if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
                 add_forces_from_recv_buffer(gcn2);
