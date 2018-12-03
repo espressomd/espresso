@@ -342,7 +342,7 @@ void mpi_bcast_event(int event) {
   mpi_bcast_event_slave(-1, event);
 }
 
-void mpi_bcast_event_slave(int node, int event) {
+void mpi_bcast_event_slave(int, int event) {
   switch (event) {
 #ifdef ELECTROSTATICS
 #ifdef P3M
@@ -1153,7 +1153,7 @@ int mpi_minimize_energy(void) {
   return minimize_energy();
 }
 
-void mpi_minimize_energy_slave(int a, int b) { minimize_energy(); }
+void mpi_minimize_energy_slave(int, int) { minimize_energy(); }
 
 /********************* REQ_INTEGRATE ********/
 int mpi_integrate(int n_steps, int reuse_forces) {
@@ -1177,7 +1177,7 @@ void mpi_bcast_all_ia_params() {
   boost::mpi::broadcast(comm_cart, ia_params, 0);
 }
 
-void mpi_bcast_all_ia_params_slave(int a, int b) {
+void mpi_bcast_all_ia_params_slave(int, int) {
   boost::mpi::broadcast(comm_cart, ia_params, 0);
 }
 
@@ -1236,7 +1236,7 @@ void mpi_bcast_max_seen_particle_type(int ns) {
   mpi_bcast_max_seen_particle_type_slave(-1, ns);
 }
 
-void mpi_bcast_max_seen_particle_type_slave(int pnode, int ns) {
+void mpi_bcast_max_seen_particle_type_slave(int, int ns) {
   realloc_ia_params(ns);
 }
 
@@ -1293,7 +1293,7 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
   }
 }
 
-void mpi_gather_stats_slave(int ana_num, int job) {
+void mpi_gather_stats_slave(int, int job) {
   switch (job) {
   case 1:
     /* calculate and reduce (sum up) energies */
@@ -1369,7 +1369,7 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
   }
 }
 
-void mpi_local_stress_tensor_slave(int ana_num, int job) {
+void mpi_local_stress_tensor_slave(int, int) {
   int bins[3] = {0, 0, 0};
   int periodic[3] = {0, 0, 0};
   double range_start[3] = {0, 0, 0};
@@ -1417,7 +1417,7 @@ void mpi_set_time_step(double time_s) {
   on_parameter_change(FIELD_TIMESTEP);
 }
 
-void mpi_set_time_step_slave(int node, int i) {
+void mpi_set_time_step_slave(int, int) {
   double old_ts = time_step;
 
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
@@ -1433,7 +1433,7 @@ int mpi_check_runtime_errors(void) {
   return check_runtime_errors();
 }
 
-void mpi_check_runtime_errors_slave(int a, int b) { check_runtime_errors(); }
+void mpi_check_runtime_errors_slave(int, int) { check_runtime_errors(); }
 
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params() {
@@ -1443,7 +1443,7 @@ void mpi_bcast_coulomb_params() {
 #endif
 }
 
-void mpi_bcast_coulomb_params_slave(int node, int parm) {
+void mpi_bcast_coulomb_params_slave(int, int) {
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
@@ -1542,7 +1542,7 @@ void mpi_bcast_collision_params() {
 #endif
 }
 
-void mpi_bcast_collision_params_slave(int node, int parm) {
+void mpi_bcast_collision_params_slave(int, int) {
 #ifdef COLLISION_DETECTION
   MPI_Bcast(&collision_params, sizeof(Collision_parameters), MPI_BYTE, 0,
             comm_cart);
@@ -1553,7 +1553,7 @@ void mpi_bcast_collision_params_slave(int node, int parm) {
 
 /****************** REQ_SET_PERM ************/
 
-void mpi_send_permittivity_slave(int node, int index) {
+void mpi_send_permittivity_slave(int node, int) {
 #ifdef ELECTROSTATICS
   if (node == this_node) {
     double data[3];
@@ -1698,7 +1698,7 @@ void mpi_rescale_particles(int dir, double scale) {
   on_particle_change();
 }
 
-void mpi_rescale_particles_slave(int pnode, int dir) {
+void mpi_rescale_particles_slave(int, int dir) {
   double scale = 0.0;
   MPI_Recv(&scale, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   local_rescale_particles(dir, scale);
@@ -1712,7 +1712,7 @@ void mpi_bcast_cell_structure(int cs) {
   cells_re_init(cs);
 }
 
-void mpi_bcast_cell_structure_slave(int pnode, int cs) { cells_re_init(cs); }
+void mpi_bcast_cell_structure_slave(int, int cs) { cells_re_init(cs); }
 
 /*************** REQ_BCAST_NPTISO_GEOM *****************/
 
@@ -1721,7 +1721,7 @@ void mpi_bcast_nptiso_geom() {
   mpi_bcast_nptiso_geom_slave(-1, 0);
 }
 
-void mpi_bcast_nptiso_geom_slave(int node, int parm) {
+void mpi_bcast_nptiso_geom_slave(int, int) {
   MPI_Bcast(&nptiso.geometry, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&nptiso.dimension, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&nptiso.cubic_box, 1, MPI_INT, 0, comm_cart);
@@ -1735,7 +1735,7 @@ void mpi_update_mol_ids() {
   mpi_update_mol_ids_slave(-1, 0);
 }
 
-void mpi_update_mol_ids_slave(int node, int parm) {
+void mpi_update_mol_ids_slave(int, int) {
   update_mol_ids_setchains();
 }
 
@@ -1780,7 +1780,7 @@ int mpi_sync_topo_part_info() {
   return 1;
 }
 
-void mpi_sync_topo_part_info_slave(int node, int parm) {
+void mpi_sync_topo_part_info_slave(int, int) {
   int i;
   int molsize = 0;
   int moltype = 0;
@@ -1827,7 +1827,7 @@ void mpi_bcast_lb_params(int field, int value) {
 #endif
 }
 
-void mpi_bcast_lb_params_slave(int field, int value) {
+void mpi_bcast_lb_params_slave(int field, int) {
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
   on_lb_params_change(field);
@@ -1844,7 +1844,7 @@ void mpi_bcast_cuda_global_part_vars() {
 #endif
 }
 
-void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy) {
+void mpi_bcast_cuda_global_part_vars_slave(int, int) {
 #ifdef CUDA
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
@@ -2059,7 +2059,7 @@ void mpi_bcast_max_mu() {
 #endif
 }
 
-void mpi_bcast_max_mu_slave(int node, int dummy) {
+void mpi_bcast_max_mu_slave(int, int) {
 #ifdef DIPOLES
 
   calc_mu_max();
@@ -2174,7 +2174,7 @@ void mpi_kill_particle_motion(int rotation) {
   on_particle_change();
 }
 
-void mpi_kill_particle_motion_slave(int pnode, int rotation) {
+void mpi_kill_particle_motion_slave(int, int rotation) {
   local_kill_particle_motion(rotation);
   on_particle_change();
 }
@@ -2185,7 +2185,7 @@ void mpi_kill_particle_forces(int torque) {
   on_particle_change();
 }
 
-void mpi_kill_particle_forces_slave(int pnode, int torque) {
+void mpi_kill_particle_forces_slave(int, int torque) {
   local_kill_particle_forces(torque);
   on_particle_change();
 }
@@ -2225,7 +2225,7 @@ void mpi_system_CMS() {
   gal.cms[2] = data[2] / data[3];
 }
 
-void mpi_system_CMS_slave(int node, int index) {
+void mpi_system_CMS_slave(int, int) {
   double rdata[4];
   double *pdata = rdata;
   local_system_CMS(pdata);
@@ -2267,7 +2267,7 @@ void mpi_system_CMS_velocity() {
   gal.cms_vel[2] = data[2] / data[3];
 }
 
-void mpi_system_CMS_velocity_slave(int node, int index) {
+void mpi_system_CMS_velocity_slave(int, int) {
   double rdata[4];
   double *pdata = rdata;
   local_system_CMS_velocity(pdata);
@@ -2288,7 +2288,7 @@ void mpi_galilei_transform() {
   on_particle_change();
 }
 
-void mpi_galilei_transform_slave(int pnode, int i) {
+void mpi_galilei_transform_slave(int, int) {
   double cmsvel[3];
   MPI_Bcast(cmsvel, 3, MPI_DOUBLE, 0, comm_cart);
 
@@ -2305,7 +2305,7 @@ void mpi_setup_reaction() {
 #endif
 }
 
-void mpi_setup_reaction_slave(int pnode, int i) {
+void mpi_setup_reaction_slave(int, int) {
 #ifdef SWIMMER_REACTIONS
   local_setup_reaction();
 #endif
@@ -2337,7 +2337,7 @@ std::vector<EspressoGpuDevice> mpi_gather_cuda_devices() {
 }
 #endif
 
-void mpi_gather_cuda_devices_slave(int dummy1, int dummy2) {
+void mpi_gather_cuda_devices_slave(int, int) {
 #ifdef CUDA
   cuda_gather_gpus();
 #endif

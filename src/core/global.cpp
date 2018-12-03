@@ -288,7 +288,7 @@ void check_global_consistency() {
 
 /*************** REQ_BCAST_PAR ************/
 
-void mpi_bcast_parameter_slave(int node, int i) {
+void mpi_bcast_parameter_slave(int, int i) {
   common_bcast_parameter(i);
   check_runtime_errors();
 }

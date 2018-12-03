@@ -39,7 +39,7 @@ namespace ErrorHandling {
 
 /* Forward declarations */
 
-void mpi_gather_runtime_errors_slave(int node, int parm);
+void mpi_gather_runtime_errors_slave(int, int);
 
 namespace {
 /** RuntimeErrorCollector instance.
@@ -106,7 +106,7 @@ vector<RuntimeError> mpi_gather_runtime_errors() {
   return runtimeErrorCollector->gather();
 }
 
-void mpi_gather_runtime_errors_slave(int node, int parm) {
+void mpi_gather_runtime_errors_slave(int, int) {
   runtimeErrorCollector->gatherSlave();
 }
 

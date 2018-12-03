@@ -112,7 +112,7 @@ void auto_exclusion(int distance);
 /** Deallocate the dynamic storage of a particle. */
 void free_particle(Particle *part) { part->~Particle(); }
 
-void mpi_who_has_slave(int node, int param) {
+void mpi_who_has_slave(int, int) {
   static int *sendbuf;
   int n_part;
 
