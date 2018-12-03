@@ -64,6 +64,32 @@ static std::vector<int> r_bondbuffer;
 int ghosts_have_v = 0;
 int ghosts_have_bonds = 0;
 
+static size_t calc_size_per_part(int data_parts) {
+  size_t size = 0;
+  if (data_parts & GHOSTTRANS_PROPRTS) {
+    size += sizeof(ParticleProperties);
+    // sending size of bond lists
+    if (ghosts_have_bonds) {
+      size += sizeof(int);
+    }
+  }
+  if (data_parts & GHOSTTRANS_POSITION)
+    size += sizeof(ParticlePosition);
+  if (data_parts & GHOSTTRANS_MOMENTUM)
+    size += sizeof(ParticleMomentum);
+  if (data_parts & GHOSTTRANS_FORCE)
+    size += sizeof(ParticleForce);
+#ifdef LB
+  if (data_parts & GHOSTTRANS_COUPLING)
+    size += sizeof(ParticleLatticeCoupling);
+#endif
+#ifdef ENGINE
+  if (data_parts & GHOSTTRANS_SWIMMING)
+    size += sizeof(ParticleParametersSwimming);
+#endif
+  return size;
+}
+
 static size_t calc_transmit_size(const std::vector<Cell *> &part_lists, int data_parts) {
   size_t n_buffer_new = 0;
 
@@ -71,35 +97,55 @@ static size_t calc_transmit_size(const std::vector<Cell *> &part_lists, int data
     n_buffer_new = sizeof(int) * part_lists.size();
   } else {
     auto const count = boost::accumulate(
-        part_lists, 0, [](int sum, const Cell *c) { return sum + c->n; });
-    
-    if (data_parts & GHOSTTRANS_PROPRTS) {
-      n_buffer_new += sizeof(ParticleProperties);
-      // sending size of bond lists
-      if (ghosts_have_bonds) {
-        n_buffer_new += sizeof(int);
-      }
-    }
-    if (data_parts & GHOSTTRANS_POSITION)
-      n_buffer_new += sizeof(ParticlePosition);
-    if (data_parts & GHOSTTRANS_MOMENTUM)
-      n_buffer_new += sizeof(ParticleMomentum);
-    if (data_parts & GHOSTTRANS_FORCE)
-      n_buffer_new += sizeof(ParticleForce);
-#ifdef LB
-    if (data_parts & GHOSTTRANS_COUPLING)
-      n_buffer_new += sizeof(ParticleLatticeCoupling);
-#endif
-#ifdef ENGINE
-    if (data_parts & GHOSTTRANS_SWIMMING)
-      n_buffer_new += sizeof(ParticleParametersSwimming);
-#endif
-    n_buffer_new *= count;
+            part_lists, 0, [](int sum, const Cell *c) { return sum + c->n; });
+
+    auto const size_per_part = calc_size_per_part(data_parts);
+    n_buffer_new = count * size_per_part;
   }
   // also sending length of bond buffer
   if (data_parts & GHOSTTRANS_PROPRTS)
     n_buffer_new += sizeof(int);
   return n_buffer_new;
+}
+
+static char * pack_particle(const Particle & pt, char * insert, int data_parts, const boost::optional<Vector3d> & shift) {
+  if (data_parts & GHOSTTRANS_PROPRTS) {
+    memcpy(insert, &pt.p, sizeof(ParticleProperties));
+    insert += sizeof(ParticleProperties);
+    if (ghosts_have_bonds) {
+      *(int *)insert = pt.bl.n;
+      insert += sizeof(int);
+    }
+  }
+  if (data_parts & GHOSTTRANS_POSITION) {
+    auto pp = new (insert) ParticlePosition(pt.r);
+
+    if (shift) {
+      pp->p += shift.get();
+    }
+    insert += sizeof(ParticlePosition);
+  }
+  if (data_parts & GHOSTTRANS_MOMENTUM) {
+    memcpy(insert, &pt.m, sizeof(ParticleMomentum));
+    insert += sizeof(ParticleMomentum);
+  }
+  if (data_parts & GHOSTTRANS_FORCE) {
+    memcpy(insert, &pt.f, sizeof(ParticleForce));
+    insert += sizeof(ParticleForce);
+  }
+#ifdef LB
+  if (data_parts & GHOSTTRANS_COUPLING) {
+    memcpy(insert, &pt.lc, sizeof(ParticleLatticeCoupling));
+    insert += sizeof(ParticleLatticeCoupling);
+  }
+#endif
+#ifdef ENGINE
+  if (data_parts & GHOSTTRANS_SWIMMING) {
+    memcpy(insert, &pt.swim, sizeof(ParticleParametersSwimming));
+    insert += sizeof(ParticleParametersSwimming);
+  }
+#endif
+  return insert;
 }
 
 static void prepare_send_buffer(GhostCommunication *gc, int data_parts, boost::optional<Vector3d> const& shift) {
@@ -126,52 +172,20 @@ static void prepare_send_buffer(GhostCommunication *gc, int data_parts, boost::o
       GHOST_TRACE(
           fprintf(stderr, "%d: %d particles assigned\n", this_node, np));
     } else {
-      Particle *part = pl->part;
       for (int p = 0; p < np; p++) {
-        Particle *pt = &part[p];
-        if (data_parts & GHOSTTRANS_PROPRTS) {
-          memcpy(insert, &pt->p, sizeof(ParticleProperties));
-          insert += sizeof(ParticleProperties);
-          if (ghosts_have_bonds) {
-            *(int *)insert = pt->bl.n;
-            insert += sizeof(int);
-            if (pt->bl.n) {
-              s_bondbuffer.insert(s_bondbuffer.end(), pt->bl.e,
-                                  pt->bl.e + pt->bl.n);
-            }
-          }
-        }
-        if (data_parts & GHOSTTRANS_POSITION) {
-          auto pp = new (insert) ParticlePosition(pt->r);
+        const Particle &pt = pl->part[p];
+        insert = pack_particle(pt, insert, data_parts, shift);
 
-          if (shift) {
-            pp->p += shift.get();
+        if (ghosts_have_bonds and (data_parts & GHOSTTRANS_PROPRTS)) {
+          if (pt.bl.n) {
+            s_bondbuffer.insert(s_bondbuffer.end(), pt.bl.e,
+                                pt.bl.e + pt.bl.n);
           }
-          insert += sizeof(ParticlePosition);
         }
-        if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memcpy(insert, &pt->m, sizeof(ParticleMomentum));
-          insert += sizeof(ParticleMomentum);
-        }
-        if (data_parts & GHOSTTRANS_FORCE) {
-          memcpy(insert, &pt->f, sizeof(ParticleForce));
-          insert += sizeof(ParticleForce);
-        }
-#ifdef LB
-        if (data_parts & GHOSTTRANS_COUPLING) {
-          memcpy(insert, &pt->lc, sizeof(ParticleLatticeCoupling));
-          insert += sizeof(ParticleLatticeCoupling);
-        }
-#endif
-#ifdef ENGINE
-        if (data_parts & GHOSTTRANS_SWIMMING) {
-          memcpy(insert, &pt->swim, sizeof(ParticleParametersSwimming));
-          insert += sizeof(ParticleParametersSwimming);
-        }
-#endif
       }
     }
   }
+
   if (data_parts & GHOSTTRANS_PROPRTS) {
     GHOST_TRACE(fprintf(stderr, "%d: bond buffer size is %ld\n", this_node,
                         s_bondbuffer.size()));
