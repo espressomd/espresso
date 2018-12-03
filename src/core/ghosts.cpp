@@ -460,9 +460,11 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
         GHOST_TRACE(fprintf(stderr,
                             "%d: ghost_comm receive from %d (%d bytes)\n",
                             this_node, node, n_r_buffer));
+        if(n_r_buffer > 0) {
             MPI_Recv(r_buffer, n_r_buffer, MPI_BYTE, node, REQ_GHOST_SEND,
                      comm_cart, &status);
-        
+        }
+
         if (data_parts & GHOSTTRANS_PROPRTS) {
           int n_bonds = *(int *)(r_buffer + n_r_buffer - sizeof(int));
           GHOST_TRACE(fprintf(stderr,
@@ -479,8 +481,10 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
       case GHOST_SEND: {
         GHOST_TRACE(fprintf(stderr, "%d: ghost_comm send to %d (%d bytes)\n",
                             this_node, node, n_s_buffer));
+        if(n_s_buffer > 0) {
             MPI_Send(s_buffer, n_s_buffer, MPI_BYTE, node, REQ_GHOST_SEND,
                      comm_cart);
+        }
 
         assert((data_parts & GHOSTTRANS_PROPRTS) or (s_bondbuffer.empty()));
 
@@ -495,7 +499,9 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
                             this_node, node,
                             (node == this_node) ? n_s_buffer : n_r_buffer));
         if (node == this_node) {
-          MPI_Bcast(s_buffer, n_s_buffer, MPI_BYTE, node, comm_cart);
+            if(n_s_buffer > 0) {
+                MPI_Bcast(s_buffer, n_s_buffer, MPI_BYTE, node, comm_cart);
+            }
 
           assert((data_parts & GHOSTTRANS_PROPRTS) or (s_bondbuffer.empty()));
             if (not s_bondbuffer.empty()) {
@@ -503,7 +509,9 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
                          comm_cart);
             }
         } else {
-          MPI_Bcast(r_buffer, n_r_buffer, MPI_BYTE, node, comm_cart);
+            if(n_r_buffer > 0) {
+                MPI_Bcast(r_buffer, n_r_buffer, MPI_BYTE, node, comm_cart);
+            }
           if (data_parts & GHOSTTRANS_PROPRTS) {
             int n_bonds = *(int *)(r_buffer + n_r_buffer - sizeof(int));
             if (n_bonds) {
@@ -517,15 +525,20 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
         GHOST_TRACE(fprintf(stderr, "%d: ghost_comm reduce to %d (%d bytes)\n",
                             this_node, node, n_s_buffer));
 
-        if (node == this_node)
-          MPI_Reduce(reinterpret_cast<double *>(s_buffer),
-                     reinterpret_cast<double *>(r_buffer),
-                     n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
-                     comm_cart);
-        else
-          MPI_Reduce(reinterpret_cast<double *>(s_buffer), nullptr,
-                     n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
-                     comm_cart);
+        if (node == this_node) {
+            if (n_s_buffer > 0) {
+                MPI_Reduce(reinterpret_cast<double *>(s_buffer),
+                           reinterpret_cast<double *>(r_buffer),
+                           n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
+                           comm_cart);
+            }
+        } else {
+            if(n_s_buffer > 0) {
+                MPI_Reduce(reinterpret_cast<double *>(s_buffer), nullptr,
+                           n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
+                           comm_cart);
+            }
+        }
       } break;
       }
       GHOST_TRACE(fprintf(stderr, "%d: ghost_comm done\n", this_node));
