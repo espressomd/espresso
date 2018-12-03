@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_UTILS_MEMORY_HPP
 #define CORE_UTILS_MEMORY_HPP
 
+#include "type_traits.hpp"
+
 #include <new>
 #include <stdexcept>
 #include <stdlib.h>
@@ -67,6 +69,21 @@ inline void *malloc(size_t size) {
   }
   return p;
 }
+
+template <typename T>
+enable_if_t<std::is_trivially_copyable<T>::value, char *> pack(char *buffer,
+                                                               const T *src) {
+  memcpy(buffer, src, sizeof(T));
+  return buffer + sizeof(T);
+}
+
+template <typename T>
+enable_if_t<std::is_trivially_copyable<T>::value, char *> unpack(char *buffer,
+                                                                 T *dst) {
+  memcpy(dst, reinterpret_cast<T *>(buffer), sizeof(T));
+  return buffer + sizeof(T);
+}
+
 } // namespace Utils
 
 /*@}*/

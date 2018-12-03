@@ -148,7 +148,7 @@ static void layered_prepare_comm(GhostCommunicator *comm,
         /* round 1 uses prefetched data and stores delayed data */
         if (c == 1) {
           comm->comm[c].prefetch = true;
-          comm->comm[c].poststore= true;
+          comm->comm[c].poststore = true;
         }
         comm->comm[c].node = btm;
         if (direction == CommDirection::GHOST_TO_LOCAL) {
@@ -174,7 +174,7 @@ static void layered_prepare_comm(GhostCommunicator *comm,
         /* round 0 prefetch send for round 1 and delay recvd data processing */
         if (c == 0) {
           comm->comm[c].prefetch = true;
-          comm->comm[c].poststore= true;
+          comm->comm[c].poststore = true;
         }
 
         comm->comm[c].node = top;
@@ -201,7 +201,7 @@ static void layered_prepare_comm(GhostCommunicator *comm,
            But this time there may already have been two transfers downwards */
         if (c % 2 == 1) {
           comm->comm[c].prefetch = true;
-          comm->comm[c].poststore= true;
+          comm->comm[c].poststore = true;
         }
 
         comm->comm[c].node = top;
@@ -228,7 +228,7 @@ static void layered_prepare_comm(GhostCommunicator *comm,
          * transfers downwards */
         if (c % 2 == 0) {
           comm->comm[c].prefetch = true;
-          comm->comm[c].poststore= true;
+          comm->comm[c].poststore = true;
         }
 
         comm->comm[c].node = btm;

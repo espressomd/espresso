@@ -262,9 +262,9 @@ namespace {
 boost::optional<Vector3d> calc_shift(int dir, int lr) {
   auto const b = boundary[2 * dir + lr];
 
-  if(b) {
+  if (b) {
     Vector3d shift{};
-    shift[dir] = b*box_l[dir];
+    shift[dir] = b * box_l[dir];
     return shift;
   } else {
     return boost::none;
@@ -327,9 +327,11 @@ void dd_prepare_comm(GhostCommunicator *comm) {
           auto const recv_cells = dd_fill_comm_cell_lists(lc, hc);
 
           /* Buffer has to contain Send and Recv cells */
-          comm->comm[cnt].part_lists.resize(send_cells.size() + recv_cells.size());
+          comm->comm[cnt].part_lists.resize(send_cells.size() +
+                                            recv_cells.size());
 
-          auto recv_begin = boost::copy(send_cells, comm->comm[cnt].part_lists.begin());
+          auto recv_begin =
+              boost::copy(send_cells, comm->comm[cnt].part_lists.begin());
           /* place receive cells after send cells */
           boost::copy(recv_cells, recv_begin);
 
@@ -420,9 +422,11 @@ void dd_update_communicators_w_boxl() {
       if (node_grid[dir] == 1) {
         if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
-          cell_structure.local_to_ghost_comm.comm[cnt].shift = calc_shift(dir, lr);
-          if(cell_structure.local_to_ghost_comm.comm[cnt].shift) {
-            cell_structure.ghost_to_local_comm.comm[cnt].shift = - cell_structure.local_to_ghost_comm.comm[cnt].shift.get();
+          cell_structure.local_to_ghost_comm.comm[cnt].shift =
+              calc_shift(dir, lr);
+          if (cell_structure.local_to_ghost_comm.comm[cnt].shift) {
+            cell_structure.ghost_to_local_comm.comm[cnt].shift =
+                -cell_structure.local_to_ghost_comm.comm[cnt].shift.get();
           }
 
           cnt++;
@@ -433,9 +437,11 @@ void dd_update_communicators_w_boxl() {
           if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0))
             if ((node_pos[dir] + i) % 2 == 0) {
               /* prepare folding of ghost positions */
-              cell_structure.local_to_ghost_comm.comm[cnt].shift = calc_shift(dir, lr);
-              if(cell_structure.local_to_ghost_comm.comm[cnt].shift) {
-                cell_structure.ghost_to_local_comm.comm[cnt].shift = - cell_structure.local_to_ghost_comm.comm[cnt].shift.get();
+              cell_structure.local_to_ghost_comm.comm[cnt].shift =
+                  calc_shift(dir, lr);
+              if (cell_structure.local_to_ghost_comm.comm[cnt].shift) {
+                cell_structure.ghost_to_local_comm.comm[cnt].shift =
+                    -cell_structure.local_to_ghost_comm.comm[cnt].shift.get();
               }
 
               cnt++;
@@ -468,8 +474,7 @@ void dd_init_cell_interactions() {
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
 
-    ind1 = get_linear_index(
-        m, n, o, dd.ghost_cell_grid);
+    ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
 
     std::vector<Cell *> red_neighbors;
     std::vector<Cell *> black_neighbors;
@@ -527,8 +532,8 @@ Cell *dd_save_position_to_cell(const Vector3d &pos) {
     }
   }
 
-  auto const ind = get_linear_index(
-      cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
+  auto const ind =
+      get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
   return &(cells[ind]);
 }
 

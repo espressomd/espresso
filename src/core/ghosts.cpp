@@ -86,14 +86,15 @@ static size_t calc_size_per_part(int data_parts) {
   return size;
 }
 
-static size_t calc_transmit_size(const std::vector<Cell *> &part_lists, int data_parts) {
+static size_t calc_transmit_size(const std::vector<Cell *> &part_lists,
+                                 int data_parts) {
   size_t n_buffer_new = 0;
 
   if (data_parts & GHOSTTRANS_PARTNUM) {
     n_buffer_new = sizeof(int) * part_lists.size();
   } else {
     auto const count = boost::accumulate(
-            part_lists, 0, [](int sum, const Cell *c) { return sum + c->n; });
+        part_lists, 0, [](int sum, const Cell *c) { return sum + c->n; });
 
     auto const size_per_part = calc_size_per_part(data_parts);
     n_buffer_new = count * size_per_part;
@@ -104,10 +105,11 @@ static size_t calc_transmit_size(const std::vector<Cell *> &part_lists, int data
   return n_buffer_new;
 }
 
-static char * pack_particle(const Particle & pt, char * insert, int data_parts, const boost::optional<Vector3d> & shift) {
+static char *pack_particle(const Particle &pt, char *insert, int data_parts,
+                           const boost::optional<Vector3d> &shift) {
+  using Utils::pack;
   if (data_parts & GHOSTTRANS_PROPRTS) {
-    memcpy(insert, &pt.p, sizeof(ParticleProperties));
-    insert += sizeof(ParticleProperties);
+    insert = pack(insert, &pt.p);
   }
   if (data_parts & GHOSTTRANS_POSITION) {
     auto pp = new (insert) ParticlePosition(pt.r);
@@ -140,7 +142,8 @@ static char * pack_particle(const Particle & pt, char * insert, int data_parts, 
   return insert;
 }
 
-static void prepare_send_buffer(GhostCommunication *gc, int data_parts, boost::optional<Vector3d> const& shift) {
+static void prepare_send_buffer(GhostCommunication *gc, int data_parts,
+                                boost::optional<Vector3d> const &shift) {
   GHOST_TRACE(fprintf(stderr, "%d: prepare sending to/bcast from %d\n",
                       this_node, gc->node));
 
@@ -170,8 +173,7 @@ static void prepare_send_buffer(GhostCommunication *gc, int data_parts, boost::o
 
         if (ghosts_have_bonds and (data_parts & GHOSTTRANS_PROPRTS)) {
           s_bondbuffer.push_back(pt.bl.n);
-          s_bondbuffer.insert(s_bondbuffer.end(), pt.bl.e,
-                                pt.bl.e + pt.bl.n);
+          s_bondbuffer.insert(s_bondbuffer.end(), pt.bl.e, pt.bl.e + pt.bl.n);
         }
       }
     }
@@ -216,34 +218,29 @@ static void prepare_recv_buffer(GhostCommunication *gc, int data_parts) {
   GHOST_TRACE(fprintf(stderr, "%d: will get %d\n", this_node, n_r_buffer));
 }
 
-static char * unpack_particle(Particle * pt, int data_parts, char * retrieve) {
-if (data_parts & GHOSTTRANS_PROPRTS) {
-memcpy(&pt->p, retrieve, sizeof(ParticleProperties));
-retrieve += sizeof(ParticleProperties);
-}
-if (data_parts & GHOSTTRANS_POSITION) {
-memcpy(&pt->r, retrieve, sizeof(ParticlePosition));
-retrieve += sizeof(ParticlePosition);
-}
-if (data_parts & GHOSTTRANS_MOMENTUM) {
-memcpy(&pt->m, retrieve, sizeof(ParticleMomentum));
-retrieve += sizeof(ParticleMomentum);
-}
-if (data_parts & GHOSTTRANS_FORCE) {
-memcpy(&pt->f, retrieve, sizeof(ParticleForce));
-retrieve += sizeof(ParticleForce);
-}
+static char *unpack_particle(Particle *pt, int data_parts, char *retrieve) {
+  using Utils::unpack;
+  if (data_parts & GHOSTTRANS_PROPRTS) {
+    retrieve = unpack(retrieve, &pt->p);
+  }
+  if (data_parts & GHOSTTRANS_POSITION) {
+    retrieve = unpack(retrieve, &pt->r);
+  }
+  if (data_parts & GHOSTTRANS_MOMENTUM) {
+    retrieve = unpack(retrieve, &pt->m);
+  }
+  if (data_parts & GHOSTTRANS_FORCE) {
+    retrieve = unpack(retrieve, &pt->f);
+  }
 #ifdef LB
-if (data_parts & GHOSTTRANS_COUPLING) {
-memcpy(&pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
-retrieve += sizeof(ParticleLatticeCoupling);
-}
+  if (data_parts & GHOSTTRANS_COUPLING) {
+    retrieve = unpack(retrieve, &pt->lc);
+  }
 #endif
 #ifdef ENGINE
-if (data_parts & GHOSTTRANS_SWIMMING) {
-memcpy(&pt->swim, retrieve, sizeof(ParticleParametersSwimming));
-retrieve += sizeof(ParticleParametersSwimming);
-}
+  if (data_parts & GHOSTTRANS_SWIMMING) {
+    retrieve = unpack(retrieve, &pt->swim);
+  }
 #endif
 
   return retrieve;
@@ -265,15 +262,15 @@ static void put_recv_buffer(GhostCommunication *gc, int data_parts) {
       for (int p = 0; p < np; p++) {
         Particle *pt = &part[p];
         if (ghosts_have_bonds and (data_parts & GHOSTTRANS_PROPRTS)) {
-            const int n_bonds = *bond_retrieve++;
-            pt->bl.resize(n_bonds);
-            std::copy(bond_retrieve, bond_retrieve + n_bonds, pt->bl.begin());
-            bond_retrieve += n_bonds;
+          const int n_bonds = *bond_retrieve++;
+          pt->bl.resize(n_bonds);
+          std::copy(bond_retrieve, bond_retrieve + n_bonds, pt->bl.begin());
+          bond_retrieve += n_bonds;
         }
 
         retrieve = unpack_particle(pt, data_parts, retrieve);
 
-        if(data_parts & GHOSTTRANS_PROPRTS) {
+        if (data_parts & GHOSTTRANS_PROPRTS) {
           if (local_particles[pt->p.identity] == nullptr) {
             local_particles[pt->p.identity] = pt;
           }
@@ -294,8 +291,9 @@ static void put_recv_buffer(GhostCommunication *gc, int data_parts) {
   r_bondbuffer.clear();
 }
 
-static void add_forces_from_recv_buffer(std::vector<Cell *> const& part_lists,
-        Utils::Span<const ParticleForce> buffer) {
+static void
+add_forces_from_recv_buffer(std::vector<Cell *> const &part_lists,
+                            Utils::Span<const ParticleForce> buffer) {
   auto it = buffer.begin();
 
   for (auto &pl : part_lists) {
@@ -529,8 +527,9 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
           /* forces have to be added, the rest overwritten. Exception is RDCE,
              where the addition is integrated into the communication. */
           if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-            add_forces_from_recv_buffer(gcn->part_lists, {reinterpret_cast<ParticleForce *>(r_buffer),
-                                                          n_r_buffer / sizeof(ParticleForce)});
+            add_forces_from_recv_buffer(
+                gcn->part_lists, {reinterpret_cast<ParticleForce *>(r_buffer),
+                                  n_r_buffer / sizeof(ParticleForce)});
           else
             put_recv_buffer(gcn, data_parts);
         } else {
@@ -550,11 +549,14 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
             int poststore2 = gcn2->poststore;
             int node2 = gcn2->node;
             if (is_recv_op(comm_type2, node2) && poststore2) {
-              assert(n_r_buffer == calc_transmit_size(gcn2->part_lists, data_parts));
+              assert(n_r_buffer ==
+                     calc_transmit_size(gcn2->part_lists, data_parts));
               /* as above */
               if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-                add_forces_from_recv_buffer(gcn2->part_lists, {reinterpret_cast<ParticleForce *>(r_buffer),
-                                                               n_r_buffer / sizeof(ParticleForce)});
+                add_forces_from_recv_buffer(
+                    gcn2->part_lists,
+                    {reinterpret_cast<ParticleForce *>(r_buffer),
+                     n_r_buffer / sizeof(ParticleForce)});
               else
                 put_recv_buffer(gcn2, data_parts);
               break;

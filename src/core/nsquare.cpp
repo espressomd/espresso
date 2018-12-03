@@ -111,8 +111,7 @@ void nsq_topology_init(CellPList *old) {
       if (this_node == 0 || this_node != n) {
         cell_structure.local_to_ghost_comm.comm[n].type = GHOST_BCST;
       } else {
-        cell_structure.local_to_ghost_comm.comm[n].type =
-            GHOST_BCST;
+        cell_structure.local_to_ghost_comm.comm[n].type = GHOST_BCST;
         cell_structure.local_to_ghost_comm.comm[n].prefetch = true;
       }
       cell_structure.ghost_to_local_comm.comm[n].type = GHOST_RDCE;
