@@ -235,11 +235,11 @@ void lb_reinit_force_densities();
 int lb_sanity_checks();
 
 /** Calculates the equilibrium distributions.
-    @param index Index of the local site
-    @param rho local fluid density
-    @param j local fluid speed
-    @param pi local fluid pressure
-*/
+ *  @param[in] index  Index of the local site
+ *  @param[in] rho    Local fluid density
+ *  @param[in] j      Local fluid speed
+ *  @param[in] pi     Local fluid pressure
+ */
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              const std::array<double, 3> &j,
                              const std::array<double, 6> &pi);
@@ -270,15 +270,15 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 
 /** Calculation of hydrodynamic modes.
  *
- *  @param index number of the node to calculate the modes for
- *  @param mode output pointer to a double[19]
+ *  @param[in]  index  Number of the node to calculate the modes for
+ *  @param[out] mode   Result
  */
 void lb_calc_modes(Lattice::index_t index, double *mode);
 
 /** Calculate the local fluid density.
  * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index the local lattice site (Input).
- * @param rho   local fluid density
+ * @param[in]  index  Local lattice site
+ * @param[out] rho    Local fluid density
  */
 inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
   // unit conversion: mass density
@@ -302,8 +302,8 @@ inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
 
 /** Calculate the local fluid momentum.
  * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index The local lattice site (Input).
- * @param j local fluid speed
+ * @param[in]  index  Local lattice site
+ * @param[out] j      Local fluid speed
  */
 inline void lb_calc_local_j(Lattice::index_t index, double *j) {
 
@@ -333,8 +333,8 @@ inline void lb_calc_local_j(Lattice::index_t index, double *j) {
 
 /** Calculate the local fluid stress.
  * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index The local lattice site (Input).
- * @param pi local fluid pressure
+ * @param[in]  index  Local lattice site
+ * @param[out] pi     Local fluid pressure
  */
 inline void lb_calc_local_pi(Lattice::index_t index, double *pi) {
 
@@ -354,10 +354,10 @@ inline void lb_calc_local_pi(Lattice::index_t index, double *pi) {
 /** Calculate the local fluid fields.
  * The calculation is implemented explicitly for the special case of D3Q19.
  *
- * @param index   Index of the local lattice site.
- * @param rho     local fluid density
- * @param j       local fluid speed
- * @param pi      local fluid pressure
+ * @param[in]  index   Index of the local lattice site
+ * @param[out] rho     Local fluid density
+ * @param[out] j       Local fluid speed
+ * @param[out] pi      Local fluid pressure
  */
 inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                                  double *pi) {

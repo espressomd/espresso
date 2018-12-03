@@ -2611,8 +2611,8 @@ void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
  *
  * Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
  *
- * @param p          The coupled particle (Input).
- * @param force      Coupling force between particle and fluid (Output).
+ * @param[in,out] p          The coupled particle
+ * @param[out]    force      Coupling force between particle and fluid
  */
 inline void lb_viscous_coupling(Particle *p, double force[3]) {
   double interpolated_u[3], delta_j[3];
