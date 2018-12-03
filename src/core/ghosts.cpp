@@ -42,15 +42,15 @@
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100
 
-static int n_s_buffer = 0;
-static int max_s_buffer = 0;
+static size_t n_s_buffer = 0;
+static size_t max_s_buffer = 0;
 /** send buffer. Just grows, which should be ok */
 static char *s_buffer = nullptr;
 
 static std::vector<int> s_bondbuffer;
 
-static int n_r_buffer = 0;
-static int max_r_buffer = 0;
+static size_t n_r_buffer = 0;
+static size_t max_r_buffer = 0;
 /** recv buffer. Just grows, which should be ok */
 static char *r_buffer = nullptr;
 
@@ -64,16 +64,15 @@ static std::vector<int> r_bondbuffer;
 int ghosts_have_v = 0;
 int ghosts_have_bonds = 0;
 
-static int calc_transmit_size(const std::vector<Cell *> &part_lists, int data_parts) {
-  int n_buffer_new;
+static size_t calc_transmit_size(const std::vector<Cell *> &part_lists, int data_parts) {
+  size_t n_buffer_new = 0;
 
-  if (data_parts & GHOSTTRANS_PARTNUM)
+  if (data_parts & GHOSTTRANS_PARTNUM) {
     n_buffer_new = sizeof(int) * part_lists.size();
-  else {
+  } else {
     auto const count = boost::accumulate(
         part_lists, 0, [](int sum, const Cell *c) { return sum + c->n; });
-
-    n_buffer_new = 0;
+    
     if (data_parts & GHOSTTRANS_PROPRTS) {
       n_buffer_new += sizeof(ParticleProperties);
       // sending size of bond lists
@@ -115,7 +114,7 @@ static void prepare_send_buffer(GhostCommunication *gc, int data_parts, boost::o
   }
   GHOST_TRACE(fprintf(stderr, "%d: will send %d\n", this_node, n_s_buffer));
 
-  s_bondbuffer.resize(0);
+  s_bondbuffer.clear();
 
   /* put in data */
   char *insert = s_buffer;
@@ -287,22 +286,20 @@ static void put_recv_buffer(GhostCommunication *gc, int data_parts) {
   r_bondbuffer.clear();
 }
 
-static void add_forces_from_recv_buffer(GhostCommunication *gc) {
-  char *retrieve;
+static void add_forces_from_recv_buffer(std::vector<Cell *> const& part_lists,
+        Utils::Span<const ParticleForce> buffer) {
+  auto it = buffer.begin();
 
-  /* put back data */
-  retrieve = r_buffer;
-  for (auto &pl : gc->part_lists) {
+  for (auto &pl : part_lists) {
     int np = pl->n;
     auto part = pl->part;
     for (int p = 0; p < np; p++) {
       auto &pt = part[p];
-      pt.f += *(reinterpret_cast<ParticleForce *>(retrieve));
-      retrieve += sizeof(ParticleForce);
+      pt.f += *it++;
     }
   }
 
-  assert((retrieve - r_buffer) == n_r_buffer);
+  assert(it == buffer.end());
 }
 
 static void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
@@ -524,7 +521,8 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
           /* forces have to be added, the rest overwritten. Exception is RDCE,
              where the addition is integrated into the communication. */
           if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-            add_forces_from_recv_buffer(gcn);
+            add_forces_from_recv_buffer(gcn->part_lists, {reinterpret_cast<ParticleForce *>(r_buffer),
+                                                          n_r_buffer / sizeof(ParticleForce)});
           else
             put_recv_buffer(gcn, data_parts);
         } else {
@@ -547,7 +545,8 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
               assert(n_r_buffer == calc_transmit_size(gcn2->part_lists, data_parts));
               /* as above */
               if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-                add_forces_from_recv_buffer(gcn2);
+                add_forces_from_recv_buffer(gcn2->part_lists, {reinterpret_cast<ParticleForce *>(r_buffer),
+                                                               n_r_buffer / sizeof(ParticleForce)});
               else
                 put_recv_buffer(gcn2, data_parts);
               break;
