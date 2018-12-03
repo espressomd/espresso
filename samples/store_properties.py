@@ -57,7 +57,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
@@ -84,8 +84,6 @@ int_n_times = 10
 
 # Interaction setup
 #############################################################
-
-system.box_l = [box_l, box_l, box_l]
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
