@@ -40,7 +40,7 @@ extern int lattice_switch;
 
 #define LATTICE_LB 1     /** Lattice Boltzmann */
 #define LATTICE_LB_GPU 2 /** Lattice Boltzmann */
-#define LATTICE_OFF 0 /** Lattice off */
+#define LATTICE_OFF 0    /** Lattice off */
 
 class Lattice {
 public:

@@ -46,10 +46,10 @@
 #include <thrust/transform_reduce.h>
 
 #include <cassert>
+#include <cstdint>
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#include <cstdint>
 
 /** defining structures residing in global memory */
 
@@ -4552,11 +4552,9 @@ void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
 }
 
 void lb_coupling_set_rng_state_gpu(uint64_t counter) {
-    coupling_rng_counter = Utils::Counter<uint64_t>(counter);
+  coupling_rng_counter = Utils::Counter<uint64_t>(counter);
 }
 
-uint64_t lb_coupling_rng_state_gpu() {
-    return coupling_rng_counter.value();
-}
+uint64_t lb_coupling_rng_state_gpu() { return coupling_rng_counter.value(); }
 
 #endif /* LB_GPU */

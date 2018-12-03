@@ -1826,27 +1826,27 @@ void lb_coupling_set_rng_state_cpu(uint64_t counter) {
 #endif
 
 uint64_t lb_coupling_rng_state() {
-    if(lattice_switch & LATTICE_LB) {
+  if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-        return lb_coupling_rng_state_cpu();
+    return lb_coupling_rng_state_cpu();
 #endif
-    } else if(lattice_switch & LATTICE_LB_GPU) {
+  } else if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-        return lb_coupling_rng_state_gpu();
+    return lb_coupling_rng_state_gpu();
 #endif
-    }
+  }
 }
 
 void lb_coupling_set_rng_state(uint64_t counter) {
-    if(lattice_switch & LATTICE_LB) {
+  if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-        lb_coupling_set_rng_state_cpu(counter);
+    lb_coupling_set_rng_state_cpu(counter);
 #endif
-    } else if(lattice_switch & LATTICE_LB_GPU) {
+  } else if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-        lb_coupling_set_rng_state_gpu(counter);
+    lb_coupling_set_rng_state_gpu(counter);
 #endif
-    }
+  }
 }
 
 void mpi_set_lb_coupling_counter(int high, int low) {
@@ -2671,8 +2671,8 @@ void calc_particle_lattice_ia() {
     using ctr_type = rng_type::ctr_type;
     using key_type = rng_type::key_type;
 
-    ctr_type c{
-        {rng_counter_coupling.value(), static_cast<uint64_t>(RNGSalt::PARTICLES)}};
+    ctr_type c{{rng_counter_coupling.value(),
+                static_cast<uint64_t>(RNGSalt::PARTICLES)}};
     rng_counter_coupling.increment();
 
     /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
