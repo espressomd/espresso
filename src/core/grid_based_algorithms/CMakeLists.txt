@@ -22,6 +22,10 @@ if (CUDA)
     lbgpu_cuda.cu
   )
   add_dependencies(lbgpu_cuda EspressoConfig)
+  target_include_directories(lbgpu_cuda PRIVATE
+          ${CMAKE_SOURCE_DIR}/src/core
+          ${CMAKE_BINARY_DIR}/src/core
+          )
 
   add_library(lbgpu SHARED
     lbgpu.cpp

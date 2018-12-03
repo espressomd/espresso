@@ -28,8 +28,10 @@
 #define LB_GPU_H
 
 #include "config.hpp"
-#include "utils.hpp"
+
 #ifdef LB_GPU
+#include "utils.hpp"
+
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
  * explicitly. This saves a lot of multiplications with 1's and 0's
@@ -307,6 +309,9 @@ void lb_lbfluid_get_population(const Vector3i &, float[LBQ], int);
 void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
                                                        double *velocities,
                                                        int length);
+
+void lb_coupling_set_rng_state_gpu(uint64_t);
+uint64_t lb_coupling_rng_state_gpu();
 
 /*@{*/
 

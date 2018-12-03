@@ -21,17 +21,11 @@
  *  Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
  *  Header file for \ref lbgpu.hpp.
  */
-
-#include "cuda_wrapper.hpp"
-#include "curand_wrapper.hpp"
-
-#include "config.hpp"
+#include "lbgpu.hpp"
 
 #ifdef LB_GPU
-#include <cassert>
-#include <stdio.h>
-#include <stdlib.h>
-#include <vector>
+#include "cuda_wrapper.hpp"
+#include "curand_wrapper.hpp"
 
 #include "Vector.hpp"
 #include "cuda_interface.hpp"
@@ -51,14 +45,11 @@
 #include <thrust/host_vector.h>
 #include <thrust/transform_reduce.h>
 
-#if defined(OMPI_MPI_H) || defined(_MPI_H)
-#error CU-file includes mpi.h! This should not happen!
-#endif
-
-int extended_values_flag = 0; /* TODO: this has to be set to one by
-                                 appropriate functions if there is
-                                 the need to compute pi at every
-                                 step (e.g. moving boundaries)*/
+#include <cassert>
+#include <stdio.h>
+#include <stdlib.h>
+#include <vector>
+#include <cstdint>
 
 /** defining structures residing in global memory */
 
@@ -4621,6 +4612,14 @@ void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
         static_cast<double>(v.z) * lbpar_gpu.agrid / lbpar_gpu.tau;
     index += 3;
   }
+}
+
+void lb_coupling_set_rng_state_gpu(uint64_t counter) {
+    coupling_rng_counter = Utils::Counter<uint64_t>(counter);
+}
+
+uint64_t lb_coupling_rng_state_gpu() {
+    return coupling_rng_counter.value();
 }
 
 #endif /* LB_GPU */

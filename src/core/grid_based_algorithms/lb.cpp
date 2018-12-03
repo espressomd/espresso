@@ -50,7 +50,6 @@
 #include <boost/multi_array.hpp>
 
 #include <cassert>
-#include <cinttypes>
 #include <core/utils/uniform.hpp>
 #include <cstdio>
 #include <iostream>
@@ -67,7 +66,7 @@ int transfer_momentum = 0;
 
 /** Counter for the particle coupling RNG */
 namespace {
-Utils::Counter<uint64_t> rng_counter;
+Utils::Counter<uint64_t> rng_counter_coupling;
 
 /*
  * @brief Salt for the RNGs
@@ -1815,14 +1814,14 @@ void lb_on_integration_start() {
                      reinterpret_cast<char *>(lbfluid[0].data()));
 }
 
-uint64_t lb_coupling_rng_state_cpu() { return rng_counter.value(); }
+uint64_t lb_coupling_rng_state_cpu() { return rng_counter_coupling.value(); }
 
 void lb_coupling_set_rng_state_cpu(uint64_t counter) {
   uint32_t high, low;
   std::tie(high, low) = Utils::u64_to_u32(counter);
   mpi_call(mpi_set_lb_coupling_counter, high, low);
 
-  rng_counter = Utils::Counter<uint64_t>(counter);
+  rng_counter_coupling = Utils::Counter<uint64_t>(counter);
 }
 #endif
 
@@ -1833,6 +1832,7 @@ uint64_t lb_coupling_rng_state() {
 #endif
     } else if(lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
+        return lb_coupling_rng_state_gpu();
 #endif
     }
 }
@@ -1853,7 +1853,7 @@ void mpi_set_lb_coupling_counter(int high, int low) {
 #ifdef LB
   using Utils::u32_to_u64;
 
-  rng_counter = Utils::Counter<uint64_t>(Utils::u32_to_u64(
+  rng_counter_coupling = Utils::Counter<uint64_t>(Utils::u32_to_u64(
       static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
 #endif
 }
@@ -2672,8 +2672,8 @@ void calc_particle_lattice_ia() {
     using key_type = rng_type::key_type;
 
     ctr_type c{
-        {rng_counter.value(), static_cast<uint64_t>(RNGSalt::PARTICLES)}};
-    rng_counter.increment();
+        {rng_counter_coupling.value(), static_cast<uint64_t>(RNGSalt::PARTICLES)}};
+    rng_counter_coupling.increment();
 
     /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
      * The factor 12 comes from the fact that we use random numbers
