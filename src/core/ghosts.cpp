@@ -387,9 +387,9 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
 
   for (auto it = gc.comm.begin(); it != gc.comm.end(); ++it) {
     GhostCommunication *gcn = &(*it);
-    int comm_type = gcn->type & GHOST_JOBMASK;
-    int prefetch = gcn->type & GHOST_PREFETCH;
-    int poststore = gcn->type & GHOST_PSTSTORE;
+    int comm_type = gcn->type;
+    int prefetch = gcn->prefetch;
+    int poststore = gcn->poststore;
     int node = gcn->node;
 
     if (comm_type == GHOST_LOCL)
@@ -413,8 +413,8 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
           /* find next action where we send and which has PREFETCH set */
           for (auto jt = std::next(it); jt != gc.comm.end(); ++jt) {
             GhostCommunication *gcn2 = &(*jt);
-            int comm_type2 = gcn2->type & GHOST_JOBMASK;
-            int prefetch2 = gcn2->type & GHOST_PREFETCH;
+            int comm_type2 = gcn2->type;
+            int prefetch2 = gcn2->prefetch;
             int node2 = gcn2->node;
             if (is_send_op(comm_type2, node2) && prefetch2) {
               prepare_send_buffer(gcn2, data_parts);
@@ -540,8 +540,8 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
           for (auto jt = make_reverse_iterator(it); jt != gc.comm.rend();
                ++jt) {
             GhostCommunication *gcn2 = &(*jt);
-            int comm_type2 = gcn2->type & GHOST_JOBMASK;
-            int poststore2 = gcn2->type & GHOST_PSTSTORE;
+            int comm_type2 = gcn2->type;
+            int poststore2 = gcn2->poststore;
             int node2 = gcn2->node;
             if (is_recv_op(comm_type2, node2) && poststore2) {
               assert(n_r_buffer == calc_transmit_size(gcn2, data_parts));

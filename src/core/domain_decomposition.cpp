@@ -397,8 +397,10 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
 void dd_assign_prefetches(GhostCommunicator *comm) {
   for (auto it = comm->comm.begin(); it != comm->comm.end(); it += 2) {
     if ((it->type == GHOST_RECV) and (std::next(it)->type == GHOST_SEND)) {
-      it->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-      std::next(it)->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+      it->prefetch = true;
+      it->poststore = true;
+      std::next(it)->prefetch = true;
+      std::next(it)->poststore = true;
     }
   }
 }

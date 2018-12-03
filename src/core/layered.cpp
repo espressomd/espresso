@@ -146,8 +146,10 @@ static void layered_prepare_comm(GhostCommunicator *comm,
       if (this_node % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comm->comm[c].type = GHOST_SEND;
         /* round 1 uses prefetched data and stores delayed data */
-        if (c == 1)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        if (c == 1) {
+          comm->comm[c].prefetch = true;
+          comm->comm[c].poststore= true;
+        }
         comm->comm[c].node = btm;
         if (direction == CommDirection::GHOST_TO_LOCAL) {
           comm->comm[c].part_lists[0] = &cells[0];
@@ -170,8 +172,11 @@ static void layered_prepare_comm(GhostCommunicator *comm,
       if (top % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comm->comm[c].type = GHOST_RECV;
         /* round 0 prefetch send for round 1 and delay recvd data processing */
-        if (c == 0)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        if (c == 0) {
+          comm->comm[c].prefetch = true;
+          comm->comm[c].poststore= true;
+        }
+
         comm->comm[c].node = top;
         if (direction == CommDirection::GHOST_TO_LOCAL) {
           comm->comm[c].part_lists[0] = &cells[n_layers];
@@ -194,8 +199,11 @@ static void layered_prepare_comm(GhostCommunicator *comm,
         comm->comm[c].type = GHOST_SEND;
         /* round 1 use prefetched data from round 0.
            But this time there may already have been two transfers downwards */
-        if (c % 2 == 1)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        if (c % 2 == 1) {
+          comm->comm[c].prefetch = true;
+          comm->comm[c].poststore= true;
+        }
+
         comm->comm[c].node = top;
         if (direction == CommDirection::GHOST_TO_LOCAL) {
           comm->comm[c].part_lists[0] = &cells[n_layers + 1];
@@ -218,8 +226,11 @@ static void layered_prepare_comm(GhostCommunicator *comm,
         comm->comm[c].type = GHOST_RECV;
         /* round 0 prefetch. But this time there may already have been two
          * transfers downwards */
-        if (c % 2 == 0)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        if (c % 2 == 0) {
+          comm->comm[c].prefetch = true;
+          comm->comm[c].poststore= true;
+        }
+
         comm->comm[c].node = btm;
         if (direction == CommDirection::GHOST_TO_LOCAL) {
           comm->comm[c].part_lists[0] = &cells[1];

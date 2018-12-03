@@ -119,12 +119,6 @@ further details.
 /// transfer data from cell to cell on this node
 #define GHOST_LOCL 4
 
-/// mask to the job area of the transfer type
-#define GHOST_JOBMASK 15
-/// additional flag for prefetching
-#define GHOST_PREFETCH 16
-/// additional flag for poststoring
-#define GHOST_PSTSTORE 32
 /*@}*/
 
 /** \name Transfer data classes, for \ref GhostCommunication::type */
@@ -158,6 +152,9 @@ struct GhostCommunication {
   int type = 0;
   /** Node to communicate with (to use with all MPI operations). */
   int node = 0;
+
+  bool prefetch = false;
+  bool poststore = false;
 
   /** Pointer array to particle lists to communicate. */
   std::vector<Cell *> part_lists = {};
