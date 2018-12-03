@@ -32,15 +32,14 @@ required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
 espressomd.assert_features(required_features)
 
 
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+box_l = 100
+system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.set_random_state_PRNG()
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.time_step = 0.01
 skin = 10.0
 system.cell_system.skin = skin
-box_l = 100
-system.box_l = [box_l, box_l, box_l]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 ### Particle types
