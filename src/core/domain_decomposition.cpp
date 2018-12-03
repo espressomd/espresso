@@ -259,22 +259,16 @@ std::vector<Cell *> dd_fill_comm_cell_lists(const int lc[3], const int hc[3]) {
 }
 
 namespace {
-/**
- * @brief Helper to update a single component in an optional Vector3d.
- *
- * Updates a single component of an optional value, leaving the other
- * components unchanged if the optional had already a value, otherwise
- * initializing them to the default value.
- *
- * @param o the optional to update
- * @param value The updated value
- * @param i which one
- */
-void update_component(boost::optional<Vector3d> &o, double val, int i) {
-  auto v = o.get_value_or({});
-  v[i] = val;
+boost::optional<Vector3d> calc_shift(int dir, int lr) {
+  auto const b = boundary[2 * dir + lr];
 
-  o = v;
+  if(b) {
+    Vector3d shift{};
+    shift[dir] = b*box_l[dir];
+    return shift;
+  } else {
+    return boost::none;
+  }
 }
 } // namespace
 
@@ -301,12 +295,6 @@ void dd_prepare_comm(GhostCommunicator *comm) {
   /* prepare communicator */
   *comm = GhostCommunicator(comm_cart, num);
 
-  /* number of cells to communicate in a direction */
-  auto const n_comm_cells =
-      Vector3i{dd.cell_grid[1] * dd.cell_grid[2],
-               dd.cell_grid[2] * dd.ghost_cell_grid[0],
-               dd.ghost_cell_grid[0] * dd.ghost_cell_grid[1]};
-
   int cnt = 0;
   /* direction loop: x, y, z */
   for (int dir = 0; dir < 3; dir++) {
@@ -326,10 +314,7 @@ void dd_prepare_comm(GhostCommunicator *comm) {
           comm->comm[cnt].node = this_node;
 
           /* prepare folding of ghost positions */
-          if (boundary[2 * dir + lr] != 0) {
-            update_component(comm->comm[cnt].shift,
-                             boundary[2 * dir + lr] * box_l[dir], dir);
-          }
+          comm->comm[cnt].shift = calc_shift(dir, lr);
 
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
@@ -358,14 +343,9 @@ void dd_prepare_comm(GhostCommunicator *comm) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
               /* prepare folding of ghost positions */
-              if (boundary[2 * dir + lr] != 0) {
-                update_component(comm->comm[cnt].shift,
-                                 boundary[2 * dir + lr] * box_l[dir], dir);
-              }
+              comm->comm[cnt].shift = calc_shift(dir, lr);
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
-
-
 
               comm->comm[cnt].part_lists = dd_fill_comm_cell_lists(lc, hc);
               cnt++;
@@ -438,12 +418,11 @@ void dd_update_communicators_w_boxl() {
       if (node_grid[dir] == 1) {
         if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
-          if (boundary[2 * dir + lr] != 0) {
-            update_component(cell_structure.local_to_ghost_comm.comm[cnt].shift,
-                             boundary[2 * dir + lr] * box_l[dir], dir);
-            update_component(cell_structure.ghost_to_local_comm.comm[cnt].shift,
-                             -boundary[2 * dir + lr] * box_l[dir], dir);
+          cell_structure.local_to_ghost_comm.comm[cnt].shift = calc_shift(dir, lr);
+          if(cell_structure.local_to_ghost_comm.comm[cnt].shift) {
+            cell_structure.ghost_to_local_comm.comm[cnt].shift = - cell_structure.local_to_ghost_comm.comm[cnt].shift.get();
           }
+
           cnt++;
         }
       } else {
@@ -452,14 +431,11 @@ void dd_update_communicators_w_boxl() {
           if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0))
             if ((node_pos[dir] + i) % 2 == 0) {
               /* prepare folding of ghost positions */
-              if (boundary[2 * dir + lr] != 0) {
-                update_component(
-                    cell_structure.local_to_ghost_comm.comm[cnt].shift,
-                    boundary[2 * dir + lr] * box_l[dir], dir);
-                update_component(
-                    cell_structure.ghost_to_local_comm.comm[cnt].shift,
-                    -boundary[2 * dir + lr] * box_l[dir], dir);
+              cell_structure.local_to_ghost_comm.comm[cnt].shift = calc_shift(dir, lr);
+              if(cell_structure.local_to_ghost_comm.comm[cnt].shift) {
+                cell_structure.ghost_to_local_comm.comm[cnt].shift = - cell_structure.local_to_ghost_comm.comm[cnt].shift.get();
               }
+
               cnt++;
             }
           if (PERIODIC(dir) || (boundary[2 * dir + (1 - lr)] == 0))
