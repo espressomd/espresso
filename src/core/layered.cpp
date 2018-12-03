@@ -131,7 +131,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, CommDirection directio
     if (!LAYERED_BTM_NEIGHBOR)
       n -= 2;
 
-    *comm = GhostCommunicator(n);
+    *comm = GhostCommunicator(comm_cart, n);
 
     /* always sending/receiving 1 cell per time step */
     for (c = 0; c < n; c++) {
@@ -236,7 +236,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, CommDirection directio
 
     n = (layered_flags & LAYERED_PERIODIC) ? 2 : 0;
 
-    *comm = GhostCommunicator(n);
+    *comm = GhostCommunicator(comm_cart,n);
 
     if (n != 0) {
       /* two cells: from and to */

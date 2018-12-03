@@ -30,6 +30,7 @@
 #include "debug.hpp"
 #include "particle_data.hpp"
 
+#include <boost/mpi/collectives.hpp>
 #include <boost/range/numeric.hpp>
 #include <mpi.h>
 
@@ -461,8 +462,7 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
                             "%d: ghost_comm receive from %d (%d bytes)\n",
                             this_node, node, n_r_buffer));
         if(n_r_buffer > 0) {
-            MPI_Recv(r_buffer, n_r_buffer, MPI_BYTE, node, REQ_GHOST_SEND,
-                     comm_cart, &status);
+            gc.mpi_comm.recv(node, REQ_GHOST_SEND, r_buffer, n_r_buffer);
         }
 
         if (data_parts & GHOSTTRANS_PROPRTS) {
@@ -472,8 +472,7 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
                               this_node, node, n_bonds));
           if (n_bonds) {
             r_bondbuffer.resize(n_bonds);
-            MPI_Recv(&r_bondbuffer[0], n_bonds, MPI_INT, node, REQ_GHOST_SEND,
-                     comm_cart, &status);
+            gc.mpi_comm.recv(node, REQ_GHOST_SEND, r_bondbuffer.data(), n_bonds);
           }
         }
         break;
@@ -482,15 +481,13 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
         GHOST_TRACE(fprintf(stderr, "%d: ghost_comm send to %d (%d bytes)\n",
                             this_node, node, n_s_buffer));
         if(n_s_buffer > 0) {
-            MPI_Send(s_buffer, n_s_buffer, MPI_BYTE, node, REQ_GHOST_SEND,
-                     comm_cart);
+            gc.mpi_comm.send(node, REQ_GHOST_SEND, s_buffer, n_s_buffer);
         }
 
         assert((data_parts & GHOSTTRANS_PROPRTS) or (s_bondbuffer.empty()));
 
         if (not s_bondbuffer.empty()) {
-          MPI_Send(s_bondbuffer.data(), s_bondbuffer.size(), MPI_INT, node, REQ_GHOST_SEND,
-                   comm_cart);
+            gc.mpi_comm.send(node, REQ_GHOST_SEND, s_bondbuffer.data(), s_bondbuffer.size());
         }
         break;
       }
@@ -500,23 +497,22 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
                             (node == this_node) ? n_s_buffer : n_r_buffer));
         if (node == this_node) {
             if(n_s_buffer > 0) {
-                MPI_Bcast(s_buffer, n_s_buffer, MPI_BYTE, node, comm_cart);
+                boost::mpi::broadcast(gc.mpi_comm, s_buffer, n_s_buffer, node);
             }
 
           assert((data_parts & GHOSTTRANS_PROPRTS) or (s_bondbuffer.empty()));
             if (not s_bondbuffer.empty()) {
-                MPI_Send(s_bondbuffer.data(), s_bondbuffer.size(), MPI_INT, node, REQ_GHOST_SEND,
-                         comm_cart);
+                boost::mpi::broadcast(gc.mpi_comm, s_bondbuffer.data(), s_bondbuffer.size(), node);
             }
         } else {
             if(n_r_buffer > 0) {
-                MPI_Bcast(r_buffer, n_r_buffer, MPI_BYTE, node, comm_cart);
+                boost::mpi::broadcast(gc.mpi_comm, r_buffer, n_r_buffer, node);
             }
           if (data_parts & GHOSTTRANS_PROPRTS) {
             int n_bonds = *(int *)(r_buffer + n_r_buffer - sizeof(int));
             if (n_bonds) {
               r_bondbuffer.resize(n_bonds);
-              MPI_Bcast(&r_bondbuffer[0], n_bonds, MPI_INT, node, comm_cart);
+                boost::mpi::broadcast(gc.mpi_comm, r_bondbuffer.data(), r_bondbuffer.size(), node);
             }
           }
         }
@@ -527,16 +523,17 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
 
         if (node == this_node) {
             if (n_s_buffer > 0) {
+
                 MPI_Reduce(reinterpret_cast<double *>(s_buffer),
                            reinterpret_cast<double *>(r_buffer),
                            n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
-                           comm_cart);
+                           gc.mpi_comm);
             }
         } else {
             if(n_s_buffer > 0) {
                 MPI_Reduce(reinterpret_cast<double *>(s_buffer), nullptr,
                            n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
-                           comm_cart);
+                           gc.mpi_comm);
             }
         }
       } break;

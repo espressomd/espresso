@@ -42,11 +42,11 @@ static void nsq_prepare_comm(GhostCommunicator *comm) {
   int n;
   /* no need for comm for only 1 node */
   if (n_nodes == 1) {
-    *comm = GhostCommunicator(0);
+    *comm = GhostCommunicator(comm_cart, 0);
     return;
   }
 
-  *comm = GhostCommunicator(n_nodes);
+  *comm = GhostCommunicator(comm_cart, n_nodes);
   /* every node has its dedicated comm step */
   for (n = 0; n < n_nodes; n++) {
     comm->comm[n].part_lists.resize(1);

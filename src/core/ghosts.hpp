@@ -99,6 +99,7 @@ further details.
 
 #include "Vector.hpp"
 
+#include <boost/mpi/communicator.hpp>
 #include <boost/optional.hpp>
 
 #include <vector>
@@ -170,7 +171,10 @@ struct GhostCommunication {
 /** Properties for a ghost communication. A ghost communication is defined */
 struct GhostCommunicator {
     GhostCommunicator() = default;
-    GhostCommunicator(int num) : comm(num) {}
+    GhostCommunicator(const boost::mpi::communicator & mpi_comm, int num) : mpi_comm(mpi_comm), comm(num) {}
+
+    /** Mpi Communicator for this action. */
+    boost::mpi::communicator mpi_comm;
 
     /** List of ghost communications. */
   std::vector<GhostCommunication> comm = {};

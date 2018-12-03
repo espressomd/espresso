@@ -312,7 +312,7 @@ void dd_prepare_comm(GhostCommunicator *comm) {
   }
 
   /* prepare communicator */
-  *comm = GhostCommunicator(num);
+  *comm = GhostCommunicator(comm_cart, num);
 
   /* number of cells to communicate in a direction */
   auto const n_comm_cells = Vector3i{
