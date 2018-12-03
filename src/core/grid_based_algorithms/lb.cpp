@@ -110,9 +110,13 @@ LB_Parameters lbpar = {
     0};
 
 /** The DnQm model to be used. */
-LB_Model<> lbmodel = {::D3Q19::c,   ::D3Q19::coefficients,
-                      ::D3Q19::w,   ::D3Q19::e_ki,
-                      ::D3Q19::w_k, ::D3Q19::c_sound_sq};
+LB_Model<> lbmodel = {::D3Q19::c,
+                      ::D3Q19::coefficients,
+                      ::D3Q19::w,
+                      ::D3Q19::e_ki,
+                      ::D3Q19::w_k,
+                      ::D3Q19::c_sound_sq,
+                      ::D3Q19::e_ki_transposed};
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
@@ -1834,6 +1838,8 @@ uint64_t lb_coupling_rng_state() {
 #ifdef LB_GPU
     return lb_coupling_rng_state_gpu();
 #endif
+  } else {
+    return {};
   }
 }
 
@@ -2332,11 +2338,8 @@ std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
   const auto normalized_modes = normalize_modes(modes);
 
   for (int i = 0; i < 19; i++) {
-    ret[i] = 0;
-    for (int j = 0; j < 19; j++) {
-      ret[i] += lbmodel.e_ki[j][i] * normalized_modes[j];
-    }
-
+    ret[i] =
+        boost::inner_product(lbmodel.e_ki_transposed[i], normalized_modes, 0.0);
     ret[i] *= lbmodel.w[i];
   }
   return ret;

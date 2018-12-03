@@ -106,6 +106,9 @@ template <size_t N_vel = 19> struct LB_Model {
 
   /** speed of sound squared */
   double c_sound_sq;
+
+  /** transposed basis of moment space */
+  std::array<std::array<double, N_vel>, N_vel> e_ki_transposed;
 };
 
 /** Data structure for fluid on a local lattice site */
