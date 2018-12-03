@@ -68,10 +68,6 @@ static size_t calc_size_per_part(int data_parts) {
   size_t size = 0;
   if (data_parts & GHOSTTRANS_PROPRTS) {
     size += sizeof(ParticleProperties);
-    // sending size of bond lists
-    if (ghosts_have_bonds) {
-      size += sizeof(int);
-    }
   }
   if (data_parts & GHOSTTRANS_POSITION)
     size += sizeof(ParticlePosition);
@@ -112,10 +108,6 @@ static char * pack_particle(const Particle & pt, char * insert, int data_parts, 
   if (data_parts & GHOSTTRANS_PROPRTS) {
     memcpy(insert, &pt.p, sizeof(ParticleProperties));
     insert += sizeof(ParticleProperties);
-    if (ghosts_have_bonds) {
-      *(int *)insert = pt.bl.n;
-      insert += sizeof(int);
-    }
   }
   if (data_parts & GHOSTTRANS_POSITION) {
     auto pp = new (insert) ParticlePosition(pt.r);
@@ -177,10 +169,9 @@ static void prepare_send_buffer(GhostCommunication *gc, int data_parts, boost::o
         insert = pack_particle(pt, insert, data_parts, shift);
 
         if (ghosts_have_bonds and (data_parts & GHOSTTRANS_PROPRTS)) {
-          if (pt.bl.n) {
-            s_bondbuffer.insert(s_bondbuffer.end(), pt.bl.e,
+          s_bondbuffer.push_back(pt.bl.n);
+          s_bondbuffer.insert(s_bondbuffer.end(), pt.bl.e,
                                 pt.bl.e + pt.bl.n);
-          }
         }
       }
     }
@@ -225,6 +216,39 @@ static void prepare_recv_buffer(GhostCommunication *gc, int data_parts) {
   GHOST_TRACE(fprintf(stderr, "%d: will get %d\n", this_node, n_r_buffer));
 }
 
+static char * unpack_particle(Particle * pt, int data_parts, char * retrieve) {
+if (data_parts & GHOSTTRANS_PROPRTS) {
+memcpy(&pt->p, retrieve, sizeof(ParticleProperties));
+retrieve += sizeof(ParticleProperties);
+}
+if (data_parts & GHOSTTRANS_POSITION) {
+memcpy(&pt->r, retrieve, sizeof(ParticlePosition));
+retrieve += sizeof(ParticlePosition);
+}
+if (data_parts & GHOSTTRANS_MOMENTUM) {
+memcpy(&pt->m, retrieve, sizeof(ParticleMomentum));
+retrieve += sizeof(ParticleMomentum);
+}
+if (data_parts & GHOSTTRANS_FORCE) {
+memcpy(&pt->f, retrieve, sizeof(ParticleForce));
+retrieve += sizeof(ParticleForce);
+}
+#ifdef LB
+if (data_parts & GHOSTTRANS_COUPLING) {
+memcpy(&pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
+retrieve += sizeof(ParticleLatticeCoupling);
+}
+#endif
+#ifdef ENGINE
+if (data_parts & GHOSTTRANS_SWIMMING) {
+memcpy(&pt->swim, retrieve, sizeof(ParticleParametersSwimming));
+retrieve += sizeof(ParticleParametersSwimming);
+}
+#endif
+
+  return retrieve;
+}
+
 static void put_recv_buffer(GhostCommunication *gc, int data_parts) {
   /* put back data */
   char *retrieve = r_buffer;
@@ -233,9 +257,6 @@ static void put_recv_buffer(GhostCommunication *gc, int data_parts) {
 
   for (auto &pl : gc->part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      GHOST_TRACE(fprintf(
-          stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
-          this_node, (void *)cur_list, *(int *)retrieve, gc->node));
       prepare_ghost_cell(pl, *(int *)retrieve);
       retrieve += sizeof(int);
     } else {
@@ -243,47 +264,20 @@ static void put_recv_buffer(GhostCommunication *gc, int data_parts) {
       Particle *part = pl->part;
       for (int p = 0; p < np; p++) {
         Particle *pt = &part[p];
-        if (data_parts & GHOSTTRANS_PROPRTS) {
-          memcpy(&pt->p, retrieve, sizeof(ParticleProperties));
-          retrieve += sizeof(ParticleProperties);
-          if (ghosts_have_bonds) {
-            int n_bonds;
-            memcpy(&n_bonds, retrieve, sizeof(int));
-            retrieve += sizeof(int);
-            if (n_bonds) {
-              pt->bl.resize(n_bonds);
-              std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
-              bond_retrieve += n_bonds;
-            }
-          }
+        if (ghosts_have_bonds and (data_parts & GHOSTTRANS_PROPRTS)) {
+            const int n_bonds = *bond_retrieve++;
+            pt->bl.resize(n_bonds);
+            std::copy(bond_retrieve, bond_retrieve + n_bonds, pt->bl.begin());
+            bond_retrieve += n_bonds;
+        }
+
+        retrieve = unpack_particle(pt, data_parts, retrieve);
+
+        if(data_parts & GHOSTTRANS_PROPRTS) {
           if (local_particles[pt->p.identity] == nullptr) {
             local_particles[pt->p.identity] = pt;
           }
         }
-        if (data_parts & GHOSTTRANS_POSITION) {
-          memcpy(&pt->r, retrieve, sizeof(ParticlePosition));
-          retrieve += sizeof(ParticlePosition);
-        }
-        if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memcpy(&pt->m, retrieve, sizeof(ParticleMomentum));
-          retrieve += sizeof(ParticleMomentum);
-        }
-        if (data_parts & GHOSTTRANS_FORCE) {
-          memcpy(&pt->f, retrieve, sizeof(ParticleForce));
-          retrieve += sizeof(ParticleForce);
-        }
-#ifdef LB
-        if (data_parts & GHOSTTRANS_COUPLING) {
-          memcpy(&pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
-          retrieve += sizeof(ParticleLatticeCoupling);
-        }
-#endif
-#ifdef ENGINE
-        if (data_parts & GHOSTTRANS_SWIMMING) {
-          memcpy(&pt->swim, retrieve, sizeof(ParticleParametersSwimming));
-          retrieve += sizeof(ParticleParametersSwimming);
-        }
-#endif
       }
     }
   }
