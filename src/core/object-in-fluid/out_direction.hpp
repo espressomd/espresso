@@ -53,7 +53,7 @@ int oif_out_direction_set_params(int bond_type);
 */
 inline int calc_out_direction(
     Particle *p1, Particle *p2, Particle *p3, Particle *p4,
-    Bonded_ia_parameters *iaparams) // first-fold-then-the-same approach
+    Bonded_ia_parameters */*iaparams*/) // first-fold-then-the-same approach
 {
   auto const fp2 = unfolded_position(*p2);
   auto const fp3 = fp2 + get_mi_vector(p3->r.p, fp2);

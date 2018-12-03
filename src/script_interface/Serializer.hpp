@@ -64,7 +64,7 @@ public:
     return m_created_objects;
   }
 
-  template <typename T> Variant operator()(T const &val) {
+  template <typename T> Variant operator()(T const &/*val*/) {
     throw std::runtime_error("Invalid format.");
   }
 

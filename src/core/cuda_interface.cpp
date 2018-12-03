@@ -128,7 +128,7 @@ void cuda_mpi_get_particles(ParticleRange particles,
   auto const n_part = particles.size();
 
   if (this_node > 0) {
-    COMM_TRACE(fprintf(stderr, "%d: get_particles_slave, %d particles\n",
+    COMM_TRACE(fprintf(stderr, "%d: get_particles_slave, %ld particles\n",
                        this_node, n_part));
     static std::vector<CUDA_particle_data> buffer;
     buffer.resize(n_part);
