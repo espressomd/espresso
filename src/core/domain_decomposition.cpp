@@ -245,28 +245,17 @@ void dd_mark_cells() {
     \param lc          lower left corner of the subgrid.
     \param hc          high up corner of the subgrid.
  */
-int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
-  int i, m, n, o, c = 0;
-  /* sanity check */
-  for (i = 0; i < 3; i++) {
-    if (lc[i] < 0 || lc[i] >= dd.ghost_cell_grid[i])
-      return 0;
-    if (hc[i] < 0 || hc[i] >= dd.ghost_cell_grid[i])
-      return 0;
-    if (lc[i] > hc[i])
-      return 0;
-  }
+std::vector<Cell *> dd_fill_comm_cell_lists(const int lc[3], const int hc[3]) {
+  std::vector<Cell *> ret;
 
-  for (o = lc[0]; o <= hc[0]; o++)
-    for (n = lc[1]; n <= hc[1]; n++)
-      for (m = lc[2]; m <= hc[2]; m++) {
-        i = get_linear_index(o, n, m, dd.ghost_cell_grid);
-        CELL_TRACE(fprintf(stderr, "%d: dd_fill_comm_cell_list: add cell %d\n",
-                           this_node, i));
-        part_lists[c] = &cells[i];
-        c++;
+  for (int o = lc[0]; o <= hc[0]; o++)
+    for (int n = lc[1]; n <= hc[1]; n++)
+      for (int m = lc[2]; m <= hc[2]; m++) {
+        int i = get_linear_index(o, n, m, dd.ghost_cell_grid);
+        ret.push_back(&cells[i]);
       }
-  return c;
+
+  return ret;
 }
 
 namespace {
@@ -336,8 +325,6 @@ void dd_prepare_comm(GhostCommunicator *comm) {
           comm->comm[cnt].type = GHOST_LOCL;
           comm->comm[cnt].node = this_node;
 
-          /* Buffer has to contain Send and Recv cells -> factor 2 */
-          comm->comm[cnt].part_lists.resize(2 * n_comm_cells[dir]);
           /* prepare folding of ghost positions */
           if (boundary[2 * dir + lr] != 0) {
             update_component(comm->comm[cnt].shift,
@@ -347,22 +334,20 @@ void dd_prepare_comm(GhostCommunicator *comm) {
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
-          CELL_TRACE(fprintf(
-              stderr,
-              "%d: prep_comm %d copy to          grid (%d,%d,%d)-(%d,%d,%d)\n",
-              this_node, cnt, lc[0], lc[1], lc[2], hc[0], hc[1], hc[2]));
+          auto const send_cells = dd_fill_comm_cell_lists(lc, hc);
 
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
 
+          auto const recv_cells = dd_fill_comm_cell_lists(lc, hc);
+
+          /* Buffer has to contain Send and Recv cells */
+          comm->comm[cnt].part_lists.resize(send_cells.size() + recv_cells.size());
+
+          auto recv_begin = boost::copy(send_cells, comm->comm[cnt].part_lists.begin());
           /* place receive cells after send cells */
-          dd_fill_comm_cell_lists(
-              &comm->comm[cnt].part_lists[n_comm_cells[dir]], lc, hc);
-          CELL_TRACE(fprintf(
-              stderr,
-              "%d: prep_comm %d copy from        grid (%d,%d,%d)-(%d,%d,%d)\n",
-              this_node, cnt, lc[0], lc[1], lc[2], hc[0], hc[1], hc[2]));
+          boost::copy(recv_cells, recv_begin);
+
           cnt++;
         }
       } else {
@@ -372,7 +357,6 @@ void dd_prepare_comm(GhostCommunicator *comm) {
             if ((node_pos[dir] + i) % 2 == 0) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
-              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
               /* prepare folding of ghost positions */
               if (boundary[2 * dir + lr] != 0) {
                 update_component(comm->comm[cnt].shift,
@@ -381,31 +365,19 @@ void dd_prepare_comm(GhostCommunicator *comm) {
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
-                                      hc);
 
-              CELL_TRACE(fprintf(stderr,
-                                 "%d: prep_comm %d send to   node %d "
-                                 "grid (%d,%d,%d)-(%d,%d,%d)\n",
-                                 this_node, cnt, comm->comm[cnt].node, lc[0],
-                                 lc[1], lc[2], hc[0], hc[1], hc[2]));
+
+              comm->comm[cnt].part_lists = dd_fill_comm_cell_lists(lc, hc);
               cnt++;
             }
           if (PERIODIC(dir) || (boundary[2 * dir + (1 - lr)] == 0))
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               comm->comm[cnt].type = GHOST_RECV;
               comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
-              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
-                                      hc);
-              CELL_TRACE(fprintf(stderr,
-                                 "%d: prep_comm %d recv from node %d "
-                                 "grid (%d,%d,%d)-(%d,%d,%d)\n",
-                                 this_node, cnt, comm->comm[cnt].node, lc[0],
-                                 lc[1], lc[2], hc[0], hc[1], hc[2]));
+              comm->comm[cnt].part_lists = dd_fill_comm_cell_lists(lc, hc);
               cnt++;
             }
         }
