@@ -159,7 +159,7 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 
 /** Switch for choosing the topology release function of a certain
     cell system. */
-static void topology_release(int) {
+static void topology_release() {
     cell_structure.local_to_ghost_comm = {};
     cell_structure.ghost_to_local_comm = {};
 
@@ -230,7 +230,7 @@ void cells_re_init(int new_cs) {
 
   invalidate_ghosts();
 
-  topology_release(cell_structure.type);
+  topology_release();
   /* MOVE old local_cell list to temporary buffer */
   memmove(&tmp_local, &local_cells, sizeof(CellPList));
   init_cellplist(&local_cells);
