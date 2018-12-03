@@ -101,7 +101,7 @@ static size_t calc_transmit_size(const std::vector<Cell *> &part_lists,
   }
   // also sending length of bond buffer
   if (data_parts & GHOSTTRANS_PROPRTS)
-    n_buffer_new += sizeof(int);
+    n_buffer_new += sizeof(size_t);
   return n_buffer_new;
 }
 
@@ -120,23 +120,19 @@ static char *pack_particle(const Particle &pt, char *insert, int data_parts,
     insert += sizeof(ParticlePosition);
   }
   if (data_parts & GHOSTTRANS_MOMENTUM) {
-    memcpy(insert, &pt.m, sizeof(ParticleMomentum));
-    insert += sizeof(ParticleMomentum);
+    insert = pack(insert, &pt.m);
   }
   if (data_parts & GHOSTTRANS_FORCE) {
-    memcpy(insert, &pt.f, sizeof(ParticleForce));
-    insert += sizeof(ParticleForce);
+    insert = pack(insert, &pt.f);
   }
 #ifdef LB
   if (data_parts & GHOSTTRANS_COUPLING) {
-    memcpy(insert, &pt.lc, sizeof(ParticleLatticeCoupling));
-    insert += sizeof(ParticleLatticeCoupling);
+    insert = pack(insert, &pt.lc);
   }
 #endif
 #ifdef ENGINE
   if (data_parts & GHOSTTRANS_SWIMMING) {
-    memcpy(insert, &pt.swim, sizeof(ParticleParametersSwimming));
-    insert += sizeof(ParticleParametersSwimming);
+    insert = pack(insert, &pt.swim);
   }
 #endif
   return insert;
@@ -162,10 +158,7 @@ static void prepare_send_buffer(GhostCommunication *gc, int data_parts,
   for (auto const &pl : gc->part_lists) {
     int np = pl->n;
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      *(int *)insert = np;
-      insert += sizeof(int);
-      GHOST_TRACE(
-          fprintf(stderr, "%d: %d particles assigned\n", this_node, np));
+      insert = Utils::pack(insert, &np);
     } else {
       for (int p = 0; p < np; p++) {
         const Particle &pt = pl->part[p];
@@ -182,8 +175,8 @@ static void prepare_send_buffer(GhostCommunication *gc, int data_parts,
   if (data_parts & GHOSTTRANS_PROPRTS) {
     GHOST_TRACE(fprintf(stderr, "%d: bond buffer size is %ld\n", this_node,
                         s_bondbuffer.size()));
-    *(int *)insert = int(s_bondbuffer.size());
-    insert += sizeof(int);
+    auto size = s_bondbuffer.size();
+    insert = Utils::pack(insert, &size);
   }
 
   /* Assert that the calculated and actual buffer size match. */
@@ -281,7 +274,7 @@ static void put_recv_buffer(GhostCommunication *gc, int data_parts) {
 
   if (data_parts & GHOSTTRANS_PROPRTS) {
     // skip the final information on bonds to be sent in a second round
-    retrieve += sizeof(int);
+    retrieve += sizeof(size_t);
   }
 
   /* Assert that the actual and calculated buffer size match */
