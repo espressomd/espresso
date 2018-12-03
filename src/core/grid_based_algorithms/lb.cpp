@@ -2335,12 +2335,12 @@ std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
 template <typename T>
 std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
   std::array<T, 19> ret;
-  const auto normalized_modes = normalize_modes(modes);
+  auto const normalized_modes = normalize_modes(modes);
 
   for (int i = 0; i < 19; i++) {
+    auto const temp = lbmodel.e_ki_transposed[i];
     ret[i] =
-        boost::inner_product(lbmodel.e_ki_transposed[i], normalized_modes, 0.0);
-    ret[i] *= lbmodel.w[i];
+        boost::inner_product(temp, normalized_modes, 0.0) * lbmodel.w[i];
   }
   return ret;
 }
