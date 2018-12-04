@@ -17,7 +17,7 @@ class RotDiffAniso(ut.TestCase):
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.skin = 5.0
-    system.seed = 5
+    system.seed = range(system.cell_system.get_state()["n_nodes"]) 
 
     # The NVT thermostat parameters
     kT = 0.0
@@ -135,7 +135,7 @@ class RotDiffAniso(ut.TestCase):
         dcosij2_dev = np.zeros((3, 3))
 
         self.system.time = 0.0
-        int_steps = 10
+        int_steps = 20
         loops = 100
         for step in range(loops):
             self.system.integrator.run(steps=int_steps)
@@ -318,7 +318,7 @@ class RotDiffAniso(ut.TestCase):
                                 i, j, dcosij2_dev[i, j]))
 
     def test_case_00(self):
-        n = 400
+        n = 800
         self.rot_diffusion_param_setup(n)
         self.system.thermostat.set_langevin(
             kT=self.kT, gamma=self.gamma_global)
