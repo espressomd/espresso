@@ -215,7 +215,6 @@ void nsq_balance_particles(int global_flag) {
         send_buf.part[i] = std::move(local->part[--local->n]);
       }
       realloc_particlelist(local, local->n);
-      update_local_particles(local);
 
       send_particles(&send_buf, l_node);
 
@@ -224,7 +223,7 @@ void nsq_balance_particles(int global_flag) {
 
       recv_particles(&recv_buf, s_node);
       for (int i = 0; i < recv_buf.n; i++) {
-        append_unindexed_particle(local, std::move(recv_buf.part[i]));
+        append_particle(local, std::move(recv_buf.part[i]));
       }
 
       realloc_particlelist(&recv_buf, 0);

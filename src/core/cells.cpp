@@ -313,24 +313,17 @@ void fold_and_reset(Particle &p) {
  * Removes a particle from a particle list and
  * from the particle index.
  */
-Particle extract_indexed_particle(ParticleList *sl, int i) {
+Particle extract_particle(ParticleList *sl, int i) {
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
 
   Particle p = std::move(*src);
 
-  assert(p.p.identity <= max_seen_particle);
-  local_particles[p.p.identity] = nullptr;
-
   if (src != end) {
     new (src) Particle(std::move(*end));
   }
 
-  if (realloc_particlelist(sl, --sl->n)) {
-    update_local_particles(sl);
-  } else if (src != end) {
-    local_particles[src->p.identity] = src;
-  }
+  realloc_particlelist(sl, --sl->n);
   return p;
 }
 } // namespace
@@ -360,14 +353,14 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
       auto target_cell = cs.position_to_cell(p.r.p);
 
       if (target_cell == nullptr) {
-        append_unindexed_particle(&displaced_parts,
-                                  extract_indexed_particle(c, i));
+        append_particle(&displaced_parts,
+                        extract_particle(c, i));
 
         if (i < c->n) {
           i--;
         }
       } else if (target_cell != c) {
-        move_indexed_particle(target_cell, c, i);
+        move_particle(target_cell, c, i);
 
         if (i < c->n) {
           i--;
@@ -409,7 +402,7 @@ void cells_resort_particles(int global_flag, CellPList local_cells) {
       runtimeErrorMsg() << "Particle " << part.identity()
                         << " moved more than"
                            " one local box length in one timestep.";
-      append_unindexed_particle(local_cells.cell[0], std::move(part));
+      append_particle(local_cells.cell[0], std::move(part));
     }
     resort_particles = Cells::RESORT_GLOBAL;
   } else {

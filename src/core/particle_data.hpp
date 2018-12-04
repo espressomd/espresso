@@ -506,7 +506,7 @@ int realloc_particlelist(ParticleList *plist, int size);
     This procedure does not care for \ref local_particles.
     \param l List to append the particle to.
     \param part  Particle to append. */
-void append_unindexed_particle(ParticleList *l, Particle &&part);
+void append_particle(ParticleList *l, Particle &&part);
 
 /** Remove a particle from one particle List and append it to another.
     Refill the sourceList with last particle and update its entry in
@@ -518,20 +518,8 @@ void append_unindexed_particle(ParticleList *l, Particle &&part);
     \param ind        Index of the particle in the sourceList.
     \return Pointer to new location of the particle.
  */
-Particle *move_unindexed_particle(ParticleList *destList,
-                                  ParticleList *sourceList, int ind);
-
-/** Remove a particle from one particle List and append it to another.
-    Refill the sourceList with last particle and update its entry in
-    local_particles. Reallocates particles if necessary.  This
-    procedure cares for \ref local_particles.
-    \param destList   List where the particle is appended.
-    \param sourceList List where the particle will be removed.
-    \param ind        Index of the particle in the sourceList.
-    \return Pointer to new location of the particle.
- */
-Particle *move_indexed_particle(ParticleList *destList,
-                                ParticleList *sourceList, int ind);
+void move_particle(ParticleList *destList,
+                   ParticleList *sourceList, int ind);
 
 /*    Other Functions                           */
 /************************************************/

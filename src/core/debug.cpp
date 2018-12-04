@@ -61,6 +61,7 @@ namespace {
   void check_index_ghost_part(const Particle &p) {
     auto p_index = local_particles[p.identity()];
     assert((p_index) && "Ghost particle is missing from index");
+    assert((p_index->identity() == p.identity()) && "Wrong particle index entry.");
   }
 }
 

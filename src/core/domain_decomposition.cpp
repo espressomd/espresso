@@ -730,10 +730,10 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
     if (target_cell) {
-      append_unindexed_particle(target_cell, std::move(src.part[i]));
+      append_particle(target_cell, std::move(src.part[i]));
     } else {
 
-      append_unindexed_particle(&rest, std::move(src.part[i]));
+      append_particle(&rest, std::move(src.part[i]));
     }
   }
 
@@ -761,14 +761,14 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
     if (get_mi_coord(part.r.p[dir], my_left[dir], dir) < 0.0) {
       if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
 
-        move_unindexed_particle(&left, &src, i);
+        move_particle(&left, &src, i);
         if (i < src.n)
           i--;
       }
     } else if (get_mi_coord(part.r.p[dir], my_right[dir], dir) >= 0.0) {
       if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
 
-        move_unindexed_particle(&right, &src, i);
+        move_particle(&right, &src, i);
         if (i < src.n)
           i--;
       }

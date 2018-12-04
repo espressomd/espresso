@@ -401,14 +401,14 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
         (get_mi_coord(pl->part[p].r.p[2], my_left[2], 2) < 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node below\n",
                          this_node, pl->part[p].p.identity));
-      move_indexed_particle(dn, pl, p);
+      move_particle(dn, pl, p);
     } else if (LAYERED_TOP_NEIGHBOR &&
                (get_mi_coord(pl->part[p].r.p[2], my_right[2], 2) >= 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node above\n",
                          this_node, pl->part[p].p.identity));
-      move_indexed_particle(up, pl, p);
+      move_particle(up, pl, p);
     } else
-      move_indexed_particle(layered_position_to_cell(pl->part[p].r.p), pl, p);
+      move_particle(layered_position_to_cell(pl->part[p].r.p), pl, p);
     /* same particle again, as this is now a new one */
     if (p < pl->n)
       p--;
@@ -435,14 +435,14 @@ void layered_exchange_and_sort_particles(int global_flag,
         (get_mi_coord(part->r.p[2], my_left[2], 2) < 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: send part %d down\n", this_node,
                          part->p.identity));
-      move_indexed_particle(&send_buf_dn, displaced_parts, p);
+      move_particle(&send_buf_dn, displaced_parts, p);
       if (p < displaced_parts->n)
         p--;
     } else if (n_nodes != 1 && LAYERED_TOP_NEIGHBOR &&
                (get_mi_coord(part->r.p[2], my_right[2], 2) >= 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: send part %d up\n", this_node,
                          part->p.identity));
-      move_indexed_particle(&send_buf_up, displaced_parts, p);
+      move_particle(&send_buf_up, displaced_parts, p);
       if (p < displaced_parts->n)
         p--;
     }
@@ -524,9 +524,9 @@ void layered_exchange_and_sort_particles(int global_flag,
         /* sort left over particles into border cells */
         CELL_TRACE(fprintf(stderr, "%d: emergency sort\n", this_node));
         while (send_buf_up.n > 0)
-          move_indexed_particle(&cells[1], &send_buf_up, 0);
+          move_particle(&cells[1], &send_buf_up, 0);
         while (send_buf_dn.n > 0)
-          move_indexed_particle(&cells[n_layers], &send_buf_dn, 0);
+          move_particle(&cells[n_layers], &send_buf_dn, 0);
       }
       break;
     }

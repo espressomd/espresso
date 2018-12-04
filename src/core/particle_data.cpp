@@ -254,52 +254,24 @@ void update_local_particles(ParticleList *pl) {
     local_particles[p[i].p.identity] = &p[i];
 }
 
-void append_unindexed_particle(ParticleList *l, Particle &&part) {
+void append_particle(ParticleList *l, Particle &&part) {
   realloc_particlelist(l, ++l->n);
   new (&(l->part[l->n - 1])) Particle(std::move(part));
 }
 
-Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
-  realloc_particlelist(dl, ++dl->n);
-  auto dst = &dl->part[dl->n - 1];
-  auto src = &sl->part[i];
-  auto end = &sl->part[sl->n - 1];
+void move_particle(ParticleList *destList, ParticleList *sourceList, int ind) {
+  realloc_particlelist(destList, ++destList->n);
+  auto dst = &destList->part[destList->n - 1];
+  auto src = &sourceList->part[ind];
+  auto end = &sourceList->part[sourceList->n - 1];
 
   new (dst) Particle(std::move(*src));
   if (src != end) {
     new (src) Particle(std::move(*end));
   }
 
-  sl->n -= 1;
-  realloc_particlelist(sl, sl->n);
-  return dst;
-}
-
-Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
-  int re = realloc_particlelist(dl, ++dl->n);
-  Particle *dst = &dl->part[dl->n - 1];
-  Particle *src = &sl->part[i];
-  Particle *end = &sl->part[sl->n - 1];
-
-  new (dst) Particle(std::move(*src));
-
-  assert(dst->p.identity <= max_seen_particle);
-
-  if (re) {
-    update_local_particles(dl);
-  } else {
-    local_particles[dst->p.identity] = dst;
-  }
-  if (src != end) {
-    new (src) Particle(std::move(*end));
-  }
-
-  if (realloc_particlelist(sl, --sl->n)) {
-    update_local_particles(sl);
-  } else if (src != end) {
-    local_particles[src->p.identity] = src;
-  }
-  return dst;
+  sourceList->n -= 1;
+  realloc_particlelist(sourceList, sourceList->n);
 }
 
 namespace {
@@ -1036,7 +1008,6 @@ void send_particles(ParticleList *particles, int node) {
 
   /* remove particles from this nodes local list and free data */
   for (int pc = 0; pc < particles->n; pc++) {
-    local_particles[particles->part[pc].p.identity] = nullptr;
     free_particle(&particles->part[pc]);
   }
 
@@ -1046,8 +1017,6 @@ void send_particles(ParticleList *particles, int node) {
 void recv_particles(ParticleList *particles, int node) {
   PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
   comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
-
-  update_local_particles(particles);
 }
 
 #ifdef EXCLUSIONS
