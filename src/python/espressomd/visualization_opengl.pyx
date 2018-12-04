@@ -755,9 +755,7 @@ class openGLLive(object):
         self.shapes = collections.defaultdict(list)
 
         # Collect shapes and interaction type (for coloring) from constraints
-        primitive_shapes = [
-            'Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid',
-                            'Shapes::SimplePore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
+        primitive_shapes = ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid', 'Shapes::SimplePore', 'Shapes::Slitpore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
 
         coll_shape_obj = collections.defaultdict(list)
         for c in self.system.constraints:
@@ -817,6 +815,16 @@ class openGLLive(object):
             smoothing_radius = np.array(s[0].get_parameter('smoothing_radius'))
             self.shapes['Shapes::SimplePore'].append(
                 [center, axis, length, radius, smoothing_radius, s[1]])
+
+        for s in coll_shape_obj['Shapes::Slitpore']:
+            channel_width = np.array(s[0].get_parameter('channel_width'))
+            lower_smoothing_radius = np.array(s[0].get_parameter('lower_smoothing_radius'))
+            upper_smoothing_radius = np.array(s[0].get_parameter('upper_smoothing_radius'))
+            pore_length = np.array(s[0].get_parameter('pore_length'))
+            pore_mouth = np.array(s[0].get_parameter('pore_mouth'))
+            pore_width = np.array(s[0].get_parameter('pore_width'))
+            self.shapes['Shapes::Slitpore'].append(
+                [channel_width, lower_smoothing_radius, upper_smoothing_radius, pore_length, pore_mouth, pore_width, s[1]])
 
         for s in coll_shape_obj['Shapes::SpheroCylinder']:
             pos = np.array(s[0].get_parameter('center'))
@@ -982,6 +990,12 @@ class openGLLive(object):
         for s in self.shapes['Shapes::Sphere']:
             draw_sphere(s[0], s[1], self._modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self._modulo_indexing(
                 self.specs['constraint_type_materials'], s[2])], self.specs['quality_constraints'])
+
+        for s in self.shapes['Shapes::Slitpore']:
+             draw_slitpore(
+                 s[0], s[1], s[2], s[3], s[4], s[5], max(self.system.box_l), self._modulo_indexing(
+                     self.specs['constraint_type_colors'], s[6]),
+                              self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[6])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Wall']:
             draw_plane(
@@ -1764,8 +1778,8 @@ class openGLLive(object):
         OpenGL.GL.glHint(OpenGL.GL.GL_LINE_SMOOTH_HINT, OpenGL.GL.GL_NICEST)
 
         # BAD FOR TRANSPARENT PARTICLES
-        # OpenGL.GL.glEnable(GL_CULL_FACE)
-        # glCullFace(GL_BACK)
+        # OpenGL.GL.glEnable(OpenGL.GL.GL_CULL_FACE)
+        # OpenGL.GL.glCullFace(OpenGL.GL.GL_BACK)
 
         OpenGL.GL.glLineWidth(2.0)
         OpenGL.GLUT.glutIgnoreKeyRepeat(1)
@@ -1914,13 +1928,13 @@ def draw_sphere(pos, radius, color, material, quality):
     OpenGL.GL.glPopMatrix()
 
 
-def draw_plane(edges, color, material):
+def draw_plane(corners, color, material):
 
     set_solid_material(color, material)
 
     OpenGL.GL.glBegin(OpenGL.GL.GL_QUADS)
-    for e in edges:
-        OpenGL.GL.glVertex3f(e[0], e[1], e[2])
+    for c in corners:
+        OpenGL.GL.glVertex3f(c[0], c[1], c[2])
     OpenGL.GL.glEnd()
 
 
@@ -2007,7 +2021,6 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     OpenGL.GLU.gluCylinder(quadric, radius, radius, length - 2 *
                            smoothing_radius, quality, quality)
     # torus segment
-
     OpenGL.GL.glEnable(clip_plane)
     OpenGL.GL.glClipPlane(clip_plane, (0, 0, -1, 0))
     OpenGL.GLUT.glutSolidTorus(smoothing_radius, (radius +
@@ -2028,6 +2041,86 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     OpenGL.GL.glTranslate(0, 0, smoothing_radius)
     OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
                               2.0 * max_box_l, quality, 1, 0, 360)
+
+    OpenGL.GL.glPopMatrix()
+
+
+def draw_slitpore(channel_width, lower_smoothing_radius, upper_smoothing_radius, pore_length, pore_mouth, pore_width, max_box_l, color, material, quality):
+    set_solid_material(color, material)
+    # If pore is large, an additional wall is necessary
+    if (pore_width > 2. * lower_smoothing_radius):
+        wall_0 = [
+                [0.5 * (max_box_l - pore_width) + lower_smoothing_radius, 0., pore_mouth - pore_length],
+                [0.5 * (max_box_l + pore_width) - lower_smoothing_radius, 0., pore_mouth - pore_length],
+                [0.5 * (max_box_l + pore_width) - lower_smoothing_radius, max_box_l, pore_mouth - pore_length],
+                [0.5 * (max_box_l - pore_width) + lower_smoothing_radius, max_box_l, pore_mouth - pore_length]]
+        draw_plane(wall_0, color, material)
+
+    # Add the remaining walls
+    wall_1 = [
+            [0., 0., channel_width + pore_mouth],
+            [max_box_l, 0., channel_width + pore_mouth],
+            [max_box_l, max_box_l, channel_width + pore_mouth],
+            [0., max_box_l, channel_width + pore_mouth]]
+
+    wall_2 = [
+            [0., 0., pore_mouth],
+            [0.5 * (max_box_l - pore_width) - upper_smoothing_radius, 0., pore_mouth],
+            [0.5 * (max_box_l - pore_width) - upper_smoothing_radius, max_box_l, pore_mouth],
+            [0., max_box_l, pore_mouth]]
+
+    wall_3 = [
+            [0.5 * (max_box_l + pore_width) + upper_smoothing_radius, 0., pore_mouth],
+            [max_box_l, 0., pore_mouth],
+            [max_box_l, max_box_l, pore_mouth],
+            [0.5 * (max_box_l + pore_width) + upper_smoothing_radius, max_box_l, pore_mouth]]
+
+    wall_4 = [
+            [0.5 * (max_box_l - pore_width), 0., pore_mouth - upper_smoothing_radius],
+            [0.5 * (max_box_l - pore_width), max_box_l, pore_mouth - upper_smoothing_radius],
+            [0.5 * (max_box_l - pore_width), max_box_l, pore_mouth - pore_length + lower_smoothing_radius],
+            [0.5 * (max_box_l - pore_width), 0., pore_mouth - pore_length + lower_smoothing_radius]]
+
+    wall_5 = [
+            [0.5 * (max_box_l + pore_width), 0., pore_mouth - upper_smoothing_radius],
+            [0.5 * (max_box_l + pore_width), max_box_l, pore_mouth - upper_smoothing_radius],
+            [0.5 * (max_box_l + pore_width), max_box_l, pore_mouth - pore_length + lower_smoothing_radius],
+            [0.5 * (max_box_l + pore_width), 0., pore_mouth - pore_length + lower_smoothing_radius]]
+
+    draw_plane(wall_1, color, material)
+    draw_plane(wall_2, color, material)
+    draw_plane(wall_3, color, material)
+    draw_plane(wall_4, color, material)
+    draw_plane(wall_5, color, material)
+
+    # Add smooth edges via clipped cylinders
+    ax, rx, ry = rotation_helper([0., 1., 0.])
+
+    OpenGL.GL.glPushMatrix()
+    quadric = OpenGL.GLU.gluNewQuadric()
+    OpenGL.GL.glTranslate(0.5*max_box_l - upper_smoothing_radius - 0.5 * pore_width, 0,  pore_mouth - upper_smoothing_radius)
+    OpenGL.GL.glRotatef(ax, rx, ry, 0.)
+
+    # Upper edges
+    clip_plane = get_extra_clip_plane()
+    OpenGL.GL.glEnable(clip_plane)
+    OpenGL.GL.glClipPlane(clip_plane, (1, -1, 0, -upper_smoothing_radius))
+    OpenGL.GLU.gluCylinder(quadric, upper_smoothing_radius, upper_smoothing_radius, max_box_l, quality, quality)
+
+    OpenGL.GL.glTranslate(pore_width + 2. * upper_smoothing_radius, 0, 0)
+    OpenGL.GL.glClipPlane(clip_plane, (-1, -1, 0, -upper_smoothing_radius))
+    OpenGL.GLU.gluCylinder(quadric, upper_smoothing_radius, upper_smoothing_radius, max_box_l, quality, quality)
+
+    # Lower edges
+    OpenGL.GL.glTranslate(- upper_smoothing_radius - lower_smoothing_radius, pore_length - upper_smoothing_radius - lower_smoothing_radius, 0)
+    OpenGL.GL.glClipPlane(clip_plane, (1, 1, 0, -lower_smoothing_radius))
+    OpenGL.GLU.gluCylinder(quadric, lower_smoothing_radius, lower_smoothing_radius, max_box_l, quality, quality)
+
+    OpenGL.GL.glTranslate(-pore_width + 2. * lower_smoothing_radius, 0, 0)
+    OpenGL.GL.glClipPlane(clip_plane, (-1, 1, 0, -lower_smoothing_radius))
+    OpenGL.GLU.gluCylinder(quadric, lower_smoothing_radius, lower_smoothing_radius, max_box_l, quality, quality)
+
+    OpenGL.GL.glDisable(clip_plane)
 
     OpenGL.GL.glPopMatrix()
 
