@@ -93,7 +93,7 @@ public:
         return is_vector(par.at("value"));
       }
     }
-    
+
     if (method == "mirror") {
       return par.at("value");
     }
