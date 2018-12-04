@@ -252,7 +252,7 @@ static void prepare_ghost_cell(Cell *cell, int size) {
       Particle *pt = new (&part[p]) Particle();
 
       // init ghost variable
-      pt->l.ghost = 1;
+      pt->l.ghost = true;
     }
   }
 }

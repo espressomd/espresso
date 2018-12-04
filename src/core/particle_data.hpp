@@ -280,7 +280,7 @@ struct ParticleLocal {
   Vector3i i = {0, 0, 0};
 
   /** check whether a particle is a ghost or not */
-  int ghost = 0;
+  bool ghost = false;
 
 #ifdef GHMC
   /** Data for the ghmc thermostat, last saved
