@@ -3,7 +3,7 @@ set(cluster_analysis_SRC
     ClusterStructure.cpp
 )
 add_library(cluster_analysis SHARED ${cluster_analysis_SRC})
-install(TARGETS cluster_analysis LIBRARY DESTINATION ${LIBDIR})
+install(TARGETS cluster_analysis LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(cluster_analysis PROPERTIES SOVERSION ${SOVERSION})
 set_target_properties(cluster_analysis PROPERTIES MACOSX_RPATH TRUE)
 add_dependencies(cluster_analysis EspressoConfig)

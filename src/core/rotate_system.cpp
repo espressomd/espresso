@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "initialize.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
@@ -66,7 +67,7 @@ void local_rotate_system(double phi, double theta, double alpha) {
       p.r.p[j] = com[j] + res[j];
     }
 #ifdef ROTATION
-    local_rotate_particle(&p, axis, alpha);
+    local_rotate_particle(p, axis, alpha);
 #endif
   }
 

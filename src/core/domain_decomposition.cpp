@@ -27,11 +27,19 @@
 
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
+#include "grid.hpp"
+
+#include "utils/mpi/sendrecv.hpp"
+#include "utils/serialization/ParticleList.hpp"
+
+#include "initialize.hpp"
+
+#include <boost/mpi/collectives.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr
     pointer. */
-Cell *dd_save_position_to_cell(const double pos[3]);
+Cell *dd_save_position_to_cell(const Vector3d &pos);
 
 /************************************************/
 /** \name Defines */
@@ -53,9 +61,6 @@ DomainDecomposition dd;
 int max_num_cells = CELLS_MAX_NUM_CELLS;
 int min_num_cells = 1;
 double max_skin = 0.0;
-
-// Full shell neighbor index offsets for dd_full_shell_neigh()
-std::vector<int> dd_fs_neigh;
 
 /*@}*/
 
@@ -549,103 +554,32 @@ void dd_init_cell_interactions() {
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr
     pointer. */
-Cell *dd_save_position_to_cell(const double pos[3]) {
-  int i, cpos[3];
+Cell *dd_save_position_to_cell(const Vector3d &pos) {
+  int cpos[3];
 
-  for (i = 0; i < 3; i++) {
-    double lpos = pos[i] - my_left[i];
-
+  for (int i = 0; i < 3; i++) {
+    auto const lpos = pos[i] - my_left[i];
     cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
 
     /* particles outside our box. Still take them if
-       VERY close or nonperiodic boundary */
+       nonperiodic boundary */
     if (cpos[i] < 1) {
-      if (lpos > -ROUND_ERROR_PREC * box_l[i] ||
-          (!PERIODIC(i) && boundary[2 * i]))
+      if (!PERIODIC(i) && boundary[2 * i])
         cpos[i] = 1;
       else
         return nullptr;
     } else if (cpos[i] > dd.cell_grid[i]) {
-      if (lpos < local_box_l[i] + ROUND_ERROR_PREC * box_l[i] ||
-          (!PERIODIC(i) && boundary[2 * i + 1]))
+      if (!PERIODIC(i) && boundary[2 * i + 1])
         cpos[i] = dd.cell_grid[i];
       else
         return nullptr;
     }
   }
-  i = get_linear_index(
+
+  auto const ind = get_linear_index(
       cpos[0], cpos[1], cpos[2],
       {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]});
-  return &(cells[i]);
-}
-
-/*************************************************/
-
-/** Append the particles in pl to \ref local_cells and update \ref
-   local_particles.
-    @return 0 if all particles in pl reside in the nodes domain otherwise 1.*/
-int dd_append_particles(ParticleList *pl, int fold_dir) {
-  int p, dir, cpos[3], flag = 0, fold_coord = fold_dir / 2;
-
-  CELL_TRACE(fprintf(stderr, "%d: dd_append_particles %d\n", this_node, pl->n));
-
-  for (p = 0; p < pl->n; p++) {
-    if (boundary[fold_dir] != 0) {
-      fold_coordinate(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i,
-                      fold_coord);
-    }
-
-    for (dir = 0; dir < 3; dir++) {
-      auto lpos = pl->part[p].r.p[dir] - my_left[dir];
-      cpos[dir] =
-          static_cast<int>(std::floor(lpos * dd.inv_cell_size[dir])) + 1;
-
-      /* If the calculated cell for the particle does not belong to
-         this node, (cpos < 1 or cpos > dd.cell_grid), we still keep them
-         if the system is not periodic in dir and we are at the boundary.
-         These are particles that have left the box in a non-periodic direction,
-         which are kept on the boundary node. Otherwise we set flag = 1 to keep
-         sorting, these particles are the send to the left or right neighbor
-         of this node in the next round. */
-      if (cpos[dir] < 1) {
-        cpos[dir] = 1;
-        if (PERIODIC(dir) || !boundary[2 * dir]) {
-          flag = 1;
-          CELL_TRACE(if (fold_coord == 2) {
-            fprintf(stderr,
-                    "%d: dd_append_particles: particle %d (%f,%f,%f) "
-                    "not inside node domain.\n",
-                    this_node, pl->part[p].p.identity, pl->part[p].r.p[0],
-                    pl->part[p].r.p[1], pl->part[p].r.p[2]);
-          });
-        }
-      } else if (cpos[dir] > dd.cell_grid[dir]) {
-        cpos[dir] = dd.cell_grid[dir];
-        if (PERIODIC(dir) || !boundary[2 * dir + 1]) {
-          flag = 1;
-          CELL_TRACE(if (fold_coord == 2) {
-            fprintf(stderr,
-                    "%d: dd_append_particles: particle %d (%f,%f,%f) "
-                    "not inside node domain.\n",
-                    this_node, pl->part[p].p.identity, pl->part[p].r.p[0],
-                    pl->part[p].r.p[1], pl->part[p].r.p[2]);
-          });
-        }
-      }
-    }
-    int c = get_linear_index(
-        cpos[0], cpos[1], cpos[2],
-        {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]});
-    CELL_TRACE(fprintf(
-        stderr,
-        "%d: dd_append_particles: Append Part id=%d to cell %d cpos %d %d %d\n",
-        this_node, pl->part[p].p.identity, c, cpos[0], cpos[1], cpos[2]));
-    append_indexed_particle(&cells[c], std::move(pl->part[p]));
-  }
-  CELL_TRACE(
-      fprintf(stderr, "%d: dd_append_particles: flag=%d\n", this_node, flag));
-
-  return flag;
+  return &(cells[ind]);
 }
 
 /*@}*/
@@ -766,7 +700,7 @@ void dd_topology_init(CellPList *old) {
     Particle *part = old->cell[c]->part;
     int np = old->cell[c]->n;
     for (p = 0; p < np; p++) {
-      Cell *nc = dd_save_position_to_cell(part[p].r.p.data());
+      Cell *nc = dd_save_position_to_cell(part[p].r.p);
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
       if (nc == nullptr)
@@ -794,218 +728,138 @@ void dd_topology_release() {
   free_comm(&cell_structure.collect_ghost_force_comm);
 }
 
-/************************************************************/
-void dd_exchange_and_sort_particles(int global_flag) {
-  int dir, c, p, i, finished = 0;
-  ParticleList *cell, *sort_cell, send_buf_l, send_buf_r, recv_buf_l,
-      recv_buf_r;
-  Particle *part;
-  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles(%d):\n",
-                     this_node, global_flag));
-  CELL_TRACE(fprintf(stderr, "%d: node_neighbors are %d %d %d %d %d %d\n",
-                     this_node, node_neighbors[0], node_neighbors[1],
-                     node_neighbors[2], node_neighbors[3], node_neighbors[4],
-                     node_neighbors[5]));
+namespace {
+/**
+ * @brief Move particles into the cell system if
+ *        it belongs to this node.
+ *
+ * Moves all particles from src into the local cell
+ * system if they do belong here. Otherwise the
+ * particles are moved into rest.
+ *
+ * @param src Particles to move.
+ * @param rest Output list for left-over particles.
+ */
+void move_if_local(ParticleList &src, ParticleList &rest) {
+  for (int i = 0; i < src.n; i++) {
+    auto &part = src.part[i];
 
-  init_particlelist(&send_buf_l);
-  init_particlelist(&send_buf_r);
-  init_particlelist(&recv_buf_l);
-  init_particlelist(&recv_buf_r);
-  while (finished == 0) {
-    finished = 1;
-    /* direction loop: x, y, z */
-    for (dir = 0; dir < 3; dir++) {
-      if (node_grid[dir] > 1) {
-        /* Communicate particles that have left the node domain */
-        /* particle loop */
-        for (c = 0; c < local_cells.n; c++) {
-          cell = local_cells.cell[c];
-          for (p = 0; p < cell->n; p++) {
-            part = &cell->part[p];
-            /* Move particles to the left side */
-            // Without the factor 0.5 in front of ROUND_ERROR_PREC, particles
-            // sitting exactly on the boundary
-            // may be accepted (i.e. not sent) here and rejected later on by
-            // dd_save_position_to_cell
-            if (part->r.p[dir] - my_left[dir] <
-                -0.5 * ROUND_ERROR_PREC * box_l[dir]) {
-              if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
-                CELL_TRACE(fprintf(stderr,
-                                   "%d: dd_ex_and_sort_p: send part left %d\n",
-                                   this_node, part->p.identity));
-                local_particles[part->p.identity] = nullptr;
-                move_indexed_particle(&send_buf_l, cell, p);
-                if (p < cell->n)
-                  p--;
-              }
-            }
-            /* Move particles to the right side */
-            // Factor 0.5 see above
-            else if (part->r.p[dir] - my_right[dir] >=
-                     0.5 * ROUND_ERROR_PREC * box_l[dir]) {
-              if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
-                CELL_TRACE(fprintf(stderr,
-                                   "%d: dd_ex_and_sort_p: send part right %d\n",
-                                   this_node, part->p.identity));
-                local_particles[part->p.identity] = nullptr;
-                move_indexed_particle(&send_buf_r, cell, p);
-                if (p < cell->n)
-                  p--;
-              }
-            }
-            /* Sort particles in cells of this node during last direction */
-            else if (dir == 2) {
-              sort_cell = dd_save_position_to_cell(part->r.p.data());
-              if (sort_cell != cell) {
-                if (sort_cell == nullptr) {
-                  CELL_TRACE(fprintf(
-                      stderr,
-                      "%d: dd_exchange_and_sort_particles: Take another loop",
-                      this_node));
-                  CELL_TRACE(fprintf(stderr,
-                                     "%d: "
-                                     "dd_exchange_and_sort_particles: "
-                                     "CP1 Particle %d (%f,%f,%f) not "
-                                     "inside node domain.\n",
-                                     this_node, part->p.identity, part->r.p[0],
-                                     part->r.p[1], part->r.p[2]));
-                  finished = 0;
-                  sort_cell = local_cells.cell[0];
-                  if (sort_cell != cell) {
-                    move_indexed_particle(sort_cell, cell, p);
-                    if (p < cell->n)
-                      p--;
-                  }
-                } else {
-                  move_indexed_particle(sort_cell, cell, p);
-                  if (p < cell->n)
-                    p--;
-                }
-              }
-            }
-          }
-        }
+    assert(local_particles[src.part[i].p.identity] == nullptr);
 
-        CELL_TRACE(fprintf(stderr, "%d: send receive %d\n", this_node, dir));
+    auto target_cell = dd_save_position_to_cell(part.r.p);
 
-        if (node_pos[dir] % 2 == 0) {
-          send_particles(&send_buf_l, node_neighbors[2 * dir]);
-          recv_particles(&recv_buf_r, node_neighbors[2 * dir + 1]);
-          send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
-          recv_particles(&recv_buf_l, node_neighbors[2 * dir]);
-        } else {
-          recv_particles(&recv_buf_r, node_neighbors[2 * dir + 1]);
-          send_particles(&send_buf_l, node_neighbors[2 * dir]);
-          recv_particles(&recv_buf_l, node_neighbors[2 * dir]);
-          send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
-        }
-
-        /* sort received particles to cells, folding of coordinates also happens
-         * in here. */
-        if (dd_append_particles(&recv_buf_l, 2 * dir) && dir == 2)
-          finished = 0;
-        if (dd_append_particles(&recv_buf_r, 2 * dir + 1) && dir == 2)
-          finished = 0;
-        /* reset send/recv buffers */
-        send_buf_l.n = 0;
-        send_buf_r.n = 0;
-        recv_buf_l.n = 0;
-        recv_buf_r.n = 0;
-      } else {
-        /* Single node direction case (no communication) */
-        /* Fold particles that have left the box */
-        /* particle loop */
-        for (c = 0; c < local_cells.n; c++) {
-          cell = local_cells.cell[c];
-          for (p = 0; p < cell->n; p++) {
-            part = &cell->part[p];
-            if (PERIODIC(dir)) {
-              fold_coordinate(part->r.p, part->m.v, part->l.i, dir);
-            }
-            if (dir == 2) {
-              sort_cell = dd_save_position_to_cell(part->r.p.data());
-              if (sort_cell != cell) {
-                if (sort_cell == nullptr) {
-                  CELL_TRACE(fprintf(stderr,
-                                     "%d: "
-                                     "dd_exchange_and_sort_particles: "
-                                     "CP2 Particle %d (%f,%f,%f) not "
-                                     "inside node domain.\n",
-                                     this_node, part->p.identity, part->r.p[0],
-                                     part->r.p[1], part->r.p[2]));
-                  finished = 0;
-                  sort_cell = local_cells.cell[0];
-                  if (sort_cell != cell) {
-                    move_indexed_particle(sort_cell, cell, p);
-                    if (p < cell->n)
-                      p--;
-                  }
-                } else {
-                  CELL_TRACE(fprintf(stderr,
-                                     "%d: "
-                                     "dd_exchange_and_sort_particles: "
-                                     "move particle id %d\n",
-                                     this_node, part->p.identity));
-                  move_indexed_particle(sort_cell, cell, p);
-                  if (p < cell->n)
-                    p--;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    /* Communicate whether particle exchange is finished */
-    if (global_flag == CELL_GLOBAL_EXCHANGE) {
-      if (this_node == 0) {
-        int sum;
-        MPI_Reduce(&finished, &sum, 1, MPI_INT, MPI_SUM, 0, comm_cart);
-        if (sum < n_nodes)
-          finished = 0;
-        else
-          finished = sum;
-      } else {
-        MPI_Reduce(&finished, nullptr, 1, MPI_INT, MPI_SUM, 0, comm_cart);
-      }
-      MPI_Bcast(&finished, 1, MPI_INT, 0, comm_cart);
+    if (target_cell) {
+      append_indexed_particle(target_cell, std::move(src.part[i]));
     } else {
-      if (finished == 0) {
-        runtimeErrorMsg() << "some particles moved more than min_local_box_l, "
-                             "reduce the time step";
-        /* the bad guys are all in cell 0, but probably their interactions are
-           of no importance anyways.
-           However, their positions have to be made valid again. */
-        finished = 1;
-        /* all out of range coordinates in the left overs cell are moved to
-         * (0,0,0) */
-        cell = local_cells.cell[0];
-        for (p = 0; p < cell->n; p++) {
-          part = &cell->part[p];
-          if (dir < 3 &&
-              (part->r.p[dir] < my_left[dir] || part->r.p[dir] > my_right[dir]))
-            for (i = 0; i < 3; i++)
-              part->r.p[i] = 0;
-        }
-      }
+
+      append_unindexed_particle(&rest, std::move(src.part[i]));
     }
-    CELL_TRACE(fprintf(
-        stderr, "%d: dd_exchange_and_sort_particles: finished value: %d\n",
-        this_node, finished));
   }
 
-  realloc_particlelist(&send_buf_l, 0);
-  realloc_particlelist(&send_buf_r, 0);
-  realloc_particlelist(&recv_buf_l, 0);
-  realloc_particlelist(&recv_buf_r, 0);
+  realloc_particlelist(&src, src.n = 0);
+}
 
-#ifdef ADDITIONAL_CHECKS
-  check_particle_consistency();
-#endif
+/**
+ * @brief Split particle list by direction.
+ *
+ * Moves all particles from src into left
+ * and right depending if they belong to
+ * the left or right side from local node
+ * in direction dir.
+ *
+ * @param src Particles to sort.
+ * @param left Particles that should go to the left
+ * @param right Particles that should go to the right
+ * @param dir Direction to consider.
+ */
+void move_left_or_right(ParticleList &src, ParticleList &left,
+                        ParticleList &right, int dir) {
+  for (int i = 0; i < src.n; i++) {
+    auto &part = src.part[i];
 
-  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles finished\n",
-                     this_node));
+    assert(local_particles[src.part[i].p.identity] == nullptr);
+
+    if (get_mi_coord(part.r.p[dir], my_left[dir], dir) < 0.0) {
+      if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
+
+        move_unindexed_particle(&left, &src, i);
+        if (i < src.n)
+          i--;
+      }
+    } else if (get_mi_coord(part.r.p[dir], my_right[dir], dir) >= 0.0) {
+      if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
+
+        move_unindexed_particle(&right, &src, i);
+        if (i < src.n)
+          i--;
+      }
+    }
+  }
+}
+
+void exchange_neighbors(ParticleList *pl) {
+  for (int dir = 0; dir < 3; dir++) {
+    /* Single node direction, no action needed. */
+    if (node_grid[dir] == 1) {
+      continue;
+      /* In this (common) case left and right neighbors are
+         the same, and we need only one communication */
+    } else if (node_grid[dir] == 2) {
+      ParticleList send_buf, recv_buf;
+      move_left_or_right(*pl, send_buf, send_buf, dir);
+
+      Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf,
+                           node_neighbors[2 * dir], 0, recv_buf);
+
+      realloc_particlelist(&send_buf, 0);
+
+      move_if_local(recv_buf, *pl);
+    } else {
+      using boost::mpi::request;
+      using Utils::Mpi::isendrecv;
+
+      ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
+
+      move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
+
+      auto req_l = isendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf_l,
+                             node_neighbors[2 * dir], 0, recv_buf_l);
+      auto req_r =
+          isendrecv(comm_cart, node_neighbors[2 * dir + 1], 0, send_buf_r,
+                    node_neighbors[2 * dir + 1], 0, recv_buf_r);
+
+      std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
+      boost::mpi::wait_all(reqs.begin(), reqs.end());
+
+      move_if_local(recv_buf_l, *pl);
+      move_if_local(recv_buf_r, *pl);
+
+      realloc_particlelist(&send_buf_l, 0);
+      realloc_particlelist(&send_buf_r, 0);
+    }
+  }
+}
+} // namespace
+
+void dd_exchange_and_sort_particles(int global, ParticleList *pl) {
+  if (global) {
+    /* Worst case we need node_grid - 1 rounds per direction.
+     * This correctly implies that if there is only one node,
+     * no action should be taken. */
+    int rounds_left = node_grid[0] + node_grid[1] + node_grid[2] - 3;
+    for (; rounds_left > 0; rounds_left--) {
+      exchange_neighbors(pl);
+
+      auto left_over =
+          boost::mpi::all_reduce(comm_cart, pl->n, std::plus<int>());
+
+      if (left_over == 0) {
+        break;
+      }
+    }
+  } else {
+    exchange_neighbors(pl);
+  }
 }
 
 /*************************************************/

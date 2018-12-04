@@ -20,14 +20,14 @@ MASS
 EXCLUSIONS
 BOND_CONSTRAINT
 LANGEVIN_PER_PARTICLE
-COLLISION_DETECTION             implies GHOSTS_HAVE_BONDS
+COLLISION_DETECTION
 METADYNAMICS
 NEMD
 NPT
 GHMC
 SWIMMER_REACTIONS
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
-PARTICLE_ANISOTROPY
+PARTICLE_ANISOTROPY             implies ROTATION
 
 /* Rotation */
 ROTATION
@@ -105,7 +105,6 @@ UMBRELLA                           requires EXPERIMENTAL_FEATURES
 GAY_BERNE                       implies ROTATION
 GAY_BERNE                       requires EXPERIMENTAL_FEATURES
 OVERLAPPED
-THOLE                           implies GHOSTS_HAVE_BONDS
 THOLE                           requires P3M
 
 /* Fluid-Structure Interactions (object in fluid) */
@@ -137,8 +136,6 @@ GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
 OLD_DIHEDRAL                    notest
 /* turn off certain nonbonded interactions within molecules */
 NO_INTRA_NB                     notest
-/* ghost particles also have the bond information. */
-GHOSTS_HAVE_BONDS               notest
 
 
 /* Debugging */

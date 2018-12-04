@@ -106,7 +106,7 @@ bool steepest_descent_step(void) {
                                : l;
 
         // Rotate the particle around axis dq by amount l
-        local_rotate_particle(&(p), axis, angle);
+        local_rotate_particle(p, axis, angle);
       }
 
       f_max = std::max(f_max, t);
