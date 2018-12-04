@@ -435,7 +435,7 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
         }
 
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          int n_bonds = *(int *)(r_buffer + n_r_buffer - sizeof(int));
+          auto n_bonds = *(size_t *)(r_buffer + n_r_buffer - sizeof(size_t));
           GHOST_TRACE(fprintf(stderr,
                               "%d: ghost_comm receive from %d (%d bonds)\n",
                               this_node, node, n_bonds));
@@ -481,7 +481,7 @@ void ghost_communicator(GhostCommunicator &gc, int data_parts) {
             boost::mpi::broadcast(gc.mpi_comm, r_buffer, n_r_buffer, node);
           }
           if (data_parts & GHOSTTRANS_PROPRTS) {
-            int n_bonds = *(int *)(r_buffer + n_r_buffer - sizeof(int));
+            auto n_bonds = *(size_t *)(r_buffer + n_r_buffer - sizeof(size_t));
             if (n_bonds) {
               r_bondbuffer.resize(n_bonds);
               boost::mpi::broadcast(gc.mpi_comm, r_bondbuffer.data(),
