@@ -74,14 +74,14 @@ inline void *malloc(size_t size) {
 
 template <typename T>
 enable_if_t<boost::has_trivial_copy<T>::value, char *> pack(char *buffer,
-                                                               const T *src) {
+                                                            const T *src) {
   memcpy(buffer, src, sizeof(T));
   return buffer + sizeof(T);
 }
 
 template <typename T>
 enable_if_t<boost::has_trivial_copy<T>::value, char *> unpack(char *buffer,
-                                                                 T *dst) {
+                                                              T *dst) {
   memcpy(dst, reinterpret_cast<T *>(buffer), sizeof(T));
   return buffer + sizeof(T);
 }
