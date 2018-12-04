@@ -520,8 +520,7 @@ void append_particle(ParticleList *l, Particle &&part);
     \param ind        Index of the particle in the sourceList.
     \return Pointer to new location of the particle.
  */
-void move_particle(ParticleList *destList,
-                   ParticleList *sourceList, int ind);
+void move_particle(ParticleList *destList, ParticleList *sourceList, int ind);
 
 /*    Other Functions                           */
 /************************************************/

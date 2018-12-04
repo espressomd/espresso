@@ -35,51 +35,53 @@ int check_id = ONEPART_DEBUG_ID;
 #endif
 
 namespace {
-  void check_node(int this_node, const Particle & p) {
-    assert((cell_structure.position_to_node(p.r.p) == this_node) && "Particle on wrong node.");
-  }
-
-  void check_cell(const Cell * cell, const Particle & p) {
-    assert((cell_structure.position_to_cell(p.r.p) == cell) && "Particle in wrong cell.");
-  }
-
-  /* For local particles we check that they are in the
-   * particles index, and the index entry points to the
-   * correct particle, and that the local particle is not
-   * flagged as ghost. */
-  void check_index_local_part(const Particle &p) {
-    auto p_index = local_particles[p.identity()];
-    assert((p_index) && "Local particle is missing from index");
-    assert((&p == p_index) && "Wrong particle index entry.");
-    assert((not p.l.ghost) && "Local particle is flagged as ghost.");
-  }
-
-  /* For ghosts we can only check that they are listed in
-   * the index. But since they could also be on this node
-   * as local parts or from other ghost cells, we can
-   * not check if the entry is valid. */
-  void check_index_ghost_part(const Particle &p) {
-    auto p_index = local_particles[p.identity()];
-    assert((p_index) && "Ghost particle is missing from index");
-    assert((p_index->identity() == p.identity()) && "Wrong particle index entry.");
-  }
+void check_node(int this_node, const Particle &p) {
+  assert((cell_structure.position_to_node(p.r.p) == this_node) &&
+         "Particle on wrong node.");
 }
 
+void check_cell(const Cell *cell, const Particle &p) {
+  assert((cell_structure.position_to_cell(p.r.p) == cell) &&
+         "Particle in wrong cell.");
+}
+
+/* For local particles we check that they are in the
+ * particles index, and the index entry points to the
+ * correct particle, and that the local particle is not
+ * flagged as ghost. */
+void check_index_local_part(const Particle &p) {
+  auto p_index = local_particles[p.identity()];
+  assert((p_index) && "Local particle is missing from index");
+  assert((&p == p_index) && "Wrong particle index entry.");
+  assert((not p.l.ghost) && "Local particle is flagged as ghost.");
+}
+
+/* For ghosts we can only check that they are listed in
+ * the index. But since they could also be on this node
+ * as local parts or from other ghost cells, we can
+ * not check if the entry is valid. */
+void check_index_ghost_part(const Particle &p) {
+  auto p_index = local_particles[p.identity()];
+  assert((p_index) && "Ghost particle is missing from index");
+  assert((p_index->identity() == p.identity()) &&
+         "Wrong particle index entry.");
+}
+} // namespace
+
 void check_particle_consistency() {
-  for(auto c : local_cells) {
-    for(int i = 0; i < c->n; i++) {
-      auto const&p = c->part[i];
+  for (auto c : local_cells) {
+    for (int i = 0; i < c->n; i++) {
+      auto const &p = c->part[i];
       check_node(this_node, p);
       check_cell(c, p);
       check_index_local_part(p);
     }
   }
 
-  for(auto c : local_cells) {
-    for(int i = 0; i < c->n; i++) {
-      auto const&p = c->part[i];
+  for (auto c : local_cells) {
+    for (int i = 0; i < c->n; i++) {
+      auto const &p = c->part[i];
       check_index_ghost_part(p);
-      }
+    }
   }
 }
-

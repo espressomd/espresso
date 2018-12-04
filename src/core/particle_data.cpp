@@ -197,13 +197,13 @@ void clear_particle_node() { particle_node.clear(); }
  ************************************************/
 
 void build_particle_index() {
-    local_particles.clear();
+  local_particles.clear();
 
-    for(auto &p : ghost_cells.particles()) {
-      local_particles[p.identity()] = &p;
-    }
+  for (auto &p : ghost_cells.particles()) {
+    local_particles[p.identity()] = &p;
+  }
 
-  for(auto &p : local_cells.particles()) {
+  for (auto &p : local_cells.particles()) {
     local_particles[p.identity()] = &p;
   }
 }

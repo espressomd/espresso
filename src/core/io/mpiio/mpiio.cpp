@@ -59,7 +59,6 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-
 #include <mpi.h>
 
 #include <boost/range/algorithm.hpp>
