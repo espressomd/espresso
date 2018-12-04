@@ -145,7 +145,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
     auto const n1 = Utils::get_n_triangle(fp2, fp1, fp3).normalize();
     auto const n2 = Utils::get_n_triangle(fp2, fp3, fp4).normalize();
 
-    auto const phi = angle_btw_triangles(fp1, fp2, fp3, fp4);
+    auto const phi = Utils::angle_btw_triangles(fp1, fp2, fp3, fp4);
     auto const aa = (phi - iaparams->p.oif_local_forces
                                .phi0); // no renormalization by phi0, to be
                                        // consistent with Krueger and Fedosov
@@ -177,7 +177,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
                               double force1[3], double force2[3],
                               double force3[3]) {
       auto const h = (1. / 3.) * (fp1 + fp2 + fp3);
-      auto const A = area_triangle(fp1, fp2, fp3);
+      auto const A = Utils::area_triangle(fp1, fp2, fp3);
       auto const t = sqrt(A / A0) - 1.0;
 
       auto const m1 = h - fp1;

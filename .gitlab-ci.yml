@@ -31,6 +31,28 @@ status_pending:
   tags:
     - linux
 
+style:
+  stage: prepare
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
+  dependencies: []
+  before_script:
+    - git submodule deinit .
+  script:
+    - maintainer/CI/fix_style.sh
+    - git --no-pager diff > style.patch
+    - git diff-index --quiet HEAD -- || (echo "Failed style check. Download $CI_JOB_URL/artifacts/raw/style.patch to see which changes are necessary." && exit 1)
+    - echo "Passed style check"
+  tags:
+    - docker
+    - linux
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  artifacts:
+    paths:
+    - style.patch
+    expire_in: 1 week
+    when: on_failure
+
 ### Builds without CUDA
 
 default:
@@ -183,6 +205,17 @@ empty:
     - linux
     - cuda
 
+### Builds with ROCm
+
+rocm-maxset:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/rocm:latest
+  script:
+    - export myconfig=maxset
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - amdgpu
+
 ### Builds with OS X
 
 osx:
@@ -245,30 +278,6 @@ intel:17:
     - docker
     - linux
     - cuda
-
-### Other builds
-
-style:
-  stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
-  dependencies: []
-  before_script:
-    - git submodule deinit .
-  script:
-    - maintainer/CI/fix_style.sh
-    - git --no-pager diff > style.patch
-    - git diff-index --quiet HEAD -- || (echo "Failed style check. Download $CI_JOB_URL/artifacts/raw/style.patch to see which changes are necessary." && exit 1)
-    - echo "Passed style check"
-  tags:
-    - docker
-    - linux
-  variables:
-    GIT_SUBMODULE_STRATEGY: none
-  artifacts:
-    paths:
-    - style.patch
-    expire_in: 1 week
-    when: on_failure
 
 check_sphinx:
   stage: additional_checks
@@ -337,4 +346,3 @@ status_failure:
   tags:
     - linux
   dependencies: []
-

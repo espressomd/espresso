@@ -33,10 +33,7 @@
 
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <mpi.h>
+#ifdef DP3M
 
 #include "cells.hpp"
 #include "communication.hpp"
@@ -46,11 +43,17 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
-#include "thermostat.hpp"
 #include "tuning.hpp"
-#include "utils.hpp"
 
-#ifdef DP3M
+#include "utils/strcat_alloc.hpp"
+using Utils::strcat_alloc;
+#include "utils/math/sinc.hpp"
+using Utils::sinc;
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <mpi.h>
 
 /************************************************
  * DEFINES
@@ -311,7 +314,7 @@ void dp3m_pre_init(void) {
   dfft_pre_init();
 }
 
-void dp3m_set_prefactor() {
+void dp3m_deactivate() {
   dp3m.params.alpha = 0.0;
   dp3m.params.alpha_L = 0.0;
   dp3m.params.r_cut = 0.0;
@@ -1361,7 +1364,7 @@ void dp3m_calc_meshift(void) {
   dp3m.meshift =
       Utils::realloc(dp3m.meshift, dp3m.params.mesh[0] * sizeof(double));
   for (i = 0; i < dp3m.params.mesh[0]; i++)
-    dp3m.meshift[i] = i - dround(i / dmesh) * dmesh;
+    dp3m.meshift[i] = i - std::round(i / dmesh) * dmesh;
 }
 
 /*****************************************************************************/
@@ -1374,7 +1377,7 @@ void dp3m_calc_differential_operator() {
   dp3m.d_op = Utils::realloc(dp3m.d_op, dp3m.params.mesh[0] * sizeof(double));
 
   for (i = 0; i < dp3m.params.mesh[0]; i++)
-    dp3m.d_op[i] = (double)i - dround((double)i / dmesh) * dmesh;
+    dp3m.d_op[i] = (double)i - std::round((double)i / dmesh) * dmesh;
 
   dp3m.d_op[dp3m.params.mesh[0] / 2] = 0;
 }

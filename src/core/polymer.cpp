@@ -46,6 +46,9 @@
 #include "random.hpp"
 #include "utils.hpp"
 
+#include "utils/vec_rotate.hpp"
+using Utils::vec_rotate;
+
 /*************************************************************
  * Functions                                                 *
  * ---------                                                 *
@@ -91,11 +94,11 @@ double buf_mindist4(double pos[3], int n_add, double *add) {
     return (std::min(std::min(box_l[0], box_l[1]), box_l[2]));
   for (i = 0; i < n_add; i++) {
     dx = pos[0] - add[3 * i + 0];
-    dx -= dround(dx / box_l[0]) * box_l[0];
+    dx -= std::round(dx / box_l[0]) * box_l[0];
     dy = pos[1] - add[3 * i + 1];
-    dy -= dround(dy / box_l[1]) * box_l[1];
+    dy -= std::round(dy / box_l[1]) * box_l[1];
     dz = pos[2] - add[3 * i + 2];
-    dz -= dround(dz / box_l[2]) * box_l[2];
+    dz -= std::round(dz / box_l[2]) * box_l[2];
     mindist =
         std::min(mindist, Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
   }
@@ -112,16 +115,15 @@ int collision(PartCfg &partCfg, double pos[3], double shield, int n_add,
 }
 
 int constraint_collision(double *p1, double *p2) {
-  Particle part1, part2;
   double d1, d2, v[3];
-  double folded_pos1[3];
-  double folded_pos2[3];
+  Vector3d folded_pos1;
+  Vector3d folded_pos2;
   int img[3];
 
-  memmove(folded_pos1, p1, 3 * sizeof(double));
+  memmove(folded_pos1.data(), p1, 3 * sizeof(double));
   fold_position(folded_pos1, img);
 
-  memmove(folded_pos2, p2, 3 * sizeof(double));
+  memmove(folded_pos2.data(), p2, 3 * sizeof(double));
   fold_position(folded_pos2, img);
 
   for (auto &c : Constraints::constraints) {

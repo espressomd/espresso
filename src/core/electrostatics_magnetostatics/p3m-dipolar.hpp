@@ -36,10 +36,14 @@
  *  </ul>
  *
  */
+
+#include "config.hpp"
+
+#ifdef DP3M
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "p3m-common.hpp"
 
-#ifdef DP3M
+#include "utils/math/AS_erfc_part.hpp"
 
 typedef struct {
   p3m_parameter_struct params;
@@ -122,8 +126,6 @@ int dp3m_set_eps(double eps);
  */
 void dp3m_init(void);
 
-void dp3m_set_prefactor(void);
-
 /** Updates \ref p3m_parameter_struct::alpha and \ref
  * p3m_parameter_struct::r_cut if \ref box_l changed. */
 void dp3m_scaleby_box_l();
@@ -137,8 +139,8 @@ int dp3m_sanity_checks();
     Dcur_ca_frac. */
 void dp3m_dipole_assign(void);
 
-/** set prefactor for dipolar p3m */
-void dp3m_set_prefactor(void);
+/** reset dipolar p3m core parameters */
+void dp3m_deactivate(void);
 
 int dp3m_adaptive_tune(char **log);
 
@@ -181,7 +183,7 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
   if (dist < dp3m.params.r_cut && dist > 0) {
     double adist = dp3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-    double erfc_part_ri = AS_erfc_part(adist) / dist;
+    double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
 #else
     double erfc_part_ri = erfc(adist) / dist;
 #endif
@@ -260,7 +262,7 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
     /*fac1 = coulomb.Dprefactor;*/
 
 #if USE_ERFC_APPROXIMATION
-    erfc_part_ri = AS_erfc_part(adist) / dist;
+    erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
     /*  fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */ /* *exp(-adist*adist);
                                                                             */
 #else

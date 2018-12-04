@@ -153,7 +153,7 @@ class VirtualSitesTracersCommon(object):
 
         ## Perform integrat[ion
         last_angle = self.compute_angle()
-        for i in range(8):
+        for i in range(6):
             system.integrator.run(500)
             angle = self.compute_angle()
             print("Angle after relaxation: ", angle)
@@ -201,7 +201,7 @@ class VirtualSitesTracersCommon(object):
 #        system.integrator.run(1)
 #        system.part[3:].pos =system.part[3:].pos +random.random((6,3)) -.5
 
-        system.integrator.run(8000)
+        system.integrator.run(6000)
 
         # For the cpu variant, check particle velocities
         if isinstance(self.lbf, lb.LBFluid):  # as opposed to LBFluidGPU
@@ -242,3 +242,18 @@ class VirtualSitesTracersCommon(object):
         self.assertGreater(dist2non, 2)
         self.assertAlmostEqual(dist2weak, np.sqrt(2), delta=0.3)
         self.assertAlmostEqual(dist2strong, np.sqrt(2), delta=0.1)
+
+    def test_zz_without_lb(self):
+        """Check behaviour without lb. Ignore non-virtual particles, complain on 
+        virutal ones.
+
+        """
+        system = self.system
+        system.virtual_sites = VirtualSitesInertialessTracers()
+        system.actors.clear()
+        system.part.clear()
+        p = system.part.add(pos=(0, 0, 0))
+        system.integrator.run(1)
+        p.virtual = 1
+        with(self.assertRaises(Exception)):
+            system.integrator.run(1)

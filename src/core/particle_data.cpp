@@ -34,11 +34,13 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
+#include "random.hpp"
 #include "rotation.hpp"
 #include "virtual_sites.hpp"
 
@@ -181,7 +183,8 @@ int get_particle_node(int id) {
 
   // Check if particle has a node, if not, we assume it does not exist.
   if (needle == particle_node.end()) {
-    throw std::runtime_error("Particle node not found!");
+    throw std::runtime_error("Particle node for id " + std::to_string(id) +
+                             " not found!");
   } else {
     return needle->second;
   }
@@ -276,6 +279,8 @@ Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
   auto const re = realloc_particlelist(l, ++l->n);
   auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
 
+  assert(p->p.identity <= max_seen_particle);
+
   if (re)
     update_local_particles(l);
   else
@@ -306,6 +311,9 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   Particle *end = &sl->part[sl->n - 1];
 
   new (dst) Particle(std::move(*src));
+
+  assert(dst->p.identity <= max_seen_particle);
+
   if (re) {
     update_local_particles(dl);
   } else {
@@ -314,6 +322,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   if (src != end) {
     new (src) Particle(std::move(*end));
   }
+
   if (realloc_particlelist(sl, --sl->n)) {
     update_local_particles(sl);
   } else if (src != end) {
@@ -395,7 +404,7 @@ std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
   /* Copy local particles */
   std::transform(node_ids[this_node].cbegin(), node_ids[this_node].cend(),
                  parts.begin(), [](int id) {
-                   assert(id);
+                   assert(local_particles[id]);
                    return *local_particles[id];
                  });
 
@@ -454,7 +463,7 @@ int place_particle(int part, double p[3]) {
     mpi_place_particle(pnode, part, p);
   } else {
     /* new particle, node by spatial position */
-    pnode = cell_structure.position_to_node(p);
+    pnode = cell_structure.position_to_node(Vector3d{p, p + 3});
 
     /* master node specific stuff */
     particle_node[part] = pnode;
@@ -530,7 +539,7 @@ int set_particle_rotation(int part, int rot) {
 }
 #endif
 #ifdef ROTATION
-int rotate_particle(int part, double axis[3], double angle) {
+int rotate_particle(int part, const Vector3d &axis, double angle) {
   auto const pnode = get_particle_node(part);
 
   mpi_rotate_particle(pnode, part, axis, angle);
@@ -664,59 +673,31 @@ int set_particle_quat(int part, double quat[4]) {
   return ES_OK;
 }
 
-int set_particle_omega_lab(int part, double omega_lab[3]) {
+int set_particle_omega_lab(int part, const Vector3d &omega_lab) {
   auto const &particle = get_particle_data(part);
 
-  /* Internal functions require the body coordinates
-     so we need to convert to these from the lab frame */
+  auto const pnode = get_particle_node(part);
+  mpi_send_omega(pnode, part,
+                 convert_vector_space_to_body(particle, omega_lab));
+  return ES_OK;
+}
 
-  double A[9];
-  double omega[3];
-
-  define_rotation_matrix(particle, A);
-
-  omega[0] = A[0 + 3 * 0] * omega_lab[0] + A[0 + 3 * 1] * omega_lab[1] +
-             A[0 + 3 * 2] * omega_lab[2];
-  omega[1] = A[1 + 3 * 0] * omega_lab[0] + A[1 + 3 * 1] * omega_lab[1] +
-             A[1 + 3 * 2] * omega_lab[2];
-  omega[2] = A[2 + 3 * 0] * omega_lab[0] + A[2 + 3 * 1] * omega_lab[1] +
-             A[2 + 3 * 2] * omega_lab[2];
-
+int set_particle_omega_body(int part, const Vector3d &omega) {
   auto const pnode = get_particle_node(part);
   mpi_send_omega(pnode, part, omega);
   return ES_OK;
 }
 
-int set_particle_omega_body(int part, double omega[3]) {
-  auto const pnode = get_particle_node(part);
-  mpi_send_omega(pnode, part, omega);
-  return ES_OK;
-}
-
-int set_particle_torque_lab(int part, double torque_lab[3]) {
+int set_particle_torque_lab(int part, const Vector3d &torque_lab) {
   auto const &particle = get_particle_data(part);
 
-  /* Internal functions require the body coordinates
-     so we need to convert to these from the lab frame */
-
-  double A[9];
-  double torque[3];
-
-  define_rotation_matrix(particle, A);
-
-  torque[0] = A[0 + 3 * 0] * torque_lab[0] + A[0 + 3 * 1] * torque_lab[1] +
-              A[0 + 3 * 2] * torque_lab[2];
-  torque[1] = A[1 + 3 * 0] * torque_lab[0] + A[1 + 3 * 1] * torque_lab[1] +
-              A[1 + 3 * 2] * torque_lab[2];
-  torque[2] = A[2 + 3 * 0] * torque_lab[0] + A[2 + 3 * 1] * torque_lab[1] +
-              A[2 + 3 * 2] * torque_lab[2];
-
   auto const pnode = get_particle_node(part);
-  mpi_send_torque(pnode, part, torque);
+  mpi_send_torque(pnode, part,
+                  convert_vector_space_to_body(particle, torque_lab));
   return ES_OK;
 }
 
-int set_particle_torque_body(int part, double torque[3]) {
+int set_particle_torque_body(int part, const Vector3d &torque) {
   auto const pnode = get_particle_node(part);
 
   /* Nothing to be done but pass, since the coordinates
@@ -870,24 +851,19 @@ void local_remove_particle(int part) {
 }
 
 void local_place_particle(int part, const double p[3], int _new) {
-  Cell *cell;
-  double pp[3];
-  int i[3], rl;
+  int i[3];
   Particle *pt;
 
   i[0] = 0;
   i[1] = 0;
   i[2] = 0;
-  pp[0] = p[0];
-  pp[1] = p[1];
-  pp[2] = p[2];
-
+  Vector3d pp = {p[0], p[1], p[2]};
   double vv[3] = {0., 0., 0.};
   fold_position(pp, vv, i);
 
   if (_new) {
     /* allocate particle anew */
-    cell = cell_structure.position_to_cell(pp);
+    auto cell = cell_structure.position_to_cell(pp);
     if (!cell) {
       fprintf(stderr,
               "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
@@ -895,7 +871,7 @@ void local_place_particle(int part, const double p[3], int _new) {
               this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
       errexit();
     }
-    rl = realloc_particlelist(cell, ++cell->n);
+    auto rl = realloc_particlelist(cell, ++cell->n);
     pt = new (&cell->part[cell->n - 1]) Particle;
 
     pt->p.identity = part;
@@ -910,10 +886,10 @@ void local_place_particle(int part, const double p[3], int _new) {
       stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
       this_node, part, p[0], p[1], p[2]));
 
-  memmove(pt->r.p.data(), pp, 3 * sizeof(double));
+  pt->r.p = pp;
   memmove(pt->l.i.data(), i, 3 * sizeof(int));
 #ifdef BOND_CONSTRAINT
-  memmove(pt->r.p_old.data(), pp, 3 * sizeof(double));
+  pt->r.p_old = pp;
 #endif
 }
 
@@ -1076,7 +1052,9 @@ void try_add_exclusion(Particle *part, int part2) {
 void try_delete_exclusion(Particle *part, int part2) {
   IntList &el = part->el;
 
-  el.erase(std::remove(el.begin(), el.end(), part2), el.end());
+  if (!el.empty()) {
+    el.erase(std::remove(el.begin(), el.end(), part2), el.end());
+  };
 }
 #endif
 
@@ -1244,10 +1222,6 @@ int number_of_particles_with_type(int type) {
 #ifdef ROTATION
 void pointer_to_omega_body(Particle const *p, double const *&res) {
   res = p->m.omega.data();
-}
-
-void pointer_to_torque_lab(Particle const *p, double const *&res) {
-  res = p->f.torque.data();
 }
 
 void pointer_to_quat(Particle const *p, double const *&res) {

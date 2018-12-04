@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "cuda_wrapper.hpp"
+
 #include "cuda_init.hpp"
 #include "cuda_utils.hpp"
 #include "debug.hpp"
@@ -27,8 +29,6 @@
 #endif
 
 #ifdef CUDA
-
-#include <cuda.h>
 
 /** \name minimally required compute capability. */
 /*@{*/

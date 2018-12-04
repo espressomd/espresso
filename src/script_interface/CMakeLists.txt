@@ -34,7 +34,7 @@ if( WITH_COVERAGE )
 endif()
 
 add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
-install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${LIBDIR})
+install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(EspressoScriptInterface PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(EspressoScriptInterface EspressoConfig)
 target_link_libraries(EspressoScriptInterface EspressoCore)

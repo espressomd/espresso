@@ -77,7 +77,7 @@ inline void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3,
   *cosphi = scalar(aXb, bXc);
 
   if (fabs(fabs(*cosphi) - 1) < TINY_SIN_VALUE)
-    *cosphi = dround(*cosphi);
+    *cosphi = std::round(*cosphi);
 
   /* Calculate dihedral angle */
   *phi = acos(*cosphi);

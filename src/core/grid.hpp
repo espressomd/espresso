@@ -105,9 +105,6 @@ extern double my_right[3];
     determine one automatically. */
 void init_node_grid();
 
-/** return whether node grid was set. */
-int node_grid_is_set();
-
 /** node mapping: array -> node.
  *
  * \param node   rank of the node you want to know the position for.
@@ -129,7 +126,7 @@ inline int map_array_node(int pos[3]) {
 }
 
 /** map a spatial position to the node grid */
-int map_position_node_array(double pos[3]);
+int map_position_node_array(const Vector3d &pos);
 
 /** fill neighbor lists of node.
  *
@@ -174,6 +171,15 @@ int map_3don2d_grid(int g3d[3], int g2d[3], int mult[3]);
  * the particles accordingly */
 void rescale_boxl(int dir, double d_new);
 
+template <typename T> T get_mi_coord(T a, T b, int dir) {
+  auto dx = a - b;
+
+  if (PERIODIC(dir) && std::fabs(dx) > half_box_l[dir])
+    dx -= std::round(dx * box_l_i[dir]) * box_l[dir];
+
+  return dx;
+}
+
 /** get the minimal distance vector of two vectors in the current bc.
  *  @param a the vector to subtract from
  *  @param b the vector to subtract
@@ -183,9 +189,7 @@ void rescale_boxl(int dir, double d_new);
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++) {
-    res[i] = a[i] - b[i];
-    if (std::fabs(res[i]) > half_box_l[i] && PERIODIC(i))
-      res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
+    res[i] = get_mi_coord(a[i], b[i], i);
   }
 }
 
@@ -302,7 +306,6 @@ inline Vector3d folded_position(const Particle *p) {
 */
 template <typename T1, typename T2, typename T3>
 void unfold_position(T1 &pos, T2 &vel, T3 &image_box) {
-
   int i;
   for (i = 0; i < 3; i++) {
     pos[i] = pos[i] + image_box[i] * box_l[i];

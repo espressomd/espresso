@@ -77,6 +77,7 @@ struct DomainDecomposition {
   double cell_size[3];
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   double inv_cell_size[3];
+  bool fully_connected[3];
 };
 
 /************************************************************/
@@ -152,7 +153,7 @@ void dd_topology_release();
     Molecular dynamics, or any other integration scheme using only local
     particle moves)
 */
-void dd_exchange_and_sort_particles(int global_flag);
+void dd_exchange_and_sort_particles(int global, ParticleList *pl);
 
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells();
