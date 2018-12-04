@@ -408,7 +408,6 @@ void local_rotate_particle(Particle &p, const Vector3d &axis_space_frame,
   // Convert rotation axis to body-fixed frame
   Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
 
-  //  printf("%g %g %g - ",a[0],a[1],a[2]);
   // Rotation turned off entirely?
   if (!p.p.rotation)
     return;
