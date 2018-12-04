@@ -43,6 +43,7 @@ class GetLocalParts {
 
   class SecondDeref {
   public:
+    using result_type = Particle &;
     Particle &operator()(const LocalParticles::value_type &kv) const {
       return assert(kv.second), *(kv.second);
     }
