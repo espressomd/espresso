@@ -61,7 +61,7 @@ inline int calc_thermalized_bond_forces(Particle *p1, Particle *p2,
                                         double dx[3], double force1[3],
                                         double force2[3]) {
   // Bond broke?
-  double dist = Utils::veclen(dx);
+  double dist = normr(dx);
   if (iaparams->p.thermalized_bond.r_cut > 0.0 &&
       dist > iaparams->p.thermalized_bond.r_cut) {
     return 1;

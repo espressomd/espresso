@@ -305,8 +305,9 @@ class ArrayPropertyTest(ut.TestCase):
         # Check (allowed) setter
         # Particle
         self.system.part[0].dip = [2, 2, 2]
-        self.assertTrue((self.system.part[0].dip == [2, 2, 2]).all())
-
+        np.testing.assert_allclose(
+            [2, 2, 2], np.copy(self.system.part[0].dip), atol=1E-15)
+        
         # Check if copy is settable
         # Particle
         self.set_copy(self.system.part[0].dip)

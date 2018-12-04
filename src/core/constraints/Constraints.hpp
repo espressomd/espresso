@@ -66,6 +66,9 @@ public:
   const_iterator end() const { return m_constraints.end(); }
 
   void add_forces(ParticleRange &particles) const {
+    if (m_constraints.empty())
+      return;
+
     reset_foces();
 
     for (auto &p : particles) {

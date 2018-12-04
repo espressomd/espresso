@@ -122,15 +122,15 @@ BOOST_AUTO_TEST_CASE(comparison_operators) {
 }
 
 BOOST_AUTO_TEST_CASE(algebraic_operators) {
-  Vector<3, int> v1{1, 2, 3};
-  Vector<3, int> v2{4, 5, 6};
+  Vector3i v1{1, 2, 3};
+  Vector3i v2{4, 5, 6};
 
   BOOST_CHECK((v1 * v2) ==
               std::inner_product(v1.begin(), v1.end(), v2.begin(), 0));
 
-  BOOST_CHECK(((v1 + v2) == Vector<3, int>{5, 7, 9}));
-  BOOST_CHECK(((v1 - v2) == Vector<3, int>{-3, -3, -3}));
-  BOOST_CHECK(((-v1) == Vector<3, int>{-1, -2, -3}));
+  BOOST_CHECK(((v1 + v2) == Vector3i{5, 7, 9}));
+  BOOST_CHECK(((v1 - v2) == Vector3i{-3, -3, -3}));
+  BOOST_CHECK(((-v1) == Vector3i{-1, -2, -3}));
 
   {
     auto v3 = v1;
@@ -142,17 +142,17 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
     BOOST_CHECK((v1 - v2) == (v3 -= v2));
   }
 
-  BOOST_CHECK(((2 * v1) == Vector<3, int>{2, 4, 6}));
-  BOOST_CHECK(((v1 * 2) == Vector<3, int>{2, 4, 6}));
+  BOOST_CHECK(((2 * v1) == Vector3i{2, 4, 6}));
+  BOOST_CHECK(((v1 * 2) == Vector3i{2, 4, 6}));
 
   {
-    Vector<3, int> v1{2, 4, 6};
+    Vector3i v1{2, 4, 6};
     auto v2 = 2 * v1;
     BOOST_CHECK(v2 == (v1 *= 2));
   }
 
   {
-    Vector<3, int> v1{2, 4, 6};
+    Vector3i v1{2, 4, 6};
     auto v2 = v1 / 2;
     BOOST_CHECK(v2 == (v1 /= 2));
   }
@@ -171,8 +171,8 @@ BOOST_AUTO_TEST_CASE(broadcast) {
 }
 
 BOOST_AUTO_TEST_CASE(swap) {
-  const auto cv1 = Vector<3, int>{1, 2, 3};
-  const auto cv2 = Vector<3, int>{4, 5, 6};
+  const auto cv1 = Vector3i{1, 2, 3};
+  const auto cv2 = Vector3i{4, 5, 6};
 
   auto v1 = cv1;
   auto v2 = cv2;
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(decay_to_scalar_test) {
   }
 
   {
-    using original_t = Vector<3, int>;
+    using original_t = Vector3i;
     using decayed_t = typename decay_to_scalar<original_t>::type;
 
     static_assert(std::is_same<original_t, decayed_t>::value, "");

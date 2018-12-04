@@ -74,8 +74,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define THOLE
 
 #define BOND_ANGLE
-#define BOND_ANGLEDIST
-#define BOND_ANGLEDIST_HARMONIC
 
 #define EXPERIMENTAL_FEATURES
 

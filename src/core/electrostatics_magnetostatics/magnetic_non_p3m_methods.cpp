@@ -43,29 +43,32 @@
 #ifdef DIPOLES
 
 // Calculates dipolar energy and/or force between two particles
-double calc_dipole_dipole_ia(Particle *p1, Particle *p2, int force_flag) {
+double calc_dipole_dipole_ia(Particle *p1, const Vector3d &dip1, Particle *p2,
+                             int force_flag) {
   double u, r, pe1, pe2, pe3, pe4, r3, r5, r2, r7, a, b, cc, d, ab;
 #ifdef ROTATION
   double bx, by, bz, ax, ay, az;
 #endif
   double ffx, ffy, ffz;
-  double dr[3];
+
+  // Cache dipole momente
+  const Vector3d dip2 = p2->calc_dip();
 
   // Distance between particles
+  Vector3d dr;
   get_mi_vector(dr, p1->r.p, p2->r.p);
 
   // Powers of distance
-  r2 = dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2];
+  r2 = dr * dr;
   r = sqrt(r2);
   r3 = r2 * r;
   r5 = r3 * r2;
   r7 = r5 * r2;
 
   // Dot products
-  pe1 = p1->r.dip[0] * p2->r.dip[0] + p1->r.dip[1] * p2->r.dip[1] +
-        p1->r.dip[2] * p2->r.dip[2];
-  pe2 = p1->r.dip[0] * dr[0] + p1->r.dip[1] * dr[1] + p1->r.dip[2] * dr[2];
-  pe3 = p2->r.dip[0] * dr[0] + p2->r.dip[1] * dr[1] + p2->r.dip[2] * dr[2];
+  pe1 = dip1 * dip2;
+  pe2 = dip1 * dr;
+  pe3 = dip2 * dr;
   pe4 = 3.0 / r5;
 
   // Energy, if requested
@@ -80,9 +83,9 @@ double calc_dipole_dipole_ia(Particle *p1, Particle *p2, int force_flag) {
     d = pe4 * pe2;
 
     //  Result
-    ffx = ab * dr[0] + cc * p1->r.dip[0] + d * p2->r.dip[0];
-    ffy = ab * dr[1] + cc * p1->r.dip[1] + d * p2->r.dip[1];
-    ffz = ab * dr[2] + cc * p1->r.dip[2] + d * p2->r.dip[2];
+    ffx = ab * dr[0] + cc * dip1[0] + d * dip2[0];
+    ffy = ab * dr[1] + cc * dip1[1] + d * dip2[1];
+    ffz = ab * dr[2] + cc * dip1[2] + d * dip2[2];
     // Add the force to the particles
     p1->f.f[0] += coulomb.Dprefactor * ffx;
     p1->f.f[1] += coulomb.Dprefactor * ffy;
@@ -90,37 +93,25 @@ double calc_dipole_dipole_ia(Particle *p1, Particle *p2, int force_flag) {
     p2->f.f[0] -= coulomb.Dprefactor * ffx;
     p2->f.f[1] -= coulomb.Dprefactor * ffy;
     p2->f.f[2] -= coulomb.Dprefactor * ffz;
-//    if (p1->p.identity==248)
-//    {
-//      printf("xxx %g %g %g\n", dr[0],dr[1],dr[2]);
-//      printf("%d %g %g %g - %g %g
-//      %g\n",p2->p.identity,ffx,ffy,ffz,p2->r.p[0],p2->r.p[1],p2->r.p[2]);
-//     }
-//    if (p2->p.identity==248)
-//   {
-//      printf("xxx %g %g %g\n", dr[0],dr[1],dr[2]);
-//      printf("%d %g %g %g - %g %g
-//      %g\n",p1->p.identity,-ffx,-ffy,-ffz,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-//     }
 
 // Torques
 #ifdef ROTATION
-    ax = p1->r.dip[1] * p2->r.dip[2] - p2->r.dip[1] * p1->r.dip[2];
-    ay = p2->r.dip[0] * p1->r.dip[2] - p1->r.dip[0] * p2->r.dip[2];
-    az = p1->r.dip[0] * p2->r.dip[1] - p2->r.dip[0] * p1->r.dip[1];
+    ax = dip1[1] * dip2[2] - dip2[1] * dip1[2];
+    ay = dip2[0] * dip1[2] - dip1[0] * dip2[2];
+    az = dip1[0] * dip2[1] - dip2[0] * dip1[1];
 
-    bx = p1->r.dip[1] * dr[2] - dr[1] * p1->r.dip[2];
-    by = dr[0] * p1->r.dip[2] - p1->r.dip[0] * dr[2];
-    bz = p1->r.dip[0] * dr[1] - dr[0] * p1->r.dip[1];
+    bx = dip1[1] * dr[2] - dr[1] * dip1[2];
+    by = dr[0] * dip1[2] - dip1[0] * dr[2];
+    bz = dip1[0] * dr[1] - dr[0] * dip1[1];
 
     p1->f.torque[0] += coulomb.Dprefactor * (-ax / r3 + bx * cc);
     p1->f.torque[1] += coulomb.Dprefactor * (-ay / r3 + by * cc);
     p1->f.torque[2] += coulomb.Dprefactor * (-az / r3 + bz * cc);
 
     // 2nd particle
-    bx = p2->r.dip[1] * dr[2] - dr[1] * p2->r.dip[2];
-    by = dr[0] * p2->r.dip[2] - p2->r.dip[0] * dr[2];
-    bz = p2->r.dip[0] * dr[1] - dr[0] * p2->r.dip[1];
+    bx = dip2[1] * dr[2] - dr[1] * dip2[2];
+    by = dr[0] * dip2[2] - dip2[0] * dr[2];
+    bz = dip2[0] * dr[1] - dr[0] * dip2[1];
 
     p2->f.torque[0] += coulomb.Dprefactor * (ax / r3 + bx * d);
     p2->f.torque[1] += coulomb.Dprefactor * (ay / r3 + by * d);
@@ -161,6 +152,7 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
     if (it->p.dipm == 0.0)
       continue;
 
+    const Vector3d dip1 = it->calc_dip();
     auto jt = it;
     /* Skip diagonal */
     ++jt;
@@ -169,7 +161,7 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
       if (jt->p.dipm == 0.0)
         continue;
       // Calculate energy and/or force between the particles
-      u += calc_dipole_dipole_ia(&(*it), &(*jt), force_flag);
+      u += calc_dipole_dipole_ia(&(*it), dip1, &(*jt), force_flag);
     }
   }
 
@@ -249,10 +241,11 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
   dip_particles = 0;
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
+      const Vector3d dip = p.calc_dip();
 
-      mx[dip_particles] = p.r.dip[0];
-      my[dip_particles] = p.r.dip[1];
-      mz[dip_particles] = p.r.dip[2];
+      mx[dip_particles] = dip[0];
+      my[dip_particles] = dip[1];
+      mz[dip_particles] = dip[2];
 
       /* here we wish the coordinates to be folded into the primary box */
 

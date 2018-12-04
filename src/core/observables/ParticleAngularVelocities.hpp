@@ -33,20 +33,8 @@ public:
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ROTATION
-
-      double RMat[9];
-      double omega[3];
-      define_rotation_matrix(partCfg[ids()[i]], RMat);
-      omega[0] = RMat[0 + 3 * 0] * partCfg[ids()[i]].m.omega[0] +
-                 RMat[1 + 3 * 0] * partCfg[ids()[i]].m.omega[1] +
-                 RMat[2 + 3 * 0] * partCfg[ids()[i]].m.omega[2];
-      omega[1] = RMat[0 + 3 * 1] * partCfg[ids()[i]].m.omega[0] +
-                 RMat[1 + 3 * 1] * partCfg[ids()[i]].m.omega[1] +
-                 RMat[2 + 3 * 1] * partCfg[ids()[i]].m.omega[2];
-      omega[2] = RMat[0 + 3 * 2] * partCfg[ids()[i]].m.omega[0] +
-                 RMat[1 + 3 * 2] * partCfg[ids()[i]].m.omega[1] +
-                 RMat[2 + 3 * 2] * partCfg[ids()[i]].m.omega[2];
-
+      const Vector3d omega =
+          convert_vector_body_to_space(partCfg[i], partCfg[i].m.omega);
       res[3 * i + 0] = omega[0];
       res[3 * i + 1] = omega[1];
       res[3 * i + 2] = omega[2];
