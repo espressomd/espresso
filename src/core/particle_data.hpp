@@ -475,7 +475,6 @@ extern int n_part;
     of bonded interactions. */
 using LocalParticles = std::vector<Particle *>;
 extern LocalParticles local_particles;
-extern int max_local_particles;
 
 /************************************************
  * Functions
@@ -508,14 +507,6 @@ int realloc_particlelist(ParticleList *plist, int size);
     \param l List to append the particle to.
     \param part  Particle to append. */
 void append_unindexed_particle(ParticleList *l, Particle &&part);
-
-/** Append a particle at the end of a particle List.
-    reallocates particles if necessary!
-    This procedure cares for \ref local_particles.
-    \param plist List to append the particle to.
-    \param part  Particle to append.
-    \return Pointer to new location of the particle. */
-Particle *append_indexed_particle(ParticleList *plist, Particle &&part);
 
 /** Remove a particle from one particle List and append it to another.
     Refill the sourceList with last particle and update its entry in

@@ -409,7 +409,7 @@ void cells_resort_particles(int global_flag, CellPList local_cells) {
       runtimeErrorMsg() << "Particle " << part.identity()
                         << " moved more than"
                            " one local box length in one timestep.";
-      append_indexed_particle(local_cells.cell[0], std::move(part));
+      append_unindexed_particle(local_cells.cell[0], std::move(part));
     }
     resort_particles = Cells::RESORT_GLOBAL;
   } else {
@@ -419,9 +419,9 @@ void cells_resort_particles(int global_flag, CellPList local_cells) {
     /* Particles are now sorted, but Verlet lists are invalid */
     resort_particles = Cells::RESORT_NONE;
     rebuild_verletlist = 1;
-
-    on_resort_particles();
   }
+
+  on_resort_particles();
 
   CELL_TRACE(
       fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));

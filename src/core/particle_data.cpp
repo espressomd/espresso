@@ -259,19 +259,6 @@ void append_unindexed_particle(ParticleList *l, Particle &&part) {
   new (&(l->part[l->n - 1])) Particle(std::move(part));
 }
 
-Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
-  auto const re = realloc_particlelist(l, ++l->n);
-  auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
-
-  assert(p->p.identity <= max_seen_particle);
-
-  if (re)
-    update_local_particles(l);
-  else
-    local_particles[p->p.identity] = p;
-  return p;
-}
-
 Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   realloc_particlelist(dl, ++dl->n);
   auto dst = &dl->part[dl->n - 1];

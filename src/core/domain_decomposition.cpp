@@ -730,7 +730,7 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
     if (target_cell) {
-      append_indexed_particle(target_cell, std::move(src.part[i]));
+      append_unindexed_particle(target_cell, std::move(src.part[i]));
     } else {
 
       append_unindexed_particle(&rest, std::move(src.part[i]));
