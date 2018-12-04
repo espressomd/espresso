@@ -727,8 +727,6 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
   for (int i = 0; i < src.n; i++) {
     auto &part = src.part[i];
 
-    assert(local_particles[src.part[i].p.identity] == nullptr);
-
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
     if (target_cell) {
@@ -759,8 +757,6 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
                         ParticleList &right, int dir) {
   for (int i = 0; i < src.n; i++) {
     auto &part = src.part[i];
-
-    assert(local_particles[src.part[i].p.identity] == nullptr);
 
     if (get_mi_coord(part.r.p[dir], my_left[dir], dir) < 0.0) {
       if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
