@@ -66,7 +66,7 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
   }
 }
 
-void nsq_topology_init(CellPList *old) {
+void nsq_topology_init() {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
@@ -143,15 +143,6 @@ void nsq_topology_init(CellPList *old) {
       cell_structure.update_ghost_pos_comm.comm[0].type |= GHOST_PREFETCH;
     }
   }
-
-  /* copy particles */
-  for (int c = 0; c < old->n; c++) {
-    auto part = old->cell[c]->part;
-    auto np = old->cell[c]->n;
-    for (int p = 0; p < np; p++)
-      append_unindexed_particle(local, std::move(part[p]));
-  }
-  update_local_particles(local);
 }
 
 void nsq_balance_particles(int global_flag) {

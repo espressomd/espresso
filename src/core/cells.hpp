@@ -237,7 +237,7 @@ inline void realloc_cellplist(CellPList *cpl, int size) {
    have changed
     arbitrarily, otherwise the change should have been smaller then skin.  */
 void cells_resort_particles(int global_flag);
-
+void cells_resort_particles(int global_flag, CellPList local_cells);
 /** this function is called whenever the cell system has to be
     reinitialized, e.g. if cutoffs have changed, or the skin, grid,
     .... It calculates the maximal interaction range, and

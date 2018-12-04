@@ -39,7 +39,7 @@ extern double layer_h, layer_h_i;
 void layered_topology_release();
 
 /// initialize the layered cell system and sort in the particles
-void layered_topology_init(CellPList *local);
+void layered_topology_init();
 
 /// distribute all particles such that they are in their dedicated cell
 void layered_exchange_and_sort_particles(int global_flag,

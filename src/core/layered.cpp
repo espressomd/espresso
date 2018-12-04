@@ -299,8 +299,8 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
   }
 }
 
-void layered_topology_init(CellPList *old) {
-  int c, p;
+void layered_topology_init() {
+  int c;
 
   CELL_TRACE(fprintf(
       stderr, "%d: layered_topology_init, %d old particle lists max_range %g\n",
@@ -385,22 +385,6 @@ void layered_topology_init(CellPList *old) {
                        GHOSTTRANS_POSITION);
   layered_prepare_comm(&cell_structure.collect_ghost_force_comm,
                        GHOSTTRANS_FORCE);
-
-  /* copy particles */
-  for (c = 0; c < old->n; c++) {
-    Particle *part = old->cell[c]->part;
-    int np = old->cell[c]->n;
-    for (p = 0; p < np; p++) {
-      Cell *nc = layered_position_to_cell(part[p].r.p);
-      /* particle does not belong to this node. Just stow away
-         somewhere for the moment */
-      if (nc == nullptr)
-        nc = local_cells.cell[0];
-      append_unindexed_particle(nc, std::move(part[p]));
-    }
-  }
-  for (c = 1; c <= n_layers; c++)
-    update_local_particles(&cells[c]);
 
   CELL_TRACE(fprintf(stderr, "%d: layered_topology_init done\n", this_node));
 }

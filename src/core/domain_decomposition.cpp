@@ -653,8 +653,7 @@ void dd_on_geometry_change(int flags) {
 }
 
 /************************************************************/
-void dd_topology_init(CellPList *old) {
-  int c, p;
+void dd_topology_init() {
   int exchange_data, update_data;
 
   CELL_TRACE(fprintf(stderr,
@@ -695,22 +694,6 @@ void dd_topology_init(CellPList *old) {
 
   dd_init_cell_interactions();
 
-  /* copy particles */
-  for (c = 0; c < old->n; c++) {
-    Particle *part = old->cell[c]->part;
-    int np = old->cell[c]->n;
-    for (p = 0; p < np; p++) {
-      Cell *nc = dd_save_position_to_cell(part[p].r.p);
-      /* particle does not belong to this node. Just stow away
-         somewhere for the moment */
-      if (nc == nullptr)
-        nc = local_cells.cell[0];
-      append_unindexed_particle(nc, std::move(part[p]));
-    }
-  }
-  for (c = 0; c < local_cells.n; c++) {
-    update_local_particles(local_cells.cell[c]);
-  }
   CELL_TRACE(fprintf(stderr, "%d: dd_topology_init: done\n", this_node));
 }
 

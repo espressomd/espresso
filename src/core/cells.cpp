@@ -197,13 +197,13 @@ void topology_init(int cs, CellPList *local) {
     topology_init(cell_structure.type, local);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_init(local);
+    dd_topology_init();
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_topology_init(local);
+    nsq_topology_init();
     break;
   case CELL_STRUCTURE_LAYERED:
-    layered_topology_init(local);
+    layered_topology_init();
     break;
   default:
     fprintf(stderr,
@@ -242,6 +242,9 @@ void cells_re_init(int new_cs) {
 
   clear_particle_node();
 
+  /* Add the particles to the new cs */
+  cells_resort_particles(CELL_GLOBAL_EXCHANGE, tmp_local);
+
   /* finally deallocate the old cells */
   realloc_cellplist(&tmp_local, 0);
 
@@ -250,9 +253,6 @@ void cells_re_init(int new_cs) {
   }
 
   CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n", this_node));
-
-  /* to enforce initialization of the ghost cells */
-  resort_particles = Cells::RESORT_GLOBAL;
 
   on_cell_structure_change();
 }
@@ -379,7 +379,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
   return displaced_parts;
 }
 
-void cells_resort_particles(int global_flag) {
+void cells_resort_particles(int global_flag, CellPList local_cells) {
   CELL_TRACE(fprintf(stderr, "%d: entering cells_resort_particles %d\n",
                      this_node, global_flag));
 
@@ -432,6 +432,10 @@ void cells_resort_particles(int global_flag) {
 
   CELL_TRACE(
       fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));
+}
+
+void cells_resort_particles(int global_flag) {
+  cells_resort_particles(global_flag, local_cells);
 }
 
 /*************************************************/
