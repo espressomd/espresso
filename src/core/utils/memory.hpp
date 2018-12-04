@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "type_traits.hpp"
 
+#include <boost/type_traits/has_trivial_copy.hpp>
+
 #include <new>
 #include <stdexcept>
 #include <stdlib.h>
@@ -71,14 +73,14 @@ inline void *malloc(size_t size) {
 }
 
 template <typename T>
-enable_if_t<std::is_trivially_copyable<T>::value, char *> pack(char *buffer,
+enable_if_t<boost::has_trivial_copy<T>::value, char *> pack(char *buffer,
                                                                const T *src) {
   memcpy(buffer, src, sizeof(T));
   return buffer + sizeof(T);
 }
 
 template <typename T>
-enable_if_t<std::is_trivially_copyable<T>::value, char *> unpack(char *buffer,
+enable_if_t<boost::has_trivial_copy<T>::value, char *> unpack(char *buffer,
                                                                  T *dst) {
   memcpy(dst, reinterpret_cast<T *>(buffer), sizeof(T));
   return buffer + sizeof(T);
