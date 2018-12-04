@@ -80,7 +80,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EVENT_DEBUG
 #define INTEG_DEBUG
 #define CELL_DEBUG
-#define GHOST_DEBUG
 #define LATTICE_DEBUG
 #define HALO_DEBUG
 #define GRID_DEBUG
@@ -96,7 +95,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define ESR_DEBUG
 #define ESK_DEBUG
 #define FENE_DEBUG
-#define GHOST_FORCE_DEBUG
 #define STAT_DEBUG
 #define POLY_DEBUG
 #define PTENSOR_DEBUG

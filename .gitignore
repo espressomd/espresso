@@ -12,7 +12,7 @@ autom4te.cache
 .deps/
 myconfig.h
 myconfig.hpp
-build/
+*build*
 CMakeFiles
 
 *.*~

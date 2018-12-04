@@ -604,11 +604,6 @@ looking directly at the code.
 
 -  ``CELL_DEBUG`` Cellsystem output.
 
--  ``GHOST_DEBUG`` Cellsystem output specific to the handling of ghost cells and the
-   ghost cell communication.
-
--  ``GHOST_FORCE_DEBUG``
-
 -  ``VERLET_DEBUG`` Debugging of the Verlet list code of the domain decomposition cell
    system.
 

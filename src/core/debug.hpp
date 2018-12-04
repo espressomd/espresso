@@ -50,11 +50,6 @@ void print_particle_forces();
 
 extern int this_node;
 
-/** by setting this variable to 1, a regular exit is
-    indicated. In that case, no core dump is generated.
-*/
-extern int regular_exit;
-
 /** Identity of the particle to check extensively if ONEPART_DEBUG is defined.
  */
 extern int check_id;
@@ -105,14 +100,6 @@ extern int check_id;
 #else
 /** Equals { cmd } iff CELL_DEBUG is set. */
 #define CELL_TRACE(cmd)
-#endif
-
-#ifdef GHOST_DEBUG
-#define GHOST_TRACE(cmd)                                                       \
-  { cmd; }
-#else
-/** Equals { cmd } iff GHOST_DEBUG is set. */
-#define GHOST_TRACE(cmd)
 #endif
 
 #ifdef HALO_DEBUG
@@ -240,13 +227,6 @@ extern int check_id;
   { cmd; }
 #else
 #define FENE_TRACE(cmd)
-#endif
-
-#ifdef GHOST_FORCE_DEBUG
-#define GHOST_FORCE_TRACE(cmd)                                                 \
-  { cmd; }
-#else
-#define GHOST_FORCE_TRACE(cmd)
 #endif
 
 #ifdef ONEPART_DEBUG
