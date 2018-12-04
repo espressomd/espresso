@@ -162,8 +162,6 @@ static void layered_prepare_comm(GhostCommunicator *comm,
           if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK)) {
             comm->comm[c].shift = Vector3d{0, 0, box_l[2]};
           }
-          CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f btml\n",
-                             this_node, btm, comm->comm[c].shift[2]));
         }
         c++;
       }
