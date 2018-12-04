@@ -344,20 +344,11 @@ void mpi_bcast_event(int event) {
 
 void mpi_bcast_event_slave(int node, int event) {
   switch (event) {
-#ifdef ELECTROSTATICS
 #ifdef P3M
   case P3M_COUNT_CHARGES:
     p3m_count_charged_particles();
     break;
 #endif
-  case MAGGS_COUNT_CHARGES:
-    maggs_count_charged_particles();
-    break;
-#endif
-  case CHECK_PARTICLES:
-    check_particles();
-    break;
-
 #ifdef DP3M
   case P3M_COUNT_DIPOLES:
     dp3m_count_magnetic_particles();

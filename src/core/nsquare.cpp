@@ -219,10 +219,6 @@ void nsq_balance_particles(int global_flag) {
 
       send_particles(&send_buf, l_node);
 
-#ifdef ADDITIONAL_CHECKS
-      check_particle_consistency();
-#endif
-
     } else if (l_node == this_node) {
       ParticleList recv_buf{};
 

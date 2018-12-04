@@ -311,9 +311,6 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
             }
 #endif
           }
-          if (local_particles[pt->p.identity] == nullptr) {
-            local_particles[pt->p.identity] = pt;
-          }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           memcpy(&pt->r, retrieve, sizeof(ParticlePosition));
@@ -700,8 +697,6 @@ void invalidate_ghosts() {
       /* Particle is stored as ghost in the local_particles array,
          if the pointer stored there belongs to a ghost cell
          particle array. */
-      if (&(part[p]) == local_particles[part[p].p.identity])
-        local_particles[part[p].p.identity] = nullptr;
       free_particle(part + p);
     }
     ghost_cells.cell[c]->n = 0;

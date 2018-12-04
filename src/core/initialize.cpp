@@ -424,6 +424,12 @@ void on_resort_particles() {
 
   build_particle_index();
 
+#ifdef ADDITIONAL_CHECKS
+  /* at the end of the day, everything should be consistent again */
+  check_particle_consistency();
+  check_particle_sorting();
+#endif
+
   recalc_forces = 1;
 }
 

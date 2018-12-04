@@ -36,11 +36,6 @@
 */
 void check_particle_consistency();
 
-/** check the consistency of the cells and particle_node. Called from
-    mpi_bcast_event(CHECK_PARTICLES)
-*/
-void check_particles();
-
 void check_particle_sorting();
 
 /** Print all particle positions contained in \ref cells::cells array. */

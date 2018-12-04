@@ -611,12 +611,6 @@ void mpi_observable_lb_radial_velocity_profile();
  */
 void mpi_setup_reaction();
 
-void mpi_external_potential_broadcast(int number);
-void mpi_external_potential_broadcast_slave(int node, int number);
-void mpi_external_potential_tabulated_read_potential_file(int number);
-void mpi_external_potential_sum_energies();
-void mpi_external_potential_sum_energies_slave();
-
 #ifdef CUDA
 /** Gather CUDA devices from all nodes */
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
@@ -643,8 +637,6 @@ std::vector<int> mpi_resort_particles(int global_flag);
 */
 /*@{*/
 #define P3M_COUNT_CHARGES 0
-#define CHECK_PARTICLES 2
-#define MAGGS_COUNT_CHARGES 3
 #define P3M_COUNT_DIPOLES 5
 /*@}*/
 
