@@ -217,22 +217,6 @@ void build_particle_index() {
     }
 }
 
-/** resize \ref local_particles.
-    \param part the highest existing particle
-*/
-void realloc_local_particles(int part) {
-  if (part >= max_local_particles) {
-    /* round up part + 1 in granularity PART_INCREMENT */
-    max_local_particles =
-        PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
-    local_particles.resize(max_local_particles);
-
-    /* Set new memory to 0 */
-    for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
-      local_particles[i] = nullptr;
-  }
-}
-
 void init_particlelist(ParticleList *pList) {
   pList->n = 0;
   pList->max = 0;
@@ -927,11 +911,8 @@ void local_rescale_particles(int dir, double scale) {
 void added_particle(int part) {
   n_part++;
 
-  if (part > max_seen_particle) {
-    realloc_local_particles(part);
-
-    max_seen_particle = part;
-  }
+  max_seen_particle = std::max(max_seen_particle, part);
+  local_particles.resize(max_seen_particle + 1);
 }
 
 int local_change_bond(int part, int *bond, int _delete) {

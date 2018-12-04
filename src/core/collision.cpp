@@ -558,7 +558,7 @@ void handle_collisions() {
                   comm_cart);
 
     // Make sure, the local_particles array is long enough
-    realloc_local_particles(max_seen_particle);
+    local_particles.resize(max_seen_particle + 1);
 
     int current_vs_pid = max_seen_particle + 1;
 

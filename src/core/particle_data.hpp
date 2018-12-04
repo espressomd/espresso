@@ -560,9 +560,6 @@ void update_local_particles(ParticleList *pl);
 */
 void clear_particle_node();
 
-/** Realloc \ref local_particles. */
-void realloc_local_particles(int part);
-
 /**
  * @brief Get particle data.
  *
