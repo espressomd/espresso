@@ -755,8 +755,9 @@ class openGLLive(object):
         self.shapes = collections.defaultdict(list)
 
         # Collect shapes and interaction type (for coloring) from constraints
-        primitive_shapes = ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid',
-                            'Shapes::SimplePore', 'Shapes::Slitpore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
+        primitive_shapes = [
+            'Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid',
+            'Shapes::SimplePore', 'Shapes::Slitpore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
 
         coll_shape_obj = collections.defaultdict(list)
         for c in self.system.constraints:
@@ -1238,8 +1239,11 @@ class openGLLive(object):
             c = np.linalg.norm(v)
             draw_arrow(
                 p, v *
-                self.specs['LB_vel_scale'], self.lb_arrow_radius, self.specs['LB_arrow_color'],
-                self.materials[self.specs['LB_arrow_material']], self.specs['LB_arrow_quality'])
+                self.specs['LB_vel_scale'],
+                self.lb_arrow_radius,
+                self.specs['LB_arrow_color'],
+                self.materials[self.specs['LB_arrow_material']],
+                self.specs['LB_arrow_quality'])
 
     # USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR
     # COLORS, MATERIALS ETC..
@@ -2047,7 +2051,17 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     OpenGL.GL.glPopMatrix()
 
 
-def draw_slitpore(channel_width, lower_smoothing_radius, upper_smoothing_radius, pore_length, pore_mouth, pore_width, max_box_l, color, material, quality):
+def draw_slitpore(
+    channel_width,
+     lower_smoothing_radius,
+     upper_smoothing_radius,
+     pore_length,
+     pore_mouth,
+     pore_width,
+     max_box_l,
+     color,
+     material,
+     quality):
     set_solid_material(color, material)
     # If pore is large, an additional wall is necessary
     if (pore_width > 2. * lower_smoothing_radius):
@@ -2113,7 +2127,7 @@ def draw_slitpore(channel_width, lower_smoothing_radius, upper_smoothing_radius,
     OpenGL.GL.glPushMatrix()
     quadric = OpenGL.GLU.gluNewQuadric()
     OpenGL.GL.glTranslate(0.5 * max_box_l - upper_smoothing_radius -
-                          0.5 * pore_width, 0,  pore_mouth - upper_smoothing_radius)
+                          0.5 * pore_width, 0, pore_mouth - upper_smoothing_radius)
     OpenGL.GL.glRotatef(ax, rx, ry, 0.)
 
     # Upper edges
