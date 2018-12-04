@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_PART_CFG_HPP
 #define CORE_PART_CFG_HPP
 
-#include <boost/iterator/indirect_iterator.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 
 #include "ParticleCache.hpp"
 #include "cells.hpp"
@@ -36,26 +36,30 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class GetLocalParts {
   class SkipIfNullOrGhost {
   public:
-    bool operator()(Particle const *p_ptr) const {
-      return (p_ptr == nullptr) or (p_ptr->l.ghost);
+    bool operator()(const LocalParticles::value_type & kv) const {
+      return (kv.second == nullptr) or (kv.second->l.ghost);
     }
   };
 
+  class SecondDeref {
+  public:
+      Particle & operator()(const LocalParticles::value_type & kv) const {
+          return assert(kv.second), *(kv.second);
+      }
+  };
+
   using skip_it = Utils::SkipIterator<LocalParticles::iterator, SkipIfNullOrGhost>;
-  using iterator = boost::indirect_iterator<skip_it>;
+  using iterator = boost::transform_iterator<SecondDeref, skip_it>;
   using Range = Utils::Range<iterator>;
 
 public:
   Range operator()() const {
     auto begin =
-        skip_it(local_particles.begin(), local_particles.end(),
-                SkipIfNullOrGhost());
+        skip_it(local_particles.begin(), local_particles.end());
     auto end =
-        skip_it(local_particles.end(),
-                local_particles.end(), SkipIfNullOrGhost());
+        skip_it(local_particles.end(), local_particles.end());
 
-    return Utils::make_range(make_indirect_iterator(begin),
-                             make_indirect_iterator(end));
+    return {iterator(begin), iterator(end)};
   }
 };
 

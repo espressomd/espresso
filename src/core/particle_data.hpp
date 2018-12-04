@@ -471,9 +471,11 @@ extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
 
+#include <unordered_map>
+
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
-using LocalParticles = std::vector<Particle *>;
+using LocalParticles = std::unordered_map<int, Particle *>;
 extern LocalParticles local_particles;
 
 /************************************************

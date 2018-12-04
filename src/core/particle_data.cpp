@@ -199,22 +199,13 @@ void clear_particle_node() { particle_node.clear(); }
 void build_particle_index() {
     local_particles.clear();
 
-    auto update_index = [](Particle &p) {
-        auto const id = p.p.identity;
-        if(id >= local_particles.size()) {
-            local_particles.resize(id + 1);
-        }
-
-        local_particles.at(id) = &p;
-    };
-
     for(auto &p : ghost_cells.particles()) {
-        update_index(p);
+      local_particles[p.identity()] = &p;
     }
 
-    for(auto &p : local_cells.particles()) {
-        update_index(p);
-    }
+  for(auto &p : local_cells.particles()) {
+    local_particles[p.identity()] = &p;
+  }
 }
 
 void init_particlelist(ParticleList *pList) {
@@ -841,7 +832,7 @@ void local_remove_all_particles() {
   int c;
   n_part = 0;
   max_seen_particle = -1;
-  boost::fill(local_particles, nullptr);
+  local_particles.clear();
 
   for (c = 0; c < local_cells.n; c++) {
     Particle *p;
@@ -871,7 +862,6 @@ void added_particle(int part) {
   n_part++;
 
   max_seen_particle = std::max(max_seen_particle, part);
-  local_particles.resize(max_seen_particle + 1);
 }
 
 int local_change_bond(int part, int *bond, int _delete) {

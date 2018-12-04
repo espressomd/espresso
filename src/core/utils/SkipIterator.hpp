@@ -47,7 +47,7 @@ class SkipIterator : public boost::iterator_facade<
 
 public:
   SkipIterator(ForwardIterator const &it, ForwardIterator const &end,
-               Predicate const &pred)
+               Predicate const &pred = Predicate())
       : m_it(it), m_end(end), m_p(pred) {
     /* increment until the first element that is not skipped. */
     if ((m_it != m_end) && m_p(*m_it))

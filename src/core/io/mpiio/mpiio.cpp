@@ -380,8 +380,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   read_prefs(fnam + ".pref", rank, size, nglobalpart, &pref, &nlocalpart);
 
   // Prepare ESPResSo data structures
-  local_particles.resize(nglobalpart);
-  boost::fill(local_particles, nullptr);
+  local_particles.clear();
 
   n_part = nglobalpart;
   max_seen_particle = nglobalpart;
