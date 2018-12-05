@@ -44,9 +44,9 @@ LB_PARAMS = {'agrid': AGRID,
              'tau': TIME_STEP}
 # System setup
 radius = 5.4
-box_width = 44
+box_width = 36 
 real_width = box_width + 2 * AGRID
-box_length = 50
+box_length = 36
 v = [0, 0, 0.01]  # The boundary slip
 
 
@@ -102,17 +102,18 @@ class Stokes(object):
                 tmp += k * k
             return np.sqrt(tmp)
 
-        self.system.integrator.run(800)
+        self.system.integrator.run(200)
 
         stokes_force = 6 * np.pi * KVISC * radius * size(v)
         print("Stokes' Law says: f=%f" % stokes_force)
 
         # get force that is exerted on the sphere
-        for i in range(4):
-            self.system.integrator.run(200)
-            force = sphere.get_force()
-            print("Measured force: f=%f" % size(force))
-            self.assertLess(abs(1.0 - size(force) / stokes_force), 0.06)
+        force = sphere.get_force()
+        print("Measured force: f=%f" % size(force))
+        np.testing.assert_allclose(force, [0, 0, stokes_force], rtol=0.06,atol=stokes_force*0.06)
+        self.system.integrator.run(300)
+        np.testing.assert_allclose(sphere.get_force(), force, atol=0.02)
+
 
 ##Invoke the GPU LB
 
