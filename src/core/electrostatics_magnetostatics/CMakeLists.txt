@@ -40,7 +40,11 @@ endif(CUDA)
 
 target_include_directories(electrostatics_magnetostatics_core PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
 target_compile_options(electrostatics_magnetostatics_core PRIVATE -fPIC)
-target_link_libraries(electrostatics_magnetostatics_core EspressoConfig)
+target_link_libraries(electrostatics_magnetostatics_core PRIVATE EspressoConfig)
+if(FFTW3_FOUND)
+target_include_directories(electrostatics_magnetostatics_core PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})
+target_link_libraries(electrostatics_magnetostatics_core PRIVATE ${FFTW3_LIBRARIES})
+endif()
 
 if(SCAFACOS)
   add_subdirectory(scafacos)
