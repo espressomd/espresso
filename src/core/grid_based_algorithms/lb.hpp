@@ -99,7 +99,7 @@ template <size_t N_vel = 19> struct LB_Model {
   std::array<double, N_vel> w;
 
   /** basis of moment space */
-  std::array<std::array<double, N_vel>, N_vel> e_ki;
+  std::array<std::array<int, N_vel>, N_vel> e_ki;
 
   /** normalization factors for the moment basis */
   std::array<double, N_vel> w_k;
@@ -108,7 +108,7 @@ template <size_t N_vel = 19> struct LB_Model {
   double c_sound_sq;
 
   /** transposed basis of moment space */
-  std::array<std::array<double, N_vel>, N_vel> e_ki_transposed;
+  std::array<std::array<int, N_vel>, N_vel> e_ki_transposed;
 };
 
 /** Data structure for fluid on a local lattice site */

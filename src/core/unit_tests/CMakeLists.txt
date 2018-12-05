@@ -133,4 +133,4 @@ unit_test(NAME u32_to_u64_test SRC u32_to_u64_test.cpp)
 unit_test(NAME uniform_test SRC uniform_test.cpp)
 unit_test(NAME Counter_test SRC Counter_test.cpp)
 unit_test(NAME lbd3q19 SRC lb-d3q19.cpp)
-
+unit_test(NAME inner_product SRC inner_product.cpp)
