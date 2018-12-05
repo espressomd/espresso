@@ -7,6 +7,6 @@ set(Accumulators_SRC
 add_library(Accumulators SHARED ${Accumulators_SRC})
 install(TARGETS Accumulators LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(Accumulators PROPERTIES SOVERSION ${SOVERSION})
-add_dependencies(Accumulators EspressoConfig)
 set_target_properties(Accumulators PROPERTIES MACOSX_RPATH TRUE)
 target_include_directories(Accumulators PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
+target_link_libraries(Accumulators PRIVATE EspressoConfig)

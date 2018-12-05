@@ -36,7 +36,5 @@ endif()
 add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
 install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(EspressoScriptInterface PROPERTIES SOVERSION ${SOVERSION})
-add_dependencies(EspressoScriptInterface EspressoConfig)
-target_link_libraries(EspressoScriptInterface EspressoCore)
-
+target_link_libraries(EspressoScriptInterface PRIVATE EspressoConfig EspressoCore)
 target_include_directories(EspressoScriptInterface PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

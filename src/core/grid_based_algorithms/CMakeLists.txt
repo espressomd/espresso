@@ -14,14 +14,14 @@ if (CUDA)
   target_include_directories(electrokinetics_core PRIVATE
     ${CMAKE_SOURCE_DIR}/src/core
     ${CMAKE_BINARY_DIR}/src/core
-  )
-  add_dependencies(electrokinetics_core EspressoConfig)
-  target_link_libraries(electrokinetics_core PRIVATE electrokinetics_core_cuda)
+    )
+
+  target_link_libraries(electrokinetics_core PRIVATE EspressoConfig electrokinetics_core_cuda)
 
   cuda_add_library(lbgpu_cuda SHARED
     lbgpu_cuda.cu
   )
-  add_dependencies(lbgpu_cuda EspressoConfig)
+  target_link_libraries(lbgpu_cuda EspressoConfig)
 
   add_library(lbgpu SHARED
     lbgpu.cpp
@@ -31,14 +31,12 @@ if (CUDA)
     ${CMAKE_SOURCE_DIR}/src/core
     ${CMAKE_BINARY_DIR}/src/core
   )
-  add_dependencies(lbgpu EspressoConfig)
-  target_link_libraries(lbgpu PRIVATE lbgpu_cuda)
+  target_link_libraries(lbgpu PRIVATE lbgpu_cuda EspressoConfig)
 
   cuda_add_library(fd_electrostatics SHARED
     fd-electrostatics_cuda.cu
   )
-  add_dependencies(fd_electrostatics EspressoConfig)
-  target_link_libraries(fd_electrostatics ${CUDA_CUFFT_LIBRARIES})
+  target_link_libraries(fd_electrostatics EspressoConfig ${CUDA_CUFFT_LIBRARIES})
 endif()
 
 add_library(lbboundaries_interface SHARED
@@ -48,7 +46,7 @@ target_include_directories(lbboundaries_interface PRIVATE
   ${CMAKE_SOURCE_DIR}/src/core
   ${CMAKE_BINARY_DIR}/src/core
 )
-add_dependencies(lbboundaries_interface EspressoConfig)
+target_link_libraries(lbboundaries_interface PRIVATE EspressoConfig)
 
 add_library(lbcpu SHARED
   lb.cpp
@@ -58,4 +56,4 @@ target_include_directories(lbcpu PRIVATE
   ${CMAKE_SOURCE_DIR}/src/core
   ${CMAKE_BINARY_DIR}/src/core
 )
-add_dependencies(lbcpu EspressoConfig)
+target_link_libraries(lbcpu PRIVATE EspressoConfig)

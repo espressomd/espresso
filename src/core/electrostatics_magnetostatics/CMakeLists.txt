@@ -23,11 +23,13 @@ if(CUDA)
 
   cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
   cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
+  cuda_include_directories(${CMAKE_SOURCE_DIR}/src/config)
+  cuda_include_directories(${CMAKE_BINARY_DIR}/src/config)
 
   cuda_add_library(electrostatics_magnetostatics_core_cuda SHARED ${electrostatics_core_cuda_src})
   install(TARGETS electrostatics_magnetostatics_core_cuda DESTINATION ${PYTHON_INSTDIR}/espressomd)
   set_target_properties(electrostatics_magnetostatics_core_cuda PROPERTIES SOVERSION ${SOVERSION})
-  add_dependencies(electrostatics_magnetostatics_core_cuda EspressoConfig)
+  target_link_libraries(electrostatics_magnetostatics_core_cuda EspressoConfig)
 
   target_link_libraries(electrostatics_magnetostatics_core_cuda ${CUDA_CUFFT_LIBRARIES})
   target_link_libraries(electrostatics_magnetostatics_core_cuda EspressoCuda)
@@ -35,7 +37,7 @@ endif(CUDA)
 
 target_include_directories(electrostatics_magnetostatics_core PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
 target_compile_options(electrostatics_magnetostatics_core PRIVATE -fPIC)
-add_dependencies(electrostatics_magnetostatics_core EspressoConfig)
+target_link_libraries(electrostatics_magnetostatics_core EspressoConfig)
 
 if(SCAFACOS)
   add_subdirectory(scafacos)

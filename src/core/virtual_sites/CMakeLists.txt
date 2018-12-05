@@ -8,7 +8,7 @@ set(VirtualSites_SRC
 add_library(VirtualSites SHARED ${VirtualSites_SRC})
 install(TARGETS VirtualSites LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd ARCHIVE DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(VirtualSites PROPERTIES SOVERSION ${SOVERSION})
-add_dependencies(VirtualSites EspressoConfig)
+target_link_libraries(VirtualSites PRIVATE EspressoConfig)
 
 if(CUDA)
   set(VirtualSitesCuda_SRC

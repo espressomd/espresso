@@ -20,33 +20,29 @@
 add_custom_command(OUTPUT gen_pxiconfig.cpp
                    COMMAND ${PYTHON_EXECUTABLE}
                    ${CMAKE_CURRENT_SOURCE_DIR}/gen_pxiconfig.py
-                   ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig.cpp
-                   DEPENDS ${CMAKE_SOURCE_DIR}/src/features.def
+                   ${CMAKE_SOURCE_DIR}/src/config/features.def ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig.cpp
+                   DEPENDS ${CMAKE_SOURCE_DIR}/src/config/features.def
                   )
 
-include_directories(${CMAKE_BINARY_DIR}/src)
-include_directories(${CMAKE_SOURCE_DIR}/src/core)
-include_directories(${CMAKE_BINARY_DIR}/src/core)
 if (HDF5_FOUND)
     include_directories(${CMAKE_BINARY_DIR}/src/core/io/writer/h5md)
     include_directories(${CMAKE_SOURCE_DIR}/src/core/io/writer/h5md)
 endif(HDF5_FOUND)
 
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
-add_dependencies(gen_pxiconfig EspressoConfig)
+target_link_libraries(gen_pxiconfig EspressoConfig)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
                    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig > ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
-
 include_directories(SYSTEM ${PYTHON_INCLUDE_DIRS})
 include_directories(SYSTEM ${NUMPY_INCLUDE_DIR})
 
 add_custom_target(espressomd)
 add_custom_command(OUTPUT code_info.pyx
-        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx
+        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/config/features.def ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
         )
 
@@ -112,7 +108,7 @@ foreach(cython_file ${cython_SRC})
           set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-unused-variable")
       endif()
       set_target_properties(${basename} PROPERTIES CXX_CLANG_TIDY "")
-      target_link_libraries(${basename} EspressoCore EspressoScriptInterface ${LIBRARIES})
+      target_link_libraries(${basename} PRIVATE EspressoConfig EspressoCore EspressoScriptInterface ${LIBRARIES})
       add_dependencies(espressomd ${basename})
   endif()
 endforeach()
