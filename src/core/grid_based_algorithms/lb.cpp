@@ -43,8 +43,8 @@
 #include "lb-d3q19.hpp"
 #include "thermostat.hpp"
 #include "utils/Counter.hpp"
-#include "utils/u32_to_u64.hpp"
 #include "utils/inner_product.hpp"
+#include "utils/u32_to_u64.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include <Random123/philox.h>
@@ -2339,8 +2339,9 @@ std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
   const auto normalized_modes = normalize_modes(modes);
 
   for (int i = 0; i < 19; i++) {
-    ret[i] =
-        Utils::inner_product(lbmodel.e_ki_transposed[i], normalized_modes, 0.0) * lbmodel.w[i];
+    ret[i] = Utils::inner_product(lbmodel.e_ki_transposed[i], normalized_modes,
+                                  0.0) *
+             lbmodel.w[i];
   }
   return ret;
 }

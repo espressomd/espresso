@@ -19,13 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define BOOST_TEST_MODULE inner_product test
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
 #include <boost/range/numeric.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "utils/inner_product.hpp"
 
 BOOST_AUTO_TEST_CASE(inner_product) {
   const std::array<int, 3> left_array{1, 2, 9};
   const std::array<double, 3> right_array{0.5, 1.25, 3.1};
-  BOOST_CHECK(Utils::inner_product(left_array, right_array, 0.0) == boost::inner_product(left_array, right_array, 0.0));
+  BOOST_CHECK(Utils::inner_product(left_array, right_array, 0.0) ==
+              boost::inner_product(left_array, right_array, 0.0));
 }
