@@ -109,10 +109,10 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
-        loops = 300
+        loops = 100
         v_stored = np.zeros((N*loops, 3))
         for i in range(loops):
-            s.integrator.run(10)
+            s.integrator.run(50)
             v_stored[i*N:(i+1)*N,:] = s.part[:].v
         v_minmax = 5
         bins = 5
