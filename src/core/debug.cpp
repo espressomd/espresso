@@ -35,11 +35,6 @@ int check_id = ONEPART_DEBUG_ID;
 #endif
 
 namespace {
-void check_node(int this_node, const Particle &p) {
-  assert((cell_structure.position_to_node(p.r.p) == this_node) &&
-         "Particle on wrong node.");
-}
-
 void check_cell(const Cell *cell, const Particle &p) {
   assert((cell_structure.position_to_cell(p.r.p) == cell) &&
          "Particle in wrong cell.");
@@ -72,13 +67,12 @@ void check_particle_consistency() {
   for (auto c : local_cells) {
     for (int i = 0; i < c->n; i++) {
       auto const &p = c->part[i];
-      check_node(this_node, p);
       check_cell(c, p);
       check_index_local_part(p);
     }
   }
 
-  for (auto c : local_cells) {
+  for (auto c : ghost_cells) {
     for (int i = 0; i < c->n; i++) {
       auto const &p = c->part[i];
       check_index_ghost_part(p);
