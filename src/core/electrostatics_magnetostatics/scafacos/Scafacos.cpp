@@ -26,7 +26,7 @@ namespace Scafacos {
   {                                                                            \
     const FCSResult res = stmt;                                                \
     if (res)                                                                   \
-      runtimeError(fcs_result_get_message(res));                               \
+      throw std::runtime_error(fcs_result_get_message(res));                   \
   }
 
 std::string Scafacos::get_parameters() { return m_last_parameters; }
