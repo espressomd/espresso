@@ -87,11 +87,6 @@ if(SCAFACOS)
   target_link_libraries(EspressoCore PRIVATE Scafacos)
 endif(SCAFACOS)
 
-if(GSL)
-  target_include_directories(EspressoCore PUBLIC ${GSL_INCLUDE_DIRS})
-  target_link_libraries(EspressoCore PRIVATE gsl gslcblas)
-endif(GSL)
-
 if(CUDA)
     set(EspressoCuda_SRC
         cuda_common_cuda.cu

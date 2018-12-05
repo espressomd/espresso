@@ -7,4 +7,9 @@ install(TARGETS cluster_analysis LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressom
 set_target_properties(cluster_analysis PROPERTIES SOVERSION ${SOVERSION})
 set_target_properties(cluster_analysis PROPERTIES MACOSX_RPATH TRUE)
 target_link_libraries(cluster_analysis PRIVATE EspressoConfig)
+
+if(GSL)
+target_link_libraries(cluster_analysis PRIVATE GSL::gsl GSL::gslcblas)
+endif()
+
 target_include_directories(cluster_analysis PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
