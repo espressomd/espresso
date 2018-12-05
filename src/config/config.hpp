@@ -34,8 +34,7 @@
 #define MPICH_SKIP_MPICXX
 
 #include "config-features.hpp"
-
-extern const char *ESPRESSO_VERSION;
+#include "version.hpp"
 
 /*********************************************************/
 /** \name Parameters from myconfig.hpp that need to be set */

@@ -4,7 +4,7 @@ if (CUDA)
   cuda_add_library(electrokinetics_core_cuda SHARED
     electrokinetics_cuda.cu
   )
-  target_link_libraries(electrokinetics_core_cuda ${CUDA_CUFFT_LIBRARIES})
+  target_link_libraries(electrokinetics_core_cuda EspressoConfig ${CUDA_CUFFT_LIBRARIES})
 
 
   add_library(electrokinetics_core SHARED
