@@ -13,6 +13,9 @@ add_library(electrostatics_magnetostatics_core SHARED
     p3m-dipolar.cpp
     p3m_gpu.cpp
     scafacos.cpp
+    fft-common.cpp
+    fft.cpp
+    fft-dipolar.cpp
 )
 
 if(CUDA)
