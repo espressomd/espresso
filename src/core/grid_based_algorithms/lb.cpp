@@ -2172,7 +2172,7 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
 std::array<double, 19> lb_calc_m_from_n(const std::array<double, 19> n) {
   std::array<double, 19> m;
   for (int i = 0; i < 19; i++) {
-    m[i] = Utils::inner_product(lbmodel.e_ki[i], n, 0.0);
+    m[i] = Utils::inner_product(lbmodel.e_ki[i], n);
   }
   return m;
 }
@@ -2339,9 +2339,9 @@ std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
   const auto normalized_modes = normalize_modes(modes);
 
   for (int i = 0; i < 19; i++) {
-    ret[i] = Utils::inner_product(lbmodel.e_ki_transposed[i], normalized_modes,
-                                  0.0) *
-             lbmodel.w[i];
+    ret[i] =
+        Utils::inner_product(lbmodel.e_ki_transposed[i], normalized_modes) *
+        lbmodel.w[i];
   }
   return ret;
 }
