@@ -1839,9 +1839,8 @@ uint64_t lb_coupling_rng_state() {
 #ifdef LB_GPU
     return lb_coupling_rng_state_gpu();
 #endif
-  } else {
-    return {};
   }
+  return {};
 }
 
 void lb_coupling_set_rng_state(uint64_t counter) {
@@ -1853,8 +1852,6 @@ void lb_coupling_set_rng_state(uint64_t counter) {
 #ifdef LB_GPU
     lb_coupling_set_rng_state_gpu(counter);
 #endif
-  } else {
-    return {};
   }
 }
 
