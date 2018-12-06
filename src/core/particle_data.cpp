@@ -826,6 +826,12 @@ void local_remove_particle(int part) {
     errexit();
   }
 
+  // workaround for bad optimization on i386
+  printf("List size: %d\n", pl->n);
+  if (pl->n == 0) {
+    return;
+  }
+
   free_particle(p);
 
   /* remove local_particles entry */
