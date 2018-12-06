@@ -96,28 +96,6 @@ class HollowCone(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Maze(ScriptInterfaceHelper):
-
-    """
-    Spherical cavities on a regular grid that are
-    connected by tubes.
-
-    Attributes
-    ----------
-    cylrad : :obj:`float`
-             Radius of the tubes.
-    dim : :obj:`float`
-          Dimension of the maze.
-    nsphere : :obj:`int`
-              Number of spherical cavities.
-    sphrad : :obj:`float`
-             Radius of the spherical cavities.
-
-    """
-    _so_name = "Shapes::Maze"
-
-
-@script_interface_register
 class Rhomboid(ScriptInterfaceHelper):
 
     """
