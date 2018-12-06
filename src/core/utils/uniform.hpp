@@ -27,7 +27,7 @@ namespace Utils {
 /**
  * @brief Unifomly map unsigned integer to double.
  */
-CXX14_CONSTEXPR double uniform(uint64_t in) {
+CXX14_CONSTEXPR inline double uniform(uint64_t in) {
   auto constexpr const max = std::numeric_limits<uint64_t>::max();
   auto constexpr const fac = 1. / (max + 1.);
 
