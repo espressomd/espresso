@@ -193,12 +193,12 @@ class DPDThermostat(ut.TestCase):
         s.integrator.run(0)
 
         # Only trans, so x component should be zero
-        self.assertTrue(s.part[0].f[0] == 0.)
+        self.assertLess(abs(s.part[0].f[0]), 1e-16)
         # f = gamma * v_ij
         self.assertTrue(abs(s.part[0].f[1] - gamma * v[1]) < 1e-11)
         self.assertTrue(abs(s.part[0].f[2] - gamma * v[2]) < 1e-11)
         # Momentum conservation
-        self.assertTrue(s.part[1].f[0] == 0.)
+        self.assertLess(abs(s.part[1].f[0]), 1e-16)
         self.assertTrue(abs(s.part[1].f[1] + gamma * v[1]) < 1e-11)
         self.assertTrue(abs(s.part[1].f[2] + gamma * v[2]) < 1e-11)
 
@@ -244,14 +244,14 @@ class DPDThermostat(ut.TestCase):
         s.integrator.run(0)
 
         # Only trans, so x component should be zero
-        self.assertTrue(s.part[0].f[0] == 0.)
+        self.assertLess(abs(s.part[0].f[0]), 1e-16)
         # f = gamma * v_ij
         self.assertTrue(
             abs(s.part[0].f[1] - omega(1.3, 1.4)**2*gamma*v[1]) < 1e-11)
         self.assertTrue(
             abs(s.part[0].f[2] - omega(1.3, 1.4)**2*gamma*v[2]) < 1e-11)
         # Momentum conservation
-        self.assertTrue(s.part[1].f[0] == 0.)
+        self.assertLess(abs(s.part[1].f[0]), 1e-16)
         self.assertTrue(
             abs(s.part[1].f[1] + omega(1.3, 1.4)**2*gamma*v[1]) < 1e-11)
         self.assertTrue(
