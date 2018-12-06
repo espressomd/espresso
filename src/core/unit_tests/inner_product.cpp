@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/inner_product.hpp"
 
 BOOST_AUTO_TEST_CASE(inner_product) {
-  const std::array<int, 3> left_array{1, 2, 9};
-  const std::array<double, 3> right_array{0.5, 1.25, 3.1};
+  const std::array<int, 3> left_array{{1, 2, 9}};
+  const std::array<double, 3> right_array{{0.5, 1.25, 3.1}};
   BOOST_CHECK(Utils::inner_product(left_array, right_array) ==
               boost::inner_product(left_array, right_array, 0.0));
 }
