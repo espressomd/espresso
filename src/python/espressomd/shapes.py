@@ -135,6 +135,7 @@ class Slitpore(ScriptInterfaceHelper):
     pore_mouth : :obj:`float`
     pore_width : :obj:`float`
     upper_smoothing_radius : :obj:`float`
+    dividing_plane : :obj:`float`
 
     """
     _so_name = "Shapes::Slitpore"
