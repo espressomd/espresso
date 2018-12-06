@@ -78,7 +78,8 @@ if(WITH_COVERAGE)
   endif()
 endif()
 
-target_link_libraries(EspressoCore PRIVATE EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Constraints Accumulators cluster_analysis)
+target_link_libraries(EspressoCore PRIVATE EspressoConfig Actor ObjectInFluid ImmersedBoundary Constraints Accumulators cluster_analysis)
+target_link_libraries(EspressoCore PRIVATE Boost::serialization Boost::mpi MPI::MPI_CXX)
 
 if(SCAFACOS)
   target_link_libraries(EspressoCore PRIVATE Scafacos)

@@ -5,7 +5,7 @@ target_include_directories(H5mdCore SYSTEM PUBLIC
   "${CMAKE_SOURCE_DIR}/libs/h5xx"
 )
 
-target_include_directories(H5mdCore PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
-target_link_libraries(H5mdCore PRIVATE EspressoConfig)
+target_include_directories(H5mdCore PUBLIC SYSTEM ${HDF5_INCLUDE_DIRS} PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
+target_link_libraries(H5mdCore PRIVATE EspressoConfig ${HDF5_LIBRARIES} Boost::filesystem)
 install(TARGETS H5mdCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 endif()

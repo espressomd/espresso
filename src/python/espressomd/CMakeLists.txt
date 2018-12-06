@@ -24,11 +24,6 @@ add_custom_command(OUTPUT gen_pxiconfig.cpp
                    DEPENDS ${CMAKE_SOURCE_DIR}/src/config/features.def
                   )
 
-if (HDF5_FOUND)
-    include_directories(${CMAKE_BINARY_DIR}/src/core/io/writer/h5md)
-    include_directories(${CMAKE_SOURCE_DIR}/src/core/io/writer/h5md)
-endif(HDF5_FOUND)
-
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
 target_link_libraries(gen_pxiconfig EspressoConfig)
 
@@ -108,7 +103,7 @@ foreach(cython_file ${cython_SRC})
           set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-unused-variable")
       endif()
       set_target_properties(${basename} PROPERTIES CXX_CLANG_TIDY "")
-      target_link_libraries(${basename} PRIVATE EspressoConfig EspressoCore EspressoScriptInterface ${LIBRARIES})
+      target_link_libraries(${basename} PRIVATE EspressoConfig EspressoCore EspressoScriptInterface)
       add_dependencies(espressomd ${basename})
   endif()
 endforeach()
