@@ -156,12 +156,22 @@ struct ParticleProperties {
   pointing from real particle to virtual site with respect to the orientation
   of the real particle is stored in the virtual site's quaternion attribute.
   */
-  int vs_relative_to_particle_id = 0;
-  double vs_relative_distance = 0;
-  // Store relative position of the virtual site.
-  double vs_relative_rel_orientation[4] = {0., 0., 0., 0};
-  // Store the orientation of the virtual particle in the body fixed frame.
-  double vs_quat[4] = {0., 0., 0., 0.};
+  struct VirtualSitesRelativeParameteres {
+      int to_particle_id = 0;
+      double distance = 0;
+      // Store relative position of the virtual site.
+      Vector<4, double> rel_orientation = {0., 0., 0., 0.};
+      // Store the orientation of the virtual particle in the body fixed frame.
+      Vector<4, double> quat = {0., 0., 0., 0.};
+
+      template <class Archive> void serialize(Archive &ar, long int) {
+        ar &to_particle_id;
+        ar &distance;
+        ar &rel_orientation;
+        ar &quat;
+      }
+  } vs_relative;
+
 #endif
 #else  /* VIRTUAL_SITES */
   static constexpr const int is_virtual = 0;
@@ -517,13 +527,6 @@ void init_particlelist(ParticleList *pList);
     \return true iff particle addresses have changed */
 int realloc_particlelist(ParticleList *plist, int size);
 
-/** Search for a specific particle.
-    \param plist the list on which to operate
-    \param id the identity of the particle to search
-    \return a pointer to the particle structure or nullptr if particle is
-    not in this list */
-Particle *got_particle(ParticleList *plist, int id);
-
 /** Append a particle at the end of a particle List.
     reallocates particles if necessary!
     This procedure does not care for \ref local_particles.
@@ -789,7 +792,7 @@ int set_particle_dipm(int part, double dipm);
 int set_particle_virtual(int part, int is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, double *vs_quat);
+void set_particle_vs_quat(int part, double *vs_relative_quat);
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
                              double *rel_ori);
 #endif

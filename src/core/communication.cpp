@@ -170,7 +170,7 @@ static int terminated = 0;
   CB(mpi_send_out_direction_slave)                                             \
   CB(mpi_send_mu_E_slave)                                                      \
   CB(mpi_bcast_max_mu_slave)                                                   \
-  CB(mpi_send_vs_quat_slave)                                                   \
+  CB(mpi_send_vs_relative_quat_slave)                                                   \
   CB(mpi_send_vs_relative_slave)                                               \
   CB(mpi_recv_fluid_populations_slave)                                         \
   CB(mpi_send_fluid_populations_slave)                                         \
@@ -963,26 +963,26 @@ void mpi_send_virtual_slave(int pnode, int part) {
 }
 
 /********************* REQ_SET_BOND ********/
-void mpi_send_vs_quat(int pnode, int part, double *vs_quat) {
+void mpi_send_vs_relative_quat(int pnode, int part, double *vs_relative_quat) {
 #ifdef VIRTUAL_SITES_RELATIVE
-  mpi_call(mpi_send_vs_quat_slave, pnode, part);
+  mpi_call(mpi_send_vs_relative_quat_slave, pnode, part);
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     for (int i = 0; i < 4; ++i) {
-      p->p.vs_quat[i] = vs_quat[i];
+      p->p.vs_relative.quat[i] = vs_relative_quat[i];
     }
   } else {
-    MPI_Send(vs_quat, 4, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    MPI_Send(vs_relative_quat, 4, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
 
   on_particle_change();
 #endif
 }
-void mpi_send_vs_quat_slave(int pnode, int part) {
+void mpi_send_vs_relative_quat_slave(int pnode, int part) {
 #ifdef VIRTUAL_SITES_RELATIVE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.vs_quat, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p.vs_relative.quat.data(), 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -999,10 +999,10 @@ void mpi_send_vs_relative(int pnode, int part, int vs_relative_to,
   // set the values locally
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.vs_relative_to_particle_id = vs_relative_to;
-    p->p.vs_relative_distance = vs_distance;
+    p->p.vs_relative.to_particle_id = vs_relative_to;
+    p->p.vs_relative.distance = vs_distance;
     for (int i = 0; i < 4; i++) {
-      p->p.vs_relative_rel_orientation[i] = rel_ori[i];
+      p->p.vs_relative.rel_orientation[i] = rel_ori[i];
     }
   } else {
     MPI_Send(&vs_relative_to, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
@@ -1018,11 +1018,11 @@ void mpi_send_vs_relative_slave(int pnode, int part) {
 #ifdef VIRTUAL_SITES_RELATIVE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->p.vs_relative_to_particle_id, 1, MPI_INT, 0, SOME_TAG,
+    MPI_Recv(&p->p.vs_relative.to_particle_id, 1, MPI_INT, 0, SOME_TAG,
              comm_cart, MPI_STATUS_IGNORE);
-    MPI_Recv(&p->p.vs_relative_distance, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(&p->p.vs_relative.distance, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
-    MPI_Recv(p->p.vs_relative_rel_orientation, 4, MPI_DOUBLE, 0, SOME_TAG,
+    MPI_Recv(p->p.vs_relative.rel_orientation.data(), 4, MPI_DOUBLE, 0, SOME_TAG,
              comm_cart, MPI_STATUS_IGNORE);
   }
 
