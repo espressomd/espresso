@@ -493,11 +493,6 @@ extern int n_part;
 extern Particle **local_particles;
 extern int max_local_particles;
 
-/** Particles' current bond partners. \ref partBondPartners is
-    sorted by particle order, and the particles are stored
-    consecutively starting with 0. This array is global to all nodes*/
-extern int *partBondPartners;
-
 /************************************************
  * Functions
  ************************************************/

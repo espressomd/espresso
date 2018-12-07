@@ -50,6 +50,7 @@
 #include "utils/make_unique.hpp"
 #include "utils/mpi/gatherv.hpp"
 
+#include <boost/serialization/variant.hpp>
 #include <boost/variant.hpp>
 
 #include <cmath>
@@ -67,26 +68,29 @@
 /** my magic MPI code for send/recv_particles */
 #define REQ_SNDRCV_PART 0xaa
 
-#include <boost/serialization/variant.hpp>
-#include <boost/variant.hpp>
-
-#include "utils/print.hpp"
-
 namespace {
 
 template <typename S, S Particle::*s, typename T, T S::*m>
 struct UpdateParticle {
-  T value;
+    int id;
+    T value;
 
   void operator()(Particle &p) const { (p.*s).*m = value; }
 
   template <class Archive> void serialize(Archive &ar, long int) {
+      ar & id;
     ar &value;
   }
 };
 
 template <typename T, T ParticleProperties::*m>
 using UpdateProperty = UpdateParticle<ParticleProperties, &Particle::p, T, m>;
+template <typename T, T ParticlePosition ::*m>
+using UpdatePosition = UpdateParticle<ParticlePosition, &Particle::r, T, m>;
+template <typename T, T ParticleMomentum ::*m>
+using UpdateMomentum = UpdateParticle<ParticleMomentum, &Particle::m, T, m>;
+template <typename T, T ParticleForce ::*m>
+using UpdateForce = UpdateParticle<ParticleForce, &Particle::f, T, m>;
 
 #ifdef EXTERNAL_FORCES
 /**
@@ -96,16 +100,21 @@ using UpdateProperty = UpdateParticle<ParticleProperties, &Particle::p, T, m>;
  * updated masked and not overwritten.
  */
 struct UpdateExternalFlag {
+    /* Particle to update */
+    int id;
+    /* The bits to update */
     int mask;
+    /* The actual values for the update */
     int flag;
     void operator()(Particle &p) const {
       /* mask out old flags */
       p.p.ext_flag &= ~mask;
       /* set new values */
-      p.p.ext_flag |= flag;
+      p.p.ext_flag |= (mask & flag);
     }
 
     template <class Archive> void serialize(Archive &ar, long int) {
+        ar & id;
       ar & mask;
       ar & flag;
     }
@@ -115,7 +124,7 @@ struct UpdateExternalFlag {
 using Prop = ParticleProperties;
 
 // clang-format off
-using UpdateMessage = boost::variant<
+using UpdatePropertyMessage = boost::variant<
           UpdateProperty<int, &Prop::type>
         , UpdateProperty<int, &Prop::mol_id>
 #ifdef MASS
@@ -173,31 +182,64 @@ using UpdateMessage = boost::variant<
 #endif
 #endif
 >;
+
+using UpdatePositionMessage = boost::variant <
+          UpdatePosition<Vector3d, &ParticlePosition::p>
+#ifdef ROTATION
+        , UpdatePosition<Vector4d, &ParticlePosition::quat>
+#endif
+>;
+
+using UpdateMomentumMessage = boost::variant <
+        UpdateMomentum<Vector3d, &ParticleMomentum::v>
+#ifdef ROTATION
+      , UpdateMomentum<Vector3d, &ParticleMomentum::omega>
+#endif
+>;
+
+using UpdateForceMessage = boost::variant <
+        UpdateForce<Vector3d, &ParticleForce::f>
+#ifdef ROTATION
+      , UpdateForce<Vector3d, &ParticleForce::torque>
+#endif
+>;
+
+using UpdateMessage = boost::variant<
+        UpdatePropertyMessage,
+        UpdatePositionMessage,
+        UpdateMomentumMessage,
+        UpdateForceMessage
+        >;
 // clang-format on
 
+    struct UpdateParticleVisitor : public boost::static_visitor<void> {
+        template <typename Message> void operator()(const Message &msg) const {
+            assert(local_particles[msg.id]);
+            msg(*local_particles[msg.id]);
+        }
+    };
+
 struct UpdateVisitor : public boost::static_visitor<void> {
-  UpdateVisitor(int id) : id(id) {}
-  const int id;
-  template <typename Message> void operator()(const Message &msg) const {
-    assert(local_particles[id]);
-    msg(*local_particles[id]);
+    /* Recurse into sub-variants */
+    template<class... Message>
+  void operator()(const boost::variant<Message...> &msg) const {
+    boost::apply_visitor(UpdateParticleVisitor(), msg);
   }
 };
 } // namespace
 
-void mpi_update_particle_slave(int node, int id) {
+void mpi_update_particle_slave(int node, int) {
     if (node == comm_cart.rank()) {
         UpdateMessage msg{};
         comm_cart.recv(0, SOME_TAG, msg);
-        boost::apply_visitor(UpdateVisitor{id}, msg);
+        boost::apply_visitor(UpdateVisitor(), msg);
     }
 
     on_particle_change();
 }
 
-void mpi_send_update_message(int id, const UpdateMessage &msg) {
-  auto const pnode = get_particle_node(id);
-  mpi_call(mpi_update_particle_slave, pnode, id);
+void mpi_send_update_message(int pnode, const UpdateMessage &msg) {
+    mpi_call(mpi_update_particle_slave, pnode, 0);
 
   /* If the particle is remote, send the
    * message to the target, otherwise we
@@ -205,7 +247,7 @@ void mpi_send_update_message(int id, const UpdateMessage &msg) {
   if(pnode != comm_cart.rank()) {
     comm_cart.send(pnode, SOME_TAG, msg);
   } else {
-    boost::apply_visitor(UpdateVisitor{id}, msg);
+    boost::apply_visitor(UpdateVisitor(), msg);
   }
 
   on_particle_change();
@@ -213,8 +255,8 @@ void mpi_send_update_message(int id, const UpdateMessage &msg) {
 
 template <typename S, S Particle::*s, typename T, T S::*m, typename TRef>
 void mpi_update_particle(int id, TRef &&value) {
-  const UpdateMessage msg = UpdateParticle<S, s, T, m>{std::forward<TRef>(value)};
-  mpi_send_update_message(id, msg);
+  const UpdateMessage msg = UpdateParticle<S, s, T, m>{id, std::forward<TRef>(value)};
+  mpi_send_update_message(get_particle_node(id), msg);
 }
 
 template <typename T, T ParticleProperties::*m, typename TRef>
@@ -268,7 +310,7 @@ void auto_exclusion(int distance);
 /** Deallocate the dynamic storage of a particle. */
 void free_particle(Particle *part) { part->~Particle(); }
 
-void mpi_who_has_slave(int node, int param) {
+void mpi_who_has_slave(int, int) {
   static int *sendbuf;
   int n_part;
 
@@ -651,7 +693,7 @@ void set_particle_mass(int part, double mass) {
     mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);
 }
 #else
-constexpr double ParticleProperties::mass;
+const constexpr double ParticleProperties::mass;
 #endif
 
 #ifdef ROTATIONAL_INERTIA
@@ -870,8 +912,8 @@ int set_particle_gamma_rot(int part, Vector3d gamma_rot) {
 int set_particle_ext_torque(int part, const Vector3d &torque) {
   auto const flag = (torque != Vector3d{}) ? PARTICLE_EXT_TORQUE : 0;
   mpi_update_particle_property<Vector3d, &ParticleProperties::ext_torque>(part, torque);
-  mpi_send_update_message(part, UpdateExternalFlag{PARTICLE_EXT_TORQUE, flag});
-
+  mpi_send_update_message(get_particle_node(part),
+          UpdateExternalFlag{part, PARTICLE_EXT_TORQUE, flag});
   return ES_OK;
 }
 #endif
@@ -879,12 +921,14 @@ int set_particle_ext_torque(int part, const Vector3d &torque) {
 int set_particle_ext_force(int part, const Vector3d &force) {
     auto const flag = (force != Vector3d{}) ? PARTICLE_EXT_FORCE : 0;
     mpi_update_particle_property<Vector3d, &ParticleProperties::ext_force>(part, force);
-    mpi_send_update_message(part, UpdateExternalFlag{PARTICLE_EXT_FORCE, flag});
+    mpi_send_update_message(get_particle_node(part),
+            UpdateExternalFlag{part, PARTICLE_EXT_FORCE, flag});
   return ES_OK;
 }
 
 int set_particle_fix(int part, int flag) {
-    mpi_send_update_message(part, UpdateExternalFlag{COORDS_FIX_MASK, flag});
+    mpi_send_update_message(get_particle_node(part),
+            UpdateExternalFlag{part, COORDS_FIX_MASK, flag});
     return ES_OK;
 }
 
