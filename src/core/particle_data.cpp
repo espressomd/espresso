@@ -81,7 +81,6 @@ struct UpdateParticle {
   void operator()(Particle &p) const { (p.*s).*m = value; }
 
   template <class Archive> void serialize(Archive &ar, long int) {
-    Utils::print(this_node, __PRETTY_FUNCTION__);
     ar &value;
   }
 };
@@ -110,7 +109,7 @@ using UpdateMessage = boost::variant<
 #ifdef MEMBRANE_COLLISION
         , UpdateProperty<Vector3d, &Prop::out_direction>
 #endif
-        , UpdateProperty<short int, &Prop::rotation>
+        , UpdateProperty<int, &Prop::rotation>
 #ifdef ELECTROSTATICS
         , UpdateProperty<double, &Prop::q>
 #endif
@@ -156,8 +155,6 @@ struct UpdateVisitor : public boost::static_visitor<void> {
   UpdateVisitor(int id) : id(id) {}
   const int id;
   template <typename Message> void operator()(const Message &msg) const {
-    Utils::print(this_node, __PRETTY_FUNCTION__);
-
     assert(local_particles[id]);
     msg(*local_particles[id]);
   }
@@ -609,6 +606,7 @@ int set_particle_f(int part, const Vector3d &F) {
 
 #ifdef SHANCHEN
 int set_particle_solvation(int part, double *solvation) {
+    mpi_update_particle_property<std::array<double, 2 *LB_COMPONENTS>, &ParticleProperties::solvation>(part, {solavation, solvation + 2* LB_COMPONENTS});
   auto const pnode = get_particle_node(part);
 
   mpi_send_solvation(pnode, part, solvation);
@@ -617,7 +615,7 @@ int set_particle_solvation(int part, double *solvation) {
 
 #endif
 
-#if defined(MASS) || defined(LB_BOUNDARIES_GPU)
+#if defined(MASS)
 void set_particle_mass(int part, double mass) {
     mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);
 }
@@ -627,9 +625,7 @@ constexpr double ParticleProperties::mass;
 
 #ifdef ROTATIONAL_INERTIA
 int set_particle_rotational_inertia(int part, double rinertia[3]) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_rotational_inertia(pnode, part, rinertia);
+  mpi_update_particle_property<Vector3d, &ParticleProperties::rinertia>(part, Vector3d(rinertia, rinertia + 3));
   return ES_OK;
 }
 #else
@@ -637,9 +633,7 @@ const constexpr double ParticleProperties::rinertia[3];
 #endif
 #ifdef ROTATION
 int set_particle_rotation(int part, int rot) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_rotation(pnode, part, rot);
+  mpi_update_particle_property<int, &ParticleProperties::rotation>(part, rot);
   return ES_OK;
 }
 #endif
@@ -654,27 +648,21 @@ int rotate_particle(int part, const Vector3d &axis, double angle) {
 
 #ifdef AFFINITY
 int set_particle_affinity(int part, double bond_site[3]) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_affinity(pnode, part, bond_site);
+  mpi_update_particle_property<Vector3d, &ParticleProperties::bond_site>(part, Vector3d(bond_site, bond_site + 3));
   return ES_OK;
 }
 #endif
 
 #ifdef MEMBRANE_COLLISION
 int set_particle_out_direction(int part, double out_direction[3]) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_out_direction(pnode, part, out_direction);
+  mpi_update_particle_property<Vector3d, &ParticleProperties::out_direction>(part, Vector3d(out_direction, out_direction + 3));
   return ES_OK;
 }
 #endif
 
 #ifdef DIPOLES
 int set_particle_dipm(int part, double dipm) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_dipm(pnode, part, dipm);
+  mpi_update_particle_property<double, &ParticleProperties::dipm>(part, dipm);
   return ES_OK;
 }
 
@@ -690,11 +678,7 @@ int set_particle_dip(int part, double dip[3]) {
 
 #ifdef VIRTUAL_SITES
 int set_particle_virtual(int part, int is_virtual) {
-  auto const pnode = get_particle_node(part);
-
-  if (pnode == -1)
-    return ES_ERROR;
-  mpi_send_virtual(pnode, part, is_virtual);
+  mpi_update_particle_property<int, &ParticleProperties::is_virtual>(part, is_virtual);
   return ES_OK;
 }
 #endif
@@ -707,29 +691,29 @@ void set_particle_vs_quat(int part, double *vs_relative_quat) {
 
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
                              double *rel_ori) {
-  auto const pnode = get_particle_node(part);
+  ParticleProperties::VirtualSitesRelativeParameteres vs_relative;
+  vs_relative.distance = vs_distance;
+  vs_relative.to_particle_id = vs_relative_to;
+  vs_relative.rel_orientation = {rel_ori, rel_ori + 4};
 
-  // Send the stuff
-  mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance, rel_ori);
+  mpi_update_particle_property<ParticleProperties::VirtualSitesRelativeParameteres,
+   &ParticleProperties::vs_relative>(part, vs_relative);
   return ES_OK;
 }
 #endif
 
+#ifdef ELECTROSTATICS
 int set_particle_q(int part, double q) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_q(pnode, part, q);
-  return ES_OK;
+    mpi_update_particle_property<double, &ParticleProperties::q>(part, q);
+    return ES_OK;
 }
-#ifndef ELECTROSTATICS
-constexpr double ParticleProperties::q;
+#else
+const constexpr double ParticleProperties::q;
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 int set_particle_mu_E(int part, double mu_E[3]) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_mu_E(pnode, part, mu_E);
+    mpi_update_particle_property<Vector3d, &ParticleProperties::mu_E>(part, Vector3d(mu_E, mu_E + 3));
   return ES_OK;
 }
 
@@ -743,7 +727,6 @@ void get_particle_mu_E(int part, double (&mu_E)[3]) {
 #endif
 
 int set_particle_type(int p_id, int type) {
-  auto const pnode = get_particle_node(p_id);
   make_particle_type_exist(type);
 
   if (type_list_enable) {
@@ -758,16 +741,13 @@ int set_particle_type(int p_id, int type) {
     add_id_to_type_map(p_id, type);
   }
 
-  mpi_send_type(pnode, p_id, type);
-
+  mpi_update_particle_property<int, &ParticleProperties::type>(p_id, type);
   return ES_OK;
 }
 
 int set_particle_mol_id(int part, int mid) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_mol_id(pnode, part, mid);
-  return ES_OK;
+    mpi_update_particle_property<int, &ParticleProperties::mol_id>(part, mid);
+    return ES_OK;
 }
 
 #ifdef ROTATION
@@ -816,35 +796,35 @@ int set_particle_torque_body(int part, const Vector3d &torque) {
 
 #ifdef LANGEVIN_PER_PARTICLE
 int set_particle_temperature(int part, double T) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_set_particle_temperature(pnode, part, T);
+  mpi_update_particle_property<double, &ParticleProperties::T>(part, T);
   return ES_OK;
 }
 
 #ifndef PARTICLE_ANISOTROPY
-int set_particle_gamma(int part, double gamma)
+int set_particle_gamma(int part, double gamma) {
+  mpi_update_particle_property<double, &ParticleProperties::gamma>(part, gamma);
+  return ES_OK;
+}
 #else
 int set_particle_gamma(int part, Vector3d gamma)
-#endif // PARTICLE_ANISOTROPY
 {
-  auto const pnode = get_particle_node(part);
-
-  mpi_set_particle_gamma(pnode, part, gamma);
+  mpi_update_particle_property<Vector3d, &ParticleProperties::gamma>(part, gamma);
   return ES_OK;
 }
+#endif // PARTICLE_ANISOTROPY
+
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
-int set_particle_gamma_rot(int part, double gamma_rot)
-#else
-int set_particle_gamma_rot(int part, Vector3d gamma_rot)
-#endif // PARTICLE_ANISOTROPY
-{
-  auto const pnode = get_particle_node(part);
-
-  mpi_set_particle_gamma_rot(pnode, part, gamma_rot);
+int set_particle_gamma_rot(int part, double gamma_rot) {
+mpi_update_particle_property<double, &ParticleProperties::gamma_rot>(part, gamma_rot);
   return ES_OK;
 }
+#else
+int set_particle_gamma_rot(int part, Vector3d gamma_rot) {
+  mpi_update_particle_property<Vector3d, &ParticleProperties::gamma_rot>(part, gamma_rot);
+  return ES_OK;
+}
+#endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 
@@ -858,10 +838,12 @@ int set_particle_ext_torque(int part, int flag, double torque[3]) {
 }
 #endif
 
-int set_particle_ext_force(int part, int flag, double force[3]) {
+int set_particle_ext_force(int part, Vector3d force) {
   auto const pnode = get_particle_node(part);
 
-  mpi_send_ext_force(pnode, part, flag, PARTICLE_EXT_FORCE, force);
+  auto flag = PARTICLE_EXT_FORCE & (force != Vector3d{});
+
+  mpi_send_ext_force(pnode, part, flag, PARTICLE_EXT_FORCE, force.data());
   return ES_OK;
 }
 
@@ -1405,7 +1387,7 @@ void pointer_to_temperature(Particle const *p, double const *&res) {
 }
 #endif // LANGEVIN_PER_PARTICLE
 
-void pointer_to_rotation(Particle const *p, short int const *&res) {
+void pointer_to_rotation(Particle const *p, int const *&res) {
   res = &(p->p.rotation);
 }
 

@@ -109,7 +109,7 @@ cdef extern from "particle_data.hpp":
 
     IF ROTATION:
         int set_particle_rotation(int part, int rot)
-        void pointer_to_rotation(const particle * p, const short int * & res)
+        void pointer_to_rotation(const particle * p, const int * & res)
 
     int set_particle_q(int part, double q)
 
@@ -184,7 +184,7 @@ cdef extern from "particle_data.hpp":
             int set_particle_ext_torque(int part, int flag, double torque[3])
             void pointer_to_ext_torque(const particle * P, const int * & res1, const double * & res2)
 
-        int set_particle_ext_force(int part, int flag, double force[3])
+        int set_particle_ext_force(int part, Vector3d force)
         void pointer_to_ext_force(const particle * P, const int * & res1, const double * & res2)
 
         int set_particle_fix(int part, int flag)
