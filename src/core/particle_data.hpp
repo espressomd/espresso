@@ -47,11 +47,9 @@
 /** bonds_flag "bonds_flag" value for updating particle config without bonding
  *  information
  */
-#define WITHOUT_BONDS 0
 /** bonds_flag "bonds_flag" value for updating particle config with bonding
  *  information
  */
-#define WITH_BONDS 1
 
 #ifdef EXTERNAL_FORCES
 /** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
@@ -832,7 +830,7 @@ int set_particle_gamma_rot(int part, Vector3d gamma);
     @param torque new value for ext_torque.
     @return ES_OK if particle existed
 */
-int set_particle_ext_torque(int part, int flag, double torque[3]);
+int set_particle_ext_torque(int part, const Vector3d &torque);
 #endif
 /** Call only on the master node: set particle external force.
     @param part  the particle.
@@ -840,7 +838,7 @@ int set_particle_ext_torque(int part, int flag, double torque[3]);
     @param force new value for ext_force.
     @return ES_OK if particle existed
 */
-int set_particle_ext_force(int part, Vector3d force);
+int set_particle_ext_force(int part, const Vector3d &force);
 /** Call only on the master node: set coordinate axes for which the particles
    motion is fixed.
     @param part  the particle.

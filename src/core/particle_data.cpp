@@ -89,6 +89,30 @@ struct UpdateParticle {
 template <typename T, T ParticleProperties::*m>
 using UpdateProperty = UpdateParticle<ParticleProperties, &Particle::p, T, m>;
 
+#ifdef EXTERNAL_FORCES
+/**
+ * @brief Special updater for the external flags.
+ *
+ * These need to be treated specialy as they are
+ * updated masked and not overwritten.
+ */
+struct UpdateExternalFlag {
+    int mask;
+    int flag;
+    void operator()(Particle &p) const {
+      /* mask out old flags */
+      p.p.ext_flag &= ~mask;
+      /* set new values */
+      p.p.ext_flag |= flag;
+    }
+
+    template <class Archive> void serialize(Archive &ar, long int) {
+      ar & mask;
+      ar & flag;
+    }
+};
+#endif
+
 using Prop = ParticleProperties;
 
 // clang-format off
@@ -143,7 +167,7 @@ using UpdateMessage = boost::variant<
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
-        , UpdateProperty<int, &Prop::ext_flag>
+        , UpdateExternalFlag
         , UpdateProperty<Vector3d, &Prop::ext_force>
 #ifdef ROTATION
         , UpdateProperty<Vector3d, &Prop::ext_torque>
@@ -172,19 +196,26 @@ void mpi_update_particle_slave(int node, int id) {
     on_particle_change();
 }
 
-template <typename S, S Particle::*s, typename T, T S::*m, typename TRef>
-void mpi_update_particle(int id, TRef &&value) {
+void mpi_send_update_message(int id, const UpdateMessage &msg) {
   auto const pnode = get_particle_node(id);
   mpi_call(mpi_update_particle_slave, pnode, id);
 
+  /* If the particle is remote, send the
+   * message to the target, otherwise we
+   * can just apply the update directly. */
   if(pnode != comm_cart.rank()) {
-    const UpdateMessage msg = UpdateParticle<S, s, T, m>{std::forward<TRef>(value)};
     comm_cart.send(pnode, SOME_TAG, msg);
   } else {
-      UpdateParticle<S, s, T, m>{std::forward<TRef>(value)}(*local_particles[id]);
+    boost::apply_visitor(UpdateVisitor{id}, msg);
   }
 
   on_particle_change();
+}
+
+template <typename S, S Particle::*s, typename T, T S::*m, typename TRef>
+void mpi_update_particle(int id, TRef &&value) {
+  const UpdateMessage msg = UpdateParticle<S, s, T, m>{std::forward<TRef>(value)};
+  mpi_send_update_message(id, msg);
 }
 
 template <typename T, T ParticleProperties::*m, typename TRef>
@@ -709,9 +740,12 @@ int set_particle_dipm(int part, double dipm) {
 }
 
 int set_particle_dip(int part, double dip[3]) {
-  auto const pnode = get_particle_node(part);
+  Vector4d quat;
+  double dipm;
+  std::tie(quat, dipm) = convert_dip_to_quat(Vector3d({dip[0], dip[1], dip[2]}));
 
-  mpi_send_dip(pnode, part, dip);
+  set_particle_dipm(part, dipm);
+  set_particle_quat(part, quat.data());
 
   return ES_OK;
 }
@@ -727,8 +761,11 @@ int set_particle_virtual(int part, int is_virtual) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part, double *vs_relative_quat) {
-  auto const pnode = get_particle_node(part);
-  mpi_send_vs_relative_quat(pnode, part, vs_relative_quat);
+  auto vs_relative = get_particle_data(part).p.vs_relative;
+  vs_relative.quat = Vector<4, double>(vs_relative_quat, vs_relative_quat + 4);
+
+  mpi_update_particle_property<ParticleProperties::VirtualSitesRelativeParameteres,
+            &ParticleProperties::vs_relative>(part, vs_relative);
 }
 
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
@@ -872,28 +909,25 @@ int set_particle_gamma_rot(int part, Vector3d gamma_rot) {
 
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
-int set_particle_ext_torque(int part, int flag, double torque[3]) {
-  auto const pnode = get_particle_node(part);
+int set_particle_ext_torque(int part, const Vector3d &torque) {
+  auto const flag = (torque != Vector3d{}) ? PARTICLE_EXT_TORQUE : 0;
+  mpi_update_particle_property<Vector3d, &ParticleProperties::ext_torque>(part, torque);
+  mpi_send_update_message(part, UpdateExternalFlag{PARTICLE_EXT_TORQUE, flag});
 
-  mpi_send_ext_torque(pnode, part, flag, PARTICLE_EXT_TORQUE, torque);
   return ES_OK;
 }
 #endif
 
-int set_particle_ext_force(int part, Vector3d force) {
-  auto const pnode = get_particle_node(part);
-
-  auto flag = PARTICLE_EXT_FORCE & (force != Vector3d{});
-
-  mpi_send_ext_force(pnode, part, flag, PARTICLE_EXT_FORCE, force.data());
+int set_particle_ext_force(int part, const Vector3d &force) {
+    auto const flag = (force != Vector3d{}) ? PARTICLE_EXT_FORCE : 0;
+    mpi_update_particle_property<Vector3d, &ParticleProperties::ext_force>(part, force);
+    mpi_send_update_message(part, UpdateExternalFlag{PARTICLE_EXT_FORCE, flag});
   return ES_OK;
 }
 
 int set_particle_fix(int part, int flag) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_ext_force(pnode, part, flag, COORDS_FIX_MASK, nullptr);
-  return ES_OK;
+    mpi_send_update_message(part, UpdateExternalFlag{COORDS_FIX_MASK, flag});
+    return ES_OK;
 }
 
 #endif

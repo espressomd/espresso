@@ -216,17 +216,9 @@ void mpi_send_torque(int node, int part, const Vector3d &torque);
 #endif
 
 #ifdef DIPOLES
-/** Issue REQ_SET_DIP: send particle dipole orientation.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param dip its new dipole orientation.
-*/
-void mpi_send_dip(int node, int part, double dip[3]);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void mpi_send_vs_relative_quat(int node, int part, double *vs_relative_quat);
 
 #endif
 
@@ -358,35 +350,6 @@ void mpi_set_time_step(double time_step);
 
 /** Issue REQ_BCAST_COULOMB: send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
-
-/** send new collision parameters. */
-void mpi_bcast_collision_params();
-
-/** Issue REQ_SEND_EXT_FORCE: send nex external flag and external force. */
-void mpi_send_ext_force(int pnode, int part, int flag, int mask,
-                        double force[3]);
-
-/** Issue REQ_SEND_EXT_TORQUE: send nex external flag and external torque. */
-void mpi_send_ext_torque(int pnode, int part, int flag, int mask,
-                         double torque[3]);
-
-#ifdef LANGEVIN_PER_PARTICLE
-
-/** Issue REQ_SEND_PARTICLE_T: send particle type specific frictional
- * coefficient. */
-#ifndef PARTICLE_ANISOTROPY
-void mpi_set_particle_gamma(int pnode, int part, double gamma);
-#else
-#endif
-
-#ifdef ROTATION
-#ifndef PARTICLE_ANISOTROPY
-void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
-#else
-void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot);
-#endif // PARTICLE_ANISOTROPY
-#endif
-#endif // LANGEVIN_PER_PARTICLE
 
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 /** Issue REQ_LB_BOUNDARY: set up walls for lb fluid */

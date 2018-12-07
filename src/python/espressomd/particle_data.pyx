@@ -910,17 +910,13 @@ cdef class ParticleHandle(object):
                 """
 
                 def __set__(self, _ext_t):
-                    cdef double ext_t[3]
-                    cdef int ext_flag
+                    cdef Vector3d ext_t
                     check_type_or_throw_except(
                         _ext_t, 3, float, "External force vector has to be 3 floats.")
                     for i in range(3):
                         ext_t[i] = _ext_t[i]
-                    if ext_t[0] == 0 and ext_t[1] == 0 and ext_t[2] == 0:
-                        ext_flag = 0
-                    else:
-                        ext_flag = PARTICLE_EXT_TORQUE
-                    if set_particle_ext_torque(self._id, ext_flag, ext_t) == 1:
+
+                    if set_particle_ext_torque(self._id, ext_t) == 1:
                         raise Exception("Set particle position first.")
 
                 def __get__(self):

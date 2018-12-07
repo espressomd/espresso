@@ -113,9 +113,6 @@ using Communication::mpiCallbacks;
 int this_node = -1;
 int n_nodes = -1;
 
-/* whether there is already a termination going on. */
-static int terminated = 0;
-
 // if you want to add a callback, add it here, and here only
 #define CALLBACK_LIST                                                          \
   CB(mpi_bcast_parameter_slave)                                                \
@@ -134,9 +131,6 @@ static int terminated = 0;
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_set_time_step_slave)                                                  \
   CB(mpi_bcast_coulomb_params_slave)                                           \
-  CB(mpi_bcast_collision_params_slave)                                         \
-  CB(mpi_send_ext_force_slave)                                                 \
-  CB(mpi_send_ext_torque_slave)                                                \
   CB(mpi_place_new_particle_slave)                                             \
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_rescale_particles_slave)                                              \
@@ -150,7 +144,6 @@ static int terminated = 0;
   CB(mpi_send_exclusion_slave)                                                 \
   CB(mpi_bcast_lb_params_slave)                                                \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
-  CB(mpi_send_dip_slave)                                                       \
   CB(mpi_send_fluid_slave)                                                     \
   CB(mpi_recv_fluid_slave)                                                     \
   CB(mpi_local_stress_tensor_slave)                                            \
@@ -158,7 +151,6 @@ static int terminated = 0;
   CB(mpi_iccp3m_init_slave)                                                    \
   CB(mpi_rotate_particle_slave)                                                \
   CB(mpi_bcast_max_mu_slave)                                                   \
-  CB(mpi_send_vs_relative_quat_slave)                                          \
   CB(mpi_recv_fluid_populations_slave)                                         \
   CB(mpi_send_fluid_populations_slave)                                         \
   CB(mpi_recv_fluid_boundary_flag_slave)                                       \
@@ -596,66 +588,6 @@ void mpi_send_torque_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     comm_cart.recv(0, SOME_TAG, p->f.torque);
-  }
-
-  on_particle_change();
-#endif
-}
-
-/********************* REQ_SET_DIP ********/
-
-void mpi_send_dip(int pnode, int part, double dip[3]) {
-#ifdef DIPOLES
-  mpi_call(mpi_send_dip_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    convert_dip_to_quat(Vector3d({dip[0], dip[1], dip[2]}), p->r.quat,
-                        &p->p.dipm);
-  } else {
-    MPI_Send(dip, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_dip_slave(int pnode, int part) {
-#ifdef DIPOLES
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    Vector3d dip;
-    MPI_Recv(dip.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
-    convert_dip_to_quat(dip, p->r.quat, &p->p.dipm);
-  }
-
-  on_particle_change();
-#endif
-}
-
-/********************* REQ_SET_BOND ********/
-void mpi_send_vs_relative_quat(int pnode, int part, double *vs_relative_quat) {
-#ifdef VIRTUAL_SITES_RELATIVE
-  mpi_call(mpi_send_vs_relative_quat_slave, pnode, part);
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    for (int i = 0; i < 4; ++i) {
-      p->p.vs_relative.quat[i] = vs_relative_quat[i];
-    }
-  } else {
-    MPI_Send(vs_relative_quat, 4, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-  }
-
-  on_particle_change();
-#endif
-}
-void mpi_send_vs_relative_quat_slave(int pnode, int part) {
-#ifdef VIRTUAL_SITES_RELATIVE
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    MPI_Recv(p->p.vs_relative.quat.data(), 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
   }
 
   on_particle_change();
@@ -1134,23 +1066,6 @@ void mpi_bcast_coulomb_params_slave(int node, int parm) {
 #endif
 }
 
-/*************** REQ_BCAST_COULOMB ************/
-void mpi_bcast_collision_params() {
-#ifdef COLLISION_DETECTION
-  mpi_call(mpi_bcast_collision_params_slave, 1, 0);
-  mpi_bcast_collision_params_slave(-1, 0);
-#endif
-}
-
-void mpi_bcast_collision_params_slave(int node, int parm) {
-#ifdef COLLISION_DETECTION
-  MPI_Bcast(&collision_params, sizeof(Collision_parameters), MPI_BYTE, 0,
-            comm_cart);
-
-  recalc_forces = 1;
-#endif
-}
-
 /****************** REQ_SET_PERM ************/
 
 void mpi_send_permittivity_slave(int node, int index) {
@@ -1180,105 +1095,6 @@ void mpi_send_permittivity(int node, int index, int *indices,
     MPI_Send(permittivity, 3, MPI_DOUBLE, node, SOME_TAG, comm_cart);
     MPI_Send(indices, 3, MPI_INT, node, SOME_TAG, comm_cart);
   }
-#endif
-}
-
-/****************** REQ_SET_EXT ************/
-
-void mpi_send_ext_torque(int pnode, int part, int flag, int mask,
-                         double torque[3]) {
-#ifdef EXTERNAL_FORCES
-#ifdef ROTATION
-  mpi_call(mpi_send_ext_torque_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    /* mask out old flags */
-    p->p.ext_flag &= ~mask;
-    /* set new values */
-    p->p.ext_flag |= flag;
-
-    if (mask & PARTICLE_EXT_TORQUE)
-      p->p.ext_torque = {torque[0], torque[1], torque[2]};
-  } else {
-    int s_buf[2];
-    s_buf[0] = flag;
-    s_buf[1] = mask;
-    MPI_Send(s_buf, 2, MPI_INT, pnode, SOME_TAG, comm_cart);
-    if (mask & PARTICLE_EXT_TORQUE)
-      MPI_Send(torque, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-  }
-
-  on_particle_change();
-#endif
-#endif
-}
-
-void mpi_send_ext_torque_slave(int pnode, int part) {
-#ifdef EXTERNAL_FORCES
-#ifdef ROTATION
-  if (pnode == this_node) {
-    int s_buf[2] = {0, 0};
-    Particle *p = local_particles[part];
-    MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    /* mask out old flags */
-    p->p.ext_flag &= ~s_buf[1];
-    /* set new values */
-    p->p.ext_flag |= s_buf[0];
-
-    if (s_buf[1] & PARTICLE_EXT_TORQUE)
-      MPI_Recv(p->p.ext_torque.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
-               MPI_STATUS_IGNORE);
-  }
-
-  on_particle_change();
-#endif
-#endif
-}
-
-void mpi_send_ext_force(int pnode, int part, int flag, int mask,
-                        double force[3]) {
-#ifdef EXTERNAL_FORCES
-  mpi_call(mpi_send_ext_force_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    /* mask out old flags */
-    p->p.ext_flag &= ~mask;
-    /* set new values */
-    p->p.ext_flag |= flag;
-    if (mask & PARTICLE_EXT_FORCE)
-      p->p.ext_force = {force[0], force[1], force[2]};
-  } else {
-    int s_buf[2];
-    s_buf[0] = flag;
-    s_buf[1] = mask;
-    MPI_Send(s_buf, 2, MPI_INT, pnode, SOME_TAG, comm_cart);
-    if (mask & PARTICLE_EXT_FORCE)
-      MPI_Send(force, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_ext_force_slave(int pnode, int part) {
-#ifdef EXTERNAL_FORCES
-  if (pnode == this_node) {
-    int s_buf[2] = {0, 0};
-    Particle *p = local_particles[part];
-    MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    /* mask out old flags */
-    p->p.ext_flag &= ~s_buf[1];
-    /* set new values */
-    p->p.ext_flag |= s_buf[0];
-
-    if (s_buf[1] & PARTICLE_EXT_FORCE)
-      MPI_Recv(p->p.ext_force.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
-               MPI_STATUS_IGNORE);
-  }
-
-  on_particle_change();
 #endif
 }
 
