@@ -113,7 +113,6 @@ using Communication::mpiCallbacks;
 int this_node = -1;
 int n_nodes = -1;
 
-int graceful_exit = 0;
 /* whether there is already a termination going on. */
 static int terminated = 0;
 
@@ -151,7 +150,6 @@ static int terminated = 0;
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_update_mol_ids_slave)                                                 \
   CB(mpi_sync_topo_part_info_slave)                                            \
-  CB(mpi_send_mass_slave)                                                      \
   CB(mpi_send_solvation_slave)                                                 \
   CB(mpi_send_exclusion_slave)                                                 \
   CB(mpi_bcast_lb_params_slave)                                                \
@@ -170,7 +168,7 @@ static int terminated = 0;
   CB(mpi_send_out_direction_slave)                                             \
   CB(mpi_send_mu_E_slave)                                                      \
   CB(mpi_bcast_max_mu_slave)                                                   \
-  CB(mpi_send_vs_relative_quat_slave)                                                   \
+  CB(mpi_send_vs_relative_quat_slave)                                          \
   CB(mpi_send_vs_relative_slave)                                               \
   CB(mpi_recv_fluid_populations_slave)                                         \
   CB(mpi_send_fluid_populations_slave)                                         \
@@ -194,7 +192,8 @@ static int terminated = 0;
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
-  CB(mpi_rotate_system_slave)
+  CB(mpi_rotate_system_slave) \
+  CB(mpi_update_particle_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -579,34 +578,6 @@ void mpi_send_solvation_slave(int pnode, int part) {
     Particle *p = local_particles[part];
     MPI_Recv(&p->p.solvation, 2 * LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG,
              comm_cart, MPI_STATUS_IGNORE);
-  }
-
-  on_particle_change();
-#endif
-}
-
-/********************* REQ_SET_M ********/
-void mpi_send_mass(int pnode, int part, double mass) {
-#ifdef MASS
-  mpi_call(mpi_send_mass_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->p.mass = mass;
-  } else {
-    MPI_Send(&mass, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_mass_slave(int pnode, int part) {
-#ifdef MASS
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    MPI_Recv(&p->p.mass, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
   }
 
   on_particle_change();

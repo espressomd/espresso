@@ -97,7 +97,7 @@ cdef extern from "particle_data.hpp":
         int set_particle_rotation(int part, int rot)
 
     IF MASS:
-        int set_particle_mass(int part, double mass)
+        void set_particle_mass(int part, double mass)
 
     IF SHANCHEN:
         int set_particle_solvation(int part, double * solvation)

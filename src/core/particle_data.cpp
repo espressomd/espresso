@@ -43,6 +43,7 @@
 #include "random.hpp"
 #include "rotation.hpp"
 #include "virtual_sites.hpp"
+#include "initialize.hpp"
 
 #include "utils.hpp"
 #include "utils/Cache.hpp"
@@ -69,6 +70,8 @@
 #include <boost/serialization/variant.hpp>
 #include <boost/variant.hpp>
 
+#include "utils/print.hpp"
+
 namespace {
 
 template <typename S, S Particle::*s, typename T, T S::*m>
@@ -77,7 +80,10 @@ struct UpdateParticle {
 
   void operator()(Particle &p) const { (p.*s).*m = value; }
 
-  template <class Archive> void serialize(Archive &ar, long int) { ar &value; }
+  template <class Archive> void serialize(Archive &ar, long int) {
+    Utils::print(this_node, __PRETTY_FUNCTION__);
+    ar &value;
+  }
 };
 
 template <typename T, T ParticleProperties::*m>
@@ -146,88 +152,46 @@ using UpdateMessage = boost::variant<
 >;
 // clang-format on
 
-/*
- using UpdateMessage = boost::variant<UpdateProperty<int, &Prop::type>
-         , UpdateProperty<int, &Prop::mol_id>
-#ifdef MASS
-         , UpdateProperty<double, &Prop::mass>
-#endif
-#ifdef ROTATIONAL_INERTIA
-         , UpdateProperty<Vector3d, &Prop::rinertia>
-#endif
-#ifdef AFFINITY
-         , UpdateProperty<Vector3d, &Prop::bond_site>
-#endif
-#ifdef MEMBRANE_COLLISION
-         , UpdateProperty<Vector3d, &Prop::out_direction>
-#endif
-         , UpdateProperty<short int, &Prop::rotation>
-#ifdef ELECTROSTATICS
-         , UpdateProperty<double, &Prop::q>
-#endif
-#ifdef LB_ELECTROHYDRODYNAMICS
-         , UpdateProperty<Vector3d, &Prop::mu_E>
-#endif
-#ifdef DIPOLES
-         , UpdateProperty<double, &Prop::dipm>
-#endif
-#ifdef VIRTUAL_SITES
-         , UpdateProperty<int, &Prop::is_virtual>
-#ifdef VIRTUAL_SITES_RELATIVE
-         , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
-                 &Prop::vs_relative>
-#endif
-#endif
-#ifdef LANGEVIN_PER_PARTICLE
-         , UpdateProperty<double, &Prop::T>
-#ifndef PARTICLE_ANISOTROPY
-         , UpdateProperty<double, &Prop::gamma>
-#else
-         , UpdateProperty<Vector3d, &Prop::gamma>
-#endif // PARTICLE_ANISOTROPY
-#ifdef ROTATION
-#ifndef PARTICLE_ANISOTROPY
-         , UpdateProperty<double, &Prop::gamma_rot>
-#else
-         , UpdateProperty<Vector3d, &Prop::gamma_rot>
-#endif // ROTATIONAL_INERTIA
-#endif // ROTATION
-#endif // LANGEVIN_PER_PARTICLE
-#ifdef EXTERNAL_FORCES
-         , UpdateProperty<int, &Prop::ext_flag>
-         , UpdateProperty<Vector3d, &Prop::ext_force>
-#ifdef ROTATION
-         , UpdateProperty<Vector3d, &Prop::ext_torque>
-#endif
-#endif
->;
-*/
-
 struct UpdateVisitor : public boost::static_visitor<void> {
   UpdateVisitor(int id) : id(id) {}
   const int id;
   template <typename Message> void operator()(const Message &msg) const {
-      assert(local_particles[id]);
+    Utils::print(this_node, __PRETTY_FUNCTION__);
+
+    assert(local_particles[id]);
     msg(*local_particles[id]);
   }
 };
+} // namespace
 
 void mpi_update_particle_slave(int node, int id) {
-  if (node == comm_cart.rank()) {
-    UpdateMessage msg;
-    comm_cart.recv(0, SOME_TAG, msg);
-    boost::apply_visitor(UpdateVisitor{id}, msg);
-  }
+    if (node == comm_cart.rank()) {
+        UpdateMessage msg{};
+        comm_cart.recv(0, SOME_TAG, msg);
+        boost::apply_visitor(UpdateVisitor{id}, msg);
+    }
+
+    on_particle_change();
 }
-} // namespace
 
 template <typename S, S Particle::*s, typename T, T S::*m, typename TRef>
 void mpi_update_particle(int id, TRef &&value) {
   auto const pnode = get_particle_node(id);
   mpi_call(mpi_update_particle_slave, pnode, id);
 
-  //comm_cart.send(pnode, SOME_TAG,
-  //               UpdateParticle<S, s, T, m>{std::forward<TRef>(value)});
+  if(pnode != comm_cart.rank()) {
+    const UpdateMessage msg = UpdateParticle<S, s, T, m>{std::forward<TRef>(value)};
+    comm_cart.send(pnode, SOME_TAG, msg);
+  } else {
+      UpdateParticle<S, s, T, m>{std::forward<TRef>(value)}(*local_particles[id]);
+  }
+
+  on_particle_change();
+}
+
+template <typename T, T ParticleProperties::*m, typename TRef>
+void mpi_update_particle_property(int id, TRef &&value) {
+      mpi_update_particle<ParticleProperties, &Particle::p, T, m>(id, std::forward<TRef>(value));
 }
 
 /************************************************
@@ -654,11 +618,8 @@ int set_particle_solvation(int part, double *solvation) {
 #endif
 
 #if defined(MASS) || defined(LB_BOUNDARIES_GPU)
-int set_particle_mass(int part, double mass) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_mass(pnode, part, mass);
-  return ES_OK;
+void set_particle_mass(int part, double mass) {
+    mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);
 }
 #else
 constexpr double ParticleProperties::mass;
