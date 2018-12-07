@@ -49,6 +49,8 @@
 #include "utils/make_unique.hpp"
 #include "utils/mpi/gatherv.hpp"
 
+#include <boost/variant.hpp>
+
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -64,11 +66,173 @@
 /** my magic MPI code for send/recv_particles */
 #define REQ_SNDRCV_PART 0xaa
 
+#include <boost/serialization/variant.hpp>
+#include <boost/variant.hpp>
+
+namespace {
+
+template <typename S, S Particle::*s, typename T, T S::*m>
+struct UpdateParticle {
+  T value;
+
+  void operator()(Particle &p) const { (p.*s).*m = value; }
+
+  template <class Archive> void serialize(Archive &ar, long int) { ar &value; }
+};
+
+template <typename T, T ParticleProperties::*m>
+using UpdateProperty = UpdateParticle<ParticleProperties, &Particle::p, T, m>;
+
+using Prop = ParticleProperties;
+
+// clang-format off
+using UpdateMessage = boost::variant<
+          UpdateProperty<int, &Prop::type>
+        , UpdateProperty<int, &Prop::mol_id>
+#ifdef MASS
+        , UpdateProperty<double, &Prop::mass>
+#endif
+#ifdef SHANCHEN
+        , UpdateProperty<std::array<double, 2 * LB_COMPONENTS>, &Prop::solvation>
+#endif
+#ifdef ROTATIONAL_INERTIA
+        , UpdateProperty<Vector3d, &Prop::rinertia>
+#endif
+#ifdef AFFINITY
+        , UpdateProperty<Vector3d, &Prop::bond_site>
+#endif
+#ifdef MEMBRANE_COLLISION
+        , UpdateProperty<Vector3d, &Prop::out_direction>
+#endif
+        , UpdateProperty<short int, &Prop::rotation>
+#ifdef ELECTROSTATICS
+        , UpdateProperty<double, &Prop::q>
+#endif
+#ifdef LB_ELECTROHYDRODYNAMICS
+        , UpdateProperty<Vector3d, &Prop::mu_E>
+#endif
+#ifdef DIPOLES
+        , UpdateProperty<double, &Prop::dipm>
+#endif
+#ifdef VIRTUAL_SITES
+        , UpdateProperty<int, &Prop::is_virtual>
+#ifdef VIRTUAL_SITES_RELATIVE
+        , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
+                         &Prop::vs_relative>
+#endif
+#endif
+#ifdef LANGEVIN_PER_PARTICLE
+        , UpdateProperty<double, &Prop::T>
+#ifndef PARTICLE_ANISOTROPY
+        , UpdateProperty<double, &Prop::gamma>
+#else
+        , UpdateProperty<Vector3d, &Prop::gamma>
+#endif // PARTICLE_ANISOTROPY
+#ifdef ROTATION
+#ifndef PARTICLE_ANISOTROPY
+        , UpdateProperty<double, &Prop::gamma_rot>
+#else
+        , UpdateProperty<Vector3d, &Prop::gamma_rot>
+#endif // ROTATIONAL_INERTIA
+#endif // ROTATION
+#endif // LANGEVIN_PER_PARTICLE
+#ifdef EXTERNAL_FORCES
+        , UpdateProperty<int, &Prop::ext_flag>
+        , UpdateProperty<Vector3d, &Prop::ext_force>
+#ifdef ROTATION
+        , UpdateProperty<Vector3d, &Prop::ext_torque>
+#endif
+#endif
+>;
+// clang-format on
+
+/*
+ using UpdateMessage = boost::variant<UpdateProperty<int, &Prop::type>
+         , UpdateProperty<int, &Prop::mol_id>
+#ifdef MASS
+         , UpdateProperty<double, &Prop::mass>
+#endif
+#ifdef ROTATIONAL_INERTIA
+         , UpdateProperty<Vector3d, &Prop::rinertia>
+#endif
+#ifdef AFFINITY
+         , UpdateProperty<Vector3d, &Prop::bond_site>
+#endif
+#ifdef MEMBRANE_COLLISION
+         , UpdateProperty<Vector3d, &Prop::out_direction>
+#endif
+         , UpdateProperty<short int, &Prop::rotation>
+#ifdef ELECTROSTATICS
+         , UpdateProperty<double, &Prop::q>
+#endif
+#ifdef LB_ELECTROHYDRODYNAMICS
+         , UpdateProperty<Vector3d, &Prop::mu_E>
+#endif
+#ifdef DIPOLES
+         , UpdateProperty<double, &Prop::dipm>
+#endif
+#ifdef VIRTUAL_SITES
+         , UpdateProperty<int, &Prop::is_virtual>
+#ifdef VIRTUAL_SITES_RELATIVE
+         , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
+                 &Prop::vs_relative>
+#endif
+#endif
+#ifdef LANGEVIN_PER_PARTICLE
+         , UpdateProperty<double, &Prop::T>
+#ifndef PARTICLE_ANISOTROPY
+         , UpdateProperty<double, &Prop::gamma>
+#else
+         , UpdateProperty<Vector3d, &Prop::gamma>
+#endif // PARTICLE_ANISOTROPY
+#ifdef ROTATION
+#ifndef PARTICLE_ANISOTROPY
+         , UpdateProperty<double, &Prop::gamma_rot>
+#else
+         , UpdateProperty<Vector3d, &Prop::gamma_rot>
+#endif // ROTATIONAL_INERTIA
+#endif // ROTATION
+#endif // LANGEVIN_PER_PARTICLE
+#ifdef EXTERNAL_FORCES
+         , UpdateProperty<int, &Prop::ext_flag>
+         , UpdateProperty<Vector3d, &Prop::ext_force>
+#ifdef ROTATION
+         , UpdateProperty<Vector3d, &Prop::ext_torque>
+#endif
+#endif
+>;
+*/
+
+struct UpdateVisitor : public boost::static_visitor<void> {
+  UpdateVisitor(int id) : id(id) {}
+  const int id;
+  template <typename Message> void operator()(const Message &msg) const {
+      assert(local_particles[id]);
+    msg(*local_particles[id]);
+  }
+};
+
+void mpi_update_particle_slave(int node, int id) {
+  if (node == comm_cart.rank()) {
+    UpdateMessage msg;
+    comm_cart.recv(0, SOME_TAG, msg);
+    boost::apply_visitor(UpdateVisitor{id}, msg);
+  }
+}
+} // namespace
+
+template <typename S, S Particle::*s, typename T, T S::*m, typename TRef>
+void mpi_update_particle(int id, TRef &&value) {
+  auto const pnode = get_particle_node(id);
+  mpi_call(mpi_update_particle_slave, pnode, id);
+
+  //comm_cart.send(pnode, SOME_TAG,
+  //               UpdateParticle<S, s, T, m>{std::forward<TRef>(value)});
+}
+
 /************************************************
  * variables
  ************************************************/
-// List of particles for grandcanonical simulations
-int number_of_type_lists;
 bool type_list_enable;
 std::unordered_map<int, std::unordered_set<int>> particle_type_map{};
 void remove_id_from_map(int part_id, int type);
@@ -248,17 +412,6 @@ void update_local_particles(ParticleList *pl) {
   int n = pl->n, i;
   for (i = 0; i < n; i++)
     local_particles[p[i].p.identity] = &p[i];
-}
-
-Particle *got_particle(ParticleList *l, int id) {
-  int i;
-
-  for (i = 0; i < l->n; i++)
-    if (l->part[i].p.identity == id)
-      break;
-  if (i == l->n)
-    return nullptr;
-  return &(l->part[i]);
 }
 
 void append_unindexed_particle(ParticleList *l, Particle &&part) {
@@ -586,9 +739,9 @@ int set_particle_virtual(int part, int is_virtual) {
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, double *vs_quat) {
+void set_particle_vs_quat(int part, double *vs_relative_quat) {
   auto const pnode = get_particle_node(part);
-  mpi_send_vs_quat(pnode, part, vs_quat);
+  mpi_send_vs_relative_quat(pnode, part, vs_relative_quat);
 }
 
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
@@ -1231,14 +1384,14 @@ void pointer_to_virtual(Particle const *p, int const *&res) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void pointer_to_vs_quat(Particle const *p, double const *&res) {
-  res = (p->p.vs_quat);
+  res = (p->p.vs_relative.quat.data());
 }
 
 void pointer_to_vs_relative(Particle const *p, int const *&res1,
                             double const *&res2, double const *&res3) {
-  res1 = &(p->p.vs_relative_to_particle_id);
-  res2 = &(p->p.vs_relative_distance);
-  res3 = (p->p.vs_relative_rel_orientation);
+  res1 = &(p->p.vs_relative.to_particle_id);
+  res2 = &(p->p.vs_relative.distance);
+  res3 = p->p.vs_relative.rel_orientation.data();
 }
 #endif
 

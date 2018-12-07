@@ -318,7 +318,7 @@ void mpi_send_virtual(int node, int part, int is_virtual);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void mpi_send_vs_quat(int node, int part, double *vs_quat);
+void mpi_send_vs_relative_quat(int node, int part, double *vs_relative_quat);
 void mpi_send_vs_relative(int node, int part, int vs_relative_to,
                           double vs_distance, double *rel_ori);
 #endif
