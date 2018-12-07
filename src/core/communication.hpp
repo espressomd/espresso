@@ -351,11 +351,6 @@ void mpi_set_time_step(double time_step);
 /** Issue REQ_BCAST_COULOMB: send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-/** Issue REQ_LB_BOUNDARY: set up walls for lb fluid */
-void mpi_bcast_lbboundary(int del_num);
-#endif
-
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir'
  * by a factor 'scale'. */
 void mpi_rescale_particles(int dir, double scale);
@@ -461,12 +456,6 @@ void mpi_observable_lb_radial_velocity_profile();
  * parameters
  */
 void mpi_setup_reaction();
-
-void mpi_external_potential_broadcast(int number);
-void mpi_external_potential_broadcast_slave(int node, int number);
-void mpi_external_potential_tabulated_read_potential_file(int number);
-void mpi_external_potential_sum_energies();
-void mpi_external_potential_sum_energies_slave();
 
 #ifdef CUDA
 /** Gather CUDA devices from all nodes */
