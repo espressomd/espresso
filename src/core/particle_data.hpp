@@ -646,7 +646,7 @@ int set_particle_f(int part, const Vector3d &F);
     @param mass its new mass.
     @return ES_OK if particle existed
 */
-int set_particle_mass(int part, double mass);
+void set_particle_mass(int part, double mass);
 
 /** Call only on the master node: set particle solvation free energy.
     @param part the particle.

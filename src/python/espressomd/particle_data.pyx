@@ -368,8 +368,7 @@ cdef class ParticleHandle(object):
             IF MASS == 1:
                 check_type_or_throw_except(
                     _mass, 1, float, "Mass has to be 1 floats")
-                if set_particle_mass(self._id, _mass) == 1:
-                    raise Exception("Set particle position first.")
+                set_particle_mass(self._id, _mass)
             ELSE:
                 raise AttributeError("You are trying to set the particle mass \
                                      but the mass feature is not compiled in.")

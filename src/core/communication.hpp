@@ -191,14 +191,6 @@ void mpi_send_f(int node, int part, const Vector3d &F);
 */
 void mpi_send_solvation(int node, int part, double *solvation);
 
-/** Issue REQ_SET_M: send particle mass.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param mass its new mass.
-*/
-void mpi_send_mass(int node, int part, double mass);
-
 /** Issue REQ_SET_Q: send particle charge.
     Also calls \ref on_particle_change.
     \param part the particle.
