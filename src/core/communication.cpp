@@ -133,7 +133,6 @@ int n_nodes = -1;
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
-  CB(mpi_send_quat_slave)                                                      \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_update_mol_ids_slave)                                                 \
   CB(mpi_sync_topo_part_info_slave)                                            \
@@ -447,38 +446,6 @@ void mpi_rotate_particle_slave(int pnode, int part) {
     comm_cart.recv(0, SOME_TAG, axis);
     comm_cart.recv(0, SOME_TAG, angle);
     local_rotate_particle(*p, axis, angle);
-  }
-
-  on_particle_change();
-#endif
-}
-
-/********************* REQ_SET_QUAT ********/
-
-void mpi_send_quat(int pnode, int part, double quat[4]) {
-#ifdef ROTATION
-  mpi_call(mpi_send_quat_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->r.quat[0] = quat[0];
-    p->r.quat[1] = quat[1];
-    p->r.quat[2] = quat[2];
-    p->r.quat[3] = quat[3];
-  } else {
-    MPI_Send(quat, 4, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_quat_slave(int pnode, int part) {
-#ifdef ROTATION
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    MPI_Recv(p->r.quat.data(), 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
   }
 
   on_particle_change();
