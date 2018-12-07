@@ -655,9 +655,9 @@ int place_particle(int part, double p[3]) {
 }
 
 int set_particle_v(int part, double v[3]) {
-  auto const pnode = get_particle_node(part);
+    mpi_update_particle<ParticleMomentum, &Particle::m,
+            Vector3d, &ParticleMomentum::v>(part, Vector3d(v, v+3));
 
-  mpi_send_v(pnode, part, v);
   return ES_OK;
 }
 
@@ -671,9 +671,8 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim) {
 #endif
 
 int set_particle_f(int part, const Vector3d &F) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_f(pnode, part, F);
+    mpi_update_particle<ParticleForce, &Particle::f,
+            Vector3d, &ParticleForce::f>(part, F);
   return ES_OK;
 }
 
@@ -831,43 +830,38 @@ int set_particle_mol_id(int part, int mid) {
 
 #ifdef ROTATION
 int set_particle_quat(int part, double quat[4]) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_quat(pnode, part, quat);
+    mpi_update_particle<ParticlePosition, &Particle::r,
+            Vector4d, &ParticlePosition::quat>(part, Vector4d(quat, quat + 4));
   return ES_OK;
 }
 
 int set_particle_omega_lab(int part, const Vector3d &omega_lab) {
   auto const &particle = get_particle_data(part);
 
-  auto const pnode = get_particle_node(part);
-  mpi_send_omega(pnode, part,
-                 convert_vector_space_to_body(particle, omega_lab));
+  mpi_update_particle<ParticleMomentum, &Particle::m,
+              Vector3d, &ParticleMomentum::omega>(part, convert_vector_space_to_body(particle, omega_lab));
+
   return ES_OK;
 }
 
 int set_particle_omega_body(int part, const Vector3d &omega) {
-  auto const pnode = get_particle_node(part);
-  mpi_send_omega(pnode, part, omega);
+    mpi_update_particle<ParticleMomentum, &Particle::m,
+            Vector3d, &ParticleMomentum::omega>(part, omega);
+
   return ES_OK;
 }
 
 int set_particle_torque_lab(int part, const Vector3d &torque_lab) {
   auto const &particle = get_particle_data(part);
 
-  auto const pnode = get_particle_node(part);
-  mpi_send_torque(pnode, part,
-                  convert_vector_space_to_body(particle, torque_lab));
+    mpi_update_particle<ParticleForce, &Particle::f,
+            Vector3d, &ParticleForce::torque>(part, convert_vector_space_to_body(particle, torque_lab));
   return ES_OK;
 }
 
 int set_particle_torque_body(int part, const Vector3d &torque) {
-  auto const pnode = get_particle_node(part);
-
-  /* Nothing to be done but pass, since the coordinates
-     are already in the proper frame */
-
-  mpi_send_torque(pnode, part, torque);
+    mpi_update_particle<ParticleForce, &Particle::f,
+            Vector3d, &ParticleForce::torque>(part, torque);
   return ES_OK;
 }
 
@@ -911,7 +905,9 @@ int set_particle_gamma_rot(int part, Vector3d gamma_rot) {
 #ifdef ROTATION
 int set_particle_ext_torque(int part, const Vector3d &torque) {
   auto const flag = (torque != Vector3d{}) ? PARTICLE_EXT_TORQUE : 0;
-  mpi_update_particle_property<Vector3d, &ParticleProperties::ext_torque>(part, torque);
+  if(flag) {
+    mpi_update_particle_property<Vector3d, &ParticleProperties::ext_torque>(part, torque);
+  }
   mpi_send_update_message(get_particle_node(part),
           UpdateExternalFlag{part, PARTICLE_EXT_TORQUE, flag});
   return ES_OK;
@@ -920,7 +916,9 @@ int set_particle_ext_torque(int part, const Vector3d &torque) {
 
 int set_particle_ext_force(int part, const Vector3d &force) {
     auto const flag = (force != Vector3d{}) ? PARTICLE_EXT_FORCE : 0;
-    mpi_update_particle_property<Vector3d, &ParticleProperties::ext_force>(part, force);
+    if(flag) {
+      mpi_update_particle_property<Vector3d, &ParticleProperties::ext_force>(part, force);
+    }
     mpi_send_update_message(get_particle_node(part),
             UpdateExternalFlag{part, PARTICLE_EXT_FORCE, flag});
   return ES_OK;

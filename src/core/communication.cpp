@@ -119,9 +119,7 @@ int n_nodes = -1;
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_bcast_event_slave)                                                    \
   CB(mpi_place_particle_slave)                                                 \
-  CB(mpi_send_v_slave)                                                         \
   CB(mpi_send_swimming_slave)                                                  \
-  CB(mpi_send_f_slave)                                                         \
   CB(mpi_send_bond_slave)                                                      \
   CB(mpi_recv_part_slave)                                                      \
   CB(mpi_integrate_slave)                                                      \
@@ -136,8 +134,6 @@ int n_nodes = -1;
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_send_quat_slave)                                                      \
-  CB(mpi_send_omega_slave)                                                     \
-  CB(mpi_send_torque_slave)                                                    \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_update_mol_ids_slave)                                                 \
   CB(mpi_sync_topo_part_info_slave)                                            \
@@ -197,7 +193,7 @@ std::vector<std::string> names{CALLBACK_LIST};
 
 /** Forward declarations */
 
-int mpi_check_runtime_errors(void);
+int mpi_check_runtime_errors();
 
 /**********************************************
  * procedures
@@ -276,8 +272,8 @@ void mpi_init() {
   Communication::m_callbacks =
       Utils::make_unique<Communication::MpiCallbacks>(comm_cart);
 
-  for (int i = 0; i < slave_callbacks.size(); ++i) {
-    mpiCallbacks().add(slave_callbacks[i]);
+  for (auto &cb : slave_callbacks) {
+    mpiCallbacks().add(cb);
   }
 
   ErrorHandling::init_error_handling(mpiCallbacks());
@@ -395,30 +391,6 @@ void mpi_place_new_particle_slave(int pnode, int part) {
   on_particle_change();
 }
 
-/****************** REQ_SET_V ************/
-void mpi_send_v(int pnode, int part, double *v) {
-  mpi_call(mpi_send_v_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-
-    p->m.v = {v[0], v[1], v[2]};
-  } else
-    MPI_Send(v, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-
-  on_particle_change();
-}
-
-void mpi_send_v_slave(int pnode, int part) {
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    MPI_Recv(p->m.v.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
-  }
-
-  on_particle_change();
-}
-
 /****************** REQ_SET_SWIMMING ************/
 void mpi_send_swimming(int pnode, int part,
                        const ParticleParametersSwimming &swim) {
@@ -447,32 +419,6 @@ void mpi_send_swimming_slave(int pnode, int part) {
 
   on_particle_change();
 #endif
-}
-
-/****************** REQ_SET_F ************/
-void mpi_send_f(int pnode, int part, const Vector3d &F) {
-  mpi_call(mpi_send_f_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->f.f = F;
-  } else {
-    comm_cart.send(pnode, SOME_TAG, F);
-  }
-
-  on_particle_change();
-}
-
-void mpi_send_f_slave(int pnode, int part) {
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    Vector3d F;
-    comm_cart.recv(0, SOME_TAG, F);
-
-    p->f.f = F;
-  }
-
-  on_particle_change();
 }
 
 void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
@@ -533,61 +479,6 @@ void mpi_send_quat_slave(int pnode, int part) {
     Particle *p = local_particles[part];
     MPI_Recv(p->r.quat.data(), 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
-  }
-
-  on_particle_change();
-#endif
-}
-
-/********************* REQ_SET_OMEGA ********/
-
-void mpi_send_omega(int pnode, int part, const Vector3d &omega) {
-#ifdef ROTATION
-  mpi_call(mpi_send_omega_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->m.omega = omega;
-  } else {
-    comm_cart.send(pnode, SOME_TAG, omega);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_omega_slave(int pnode, int part) {
-#ifdef ROTATION
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    comm_cart.recv(0, SOME_TAG, p->m.omega);
-  }
-  on_particle_change();
-#endif
-}
-
-/********************* REQ_SET_TORQUE ********/
-
-void mpi_send_torque(int pnode, int part, const Vector3d &torque) {
-#ifdef ROTATION
-  mpi_call(mpi_send_torque_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->f.torque = torque;
-  } else {
-    comm_cart.send(pnode, SOME_TAG, torque);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_torque_slave(int pnode, int part) {
-#ifdef ROTATION
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    comm_cart.recv(0, SOME_TAG, p->f.torque);
   }
 
   on_particle_change();
@@ -680,7 +571,7 @@ void mpi_remove_particle_slave(int pnode, int part) {
 
 /********************* REQ_MIN_ENERGY ********/
 
-int mpi_minimize_energy(void) {
+int mpi_minimize_energy() {
   mpi_call(mpi_minimize_energy_slave, 0, 0);
   return minimize_energy();
 }
@@ -949,7 +840,7 @@ void mpi_set_time_step(double time_s) {
   on_parameter_change(FIELD_TIMESTEP);
 }
 
-void mpi_set_time_step_slave(int node, int i) {
+void mpi_set_time_step_slave(int, int i) {
   double old_ts = time_step;
 
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
@@ -960,12 +851,12 @@ void mpi_set_time_step_slave(int node, int i) {
   time_step_half = time_step / 2.;
 }
 
-int mpi_check_runtime_errors(void) {
+int mpi_check_runtime_errors() {
   mpi_call(mpi_check_runtime_errors_slave, 0, 0);
   return check_runtime_errors();
 }
 
-void mpi_check_runtime_errors_slave(int a, int b) { check_runtime_errors(); }
+void mpi_check_runtime_errors_slave(int, int) { check_runtime_errors(); }
 
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params() {
