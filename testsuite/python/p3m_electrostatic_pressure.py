@@ -38,42 +38,47 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         self.system.thermostat.set_langevin(kT=self.kT, gamma=1.0)
         self.system.seed = 1
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=1.0, sigma=1.0, cutoff=2**(1.0/6.0), shift="auto")
+            epsilon=1.0, sigma=1.0, cutoff=2**(1.0 / 6.0), shift="auto")
         num_part = 40
         mass = 1
         np.random.seed(seed=1)
 
         for i in range(num_part):
             self.system.part.add(pos=np.random.random(
-                3) * self.system.box_l, q=1,  v=np.sqrt(self.kT/mass)*np.random.normal(loc=[0, 0, 0]))
+                3) * self.system.box_l, q=1, v=np.sqrt(self.kT / mass) * np.random.normal(loc=[0, 0, 0]))
             self.system.part.add(pos=np.random.random(
-                3) * self.system.box_l, q=-1, v=np.sqrt(self.kT/mass)*np.random.normal(loc=[0, 0, 0]))
+                3) * self.system.box_l, q=-1, v=np.sqrt(self.kT / mass) * np.random.normal(loc=[0, 0, 0]))
 
-    def pressure_via_volume_scaling(self, system, kbT, list_of_previous_values):
+    def pressure_via_volume_scaling(
+        self,
+        system,
+     kbT,
+     list_of_previous_values):
         # taken from "Efficient pressure estimation in molecular simulations without evaluating the virial"
-        # only works so far for isotropic volume changes, i.e. the isotropic pressure
+        # only works so far for isotropic volume changes, i.e. the isotropic
+        # pressure
         energy = system.analysis.energy()
-        Epot_old = energy["total"]-energy["kinetic"]
+        Epot_old = energy["total"] - energy["kinetic"]
         old_box_lengths = system.box_l
         old_volume = np.prod(old_box_lengths)
         dV_div_old_volume = 0.001
-        dV = -dV_div_old_volume*old_volume
-        new_volume = old_volume+dV
-        new_box_l = (new_volume)**(1./3.)
+        dV = -dV_div_old_volume * old_volume
+        new_volume = old_volume + dV
+        new_box_l = (new_volume)**(1. / 3.)
         system.change_volume_and_rescale_particles(new_box_l, "xyz")
         system.integrator.run(0)
         energy = system.analysis.energy()
-        Epot_new = energy["total"]-energy["kinetic"]
+        Epot_new = energy["total"] - energy["kinetic"]
         system.change_volume_and_rescale_particles(old_box_lengths[0], "xyz")
         system.integrator.run(0)
-        DeltaEpot = Epot_new-Epot_old
+        DeltaEpot = Epot_new - Epot_old
         particle_number = len(system.part[:].id)
-        current_value = (new_volume/old_volume)**particle_number * \
-            np.exp(-DeltaEpot/kbT)
+        current_value = (new_volume / old_volume)**particle_number * \
+            np.exp(-DeltaEpot / kbT)
         list_of_previous_values.append(current_value)
         average_value = np.mean(list_of_previous_values)
 
-        pressure = kbT/dV*np.log(average_value)
+        pressure = kbT / dV * np.log(average_value)
         return pressure
 
     def test_p3m_pressure(self):
