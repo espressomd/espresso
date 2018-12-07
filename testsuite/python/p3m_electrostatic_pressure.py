@@ -25,7 +25,6 @@ import espressomd
 from espressomd import electrostatics
 
 
-
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
 class ElectrostaticInteractionsTests(ut.TestCase):
