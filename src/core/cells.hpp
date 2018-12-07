@@ -298,12 +298,11 @@ void check_resort_particles();
 
 /*@}*/
 
-/* @brief Finds the cell in which a particle is stored
-
-   Uses position_to_cell on p.r.p. If this is not on the node's domain,
-   uses position at last Verlet list rebuild (p.l.p_old).
-
-   @return pointer to the cell or nullptr if the particle is not on the node
+/**
+ * @brief Finds the cell in which a particle is stored
+ *
+ *
+ * @return pointer to the cell or nullptr if the particle is not on the node
 */
 Cell *find_current_cell(const Particle &p);
 

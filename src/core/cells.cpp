@@ -491,13 +491,11 @@ void cells_update_ghosts() {
 }
 
 Cell *find_current_cell(const Particle &p) {
-  auto c = cell_structure.position_to_cell(p.r.p);
-  if (c) {
-    return c;
-  } else if (!p.l.ghost) {
-    // Old pos must lie within the cell system
-    return cell_structure.position_to_cell(p.l.p_old);
-  } else {
+  assert(not resort_particles);
+
+  if (p.l.ghost) {
     return nullptr;
   }
+
+  return cell_structure.position_to_cell(p.l.p_old);
 }
