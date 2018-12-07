@@ -164,9 +164,13 @@ private:
 
 // Useful typedefs
 
-typedef Vector<3, double> Vector3d;
+template<size_t N>
+using VectorXd = Vector<N, double>;
+using Vector2d = VectorXd<2>;
+using Vector3d = VectorXd<3>;
+using Vector4d = VectorXd<4>;
+
 typedef Vector<3, int> Vector3i;
-typedef Vector<2, double> Vector2d;
 
 namespace detail {
 template <size_t N, typename T, typename Op>
