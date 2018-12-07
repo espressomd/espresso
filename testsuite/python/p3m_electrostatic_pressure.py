@@ -19,11 +19,12 @@
 from __future__ import print_function
 import unittest as ut
 import numpy as np
+import numpy.testing as npt
 
 import espressomd
 from espressomd import electrostatics
 import tests_common
-import numpy.testing as npt
+
 
 
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
