@@ -156,7 +156,7 @@ int n_nodes = -1;
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
-  CB(mpi_rotate_system_slave) \
+  CB(mpi_rotate_system_slave)                                                  \
   CB(mpi_update_particle_slave)
 
 // create the forward declarations
