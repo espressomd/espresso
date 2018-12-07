@@ -125,7 +125,7 @@ struct ParticleProperties {
 
   // Determines, whether a particle's rotational degrees of freedom are
   // integrated
-  short int rotation = 0;
+  int rotation = 0;
 
   /** charge. */
 #ifdef ELECTROSTATICS
@@ -840,7 +840,7 @@ int set_particle_ext_torque(int part, int flag, double torque[3]);
     @param force new value for ext_force.
     @return ES_OK if particle existed
 */
-int set_particle_ext_force(int part, int flag, double force[3]);
+int set_particle_ext_force(int part, Vector3d force);
 /** Call only on the master node: set coordinate axes for which the particles
    motion is fixed.
     @param part  the particle.
@@ -1042,7 +1042,7 @@ void pointer_to_gamma_rot(Particle const *p, double const *&res);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef ROTATION
-void pointer_to_rotation(Particle const *p, short int const *&res);
+void pointer_to_rotation(Particle const *p, int const *&res);
 #endif
 
 #ifdef ENGINE

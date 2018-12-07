@@ -837,17 +837,13 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _ext_f):
-                cdef double ext_f[3]
-                cdef int ext_flag = 0
+                cdef Vector3d ext_f
                 check_type_or_throw_except(
                     _ext_f, 3, float, "External force vector has to be 3 floats.")
                 for i in range(3):
                     ext_f[i] = _ext_f[i]
-                if ext_f[0] == 0 and ext_f[1] == 0 and ext_f[2] == 0:
-                    ext_flag = 0
-                else:
-                    ext_flag = PARTICLE_EXT_FORCE
-                if set_particle_ext_force(self._id, ext_flag, ext_f) == 1:
+
+                if set_particle_ext_force(self._id, ext_f) == 1:
                     raise Exception("Set particle position first.")
 
             def __get__(self):
@@ -1112,7 +1108,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const short int * _rot = NULL
+                cdef const int * _rot = NULL
                 pointer_to_rotation(self.particle_data, _rot)
                 rot = _rot[0]
                 res = np.zeros(3, dtype=int)
