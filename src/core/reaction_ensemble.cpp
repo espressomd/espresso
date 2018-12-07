@@ -717,9 +717,9 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   // for components
   double vel[3];
   // we use mass=1 for all particles, think about adapting this
-  vel[0] = std::pow(2 * PI * temperature, -3.0 / 2.0) * gaussian_random();
-  vel[1] = std::pow(2 * PI * temperature, -3.0 / 2.0) * gaussian_random();
-  vel[2] = std::pow(2 * PI * temperature, -3.0 / 2.0) * gaussian_random();
+  vel[0] = std::sqrt(temperature) * gaussian_random();
+  vel[1] = std::sqrt(temperature) * gaussian_random();
+  vel[2] = std::sqrt(temperature) * gaussian_random();
 #ifdef ELECTROSTATICS
   double charge = charges_of_types[desired_type];
 #endif
@@ -831,6 +831,12 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     p_id = p_id_s_changed_particles[i];
     // change particle position
     new_pos = get_random_position_in_box();
+    double vel[3];
+    auto const &p = get_particle_data(p_id);
+    vel[0] = std::sqrt(temperature / p.p.mass) * gaussian_random();
+    vel[1] = std::sqrt(temperature / p.p.mass) * gaussian_random();
+    vel[2] = std::sqrt(temperature / p.p.mass) * gaussian_random();
+    set_particle_v(p_id, vel);
     // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
     // //enhanced proposal of small radii
     place_particle(p_id, new_pos.data());
@@ -1791,7 +1797,7 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
          // need to hide the particle and recover it
   make_reaction_attempt(current_reaction, changed_particles_properties,
                         p_ids_created_particles, hidden_particles_properties);
-  const double E_pot_new= calculate_current_potential_energy_of_system();
+  const double E_pot_new = calculate_current_potential_energy_of_system();
   // reverse reaction attempt
   // reverse reaction
   // 1) delete created product particles

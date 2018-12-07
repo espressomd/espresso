@@ -25,6 +25,7 @@ from espressomd.interactions import FeneBond
 from time import time
 from espressomd.accumulators import Correlator
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
+from tests_common import single_component_maxwell
 
 
 @ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"),
@@ -35,8 +36,8 @@ class LangevinThermostat(ut.TestCase):
        the single component Maxwell distribution."""
 
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.cell_system.set_n_square()
-    system.cell_system.skin = 0.3
+    system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+    system.cell_system.skin = 0
     system.seed = range(system.cell_system.get_state()["n_nodes"])
     if espressomd.has_features("PARTIAL_PERIODIC"):
         system.periodicity = 0, 0, 0
@@ -44,12 +45,6 @@ class LangevinThermostat(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         np.random.seed(42)
-
-    def single_component_maxwell(self, x1, x2, kT):
-        """Integrate the probability density from x1 to x2 using the trapez rule"""
-        x = np.linspace(x1, x2, 1000)
-        return np.trapz(np.exp(-x**2 / (2. * kT)), x) / \
-            np.sqrt(2. * np.pi * kT)
 
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
         """check the recorded particle distributions in vel againsta histogram with n_bins bins. Drop velocities outside minmax. Check individual histogram bins up to an accuracy of error_tol agaisnt the analytical result for kT."""
@@ -60,14 +55,14 @@ class LangevinThermostat(ut.TestCase):
             bins = hist[1]
             for j in range(n_bins):
                 found = data[j]
-                expected = self.single_component_maxwell(
+                expected = single_component_maxwell(
                     bins[j], bins[j + 1], kT)
                 self.assertLessEqual(abs(found - expected), error_tol)
 
     def test_aa_verify_single_component_maxwell(self):
         """Verifies the normalization of the analytical expression."""
         self.assertLessEqual(
-            abs(self.single_component_maxwell(-10, 10, 4.) - 1.), 1E-4)
+            abs(single_component_maxwell(-10, 10, 4.) - 1.), 1E-4)
 
     def test_global_langevin(self):
         """Test for global Langevin parameters."""

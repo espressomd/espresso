@@ -28,13 +28,15 @@ class CheckpointTest(ut.TestCase):
     @classmethod
     def setUpClass(self):
         checkpoint = espressomd.checkpointing.Checkpoint(
-            checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
+            checkpoint_id="mycheckpoint",
+            checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
         if espressomd.has_features('LB'):
             self.lbf = system.actors[0]
             self.lbf.load_checkpoint("@CMAKE_CURRENT_BINARY_DIR@/lb.cpt", 1)
 
-    @ut.skipIf(not espressomd.has_features('LB'), "Skipping test due to missing features.")
+    @ut.skipIf(not espressomd.has_features('LB'),
+               "Skipping test due to missing features.")
     def test_LB(self):
         np.testing.assert_almost_equal(
             np.copy(self.lbf[1, 1, 1].velocity), np.array([0.1, 0.2, 0.3]))
@@ -59,11 +61,13 @@ class CheckpointTest(ut.TestCase):
     def test_thermostat(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')
         self.assertEqual(system.thermostat.get_state()[0]['kT'], 1.0)
-        np.testing.assert_array_equal(
-            system.thermostat.get_state()[0]['gamma'], np.array([2.0, 2.0, 2.0]))
+        np.testing.assert_array_equal(system.thermostat.get_state()[
+            0]['gamma'], np.array([2.0, 2.0, 2.0]))
 
-    @ut.skipIf(not espressomd.has_features(['LENNARD_JONES']),
-               "Cannot test for Lennard-Jones checkpointing because feature not compiled in.")
+    @ut.skipIf(
+        not espressomd.has_features(
+            ['LENNARD_JONES']),
+        "Cannot test for Lennard-Jones checkpointing because feature not compiled in.")
     def test_non_bonded_inter(self):
         state = system.non_bonded_inter[
             0, 0].lennard_jones._get_params_from_es_core()
@@ -75,8 +79,8 @@ class CheckpointTest(ut.TestCase):
                       1.2, 'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
         self.assertEqual(
             len(set(state.items()) & set(reference.items())), len(reference))
-        self.assertEqual(
-            len(set(state2.items()) & set(reference2.items())), len(reference2))
+        self.assertEqual(len(set(state2.items()) & set(
+            reference2.items())), len(reference2))
 
     def test_bonded_inter(self):
         state = system.part[1].bonds[0][0].params
@@ -87,11 +91,13 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(
         not espressomd.has_features(
             ['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']),
-               "Cannot test for virtual site checkpointing because feature not compiled in.")
+        "Cannot test for virtual site checkpointing because feature not compiled in.")
     def test_virtual_sites(self):
         self.assertEqual(system.part[1].virtual, 1)
         self.assertTrue(
-            isinstance(system.virtual_sites, espressomd.virtual_sites.VirtualSitesRelative))
+            isinstance(
+                system.virtual_sites,
+                espressomd.virtual_sites.VirtualSitesRelative))
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(
@@ -99,11 +105,21 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(
             acc.get_variance(), np.array([0., 0.5, 2., 0., 0., 0.]))
 
-    @ut.skipIf(not espressomd.has_features(['ELECTROSTATICS']),
-               "Cannot test for P3M checkpointing because feature not compiled in.")
+    @ut.skipIf(
+        not espressomd.has_features(
+            ['ELECTROSTATICS']),
+        "Cannot test for P3M checkpointing because feature not compiled in.")
     def test_p3m(self):
-        self.assertTrue(
-            isinstance(system.actors.active_actors[1], espressomd.electrostatics.P3M))
+        self.assertTrue(any(isinstance(actor, espressomd.electrostatics.P3M)
+                            for actor in system.actors.active_actors))
+    
+    @ut.skipIf(not espressomd.has_features("COLLISION_DETECTION"), "skipped for missing features")
+    def test_collision_detection(self):
+        coldet = system.collision_detection
+        self.assertEqual(coldet.mode, "bind_centers")
+        self.assertAlmostEqual(coldet.distance, 0.11, delta=1E-9)
+        self.assertTrue(coldet.bond_centers, system.bonded_inter[0])
+
 
 if __name__ == '__main__':
     ut.main()

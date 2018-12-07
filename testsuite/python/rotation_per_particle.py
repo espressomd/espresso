@@ -98,7 +98,7 @@ class Rotation(ut.TestCase):
 
         # Space and body frame co-incide?
         np.testing.assert_allclose(
-            p.director, p.convert_vector_body_to_space((0, 0, 1)), atol=1E-10)
+            np.copy(p.director), p.convert_vector_body_to_space((0, 0, 1)), atol=1E-10)
 
         # Random vector should still co-incide
         v = (1., 5.5, 17)

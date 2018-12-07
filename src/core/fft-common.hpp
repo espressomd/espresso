@@ -21,6 +21,7 @@
 #ifndef _FFT_COMMON_H
 #define _FFT_COMMON_H
 
+#include "Vector.hpp"
 #include "config.hpp"
 #if defined(P3M) || defined(DP3M)
 
@@ -158,8 +159,9 @@ void fft_common_pre_init(fft_data_struct *fft);
  * node  (Output). \param pos        positions of the nodes in in grid2
  * (Output). \param my_pos      position of this_node in  grid2.
  * \return Size of the communication group (Output of course!).  */
-int fft_find_comm_groups(int grid1[3], int grid2[3], int *node_list1,
-                         int *node_list2, int *group, int *pos, int *my_pos);
+int fft_find_comm_groups(const Vector3i &grid1, const Vector3i &grid2,
+                         int *node_list1, int *node_list2, int *group, int *pos,
+                         int *my_pos);
 
 /** Calculate the local fft mesh.  Calculate the local mesh (loc_mesh)
  *  of a node at position (n_pos) in a node grid (n_grid) for a global
