@@ -35,7 +35,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         self.system.time_step = 0.01
         self.kT = 0.5
         self.system.thermostat.set_langevin(kT=self.kT, gamma=1.0)
-        self.system.seed = 1
+        self.system.seed = range(system.cell_system.get_state()["n_nodes"])
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0, cutoff=2**(1.0 / 6.0), shift="auto")
         num_part = 40
