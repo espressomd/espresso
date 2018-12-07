@@ -322,6 +322,33 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   return dst;
 }
 
+/**
+ * @brief Extract an indexed particle from a list.
+ *
+ * Removes a particle from a particle list and
+ * from the particle index.
+ */
+Particle extract_indexed_particle(ParticleList *sl, int i) {
+  Particle *src = &sl->part[i];
+  Particle *end = &sl->part[sl->n - 1];
+
+  Particle p = std::move(*src);
+
+  assert(p.p.identity <= max_seen_particle);
+  local_particles[p.p.identity] = nullptr;
+
+  if (src != end) {
+    new (src) Particle(std::move(*end));
+  }
+
+  if (realloc_particlelist(sl, --sl->n)) {
+    update_local_particles(sl);
+  } else if (src != end) {
+    local_particles[src->p.identity] = src;
+  }
+  return p;
+}
+
 namespace {
 /* Limit cache to 100 MiB */
 std::size_t const max_cache_size = (100ul * 1048576ul) / sizeof(Particle);
@@ -803,42 +830,48 @@ int remove_particle(int p_id) {
   return ES_OK;
 }
 
-void local_remove_particle(int part) {
-  int ind, c;
-  Particle *p = local_particles[part];
-  ParticleList *pl = nullptr, *tmp;
+namespace {
+std::pair<Cell *, size_t> find_particle(const Particle *p, Cell *c) {
+  auto n = c->part - p;
+  if ((n > 0) && (n < c->n)) {
+    return {c, n};
+  } else {
+    return {nullptr, 0};
+  }
+}
 
-  /* the tricky - say ugly - part: determine
-     the cell the particle is located in by checking
-     whether the particle address is inside the array */
-  for (c = 0; c < local_cells.n; c++) {
-    tmp = local_cells.cell[c];
-    ind = p - tmp->part;
-    if (ind >= 0 && ind < tmp->n) {
-      pl = tmp;
-      break;
+std::pair<Cell *, size_t> find_particle(const Particle *p, CellPList cells) {
+  for (auto &c : cells) {
+    auto res = find_particle(p, c);
+    if (res.first) {
+      return res;
     }
   }
-  if (!pl) {
-    fprintf(stderr,
-            "%d: INTERNAL ERROR: could not find cell of particle %d, exiting\n",
-            this_node, part);
-    errexit();
+
+  return {nullptr, 0};
+}
+} // namespace
+
+void local_remove_particle(int part) {
+  const Particle *p = local_particles[part];
+  assert(p);
+  assert(not p->l.ghost);
+
+  /* If the particles are sorted we can use the
+   * cell system to find the cell containing the
+   * particle. Otherwise we do a brute force search
+   * of the cells. */
+  Cell *cell = nullptr;
+  size_t n = 0;
+  if (Cells::RESORT_NONE == get_resort_particles()) {
+    std::tie(cell, n) = find_particle(p, find_current_cell(*p));
+  } else {
+    std::tie(cell, n) = find_particle(p, local_cells);
   }
 
-  free_particle(p);
+  assert(cell);
 
-  /* remove local_particles entry */
-  local_particles[p->p.identity] = nullptr;
-
-  if (&pl->part[pl->n - 1] != p) {
-    /* move last particle to free position */
-    *p = pl->part[pl->n - 1];
-
-    /* update the local_particles array for the moved particle */
-    local_particles[p->p.identity] = p;
-  }
-  pl->n--;
+  Particle p_destroy = extract_indexed_particle(cell, n);
 }
 
 void local_place_particle(int part, const double p[3], int _new) {
