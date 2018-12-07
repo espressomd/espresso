@@ -115,7 +115,7 @@ cdef extern from "particle_data.hpp":
 
     IF LB_ELECTROHYDRODYNAMICS:
         int set_particle_mu_E(int part, double mu_E[3])
-        void get_particle_mu_E(int part, double (& mu_E)[3])
+        void get_particle_mu_E(int part, double ( & mu_E)[3])
 
     int set_particle_type(int part, int type)
 
@@ -184,7 +184,7 @@ cdef extern from "particle_data.hpp":
             int set_particle_ext_torque(int part, const Vector3d & torque)
             void pointer_to_ext_torque(const particle * P, const int * & res1, const double * & res2)
 
-        int set_particle_ext_force(int part, const Vector3d &force)
+        int set_particle_ext_force(int part, const Vector3d & force)
         void pointer_to_ext_force(const particle * P, const int * & res1, const double * & res2)
 
         int set_particle_fix(int part, int flag)
@@ -239,9 +239,9 @@ cdef class _ParticleSliceImpl:
     cdef int _chunk_size
 
 cdef extern from "grid.hpp":
-    Vector3d folded_position(const particle * )
-    Vector3d unfolded_position(const particle * )
-    cdef void fold_position(double * , int*)
+    Vector3d folded_position(const particle *)
+    Vector3d unfolded_position(const particle *)
+    cdef void fold_position(double *, int*)
     void unfold_position(double pos[3], int image_box[3])
 
 cdef make_array_locked(const Vector3d & v)

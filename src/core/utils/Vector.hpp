@@ -164,8 +164,7 @@ private:
 
 // Useful typedefs
 
-template<size_t N>
-using VectorXd = Vector<N, double>;
+template <size_t N> using VectorXd = Vector<N, double>;
 using Vector2d = VectorXd<2>;
 using Vector3d = VectorXd<3>;
 using Vector4d = VectorXd<4>;

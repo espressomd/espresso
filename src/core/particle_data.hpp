@@ -155,19 +155,19 @@ struct ParticleProperties {
   of the real particle is stored in the virtual site's quaternion attribute.
   */
   struct VirtualSitesRelativeParameteres {
-      int to_particle_id = 0;
-      double distance = 0;
-      // Store relative position of the virtual site.
-      Vector<4, double> rel_orientation = {0., 0., 0., 0.};
-      // Store the orientation of the virtual particle in the body fixed frame.
-      Vector<4, double> quat = {0., 0., 0., 0.};
+    int to_particle_id = 0;
+    double distance = 0;
+    // Store relative position of the virtual site.
+    Vector<4, double> rel_orientation = {0., 0., 0., 0.};
+    // Store the orientation of the virtual particle in the body fixed frame.
+    Vector<4, double> quat = {0., 0., 0., 0.};
 
-      template <class Archive> void serialize(Archive &ar, long int) {
-        ar &to_particle_id;
-        ar &distance;
-        ar &rel_orientation;
-        ar &quat;
-      }
+    template <class Archive> void serialize(Archive &ar, long int) {
+      ar &to_particle_id;
+      ar &distance;
+      ar &rel_orientation;
+      ar &quat;
+    }
   } vs_relative;
 
 #endif

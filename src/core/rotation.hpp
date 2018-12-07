@@ -80,7 +80,7 @@ int convert_director_to_quat(const Vector3d &d, Vector<4, double> &quat);
 #ifdef DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
-inline std::pair<Vector4d, double>  convert_dip_to_quat(const Vector3d &dip) {
+inline std::pair<Vector4d, double> convert_dip_to_quat(const Vector3d &dip) {
   Vector4d quat;
   convert_director_to_quat(dip, quat);
 

@@ -37,6 +37,7 @@
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
+#include "initialize.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
@@ -44,7 +45,6 @@
 #include "rotation.hpp"
 #include "serialization/ParticleList.hpp"
 #include "virtual_sites.hpp"
-#include "initialize.hpp"
 
 #include "utils.hpp"
 #include "utils/Cache.hpp"
@@ -73,13 +73,13 @@ namespace {
 
 template <typename S, S Particle::*s, typename T, T S::*m>
 struct UpdateParticle {
-    int id;
-    T value;
+  int id;
+  T value;
 
   void operator()(Particle &p) const { (p.*s).*m = value; }
 
   template <class Archive> void serialize(Archive &ar, long int) {
-      ar & id;
+    ar &id;
     ar &value;
   }
 };
@@ -101,24 +101,24 @@ using UpdateForce = UpdateParticle<ParticleForce, &Particle::f, T, m>;
  * updated masked and not overwritten.
  */
 struct UpdateExternalFlag {
-    /* Particle to update */
-    int id;
-    /* The bits to update */
-    int mask;
-    /* The actual values for the update */
-    int flag;
-    void operator()(Particle &p) const {
-      /* mask out old flags */
-      p.p.ext_flag &= ~mask;
-      /* set new values */
-      p.p.ext_flag |= (mask & flag);
-    }
+  /* Particle to update */
+  int id;
+  /* The bits to update */
+  int mask;
+  /* The actual values for the update */
+  int flag;
+  void operator()(Particle &p) const {
+    /* mask out old flags */
+    p.p.ext_flag &= ~mask;
+    /* set new values */
+    p.p.ext_flag |= (mask & flag);
+  }
 
-    template <class Archive> void serialize(Archive &ar, long int) {
-        ar & id;
-      ar & mask;
-      ar & flag;
-    }
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &id;
+    ar &mask;
+    ar &flag;
+  }
 };
 #endif
 
@@ -213,16 +213,16 @@ using UpdateMessage = boost::variant<
         >;
 // clang-format on
 
-    struct UpdateParticleVisitor : public boost::static_visitor<void> {
-        template <typename Message> void operator()(const Message &msg) const {
-            assert(local_particles[msg.id]);
-            msg(*local_particles[msg.id]);
-        }
-    };
+struct UpdateParticleVisitor : public boost::static_visitor<void> {
+  template <typename Message> void operator()(const Message &msg) const {
+    assert(local_particles[msg.id]);
+    msg(*local_particles[msg.id]);
+  }
+};
 
 struct UpdateVisitor : public boost::static_visitor<void> {
-    /* Recurse into sub-variants */
-    template<class... Message>
+  /* Recurse into sub-variants */
+  template <class... Message>
   void operator()(const boost::variant<Message...> &msg) const {
     boost::apply_visitor(UpdateParticleVisitor(), msg);
   }
@@ -230,22 +230,22 @@ struct UpdateVisitor : public boost::static_visitor<void> {
 } // namespace
 
 void mpi_update_particle_slave(int node, int) {
-    if (node == comm_cart.rank()) {
-        UpdateMessage msg{};
-        comm_cart.recv(0, SOME_TAG, msg);
-        boost::apply_visitor(UpdateVisitor(), msg);
-    }
+  if (node == comm_cart.rank()) {
+    UpdateMessage msg{};
+    comm_cart.recv(0, SOME_TAG, msg);
+    boost::apply_visitor(UpdateVisitor(), msg);
+  }
 
-    on_particle_change();
+  on_particle_change();
 }
 
 void mpi_send_update_message(int pnode, const UpdateMessage &msg) {
-    mpi_call(mpi_update_particle_slave, pnode, 0);
+  mpi_call(mpi_update_particle_slave, pnode, 0);
 
   /* If the particle is remote, send the
    * message to the target, otherwise we
    * can just apply the update directly. */
-  if(pnode != comm_cart.rank()) {
+  if (pnode != comm_cart.rank()) {
     comm_cart.send(pnode, SOME_TAG, msg);
   } else {
     boost::apply_visitor(UpdateVisitor(), msg);
@@ -256,13 +256,15 @@ void mpi_send_update_message(int pnode, const UpdateMessage &msg) {
 
 template <typename S, S Particle::*s, typename T, T S::*m, typename TRef>
 void mpi_update_particle(int id, TRef &&value) {
-  const UpdateMessage msg = UpdateParticle<S, s, T, m>{id, std::forward<TRef>(value)};
+  const UpdateMessage msg =
+      UpdateParticle<S, s, T, m>{id, std::forward<TRef>(value)};
   mpi_send_update_message(get_particle_node(id), msg);
 }
 
 template <typename T, T ParticleProperties::*m, typename TRef>
 void mpi_update_particle_property(int id, TRef &&value) {
-      mpi_update_particle<ParticleProperties, &Particle::p, T, m>(id, std::forward<TRef>(value));
+  mpi_update_particle<ParticleProperties, &Particle::p, T, m>(
+      id, std::forward<TRef>(value));
 }
 
 /************************************************
@@ -697,8 +699,8 @@ int place_particle(int part, double p[3]) {
 }
 
 int set_particle_v(int part, double v[3]) {
-    mpi_update_particle<ParticleMomentum, &Particle::m,
-            Vector3d, &ParticleMomentum::v>(part, Vector3d(v, v+3));
+  mpi_update_particle<ParticleMomentum, &Particle::m, Vector3d,
+                      &ParticleMomentum::v>(part, Vector3d(v, v + 3));
 
   return ES_OK;
 }
@@ -713,14 +715,16 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim) {
 #endif
 
 int set_particle_f(int part, const Vector3d &F) {
-    mpi_update_particle<ParticleForce, &Particle::f,
-            Vector3d, &ParticleForce::f>(part, F);
+  mpi_update_particle<ParticleForce, &Particle::f, Vector3d, &ParticleForce::f>(
+      part, F);
   return ES_OK;
 }
 
 #ifdef SHANCHEN
 int set_particle_solvation(int part, double *solvation) {
-    mpi_update_particle_property<std::array<double, 2 *LB_COMPONENTS>, &ParticleProperties::solvation>(part, {solavation, solvation + 2* LB_COMPONENTS});
+  mpi_update_particle_property<std::array<double, 2 * LB_COMPONENTS>,
+                               &ParticleProperties::solvation>(
+      part, {solavation, solvation + 2 * LB_COMPONENTS});
   auto const pnode = get_particle_node(part);
 
   mpi_send_solvation(pnode, part, solvation);
@@ -731,7 +735,7 @@ int set_particle_solvation(int part, double *solvation) {
 
 #if defined(MASS)
 void set_particle_mass(int part, double mass) {
-    mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);
+  mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);
 }
 #else
 const constexpr double ParticleProperties::mass;
@@ -739,7 +743,8 @@ const constexpr double ParticleProperties::mass;
 
 #ifdef ROTATIONAL_INERTIA
 int set_particle_rotational_inertia(int part, double rinertia[3]) {
-  mpi_update_particle_property<Vector3d, &ParticleProperties::rinertia>(part, Vector3d(rinertia, rinertia + 3));
+  mpi_update_particle_property<Vector3d, &ParticleProperties::rinertia>(
+      part, Vector3d(rinertia, rinertia + 3));
   return ES_OK;
 }
 #else
@@ -762,14 +767,16 @@ int rotate_particle(int part, const Vector3d &axis, double angle) {
 
 #ifdef AFFINITY
 int set_particle_affinity(int part, double bond_site[3]) {
-  mpi_update_particle_property<Vector3d, &ParticleProperties::bond_site>(part, Vector3d(bond_site, bond_site + 3));
+  mpi_update_particle_property<Vector3d, &ParticleProperties::bond_site>(
+      part, Vector3d(bond_site, bond_site + 3));
   return ES_OK;
 }
 #endif
 
 #ifdef MEMBRANE_COLLISION
 int set_particle_out_direction(int part, double out_direction[3]) {
-  mpi_update_particle_property<Vector3d, &ParticleProperties::out_direction>(part, Vector3d(out_direction, out_direction + 3));
+  mpi_update_particle_property<Vector3d, &ParticleProperties::out_direction>(
+      part, Vector3d(out_direction, out_direction + 3));
   return ES_OK;
 }
 #endif
@@ -783,7 +790,8 @@ int set_particle_dipm(int part, double dipm) {
 int set_particle_dip(int part, double dip[3]) {
   Vector4d quat;
   double dipm;
-  std::tie(quat, dipm) = convert_dip_to_quat(Vector3d({dip[0], dip[1], dip[2]}));
+  std::tie(quat, dipm) =
+      convert_dip_to_quat(Vector3d({dip[0], dip[1], dip[2]}));
 
   set_particle_dipm(part, dipm);
   set_particle_quat(part, quat.data());
@@ -795,7 +803,8 @@ int set_particle_dip(int part, double dip[3]) {
 
 #ifdef VIRTUAL_SITES
 int set_particle_virtual(int part, int is_virtual) {
-  mpi_update_particle_property<int, &ParticleProperties::is_virtual>(part, is_virtual);
+  mpi_update_particle_property<int, &ParticleProperties::is_virtual>(
+      part, is_virtual);
   return ES_OK;
 }
 #endif
@@ -805,8 +814,9 @@ void set_particle_vs_quat(int part, double *vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
   vs_relative.quat = Vector<4, double>(vs_relative_quat, vs_relative_quat + 4);
 
-  mpi_update_particle_property<ParticleProperties::VirtualSitesRelativeParameteres,
-            &ParticleProperties::vs_relative>(part, vs_relative);
+  mpi_update_particle_property<
+      ParticleProperties::VirtualSitesRelativeParameteres,
+      &ParticleProperties::vs_relative>(part, vs_relative);
 }
 
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
@@ -816,16 +826,17 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
   vs_relative.to_particle_id = vs_relative_to;
   vs_relative.rel_orientation = {rel_ori, rel_ori + 4};
 
-  mpi_update_particle_property<ParticleProperties::VirtualSitesRelativeParameteres,
-   &ParticleProperties::vs_relative>(part, vs_relative);
+  mpi_update_particle_property<
+      ParticleProperties::VirtualSitesRelativeParameteres,
+      &ParticleProperties::vs_relative>(part, vs_relative);
   return ES_OK;
 }
 #endif
 
 #ifdef ELECTROSTATICS
 int set_particle_q(int part, double q) {
-    mpi_update_particle_property<double, &ParticleProperties::q>(part, q);
-    return ES_OK;
+  mpi_update_particle_property<double, &ParticleProperties::q>(part, q);
+  return ES_OK;
 }
 #else
 const constexpr double ParticleProperties::q;
@@ -833,7 +844,8 @@ const constexpr double ParticleProperties::q;
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 int set_particle_mu_E(int part, double mu_E[3]) {
-    mpi_update_particle_property<Vector3d, &ParticleProperties::mu_E>(part, Vector3d(mu_E, mu_E + 3));
+  mpi_update_particle_property<Vector3d, &ParticleProperties::mu_E>(
+      part, Vector3d(mu_E, mu_E + 3));
   return ES_OK;
 }
 
@@ -866,29 +878,30 @@ int set_particle_type(int p_id, int type) {
 }
 
 int set_particle_mol_id(int part, int mid) {
-    mpi_update_particle_property<int, &ParticleProperties::mol_id>(part, mid);
-    return ES_OK;
+  mpi_update_particle_property<int, &ParticleProperties::mol_id>(part, mid);
+  return ES_OK;
 }
 
 #ifdef ROTATION
 int set_particle_quat(int part, double quat[4]) {
-    mpi_update_particle<ParticlePosition, &Particle::r,
-            Vector4d, &ParticlePosition::quat>(part, Vector4d(quat, quat + 4));
+  mpi_update_particle<ParticlePosition, &Particle::r, Vector4d,
+                      &ParticlePosition::quat>(part, Vector4d(quat, quat + 4));
   return ES_OK;
 }
 
 int set_particle_omega_lab(int part, const Vector3d &omega_lab) {
   auto const &particle = get_particle_data(part);
 
-  mpi_update_particle<ParticleMomentum, &Particle::m,
-              Vector3d, &ParticleMomentum::omega>(part, convert_vector_space_to_body(particle, omega_lab));
+  mpi_update_particle<ParticleMomentum, &Particle::m, Vector3d,
+                      &ParticleMomentum::omega>(
+      part, convert_vector_space_to_body(particle, omega_lab));
 
   return ES_OK;
 }
 
 int set_particle_omega_body(int part, const Vector3d &omega) {
-    mpi_update_particle<ParticleMomentum, &Particle::m,
-            Vector3d, &ParticleMomentum::omega>(part, omega);
+  mpi_update_particle<ParticleMomentum, &Particle::m, Vector3d,
+                      &ParticleMomentum::omega>(part, omega);
 
   return ES_OK;
 }
@@ -896,14 +909,15 @@ int set_particle_omega_body(int part, const Vector3d &omega) {
 int set_particle_torque_lab(int part, const Vector3d &torque_lab) {
   auto const &particle = get_particle_data(part);
 
-    mpi_update_particle<ParticleForce, &Particle::f,
-            Vector3d, &ParticleForce::torque>(part, convert_vector_space_to_body(particle, torque_lab));
+  mpi_update_particle<ParticleForce, &Particle::f, Vector3d,
+                      &ParticleForce::torque>(
+      part, convert_vector_space_to_body(particle, torque_lab));
   return ES_OK;
 }
 
 int set_particle_torque_body(int part, const Vector3d &torque) {
-    mpi_update_particle<ParticleForce, &Particle::f,
-            Vector3d, &ParticleForce::torque>(part, torque);
+  mpi_update_particle<ParticleForce, &Particle::f, Vector3d,
+                      &ParticleForce::torque>(part, torque);
   return ES_OK;
 }
 
@@ -921,9 +935,9 @@ int set_particle_gamma(int part, double gamma) {
   return ES_OK;
 }
 #else
-int set_particle_gamma(int part, Vector3d gamma)
-{
-  mpi_update_particle_property<Vector3d, &ParticleProperties::gamma>(part, gamma);
+int set_particle_gamma(int part, Vector3d gamma) {
+  mpi_update_particle_property<Vector3d, &ParticleProperties::gamma>(part,
+                                                                     gamma);
   return ES_OK;
 }
 #endif // PARTICLE_ANISOTROPY
@@ -931,12 +945,14 @@ int set_particle_gamma(int part, Vector3d gamma)
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma_rot(int part, double gamma_rot) {
-mpi_update_particle_property<double, &ParticleProperties::gamma_rot>(part, gamma_rot);
+  mpi_update_particle_property<double, &ParticleProperties::gamma_rot>(
+      part, gamma_rot);
   return ES_OK;
 }
 #else
 int set_particle_gamma_rot(int part, Vector3d gamma_rot) {
-  mpi_update_particle_property<Vector3d, &ParticleProperties::gamma_rot>(part, gamma_rot);
+  mpi_update_particle_property<Vector3d, &ParticleProperties::gamma_rot>(
+      part, gamma_rot);
   return ES_OK;
 }
 #endif // PARTICLE_ANISOTROPY
@@ -947,29 +963,31 @@ int set_particle_gamma_rot(int part, Vector3d gamma_rot) {
 #ifdef ROTATION
 int set_particle_ext_torque(int part, const Vector3d &torque) {
   auto const flag = (torque != Vector3d{}) ? PARTICLE_EXT_TORQUE : 0;
-  if(flag) {
-    mpi_update_particle_property<Vector3d, &ParticleProperties::ext_torque>(part, torque);
+  if (flag) {
+    mpi_update_particle_property<Vector3d, &ParticleProperties::ext_torque>(
+        part, torque);
   }
   mpi_send_update_message(get_particle_node(part),
-          UpdateExternalFlag{part, PARTICLE_EXT_TORQUE, flag});
+                          UpdateExternalFlag{part, PARTICLE_EXT_TORQUE, flag});
   return ES_OK;
 }
 #endif
 
 int set_particle_ext_force(int part, const Vector3d &force) {
-    auto const flag = (force != Vector3d{}) ? PARTICLE_EXT_FORCE : 0;
-    if(flag) {
-      mpi_update_particle_property<Vector3d, &ParticleProperties::ext_force>(part, force);
-    }
-    mpi_send_update_message(get_particle_node(part),
-            UpdateExternalFlag{part, PARTICLE_EXT_FORCE, flag});
+  auto const flag = (force != Vector3d{}) ? PARTICLE_EXT_FORCE : 0;
+  if (flag) {
+    mpi_update_particle_property<Vector3d, &ParticleProperties::ext_force>(
+        part, force);
+  }
+  mpi_send_update_message(get_particle_node(part),
+                          UpdateExternalFlag{part, PARTICLE_EXT_FORCE, flag});
   return ES_OK;
 }
 
 int set_particle_fix(int part, int flag) {
-    mpi_send_update_message(get_particle_node(part),
-            UpdateExternalFlag{part, COORDS_FIX_MASK, flag});
-    return ES_OK;
+  mpi_send_update_message(get_particle_node(part),
+                          UpdateExternalFlag{part, COORDS_FIX_MASK, flag});
+  return ES_OK;
 }
 
 #endif
