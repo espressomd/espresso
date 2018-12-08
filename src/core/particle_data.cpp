@@ -220,6 +220,7 @@ void init_particlelist(ParticleList *pList) {
 }
 
 int realloc_particlelist(ParticleList *l, int size) {
+  assert(size >= 0);
   int old_max = l->max;
   Particle *old_start = l->part;
 
@@ -280,6 +281,9 @@ Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
 }
 
 Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
+  assert(sl->n > 0);
+  assert(i < sl->n);
+
   realloc_particlelist(dl, ++dl->n);
   auto dst = &dl->part[dl->n - 1];
   auto src = &sl->part[i];
@@ -290,12 +294,13 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  sl->n -= 1;
-  realloc_particlelist(sl, sl->n);
+  realloc_particlelist(sl, --sl->n);
   return dst;
 }
 
 Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
+  assert(sl->n > 0);
+  assert(i < sl->n);
   int re = realloc_particlelist(dl, ++dl->n);
   Particle *dst = &dl->part[dl->n - 1];
   Particle *src = &sl->part[i];
@@ -327,8 +332,16 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
  *
  * Removes a particle from a particle list and
  * from the particle index.
+ *
+ * @param i Index of particle to remove,
+ *          needs to be valid.
+ * @param sl List to remove the particle from,
+ *           needs to be non-empty.
+ * @return The extracted particle.
  */
 Particle extract_indexed_particle(ParticleList *sl, int i) {
+  assert(sl->n > 0);
+  assert(i < sl->n);
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
 
@@ -832,8 +845,8 @@ int remove_particle(int p_id) {
 
 namespace {
 std::pair<Cell *, size_t> find_particle(const Particle *p, Cell *c) {
-  auto n = c->part - p;
-  if ((n > 0) && (n < c->n)) {
+  const auto n = p - c->part;
+  if ((n >= 0) && (n < c->n)) {
     return {c, n};
   } else {
     return {nullptr, 0};
@@ -865,8 +878,14 @@ void local_remove_particle(int part) {
   size_t n = 0;
   if (Cells::RESORT_NONE == get_resort_particles()) {
     std::tie(cell, n) = find_particle(p, find_current_cell(*p));
-  } else {
+  }
+
+  if (not cell) {
     std::tie(cell, n) = find_particle(p, local_cells);
+  }
+
+  if (not cell) {
+    std::tie(cell, n) = find_particle(p, ghost_cells);
   }
 
   assert(cell);
