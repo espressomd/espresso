@@ -884,10 +884,6 @@ void local_remove_particle(int part) {
     std::tie(cell, n) = find_particle(p, local_cells);
   }
 
-  if (not cell) {
-    std::tie(cell, n) = find_particle(p, ghost_cells);
-  }
-
   assert(cell);
 
   Particle p_destroy = extract_indexed_particle(cell, n);
