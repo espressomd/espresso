@@ -845,12 +845,12 @@ int remove_particle(int p_id) {
 
 namespace {
 std::pair<Cell *, size_t> find_particle(Particle *p, Cell *c) {
-  const auto n = (c->n > 0) ? std::distance(c->part, p) : -1;
-  if ((n >= 0) && (n < c->n) && ((c->part + n) == p)) {
-    return {c, n};
-  } else {
-    return {nullptr, 0};
+  for (int i = 0; i < c->n; ++i) {
+    if ((c->part + i) == p) {
+      return {c, i};
+    }
   }
+  return {nullptr, 0};
 }
 
 std::pair<Cell *, size_t> find_particle(Particle *p, CellPList cells) {
