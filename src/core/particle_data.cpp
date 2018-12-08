@@ -844,16 +844,16 @@ int remove_particle(int p_id) {
 }
 
 namespace {
-std::pair<Cell *, size_t> find_particle(const Particle *p, Cell *c) {
-  const auto n = p - c->part;
-  if ((n >= 0) && (n < c->n)) {
+std::pair<Cell *, size_t> find_particle(Particle *p, Cell *c) {
+  const auto n = (c->n > 0) ? std::distance(c->part, p) : -1;
+  if ((n >= 0) && (n < c->n) && ((c->part + n) == p)) {
     return {c, n};
   } else {
     return {nullptr, 0};
   }
 }
 
-std::pair<Cell *, size_t> find_particle(const Particle *p, CellPList cells) {
+std::pair<Cell *, size_t> find_particle(Particle *p, CellPList cells) {
   for (auto &c : cells) {
     auto res = find_particle(p, c);
     if (res.first) {
@@ -866,7 +866,7 @@ std::pair<Cell *, size_t> find_particle(const Particle *p, CellPList cells) {
 } // namespace
 
 void local_remove_particle(int part) {
-  const Particle *p = local_particles[part];
+  Particle *p = local_particles[part];
   assert(p);
   assert(not p->l.ghost);
 
@@ -884,7 +884,7 @@ void local_remove_particle(int part) {
     std::tie(cell, n) = find_particle(p, local_cells);
   }
 
-  assert(cell);
+  assert(cell && cell->part && (n < cell->n) && ((cell->part + n) == p));
 
   Particle p_destroy = extract_indexed_particle(cell, n);
 }
