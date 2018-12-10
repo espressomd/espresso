@@ -39,16 +39,17 @@ class VirialPressureConsistency(ut.TestCase):
     system = espressomd.System(box_l=[50, 50, 50])
 
     def setUp(self):
+        np.random.seed(seed=1)
+        self.system.seed = range(
+            self.system.cell_system.get_state()["n_nodes"])
         self.system.time_step = 0.01
         self.kT = 0.5
         self.system.thermostat.set_langevin(kT=self.kT, gamma=1.0)
-        self.system.seed = range(
-            self.system.cell_system.get_state()["n_nodes"])
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0, cutoff=2**(1.0 / 6.0), shift="auto")
         num_part = 40
         mass = 1
-        np.random.seed(seed=1)
+        
 
         for i in range(num_part):
             self.system.part.add(pos=np.random.random(
@@ -66,7 +67,7 @@ class VirialPressureConsistency(ut.TestCase):
         # pressure
         energy = system.analysis.energy()
         Epot_old = energy["total"] - energy["kinetic"]
-        old_box_lengths = system.box_l
+        old_box_lengths = np.copy(system.box_l)
         old_volume = np.prod(old_box_lengths)
         dV_div_old_volume = 0.001
         dV = -dV_div_old_volume * old_volume
@@ -102,10 +103,10 @@ class VirialPressureConsistency(ut.TestCase):
             result_pressure_via_volume_scaling = self.get_pressure_via_volume_scaling(
                 self.system, self.kT, pressures_via_volume_scaling)
         pressure_virial = np.mean(pressures_via_virial)
-        ratio_pressure_virial_pressure_volume_scaling = result_pressure_via_volume_scaling / \
-            pressure_virial  # should be 1 ideally
-        npt.assert_almost_equal(
-            ratio_pressure_virial_pressure_volume_scaling, 1.0, decimal=2)
+        abs_deviation_in_percent = abs(
+            pressure_virial/result_pressure_via_volume_scaling-1.0)*100.0  # should be 0% ideally
+        print(abs_deviation_in_percent)
+        npt.assert_array_less(abs_deviation_in_percent, 2.0) #devation should be below 2 percent
 
 
 if __name__ == "__main__":
