@@ -142,7 +142,9 @@ class ReactionEnsembleTest(ut.TestCase):
         self.WLRE.write_wang_landau_checkpoint()
         old_checkpoint = np.loadtxt(filename)
 
-        # modify old_checkpoint in memory and in file (this destroys the information contained in the checkpoint, but allows for testing of the functions)
+        # modify old_checkpoint in memory and in file (this destroys the
+        # information contained in the checkpoint, but allows for testing of
+        # the functions)
         modified_checkpoint = old_checkpoint
         modified_checkpoint[0] = 1
         np.savetxt(filename, modified_checkpoint)
