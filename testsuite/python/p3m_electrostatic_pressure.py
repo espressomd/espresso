@@ -97,8 +97,9 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         pressure_virial = np.mean(pressures_via_virial)
         ratio_pressure_virial_pressure_volume_scaling = pressure_via_volume_scaling / \
             pressure_virial  # should be 1 ideally
-        npt.assert_almost_equal(
-            ratio_pressure_virial_pressure_volume_scaling, 1.0, decimal=2)
+        self.assertAlmostEqual(
+            ratio_pressure_virial_pressure_volume_scaling, 1, places=2,
+                               msg="Difference to between isotropic virial pressure and pressure via volume derivative of potential energy is too big. The result must be self-consistent.")
 
 
 if __name__ == "__main__":
