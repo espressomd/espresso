@@ -228,7 +228,7 @@ bool operator==(Vector<N, T> const &a, Vector<N, T> const &b) {
 
 template <size_t N, typename T>
 bool operator!=(Vector<N, T> const &a, Vector<N, T> const &b) {
-  return not (a == b);
+  return not(a == b);
 }
 
 template <size_t N, typename T>
