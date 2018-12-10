@@ -50,7 +50,6 @@ class VirialPressureConsistency(ut.TestCase):
         num_part = 40
         mass = 1
         
-
         for i in range(num_part):
             self.system.part.add(pos=np.random.random(
                 3) * self.system.box_l, q=1, v=np.sqrt(self.kT / mass) * np.random.normal(loc=[0, 0, 0]))
@@ -104,8 +103,10 @@ class VirialPressureConsistency(ut.TestCase):
                 self.system, self.kT, pressures_via_volume_scaling)
         pressure_virial = np.mean(pressures_via_virial)
         abs_deviation_in_percent = abs(
-            pressure_virial/result_pressure_via_volume_scaling-1.0)*100.0  # should be 0% ideally
-        npt.assert_array_less(abs_deviation_in_percent, 2.0) #devation should be below 2%
+            pressure_virial / result_pressure_via_volume_scaling - 1.0) * 100.0  # should be 0% ideally
+        npt.assert_array_less(
+            abs_deviation_in_percent,
+            2.0)  # devation should be below 2%
 
 
 if __name__ == "__main__":
