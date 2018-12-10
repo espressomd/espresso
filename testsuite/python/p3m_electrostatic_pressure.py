@@ -105,7 +105,7 @@ class VirialPressureConsistency(ut.TestCase):
         ratio_pressure_virial_pressure_volume_scaling = pressure_via_volume_scaling / \
             pressure_virial  # should be 1 ideally
         self.assertAlmostEqual(
-            ratio_pressure_virial_pressure_volume_scaling, 1, places=2,
+            ratio_pressure_virial_pressure_volume_scaling-1.0, 0.0, places=2,
                                msg="Difference to between isotropic virial pressure and pressure via volume derivative of potential energy is too big. The result must be self-consistent.")
 
 
