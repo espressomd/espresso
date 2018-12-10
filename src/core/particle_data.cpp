@@ -707,10 +707,8 @@ int set_particle_f(int part, const Vector3d &F) {
 int set_particle_solvation(int part, double *solvation) {
   mpi_update_particle_property<std::array<double, 2 * LB_COMPONENTS>,
                                &ParticleProperties::solvation>(
-      part, {solavation, solvation + 2 * LB_COMPONENTS});
-  auto const pnode = get_particle_node(part);
+      part, {solvation, solvation + 2 * LB_COMPONENTS});
 
-  mpi_send_solvation(pnode, part, solvation);
   return ES_OK;
 }
 
