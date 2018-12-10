@@ -858,12 +858,14 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 }
 #endif
 
-#ifdef ELECTROSTATICS
 int set_particle_q(int part, double q) {
+#ifdef ELECTROSTATICS
   mpi_update_particle_property<double, &ParticleProperties::q>(part, q);
+#endif
   return ES_OK;
 }
-#else
+
+#ifndef ELECTROSTATICS
 const constexpr double ParticleProperties::q;
 #endif
 
