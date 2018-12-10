@@ -212,6 +212,31 @@ using UpdateMessage = boost::variant<
         >;
 // clang-format on
 
+template <typename S, S Particle::*s, typename T, T S::*m> struct message_type;
+
+template <typename T, T ParticleProperties::*m>
+struct message_type<ParticleProperties, &Particle::p, T, m> {
+  using type = UpdatePropertyMessage;
+};
+
+template <typename T, T ParticlePosition::*m>
+struct message_type<ParticlePosition, &Particle::r, T, m> {
+  using type = UpdatePositionMessage;
+};
+
+template <typename T, T ParticleMomentum::*m>
+struct message_type<ParticleMomentum, &Particle::m, T, m> {
+  using type = UpdateMomentumMessage;
+};
+
+template <typename T, T ParticleForce::*m>
+struct message_type<ParticleForce, &Particle::f, T, m> {
+  using type = UpdateForceMessage;
+};
+
+template <typename S, S Particle::*s, typename T, T S::*m>
+using message_type_t = typename message_type<S, s, T, m>::type;
+
 struct UpdateParticleVisitor : public boost::static_visitor<void> {
   template <typename Message> void operator()(const Message &msg) const {
     assert(local_particles[msg.id]);
@@ -255,8 +280,8 @@ void mpi_send_update_message(int pnode, const UpdateMessage &msg) {
 
 template <typename S, S Particle::*s, typename T, T S::*m, typename TRef>
 void mpi_update_particle(int id, TRef &&value) {
-  const UpdateMessage msg =
-      UpdateParticle<S, s, T, m>{id, std::forward<TRef>(value)};
+  using MessageType = message_type_t<S, s, T, m>;
+  MessageType msg = UpdateParticle<S, s, T, m>{id, std::forward<TRef>(value)};
   mpi_send_update_message(get_particle_node(id), msg);
 }
 
@@ -926,7 +951,8 @@ int set_particle_ext_torque(int part, const Vector3d &torque) {
         part, torque);
   }
   mpi_send_update_message(get_particle_node(part),
-                          UpdateExternalFlag{part, PARTICLE_EXT_TORQUE, flag});
+                          UpdatePropertyMessage(UpdateExternalFlag{
+                              part, PARTICLE_EXT_TORQUE, flag}));
   return ES_OK;
 }
 #endif
@@ -938,13 +964,15 @@ int set_particle_ext_force(int part, const Vector3d &force) {
         part, force);
   }
   mpi_send_update_message(get_particle_node(part),
-                          UpdateExternalFlag{part, PARTICLE_EXT_FORCE, flag});
+                          UpdatePropertyMessage(UpdateExternalFlag{
+                              part, PARTICLE_EXT_FORCE, flag}));
   return ES_OK;
 }
 
 int set_particle_fix(int part, int flag) {
-  mpi_send_update_message(get_particle_node(part),
-                          UpdateExternalFlag{part, COORDS_FIX_MASK, flag});
+  mpi_send_update_message(
+      get_particle_node(part),
+      UpdatePropertyMessage(UpdateExternalFlag{part, COORDS_FIX_MASK, flag}));
   return ES_OK;
 }
 
