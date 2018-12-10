@@ -27,7 +27,13 @@ from espressomd import electrostatics
 
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
-class ElectrostaticInteractionsTests(ut.TestCase):
+class VirialPressureConsistency(ut.TestCase):
+    """Test the consistency of the core implementation of the virial pressure with an analytical relation which allows
+       for the calculation of the pressure as a volume derivative of a function of the potential energy change on infinitesimal volume changes.
+       The relation and its derivation can be found in the paper with the name "Efficient pressure estimation in molecular simulations without evaluating the virial"
+       by Harismiadis, V. I., J. Vorholz, and A. Z. Panagiotopoulos. 1966
+
+    """
     # Handle to espresso system
     system = espressomd.System(box_l=[50, 50, 50])
 
