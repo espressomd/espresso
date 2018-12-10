@@ -56,7 +56,7 @@ class VirialPressureConsistency(ut.TestCase):
             self.system.part.add(pos=np.random.random(
                 3) * self.system.box_l, q=-1, v=np.sqrt(self.kT / mass) * np.random.normal(loc=[0, 0, 0]))
 
-    def pressure_via_volume_scaling(
+    def get_pressure_via_volume_scaling(
         self,
         system,
      kbT,
@@ -94,19 +94,18 @@ class VirialPressureConsistency(ut.TestCase):
         p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
         self.system.actors.add(p3m)
         num_samples = 100
-        pressure_via_volume_scaling = np.nan
+        result_pressure_via_volume_scaling = np.nan
         for i in range(num_samples):
             self.system.integrator.run(100)
             pressures_via_virial.append(
                 self.system.analysis.pressure()['total'])
-            pressure_via_volume_scaling = self.pressure_via_volume_scaling(
+            result_pressure_via_volume_scaling = self.get_pressure_via_volume_scaling(
                 self.system, self.kT, pressures_via_volume_scaling)
         pressure_virial = np.mean(pressures_via_virial)
-        ratio_pressure_virial_pressure_volume_scaling = pressure_via_volume_scaling / \
+        ratio_pressure_virial_pressure_volume_scaling = result_pressure_via_volume_scaling / \
             pressure_virial  # should be 1 ideally
-        self.assertAlmostEqual(
-            ratio_pressure_virial_pressure_volume_scaling - 1.0, 0.0, places=2,
-                               msg="Difference to between isotropic virial pressure and pressure via volume derivative of potential energy is too big. The result must be self-consistent.")
+        npt.assert_almost_equal(
+            ratio_pressure_virial_pressure_volume_scaling, 1.0, decimal=2)
 
 
 if __name__ == "__main__":
