@@ -151,6 +151,13 @@ class ParticleProperties(ut.TestCase):
     if espressomd.has_features(["ELECTROSTATICS"]):
         test_charge = generateTestForScalarProperty("q", -19.7)
 
+    if espressomd.has_features(["EXTERNAL_FORCES"]):
+        test_ext_force = generateTestForVectorProperty("ext_force", [0.1, 0.2, 0.3])
+        test_fix = generateTestForVectorProperty("fix", [True, False, True])
+
+    if espressomd.has_features(["EXTERNAL_FORCES", "ROTATION"]):
+        test_ext_torque = generateTestForVectorProperty("ext_torque", [.4,.5,.6])
+
     if espressomd.has_features(["DIPOLES"]):
         test_dip = generateTestForVectorProperty(
             "dip", np.array([0.5, -0.5, 3]))
