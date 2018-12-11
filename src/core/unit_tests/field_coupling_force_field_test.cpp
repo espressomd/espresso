@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "core/field_coupling/detail/BindCoupling.hpp"
 using namespace FieldCoupling;
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 template <bool linear> struct Id {
   static constexpr const bool is_linear = linear;

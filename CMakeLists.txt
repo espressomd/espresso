@@ -18,14 +18,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.10)
 include(FeatureSummary)
 project(ESPResSo)
 include(cmake/FindPythonModule.cmake)
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "4.0-dev")
+set(PROJECT_VERSION "4.1-dev")
 string(REGEX REPLACE "^([1-9]+)\\.[0-9]+.*$" "\\1" SOVERSION "${PROJECT_VERSION}")
 if (NOT ${SOVERSION} MATCHES "^[1-9]+$")
   message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
@@ -38,26 +38,11 @@ endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-# If the version is smaller than 3.4, use custom find HDF5 module
-# else, use prefer parallel feature of default module.
-if(CMAKE_VERSION VERSION_LESS 3.4)
-  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-                        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/hdf5)
-else()
-  set(HDF5_PREFER_PARALLEL 1)
-endif()
+set(HDF5_PREFER_PARALLEL 1)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
-
-# Parse repository info from git if available
-include(version)
-
-configure_file(
-  ${CMAKE_SOURCE_DIR}/src/version.hpp.in
-  ${CMAKE_BINARY_DIR}/src/version.hpp
-  )
 
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
@@ -68,13 +53,13 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 
 set(WITH_PYTHON yes)
 
-option(WITH_GSL "Build with GSL support" ON)
+option(WITH_GSL     "Build with GSL support" ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
-if( CMAKE_VERSION VERSION_GREATER 3.5.2 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
 if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
@@ -92,12 +77,7 @@ if(WITH_CCACHE)
   find_program(CCACHE ccache)
   if(CCACHE)
     message(STATUS "Found ccache ${CCACHE}")
-    if(CMAKE_VERSION VERSION_LESS 3.4)
-      set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE})
-      set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE})
-    else()
-      set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE} CACHE STRING "ccache executable")
-    endif()
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE} CACHE STRING "ccache executable")
   else()
       message(FATAL_ERROR "ccache not found.")
   endif(CCACHE)
@@ -152,8 +132,6 @@ if (WITH_CUDA)
     endif()
     find_library(CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
     find_library(CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
-    list(APPEND LIBRARIES ${CUDART_LIBRARY})
-    list(APPEND LIBRARIES ${CUFFT_LIBRARY})
     set(CUDA 1)
 
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --cuda-gpu-arch=sm_30")
@@ -201,8 +179,6 @@ if (WITH_CUDA)
     else()
       find_package(CUDA 7.0)
       if(CUDA_FOUND)
-        list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
-        list(APPEND LIBRARIES ${CUDA_LIBRARIES})
         if(NOT CUDA_NVCC_EXECUTABLE STREQUAL "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc")
           get_filename_component(NVCC_EXECUTABLE_DIRNAME "${CUDA_NVCC_EXECUTABLE}" DIRECTORY)
           get_filename_component(NVCC_EXECUTABLE_DIRNAME "${NVCC_EXECUTABLE_DIRNAME}" DIRECTORY)
@@ -256,11 +232,8 @@ endif(WITH_PYTHON)
 
 find_package(FFTW3)
 if (FFTW3_FOUND)
-  include_directories(SYSTEM ${FFTW3_INCLUDE_DIR})
-  list(APPEND LIBRARIES ${FFTW3_LIBRARIES})
   set(FFTW 3)
 endif(FFTW3_FOUND)
-
 
 # If we build either interface turn on script interface
 if (WITH_PYTHON)
@@ -274,8 +247,6 @@ if (WITH_HDF5)
     set(H5MD 1)
     include(FindPythonModule)
     find_python_module(h5py)
-    list(APPEND LIBRARIES ${HDF5_LIBRARIES})
-    include_directories(SYSTEM ${HDF5_INCLUDE_DIRS})
     add_feature_info(HDF5 ON "parallel")
   else()
     unset(H5MD)
@@ -325,18 +296,10 @@ if(WITH_VALGRIND_INSTRUMENTATION)
 endif(WITH_VALGRIND_INSTRUMENTATION)
 
 #######################################################################
-# Process MPI settings
+# MPI
 #######################################################################
 
 find_package(MPI REQUIRED)
-# Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
-foreach(_MPI_FLAG ${MPI_CXX_COMPILE_FLAGS})
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_MPI_FLAG}")
-endforeach()
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
-include_directories(SYSTEM ${MPI_INCLUDE_PATH})
-list(APPEND LIBRARIES ${MPI_LIBRARIES})
-add_definitions(-DH5XX_USE_MPI)
 
 #######################################################################
 # Boost
@@ -359,8 +322,6 @@ else()
 endif()
 
 find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
-list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
 if(Boost_VERSION VERSION_GREATER 106399 AND Boost_VERSION VERSION_LESS 106500)
   # Boost 1.64 has incompatible Serialization and MPI modules, see https://svn.boost.org/trac10/ticket/12723 .
@@ -390,10 +351,6 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-if(CMAKE_VERSION VERSION_LESS 3.1)
-  include(RequireCXX11)
-endif()
-
 
 if(APPLE)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
@@ -470,7 +427,6 @@ if(WITH_TESTS)
   enable_testing()
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     set(WITH_UNIT_TESTS ON)
-    list(APPEND LIBRARIES ${Boost_LIBRARIES})
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
   add_subdirectory(testsuite)
@@ -482,7 +438,6 @@ endif(WITH_TESTS)
 
 add_subdirectory(doc)
 add_subdirectory(src)
-add_subdirectory(config)
 
 #######################################################################
 # Feature summary

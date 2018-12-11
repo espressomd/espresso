@@ -44,7 +44,6 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.Cylinder`
     - :class:`espressomd.shapes.Ellipsoid`
     - :class:`espressomd.shapes.HollowCone`
-    - :class:`espressomd.shapes.Maze`
     - :class:`espressomd.shapes.Rhomboid`
     - :class:`espressomd.shapes.SimplePore`
     - :class:`espressomd.shapes.Slitpore`
@@ -292,27 +291,6 @@ The direction ``direction`` determines the force direction, ``-1`` for inward an
 
 creates a rhomboid defined by one corner located at ``[5.0, 5.0, 5.0]`` and three
 adjacent edges, defined by the three vectors connecting the corner with its three neighboring corners, ``(1,1,0)`` , ``(0,0,1)`` and ``(0,1,0)``.
-
-
-:class:`espressomd.shapes.Maze`
-    Spherical cavities on a regular grid that are connected by tubes.
-
-The resulting surface is ``nsphere`` spheres of radius ``sphrad`` along each dimension, connected by cylinders of radius ``cylrad``.
-The sphere grid have simple cubic symmetry.
-The spheres are distributed evenly by dividing the boxl by ``nsphere``.
-Dimension of the maze can be controlled by ``dim``: 0 for one dimensional, 1 for two dimensional and 2 for three dimensional maze.
-
-
-.. figure:: figures/shape-maze.png
-   :alt: Example constraint with a ``Maze`` shape.
-   :align: center
-   :height: 6.00000cm
-
-Pictured is an example constraint with a ``Maze`` shape created with ::
-
-    maze = Maze(cylrad=2, dim=2, nsphere=5, sphrad=6)
-    system.constraints.add(shape=maze, particle_type=0, penetrable=1)
-
 
 :class:`espressomd.shapes.SimplePore`
     Two parallel infinite planes, connected by a cylindrical orifice. The cylinder is connected to the

@@ -42,6 +42,7 @@
 #include "partCfg_global.hpp"
 #include "random.hpp"
 #include "rotation.hpp"
+#include "serialization/ParticleList.hpp"
 #include "virtual_sites.hpp"
 
 #include "utils.hpp"
@@ -987,8 +988,6 @@ void try_delete_exclusion(Particle *part, int part2) {
   };
 }
 #endif
-
-#include "utils/serialization/ParticleList.hpp"
 
 void send_particles(ParticleList *particles, int node) {
   PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node,
