@@ -167,7 +167,7 @@ if(CUDA)
   cuda_add_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
   set_property(TARGET EspressoCore PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
-  target_link_libraries(EspressoCore PUBLIC ${CUDA_CUFFT_LIBRARIES})
+  target_link_libraries(EspressoCore PRIVATE ${CUDA_CUFFT_LIBRARIES})
 else(CUDA)
   add_library(EspressoCore SHARED ${EspressoCore_SRC})
 endif(CUDA)
@@ -189,7 +189,7 @@ if(WITH_COVERAGE)
 endif()
 
 target_link_libraries(EspressoCore PUBLIC EspressoConfig)
-target_link_libraries(EspressoCore PRIVATE Boost::serialization Boost::mpi MPI::MPI_CXX)
+target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX)
 
 if(FFTW3_FOUND)
   target_include_directories(EspressoCore PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})
