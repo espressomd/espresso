@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_EXTERNAL_FIELD_FIELDS_AFFINE_MAP_HPP
 #define CORE_EXTERNAL_FIELD_FIELDS_AFFINE_MAP_HPP
 
-#include "utils/Vector.hpp"
 #include "gradient_type.hpp"
+#include "utils/Vector.hpp"
 
 namespace FieldCoupling {
 namespace Fields {

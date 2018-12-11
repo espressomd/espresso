@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/variant.hpp>
 
 #include "None.hpp"
-#include "utils/Vector.hpp"
 #include "utils/AutoObjectId.hpp"
+#include "utils/Vector.hpp"
 
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/serialization.hpp>

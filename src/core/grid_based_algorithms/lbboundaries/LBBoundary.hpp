@@ -21,10 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
-#include "utils/Vector.hpp"
 #include "config.hpp"
 #include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"
+#include "utils/Vector.hpp"
 
 namespace LBBoundaries {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)

@@ -25,9 +25,9 @@
  *  see \ref particle_data.cpp "particle_data.cpp"
  */
 
-#include "utils/Vector.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+#include "utils/Vector.hpp"
 
 #include "utils/List.hpp"
 
