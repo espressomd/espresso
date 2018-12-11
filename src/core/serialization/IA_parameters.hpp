@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SERIALIZATION_IA_PARAMETERS_HPP
 #define SERIALIZATION_IA_PARAMETERS_HPP
 
-#include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 namespace boost {
 namespace serialization {

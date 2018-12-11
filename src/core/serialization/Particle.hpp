@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_UTILS_SERIALIZATION_PARTICLE_HPP
 #define CORE_UTILS_SERIALIZATION_PARTICLE_HPP
 
-#include "core/particle_data.hpp"
+#include "particle_data.hpp"
 #include "utils/serialization/List.hpp"
 
 #include <boost/serialization/vector.hpp>

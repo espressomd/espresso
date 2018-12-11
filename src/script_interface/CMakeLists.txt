@@ -40,4 +40,5 @@ target_link_libraries(EspressoScriptInterface PRIVATE EspressoConfig PUBLIC Espr
 if(HDF5_FOUND)
  target_link_libraries(EspressoScriptInterface PRIVATE H5mdCore)
 endif()
+target_include_directories(EspressoScriptInterface PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_include_directories(EspressoScriptInterface PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

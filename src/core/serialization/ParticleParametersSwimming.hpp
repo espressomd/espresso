@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_UTILS_SERIALIZATION_PARTICLE_SWIM_HPP
 #define CORE_UTILS_SERIALIZATION_PARTICLE_SWIM_HPP
 
-#include "core/particle_data.hpp"
-#include "core/utils/serialization/List.hpp"
+#include "particle_data.hpp"
+
 #include <boost/serialization/vector.hpp>
 
 namespace boost {
