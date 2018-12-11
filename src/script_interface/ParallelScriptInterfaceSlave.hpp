@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_PARALLEL_SCRIPT_INTERFACE_SLAVE_HPP
 
 #include "ScriptInterfaceBase.hpp"
-#include "core/utils/parallel/ParallelObject.hpp"
+#include "utils/parallel/ParallelObject.hpp"
 
 namespace ScriptInterface {
 
