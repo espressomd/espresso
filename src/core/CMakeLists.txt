@@ -142,7 +142,36 @@ set(EspressoCore_SRC
     virtual_sites/VirtualSitesRelative.cpp
 )
 
-add_library(EspressoCore SHARED ${EspressoCore_SRC})
+if(CUDA)
+    set(EspressoCuda_SRC
+        cuda_common_cuda.cu
+        cuda_init_cuda.cu
+        EspressoSystemInterface_cuda.cu
+        actor/DipolarBarnesHut_cuda.cu
+        actor/DipolarDirectSum_cuda.cu
+        actor/HarmonicOrientationWell_cuda.cu
+        actor/HarmonicWell_cuda.cu
+        actor/Mmm1dgpuForce_cuda.cu
+        electrostatics_magnetostatics/p3m_gpu_cuda.cu
+        electrostatics_magnetostatics/p3m_gpu_error_cuda.cu
+        grid_based_algorithms/electrokinetics_cuda.cu
+        grid_based_algorithms/lbgpu_cuda.cu
+        grid_based_algorithms/fd-electrostatics_cuda.cu
+        virtual_sites/lb_inertialess_tracers_cuda.cu
+        grid_based_algorithms/electrokinetics.cpp
+        grid_based_algorithms/electrokinetics_pdb_parse.cpp
+        grid_based_algorithms/lbgpu.cpp
+    )
+
+  set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
+  cuda_add_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
+  set_property(TARGET EspressoCore PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+  target_link_libraries(EspressoCore PUBLIC ${CUDA_CUFFT_LIBRARIES})
+else(CUDA)
+  add_library(EspressoCore SHARED ${EspressoCore_SRC})
+endif(CUDA)
+
 install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -170,43 +199,6 @@ endif()
 if(SCAFACOS)
   target_link_libraries(EspressoCore PRIVATE Scafacos)
 endif(SCAFACOS)
-
-if(CUDA)
-  set(EspressoCudaHost_SRC
-        grid_based_algorithms/electrokinetics.cpp
-        grid_based_algorithms/electrokinetics_pdb_parse.cpp
-        grid_based_algorithms/lbgpu.cpp
-        )
-
-    add_library(EspressoCudaHost SHARED ${EspressoCudaHost_SRC})
-    target_include_directories(EspressoCudaHost PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    target_link_libraries(EspressoCudaHost PUBLIC EspressoConfig)
-
-    set(EspressoCuda_SRC
-        cuda_common_cuda.cu
-        cuda_init_cuda.cu
-        EspressoSystemInterface_cuda.cu
-        actor/DipolarBarnesHut_cuda.cu
-        actor/DipolarDirectSum_cuda.cu
-        actor/HarmonicOrientationWell_cuda.cu
-        actor/HarmonicWell_cuda.cu
-        actor/Mmm1dgpuForce_cuda.cu
-        electrostatics_magnetostatics/p3m_gpu_cuda.cu
-        electrostatics_magnetostatics/p3m_gpu_error_cuda.cu
-        grid_based_algorithms/electrokinetics_cuda.cu
-        grid_based_algorithms/lbgpu_cuda.cu
-        grid_based_algorithms/fd-electrostatics_cuda.cu
-        virtual_sites/lb_inertialess_tracers_cuda.cu
-    )
-
-  set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
-  cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC})
-  install(TARGETS EspressoCuda DESTINATION ${PYTHON_INSTDIR}/espressomd)
-  set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
-  target_include_directories(EspressoCuda PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-  target_link_libraries(EspressoCuda PUBLIC EspressoConfig ${CUDA_CUFFT_LIBRARIES} EspressoCudaHost)
-  target_link_libraries(EspressoCore PUBLIC EspressoCuda)
-endif(CUDA)
 
 # Subdirectories
 add_subdirectory(io)

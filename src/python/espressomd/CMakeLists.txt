@@ -71,7 +71,6 @@ foreach(cython_file ${cython_SRC})
   if(basename STREQUAL "")
       message( FATAL_ERROR "Internal error empty basename of file ${cython_file}")
   else()
-      list(APPEND cython_generated_SRC "${basename}.cpp")
       add_custom_command(OUTPUT ${outputpath}
                          COMMAND ${CYTHON_EXECUTABLE} ${CYTHON_FLAGS} --cplus
                          --directive embedsignature=True
