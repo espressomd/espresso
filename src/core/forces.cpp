@@ -295,7 +295,7 @@ void calc_long_range_forces() {
 #ifdef DP3M
   case DIPOLAR_MDLC_DS:
     add_mdlc_force_corrections();
-  // fall through
+    // fall through
 #endif
   case DIPOLAR_DS:
     magnetic_dipolar_direct_sum_calculations(1, 0);
