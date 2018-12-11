@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "particle_data.hpp"
 #include "utils/Range.hpp"
 #include "utils/SkipIterator.hpp"
-#include "utils/serialization/Particle.hpp"
+#include "serialization/Particle.hpp"
 
 /**
  * @brief Proxy class that gets a particle range from

@@ -30,7 +30,7 @@
 #include "grid.hpp"
 
 #include "utils/mpi/sendrecv.hpp"
-#include "utils/serialization/ParticleList.hpp"
+#include "serialization/ParticleList.hpp"
 
 #include "initialize.hpp"
 
