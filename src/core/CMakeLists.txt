@@ -159,7 +159,7 @@ if(WITH_COVERAGE)
   endif()
 endif()
 
-target_link_libraries(EspressoCore PRIVATE EspressoConfig)
+target_link_libraries(EspressoCore PUBLIC EspressoConfig)
 target_link_libraries(EspressoCore PRIVATE Boost::serialization Boost::mpi MPI::MPI_CXX)
 
 if(FFTW3_FOUND)
@@ -176,18 +176,29 @@ if(CUDA)
         cuda_common_cuda.cu
         cuda_init_cuda.cu
         EspressoSystemInterface_cuda.cu
+        actor/DipolarBarnesHut_cuda.cu
+        actor/DipolarDirectSum_cuda.cu
+        actor/HarmonicOrientationWell_cuda.cu
+        actor/HarmonicWell_cuda.cu
+        actor/Mmm1dgpuForce_cuda.cu
+        electrostatics_magnetostatics/p3m_gpu_cuda.cu
+        electrostatics_magnetostatics/p3m_gpu_error_cuda.cu
+        grid_based_algorithms/electrokinetics.cpp
+        grid_based_algorithms/electrokinetics_pdb_parse.cpp
+        grid_based_algorithms/electrokinetics_cuda.cu
+        grid_based_algorithms/lbgpu.cpp
+        grid_based_algorithms/lbgpu_cuda.cu
+        grid_based_algorithms/fd-electrostatics_cuda.cu
+        virtual_sites/lb_inertialess_tracers_cuda.cu
     )
 
-  cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-  cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
-  cuda_include_directories(${CMAKE_SOURCE_DIR}/src/config)
-  cuda_include_directories(${CMAKE_BINARY_DIR}/src/config)
-
+  set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
   cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC})
   install(TARGETS EspressoCuda DESTINATION ${PYTHON_INSTDIR}/espressomd)
   set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
-  target_link_libraries(EspressoCuda EspressoConfig ${CUDA_CUFFT_LIBRARIES})
-  target_link_libraries(EspressoCore PRIVATE EspressoCuda)
+  target_include_directories(EspressoCuda PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_link_libraries(EspressoCuda PUBLIC EspressoConfig ${CUDA_CUFFT_LIBRARIES})
+  target_link_libraries(EspressoCore PUBLIC EspressoCuda)
 endif(CUDA)
 
 # Subdirectories
@@ -199,22 +210,6 @@ if(WITH_UNIT_TESTS)
 endif(WITH_UNIT_TESTS)
 
 add_subdirectory(grid_based_algorithms)
-
-if(CUDA)
-  target_link_libraries(EspressoCore PRIVATE electrokinetics_core)
-  target_link_libraries(EspressoCore PRIVATE fd_electrostatics)
-  target_link_libraries(EspressoCore PRIVATE lbgpu)
-endif(CUDA)
-
-add_subdirectory(virtual_sites)
-if(CUDA)
-  target_link_libraries(EspressoCore PRIVATE VirtualSitesCuda)
-endif(CUDA)
-
 add_subdirectory(shapes)
 add_subdirectory(cluster_analysis)
 add_subdirectory(electrostatics_magnetostatics)
-
-if(CUDA)
-  target_link_libraries(EspressoCore PRIVATE electrostatics_magnetostatics_core_cuda)
-endif()
