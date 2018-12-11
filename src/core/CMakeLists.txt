@@ -172,6 +172,16 @@ if(SCAFACOS)
 endif(SCAFACOS)
 
 if(CUDA)
+  set(EspressoCudaHost_SRC
+        grid_based_algorithms/electrokinetics.cpp
+        grid_based_algorithms/electrokinetics_pdb_parse.cpp
+        grid_based_algorithms/lbgpu.cpp
+        )
+
+    add_library(EspressoCudaHost SHARED ${EspressoCudaHost_SRC})
+    target_include_directories(EspressoCudaHost PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(EspressoCudaHost PUBLIC EspressoConfig)
+
     set(EspressoCuda_SRC
         cuda_common_cuda.cu
         cuda_init_cuda.cu
@@ -183,10 +193,7 @@ if(CUDA)
         actor/Mmm1dgpuForce_cuda.cu
         electrostatics_magnetostatics/p3m_gpu_cuda.cu
         electrostatics_magnetostatics/p3m_gpu_error_cuda.cu
-        grid_based_algorithms/electrokinetics.cpp
-        grid_based_algorithms/electrokinetics_pdb_parse.cpp
         grid_based_algorithms/electrokinetics_cuda.cu
-        grid_based_algorithms/lbgpu.cpp
         grid_based_algorithms/lbgpu_cuda.cu
         grid_based_algorithms/fd-electrostatics_cuda.cu
         virtual_sites/lb_inertialess_tracers_cuda.cu
@@ -197,7 +204,7 @@ if(CUDA)
   install(TARGETS EspressoCuda DESTINATION ${PYTHON_INSTDIR}/espressomd)
   set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
   target_include_directories(EspressoCuda PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-  target_link_libraries(EspressoCuda PUBLIC EspressoConfig ${CUDA_CUFFT_LIBRARIES})
+  target_link_libraries(EspressoCuda PUBLIC EspressoConfig ${CUDA_CUFFT_LIBRARIES} EspressoCudaHost)
   target_link_libraries(EspressoCore PUBLIC EspressoCuda)
 endif(CUDA)
 
