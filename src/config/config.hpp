@@ -41,13 +41,6 @@
 /*********************************************************/
 /*@{*/
 
-#ifdef SCAFACOS
-#include "fcs_config.h"
-#if defined(FCS_ENABLE_DIPOLES) && defined(DIPOLES)
-#define SCAFACOS_DIPOLES
-#endif
-#endif
-
 #ifndef ONEPART_DEBUG_ID
 #define ONEPART_DEBUG_ID 13
 #endif

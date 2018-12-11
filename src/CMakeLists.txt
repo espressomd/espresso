@@ -79,6 +79,10 @@ endfunction(UNIT_TEST)
 add_subdirectory(core)
 add_subdirectory(config)
 
+if(SCAFACOS)
+  add_subdirectory(scafacos)
+endif(SCAFACOS)
+
 if(WITH_SCRIPT_INTERFACE)
   add_subdirectory(script_interface)
 endif()
