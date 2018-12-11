@@ -430,19 +430,6 @@ void make_particle_type_exist_local(int type) {
     realloc_ia_params(type + 1);
 }
 
-void make_bond_type_exist(int type) {
-  int i, ns = type + 1;
-  const auto old_size = bonded_ia_params.size();
-  if (ns <= bonded_ia_params.size()) {
-    return;
-  }
-  /* else allocate new memory */
-  bonded_ia_params.resize(ns);
-  /* set bond types not used as undefined */
-  for (i = old_size; i < ns; i++)
-    bonded_ia_params[i].type = BONDED_IA_NONE;
-}
-
 int interactions_sanity_checks() {
   /* set to zero if initialization was not successful. */
   int state = 1;

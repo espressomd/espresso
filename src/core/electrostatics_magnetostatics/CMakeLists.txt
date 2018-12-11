@@ -1,23 +1,3 @@
-add_library(electrostatics_magnetostatics_core SHARED
-    debye_hueckel.cpp
-    elc.cpp
-    icc.cpp
-    maggs.cpp
-    magnetic_non_p3m_methods.cpp
-    mdlc_correction.cpp
-    mmm1d.cpp
-    mmm2d.cpp
-    mmm-common.cpp
-    p3m-common.cpp
-    p3m.cpp
-    p3m-dipolar.cpp
-    p3m_gpu.cpp
-    scafacos.cpp
-    fft-common.cpp
-    fft.cpp
-    fft-dipolar.cpp
-)
-
 if(CUDA)
     set(electrostatics_core_cuda_src
         p3m_gpu_cuda.cu
@@ -37,14 +17,6 @@ if(CUDA)
   target_link_libraries(electrostatics_magnetostatics_core_cuda ${CUDA_CUFFT_LIBRARIES})
   target_link_libraries(electrostatics_magnetostatics_core_cuda EspressoCuda)
 endif(CUDA)
-
-target_include_directories(electrostatics_magnetostatics_core PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
-target_compile_options(electrostatics_magnetostatics_core PRIVATE -fPIC)
-target_link_libraries(electrostatics_magnetostatics_core PRIVATE EspressoConfig)
-if(FFTW3_FOUND)
-target_include_directories(electrostatics_magnetostatics_core PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})
-target_link_libraries(electrostatics_magnetostatics_core PRIVATE ${FFTW3_LIBRARIES})
-endif()
 
 if(SCAFACOS)
   add_subdirectory(scafacos)

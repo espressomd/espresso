@@ -1,15 +1,3 @@
-set(VirtualSites_SRC
-    lb_inertialess_tracers.cpp
-    lb_inertialess_tracers_cuda_interface.cpp
-    virtual_sites_com.cpp
-    VirtualSitesInertialessTracers.cpp
-    VirtualSitesRelative.cpp
-)
-add_library(VirtualSites SHARED ${VirtualSites_SRC})
-install(TARGETS VirtualSites LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd ARCHIVE DESTINATION ${PYTHON_INSTDIR}/espressomd)
-set_target_properties(VirtualSites PROPERTIES SOVERSION ${SOVERSION})
-target_link_libraries(VirtualSites PRIVATE EspressoConfig)
-
 if(CUDA)
   set(VirtualSitesCuda_SRC
     lb_inertialess_tracers_cuda.cu
@@ -21,6 +9,3 @@ if(CUDA)
 
   CUDA_ADD_CUFFT_TO_TARGET(VirtualSitesCuda)
 endif(CUDA)
-
-set_target_properties(VirtualSites PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(VirtualSites PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)

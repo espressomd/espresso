@@ -57,14 +57,95 @@ set(EspressoCore_SRC
     topology.cpp
     tuning.cpp
     virtual_sites.cpp
+    accumulators/Correlator.hpp
+    accumulators/Correlator.cpp
+    accumulators/MeanVarianceCalculator.hpp
+    accumulators/MeanVarianceCalculator.cpp
+    actor/ActorList.cpp
+    actor/DipolarBarnesHut.cpp
+    actor/DipolarDirectSum.cpp
+    actor/HarmonicOrientationWell.cpp
+    actor/HarmonicWell.cpp
+    actor/Mmm1dgpuForce.cpp
+    bonded_interactions/angle_cosine.cpp
+    bonded_interactions/angle_cossquare.cpp
+    bonded_interactions/angle_harmonic.cpp
+    bonded_interactions/bonded_coulomb.cpp
+    bonded_interactions/bonded_coulomb_p3m_sr.cpp
+    bonded_interactions/bonded_interaction_data.cpp
+    bonded_interactions/bonded_tab.cpp
+    bonded_interactions/dihedral.cpp
+    bonded_interactions/fene.cpp
+    bonded_interactions/harmonic.cpp
+    bonded_interactions/harmonic_dumbbell.cpp
+    bonded_interactions/quartic.cpp
+    bonded_interactions/subt_lj.cpp
+    bonded_interactions/thermalized_bond.cpp
+    bonded_interactions/umbrella.cpp
+    constraints/HomogeneousMagneticField.cpp
+    constraints/ShapeBasedConstraint.cpp
+    electrostatics_magnetostatics/debye_hueckel.cpp
+    electrostatics_magnetostatics/elc.cpp
+    electrostatics_magnetostatics/icc.cpp
+    electrostatics_magnetostatics/maggs.cpp
+    electrostatics_magnetostatics/magnetic_non_p3m_methods.cpp
+    electrostatics_magnetostatics/mdlc_correction.cpp
+    electrostatics_magnetostatics/mmm1d.cpp
+    electrostatics_magnetostatics/mmm2d.cpp
+    electrostatics_magnetostatics/mmm-common.cpp
+    electrostatics_magnetostatics/p3m-common.cpp
+    electrostatics_magnetostatics/p3m.cpp
+    electrostatics_magnetostatics/p3m-dipolar.cpp
+    electrostatics_magnetostatics/p3m_gpu.cpp
+    electrostatics_magnetostatics/scafacos.cpp
+    electrostatics_magnetostatics/fft-common.cpp
+    electrostatics_magnetostatics/fft.cpp
+    electrostatics_magnetostatics/fft-dipolar.cpp
+    grid_based_algorithms/lbboundaries.cpp
+    grid_based_algorithms/lb.cpp
+    grid_based_algorithms/lb-d3q19.cpp
+    immersed_boundary/ibm_tribend.cpp
+    immersed_boundary/ibm_triel.cpp
+    immersed_boundary/ImmersedBoundaries.cpp
+    nonbonded_interactions/bmhtf-nacl.cpp
+    nonbonded_interactions/buckingham.cpp
+    nonbonded_interactions/cos2.cpp
+    nonbonded_interactions/gaussian.cpp
+    nonbonded_interactions/gb.cpp
+    nonbonded_interactions/hat.cpp
+    nonbonded_interactions/hertzian.cpp
+    nonbonded_interactions/ljcos2.cpp
+    nonbonded_interactions/ljcos.cpp
+    nonbonded_interactions/lj.cpp
+    nonbonded_interactions/ljgen.cpp
+    nonbonded_interactions/morse.cpp
+    nonbonded_interactions/nonbonded_interaction_data.cpp
+    nonbonded_interactions/nonbonded_tab.cpp
+    nonbonded_interactions/reaction_field.cpp
+    nonbonded_interactions/soft_sphere.cpp
+    nonbonded_interactions/steppot.cpp
+    nonbonded_interactions/thole.cpp
+    nonbonded_interactions/wca.cpp
+    object-in-fluid/affinity.cpp
+    object-in-fluid/membrane_collision.cpp
+    object-in-fluid/oif_global_forces.cpp
+    object-in-fluid/oif_local_forces.cpp
+    object-in-fluid/out_direction.cpp
+    observables/CylindricalLBFluxDensityProfileAtParticlePositions.cpp
+    observables/CylindricalLBVelocityProfileAtParticlePositions.cpp
+    observables/CylindricalLBVelocityProfile.cpp
+    observables/LBVelocityProfile.cpp
+    virtual_sites/lb_inertialess_tracers.cpp
+    virtual_sites/lb_inertialess_tracers_cuda_interface.cpp
+    virtual_sites/virtual_sites_com.cpp
+    virtual_sites/VirtualSitesInertialessTracers.cpp
+    virtual_sites/VirtualSitesRelative.cpp
 )
-
 
 add_library(EspressoCore SHARED ${EspressoCore_SRC})
 install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 if(WITH_COVERAGE)
   target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:Release>:-g>")
   target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:Release>:-O0>")
@@ -78,8 +159,13 @@ if(WITH_COVERAGE)
   endif()
 endif()
 
-target_link_libraries(EspressoCore PRIVATE EspressoConfig Actor ObjectInFluid ImmersedBoundary Constraints Accumulators cluster_analysis)
+target_link_libraries(EspressoCore PRIVATE EspressoConfig)
 target_link_libraries(EspressoCore PRIVATE Boost::serialization Boost::mpi MPI::MPI_CXX)
+
+if(FFTW3_FOUND)
+target_include_directories(EspressoCore PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})
+target_link_libraries(EspressoCore PRIVATE ${FFTW3_LIBRARIES})
+endif()
 
 if(SCAFACOS)
   target_link_libraries(EspressoCore PRIVATE Scafacos)
@@ -105,45 +191,30 @@ if(CUDA)
 endif(CUDA)
 
 # Subdirectories
-add_subdirectory(observables)
-target_link_libraries(EspressoCore PUBLIC Observables)
-add_subdirectory(accumulators)
 add_subdirectory(io)
-if(HDF5_FOUND)
-    target_link_libraries(EspressoCore PUBLIC H5mdCore)
-endif(HDF5_FOUND)
-target_link_libraries(EspressoCore PRIVATE mpiio)
-target_link_libraries(EspressoCore PRIVATE pdbreader)
-target_link_libraries(EspressoCore PRIVATE bonded_interactions)
-target_link_libraries(EspressoCore PRIVATE nonbonded_interactions)
+
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_UNIT_TESTS)
 
-add_subdirectory(actor)
-add_subdirectory(bonded_interactions)
 add_subdirectory(grid_based_algorithms)
-target_link_libraries(EspressoCore PRIVATE lbboundaries_interface)
-target_link_libraries(EspressoCore PRIVATE lbcpu)
+
 if(CUDA)
   target_link_libraries(EspressoCore PRIVATE electrokinetics_core)
   target_link_libraries(EspressoCore PRIVATE fd_electrostatics)
   target_link_libraries(EspressoCore PRIVATE lbgpu)
 endif(CUDA)
-add_subdirectory(immersed_boundary)
+
 add_subdirectory(virtual_sites)
-target_link_libraries(EspressoCore PRIVATE VirtualSites)
 if(CUDA)
   target_link_libraries(EspressoCore PRIVATE VirtualSitesCuda)
 endif(CUDA)
-add_subdirectory(nonbonded_interactions)
-add_subdirectory(object-in-fluid)
+
 add_subdirectory(shapes)
-add_subdirectory(constraints)
 add_subdirectory(cluster_analysis)
 add_subdirectory(electrostatics_magnetostatics)
-target_link_libraries(EspressoCore PRIVATE electrostatics_magnetostatics_core)
+
 if(CUDA)
   target_link_libraries(EspressoCore PRIVATE electrostatics_magnetostatics_core_cuda)
 endif()

@@ -38,22 +38,3 @@ if (CUDA)
   )
   target_link_libraries(fd_electrostatics EspressoConfig ${CUDA_CUFFT_LIBRARIES})
 endif()
-
-add_library(lbboundaries_interface SHARED
-  lbboundaries.cpp
-)
-target_include_directories(lbboundaries_interface PRIVATE
-  ${CMAKE_SOURCE_DIR}/src/core
-  ${CMAKE_BINARY_DIR}/src/core
-)
-target_link_libraries(lbboundaries_interface PRIVATE EspressoConfig)
-
-add_library(lbcpu SHARED
-  lb.cpp
-  lb-d3q19.cpp
-)
-target_include_directories(lbcpu PRIVATE
-  ${CMAKE_SOURCE_DIR}/src/core
-  ${CMAKE_BINARY_DIR}/src/core
-)
-target_link_libraries(lbcpu PRIVATE EspressoConfig)

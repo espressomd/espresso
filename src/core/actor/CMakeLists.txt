@@ -1,18 +1,3 @@
-set(Actor_SRC
-    ActorList.cpp
-    DipolarBarnesHut.cpp
-    DipolarDirectSum.cpp
-    HarmonicOrientationWell.cpp
-    HarmonicWell.cpp
-    Mmm1dgpuForce.cpp
-)
-
-add_library(Actor SHARED ${Actor_SRC})
-install(TARGETS Actor LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd ARCHIVE DESTINATION ${PYTHON_INSTDIR}/espressomd)
-set_target_properties(Actor PROPERTIES SOVERSION ${SOVERSION})
-target_link_libraries(Actor PRIVATE EspressoConfig)
-target_include_directories(Actor PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
-
 if(CUDA)
   set(ActorCuda_SRC
         DipolarBarnesHut_cuda.cu
