@@ -29,8 +29,8 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
-#include "utils/mpi/sendrecv.hpp"
 #include "serialization/ParticleList.hpp"
+#include "utils/mpi/sendrecv.hpp"
 
 #include "initialize.hpp"
 
