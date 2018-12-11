@@ -25,7 +25,7 @@
  * (Dupin2007) \ref forces.cpp
  */
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"

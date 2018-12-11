@@ -21,7 +21,7 @@
 #ifndef _FFT_COMMON_H
 #define _FFT_COMMON_H
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 #include "config.hpp"
 #if defined(P3M) || defined(DP3M)
 

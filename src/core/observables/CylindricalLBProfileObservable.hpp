@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "CylindricalProfileObservable.hpp"
 #include "LBObservable.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "utils/coordinate_transformation.hpp"

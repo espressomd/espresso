@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 #include "config.hpp"
 #include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"

@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <vector>
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "debug.hpp"

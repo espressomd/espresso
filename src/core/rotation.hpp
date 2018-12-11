@@ -29,7 +29,7 @@
 
 #ifdef ROTATION
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 #include "particle_data.hpp"
 
 constexpr const int ROTATION_X = 2;

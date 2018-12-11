@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/variant.hpp>
 
 #include "None.hpp"
-#include "core/Vector.hpp"
+#include "utils/Vector.hpp"
 #include "utils/AutoObjectId.hpp"
 
 #include <boost/serialization/map.hpp>

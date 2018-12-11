@@ -126,7 +126,7 @@
 #include <memory>
 
 #include "AccumulatorBase.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 #include "integrate.hpp"
 #include "observables/Observable.hpp"
 #include "utils.hpp"
