@@ -95,8 +95,6 @@ LB_Parameters lbpar = {
     0.0,
     // ext_force_density
     {0.0, 0.0, 0.0},
-    // rho_lb_units
-    0.,
     // gamma_odd
     0.,
     // gamma_even
@@ -1273,13 +1271,13 @@ int lb_lbnode_get_pi(const Vector3i &ind, double *p_pi) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     for (int ii = 0; ii < LB_COMPONENTS; ii++) {
-      p0 += lbpar_gpu.rho[ii] * lbpar_gpu.agrid * lbpar_gpu.agrid /
+      p0 += lbpar_gpu.rho[ii] / lbpar_gpu.agrid /
             lbpar_gpu.tau / lbpar_gpu.tau / 3.;
     }
 #endif // LB_GPU
   } else {
 #ifdef LB
-    p0 = lbpar.rho * lbpar.agrid * lbpar.agrid / lbpar.tau / lbpar.tau / 3.;
+    p0 = lbpar.rho / lbpar.agrid / lbpar.tau / lbpar.tau / 3.;
 #endif // LB
   }
 
@@ -2013,7 +2011,7 @@ void lb_reinit_fluid() {
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
   /* here the conversion to lb units is performed */
-  double rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  double rho = lbpar.rho;
   std::array<double, 3> j = {{0., 0., 0.}};
   std::array<double, 6> pi = {{0., 0., 0., 0., 0., 0.}};
 
@@ -2089,8 +2087,6 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              const std::array<double, 6> &pi) {
   int i;
   double local_rho, local_j[3], local_pi[6], trace;
-  const double avg_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-
   local_rho = rho;
 
   local_j[0] = j[0];
@@ -2106,10 +2102,10 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
   double tmp1, tmp2;
 
   /* update the q=0 sublattice */
-  lbfluid[0][index] = 1. / 3. * (local_rho - avg_rho) - 1. / 2. * trace;
+  lbfluid[0][index] = 1. / 3. * (local_rho - lbpar.rho) - 1. / 2. * trace;
 
   /* update the q=1 sublattice */
-  rho_times_coeff = 1. / 18. * (local_rho - avg_rho);
+  rho_times_coeff = 1. / 18. * (local_rho - lbpar.rho);
 
   lbfluid[1][index] = rho_times_coeff + 1. / 6. * local_j[0] +
                       1. / 4. * local_pi[0] - 1. / 12. * trace;
@@ -2125,7 +2121,7 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                       1. / 4. * local_pi[5] - 1. / 12. * trace;
 
   /* update the q=2 sublattice */
-  rho_times_coeff = 1. / 36. * (local_rho - avg_rho);
+  rho_times_coeff = 1. / 36. * (local_rho - lbpar.rho);
 
   tmp1 = local_pi[0] + local_pi[2];
   tmp2 = 2.0 * local_pi[1];
@@ -2193,7 +2189,7 @@ lb_relax_modes(Lattice::index_t index, const std::array<double, 19> &modes) {
   /* re-construct the real density
    * remember that the populations are stored as differences to their
    * equilibrium value */
-  rho = modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  rho = modes[0] + lbpar.rho;
 
   j[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
   j[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
@@ -2234,7 +2230,7 @@ lb_thermalize_modes(Lattice::index_t index,
                     const std::array<double, 19> &modes) {
   std::array<double, 19> thermalized_modes = modes;
   const double rootrho = std::sqrt(std::fabs(
-      modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid));
+      modes[0] + lbpar.rho));
 #ifdef GAUSSRANDOM
   constexpr double variance = 1.0;
   auto rng = []() -> double { return gaussian_random(); };
@@ -2280,7 +2276,7 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
 
   const auto &f = lbfields[index].force_density;
 
-  rho = modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  rho = modes[0] + lbpar.rho;
 
   /* hydrodynamic momentum density is redefined when external forces present */
   u[0] = (modes[1] + 0.5 * f[0]) / rho;
@@ -2586,7 +2582,7 @@ Vector3d node_u(Lattice::index_t index) {
 #endif // LB_BOUNDARIES
   auto const modes = lb_calc_modes(index);
   auto const local_rho =
-      lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
+      lbpar.rho + modes[0];
   return Vector3d{modes[1], modes[2], modes[3]} / local_rho;
 }
 } // namespace
@@ -2621,7 +2617,7 @@ Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &pos) {
 #endif
           auto const modes = lb_calc_modes(index);
           auto const local_rho =
-              modes[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+              modes[0] + lbpar.rho;
           interpolated_f += w / 2 / local_rho *
                             (lbfields[index].force_density_buf -
                              (lbpar.ext_force_density * lbpar.agrid *
@@ -2985,7 +2981,7 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 
 #ifdef LB_BOUNDARIES
   if (lbfields[index].boundary) {
-    *rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+    *rho = lbpar.rho;
     j[0] = 0.;
     j[1] = 0.;
     j[2] = 0.;
@@ -3003,7 +2999,7 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
   double modes_from_pi_eq[6];
   std::array<double, 19> mode = lb_calc_modes(index);
 
-  *rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  *rho = mode[0] + lbpar.rho;
 
   j[0] = mode[1] + 0.5 * lbfields[index].force_density[0];
   j[1] = mode[2] + 0.5 * lbfields[index].force_density[1];

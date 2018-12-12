@@ -54,7 +54,6 @@ IF LB_GPU or LB:
             double tau
             double friction[2]
             double ext_force_density[3]
-            double rho_lb_units[2]
             double gamma_odd[2]
             double gamma_even[2]
             int resent_halo
@@ -121,7 +120,7 @@ IF LB_GPU or LB:
     # Wrapper-functions for access to C-pointer: Set params
     #
     ###############################################
-    cdef inline python_lbfluid_set_density(p_dens):
+    cdef inline python_lbfluid_set_density(p_dens, agrid):
 
         IF SHANCHEN:
             cdef double c_dens[2]
@@ -130,9 +129,9 @@ IF LB_GPU or LB:
 
         # get pointers
         if isinstance(p_dens, float) or isinstance(p_dens, int):
-            c_dens[0] = <float > p_dens
+            c_dens[0] = <float > p_dens * agrid * agrid * agrid
         else:
-            c_dens = p_dens
+            c_dens = p_dens * agrid * agrid * agrid
         # call c-function
         if(lb_lbfluid_set_density(c_dens)):
             raise Exception("lb_fluid_set_density error at C-level interface")
@@ -323,7 +322,7 @@ IF LB_GPU or LB:
 # Wrapper-functions for access to C-pointer: Get params
 #
 ###############################################
-    cdef inline python_lbfluid_get_density(p_dens):
+    cdef inline python_lbfluid_get_density(p_dens, agrid):
 
         IF SHANCHEN:
             cdef double c_dens[2]
@@ -333,9 +332,9 @@ IF LB_GPU or LB:
         if(lb_lbfluid_get_density(c_dens)):
             raise Exception("lb_fluid_get_density error at C-level interface")
         if isinstance(p_dens, float) or isinstance(p_dens, int):
-            p_dens = <double > c_dens[0]
+            p_dens = <double > c_dens[0] / agrid / agrid / agrid
         else:
-            p_dens = c_dens
+            p_dens = c_dens / agrid / agrid / agrid
 
         return 0
 

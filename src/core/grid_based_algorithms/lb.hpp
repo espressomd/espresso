@@ -131,7 +131,7 @@ struct LB_FluidNode {
 
 /** Data structure holding the parameters for the Lattice Boltzmann system. */
 typedef struct {
-  /** number density (LJ units) */
+  /** number density (LB units) */
   double rho;
 
   /** kinematic viscosity (LJ units) */
@@ -153,7 +153,7 @@ typedef struct {
   /** external force density applied to the fluid at each lattice site (MD
    * units) */
   Vector3d ext_force_density;
-  double rho_lb_units;
+
   /** relaxation of the odd kinetic modes */
   double gamma_odd;
   /** relaxation of the even kinetic modes */

@@ -123,7 +123,7 @@ IF LB_GPU or LB:
         def _set_params_in_es_core(self):
             default_params = self.default_params()
 
-            if python_lbfluid_set_density(self._params["dens"]):
+            if python_lbfluid_set_density(self._params["dens"], self._params["agrid"]):
                 raise Exception("lb_lbfluid_set_density error")
 
             if python_lbfluid_set_tau(self._params["tau"]):
@@ -164,7 +164,7 @@ IF LB_GPU or LB:
         def _get_params_from_es_core(self):
             default_params = self.default_params()
 
-            if python_lbfluid_get_density(self._params["dens"]):
+            if python_lbfluid_get_density(self._params["dens"], self._params["agrid"]):
                 raise Exception("lb_lbfluid_get_density error")
 
             if python_lbfluid_get_tau(self._params["tau"]):

@@ -4139,7 +4139,7 @@ void lb_calc_fluid_temperature_GPU(double *host_temp) {
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
     *host_temp +=
         (double)(host_jsquared * 1. /
-                 (3.0f * lbpar_gpu.rho[ii] * host_number_of_non_boundary_nodes *
+                 (3.0f * lbpar_gpu.rho[ii] / lbpar_gpu.agrid / lbpar_gpu.agrid / lbpar_gpu.agrid * host_number_of_non_boundary_nodes *
                   lbpar_gpu.tau * lbpar_gpu.tau * lbpar_gpu.agrid));
   }
 }
