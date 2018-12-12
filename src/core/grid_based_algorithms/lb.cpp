@@ -43,7 +43,7 @@
 #include "lb-d3q19.hpp"
 #include "thermostat.hpp"
 #include "utils/Counter.hpp"
-#include "utils/inner_product.hpp"
+#include "utils/matrix_vector_product.hpp"
 #include "utils/u32_to_u64.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
@@ -2164,12 +2164,9 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
 
 #include <boost/range/numeric.hpp>
 
-std::array<double, 19> lb_calc_m_from_n(const std::array<double, 19> n) {
-  std::array<double, 19> m;
-  for (int i = 0; i < 19; i++) {
-    m[i] = Utils::inner_product(lbmodel.e_ki[i], n);
-  }
-  return m;
+template<typename T, std::size_t N>
+std::array<T, N> lb_calc_m_from_n(const std::array<T, N> n) {
+  return Utils::matrix_vector_product<T, N, ::D3Q19::e_ki>(n);
 }
 
 /** Calculation of hydrodynamic modes */
@@ -2328,16 +2325,11 @@ std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
   return normalized_modes;
 }
 
-template <typename T>
-std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
-  std::array<T, 19> ret;
-  const auto normalized_modes = normalize_modes(modes);
-
-  for (int i = 0; i < 19; i++) {
-    ret[i] =
-        Utils::inner_product(lbmodel.e_ki_transposed[i], normalized_modes) *
-        lbmodel.w[i];
-  }
+template <typename T, std::size_t N>
+std::array<T, N> lb_calc_n_from_m(const std::array<T, N> &modes) {
+  auto const normalized_modes = normalize_modes(modes);
+  auto ret = Utils::matrix_vector_product<T, N, ::D3Q19::e_ki_transposed>(normalized_modes);
+  std::transform(ret.begin(), ret.end(), ::D3Q19::w.begin(), ret.begin(), std::multiplies<T>());
   return ret;
 }
 
