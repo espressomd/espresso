@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
-#include "core/lbboundaries/LBBoundary.hpp"
 #include "core/communication.hpp"
+#include "core/lbboundaries/LBBoundary.hpp"
 #include "shapes/Shape.hpp"
 
 namespace ScriptInterface {
