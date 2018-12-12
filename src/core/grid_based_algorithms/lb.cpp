@@ -1271,8 +1271,8 @@ int lb_lbnode_get_pi(const Vector3i &ind, double *p_pi) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     for (int ii = 0; ii < LB_COMPONENTS; ii++) {
-      p0 += lbpar_gpu.rho[ii] / lbpar_gpu.agrid /
-            lbpar_gpu.tau / lbpar_gpu.tau / 3.;
+      p0 += lbpar_gpu.rho[ii] / lbpar_gpu.agrid / lbpar_gpu.tau /
+            lbpar_gpu.tau / 3.;
     }
 #endif // LB_GPU
   } else {
@@ -2164,7 +2164,7 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
 
 #include <boost/range/numeric.hpp>
 
-template<typename T, std::size_t N>
+template <typename T, std::size_t N>
 std::array<T, N> lb_calc_m_from_n(const std::array<T, N> n) {
   return Utils::matrix_vector_product<T, N, ::D3Q19::e_ki>(n);
 }
@@ -2226,8 +2226,7 @@ inline std::array<double, 19>
 lb_thermalize_modes(Lattice::index_t index,
                     const std::array<double, 19> &modes) {
   std::array<double, 19> thermalized_modes = modes;
-  const double rootrho = std::sqrt(std::fabs(
-      modes[0] + lbpar.rho));
+  const double rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
 #ifdef GAUSSRANDOM
   constexpr double variance = 1.0;
   auto rng = []() -> double { return gaussian_random(); };
@@ -2328,8 +2327,10 @@ std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
 template <typename T, std::size_t N>
 std::array<T, N> lb_calc_n_from_m(const std::array<T, N> &modes) {
   auto const normalized_modes = normalize_modes(modes);
-  auto ret = Utils::matrix_vector_product<T, N, ::D3Q19::e_ki_transposed>(normalized_modes);
-  std::transform(ret.begin(), ret.end(), ::D3Q19::w.begin(), ret.begin(), std::multiplies<T>());
+  auto ret = Utils::matrix_vector_product<T, N, ::D3Q19::e_ki_transposed>(
+      normalized_modes);
+  std::transform(ret.begin(), ret.end(), ::D3Q19::w.begin(), ret.begin(),
+                 std::multiplies<T>());
   return ret;
 }
 
@@ -2573,8 +2574,7 @@ Vector3d node_u(Lattice::index_t index) {
   }
 #endif // LB_BOUNDARIES
   auto const modes = lb_calc_modes(index);
-  auto const local_rho =
-      lbpar.rho + modes[0];
+  auto const local_rho = lbpar.rho + modes[0];
   return Vector3d{modes[1], modes[2], modes[3]} / local_rho;
 }
 } // namespace
@@ -2608,8 +2608,7 @@ Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &pos) {
         if (!lbfields[index].boundary) {
 #endif
           auto const modes = lb_calc_modes(index);
-          auto const local_rho =
-              modes[0] + lbpar.rho;
+          auto const local_rho = modes[0] + lbpar.rho;
           interpolated_f += w / 2 / local_rho *
                             (lbfields[index].force_density_buf -
                              (lbpar.ext_force_density * lbpar.agrid *
