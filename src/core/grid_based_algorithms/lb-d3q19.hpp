@@ -80,7 +80,7 @@ static constexpr const std::array<double, 19> w = {
      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.}};
 
 /** Basis of the mode space as described in [Duenweg, Schiller, Ladd] */
-static constexpr const std::array<std::array<int, 19>, 19> e_ki = {
+extern constexpr const std::array<std::array<int, 19>, 19> e_ki = {
     {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
      {{0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1, 0, 0, 0, 0}},
      {{0, 0, 0, 1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 0, 1, -1, 1, -1}},
@@ -107,7 +107,7 @@ static constexpr const std::array<double, 19> w_k = {
      1. / 9., 1. / 9., 2. / 3., 2. / 3., 2. / 3., 2. / 9., 2. / 9., 2. / 9.,
      2.0, 4. / 9., 4. / 3.}};
 
-static constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
+extern constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
     {{{1, 0, 0, 0, -1, 0, -0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
      {{1, 1, 0, 0, 0, 1, 1, 0, 0, 0, -2, 0, 0, -0, 0, 0, -2, -1, -1}},
      {{1, -1, 0, 0, 0, 1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, -2, -1, -1}},
