@@ -579,10 +579,9 @@ __device__ void update_rho_v(float *mode, unsigned int index,
      * remember that the populations are stored as differences to their
      * equilibrium value */
 
-    d_v[index].rho[ii] = mode[0 + ii * LBQ] + para->rho[ii] * para->agrid *
-                                                  para->agrid * para->agrid;
+    d_v[index].rho[ii] = mode[0 + ii * LBQ] + para->rho[ii];
     Rho_tot += mode[0 + ii * LBQ] +
-               para->rho[ii] * para->agrid * para->agrid * para->agrid;
+               para->rho[ii];
     u_tot[0] += mode[1 + ii * LBQ];
     u_tot[1] += mode[2 + ii * LBQ];
     u_tot[2] += mode[3 + ii * LBQ];
@@ -635,7 +634,7 @@ __device__ void relax_modes(float *mode, unsigned int index,
     float modes_from_pi_eq[6];
 
     Rho = mode[0 + ii * LBQ] +
-          para->rho[ii] * para->agrid * para->agrid * para->agrid;
+          para->rho[ii];
     j[0] = Rho * u_tot[0];
     j[1] = Rho * u_tot[1];
     j[2] = Rho * u_tot[2];
@@ -713,10 +712,10 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
 #pragma unroll
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
     Rho_tot += mode[0 + ii * LBQ] +
-               para->rho[ii] * para->agrid * para->agrid * para->agrid;
+               para->rho[ii];
   }
   c = (mode[0 + 0 * LBQ] +
-       para->rho[0] * para->agrid * para->agrid * para->agrid) /
+       para->rho[0]) /
       Rho_tot;
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
     random_floats = random_wrapper_philox(index, 1 * ii * LBQ, philox_counter);
@@ -742,7 +741,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
     /** mass mode */
     Rho = mode[0 + ii * LBQ] +
-          para->rho[ii] * para->agrid * para->agrid * para->agrid;
+          para->rho[ii];
 
     /** momentum modes */
 
@@ -1086,10 +1085,6 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index,
     unsigned int y = xyz[1];
     unsigned int z = xyz[2];
 
-    /* CPU analog of shift:
-       lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l]
-     */
-
     /** store vd temporary in second lattice to avoid race conditions */
 
     // TODO : PUT IN EQUILIBRIUM CONTRIBUTION TO THE BOUNCE-BACK DENSITY FOR THE
@@ -1101,7 +1096,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index,
 #ifndef SHANCHEN
 
 #define BOUNCEBACK()                                                           \
-  shift = 2.0f * para->agrid * para->agrid * para->rho[0] * 3.0f * weight *    \
+  shift = 2.0f / para->agrid * para->rho[0] * 3.0f * weight *    \
           para->tau * (v[0] * c[0] + v[1] * c[1] + v[2] * c[2]);               \
   pop_to_bounce_back = n_curr.vd[population * para->number_of_nodes + index];  \
   to_index_x = (x + c[0] + para->dim_x) % para->dim_x;                         \
@@ -1123,7 +1118,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index,
 
 #define BOUNCEBACK()                                                           \
   for (int component = 0; component < LB_COMPONENTS; component++) {            \
-    shift = 2.0f * para->agrid * para->agrid * para->rho[component] * 3.0f *   \
+    shift = 2.0f * / para->agrid * para->rho[component] * 3.0f *   \
             weight * para->tau * (v[0] * c[0] + v[1] * c[1] + v[2] * c[2]);    \
     pop_to_bounce_back =                                                       \
         n_curr.vd[(population + component * LBQ) * para->number_of_nodes +     \
@@ -1829,7 +1824,7 @@ interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
 #pragma unroll
     for (int ii = 0; ii < LB_COMPONENTS; ii++) {
       totmass +=
-          mode[0] + para->rho[ii] * para->agrid * para->agrid * para->agrid;
+          mode[0] + para->rho[ii];
     }
     /* The boolean expression (n_a.boundary[node_index[i]] == 0) causes boundary
        nodes to couple with velocity 0 to particles. This is necessary, since
@@ -2149,7 +2144,7 @@ __device__ __inline__ void interpolation_two_point_coupling(
 #pragma unroll
     for (int ii = 0; ii < LB_COMPONENTS; ii++) {
       totmass +=
-          mode[0] + para->rho[ii] * para->agrid * para->agrid * para->agrid;
+          mode[0] + para->rho[ii];
     }
 
 #ifdef SHANCHEN
@@ -2300,7 +2295,7 @@ __device__ void calc_viscous_force(
 
     // TODO: should one introduce a density-dependent friction ?
     calc_mode(mode, n_a, node_index[0], ii);
-    Rho = mode[0] + para->rho[ii] * para->agrid * para->agrid * para->agrid;
+    Rho = mode[0] + para->rho[ii];
     interpolated_rho[ii] += delta[0] * Rho;
     partgrad1[ii * 8 + 0] += Rho * solvation2;
     partgrad2[ii * 8 + 0] += Rho * solvation2;
@@ -2310,7 +2305,7 @@ __device__ void calc_viscous_force(
     gradrho3 -= (delta[0] + delta[4]) * Rho;
 
     calc_mode(mode, n_a, node_index[1], ii);
-    Rho = mode[0] + para->rho[ii] * para->agrid * para->agrid * para->agrid;
+    Rho = mode[0] + para->rho[ii];
     interpolated_rho[ii] += delta[1] * Rho;
     partgrad1[ii * 8 + 1] -= Rho * solvation2;
     partgrad2[ii * 8 + 1] += Rho * solvation2;
@@ -2320,7 +2315,7 @@ __device__ void calc_viscous_force(
     gradrho3 -= (delta[1] + delta[5]) * Rho;
 
     calc_mode(mode, n_a, node_index[2], ii);
-    Rho = mode[0] + para->rho[ii] * para->agrid * para->agrid * para->agrid;
+    Rho = mode[0] + para->rho[ii];
     interpolated_rho[ii] += delta[2] * Rho;
     partgrad1[ii * 8 + 2] += Rho * solvation2;
     partgrad2[ii * 8 + 2] -= Rho * solvation2;
@@ -2330,7 +2325,7 @@ __device__ void calc_viscous_force(
     gradrho3 -= (delta[2] + delta[6]) * Rho;
 
     calc_mode(mode, n_a, node_index[3], ii);
-    Rho = mode[0] + para->rho[ii] * para->agrid * para->agrid * para->agrid;
+    Rho = mode[0] + para->rho[ii];
     interpolated_rho[ii] += delta[3] * Rho;
     partgrad1[ii * 8 + 3] -= Rho * solvation2;
     partgrad2[ii * 8 + 3] -= Rho * solvation2;
@@ -2340,7 +2335,7 @@ __device__ void calc_viscous_force(
     gradrho3 -= (delta[3] + delta[7]) * Rho;
 
     calc_mode(mode, n_a, node_index[4], ii);
-    Rho = mode[0] + para->rho[ii] * para->agrid * para->agrid * para->agrid;
+    Rho = mode[0] + para->rho[ii];
     interpolated_rho[ii] += delta[4] * Rho;
     partgrad1[ii * 8 + 4] += Rho * solvation2;
     partgrad2[ii * 8 + 4] += Rho * solvation2;
@@ -2350,7 +2345,7 @@ __device__ void calc_viscous_force(
     gradrho3 += (delta[4] + delta[0]) * Rho;
 
     calc_mode(mode, n_a, node_index[5], ii);
-    Rho = mode[0] + para->rho[ii] * para->agrid * para->agrid * para->agrid;
+    Rho = mode[0] + para->rho[ii];
     interpolated_rho[ii] += delta[5] * Rho;
     partgrad1[ii * 8 + 5] -= Rho * solvation2;
     partgrad2[ii * 8 + 5] += Rho * solvation2;
@@ -2360,7 +2355,7 @@ __device__ void calc_viscous_force(
     gradrho3 += (delta[5] + delta[1]) * Rho;
 
     calc_mode(mode, n_a, node_index[6], ii);
-    Rho = mode[0] + para->rho[ii] * para->agrid * para->agrid * para->agrid;
+    Rho = mode[0] + para->rho[ii];
     interpolated_rho[ii] += delta[6] * Rho;
     partgrad1[ii * 8 + 6] += Rho * solvation2;
     partgrad2[ii * 8 + 6] -= Rho * solvation2;
@@ -2370,7 +2365,7 @@ __device__ void calc_viscous_force(
     gradrho3 += (delta[6] + delta[2]) * Rho;
 
     calc_mode(mode, n_a, node_index[7], ii);
-    Rho = mode[0] + para->rho[ii] * para->agrid * para->agrid * para->agrid;
+    Rho = mode[0] + para->rho[ii];
     interpolated_rho[ii] += delta[7] * Rho;
     partgrad1[ii * 8 + 7] -= Rho * solvation2;
     partgrad2[ii * 8 + 7] -= Rho * solvation2;
@@ -2646,13 +2641,13 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
       /** default values for fields in lattice units */
       gpu_check[0] = 1;
 
-      float Rho = para->rho[ii] * para->agrid * para->agrid * para->agrid;
+      float Rho = para->rho[ii];
       float v[3] = {0.0f, 0.0f, 0.0f};
       float pi[6] = {Rho * c_sound_sq, 0.0f, Rho * c_sound_sq, 0.0f, 0.0f,
                      Rho * c_sound_sq};
 
       float rhoc_sq = Rho * c_sound_sq;
-      float avg_rho = para->rho[ii] * para->agrid * para->agrid * para->agrid;
+      float avg_rho = para->rho[ii];
       float local_rho, local_j[3], *local_pi, trace;
 
       local_rho = Rho;
@@ -2809,7 +2804,7 @@ __global__ void set_u_from_rho_v_pi(LB_nodes_gpu n_a, int single_nodeindex,
       // Take LB component density and calculate the equilibrium part
 
       local_rho = rho_from_m[ii];
-      avg_rho = para->rho[ii] * para->agrid * para->agrid * para->agrid;
+      avg_rho = para->rho[ii];
 
       // Take LB component velocity and make it a momentum
 
@@ -2933,7 +2928,7 @@ __global__ void calc_mass(LB_nodes_gpu n_a, float *sum) {
     for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
       calc_mode(mode, n_a, index, ii);
       float Rho =
-          mode[0] + para->rho[ii] * para->agrid * para->agrid * para->agrid;
+          mode[0] + para->rho[ii];
       atomicAdd(&(sum[0]), Rho);
     }
   }
@@ -3036,7 +3031,7 @@ calc_massmode(LB_nodes_gpu n_a, int single_nodeindex, int component_index) {
          n_a.vd[(18 + component_index * LBQ) * para->number_of_nodes +
                 single_nodeindex];
 
-  mode += para->rho[component_index] * para->agrid * para->agrid * para->agrid;
+  mode += para->rho[component_index];
 
   return mode;
 }
@@ -3240,7 +3235,7 @@ __global__ void set_rho(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
     for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
       /** default values for fields in lattice units */
       local_rho =
-          (rho[ii] - para->rho[ii]) * para->agrid * para->agrid * para->agrid;
+          (rho[ii] - para->rho[ii]);
       d_v[single_nodeindex].rho[ii] = rho[ii];
 
       n_a.vd[(0 + ii * LBQ) * para->number_of_nodes + single_nodeindex] =
