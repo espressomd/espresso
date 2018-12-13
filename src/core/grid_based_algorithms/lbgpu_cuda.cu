@@ -580,8 +580,7 @@ __device__ void update_rho_v(float *mode, unsigned int index,
      * equilibrium value */
 
     d_v[index].rho[ii] = mode[0 + ii * LBQ] + para->rho[ii];
-    Rho_tot += mode[0 + ii * LBQ] +
-               para->rho[ii];
+    Rho_tot += mode[0 + ii * LBQ] + para->rho[ii];
     u_tot[0] += mode[1 + ii * LBQ];
     u_tot[1] += mode[2 + ii * LBQ];
     u_tot[2] += mode[3 + ii * LBQ];
@@ -633,8 +632,7 @@ __device__ void relax_modes(float *mode, unsigned int index,
     float j[3];
     float modes_from_pi_eq[6];
 
-    Rho = mode[0 + ii * LBQ] +
-          para->rho[ii];
+    Rho = mode[0 + ii * LBQ] + para->rho[ii];
     j[0] = Rho * u_tot[0];
     j[1] = Rho * u_tot[1];
     j[2] = Rho * u_tot[2];
@@ -711,12 +709,9 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
   float Rho_tot = 0.0, c;
 #pragma unroll
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
-    Rho_tot += mode[0 + ii * LBQ] +
-               para->rho[ii];
+    Rho_tot += mode[0 + ii * LBQ] + para->rho[ii];
   }
-  c = (mode[0 + 0 * LBQ] +
-       para->rho[0]) /
-      Rho_tot;
+  c = (mode[0 + 0 * LBQ] + para->rho[0]) / Rho_tot;
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
     random_floats = random_wrapper_philox(index, 1 * ii * LBQ, philox_counter);
     mode[1 + ii * LBQ] +=
@@ -740,8 +735,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index,
 
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
     /** mass mode */
-    Rho = mode[0 + ii * LBQ] +
-          para->rho[ii];
+    Rho = mode[0 + ii * LBQ] + para->rho[ii];
 
     /** momentum modes */
 
@@ -1096,8 +1090,8 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index,
 #ifndef SHANCHEN
 
 #define BOUNCEBACK()                                                           \
-  shift = 2.0f / para->agrid * para->rho[0] * 3.0f * weight *    \
-          para->tau * (v[0] * c[0] + v[1] * c[1] + v[2] * c[2]);               \
+  shift = 2.0f / para->agrid * para->rho[0] * 3.0f * weight * para->tau *      \
+          (v[0] * c[0] + v[1] * c[1] + v[2] * c[2]);                           \
   pop_to_bounce_back = n_curr.vd[population * para->number_of_nodes + index];  \
   to_index_x = (x + c[0] + para->dim_x) % para->dim_x;                         \
   to_index_y = (y + c[1] + para->dim_y) % para->dim_y;                         \
@@ -1118,8 +1112,8 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index,
 
 #define BOUNCEBACK()                                                           \
   for (int component = 0; component < LB_COMPONENTS; component++) {            \
-    shift = 2.0f * / para->agrid * para->rho[component] * 3.0f *   \
-            weight * para->tau * (v[0] * c[0] + v[1] * c[1] + v[2] * c[2]);    \
+    shift = 2.0f * / para->agrid * para->rho[component] * 3.0f * weight *      \
+            para->tau * (v[0] * c[0] + v[1] * c[1] + v[2] * c[2]);             \
     pop_to_bounce_back =                                                       \
         n_curr.vd[(population + component * LBQ) * para->number_of_nodes +     \
                   index];                                                      \
@@ -1823,8 +1817,7 @@ interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
     calc_m_from_n(n_a, node_index[i], mode);
 #pragma unroll
     for (int ii = 0; ii < LB_COMPONENTS; ii++) {
-      totmass +=
-          mode[0] + para->rho[ii];
+      totmass += mode[0] + para->rho[ii];
     }
     /* The boolean expression (n_a.boundary[node_index[i]] == 0) causes boundary
        nodes to couple with velocity 0 to particles. This is necessary, since
@@ -2143,8 +2136,7 @@ __device__ __inline__ void interpolation_two_point_coupling(
 
 #pragma unroll
     for (int ii = 0; ii < LB_COMPONENTS; ii++) {
-      totmass +=
-          mode[0] + para->rho[ii];
+      totmass += mode[0] + para->rho[ii];
     }
 
 #ifdef SHANCHEN
@@ -2927,8 +2919,7 @@ __global__ void calc_mass(LB_nodes_gpu n_a, float *sum) {
   if (index < para->number_of_nodes) {
     for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
       calc_mode(mode, n_a, index, ii);
-      float Rho =
-          mode[0] + para->rho[ii];
+      float Rho = mode[0] + para->rho[ii];
       atomicAdd(&(sum[0]), Rho);
     }
   }
@@ -3234,8 +3225,7 @@ __global__ void set_rho(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
 #pragma unroll
     for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
       /** default values for fields in lattice units */
-      local_rho =
-          (rho[ii] - para->rho[ii]);
+      local_rho = (rho[ii] - para->rho[ii]);
       d_v[single_nodeindex].rho[ii] = rho[ii];
 
       n_a.vd[(0 + ii * LBQ) * para->number_of_nodes + single_nodeindex] =
