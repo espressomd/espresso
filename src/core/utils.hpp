@@ -51,17 +51,6 @@ template <typename T1, typename T2> double scalar(const T1 &a, const T2 &b) {
 /** calculates the squared length of a vector */
 template <typename T> double sqrlen(T const &v) { return scalar(v, v); }
 
-/** calculates the length of a vector */
-inline double normr(double v[3]) { return std::sqrt(sqrlen(v)); }
-
-/** calculates unit vector */
-inline void unit_vector(double v[3], double y[3]) {
-  const double d = normr(v);
-
-  for (int i = 0; i < 3; i++)
-    y[i] = v[i] / d;
-}
-
 /** calculates the vector product c of two vectors a and b */
 template <typename T, typename U, typename V>
 inline void vector_product(T const &a, U const &b, V &c) {

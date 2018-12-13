@@ -465,6 +465,8 @@ struct ParticleList {
 extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
+/** flag that active swimming particles exist */
+extern bool swimming_particles_exist;
 
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
@@ -547,6 +549,8 @@ Particle *move_unindexed_particle(ParticleList *destList,
  */
 Particle *move_indexed_particle(ParticleList *destList,
                                 ParticleList *sourceList, int ind);
+
+Particle extract_indexed_particle(ParticleList *sl, int i);
 
 /*    Other Functions                           */
 /************************************************/
@@ -658,7 +662,7 @@ int set_particle_rotation(int part, int rot);
    @param axis rotation axis
    @param angle rotation angle
 */
-int rotate_particle(int part, double axis[3], double angle);
+int rotate_particle(int part, const Vector3d &axis, double angle);
 
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
@@ -722,28 +726,28 @@ int set_particle_quat(int part, double quat[4]);
     @param omega its new angular velocity.
     @return ES_OK if particle existed
 */
-int set_particle_omega_lab(int part, double omega[3]);
+int set_particle_omega_lab(int part, const Vector3d &omega);
 
 /** Call only on the master node: set particle angular velocity in body frame.
     @param part the particle.
     @param omega its new angular velocity.
     @return ES_OK if particle existed
 */
-int set_particle_omega_body(int part, double omega[3]);
+int set_particle_omega_body(int part, const Vector3d &omega);
 
 /** Call only on the master node: set particle torque from lab frame.
     @param part the particle.
     @param torque its new torque.
     @return ES_OK if particle existed
 */
-int set_particle_torque_lab(int part, double torque[3]);
+int set_particle_torque_lab(int part, const Vector3d &torque);
 
 /** Call only on the master node: set particle torque in body frame.
     @param part the particle.
     @param torque its new torque.
     @return ES_OK if particle existed
 */
-int set_particle_torque_body(int part, double torque[3]);
+int set_particle_torque_body(int part, const Vector3d &torque);
 #endif
 
 #ifdef DIPOLES
@@ -981,7 +985,7 @@ int number_of_particles_with_type(int type);
 #ifdef ROTATION
 void pointer_to_omega_body(Particle const *p, double const *&res);
 
-void pointer_to_torque_lab(Particle const *p, double const *&res);
+inline Vector3d get_torque_body(const Particle &p) { return p.f.torque; }
 
 void pointer_to_quat(Particle const *p, double const *&res);
 
