@@ -50,10 +50,9 @@
     debugging purposes you can add a nice name to \ref #names in the
     same way.  */
 
-#include <array>
-#include <mpi.h>
-
 #include <boost/mpi/communicator.hpp>
+
+#include <array>
 
 #include "MpiCallbacks.hpp"
 
@@ -152,14 +151,6 @@ void mpi_place_particle(int node, int id, double pos[3]);
 */
 void mpi_place_new_particle(int node, int id, double pos[3]);
 
-/** Issue REQ_SET_V: send particle velocity.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param v its new velocity.
-*/
-void mpi_send_v(int node, int part, double v[3]);
-
 /** Issue REQ_SET_SWIMMING: send particle swimming properties.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -168,14 +159,6 @@ void mpi_send_v(int node, int part, double v[3]);
 */
 void mpi_send_swimming(int node, int part,
                        const ParticleParametersSwimming &swim);
-
-/** Issue REQ_SET_F: send particle force.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param F its new force.
-*/
-void mpi_send_f(int node, int part, const Vector3d &F);
 
 #ifdef ROTATION
 /** Mpi call for rotating a single particle
@@ -187,39 +170,6 @@ void mpi_send_f(int node, int part, const Vector3d &F);
 */
 void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
                          double angle);
-#endif
-
-#ifdef ROTATION
-/** Issue REQ_SET_QUAT: send particle orientation.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param quat its new quaternions.
-*/
-void mpi_send_quat(int node, int part, double quat[4]);
-
-/** Issue REQ_SET_LAMBDA: send particle angular velocity.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param omega its new angular velocity.
-*/
-void mpi_send_omega(int node, int part, const Vector3d &omega);
-
-/** Issue REQ_SET_TORQUE: send particle torque.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param torque its new torque.
-*/
-void mpi_send_torque(int node, int part, const Vector3d &torque);
-#endif
-
-#ifdef DIPOLES
-#endif
-
-#ifdef VIRTUAL_SITES_RELATIVE
-
 #endif
 
 /** Issue REQ_SET_BOND: send bond.
