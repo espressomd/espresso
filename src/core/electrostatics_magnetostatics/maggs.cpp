@@ -1600,9 +1600,8 @@ void maggs_calc_init_e_field() {
   gsqrE = gsqrE / (SPACE_DIM * maggs.mesh * maggs.mesh * maggs.mesh);
 
 #ifdef MAGGS_DEBUG
-  int iteration;
-  if (!this_node)
-    iteration = 0;
+  int iteration = 0;
+  const int iteration_step = 1; // debug message frequency
 #endif
   do {
 #ifdef MAGGS_DEBUG
@@ -1620,9 +1619,9 @@ void maggs_calc_init_e_field() {
     maxcurl = maggs_check_curl_E();
 
 #ifdef MAGGS_DEBUG
-    if (!this_node) {
+    if (this_node == 0) {
       iteration++;
-      if (iteration % 1 == 0) {
+      if (iteration % iteration_step == 0) {
         fprintf(
             stderr,
             "# iteration for field equilibration %d, diff=%9.4e, curlE=%9.4e\n",
