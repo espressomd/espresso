@@ -487,6 +487,8 @@ struct ParticleList {
 extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
+/** flag that active swimming particles exist */
+extern bool swimming_particles_exist;
 
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */

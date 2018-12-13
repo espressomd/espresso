@@ -301,6 +301,7 @@ void add_id_to_type_map(int part_id, int type);
 
 int max_seen_particle = -1;
 int n_part = 0;
+bool swimming_particles_exist = false;
 /**
  * @brief id -> rank
  */

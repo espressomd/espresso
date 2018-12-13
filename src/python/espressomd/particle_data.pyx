@@ -28,7 +28,7 @@ from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params
 from copy import copy
-from globals cimport max_seen_particle, time_step, box_l, n_part, n_rigidbonds, max_seen_particle_type
+from globals cimport max_seen_particle, time_step, box_l, n_part, n_rigidbonds, max_seen_particle_type, swimming_particles_exist
 import collections
 import functools
 import types
@@ -1264,6 +1264,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _params):
+                global swimming_particles_exist
                 cdef particle_parameters_swimming swim
                 swim.swimming = True
                 swim.v_swim = 0.0
@@ -1315,6 +1316,9 @@ cdef class ParticleHandle(object):
                                 _params['rotational_friction'], 1, float, "rotational_friction has to be a float.")
                             swim.rotational_friction = _params[
                                 'rotational_friction']
+
+                if swim.f_swim != 0 or swim.v_swim != 0:
+                    swimming_particles_exist = True
 
                 if set_particle_swimming(self._id, swim) == 1:
                     raise Exception("Set particle position first.")
