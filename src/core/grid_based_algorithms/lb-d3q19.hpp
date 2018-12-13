@@ -27,6 +27,14 @@
 #ifndef D3Q19_H
 #define D3Q19_H
 
+
+//circumvent bug in gcc versions < 6 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52036
+#if defined(__GNUC__) && (__GNUC___ < 6 )
+#define GCC_EXTERN_STATEMENT extern
+#else
+#define GCC_EXTERN_STATEMENT static
+#endif
+
 namespace D3Q19 {
 
 /** Velocity sub-lattice of the D3Q19 model */
@@ -80,7 +88,7 @@ static constexpr const std::array<double, 19> w = {
      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.}};
 
 /** Basis of the mode space as described in [Duenweg, Schiller, Ladd] */
-extern constexpr const std::array<std::array<int, 19>, 19> e_ki = {
+GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19> e_ki = {
     {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
      {{0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1, 0, 0, 0, 0}},
      {{0, 0, 0, 1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 0, 1, -1, 1, -1}},
@@ -107,7 +115,7 @@ static constexpr const std::array<double, 19> w_k = {
      1. / 9., 1. / 9., 2. / 3., 2. / 3., 2. / 3., 2. / 9., 2. / 9., 2. / 9.,
      2.0, 4. / 9., 4. / 3.}};
 
-extern constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
+GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
     {{{1, 0, 0, 0, -1, 0, -0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
      {{1, 1, 0, 0, 0, 1, 1, 0, 0, 0, -2, 0, 0, -0, 0, 0, -2, -1, -1}},
      {{1, -1, 0, 0, 0, 1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, -2, -1, -1}},
@@ -131,6 +139,8 @@ extern constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
 static constexpr const double c_sound_sq = 1. / 3.;
 
 } // namespace D3Q19
+
+#undef GCC_EXTERN_STATEMENT
 
 #endif /* D3Q19_H */
 
