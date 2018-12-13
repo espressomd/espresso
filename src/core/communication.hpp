@@ -23,12 +23,12 @@
 /** \file
     This file contains the asynchronous MPI communication.
 
-    It is the header file for \ref communication.cpp "communication.cpp".
+    It is the header file for communication.cpp.
 
     The asynchronous MPI communication is used during the script
     evaluation. Except for the master node that interprets the Tcl
     script, all other nodes wait in mpi_loop() for the master node to
-    issue an action using mpi_call(). \ref mpi_loop immediately
+    issue an action using mpi_call(). mpi_loop() immediately
     executes an MPI_Bcast and therefore waits for the master node to
     broadcast a command, which is done by mpi_call(). The request
     consists of three integers, the first one describing the action
@@ -40,15 +40,14 @@
     following:
     - write the mpi_* function that is executed on the master
     - write the mpi_*_slave function
-    - Add your slave function to CALLBACK_LIST in communication.cpp
+    - Add your slave function to \ref CALLBACK_LIST in communication.cpp
 
     After this your procedure is free to do anything. However, it has
     to be in (MPI) sync with what your new mpi_*_slave does.  This
     procedure is called immediately after the broadcast with the
-    arbitrary integer as parameter.  To this aim it has also to be
-    added to \ref CALLBACK_LIST "callbacks".  Last but not least for
-    debugging purposes you can add a nice name to \ref #names in the
-    same way.  */
+    arbitrary integer as parameter.  To this aim it has also to be added
+    to \ref CALLBACK_LIST.  A debug message will be created automatically
+    in \ref anonymous_namespace{communication.cpp}::names "names". */
 
 #include <array>
 #include <mpi.h>
@@ -525,9 +524,10 @@ void mpi_update_mol_ids(void);
  * topology */
 int mpi_sync_topo_part_info(void);
 
-/** Issue REQ_BCAST_LBPAR: Broadcast a parameter for Lattice Boltzmann.
- * @param field References the parameter field to be broadcasted. The references
- * are defined in \ref lb.hpp "grid_based_algorithms/lb.hpp"
+/** Issue REQ_BCAST_LBPAR: Broadcast a parameter for lattice Boltzmann.
+ * @param[in] field References the parameter field to be broadcasted.
+ *                  The references are defined in lb.hpp
+ * @param[in] value Dummy value
  */
 void mpi_bcast_lb_params(int field, int value = -1);
 

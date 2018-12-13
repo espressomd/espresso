@@ -45,9 +45,8 @@
     Some structures are common to all cell systems:
 
    <ul>
-   <li> All cells, real cells as well as ghost cells, are stored in the array
-   \ref cells::cells with size \ref
-   n_cells. The size of this array has to be changed with \ref realloc_cells.
+   <li> All cells, real cells as well as ghost cells, are stored in the vector
+   \ref cells::cells whose size has to be changed with \ref realloc_cells.
    <li> There are two lists of cell pointers to access particles and
    ghost particles on a node: \ref local_cells contains pointers to
    all cells containing the particles physically residing on that
@@ -69,7 +68,6 @@
 #include "ParticleRange.hpp"
 
 /** \name Cell Structure */
-/** Flag telling which cell structure is used at the moment. */
 /*@{*/
 /** Flag indicating that there is no cell system yet. Only at the
     VERY beginning of the code startup. */
@@ -293,7 +291,7 @@ unsigned const &get_resort_particles();
 /** spread the particle resorting criterion across the nodes. */
 void announce_resort_particles();
 
-/* Checks if a particle resorting is required. */
+/** Check if a particle resorting is required. */
 void check_resort_particles();
 
 /*@}*/

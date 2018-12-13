@@ -19,9 +19,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    This is the place for analysis (so far...).
-    Implementation of statistics.hpp
-*/
+ *  Statistical tools to analyze simulations.
+ *
+ *  The corresponding header file is statistics.hpp.
+ */
+
 #include "statistics.hpp"
 #include "communication.hpp"
 #include "energy.hpp"

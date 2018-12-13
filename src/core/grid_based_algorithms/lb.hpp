@@ -19,9 +19,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
- * Header file for lb.cpp
  *
- * This is the header file for the Lattice Boltzmann implementation in lb.cpp
+ * %Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
+ *
+ * Implementation in lb.cpp.
  */
 
 #ifndef LB_H
@@ -45,7 +46,7 @@
  * thus making the code more efficient. */
 #define D3Q19
 
-/** \name Parameter fields for Lattice Boltzmann
+/** \name Parameter fields for lattice Boltzmann
  * The numbers are referenced in \ref mpi_bcast_lb_params
  * to determine what actions have to take place upon change
  * of the respective parameter. */
@@ -128,7 +129,7 @@ struct LB_FluidNode {
 #endif
 };
 
-/** Data structure holding the parameters for the Lattice Boltzmann system. */
+/** Parameters for the lattice Boltzmann system. */
 typedef struct {
   /** number density (LJ units) */
   double rho;
@@ -184,7 +185,7 @@ typedef struct {
 /** The DnQm model to be used. */
 extern LB_Model<> lbmodel;
 
-/** Struct holding the Lattice Boltzmann parameters */
+/** %Lattice Boltzmann parameters. */
 extern LB_Parameters lbpar;
 
 /** The underlying lattice */
@@ -207,7 +208,7 @@ extern int transfer_momentum;
 /************************************************************/
 /*@{*/
 
-/** Updates the Lattice Boltzmann system for one time step.
+/** Updates the lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
  * If external force densities are present, they are applied prior to the
  * collisions. If boundaries are present, it also applies the boundary
@@ -216,12 +217,12 @@ extern int transfer_momentum;
 void lattice_boltzmann_update();
 
 /** Performs a full initialization of
- *  the Lattice Boltzmann system. All derived parameters
+ *  the lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init();
 
 /** (Re-)initializes the derived parameters
- *  for the Lattice Boltzmann system.
+ *  for the lattice Boltzmann system.
  *  The current state of the fluid is unchanged. */
 void lb_reinit_parameters();
 
@@ -244,7 +245,7 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              const std::array<double, 3> &j,
                              const std::array<double, 6> &pi);
 
-/** Propagates the Lattice Boltzmann system for one time step.
+/** Propagates the lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
  * If external force densities are present, they are applied prior to the
  * collisions. If boundaries are present, it also applies the boundary
@@ -268,7 +269,7 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v);
 inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                                  double *pi);
 
-/** Calculation of hydrodynamic modes.
+/** Calculate hydrodynamic modes.
  *
  *  @param[in]  index  Number of the node to calculate the modes for
  *  @param[out] mode   Result

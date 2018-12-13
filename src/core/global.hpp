@@ -44,7 +44,7 @@
 int mpi_bcast_parameter(int i);
 
 /*
- * @brief Check if all the global fields a synchronized between
+ * @brief Check if all the global fields are synchronized between
  *        the nodes.
  */
 void check_global_consistency();

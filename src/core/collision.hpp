@@ -86,7 +86,6 @@ extern Collision_parameters collision_params;
 #ifdef COLLISION_DETECTION
 
 /** \name bits of possible modes for collision handling.
-    To be used with \ref collision_detection_set_params.
     The modes can be combined by or-ing together. Not all combinations are
    possible.
     COLLISION_MODE_ERROR|COLLISION_MODE_BOND.

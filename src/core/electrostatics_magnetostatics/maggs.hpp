@@ -45,7 +45,6 @@
  *
  */
 
-/** protect header file: */
 #ifndef _MAGGS_H
 #define _MAGGS_H
 
@@ -56,24 +55,23 @@
 /** \name External structure */
 /*@{*/
 
-/** \struct MAGGS_struct
-    Maggs structure. Contains global system information for MEMD algorithm
+/** Global system information for MEMD algorithm.
 */
 typedef struct {
   int finite_epsilon_flag;
   int adaptive_flag;
   double scaling;
   double epsilon_infty;
-  /** = 1/c^2    speed of light parameter. */
-  double f_mass;
-  /** inverse of square root of f_mass. */
+  /** speed of light parameter */
+  double f_mass; // = 1/c^2
+  /** inverse of square root of f_mass */
   double invsqrt_f_mass;
   double prefactor;
-  /** prefactor to convert field to force. */
+  /** prefactor to convert field to force */
   double pref1;
   /** mesh size in one dimension */
   int mesh;
-  /** = 1/a = mesh / box_length */
+  /* = 1/a = mesh / box_length */
   double inva;
   /** size of mesh cube */
   double a;
@@ -89,12 +87,12 @@ extern MAGGS_struct maggs;
 
 /*@{*/
 
-/** initialization function, parse command and set parameters.
-    Called from \ref initialize.cpp
+/** Initialization function, parse command and set parameters.
+    Called from initialize.cpp
 */
-void maggs_init(); /** called from: initialize.cpp */
+void maggs_init();
 
-/** set the main parameters for the algorithm.
+/** Set the main parameters for the algorithm.
     @param prefactor   Electrostatics prefactor for the system
     @param f_mass    parameter to tune the speed of light (1/c^2)
     @param mesh      Mesh size in one dimension
@@ -104,12 +102,12 @@ void maggs_init(); /** called from: initialize.cpp */
 int maggs_set_parameters(double prefactor, double f_mass, int mesh,
                          int finite_epsilon_flag, double epsilon_infty);
 
-/** get lattice size in one dimension
+/** Get lattice size in one dimension.
  @return mesh in 1D
  */
 int maggs_get_mesh_1D();
 
-/** set permittivity for single lattice links
+/** Set permittivity for single lattice links.
  @param node_x              index of the node in x direction
  @param node_y              index of the node in y direction
  @param node_z              index of the node in z direction
@@ -121,7 +119,7 @@ int maggs_get_mesh_1D();
 double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction,
                               double relative_epsilon);
 
-/** set adaptive permittivity flag
+/** Set adaptive permittivity flag.
  @param scaling             scaling of the volumetric formula for salt dependent
  permittivity
  */

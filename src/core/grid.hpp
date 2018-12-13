@@ -41,8 +41,7 @@
  *  (e.g \ref node_grid, \ref box_l , \ref my_left,...).
  *
  *
- *  For more information on the domain decomposition, see \ref grid.cpp
- * "grid.c".
+ *  Implementation in grid.cpp.
  */
 #include "RuntimeErrorStream.hpp"
 #include "communication.hpp"

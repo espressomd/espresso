@@ -200,21 +200,24 @@ static int terminated = 0;
 #define CB(name) void name(int node, int param);
 CALLBACK_LIST
 
+#ifdef DOXYGEN
+(void); /* this line prevents an interaction in Doxygen between CALLBACK_LIST
+           and the anonymous namespace that follows */
+#endif
+
 namespace {
 
-// create the list of callbacks
 #undef CB
 #define CB(name) name,
+/// List of callbacks
 std::vector<SlaveCallback *> slave_callbacks{CALLBACK_LIST};
 
-/** The callback name list is only used for
-    debugging.
-*/
 #ifdef COMM_DEBUG
 // create the list of names
 #undef CB
 #define CB(name) #name,
 
+/** List of callback names for debugging. */
 std::vector<std::string> names{CALLBACK_LIST};
 #endif
 } // namespace

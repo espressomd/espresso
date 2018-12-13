@@ -20,11 +20,12 @@
 */
 /** \file
  *
- * Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
+ * %Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *
  * Includes fluctuating LB and coupling to MD particles via frictional
  * momentum transfer.
  *
+ * The corresponding header file is lb.hpp.
  */
 
 #include "grid_based_algorithms/lb.hpp"
@@ -61,7 +62,7 @@ void print_fluid();
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum = 0;
 
-/** Struct holding the Lattice Boltzmann parameters */
+/** %Lattice Boltzmann parameters */
 LB_Parameters lbpar = {
     // rho
     0.0,
@@ -2079,7 +2080,7 @@ void lb_reinit_fluid() {
 }
 
 /** Performs a full initialization of
- *  the Lattice Boltzmann system. All derived parameters
+ *  the lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init() {
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));

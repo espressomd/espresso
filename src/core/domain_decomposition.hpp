@@ -95,10 +95,10 @@ extern double max_skin;
 
 /** Maximal number of cells per node. In order to avoid memory
  *  problems due to the cell grid one has to specify the maximal
- *  number of \ref cells::cells. If the number of cells \ref
- *  n_cells, is larger than max_num_cells the cell grid is
- *  reduced. max_num_cells has to be larger than 27, e.g one inner
- *  cell.  max_num_cells is initialized with the default value
+ *  number of \ref cells::cells. If the number of cells is larger
+ *  than max_num_cells the cell grid is reduced.
+ *  max_num_cells has to be larger than 27, e.g. one inner cell.
+ *  max_num_cells is initialized with the default value
  *  specified in \ref config.hpp as \ref CELLS_MAX_NUM_CELLS.
  */
 extern int max_num_cells;
@@ -148,10 +148,11 @@ void dd_topology_release();
 /** Just resort the particles. Used during integration. The particles
     are stored in the cell structure.
 
-    @param global_flag Use DD_GLOBAL_EXCHANGE for global exchange and
+    @param global Use DD_GLOBAL_EXCHANGE for global exchange and
     DD_NEIGHBOR_EXCHANGE for neighbor exchange (recommended for use within
     Molecular dynamics, or any other integration scheme using only local
     particle moves)
+    @param pl List of particles
 */
 void dd_exchange_and_sort_particles(int global, ParticleList *pl);
 

@@ -157,8 +157,7 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 /************************************************************/
 /*@{*/
 
-/** Switch for choosing the topology release function of a certain
-    cell system. */
+/** Choose the topology release function of a certain cell system. */
 static void topology_release(int cs) {
   switch (cs) {
   case CELL_STRUCTURE_NONEYET:
@@ -184,8 +183,7 @@ static void topology_release(int cs) {
   }
 }
 
-/** Switch for choosing the topology init function of a certain
-    cell system. */
+/** Choose the topology init function of a certain cell system. */
 void topology_init(int cs, CellPList *local) {
   /** broadcast the flag for using Verlet list */
   boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);

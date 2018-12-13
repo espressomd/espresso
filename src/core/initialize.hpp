@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef INITIALZE_H
-#define INITIALZE_H
+#ifndef CORE_INITIALIZE_HPP
+#define CORE_INITIALIZE_HPP
 /** \file
     This file contains the hook procedures. These
     are the ones with names on_* and are called whenever something is
@@ -30,21 +30,23 @@
 
     For this mechanism to work, two things have to be fulfilled. If
     some part of the code changes some property, it has to call the
-    corresponding hook, i. e. on_particle_change if a particle
-    property has been changed or on_short_range_ia_change, if a short
-    ranged interaction has been changed.  In turn procedures that
+    corresponding hook, i.e. on_particle_change() if a particle
+    property has been changed or on_short_range_ia_change(), if a short
+    ranged interaction has been changed. In turn procedures that
     depend on particle properties or the box size, should react to
     such changes in the corresponding hook procedure.
+
+    Implementation in initialize.cpp.
  */
 
 /** \name Hook procedures
     These procedures are called if several significant changes to
     the system happen which may make a reinitialization of subsystems
     necessary. Note that all these functions are called on ALL nodes.
-    if you need to do something only on the master node, check
+    If you need to do something only on the master node, check
     \ref this_node == 0. The use of the asynchronous mpi_* functions
-    (e. g. mpi_bcast_parameter) on the master node is possible.
-*/
+    (e.g. mpi_bcast_parameter) on the master node is possible.
+ */
 /*@{*/
 
 /** called once at the very beginning of the program start. */

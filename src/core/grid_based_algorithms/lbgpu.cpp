@@ -19,8 +19,9 @@
 
 /** \file
  *
- * C file for the Lattice Boltzmann implementation on GPUs.
- * Header file for \ref lbgpu.hpp.
+ * %Lattice Boltzmann on GPUs.
+ *
+ * The corresponding header file is lbgpu.hpp.
  */
 
 #include "config.hpp"
@@ -74,7 +75,7 @@
   { -1.0, -1.0 }
 #endif
 
-/** Struct holding the Lattice Boltzmann parameters */
+/** %Lattice Boltzmann parameters */
 // LB_parameters_gpu lbpar_gpu = { .rho=SC0, .mu=SC0, .viscosity=SC0,
 // .gamma_shear=SC0, .gamma_bulk=SC0,
 //                                 .gamma_odd=SC0,.gamma_even=SC0, .agrid=0.0,
@@ -202,9 +203,7 @@ void lattice_boltzmann_calc_shanchen_gpu(void) {
 }
 #endif // SHANCHEN
 
-/** lattice Boltzmann update gpu called from integrate.cpp
- */
-
+/** %Lattice Boltzmann update gpu called from integrate.cpp */
 void lattice_boltzmann_update_gpu() {
 
   int factor = (int)round(lbpar_gpu.tau / time_step);
@@ -394,7 +393,7 @@ void lb_reinit_parameters_gpu() {
 }
 
 /** Performs a full initialization of
- *  the Lattice Boltzmann system. All derived parameters
+ *  the lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init_gpu() {
 

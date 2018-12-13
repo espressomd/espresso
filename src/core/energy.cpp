@@ -19,8 +19,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref energy.hpp "energy.hpp".
-*/
+ *  Energy calculation.
+ *
+ *  The corresponding header file is energy.hpp.
+ */
 
 #include "EspressoSystemInterface.hpp"
 #include "constraints.hpp"

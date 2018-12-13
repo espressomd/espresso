@@ -58,9 +58,9 @@ void serialize(Archive &ar, collision_struct &c, const unsigned int) {
 } // namespace serialization
 } // namespace boost
 
-// During force calculation, colliding particles are recorded in the queue
-// The queue is processed after force calculation, when it is save to add
-// particles
+/// During force calculation, colliding particles are recorded in the queue.
+/// The queue is processed after force calculation, when it is safe to add
+/// particles.
 static std::vector<collision_struct> local_collision_queue;
 
 /// Parameters for collision detection

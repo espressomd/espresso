@@ -148,7 +148,7 @@ struct AutoParameter {
    * @param name The name the parameter should be bound to in the interface.
    * @param type The parameter type, by default this is deduced from the
    *             type of the reference.
-   * @param length The supposed length of the parameter, by default this this
+   * @param length The supposed length of the parameter, by default it
    *               is deduced from the type of the reference.
    */
   template <typename T>
@@ -175,7 +175,7 @@ struct AutoParameter {
    * @param name The name the parameter should be bound to in the interface.
    * @param type The parameter type, by default this is deduced from the
    *             type of the reference.
-   * @param length The supposed length of the parameter, by default this this
+   * @param length The supposed length of the parameter, by default it
    *               is deduced from the type of the reference.
    */
   template <typename T>

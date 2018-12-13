@@ -16,12 +16,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 /** \file
- * Header file for lbgpu.cpp
  *
- * This is the header file for the Lattice Boltzmann implementation in
- * lbgpu_cfile.cpp
+ * %Lattice Boltzmann implementation on GPUs.
+ *
+ * Implementation in lbgpu.cpp.
  */
 
 #ifndef LB_GPU_H
@@ -42,7 +41,7 @@
 #define LB_COUPLE_TWO_POINT 2
 #define LB_COUPLE_THREE_POINT 4
 
-/** \name Parameter fields for Lattice Boltzmann
+/** \name Parameter fields for lattice Boltzmann
  * The numbers are referenced in \ref mpi_bcast_lb_params
  * to determine what actions have to take place upon change
  * of the respective parameter. */
@@ -70,8 +69,7 @@ typedef float lbForceFloat;
 #endif
 
 /**-------------------------------------------------------------------------*/
-/** Data structure holding the parameters for the Lattice Boltzmann system for
- * gpu. */
+/** Parameters for the lattice Boltzmann system for GPU. */
 typedef struct {
   /** number density (LJ units) */
   float rho[LB_COMPONENTS];
@@ -146,8 +144,7 @@ typedef struct {
 
 } LB_parameters_gpu;
 
-/** Data structure holding the conserved quantities for the Lattice Boltzmann
- * system. */
+/** Conserved quantities for the lattice Boltzmann system. */
 typedef struct {
 
   /** density of the node */
@@ -198,9 +195,6 @@ void on_lb_params_change_gpu(int field);
 /************************************************************/
 /*@{*/
 
-/**
- */
-
 /** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_rho_v_pi_gpu *host_values;
@@ -230,12 +224,12 @@ void lattice_boltzmann_update_gpu();
 void lb_pre_init_gpu();
 
 /** Performs a full initialization of
- *  the Lattice Boltzmann system. All derived parameters
+ *  the lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init_gpu();
 
 /** (Re-)initializes the derived parameters
- *  for the Lattice Boltzmann system.
+ *  for the lattice Boltzmann system.
  *  The current state of the fluid is unchanged. */
 void lb_reinit_parameters_gpu();
 
@@ -311,7 +305,7 @@ void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
                                                        double *velocities,
                                                        int length);
 
-/*@{*/
+/*@}*/
 
 #endif /* LB_GPU */
 

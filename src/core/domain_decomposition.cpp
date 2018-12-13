@@ -100,8 +100,8 @@ double max_skin = 0.0;
  *  smaller or equal \ref max_num_cells. It sets: \ref
  *  DomainDecomposition::cell_grid, \ref
  *  DomainDecomposition::ghost_cell_grid, \ref
- *  DomainDecomposition::cell_size, \ref
- *  DomainDecomposition::inv_cell_size, and \ref n_cells.
+ *  DomainDecomposition::cell_size, and \ref
+ *  DomainDecomposition::inv_cell_size.
  */
 void dd_create_cell_grid() {
   int i, n_local_cells, new_cells;

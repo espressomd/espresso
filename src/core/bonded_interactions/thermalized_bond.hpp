@@ -48,11 +48,12 @@ void thermalized_bond_init();
 
 /** Separately thermalizes the com and distance of a particle pair
     and adds this force to the particle forces.
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
+    @param p1        First particle
+    @param p2        Second/middle particle
     @param iaparams  Parameters of interaction
-    @param dx        change in position
-    @param force1 and force2     force on particles
+    @param dx        Change in position
+    @param force1    Force on particle p1
+    @param force2    Force on particle p2
     @return true if bond is broken
 */
 
