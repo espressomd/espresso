@@ -283,7 +283,7 @@ inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
     return;
   }
 
-  double avg_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  double avg_rho = lbpar.rho;
 
   *rho = avg_rho + lbfluid[0][index] + lbfluid[1][index] + lbfluid[2][index] +
          lbfluid[3][index] + lbfluid[4][index] + lbfluid[5][index] +

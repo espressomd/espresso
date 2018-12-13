@@ -251,17 +251,17 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
 // We probably can even set the boundary velocity directly
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
-          local_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+          local_rho = lbpar.rho;
           local_j[0] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
+              lbpar.rho *
               (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
                   .velocity()[0];
           local_j[1] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
+              lbpar.rho *
               (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
                   .velocity()[1];
           local_j[2] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
+              lbpar.rho *
               (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
                   .velocity()[2];
         } else
@@ -269,7 +269,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
         {
           auto const modes = lb_calc_modes(index);
           local_rho =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
+              lbpar.rho + modes[0];
 
           // Add the +f/2 contribution!!
           // Guo et al. PRE 2002
