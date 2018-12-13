@@ -73,6 +73,7 @@ cdef extern from "domain_decomposition.hpp":
 
 cdef extern from "particle_data.hpp":
     extern int n_part
+    extern bool swimming_particles_exist
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     double dpd_gamma
