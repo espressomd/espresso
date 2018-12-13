@@ -108,7 +108,13 @@ class Stokes(object):
 
         # get force that is exerted on the sphere
         force = sphere.get_force()
-        np.testing.assert_allclose(force, [0, 0, stokes_force], rtol=0.06,atol=stokes_force*0.06)
+        np.testing.assert_allclose(
+            force,
+            [0,
+             0,
+             stokes_force],
+            rtol=0.06,
+            atol=stokes_force * 0.06)
         self.system.integrator.run(300)
         np.testing.assert_allclose(sphere.get_force(), force, atol=0.02)
 
@@ -119,6 +125,7 @@ class LBGPUStokes(ut.TestCase, Stokes):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+
 
 @ut.skipIf(not espressomd.has_features(
     ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
