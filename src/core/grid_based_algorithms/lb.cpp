@@ -1073,20 +1073,27 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
     std::vector<lbForceFloat> host_checkpoint_force(lbpar_gpu.number_of_nodes *
                                                     3);
     uint64_t host_checkpoint_philox_counter;
-    int res;
     if (!binary) {
+      int res;
+      const char err_msg[] = "Error while reading LB checkpoint.";
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
-        fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
+        res = fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
+        if (res == EOF)
+          throw std::runtime_error(err_msg);
       }
       for (int n = 0; n < int(lbpar_gpu.number_of_nodes); n++) {
-        fscanf(cpfile, "%u", &host_checkpoint_boundary[n]);
+        res = fscanf(cpfile, "%u", &host_checkpoint_boundary[n]);
+        if (res == EOF)
+          throw std::runtime_error(err_msg);
       }
       for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
-        fscanf(cpfile, "%f", &host_checkpoint_force[n]);
+        res = fscanf(cpfile, "%f", &host_checkpoint_force[n]);
+        if (res == EOF)
+          throw std::runtime_error(err_msg);
       }
       res = fscanf(cpfile, "%" SCNu64, &host_checkpoint_philox_counter);
       if (res == EOF)
-        throw std::runtime_error("Error while reading LB checkpoint.");
+        throw std::runtime_error(err_msg);
     } else {
       if (fread(host_checkpoint_vd.data(), sizeof(float),
                 19 * int(lbpar_gpu.number_of_nodes),
