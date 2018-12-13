@@ -31,9 +31,9 @@ void HollowCone::calculate_dist(const Vector3d &pos, double *dist,
                                 double *vec) const {
   int number = -1;
   double r0, r1, w, alpha, xd, yd, zd, mu, x_2D, y_2D, t0, t1, t2, time1, time2,
-      time3, time4, mdst0, mdst1, mdst2, mdst3, mindist, normalize, x, y, z,
-      xp, yp, zp, xpp, ypp, sin_xy, cos_xy, normal_x_3D, normal_y_3D,
-      normal_z_3D, normal_3D_x, normal_3D_y, normal_3D_z;
+      time3, time4, mdst0, mdst1, mdst2, mdst3, mindist, normalize, x, y, z, xp,
+      yp, zp, xpp, ypp, sin_xy, cos_xy, normal_x_3D, normal_y_3D, normal_z_3D,
+      normal_3D_x, normal_3D_y, normal_3D_z;
 
   // Set the dimensions of the hollow cone
 

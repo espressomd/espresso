@@ -22,8 +22,8 @@
  *
  *  This file contains functions for the cell system.
  *
- *  For more information on cells, see cells.hpp
- *   */
+ *  Implementation of cells.hpp.
+ */
 #include "cells.hpp"
 #include "algorithm/link_cell.hpp"
 #include "communication.hpp"
@@ -296,8 +296,7 @@ int cells_get_n_particles() {
 
 namespace {
 /**
- * @brief Fold coordinates to box and reset the
- *        old position.
+ * @brief Fold coordinates to box and reset the old position.
  */
 void fold_and_reset(Particle &p) {
   fold_position(p.r.p, p.l.i);
@@ -308,8 +307,7 @@ void fold_and_reset(Particle &p) {
 /**
  * @brief Extract an indexed particle from a list.
  *
- * Removes a particle from a particle list and
- * from the particle index.
+ * Removes a particle from a particle list and from the particle index.
  */
 Particle extract_indexed_particle(ParticleList *sl, int i) {
   Particle *src = &sl->part[i];
@@ -336,10 +334,9 @@ Particle extract_indexed_particle(ParticleList *sl, int i) {
 /**
  * @brief Sort and fold particles.
  *
- * This function folds the positions of all particles back into
- * the box and puts them back into the correct cells. Particles
- * that do not belong to this node are removed from the cell
- * and returned.
+ * This function folds the positions of all particles back into the
+ * box and puts them back into the correct cells. Particles that do
+ * not belong to this node are removed from the cell and returned.
  *
  * @param cs The cell system to be used.
  * @param cells Cells to iterate over.

@@ -23,8 +23,9 @@
 /** \file
  *  Force calculation.
  *
- *  \todo Preprocessor switches for all forces (Default: everything is turned
- * on). \todo Implement more flexible thermostat, e.g. which thermostat to use.
+ *  \todo Preprocessor switches for all forces (Default: everything is
+ *        turned on).
+ *  \todo Implement more flexible thermostat, e.g. which thermostat to use.
  *
  *  Implementation in forces.cpp.
  */
@@ -46,8 +47,7 @@ extern ActorList forceActors;
     ghost particle forces with zero. */
 void init_forces();
 
-/** Set forces of all ghosts to zero
- */
+/** Set forces of all ghosts to zero */
 void init_forces_ghosts();
 
 /** Calculate forces.
@@ -62,8 +62,7 @@ void init_forces_ghosts();
  */
 void force_calc();
 
-/** Check if forces are NAN
- */
+/** Check if forces are NAN */
 void check_forces();
 
 /** Calculate long range forces (P3M, MMM2d...). */

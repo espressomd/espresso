@@ -20,8 +20,6 @@
 */
 /** \file
  *  Energy calculation.
- *
- *  The corresponding header file is energy.hpp.
  */
 
 #include "EspressoSystemInterface.hpp"

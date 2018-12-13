@@ -43,6 +43,7 @@
  * (2004).
  *  </ul>
  *
+ * Implementation in maggs.cpp.
  */
 
 #ifndef _MAGGS_H
@@ -55,8 +56,7 @@
 /** \name External structure */
 /*@{*/
 
-/** Global system information for MEMD algorithm.
-*/
+/** Global system information for MEMD algorithm. */
 typedef struct {
   int finite_epsilon_flag;
   int adaptive_flag;
@@ -88,58 +88,61 @@ extern MAGGS_struct maggs;
 /*@{*/
 
 /** Initialization function, parse command and set parameters.
-    Called from initialize.cpp
-*/
+ *  Called from initialize.cpp
+ */
 void maggs_init();
 
 /** Set the main parameters for the algorithm.
-    @param prefactor   Electrostatics prefactor for the system
-    @param f_mass    parameter to tune the speed of light (1/c^2)
-    @param mesh      Mesh size in one dimension
-    @param finite_epsilon_flag whether to do epsilon-at-infinity-correction
-    @param epsilon_infty epsilon-at-infinity
+ *  @param prefactor            Electrostatics prefactor for the system
+ *  @param f_mass               Parameter to tune the speed of light (1/c^2)
+ *  @param mesh                 Mesh size in one dimension
+ *  @param finite_epsilon_flag  Whether to do epsilon-at-infinity-correction
+ *  @param epsilon_infty        epsilon-at-infinity
  */
 int maggs_set_parameters(double prefactor, double f_mass, int mesh,
                          int finite_epsilon_flag, double epsilon_infty);
 
 /** Get lattice size in one dimension.
- @return mesh in 1D
+ *  @return mesh in 1D
  */
 int maggs_get_mesh_1D();
 
 /** Set permittivity for single lattice links.
- @param node_x              index of the node in x direction
- @param node_y              index of the node in y direction
- @param node_z              index of the node in z direction
- @param direction           direction in which the link points from the node. 0
- is for x, 1 is for y, 2 is for z
- @param relative_epsilon    permittivity to set, relative to the background
- permittivity set by the electrostatics prefactor
+ *  @param node_x             index of the node in x direction
+ *  @param node_y             index of the node in y direction
+ *  @param node_z             index of the node in z direction
+ *  @param direction          direction in which the link points from the node.
+ *                            0 is for x, 1 is for y, 2 is for z
+ *  @param relative_epsilon   permittivity to set, relative to the background
+ *                            permittivity set by the electrostatics prefactor
  */
 double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction,
                               double relative_epsilon);
 
 /** Set adaptive permittivity flag.
- @param scaling             scaling of the volumetric formula for salt dependent
- permittivity
+ *  @param scaling   scaling of the volumetric formula for salt-dependent
+ *                   permittivity
  */
 int maggs_set_adaptive_flag(double scaling);
 
 /** Propagate the B-field in the system.
-    Called TWICE from \ref integrate.cpp with timestep dt/2 to ensure
-   time-reversibility of the integrator.
-    @param dt Timestep for which to propagate the field.
-*/
+ *  Called TWICE from integrate.cpp with timestep dt/2 to ensure
+ *  time-reversibility of the integrator.
+ *  @param dt   Timestep for which to propagate the field.
+ */
 void maggs_propagate_B_field(double dt);
 
 /** Calculate the forces on all particles. Writes the result directly into the
- * force pointer. */
+ *  force pointer.
+ */
 void maggs_calc_forces();
 
 /** Get the electric energy of the system as return value */
 double maggs_electric_energy();
+
 /** Get the magnetic energy of the artificial transversal field component as
- * return value */
+ *  return value.
+ */
 double maggs_magnetic_energy();
 
 /** Count the number of charges in the whole system. */

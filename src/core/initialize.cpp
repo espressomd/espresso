@@ -21,7 +21,7 @@
 /** \file
  *  Hook procedures.
  *
- *  The corresponding header file is initialize.hpp.
+ *  Implemetation of initialize.hpp.
  */
 #include "initialize.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"

@@ -31,7 +31,7 @@ namespace Mpiio {
  *  multiple fields, OR the corresponding values.
  *
  */
-enum MPIIOOutputFields: unsigned int {
+enum MPIIOOutputFields : unsigned int {
   MPIIO_OUT_POS = 1u,
   MPIIO_OUT_VEL = 2u,
   MPIIO_OUT_TYP = 4u,

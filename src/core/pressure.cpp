@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref pressure.hpp "pressure.hpp".
-*/
+ *  Implementation of pressure.hpp.
+ */
 
 #include "cells.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
@@ -79,10 +79,11 @@ void init_virials(Observable_stat *stat);
 void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb);
 
 /** on the master node: calc energies only if necessary
-    @param v_comp flag which enables (1) compensation of the velocities required
-                  for deriving a pressure reflecting \ref nptiso_struct::p_inst
-                  (hence it only works with domain decomposition); naturally it
-                  therefore doesn't make sense to use it without NpT. */
+ *  @param v_comp flag which enables (1) compensation of the velocities required
+ *                for deriving a pressure reflecting \ref nptiso_struct::p_inst
+ *                (hence it only works with domain decomposition); naturally it
+ *                therefore doesn't make sense to use it without NpT.
+ */
 void master_pressure_calc(int v_comp);
 
 /** Initializes stat to be used by \ref pressure_calc. */
@@ -537,8 +538,8 @@ int does_line_go_through_cube(double pos1[3], double pos2[3],
       /*does the line start outside the cube in direction i?*/
       if ((!doesntenter) && (!found_entry) &&
           fabs(vect2centre1[i]) > range[i] / 2.0) {
-        /*does the bond heads away from the cube or is part2 is before the cube
-         * in direction i? */
+        /* does the bond heads away from the cube or is part2 is before the
+         * cube in direction i? */
         if ((vect2centre1[i] * sign[i] > 0) ||
             (vect2centre2[i] * sign[i] < -range[i] / 2.0)) {
           doesntenter = 1;
@@ -580,7 +581,7 @@ int does_line_go_through_cube(double pos1[3], double pos2[3],
                           "%d: does_line_go_through_cube: Entry is %f %f %f \n",
                           this_node, entry[0], entry[1], entry[2]););
     if (!inside2) {
-      /*check which outside faces of box the line exits through */
+      /* check which outside faces of box the line exits through */
       for (i = 0; i < 3; i++) {
         i1 = (i + 1) % 3;
         i2 = (i + 2) % 3;

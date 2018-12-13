@@ -201,8 +201,8 @@ static int terminated = 0;
 CALLBACK_LIST
 
 #ifdef DOXYGEN
-(void); /* this line prevents an interaction in Doxygen between CALLBACK_LIST
-           and the anonymous namespace that follows */
+    (void); /* this line prevents an interaction in Doxygen between
+               CALLBACK_LIST and the anonymous namespace that follows */
 #endif
 
 namespace {
@@ -231,12 +231,12 @@ int mpi_check_runtime_errors(void);
  **********************************************/
 
 #if defined(OPEN_MPI)
-/*! Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
-    appears when CUDA is used. This is a bug in OpenMPI 2.0-2.1.2 and 3.0.0
-    according to
-    https://www.mail-archive.com/users@lists.open-mpi.org/msg32357.html,
-    so we set btl_vader_single_copy_mechanism = none.
-*/
+/** Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
+ *  appears when CUDA is used. This is a bug in OpenMPI 2.0-2.1.2 and 3.0.0
+ *  according to
+ *  https://www.mail-archive.com/users@lists.open-mpi.org/msg32357.html,
+ *  so we set btl_vader_single_copy_mechanism = none.
+ */
 static void openmpi_fix_vader() {
   if (OMPI_MAJOR_VERSION < 2 || OMPI_MAJOR_VERSION > 3)
     return;
@@ -1738,9 +1738,7 @@ void mpi_update_mol_ids() {
   mpi_update_mol_ids_slave(-1, 0);
 }
 
-void mpi_update_mol_ids_slave(int, int) {
-  update_mol_ids_setchains();
-}
+void mpi_update_mol_ids_slave(int, int) { update_mol_ids_setchains(); }
 
 /******************* REQ_SYNC_TOPO ********************/
 int mpi_sync_topo_part_info() {

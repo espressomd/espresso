@@ -16,12 +16,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 /** \file
+ *  %Lattice Boltzmann on GPUs.
  *
- * %Lattice Boltzmann on GPUs.
- *
- * The corresponding header file is lbgpu.hpp.
+ *  The corresponding header file is lbgpu.hpp.
  */
 
 #include "config.hpp"
@@ -222,8 +220,7 @@ void lattice_boltzmann_update_gpu() {
   }
 }
 
-/** (re-) allocation of the memory needed for the particles (cpu part)
- */
+/** (Re-)allocation of the memory needed for the particles (CPU part) */
 void lb_realloc_particles_gpu() {
 
   lbpar_gpu.number_of_particles = n_part;
@@ -235,7 +232,7 @@ void lb_realloc_particles_gpu() {
   lb_realloc_particles_GPU_leftovers(&lbpar_gpu);
 }
 
-/** (Re-)initializes the fluid according to the given value of rho. */
+/** (Re-)initialize the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
 
   lb_reinit_parameters_gpu();
@@ -261,7 +258,7 @@ void lb_release_gpu() {
   //  if(host_forces!=nullptr) free(host_forces);
   //  if(host_data  !=nullptr) free(host_data);
 }
-/** (Re-)initializes the fluid. */
+/** (Re-)initialize the fluid. */
 void lb_reinit_parameters_gpu() {
   int ii;
 
@@ -392,9 +389,9 @@ void lb_reinit_parameters_gpu() {
   reinit_parameters_GPU(&lbpar_gpu);
 }
 
-/** Performs a full initialization of
- *  the lattice Boltzmann system. All derived parameters
- *  and the fluid are reset to their default values. */
+/** Performs a full initialization of the lattice Boltzmann system.
+ *  All derived parameters and the fluid are reset to their default values.
+ */
 void lb_init_gpu() {
 
   LB_TRACE(printf("Begin initialzing fluid on GPU\n"));

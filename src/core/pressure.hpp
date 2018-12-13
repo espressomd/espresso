@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Pressure calculation. Really similar to \ref energy.hpp "energy.hpp".
-*/
+ *  Pressure calculation. Really similar to energy.hpp.
+ */
 
 #ifndef CORE_PRESSURE_HPP
 #define CORE_PRESSURE_HPP
@@ -47,27 +47,27 @@ void init_p_tensor(Observable_stat *stat);
 void master_pressure_calc(int v_comp);
 
 /** Calculates the pressure in the system from a virial expansion.
-    @param[out] result Calculated scalar pressure
-    @param[out] result_t Calculated stress tensor
-    @param[out] result_nb Calculated intra- and inter-molecular nonbonded
-                          contributions to the scalar pressure
-    @param[out] result_t_nb Calculated intra- and inter-molecular nonbonded
-                            contributions to the stress tensor
-    @param[in] v_comp flag which enables (1) compensation of the velocities
-                      required for deriving a pressure reflecting
-                      \ref nptiso_struct::p_inst (hence it only works with
-                      domain decomposition); naturally it therefore doesn't
-                      make sense to use it without NpT.
-*/
+ *  @param[out] result Calculated scalar pressure
+ *  @param[out] result_t Calculated stress tensor
+ *  @param[out] result_nb Calculated intra- and inter-molecular nonbonded
+ *                        contributions to the scalar pressure
+ *  @param[out] result_t_nb Calculated intra- and inter-molecular nonbonded
+ *                          contributions to the stress tensor
+ *  @param[in] v_comp flag which enables (1) compensation of the velocities
+ *                    required for deriving a pressure reflecting
+ *                    \ref nptiso_struct::p_inst (hence it only works with
+ *                    domain decomposition); naturally it therefore doesn't
+ *                    make sense to use it without NpT.
+ */
 void pressure_calc(double *result, double *result_t, double *result_nb,
                    double *result_t_nb, int v_comp);
 
-/** implementation of analyse local_stress_tensor */
+/** Implementation of analyse local_stress_tensor */
 int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
                              int periodic[3], double range_start[3],
                              double range[3]);
 
-/** function to calculate stress tensor for the observables */
+/** Function to calculate stress tensor for the observables */
 int observable_compute_stress_tensor(int v_comp, double *A);
 
 void update_pressure(int v_comp);

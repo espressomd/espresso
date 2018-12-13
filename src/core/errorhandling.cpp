@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref errorhandling.hpp.
-*/
+ *  Implementation of \ref errorhandling.hpp.
+ */
 #include <csignal>
 #include <cstdlib>
 #include <cstring>

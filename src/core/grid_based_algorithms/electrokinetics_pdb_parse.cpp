@@ -326,9 +326,8 @@ int pdb_parse(char *pdb_filename, char *itp_filename, double scale) {
    */
 
   /* BEGIN DEPLOY */
-  const size_t size = ek_parameters.dim_x \
-                    * ek_parameters.dim_y \
-                    * ek_parameters.dim_z;
+  const size_t size =
+      ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
   galloc((void **)&pdb_charge_lattice, size * sizeof(float));
   galloc((void **)&pdb_boundary_lattice, size * sizeof(int));
   for (size_t i = 0; i < size; i++) {

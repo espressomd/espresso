@@ -19,12 +19,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    The layered cellsystem. This cellsystem is a combination of a single
-   processor n-squared method along x and y, and a multiprocessor domain
-   decomposition along z. Therefore only \f$1\times 1\times N\f$ processors
-   grids are allowed for this cellsystem. The implementation is pretty similar
-   to \ref domain_decomposition.hpp "domain_decomposition.hpp".
-*/
+ *  The layered cellsystem. This cellsystem is a combination of a single
+ *  processor n-squared method along x and y, and a multiprocessor domain
+ *  decomposition along z. Therefore only \f$1\times 1\times N\f$ processors
+ *  grids are allowed for this cellsystem. The implementation is pretty similar
+ *  to domain_decomposition.hpp.
+ *
+ *  Implementation in layered.cpp.
+ */
 #ifndef LAYERED_H
 #define LAYERED_H
 #include "cells.hpp"

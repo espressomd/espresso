@@ -49,15 +49,15 @@
 /** \name Parameter fields for lattice Boltzmann
  * The numbers are referenced in \ref mpi_bcast_lb_params
  * to determine what actions have to take place upon change
- * of the respective parameter. */
+ * of the respective parameter.
+ */
 /*@{*/
 #define LBPAR_DENSITY 0   /**< fluid density */
 #define LBPAR_VISCOSITY 1 /**< fluid kinematic viscosity */
 #define LBPAR_AGRID 2     /**< grid constant for fluid lattice */
 #define LBPAR_TAU 3       /**< time step for fluid propagation */
-#define LBPAR_FRICTION                                                         \
-  4 /**< friction coefficient for viscous coupling between particles and fluid \
-     */
+/** friction coefficient for viscous coupling between particles and fluid */
+#define LBPAR_FRICTION 4
 #define LBPAR_EXTFORCE 5 /**< external force density acting on the fluid */
 #define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
 
@@ -71,26 +71,26 @@ void print_fluid();
 #endif
 /*@}*/
 /** Some general remarks:
- * This file implements the LB D3Q19 method to Espresso. The LB_Model
- * construction is preserved for historical reasons and might be removed
- * soon. It is constructed as a multi-relaxation time LB, thus all populations
- * are converted to modes, then collision is performed and transfered back
- * to population space, where the streaming is performed.
+ *  This file implements the LB D3Q19 method to Espresso. The LB_Model
+ *  construction is preserved for historical reasons and might be removed
+ *  soon. It is constructed as a multi-relaxation time LB, thus all populations
+ *  are converted to modes, then collision is performed and transfered back
+ *  to population space, where the streaming is performed.
  *
- * For performance reasons it is clever to do streaming and collision at the
- * same time
- * because every fluid node has to be read and written only once. This increases
- * mainly cache efficiency.
- * Two alternatives are implemented: stream_collide and collide_stream.
+ *  For performance reasons it is clever to do streaming and collision at the
+ *  same time because every fluid node has to be read and written only once.
+ *  This increases mainly cache efficiency. Two alternatives are implemented:
+ *  stream_collide and collide_stream.
  *
- * The hydrodynamic fields, corresponding to density, velocity and stress, are
- * stored in LB_FluidNodes in the array lbfields, the populations in lbfluid
- * which is constructed as 2 x (Nx x Ny x Nz) x 19 array.
+ *  The hydrodynamic fields, corresponding to density, velocity and stress, are
+ *  stored in LB_FluidNodes in the array lbfields, the populations in lbfluid
+ *  which is constructed as 2 x (Nx x Ny x Nz) x 19 array.
  */
 
 /** Description of the LB Model in terms of the unit vectors of the
  *  velocity sub-lattice and the corresponding coefficients
- *  of the pseudo-equilibrium distribution */
+ *  of the pseudo-equilibrium distribution
+ */
 template <size_t N_vel = 19> struct LB_Model {
   /** number of velocities */
   static const int n_veloc = static_cast<int>(N_vel);
@@ -144,16 +144,19 @@ typedef struct {
   double agrid;
 
   /** time step for fluid propagation (LJ units)
-   *  Note: Has to be larger than MD time step! */
+   *  Note: Has to be larger than MD time step!
+   */
   double tau;
 
   /** friction coefficient for viscous coupling (LJ units)
-   * Note that the friction coefficient is quite high and may
-   * lead to numerical artifacts with low order integrators */
+   *  Note that the friction coefficient is quite high and may
+   *  lead to numerical artifacts with low order integrators
+   */
   double friction;
 
   /** external force density applied to the fluid at each lattice site (MD
-   * units) */
+   *  units)
+   */
   double ext_force_density[3]; /* Open question: Do we want a local force or
                           global force? */
   double rho_lb_units;
@@ -167,10 +170,9 @@ typedef struct {
   double gamma_bulk;
 
   /** Flag determining whether lbpar.gamma_shear, gamma_odd, and gamma_even are
-   * calculated
-   *  from lbpar.gamma_shear in such a way to yield a TRT LB with minimized slip
-   * at
-   *  bounce-back boundaries */
+   *  calculated from lbpar.gamma_shear in such a way to yield a TRT LB with
+   *  minimized slip at bounce-back boundaries
+   */
   bool is_TRT;
 
   int resend_halo;
@@ -192,8 +194,9 @@ extern LB_Parameters lbpar;
 extern Lattice lblattice;
 
 /** Pointer to the velocity populations of the fluid.
- * lbfluid contains pre-collision populations, lbfluid_post
- * contains post-collision populations*/
+ *  lbfluid contains pre-collision populations, lbfluid_post
+ *  contains post-collision populations
+ */
 using LB_Fluid = std::array<Utils::Span<double>, 19>;
 extern LB_Fluid lbfluid;
 
@@ -208,34 +211,35 @@ extern int transfer_momentum;
 /************************************************************/
 /*@{*/
 
-/** Updates the lattice Boltzmann system for one time step.
- * This function performs the collision step and the streaming step.
- * If external force densities are present, they are applied prior to the
- * collisions. If boundaries are present, it also applies the boundary
- * conditions.
+/** Update the lattice Boltzmann system for one time step.
+ *  This function performs the collision step and the streaming step.
+ *  If external force densities are present, they are applied prior to the
+ *  collisions. If boundaries are present, it also applies the boundary
+ *  conditions.
  */
 void lattice_boltzmann_update();
 
-/** Performs a full initialization of
+/** Perform a full initialization of
  *  the lattice Boltzmann system. All derived parameters
- *  and the fluid are reset to their default values. */
+ *  and the fluid are reset to their default values.
+ */
 void lb_init();
 
-/** (Re-)initializes the derived parameters
- *  for the lattice Boltzmann system.
- *  The current state of the fluid is unchanged. */
+/** (Re-)initialize the derived parameters for the lattice Boltzmann system.
+ *  The current state of the fluid is unchanged.
+ */
 void lb_reinit_parameters();
 
-/** (Re-)initializes the fluid. */
+/** (Re-)initialize the fluid. */
 void lb_reinit_fluid();
 
-/** Resets the force densities on the fluid nodes */
+/** Reset the force densities on the fluid nodes */
 void lb_reinit_force_densities();
 
-/** Checks if all LB parameters are meaningful */
+/** Check if all LB parameters are meaningful */
 int lb_sanity_checks();
 
-/** Calculates the equilibrium distributions.
+/** Calculate the equilibrium distributions.
  *  @param[in] index  Index of the local site
  *  @param[in] rho    Local fluid density
  *  @param[in] j      Local fluid speed
@@ -245,25 +249,26 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              const std::array<double, 3> &j,
                              const std::array<double, 6> &pi);
 
-/** Propagates the lattice Boltzmann system for one time step.
- * This function performs the collision step and the streaming step.
- * If external force densities are present, they are applied prior to the
- * collisions. If boundaries are present, it also applies the boundary
- * conditions.
+/** Propagate the lattice Boltzmann system for one time step.
+ *  This function performs the collision step and the streaming step.
+ *  If external force densities are present, they are applied prior to the
+ *  collisions. If boundaries are present, it also applies the boundary
+ *  conditions.
  */
 void lb_propagate();
 
-/** Calculates the coupling of MD particles to the LB fluid.
- * This function  is called from \ref force_calc. The force is added
- * to the particle force and the corresponding momentum exchange is
- * applied to the fluid.
- * Note that this function changes the state of the fluid!
+/** Calculate the coupling of MD particles to the LB fluid.
+ *  This function is called from \ref force_calc. The force is added
+ *  to the particle force and the corresponding momentum exchange is
+ *  applied to the fluid.
+ *  Note that this function changes the state of the fluid!
  */
 void calc_particle_lattice_ia();
 
-/** calculates the fluid velocity at a given position of the
- * lattice. Note that it can lead to undefined behaviour if the
- * position is not within the local lattice. */
+/** Calculate the fluid velocity at a given position of the lattice.
+ *  Note that it can lead to undefined behaviour if the position
+ *  is not within the local lattice.
+ */
 void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v);
 
 inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
@@ -277,9 +282,9 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 void lb_calc_modes(Lattice::index_t index, double *mode);
 
 /** Calculate the local fluid density.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param[in]  index  Local lattice site
- * @param[out] rho    Local fluid density
+ *  The calculation is implemented explicitly for the special case of D3Q19.
+ *  @param[in]  index  Local lattice site
+ *  @param[out] rho    Local fluid density
  */
 inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
   // unit conversion: mass density
@@ -302,9 +307,9 @@ inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
 }
 
 /** Calculate the local fluid momentum.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param[in]  index  Local lattice site
- * @param[out] j      Local fluid speed
+ *  The calculation is implemented explicitly for the special case of D3Q19.
+ *  @param[in]  index  Local lattice site
+ *  @param[out] j      Local fluid speed
  */
 inline void lb_calc_local_j(Lattice::index_t index, double *j) {
 
@@ -333,9 +338,9 @@ inline void lb_calc_local_j(Lattice::index_t index, double *j) {
 }
 
 /** Calculate the local fluid stress.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param[in]  index  Local lattice site
- * @param[out] pi     Local fluid pressure
+ *  The calculation is implemented explicitly for the special case of D3Q19.
+ *  @param[in]  index  Local lattice site
+ *  @param[out] pi     Local fluid pressure
  */
 inline void lb_calc_local_pi(Lattice::index_t index, double *pi) {
 
@@ -352,13 +357,13 @@ inline void lb_calc_local_pi(Lattice::index_t index, double *pi) {
   lb_calc_local_fields(index, &rho, j, pi);
 }
 
-/** Calculate the local fluid fields.
- * The calculation is implemented explicitly for the special case of D3Q19.
+/** Calculate local fluid fields.
+ *  The calculation is implemented explicitly for the special case of D3Q19.
  *
- * @param[in]  index   Index of the local lattice site
- * @param[out] rho     Local fluid density
- * @param[out] j       Local fluid speed
- * @param[out] pi      Local fluid pressure
+ *  @param[in]  index   Index of the local lattice site
+ *  @param[out] rho     Local fluid density
+ *  @param[out] j       Local fluid speed
+ *  @param[out] pi      Local fluid pressure
  */
 inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                                  double *pi) {
@@ -531,13 +536,13 @@ int lb_lbnode_set_rho(const Vector3i &ind, double *rho);
 int lb_lbnode_set_u(const Vector3i &ind, double *u);
 int lb_lbnode_set_pop(const Vector3i &ind, double *pop);
 
-/** calculates the fluid velocity at a given position of the
- * lattice. Note that it can lead to undefined behaviour if the
- * position is not within the local lattice. This version of the function
- * can be called without the position needing to be on the local processor */
+/** Calculate the fluid velocity at a given position of the lattice.
+ *  Note that it can lead to undefined behaviour if the
+ *  position is not within the local lattice. This version of the function
+ *  can be called without the position needing to be on the local processor.
+ */
 int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v);
 
 #endif
 
 #endif /* _LB_H */
-/*@}*/

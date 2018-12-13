@@ -43,6 +43,7 @@
  *
  *  Implementation in grid.cpp.
  */
+
 #include "RuntimeErrorStream.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"

@@ -117,7 +117,7 @@ __device__ unsigned int getThreadIndex() {
          threadIdx.x;
 }
 
-/** kernel for the initialisation of the particle force array
+/** Kernel for the initialisation of the particle force array
  * @param[out] particle_forces_device    Local particle force
  * @param[out] particle_torques_device   Local particle torque
  * @param[out] particle_seeds_device     Particle random seed
@@ -144,7 +144,7 @@ __global__ void init_particle_force(float *particle_forces_device,
   }
 }
 
-/** kernel for the initialisation of the fluid composition
+/** Kernel for the initialisation of the fluid composition
  * @param[out] fluid_composition_device  Local fluid composition
  */
 __global__ void
@@ -162,7 +162,7 @@ init_fluid_composition(CUDA_fluid_composition *fluid_composition_device) {
   }
 }
 
-/** kernel for the initialisation of the particle force array
+/** Kernel for the initialisation of the particle force array
  * @param[out] particle_forces_device    Local particle force
  * @param[out] particle_torques_device   Local particle torque
  */

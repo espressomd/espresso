@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref global.hpp "global.hpp".
-*/
+ *  Implementation of \ref global.hpp "global.hpp".
+ */
 #include "global.hpp"
 
 #include "bonded_interactions/thermalized_bond.hpp"

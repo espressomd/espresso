@@ -19,8 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-
-    For more information see \ref nemd.hpp
+ *  Implementation of nemd.hpp.
  */
 
 #include "config.hpp"

@@ -85,7 +85,7 @@
 #include "dpd.hpp"
 #endif
 
-/** initialize the forces for a ghost particle */
+/** Initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part) {
   part->f.f[0] = 0;
   part->f.f[1] = 0;
@@ -114,7 +114,7 @@ inline void init_ghost_force(Particle *part) {
 #endif
 }
 
-/** initialize the forces for a real particle */
+/** Initialize the forces for a real particle */
 inline void init_local_particle_force(Particle *part) {
   if (thermo_switch & THERMO_LANGEVIN)
     friction_thermo_langevin(part);
@@ -269,11 +269,12 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 }
 
 /** Calculate non bonded forces between a pair of particles.
-    @param p1        pointer to particle 1.
-    @param p2        pointer to particle 2.
-    @param d         vector between p1 and p2.
-    @param dist      distance between p1 and p2.
-    @param dist2     distance squared between p1 and p2. */
+ *  @param p1        pointer to particle 1.
+ *  @param p2        pointer to particle 2.
+ *  @param d         vector between p1 and p2.
+ *  @param dist      distance between p1 and p2.
+ *  @param dist2     distance squared between p1 and p2.
+ */
 inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
 
@@ -443,9 +444,8 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 }
 
 /** Calculate bonded forces for one particle.
-    @param p1 particle for which to calculate forces
-*/
-
+ *  @param p1   particle for which to calculate forces
+ */
 inline void add_bonded_force(Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;

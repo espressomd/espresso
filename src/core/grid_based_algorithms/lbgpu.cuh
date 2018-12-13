@@ -44,5 +44,5 @@ typedef struct {
 } LB_nodes_gpu;
 #endif // LB_GPU
 
-#endif //CUDA
+#endif // CUDA
 #endif

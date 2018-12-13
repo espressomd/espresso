@@ -54,7 +54,7 @@ public:
 
   Vector3i halo_grid; /**< number of lattice sites in each direction
                        *   (including halo) */
-  int halo_size; /**< halo size in all directions */
+  int halo_size;      /**< halo size in all directions */
 
   Vector3d offset; /**< global offset */
   Vector3d local_offset;

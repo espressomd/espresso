@@ -21,11 +21,11 @@
 #ifndef NEMD_H
 #define NEMD_H
 /** \file
-
-    This file contains the implementation of the NEMD (Non Equilibrium
-    Molecular Dynamics) algorithm. It allows one to shear a system
-    with help of an unphysical momentum change in two slabs in the
-    system.
+ *
+ *  This file contains the implementation of the NEMD (Non Equilibrium
+ *  Molecular Dynamics) algorithm. It allows one to shear a system
+ *  with help of an unphysical momentum change in two slabs in the
+ *  system.
  */
 
 #include "particle_data.hpp"
@@ -125,15 +125,18 @@ int nemd_free(void);
 void nemd_init(int n_slabs, int n_exchange, double shear_rate);
 
 /** Change momentum in top an middle slab. How this is done depends on
-    nemd method. */
+ *  nemd method.
+ */
 void nemd_change_momentum();
 
 /** Store the mean value of the velocity x-component of all slabs in
-    \ref Nemd::velocity_profile. */
+ *  \ref Nemd::velocity_profile.
+ */
 void nemd_store_velocity_profile();
 
 /** Store the x-component of the velocity of particle part into the
-    nemd data structure \ref nemddata. */
+ *  nemd data structure \ref nemddata.
+ */
 inline void nemd_get_velocity(Particle part) {
   int slab_num, i;
   Slab *slab;
