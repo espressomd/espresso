@@ -558,6 +558,8 @@ Particle *move_unindexed_particle(ParticleList *destList,
 Particle *move_indexed_particle(ParticleList *destList,
                                 ParticleList *sourceList, int ind);
 
+Particle extract_indexed_particle(ParticleList *sl, int i);
+
 /*    Other Functions                           */
 /************************************************/
 
