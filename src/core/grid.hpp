@@ -214,19 +214,13 @@ Vector3d get_mi_vector(T const &a, U const &b) {
 template <typename T1, typename T2, typename T3>
 void fold_coordinate(T1 &pos, T2 &vel, T3 &image_box, int dir) {
   if (PERIODIC(dir)) {
-    int img_count = (int)floor(pos[dir] * box_l_i[dir]);
-    image_box[dir] += img_count;
-    pos[dir] = pos[dir] - img_count * box_l[dir];
-
-    if (pos[dir] * box_l_i[dir] < -ROUND_ERROR_PREC ||
-        pos[dir] * box_l_i[dir] >= 1 + ROUND_ERROR_PREC) {
-
-      runtimeErrorMsg() << "particle coordinate out of range, pos = "
-                        << pos[dir] << ", image box = " << image_box[dir];
-
-      image_box[dir] = 0;
-      pos[dir] = 0;
-      return;
+    while (pos[dir] < 0) {
+      pos[dir] += box_l[dir];
+      image_box[dir] -= 1;
+    }
+    while (pos[dir] >= box_l[dir]) {
+      pos[dir] -= box_l[dir];
+      image_box[dir] += 1;
     }
   }
 }
