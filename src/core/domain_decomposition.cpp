@@ -810,29 +810,34 @@ void exchange_neighbors(ParticleList *pl) {
       ParticleList send_buf, recv_buf;
       move_left_or_right(*pl, send_buf, send_buf, dir);
 
-      Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir], 0xaa, send_buf,
-                           node_neighbors[2 * dir], 0xaa, recv_buf);
+      Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf,
+                           node_neighbors[2 * dir], 0, recv_buf);
 
       realloc_particlelist(&send_buf, 0);
 
       move_if_local(recv_buf, *pl);
     } else {
+      using boost::mpi::request;
+      using Utils::Mpi::isendrecv;
+
       ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
       move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
-      auto reqs_l = Utils::Mpi::isendrecv(
-          comm_cart, node_neighbors[2 * dir], 0xaa, send_buf_l,
-          node_neighbors[2 * dir], 0xaa, recv_buf_l);
-      Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir + 1], 0xaa,
-                           send_buf_r, node_neighbors[2 * dir + 1], 0xaa,
-                           recv_buf_r);
-      boost::mpi::wait_all(reqs_l.begin(), reqs_l.end());
 
-      realloc_particlelist(&send_buf_l, 0);
-      realloc_particlelist(&send_buf_r, 0);
+      auto req_l = isendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf_l,
+                             node_neighbors[2 * dir], 0, recv_buf_l);
+      auto req_r =
+          isendrecv(comm_cart, node_neighbors[2 * dir + 1], 0, send_buf_r,
+                    node_neighbors[2 * dir + 1], 0, recv_buf_r);
+
+      std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
+      boost::mpi::wait_all(reqs.begin(), reqs.end());
 
       move_if_local(recv_buf_l, *pl);
       move_if_local(recv_buf_r, *pl);
+
+      realloc_particlelist(&send_buf_l, 0);
+      realloc_particlelist(&send_buf_r, 0);
     }
   }
 }

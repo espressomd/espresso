@@ -48,7 +48,7 @@ void local_rotate_system(double phi, double theta, double alpha) {
       mpi::all_reduce(comm_cart, local_com, std::plus<Vector3d>()) / total_mass;
 
   // Rotation axis in Cartesian coordinates
-  double axis[3];
+  Vector3d axis;
   axis[0] = sin(theta) * cos(phi);
   axis[1] = sin(theta) * sin(phi);
   axis[2] = cos(theta);
@@ -67,7 +67,7 @@ void local_rotate_system(double phi, double theta, double alpha) {
       p.r.p[j] = com[j] + res[j];
     }
 #ifdef ROTATION
-    local_rotate_particle(&p, axis, alpha);
+    local_rotate_particle(p, axis, alpha);
 #endif
   }
 

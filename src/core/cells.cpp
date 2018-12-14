@@ -303,32 +303,6 @@ void fold_and_reset(Particle &p) {
 
   p.l.p_old = p.r.p;
 }
-
-/**
- * @brief Extract an indexed particle from a list.
- *
- * Removes a particle from a particle list and from the particle index.
- */
-Particle extract_indexed_particle(ParticleList *sl, int i) {
-  Particle *src = &sl->part[i];
-  Particle *end = &sl->part[sl->n - 1];
-
-  Particle p = std::move(*src);
-
-  assert(p.p.identity <= max_seen_particle);
-  local_particles[p.p.identity] = nullptr;
-
-  if (src != end) {
-    new (src) Particle(std::move(*end));
-  }
-
-  if (realloc_particlelist(sl, --sl->n)) {
-    update_local_particles(sl);
-  } else if (src != end) {
-    local_particles[src->p.identity] = src;
-  }
-  return p;
-}
 } // namespace
 
 /**
@@ -486,13 +460,11 @@ void cells_update_ghosts() {
 }
 
 Cell *find_current_cell(const Particle &p) {
-  auto c = cell_structure.position_to_cell(p.r.p);
-  if (c) {
-    return c;
-  } else if (!p.l.ghost) {
-    // Old pos must lie within the cell system
-    return cell_structure.position_to_cell(p.l.p_old);
-  } else {
+  assert(not resort_particles);
+
+  if (p.l.ghost) {
     return nullptr;
   }
+
+  return cell_structure.position_to_cell(p.l.p_old);
 }

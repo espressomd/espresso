@@ -229,7 +229,8 @@ void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
  *  \param axis   rotation axis
  *  \param angle  rotation angle
  */
-void mpi_rotate_particle(int node, int part, double axis[3], double angle);
+void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
+                         double angle);
 #endif
 
 #ifdef AFFINITY
@@ -270,20 +271,20 @@ void mpi_send_quat(int node, int part, double quat[4]);
 void mpi_send_rotation(int pnode, int part, short int rot);
 
 /* Issue REQ_SET_LAMBDA: send particle angular velocity.
- *  Also calls \ref on_particle_change.
- *  \param part   the particle.
- *  \param node   the node it is attached to.
- *  \param omega  its new angular velocity.
- */
-void mpi_send_omega(int node, int part, double omega[3]);
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param omega its new angular velocity.
+*/
+void mpi_send_omega(int node, int part, const Vector3d &omega);
 
 /** Issue REQ_SET_TORQUE: send particle torque.
- *  Also calls \ref on_particle_change.
- *  \param part the particle.
- *  \param node the node it is attached to.
- *  \param torque its new torque.
- */
-void mpi_send_torque(int node, int part, double torque[3]);
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param torque its new torque.
+*/
+void mpi_send_torque(int node, int part, const Vector3d &torque);
 #endif
 
 #ifdef DIPOLES

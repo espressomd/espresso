@@ -28,7 +28,7 @@ from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params
 from copy import copy
-from globals cimport max_seen_particle, time_step, box_l, n_part, n_rigidbonds, max_seen_particle_type
+from globals cimport max_seen_particle, time_step, box_l, n_part, n_rigidbonds, max_seen_particle_type, swimming_particles_exist
 import collections
 import functools
 import types
@@ -403,7 +403,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _o):
-                cdef double myo[3]
+                cdef Vector3d myo
                 check_type_or_throw_except(
                     _o, 3, float, "Omega_lab has to be 3 floats.")
                 for i in range(3):
@@ -413,10 +413,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double o[3]
-
-                convert_omega_body_to_space(self.particle_data, o)
-                return array_locked([o[0], o[1], o[2]])
+                return array_locked(self.convert_vector_body_to_space(self.omega_body))
 
         property quat:
             """
@@ -482,7 +479,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _o):
-                cdef double myo[3]
+                cdef Vector3d myo
                 check_type_or_throw_except(
                     _o, 3, float, "Omega_body has to be 3 floats.")
                 for i in range(3):
@@ -518,7 +515,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _t):
-                cdef double myt[3]
+                cdef Vector3d myt
                 check_type_or_throw_except(
                     _t, 3, float, "Torque has to be 3 floats.")
                 for i in range(3):
@@ -528,10 +525,13 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double x[3]
+                cdef Vector3d torque_body
+                cdef Vector3d torque_space
+                torque_body = get_torque_body(self.particle_data[0])
+                torque_space = convert_vector_body_to_space(
+                    self.particle_data[0], torque_body)
 
-                convert_torques_body_to_space(self.particle_data, x)
-                return array_locked([x[0], x[1], x[2]])
+                return make_array_locked(torque_space)
 
     IF ROTATIONAL_INERTIA:
         property rinertia:
@@ -1273,6 +1273,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _params):
+                global swimming_particles_exist
                 cdef particle_parameters_swimming swim
                 swim.swimming = True
                 swim.v_swim = 0.0
@@ -1324,6 +1325,9 @@ cdef class ParticleHandle(object):
                                 _params['rotational_friction'], 1, float, "rotational_friction has to be a float.")
                             swim.rotational_friction = _params[
                                 'rotational_friction']
+
+                if swim.f_swim != 0 or swim.v_swim != 0:
+                    swimming_particles_exist = True
 
                 if set_particle_swimming(self._id, swim) == 1:
                     raise Exception("Set particle position first.")
@@ -1620,7 +1624,7 @@ cdef class ParticleHandle(object):
             angle : float
 
             """
-            cdef double[3] a
+            cdef Vector3d a
             a[0] = axis[0]
             a[1] = axis[1]
             a[2] = axis[2]

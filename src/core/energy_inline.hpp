@@ -37,7 +37,6 @@
 #include "bonded_interactions/harmonic_dumbbell.hpp"
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/subt_lj.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
@@ -332,9 +331,6 @@ inline void add_bonded_energy(Particle *p1) {
         break;
       case BONDED_IA_QUARTIC:
         bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
-        break;
-      case BONDED_IA_THERMALIZED_DIST:
-        bond_broken = thermalized_bond_energy(p1, p2, iaparams, dx, &ret);
         break;
 #ifdef ELECTROSTATICS
       case BONDED_IA_BONDED_COULOMB:
