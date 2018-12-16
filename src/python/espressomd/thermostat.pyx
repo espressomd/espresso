@@ -26,6 +26,7 @@ from .lb cimport *
 from .lb import HydrodynamicInteraction
 from .lb cimport lb_lbcoupling_set_gamma
 from .lb cimport lb_lbcoupling_get_gamma
+from espressomd.utils import to_char_pointer
 
 
 def AssertThermostatType(*allowedthermostats):
@@ -111,6 +112,13 @@ cdef class Thermostat:
                              gammav=thmst["gammav"])
             if thmst["type"] == "DPD":
                 self.set_dpd(kT=thmst["kT"], seed=thmst["seed"])
+            if thmst["type"] == "SD":
+                self.set_sd(viscosity=thmst["viscosity"],
+                            device=thmst["device"],
+                            radii=thmst["radii"],
+                            kT=thmst["kT"],
+                            seed=thmst["seed"],
+                            flags=thmst["flags"])
 
     def get_ts(self):
         return thermo_switch
@@ -169,6 +177,17 @@ cdef class Thermostat:
                 dpd_dict["kT"] = temperature
                 dpd_dict["seed"] = int(dpd_get_rng_state())
                 thermo_list.append(dpd_dict)
+        if (thermo_switch & THERMO_SD):
+            IF STOKESIAN_DYNAMICS:
+                sd_dict = {}
+                sd_dict["type"] = "SD"
+                sd_dict["viscosity"] = get_sd_viscosity()
+                sd_dict["device"] = get_sd_device()
+                sd_dict["radii"] = get_sd_radius_dict()
+                sd_dict["kT"] = get_sd_kT()
+                sd_dict["seed"] = get_sd_seed()
+                sd_dict["flags"] = get_sd_flags()
+                thermo_list.append(sd_dict)
         return thermo_list
 
     def turn_off(self):
@@ -486,3 +505,63 @@ cdef class Thermostat:
 
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_TEMPERATURE)
+
+    IF STOKESIAN_DYNAMICS:
+        def set_sd(self, viscosity=None, device=None, radii=None, kT=None, seed=None,
+                   flags=SELF_MOBILITY | PAIR_MOBILITY | FTS):
+            """
+            Sets the SD thermostat with required parameters.  This
+            also activates hydrodynamic interactions and the SD
+            integrator.
+
+            Parameters
+            ----------
+            'viscosity' : :obj:`float`
+                    Bulk viscosity
+            'device' : :obj:`str`
+                       Device to execute on.  Possible values are
+                       "cpu" and "gpu".
+            'radii' : :obj:`dict`
+                      Dictionary that maps particle types to radii
+            'kT' : :obj:`float`
+                   Temperature
+            'seed' : :obj:`int`
+                     Seed for the random number generator
+            'flags' : :obj:`int`
+                      Bit mask for feature selection.
+                      Available features:
+
+                           NONE, SELF_MOBILITY, PAIR_MOBILITY, LUBRICATION, FTS
+
+            """
+
+            utils.check_type_or_throw_except(
+                viscosity, 1, float, "viscosity must be a number")
+            set_sd_viscosity(viscosity)
+
+            utils.check_type_or_throw_except(
+                device, 1, str, "device must be a string")
+            set_sd_device(to_char_pointer(device.lower()))
+
+            utils.check_type_or_throw_except(
+                radii, 1, dict, "radii must be a dictionary")
+            set_sd_radius_dict(radii)
+
+            if kT is None:
+                set_sd_kT(0.0)
+            else:
+                utils.check_type_or_throw_except(
+                    kT, 1, float, "kT must be a float")
+                set_sd_kT(kT)
+
+                utils.check_type_or_throw_except(
+                    seed, 1, int, "seed must be an integer")
+                set_sd_seed(seed)
+
+            utils.check_type_or_throw_except(
+                flags, 1, int, "flags must be an integer")
+            set_sd_flags(flags)
+
+            global thermo_switch
+            thermo_switch = (thermo_switch | THERMO_SD)
+            mpi_bcast_parameter(FIELD_THERMO_SWITCH)

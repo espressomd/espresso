@@ -58,6 +58,7 @@
 #include "virtual_sites.hpp"
 
 #include "integrators/steepest_descent.hpp"
+#include "integrators/stokesian_dynamics_inline.hpp"
 #include "integrators/velocity_verlet_inline.hpp"
 #include "integrators/velocity_verlet_npt.hpp"
 
@@ -136,6 +137,11 @@ bool integrator_step_1(ParticleRange &particles) {
     velocity_verlet_npt_step_1(particles);
     break;
 #endif
+#ifdef STOKESIAN_DYNAMICS
+  case INTEG_METHOD_SD:
+    stokesian_dynamics_step_1(particles);
+    break;
+#endif // STOKESIAN_DYNAMICS
   default:
     throw std::runtime_error("Unknown value for integ_switch");
   }
@@ -156,6 +162,11 @@ void integrator_step_2(ParticleRange &particles) {
     velocity_verlet_npt_step_2(particles);
     break;
 #endif
+#ifdef STOKESIAN_DYNAMICS
+  case INTEG_METHOD_SD:
+    stokesian_dynamics_step_2(particles);
+    break;
+#endif // STOKESIAN_DYNAMICS
   default:
     throw std::runtime_error("Unknown value for INTEG_SWITCH");
   }
@@ -386,6 +397,11 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
 void integrate_set_nvt() {
   integ_switch = INTEG_METHOD_NVT;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+}
+
+void integrate_set_sd() {
+  integ_switch = INTEG_METHOD_SD;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
 }
 

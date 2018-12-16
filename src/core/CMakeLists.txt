@@ -194,3 +194,5 @@ endif(WITH_UNIT_TESTS)
 
 add_subdirectory(shapes)
 add_subdirectory(cluster_analysis)
+add_subdirectory(stokesian_dynamics)
+target_link_libraries(EspressoCore PUBLIC sd_interface)

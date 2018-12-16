@@ -45,6 +45,8 @@
 
 #define ENGINE
 
+#define STOKESIAN_DYNAMICS
+
 #ifdef CUDA
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS

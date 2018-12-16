@@ -30,6 +30,7 @@
 #define INTEG_METHOD_NPT_ISO 0
 #define INTEG_METHOD_NVT 1
 #define INTEG_METHOD_STEEPEST_DESCENT 2
+#define INTEG_METHOD_SD 7
 
 /************************************************************/
 /** \name Exported Variables */
@@ -125,6 +126,8 @@ void integrate_vv(int n_steps, int reuse_forces);
  *  @retval ES_ERROR on error
  */
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces);
+
+void integrate_set_sd();
 
 /** @brief Set the NVT integrator. */
 void integrate_set_nvt();
