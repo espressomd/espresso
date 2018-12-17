@@ -38,7 +38,8 @@ mpi::request isend(mpi::communicator const &comm, int dest, int tag,
   /* boost.mpi before that version has a broken implementation
      of isend for non-mpi data types, so we have to use our own. */
 #if BOOST_VERSION < 106800
-  auto archive = boost::make_shared<mpi::packed_oarchive>(comm);
+  auto archive =
+      boost::shared_ptr<mpi::packed_oarchive>(new mpi::packed_oarchive(comm));
   *archive << value;
   auto const size = archive->size();
   auto const data = const_cast<void *>(archive->address());
