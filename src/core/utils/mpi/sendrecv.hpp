@@ -41,7 +41,7 @@ mpi::request isend(mpi::communicator const &comm, int dest, int tag,
   auto archive =
       boost::shared_ptr<mpi::packed_oarchive>(new mpi::packed_oarchive(comm));
   *archive << value;
-  auto const size = archive->size();
+  auto size = archive->size();
   mpi::request result;
   BOOST_MPI_CHECK_RESULT(MPI_Isend,
                          (&size, 1, mpi::get_mpi_datatype<std::size_t>(size),
