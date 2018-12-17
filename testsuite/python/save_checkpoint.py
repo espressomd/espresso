@@ -40,6 +40,7 @@ if espressomd.has_features('LB'):
 
 system.part.add(pos=[1.0] * 3)
 system.part.add(pos=[1.0, 1.0, 2.0])
+system.part.add(pos=[2.0]*3, exclusions=[0,1])
 if espressomd.has_features('ELECTROSTATICS'):
     system.part[0].q = 1
     system.part[1].q = -1

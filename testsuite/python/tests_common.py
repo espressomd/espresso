@@ -139,8 +139,8 @@ def lj_force_vector(v_d, d, lj_params):
 
 
 def verify_lj_forces(system, tolerance, ids_to_skip=[]):
-    """Goes over all pairs of paritcles in system and compares the forces on them
-       to what would be expected based on the systems lj parametes.
+    """Goes over all pairs of particles in system and compares the forces on them
+       to what would be expected based on the systems LJ parametes.
        Particle ids listed in ids_to_skip are not checked
        Do not run this with a thermostat enabled."""
 
@@ -594,3 +594,6 @@ def single_component_maxwell(x1, x2, kT):
     """Integrate the probability density from x1 to x2 using the trapezoidal rule"""
     x = np.linspace(x1, x2, 1000)
     return np.trapz(np.exp(-x**2 / (2. * kT)), x) / np.sqrt(2. * np.pi * kT)
+
+def lists_contain_same_elements(list1, list2):
+    return len(list1) == len(list2) and sorted(list1) == sorted(list2)

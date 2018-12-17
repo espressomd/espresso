@@ -1140,22 +1140,16 @@ cdef class ParticleHandle(object):
                 for e in self.exclusions:
                     self.delete_exclusion(e)
 
-            # Empty list? ony delete
-                if _partners:
+                nlvl = nesting_level(_partners)
 
-                    nlvl = nesting_level(_partners)
-
-                    if nlvl == 0:  # Single item
-                        self.add_exclusion(_partners)
-                    elif nlvl == 1:  # List of items
-                        for partner in _partners:
-                            self.add_exclusion(partner)
-                    else:
-                        raise ValueError(
-                            "Exclusions have to specified as a lists of partners or a single partner.")
-
-                    # Set new exclusion list
-                    # self.add_exclusion(_partners)
+                if nlvl == 0:  # Single item
+                    self.add_exclusion(_partners)
+                elif nlvl == 1:  # List of items
+                    for partner in _partners:
+                        self.add_exclusion(partner)
+                else:
+                    raise ValueError(
+                        "Exclusions have to be specified as a lists of partners or a single item.")
 
             def __get__(self):
                 self.update_particle_data()
@@ -1813,9 +1807,16 @@ cdef class ParticleList(object):
         return odict
 
     def __setstate__(self, params):
+        exclusions = collections.OrderedDict()
         for particle_number in params.keys():
             params[particle_number]["id"] = particle_number
+            IF EXCLUSIONS:
+                exclusions[particle_number] = params[particle_number]["exclusions"]
+                del params[particle_number]["exclusions"]
             self._place_new_particle(params[particle_number])
+        IF EXCLUSIONS:
+            for pid in exclusions:
+                self[pid].exclusions = exclusions[pid]
 
     def __len__(self):
         return n_part
