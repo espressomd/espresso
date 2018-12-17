@@ -42,13 +42,13 @@ mpi::request isend(mpi::communicator const &comm, int dest, int tag,
       boost::shared_ptr<mpi::packed_oarchive>(new mpi::packed_oarchive(comm));
   *archive << value;
   auto const size = archive->size();
-  auto const data = const_cast<void *>(archive->address());
   mpi::request result;
   BOOST_MPI_CHECK_RESULT(MPI_Isend,
                          (&size, 1, mpi::get_mpi_datatype<std::size_t>(size),
                           dest, tag, comm, &result.m_requests[0]));
-  BOOST_MPI_CHECK_RESULT(MPI_Isend, (data, size, MPI_PACKED, dest, tag, comm,
-                                     &result.m_requests[1]));
+  BOOST_MPI_CHECK_RESULT(MPI_Isend,
+                         (const_cast<void *>(archive->address()), size,
+                          MPI_PACKED, dest, tag, comm, &result.m_requests[1]));
 
   result.m_data = archive;
   return result;
