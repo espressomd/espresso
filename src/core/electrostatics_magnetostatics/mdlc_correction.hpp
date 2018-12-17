@@ -42,7 +42,7 @@
 
 #include "config.hpp"
 
-#ifdef DIPOLES
+#if defined(DIPOLES) && defined(DP3M)
 
 /** parameters for the MDLC method */
 typedef struct {
