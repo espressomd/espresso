@@ -1811,7 +1811,10 @@ cdef class ParticleList(object):
         for particle_number in params.keys():
             params[particle_number]["id"] = particle_number
             IF EXCLUSIONS:
-                exclusions[particle_number] = params[particle_number]["exclusions"]
+                exclusions[
+                    particle_number] = params[
+                        particle_number][
+                            "exclusions"]
                 del params[particle_number]["exclusions"]
             self._place_new_particle(params[particle_number])
         IF EXCLUSIONS:

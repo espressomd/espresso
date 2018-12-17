@@ -23,6 +23,7 @@ import espressomd.checkpointing
 import espressomd.virtual_sites
 import tests_common
 
+
 class CheckpointTest(ut.TestCase):
 
     @classmethod
@@ -122,9 +123,12 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf(not espressomd.has_features("EXCLUSIONS"), "Skipped because feature EXCLUSIONS missing.")
     def test_exclusions(self):
-        self.assertTrue(tests_common.lists_contain_same_elements(system.part[0].exclusions, [2]))
-        self.assertTrue(tests_common.lists_contain_same_elements(system.part[1].exclusions, [2]))
-        self.assertTrue(tests_common.lists_contain_same_elements(system.part[2].exclusions, [0,1]))
+        self.assertTrue(
+            tests_common.lists_contain_same_elements(system.part[0].exclusions, [2]))
+        self.assertTrue(
+            tests_common.lists_contain_same_elements(system.part[1].exclusions, [2]))
+        self.assertTrue(
+            tests_common.lists_contain_same_elements(system.part[2].exclusions, [0, 1]))
 
 
 if __name__ == '__main__':

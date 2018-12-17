@@ -595,5 +595,6 @@ def single_component_maxwell(x1, x2, kT):
     x = np.linspace(x1, x2, 1000)
     return np.trapz(np.exp(-x**2 / (2. * kT)), x) / np.sqrt(2. * np.pi * kT)
 
+
 def lists_contain_same_elements(list1, list2):
     return len(list1) == len(list2) and sorted(list1) == sorted(list2)
