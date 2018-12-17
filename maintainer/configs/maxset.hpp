@@ -72,7 +72,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SOFT_SPHERE
 #define INTER_RF
 #define OVERLAPPED
+
+#ifdef P3M
 #define THOLE
+#endif
 
 #define BOND_ANGLE
 #define BOND_ANGLEDIST

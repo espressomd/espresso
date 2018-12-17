@@ -238,10 +238,12 @@ void calc_long_range_energies() {
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     energy.dipolar[1] = dawaanr_calculations(0, 1);
     break;
+#ifdef DP3M
   case DIPOLAR_MDLC_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
     energy.dipolar[2] = add_mdlc_energy_corrections();
     break;
+#endif
   case DIPOLAR_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
     break;

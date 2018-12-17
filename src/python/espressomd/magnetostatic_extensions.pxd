@@ -23,7 +23,7 @@ include "myconfig.pxi"
 from espressomd.system cimport *
 from espressomd.utils cimport *
 
-IF DIPOLES == 1:
+IF DIPOLES and DP3M:
 
     cdef extern from "mdlc_correction.hpp":
         ctypedef struct dlc_struct "DLC_struct":

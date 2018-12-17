@@ -2095,7 +2095,7 @@ void mpi_send_fluid_populations_slave(int node, int index) {
 /****************************************************/
 
 void mpi_bcast_max_mu() {
-#ifdef DIPOLES
+#if defined(DIPOLES) and defined(DP3M)
   mpi_call(mpi_bcast_max_mu_slave, -1, 0);
 
   calc_mu_max();
@@ -2104,7 +2104,7 @@ void mpi_bcast_max_mu() {
 }
 
 void mpi_bcast_max_mu_slave(int node, int dummy) {
-#ifdef DIPOLES
+#if defined(DIPOLES) and defined(DP3M)
 
   calc_mu_max();
 
