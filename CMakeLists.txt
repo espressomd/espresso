@@ -313,8 +313,15 @@ if(NOT TARGET MPI::MPI_CXX)
 
   set_property(TARGET MPI::MPI_CXX
           PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
+
+  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
+  foreach(_MPI_FLAG ${MPI_CXX_LINK_FLAGS})
   set_property(TARGET MPI::MPI_CXX
-          PROPERTY INTERFACE_LINK_LIBRARIES ${MPI_CXX_LINK_FLAGS} ${MPI_CXX_LIBRARIES})
+          PROPERTY INTERFACE_LINK_LIBRARIES ${_MPI_FLAG})
+  endforeach()
+
+  set_property(TARGET MPI::MPI_CXX
+          PROPERTY INTERFACE_LINK_LIBRARIES ${MPI_CXX_LIBRARIES})
 endif()
 
 #######################################################################
