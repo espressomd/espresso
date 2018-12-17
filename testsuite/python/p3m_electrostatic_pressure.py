@@ -56,6 +56,22 @@ class VirialPressureConsistency(ut.TestCase):
             self.system.part.add(pos=np.random.random(
                 3) * self.system.box_l, q=-1, v=np.sqrt(self.kT / mass) * np.random.normal(loc=[0, 0, 0]))
 
+        #############################################################
+        #  Warmup Integration                                       #
+        #############################################################
+
+        self.system.integrator.set_steepest_descent(
+            f_max=0,
+            gamma=0.001,
+            max_displacement=0.01)
+
+        # warmup
+        while self.system.analysis.energy()["total"] > 10 * num_part:
+            print("minimization: {:.1f}".format(self.system.analysis.energy()["total"]))
+            self.system.integrator.run(10)
+        self.system.integrator.set_vv()
+
+
     def get_pressure_via_volume_scaling(
         self,
         system,
