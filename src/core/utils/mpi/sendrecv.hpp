@@ -34,7 +34,7 @@ namespace mpi = boost::mpi;
 namespace detail {
 template <typename T>
 mpi::request isend(mpi::communicator const &comm, int dest, int tag,
-                   const T &value) {
+                   const T &value, boost::mpl::false_) {
   /* boost.mpi before that version has a broken implementation
      of isend for non-mpi data types, so we have to use our own. */
 #if BOOST_VERSION < 106800
@@ -57,10 +57,17 @@ mpi::request isend(mpi::communicator const &comm, int dest, int tag,
 }
 
 template <typename T>
+mpi::request isend(mpi::communicator const &comm, int dest, int tag,
+                   const T &value, boost::mpl::true_) {
+  return comm.isend(dest, tag, value);
+}
+
+template <typename T>
 std::array<mpi::request, 2> isendrecv_impl(mpi::communicator const &comm,
                                            int dest, int stag, const T &sval,
                                            int src, int rtag, T &rval) {
-  return {{isend(comm, dest, stag, sval), comm.irecv(src, rtag, rval)}};
+  return {{isend(comm, dest, stag, sval, mpi::is_mpi_datatype<T>()),
+           comm.irecv(src, rtag, rval)}};
 }
 
 template <typename T>
