@@ -33,10 +33,34 @@ namespace mpi = boost::mpi;
 
 namespace detail {
 template <typename T>
+mpi::request isend(mpi::communicator const &comm, int dest, int tag,
+                   const T &value) {
+  /* boost.mpi before that version has a broken implementation
+     of isend for non-mpi data types, so we have to use our own. */
+#if BOOST_VERSION < 106800
+  auto archive = boost::make_shared<mpi::packed_oarchive>(comm);
+  *archive << value;
+  auto const size = archive->size();
+  auto const data = const_cast<void *>(archive->address());
+  mpi::request result;
+  BOOST_MPI_CHECK_RESULT(MPI_Isend,
+                         (&size, 1, mpi::get_mpi_datatype<std::size_t>(size),
+                          dest, tag, comm, &result.m_requests[0]));
+  BOOST_MPI_CHECK_RESULT(MPI_Isend, (data, size, MPI_PACKED, dest, tag, comm,
+                                     &result.m_requests[1]));
+
+  result.m_data = archive;
+  return result;
+#else
+  return comm.isend(dest, tag, value);
+#endif
+}
+
+template <typename T>
 std::array<mpi::request, 2> isendrecv_impl(mpi::communicator const &comm,
                                            int dest, int stag, const T &sval,
                                            int src, int rtag, T &rval) {
-  return {{comm.isend(dest, stag, sval), comm.irecv(src, rtag, rval)}};
+  return {{isend(comm, dest, stag, sval), comm.irecv(src, rtag, rval)}};
 }
 
 template <typename T>
