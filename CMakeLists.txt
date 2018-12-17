@@ -305,8 +305,12 @@ find_package(MPI REQUIRED)
 if(NOT TARGET MPI::MPI_CXX)
   add_library(MPI::MPI_CXX IMPORTED INTERFACE)
 
-  set_property(TARGET MPI::MPI_CXX
-          PROPERTY INTERFACE_COMPILE_OPTIONS ${MPI_CXX_COMPILE_FLAGS})
+  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
+  foreach(_MPI_FLAG ${MPI_CXX_COMPILE_FLAGS})
+     set_property(TARGET MPI::MPI_CXX
+            PROPERTY INTERFACE_COMPILE_OPTIONS ${_MPI_FLAG})
+  endforeach()
+
   set_property(TARGET MPI::MPI_CXX
           PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
   set_property(TARGET MPI::MPI_CXX
