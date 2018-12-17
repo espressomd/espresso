@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.4)
 
 # Target for the unit tests
 add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) --output-on-failure)
