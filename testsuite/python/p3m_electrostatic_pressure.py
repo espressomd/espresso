@@ -67,10 +67,10 @@ class VirialPressureConsistency(ut.TestCase):
 
         # warmup
         while self.system.analysis.energy()["total"] > 10 * num_part:
-            print("minimization: {:.1f}".format(self.system.analysis.energy()["total"]))
+            print("minimization: {:.1f}".format(
+                self.system.analysis.energy()["total"]))
             self.system.integrator.run(10)
         self.system.integrator.set_vv()
-
 
     def get_pressure_via_volume_scaling(
         self,
@@ -108,11 +108,11 @@ class VirialPressureConsistency(ut.TestCase):
         pressures_via_virial = []
         pressures_via_volume_scaling = []
         print("Tune skin: {}".format(self.system.cell_system.tune_skin(
-           min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100))) 
+                                     min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100))) 
         p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
         self.system.actors.add(p3m)
         print("Tune skin: {}".format(self.system.cell_system.tune_skin(
-           min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100)))
+                                     min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100)))
         num_samples = 100
         result_pressure_via_volume_scaling = np.nan
         for i in range(num_samples):
