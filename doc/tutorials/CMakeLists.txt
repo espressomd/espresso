@@ -64,6 +64,7 @@ add_subdirectory(07-electrokinetics)
 add_subdirectory(08-visualization)
 add_subdirectory(09-swimmer_reactions)
 add_subdirectory(10-reaction_ensemble)
+add_subdirectory(11-ferrofluid_monolayer)
 
 
 ### here: add the appropriate tutorial target after DEPENDS
@@ -77,7 +78,9 @@ add_custom_target(tutorials
   tutorials_07
   tutorials_08
   tutorials_09
-  tutorials_10)
+  tutorials_10
+  tutorials_11
+  )
 
 add_custom_target(tutorials_html DEPENDS
   tutorials
@@ -89,6 +92,9 @@ add_custom_target(tutorials_html DEPENDS
   tutorials_04_3_html
   tutorials_04_4_html
   tutorials_05_html
+  tutorials_11_1_html
+  tutorials_11_2_html
+  tutorials_11_3_html
   )
 
 add_custom_target(tutorials_python DEPENDS
@@ -101,6 +107,9 @@ add_custom_target(tutorials_python DEPENDS
   tutorials_04_3_python
   tutorials_04_4_python
   tutorials_05_python
+  tutorials_11_1_python
+  tutorials_11_2_python
+  tutorials_11_3_python
   )
 
 configure_file(Readme.rst ${CMAKE_CURRENT_BINARY_DIR}/Readme.rst COPYONLY)
