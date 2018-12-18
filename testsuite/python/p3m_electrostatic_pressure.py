@@ -27,6 +27,46 @@ from espressomd import electrostatics
 
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
+class pressureViaVolumeScaling():
+    def __init__(self,system,kbT):
+        self.system=system
+        self.kbT=kbT
+        self.old_box_lengths = np.copy(system.box_l)
+        self.old_volume = np.prod(self.old_box_lengths)
+        dV_div_old_volume = 0.001
+        self.dV = -dV_div_old_volume * self.old_volume
+        self.new_volume = self.old_volume + self.dV
+        self.new_box_l = (self.new_volume)**(1. / 3.)
+
+        self.list_of_previous_values=[]
+    
+
+    def measure_pressure_via_volume_scaling(
+        self):
+        # taken from "Efficient pressure estimation in molecular simulations without evaluating the virial"
+        # only works so far for isotropic volume changes, i.e. the isotropic
+        # pressure
+        energy = self.system.analysis.energy()
+        Epot_old = energy["total"] - energy["kinetic"]
+        self.system.change_volume_and_rescale_particles(self.new_box_l, "xyz")
+        self.system.integrator.run(0)
+        energy = self.system.analysis.energy()
+        Epot_new = energy["total"] - energy["kinetic"]
+        self.system.change_volume_and_rescale_particles(self.old_box_lengths[0], "xyz")
+        self.system.integrator.run(0)
+        DeltaEpot = Epot_new - Epot_old
+        particle_number = len(self.system.part[:].id)
+        current_value = (self.new_volume / self.old_volume)**particle_number * \
+            np.exp(-DeltaEpot / self.kbT)
+        self.list_of_previous_values.append(current_value)
+    
+    def get_result(self):
+        average_value = np.mean(self.list_of_previous_values)
+
+        pressure = self.kbT / self.dV * np.log(average_value)
+        return pressure
+
+
 class VirialPressureConsistency(ut.TestCase):
 
     """Test the consistency of the core implementation of the virial pressure with an analytical relation which allows
@@ -44,7 +84,6 @@ class VirialPressureConsistency(ut.TestCase):
             self.system.cell_system.get_state()["n_nodes"])
         self.system.time_step = 0.01
         self.kT = 0.5
-        self.system.thermostat.set_langevin(kT=self.kT, gamma=1.0)
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0, cutoff=2**(1.0 / 6.0), shift="auto")
         num_part = 40
@@ -71,38 +110,7 @@ class VirialPressureConsistency(ut.TestCase):
                 self.system.analysis.energy()["total"]))
             self.system.integrator.run(10)
         self.system.integrator.set_vv()
-
-    def get_pressure_via_volume_scaling(
-        self,
-        system,
-     kbT,
-     list_of_previous_values):
-        # taken from "Efficient pressure estimation in molecular simulations without evaluating the virial"
-        # only works so far for isotropic volume changes, i.e. the isotropic
-        # pressure
-        energy = system.analysis.energy()
-        Epot_old = energy["total"] - energy["kinetic"]
-        old_box_lengths = np.copy(system.box_l)
-        old_volume = np.prod(old_box_lengths)
-        dV_div_old_volume = 0.001
-        dV = -dV_div_old_volume * old_volume
-        new_volume = old_volume + dV
-        new_box_l = (new_volume)**(1. / 3.)
-        system.change_volume_and_rescale_particles(new_box_l, "xyz")
-        system.integrator.run(0)
-        energy = system.analysis.energy()
-        Epot_new = energy["total"] - energy["kinetic"]
-        system.change_volume_and_rescale_particles(old_box_lengths[0], "xyz")
-        system.integrator.run(0)
-        DeltaEpot = Epot_new - Epot_old
-        particle_number = len(system.part[:].id)
-        current_value = (new_volume / old_volume)**particle_number * \
-            np.exp(-DeltaEpot / kbT)
-        list_of_previous_values.append(current_value)
-        average_value = np.mean(list_of_previous_values)
-
-        pressure = kbT / dV * np.log(average_value)
-        return pressure
+        self.system.thermostat.set_langevin(kT=self.kT, gamma=1.0)
 
     def test_p3m_pressure(self):
         pressures_via_virial = []
@@ -114,19 +122,18 @@ class VirialPressureConsistency(ut.TestCase):
         print("Tune skin: {}".format(self.system.cell_system.tune_skin(
                                      min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100)))
         num_samples = 100
-        result_pressure_via_volume_scaling = np.nan
+        pressure_via_volume_scaling=pressureViaVolumeScaling(self.system, self.kT)
         for i in range(num_samples):
             self.system.integrator.run(100)
             pressures_via_virial.append(
                 self.system.analysis.pressure()['total'])
-            result_pressure_via_volume_scaling = self.get_pressure_via_volume_scaling(
-                self.system, self.kT, pressures_via_volume_scaling)
+            pressure_via_volume_scaling.measure_pressure_via_volume_scaling()
         pressure_virial = np.mean(pressures_via_virial)
         abs_deviation_in_percent = abs(
-            pressure_virial / result_pressure_via_volume_scaling - 1.0) * 100.0  # should be 0% ideally
+            pressure_virial / pressure_via_volume_scaling.get_result() - 1.0) * 100.0  # should be 0% ideally
         npt.assert_array_less(
             abs_deviation_in_percent,
-            2.0)  # devation should be below 2%
+            5.0)  # devation should be below 5%
 
 
 if __name__ == "__main__":
