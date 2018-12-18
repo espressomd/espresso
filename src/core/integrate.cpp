@@ -191,7 +191,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* Prepare the Integrator */
   on_integration_start();
 #ifdef LEES_EDWARDS
-  setup_lees_edwards_protocol();
+  setup_lees_edwards_protocol(0.);
 #endif
 
   // Here we initialize volume conservation

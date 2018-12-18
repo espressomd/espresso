@@ -37,7 +37,7 @@ typedef struct {
 
 extern lees_edwards_protocol_struct lees_edwards_protocol;
 /** Function to determine the current offset / velocity depending on the protocol */
-void setup_lees_edwards_protocol();
+void setup_lees_edwards_protocol(double time_offset);
 /** Calculation of current offset*/
 double lees_edwards_get_offset(double time);
 /** Calculation of current velocity*/

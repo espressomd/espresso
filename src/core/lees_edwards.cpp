@@ -27,7 +27,7 @@ lees_edwards_protocol_struct lees_edwards_protocol = {LEES_EDWARDS_PROTOCOL_OFF,
 
 /* Functions to determine the current offset and shear rate with respect to the chosen protocol */
 
-void setup_lees_edwards_protocol() {
+void setup_lees_edwards_protocol(double time_offset) {
   if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_OFF) {
     lees_edwards_protocol.offset = 0.0;
     lees_edwards_protocol.velocity = 0.0;
@@ -43,14 +43,14 @@ void setup_lees_edwards_protocol() {
   } 
 
   else if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_STEADY_SHEAR) {
-    lees_edwards_protocol.offset = lees_edwards_get_offset(sim_time);
+    lees_edwards_protocol.offset = lees_edwards_get_offset(sim_time + time_offset);
     lees_edwards_protocol.amplitude = 0.0;
     lees_edwards_protocol.frequency = 0.0;
   } 
   
   else if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_OSC_SHEAR) {
-    lees_edwards_protocol.offset = lees_edwards_get_offset(sim_time);
-    lees_edwards_protocol.velocity = lees_edwards_get_velocity(sim_time);
+    lees_edwards_protocol.offset = lees_edwards_get_offset(sim_time + time_offset);
+    lees_edwards_protocol.velocity = lees_edwards_get_velocity(sim_time + time_offset);
   }
   else {
     lees_edwards_protocol.offset = 0.0;
