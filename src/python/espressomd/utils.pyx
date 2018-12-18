@@ -310,7 +310,7 @@ def nesting_level(obj):
 
     """
 
-    if not isinstance(obj, (list, tuple)):
+    if not isinstance(obj, (list, tuple, np.ndarray)):
         return 0
 
     obj = list(obj)
