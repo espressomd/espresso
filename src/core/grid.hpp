@@ -214,13 +214,19 @@ Vector3d get_mi_vector(T const &a, U const &b) {
 template <typename T1, typename T2, typename T3>
 void fold_coordinate(T1 &pos, T2 &vel, T3 &image_box, int dir) {
   if (PERIODIC(dir)) {
-    while (pos[dir] < 0) {
+    while ((pos[dir] < 0) && (image_box[dir] > INT_MIN)) {
       pos[dir] += box_l[dir];
       image_box[dir] -= 1;
     }
-    while (pos[dir] >= box_l[dir]) {
+    while ((pos[dir] >= box_l[dir]) && (image_box[dir] < INT_MAX)) {
       pos[dir] -= box_l[dir];
       image_box[dir] += 1;
+    }
+    if ((image_box[dir] == INT_MIN) || (image_box[dir] == INT_MAX)) {
+      throw std::runtime_error(
+          "Overflow in the image box count while folding a particle coordinate "
+          "into the primary simulation box. Maybe a particle experienced a "
+          "huge force.");
     }
   }
 }
