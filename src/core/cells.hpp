@@ -317,7 +317,7 @@ void local_sort_particles();
  *
  *
  * @return pointer to the cell or nullptr if the particle is not on the node
-*/
+ */
 Cell *find_current_cell(const Particle &p);
 
 #endif
