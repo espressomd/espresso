@@ -65,6 +65,7 @@ class pressureViaVolumeScaling(object):
         pressure = self.kbT / self.dV * np.log(average_value)
         return pressure
 
+
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS, LENNARD_JONES"]),
            "Features not available, skipping test!")
 class VirialPressureConsistency(ut.TestCase):
