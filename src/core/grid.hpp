@@ -271,14 +271,9 @@ template <typename T1, typename T2> void fold_position(T1 &pos, T2 &image_box) {
  */
 inline Vector3d folded_position(Particle const &p) {
   Vector3d pos{p.r.p};
-
+  int tmp[3] = {0, 0, 0};
   for (int dir = 0; dir < 3; dir++) {
-    if (PERIODIC(dir)) {
-      const int img_count =
-          static_cast<int>(std::floor(pos[dir] * box_l_i[dir]));
-
-      pos[dir] -= img_count * box_l[dir];
-    }
+    fold_coordinate(pos, tmp, dir);
   }
 
   return pos;
