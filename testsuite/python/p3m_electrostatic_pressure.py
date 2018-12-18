@@ -28,9 +28,10 @@ from espressomd import electrostatics
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
 class pressureViaVolumeScaling():
-    def __init__(self,system,kbT):
-        self.system=system
-        self.kbT=kbT
+
+    def __init__(self, system, kbT):
+        self.system = system
+        self.kbT = kbT
         self.old_box_lengths = np.copy(system.box_l)
         self.old_volume = np.prod(self.old_box_lengths)
         dV_div_old_volume = 0.001
@@ -38,11 +39,10 @@ class pressureViaVolumeScaling():
         self.new_volume = self.old_volume + self.dV
         self.new_box_l = (self.new_volume)**(1. / 3.)
 
-        self.list_of_previous_values=[]
+        self.list_of_previous_values = []
     
-
     def measure_pressure_via_volume_scaling(
-        self):
+            self):
         # taken from "Efficient pressure estimation in molecular simulations without evaluating the virial"
         # only works so far for isotropic volume changes, i.e. the isotropic
         # pressure
@@ -52,7 +52,8 @@ class pressureViaVolumeScaling():
         self.system.integrator.run(0)
         energy = self.system.analysis.energy()
         Epot_new = energy["total"] - energy["kinetic"]
-        self.system.change_volume_and_rescale_particles(self.old_box_lengths[0], "xyz")
+        self.system.change_volume_and_rescale_particles(
+            self.old_box_lengths[0], "xyz")
         self.system.integrator.run(0)
         DeltaEpot = Epot_new - Epot_old
         particle_number = len(self.system.part[:].id)
@@ -122,7 +123,8 @@ class VirialPressureConsistency(ut.TestCase):
         print("Tune skin: {}".format(self.system.cell_system.tune_skin(
                                      min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100)))
         num_samples = 100
-        pressure_via_volume_scaling=pressureViaVolumeScaling(self.system, self.kT)
+        pressure_via_volume_scaling = pressureViaVolumeScaling(
+            self.system, self.kT)
         for i in range(num_samples):
             self.system.integrator.run(100)
             pressures_via_virial.append(
