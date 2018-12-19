@@ -2407,8 +2407,10 @@ int ek_init() {
     lbpar_gpu.friction[0] = ek_parameters.friction;
 
     // Convert the density (given in MD units) to LB units
-    lbpar_gpu.rho[0] =
-        (ek_parameters.lb_density < 0.0 ? 1.0 : ek_parameters.lb_density * ek_parameters.agrid * ek_parameters.agrid * ek_parameters.agrid);
+    lbpar_gpu.rho[0] = (ek_parameters.lb_density < 0.0
+                            ? 1.0
+                            : ek_parameters.lb_density * ek_parameters.agrid *
+                                  ek_parameters.agrid * ek_parameters.agrid);
 
     lbpar_gpu.is_TRT = true;
 
@@ -2519,7 +2521,8 @@ int ek_init() {
         lbpar_gpu.friction[0] != ek_parameters.friction ||
         ((lbpar_gpu.rho[0] != 1.0) &&
          // Convert the density to LB units.
-         (lbpar_gpu.rho[0] != ek_parameters.lb_density * ek_parameters.agrid * ek_parameters.agrid * ek_parameters.agrid))) {
+         (lbpar_gpu.rho[0] != ek_parameters.lb_density * ek_parameters.agrid *
+                                  ek_parameters.agrid * ek_parameters.agrid))) {
       fprintf(stderr,
               "ERROR: The LB parameters on the GPU cannot be reinitialized.\n");
 
