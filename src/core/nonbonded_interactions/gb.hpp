@@ -193,14 +193,17 @@ inline double gb_pair_energy(const Particle *p1, const Particle *p2,
 
   auto const e = e0 * e1 * e2;
 
-  auto const s = s0 * std::sqrt(1. - 0.5 * chi1 *
+  auto const s = s0 / std::sqrt(1. - 0.5 * chi1 *
                                          (sqr(rui + ruj) / (1 + chi1 * uij) +
                                           sqr(rui - ruj) / (1 - chi1 * uij)));
 
   auto r_eff = [=](double r) { return (r - s + s0) / s0; };
   auto E = [=](double r) {
-    4. * e *(int_pow<12>(1. / r) + int_pow<6>(1. / r));
+    return 4. * e *(int_pow<12>(1. / r) - int_pow<6>(1. / r));
   };
+  printf("epsilon: %f\n",e);
+  printf("sigma: %f\n",s);
+  printf("r_eff: %f\n",r_eff(dist));
 
   return E(r_eff(dist)) - E(r_eff(ia_params->GB_cut));
 }

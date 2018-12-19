@@ -585,6 +585,36 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         self.system.non_bonded_inter[0, 0].gaussian.set_params(eps=0.)
 
+    @ut.skipIf(not espressomd.has_features("GAY_BERNE"),"skipped for lack of Gay Berne")
+    def test_gb(self):
+        k_1=1.2
+        k_2=2.4
+        mu=2.
+        nu=5.
+        sigma_0=1.2
+        epsilon_0=0.8
+        cut=4.
+
+        
+        self.system.part.clear()
+        self.system.part.add(id=(1,2),pos=((1,2,3),(2.2,2.1,2.9)))
+        print(self.system.analysis.energy()["non_bonded"])
+        self.system.non_bonded_inter[0, 0].gay_berne.set_params(
+           sig=sigma_0,cut=cut, eps=epsilon_0,k1=k_1,k2=k_2,mu=mu,nu=nu)
+        p1=self.system.part[1]
+        p2=self.system.part[2]
+        p1.dip=(-4,2,1)
+        p2.dip=(7,4,2)
+        
+        r=self.system.distance_vec(p1,p2)
+
+        print(self.system.analysis.energy()["non_bonded"])
+        r_cut=r*cut /numpy.linalg.norm(r)
+        print(
+          tests_common.gay_berne_potential(
+            r,p1.director,p2.director,epsilon_0, sigma_0, mu,nu,k_1,k_2) -
+          tests_common.gay_berne_potential(
+            r_cut,p1.director,p2.director,epsilon_0, sigma_0, mu,nu,k_1,k_2))
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())
