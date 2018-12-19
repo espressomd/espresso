@@ -1112,7 +1112,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index,
 
 #define BOUNCEBACK()                                                           \
   for (int component = 0; component < LB_COMPONENTS; component++) {            \
-    shift = 2.0f * / para->agrid * para->rho[component] * 3.0f * weight *      \
+    shift = 2.0f / para->agrid * para->rho[component] * 3.0f * weight *      \
             para->tau * (v[0] * c[0] + v[1] * c[1] + v[2] * c[2]);             \
     pop_to_bounce_back =                                                       \
         n_curr.vd[(population + component * LBQ) * para->number_of_nodes +     \
