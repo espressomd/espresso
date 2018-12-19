@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/matrix_vector_product.hpp"
 
 extern constexpr std::array<std::array<int, 3>, 3> matrix{
-    {{1, 2, 9}, {8, 41, 6}, {31, 15, 99}}};
+    {{{1, 2, 9}}, {{8, 41, 6}}, {{31, 15, 99}}}};
 
 BOOST_AUTO_TEST_CASE(inner_product) {
   const std::array<double, 3> vector{{0.5, 1.25, 3.1}};
