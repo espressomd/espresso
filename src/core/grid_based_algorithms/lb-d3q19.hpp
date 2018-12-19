@@ -88,7 +88,7 @@ static constexpr const std::array<double, 19> w = {
      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.}};
 
 /** Basis of the mode space as described in [Duenweg, Schiller, Ladd] */
-GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19> e_ki =
+GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19> e_ki = // NOLINT
     {{{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
       {{0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1, 0, 0, 0, 0}},
       {{0, 0, 0, 1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 0, 1, -1, 1, -1}},
@@ -116,7 +116,7 @@ static constexpr const std::array<double, 19> w_k = {
      2.0, 4. / 9., 4. / 3.}};
 
 GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19>
-    e_ki_transposed = {
+    e_ki_transposed = { // NOLINT
         {{{1, 0, 0, 0, -1, 0, -0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
          {{1, 1, 0, 0, 0, 1, 1, 0, 0, 0, -2, 0, 0, -0, 0, 0, -2, -1, -1}},
          {{1, -1, 0, 0, 0, 1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, -2, -1, -1}},
