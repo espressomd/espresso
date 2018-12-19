@@ -88,7 +88,8 @@ static constexpr const std::array<double, 19> w = {
      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.}};
 
 /** Basis of the mode space as described in [Duenweg, Schiller, Ladd] */
-GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19> e_ki = // NOLINT
+GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19>
+    e_ki = // NOLINT
     {{{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
       {{0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1, 0, 0, 0, 0}},
       {{0, 0, 0, 1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 0, 1, -1, 1, -1}},
