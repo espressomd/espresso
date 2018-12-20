@@ -2161,7 +2161,7 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                        1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 }
 
-  /*@}*/
+/*@}*/
 
 #include <boost/range/numeric.hpp>
 
