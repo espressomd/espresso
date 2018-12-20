@@ -603,8 +603,8 @@ class InteractionsNonBondedTest(ut.TestCase):
            sig=sigma_0,cut=cut, eps=epsilon_0,k1=k_1,k2=k_2,mu=mu,nu=nu)
         p1=self.system.part[0]
         p2=self.system.part[1]
-        p1.dip=(-4,2,1)
-        p2.dip=(7,4,2)
+        p1.rotate(axis=(1,2,3),angle=0.3)
+        p1.rotate(axis=(1,-2,-4),angle=1.2)
         
         r=self.system.distance_vec(p1,p2)
 
