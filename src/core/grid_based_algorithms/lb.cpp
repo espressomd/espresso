@@ -2224,17 +2224,11 @@ lb_relax_modes(Lattice::index_t index, const std::array<double, 19> &modes) {
 }
 
 inline std::array<double, 19>
-lb_thermalize_modes(Lattice::index_t index,
+lb_thermalize_modes(Lattice::index_t index, const r123::Philox4x64::ctr_type &c,
                     const std::array<double, 19> &modes) {
   using Utils::uniform;
-
-  std::array<double, 19> thermalized_modes = modes;
-
   using rng_type = r123::Philox4x64;
   using ctr_type = rng_type::ctr_type;
-
-  ctr_type c{
-      {rng_counter_fluid.value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
 
   const double rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
   auto const pref = std::sqrt(12.) * rootrho;
@@ -2247,26 +2241,26 @@ lb_thermalize_modes(Lattice::index_t index,
 
   auto rng = [&](int i) { return uniform(noise[i / 4][i % 4]); };
 
-  /* stress modes */
-  thermalized_modes[4] += pref * lbpar.phi[4] * rng(0);
-  thermalized_modes[5] += pref * lbpar.phi[5] * rng(1);
-  thermalized_modes[6] += pref * lbpar.phi[6] * rng(2);
-  thermalized_modes[7] += pref * lbpar.phi[7] * rng(3);
-  thermalized_modes[8] += pref * lbpar.phi[8] * rng(4);
-  thermalized_modes[9] += pref * lbpar.phi[9] * rng(5);
+  return {/* conserved modes */
+          modes[0], modes[1], modes[2], modes[3],
+          /* stress modes */
+          modes[4] + pref * lbpar.phi[4] * rng(0),
+          modes[5] + pref * lbpar.phi[5] * rng(1),
+          modes[6] + pref * lbpar.phi[6] * rng(2),
+          modes[7] + pref * lbpar.phi[7] * rng(3),
+          modes[8] + pref * lbpar.phi[8] * rng(4),
+          modes[9] + pref * lbpar.phi[9] * rng(5),
 
-  /* ghost modes */
-  thermalized_modes[10] += pref * lbpar.phi[10] * rng(6);
-  thermalized_modes[11] += pref * lbpar.phi[11] * rng(7);
-  thermalized_modes[12] += pref * lbpar.phi[12] * rng(8);
-  thermalized_modes[13] += pref * lbpar.phi[13] * rng(9);
-  thermalized_modes[14] += pref * lbpar.phi[14] * rng(10);
-  thermalized_modes[15] += pref * lbpar.phi[15] * rng(11);
-  thermalized_modes[16] += pref * lbpar.phi[16] * rng(12);
-  thermalized_modes[17] += pref * lbpar.phi[17] * rng(13);
-  thermalized_modes[18] += pref * lbpar.phi[18] * rng(14);
-
-  return thermalized_modes;
+          /* ghost modes */
+          modes[10] + pref * lbpar.phi[10] * rng(6),
+          modes[11] + pref * lbpar.phi[11] * rng(7),
+          modes[12] + pref * lbpar.phi[12] * rng(8),
+          modes[13] + pref * lbpar.phi[13] * rng(9),
+          modes[14] + pref * lbpar.phi[14] * rng(10),
+          modes[15] + pref * lbpar.phi[15] * rng(11),
+          modes[16] + pref * lbpar.phi[16] * rng(12),
+          modes[17] + pref * lbpar.phi[17] * rng(13),
+          modes[18] + pref * lbpar.phi[18] * rng(14)};
 }
 
 template <typename T>
@@ -2373,6 +2367,9 @@ inline void lb_collide_stream() {
   }
 #endif
 
+  const r123::Philox4x64::ctr_type c{
+      {rng_counter_fluid.value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
+
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
@@ -2391,7 +2388,7 @@ inline void lb_collide_stream() {
 
           /* fluctuating hydrodynamics */
           if (lbpar.fluct)
-            modes = lb_thermalize_modes(index, modes);
+            modes = lb_thermalize_modes(index, c, modes);
 
           /* apply forces */
           modes = lb_apply_forces(index, modes);
