@@ -2234,33 +2234,33 @@ lb_thermalize_modes(Lattice::index_t index, const r123::Philox4x64::ctr_type &c,
   auto const pref = std::sqrt(12.) * rootrho;
 
   const ctr_type noise[4] = {
-      rng_type{}(c, {static_cast<uint64_t>(index), 0ul}),
-      rng_type{}(c, {static_cast<uint64_t>(index), 1ul}),
-      rng_type{}(c, {static_cast<uint64_t>(index), 2ul}),
-      rng_type{}(c, {static_cast<uint64_t>(index), 3ul})};
+      rng_type{}(c, {{static_cast<uint64_t>(index), 0ul}}),
+      rng_type{}(c, {{static_cast<uint64_t>(index), 1ul}}),
+      rng_type{}(c, {{static_cast<uint64_t>(index), 2ul}}),
+      rng_type{}(c, {{static_cast<uint64_t>(index), 3ul}})};
 
   auto rng = [&](int i) { return uniform(noise[i / 4][i % 4]); };
 
   return {/* conserved modes */
-          modes[0], modes[1], modes[2], modes[3],
-          /* stress modes */
-          modes[4] + pref * lbpar.phi[4] * rng(0),
-          modes[5] + pref * lbpar.phi[5] * rng(1),
-          modes[6] + pref * lbpar.phi[6] * rng(2),
-          modes[7] + pref * lbpar.phi[7] * rng(3),
-          modes[8] + pref * lbpar.phi[8] * rng(4),
-          modes[9] + pref * lbpar.phi[9] * rng(5),
+          {modes[0], modes[1], modes[2], modes[3],
+           /* stress modes */
+           modes[4] + pref * lbpar.phi[4] * rng(0),
+           modes[5] + pref * lbpar.phi[5] * rng(1),
+           modes[6] + pref * lbpar.phi[6] * rng(2),
+           modes[7] + pref * lbpar.phi[7] * rng(3),
+           modes[8] + pref * lbpar.phi[8] * rng(4),
+           modes[9] + pref * lbpar.phi[9] * rng(5),
 
-          /* ghost modes */
-          modes[10] + pref * lbpar.phi[10] * rng(6),
-          modes[11] + pref * lbpar.phi[11] * rng(7),
-          modes[12] + pref * lbpar.phi[12] * rng(8),
-          modes[13] + pref * lbpar.phi[13] * rng(9),
-          modes[14] + pref * lbpar.phi[14] * rng(10),
-          modes[15] + pref * lbpar.phi[15] * rng(11),
-          modes[16] + pref * lbpar.phi[16] * rng(12),
-          modes[17] + pref * lbpar.phi[17] * rng(13),
-          modes[18] + pref * lbpar.phi[18] * rng(14)};
+           /* ghost modes */
+           modes[10] + pref * lbpar.phi[10] * rng(6),
+           modes[11] + pref * lbpar.phi[11] * rng(7),
+           modes[12] + pref * lbpar.phi[12] * rng(8),
+           modes[13] + pref * lbpar.phi[13] * rng(9),
+           modes[14] + pref * lbpar.phi[14] * rng(10),
+           modes[15] + pref * lbpar.phi[15] * rng(11),
+           modes[16] + pref * lbpar.phi[16] * rng(12),
+           modes[17] + pref * lbpar.phi[17] * rng(13),
+           modes[18] + pref * lbpar.phi[18] * rng(14)}};
 }
 
 template <typename T>
