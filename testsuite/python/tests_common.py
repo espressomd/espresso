@@ -607,7 +607,6 @@ def gay_berne_potential(r_ij, u_i,u_j,epsilon_0, sigma_0, mu,nu,k_1, k_2):
         (r_u_i - r_u_j)**2 /(1-chi_d * u_i_u_j)))**mu
 
     rr =np.linalg.norm((np.linalg.norm(r_ij)-sigma +sigma_0)/sigma_0)
-    print(sigma_0,sigma,epsilon_0,epsilon,np.linalg.norm(r_ij),rr)
 
     return 4.*epsilon *(rr**-12 -rr**-6)
 
