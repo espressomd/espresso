@@ -68,6 +68,7 @@ int transfer_momentum = 0;
 /** Counter for the particle coupling RNG */
 namespace {
 Utils::Counter<uint64_t> rng_counter_coupling;
+Utils::Counter<uint64_t> rng_counter_fluid;
 
 /*
  * @brief Salt for the RNGs
@@ -76,7 +77,7 @@ Utils::Counter<uint64_t> rng_counter_coupling;
  * noise on the particle coupling and the fluid
  * thermalization.
  */
-enum class RNGSalt { PARTICLES };
+enum class RNGSalt { PARTICLES, FLUID };
 } // namespace
 
 /** Struct holding the Lattice Boltzmann parameters */
@@ -2160,7 +2161,7 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                        1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 }
 
-/*@}*/
+  /*@}*/
 
 #include <boost/range/numeric.hpp>
 
@@ -2225,41 +2226,45 @@ lb_relax_modes(Lattice::index_t index, const std::array<double, 19> &modes) {
 inline std::array<double, 19>
 lb_thermalize_modes(Lattice::index_t index,
                     const std::array<double, 19> &modes) {
-  std::array<double, 19> thermalized_modes = modes;
-  const double rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
-#ifdef GAUSSRANDOM
-  constexpr double variance = 1.0;
-  auto rng = []() -> double { return gaussian_random(); };
-#elif defined(GAUSSRANDOMCUT)
-  constexpr double variance = 1.0;
-  auto rng = []() -> double { return gaussian_random_cut(); };
-#elif defined(FLATNOISE)
-  constexpr double variance = 1. / 12.0;
-  auto rng = []() -> double { return d_random() - 0.5; };
-#else // GAUSSRANDOM
-#error No noise type defined for the CPU LB
-#endif // GAUSSRANDOM
+  using Utils::uniform;
 
-  auto const pref = std::sqrt(1. / variance) * rootrho;
+  std::array<double, 19> thermalized_modes = modes;
+
+  using rng_type = r123::Philox4x64;
+  using ctr_type = rng_type::ctr_type;
+
+  ctr_type c{
+      {rng_counter_fluid.value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
+
+  const double rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
+  auto const pref = std::sqrt(12.) * rootrho;
+
+  const ctr_type noise[4] = {
+      rng_type{}(c, {static_cast<uint64_t>(index), 0ul}),
+      rng_type{}(c, {static_cast<uint64_t>(index), 1ul}),
+      rng_type{}(c, {static_cast<uint64_t>(index), 2ul}),
+      rng_type{}(c, {static_cast<uint64_t>(index), 3ul})};
+
+  auto rng = [&](int i) { return uniform(noise[i / 4][i % 4]); };
 
   /* stress modes */
-  thermalized_modes[4] += pref * lbpar.phi[4] * rng();
-  thermalized_modes[5] += pref * lbpar.phi[5] * rng();
-  thermalized_modes[6] += pref * lbpar.phi[6] * rng();
-  thermalized_modes[7] += pref * lbpar.phi[7] * rng();
-  thermalized_modes[8] += pref * lbpar.phi[8] * rng();
-  thermalized_modes[9] += pref * lbpar.phi[9] * rng();
+  thermalized_modes[4] += pref * lbpar.phi[4] * rng(0);
+  thermalized_modes[5] += pref * lbpar.phi[5] * rng(1);
+  thermalized_modes[6] += pref * lbpar.phi[6] * rng(2);
+  thermalized_modes[7] += pref * lbpar.phi[7] * rng(3);
+  thermalized_modes[8] += pref * lbpar.phi[8] * rng(4);
+  thermalized_modes[9] += pref * lbpar.phi[9] * rng(5);
 
   /* ghost modes */
-  thermalized_modes[10] += pref * lbpar.phi[10] * rng();
-  thermalized_modes[11] += pref * lbpar.phi[11] * rng();
-  thermalized_modes[12] += pref * lbpar.phi[12] * rng();
-  thermalized_modes[13] += pref * lbpar.phi[13] * rng();
-  thermalized_modes[14] += pref * lbpar.phi[14] * rng();
-  thermalized_modes[15] += pref * lbpar.phi[15] * rng();
-  thermalized_modes[16] += pref * lbpar.phi[16] * rng();
-  thermalized_modes[17] += pref * lbpar.phi[17] * rng();
-  thermalized_modes[18] += pref * lbpar.phi[18] * rng();
+  thermalized_modes[10] += pref * lbpar.phi[10] * rng(6);
+  thermalized_modes[11] += pref * lbpar.phi[11] * rng(7);
+  thermalized_modes[12] += pref * lbpar.phi[12] * rng(8);
+  thermalized_modes[13] += pref * lbpar.phi[13] * rng(9);
+  thermalized_modes[14] += pref * lbpar.phi[14] * rng(10);
+  thermalized_modes[15] += pref * lbpar.phi[15] * rng(11);
+  thermalized_modes[16] += pref * lbpar.phi[16] * rng(12);
+  thermalized_modes[17] += pref * lbpar.phi[17] * rng(13);
+  thermalized_modes[18] += pref * lbpar.phi[18] * rng(14);
 
   return thermalized_modes;
 }
@@ -2411,6 +2416,8 @@ inline void lb_collide_stream() {
   /* boundary conditions for links */
   LBBoundaries::lb_bounce_back(lbfluid_post);
 #endif // LB_BOUNDARIES
+
+  rng_counter_fluid.increment();
 
   /* swap the pointers for old and new population fields */
   std::swap(lbfluid, lbfluid_post);
