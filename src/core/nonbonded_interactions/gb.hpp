@@ -82,8 +82,8 @@ add_gb_pair_force(const Particle *const p1, const Particle *const p2,
   Koef1 = ia_params->GB_mu / E2;
   Koef2 = Sigma * Sigma * Sigma * 0.5;
 
-  X = 1 / (dist - Sigma + ia_params->GB_sig);
-  Xcut = 1 / (ia_params->GB_cut - Sigma + ia_params->GB_sig);
+  X = ia_params->GB_sig / (dist - Sigma + ia_params->GB_sig);
+  Xcut = ia_params->GB_sig / (ia_params->GB_cut - Sigma + ia_params->GB_sig);
 
   if (X < 1.25) { /* 1.25 corresponds to the interparticle penetration of 0.2
                     units of length.
@@ -201,9 +201,6 @@ inline double gb_pair_energy(const Particle *p1, const Particle *p2,
   auto E = [=](double r) {
     return 4. * e *(int_pow<12>(1. / r) - int_pow<6>(1. / r));
   };
-  printf("epsilon: %f\n",e);
-  printf("sigma: %f\n",s);
-  printf("r_eff: %f\n",r_eff(dist));
 
   return E(r_eff(dist)) - E(r_eff(ia_params->GB_cut));
 }
