@@ -4,6 +4,8 @@
 #include <array>
 #include <utility>
 
+#include "utils/integer_sequence.hpp"
+
 namespace Utils {
 
 namespace detail {
@@ -39,7 +41,7 @@ template <typename T, std::size_t N,
           const std::array<std::array<int, N>, N> &matrix,
           std::size_t row_index, std::size_t... column_indices>
 constexpr T inner_product_helper(const std::array<T, N> &vec,
-                                 std::index_sequence<column_indices...>) {
+                                 Utils::index_sequence<column_indices...>) {
   return inner_product_template_impl<0, T, N,
                                      matrix[row_index][column_indices]...>{}(
       vec);
@@ -50,7 +52,7 @@ template <typename T, std::size_t N,
           std::size_t row_index>
 constexpr T inner_product_template(const std::array<T, N> &vec) {
   return detail::inner_product_helper<T, N, matrix, row_index>(
-      vec, std::make_index_sequence<N>{});
+      vec, Utils::make_index_sequence<N>{});
 }
 
 template <typename T, std::size_t N,
@@ -58,7 +60,7 @@ template <typename T, std::size_t N,
           std::size_t... column_indices>
 constexpr std::array<T, N>
 matrix_vector_product_helper(const std::array<T, N> &vec,
-                             std::index_sequence<column_indices...>) {
+                             Utils::index_sequence<column_indices...>) {
   return std::array<T, N>{
       {inner_product_template<T, N, matrix, column_indices>(vec)...}};
 }
@@ -69,7 +71,7 @@ template <typename T, std::size_t N,
           const std::array<std::array<int, N>, N> &matrix>
 constexpr std::array<T, N> matrix_vector_product(const std::array<T, N> &vec) {
   return detail::matrix_vector_product_helper<T, N, matrix>(
-      vec, std::make_index_sequence<N>{});
+      vec, Utils::make_index_sequence<N>{});
 }
 
 } // namespace Utils
