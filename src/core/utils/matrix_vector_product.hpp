@@ -42,9 +42,8 @@ template <typename T, std::size_t N,
           std::size_t row_index, std::size_t... column_indices>
 constexpr T inner_product_helper(const std::array<T, N> &vec,
                                  Utils::index_sequence<column_indices...>) {
-  return inner_product_template_impl<0, T, N,
-                                     matrix[row_index][column_indices]...>{}(
-      vec);
+  return inner_product_template_impl<
+      0, T, N, std::get<column_indices>(std::get<row_index>(matrix))...>{}(vec);
 }
 
 template <typename T, std::size_t N,
