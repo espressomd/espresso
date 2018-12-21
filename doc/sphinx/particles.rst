@@ -257,7 +257,7 @@ interaction :math:`0` is taken which must be a two-particle bond.
 
    Diamond-like polymer network with MPC=15.
 
-See :meth:`espressomd.diamond.Diamond` for more details. For simulating compressed or streched gels the function 
+See :meth:`espressomd.diamond.Diamond` for more details. For simulating compressed or stretched gels the function 
 :meth:`espressomd.system.System.change_volume_and_rescale_particles` may be used.
 
 ..
