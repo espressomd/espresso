@@ -58,6 +58,7 @@
 
 #include <profiler/profiler.hpp>
 #include <utils/constants.hpp>
+#include "stokesian_dynamics/sd_interface.hpp"
 
 #include <cmath>
 #include <cstdio>
@@ -452,8 +453,15 @@ void propagate_vel_finalize_p_inst() {
                       friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
         } else
 #endif
-          /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
-          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+        {
+#ifdef STOKESIAN_DYNAMICS
+          if (!(thermo_switch & THERMO_SD))
+#endif // STOKESIAN_DYNAMICS
+          {
+            /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
+            p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+          }
+        }
 #ifdef EXTERNAL_FORCES
       }
 #endif
@@ -614,8 +622,15 @@ void propagate_vel() {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
         } else
 #endif
-          /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
-          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+        {
+#ifdef STOKESIAN_DYNAMICS
+          if (!(thermo_switch & THERMO_SD))
+#endif // STOKESIAN_DYNAMICS
+          {
+            /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
+            p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+          }
+        }
       }
 
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
@@ -647,9 +662,14 @@ void propagate_pos() {
         if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
         {
-          /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-           * v(t+0.5*dt) */
-          p.r.p[j] += time_step * p.m.v[j];
+#ifdef STOKESIAN_DYNAMICS
+          if (!(thermo_switch & THERMO_SD))
+#endif // STOKESIAN_DYNAMICS
+          {
+            /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
+             * v(t+0.5*dt) */
+            p.r.p[j] += time_step * p.m.v[j];
+          }
         }
       }
       /* Verlet criterion check */
@@ -667,6 +687,10 @@ void propagate_vel_pos() {
   db_maxf_id = db_maxv_id = -1;
 #endif
 
+#ifdef STOKESIAN_DYNAMICS
+  propagate_vel_pos_sd();
+#endif // STOKESIAN_DYNAMICS
+
   for (auto &p : local_cells.particles()) {
 #ifdef ROTATION
     propagate_omega_quat_particle(&p);
@@ -682,12 +706,17 @@ void propagate_vel_pos() {
       if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
       {
-        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
-        p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+#ifdef STOKESIAN_DYNAMICS
+        if (!(thermo_switch & THERMO_SD))
+#endif // STOKESIAN_DYNAMICS
+        {
+          /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
+          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 
-        /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-         * v(t+0.5*dt) */
-        p.r.p[j] += time_step * p.m.v[j];
+          /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
+           * v(t+0.5*dt) */
+          p.r.p[j] += time_step * p.m.v[j];
+        }
       }
     }
 
