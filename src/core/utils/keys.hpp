@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -20,28 +20,28 @@
 #ifndef UTILS_KEYS_HPP
 #define UTILS_KEYS_HPP
 
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 namespace Utils {
-  /**
-   * @brief Return the keys of a map type.
-   *
-   * Returns a vector of copies of the keys
-   * of a map, unordered_map, ...
-   */
-  template <typename Map>
-  auto keys(Map const &m) -> std::vector<typename Map::key_type> {
-    using value_type = typename Map::value_type;
-    using std::begin;
-    using std::end;
+/**
+ * @brief Return the keys of a map type.
+ *
+ * Returns a vector of copies of the keys
+ * of a map, unordered_map, ...
+ */
+template <typename Map>
+auto keys(Map const &m) -> std::vector<typename Map::key_type> {
+  using value_type = typename Map::value_type;
+  using std::begin;
+  using std::end;
 
-    std::vector<typename Map::key_type> ret(m.size());
+  std::vector<typename Map::key_type> ret(m.size());
 
-    std::transform(begin(m), end(m), ret.begin(),
-                   [](value_type const &kv) { return kv.first; });
-    return ret;
-  }
+  std::transform(begin(m), end(m), ret.begin(),
+                 [](value_type const &kv) { return kv.first; });
+  return ret;
 }
+} // namespace Utils
 
 #endif

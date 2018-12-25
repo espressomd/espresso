@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -19,13 +19,13 @@
 #ifndef _ACTOR_ACTORLIST_HPP
 #define _ACTOR_ACTORLIST_HPP
 
-#include <vector>
 #include "Actor.hpp"
+#include <vector>
 
-class ActorList : public std::vector<Actor*> {
+class ActorList : public std::vector<Actor *> {
 public:
-	void add(Actor *actor);
-	void remove(Actor *actor);
+  void add(Actor *actor);
+  void remove(Actor *actor);
 };
 
 #endif /* ACTORLIST_HPP_ */

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -20,43 +20,16 @@
 #ifndef OBSERVABLES_CYLINDRICALLBFLUXDENSITYPROFILEATPARTICLEPOSITIONS_HPP
 #define OBSERVABLES_CYLINDRICALLBFLUXDENSITYPROFILEATPARTICLEPOSITIONS_HPP
 
-#include "CylindricalProfileObservable.hpp"
+#include "CylindricalPidProfileObservable.hpp"
 #include "partCfg_global.hpp"
 #include "utils/Histogram.hpp"
 
 namespace Observables {
 class CylindricalLBFluxDensityProfileAtParticlePositions
-    : public CylindricalProfileObservable {
+    : public CylindricalPidProfileObservable {
 public:
-  virtual std::vector<double> operator()(PartCfg &partCfg) const override;
-  virtual int n_values() const override {
-    return 3 * n_r_bins * n_phi_bins * n_z_bins;
-  }
-
-private:
-  virtual void do_write() override {
-    // We override the implementation to actually write positions not plain
-    // indices.
-    static const int len_dims[4] = {n_r_bins, n_phi_bins, n_z_bins, 3};
-    static const int n_dims = 4;
-    static const std::array<double, 3> bin_sizes = {
-        {r_bin_size(), phi_bin_size(), z_bin_size()}};
-    std::array<double, 3> position;
-    int index;
-    int unravelled_index[4];
-    std::vector<double> tmp = operator()(partCfg());
-    for (auto it = tmp.begin(); it != tmp.end(); it += 3) {
-      index = std::distance(tmp.begin(), it);
-      ::Utils::unravel_index(len_dims, n_dims, index, unravelled_index);
-      position = {
-          {(static_cast<double>(unravelled_index[0]) + 0.5) * bin_sizes[0],
-           (static_cast<double>(unravelled_index[1]) + 0.5) * bin_sizes[1],
-           (static_cast<double>(unravelled_index[2]) + 0.5) * bin_sizes[2]}};
-      m_ofile << position[0] << " " << position[1] << " " << position[2] << " "
-              << *it << " " << *(it + 1) << " " << *(it + 2) << "\n";
-    }
-    m_ofile << std::endl;
-  }
+  std::vector<double> operator()(PartCfg &partCfg) const override;
+  int n_values() const override { return 3 * n_r_bins * n_phi_bins * n_z_bins; }
 };
 
 } // Namespace Observables

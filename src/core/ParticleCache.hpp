@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef CORE_PARTICLE_CACHE_HPP
 #define CORE_PARTICLE_CACHE_HPP
 
@@ -29,8 +47,8 @@
 
 namespace detail {
 /**
-* @brief Compare particles by id.
-*/
+ * @brief Compare particles by id.
+ */
 class IdCompare {
 public:
   template <typename Particle>
@@ -54,7 +72,7 @@ template <typename Container, typename Compare> class Merge {
   Compare m_comp;
 
 public:
-  Merge(Compare &&comp = Compare{}) : m_comp(comp) {}
+  explicit Merge(Compare &&comp = Compare{}) : m_comp(comp) {}
   Container operator()(Container const &a, Container const &b) const {
     Container ret;
     ret.reserve(a.size() + b.size());
@@ -91,7 +109,7 @@ public:
     return ret;
   }
 };
-}
+} // namespace detail
 
 /* Mark merge as commutative with all containers */
 namespace boost {
@@ -99,37 +117,37 @@ namespace mpi {
 template <typename Container>
 struct is_commutative<::detail::Merge<Container, ::detail::IdCompare>,
                       Container> : public boost::mpl::true_ {};
-}
-}
+} // namespace mpi
+} // namespace boost
 
 /**
-* @brief Particle cache on the master.
-*
-* This class implements cached access to all particles in a
-* particle range on the master node.
-* This implementation fetches all particles to
-* the master on first access. Updates of the particle data are
-* triggered automatically on access. The data in the cache
-* is invalidated automatically on_particle_change, and then
-* updated on the next access.
-* By default the particles do not have valid bond information
-* on them. If bonds are needed, update_bonds() has to be called
-* explicitly to update the bond cache.
-*
-* To update the cache particles are sorted by id on the nodes,
-* and the sorted arrays a merged in a reduction tree, until the
-* master node recives a complete and sorted particle array.
-*
-* This class can be customized by running a unary opration on
-* the particles. This op is run on all the nodes. It can be used
-* e.g. to fold or unfold the coordinates on the fly.
-*
-* To iterate over the particles using the iterators is more
-* efficient than using operator[].
-*
-* All functions in the public interface can only be called on
-* the master node.
-*/
+ * @brief Particle cache on the master.
+ *
+ * This class implements cached access to all particles in a
+ * particle range on the master node.
+ * This implementation fetches all particles to
+ * the master on first access. Updates of the particle data are
+ * triggered automatically on access. The data in the cache
+ * is invalidated automatically on_particle_change, and then
+ * updated on the next access.
+ * By default the particles do not have valid bond information
+ * on them. If bonds are needed, update_bonds() has to be called
+ * explicitly to update the bond cache.
+ *
+ * To update the cache particles are sorted by id on the nodes,
+ * and the sorted arrays a merged in a reduction tree, until the
+ * master node receives a complete and sorted particle array.
+ *
+ * This class can be customized by running a unary operation on
+ * the particles. This op is run on all the nodes. It can be used
+ * e.g. to fold or unfold the coordinates on the fly.
+ *
+ * To iterate over the particles using the iterators is more
+ * efficient than using operator[].
+ *
+ * All functions in the public interface can only be called on
+ * the master node.
+ */
 template <typename GetParticles, typename UnaryOp = Utils::NoOp,
           typename Range = typename std::remove_reference<decltype(
               std::declval<GetParticles>()())>::type,
@@ -209,7 +227,7 @@ class ParticleCache {
    *
    * This gets a new particle range, packs
    * the particles into a buffer and then
-   * merges these buffers hierachicaly to the
+   * merges these buffers hierarchically to the
    * master node
    */
   void m_update() {
@@ -242,6 +260,7 @@ class ParticleCache {
 
 public:
   using value_iterator = typename map_type::const_iterator;
+  using value_type = Particle;
 
   ParticleCache() = delete;
   ParticleCache(Communication::MpiCallbacks &cb, GetParticles parts,
@@ -366,9 +385,9 @@ public:
   }
 
   /** Number of particles in the config.
-    *
-    * Complexity: O(1)
-  */
+   *
+   * Complexity: O(1)
+   */
   size_t size() {
     assert(m_cb.comm().rank() == 0);
 

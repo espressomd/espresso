@@ -9,7 +9,6 @@ cdef class Actor(object):
                        MagnetostaticInteraction=False,
                        MagnetostaticExtension=False,
                        HydrodynamicInteraction=False,
-                       ElectrostaticExtensions=False,
                        Scafacos=False)
 
     # __getstate__ and __setstate__ define the pickle interaction
@@ -24,7 +23,6 @@ cdef class Actor(object):
     def __init__(self, *args, **kwargs):
         self._isactive = False
         self._params = self.default_params()
-        self.system = None
 
         # Check if all required keys are given
         for k in self.required_keys():
@@ -97,7 +95,7 @@ cdef class Actor(object):
                         "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
 
         self._params.update(p)
-        # vaidate updated parameters
+        # validate updated parameters
         self.validate_params()
         # Put in values given by the user
         if self.is_active():
@@ -163,11 +161,16 @@ cdef class Actor(object):
 
 
 class Actors(object):
-
     active_actors = []
 
-    def __init__(self, _system=None):
-        self.system = _system
+    def __getstate__(self):
+        return self.active_actors
+
+    def __setstate__(self, active_actors):
+        self.active_actors[:] = []
+        for a in active_actors:
+            self.active_actors.append(a)
+            a._activate()
 
     def add(self, actor):
         """
@@ -177,8 +180,7 @@ class Actors(object):
 
         """
         if not actor in Actors.active_actors:
-            actor.system = self.system
-            Actors.active_actors.append(actor)
+            self.active_actors.append(actor)
             actor._activate()
         else:
             raise ThereCanOnlyBeOne(actor)
@@ -190,22 +192,21 @@ class Actors(object):
         actor : instance of :class:`espressomd.actors.Actor`
 
         """
-        self._remove_actor(actor)
-
-    def _remove_actor(self, actor):
-        """
-        Parameters
-        ----------
-        actor : instance of :class:`espressomd.actors.Actor`
-
-        """
         if not actor in self.active_actors:
             raise Exception("Actor is not active")
         actor._deactivate()
         self.active_actors.remove(actor)
 
+    def clear(self):
+        """
+        Remove all actors.
+
+        """
+        for a in self.active_actors:
+            self.remove(a)
+
     def __str__(self):
-        return "Active Actors: "+Actors.active_actors.__str__()
+        return str(self.active_actors)
 
     def __getitem__(self, key):
         return self.active_actors[key]
@@ -219,4 +220,4 @@ class Actors(object):
 
     def __delitem__(self, idx):
         actor = self[idx]
-        self._remove_actor(actor)
+        self.remove(actor)

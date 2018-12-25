@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -21,19 +21,19 @@
 #ifndef SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP
 #define SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP
 
-#include "Accumulator.hpp"
+#include "AccumulatorBase.hpp"
 #include "ScriptInterface.hpp"
 #include "ScriptObjectRegistry.hpp"
 #include "core/accumulators.hpp"
 
 namespace ScriptInterface {
 namespace Accumulators {
-class AutoUpdateAccumulators : public ScriptObjectRegistry<Accumulator> {
-  void add_in_core(std::shared_ptr<Accumulator> obj_ptr) override {
+class AutoUpdateAccumulators : public ScriptObjectRegistry<AccumulatorBase> {
+  void add_in_core(std::shared_ptr<AccumulatorBase> obj_ptr) override {
     ::Accumulators::auto_update_accumulators.push_back(obj_ptr->accumulator());
   }
 
-  void remove_in_core(std::shared_ptr<Accumulator> obj_ptr) override {
+  void remove_in_core(std::shared_ptr<AccumulatorBase> obj_ptr) override {
     auto it = std::find(::Accumulators::auto_update_accumulators.begin(),
                         ::Accumulators::auto_update_accumulators.end(),
                         obj_ptr->accumulator());

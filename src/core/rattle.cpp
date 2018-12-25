@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -20,21 +20,26 @@
 */
 
 #include "rattle.hpp"
-#include "domain_decomposition.hpp"
+
+int n_rigidbonds = 0;
+
+#ifdef BOND_CONSTRAINT
+
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "cells.hpp"
+#include "communication.hpp"
+#include "errorhandling.hpp"
 #include "global.hpp"
+#include "grid.hpp"
 #include "integrate.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "interaction_data.hpp"
 
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
-
-int n_rigidbonds = 0;
-
-#ifdef BOND_CONSTRAINT
 
 /** \name Private functions */
 /************************************************************/
@@ -49,7 +54,7 @@ void compute_pos_corr_vec(int *repeat_);
 void app_pos_correction();
 
 /** Transfers temporarily the current forces from f.f[3] of the \ref Particle
-    structure to r.p_old[3] location and also intializes velocity correction
+    structure to r.p_old[3] location and also initializes velocity correction
     vector. Invoked from \ref correct_vel_shake()*/
 void transfer_force_init_vel();
 
@@ -89,7 +94,7 @@ void save_old_pos() {
 }
 
 /**Initialize the correction vector. The correction vector is stored in f.f of
- * particle strcuture. */
+ * particle structure. */
 void init_correction_vector() {
   auto reset_force = [](Particle &p) {
     for (int j = 0; j < 3; j++)
@@ -303,8 +308,9 @@ void correct_vel_shake() {
   }
 
   if (cnt >= SHAKE_MAX_ITERATIONS) {
-    fprintf(stderr, "%d: VEL CORRECTIONS IN RATTLE failed to converge after %d "
-                    "iterations !!\n",
+    fprintf(stderr,
+            "%d: VEL CORRECTIONS IN RATTLE failed to converge after %d "
+            "iterations !!\n",
             this_node, cnt);
     errexit();
   }
@@ -323,7 +329,7 @@ int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol) {
 
   bonded_ia_params[bond_type].p.rigid_bond.d2 = d * d;
   bonded_ia_params[bond_type].p.rigid_bond.p_tol = 2.0 * p_tol;
-  bonded_ia_params[bond_type].p.rigid_bond.v_tol = v_tol * time_step;
+  bonded_ia_params[bond_type].p.rigid_bond.v_tol = v_tol;
   bonded_ia_params[bond_type].type = BONDED_IA_RIGID_BOND;
   bonded_ia_params[bond_type].num = 1;
   n_rigidbonds += 1;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -22,9 +22,9 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_ACTIVE_VIRTUAL_SITES_HANDLE_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_ACTIVE_VIRTUAL_SITES_HANDLE_HPP
 
-#include "config.hpp"
-#include "auto_parameters/AutoParameters.hpp"
 #include "VirtualSites.hpp"
+#include "auto_parameters/AutoParameters.hpp"
+#include "config.hpp"
 #include "core/virtual_sites.hpp"
 #include "errorhandling.hpp"
 
@@ -33,23 +33,27 @@
 namespace ScriptInterface {
 namespace VirtualSites {
 
-class ActiveVirtualSitesHandle : public AutoParameters<ActiveVirtualSitesHandle> {
+class ActiveVirtualSitesHandle
+    : public AutoParameters<ActiveVirtualSitesHandle> {
 public:
   ActiveVirtualSitesHandle() {
-      add_parameters({
-          {"implementation", 
+    add_parameters({{"implementation",
                      [this](Variant const &value) {
                        m_active_implementation =
                            get_value<std::shared_ptr<VirtualSites>>(value);
-                       ::set_virtual_sites(m_active_implementation->virtual_sites());
+                       ::set_virtual_sites(
+                           m_active_implementation->virtual_sites());
                      },
                      [this]() {
-                       return (this->m_active_implementation != nullptr) ? this->m_active_implementation->id() : ObjectId();
+                       return (this->m_active_implementation != nullptr)
+                                  ? this->m_active_implementation->id()
+                                  : ObjectId();
                      }}});
-         }
-  private:
-    std::shared_ptr<VirtualSites> m_active_implementation;
- };
+  }
+
+private:
+  std::shared_ptr<VirtualSites> m_active_implementation;
+};
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
 #endif

@@ -20,7 +20,7 @@ idea what this acronym stands for). Instead of defining the summation
 order, one multiplies each summand by a continuous factor
 :math:`c(\beta,r_{ij},n_{klm})` such that the sum is absolutely
 convergent for :math:`\beta>0`, but :math:`c(0,.,.)=1`. The energy is
-then defined as the limit :math:`\beta\rightarrow 0` of the sum, i. e.
+then defined as the limit :math:`\beta\rightarrow 0` of the sum, i.e.
 :math:`\beta` is an artificial convergence parameter. For a convergence
 factor of :math:`e^{-\beta n_{klm}^2}` the limit is the same as the spherical
 limit, and one can derive the classical Ewald method quite conveniently through
@@ -37,8 +37,8 @@ one has to use a different convergence factor, namely
    q_iq_j\phi_\beta(x_{ij}, y_{ij},z_{ij}).
 
 :math:`\phi_\beta` is given by
-:math:` \phi_\beta(x,y,z)=\,\tilde\phi_\beta(x,y,z)
-+ \frac{e^{-\beta r}}{r} ` for :math:`(x,y,z)\neq 0` and
+:math:`\phi_\beta(x,y,z)=\,\tilde\phi_\beta(x,y,z)
++ \frac{e^{-\beta r}}{r}` for :math:`(x,y,z)\neq 0` and
 :math:`\phi_\beta(0,0,0)=\,\tilde\phi_\beta(0,0,0)`, where
 
 .. math::
@@ -80,9 +80,9 @@ transform the potential along both x and y. We obtain the far formula as
        - 1\right)} e^{2\pi i u_y q y}e^{2\pi i u_x p x} + 2\pi u_x
    u_y\left(u_z z^2 - z + \frac{\lambda_z}{6}\right).
 
-where :math:`\lambda_{x,y,z}` are the box dimensions, :math:` f_{pq} =\,
-\sqrt{(u_x p)^2 + (u_y q)^2},\quad f_p =\, u_x p,\quad f_q =\, u_x q
-`, :math:` \omega_p=2\pi u_x p` and :math:`\omega_q=2\pi u_y q`. The
+where :math:`\lambda_{x,y,z}` are the box dimensions, :math:`f_{pq} =\,
+\sqrt{(u_x p)^2 + (u_y q)^2},\quad f_p =\, u_x p,\quad f_q =\, u_x q`,
+:math:`\omega_p=2\pi u_x p` and :math:`\omega_q=2\pi u_y q`. The
 advantage of this formula is that it allows for a product decomposition
 into components of the particles. For example
 
@@ -97,7 +97,7 @@ together, which can be done in :math:`O(N)` computation time. As can be
 seen easily, the convergence of the series is excellent as long as z is
 sufficiently large. By symmetry one can choose the coordinate with the
 largest distance as z to optimize the convergence. Similar to the Lekner
-sum, we need a different formula if all coordinates are small, i. e. for
+sum, we need a different formula if all coordinates are small, i.e. for
 particles close to each other. For sufficiently small :math:`u_y\rho`
 and :math:`u_xx` we obtain the near formula as
 
@@ -116,7 +116,7 @@ and :math:`u_xx` we obtain the near formula as
      2\log(4\pi). \end{array}
 
 Note that this time we calculate :math:`\tilde{\phi}` instead of
-:math:`\phi`, i. e. we omit the contribution of the primary simulation
+:math:`\phi`, i.e. we omit the contribution of the primary simulation
 box. This is very convenient as it includes the case of self energy and
 makes :math:`\tilde{\phi}` a smooth function. To obtain :math:`\phi` one
 has to add the :math:`1/r` contribution of the primary box. The self
@@ -136,7 +136,7 @@ argument does not hold.
 
 To obtain the :math:`O(N\log N)` scaling, some algorithm tricks are
 needed, which are not used in MMM1D, MMM2D or ELC and are therefore not
-discussed here. For details, see :cite:`strebel99a`. 
+discussed here. For details, see :cite:`strebel99a`.
 
 .. _MMM2D theory:
 
@@ -191,11 +191,11 @@ The implementation of the near formula is relatively straight forward
 and can be treated as any short ranged force is treated using the link
 cell algorithm, here in the layered variant. The special functions in
 the formula are somewhat demanding, but for the polygamma functions
-Taylor series can be achieved, which are implemented in mmm-common.h.
+Taylor series can be achieved, which are implemented in :file:`mmm-common.h`.
 The Bessel functions are calculated using a Chebychev series.
 
 The treatment of the far formula is algorithmically more complicated.
-For a particle i in layer :math:` S_i`, the formula can product
+For a particle i in layer :math:`S_i`, the formula can product
 decomposed, as in
 
 .. math::
@@ -378,8 +378,8 @@ ELC theory
 The ELC method differs from the other MMM algorithms in that it is not
 an algorithm for the calculation of the electrostatic interaction, but
 rather represents a correction term which allows to use any method for
-threedimensionally periodic systems with spherical summation order for
-twodimensional periodicity. The basic idea is to expand the two
+three-dimensionally periodic systems with spherical summation order for
+two-dimensional periodicity. The basic idea is to expand the two
 dimensional slab system of height h in the non-periodic z-coordinate to
 a system with periodicity in all three dimensions, with a period of
 :math:`\lambda_z>h`, which leaves an empty gap of height
@@ -391,7 +391,7 @@ charge neutral, the additional image layers (those layers above or below
 the original slab system) are charge neutral, too. Now let us consider
 the n-th image layer which has an offset of :math:`n\lambda_z` to the
 original layer. If :math:`n\lambda_z` is large enough, each particle of
-charge q\_j at position :math:`(x_j,y_j,z_j+n\lambda_z)` and its
+charge :math:`q\_j` at position :math:`(x_j,y_j,z_j+n\lambda_z)` and its
 replicas in the xy-plane can be viewed as constituting a homogeneous
 charged sheet of charge density
 :math:`\sigma_j = \frac{q_j}{\lambda_x\lambda_y}`. The potential of such
@@ -419,13 +419,13 @@ distance :math:`n\lambda_z` from the central layer.
 However, in a naive implementation, even large gap sizes will result in
 large errors. This is due to the order of summation for the standard
 Ewald sum, which is spherical, while the above approach orders the cells
-in layers, called slab–wise summation. Smith has shown that by adding to
+in layers, called slab-wise summation. Smith has shown that by adding to
 the Ewald energy the term
 
 .. math:: E_c=2\pi M_z^2 - \frac{2\pi M^2}{3},
 
 where M is the total dipole moment, one obtains the result of a
-slab–wise summation instead of the spherical limit
+slab-wise summation instead of the spherical limit
 :cite:`smith81a`. Although this is a major change in the
 summation order, the difference is a very simple term. In fact, Smith
 shows that changes of the summation order always result in a difference
@@ -476,7 +476,7 @@ estimates is of little importance here, for details see
 One important aspect is that the error estimates are also exponential in
 the non-periodic coordinate. Since the number of close by and far away
 particles is different for particles near the border and in the center
-of the system, the error distribution is highly non–homogeneous. This is
+of the system, the error distribution is highly non-homogeneous. This is
 unproblematic as long as the maximal error is really much smaller than
 the thermal energy. However, one cannot interpret the error simply as an
 additional error source.
@@ -499,11 +499,11 @@ computationally cheap.
     -------------------------------------------
 
     In this chapter, we want to give a more thorough introduction to the
-    MEMD (or “Maggs”) algorithm for the calculation of Coulomb interactions
+    MEMD (or "Maggs") algorithm for the calculation of Coulomb interactions
     that is implemented in |es|. For an even more detailed description, we refer
     to the publications :cite:`maggs02a,pasichnyk04a`. The method is intimately
-    related to the Car–Parrinello approach, while being equivalent to solving
-    Maxwell’s equations with freely adjustable speed of light.
+    related to the Car--Parrinello approach, while being equivalent to solving
+    Maxwell's equations with freely adjustable speed of light.
 
     .. _Equations of motion:
 
@@ -523,7 +523,7 @@ computationally cheap.
          \dot{\vec p}_i & = & - \frac{\partial U}{\partial \vec r_i} + q_i \vec E (\vec r_i)- \frac{\zeta}{m_i} \vec p_i
                                + \vec f_i \\
          \dot{\vec A} & = & - \vec E \\
-         \dot{\vec E} & = & 
+         \dot{\vec E} & = &
          c^2 \vec \nabla \times \left( \vec \nabla \times \vec A \right)
          - \frac{1}{\epsilon_0} \vec j ,\end{aligned}
 
@@ -568,7 +568,7 @@ computationally cheap.
 
     In the implementation of the algorithm we assume that particles with
     masses :math:`m_i` and charges :math:`q_i` live in the continuum
-    (off–lattice approach). The charges are interpolated on the lattice with
+    (off-lattice approach). The charges are interpolated on the lattice with
     grid spacing :math:`a` using a linear interpolation scheme.
 
     .. _Initialization of the algorithm:
@@ -579,8 +579,8 @@ computationally cheap.
     The algorithm as it is implemented only calculates step-wise time updates
     of the exact field solution. Therefore in order to start the simulation
     for the given random distribution of charges we have to calculate the
-    initial electrostatic field, i. e. the exact solution of the
-    electrostatic problem. We find a particular solution of Gauss’ law as
+    initial electrostatic field, i.e. the exact solution of the
+    electrostatic problem. We find a particular solution of Gauss' law as
     the result of the following recursive procedure (see
     Fig. [fig:maggs-initialization]):
 
@@ -611,14 +611,14 @@ computationally cheap.
 
        .. math:: E_x^2=E_x^1+\frac{q_\text{vertex}}{\epsilon_0a^2}
 
-    This scheme is repeated until the fields are completely relaxed (i. e.
+    This scheme is repeated until the fields are completely relaxed (i.e.
     the energy is minimized). During repetition, the spatial dimensions are
     permutated to avoid a drift in one direction.
 
     .. figure:: figures/maggs-initial-scheme.pdf
-       :alt: Recursive solution of Gauss’ law
+       :alt: Recursive solution of Gauss' law
 
-       Recursive solution of Gauss’ law
+       Recursive solution of Gauss' law
 
     .. _Time integrator:
 
@@ -627,7 +627,7 @@ computationally cheap.
 
     For the time discretization we have adopted the elegant solution which
     was found by Rottler and Maggs :cite:`maggs02a` and allows
-    to conserve *both* time–reversibility and phase–space volume
+    to conserve *both* time-reversibility and phase-space volume
     conservation:
 
     #. Update the particle momenta by half a time step.
@@ -666,17 +666,17 @@ computationally cheap.
 
     #. Update the particle momenta by half a time step.
 
-    .. _Self–energy:
+    .. _Self-energy:
 
-    Self–energy
+    Self-energy
     ~~~~~~~~~~~
 
     The interpolation of the charges onto the lattice gives rise to the
     artificial force exerted on the particle by its own field. In order to
-    cure this remedy, the direct subtraction of the self–energy is
+    cure this remedy, the direct subtraction of the self-energy is
     introduced.
 
-    For the interpolated charge cloud the self–energy can be directly
+    For the interpolated charge cloud the self-energy can be directly
     calculated. For the simple cubic lattice in three dimensions the linear
     interpolation will give 8 charges which are placed at the corners of the
     cube with edge length :math:`a` (see Fig. [fig:charge-assignment]).
@@ -763,263 +763,4 @@ computationally cheap.
     But, if you have dense systems with more than 1000 charges or
     simulations that run for many timesteps, this method is definitely an
     option.
-
-
-.. _Reaction Ensemble:
-
-Reaction Ensemble
------------------
-
-.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
-
-The reaction ensemble :cite:`smith94a,turner2008simulation` allows to simulate
-chemical reactions which can be represented by the general equation:
-
-.. math::
-
-   \mathrm{\nu_1 S_1 +\ \dots\  \nu_l S_l\ \rightleftharpoons\ \nu_m S_m +\ \dots\ \nu_z S_z }
-       \label{general-eq}
-
-where :math:`\nu_i` is the stoichiometric coefficient of species
-:math:`S_i`. By convention, stoichiometric coefficients of the
-species on the left-hand side of the reaction (*reactants*) attain
-negative values, and those on the right-hand side (*products*) attain
-positive values, so that the reaction can be equivalently written as
-
-.. math::
-
-   \mathrm{\sum_i \nu_i S_i = 0} \,.
-       \label{general-eq-sum}
-
-
-The equilibrium constant of the reaction is then given as
-
-.. math::
-
-   K = \exp(-\Delta_{\mathrm{r}}G^{\ominus} / k_B T)
-       \quad\text{with}\quad
-       \Delta_{\mathrm{r}}G^{\ominus} = \sum_i \nu_i \mu_i^{\ominus}\,.
-       \label{Keq}
-
-
-Here :math:`k_B` is the Boltzmann constant, :math:`T` is temperature,
-:math:`\Delta_{\mathrm{r}}G^{\ominus}` standard Gibbs free energy change
-of the reaction, and :math:`\mu_i^{\ominus}` the standard chemical
-potential (per particle) of species :math:`i`. Note that thermodynamic equilibrium is
-independent of the direction in which we write the reaction. If it is
-written with left and right-hand side swapped, 
-both :math:`\Delta_{\mathrm{r}}G^{\ominus}` and the stoichiometric
-coefficients attain opposite signs, and the equilibrium constant attains the inverse value. 
-Further, note that the equilibrium constant :math:`K` is the
-dimensionless *thermodynamic, concentration-based* equilibrium constant,
-defined as
-
-.. math::
-
-   K(c^{\ominus}) = (c^{\ominus})^{-\bar\nu} \prod_i (c_i)^{\nu_i}
-
-where :math:`\bar\nu=\sum_i \nu_i`, and :math:`c^{\ominus}` is the reference concentration,
-at which the standard chemical potential :math:`\Delta_{\mathrm{r}}G^{\ominus}` was determined.
-In practice, this constant is often used with the dimension of :math:`(c^{\ominus})^{\bar\nu}`
-
-.. math::
-
-   K_c(c^{\ominus}) = K(c^{\ominus})\times (c^{\ominus})^{\bar\nu}
-
-A simulation in
-the reaction ensemble consists of two types of moves: the *reaction move*
-and the *configuration move*. The configuration move changes the configuration
-of the system. It is not performed by the Reaction Ensemble module, and can be
-performed by a suitable molecular dynamics or a Monte Carlo scheme. The
-``reactant_ensemble`` command takes care only of the reaction moves.
-In the *forward* reaction, the appropriate number of reactants (given by
-:math:`\nu_i`) is removed from the system, and the concomitant number of
-products is inserted into the system. In the *backward* reaction,
-reactants and products exchange their roles. The acceptance probability
-:math:`P^{\xi}` for move from state :math:`o` to :math:`n` reaction
-ensemble is given by the criterion :cite:`smith94a`
-
-.. math::
-
-   P^{\xi} = \text{min}\biggl(1,V^{\bar\nu\xi}\Gamma^{\xi}e^{-\beta\Delta E}\prod_{i=1}\frac{N_i^0!}{(N_i^0+\nu_{i}\xi)!}
-       \label{eq:Pacc}
-       \biggr),
-
-where :math:`\Delta E=E_\mathrm{new}-E_\mathrm{old}` is the change in potential energy,
-:math:`V` is the simulation box volume,
-and :math:`\beta=1/k_\mathrm{B}T`. 
-The extent of reaction, :math:`\xi=1` for the forward, and
-:math:`\xi=-1` for the backward direction. 
-The parameter :math:`\Gamma` proportional to the reaction constant. It is defined as
-
-.. math::
-
-   \Gamma = \prod_i \Bigl(\frac{\left<N_i\right>}{V} \Bigr)^{\bar\nu} = V^{-\bar\nu} \prod_i \left<N_i\right>^{\nu_i} = K_c(c^{\ominus}=1/\sigma^3)
-
-where :math:`\left<N_i\right>/V` is the average number density of particles of type :math:`i`.
-Note that the dimension of :math:`\Gamma` is :math:`V^{\bar\nu}`, therefore its
-units must be consistent with the units in which Espresso measures the box volume,
-i.e. :math:`\sigma^3`.
-   
-It is often convenient, and in some cases even necessary, that some particles
-representing reactants are not removed from or placed at randomly in the system
-but their identity is changed to that of the products, or vice versa in the
-backward direction.  A typical example is the ionization reaction of weak
-polyelectrolytes, where the ionizable groups on the polymer have to remain on
-the polymer chain after the reaction.  The replacement rule is that the identity of a given reactant type is
-changed to the corresponding product type as long as the corresponding
-coefficients allow for it.  Corresponding means having the same position (index) in
-the python lists of reactants and products which are used to set up the
-reaction.
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`
-
-.. _Converting tabulated reaction constants to internal units in Espresso:
-
-Converting tabulated reaction constants to internal units in Espresso 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The implementation in Espresso requires that the dimension of :math:`\Gamma` 
-is consistent with the internal unit of volume, :math:`\sigma^3`.
-The tabulated values of equilibrium constants for reactions in solution, :math:`K_c`, typically use
-:math:`c^{\ominus} = 1\,\mathrm{moldm^{-3}}` as the reference concentration, 
-and have the dimension of :math:`(c^{\ominus})^{\bar\nu}`.  To be used with Espresso, the
-value of :math:`K_c` has to be converted as
-
-.. math::
-
-   \Gamma = K_c(c^{\ominus} = 1/\sigma^3) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) 
-   \Bigl( N_{\mathrm{A}}\bigl(\frac{\sigma}{\mathrm{dm}}\bigr)^3\Bigr)^{\bar\nu}
-   
-where :math:`N_{\mathrm{A}}` is the Avogardo number.  For gas-phase reactions,
-the pressure-based reaction constant, :math:`K_p` is often used, which can
-be converted to :math:`K_c` as
-
-.. math::
-
-   K_p(p^{\ominus}=1\,\mathrm{atm}) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) \biggl(\frac{c^{\ominus}RT}{p^{\ominus}}\biggr)^{\bar\nu},
-
-where :math:`p^{\ominus}=1\,\mathrm{atm}` is the standard pressure. 
-
-
-
-.. The text below is commented-out because it is still an open research question how it should be used correctly.
-..
-.. This can be used to include water autoprotolysis in the implicit solvent simulation, 
-.. by means of a reaction:
-.. 
-.. .. math::
-.. 
-..    \mathrm{2 H_2O \rightleftharpoons\ H_3O^+ + OH^- } \,,
-.. 
-.. 
-.. add the following ex nihilo reactions to Espresso. (:math:`\emptyset`, read ex
-.. nihilo). Ex nihilo means that the reaction has no reactants or products.
-.. Therefore, if :math:`\emptyset` is a product, particles vanish and if
-.. :math:`\emptyset` is an reactant, then particles are created ex nihilo:
-.. 
-.. .. math::
-.. 
-..    \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- }  \,, 
-.. 
-.. with reaction constant K
-.. 
-.. .. math::
-.. 
-..    \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,, 
-.. 
-.. with reaction constant 1/K. K is given implicitly as a function of the apparent dissociation
-.. constant :math:`K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}` such that the dimensionless is
-.. :math:`K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}` with
-.. :math:`\overline{\nu}=2` for the dissociation reaction and where x is
-.. the value of the apparent dissociation constant that is converted from
-.. :math:`\rm{mol^2/l^2}` to a number density in :math:`1/(\sigma^3)^2`,
-.. where :math:`\sigma` is the simulation length unit. If :math:`\beta` and
-.. :math:`P^0` are provided in simulation units this will make :math:`K`
-.. dimensionless. As a test for the autodissociation of water a big
-.. simulation box can be set up and the autodissociation reaction can be
-.. performed. Then the box should fill with the correct number of protons
-.. and hydroxide ions (check for the number of protons and hydroxide ions
-.. in the given simulation volume and compare this to the expected value at
-.. pH 7). Further the :math:`pK_w=14` should be reproduced -also in the
-.. case of an initial excess of acid or base in the simulation box. Note
-.. that this only works for big enough volumes.
-
-
-.. _Wang-Landau Reaction Ensemble:
-
-Wang-Landau Reaction Ensemble
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
-
-Combination of the Reaction Ensemble with the Wang-Landau algorithm 
-:cite:`wang01a`
-allows for enhanced sampling of the reacting system, and
-and for the determination of the density of states with respect 
-to the reaction coordinate or with respect to some other collective
-variable :cite:`landsgesell16a`. Here the 1/t Wang-Landau
-algorithm :cite:`belardinelli07a` is implemented since it
-does not suffer from systematic errors. Additionally to the above
-commands for the reaction ensemble use the following commands for the
-Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
-
-.. _Constant pH simulation using the Reaction Ensemble:
-
-Constant pH simulation using the Reaction Ensemble
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
-
-In the constant pH method due to Reed and Reed
-:cite:`reed92a` it is possible to set the chemical potential
-of :math:`H^{+}` ions, assuming that the simulated system is coupled to an
-infinite reservoir. This value is the used to simulate dissociation
-equilibrium of acids and bases. Under certain conditions, the constant
-pH method can yield equivalent results as the reaction ensemble :cite:`landsgesell16b`. However, it
-treats the chemical potential of :math:`H^{+}` ions and their actual
-number in the simulation box as independent variables, which can lead to
-serious artifacts. 
-The constant pH method can be used within the reaction ensemble module by
-initializing the reactions with the standard commands of the reaction ensemble. 
-
-The dissociation constant, which is the input of the constant pH method, is the equilibrium
-constant :math:`K_c` for the following reaction:
-
-.. math::
-
-   \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
-
-For an example of how to setup
-a Constant pH simulation, see the file in the testsuite directory. 
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
-
-.. _Grand canonical ensemble simulation using the Reaction Ensemble:
-
-Grand canonical ensemble simulation using the Reaction Ensemble
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-As a special case, all stoichiometric coefficients on one side of the chemical
-reaction can be set to zero.  Such reaction creates particles *ex nihilo*, and 
-is equivalent to exchange with a reservoir. Then the simulation in the reaction ensemble becomes equivalent with the
-grandcanonical simulation. Formally, this can be expressed by the reaction
-
-.. math::
- 
-    \mathrm{\emptyset \rightleftharpoons\ \nu_A A  }  \,, 
-
-where, if :math:`\nu_A=1`, the reaction constant :math:`\Gamma` defines the chemical potential of species A.
-However, if :math:`\nu_A\neq 1`, the statistics of the reaction ensemble becomes
-equivalent to the grandcanonical only in the limit of large average number of species A in the box.
-It the reaction contains more than one product, then the reaction constant
-:math:`\Gamma` defines only the sum of their chemical potentials but not the
-chemical potential of each product alone.
-
-.. Since the Reaction Ensemble acceptance transition probability can be
-.. derived from the grand canonical acceptance transition probability we
-.. can use the reaction ensemble to implement grand canonical simulation
-.. moves. This is done via adding reactions that only have reactants (for the
-.. deletion of particles) or only have products (for the creation of
-.. particles). There exists a one to one mapping of the expressions in the
-.. grand canonical transition probabilities and the expressions in the
-.. reaction ensemble transition probabilities.
 

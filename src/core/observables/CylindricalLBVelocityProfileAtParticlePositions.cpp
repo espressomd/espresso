@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -18,22 +18,23 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
-#include "lbgpu.hpp"
+#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbgpu.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
+#include "utils/coordinate_transformation.hpp"
 
 namespace Observables {
 
 std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::
 operator()(PartCfg &partCfg) const {
   std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
-                              static_cast<size_t>(n_phi_bins),
-                              static_cast<size_t>(n_z_bins)}};
+                                static_cast<size_t>(n_phi_bins),
+                                static_cast<size_t>(n_z_bins)}};
   std::array<std::pair<double, double>, 3> limits{
       {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
        std::make_pair(min_z, max_z)}};
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
-#ifdef LB_GPU
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
   std::vector<::Vector<3, double>> folded_positions;
@@ -49,8 +50,22 @@ operator()(PartCfg &partCfg) const {
     ppos[3 * ind + 2] = (*it)[2];
   }
   std::vector<double> velocities(3 * ids().size());
-  lb_lbfluid_get_interpolated_velocity_at_positions(
-      ppos.data(), velocities.data(), ids().size());
+  if (lattice_switch & LATTICE_LB_GPU) {
+#if defined(LB_GPU)
+    lb_lbfluid_get_interpolated_velocity_at_positions(
+        ppos.data(), velocities.data(), ids().size());
+#endif
+  } else if (lattice_switch & LATTICE_LB) {
+#if defined(LB)
+    for (size_t ind = 0; ind < ppos.size(); ind += 3) {
+      Vector3d pos_tmp = {ppos[ind + 0], ppos[ind + 1], ppos[ind + 2]};
+      lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
+    }
+#endif
+  } else {
+    throw std::runtime_error("Either CPU LB or GPU LB has to be active for "
+                             "this observable to work.");
+  }
   for (auto &p : folded_positions)
     p -= center;
   for (int ind = 0; ind < ids().size(); ++ind) {
@@ -65,14 +80,11 @@ operator()(PartCfg &partCfg) const {
   auto hist_tmp = histogram.get_histogram();
   auto tot_count = histogram.get_tot_count();
   for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
-    if (hist_tmp[ind] > 0.0) {
+    if (tot_count[ind] > 0) {
       hist_tmp[ind] /= tot_count[ind];
     }
   }
   return hist_tmp;
-#endif // LB_GPU
-#ifndef LB_GPU
-  return histogram.get_histogram();
-#endif
 }
+
 } // namespace Observables

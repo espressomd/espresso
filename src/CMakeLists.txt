@@ -1,4 +1,4 @@
-# Copyright (C) 2009,2010,2011,2012,2015,2016 The ESPResSo project
+# Copyright (C) 2009-2018 The ESPResSo project
 # Copyright (C) 2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -21,6 +21,9 @@ cmake_minimum_required(VERSION 2.8)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+if(SCAFACOS)
+  include_directories(${SCAFACOS_INCLUDE_DIRS})
+endif(SCAFACOS)
 
 configure_file(${CMAKE_SOURCE_DIR}/cmake/cmake_config.cmakein
                cmake_config.hpp

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -19,46 +19,50 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file integrate.cpp   Molecular dynamics integrator.
+/** \file
+ *  Molecular dynamics integrator.
  *
  *  For more information about the integrator
  *  see \ref integrate.hpp "integrate.hpp".
-*/
+ */
 
 #include "integrate.hpp"
+#include "accumulators.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
+#include "collision.hpp"
 #include "communication.hpp"
-#include "correlators.hpp"
 #include "domain_decomposition.hpp"
-#include "electrokinetics.hpp"
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
-#include "forces_inline.hpp"
 #include "ghmc.hpp"
 #include "ghosts.hpp"
+#include "global.hpp"
 #include "grid.hpp"
-#include "immersed_boundary/ibm_main.hpp"
-#include "immersed_boundary/ibm_volume_conservation.hpp"
+#include "grid_based_algorithms/electrokinetics.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "initialize.hpp"
-#include "interaction_data.hpp"
 #include "lattice.hpp"
-#include "lb.hpp"
-#include "lees_edwards.hpp"
-#include "maggs.hpp"
 #include "minimize_energy.hpp"
 #include "nemd.hpp"
-#include "accumulators.hpp"
-#include "p3m.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "npt.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
-#include "reaction.hpp"
 #include "rotation.hpp"
+#include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "virtual_sites.hpp"
-#include "npt.hpp"
-#include "collision.hpp"
+
 #include "brownian_inline.hpp"
+#include "collision.hpp"
+#include "forces.hpp"
+#include "immersed_boundaries.hpp"
+#include "npt.hpp"
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -89,22 +93,18 @@ int recalc_forces = 1;
 
 double verlet_reuse = 0.0;
 
-double smaller_time_step = -1.0;
-
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
 int db_maxf_id = 0, db_maxv_id = 0;
 #endif
 
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
-/** Rescale all particle forces with \f[ 0.5 \Delta t^2 \f]. */
-void rescale_forces();
 /** Propagate the velocities. Integration step 1 of the Velocity Verlet
    integrator:<br>
-    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t) \f] */
+    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] */
 void propagate_vel();
 /** Propagate the positions. Integration step 2 of the Velocity
    Verletintegrator:<br>
@@ -112,22 +112,27 @@ void propagate_vel();
 void propagate_pos();
 /** Propagate the velocities and positions. Integration step 1 and 2
     of the Velocity Verlet integrator: <br>
-    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t) \f] <br>
+    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] <br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
 void propagate_vel_pos();
-/** Rescale all particle forces with \f[ 0.5 \Delta t^2 \f] and propagate the
-   velocities.
-    Integration step 4 of the Velocity Verletintegrator:<br>
-    \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t) \f] */
-void rescale_forces_propagate_vel();
+/** Integration step 4 of the Velocity Verletintegrator and finalize
+    instantaneous pressure calculation:<br>
+    \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
+void propagate_vel_finalize_p_inst();
 
 /** Integrator stability check (see compile flag ADDITIONAL_CHECKS). */
 void force_and_velocity_display();
 
 void finalize_p_inst_npt();
 
+#ifdef BROWNIAN_DYNAMICS
 /** Propagate position: random walk part.*/
 void bd_random_walk(Particle &p, double dt);
+/** Propagate velocities: all parts.*/
+void bd_vel_steps(Particle &p, double dt);
+/** Propagate positions: all parts.*/
+void bd_pos_steps(Particle &p, double dt);
+#endif
 
 /*@}*/
 
@@ -194,8 +199,9 @@ void integrate_ensemble_init() {
     nptiso.inv_piston = 1 / (1.0 * nptiso.piston);
     nptiso.p_inst_av = 0.0;
     if (nptiso.dimension == 0) {
-      fprintf(stderr, "%d: INTERNAL ERROR: npt integrator was called but "
-                      "dimension not yet set. this should not happen. ",
+      fprintf(stderr,
+              "%d: INTERNAL ERROR: npt integrator was called but "
+              "dimension not yet set. this should not happen. ",
               this_node);
       errexit();
     }
@@ -221,7 +227,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
   // Here we initialize volume conservation
   // This function checks if the reference volumes have been set and if
   // necessary calculates them
-  IBM_InitVolumeConservation();
+  immersed_boundaries.init_volume_conservation();
 #endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
@@ -249,7 +255,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef LB
     transfer_momentum = 0;
-    if (lattice_switch & LATTICE_LB && this_node == 0)
+    if (lattice_switch & LATTICE_LB && this_node == 0 && n_part)
       runtimeWarning("Recalculating forces, so the LB coupling forces are not "
                      "included in the particle force the first time step. This "
                      "only matters if it happens frequently during "
@@ -257,17 +263,26 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 0;
-    if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
+    if (lattice_switch & LATTICE_LB_GPU && this_node == 0 && n_part)
       runtimeWarning("Recalculating forces, so the LB coupling forces are not "
                      "included in the particle force the first time step. This "
                      "only matters if it happens frequently during "
                      "sampling.\n");
 #endif
 
+    // Communication step: distribute ghost positions
+    cells_update_ghosts();
+
+// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
+#ifdef VIRTUAL_SITES
+    virtual_sites()->update();
+    if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    }
+#endif
     force_calc();
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      rescale_forces();
 #ifdef ROTATION
       convert_initial_torques();
 #endif
@@ -276,7 +291,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     thermo_cool_down();
 
 #ifdef COLLISION_DETECTION
-    handle_collisions();
+    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+      handle_collisions();
+    }
 #endif
   }
 
@@ -312,18 +329,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
-       v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
+       v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
-       NOTE 1: Prefactors do not occur in formulas since we use
-       rescaled forces and velocities.
-       NOTE 2: Depending on the integration method Step 1 and Step 2
+       NOTE: Depending on the integration method Step 1 and Step 2
        cannot be combined for the translation.
     */
     if (integ_switch == INTEG_METHOD_NPT_ISO
 #ifdef NEMD
         || nemd_method != NEMD_METHOD_OFF
 #endif
-        ) {
+    ) {
       propagate_vel();
       propagate_pos();
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
@@ -349,38 +364,41 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-/* Integration Step: Step 3 of Velocity Verlet scheme:
-   Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
-   v(t+0.5*dt) ) */
+    /* Integration Step: Step 3 of Velocity Verlet scheme:
+       Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
+       v(t+0.5*dt) ) */
 
 #ifdef LB
-    transfer_momentum = 1;
+    transfer_momentum = (n_part > 0);
 #endif
 #ifdef LB_GPU
-    transfer_momentum_gpu = 1;
+    transfer_momentum_gpu = (n_part > 0);
 #endif
 
+    // Communication step: distribute ghost positions
+    cells_update_ghosts();
+
+// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
+#ifdef VIRTUAL_SITES
+    virtual_sites()->update();
+    if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    }
+#endif
     force_calc();
 
-// IMMERSED_BOUNDARY
-#ifdef IMMERSED_BOUNDARY
-    // Now the forces are computed and need to go into the LB fluid
-    if (lattice_switch & LATTICE_LB)
-      IBM_ForcesIntoFluid_CPU();
-#ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU)
-      IBM_ForcesIntoFluid_GPU(local_cells.particles());
-#endif
+#ifdef VIRTUAL_SITES
+    virtual_sites()->after_force_calc();
 #endif
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
     integrate_reaction();
 #endif
 
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      rescale_forces_propagate_vel();
+      propagate_vel_finalize_p_inst();
 #ifdef ROTATION
       convert_torques_propagate_omega();
 #endif
@@ -392,59 +410,37 @@ void integrate_vv(int n_steps, int reuse_forces) {
       correct_vel_shake();
     }
 #endif
-// VIRTUAL_SITES update vel
-#ifdef VIRTUAL_SITES
-    if (virtual_sites()->need_ghost_comm_before_vel_update()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
-    virtual_sites()->update(false); // Recalc positions = false
-#endif
 
-// progagate one-step functionalities
+    // propagate one-step functionalities
+
+    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef LB
-    if (lattice_switch & LATTICE_LB)
-      lattice_boltzmann_update();
+      if (lattice_switch & LATTICE_LB)
+        lattice_boltzmann_update();
 
-    if (check_runtime_errors())
-      break;
+      if (check_runtime_errors())
+        break;
 #endif
 
 #ifdef LB_GPU
-    if (this_node == 0) {
+      if (this_node == 0) {
 #ifdef ELECTROKINETICS
-      if (ek_initialized) {
-        ek_integrate();
-      } else {
+        if (ek_initialized) {
+          ek_integrate();
+        } else {
 #endif
-        if (lattice_switch & LATTICE_LB_GPU)
-          lattice_boltzmann_update_gpu();
+          if (lattice_switch & LATTICE_LB_GPU)
+            lattice_boltzmann_update_gpu();
 #ifdef ELECTROKINETICS
+        }
+#endif
       }
-#endif
-    }
 #endif // LB_GPU
 
-// IMMERSED_BOUNDARY
-#ifdef IMMERSED_BOUNDARY
-
-    IBM_UpdateParticlePositions(local_cells.particles());
-// We reset all since otherwise the halo nodes may not be reset
-// NB: the normal Espresso reset is also done after applying the forces
-//    if (lattice_switch & LATTICE_LB) IBM_ResetLBForces_CPU();
-#ifdef LB_GPU
-// if (lattice_switch & LATTICE_LB_GPU) IBM_ResetLBForces_GPU();
+#ifdef VIRTUAL_SITES
+      virtual_sites()->after_lb_propagation();
 #endif
-
-    if (check_runtime_errors())
-      break;
-
-    // Ghost positions are now out-of-date
-    // We should update.
-    // Actually we seem to get the same results whether we do this here or not,
-    // but it is safer to do it
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-
-#endif // IMMERSED_BOUNDARY
+    }
 
 #ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_MAGGS) {
@@ -467,23 +463,26 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       /* Propagate time: t = t+dt */
       sim_time += time_step;
-    }
+
 #ifdef COLLISION_DETECTION
-    handle_collisions();
+      handle_collisions();
 #endif
+    }
+
     if (check_runtime_errors())
       break;
   }
+// VIRTUAL_SITES update vel
+#ifdef VIRTUAL_SITES
+  if (virtual_sites()->need_ghost_comm_before_vel_update()) {
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  }
+  virtual_sites()->update(false); // Recalc positions = false
+#endif
 
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
-
-  /* Steepest descent operatates on unscaled forces,
-     so we have to scale them back now. */
-  if(integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
-    rescale_forces();
-  }
 
   /* verlet list statistics */
   if (n_verlet_updates > 0)
@@ -519,33 +518,10 @@ void rescale_velocities(double scale) {
   }
 }
 
-/* Privat functions */
+/* Private functions */
 /************************************************************/
 
-namespace {
-double calc_scale() { return 0.5 * time_step * time_step; }
-}
-
-void rescale_forces() {
-  auto const scale = calc_scale();
-
-  INTEG_TRACE(fprintf(stderr, "%d: rescale_forces:\n", this_node));
-
-  for (auto &p : local_cells.particles()) {
-    check_particle_force(&p);
-    p.f.f[0] *= scale / p.p.mass;
-    p.f.f[1] *= scale / p.p.mass;
-    p.f.f[2] *= scale / p.p.mass;
-
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
-  }
-}
-
-void rescale_forces_propagate_vel() {
-  auto const scale = calc_scale();
-
+void propagate_vel_finalize_p_inst() {
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
@@ -553,43 +529,33 @@ void rescale_forces_propagate_vel() {
 #endif
 
   INTEG_TRACE(
-      fprintf(stderr, "%d: rescale_forces_propagate_vel:\n", this_node));
+      fprintf(stderr, "%d: propagate_vel_finalize_p_inst:\n", this_node));
 
   for (auto &p : local_cells.particles()) {
-    check_particle_force(&p);
-    /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
-    p.f.f[0] *= scale / p.p.mass;
-    p.f.f[1] *= scale / p.p.mass;
-    p.f.f[2] *= scale / p.p.mass;
-
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
         this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
 #ifdef VIRTUAL_SITES
     // Virtual sites are not propagated during integration
-    if (p.p.isVirtual)
+    if (p.p.is_virtual)
       continue;
 #endif
 #ifdef BROWNIAN_DYNAMICS
-      if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drag_vel(p,0.5 * time_step);
-        bd_random_walk_vel(p,0.5 * time_step);
-      }
+    if (thermo_switch & THERMO_BROWNIAN) {
+      bd_drag_vel(p, 0.5 * time_step);
+      bd_random_walk_vel(p, 0.5 * time_step);
+    }
 #endif // BROWNIAN_DYNAMICS
-      for (int j = 0; j < 3; j++) {
+    for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
 #endif
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-          nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
-#ifdef MULTI_TIMESTEP
-          if (smaller_time_step > 0. && current_time_step_is_small == 1)
-            p.m.v[j] += p.f.f[j];
-          else
-#endif
-            p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+          nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
+          p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] +
+                      friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
         } else
 #endif
         {
@@ -597,8 +563,8 @@ void rescale_forces_propagate_vel() {
           if (!(thermo_switch & THERMO_BROWNIAN))
 #endif // BROWNIAN_DYNAMICS
           {
-            /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-            p.m.v[j] += p.f.f[j];
+            /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
+            p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
           }
         }
 #ifdef EXTERNAL_FORCES
@@ -625,12 +591,7 @@ void finalize_p_inst_npt() {
     nptiso.p_inst = 0.0;
     for (i = 0; i < 3; i++) {
       if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
-#ifdef MULTI_TIMESTEP
-        if (smaller_time_step > 0.)
-          nptiso.p_vel[i] /= Utils::sqr(smaller_time_step);
-        else
-#endif
-          nptiso.p_vel[i] /= Utils::sqr(time_step);
+        nptiso.p_vel[i] /= Utils::sqr(time_step);
         nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
       }
     }
@@ -658,10 +619,7 @@ void propagate_press_box_pos_and_rescale_npt() {
      * vel-rescaling
      */
     if (this_node == 0) {
-#ifdef MULTI_TIMESTEP
-      if (smaller_time_step < 0. || current_time_step_is_small == 0)
-#endif
-        nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
+      nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
       scal[2] = Utils::sqr(box_l[nptiso.non_const_dim]) /
                 pow(nptiso.volume, 2.0 / nptiso.dimension);
       nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
@@ -688,7 +646,7 @@ void propagate_press_box_pos_and_rescale_npt() {
     /* propagate positions while rescaling positions and velocities */
     for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-      if (p.p.isVirtual)
+      if (p.p.is_virtual)
         continue;
 #endif
       for (int j = 0; j < 3; j++) {
@@ -697,12 +655,12 @@ void propagate_press_box_pos_and_rescale_npt() {
 #endif
           if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
             {
-              p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j]);
+              p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j] * time_step);
               p.l.p_old[j] *= scal[1];
               p.m.v[j] *= scal[0];
             }
           } else {
-            p.r.p[j] += p.m.v[j];
+            p.r.p[j] += p.m.v[j] * time_step;
           }
 #ifdef EXTERNAL_FORCES
         }
@@ -748,28 +706,18 @@ void propagate_vel() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef ROTATION
-#ifdef BROWNIAN_DYNAMICS
-  if (!(thermo_switch & THERMO_BROWNIAN))
-#endif // BROWNIAN_DYNAMICS
-  {
     propagate_omega_quat_particle(&p);
-  }
 #endif
 
 // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
-    if (p.p.isVirtual)
+    if (p.p.is_virtual)
       continue;
 #endif
 #ifdef BROWNIAN_DYNAMICS
-    if (thermo_switch & THERMO_BROWNIAN) {
-      bd_drag_vel(p,0.5 * time_step);
-      bd_drag_vel_rot(p,0.5 * time_step);
-      bd_random_walk_vel(p,0.5 * time_step);
-      bd_random_walk_vel_rot(p,0.5 * time_step);
-    }
+    bd_vel_steps(p, 0.5 * time_step);
 #endif // BROWNIAN_DYNAMICS
-      for (int j = 0; j < 3; j++) {
+    for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
@@ -777,13 +725,9 @@ void propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-#ifdef MULTI_TIMESTEP
-          if (smaller_time_step > 0. && current_time_step_is_small == 1)
-            p.m.v[j] += p.f.f[j];
-          else
-#endif
-            p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
-          nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
+          p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass +
+                      friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+          nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
         } else
 #endif
         {
@@ -791,8 +735,8 @@ void propagate_vel() {
           if (!(thermo_switch & THERMO_BROWNIAN))
 #endif // BROWNIAN_DYNAMICS
           {
-            /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-            p.m.v[j] += p.f.f[j];
+            /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
+            p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
           }
         }
 
@@ -825,21 +769,16 @@ void propagate_pos() {
   if (integ_switch == INTEG_METHOD_NPT_ISO)
     /* Special propagator for NPT ISOTROPIC */
     /* Propagate pressure, box_length (2 times) and positions, rescale
-       positions and velocities and check verlet list criterion (only NPT) */
+       positions and velocities and check Verlet list criterion (only NPT) */
     propagate_press_box_pos_and_rescale_npt();
   else {
     for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-      if (p.p.isVirtual)
+      if (p.p.is_virtual)
         continue;
 #endif
 #ifdef BROWNIAN_DYNAMICS
-      if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drag(p, time_step);
-        bd_drag_rot(p, time_step);
-        bd_random_walk(p, time_step);
-        bd_random_walk_rot(p, time_step);
-      }
+      bd_pos_steps(p, time_step);
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -857,7 +796,7 @@ void propagate_pos() {
           {
             /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
              * v(t+0.5*dt) */
-            p.r.p[j] += p.m.v[j];
+            p.r.p[j] += time_step * p.m.v[j];
           }
         }
       }
@@ -879,49 +818,36 @@ void propagate_vel_pos() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef ROTATION
-#ifdef BROWNIAN_DYNAMICS
-      if (!(thermo_switch & THERMO_BROWNIAN))
-#endif // BROWNIAN_DYNAMICS
-      {
-        propagate_omega_quat_particle(&p);
-      }
+    propagate_omega_quat_particle(&p);
 #endif
 
 // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
-    if (p.p.isVirtual)
+    if (p.p.is_virtual)
       continue;
 #endif
 #ifdef BROWNIAN_DYNAMICS
-      if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drag_vel(p,0.5 * time_step);
-        bd_drag_vel_rot(p,0.5 * time_step);
-        bd_random_walk_vel(p,0.5 * time_step);
-        bd_random_walk_vel_rot(p,0.5 * time_step);
-        bd_drag(p, time_step);
-        bd_drag_rot(p, time_step);
-        bd_random_walk(p, time_step);
-        bd_random_walk_rot(p, time_step);
-      }
+    bd_vel_steps(p, 0.5 * time_step);
+    bd_pos_steps(p, time_step);
 #endif // BROWNIAN_DYNAMICS
-      for (int j = 0; j < 3; j++) {
+    for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-        if (!(p.p.ext_flag & COORD_FIXED(j)))
+      if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
-        {
+      {
 #ifdef BROWNIAN_DYNAMICS
-          if (!(thermo_switch & THERMO_BROWNIAN))
+        if (!(thermo_switch & THERMO_BROWNIAN))
 #endif // BROWNIAN_DYNAMICS
-          {
-            /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-            p.m.v[j] += p.f.f[j];
+        {
+          /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
+          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 
-            /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-             * v(t+0.5*dt) */
-            p.r.p[j] += p.m.v[j];
-          }
+          /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
+           * v(t+0.5*dt) */
+          p.r.p[j] += time_step * p.m.v[j];
         }
       }
+    }
 
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
@@ -930,63 +856,13 @@ void propagate_vel_pos() {
                       fprintf(stderr, "%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",
                               this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
 
-#ifdef LEES_EDWARDS
-    /* test for crossing of a y-pbc: requires adjustment of velocity.*/
-    {
-      int b1, delta_box;
-      b1 = (int)floor(p.r.p[1] * box_l_i[1]);
-      if (b1 != 0) {
-        delta_box = b1 - (int)floor((p.r.p[1] - p.m.v[1]) * box_l_i[1]);
-        if (abs(delta_box) > 1) {
-          fprintf(stderr,
-                  "Error! Particle moved more than one box length in 1 step\n");
-          errexit();
-        }
-        p.m.v[0] -= delta_box * lees_edwards_rate;
-        p.r.p[0] -= delta_box * lees_edwards_offset;
-        p.r.p[1] -= delta_box * box_l[1];
-        p.l.i[1] += delta_box;
-        while (p.r.p[1] > box_l[1]) {
-          p.r.p[1] -= box_l[1];
-          p.l.i[1]++;
-        }
-        while (p.r.p[1] < 0.0) {
-          p.r.p[1] += box_l[1];
-          p.l.i[1]--;
-        }
-        set_resort_particles(Cells::RESORT_LOCAL);
-      }
-      /* Branch prediction on most systems should mean there is minimal cost
-       * here */
-      while (p.r.p[0] > box_l[0]) {
-        p.r.p[0] -= box_l[0];
-        p.l.i[0]++;
-      }
-      while (p.r.p[0] < 0.0) {
-        p.r.p[0] += box_l[0];
-        p.l.i[0]--;
-      }
-      while (p.r.p[2] > box_l[2]) {
-        p.r.p[2] -= box_l[2];
-        p.l.i[2]++;
-      }
-      while (p.r.p[2] < 0.0) {
-        p.r.p[2] += box_l[2];
-        p.l.i[2]--;
-      }
-    }
-#endif
-
     /* Verlet criterion check*/
-    if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) + Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
+    if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
+            Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
             Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
         skin2)
       set_resort_particles(Cells::RESORT_LOCAL);
   }
-
-#ifdef LEES_EDWARDS /* would be nice to be more refined about this */
-  set_resort_particles(Cells::RESORT_GLOBAL);
-#endif
 
   announce_resort_particles();
 
@@ -1010,7 +886,7 @@ void force_and_velocity_display() {
 #endif
 }
 
-/** @TODO: This needs to go!! */
+/** @todo This needs to go!! */
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   int reuse_forces = 0;
@@ -1042,8 +918,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   }
 
   /* perform integration */
-  if (!Correlators::auto_update_enabled() &&
-      !Accumulators::auto_update_enabled()) {
+  if (!Accumulators::auto_update_enabled()) {
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
   } else {
@@ -1051,7 +926,6 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       if (mpi_integrate(1, reuse_forces))
         return ES_ERROR;
       reuse_forces = 1;
-      Correlators::auto_update();
       Accumulators::auto_update();
     }
     if (n_steps == 0) {
@@ -1159,6 +1033,38 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 }
 
 #ifdef BROWNIAN_DYNAMICS
+/** Propagate the velocities: all parts.*/
+/*********************************************************/
+/** \name bd_vel_steps */
+/*********************************************************/
+/**
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_vel_steps(Particle &p, double dt) {
+  if (thermo_switch & THERMO_BROWNIAN) {
+    bd_drag_vel(p, dt);
+    bd_drag_vel_rot(p, dt);
+    bd_random_walk_vel(p, dt);
+    bd_random_walk_vel_rot(p, dt);
+  }
+}
+/** Propagate the positions: all parts.*/
+/*********************************************************/
+/** \name bd_pos_steps */
+/*********************************************************/
+/**
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_pos_steps(Particle &p, double dt) {
+  if (thermo_switch & THERMO_BROWNIAN) {
+    bd_drag(p, dt);
+    bd_drag_rot(p, dt);
+    bd_random_walk(p, dt);
+    bd_random_walk_rot(p, dt);
+  }
+}
 /** Propagate the positions: random walk part.*/
 /*********************************************************/
 /** \name bd_drag_vel */
@@ -1168,9 +1074,10 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
  * @param dt              Time interval (Input)
  */
 void bd_random_walk(Particle &p, double dt) {
-  // Position dispersion is defined by the second eq. (14.38) of Schlick2010 taking into account eq. (14.35).
-  // Its time interval factor will be added at the end of this function.
-  // Its square root is the standard deviation. A multiplicative inverse of the position standard deviation:
+  // Position dispersion is defined by the second eq. (14.38) of Schlick2010
+  // taking into account eq. (14.35). Its time interval factor will be added at
+  // the end of this function. Its square root is the standard deviation. A
+  // multiplicative inverse of the position standard deviation:
   extern Thermostat::GammaType brown_sigma_pos_inv;
   // Just a NAN setter, technical variable:
   extern Thermostat::GammaType brown_gammatype_nan;
@@ -1181,30 +1088,37 @@ void bd_random_walk(Particle &p, double dt) {
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 2.0;
 
-  if(p.p.gamma >= Thermostat::GammaType{}) {
+  if (p.p.gamma >= Thermostat::GammaType{}) {
     // Is a particle-specific temperature also specified?
-    if(p.p.T >= 0.)
-    {
+    if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
-        brown_sigma_pos_temp_inv = sqrt(p.p.gamma / (langevin_temp_coeff * p.p.T));
+        brown_sigma_pos_temp_inv =
+            sqrt(p.p.gamma / (langevin_temp_coeff * p.p.T));
       } else {
-        brown_sigma_pos_temp_inv = brown_gammatype_nan; // just an indication of the infinity
+        brown_sigma_pos_temp_inv =
+            brown_gammatype_nan; // just an indication of the infinity
       }
     } else
-    // Default temperature but particle-specific gamma
-      brown_sigma_pos_temp_inv = sqrt(p.p.gamma / (langevin_temp_coeff * temperature));
+        // Default temperature but particle-specific gamma
+        if (temperature > 0.0) {
+      brown_sigma_pos_temp_inv =
+          sqrt(p.p.gamma / (langevin_temp_coeff * temperature));
+    } else {
+      brown_sigma_pos_temp_inv = brown_gammatype_nan;
+    }
   } // particle specific gamma
-  else
-  {
+  else {
     // No particle-specific gamma, but is there particle-specific temperature
-    if(p.p.T >= 0.) {
-      if(p.p.T > 0.0) {
-        brown_sigma_pos_temp_inv = sqrt(langevin_gamma / (langevin_temp_coeff * p.p.T));
+    if (p.p.T >= 0.) {
+      if (p.p.T > 0.0) {
+        brown_sigma_pos_temp_inv =
+            sqrt(langevin_gamma / (langevin_temp_coeff * p.p.T));
       } else {
-        brown_sigma_pos_temp_inv = brown_gammatype_nan; // just an indication of the infinity
+        brown_sigma_pos_temp_inv =
+            brown_gammatype_nan; // just an indication of the infinity
       }
     } else {
-    // Defaut values for both
+      // Defaut values for both
       brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
     }
   }
@@ -1214,15 +1128,16 @@ void bd_random_walk(Particle &p, double dt) {
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
-  aniso_flag = (brown_sigma_pos_temp_inv[0] != brown_sigma_pos_temp_inv[1])
-      || (brown_sigma_pos_temp_inv[1] != brown_sigma_pos_temp_inv[2]);
+  aniso_flag = (brown_sigma_pos_temp_inv[0] != brown_sigma_pos_temp_inv[1]) ||
+               (brown_sigma_pos_temp_inv[1] != brown_sigma_pos_temp_inv[2]);
 #endif
 
 #ifdef PARTICLE_ANISOTROPY
-  double delta_pos_body[3] = { 0.0, 0.0, 0.0 }, delta_pos_lab[3] = { 0.0, 0.0, 0.0 };
+  Vector3d delta_pos_body, delta_pos_lab;
 #endif
 
-  // Eq. (14.37) is factored by the Gaussian noise (12.22) with its squared magnitude defined in the second eq. (14.38), Schlick2010.
+  // Eq. (14.37) is factored by the Gaussian noise (12.22) with its squared
+  // magnitude defined in the second eq. (14.38), Schlick2010.
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -1230,13 +1145,15 @@ void bd_random_walk(Particle &p, double dt) {
     {
 #ifndef PARTICLE_ANISOTROPY
       if (brown_sigma_pos_temp_inv > 0.0) {
-        delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt) * Thermostat::noise_g();
+        delta_pos_body[j] =
+            (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt) * Thermostat::noise_g();
       } else {
         delta_pos_body[j] = 0.0;
       }
 #else
       if (brown_sigma_pos_temp_inv[j] > 0.0) {
-        delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt) * Thermostat::noise_g();
+        delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt) *
+                            Thermostat::noise_g();
       } else {
         delta_pos_body[j] = 0.0;
       }
@@ -1245,7 +1162,7 @@ void bd_random_walk(Particle &p, double dt) {
   }
 
   if (aniso_flag) {
-    convert_vec_body_to_space(&(p), delta_pos_body, delta_pos_lab);
+    delta_pos_lab = convert_vector_body_to_space(p, delta_pos_body);
   }
 
   for (int j = 0; j < 3; j++) {
@@ -1253,7 +1170,7 @@ void bd_random_walk(Particle &p, double dt) {
     if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-        p.r.p[j] += aniso_flag ? delta_pos_lab[j] : delta_pos_body[j];
+      p.r.p[j] += aniso_flag ? delta_pos_lab[j] : delta_pos_body[j];
     }
   }
 }

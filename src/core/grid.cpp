@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -18,18 +18,18 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file grid.cpp   Domain decomposition for parallel computing.
+/** \file
+ *  Domain decomposition for parallel computing.
  *
  *  For more information on the domain decomposition,
- *  see \ref grid.hpp "grid.h".
-*/
+ *  see \ref grid.hpp "grid.hpp".
+ */
 
-#include "debug.hpp"
 #include "grid.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "global.hpp"
-#include "interaction_data.hpp"
 #include "utils.hpp"
 #include <cmath>
 #include <cstdio>
@@ -50,14 +50,7 @@
 
 int node_grid[3] = {0, 0, 0};
 int node_pos[3] = {-1, -1, -1};
-#ifdef LEES_EDWARDS
-int *node_neighbors;
-int *node_neighbor_wrap;
-int *node_neighbor_lr;
-int my_neighbor_count;
-#else
 int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
-#endif
 int boundary[6] = {0, 0, 0, 0, 0, 0};
 int periodic = 7;
 
@@ -102,42 +95,13 @@ int map_position_node_array(double pos[3]) {
 int calc_node_neighbors(int node) {
 
   int dir, neighbor_count;
-#ifdef LEES_EDWARDS
-  node_neighbors = Utils::realloc(node_neighbors, 6 * sizeof(int));
-  node_neighbor_lr = Utils::realloc(node_neighbor_lr, 6 * sizeof(int));
-  node_neighbor_wrap =
-      Utils::realloc(node_neighbor_wrap, 6 * sizeof(int));
-#endif
 
   map_node_array(node, node_pos);
   for (dir = 0; dir < 3; dir++) {
     int buf;
 
-#ifndef LEES_EDWARDS
-
     MPI_Cart_shift(comm_cart, dir, -1, &buf, &(node_neighbors[2 * dir]));
     MPI_Cart_shift(comm_cart, dir, 1, &buf, &(node_neighbors[2 * dir + 1]));
-
-#else
-
-    /* Writes to node_neighbors[] the integer rank of that neighbor
-     * ... the 'buf' stores own rank, which is discarded. */
-    if (node_pos[dir] % 2 == 0) {
-      MPI_Cart_shift(comm_cart, dir, -1, &buf, &(node_neighbors[2 * dir]));
-      MPI_Cart_shift(comm_cart, dir, 1, &buf, &(node_neighbors[2 * dir + 1]));
-
-      node_neighbor_lr[2 * dir] = 0;
-      node_neighbor_lr[2 * dir + 1] = 1;
-
-    } else {
-      MPI_Cart_shift(comm_cart, dir, 1, &buf, &(node_neighbors[2 * dir]));
-      MPI_Cart_shift(comm_cart, dir, -1, &buf, &(node_neighbors[2 * dir + 1]));
-
-      node_neighbor_lr[2 * dir] = 1;
-      node_neighbor_lr[2 * dir + 1] = 0;
-    }
-
-#endif
 
     /* left boundary ? */
     if (node_pos[dir] == 0) {
@@ -154,98 +118,9 @@ int calc_node_neighbors(int node) {
   }
 
   neighbor_count = 6;
-#ifdef LEES_EDWARDS
-  if (boundary[2] == 1 || boundary[3] == -1) {
-
-    int x_index, abs_coords[3];
-
-    abs_coords[2] = node_pos[2]; /* z constant */
-
-    if ((boundary[2] == 1 && boundary[3] != -1) ||
-        (boundary[3] == -1 && boundary[2] != 1)) {
-      node_neighbors = Utils::realloc(
-          node_neighbors, (neighbor_count + node_grid[0] - 1) * sizeof(int));
-      node_neighbor_lr = Utils::realloc(
-          node_neighbor_lr, (neighbor_count + node_grid[0] - 1) * sizeof(int));
-      node_neighbor_wrap = Utils::realloc(
-          node_neighbor_wrap,
-          (neighbor_count + node_grid[0] - 1) * sizeof(int));
-    } else if (boundary[3] == -1 && boundary[2] == 1) {
-      node_neighbors = Utils::realloc(
-          node_neighbors,
-          (neighbor_count + 2 * node_grid[0] - 2) * sizeof(int));
-      node_neighbor_lr = Utils::realloc(
-          node_neighbor_lr,
-          (neighbor_count + 2 * node_grid[0] - 2) * sizeof(int));
-      node_neighbor_wrap = Utils::realloc(
-          node_neighbor_wrap,
-          (neighbor_count + 2 * node_grid[0] - 2) * sizeof(int));
-    }
-
-    for (x_index = 0; x_index < node_grid[0]; x_index++) {
-      if (x_index != node_pos[0]) {
-        abs_coords[0] = x_index;
-        if (x_index > node_pos[0]) {
-          if (boundary[2] == 1) {
-            abs_coords[1] = node_grid[1] - 1; /* wraps to upper y */
-            node_neighbors[neighbor_count] = map_array_node(abs_coords);
-            node_neighbor_lr[neighbor_count] = 0;
-            neighbor_count++;
-          }
-          if (boundary[3] == -1) {
-            abs_coords[1] = 0; /* wraps to lower y */
-            node_neighbors[neighbor_count] = map_array_node(abs_coords);
-            node_neighbor_lr[neighbor_count] = 1;
-            neighbor_count++;
-          }
-        } else {
-          if (boundary[3] == -1) {
-            abs_coords[1] = 0; /* wraps to lower y */
-            node_neighbors[neighbor_count] = map_array_node(abs_coords);
-            node_neighbor_lr[neighbor_count] = 1;
-            neighbor_count++;
-          }
-          if (boundary[2] == 1) {
-            abs_coords[1] = node_grid[1] - 1; /* wraps to upper y */
-            node_neighbors[neighbor_count] = map_array_node(abs_coords);
-            node_neighbor_lr[neighbor_count] = 0;
-            neighbor_count++;
-          }
-        }
-      }
-    }
-  }
-#else
   GRID_TRACE(printf("%d: node_grid %d %d %d, pos %d %d %d, node_neighbors ",
                     this_node, node_grid[0], node_grid[1], node_grid[2],
                     node_pos[0], node_pos[1], node_pos[2]));
-#endif
-
-#ifdef LEES_EDWARDS
-  my_neighbor_count = neighbor_count; /* set the global neighbor count */
-  for (neighbor_count = 0; neighbor_count < my_neighbor_count;
-       neighbor_count++) {
-
-    if (neighbor_count < 6)
-      dir = neighbor_count / 2;
-    else
-      dir = 1;
-
-    if (boundary[2 * dir] == 1 && node_neighbor_lr[neighbor_count] == 0) {
-      node_neighbor_wrap[neighbor_count] = 1;
-    } else if (boundary[2 * dir + 1] == -1 &&
-               node_neighbor_lr[neighbor_count] == 1) {
-      node_neighbor_wrap[neighbor_count] = -1;
-    } else {
-      node_neighbor_wrap[neighbor_count] = 0;
-    }
-  }
-  GRID_TRACE(for (dir = 0; dir < my_neighbor_count; dir++) {
-    fprintf(stderr, "%d: neighbour %d -->  %d lr: %i wrap: %i\n", this_node,
-            dir, node_neighbors[dir], node_neighbor_lr[dir],
-            node_neighbor_wrap[dir]);
-  });
-#endif
 
   return (neighbor_count);
 }
@@ -271,8 +146,9 @@ void grid_changed_box_l() {
 #ifdef GRID_DEBUG
   fprintf(stderr, "%d: local_box_l = (%.3f, %.3f, %.3f)\n", this_node,
           local_box_l[0], local_box_l[1], local_box_l[2]);
-  fprintf(stderr, "%d: coordinates: x in [%.3f, %.3f], y in [%.3f, %.3f], z in "
-                  "[%.3f, %.3f]\n",
+  fprintf(stderr,
+          "%d: coordinates: x in [%.3f, %.3f], y in [%.3f, %.3f], z in "
+          "[%.3f, %.3f]\n",
           this_node, my_left[0], my_right[0], my_left[1], my_right[1],
           my_left[2], my_right[2]);
 #endif
@@ -282,7 +158,7 @@ void grid_changed_n_nodes() {
   GRID_TRACE(fprintf(stderr, "%d: grid_changed_n_nodes:\n", this_node));
 
   mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
-                           {{ 1, 1, 1}});
+                           {{1, 1, 1}});
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 

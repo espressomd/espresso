@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -18,7 +18,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef ESPRESSO_SCRIPTINTERFACE_ACCUMULATORS_INITIALIZE_HPP
 #define ESPRESSO_SCRIPTINTERFACE_ACCUMULATORS_INITIALIZE_HPP
 namespace ScriptInterface {
@@ -28,4 +27,4 @@ void initialize();
 
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */
-#endif //ESPRESSO_SCRIPTINTERFACE_ACCUMULATORS_INITIALIZE_HPP
+#endif // ESPRESSO_SCRIPTINTERFACE_ACCUMULATORS_INITIALIZE_HPP

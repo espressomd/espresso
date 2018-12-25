@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -20,10 +20,13 @@
 */
 
 #include "minimize_energy.hpp"
+#include "cells.hpp"
+#include "communication.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
+
 #include <algorithm>
 #include <limits>
 
@@ -71,7 +74,7 @@ bool steepest_descent_step(void) {
 #endif
 #ifdef VIRTUAL_SITES
         // Skip positional increments of virtual particles
-        if (!p.p.isVirtual)
+        if (!p.p.is_virtual)
 #endif
         {
           // Square of force on particle
@@ -113,7 +116,7 @@ bool steepest_descent_step(void) {
         l = sgn(l) * params->max_displacement;
 
       // Rotate the particle around axis dq by amount l
-      rotate_particle(&(p), dq, l);
+      local_rotate_particle(&(p), dq, l);
     }
 #endif
 

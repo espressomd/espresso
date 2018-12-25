@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file polymer.cpp
+/** \file
     This file contains everything needed to create a start-up configuration
     of (partially charged) polymer chains with counterions and salt molecules,
-    assigning velocities to the particles and crosslinking the polymers if
+    assigning velocities to the particles and cross-linking the polymers if
    necessary.
 
     The corresponding header file is polymer.hpp.
@@ -33,6 +33,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "PartCfg.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
@@ -40,8 +42,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
-#include "PartCfg.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
 #include "utils.hpp"
@@ -51,7 +51,7 @@
  * ---------                                                 *
  *************************************************************/
 
-int mindist3(PartCfg & partCfg, int part_id, double r_catch, int *ids) {
+int mindist3(PartCfg &partCfg, int part_id, double r_catch, int *ids) {
   int caught = 0;
 
   auto const r_catch2 = r_catch * r_catch;
@@ -67,7 +67,7 @@ int mindist3(PartCfg & partCfg, int part_id, double r_catch, int *ids) {
   return caught;
 }
 
-double mindist4(PartCfg & partCfg, double pos[3]) {
+double mindist4(PartCfg &partCfg, double pos[3]) {
   if (partCfg.size() == 0) {
     return std::min(std::min(box_l[0], box_l[1]), box_l[2]);
   }
@@ -96,20 +96,20 @@ double buf_mindist4(double pos[3], int n_add, double *add) {
     dy -= dround(dy / box_l[1]) * box_l[1];
     dz = pos[2] - add[3 * i + 2];
     dz -= dround(dz / box_l[2]) * box_l[2];
-    mindist = std::min(mindist, Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
+    mindist =
+        std::min(mindist, Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
   }
   if (mindist < 30000.0)
     return (sqrt(mindist));
   return (-1.0);
 }
 
-int collision(PartCfg & partCfg, double pos[3], double shield, int n_add, double *add) {
+int collision(PartCfg &partCfg, double pos[3], double shield, int n_add,
+              double *add) {
   if (mindist4(partCfg, pos) > shield && buf_mindist4(pos, n_add, add) > shield)
     return (0);
   return (1);
 }
-
-#ifdef CONSTRAINTS
 
 int constraint_collision(double *p1, double *p2) {
   Particle part1, part2;
@@ -138,12 +138,11 @@ int constraint_collision(double *p1, double *p2) {
   return 0;
 }
 
-#endif
-
-int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_id, double *posed,
-             int mode, double shield, int max_try, double val_cM, int cM_dist,
-             int type_nM, int type_cM, int type_bond, double angle,
-             double angle2, double *posed2, int constr) {
+int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
+             int part_id, double *posed, int mode, double shield, int max_try,
+             double val_cM, int cM_dist, int type_nM, int type_cM,
+             int type_bond, double angle, double angle2, double *posed2,
+             int constr) {
   int p, n, cnt1, cnt2, max_cnt, bond_size, i;
   double phi, zz, rr;
   double pos[3];
@@ -162,7 +161,8 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
 
   cnt1 = cnt2 = max_cnt = 0;
   for (p = 0; p < N_P; p++) {
-    if (p > 0) posed = nullptr;
+    if (p > 0)
+      posed = nullptr;
 
     for (cnt2 = 0; cnt2 < max_try; cnt2++) {
       /* place start monomer */
@@ -220,25 +220,23 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
           pos[0] = poz[0] + rr * cos(phi);
           pos[1] = poz[1] + rr * sin(phi);
           pos[2] = poz[2] + zz;
-#ifdef CONSTRAINTS
           if (constr == 0 ||
               constraint_collision(pos, poly.data() + 3 * (n - 1)) == 0) {
-#endif
 
-            if (mode == 1 || collision(partCfg, pos, shield, n, poly.data()) == 0)
+            if (mode == 1 ||
+                collision(partCfg, pos, shield, n, poly.data()) == 0)
               break;
             if (mode == 0) {
               cnt1 = -1;
               break;
             }
-#ifdef CONSTRAINTS
           }
-#endif
           POLY_TRACE(printf("m"); fflush(nullptr));
         }
         if (cnt1 >= max_try) {
-          fprintf(stderr, "\nWarning! Attempt #%d to build polymer %d failed "
-                          "while placing monomer 2!\n",
+          fprintf(stderr,
+                  "\nWarning! Attempt #%d to build polymer %d failed "
+                  "while placing monomer 2!\n",
                   cnt2 + 1, p);
           fprintf(stderr, "         Retrying by re-setting the start-monomer "
                           "of current chain...\n");
@@ -329,30 +327,29 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
             pos[2] = poz[2] + zz;
           }
 
-// POLY_TRACE(/* printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f
-// a*c=%f)\n",a[0],a[1],a[2],sqrt(Utils::sqr(a[0])+Utils::sqr(a[1])+Utils::sqr(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(Utils::sqr(M[0]+c[0])+Utils::sqr(M[1]+c[1])+Utils::sqr(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2])
-// */);
-// POLY_TRACE(/* printf("placed Monomer %d at
-// (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
+          // POLY_TRACE(/* printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f)
+          // c=(%f,%f,%f) absMc=%f
+          // a*c=%f)\n",a[0],a[1],a[2],sqrt(Utils::sqr(a[0])+Utils::sqr(a[1])+Utils::sqr(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(Utils::sqr(M[0]+c[0])+Utils::sqr(M[1]+c[1])+Utils::sqr(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2])
+          // */);
+          // POLY_TRACE(/* printf("placed Monomer %d at
+          // (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
 
-#ifdef CONSTRAINTS
           if (constr == 0 ||
               constraint_collision(pos, poly.data() + 3 * (n - 1)) == 0) {
-#endif
-            if (mode == 1 || collision(partCfg, pos, shield, n, poly.data()) == 0)
+            if (mode == 1 ||
+                collision(partCfg, pos, shield, n, poly.data()) == 0)
               break;
             if (mode == 0) {
               cnt1 = -2;
               break;
             }
-#ifdef CONSTRAINTS
           }
-#endif
           POLY_TRACE(printf("m"); fflush(nullptr));
         }
         if (cnt1 >= max_try) {
-          fprintf(stderr, "\nWarning! Attempt #%d to build polymer %d failed "
-                          "after %d unsuccessful trials to place monomer %d!\n",
+          fprintf(stderr,
+                  "\nWarning! Attempt #%d to build polymer %d failed "
+                  "after %d unsuccessful trials to place monomer %d!\n",
                   cnt2 + 1, p, cnt1, n);
           fprintf(stderr, "         Retrying by re-setting the start-monomer "
                           "of current chain...\n");
@@ -413,8 +410,8 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
   return (std::max(max_cnt, cnt2));
 }
 
-int counterionsC(PartCfg & partCfg, int N_CI, int part_id, int mode, double shield, int max_try,
-                 double val_CI, int type_CI) {
+int counterionsC(PartCfg &partCfg, int N_CI, int part_id, int mode,
+                 double shield, int max_try, double val_CI, int type_CI) {
   int n, cnt1, max_cnt;
   double pos[3];
 
@@ -448,13 +445,9 @@ int counterionsC(PartCfg & partCfg, int N_CI, int part_id, int mode, double shie
   return (std::max(max_cnt, cnt1));
 }
 
-
-
-
-
-
-int diamondC(PartCfg & partCfg, double a, double bond_length, int MPC, int N_CI, double val_nodes,
-             double val_cM, double val_CI, int cM_dist, int nonet) {
+int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
+             double val_nodes, double val_cM, double val_CI, int cM_dist,
+             int nonet) {
   int i, j, k, part_id, bond[2], type_bond = 0, type_node = 0, type_cM = 1,
                                  type_nM = 1, type_CI = 2;
   double pos[3], off = bond_length / sqrt(3);
@@ -525,8 +518,8 @@ int diamondC(PartCfg & partCfg, double a, double bond_length, int MPC, int N_CI,
   return (0);
 }
 
-int icosaederC(PartCfg & partCfg, double ico_a, int MPC, int N_CI, double val_cM, double val_CI,
-               int cM_dist) {
+int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
+               double val_CI, int cM_dist) {
   int i, j, k, l, part_id, bond[2], type_bond = 0, type_cM = 0, type_nM = 1,
                                     type_CI = 2;
   double pos[3], pos_shift[3], vec[3], e_vec[3], vec_l,
@@ -568,7 +561,7 @@ int icosaederC(PartCfg & partCfg, double ico_a, int MPC, int N_CI, double val_cM
   else
     shift = ico_g;
 
-  /* create fulleren & soccer-ball */
+  /* create fullerene & soccer-ball */
   part_id = 0;
   for (i = 0; i < 12; i++) {
     for (j = 0; j < 5; j++) {
@@ -583,7 +576,8 @@ int icosaederC(PartCfg & partCfg, double ico_a, int MPC, int N_CI, double val_cM
         for (l = 0; l < 3; l++)
           vec[l] =
               (ico_coord[ico_NN[i][0]][l] - ico_coord[ico_NN[i][4]][l]) / 3.;
-      vec_l = sqrt(Utils::sqr(vec[0]) + Utils::sqr(vec[1]) + Utils::sqr(vec[2]));
+      vec_l =
+          sqrt(Utils::sqr(vec[0]) + Utils::sqr(vec[1]) + Utils::sqr(vec[2]));
       for (l = 0; l < 3; l++)
         e_vec[l] = vec[l] / vec_l;
 
@@ -617,7 +611,8 @@ int icosaederC(PartCfg & partCfg, double ico_a, int MPC, int N_CI, double val_cM
       if (i < ico_NN[i][j]) {
         for (l = 0; l < 3; l++)
           vec[l] = (ico_coord[ico_NN[i][j]][l] - ico_coord[i][l]) / 3.;
-        vec_l = sqrt(Utils::sqr(vec[0]) + Utils::sqr(vec[1]) + Utils::sqr(vec[2]));
+        vec_l =
+            sqrt(Utils::sqr(vec[0]) + Utils::sqr(vec[1]) + Utils::sqr(vec[2]));
         for (l = 0; l < 3; l++)
           e_vec[l] = vec[l] / vec_l;
 

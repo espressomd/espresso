@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -37,7 +37,7 @@ cdef extern from "partCfg_global.hpp":
     PartCfg & partCfg()
 
 cdef extern from "particle_data.hpp":
-    int n_particle_types
+    int max_seen_particle_type
 
 cdef extern from "statistics.hpp":
     cdef void calc_structurefactor(PartCfg &, int * p_types, int n_types, int order, double ** sf)
@@ -56,6 +56,7 @@ cdef extern from "statistics.hpp":
         double * coulomb
         double * dipolar
         double * virtual_sites
+        double * external_fields
 
 cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
@@ -70,8 +71,10 @@ cdef extern from "statistics.hpp":
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
     cdef vector[double] centerofmass(PartCfg &, int part_type)
-    cdef int calc_cylindrical_average(PartCfg &, vector[double] center, vector[double] direction, double length,
-                                      double radius, int bins_axial, int bins_radial, vector[int] types,
+    cdef int calc_cylindrical_average(PartCfg & , vector[double] center,
+                                      vector[double] direction, double length,
+                                      double radius, int bins_axial,
+                                      int bins_radial, vector[int] types,
                                       map[string, vector[vector[vector[double]]]] & distribution)
 
 cdef extern from "pressure.hpp":
@@ -92,12 +95,9 @@ cdef extern from "statistics_chain.hpp":
     int chain_start
     int chain_n_chains
     int chain_length
-    void calc_re(PartCfg&, double ** re)
-    void calc_rg(PartCfg&, double ** rg)
-    void calc_rh(PartCfg&, double ** rh)
-
-cdef extern from "interaction_data.hpp":
-    int n_bonded_ia
+    void calc_re(PartCfg & , double ** re)
+    void calc_rg(PartCfg & , double ** rg)
+    void calc_rh(PartCfg & , double ** rh)
 
 cdef extern from "statistics.hpp":
     void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
@@ -107,9 +107,7 @@ cdef extern from "statistics.hpp":
                      double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
 
     void angularmomentum(PartCfg &, int p_type, double * com)
-    void calc_gyration_tensor(PartCfg &, int p_type, vector[double] gt)
     void momentofinertiamatrix(PartCfg &, int p_type, double * MofImatrix)
-    void analyze_rdfchain(PartCfg &, double r_min, double r_max, int r_bins, double ** f1, double ** f2, double ** f3)
 
 cdef extern from "statistics.hpp":
     int n_part
@@ -118,6 +116,7 @@ cdef extern from "statistics.hpp":
     void analyze_append(PartCfg &)
 
 cdef extern from "statistics.hpp":
-    void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types, int n_p2,
-                                double r_min, double r_max, int r_bins, int log_flag, 
-                                double *low, double *dist)
+    void calc_part_distribution(
+        PartCfg & , int * p1_types, int n_p1, int * p2_types, int n_p2,
+                                double r_min, double r_max, int r_bins, int log_flag,
+                                double * low, double * dist)

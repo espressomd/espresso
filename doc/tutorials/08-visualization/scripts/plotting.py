@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 
 import numpy
@@ -25,6 +41,7 @@ lj_cap = 20
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l, box_l, box_l])
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -62,7 +79,7 @@ for i in range(n_part):
     system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
 system.analysis.dist_to(0)
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 system.cell_system.max_num_cells = 2744
 
 #############################################################
@@ -78,7 +95,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
     i += 1
 
 #   Increase LJ cap
@@ -93,23 +110,25 @@ while (i < warm_n_times and act_min_dist < min_dist):
 lj_cap = 0
 system.force_cap = lj_cap
 
-energies = numpy.empty((int_steps,2))
+energies = numpy.empty((int_steps, 2))
 current_time = -1
 pyplot.xlabel("time")
 pyplot.ylabel("energy")
-plot, = pyplot.plot([0],[0])
+plot, = pyplot.plot([0], [0])
 pyplot.show(block=False)
+
 
 def update_plot():
     if current_time < 0:
         return
     i = current_time
-    plot.set_xdata(energies[:i+1,0])
-    plot.set_ydata(energies[:i+1,1])
-    pyplot.xlim(0, energies[i,0])
-    pyplot.ylim(energies[:i+1,1].min(), energies[:i+1,1].max())
+    plot.set_xdata(energies[:i + 1, 0])
+    plot.set_ydata(energies[:i + 1, 1])
+    pyplot.xlim(0, energies[i, 0])
+    pyplot.ylim(energies[:i + 1, 1].min(), energies[:i + 1, 1].max())
     pyplot.draw()
     pyplot.pause(0.01)
+
 
 def main():
     global current_time
@@ -122,7 +141,7 @@ def main():
 
 main()
 
-print("Average energy: %6g" % energies[:,1].mean())
+print("Average energy: %6g" % energies[:, 1].mean())
 
 # terminate program
 print("\nFinished.")

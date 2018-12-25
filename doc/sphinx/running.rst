@@ -26,7 +26,7 @@ step after setting up, there are no forces present yet. Therefore, |es| has
 to compute them before the first time step. That has two consequences:
 first, random forces are redrawn, resulting in a narrower distribution
 of the random forces, which we compensate by stretching. Second,
-coupling forces of e.g. the Lattice Boltzmann fluid cannot be computed
+coupling forces of e.g. the lattice Boltzmann fluid cannot be computed
 and are therefore lacking in the first half time step. In order to
 minimize these effects, |es| has a quite conservative heuristics to decide
 whether a change makes it necessary to recompute forces before the first
@@ -54,29 +54,16 @@ enforce force recalculation.
 Run steepest descent minimization
 ---------------------------------
 
-In Python the ``minimize_energy`` functionality can be imported from
-:mod:`espressomd.minimize_energy` as class
-:class:`espressomd.minimize_energy.MinimizeEnergy`. Alternatively it
-is already part of the :class:`espressomd.system.System` class object
-and can be called from there (second variant)::
+:func:`espressomd.espresso.thermostat.Thermostat.set_steepest_descent`
 
-    espressomd.minimize_energy.init(
-        f_max = <double>,
-        gamma = <double>,
-        max_steps = <double>,
-        max_displacement = <double>)
-    espressomd.minimize_energy.minimize()
 
-    system.minimize_energy.init(
-        f_max = <double>,
-        gamma = <double>,
-        max_steps = <double>,
-        max_displacement = <double>)
-    system.minimize_energy.minimize()
 
-This command runs a steepest descent energy minimization on the system.
+This feature is used to propagate each particle by a small distance parallel to the force acting on it.
+When only conservative forces for which a potential exists are in use, this is equivalent to a steepest descent energy minimization.
+A common application is removing overlap between randomly placed particles.
+
 Please note that the behavior is undefined if either a thermostat,
-Maggs electrostatics or Lattice-Boltzmann is activated. It runs a simple
+Maggs electrostatics or lattice Boltzmann is activated. It runs a simple
 steepest descent algorithm:
 
 Iterate
@@ -85,13 +72,22 @@ Iterate
 
 while the maximal force is bigger than ``f_max`` or for at most ``max_steps`` times. The energy
 is relaxed by ``gamma``, while the change per coordinate per step is limited to ``max_displacement``.
-The combination of ``gamma`` and ``max_displacement`` can be used to get a poor man’s adaptive update.
+The combination of ``gamma`` and ``max_displacement`` can be used to get a poor man's adaptive update.
 Rotational degrees of freedom are treated similarly: each particle is
 rotated around an axis parallel to the torque acting on the particle.
 Please be aware of the fact that this needs not to converge to a local
 minimum in periodic boundary conditions. Translational and rotational
-coordinates that are fixed using the ``fix`` command or the
-``ROTATION_PER_PARTICLE`` feature are not altered.
+coordinates that are fixed using the ``fix`` and ``rotation`` attribute of particles are not altered.
+
+Usage example::
+
+        system.integrator.set_steepest_descent(
+            f_max=0, gamma=0.1, max_displacement=0.1)
+        system.integrator.run(20)
+        system.integrator.set_vv()  # to switch back to velocity verlet
+
+
+
 
 .. _Multi-timestepping:
 
@@ -121,26 +117,26 @@ simulations, respectively. See :cite:`bereau15` for more details.
 
 Integrating rotational degrees of freedom
 -----------------------------------------
-When the feature ROTATION is compiled in, Particles not only have a position, but also an orientation.
+When the feature ``ROTATION`` is compiled in, Particles not only have a position, but also an orientation.
 Just as a force on a particle leads to an increase in linear velocity, a torque on a particle leads to an increase in angular velocity. The rotational degrees of freedom are also integrated using a velocity Verlet scheme.
 When the Langevin thermostat is enabled, the rotational degrees of freedom are also thermalized.
 
 Whether or not rotational degrees of freedom are propagated, is controlled on a per-particle and per-axis level, where the axes are the Cartesian axes of the particle in its body-fixed frame.
 It is important to note that starting from version 4.0 and unlike in earlier versions of |es|, the particles' rotation is disabled by default.
-In this way, just compiling in the ROTATION feature no longer changes the physics of the system.
+In this way, just compiling in the ``ROTATION`` feature no longer changes the physics of the system.
 
-The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled:::
-    
+The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled::
+
     import espressomd
-    s=espressomd.System()
-    s.part.add(pos=(0,0,0),rotation=(1,0,0))
+    s = espressomd.System()
+    s.part.add(pos=(0, 0, 0), rotation=(1, 0, 0))
 
 Notes:
 
-* The orientation of a particle is stored as a quaternion in the :attr:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide. 
-* The space-frame direction of the particle's z-axis in its body frame is accessible through the `espressomd.particle_data.ParticleHandle.director` property.
-* Any other vector can be converted from body to space fixed frame using the `espressomd.particle_data.ParticleHandle.convert_vector_body_to_space` method.
-* When DIPOLES are compiled in, the particles dipole moment is always co-aligned with the z-axis in the body-fixed frame.
+* The orientation of a particle is stored as a quaternion in the :attr:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide.
+* The space-frame direction of the particle's z-axis in its body frame is accessible through the ``espressomd.particle_data.ParticleHandle.director`` property.
+* Any other vector can be converted from body to space fixed frame using the ``espressomd.particle_data.ParticleHandle.convert_vector_body_to_space`` method.
+* When ``DIPOLES`` are compiled in, the particles dipole moment is always co-aligned with the z-axis in the body-fixed frame.
 * Changing the particles dipole moment and director will re-orient the particle such that its z-axis in space frame is aligned parallel to the given vector. No guarantees are made for the other two axes after setting the director or the dipole moment.
 
 

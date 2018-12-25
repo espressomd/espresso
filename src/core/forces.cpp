@@ -1,6 +1,6 @@
 
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -19,23 +19,24 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file forces.cpp Force calculation.
+/** \file
+ *  Force calculation.
  *
- *  For more information see \ref forces.hpp "forces.h".
-*/
+ *  For more information see \ref forces.hpp "forces.hpp".
+ */
 
 #include "EspressoSystemInterface.hpp"
 
 #include "comfixed_global.hpp"
-#include "electrokinetics.hpp"
-#include "external_potential.hpp"
-#include "forces.hpp"
-#include "forces_inline.hpp"
-#include "iccp3m.hpp"
-#include "maggs.hpp"
-#include "p3m_gpu.hpp"
-#include "partCfg_global.hpp"
+#include "constraints.hpp"
+#include "electrostatics_magnetostatics/icc.hpp"
+#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
+#include "forces_inline.hpp"
+#include "grid_based_algorithms/electrokinetics.hpp"
+#include "grid_based_algorithms/lb.hpp"
+#include "immersed_boundaries.hpp"
 #include "short_range_loop.hpp"
 
 #include <cassert>
@@ -43,8 +44,8 @@
 ActorList forceActors;
 
 void init_forces() {
-/* The force initialization depends on the used thermostat and the
-   thermodynamic ensemble */
+  /* The force initialization depends on the used thermostat and the
+     thermodynamic ensemble */
 
 #ifdef NPT
   /* reset virial part of instantaneous pressure */
@@ -52,7 +53,7 @@ void init_forces() {
     nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
 #endif
 
-  /* initialize forces with langevin thermostat forces
+  /* initialize forces with Langevin thermostat forces
      or zero depending on the thermostat
      set torque to zero for all and rescale quaternions
   */
@@ -66,10 +67,6 @@ void init_forces() {
   for (auto &p : ghost_cells.particles()) {
     init_ghost_force(&p);
   }
-
-#ifdef CONSTRAINTS
-  init_constraint_forces();
-#endif
 }
 
 void init_forces_ghosts() {
@@ -92,18 +89,7 @@ void check_forces() {
 }
 
 void force_calc() {
-  // Communication step: distribute ghost positions
-  cells_update_ghosts();
 
-// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef VIRTUAL_SITES
-  virtual_sites()->update();
-  if (virtual_sites()->need_ghost_comm_after_pos_update()) {
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-  }
-#endif
-
-  
   espressoSystemInterface.update();
 
 #ifdef COLLISION_DETECTION
@@ -121,12 +107,11 @@ void force_calc() {
   // this_node==0 makes sure it is the master node where the gpu exists
   if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu &&
       (this_node == 0))
-    lb_calc_particle_lattice_ia_gpu();
+    lb_calc_particle_lattice_ia_gpu(thermo_virtual);
 #endif // LB_GPU
 
 #ifdef ELECTROSTATICS
-  if (iccp3m_initialized && iccp3m_cfg.set_flag)
-    iccp3m_iteration();
+  iccp3m_iteration();
 #endif
   init_forces();
 
@@ -142,27 +127,32 @@ void force_calc() {
 
   short_range_loop([](Particle &p) { add_single_particle_force(&p); },
                    [](Particle &p1, Particle &p2, Distance &d) {
-                     add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
+                     add_non_bonded_pair_force(&(p1), &(p2), d.vec21.data(),
                                                sqrt(d.dist2), d.dist2);
                    });
 
+  auto local_parts = local_cells.particles();
+  Constraints::constraints.add_forces(local_parts);
+
 #ifdef OIF_GLOBAL_FORCES
-  double area_volume[2]; // There are two global quantities that need to be
-                         // evaluated: object's surface and object's volume. One
-                         // can add another quantity.
-  area_volume[0] = 0.0;
-  area_volume[1] = 0.0;
-  for (int i = 0; i < MAX_OBJECTS_IN_FLUID; i++) {
-    calc_oif_global(area_volume, i);
-    if (fabs(area_volume[0]) < 1e-100 && fabs(area_volume[1]) < 1e-100)
-      break;
-    add_oif_global_forces(area_volume, i);
+  if (max_oif_objects) {
+    double area_volume[2]; // There are two global quantities that need to be
+    // evaluated: object's surface and object's volume. One
+    // can add another quantity.
+    area_volume[0] = 0.0;
+    area_volume[1] = 0.0;
+    for (int i = 0; i < max_oif_objects; i++) {
+      calc_oif_global(area_volume, i);
+      if (fabs(area_volume[0]) < 1e-100 && fabs(area_volume[1]) < 1e-100)
+        break;
+      add_oif_global_forces(area_volume, i);
+    }
   }
 #endif
 
 #ifdef IMMERSED_BOUNDARY
   // Must be done here. Forces need to be ghost-communicated
-  IBM_VolumeConservation();
+  immersed_boundaries.volume_conservation();
 #endif
 
 #ifdef LB
@@ -181,8 +171,7 @@ void force_calc() {
 
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
-  if (virtual_sites()->need_ghost_comm_before_back_transfer())
-  {
+  if (virtual_sites()->need_ghost_comm_before_back_transfer()) {
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
     init_forces_ghosts();
   }
@@ -191,11 +180,6 @@ void force_calc() {
 
   // Communication Step: ghost forces
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
-
-// apply trap forces to trapped molecules
-#ifdef MOLFORCES
-  calc_and_apply_mol_constraints();
-#endif
 
   auto local_particles = local_cells.particles();
   // should be pretty late, since it needs to zero out the total force
@@ -326,23 +310,4 @@ void calc_long_range_forces() {
     break;
   }
 #endif /*ifdef DIPOLES */
-}
-
-void calc_non_bonded_pair_force_from_partcfg(
-    Particle const *p1, Particle const *p2, IA_parameters *ia_params,
-    double d[3], double dist, double dist2, double force[3], double torque1[3],
-    double torque2[3]) {
-  calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, force,
-                                   torque1, torque2);
-}
-
-void calc_non_bonded_pair_force_from_partcfg_simple(Particle const *p1,
-                                                    Particle const *p2,
-                                                    double d[3], double dist,
-                                                    double dist2,
-                                                    double force[3]) {
-  IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
-  double torque1[3] = {0,0,0}, torque2[3] = {0,0,0};
-  calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
-                                          force, torque1, torque2);
 }

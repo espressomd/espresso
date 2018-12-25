@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file energy_inline.hpp
+/** \file
     Implementation of the energy calculation.
 */
 #ifndef ENERGY_INLINE_HPP
@@ -26,62 +26,53 @@
 
 #include "config.hpp"
 
-#include "bmhtf-nacl.hpp"
-#include "buckingham.hpp"
-#include "dihedral.hpp"
-#include "thermalized_bond.hpp"
-#include "fene.hpp"
-#include "gaussian.hpp"
-#include "gb.hpp"
-#include "harmonic.hpp"
-#include "harmonic_dumbbell.hpp"
-#include "hat.hpp"
-#include "hertzian.hpp"
-#include "lj.hpp"
-#include "ljangle.hpp"
-#include "ljcos.hpp"
-#include "ljcos2.hpp"
-#include "ljgen.hpp"
-#include "overlap.hpp"
-#include "p3m-dipolar.hpp"
-#include "p3m.hpp"
-#include "quartic.hpp"
-#include "soft_sphere.hpp"
-#include "statistics.hpp"
-#include "steppot.hpp"
-#include "tab.hpp"
-#include "thole.hpp"
-#include "thermostat.hpp"
-#include "umbrella.hpp"
+#include "bonded_interactions/angle_cosine.hpp"
+#include "bonded_interactions/angle_cossquare.hpp"
+#include "bonded_interactions/angle_dist.hpp"
+#include "bonded_interactions/angle_harmonic.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonded_interactions/bonded_tab.hpp"
+#include "bonded_interactions/dihedral.hpp"
+#include "bonded_interactions/fene.hpp"
+#include "bonded_interactions/harmonic.hpp"
+#include "bonded_interactions/harmonic_dumbbell.hpp"
+#include "bonded_interactions/quartic.hpp"
+#include "bonded_interactions/subt_lj.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
+#include "bonded_interactions/umbrella.hpp"
+#include "electrostatics_magnetostatics/debye_hueckel.hpp"
+#include "nonbonded_interactions/bmhtf-nacl.hpp"
+#include "nonbonded_interactions/buckingham.hpp"
+#include "nonbonded_interactions/gaussian.hpp"
+#include "nonbonded_interactions/gb.hpp"
+#include "nonbonded_interactions/hat.hpp"
+#include "nonbonded_interactions/hertzian.hpp"
+#include "nonbonded_interactions/lj.hpp"
+#include "nonbonded_interactions/ljcos.hpp"
+#include "nonbonded_interactions/ljcos2.hpp"
+#include "nonbonded_interactions/ljgen.hpp"
+#include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "nonbonded_interactions/reaction_field.hpp"
+#include "nonbonded_interactions/soft_sphere.hpp"
+#include "nonbonded_interactions/steppot.hpp"
+#include "nonbonded_interactions/thole.hpp"
+#include "nonbonded_interactions/wca.hpp"
 #ifdef ELECTROSTATICS
-#include "bonded_coulomb.hpp"
+#include "bonded_interactions/bonded_coulomb.hpp"
 #endif
 #ifdef P3M
-#include "bonded_coulomb_p3m_sr.hpp"
+#include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
 #endif
-#include "angle_cosine.hpp"
-#include "angle_cossquare.hpp"
-#include "angle_harmonic.hpp"
-#include "angledist.hpp"
-#include "debye_hueckel.hpp"
-#include "elc.hpp"
-#include "endangledist.hpp"
-#include "hydrogen_bond.hpp"
-#include "mmm1d.hpp"
-#include "mmm2d.hpp"
-#include "morse.hpp"
-#include "reaction_field.hpp"
-#include "scafacos.hpp"
-#include "subt_lj.hpp"
-#include "twist_stack.hpp"
-
-#ifdef CONSTRAINTS
-#include "constraints.hpp"
-#endif
-
-#ifdef EXTERNAL_FORCES
-#include "external_potential.hpp"
-#endif
+#include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
+#include "statistics.hpp"
+#include "thermostat.hpp"
 
 #include "energy.hpp"
 
@@ -94,9 +85,11 @@
     @param dist2     distance squared between p1 and p2.
     @return the short ranged interaction energy between the two particles
 */
-inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
-                                          const IA_parameters *ia_params, const double d[3],
-                                          double dist, double dist2) {
+inline double calc_non_bonded_pair_energy(const Particle *p1,
+                                          const Particle *p2,
+                                          const IA_parameters *ia_params,
+                                          const double d[3], double dist,
+                                          double dist2) {
   double ret = 0;
 
 #ifdef NO_INTRA_NB
@@ -105,18 +98,17 @@ inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2
 #endif
 
 #ifdef LENNARD_JONES
-  /* lennard jones */
+  /* Lennard-Jones */
   ret += lj_pair_energy(p1, p2, ia_params, d, dist);
+#endif
+#ifdef WCA
+  /* WCA */
+  ret += wca_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
-  /* Generic lennard jones */
+  /* Generic Lennard-Jones */
   ret += ljgen_pair_energy(p1, p2, ia_params, d, dist);
-#endif
-
-#ifdef LJ_ANGLE
-  /* Directional LJ */
-  ret += ljangle_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef SMOOTH_STEP
@@ -140,12 +132,12 @@ inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2
 #endif
 
 #ifdef MORSE
-  /* morse */
+  /* Morse */
   ret += morse_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef BUCKINGHAM
-  /* lennard jones */
+  /* Buckingham */
   ret += buck_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -160,12 +152,12 @@ inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2
 #endif
 
 #ifdef LJCOS2
-  /* lennard jones */
+  /* Lennard-Jones */
   ret += ljcos2_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef THOLE
-  /* thole damping */
+  /* Thole damping */
   ret += thole_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -175,7 +167,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2
 #endif
 
 #ifdef LJCOS
-  /* lennard jones cosine */
+  /* Lennard-Jones cosine */
   ret += ljcos_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -191,7 +183,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2
   return ret;
 }
 
-/** Add non bonded energies and short range coulomb between a pair of particles.
+/** Add non bonded energies and short range Coulomb between a pair of particles.
     @param p1        pointer to particle 1.
     @param p2        pointer to particle 2.
     @param d         vector between p1 and p2.
@@ -209,12 +201,12 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
-  *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
-      calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
+    *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
+        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
 
 #ifdef ELECTROSTATICS
   if (coulomb.method != COULOMB_NONE) {
-    /* real space coulomb */
+    /* real space Coulomb */
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_P3M_GPU:
@@ -279,23 +271,20 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 */
 
 inline void add_bonded_energy(Particle *p1) {
-  Particle *p2, *p3 = nullptr, *p4 = nullptr;
-#ifdef TWIST_STACK
-  Particle *p5 = nullptr, *p6 = nullptr, *p7 = nullptr, *p8 = nullptr;
-#endif
+  Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
-  int i, type_num, type, n_partners, bond_broken;
+  int i, bond_broken;
   double ret = 0, dx[3] = {0, 0, 0};
 
   i = 0;
   while (i < p1->bl.n) {
-    type_num = p1->bl.e[i++];
+    int type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
-    type = iaparams->type;
-    n_partners = iaparams->num;
+    int type = iaparams->type;
+    int n_partners = iaparams->num;
 
     /* fetch particle 2, which is always needed */
-    p2 = local_particles[p1->bl.e[i++]];
+    Particle *p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                         << " and " << p1->bl.e[i - 1]
@@ -326,24 +315,6 @@ inline void add_bonded_energy(Particle *p1) {
         return;
       }
     }
-#ifdef TWIST_STACK
-    if (n_partners >= 7) {
-      p5 = local_particles[p1->bl.e[i++]];
-      p6 = local_particles[p1->bl.e[i++]];
-      p7 = local_particles[p1->bl.e[i++]];
-      p8 = local_particles[p1->bl.e[i++]];
-
-      if (!p4 || !p5 || !p6 || !p7 || !p8) {
-        runtimeErrorMsg() << "bond broken between particles" << p1->p.identity
-                          << ", " << p1->bl.e[i - 7] << ", " << p1->bl.e[i - 6]
-                          << ", " << p1->bl.e[i - 5] << ", " << p1->bl.e[i - 4]
-                          << ", " << p1->bl.e[i - 3] << ", " << p1->bl.e[i - 2]
-                          << ", " << p1->bl.e[i - 1]
-                          << " (particles not stored on the same node)";
-        return;
-      }
-    }
-#endif
     /* similar to the force, we prepare the center-center vector */
     if (n_partners == 1)
       get_mi_vector(dx, p1->r.p, p2->r.p);
@@ -373,23 +344,13 @@ inline void add_bonded_energy(Particle *p1) {
 #endif
 #ifdef P3M
     case BONDED_IA_BONDED_COULOMB_P3M_SR:
-      bond_broken = bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
+      bond_broken =
+          bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
-#endif
-#ifdef TWIST_STACK
-    case BONDED_IA_CG_DNA_STACKING:
-      bond_broken = calc_twist_stack_energy(p1, p2, p3, p4, p5, p6, p7, p8,
-                                            iaparams, &ret);
-      break;
-#endif
-#ifdef HYDROGEN_BOND
-    case BONDED_IA_CG_DNA_BASEPAIR:
-      bond_broken = calc_hydrogen_bond_energy(p1, p2, p3, p4, iaparams, &ret);
       break;
 #endif
 #ifdef BOND_ANGLE
@@ -406,11 +367,6 @@ inline void add_bonded_energy(Particle *p1) {
 #ifdef BOND_ANGLEDIST
     case BONDED_IA_ANGLEDIST:
       bond_broken = angledist_energy(p1, p2, p3, iaparams, &ret);
-      break;
-#endif
-#ifdef BOND_ENDANGLEDIST
-    case BONDED_IA_ENDANGLEDIST:
-      bond_broken = endangledist_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
     case BONDED_IA_DIHEDRAL:
@@ -436,25 +392,6 @@ inline void add_bonded_energy(Particle *p1) {
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: tabulated bond type of atom "
-                          << p1->p.identity << " unknown\n";
-        return;
-      }
-      break;
-#endif
-#ifdef OVERLAPPED
-    case BONDED_IA_OVERLAPPED:
-      switch (iaparams->p.overlap.type) {
-      case OVERLAP_BOND_LENGTH:
-        bond_broken = overlap_bond_energy(p1, p2, iaparams, dx, &ret);
-        break;
-      case OVERLAP_BOND_ANGLE:
-        bond_broken = overlap_angle_energy(p1, p2, p3, iaparams, &ret);
-        break;
-      case OVERLAP_BOND_DIHEDRAL:
-        bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
-        break;
-      default:
-        runtimeErrorMsg() << "add_bonded_energy: overlapped bond type of atom "
                           << p1->p.identity << " unknown\n";
         return;
       }
@@ -508,34 +445,23 @@ inline void add_bonded_energy(Particle *p1) {
 */
 inline void add_kinetic_energy(Particle *p1) {
 #ifdef VIRTUAL_SITES
-  if (p1->p.isVirtual)
+  if (p1->p.is_virtual)
     return;
 #endif
 
   /* kinetic energy */
-
-  // #ifdef MULTI_TIMESTEP
-  //   if (p1->p.smaller_timestep==1) {
-  //     ostringstream msg;
-  //     msg << "SMALL TIME STEP";
-  //     energy.data.e[0] += Utils::sqr(smaller_time_step/time_step) *
-  //       (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2]))*(*p1).p.mass;
-  //   }
-  //   else
-  // #endif
-  energy.data.e[0] +=
-      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * (*p1).p.mass;
+  energy.data.e[0] += (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) +
+                       Utils::sqr(p1->m.v[2])) *
+                      0.5 * p1->p.mass;
 
 #ifdef ROTATION
-  if (p1->p.rotation)
-  {
+  if (p1->p.rotation) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
-    energy.data.e[0] += (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
-                         Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
-                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]) *
-                        time_step * time_step;
+    energy.data.e[0] += 0.5 * (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
+                               Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
+                               Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]);
   }
 #endif
 }
@@ -543,12 +469,6 @@ inline void add_kinetic_energy(Particle *p1) {
 inline void add_single_particle_energy(Particle *p) {
   add_kinetic_energy(p);
   add_bonded_energy(p);
-#ifdef CONSTRAINTS
-  add_constraints_energy(p);
-#endif
-#ifdef EXTERNAL_FORCES
-  add_external_potential_energy(p);
-#endif
 }
 
 #endif // ENERGY_INLINE_HPP

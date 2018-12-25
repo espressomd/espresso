@@ -1,4 +1,23 @@
-/* test configuration without relative/com virtual sites for immersed boundaries */
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/* test configuration without relative/com virtual sites for immersed boundaries
+ */
 #define IMMERSED_BOUNDARY
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
@@ -6,18 +25,16 @@
 #define ROTATION
 #define ROTATIONAL_INERTIA
 #define EXTERNAL_FORCES
-#define CONSTRAINTS
+
 #define MASS
 #define EXCLUSIONS
-#define MOLFORCES
-
 
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define CATALYTIC_REACTIONS
+#define SWIMMER_REACTIONS
 
 #define NEMD
-#define NPT 
+#define NPT
 #define GHMC
 
 #define LB
@@ -38,7 +55,6 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
-#define LJ_ANGLE
 #define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN
@@ -52,5 +68,3 @@
 #define BOND_ANGLE
 #define BOND_ANGLEDIST
 #define BOND_ANGLEDIST_HARMONIC
-#define BOND_ENDANGLEDIST
-#define BOND_ENDANGLEDIST_HARMONIC

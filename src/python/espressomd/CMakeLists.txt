@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -40,6 +40,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
+
 include_directories(SYSTEM ${PYTHON_INCLUDE_DIRS})
 include_directories(SYSTEM ${NUMPY_INCLUDE_DIR})
 
@@ -67,21 +68,21 @@ list(REMOVE_DUPLICATES cython_SRC)
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
   file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${cython_file})
-  if("${basename}" STREQUAL "code_info")
+  if(basename STREQUAL "code_info")
       file(RELATIVE_PATH relpath ${CMAKE_CURRENT_BINARY_DIR} ${cython_file})
   endif()
   get_filename_component(relpath ${relpath} DIRECTORY)
-  if("${relpath}" STREQUAL "")
+  if(relpath STREQUAL "")
       string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${basename} ".cpp")
   else()
       string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${relpath} "/" ${basename} ".cpp")
   endif()
-  if("${basename}" STREQUAL "")
+  if(basename STREQUAL "")
       message( FATAL_ERROR "Internal error empty basename of file ${cython_file}")
   else()
       list(APPEND cython_generated_SRC "${basename}.cpp")
       add_custom_command(OUTPUT ${outputpath}
-                         COMMAND ${CYTHON_EXECUTABLE}  --cplus
+                         COMMAND ${CYTHON_EXECUTABLE} ${CYTHON_FLAGS} --cplus
                          --directive embedsignature=True
                          --directive binding=True
                          -I ${CMAKE_CURRENT_SOURCE_DIR}

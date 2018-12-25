@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 /* maximal set of features usable at the same time plus all debug switches */
 /* Do not run the testsuite with this set, only compile it. */
 #define PARTIAL_PERIODIC
@@ -7,15 +25,13 @@
 #define ROTATIONAL_INERTIA
 #define PARTICLE_ANISOTROPY
 #define EXTERNAL_FORCES
-#define CONSTRAINTS
+
 #define MASS
 #define EXCLUSIONS
-#define MOLFORCES
-
 
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define CATALYTIC_REACTIONS
+#define SWIMMER_REACTIONS
 
 #define NEMD
 #define NPT
@@ -24,6 +40,8 @@
 #define LB
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
+
+#define BROWNIAN_DYNAMICS
 
 #ifdef CUDA
 #define LB_GPU
@@ -41,7 +59,6 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
-#define LJ_ANGLE
 #define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN
@@ -56,8 +73,6 @@
 #define BOND_ANGLE
 #define BOND_ANGLEDIST
 #define BOND_ANGLEDIST_HARMONIC
-#define BOND_ENDANGLEDIST
-#define BOND_ENDANGLEDIST_HARMONIC
 
 #define VIRTUAL_SITES_RELATIVE
 
@@ -88,7 +103,6 @@
 #define GHOST_FORCE_DEBUG
 #define STAT_DEBUG
 #define POLY_DEBUG
-#define MOLFORCES_DEBUG
 #define PTENSOR_DEBUG
 #define MAGGS_DEBUG
 #define LB_DEBUG

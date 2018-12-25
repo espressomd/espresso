@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -42,12 +42,12 @@ BOOST_AUTO_TEST_CASE(static_vector) {
   BOOST_CHECK((Vector3d{1., 2., 3.} == r));
 }
 
-BOOST_AUTO_TEST_CASE(empty_vector) {
+BOOST_AUTO_TEST_CASE(empty_vector) { // NOLINT
   using ScriptInterface::get_value;
   using ScriptInterface::Variant;
 
-  Variant v = std::vector<Variant>{};
-  auto vec = get_value<std::vector<int>>(v);
+  Variant v = std::vector<Variant>{};        // NOLINT
+  auto vec = get_value<std::vector<int>>(v); // NOLINT
 
   BOOST_CHECK(std::vector<int>{} == vec);
 }

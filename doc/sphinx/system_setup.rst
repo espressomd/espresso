@@ -16,7 +16,7 @@ available in the Python interface are listed in the following. Note that for the
 vectorial properties ``box_l`` and ``periodicity``, component-wise manipulation
 like ``system.box_l[0] = 1`` or in-place operators like ``+=`` or ``*=`` are not
 allowed and result in an error. This behavior is inherited, so the same applies
-to ``a`` after ``a = system.box_l``. If you want to use an vectorial property
+to ``a`` after ``a = system.box_l``. If you want to use a vectorial property
 for further calculations, you should explicitly make a copy e.g. via
 ``a = numpy.copy(system.box_l)``.
 
@@ -32,7 +32,7 @@ for further calculations, you should explicitly make a copy e.g. via
 * :py:attr:`~espressomd.system.System.periodicity`
 
     (int[3]) Specifies periodicity for the three directions. If the feature
-    PARTIAL\_PERIODIC is set, |es| can be instructed to treat some
+    ``PARTIAL_PERIODIC`` is set, |es| can be instructed to treat some
     dimensions as non-periodic. Per default espresso assumes periodicity in
     all directions which equals setting this variable to [1,1,1]. A
     dimension is specified as non-periodic via setting the periodicity
@@ -40,7 +40,7 @@ for further calculations, you should explicitly make a copy e.g. via
     is obtained by [0,0,1]. Caveat: Be aware of the fact that making a
     dimension non-periodic does not hinder particles from leaving the box in
     this direction. In this case for keeping particles in the simulation box
-    a constraint has to be set. 
+    a constraint has to be set.
 
 * :py:attr:`~espressomd.system.System.time_step`
 
@@ -76,13 +76,13 @@ objects like
 
 ``n_part = len(espressomd.System().part[:].pos)``
 
-or by calling the corresponding ``get_state`` methods like::
+or by calling the corresponding ``get_state()`` methods like::
 
-    temperature = espressomd.System().thermostat.get_state()[0][’kT’]
-    
-    gamma = espressomd.System().thermostat.get_state()[0][’gamma’]
-    
-    gamma_rot = espressomd.System().thermostat.get_state()[0][’gamma_rotation’]
+    temperature = espressomd.System().thermostat.get_state()[0]['kT']
+
+    gamma = espressomd.System().thermostat.get_state()[0]['gamma']
+
+    gamma_rot = espressomd.System().thermostat.get_state()[0]['gamma_rotation']
 
 .. _Cellsystems:
 
@@ -111,42 +111,42 @@ The properties of the cell system can be accessed by
     * :py:attr:`~espressomd.cellsystem.CellSystem.min_num_cells`
 
     (int) Minimal number of cells for the link cell algorithm. Reasonable
-    values range in :math:`10^{-6} N^2` to :math:`10^{-7} N^2`. In general 
+    values range in :math:`10^{-6} N^2` to :math:`10^{-7} N^2`. In general
     just make sure that the Verlet lists are not incredibly large. By default the
     minimum is 0, but for the automatic P3M tuning it may be wise to set larger
     values for high particle numbers.
 
     * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
-    
+
     (int[3]) 3D node grid for real space domain decomposition (optional, if
     unset an optimal set is chosen automatically).
 
     * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
-    
+
     (float) Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
 
-Details about the cell system can be obtained by ``espressomd.System().cell_system.get_state()``:
+Details about the cell system can be obtained by :meth:`espressomd.System().cell_system.get_state() <espressomd.cellsystem.CellSystem.get_state>`:
 
-    * `cell_grid`       Dimension of the inner cell grid.
-    * `cell_size`       Box-length of a cell.
-    * `local_box_l`     Local simulation box length of the nodes.
-    * `max_cut`         Maximal cutoff of real space interactions.
-    * `n_layers`        Number of layers in cell structure LAYERED
-    * `n_nodes`         Number of nodes.
-    * `type`            The current type of the cell system.
-    * `verlet_reuse`    Average number of integration steps the verlet list is re-used.
+    * ``cell_grid``       Dimension of the inner cell grid.
+    * ``cell_size``       Box-length of a cell.
+    * ``local_box_l``     Local simulation box length of the nodes.
+    * ``max_cut``         Maximal cutoff of real space interactions.
+    * ``n_layers``        Number of layers in cell structure LAYERED
+    * ``n_nodes``         Number of nodes.
+    * ``type``            The current type of the cell system.
+    * ``verlet_reuse``    Average number of integration steps the Verlet list is re-used.
 
 .. _Domain decomposition:
 
 Domain decomposition
 ~~~~~~~~~~~~~~~~~~~~
 
-Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_domain_decomposition` 
+Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_domain_decomposition`
 selects the domain decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
-domain decomposition is used, but not the Verlet lists.::
+domain decomposition is used, but not the Verlet lists. ::
 
-    system=espressomd.System()
+    system = espressomd.System()
 
     system.cell_system.set_domain_decomposition(use_verlet_lists=True)
 
@@ -173,9 +173,9 @@ the interactions for all particle pairs. Therefore it loops over all
 particles, giving an unfavorable computation time scaling of
 :math:`N^2`. However, algorithms like MMM1D or the plain Coulomb
 interaction in the cell model require the calculation of all pair
-interactions.::
+interactions. ::
 
-    system=espressomd.System()
+    system = espressomd.System()
 
     system.cell_system.set_n_square()
 
@@ -209,17 +209,17 @@ Layered cell system
 Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_layered`
 selects the layered cell system, which is specifically designed for
 the needs of the MMM2D algorithm. Basically it consists of a nsquared
-algorithm in x and y, but a domain decomposition along z, i. e. the
+algorithm in x and y, but a domain decomposition along z, i.e. the
 system is cut into equally sized layers along the z axis. The current
 implementation allows for the CPUs to align only along the z axis,
 therefore the processor grid has to have the form 1x1xN. However, each
 processor may be responsible for several layers, which is determined by
-``n_layers``, i. e. the system is split into N\* layers along the z axis. Since in x
+``n_layers``, i.e. the system is split into N\* layers along the z axis. Since in x
 and y direction there are no processor boundaries, the implementation is
 basically just a stripped down version of the domain decomposition
-cellsystem.::
+cellsystem. ::
 
-    system=espressomd.System()
+    system = espressomd.System()
 
     system.cell_system.set_layered(n_layers=4)
 
@@ -244,7 +244,7 @@ Since |es| does not enforce a particular unit system, it cannot know about
 the current value of the Boltzmann constant. Therefore, when specifying
 the temperature of a thermostat, you actually do not define the
 temperature, but the value of the thermal energy :math:`k_B T` in the
-current unit system (see the discussion on units, Section [sec:units]).
+current unit system (see the discussion on units, Section :ref:`On units`).
 
 Note that there are three different types of noise which can be used in
 |es|. The one used typically in simulations is flat noise with the correct
@@ -252,7 +252,7 @@ variance and it is the default used in |es|, though it can be explicitly
 specified using the feature ``FLATNOISE``. You can also employ Gaussian noise which
 is, in some sense, more realistic. Notably Gaussian noise (activated
 using the feature ``GAUSSRANDOM``) does a superior job of reproducing higher order
-moments of the Maxwell-Boltzmann distribution. For typical generic
+moments of the Maxwell--Boltzmann distribution. For typical generic
 coarse-grained polymers using FENE bonds the Gaussian noise tends to
 break the FENE bonds. We thus offer a third type of noise, activate
 using the feature ``GAUSSRANDOMCUT``, which produces Gaussian random numbers but takes
@@ -270,13 +270,15 @@ Langevin thermostat
 In order to activate the Langevin thermostat the member function
 :py:attr:`~espressomd.thermostat.Thermostat.set_langevin` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
-Best explained in an example:::
-    
+Best explained in an example::
+
     import espressomd
     system = espressomd.System()
-    system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+    therm = system.Thermostat()
 
-As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`. 
+    therm.set_langevin(kT=1.0, gamma=1.0)
+
+As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`.
 The Langevin thermostat consists of a friction and noise term coupled
 via the fluctuation-dissipation theorem. The friction term is a function
 of the particle velocities. By specifying the diffusion coefficient for
@@ -285,7 +287,7 @@ the particle becomes
 .. math:: D = \frac{\text{temperature}}{\text{gamma}}.
 
 The relaxation time is given by :math:`\text{gamma}/\text{MASS}`, with
-``MASS`` the particle’s mass.  For a more detailed explanation, refer to
+``MASS`` the particle's mass.  For a more detailed explanation, refer to
 :cite:`grest86a`.  An anisotropic diffusion coefficient tensor is available to
 simulate anisotropic colloids (rods, etc.) properly. It can be enabled by the
 feature ``PARTICLE_ANISOTROPY``.
@@ -297,9 +299,9 @@ same value as that for the translation.
 
 A separate rotational diffusion coefficient can be set by inputting
 ``gamma_rotate``.  This also allows one to properly match the translational and
-rotational diffusion coefficients of a sphere. ``ROTATIONAL_INERTIA`` Feature
+rotational diffusion coefficients of a sphere. Feature ``ROTATIONAL_INERTIA``
 enables an anisotropic rotational diffusion coefficient tensor through
-corresponding friction coefficients. 
+corresponding friction coefficients.
 
 Finally, the two options allow one to switch the translational and rotational
 thermalization on or off separately, maintaining the frictional behavior. This
@@ -341,7 +343,7 @@ friction coefficient for every particle individually via the feature
     In case the MD step is rejected, the particles momenta may be flipped.
     This is specified by setting the / option, for the option half of the
     rejected MD steps randomly result in momenta flip. The default for
-    momenta flip is . The :math:`\pmb{\xi}` noise vector’s variance van be
+    momenta flip is . The :math:`\pmb{\xi}` noise vector's variance can be
     tuned to exactly :math:`1/\mathrm{temperature}` by specifying the option.
     The default for temperature scaling is .
 
@@ -379,39 +381,46 @@ relative velocity of particle pairs. The DPD thermostat is better for
 dynamics than the Langevin thermostat, since it mimics hydrodynamics in
 the system.
 
-When using a Lennard-Jones interaction, :math:`{r\_cut} =
+When using a Lennard-Jones interaction, :math:`{r_\mathrm{cut}} =
 2^{\frac{1}{6}} \sigma` is a good value to choose, so that the
 thermostat acts on the relative velocities between nearest neighbor
 particles. Larger cutoffs including next nearest neighbors or even more
 are unphysical.
+
+Boundary conditions for DPD can be introduced by adding the boundary
+as a particle constraint, and setting a velocity and a type on it, see
+:class:`espressomd.constraints.Constraint`. Then a
+:ref:`DPD interaction` with the type can be defined, which acts as a
+boundary condition.
 
 .. _Isotropic NPT thermostat:
 
 Isotropic NPT thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to use this feature, ``NPT`` has to be defined in the ``myconfig.hpp``.
+This feature allows to simulate an (on average) homogeneous and isotropic system in the NPT ensemble.
+In order to use this feature, ``NPT`` has to be defined in the :file:`myconfig.hpp`.
 Activate the NPT thermostat with the command :py:func:`~espressomd.thermostat.Thermostat.set_npt`
 and set the following parameters:
 
-    * kT:     (float) Thermal energy of the heat bath
-    * gamma0: (float) Friction coefficient of the bath
-    * gammav: (float) Artificial friction coefficient for the volume fluctuations.
+    * ``kT``:     (float) Thermal energy of the heat bath
+    * ``gamma0``: (float) Friction coefficient of the bath
+    * ``gammav``: (float) Artificial friction coefficient for the volume fluctuations.
 
-Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.system.integrator.set_isotropic_npt` 
+Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.system.integrator.set_isotropic_npt`
 and the parameters:
 
-    * ext_pressure:  (float) The external pressure as float variable.
-    * piston:        (float) The mass of the applied piston as float variable.
+    * ``ext_pressure``:  (float) The external pressure as float variable.
+    * ``piston``:        (float) The mass of the applied piston as float variable.
 
-This thermostat is based on the Anderson thermostat (see
+This thermostat is based on the Andersen thermostat (see
 :cite:`andersen80a,mann05d`) and will thermalize the box
-geometry. It will only do isotropic changes of the box. 
+geometry. It will only do isotropic changes of the box.
 See this code snippet for the two commands::
 
     import espressomd
 
-    system=espressomd.System()
+    system = espressomd.System()
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
@@ -482,6 +491,9 @@ Note, that the velocity random walk is propagated from zero at each step.
 A rotational motion is implemented similarly. The Velocity Verlet quaternion
 based rotational method implementation is still used, however, had been modified
 for the larger :math:`\Delta t` case to be consistent and still the Velocity Verlet-compliant.
+Note: the rotational Brownian dynamics implementation is compatible with particles which have
+the isotropic moment of inertia tensor only. Otherwise, the viscous terminal angular velocity
+is not defined, i.e. it has no constant direction over the time.
 
 .. _CUDA:
 
@@ -493,14 +505,14 @@ GPU-computations. Note that due to driver limitations, the GPU cannot be
 changed anymore after the first GPU-using command has been issued, for
 example ``lbfluid``. If you do not choose the GPU manually before that,
 CUDA internally chooses one, which is normally the most powerful GPU
-available, but load-independent.::
-    
-    system=espressomd.System()
+available, but load-independent. ::
+
+    system = espressomd.System()
 
     dev = system.cuda_init_handle.device
     system.cuda_init_handle.device = dev
 
-The first invocation in the sample above returns the id of the set graphics card, the second one sets the 
+The first invocation in the sample above returns the id of the set graphics card, the second one sets the
 device id.
 
 .. _GPU Acceleration with CUDA:
@@ -509,11 +521,11 @@ GPU Acceleration with CUDA
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    `Feature CUDA required`
+    Feature ``CUDA`` required
 
 
 |es| is capable of GPU acceleration to speed up simulations.
-Not every simulation method is parallelizable or profits from 
+Not every simulation method is parallelizable or profits from
 GPU acceleration. Refer to :ref:`Available simulation methods`
 to check whether your desired method can be used on the GPU.
 In order to use GPU acceleration you need a NVIDIA GPU
@@ -527,9 +539,9 @@ List available CUDA devices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to list available CUDA devices
-you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g.,::
+you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g., ::
 
-    system=espressomd.System()
+    system = espressomd.System()
 
     print(system.cuda_init_handle.device_list)
 
@@ -542,11 +554,11 @@ Selection of CUDA device
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 When you start ``pypresso`` your first GPU should
-be selected. 
-If you wanted to use the second GPU, this can be done 
+be selected.
+If you wanted to use the second GPU, this can be done
 by setting :attr:`espressomd.cuda_init.CudaInitHandle.device` as follows::
 
-    system=espressomd.System()
+    system = espressomd.System()
 
     system.cuda_init_handle.device = 1
 

@@ -1,53 +1,38 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
+import espressomd.lbboundaries
 
+if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
+    @script_interface_register
+    class EKBoundaries(espressomd.lbboundaries.LBBoundaries):
 
-@script_interface_register
-class EKBoundaries(ScriptInterfaceHelper):
-    """
-    Creates a set of electrokinetics boundaries.
-    """
-
-    _so_name = "LBBoundaries::LBBoundaries"
-
-    def add(self, *args, **kwargs):
         """
-        Adds a boundary to the set.
-        Either a valid boundary is an argument,
-        or a valid set of parameters to create a boundary.
-        
+        Creates a set of electrokinetics boundaries.
+
         """
+        pass
 
-        if len(args) == 1:
-            if isinstance(args[0], EKBoundary):
-                ekboundary = args[0]
-            else:
-                raise TypeError(
-                    "Either a EKBoundary object or key-value pairs for the parameters of a EKBoundary object need to be passed.")
-        else:
-            ekboundary = EKBoundary(**kwargs)
-        self.call_method("add", object=ekboundary)
-        return ekboundary
+    @script_interface_register
+    class EKBoundary(espressomd.lbboundaries.LBBoundary):
 
-    def remove(self, ekboundary):
         """
-        Removes a boundary from the set.
-        
-        Parameters
-        ----------
-        ekboundary : :obj:`EKBoundary`
-                     The boundary to be removed from the set.
-                     
+        Creates a EK boundary.
+
         """
-
-        self.call_method("remove", ekboundary=ekboundary)
-
-
-@script_interface_register
-class EKBoundary(ScriptInterfaceHelper):
-    """
-    Creates a EK boundary.
-    
-    """
-
-    _so_name = "LBBoundaries::LBBoundary"
+        pass

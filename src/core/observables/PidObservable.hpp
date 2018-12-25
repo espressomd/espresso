@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -27,13 +27,12 @@
 namespace Observables {
 
 // Observable which acts on a given list of particle ids()
-class PidObservable : public Observable {
+class PidObservable : virtual public Observable {
   std::vector<int> m_ids;
 
 public:
   std::vector<int> &ids() { return m_ids; }
   std::vector<int> const &ids() const { return m_ids; }
-  virtual int n_values() const override { return 3 * ids().size(); }
 };
 
 } // Namespace Observables

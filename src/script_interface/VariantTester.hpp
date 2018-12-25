@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include "ScriptInterface.hpp"
 
 namespace ScriptInterface {
@@ -6,7 +24,7 @@ class VariantTester : public ScriptInterfaceBase {
 public:
   Variant call_method(std::string const &method,
                       VariantMap const &par) override {
-    if(method == "default") {
+    if (method == "default") {
       return Variant{};
     }
 
@@ -40,7 +58,7 @@ public:
     if (method == "check_parameter_type") {
       auto const type = boost::get<std::string>(par.at("type"));
 
-      if(type == "none")
+      if (type == "none")
         return is_none(par.at("value"));
 
       if (type == "bool") {
@@ -87,5 +105,5 @@ private:
       return std::string("end");
   }
 };
-}
-}
+} // namespace Testing
+} // namespace ScriptInterface

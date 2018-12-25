@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
   Max-Planck-Institute for Polymer Research, Theory Group
 
   This file is part of ESPResSo.
@@ -48,7 +48,7 @@ namespace Mpi {
           large enough to hold all elements and has the local
           part in the beginning. On the slaves the local buffer.
  * @param n_elem The number of elements in the local buffer.
- * @param The rank where the data should be gathered.
+ * @param root The rank where the data should be gathered.
  * @return On rank root, the total number of elements in the buffer,
  *         on the other ranks 0.
  */
@@ -70,8 +70,8 @@ int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
   } else {
     detail::size_and_offset(n_elem, comm, root);
     /* Send data */
-    gatherv(comm, buffer, n_elem, static_cast<T *>(nullptr),
-            nullptr, nullptr, root);
+    gatherv(comm, buffer, n_elem, static_cast<T *>(nullptr), nullptr, nullptr,
+            root);
 
     return 0;
   }
@@ -87,7 +87,7 @@ int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
  *
  * @param buffer On the master the target buffer that has the local
           part in the beginning. On the slaves the local buffer.
- * @param The rank where the data should be gathered.
+ * @param root The rank where the data should be gathered.
  * @return On rank root, the total number of elements in the buffer,
  *         on the other ranks 0.
  */
@@ -101,7 +101,7 @@ void gather_buffer(std::vector<T> &buffer, boost::mpi::communicator comm,
     static std::vector<int> displ;
 
     auto const tot_size =
-      detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
+        detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
 
     /* Resize the buffer */
     buffer.resize(tot_size);
@@ -116,7 +116,7 @@ void gather_buffer(std::vector<T> &buffer, boost::mpi::communicator comm,
     gatherv(comm, buffer.data(), n_elem, static_cast<T *>(nullptr), 0, 0, root);
   }
 }
-}
-}
+} // namespace Mpi
+} // namespace Utils
 
 #endif

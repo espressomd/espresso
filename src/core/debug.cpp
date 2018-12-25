@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file debug.cpp
+/** \file
     Implements the malloc replacements as described in \ref debug.hpp
    "debug.hpp".
 */
@@ -47,7 +47,7 @@ int check_id = ONEPART_DEBUG_ID;
 void check_particle_consistency() {
   Particle *part;
   Cell *cell;
-  int n, dir, c, p;
+  int n, dir, c;
   int cell_part_cnt = 0, ghost_part_cnt = 0, local_part_cnt = 0;
   int cell_err_cnt = 0;
 
@@ -58,8 +58,9 @@ void check_particle_consistency() {
     part = cell->part;
     for (int n = 0; n < cell->n; n++) {
       if (part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
-        fprintf(stderr, "%d: check_particle_consistency: ERROR: Cell %d Part "
-                        "%d has corrupted id=%d\n",
+        fprintf(stderr,
+                "%d: check_particle_consistency: ERROR: Cell %d Part "
+                "%d has corrupted id=%d\n",
                 this_node, c, n, cell->part[n].p.identity);
         errexit();
       }
@@ -67,16 +68,18 @@ void check_particle_consistency() {
         if (PERIODIC(dir) &&
             (part[n].r.p[dir] < -ROUND_ERROR_PREC * box_l[dir] ||
              part[n].r.p[dir] - box_l[dir] > ROUND_ERROR_PREC * box_l[dir])) {
-          fprintf(stderr, "%d: check_particle_consistency: ERROR: illegal "
-                          "pos[%d]=%f of part %d id=%d in cell %d\n",
+          fprintf(stderr,
+                  "%d: check_particle_consistency: ERROR: illegal "
+                  "pos[%d]=%f of part %d id=%d in cell %d\n",
                   this_node, dir, part[n].r.p[dir], n, part[n].p.identity, c);
           errexit();
         }
       }
       if (local_particles[part[n].p.identity] != &part[n]) {
-        fprintf(stderr, "%d: check_particle_consistency: ERROR: address "
-                        "mismatch for part id %d: local: %p cell: %p in cell "
-                        "%d\n",
+        fprintf(stderr,
+                "%d: check_particle_consistency: ERROR: address "
+                "mismatch for part id %d: local: %p cell: %p in cell "
+                "%d\n",
                 this_node, part[n].p.identity,
                 static_cast<void *>(local_particles[part[n].p.identity]),
                 static_cast<void *>(&part[n]), c);
@@ -89,21 +92,24 @@ void check_particle_consistency() {
     cell = ghost_cells.cell[c];
     if (cell->n > 0) {
       ghost_part_cnt += cell->n;
-      fprintf(stderr, "%d: check_particle_consistency: WARNING: ghost_cell %d "
-                      "contains %d particles!\n",
+      fprintf(stderr,
+              "%d: check_particle_consistency: WARNING: ghost_cell %d "
+              "contains %d particles!\n",
               this_node, c, cell->n);
     }
   }
-  CELL_TRACE(fprintf(stderr, "%d: check_particle_consistency: %d particles in "
-                             "cells, %d particles in ghost_cells.\n",
+  CELL_TRACE(fprintf(stderr,
+                     "%d: check_particle_consistency: %d particles in "
+                     "cells, %d particles in ghost_cells.\n",
                      this_node, cell_part_cnt, ghost_part_cnt));
   /* checks: local particle id */
   for (n = 0; n < max_seen_particle + 1; n++) {
     if (local_particles[n] != nullptr) {
       local_part_cnt++;
       if (local_particles[n]->p.identity != n) {
-        fprintf(stderr, "%d: check_particle_consistency: ERROR: "
-                        "local_particles part %d has corrupted id %d\n",
+        fprintf(stderr,
+                "%d: check_particle_consistency: ERROR: "
+                "local_particles part %d has corrupted id %d\n",
                 this_node, n, local_particles[n]->p.identity);
         errexit();
       }
@@ -116,23 +122,25 @@ void check_particle_consistency() {
 
   /* EXIT on severe errors */
   if (cell_err_cnt > 0) {
-    fprintf(stderr, "%d: check_particle_consistency: %d ERRORS detected in "
-                    "cell structure!\n",
+    fprintf(stderr,
+            "%d: check_particle_consistency: %d ERRORS detected in "
+            "cell structure!\n",
             this_node, cell_err_cnt);
     errexit();
   }
   if (local_part_cnt != cell_part_cnt) {
-    fprintf(stderr, "%d: check_particle_consistency: ERROR: %d parts in cells "
-                    "but %d parts in local_particles\n",
+    fprintf(stderr,
+            "%d: check_particle_consistency: ERROR: %d parts in cells "
+            "but %d parts in local_particles\n",
             this_node, cell_part_cnt, local_part_cnt);
 
     for (c = 0; c < local_cells.n; c++) {
-      for (p = 0; p < local_cells.cell[c]->n; p++)
+      for (int p = 0; p < local_cells.cell[c]->n; p++)
         fprintf(stderr, "%d: got particle %d in cell %d\n", this_node,
                 local_cells.cell[c]->part[p].p.identity, c);
     }
 
-    for (p = 0; p < n_part; p++)
+    for (int p = 0; p < n_part; p++)
       if (local_particles[p])
         fprintf(stderr, "%d: got particle %d in local_particles\n", this_node,
                 p);
@@ -141,8 +149,9 @@ void check_particle_consistency() {
       errexit();
   }
   if (ghost_part_cnt > 0) {
-    fprintf(stderr, "%d: check_particle_consistency: ERROR: Found %d illegal "
-                    "ghost particles!\n",
+    fprintf(stderr,
+            "%d: check_particle_consistency: ERROR: Found %d illegal "
+            "ghost particles!\n",
             this_node, ghost_part_cnt);
     errexit();
   }
@@ -176,15 +185,17 @@ void check_particles() {
       for (dir = 0; dir < 3; dir++) {
         if (PERIODIC(dir) && (part[n].r.p[dir] < -skin2 ||
                               part[n].r.p[dir] > box_l[dir] + skin2)) {
-          fprintf(stderr, "%d: check_particles: ERROR: illegal pos[%d]=%f of "
-                          "part %d id=%d in cell %d\n",
+          fprintf(stderr,
+                  "%d: check_particles: ERROR: illegal pos[%d]=%f of "
+                  "part %d id=%d in cell %d\n",
                   this_node, dir, part[n].r.p[dir], n, part[n].p.identity, c);
           errexit();
         }
       }
       if (local_particles[part[n].p.identity] != &part[n]) {
-        fprintf(stderr, "%d: check_particles: ERROR: address mismatch for part "
-                        "id %d: local: %p cell: %p in cell %d\n",
+        fprintf(stderr,
+                "%d: check_particles: ERROR: address mismatch for part "
+                "id %d: local: %p cell: %p in cell %d\n",
                 this_node, part[n].p.identity,
                 static_cast<void *>(local_particles[part[n].p.identity]),
                 static_cast<void *>(&part[n]), c);
@@ -201,8 +212,9 @@ void check_particles() {
     if (local_particles[n] != nullptr) {
       local_part_cnt++;
       if (local_particles[n]->p.identity != n) {
-        fprintf(stderr, "%d: check_particles: ERROR: local_particles part %d "
-                        "has corrupted id %d\n",
+        fprintf(stderr,
+                "%d: check_particles: ERROR: local_particles part %d "
+                "has corrupted id %d\n",
                 this_node, n, local_particles[n]->p.identity);
         errexit();
       }
@@ -234,9 +246,10 @@ void check_particle_sorting() {
     auto cell = local_cells.cell[c];
     for (int n = 0; n < cell->n; n++) {
       auto p = cell->part[n];
-      if (cell_structure.position_to_cell(p.r.p) != cell) {
+      if (cell_structure.position_to_cell(p.r.p.data()) != cell) {
         fprintf(stderr, "%d: misplaced part id %d. %p != %p\n", this_node,
-                p.p.identity, (void*)cell, (void*)cell_structure.position_to_cell(p.r.p));
+                p.p.identity, (void *)cell,
+                (void *)cell_structure.position_to_cell(p.r.p.data()));
         errexit();
       }
     }

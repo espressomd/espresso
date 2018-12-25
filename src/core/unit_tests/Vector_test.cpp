@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -19,9 +19,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file Vector_test.cpp Unit tests for the Utils::Vector class.
+/** \file
+ * Unit tests for the Utils::Vector class.
  *
-*/
+ */
 
 #define BOOST_TEST_MODULE Vector test
 #define BOOST_TEST_DYN_LINK
@@ -51,12 +52,33 @@ BOOST_AUTO_TEST_CASE(initializer_list_constructor) {
   Vector<n_test_numbers, int> v(TEST_NUMBERS);
 
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
+
+  BOOST_CHECK_THROW(Vector2d({1., 2., 3.}), std::length_error);
 }
 
 BOOST_AUTO_TEST_CASE(iterator_constructor) {
   Vector<n_test_numbers, int> v(std::begin(test_numbers),
                                 std::end(test_numbers));
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
+
+  BOOST_CHECK_THROW(Vector2d(std::begin(test_numbers), std::end(test_numbers)),
+                    std::length_error);
+}
+
+BOOST_AUTO_TEST_CASE(const_iterator_constructor) {
+  /* {begin,end}() const variant */
+  {
+    const Vector<n_test_numbers, int> v(std::begin(test_numbers),
+                                        std::end(test_numbers));
+    BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
+  }
+
+  /* {cbegin,cend}() const variant */
+  {
+    Vector<n_test_numbers, int> v(std::begin(test_numbers),
+                                  std::end(test_numbers));
+    BOOST_CHECK(std::equal(v.cbegin(), v.cend(), test_numbers));
+  }
 }
 
 BOOST_AUTO_TEST_CASE(default_constructor_test) {
@@ -137,4 +159,49 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
 
   BOOST_CHECK((sqrt(Vector<3, double>{1., 2., 3.}) ==
                Vector<3, double>{sqrt(1.), sqrt(2.), sqrt(3.)}));
+}
+
+BOOST_AUTO_TEST_CASE(broadcast) {
+  const auto fives = Vector<11, int>::broadcast(5);
+
+  BOOST_CHECK(fives.size() == 11);
+  for (auto const &e : fives) {
+    BOOST_CHECK(5 == e);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(swap) {
+  const auto cv1 = Vector<3, int>{1, 2, 3};
+  const auto cv2 = Vector<3, int>{4, 5, 6};
+
+  auto v1 = cv1;
+  auto v2 = cv2;
+
+  v1.swap(v2);
+
+  BOOST_CHECK(v1 == cv2);
+  BOOST_CHECK(v2 == cv1);
+}
+
+BOOST_AUTO_TEST_CASE(decay_to_scalar_test) {
+  {
+    using original_t = Vector<1, int>;
+    using decayed_t = typename decay_to_scalar<original_t>::type;
+
+    static_assert(std::is_same<int, decayed_t>::value, "");
+  }
+
+  {
+    using original_t = Vector<3, int>;
+    using decayed_t = typename decay_to_scalar<original_t>::type;
+
+    static_assert(std::is_same<original_t, decayed_t>::value, "");
+  }
+}
+
+BOOST_AUTO_TEST_CASE(vector_broadcast) {
+  Vector2d const v = Vector2d::broadcast(1.4);
+
+  BOOST_CHECK_EQUAL(v[0], 1.4);
+  BOOST_CHECK_EQUAL(v[1], 1.4);
 }
