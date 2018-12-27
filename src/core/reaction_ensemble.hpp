@@ -33,10 +33,12 @@ struct SingleReaction {
   std::vector<int> reactant_coefficients;
   std::vector<int> product_types;
   std::vector<int> product_coefficients;
-  double gamma;
+  double gamma= {};
   // calculated values that are stored for performance reasons
-  int nu_bar;
+  int nu_bar= {};
   Utils::Accumulator accumulator_exponentials = Utils::Accumulator(1);
+  int tried_moves= 0;
+  int accepted_moves= 0;
 };
 
 struct StoredParticleProperty {
@@ -46,9 +48,9 @@ struct StoredParticleProperty {
 };
 
 struct CollectiveVariable {
-  double CV_minimum;
-  double CV_maximum;
-  double delta_CV;
+  double CV_minimum= {};
+  double CV_maximum= {};
+  double delta_CV= {};
   virtual double determine_current_state() = 0; // use pure virtual, otherwise
                                                 // this will be used in vector
                                                 // of collective variables

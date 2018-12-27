@@ -122,6 +122,13 @@ cdef class ReactionAlgorithm(object):
         """
         return (1.0 * self.RE.m_accepted_configurational_MC_moves) / self.RE.m_tried_configurational_MC_moves
 
+    def get_acceptance_rate_reaction(self,reaction_id):
+        """
+        Returns the acceptance rate for the given reaction.
+
+        """
+        return float(self.RE.reactions[reaction_id].accepted_moves)/float(self.RE.reactions[reaction_id].tried_moves)
+
     def set_non_interacting_type(self, non_interacting_type):
         """
         Sets the particle type for non-interacting particles.
@@ -673,7 +680,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
 
     def measure_excess_chemical_potential(self, reaction_id=0):
         """
-        Measures the excess chemical potential in a homogeneous system. Returns the excess chemical potential and the standard error for the excess chemical potential. It assumes that your samples are uncorrelated.
+        Measures the excess chemical potential in a homogeneous system. Returns the excess chemical potential and the standard error for the excess chemical potential. It assumes that your samples are uncorrelated in estimating the standard error.
 
         """
         return self.WidomInsertionPtr.measure_excess_chemical_potential(int(reaction_id))

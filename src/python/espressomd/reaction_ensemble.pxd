@@ -15,6 +15,8 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         vector[int] product_coefficients
         double gamma
         int nu_bar
+        int tried_moves
+        int accepted_moves
 
     cdef cppclass CReactionAlgorithm "ReactionEnsemble::ReactionAlgorithm":
         int do_reaction(int reaction_steps) except +
