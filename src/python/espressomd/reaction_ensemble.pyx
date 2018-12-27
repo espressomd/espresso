@@ -120,14 +120,14 @@ cdef class ReactionAlgorithm(object):
         Returns the acceptance rate for the configuration moves.
 
         """
-        return (1.0 * self.RE.m_accepted_configurational_MC_moves) / self.RE.m_tried_configurational_MC_moves
+        return self.RE.get_acceptance_rate_configurational_moves()
 
     def get_acceptance_rate_reaction(self,reaction_id):
         """
         Returns the acceptance rate for the given reaction.
 
         """
-        return float(self.RE.reactions[reaction_id].accepted_moves)/float(self.RE.reactions[reaction_id].tried_moves)
+        return self.RE.reactions[reaction_id].get_acceptance_rate()
 
     def set_non_interacting_type(self, non_interacting_type):
         """

@@ -39,6 +39,9 @@ struct SingleReaction {
   Utils::Accumulator accumulator_exponentials = Utils::Accumulator(1);
   int tried_moves= 0;
   int accepted_moves= 0;
+  double get_acceptance_rate(){
+    return static_cast<double>(accepted_moves)/static_cast<double>(tried_moves);
+  };
 };
 
 struct StoredParticleProperty {
@@ -129,6 +132,9 @@ public:
 
   int m_accepted_configurational_MC_moves = 0;
   int m_tried_configurational_MC_moves = 0;
+  double get_acceptance_rate_configurational_moves(){
+    return static_cast<double>(m_accepted_configurational_MC_moves)/static_cast<double>(m_tried_configurational_MC_moves);
+  }
 
   void set_cuboid_reaction_ensemble_volume();
   virtual int do_reaction(int reaction_steps);
