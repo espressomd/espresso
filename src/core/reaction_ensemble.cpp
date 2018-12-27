@@ -438,7 +438,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
    */
 
   SingleReaction &current_reaction = reactions[reaction_id];
-  current_reaction.tried_moves+=1;
+  current_reaction.tried_moves += 1;
   bool reaction_is_accepted = false;
   particle_inserted_too_close_to_another_one = false;
   int old_state_index = -1; // for Wang-Landau algorithm
@@ -521,7 +521,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     for (int i = 0; i < len_hidden_particles_properties; i++) {
       delete_particle(to_be_deleted_hidden_ids[i]); // delete particle
     }
-    current_reaction.accepted_moves+=1;
+    current_reaction.accepted_moves += 1;
     reaction_is_accepted = true;
   } else {
     // reject

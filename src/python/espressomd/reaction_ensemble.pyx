@@ -122,7 +122,7 @@ cdef class ReactionAlgorithm(object):
         """
         return self.RE.get_acceptance_rate_configurational_moves()
 
-    def get_acceptance_rate_reaction(self,reaction_id):
+    def get_acceptance_rate_reaction(self, reaction_id):
         """
         Returns the acceptance rate for the given reaction.
 
