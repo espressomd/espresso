@@ -88,7 +88,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
 
     // Obtain quaternions from desired director
     Vector<4, double> quat_director;
-    convert_quatu_to_quat(d, quat_director);
+    convert_director_to_quat(d, quat_director);
 
     // Define quat as described above:
     double x = 0;

@@ -141,12 +141,19 @@ void energy_calc(double *result) {
 
   on_observable_calc();
 
-  short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
-                   [](Particle &p1, Particle &p2, Distance &d) {
-                     add_non_bonded_pair_energy(&p1, &p2, d.vec21.data(),
-                                                sqrt(d.dist2), d.dist2);
-                   });
-
+  // Execute short range loop if the cutoff is >0
+  if (max_cut > 0) {
+    short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
+                     [](Particle &p1, Particle &p2, Distance &d) {
+                       add_non_bonded_pair_energy(&p1, &p2, d.vec21.data(),
+                                                  sqrt(d.dist2), d.dist2);
+                     });
+  } else {
+    // Otherwise, only do the single-particle contribution
+    for (auto &p : local_cells.particles()) {
+      add_single_particle_energy(&p);
+    }
+  }
   calc_long_range_energies();
 
   auto local_parts = local_cells.particles();
@@ -238,10 +245,12 @@ void calc_long_range_energies() {
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     energy.dipolar[1] = dawaanr_calculations(0, 1);
     break;
+#ifdef DP3M
   case DIPOLAR_MDLC_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
     energy.dipolar[2] = add_mdlc_energy_corrections();
     break;
+#endif
   case DIPOLAR_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
     break;

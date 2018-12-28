@@ -178,8 +178,9 @@ void fft_unpack_block(double *in, double *out, int start[3], int size[3],
  * private functions
  ************************************************/
 
-int fft_find_comm_groups(int grid1[3], int grid2[3], int *node_list1,
-                         int *node_list2, int *group, int *pos, int *my_pos) {
+int fft_find_comm_groups(const Vector3i &grid1, const Vector3i &grid2,
+                         int *node_list1, int *node_list2, int *group, int *pos,
+                         int *my_pos) {
   int i;
   /* communication group cell size on grid1 and grid2 */
   int s1[3], s2[3];

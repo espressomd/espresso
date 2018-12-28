@@ -429,7 +429,7 @@ Description of sample script
     The following features are required:
     ``LB``, ``LB_BOUNDARIES``,
     ``EXTERNAL_FORCES``,
-    ``MASS``, ``CONSTRAINTS``, ``OIF_LOCAL_FORCES``,
+    ``MASS``, ``OIF_LOCAL_FORCES``,
     ``OIF_GLOBAL_FORCES``, ``SOFT_SPHERE``, ``MEMBRANE_COLLISION``
 
 The script described in this section is available in :file:`samples/object-in-fluid/two-cells.py` and also at

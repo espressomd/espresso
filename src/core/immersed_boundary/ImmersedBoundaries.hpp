@@ -41,6 +41,7 @@ private:
   const int MaxNumIBM;
   std::vector<double> VolumesCurrent;
   bool VolumeInitDone = false;
+  bool BoundariesFound = false;
 };
 
 #endif

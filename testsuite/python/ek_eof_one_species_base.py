@@ -33,11 +33,11 @@ from tests_common import DynamicDict
 
 params_base = DynamicDict([
     ('dt', 1.0 / 7),
-    ('integration_length', 3000),
+    ('integration_length', 2300),
     ('agrid', 1. / 3),
     ('density_water', 26.15),
     ('friction', 1.9),
-    ('width', 40.0),
+    ('width', 20.0),
     ('sigma', -0.04),
     ('padding', 6.0),
     ('force', 0.07),

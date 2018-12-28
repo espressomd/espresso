@@ -19,12 +19,9 @@
 #ifndef _CUDA_UTILS_HPP
 #define _CUDA_UTILS_HPP
 
-#ifndef __CUDACC__
+#if !defined(__HIPCC__) and !defined(__CUDACC__)
 #error Do not include CUDA headers in normal C++-code!!!
 #endif
-
-#include <cuda.h>
-#include <cuda_runtime.h>
 
 /**cuda streams for parallel computing on cpu and gpu */
 extern cudaStream_t stream[1];
@@ -46,15 +43,15 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
 
 #define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
 
-#define KERNELCALL_shared(_f, _a, _b, _s, _params)                             \
-  _f<<<_a, _b, _s, stream[0]>>> _params;                                       \
+#define KERNELCALL_shared(_f, _a, _b, _s, ...)                                 \
+  hipLaunchKernelGGL(_f, _a, _b, _s, stream[0], ##__VA_ARGS__);                \
   _cuda_check_errors(_a, _b, #_f, __FILE__, __LINE__);
 
-#define KERNELCALL_stream(_function, _grid, _block, _stream, _params)          \
-  _function<<<_grid, _block, 0, _stream>>> _params;                            \
+#define KERNELCALL_stream(_function, _grid, _block, _stream, ...)              \
+  hipLaunchKernelGGL(_function, _grid, _block, 0, _stream, ##__VA_ARGS__);     \
   _cuda_check_errors(_grid, _block, #_function, __FILE__, __LINE__);
 
-#define KERNELCALL(_f, _a, _b, _params)                                        \
-  KERNELCALL_shared(_f, _a, _b, 0, _params)
+#define KERNELCALL(_f, _a, _b, ...)                                            \
+  KERNELCALL_shared(_f, _a, _b, 0, ##__VA_ARGS__)
 
 #endif

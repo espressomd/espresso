@@ -6,7 +6,7 @@ set(VirtualSites_SRC
     VirtualSitesRelative.cpp
 )
 add_library(VirtualSites SHARED ${VirtualSites_SRC})
-install(TARGETS VirtualSites LIBRARY DESTINATION ${LIBDIR} ARCHIVE DESTINATION ${LIBDIR})
+install(TARGETS VirtualSites LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd ARCHIVE DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(VirtualSites PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(VirtualSites EspressoConfig)
 
@@ -15,7 +15,7 @@ if(CUDA)
     lb_inertialess_tracers_cuda.cu
   )
   cuda_add_library(VirtualSitesCuda SHARED ${VirtualSitesCuda_SRC})
-  install(TARGETS VirtualSitesCuda DESTINATION ${LIBDIR})
+  install(TARGETS VirtualSitesCuda DESTINATION ${PYTHON_INSTDIR}/espressomd)
   set_target_properties(VirtualSitesCuda PROPERTIES SOVERSION ${SOVERSION})
   add_dependencies(VirtualSitesCuda EspressoConfig)
 

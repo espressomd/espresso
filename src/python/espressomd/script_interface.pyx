@@ -161,7 +161,7 @@ cdef class PScriptInterface(object):
         elif np.issubdtype(np.dtype(type(value)), np.signedinteger):
             return make_variant[int](value)
         elif np.issubdtype(np.dtype(type(value)), np.floating):
-            return make_variant[float](value)
+            return make_variant[double](value)
         else:
             raise TypeError("Unkown type for conversion to Variant")
 

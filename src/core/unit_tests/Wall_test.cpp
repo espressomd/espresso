@@ -32,7 +32,7 @@ bool check_distance_function(const Shapes::Shape &s) {
   for (int i = 0; i < 100; i++)
     for (int j = 0; j < 100; j++)
       for (int k = 0; k < 100; k++) {
-        double pos[3] = {i * 0.1, j * 0.1, k * 0.1};
+        Vector3d pos = {i * 0.1, j * 0.1, k * 0.1};
         double dist[3];
         double d;
 
