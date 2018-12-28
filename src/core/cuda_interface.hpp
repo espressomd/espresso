@@ -50,7 +50,7 @@ typedef struct {
   float v_cs[6];
   float v_swim;
   float f_swim;
-  float quatu[3];
+  float director[3];
   int push_pull;
   float dipole_length;
   bool swimming;
@@ -60,11 +60,11 @@ typedef struct {
 /** data structure which must be copied to the GPU at each step run on the GPU
  */
 struct CUDA_particle_data {
-
 //   // This has to stay in front of the struct for memmove reasons
 #ifdef ENGINE
   CUDA_ParticleParametersSwimming swim;
 #endif
+  int identity;
 
   /** particle position given from md part*/
   float p[3];
@@ -75,7 +75,7 @@ struct CUDA_particle_data {
 #endif
 
 #ifdef ROTATION
-  float quatu[3];
+  float director[3];
 #endif
 
 #ifdef SHANCHEN

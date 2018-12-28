@@ -251,7 +251,9 @@ if $make_check; then
 else
     start "TEST"
 
-    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/python/particle.py" || exit 1
+    if [ "$HIP_PLATFORM" != "hcc" ]; then
+      cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/python/particle.py" || exit 1
+    fi
 
     end "TEST"
 fi

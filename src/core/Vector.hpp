@@ -31,6 +31,7 @@
 #include <vector>
 
 #include "utils/serialization/array.hpp"
+#include <boost/serialization/access.hpp>
 
 template <size_t n, typename Scalar> class Vector {
 private:
@@ -114,12 +115,14 @@ public:
   inline Scalar norm2() const { return (*this) * (*this); }
   inline Scalar norm() const { return sqrt(norm2()); }
 
-  inline void normalize(void) {
+  inline Vector &normalize(void) {
     const auto N = norm();
     if (N > Scalar(0)) {
       for (int i = 0; i < n; i++)
         d[i] /= N;
     }
+
+    return *this;
   }
 
   /**
@@ -162,6 +165,7 @@ private:
 // Useful typedefs
 
 typedef Vector<3, double> Vector3d;
+typedef Vector<3, int> Vector3i;
 typedef Vector<2, double> Vector2d;
 
 namespace detail {

@@ -40,11 +40,19 @@ if espressomd.has_features('LB'):
 
 system.part.add(pos=[1.0] * 3)
 system.part.add(pos=[1.0, 1.0, 2.0])
+if espressomd.has_features('EXCLUSIONS'):
+    system.part.add(pos=[2.0] * 3, exclusions=[0, 1])
 if espressomd.has_features('ELECTROSTATICS'):
     system.part[0].q = 1
     system.part[1].q = -1
     p3m = espressomd.electrostatics.P3M(
-        prefactor=1.0, accuracy=0.1, mesh=10, cao=1, alpha=1.0, r_cut=1.0, tune=False)
+        prefactor=1.0,
+        accuracy=0.1,
+        mesh=10,
+        cao=1,
+        alpha=1.0,
+        r_cut=1.0,
+        tune=False)
     system.actors.add(p3m)
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
 acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
@@ -56,8 +64,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=2.0)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
-        have_velocity=True,
-                                                                        have_quaternion=True)
+        have_velocity=True, have_quaternion=True)
     system.part[1].vs_auto_relate_to(0)
 if espressomd.has_features(['LENNARD_JONES']):
     system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -79,4 +86,7 @@ checkpoint.register("particle_force1")
 if espressomd.has_features('LB'):
     lbf[1, 1, 1].velocity = [0.1, 0.2, 0.3]
     lbf.save_checkpoint("@CMAKE_CURRENT_BINARY_DIR@/lb.cpt", 1)
+if espressomd.has_features("COLLISION_DETECTION"): 
+        system.collision_detection.set_params(
+            mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
 checkpoint.save(0)

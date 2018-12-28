@@ -41,8 +41,8 @@ class TestLB(object):
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = range(n_nodes)
     np.random.seed = 1
-    params = {'int_steps': 25,
-              'int_times': 10,
+    params = {'int_steps': 15,
+              'int_times': 30,
               'time_step': 0.01,
               'tau': 0.01,
               'agrid': 0.5,
@@ -121,8 +121,9 @@ class TestLB(object):
 
             # Go over lb lattice
             for lb_node in lb_nodes:
-                fluid_mass += lb_node.density[0]
-                fluid_temp += np.sum(lb_node.velocity**2) * lb_node.density[0]
+                dens = lb_node.density[0]
+                fluid_mass += dens
+                fluid_temp += np.sum(lb_node.velocity**2) * dens
 
             # Normalize
             fluid_mass /= len(lb_nodes)
@@ -172,6 +173,25 @@ class TestLB(object):
         np.testing.assert_allclose(
             np.copy(self.lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
 
+    def test_grid_index(self):
+        self.system.actors.clear()
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step,
+            fric=self.params['friction'], ext_force_density=[0, 0, 0])
+        self.system.actors.add(self.lbf)
+        with self.assertRaises(ValueError):
+            v = self.lbf[
+                int(self.params['box_l'] / self.params['agrid']) + 1, 0, 0].velocity
+        with self.assertRaises(ValueError):
+            v = self.lbf[
+                0, int(self.params['box_l'] / self.params['agrid']) + 1, 0].velocity
+        with self.assertRaises(ValueError):
+            v = self.lbf[
+                0, 0, int(self.params['box_l'] / self.params['agrid']) + 1].velocity
+
     @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
                "Features not available, skipping test!")
     def test_viscous_coupling(self):
@@ -219,7 +239,8 @@ class TestLB(object):
                 np.copy(self.lbf[n].velocity), fluid_velocity, atol=1E-6)
 
 
-@ut.skipIf(not espressomd.has_features(["LB"]),
+@ut.skipIf(
+    not espressomd.has_features(["LB"]) or espressomd.has_features("SHANCHEN"),
            "Features not available, skipping test!")
 class TestLBCPU(TestLB, ut.TestCase):
 
@@ -230,8 +251,8 @@ class TestLBCPU(TestLB, ut.TestCase):
 
 @ut.skipIf(
     not espressomd.has_features(
-        ["LB_GPU"]) or espressomd.has_features('SHANCHEN'),
-           "Features not available, skipping test!")
+        ["LB_GPU"]) or espressomd.has_features('SHANCHEN') or espressomd.has_features("SHANCHEN"),
+    "Features not available, skipping test!")
 class TestLBGPU(TestLB, ut.TestCase):
 
     def setUp(self):
