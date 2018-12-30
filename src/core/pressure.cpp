@@ -94,6 +94,16 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 /*********************************/
 /* Scalar and Tensorial Pressure */
 /*********************************/
+inline void add_single_particle_virials(int v_comp, Particle &p) {
+  add_kinetic_virials(&p, v_comp);
+  add_bonded_virials(&p);
+#ifdef BOND_ANGLE_OLD
+  add_three_body_bonded_stress(&p);
+#endif
+#ifdef BOND_ANGLE
+  add_three_body_bonded_stress(&p);
+#endif
+}
 
 void pressure_calc(double *result, double *result_t, double *result_nb,
                    double *result_t_nb, int v_comp) {
@@ -112,23 +122,20 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   init_p_tensor_non_bonded(&p_tensor_non_bonded);
 
   on_observable_calc();
-
-  short_range_loop(
-      [&v_comp](Particle &p) {
-        add_kinetic_virials(&p, v_comp);
-        add_bonded_virials(&p);
-#ifdef BOND_ANGLE_OLD
-        add_three_body_bonded_stress(&p);
-#endif
-#ifdef BOND_ANGLE
-        add_three_body_bonded_stress(&p);
-#endif
-      },
-      [](Particle &p1, Particle &p2, Distance &d) {
-        add_non_bonded_pair_virials(&(p1), &(p2), d.vec21.data(), sqrt(d.dist2),
-                                    d.dist2);
-      });
-
+  // Run short-range loop if max cut >0
+  if (max_cut > 0) {
+    short_range_loop(
+        [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
+        [](Particle &p1, Particle &p2, Distance &d) {
+          add_non_bonded_pair_virials(&(p1), &(p2), d.vec21.data(),
+                                      sqrt(d.dist2), d.dist2);
+        });
+  } else {
+    // Only add single particle virials
+    for (auto &p : local_cells.particles()) {
+      add_single_particle_virials(v_comp, p);
+    }
+  }
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);
 
@@ -655,20 +662,20 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
   int zi;
   double length; /* length of line between the two points */
   int d1, d2; /* for each z-bin d1 and d2 are calculated.  they indicate through
-                 which faces of the bin the line enters and leaves the bin. i.e.
-                 if the line enters through the face corresponding to y = 0.34
-                 then d1 = 1 (y-direction) and val1 = 0.34 */
+                 which faces of the bin the line enters and leaves the bin.
+                 i.e. if the line enters through the face corresponding to y =
+                 0.34 then d1 = 1 (y-direction) and val1 = 0.34 */
   double val1, val2;
   double intersect;
   double segment, segment2;
   double calclength;
   int xa, ya, za; /* counters for bins */
   double temp[3];
-  double redentry[3], redexit[3]; /* like entry and exit but using a coordinate
-                                     system where range_start corresponds to
-                                     (0,0,0) and the length scale in each
-                                     direction is the bin width */
-  double redbox_l[3];             /* box size is reduced units */
+  double redentry[3],
+      redexit[3];     /* like entry and exit but using a coordinate system where
+                         range_start corresponds to (0,0,0) and the length scale in
+                         each direction is the bin width */
+  double redbox_l[3]; /* box size is reduced units */
   int facein, faceout;
 
   PTENSOR_TRACE(fprintf(stderr,
@@ -728,14 +735,14 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
 
     /* find in which x-bins the line starts and stops */
     if (facein == 0) {
-      startx = dround(redentry[0]) - 1 + sign10[0];
+      startx = std::round(redentry[0]) - 1 + sign10[0];
     } else {
       startx = floor(redentry[0]);
     }
     if ((startx < 0) && (range[0] == box_l[0]))
       startx += bins[0];
     if (faceout == 0) {
-      endx = dround(redexit[0] - sign10[0]);
+      endx = std::round(redexit[0] - sign10[0]);
     } else {
       endx = floor(redexit[0]);
     }
@@ -755,7 +762,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
      * starty[xbin-startx+1] */
     totoccupiedybins = 0;
     if (facein == 1) {
-      starty[0] = dround(redentry[1]) - 1 + sign10[1];
+      starty[0] = std::round(redentry[1]) - 1 + sign10[1];
     } else {
       starty[0] = floor(redentry[1]);
     }
@@ -790,7 +797,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
     /* find in which z-bins the line starts and stops for each y-bin*/
     counter = 0;
     if (facein == 2) {
-      zi = dround(redentry[2]) - 1 + sign10[2];
+      zi = std::round(redentry[2]) - 1 + sign10[2];
     } else {
       zi = floor(redentry[2]);
     }
@@ -825,7 +832,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
       ybin = starty[xa + 1];
       if (xbin == endx) {
         if (faceout == 2) {
-          zi = dround(redexit[2] - sign10[2]);
+          zi = std::round(redexit[2] - sign10[2]);
         } else {
           zi = floor(redexit[2]);
         }
@@ -1108,9 +1115,9 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force,
                         "handle DAWAANR magnetostatics so it is left out\n");
         break;
       case DIPOLAR_DS:
-        fprintf(stderr, "WARNING: Local stress tensor calculation cannot "
-                        "handle MAGNETIC DIPOLAR SUM magnetostatics so "
-                        "it is left out\n");
+        fprintf(stderr,
+                "WARNING: Local stress tensor calculation cannot handle "
+                "MAGNETIC DIPOLAR SUM magnetostatics so it is left out\n");
         break;
 
       default:

@@ -332,11 +332,6 @@ int calc_cylindrical_average(
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution);
 
-int calc_radial_density_map(int xbins, int ybins, int thetabins, double xrange,
-                            double yrange, double axis[3], double center[3],
-                            IntList *beadids, DoubleList *density_map,
-                            DoubleList *density_profile);
-
 template <typename T1, typename T2>
 double min_distance2(T1 const pos1, T2 const pos2) {
   double diff[3];

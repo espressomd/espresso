@@ -42,6 +42,7 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbgpu.hpp"
 #include "initialize.hpp"
 #include "lattice.hpp"
 #include "minimize_energy.hpp"

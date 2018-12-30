@@ -4,7 +4,7 @@
 function helper_test_install_common() {
   local root=$1
   local filepaths=("${root}/bin/pypresso" \
-                   "${root}/lib/libEspressoCore.so" \
+                   "${root}/@Python_SITEARCH@/espressomd/EspressoCore.so" \
                   )
   if [ "@TESTING_PYTHON@" = "TRUE" ]
   then

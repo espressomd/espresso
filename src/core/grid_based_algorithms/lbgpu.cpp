@@ -164,8 +164,6 @@ LB_parameters_gpu lbpar_gpu = {
 /** this is the array that stores the hydrodynamic fields for the output */
 LB_rho_v_pi_gpu *host_values = nullptr;
 
-LB_nodes_gpu *host_nodes = nullptr;
-
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum_gpu = 0;
 
@@ -257,10 +255,6 @@ void lb_reinit_fluid_gpu() {
   only the fluid-related memory on the gpu.*/
 void lb_release_gpu() {
 
-  if (host_nodes != nullptr) {
-    free(host_nodes);
-    host_nodes = nullptr;
-  }
   if (host_values != nullptr) {
     free(host_values);
     host_values = nullptr;

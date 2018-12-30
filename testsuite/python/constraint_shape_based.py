@@ -471,7 +471,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 offset=0.,
                 eps=1.0,
                 sig=1.0,
-                r=1.134228603),
+                r=hollowcone_constraint.min_dist()),
             places=9)
 
         # Reset

@@ -35,7 +35,7 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
   /* determine the number of local lattice nodes */
   for (int d = 0; d < 3; d++) {
     this->agrid[d] = agrid[d];
-    this->global_grid[d] = (int)dround(box_l[d] / agrid[d]);
+    this->global_grid[d] = (int)std::round(box_l[d] / agrid[d]);
     this->offset[d] = offset[d];
     this->local_index_offset[d] =
         (int)ceil((my_left[d] - this->offset[d]) / this->agrid[d]);
@@ -102,8 +102,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
       } else {
         fprintf(stderr,
                 "%d: map_position_to_lattice: position (%f,%f,%f) not inside a "
-                "local plaquette in dir %d ind[dir]=%d "
-                "rel=%f lpos=%f.\n",
+                "local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",
                 this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
       }
     } else if (ind[dir] > this->grid[dir]) {
@@ -112,8 +111,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
       else
         fprintf(stderr,
                 "%d: map_position_to_lattice: position (%f,%f,%f) not inside a "
-                "local plaquette in dir %d ind[dir]=%d "
-                "rel=%f lpos=%f.\n",
+                "local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",
                 this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
     }
 
@@ -133,7 +131,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
 
 /********************** static Functions **********************/
 
-void Lattice::map_position_to_lattice_global(Vector3d &pos, int ind[3],
+void Lattice::map_position_to_lattice_global(Vector3d &pos, Vector3i &ind,
                                              double delta[6],
                                              double tmp_agrid) {
   // not sure why I don't have access to agrid here so I make a temp var and
