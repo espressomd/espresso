@@ -341,37 +341,42 @@ void convert_torques_propagate_omega() {
 #endif // BROWNIAN_DYNAMICS
     {
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
+          stderr,
+          "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
+          this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1],
+          p.m.v[2]));
 
       // Propagation of angular velocities
       p.m.omega[0] += time_step_half * p.f.torque[0] / p.p.rinertia[0];
       p.m.omega[1] += time_step_half * p.f.torque[1] / p.p.rinertia[1];
       p.m.omega[2] += time_step_half * p.f.torque[2] / p.p.rinertia[2];
-	  
+
       // zeroth estimate of omega
       Vector3d omega_0 = p.m.omega;
-	  
+
       /* if the tensor of inertia is isotropic, the following refinement is not
          needed.
          Otherwise repeat this loop 2-3 times depending on the required accuracy
          */
-	  
+
       const double rinertia_diff_01 = p.p.rinertia[0] - p.p.rinertia[1];
       const double rinertia_diff_12 = p.p.rinertia[1] - p.p.rinertia[2];
       const double rinertia_diff_20 = p.p.rinertia[2] - p.p.rinertia[0];
       for (int times = 0; times <= 5; times++) {
         Vector3d Wd;
-	  
-        Wd[0] = p.m.omega[1] * p.m.omega[2] * rinertia_diff_12 / p.p.rinertia[0];
-        Wd[1] = p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 / p.p.rinertia[1];
-        Wd[2] = p.m.omega[0] * p.m.omega[1] * rinertia_diff_01 / p.p.rinertia[2];
-	  
+
+        Wd[0] =
+            p.m.omega[1] * p.m.omega[2] * rinertia_diff_12 / p.p.rinertia[0];
+        Wd[1] =
+            p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 / p.p.rinertia[1];
+        Wd[2] =
+            p.m.omega[0] * p.m.omega[1] * rinertia_diff_01 / p.p.rinertia[2];
+
         p.m.omega = omega_0 + time_step_half * Wd;
       }
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-          stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
-          p.m.v[1], p.m.v[2]));
+          stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node,
+          p.m.v[0], p.m.v[1], p.m.v[2]));
     }
   }
 }
@@ -429,7 +434,7 @@ void rotation_fix(Particle &p, Vector3d &rot_vector) {
  * aBodyFrame by amount phi
  */
 void local_rotate_particle_body(Particle &p, const Vector3d &axis_body_frame,
-                           const double phi) {
+                                const double phi) {
   Vector3d axis = axis_body_frame;
 
   // Rotation turned off entirely?
@@ -626,15 +631,15 @@ void bd_random_walk_rot(Particle &p, double dt) {
     {
 #ifndef PARTICLE_ANISOTROPY
       if (brown_sigma_pos_temp_inv > 0.0) {
-        dphi[j] = Thermostat::noise_g() *
-                  (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt);
+        dphi[j] =
+            Thermostat::noise_g() * (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt);
       } else {
         dphi[j] = 0.0;
       }
 #else
       if (brown_sigma_pos_temp_inv[j] > 0.0) {
-        dphi[j] = Thermostat::noise_g() *
-                  (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt);
+        dphi[j] = Thermostat::noise_g() * (1.0 / brown_sigma_pos_temp_inv[j]) *
+                  sqrt(dt);
       } else {
         dphi[j] = 0.0;
       }
@@ -680,8 +685,8 @@ void bd_random_walk_vel_rot(Particle &p, double dt) {
     {
       // velocity is added here. It is already initialized in the terminal drag
       // part.
-      domega[j] = brown_sigma_vel_temp * Thermostat::noise_g() /
-                      sqrt(p.p.rinertia[j]);
+      domega[j] =
+          brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p.p.rinertia[j]);
     }
   }
   rotation_fix(p, domega);
