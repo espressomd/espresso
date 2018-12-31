@@ -205,6 +205,16 @@ empty:
     - linux
     - cuda
 
+ubuntu:wo-dependencies:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export myconfig=maxset make_check=false
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
 ### Builds with ROCm
 
 rocm-maxset:

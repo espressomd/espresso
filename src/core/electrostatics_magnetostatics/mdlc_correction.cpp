@@ -44,7 +44,7 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-#ifdef DIPOLES
+#if defined(DIPOLES) && defined(DP3M)
 
 DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
 
