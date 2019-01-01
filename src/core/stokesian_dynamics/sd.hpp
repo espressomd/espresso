@@ -16,6 +16,7 @@ namespace sd {
 template <typename Policy, typename T>
 struct check_dist {
     device_vector_view<T, Policy> const x;
+    device_vector_view<T, Policy> const a;
     device_matrix_view<T, Policy> pd;
     device_matrix_view<std::size_t, Policy> const part_id;
     DEVICE_FUNC void operator()(std::size_t i) {
@@ -30,10 +31,10 @@ struct check_dist {
 
 #ifdef NDEBUG
 #undef NDEBUG
-        assert(dr > 2 && "Particles overlapped!");
+        assert(dr > a(part_id(0, i))+a(part_id(1, i)) && "Particles overlapped!");
 #define NDEBUG
 #else
-        assert(dr > 2 && "Particles overlapped!");
+        assert(dr > a(part_id(0, i))+a(part_id(1, i)) && "Particles overlapped!");
 #endif
 
         pd(0, i) = dx * dr_inv;
@@ -61,6 +62,8 @@ struct mobility;
 template <typename Policy, typename T>
 struct mobility<Policy, T, true> {
     device_matrix_view<T, Policy> zmuf, zmus, zmes;
+    device_vector_view<T, Policy> const a;
+    T const eta;
 
     // Determine the self contribution
     // This is independent of dr_inv, dx, dy, dz
@@ -90,18 +93,21 @@ struct mobility<Policy, T, true> {
         };
 
         // Fill the self mobility terms
-        std::size_t ph1 = 6 * part_id;
-        std::size_t ph2 = ph1 + 3;
-        std::size_t ph3 = 5 * part_id;
+        std::size_t const ph1 = 6 * part_id;
+        std::size_t const ph2 = ph1 + 3;
+        std::size_t const ph3 = 5 * part_id;
 
+        T const visc1 = T{M_1_PI / 6. / eta / a(part_id)};
+        T const visc2 = T{visc1 / a(part_id)};
+        T const visc3 = T{visc2 / a(part_id)};
         for (std::size_t i = 0; i < 3; ++i) {
-            zmuf(ph1 + i, ph1 + i) = mob_a(i, i);
-            zmuf(ph2 + i, ph2 + i) = mob_c(i, i);
+            zmuf(ph1 + i, ph1 + i) = visc1 * mob_a(i, i);
+            zmuf(ph2 + i, ph2 + i) = visc3 * mob_c(i, i);
         }
 
         for (std::size_t i = 0; i < 5; ++i) {
             for (std::size_t j = 0; j < 5; ++j) {
-                zmes(ph3 + i, ph3 + j) = mob_m(i, j);
+                zmes(ph3 + i, ph3 + j) = visc3 * mob_m(i, j);
             }
         }
     }
@@ -112,6 +118,8 @@ struct mobility<Policy, T, false> {
     device_matrix_view<T, Policy> zmuf, zmus, zmes;
     device_matrix_view<T, Policy> const pd;
     device_matrix_view<std::size_t, Policy> const part_id;
+    device_vector_view<T, Policy> const a;
+    T const eta;
 
     // Determine the pair contribution
     DEVICE_FUNC void operator()(std::size_t pair_id) {
@@ -286,6 +294,7 @@ struct mobility<Policy, T, false> {
         // Fill the pair mobility terms
         std::size_t ph1 = part_id(0, pair_id);
         std::size_t ph2 = part_id(1, pair_id);
+        T a12 = T{.5} * (a(ph1) + a(ph2));
 
         std::size_t ph5 = 5 * ph1;
         std::size_t ph6 = 5 * ph2;
@@ -296,32 +305,35 @@ struct mobility<Policy, T, false> {
         std::size_t ph3 = ph1 + 3;
         std::size_t ph4 = ph2 + 3;
 
+        T const visc1 = T{M_1_PI / 6. / eta / a12};
+        T const visc2 = T{visc1 / a12};
+        T const visc3 = T{visc2 / a12};
         for (std::size_t i = 0; i < 3; ++i) {
             for (std::size_t j = 0; j < 3; ++j) {
-                zmuf(ph1 + i, ph2 + j) = mob_a(i, j);
-                zmuf(ph3 + i, ph2 + j) = mob_b(i, j);
-                zmuf(ph1 + i, ph4 + j) = -mob_b(j, i); // mob_b transpose
-                zmuf(ph3 + i, ph4 + j) = mob_c(i, j);
+                zmuf(ph1 + i, ph2 + j) = visc1 * mob_a(i, j);
+                zmuf(ph3 + i, ph2 + j) = visc2 * mob_b(i, j);
+                zmuf(ph1 + i, ph4 + j) = -visc2 * mob_b(j, i); // mob_b transpose
+                zmuf(ph3 + i, ph4 + j) = visc3 * mob_c(i, j);
 
-                zmuf(ph2 + i, ph1 + j) = mob_a(j, i);
-                zmuf(ph4 + i, ph1 + j) = mob_b(j, i);
-                zmuf(ph2 + i, ph3 + j) = -mob_b(i, j); // mob_b transpose
-                zmuf(ph4 + i, ph3 + j) = mob_c(j, i);
+                zmuf(ph2 + i, ph1 + j) = visc1 * mob_a(j, i);
+                zmuf(ph4 + i, ph1 + j) = visc2 * mob_b(j, i);
+                zmuf(ph2 + i, ph3 + j) = -visc2 * mob_b(i, j); // mob_b transpose
+                zmuf(ph4 + i, ph3 + j) = visc3 * mob_c(j, i);
             }
 
             for (std::size_t j = 0; j < 5; ++j) {
-                zmus(ph1 + i, ph6 + j) = mob_gt(i, j);
-                zmus(ph2 + i, ph5 + j) = T{-1.0} * mob_gt(i, j);
+                zmus(ph1 + i, ph6 + j) = visc3 * mob_gt(i, j);
+                zmus(ph2 + i, ph5 + j) = T{-1.0} * visc3 * mob_gt(i, j);
 
-                zmus(ph3 + i, ph6 + j) = mob_ht(i, j);
-                zmus(ph4 + i, ph5 + j) = mob_ht(i, j);
+                zmus(ph3 + i, ph6 + j) = visc3 * mob_ht(i, j);
+                zmus(ph4 + i, ph5 + j) = visc3 * mob_ht(i, j);
             }
         }
 
         for (std::size_t i = 0; i < 5; ++i) {
             for (std::size_t j = 0; j < 5; ++j) {
-                zmes(ph5 + i, ph6 + j) = mob_m(i, j);
-                zmes(ph6 + i, ph5 + j) = mob_m(j, i);
+                zmes(ph5 + i, ph6 + j) = visc3 * mob_m(i, j);
+                zmes(ph6 + i, ph5 + j) = visc3 * mob_m(j, i);
             }
         }
     }
@@ -338,6 +350,7 @@ struct solver {
     template <typename U>
     using vector_type = typename Policy::template vector<U>;
 
+    T const eta;
     std::size_t const n_part;
     std::size_t const n_pair;
 
@@ -345,8 +358,8 @@ struct solver {
     device_matrix<T, Policy> zmus;
     device_matrix<T, Policy> zmes;
 
-    solver(std::size_t const n_part)
-        : n_part(n_part), n_pair(n_part * (n_part - 1) / 2),
+    solver(T eta, std::size_t const n_part)
+        : eta{eta}, n_part(n_part), n_pair(n_part * (n_part - 1) / 2),
           zmuf(n_part * 6, n_part * 6), zmus(n_part * 6, n_part * 5),
           zmes(n_part * 5, n_part * 5) {}
 
@@ -354,6 +367,7 @@ struct solver {
                             std::vector<T> const &f_host) {
         assert(x_host.size() == 6 * n_part);
         vector_type<T> x(x_host.begin(), x_host.end());
+        vector_type<T> a(n_part, T{1.0}); // TODO: Get from host
 
         // TODO: More efficient!
         device_matrix<std::size_t, Policy> part_id(2, n_pair);
@@ -371,16 +385,16 @@ struct solver {
 
         // check_dist
         thrust::for_each(Policy::par(), begin, begin + n_pair,
-                         check_dist<Policy, T>{x, pd, part_id});
+                         check_dist<Policy, T>{x, a, pd, part_id});
 
         // self mobility term
         thrust::for_each(Policy::par(), begin, begin + n_part,
-                         mobility<Policy, T, true>{zmuf, zmus, zmes});
+                         mobility<Policy, T, true>{zmuf, zmus, zmes, a, eta});
 
         // pair mobility term
         thrust::for_each(
             Policy::par(), begin, begin + n_pair,
-            mobility<Policy, T, false>{zmuf, zmus, zmes, pd, part_id});
+            mobility<Policy, T, false>{zmuf, zmus, zmes, pd, part_id, a, eta});
 
         // Invert the grand-mobility tensor.  This is done in several steps
         // which minimize the computation time.
