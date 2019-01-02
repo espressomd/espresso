@@ -24,7 +24,6 @@ import numpy.testing as npt
 import espressomd
 from espressomd import electrostatics
 
-
 class pressureViaVolumeScaling(object):
 
     def __init__(self, system, kbT):
@@ -65,8 +64,7 @@ class pressureViaVolumeScaling(object):
         pressure = self.kbT / self.dV * np.log(average_value)
         return pressure
 
-
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS, LENNARD_JONES"]),
+@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "LENNARD_JONES"]),
            "Features not available, skipping test!")
 class VirialPressureConsistency(ut.TestCase):
 
