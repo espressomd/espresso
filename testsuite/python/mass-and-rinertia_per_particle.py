@@ -31,7 +31,8 @@ class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
+    es.seed = range(es.cell_system.get_state()["n_nodes"])
+    es.cell_system.set_domain_decomposition(use_verlet_lists=True)
     es.cell_system.skin = 5.0
 
     # The NVT thermostat parameters
@@ -63,7 +64,7 @@ class ThermoTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        np.random.seed(15)
+        np.random.seed(16)
 
     def setUp(self):
         self.es.time = 0.0
@@ -310,11 +311,11 @@ class ThermoTest(ut.TestCase):
                 pos0[ind, :] = self.es.part[ind].pos
         dt0 = self.mass / self.gamma_tran_p_validate
 
-        loops = 250
-        therm_steps = 20
+        loops = 10
+        therm_steps = int(1000)
         self.es.integrator.run(therm_steps)
 
-        int_steps = 5
+        int_steps = 50
         for i in range(loops):
             self.es.integrator.run(int_steps)
             # Get kinetic energy in each degree of freedom for all particles
@@ -451,7 +452,7 @@ class ThermoTest(ut.TestCase):
     # Test case 0.1: no particle specific values / fluctuation & dissipation
     def test_case_01(self):
         # Each of 2 kind of particles will be represented by n instances:
-        n = 200
+        n = 50
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
@@ -477,7 +478,7 @@ class ThermoTest(ut.TestCase):
     # & dissipation
     def test_case_11(self):
         # Each of 2 kind of particles will be represented by n instances:
-        n = 200
+        n = 50
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
@@ -504,7 +505,7 @@ class ThermoTest(ut.TestCase):
     # & dissipation
     def test_case_21(self):
         # Each of 2 kind of particles will be represented by n instances:
-        n = 200
+        n = 75
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
@@ -532,7 +533,7 @@ class ThermoTest(ut.TestCase):
     # fluctuation & dissipation
     def test_case_31(self):
         # Each of 2 kind of particles will be represented by n instances:
-        n = 200
+        n = 75
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
@@ -563,7 +564,7 @@ class ThermoTest(ut.TestCase):
     # thermostat / fluctuation & dissipation
     def test_case_41(self):
         # Each of 2 kind of particles will be represented by n instances:
-        n = 200
+        n = 75
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults_rot_differ()
         # The test case-specific thermostat and per-particle parameters
