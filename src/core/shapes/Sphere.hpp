@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -30,8 +30,8 @@ class Sphere : public Shape {
 public:
   Sphere() : m_pos({0.0, 0.0, 0.0}), m_rad(0.0), m_direction(1.0) {}
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 
   Vector3d &pos() { return m_pos; }
   double &rad() { return m_rad; }
@@ -42,6 +42,6 @@ private:
   double m_rad;
   double m_direction;
 };
-}
+} // namespace Shapes
 
 #endif

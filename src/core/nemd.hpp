@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -20,7 +20,7 @@
 */
 #ifndef NEMD_H
 #define NEMD_H
-/** \file nemd.hpp
+/** \file
 
     This file contains the implementation of the NEMD (Non Equilibrium
     Molecular Dynamics) algorithm. It allows one to shear a system
@@ -42,7 +42,7 @@ extern int nemd_method;
 /** \name Data Types */
 /************************************************/
 /*@{*/
-/** Data structure describing a slab and the velocities occuring their in. */
+/** Data structure describing a slab and the velocities occurring their in. */
 typedef struct {
 
   /* velocity profile */
@@ -54,7 +54,7 @@ typedef struct {
   /* the n_exchange fastest particles */
   /** identity list of n_exchange fastest particles */
   int *fastest;
-  /** number of particles allready stored */
+  /** number of particles already stored */
   int n_fastest;
   /** minimal velocity stored in fastest*/
   double v_min;
@@ -76,7 +76,7 @@ typedef struct {
 
   /** thickness of a slab */
   double thickness;
-  /** invers thickness of a slab */
+  /** inverse thickness of a slab */
   double invthickness;
 
   /** Velocity profile */
@@ -98,7 +98,7 @@ typedef struct {
 
   /* momentum added/exchanged */
   double momentum;
-  /* numbe of momentum exchanges */
+  /* number of momentum exchanges */
   int momentum_norm;
 } Nemd;
 /*@}*/
@@ -132,7 +132,7 @@ void nemd_change_momentum();
     \ref Nemd::velocity_profile. */
 void nemd_store_velocity_profile();
 
-/** Store the x-componenet of the velocity of particle part into the
+/** Store the x-component of the velocity of particle part into the
     nemd data structure \ref nemddata. */
 inline void nemd_get_velocity(Particle part) {
   int slab_num, i;
@@ -160,7 +160,7 @@ inline void nemd_get_velocity(Particle part) {
      and middle slab if nemd method is exchange */
   if (nemd_method == NEMD_METHOD_EXCHANGE) {
     if (slab_num == nemddata.top_slab) {
-      /* top slab: look for largest negative x componenet */
+      /* top slab: look for largest negative x component */
 
       /* first fill fastest array as particles com in */
       if (slab->n_fastest < nemddata.n_exchange) {
@@ -184,7 +184,7 @@ inline void nemd_get_velocity(Particle part) {
           }
       }
     } else if (slab_num == nemddata.mid_slab) {
-      /* midlle slab: look for largest positive x componenet */
+      /* middle slab: look for largest positive x component */
 
       /* first fill fastest array as particles com in */
       if (slab->n_fastest < nemddata.n_exchange) {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -26,7 +26,8 @@
 using namespace std;
 
 namespace Shapes {
-int Maze::calculate_dist(const double *ppos, double *dist, double *vec) const {
+void Maze::calculate_dist(const Vector3d &pos, double *dist,
+                          double *vec) const {
   int i, min_axis, cursph[3];
   double diasph, fac, c_dist, sph_dist, cyl_dist, temp_dis;
   double sph_vec[3], cyl_vec[3];
@@ -36,8 +37,8 @@ int Maze::calculate_dist(const double *ppos, double *dist, double *vec) const {
   /* First determine the distance to the sphere */
   c_dist = 0.0;
   for (i = 0; i < 3; i++) {
-    cursph[i] = (int)(ppos[i] / diasph);
-    sph_vec[i] = (cursph[i] + 0.5) * diasph - (ppos[i]);
+    cursph[i] = (int)(pos[i] / diasph);
+    sph_vec[i] = (cursph[i] + 0.5) * diasph - (pos[i]);
     c_dist += Utils::sqr(sph_vec[i]);
   }
   c_dist = sqrt(c_dist);
@@ -92,6 +93,5 @@ int Maze::calculate_dist(const double *ppos, double *dist, double *vec) const {
     for (i = 0; i < 3; i++)
       vec[i] = cyl_vec[i];
   }
-  return 0;
 }
-}
+} // namespace Shapes

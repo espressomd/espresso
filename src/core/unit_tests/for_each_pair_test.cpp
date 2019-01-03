@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -17,9 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file for_each_pair_test.cpp Unit tests for the Utils::for_each_pair.
+/** \file
+ * Unit tests for the Utils::for_each_pair.
  *
-*/
+ */
 
 #define BOOST_TEST_MODULE for_each_pair test
 #define BOOST_TEST_DYN_LINK
@@ -47,7 +48,7 @@ void check_pairs(int n_values, std::vector<std::pair<int, int>> &pairs) {
 BOOST_AUTO_TEST_CASE(basic_check) {
   auto const n_values = 141;
   std::vector<int> vec(n_values);
-  
+
   std::iota(vec.begin(), vec.end(), 0);
 
   std::vector<std::pair<int, int>> pairs;

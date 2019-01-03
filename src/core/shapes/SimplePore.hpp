@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -92,9 +92,9 @@ public:
 
   Vector3d &center() { return m_center; }
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 };
-}
+} // namespace Shapes
 
 #endif

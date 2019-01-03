@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -27,8 +27,8 @@
 using namespace std;
 
 namespace Shapes {
-int HollowCone::calculate_dist(const double *ppos, double *dist,
-                               double *vec) const {
+void HollowCone::calculate_dist(const Vector3d &pos, double *dist,
+                                double *vec) const {
   int number = -1;
   double r0, r1, w, alpha, xd, yd, zd, mu, x_2D, y_2D, t0, t1, t2, time1, time2,
       time3, time4, mdst0, mdst1, mdst2, mdst3, mindist, normalize, x, y, z,
@@ -45,7 +45,7 @@ int HollowCone::calculate_dist(const double *ppos, double *dist,
 
   // Set the point for which we want to know the distance
 
-  Vector3d point_3D = Vector3d(ppos, ppos + 3);
+  Vector3d point_3D = pos;
 
   /***** Convert 3D coordinates to 2D planar coordinates *****/
 
@@ -273,7 +273,7 @@ int HollowCone::calculate_dist(const double *ppos, double *dist,
   yd = m_orientation[1] / m_orientation.norm();
   zd = m_orientation[2] / m_orientation.norm();
 
-  // We now establish the rotion matrix required to go
+  // We now establish the rotation matrix required to go
   // form {0,0,1} to {xd,yd,zd}
 
   double matrix[9];
@@ -367,10 +367,8 @@ int HollowCone::calculate_dist(const double *ppos, double *dist,
     vec[i] = normal_3D[i] * distance;
   }
 
-  *dist = std::copysign(distance, m_direction);
+  *dist = distance * std::copysign(1.0, m_direction);
 
   // And we are done with the hollow cone
-
-  return 0;
 }
 } // namespace Shapes

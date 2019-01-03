@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 #define CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 
@@ -13,26 +31,25 @@ namespace Constraints {
 
 class ShapeBasedConstraint : public Constraint {
 public:
-  enum class ReflectionType { NONE, NORMAL, NORMAL_TANGENTIAL };
-
   ShapeBasedConstraint()
-      : m_shape(std::make_shared<Shapes::NoWhere>()),
-        m_penetrable(false),
+      : m_shape(std::make_shared<Shapes::NoWhere>()), m_penetrable(false),
         m_only_positive(false) {
     ShapeBasedConstraint::reset_force();
   }
 
-  virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
-                          Observable_stat &energy) const override;
+  void add_energy(const Particle &p, const Vector3d &folded_pos,
+                  Observable_stat &energy) const override;
 
-  virtual ParticleForce force(const Particle &p, const Vector3d &folded_pos) override;
+  ParticleForce force(const Particle &p, const Vector3d &folded_pos) override;
+
+  bool fits_in_box(Vector3d const &) const override { return true; }
 
   /* finds the minimum distance to all particles */
   double min_dist();
 
   /* Calculate distance from the constraint */
-  int calc_dist(const double *pos, double *dist, double *vec) const {
-    return m_shape->calculate_dist(pos, dist, vec);
+  void calc_dist(const Vector3d &pos, double *dist, double *vec) const {
+    m_shape->calculate_dist(pos, dist, vec);
   }
 
   void set_shape(std::shared_ptr<Shapes::Shape> const &shape) {
@@ -41,7 +58,10 @@ public:
 
   Shapes::Shape const &shape() const { return *m_shape; }
 
-  void reset_force() override { m_local_force = Vector3d{0, 0, 0}; m_outer_normal_force=0.0;}
+  void reset_force() override {
+    m_local_force = Vector3d{0, 0, 0};
+    m_outer_normal_force = 0.0;
+  }
 
   bool &only_positive() { return m_only_positive; }
   bool &penetrable() { return m_penetrable; }
@@ -59,7 +79,7 @@ public:
 private:
   Particle part_rep;
 
-    /** Private data members */
+  /** Private data members */
   std::shared_ptr<Shapes::Shape> m_shape;
 
   bool m_penetrable;
@@ -68,6 +88,6 @@ private:
   double m_outer_normal_force;
 };
 
-} /* namespace Constaints */
+} // namespace Constraints
 
 #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -23,17 +23,15 @@
 #include "utils.hpp"
 #include <cmath>
 
-
 namespace Shapes {
 
-int SpheroCylinder::calculate_dist(const double *ppos, double *dist,
-                               double *vec) const {
+void SpheroCylinder::calculate_dist(const Vector3d &pos, double *dist,
+                                    double *vec) const {
   /* Coordinate transform to cylinder coords
      with origin at m_center. */
 
-  Vector3d const ppos_v = Vector3d(ppos, ppos + 3);
   /* Vector cylinder center<->particle */
-  Vector3d const c_dist = ppos_v - m_center;
+  Vector3d const c_dist = pos - m_center;
 
   auto const z = e_z * c_dist;
   auto const r_vec = c_dist - z * e_z;
@@ -50,56 +48,56 @@ int SpheroCylinder::calculate_dist(const double *ppos, double *dist,
   double z_abs = std::abs(z);
   double side = 1;
 
-  if (r >= m_rad || (z_abs >= m_half_length && std::sqrt(r * r + std::pow(z_abs-m_half_length,2))) > m_rad ) { 
-  /* Outside */
-    if (z_abs >= m_half_length) { 
-    /* Closest feature: hemisphere */
-        double dir = 1;
-        if (z<0)
-            dir = -1;
-        Vector3d c_dist_cap = ppos_v - (m_center + dir * e_z * m_half_length);
-        *dist = c_dist_cap.norm() - m_rad;
-        c_dist_cap.normalize();
-        Vector3d v = *dist * c_dist_cap;
-        for (int i = 0; i < 3; i++) {
-            vec[i] = v[i];
-        }
-        *dist *= m_direction;
-        return 0;
+  if (r >= m_rad ||
+      (z_abs >= m_half_length &&
+       std::sqrt(r * r + std::pow(z_abs - m_half_length, 2))) > m_rad) {
+    /* Outside */
+    if (z_abs >= m_half_length) {
+      /* Closest feature: hemisphere */
+      double dir = 1;
+      if (z < 0)
+        dir = -1;
+      Vector3d c_dist_cap = pos - (m_center + dir * e_z * m_half_length);
+      *dist = c_dist_cap.norm() - m_rad;
+      c_dist_cap.normalize();
+      Vector3d v = *dist * c_dist_cap;
+      for (int i = 0; i < 3; i++) {
+        vec[i] = v[i];
+      }
+      *dist *= m_direction;
+      return;
     } else {
-    /* Closest feature: cylinder */
-        dr = -(r - m_rad);
+      /* Closest feature: cylinder */
+      dr = -(r - m_rad);
     }
   } else {
     side = -1;
     /* Inside */
-    if (z_abs <= m_half_length) { 
-    /* Closest feature: cylinder */
-        dr = m_rad - r;
+    if (z_abs <= m_half_length) {
+      /* Closest feature: cylinder */
+      dr = m_rad - r;
     } else {
-    /* Closest feature: hemisphere */
-        double dir = 1;
-        if (z<0)
-            dir = -1;
-        Vector3d c_dist_cap = -(ppos_v - (m_center + dir * e_z * m_half_length));
-        *dist =  m_rad - c_dist_cap.norm();
-        c_dist_cap.normalize();
-        Vector3d v = *dist * c_dist_cap;
-        for (int i = 0; i < 3; i++) {
-            vec[i] = v[i];
-        }
-        *dist *= -m_direction;
-        return 0;
-
+      /* Closest feature: hemisphere */
+      double dir = 1;
+      if (z < 0)
+        dir = -1;
+      Vector3d c_dist_cap = -(pos - (m_center + dir * e_z * m_half_length));
+      *dist = m_rad - c_dist_cap.norm();
+      c_dist_cap.normalize();
+      Vector3d v = *dist * c_dist_cap;
+      for (int i = 0; i < 3; i++) {
+        vec[i] = v[i];
+      }
+      *dist *= -m_direction;
+      return;
     }
   }
-  
+
   *dist = std::sqrt(dr * dr) * m_direction * side;
   for (int i = 0; i < 3; i++) {
     vec[i] = -dr * e_r[i];
   }
 
-  return 0;
+  return;
 }
-}
-
+} // namespace Shapes

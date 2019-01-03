@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2011-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -22,16 +22,21 @@
 #define COLLISION_MODE_OFF 0
 /// just create bond between centers of colliding particles
 #define COLLISION_MODE_BOND 2
-/** create a bond between the centers of the colloiding particles,
+/** create a bond between the centers of the colliding particles,
     plus two virtual sites at the point of collision and bind them
     together. This prevents the particles from sliding against each
     other. Requires VIRTUAL_SITES_RELATIVE and COLLISION_MODE_BOND*/
 #define COLLISION_MODE_VS 4
-/** Glue a particle to a speciffic spot on the surface of an other */
+/** Glue a particle to a specific spot on the surface of an other */
 #define COLLISION_MODE_GLUE_TO_SURF 8
 /// Three particle binding mode
 #define COLLISION_MODE_BIND_THREE_PARTICLES 16
 /*@}*/
+
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "integrate.hpp"
+#include "particle_data.hpp"
+#include "virtual_sites.hpp"
 
 class Collision_parameters {
 public:
@@ -77,11 +82,6 @@ public:
 };
 /// Parameters for collision detection
 extern Collision_parameters collision_params;
-
-#include "integrate.hpp"
-#include "interaction_data.hpp"
-#include "particle_data.hpp"
-#include "virtual_sites.hpp"
 
 #ifdef COLLISION_DETECTION
 

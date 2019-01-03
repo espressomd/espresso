@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -17,22 +17,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "cuda_interface.hpp"
 
 #ifdef CUDA
 
-#include "utils/serialization/CUDA_particle_data.hpp"
-#include "utils/mpi/gather_buffer.hpp"
-#include "utils/mpi/scatter_buffer.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "debug.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
-#include "random.hpp"
-
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "utils/mpi/gather_buffer.hpp"
+#include "utils/mpi/scatter_buffer.hpp"
+#include "utils/serialization/CUDA_particle_data.hpp"
 
 /// MPI tag for cuda particle gathering
 #define REQ_CUDAGETPARTS 0xcc01
@@ -58,6 +55,7 @@ static void pack_particles(ParticleRange particles,
                            CUDA_particle_data *buffer) {
   int i = 0;
   for (auto const &part : particles) {
+    buffer[i].identity = part.p.identity;
     auto const pos = folded_position(part);
 
     buffer[i].p[0] = static_cast<float>(pos[0]);
@@ -75,9 +73,10 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef DIPOLES
-    buffer[i].dip[0] = static_cast<float>(part.r.dip[0]);
-    buffer[i].dip[1] = static_cast<float>(part.r.dip[1]);
-    buffer[i].dip[2] = static_cast<float>(part.r.dip[2]);
+    const Vector3d dip = part.calc_dip();
+    buffer[i].dip[0] = static_cast<float>(dip[0]);
+    buffer[i].dip[1] = static_cast<float>(dip[1]);
+    buffer[i].dip[2] = static_cast<float>(dip[2]);
 #endif
 
 #ifdef SHANCHEN
@@ -87,7 +86,7 @@ static void pack_particles(ParticleRange particles,
     }
 #endif
 
-#ifdef LB_ELECTROHYDRODYNAMICS
+#if defined(LB_ELECTROHYDRODYNAMICS) && defined(LB_GPU)
     buffer[i].mu_E[0] = static_cast<float>(part.p.mu_E[0]);
     buffer[i].mu_E[1] = static_cast<float>(part.p.mu_E[1]);
     buffer[i].mu_E[2] = static_cast<float>(part.p.mu_E[2]);
@@ -102,17 +101,18 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef ROTATION
-    buffer[i].quatu[0] = static_cast<float>(part.r.quatu[0]);
-    buffer[i].quatu[1] = static_cast<float>(part.r.quatu[1]);
-    buffer[i].quatu[2] = static_cast<float>(part.r.quatu[2]);
+    const Vector3d director = part.r.calc_director();
+    buffer[i].director[0] = static_cast<float>(director[0]);
+    buffer[i].director[1] = static_cast<float>(director[1]);
+    buffer[i].director[2] = static_cast<float>(director[2]);
 #endif
 
 #ifdef ENGINE
     buffer[i].swim.v_swim = static_cast<float>(part.swim.v_swim);
     buffer[i].swim.f_swim = static_cast<float>(part.swim.f_swim);
-    buffer[i].swim.quatu[0] = static_cast<float>(part.r.quatu[0]);
-    buffer[i].swim.quatu[1] = static_cast<float>(part.r.quatu[1]);
-    buffer[i].swim.quatu[2] = static_cast<float>(part.r.quatu[2]);
+    buffer[i].swim.director[0] = static_cast<float>(director[0]);
+    buffer[i].swim.director[1] = static_cast<float>(director[1]);
+    buffer[i].swim.director[2] = static_cast<float>(director[2]);
 #if defined(LB) || defined(LB_GPU)
     buffer[i].swim.push_pull = part.swim.push_pull;
     buffer[i].swim.dipole_length = static_cast<float>(part.swim.dipole_length);
@@ -150,8 +150,8 @@ void cuda_mpi_get_particles(ParticleRange particles,
  * @brief Add a flat force (and torque) array to a range of particles.
  *
  * @param particles The particles the forces (and torques should be added to)
- * @param forces The forces as flat array of size 3 * particls.size()
- * @param torques The torques as flat array of size 3 * particls.size(),
+ * @param forces The forces as flat array of size 3 * particles.size()
+ * @param torques The torques as flat array of size 3 * particles.size(),
  *                this is only touched if ROTATION is active.
  */
 static void add_forces_and_torques(ParticleRange particles, float *forces,
@@ -239,7 +239,7 @@ void set_v_cs(ParticleRange particles, CUDA_v_cs *v_cs) {
     v_cs++;
   }
 }
-}
+} // namespace
 
 void cuda_mpi_send_v_cs(ParticleRange particles, CUDA_v_cs *host_v_cs) {
   // first collect number of particles on each node
@@ -266,9 +266,9 @@ on mpi.h. */
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host) {
   energy.bonded[0] += energy_host.bonded;
   energy.non_bonded[0] += energy_host.non_bonded;
-  if (energy.n_coulomb>=1)
+  if (energy.n_coulomb >= 1)
     energy.coulomb[0] += energy_host.coulomb;
-  if (energy.n_dipolar >=2)
+  if (energy.n_dipolar >= 2)
     energy.dipolar[1] += energy_host.dipolar;
 }
 

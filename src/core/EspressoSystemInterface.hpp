@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
+  Copyright (C) 2014-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -96,16 +96,16 @@ public:
     return m_needsQGpu;
   };
 
-  float *quatuGpuBegin() override { return m_quatu_gpu_begin; };
-  float *quatuGpuEnd() override { return m_quatu_gpu_end; };
-  bool hasQuatuGpu() override { return true; };
-  bool requestQuatuGpu() override {
-    m_needsQuatuGpu = hasQuatuGpu();
-    m_splitParticleStructGpu |= m_needsQuatuGpu;
-    m_gpu |= m_needsQuatuGpu;
+  float *directorGpuBegin() override { return m_director_gpu_begin; };
+  float *directorGpuEnd() override { return m_director_gpu_end; };
+  bool hasDirectorGpu() override { return true; };
+  bool requestDirectorGpu() override {
+    m_needsDirectorGpu = hasDirectorGpu();
+    m_splitParticleStructGpu |= m_needsDirectorGpu;
+    m_gpu |= m_needsDirectorGpu;
     if (m_gpu)
       enableParticleCommunication();
-    return m_needsQuatuGpu;
+    return m_needsDirectorGpu;
   };
 
   bool requestParticleStructGpu() {
@@ -163,10 +163,10 @@ protected:
   static EspressoSystemInterface *m_instance;
   EspressoSystemInterface()
       : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0),
-        m_dip_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),
-        m_q_gpu_end(0), m_quatu_gpu_begin(0), m_quatu_gpu_end(0),
-        m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)
-        {};
+        m_dip_gpu_begin(0), m_dip_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0),
+        m_q_gpu_begin(0), m_q_gpu_end(0), m_director_gpu_begin(0),
+        m_director_gpu_end(0), m_needsParticleStructGpu(false),
+        m_splitParticleStructGpu(false){};
   virtual ~EspressoSystemInterface() {}
 
   void gatherParticles();
@@ -200,8 +200,8 @@ protected:
   float *m_q_gpu_begin;
   float *m_q_gpu_end;
 
-  float *m_quatu_gpu_begin;
-  float *m_quatu_gpu_end;
+  float *m_director_gpu_begin;
+  float *m_director_gpu_end;
 
   bool m_needsParticleStructGpu;
   bool m_splitParticleStructGpu;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -18,8 +18,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "lb.hpp"
 #include "CylindricalLBVelocityProfile.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
 
@@ -45,10 +45,10 @@ operator()(PartCfg &partCfg) const {
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #if defined(LB)
-    for (size_t ind=0; ind < m_sample_positions.size(); ind +=3) {
+    for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
       Vector3d pos_tmp = {m_sample_positions[ind + 0],
-                           m_sample_positions[ind + 1],
-                           m_sample_positions[ind + 2]};
+                          m_sample_positions[ind + 1],
+                          m_sample_positions[ind + 2]};
       lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
     }
 #endif

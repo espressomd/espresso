@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -53,8 +53,8 @@ cdef class Integrator(object):
             self.set_nvt()
         elif self._method == "NPT":
             npt_params = state['_isotropic_npt_params']
-            self.set_isotropic_npt(npt_params['ext_pressure'], npt_params['piston'], direction=npt_params['direction'], cubic_box=npt_params['cubic_box'])
-
+            self.set_isotropic_npt(npt_params['ext_pressure'], npt_params[
+                                   'piston'], direction=npt_params['direction'], cubic_box=npt_params['cubic_box'])
 
     def run(self, steps=1, recalc_forces=False, reuse_forces=False):
         """
@@ -78,8 +78,7 @@ cdef class Integrator(object):
             check_type_or_throw_except(
                 reuse_forces, 1, bool, "reuse_forces has to be a bool")
 
-            if (_integrate(steps, recalc_forces, reuse_forces)):
-                handle_errors("Encoutered errors during integrate")
+            _integrate(steps, recalc_forces, reuse_forces)
         elif self._method == "STEEPEST_DESCENT":
             minimize_energy_init(self._steepest_descent_params["f_max"],
                                  self._steepest_descent_params["gamma"],
@@ -88,6 +87,8 @@ cdef class Integrator(object):
             mpi_minimize_energy()
         else:
             raise ValueError("No integrator method set!")
+
+        handle_errors("Encoutered errors during integrate")
 
     def set_steepest_descent(self, *args, **kwargs):
         """
@@ -100,7 +101,7 @@ cdef class Integrator(object):
         req = ["f_max", "gamma", "max_displacement"]
         for key in kwargs:
             if not key in req:
-                raise Exception("Set required parameter %s first." %key)
+                raise Exception("Set required parameter %s first." % key)
 
         self._steepest_descent_params.update(kwargs)
         self._method = "STEEPEST_DESCENT"
@@ -120,7 +121,8 @@ cdef class Integrator(object):
         self._method = "NVT"
         integrate_set_nvt()
 
-    def set_isotropic_npt(self, ext_pressure, piston, direction=[0,0,0], cubic_box=False):
+    def set_isotropic_npt(self, ext_pressure, piston, direction=[0, 0, 0],
+                          cubic_box=False):
         """
         Set the integration method to NPT.
 

@@ -1,12 +1,29 @@
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
-import espressomd
-from espressomd.shapes import *
-from espressomd.visualization_opengl import openGLLive
+import math
 import numpy as np
-from math import *
+
+import espressomd
+import espressomd.shapes
+from espressomd.visualization_opengl import openGLLive
 
 box_l = 50
-system = espressomd.System(box_l = [box_l, 15, box_l])
+system = espressomd.System(box_l=[box_l, 15, box_l])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
@@ -24,8 +41,8 @@ for i in range(cup_height):
     alpha = 2.0 * np.pi / int(circ)
     posy = yoff + i
     for j in range(int(circ)):
-        posx = box_l / 2.0 + rad * sin(j * alpha + (np.pi / 2.0))
-        posz = box_l / 2.0 + rad * cos(j * alpha + (np.pi / 2.0))
+        posx = box_l / 2.0 + rad * math.sin(j * alpha + (np.pi / 2.0))
+        posz = box_l / 2.0 + rad * math.cos(j * alpha + (np.pi / 2.0))
         system.part.add(pos=[posx, posy, posz], type=0)
 
 # cup bottom
@@ -36,23 +53,23 @@ while (rad > 1.0):
     circ = 2.0 * np.pi * rad
     alpha = 2.0 * np.pi / int(circ)
     for j in range(int(circ)):
-        posx = box_l / 2.0 + rad * sin(j * alpha + (np.pi / 2.0))
-        posz = box_l / 2.0 + rad * cos(j * alpha + (np.pi / 2.0))
+        posx = box_l / 2.0 + rad * math.sin(j * alpha + (np.pi / 2.0))
+        posz = box_l / 2.0 + rad * math.cos(j * alpha + (np.pi / 2.0))
         system.part.add(pos=[posx, posy, posz], type=0)
 
 
 # cup handle
-hand_rad = (cup_height - 4.0) / sqrt(2.0)
+hand_rad = (cup_height - 4.0) / math.sqrt(2.0)
 hand_circ = (1.5 * np.pi * hand_rad)
 hand_xoff = (cup_bot_circ + cup_top_circ) / (4.0 * np.pi) + 1.2
 hand_yoff = yoff + cup_height / 2.0 - 0.2
 alpha = 2.0 * np.pi / int(4.0 * hand_circ / 3.0)
-beta = sin((cup_top_circ - cup_bot_circ) / (2.0 * np.pi * cup_height - 1))
+beta = math.sin((cup_top_circ - cup_bot_circ) / (2.0 * np.pi * cup_height - 1))
 beta = beta - np.pi / 8.0
 posz = (box_l / 2.0) + 0.5
 for i in range(int(hand_circ)):
-    posx = hand_xoff + box_l / 2.0 + hand_rad * sin(i * alpha + beta)
-    posy = hand_yoff + hand_rad * cos(i * alpha + beta)
+    posx = hand_xoff + box_l / 2.0 + hand_rad * math.sin(i * alpha + beta)
+    posy = hand_yoff + hand_rad * math.cos(i * alpha + beta)
     system.part.add(pos=[posx, posy, posz], type=0)
 
 # saucer
@@ -70,8 +87,8 @@ for i in range(n_saucer):
     alpha = 2.0 * np.pi / int(saucer_circ - (i * 2.0 * np.pi))
     posy = yoff + 0.3 - 0.5 * i
     for j in range(int(saucer_circ - (i * 2.0 * np.pi))):
-        posx = box_l / 2.0 + rad * sin(j * alpha)
-        posz = box_l / 2.0 + rad * cos(j * alpha)
+        posx = box_l / 2.0 + rad * math.sin(j * alpha)
+        posz = box_l / 2.0 + rad * math.cos(j * alpha)
         system.part.add(pos=[posx, posy, posz], type=1)
 
 # python
@@ -110,8 +127,8 @@ rad = (cup_top_circ - 12.5) / (2.0 * np.pi)
 alpha = 2.0 * np.pi / int(n_steam)
 for i in range(n_steam):
     for j in range(l_steam):
-        posx = box_l / 2.0 + rad * sin(i * alpha + j * 0.6)
-        posz = box_l / 2.0 + rad * cos(i * alpha + j * 0.6)
+        posx = box_l / 2.0 + rad * math.sin(i * alpha + j * 0.6)
+        posz = box_l / 2.0 + rad * math.cos(i * alpha + j * 0.6)
         posy = yoff + 2 + j * 0.1 * rad
         system.part.add(pos=[posx, posy, posz], type=3)
         pid = len(system.part) - 1
@@ -127,7 +144,7 @@ for i in range(n_steam):
 
 # stand
 system.constraints.add(
-    shape=Cylinder(
+    shape=espressomd.shapes.Cylinder(
         center=[box_l / 2.0, 1.0, box_l / 2.0],
             axis=[0, 1, 0],
             direction=1,

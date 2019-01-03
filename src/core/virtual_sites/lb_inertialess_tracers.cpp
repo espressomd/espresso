@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 /// \file
 /// \brief Main of the Bayreuth Immersed-Boundary implementation
 
@@ -6,14 +24,14 @@
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "cells.hpp"
+#include "grid.hpp"
+#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbboundaries.hpp"
 #include "halo.hpp"
 #include "integrate.hpp"
-#include "lb.hpp"
-#include "lbboundaries.hpp"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
-#include "grid.hpp"
 
 // ****** Functions for internal use ********
 
@@ -48,7 +66,7 @@ void IBM_ForcesIntoFluid_CPU() {
   }
 
   // Update the forces on the ghost particles
-  ghost_communicator(&cell_structure.vs_inertialess_tracers_ghost_force_comm);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_FORCE);
 
   // Loop over local cells
   for (int c = 0; c < local_cells.n; c++) {
@@ -91,14 +109,15 @@ Usually the reset would be done by Espresso after the LB update. But we need to
 keep the forces till after the position update for the f/2 term
 ****************/
 
-void IBM_ResetLBForces_CPU()
-{
-  for (int i = 0; i<lblattice.halo_grid_volume; ++i)
-  {
+void IBM_ResetLBForces_CPU() {
+  for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
     // unit conversion: force density
-    lbfields[i].force_density[0] = lbpar.ext_force_density[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
-    lbfields[i].force_density[1] = lbpar.ext_force_density[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
-    lbfields[i].force_density[2] = lbpar.ext_force_density[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[i].force_density[0] = lbpar.ext_force_density[0] *
+                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
+    lbfields[i].force_density[1] = lbpar.ext_force_density[1] *
+                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
+    lbfields[i].force_density[2] = lbpar.ext_force_density[2] *
+                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
   }
 }
 
@@ -125,11 +144,17 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
     Particle *const p = cell->part;
     for (int j = 0; j < cell->n; j++)
       if (p[j].p.is_virtual) {
+#ifdef EXTERNAL_FORCES
         if (!(p[j].p.ext_flag & 2))
+#endif
           p[j].r.p[0] = p[j].r.p[0] + p[j].m.v[0] * time_step;
+#ifdef EXTERNAL_FORCES
         if (!(p[j].p.ext_flag & 4))
+#endif
           p[j].r.p[1] = p[j].r.p[1] + p[j].m.v[1] * time_step;
+#ifdef EXTERNAL_FORCES
         if (!(p[j].p.ext_flag & 8))
+#endif
           p[j].r.p[2] = p[j].r.p[2] + p[j].m.v[2] * time_step;
 
         // Check if the particle might have crossed a box border (criterion see
@@ -156,12 +181,6 @@ CPU
 void CoupleIBMParticleToFluid(Particle *p) {
   // Convert units from MD to LB
   double delta_j[3];
-  // Old version. Worked, but not when agrid != 1 and probably also required
-  // time_step = lbpar.tau
-  /*  delta_j[0] = p->f.f[0]*time_step*lbpar.tau/lbpar.agrid;
-    delta_j[1] = p->f.f[1]*time_step*lbpar.tau/lbpar.agrid;
-    delta_j[2] = p->f.f[2]*time_step*lbpar.tau/lbpar.agrid;*/
-
   delta_j[0] = p->f.f[0] * lbpar.tau * lbpar.tau / lbpar.agrid;
   delta_j[1] = p->f.f[1] * lbpar.tau * lbpar.tau / lbpar.agrid;
   delta_j[2] = p->f.f[2] * lbpar.tau * lbpar.tau / lbpar.agrid;
@@ -176,14 +195,17 @@ void CoupleIBMParticleToFluid(Particle *p) {
     for (int y = 0; y < 2; y++) {
       for (int x = 0; x < 2; x++) {
         // Do not put force into a halo node
-        if ( !IsHalo(node_index[(z*2+y)*2+x]) )
-        {
+        if (!IsHalo(node_index[(z * 2 + y) * 2 + x])) {
           // Add force into the lbfields structure
-          double *local_f = lbfields[node_index[(z*2+y)*2+x]].force_density;
+          double *local_f =
+              lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
-          local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
-          local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
-          local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
+          local_f[0] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
+                        delta_j[0];
+          local_f[1] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
+                        delta_j[1];
+          local_f[2] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
+                        delta_j[2];
         }
       }
     }
@@ -209,40 +231,6 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
   Vector3d pos;
 
 #ifdef LB_BOUNDARIES
-
-  // This is the interpolation scheme from lb_lbfluid_get_interpolated_velocity
-  // in lb.cpp
-  // It is buggy and has therefore been removed
-
-  /* int boundary_no;
-    int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if
-    0<dist<agrid/2, 2 if dist <0
-
-    LBBoundaries::lbboundary_mindist_position(p, &lbboundary_mindist, distvec,
-    &boundary_no);
-    if (lbboundary_mindist>lbpar.agrid/2) {
-      boundary_flag=0;
-      pos[0]=p[0];
-      pos[1]=p[1];
-      pos[2]=p[2];
-
-    } else if (lbboundary_mindist > 0 ) {
-      boundary_flag=1;
-      pos[0]=p[0] - distvec[0]+ distvec[0]/lbboundary_mindist*lbpar.agrid/2.;
-      pos[1]=p[1] - distvec[1]+ distvec[1]/lbboundary_mindist*lbpar.agrid/2.;
-      pos[2]=p[2] - distvec[2]+ distvec[2]/lbboundary_mindist*lbpar.agrid/2.;
-
-    } else {
-      boundary_flag=2;
-      v[0]=
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0]*lbpar.agrid/lbpar.tau;
-      v[1]=
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1]*lbpar.agrid/lbpar.tau;
-      v[2]=
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2]*lbpar.agrid/lbpar.tau;
-      return; // we can return without interpolating
-    }*/
-
   pos[0] = p[0];
   pos[1] = p[1];
   pos[2] = p[2];
@@ -271,7 +259,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
         index = node_index[(z * 2 + y) * 2 + x];
         f = lbfields[index].force_density_buf;
 
-// This can be done easier withouth copying the code twice
+// This can be done easier without copying the code twice
 // We probably can even set the boundary velocity directly
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
@@ -335,20 +323,6 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
     }
   }
 #ifdef LB_BOUNDARIES
-  // Again the interpolation scheme has been removed
-  /*  if (boundary_flag==1) {
-      v[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0]+(1-lbboundary_mindist/(lbpar.agrid/2.))*
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0];
-      v[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1]+(1-lbboundary_mindist/(lbpar.agrid/2.))*
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1];
-      v[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2]+(1-lbboundary_mindist/(lbpar.agrid/2.))*
-    (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2];
-
-    } else {
-      v[0] = interpolated_u[0];
-      v[1] = interpolated_u[1];
-      v[2] = interpolated_u[2];
-    }*/
   v[0] = interpolated_u[0];
   v[1] = interpolated_u[1];
   v[2] = interpolated_u[2];

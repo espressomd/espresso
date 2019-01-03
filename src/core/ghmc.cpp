@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021
   Mainz, Germany
@@ -19,7 +19,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file ghmc.cpp
+/** \file
 
     For more information see \ref ghmc.hpp
  */
@@ -33,11 +33,11 @@
 #include "communication.hpp"
 #include "energy.hpp"
 #include "ghmc.hpp"
+#include "global.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
 #include "statistics.hpp"
 #include "virtual_sites.hpp"
-#include "global.hpp"
 
 /************************************************************/
 
@@ -79,7 +79,7 @@ void momentum_flip();
 /************************************************************/
 
 /************************************************************/
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -137,7 +137,7 @@ void hamiltonian_calc(int ekin_update_flag) {
   }
 }
 
-// get local temperature - here for debbuging purposes
+// get local temperature - here for debugging purposes
 double calc_local_temp() {
   int tot_np = 0;
   double temp = 0.0;
@@ -168,7 +168,8 @@ void calc_kinetic(double *ek_trans, double *ek_rot) {
 #endif
 
     /* kinetic energy */
-    et += (Utils::sqr(p.m.v[0]) + Utils::sqr(p.m.v[1]) + Utils::sqr(p.m.v[2])) * (p).p.mass;
+    et += (Utils::sqr(p.m.v[0]) + Utils::sqr(p.m.v[1]) + Utils::sqr(p.m.v[2])) *
+          (p).p.mass;
 
 /* rotational energy */
 #ifdef ROTATION
@@ -295,7 +296,7 @@ void partial_momentum_update() {
     for (int j = 0; j < 3; j++) {
       if (sigmat > 0.0) {
         p.m.v[j] =
-          cosp * (p.m.v[j]) + sinp * (sigmat * gaussian_random() * time_step);
+            cosp * (p.m.v[j]) + sinp * (sigmat * gaussian_random() * time_step);
       } else {
         p.m.v[j] = cosp * p.m.v[j];
       }
@@ -305,7 +306,7 @@ void partial_momentum_update() {
 #endif
       if (sigmar > 0.0) {
         p.m.omega[j] =
-          cosp * (p.m.omega[j]) + sinp * (sigmar * gaussian_random());
+            cosp * (p.m.omega[j]) + sinp * (sigmar * gaussian_random());
       } else {
         p.m.omega[j] = cosp * p.m.omega[j];
       }
@@ -370,7 +371,7 @@ void ghmc_close() {
   ghmc_acc += ghmcdata.acc;
 }
 
-/* monte carlo step of ghmc - evaluation stage */
+/* Monte Carlo step of ghmc - evaluation stage */
 void ghmc_mc() {
   INTEG_TRACE(fprintf(stderr, "%d: ghmc_mc:\n", this_node));
 
@@ -382,7 +383,7 @@ void ghmc_mc() {
 
     ghmcdata.att++;
 
-    // metropolis algorithm
+    // Metropolis algorithm
     double boltzmann = ghmcdata.hmlt_new - ghmcdata.hmlt_old;
     if (boltzmann < 0)
       boltzmann = 1.0;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016,2017 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file pressure_inline.hpp
-    Pressure calculation. Really similar to \ref energy.hpp "energy.h".
+/** \file
+    Pressure calculation. Really similar to \ref energy.hpp "energy.hpp".
 */
 
 #ifndef CORE_PRESSURE_INLINE_HPP
@@ -81,14 +81,19 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
   }
 
 #ifdef ELECTROSTATICS
-  /* real space coulomb */
+  /* real space Coulomb */
   if (coulomb.method != COULOMB_NONE) {
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
       /**
-      Here we calculate the short ranged contribution of the electrostatics. These terms are called Pi_{dir, alpha, beta} in the paper by Essmann et al "A smooth particle mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995); doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper is not present here since M is the empty set in our simulations.
+      Here we calculate the short ranged contribution of the electrostatics.
+      These terms are called Pi_{dir, alpha, beta} in the paper by Essmann et al
+      "A smooth particle mesh Ewald method", The Journal of Chemical Physics
+      103, 8577 (1995); doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta}
+      in the Essmann paper is not present here since M is the empty set in our
+      simulations.
       */
       force[0] = 0.0;
       force[1] = 0.0;
@@ -183,10 +188,6 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
     (*i)++;
     force[0] = force[1] = force[2] = 0;
     break;
-  case BONDED_IA_ANGLEDIST:
-    (*i)++;
-    force[0] = force[1] = force[2] = 0;
-    break;
   case BONDED_IA_DIHEDRAL:
     (*i) += 2;
     force[0] = force[1] = force[2] = 0;
@@ -197,14 +198,14 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
     // printf("BONDED TAB, Particle: %d, P2: %d TYPE_TAB:
     // %d\n",p1->p.identity,p2->p.identity,iparams->p.tab.type);
     switch (iaparams->p.tab.type) {
-    case TAB_BOND_LENGTH:
+    case 1:
       calc_tab_bond_force(p1, p2, iaparams, dx, force);
       break;
-    case TAB_BOND_ANGLE:
+    case 2:
       (*i)++;
       force[0] = force[1] = force[2] = 0;
       break;
-    case TAB_BOND_DIHEDRAL:
+    case 3:
       (*i) += 2;
       force[0] = force[1] = force[2] = 0;
       break;
@@ -288,8 +289,8 @@ inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2,
 #endif
   default:
     fprintf(stderr, "calc_three_body_bonded_forces: \
-            WARNING: Bond type %d , atom %d unhandled, Atom 2: %d\n", iaparams->type,
-            p1->p.identity, p2->p.identity);
+            WARNING: Bond type %d , atom %d unhandled, Atom 2: %d\n",
+            iaparams->type, p1->p.identity, p2->p.identity);
     break;
   }
 }
@@ -421,9 +422,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
       i = i + 2;
     }
 #endif
-    else if (type == BONDED_IA_ANGLEDIST) {
-      i = i + 3;
-    } else if (type == BONDED_IA_DIHEDRAL) {
+    else if (type == BONDED_IA_DIHEDRAL) {
       i = i + 4;
     }
 #ifdef TABULATED
@@ -497,12 +496,17 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
   /* kinetic energy */
   {
     if (v_comp)
-      virials.data.e[0] += (Utils::sqr(p1->m.v[0] * time_step - p1->f.f[0] * 0.5 * time_step * time_step / p1->p.mass) +
-                            Utils::sqr(p1->m.v[1] * time_step - p1->f.f[1] * 0.5 * time_step * time_step / p1->p.mass) +
-                            Utils::sqr(p1->m.v[2] * time_step - p1->f.f[2] * 0.5 * time_step * time_step / p1->p.mass)) *
-                           (*p1).p.mass;
+      virials.data.e[0] +=
+          (Utils::sqr(p1->m.v[0] * time_step -
+                      p1->f.f[0] * 0.5 * time_step * time_step / p1->p.mass) +
+           Utils::sqr(p1->m.v[1] * time_step -
+                      p1->f.f[1] * 0.5 * time_step * time_step / p1->p.mass) +
+           Utils::sqr(p1->m.v[2] * time_step -
+                      p1->f.f[2] * 0.5 * time_step * time_step / p1->p.mass)) *
+          (*p1).p.mass;
     else
-      virials.data.e[0] += (Utils::sqr(p1->m.v[0] * time_step) + Utils::sqr(p1->m.v[1] * time_step) +
+      virials.data.e[0] += (Utils::sqr(p1->m.v[0] * time_step) +
+                            Utils::sqr(p1->m.v[1] * time_step) +
                             Utils::sqr(p1->m.v[2] * time_step)) *
                            (*p1).p.mass;
   }
@@ -511,8 +515,8 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
    * each will be done later) */
   for (k = 0; k < 3; k++)
     for (l = 0; l < 3; l++)
-        p_tensor.data.e[k * 3 + l] +=
-            (p1->m.v[k]*time_step) * (p1->m.v[l]*time_step) * (*p1).p.mass;
+      p_tensor.data.e[k * 3 + l] +=
+          (p1->m.v[k] * time_step) * (p1->m.v[l] * time_step) * (*p1).p.mass;
 }
 
 #endif

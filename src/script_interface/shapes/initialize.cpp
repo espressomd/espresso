@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2015-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -30,6 +30,7 @@
 #include "Sphere.hpp"
 #include "SpheroCylinder.hpp"
 #include "Stomatocyte.hpp"
+#include "Torus.hpp"
 #include "Wall.hpp"
 
 namespace ScriptInterface {
@@ -57,6 +58,8 @@ void initialize() {
       "Shapes::Stomatocyte");
   ScriptInterface::register_new<ScriptInterface::Shapes::SimplePore>(
       "Shapes::SimplePore");
+  ScriptInterface::register_new<ScriptInterface::Shapes::Torus>(
+      "Shapes::Torus");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

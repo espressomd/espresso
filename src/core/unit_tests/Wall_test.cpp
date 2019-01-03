@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -32,7 +32,7 @@ bool check_distance_function(const Shapes::Shape &s) {
   for (int i = 0; i < 100; i++)
     for (int j = 0; j < 100; j++)
       for (int k = 0; k < 100; k++) {
-        double pos[3] = {i * 0.1, j * 0.1, k * 0.1};
+        Vector3d pos = {i * 0.1, j * 0.1, k * 0.1};
         double dist[3];
         double d;
 
@@ -65,4 +65,4 @@ BOOST_AUTO_TEST_CASE(dist_function) {
   BOOST_CHECK(check_distance_function(w));
 }
 
-/* @TODO: Functional unit test of the distance function */
+/* @todo  Functional unit test of the distance function */

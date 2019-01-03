@@ -48,7 +48,7 @@ are stored in text files (the particle positions), there is only a limited
 precision. Therefore, it is not possible to bitwise reproduce a simulation
 state using this text files. When you need bitwise reproducibility, you will have
 to use checkpointing , which stores positions, forces and velocities in binary
-format. 
+format.
 
 .. _(Almost) generic checkpointing in Python:
 
@@ -56,7 +56,7 @@ format.
 ----------------------------------------
 
 Referring to the previous section, generic checkpointing poses
-difficulties in many ways. Fortunatelly, the Python checkpointing module
+difficulties in many ways. Fortunately, the Python checkpointing module
 presented in this section provides a comfortable workflow for an almost
 generic checkpointing.
 
@@ -102,7 +102,7 @@ To give an example::
     checkpoint.register("skin")
 
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
-    # ... set system properties like time_step here ... 
+    # ... set system properties like time_step here ...
     checkpoint.register("system")
 
     system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -114,7 +114,7 @@ To give an example::
     # ... add particles to the system with system.part.add(...) here ...
     checkpoint.register("system.part")
 
-    # ... set charges of particles here ... 
+    # ... set charges of particles here ...
     from espressomd import electrostatics
     p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     system.actors.add(p3m)
@@ -159,7 +159,9 @@ restores the state of all checkpointed objects and registers a signal.
 
 .. code::
 
-    import espressomd from espressomd import checkpointing import signal
+    import espressomd
+    from espressomd import checkpointing
+    import signal
 
     checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
     checkpoint.load()
@@ -168,7 +170,7 @@ restores the state of all checkpointed objects and registers a signal.
     system.cell_system.skin = skin
     system.actors.add(p3m)
 
-    #signal.SIGINT: signal 2, is sent when ctrl+c is pressed
+    # signal.SIGINT: signal 2, is sent when ctrl+c is pressed
     checkpoint.register_signal(signal.SIGINT)
 
     # integrate system until user presses ctrl+c while True:
@@ -178,9 +180,9 @@ The above example runs as long as the user interrupts by pressing
 ctrl+c. In this case a new checkpoint is written and the simulation
 quits.
 
-It is perhaps surprising that one has to explicitly create ``system`` again.
-But this is necessary as not all |es| modules like ``cell_system`` or
-``actors`` have implementations for checkpointing yet. By calling ``System()`` these modules
+It is perhaps surprising that one has to explicitly create :class:`~espressomd.system.System` again.
+But this is necessary as not all |es| modules like :class:`~espressomd.cellsystem` or
+:class:`~espressomd.actors` have implementations for checkpointing yet. By calling :class:`~espressomd.system.System` these modules
 are created and can be easily initialized with checkpointed user variables
 (like ``skin``) or checkpointed submodules (like ``p3m``).
 
@@ -189,7 +191,7 @@ are created and can be easily initialized with checkpointed user variables
 Writing H5MD-files
 ------------------
 
-For large amounts of data it’s a good idea to store it in the hdf5 (H5MD
+For large amounts of data it's a good idea to store it in the hdf5 (H5MD
 is based on hdf5) file format (see https://www.hdfgroup.org/ for
 details). Currently |es| supports some basic functions for writing simulation
 data to H5MD files. The implementation is MPI-parallelized and is capable
@@ -208,25 +210,25 @@ respective hdf5-file. This may, for example, look like:
 
 If a file with the given filename exists and has a valid H5MD structures
 it will be backed up to a file with suffix ".bak". This file will be
-removed by the close() method of the class which has to be called at the
+removed by the ``close()`` method of the class which has to be called at the
 end of the simulation to close the file. The current implementation
 allows to write the following properties: positions, velocities, forces,
 species (|es| types), and masses of the particles. In order to write any property, you
-have to set the respective boolean flag as an option to the H5md class.
+have to set the respective boolean flag as an option to the :class:`~espressomd.io.writer.h5md.H5md` class.
 Currently available:
 
-    - write_pos: particle positions
+    - ``write_pos``: particle positions
 
-    - write_vel: particle velocities
+    - ``write_vel``: particle velocities
 
-    - write_force: particle forces
+    - ``write_force``: particle forces
 
-    - write_species: particle types
+    - ``write_species``: particle types
 
-    - write_mass: particle masses
+    - ``write_mass``: particle masses
 
-    - write_ordered: if particles should be written ordered according to their
-      id (implies serial write). 
+    - ``write_ordered``: if particles should be written ordered according to their
+      id (implies serial write).
 
 
 
@@ -244,9 +246,19 @@ call the H5md objects :meth:`espressomd.io.writer.h5md.H5md.write` method withou
 
     h5.write()
 
-    
-After the last write call, you have to call the close() method to remove
+
+After the last write call, you have to call the ``close()`` method to remove
 the backup file and to close the datasets etc.
+
+H5MD files can be read and modified with the python module h5py (for documentation see `h5py <http://docs.h5py.org/en/stable/>`_). For example all positions stored in the file called "h5mdfile.h5" can be read using
+
+.. code:: python
+    
+    import h5py
+    h5file = h5py.File("h5mdfile.h5", 'r')
+    positions = h5file['particles/atoms/position/value']
+
+Further the files can be inspected with the GUI tool hdfview.
 
 .. _Writing MPI-IO binary files:
 
@@ -256,7 +268,7 @@ Writing MPI-IO binary files
 This method outputs binary data in parallel and is, thus, also suitable for
 large-scale simulations. Generally, H5MD is the preferred method because the
 data is easier accessible. In contrast to H5MD, the MPI-IO functionality
-outputs data in a *machine dependent format* but has write and read
+outputs data in a *machine-dependent format* but has write and read
 capabilities. The usage is quite simple:
 
 .. code:: python
@@ -266,27 +278,27 @@ capabilities. The usage is quite simple:
     # ... add particles here
     mpiio.write("/tmp/mydata", positions=True, velocities=True, types=True, bonds=True)
 
-Here, `/tmp/mydata` is the prefix used for several files. The call will output
+Here, :file:`/tmp/mydata` is the prefix used for several files. The call will output
 particle positions, velocities, types and their bonds to the following files in
-folder `/tmp`:
+folder :file:`/tmp`:
 
-    - mydata.head
-    - mydata.id
-    - mydata.pos
-    - mydata.pref
-    - mydata.type
-    - mydata.vel
-    - mydata.boff
-    - mydata.bond
+    - :file:`mydata.head`
+    - :file:`mydata.id`
+    - :file:`mydata.pos`
+    - :file:`mydata.pref`
+    - :file:`mydata.type`
+    - :file:`mydata.vel`
+    - :file:`mydata.boff`
+    - :file:`mydata.bond`
 
 Depending on the chosen output, not all of these files might be created.
 To read these in again, simply call :meth:`espressomd.io.mpiio.Mpiio.read`. It has the same signature as
 :meth:`espressomd.io.mpiio.Mpiio.write`.
-There exists a legacy python script in the `tools` directory which can convert
+There exists a legacy python script in the :file:`tools` directory which can convert
 MPI-IO data to the now unsupported blockfile format. Check it out if you want
 to post-process the data without ESPResSo.
 
-*WARNING* Do not attempt to read these data on a machine with a different
+*WARNING* Do not attempt to read these binary files on a machine with a different
 architecture!
 
 .. _Writing VTF files:
@@ -315,12 +327,12 @@ a whole simulation in a single file. For more details on the format,
 refer to the VTF homepage (https://github.com/olenz/vtfplugin/wiki).
 
 Creating files in these formats from within is supported by the commands :meth:`espressomd.io.writer.vtf.writevsf`
-and :meth:`espressomd.io.writer.vtf.writevcf`, that write a structure and coordinate block (respectively ) to the
+and :meth:`espressomd.io.writer.vtf.writevcf`, that write a structure and coordinate block (respectively) to the
 given file. To create a standalone VTF file, first use ``writevsf`` at the beginning of
-the simulation to write the particle definitions as a header, and then ``writevcf`` 
+the simulation to write the particle definitions as a header, and then ``writevcf``
 to generate a timeframe of the simulation state. For example:
 
-A standalone VTF file can simply be 
+A standalone VTF file can simply be
 
 .. code:: python
 
@@ -330,9 +342,9 @@ A standalone VTF file can simply be
     fp = open('trajectory.vtf', mode='w+t')
 
     # ... add particles here
-    
+
     # write structure block as header
-    vtf.writevtf(system, fp)
+    vtf.writevsf(system, fp)
     # write initial positions as coordinate block
     vtf.writevcf(system, fp)
 
@@ -342,12 +354,12 @@ A standalone VTF file can simply be
         vtf.writevcf(system, fp)
     fp.close()
 
-The structure definitions in the VTF/VSF formats are incremental, a user
+The structure definitions in the VTF/VSF formats are incremental, the user
 can easily add further structure lines to the VTF/VSF file after a
 structure block has been written to specify further particle properties
 for visualization.
 
-Note that the ``ids`` of the particles in and VMD may differ. VMD requires
+Note that the ``ids`` of the particles in |es| and VMD may differ. VMD requires
 the particle ids to be enumerated continuously without any holes, while
 this is not required in |es|. When using ``writevsf``
 and ``writevcf``, the particle ids are
@@ -368,8 +380,7 @@ timesteps. This is a restriction of VMD itself, not of the format.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :meth:`espressomd.io.writer.vtf.writevsf`
 
-Writes a structure block describing the system’s structure to the given channel.
-for example
+Writes a structure block describing the system's structure to the given channel, for example:
 
 .. code:: python
 
@@ -391,7 +402,7 @@ contains a trajectory of a whole simulation.
 :meth:`espressomd.io.writer.vtf.writevcf`
 
 Writes a coordinate (or timestep) block that contains all coordinates of
-the system’s particles.
+the system's particles.
 
 .. code:: python
 
@@ -399,15 +410,15 @@ the system’s particles.
     from espressomd.io.writer import vtf
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
-    fp = open('trajectory.vcf', mode='w+t')    
-    vtf.writevcf(system, fp, types='all')  
+    fp = open('trajectory.vcf', mode='w+t')
+    vtf.writevcf(system, fp, types='all')
 
 .. _vtf_pid_map\: Going back and forth between |es| and VTF indexing:
 
 :meth:`espressomd.io.writer.vtf.vtf_pid_map`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Generates a dictionary which maps |es| particle ``id`` to VTF indices.
-This is motivated by the fact that the list of |es| particle ``id`` is allowed to contain *holes* but VMD 
+This is motivated by the fact that the list of |es| particle ``id`` is allowed to contain *holes* but VMD
 requires increasing and continuous indexing. The |es| ``id`` can be used as *key* to obtain the VTF index as the *value*, for example:
 
 .. code:: python
@@ -415,11 +426,10 @@ requires increasing and continuous indexing. The |es| ``id`` can be used as *key
     import espressomd
     from espressomd.io.writer import vtf
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
-    system.part.add(id=5, pos=[0,0,0])
-    system.part.add(id=3, pos=[0,0,0])
+    system.part.add(id=5, pos=[0, 0, 0])
+    system.part.add(id=3, pos=[0, 0, 0])
     vtf_index = vtf.vtf_pid_map(system)
     vtf_index[3]
-    >>> 0
 
 Note that the |es| particles are ordered in increasing order, thus ``id=3`` corresponds to the zeroth VTF index.
 
@@ -444,19 +454,19 @@ using MDAnalysis. A simple example is the following:
     from espressomd import MDA_ESP
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
-    eos = MDA_ESP.Stream(system) # create the stream
-    u =  mda.Universe( eos.topology, eos.trajectory ) # create the MDA universe
+    eos = MDA_ESP.Stream(system)  # create the stream
+    u = mda.Universe(eos.topology, eos.trajectory)  # create the MDA universe
 
     # example: write a single frame to PDB
     u.atoms.write("system.pdb")
 
     # example: save the trajectory to GROMACS format
     from MDAnalysis.coordinates.TRR import TRRWriter
-    W = TRRWriter("traj.trr",n_atoms=len(system.part)) # open the trajectory file
+    W = TRRWriter("traj.trr", n_atoms=len(system.part))  # open the trajectory file
     for i in range(100):
         system.integrator.run(1)
-        u.load_new(eos.trajectory) # load the frame to the MDA universe
-        W.write_next_timestep(u.trajectory.ts) # append it to the trajectory
+        u.load_new(eos.trajectory)  # load the frame to the MDA universe
+        W.write_next_timestep(u.trajectory.ts)  # append it to the trajectory
 
 For other examples see samples/python/MDAnalysisIntegration.py
 
@@ -465,4 +475,4 @@ For other examples see samples/python/MDAnalysisIntegration.py
 Parsing PDB Files
 -----------------
 
-The feature allows the user to parse simple PDB files, a file format introduced by the protein database to encode molecular structures. Together with a topology file (here ) the structure gets interpolated to the grid. For the input you will need to prepare a PDB file with a force field to generate the topology file. Normally the PDB file extension is , the topology file extension is . Obviously the PDB file is placed instead of and the topology file instead of .
+The feature allows the user to parse simple PDB files, a file format introduced by the protein database to encode molecular structures. Together with a topology file (here ) the structure gets interpolated to the grid. For the input you will need to prepare a PDB file with a force field to generate the topology file. Normally the PDB file extension is :file:`.pdb`, the topology file extension is :file:`.itp`. Obviously the PDB file is placed instead of and the topology file instead of .

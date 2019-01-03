@@ -160,14 +160,14 @@ Catalytic reactions can be enabled in \es\ by compiling in the eponymous feature
 
 To setup the reaction there is the \es\ command \codees{Reaction}, which operates on particle types. The general syntax is
 \begin{espresso}
-espressomd.reaction.Reaction(reactant_type=R,catalyzer_type=C,product_type=P,ct_range=r,ct_rate=k_ct,
+espressomd.swimmer_reaction.Reaction(reactant_type=R,catalyzer_type=C,product_type=P,ct_range=r,ct_rate=k_ct,
                                 react_once=True/False ) # optional
 \end{espresso}
 The parameter \codees{react_once} is optional and can be left out, the default values is \codees{react_once=False}.
 
 To set up a reaction between particles with types 1 and 2, where particles of type 3 act as catalyzers with a reaction range of 1.5 around them and a reaction rate of 20, one inputs
 \begin{espresso}
-espressomd.reaction.Reaction(reactant_type=1,catalyzer_type=3,product_type=2,ct_range=1.5,ct_rate=20)
+espressomd.swimmer_reaction.Reaction(reactant_type=1,catalyzer_type=3,product_type=2,ct_range=1.5,ct_rate=20)
 \end{espresso}
 Here, we have left out the optional parameter \codees{react_once}, however, its meaning is important. Briefly, the parameter determines whether a particle can take part in a only single reaction move per time step. In the case of multiple catalyzers in the system a particle might be tagged for reaction several times by different catalyzers because their reaction ranges overlap and the reactant is inside this overlap. This can be prevented by setting \code{react_once on}. That way the reaction rate is independent of the density of catalyzers. This can be convenient if one wants to model several catalyzer particles that are in close proximity to one another.
 

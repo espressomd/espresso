@@ -3,7 +3,7 @@
 Non-bonded interactions
 =======================
 
-In |es|, interactions are set up and investigated by the ``interactions`` module. There are
+In |es|, interactions are set up and investigated by the :mod:`espressomd.interactions` module. There are
 mainly two types of interactions: non-bonded and bonded interactions.
 
 Non-bonded interactions only depend on the *type* of the two particles
@@ -30,9 +30,9 @@ Non-bonded interaction are configured via the :class:`espressomd.interactions.No
 
     system.non_bonded_inter[type1, type2]
 
-This command defines an interaction between all particles of type *type1* and
-*type2*. Possible interaction types and their parameters are
-listed below. 
+This command defines an interaction between all particles of type ``type1`` and
+``type2``. Possible interaction types and their parameters are
+listed below.
 
 .. todo::
     Implement this functionality:
@@ -51,20 +51,21 @@ Tabulated interaction
 
 .. note ::
 
-    `Feature TABULATED required.`
+    Feature ``TABULATED`` required.
 
 
 The interface for tabulated interactions are implemented in the
-:class:`espressomd.interactions.TabulatedNonBonded` class. They can be configured
+:class:`~espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
-  system.non_bonded_inter[type1, type2].tabulated.set_params(min='min', max='max', energy='energy', force='force')
+  system.non_bonded_inter[type1, type2].tabulated.set_params(
+      min='min', max='max', energy='energy', force='force')
 
 
-This defines an interaction between particles of the types *type1* and
-*type2* according to an arbitrary tabulated pair potential by linear interpolation.
-*force* specifies the tabulated forces and *energy* the energies as a function of the
-separation distance. *force* and *energy* have to have the same length :math:`N_\mathrm{points}`.
+This defines an interaction between particles of the types ``type1`` and
+``type2`` according to an arbitrary tabulated pair potential by linear interpolation.
+``force`` specifies the tabulated forces and ``energy`` the energies as a function of the
+separation distance. ``force`` and ``energy`` have to have the same length :math:`N_\mathrm{points}`.
 Take care when choosing the number of points, since a copy of each lookup
 table is kept on each node and must be referenced very frequently.
 The maximal tabulated separation distance also acts as the effective cutoff
@@ -80,17 +81,17 @@ Lennard-Jones interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    `Feature LENNARD_JONES required.`
+    Feature ``LENNARD_JONES`` required.
 
-The interface for the Lennard-Jones interaction is implemented in 
-:class:`espressomd.interactions.LennardJonesInteraction`. The Lennard-Jones parameters
+The interface for the Lennard-Jones interaction is implemented in
+:class:`~espressomd.interactions.LennardJonesInteraction`. The Lennard-Jones parameters
 can be set via::
 
     system.non_bonded_inter[type1, type2].lennard_jones.set_params(**kwargs)
 
 This command defines the traditional (12-6)-Lennard-Jones interaction
-between particles of the types *type1* and *type2*. For a description of the input arguments
-see :class:`espressomd.interactions.LennardJonesInteraction`. The potential is defined by
+between particles of the types ``type1`` and ``type2``. For a description of the input arguments
+see :class:`~espressomd.interactions.LennardJonesInteraction`. The potential is defined by
 
 .. math::
 
@@ -100,11 +101,11 @@ see :class:`espressomd.interactions.LennardJonesInteraction`. The potential is d
          4 \epsilon \left[ \left(\frac{\sigma}{r-r_\mathrm{off}}\right)^{12}
          - \left(\frac{\sigma}{r-r_\mathrm{off}}\right)^6+c_\mathrm{shift}\right]
          & \mathrm{if~} r_\mathrm{min}+r_\mathrm{off} < r < r_\mathrm{cut}+r_\mathrm{off}\\
-         0 
+         0
          & \mathrm{otherwise}
        \end{cases}.
 
-The traditional Lennard-Jones potential is the “work-horse” potential of
+The traditional Lennard-Jones potential is the "work-horse" potential of
 particle--particle interactions in coarse-grained simulations. It is a
 simple model for the van-der-Waals interaction, and is attractive at
 large distance, but strongly repulsive at short distances.
@@ -113,7 +114,7 @@ the radii of the interaction particles. At this distance, the potential is
 :math:`V_\mathrm{LJ}(r_\mathrm{off} + \sigma) = 4 \epsilon c_\mathrm{shift}`.
 The minimum of the potential is at
 :math:`V_\mathrm{LJ}(r_\mathrm{off} +
-2^\frac{1}{6}\sigma) = 
+2^\frac{1}{6}\sigma) =
 -\epsilon + 4 \epsilon c_\mathrm{shift}`. Beyond this value the interaction is attractive.
 Beyond the distance :math:`r_\mathrm{cut}` the potential is cut off and the interaction force is zero.
 
@@ -173,10 +174,10 @@ Generic Lennard-Jones interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    `Feature LENNARD_JONES_GENERIC required.`
+    Feature ``LENNARD_JONES_GENERIC`` required.
 
 
-The interface for the generic Lennard-Jones interactions is implemented in 
+The interface for the generic Lennard-Jones interactions is implemented in
 :class:`espressomd.interactions.GenericLennardJonesInteraction`. They
 are configured via the syntax::
 
@@ -184,7 +185,7 @@ are configured via the syntax::
 
 This command defines a generalized version of the Lennard-Jones
 interaction (see :ref:`Lennard-Jones interaction`) between particles of the
-types *type1* and *type2*. The potential is defined by
+types ``type1`` and ``type2``. The potential is defined by
 
 .. math::
 
@@ -194,7 +195,7 @@ types *type1* and *type2*. The potential is defined by
          \epsilon\left[b_1\left(\frac{\sigma}{r-r_\mathrm{off}}\right)^{e_1}
          -b_2\left(\frac{\sigma}{r-r_\mathrm{off}}\right)^{e_2}+c_\mathrm{shift}\right]
          & \mathrm{if~} r_\mathrm{min}+r_\mathrm{off} < r < r_\mathrm{cut}+r_\mathrm{off}\\
-         0 
+         0
          & \mathrm{otherwise}
        \end{cases}\ .
 
@@ -215,6 +216,40 @@ interaction, while :math:`\delta` varies how smoothly the potential goes to zero
 alchemical transformations, where a group of atoms can be slowly turned
 on/off during a simulation.
 
+.. _Weeks-Chandler-Andersen interaction:
+
+Weeks-Chandler-Andersen interaction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+    Feature ``WCA`` required.
+
+
+The interface for the Weeks-Chandler-Andersen interactions is implemented in
+:class:`espressomd.interactions.WCAInteraction`. They
+are configured via the syntax::
+
+    system.non_bonded_inter[type1, type2].wca.set_params(**kwargs)
+
+This command defines a Weeks-Chandler-Andersen interaction between particles of the
+types ``type1`` and ``type2``. The potential is defined by
+
+.. math::
+
+   \label{eq:wca}
+     V_\mathrm{WCA}(r) =
+       \begin{cases}
+         4 \epsilon \left[ \left(\frac{\sigma}{r}\right)^{12}
+         - \left(\frac{\sigma}{r}\right)^6 + \frac{1}{4} \right]
+         & \mathrm{if~} r < \sigma 2^{\frac{1}{6}}\\
+         0
+         & \mathrm{otherwise}
+       \end{cases}.
+
+The net force on a particle can be capped by using
+force capping ``system.non_bonded_inter.set_force_cap(max)``, see
+section :ref:`Capping the force during warmup`
+
 .. _Lennard-Jones cosine interaction:
 
 Lennard-Jones cosine interaction
@@ -222,7 +257,7 @@ Lennard-Jones cosine interaction
 
 .. note::
 
-   `Feature LJCOS and/or LJCOS2 required.`
+   Feature ``LJCOS`` and/or ``LJCOS2`` required.
 
 .. code::
 
@@ -232,7 +267,7 @@ Lennard-Jones cosine interaction
 :class:`espressomd.interactions.LennardJonesCosInteraction` and
 :class:`espressomd.interactions.LennardJonesCos2Interaction` specifies
 a Lennard-Jones interaction with cosine tail :cite:`soddeman01a`
-between particles of the types *type1* and *type2*. The first variant
+between particles of the types ``type1`` and ``type2``. The first variant
 behaves as follows: Until the minimum of the Lennard-Jones potential
 at :math:`r_\mathrm{min} = r_\mathrm{off} + 2^{\frac{1}{6}}\sigma`, it
 behaves identical to the unshifted Lennard-Jones potential
@@ -270,7 +305,7 @@ Smooth step interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-     `Feature SMOOTH_STEP required.`
+     Feature ``SMOOTH_STEP`` required.
 
 The interface for the smooth-step interaction is implemented in
 :class:`espressomd.interactions.SmoothStepInteraction`. The smooth-step parameters
@@ -278,8 +313,8 @@ can be set via::
 
      system.non_bonded_inter[type1, type2].smooth_step.set_params(**kwargs)
 
-This defines a smooth step interaction between particles of the types *type1*
-and *type2*, for which the potential is
+This defines a smooth step interaction between particles of the types ``type1``
+and ``type2``, for which the potential is
 
 .. math:: V(r)= \left(d/r\right)^n + \epsilon/(1 + \exp\left[2k_0 (r - \sigma)\right])
 
@@ -296,7 +331,7 @@ BMHTF potential
 ~~~~~~~~~~~~~~~
 
 .. note::
-     `Feature BMHTF_NACL required.`
+     Feature ``BMHTF_NACL`` required.
 
 The interface for the smooth-step interaction is implemented in
 :class:`espressomd.interactions.BMHTFInteraction`. The parameters of the BMHTF potential
@@ -305,8 +340,8 @@ can be set via::
      system.non_bonded_inter[type1, type2].bmhtf.set_params(**kwargs)
 
 This defines an interaction with the *short-ranged part* of the
-Born-Meyer-Huggins-Tosi-Fumi potential between particles of the types *type1*
-and *type2*, which is often used to simulate NaCl crystals. The potential is
+Born-Meyer-Huggins-Tosi-Fumi potential between particles of the types ``type1``
+and ``type2``, which is often used to simulate NaCl crystals. The potential is
 defined by:
 
 .. math::
@@ -345,7 +380,7 @@ Morse interaction
 ~~~~~~~~~~~~~~~~~
 
 .. note::
-     `Feature MORSE required.`
+     Feature ``MORSE`` required.
 
 The interface for the Morse interaction is implemented in
 :class:`espressomd.interactions.MorseInteraction`. The Morse interaction parameters
@@ -354,9 +389,9 @@ can be set via::
      system.non_bonded_inter[type1, type2].morse.set_params(**kwargs)
 
 This defines an interaction using the Morse potential between particles
-of the types *type1* and *type2*. It serves similar purposes as the Lennard-Jones
+of the types ``type1`` and ``type2``. It serves similar purposes as the Lennard-Jones
 potential, but has a deeper minimum, around which it is harmonic. This
-models the potential energy in a diatomic molecule. 
+models the potential energy in a diatomic molecule.
 
 For :math:`r < r_\mathrm{cut}`, this potential is given by
 
@@ -375,7 +410,7 @@ Buckingham interaction
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-     `Feature BUCKINGHAM required.`
+     Feature ``BUCKINGHAM`` required.
 
 The interface for the Buckingham interaction is implemented in
 :class:`espressomd.interactions.BuckinghamInteraction`. The Buckingham interaction parameters
@@ -399,7 +434,7 @@ Soft-sphere interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    `Feature SOFT_SPHERE required.`
+    Feature ``SOFT_SPHERE`` required.
 
 The interface for the Soft-sphere interaction is implemented in
 :class:`espressomd.interactions.SoftSphereInteraction`. The Soft-sphere parameters
@@ -407,8 +442,8 @@ can be set via::
 
     system.non_bonded_inter[type1, type2].soft_sphere.set_params(**kwargs)
 
-This defines a soft sphere interaction between particles of the types *type1*
-and *type2*, which is defined by a single power law:
+This defines a soft sphere interaction between particles of the types ``type1``
+and ``type2``, which is defined by a single power law:
 
 .. math:: V(r)=a\left(r-r_\mathrm{offset}\right)^{-n}
 
@@ -423,11 +458,11 @@ Membrane-collision interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-     `Feature MEMBRANE_COLLISION required.`
+     Feature ``MEMBRANE_COLLISION`` required.
 
 This defines a membrane collision interaction between particles of the
-types *type1* and *type2*, where particle of *type1* belongs to one OIF or OIF-like object and
-particle of *type2* belongs to another such object.
+types ``type1`` and ``type2``, where particle of ``type1`` belongs to one OIF or OIF-like object and
+particle of ``type2`` belongs to another such object.
 
 It is very similar to soft-sphere interaction, but it takes into account
 the local outward normal vectors on the surfaces of the two objects to
@@ -437,7 +472,7 @@ distance of nodes of membranes that are not crossed and saturating with
 growing distance of nodes of crossed membranes.
 
 In order to work with the OIF objects, both OIF objects need to be created
-using OifCellType class with keyword *normal=1*, because this implicitly sets up the
+using OifCellType class with keyword ``normal=1``, because this implicitly sets up the
 bonded out-direction interaction, which computes the outward normal
 vector.
 
@@ -458,9 +493,9 @@ Hat interaction
 ~~~~~~~~~~~~~~~
 
 .. note::
-    `Feature HAT required.`
+    Feature ``HAT`` required.
 
-The interface for the Lennard-Jones interaction is implemented in 
+The interface for the Lennard-Jones interaction is implemented in
 :class:`espressomd.interactions.HatInteraction`. The hat parameters
 can be set via::
 
@@ -490,7 +525,7 @@ Hertzian interaction
 ~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    `Feature HERTZIAN required.`
+    Feature ``HERTZIAN`` required.
 
 The interface for the Hertzian interaction is implemented in
 :class:`espressomd.interactions.HertzianInteraction`. The Hertzian interaction parameters
@@ -499,7 +534,7 @@ can be set via::
     system.non_bonded_inter[type1, type2].hertzian.set_params(**kwargs)
 
 This defines an interaction according to the Hertzian potential between
-particles of the types *type1* and *type2*. The Hertzian potential is defined by
+particles of the types ``type1`` and ``type2``. The Hertzian potential is defined by
 
 .. math::
 
@@ -509,7 +544,7 @@ particles of the types *type1* and *type2*. The Hertzian potential is defined by
      \end{cases}
 
 The potential has no singularity and is defined everywhere; the
-potential has a nondifferentiable maximum at :math:`r=0`, where the force
+potential has a non-differentiable maximum at :math:`r=0`, where the force
 is undefined.
 
 .. _Gaussian:
@@ -518,7 +553,7 @@ Gaussian
 ~~~~~~~~
 
 .. note::
-    `Feature GAUSSIAN required.`
+    Feature ``GAUSSIAN`` required.
 
 The interface for the Gaussian interaction is implemented in
 :class:`espressomd.interactions.GaussianInteraction`. The Gaussian interaction parameters
@@ -527,11 +562,11 @@ can be set via::
     system.non_bonded_inter[type1, type2].gaussian.set_params(**kwargs)
 
 This defines an interaction according to the Gaussian potential between
-particles of the types *type1* and *type2*. The Gaussian potential is defined by
+particles of the types ``type1`` and ``type2``. The Gaussian potential is defined by
 
 .. math::
 
-   V(r) = 
+   V(r) =
      \begin{cases} \epsilon\,e^{-\frac{1}{2}\left(\frac{r}{\sigma}\right)^{2}}
        & r < r_\mathrm{cut}\\
      0 & r \ge r_\mathrm{cut}
@@ -553,7 +588,7 @@ DPD interaction
 ~~~~~~~~~~~~~~~
 
 .. note::
-    `Feature DPD required.`
+    Feature ``DPD`` required.
 
 This is a special interaction that is to be used in conjunction with the
 `Dissipative Particle Dynamics (DPD)` thermostat, for a general description
@@ -561,8 +596,8 @@ of the algorithm see there. The parameters can be set via::
 
     system.non_bonded_inter[type1, type2].dpd.set_params(**kwargs)
 
-This command defines a velocity dependent interaction
-between particles of the types *type1* and *type2*. For a description of the input arguments
+This command defines a velocity-dependent interaction
+between particles of the types ``type1`` and ``type2``. For a description of the input arguments
 see :class:`espressomd.interactions.DPDInteraction`. The interaction
 only has an effect if the DPD thermostat activated, and acts according to the
 temperature of the thermostat.
@@ -590,7 +625,7 @@ order of :math:`w^D`:
 
 .. math::
 
-   w^D (r_{ij}) = ( w^R (r_{ij})) ^2 = 
+   w^D (r_{ij}) = ( w^R (r_{ij})) ^2 =
       \left\{
    \begin{array}{clcr}
                 1                      & , \; \text{weight_function} = 0 \\
@@ -617,22 +652,22 @@ Thole correction
 
 .. note::
 
-    Requires features THOLE and ELECTROSTATICS.
+    Requires features ``THOLE`` and ``ELECTROSTATICS``.
 
 .. note::
 
-    THOLE is only implemented for the P3M electrostatics solver.
+    ``THOLE`` is only implemented for the P3M electrostatics solver.
 
-The Thole correction is closely related to simulations involving 
-:ref:`Particle polarizability with thermalized cold Drude oszillators`.
+The Thole correction is closely related to simulations involving
+:ref:`Particle polarizability with thermalized cold Drude oscillators`.
 In this context, it is used to correct for overestimation of
 induced dipoles at short distances. Ultimately, it alters the short-range
-electrostatics of P3M to result in a damped coulomb interaction potential
+electrostatics of P3M to result in a damped Coulomb interaction potential
 :math:`V(r) = \frac{q_1 q_2}{r} \cdot (1- e^{-s r} (1 + \frac{s r}{2}) )`.  The
-thole scaling coefficient :math:`s` is related to the polarizabilies
-:math:`\alpha` and thole damping parameters :math:`a` of the interacting
+Thole scaling coefficient :math:`s` is related to the polarizabilities
+:math:`\alpha` and Thole damping parameters :math:`a` of the interacting
 species via :math:`s = \frac{ (a_i + a_j) / 2 }{ (\alpha_i \alpha_j)^{1/6} }`.
-Note that for the Drude oszillators, the Thole correction should be applied
+Note that for the Drude oscillators, the Thole correction should be applied
 only for the dipole part :math:`\pm q_d` added by the Drude charge and not on
 the total core charge, which can be different for polarizable ions. Also note
 that the Thole correction acts between all dipoles, intra- and intermolecular.
@@ -640,39 +675,41 @@ Again, the accuracy is related to the P3M accuracy and the split between
 short-range and long-range electrostatics interaction. It is configured by::
 
     system = espressomd.System()
-    system.non_bonded_inter[type_1,type_2].thole.set_params(scaling_coeff = <float>, q1q2 = <float>)
+    system.non_bonded_inter[type_1,type_2].thole.set_params(scaling_coeff=<float>, q1q2=<float>)
 
 with parameters:
-    * scaling_coeff: The scaling coefficient :math:`s`.
-    * q1q2: The charge factor of the involved charges.
+    * ``scaling_coeff``: The scaling coefficient :math:`s`.
+    * ``q1q2``: The charge factor of the involved charges.
 
-Because the scaling coefficient depends on the *mixed* polarizabilies and the
+Because the scaling coefficient depends on the *mixed* polarizabilities and the
 nonbonded interaction is controlled by particle types, each Drude charge with a
 unique polarizability has to have a unique type. Each Drude charge type has
 a Thole correction interaction with all other Drude charges and all Drude
-cores, except the one it's connected to.  This exeption is handeled internally
+cores, except the one it's connected to.  This exception is handled internally
 by disabling Thole interaction between particles connected via Drude bonds.
 Also, each Drude core has a Thole correction interaction with all other Drude
 cores and Drude charges. To assist with the bookkeeping of mixed scaling
-coefficients, the helper method ``add_drude_particle_to_core()`` (see 
-:ref:`Particle polarizability with thermalized cold Drude oszillators`) 
-collects all core types, drude types and relevant parameters when a drude 
-particle is created. The user already provided all the information when 
-setting up the the drude particles, so the simple call::
+coefficients, the helper method :meth:`~espressomd.drude_helpers.add_drude_particle_to_core` (see
+:ref:`Particle polarizability with thermalized cold Drude oscillators`)
+collects all core types, Drude types and relevant parameters when a Drude
+particle is created. The user already provided all the information when
+setting up the Drude particles, so the simple call::
 
     add_all_thole(<system>, <verbose>)
 
-given the espressomd.System() object, uses this information to create all
+given the :class:`espressomd.System() <espressomd.system.System>` object, uses this information to create all
 necessary Thole interactions. The method calculates the mixed scaling
 coefficient `s` and creates the non-bonded Thole interactions between the
-collected types to cover all the drude-drude, drude-core and core-core
-combinations. No further calls of ``add_drude_particle_to_core()`` should
-follow. Set `verbose` to `True` to print out the coefficients, charge factors
+collected types to cover all the Drude-Drude, Drude-core and core-core
+combinations. No further calls of :meth:`~espressomd.drude_helpers.add_drude_particle_to_core` should
+follow. Set ``verbose`` to ``True`` to print out the coefficients, charge factors
 and involved types.
 
-The samples folder contains the script *drude_bmimpf6.py* with a fully
+The samples folder contains the script :file:`drude_bmimpf6.py` with a fully
 polarizable, coarse grained ionic liquid where this approach is applied.
-To use the script, compile espresso with the following features::
+To use the script, compile espresso with the following features:
+
+.. code-block:: c++
 
     #define EXTERNAL_FORCES
     #define MASS
@@ -697,19 +734,19 @@ Anisotropic non-bonded interactions
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. todo::
-        
+
         Not implemented yet.
 
-    inter lj-angle
+    inter LJ-angle
 
     |image_directional_lj|
 
     Specifies a 12-10 Lennard-Jones interaction with angular dependence
-    between particles of the types *type1* and *type2*. These two particles need two bonded
+    between particles of the types ``type1`` and ``type2``. These two particles need two bonded
     partners oriented in a symmetric way. They define an orientation for the
     central particle. The purpose of using bonded partners is to avoid
     dealing with torques, therefore the interaction does *not* need the
-    ROTATION feature. The angular part of the potential minimizes the system
+    ``ROTATION`` feature. The angular part of the potential minimizes the system
     when the two central beads are oriented along the vector formed by these
     two particles. The shaded beads on the image are virtual particles that
     are formed from the orientation of the bonded partners, connected to the
@@ -719,7 +756,7 @@ Anisotropic non-bonded interactions
     .. math::
 
        U(r_{ik},\theta_{jik},\theta_{ikn})=
-         \epsilon\left[5\left(\frac{\sigma}r\right)^{12} - 
+         \epsilon\left[5\left(\frac{\sigma}r\right)^{12} -
            6\left(\frac{\sigma}{r}\right)^{10}\right]
          \cos^2\theta_{jik}\cos^2\theta_{ikn},
 
@@ -727,7 +764,7 @@ Anisotropic non-bonded interactions
     each angle defines the orientation between the direction of a central
     bead (determined from the two bonded partners) and the vector
     :math:`\mathbf{r_{ik}}`. Note that the potential is turned off if one of
-    the angle is more than :math:`\pi/2`. This way we don’t end up creating
+    the angle is more than :math:`\pi/2`. This way we don't end up creating
     a minimum for an anti-parallel configuration.
 
     Unfortunately, the bonded partners are not sought dynamically. One has
@@ -777,7 +814,7 @@ The interface for a Gay-Berne interaction is provided by the :class:`espressomd.
     system.non_bonded_inter[type1, type2].gay_berne.set_params(**kwargs)
 
 This defines a Gay-Berne potential for prolate and oblate particles
-between particles types *type1* and *type2*. The Gay-Berne potential is an
+between particles types ``type1`` and ``type2``. The Gay-Berne potential is an
 anisotropic version of the classic Lennard-Jones potential, with
 orientational dependence of the range :math:`\sigma_0` and the well-depth :math:`\epsilon_0`.
 
@@ -823,7 +860,7 @@ and
      \epsilon(\mathbf{\hat{r}}, \mathbf{\hat{u}}_i,
      \mathbf{\hat{u}}_j) = \\
      \epsilon_0 \left( 1- \chi^{2}(\mathbf{\hat{u}}_i
-       \cdot \mathbf{\hat{u}}_j) \right)^{-\frac {\nu}{2}} \left[1-\frac
+       \cdot \mathbf{\hat{u}}_j)^{2} \right)^{-\frac {\nu}{2}} \left[1-\frac
        {\chi'}{2} \left( \frac { (\mathbf{\hat{r}} \cdot
            \mathbf{\hat{u}}_i+ \mathbf{\hat{r}} \cdot
            \mathbf{\hat{u}}_j)^{2}} {1+\chi' \, \mathbf{\hat{u}}_i \cdot
@@ -832,8 +869,8 @@ and
            \mathbf{\hat{u}}_j)^{2}} {1-\chi' \, \mathbf{\hat{u}}_i \cdot
            \mathbf{\hat{u}}_j } \right) \right]^{\mu}.\end{gathered}
 
-The parameters :math:`\chi = \left(k_1^{2} - 1\right)/\left(k_1^{2} + 1\right)` 
-and :math:`\chi' = \left(k_2^{1/\mu} -  1\right)/\left(k_2^{1/\mu} + 1\right)` 
+The parameters :math:`\chi = \left(k_1^{2} - 1\right)/\left(k_1^{2} + 1\right)`
+and :math:`\chi' = \left(k_2^{1/\mu} -  1\right)/\left(k_2^{1/\mu} + 1\right)`
 are responsible for the degree of anisotropy of the molecular properties. :math:`k_1` is
 the molecular elongation, and :math:`k_2` is the ratio of the potential well depths for the
 side-by-side and end-to-end configurations. The exponents and are adjustable
@@ -847,7 +884,7 @@ Affinity interaction
 ~~~~~~~~~~~~~~~~~~~~
 
 .. todo::
-    
+
     Not implemented yet.
 
 inter affinity

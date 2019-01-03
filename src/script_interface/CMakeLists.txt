@@ -22,10 +22,9 @@ if(H5MD)
         "${CMAKE_CURRENT_SOURCE_DIR}/h5md/initialize.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/h5md/h5md.cpp"
         )
-    endif(H5MD)
+endif(H5MD)
 
 if( WITH_COVERAGE )
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -Og")
   if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
   else()
@@ -35,18 +34,9 @@ if( WITH_COVERAGE )
 endif()
 
 add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
-install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${LIBDIR})
+install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(EspressoScriptInterface PROPERTIES SOVERSION ${SOVERSION})
-add_dependencies(EspressoScriptInterface EspressoConfig EspressoConfig)
+add_dependencies(EspressoScriptInterface EspressoConfig)
 target_link_libraries(EspressoScriptInterface EspressoCore)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
-include_directories(${CMAKE_SOURCE_DIR}/src)
-include_directories(${CMAKE_SOURCE_DIR}/src/core)
-include_directories(${CMAKE_BINARY_DIR}/src/core)
-if (HDF5_FOUND)
-    include_directories(${CMAKE_SOURCE_DIR}/libs/h5xx SYSTEM)
-    include_directories(${CMAKE_SOURCE_DIR}/src/core/io/writer/h5md)
-    include_directories(${CMAKE_BINARY_DIR}/src/core/io/writer/h5md)
-endif(HDF5_FOUND)
+target_include_directories(EspressoScriptInterface PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

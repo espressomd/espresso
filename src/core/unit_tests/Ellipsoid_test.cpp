@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -41,9 +41,9 @@ bool check_distance_function(const Shapes::Shape &s) {
       double d;
 
       /* pos part of surface */
-      double pos[3] = {semiaxes[0] * sqrt(1. - v * v) * cos(theta),
-                       semiaxes[1] * sqrt(1. - v * v) * sin(theta),
-                       semiaxes[2] * v};
+      Vector3d pos = {semiaxes[0] * sqrt(1. - v * v) * cos(theta),
+                      semiaxes[1] * sqrt(1. - v * v) * sin(theta),
+                      semiaxes[2] * v};
 
       /* check that points on ellipsoid yield zero distance */
       s.calculate_dist(pos, &d, dist);

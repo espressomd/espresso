@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2010,2011 Rudolf Weeber
 
   This file is part of ESPResSo.
@@ -34,7 +34,7 @@ public:
   /** @brief Update positions and/or velocities of virtual sites
 
   * Velocities are only updated have_velocity() return true
-  * @param recalc_positions can be used to skip the reculation of positions
+  * @param recalc_positions can be used to skip the recalculation of positions
   */
   void update(bool recalc_positions = true) const override;
   /** Back-transfer forces (and torques) to non-virtual particles */

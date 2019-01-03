@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
-# Copyright (C) 2016 The ESPResSo project
+# Copyright (C) 2016-2018 The ESPResSo project
 # Copyright (C) 2014 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
+
+abort()
+{
+    echo "An error occurred. Exiting..." >&2
+    echo "Command that failed: $BASH_COMMAND" >&2
+    exit 1
+}
+
+trap 'abort' 0
+set -e
 
 # HELPER FUNCTIONS
 
@@ -53,12 +63,33 @@ function cmd {
 [ -z "$check_odd_only" ] && check_odd_only="false"
 [ -z "$python_version" ] && python_version="2"
 [ -z "$with_cuda" ] && with_cuda="true"
+[ -z "$build_type" ] && build_type="Debug"
+[ -z "$with_ccache" ] && with_ccache="false"
+
+# If there are no user-provided flags they
+# are added according to with_coverage.
+if [ -z "$cxx_flags" ]; then
+    if $with_coverage; then
+        cxx_flags="-Og"
+    else
+        if $make_check; then
+            cxx_flags="-O3"
+        else
+            cxx_flags="-O0"
+        fi
+    fi
+fi
 
 if [[ ! -z ${with_coverage+x} ]]; then
   bash <(curl -s https://codecov.io/env) &> /dev/null;
 fi
 
-cmake_params="-DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
+cmake_params="-DCMAKE_BUILD_TYPE=$build_type -DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
+cmake_params="$cmake_params -DCMAKE_CXX_FLAGS=$cxx_flags"
+cmake_params="$cmake_params -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
+if $with_ccache; then
+  cmake_params="$cmake_params -DWITH_CCACHE=ON"
+fi
 
 if $insource; then
     builddir=$srcdir
@@ -70,11 +101,10 @@ outp insource srcdir builddir make_check \
     cmake_params with_fftw \
     with_python_interface with_coverage \
     with_ubsan with_asan \
-    with_static_analysis myconfig check_procs \
     build_procs check_odd_only \
     with_static_analysis myconfig \
     check_procs build_procs \
-    python_version with_cuda
+    python_version with_cuda with_ccache
 
 # check indentation of python files
 pep8_command () {
@@ -215,23 +245,24 @@ if $make_check; then
         done
     fi
     cmd "make -j${build_procs} check_unit_tests $make_params" || exit 1
+    cmd "make check_cmake_install $make_params" || exit 1
 
     end "TEST"
 else
     start "TEST"
 
-    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/particle.py" || exit 1
+    if [ "$HIP_PLATFORM" != "hcc" ]; then
+      cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/python/particle.py" || exit 1
+    fi
 
     end "TEST"
 fi
 
 if $with_coverage; then
     cd $builddir
-    lcov --directory . --capture --output-file coverage.info # capture coverage info
-    lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
-    lcov --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
-    lcov --remove coverage.info '*/unit_tests/*' --output-file coverage.info # filter out unit test
-    lcov --list coverage.info #debug info
+    lcov -q --directory . --capture --output-file coverage.info # capture coverage info
+    lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+    lcov -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
     # Uploading report to CodeCov
     if [ -z "$CODECOV_TOKEN" ]; then
         bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
@@ -239,3 +270,5 @@ if $with_coverage; then
         bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" || echo "Codecov did not collect coverage reports"
     fi
 fi
+
+trap : 0

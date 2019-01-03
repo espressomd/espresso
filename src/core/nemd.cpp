@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file nemd.cpp
+/** \file
 
     For more information see \ref nemd.hpp
  */
@@ -41,7 +41,7 @@
 int nemd_method = NEMD_METHOD_OFF;
 Nemd nemddata = {-1, 0, 0, 0.0, 1.0, nullptr, 0, 0, nullptr, 0.0, 0.0, 0.0, 0};
 
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
 
@@ -81,7 +81,7 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate) {
     return;
   }
 
-  /* first free old structures befor initializing new ones */
+  /* first free old structures before initializing new ones */
   if (nemddata.n_slabs > -1)
     nemd_free();
   /* exit nemd integration */

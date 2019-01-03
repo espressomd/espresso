@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -20,13 +20,13 @@
 */
 #ifndef _COMMUNICATION_HPP
 #define _COMMUNICATION_HPP
-/** \file communication.hpp
+/** \file
     This file contains the asynchronous MPI communication.
 
-    It is the header file for \ref communication.cpp "communication.c".
+    It is the header file for \ref communication.cpp "communication.cpp".
 
     The asynchronous MPI communication is used during the script
-    evaluation. Except for the master node that interpretes the Tcl
+    evaluation. Except for the master node that interprets the Tcl
     script, all other nodes wait in mpi_loop() for the master node to
     issue an action using mpi_call(). \ref mpi_loop immediately
     executes an MPI_Bcast and therefore waits for the master node to
@@ -90,7 +90,7 @@ namespace Communication {
  *
  */
 MpiCallbacks &mpiCallbacks();
-}
+} // namespace Communication
 
 /**************************************************
  * for every procedure requesting a MPI negotiation
@@ -125,8 +125,8 @@ void mpi_finalize();
  * and node grid.
  */
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity = {{1, 1,
-                                                                       1}});
+                              std::array<int, 3> const &periodicity = {
+                                  {1, 1, 1}});
 
 /** Issue REQ_EVENT: tells all clients of some system change.
     The events are:
@@ -172,7 +172,8 @@ void mpi_send_v(int node, int part, double v[3]);
     \param node the node it is attached to.
     \param swim struct containing swimming parameters
 */
-void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
+void mpi_send_swimming(int node, int part,
+                       const ParticleParametersSwimming &swim);
 
 /** Issue REQ_SET_F: send particle force.
     Also calls \ref on_particle_change.
@@ -180,7 +181,7 @@ void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
     \param node the node it is attached to.
     \param F its new force.
 */
-void mpi_send_f(int node, int part, const Vector3d & F);
+void mpi_send_f(int node, int part, const Vector3d &F);
 
 /** issue req_set_solv: send particle solvation free energy
     also calls \ref on_particle_change.
@@ -224,14 +225,15 @@ void mpi_send_mu_E(int node, int part, double mu_E[3]);
 void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
 #endif
 #ifdef ROTATION
-/** Mpi call for rotating a single particle 
+/** Mpi call for rotating a single particle
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
     \param axis rotation axis
     \param angle rotation angle
 */
-void mpi_rotate_particle(int node, int part, double axis[3],double angle);
+void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
+                         double angle);
 #endif
 
 #ifdef AFFINITY
@@ -277,7 +279,7 @@ void mpi_send_rotation(int pnode, int part, short int rot);
     \param node the node it is attached to.
     \param omega its new angular velocity.
 */
-void mpi_send_omega(int node, int part, double omega[3]);
+void mpi_send_omega(int node, int part, const Vector3d &omega);
 
 /** Issue REQ_SET_TORQUE: send particle torque.
     Also calls \ref on_particle_change.
@@ -285,7 +287,7 @@ void mpi_send_omega(int node, int part, double omega[3]);
     \param node the node it is attached to.
     \param torque its new torque.
 */
-void mpi_send_torque(int node, int part, double torque[3]);
+void mpi_send_torque(int node, int part, const Vector3d &torque);
 #endif
 
 #ifdef DIPOLES
@@ -300,7 +302,7 @@ void mpi_send_dip(int node, int part, double dip[3]);
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
-    \param dipm its new dipole moment (absolut value).
+    \param dipm its new dipole moment (absolute value).
 */
 void mpi_send_dipm(int node, int part, double dipm);
 #endif
@@ -318,7 +320,7 @@ void mpi_send_virtual(int node, int part, int is_virtual);
 #ifdef VIRTUAL_SITES_RELATIVE
 void mpi_send_vs_quat(int node, int part, double *vs_quat);
 void mpi_send_vs_relative(int node, int part, int vs_relative_to,
-                          double vs_distance, double* rel_ori);
+                          double vs_distance, double *rel_ori);
 #endif
 
 /** Issue REQ_SET_TYPE: send particle type.
@@ -342,7 +344,7 @@ void mpi_send_mol_id(int node, int part, int mid);
     \param pnode    node it is attached to.
     \param part     identity of principal atom of the bond.
     \param bond     field containing the bond type number and the identity of
-   all bond partners (secundary atoms of the bond).
+   all bond partners (secondary atoms of the bond).
     \param _delete   if true, do not add the bond, rather delete it if found
     \return 1 on success or 0 if not (e. g. bond to delete does not exist)
 */
@@ -351,7 +353,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int _delete);
 /** Issue REQ_SET_EXCLUSION: send exclusions.
     Also calls \ref on_particle_change.
     \param part     identity of first particle of the exclusion.
-    \param part2    identity of secnd particle of the exclusion.
+    \param part2    identity of second particle of the exclusion.
     \param _delete   if true, do not add the exclusion, rather delete it if
    found
 */
@@ -369,7 +371,6 @@ void mpi_remove_particle(int node, int id);
     and exclusions are left over.
     \param part the particle.
     \param node the node it is attached to.
-    \param part_data where to store the received data.
     \note Gets a copy of the particle data not a pointer to the actual particle
     used in integration
 */
@@ -464,7 +465,7 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
 */
 void mpi_set_time_step(double time_step);
 
-/** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
+/** Issue REQ_BCAST_COULOMB: send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
 /** send new collision parameters. */
@@ -527,7 +528,7 @@ int mpi_sync_topo_part_info(void);
 
 /** Issue REQ_BCAST_LBPAR: Broadcast a parameter for Lattice Boltzmann.
  * @param field References the parameter field to be broadcasted. The references
- * are defined in \ref lb.hpp "lb.hpp"
+ * are defined in \ref lb.hpp "grid_based_algorithms/lb.hpp"
  */
 void mpi_bcast_lb_params(int field, int value = -1);
 
@@ -542,7 +543,9 @@ void mpi_bcast_cuda_global_part_vars();
  * @param j     local fluid velocity
  * @param pi    local fluid pressure
  */
-void mpi_send_fluid(int node, int index, double rho, const std::array<double, 3> &j, const std::array<double, 6> &pi);
+void mpi_send_fluid(int node, int index, double rho,
+                    const std::array<double, 3> &j,
+                    const std::array<double, 6> &pi);
 
 /** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
  * @param node  processor to send to
@@ -564,12 +567,12 @@ void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary);
 /** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
     @return nonzero on error
 */
-int mpi_iccp3m_iteration(int dummy);
+int mpi_iccp3m_iteration();
 
 /** Issue REQ_ICCP3M_INIT: performs iccp3m initialization
     @return nonzero on error
 */
-int mpi_iccp3m_init(int dummy);
+int mpi_iccp3m_init();
 
 /** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
  * @param node  processor to send to

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,7 +25,12 @@ from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
 
 cdef class CellSystem(object):
-    def set_domain_decomposition(self, use_verlet_lists=True):
+    def set_domain_decomposition(
+        self,
+        use_verlet_lists=True,
+     fully_connected=[False,
+                      False,
+                      False]):
         """
         Activates domain decomposition cell system.
 
@@ -37,12 +42,12 @@ cdef class CellSystem(object):
 
         """
 
-        cell_structure.use_verlet_list =  use_verlet_lists
+        cell_structure.use_verlet_list = use_verlet_lists
+        dd.fully_connected = fully_connected
         # grid.h::node_grid
         mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC)
 
-        # @TODO: gathering should be interface independent
-        # return mpi_gather_runtime_errors(interp, TCL_OK)
+        handle_errors("Error while initializing the cell system.")
         return True
 
     def set_n_square(self, use_verlet_lists=True):
@@ -52,7 +57,7 @@ cdef class CellSystem(object):
         Parameters
         ----------
         'use_verlet_lists' : :obj:`bool`, optional
-                             Activates or deactivates the usage of the verlet
+                             Activates or deactivates the usage of the Verlet
                              lists for this algorithm.
 
         """
@@ -73,9 +78,9 @@ cdef class CellSystem(object):
         'n_layers': :obj:`int`, optional, positive
                     Sets the number of layers in the z-direction.
         'use_verlet_lists' : :obj:`bool`, optional
-                             Activates or deactivates the usage of the verlet
+                             Activates or deactivates the usage of the Verlet
                              lists for this algorithm.
-        
+
         """
         cell_structure.use_verlet_list = use_verlet_lists
 
@@ -110,7 +115,7 @@ cdef class CellSystem(object):
         return True
 
     def get_state(self):
-        s = {"use_verlet_list" : cell_structure.use_verlet_list}
+        s = {"use_verlet_list": cell_structure.use_verlet_list}
 
         if cell_structure.type == CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
@@ -121,7 +126,8 @@ cdef class CellSystem(object):
             s["type"] = "nsquare"
 
         s["skin"] = skin
-        s["local_box_l"] = np.array([local_box_l[0], local_box_l[1], local_box_l[2]])
+        s["local_box_l"] = np.array(
+            [local_box_l[0], local_box_l[1], local_box_l[2]])
         s["max_cut"] = max_cut
         s["max_range"] = max_range
         s["max_skin"] = max_skin
@@ -129,15 +135,18 @@ cdef class CellSystem(object):
         s["verlet_reuse"] = verlet_reuse
         s["n_nodes"] = n_nodes
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
-        s["cell_grid"] = np.array([dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
-        s["cell_size"] = np.array([dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
+        s["cell_grid"] = np.array(
+            [dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
+        s["cell_size"] = np.array(
+            [dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
         s["max_num_cells"] = max_num_cells
         s["min_num_cells"] = min_num_cells
+        s["fully_connected"] = dd.fully_connected
 
         return s
 
     def __getstate__(self):
-        s = {"use_verlet_list" : cell_structure.use_verlet_list}
+        s = {"use_verlet_list": cell_structure.use_verlet_list}
 
         if cell_structure.type == CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
@@ -151,6 +160,7 @@ cdef class CellSystem(object):
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
         s["max_num_cells"] = max_num_cells
         s["min_num_cells"] = min_num_cells
+        s["fully_connected"] = dd.fully_connected
         return s
 
     def __setstate__(self, d):
@@ -160,9 +170,11 @@ cdef class CellSystem(object):
                 use_verlet_lists = d[key]
             elif key == "type":
                 if d[key] == "layered":
-                    self.set_layered(n_layers=d['n_layers'], use_verlet_lists=use_verlet_lists)
+                    self.set_layered(
+                        n_layers=d['n_layers'], use_verlet_lists=use_verlet_lists)
                 elif d[key] == "domain_decomposition":
-                    self.set_domain_decomposition(use_verlet_lists=use_verlet_lists)
+                    self.set_domain_decomposition(
+                        use_verlet_lists=use_verlet_lists)
                 elif d[key] == "nsquare":
                     self.set_n_square(use_verlet_lists=use_verlet_lists)
         self.skin = d['skin']
@@ -173,7 +185,7 @@ cdef class CellSystem(object):
     def get_pairs_(self, distance):
         return mpi_get_pairs(distance)
 
-    def resort(self, global_flag = 1):
+    def resort(self, global_flag=1):
         """
         Resort the particles in the cellsystem.
         Returns the particle numbers on the nodes
@@ -194,6 +206,7 @@ cdef class CellSystem(object):
         Maximum number for the cells.
 
         """
+
         def __set__(self, int _max_num_cells):
             global max_num_cells
             if _max_num_cells < min_num_cells:
@@ -210,6 +223,7 @@ cdef class CellSystem(object):
         Minimal number of the cells.
 
         """
+
         def __set__(self, int _min_num_cells):
             global min_num_cells
             min = calc_processor_min_num_cells()
@@ -225,16 +239,17 @@ cdef class CellSystem(object):
         def __get__(self):
             return min_num_cells
 
-
     # setter deprecated
     property node_grid:
         """
         Node grid.
 
         """
+
         def __set__(self, _node_grid):
             if not np.prod(_node_grid) == n_nodes:
-                raise ValueError("Number of available nodes " + str(n_nodes) + " and imposed node grid " + str(_node_grid) + " do not agree.")
+                raise ValueError("Number of available nodes " + str(
+                    n_nodes) + " and imposed node grid " + str(_node_grid) + " do not agree.")
             else:
                 node_grid[0] = _node_grid[0]
                 node_grid[1] = _node_grid[1]
@@ -247,7 +262,6 @@ cdef class CellSystem(object):
         def __get__(self):
             return np.array([node_grid[0], node_grid[1], node_grid[2]])
 
-
     property skin:
         """
         Value of the skin layer expects a floating point number.
@@ -255,6 +269,7 @@ cdef class CellSystem(object):
         .. note:: Mandatory to set.
 
         """
+
         def __set__(self, double _skin):
             if _skin < 0:
                 raise ValueError("Skin must be >= 0")
@@ -266,7 +281,8 @@ cdef class CellSystem(object):
         def __get__(self):
             return skin
 
-    def tune_skin(self, min_skin=None, max_skin=None, tol=None, int_steps=None):
+    def tune_skin(self, min_skin=None, max_skin=None, tol=None,
+                  int_steps=None):
         """
         Tunes the skin by measuring the integration time and bisecting over the
         given range of skins. The best skin is set in the simulation core.

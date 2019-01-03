@@ -1,16 +1,37 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
+#include "initialize.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
-#include "initialize.hpp"
+
+#include "utils/vec_rotate.hpp"
 
 #include <boost/mpi/collectives.hpp>
 
 namespace mpi = boost::mpi;
 
 void local_rotate_system(double phi, double theta, double alpha) {
-  // Culculate center of mass
+  // Calculate center of mass
   Vector3d local_com{};
   double local_mass = 0.0;
 
@@ -26,8 +47,8 @@ void local_rotate_system(double phi, double theta, double alpha) {
   auto const com =
       mpi::all_reduce(comm_cart, local_com, std::plus<Vector3d>()) / total_mass;
 
-  // Rotation axis in carthesian coordinates
-  double axis[3];
+  // Rotation axis in Cartesian coordinates
+  Vector3d axis;
   axis[0] = sin(theta) * cos(phi);
   axis[1] = sin(theta) * sin(phi);
   axis[2] = cos(theta);
@@ -40,13 +61,13 @@ void local_rotate_system(double phi, double theta, double alpha) {
     }
     // Rotate
     double res[3];
-    vec_rotate(axis, alpha, p.r.p, res);
+    Utils::vec_rotate(axis, alpha, p.r.p, res);
     // Write back result and shift back the center of mass
     for (int j = 0; j < 3; j++) {
       p.r.p[j] = com[j] + res[j];
     }
 #ifdef ROTATION
-    local_rotate_particle(&p, axis, alpha);
+    local_rotate_particle(p, axis, alpha);
 #endif
   }
 

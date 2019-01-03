@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
      Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -18,18 +18,18 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file dpd.cpp
+/** \file
     Implementation of \ref dpd.hpp "dpd.hpp"
  */
 #include "dpd.hpp"
 
 #ifdef DPD
 
+#include "communication.hpp"
+#include "global.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
 #include "thermostat.hpp"
-#include "communication.hpp"
-#include "global.hpp"
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
@@ -120,20 +120,23 @@ static double weight(int type, double r_cut, double dist_inv) {
   }
 }
 
-Vector3d dpd_pair_force(const Particle *p1, const Particle *p2, IA_parameters *ia_params,
-                        double *d, double dist, double dist2) {
+Vector3d dpd_pair_force(const Particle *p1, const Particle *p2,
+                        IA_parameters *ia_params, double *d, double dist,
+                        double dist2) {
   Vector3d f{};
   auto const dist_inv = 1.0 / dist;
 
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_pref1 > 0.0)) {
-    auto const omega = weight(ia_params->dpd_wf, ia_params->dpd_r_cut, dist_inv);
+    auto const omega =
+        weight(ia_params->dpd_wf, ia_params->dpd_r_cut, dist_inv);
     auto const omega2 = Utils::sqr(omega);
     // DPD part
     // friction force prefactor
     double vel12_dot_d12 = 0.0;
     for (int j = 0; j < 3; j++)
       vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
-    auto const friction = ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
+    auto const friction =
+        ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
     // random force prefactor
     double noise;
     if (ia_params->dpd_pref2 > 0.0) {
@@ -142,16 +145,19 @@ Vector3d dpd_pair_force(const Particle *p1, const Particle *p2, IA_parameters *i
       noise = 0.0;
     }
     for (int j = 0; j < 3; j++) {
-       f[j] += (noise - friction) * d[j];
+      f[j] += (noise - friction) * d[j];
     }
   }
   // DPD2 part
   if ((dist < ia_params->dpd_tr_cut) && (ia_params->dpd_pref3 > 0.0)) {
-    auto const omega = weight(ia_params->dpd_twf, ia_params->dpd_tr_cut, dist_inv);
+    auto const omega =
+        weight(ia_params->dpd_twf, ia_params->dpd_tr_cut, dist_inv);
     auto const omega2 = Utils::sqr(omega);
 
-    double P_times_dist_sqr[3][3] = {{dist2, 0, 0}, {0, dist2, 0}, {0, 0, dist2}},
-            noise_vec[3];
+    double P_times_dist_sqr[3][3] = {{dist2, 0, 0},
+                                     {0, dist2, 0},
+                                     {0, 0, dist2}},
+           noise_vec[3];
     for (int i = 0; i < 3; i++) {
       // noise vector
       if (ia_params->dpd_pref2 > 0.0) {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -34,14 +34,12 @@ namespace Observables {
 
 template <typename CoreLBObs>
 class LBProfileObservable
-    : public AutoParameters<LBProfileObservable<CoreLBObs>,
-                            Observable> {
+    : public AutoParameters<LBProfileObservable<CoreLBObs>, Observable> {
 public:
-  static_assert(std::is_base_of<::Observables::LBProfileObservable,
-                                CoreLBObs>::value,
-                "");
-  LBProfileObservable()
-      : m_observable(std::make_shared<CoreLBObs>()) {
+  static_assert(
+      std::is_base_of<::Observables::LBProfileObservable, CoreLBObs>::value,
+      "");
+  LBProfileObservable() : m_observable(std::make_shared<CoreLBObs>()) {
     this->add_parameters(
         {{"n_x_bins",
           [this](const Variant &v) {
@@ -90,70 +88,49 @@ public:
           [this]() { return profile_observable()->max_z; }},
          {"sampling_delta_x",
           [this](const Variant &v) {
-            profile_observable()->sampling_delta_x =
-                get_value<double>(v);
+            profile_observable()->sampling_delta_x = get_value<double>(v);
             profile_observable()->calculate_sample_positions();
           },
-          [this]() {
-            return profile_observable()->sampling_delta_x;
-          }},
+          [this]() { return profile_observable()->sampling_delta_x; }},
          {"sampling_delta_y",
           [this](const Variant &v) {
-            profile_observable()->sampling_delta_y =
-                get_value<double>(v);
+            profile_observable()->sampling_delta_y = get_value<double>(v);
             profile_observable()->calculate_sample_positions();
           },
-          [this]() {
-            return profile_observable()->sampling_delta_y;
-          }},
+          [this]() { return profile_observable()->sampling_delta_y; }},
          {"sampling_delta_z",
           [this](const Variant &v) {
-            profile_observable()->sampling_delta_z =
-                get_value<double>(v);
+            profile_observable()->sampling_delta_z = get_value<double>(v);
             profile_observable()->calculate_sample_positions();
           },
-          [this]() {
-            return profile_observable()->sampling_delta_z;
-          }},
+          [this]() { return profile_observable()->sampling_delta_z; }},
          {"sampling_offset_x",
           [this](const Variant &v) {
-            profile_observable()->sampling_offset_x =
-                get_value<double>(v);
+            profile_observable()->sampling_offset_x = get_value<double>(v);
             profile_observable()->calculate_sample_positions();
           },
-          [this]() {
-            return profile_observable()->sampling_offset_x;
-          }},
+          [this]() { return profile_observable()->sampling_offset_x; }},
          {"sampling_offset_y",
           [this](const Variant &v) {
-            profile_observable()->sampling_offset_y =
-                get_value<double>(v);
+            profile_observable()->sampling_offset_y = get_value<double>(v);
             profile_observable()->calculate_sample_positions();
           },
-          [this]() {
-            return profile_observable()->sampling_offset_y;
-          }},
+          [this]() { return profile_observable()->sampling_offset_y; }},
          {"sampling_offset_z",
           [this](const Variant &v) {
-            profile_observable()->sampling_offset_z =
-                get_value<double>(v);
+            profile_observable()->sampling_offset_z = get_value<double>(v);
             profile_observable()->calculate_sample_positions();
           },
-          [this]() {
-            return profile_observable()->sampling_offset_z;
-          }},
+          [this]() { return profile_observable()->sampling_offset_z; }},
          {"allow_empty_bins",
           [this](const Variant &v) {
-            profile_observable()->allow_empty_bins =
-                get_value<bool>(v);
+            profile_observable()->allow_empty_bins = get_value<bool>(v);
           },
-          [this]() {
-            return profile_observable()->allow_empty_bins;
-          }}});
+          [this]() { return profile_observable()->allow_empty_bins; }}});
   }
 
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
     if (method == "calculate") {
       return profile_observable()->operator()(partCfg());
     }
@@ -163,8 +140,7 @@ public:
     return {};
   }
 
-  virtual std::shared_ptr<::Observables::Observable>
-  observable() const override {
+  std::shared_ptr<::Observables::Observable> observable() const override {
     return m_observable;
   }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 The ESPResSo project
+  Copyright (C) 2016-2018 The ESPResSo project
     Max-Planck-Institute for Polymer Research, Theory Group
 
   This file is part of ESPResSo.
@@ -18,9 +18,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file MpiCallbacks_test.cpp Unit tests for the MpiCallbacks class.
+/** \file
+ * Unit tests for the MpiCallbacks class.
  *
-*/
+ */
 
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE MpiCallbacks test
@@ -42,7 +43,7 @@ void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
     boost::mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
   }
 }
-}
+} // namespace Testing
 
 bool static_callback_called = false;
 void static_callback(int a, int b) {
@@ -121,7 +122,7 @@ BOOST_AUTO_TEST_CASE(add_dynamic_callback) {
 }
 
 /**
- * Check wether removing a dynamic callback
+ * Check whether removing a dynamic callback
  * works.
  */
 BOOST_AUTO_TEST_CASE(remove_dynamic_callback) {
@@ -197,7 +198,7 @@ BOOST_AUTO_TEST_CASE(destructor) {
   communicator world;
 
   {
-    /* Will be detroyed on scope exit */
+    /* Will be destroyed on scope exit */
     MpiCallbacks callbacks(world);
 
     if (world.rank() == 0) {

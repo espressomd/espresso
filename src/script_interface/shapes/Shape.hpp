@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -38,9 +38,9 @@ public:
   Variant call_method(std::string const &name,
                       VariantMap const &params) override {
     if (name == "calc_distance") {
-      std::array<double, 3> pos = get_value<Vector3d>(params.at("position"));
+      auto const pos = get_value<Vector3d>(params.at("position"));
       double dist, vec[3];
-      shape()->calculate_dist(pos.data(), &dist, vec);
+      shape()->calculate_dist(pos, &dist, vec);
       return std::vector<Variant>{dist, Vector3d{vec}};
     }
 

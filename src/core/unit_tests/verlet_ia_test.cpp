@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2010-2018 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include <algorithm>
 #include <functional>
 #include <iostream>
@@ -28,7 +46,8 @@ struct Distance {
 
 /* Dummy interaction criterion */
 struct VerletCriterion {
-  bool operator()(Particle const &p1, Particle const &p2, Distance const& d) const {
+  bool operator()(Particle const &p1, Particle const &p2,
+                  Distance const &d) const {
     return d.interact;
   }
 };
@@ -42,10 +61,14 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
 
   auto id = 0;
   for (auto &c : cells) {
+    std::vector<Cell *> neighbors;
+
     for (auto &n : cells) {
       if (&c != &n)
-        c.m_neighbors.push_back(&n);
+        neighbors.push_back(&n);
     }
+
+    c.m_neighbors = Neighbors<Cell *>(neighbors, {});
 
     c.part = new Particle[n_part_per_cell];
     c.n = c.max = n_part_per_cell;
@@ -82,7 +105,7 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
   pairs.clear();
   std::fill(id_counts.begin(), id_counts.end(), 0);
 
-  /* Now check the verlet lists */
+  /* Now check the Verlet lists */
   Algorithm::verlet_ia(
       cells.begin(), cells.end(),
       [&id_counts](Particle const &p) { id_counts[p.p.identity]++; },

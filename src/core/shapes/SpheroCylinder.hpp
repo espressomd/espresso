@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -24,7 +24,6 @@
 
 #include "Shape.hpp"
 #include "Vector.hpp"
-
 
 namespace Shapes {
 class SpheroCylinder : public Shape {
@@ -65,12 +64,12 @@ public:
     e_r_axis.normalize();
   }
 
-
 public:
   SpheroCylinder()
       : m_center({0.0, 0.0, 0.0}), m_axis({1.0, 0.0, 0.0}), m_rad(0),
-        m_length(0.0) { precalc(); }
-
+        m_length(0.0) {
+    precalc();
+  }
 
   double radius() const { return m_rad; }
   void set_radius(double const &radius) {
@@ -93,10 +92,9 @@ public:
   Vector3d &center() { return m_center; }
   double &direction() { return m_direction; }
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
-
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 };
-}
+} // namespace Shapes
 
 #endif

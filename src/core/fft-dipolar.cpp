@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -18,27 +18,27 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file fft.cpp
+/** \file
  *
  *  Routines, row decomposition, data structures and communication for the
  * 3D-FFT.
  *
-*/
+ */
 
 #include "fft-dipolar.hpp"
 
 #ifdef DP3M
 
-#include <fftw3.h>
-/* our remapping of malloc interferes with fftw3's name mangling. */
-void *fftw_malloc(size_t n);
-
-#include <mpi.h>
-
 #include "communication.hpp"
+#include "debug.hpp"
 #include "fft-common.hpp"
 #include "grid.hpp"
-#include "debug.hpp"
+
+#include "utils/math/permute_ifield.hpp"
+using Utils::permute_ifield;
+
+#include <fftw3.h>
+#include <mpi.h>
 
 /************************************************
  * variables
@@ -50,7 +50,7 @@ fft_data_struct dfft;
  * \param plan communication plan (see \ref fft_forw_plan).
  * \param in   input mesh.
  * \param out  output mesh.
-*/
+ */
 void dfft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
 
 /** communicate the grid data according to the given
@@ -59,7 +59,7 @@ void dfft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
  * \param plan_b additional back plan (see \ref fft_back_plan).
  * \param in     input mesh.
  * \param out    output mesh.
-*/
+ */
 void dfft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
                          double *out);
 
@@ -98,7 +98,8 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
   for (i = 0; i < n_nodes; i++) {
     map_node_array(i, &(n_pos[0][3 * i + 0]));
     n_id[0][get_linear_index(n_pos[0][3 * i + 0], n_pos[0][3 * i + 1],
-                             n_pos[0][3 * i + 2], n_grid[0])] = i;
+                             n_pos[0][3 * i + 2],
+                             {n_grid[0][0], n_grid[0][1], n_grid[0][2]})] = i;
   }
 
   /* FFT node grids (n_grid[1 - 3]) */
@@ -120,18 +121,20 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
   for (i = 0; i < 3; i++)
     dfft.plan[0].new_mesh[i] = local_mesh_dim[i];
   for (i = 1; i < 4; i++) {
-    dfft.plan[i].g_size =
-        fft_find_comm_groups(n_grid[i - 1], n_grid[i], n_id[i - 1], n_id[i],
-                             dfft.plan[i].group, n_pos[i], my_pos[i]);
+    dfft.plan[i].g_size = fft_find_comm_groups(
+        {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+        {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+        dfft.plan[i].group, n_pos[i], my_pos[i]);
     if (dfft.plan[i].g_size == -1) {
       /* try permutation */
       j = n_grid[i][(dfft.plan[i].row_dir + 1) % 3];
       n_grid[i][(dfft.plan[i].row_dir + 1) % 3] =
           n_grid[i][(dfft.plan[i].row_dir + 2) % 3];
       n_grid[i][(dfft.plan[i].row_dir + 2) % 3] = j;
-      dfft.plan[i].g_size =
-          fft_find_comm_groups(n_grid[i - 1], n_grid[i], n_id[i - 1], n_id[i],
-                               dfft.plan[i].group, n_pos[i], my_pos[i]);
+      dfft.plan[i].g_size = fft_find_comm_groups(
+          {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+          dfft.plan[i].group, n_pos[i], my_pos[i]);
       if (dfft.plan[i].g_size == -1) {
         fprintf(stderr,
                 "%d: dipolar INTERNAL ERROR: fft_find_comm_groups error\n",
@@ -237,14 +240,13 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
   }
 
   /* Factor 2 for complex numbers */
-  dfft.send_buf = Utils::realloc(dfft.send_buf,
-                                           dfft.max_comm_size * sizeof(double));
-  dfft.recv_buf = Utils::realloc(dfft.recv_buf,
-                                           dfft.max_comm_size * sizeof(double));
-  (*data) =
-      Utils::realloc((*data), dfft.max_mesh_size * sizeof(double));
-  dfft.data_buf = Utils::realloc(dfft.data_buf,
-                                           dfft.max_mesh_size * sizeof(double));
+  dfft.send_buf =
+      Utils::realloc(dfft.send_buf, dfft.max_comm_size * sizeof(double));
+  dfft.recv_buf =
+      Utils::realloc(dfft.recv_buf, dfft.max_comm_size * sizeof(double));
+  (*data) = Utils::realloc((*data), dfft.max_mesh_size * sizeof(double));
+  dfft.data_buf =
+      Utils::realloc(dfft.data_buf, dfft.max_mesh_size * sizeof(double));
   if (!(*data) || !dfft.data_buf || !dfft.recv_buf || !dfft.send_buf) {
     fprintf(stderr, "%d: Could not allocate FFT data arays\n", this_node);
     errexit();
@@ -455,8 +457,8 @@ void dfft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
   MPI_Status status;
   double *tmp_ptr;
 
-  /* Back means: Use the send/recieve stuff from the forward plan but
-     replace the recieve blocks by the send blocks and vice
+  /* Back means: Use the send/receive stuff from the forward plan but
+     replace the receive blocks by the send blocks and vice
      versa. Attention then also new_mesh and old_mesh are exchanged */
 
   for (i = 0; i < plan_f.g_size; i++) {

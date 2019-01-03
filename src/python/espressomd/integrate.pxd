@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -51,10 +51,9 @@ cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
     cdef vector[RuntimeError]mpi_gather_runtime_errors()
 
 cdef extern from "minimize_energy.hpp":
-    void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement);
+    void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement)
 cdef extern from "communication.hpp":
-    int mpi_minimize_energy() 
-
+    int mpi_minimize_energy()
 
 
 # cdef class Integrator:

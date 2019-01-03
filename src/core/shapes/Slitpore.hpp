@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -32,8 +32,8 @@ public:
         m_lower_smoothing_radius(0.0), m_channel_width(0.0), m_pore_width(0.0),
         m_pore_length(0.0) {}
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 
   double &pore_mouth() { return m_pore_mouth; }
   double &upper_smoothing_radius() { return m_upper_smoothing_radius; }
@@ -50,6 +50,6 @@ private:
   double m_pore_width;
   double m_pore_length;
 };
-}
+} // namespace Shapes
 
 #endif

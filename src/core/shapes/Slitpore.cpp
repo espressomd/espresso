@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -29,8 +29,8 @@
 using namespace std;
 
 namespace Shapes {
-int Slitpore::calculate_dist(const double *ppos, double *dist,
-                             double *vec) const {
+void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
+                              double *vec) const {
   // the left circles
   double box_l_x = box_l[0];
   double c11[2] = {box_l_x / 2 - m_pore_width / 2 - m_upper_smoothing_radius,
@@ -43,89 +43,87 @@ int Slitpore::calculate_dist(const double *ppos, double *dist,
   double c22[2] = {box_l_x / 2 + m_pore_width / 2 - m_lower_smoothing_radius,
                    m_pore_mouth - m_pore_length + m_lower_smoothing_radius};
 
-  if (ppos[2] > m_pore_mouth + m_channel_width / 2) {
+  if (pos[2] > m_pore_mouth + m_channel_width / 2) {
     //    printf("upper wall\n");
     // Feel the upper wall
-    *dist = m_pore_mouth + m_channel_width - ppos[2];
+    *dist = m_pore_mouth + m_channel_width - pos[2];
     vec[0] = vec[1] = 0;
     vec[2] = -*dist;
-    return 0;
+    return;
   }
 
-  if (ppos[0] < c11[0] || ppos[0] > c21[0]) {
+  if (pos[0] < c11[0] || pos[0] > c21[0]) {
     // Feel the lower wall of the channel
-    *dist = ppos[2] - m_pore_mouth;
+    *dist = pos[2] - m_pore_mouth;
     vec[0] = vec[1] = 0;
     vec[2] = *dist;
-    return 0;
+    return;
   }
 
-  if (ppos[2] > c11[1]) {
+  if (pos[2] > c11[1]) {
     // Feel the upper smoothing
-    if (ppos[0] < box_l_x / 2) {
-      *dist =
-          sqrt(Utils::sqr(c11[0] - ppos[0]) + Utils::sqr(c11[1] - ppos[2])) -
-          m_upper_smoothing_radius;
+    if (pos[0] < box_l_x / 2) {
+      *dist = sqrt(Utils::sqr(c11[0] - pos[0]) + Utils::sqr(c11[1] - pos[2])) -
+              m_upper_smoothing_radius;
       vec[0] =
-          -(c11[0] - ppos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
+          -(c11[0] - pos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
       vec[1] = 0;
       vec[2] =
-          -(c11[1] - ppos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
-      return 0;
+          -(c11[1] - pos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
+      return;
     } else {
-      *dist =
-          sqrt(Utils::sqr(c21[0] - ppos[0]) + Utils::sqr(c21[1] - ppos[2])) -
-          m_upper_smoothing_radius;
+      *dist = sqrt(Utils::sqr(c21[0] - pos[0]) + Utils::sqr(c21[1] - pos[2])) -
+              m_upper_smoothing_radius;
       vec[0] =
-          -(c21[0] - ppos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
+          -(c21[0] - pos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
       vec[1] = 0;
       vec[2] =
-          -(c21[1] - ppos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
-      return 0;
+          -(c21[1] - pos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
+      return;
     }
   }
 
-  if (ppos[2] > c12[1]) {
+  if (pos[2] > c12[1]) {
     // Feel the pore wall
-    if (ppos[0] < box_l_x / 2) {
-      *dist = ppos[0] - (box_l_x / 2 - m_pore_width / 2);
+    if (pos[0] < box_l_x / 2) {
+      *dist = pos[0] - (box_l_x / 2 - m_pore_width / 2);
       vec[0] = *dist;
       vec[1] = vec[2] = 0;
-      return 0;
+      return;
     } else {
-      *dist = (box_l_x / 2 + m_pore_width / 2) - ppos[0];
+      *dist = (box_l_x / 2 + m_pore_width / 2) - pos[0];
       vec[0] = -*dist;
       vec[1] = vec[2] = 0;
-      return 0;
+      return;
     }
   }
 
-  if (ppos[0] > c12[0] && ppos[0] < c22[0]) {
+  if (pos[0] > c12[0] && pos[0] < c22[0]) {
     //    printf("pore end\n");
     // Feel the pore end wall
-    *dist = ppos[2] - (m_pore_mouth - m_pore_length);
+    *dist = pos[2] - (m_pore_mouth - m_pore_length);
     vec[0] = vec[1] = 0;
     vec[2] = *dist;
-    return 0;
+    return;
   }
   // Else
   // Feel the lower smoothing
-  if (ppos[0] < box_l_x / 2) {
-    *dist = -sqrt(Utils::sqr(c12[0] - ppos[0]) + Utils::sqr(c12[1] - ppos[2])) +
+  if (pos[0] < box_l_x / 2) {
+    *dist = -sqrt(Utils::sqr(c12[0] - pos[0]) + Utils::sqr(c12[1] - pos[2])) +
             m_lower_smoothing_radius;
-    vec[0] = (c12[0] - ppos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
+    vec[0] = (c12[0] - pos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     vec[1] = 0;
-    vec[2] = (c12[1] - ppos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
-    return 0;
+    vec[2] = (c12[1] - pos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
+    return;
   } else {
-    *dist = -sqrt(Utils::sqr(c22[0] - ppos[0]) + Utils::sqr(c22[1] - ppos[2])) +
+    *dist = -sqrt(Utils::sqr(c22[0] - pos[0]) + Utils::sqr(c22[1] - pos[2])) +
             m_lower_smoothing_radius;
-    vec[0] = (c22[0] - ppos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
+    vec[0] = (c22[0] - pos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     vec[1] = 0;
-    vec[2] = (c22[1] - ppos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
-    return 0;
+    vec[2] = (c22[1] - pos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
+    return;
   }
 
-  return 0;
+  return;
 }
 } // namespace Shapes

@@ -1,27 +1,27 @@
-  # Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-  #   Max-Planck-Institute for Polymer Research, Theory Group
-  
-  # This file is part of ESPResSo.
-  
-  # ESPResSo is free software: you can redistribute it and/or modify
-  # it under the terms of the GNU General Public License as published by
-  # the Free Software Foundation, either version 3 of the License, or
-  # (at your option) any later version.
-  
-  # ESPResSo is distributed in the hope that it will be useful,
-  # but WITHOUT ANY WARRANTY; without even the implied warranty of
-  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  # GNU General Public License for more details.
-  
-  # You should have received a copy of the GNU General Public License
-  # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
+
+# This file is part of ESPResSo.
+
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 
 # Build tests only when testing
 set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL ON)
 
 # Target for the unit tests
-add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
+add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) --output-on-failure)
 
 # Run unit tests on check
 add_dependencies(check check_unit_tests)
@@ -30,7 +30,20 @@ add_dependencies(check check_unit_tests)
 function(UNIT_TEST)
   cmake_parse_arguments(TEST "" "NAME;NUM_PROC" "SRC" ${ARGN} )
   add_executable(${TEST_NAME} ${TEST_SRC})
-  target_link_libraries(${TEST_NAME} ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+  target_link_libraries(${TEST_NAME} PRIVATE ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+  if(WITH_COVERAGE)
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<CONFIG:Release>:-g>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<CONFIG:Release>:-O0>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fprofile-instr-generate>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fcoverage-mapping>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:--coverage>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-fprofile-arcs>")
+    target_compile_options(${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-ftest-coverage>")
+    if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+      target_link_libraries(${TEST_NAME} PUBLIC gcov)
+    endif()
+  endif()
+  target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
   add_dependencies(${TEST_NAME} EspressoConfig)
 
   # If NUM_PROC is given, set up MPI parallel test case
@@ -98,6 +111,21 @@ unit_test(NAME None_test SRC None_test.cpp)
 unit_test(NAME keys_test SRC keys_test.cpp)
 unit_test(NAME Cache_test SRC Cache_test.cpp)
 unit_test(NAME histogram SRC histogram.cpp)
-unit_test(NAME get_value SRC get_value_test.cpp)
+unit_test(NAME get_value SRC get_value_test.cpp ../../script_interface/Variant.cpp)
 unit_test(NAME accumulator SRC accumulator.cpp)
+unit_test(NAME strcat_alloc SRC strcat_alloc_test.cpp)
+unit_test(NAME int_pow SRC int_pow_test.cpp)
+unit_test(NAME sgn SRC sgn_test.cpp)
+unit_test(NAME AS_erfc_part SRC AS_erfc_part_test.cpp)
+unit_test(NAME sinc SRC sinc_test.cpp)
+unit_test(NAME as_const SRC as_const_test.cpp)
+unit_test(NAME permute_ifield_test SRC permute_ifield_test.cpp)
+unit_test(NAME vec_rotate SRC vec_rotate_test.cpp)
+unit_test(NAME tensor_product SRC tensor_product_test.cpp)
+unit_test(NAME interpolation_gradient SRC interpolation_gradient_test.cpp)
+unit_test(NAME interpolation SRC interpolation_test.cpp)
+unit_test(NAME field_coupling_coulplings SRC field_coupling_couplings_test.cpp)
+unit_test(NAME field_coupling_fields SRC field_coupling_fields_test.cpp)
+unit_test(NAME field_coupling_force_field SRC field_coupling_force_field_test.cpp)
 unit_test(NAME Span_test SRC Span_test.cpp)
+unit_test(NAME sendrecv_test SRC sendrecv_test.cpp)

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+Copyright (C) 2010-2018 The ESPResSo project
 Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -24,18 +24,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
-/** \file metadynamics.hpp
-*
-*  This file contains routines to perform metadynamics.  Right now, the
-*  reaction coordinate is defined between two particles (either distance
-*  or z-projected distance). Note that these
-*  particles can be virtual sites, in order to handle molecules.
-*
-*  - set metadynamics options
-*  - initialize bias forces and free energy profiles
-*  - calculate reaction coordinate for each integration step
-*  - apply bias force on particles
-*/
+/** \file
+ *
+ *  This file contains routines to perform metadynamics.  Right now, the
+ *  reaction coordinate is defined between two particles (either distance
+ *  or z-projected distance). Note that these
+ *  particles can be virtual sites, in order to handle molecules.
+ *
+ *  - set metadynamics options
+ *  - initialize bias forces and free energy profiles
+ *  - calculate reaction coordinate for each integration step
+ *  - apply bias force on particles
+ */
 
 #ifdef METADYNAMICS
 /* metadynamics switch */
@@ -85,8 +85,8 @@ void meta_init() {
                          sizeof *meta_acc_fprofile);
   }
 
-  /* Check that the simulation uses onle a single processor. Otherwise exit.
-  *  MPI interface *not* implemented. */
+  /* Check that the simulation uses only a single processor. Otherwise exit.
+   *  MPI interface *not* implemented. */
   if (n_nodes != 1) {
     runtimeErrorMsg() << "Can't use metadynamics on more than one processor.\n";
     return;
@@ -96,10 +96,10 @@ void meta_init() {
 }
 
 /** Metadynamics main function:
-* - Calculate reaction coordinate
-* - Update profile and biased force
-* - apply external force
-*/
+ * - Calculate reaction coordinate
+ * - Update profile and biased force
+ * - apply external force
+ */
 void meta_perform() {
   Vector3d ppos1, ppos2;
 
@@ -113,8 +113,8 @@ void meta_perform() {
     if (p.p.identity == meta_pid1) {
       flag1 = 1;
       p1 = &p;
-      ppos1=unfolded_position(p);
-      
+      ppos1 = unfolded_position(p);
+
       if (flag1 && flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
         meta_cur_xi = ppos2 - ppos1;
@@ -124,11 +124,11 @@ void meta_perform() {
     if (p.p.identity == meta_pid2) {
       flag2 = 1;
       p2 = &p;
-      ppos2=unfolded_position(p);
+      ppos2 = unfolded_position(p);
 
       if (flag1 && flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
-        meta_cur_xi =ppos2 - ppos1;
+        meta_cur_xi = ppos2 - ppos1;
         break;
       }
     }
@@ -140,9 +140,9 @@ void meta_perform() {
   }
 
   /* Now update free energy profile
-  * Here, we're following the functional form of
-  * Marsili etal., J Comp. Chem, 31 (2009).
-  * Instead of gaussians, we use so-called Lucy's functions */
+   * Here, we're following the functional form of
+   * Marsili et al., J Comp Chem, 31 (2009).
+   * Instead of Gaussians, we use so-called Lucy's functions */
 
   for (int i = 0; i < meta_xi_num_bins; ++i) {
     if (meta_switch == META_DIST) {
@@ -157,7 +157,7 @@ void meta_perform() {
       }
 
       // direction of the bias force
-      meta_apply_direction =meta_cur_xi /meta_cur_xi.norm();
+      meta_apply_direction = meta_cur_xi / meta_cur_xi.norm();
     } else if (meta_switch == META_REL_Z) {
       // reaction coordinate value: relative height of z_pid1 with respect to
       // z_pid2
@@ -182,7 +182,7 @@ void meta_perform() {
   /** Apply force */
 
   // Calculate the strength of the applied force
-  double factor=0;
+  double factor = 0;
   if (meta_val_xi < meta_xi_min) {
     // below the lower bound
     factor = -1. * meta_f_bound * (meta_xi_min - meta_val_xi) / meta_xi_step;
@@ -191,7 +191,7 @@ void meta_perform() {
     factor = meta_f_bound * (meta_val_xi - meta_xi_max) / meta_xi_step;
   } else {
     // within the RC interval
-    int i = (int)dround((meta_val_xi - meta_xi_min) / meta_xi_step);
+    int i = (int)std::round((meta_val_xi - meta_xi_min) / meta_xi_step);
     if (i < 0)
       i = 0;
     if (i >= meta_xi_num_bins)

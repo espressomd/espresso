@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
+  Copyright (C) 2017-2018 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -27,7 +27,7 @@
 #include <map>
 
 BOOST_AUTO_TEST_CASE(values) {
-  using pair_type = std::map<int,int>::value_type;
+  using pair_type = std::map<int, int>::value_type;
 
   auto pairs = std::map<int, int>{{31, 2}, {2, 63}, {23, 9}, {4, 9}};
   auto keys = Utils::keys(pairs);
@@ -36,4 +36,3 @@ BOOST_AUTO_TEST_CASE(values) {
       std::equal(keys.begin(), keys.end(), pairs.begin(),
                  [](int k, pair_type const &kv) { return k == kv.first; }));
 }
-

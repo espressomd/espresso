@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
 
     Max-Planck-Institute for Polymer Research, Theory Group
@@ -27,9 +27,9 @@
 #include <sstream>
 
 namespace Random {
-using std::string;
-using std::ostringstream;
 using std::istringstream;
+using std::ostringstream;
+using std::string;
 using std::vector;
 
 using Communication::mpiCallbacks;
@@ -64,7 +64,7 @@ void set_state(const string &s) {
  * @brief Get the state size of the PRNG
  */
 int get_state_size_of_generator() {
-  return generator.state_size; // this only works for the mersenne twister
+  return generator.state_size; // this only works for the Mersenne twister
                                // generator, other generators do not provide
                                // this member variable
 }
@@ -72,7 +72,8 @@ int get_state_size_of_generator() {
 /** Communication */
 
 void mpi_random_seed_slave(int pnode, int cnt) {
-  int this_seed;  user_has_seeded=true;
+  int this_seed;
+  user_has_seeded = true;
 
   MPI_Scatter(nullptr, 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
 
@@ -142,11 +143,13 @@ void init_random(void) {
   mpiCallbacks().add(mpi_random_get_stat_slave);
 }
 
-void init_random_seed(int seed)
-{
-  std::seed_seq seeder{seed}; //come up with "sane" initialization to avoid too many zeros in the internal state of the Mersenne twister
+void init_random_seed(int seed) {
+  std::seed_seq seeder{
+      seed}; // come up with "sane" initialization to avoid too many zeros in
+             // the internal state of the Mersenne twister
   generator.seed(seeder);
-  generator.discard(1e6); //discard the first 1e6 random numbers to warm up the Mersenne-Twister PRNG
+  generator.discard(1e6); // discard the first 1e6 random numbers to warm up the
+                          // Mersenne-Twister PRNG
 }
 
-} /* Random */
+} // namespace Random

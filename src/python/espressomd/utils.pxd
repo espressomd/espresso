@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -34,7 +34,7 @@ cdef extern from "utils/List.hpp":
         int_list(int)
         int_list(int, int)
 
-        int& operator[](int)
+        int & operator[](int)
         void resize(int)
         void push_back(int)
 
@@ -46,13 +46,15 @@ cdef extern from "utils/List.hpp":
         double_list(int)
         double_list(int, double)
 
-        double& operator[](int)
+        double & operator[](int)
 
         double * e
         unsigned n
 
 cdef extern from "utils/Histogram.hpp" namespace "Utils":
-    cdef void unravel_index(const int* const len_dims, const int ndims, const int flattened_index, int* unravelled_index_out)
+    cdef void unravel_index(const int * const len_dims, const int ndims,
+                            const int flattened_index,
+                            int * unravelled_index_out)
 
 cdef int_list create_int_list_from_python_object(obj)
 cdef np.ndarray create_nparray_from_int_list(int_list * il)
@@ -85,10 +87,18 @@ cdef extern from "<limits>" namespace "std" nogil:
     cdef cppclass numeric_limits[T]:
         @staticmethod
         T epsilon()
+
         @staticmethod
         T max()
 
 cdef extern from "Vector.hpp":
+    cppclass Vector3i:
+        int & operator[](int i)
+        int * data()
+
     cppclass Vector3d:
         double & operator[](int i)
         double * data()
+
+cdef extern from "utils/math/bspline.hpp" namespace "Utils":
+    cdef double bspline(int k, int i, double x)

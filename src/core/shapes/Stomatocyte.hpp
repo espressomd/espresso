@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -28,27 +28,27 @@
 namespace Shapes {
 class Stomatocyte : public Shape {
 public:
-  Stomatocyte() : m_position({0., 0., 0.}), m_orientation({1., 0., 0.}),
-                  m_outer_radius(0.0), m_inner_radius(0.0), m_layer_width(0.0),
-                  m_direction(0.0) {}
+  Stomatocyte()
+      : m_position({0., 0., 0.}), m_orientation({1., 0., 0.}),
+        m_outer_radius(0.0), m_inner_radius(0.0), m_layer_width(0.0),
+        m_direction(0.0) {}
 
-  int calculate_dist(const double *ppos, double *dist, double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 
   Vector3d const &position() const { return m_position; }
-  void set_position(Vector3d const &position) {
-      m_position = position;
-  }
+  void set_position(Vector3d const &position) { m_position = position; }
 
   Vector3d const &orientation() const { return m_orientation; }
   void set_orientation(Vector3d const &orientation) {
-      m_orientation = orientation;
+    m_orientation = orientation;
   }
 
-  double  &outer_radius()  { return m_outer_radius; }
-  double  &inner_radius()  { return m_inner_radius; }
-  double  &layer_width()  { return m_layer_width; }
-  
-  double  &direction()  { return m_direction; }
+  double &outer_radius() { return m_outer_radius; }
+  double &inner_radius() { return m_inner_radius; }
+  double &layer_width() { return m_layer_width; }
+
+  double &direction() { return m_direction; }
 
 private:
   /** Stomatocyte position. */
@@ -65,6 +65,6 @@ private:
   /** Inside/Outside (+1 outside -1 inside interaction direction)*/
   double m_direction;
 };
-}
+} // namespace Shapes
 
 #endif
