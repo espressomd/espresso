@@ -115,8 +115,8 @@ static const float c_sound_sq = 1.0f / 3.0f;
 /*-------------------------------------------------------*/
 
 static constexpr float sqrt12 = 3.4641016151377544f;
-static Utils::Counter<uint64_t> coupling_rng_counter;
-static Utils::Counter<uint64_t> fluid_rng_counter;
+static Utils::Counter<uint64_t> rng_counter_coupling_gpu;
+static Utils::Counter<uint64_t> rng_counter_fluid_gpu;
 __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
                                         uint64_t philox_counter) {
   // Split the 64 bit counter into two 32 bit ints.
@@ -3913,7 +3913,7 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
                  threads_per_block_particles, *current_nodes,
                  gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
                  gpu_get_fluid_composition_pointer(), node_f, device_rho_v,
-                 couple_virtual, coupling_rng_counter.value());
+                 couple_virtual, rng_counter_coupling_gpu.value());
     } else { /** only other option is the three point coupling scheme */
 #ifdef SHANCHEN
       fprintf(stderr, "The three point particle coupling is not currently "
@@ -3924,9 +3924,9 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
       KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles,
                  threads_per_block_particles, *current_nodes,
                  gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 node_f, device_rho_v, coupling_rng_counter.value());
+                 node_f, device_rho_v, rng_counter_coupling_gpu.value());
     }
-    coupling_rng_counter.increment();
+    rng_counter_coupling_gpu.increment();
   }
 }
 
@@ -4289,13 +4289,13 @@ void lb_integrate_GPU() {
   if (intflag == 1) {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
                device_rho_v, node_f, lb_ek_parameters_gpu,
-               fluid_rng_counter.value());
+               rng_counter_fluid_gpu.value());
     current_nodes = &nodes_b;
     intflag = 0;
   } else {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
                device_rho_v, node_f, lb_ek_parameters_gpu,
-               fluid_rng_counter.value());
+               rng_counter_fluid_gpu.value());
     current_nodes = &nodes_a;
     intflag = 1;
   }
@@ -4306,7 +4306,7 @@ void lb_integrate_GPU() {
                lb_boundary_velocity, lb_boundary_force);
   }
 #endif
-  fluid_rng_counter.increment();
+  rng_counter_fluid_gpu.increment();
 }
 
 void lb_gpu_get_boundary_forces(double *forces) {
@@ -4538,9 +4538,12 @@ void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
 }
 
 void lb_coupling_set_rng_state_gpu(uint64_t counter) {
-  coupling_rng_counter = Utils::Counter<uint64_t>(counter);
+  rng_counter_coupling_gpu = Utils::Counter<uint64_t>(counter);
 }
 
-uint64_t lb_coupling_rng_state_gpu() { return coupling_rng_counter.value(); }
+uint64_t lb_coupling_rng_state_gpu() {
+  return rng_counter_coupling_gpu.value();
+}
+uint64_t lb_fluid_rng_state_gpu() { return rng_counter_fluid_gpu.value(); }
 
 #endif /* LB_GPU */

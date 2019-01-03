@@ -74,7 +74,7 @@ typedef float lbForceFloat;
 /** Data structure holding the parameters for the Lattice Boltzmann system for
  * gpu. */
 typedef struct {
-  /** number density (LJ units) */
+  /** number density (LB units) */
   float rho[LB_COMPONENTS];
   /** mu (LJ units) */
   float mu[LB_COMPONENTS];
@@ -312,6 +312,7 @@ void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
 
 void lb_coupling_set_rng_state_gpu(uint64_t);
 uint64_t lb_coupling_rng_state_gpu();
+uint64_t lb_fluid_rng_state_gpu();
 
 /*@{*/
 

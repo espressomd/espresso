@@ -31,6 +31,7 @@
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include <cinttypes>
+#include <fstream>
 
 #ifdef LB
 
@@ -185,14 +186,16 @@ int lb_lbfluid_set_shanchen_coupling(double *p_coupling) {
   int ii, jj, n = 0;
   switch (LB_COMPONENTS) {
   case 1:
-    lbpar_gpu.coupling[0] = (float)p_coupling[0];
-    lbpar_gpu.coupling[1] = (float)p_coupling[1];
+    lbpar_gpu.coupling[0] = static_cast<float>(p_coupling[0]);
+    lbpar_gpu.coupling[1] = static_cast<float>(p_coupling[1]);
     break;
   default:
     for (ii = 0; ii < LB_COMPONENTS; ii++) {
       for (jj = ii; jj < LB_COMPONENTS; jj++) {
-        lbpar_gpu.coupling[LB_COMPONENTS * ii + jj] = (float)p_coupling[n];
-        lbpar_gpu.coupling[LB_COMPONENTS * jj + ii] = (float)p_coupling[n];
+        lbpar_gpu.coupling[LB_COMPONENTS * ii + jj] =
+            static_cast<float>(p_coupling[n]);
+        lbpar_gpu.coupling[LB_COMPONENTS * jj + ii] =
+            static_cast<float>(p_coupling[n]);
         n++;
       }
     }
@@ -206,6 +209,7 @@ int lb_lbfluid_set_shanchen_coupling(double *p_coupling) {
   return 0;
 }
 
+#ifdef SHANCHEN
 int lb_lbfluid_set_mobility(double *p_mobility) {
   int ii;
   for (ii = 0; ii < LB_COMPONENTS - 1; ii++) {
@@ -214,7 +218,7 @@ int lb_lbfluid_set_mobility(double *p_mobility) {
     }
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-      lbpar_gpu.mobility[ii] = (float)p_mobility[ii];
+      lbpar_gpu.mobility[ii] = static_cast<float>(p_mobility[ii]);
       on_lb_params_change_gpu(LBPAR_MOBILITY);
 #endif // LB_GPU
     } else {
@@ -225,6 +229,7 @@ int lb_lbfluid_set_mobility(double *p_mobility) {
   }
   return 0;
 }
+#endif SHANCHEN
 
 int affinity_set_params(int part_type_a, int part_type_b, double *affinity) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
@@ -252,7 +257,7 @@ int lb_lbfluid_set_density(double *p_dens) {
       return -1;
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-      lbpar_gpu.rho[ii] = (float)p_dens[ii];
+      lbpar_gpu.rho[ii] = static_cast<float>(p_dens[ii]);
       on_lb_params_change_gpu(LBPAR_DENSITY);
 #endif // LB_GPU
     } else {
@@ -421,9 +426,9 @@ int lb_lbfluid_set_agrid(double p_agrid) {
 #ifdef LB_GPU
     lbpar_gpu.agrid = (float)p_agrid;
 
-    lbpar_gpu.dim_x = (unsigned int)rint(box_l[0] / p_agrid);
-    lbpar_gpu.dim_y = (unsigned int)rint(box_l[1] / p_agrid);
-    lbpar_gpu.dim_z = (unsigned int)rint(box_l[2] / p_agrid);
+    lbpar_gpu.dim_x = static_cast<unsigned int>(rint(box_l[0] / p_agrid));
+    lbpar_gpu.dim_y = static_cast<unsigned int>(rint(box_l[1] / p_agrid));
+    lbpar_gpu.dim_z = static_cast<unsigned int>(rint(box_l[2] / p_agrid));
     unsigned int tmp[3];
     tmp[0] = lbpar_gpu.dim_x;
     tmp[1] = lbpar_gpu.dim_y;
@@ -456,7 +461,7 @@ int lb_lbfluid_set_tau(double p_tau) {
     return -1;
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    lbpar_gpu.tau = (float)p_tau;
+    lbpar_gpu.tau = static_cast<float>(p_tau);
     on_lb_params_change_gpu(0);
 #endif // LB_GPU
   } else {
@@ -495,9 +500,9 @@ int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
       return 3;
 
     /* external force density is stored in MD units */
-    lbpar_gpu.ext_force_density[3 * component + 0] = (float)p_fx;
-    lbpar_gpu.ext_force_density[3 * component + 1] = (float)p_fy;
-    lbpar_gpu.ext_force_density[3 * component + 2] = (float)p_fz;
+    lbpar_gpu.ext_force_density[3 * component + 0] = static_cast<float>(p_fx);
+    lbpar_gpu.ext_force_density[3 * component + 1] = static_cast<float>(p_fy);
+    lbpar_gpu.ext_force_density[3 * component + 2] = static_cast<float>(p_fz);
     if (p_fx != 0 || p_fy != 0 || p_fz != 0) {
       lbpar_gpu.external_force_density = 1;
     } else {
@@ -527,7 +532,7 @@ int lb_lbfluid_get_density(double *p_dens) {
   for (int ii = 0; ii < LB_COMPONENTS; ii++) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-      p_dens[ii] = (double)lbpar_gpu.rho[ii];
+      p_dens[ii] = static_cast<double>(lbpar_gpu.rho[ii]);
 #endif // LB_GPU
     } else {
 #ifdef LB
@@ -542,7 +547,7 @@ int lb_lbfluid_get_visc(double *p_visc) {
   for (int ii = 0; ii < LB_COMPONENTS; ii++) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-      p_visc[ii] = (double)lbpar_gpu.viscosity[ii];
+      p_visc[ii] = static_cast<double>(lbpar_gpu.viscosity[ii]);
 #endif // LB_GPU
     } else {
 #ifdef LB
@@ -765,7 +770,7 @@ int lb_lbfluid_print_vtk_velocity(char *filename, std::vector<int> bb1,
 #endif // LB_GPU
   } else {
 #ifdef LB
-    double u[3];
+    Vector3d u;
 
     fprintf(fp,
             "# vtk DataFile Version 2.0\nlbfluid_cpu\n"
@@ -783,7 +788,7 @@ int lb_lbfluid_print_vtk_velocity(char *filename, std::vector<int> bb1,
     for (pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
       for (pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
         for (pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++) {
-          lb_lbnode_get_u(pos, u);
+          lb_lbnode_get_u(pos, u.data());
           fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
         }
 #endif // LB
@@ -807,7 +812,7 @@ int lb_lbfluid_print_boundary(char *filename) {
                                                 sizeof(unsigned int));
     lb_get_boundary_flags_GPU(bound_array);
 
-    int xyz[3];
+    Vector3i xyz;
     int j;
     for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
       xyz[0] = j % lbpar_gpu.dim_x;
@@ -826,7 +831,7 @@ int lb_lbfluid_print_boundary(char *filename) {
 #ifdef LB
     Vector3i pos;
     int boundary;
-    int gridsize[3];
+    Vector3i gridsize;
 
     gridsize[0] = box_l[0] / lblattice.agrid[0];
     gridsize[1] = box_l[1] / lblattice.agrid[1];
@@ -866,7 +871,7 @@ int lb_lbfluid_print_velocity(char *filename) {
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
     host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
     lb_get_values_GPU(host_values);
-    int xyz[3];
+    Vector3i xyz;
     int j;
     for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
       xyz[0] = j % lbpar_gpu.dim_x;
@@ -885,8 +890,8 @@ int lb_lbfluid_print_velocity(char *filename) {
   } else {
 #ifdef LB
     Vector3i pos;
-    double u[3];
-    int gridsize[3];
+    Vector3d u;
+    Vector3i gridsize;
 
     gridsize[0] = box_l[0] / lblattice.agrid[0];
     gridsize[1] = box_l[1] / lblattice.agrid[1];
@@ -900,7 +905,7 @@ int lb_lbfluid_print_velocity(char *filename) {
                   __LINE__);
           errexit();
 #endif // SHANCHEN
-          lb_lbnode_get_u(pos, u);
+          lb_lbnode_get_u(pos, u.data());
           fprintf(fp, "%f %f %f %f %f %f\n",
                   (pos[0] + 0.5) * lblattice.agrid[0],
                   (pos[1] + 0.5) * lblattice.agrid[1],
@@ -918,11 +923,6 @@ int lb_lbfluid_print_velocity(char *filename) {
 int lb_lbfluid_save_checkpoint(char *filename, int binary) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    FILE *cpfile;
-    cpfile = fopen(filename, "w");
-    if (!cpfile) {
-      return ES_ERROR;
-    }
     float *host_checkpoint_vd =
         (float *)Utils::malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
     unsigned int *host_checkpoint_boundary = (unsigned int *)Utils::malloc(
@@ -932,39 +932,55 @@ int lb_lbfluid_save_checkpoint(char *filename, int binary) {
     lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_boundary,
                            host_checkpoint_force);
     if (!binary) {
+      std::fstream cpfile(filename, std::ios::out);
+      cpfile << std::fixed;
+      cpfile.precision(8);
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
-        fprintf(cpfile, "%.8E \n", host_checkpoint_vd[n]);
+        cpfile << host_checkpoint_vd[n] << "\n";
       }
       for (int n = 0; n < int(lbpar_gpu.number_of_nodes); n++) {
-        fprintf(cpfile, "%u \n", host_checkpoint_boundary[n]);
+        cpfile << host_checkpoint_boundary[n] << "\n";
       }
       for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
-        fprintf(cpfile, "%.8E \n", host_checkpoint_force[n]);
+        cpfile << host_checkpoint_force[n] << "\n";
       }
+      cpfile << lb_coupling_rng_state_gpu();
+      cpfile << lb_fluid_rng_state_gpu();
+      cpfile.close();
     } else {
-      fwrite(host_checkpoint_vd, sizeof(float),
-             19 * int(lbpar_gpu.number_of_nodes), cpfile);
-      fwrite(host_checkpoint_boundary, sizeof(int),
-             int(lbpar_gpu.number_of_nodes), cpfile);
-      fwrite(host_checkpoint_force, sizeof(lbForceFloat),
-             3 * int(lbpar_gpu.number_of_nodes), cpfile);
+      std::fstream cpfile(filename, std::ios::out | std::ios::binary);
+      cpfile.write(reinterpret_cast<char *>(&host_checkpoint_vd),
+                   19 * sizeof(float) * lbpar_gpu.number_of_nodes);
+      cpfile.write(reinterpret_cast<char *>(&host_checkpoint_boundary),
+                   sizeof(int) * lbpar_gpu.number_of_nodes);
+      cpfile.write(reinterpret_cast<char *>(&host_checkpoint_force),
+                   3 * sizeof(float) * lbpar_gpu.number_of_nodes);
+      auto tmp_rng = lb_coupling_rng_state_gpu();
+      cpfile.write(reinterpret_cast<char *>(&tmp_rng),
+                   sizeof(decltype(lb_coupling_rng_state_gpu())));
+      tmp_rng = lb_coupling_rng_state_gpu();
+      cpfile.write(reinterpret_cast<char *>(&tmp_rng),
+                   sizeof(decltype(lb_fluid_rng_state_gpu())));
+      cpfile.close();
     }
-    fclose(cpfile);
     free(host_checkpoint_vd);
     free(host_checkpoint_boundary);
     free(host_checkpoint_force);
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    FILE *cpfile;
-    cpfile = fopen(filename, "w");
-    if (!cpfile) {
-      return ES_ERROR;
+    std::fstream cpfile;
+    if (binary) {
+      cpfile.open(filename, std::ios::out | std::ios::binary);
+    } else {
+      cpfile.open(filename, std::ios::out);
+      cpfile.precision(16);
+      cpfile << std::fixed;
     }
     double pop[19];
     Vector3i ind;
 
-    int gridsize[3];
+    Vector3i gridsize;
 
     gridsize[0] = box_l[0] / lbpar.agrid;
     gridsize[1] = box_l[1] / lbpar.agrid;
@@ -979,16 +995,17 @@ int lb_lbfluid_save_checkpoint(char *filename, int binary) {
           lb_lbnode_get_pop(ind, pop);
           if (!binary) {
             for (int n = 0; n < 19; n++) {
-              fprintf(cpfile, "%.16e ", pop[n]);
+              cpfile << pop[n];
             }
-            fprintf(cpfile, "\n");
+            cpfile << "\n";
           } else {
-            fwrite(pop, sizeof(double), 19, cpfile);
+            cpfile.write(reinterpret_cast<char *>(&pop[0]),
+                         19 * sizeof(double));
           }
         }
       }
     }
-    fclose(cpfile);
+    cpfile.close();
 #endif // LB
   }
   return ES_OK;
@@ -1053,7 +1070,7 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
     double pop[19];
     Vector3i ind;
 
-    int gridsize[3];
+    Vector3i gridsize;
     mpi_bcast_lb_params(0);
     gridsize[0] = box_l[0] / lbpar.agrid;
     gridsize[1] = box_l[1] / lbpar.agrid;
