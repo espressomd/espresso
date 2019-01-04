@@ -160,7 +160,6 @@ print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100)))
 
 
-
 if not args.visualizer:
     # print initial energies
     energies = system.analysis.energy()
