@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # list of commits to benchmark
-commits="c1d850ef3c4 c72cb35c3c5 eaa84cd1c92"
+commits="HEAD"
 
 cd "$(git rev-parse --show-toplevel)"
 mkdir -p build
