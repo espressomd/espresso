@@ -13,8 +13,6 @@ cat > myconfig-minimal.hpp << EOF
 EOF
 cp ../src/core/myconfig-default.hpp myconfig-default.hpp
 sed 's/#define ADDITIONAL_CHECKS//' ../maintainer/configs/maxset.hpp > myconfig-maxset.hpp
-# disable features interfering with LJ benchmarks
-sed -ri 's/#define +(THOLE|COLLISION_DETECTION|GHOSTS_HAVE_BONDS)/\/\/#define \1/' myconfig-*.hpp
 
 # prepare build area
 rm -rf src/ maintainer/
