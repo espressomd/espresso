@@ -582,33 +582,31 @@ def gaussian_force(r, eps, sig, cutoff):
         f = eps * r / sig**2 * np.exp(-np.power(r / sig, 2) / 2)
     return f
 
-def gay_berne_potential(r_ij, u_i,u_j,epsilon_0, sigma_0, mu,nu,k_1, k_2):
-    r_normed =r_ij/np.linalg.norm(r_ij)
-    r_u_i=np.dot(r_normed,u_i)
-    r_u_j=np.dot(r_normed,u_j)
-    u_i_u_j = np.dot(u_i,u_j)
 
-    chi =(k_1**2-1.)/(k_1**2+1.)
-    chi_d =(k_2**(1./mu) -1) / (k_2**(1./mu) +1)
+def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
+    r_normed = r_ij / np.linalg.norm(r_ij)
+    r_u_i = np.dot(r_normed, u_i)
+    r_u_j = np.dot(r_normed, u_j)
+    u_i_u_j = np.dot(u_i, u_j)
 
+    chi = (k_1**2 - 1.) / (k_1**2 + 1.)
+    chi_d = (k_2**(1. / mu) - 1) / (k_2**(1. / mu) + 1)
 
-
-    
     sigma = sigma_0 \
-       /np.sqrt(
-         (1-0.5*chi *(\
-           (r_u_i +r_u_j)**2/(1+chi *u_i_u_j) +\
-           (r_u_i -r_u_j)**2/(1-chi *u_i_u_j))))
+        / np.sqrt(
+            (1 - 0.5 * chi * (
+             (r_u_i + r_u_j)**2 / (1 + chi * u_i_u_j) +
+             (r_u_i - r_u_j)**2 / (1 - chi * u_i_u_j))))
 
     epsilon = epsilon_0 *\
-      (1-chi**2 *u_i_u_j**2)**(-nu/2.) *\
-      (1-chi_d/2. *(\
-        (r_u_i + r_u_j)**2 /(1+chi_d * u_i_u_j) +\
-        (r_u_i - r_u_j)**2 /(1-chi_d * u_i_u_j)))**mu
+        (1 - chi**2 * u_i_u_j**2)**(-nu / 2.) *\
+        (1 - chi_d / 2. * (
+         (r_u_i + r_u_j)**2 / (1 + chi_d * u_i_u_j) +
+         (r_u_i - r_u_j)**2 / (1 - chi_d * u_i_u_j)))**mu
 
-    rr =np.linalg.norm((np.linalg.norm(r_ij)-sigma +sigma_0)/sigma_0)
+    rr = np.linalg.norm((np.linalg.norm(r_ij) - sigma + sigma_0) / sigma_0)
 
-    return 4.*epsilon *(rr**-12 -rr**-6)
+    return 4. * epsilon * (rr**-12 - rr**-6)
 
 
 class DynamicDict(dict):
