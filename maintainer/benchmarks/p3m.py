@@ -98,11 +98,10 @@ system.cell_system.set_domain_decomposition(use_verlet_lists=True)
 #############################################################
 system.random_number_generator_state = list(range(
     n_proc * (system._get_PRNG_state_size() + 1)))
-np.random.seed(1)
 # Integration parameters
 #############################################################
 system.time_step = 0.01
-system.cell_system.skin = 1.2
+system.cell_system.skin = .4 
 system.thermostat.turn_off()
 
 
@@ -145,16 +144,21 @@ system.minimize_energy.minimize()
 energy = system.analysis.energy()
 print("After Minimization: E_total = {}".format(energy["total"]))
 
+
+system.integrator.set_vv()
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+
+system.integrator.run(min(3 * measurement_steps, 1000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
-    min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100)))
+    min_skin=0.4, max_skin=1.6, tol=0.05, int_steps=100)))
+system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune p3m")
 p3m = electrostatics.P3M(prefactor=args.bjerrum_length, accuracy=1e-4)
 system.actors.add(p3m)
-system.integrator.run(min(3 * measurement_steps, 6000))
+system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100)))
 
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 
 if not args.visualizer:

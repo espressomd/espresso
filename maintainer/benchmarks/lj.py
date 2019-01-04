@@ -85,7 +85,7 @@ system = espressomd.System(box_l=3 * (box_l,))
 #############################################################
 system.random_number_generator_state = list(range(
     n_proc * (system._get_PRNG_state_size() + 1)))
-np.random.seed(1)
+#np.random.seed(1)
 # Integration parameters
 #############################################################
 system.time_step = 0.01
@@ -121,7 +121,7 @@ system.integrator.set_steepest_descent(
     max_displacement=0.01)
 
 # warmup
-while system.analysis.energy()["total"] > 10 * n_part:
+while system.analysis.energy()["total"] > 3 * n_part:
     print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
     system.integrator.run(10)
 print()
@@ -132,9 +132,10 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 # tune skin
 print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
-system.integrator.run(min(30 * measurement_steps, 60000))
+system.integrator.run(min(5 * measurement_steps, 60000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
+system.integrator.run(min(10 * measurement_steps, 60000))
 
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
