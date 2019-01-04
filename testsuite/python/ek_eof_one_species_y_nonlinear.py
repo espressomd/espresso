@@ -43,7 +43,7 @@ class ek_eof_one_species_x(ut.TestCase):
         pi = math.pi
         box_z = 4
         box_y = 4
-        width = 32
+        width = 20 
 
         padding = 6
         box_x = width + 2 * padding

@@ -62,6 +62,7 @@ std::vector<int> r_bondbuffer;
    !!!!
 */
 int ghosts_have_v = 0;
+int ghosts_have_bonds = 0;
 
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
   assert(comm);
@@ -104,12 +105,12 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
     if (data_parts & GHOSTTRANS_PROPRTS) {
       n_buffer_new += sizeof(ParticleProperties);
       // sending size of bond/exclusion lists
-#ifdef GHOSTS_HAVE_BONDS
-      n_buffer_new += sizeof(int);
+      if (ghosts_have_bonds) {
+        n_buffer_new += sizeof(int);
 #ifdef EXCLUSIONS
-      n_buffer_new += sizeof(int);
+        n_buffer_new += sizeof(int);
 #endif
-#endif
+      }
     }
     if (data_parts & GHOSTTRANS_POSITION)
       n_buffer_new += sizeof(ParticlePosition);
@@ -161,54 +162,54 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
       for (int p = 0; p < np; p++) {
         Particle *pt = &part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memmove(insert, &pt->p, sizeof(ParticleProperties));
+          memcpy(insert, &pt->p, sizeof(ParticleProperties));
           insert += sizeof(ParticleProperties);
-#ifdef GHOSTS_HAVE_BONDS
-          *(int *)insert = pt->bl.n;
-          insert += sizeof(int);
-          if (pt->bl.n) {
-            s_bondbuffer.insert(s_bondbuffer.end(), pt->bl.e,
-                                pt->bl.e + pt->bl.n);
-          }
+          if (ghosts_have_bonds) {
+            *(int *)insert = pt->bl.n;
+            insert += sizeof(int);
+            if (pt->bl.n) {
+              s_bondbuffer.insert(s_bondbuffer.end(), pt->bl.e,
+                                  pt->bl.e + pt->bl.n);
+            }
 #ifdef EXCLUSIONS
-          *(int *)insert = pt->el.n;
-          insert += sizeof(int);
-          if (pt->el.n) {
-            s_bondbuffer.insert(s_bondbuffer.end(), pt->el.e,
-                                pt->el.e + pt->el.n);
+            *(int *)insert = pt->el.n;
+            insert += sizeof(int);
+            if (pt->el.n) {
+              s_bondbuffer.insert(s_bondbuffer.end(), pt->el.e,
+                                  pt->el.e + pt->el.n);
+            }
+#endif
           }
-#endif
-#endif
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
           ParticlePosition *pp = reinterpret_cast<ParticlePosition *>(insert);
           int i;
-          memmove(pp, &pt->r, sizeof(ParticlePosition));
+          *pp = pt->r;
           for (i = 0; i < 3; i++)
             pp->p[i] += gc->shift[i];
           insert += sizeof(ParticlePosition);
         } else if (data_parts & GHOSTTRANS_POSITION) {
-          memmove(insert, &pt->r, sizeof(ParticlePosition));
+          memcpy(insert, &pt->r, sizeof(ParticlePosition));
           insert += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memmove(insert, &pt->m, sizeof(ParticleMomentum));
+          memcpy(insert, &pt->m, sizeof(ParticleMomentum));
           insert += sizeof(ParticleMomentum);
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memmove(insert, &pt->f, sizeof(ParticleForce));
+          memcpy(insert, &pt->f, sizeof(ParticleForce));
           insert += sizeof(ParticleForce);
         }
 #ifdef LB
         if (data_parts & GHOSTTRANS_COUPLING) {
-          memmove(insert, &pt->lc, sizeof(ParticleLatticeCoupling));
+          memcpy(insert, &pt->lc, sizeof(ParticleLatticeCoupling));
           insert += sizeof(ParticleLatticeCoupling);
         }
 #endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
-          memmove(insert, &pt->swim, sizeof(ParticleParametersSwimming));
+          memcpy(insert, &pt->swim, sizeof(ParticleParametersSwimming));
           insert += sizeof(ParticleParametersSwimming);
         }
 #endif
@@ -232,16 +233,16 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
-#ifdef GHOSTS_HAVE_BONDS
-  // free all allocated information, will be resent
-  {
-    int np = cell->n;
-    Particle *part = cell->part;
-    for (int p = 0; p < np; p++) {
-      free_particle(part + p);
+  if (ghosts_have_bonds) {
+    // free all allocated information, will be resent
+    {
+      int np = cell->n;
+      Particle *part = cell->part;
+      for (int p = 0; p < np; p++) {
+        free_particle(part + p);
+      }
     }
   }
-#endif
   cell->resize(size);
   // invalidate pointers etc
   {
@@ -288,53 +289,53 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
       for (int p = 0; p < np; p++) {
         Particle *pt = &part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memmove(&pt->p, retrieve, sizeof(ParticleProperties));
+          memcpy(&pt->p, retrieve, sizeof(ParticleProperties));
           retrieve += sizeof(ParticleProperties);
-#ifdef GHOSTS_HAVE_BONDS
-          int n_bonds;
-          memmove(&n_bonds, retrieve, sizeof(int));
-          retrieve += sizeof(int);
-          if (n_bonds) {
-            pt->bl.resize(n_bonds);
-            std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
-            bond_retrieve += n_bonds;
-          }
+          if (ghosts_have_bonds) {
+            int n_bonds;
+            memcpy(&n_bonds, retrieve, sizeof(int));
+            retrieve += sizeof(int);
+            if (n_bonds) {
+              pt->bl.resize(n_bonds);
+              std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
+              bond_retrieve += n_bonds;
+            }
 #ifdef EXCLUSIONS
-          int n_exclusions;
-          memmove(&n_exclusions, retrieve, sizeof(int));
-          retrieve += sizeof(int);
-          if (n_exclusions) {
-            pt->el.resize(n_exclusions);
-            std::copy_n(bond_retrieve, n_exclusions, pt->el.begin());
-            bond_retrieve += n_exclusions;
+            int n_exclusions;
+            memcpy(&n_exclusions, retrieve, sizeof(int));
+            retrieve += sizeof(int);
+            if (n_exclusions) {
+              pt->el.resize(n_exclusions);
+              std::copy_n(bond_retrieve, n_exclusions, pt->el.begin());
+              bond_retrieve += n_exclusions;
+            }
+#endif
           }
-#endif
-#endif
           if (local_particles[pt->p.identity] == nullptr) {
             local_particles[pt->p.identity] = pt;
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
-          memmove(&pt->r, retrieve, sizeof(ParticlePosition));
+          memcpy(&pt->r, retrieve, sizeof(ParticlePosition));
           retrieve += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memmove(&pt->m, retrieve, sizeof(ParticleMomentum));
+          memcpy(&pt->m, retrieve, sizeof(ParticleMomentum));
           retrieve += sizeof(ParticleMomentum);
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memmove(&pt->f, retrieve, sizeof(ParticleForce));
+          memcpy(&pt->f, retrieve, sizeof(ParticleForce));
           retrieve += sizeof(ParticleForce);
         }
 #ifdef LB
         if (data_parts & GHOSTTRANS_COUPLING) {
-          memmove(&pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
+          memcpy(&pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
           retrieve += sizeof(ParticleLatticeCoupling);
         }
 #endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
-          memmove(&pt->swim, retrieve, sizeof(ParticleParametersSwimming));
+          memcpy(&pt->swim, retrieve, sizeof(ParticleParametersSwimming));
           retrieve += sizeof(ParticleParametersSwimming);
         }
 #endif
@@ -411,35 +412,35 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         pt1 = &part1[p];
         pt2 = &part2[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memmove(&pt2->p, &pt1->p, sizeof(ParticleProperties));
-#ifdef GHOSTS_HAVE_BONDS
-          pt2->bl = pt1->bl;
+          pt2->p = pt1->p;
+          if (ghosts_have_bonds) {
+            pt2->bl = pt1->bl;
 #ifdef EXCLUSIONS
-          pt2->el = pt1->el;
+            pt2->el = pt1->el;
 #endif
-#endif
+          }
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
           int i;
-          memmove(&pt2->r, &pt1->r, sizeof(ParticlePosition));
+          pt2->r = pt1->r;
           for (i = 0; i < 3; i++)
             pt2->r.p[i] += gc->shift[i];
         } else if (data_parts & GHOSTTRANS_POSITION)
-          memmove(&pt2->r, &pt1->r, sizeof(ParticlePosition));
+          pt2->r = pt1->r;
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memmove(&pt2->m, &pt1->m, sizeof(ParticleMomentum));
+          pt2->m = pt1->m;
         }
         if (data_parts & GHOSTTRANS_FORCE)
           pt2->f += pt1->f;
 
 #ifdef LB
         if (data_parts & GHOSTTRANS_COUPLING)
-          memmove(&pt2->lc, &pt1->lc, sizeof(ParticleLatticeCoupling));
+          pt2->lc = pt1->lc;
 #endif
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING)
-          memmove(&pt2->swim, &pt1->swim, sizeof(ParticleParametersSwimming));
+          pt2->swim = pt1->swim;
 #endif
       }
     }
@@ -498,6 +499,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
     GHOST_TRACE(fprintf(stderr, "%d: ghost_comm shift %f %f %f\n", this_node,
                         gc->comm[n].shift[0], gc->comm[n].shift[1],
                         gc->comm[n].shift[2]));
+
     if (comm_type == GHOST_LOCL)
       cell_cell_transfer(gcn, data_parts);
     else {

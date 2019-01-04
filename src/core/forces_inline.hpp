@@ -92,25 +92,9 @@ inline void init_ghost_force(Particle *part) {
   part->f.f[2] = 0;
 
 #ifdef ROTATION
-  {
-    double scale;
-    /* set torque to zero */
-    part->f.torque[0] = 0;
-    part->f.torque[1] = 0;
-    part->f.torque[2] = 0;
-
-    /* and rescale quaternion, so it is exactly of unit length */
-    scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
-                 Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
-    if (scale == 0) {
-      part->r.quat[0] = 1;
-    } else {
-      part->r.quat[0] /= scale;
-      part->r.quat[1] /= scale;
-      part->r.quat[2] /= scale;
-      part->r.quat[3] /= scale;
-    }
-  }
+  part->f.torque[0] = 0;
+  part->f.torque[1] = 0;
+  part->f.torque[2] = 0;
 #endif
 }
 
@@ -245,7 +229,10 @@ inline void calc_non_bonded_pair_force_parts(
 #endif
 /* Gay-Berne */
 #ifdef GAY_BERNE
-  add_gb_pair_force(p1, p2, ia_params, d, dist, force, torque1, torque2);
+  // The gb force function isn't inlined, probably due to its size
+  if (dist < ia_params->GB_cut) {
+    add_gb_pair_force(p1, p2, ia_params, d, dist, force, torque1, torque2);
+  }
 #endif
 #ifdef INTER_RF
   add_interrf_pair_force(p1, p2, ia_params, d, dist, force);
@@ -294,7 +281,10 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 
 /*affinity potential*/
 #ifdef AFFINITY
-  add_affinity_pair_force(p1, p2, ia_params, d, dist, force.data());
+  // Prevent jump to non-inlined function
+  if (dist < ia_params->affinity_cut) {
+    add_affinity_pair_force(p1, p2, ia_params, d, dist, force.data());
+  }
 #endif
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
@@ -794,6 +784,10 @@ inline void check_particle_force(Particle *part) {
 #endif
 }
 
-inline void add_single_particle_force(Particle *p) { add_bonded_force(p); }
+inline void add_single_particle_force(Particle *p) {
+  if (p->bl.n) {
+    add_bonded_force(p);
+  }
+}
 
 #endif

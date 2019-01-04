@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "utils/Batch.hpp"
 
 /**
  * @brief Distance vector and length handed to pair kernels.
@@ -102,31 +101,17 @@ void decide_distance(CellIterator first, CellIterator last,
 template <typename ParticleKernel, typename PairKernel>
 void short_range_loop(ParticleKernel &&particle_kernel,
                       PairKernel &&pair_kernel) {
-  using Utils::make_batch;
 
   auto first = boost::make_indirect_iterator(local_cells.begin());
   auto last = boost::make_indirect_iterator(local_cells.end());
 
-  /* In this case we reset l.p_old on the particles */
-  if (rebuild_verletlist) {
-    detail::decide_distance(
-        first, last,
-        /* Create a new functor that first runs the position
-           copy and then the actual kernel. */
-        make_batch([](Particle &p) { p.l.p_old = p.r.p; },
-                   std::forward<ParticleKernel>(particle_kernel)),
-        std::forward<PairKernel>(pair_kernel),
-        VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff,
-                        collision_detection_cutoff()});
+  detail::decide_distance(
+      first, last, std::forward<ParticleKernel>(particle_kernel),
+      std::forward<PairKernel>(pair_kernel),
+      VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff,
+                      collision_detection_cutoff()});
 
-    /* Now everything is up-to-date */
-    rebuild_verletlist = 0;
-  } else {
-    detail::decide_distance(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel),
-        VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff});
-  }
+  rebuild_verletlist = 0;
 }
 
 #endif
