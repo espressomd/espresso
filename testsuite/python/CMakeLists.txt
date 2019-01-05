@@ -168,6 +168,7 @@ python_test(FILE lb_boundary.py MAX_NUM_PROC 2)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 4)
 python_test(FILE lb_shear.py MAX_NUM_PROC 2)
 python_test(FILE lb_thermostat.py MAX_NUM_PROC 2)
+python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)

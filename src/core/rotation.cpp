@@ -294,7 +294,7 @@ void convert_torques_propagate_omega() {
       fprintf(stderr, "%d: convert_torques_propagate_omega:\n", this_node));
 
 #if defined(LB_GPU) && defined(ENGINE)
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if ((lattice_switch & LATTICE_LB_GPU) && swimming_particles_exist) {
     copy_v_cs_from_GPU(local_cells.particles());
   }
 #endif
@@ -408,7 +408,6 @@ void local_rotate_particle(Particle &p, const Vector3d &axis_space_frame,
   // Convert rotation axis to body-fixed frame
   Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
 
-  //  printf("%g %g %g - ",a[0],a[1],a[2]);
   // Rotation turned off entirely?
   if (!p.p.rotation)
     return;
