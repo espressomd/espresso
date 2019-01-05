@@ -595,8 +595,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         epsilon_0 = 0.8
         cut = 4.
 
-        self.system.part.clear()
-        self.system.part.add(id=(0, 1), pos=((1, 2, 3), (2.2, 2.1, 2.9)))
+        self.system.part[:].pos = ((1, 2, 3), (2.2, 2.1, 2.9))
         print(self.system.analysis.energy()["non_bonded"])
         self.system.non_bonded_inter[0, 0].gay_berne.set_params(
             sig=sigma_0, cut=cut, eps=epsilon_0, k1=k_1, k2=k_2, mu=mu, nu=nu)
@@ -604,7 +603,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         p2 = self.system.part[1]
         p1.rotate(axis=(1, 2, 3), angle=0.3)
         p1.rotate(axis=(1, -2, -4), angle=1.2)
-        
+
         r = self.system.distance_vec(p1, p2)
 
         print(self.system.analysis.energy()["non_bonded"])
@@ -612,13 +611,12 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.assertAlmostEqual(self.system.analysis.energy()["non_bonded"],
                                tests_common.gay_berne_potential(r, p1.director, p2.director, epsilon_0, sigma_0, mu, nu, k_1, k_2) -
                                tests_common.gay_berne_potential(r_cut, p1.director, p2.director, epsilon_0, sigma_0, mu, nu, k_1, k_2), delta=1E-14)
-        
+
         self.system.integrator.run(0)
         self.system.non_bonded_inter[0, 0].gay_berne.set_params(
-            sig=sigma_0, cut=cut, eps=0, k1=k_1, k2=k_2, mu=mu, nu=nu)
+            sig=sigma_0, cut=0, eps=0, k1=k_1, k2=k_2, mu=mu, nu=nu)
+        self.system.integrator.run(0)
         self.assertEqual(self.system.analysis.energy()["non_bonded"], 0.0)
-        self.system.part.clear()
-        self.setUp()
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())
