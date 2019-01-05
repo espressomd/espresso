@@ -191,7 +191,8 @@ class ThermoTest(ut.TestCase):
         for i in range(n):
             for k in range(2):
                 ind = i + k * n
-                self.es.part.add(rotation=(1, 1, 1), pos=(0.0, 0.0, 0.0), id=ind)
+                self.es.part.add(
+                    rotation=(1, 1, 1), pos=(0.0, 0.0, 0.0), id=ind)
                 self.es.part[ind].v = 1.0, 1.0, 1.0
                 if "ROTATION" in espressomd.features():
                     self.es.part[ind].omega_body = 1.0, 1.0, 1.0
