@@ -17,9 +17,10 @@
 from __future__ import print_function
 import unittest as ut
 import numpy as np
-from numpy.random import random, seed
+from numpy.random import uniform
 import espressomd
 import math
+import random
 
 
 @ut.skipIf(not espressomd.has_features(["MASS",
@@ -29,9 +30,17 @@ import math
            "Features not available, skipping test!")
 class ThermoTest(ut.TestCase):
     longMessage = True
+    # Handle a random generator seeding
+    #rnd_gen = random.SystemRandom()
+    #seed1 = int(200 * rnd_gen.random())
+    seed1 = 15
+    #seed2 = int(200 * rnd_gen.random())
+    seed2 = 42
+    np.random.seed(seed1)
+    
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = range(system.cell_system.get_state()["n_nodes"])
+    system.seed = [s * seed2 for s in range(system.cell_system.get_state()["n_nodes"])]
     system.cell_system.set_domain_decomposition(use_verlet_lists=True)
     system.cell_system.skin = 5.0
 
@@ -39,6 +48,9 @@ class ThermoTest(ut.TestCase):
     kT = 0.0
     gamma_global = np.zeros((3))
     gamma_global_rot = np.zeros((3))
+    # Test ranges    
+    gamma_min = 5.
+    gamma_max = 10.
 
     # Particle properties
     mass = 0.0
@@ -62,46 +74,12 @@ class ThermoTest(ut.TestCase):
     # Diffusivity
     D_tran_p_validate = np.zeros((2, 3))
 
-    @classmethod
-    def setUpClass(cls):
-        np.random.seed(16)
+    #@classmethod
+    #def setUpClass(cls):
 
     def setUp(self):
         self.system.time = 0.0
         self.system.part.clear()
-
-    def generate_scalar_ranged_rnd(self, min_par, max_par):
-        """
-        Generate the scaled random scalar in the range between
-        min_par*max_par and (min_par+1.0)*max_par.
-
-        Parameters
-        ----------
-        min_par : :obj:`int`
-                  Minimal value parameter.
-        max_par : :obj:`int`
-                  Maximal value parameter.
-
-        """
-        res = (min_par + np.random.random()) * max_par
-        return res
-
-    def generate_vec_ranged_rnd(self, min_par, max_par):
-        """
-        Generate the scaled random 3D vector with a magnitude
-        in the range between sqrt(3)*min_par*max_par and
-        sqrt(3)*(min_par+1.0)*max_par.
-
-        Parameters
-        ----------
-        min_par : :obj:`int`
-                  Minimal value parameter.
-        max_par : :obj:`int`
-                  Maximal value parameter.
-
-        """
-        res = (min_par + np.random.random(3)) * max_par
-        return res
 
     def set_langevin_global_defaults(self):
         """
@@ -156,32 +134,30 @@ class ThermoTest(ut.TestCase):
         # As far as the problem characteristic time is t0 ~ mass / gamma
         # and the Langevin equation finite-difference approximation is stable
         # only for time_step << t0, it is needed to set the gamma less than
-        # some maximal value according to the value max_gamma_param.
-        # Also, it cannot be very small (min_gamma_param), otherwise the thermalization will require
+        # some maximal value according to the value gamma_max.
+        # Also, it cannot be very small (gamma_min), otherwise the thermalization will require
         # too much of the CPU time. Same: for all such gamma assignments throughout the test.
         #
-        min_gamma_param = 0.5
-        max_gamma_param = 2.0 / 3.0
-        gamma_rnd = self.generate_scalar_ranged_rnd(
-            min_gamma_param, max_gamma_param)
+        gamma_min = self.gamma_min
+        gamma_max = self.gamma_max
+        gamma_rnd = uniform(gamma_min,gamma_max)
         self.gamma_global = gamma_rnd, gamma_rnd, gamma_rnd
         # Additional test case for the specific global rotational gamma set.
-        self.gamma_global_rot = self.generate_vec_ranged_rnd(0.5, 2.0 / 3.0)
+        self.gamma_global_rot = uniform(gamma_min,gamma_max,3)
         # Per-paricle values:
         self.kT_p = 0.0, 0.0
         # Either translational friction isotropy is required
         # or both translational and rotational ones.
         # Otherwise these types of motion will interfere.
         # ..Let's test both cases depending on the particle index.
-        self.gamma_tran_p[0, 0] = self.generate_scalar_ranged_rnd(0.5, 1.0)
+        self.gamma_tran_p[0, 0] = uniform(gamma_min, gamma_max)
         self.gamma_tran_p[0, 1] = self.gamma_tran_p[0, 0]
         self.gamma_tran_p[0, 2] = self.gamma_tran_p[0, 0]
-        self.gamma_rot_p[0, :] = self.generate_vec_ranged_rnd(0.5, 2.0 / 3.0)
-        self.gamma_tran_p[1, 0] = self.generate_scalar_ranged_rnd(0.5, 1.0)
+        self.gamma_rot_p[0, :] = uniform(gamma_min,gamma_max,3)
+        self.gamma_tran_p[1, 0] = uniform(gamma_min, gamma_max)
         self.gamma_tran_p[1, 1] = self.gamma_tran_p[1, 0]
         self.gamma_tran_p[1, 2] = self.gamma_tran_p[1, 0]
-        self.gamma_rot_p[1, 0] = self.generate_scalar_ranged_rnd(
-            0.5, 2.0 / 3.0)
+        self.gamma_rot_p[1, 0] = uniform(gamma_min, gamma_max)
         self.gamma_rot_p[1, 1] = self.gamma_rot_p[1, 0]
         self.gamma_rot_p[1, 2] = self.gamma_rot_p[1, 0]
 
@@ -221,18 +197,20 @@ class ThermoTest(ut.TestCase):
 
         # NVT thermostat
         # Just some temperature range to cover by the test:
-        self.kT = self.generate_scalar_ranged_rnd(0.3, 5)
+        self.kT = uniform(1.5, 5.)
         # See the above comment regarding the gamma assignments.
         # Note: here & hereinafter specific variations in these ranges are related to
         # the test execution duration to achieve the required statistical
         # averages faster.
-        self.gamma_global = self.generate_vec_ranged_rnd(0.5, 2.0 / 3.0)
-        self.gamma_global_rot = self.generate_vec_ranged_rnd(0.2, 20)
+        gamma_min = self.gamma_min
+        gamma_max = self.gamma_max
+        self.gamma_global = uniform(gamma_min, gamma_max, 3)
+        self.gamma_global_rot = uniform(gamma_min, gamma_max, 3)
         # Per-particle parameters
         self.kT_p = 2.5, 2.0
         for k in range(2):
-            self.gamma_tran_p[k, :] = self.generate_vec_ranged_rnd(0.4, 10.0)
-            self.gamma_rot_p[k, :] = self.generate_vec_ranged_rnd(0.2, 20.0)
+            self.gamma_tran_p[k, :] = uniform(gamma_min, gamma_max, 3)
+            self.gamma_rot_p[k, :] = uniform(gamma_min, gamma_max, 3)
 
         # Particles
         # As far as the problem characteristic time is t0 ~ mass / gamma
@@ -242,11 +220,10 @@ class ThermoTest(ut.TestCase):
         # Also, it is expected to test the large enough mass (max_mass_param).
         # It should be not very large, otherwise the thermalization will require
         # too much of the CPU time.
-        min_mass_param = 0.2
-        max_mass_param = 7.0
-        self.mass = self.generate_scalar_ranged_rnd(
-            min_mass_param, max_mass_param)
-        self.J = self.generate_vec_ranged_rnd(min_mass_param, max_mass_param)
+        min_mass_param = 3.
+        max_mass_param = 10.0
+        self.mass = uniform(min_mass_param, max_mass_param)
+        self.J = uniform(min_mass_param, max_mass_param, 3)
         for i in range(n):
             for k in range(2):
                 ind = i + k * n
@@ -468,7 +445,7 @@ class ThermoTest(ut.TestCase):
     # Test case 0.1: no particle specific values / fluctuation & dissipation
     def test_case_01(self):
         # Each of 2 kind of particles will be represented by n instances:
-        n = 50
+        n = 500
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
@@ -496,7 +473,7 @@ class ThermoTest(ut.TestCase):
     # & dissipation
     def test_case_11(self):
         # Each of 2 kind of particles will be represented by n instances:
-        n = 50
+        n = 500
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
@@ -525,7 +502,7 @@ class ThermoTest(ut.TestCase):
     # & dissipation
     def test_case_21(self):
         # Each of 2 kind of particles will be represented by n instances:
-        n = 75
+        n = 500
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
@@ -555,7 +532,7 @@ class ThermoTest(ut.TestCase):
     # fluctuation & dissipation
     def test_case_31(self):
         # Each of 2 kind of particles will be represented by n instances:
-        n = 75
+        n = 500
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
@@ -587,7 +564,7 @@ class ThermoTest(ut.TestCase):
     # thermostat / fluctuation & dissipation
     def test_case_41(self):
         # Each of 2 kind of particles will be represented by n instances:
-        n = 75
+        n = 500
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults_rot_differ()
         # The test case-specific thermostat and per-particle parameters
