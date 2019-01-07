@@ -32,15 +32,14 @@ class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle a random generator seeding
     #rnd_gen = random.SystemRandom()
-    #seed1 = int(200 * rnd_gen.random())
-    seed1 = 15
-    #seed2 = int(200 * rnd_gen.random())
-    seed2 = 42
-    np.random.seed(seed1)
-    
+    #sd1 = int(200 * rnd_gen.random())
+    sd1 = 15
+    np.random.seed(sd1)
+    #sd2 = int(200 * rnd_gen.random())
+    sd2 = 42
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = [s * seed2 for s in range(system.cell_system.get_state()["n_nodes"])]
+    system.seed = [s * sd2 for s in range(system.cell_system.get_state()["n_nodes"])]
     system.cell_system.set_domain_decomposition(use_verlet_lists=True)
     system.cell_system.skin = 5.0
 
