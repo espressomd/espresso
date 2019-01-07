@@ -50,9 +50,10 @@ if(GSL)
   target_link_libraries(EspressoCore gsl gslcblas)
 endif(GSL)
 
-if(GSL)
-  target_link_libraries(EspressoCore gsl gslcblas)
-endif(GSL)
+if(GSL_FOUND)
+  target_include_directories(EspressoCore PUBLIC ${GSL_INCLUDE_DIRS})
+  target_link_libraries(EspressoCore PRIVATE GSL::gsl GSL::gslcblas)
+endif(GSL_FOUND)
 
 if(CUDA)
   file(GLOB EspressoCuda_SRC
