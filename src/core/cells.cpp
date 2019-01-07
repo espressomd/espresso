@@ -407,5 +407,5 @@ Cell *find_current_cell(const Particle &p) {
     return nullptr;
   }
 
-  return cell_structure.position_to_cell(p.l.p_old);
+  return cell_structure.position_to_cell(p.l.p_old.data());
 }
