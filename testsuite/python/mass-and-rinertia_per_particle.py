@@ -30,19 +30,8 @@ import random
            "Features not available, skipping test!")
 class ThermoTest(ut.TestCase):
     longMessage = True
-    # Handle a random generator seeding
-    #rnd_gen = random.SystemRandom()
-    #sd1 = int(200 * rnd_gen.random())
-    sd1 = 15
-    np.random.seed(sd1)
-    #sd2 = int(200 * rnd_gen.random())
-    sd2 = 42
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = [s * sd2 for s in range(system.cell_system.get_state()["n_nodes"])]
-    system.cell_system.set_domain_decomposition(use_verlet_lists=True)
-    system.cell_system.skin = 5.0
-
     # The NVT thermostat parameters
     kT = 0.0
     gamma_global = np.zeros((3))
@@ -73,8 +62,19 @@ class ThermoTest(ut.TestCase):
     # Diffusivity
     D_tran_p_validate = np.zeros((2, 3))
 
-    #@classmethod
-    #def setUpClass(cls):
+    @classmethod
+    def setUpClass(cls):
+        # Handle a random generator seeding
+        #rnd_gen = random.SystemRandom()
+        #seed1 = int(200 * rnd_gen.random())
+        seed1 = 15
+        np.random.seed(seed1)
+        #seed2 = int(200 * rnd_gen.random())
+        seed2 = 42
+        # The Espresso system configuration
+        cls.system.seed = [s * seed2 for s in range(cls.system.cell_system.get_state()["n_nodes"])]
+        cls.system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        cls.system.cell_system.skin = 5.0
 
     def setUp(self):
         self.system.time = 0.0
