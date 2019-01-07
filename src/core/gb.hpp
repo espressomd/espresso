@@ -179,8 +179,8 @@ inline double gb_pair_energy(const Particle *p1, const Particle *p2,
   Vector3d r = Vector3d{{d[0], d[1], d[2]}};
   r.normalize();
 
-  auto const ui = Vector3d{{p1->r.quatu[0],p1->r.quatu[1],p1->r.quatu[2]}};
-  auto const uj = Vector3d{{p2->r.quatu[0],p2->r.quatu[1],p2->r.quatu[2]}};
+  auto const ui = Vector3d{{p1->r.quatu[0], p1->r.quatu[1], p1->r.quatu[2]}};
+  auto const uj = Vector3d{{p2->r.quatu[0], p2->r.quatu[1], p2->r.quatu[2]}};
   auto const uij = ui * uj;
   auto const rui = r * ui;
   auto const ruj = r * uj;
