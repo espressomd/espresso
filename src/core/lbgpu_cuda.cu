@@ -23,7 +23,6 @@
  * Header file for \ref lbgpu.hpp.
  */
 
-#include "cuda_wrapper.hpp"
 #include "curand_wrapper.hpp"
 
 #include "config.hpp"
