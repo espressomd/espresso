@@ -41,14 +41,6 @@ target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFlu
 if(SCAFACOS)
   target_link_libraries(EspressoCore Scafacos)
 endif(SCAFACOS)
-if(GSL)
-  include_directories(${GSL_INCLUDE_DIRS})
-endif(GSL)
-
-
-if(GSL)
-  target_link_libraries(EspressoCore gsl gslcblas)
-endif(GSL)
 
 if(GSL_FOUND)
   target_include_directories(EspressoCore PUBLIC ${GSL_INCLUDE_DIRS})
