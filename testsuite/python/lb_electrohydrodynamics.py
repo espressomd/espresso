@@ -49,7 +49,8 @@ class LBEHTest(ut.TestCase):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.s.time_step,
-            fric=self.params['friction'])
+            fric=self.params['friction'],
+            seed=123)
 
         self.s.actors.add(self.lbf)
         self.s.thermostat.set_lb(kT=self.params['temp'])
