@@ -46,7 +46,7 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
     def check_virtual(self, fluid_class):
         s = self.system
         lb_fluid = fluid_class(
-            agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=1.0)
+            agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=1.0, seed=42)
         s.actors.add(lb_fluid)
 
         virtual = s.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
