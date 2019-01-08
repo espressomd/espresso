@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import espressomd
 from espressomd import assert_features, electrostatics
 import numpy
 
@@ -52,7 +53,7 @@ lj_cuts = {"Anion": WCA_cut * lj_sigmas["Anion"],
 # Setup System
 box_l = (n_part / density)**(1. / 3.)
 system = espressomd.System(box_l=[box_l] * 3)
-system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.periodicity = [1, 1, 1]
 system.time_step = time_step
 system.cell_system.skin = 0.3
@@ -102,8 +103,8 @@ system.thermostat.set_langevin(kT=temp * 0.1, gamma=gamma * 50.0)
 
 while min_dist < max_sigma:
     # Warmup Helper: Cap max. force, increase slowly for overlapping particles
-    min_dist = system.analysis.mindist([types["Anion"], types["Cation"]], [
-                                       types["Anion"], types["Cation"]])
+    min_dist = system.analysis.min_dist([types["Anion"], types["Cation"]], [
+        types["Anion"], types["Cation"]])
     cap += min_dist
 # print min_dist, cap
     system.force_cap = cap
@@ -114,7 +115,7 @@ system.thermostat.set_langevin(kT=temp, gamma=gamma)
 system.force_cap = 0
 
 print("\n--->Tuning Electrostatics")
-p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-3)
+p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-3)
 system.actors.add(p3m)
 
 print("\n--->Temperature Equilibration")
@@ -125,9 +126,9 @@ for i in range(int(num_steps_equilibration / 100)):
     print(
         "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                                                               system.analysis.energy()[
-                                                                              'total'],
+                                                                                  'total'],
                                                                               system.analysis.energy()[
-                                                                              'coulomb'],
+                                                                                  'coulomb'],
                                                                               temp_measured))
     system.integrator.run(100)
 
@@ -140,9 +141,9 @@ for i in range(num_configs):
     print(
         "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                                                               system.analysis.energy()[
-                                                                              'total'],
+                                                                                  'total'],
                                                                               system.analysis.energy()[
-                                                                              'coulomb'],
+                                                                                  'coulomb'],
                                                                               temp_measured[-1]))
     system.integrator.run(integ_steps_per_config)
 
