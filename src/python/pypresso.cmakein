@@ -7,6 +7,8 @@
 # without any warranty.
 #
 
+export LD_PRELOAD=@BOOST_LD_PRELOAD@:$LD_PRELOAD
+
 if test -n "$PYTHONPATH"; then
   PYTHONPATH=@PYTHON_DIR@:$PYTHONPATH
 else
