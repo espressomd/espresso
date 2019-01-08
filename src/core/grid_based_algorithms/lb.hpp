@@ -248,12 +248,6 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
  */
 void calc_particle_lattice_ia();
 
-uint64_t lb_coupling_rng_state();
-void lb_coupling_set_rng_state(uint64_t counter);
-
-uint64_t lb_fluid_rng_state();
-void lb_fluid_set_rng_state(uint64_t counter);
-
 /** calculates the fluid velocity at a given position of the
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. */
@@ -365,6 +359,9 @@ inline void lb_set_populations(Lattice::index_t index, double *pop) {
 #endif
 
 #if defined(LB) || defined(LB_GPU)
+uint64_t lb_coupling_rng_state();
+void lb_coupling_set_rng_state(uint64_t counter);
+
 /* A C level interface to the LB fluid */
 int lb_lbfluid_set_density(double *p_dens);
 int lb_lbfluid_get_density(double *p_dens);
@@ -377,6 +374,9 @@ int lb_lbfluid_set_couple_flag(int couple_flag);
 int lb_lbfluid_set_agrid(double p_agrid);
 int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
                                      double p_fz);
+uint64_t lb_fluid_rng_state();
+void lb_fluid_set_rng_state(uint64_t counter);
+
 int lb_lbfluid_set_tau(double p_tau);
 int lb_lbfluid_set_remove_momentum(void);
 int lb_lbfluid_get_agrid(double *p_agrid);
