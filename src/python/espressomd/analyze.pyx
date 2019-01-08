@@ -1109,7 +1109,6 @@ class Analysis(object):
     #
 
     def angular_momentum(self, p_type=None):
-        print("p_type = ", p_type)
         check_type_or_throw_except(
             p_type, 1, int, "p_type has to be an int")
 

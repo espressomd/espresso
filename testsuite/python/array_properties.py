@@ -87,7 +87,7 @@ class ArrayPropertyTest(ut.TestCase):
     system.cell_system.skin = 0.01
     system.part.add(pos=[0, 0, 0])
     if espressomd.has_features(["LB"]):
-        lbf = lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
+        lbf = lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01, seed=123)
         system.actors.add(lbf)
 
     def locked_operators(self, v):

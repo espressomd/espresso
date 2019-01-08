@@ -34,7 +34,8 @@ LB_PARAMETERS = {
     'visc': VISC,
     'dens': DENS,
     'fric': FRIC,
-    'tau': TAU
+    'tau': TAU,
+    'seed': 23
 }
 
 

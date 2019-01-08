@@ -40,7 +40,8 @@ class TestLBGetUAtPos(ut.TestCase):
             'dens': 0.85,
             'viscosity': 30.0,
             'friction': 2.0,
-            'gamma': 1.5
+            'gamma': 1.5,
+            'seed': 123
         }
         self.system = espressomd.System(box_l=[1.0, 1.0, 1.0])
         self.system.box_l = self.params['box_l']
@@ -58,7 +59,8 @@ class TestLBGetUAtPos(ut.TestCase):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.params['tau'],
-            fric=self.params['friction']
+            fric=self.params['friction'],
+            seed=123
         )
         self.system.actors.add(self.lb_fluid)
         self.vels = np.zeros((self.n_nodes_per_dim, 3))

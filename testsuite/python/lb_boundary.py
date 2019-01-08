@@ -113,7 +113,7 @@ class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
                 dens=1.0,
                 agrid=0.5,
                 tau=1.0,
-                fric=1.0)
+                fric=1.0, seed=1)
 
         self.system.actors.add(self.lbf)
 
@@ -134,7 +134,7 @@ class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
                 dens=1.0,
                 agrid=0.5,
                 tau=1.0,
-                fric=1.0)
+                fric=1.0, seed=1)
 
         self.system.actors.add(self.lbf)
 

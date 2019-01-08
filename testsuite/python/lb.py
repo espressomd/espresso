@@ -84,7 +84,7 @@ class TestLB(object):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'], ext_force_density=[0, 0, 0])
+            fric=self.params['friction'], ext_force_density=[0, 0, 0], seed=4)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(kT=self.params['temp'], seed=3)
         # give particles a push
@@ -166,7 +166,7 @@ class TestLB(object):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'], ext_force_density=[0, 0, 0])
+            fric=self.params['friction'], ext_force_density=[0, 0, 0], seed=2)
         self.system.actors.add(self.lbf)
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf[0, 0, 0].velocity = v_fluid
@@ -180,7 +180,7 @@ class TestLB(object):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'], ext_force_density=[0, 0, 0])
+            fric=self.params['friction'], ext_force_density=[0, 0, 0], seed=6)
         self.system.actors.add(self.lbf)
         with self.assertRaises(ValueError):
             v = self.lbf[
@@ -205,7 +205,7 @@ class TestLB(object):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'], ext_force_density=[0, 0, 0])
+            fric=self.params['friction'], ext_force_density=[0, 0, 0], seed=3)
         self.system.actors.add(self.lbf)
         self.system.part.add(
             pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
@@ -226,7 +226,7 @@ class TestLB(object):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'], ext_force_density=ext_force_density)
+            fric=self.params['friction'], ext_force_density=ext_force_density, seed=492)
         self.system.actors.add(self.lbf)
         n_time_steps = 5
         self.system.integrator.run(n_time_steps)

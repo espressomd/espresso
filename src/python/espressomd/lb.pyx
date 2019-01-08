@@ -22,6 +22,7 @@ import os
 import cython
 import numpy as np
 cimport numpy as np
+from libc cimport stdint
 from .actors cimport Actor
 from . cimport cuda_init
 from . import cuda_init
@@ -85,12 +86,12 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even"
+            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even", "seed"
 
         # list of essential keys required for the fluid
         ####################################################
         def required_keys(self):
-            return ["dens", "agrid", "visc", "tau"]
+            return ["dens", "agrid", "visc", "tau", "seed"]
 
         # list of default parameters
         ####################################################
@@ -103,7 +104,8 @@ IF LB_GPU or LB:
                         "visc": [-1.0, -1.0],
                         "bulk_visc": [-1.0, -1.0],
                         "tau": -1.0,
-                        "couple": "2pt"}
+                        "couple": "2pt",
+                        "seed" : 0}
             ELSE:
                 return {"agrid": -1.0,
                         "dens": -1.0,
@@ -112,7 +114,8 @@ IF LB_GPU or LB:
                         "visc": -1.0,
                         "bulk_visc": -1.0,
                         "tau": -1.0,
-                        "couple": "2pt"}
+                        "couple": "2pt",
+                        "seed": 0}
 
         # function that calls wrapper functions which set the parameters at C-Level
         ####################################################
@@ -123,6 +126,8 @@ IF LB_GPU or LB:
         def _set_params_in_es_core(self):
             default_params = self.default_params()
 
+            cdef stdint.uint64_t seed = self._params["seed"]
+            lb_fluid_set_rng_state(seed)
             if python_lbfluid_set_density(self._params["dens"], self._params["agrid"]):
                 raise Exception("lb_lbfluid_set_density error")
 
@@ -163,7 +168,8 @@ IF LB_GPU or LB:
         ####################################################
         def _get_params_from_es_core(self):
             default_params = self.default_params()
-
+            cdef stdint.uint64_t seed = lb_fluid_rng_state()
+            self._params['seed'] = seed
             if python_lbfluid_get_density(self._params["dens"], self._params["agrid"]):
                 raise Exception("lb_lbfluid_get_density error")
 

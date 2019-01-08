@@ -195,7 +195,8 @@ static int terminated = 0;
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
   CB(mpi_rotate_system_slave)                                                  \
-  CB(mpi_set_lb_coupling_counter)
+  CB(mpi_set_lb_coupling_counter)                                              \
+  CB(mpi_set_lb_fluid_counter)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);

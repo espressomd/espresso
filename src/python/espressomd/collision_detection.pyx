@@ -196,5 +196,4 @@ class CollisionDetection(ScriptInterfaceHelper):
 
 
 def _restore_collision_detection(params):
-    print(params)
     return CollisionDetection(**params)

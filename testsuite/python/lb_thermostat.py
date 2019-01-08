@@ -35,7 +35,8 @@ LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
              'fric': 2.0,
-             'tau': TIME_STEP}
+             'tau': TIME_STEP,
+             'seed': 123}
 
 
 class LBThermostatCommon(object):

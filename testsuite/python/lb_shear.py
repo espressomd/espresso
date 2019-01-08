@@ -39,7 +39,8 @@ LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
              'fric': 1.0,
-             'tau': TIME_STEP}
+             'tau': TIME_STEP,
+             'seed': 123}
 
 
 def shear_flow(x, t, nu, v, h, k_max):

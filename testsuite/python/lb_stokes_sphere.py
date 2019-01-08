@@ -41,7 +41,8 @@ LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'fric': 1.0,
-             'tau': TIME_STEP}
+             'tau': TIME_STEP,
+             'seed': 23}
 # System setup
 radius = 5.4
 box_width = 36 

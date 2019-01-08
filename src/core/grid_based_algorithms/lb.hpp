@@ -32,6 +32,7 @@
 #include "lattice.hpp"
 
 void mpi_set_lb_coupling_counter(int high, int low);
+void mpi_set_lb_fluid_counter(int high, int low);
 
 #ifdef LB
 
@@ -249,6 +250,9 @@ void calc_particle_lattice_ia();
 
 uint64_t lb_coupling_rng_state();
 void lb_coupling_set_rng_state(uint64_t counter);
+
+uint64_t lb_fluid_rng_state();
+void lb_fluid_set_rng_state(uint64_t counter);
 
 /** calculates the fluid velocity at a given position of the
  * lattice. Note that it can lead to undefined behaviour if the

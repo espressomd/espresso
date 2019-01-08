@@ -40,7 +40,8 @@ LB_PARAMS = {'agrid': AGRID,
              'visc': VISC,
              'fric': 1.0,
              'tau': TIME_STEP,
-             'ext_force_density': [0.0, 0.0, EXT_FORCE]}
+             'ext_force_density': [0.0, 0.0, EXT_FORCE],
+             'seed': 123}
 
 
 def poiseuille_flow(z, H, ext_force_density, dyn_visc):

@@ -100,7 +100,5 @@ cdef class Diamond(object):
         if(tmp_try == -3):
             raise Exception(
                 "Failed upon creating one of the monomers in Espresso!\nAborting...\n")
-        elif(tmp_try >= 0):
-            print(tmp_try)
         else:
             raise Exception("Unknown Error")

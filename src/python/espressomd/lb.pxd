@@ -108,7 +108,9 @@ IF LB_GPU or LB:
         int lb_lbfluid_set_couple_flag(int c_couple_flag)
         int lb_lbfluid_get_couple_flag(int * c_couple_flag)
         int lb_lbfluid_get_interpolated_velocity_global(Vector3d & p, double * v)
+        stdint.uint64_t lb_fluid_rng_state()
         stdint.uint64_t lb_coupling_rng_state()
+        void lb_fluid_set_rng_state(stdint.uint64_t)
         void lb_coupling_set_rng_state(stdint.uint64_t)
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":

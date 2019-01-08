@@ -61,10 +61,10 @@ class TestCylindricalLBObservable(ut.TestCase):
     def setUpClass(self):
         if espressomd.has_features('LB_GPU'):
             self.lbf_gpu = espressomd.lb.LBFluidGPU(
-                agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+                agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01, seed=123)
         if espressomd.has_features('LB'):
             self.lbf_cpu = espressomd.lb.LBFluid(
-                agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+                agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01, seed=1321)
 
     def tearDown(self):
         del self.positions[:]

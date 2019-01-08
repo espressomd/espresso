@@ -944,8 +944,6 @@ int lb_lbfluid_save_checkpoint(char *filename, int binary) {
       for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
         cpfile << host_checkpoint_force[n] << "\n";
       }
-      cpfile << lb_coupling_rng_state_gpu();
-      cpfile << lb_fluid_rng_state_gpu();
       cpfile.close();
     } else {
       std::fstream cpfile(filename, std::ios::out | std::ios::binary);
@@ -955,12 +953,6 @@ int lb_lbfluid_save_checkpoint(char *filename, int binary) {
                    sizeof(int) * lbpar_gpu.number_of_nodes);
       cpfile.write(reinterpret_cast<char *>(&host_checkpoint_force),
                    3 * sizeof(float) * lbpar_gpu.number_of_nodes);
-      auto tmp_rng = lb_coupling_rng_state_gpu();
-      cpfile.write(reinterpret_cast<char *>(&tmp_rng),
-                   sizeof(decltype(lb_coupling_rng_state_gpu())));
-      tmp_rng = lb_coupling_rng_state_gpu();
-      cpfile.write(reinterpret_cast<char *>(&tmp_rng),
-                   sizeof(decltype(lb_fluid_rng_state_gpu())));
       cpfile.close();
     }
     free(host_checkpoint_vd);
@@ -1844,6 +1836,16 @@ void lb_coupling_set_rng_state_cpu(uint64_t counter) {
 
   rng_counter_coupling = Utils::Counter<uint64_t>(counter);
 }
+
+uint64_t lb_fluid_rng_state_cpu() { return rng_counter_fluid.value(); }
+
+void lb_fluid_set_rng_state_cpu(uint64_t counter) {
+  uint32_t high, low;
+  std::tie(high, low) = Utils::u64_to_u32(counter);
+  mpi_call(mpi_set_lb_fluid_counter, high, low);
+
+  rng_counter_fluid = Utils::Counter<uint64_t>(counter);
+}
 #endif
 
 uint64_t lb_coupling_rng_state() {
@@ -1871,11 +1873,40 @@ void lb_coupling_set_rng_state(uint64_t counter) {
   }
 }
 
+uint64_t lb_fluid_rng_state() {
+  if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    return lb_fluid_rng_state_cpu();
+#endif
+  } else if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    return lb_fluid_rng_state_gpu();
+#endif
+  }
+  return {};
+}
+
+void lb_fluid_set_rng_state(uint64_t counter) {
+  if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    lb_fluid_set_rng_state_cpu(counter);
+#endif
+  } else if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    lb_fluid_set_rng_state_gpu(counter);
+#endif
+  }
+}
 void mpi_set_lb_coupling_counter(int high, int low) {
 #ifdef LB
-  using Utils::u32_to_u64;
-
   rng_counter_coupling = Utils::Counter<uint64_t>(Utils::u32_to_u64(
+      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
+#endif
+}
+
+void mpi_set_lb_fluid_counter(int high, int low) {
+#ifdef LB
+  rng_counter_fluid = Utils::Counter<uint64_t>(Utils::u32_to_u64(
       static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
 #endif
 }
