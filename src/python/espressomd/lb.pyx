@@ -105,7 +105,7 @@ IF LB_GPU or LB:
                         "bulk_visc": [-1.0, -1.0],
                         "tau": -1.0,
                         "couple": "2pt",
-                        "seed" : 0}
+                        "seed": 0}
             ELSE:
                 return {"agrid": -1.0,
                         "dens": -1.0,
@@ -318,7 +318,7 @@ IF LB_GPU:
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_lbfluid_get_interpolated_velocity_at_positions(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            lb_lbfluid_get_interpolated_velocity_at_positions( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities
 
 IF LB or LB_GPU:
