@@ -109,7 +109,7 @@ class SwimmerTest(ut.TestCase):
         self.prepare(S)
 
         lbm = espressomd.lb.LBFluid(
-            agrid=1.0, tau=S.time_step, fric=0.5, visc=1.0, dens=1.0, seed=12)
+            agrid=1.0, tau=S.time_step, fric=0.5, visc=1.0, dens=1.0)
         S.actors.add(lbm)
 
         self.run_and_check(

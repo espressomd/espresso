@@ -39,12 +39,10 @@ class LBSwitchActor(ut.TestCase):
         gamma_2 = 2.0
         ext_force_density = [0.2, 0.3, 0.15]
 
-        system.thermostat.set_lb(kT=0.0)
-
         lb_fluid_1_params = {
-            'agrid': 2.0, 'dens': 1.0, 'visc': 1.0, 'fric': gamma_1, 'tau': 0.03, 'seed': 123}
+            'agrid': 2.0, 'dens': 1.0, 'visc': 1.0, 'fric': gamma_1, 'tau': 0.03}
         lb_fluid_2_params = {
-            'agrid': 2.0, 'dens': 1.0, 'visc': 1.0, 'fric': gamma_2, 'tau': 0.03, 'seed': 123}
+            'agrid': 2.0, 'dens': 1.0, 'visc': 1.0, 'fric': gamma_2, 'tau': 0.03}
 
         if GPU:
             lb_fluid_1 = espressomd.lb.LBFluidGPU(**lb_fluid_1_params)

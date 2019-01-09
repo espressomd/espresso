@@ -58,8 +58,7 @@ LB_PARAMETERS = {
     'fric': 1.0,
     'dens': 1.0,
     'gamma_odd': 1.0,
-    'gamma_even': 1.0,
-    'seed': 123
+    'gamma_even': 1.0
 }
 
 

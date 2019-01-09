@@ -42,10 +42,10 @@ class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
         system = espressomd.System(box_l=(box_lw, box_lw, box_height))
         system.time_step = 0.05
         system.cell_system.skin = 0.1
-        lbf = lb.LBFluidGPU(
-            agrid=1, dens=1, visc=1.8, tau=system.time_step, fric=1, seed=123)
+        lbf = lb.LBFluidGPU(kT=0,
+            agrid=1, dens=1, visc=1.8, tau=system.time_step, fric=1)
         system.actors.add(lbf)
-        system.thermostat.set_lb(kT=0, act_on_virtual=False)
+        system.thermostat.set_lb(LB_instance=lbf, act_on_virtual=False)
 
         # Setup boundaries
         walls = [lbboundaries.LBBoundary() for k in range(2)]

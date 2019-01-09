@@ -43,7 +43,7 @@ class CheckpointTest(ut.TestCase):
             np.copy(self.lbf[1, 1, 1].velocity), np.array([0.1, 0.2, 0.3]))
         state = self.lbf.get_params()
         reference = {'agrid': 0.5, 'visc': 1.3,
-                     'dens': 1.5, 'tau': 0.01, 'fric': 2.0, 'seed': 134}
+                     'dens': 1.5, 'tau': 0.01, 'fric': 2.0}
         self.assertDictContainsSubset(reference, state)
 
     def test_variables(self):

@@ -24,7 +24,10 @@ from globals cimport *
 import numpy as np
 from . cimport utils
 from .lb cimport *
-
+IF LB:
+    from .lb import LBFluid
+IF LB_GPU:
+    from .lb import LBFluidGPU
 
 def AssertThermostatType(*allowedthermostats):
     """Assert that only a certain thermostat is active
@@ -333,16 +336,15 @@ cdef class Thermostat(object):
 
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
-        def set_lb(self, kT=None, seed=None, act_on_virtual=True):
+        def set_lb(self, seed=None, act_on_virtual=True, LB_instance=None):
             """
-            Sets the LB thermostat with required parameter 'kT'.
+            Sets the LB thermostat.
 
-            This thermostat requires the feature LB or LB_GPU.
+            This thermostat requires the feature LBFluid or LBFluidGPU.
 
             Parameters
             ----------
-            kT : :obj:`float`
-                 Specifies the thermal energy of the heat bath.
+            LB_instance : instance of :class:`espressomd.LBFluid` or :class:`espressomd.LBFluidGPU`
             seed : :obj:`int`
                  Seed for the random number generator, required
                  if kT > 0.
@@ -350,31 +352,29 @@ cdef class Thermostat(object):
                 If true the thermostat will act on virtual sites, default is on.
 
             """
-
-            if kT is None:
-                raise ValueError(
-                    "kT has to be given as keyword arg")
-            utils.check_type_or_throw_except(
-                kT, 1, float, "kT must be a number")
-            if float(kT) < 0.:
-                raise ValueError("temperature must be non-negative")
-
-            if LB:
-                if kT > 0. and not seed:
-                    raise ValueError(
-                        "seed has to be given as keyword arg")
-
-                if not seed:
-                    seed = 0
-
-                lb_coupling_set_rng_state(seed)
+            valid_LB_instance = False
+            IF LB:
+                if isinstance(LB_instance, LBFluid):
+                    valid_LB_instance = True
+            IF LB_GPU:
+                if isinstance(LB_instance, LBFluidGPU):
+                    valid_LB_instance = True
+            if not valid_LB_instance:
+                raise ValueError("The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
             global temperature
-            temperature = float(kT)
+            if temperature > 0. and not seed:
+                raise ValueError(
+                    "seed has to be given as keyword arg")
+
+            if not seed:
+                seed = 0
+
+            lb_coupling_set_rng_state(seed)
+
             global thermo_switch
             thermo_switch = (thermo_switch or THERMO_LB)
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-            mpi_bcast_parameter(FIELD_TEMPERATURE)
 
             global thermo_virtual
             thermo_virtual = act_on_virtual

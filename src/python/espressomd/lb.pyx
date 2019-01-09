@@ -69,6 +69,11 @@ IF LB_GPU or LB:
         def validate_params(self):
             default_params = self.default_params()
 
+            utils.check_type_or_throw_except(
+                self._params["kT"], 1, float, "kT must be a number")
+            if self._params["kT"] > 0. and not self._params["seed"]:
+                raise ValueError("seed has to be given if temperature is not 0.")
+
             IF SHANCHEN:
                 if not hasattr(self._params["dens"], "__getitem__"):
                     raise ValueError(
@@ -86,12 +91,12 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even", "seed"
+            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
         # list of essential keys required for the fluid
         ####################################################
         def required_keys(self):
-            return ["dens", "agrid", "visc", "tau", "seed"]
+            return ["dens", "agrid", "visc", "tau"]
 
         # list of default parameters
         ####################################################
@@ -105,7 +110,8 @@ IF LB_GPU or LB:
                         "bulk_visc": [-1.0, -1.0],
                         "tau": -1.0,
                         "couple": "2pt",
-                        "seed": 0}
+                        "seed": None,
+                        "kT": 0.}
             ELSE:
                 return {"agrid": -1.0,
                         "dens": -1.0,
@@ -115,7 +121,8 @@ IF LB_GPU or LB:
                         "bulk_visc": -1.0,
                         "tau": -1.0,
                         "couple": "2pt",
-                        "seed": 0}
+                        "seed": None,
+                        "kT": 0.}
 
         # function that calls wrapper functions which set the parameters at C-Level
         ####################################################
@@ -126,8 +133,14 @@ IF LB_GPU or LB:
         def _set_params_in_es_core(self):
             default_params = self.default_params()
 
-            cdef stdint.uint64_t seed = self._params["seed"]
-            lb_fluid_set_rng_state(seed)
+            cdef stdint.uint64_t seed
+            if self._params["kT"] > 0.:
+                seed = self._params["seed"]
+                lb_fluid_set_rng_state(seed)
+
+            global temperature
+            temperature = float(self._params["kT"])
+            mpi_bcast_parameter(FIELD_TEMPERATURE)
             if python_lbfluid_set_density(self._params["dens"], self._params["agrid"]):
                 raise Exception("lb_lbfluid_set_density error")
 
@@ -168,6 +181,8 @@ IF LB_GPU or LB:
         ####################################################
         def _get_params_from_es_core(self):
             default_params = self.default_params()
+            global temperature
+            self._params["kT"] = temperature
             cdef stdint.uint64_t seed = lb_fluid_rng_state()
             self._params['seed'] = seed
             if python_lbfluid_get_density(self._params["dens"], self._params["agrid"]):

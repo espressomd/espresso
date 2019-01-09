@@ -36,6 +36,7 @@ LB_PARAMS = {'agrid': AGRID,
              'visc': VISC,
              'fric': 2.0,
              'tau': TIME_STEP,
+             'kT': KT,
              'seed': 123}
 
 
@@ -53,7 +54,7 @@ class LBThermostatCommon(object):
         self.system.actors.add(self.lbf)
         self.system.part.add(
             pos=np.random.random((250, 3)) * self.system.box_l)
-        self.system.thermostat.set_lb(kT=KT, seed=5)
+        self.system.thermostat.set_lb(LB_instance=self.lbf, seed=5)
 
     def test_velocity_distribution(self):
         self.prepare()

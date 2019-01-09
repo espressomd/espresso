@@ -40,7 +40,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         system = self.system
 
         lb_fluid = espressomd.lb.LBFluid(
-            agrid=2.0, dens=1.0, visc=1.0, fric=1.0, tau=0.03, seed=1)
+            agrid=2.0, dens=1.0, visc=1.0, fric=1.0, tau=0.03)
         system.actors.add(lb_fluid)
 
         v_boundary = [0.03, 0.02, 0.01]

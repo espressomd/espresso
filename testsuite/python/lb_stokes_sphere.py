@@ -41,8 +41,7 @@ LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'fric': 1.0,
-             'tau': TIME_STEP,
-             'seed': 23}
+             'tau': TIME_STEP}
 # System setup
 radius = 5.4
 box_width = 36 
@@ -62,8 +61,6 @@ class Stokes(object):
         self.system.actors.clear()
         self.system.lbboundaries.clear()
         self.system.actors.add(self.lbf)
-        # The temperature is zero.
-        self.system.thermostat.set_lb(kT=0)
 
         # Setup walls
         walls = [None] * 4

@@ -46,27 +46,27 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
     def check_virtual(self, fluid_class):
         s = self.system
         lb_fluid = fluid_class(
-            agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=1.0, seed=42)
+            agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=1.0, kT=0.0)
         s.actors.add(lb_fluid)
 
         virtual = s.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
         physical = s.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
 
-        s.thermostat.set_lb(kT=0, act_on_virtual=False)
+        s.thermostat.set_lb(LB_instance=lb_fluid, act_on_virtual=False)
 
         s.integrator.run(1)
 
         np.testing.assert_almost_equal(np.copy(virtual.f), [0, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
 
-        s.thermostat.set_lb(kT=0, act_on_virtual=True, seed=123)
+        s.thermostat.set_lb(LB_instance=lb_fluid, act_on_virtual=True)
 
         virtual.v = [1, 0, 0]
         physical.v = [1, 0, 0]
 
         s.actors.remove(lb_fluid)
         lb_fluid = fluid_class(
-            agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=1.0, seed=123)
+            agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=1.0)
         s.actors.add(lb_fluid)
         virtual.pos = physical.pos
         virtual.v = 1, 0, 0

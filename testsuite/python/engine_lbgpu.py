@@ -115,8 +115,7 @@ class SwimmerTest(ut.TestCase):
             fric=0.5,
             visc=1.0,
             dens=1.0,
-            couple="2pt",
-            seed=12)
+            couple="2pt")
         S.actors.add(lbm)
         self.run_and_check(
             S, lbm, tests_common.abspath("data/engine_lbgpu_2pt.vtk"))
