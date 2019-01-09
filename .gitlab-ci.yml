@@ -267,7 +267,7 @@ check_sphinx:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
   dependencies:
-  - cuda8-maxset
+  - cuda-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
@@ -296,7 +296,7 @@ deploy_documentation:
   only:
     - python
   dependencies:
-    - cuda8-maxset
+    - cuda-maxset
   before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
