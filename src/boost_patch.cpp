@@ -27,16 +27,14 @@ template <>
 boost::mpi::request
 boost::mpi::communicator::isend<boost::mpi::packed_oarchive>(
     int dest, int tag, boost::mpi::packed_oarchive const &ar) const {
-  std::size_t const& size = ar.size();
+  std::size_t const &size = ar.size();
   request req;
+  BOOST_MPI_CHECK_RESULT(MPI_Isend, (&const_cast<std::size_t &>(size), 1,
+                                     get_mpi_datatype(size), dest, tag, *this,
+                                     &req.m_requests[0]));
   BOOST_MPI_CHECK_RESULT(MPI_Isend,
-                         (&const_cast<std::size_t &>(size), 1,
-                                 get_mpi_datatype(size),
-                                 dest, tag, *this, &req.m_requests[0]));
-  BOOST_MPI_CHECK_RESULT(MPI_Isend,
-                         (const_cast<void *>(ar.address()), size,
-                                 MPI_PACKED,
-                                 dest, tag, *this, &req.m_requests[1]));
+                         (const_cast<void *>(ar.address()), size, MPI_PACKED,
+                          dest, tag, *this, &req.m_requests[1]));
 
   return req;
 }
