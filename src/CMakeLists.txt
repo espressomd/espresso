@@ -40,6 +40,11 @@ add_custom_target(check_myconfig
           myconfig
   )
 
+if(BOOST_VERSION VERSION_LESS 106700)
+  add_library(boost_patch SHARED boost_patch.cpp)
+  target_link_libraries(boost_patch PRIVATE Boost::mpi)
+endif()
+
 add_subdirectory(core)
 
 if(WITH_SCRIPT_INTERFACE)

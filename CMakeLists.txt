@@ -363,12 +363,10 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
 if(BOOST_VERSION VERSION_LESS 106700)
-  add_library(boost_patch SHARED ${CMAKE_SOURCE_DIR}/src/boost_patch.cpp)
-  set(BOOST_LD_PRELOAD $<TARGET_FILE_NAME:${boost_patch}>)
+  set(BOOST_LD_PRELOAD $<TARGET_FILE:boost_patch>)
 else()
   set(BOOST_LD_PRELOAD "")
 endif()
-  message(STATUS "BOOST_LD_PRELOAD ${BOOST_LD_PRELOAD}")
 
 if(Boost_VERSION VERSION_GREATER 106399 AND Boost_VERSION VERSION_LESS 106500)
   # Boost 1.64 has incompatible Serialization and MPI modules, see https://svn.boost.org/trac10/ticket/12723 .

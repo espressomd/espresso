@@ -5,10 +5,12 @@ set(PYTHON_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 set(PYTHON_FRONTEND ${PYTHON_EXECUTABLE})
 configure_file(pypresso.cmakein ${CMAKE_BINARY_DIR}/pypresso @ONLY)
+file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/pypresso INPUT ${CMAKE_BINARY_DIR}/pypresso)
 
 if( IPYTHON_EXECUTABLE )
   set(PYTHON_FRONTEND ${IPYTHON_EXECUTABLE})
   configure_file(pypresso.cmakein ${CMAKE_BINARY_DIR}/ipypresso @ONLY)
+  file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/ipypresso INPUT ${CMAKE_BINARY_DIR}/ipypresso)
 endif( )
 
 # Configure pypresso for install dir
@@ -21,7 +23,6 @@ if( IPYTHON_EXECUTABLE )
   set(PYTHON_FRONTEND ${IPYTHON_EXECUTABLE})
   configure_file(pypresso.cmakein ${CMAKE_CURRENT_BINARY_DIR}/ipypresso @ONLY)
 endif( )
-
 
 option(INSTALL_PYPRESSO "Install pypresso script, not needed when Espresso is installed in /usr" ON)
 if(INSTALL_PYPRESSO)
