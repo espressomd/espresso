@@ -265,7 +265,7 @@ intel:17:
 
 check_sphinx:
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   dependencies:
   - cuda-maxset
   when: on_success
