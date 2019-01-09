@@ -111,11 +111,11 @@ def main():
             for k in range(n_ppside):
                 p = numpy.array([i, j, k]) * l
                 if q < 0:
-                    system.part.add(id=len(
-                        system.part), type=types["Cl"], pos=p, q=charges["Cl"], mass=masses["Cl"])
+                    system.part.add(id=len(system.part), type=types["Cl"],
+                                    pos=p, q=charges["Cl"], mass=masses["Cl"])
                 else:
-                    system.part.add(id=len(
-                        system.part), type=types["Na"], pos=p, q=charges["Na"], mass=masses["Na"])
+                    system.part.add(id=len(system.part), type=types["Na"],
+                                    pos=p, q=charges["Na"], mass=masses["Na"])
 
                 q *= -1
             q *= -1
@@ -156,13 +156,9 @@ def main():
     for i in range(int(num_steps_equilibration / 100)):
         energy = system.analysis.energy()
         temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-        print(
-            "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                                  energy[
-                                                                                  'total'],
-                                                                                  energy[
-                                                                                  'coulomb'],
-                                                                                  temp_measured))
+        print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}"
+              .format(system.time, energy['total'], energy['coulomb'],
+                      temp_measured))
         system.integrator.run(100)
         visualizer.update()
 

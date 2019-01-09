@@ -101,8 +101,16 @@ lj_shift = 0.0
 
 # setting up the polymer
 polymer.create_polymer(
-    N_P=N_P, bond_length=bond_l, MPC=MPC, start_id=0, bond=harmonic_bond,
-                       type_poly_neutral=type_HA, type_poly_charged=type_A, mode=0, val_poly=charges[type_A], start_pos=[0]*3)
+    N_P=N_P,
+    bond_length=bond_l,
+    MPC=MPC,
+    start_id=0,
+    bond=harmonic_bond,
+    type_poly_neutral=type_HA,
+    type_poly_charged=type_A,
+    mode=0,
+    val_poly=charges[type_A],
+    start_pos=[0] * 3)
 # setting up counterions
 for i in range(N0):
     system.part.add(pos=np.random.random(3) *
@@ -150,12 +158,27 @@ elif(mode == "constant_pH_ensemble"):
     RE.constant_pH = 0
 
 # HA <--> A- + H+
-RE.add_reaction(gamma=K_diss, reactant_types=[type_HA], reactant_coefficients=[1], product_types=[
-                type_A, type_H], product_coefficients=[1, 1], default_charges={type_HA: charges[type_HA], type_A: charges[type_A], type_H: charges[type_H]})
+RE.add_reaction(
+    gamma=K_diss,
+    reactant_types=[type_HA],
+    reactant_coefficients=[1],
+    product_types=[type_A, type_H],
+    product_coefficients=[1, 1],
+    default_charges={
+        type_HA: charges[type_HA],
+        type_A: charges[type_A],
+        type_H: charges[type_H]})
 
 # H2O autoprotolysis
-RE.add_reaction(gamma=(1 / K_w), reactant_types=[type_H, type_OH], reactant_coefficients=[
-                1, 1], product_types=[], product_coefficients=[], default_charges={type_H: charges[type_H], type_OH: charges[type_OH]})
+RE.add_reaction(
+    gamma=1 / K_w,
+    reactant_types=[type_H, type_OH],
+    reactant_coefficients=[1, 1],
+    product_types=[],
+    product_coefficients=[],
+    default_charges={
+        type_H: charges[type_H],
+        type_OH: charges[type_OH]})
 
 
 print(RE.get_status())
@@ -175,9 +198,20 @@ for i in range(12000):
     system.integrator.run(
         500)  # this is for tutorial only, too few integration steps
     print(
-        i, ") HA", system.number_of_particles(type=type_HA), "A-", system.number_of_particles(
-            type=type_A), "H+", system.number_of_particles(type=type_H),
-          'OH-', system.number_of_particles(type=type_OH), 'Cl-', system.number_of_particles(type=type_Cl), 'NA+', system.number_of_particles(type=type_Na))
+        i,
+        ") ",
+        "HA",
+        system.number_of_particles(type=type_HA),
+        "A-",
+        system.number_of_particles(type=type_A),
+        "H+",
+        system.number_of_particles(type=type_H),
+        'OH-',
+        system.number_of_particles(type=type_OH),
+        'Cl-',
+        system.number_of_particles(type=type_Cl),
+        'NA+',
+        system.number_of_particles(type=type_Na))
     if (i > 2000):  # just a bit of thermalization before starting to gain informations about the properties of the system
         alpha.append(system.number_of_particles(type=type_A) / N0)
         nHA.append(system.number_of_particles(type=type_HA))

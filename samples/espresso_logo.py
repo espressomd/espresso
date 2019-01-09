@@ -145,10 +145,12 @@ for i in range(n_steam):
 system.constraints.add(
     shape=Cylinder(
         center=[box_l / 2.0, 1.0, box_l / 2.0],
-            axis=[0, 1, 0],
-            direction=1,
-            radius=7.5,
-            length=1), particle_type=0, penetrable=True)
+        axis=[0, 1, 0],
+        direction=1,
+        radius=7.5,
+        length=1),
+    particle_type=0,
+    penetrable=True)
 
 
 system.time_step = 0.00022
@@ -173,17 +175,17 @@ for i in range(3):
         epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 visualizer = openGLLive(system,
-                        background_color=[
-                        0.2, 0.2, 0.3],
+                        background_color=[0.2, 0.2, 0.3],
                         camera_position=[box_l / 2.0, box_l / 4.0, 20 * 3],
                         particle_sizes=[0.6, 0.75, 0.9, 0.2],
                         particle_type_materials=[
-                        'bright', 'bright', 'plastic', 'chrome'],
-                        particle_type_colors=[[0.2, 0.2, 0.8, 1], [
-                            0.8, 0.2, 0.2, 1], [
-                                1, 1, 1, 1], [0.8, 0.8, 0.8, 1]],
-                        bond_type_materials=[
-                        'chrome'],
+                            'bright', 'bright', 'plastic', 'chrome'],
+                        particle_type_colors=[
+                            [0.2, 0.2, 0.8, 1],
+                            [0.8, 0.2, 0.2, 1],
+                            [1, 1, 1, 1],
+                            [0.8, 0.8, 0.8, 1]],
+                        bond_type_materials=['chrome'],
                         bond_type_colors=[[0.2, 0.2, 0.2, 0.5]],
                         bond_type_radius=[0.1],
                         constraint_type_colors=[[1, 1, 1, 0.5]],
@@ -202,5 +204,6 @@ def rotate():
     visualizer.camera.rotateSystemXL()
 
 # visualizer.registerCallback(rotate, interval = 16)
+
 
 visualizer.run(1)

@@ -72,26 +72,41 @@ system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
 # Visualizer
-visualizer = openGLLive(system, camera_position=[-3 * box_l, box_l * 0.5, box_l * 0.5], camera_right=[
-                        0, 0, 1], drag_force=5 * 298, background_color=[1, 1, 1], light_pos=[30, 30, 30], ext_force_arrows_type_scale=[0.0001], ext_force_arrows=False)
+visualizer = openGLLive(
+    system,
+    camera_position=[-3 * box_l, box_l * 0.5, box_l * 0.5],
+    camera_right=[0, 0, 1],
+    drag_force=5 * 298,
+    background_color=[1, 1, 1],
+    light_pos=[30, 30, 30],
+    ext_force_arrows_type_scale=[0.0001],
+    ext_force_arrows=False)
 
 # Walls
-system.constraints.add(shape=Wall(
-    dist=0, normal=[0, 0, 1]), particle_type=types["Electrode"])
-system.constraints.add(shape=Wall(
-    dist=-box_z, normal=[0, 0, -1]), particle_type=types["Electrode"])
+system.constraints.add(shape=Wall(dist=0, normal=[0, 0, 1]),
+                       particle_type=types["Electrode"])
+system.constraints.add(shape=Wall(dist=-box_z, normal=[0, 0, -1]),
+                       particle_type=types["Electrode"])
 
 # Place particles
 for i in range(int(n_ionpairs)):
     p = numpy.random.random(3) * box_l
     p[2] += lj_sigmas["Electrode"]
-    system.part.add(id=len(system.part),
-                    type=types["Cl"], pos=p, q=charges["Cl"], mass=masses["Cl"])
+    system.part.add(
+        id=len(system.part),
+        type=types["Cl"],
+        pos=p,
+        q=charges["Cl"],
+        mass=masses["Cl"])
 for i in range(int(n_ionpairs)):
     p = numpy.random.random(3) * box_l
     p[2] += lj_sigmas["Electrode"]
-    system.part.add(id=len(system.part),
-                    type=types["Na"], pos=p, q=charges["Na"], mass=masses["Na"])
+    system.part.add(
+        id=len(system.part),
+        type=types["Na"],
+        pos=p,
+        q=charges["Na"],
+        mass=masses["Na"])
 
 # Lennard-Jones interactions parameters
 
@@ -110,7 +125,8 @@ def combination_rule_sigma(rule, sig1, sig2):
         return ValueError("No combination rule defined")
 
 
-for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"], ["Na", "Electrode"], ["Cl", "Electrode"]]:
+for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"],
+          ["Na", "Electrode"], ["Cl", "Electrode"]]:
     lj_sig = combination_rule_sigma(
         "Berthelot", lj_sigmas[s[0]], lj_sigmas[s[1]])
     lj_cut = combination_rule_sigma("Berthelot", lj_cuts[s[0]], lj_cuts[s[1]])
@@ -120,8 +136,8 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"], ["Na", "Electrode"], ["Cl", 
     system.non_bonded_inter[types[s[0]], types[s[1]]].lennard_jones.set_params(
         epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
-system.minimize_energy.init(
-    f_max=10, gamma=10, max_steps=2000, max_displacement=0.1)
+system.minimize_energy.init(f_max=10, gamma=10, max_steps=2000,
+                            max_displacement=0.1)
 system.minimize_energy.minimize()
 
 print("\n--->Tuning Electrostatics")
@@ -148,10 +164,10 @@ def decreaseElectricField():
 
 
 # Register buttons
-visualizer.keyboardManager.register_button(KeyboardButtonEvent(
-    'u', KeyboardFireEvent.Hold, increaseElectricField))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent(
-    'j', KeyboardFireEvent.Hold, decreaseElectricField))
+visualizer.keyboardManager.register_button(
+    KeyboardButtonEvent('u', KeyboardFireEvent.Hold, increaseElectricField))
+visualizer.keyboardManager.register_button(
+    KeyboardButtonEvent('j', KeyboardFireEvent.Hold, decreaseElectricField))
 
 
 def main():
