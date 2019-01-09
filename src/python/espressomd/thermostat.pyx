@@ -29,6 +29,7 @@ IF LB:
 IF LB_GPU:
     from .lb import LBFluidGPU
 
+
 def AssertThermostatType(*allowedthermostats):
     """Assert that only a certain thermostat is active
 
@@ -360,7 +361,8 @@ cdef class Thermostat(object):
                 if isinstance(LB_instance, LBFluidGPU):
                     valid_LB_instance = True
             if not valid_LB_instance:
-                raise ValueError("The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
+                raise ValueError(
+                    "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
             global temperature
             if temperature > 0. and not seed:

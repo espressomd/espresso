@@ -72,7 +72,8 @@ IF LB_GPU or LB:
             utils.check_type_or_throw_except(
                 self._params["kT"], 1, float, "kT must be a number")
             if self._params["kT"] > 0. and not self._params["seed"]:
-                raise ValueError("seed has to be given if temperature is not 0.")
+                raise ValueError(
+                    "seed has to be given if temperature is not 0.")
 
             IF SHANCHEN:
                 if not hasattr(self._params["dens"], "__getitem__"):
@@ -333,7 +334,7 @@ IF LB_GPU:
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_lbfluid_get_interpolated_velocity_at_positions( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            lb_lbfluid_get_interpolated_velocity_at_positions(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities
 
 IF LB or LB_GPU:

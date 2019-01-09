@@ -50,7 +50,7 @@ class LBEHTest(ut.TestCase):
             agrid=self.params['agrid'],
             tau=self.s.time_step,
             fric=self.params['friction']
-            )
+        )
 
         self.s.actors.add(self.lbf)
         self.s.thermostat.set_lb(kT=self.params['temp'])

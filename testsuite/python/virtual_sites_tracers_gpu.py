@@ -43,7 +43,7 @@ class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
         system.time_step = 0.05
         system.cell_system.skin = 0.1
         lbf = lb.LBFluidGPU(kT=0,
-            agrid=1, dens=1, visc=1.8, tau=system.time_step, fric=1)
+                            agrid=1, dens=1, visc=1.8, tau=system.time_step, fric=1)
         system.actors.add(lbf)
         system.thermostat.set_lb(LB_instance=lbf, act_on_virtual=False)
 
