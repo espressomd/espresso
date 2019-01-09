@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import espressomd
 from espressomd import electrostatics, assert_features
 import numpy
 
@@ -112,7 +113,7 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"]]:
 print("\n--->Tuning Electrostatics")
 # p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2,
 # mesh=[84,84,84], cao=6)
-p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=l_bjerrum * temp, accuracy=1e-2)
 system.actors.add(p3m)
 
 print("\n--->Temperature Equilibration")

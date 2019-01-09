@@ -164,7 +164,6 @@ def create_polymer(**kwargs):
     default_params["MPC"] = 0
     default_params["bond_length"] = 0
     default_params["start_id"] = 0
-    default_params["start_pos"] = np.array([0, 0, 0])
     default_params["mode"] = 1
     default_params["shield"] = 0
     default_params["max_tries"] = 1000

@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import espressomd
 from espressomd import assert_features, electrostatics, electrostatic_extensions
 from espressomd.visualization_opengl import *
 import numpy
@@ -57,9 +58,9 @@ def decreaseTemp():
 
 
 # Register buttons
-visualizer.keyboardManager.registerButton(
+visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
-visualizer.keyboardManager.registerButton(
+visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
 
 
@@ -147,7 +148,7 @@ def main():
     print("\n--->Tuning Electrostatics")
     # p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2,
     # mesh=[84,84,84], cao=6)
-    p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2)
+    p3m = electrostatics.P3M(prefactor=l_bjerrum * temp, accuracy=1e-2)
     system.actors.add(p3m)
 
     print("\n--->Temperature Equilibration")

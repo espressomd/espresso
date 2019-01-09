@@ -178,7 +178,7 @@ visualizer = openGLLive(system,
                         camera_position=[box_l / 2.0, box_l / 4.0, 20 * 3],
                         particle_sizes=[0.6, 0.75, 0.9, 0.2],
                         particle_type_materials=[
-                        'silver', 'gold', 'greenplastic', 'chrome'],
+                        'bright', 'bright', 'plastic', 'chrome'],
                         particle_type_colors=[[0.2, 0.2, 0.8, 1], [
                             0.8, 0.2, 0.2, 1], [
                                 1, 1, 1, 1], [0.8, 0.8, 0.8, 1]],
@@ -187,7 +187,7 @@ visualizer = openGLLive(system,
                         bond_type_colors=[[0.2, 0.2, 0.2, 0.5]],
                         bond_type_radius=[0.1],
                         constraint_type_colors=[[1, 1, 1, 0.5]],
-                        constraint_type_materials=['ruby'],
+                        constraint_type_materials=['chrome'],
                         spotlight_brightness=5.0,
                         spotlight_focus=100,
                         spotlight_angle=60,

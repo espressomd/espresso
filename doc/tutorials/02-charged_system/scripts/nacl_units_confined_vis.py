@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import espressomd
 from espressomd import assert_features, electrostatics, electrostatic_extensions
 from espressomd.shapes import Wall
 from espressomd.visualization_opengl import *
@@ -72,7 +73,7 @@ system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
 # Visualizer
 visualizer = openGLLive(system, camera_position=[-3 * box_l, box_l * 0.5, box_l * 0.5], camera_right=[
-                        0, 0, 1], drag_force=5 * 298, background_color=[1, 1, 1], light_pos=[30, 30, 30], ext_force_arrows_scale=[0.0001], ext_force_arrows=False)
+                        0, 0, 1], drag_force=5 * 298, background_color=[1, 1, 1], light_pos=[30, 30, 30], ext_force_arrows_type_scale=[0.0001], ext_force_arrows=False)
 
 # Walls
 system.constraints.add(shape=Wall(
@@ -124,7 +125,7 @@ system.minimize_energy.init(
 system.minimize_energy.minimize()
 
 print("\n--->Tuning Electrostatics")
-p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=l_bjerrum * temp, accuracy=1e-2)
 system.actors.add(p3m)
 elc = electrostatic_extensions.ELC(gap_size=elc_gap, maxPWerror=1e-3)
 system.actors.add(elc)
@@ -147,9 +148,9 @@ def decreaseElectricField():
 
 
 # Register buttons
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent(
+visualizer.keyboardManager.register_button(KeyboardButtonEvent(
     'u', KeyboardFireEvent.Hold, increaseElectricField))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent(
+visualizer.keyboardManager.register_button(KeyboardButtonEvent(
     'j', KeyboardFireEvent.Hold, decreaseElectricField))
 
 

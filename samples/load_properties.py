@@ -102,16 +102,15 @@ if not system.non_bonded_inter[0, 0].lennard_jones.is_active():
     print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
 
-# Import of particle properties and P3M parameters
+# Import P3M parameters
 #############################################################
-with open("particle_save", "rb") as particle_save:
-    pickle.load(particle_save)
 act_min_dist = system.analysis.min_dist()
 
 with open("p3m_save", "rb") as p3m_save:
     p3m = pickle.load(p3m_save)
 print(p3m.get_params())
 
+system.actors.clear()
 system.actors.add(p3m)
 
 # Check import
