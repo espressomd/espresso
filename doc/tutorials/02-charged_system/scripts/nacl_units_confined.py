@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-from espressomd import electrostatics, electrostatic_extensions, assert_features
+from espressomd import assert_features, electrostatics, electrostatic_extensions
 from espressomd.shapes import Wall
 import numpy
 
@@ -40,10 +40,6 @@ temp = 1198.3
 gamma = 50
 #l_bjerrum = 0.885^2 * e^2/(4*pi*epsilon_0*k_B*T)
 l_bjerrum = 130878.0 / temp
-#[E]=k_b*K/e/A
-#Ez = U[V]/(8.61733e-5*box_l)
-# Ez=465.116 -> 1V
-Ez = 465.116
 
 num_steps_equilibration = 3000
 num_configs = 500
@@ -72,6 +68,11 @@ system.periodicity = [1, 1, 1]
 system.time_step = time_step
 system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
+
+# Uniform electric field between two parallel plates
+# E = V/d in units of V/m
+# E = V/d/k_b*e in units of eV/m
+Ez = 15 / (8.61733e-5 * box_z)  # in units of eV/m
 
 # Walls
 system.constraints.add(shape=Wall(
@@ -134,7 +135,7 @@ elc = electrostatic_extensions.ELC(gap_size=elc_gap, maxPWerror=1e-3)
 system.actors.add(elc)
 
 for p in system.part:
-    p.ext_force = [0, 0, Ez * p.q]
+    p.ext_force = [0, 0, p.q * Ez]
 
 print("\n--->Temperature Equilibration")
 system.time = 0.0

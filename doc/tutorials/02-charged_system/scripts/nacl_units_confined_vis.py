@@ -43,9 +43,8 @@ temp = 1198.3
 gamma = 50
 #l_bjerrum = 0.885^2 * e^2/(4*pi*epsilon_0*k_B*T)
 l_bjerrum = 130878.0 / temp
-Ez = 0
-
-num_steps_equilibration = 500
+Vz = 0  # potential difference between the electrodes
+Ez = 364.5  # conversion from potential to electical field
 
 # Particle parameters
 types = {"Cl": 0, "Na": 1, "Electrode": 2}
@@ -94,8 +93,6 @@ for i in range(int(n_ionpairs)):
                     type=types["Na"], pos=p, q=charges["Na"], mass=masses["Na"])
 
 # Lennard-Jones interactions parameters
-
-
 def combination_rule_epsilon(rule, eps1, eps2):
     if rule == "Lorentz":
         return (eps1 * eps2)**0.5
@@ -132,19 +129,19 @@ system.actors.add(elc)
 
 
 def increaseElectricField():
-    global Ez
-    Ez += 1000
+    global Vz
+    Vz += 3
     for p in system.part:
-        p.ext_force = [0, 0, Ez * p.q]
-    print(Ez)
+        p.ext_force = [0, 0, p.q * Vz * Vz_to_Ez]
+    print('Potential difference: {:.0V}'.format(Vz))
 
 
 def decreaseElectricField():
     global Ez
-    Ez -= 1000
+    Vz -= 3
     for p in system.part:
-        p.ext_force = [0, 0, Ez * p.q]
-    print(Ez)
+        p.ext_force = [0, 0, p.q * Vz * Vz_to_Ez]
+    print('Potential difference: {:.0V}'.format(Vz))
 
 
 # Register buttons

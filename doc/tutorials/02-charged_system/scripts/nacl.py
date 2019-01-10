@@ -106,7 +106,6 @@ while min_dist < max_sigma:
     min_dist = system.analysis.min_dist([types["Anion"], types["Cation"]], [
         types["Anion"], types["Cation"]])
     cap += min_dist
-# print min_dist, cap
     system.force_cap = cap
     system.integrator.run(10)
 

@@ -42,7 +42,7 @@ def increaseTemp():
     global temperature
     temperature += 10
     system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-    print(temperature)
+    print("T = {:.0f} K".format(temperature))
 
 
 def decreaseTemp():
@@ -54,7 +54,7 @@ def decreaseTemp():
     else:
         temperature = 0
         system.thermostat.turn_off()
-    print(temperature)
+    print("T = {:.0f} K".format(temperature))
 
 
 # Register buttons
@@ -68,7 +68,7 @@ def main():
 
     print("\n--->Setup system")
 
-# System parameters
+    # System parameters
     n_ppside = 10
     n_part = int(n_ppside**3)
     n_ionpairs = n_part / 2
@@ -83,7 +83,7 @@ def main():
     num_configs = 50
     integ_steps_per_config = 500
 
-# Particle parameters
+    # Particle parameters
     types = {"Cl": 0, "Na": 1}
     numbers = {"Cl": n_ionpairs, "Na": n_ionpairs}
     charges = {"Cl": -1.0, "Na": 1.0}
@@ -95,7 +95,7 @@ def main():
 
     masses = {"Cl": 35.453, "Na": 22.99}
 
-# Setup System
+    # Setup System
     box_l = (n_ionpairs * sum(masses.values()) / density)**(1. / 3.)
     system.box_l = [box_l, box_l, box_l]
     system.periodicity = [1, 1, 1]
@@ -103,7 +103,7 @@ def main():
     system.cell_system.skin = 0.3
     system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
-# Place particles
+    # Place particles
     q = 1
     l = box_l / n_ppside
     for i in range(n_ppside):
@@ -133,7 +133,7 @@ def main():
         else:
             return ValueError("No combination rule defined")
 
-# Lennard-Jones interactions parameters
+    # Lennard-Jones interactions parameters
     for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"]]:
         lj_sig = combination_rule_sigma(
             "Berthelot", lj_sigmas[s[0]], lj_sigmas[s[1]])
@@ -146,8 +146,6 @@ def main():
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
     print("\n--->Tuning Electrostatics")
-    # p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2,
-    # mesh=[84,84,84], cao=6)
     p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)
     system.actors.add(p3m)
 
@@ -168,7 +166,7 @@ def main():
 
     print("\n--->Integration")
     system.time = 0.0
-    while (True):
+    while True:
         system.integrator.run(1)
         visualizer.update()
 

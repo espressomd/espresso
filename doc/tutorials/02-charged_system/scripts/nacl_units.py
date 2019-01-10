@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-from espressomd import electrostatics, assert_features
+from espressomd import assert_features, electrostatics
 import numpy
 
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
@@ -111,8 +111,6 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"]]:
 
 
 print("\n--->Tuning Electrostatics")
-# p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2,
-# mesh=[84,84,84], cao=6)
 p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)
 system.actors.add(p3m)
 

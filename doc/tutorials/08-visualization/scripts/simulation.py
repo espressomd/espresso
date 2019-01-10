@@ -20,7 +20,6 @@ from matplotlib import pyplot
 from threading import Thread
 
 import espressomd
-from espressomd import visualization
 import numpy
 
 # System parameters
@@ -98,7 +97,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
     act_min_dist = system.analysis.min_dist()
     i += 1
 
-#   Increase LJ cap
+    # Increase LJ cap
     lj_cap = lj_cap + 10
     system.force_cap = lj_cap
 
