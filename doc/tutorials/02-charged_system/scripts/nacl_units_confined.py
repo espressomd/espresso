@@ -127,7 +127,7 @@ energy = system.analysis.energy()
 print("After Minimization: E_total=", energy['total'])
 
 print("\n--->Tuning Electrostatics")
-p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)
 system.actors.add(p3m)
 elc = electrostatic_extensions.ELC(gap_size=elc_gap, maxPWerror=1e-3)
 system.actors.add(elc)

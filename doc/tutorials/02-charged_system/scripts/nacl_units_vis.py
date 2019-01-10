@@ -147,7 +147,7 @@ def main():
     print("\n--->Tuning Electrostatics")
     # p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2,
     # mesh=[84,84,84], cao=6)
-    p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2)
+    p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)
     system.actors.add(p3m)
 
     print("\n--->Temperature Equilibration")
