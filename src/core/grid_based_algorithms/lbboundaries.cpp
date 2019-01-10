@@ -99,29 +99,6 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
   on_lbboundary_change();
 }
 
-void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
-                                 double distvec[3], int *no) {
-
-  double vec[3] = {std::numeric_limits<double>::infinity(),
-                   std::numeric_limits<double>::infinity(),
-                   std::numeric_limits<double>::infinity()};
-  double dist = std::numeric_limits<double>::infinity();
-  *mindist = std::numeric_limits<double>::infinity();
-
-  int n = 0;
-  for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end(); ++lbb, n++) {
-    (**lbb).calc_dist(pos.data(), &dist, vec);
-
-    if (dist < *mindist || lbb == lbboundaries.begin()) {
-      *no = n;
-      *mindist = dist;
-      distvec[0] = vec[0];
-      distvec[1] = vec[1];
-      distvec[2] = vec[2];
-    }
-  }
-}
-
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
 
