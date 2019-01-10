@@ -102,7 +102,7 @@ lj_shift = 0.0
 # setting up the polymer
 polymer.create_polymer(
     N_P=N_P, bond_length=bond_l, MPC=MPC, start_id=0, bond=harmonic_bond,
-                       type_poly_neutral=type_HA, type_poly_charged=type_A, mode=0, val_poly=charges[type_A])
+                       type_poly_neutral=type_HA, type_poly_charged=type_A, mode=0, val_poly=charges[type_A], start_pos=[0]*3)
 # setting up counterions
 for i in range(N0):
     system.part.add(pos=np.random.random(3) *

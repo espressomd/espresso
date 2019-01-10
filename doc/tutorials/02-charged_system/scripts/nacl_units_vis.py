@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import espressomd
 from espressomd import assert_features, electrostatics, electrostatic_extensions
 from espressomd.visualization_opengl import *
 import numpy
@@ -57,9 +58,9 @@ def decreaseTemp():
 
 
 # Register buttons
-visualizer.keyboardManager.registerButton(
+visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
-visualizer.keyboardManager.registerButton(
+visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
 
 
