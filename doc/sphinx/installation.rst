@@ -60,10 +60,10 @@ Python
 Cython
     Cython is used for connecting the C++ core to Python
 
-.. _Installing Requirements on Ubuntu 16.04 LTS:
+.. _Installing Requirements on Ubuntu Linux:
 
-Installing Requirements on Ubuntu 16.04 LTS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing Requirements on Ubuntu Linux
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To make ESPResSo run on Ubuntu 16.04 LTS or 18.04 LTS, its dependencies can be
 installed with:
@@ -87,6 +87,23 @@ CUDA SDK to make use of GPU computation:
 .. code-block:: bash
 
     sudo apt install nvidia-cuda-toolkit
+
+On Ubuntu 18.04, you need to modify a file to make CUDA work with the default compiler:
+
+.. code-block:: bash
+
+    sudo sed -i 's/__GNUC__ > 6/__GNUC__ > 7/g' /usr/include/crt/host_config.h
+    sudo sed -i 's/than 6/than 7/g' /usr/include/crt/host_config.h
+
+If your computer has an AMD graphics card, you should also download and install the
+ROCm SDK to make use of GPU computation:
+
+.. code-block:: bash
+
+    wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
+    echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list
+    sudo apt update
+    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand hip-thrust
 
 .. _Installing Requirements on Mac OS X:
 
@@ -362,11 +379,6 @@ General features
    individually. Also allows to fix individual coordinates of particles,
    keep them at a fixed position or within a plane.
 
--  ``CONSTRAINTS`` Turns on various spatial constraints such as spherical compartments
-   or walls. This constraints interact with the particles through
-   regular short ranged potentials such as the Lennard-Jones potential.
-   See section for possible constraint forms.
-
 -  ``MASS`` Allows particles to have individual masses. Note that some analysis
    procedures have not yet been adapted to take the masses into account
    correctly.
@@ -542,10 +554,6 @@ If you want to use bond-angle potentials (see section :ref:`Bond-angle interacti
 following features.
 
 -  ``BOND_ANGLE``
-
--  ``BOND_ANGLEDIST``
-
--  ``BOND_ANGLEDIST_HARMONIC``
 
 -  ``LJGEN_SOFTCORE``
 
@@ -869,7 +877,7 @@ simulation core which requires running the program in a debugger.  The
 which sets the Python path appropriately and starts the Python
 interpreter with your arguments.  Thus it is not possible to directly
 run ``pypresso`` in a debugger.  However, we provide some useful
-commandline options for the most common tools.
+command line options for the most common tools.
 
 .. code-block:: bash
 

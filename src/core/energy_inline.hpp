@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file energy_inline.hpp
+/** \file
     Implementation of the energy calculation.
 */
 #ifndef ENERGY_INLINE_HPP
@@ -28,7 +28,6 @@
 
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
-#include "bonded_interactions/angle_dist.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
@@ -38,7 +37,6 @@
 #include "bonded_interactions/harmonic_dumbbell.hpp"
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/subt_lj.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
@@ -58,6 +56,7 @@
 #include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/steppot.hpp"
 #include "nonbonded_interactions/thole.hpp"
+#include "nonbonded_interactions/wca.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
 #endif
@@ -97,12 +96,16 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef LENNARD_JONES
-  /* lennard jones */
+  /* Lennard-Jones */
   ret += lj_pair_energy(p1, p2, ia_params, d, dist);
+#endif
+#ifdef WCA
+  /* WCA */
+  ret += wca_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
-  /* Generic lennard jones */
+  /* Generic Lennard-Jones */
   ret += ljgen_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -127,12 +130,12 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef MORSE
-  /* morse */
+  /* Morse */
   ret += morse_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef BUCKINGHAM
-  /* lennard jones */
+  /* Buckingham */
   ret += buck_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -147,12 +150,12 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef LJCOS2
-  /* lennard jones */
+  /* Lennard-Jones */
   ret += ljcos2_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef THOLE
-  /* thole damping */
+  /* Thole damping */
   ret += thole_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -162,7 +165,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #endif
 
 #ifdef LJCOS
-  /* lennard jones cosine */
+  /* Lennard-Jones cosine */
   ret += ljcos_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
@@ -178,7 +181,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
   return ret;
 }
 
-/** Add non bonded energies and short range coulomb between a pair of particles.
+/** Add non bonded energies and short range Coulomb between a pair of particles.
     @param p1        pointer to particle 1.
     @param p2        pointer to particle 2.
     @param d         vector between p1 and p2.
@@ -201,7 +204,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 
 #ifdef ELECTROSTATICS
   if (coulomb.method != COULOMB_NONE) {
-    /* real space coulomb */
+    /* real space Coulomb */
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_P3M_GPU:
@@ -268,7 +271,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 inline void add_bonded_energy(Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
-  int i, bond_broken;
+  int i, bond_broken = 1;
   double ret = 0, dx[3] = {0, 0, 0};
 
   i = 0;
@@ -314,98 +317,107 @@ inline void add_bonded_energy(Particle *p1) {
     if (n_partners == 1)
       get_mi_vector(dx, p1->r.p, p2->r.p);
 
-    switch (type) {
-    case BONDED_IA_FENE:
-      bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
+    if (n_partners == 1) {
+      switch (type) {
+      case BONDED_IA_FENE:
+        bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
+        break;
 #ifdef ROTATION
-    case BONDED_IA_HARMONIC_DUMBBELL:
-      bond_broken = harmonic_dumbbell_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
+      case BONDED_IA_HARMONIC_DUMBBELL:
+        bond_broken = harmonic_dumbbell_pair_energy(p1, p2, iaparams, dx, &ret);
+        break;
 #endif
-    case BONDED_IA_HARMONIC:
-      bond_broken = harmonic_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
-    case BONDED_IA_QUARTIC:
-      bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
-    case BONDED_IA_THERMALIZED_DIST:
-      bond_broken = thermalized_bond_energy(p1, p2, iaparams, dx, &ret);
-      break;
+      case BONDED_IA_HARMONIC:
+        bond_broken = harmonic_pair_energy(p1, p2, iaparams, dx, &ret);
+        break;
+      case BONDED_IA_QUARTIC:
+        bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
+        break;
 #ifdef ELECTROSTATICS
-    case BONDED_IA_BONDED_COULOMB:
-      bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
+      case BONDED_IA_BONDED_COULOMB:
+        bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);
+        break;
 #endif
 #ifdef P3M
-    case BONDED_IA_BONDED_COULOMB_P3M_SR:
-      bond_broken =
-          bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
+      case BONDED_IA_BONDED_COULOMB_P3M_SR:
+        bond_broken =
+            bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
+        break;
 #endif
 #ifdef LENNARD_JONES
-    case BONDED_IA_SUBT_LJ:
-      bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
+      case BONDED_IA_SUBT_LJ:
+        bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
+        break;
 #endif
-#ifdef BOND_ANGLE
-    case BONDED_IA_ANGLE_HARMONIC:
-      bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);
-      break;
-    case BONDED_IA_ANGLE_COSINE:
-      bond_broken = angle_cosine_energy(p1, p2, p3, iaparams, &ret);
-      break;
-    case BONDED_IA_ANGLE_COSSQUARE:
-      bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
-      break;
-#endif
-#ifdef BOND_ANGLEDIST
-    case BONDED_IA_ANGLEDIST:
-      bond_broken = angledist_energy(p1, p2, p3, iaparams, &ret);
-      break;
-#endif
-    case BONDED_IA_DIHEDRAL:
-      bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
-      break;
 #ifdef BOND_CONSTRAINT
-    case BONDED_IA_RIGID_BOND:
-      bond_broken = 0;
-      ret = 0;
-      break;
+      case BONDED_IA_RIGID_BOND:
+        bond_broken = 0;
+        ret = 0;
+        break;
 #endif
 #ifdef TABULATED
-    case BONDED_IA_TABULATED:
-      switch (iaparams->p.tab.type) {
-      case TAB_BOND_LENGTH:
-        bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
+      case BONDED_IA_TABULATED:
+        if (iaparams->num == 1)
+          bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
         break;
-      case TAB_BOND_ANGLE:
-        bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
-        break;
-      case TAB_BOND_DIHEDRAL:
-        bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
-        break;
-      default:
-        runtimeErrorMsg() << "add_bonded_energy: tabulated bond type of atom "
-                          << p1->p.identity << " unknown\n";
-        return;
-      }
-      break;
 #endif
 #ifdef UMBRELLA
-    case BONDED_IA_UMBRELLA:
-      bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
+      case BONDED_IA_UMBRELLA:
+        bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
+        break;
 #endif
-    case BONDED_IA_VIRTUAL_BOND:
-      bond_broken = 0;
-      ret = 0;
-      break;
-    default:
-      runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
-                        << ") of atom " << p1->p.identity << " unknown\n";
-      return;
-    }
+      case BONDED_IA_VIRTUAL_BOND:
+        bond_broken = 0;
+        ret = 0;
+        break;
+      default:
+        runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
+                          << ") of atom " << p1->p.identity << " unknown\n";
+        return;
+      }
+    } // 1 partner
+    else if (n_partners == 2) {
+      switch (type) {
+#ifdef BOND_ANGLE
+      case BONDED_IA_ANGLE_HARMONIC:
+        bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);
+        break;
+      case BONDED_IA_ANGLE_COSINE:
+        bond_broken = angle_cosine_energy(p1, p2, p3, iaparams, &ret);
+        break;
+      case BONDED_IA_ANGLE_COSSQUARE:
+        bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
+        break;
+#endif
+#ifdef TABULATED
+      case BONDED_IA_TABULATED:
+        if (iaparams->num == 2)
+          bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
+        break;
+#endif
+      default:
+        runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
+                          << ") of atom " << p1->p.identity << " unknown\n";
+        return;
+      }
+    } // 2 partner
+    else if (n_partners == 3) {
+      switch (type) {
+      case BONDED_IA_DIHEDRAL:
+        bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
+        break;
+#ifdef TABULATED
+      case BONDED_IA_TABULATED:
+        if (iaparams->num == 3)
+          bond_broken = tab_dihedral_energy(p1, p2, p3, p4, iaparams, &ret);
+        break;
+#endif
+      default:
+        runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
+                          << ") of atom " << p1->p.identity << " unknown\n";
+        return;
+      }
+    } // 3 partners
 
     if (bond_broken) {
       switch (n_partners) {

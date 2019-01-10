@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lattice.cpp
+/** \file
  *
  * Lattice class definition
  *
@@ -35,7 +35,7 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
   /* determine the number of local lattice nodes */
   for (int d = 0; d < 3; d++) {
     this->agrid[d] = agrid[d];
-    this->global_grid[d] = (int)dround(box_l[d] / agrid[d]);
+    this->global_grid[d] = (int)std::round(box_l[d] / agrid[d]);
     this->offset[d] = offset[d];
     this->local_index_offset[d] =
         (int)ceil((my_left[d] - this->offset[d]) / this->agrid[d]);
@@ -83,14 +83,15 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
 }
 
 void Lattice::map_position_to_lattice(const Vector3d &pos,
-                                      index_t node_index[8], double delta[6]) {
+                                      index_t node_index[8],
+                                      double delta[6]) const {
   int ind[3];
 
   /* determine the elementary lattice cell containing the particle
      and the relative position of the particle in this cell */
   for (int dir = 0; dir < 3; dir++) {
-    double lpos = pos[dir] - my_left[dir];
-    double rel = lpos / this->agrid[dir] + 0.5; // +1 for halo offset
+    const double lpos = pos[dir] - my_left[dir];
+    const double rel = lpos / this->agrid[dir] + 0.5; // +1 for halo offset
     ind[dir] = (int)floor(rel);
 
     /* surrounding elementary cell is not completely inside this box,
@@ -101,8 +102,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
       } else {
         fprintf(stderr,
                 "%d: map_position_to_lattice: position (%f,%f,%f) not inside a "
-                "local plaquette in dir %d ind[dir]=%d "
-                "rel=%f lpos=%f.\n",
+                "local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",
                 this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
       }
     } else if (ind[dir] > this->grid[dir]) {
@@ -111,8 +111,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
       else
         fprintf(stderr,
                 "%d: map_position_to_lattice: position (%f,%f,%f) not inside a "
-                "local plaquette in dir %d ind[dir]=%d "
-                "rel=%f lpos=%f.\n",
+                "local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",
                 this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
     }
 
@@ -132,7 +131,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
 
 /********************** static Functions **********************/
 
-void Lattice::map_position_to_lattice_global(Vector3d &pos, int ind[3],
+void Lattice::map_position_to_lattice_global(Vector3d &pos, Vector3i &ind,
                                              double delta[6],
                                              double tmp_agrid) {
   // not sure why I don't have access to agrid here so I make a temp var and

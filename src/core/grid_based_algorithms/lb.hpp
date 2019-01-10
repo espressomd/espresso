@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lb.hpp
+/** \file
  * Header file for lb.cpp
  *
  * This is the header file for the Lattice Boltzmann implementation in lb.cpp
@@ -115,7 +115,7 @@ struct LB_FluidNode {
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
   int boundary;
-  Vector3d boundary_velocity;
+  Vector3d boundary_velocity = {};
 #endif // LB_BOUNDARIES
 
   /** local force density */
@@ -384,7 +384,7 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 
 #ifdef LB_BOUNDARIES
   if (lbfields[index].boundary) {
-    *rho = lbpar.rho *lbpar.agrid *lbpar.agrid *lbpar.agrid;
+    *rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
     j[0] = 0.;
     j[1] = 0.;
     j[2] = 0.;
@@ -403,7 +403,7 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
   double modes_from_pi_eq[6];
   lb_calc_modes(index, mode);
 
-  *rho = mode[0] + lbpar.rho *lbpar.agrid *lbpar.agrid *lbpar.agrid;
+  *rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
   j[0] = mode[1] + 0.5 * lbfields[index].force_density[0];
   j[1] = mode[2] + 0.5 * lbfields[index].force_density[1];
@@ -477,8 +477,6 @@ inline void lb_set_populations(Lattice::index_t index, double *pop) {
 }
 #endif
 
-#include "grid_based_algorithms/lbgpu.hpp"
-
 #if defined(LB) || defined(LB_GPU)
 /* A C level interface to the LB fluid */
 int lb_lbfluid_set_density(double *p_dens);
@@ -520,18 +518,17 @@ int lb_lbfluid_print_velocity(char *filename);
 int lb_lbfluid_save_checkpoint(char *filename, int binary);
 int lb_lbfluid_load_checkpoint(char *filename, int binary);
 
-int lb_lbnode_get_rho(int *ind, double *p_rho);
-int lb_lbnode_get_u(int *ind, double *u);
-int lb_lbnode_get_pi(int *ind, double *pi);
-int lb_lbnode_get_pi_neq(int *ind, double *pi_neq);
-int lb_lbnode_get_boundary(int *ind, int *p_boundary);
-int lb_lbnode_get_pop(int *ind, double *pop);
+bool lb_lbnode_is_index_valid(const Vector3i &ind);
+int lb_lbnode_get_rho(const Vector3i &ind, double *p_rho);
+int lb_lbnode_get_u(const Vector3i &ind, double *u);
+int lb_lbnode_get_pi(const Vector3i &ind, double *pi);
+int lb_lbnode_get_pi_neq(const Vector3i &ind, double *pi_neq);
+int lb_lbnode_get_boundary(const Vector3i &ind, int *p_boundary);
+int lb_lbnode_get_pop(const Vector3i &ind, double *pop);
 
-int lb_lbnode_set_rho(int *ind, double *rho);
-int lb_lbnode_set_u(int *ind, double *u);
-int lb_lbnode_set_pi(int *ind, double *pi);
-int lb_lbnode_set_pi_neq(int *ind, double *pi_neq);
-int lb_lbnode_set_pop(int *ind, double *pop);
+int lb_lbnode_set_rho(const Vector3i &ind, double *rho);
+int lb_lbnode_set_u(const Vector3i &ind, double *u);
+int lb_lbnode_set_pop(const Vector3i &ind, double *pop);
 
 /** calculates the fluid velocity at a given position of the
  * lattice. Note that it can lead to undefined behaviour if the

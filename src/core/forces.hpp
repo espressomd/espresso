@@ -20,7 +20,8 @@
 */
 #ifndef CORE_FORCES_HPP
 #define CORE_FORCES_HPP
-/** \file forces.hpp Force calculation.
+/** \file
+ *  Force calculation.
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned
  * on). \todo Implement more flexible thermostat, %e.g. which thermostat to use.

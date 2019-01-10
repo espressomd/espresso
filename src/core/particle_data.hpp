@@ -20,10 +20,10 @@
 */
 #ifndef _PARTICLE_DATA_H
 #define _PARTICLE_DATA_H
-/** \file particle_data.hpp
-    For more information on particle_data,
-    see \ref particle_data.cpp "particle_data.c"
-*/
+/** \file
+ *  For more information on particle_data,
+ *  see \ref particle_data.cpp "particle_data.cpp"
+ */
 
 #include "Vector.hpp"
 #include "config.hpp"
@@ -44,29 +44,33 @@
 /// ok code for \ref place_particle, particle is new
 #define ES_PART_CREATED 1
 
-/**  bonds_flag "bonds_flag" value for updating particle config without bonding
- * information */
+/** bonds_flag "bonds_flag" value for updating particle config without bonding
+ *  information
+ */
 #define WITHOUT_BONDS 0
-/**  bonds_flag "bonds_flag" value for updating particle config with bonding
- * information */
+/** bonds_flag "bonds_flag" value for updating particle config with bonding
+ *  information
+ */
 #define WITH_BONDS 1
 
 #ifdef EXTERNAL_FORCES
-/** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an
- * external force. */
+/** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
+ *  an external force
+ */
 #define PARTICLE_EXT_FORCE 1
-/** \ref ParticleLocal::ext_flag "ext_flag" value for fixed coordinate coord. */
+/** \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
+ *  coord. */
 #define COORD_FIXED(coord) (2L << coord)
-/** \ref ParticleLocal::ext_flag "ext_flag" mask to check whether any of the
- * coordinates is fixed. */
+/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
+ *  the coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-/** \ref ParticleLocal::ext_flag "ext_flag" mask to check whether all of the
- * coordinates are fixed. */
+/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether all of
+ *  the coordinates are fixed. */
 #define COORDS_ALL_FIXED (COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2))
 
 #ifdef ROTATION
-/** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an
- * external torque. */
+/** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
+ *  an external torque. */
 #define PARTICLE_EXT_TORQUE 16
 #endif
 
@@ -77,11 +81,11 @@
  ************************************************/
 
 /** Properties of a particle which are not supposed to
-    change during the integration, but have to be known
-    for all ghosts. Ghosts are particles which are
-    needed in the interaction calculation, but are just copies of
-    particles stored on different nodes.
-*/
+ *  change during the integration, but have to be known
+ *  for all ghosts. Ghosts are particles which are
+ *  needed in the interaction calculation, but are just copies of
+ *  particles stored on different nodes.
+ */
 struct ParticleProperties {
   /** unique identifier for the particle. */
   int identity = -1;
@@ -123,9 +127,11 @@ struct ParticleProperties {
   // integrated
   short int rotation = 0;
 
-#ifdef ELECTROSTATICS
   /** charge. */
+#ifdef ELECTROSTATICS
   double q = 0.0;
+#else
+  constexpr static double q{0.0};
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
@@ -186,17 +192,17 @@ struct ParticleProperties {
   /** flag whether to fix a particle in space.
       Values:
       <ul> <li> 0 no external influence
-           <li> 1 apply external force \ref ParticleLocal::ext_force
+           <li> 1 apply external force \ref ParticleProperties::ext_force
            <li> 2,3,4 fix particle coordinate 0,1,2
-           <li> 5 apply external torque \ref ParticleLocal::ext_torque
+           <li> 5 apply external torque \ref ParticleProperties::ext_torque
       </ul>
   */
   int ext_flag = 0;
-  /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
+  /** External force, apply if \ref ParticleProperties::ext_flag == 1. */
   Vector3d ext_force = {0, 0, 0};
 
 #ifdef ROTATION
-  /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
+  /** External torque, apply if \ref ParticleProperties::ext_flag == 16. */
   Vector3d ext_torque = {0, 0, 0};
 #endif
 #endif
@@ -212,12 +218,12 @@ struct ParticlePosition {
   /** quaternions to define particle orientation */
   Vector<4, double> quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
-  Vector3d quatu{0., 0., 1.};
-#endif
-
-#ifdef DIPOLES
-  /** dipole moment. This is synchronized with quatu and quat. */
-  Vector3d dip = {0., 0., 0.};
+  inline const Vector3d calc_director() const {
+    return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
+            2 * (quat[2] * quat[3] - quat[0] * quat[1]),
+            quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
+                quat[3] * quat[3]};
+  };
 #endif
 
 #ifdef BOND_CONSTRAINT
@@ -280,7 +286,7 @@ struct ParticleLocal {
   /** position in the last time step before last Verlet list update. */
   Vector3d p_old = {0, 0, 0};
   /** index of the simulation box image where the particle really sits. */
-  Vector<3, int> i = {0, 0, 0};
+  Vector3i i = {0, 0, 0};
 
   /** check whether a particle is a ghost or not */
   int ghost = 0;
@@ -362,6 +368,9 @@ struct Particle {
   ParticleProperties p;
   ///
   ParticlePosition r;
+#ifdef DIPOLES
+  inline const Vector3d calc_dip() const { return r.calc_director() * p.dipm; }
+#endif
   ///
   ParticleMomentum m;
   ///
@@ -372,10 +381,12 @@ struct Particle {
 #ifdef LB
   ParticleLatticeCoupling lc;
 #endif
-  /** bonded interactions list. The format is pretty simple:
-      Just the bond type, and then the particle ids. The number of particle ids
-     can be determined
-      easily from the bonded_ia_params entry for the type. */
+  /** Bonded interactions list
+   *
+   *  The format is pretty simple: just the bond type, and then the particle
+   *  ids. The number of particle ids can be determined easily from the
+   *  bonded_ia_params entry for the type.
+   */
   IntList bl;
 
   IntList &bonds() { return bl; }
@@ -399,7 +410,7 @@ struct Particle {
 
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no nonbonded
-   * interactions
+   *  interactions
    */
   IntList el;
 #endif
@@ -412,9 +423,9 @@ struct Particle {
 /**
  * These functions cause a compile time error if
  * Particles are copied by memmove or memcpy,
- * which does not keep class invariants.
+ * which do not keep class invariants.
  *
- * These are templates so that the error is cause
+ * These are templates so that the error is caused
  * at the place they are used.
  */
 template <typename Size> void memmove(Particle *, Particle *, Size) {
@@ -442,9 +453,9 @@ void MPI_Send(Particle const *, Size, Ts...) {
 }
 
 /** List of particles. The particle array is resized using a sophisticated
-    (we hope) algorithm to avoid unnecessary resizes.
-    Access using \ref realloc_particlelist, \ref got_particle,...
-*/
+ *  (we hope) algorithm to avoid unnecessary resizes.
+ *  Access using \ref realloc_particlelist, \ref got_particle, ...
+ */
 struct ParticleList {
   ParticleList() : part{nullptr}, n{0}, max{0} {}
   /** The particles payload */
@@ -468,6 +479,8 @@ struct ParticleList {
 extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
+/** flag that active swimming particles exist */
+extern bool swimming_particles_exist;
 
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
@@ -514,7 +527,7 @@ Particle *got_particle(ParticleList *plist, int id);
 /** Append a particle at the end of a particle List.
     reallocates particles if necessary!
     This procedure does not care for \ref local_particles.
-    \param plist List to append the particle to.
+    \param l List to append the particle to.
     \param part  Particle to append. */
 void append_unindexed_particle(ParticleList *l, Particle &&part);
 
@@ -550,6 +563,8 @@ Particle *move_unindexed_particle(ParticleList *destList,
  */
 Particle *move_indexed_particle(ParticleList *destList,
                                 ParticleList *sourceList, int ind);
+
+Particle extract_indexed_particle(ParticleList *sl, int i);
 
 /*    Other Functions                           */
 /************************************************/
@@ -587,7 +602,7 @@ const Particle &get_particle_data(int part);
  */
 void prefetch_particle_data(std::vector<int> ids);
 
-/** @brief Invalidate the fetch cache for @f get_particle_data. */
+/** @brief Invalidate the fetch cache for get_particle_data. */
 void invalidate_fetch_cache();
 
 /** Call only on the master node.
@@ -661,7 +676,7 @@ int set_particle_rotation(int part, int rot);
    @param axis rotation axis
    @param angle rotation angle
 */
-int rotate_particle(int part, double axis[3], double angle);
+int rotate_particle(int part, const Vector3d &axis, double angle);
 
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
@@ -699,7 +714,7 @@ void get_particle_mu_E(int part, double (&mu_E)[3]);
 #endif
 
 /** Call only on the master node: set particle type.
-    @param part the particle.
+    @param p_id the particle.
     @param type its new type.
     @return ES_OK if particle existed
 */
@@ -725,28 +740,28 @@ int set_particle_quat(int part, double quat[4]);
     @param omega its new angular velocity.
     @return ES_OK if particle existed
 */
-int set_particle_omega_lab(int part, double omega[3]);
+int set_particle_omega_lab(int part, const Vector3d &omega);
 
 /** Call only on the master node: set particle angular velocity in body frame.
     @param part the particle.
     @param omega its new angular velocity.
     @return ES_OK if particle existed
 */
-int set_particle_omega_body(int part, double omega[3]);
+int set_particle_omega_body(int part, const Vector3d &omega);
 
 /** Call only on the master node: set particle torque from lab frame.
     @param part the particle.
     @param torque its new torque.
     @return ES_OK if particle existed
 */
-int set_particle_torque_lab(int part, double torque[3]);
+int set_particle_torque_lab(int part, const Vector3d &torque);
 
 /** Call only on the master node: set particle torque in body frame.
     @param part the particle.
     @param torque its new torque.
     @return ES_OK if particle existed
 */
-int set_particle_torque_body(int part, double torque[3]);
+int set_particle_torque_body(int part, const Vector3d &torque);
 #endif
 
 #ifdef DIPOLES
@@ -984,16 +999,13 @@ int number_of_particles_with_type(int type);
 #ifdef ROTATION
 void pointer_to_omega_body(Particle const *p, double const *&res);
 
-void pointer_to_torque_lab(Particle const *p, double const *&res);
+inline Vector3d get_torque_body(const Particle &p) { return p.f.torque; }
 
 void pointer_to_quat(Particle const *p, double const *&res);
-void pointer_to_quatu(Particle const *p, double const *&res);
 
 #endif
 
-#ifdef ELECTROSTATICS
 void pointer_to_q(Particle const *p, double const *&res);
-#endif
 
 #ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, int const *&res);

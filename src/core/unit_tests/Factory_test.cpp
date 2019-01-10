@@ -17,7 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file Factory_test.cpp Unit tests for the Utils::Factory class.
+/** \file
+ * Unit tests for the Utils::Factory class.
  * The factory is tested by registering different types of classes
  * with it (first test), and then checking if instances of those classes can be
  * made via the Factory (second test).

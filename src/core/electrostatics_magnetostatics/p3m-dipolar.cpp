@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file p3m-dipolar.cpp  P3M algorithm for long range magnetic dipole-dipole
+/** \file
+ *  P3M algorithm for long range magnetic dipole-dipole
  interaction.
  *
  NB: In general the magnetic dipole-dipole functions bear the same
@@ -32,10 +33,7 @@
 
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <mpi.h>
+#ifdef DP3M
 
 #include "cells.hpp"
 #include "communication.hpp"
@@ -45,11 +43,17 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
-#include "thermostat.hpp"
 #include "tuning.hpp"
-#include "utils.hpp"
 
-#ifdef DP3M
+#include "utils/strcat_alloc.hpp"
+using Utils::strcat_alloc;
+#include "utils/math/sinc.hpp"
+using Utils::sinc;
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <mpi.h>
 
 /************************************************
  * DEFINES
@@ -310,7 +314,7 @@ void dp3m_pre_init(void) {
   dfft_pre_init();
 }
 
-void dp3m_set_prefactor() {
+void dp3m_deactivate() {
   dp3m.params.alpha = 0.0;
   dp3m.params.alpha_L = 0.0;
   dp3m.params.r_cut = 0.0;
@@ -643,7 +647,7 @@ void dp3m_dipole_assign(void) {
 
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
-      dp3m_assign_dipole(p.r.p.data(), p.p.dipm, p.r.dip.data(), cp_cnt);
+      dp3m_assign_dipole(p.r.p.data(), p.p.dipm, p.calc_dip().data(), cp_cnt);
       cp_cnt++;
     }
   }
@@ -801,6 +805,7 @@ static void P3M_assign_torques(double prefac, int d_rs) {
 
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
+      const Vector3d dip = p.calc_dip();
       q_ind = dp3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
         for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
@@ -816,22 +821,22 @@ static void P3M_assign_torques(double prefac, int d_rs) {
             */
             switch (d_rs) {
             case 0: // E_x
-              p.f.torque[1] -= p.r.dip[2] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
-              p.f.torque[2] += p.r.dip[1] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
+              p.f.torque[1] -=
+                  dip[2] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
+              p.f.torque[2] +=
+                  dip[1] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
               break;
             case 1: // E_y
-              p.f.torque[0] += p.r.dip[2] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
-              p.f.torque[2] -= p.r.dip[0] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
+              p.f.torque[0] +=
+                  dip[2] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
+              p.f.torque[2] -=
+                  dip[0] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
               break;
             case 2: // E_z
-              p.f.torque[0] -= p.r.dip[1] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
-              p.f.torque[1] += p.r.dip[0] * prefac * dp3m.ca_frac[cf_cnt] *
-                               dp3m.rs_mesh[q_ind];
+              p.f.torque[0] -=
+                  dip[1] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
+              p.f.torque[1] +=
+                  dip[0] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
             }
             q_ind++;
             cf_cnt++;
@@ -865,14 +870,15 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs) {
 
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
+      const Vector3d dip = p.calc_dip();
       q_ind = dp3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
         for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
           for (int i2 = 0; i2 < dp3m.params.cao; i2++) {
             p.f.f[d_rs] += prefac * dp3m.ca_frac[cf_cnt] *
-                           (dp3m.rs_mesh_dip[0][q_ind] * p.r.dip[0] +
-                            dp3m.rs_mesh_dip[1][q_ind] * p.r.dip[1] +
-                            dp3m.rs_mesh_dip[2][q_ind] * p.r.dip[2]);
+                           (dp3m.rs_mesh_dip[0][q_ind] * dip[0] +
+                            dp3m.rs_mesh_dip[1][q_ind] * dip[1] +
+                            dp3m.rs_mesh_dip[2][q_ind] * dip[2]);
             q_ind++;
             cf_cnt++;
           }
@@ -1181,9 +1187,10 @@ double calc_surface_term(int force_flag, int energy_flag) {
 
   int ip = 0;
   for (auto const &p : local_cells.particles()) {
-    mx[ip] = p.r.dip[0];
-    my[ip] = p.r.dip[1];
-    mz[ip] = p.r.dip[2];
+    const Vector3d dip = p.calc_dip();
+    mx[ip] = dip[0];
+    my[ip] = dip[1];
+    mz[ip] = dip[2];
     ip++;
   }
 
@@ -1357,7 +1364,7 @@ void dp3m_calc_meshift(void) {
   dp3m.meshift =
       Utils::realloc(dp3m.meshift, dp3m.params.mesh[0] * sizeof(double));
   for (i = 0; i < dp3m.params.mesh[0]; i++)
-    dp3m.meshift[i] = i - dround(i / dmesh) * dmesh;
+    dp3m.meshift[i] = i - std::round(i / dmesh) * dmesh;
 }
 
 /*****************************************************************************/
@@ -1370,7 +1377,7 @@ void dp3m_calc_differential_operator() {
   dp3m.d_op = Utils::realloc(dp3m.d_op, dp3m.params.mesh[0] * sizeof(double));
 
   for (i = 0; i < dp3m.params.mesh[0]; i++)
-    dp3m.d_op[i] = (double)i - dround((double)i / dmesh) * dmesh;
+    dp3m.d_op[i] = (double)i - std::round((double)i / dmesh) * dmesh;
 
   dp3m.d_op[dp3m.params.mesh[0] / 2] = 0;
 }
@@ -1585,7 +1592,7 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
     error contributions of real and reciprocal space should be equal.
 
     After checking if the total error fulfills the accuracy goal the
-    time needed for one force calculation (including verlet list
+    time needed for one force calculation (including Verlet list
     update) is measured via \ref mpi_integrate (0).
 
     The function returns a log of the performed tuning.
@@ -1781,7 +1788,8 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
                           double *_accuracy) {
   double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L = 0.0,
          tmp_accuracy = 0.0;
-  /* in which direction improvement is possible. Initially, we dont know it yet.
+  /* in which direction improvement is possible. Initially, we don't know it
+   * yet.
    */
   int final_dir = 0;
   int cao = *_cao;
@@ -2024,7 +2032,7 @@ int dp3m_adaptive_tune(char **logger) {
                                   "    Drs_err    Dks_err    time [ms]\n");
 
   /* mesh loop */
-  for (; tmp_mesh <= mesh_max; tmp_mesh *= 2) {
+  for (; tmp_mesh <= mesh_max; tmp_mesh += 2) {
     tmp_cao = cao;
     tmp_time =
         dp3m_m_time(logger, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
@@ -2106,8 +2114,7 @@ void dp3m_count_magnetic_particles() {
 
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
-      node_sums[0] += Utils::sqr(p.r.dip[0]) + Utils::sqr(p.r.dip[1]) +
-                      Utils::sqr(p.r.dip[2]);
+      node_sums[0] += p.calc_dip().norm2();
       node_sums[1] += 1.0;
     }
   }

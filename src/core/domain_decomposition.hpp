@@ -21,20 +21,20 @@
 #ifndef _DOMAIN_DECOMPOSITION_H
 #define _DOMAIN_DECOMPOSITION_H
 
-/** \file domain_decomposition.hpp
+/** \file
  *
  *  This file contains everything related to the cell system: domain
  * decomposition.
  *
  *  The simulation box is split into spatial domains for each node
- *  according to a cartesian node grid (\ref node_grid).
+ *  according to a Cartesian node grid (\ref node_grid).
  *
  *  The domain of a node is split into a 3D cell grid with dimension
  *  \ref DomainDecomposition::cell_grid. Together with one ghost cell
  *  layer on each side the overall dimension of the ghost cell grid is
  *  \ref DomainDecomposition::ghost_cell_grid. The domain
  *  decomposition enables one the use of the linked cell algorithm
- *  which is in turn used for setting up the verlet list for the
+ *  which is in turn used for setting up the Verlet list for the
  *  system. You can see a 2D graphical representation of the linked
  *  cell grid below.
  *
@@ -77,6 +77,7 @@ struct DomainDecomposition {
   double cell_size[3];
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   double inv_cell_size[3];
+  bool fully_connected[3];
 };
 
 /************************************************************/
@@ -152,7 +153,7 @@ void dd_topology_release();
     Molecular dynamics, or any other integration scheme using only local
     particle moves)
 */
-void dd_exchange_and_sort_particles(int global_flag);
+void dd_exchange_and_sort_particles(int global, ParticleList *pl);
 
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells();

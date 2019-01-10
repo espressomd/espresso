@@ -94,6 +94,10 @@ public:
       }
     }
 
+    if (method == "mirror") {
+      return par.at("value");
+    }
+
     throw std::runtime_error("Unknown method");
   }
 

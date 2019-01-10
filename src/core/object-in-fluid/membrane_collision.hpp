@@ -21,7 +21,7 @@
 #ifndef MEMBRANE_COLLISION_H
 #define MEMBRANE_COLLISION_H
 
-/** \file membrane_collision.hpp
+/** \file
  *  Routines to calculate the membrane collision force
  *  for a particle pair.
  *  \ref forces.cpp
@@ -35,7 +35,6 @@
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "random.hpp"
 
 int membrane_collision_set_params(int part_type_a, int part_type_b, double a,
                                   double n, double cut, double offset);

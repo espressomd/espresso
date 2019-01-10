@@ -20,7 +20,7 @@
 */
 #ifndef _QUARTIC_HPP
 #define _QUARTIC_HPP
-/** \file quartic.hpp
+/** \file
  *  Routines to calculate the HARMONIC Energy or/and HARMONIC force
  *  for a particle pair.
  *  \ref forces.cpp
@@ -31,7 +31,6 @@
 #include "bonded_interaction_data.hpp"
 #include "debug.hpp"
 #include "particle_data.hpp"
-#include "random.hpp"
 #include "utils.hpp"
 
 /// set the parameters for the quartic potential
@@ -39,11 +38,11 @@ int quartic_set_params(int bond_type, double k0, double k1, double r,
                        double r_cut);
 
 /** Computes the QUARTIC pair force and adds this
-    force to the particle forces (see \ref interaction_data.cpp).
+    force to the particle forces (see \ref bonded_interaction_data.cpp).
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
     @param iaparams  bond type number of the angle interaction (see \ref
-   interaction_data.cpp).
+   bonded_interaction_data.cpp).
     @param dx        particle distance vector
     @param force     returns force of particle 1
     @return 0.

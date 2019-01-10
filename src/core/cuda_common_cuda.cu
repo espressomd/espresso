@@ -17,6 +17,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "cuda_wrapper.hpp"
+
 #include "config.hpp"
 #include "debug.hpp"
 
@@ -33,13 +35,13 @@
 #endif
 
 static CUDA_global_part_vars global_part_vars_host = {0, 0, 0};
-static __device__ __constant__ CUDA_global_part_vars global_part_vars_device;
+__device__ __constant__ CUDA_global_part_vars global_part_vars_device[1];
 
 /** struct for particle force */
 static float *particle_forces_device = nullptr;
 static float *particle_torques_device = nullptr;
 
-/** struct for particle position and veloctiy */
+/** struct for particle position and velocity */
 static CUDA_particle_data *particle_data_device = nullptr;
 /** struct for storing particle rn seed */
 static CUDA_particle_seed *particle_seeds_device = nullptr;
@@ -115,7 +117,7 @@ __device__ unsigned int getThreadIndex() {
          threadIdx.x;
 }
 
-/** kernel for the initalisation of the particle force array
+/** kernel for the initialisation of the particle force array
  * @param *particle_forces_device	    Pointer to local particle force
  * (Output)
  * @param *particle_seeds_device			Pointer to the particle
@@ -129,7 +131,7 @@ __global__ void init_particle_force(float *particle_forces_device,
 
   unsigned int part_index = getThreadIndex();
 
-  if (part_index < global_part_vars_device.number_of_particles) {
+  if (part_index < global_part_vars_device->number_of_particles) {
     particle_forces_device[3 * part_index + 0] = 0.0f;
     particle_forces_device[3 * part_index + 1] = 0.0f;
     particle_forces_device[3 * part_index + 2] = 0.0f;
@@ -141,11 +143,11 @@ __global__ void init_particle_force(float *particle_forces_device,
 #endif
 
     particle_seeds_device[part_index].seed =
-        global_part_vars_device.seed + part_index;
+        global_part_vars_device->seed + part_index;
   }
 }
 
-/** kernel for the initalisation of the fluid composition
+/** kernel for the initialisation of the fluid composition
  * @param *fluid_composition_device Pointer to local fluid composition (Output)
  */
 __global__ void
@@ -156,14 +158,14 @@ init_fluid_composition(CUDA_fluid_composition *fluid_composition_device) {
            particles have been created after the fluid */
   unsigned int part_index = getThreadIndex();
 
-  if (part_index < global_part_vars_device.number_of_particles) {
+  if (part_index < global_part_vars_device->number_of_particles) {
     for (int ii = 0; ii < LB_COMPONENTS; ii++) {
       fluid_composition_device[part_index].weight[ii] = 0.0f;
     }
   }
 }
 
-/** kernel for the initalisation of the partikel force array
+/** kernel for the initialisation of the particle force array
  * @param *particle_forces_device	pointer to local particle force (Input)
  */
 __global__ void reset_particle_force(float *particle_forces_device,
@@ -171,7 +173,7 @@ __global__ void reset_particle_force(float *particle_forces_device,
 
   unsigned int part_index = getThreadIndex();
 
-  if (part_index < global_part_vars_device.number_of_particles) {
+  if (part_index < global_part_vars_device->number_of_particles) {
     particle_forces_device[3 * part_index + 0] = 0.0f;
     particle_forces_device[3 * part_index + 1] = 0.0f;
     particle_forces_device[3 * part_index + 2] = 0.0f;
@@ -202,7 +204,7 @@ void gpu_change_number_of_part_to_comm() {
     global_part_vars_host.seed = (unsigned int)std::random_device{}();
     global_part_vars_host.number_of_particles = n_part;
 
-    cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device,
+    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(global_part_vars_device),
                                      &global_part_vars_host,
                                      sizeof(CUDA_global_part_vars)));
 
@@ -259,7 +261,6 @@ void gpu_change_number_of_part_to_comm() {
 
     if (global_part_vars_host.number_of_particles) {
 
-#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
       /**pinned memory mode - use special function to get OS-pinned memory*/
       cuda_safe_mem(cudaHostAlloc((void **)&particle_data_host,
                                   global_part_vars_host.number_of_particles *
@@ -289,29 +290,6 @@ void gpu_change_number_of_part_to_comm() {
                                       sizeof(CUDA_fluid_composition),
                                   cudaHostAllocWriteCombined));
 #endif
-#else // __CUDA_ARCH__
-      cuda_safe_mem(cudaMallocHost((void **)&particle_data_host,
-                                   global_part_vars_host.number_of_particles *
-                                       sizeof(CUDA_particle_data)));
-      cuda_safe_mem(cudaMallocHost(
-          (void **)&particle_forces_host,
-          3 * global_part_vars_host.number_of_particles * sizeof(float)));
-#ifdef ENGINE
-      cuda_safe_mem(cudaMallocHost((void **)&host_v_cs,
-                                   global_part_vars_host.number_of_particles *
-                                       sizeof(CUDA_v_cs)));
-#endif
-#if (defined DIPOLES || defined ROTATION)
-      cuda_safe_mem(cudaMallocHost((void **)&particle_torques_host,
-                                   global_part_vars_host.number_of_particles *
-                                       3 * sizeof(float)));
-#endif
-#ifdef SHANCHEN
-      cuda_safe_mem(cudaMallocHost((void **)&fluid_composition_host,
-                                   global_part_vars_host.number_of_particles *
-                                       sizeof(CUDA_fluid_composition)));
-#endif
-#endif // __CUDA_ARCH__
 
       cuda_safe_mem(cudaMalloc((void **)&particle_forces_device,
                                3 * global_part_vars_host.number_of_particles *
@@ -345,13 +323,12 @@ void gpu_change_number_of_part_to_comm() {
                                            blocks_per_grid_particles_y, 1);
 
       KERNELCALL(init_particle_force, dim_grid_particles,
-                 threads_per_block_particles,
-                 (particle_forces_device, particle_torques_device,
-                  particle_seeds_device));
+                 threads_per_block_particles, particle_forces_device,
+                 particle_torques_device, particle_seeds_device);
 
 #ifdef SHANCHEN
       KERNELCALL(init_fluid_composition, dim_grid_particles,
-                 threads_per_block_particles, (fluid_composition_device));
+                 threads_per_block_particles, fluid_composition_device);
 #endif
     }
   }
@@ -398,7 +375,7 @@ CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host() {
   return &global_part_vars_host;
 }
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer() {
-  return &global_part_vars_device;
+  return global_part_vars_device;
 }
 float *gpu_get_particle_force_pointer() { return particle_forces_device; }
 CUDA_energy *gpu_get_energy_pointer() { return energy_device; }
@@ -469,8 +446,8 @@ void copy_forces_from_GPU(ParticleRange particles) {
       /** reset part forces with zero*/
 
       KERNELCALL(reset_particle_force, dim_grid_particles,
-                 threads_per_block_particles,
-                 (particle_forces_device, particle_torques_device));
+                 threads_per_block_particles, particle_forces_device,
+                 particle_torques_device);
       cudaThreadSynchronize();
     }
 

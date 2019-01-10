@@ -44,7 +44,9 @@ public:
 
   /* Calculate distance from the lbboundary */
   int calc_dist(const double *pos, double *dist, double *vec) const {
-    return m_shape->calculate_dist(pos, dist, vec);
+    m_shape->calculate_dist(Vector3d{pos, pos + 3}, dist, vec);
+
+    return 0;
   }
 
   void set_shape(std::shared_ptr<Shapes::Shape> const &shape) {

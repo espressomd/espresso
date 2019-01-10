@@ -13,7 +13,7 @@ enum BondedInteraction {
   /** This bonded interaction was not set. */
   BONDED_IA_NONE = -1,
   /** Type of bonded interaction is a FENE potential
-      (to be combined with Lennard Jones). */
+      (to be combined with Lennard-Jones). */
   BONDED_IA_FENE,
   /** Type of bonded interaction is a HARMONIC potential. */
   BONDED_IA_HARMONIC,
@@ -36,9 +36,6 @@ enum BondedInteraction {
   BONDED_IA_RIGID_BOND,
   /** Type of a virtual bond*/
   BONDED_IA_VIRTUAL_BOND,
-  /** Type of bonded interaction is a bond angle -- constraint distance
-     potential. */
-  BONDED_IA_ANGLEDIST,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
   /** Type of bonded interaction is a bond angle cosine potential. */
@@ -78,7 +75,7 @@ enum TabulatedBondedInteraction {
 /*@}*/
 /** Parameters for FENE bond Potential.
 k - spring constant.
-drmax - maximal bond streching.
+drmax - maximal bond stretching.
 r0 - equilibrium bond length.
 drmax2 - square of drmax (internal parameter).
 */
@@ -148,13 +145,13 @@ struct Quartic_bond_parameters {
   double r_cut;
 };
 
-/** Parameters for coulomb bond Potential */
+/** Parameters for Coulomb bond Potential */
 struct Bonded_coulomb_bond_parameters {
   double prefactor;
 };
 
 #ifdef P3M
-/** Parameters for coulomb bond p3m shortrange Potential */
+/** Parameters for Coulomb bond p3m shortrange Potential */
 struct Bonded_coulomb_p3m_sr_bond_parameters {
   double q1q2;
 };
@@ -238,25 +235,6 @@ struct Rigid_bond_parameters {
   double v_tol;
 };
 
-/** Parameters for three body angular potential (bond-angle potentials) that
-    depends on distance to wall constraint.
-        ATTENTION: Note that there are different implementations of the bond
-   angle
-        potential which you may chose with a compiler flag in the file \ref
-   config.hpp !
-        bend - bending constant.
-        phi0 - equilibrium angle (default is 180 degrees / Pi)
-        dist0 - equilibrium distance (no default) */
-struct Angledist_bond_parameters {
-  double bend;
-  double phimin;
-  double distmin;
-  double phimax;
-  double distmax;
-  double cos_phi0;
-  double sin_phi0;
-};
-
 enum class tElasticLaw { NeoHookean, Skalak };
 
 /** Parameters for IBM elastic triangle (triel) **/
@@ -334,7 +312,6 @@ union Bond_parameters {
 #endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
-  Angledist_bond_parameters angledist;
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;
@@ -350,7 +327,7 @@ struct Bonded_ia_parameters {
   Bond_parameters p;
 };
 
-/** Field containing the paramters of the bonded ia types */
+/** Field containing the parameters of the bonded ia types */
 extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 
 /** Maximal interaction cutoff (real space/short range bonded interactions). */
@@ -365,7 +342,6 @@ void make_bond_type_exist(int type);
 /** @brief Checks if particle has a pair bond with a given partner
  *  Note that bonds are stored only on one of the two particles in Espresso
  *
- * @param P
  * @param p          particle on which the bond may be stored
  * @param partner    bond partner
  * @param bond_type  numerical bond type */
@@ -390,13 +366,17 @@ inline bool pair_bond_exists_on(const Particle *const p,
 /** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if
  * particles are ghosts.
  *
- * @param P
- * @param p1          particle on which the bond may be stored
- * @param p2    	     bond partner
+ * @param p_bond      particle on which the bond may be stored
+ * @param p_partner   bond partner
  * @param bond        enum bond type */
 inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
                                      const Particle *const p_partner,
                                      BondedInteraction bond) {
+#ifdef ADDITIONAL_CHECKS
+  extern int ghosts_have_bonds;
+  assert(ghosts_have_bonds);
+#endif
+
   int i = 0;
   while (i < p_bond->bl.n) {
     int type_num = p_bond->bl.e[i];
@@ -414,10 +394,9 @@ inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
 /** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if
  * particles are ghosts.
  *
- * @param P
- * @param p1          particle on which the bond may be stored
- * @param p2    	     particle on which the bond may be stored
- * @param bond_type   numerical bond type */
+ * @param p1     particle on which the bond may be stored
+ * @param p2     particle on which the bond may be stored
+ * @param bond   numerical bond type */
 inline bool pair_bond_enum_exists_between(const Particle *const p1,
                                           const Particle *const p2,
                                           BondedInteraction bond) {

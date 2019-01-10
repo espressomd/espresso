@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file pressure_inline.hpp
-    Pressure calculation. Really similar to \ref energy.hpp "energy.h".
+/** \file
+    Pressure calculation. Really similar to \ref energy.hpp "energy.hpp".
 */
 
 #ifndef CORE_PRESSURE_INLINE_HPP
@@ -81,7 +81,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
   }
 
 #ifdef ELECTROSTATICS
-  /* real space coulomb */
+  /* real space Coulomb */
   if (coulomb.method != COULOMB_NONE) {
     switch (coulomb.method) {
 #ifdef P3M
@@ -188,10 +188,6 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
     (*i)++;
     force[0] = force[1] = force[2] = 0;
     break;
-  case BONDED_IA_ANGLEDIST:
-    (*i)++;
-    force[0] = force[1] = force[2] = 0;
-    break;
   case BONDED_IA_DIHEDRAL:
     (*i) += 2;
     force[0] = force[1] = force[2] = 0;
@@ -202,14 +198,14 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
     // printf("BONDED TAB, Particle: %d, P2: %d TYPE_TAB:
     // %d\n",p1->p.identity,p2->p.identity,iparams->p.tab.type);
     switch (iaparams->p.tab.type) {
-    case TAB_BOND_LENGTH:
+    case 1:
       calc_tab_bond_force(p1, p2, iaparams, dx, force);
       break;
-    case TAB_BOND_ANGLE:
+    case 2:
       (*i)++;
       force[0] = force[1] = force[2] = 0;
       break;
-    case TAB_BOND_DIHEDRAL:
+    case 3:
       (*i) += 2;
       force[0] = force[1] = force[2] = 0;
       break;
@@ -426,9 +422,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
       i = i + 2;
     }
 #endif
-    else if (type == BONDED_IA_ANGLEDIST) {
-      i = i + 3;
-    } else if (type == BONDED_IA_DIHEDRAL) {
+    else if (type == BONDED_IA_DIHEDRAL) {
       i = i + 4;
     }
 #ifdef TABULATED

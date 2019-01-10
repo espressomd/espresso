@@ -429,7 +429,7 @@ Description of sample script
     The following features are required:
     ``LB``, ``LB_BOUNDARIES``,
     ``EXTERNAL_FORCES``,
-    ``MASS``, ``CONSTRAINTS``, ``OIF_LOCAL_FORCES``,
+    ``MASS``, ``OIF_LOCAL_FORCES``,
     ``OIF_GLOBAL_FORCES``, ``SOFT_SPHERE``, ``MEMBRANE_COLLISION``
 
 The script described in this section is available in :file:`samples/object-in-fluid/two-cells.py` and also at
@@ -1711,7 +1711,7 @@ In |es|, the basic ingredients to simulate such a system are split into three bo
 
 The system-wide thermostat has to be applied to the centre of mass and not to
 the core particle directly. Therefore, the particles have to be excluded from
-global thermostating.  With ``LANGEVIN_PER_PARTICLE`` enabled, we set the
+global thermostatting.  With ``LANGEVIN_PER_PARTICLE`` enabled, we set the
 temperature and friction coefficient of the Drude complex to zero, which allows
 to still use a global Langevin thermostat for non-polarizable particles.
 

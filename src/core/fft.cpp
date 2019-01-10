@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file fft.cpp
+/** \file
  *
  *  Routines, row decomposition, data structures and communication for the
  * 3D-FFT.
@@ -28,15 +28,15 @@
 #include "fft.hpp"
 
 #ifdef P3M
-
-#include <fftw3.h>
-/* our remapping of malloc interferes with fftw3's name mangling. */
-void *fftw_malloc(size_t n);
-
 #include "communication.hpp"
 #include "debug.hpp"
 #include "fft-common.hpp"
 #include "grid.hpp"
+
+#include "utils/math/permute_ifield.hpp"
+using Utils::permute_ifield;
+
+#include <fftw3.h>
 #include <mpi.h>
 
 /************************************************
@@ -92,7 +92,8 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     int lin_ind;
     map_node_array(i, &(n_pos[0][3 * i + 0]));
     lin_ind = get_linear_index(n_pos[0][3 * i + 0], n_pos[0][3 * i + 1],
-                               n_pos[0][3 * i + 2], n_grid[0]);
+                               n_pos[0][3 * i + 2],
+                               {n_grid[0][0], n_grid[0][1], n_grid[0][2]});
     n_id[0][lin_ind] = i;
   }
 
@@ -115,18 +116,20 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   for (i = 0; i < 3; i++)
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
   for (i = 1; i < 4; i++) {
-    fft.plan[i].g_size =
-        fft_find_comm_groups(n_grid[i - 1], n_grid[i], n_id[i - 1], n_id[i],
-                             fft.plan[i].group, n_pos[i], my_pos[i]);
+    fft.plan[i].g_size = fft_find_comm_groups(
+        {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+        {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+        fft.plan[i].group, n_pos[i], my_pos[i]);
     if (fft.plan[i].g_size == -1) {
       /* try permutation */
       j = n_grid[i][(fft.plan[i].row_dir + 1) % 3];
       n_grid[i][(fft.plan[i].row_dir + 1) % 3] =
           n_grid[i][(fft.plan[i].row_dir + 2) % 3];
       n_grid[i][(fft.plan[i].row_dir + 2) % 3] = j;
-      fft.plan[i].g_size =
-          fft_find_comm_groups(n_grid[i - 1], n_grid[i], n_id[i - 1], n_id[i],
-                               fft.plan[i].group, n_pos[i], my_pos[i]);
+      fft.plan[i].g_size = fft_find_comm_groups(
+          {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+          fft.plan[i].group, n_pos[i], my_pos[i]);
       if (fft.plan[i].g_size == -1) {
         fprintf(stderr, "%d: INTERNAL ERROR: fft_find_comm_groups error\n",
                 this_node);

@@ -225,36 +225,26 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
       auto p4 = get_particle_data(ind4);
 
       // Get vectors of triangles
-      double dx1[3], dx2[3], dx3[3];
-      get_mi_vector(dx1, p1.r.p, p3.r.p);
-      get_mi_vector(dx2, p2.r.p, p3.r.p);
-      get_mi_vector(dx3, p4.r.p, p3.r.p);
+      auto const dx1 = get_mi_vector(p1.r.p, p3.r.p);
+      auto const dx2 = get_mi_vector(p2.r.p, p3.r.p);
+      auto const dx3 = get_mi_vector(p4.r.p, p3.r.p);
 
       // Get normals on triangle; pointing outwards by definition of indices
       // sequence
-      double n1l[3], n2l[3];
-      vector_product(dx1, dx2, n1l);
-      vector_product(dx1, dx3, n2l);
+      auto const n1l = dx1.cross(dx2);
+      auto const n2l = -dx1.cross(dx3);
 
-      // Wolfgang here had a minus. It seems to work, so leave it in
-      n2l[0] = -1 * n2l[0];
-      n2l[1] = -1 * n2l[1];
-      n2l[2] = -1 * n2l[2];
-
-      double n1[3], n2[3];
-      unit_vector(n1l, n1);
-      unit_vector(n2l, n2);
+      auto const n1 = n1l / n1l.norm();
+      auto const n2 = n2l / n2l.norm();
 
       // calculate theta by taking the acos of the scalar n1*n2
-      double sc = scalar(n1, n2);
+      double sc = n1 * n2;
       if (sc > 1.0)
         sc = 1.0;
 
       theta0 = acos(sc);
-      double tmp[3];
-      vector_product(n1, n2, tmp);
 
-      const double desc = scalar(dx1, tmp);
+      auto const desc = dx1 * n1.cross(n2);
       if (desc < 0)
         theta0 = 2.0 * PI - theta0;
 

@@ -18,10 +18,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file grid.cpp   Domain decomposition for parallel computing.
+/** \file
+ *  Domain decomposition for parallel computing.
  *
  *  For more information on the domain decomposition,
- *  see \ref grid.hpp "grid.h".
+ *  see \ref grid.hpp "grid.hpp".
  */
 
 #include "grid.hpp"
@@ -69,9 +70,7 @@ void init_node_grid() {
   cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
 }
 
-int node_grid_is_set() { return (node_grid[0] > 0); }
-
-int map_position_node_array(double pos[3]) {
+int map_position_node_array(const Vector3d &pos) {
   int i, im[3] = {0, 0, 0};
   double f_pos[3];
 

@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file statistics.cpp
+/** \file
     This is the place for analysis (so far...).
     Implementation of statistics.hpp
 */
@@ -27,6 +27,7 @@
 #include "energy.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbgpu.hpp"
 #include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -135,37 +136,41 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
     agg_size[i] = 0;
   }
 
-  short_range_loop(Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
-    auto p1molid = p1.p.mol_id;
-    auto p2molid = p2.p.mol_id;
-    if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
-        ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-      if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
+  // Calculate pair contributions if max_cut is >0. No single particle
+  // contributions apply here
+  if (max_cut > 0)
+    short_range_loop(
+        Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
+          auto p1molid = p1.p.mol_id;
+          auto p2molid = p2.p.mol_id;
+          if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
+              ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
+            if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
 #ifdef ELECTROSTATICS
-        if (charge && (p1.p.q * p2.p.q >= 0)) {
-          return;
-        }
+              if (charge && (p1.p.q * p2.p.q >= 0)) {
+                return;
+              }
 #endif
-        if (d.dist2 < dist_criteria2) {
-          if (p1molid > p2molid) {
-            ind = p1molid * topology.size() + p2molid;
-          } else {
-            ind = p2molid * topology.size() + p1molid;
-          }
-          if (min_contact > 1) {
-            contact_num[ind]++;
-            if (contact_num[ind] >= min_contact) {
-              merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
-                                    link_list);
+              if (d.dist2 < dist_criteria2) {
+                if (p1molid > p2molid) {
+                  ind = p1molid * topology.size() + p2molid;
+                } else {
+                  ind = p2molid * topology.size() + p1molid;
+                }
+                if (min_contact > 1) {
+                  contact_num[ind]++;
+                  if (contact_num[ind] >= min_contact) {
+                    merge_aggregate_lists(head_list, agg_id_list, p1molid,
+                                          p2molid, link_list);
+                  }
+                } else {
+                  merge_aggregate_lists(head_list, agg_id_list, p1molid,
+                                        p2molid, link_list);
+                }
+              }
             }
-          } else {
-            merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
-                                  link_list);
           }
-        }
-      }
-    }
-  });
+        });
 
   /* count number of aggregates
      find aggregate size
@@ -216,7 +221,7 @@ void predict_momentum_particles(double *result) {
 /** Calculate total momentum of the system (particles & LB fluid)
  * inputs are bools to include particles and fluid in the linear momentum
  * calculation
- * @param momentum Result for this processor (Output)
+ * @return Result for this processor (Output)
  */
 std::vector<double> calc_linear_momentum(int include_particles,
                                          int include_lbfluid) {
@@ -821,143 +826,9 @@ int calc_cylindrical_average(
   return ES_OK;
 }
 
-int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
-                            int thetabins, double xrange, double yrange,
-                            double axis[3], double center[3], IntList *beadids,
-                            DoubleList *density_map,
-                            DoubleList *density_profile) {
-  int i, j, t;
-  int bi;
-  int nbeadtypes;
-  int beadcount;
-  double vectprod[3];
-  double pvector[3];
-  double xdist, ydist, rdist, xav, yav, theta;
-  double xbinwidth, ybinwidth, binvolume;
-  double thetabinwidth;
-  double *thetaradii;
-  int *thetacounts;
-  int xindex, yindex, tindex;
-  xbinwidth = xrange / (double)(xbins);
-  ybinwidth = yrange / (double)(ybins);
-
-  nbeadtypes = beadids->n;
-
-  beadcount = 0;
-  xav = 0.0;
-  yav = 0.0;
-
-  for (auto const &pi : partCfg) {
-    for (bi = 0; bi < nbeadtypes; bi++) {
-      if (beadids->e[bi] == pi.p.type) {
-        /* Find the vector from the point to the center */
-        vecsub(center, folded_position(pi), pvector);
-
-        /* Work out x and y coordinates with respect to rotation axis */
-
-        /* Find the minimum distance of the point from the axis */
-        vector_product(axis, pvector, vectprod);
-        xdist = sqrt(sqrlen(vectprod) / sqrlen(axis));
-
-        /* Find the projection of the vector from the point to the center
-           onto the axis vector */
-        ydist = scalar(axis, pvector) / sqrt(sqrlen(axis));
-
-        /* Work out relevant indices for x and y */
-        xindex = (int)(floor(xdist / xbinwidth));
-        yindex = (int)(floor((ydist + yrange * 0.5) / ybinwidth));
-
-        /* Check array bounds */
-        if ((xindex < xbins && xindex > 0) && (yindex < ybins && yindex > 0)) {
-          density_map[bi].e[ybins * xindex + yindex] += 1;
-          xav += xdist;
-          yav += ydist;
-          beadcount += 1;
-        }
-      }
-    }
-  }
-
-  /* Now turn counts into densities for the density map */
-  for (bi = 0; bi < nbeadtypes; bi++) {
-    for (i = 0; i < xbins; i++) {
-      /* All bins are cylinders and therefore constant in yindex */
-      binvolume = PI * (2 * i * xbinwidth + xbinwidth * xbinwidth) * yrange;
-      for (j = 0; j < ybins; j++) {
-        density_map[bi].e[ybins * i + j] /= binvolume;
-      }
-    }
-  }
-
-  /* if required calculate the theta density profile */
-  if (thetabins > 0) {
-    /* Convert the center to an output of the density center */
-    xav = xav / (double)(beadcount);
-    yav = yav / (double)(beadcount);
-    thetabinwidth = 2 * PI / (double)(thetabins);
-    thetaradii =
-        (double *)Utils::malloc(thetabins * nbeadtypes * sizeof(double));
-    thetacounts = (int *)Utils::malloc(thetabins * nbeadtypes * sizeof(int));
-    for (bi = 0; bi < nbeadtypes; bi++) {
-      for (t = 0; t < thetabins; t++) {
-        thetaradii[bi * thetabins + t] = 0.0;
-        thetacounts[bi * thetabins + t] = 0.0;
-      }
-    }
-    /* Maybe there is a nicer way to do this but now I will just repeat the loop
-     * over all particles */
-    for (auto const &pi : partCfg) {
-      for (bi = 0; bi < nbeadtypes; bi++) {
-        if (beadids->e[bi] == pi.p.type) {
-          vecsub(center, folded_position(pi), pvector);
-          vector_product(axis, pvector, vectprod);
-          xdist = sqrt(sqrlen(vectprod) / sqrlen(axis));
-          ydist = scalar(axis, pvector) / sqrt(sqrlen(axis));
-          /* Center the coordinates */
-
-          xdist = xdist - xav;
-          ydist = ydist - yav;
-          rdist = sqrt(xdist * xdist + ydist * ydist);
-          if (ydist >= 0) {
-            theta = acos(xdist / rdist);
-          } else {
-            theta = 2 * PI - acos(xdist / rdist);
-          }
-          tindex = (int)(floor(theta / thetabinwidth));
-          thetaradii[bi * thetabins + tindex] += xdist + xav;
-          thetacounts[bi * thetabins + tindex] += 1;
-          if (tindex >= thetabins) {
-            fprintf(stderr, "ERROR: outside density_profile array bounds in "
-                            "calc_radial_density_map");
-            fflush(nullptr);
-            errexit();
-          } else {
-            density_profile[bi].e[tindex] += 1;
-          }
-        }
-      }
-    }
-
-    /* normalize the theta densities*/
-    for (bi = 0; bi < nbeadtypes; bi++) {
-      for (t = 0; t < thetabins; t++) {
-        rdist = thetaradii[bi * thetabins + t] /
-                (double)(thetacounts[bi * thetabins + t]);
-        density_profile[bi].e[t] /= rdist * rdist;
-      }
-    }
-
-    free(thetaradii);
-    free(thetacounts);
-  }
-
-  return ES_OK;
-}
-
 int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
                  int rbins, int tmax, double *msd, double **vanhove) {
   int c1, c3, c3_max, ind;
-  double p1[3], p2[3], dist;
   double bin_width, inv_bin_width;
   std::vector<int> ids;
 
@@ -980,13 +851,14 @@ int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
     c3_max = (c1 + tmax + 1) > n_configs ? n_configs : c1 + tmax + 1;
     for (c3 = (c1 + 1); c3 < c3_max; c3++) {
       for (auto const &id : ids) {
+        Vector3d p1, p2;
         p1[0] = configs[c1][3 * id];
         p1[1] = configs[c1][3 * id + 1];
         p1[2] = configs[c1][3 * id + 2];
         p2[0] = configs[c3][3 * id];
         p2[1] = configs[c3][3 * id + 1];
         p2[2] = configs[c3][3 * id + 2];
-        dist = distance(p1, p2);
+        auto const dist = (p1 - p2).norm();
         if (dist > rmin && dist < rmax) {
           ind = (int)((dist - rmin) * inv_bin_width);
           vanhove[(c3 - c1 - 1)][ind]++;

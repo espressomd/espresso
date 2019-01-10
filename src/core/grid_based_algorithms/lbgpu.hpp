@@ -17,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file lbgpu.hpp
+/** \file
  * Header file for lbgpu.cpp
  *
  * This is the header file for the Lattice Boltzmann implementation in
@@ -30,7 +30,6 @@
 #include "config.hpp"
 #include "utils.hpp"
 #ifdef LB_GPU
-
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
  * explicitly. This saves a lot of multiplications with 1's and 0's
@@ -38,7 +37,7 @@
 #define D3Q19
 #define LBQ 19
 
-/** Note these are usef for binary logic so should be powers of 2 */
+/** Note these are used for binary logic so should be powers of 2 */
 #define LB_COUPLE_NULL 1
 #define LB_COUPLE_TWO_POINT 2
 #define LB_COUPLE_THREE_POINT 4
@@ -170,28 +169,6 @@ typedef struct {
   float pi[6];
 } LB_rho_v_pi_gpu;
 
-/** Data structure holding the velocity densities for the Lattice Boltzmann
- * system. */
-typedef struct {
-
-  /** velocity density of the node */
-  float *vd;
-  /** seed for the random gen */
-  unsigned int *seed;
-  /** flag indicating whether this site belongs to a boundary */
-  unsigned int *boundary;
-
-} LB_nodes_gpu;
-
-/** Data structure for the randomnr and the seed. */
-typedef struct {
-
-  float randomnr[2];
-
-  unsigned int seed;
-
-} LB_randomnr_gpu;
-
 typedef struct {
 
   lbForceFloat *force_density;
@@ -311,13 +288,13 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]);
 void lb_gpu_get_boundary_forces(double *forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_seed,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
+                            lbForceFloat *host_checkpoint_force,
+                            uint64_t *philox_counter);
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_seed,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
+                            lbForceFloat *host_checkpoint_force,
+                            uint64_t *philox_counter);
 int lb_lbfluid_save_checkpoint_wrapper(char *filename, int binary);
 int lb_lbfluid_load_checkpoint_wrapper(char *filename, int binary);
 
@@ -327,8 +304,8 @@ void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
                                      int include_lbfluid);
 void lb_lbfluid_particles_add_momentum(float velocity[3]);
 
-void lb_lbfluid_set_population(int[3], float[LBQ], int);
-void lb_lbfluid_get_population(int[3], float[LBQ], int);
+void lb_lbfluid_set_population(const Vector3i &, float[LBQ], int);
+void lb_lbfluid_get_population(const Vector3i &, float[LBQ], int);
 
 void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
                                                        double *velocities,

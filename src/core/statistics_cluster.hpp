@@ -20,7 +20,7 @@
 */
 #ifndef STATISTICS_CLUSTER_H
 #define STATISTICS_CLUSTER_H
-/** \file statistics_cluster.hpp
+/** \file
  *
  *  mesh based cluster algorithm to identify hole spaces
  *  (see thesis chapter 3 of H. Schmitz for details)

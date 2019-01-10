@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file halo.cpp
+/** \file
  *
  * Halo scheme for parallelization of lattice algorithms.
  * Implementation of file \ref halo.hpp.
@@ -233,7 +233,7 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
 
 /** Preparation of the halo parallelization scheme. Sets up the
  *  necessary datastructures for \ref halo_communication
- * @param hc         halo communicator beeing created (Input/Output)
+ * @param hc         halo communicator being created (Input/Output)
  * @param lattice    lattice the communication is created for (Input)
  * @param fieldtype  field layout of the lattice data (Input)
  * @param datatype   MPI datatype for the lattice data (Input)
@@ -241,8 +241,8 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
 void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype) {
   int k, n, dir, lr, cnt, num = 0;
-  int *grid = lattice->grid;
-  int *period = lattice->halo_grid;
+  const auto grid = lattice->grid;
+  const auto period = lattice->halo_grid;
 
   for (n = 0; n < hc->num; n++) {
     MPI_Type_free(&(hc->halo_info[n].datatype));

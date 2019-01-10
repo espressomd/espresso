@@ -1,4 +1,5 @@
-#include <cuda.h>
+#include "cuda_wrapper.hpp"
+
 #include <stdio.h>
 #include <thrust/device_vector.h>
 #include <thrust/reduce.h>
@@ -12,7 +13,7 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-/** @TODO: Extend to hight order. This comes from some 1/sin expansion in
+/** @todo Extend to higher order. This comes from some 1/sin expansion in
  * Hockney/Eastwood */
 
 template <int cao>
@@ -290,32 +291,32 @@ double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart,
 
   switch (cao) {
   case 1:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<1>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<1>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 2:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<2>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<2>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 3:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<3>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<3>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 4:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<4>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<4>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 5:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<5>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<5>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 6:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<6>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<6>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 7:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<7>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<7>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   }
 

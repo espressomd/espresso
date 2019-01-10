@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file p3m.hpp  code for calculating the MDLC (magnetic dipolar layer
+/** \file
+ * code for calculating the MDLC (magnetic dipolar layer
  *correction).
  *  Purpose:   get the corrections for dipolar 3D algorithms
  *             when applied to a slab geometry and dipolar
@@ -43,7 +44,7 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-#ifdef DIPOLES
+#if defined(DIPOLES) && defined(DP3M)
 
 DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
 
@@ -92,9 +93,10 @@ double slab_dip_count_mu(double *mt, double *mx, double *my) {
 
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
-      node_sums[0] += p.r.dip[0];
-      node_sums[1] += p.r.dip[1];
-      node_sums[2] += p.r.dip[2];
+      auto const dip = p.calc_dip();
+      node_sums[0] += dip[0];
+      node_sums[1] += dip[1];
+      node_sums[2] += dip[2];
     }
   }
 
@@ -172,9 +174,10 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
 
         for (auto const &p : local_cells.particles()) {
           if (p.p.dipm > 0) {
+            const Vector3d dip = p.calc_dip();
 
-            a = gx * p.r.dip[0] + gy * p.r.dip[1];
-            b = gr * p.r.dip[2];
+            a = gx * dip[0] + gy * dip[1];
+            b = gr * dip[2];
             er = gx * p.r.p[0] + gy * p.r.p[1];
             ez = gr * p.r.p[2];
             c = cos(er);
@@ -265,9 +268,10 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
   ip = 0;
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm > 0) {
-      a = p.r.dip[1] * tz[ip] - p.r.dip[2] * ty[ip];
-      b = p.r.dip[2] * tx[ip] - p.r.dip[0] * tz[ip];
-      c = p.r.dip[0] * ty[ip] - p.r.dip[1] * tx[ip];
+      const Vector3d dip = p.calc_dip();
+      a = dip[1] * tz[ip] - dip[2] * ty[ip];
+      b = dip[2] * tx[ip] - dip[0] * tz[ip];
+      c = dip[0] * ty[ip] - dip[1] * tx[ip];
       tx[ip] = a;
       ty[ip] = b;
       tz[ip] = c;
@@ -345,10 +349,11 @@ double get_DLC_energy_dipolar(int kcut) {
 
         for (auto const &p : local_cells.particles()) {
           if (p.p.dipm > 0) {
+            const Vector3d dip = p.calc_dip();
 
-            a = gx * p.r.dip[0] + gy * p.r.dip[1];
+            a = gx * dip[0] + gy * dip[1];
             {
-              b = gr * p.r.dip[2];
+              b = gr * dip[2];
               er = gx * p.r.p[0] + gy * p.r.p[1];
               ez = gr * p.r.p[2];
               c = cos(er);
@@ -465,6 +470,7 @@ void add_mdlc_force_corrections() {
   ip = 0;
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
+      const Vector3d dip = p.calc_dip();
 
       p.f.f[0] += coulomb.Dprefactor * dip_DLC_f_x[ip];
       p.f.f[1] += coulomb.Dprefactor * dip_DLC_f_y[ip];
@@ -482,12 +488,12 @@ void add_mdlc_force_corrections() {
         dy = 0.0;
         dz = correc * (-1.0) * mz;
 
-        p.f.torque[0] += coulomb.Dprefactor *
-                         (dip_DLC_t_x[ip] + p.r.dip[1] * dz - p.r.dip[2] * dy);
-        p.f.torque[1] += coulomb.Dprefactor *
-                         (dip_DLC_t_y[ip] + p.r.dip[2] * dx - p.r.dip[0] * dz);
-        p.f.torque[2] += coulomb.Dprefactor *
-                         (dip_DLC_t_z[ip] + p.r.dip[0] * dy - p.r.dip[1] * dx);
+        p.f.torque[0] +=
+            coulomb.Dprefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
+        p.f.torque[1] +=
+            coulomb.Dprefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
+        p.f.torque[2] +=
+            coulomb.Dprefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
 
       } else {
 
@@ -496,12 +502,12 @@ void add_mdlc_force_corrections() {
         dy = correps * my;
         dz = correc * (-1.0 + 1. / (2.0 * dp3m.params.epsilon + 1.0)) * mz;
 
-        p.f.torque[0] += coulomb.Dprefactor *
-                         (dip_DLC_t_x[ip] + p.r.dip[1] * dz - p.r.dip[2] * dy);
-        p.f.torque[1] += coulomb.Dprefactor *
-                         (dip_DLC_t_y[ip] + p.r.dip[2] * dx - p.r.dip[0] * dz);
-        p.f.torque[2] += coulomb.Dprefactor *
-                         (dip_DLC_t_z[ip] + p.r.dip[0] * dy - p.r.dip[1] * dx);
+        p.f.torque[0] +=
+            coulomb.Dprefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
+        p.f.torque[1] +=
+            coulomb.Dprefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
+        p.f.torque[2] +=
+            coulomb.Dprefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
       }
 #endif
     }
@@ -575,12 +581,12 @@ double add_mdlc_energy_corrections() {
    same
    value of the dipolar momentum modulus (mu_max). mu_max is taken as the
    largest value of
-   mu inside the system. If we assum the gap has a width gap_size (within which
+   mu inside the system. If we assume the gap has a width gap_size (within which
    there is no particles)
 
    Lz=h+gap_size
 
-   BE CAREFUL:  (1) We assum the short distance for the slab to be in the Z
+   BE CAREFUL:  (1) We assume the short distance for the slab to be in the Z
    direction
    (2) You must also tune the other 3D method to the same accuracy, otherwise
    it has no sense to have a good accurate result for DLC-dipolar.

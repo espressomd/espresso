@@ -44,6 +44,7 @@ cdef extern from "particle_data.hpp":
 
     ctypedef struct particle_position "ParticlePosition":
         Vector3d p
+        Vector3d calc_director()
 
     ctypedef struct particle_force "ParticleForce":
         Vector3d f
@@ -62,6 +63,7 @@ cdef extern from "particle_data.hpp":
         particle_local l
         int_list bl
         int_list exclusions() except +
+        Vector3d calc_dip()
 
     IF ENGINE:
         IF LB or LB_GPU:
@@ -109,12 +111,11 @@ cdef extern from "particle_data.hpp":
         int set_particle_rotation(int part, int rot)
         void pointer_to_rotation(const particle * p, const short int * & res)
 
-    IF ELECTROSTATICS:
-        int set_particle_q(int part, double q)
+    int set_particle_q(int part, double q)
 
     IF LB_ELECTROHYDRODYNAMICS:
         int set_particle_mu_E(int part, double mu_E[3])
-        void get_particle_mu_E(int part, double ( & mu_E)[3])
+        void get_particle_mu_E(int part, double (& mu_E)[3])
 
     int set_particle_type(int part, int type)
 
@@ -123,13 +124,12 @@ cdef extern from "particle_data.hpp":
     IF ROTATION:
         int set_particle_quat(int part, double quat[4])
         void pointer_to_quat(const particle * p, const double * & res)
-        void pointer_to_quatu(const particle * p, const double * & res)
-        int set_particle_omega_lab(int part, double omega[3])
-        int set_particle_omega_body(int part, double omega[3])
-        int set_particle_torque_lab(int part, double torque[3])
-        int set_particle_torque_body(int part, double torque[3])
+        int set_particle_omega_lab(int part, Vector3d omega)
+        int set_particle_omega_body(int part, Vector3d omega)
+        int set_particle_torque_lab(int part, Vector3d torque)
+        int set_particle_torque_body(int part, Vector3d torque)
         void pointer_to_omega_body(const particle * p, const double * & res)
-        void pointer_to_torque_lab(const particle * p, const double * & res)
+        Vector3d get_torque_body(const particle p)
 
     IF MEMBRANE_COLLISION:
         int set_particle_out_direction(int part, double out_direction[3])
@@ -144,7 +144,6 @@ cdef extern from "particle_data.hpp":
 
     IF DIPOLES:
         int set_particle_dip(int part, double dip[3])
-        void pointer_to_dip(const particle * P, const double * & res)
 
         int set_particle_dipm(int part, double dipm)
         void pointer_to_dipm(const particle * P, const double * & res)
@@ -178,8 +177,7 @@ cdef extern from "particle_data.hpp":
         int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double * rel_ori)
         void set_particle_vs_quat(int part, double * vs_quat)
 
-    IF ELECTROSTATICS:
-        void pointer_to_q(const particle * P, const double * & res)
+    void pointer_to_q(const particle * P, const double * & res)
 
     IF EXTERNAL_FORCES:
         IF ROTATION:
@@ -227,11 +225,9 @@ cdef extern from "virtual_sites.hpp":
         int vs_relate_to(int part_num, int relate_to)
 
 cdef extern from "rotation.hpp":
-    void convert_omega_body_to_space(const particle * p, double * omega)
-    void convert_torques_body_to_space(const particle * p, double * torque)
     Vector3d convert_vector_body_to_space(const particle & p, const Vector3d & v)
     Vector3d convert_vector_space_to_body(const particle & p, const Vector3d & v)
-    void rotate_particle(int id, double * axis, double angle)
+    void rotate_particle(int id, Vector3d axis, double angle)
 
 cdef class ParticleHandle(object):
     cdef public int _id
@@ -243,9 +239,9 @@ cdef class _ParticleSliceImpl:
     cdef int _chunk_size
 
 cdef extern from "grid.hpp":
-    Vector3d folded_position(const particle *)
-    Vector3d unfolded_position(const particle *)
-    cdef void fold_position(double *, int*)
+    Vector3d folded_position(const particle * )
+    Vector3d unfolded_position(const particle * )
+    cdef void fold_position(double * , int*)
     void unfold_position(double pos[3], int image_box[3])
 
 cdef make_array_locked(const Vector3d & v)

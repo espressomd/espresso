@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lattice.hpp
+/** \file
  *
  * Lattice class definition
  * Contains the lattice layout and pointers to the data fields.
@@ -48,18 +48,19 @@ class Lattice {
 public:
   using index_t = int;
 
-  int grid[3]; /** number of local lattice sites in each direction (excluding
-                  halo) */
-  int global_grid[3];
-  double agrid[3]; /** lattice constant */
+  Vector3i grid; /** number of local lattice sites in each direction
+                  (excluding halo) */
+  Vector3i global_grid;
+  Vector3d agrid; /** lattice constant */
 
-  int halo_grid[3]; /** number of lattice sites in each direction including halo
-                     */
-  int halo_size;    /** halo size in all directions */
+  Vector3i
+      halo_grid; /** number of lattice sites in each direction including halo
+                  */
+  int halo_size; /** halo size in all directions */
 
-  double offset[3]; /** global offset */
-  double local_offset[3];
-  int local_index_offset[3];
+  Vector3d offset; /** global offset */
+  Vector3d local_offset;
+  Vector3i local_index_offset;
 
   index_t halo_grid_volume; /** total number (volume) of lattice sites
                                (including halo) */
@@ -94,8 +95,7 @@ public:
    *                   elementary cell, 6 directions (Output)
    */
   void map_position_to_lattice(const Vector3d &pos, index_t node_index[8],
-                               double delta[6]);
-
+                               double delta[6]) const;
   /********************** Inline Functions **********************/
 
   /** Map a global lattice site to the node grid.
@@ -130,7 +130,7 @@ public:
    *                   elementary cell, 6 directions (Output)
    * \param tmp_agrid  lattice mesh distance
    */
-  static void map_position_to_lattice_global(Vector3d &pos, int ind[3],
+  static void map_position_to_lattice_global(Vector3d &pos, Vector3i &ind,
                                              double delta[6], double tmp_agrid);
 };
 
