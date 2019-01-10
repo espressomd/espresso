@@ -164,7 +164,7 @@ system.ekboundaries.add(ek_wall_right)
 system.actors.add(ek)
 \end{lstlisting}
 
-After setting up the system, we integrate a sufficient number of time steps to relax the system into the stationary state and output the counterion density profile, the velocity profile, and the shear stress. Since this system has translational symmetry in the x- and y-direction, we iterate over a line in the z direction and use the \texttt{species\[node\].quantity} command, to output local quantities. You can instead also use the \texttt{electrokinetics.print\_vtk\_quantity} command to output the whole field at once in a Paraview compatible format.
+After setting up the system, we integrate a sufficient number of time steps to relax the system into the stationary state and output the counterion density profile, the velocity profile, and the shear stress. Since this system has translational symmetry in the x- and y-direction, we iterate over a line in the z direction and use the \texttt{species[node].quantity} command, to output local quantities. You can instead also use the \texttt{electrokinetics.print\_vtk\_quantity} command to output the whole field at once in a Paraview compatible format.
 
 Density and velocity are not the only fields available for output. Please refer to the User's Guide for all available options.
 

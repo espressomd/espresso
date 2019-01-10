@@ -128,7 +128,7 @@ The main difference in the two methods consists in the fact that in the Reaction
 \section{Example one: homogeneous aqueous solution of acidic species}
 
 Compile Espresso with the following features in your
-myconfig.hpp to be set throughout the whole tutorial:
+\texttt{myconfig.hpp} to be set throughout the whole tutorial:
 
 \begin{verbatim}
 # define LENNARD_JONES
@@ -187,7 +187,7 @@ product_types=[1, 2], product_coefficients=[1, 1], default_charges=
 
 system.setup_type_map([0, 1, 2])
 \end{verbatim}
-You can switch from one method to the other simply by changing the ``mode'' parameter from ``reaction\textunderscore ensemble'' to ``constant\textunderscore pH\textunderscore ensemble''. Now the system is ready to be simulated.
+You can switch from one method to the other simply by changing the \texttt{mode} parameter from \texttt{"reaction\_ensemble"} to \texttt{"constant\_pH\_ensemble"}. Now the system is ready to be simulated.
 
 \begin{verbatim}
 Nreac = 10**4 #number of association/dissociation attempt to be performed
