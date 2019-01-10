@@ -43,8 +43,7 @@ if(SCAFACOS)
 endif(SCAFACOS)
 
 if(GSL_FOUND)
-  target_include_directories(EspressoCore PUBLIC ${GSL_INCLUDE_DIRS})
-  target_link_libraries(EspressoCore PRIVATE GSL::gsl GSL::gslcblas)
+  target_link_libraries(EspressoCore GSL::gsl GSL::gslcblas)
 endif(GSL_FOUND)
 
 if(CUDA)
