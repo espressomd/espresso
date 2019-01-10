@@ -2274,41 +2274,45 @@ lb_relax_modes(Lattice::index_t index, const std::array<double, 19> &modes) {
 inline std::array<double, 19>
 lb_thermalize_modes(Lattice::index_t index, const r123::Philox4x64::ctr_type &c,
                     const std::array<double, 19> &modes) {
-  using Utils::uniform;
-  using rng_type = r123::Philox4x64;
-  using ctr_type = rng_type::ctr_type;
+  if (lbpar.fluct) {
+      using Utils::uniform;
+      using rng_type = r123::Philox4x64;
+      using ctr_type = rng_type::ctr_type;
 
-  const double rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
-  auto const pref = std::sqrt(12.) * rootrho;
+      const double rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
+      auto const pref = std::sqrt(12.) * rootrho;
 
-  const ctr_type noise[4] = {
-      rng_type{}(c, {{static_cast<uint64_t>(index), 0ul}}),
-      rng_type{}(c, {{static_cast<uint64_t>(index), 1ul}}),
-      rng_type{}(c, {{static_cast<uint64_t>(index), 2ul}}),
-      rng_type{}(c, {{static_cast<uint64_t>(index), 3ul}})};
+      const ctr_type noise[4] = {
+          rng_type{}(c, {{static_cast<uint64_t>(index), 0ul}}),
+          rng_type{}(c, {{static_cast<uint64_t>(index), 1ul}}),
+          rng_type{}(c, {{static_cast<uint64_t>(index), 2ul}}),
+          rng_type{}(c, {{static_cast<uint64_t>(index), 3ul}})};
 
-  auto rng = [&](int i) { return uniform(noise[i / 4][i % 4]); };
+      auto rng = [&](int i) { return uniform(noise[i / 4][i % 4]); };
 
-  return {/* conserved modes */
-          {modes[0], modes[1], modes[2], modes[3],
-           /* stress modes */
-           modes[4] + pref * lbpar.phi[4] * rng(0),
-           modes[5] + pref * lbpar.phi[5] * rng(1),
-           modes[6] + pref * lbpar.phi[6] * rng(2),
-           modes[7] + pref * lbpar.phi[7] * rng(3),
-           modes[8] + pref * lbpar.phi[8] * rng(4),
-           modes[9] + pref * lbpar.phi[9] * rng(5),
+      return {/* conserved modes */
+              {modes[0], modes[1], modes[2], modes[3],
+               /* stress modes */
+               modes[4] + pref * lbpar.phi[4] * rng(0),
+               modes[5] + pref * lbpar.phi[5] * rng(1),
+               modes[6] + pref * lbpar.phi[6] * rng(2),
+               modes[7] + pref * lbpar.phi[7] * rng(3),
+               modes[8] + pref * lbpar.phi[8] * rng(4),
+               modes[9] + pref * lbpar.phi[9] * rng(5),
 
-           /* ghost modes */
-           modes[10] + pref * lbpar.phi[10] * rng(6),
-           modes[11] + pref * lbpar.phi[11] * rng(7),
-           modes[12] + pref * lbpar.phi[12] * rng(8),
-           modes[13] + pref * lbpar.phi[13] * rng(9),
-           modes[14] + pref * lbpar.phi[14] * rng(10),
-           modes[15] + pref * lbpar.phi[15] * rng(11),
-           modes[16] + pref * lbpar.phi[16] * rng(12),
-           modes[17] + pref * lbpar.phi[17] * rng(13),
-           modes[18] + pref * lbpar.phi[18] * rng(14)}};
+               /* ghost modes */
+               modes[10] + pref * lbpar.phi[10] * rng(6),
+               modes[11] + pref * lbpar.phi[11] * rng(7),
+               modes[12] + pref * lbpar.phi[12] * rng(8),
+               modes[13] + pref * lbpar.phi[13] * rng(9),
+               modes[14] + pref * lbpar.phi[14] * rng(10),
+               modes[15] + pref * lbpar.phi[15] * rng(11),
+               modes[16] + pref * lbpar.phi[16] * rng(12),
+               modes[17] + pref * lbpar.phi[17] * rng(13),
+               modes[18] + pref * lbpar.phi[18] * rng(14)}};
+  } else {
+    return modes;
+  }
 }
 
 template <typename T>
@@ -2429,22 +2433,21 @@ inline void lb_collide_stream() {
 #endif // LB_BOUNDARIES
         {
           /* calculate modes locally */
-          std::array<double, 19> modes = lb_calc_modes(index);
+          auto const modes = lb_calc_modes(index);
 
           /* deterministic collisions */
-          modes = lb_relax_modes(index, modes);
+          auto const relaxed_modes = lb_relax_modes(index, modes);
 
           /* fluctuating hydrodynamics */
-          if (lbpar.fluct)
-            modes = lb_thermalize_modes(index, c, modes);
+          auto const thermalized_modes = lb_thermalize_modes(index, c, relaxed_modes);
 
           /* apply forces */
-          modes = lb_apply_forces(index, modes);
+          auto const modes_with_forces = lb_apply_forces(index, thermalized_modes);
 
           lb_reset_force_densities(index);
 
           /* transform back to populations and streaming */
-          lb_calc_n_from_modes_push(lbfluid_post, index, modes);
+          lb_calc_n_from_modes_push(lbfluid_post, index, modes_with_forces);
         }
 
         ++index; /* next node */
