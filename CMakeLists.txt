@@ -72,7 +72,8 @@ option(WITH_GSL "Build with GSL support" ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
-option(WITH_SCAFACOS "Build with Scafacos support" ON)
+option(WITH_SCAFACOS "Build with Scafacos support" OFF)
+option(WITH_BENCHMARKS "Enable benchmarks"   OFF)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
 if( CMAKE_VERSION VERSION_GREATER 3.5.2 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
@@ -476,6 +477,11 @@ if(WITH_TESTS)
   add_custom_target(check)
   add_subdirectory(testsuite)
 endif(WITH_TESTS)
+
+if(WITH_BENCHMARKS)
+  add_custom_target(benchmark)
+  add_subdirectory(maintainer/benchmarks)
+endif(WITH_BENCHMARKS)
 
 #######################################################################
 # Subdirectories
