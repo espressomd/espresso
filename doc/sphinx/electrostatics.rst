@@ -15,8 +15,10 @@ where
    C=\frac{1}{4\pi \epsilon_0 \epsilon_r}
    :label: coulomb_prefactor
 
-is a prefactor which can be set by the user.
-The commonly used Bdrm length :math:`l_B = e_o^2 / (4 \pi \epsilon_0 \epsilon_r k_B T)` is the length at which the Coulomb energy between two unit charges is equal to the thermal energy :math:`k_B T`.
+is a prefactor which can be set by the user. The commonly used Bjerrum length
+:math:`l_B = e_o^2 / (4 \pi \epsilon_0 \epsilon_r k_B T)` is the length at
+which the Coulomb energy between two unit charges is equal to the thermal
+energy :math:`k_B T`.
 Based on the this length, the prefactor is given by :math:`C=l_B k_B T`.
 
 Computing electrostatic interactions is computationally very expensive.

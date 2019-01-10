@@ -94,7 +94,7 @@ for s in [["Anion", "Cation"], ["Anion", "Anion"], ["Cation", "Cation"]]:
         epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 
-print("\n--->Lennard Jones Equilibration")
+print("\n--->Lennard-Jones Equilibration")
 max_sigma = max(lj_sigmas.values())
 min_dist = 0.0
 cap = 10.0

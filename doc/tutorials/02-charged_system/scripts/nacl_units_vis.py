@@ -103,7 +103,7 @@ def main():
     system.cell_system.skin = 0.3
     system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
-    # Place particles
+    # Place particles on a face-centered cubic lattice
     q = 1
     l = box_l / n_ppside
     for i in range(n_ppside):

@@ -30,7 +30,7 @@ from espressomd import visualization
 box_l = 10.7437
 density = 0.7
 
-# Interaction parameters (repulsive Lennard Jones)
+# Interaction parameters (repulsive Lennard-Jones)
 #############################################################
 
 lj_eps = 1.0
