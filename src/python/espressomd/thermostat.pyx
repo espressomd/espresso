@@ -102,9 +102,10 @@ cdef class Thermostat(object):
                              "p_diff"], piston=thmst["piston"])
             if thmst["type"] == "DPD":
                 self.set_dpd(kT=thmst["kT"])
-            if thmst["type"] == "BROWNIAN":
-                self.set_brownian(kT=thmst["kT"], gamma=thmst[
-                                  "gamma"], gamma_rotation=thmst["gamma_rotation"])
+            IF BROWNIAN_DYNAMICS:
+                if thmst["type"] == "BROWNIAN":
+                    self.set_brownian(kT=thmst["kT"], gamma=thmst[
+                                      "gamma"], gamma_rotation=thmst["gamma_rotation"])
 
     def get_ts(self):
         return thermo_switch
@@ -138,6 +139,29 @@ cdef class Thermostat(object):
                 lang_dict["gamma_rotation"] = None
 
             thermo_list.append(lang_dict)
+        IF BROWNIAN_DYNAMICS:
+            if thermo_switch & THERMO_BROWNIAN:
+                lang_dict = {}
+                lang_dict["type"] = "BROWNIAN"
+                lang_dict["kT"] = temperature
+                lang_dict["act_on_virtual"] = thermo_virtual
+                IF PARTICLE_ANISOTROPY:
+                    lang_dict["gamma"] = [langevin_gamma[0],
+                                          langevin_gamma[1],
+                                          langevin_gamma[2]]
+                ELSE:
+                    lang_dict["gamma"] = langevin_gamma
+                IF ROTATION:
+                    IF PARTICLE_ANISOTROPY:
+                        lang_dict["gamma_rotation"] = [langevin_gamma_rotation[0],
+                                                       langevin_gamma_rotation[1],
+                                                       langevin_gamma_rotation[2]]
+                    ELSE:
+                        lang_dict["gamma_rotation"] = langevin_gamma_rotation
+                ELSE:
+                    lang_dict["gamma_rotation"] = None
+
+                thermo_list.append(lang_dict)
         if thermo_switch & THERMO_LB:
             lb_dict = {}
             lb_dict["type"] = "LB"
