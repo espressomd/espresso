@@ -337,7 +337,7 @@ cdef class Thermostat(object):
 
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
-        def set_lb(self, seed=None, act_on_virtual=True, LB_instance=None):
+        def set_lb(self, seed=None, act_on_virtual=True, LB_fluid=None):
             """
             Sets the LB thermostat.
 
@@ -345,7 +345,7 @@ cdef class Thermostat(object):
 
             Parameters
             ----------
-            LB_instance : instance of :class:`espressomd.LBFluid` or :class:`espressomd.LBFluidGPU`
+            LB_fluid : instance of :class:`espressomd.LBFluid` or :class:`espressomd.LBFluidGPU`
             seed : :obj:`int`
                  Seed for the random number generator, required
                  if kT > 0.
@@ -353,14 +353,14 @@ cdef class Thermostat(object):
                 If true the thermostat will act on virtual sites, default is on.
 
             """
-            valid_LB_instance = False
+            valid_LB_fluid = False
             IF LB:
-                if isinstance(LB_instance, LBFluid):
-                    valid_LB_instance = True
+                if isinstance(LB_fluid, LBFluid):
+                    valid_LB_fluid = True
             IF LB_GPU:
-                if isinstance(LB_instance, LBFluidGPU):
-                    valid_LB_instance = True
-            if not valid_LB_instance:
+                if isinstance(LB_fluid, LBFluidGPU):
+                    valid_LB_fluid = True
+            if not valid_LB_fluid:
                 raise ValueError(
                     "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
