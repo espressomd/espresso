@@ -115,7 +115,6 @@ vskin = 0.1
 frict = 20.0
 visco = 1.0
 densi = 1.0
-temp = 0.0
 
 lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco,
                     tau=dt, fric=frict, couple='3pt')
@@ -123,7 +122,6 @@ lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco,
 # What does 'couple 3pt' imply?
 # Can the particle rotate in the flow field?
 system.actors.add(lbf)
-system.thermostat.set_lb(kT=temp)
 
 ##########################################################################
 

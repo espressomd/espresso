@@ -68,13 +68,25 @@ The LBM should
 parameters that were applied.
 
 In the following, we describe a number of optional parameters.
+Thermalization of the fluid (and particle coupling later on) can be activated by
+providing a non-zero value for the parameter ``kT``. Then, a seed has to be provided for
+the fluid thermalization::
+
+    lbfluid = espressomd.lb.LBFluid(kT=1.0, seed=134, ...)
+
 The parameter ``ext_force_density`` takes a three dimensional vector as an
 `array_like`, representing a homogeneous external body force density in MD
-units to be applied to the fluid. The
-parameter ``bulk_visc`` allows one to tune the bulk viscosity of the fluid and is given in
-MD units. In the limit of low Mach number, the flow does not compress the fluid and the resulting flow field is therefore independent of the bulk viscosity. It is however known that the value of the viscosity does affect
-the quality of the implemented link-bounce-back method. ``gamma_even`` and ``gamma_odd`` are the
-relaxation parameters for the kinetic modes. These fluid parameters do not correspond to any macroscopic fluid properties, but do influence numerical properties of the algorithm, such as the magnitude of the error at boundaries. Unless you are an expert, leave their defaults unchanged. If you do change them, note that they are to be given in LB units.
+units to be applied to the fluid. The parameter ``bulk_visc`` allows one to
+tune the bulk viscosity of the fluid and is given in MD units. In the limit of
+low Mach number, the flow does not compress the fluid and the resulting flow
+field is therefore independent of the bulk viscosity. It is however known that
+the value of the viscosity does affect the quality of the implemented
+link-bounce-back method. ``gamma_even`` and ``gamma_odd`` are the relaxation
+parameters for the kinetic modes. These fluid parameters do not correspond to
+any macroscopic fluid properties, but do influence numerical properties of the
+algorithm, such as the magnitude of the error at boundaries. Unless you are an
+expert, leave their defaults unchanged. If you do change them, note that they
+are to be given in LB units.
 
 Before running a simulation at least the following parameters must be
 set up: ``agrid``, ``tau``, ``visc``, ``dens``, ``fric``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force_density=[0,0,0]``.
@@ -112,20 +124,21 @@ Checkpointing LB
     lb.save_checkpoint(path, binary)
     lb.load_checkpoint(path, binary)
 
-The first command saves all of the LB fluid nodes' populations
-to an ascii (``binary=0``) or binary (``binary=1``) format respectively. The load command loads
-the populations from a checkpoint file written with ``lb.save_checkpoint``. In both cases ``path`` specifies the location of the checkpoint file. This is useful for restarting a simulation either
-on the same machine or a different machine. Some care should be taken
-when using the binary format as the format of doubles can depend on both
-the computer being used as well as the compiler. One thing that one
-needs to be aware of is that loading the checkpoint also requires the
-user to reuse the old forces. This is necessary since the coupling force
-between the particles and the fluid has already been applied to the
-fluid. Failing to reuse the old forces breaks momentum conservation,
-which is in general a problem. It is particularly problematic for bulk
-simulations as the system as a whole acquires a drift of the center of
-mass, causing errors in the calculation of velocities and diffusion
-coefficients. The correct way to restart an LB simulation is to first
+The first command saves all of the LB fluid nodes' populations to an ascii
+(``binary=0``) or binary (``binary=1``) format respectively. The load command
+loads the populations from a checkpoint file written with
+``lb.save_checkpoint``. In both cases ``path`` specifies the location of the
+checkpoint file. This is useful for restarting a simulation either on the same
+machine or a different machine. Some care should be taken when using the binary
+format as the format of doubles can depend on both the computer being used as
+well as the compiler. One thing that one needs to be aware of is that loading
+the checkpoint also requires the user to reuse the old forces. This is
+necessary since the coupling force between the particles and the fluid has
+already been applied to the fluid. Failing to reuse the old forces breaks
+momentum conservation, which is in general a problem. It is particularly
+problematic for bulk simulations as the system as a whole acquires a drift of
+the center of mass, causing errors in the calculation of velocities and
+diffusion coefficients. The correct way to restart an LB simulation is to first
 load in the particles with the correct forces, and use::
 
     sys.integrator.run(steps=number_of_steps, reuse_forces=True)
@@ -138,9 +151,13 @@ old forces to be reused and thus conserves momentum.
 LB as a thermostat
 ------------------
 
-The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions. To enable the LB thermostat, use::
+The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
+The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
+Temperature is set via the ``kT`` argument of the LB fluid. Furthermore a seed has to be given for the
+thermalization of the particle coupling.
+To enable the LB thermostat, use::
 
-    sys.thermostat.set_lb(kT)
+    sys.thermostat.set_lb(LB_fluid=lbf, seed=123)
 
 The LBM implementation in |es| uses Ahlrichs and Dünweg's point coupling
 method to couple MD particles the LB fluid. This coupling consists of a
