@@ -40,7 +40,8 @@ def validate_params(_params, default):
     if _params["start_id"] < 0:
         raise ValueError(
             "start_id has to be a positive Integer")
-    if not hasattr(_params["start_pos"], "__getitem__") or len(_params["start_pos"]) != 3:
+    if not hasattr(_params["start_pos"], "__getitem__") \
+            or len(_params["start_pos"]) != 3:
         raise ValueError(
             "start_pos has to be an numpy array with 3 Elements")
     if not is_valid_type(_params["mode"], int):
@@ -52,7 +53,8 @@ def validate_params(_params, default):
     if _params["max_tries"] < 0 and default["max_tries"] != _params["max_tries"]:
         raise ValueError(
             "max_tries has to be a positive Integer")
-    if not is_valid_type(_params["val_poly"], float) and default["val_poly"] != _params["val_poly"]:
+    if not is_valid_type(_params["val_poly"], float) \
+            and default["val_poly"] != _params["val_poly"]:
         raise ValueError(
             "val_poly has to be a float")
     if _params["charge_distance"] < 0:
@@ -164,7 +166,6 @@ def create_polymer(**kwargs):
     default_params["MPC"] = 0
     default_params["bond_length"] = 0
     default_params["start_id"] = 0
-    default_params["start_pos"] = np.array([0, 0, 0])
     default_params["mode"] = 1
     default_params["shield"] = 0
     default_params["max_tries"] = 1000
@@ -179,13 +180,28 @@ def create_polymer(**kwargs):
     params = default_params
 
     valid_keys = [
-        "N_P", "MPC", "bond_length", "bond", "start_id", "start_pos", "mode", "shield", "max_tries",
-        "val_poly", "charge_distance", "type_poly_neutral", "type_poly_charged", "angle", "angle2", "constraints", "pos2"]
+        "N_P",
+        "MPC",
+        "bond_length",
+        "bond",
+        "start_id",
+        "start_pos",
+        "mode",
+        "shield",
+        "max_tries",
+        "val_poly",
+        "charge_distance",
+        "type_poly_neutral",
+        "type_poly_charged",
+        "angle",
+        "angle2",
+        "constraints",
+        "pos2"]
 
     required_keys = ["N_P", "MPC", "bond_length", "bond", "start_pos"]
 
     for k in kwargs:
-        if not k in valid_keys:
+        if k not in valid_keys:
             raise ValueError("Unknown parameter '%s'" % k)
         params[k] = kwargs[k]
 
@@ -193,7 +209,8 @@ def create_polymer(**kwargs):
         if k not in kwargs:
             print(k)
             raise ValueError(
-                "At least the following keys have to be given as keyword arguments: " + required_keys.__str__())
+                "At least the following keys have to be given as keyword "
+                "arguments: " + required_keys.__str__())
 
     validate_params(params, default_params)
 
@@ -208,19 +225,16 @@ def create_polymer(**kwargs):
 
     if "pos2" in params:
         polymerC(
-            partCfg(), params["N_P"], params["MPC"], params[
-                "bond_length"], params["start_id"],
-             start_pos, params["mode"], params["shield"], params["max_tries"],
-             params["val_poly"], params[
-                 "charge_distance"], params["type_poly_neutral"],
-             params["type_poly_charged"], bond_id, params["angle"],
-             params["angle2"], start_pos2, params["constraints"])
+            partCfg(), params["N_P"], params["MPC"], params["bond_length"],
+            params["start_id"], start_pos, params["mode"], params["shield"],
+            params["max_tries"], params["val_poly"], params["charge_distance"],
+            params["type_poly_neutral"], params["type_poly_charged"], bond_id,
+            params["angle"], params["angle2"], start_pos2,
+            params["constraints"])
     else:
         polymerC(
-            partCfg(), params["N_P"], params["MPC"], params[
-                "bond_length"], params["start_id"],
-             start_pos, params["mode"], params["shield"], params["max_tries"],
-             params["val_poly"], params[
-                 "charge_distance"], params["type_poly_neutral"],
-             params["type_poly_charged"], bond_id, params["angle"],
-             params["angle2"], NULL, params["constraints"])
+            partCfg(), params["N_P"], params["MPC"], params["bond_length"],
+            params["start_id"], start_pos, params["mode"], params["shield"],
+            params["max_tries"], params["val_poly"], params["charge_distance"],
+            params["type_poly_neutral"], params["type_poly_charged"], bond_id,
+            params["angle"], params["angle2"], NULL, params["constraints"])

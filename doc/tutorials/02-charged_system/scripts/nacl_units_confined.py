@@ -18,11 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import espressomd
 from espressomd import electrostatics, electrostatic_extensions, assert_features
 from espressomd.shapes import Wall
 import numpy
 
-assert_features(["ELECTROSTATICS", "CONSTRAINTS", "MASS", "LENNARD_JONES"])
+assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
@@ -73,22 +74,30 @@ system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
 # Walls
-system.constraints.add(shape=Wall(
-    dist=0, normal=[0, 0, 1]), particle_type=types["Electrode"])
-system.constraints.add(shape=Wall(
-    dist=-box_z, normal=[0, 0, -1]), particle_type=types["Electrode"])
+system.constraints.add(shape=Wall(dist=0, normal=[0, 0, 1]),
+                       particle_type=types["Electrode"])
+system.constraints.add(shape=Wall(dist=-box_z, normal=[0, 0, -1]),
+                       particle_type=types["Electrode"])
 
 # Place particles
 for i in range(int(n_ionpairs)):
     p = numpy.random.random(3) * box_l
     p[2] += lj_sigmas["Electrode"]
-    system.part.add(id=len(system.part),
-                    type=types["Cl"], pos=p, q=charges["Cl"], mass=masses["Cl"])
+    system.part.add(
+        id=len(system.part),
+        type=types["Cl"],
+        pos=p,
+        q=charges["Cl"],
+        mass=masses["Cl"])
 for i in range(int(n_ionpairs)):
     p = numpy.random.random(3) * box_l
     p[2] += lj_sigmas["Electrode"]
-    system.part.add(id=len(system.part),
-                    type=types["Na"], pos=p, q=charges["Na"], mass=masses["Na"])
+    system.part.add(
+        id=len(system.part),
+        type=types["Na"],
+        pos=p,
+        q=charges["Na"],
+        mass=masses["Na"])
 
 # Lennard-Jones interactions parameters
 
@@ -107,7 +116,8 @@ def combination_rule_sigma(rule, sig1, sig2):
         return ValueError("No combination rule defined")
 
 
-for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"], ["Na", "Electrode"], ["Cl", "Electrode"]]:
+for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"],
+          ["Na", "Electrode"], ["Cl", "Electrode"]]:
     lj_sig = combination_rule_sigma(
         "Berthelot", lj_sigmas[s[0]], lj_sigmas[s[1]])
     lj_cut = combination_rule_sigma("Berthelot", lj_cuts[s[0]], lj_cuts[s[1]])
@@ -127,7 +137,7 @@ energy = system.analysis.energy()
 print("After Minimization: E_total=", energy['total'])
 
 print("\n--->Tuning Electrostatics")
-p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=l_bjerrum * temp, accuracy=1e-2)
 system.actors.add(p3m)
 elc = electrostatic_extensions.ELC(gap_size=elc_gap, maxPWerror=1e-3)
 system.actors.add(elc)
@@ -140,13 +150,8 @@ system.time = 0.0
 for i in range(int(num_steps_equilibration / 100)):
     energy = system.analysis.energy()
     temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-    print(
-        "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                              energy[
-                                                                              'total'],
-                                                                              energy[
-                                                                              'coulomb'],
-                                                                              temp_measured))
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(
+        system.time, energy['total'], energy['coulomb'], temp_measured))
     system.integrator.run(100)
 
 
@@ -158,15 +163,10 @@ system.time = 0.0
 cnt = 0
 
 for i in range(num_configs):
-    temp_measured = system.analysis.energy(
-    )['kinetic'] / ((3.0 / 2.0) * n_part)
-    print(
-        "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                              system.analysis.energy()[
-                                                                              'total'],
-                                                                              system.analysis.energy()[
-                                                                              'coulomb'],
-                                                                              temp_measured))
+    temp_measured = system.analysis.energy()['kinetic'] / ((3 / 2.0) * n_part)
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(
+        system.time, system.analysis.energy()['total'],
+        system.analysis.energy()['coulomb'], temp_measured))
     system.integrator.run(integ_steps_per_config)
 
     for p in system.part:

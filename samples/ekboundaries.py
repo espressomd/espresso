@@ -23,7 +23,7 @@ import espressomd
 required_features = ["ELECTROKINETICS", "EK_BOUNDARIES", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
-from espressomd import System, shapes, electrokinetics
+from espressomd import System, shapes, electrokinetics, ekboundaries
 import sys
 
 system = System(box_l=[10, 10, 10])
@@ -51,9 +51,9 @@ print(neg.get_params())
 print(pos[5, 5, 5].density)
 
 
-ek_wall_left = electrokinetics.EKBoundary(
+ek_wall_left = ekboundaries.EKBoundary(
     shape=shapes.Wall(dist=1, normal=[1, 0, 0]), charge_density=-0.01)
-ek_wall_right = electrokinetics.EKBoundary(
+ek_wall_right = ekboundaries.EKBoundary(
     shape=shapes.Wall(dist=-9, normal=[-1, 0, 0]), charge_density=0.01)
 system.ekboundaries.add(ek_wall_left)
 system.ekboundaries.add(ek_wall_right)

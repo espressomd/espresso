@@ -169,9 +169,6 @@ try:
 except ImportError:
     import pickle
 
-with open("particle_save", "wb") as particle_save:
-    pickle.dump(system.part, particle_save, -1)
-
 with open("p3m_save", "wb") as p3m_save:
     pickle.dump(p3m, p3m_save, -1)
 
