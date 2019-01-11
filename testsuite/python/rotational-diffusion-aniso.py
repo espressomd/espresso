@@ -155,29 +155,15 @@ class RotDiffAniso(ut.TestCase):
                     for i in range(3):
                         if i != j:
                             # the LHS of eq. (24) [Perrin1936].
-                            dcosijpp[
-                                i,
-                                j] += dir_cos[
-                                    i,
-                                    i] * dir_cos[
-                                        j,
-                                        j] + dir_cos[
-                                            i,
-                                            j] * dir_cos[
-                                                j,
-                                                i]
+                            dcosijpp[i, j] += dir_cos[i, i] * \
+                                              dir_cos[j, j] + \
+                                              dir_cos[i, j] * \
+                                              dir_cos[j, i]
                             # the LHS of eq. (25) [Perrin1936].
-                            dcosijnn[
-                                i,
-                                j] += dir_cos[
-                                    i,
-                                    i] * dir_cos[
-                                        j,
-                                        j] - dir_cos[
-                                            i,
-                                            j] * dir_cos[
-                                                j,
-                                                i]
+                            dcosijnn[i, j] += dir_cos[i, i] * \
+                                              dir_cos[j, j] - \
+                                              dir_cos[i, j] * \
+                                              dir_cos[j, i]
                             # the LHS of eq. (33) [Perrin1936].
                             dcosij2[i, j] += dir_cos[i, j]**2.0
             dcosjj /= n
