@@ -68,6 +68,21 @@ class ThermoTest(ut.TestCase):
     def setUp(self):
         self.system.time = 0.0
         self.system.part.clear()
+        if "BROWNIAN_DYNAMICS" in espressomd.features():
+            self.system.thermostat.turn_off()
+    
+    def set_initial_cond(self):
+        """
+        Set all the particles to zero coordinates and velocities; same for time.
+        The quaternion is set to default value.
+
+        """
+        system = self.system
+        system.time = 0.0
+        system.part[:].pos = np.zeros((3))
+        system.part[:].v = np.zeros((3))
+        system.part[:].omega_body = np.zeros((3))
+        system.part[:].quat = np.array([1., 0., 0., 0.])
 
     def generate_scalar_ranged_rnd(self, min_par, max_par):
         """
@@ -104,7 +119,7 @@ class ThermoTest(ut.TestCase):
 
     def set_langevin_global_defaults(self):
         """
-        Setup the NVT thermostat viscous friction parameters.
+        Setup the expected NVT thermostat viscous friction parameters.
 
         """
 
@@ -116,7 +131,7 @@ class ThermoTest(ut.TestCase):
 
     def set_langevin_global_defaults_rot_differ(self):
         """
-        Setup the NVT thermostat viscous friction parameters
+        Setup the expected NVT thermostat viscous friction parameters
         with a rotation-specific gamma.
 
         """
@@ -191,10 +206,11 @@ class ThermoTest(ut.TestCase):
             system.part[i].mass = self.mass
             system.part[i].rinertia = self.J
 
-    def dissipation_viscous_drag_setup(self):
+    def dissipation_viscous_drag_setup_bd(self):
         """
         Setup the specific parameters for the following dissipation
         test of the viscous drag terminal velocity stationarity.
+        It is used by the BD test cases only for the moment.
 
         """
         ## Time
@@ -310,10 +326,6 @@ class ThermoTest(ut.TestCase):
         system = self.system
         tol = 7E-3
         if "EXTERNAL_FORCES" in espressomd.features():
-            for k in range(2):
-                system.part[k].pos = np.zeros((3))
-                system.part[k].v = np.zeros((3))
-                system.part[k].omega_body = np.zeros((3))
             # Just some random forces
             f0 = -1.2, 58.3578, 0.002
             f1 = -15.112, -2.0, 368.0
@@ -508,8 +520,10 @@ class ThermoTest(ut.TestCase):
         """
 
         for k in range(2):
+            # for the expected metrics calc
             self.gamma_tran_p_validate[k,:] = self.gamma_tran_p[k,:]
             self.gamma_rot_p_validate[k,:] = self.gamma_rot_p[k,:]
+            # init
             for i in range(n):
                 ind = i + k * n
                 self.system.part[ind].gamma = self.gamma_tran_p[k,:]
@@ -528,7 +542,9 @@ class ThermoTest(ut.TestCase):
         """
 
         for k in range(2):
+            # expected
             self.halfkT_p_validate[k] = self.kT_p[k] / 2.0
+            # init
             for i in range(n):
                 ind = i + k * n
                 self.system.part[ind].temp = self.kT_p[k]
@@ -544,35 +560,11 @@ class ThermoTest(ut.TestCase):
             self.D_tran_p_validate[k,:] = 2.0 * \
                 self.halfkT_p_validate[k] / self.gamma_tran_p_validate[k,:]
 
-    if "BROWNIAN_DYNAMICS" in espressomd.features():
-        def check_fluctuation_dissipation_bd(self, n):
-            system = self.system
-            # Large time-step is OK for BD.
-            system.time_step = 42
-            # Less number of loops are needed in case of BD because the velocity
-            # distribution is already as required. It is not a result of a real dynamics.
-            loops = 8
-            # The BD does not require so the warmup. Only 1 step is enough.
-            # More steps are taken just to be sure that they will not lead
-            # to wrong results.
-            therm_steps = 2
-            system.part[:].v = np.zeros((3))
-            system.part[:].omega_body = np.zeros((3))
-            system.thermostat.turn_off()
-            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
-            self.check_fluctuation_dissipation(n, therm_steps, loops)
-        
-        def check_dissipation_viscous_drag_bd(self):
-            system = self.system
-            system.part[:].v = np.zeros((3))
-            system.part[:].omega_body = np.zeros((3))
-            system.thermostat.turn_off()
-            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
-            # Actual integration and validation run
-            self.check_dissipation_viscous_drag()
-
-    # Test case 0.0: no particle specific values / dissipation only
-    def test_case_00(self):
+    # Test case 0.0.0:
+    # no particle specific values / dissipation only / LD only.
+    # No meaning for the simple BD propagation cause
+    # it has no inertial features.
+    def test_case_000(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
         n = 1
@@ -582,11 +574,29 @@ class ThermoTest(ut.TestCase):
         system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
         # Actual integration and validation run
         self.check_dissipation()
-        if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.dissipation_viscous_drag_setup()
-            self.check_dissipation_viscous_drag_bd()
+
+    # Test case 0.0.1:
+    # no particle specific values / dissipation viscous drag only / BD only.
+    # LD will require too much computational time
+    # (one is tested offline though).
+    if "BROWNIAN_DYNAMICS" in espressomd.features():
+        def test_case_001(self):
+            system = self.system
+            # Each of 2 kind of particles will be represented by n instances:
+            n = 1
+            self.dissipation_param_setup()
+            self.dissipation_viscous_drag_setup_bd()
+            self.set_langevin_global_defaults()
+            # The test case-specific thermostat and per-particle parameters
+            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            # Actual integration and validation run
+            self.check_dissipation_viscous_drag()
 
     # Test case 0.1: no particle specific values / fluctuation & dissipation
+    # Same particle and thermostat parameters for LD and BD are required in order
+    # to test the BD consistency by means of NVT-ensemble.
+    # Less number of steps and other specific integration parameters of BD
+    # reflect its temporal scale advances.
     def test_case_01(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
@@ -596,35 +606,59 @@ class ThermoTest(ut.TestCase):
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.turn_off()
         system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
         self.set_diffusivity_tran()
         # Actual integration and validation run
         self.check_fluctuation_dissipation(n, therm_steps, loops)
         if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.check_fluctuation_dissipation_bd(n)
+            self.set_initial_cond()
+            # Large time-step is OK for BD.
+            system.time_step = 42
+            # Less number of loops are needed in case of BD because the velocity
+            # distribution is already as required. It is not a result of a real dynamics.
+            loops = 8
+            # The BD does not require so the warmup. Only 1 step is enough.
+            # More steps are taken just to be sure that they will not lead
+            # to wrong results.
+            therm_steps = 2
+            # The test case-specific thermostat
+            system.thermostat.turn_off()
+            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            # Actual integration and validation run
+            self.check_fluctuation_dissipation(n, therm_steps, loops)
 
-    # Test case 1.0: particle specific gamma but not temperature / dissipation
-    # only
-    def test_case_10(self):
+    # Test case 1.0.0: particle specific gamma but not temperature / dissipation
+    # only / LD only
+    def test_case_100(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
         n = 1
         self.dissipation_param_setup()
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.turn_off()
         system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
         self.set_particle_specific_gamma(n)
         # Actual integration and validation run
         self.check_dissipation()
-        if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.dissipation_viscous_drag_setup()
+
+    # Test case 1.0.1: particle specific gamma but not temperature /
+    # dissipation viscous drag only / BD only.
+    if "BROWNIAN_DYNAMICS" in espressomd.features():
+        def test_case_101(self):
+            system = self.system
+            # Each of 2 kind of particles will be represented by n instances:
+            n = 1
+            self.dissipation_param_setup()
+            self.dissipation_viscous_drag_setup_bd()
+            self.set_langevin_global_defaults()
+            # The test case-specific thermostat and per-particle parameters
+            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
             self.set_particle_specific_gamma(n)
-            self.check_dissipation_viscous_drag_bd()
+            # Actual integration and validation run
+            self.check_dissipation_viscous_drag()
 
     # Test case 1.1: particle specific gamma but not temperature / fluctuation
-    # & dissipation
+    # & dissipation / LD and BD
     def test_case_11(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
@@ -634,35 +668,54 @@ class ThermoTest(ut.TestCase):
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.turn_off()
         system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
         self.set_particle_specific_gamma(n)
         self.set_diffusivity_tran()
         # Actual integration and validation run
         self.check_fluctuation_dissipation(n, therm_steps, loops)
         if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.check_fluctuation_dissipation_bd(n)
+            self.set_initial_cond()
+            system.time_step = 42
+            loops = 8
+            therm_steps = 2
+            # The test case-specific thermostat
+            system.thermostat.turn_off()
+            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            # Actual integration and validation run
+            self.check_fluctuation_dissipation(n, therm_steps, loops)
 
-    # Test case 2.0: particle specific temperature but not gamma / dissipation
-    # only
-    def test_case_20(self):
+    # Test case 2.0.0: particle specific temperature but not gamma / dissipation
+    # only / LD only
+    def test_case_200(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
         n = 1
         self.dissipation_param_setup()
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.turn_off()
         system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
         self.set_particle_specific_temperature(n)
         # Actual integration and validation run
         self.check_dissipation()
-        if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.dissipation_viscous_drag_setup()
-            self.check_dissipation_viscous_drag_bd()
+
+    # Test case 2.0.1: particle specific temperature but not gamma / dissipation
+    # viscous drag only / BD only
+    if "BROWNIAN_DYNAMICS" in espressomd.features():
+        def test_case_201(self):
+            system = self.system
+            # Each of 2 kind of particles will be represented by n instances:
+            n = 1
+            self.dissipation_param_setup()
+            self.dissipation_viscous_drag_setup_bd()
+            self.set_langevin_global_defaults()
+            # The test case-specific thermostat and per-particle parameters
+            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            self.set_particle_specific_temperature(n)
+            # Actual integration and validation run
+            self.check_dissipation_viscous_drag()
 
     # Test case 2.1: particle specific temperature but not gamma / fluctuation
-    # & dissipation
+    # & dissipation / LD and BD
     def test_case_21(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
@@ -672,37 +725,56 @@ class ThermoTest(ut.TestCase):
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.turn_off()
         system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
         self.set_particle_specific_temperature(n)
         self.set_diffusivity_tran()
         # Actual integration and validation run
         self.check_fluctuation_dissipation(n, therm_steps, loops)
         if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.check_fluctuation_dissipation_bd(n)
+            self.set_initial_cond()
+            system.time_step = 42
+            loops = 8
+            therm_steps = 2
+            # The test case-specific thermostat and per-particle parameters
+            system.thermostat.turn_off()
+            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            # Actual integration and validation run
+            self.check_fluctuation_dissipation(n, therm_steps, loops)
 
-    # Test case 3.0: both particle specific gamma and temperature /
-    # dissipation only
-    def test_case_30(self):
+    # Test case 3.0.0: both particle specific gamma and temperature /
+    # dissipation only / LD only
+    def test_case_300(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
         n = 1
         self.dissipation_param_setup()
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.turn_off()
         system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
         self.set_particle_specific_gamma(n)
         self.set_particle_specific_temperature(n)
         # Actual integration and validation run
         self.check_dissipation()
-        if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.dissipation_viscous_drag_setup()
+
+    # Test case 3.0.1: both particle specific gamma and temperature /
+    # dissipation viscous drag only / BD only
+    if "BROWNIAN_DYNAMICS" in espressomd.features():
+        def test_case_301(self):
+            system = self.system
+            # Each of 2 kind of particles will be represented by n instances:
+            n = 1
+            self.dissipation_param_setup()
+            self.dissipation_viscous_drag_setup_bd()
+            self.set_langevin_global_defaults()
+            # The test case-specific thermostat and per-particle parameters
+            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
             self.set_particle_specific_gamma(n)
-            self.check_dissipation_viscous_drag_bd()
+            self.set_particle_specific_temperature(n)
+            # Actual integration and validation run
+            self.check_dissipation_viscous_drag()
 
     # Test case 3.1: both particle specific gamma and temperature /
-    # fluctuation & dissipation
+    # fluctuation & dissipation / LD and BD
     def test_case_31(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
@@ -712,7 +784,6 @@ class ThermoTest(ut.TestCase):
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.turn_off()
         system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
         self.set_particle_specific_gamma(n)
         self.set_particle_specific_temperature(n)
@@ -720,30 +791,43 @@ class ThermoTest(ut.TestCase):
         # Actual integration and validation run
         self.check_fluctuation_dissipation(n, therm_steps, loops)
         if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.check_fluctuation_dissipation_bd(n)
+            self.set_initial_cond()
+            system.time_step = 42
+            loops = 8
+            therm_steps = 2
+            # The test case-specific thermostat
+            system.thermostat.turn_off()
+            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            # Actual integration and validation run
+            self.check_fluctuation_dissipation(n, therm_steps, loops)
 
-    # Test case 4.0: no particle specific values / rotational specific global
-    # thermostat / dissipation only
-    def test_case_40(self):
+    # Test case 4.0.0: no particle specific values / rotational specific global
+    # thermostat / dissipation only / LD only
+    def test_case_400(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
         n = 1
         self.dissipation_param_setup()
         self.set_langevin_global_defaults_rot_differ()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.turn_off()
         system.thermostat.set_langevin(
             kT=self.kT,
             gamma=self.gamma_global,
             gamma_rotation=self.gamma_global_rot)
         # Actual integration and validation run
         self.check_dissipation()
-        if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.dissipation_viscous_drag_setup()
+
+    # Test case 4.0.1: no particle specific values / rotational specific global
+    # thermostat / dissipation only / BD only
+    if "BROWNIAN_DYNAMICS" in espressomd.features():
+        def test_case_401(self):
+            system = self.system
+            # Each of 2 kind of particles will be represented by n instances:
+            n = 1
+            self.dissipation_param_setup()
+            self.dissipation_viscous_drag_setup_bd()
             self.set_langevin_global_defaults_rot_differ()
-            system.part[:].v = np.zeros((3))
-            system.part[:].omega_body = np.zeros((3))
-            system.thermostat.turn_off()
+            # The test case-specific thermostat and per-particle parameters
             system.thermostat.set_brownian(
                 kT=self.kT,
                 gamma=self.gamma_global,
@@ -752,7 +836,7 @@ class ThermoTest(ut.TestCase):
             self.check_dissipation_viscous_drag()
 
     # Test case 4.1: no particle specific values / rotational specific global
-    # thermostat / fluctuation & dissipation
+    # thermostat / fluctuation & dissipation / LD and BD
     def test_case_41(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
@@ -762,7 +846,6 @@ class ThermoTest(ut.TestCase):
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults_rot_differ()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.turn_off()
         system.thermostat.set_langevin(
             kT=self.kT,
             gamma=self.gamma_global,
@@ -771,16 +854,17 @@ class ThermoTest(ut.TestCase):
         # Actual integration and validation run
         self.check_fluctuation_dissipation(n, therm_steps, loops)
         if "BROWNIAN_DYNAMICS" in espressomd.features():
+            self.set_initial_cond()
             system.time_step = 42
             loops = 8
             therm_steps = 2
-            system.part[:].v = np.zeros((3))
-            system.part[:].omega_body = np.zeros((3))
+            # The test case-specific thermostat
             system.thermostat.turn_off()
             system.thermostat.set_brownian(
                 kT=self.kT,
                 gamma=self.gamma_global,
                 gamma_rotation=self.gamma_global_rot)
+            # Actual integration and validation run
             self.check_fluctuation_dissipation(n, therm_steps, loops)
 
 if __name__ == '__main__':
