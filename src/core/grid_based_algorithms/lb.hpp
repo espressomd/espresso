@@ -151,7 +151,8 @@ struct LB_Parameters {
   /** friction coefficient for viscous coupling (LJ units) */
   double friction;
 
-  /** external force density applied to the fluid at each lattice site (LB Units) */
+  /** external force density applied to the fluid at each lattice site (LB
+   * Units) */
   Vector3d ext_force_density;
 
   /** relaxation of the odd kinetic modes */

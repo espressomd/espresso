@@ -269,16 +269,13 @@ void lb_reinit_parameters_gpu() {
     if (lbpar_gpu.viscosity[ii] > 0.0 && lbpar_gpu.agrid > 0.0 &&
         lbpar_gpu.tau > 0.0) {
       /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
-      lbpar_gpu.gamma_shear[ii] =
-          1. - 2. / (6. * lbpar_gpu.viscosity[ii] +
-                     1.);
+      lbpar_gpu.gamma_shear[ii] = 1. - 2. / (6. * lbpar_gpu.viscosity[ii] + 1.);
     }
 
     if (lbpar_gpu.bulk_viscosity[ii] > 0.0) {
       /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
       lbpar_gpu.gamma_bulk[ii] =
-          1. - 2. / (9. * lbpar_gpu.bulk_viscosity[ii] +
-                     1.);
+          1. - 2. / (9. * lbpar_gpu.bulk_viscosity[ii] + 1.);
     }
 
     // By default, gamma_even and gamma_odd are chosen such that the MRT becomes
