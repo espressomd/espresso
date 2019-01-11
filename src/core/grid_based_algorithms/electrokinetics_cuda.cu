@@ -2403,7 +2403,8 @@ int ek_init() {
 
     lbpar_gpu.agrid = ek_parameters.agrid;
     lbpar_gpu.viscosity[0] = 1.0; // dummy values (real initialization later)
-    lbpar_gpu.bulk_viscosity[0] = 1.0; // dummy values (real initialization later)
+    lbpar_gpu.bulk_viscosity[0] =
+        1.0; // dummy values (real initialization later)
     lbpar_gpu.friction[0] = ek_parameters.friction;
 
     // Convert the density (given in MD units) to LB units
@@ -2415,8 +2416,11 @@ int ek_init() {
     lbpar_gpu.is_TRT = true;
 
     lb_reinit_parameters_gpu();
-    lbpar_gpu.viscosity[0] = ek_parameters.viscosity * lbpar_gpu.time_step / (ek_parameters.agrid * ek_parameters.agrid);
-    lbpar_gpu.bulk_viscosity[0] = ek_parameters.bulk_viscosity * lbpar_gpu.time_step / (ek_parameters.agrid * ek_parameters.agrid);
+    lbpar_gpu.viscosity[0] = ek_parameters.viscosity * lbpar_gpu.time_step /
+                             (ek_parameters.agrid * ek_parameters.agrid);
+    lbpar_gpu.bulk_viscosity[0] = ek_parameters.bulk_viscosity *
+                                  lbpar_gpu.time_step /
+                                  (ek_parameters.agrid * ek_parameters.agrid);
     lb_reinit_parameters_gpu();
 
     lb_init_gpu();
@@ -2425,9 +2429,18 @@ int ek_init() {
         ek_parameters.lb_force_density[1] != 0 ||
         ek_parameters.lb_force_density[2] != 0) {
       lbpar_gpu.external_force_density = 1;
-      lbpar_gpu.ext_force_density[0] = ek_parameters.lb_force_density[0] * ek_parameters.agrid * ek_parameters.agrid * ek_parameters.time_step * ek_parameters.time_step;
-      lbpar_gpu.ext_force_density[1] = ek_parameters.lb_force_density[1] * ek_parameters.agrid * ek_parameters.agrid * ek_parameters.time_step * ek_parameters.time_step;
-      lbpar_gpu.ext_force_density[2] = ek_parameters.lb_force_density[2] * ek_parameters.agrid * ek_parameters.agrid * ek_parameters.time_step * ek_parameters.time_step;
+      lbpar_gpu.ext_force_density[0] =
+          ek_parameters.lb_force_density[0] * ek_parameters.agrid *
+          ek_parameters.agrid * ek_parameters.time_step *
+          ek_parameters.time_step;
+      lbpar_gpu.ext_force_density[1] =
+          ek_parameters.lb_force_density[1] * ek_parameters.agrid *
+          ek_parameters.agrid * ek_parameters.time_step *
+          ek_parameters.time_step;
+      lbpar_gpu.ext_force_density[2] =
+          ek_parameters.lb_force_density[2] * ek_parameters.agrid *
+          ek_parameters.agrid * ek_parameters.time_step *
+          ek_parameters.time_step;
       lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
     } else {
       lbpar_gpu.external_force_density = 0;
@@ -2519,13 +2532,19 @@ int ek_init() {
     ek_initialized = true;
   } else {
     if (lbpar_gpu.agrid != ek_parameters.agrid ||
-        lbpar_gpu.viscosity[0] != ek_parameters.viscosity * ek_parameters.time_step / (ek_parameters.agrid * ek_parameters.agrid) ||
-        lbpar_gpu.bulk_viscosity[0] != ek_parameters.bulk_viscosity  * ek_parameters.time_step / (ek_parameters.agrid * ek_parameters.agrid) ||
+        lbpar_gpu.viscosity[0] !=
+            ek_parameters.viscosity * ek_parameters.time_step /
+                (ek_parameters.agrid * ek_parameters.agrid) ||
+        lbpar_gpu.bulk_viscosity[0] !=
+            ek_parameters.bulk_viscosity * ek_parameters.time_step /
+                (ek_parameters.agrid * ek_parameters.agrid) ||
         lbpar_gpu.friction[0] != ek_parameters.friction ||
         lbpar_gpu.rho[0] != ek_parameters.lb_density * ek_parameters.agrid *
-                                  ek_parameters.agrid * ek_parameters.agrid) {
+                                ek_parameters.agrid * ek_parameters.agrid) {
       fprintf(stderr, "dens %f %f\n", lbpar_gpu.agrid, ek_parameters.agrid);
-      fprintf(stderr, "visc %f %f\n", lbpar_gpu.viscosity[0], ek_parameters.viscosity * ek_parameters.time_step / (ek_parameters.agrid * ek_parameters.agrid));
+      fprintf(stderr, "visc %f %f\n", lbpar_gpu.viscosity[0],
+              ek_parameters.viscosity * ek_parameters.time_step /
+                  (ek_parameters.agrid * ek_parameters.agrid));
       fprintf(stderr,
               "ERROR: The LB parameters on the GPU cannot be reinitialized.\n");
 
