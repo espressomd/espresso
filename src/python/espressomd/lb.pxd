@@ -265,9 +265,15 @@ IF LB_GPU or LB:
         cdef double c_ext_force_density[3]
         # get pointers
         # unit conversion MD -> LB
-        c_ext_force_density[0] = p_ext_force_density[0] * p_agrid * p_agrid * p_tau * p_tau;
-        c_ext_force_density[1] = p_ext_force_density[1] * p_agrid * p_agrid * p_tau * p_tau;
-        c_ext_force_density[2] = p_ext_force_density[2] * p_agrid * p_agrid * p_tau * p_tau;
+        c_ext_force_density[
+    0] = p_ext_force_density[
+        0] * p_agrid * p_agrid * p_tau * p_tau;
+        c_ext_force_density[
+    1] = p_ext_force_density[
+        1] * p_agrid * p_agrid * p_tau * p_tau;
+        c_ext_force_density[
+    2] = p_ext_force_density[
+        2] * p_agrid * p_agrid * p_tau * p_tau;
         # call c-function
         IF SHANCHEN:
             if(lb_lbfluid_set_ext_force_density(1, c_ext_force_density[0], c_ext_force_density[1], c_ext_force_density[2])):
@@ -304,7 +310,7 @@ IF LB_GPU or LB:
     cdef inline python_lbfluid_get_couple_flag(p_couple_flag):
 
         cdef int c_couple_flag;
-        if(lb_lbfluid_get_couple_flag(& c_couple_flag)):
+        if(lb_lbfluid_get_couple_flag( & c_couple_flag)):
             raise Exception(
                 "lb_lbfluid_get_couple_flag error at C-level interface")
         p_couple_flag = c_couple_flag
@@ -428,8 +434,14 @@ IF LB_GPU or LB:
             raise Exception(
                 "lb_fluid_get_ext_force_density error at C-level interface")
         # unit conversion LB -> MD
-        p_ext_force_density[0] = c_ext_force_density[0] / p_agrid / p_agrid / p_tau / p_tau
-        p_ext_force_density[1] = c_ext_force_density[1] / p_agrid / p_agrid / p_tau / p_tau
-        p_ext_force_density[2] = c_ext_force_density[2] / p_agrid / p_agrid / p_tau / p_tau
+        p_ext_force_density[
+    0] = c_ext_force_density[
+        0] / p_agrid / p_agrid / p_tau / p_tau
+        p_ext_force_density[
+    1] = c_ext_force_density[
+        1] / p_agrid / p_agrid / p_tau / p_tau
+        p_ext_force_density[
+    2] = c_ext_force_density[
+        2] / p_agrid / p_agrid / p_tau / p_tau
 
         return 0
