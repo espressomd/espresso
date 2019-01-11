@@ -131,28 +131,27 @@ struct LB_FluidNode {
 };
 
 /** Data structure holding the parameters for the Lattice Boltzmann system. */
-typedef struct {
+struct LB_Parameters {
   /** number density (LB units) */
   double rho;
 
-  /** kinematic viscosity (LJ units) */
+  /** kinematic viscosity (LB units) */
   double viscosity;
 
   /** bulk viscosity (LJ units) */
   double bulk_viscosity;
 
-  /** lattice spacing (LJ units) */
+  /** lattice spacing (MD units) */
   double agrid;
 
-  /** time step for fluid propagation (LJ units)
+  /** time step for fluid propagation (MD units)
    *  Note: Has to be larger than MD time step! */
   double tau;
 
   /** friction coefficient for viscous coupling (LJ units) */
   double friction;
 
-  /** external force density applied to the fluid at each lattice site (MD
-   * units) */
+  /** external force density applied to the fluid at each lattice site (LB Units) */
   Vector3d ext_force_density;
 
   /** relaxation of the odd kinetic modes */
@@ -176,7 +175,7 @@ typedef struct {
   int fluct;
   /** amplitudes of the fluctuations of the modes */
   Vector<19, double> phi;
-} LB_Parameters;
+};
 
 /** The DnQm model to be used. */
 extern LB_Model<> lbmodel;

@@ -155,7 +155,7 @@ IF LB_GPU or LB:
 
 ###############################################
 
-    cdef inline python_lbfluid_set_visc(p_visc):
+    cdef inline python_lbfluid_set_visc(p_visc, p_agrid, p_tau):
 
         IF SHANCHEN:
             cdef double c_visc[2]
@@ -163,9 +163,9 @@ IF LB_GPU or LB:
             cdef double c_visc[1]
         # get pointers
         if isinstance(p_visc, float) or isinstance(p_visc, int):
-            c_visc[0] = <float > p_visc
+            c_visc[0] = <float > p_visc * p_tau / (p_agrid * p_agrid)
         else:
-            c_visc = p_visc
+            c_visc = p_visc * p_tau / (p_agrid * p_agrid)
         # call c-function
         if(lb_lbfluid_set_visc(c_visc)):
             raise Exception("lb_fluid_set_visc error at C-level interface")
@@ -361,7 +361,7 @@ IF LB_GPU or LB:
         return 0
 
 ###############################################
-    cdef inline python_lbfluid_get_visc(p_visc):
+    cdef inline python_lbfluid_get_visc(p_visc, p_agrid, p_tau):
 
         IF SHANCHEN:
             cdef double c_visc[2]
@@ -372,9 +372,9 @@ IF LB_GPU or LB:
             raise Exception(
                 "lb_fluid_get_viscosity error at C-level interface")
         if isinstance(p_visc, float) or isinstance(p_visc, int):
-            p_visc = <double > c_visc[0]
+            p_visc = <double > c_visc[0] / p_tau * (p_agrid * p_agrid)
         else:
-            p_visc = c_visc
+            p_visc = c_visc / p_tau * (p_agrid * p_agrid)
 
         return 0
 

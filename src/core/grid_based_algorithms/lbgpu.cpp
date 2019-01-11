@@ -270,8 +270,7 @@ void lb_reinit_parameters_gpu() {
         lbpar_gpu.tau > 0.0) {
       /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
       lbpar_gpu.gamma_shear[ii] =
-          1. - 2. / (6. * lbpar_gpu.viscosity[ii] * lbpar_gpu.tau /
-                         (lbpar_gpu.agrid * lbpar_gpu.agrid) +
+          1. - 2. / (6. * lbpar_gpu.viscosity[ii] +
                      1.);
     }
 

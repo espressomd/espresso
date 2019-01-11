@@ -148,7 +148,7 @@ IF LB_GPU or LB:
             if python_lbfluid_set_tau(self._params["tau"]):
                 raise Exception("lb_lbfluid_set_tau error")
 
-            if python_lbfluid_set_visc(self._params["visc"]):
+            if python_lbfluid_set_visc(self._params["visc"], self._params["agrid"], self._params["tau"]):
                 raise Exception("lb_lbfluid_set_visc error")
 
             if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
@@ -192,7 +192,7 @@ IF LB_GPU or LB:
             if python_lbfluid_get_tau(self._params["tau"]):
                 raise Exception("lb_lbfluid_set_tau error")
 
-            if python_lbfluid_get_visc(self._params["visc"]):
+            if python_lbfluid_get_visc(self._params["visc"], self._params["agrid"], self._params["tau"]):
                 raise Exception("lb_lbfluid_set_visc error")
 
             if not self._params["bulk_visc"] == default_params["bulk_visc"]:

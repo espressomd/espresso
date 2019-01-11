@@ -1989,9 +1989,7 @@ void lb_reinit_parameters() {
 
   if (lbpar.viscosity > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
-    // unit conversion: viscosity
-    lbpar.gamma_shear = 1. - 2. / (6. * lbpar.viscosity * lbpar.tau /
-                                       (lbpar.agrid * lbpar.agrid) +
+    lbpar.gamma_shear = 1. - 2. / (6. * lbpar.viscosity +
                                    1.);
   }
 
