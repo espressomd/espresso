@@ -2227,10 +2227,10 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index) {
   return lb_calc_m_from_n(n);
 }
 
-inline std::array<double, 19>
-lb_relax_modes(Lattice::index_t index, const std::array<double, 19> &modes) {
-  std::array<double, 19> relaxed_modes = modes;
-  double rho, j[3], pi_eq[6];
+template <typename T>
+inline std::array<T, 19>
+lb_relax_modes(Lattice::index_t index, const std::array<T, 19> &modes) {
+  T rho, j[3], pi_eq[6];
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
@@ -2249,37 +2249,33 @@ lb_relax_modes(Lattice::index_t index, const std::array<double, 19> &modes) {
   pi_eq[4] = j[0] * j[2] / rho;
   pi_eq[5] = j[1] * j[2] / rho;
 
-  /* relax the stress modes */
-  relaxed_modes[4] = pi_eq[0] + lbpar.gamma_bulk * (modes[4] - pi_eq[0]);
-  relaxed_modes[5] = pi_eq[1] + lbpar.gamma_shear * (modes[5] - pi_eq[1]);
-  relaxed_modes[6] = pi_eq[2] + lbpar.gamma_shear * (modes[6] - pi_eq[2]);
-  relaxed_modes[7] = pi_eq[3] + lbpar.gamma_shear * (modes[7] - pi_eq[3]);
-  relaxed_modes[8] = pi_eq[4] + lbpar.gamma_shear * (modes[8] - pi_eq[4]);
-  relaxed_modes[9] = pi_eq[5] + lbpar.gamma_shear * (modes[9] - pi_eq[5]);
-
-  /* relax the ghost modes (project them out) */
-  /* ghost modes have no equilibrium part due to orthogonality */
-  relaxed_modes[10] = lbpar.gamma_odd * modes[10];
-  relaxed_modes[11] = lbpar.gamma_odd * modes[11];
-  relaxed_modes[12] = lbpar.gamma_odd * modes[12];
-  relaxed_modes[13] = lbpar.gamma_odd * modes[13];
-  relaxed_modes[14] = lbpar.gamma_odd * modes[14];
-  relaxed_modes[15] = lbpar.gamma_odd * modes[15];
-  relaxed_modes[16] = lbpar.gamma_even * modes[16];
-  relaxed_modes[17] = lbpar.gamma_even * modes[17];
-  relaxed_modes[18] = lbpar.gamma_even * modes[18];
-  return relaxed_modes;
+  return {{modes[0], modes[1], modes[2], modes[3],
+           /* relax the stress modes */
+           pi_eq[0] + lbpar.gamma_bulk * (modes[4] - pi_eq[0]),
+           pi_eq[1] + lbpar.gamma_shear * (modes[5] - pi_eq[1]),
+           pi_eq[2] + lbpar.gamma_shear * (modes[6] - pi_eq[2]),
+           pi_eq[3] + lbpar.gamma_shear * (modes[7] - pi_eq[3]),
+           pi_eq[4] + lbpar.gamma_shear * (modes[8] - pi_eq[4]),
+           pi_eq[5] + lbpar.gamma_shear * (modes[9] - pi_eq[5]),
+           /* relax the ghost modes (project them out) */
+           /* ghost modes have no equilibrium part due to orthogonality */
+           lbpar.gamma_odd * modes[10], lbpar.gamma_odd * modes[11],
+           lbpar.gamma_odd * modes[12], lbpar.gamma_odd * modes[13],
+           lbpar.gamma_odd * modes[14], lbpar.gamma_odd * modes[15],
+           lbpar.gamma_even * modes[16], lbpar.gamma_even * modes[17],
+           lbpar.gamma_even * modes[18]}};
 }
 
-inline std::array<double, 19>
+template <typename T>
+inline std::array<T, 19>
 lb_thermalize_modes(Lattice::index_t index, const r123::Philox4x64::ctr_type &c,
-                    const std::array<double, 19> &modes) {
+                    const std::array<T, 19> &modes) {
   if (lbpar.fluct) {
     using Utils::uniform;
     using rng_type = r123::Philox4x64;
     using ctr_type = rng_type::ctr_type;
 
-    const double rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
+    const T rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
     auto const pref = std::sqrt(12.) * rootrho;
 
     const ctr_type noise[4] = {
@@ -2318,7 +2314,6 @@ lb_thermalize_modes(Lattice::index_t index, const r123::Philox4x64::ctr_type &c,
 template <typename T>
 std::array<T, 19> lb_apply_forces(Lattice::index_t index,
                                   const std::array<T, 19> &modes) {
-  std::array<T, 19> modes_with_forces = modes;
   T rho, u[3], C[6];
 
   const auto &f = lbfields[index].force_density;
@@ -2340,19 +2335,27 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
   C[3] = 1. / 2. * (1. + lbpar.gamma_shear) * (u[0] * f[2] + u[2] * f[0]);
   C[4] = 1. / 2. * (1. + lbpar.gamma_shear) * (u[1] * f[2] + u[2] * f[1]);
 
-  /* update momentum modes */
-  modes_with_forces[1] += f[0];
-  modes_with_forces[2] += f[1];
-  modes_with_forces[3] += f[2];
-
-  /* update stress modes */
-  modes_with_forces[4] += C[0] + C[2] + C[5];
-  modes_with_forces[5] += C[0] - C[2];
-  modes_with_forces[6] += C[0] + C[2] - 2. * C[5];
-  modes_with_forces[7] += C[1];
-  modes_with_forces[8] += C[3];
-  modes_with_forces[9] += C[4];
-  return modes_with_forces;
+  return {{modes[0],
+           /* update momentum modes */
+           modes[1] + f[0],
+           modes[2] + f[1],
+           modes[3] + f[2],
+           /* update stress modes */
+           modes[4] + C[0] + C[2] + C[5],
+           modes[5] + C[0] - C[2],
+           modes[6] + C[0] + C[2] - 2. * C[5],
+           modes[7] + C[1],
+           modes[8] + C[3],
+           modes[9] + C[4],
+           modes[10],
+           modes[11],
+           modes[12],
+           modes[13],
+           modes[14],
+           modes[15],
+           modes[16],
+           modes[17],
+           modes[18]}};
 }
 
 inline void lb_reset_force_densities(Lattice::index_t index) {
@@ -2377,16 +2380,15 @@ std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
 
 template <typename T, std::size_t N>
 std::array<T, N> lb_calc_n_from_m(const std::array<T, N> &modes) {
-  auto const normalized_modes = normalize_modes(modes);
-  auto ret = Utils::matrix_vector_product<T, N, ::D3Q19::e_ki_transposed>(
-      normalized_modes);
+  auto ret = Utils::matrix_vector_product<T, N, ::D3Q19::e_ki_transposed>(normalize_modes(modes));
   std::transform(ret.begin(), ret.end(), ::D3Q19::w.begin(), ret.begin(),
                  std::multiplies<T>());
   return ret;
 }
 
+template <typename T>
 inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
-                                      std::array<double, 19> m) {
+                                      const std::array<T, 19> m) {
   const std::array<int, 3> period = {
       {1, lblattice.halo_grid[0],
        lblattice.halo_grid[0] * lblattice.halo_grid[1]}};
