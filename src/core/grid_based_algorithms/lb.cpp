@@ -2228,8 +2228,8 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index) {
 }
 
 template <typename T>
-inline std::array<T, 19>
-lb_relax_modes(Lattice::index_t index, const std::array<T, 19> &modes) {
+inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
+                                        const std::array<T, 19> &modes) {
   T rho, j[3], pi_eq[6];
 
   /* re-construct the real density
@@ -2337,25 +2337,12 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
 
   return {{modes[0],
            /* update momentum modes */
-           modes[1] + f[0],
-           modes[2] + f[1],
-           modes[3] + f[2],
+           modes[1] + f[0], modes[2] + f[1], modes[3] + f[2],
            /* update stress modes */
-           modes[4] + C[0] + C[2] + C[5],
-           modes[5] + C[0] - C[2],
-           modes[6] + C[0] + C[2] - 2. * C[5],
-           modes[7] + C[1],
-           modes[8] + C[3],
-           modes[9] + C[4],
-           modes[10],
-           modes[11],
-           modes[12],
-           modes[13],
-           modes[14],
-           modes[15],
-           modes[16],
-           modes[17],
-           modes[18]}};
+           modes[4] + C[0] + C[2] + C[5], modes[5] + C[0] - C[2],
+           modes[6] + C[0] + C[2] - 2. * C[5], modes[7] + C[1], modes[8] + C[3],
+           modes[9] + C[4], modes[10], modes[11], modes[12], modes[13],
+           modes[14], modes[15], modes[16], modes[17], modes[18]}};
 }
 
 template <typename T>
@@ -2369,7 +2356,8 @@ std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
 
 template <typename T, std::size_t N>
 std::array<T, N> lb_calc_n_from_m(const std::array<T, N> &modes) {
-  auto ret = Utils::matrix_vector_product<T, N, ::D3Q19::e_ki_transposed>(normalize_modes(modes));
+  auto ret = Utils::matrix_vector_product<T, N, ::D3Q19::e_ki_transposed>(
+      normalize_modes(modes));
   std::transform(ret.begin(), ret.end(), ::D3Q19::w.begin(), ret.begin(),
                  std::multiplies<T>());
   return ret;
@@ -2658,9 +2646,9 @@ Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &pos) {
 #endif
           auto const modes = lb_calc_modes(index);
           auto const local_rho = modes[0] + lbpar.rho;
-          interpolated_f += w / 2 / local_rho *
-                            (lbfields[index].force_density_buf -
-                             lbpar.ext_force_density);
+          interpolated_f +=
+              w / 2 / local_rho *
+              (lbfields[index].force_density_buf - lbpar.ext_force_density);
 #ifdef LB_BOUNDARIES
         }
 #endif
