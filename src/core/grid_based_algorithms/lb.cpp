@@ -1996,8 +1996,7 @@ void lb_reinit_parameters() {
   if (lbpar.bulk_viscosity > 0.0) {
     /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     // unit conversion: viscosity
-    lbpar.gamma_bulk = 1. - 2. / (9. * lbpar.bulk_viscosity * lbpar.tau /
-                                      (lbpar.agrid * lbpar.agrid) +
+    lbpar.gamma_bulk = 1. - 2. / (9. * lbpar.bulk_viscosity +
                                   1.);
   }
 

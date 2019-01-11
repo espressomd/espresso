@@ -138,10 +138,10 @@ struct LB_Parameters {
   /** kinematic viscosity (LB units) */
   double viscosity;
 
-  /** bulk viscosity (LJ units) */
+  /** bulk viscosity (LB units) */
   double bulk_viscosity;
 
-  /** lattice spacing (MD units) */
+  /** lattice spacing */
   double agrid;
 
   /** time step for fluid propagation (MD units)
