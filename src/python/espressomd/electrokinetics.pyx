@@ -202,7 +202,7 @@ IF ELECTROKINETICS:
                 raise Exception(
                     'EK init failed', 'agrid incompatible with box size')
             elif err != 0:
-                raise Exception('EK init failed', 'unknown error')
+                raise Exception('EK init failed, unknown error', err)
 
         def add_species(self, species):
             """
