@@ -257,7 +257,7 @@ intel:17:
   script:
     - export myconfig=maxset with_cuda=false with_coverage=false I_MPI_SHM_LMT=shm
     - export cxx_flags=-O2
-    - bash maintainer/build_cmake.sh
+    - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
     - linux
