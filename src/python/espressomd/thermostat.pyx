@@ -153,7 +153,8 @@ cdef class Thermostat(object):
                     lang_dict["gamma"] = langevin_gamma
                 IF ROTATION:
                     IF PARTICLE_ANISOTROPY:
-                        lang_dict["gamma_rotation"] = [langevin_gamma_rotation[0],
+                        lang_dict[
+                            "gamma_rotation"] = [langevin_gamma_rotation[0],
                                                        langevin_gamma_rotation[1],
                                                        langevin_gamma_rotation[2]]
                     ELSE:
