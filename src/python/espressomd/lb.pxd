@@ -260,11 +260,14 @@ IF LB_GPU or LB:
 
 ###############################################
 
-    cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density):
+    cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density, p_agrid, p_tau):
 
         cdef double c_ext_force_density[3]
         # get pointers
-        c_ext_force_density = p_ext_force_density
+        # unit conversion MD -> LB
+        c_ext_force_density[0] = p_ext_force_density[0] * p_agrid * p_agrid * p_tau * p_tau;
+        c_ext_force_density[1] = p_ext_force_density[1] * p_agrid * p_agrid * p_tau * p_tau;
+        c_ext_force_density[2] = p_ext_force_density[2] * p_agrid * p_agrid * p_tau * p_tau;
         # call c-function
         IF SHANCHEN:
             if(lb_lbfluid_set_ext_force_density(1, c_ext_force_density[0], c_ext_force_density[1], c_ext_force_density[2])):
@@ -417,13 +420,16 @@ IF LB_GPU or LB:
 
 ###############################################
 
-    cdef inline python_lbfluid_get_ext_force_density(p_ext_force_density):
+    cdef inline python_lbfluid_get_ext_force_density(p_ext_force_density, p_agrid, p_tau):
 
         cdef double c_ext_force_density[3]
         # call c-function
         if(lb_lbfluid_get_ext_force_density(c_ext_force_density)):
             raise Exception(
                 "lb_fluid_get_ext_force_density error at C-level interface")
-        p_ext_force_density = c_ext_force_density
+        # unit conversion LB -> MD
+        p_ext_force_density[0] = c_ext_force_density[0] / p_agrid / p_agrid / p_tau / p_tau
+        p_ext_force_density[1] = c_ext_force_density[1] / p_agrid / p_agrid / p_tau / p_tau
+        p_ext_force_density[2] = c_ext_force_density[2] / p_agrid / p_agrid / p_tau / p_tau
 
         return 0

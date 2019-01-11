@@ -509,7 +509,6 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
 __device__ void reset_LB_force_densities(unsigned int index,
                                          LB_node_force_density_gpu node_f,
                                          bool buffer = true) {
-  float force_factor = powf(para->agrid, 2) * para->tau * para->tau;
   for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
     // Store backup of the node forces
@@ -526,11 +525,11 @@ __device__ void reset_LB_force_densities(unsigned int index,
 #ifdef EXTERNAL_FORCES
     if (para->external_force_density) {
       node_f.force_density[(0 + ii * 3) * para->number_of_nodes + index] =
-          para->ext_force_density[0 + ii * 3] * force_factor;
+          para->ext_force_density[0 + ii * 3];
       node_f.force_density[(1 + ii * 3) * para->number_of_nodes + index] =
-          para->ext_force_density[1 + ii * 3] * force_factor;
+          para->ext_force_density[1 + ii * 3];
       node_f.force_density[(2 + ii * 3) * para->number_of_nodes + index] =
-          para->ext_force_density[2 + ii * 3] * force_factor;
+          para->ext_force_density[2 + ii * 3];
     } else {
       node_f.force_density[(0 + ii * 3) * para->number_of_nodes + index] = 0.0f;
       node_f.force_density[(1 + ii * 3) * para->number_of_nodes + index] = 0.0f;

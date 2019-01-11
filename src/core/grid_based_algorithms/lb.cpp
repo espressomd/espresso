@@ -2358,17 +2358,6 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
            modes[18]}};
 }
 
-inline void lb_reset_force_densities(Lattice::index_t index) {
-  /* reset force */
-  // unit conversion: force density
-  lbfields[index].force_density[0] = lbpar.ext_force_density[0] * lbpar.agrid *
-                                     lbpar.agrid * lbpar.tau * lbpar.tau;
-  lbfields[index].force_density[1] = lbpar.ext_force_density[1] * lbpar.agrid *
-                                     lbpar.agrid * lbpar.tau * lbpar.tau;
-  lbfields[index].force_density[2] = lbpar.ext_force_density[2] * lbpar.agrid *
-                                     lbpar.agrid * lbpar.tau * lbpar.tau;
-}
-
 template <typename T>
 std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
   auto normalized_modes = modes;
@@ -2448,7 +2437,8 @@ inline void lb_collide_stream() {
           auto const modes_with_forces =
               lb_apply_forces(index, thermalized_modes);
 
-          lb_reset_force_densities(index);
+          /* reset the force density */
+          lbfields[index].force_density = lbpar.ext_force_density;
 
           /* transform back to populations and streaming */
           lb_calc_n_from_modes_push(lbfluid_post, index, modes_with_forces);
@@ -2670,8 +2660,7 @@ Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &pos) {
           auto const local_rho = modes[0] + lbpar.rho;
           interpolated_f += w / 2 / local_rho *
                             (lbfields[index].force_density_buf -
-                             (lbpar.ext_force_density * lbpar.agrid *
-                              lbpar.agrid * lbpar.tau * lbpar.tau));
+                             lbpar.ext_force_density);
 #ifdef LB_BOUNDARIES
         }
 #endif
