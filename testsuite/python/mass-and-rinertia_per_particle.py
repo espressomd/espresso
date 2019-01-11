@@ -329,16 +329,13 @@ class ThermoTest(ut.TestCase):
                     # matching (cf. eq. (10.1.1) there):
                     sigma2_tr[k] = 0.0
                     for j in range(3):
-                        sigma2_tr[k] += self.D_tran_p_validate[k,
-                                                               j] * (
-                                                                   2.0 * dt + dt0[
-                                                                       k,
-                                                                       j] * (
-                                                                           - 3.0 + 4.0 * math.exp(
-                                                                               - dt / dt0[
-                                                                                   k,
-                                                                                                                            j]) - math.exp(- 2.0 * dt / dt0[k,
-                                                                                                                                                            j])))
+                        sigma2_tr[k] += \
+                            self.D_tran_p_validate[k, j] * \
+                            (2.0 * dt + dt0[k,j] * \
+                            (- 3.0 + 4.0 * \
+                            math.exp(- dt / dt0[k,j]) - \
+                            math.exp(- 2.0 * \
+                            dt / dt0[k,j])))
                     dr_norm[k] += (sum(dr2[k,:]) -
                                    sigma2_tr[k]) / sigma2_tr[k]
 
