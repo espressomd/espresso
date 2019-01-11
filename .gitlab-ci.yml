@@ -255,9 +255,9 @@ intel:17:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
+    - export myconfig=maxset with_cuda=false with_coverage=false I_MPI_SHM_LMT=shm
     - export cxx_flags=-O2
-    - bash maintainer/cuda_build.sh
+    - bash maintainer/build_cmake.sh
   tags:
     - docker
     - linux
