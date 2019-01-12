@@ -455,3 +455,15 @@ cdef class Thermostat(object):
 
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_TEMPERATURE)
+
+    IF STOKESIAN_DYNAMICS:
+        def set_sd(self):
+            """
+            Sets the SD thermostat with required parameters.  This
+            also activates hydrodynamic interactions and the SD
+            integrator.
+            """
+
+            global thermo_switch
+            thermo_switch = (thermo_switch | THERMO_SD)
+            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
