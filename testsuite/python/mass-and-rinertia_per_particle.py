@@ -339,23 +339,23 @@ class ThermoTest(ut.TestCase):
                 for i in range(n):
                     ind = i + k * n
                     # Just some random forces
-                    f[ind, :] = self.generate_vec_ranged_rnd(-0.5, 500.)
-                    system.part[ind].ext_force = f[ind, :]
+                    f[ind,:] = self.generate_vec_ranged_rnd(-0.5, 500.)
+                    system.part[ind].ext_force = f[ind,:]
                     if "ROTATION" in espressomd.features():
                         # Just some random torques
-                        tor[ind, :] = self.generate_vec_ranged_rnd(-0.5, 500.)
-                        system.part[ind].ext_torque = tor[ind, :]
+                        tor[ind,:] = self.generate_vec_ranged_rnd(-0.5, 500.)
+                        system.part[ind].ext_torque = tor[ind,:]
                         # Let's set the dipole perpendicular to the torque
                         if "DIPOLES" in espressomd.features():
                             # 2 types of particles correspond to 2 different
                             # perpendicular vectors
                             if ind % 2 == 0:
-                                dip[ind, :] = 0.0, tor[ind, 2], -tor[ind, 1]
+                                dip[ind,:] = 0.0, tor[ind, 2], -tor[ind, 1]
                             else:
-                                dip[ind, :] = -tor[ind, 2], 0.0, tor[ind, 0]
-                            system.part[ind].dip = dip[ind, :]
+                                dip[ind,:] = -tor[ind, 2], 0.0, tor[ind, 0]
+                            system.part[ind].dip = dip[ind,:]
                             # 3rd dynamic axis
-                            tmp_axis[ind, :] = np.cross(tor[ind, :], dip[ind, :]) \
+                            tmp_axis[ind,:] = np.cross(tor[ind,:], dip[ind,:]) \
                                 / (np.linalg.norm(tor[ind]) * np.linalg.norm(dip[ind]))
             # Small number of steps is enough for the terminal velocity within the BD by its definition.
             # A simulation of the original saturation of the velocity.
@@ -390,14 +390,14 @@ class ThermoTest(ut.TestCase):
                     if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
                         # Same, a rotational analogy. One is implemented using a simple linear algebra;
                         # the polar angles with a sign control just for a correct inverse trigonometric functions application.
-                        cos_alpha = np.dot(dip[ind, :], system.part[ind].dip[:]) / \
-                            (np.linalg.norm(dip[ind, :]) * system.part[ind].dipm)
+                        cos_alpha = np.dot(dip[ind,:], system.part[ind].dip[:]) / \
+                            (np.linalg.norm(dip[ind,:]) * system.part[ind].dipm)
                         # Isoptropic particle for the BD. Single gamma equals to other components
-                        cos_alpha_test = np.cos(system.time * np.linalg.norm(tor[ind, :]) / \
+                        cos_alpha_test = np.cos(system.time * np.linalg.norm(tor[ind,:]) / \
                             self.gamma_rot_p_validate[k, 0])
                         # The sign instead of sin calc additionally (equivalent approach)
-                        sgn = np.sign(np.dot(system.part[ind].dip[:], tmp_axis[ind, :]))
-                        sgn_test = np.sign(np.sin(system.time * np.linalg.norm(tor[ind, :]) / \
+                        sgn = np.sign(np.dot(system.part[ind].dip[:], tmp_axis[ind,:]))
+                        sgn_test = np.sign(np.sin(system.time * np.linalg.norm(tor[ind,:]) / \
                             self.gamma_rot_p_validate[k, 0]))
 
                         self.assertLess(abs(cos_alpha - cos_alpha_test), tol)
