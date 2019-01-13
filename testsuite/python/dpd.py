@@ -162,7 +162,7 @@ class DPDThermostat(ut.TestCase):
             v_stored[i*N:(i+1)*N,:] = s.part[:].v
         v_minmax = 5
         bins = 5
-        error_tol = 0.01
+        error_tol = 0.012
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
 
