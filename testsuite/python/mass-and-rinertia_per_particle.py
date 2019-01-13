@@ -333,7 +333,7 @@ class ThermoTest(ut.TestCase):
         tor = np.zeros((2 * n, 3))
         dip = np.zeros((2 * n, 3))
         tmp_axis = np.zeros((2 * n, 3))
-        tol = 7E-3
+        tol = 1E-11
         if "EXTERNAL_FORCES" in espressomd.features():
             for k in range(2):
                 for i in range(n):
