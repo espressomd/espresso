@@ -317,81 +317,91 @@ class ThermoTest(ut.TestCase):
 
     # Note: the decelleration test is needed for the Langevin thermostat only. Brownian thermostat is defined
     # over a larger time-step by its concept.
-    def check_dissipation_viscous_drag(self):
+    def check_dissipation_viscous_drag(self, n):
         """
         Check the dissipation relations: the drag terminal velocity tests,
         aka the drift in case of the electrostatics
 
+        Parameters
+        ----------
+        n : :obj:`int`
+            Number of particles of the each type. There are 2 types.
+
         """
         system = self.system
+        f = np.zeros((2 * n, 3))
+        tor = np.zeros((2 * n, 3))
+        dip = np.zeros((2 * n, 3))
+        tmp_axis = np.zeros((2 * n, 3))
         tol = 7E-3
         if "EXTERNAL_FORCES" in espressomd.features():
-            # Just some random forces
-            f0 = -1.2, 58.3578, 0.002
-            f1 = -15.112, -2.0, 368.0
-            system.part[0].ext_force = f0
-            system.part[1].ext_force = f1
-            if "ROTATION" in espressomd.features():
-                # Just some random torques
-                tor0 = 12, 0.022, 87
-                tor1 = -0.03, -174, 368
-                system.part[0].ext_torque = tor0
-                system.part[1].ext_torque = tor1
-                # Let's set the dipole perpendicular to the torque
-                if "DIPOLES" in espressomd.features():
-                    dip0 = 0.0, tor0[2], -tor0[1]
-                    dip1 = -tor1[2], 0.0, tor1[0]
-                    system.part[0].dip = dip0
-                    system.part[1].dip = dip1
-                    tmp_axis0 = np.cross(tor0, dip0) / (np.linalg.norm(tor0) * np.linalg.norm(dip0))
-                    tmp_axis1 = np.cross(tor1, dip1) / (np.linalg.norm(tor1) * np.linalg.norm(dip1))
+            for k in range(2):
+                for i in range(n):
+                    ind = i + k * n
+                    # Just some random forces
+                    f[ind, :] = self.generate_vec_ranged_rnd(-0.5, 500.)
+                    system.part[ind].ext_force = f[ind, :]
+                    if "ROTATION" in espressomd.features():
+                        # Just some random torques
+                        tor[ind, :] = self.generate_vec_ranged_rnd(-0.5, 500.)
+                        system.part[ind].ext_torque = tor[ind, :]
+                        # Let's set the dipole perpendicular to the torque
+                        if "DIPOLES" in espressomd.features():
+                            # 2 types of particles correspond to 2 different
+                            # perpendicular vectors
+                            if ind % 2 == 0:
+                                dip[ind, :] = 0.0, tor[ind, 2], -tor[ind, 1]
+                            else:
+                                dip[ind, :] = -tor[ind, 2], 0.0, tor[ind, 0]
+                            system.part[ind].dip = dip[ind, :]
+                            # 3rd dynamic axis
+                            tmp_axis[ind, :] = np.cross(tor[ind, :], dip[ind, :]) \
+                                / (np.linalg.norm(tor[ind]) * np.linalg.norm(dip[ind]))
             # Small number of steps is enough for the terminal velocity within the BD by its definition.
             # A simulation of the original saturation of the velocity.
             system.integrator.run(7)
             system.time = 0.0
-            for k in range(2):
-                system.part[k].pos = np.zeros((3))
-            if "DIPOLES" in espressomd.features():
-                    system.part[0].dip = dip0
-                    system.part[1].dip = dip1
-            for i in range(3):
+            for i in range(n):
+                for k in range(2):
+                    ind = i + k * n
+                    system.part[ind].pos = np.zeros((3))
+                    if "DIPOLES" in espressomd.features():
+                        system.part[ind].dip = dip[ind,:]
+            for step in range(3):
                 # Small number of steps
                 system.integrator.run(2)
-                for k in range(3):
-                    # Eq. (14.34) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010)
-                    # First (deterministic) term of the eq. (14.34) of Schlick2010 taking into account eq. (14.35).
-                    self.assertLess(
-                        abs(system.part[0].v[k] - f0[k] / self.gamma_tran_p_validate[0, k]), tol)
-                    self.assertLess(
-                        abs(system.part[1].v[k] - f1[k] / self.gamma_tran_p_validate[1, k]), tol)
-                    # Second (deterministic) term of the Eq. (14.39) of Schlick2010.
-                    self.assertLess(
-                        abs(system.part[0].pos[k] - system.time * f0[k] / self.gamma_tran_p_validate[0, k]), tol)
-                    self.assertLess(
-                        abs(system.part[1].pos[k] - system.time * f1[k] / self.gamma_tran_p_validate[1, k]), tol)
-                    # Same, a rotational analogy.
-                    if "ROTATION" in espressomd.features():
-                        self.assertLess(abs(
-                            system.part[0].omega_lab[k] - tor0[k] / self.gamma_rot_p_validate[0, k]), tol)
-                        self.assertLess(abs(
-                            system.part[1].omega_lab[k] - tor1[k] / self.gamma_rot_p_validate[1, k]), tol)
-                if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
-                    # Same, a rotational analogy. One is implemented using a simple linear algebra;
-                    # the polar angles with a sign control just for a correct inverse trigonometric functions application.
-                    cos_alpha0 = np.dot(dip0, system.part[0].dip) / (np.linalg.norm(dip0) * system.part[0].dipm)
-                    cos_alpha0_test = np.cos(system.time * np.linalg.norm(tor0) / self.gamma_rot_p_validate[0, 0])
-                    sgn0 = np.sign(np.dot(system.part[0].dip, tmp_axis0))
-                    sgn0_test = np.sign(np.sin(system.time * np.linalg.norm(tor0) / self.gamma_rot_p_validate[0, 0]))
-                    
-                    cos_alpha1 = np.dot(dip1, system.part[1].dip) / (np.linalg.norm(dip1) * system.part[1].dipm)
-                    cos_alpha1_test = np.cos(system.time * np.linalg.norm(tor1) / self.gamma_rot_p_validate[1, 0])
-                    sgn1 = np.sign(np.dot(system.part[1].dip, tmp_axis1))
-                    sgn1_test = np.sign(np.sin(system.time * np.linalg.norm(tor1) / self.gamma_rot_p_validate[1, 0]))
-                    
-                    self.assertLess(abs(cos_alpha0 - cos_alpha0_test), tol)
-                    self.assertLess(abs(cos_alpha1 - cos_alpha1_test), tol)
-                    self.assertEqual(sgn0, sgn0_test)
-                    self.assertEqual(sgn1, sgn1_test)
+                for k in range(2):
+                    ind = i + k * n
+                    for j in range(3):
+                        # Eq. (14.34) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010)
+                        # First (deterministic) term of the eq. (14.34) of Schlick2010 taking into account eq. (14.35).
+                        self.assertLess(
+                            abs(system.part[ind].v[j] - f[ind, j] / \
+                                self.gamma_tran_p_validate[k, j]), tol)
+                        # Second (deterministic) term of the Eq. (14.39) of Schlick2010.
+                        self.assertLess(
+                            abs(system.part[ind].pos[j] - \
+                                system.time * f[ind, j] / self.gamma_tran_p_validate[k, j]), tol)
+                        # Same, a rotational analogy.
+                        if "ROTATION" in espressomd.features():
+                            self.assertLess(abs(
+                                system.part[ind].omega_lab[j] - tor[ind, j] \
+                                    / self.gamma_rot_p_validate[k, j]), tol)
+                    if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
+                        # Same, a rotational analogy. One is implemented using a simple linear algebra;
+                        # the polar angles with a sign control just for a correct inverse trigonometric functions application.
+                        cos_alpha = np.dot(dip[ind, :], system.part[ind].dip[:]) / \
+                            (np.linalg.norm(dip[ind, :]) * system.part[ind].dipm)
+                        # Isoptropic particle for the BD. Single gamma equals to other components
+                        cos_alpha_test = np.cos(system.time * np.linalg.norm(tor[ind, :]) / \
+                            self.gamma_rot_p_validate[k, 0])
+                        # The sign instead of sin calc additionally (equivalent approach)
+                        sgn = np.sign(np.dot(system.part[ind].dip[:], tmp_axis[ind, :]))
+                        sgn_test = np.sign(np.sin(system.time * np.linalg.norm(tor[ind, :]) / \
+                            self.gamma_rot_p_validate[k, 0]))
+
+                        self.assertLess(abs(cos_alpha - cos_alpha_test), tol)
+                        self.assertEqual(sgn, sgn_test)
 
     def check_fluctuation_dissipation(self, n, therm_steps, loops):
         """
@@ -590,7 +600,7 @@ class ThermoTest(ut.TestCase):
             # The test case-specific thermostat and per-particle parameters
             system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
             # Actual integration and validation run
-            self.check_dissipation_viscous_drag()
+            self.check_dissipation_viscous_drag(n)
 
     # Test case 0.1: no particle specific values / fluctuation & dissipation
     # Same particle and thermostat parameters for LD and BD are required in order
@@ -655,7 +665,7 @@ class ThermoTest(ut.TestCase):
             system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
             self.set_particle_specific_gamma(n)
             # Actual integration and validation run
-            self.check_dissipation_viscous_drag()
+            self.check_dissipation_viscous_drag(n)
 
     # Test case 1.1: particle specific gamma but not temperature / fluctuation
     # & dissipation / LD and BD
@@ -712,7 +722,7 @@ class ThermoTest(ut.TestCase):
             system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
             self.set_particle_specific_temperature(n)
             # Actual integration and validation run
-            self.check_dissipation_viscous_drag()
+            self.check_dissipation_viscous_drag(n)
 
     # Test case 2.1: particle specific temperature but not gamma / fluctuation
     # & dissipation / LD and BD
@@ -771,7 +781,7 @@ class ThermoTest(ut.TestCase):
             self.set_particle_specific_gamma(n)
             self.set_particle_specific_temperature(n)
             # Actual integration and validation run
-            self.check_dissipation_viscous_drag()
+            self.check_dissipation_viscous_drag(n)
 
     # Test case 3.1: both particle specific gamma and temperature /
     # fluctuation & dissipation / LD and BD
@@ -833,7 +843,7 @@ class ThermoTest(ut.TestCase):
                 gamma=self.gamma_global,
                 gamma_rotation=self.gamma_global_rot)
             # Actual integration and validation run
-            self.check_dissipation_viscous_drag()
+            self.check_dissipation_viscous_drag(n)
 
     # Test case 4.1: no particle specific values / rotational specific global
     # thermostat / fluctuation & dissipation / LD and BD
