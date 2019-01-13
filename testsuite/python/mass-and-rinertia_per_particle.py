@@ -253,8 +253,9 @@ class ThermoTest(ut.TestCase):
 
         """
 
-        tol = 1.25E-4
+        tol = 1.2E-3
         for step in range(100):
+            self.system.integrator.run(2)
             for i in range(n):
                 for k in range(2):
                     ind = i + k * n
