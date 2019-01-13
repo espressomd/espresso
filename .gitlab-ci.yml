@@ -233,14 +233,14 @@ rocm-maxset:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
     - export with_cuda=false
+    - export OMPI_MCA_btl_vader_single_copy_mechanism=none
     - export myconfig=maxset
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
     - linux
-#  only:
-#    - tags
-#    - triggers
+#  except:
+#    - /^PR-.*/
 
 ubuntu:arm64:
   <<: *arch_definition
