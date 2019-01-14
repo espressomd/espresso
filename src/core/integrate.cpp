@@ -782,7 +782,7 @@ void propagate_pos() {
   else {
     for (auto &p : local_cells.particles()) {
 #if defined(ROTATION) && defined(BROWNIAN_DYNAMICS)
-    bd_pos_steps_rot(p, 0.5 * time_step);
+      bd_pos_steps_rot(p, 0.5 * time_step);
 #endif
 // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
