@@ -585,4 +585,7 @@ cdef class Thermostat(object):
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_BROWNIAN)
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+            global thermo_virtual
+            thermo_virtual = act_on_virtual
+            mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
             return True

@@ -107,6 +107,10 @@ inline void bd_drag_vel(Particle &p, double dt) {
  * @param dt              Time interval (Input)
  */
 inline void bd_random_walk_vel(Particle &p, double dt) {
+  // skip the translation thermalizing for virtual sites unless enabled
+  extern bool thermo_virtual;
+  if (p.p.is_virtual && !thermo_virtual )
+    return;
   // Just a square root of kT, see eq. (10.2.17) and comments in 2 paragraphs
   // afterwards, Pottier2010
   extern double brown_sigma_vel;
