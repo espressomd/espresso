@@ -107,16 +107,6 @@ debian:9:
     - docker
     - linux
 
-opensuse:42.3:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
-  script:
-    - export with_cuda=false myconfig=maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
 opensuse:15.0:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
