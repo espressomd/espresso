@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
         grid_spacing, origin, Vector3d{});
 
     BOOST_CHECK((interpolated_value - field_value).norm() <
-                std::numeric_limits<double>::epsilon());
+                2 * std::numeric_limits<double>::epsilon());
   }
 }
 

@@ -329,6 +329,11 @@ else()
   set(BOOST_MINIMUM_VERSION "1.53.0")
 endif()
 
+# old Boost.MPI versions contain a use-after-free bug that seems to only cause crashes on 32-bit architectures
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(BOOST_MINIMUM_VERSION "1.67.0")
+endif()
+
 find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
