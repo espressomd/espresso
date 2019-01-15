@@ -25,6 +25,7 @@ espressomd.assert_features(required_features)
 
 from espressomd import System, shapes, electrokinetics, ekboundaries
 import sys
+import os
 
 system = System(box_l=[10, 10, 10])
 system.set_random_state_PRNG()
@@ -57,6 +58,11 @@ ek_wall_right = ekboundaries.EKBoundary(
     shape=shapes.Wall(dist=-9, normal=[-1, 0, 0]), charge_density=0.01)
 system.ekboundaries.add(ek_wall_left)
 system.ekboundaries.add(ek_wall_right)
+
+
+if not os.path.isdir("ek"):
+    os.makedirs("ek")
+
 
 for i in range(1000):
     system.integrator.run(100)

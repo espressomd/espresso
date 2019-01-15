@@ -34,7 +34,6 @@ print("""
 Program Information:""")
 print(espressomd.features())
 
-dev = "cpu"
 
 # System parameters
 #############################################################
@@ -58,10 +57,10 @@ system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 
-with open("system_save", "rb") as system_save:
+with open("system_save.pkl", "rb") as system_save:
     pickle.load(system_save)
 
-with open("nonBondedInter_save", "rb") as bond_save:
+with open("nonBondedInter_save.pkl", "rb") as bond_save:
     pickle.load(bond_save)
 
 print("Non-bonded interactions from checkpoint:")
@@ -73,7 +72,7 @@ print(system.force_cap)
 
 # Integration parameters
 #############################################################
-with open("thermostat_save", "rb") as thermostat_save:
+with open("thermostat_save.pkl", "rb") as thermostat_save:
     pickle.load(thermostat_save)
 
 
@@ -106,7 +105,7 @@ if not system.non_bonded_inter[0, 0].lennard_jones.is_active():
 #############################################################
 act_min_dist = system.analysis.min_dist()
 
-with open("p3m_save", "rb") as p3m_save:
+with open("p3m_save.pkl", "rb") as p3m_save:
     p3m = pickle.load(p3m_save)
 print(p3m.get_params())
 
@@ -143,7 +142,7 @@ energies = system.analysis.energy()
 print(energies)
 
 j = 0
-for i in range(0, int_n_times):
+for i in range(int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
     system.integrator.run(int_steps)

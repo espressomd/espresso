@@ -1,8 +1,3 @@
-"""
-This sample measures the excess chemical potential for Widom insertion of charged
-particles using the reaction ensemble method.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -21,6 +16,10 @@ particles using the reaction ensemble method.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample measures the excess chemical potential for Widom insertion of
+charged particles using the reaction ensemble method.
+"""
 from __future__ import print_function
 import numpy as np
 import sys
@@ -37,6 +36,7 @@ espressomd.assert_features(required_features)
 
 # System parameters
 #############################################################
+assert len(sys.argv) == 2, "please provide a value for cs_bulk"
 cs_bulk = float(sys.argv[1])
 box_l = 50.0
 N0 = int(cs_bulk * box_l**3)
@@ -123,9 +123,10 @@ for i in range(10000):
         RE.measure_excess_chemical_potential(0)  # 0 for insertion reaction
         system.integrator.run(steps=2)
     system.integrator.run(steps=500)
-    if(i % 100 == 0):
-        print("mu_ex_pair", RE.measure_excess_chemical_potential(0))
-              #0 for insertion reaction
+    if i % 20 == 0:
+        print("mu_ex_pair ({:.4f}, {:.4f})".format(
+            *RE.measure_excess_chemical_potential(0)  # 0 for insertion reaction
+        ))
         print("HA", system.number_of_particles(type=0), "A-",
               system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
 

@@ -1,10 +1,3 @@
-"""
-This sample sets up a polymer and tests the available cell systems.
-"""
-
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
 # Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -22,6 +15,10 @@ This sample sets up a polymer and tests the available cell systems.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample sets up a polymer and tests the available cell systems.
+"""
+
 from __future__ import print_function
 import espressomd
 from espressomd import polymer

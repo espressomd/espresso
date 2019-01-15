@@ -14,9 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Demonstrates the construction of a rigid object by means of the
+"""
+Demonstrates the construction of a rigid object by means of the
 VIRTUAL_SITES_RELATIVE feature.
-
 """
 
 from __future__ import print_function

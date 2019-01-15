@@ -14,14 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" Visualization sample for Lattice Boltzmann boundary nodes.
+"""
+Visualization sample for Lattice Boltzmann boundary nodes.
 """
 
 import espressomd
 import espressomd.lb
 import espressomd.shapes
 import espressomd.lbboundaries
-from espressomd.visualization_opengl import *
+from espressomd import visualization_opengl
 
 required_features = ["LB", "LB_BOUNDARIES"]
 espressomd.assert_features(required_features)
@@ -44,7 +45,7 @@ cylinder_shape = espressomd.shapes.Cylinder(
 cylinder_boundary = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
 system.lbboundaries.add(cylinder_boundary)
 
-visualizer = openGLLive(system,
+visualizer = visualization_opengl.openGLLive(system,
                         background_color=[1, 1, 1],
                         camera_position=[5, 5, 25],
                         LB_draw_boundaries=True,

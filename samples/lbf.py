@@ -1,7 +1,3 @@
-"""
-This samples sets up a Lattice-Boltzmann fluid and applies an external force density on it.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -20,10 +16,15 @@ This samples sets up a Lattice-Boltzmann fluid and applies an external force den
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This samples sets up a Lattice-Boltzmann fluid and applies an external force
+density on it.
+"""
 from __future__ import print_function
 
 import matplotlib.pyplot as plt
 import numpy as np
+import argparse
 
 import espressomd
 
@@ -32,13 +33,27 @@ espressomd.assert_features(required_features)
 
 import espressomd.lb
 
+parser = argparse.ArgumentParser()
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--cpu', action='store_true')
+group.add_argument('--gpu', action='store_true')
+args = parser.parse_args()
+
 
 print("""
 =======================================================
 =         Lattice Boltzmann fluid example             =
 =======================================================
+""")
 
-Program Information:""")
+if args.gpu:
+    print("Using GPU implementation")
+else:
+    print("Using CPU implementation")
+    if not args.cpu:
+        print("(select the implementation with --cpu or --gpu)")
+
+print("\nProgram Information:")
 print(espressomd.features())
 
 
@@ -56,8 +71,11 @@ system.part.add(id=0, pos=[box_l / 2.0, box_l /
 
 lb_params = {'agrid': 1, 'fric': 1, 'dens': 1, 'visc': 1, 'tau': 0.01,
              'ext_force_density': [0, 0, -1.0 / (box_l**3)]}
-#lbf = espressomd.lb.LBFluidGPU(**lb_params)
-lbf = espressomd.lb.LBFluid(**lb_params)
+
+if args.gpu:
+    lbf = espressomd.lb.LBFluidGPU(**lb_params)
+else:
+    lbf = espressomd.lb.LBFluid(**lb_params)
 system.actors.add(lbf)
 print(system.actors)
 print(lbf.get_params())

@@ -14,7 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" Visualization sample for bonds. Simulates a large chain of particles connected via harmonic bonds.
+"""
+Visualization sample for bonds. Simulates a large chain of particles connected
+via harmonic bonds.
 """
 
 from __future__ import print_function

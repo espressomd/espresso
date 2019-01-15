@@ -14,7 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" Particle polarization with cold drude oscillators on a coarse grained ionic liquid.
+"""
+Particle polarization with cold Drude oscillators on a coarse grained
+ionic liquid BMIM PF6.
 """
 
 from __future__ import print_function
@@ -37,11 +39,11 @@ required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "ROTATIONAL_INERTIA", "VIRTUAL_SITES_RELATIVE", "THOLE", "LANGEVIN_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
-print("\nThis script demonstrates particle polarization with cold drude\n\
-oscillators. It is a coarse grained simulation of the ionic liquid BMIM PF6.\n\
-The density and particle numbers are low for testing purposes. It writes the\n\
-xyz trajectory and RDF to the specified output path. Run with --help to see\n\
-available arguments (e.g. use --visual for visualization).")
+print("""This script demonstrates particle polarization with cold Drude
+oscillators. It is a coarse grained simulation of the ionic liquid BMIM PF6.
+The density and particle numbers are low for testing purposes. It writes the
+xyz trajectory and RDF to the specified output path. Run with --help to see
+available arguments (e.g. use --visual for visualization).""")
 
 parser = argparse.ArgumentParser(description='Drude LJ liquid')
 parser.add_argument("--epsilon_r", nargs='?', default=1.0, type=float)
@@ -97,7 +99,7 @@ if args.visu:
 
 args.path = os.path.join(args.path, '')
 if not os.path.exists(args.path):
-    os.mkdir(args.path)
+    os.makedirs(args.path)
 
 #TIMESTEP
 fs_to_md_time = 1.0e-2
@@ -325,7 +327,7 @@ else:
 
     for i in range(n_int_cycles):
         system.integrator.run(n_int_steps)
-        print("{0:.2f} %".format(100.0 * i / n_int_cycles))
+        print("{0:.0f} %".format(100.0 * i / n_int_cycles))
 
     print("\n-->Integration")
 
@@ -352,7 +354,7 @@ else:
         #FOR RDFS
         system.analysis.append()
 
-        print("{0:.2f} %".format(100.0 * i / n_int_cycles))
+        print("{0:.1f} %".format(100.0 * i / n_int_cycles))
 
     #RDFs
     rdf_bins = 100

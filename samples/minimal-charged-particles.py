@@ -1,7 +1,3 @@
-"""
-This sample simulates equal number of positively and negatively charged particles using the P3M solver. The system is maintained at a constant temperature by using a Langevin thermostat.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -20,6 +16,11 @@ This sample simulates equal number of positively and negatively charged particle
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample simulates equal number of positively and negatively charged
+particles using the P3M solver. The system is maintained at a constant
+temperature using a Langevin thermostat.
+"""
 from __future__ import print_function
 import espressomd
 
@@ -81,7 +82,7 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
-# Assingn charge to particles
+# Assign charge to particles
 for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
@@ -114,7 +115,7 @@ system.actors.add(p3m)
 #      Integration                                          #
 #############################################################
 
-for i in range(0, int_n_times):
+for i in range(int_n_times):
     system.integrator.run(int_steps)
 
     energies = system.analysis.energy()

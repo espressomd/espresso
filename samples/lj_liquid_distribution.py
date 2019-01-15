@@ -1,6 +1,3 @@
-"""
-This sample sets up a Lennard-Jones fluid. The particles in the system are of two types: Type 0 and Type 1. Type 0 particles interact with each other via a repulsive WCA interaction. Type 1 particles neither interact with themselves nor with Type 0 particles. The distribution of minimum distances between particles of Type 0 and Type 1 is recorded.
-"""
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -19,6 +16,13 @@ This sample sets up a Lennard-Jones fluid. The particles in the system are of tw
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample sets up a Lennard-Jones fluid. The particles in the system are of
+two types: Type 0 and Type 1. Type 0 particles interact with each other via a
+repulsive WCA interaction. Type 1 particles neither interact with themselves
+nor with Type 0 particles. The distribution of minimum distances between
+particles of Type 0 and Type 1 is recorded.
+"""
 from __future__ import print_function
 import numpy as np
 import espressomd
@@ -198,7 +202,7 @@ energies = system.analysis.energy()
 print(energies)
 
 j = 0
-for i in range(0, int_n_times):
+for i in range(int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
     system.integrator.run(int_steps)

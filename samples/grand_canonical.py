@@ -1,6 +1,3 @@
-"""
-This sample performs a grand canonical simulation of a salt solution.
-"""
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -19,14 +16,14 @@ This sample performs a grand canonical simulation of a salt solution.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample performs a grand canonical simulation of a salt solution.
+"""
 from __future__ import print_function
 import numpy as np
 import sys
 
 import espressomd
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
 from espressomd import reaction_ensemble
 from espressomd import electrostatics
 
@@ -34,7 +31,7 @@ required_features = ["ELECTROSTATICS", "EXTERNAL_FORCES", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 # print help message if proper command-line arguments are not provided
-if (len(sys.argv) != 3):
+if len(sys.argv) != 3:
     print("\nGot ", str(len(sys.argv) - 1), " arguments, need 2\n\nusage:" +
           sys.argv[0] + " [cs_bulk] [excess_chemical_potential/kT]\n")
     sys.exit()
@@ -139,11 +136,12 @@ for i in range(10000):
     RE.reaction(10)
     system.integrator.run(steps=300)
     num_As.append(system.number_of_particles(type=1))
-    if(i % 100 == 0):
+    if i > 2 and i % 50 == 0:
         print("HA", system.number_of_particles(type=0), "A-",
               system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
         concentration_in_box = np.mean(num_As) / box_l**3
-        print(
-            "average num A", np.mean(num_As), "+/-", np.sqrt(
-                np.var(num_As, ddof=1) / len(num_As)), "average concentration",
-              concentration_in_box, "deviation to target concentration", (concentration_in_box - cs_bulk) / cs_bulk * 100, "%")
+        deviation = (concentration_in_box - cs_bulk) / cs_bulk * 100
+        print("average num A {:.1f} +/- {:.1f}, average concentration {:.3f}, "
+              "deviation to target concentration {:.1f}%".format(
+              np.mean(num_As), np.sqrt(np.var(num_As, ddof=1) / len(num_As)),
+              concentration_in_box, deviation))

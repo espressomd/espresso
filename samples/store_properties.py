@@ -1,7 +1,3 @@
-"""
-This sample simulates charged particles that interact via repulsive WCA potential. Electrostatic interactions are included using the P3M solver. Relevant properties of the simulation is stored as a pickle file.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -20,6 +16,11 @@ This sample simulates charged particles that interact via repulsive WCA potentia
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample simulates charged particles that interact via repulsive WCA
+potential. Electrostatic interactions are included using the P3M solver.
+Relevant properties of the simulation is stored in a pickle file.
+"""
 from __future__ import print_function
 import numpy as np
 import espressomd
@@ -37,8 +38,6 @@ print("""
 
 Program Information:""")
 print(espressomd.features())
-
-dev = "cpu"
 
 # System parameters
 #############################################################
@@ -113,7 +112,7 @@ print("Start with minimal distance {}".format(act_min_dist))
 system.cell_system.max_num_cells = 2744
 
 
-# Assingn charge to particles
+# Assign charge to particles
 for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
@@ -169,16 +168,16 @@ try:
 except ImportError:
     import pickle
 
-with open("p3m_save", "wb") as p3m_save:
+with open("p3m_save.pkl", "wb") as p3m_save:
     pickle.dump(p3m, p3m_save, -1)
 
-with open("system_save", "wb") as system_save:
+with open("system_save.pkl", "wb") as system_save:
     pickle.dump(system, system_save, -1)
 
-with open("thermostat_save", "wb") as thermostat_save:
+with open("thermostat_save.pkl", "wb") as thermostat_save:
     pickle.dump(system.thermostat, thermostat_save, -1)
 
-with open("nonBondedInter_save", "wb") as bond_save:
+with open("nonBondedInter_save.pkl", "wb") as bond_save:
     pickle.dump(system.non_bonded_inter, bond_save, -1)
 
 # terminate program

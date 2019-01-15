@@ -14,8 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""This scripts demonstrates the measurement of the mean square displacement
-using the Observables/Correlators framework."""
+"""
+This scripts demonstrates the measurement of the mean square displacement
+using the Observables/Correlators framework.
+"""
 
 from __future__ import print_function
 import numpy as np
@@ -37,9 +39,9 @@ system.cell_system.set_n_square(use_verlet_lists=False)
 system.thermostat.set_langevin(kT=1, gamma=10)
 system.integrator.run(1000)
 
-# Initialize obzervable for a particle with id 0
+# Initialize observable for a particle with id 0
 p = espressomd.observables.ParticlePositions(ids=(0,))
-# ASk the observable for its parameters
+# Ask the observable for its parameters
 print(p.get_params())
 # Calculate and return current value
 print(p.calculate())
@@ -47,12 +49,12 @@ print(p.calculate())
 print(p.calculate())
 
 
-# Instance a correlator correlating the p observable with itself,
+# Instantiate a correlator correlating the p observable with itself,
 # calculating the mean squared displacement (msd).
 c = espressomd.accumulators.Correlator(
     tau_lin=16, tau_max=1000, delta_N=1, obs1=p,
                                       corr_operation="square_distance_componentwise", compress1="discard1")
-# Instance a correlator calculating the FCS autocorrelation function from
+# Instantiate a correlator calculating the FCS autocorrelation function from
 # particle positions, using the symmetric focal spot with wx=wy=wz=10
 # (sigma)
 fcs = espressomd.accumulators.Correlator(

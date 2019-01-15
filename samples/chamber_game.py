@@ -14,7 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" ESPResSo as a game engine.
+"""
+ESPResSo as a game engine.
 """
 
 from __future__ import print_function
@@ -31,18 +32,25 @@ required_features = ["LENNARD_JONES", "MASS",
                      "EXTERNAL_FORCES", "LANGEVIN_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
-print(
-    "THE CHAMBER GAME\n\nYOUR GOAL IS TO SCOOP ALL BLUE PARTICLES INTO THE RIGHT BOX.\nGREEN/RED SPHERES CAN BE PICKED UP AND INCREASE/DECREASE\nTHE TEMERATURE IN THE CHAMBER WHERE THEY ARE COLLECTED.")
+print("""THE CHAMBER GAME
+
+YOUR GOAL IS TO SCOOP ALL BLUE PARTICLES INTO THE RIGHT BOX.
+GREEN/RED SPHERES CAN BE PICKED UP AND INCREASE/DECREASE
+THE TEMPERATURE IN THE CHAMBER WHERE THEY ARE COLLECTED.""")
 
 try:
     import pygame
     has_pygame = True
-    print(
-        "\nCONTROLS:\nMOVE: (JOYSTICK AXIS), (KEYBOARD i/j/k/l)\nACTION BUTTON: (JOYSTICK A), (KEYBOARD p)\nRESTART: (JOYSTICK START), (KEYBOARD b)")
+    print("\nCONTROLS:"
+          "\nMOVE: (JOYSTICK AXIS), (KEYBOARD i/j/k/l)"
+          "\nACTION BUTTON: (JOYSTICK A), (KEYBOARD p)"
+          "\nRESTART: (JOYSTICK START), (KEYBOARD b)")
 except:
     has_pygame = False
-    print(
-        "\nCONTROLS:\nMOVE: (KEYBOARD i/j/k/l)\nACTION BUTTON: (KEYBOARD p)\nRESTART: (KEYBOARD b)")
+    print("\nCONTROLS:"
+          "\nMOVE: (KEYBOARD i/j/k/l)"
+          "\nACTION BUTTON: (KEYBOARD p)"
+          "\nRESTART: (KEYBOARD b)")
 
 box = np.array([1500.0, 500.0, 150.0])
 system = espressomd.System(box_l=box)
@@ -237,7 +245,7 @@ while (n < bubbles_n):
     testid = len(system.part) - 1
     n += 1
 
-    if (system.analysis.dist_to(id=testid) < bubble_sigma * 0.5):
+    if system.analysis.dist_to(id=testid) < bubble_sigma * 0.5:
         system.part[testid].remove()
         n -= 1
 
@@ -383,7 +391,7 @@ def main():
     exploding = False
     button_A_old = 0
     button_Start_old = 0
-    while(True):
+    while True:
 
         # INTEGRATE
         system.integrator.run(1)

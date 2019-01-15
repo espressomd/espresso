@@ -14,7 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" Visualization sample for charged particles. Simulates a pool of particles with various charges, LJ parameters and masses.
+"""
+Visualization sample for charged particles. Simulates a pool of particles
+with various charges, LJ parameters and masses.
 """
 
 import espressomd

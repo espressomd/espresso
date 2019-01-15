@@ -1,6 +1,3 @@
-"""
-This sample sets up a polymer.
-"""
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -19,6 +16,9 @@ This sample sets up a polymer.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample sets up a polymer.
+"""
 from __future__ import print_function
 import espressomd
 from espressomd import thermostat

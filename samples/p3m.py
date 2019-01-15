@@ -109,7 +109,7 @@ print("Start with minimal distance {}".format(act_min_dist))
 system.cell_system.max_num_cells = 2744
 
 
-# Assingn charge to particles
+# Assign charge to particles
 for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
@@ -204,7 +204,7 @@ energies = system.analysis.energy()
 print(energies)
 
 j = 0
-for i in range(0, int_n_times):
+for i in range(int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
     system.integrator.run(int_steps)

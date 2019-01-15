@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample sets up a DPD fluid and calculates pressure as a function of varying density. The fluid is thermalized using a DPD thermostat.
+This sample sets up a DPD fluid and calculates pressure as a function of
+varying density. The fluid is thermalized using a DPD thermostat.
 """
 
 from __future__ import print_function

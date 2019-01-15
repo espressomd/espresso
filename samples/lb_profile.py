@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This samples simulates the flow of a Lattice-Boltzmann fluid past a cylinder, obtains the velocity profile in polar coordinates and compares it with the analytical result.
+This sample simulates the flow of a Lattice-Boltzmann fluid past a cylinder,
+obtains the velocity profile in polar coordinates and compares it with the
+analytical solution.
 """
 import numpy as np
 import matplotlib.pyplot as plt

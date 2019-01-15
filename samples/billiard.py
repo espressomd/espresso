@@ -14,7 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" ESPResSo 8Ball billard game.
+"""
+ESPResSo 8Ball billiard game.
 """
 
 from __future__ import print_function
@@ -35,8 +36,11 @@ import espressomd.shapes
 required_features = ["LENNARD_JONES", "MASS", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
-print(
-    '8Ball BILLARD - An Espresso Visualizer Demo\nControls:\nNumpad 4/6: Adjust Angle\nNumpad 2/8: Adjust Impulse\nNumpad 5: Shoot')
+print('''8Ball BILLIARD - An ESPResSo Visualizer Demo
+Controls:
+  Numpad 4/6: Adjust Angle
+  Numpad 2/8: Adjust Impulse
+  Numpad 5: Shoot''')
 
 #ESPRESSO
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -227,9 +231,6 @@ def main():
     ball.ext_force = impulse * np.array([math.sin(angle), 0, math.cos(angle)])
     ball.fix = [1, 1, 1]
     system.thermostat.set_langevin(kT=0, gamma=0.8)
-    #ELECTROSTATICS
-    #	p3m = electrostatics.P3M(prefactor=50, accuracy=1e-2)
-    #	system.actors.add(p3m)
 
     cleared_balls = [0, 0]
     while True:

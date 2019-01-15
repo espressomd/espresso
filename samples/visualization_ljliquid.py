@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-""" Visualization sample for a Lennard Jones liquid with live plotting via matplotlib.
+"""
+Visualization sample for a Lennard-Jones liquid with live plotting via
+matplotlib.
 """
 
 from __future__ import print_function
@@ -201,7 +203,7 @@ def main_loop():
 
 
 def main_thread():
-    for i in range(0, int_n_times):
+    for i in range(int_n_times):
         main_loop()
 
 

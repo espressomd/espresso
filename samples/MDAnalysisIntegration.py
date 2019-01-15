@@ -17,7 +17,7 @@
 # -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 """
-    This example shows how to integrate MDAnalysis in ESPResSo
+This example shows how to integrate MDAnalysis in ESPResSo
 """
 from __future__ import print_function
 import espressomd
@@ -123,4 +123,3 @@ for i in range(100):
 
 print("===> The trajectory has been saved in the traj.trr file")
 
-#

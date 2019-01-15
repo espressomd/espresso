@@ -14,7 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""This sample checks if particles or a polymer added to the system obey(s) constraints."""
+"""
+This sample checks if particles or a polymer added to the system obey(s)
+constraints.
+"""
 
 from __future__ import print_function
 import espressomd
@@ -94,7 +97,7 @@ i = 0
 act_min_dist = system.analysis.min_dist()
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
-# warmp with zero temperature to remove overlaps
+# warmup with zero temperature to remove overlaps
 while (act_min_dist < min_dist or c1.min_dist() < min_dist or c2.min_dist() < min_dist):
     for j in range(warm_steps + lj_cap):
         print(j)
@@ -122,5 +125,5 @@ system.integrator.run(warm_steps)
 
 for t in range(300):
     system.integrator.run(1000)
-    # print the position to see if it stays within imposed constraints
-    print(system.part[0].pos)
+    # print the position to see if it stays within the imposed constraints
+    print("({:.2f}, {:.2f}, {:.2f})".format(*system.part[0].pos))

@@ -14,7 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" Visualization sample for Poisseuille flow with Lattice Boltzmann.
+"""
+Visualization sample for Poiseuille flow with Lattice Boltzmann.
 """
 
 from __future__ import print_function

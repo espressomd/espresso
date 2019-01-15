@@ -14,7 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" Visualization samples with keyboard control and particle repositioning via timed callback.
+"""
+Visualization samples with keyboard control and particle repositioning via
+timed callback.
 """
 
 from __future__ import print_function
@@ -23,8 +25,7 @@ from espressomd import thermostat
 from espressomd import integrate
 import numpy as np
 from threading import Thread
-from math import *
-from espressomd.visualization_opengl import *
+from espressomd import visualization_opengl
 
 required_features = []
 espressomd.assert_features(required_features)
@@ -34,7 +35,7 @@ print("Press u/j to change temperature")
 box_l = 10.0
 system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
-visualizer = openGLLive(system, drag_enabled=True, drag_force=100)
+visualizer = visualization_opengl.openGLLive(system, drag_enabled=True, drag_force=100)
 
 system.time_step = 0.00001
 system.cell_system.skin = 3.0
@@ -84,9 +85,9 @@ def decreaseTemp():
 
 # Register button callbacks
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('u', KeyboardFireEvent.Hold, increaseTemp))
+    visualization_opengl.KeyboardButtonEvent('u', visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('j', KeyboardFireEvent.Hold, decreaseTemp))
+    visualization_opengl.KeyboardButtonEvent('j', visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
 
 # Set initial position
 spin()

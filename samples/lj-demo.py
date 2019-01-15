@@ -477,7 +477,7 @@ def main_loop():
 
 
 def main_thread():
-    for i in range(0, int_n_times):
+    for i in range(int_n_times):
         main_loop()
 
 
