@@ -50,7 +50,7 @@ ext_force_density = 0.1
 system.time_step = dt
 system.cell_system.skin = 0.2
 system.thermostat.turn_off()
-integration_length = int(2e3)
+integration_length = 2000
 
 # Set up the (LB) electrokinetics fluid
 viscosity_kinematic = viscosity_dynamic / density_water

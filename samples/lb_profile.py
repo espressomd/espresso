@@ -36,6 +36,7 @@ import espressomd.accumulators
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
+n_steps = 500
 
 lb_fluid = espressomd.lb.LBFluidGPU(
     agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01, ext_force_density=[0, 0, 0.15])
@@ -64,12 +65,12 @@ cylinder_shape = espressomd.shapes.Cylinder(
         length=20.0)
 cylinder_boundary = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
 system.lbboundaries.add(cylinder_boundary)
-system.integrator.run(5000)
+system.integrator.run(n_steps)
 
 
 accumulator = espressomd.accumulators.MeanVarianceCalculator(obs=fluid_obs)
 system.auto_update_accumulators.add(accumulator)
-system.integrator.run(5000)
+system.integrator.run(n_steps)
 
 lb_fluid_profile = accumulator.get_mean()
 lb_fluid_profile = np.reshape(lb_fluid_profile, (100, 1, 1, 3))

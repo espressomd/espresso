@@ -118,7 +118,8 @@ RE.add_reaction(gamma=unimportant_K_diss, reactant_types=[], reactant_coefficien
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
-for i in range(10000):
+n_iterations = 10000
+for i in range(n_iterations):
     for j in range(30):
         RE.measure_excess_chemical_potential(0)  # 0 for insertion reaction
         system.integrator.run(steps=2)

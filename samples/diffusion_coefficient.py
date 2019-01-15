@@ -63,8 +63,9 @@ np.savetxt("vacf.dat", c_vel.result())
 vacf = c_vel.result()
 #Integrate with trapezoidal rule
 I = np.trapz(vacf[:, 2], vacf[:, 0])
+ratio = 1. / 3. * I / (kT / gamma)
 print("Ratio of measured and expected diffusion coefficients from Green-Kubo:",
-      1. / 3. * I / (kT / gamma))
+      ratio)
 
 # Check MSD
 msd = c_pos.result()

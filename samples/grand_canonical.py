@@ -131,10 +131,13 @@ system.force_cap = 0
 #MC warmup
 RE.reaction(1000)
 
+n_int_cycles = 10000
+n_int_steps = 300
 num_As = []
-for i in range(10000):
+deviation = None
+for i in range(n_int_cycles):
     RE.reaction(10)
-    system.integrator.run(steps=300)
+    system.integrator.run(steps=n_int_steps)
     num_As.append(system.number_of_particles(type=1))
     if i > 2 and i % 50 == 0:
         print("HA", system.number_of_particles(type=0), "A-",

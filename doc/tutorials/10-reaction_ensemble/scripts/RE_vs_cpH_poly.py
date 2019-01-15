@@ -169,16 +169,18 @@ nH = []
 nOH = []
 qdist = np.zeros(N0)
 c = 0
+n_iterations = 500  # this is for tutorial only, too few integration steps
+n_steps_production = 10000
+n_steps_thermalization = 2000
 
-for i in range(12000):
+for i in range(n_steps_thermalization + n_steps_production):
     RE.reaction()
-    system.integrator.run(
-        500)  # this is for tutorial only, too few integration steps
+    system.integrator.run(n_iterations)
     print(
         i, ") HA", system.number_of_particles(type=type_HA), "A-", system.number_of_particles(
             type=type_A), "H+", system.number_of_particles(type=type_H),
           'OH-', system.number_of_particles(type=type_OH), 'Cl-', system.number_of_particles(type=type_Cl), 'NA+', system.number_of_particles(type=type_Na))
-    if (i > 2000):  # just a bit of thermalization before starting to gain informations about the properties of the system
+    if (i > n_steps_thermalization):  # just a bit of thermalization before starting to gain informations about the properties of the system
         alpha.append(system.number_of_particles(type=type_A) / N0)
         nHA.append(system.number_of_particles(type=type_HA))
         nA.append(system.number_of_particles(type=type_A))

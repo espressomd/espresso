@@ -21,7 +21,7 @@
 import espressomd
 from espressomd import assert_features, electrostatics, electrostatic_extensions
 from espressomd.shapes import Wall
-from espressomd.visualization_opengl import *
+from espressomd import visualization_opengl
 import numpy
 from threading import Thread
 from time import sleep
@@ -71,7 +71,7 @@ system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
 # Visualizer
-visualizer = openGLLive(system, camera_position=[-3 * box_l, box_l * 0.5, box_l * 0.5], camera_right=[
+visualizer = visualization_opengl.openGLLive(system, camera_position=[-3 * box_l, box_l * 0.5, box_l * 0.5], camera_right=[
                         0, 0, 1], drag_force=5 * 298, background_color=[1, 1, 1], light_pos=[30, 30, 30], ext_force_arrows_type_scale=[0.0001], ext_force_arrows=False)
 
 # Walls
@@ -145,10 +145,10 @@ def decreaseElectricField():
 
 
 # Register buttons
-visualizer.keyboardManager.register_button(KeyboardButtonEvent(
-    'u', KeyboardFireEvent.Hold, increaseElectricField))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent(
-    'j', KeyboardFireEvent.Hold, decreaseElectricField))
+visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+    'u', visualization_opengl.KeyboardFireEvent.Hold, increaseElectricField))
+visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+    'j', visualization_opengl.KeyboardFireEvent.Hold, decreaseElectricField))
 
 
 def main():

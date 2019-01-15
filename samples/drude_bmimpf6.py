@@ -245,8 +245,9 @@ for i in range(n_ionpairs):
 #ENERGY MINIMIZATION
 print("\n-->E minimization")
 print("Before:", system.analysis.energy()["total"])
+n_max_steps = 100000
 system.minimize_energy.init(
-    f_max=5.0, gamma=0.01, max_steps=100000, max_displacement=0.01)
+    f_max=5.0, gamma=0.01, max_steps=n_max_steps, max_displacement=0.01)
 system.minimize_energy.minimize()
 print("After:", system.analysis.energy()["total"])
 
@@ -312,8 +313,9 @@ system.time_step = time_step_fs * fs_to_md_time
 
 print("\n-->Timing")
 start = time.time()
-system.integrator.run(1000)
-time_per_step = (time.time() - start) / 1000.0
+n_timing_steps = 1000
+system.integrator.run(n_timing_steps)
+time_per_step = (time.time() - start) / float(n_timing_steps)
 ns_per_hour = 3600.0 * time_step_fs * 1e-6 / time_per_step
 ns_per_day = 24.0 * ns_per_hour
 print("Yield:", ns_per_day, "ns/day")

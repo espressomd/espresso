@@ -64,7 +64,8 @@ if not os.path.isdir("ek"):
     os.makedirs("ek")
 
 
-for i in range(1000):
+n_int_cycles = 1000
+for i in range(n_int_cycles):
     system.integrator.run(100)
     sys.stdout.write("\rIntegrating: %03i" % i)
     sys.stdout.flush()

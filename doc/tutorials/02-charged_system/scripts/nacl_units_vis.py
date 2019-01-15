@@ -20,7 +20,7 @@
 #
 import espressomd
 from espressomd import assert_features, electrostatics, electrostatic_extensions
-from espressomd.visualization_opengl import *
+from espressomd import visualization_opengl
 import numpy
 from threading import Thread
 from time import sleep
@@ -31,7 +31,7 @@ system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 numpy.random.seed(system.seed)
 
-visualizer = openGLLive(system, drag_force=5 * 298,
+visualizer = visualization_opengl.openGLLive(system, drag_force=5 * 298,
                         background_color=[1, 1, 1], light_pos=[30, 30, 30])
 
 # Callbacks to control temperature
@@ -59,9 +59,9 @@ def decreaseTemp():
 
 # Register buttons
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
+    visualization_opengl.KeyboardButtonEvent('t', visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
+    visualization_opengl.KeyboardButtonEvent('g', visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
 
 
 def main():
@@ -79,9 +79,7 @@ def main():
     #l_bjerrum = 0.885^2 * e^2/(4*pi*epsilon_0*k_B*T)
     l_bjerrum = 130878.0 / temp
 
-    num_steps_equilibration = 3000
-    num_configs = 50
-    integ_steps_per_config = 500
+    num_steps_equilibration = 30
 
     # Particle parameters
     types = {"Cl": 0, "Na": 1}
@@ -151,7 +149,7 @@ def main():
 
     print("\n--->Temperature Equilibration")
     system.time = 0.0
-    for i in range(int(num_steps_equilibration / 100)):
+    for i in range(num_steps_equilibration):
         energy = system.analysis.energy()
         temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
         print(

@@ -60,14 +60,16 @@ system.part.add(pos=system.box_l * np.random.random((n_part, 3)))
 
 # As a usage example, we calculate the pressure at several
 # particle densities.
+sample_size = 100
+int_steps = 1000
 for V in range(100, 1000, 100):
     # Rescale the system to the new volume
     system.change_volume_and_rescale_particles(V**0.3333)
 
     # List of samples
     p_samples = []
-    for i in range(100):
-        system.integrator.run(1000)
+    for i in range(sample_size):
+        system.integrator.run(int_steps)
         p_samples.append(system.analysis.pressure()['total'])
 
     # Average pressure
