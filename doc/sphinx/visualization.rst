@@ -315,8 +315,8 @@ by a timer or keyboard input::
             print "T = 0"
 
     # Registers input-based calls
-    visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
-    visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
+    visualizer.keyboardManager.register_button(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
+    visualizer.keyboardManager.register_button(KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
 
 Further examples can be found in samples/python/billard.py or samples/python/visualization\_interactive.py.
 
