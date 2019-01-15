@@ -1116,7 +1116,7 @@ void bd_pos_steps_rot(Particle &p, double dt) {
 void bd_random_walk(Particle &p, double dt) {
   // skip the translation thermalizing for virtual sites unless enabled
   extern bool thermo_virtual;
-  if (p.p.is_virtual && !thermo_virtual )
+  if (p.p.is_virtual && !thermo_virtual)
     return;
   // Position dispersion is defined by the second eq. (14.38) of Schlick2010
   // taking into account eq. (14.35). Its time interval factor will be added at
