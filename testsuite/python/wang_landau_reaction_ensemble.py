@@ -29,6 +29,7 @@ from espressomd import integrate
 from espressomd.interactions import *
 from espressomd import reaction_ensemble
 from espressomd import system
+import numpy.testing as npt
 
 
 class ReactionEnsembleTest(ut.TestCase):
@@ -70,9 +71,9 @@ class ReactionEnsembleTest(ut.TestCase):
     h = HarmonicBond(r_0=0, k=1)
     system.bonded_inter[0] = h
     system.part[0].add_bond((h, 1))
-    RE = reaction_ensemble.WangLandauReactionEnsemble(
+    WLRE = reaction_ensemble.WangLandauReactionEnsemble(
         temperature=temperature, exclusion_radius=0)
-    RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
+    WLRE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
         1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
     system.setup_type_map([0, 1, 2, 3])
     # initialize wang_landau
@@ -82,19 +83,28 @@ class ReactionEnsembleTest(ut.TestCase):
     np.savetxt("energy_boundaries.dat", np.c_[
                [0, 1], [0, 0], [9, 9]], delimiter='\t', header="nbar   E_potmin   E_potmax")
 
-    RE.add_collective_variable_degree_of_association(
+    WLRE.add_collective_variable_degree_of_association(
         associated_type=0, min=0, max=1, corresponding_acid_types=[0, 1])
-    RE.add_collective_variable_potential_energy(
-        filename="energy_boundaries.dat", delta=0.05)
-    RE.set_wang_landau_parameters(
+    WLRE.set_wang_landau_parameters(
         final_wang_landau_parameter=1e-2, do_not_sample_reaction_partition_function=True, full_path_to_output_filename="WL_potential_out.dat")
 
+    def test_wang_landau_energy_recording(self):
+        self.WLRE.update_maximum_and_minimum_energies_at_current_state()
+        self.WLRE.write_out_preliminary_energy_run_results()
+        nbars, E_mins, E_maxs = np.loadtxt(
+            "preliminary_energy_run_results", unpack=True)
+        npt.assert_almost_equal(nbars, [0, 1])
+        npt.assert_almost_equal(E_mins, [27.0, -10])
+        npt.assert_almost_equal(E_maxs, [27.0, -10])
+
     def test_wang_landau_output(self):
+        self.WLRE.add_collective_variable_potential_energy(
+            filename="energy_boundaries.dat", delta=0.05)
         while True:
             try:
-                self.RE.reaction()
+                self.WLRE.reaction()
                 for i in range(2):
-                    self.RE.displacement_mc_move_for_particles_of_type(3)
+                    self.WLRE.displacement_mc_move_for_particles_of_type(3)
             except reaction_ensemble.WangLandauHasConverged:  # only catch my exception
                 break
         # test as soon as wang_landau has converged (throws exception then)
@@ -122,10 +132,35 @@ class ReactionEnsembleTest(ut.TestCase):
         # compared here, see Master Thesis Jonas Landsgesell p. 72
         self.assertAlmostEqual(
             expected_canonical_potential_energy - 1.5, 0.00, places=1,
-                               msg="difference to analytical expected canonical potential energy too big")
+            msg="difference to analytical expected canonical potential energy too big")
         self.assertAlmostEqual(
             expected_canonical_configurational_heat_capacity - 1.5, 0.00, places=1,
-                               msg="difference to analytical expected canonical configurational heat capacity too big")
+            msg="difference to analytical expected canonical configurational heat capacity too big")
+
+    def _wang_landau_output_checkpoint(self, filename):
+        # write first checkpoint
+        self.WLRE.write_wang_landau_checkpoint()
+        old_checkpoint = np.loadtxt(filename)
+
+        # modify old_checkpoint in memory and in file (this destroys the
+        # information contained in the checkpoint, but allows for testing of
+        # the functions)
+        modified_checkpoint = old_checkpoint
+        modified_checkpoint[0] = 1
+        np.savetxt(filename, modified_checkpoint)
+
+        # check whether changes are carried out correctly
+        self.WLRE.load_wang_landau_checkpoint()
+        self.WLRE.write_wang_landau_checkpoint()
+        new_checkpoint = np.loadtxt(filename)
+        npt.assert_almost_equal(new_checkpoint, modified_checkpoint)
+
+    def test_wang_landau_output_checkpoint(self):
+        filenames = ["checkpoint_wang_landau_potential_checkpoint",
+                     "checkpoint_wang_landau_histogram_checkpoint"]
+        for filename in filenames:
+            self._wang_landau_output_checkpoint(filename)
+
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

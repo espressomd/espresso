@@ -30,6 +30,8 @@
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "utils/math/int_pow.hpp"
+#include "utils/math/sqr.hpp"
 
 #ifdef GAY_BERNE
 
@@ -80,8 +82,8 @@ add_gb_pair_force(const Particle *const p1, const Particle *const p2,
   Koef1 = ia_params->GB_mu / E2;
   Koef2 = Sigma * Sigma * Sigma * 0.5;
 
-  X = 1 / (dist - Sigma + ia_params->GB_sig);
-  Xcut = 1 / (ia_params->GB_cut - Sigma + ia_params->GB_sig);
+  X = ia_params->GB_sig / (dist - Sigma + ia_params->GB_sig);
+  Xcut = ia_params->GB_sig / (ia_params->GB_cut - Sigma + ia_params->GB_sig);
 
   if (X < 1.25) { /* 1.25 corresponds to the interparticle penetration of 0.2
                     units of length.
@@ -163,47 +165,44 @@ add_gb_pair_force(const Particle *const p1, const Particle *const p2,
 inline double gb_pair_energy(const Particle *p1, const Particle *p2,
                              const IA_parameters *ia_params, const double d[3],
                              double dist) {
+  using Utils::int_pow;
+  using Utils::sqr;
+
   if (!(dist < ia_params->GB_cut))
     return 0.0;
 
-  double a, b, c, X, Xcut, Brack, BrackCut, u1x, u1y, u1z, u2x, u2y, u2z, E, E1,
-      E2, Sigma, Plus1, Minus1, Plus2, Minus2;
+  auto const e0 = ia_params->GB_eps;
+  auto const s0 = ia_params->GB_sig;
+  auto const chi1 = ia_params->GB_chi1;
+  auto const chi2 = ia_params->GB_chi2;
+  auto const mu = ia_params->GB_mu;
+  auto const nu = ia_params->GB_nu;
+  auto const r = Vector3d({d[0], d[1], d[2]}).normalize();
 
-  u1x = p1->r.calc_director()[0];
-  u1y = p1->r.calc_director()[1];
-  u1z = p1->r.calc_director()[2];
-  u2x = p2->r.calc_director()[0];
-  u2y = p2->r.calc_director()[1];
-  u2z = p2->r.calc_director()[2];
+  auto const ui = p1->r.calc_director();
+  auto const uj = p2->r.calc_director();
+  auto const uij = ui * uj;
+  auto const rui = r * ui;
+  auto const ruj = r * uj;
 
-  a = d[0] * u1x + d[1] * u1y + d[2] * u1z;
-  b = d[0] * u2x + d[1] * u2y + d[2] * u2z;
-  c = u1x * u2x + u1y * u2y + u1z * u2z;
+  auto const e1 = std::pow(1. - sqr(chi1 * uij), -0.5 * nu);
 
-  Plus1 = (a + b) / (1 + ia_params->GB_chi1 * c);
-  Plus2 = (a + b) / (1 + ia_params->GB_chi2 * c);
-  Minus1 = (a - b) / (1 - ia_params->GB_chi1 * c);
-  Minus2 = (a - b) / (1 - ia_params->GB_chi2 * c);
-  E1 = 1 / sqrt(1 - ia_params->GB_chi1 * ia_params->GB_chi1 * c * c);
-  E2 = 1 - 0.5 * (ia_params->GB_chi2 / dist / dist) *
-               (Plus2 * (a + b) + Minus2 * (a - b));
-  E = 4 * ia_params->GB_eps * pow(E1, ia_params->GB_nu) *
-      pow(E2, ia_params->GB_mu);
-  Sigma =
-      ia_params->GB_sig / sqrt(1 - 0.5 * (ia_params->GB_chi1 / dist / dist) *
-                                       (Plus1 * (a + b) + Minus1 * (a - b)));
+  auto const t1 = sqr(rui + ruj) / (1 + chi2 * uij);
+  auto const t2 = sqr(rui - ruj) / (1 - chi2 * uij);
+  auto const e2 = std::pow(1. - 0.5 * chi2 * (t1 + t2), mu);
 
-  X = 1 / (dist - Sigma + ia_params->GB_sig);
-  Xcut = 1 / (ia_params->GB_cut - Sigma + ia_params->GB_sig);
+  auto const e = e0 * e1 * e2;
 
-  Brack = X * X * X;
-  BrackCut = Xcut * Xcut * Xcut;
-  Brack = Brack * Brack;
-  BrackCut = BrackCut * BrackCut;
-  Brack = Brack * (Brack - 1);
-  BrackCut = BrackCut * (BrackCut - 1);
+  auto const s = s0 / std::sqrt(1. - 0.5 * chi1 *
+                                         (sqr(rui + ruj) / (1 + chi1 * uij) +
+                                          sqr(rui - ruj) / (1 - chi1 * uij)));
 
-  return E * (Brack - BrackCut);
+  auto r_eff = [=](double r) { return (r - s + s0) / s0; };
+  auto E = [=](double r) {
+    return 4. * e * (int_pow<12>(1. / r) - int_pow<6>(1. / r));
+  };
+
+  return E(r_eff(dist)) - E(r_eff(ia_params->GB_cut));
 }
 
 #endif
