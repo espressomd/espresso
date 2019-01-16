@@ -210,7 +210,7 @@ void gpu_change_number_of_part_to_comm() {
 
     // if the arrays exists free them to prevent memory leaks
     if (particle_forces_host) {
-      cuda_safe_mem(cudaFreeHost(particle_forces_host));
+      free(particle_forces_host);
       particle_forces_host = nullptr;
     }
     if (particle_data_host) {
@@ -231,13 +231,13 @@ void gpu_change_number_of_part_to_comm() {
     }
 #ifdef ENGINE
     if (host_v_cs) {
-      cudaFreeHost(host_v_cs);
+      free(host_v_cs);
       host_v_cs = nullptr;
     }
 #endif
 #if (defined DIPOLES || defined ROTATION)
     if (particle_torques_host) {
-      cudaFreeHost(particle_torques_host);
+      free(particle_torques_host);
       particle_torques_host = nullptr;
     }
 #endif
@@ -262,26 +262,21 @@ void gpu_change_number_of_part_to_comm() {
     if (global_part_vars_host.number_of_particles) {
 
       /**pinned memory mode - use special function to get OS-pinned memory*/
-      cuda_safe_mem(cudaHostAlloc((void **)&particle_data_host,
-                                  global_part_vars_host.number_of_particles *
-                                      sizeof(CUDA_particle_data),
-                                  cudaHostAllocWriteCombined));
-      cuda_safe_mem(cudaHostAlloc(
-          (void **)&particle_forces_host,
-          3 * global_part_vars_host.number_of_particles * sizeof(float),
-          cudaHostAllocWriteCombined));
+      cuda_safe_mem(
+          cudaHostAlloc((void **)&particle_data_host,
+                        global_part_vars_host.number_of_particles *
+                            sizeof(CUDA_particle_data),
+                        cudaHostAllocWriteCombined | cudaHostAllocMapped));
+      particle_forces_host = (float *)malloc(
+          3 * global_part_vars_host.number_of_particles * sizeof(float));
 
 #ifdef ENGINE
-      cuda_safe_mem(cudaHostAlloc((void **)&host_v_cs,
-                                  global_part_vars_host.number_of_particles *
-                                      sizeof(CUDA_v_cs),
-                                  cudaHostAllocWriteCombined));
+      host_v_cs = (CUDA_v_cs *)malloc(
+          global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs));
 #endif
 #if (defined DIPOLES || defined ROTATION)
-      cudaHostAlloc((void **)&particle_torques_host,
-                    global_part_vars_host.number_of_particles * 3 *
-                        sizeof(float),
-                    cudaHostAllocWriteCombined);
+      particle_torques_host = (float *)malloc(
+          3 * global_part_vars_host.number_of_particles * sizeof(float));
 #endif
 
 #ifdef SHANCHEN
