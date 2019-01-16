@@ -16,7 +16,8 @@ variables:
 
 cache:
   key: global_cache
-  path: /cache/*
+  paths: 
+    - /cache/*
 
 check_permission:
   stage: permission
