@@ -53,6 +53,7 @@
 #include "pressure.hpp"
 #include "rattle.hpp"
 #include "rotation.hpp"
+#include "signalhandling.hpp"
 #include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
@@ -98,6 +99,11 @@ double verlet_reuse = 0.0;
 double db_max_force = 0.0, db_max_vel = 0.0;
 int db_maxf_id = 0, db_maxv_id = 0;
 #endif
+
+bool set_py_interrupt = false;
+namespace {
+volatile static std::sig_atomic_t ctrl_C = 0;
+}
 
 /** \name Private Functions */
 /************************************************************/
@@ -476,6 +482,18 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     if (check_runtime_errors())
       break;
+
+    // Check if SIGINT has been caught.
+    if (ctrl_C == 1) {
+      // Reset the flag.
+      ctrl_C = 0;
+
+      // Set global to notify Python of signal.
+      set_py_interrupt = true;
+
+      // Break the integration loop
+      break;
+    }
   }
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
@@ -905,6 +923,9 @@ void force_and_velocity_display() {
 /** @todo This needs to go!! */
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
+  // Override the signal handler so that the integrator obeys Ctrl+C
+  SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
+
   int reuse_forces = 0;
   reuse_forces = reuse_forces_par;
   INTEG_TRACE(fprintf(stderr, "%d: integrate:\n", this_node));
