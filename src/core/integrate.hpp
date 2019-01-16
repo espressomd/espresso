@@ -65,6 +65,9 @@ extern int recalc_forces;
     used. */
 extern double verlet_reuse;
 
+/** Communicate signal handling to the Python interpreter */
+extern bool set_py_interrupt;
+
 /*@}*/
 
 /** \name Exported Functions */
