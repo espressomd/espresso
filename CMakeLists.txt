@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.4)
 include(FeatureSummary)
 project(ESPResSo)
 include(cmake/FindPythonModule.cmake)
@@ -57,7 +57,8 @@ option(WITH_GSL     "Build with GSL support" ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
-option(WITH_SCAFACOS "Build with Scafacos support" ON)
+option(WITH_SCAFACOS "Build with Scafacos support" OFF)
+option(WITH_BENCHMARKS "Enable benchmarks"   OFF)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
@@ -134,15 +135,7 @@ if (WITH_CUDA)
     find_library(CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
     set(CUDA 1)
 
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --cuda-gpu-arch=sm_30")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 3.8.9)
-      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --cuda-gpu-arch=sm_52")
-    endif()
-
-    function(cuda_include_directories)
-      include_directories(${ARGV})
-    endfunction()
-    function(cuda_add_library)
+    function(add_gpu_library)
       set(options STATIC SHARED MODULE EXCLUDE_FROM_ALL)
       set(oneValueArgs)
       set(multiValueArgs)
@@ -151,30 +144,35 @@ if (WITH_CUDA)
       set_source_files_properties(${ARG_UNPARSED_ARGUMENTS} PROPERTIES LANGUAGE "CXX" COMPILE_FLAGS "${CUDA_NVCC_FLAGS}")
       add_library(${ARGV})
       set_target_properties(${ARGV0} PROPERTIES LINKER_LANGUAGE "CXX")
-      target_link_libraries(${ARGV0} ${CUDA_LIBRARY} ${CUDART_LIBRARY})
-    endfunction()
-    function(CUDA_ADD_CUFFT_TO_TARGET target)
-      target_link_libraries(${target} ${CUFFT_LIBRARY})
+      target_link_libraries(${ARGV0} PRIVATE ${CUDA_LIBRARY} ${CUDART_LIBRARY})
+      target_link_libraries(${ARGV0} PRIVATE ${CUFFT_LIBRARY})
+
+      foreach(file ${ARG_UNPARSED_ARGUMENTS})
+        if(${file} MATCHES "\\.cu$")
+                if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 3.8.9)
+                  set_source_files_properties(${file} PROPERTIES COMPILE_FLAGS "--cuda-gpu-arch=sm_30 --cuda-gpu-arch=sm_52")
+                else()
+                  set_source_files_properties(${file} PROPERTIES COMPILE_FLAGS "--cuda-gpu-arch=sm_30")
+                endif()
+        endif()
+      endforeach()
     endfunction()
   else()
-    find_package(HIP QUIET MODULE)
+    list(APPEND CMAKE_MODULE_PATH "/opt/rocm/hip/cmake")
+    find_package(HIP 1.5.18494 QUIET MODULE)
     if(HIP_FOUND)
       set(HCC_PATH "${HIP_ROOT_DIR}")
       find_package(HIP MODULE)
       message(STATUS "Found HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
       set(CUDA 1)
-      list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined")
-      HIP_INCLUDE_DIRECTORIES("${CMAKE_BINARY_DIR}/src/core" "${CMAKE_SOURCE_DIR}/src/core")
-      function(cuda_include_directories)
-        HIP_INCLUDE_DIRECTORIES(${ARGV})
-      endfunction()
-      function(cuda_add_library)
-        HIP_ADD_LIBRARY(${ARGV})
-        set_target_properties(${ARGV0} PROPERTIES LINKER_LANGUAGE HIP)
-      endfunction()
+      list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier")
+
       find_library(ROCFFT_LIB name "rocfft" PATHS "${HIP_ROOT_DIR}/lib")
-      function(CUDA_ADD_CUFFT_TO_TARGET target)
-        target_link_libraries(${target} "${ROCFFT_LIB}")
+
+      function(add_gpu_library)
+        hip_add_library(${ARGV})
+        set_target_properties(${ARGV0} PROPERTIES LINKER_LANGUAGE HIP)
+        target_link_libraries(${ARGV0} PRIVATE "${ROCFFT_LIB}")
       endfunction()
     else()
       find_package(CUDA 7.0)
@@ -185,6 +183,8 @@ if (WITH_CUDA)
           message(WARNING "Your nvcc (${CUDA_NVCC_EXECUTABLE}) does not appear to match your CUDA libraries (in ${CUDA_TOOLKIT_ROOT_DIR}). While Espresso will still compile, you might get unexpected crashes. Please point CUDA_TOOLKIT_ROOT_DIR to your CUDA toolkit path, e.g. by adding -DCUDA_TOOLKIT_ROOT_DIR=${NVCC_EXECUTABLE_DIRNAME} to your cmake command.")
         endif()
         set(CUDA 1)
+
+        set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 
         set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g -G")
         set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -DNDEBUG")
@@ -200,6 +200,13 @@ if (WITH_CUDA)
         if (CMAKE_OSX_SYSROOT)
           set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
         endif()
+
+        function(add_gpu_library)
+          cuda_add_library(${ARGV})
+          set_property(TARGET ${ARGV0} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+          target_link_libraries(${ARGV0} PRIVATE ${CUDA_CUFFT_LIBRARIES})
+        endfunction()
+
       endif(CUDA_FOUND)
     endif()
   endif()
@@ -300,6 +307,29 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 #######################################################################
 
 find_package(MPI REQUIRED)
+
+# CMake < 3.9
+if(NOT TARGET MPI::MPI_CXX)
+  add_library(MPI::MPI_CXX IMPORTED INTERFACE)
+
+  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
+  foreach(_MPI_FLAG ${MPI_CXX_COMPILE_FLAGS})
+     set_property(TARGET MPI::MPI_CXX
+            PROPERTY INTERFACE_COMPILE_OPTIONS ${_MPI_FLAG})
+  endforeach()
+
+  set_property(TARGET MPI::MPI_CXX
+          PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
+
+  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
+  foreach(_MPI_FLAG ${MPI_CXX_LINK_FLAGS})
+  set_property(TARGET MPI::MPI_CXX
+          PROPERTY INTERFACE_LINK_LIBRARIES ${_MPI_FLAG})
+  endforeach()
+
+  set_property(TARGET MPI::MPI_CXX
+          PROPERTY INTERFACE_LINK_LIBRARIES ${MPI_CXX_LIBRARIES})
+endif()
 
 #######################################################################
 # Boost
@@ -431,6 +461,11 @@ if(WITH_TESTS)
   add_custom_target(check)
   add_subdirectory(testsuite)
 endif(WITH_TESTS)
+
+if(WITH_BENCHMARKS)
+  add_custom_target(benchmark)
+  add_subdirectory(maintainer/benchmarks)
+endif(WITH_BENCHMARKS)
 
 #######################################################################
 # Subdirectories

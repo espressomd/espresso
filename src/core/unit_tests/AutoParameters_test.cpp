@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "auto_parameters/AutoParameters.hpp"
 
 using ScriptInterface::AutoParameters;
 

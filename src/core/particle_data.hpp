@@ -470,6 +470,8 @@ struct ParticleList {
 extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
+/** flag that active swimming particles exist */
+extern bool swimming_particles_exist;
 
 #include <unordered_map>
 
@@ -521,6 +523,8 @@ void append_particle(ParticleList *l, Particle &&part);
     \return Pointer to new location of the particle.
  */
 void move_particle(ParticleList *destList, ParticleList *sourceList, int ind);
+
+Particle extract_particle(ParticleList *sl, int i);
 
 /*    Other Functions                           */
 /************************************************/

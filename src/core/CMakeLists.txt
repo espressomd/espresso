@@ -200,7 +200,6 @@ if(SCAFACOS)
   target_link_libraries(EspressoCore PRIVATE Scafacos)
 endif(SCAFACOS)
 
-# Subdirectories
 add_subdirectory(io)
 
 

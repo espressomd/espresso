@@ -458,9 +458,8 @@ int interactions_sanity_checks() {
   }
 #endif /* ifdef ELECTROSTATICS */
 
-#ifdef DIPOLES
+#if defined(DIPOLES) and defined(DP3M)
   switch (coulomb.Dmethod) {
-#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     if (mdlc_sanity_checks())
       state = 0; // fall through
@@ -468,7 +467,6 @@ int interactions_sanity_checks() {
     if (dp3m_sanity_checks())
       state = 0;
     break;
-#endif
   case DIPOLAR_MDLC_DS:
     if (mdlc_sanity_checks())
       state = 0; // fall through

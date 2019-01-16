@@ -248,7 +248,7 @@ class ParticleProperties(ut.TestCase):
             "If this test hangs, there is an mpi deadlock in a particle property setter.")
         for p in espressomd.particle_data.particle_attributes:
             # Uncomment to identify guilty property
-            #print( p)
+            # print( p)
 
             if not hasattr(s.part[0], p):
                 raise Exception(
@@ -260,7 +260,19 @@ class ParticleProperties(ut.TestCase):
             # Cause a differtn mpi callback to uncover deadlock immediately
             x = getattr(s.part[:], p)
 
+    def test_zz_remove_all(self):
+        for id in self.system.part[:].id:
+            self.system.part[id].remove()
+        self.system.part.add(pos=np.random.random(
+            (100, 3)) * self.system.box_l, id=np.arange(100, dtype=int))
+        ids = self.system.part[:].id
+        np.random.shuffle(ids)
+        for id in ids:
+            self.system.part[id].remove()
+        with self.assertRaises(Exception):
+            self.system.part[17].remove()
+
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
+    # print("Features: ", espressomd.features())
     ut.main()
