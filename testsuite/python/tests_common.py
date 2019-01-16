@@ -278,6 +278,35 @@ def rotation_matrix(axis, theta):
                      [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
 
 
+def rotation_matrix_quat(system, part):
+    """
+    Return the rotation matrix associated with quaternion.
+
+    Parameters
+    ----------
+    part : :obj:`int`
+            Particle index.
+
+    """
+    A = np.zeros((3, 3))
+    quat = system.part[part].quat
+    qq = np.power(quat, 2)
+
+    A[0, 0] = qq[0] + qq[1] - qq[2] - qq[3]
+    A[1, 1] = qq[0] - qq[1] + qq[2] - qq[3]
+    A[2, 2] = qq[0] - qq[1] - qq[2] + qq[3]
+
+    A[0, 1] = 2 * (quat[1] * quat[2] + quat[0] * quat[3])
+    A[0, 2] = 2 * (quat[1] * quat[3] - quat[0] * quat[2])
+    A[1, 0] = 2 * (quat[1] * quat[2] - quat[0] * quat[3])
+
+    A[1, 2] = 2 * (quat[2] * quat[3] + quat[0] * quat[1])
+    A[2, 0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2])
+    A[2, 1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1])
+
+    return A
+
+
 def get_cylindrical_bin_volume(
         n_r_bins,
         n_phi_bins,
