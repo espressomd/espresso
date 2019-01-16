@@ -14,6 +14,10 @@ variables:
   CCACHE_MAXSIZE: 100G
   with_ccache: "true"
 
+cache:
+  key: global_cache
+  path: /cache/*
+
 check_permission:
   stage: permission
   only:
