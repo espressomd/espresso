@@ -266,7 +266,7 @@ void gpu_change_number_of_part_to_comm() {
           cudaHostAlloc((void **)&particle_data_host,
                         global_part_vars_host.number_of_particles *
                             sizeof(CUDA_particle_data),
-                        cudaHostAllocWriteCombined | cudaHostAllocMapped));
+                        cudaHostAllocWriteCombined ));
       particle_forces_host = (float *)malloc(
           3 * global_part_vars_host.number_of_particles * sizeof(float));
 
