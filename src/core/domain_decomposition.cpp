@@ -564,12 +564,12 @@ Cell *dd_save_position_to_cell(const Vector3d &pos) {
     /* particles outside our box. Still take them if
        nonperiodic boundary */
     if (cpos[i] < 1) {
-      if ((!PERIODIC(i) | (pos[i] >= box_l[i])) && boundary[2 * i])
+      if ((!PERIODIC(i) or (pos[i] >= box_l[i])) && boundary[2 * i])
         cpos[i] = 1;
       else
         return nullptr;
     } else if (cpos[i] > dd.cell_grid[i]) {
-      if ((!PERIODIC(i) | (pos[i] < box_l[i])) && boundary[2 * i + 1])
+      if ((!PERIODIC(i) or (pos[i] < box_l[i])) && boundary[2 * i + 1])
         cpos[i] = dd.cell_grid[i];
       else
         return nullptr;
