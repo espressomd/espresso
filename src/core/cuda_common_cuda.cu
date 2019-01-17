@@ -51,13 +51,13 @@ static CUDA_fluid_composition *fluid_composition_device = nullptr;
 static CUDA_energy *energy_device = nullptr;
 
 CUDA_particle_data *particle_data_host = nullptr;
-float *particle_forces_host = nullptr;
+std::vector<float> particle_forces_host;
 CUDA_energy energy_host;
-float *particle_torques_host = nullptr;
 
+std::vector<float> particle_torques_host;
 CUDA_fluid_composition *fluid_composition_host = nullptr;
 #ifdef ENGINE
-CUDA_v_cs *host_v_cs = nullptr;
+std::vector<CUDA_v_cs> host_v_cs;
 #endif
 
 /**cuda streams for parallel computing on cpu and gpu */
@@ -209,10 +209,7 @@ void gpu_change_number_of_part_to_comm() {
                                      sizeof(CUDA_global_part_vars)));
 
     // if the arrays exists free them to prevent memory leaks
-    if (particle_forces_host) {
-      free(particle_forces_host);
-      particle_forces_host = nullptr;
-    }
+    particle_forces_host.clear();
     if (particle_data_host) {
       cuda_safe_mem(cudaFreeHost(particle_data_host));
       particle_data_host = nullptr;
@@ -230,16 +227,10 @@ void gpu_change_number_of_part_to_comm() {
       particle_seeds_device = nullptr;
     }
 #ifdef ENGINE
-    if (host_v_cs) {
-      free(host_v_cs);
-      host_v_cs = nullptr;
-    }
+    host_v_cs.clear();
 #endif
-#if (defined DIPOLES || defined ROTATION)
-    if (particle_torques_host) {
-      free(particle_torques_host);
-      particle_torques_host = nullptr;
-    }
+#ifdef ROTATION
+    particle_torques_host.clear();
 #endif
 #ifdef SHANCHEN
     if (fluid_composition_host) {
@@ -262,21 +253,18 @@ void gpu_change_number_of_part_to_comm() {
     if (global_part_vars_host.number_of_particles) {
 
       /**pinned memory mode - use special function to get OS-pinned memory*/
-      cuda_safe_mem(
-          cudaHostAlloc((void **)&particle_data_host,
-                        global_part_vars_host.number_of_particles *
-                            sizeof(CUDA_particle_data),
-                        cudaHostAllocWriteCombined ));
-      particle_forces_host = (float *)malloc(
-          3 * global_part_vars_host.number_of_particles * sizeof(float));
-
+      cuda_safe_mem(cudaHostAlloc((void **)&particle_data_host,
+                                  global_part_vars_host.number_of_particles *
+                                      sizeof(CUDA_particle_data),
+                                  cudaHostAllocWriteCombined));
+      particle_forces_host.resize(3 *
+                                  global_part_vars_host.number_of_particles);
 #ifdef ENGINE
-      host_v_cs = (CUDA_v_cs *)malloc(
-          global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs));
+      host_v_cs.resize(global_part_vars_host.number_of_particles);
 #endif
 #if (defined DIPOLES || defined ROTATION)
-      particle_torques_host = (float *)malloc(
-          3 * global_part_vars_host.number_of_particles * sizeof(float));
+      particle_torques_host.resize(3 *
+                                   global_part_vars_host.number_of_particles);
 #endif
 
 #ifdef SHANCHEN
@@ -411,15 +399,15 @@ void copy_forces_from_GPU(ParticleRange particles) {
 
     /** Copy result from device memory to host memory*/
     if (this_node == 0) {
-      cuda_safe_mem(cudaMemcpy(particle_forces_host, particle_forces_device,
-                               3 * global_part_vars_host.number_of_particles *
-                                   sizeof(float),
-                               cudaMemcpyDeviceToHost));
+      cuda_safe_mem(cudaMemcpy(
+          &(particle_forces_host[0]), particle_forces_device,
+          3 * global_part_vars_host.number_of_particles * sizeof(float),
+          cudaMemcpyDeviceToHost));
 #ifdef ROTATION
-      cuda_safe_mem(cudaMemcpy(particle_torques_host, particle_torques_device,
-                               global_part_vars_host.number_of_particles * 3 *
-                                   sizeof(float),
-                               cudaMemcpyDeviceToHost));
+      cuda_safe_mem(cudaMemcpy(
+          &(particle_torques_host[0]), particle_torques_device,
+          global_part_vars_host.number_of_particles * 3 * sizeof(float),
+          cudaMemcpyDeviceToHost));
 #endif
 #ifdef SHANCHEN
       cuda_safe_mem(cudaMemcpy(fluid_composition_host, fluid_composition_device,
@@ -462,7 +450,7 @@ void copy_v_cs_from_GPU(ParticleRange particles) {
     // Copy result from device memory to host memory
     if (this_node == 0) {
       cuda_safe_mem(cudaMemcpy2D(
-          host_v_cs, sizeof(CUDA_v_cs), particle_data_device,
+          host_v_cs.data(), sizeof(CUDA_v_cs), particle_data_device,
           sizeof(CUDA_particle_data), sizeof(CUDA_v_cs),
           global_part_vars_host.number_of_particles, cudaMemcpyDeviceToHost));
     }
