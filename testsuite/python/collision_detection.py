@@ -216,10 +216,9 @@ class CollisionDetection(ut.TestCase):
                 dist_centers = p1.pos - p2.pos
             expected_pos = self.s.part[rel_to].pos_folded + \
                 self.s.collision_detection.vs_placement * dist_centers
-            dist=expected_pos -p.pos_folded
-            dist-=np.round(dist/self.s.box_l) *self.s.box_l
-            self.assertLess(np.linalg.norm(dist),1E-12)
-
+            dist = expected_pos - p.pos_folded
+            dist -= np.round(dist / self.s.box_l) * self.s.box_l
+            self.assertLess(np.linalg.norm(dist), 1E-12)
 
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
     def test_bind_at_point_of_collision(self):
