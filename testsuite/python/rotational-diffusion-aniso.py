@@ -14,6 +14,7 @@ import tests_common
            "Features not available, skipping test!")
 class RotDiffAniso(ut.TestCase):
     longMessage = True
+    round_error_prec = 1E-14
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.skin = 5.0
@@ -24,25 +25,93 @@ class RotDiffAniso(ut.TestCase):
     gamma_global = np.zeros((3))
 
     # Particle properties
-    J = 0.0, 0.0, 0.0
+    J = np.zeros((3))
 
     @classmethod
     def setUpClass(cls):
-        seed(4)
+        seed(42)
 
     def setUp(self):
         self.system.time = 0.0
         self.system.part.clear()
 
-    def rot_diffusion_param_setup(self, n):
+    def add_particles_setup(self, n):
         """
-        Setup the parameters for the rotational diffusion
-        test check_rot_diffusion().
+        Adding particles according to the
+        previously set parameters.
 
         Parameters
         ----------
         n : :obj:`int`
             Number of particles.
+
+        """
+
+        for ind in range(n):
+            part_pos = np.random.random(3) * self.system.box_l[0]
+            self.system.part.add(rotation=(1, 1, 1), id=ind, rinertia=self.J,
+                                 pos=part_pos)
+            if "ROTATION" in espressomd.features():
+                self.system.part[ind].omega_body = 0.0, 0.0, 0.0
+
+    def set_anisotropic_param(self):
+        """
+        Select parameters for anisotropic particles.
+
+        Parameters
+        ----------
+
+        """
+
+        # NVT thermostat
+        # Note: here & hereinafter specific variations in the random parameter ranges are related to
+        # the test execution duration to achieve the required statistical averages faster.
+        # The friction gamma_global should be large enough in order to have the small enough D ~ kT / gamma and
+        # to observe the details of the original rotational diffusion: the Perrin1936 (see the reference below) tests are visible
+        # only when the diffusive rotation is ~pi due to the exponential temporal dependencies (see the equations referred in the check_rot_diffusion()).
+        # Also, t0 ~ J / gamma should be small enough
+        # in order to remove the small-time-scale diffusion effects which do not fit the Perrin1936's
+        # tests which are based on the partial differential equation (eq. (68), Perrin1934) leading only to the simple
+        # classical Einstein-Smoluchowski equations of the diffusion
+        # in a contrast of the eq. (10.2.26) [N. Pottier,
+        # https://doi.org/10.1007/s10955-010-0114-6 (2010)].
+        self.gamma_global = 1E2 * uniform(0.35, 1.05, (3))
+
+        # Particles' properties
+        # As far as the problem characteristic time is t0 ~ J / gamma
+        # and the Langevin equation finite-difference approximation is stable
+        # only for time_step << t0, it is needed to set the moment of inertia higher than
+        # some minimal value.
+        # Also, it is expected to test the large enough J.
+        # It should be not very large, otherwise the thermalization will require
+        # too much of the CPU time: the in silico time should clock over the
+        # t0.
+        self.J = uniform(1.5, 16.5, (3))
+
+    def set_isotropic_param(self):
+        """
+        Select parameters for isotropic particles.
+
+        Parameters
+        ----------
+
+        """
+
+        # NVT thermostat
+        # see the comments in set_anisotropic_param()
+        self.gamma_global[0] = 1E2 * uniform(0.35, 1.05, (1))
+        self.gamma_global[1] = self.gamma_global[0]
+        self.gamma_global[2] = self.gamma_global[0]
+        # Particles' properties
+        # see the comments in set_anisotropic_param()
+        self.J[0] = uniform(1.5, 16.5, (1))
+        self.J[1] = self.J[0]
+        self.J[2] = self.J[0]
+
+    def rot_diffusion_param_setup(self):
+        """
+        Setup the parameters for the rotational diffusion
+        test check_rot_diffusion().
 
         """
 
@@ -59,35 +128,6 @@ class RotDiffAniso(ut.TestCase):
         # NVT thermostat
         # Just some temperature range to cover by the test:
         self.kT = uniform(1.5, 6.5)
-        # Note: here & hereinafter specific variations in the random parameter ranges are related to
-        # the test execution duration to achieve the required statistical averages faster.
-        # The friction gamma_global should be large enough in order to have the small enough D ~ kT / gamma and
-        # to observe the details of the original rotational diffusion: the Perrin1936 (see the reference below) tests are visible
-        # only when the diffusive rotation is ~pi due to the exponential temporal dependencies (see the equations referred in the check_rot_diffusion()).
-        # Also, t0 ~ J / gamma should be small enough
-        # in order to remove the small-time-scale diffusion effects which do not fit the Perrin1936's
-        # tests which are based on the partial differential equation (eq. (68), Perrin1934) leading only to the simple
-        # classical Einstein-Smoluchowski equations of the diffusion
-        # in a contrast of the eq. (10.2.26) [N. Pottier,
-        # https://doi.org/10.1007/s10955-010-0114-6 (2010)].
-        self.gamma_global = 1E2 * uniform(0.35, 1.05, (3))
-
-        # Particles
-        # As far as the problem characteristic time is t0 ~ J / gamma
-        # and the Langevin equation finite-difference approximation is stable
-        # only for time_step << t0, it is needed to set the moment of inertia higher than
-        # some minimal value.
-        # Also, it is expected to test the large enough J.
-        # It should be not very large, otherwise the thermalization will require
-        # too much of the CPU time: the in silico time should clock over the
-        # t0.
-        self.J = uniform(1.5, 16.5, (3))
-        for ind in range(n):
-            part_pos = np.random.random(3) * box
-            self.system.part.add(rotation=(1, 1, 1), id=ind, rinertia=self.J,
-                                 pos=part_pos)
-            if "ROTATION" in espressomd.features():
-                self.system.part[ind].omega_body = 0.0, 0.0, 0.0
 
     def check_rot_diffusion(self, n):
         """
@@ -104,7 +144,7 @@ class RotDiffAniso(ut.TestCase):
         """
         # Global diffusivity tensor in the body frame:
         D = self.kT / self.gamma_global
-        dt0 = self.J / self.gamma_global
+        #dt0 = self.J / self.gamma_global
 
         # Thermalizing...
         therm_steps = 100
@@ -174,7 +214,7 @@ class RotDiffAniso(ut.TestCase):
 
             # Actual comparison.
 
-            tolerance = 0.195
+            tolerance = 0.15
             # Too small values of the direction cosines are out of interest
             # compare to 0..1 range.
             min_value = 0.14
@@ -231,6 +271,9 @@ class RotDiffAniso(ut.TestCase):
                     if i != j:
                         D1D1 += D[i] * D[j]
             D1D1 /= 6.0
+            # Technical workaround of a digital arithmetic issue for isotropic particle
+            if np.absolute((D0**2 - D1D1)/(D0**2 + D1D1)) < self.round_error_prec:
+                D1D1 *= (1.0 - 2.0 * self.round_error_prec)
             # Eq. (32) [Perrin1936].
             dcosjj2_validate = 1. / 3. + (1. / 3.) * (1. + (D - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
                 * np.exp(-6. * (D0 - np.sqrt(D0**2 - D1D1)) * self.system.time) \
@@ -303,14 +346,39 @@ class RotDiffAniso(ut.TestCase):
                             msg='Relative deviation dcosij2_dev[{0},{1}] in a rotational diffusion is too large: {2}'.format(
                                 i, j, dcosij2_dev[i, j]))
 
+    # Langevin Dynamics / Anisotropic
     def test_case_00(self):
         n = 800
-        self.rot_diffusion_param_setup(n)
+        self.rot_diffusion_param_setup()
+        self.set_anisotropic_param()
+        self.add_particles_setup(n)
         self.system.thermostat.set_langevin(
             kT=self.kT, gamma=self.gamma_global)
         # Actual integration and validation run
         self.check_rot_diffusion(n)
 
+    # Langevin Dynamics / Isotropic
+    def test_case_01(self):
+        n = 800
+        self.rot_diffusion_param_setup()
+        self.set_isotropic_param()
+        self.add_particles_setup(n)
+        self.system.thermostat.set_langevin(
+            kT=self.kT, gamma=self.gamma_global)
+        # Actual integration and validation run
+        self.check_rot_diffusion(n)
+
+    # Brownian Dynamics / Isotropic
+    def test_case_10(self):
+        n = 800
+        self.rot_diffusion_param_setup()
+        self.set_isotropic_param()
+        self.add_particles_setup(n)
+        self.system.thermostat.turn_off()
+        self.system.thermostat.set_brownian(
+            kT=self.kT, gamma=self.gamma_global)
+        # Actual integration and validation run
+        self.check_rot_diffusion(n)
 
 if __name__ == '__main__':
     ut.main()
