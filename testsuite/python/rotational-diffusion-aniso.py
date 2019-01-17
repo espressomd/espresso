@@ -271,8 +271,9 @@ class RotDiffAniso(ut.TestCase):
                     if i != j:
                         D1D1 += D[i] * D[j]
             D1D1 /= 6.0
-            # Technical workaround of a digital arithmetic issue for isotropic particle
-            if np.absolute((D0**2 - D1D1)/(D0**2 + D1D1)) < self.round_error_prec:
+            # Technical workaround of a digital arithmetic issue for isotropic
+            # particle
+            if np.absolute((D0**2 - D1D1) / (D0**2 + D1D1)) < self.round_error_prec:
                 D1D1 *= (1.0 - 2.0 * self.round_error_prec)
             # Eq. (32) [Perrin1936].
             dcosjj2_validate = 1. / 3. + (1. / 3.) * (1. + (D - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
