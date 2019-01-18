@@ -73,9 +73,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_CELLGRID,
      {dd.cell_grid, Datafield::Type::INT, 3,
       "cell_grid"}}, /* 1  from cells.cpp */
-    {FIELD_CELLSIZE,
-     {dd.cell_size, Datafield::Type::DOUBLE, 3,
-      "cell_size"}}, /* 2  from cells.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA,
      {&langevin_gamma, Datafield::Type::DOUBLE, 1,
@@ -88,38 +85,18 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_INTEG_SWITCH,
      {&integ_switch, Datafield::Type::INT, 1,
       "integ_switch"}}, /* 7  from integrate.cpp */
-    {FIELD_LBOXL,
-     {local_box_l, Datafield::Type::DOUBLE, 3,
-      "local_box_l"}}, /* 8  from global.cpp */
-    {FIELD_MCUT,
-     {&max_cut, Datafield::Type::DOUBLE, 1,
-      "max_cut"}}, /* 9  from interaction_data.cpp */
     {FIELD_MAXNUMCELLS,
      {&max_num_cells, Datafield::Type::INT, 1,
       "max_num_cells"}}, /* 10 from cells.cpp */
     {FIELD_MAXPART,
      {&max_seen_particle, Datafield::Type::INT, 1,
       "max_part"}}, /* 11 from particle_data.cpp */
-    {FIELD_MAXRANGE,
-     {&max_range, Datafield::Type::DOUBLE, 1,
-      "max_range"}}, /* 12 from integrate.cpp */
-    {FIELD_MAXSKIN,
-     {&max_skin, Datafield::Type::DOUBLE, 1,
-      "max_skin"}}, /* 13 from integrate.cpp */
     {FIELD_MINNUMCELLS,
      {&min_num_cells, Datafield::Type::INT, 1,
       "min_num_cells"}}, /* 14  from cells.cpp */
     {FIELD_NLAYERS,
      {&n_layers, Datafield::Type::INT, 1,
       "n_layers"}}, /* 15 from layered.cpp */
-    {FIELD_NNODES,
-     {&n_nodes, Datafield::Type::INT, 1,
-      "n_nodes"}}, /* 16 from communication.cpp */
-    {FIELD_NPART,
-     {&n_part, Datafield::Type::INT, 1, "n_part"}}, /* 17 from particle.cpp */
-    {FIELD_NPARTTYPE,
-     {&max_seen_particle_type, Datafield::Type::INT, 1,
-      "max_seen_particle_type"}}, /* 18 from interaction_data.cpp */
     {FIELD_RIGIDBONDS,
      {&n_rigidbonds, Datafield::Type::INT, 1,
       "n_rigidbonds"}}, /* 19 from rattle.cpp */
@@ -163,21 +140,9 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_TIMESTEP,
      {&time_step, Datafield::Type::DOUBLE, 1,
       "time_step"}}, /* 33 from integrate.cpp */
-    {FIELD_TIMINGSAMP,
-     {&timing_samples, Datafield::Type::INT, 1,
-      "timings"}}, /* 34 from tuning.cpp */
-    {FIELD_MCUT_NONBONDED,
-     {&max_cut_nonbonded, Datafield::Type::DOUBLE, 1,
-      "max_cut_nonbonded"}}, /* 35 from interaction_data.cpp */
-    {FIELD_VERLETREUSE,
-     {&verlet_reuse, Datafield::Type::DOUBLE, 1,
-      "verlet_reuse"}}, /* 36 from integrate.cpp */
     {FIELD_LATTICE_SWITCH,
      {&lattice_switch, Datafield::Type::INT, 1,
       "lattice_switch"}}, /* 37 from lattice.cpp */
-    {FIELD_MCUT_BONDED,
-     {&max_cut_bonded, Datafield::Type::DOUBLE, 1,
-      "max_cut_bonded"}}, /* 42 from interaction_data.cpp */
     {FIELD_MIN_GLOBAL_CUT,
      {&min_global_cut, Datafield::Type::DOUBLE, 1,
       "min_global_cut"}}, /* 43 from interaction_data.cpp */

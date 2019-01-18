@@ -59,34 +59,18 @@ enum Fields {
   FIELD_BOXL = 0,
   /** index of \ref DomainDecomposition::cell_grid */
   FIELD_CELLGRID,
-  /** index of \ref DomainDecomposition::cell_size */
-  FIELD_CELLSIZE,
   /** index of \ref langevin_gamma */
   FIELD_LANGEVIN_GAMMA,
   /** index of \ref integ_switch */
   FIELD_INTEG_SWITCH,
-  /** index of \ref local_box_l */
-  FIELD_LBOXL,
-  /** index of \ref max_cut */
-  FIELD_MCUT,
   /** index of \ref max_num_cells  */
   FIELD_MAXNUMCELLS,
   /** index of \ref max_seen_particle */
   FIELD_MAXPART,
-  /** index of \ref max_range */
-  FIELD_MAXRANGE,
-  /** index of \ref max_skin */
-  FIELD_MAXSKIN,
   /** index of \ref min_num_cells  */
   FIELD_MINNUMCELLS,
   /** index of \ref n_layers */
   FIELD_NLAYERS,
-  /** index of \ref n_nodes */
-  FIELD_NNODES,
-  /** index of \ref n_part */
-  FIELD_NPART,
-  /** index of \ref max_seen_particle_type */
-  FIELD_NPARTTYPE,
   /** index of \ref n_rigidbonds */
   FIELD_RIGIDBONDS,
   /** index of \ref node_grid */
@@ -117,16 +101,8 @@ enum Fields {
   FIELD_SIMTIME,
   /** index of \ref time_step */
   FIELD_TIMESTEP,
-  /** index of \ref timing_samples */
-  FIELD_TIMINGSAMP,
-  /** index of \ref max_cut_nonbonded */
-  FIELD_MCUT_NONBONDED,
-  /** index of \ref verlet_reuse */
-  FIELD_VERLETREUSE,
   /** index of \ref lattice_switch */
   FIELD_LATTICE_SWITCH,
-  /** index of \ref max_cut_bonded */
-  FIELD_MCUT_BONDED,
   /** index of \ref min_global_cut */
   FIELD_MIN_GLOBAL_CUT,
   /** index of \ref ghmc_nmd */
@@ -141,10 +117,6 @@ enum Fields {
   FIELD_GHMC_SCALE,
   /** index of \ref warnings */
   FIELD_WARNINGS,
-  /** index of \ref langevin_trans */
-  FIELD_LANGEVIN_TRANS_SWITCH,
-  /** index of \ref langevin_rotate */
-  FIELD_LANGEVIN_ROT_SWITCH,
   /** index of \ref langevin_gamma_rotation */
   FIELD_LANGEVIN_GAMMA_ROTATION,
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
