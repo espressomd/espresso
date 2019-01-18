@@ -31,12 +31,14 @@
 #include "debug.hpp"
 #include "global.hpp"
 #include "utils.hpp"
+
+#include <boost/algorithm/clamp.hpp>
+#include <mpi.h>
+
 #include <cmath>
 #include <cstdio>
-
 #include <cstdlib>
 #include <cstring>
-#include <mpi.h>
 
 /************************************************
  * defines
@@ -73,13 +75,10 @@ void init_node_grid() {
 int map_position_node_array(const Vector3d &pos) {
   auto const f_pos = folded_position(pos);
 
-  int im[3] = {0, 0, 0};
+  Vector3i im;
   for (int i = 0; i < 3; i++) {
-    im[i] = (int)floor(node_grid[i] * f_pos[i] * box_l_i[i]);
-    if (im[i] < 0)
-      im[i] = 0;
-    else if (im[i] >= node_grid[i])
-      im[i] = node_grid[i] - 1;
+    im[i] = std::floor(node_grid[i] * f_pos[i] * box_l_i[i]);
+    im[i] = boost::algorithm::clamp(im[i], 0, node_grid[i] - 1);
   }
 
   return map_array_node(im);

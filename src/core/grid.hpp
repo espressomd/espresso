@@ -49,8 +49,9 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "utils.hpp"
+#include "utils/Span.hpp"
 
-#include <climits>
+#include <limits>
 
 /** Macro that tests for a coordinate being periodic or not. */
 #ifdef PARTIAL_PERIODIC
@@ -120,9 +121,9 @@ inline void map_node_array(int node, int pos[3]) {
  * \return      rank of the node at position pos.
  * \param pos   position of the node in node grid.
  */
-inline int map_array_node(int pos[3]) {
+inline int map_array_node(Utils::Span<const int> pos) {
   int rank;
-  MPI_Cart_rank(comm_cart, pos, &rank);
+  MPI_Cart_rank(comm_cart, pos.data(), &rank);
   return rank;
 }
 

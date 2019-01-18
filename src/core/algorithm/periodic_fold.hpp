@@ -7,10 +7,10 @@
 
 namespace Algorithm {
 /**
- * @brief Fold value in to primary interval.
+ * @brief Fold value into primary interval.
  *
  * @param x Value to fold
- * @param i Image cont befor folding
+ * @param i Image count before folding
  * @param l Length of primary interval
  * @return x folded into [0, l) and number of folds.
  */
@@ -32,7 +32,7 @@ std::pair<T, I> periodic_fold(T x, I i, T const &l) {
 }
 
 /**
- * @brief Fold value in to primary interval.
+ * @brief Fold value into primary interval.
  *
  * @param x Value to fold
  * @param l Length of primary interval
