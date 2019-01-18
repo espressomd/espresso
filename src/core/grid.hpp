@@ -48,6 +48,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "utils.hpp"
+#include "algorithm/periodic_fold.hpp"
 
 #include <climits>
 
@@ -201,8 +202,6 @@ Vector3d get_mi_vector(T const &a, U const &b) {
   return res;
 }
 
-#include "algorithm/periodic_fold.hpp"
-
 /** fold a coordinate to primary simulation box, including velocity.
     \param pos         the position...
     \param image_box   and the box
@@ -212,13 +211,13 @@ Vector3d get_mi_vector(T const &a, U const &b) {
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
 */
-template <typename T1, typename T2>
-void fold_coordinate(T1 &pos, T2 &image_box, int dir) {
+template <size_t N, typename T1, typename T2>
+void fold_coordinate(Vector<N, T1> &pos, Vector<N, T2> &image_box, int dir) {
   if (PERIODIC(dir)) {
     std::tie(pos[dir], image_box[dir]) =
         Algorithm::periodic_fold(pos[dir], image_box[dir], box_l[dir]);
 
-    if ((image_box[dir] == INT_MIN) || (image_box[dir] == INT_MAX)) {
+    if ((image_box[dir] == std::numeric_limits<T2>::min()) || (image_box[dir] == std::numeric_limits<T2>::max())) {
       throw std::runtime_error(
           "Overflow in the image box count while folding a particle coordinate "
           "into the primary simulation box. Maybe a particle experienced a "
@@ -243,7 +242,9 @@ void fold_position(Vector<N, T1> &pos, Vector<N, T2> &image_box) {
 inline Vector3d folded_position(const Vector3d &p) {
   Vector3d p_folded;
   for (int i = 0; i < 3; i++) {
-    p_folded[i] = Algorithm::periodic_fold(p[i], box_l[i]);
+    if (PERIODIC(i)) {
+      p_folded[i] = Algorithm::periodic_fold(p[i], box_l[i]);
+    }
   }
 
   return p_folded;
@@ -253,19 +254,13 @@ inline Vector3d folded_position(const Vector3d &p) {
  * The particle is not changed.
  */
 inline Vector3d folded_position(Particle const &p) {
-  Vector3d pos{p.r.p};
-  int tmp[3] = {0, 0, 0};
-  for (int dir = 0; dir < 3; dir++) {
-    fold_coordinate(pos, tmp, dir);
-  }
-
-  return pos;
+  return folded_position(p.r.p);
 }
 
 /** @overload */
 inline Vector3d folded_position(const Particle *p) {
   assert(p);
-  return folded_position(*p);
+  return folded_position(p->r.p);
 }
 
 /** unfold coordinates to physical position.

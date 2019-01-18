@@ -3,8 +3,17 @@
 
 #include <limits>
 #include <utility>
+#include <cmath>
 
 namespace Algorithm {
+    /**
+     * @brief Fold value in to primary interval.
+     *
+     * @param x Value to fold
+     * @param i Image cont befor folding
+     * @param l Length of primary interval
+     * @return x folded into [0, l) and number of folds.
+     */
 template <typename T, typename I>
 std::pair<T, I> periodic_fold(T x, I i, T const &l) {
   using limits = std::numeric_limits<I>;
@@ -22,7 +31,21 @@ std::pair<T, I> periodic_fold(T x, I i, T const &l) {
   return {x, i};
 }
 
+    /**
+     * @brief Fold value in to primary interval.
+     *
+     * @param x Value to fold
+     * @param l Length of primary interval
+     * @return x folded into [0, l).
+     */
 template <typename T> T periodic_fold(T x, T const &l) {
+  /* Can't fold if either x or l is nan or inf. */
+  if(std::isnan(x) or std::isnan(l) or std::isinf(x) or (l == 0)) {
+      return std::nan("");
+  } else if(std::isinf(l)) {
+      return x;
+  }
+
   while (x < 0) {
     x += l;
   }
