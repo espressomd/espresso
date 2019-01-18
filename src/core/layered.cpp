@@ -411,7 +411,7 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
 
   CELL_TRACE(fprintf(stderr, "%d: sorting in %d\n", this_node, pl->n));
   for (p = 0; p < pl->n; p++) {
-    fold_position(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i);
+    fold_position(pl->part[p].r.p, pl->part[p].l.i);
 
     if (LAYERED_BTM_NEIGHBOR &&
         (get_mi_coord(pl->part[p].r.p[2], my_left[2], 2) < 0.0)) {

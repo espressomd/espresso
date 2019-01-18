@@ -201,37 +201,9 @@ Vector3d get_mi_vector(T const &a, U const &b) {
   return res;
 }
 
+#include "algorithm/periodic_fold.hpp"
+
 /** fold a coordinate to primary simulation box, including velocity.
-    \param pos         the position...
-    \param vel         the velocity...
-    \param image_box   and the box
-    \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z
-   coordinate.
-
-    Both pos and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
-template <typename T1, typename T2, typename T3>
-void fold_coordinate(T1 &pos, T2 &vel, T3 &image_box, int dir) {
-  if (PERIODIC(dir)) {
-    while ((pos[dir] < 0) && (image_box[dir] > INT_MIN)) {
-      pos[dir] += box_l[dir];
-      image_box[dir] -= 1;
-    }
-    while ((pos[dir] >= box_l[dir]) && (image_box[dir] < INT_MAX)) {
-      pos[dir] -= box_l[dir];
-      image_box[dir] += 1;
-    }
-    if ((image_box[dir] == INT_MIN) || (image_box[dir] == INT_MAX)) {
-      throw std::runtime_error(
-          "Overflow in the image box count while folding a particle coordinate "
-          "into the primary simulation box. Maybe a particle experienced a "
-          "huge force.");
-    }
-  }
-}
-
-/** fold a coordinate to primary simulation box, not caring about velocities.
     \param pos         the position...
     \param image_box   and the box
     \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z
@@ -242,22 +214,17 @@ void fold_coordinate(T1 &pos, T2 &vel, T3 &image_box, int dir) {
 */
 template <typename T1, typename T2>
 void fold_coordinate(T1 &pos, T2 &image_box, int dir) {
-  double v[3];
-  fold_coordinate(pos, v, image_box, dir);
-}
+  if (PERIODIC(dir)) {
+    std::tie(pos[dir], image_box[dir]) =
+        Algorithm::periodic_fold(pos[dir], image_box[dir], box_l[dir]);
 
-/** fold particle coordinates to primary simulation box.
-    \param pos the position...
-    \param vel the velocity...
-    \param image_box and the box
-
-    Pos, vel and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
-template <typename T1, typename T2, typename T3>
-inline void fold_position(T1 &pos, T2 &vel, T3 &image_box) {
-  for (int i = 0; i < 3; i++)
-    fold_coordinate(pos, vel, image_box, i);
+    if ((image_box[dir] == INT_MIN) || (image_box[dir] == INT_MAX)) {
+      throw std::runtime_error(
+          "Overflow in the image box count while folding a particle coordinate "
+          "into the primary simulation box. Maybe a particle experienced a "
+          "huge force.");
+    }
+  }
 }
 
 /** fold particle coordinates to primary simulation box.
@@ -267,9 +234,19 @@ inline void fold_position(T1 &pos, T2 &vel, T3 &image_box) {
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
 */
-template <typename T1, typename T2> void fold_position(T1 &pos, T2 &image_box) {
+template <size_t N, typename T1, typename T2>
+void fold_position(Vector<N, T1> &pos, Vector<N, T2> &image_box) {
   for (int i = 0; i < 3; i++)
     fold_coordinate(pos, image_box, i);
+}
+
+inline Vector3d folded_position(const Vector3d &p) {
+  Vector3d p_folded;
+  for (int i = 0; i < 3; i++) {
+    p_folded[i] = Algorithm::periodic_fold(p[i], box_l[i]);
+  }
+
+  return p_folded;
 }
 
 /** fold particle coordinates to primary simulation box.
