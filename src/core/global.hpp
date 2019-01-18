@@ -115,8 +115,6 @@ enum Fields {
   FIELD_GHMC_FLIP,
   /** index of \ref ghmc_phi */
   FIELD_GHMC_SCALE,
-  /** index of \ref warnings */
-  FIELD_WARNINGS,
   /** index of \ref langevin_gamma_rotation */
   FIELD_LANGEVIN_GAMMA_ROTATION,
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
@@ -125,8 +123,5 @@ enum Fields {
   FIELD_FORCE_CAP,
   FIELD_THERMO_VIRTUAL
 };
-
-/** bool: whether to write out warnings or not */
-extern int warnings;
 
 #endif

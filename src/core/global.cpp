@@ -36,6 +36,7 @@
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "rattle.hpp"
+#include "thermostat.hpp"
 #include "tuning.hpp"
 #include "utils/mpi/all_compare.hpp"
 
@@ -161,8 +162,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_GHMC_SCALE,
      {&ghmc_tscale, Datafield::Type::INT, 1,
       "ghmc_tscale"}}, /* 48 from ghmc.cpp */
-    {FIELD_WARNINGS,
-     {&warnings, Datafield::Type::INT, 1, "warnings"}}, /* 50 from global.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA_ROTATION,
      {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1,
@@ -227,8 +226,6 @@ void common_bcast_parameter(int i) {
   on_parameter_change(i);
 }
 } // namespace
-
-int warnings = 1;
 
 void check_global_consistency() {
   using Utils::Mpi::all_compare;
