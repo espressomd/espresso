@@ -88,9 +88,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_INTEG_SWITCH,
      {&integ_switch, Datafield::Type::INT, 1,
       "integ_switch"}}, /* 7  from integrate.cpp */
-    {FIELD_LBOXL,
-     {local_box_l, Datafield::Type::DOUBLE, 3,
-      "local_box_l"}}, /* 8  from global.cpp */
     {FIELD_MCUT,
      {&max_cut, Datafield::Type::DOUBLE, 1,
       "max_cut"}}, /* 9  from interaction_data.cpp */

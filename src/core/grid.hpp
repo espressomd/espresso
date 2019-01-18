@@ -87,7 +87,7 @@ extern double box_l_i[3];
     are taken into account! */
 extern double min_box_l;
 /** Dimensions of the box a single node is responsible for. */
-extern double local_box_l[3];
+extern Vector3d local_box_l;
 /** Smallest local simulation box dimension (\ref local_box_l).
     Remark: with PARTIAL_PERIODIC, only the periodic directions
     are taken into account! */
