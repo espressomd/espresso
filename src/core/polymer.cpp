@@ -115,8 +115,8 @@ int collision(PartCfg &partCfg, double pos[3], double shield, int n_add,
 }
 
 int constraint_collision(double *p1, double *p2) {
-  Vector3d folded_pos1 = folded_position({p1, p1+3});
-  Vector3d folded_pos2 = folded_position({p2, p2+3});
+  Vector3d folded_pos1 = folded_position({p1, p1 + 3});
+  Vector3d folded_pos2 = folded_position({p2, p2 + 3});
 
   for (auto &c : Constraints::constraints) {
     auto cs =

@@ -691,7 +691,8 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
       for (auto const &p : partCfg) {
         // com particles
         if (p.p.type == type) {
-          auto const pos = folded_position({&configs[k][3 * i], &configs[k][3 * i] + 3});
+          auto const pos =
+              folded_position({&configs[k][3 * i], &configs[k][3 * i] + 3});
 
           if (pos[dir] <= r + r_bin && pos[dir] > r)
             n++;

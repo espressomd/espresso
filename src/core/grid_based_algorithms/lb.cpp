@@ -2682,7 +2682,8 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 
     // calculate source position
     double direction = double(p->swim.push_pull) * p->swim.dipole_length;
-    auto const source_position = folded_position(p->r.p + direction * p->r.calc_director() );
+    auto const source_position =
+        folded_position(p->r.p + direction * p->r.calc_director());
 
     lb_lbfluid_get_interpolated_velocity(Vector3d(source_position),
                                          p->swim.v_source.data());

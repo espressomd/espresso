@@ -45,10 +45,10 @@
  * "grid.c".
  */
 #include "RuntimeErrorStream.hpp"
+#include "algorithm/periodic_fold.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "utils.hpp"
-#include "algorithm/periodic_fold.hpp"
 
 #include <climits>
 
@@ -217,7 +217,8 @@ void fold_coordinate(Vector<N, T1> &pos, Vector<N, T2> &image_box, int dir) {
     std::tie(pos[dir], image_box[dir]) =
         Algorithm::periodic_fold(pos[dir], image_box[dir], box_l[dir]);
 
-    if ((image_box[dir] == std::numeric_limits<T2>::min()) || (image_box[dir] == std::numeric_limits<T2>::max())) {
+    if ((image_box[dir] == std::numeric_limits<T2>::min()) ||
+        (image_box[dir] == std::numeric_limits<T2>::max())) {
       throw std::runtime_error(
           "Overflow in the image box count while folding a particle coordinate "
           "into the primary simulation box. Maybe a particle experienced a "

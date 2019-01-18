@@ -35,149 +35,153 @@ BOOST_AUTO_TEST_CASE(with_image_count) {
     BOOST_CHECK_EQUAL(res.second, i);
   }
 
-    /* Outside left */
-    {
-        auto const x = -5.;
-        auto const i = 9;
-        auto const box = 10.;
-        auto const res = periodic_fold(x, i, box);
-        BOOST_CHECK_EQUAL(res.first - box, x);
-        BOOST_CHECK_EQUAL(res.second, i - 1);
-    }
+  /* Outside left */
+  {
+    auto const x = -5.;
+    auto const i = 9;
+    auto const box = 10.;
+    auto const res = periodic_fold(x, i, box);
+    BOOST_CHECK_EQUAL(res.first - box, x);
+    BOOST_CHECK_EQUAL(res.second, i - 1);
+  }
 
-    /* Left boundary */
-    {
-        auto const x = 0.;
-        auto const i = 9;
-        auto const box = 10.;
-        auto const res = periodic_fold(x, i, box);
-        BOOST_CHECK_EQUAL(res.first, x);
-        BOOST_CHECK_EQUAL(res.second, i);
-    }
+  /* Left boundary */
+  {
+    auto const x = 0.;
+    auto const i = 9;
+    auto const box = 10.;
+    auto const res = periodic_fold(x, i, box);
+    BOOST_CHECK_EQUAL(res.first, x);
+    BOOST_CHECK_EQUAL(res.second, i);
+  }
 
-    /* Right boundary */
-    {
-        auto const x = 10.;
-        auto const i = 9;
-        auto const box = x;
-        auto const res = periodic_fold(x, i, box);
-        BOOST_CHECK_EQUAL(res.first, x - box);
-        BOOST_CHECK_EQUAL(res.second, i + 1);
-    }
+  /* Right boundary */
+  {
+    auto const x = 10.;
+    auto const i = 9;
+    auto const box = x;
+    auto const res = periodic_fold(x, i, box);
+    BOOST_CHECK_EQUAL(res.first, x - box);
+    BOOST_CHECK_EQUAL(res.second, i + 1);
+  }
 
-    /* Pathological (NaN) */
-    {
-        auto const x = std::nan("");
-        auto const i = 9;
-        auto const box = 10.;
-        auto const res = periodic_fold(x, i, box);
-        BOOST_CHECK(std::isnan(res.first));
-    }
+  /* Pathological (NaN) */
+  {
+    auto const x = std::nan("");
+    auto const i = 9;
+    auto const box = 10.;
+    auto const res = periodic_fold(x, i, box);
+    BOOST_CHECK(std::isnan(res.first));
+  }
 
-    /* Overflow right */
-    {
-        auto const x = (100. * static_cast<double>(std::numeric_limits<int>::max())) ;
-        auto const box = 10.;
-        int const i = std::numeric_limits<int>::max() - 10;
-        auto const res = periodic_fold(x, i, box);
-        BOOST_CHECK_EQUAL(res.second, std::numeric_limits<int>::max());
-    }
+  /* Overflow right */
+  {
+    auto const x =
+        (100. * static_cast<double>(std::numeric_limits<int>::max()));
+    auto const box = 10.;
+    int const i = std::numeric_limits<int>::max() - 10;
+    auto const res = periodic_fold(x, i, box);
+    BOOST_CHECK_EQUAL(res.second, std::numeric_limits<int>::max());
+  }
 
-    /* Overflow left */
-    {
-        auto const x = (100. * static_cast<double>(std::numeric_limits<int>::min())) ;
-        auto const box = 10.;
-        int const i = std::numeric_limits<int>::min() + 10;
-        auto const res = periodic_fold(x, i, box);
-        BOOST_CHECK_EQUAL(res.second, std::numeric_limits<int>::min());
-    }
+  /* Overflow left */
+  {
+    auto const x =
+        (100. * static_cast<double>(std::numeric_limits<int>::min()));
+    auto const box = 10.;
+    int const i = std::numeric_limits<int>::min() + 10;
+    auto const res = periodic_fold(x, i, box);
+    BOOST_CHECK_EQUAL(res.second, std::numeric_limits<int>::min());
+  }
 
-    /* Corner left */
-    {
-        auto const x = std::nextafter(0., -1.);
-        auto const box = 10.;
-        auto const res = periodic_fold(x, 0, box);
-        BOOST_CHECK(res.first >= 0.);
-        BOOST_CHECK(res.first < box);
-        BOOST_CHECK(std::abs(res.first - x + res.second * box) <= std::numeric_limits<double>::epsilon());
-    }
+  /* Corner left */
+  {
+    auto const x = std::nextafter(0., -1.);
+    auto const box = 10.;
+    auto const res = periodic_fold(x, 0, box);
+    BOOST_CHECK(res.first >= 0.);
+    BOOST_CHECK(res.first < box);
+    BOOST_CHECK(std::abs(res.first - x + res.second * box) <=
+                std::numeric_limits<double>::epsilon());
+  }
 
-    /* Corner right */
-    {
-        auto const box = 10.;
-        auto const x = std::nextafter(box, 2*box);
-        auto const res = periodic_fold(x, 0, box);
-        BOOST_CHECK(res.first >= 0.);
-        BOOST_CHECK(res.first < box);
-        BOOST_CHECK(std::abs(res.first - x + res.second * box) <= std::numeric_limits<double>::epsilon());
-    }
+  /* Corner right */
+  {
+    auto const box = 10.;
+    auto const x = std::nextafter(box, 2 * box);
+    auto const res = periodic_fold(x, 0, box);
+    BOOST_CHECK(res.first >= 0.);
+    BOOST_CHECK(res.first < box);
+    BOOST_CHECK(std::abs(res.first - x + res.second * box) <=
+                std::numeric_limits<double>::epsilon());
+  }
 }
 
 BOOST_AUTO_TEST_CASE(without_image_count) {
-    using Algorithm::periodic_fold;
+  using Algorithm::periodic_fold;
 
-    /* Inside */
-    {
-        auto const x = 5.;
-        auto const res = periodic_fold(x, 10.);
-        BOOST_CHECK_EQUAL(res, x);
-    }
+  /* Inside */
+  {
+    auto const x = 5.;
+    auto const res = periodic_fold(x, 10.);
+    BOOST_CHECK_EQUAL(res, x);
+  }
 
-    /* Outside left */
-    {
-        auto const x = -5.;
-        auto const box = 10.;
-        auto const res = periodic_fold(x, box);
-        BOOST_CHECK_EQUAL(res - box, x);
-    }
+  /* Outside left */
+  {
+    auto const x = -5.;
+    auto const box = 10.;
+    auto const res = periodic_fold(x, box);
+    BOOST_CHECK_EQUAL(res - box, x);
+  }
 
-    /* Left boundary */
-    {
-        auto const x = 0.;
-        auto const box = 10.;
-        auto const res = periodic_fold(x, box);
-        BOOST_CHECK_EQUAL(res, x);
-    }
+  /* Left boundary */
+  {
+    auto const x = 0.;
+    auto const box = 10.;
+    auto const res = periodic_fold(x, box);
+    BOOST_CHECK_EQUAL(res, x);
+  }
 
-    /* Right boundary */
-    {
-        auto const x = 10.;
-        auto const box = x;
-        auto const res = periodic_fold(x, box);
-        BOOST_CHECK_EQUAL(res, x - box);
-    }
+  /* Right boundary */
+  {
+    auto const x = 10.;
+    auto const box = x;
+    auto const res = periodic_fold(x, box);
+    BOOST_CHECK_EQUAL(res, x - box);
+  }
 
-    /* Pathological (NaN value) */
-    {
-        auto const x = std::nan("");
-        auto const box = 10.;
-        auto const res = periodic_fold(x, box);
-        BOOST_CHECK(std::isnan(res));
-    }
+  /* Pathological (NaN value) */
+  {
+    auto const x = std::nan("");
+    auto const box = 10.;
+    auto const res = periodic_fold(x, box);
+    BOOST_CHECK(std::isnan(res));
+  }
 
-    /* Pathological (NaN box) */
-    {
-        auto const x = 5.;
-        auto const box = std::nan("");
-        auto const res = periodic_fold(x, box);
-        BOOST_CHECK(std::isnan(res));
-    }
+  /* Pathological (NaN box) */
+  {
+    auto const x = 5.;
+    auto const box = std::nan("");
+    auto const res = periodic_fold(x, box);
+    BOOST_CHECK(std::isnan(res));
+  }
 
-    /* Corner left */
-    {
-        auto const x = std::nextafter(0., -1.);
-        auto const box = 10.;
-        auto const res = periodic_fold(x, box);
-        BOOST_CHECK(res >= 0.);
-        BOOST_CHECK(res < box);
-    }
+  /* Corner left */
+  {
+    auto const x = std::nextafter(0., -1.);
+    auto const box = 10.;
+    auto const res = periodic_fold(x, box);
+    BOOST_CHECK(res >= 0.);
+    BOOST_CHECK(res < box);
+  }
 
-    /* Corner right */
-    {
-        auto const box = 10.;
-        auto const x = std::nextafter(box, 2*box);
-        auto const res = periodic_fold(x, box);
-        BOOST_CHECK(res >= 0.);
-        BOOST_CHECK(res < box);
-    }
+  /* Corner right */
+  {
+    auto const box = 10.;
+    auto const x = std::nextafter(box, 2 * box);
+    auto const res = periodic_fold(x, box);
+    BOOST_CHECK(res >= 0.);
+    BOOST_CHECK(res < box);
+  }
 }
