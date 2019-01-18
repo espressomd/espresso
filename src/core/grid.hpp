@@ -246,6 +246,8 @@ inline Vector3d folded_position(const Vector3d &p) {
   for (int i = 0; i < 3; i++) {
     if (PERIODIC(i)) {
       p_folded[i] = Algorithm::periodic_fold(p[i], box_l[i]);
+    } else {
+      p_folded[i] = p[i];
     }
   }
 

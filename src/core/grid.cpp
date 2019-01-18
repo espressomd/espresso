@@ -77,11 +77,12 @@ int map_position_node_array(const Vector3d &pos) {
 
   Vector3i im;
   for (int i = 0; i < 3; i++) {
-    im[i] = std::floor(node_grid[i] * f_pos[i] * box_l_i[i]);
+    im[i] = std::floor(f_pos[i] / local_box_l[i]);
     im[i] = boost::algorithm::clamp(im[i], 0, node_grid[i] - 1);
   }
 
-  return map_array_node(im);
+  auto const node = map_array_node(im);
+  return node;
 }
 
 int calc_node_neighbors(int node) {
