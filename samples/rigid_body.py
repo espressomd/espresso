@@ -64,10 +64,10 @@ z = box_l * 0.5
 # place six branches, pointing +/-x +/-y and +/-z
 for direction in np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]):
     for n in range(branch_len):
-        system.part.add(
-            pos=[x, y, z] + (n + 1) * direction, type=type_A, virtual=1)
-        system.part.add(
-            pos=[x, y, z] - (n + 1) * direction, type=type_A, virtual=1)
+        system.part.add(pos=[x, y, z] + (n + 1) * direction,
+                        type=type_A, virtual=1)
+        system.part.add(pos=[x, y, z] - (n + 1) * direction,
+                        type=type_A, virtual=1)
 
 system.virtual_sites = VirtualSitesRelative(have_velocity=True)
 
@@ -95,7 +95,8 @@ print("moment of intertia is", momI)
 
 #place center bead
 p_center = system.part.add(
-    pos=com, mass=branch_len * 6 + 1, rinertia=momI, rotation=[1, 1, 1], type=type_centre)
+    pos=com, mass=branch_len * 6 + 1, rinertia=momI,
+    rotation=[1, 1, 1], type=type_centre)
 
 # The virtual particles relate to the center one
 for p in system.part:

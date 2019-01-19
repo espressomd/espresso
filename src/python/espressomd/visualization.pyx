@@ -9,6 +9,7 @@ try:
 except ImportError as e:
     class mayaviLive(object):
         deferred_ImportError = e
+
         def __init__(self, *args, **kwargs):
             raise self.deferred_ImportError
 
@@ -17,6 +18,7 @@ try:
 except ImportError as e:
     class openGLLive(object):
         deferred_ImportError = e
+
         def __init__(self, *args, **kwargs):
             raise self.deferred_ImportError
 

@@ -33,9 +33,9 @@ from espressomd import reaction_ensemble
 parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()
 group.add_argument('--reaction_ensemble', action='store_const', dest='mode',
-    const='reaction_ensemble', default='reaction_ensemble')
+                   const='reaction_ensemble', default='reaction_ensemble')
 group.add_argument('--constant_pH_ensemble', action='store_const', dest='mode',
-    const='constant_pH_ensemble')
+                   const='constant_pH_ensemble')
 args = parser.parse_args()
 
 
@@ -75,8 +75,9 @@ elif args.mode == "constant_pH_ensemble":
     RE = reaction_ensemble.ConstantpHEnsemble(
         temperature=1, exclusion_radius=1)
     RE.constant_pH = 2
-RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
-    1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
+RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
+                product_types=[1, 2], product_coefficients=[1, 1],
+                default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
@@ -84,4 +85,5 @@ for i in range(10000):
     RE.reaction()
     if i % 100 == 0:
         print("HA", system.number_of_particles(type=0), "A-",
-              system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
+              system.number_of_particles(type=1), "H+",
+              system.number_of_particles(type=2))

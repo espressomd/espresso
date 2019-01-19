@@ -116,27 +116,29 @@ dtemp = 1000.0
 # VISUALIZER
 zoom = 10
 
-visualizer = espressomd.visualization_opengl.openGLLive(system,
-                                                        window_size=[800, 600],
-                                                        draw_axis=False,
-                                                        particle_sizes=[
-                                                        snake_head_sigma *
-                                                            0.5, snake_bead_sigma *
-                                                                0.5,
-                                                        cylinder_sigma, bubble_sigma * 0.5, temp_change_radius, temp_change_radius],
-                                                        particle_type_colors=[[1, 1, 0], [1, 0, 1], [0, 0, 1], [
-                                                                              0, 1, 1], [
-                                                                              0, 1, 0], [
-                                                                              1, 0, 0], [
-                                                                              0.5, 0, 1]],
-                                                        constraint_type_colors=[
-                                                        [1, 1, 1]],
-                                                        camera_position=[
-                                                        snake_startpos[0],
-                                                        snake_startpos[
-                                                        1], system.box_l[
-                                                        2] * zoom],
-                                                        camera_target=snake_startpos)
+visualizer = espressomd.visualization_opengl.openGLLive(
+    system,
+    window_size=[800, 600],
+    draw_axis=False,
+    particle_sizes=[
+        snake_head_sigma * 0.5,
+        snake_bead_sigma * 0.5,
+        cylinder_sigma,
+        bubble_sigma * 0.5,
+        temp_change_radius,
+        temp_change_radius],
+    particle_type_colors=[[1, 1, 0],
+                          [1, 0, 1],
+                          [0, 0, 1],
+                          [0, 1, 1],
+                          [0, 1, 0],
+                          [1, 0, 0],
+                          [0.5, 0, 1]],
+    constraint_type_colors=[[1, 1, 1]],
+    camera_position=[snake_startpos[0],
+                     snake_startpos[1],
+                     system.box_l[2] * zoom],
+    camera_target=snake_startpos)
 
 
 # JOYPAD CONTROL
@@ -172,11 +174,25 @@ system.bonded_inter.add(harmonic_bead)
 
 for i in range(snake_n):
     if i == 0:
-        p_head = system.part.add(pos=snake_startpos, type=snake_head_type, fix=[
-                                 0, 0, 1], mass=snake_head_mass, temp=temperature_snake, gamma=gamma_snake_head)
+        p_head = system.part.add(
+            pos=snake_startpos,
+            type=snake_head_type,
+            fix=[0, 0, 1],
+            mass=snake_head_mass,
+            temp=temperature_snake,
+            gamma=gamma_snake_head)
     else:
-        system.part.add(pos=snake_startpos + np.array([0, -1, 0]) * (0.5 * (snake_head_sigma + snake_bead_sigma) + (i - 1) * snake_bead_sigma), bonds=(
-            harmonic_bead if (i > 1) else harmonic_head, i - 1), type=snake_bead_type, fix=[0, 0, 1], mass=snake_bead_mass, temp=temperature_snake, gamma=gamma_snake_bead)
+        system.part.add(
+            pos=snake_startpos
+            + np.array([0, -1, 0])
+            * (0.5 * (snake_head_sigma + snake_bead_sigma)
+               + (i - 1) * snake_bead_sigma),
+            bonds=(harmonic_bead if (i > 1) else harmonic_head, i - 1),
+            type=snake_bead_type,
+            fix=[0, 0, 1],
+            mass=snake_bead_mass,
+            temp=temperature_snake,
+            gamma=gamma_snake_bead)
 
 # NB INTER
 
@@ -226,8 +242,9 @@ system.constraints.add(shape=espressomd.shapes.Wall(
 system.constraints.add(shape=espressomd.shapes.Wall(
     dist=-box[1], normal=[0, -1, 0]), particle_type=cylinder_type, penetrable=True)
 
-system.constraints.add(shape=espressomd.shapes.SimplePore(center=0.5 * box, axis=[
-                       1, 0, 0], length=pore_length, radius=pore_radius, smoothing_radius=5), particle_type=cylinder_type, penetrable=True)
+system.constraints.add(shape=espressomd.shapes.SimplePore(
+    center=0.5 * box, axis=[1, 0, 0], length=pore_length, radius=pore_radius,
+    smoothing_radius=5), particle_type=cylinder_type, penetrable=True)
 
 
 # BUBBLES
@@ -240,8 +257,13 @@ while (n < bubbles_n):
     # box[2]*0.5]
     bpos = [np.random.random() * (pore_xl - snake_head_sigma * 4) +
             snake_head_sigma * 2, np.random.random() * box[1], box[2] * 0.5]
-    system.part.add(pos=bpos, type=bubble_type, fix=[
-                    0, 0, 1], mass=bubble_mass, temp=temperature_bubbles, gamma=gamma_bubbles)
+    system.part.add(
+        pos=bpos,
+        type=bubble_type,
+        fix=[0, 0, 1],
+        mass=bubble_mass,
+        temp=temperature_bubbles,
+        gamma=gamma_bubbles)
     testid = len(system.part) - 1
     n += 1
 
@@ -255,12 +277,19 @@ p_bubbles = np.where(system.part[:].type == bubble_type)[0]
 bpos = [np.random.random() * (pore_xl - snake_head_sigma * 4) +
         snake_head_sigma * 2, np.random.random() * box[1], box[2] * 0.5]
 p_temp_inc = system.part.add(
-    pos=bpos, type=temp_change_inc_type, fix=[1, 1, 1])
+    pos=bpos,
+    type=temp_change_inc_type,
+    fix=[1, 1, 1])
 
-bpos = [pore_xr + np.random.random() * (pore_xr - pore_xl - snake_head_sigma * 4) +
-        snake_head_sigma * 2, np.random.random() * box[1], box[2] * 0.5]
+bpos = [pore_xr
+        + np.random.random() * (pore_xr - pore_xl - snake_head_sigma * 4)
+        + snake_head_sigma * 2,
+        np.random.random() * box[1],
+        box[2] * 0.5]
 p_temp_dec = system.part.add(
-    pos=bpos, type=temp_change_dec_type, fix=[1, 1, 1])
+    pos=bpos,
+    type=temp_change_dec_type,
+    fix=[1, 1, 1])
 
 # MINIMIZE ENERGY
 
@@ -329,6 +358,7 @@ def restart():
     system.galilei.kill_particle_motion()
     system.galilei.kill_particle_forces()
 
+
 expl_time = 0
 exploding = False
 
@@ -347,28 +377,48 @@ def explode():
 
 # KEYBOARD CONTROLS
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('i', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, move_up_set))
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        'i', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
+        move_up_set))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('k', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, move_down_set))
-visualizer.keyboardManager.register_button(espressomd.visualization_opengl.KeyboardButtonEvent(
-    'i', espressomd.visualization_opengl.KeyboardFireEvent.Released, move_updown_reset))
-visualizer.keyboardManager.register_button(espressomd.visualization_opengl.KeyboardButtonEvent(
-    'k', espressomd.visualization_opengl.KeyboardFireEvent.Released, move_updown_reset))
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        'k', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
+        move_down_set))
+visualizer.keyboardManager.register_button(
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        'i', espressomd.visualization_opengl.KeyboardFireEvent.Released,
+        move_updown_reset))
+visualizer.keyboardManager.register_button(
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        'k', espressomd.visualization_opengl.KeyboardFireEvent.Released,
+        move_updown_reset))
 
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('j', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, move_left_set))
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        'j', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
+        move_left_set))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('l', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, move_right_set))
-visualizer.keyboardManager.register_button(espressomd.visualization_opengl.KeyboardButtonEvent(
-    'j', espressomd.visualization_opengl.KeyboardFireEvent.Released, move_leftright_reset))
-visualizer.keyboardManager.register_button(espressomd.visualization_opengl.KeyboardButtonEvent(
-    'l', espressomd.visualization_opengl.KeyboardFireEvent.Released, move_leftright_reset))
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        'l', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
+        move_right_set))
+visualizer.keyboardManager.register_button(
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        'j', espressomd.visualization_opengl.KeyboardFireEvent.Released,
+        move_leftright_reset))
+visualizer.keyboardManager.register_button(
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        'l', espressomd.visualization_opengl.KeyboardFireEvent.Released,
+        move_leftright_reset))
 
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('p', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, explode))
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        'p', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
+        explode))
 
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('b', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, restart))
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        'b', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
+        restart))
 
 # MAIN LOOP
 
@@ -437,13 +487,14 @@ def main():
             w = visualizer.specs['window_size']
             visualizer.user_texts = [
                 [[20, w[1] - 20], 'LEFT: {}   RIGHT: {}'.format(Nl, Nr)],
-                                     [[20, w[1] - 40], 'TEMPERATURE LEFT: {:.0f}   TEMPERATURE RIGHT: {:.0f}'.format(temp_l, temp_r)]]
+                [[20, w[1] - 40], 'TEMPERATURE LEFT: {:.0f}   TEMPERATURE RIGHT: {:.0f}'.format(temp_l, temp_r)]]
             # [[w[0] * 0.5, w[1] - 60], 'GAMMA LEFT: {:0.4f}   GAMMA RIGHT: {:0.4f}'.format( T_to_g(temp_l), T_to_g(temp_r))]]
 
         # TEMP CHANGE COLLISION
         repos_temp_inc = False
         repos_temp_dec = False
-        if np.linalg.norm(p_head.pos - p_temp_inc.pos) < temp_change_radius + snake_head_sigma * 0.5:
+        if np.linalg.norm(
+                p_head.pos - p_temp_inc.pos) < temp_change_radius + snake_head_sigma * 0.5:
             repos_temp_inc = True
             if p_temp_inc.pos[0] > box[0] * 0.5:
                 temp_r += dtemp
@@ -453,7 +504,8 @@ def main():
                 temp_l += dtemp
                 if temp_l > temp_max:
                     temp_l = temp_max
-        if np.linalg.norm(p_head.pos - p_temp_dec.pos) < temp_change_radius + snake_head_sigma * 0.5:
+        if np.linalg.norm(
+                p_head.pos - p_temp_dec.pos) < temp_change_radius + snake_head_sigma * 0.5:
             repos_temp_dec = True
             if p_temp_dec.pos[0] > box[0] * 0.5:
                 temp_r -= dtemp
@@ -476,20 +528,34 @@ def main():
         if repos_temp_inc or tincF > 5000:
             tincF = 0
             if np.random.random() < 0.5:
-                p_temp_inc.pos = [np.random.random() * (pore_xl - snake_head_sigma * 4) +
-                                  snake_head_sigma * 2, np.random.random() * box[1], box[2] * 0.5]
+                p_temp_inc.pos = [np.random.random()
+                                  * (pore_xl - snake_head_sigma * 4)
+                                  + snake_head_sigma * 2,
+                                  np.random.random() * box[1],
+                                  box[2] * 0.5]
             else:
-                p_temp_inc.pos = [pore_xr + np.random.random() * (pore_xr - pore_xl - snake_head_sigma * 4) +
-                                  snake_head_sigma * 2, np.random.random() * box[1], box[2] * 0.5]
+                p_temp_inc.pos = [pore_xr
+                                  + np.random.random()
+                                  * (pore_xr - pore_xl - snake_head_sigma * 4)
+                                  + snake_head_sigma * 2,
+                                  np.random.random() * box[1],
+                                  box[2] * 0.5]
 
         if repos_temp_dec or tdecF > 5000:
             tdecF = 0
             if np.random.random() < 0.5:
-                p_temp_dec.pos = [np.random.random() * (pore_xl - snake_head_sigma * 4) +
-                                  snake_head_sigma * 2, np.random.random() * box[1], box[2] * 0.5]
+                p_temp_dec.pos = [np.random.random()
+                                  * (pore_xl - snake_head_sigma * 4)
+                                  + snake_head_sigma * 2,
+                                  np.random.random() * box[1],
+                                  box[2] * 0.5]
             else:
-                p_temp_dec.pos = [pore_xr + np.random.random() * (pore_xr - pore_xl - snake_head_sigma * 4) +
-                                  snake_head_sigma * 2, np.random.random() * box[1], box[2] * 0.5]
+                p_temp_dec.pos = [pore_xr
+                                  + np.random.random()
+                                  * (pore_xr - pore_xl - snake_head_sigma * 4)
+                                  + snake_head_sigma * 2,
+                                  np.random.random() * box[1],
+                                  box[2] * 0.5]
 
         # REENABLE EXPLOSION
         if exploding and time.time() - expl_time > 1:
@@ -501,11 +567,9 @@ def main():
             if joystick_control:
                 pygame.event.get()
                 axis_l = np.array(
-                    [joystick.get_axis(0),
-                     -joystick.get_axis(1)])
+                    [joystick.get_axis(0), -joystick.get_axis(1)])
                 axis_r = np.array(
-                    [joystick.get_axis(3),
-                     -joystick.get_axis(4)])
+                    [joystick.get_axis(3), -joystick.get_axis(4)])
 
                 button_A = joystick.get_button(0)
                 button_Start = joystick.get_button(7)

@@ -74,8 +74,9 @@ system.part[0].add_bond((h, 1))
 
 RE = reaction_ensemble.WangLandauReactionEnsemble(
     temperature=1, exclusion_radius=0)
-RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
-    1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
+RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
+                product_types=[1, 2], product_coefficients=[1, 1],
+                default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2, 3])
 
@@ -84,15 +85,17 @@ system.setup_type_map([0, 1, 2, 3])
 # generate preliminary_energy_run_results here, this should be done in a
 # seperate simulation without energy reweighting using the update energy
 # functions
-np.savetxt("energy_boundaries.dat", np.c_[
-           [0, 1], [0, 0], [9, 9]], header="nbar E_min E_max")
+np.savetxt("energy_boundaries.dat", np.c_[[0, 1], [0, 0], [9, 9]],
+           header="nbar E_min E_max")
 
 RE.add_collective_variable_degree_of_association(
     associated_type=0, min=0, max=1, corresponding_acid_types=[0, 1])
 RE.add_collective_variable_potential_energy(
     filename="energy_boundaries.dat", delta=0.05)
-RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3,
-                              do_not_sample_reaction_partition_function=True, full_path_to_output_filename="WL_potential_out.dat")
+RE.set_wang_landau_parameters(
+    final_wang_landau_parameter=1e-3,
+    do_not_sample_reaction_partition_function=True,
+    full_path_to_output_filename="WL_potential_out.dat")
 
 i = 0
 while True:

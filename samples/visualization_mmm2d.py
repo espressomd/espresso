@@ -36,8 +36,11 @@ box_l = 20
 system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
-visualizer = visualization.openGLLive(system, constraint_type_colors=[
-                        [1, 1, 1]], camera_position=[50, 15, 15], camera_right=[0, 0, -1])
+visualizer = visualization.openGLLive(
+    system,
+    constraint_type_colors=[[1, 1, 1]],
+    camera_position=[50, 15, 15],
+    camera_right=[0, 0, -1])
 
 system.time_step = 0.02
 system.cell_system.skin = 0.4
@@ -52,8 +55,8 @@ for i in range(300):
 
 system.constraints.add(shape=espressomd.shapes.Wall(
     dist=0, normal=[0, 0, 1]), particle_type=1)
-system.constraints.add(
-    shape=espressomd.shapes.Wall(dist=-box_l, normal=[0, 0, -1]), particle_type=1)
+system.constraints.add(shape=espressomd.shapes.Wall(
+    dist=-box_l, normal=[0, 0, -1]), particle_type=1)
 
 WCA_cut = 2.**(1. / 6.)
 system.non_bonded_inter[0, 1].lennard_jones.set_params(

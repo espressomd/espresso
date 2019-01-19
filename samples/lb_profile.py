@@ -44,25 +44,25 @@ system.actors.add(lb_fluid)
 system.thermostat.set_lb(kT=1.0)
 fluid_obs = espressomd.observables.CylindricalLBVelocityProfile(
     center=[5.0, 5.0, 0.0],
-        axis='z',
-        n_r_bins=100,
-        n_phi_bins=1,
-        n_z_bins=1,
-        min_r=0.0,
-        max_r=4.0,
-        min_phi=-np.pi,
-        max_phi=np.pi,
-        min_z=0.0,
-        max_z=10.0,
-        sampling_delta_x=0.05,
-        sampling_delta_y=0.05,
-        sampling_delta_z=1.0)
+    axis='z',
+    n_r_bins=100,
+    n_phi_bins=1,
+    n_z_bins=1,
+    min_r=0.0,
+    max_r=4.0,
+    min_phi=-np.pi,
+    max_phi=np.pi,
+    min_z=0.0,
+    max_z=10.0,
+    sampling_delta_x=0.05,
+    sampling_delta_y=0.05,
+    sampling_delta_z=1.0)
 cylinder_shape = espressomd.shapes.Cylinder(
     center=[5.0, 5.0, 5.0],
-        axis=[0, 0, 1],
-        direction=-1,
-        radius=4.0,
-        length=20.0)
+    axis=[0, 0, 1],
+    direction=-1,
+    radius=4.0,
+    length=20.0)
 cylinder_boundary = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
 system.lbboundaries.add(cylinder_boundary)
 system.integrator.run(n_steps)

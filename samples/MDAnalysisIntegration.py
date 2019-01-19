@@ -36,10 +36,8 @@ system.time_step = 0.001
 system.cell_system.skin = 0.1
 
 for i in range(10):
-    system.part.add(id=i,
-                    pos=np.random.random(3) * system.box_l,
-                    v=np.random.random(3)
-                    )
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l,
+                    v=np.random.random(3))
 for i in range(5, 10):
     system.part[i].q = 1.0
     system.part[i].type = 1
@@ -122,4 +120,3 @@ for i in range(100):
     W.write_next_timestep(u.trajectory.ts)
 
 print("===> The trajectory has been saved in the traj.trr file")
-

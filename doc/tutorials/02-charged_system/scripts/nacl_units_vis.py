@@ -31,8 +31,11 @@ system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 numpy.random.seed(system.seed)
 
-visualizer = visualization_opengl.openGLLive(system, drag_force=5 * 298,
-                        background_color=[1, 1, 1], light_pos=[30, 30, 30])
+visualizer = visualization_opengl.openGLLive(
+    system,
+    drag_force=5 * 298,
+    background_color=[1, 1, 1],
+    light_pos=[30, 30, 30])
 
 # Callbacks to control temperature
 temperature = 298.0
@@ -58,10 +61,10 @@ def decreaseTemp():
 
 
 # Register buttons
-visualizer.keyboardManager.register_button(
-    visualization_opengl.KeyboardButtonEvent('t', visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
-visualizer.keyboardManager.register_button(
-    visualization_opengl.KeyboardButtonEvent('g', visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
+visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+    't', visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
+visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+    'g', visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
 
 
 def main():
@@ -152,13 +155,9 @@ def main():
     for i in range(num_steps_equilibration):
         energy = system.analysis.energy()
         temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-        print(
-            "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                                  energy[
-                                                                                  'total'],
-                                                                                  energy[
-                                                                                  'coulomb'],
-                                                                                  temp_measured))
+        print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}"
+              .format(system.time, energy['total'], energy['coulomb'],
+                      temp_measured))
         system.integrator.run(100)
         visualizer.update()
 

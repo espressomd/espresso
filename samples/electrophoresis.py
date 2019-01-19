@@ -93,8 +93,11 @@ system.bonded_inter.add(harmonicangle)
 #########################################################################################
 n_monomers = 20
 
-init_polymer_pos = np.dstack((np.arange(n_monomers), np.zeros(n_monomers), np.zeros(n_monomers)))[
-    0] + np.array([system.box_l[0] / 2 - n_monomers / 2, system.box_l[1] / 2, system.box_l[2] / 2])
+init_polymer_pos = np.dstack(
+    (np.arange(n_monomers), np.zeros(n_monomers), np.zeros(n_monomers)))[0] + \
+    np.array([system.box_l[0] / 2 - n_monomers / 2,
+              system.box_l[1] / 2,
+              system.box_l[2] / 2])
 
 system.part.add(pos=init_polymer_pos)
 

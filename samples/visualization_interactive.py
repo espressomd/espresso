@@ -35,7 +35,8 @@ print("Press u/j to change temperature")
 box_l = 10.0
 system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
-visualizer = visualization_opengl.openGLLive(system, drag_enabled=True, drag_force=100)
+visualizer = visualization_opengl.openGLLive(
+    system, drag_enabled=True, drag_force=100)
 
 system.time_step = 0.00001
 system.cell_system.skin = 3.0
@@ -50,8 +51,8 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 
 def spin():
-    system.part[:].pos = [[box_l * 0.5, box_l *
-                           (i + 1) / (N + 2), box_l * 0.5] for i in range(N)]
+    system.part[:].pos = [[box_l * 0.5, box_l * (i + 1) / (N + 2), box_l * 0.5]
+                          for i in range(N)]
     system.part[:].v = [
         [np.sin(10.0 * i / N) * 20, 0, np.cos(10.0 * i / N) * 20] for i in range(N)]
 
@@ -85,9 +86,11 @@ def decreaseTemp():
 
 # Register button callbacks
 visualizer.keyboardManager.register_button(
-    visualization_opengl.KeyboardButtonEvent('u', visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
+    visualization_opengl.KeyboardButtonEvent(
+        'u', visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
 visualizer.keyboardManager.register_button(
-    visualization_opengl.KeyboardButtonEvent('j', visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
+    visualization_opengl.KeyboardButtonEvent(
+        'j', visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
 
 # Set initial position
 spin()

@@ -32,9 +32,8 @@ def profile():
     ti = time.time()
     system.integrator.run(n_steps)
     tf = time.time()
-    print(
-        "\t with skin={} ran {:d} steps in {:f} seconds. steps/sec:{:f} ".format(skin,
-                                                                                 n_steps, tf - ti, n_steps * 1. / (tf - ti)))
+    print("\t with skin={} ran {:d} steps in {:f} seconds. steps/sec:{:f} "
+          .format(skin, n_steps, tf - ti, n_steps * 1. / (tf - ti)))
 
 
 system = espressomd.System(box_l=[100, 100, 100])
@@ -58,8 +57,8 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
     cutoff=2**(1. / 6), shift="auto")
 fene = interactions.FeneBond(k=10, d_r_max=1.5)
 system.bonded_inter.add(fene)
-polymer.create_polymer(
-    N_P=1, bond_length=0.97, MPC=100, bond=fene, start_pos=[0, 0, 0])
+polymer.create_polymer(N_P=1, bond_length=0.97, MPC=100,
+                       bond=fene, start_pos=[0, 0, 0])
 
 n_steps = 1000
 

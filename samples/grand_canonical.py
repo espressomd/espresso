@@ -89,7 +89,8 @@ RE = reaction_ensemble.ReactionEnsemble(
     temperature=temperature, exclusion_radius=1.0)
 RE.add_reaction(
     gamma=cs_bulk**2 * np.exp(excess_chemical_potential_pair / temperature),
-                reactant_types=[], reactant_coefficients=[], product_types=[1, 2], product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
+    reactant_types=[], reactant_coefficients=[], product_types=[1, 2],
+    product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
@@ -141,10 +142,12 @@ for i in range(n_int_cycles):
     num_As.append(system.number_of_particles(type=1))
     if i > 2 and i % 50 == 0:
         print("HA", system.number_of_particles(type=0), "A-",
-              system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
+              system.number_of_particles(type=1), "H+",
+              system.number_of_particles(type=2))
         concentration_in_box = np.mean(num_As) / box_l**3
         deviation = (concentration_in_box - cs_bulk) / cs_bulk * 100
         print("average num A {:.1f} +/- {:.1f}, average concentration {:.3f}, "
               "deviation to target concentration {:.1f}%".format(
-              np.mean(num_As), np.sqrt(np.var(num_As, ddof=1) / len(num_As)),
-              concentration_in_box, deviation))
+                  np.mean(num_As),
+                  np.sqrt(np.var(num_As, ddof=1) / len(num_As)),
+                  concentration_in_box, deviation))

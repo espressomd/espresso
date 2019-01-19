@@ -52,8 +52,7 @@ system.non_bonded_inter[0, 0].dpd.set_params(
     trans_weight_function=0, trans_gamma=gamma, trans_r_cut=r_cut)
 
 # Set up the repulsive interaction
-system.non_bonded_inter[0, 0].hat.set_params(F_max=F_max,
-                                             cutoff=r_cut)
+system.non_bonded_inter[0, 0].hat.set_params(F_max=F_max, cutoff=r_cut)
 
 # Add particles that are randomly distributed over the box
 system.part.add(pos=system.box_l * np.random.random((n_part, 3)))
@@ -77,5 +76,5 @@ for V in range(100, 1000, 100):
     # Standard deviation of pressure
     p_std = np.std(p_samples)
 
-    print('rho {:.2f} p {:.2f} ({:.2f})'.format(
-        float(n_part) / V, p_avg, p_std))
+    print('rho {:.2f} p {:.2f} ({:.2f})'
+          .format(float(n_part) / V, p_avg, p_std))

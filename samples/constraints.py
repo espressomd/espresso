@@ -39,7 +39,7 @@ import numpy as np
 #############################################################
 
 box_l = 50.0
-system = espressomd.System(box_l=[box_l]*3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
 
@@ -59,7 +59,7 @@ wall_offset = 0.1
 
 # create random positions in the box sufficiently away from the walls
 ran_pos = np.random.uniform(low=1 + wall_offset, high=box_l - 1 - wall_offset,
-    size=(num_part, 3))
+                            size=(num_part, 3))
 system.part.add(id=np.arange(num_part),
                 pos=ran_pos, type=np.zeros(num_part, dtype=int))
 

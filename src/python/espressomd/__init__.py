@@ -27,6 +27,7 @@ from espressomd.code_info import features
 
 
 class FeaturesError(Exception):
+
     def __init__(self, missing_features_list):
         message = "Missing features " + ", ".join(missing_features_list)
         super(FeaturesError, self).__init__(message)

@@ -38,18 +38,19 @@ system.actors.add(lb_fluid)
 
 cylinder_shape = espressomd.shapes.Cylinder(
     center=[5.0, 5.0, 5.0],
-        axis=[0, 0, 1],
-        direction=-1,
-        radius=4.0,
-        length=20.0)
+    axis=[0, 0, 1],
+    direction=-1,
+    radius=4.0,
+    length=20.0)
 cylinder_boundary = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
 system.lbboundaries.add(cylinder_boundary)
 
-visualizer = visualization_opengl.openGLLive(system,
-                        background_color=[1, 1, 1],
-                        camera_position=[5, 5, 25],
-                        LB_draw_boundaries=True,
-                        LB_draw_nodes=True,
-                        LB_draw_node_boundaries=True)
+visualizer = visualization_opengl.openGLLive(
+    system,
+    background_color=[1, 1, 1],
+    camera_position=[5, 5, 25],
+    LB_draw_boundaries=True,
+    LB_draw_nodes=True,
+    LB_draw_node_boundaries=True)
 
 visualizer.run(1)

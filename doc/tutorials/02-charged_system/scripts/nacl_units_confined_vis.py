@@ -71,8 +71,15 @@ system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
 # Visualizer
-visualizer = visualization_opengl.openGLLive(system, camera_position=[-3 * box_l, box_l * 0.5, box_l * 0.5], camera_right=[
-                        0, 0, 1], drag_force=5 * 298, background_color=[1, 1, 1], light_pos=[30, 30, 30], ext_force_arrows_type_scale=[0.0001], ext_force_arrows=False)
+visualizer = visualization_opengl.openGLLive(
+    system,
+    camera_position=[-3 * box_l, box_l * 0.5, box_l * 0.5],
+    camera_right=[0, 0, 1],
+    drag_force=5 * 298,
+    background_color=[1, 1, 1],
+    light_pos=[30, 30, 30],
+    ext_force_arrows_type_scale=[0.0001],
+    ext_force_arrows=False)
 
 # Walls
 system.constraints.add(shape=Wall(
@@ -84,15 +91,17 @@ system.constraints.add(shape=Wall(
 for i in range(int(n_ionpairs)):
     p = numpy.random.random(3) * box_l
     p[2] += lj_sigmas["Electrode"]
-    system.part.add(id=len(system.part),
-                    type=types["Cl"], pos=p, q=charges["Cl"], mass=masses["Cl"])
+    system.part.add(id=len(system.part), type=types["Cl"],
+                    pos=p, q=charges["Cl"], mass=masses["Cl"])
 for i in range(int(n_ionpairs)):
     p = numpy.random.random(3) * box_l
     p[2] += lj_sigmas["Electrode"]
-    system.part.add(id=len(system.part),
-                    type=types["Na"], pos=p, q=charges["Na"], mass=masses["Na"])
+    system.part.add(id=len(system.part), type=types["Na"],
+                    pos=p, q=charges["Na"], mass=masses["Na"])
 
 # Lennard-Jones interactions parameters
+
+
 def combination_rule_epsilon(rule, eps1, eps2):
     if rule == "Lorentz":
         return (eps1 * eps2)**0.5
