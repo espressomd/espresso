@@ -21,6 +21,7 @@ Developer's Guide
     :maxdepth: 1
 
     dg.rst
+    testing.rst
 
 Python module documentation
 ===========================

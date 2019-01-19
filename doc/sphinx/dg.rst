@@ -103,12 +103,14 @@ need to look at the CMakeLists.txt in the directory where the file is located.
 Testsuite
 ---------
 
--  New or significantly changed features will only be accepted, if they have a test case.
-   This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behavior is guaranteed to work.
--  There are two kinds of tests:
+-  New or significantly changed features will only be accepted if they have a test case.
+   This is to make sure the feature is not broken by future changes to |es|, and so other users can get an impression of what behavior is guaranteed to work.
+-  There are multiple kinds of tests:
 
-  -  C++-unit tests, testing individual C++ functions and classes. They make use of the boost unit test framework and reside in :file:`src/core/unit_tests`
-  -  Python integration tests, testing the Python interface and (physical) results of features. They reside in :file:`python`
+  -  C++-unit tests, testing individual C++ functions and classes. They make use of the boost unit test framework and reside in :file:`/src/core/unit_tests`
+  -  Python integration tests, testing the Python interface and (physical) results of features. They reside in :file:`/testsuite/python`
+  -  CMake tests, testing the software can be successfully installed. They reside in :file:`/testsuite/cmake`
+  -  Python scripts tests, testing the IPython notebooks and Python samples in :file:`/doc/tutorials` and :file:`/samples`. They reside in :file:`/testsuite/scripts/tutorials` resp. :file:`/testsuite/scripts/samples` and are executed on a different schedule
 
 - To execute the tests, run:
 
@@ -117,6 +119,8 @@ Testsuite
      make check
 
   in the top build directory.
+
+- See :ref:`Unit testing` for how to develop new tests
 
 
 .. _Documentation:
@@ -328,12 +332,12 @@ Functions for calculating force and energy, and for setting parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Every interaction resides in its own source .cpp and .hpp. A simple example for a
-bonded interaction is the FENE bond in :file:``src/core/bonded_interactions/fene.cpp``` and :file:``src/core/bonded_interactions/fene.hpp``. 
+bonded interaction is the FENE bond in :file:`src/core/bonded_interactions/fene.cpp` and :file:`src/core/bonded_interactions/fene.hpp`.
 Use these two files as templates for your interaction.
 
 Notes:
 
-* The names of function arguments mentioned below are taken from the FENE bond in :file:``src/core/bonded_interactions/fene.cpp`` and :file:``src/core/bonded_interactions/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction. 
+* The names of function arguments mentioned below are taken from the FENE bond in :file:`src/core/bonded_interactions/fene.cpp` and :file:`src/core/bonded_interactions/fene.hpp`. It is recommended to use the same names for the corresponding functions for your interaction.
 * The recommended signatures of the force and energy functions are:
 
   .. code-block:: c++
@@ -375,7 +379,7 @@ Notes:
 Including the bonded interaction in the force calculation and the energy and pressure analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* In :file:``src/core/bonded_interactions/bonded_interaction_data.cpp``:
+* In :file:`src/core/bonded_interactions/bonded_interaction_data.cpp`:
 
     #. Add a name for the interaction to ``get_name_of_bonded_ia()``.
     #. In ``calc_maximal_cutoff()``, add a case for the new interaction which
