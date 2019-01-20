@@ -646,9 +646,17 @@ void bd_random_walk_rot(Particle &p, double dt) {
 #endif // ROTATIONAL_INERTIA
     }
   }
-  rotation_fix(p, dphi);
+  /*rotation_fix(p, dphi);
   for (int j = 0; j < 3; j++) {
     rotate_particle_body_j(p, j, dphi[j]);
+  }*/
+  rotation_fix(p, dphi);
+  // making the algorithm to be independ on an order of the rotations
+  double dphi_m = dphi.norm();
+  if (dphi_m) {
+    Vector3d dphi_u;
+    dphi_u = dphi / dphi_m;
+    local_rotate_particle_body(p, dphi_u, dphi_m);
   }
 }
 
