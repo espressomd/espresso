@@ -31,7 +31,7 @@ class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+    system.seed = [s * 15 for s in range(system.cell_system.get_state()["n_nodes"])]
     system.cell_system.skin = 5.0
 
     # The NVT thermostat parameters
@@ -63,7 +63,7 @@ class ThermoTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        np.random.seed(15)
+        np.random.seed(20)
 
     def setUp(self):
         self.system.time = 0.0
@@ -183,17 +183,15 @@ class ThermoTest(ut.TestCase):
         # or both translational and rotational ones.
         # Otherwise these types of motion will interfere.
         # ..Let's test both cases depending on the particle index.
-        self.gamma_tran_p[0, 0] = self.generate_scalar_ranged_rnd(0.5, 1.0)
-        self.gamma_tran_p[0, 1] = self.gamma_tran_p[0, 0]
-        self.gamma_tran_p[0, 2] = self.gamma_tran_p[0, 0]
+        for k in range(2):
+            gamma_rnd = self.generate_scalar_ranged_rnd(0.5, 1.0)
+            for j in range(3):
+                self.gamma_tran_p[k, j] = gamma_rnd
         self.gamma_rot_p[0,:] = self.generate_vec_ranged_rnd(0.5, 2.0 / 3.0)
-        self.gamma_tran_p[1, 0] = self.generate_scalar_ranged_rnd(0.5, 1.0)
-        self.gamma_tran_p[1, 1] = self.gamma_tran_p[1, 0]
-        self.gamma_tran_p[1, 2] = self.gamma_tran_p[1, 0]
-        self.gamma_rot_p[1, 0] = self.generate_scalar_ranged_rnd(
+        gamma_rnd = self.generate_scalar_ranged_rnd(
             0.5, 2.0 / 3.0)
-        self.gamma_rot_p[1, 1] = self.gamma_rot_p[1, 0]
-        self.gamma_rot_p[1, 2] = self.gamma_rot_p[1, 0]
+        for j in range(3):
+            self.gamma_rot_p[1, j] = gamma_rnd
 
         # Particles
         self.mass = 12.74
@@ -213,19 +211,62 @@ class ThermoTest(ut.TestCase):
         It is used by the BD test cases only for the moment.
 
         """
+
+        system = self.system
         ## Time
         # Large time_step is OK for the BD by its definition & its benefits
         self.system.time_step = 17.0
-        ## NVT thermostat
-        # Isotropic reassignment is required here for the drag tests
-        self.gamma_global_rot = np.zeros((3))
-        self.gamma_global_rot[0] = (0.5 + np.random.random()) * 2.0 / 3.0
-        self.gamma_global_rot[1] = self.gamma_global_rot[0]
-        self.gamma_global_rot[2] = self.gamma_global_rot[0]
+
+        # Space
+        # A large box is reuired due to huge steps over the space:
+        # large time_step is natural for the BD.
+        box = 1.0E4
+        self.system.box_l = box, box, box
+        if espressomd.has_features(("PARTIAL_PERIODIC",)):
+            self.system.periodicity = 0, 0, 0
+
+        # NVT thermostat
+        self.kT = 0.0
+        # The translational gamma isotropy is required here.
+        # Global gamma for tests without particle-specific gammas.
+        #
+        # As far as the problem characteristic time is t0 ~ mass / gamma
+        # and the Langevin equation finite-difference approximation is stable
+        # only for time_step << t0, it is needed to set the gamma less than
+        # some maximal value according to the value max_gamma_param.
+        # Also, it cannot be very small (min_gamma_param), otherwise the thermalization will require
+        # too much of the CPU time. Same: for all such gamma assignments throughout the test.
+        #
+        min_gamma_param = 0.5
+        max_gamma_param = 2.0 / 3.0
+        gamma_rnd = self.generate_scalar_ranged_rnd(
+            min_gamma_param, max_gamma_param)
+        self.gamma_global = gamma_rnd, gamma_rnd, gamma_rnd
+        # Additional test case for the specific global rotational gamma set.
+        gamma_rnd = self.generate_scalar_ranged_rnd(
+            min_gamma_param, max_gamma_param)
+        self.gamma_global_rot = gamma_rnd, gamma_rnd, gamma_rnd
+        # Per-paricle values:
+        self.kT_p = 0.0, 0.0
         # Isotropy is required here for the drag tests
-        self.gamma_rot_p[0, 0] = self.generate_scalar_ranged_rnd(0.5, 2.0/3.0)
-        self.gamma_rot_p[0, 1] = self.gamma_rot_p[0, 0]
-        self.gamma_rot_p[0, 2] = self.gamma_rot_p[0, 0]
+        for k in range(2):
+            gamma_rnd_tran = self.generate_scalar_ranged_rnd(0.5, 1.0)
+            gamma_rnd_rot = self.generate_scalar_ranged_rnd(
+                0.5, 2.0 / 3.0)
+            for j in range(3):
+                self.gamma_tran_p[k, j] = gamma_rnd_tran
+                self.gamma_rot_p[k, j] = gamma_rnd_rot
+
+        # Particles
+        self.mass = 12.74
+        self.J = 10.0, 10.0, 10.0
+        for i in range(2):
+            system.part.add(rotation=(1, 1, 1), pos=(0.0, 0.0, 0.0), id=i)
+            system.part[i].v = 0.0, 0.0, 0.0
+            if "ROTATION" in espressomd.features():
+                system.part[i].omega_body = 0.0, 0.0, 0.0
+            system.part[i].mass = self.mass
+            system.part[i].rinertia = self.J
 
     def fluctuation_dissipation_param_setup(self, n):
         """
@@ -242,7 +283,11 @@ class ThermoTest(ut.TestCase):
         self.system.time_step = 0.03
 
         # Space
-        box = 10.0
+        if "BROWNIAN_DYNAMICS" in espressomd.features():
+            # for large steps and multi-core run stability
+            box = 1E2
+        else:
+            box = 10.0
         self.system.box_l = box, box, box
         if espressomd.has_features(("PARTIAL_PERIODIC",)):
             self.system.periodicity = 0, 0, 0
@@ -594,7 +639,6 @@ class ThermoTest(ut.TestCase):
             system = self.system
             # Each of 2 kind of particles will be represented by n instances:
             n = 1
-            self.dissipation_param_setup()
             self.dissipation_viscous_drag_setup_bd()
             self.set_langevin_global_defaults()
             # The test case-specific thermostat and per-particle parameters
@@ -623,7 +667,7 @@ class ThermoTest(ut.TestCase):
         if "BROWNIAN_DYNAMICS" in espressomd.features():
             self.set_initial_cond()
             # Large time-step is OK for BD.
-            system.time_step = 42
+            system.time_step = 10.0
             # Less number of loops are needed in case of BD because the velocity
             # distribution is already as required. It is not a result of a real dynamics.
             loops = 8
@@ -658,7 +702,6 @@ class ThermoTest(ut.TestCase):
             system = self.system
             # Each of 2 kind of particles will be represented by n instances:
             n = 1
-            self.dissipation_param_setup()
             self.dissipation_viscous_drag_setup_bd()
             self.set_langevin_global_defaults()
             # The test case-specific thermostat and per-particle parameters
@@ -685,7 +728,7 @@ class ThermoTest(ut.TestCase):
         self.check_fluctuation_dissipation(n, therm_steps, loops)
         if "BROWNIAN_DYNAMICS" in espressomd.features():
             self.set_initial_cond()
-            system.time_step = 42
+            system.time_step = 10.0
             loops = 8
             therm_steps = 2
             # The test case-specific thermostat
@@ -715,7 +758,6 @@ class ThermoTest(ut.TestCase):
             system = self.system
             # Each of 2 kind of particles will be represented by n instances:
             n = 1
-            self.dissipation_param_setup()
             self.dissipation_viscous_drag_setup_bd()
             self.set_langevin_global_defaults()
             # The test case-specific thermostat and per-particle parameters
@@ -742,7 +784,7 @@ class ThermoTest(ut.TestCase):
         self.check_fluctuation_dissipation(n, therm_steps, loops)
         if "BROWNIAN_DYNAMICS" in espressomd.features():
             self.set_initial_cond()
-            system.time_step = 42
+            system.time_step = 10.0
             loops = 8
             therm_steps = 2
             # The test case-specific thermostat and per-particle parameters
@@ -773,7 +815,6 @@ class ThermoTest(ut.TestCase):
             system = self.system
             # Each of 2 kind of particles will be represented by n instances:
             n = 1
-            self.dissipation_param_setup()
             self.dissipation_viscous_drag_setup_bd()
             self.set_langevin_global_defaults()
             # The test case-specific thermostat and per-particle parameters
@@ -802,7 +843,7 @@ class ThermoTest(ut.TestCase):
         self.check_fluctuation_dissipation(n, therm_steps, loops)
         if "BROWNIAN_DYNAMICS" in espressomd.features():
             self.set_initial_cond()
-            system.time_step = 42
+            system.time_step = 10.0
             loops = 8
             therm_steps = 2
             # The test case-specific thermostat
@@ -834,7 +875,6 @@ class ThermoTest(ut.TestCase):
             system = self.system
             # Each of 2 kind of particles will be represented by n instances:
             n = 1
-            self.dissipation_param_setup()
             self.dissipation_viscous_drag_setup_bd()
             self.set_langevin_global_defaults_rot_differ()
             # The test case-specific thermostat and per-particle parameters
@@ -865,7 +905,7 @@ class ThermoTest(ut.TestCase):
         self.check_fluctuation_dissipation(n, therm_steps, loops)
         if "BROWNIAN_DYNAMICS" in espressomd.features():
             self.set_initial_cond()
-            system.time_step = 42
+            system.time_step = 10.0
             loops = 8
             therm_steps = 2
             # The test case-specific thermostat
