@@ -61,8 +61,9 @@
  * \param global_mesh_off Pointer to global CA mesh offset.
  * \param ks_pnum         Pointer to number of permutations in k-space.
  */
-int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *global_mesh_dim, double *global_mesh_off,
-             int *ks_pnum, fft_data_struct &fft);
+int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
+             int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
+             fft_data_struct &fft);
 
 /** perform the forward 3D FFT.
     The assigned charges are in \a data. The result is also stored in \a data.

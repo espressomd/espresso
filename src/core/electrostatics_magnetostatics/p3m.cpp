@@ -366,8 +366,8 @@ void p3m_init() {
                       (void *)p3m.rs_mesh));
 
     int ca_mesh_size =
-            fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
-                     p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft);
+        fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
+                 p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft);
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
@@ -904,7 +904,8 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
         }
       }
       /* Back FFT force component mesh */
-      fft_perform_back(p3m.rs_mesh,  /* check_complex */ !p3m.params.tuning, p3m.fft);
+      fft_perform_back(p3m.rs_mesh, /* check_complex */ !p3m.params.tuning,
+                       p3m.fft);
       /* redistribute force component mesh */
       p3m_spread_force_grid(p3m.rs_mesh);
       /* Assign force component from mesh to particle */
@@ -1198,10 +1199,11 @@ template <int cao> void calc_influence_function_force() {
   for (n[0] = p3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
     for (n[1] = p3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
       for (n[2] = p3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        ind = (n[2] - p3m.fft.plan[3].start[2]) +
-              p3m.fft.plan[3].new_mesh[2] *
-                  ((n[1] - p3m.fft.plan[3].start[1]) +
-                   (p3m.fft.plan[3].new_mesh[1] * (n[0] - p3m.fft.plan[3].start[0])));
+        ind =
+            (n[2] - p3m.fft.plan[3].start[2]) +
+            p3m.fft.plan[3].new_mesh[2] * ((n[1] - p3m.fft.plan[3].start[1]) +
+                                           (p3m.fft.plan[3].new_mesh[1] *
+                                            (n[0] - p3m.fft.plan[3].start[0])));
 
         if ((n[KX] % (p3m.params.mesh[RX] / 2) == 0) &&
             (n[KY] % (p3m.params.mesh[RY] / 2) == 0) &&
@@ -1319,7 +1321,8 @@ template <int cao> void calc_influence_function_energy() {
   for (n[0] = start[0]; n[0] < end[0]; n[0]++) {
     for (n[1] = start[1]; n[1] < end[1]; n[1]++) {
       for (n[2] = start[2]; n[2] < end[2]; n[2]++) {
-        ind = (n[2] - start[2]) + p3m.fft.plan[3].new_mesh[2] * (n[1] - start[1]) +
+        ind = (n[2] - start[2]) +
+              p3m.fft.plan[3].new_mesh[2] * (n[1] - start[1]) +
               p3m.fft.plan[3].new_mesh[2] * p3m.fft.plan[3].new_mesh[1] *
                   (n[0] - start[0]);
         if ((n[KX] % (p3m.params.mesh[RX] / 2) == 0) &&

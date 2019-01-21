@@ -44,7 +44,8 @@ using Utils::permute_ifield;
  * \param in   input mesh.
  * \param out  output mesh.
  */
-static void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out, fft_data_struct &fft);
+static void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
+                               fft_data_struct &fft);
 
 /** communicate the grid data according to the given
  * fft_forw_plan/fft_bakc_plan. \param plan_f communication plan (see \ref
@@ -52,11 +53,12 @@ static void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out, fft_
  * \param in     input mesh.
  * \param out    output mesh.
  */
-static void
-fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in, double *out, fft_data_struct &fft);
+static void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
+                               double *in, double *out, fft_data_struct &fft);
 
-int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *global_mesh_dim, double *global_mesh_off,
-             int *ks_pnum, fft_data_struct &fft) {
+int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
+             int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
+             fft_data_struct &fft) {
   int i, j;
   /* helpers */
   int mult[3];
@@ -110,9 +112,9 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *global_m
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
   for (i = 1; i < 4; i++) {
     fft.plan[i].g_size = fft_find_comm_groups(
-            {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-            {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
-            fft.plan[i].group, n_pos[i], my_pos[i]);
+        {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+        {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+        fft.plan[i].group, n_pos[i], my_pos[i]);
     if (fft.plan[i].g_size == -1) {
       /* try permutation */
       j = n_grid[i][(fft.plan[i].row_dir + 1) % 3];
@@ -120,9 +122,9 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *global_m
           n_grid[i][(fft.plan[i].row_dir + 2) % 3];
       n_grid[i][(fft.plan[i].row_dir + 2) % 3] = j;
       fft.plan[i].g_size = fft_find_comm_groups(
-              {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-              {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
-              fft.plan[i].group, n_pos[i], my_pos[i]);
+          {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+          fft.plan[i].group, n_pos[i], my_pos[i]);
       if (fft.plan[i].g_size == -1) {
         fprintf(stderr, "%d: INTERNAL ERROR: fft_find_comm_groups error\n",
                 this_node);
@@ -131,17 +133,17 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *global_m
     }
 
     fft.plan[i].send_block = Utils::realloc(
-            fft.plan[i].send_block, 6 * fft.plan[i].g_size * sizeof(int));
+        fft.plan[i].send_block, 6 * fft.plan[i].g_size * sizeof(int));
     fft.plan[i].send_size = Utils::realloc(
-            fft.plan[i].send_size, 1 * fft.plan[i].g_size * sizeof(int));
+        fft.plan[i].send_size, 1 * fft.plan[i].g_size * sizeof(int));
     fft.plan[i].recv_block = Utils::realloc(
-            fft.plan[i].recv_block, 6 * fft.plan[i].g_size * sizeof(int));
+        fft.plan[i].recv_block, 6 * fft.plan[i].g_size * sizeof(int));
     fft.plan[i].recv_size = Utils::realloc(
-            fft.plan[i].recv_size, 1 * fft.plan[i].g_size * sizeof(int));
+        fft.plan[i].recv_size, 1 * fft.plan[i].g_size * sizeof(int));
 
     fft.plan[i].new_size = fft_calc_local_mesh(
-            my_pos[i], n_grid[i], global_mesh_dim, global_mesh_off,
-            fft.plan[i].new_mesh, fft.plan[i].start);
+        my_pos[i], n_grid[i], global_mesh_dim, global_mesh_off,
+        fft.plan[i].new_mesh, fft.plan[i].start);
     permute_ifield(fft.plan[i].new_mesh, 3, -(fft.plan[i].n_permute));
     permute_ifield(fft.plan[i].start, 3, -(fft.plan[i].n_permute));
     fft.plan[i].n_ffts = fft.plan[i].new_mesh[0] * fft.plan[i].new_mesh[1];
@@ -257,9 +259,9 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *global_m
     if (fft.init_tag == 1)
       fftw_destroy_plan(fft.plan[i].our_fftw_plan);
     fft.plan[i].our_fftw_plan = fftw_plan_many_dft(
-            1, &fft.plan[i].new_mesh[2], fft.plan[i].n_ffts, c_data, nullptr, 1,
-            fft.plan[i].new_mesh[2], c_data, nullptr, 1, fft.plan[i].new_mesh[2],
-            fft.plan[i].dir, FFTW_PATIENT);
+        1, &fft.plan[i].new_mesh[2], fft.plan[i].n_ffts, c_data, nullptr, 1,
+        fft.plan[i].new_mesh[2], c_data, nullptr, 1, fft.plan[i].new_mesh[2],
+        fft.plan[i].dir, FFTW_PATIENT);
 
     fft.plan[i].fft_function = fftw_execute;
   }
@@ -272,9 +274,9 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *global_m
     if (fft.init_tag == 1)
       fftw_destroy_plan(fft.back[i].our_fftw_plan);
     fft.back[i].our_fftw_plan = fftw_plan_many_dft(
-            1, &fft.plan[i].new_mesh[2], fft.plan[i].n_ffts, c_data, nullptr, 1,
-            fft.plan[i].new_mesh[2], c_data, nullptr, 1, fft.plan[i].new_mesh[2],
-            fft.back[i].dir, FFTW_PATIENT);
+        1, &fft.plan[i].new_mesh[2], fft.plan[i].n_ffts, c_data, nullptr, 1,
+        fft.plan[i].new_mesh[2], c_data, nullptr, 1, fft.plan[i].new_mesh[2],
+        fft.back[i].dir, FFTW_PATIENT);
 
     fft.back[i].fft_function = fftw_execute;
     fft.back[i].pack_function = fft_pack_block_permute1;
@@ -304,7 +306,7 @@ void fft_perform_forw(double *data, fft_data_struct &fft) {
   FFT_TRACE(fprintf(stderr, "%d: fft_perform_forw: dir 1:\n", this_node));
 
   fftw_complex *c_data = (fftw_complex *)data;
-  fftw_complex *c_data_buf = (fftw_complex *) fft.data_buf;
+  fftw_complex *c_data_buf = (fftw_complex *)fft.data_buf;
 
   /* communication to current dir row format (in is data) */
   fft_forw_grid_comm(fft.plan[1], data, fft.data_buf, fft);
@@ -351,7 +353,7 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft) {
   int i;
 
   fftw_complex *c_data = (fftw_complex *)data;
-  fftw_complex *c_data_buf = (fftw_complex *) fft.data_buf;
+  fftw_complex *c_data_buf = (fftw_complex *)fft.data_buf;
 
   /* ===== third direction  ===== */
   FFT_TRACE(fprintf(stderr, "%d: fft_perform_back: dir 3:\n", this_node));
@@ -389,7 +391,8 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft) {
   /* REMARK: Result has to be in data. */
 }
 
-void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out, fft_data_struct &fft) {
+void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
+                        fft_data_struct &fft) {
   int i;
   MPI_Status status;
   double *tmp_ptr;
@@ -420,7 +423,8 @@ void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out, fft_data_st
   }
 }
 
-void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in, double *out, fft_data_struct &fft) {
+void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
+                        double *out, fft_data_struct &fft) {
   int i;
   MPI_Status status;
   double *tmp_ptr;

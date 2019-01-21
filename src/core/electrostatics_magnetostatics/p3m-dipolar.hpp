@@ -40,9 +40,9 @@
 #include "config.hpp"
 
 #ifdef DP3M
+#include "fft.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "p3m-common.hpp"
-#include "fft.hpp"
 
 #include "utils/math/AS_erfc_part.hpp"
 
@@ -99,7 +99,7 @@ typedef struct {
 
   /* Stores the value of the energy correction due to MS effects */
   double energy_correction;
-  
+
   fft_data_struct fft;
 } dp3m_data_struct;
 
