@@ -24,6 +24,10 @@
   file \ref icc.hpp.
 */
 
+#include "icc.hpp"
+
+#ifdef ELECTROSTATICS
+
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -35,7 +39,6 @@
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
-#include "icc.hpp"
 
 #include "cells.hpp"
 #include "communication.hpp"
@@ -45,11 +48,10 @@
 #include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
+#include "debug.hpp"
 
 #include "short_range_loop.hpp"
 #include "utils/NoOp.hpp"
-
-#ifdef ELECTROSTATICS
 
 iccp3m_struct iccp3m_cfg;
 
