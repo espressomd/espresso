@@ -47,8 +47,6 @@
 
 #include "fft-common.hpp"
 
-extern fft_data_struct fft_aaaa;
-
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/

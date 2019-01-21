@@ -289,7 +289,7 @@ void p3m_pre_init(void) {
   p3m.send_grid = nullptr;
   p3m.recv_grid = nullptr;
 
-  fft_common_pre_init(&fft_aaaa);
+  fft_common_pre_init(&p3m.fft);
 }
 
 void p3m_free() {
@@ -367,7 +367,7 @@ void p3m_init() {
 
     int ca_mesh_size =
             fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
-                     p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, fft_aaaa);
+                     p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft);
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
@@ -820,7 +820,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
   /* and Perform forward 3D FFT (Charge Assignment Mesh). */
   if (p3m.sum_q2 > 0) {
     p3m_gather_fft_grid(p3m.rs_mesh);
-    fft_perform_forw(p3m.rs_mesh, fft_aaaa);
+    fft_perform_forw(p3m.rs_mesh, p3m.fft);
   }
   // Note: after these calls, the grids are in the order yzx and not xyz
   // anymore!!!
@@ -835,7 +835,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
     Coulomb energy
     **********************/
 
-    for (i = 0; i < fft_aaaa.plan[3].new_size; i++) {
+    for (i = 0; i < p3m.fft.plan[3].new_size; i++) {
       // Use the energy optimized influence function for energy!
       node_k_space_energy +=
           p3m.g_energy[i] *
@@ -865,7 +865,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
     /* Force preparation */
     ind = 0;
     /* apply the influence function */
-    for (i = 0; i < fft_aaaa.plan[3].new_size; i++) {
+    for (i = 0; i < p3m.fft.plan[3].new_size; i++) {
       p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
       ind++;
       p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
@@ -887,24 +887,24 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
       d_rs = (d + p3m.ks_pnum) % 3;
       /* sqrt(-1)*k differentiation */
       ind = 0;
-      for (j[0] = 0; j[0] < fft_aaaa.plan[3].new_mesh[0]; j[0]++) {
-        for (j[1] = 0; j[1] < fft_aaaa.plan[3].new_mesh[1]; j[1]++) {
-          for (j[2] = 0; j[2] < fft_aaaa.plan[3].new_mesh[2]; j[2]++) {
+      for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[0]; j[0]++) {
+        for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
+          for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
             /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
             p3m.rs_mesh[ind] = -2.0 * PI *
                                (p3m.ks_mesh[ind + 1] *
-                                d_operator[j[d] + fft_aaaa.plan[3].start[d]]) /
+                                d_operator[j[d] + p3m.fft.plan[3].start[d]]) /
                                box_l[d_rs];
             ind++;
             p3m.rs_mesh[ind] = 2.0 * PI * p3m.ks_mesh[ind - 1] *
-                               d_operator[j[d] + fft_aaaa.plan[3].start[d]] /
+                               d_operator[j[d] + p3m.fft.plan[3].start[d]] /
                                box_l[d_rs];
             ind++;
           }
         }
       }
       /* Back FFT force component mesh */
-      fft_perform_back(p3m.rs_mesh,  /* check_complex */ !p3m.params.tuning, fft_aaaa);
+      fft_perform_back(p3m.rs_mesh,  /* check_complex */ !p3m.params.tuning, p3m.fft);
       /* redistribute force component mesh */
       p3m_spread_force_grid(p3m.rs_mesh);
       /* Assign force component from mesh to particle */
@@ -1180,8 +1180,8 @@ template <int cao> void calc_influence_function_force() {
   p3m_calc_meshift();
 
   for (i = 0; i < 3; i++) {
-    size *= fft_aaaa.plan[3].new_mesh[i];
-    end[i] = fft_aaaa.plan[3].start[i] + fft_aaaa.plan[3].new_mesh[i];
+    size *= p3m.fft.plan[3].new_mesh[i];
+    end[i] = p3m.fft.plan[3].start[i] + p3m.fft.plan[3].new_mesh[i];
   }
 
   p3m.g_force = Utils::realloc(p3m.g_force, size * sizeof(double));
@@ -1195,13 +1195,13 @@ template <int cao> void calc_influence_function_force() {
     return;
   }
 
-  for (n[0] = fft_aaaa.plan[3].start[0]; n[0] < end[0]; n[0]++) {
-    for (n[1] = fft_aaaa.plan[3].start[1]; n[1] < end[1]; n[1]++) {
-      for (n[2] = fft_aaaa.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        ind = (n[2] - fft_aaaa.plan[3].start[2]) +
-              fft_aaaa.plan[3].new_mesh[2] *
-                  ((n[1] - fft_aaaa.plan[3].start[1]) +
-                   (fft_aaaa.plan[3].new_mesh[1] * (n[0] - fft_aaaa.plan[3].start[0])));
+  for (n[0] = p3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
+    for (n[1] = p3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
+      for (n[2] = p3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
+        ind = (n[2] - p3m.fft.plan[3].start[2]) +
+              p3m.fft.plan[3].new_mesh[2] *
+                  ((n[1] - p3m.fft.plan[3].start[1]) +
+                   (p3m.fft.plan[3].new_mesh[1] * (n[0] - p3m.fft.plan[3].start[0])));
 
         if ((n[KX] % (p3m.params.mesh[RX] / 2) == 0) &&
             (n[KY] % (p3m.params.mesh[RY] / 2) == 0) &&
@@ -1302,9 +1302,9 @@ template <int cao> void calc_influence_function_energy() {
   p3m_calc_meshift();
 
   for (i = 0; i < 3; i++) {
-    size *= fft_aaaa.plan[3].new_mesh[i];
-    end[i] = fft_aaaa.plan[3].start[i] + fft_aaaa.plan[3].new_mesh[i];
-    start[i] = fft_aaaa.plan[3].start[i];
+    size *= p3m.fft.plan[3].new_mesh[i];
+    end[i] = p3m.fft.plan[3].start[i] + p3m.fft.plan[3].new_mesh[i];
+    start[i] = p3m.fft.plan[3].start[i];
   }
 
   p3m.g_energy = Utils::realloc(p3m.g_energy, size * sizeof(double));
@@ -1319,8 +1319,8 @@ template <int cao> void calc_influence_function_energy() {
   for (n[0] = start[0]; n[0] < end[0]; n[0]++) {
     for (n[1] = start[1]; n[1] < end[1]; n[1]++) {
       for (n[2] = start[2]; n[2] < end[2]; n[2]++) {
-        ind = (n[2] - start[2]) + fft_aaaa.plan[3].new_mesh[2] * (n[1] - start[1]) +
-              fft_aaaa.plan[3].new_mesh[2] * fft_aaaa.plan[3].new_mesh[1] *
+        ind = (n[2] - start[2]) + p3m.fft.plan[3].new_mesh[2] * (n[1] - start[1]) +
+              p3m.fft.plan[3].new_mesh[2] * p3m.fft.plan[3].new_mesh[1] *
                   (n[0] - start[0]);
         if ((n[KX] % (p3m.params.mesh[RX] / 2) == 0) &&
             (n[KY] % (p3m.params.mesh[RY] / 2) == 0) &&
@@ -2350,17 +2350,17 @@ void p3m_calc_kspace_stress(double *stress) {
     }
 
     p3m_gather_fft_grid(p3m.rs_mesh);
-    fft_perform_forw(p3m.rs_mesh, fft_aaaa);
+    fft_perform_forw(p3m.rs_mesh, p3m.fft);
     force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
 
-    for (j[0] = 0; j[0] < fft_aaaa.plan[3].new_mesh[RX]; j[0]++) {
-      for (j[1] = 0; j[1] < fft_aaaa.plan[3].new_mesh[RY]; j[1]++) {
-        for (j[2] = 0; j[2] < fft_aaaa.plan[3].new_mesh[RZ]; j[2]++) {
-          kx = 2.0 * PI * p3m.d_op[RX][j[KX] + fft_aaaa.plan[3].start[KX]] /
+    for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
+      for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
+        for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
+          kx = 2.0 * PI * p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
                box_l[RX];
-          ky = 2.0 * PI * p3m.d_op[RY][j[KY] + fft_aaaa.plan[3].start[KY]] /
+          ky = 2.0 * PI * p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
                box_l[RY];
-          kz = 2.0 * PI * p3m.d_op[RZ][j[KZ] + fft_aaaa.plan[3].start[KZ]] /
+          kz = 2.0 * PI * p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
                box_l[RZ];
           sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
           if (sqk == 0) {

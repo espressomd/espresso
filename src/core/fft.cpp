@@ -39,11 +39,6 @@ using Utils::permute_ifield;
 #include <fftw3.h>
 #include <mpi.h>
 
-/************************************************
- * variables
- ************************************************/
-fft_data_struct fft_aaaa;
-
 /** communicate the grid data according to the given fft_forw_plan.
  * \param plan communication plan (see \ref fft_forw_plan).
  * \param in   input mesh.
