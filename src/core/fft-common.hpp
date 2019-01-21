@@ -21,9 +21,9 @@
 #ifndef _FFT_COMMON_H
 #define _FFT_COMMON_H
 
-#include "Vector.hpp"
 #include "config.hpp"
 #if defined(P3M) || defined(DP3M)
+#include "Vector.hpp"
 
 #include <fftw3.h>
 
@@ -123,7 +123,7 @@ typedef struct {
  * DEFINES
  ************************************************/
 
-/* MPI tags for the fft_aaaa communications: */
+/* MPI tags for the fft communications: */
 /** Tag for communication in fft_init() */
 #define REQ_FFT_INIT 300
 /** Tag for communication in forw_grid_comm() */

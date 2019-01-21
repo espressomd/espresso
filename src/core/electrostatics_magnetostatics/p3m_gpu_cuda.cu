@@ -741,7 +741,7 @@ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
                       FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS ||
           cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
                       FFT_PLAN_BACK_FLAG) != CUFFT_SUCCESS) {
-        throw std::string("Unable to create fft_aaaa plan");
+        throw std::string("Unable to create fft plan");
       }
     }
 

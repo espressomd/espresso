@@ -147,7 +147,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *global_m
     fft.plan[i].n_ffts = fft.plan[i].new_mesh[0] * fft.plan[i].new_mesh[1];
 
     /* FFT_TRACE( printf("%d: comm_group( ",this_node )); */
-    /* FFT_TRACE( for(j=0; j< fft_aaaa.plan[i].g_size; j++) printf("%d ")); */
+    /* FFT_TRACE( for(j=0; j< fft.plan[i].g_size; j++) printf("%d ")); */
     /* FFT_TRACE( printf(")\n")); */
 
     /* === send/recv block specifications === */
@@ -210,7 +210,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *global_m
       fft.max_mesh_size = 2 * fft.plan[i].new_size;
 
   FFT_TRACE(fprintf(stderr,
-                    "%d: fft_aaaa.max_comm_size = %d, fft_aaaa.max_mesh_size = %d\n",
+                    "%d: fft.max_comm_size = %d, fft.max_mesh_size = %d\n",
                     this_node, fft.max_comm_size, fft.max_mesh_size));
 
   /* === pack function === */
@@ -315,7 +315,7 @@ void fft_perform_forw(double *data, fft_data_struct &fft) {
     for(m=0;m<8;m++) {
     for(n=0;n<8;n++) {
     for(o=0;o<8;o++) {
-    fprintf(stderr,"%.3f ",fft_aaaa.data_buf[i++]);
+    fprintf(stderr,"%.3f ",fft.data_buf[i++]);
     }
     fprintf(stderr,"\n");
     }
@@ -323,7 +323,7 @@ void fft_perform_forw(double *data, fft_data_struct &fft) {
     }
   */
 
-  /* complexify the real data array (in is fft_aaaa.data_buf) */
+  /* complexify the real data array (in is fft.data_buf) */
   for (i = 0; i < fft.plan[1].new_size; i++) {
     data[2 * i] = fft.data_buf[i]; /* real value */
     data[(2 * i) + 1] = 0;         /* complex value */
@@ -334,15 +334,15 @@ void fft_perform_forw(double *data, fft_data_struct &fft) {
   FFT_TRACE(fprintf(stderr, "%d: fft_perform_forw: dir 2:\n", this_node));
   /* communication to current dir row format (in is data) */
   fft_forw_grid_comm(fft.plan[2], data, fft.data_buf, fft);
-  /* perform FFT (in/out is fft_aaaa.data_buf)*/
+  /* perform FFT (in/out is fft.data_buf)*/
   fftw_execute_dft(fft.plan[2].our_fftw_plan, c_data_buf, c_data_buf);
   /* ===== third direction  ===== */
   FFT_TRACE(fprintf(stderr, "%d: fft_perform_forw: dir 3:\n", this_node));
-  /* communication to current dir row format (in is fft_aaaa.data_buf) */
+  /* communication to current dir row format (in is fft.data_buf) */
   fft_forw_grid_comm(fft.plan[3], fft.data_buf, data, fft);
   /* perform FFT (in/out is data)*/
   fftw_execute_dft(fft.plan[3].our_fftw_plan, c_data, c_data);
-  // fft_print_global_fft_mesh(fft_aaaa.plan[3],data,1,0);
+  // fft_print_global_fft_mesh(fft.plan[3],data,1,0);
 
   /* REMARK: Result has to be in data. */
 }
@@ -363,9 +363,9 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft) {
 
   /* ===== second direction ===== */
   FFT_TRACE(fprintf(stderr, "%d: fft_perform_back: dir 2:\n", this_node));
-  /* perform FFT (in is fft_aaaa.data_buf) */
+  /* perform FFT (in is fft.data_buf) */
   fftw_execute_dft(fft.back[2].our_fftw_plan, c_data_buf, c_data_buf);
-  /* communicate (in is fft_aaaa.data_buf) */
+  /* communicate (in is fft.data_buf) */
   fft_back_grid_comm(fft.plan[2], fft.back[2], fft.data_buf, data, fft);
 
   /* ===== first direction  ===== */
@@ -383,7 +383,7 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft) {
         errexit();
     }
   }
-  /* communicate (in is fft_aaaa.data_buf) */
+  /* communicate (in is fft.data_buf) */
   fft_back_grid_comm(fft.plan[1], fft.back[1], fft.data_buf, data, fft);
 
   /* REMARK: Result has to be in data. */
