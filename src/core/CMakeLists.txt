@@ -15,7 +15,6 @@ set(EspressoCore_SRC
     EspressoSystemInterface.cpp
     fft-common.cpp
     fft.cpp
-    fft-dipolar.cpp
     forcecap.cpp
     forces.cpp
     galilei.cpp
