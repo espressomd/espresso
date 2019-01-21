@@ -239,8 +239,8 @@ rocm-maxset:
   tags:
     - docker
     - linux
-#  except:
-#    - /^PR-.*/
+  except:
+    - /^PR-.*/
 
 ubuntu:arm64:
   <<: *arch_definition
