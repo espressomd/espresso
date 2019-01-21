@@ -289,7 +289,7 @@ void p3m_pre_init(void) {
   p3m.send_grid = nullptr;
   p3m.recv_grid = nullptr;
 
-  fft_pre_init();
+  fft_common_pre_init(&fft);
 }
 
 void p3m_free() {
@@ -366,8 +366,8 @@ void p3m_init() {
                       (void *)p3m.rs_mesh));
 
     int ca_mesh_size =
-        fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
-                 p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum);
+            fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
+                     p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, fft);
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
@@ -820,7 +820,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
   /* and Perform forward 3D FFT (Charge Assignment Mesh). */
   if (p3m.sum_q2 > 0) {
     p3m_gather_fft_grid(p3m.rs_mesh);
-    fft_perform_forw(p3m.rs_mesh);
+    fft_perform_forw(p3m.rs_mesh, fft);
   }
   // Note: after these calls, the grids are in the order yzx and not xyz
   // anymore!!!
@@ -904,7 +904,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
         }
       }
       /* Back FFT force component mesh */
-      fft_perform_back(p3m.rs_mesh, /* check_complex */ !p3m.params.tuning);
+      fft_perform_back(p3m.rs_mesh,  /* check_complex */ !p3m.params.tuning, fft);
       /* redistribute force component mesh */
       p3m_spread_force_grid(p3m.rs_mesh);
       /* Assign force component from mesh to particle */
@@ -2350,7 +2350,7 @@ void p3m_calc_kspace_stress(double *stress) {
     }
 
     p3m_gather_fft_grid(p3m.rs_mesh);
-    fft_perform_forw(p3m.rs_mesh);
+    fft_perform_forw(p3m.rs_mesh, fft);
     force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
 
     for (j[0] = 0; j[0] < fft.plan[3].new_mesh[RX]; j[0]++) {
