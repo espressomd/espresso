@@ -408,7 +408,7 @@ void dfft_perform_back(double *data) {
     dfft.data_buf[i] = data[2 * i]; /* real value */
     // Vincent:
     if (data[2 * i + 1] > 1e-5) {
-      printf("dipoar fft - Complex value is not zero (i=%d,data=%g)!!!\n", i,
+      printf("dipoar fft_aaaa - Complex value is not zero (i=%d,data=%g)!!!\n", i,
              data[2 * i + 1]);
       if (i > 100)
         errexit();

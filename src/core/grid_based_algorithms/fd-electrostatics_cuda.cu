@@ -94,7 +94,7 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
 
   if (cufftPlan3d(&plan_fft, parameters.dim_z, parameters.dim_y,
                   parameters.dim_x, CUFFT_R2C) != CUFFT_SUCCESS) {
-    throw std::string("Unable to create fft plan");
+    throw std::string("Unable to create fft_aaaa plan");
   }
 
   if (cufftSetStream(plan_fft, cuda_stream) != CUFFT_SUCCESS) {

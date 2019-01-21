@@ -123,7 +123,7 @@ typedef struct {
  * DEFINES
  ************************************************/
 
-/* MPI tags for the fft communications: */
+/* MPI tags for the fft_aaaa communications: */
 /** Tag for communication in fft_init() */
 #define REQ_FFT_INIT 300
 /** Tag for communication in forw_grid_comm() */
