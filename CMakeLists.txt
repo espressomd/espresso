@@ -38,8 +38,6 @@ endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-set(HDF5_PREFER_PARALLEL 1)
-
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
@@ -249,6 +247,7 @@ endif()
 
 # We need the parallel hdf5 version!
 if (WITH_HDF5)
+  set(HDF5_PREFER_PARALLEL 1)
   find_package(HDF5 "1.8" COMPONENTS C)
   if(HDF5_IS_PARALLEL)
     set(H5MD 1)
