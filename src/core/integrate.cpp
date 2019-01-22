@@ -36,7 +36,6 @@
 #include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
-#include "ghmc.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
@@ -294,11 +293,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
   }
 
-#ifdef GHMC
-  if (thermo_switch & THERMO_GHMC)
-    ghmc_init();
-#endif
-
   if (check_runtime_errors())
     return;
 
@@ -316,13 +310,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (n_rigidbonds)
       save_old_pos();
 
-#endif
-
-#ifdef GHMC
-    if (thermo_switch & THERMO_GHMC) {
-      if (step % ghmc_nmd == 0)
-        ghmc_momentum_update();
-    }
 #endif
 
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
@@ -450,13 +437,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
       nptiso.p_inst_av += nptiso.p_inst;
 #endif
 
-#ifdef GHMC
-    if (thermo_switch & THERMO_GHMC) {
-      if (step % ghmc_nmd == ghmc_nmd - 1)
-        ghmc_mc();
-    }
-#endif
-
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       /* Propagate time: t = t+dt */
       sim_time += time_step;
@@ -509,11 +489,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
       nptiso.p_inst_av /= 1.0 * n_steps;
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
-#endif
-
-#ifdef GHMC
-  if (thermo_switch & THERMO_GHMC)
-    ghmc_close();
 #endif
 }
 

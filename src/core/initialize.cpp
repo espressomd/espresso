@@ -42,7 +42,6 @@
 #include "energy.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
-#include "ghmc.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"

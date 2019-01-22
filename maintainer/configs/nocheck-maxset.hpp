@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define NEMD
 #define NPT
-#define GHMC
+
 
 #define LB
 #define LB_BOUNDARIES

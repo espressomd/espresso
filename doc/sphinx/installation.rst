@@ -448,8 +448,6 @@ integrator or thermostat:
 
 -  ``REACTION_ENSEMBLE``
 
--  ``GHMC``
-
 -  ``MULTI_TIMESTEP`` (experimental)
 
 -  ``ENGINE``

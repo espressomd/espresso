@@ -105,16 +105,6 @@ enum Fields {
   FIELD_LATTICE_SWITCH,
   /** index of \ref min_global_cut */
   FIELD_MIN_GLOBAL_CUT,
-  /** index of \ref ghmc_nmd */
-  FIELD_GHMC_NMD,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_PHI,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_RES,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_FLIP,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_SCALE,
   /** index of \ref langevin_gamma_rotation */
   FIELD_LANGEVIN_GAMMA_ROTATION,
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
