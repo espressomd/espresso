@@ -332,9 +332,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
        cannot be combined for the translation.
     */
     if (integ_switch == INTEG_METHOD_NPT_ISO
-#ifdef NEMD
-        || nemd_method != NEMD_METHOD_OFF
-#endif
     ) {
       propagate_vel();
       propagate_pos();
@@ -725,12 +722,6 @@ void propagate_vel() {
 #endif
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
-
-/* SPECIAL TASKS in particle loop */
-#ifdef NEMD
-        if (j == 0)
-          nemd_get_velocity(p);
-#endif
       }
 
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
@@ -741,12 +732,6 @@ void propagate_vel() {
 
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();
-#endif
-
-/* SPECIAL TASKS after velocity propagation */
-#ifdef NEMD
-  nemd_change_momentum();
-  nemd_store_velocity_profile();
 #endif
 }
 
@@ -768,11 +753,6 @@ void propagate_pos() {
         if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
         {
-#ifdef NEMD
-          /* change momentum of each particle in top and bottom slab */
-          if (j == 0)
-            nemd_add_velocity(&p);
-#endif
           /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
            * v(t+0.5*dt) */
           p.r.p[j] += time_step * p.m.v[j];

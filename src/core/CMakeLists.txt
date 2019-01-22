@@ -27,7 +27,6 @@ set(EspressoCore_SRC
   metadynamics.cpp
   minimize_energy.cpp
   MpiCallbacks.cpp
-  nemd.cpp
   npt.cpp
   nsquare.cpp
   partCfg_global.cpp
