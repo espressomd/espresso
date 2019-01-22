@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/interpolation/bspline_3d_gradient.hpp"
 #include "utils/math/tensor_product.hpp"
 
-#include "Vector.hpp"
 #include "gradient_type.hpp"
+#include "utils/Vector.hpp"
 
 /* Turn off range checks if release build. */
 #if defined(NDEBUG) && !defined(BOOST_DISABLE_ASSERTS)

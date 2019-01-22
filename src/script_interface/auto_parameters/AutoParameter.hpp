@@ -23,9 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <utility>
 
-#include "core/utils/make_function.hpp"
-#include "script_interface/Variant.hpp"
-#include "script_interface/get_value.hpp"
+#include "Variant.hpp"
+#include "get_value.hpp"
+
+#include "utils/make_function.hpp"
 
 namespace ScriptInterface {
 

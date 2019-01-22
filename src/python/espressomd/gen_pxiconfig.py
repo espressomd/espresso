@@ -24,7 +24,7 @@ import sys
 import os
 # find featuredefs.py
 moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
-sys.path.append(os.path.join(moduledir, '..', '..'))
+sys.path.append(os.path.join(moduledir, '..', '..', 'config'))
 import featuredefs
 
 if len(sys.argv) != 3:

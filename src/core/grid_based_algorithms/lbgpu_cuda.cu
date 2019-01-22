@@ -21,13 +21,18 @@
  *  Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
  *  Header file for \ref lbgpu.hpp.
  */
-#include "lbgpu.hpp"
 
-#ifdef LB_GPU
 #include "cuda_wrapper.hpp"
 #include "curand_wrapper.hpp"
 
-#include "Vector.hpp"
+#include "config.hpp"
+
+#ifdef LB_GPU
+#include <cassert>
+#include <stdio.h>
+#include <stdlib.h>
+#include <vector>
+
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "debug.hpp"
@@ -36,7 +41,7 @@
 #include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
-
+#include "utils/Vector.hpp"
 #include "utils/Counter.hpp"
 
 #include <thrust/device_ptr.h>

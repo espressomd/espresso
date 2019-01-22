@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_UNIT_TESTS_COMMON_GAUSSIAN_HPP
 #define CORE_UNIT_TESTS_COMMON_GAUSSIAN_HPP
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 #include <boost/multi_array.hpp>
 
