@@ -17,10 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "electrostatics_magnetostatics/scafacos/Scafacos.hpp"
-#include "communication.hpp"
-#include "errorhandling.hpp"
-#include "integrate.hpp"
+#include "Scafacos.hpp"
 #include <cassert>
 
 namespace Scafacos {
@@ -29,7 +26,7 @@ namespace Scafacos {
   {                                                                            \
     const FCSResult res = stmt;                                                \
     if (res)                                                                   \
-      runtimeError(fcs_result_get_message(res));                               \
+      throw std::runtime_error(fcs_result_get_message(res));                   \
   }
 
 std::string Scafacos::get_parameters() { return m_last_parameters; }
@@ -130,7 +127,7 @@ void Scafacos::run(std::vector<double> &charges, std::vector<double> &positions,
                        &(fields[0]), &(potentials[0])));
 }
 
-#ifdef SCAFACOS_DIPOLES
+#ifdef FCS_ENABLE_DIPOLES
 void Scafacos::run_dipolar(std::vector<double> &dipoles,
                            std::vector<double> &positions,
                            std::vector<double> &fields,
@@ -172,17 +169,16 @@ void Scafacos::set_common_parameters(double *box_l, int *periodicity,
   }
   handle_error(fcs_set_common(handle, sr, boxa, boxb, boxc, off, periodicity,
                               total_particles));
-#ifdef SCAFACOS_DIPOLES
+#ifdef FCS_ENABLE_DIPOLES
   if (m_dipolar)
     handle_error(fcs_set_total_dipole_particles(handle, total_particles));
 #endif
 }
 
 void Scafacos::set_dipolar(bool d) {
-#ifndef SCAFACOS_DIPOLES
+#ifndef FCS_ENABLE_DIPOLES
   if (d) {
-    throw std::runtime_error("Dipolar extension not compiled in. Switch on via "
-                             "SCAFACOS_DIPOLES in myconfig.hpp");
+    throw std::runtime_error("Scafacos library does not have dipole support.");
   }
 #endif
   m_dipolar = d;

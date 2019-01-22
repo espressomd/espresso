@@ -494,7 +494,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
             upper_smoothing_radius=3,
             pore_length=15,
             pore_mouth=20,
-            pore_width=10)
+            pore_width=10,
+            dividing_plane=self.box_l / 2)
         slitpore_constraint = espressomd.constraints.ShapeBasedConstraint(
             shape=slitpore_shape, particle_type=1, penetrable=True)
         system.constraints.add(slitpore_constraint)
