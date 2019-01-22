@@ -182,7 +182,7 @@ if(WITH_COVERAGE)
 endif()
 
 target_link_libraries(EspressoCore PUBLIC EspressoConfig)
-target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX)
+target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX Random123)
 
 if(FFTW3_FOUND)
   target_include_directories(EspressoCore PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})

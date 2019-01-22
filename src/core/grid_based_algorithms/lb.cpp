@@ -46,13 +46,13 @@
 #include "utils/Counter.hpp"
 #include "utils/matrix_vector_product.hpp"
 #include "utils/u32_to_u64.hpp"
+#include "utils/uniform.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
 
 #include <cassert>
-#include <core/utils/uniform.hpp>
 #include <cstdio>
 #include <iostream>
 #include <mpi.h>
