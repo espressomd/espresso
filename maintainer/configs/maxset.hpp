@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define LANGEVIN_PER_PARTICLE
 #define SWIMMER_REACTIONS
 
-
 #define NPT
 #define GHMC
 #define DPD
