@@ -46,7 +46,6 @@
 #include "initialize.hpp"
 #include "lattice.hpp"
 #include "minimize_energy.hpp"
-#include "nemd.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "particle_data.hpp"
