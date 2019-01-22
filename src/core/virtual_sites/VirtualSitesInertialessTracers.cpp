@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VirtualSitesInertialessTracers.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
-#include "grid_based_algorithms/lattice.hpp"
+#include "lattice.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 #include <algorithm>
 

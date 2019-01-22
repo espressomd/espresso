@@ -46,13 +46,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-# Parse repository info from git if available
-include(version)
-
-configure_file(
-  ${CMAKE_SOURCE_DIR}/src/version.hpp.in
-  ${CMAKE_BINARY_DIR}/src/version.hpp
-  )
 
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
@@ -554,7 +547,8 @@ endif(WITH_BENCHMARKS)
 
 add_subdirectory(doc)
 add_subdirectory(src)
-
+add_subdirectory(libs)
+add_subdirectory(config)
 #
 # Feature summary
 #
