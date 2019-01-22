@@ -43,12 +43,12 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
+#include "debug.hpp"
 #include "forces.hpp"
 #include "global.hpp"
 #include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "debug.hpp"
 
 #include "short_range_loop.hpp"
 #include "utils/NoOp.hpp"
