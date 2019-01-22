@@ -474,10 +474,8 @@ if(NOT
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel"
-   AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "16.0")
-  # workaround for compiler crash related to decltype() and variadic template
-  # usage inside Boost
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX11_VARIADIC_TEMPLATES")
+   AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "18.0")
+  message(FATAL_ERROR "Intel compiler version not supported. At least version 18.0 required.")
 endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)
