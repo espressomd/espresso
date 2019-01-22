@@ -16,43 +16,36 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CORE_UTILS_SERIALIZATION_PARTICLE_HPP
-#define CORE_UTILS_SERIALIZATION_PARTICLE_HPP
+#ifndef UTILS_SERIALIZATION_CUDA_PARTICLE_DATA_HPP
+#define UTILS_SERIALIZATION_CUDA_PARTICLE_DATA_HPP
 
-#include "core/particle_data.hpp"
-#include "core/utils/serialization/List.hpp"
-#include <boost/serialization/vector.hpp>
+#include "cuda_interface.hpp"
+
+#include <boost/serialization/array.hpp>
+#include <boost/serialization/is_bitwise_serializable.hpp>
+#include <boost/serialization/split_free.hpp>
+
+BOOST_IS_BITWISE_SERIALIZABLE(CUDA_particle_data)
 
 namespace boost {
 namespace serialization {
-/* Pod serialize for Particle */
 template <typename Archive>
-void load(Archive &ar, Particle &p, const unsigned int /* file_version */) {
-  /* Cruel but effective */
-  ar >> make_array(reinterpret_cast<char *>(&p), sizeof(Particle));
-  new (&(p.bl)) IntList(p.bl.size());
-  ar >> p.bl;
-
-#ifdef EXCLUSIONS
-  new (&(p.el)) IntList(p.el.size());
-  ar >> p.el;
-#endif
+void load(Archive &ar, CUDA_particle_data &p,
+          const unsigned int /* file_version */) {
+  ar >> make_array(reinterpret_cast<char *>(&p), sizeof(CUDA_particle_data));
 }
 
 template <typename Archive>
-void save(Archive &ar, Particle const &p,
+void save(Archive &ar, CUDA_particle_data const &p,
           const unsigned int /* file_version */) {
   /* Cruel but effective */
-  ar << make_array(reinterpret_cast<char const *>(&p), sizeof(Particle));
-  ar << p.bl;
-
-#ifdef EXCLUSIONS
-  ar << p.el;
-#endif
+  ar << make_array(reinterpret_cast<char const *>(&p),
+                   sizeof(CUDA_particle_data));
 }
 
 template <class Archive>
-void serialize(Archive &ar, Particle &p, const unsigned int file_version) {
+void serialize(Archive &ar, CUDA_particle_data &p,
+               const unsigned int file_version) {
   split_free(ar, p, file_version);
 }
 } // namespace serialization

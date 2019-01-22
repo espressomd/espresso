@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <type_traits>
 #include <vector>
 
-#include "core/utils/make_unique.hpp"
+#include "utils/make_unique.hpp"
 
 #define BOOST_TEST_MODULE ParticleIterator test
 #define BOOST_TEST_DYN_LINK

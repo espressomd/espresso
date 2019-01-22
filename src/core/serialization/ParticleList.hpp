@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_UTILS_SERIALIZATION_PARTICLE_LIST_HPP
 #define CORE_UTILS_SERIALIZATION_PARTICLE_LIST_HPP
 
-#include "core/utils/serialization/Particle.hpp"
+#include "Particle.hpp"
 
 namespace boost {
 namespace serialization {
