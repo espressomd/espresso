@@ -71,6 +71,31 @@
 
 namespace {
 
+    /**
+     * @brief Request particle data.
+     */
+
+    struct RequestParticle {
+        int id;
+
+        void operator()(Particle const &p) const {
+
+        }
+    };
+
+/**
+ * @brief A generic particle update.
+ *
+ * Here the sub-struct struture of Particle is
+ * used: the specification of the data memeber to update
+ * consists of to parts, the pointer to the subsutruct @p s
+ * and a pointer to a member of that substruct @m.
+ *
+ * @tparam S Substruct type of Particle
+ * @tparam s Pointer to a member of Particle
+ * @tparam T Type of the member to update
+ * @tparam m Pointer to the member.
+ */
 template <typename S, S Particle::*s, typename T, T S::*m>
 struct UpdateParticle {
   int id;
@@ -205,6 +230,13 @@ using UpdateForceMessage = boost::variant <
 #endif
 >;
 
+/**
+ * @brief Top-level message.
+ *
+ * A message is either updates a property,
+ * or a position, or ...
+ */
+
 using UpdateMessage = boost::variant<
         UpdatePropertyMessage,
         UpdatePositionMessage,
@@ -213,6 +245,10 @@ using UpdateMessage = boost::variant<
         >;
 // clang-format on
 
+/**
+ * @brief Meta-function to detect the message type from
+ *        a pointer to member object.
+ */
 template <typename S, S Particle::*s, typename T, T S::*m> struct message_type;
 
 template <typename T, T ParticleProperties::*m>
@@ -279,17 +315,17 @@ void mpi_send_update_message(int pnode, const UpdateMessage &msg) {
   on_particle_change();
 }
 
-template <typename S, S Particle::*s, typename T, T S::*m, typename TRef>
-void mpi_update_particle(int id, TRef &&value) {
+template <typename S, S Particle::*s, typename T, T S::*m>
+void mpi_update_particle(int id, const T&value) {
   using MessageType = message_type_t<S, s, T, m>;
-  MessageType msg = UpdateParticle<S, s, T, m>{id, std::forward<TRef>(value)};
+  MessageType msg = UpdateParticle<S, s, T, m>{id, value};
   mpi_send_update_message(get_particle_node(id), msg);
 }
 
-template <typename T, T ParticleProperties::*m, typename TRef>
-void mpi_update_particle_property(int id, TRef &&value) {
+template <typename T, T ParticleProperties::*m>
+void mpi_update_particle_property(int id, const T &value) {
   mpi_update_particle<ParticleProperties, &Particle::p, T, m>(
-      id, std::forward<TRef>(value));
+      id, value);
 }
 
 /************************************************
