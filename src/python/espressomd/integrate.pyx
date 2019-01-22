@@ -17,9 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
+from cpython.exc cimport PyErr_CheckSignals, PyErr_SetInterrupt
 include "myconfig.pxi"
 import espressomd.code_info
 from espressomd.utils cimport *
+cimport globals
 
 cdef class Integrator(object):
     """
@@ -79,6 +81,12 @@ cdef class Integrator(object):
                 reuse_forces, 1, bool, "reuse_forces has to be a bool")
 
             _integrate(steps, recalc_forces, reuse_forces)
+
+            if globals.set_py_interrupt:
+                PyErr_SetInterrupt()
+                globals.set_py_interrupt = False
+                PyErr_CheckSignals()
+
         elif self._method == "STEEPEST_DESCENT":
             minimize_energy_init(self._steepest_descent_params["f_max"],
                                  self._steepest_descent_params["gamma"],
