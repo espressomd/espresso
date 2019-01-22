@@ -1,8 +1,8 @@
 #ifndef UTILS_VEC_ROTATE_HPP
 #define UTILS_VEC_ROTATE_HPP
 
-#include "Vector.hpp"
 #include "utils.hpp"
+#include "utils/Vector.hpp"
 #include "utils/math/sqr.hpp"
 
 namespace Utils {
