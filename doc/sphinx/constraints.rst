@@ -411,12 +411,12 @@ The meaning of the geometrical parameters can be inferred from the schematic in 
 
 Pictured is an example constraint with a ``Slitpore`` shape created with ::
 
-    slitpore = Slitpore(channel_width=30,
-                        lower_smoothing_radius=3,
-                        upper_smoothing_radius=3,
-                        pore_length=40,
-                        pore_mouth=60,
-                        pore_width=10)
+    slitpore = Slitpore(channel_width=15,
+                        lower_smoothing_radius=1.5,
+                        upper_smoothing_radius=2,
+                        pore_length=20,
+                        pore_mouth=30,
+                        pore_width=5)
     system.constraints.add(shape=slitpore, particle_type=0, penetrable=1)
 
 
