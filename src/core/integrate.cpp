@@ -330,8 +330,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
        NOTE: Depending on the integration method Step 1 and Step 2
        cannot be combined for the translation.
     */
-    if (integ_switch == INTEG_METHOD_NPT_ISO
-    ) {
+    if (integ_switch == INTEG_METHOD_NPT_ISO) {
       propagate_vel();
       propagate_pos();
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
