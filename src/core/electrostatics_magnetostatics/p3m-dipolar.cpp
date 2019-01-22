@@ -1564,41 +1564,6 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
  ************************************************/
 
 #define P3M_TUNE_MAX_CUTS 50
-/** Tune dipolar P3M parameters to desired accuracy.
-
-
-    The parameters are tuned to obtain the desired accuracy in best
-    time, by running mpi_integrate(0) for several parameter sets.
-
-    The function utilizes the analytic expression of the error estimate
-    for the dipolar P3M method see JCP,2008 paper by J.J.Cerda et al in
-    order to obtain the rms error in the force for a system of N randomly
-    distributed particles in a cubic box.
-    For the real space error the estimate of Kolafa/Perram is used.
-
-    Parameter range if not given explicit values: For \ref
-   p3m_parameter_struct::r_cut_iL
-    the function uses the values (\ref min_local_box_l -\ref #skin) /
-    (n * \ref box_l), n being an integer (this implies the assumption that \ref
-    p3m_parameter_struct::r_cut_iL is the largest cutoff in the system!). For
-   \ref
-    p3m_parameter_struct::mesh the function uses the two values which matches
-   best the
-    equation: number of mesh point = number of magnetic dipolar particles. For
-    \ref p3m_parameter_struct::cao the function considers all possible values.
-
-    For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming
-   that the
-    error contributions of real and reciprocal space should be equal.
-
-    After checking if the total error fulfills the accuracy goal the
-    time needed for one force calculation (including Verlet list
-    update) is measured via \ref mpi_integrate (0).
-
-    The function returns a log of the performed tuning.
-
-    The function is based on routines for charges.
- */
 
 /*****************************************************************************/
 
@@ -1933,6 +1898,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
   return best_time;
 }
 
+int dp3m_adaptive_tune(char **logger) {
 /** Tuning of dipolar P3M. The algorithm
     basically determines the mesh, cao and then the real space cutoff, in this
    nested order.
@@ -1954,8 +1920,6 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
    once the computation time is
     significantly higher than the currently known optimum.
  */
-
-int dp3m_adaptive_tune(char **logger) {
   int mesh_max, mesh = -1, tmp_mesh;
   double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL = 0.0;
   int cao_min, cao_max, cao = -1, tmp_cao;

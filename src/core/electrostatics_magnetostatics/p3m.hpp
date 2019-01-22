@@ -128,6 +128,38 @@ extern p3m_data_struct p3m;
 
 void p3m_pre_init(void);
 
+/** Tune P3M parameters to desired accuracy.
+
+    The parameters are tuned to obtain the desired accuracy in best
+    time, by running mpi_integrate(0) for several parameter sets.
+
+    The function utilizes the analytic expression of the error estimate
+    for the P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
+    order to obtain the rms error in the force for a system of N randomly
+    distributed particles in a cubic box.
+    For the real space error the estimate of Kolafa/Perram is used.
+
+    Parameter range if not given explicit values: For \ref
+   p3m_parameter_struct::r_cut_iL the function uses the values (\ref
+   min_local_box_l -\ref #skin) / (n * \ref box_l), n being an integer (this
+   implies the assumption that \ref p3m_parameter_struct::r_cut_iL is the
+   largest cutoff in the system!). For \ref p3m_parameter_struct::mesh the
+   function uses the two values which matches best the equation: number of mesh
+   point = number of charged particles. For \ref p3m_parameter_struct::cao the
+   function considers all possible values.
+
+    For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming
+   that the error contributions of real and reciprocal space should be equal.
+
+    After checking if the total error fulfills the accuracy goal the
+    time needed for one force calculation (including Verlet list
+    update) is measured via \ref mpi_integrate (0).
+
+    The function returns a log of the performed tuning.
+
+    The function is based on routines of the program HE_Q.cpp written by M.
+   Deserno.
+ */
 int p3m_adaptive_tune(char **log);
 
 /** Initialize all structures, parameters and arrays needed for the
@@ -167,39 +199,6 @@ enum P3M_TUNE_ERROR {
   P3M_TUNE_ELCTEST = 8,
   P3M_TUNE_CUTOFF_TOO_LARGE = 16
 };
-
-/** Tune P3M parameters to desired accuracy.
-
-    The parameters are tuned to obtain the desired accuracy in best
-    time, by running mpi_integrate(0) for several parameter sets.
-
-    The function utilizes the analytic expression of the error estimate
-    for the P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
-    order to obtain the rms error in the force for a system of N randomly
-    distributed particles in a cubic box.
-    For the real space error the estimate of Kolafa/Perram is used.
-
-    Parameter range if not given explicit values: For \ref
-   p3m_parameter_struct::r_cut_iL the function uses the values (\ref
-   min_local_box_l -\ref #skin) / (n * \ref box_l), n being an integer (this
-   implies the assumption that \ref p3m_parameter_struct::r_cut_iL is the
-   largest cutoff in the system!). For \ref p3m_parameter_struct::mesh the
-   function uses the two values which matches best the equation: number of mesh
-   point = number of charged particles. For \ref p3m_parameter_struct::cao the
-   function considers all possible values.
-
-    For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming
-   that the error contributions of real and reciprocal space should be equal.
-
-    After checking if the total error fulfills the accuracy goal the
-    time needed for one force calculation (including Verlet list
-    update) is measured via \ref mpi_integrate (0).
-
-    The function returns a log of the performed tuning.
-
-    The function is based on routines of the program HE_Q.cpp written by M.
-   Deserno.
- */
 
 /** assign the physical charges using the tabulated charge assignment function.
     If store_ca_frac is true, then the charge fractions are buffered in

@@ -142,6 +142,41 @@ void dp3m_dipole_assign(void);
 /** reset dipolar p3m core parameters */
 void dp3m_deactivate(void);
 
+/** Tune dipolar P3M parameters to desired accuracy.
+
+
+    The parameters are tuned to obtain the desired accuracy in best
+    time, by running mpi_integrate(0) for several parameter sets.
+
+    The function utilizes the analytic expression of the error estimate
+    for the dipolar P3M method see JCP,2008 paper by J.J.Cerda et al in
+    order to obtain the rms error in the force for a system of N randomly
+    distributed particles in a cubic box.
+    For the real space error the estimate of Kolafa/Perram is used.
+
+    Parameter range if not given explicit values: For \ref
+   p3m_parameter_struct::r_cut_iL
+    the function uses the values (\ref min_local_box_l -\ref #skin) /
+    (n * \ref box_l), n being an integer (this implies the assumption that \ref
+    p3m_parameter_struct::r_cut_iL is the largest cutoff in the system!). For
+   \ref
+    p3m_parameter_struct::mesh the function uses the two values which matches
+   best the
+    equation: number of mesh point = number of magnetic dipolar particles. For
+    \ref p3m_parameter_struct::cao the function considers all possible values.
+
+    For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming
+   that the
+    error contributions of real and reciprocal space should be equal.
+
+    After checking if the total error fulfills the accuracy goal the
+    time needed for one force calculation (including Verlet list
+    update) is measured via \ref mpi_integrate (0).
+
+    The function returns a log of the performed tuning.
+
+    The function is based on routines for charges.
+ */
 int dp3m_adaptive_tune(char **log);
 
 /** compute the k-space part of forces and energies for the magnetic
