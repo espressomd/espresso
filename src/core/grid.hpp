@@ -56,10 +56,6 @@
 
 #include <limits>
 
-#ifdef LEES_EDWARDS
-#include "lees_edwards.hpp"
-#endif
-
 /** Macro that tests for a coordinate being periodic or not. */
 #ifdef PARTIAL_PERIODIC
 #define PERIODIC(coord) (periodic & (1L << (coord)))
@@ -189,16 +185,13 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
     double shift = 0.0;
 #ifdef LEES_EDWARDS
     double offset = lees_edwards_protocol.offset;
+    double dist = a[lees_edwards_protocol.shearplanenormal]-
+                  b[lees_edwards_protocol.shearplanenormal];
+    shift = Utils::sgn(dist) *
+                   (offset - round(offset * box_l_i[lees_edwards_protocol.sheardir]) *
+                    box_l[lees_edwards_protocol.sheardir]);
 #endif
     for (int i = 0; i < 3; i++) {
-#ifdef LEES_EDWARDS
-        double dist = a[lees_edwards_protocol.shearplanenormal]-
-                      b[lees_edwards_protocol.shearplanenormal];
-        shift = Utils::sgn(dist) *
-                (offset - round(offset * box_l_i[lees_edwards_protocol.sheardir]) *
-                box_l[lees_edwards_protocol.sheardir]);
-        if (std::abs(dist) > half_box_l[lees_edwards_protocol.shearplanenormal] && PERIODIC(lees_edwards_protocol.shearplanenormal))
-#endif
 
         res[i] = get_mi_coord(a[i], b[i], i, shift);
   }
