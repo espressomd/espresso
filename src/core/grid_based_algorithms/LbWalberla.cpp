@@ -1,9 +1,7 @@
-//#ifdef LB_WALBERLA
+#ifdef LB_WALBERLA
 #include "LbWalberla.hpp"
 #include "utils/Vector.hpp"
 
-// TODO walberla includes
-//#include "walberla/src/blockforest/ini
 
 #include "blockforest/Initialization.h"
 #include "blockforest/communication/UniformBufferedScheme.h"
@@ -17,10 +15,10 @@
 
 #include "field/AddToStorage.h"
 #include "field/FlagField.h"
+#include "field/adaptors/AdaptorCreators.h"
 #include "field/communication/PackInfo.h"
 #include "field/vtk/FlagFieldCellFilter.h"
 #include "field/vtk/VTKWriter.h"
-#include "field/adaptors/AdaptorCreators.h"
 #include "lbm/boundary/NoSlip.h"
 #include "lbm/boundary/SimpleUBB.h"
 #include "lbm/communication/PdfFieldPackInfo.h"
@@ -37,33 +35,28 @@
 
 #include <memory>
 
-
-
 using namespace walberla;
-int argc=0;
-char** argv=NULL;
-mpi::Environment m_env = mpi::Environment(argc,argv);
+int argc = 0;
+char **argv = NULL;
+mpi::Environment m_env = mpi::Environment(argc, argv);
 
-inline
-Vector3d to_vector3d(const Vector3<real_t> v) {
-  return Vector3d{v[0],v[1],v[2]};
+inline Vector3d to_vector3d(const Vector3<real_t> v) {
+  return Vector3d{v[0], v[1], v[2]};
 }
 Vector3<real_t> to_vector3(const Vector3d v) {
-  return Vector3<real_t>{v[0],v[1],v[2]};
+  return Vector3<real_t>{v[0], v[1], v[2]};
 }
 
-LbWalberla::LbWalberla(const Vector3i &grid_dimensions, double viscosity,
+LbWalberla::LbWalberla(double viscosity, double agrid,
                        const Vector3d &box_dimensions,
                        const Vector3i &node_grid, double skin) {
-  m_grid_dimensions = grid_dimensions;
-  m_box_dimensions = box_dimensions;
-  m_node_grid = node_grid;
+  
   m_skin = skin;
+  
+  const Vector3i grid_dimensions = box_imensions/agrid;
 
   // Probably needs some args
   int argc = 0;
-  char **argv = nullptr;
-
   m_blocks = blockforest::createUniformBlockGrid(
       node_grid[0], // blocks in x direction
       node_grid[1], // blocks in y direction
@@ -74,12 +67,9 @@ LbWalberla::LbWalberla(const Vector3i &grid_dimensions, double viscosity,
           node_grid[1], // number of cells per block in y direction
       grid_dimensions[2] /
           node_grid[2], // number of cells per block in z direction
-      1,                // dx
+      1,                // Lattice constant
       false);           // more than one block can be on the same process
 
-  // SRT or TRT or MRT
-  // Which Force model
-  // Force field
   m_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
       uint_c(1));
@@ -124,11 +114,13 @@ LbWalberla::LbWalberla(const Vector3i &grid_dimensions, double viscosity,
   m_force_distributor_id =
       field::addDistributor<Vector_field_distributor_t, Flag_field_t>(
           m_blocks, m_force_field_id, m_flag_field_id, Fluid_flag);
-   
-  m_velocity_adaptor_id = field::addFieldAdaptor< VelocityAdaptor >( m_blocks, m_pdf_field_id, "velocity adaptor");
-  
-  m_velocity_interpolator_id = 
-    field::addFieldInterpolator< VectorFieldAdaptorInterpolator, Flag_field_t>( m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
+
+  m_velocity_adaptor_id = field::addFieldAdaptor<VelocityAdaptor>(
+      m_blocks, m_pdf_field_id, "velocity adaptor");
+
+  m_velocity_interpolator_id =
+      field::addFieldInterpolator<VectorFieldAdaptorInterpolator, Flag_field_t>(
+          m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
 }
 
 void LbWalberla::print_vtk_density(char *filename) {
@@ -202,42 +194,45 @@ LbWalberla::create_fluid_field_vtk_writer(
 }
 
 Vector3d LbWalberla::get_node_velocity(const Vector3i node) const {
-     Cell global_cell{node[0],node[1],node[2]};
-     // Get block which has the cell
-     const IBlock* block =m_blocks->getBlock(global_cell,0);
-     
-     // Transform coords to block local
-     Cell local_cell;
-     m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
+  Cell global_cell{node[0], node[1], node[2]};
+  // Get block which has the cell
+  const IBlock *block = m_blocks->getBlock(global_cell, 0);
 
-     // Get pdf field
-//     auto const& pdf_field = block->getData<Pdf_field_t>(m_pdf_field_id);
-    auto const& vel_adaptor = block->getData<VelocityAdaptor>(m_velocity_adaptor_id);
-     return to_vector3d(vel_adaptor->get(local_cell));
+  // Transform coords to block local
+  Cell local_cell;
+  m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
+
+  // Get pdf field
+  //     auto const& pdf_field = block->getData<Pdf_field_t>(m_pdf_field_id);
+  auto const &vel_adaptor =
+      block->getData<VelocityAdaptor>(m_velocity_adaptor_id);
+  return to_vector3d(vel_adaptor->get(local_cell));
 }
 
-Vector3d LbWalberla::get_velocity_at_pos(const Vector3d& pos) const {
-auto block = m_blocks->getBlock(to_vector3(pos)); 
-auto* velocity_interpolator = block->getData< VectorFieldAdaptorInterpolator>( m_velocity_interpolator_id);
-Vector3<real_t> v;
-velocity_interpolator->get(to_vector3(pos),&v);
-return to_vector3d(v);
+Vector3d LbWalberla::get_velocity_at_pos(const Vector3d &pos) const {
+  auto block = m_blocks->getBlock(to_vector3(pos));
+  auto *velocity_interpolator = block->getData<VectorFieldAdaptorInterpolator>(
+      m_velocity_interpolator_id);
+  Vector3<real_t> v;
+  velocity_interpolator->get(to_vector3(pos), &v);
+  return to_vector3d(v);
 }
 
 void LbWalberla::set_node_velocity(const Vector3i node, const Vector3d v) {
-     Cell global_cell{node[0],node[1],node[2]};
-     // Get block which has the cell
-     auto block =m_blocks->getBlock(global_cell,0);
-     
-     // Transform coords to block local
-     Cell local_cell;
-     m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
+  Cell global_cell{node[0], node[1], node[2]};
+  // Get block which has the cell
+  auto block = m_blocks->getBlock(global_cell, 0);
 
-     // Get pdf field
-     auto pdf_field = block->getData<Pdf_field_t>(m_pdf_field_id);
-     const real_t density=pdf_field->getDensity(local_cell);
-     
-     pdf_field->setDensityAndVelocity(local_cell,Vector3<double>{v[0],v[1],v[2]},density);
+  // Transform coords to block local
+  Cell local_cell;
+  m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
+
+  // Get pdf field
+  auto pdf_field = block->getData<Pdf_field_t>(m_pdf_field_id);
+  const real_t density = pdf_field->getDensity(local_cell);
+
+  pdf_field->setDensityAndVelocity(local_cell,
+                                   Vector3<double>{v[0], v[1], v[2]}, density);
 }
 
 void LbWalberla::set_viscosity(double viscosity) {
@@ -249,4 +244,4 @@ double LbWalberla::get_viscosity() {
   return m_lattice_model->collisionModel().viscosity();
 }
 
-//#endif LB_WALBERLA
+#endif LB_WALBERLA

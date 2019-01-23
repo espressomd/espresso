@@ -1,26 +1,23 @@
 #ifndef LB_WALBERLA_H
 #define LB_WALBERLA_H
 
-//#include "config.hpp"
-
-//#ifdef LB_WALBERLA
+#ifdef LB_WALBERLA
 
 #include "utils/Vector.hpp"
 
-#include "blockforest/Initialization.h"
-#include "boundary/BoundaryHandling.h"
-#include "core/mpi/Environment.h"
-#include "core/mpi/MPIManager.h"
-#include "field/FlagField.h"
-#include "field/distributors/all.h"
-#include "field/interpolators/all.h"
-#include "lbm/boundary/NoSlip.h"
-#include "lbm/boundary/SimpleUBB.h"
-#include "lbm/field/PdfField.h"
-#include "lbm/field/Adaptors.h"
-#include "lbm/lattice_model/D3Q19.h"
-#include "timeloop/SweepTimeloop.h"
-#include "vtk/VTKOutput.h"
+#include "walberla/field/GhostLayerField.h"
+#include "walberla/boundary/BoundaryHandling.h"
+#include "walberla/core/mpi/Environment.h"
+#include "walberla/field/FlagField.h"
+#include "walberla/field/distributors/KernelFieldDistributor.h"
+#include "walberla/field/interpolators/TrilinearFieldInterpolator.h"
+#include "walberla/lbm/boundary/NoSlip.h"
+#include "walberla/lbm/boundary/SimpleUBB.h"
+#include "walberla/lbm/field/Adaptors.h"
+#include "walberla/lbm/field/PdfField.h"
+#include "walberla/lbm/lattice_model/D3Q19.h"
+#include "walberla/timeloop/SweepTimeloop.h"
+#include "walberla/vtk/VTKOutput.h"
 
 const walberla::FlagUID Fluid_flag("fluid");
 const walberla::FlagUID UBB_flag("velocity bounce back");
@@ -78,7 +75,7 @@ class LbWalberla {
   };
 
 public:
-  LbWalberla(const Vector3i &grid_dimensions, double viscosity,
+  LbWalberla(double viscosity, double agrid,
              const Vector3d &box_dimensions, const Vector3i &node_grid,
              double skin);
 
@@ -92,8 +89,8 @@ public:
   //  Vector3d get_stress_at_pos(const Vector3d& position);
 
   void set_node_as_boundary(const Vector3i &node);
-//  void set_node_as_boundary(const Vector3i &node,
-//                            const Vector3d &slip_velocity);
+  //  void set_node_as_boundary(const Vector3i &node,
+  //                            const Vector3d &slip_velocity);
   void remove_node_from_boundary(const Vector3i &node);
   int get_node_is_boundary(const Vector3i &node);
 
@@ -120,12 +117,10 @@ public:
   }
 
 private:
-  double m_viscosity;
   double m_skin;
+  double m_agrid;
   Vector3d m_ext_force;
-  Vector3i m_grid_dimensions;
-  Vector3d m_box_dimensions;
-  Vector3i m_node_grid;
+
 
   walberla::BlockDataID m_pdf_field_id;
   walberla::BlockDataID m_flag_field_id;
@@ -139,14 +134,16 @@ private:
   std::shared_ptr<walberla::mpi::Environment> m_env;
   walberla::BlockDataID m_boundary_handling_id;
   std::shared_ptr<Lattice_model_t> m_lattice_model;
-      // Adaptors
-      using DensityAdaptor = walberla::lbm::Adaptor<Lattice_model_t>::Density;
-      using VelocityAdaptor = walberla::lbm::Adaptor<Lattice_model_t>::VelocityVector; 
+  // Adaptors
+  using DensityAdaptor = walberla::lbm::Adaptor<Lattice_model_t>::Density;
+  using VelocityAdaptor =
+      walberla::lbm::Adaptor<Lattice_model_t>::VelocityVector;
 
   using Vector_field_distributor_t =
       walberla::field::KernelDistributor<vector_field_t, Flag_field_t>;
-  using VectorFieldAdaptorInterpolator =  walberla::field::TrilinearFieldInterpolator<VelocityAdaptor, Flag_field_t>;
-
+  using VectorFieldAdaptorInterpolator =
+      walberla::field::TrilinearFieldInterpolator<VelocityAdaptor,
+                                                  Flag_field_t>;
 
   void empty_flags_for_boundary(
       std::shared_ptr<walberla::StructuredBlockForest> &blocks,
@@ -172,6 +169,6 @@ private:
       const walberla::BlockDataID &flag_field_id);
 };
 
-//#endif // LB_WALBERLA
+#endif // LB_WALBERLA
 
 #endif // LB_WALBERLA_H
