@@ -49,6 +49,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "utils.hpp"
+#include "utils/math/sgn.hpp"
 #ifdef LEES_EDWARDS
 #include "lees_edwards.hpp"
 #endif
@@ -164,8 +165,12 @@ void calc_minimal_box_dimensions();
  * the particles accordingly */
 void rescale_boxl(int dir, double d_new);
 
-template <typename T> T get_mi_coord(T a, T b, int dir) {
+template <typename T> T get_mi_coord(T a, T b, int dir, double shift = 0.0) {
   auto dx = a - b;
+#ifdef LEES_EDWARDS
+  if (dir == lees_edwards_protocol.sheardir)
+    dx -= shift;
+#endif
 
   if (PERIODIC(dir) && std::fabs(dx) > half_box_l[dir])
     dx -= std::round(dx * box_l_i[dir]) * box_l[dir];
@@ -181,8 +186,21 @@ template <typename T> T get_mi_coord(T a, T b, int dir) {
 
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
-  for (int i = 0; i < 3; i++) {
-    res[i] = get_mi_coord(a[i], b[i], i);
+    double shift = 0.0;
+#ifdef LEES_EDWARDS
+    double offset = lees_edwards_protocol.offset;
+#endif
+    for (int i = 0; i < 3; i++) {
+#ifdef LEES_EDWARDS
+        double dist = a[lees_edwards_protocol.shearplanenormal]-
+                      b[lees_edwards_protocol.shearplanenormal];
+        shift = Utils::sgn(dist) *
+                (offset - round(offset * box_l_i[lees_edwards_protocol.sheardir]) *
+                box_l[lees_edwards_protocol.sheardir]);
+        if (std::abs(dist) > half_box_l[lees_edwards_protocol.shearplanenormal] && PERIODIC(lees_edwards_protocol.shearplanenormal))
+#endif
+
+        res[i] = get_mi_coord(a[i], b[i], i, shift);
   }
 }
 
