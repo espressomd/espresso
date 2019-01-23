@@ -434,7 +434,6 @@ General features
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
-..
 -  ``NPT`` Enables an on-the-fly NPT integration scheme.
 
    .. seealso:: :ref:`Isotropic NPT thermostat`
