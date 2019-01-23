@@ -71,16 +71,6 @@
 
 namespace {
 /**
- * @brief Request particle data.
- */
-
-struct RequestParticle {
-  int id;
-
-  void operator()(Particle const &p) const {}
-};
-
-/**
  * @brief A generic particle update.
  *
  * Here the sub-struct struture of Particle is
@@ -232,6 +222,12 @@ using UpdateForceMessage = boost::variant <
  *
  * A message is either updates a property,
  * or a position, or ...
+ * New messages can be added here, if they
+ * fullfill the type requirements, namely:
+ * They either have an integer member id indicating
+ * the particle that should be updated an operator()(const Particle&)
+ * that is called with the particle, or a tree of
+ * variants with leafs that have such a operator() and member.
  */
 using UpdateMessage = boost::variant<
         UpdatePropertyMessage,
@@ -270,18 +266,28 @@ struct message_type<ParticleForce, &Particle::f> {
 template <typename S, S Particle::*s>
 using message_type_t = typename message_type<S, s>::type;
 
-struct UpdateParticleVisitor : public boost::static_visitor<void> {
-  template <typename Message> void operator()(const Message &msg) const {
-    assert(local_particles[msg.id]);
-    msg(*local_particles[msg.id]);
-  }
-};
+/**
+ * @brief Visitor for message evaluation.
+ *
+ * This visitor either recurses into the active type
+ * if it is a variant type, or otherwise callse
+ * operator()(const Particle&) on the active type with
+ * the particle that ought to be updated. This construction
+ * allows to nest message variants to allow for sub-
+ * categories. Those are mostly used here to differentiate
+ * the updates for the substructs of Particle.
+ */
 
 struct UpdateVisitor : public boost::static_visitor<void> {
   /* Recurse into sub-variants */
   template <class... Message>
   void operator()(const boost::variant<Message...> &msg) const {
-    boost::apply_visitor(UpdateParticleVisitor(), msg);
+    boost::apply_visitor(*this, msg);
+  }
+  /* Plain messages are just called. */
+  template <typename Message> void operator()(const Message &msg) const {
+    assert(local_particles[msg.id]);
+    msg(*local_particles[msg.id]);
   }
 };
 } // namespace
