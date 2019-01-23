@@ -98,7 +98,7 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
  * errors. This removes parallelism between host and device and should only be
  * enabled while debugging. */
 #ifdef CUDA_DEBUG
-  cudaThreadSynchronize();
+  cudaDeviceSynchronize();
 #endif
   CU_err = cudaGetLastError();
   if (CU_err != cudaSuccess) {
@@ -431,7 +431,7 @@ void copy_forces_from_GPU(ParticleRange particles) {
       KERNELCALL(reset_particle_force, dim_grid_particles,
                  threads_per_block_particles, particle_forces_device,
                  particle_torques_device);
-      cudaThreadSynchronize();
+      cudaDeviceSynchronize();
     }
 
     cuda_mpi_send_forces(particles, particle_forces_host,
