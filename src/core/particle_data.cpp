@@ -70,18 +70,15 @@
 #define REQ_SNDRCV_PART 0xaa
 
 namespace {
+/**
+ * @brief Request particle data.
+ */
 
-    /**
-     * @brief Request particle data.
-     */
+struct RequestParticle {
+  int id;
 
-    struct RequestParticle {
-        int id;
-
-        void operator()(Particle const &p) const {
-
-        }
-    };
+  void operator()(Particle const &p) const {}
+};
 
 /**
  * @brief A generic particle update.
@@ -236,7 +233,6 @@ using UpdateForceMessage = boost::variant <
  * A message is either updates a property,
  * or a position, or ...
  */
-
 using UpdateMessage = boost::variant<
         UpdatePropertyMessage,
         UpdatePositionMessage,
@@ -316,7 +312,7 @@ void mpi_send_update_message(int pnode, const UpdateMessage &msg) {
 }
 
 template <typename S, S Particle::*s, typename T, T S::*m>
-void mpi_update_particle(int id, const T&value) {
+void mpi_update_particle(int id, const T &value) {
   using MessageType = message_type_t<S, s, T, m>;
   MessageType msg = UpdateParticle<S, s, T, m>{id, value};
   mpi_send_update_message(get_particle_node(id), msg);
@@ -324,8 +320,7 @@ void mpi_update_particle(int id, const T&value) {
 
 template <typename T, T ParticleProperties::*m>
 void mpi_update_particle_property(int id, const T &value) {
-  mpi_update_particle<ParticleProperties, &Particle::p, T, m>(
-      id, value);
+  mpi_update_particle<ParticleProperties, &Particle::p, T, m>(id, value);
 }
 
 /************************************************
