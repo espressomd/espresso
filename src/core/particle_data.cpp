@@ -243,32 +243,32 @@ using UpdateMessage = boost::variant<
 
 /**
  * @brief Meta-function to detect the message type from
- *        a pointer to member object.
+ *        the particle substruct.
  */
-template <typename S, S Particle::*s, typename T, T S::*m> struct message_type;
+template <typename S, S Particle::*s> struct message_type;
 
-template <typename T, T ParticleProperties::*m>
-struct message_type<ParticleProperties, &Particle::p, T, m> {
+template <>
+struct message_type<ParticleProperties, &Particle::p> {
   using type = UpdatePropertyMessage;
 };
 
-template <typename T, T ParticlePosition::*m>
-struct message_type<ParticlePosition, &Particle::r, T, m> {
+template <>
+struct message_type<ParticlePosition, &Particle::r> {
   using type = UpdatePositionMessage;
 };
 
-template <typename T, T ParticleMomentum::*m>
-struct message_type<ParticleMomentum, &Particle::m, T, m> {
+template <>
+struct message_type<ParticleMomentum, &Particle::m> {
   using type = UpdateMomentumMessage;
 };
 
-template <typename T, T ParticleForce::*m>
-struct message_type<ParticleForce, &Particle::f, T, m> {
+template <>
+struct message_type<ParticleForce, &Particle::f> {
   using type = UpdateForceMessage;
 };
 
-template <typename S, S Particle::*s, typename T, T S::*m>
-using message_type_t = typename message_type<S, s, T, m>::type;
+template <typename S, S Particle::*s>
+using message_type_t = typename message_type<S, s>::type;
 
 struct UpdateParticleVisitor : public boost::static_visitor<void> {
   template <typename Message> void operator()(const Message &msg) const {
@@ -313,7 +313,7 @@ void mpi_send_update_message(int pnode, const UpdateMessage &msg) {
 
 template <typename S, S Particle::*s, typename T, T S::*m>
 void mpi_update_particle(int id, const T &value) {
-  using MessageType = message_type_t<S, s, T, m>;
+  using MessageType = message_type_t<S, s>;
   MessageType msg = UpdateParticle<S, s, T, m>{id, value};
   mpi_send_update_message(get_particle_node(id), msg);
 }
