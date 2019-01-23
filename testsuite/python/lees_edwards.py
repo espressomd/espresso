@@ -54,8 +54,8 @@ class LeesEdwards(ut.TestCase):
         # Check if the offset is determined correctly
         frequency = 3.5
         omega = 2 * np.pi * frequency
-        amplitude = 1.6
-        sheardir = 0 
+        amplitude = 1.3
+        sheardir = 0
         shearplanenormal = 1
         system.lees_edwards.set_params(type="oscillatory_shear", frequency=omega,
                                        amplitude=amplitude, sheardir=sheardir, shearplanenormal=shearplanenormal)
@@ -83,58 +83,63 @@ class LeesEdwards(ut.TestCase):
         dir = [0, 1, 2]
 
         for sheardir in dir:
-          for shearplanenormal in dir:
-            if sheardir != shearplanenormal:
+            for shearplanenormal in dir:
+                if sheardir != shearplanenormal:
 
-              system.time = 0.0
-              system.lees_edwards.set_params(type = "steady_shear", velocity = velocity, sheardir = sheardir, shearplanenormal = shearplanenormal)
+                    system.time = 0.0
+                    system.lees_edwards.set_params(
+                        type="steady_shear", velocity=velocity, sheardir=sheardir, shearplanenormal=shearplanenormal)
 
-              pos = np.full([3], 2.5)
-              pos[shearplanenormal] = system.box_l[shearplanenormal] - 0.1
-              vel = np.zeros([3])
-              vel[shearplanenormal] = 0.1
-              system.part.add(pos=pos, v=vel, id=0, type=0)
+                    pos = np.full([3], 2.5)
+                    pos[shearplanenormal] = system.box_l[shearplanenormal] - 0.05
+                    vel = np.zeros([3])
+                    vel[shearplanenormal] = 0.1
+                    system.part.add(pos=pos, v=vel, id=0, type=0)
 
-              pos_change = np.zeros([3])
-              pos_change[sheardir] = -0.5*system.time_step*velocity
-              pos_change[shearplanenormal] = velocity*system.time_step
-              vel_change = np.zeros([3])
-              vel_change[sheardir] = -velocity
+                    pos_change = np.zeros([3])
+                    pos_change[sheardir] = -system.time_step*0.5*velocity
+                    pos_change[shearplanenormal] = velocity*system.time_step
+                    vel_change = np.zeros([3])
+                    vel_change[sheardir] = -velocity
 
-              expected_pos = system.part[0].pos + pos_change
-              expected_vel = system.part[0].v + vel_change
+                    expected_pos = system.part[0].pos + pos_change
+                    expected_vel = system.part[0].v + vel_change
 
-              system.integrator.run(1)
+                    system.integrator.run(1)
 
-              np.testing.assert_almost_equal(system.part[0].pos, expected_pos)
-              np.testing.assert_almost_equal(system.part[0].v, expected_vel)
+                    np.testing.assert_almost_equal(
+                        system.part[0].pos, expected_pos)
+                    np.testing.assert_almost_equal(
+                        system.part[0].v, expected_vel)
 
-              system.part.clear()
+                    system.part.clear()
 
-              # Test for lower boundary
+                    # Test for lower boundary
 
-              system.time = 0.0
-              pos = np.full([3], 2.5)
-              pos[shearplanenormal] = 0.1
-              vel = np.zeros([3])
-              vel[shearplanenormal] = -0.1
-              system.part.add(pos=pos, v=vel, id=0, type=0)
+                    system.time = 0.0
+                    pos = np.full([3], 2.5)
+                    pos[shearplanenormal] = 0.05
+                    vel = np.zeros([3])
+                    vel[shearplanenormal] = -0.1
+                    system.part.add(pos=pos, v=vel, id=0, type=0)
 
-              pos_change = np.zeros([3])
-              pos_change[sheardir] = 0.5*system.time_step*velocity
-              pos_change[shearplanenormal] = -velocity*system.time_step
-              vel_change = np.zeros([3])
-              vel_change[sheardir] = velocity
+                    pos_change = np.zeros([3])
+                    pos_change[sheardir] = system.time_step*0.5*velocity
+                    pos_change[shearplanenormal] = -velocity*system.time_step
+                    vel_change = np.zeros([3])
+                    vel_change[sheardir] = velocity
 
-              expected_pos = system.part[0].pos + pos_change
-              expected_vel = system.part[0].v + vel_change
+                    expected_pos = system.part[0].pos + pos_change
+                    expected_vel = system.part[0].v + vel_change
 
-              system.integrator.run(1)
+                    system.integrator.run(1)
 
-              np.testing.assert_almost_equal(system.part[0].pos, expected_pos)
-              np.testing.assert_almost_equal(system.part[0].v, expected_vel)
+                    np.testing.assert_almost_equal(
+                        system.part[0].pos, expected_pos)
+                    np.testing.assert_almost_equal(
+                        system.part[0].v, expected_vel)
 
-              system.part.clear()
+                    system.part.clear()
 
     def test_c_interactions(self):
         """We place two particles crossing a boundary and connect them with an unbonded
