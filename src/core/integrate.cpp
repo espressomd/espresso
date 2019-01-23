@@ -731,13 +731,13 @@ double offset_at_time_step =
       if (p.r.p[lees_edwards_protocol.shearplanenormal] >= box_l[lees_edwards_protocol.shearplanenormal]) {
         p.m.v[lees_edwards_protocol.sheardir] -= shear_velocity / 2.0;
         p.r.p[lees_edwards_protocol.sheardir] -= (offset_at_time_step -
-                     dround(offset_at_time_step * box_l_i[lees_edwards_protocol.sheardir]) * box_l[lees_edwards_protocol.sheardir]);
+                     std::round(offset_at_time_step * box_l_i[lees_edwards_protocol.sheardir]) * box_l[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
                                     // propagate_vel_finalize_p_inst
       } else if (p.r.p[lees_edwards_protocol.shearplanenormal] <= 0.) {
         p.m.v[lees_edwards_protocol.sheardir] += shear_velocity / 2.0;
         p.r.p[lees_edwards_protocol.sheardir] += (offset_at_time_step -
-                     dround(offset_at_time_step * box_l_i[lees_edwards_protocol.sheardir]) * box_l[lees_edwards_protocol.sheardir]);
+                     std::round(offset_at_time_step * box_l_i[lees_edwards_protocol.sheardir]) * box_l[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = 1; // perform a positive half velocity shift in
                                    // propagate_vel_finalize_p_inst
       } else {
