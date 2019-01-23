@@ -58,6 +58,7 @@ option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" OFF)
 option(WITH_BENCHMARKS "Enable benchmarks"   OFF)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
+option(WITH_WALBERLA "Build with WALBERLA Lattice-Boltzmann support" OFF)
 if(CMAKE_VERSION VERSION_GREATER 3.5.2 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
@@ -465,6 +466,20 @@ if(WITH_BENCHMARKS)
   add_custom_target(benchmark)
   add_subdirectory(maintainer/benchmarks)
 endif(WITH_BENCHMARKS)
+
+
+# Walberla 
+if (WITH_WALBERLA)
+  set ( WALBERLA_BUILD_TESTS on CACHE BOOL "walberla tests")
+  set ( WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "walberla benchmarks")
+  set ( WALBERLA_BUILD_TOOLS off CACHE BOOL "walberla tools")
+  set ( WALBERLA_BUILD_TESTS off CACHE BOOL "walberla tools")
+  set ( WALBERLA_BUILD_TUTORIALS off CACHE BOOL "walberla tutorials")
+  set ( WALBERLA_BUILD_SHOWCASES off CACHE BOOL "walberla showcases")
+  set ( WALBERLA_BUILD_DOCS off CACHE BOOL "walberla showcases")
+  add_subdirectory(libs/walberla)
+  walberla_import()
+endif(WITH_WALBERLA)
 
 #######################################################################
 # Subdirectories

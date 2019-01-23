@@ -123,6 +123,8 @@ SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
 
+LB_WALBERLA                     requires EXPERIMENTAL_FEATURES
+
 EXPERIMENTAL_FEATURES
 
 // Shape of the noise in the (Langevin) thermostat

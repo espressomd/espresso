@@ -33,6 +33,7 @@
 #include "observables/initialize.hpp"
 
 #include "ComFixed.hpp"
+#include "LbWalberla.hpp"
 
 #include "ParallelScriptInterface.hpp"
 #include "VariantTester.hpp"
@@ -62,6 +63,10 @@ void initialize() {
   ScriptInterface::register_new<Testing::VariantTester>(
       "Testing::VariantTester");
   ScriptInterface::register_new<ComFixed>("ComFixed");
+#ifdef LB_WALBERLA  
+  ScriptInterface::register_new<LbWalberla>("LbWalberla");
+#endif
 }
+
 
 } /* namespace ScriptInterface */

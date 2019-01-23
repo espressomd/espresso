@@ -244,4 +244,4 @@ double LbWalberla::get_viscosity() {
   return m_lattice_model->collisionModel().viscosity();
 }
 
-#endif LB_WALBERLA
+#endif 

@@ -4,20 +4,21 @@
 #ifdef LB_WALBERLA
 
 #include "utils/Vector.hpp"
-
-#include "walberla/field/GhostLayerField.h"
-#include "walberla/boundary/BoundaryHandling.h"
-#include "walberla/core/mpi/Environment.h"
-#include "walberla/field/FlagField.h"
-#include "walberla/field/distributors/KernelFieldDistributor.h"
-#include "walberla/field/interpolators/TrilinearFieldInterpolator.h"
-#include "walberla/lbm/boundary/NoSlip.h"
-#include "walberla/lbm/boundary/SimpleUBB.h"
-#include "walberla/lbm/field/Adaptors.h"
-#include "walberla/lbm/field/PdfField.h"
-#include "walberla/lbm/lattice_model/D3Q19.h"
-#include "walberla/timeloop/SweepTimeloop.h"
-#include "walberla/vtk/VTKOutput.h"
+#undef PI
+#include "blockforest/StructuredBlockForest.h"
+#include "field/GhostLayerField.h"
+#include "boundary/BoundaryHandling.h"
+#include "core/mpi/Environment.h"
+#include "field/FlagField.h"
+#include "field/distributors/KernelDistributor.h"
+#include "field/interpolators/TrilinearFieldInterpolator.h"
+#include "lbm/boundary/NoSlip.h"
+#include "lbm/boundary/SimpleUBB.h"
+#include "lbm/field/Adaptors.h"
+#include "lbm/field/PdfField.h"
+#include "lbm/lattice_model/D3Q19.h"
+#include "timeloop/SweepTimeloop.h"
+#include "vtk/VTKOutput.h"
 
 const walberla::FlagUID Fluid_flag("fluid");
 const walberla::FlagUID UBB_flag("velocity bounce back");
@@ -26,6 +27,9 @@ const walberla::FlagUID No_slip_flag("no slip");
 /** Class that runs and controls the LB on WaLBerla
  */
 class LbWalberla {
+  double m_skin;
+  double m_agrid;
+  Vector3d m_ext_force;
 
   // Type definitions
   using vector_field_t =
@@ -45,6 +49,8 @@ class LbWalberla {
                                  Boundary_conditions_t>;
 
   class LB_boundary_handling {
+  
+
   public:
     LB_boundary_handling(const walberla::BlockDataID &flag_field_id,
                          const walberla::BlockDataID &pdf_field_id,
@@ -106,21 +112,16 @@ public:
   void set_viscosity(double viscosity);
   double get_viscosity();
 
-  Vector3d get_box_dimensions() { return m_box_dimensions; }
 
-  Vector3i get_grid_dimensions() { return m_grid_dimensions; }
+  Vector3i get_grid_dimensions() {
+    return Vector3i{{int(m_blocks->getXSize()), int(m_blocks->getYSize()), int(m_blocks->getZSize())}};
+  };
 
-  Vector3d get_grid_spacing() {
-    return {(double)m_box_dimensions[0] / m_grid_dimensions[0],
-            (double)m_box_dimensions[1] / m_grid_dimensions[1],
-            (double)m_box_dimensions[2] / m_grid_dimensions[2]};
+  double get_grid_spacing() {
+    return m_agrid;
   }
 
 private:
-  double m_skin;
-  double m_agrid;
-  Vector3d m_ext_force;
-
 
   walberla::BlockDataID m_pdf_field_id;
   walberla::BlockDataID m_flag_field_id;
