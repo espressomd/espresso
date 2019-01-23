@@ -32,9 +32,6 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
-include_directories(SYSTEM ${PYTHON_INCLUDE_DIRS})
-include_directories(SYSTEM ${NUMPY_INCLUDE_DIR})
-
 add_custom_target(espressomd)
 add_custom_command(OUTPUT code_info.pyx
         COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/config/features.def ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx
@@ -90,7 +87,10 @@ foreach(cython_file ${cython_SRC})
           set_target_properties(${basename} PROPERTIES PREFIX "")
       endif()
       if (APPLE)
-         set_target_properties(${basename} PROPERTIES SUFFIX ".so")
+         set_target_properties(${basename} PROPERTIES
+                 SUFFIX ".so"
+                 LINK_FLAGS "-undefined dynamic_lookup"
+                 )
       endif()
       if ( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
           set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-cpp -Wno-strict-aliasing -Wno-maybe-uninitialized -Wno-unused-variable")
@@ -103,6 +103,7 @@ foreach(cython_file ${cython_SRC})
       endif()
       set_target_properties(${basename} PROPERTIES CXX_CLANG_TIDY "")
       target_link_libraries(${basename} PRIVATE EspressoConfig EspressoCore EspressoScriptInterface)
+      target_include_directories(${basename} SYSTEM PRIVATE ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR})
       add_dependencies(espressomd ${basename})
   endif()
 endforeach()
