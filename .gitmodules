@@ -1,3 +1,7 @@
 [submodule "libs/h5xx"]
 	path = libs/h5xx
 	url = https://github.com/h5md/h5xx.git
+
+[submodule "walberla"]
+	path = libs/walberla
+	url = git://github.com/lssfau/walberla

@@ -1,0 +1,3 @@
+[submodule "libs/h5xx"]
+	path = libs/h5xx
+	url = https://github.com/h5md/h5xx.git
