@@ -65,11 +65,8 @@ class ThermoTest(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         # Handle a random generator seeding
-        #rnd_gen = random.SystemRandom()
-        #seed1 = int(200 * rnd_gen.random())
         seed1 = 15
         np.random.seed(seed1)
-        #seed2 = int(200 * rnd_gen.random())
         seed2 = 42
         # The Espresso system configuration
         cls.system.seed = [s * seed2 for s in range(cls.system.cell_system.get_state()["n_nodes"])]
