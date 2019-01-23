@@ -99,6 +99,7 @@ set(EspressoCore_SRC
   grid_based_algorithms/lbboundaries.cpp
   grid_based_algorithms/lb.cpp
   grid_based_algorithms/lb-d3q19.cpp
+  grid_based_algorithms/LbWalberla.cpp
   immersed_boundary/ibm_tribend.cpp
   immersed_boundary/ibm_triel.cpp
   immersed_boundary/ImmersedBoundaries.cpp
