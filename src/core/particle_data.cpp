@@ -243,23 +243,19 @@ using UpdateMessage = boost::variant<
  */
 template <typename S, S Particle::*s> struct message_type;
 
-template <>
-struct message_type<ParticleProperties, &Particle::p> {
+template <> struct message_type<ParticleProperties, &Particle::p> {
   using type = UpdatePropertyMessage;
 };
 
-template <>
-struct message_type<ParticlePosition, &Particle::r> {
+template <> struct message_type<ParticlePosition, &Particle::r> {
   using type = UpdatePositionMessage;
 };
 
-template <>
-struct message_type<ParticleMomentum, &Particle::m> {
+template <> struct message_type<ParticleMomentum, &Particle::m> {
   using type = UpdateMomentumMessage;
 };
 
-template <>
-struct message_type<ParticleForce, &Particle::f> {
+template <> struct message_type<ParticleForce, &Particle::f> {
   using type = UpdateForceMessage;
 };
 
