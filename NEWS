@@ -2,6 +2,156 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 4.0.1
+==============
+
+This release provides a number of corrections for Espresso 4.0.
+We recommend that this release be used for all production simulations.
+The interface has not been changed between Espresso 4.0 and 4.0.1
+However, some bugs were discovered which can affect simulation results.
+Below, please find the list of changes. The numbers in brackets refer to 
+ticket numbers on http://github.com/espressomd/espresso
+
+
+Physics related corrections:
+  * The GPU lattice Boltzmann method produced incorrect results when
+    EXTERNAL_FORCES was not declared in myconfig.hpp.
+    This issue was present since around June 2018 (#2241)
+
+  * The temperature fluctuations for the GPU lattice Boltzmann implementation
+    were larger than the ones for the Cpu lattice Boltzmann implementation.
+    The cause was likely weak or incorrect random number generation.
+    It is not clear since when this issue existed.
+    It has been resolved by using library code for a counter-based
+    random number generator (Philox) rather than the existing custom code.
+
+  * Particles which were moved with the configuration changing moves (MC) implemented in the reaction ensemble 
+    module did not get assigned a random velocity. This was not a problem if you were looking at observables 
+    which do not depend on velocity.
+    
+  * Particles which were created in the Reaction Ensemble module were assigned a random velocity which was not distributed according to the Maxwell-Boltzmann distribution. This was not a problem if you were looking at observables which do not depend on velocity. If you looked at velocity dependent observables but used a thermostat for thermalization before taking a sample you are also fine.  (#2377).
+
+  * Under some conditions, the torque on self-propelled particles 
+    in a lattice-Boltzmann fluid was incorrect due to a sign error in the 
+    ENGINE feature. This was the case since the introduction of the feature
+    (#2383)
+
+  * The SimplePore shape was incorrect (#2379)
+  
+  * The parameters passed from Python to some features were narrowed to single 
+    precision. I.e., the values used were only accurate up to the 7th-8th 
+    significant digit. Further calculations with those values still were
+    done using double precision.
+    Classes backed by the script interface were affected. This includes
+    shapes, LB boundaries, pair criteria and the collision detection.
+    This issue was likely present since the introduction of Python support
+    for the relevant features. (#2379)
+  
+  * Forces on LB boundaries retrieved via the LbBoundary.get_force() method
+    in a Python script were incorrect for the CPU LB implementation.
+    The GPU implementation was not affected.
+    It is not clear, when the issue was introduced. (#2366)
+
+  * In highly dense systems, the Widdom insertion scheme reported wrong values
+    (#2294)
+
+  * Fixed the Gay-Berne potential for sigma != 1. Downgraded the GAY_BERNE feature to an experimental feature due to insufficient testing (#2424)
+
+Further general corrections and improvements:
+  
+* Fix restoring checkpointed simulations which contain exclusions (#2418)
+
+* Allow neutral systems in reaction ensemble (#2378)
+
+* Support re-tuning the dipolar P3M method (#2351, #1937)
+  
+* Support checkpointing of the collision detection parameters (#2342)
+  
+* Virtual sites tracers: don't complain about missing lb for non-virtual 
+  part (#2341)
+  
+* Prevent access to non-existent lb nodes from Python
+  
+* Opengl wildcard imports + mac fix  (#2295)
+
+* Fix segfaults in virtual sites based collision detection schemes on more than one processor core (#2195)
+
+* Fixed find_current_cell() and particle deletion (#2410, #2441)
+
+* Fixed coordinate folding for corner cases (0 - epsilon on 32 bit architectures) (#2415)
+
+Documentation and tutorials corrections and improvements: 
+
+* Mention how to read h5md files in the docs (#2353)
+
+* Correct docs for setting the skin (#2340)
+
+* Corrections to the Lennard-Jones tutorial (#2339)
+
+* doc: Fixed Gay-Bern formula (#2234)
+
+* Update PDF of tutorial 6 with bibliography (#2285)
+
+
+Build system and platform related corrections and improvements:
+
+* Fix Cython detection on Fedora 29 (#2371)
+
+* Properly detect CUDA libraries if multiple are available (#2352)
+
+* Guard tests and compilation for different feature sets
+  in myconfig.hpp (#2344, #2326, #2350, #2349, #2335, #2337, #2266)
+
+* install libH5mdCore (#2277)
+  
+* Fix MPI on Ubuntu 18.04 with CUDA (#2271)
+  
+* Fix PARTIAL_PERIODIC on big-endian platforms (#2259)
+
+* Fixes for OpenSUSE rpm build (#2255)
+
+* ctest: add ARGS option to custom 'make check' (#2252)
+  
+* cmake: workaround for cmake bug#18349 (#2244)
+
+* Remove some superfluous executable bits (#2242)
+  
+* Silence arm32 warnings (#2267)
+  
+* Fix unit test without SSE instructions (#2265)
+
+* Turn off ScaFaCoS support by default. Has to be enabled explicitly using -DWITH_SCAFACOS=on in CMake. (#2417)
+
+* Fix builds with the Gnu Scientific Library in non-standard locations (#2429)
+
+* Resolve some floating point rounding issues on I386 32-bit (#2454)
+
+
+Improved testing:
+
+* Test the LB thermostat (#2391, #2362)
+  
+* Better stability of the LB test (#2360)
+  
+* testsuite: fix checkpoint test (#2336)
+  
+* Test the installation routine (#2268)
+
+* Improved testing of the cylindrical lb profile observables (#2272)
+  
+* testsuite: Check planar shear profile of LB (#2263)
+
+* Test builds without optional dependencies (#2406)
+
+* Test builds on non-Amd64 architectures (#2401)
+
+* Improved test coverage of the Wang-Landau reaction ensemble (#2404)
+
+* Testing of the electrostatic pressure (#2409)
+
+
+
+
 ESPResSo 4.0
 ============
 
