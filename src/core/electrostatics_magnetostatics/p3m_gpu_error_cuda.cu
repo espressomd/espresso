@@ -82,7 +82,7 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
   }
 }
 
-__global__ void p3m_k_space_error_gpu_kernel_ad(int3 mesh, double3 meshi,
+__global__ void p3m_k_space_error_gpu_kernel_ad(const int3 mesh, const double3 meshi,
                                                 int cao, double alpha_L,
                                                 double *he_q) {
   int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
@@ -139,7 +139,7 @@ __global__ void p3m_k_space_error_gpu_kernel_ad(int3 mesh, double3 meshi,
   }
 }
 
-__global__ void p3m_k_space_error_gpu_kernel_ik_i(int3 mesh, double3 meshi,
+__global__ void p3m_k_space_error_gpu_kernel_ik_i(const int3 mesh, const double3 meshi,
                                                   int cao, double alpha_L,
                                                   double *he_q) {
 
@@ -201,7 +201,7 @@ __global__ void p3m_k_space_error_gpu_kernel_ik_i(int3 mesh, double3 meshi,
   }
 }
 
-__global__ void p3m_k_space_error_gpu_kernel_ad_i(int3 mesh, double3 meshi,
+__global__ void p3m_k_space_error_gpu_kernel_ad_i(const int3 mesh, const double3 meshi,
                                                   int cao, double alpha_L,
                                                   double *he_q) {
 
@@ -265,8 +265,9 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(int3 mesh, double3 meshi,
   }
 }
 
-double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart,
-                             double sum_q2, double alpha_L, double *box) {
+double p3m_k_space_error_gpu(double prefactor, const int *mesh, int cao,
+                             int npart, double sum_q2, double alpha_L,
+                             double *box) {
   static thrust::device_vector<double> he_q;
 
   const size_t mesh_size = mesh[0] * mesh[1] * mesh[2];

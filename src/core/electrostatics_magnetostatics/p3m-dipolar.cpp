@@ -123,7 +123,7 @@ static void dp3m_init_a_ai_cao_cut();
 
 /** checks for correctness for magnetic dipoles in P3M of the cao_cut, necessary
  * when the box length changes */
-static int dp3m_sanity_checks_boxl(void);
+static bool dp3m_sanity_checks_boxl(void);
 
 /** Calculate the spacial position of the left down mesh point of the local
    mesh, to be
@@ -170,8 +170,8 @@ static void dp3m_compute_constants_energy_dipolar();
  * \param  nominator   aliasing sums in the nominator.
  * \return denominator aliasing sum in the denominator
  */
-static double dp3m_perform_aliasing_sums_force(int n[3], double nominator[1]);
-static double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]);
+static double dp3m_perform_aliasing_sums_force(const int n[3], double nominator[1]);
+static double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]);
 
 static double dp3m_k_space_error(double box_size, double prefac, int mesh,
                                  int cao, int n_c_part, double sum_q2,
@@ -207,7 +207,7 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
 /* functions related to the correction of the dipolar p3m-energy */
 
 static double dp3m_average_dipolar_self_energy(double box_l, int mesh);
-static double dp3m_perform_aliasing_sums_dipolar_self_energy(int n[3]);
+static double dp3m_perform_aliasing_sums_dipolar_self_energy(const int n[3]);
 
 /************************************************************/
 /* functions related to the correction of the dipolar p3m-energy */
@@ -480,7 +480,7 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
   return phi;
 }
 
-double dp3m_perform_aliasing_sums_dipolar_self_energy(int n[3]) {
+double dp3m_perform_aliasing_sums_dipolar_self_energy(const int n[3]) {
   double u_sum = 0.0;
   /* lots of temporary variables... */
   double f1, sx, sy, sz, mx, my, mz, nmx, nmy, nmz;
@@ -1430,7 +1430,7 @@ void dp3m_calc_influence_function_force() {
 
 /*****************************************************************************/
 
-double dp3m_perform_aliasing_sums_force(int n[3], double nominator[1]) {
+double dp3m_perform_aliasing_sums_force(const int n[3], double nominator[1]) {
   double denominator = 0.0;
   /* lots of temporary variables... */
   double sx, sy, sz, f1, f2, f3, mx, my, mz, nmx, nmy, nmz, nm2, expo;
@@ -1517,7 +1517,7 @@ void dp3m_calc_influence_function_energy() {
 
 /*****************************************************************************/
 
-double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
+double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]) {
   double denominator = 0.0;
   /* lots of temporary variables... */
   double sx, sy, sz, f1, f2, f3, mx, my, mz, nmx, nmy, nmz, nm2, expo;
@@ -1636,7 +1636,11 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
   /* initialize p3m structures */
   mpi_bcast_coulomb_params();
   /* perform force calculation test */
-  return time_force_calc(int_num);
+  double int_time = time_force_calc(int_num);
+  if (int_time == -1) {
+    return -P3M_TUNE_FAIL;
+  }
+  return int_time;
 }
 
 /*****************************************************************************/
@@ -1663,7 +1667,7 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
     /* print result */
     sprintf(b, "%-4d %-3d  cao too large for this mesh\n", mesh, cao);
     *log = strcat_alloc(*log, b);
-    return -3;
+    return -P3M_TUNE_CAO_TOO_LARGE;
   }
 
   /* Either low and high boundary are equal (for fixed cut), or the low border
@@ -1677,7 +1681,7 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
     sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e accuracy not achieved\n",
             mesh, cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err, ks_err);
     *log = strcat_alloc(*log, b);
-    return -2;
+    return -P3M_TUNE_ACCURACY_TOO_LARGE;
   }
 
   for (;;) {
@@ -1718,13 +1722,13 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
     sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e radius dangerously high\n\n",
             mesh, cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err, ks_err);
     *log = strcat_alloc(*log, b);
-    return -2;
+    return -P3M_TUNE_CUTOFF_TOO_LARGE;
   }
 
   int_time = dp3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
-  if (int_time == -1) {
+  if (int_time == -P3M_TUNE_FAIL) {
     *log = strcat_alloc(*log, "tuning failed, test integration not possible\n");
-    return -1;
+    return int_time;
   }
 
   *_accuracy =
@@ -1770,13 +1774,13 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     tmp_time = dp3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                             &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out if the force evaluation is not working */
-    if (tmp_time == -1)
-      return -1;
+    if (tmp_time == -P3M_TUNE_FAIL)
+      return tmp_time;
     /* cao is too large for this grid, but still the accuracy cannot be
      * achieved, give up */
-    if (tmp_time == -3) {
+    if (tmp_time == -P3M_TUNE_CAO_TOO_LARGE) {
       P3M_TRACE(fprintf(stderr, "dp3m_m_time: no possible cao found\n"));
-      return -2;
+      return tmp_time;
     }
     /* we have a valid time, start optimising from there */
     if (tmp_time >= 0) {
@@ -1797,7 +1801,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
   } while (cao <= cao_max);
   /* with this mesh, the required accuracy cannot be obtained. */
   if (cao > cao_max)
-    return -2;
+    return -P3M_TUNE_CAO_TOO_LARGE;
 
   /* at the boundaries, only the opposite direction can be used for optimisation
    */
@@ -1817,8 +1821,8 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
           dp3m_mc_time(log, mesh, cao + final_dir, r_cut_iL_min, r_cut_iL_max,
                        &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
       /* bail out on errors, as usual */
-      if (tmp_time == -1)
-        return -1;
+      if (tmp_time == -P3M_TUNE_FAIL)
+        return tmp_time;
       /* in this direction, we cannot optimise, since we get into precision
        * trouble */
       if (tmp_time < 0)
@@ -1874,8 +1878,8 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     tmp_time = dp3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                             &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out on errors, as usual */
-    if (tmp_time == -1)
-      return -1;
+    if (tmp_time == -P3M_TUNE_FAIL)
+      return tmp_time;
     /* if we cannot meet the precision anymore, give up */
     if (tmp_time < 0)
       break;
@@ -2342,22 +2346,23 @@ void dp3m_calc_local_ca_mesh() {
 
 /*****************************************************************************/
 
-int dp3m_sanity_checks_boxl() {
-  int i, ret = 0;
+bool dp3m_sanity_checks_boxl() {
+  int i;
+  bool ret = false;
   for (i = 0; i < 3; i++) {
     /* check k-space cutoff */
     if (dp3m.params.cao_cut[i] >= 0.5 * box_l[i]) {
       runtimeErrorMsg() << "dipolar P3M_init: k-space cutoff "
                         << dp3m.params.cao_cut[i]
                         << " is larger than half of box dimension " << box_l[i];
-      ret = 1;
+      ret = true;
     }
     if (dp3m.params.cao_cut[i] >= local_box_l[i]) {
       runtimeErrorMsg() << "dipolar P3M_init: k-space cutoff "
                         << dp3m.params.cao_cut[i]
                         << " is larger than local box dimension "
                         << local_box_l[i];
-      ret = 1;
+      ret = true;
     }
   }
   return ret;
@@ -2365,50 +2370,50 @@ int dp3m_sanity_checks_boxl() {
 
 /*****************************************************************************/
 
-int dp3m_sanity_checks() {
-  int ret = 0;
+bool dp3m_sanity_checks() {
+  bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
     runtimeErrorMsg() << "dipolar P3M requires periodicity 1 1 1";
-    ret = 1;
+    ret = true;
   }
   /*
   if (n_nodes != 1) {
       runtimeErrorMsg() <<"dipolar P3M does not run in parallel";
-    ret = 1;
+    ret = true;
   } */
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     runtimeErrorMsg() << "dipolar P3M at present requires the domain "
                          "decomposition cell system";
-    ret = 1;
+    ret = true;
   }
 
   if ((box_l[0] != box_l[1]) || (box_l[1] != box_l[2])) {
     runtimeErrorMsg() << "dipolar P3M requires a cubic box";
-    ret = 1;
+    ret = true;
   }
 
   if ((dp3m.params.mesh[0] != dp3m.params.mesh[1]) ||
       (dp3m.params.mesh[1] != dp3m.params.mesh[2])) {
     runtimeErrorMsg() << "dipolar P3M requires a cubic mesh";
-    ret = 1;
+    ret = true;
   }
 
   if (dp3m_sanity_checks_boxl())
-    ret = 1;
+    ret = true;
 
   if (dp3m.params.mesh[0] == 0) {
     runtimeErrorMsg() << "dipolar P3M_init: mesh size is not yet set";
-    ret = 1;
+    ret = true;
   }
   if (dp3m.params.cao == 0) {
     runtimeErrorMsg() << "dipolar P3M_init: cao is not yet set";
-    ret = 1;
+    ret = true;
   }
   if (node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
     runtimeErrorMsg()
         << "dipolar P3M_init: node grid must be sorted, largest first";
-    ret = 1;
+    ret = true;
   }
 
   return ret;

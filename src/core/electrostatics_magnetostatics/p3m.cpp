@@ -148,11 +148,11 @@ static void p3m_spread_force_grid(double *mesh);
 static void p3m_realloc_ca_fields(int newsize);
 #endif
 
-static int p3m_sanity_checks_system(void);
+static bool p3m_sanity_checks_system(void);
 
 /** checks for correctness for charges in P3M of the cao_cut, necessary when the
  * box length changes */
-static int p3m_sanity_checks_boxl(void);
+static bool p3m_sanity_checks_boxl(void);
 
 /** Calculate the spacial position of the left down mesh point of the local
    mesh, to be
@@ -237,12 +237,12 @@ static double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
     \param alpha_L  rescaled Ewald splitting parameter.
     \return reciprocal (k) space error
 */
-static double p3m_k_space_error(double prefac, int mesh[3], int cao,
+static double p3m_k_space_error(double prefac, const int mesh[3], int cao,
                                 int n_c_part, double sum_q2, double alpha_L);
 
 /** aliasing sum used by \ref p3m_k_space_error. */
-static void p3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh[3],
-                                   double mesh_i[3], int cao, double alpha_L_i,
+static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
+                                   const double mesh_i[3], int cao, double alpha_L_i,
                                    double *alias1, double *alias2);
 
 /** Template parameterized calculation of the charge assignment to be called by
@@ -394,7 +394,7 @@ void p3m_init() {
   }
 }
 
-void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha,
+void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
                          double accuracy, int n_interpol) {
   if (r_cut >= 0) {
     p3m.params.r_cut = r_cut;
@@ -424,7 +424,7 @@ void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha,
 
 /*@}*/
 
-int p3m_set_params(double r_cut, int *mesh, int cao, double alpha,
+int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
                    double accuracy) {
   if (coulomb.method != COULOMB_P3M && coulomb.method != COULOMB_ELC_P3M &&
       coulomb.method != COULOMB_P3M_GPU)
@@ -1375,7 +1375,7 @@ void p3m_calc_influence_function_energy() {
     total error, and then the Fourier space error is
     calculated. Returns the error and the optimal alpha, or 0 if this
     combination does not work at all */
-static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL,
+static double p3m_get_accuracy(const int mesh[3], int cao, double r_cut_iL,
                                double *_alpha_L, double *_rs_err,
                                double *_ks_err) {
   double rs_err, ks_err;
@@ -1422,7 +1422,7 @@ static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL,
 /** get the optimal alpha and the corresponding computation time for fixed
  * mesh,
  * cao, r_cut and alpha */
-static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL,
+static double p3m_mcr_time(const int mesh[3], int cao, double r_cut_iL,
                            double alpha_L) {
   /* rounded up 5000/n_charges timing force evaluations */
   int int_num = (5000 + p3m.sum_qpart) / p3m.sum_qpart;
@@ -1451,6 +1451,9 @@ static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL,
                     "r_cut_iL %lf, cao %d, alpha_L %lf returned %lf.\n",
                     this_node, mesh[0], mesh[1], mesh[2], r_cut_iL, cao,
                     alpha_L, int_time));
+  if (int_time == -1) {
+    return -P3M_TUNE_FAIL;
+  }
   return int_time;
 }
 
@@ -1461,7 +1464,7 @@ static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL,
    if
    there is no valid r_cut, and -3 if
     the charge assignment order is too large for this grid */
-static double p3m_mc_time(char **log, int mesh[3], int cao, double r_cut_iL_min,
+static double p3m_mc_time(char **log, const int mesh[3], int cao, double r_cut_iL_min,
                           double r_cut_iL_max, double *_r_cut_iL,
                           double *_alpha_L, double *_accuracy) {
   double int_time;
@@ -1482,7 +1485,7 @@ static double p3m_mc_time(char **log, int mesh[3], int cao, double r_cut_iL_min,
       k_cut >= (std::min(min_box_l, min_local_box_l) - skin)) {
     sprintf(b, "%-4d %-3d cao too large for this mesh\n", mesh[0], cao);
     *log = strcat_alloc(*log, b);
-    return -3;
+    return -P3M_TUNE_CAO_TOO_LARGE;
   }
 
   /* Either low and high boundary are equal (for fixed cut), or the low border
@@ -1496,7 +1499,7 @@ static double p3m_mc_time(char **log, int mesh[3], int cao, double r_cut_iL_min,
     sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e accuracy not achieved\n",
             mesh[0], cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err, ks_err);
     *log = strcat_alloc(*log, b);
-    return -2;
+    return -P3M_TUNE_ACCURACY_TOO_LARGE;
   }
 
   for (;;) {
@@ -1553,9 +1556,9 @@ static double p3m_mc_time(char **log, int mesh[3], int cao, double r_cut_iL_min,
   }
 
   int_time = p3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
-  if (int_time == -1) {
+  if (int_time == -P3M_TUNE_FAIL) {
     *log = strcat_alloc(*log, "tuning failed, test integration not possible\n");
-    return -P3M_TUNE_FAIL;
+    return int_time;
   }
 
   *_accuracy =
@@ -1578,7 +1581,7 @@ static double p3m_mc_time(char **log, int mesh[3], int cao, double r_cut_iL_min,
    down. Returns the time
     upon completion, -1 if the force evaluation does not work, and -2 if the
    accuracy cannot be met */
-static double p3m_m_time(char **log, int mesh[3], int cao_min, int cao_max,
+static double p3m_m_time(char **log, const int mesh[3], int cao_min, int cao_max,
                          int *_cao, double r_cut_iL_min, double r_cut_iL_max,
                          double *_r_cut_iL, double *_alpha_L,
                          double *_accuracy) {
@@ -1603,13 +1606,13 @@ static double p3m_m_time(char **log, int mesh[3], int cao_min, int cao_max,
     tmp_time = p3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                            &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out if the force evaluation is not working */
-    if (tmp_time == -1)
-      return -1;
+    if (tmp_time == -P3M_TUNE_FAIL)
+      return tmp_time;
     /* cao is too large for this grid, but still the accuracy cannot be
      * achieved, give up */
-    if (tmp_time == -3) {
+    if (tmp_time == -P3M_TUNE_CAO_TOO_LARGE) {
       P3M_TRACE(fprintf(stderr, "p3m_m_time: no possible cao found\n"));
-      return -2;
+      return tmp_time;
     }
     /* we have a valid time, start optimising from there */
     if (tmp_time >= 0) {
@@ -1629,7 +1632,7 @@ static double p3m_m_time(char **log, int mesh[3], int cao_min, int cao_max,
   } while (cao <= cao_max);
   /* with this mesh, the required accuracy cannot be obtained. */
   if (cao > cao_max)
-    return -2;
+    return -P3M_TUNE_CAO_TOO_LARGE;
 
   /* at the boundaries, only the opposite direction can be used for
    * optimisation
@@ -1651,8 +1654,8 @@ static double p3m_m_time(char **log, int mesh[3], int cao_min, int cao_max,
           p3m_mc_time(log, mesh, cao + final_dir, r_cut_iL_min, r_cut_iL_max,
                       &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
       /* bail out on errors, as usual */
-      if (tmp_time == -1)
-        return -P3M_TUNE_FAIL;
+      if (tmp_time == -P3M_TUNE_FAIL)
+        return tmp_time;
       /* in this direction, we cannot optimise, since we get into precision
        * trouble */
       if (tmp_time < 0)
@@ -1709,8 +1712,8 @@ static double p3m_m_time(char **log, int mesh[3], int cao_min, int cao_max,
     tmp_time = p3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                            &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out on errors, as usual */
-    if (tmp_time == -1)
-      return -1;
+    if (tmp_time == -P3M_TUNE_FAIL)
+      return tmp_time;
     /* if we cannot meet the precision anymore, give up */
     if (tmp_time < 0)
       break;
@@ -1742,7 +1745,7 @@ int p3m_adaptive_tune(char **log) {
   double time_best = 1e20, tmp_time;
   double mesh_density = 0.0, mesh_density_min, mesh_density_max;
   char b[3 * ES_INTEGER_SPACE + 3 * ES_DOUBLE_SPACE + 128];
-  int tune_mesh = 0; // boolean to indicate if mesh should be tuned
+  bool tune_mesh = false; // indicates if mesh should be tuned
 
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if (!((box_l[0] == box_l[1]) && (box_l[1] == box_l[2]))) {
@@ -1784,7 +1787,7 @@ int p3m_adaptive_tune(char **log) {
     mesh_density_min =
         pow(p3m.sum_qpart / (box_l[0] * box_l[1] * box_l[2]), 1.0 / 3.0);
     mesh_density_max = 512 / pow(box_l[0] * box_l[1] * box_l[2], 1.0 / 3.0);
-    tune_mesh = 1;
+    tune_mesh = true;
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
        meshes have to be tested */
@@ -1876,7 +1879,6 @@ int p3m_adaptive_tune(char **log) {
     /* some error occurred during the tuning force evaluation */
     P3M_TRACE(fprintf(stderr, "delta_accuracy: %lf tune time: %lf\n",
                       p3m.params.accuracy - tmp_accuracy, tmp_time));
-    //    if (tmp_time == -1) con;
     /* this mesh does not work at all */
     if (tmp_time < 0.0)
       continue;
@@ -1982,7 +1984,7 @@ double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
               box_l[2]);
 }
 
-double p3m_k_space_error(double prefac, int mesh[3], int cao, int n_c_part,
+double p3m_k_space_error(double prefac, const int mesh[3], int cao, int n_c_part,
                          double sum_q2, double alpha_L) {
   int nx, ny, nz;
   double he_q = 0.0, mesh_i[3] = {1.0 / mesh[0], 1.0 / mesh[1], 1.0 / mesh[2]},
@@ -2014,8 +2016,8 @@ double p3m_k_space_error(double prefac, int mesh[3], int cao, int n_c_part,
          (box_l[1] * box_l[2]);
 }
 
-void p3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh[3],
-                            double mesh_i[3], int cao, double alpha_L_i,
+void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
+                            const double mesh_i[3], int cao, double alpha_L_i,
                             double *alias1, double *alias2) {
 
   int mx, my, mz;
@@ -2141,21 +2143,21 @@ void p3m_init_a_ai_cao_cut() {
   }
 }
 
-int p3m_sanity_checks_boxl() {
-  // char *errtxt;
-  int i, ret = 0;
+bool p3m_sanity_checks_boxl() {
+  int i;
+  bool ret = false;
   for (i = 0; i < 3; i++) {
     /* check k-space cutoff */
     if (p3m.params.cao_cut[i] >= 0.5 * box_l[i]) {
       runtimeErrorMsg() << "P3M_init: k-space cutoff " << p3m.params.cao_cut[i]
                         << " is larger than half of box dimension " << box_l[i];
-      ret = 1;
+      ret = true;
     }
     if (p3m.params.cao_cut[i] >= local_box_l[i]) {
       runtimeErrorMsg() << "P3M_init: k-space cutoff " << p3m.params.cao_cut[i]
                         << " is larger than local box dimension "
                         << local_box_l[i];
-      ret = 1;
+      ret = true;
     }
   }
 
@@ -2165,58 +2167,58 @@ int p3m_sanity_checks_boxl() {
 /**
  * @brief General sanity checks independent of p3m parameters.
  *
- * @return 0 if ok, 1 on error.
+ * @return false if ok, true on error.
  */
-int p3m_sanity_checks_system() {
-  int ret = 0;
+bool p3m_sanity_checks_system() {
+  bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
     runtimeErrorMsg() << "P3M requires periodicity 1 1 1";
-    ret = 1;
+    ret = true;
   }
 
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     runtimeErrorMsg()
         << "P3M at present requires the domain decomposition cell system";
-    ret = 1;
+    ret = true;
   }
 
   if (node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
     runtimeErrorMsg() << "P3M_init: node grid must be sorted, largest first";
-    ret = 1;
+    ret = true;
   }
 
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if (!((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
           (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
       runtimeErrorMsg() << "P3M_init: Nonmetallic epsilon requires cubic box";
-      ret = 1;
+      ret = true;
     }
   }
 
   return ret;
 }
 
-int p3m_sanity_checks() {
-  int ret = 0;
+bool p3m_sanity_checks() {
+  bool ret = false;
 
   if (p3m_sanity_checks_system())
-    ret = 1;
+    ret = true;
 
   if (p3m_sanity_checks_boxl())
-    ret = 1;
+    ret = true;
 
   if (p3m.params.mesh[0] == 0) {
     runtimeErrorMsg() << "P3M_init: mesh size is not yet set";
-    ret = 1;
+    ret = true;
   }
   if (p3m.params.cao == 0) {
     runtimeErrorMsg() << "P3M_init: cao is not yet set";
-    ret = 1;
+    ret = true;
   }
   if (p3m.params.alpha < 0.0) {
     runtimeErrorMsg() << "P3M_init: alpha must be >0";
-    ret = 1;
+    ret = true;
   }
 
   return ret;

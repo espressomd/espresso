@@ -35,6 +35,7 @@
  * ,(2008).
  *  </ul>
  *
+ *  Implementation in p3m-dipolar.cpp.
  */
 
 #include "config.hpp"
@@ -112,6 +113,7 @@ void dp3m_pre_init();
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
                           double accuracy, int n_interpol);
 
+/** @return Custom error code */
 int dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
                     double accuracy);
 
@@ -131,7 +133,7 @@ void dp3m_init(void);
 void dp3m_scaleby_box_l();
 
 /// sanity checks
-int dp3m_sanity_checks();
+bool dp3m_sanity_checks();
 
 /** assign the physical dipoles using the tabulated assignment function.
     If Dstore_ca_frac is true, then the charge fractions are buffered in

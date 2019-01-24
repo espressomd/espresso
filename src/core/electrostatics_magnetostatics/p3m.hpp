@@ -179,26 +179,11 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag);
 void p3m_calc_kspace_stress(double *stress);
 
 /// sanity checks
-int p3m_sanity_checks();
+bool p3m_sanity_checks();
 
 /** Calculate number of charged particles, the sum of the squared
     charges and the squared sum of the charges. */
 void p3m_count_charged_particles();
-
-/** Error Codes for p3m tuning (version 2) :
-    P3M_TUNE_FAIL: force evaluation failed,
-    P3M_TUNE_NO_CUTOFF: could not find a valid realspace cutoff radius,
-    P3M_TUNE_CAOTOLARGE: Charge assignment order to large for mesh size,
-    P3M_TUNE_ELCTEST: conflict with ELC gap size.
-*/
-
-enum P3M_TUNE_ERROR {
-  P3M_TUNE_FAIL = 1,
-  P3M_TUNE_NOCUTOFF = 2,
-  P3M_TUNE_CAOTOLARGE = 4,
-  P3M_TUNE_ELCTEST = 8,
-  P3M_TUNE_CUTOFF_TOO_LARGE = 16
-};
 
 /** assign the physical charges using the tabulated charge assignment function.
     If store_ca_frac is true, then the charge fractions are buffered in
@@ -247,10 +232,11 @@ inline double p3m_add_pair_force(double chgfac, double *d, double dist2,
   return 0.0;
 }
 
-void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha,
+void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
                          double accuracy, int n_interpol);
 
-int p3m_set_params(double r_cut, int *mesh, int cao, double alpha,
+/** @return Custom error code */
+int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
                    double accuracy);
 
 int p3m_set_mesh_offset(double x, double y, double z);

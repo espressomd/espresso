@@ -56,6 +56,22 @@
 
 #if defined(P3M) || defined(DP3M)
 
+/** Error Codes for p3m tuning (version 2) :
+    P3M_TUNE_FAIL: force evaluation failed,
+    P3M_TUNE_NO_CUTOFF: could not find a valid realspace cutoff radius,
+    P3M_TUNE_CAO_TOO_LARGE: Charge assignment order to large for mesh size,
+    P3M_TUNE_ELCTEST: conflict with ELC gap size.
+*/
+
+enum P3M_TUNE_ERROR : long {
+  P3M_TUNE_FAIL = 1,
+  P3M_TUNE_NOCUTOFF = 2,
+  P3M_TUNE_CAO_TOO_LARGE = 4,
+  P3M_TUNE_ELCTEST = 8,
+  P3M_TUNE_CUTOFF_TOO_LARGE = 16,
+  P3M_TUNE_ACCURACY_TOO_LARGE = 32
+};
+
 /** This value for p3m.epsilon indicates metallic boundary conditions. */
 #define P3M_EPSILON_METALLIC 0.0
 
