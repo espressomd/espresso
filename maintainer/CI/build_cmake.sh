@@ -57,8 +57,8 @@ function cmd {
 [ -z "$with_asan" ] && with_asan="false"
 [ -z "$with_static_analysis" ] && with_static_analysis="false"
 [ -z "$myconfig" ] && myconfig="default"
-[ -z "$check_procs" ] && check_procs=2
 [ -z "$build_procs" ] && build_procs=2
+[ -z "$check_procs" ] && check_procs=$build_procs
 [ -z "$make_check" ] && make_check="true"
 [ -z "$check_odd_only" ] && check_odd_only="false"
 [ -z "$python_version" ] && python_version="2"
@@ -101,9 +101,9 @@ outp insource srcdir builddir make_check \
     cmake_params with_fftw \
     with_python_interface with_coverage \
     with_ubsan with_asan \
-    build_procs check_odd_only \
+    check_odd_only \
     with_static_analysis myconfig \
-    check_procs build_procs \
+    build_procs check_procs \
     python_version with_cuda with_ccache
 
 # check indentation of python files
