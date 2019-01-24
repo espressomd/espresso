@@ -61,6 +61,7 @@ function cmd {
 [ -z "$check_procs" ] && check_procs=$build_procs
 [ -z "$make_check" ] && make_check="true"
 [ -z "$check_odd_only" ] && check_odd_only="false"
+[ -z "$check_gpu_only" ] && check_gpu_only="false"
 [ -z "$python_version" ] && python_version="2"
 [ -z "$with_cuda" ] && with_cuda="true"
 [ -z "$build_type" ] && build_type="Debug"
@@ -235,6 +236,8 @@ if $make_check; then
     if [ -z "$run_tests" ]; then
         if $check_odd_only; then
             cmd "make -j${build_procs} check_python_parallel_odd $make_params" || exit 1
+	elif $check_gpu_only; then
+	    cmd "make -j${build_procs} check_gpu_only $make_params" || exit 1
         else
             cmd "make -j${build_procs} check_python $make_params" || exit 1
         fi
