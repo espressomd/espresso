@@ -1,3 +1,4 @@
+#include "config.hpp" 
 #ifdef LB_WALBERLA
 #include "LbWalberla.hpp"
 #include "utils/Vector.hpp"
@@ -28,6 +29,8 @@
 #include "lbm/sweeps/CellwiseSweep.h"
 #include "lbm/vtk/Density.h"
 #include "lbm/vtk/Velocity.h"
+#include "field/distributors/DistributorCreators.h" 
+#include "field/interpolators/FieldInterpolatorCreators.h" 
 
 #include "stencil/D3Q27.h"
 
@@ -53,7 +56,13 @@ LbWalberla::LbWalberla(double viscosity, double agrid,
   
   m_skin = skin;
   
-  const Vector3i grid_dimensions = box_imensions/agrid;
+  Vector3i grid_dimensions;
+  for (int i=0;i<3;i++) {
+    if (box_dimensions[i]/agrid >  std::numeric_limits<double>::epsilon()){
+       throw std::runtime_error("Box length not commensurate with agrid in direction "+std::to_string(i));
+    }
+    grid_dimensions[i]=int(box_dimensions[i]/agrid);
+  }
 
   // Probably needs some args
   int argc = 0;

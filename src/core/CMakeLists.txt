@@ -202,6 +202,12 @@ if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_UNIT_TESTS)
 
+IF(WITH_WALBERLA)
+  target_link_libraries(EspressoCore PUBLIC
+   mpi core domain_decomposition blockforest boundary core domain_decomposition field lbm timeloop vtk)
+  target_link_libraries(EspressoCore PUBLIC stdc++fs)
+endif(WITH_WALBERLA)
+
 add_subdirectory(grid_based_algorithms)
 add_subdirectory(shapes)
 add_subdirectory(cluster_analysis)
