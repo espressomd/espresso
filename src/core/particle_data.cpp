@@ -137,14 +137,6 @@ struct UpdateExternalFlag {
 };
 #endif
 
-struct RemoveParticle {
-    int id;
-
-    void operator()(Particle &p) {
-
-    }
-};
-
 using Prop = ParticleProperties;
 
 // clang-format off
