@@ -1,0 +1,20 @@
+set( WALBERLA_FOUND  OFF                     CACHE  BOOL  "waLBerla found" )
+set( WALBERLA_DIR    WALBERLA_DIR-NOTFOUND   CACHE  PATH  "waLBerla path"  )
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/walberla" )
+    # Subdirectory walberla exists
+    message( STATUS "Using walberla subfolder" )
+    add_subdirectory( walberla EXCLUDE_FROM_ALL )
+    waLBerla_import()
+    set( WALBERLA_DIR   "${CMAKE_CURRENT_SOURCE_DIR}/walberla" CACHE  PATH  "waLBerla path"  FORCE )
+    set( WALBERLA_FOUND ON                                     CACHE  BOOL  "waLBerla found" FORCE )
+else()
+    # Search for a build directory elsewhere
+    find_package( waLBerla REQUIRED NO_MODULE ) 
+    message( STATUS "Found waLBerla source directory ${walberla_SOURCE_DIR}" )
+    message( STATUS "Found waLBerla binary directory ${walberla_BINARY_DIR}" )
+    add_subdirectory( ${walberla_SOURCE_DIR} ${walberla_BINARY_DIR} EXCLUDE_FROM_ALL )
+    waLBerla_import()
+    set( WALBERLA_DIR   "${walberla_BINARY_DIR}"  CACHE  PATH  "waLBerla path"  FORCE )
+    set( WALBERLA_FOUND ON                        CACHE  BOOL  "waLBerla found" FORCE )
+endif()
