@@ -22,6 +22,7 @@ cmake_minimum_required(VERSION 3.4)
 include(FeatureSummary)
 project(ESPResSo)
 include(cmake/FindPythonModule.cmake)
+include(cmake/FindwaLBerla.cmake)
 
 enable_language(CXX)
 
@@ -378,7 +379,7 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 #######################################################################
 
 # C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -470,17 +471,10 @@ endif(WITH_BENCHMARKS)
 
 # Walberla 
 if (WITH_WALBERLA)
-  set ( WALBERLA_BUILD_TESTS off CACHE BOOL "walberla tests")
-  set ( WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "walberla benchmarks")
-  set ( WALBERLA_BUILD_TOOLS off CACHE BOOL "walberla tools")
-  set ( WALBERLA_BUILD_TESTS off CACHE BOOL "walberla tools")
-  set ( WALBERLA_BUILD_TUTORIALS off CACHE BOOL "walberla tutorials")
-  set ( WALBERLA_BUILD_SHOWCASES off CACHE BOOL "walberla showcases")
-  set ( WALBERLA_BUILD_DOCS off CACHE BOOL "walberla showcases")
-  set ( WALBERLA_BUILD_PE off CACHE BOOL "walberla showcases")
-  set ( WARNINGS_PEDANTIC off CACHE BOOL "walberla showcases")
-  add_subdirectory(libs/walberla)
-  walberla_import()
+  find_package(waLBerLa)
+  if (${WALBERLA_FOUND})
+    set(WALBERLA 1)
+  endif(WALBERLA_FOUND)
 endif(WITH_WALBERLA)
 
 #######################################################################

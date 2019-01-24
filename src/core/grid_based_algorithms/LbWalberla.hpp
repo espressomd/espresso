@@ -170,6 +170,9 @@ private:
       const walberla::BlockDataID &flag_field_id);
 };
 
+void walberla_mpi_init();
+
+
 #endif // LB_WALBERLA
 
 #endif // LB_WALBERLA_H

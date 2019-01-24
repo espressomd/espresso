@@ -251,6 +251,9 @@ static void openmpi_fix_vader() {
 }
 #endif
 
+
+void walberla_mpi_init();
+
 void mpi_init() {
 #ifdef OPEN_MPI
   openmpi_fix_vader();
@@ -306,6 +309,10 @@ void mpi_init() {
 
   ErrorHandling::init_error_handling(mpiCallbacks());
   partCfg(Utils::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
+
+#ifdef LB_WALBERLA
+  walberla_mpi_init();
+#endif
 
   on_program_start();
 }

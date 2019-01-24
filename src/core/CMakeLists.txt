@@ -183,11 +183,15 @@ if(WITH_COVERAGE)
 endif()
 
 target_link_libraries(EspressoCore PUBLIC EspressoConfig)
-target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX)
+target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX mpi)
 
 if(FFTW3_FOUND)
   target_include_directories(EspressoCore PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})
   target_link_libraries(EspressoCore PRIVATE ${FFTW3_LIBRARIES})
+endif()
+if(WALBERLA)
+  target_include_directories(EspressoCore PRIVATE ${WALBERLA_INCLUDE_DIR})
+  target_link_libraries(EspressoCore PRIVATE ${WALBERLA_LIBRARIES})
 endif()
 
 if(SCAFACOS)

@@ -39,9 +39,13 @@
 #include <memory>
 
 using namespace walberla;
+
+void walberla_mpi_init() {
 int argc = 0;
-char **argv = NULL;
-mpi::Environment m_env = mpi::Environment(argc, argv);
+  char **argv = NULL;
+//  static mpi::Environment m_env = mpi::Environment(argc, argv);
+}
+
 
 inline Vector3d to_vector3d(const Vector3<real_t> v) {
   return Vector3d{v[0], v[1], v[2]};
@@ -58,7 +62,7 @@ LbWalberla::LbWalberla(double viscosity, double agrid,
   
   Vector3i grid_dimensions;
   for (int i=0;i<3;i++) {
-    if (box_dimensions[i]/agrid >  std::numeric_limits<double>::epsilon()){
+    if (fmod(box_dimensions[i],agrid) >  std::numeric_limits<double>::epsilon()){
        throw std::runtime_error("Box length not commensurate with agrid in direction "+std::to_string(i));
     }
     grid_dimensions[i]=int(box_dimensions[i]/agrid);
