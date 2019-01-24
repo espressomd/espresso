@@ -333,7 +333,7 @@ void dp3m_init() {
           fprintf(stderr, "   Magnetostatics of dipoles switched off!\n"));
     }
   } else {
-    P3M_TRACE(fprintf(stderr, "%d: dp3m_init: \n", this_node));
+    P3M_TRACE(fprintf(stderr, "%d: dp3m_init:\n", this_node));
 
     if (dp3m_sanity_checks())
       return;
@@ -900,7 +900,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
   double k_space_energy_dip = 0.0, node_k_space_energy_dip = 0.0;
   double tmp0, tmp1;
 
-  P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_perform(%d,%d): \n", this_node,
+  P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_perform(%d,%d):\n", this_node,
                     force_flag, energy_flag));
 
   dipole_prefac =
@@ -922,7 +922,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
   }
 
   /* === k-space calculations === */
-  P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_perform: k-Space\n", this_node));
+  P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_perform: k-space\n", this_node));
 
   /* === k-space energy calculation  === */
   if (energy_flag) {
@@ -931,7 +931,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
     **********************/
     if (dp3m.sum_mu2 > 0) {
       P3M_TRACE(fprintf(stderr,
-                        "%d: dipolar p3m start Energy calculation: k-Space\n",
+                        "%d: dipolar p3m start energy calculation: k-space\n",
                         this_node));
 
       /* i*k differentiation for dipolar gradients:
@@ -986,12 +986,12 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
                               volume; /* add the dipolar energy correction due
                                          to systematic Madelung-Self effects */
 
-        P3M_TRACE(fprintf(stderr, "%d: Energy correction: %lf\n", this_node,
+        P3M_TRACE(fprintf(stderr, "%d: energy correction: %lf\n", this_node,
                           k_space_energy_dip - a));
       }
 
       P3M_TRACE(fprintf(stderr,
-                        "%d: dipolar p3m end Energy calculation: k-Space\n",
+                        "%d: dipolar p3m end energy calculation: k-space\n",
                         this_node));
     }
   } // if (energy_flag)
@@ -1004,7 +1004,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
     if (dp3m.sum_mu2 > 0) {
 #ifdef ROTATION
       P3M_TRACE(fprintf(stderr,
-                        "%d: dipolar p3m start torques calculation: k-Space\n",
+                        "%d: dipolar p3m start torques calculation: k-space\n",
                         this_node));
 
       /* fill in ks_mesh array for torque calculation */
@@ -1072,7 +1072,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
          DIPOLAR FORCES (k-space)
       ****************************/
       P3M_TRACE(fprintf(stderr,
-                        "%d: dipolar p3m start forces calculation: k-Space\n",
+                        "%d: dipolar p3m start forces calculation: k-space\n",
                         this_node));
 
       // Compute forces after torques because the algorithm below overwrites the
@@ -1148,7 +1148,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
       }
 
       P3M_TRACE(fprintf(stderr,
-                        "%d: dipolar p3m end forces calculation: k-Space\n",
+                        "%d: dipolar p3m end forces calculation: k-space\n",
                         this_node));
 
     } /* of if (dp3m.sum_mu2>0 */
@@ -2067,7 +2067,7 @@ int dp3m_adaptive_tune(char **logger) {
       break;
   }
 
-  P3M_TRACE(fprintf(stderr, "finshed tuning\n"));
+  P3M_TRACE(fprintf(stderr, "finished tuning\n"));
   if (time_best == 1e20) {
     *logger = strcat_alloc(
         *logger,
@@ -2085,8 +2085,10 @@ int dp3m_adaptive_tune(char **logger) {
   /* broadcast tuned p3m parameters */
   mpi_bcast_coulomb_params();
   /* Tell the user about the outcome */
-  sprintf(b, "\nresulting parameters:\n%-4d %-3d %.5e %.5e %.5e %-8d\n", mesh,
-          cao, r_cut_iL, alpha_L, accuracy, (int)time_best);
+  sprintf(b,
+          "\nresulting parameters: mesh: %d, cao: %d, r_cut_iL: %.4e,"
+          "\n                      alpha_L: %.4e, accuracy: %.4e, time: %.0f\n",
+          mesh, cao, r_cut_iL, alpha_L, accuracy, time_best);
   *logger = strcat_alloc(*logger, b);
   return ES_OK;
 }
@@ -2094,8 +2096,8 @@ int dp3m_adaptive_tune(char **logger) {
 /*****************************************************************************/
 
 void p3m_print_dp3m_struct(p3m_parameter_struct ps) {
-  fprintf(stderr, "%d: dipolar p3m_parameter_struct: \n", this_node);
-  fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f \n", ps.alpha_L, ps.r_cut_iL);
+  fprintf(stderr, "%d: dipolar p3m_parameter_struct:\n", this_node);
+  fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f\n", ps.alpha_L, ps.r_cut_iL);
   fprintf(stderr, "   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n", ps.mesh[0],
           ps.mesh[1], ps.mesh[2], ps.mesh_off[0], ps.mesh_off[1],
           ps.mesh_off[2]);
@@ -2262,7 +2264,7 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
          constant;
   if (f * fmid >= 0.0)
     fprintf(stderr,
-            "Root must be bracketed for bisection in dp3m_rtbisection \n");
+            "Root must be bracketed for bisection in dp3m_rtbisection\n");
   rtb = f < 0.0 ? (dx = x2 - x1, x1)
                 : (dx = x1 - x2,
                    x2); // Orient the search dx, and set rtb to x1 or x2 ...
@@ -2275,7 +2277,7 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
     if (fabs(dx) < xacc || fmid == 0.0)
       return rtb;
   }
-  fprintf(stderr, "Too many bisections in JJ_rtbissection \n");
+  fprintf(stderr, "Too many bisections in JJ_rtbissection\n");
   return -9999999.9999;
 }
 

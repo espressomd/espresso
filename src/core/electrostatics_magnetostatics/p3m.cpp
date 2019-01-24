@@ -85,7 +85,7 @@ p3m_data_struct p3m;
 #ifdef P3M_DEBUG
 static void p3m_print(void) {
   fprintf(stderr,
-          "general information: \n\t node: %d \n\t box_l: (%lf, %lf, %lf)\n",
+          "general information:\n\t node: %d\n\t box_l: (%lf, %lf, %lf)\n",
           this_node, box_l[0], box_l[1], box_l[2]);
 
   fprintf(stderr, "p3m parameters:\n\t alpha_L: %lf\n\t r_cut_iL: %lf\n\t \
@@ -322,7 +322,7 @@ void p3m_init() {
     }
 
   } else {
-    P3M_TRACE(fprintf(stderr, "%d: p3m_init: \n", this_node));
+    P3M_TRACE(fprintf(stderr, "%d: p3m_init:\n", this_node));
 
     if (p3m_sanity_checks()) {
       return;
@@ -800,7 +800,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
   /* directions */
   double *d_operator = nullptr;
 
-  P3M_TRACE(fprintf(stderr, "%d: p3m_perform: \n", this_node));
+  P3M_TRACE(fprintf(stderr, "%d: p3m_perform:\n", this_node));
   //     fprintf(stderr, "calculating kspace forces\n");
 
   force_prefac = coulomb.prefactor / (2 * box_l[0] * box_l[1] * box_l[2]);
@@ -816,7 +816,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
   // anymore!!!
 
   /* === k-space calculations === */
-  P3M_TRACE(fprintf(stderr, "%d: p3m_perform: k-Space\n", this_node));
+  P3M_TRACE(fprintf(stderr, "%d: p3m_perform: k-space\n", this_node));
 
   /* === k-space energy calculation  === */
   //     if(energy_flag && p3m.sum_q2 > 0) {
@@ -1791,7 +1791,7 @@ int p3m_adaptive_tune(char **log) {
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
   /* Print Status */
-  sprintf(b, "P3M tune parameters: Accuracy goal = %.5e prefactor = %.5e \n",
+  sprintf(b, "P3M tune parameters: Accuracy goal = %.5e prefactor = %.5e\n",
           p3m.params.accuracy, coulomb.prefactor);
   *log = strcat_alloc(*log, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
@@ -1934,7 +1934,7 @@ int p3m_adaptive_tune(char **log) {
     /* no hope of further optimisation */
     else if (tmp_time > time_best + P3M_TIME_GRAN) {
       P3M_TRACE(fprintf(stderr,
-                        "%d: %lf is mush slower then best time, aborting.\n",
+                        "%d: %lf is much slower than best time, aborting.\n",
                         this_node, tmp_time));
       break;
     }
@@ -1961,8 +1961,8 @@ int p3m_adaptive_tune(char **log) {
   p3m.params.accuracy = accuracy;
   /* broadcast tuned p3m parameters */
   P3M_TRACE(fprintf(stderr,
-                    "%d: Broadcasting P3M parameters: mesh: (%d %d "
-                    "%d), cao: %d, alpha_L: %lf, acccuracy: %lf\n",
+                    "%d: Broadcasting P3M parameters: mesh: (%d %d %d), "
+                    "cao: %d, alpha_L: %lf, acccuracy: %lf\n",
                     this_node, p3m.params.mesh[0], p3m.params.mesh[1],
                     p3m.params.mesh[2], p3m.params.cao, p3m.params.alpha_L,
                     p3m.params.accuracy));
@@ -1971,9 +1971,11 @@ int p3m_adaptive_tune(char **log) {
   P3M_TRACE(p3m_print());
 
   /* Tell the user about the outcome */
-  sprintf(
-      b, "\nresulting parameters:\n%-4d %-4d %-4d %-3d %.5e %.5e %.5e %-8.2f\n",
-      mesh[0], mesh[1], mesh[2], cao, r_cut_iL, alpha_L, accuracy, time_best);
+  sprintf(b,
+          "\nresulting parameters: mesh: (%d %d %d), cao: %d, r_cut_iL: %.4e,"
+          "\n                      alpha_L: %.4e, accuracy: %.4e, time: %.2f\n",
+          mesh[0], mesh[1], mesh[2], cao, r_cut_iL, alpha_L, accuracy,
+          time_best);
   *log = strcat_alloc(*log, b);
   return ES_OK;
 }
@@ -2443,8 +2445,8 @@ void p3m_calc_kspace_stress(double *stress) {
 
 /** Debug function to print p3m parameters */
 void p3m_p3m_print_struct(p3m_parameter_struct ps) {
-  fprintf(stderr, "%d: p3m_parameter_struct: \n", this_node);
-  fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f \n", ps.alpha_L, ps.r_cut_iL);
+  fprintf(stderr, "%d: p3m_parameter_struct:\n", this_node);
+  fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f\n", ps.alpha_L, ps.r_cut_iL);
   fprintf(stderr, "   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n", ps.mesh[0],
           ps.mesh[1], ps.mesh[2], ps.mesh_off[0], ps.mesh_off[1],
           ps.mesh_off[2]);
