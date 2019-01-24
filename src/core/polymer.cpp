@@ -497,11 +497,11 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
         }
       } else {
         bond[1] = part_id - 1;
-          add_particle_bond(part_id, bond);
+        add_particle_bond(part_id, bond);
       }
       if ((k == MPC) && (nonet != 1)) {
         bond[1] = dchain[i][1];
-          add_particle_bond(part_id, bond);
+        add_particle_bond(part_id, bond);
       }
       part_id++;
     }

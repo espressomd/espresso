@@ -51,11 +51,10 @@
 #include "utils/make_unique.hpp"
 #include "utils/mpi/gatherv.hpp"
 
+#include <boost/range/algorithm.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
-#include <boost/range/algorithm.hpp>
 #include <boost/variant.hpp>
-
 
 #include <cmath>
 #include <cstdlib>
@@ -1113,21 +1112,20 @@ int set_particle_fix(int part, int flag) {
 #endif
 
 void delete_particle_bond(int part, Utils::Span<const int> bond) {
-  mpi_send_update_message(get_particle_node(part),
-          UpdateBondMessage{
-              RemoveBond{part, {bond.begin(), bond.end()}}});
+  mpi_send_update_message(
+      get_particle_node(part),
+      UpdateBondMessage{RemoveBond{part, {bond.begin(), bond.end()}}});
 }
 
 void delete_particle_bonds(int part) {
   mpi_send_update_message(get_particle_node(part),
-                          UpdateBondMessage{
-                                  RemoveBonds{part}});
+                          UpdateBondMessage{RemoveBonds{part}});
 }
 
 void add_particle_bond(int part, Utils::Span<const int> bond) {
-  mpi_send_update_message(get_particle_node(part),
-                          UpdateBondMessage{
-                                  AddBond{part, {bond.begin(), bond.end()}}});
+  mpi_send_update_message(
+      get_particle_node(part),
+      UpdateBondMessage{AddBond{part, {bond.begin(), bond.end()}}});
 }
 
 void remove_all_particles() {
@@ -1270,7 +1268,7 @@ void local_rescale_particles(int dir, double scale) {
     if (dir < 3)
       p.r.p[dir] *= scale;
     else {
-        p.r.p *= scale;
+      p.r.p *= scale;
     }
   }
 }
