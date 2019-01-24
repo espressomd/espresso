@@ -38,8 +38,6 @@ endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-set(HDF5_PREFER_PARALLEL 1)
-
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
@@ -60,7 +58,7 @@ option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" OFF)
 option(WITH_BENCHMARKS "Enable benchmarks"   OFF)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if(CMAKE_VERSION VERSION_GREATER 3.5.2 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
 if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
@@ -249,6 +247,7 @@ endif()
 
 # We need the parallel hdf5 version!
 if (WITH_HDF5)
+  set(HDF5_PREFER_PARALLEL 1)
   find_package(HDF5 "1.8" COMPONENTS C)
   if(HDF5_IS_PARALLEL)
     set(H5MD 1)
@@ -351,6 +350,11 @@ else()
   set(BOOST_MINIMUM_VERSION "1.53.0")
 endif()
 
+# old Boost.MPI versions contain a use-after-free bug that seems to only cause crashes on 32-bit architectures
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(BOOST_MINIMUM_VERSION "1.67.0")
+endif()
+
 find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
 
 if(Boost_VERSION VERSION_GREATER 106399 AND Boost_VERSION VERSION_LESS 106500)
@@ -382,12 +386,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(APPLE)
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
-endif()
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
-endif()
 # drop 'lib' prefix from all libraries
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
@@ -415,6 +413,11 @@ endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "16.0")
   # workaround for compiler crash related to decltype() and variadic template usage inside Boost
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX11_VARIADIC_TEMPLATES")
+endif()
+
+# prevent 80-bit arithmetic on old Intel processors
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffloat-store")
 endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)

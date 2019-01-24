@@ -376,6 +376,7 @@ The parameter ``channel_width`` specifies the distance between the top and the p
 The parameter ``pore_length`` specifies the distance between the bottom and the plateau edge.
 The parameter ``pore_width`` specifies the distance between the two plateau edges, it is the space between the left and right walls of the pore region.
 The parameter ``pore_mouth`` specifies the location (z-coordinate) of the pore opening (center). It is always centered in the x-direction.
+The parameter ``dividing_plane`` specifies the location (z-coordinate) of the middle between the two walls.
 
 All the edges  are smoothed via the parameters ``upper_smoothing_radius`` (for the concave corner at the edge of the plateau region) and ``lower_smoothing_radius`` (for the convex corner at the bottom of the pore region).
 The meaning of the geometrical parameters can be inferred from the schematic in Fig. :ref:`slitpore <figure-slitpore>`.
@@ -389,12 +390,15 @@ The meaning of the geometrical parameters can be inferred from the schematic in 
 
 Pictured is an example constraint with a ``Slitpore`` shape created with ::
 
-    slitpore = Slitpore(channel_width=30,
-                        lower_smoothing_radius=3,
-                        upper_smoothing_radius=3,
-                        pore_length=40,
-                        pore_mouth=60,
-                        pore_width=10)
+
+    slitpore = Slitpore(channel_width=15,
+                        lower_smoothing_radius=1.5,
+                        upper_smoothing_radius=2,
+                        pore_length=20,
+                        pore_mouth=30,
+                        pore_width=5,
+                        dividing_plane=40)
+
     system.constraints.add(shape=slitpore, particle_type=0, penetrable=1)
 
 
