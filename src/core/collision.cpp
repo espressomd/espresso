@@ -371,12 +371,9 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // Create the bond
 
   // First, fill bond data structure
-  int bondT[3];
-  bondT[0] = bond_id;
-  bondT[1] = p1.p.identity;
-  bondT[2] = p2.p.identity;
+  const Vector3i bondT = {bond_id, p1.p.identity, p2.p.identity};
 
-  local_change_bond(p.p.identity, bondT, 0);
+  add_particle_bond(p.p.identity, bondT);
 }
 
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -409,7 +406,7 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
     bondG[1] = current_vs_pid - 2;
     // Only add bond if vs was created on this node
     if (local_particles[current_vs_pid - 1])
-      local_change_bond(current_vs_pid - 1, bondG, 0);
+      add_particle_bond(current_vs_pid - 1, bondG);
     break;
   }
   case 2: {
@@ -419,9 +416,9 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
     bondG[2] = c.pp2;
     // Only add bond if vs was created on this node
     if (local_particles[current_vs_pid - 1])
-      local_change_bond(current_vs_pid - 1, bondG, 0);
+      add_particle_bond(current_vs_pid - 1, bondG);
     if (local_particles[current_vs_pid - 2])
-      local_change_bond(current_vs_pid - 2, bondG, 0);
+      add_particle_bond(current_vs_pid - 2, bondG);
     break;
   }
   }
@@ -436,9 +433,9 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
   bondG[0] = collision_params.bond_vs;
   bondG[1] = vs_pid_plus_one - 1;
   if (p1->p.type == collision_params.part_type_after_glueing) {
-    local_change_bond(p1->p.identity, bondG, 0);
+    add_particle_bond(p1->p.identity, bondG);
   } else {
-    local_change_bond(p2->p.identity, bondG, 0);
+    add_particle_bond(p2->p.identity, bondG);
   }
 }
 
@@ -539,7 +536,7 @@ void handle_collisions() {
       int bondG[2];
       bondG[0] = collision_params.bond_centers;
       bondG[1] = c.pp2;
-      local_change_bond(c.pp1, bondG, 0);
+      add_particle_bond(c.pp1, bondG);
     }
   }
 
@@ -676,7 +673,7 @@ void handle_collisions() {
             int bondG[2];
             bondG[0] = collision_params.bond_centers;
             bondG[1] = c.pp2;
-            local_change_bond(c.pp1, bondG, 0);
+            add_particle_bond(c.pp1, bondG);
           }
 
           // Change type of particle being attached, to make it inert

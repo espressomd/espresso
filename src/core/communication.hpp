@@ -172,17 +172,6 @@ void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
                          double angle);
 #endif
 
-/** Issue REQ_SET_BOND: send bond.
-    Also calls \ref on_particle_change.
-    \param pnode    node it is attached to.
-    \param part     identity of principal atom of the bond.
-    \param bond     field containing the bond type number and the identity of
-   all bond partners (secondary atoms of the bond).
-    \param _delete   if true, do not add the bond, rather delete it if found
-    \return 1 on success or 0 if not (e. g. bond to delete does not exist)
-*/
-int mpi_send_bond(int pnode, int part, int *bond, int _delete);
-
 /** Issue REQ_SET_EXCLUSION: send exclusions.
     Also calls \ref on_particle_change.
     \param part     identity of first particle of the exclusion.

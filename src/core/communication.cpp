@@ -112,7 +112,6 @@ int n_nodes = -1;
   CB(mpi_bcast_event_slave)                                                    \
   CB(mpi_place_particle_slave)                                                 \
   CB(mpi_send_swimming_slave)                                                  \
-  CB(mpi_send_bond_slave)                                                      \
   CB(mpi_recv_part_slave)                                                      \
   CB(mpi_integrate_slave)                                                      \
   CB(mpi_bcast_ia_params_slave)                                                \
@@ -442,52 +441,6 @@ void mpi_rotate_particle_slave(int pnode, int part) {
 
   on_particle_change();
 #endif
-}
-
-/********************* REQ_SET_BOND ********/
-
-int mpi_send_bond(int pnode, int part, int *bond, int _delete) {
-  int bond_size, stat = 0;
-
-  mpi_call(mpi_send_bond_slave, pnode, part);
-
-  bond_size = (bond) ? bonded_ia_params[bond[0]].num + 1 : 0;
-
-  if (pnode == this_node) {
-    stat = local_change_bond(part, bond, _delete);
-    on_particle_change();
-    return stat;
-  }
-  /* else */
-  MPI_Send(&bond_size, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
-  if (bond_size)
-    MPI_Send(bond, bond_size, MPI_INT, pnode, SOME_TAG, comm_cart);
-  MPI_Send(&_delete, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
-  MPI_Recv(&stat, 1, MPI_INT, pnode, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-  on_particle_change();
-  return stat;
-}
-
-void mpi_send_bond_slave(int pnode, int part) {
-  int bond_size = 0, _delete = 0, stat;
-
-  if (pnode == this_node) {
-    MPI_Recv(&bond_size, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    int *bond;
-    if (bond_size) {
-      bond = (int *)Utils::malloc(bond_size * sizeof(int));
-      MPI_Recv(bond, bond_size, MPI_INT, 0, SOME_TAG, comm_cart,
-               MPI_STATUS_IGNORE);
-    } else
-      bond = nullptr;
-    MPI_Recv(&_delete, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    stat = local_change_bond(part, bond, _delete);
-    if (bond)
-      free(bond);
-    MPI_Send(&stat, 1, MPI_INT, 0, SOME_TAG, comm_cart);
-  }
-
-  on_particle_change();
 }
 
 /****************** REQ_GET_PART ************/
