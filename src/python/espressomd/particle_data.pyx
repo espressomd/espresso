@@ -1378,7 +1378,7 @@ cdef class ParticleHandle(object):
             raise Exception(
                 "Bond partners {} include the particle {} itself.".format(bond[1:], self._id))
         
-        add_particle_bond(self._id, make_const_span( bond_info, len(bond)))
+        add_particle_bond(self._id, make_const_span(bond_info, len(bond)))
 
     def delete_verified_bond(self, bond):
         """

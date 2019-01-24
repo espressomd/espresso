@@ -53,7 +53,7 @@ cdef extern from "utils/List.hpp":
 
 cdef extern from "utils/Span.hpp" namespace "Utils":
     cppclass Span[T]:
-         pass
+        pass
 
     Span[const int] make_const_span(int *, int)
 
