@@ -21,8 +21,9 @@
 
 /** \file
  *
- * Cuda (.cu) file for the P3M electrostatics method.
- * Header file \ref p3m_gpu.hpp .
+ *  P3M electrostatics on GPU.
+ *
+ *  The corresponding header file is p3m_gpu.hpp.
  */
 
 #include "config.hpp"

@@ -30,10 +30,9 @@
  *  Particle-Mesh part.
  *
  *  Further reading:
- *  <ul>
- *  <li> J.J. Cerda, P3M for dipolar interactions. J. Chem. Phys, 129, xxx
- * ,(2008).
- *  </ul>
+ *  - J. J. Cerda,
+ *    *P3M for dipolar interactions*,
+ *    J. Chem. Phys (129) 234104, 2008
  *
  *  Implementation in p3m-dipolar.cpp.
  */
@@ -55,7 +54,7 @@ typedef struct {
   double *rs_mesh;
   /** real space mesh (local) for CA/FFT of the dipolar field.*/
   double *rs_mesh_dip[3];
-  /** k space mesh (local) for k space calculation and FFT.*/
+  /** k-space mesh (local) for k-space calculation and FFT.*/
   double *ks_mesh;
 
   /** number of dipolar particles (only on master node). */
@@ -128,60 +127,65 @@ int dp3m_set_eps(double eps);
  */
 void dp3m_init(void);
 
-/** Updates \ref p3m_parameter_struct::alpha and \ref
- * p3m_parameter_struct::r_cut if \ref box_l changed. */
+/** Update @ref dp3m_parameter_struct::alpha "alpha" and
+    @ref dp3m_parameter_struct::r_cut "r_cut" if @ref box_l changed */
 void dp3m_scaleby_box_l();
 
 /// sanity checks
 bool dp3m_sanity_checks();
 
-/** assign the physical dipoles using the tabulated assignment function.
+/** Assign the physical dipoles using the tabulated assignment function.
     If Dstore_ca_frac is true, then the charge fractions are buffered in
    Dcur_ca_fmp and
     Dcur_ca_frac. */
 void dp3m_dipole_assign(void);
 
-/** reset dipolar p3m core parameters */
+/** Reset @ref dp3m core parameters */
 void dp3m_deactivate(void);
 
 /** Tune dipolar P3M parameters to desired accuracy.
 
-
-    The parameters are tuned to obtain the desired accuracy in best
-    time, by running mpi_integrate(0) for several parameter sets.
+    The parameters
+    @ref dp3m_parameter_struct::mesh "mesh",
+    @ref dp3m_parameter_struct::cao "cao",
+    @ref dp3m_parameter_struct::r_cut_iL "r_cut_iL" and
+    @ref dp3m_parameter_struct::alpha_L "alpha_L"
+    are tuned to obtain the target accuracy (initially stored in
+    @ref dp3m_parameter_struct::accuracy "accuracy") in optimal time.
+    These parameters are stored in the @ref dp3m object.
 
     The function utilizes the analytic expression of the error estimate
-    for the dipolar P3M method see JCP,2008 paper by J.J.Cerda et al in
+    for the dipolar P3M method in the paper of J. J. Cerda et al., JCP 2008 in
     order to obtain the rms error in the force for a system of N randomly
     distributed particles in a cubic box.
     For the real space error the estimate of Kolafa/Perram is used.
 
-    Parameter range if not given explicit values: For \ref
-   p3m_parameter_struct::r_cut_iL
-    the function uses the values (\ref min_local_box_l -\ref #skin) /
-    (n * \ref box_l), n being an integer (this implies the assumption that \ref
-    p3m_parameter_struct::r_cut_iL is the largest cutoff in the system!). For
-   \ref
-    p3m_parameter_struct::mesh the function uses the two values which matches
-   best the
-    equation: number of mesh point = number of magnetic dipolar particles. For
-    \ref p3m_parameter_struct::cao the function considers all possible values.
+    Parameter ranges if not given explicit values via dp3m_set_tune_params():
+    - @p r_cut_iL starts from (@ref min_local_box_l - @ref #skin) / (
+      n * @ref box_l), with n an integer (this implies @p r_cut_iL is the
+      largest cutoff in the system!)
+    - @p mesh is set up such that the number of mesh points is equal to the
+      number of magnetic dipolar particles
+    - @p cao explores all possible values
+    - @p alpha_L is tuned for each tuple (@p r_cut_iL, @p mesh, @p cao) and
+      calculated assuming that the error contributions of real and reciprocal
+      space should be equal
 
-    For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming
-   that the
-    error contributions of real and reciprocal space should be equal.
+    After checking if the total error lies below the target accuracy, the
+    time needed for one force calculation (including Verlet list update)
+    is measured via time_force_calc().
 
-    After checking if the total error fulfills the accuracy goal the
-    time needed for one force calculation (including Verlet list
-    update) is measured via \ref mpi_integrate (0).
+    The function generates a log of the performed tuning.
 
-    The function returns a log of the performed tuning.
+    The function is based on routines of the program HE_Q.cpp for charges
+    written by M. Deserno.
 
-    The function is based on routines for charges.
+ *  @param[out]  log
+ *  @return @ref ES_OK or @ref ES_ERROR
  */
 int dp3m_adaptive_tune(char **log);
 
-/** compute the k-space part of forces and energies for the magnetic
+/** Compute the k-space part of forces and energies for the magnetic
  * dipole-dipole interaction  */
 double dp3m_calc_kspace_forces(int force_flag, int energy_flag);
 
@@ -195,10 +199,20 @@ void dp3m_count_magnetic_particles();
     which may be smaller than 0, in which case the charge is assumed to be
    virtual and is not
     stored in the Dca_frac arrays. */
+
+/** Assign a single dipole into the current dipole grid.
+ *
+ *  @param[in] real_pos   %Particle position in real space
+ *  @param[in] mu         %Particle magnetic dipole magnitude
+ *  @param[in] dip        %Particle magnetic dipole vector
+ *  @param[in] cp_cnt     The running index, which may be smaller than 0, in
+ *                        which case the dipole is assumed to be virtual and
+ *                        is not stored in the @ref dp3m_data_struct::ca_frac
+ *                        "ca_frac" arrays */
 void dp3m_assign_dipole(double const real_pos[3], double mu,
                         double const dip[3], int cp_cnt);
 
-/** shrink wrap the dipoles grid */
+/** Shrink wrap the dipoles grid */
 void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
 
 /** Calculate real space contribution of p3m dipolar pair forces and torques.

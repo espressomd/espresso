@@ -18,6 +18,11 @@
 */
 #ifndef _P3M_GPU_H
 #define _P3M_GPU_H
+/** \file
+ *  P3M electrostatics on GPU.
+ *
+ *  Implementation in p3m_gpu_cuda.cu.
+ */
 
 #define _P3M_GPU_FLOAT
 //#define _P3M_GPU_REAL_DOUBLE

@@ -21,7 +21,7 @@
 #ifndef _P3M_COMMON_H
 #define _P3M_COMMON_H
 /** \file
- *  common functions for dipolar and charge p3m.
+ *  Common functions for dipolar and charge P3M.
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the Ewald summation. Details of the used method can be found in
@@ -29,26 +29,25 @@
  *  Particle-Mesh part.
  *
  *  Further reading:
- *  <ul>
- *  <li> P.P. Ewald,
- *       <i>Die Berechnung optischer und elektrostatischer Gitterpotentiale</i>,
+ *  -    P. P. Ewald,
+ *       *Die Berechnung optischer und elektrostatischer Gitterpotentiale*,
  *       Ann. Phys. (64) 253-287, 1921
- *  <li> R. W. Hockney and J. W. Eastwood,
- *       <i>Computer Simulation Using Particles</i>,
+ *  -    R. W. Hockney and J. W. Eastwood,
+ *       *Computer simulation using particles*,
  *       IOP, London, 1988
- *  <li> M. Deserno and C. Holm,
- *       <i>How to mesh up {E}wald sums. I. + II.</i>,
+ *  -    M. Deserno and C. Holm,
+ *       *How to mesh up Ewald sums I + II*,
  *       J. Chem. Phys. (109) 7678, 1998; (109) 7694, 1998
- *  <li> M. Deserno, C. Holm and H. J. Limbach,
- *       <i>How to mesh up {E}wald sums. </i>,
+ *  -    M. Deserno, C. Holm and H. J. Limbach,
+ *       *How to mesh up Ewald sums*,
  *       in Molecular Dynamics on Parallel Computers,
  *       Ed. R. Esser et al., World Scientific, Singapore, 2000
- *  <li> M. Deserno,
- *       <i>Counterion condensation for rigid linear polyelectrolytes</i>,
- *       PhdThesis, Universit{\"a}t Mainz, 2000
- *  <li> J.J. Cerda, P3M for dipolar interactions. J. Chem. Phys, 129, xxx
- * ,(2008).
- *  </ul>
+ *  -    M. Deserno,
+ *       *Counterion condensation for rigid linear polyelectrolytes*,
+ *       PhD Thesis, Universität Mainz, 2000
+ *  -    J. J. Cerda,
+ *       *P3M for dipolar interactions*,
+ *       J. Chem. Phys (129) 234104, 2008
  *
  */
 #include "config.hpp"
@@ -56,19 +55,18 @@
 
 #if defined(P3M) || defined(DP3M)
 
-/** Error Codes for p3m tuning (version 2) :
-    P3M_TUNE_FAIL: force evaluation failed,
-    P3M_TUNE_NO_CUTOFF: could not find a valid realspace cutoff radius,
-    P3M_TUNE_CAO_TOO_LARGE: Charge assignment order to large for mesh size,
-    P3M_TUNE_ELCTEST: conflict with ELC gap size.
-*/
-
+/** Error Codes for p3m tuning (version 2) */
 enum P3M_TUNE_ERROR : long {
+  /** force evaluation failed */
   P3M_TUNE_FAIL = 1,
+  /** could not find a valid realspace cutoff radius */
   P3M_TUNE_NOCUTOFF = 2,
+  /** charge assignment order too large for mesh size */
   P3M_TUNE_CAO_TOO_LARGE = 4,
+  /** conflict with ELC gap size */
   P3M_TUNE_ELCTEST = 8,
   P3M_TUNE_CUTOFF_TOO_LARGE = 16,
+  /** could not achieve target accuracy */
   P3M_TUNE_ACCURACY_TOO_LARGE = 32
 };
 

@@ -18,6 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef P3M_ERROR_GPU_HPP
 #define P3M_ERROR_GPU_HPP
+/** @file
+ *  P3M electrostatics on GPU.
+ *
+ *  Implementation in p3m_gpu_error_cuda.cu.
+ */
 
 #include "config.hpp"
 
