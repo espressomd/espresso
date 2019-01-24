@@ -237,7 +237,7 @@ if $make_check; then
         if $check_odd_only; then
             cmd "make -j${build_procs} check_python_parallel_odd $make_params" || exit 1
 	elif $check_gpu_only; then
-	    cmd "make -j${build_procs} check_gpu_only $make_params" || exit 1
+	    cmd "make -j${build_procs} check_python_gpu $make_params" || exit 1
         else
             cmd "make -j${build_procs} check_python $make_params" || exit 1
         fi
