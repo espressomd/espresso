@@ -57,7 +57,7 @@ cdef extern from "utils/Span.hpp" namespace "Utils":
         Span(T * , int size)
 
     Span[T] make_span[T](T *, int)
-    Span[const T] make_const_span[T](const T *, int)
+    Span[const T] make_const_span[T](T *, int)
 
 cdef extern from "utils/Histogram.hpp" namespace "Utils":
     cdef void unravel_index(const int * const len_dims, const int ndims,
