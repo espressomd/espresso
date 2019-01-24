@@ -26,10 +26,10 @@
  */
 
 #include "config.hpp"
-#include "utils.hpp"
-#include "utils/Vector.hpp"
 
+#include "utils/Vector.hpp"
 #include "utils/List.hpp"
+#include "utils/Span.hpp"
 
 #include <memory>
 
@@ -843,17 +843,24 @@ int set_particle_ext_force(int part, const Vector3d &force);
 int set_particle_fix(int part, int flag);
 #endif
 
-/** Call only on the master node: change particle bond.
+/** Call only on the master node: remove bond from particle.
     @param part     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
-    identity of all bond partners (secondary atoms of the bond). If nullptr,
-   delete
-   all bonds.
-    @param _delete   if true, do not add the bond, rather delete it if found
-    @return ES_OK on success or ES_ERROR if no success
-    (e. g. particle or bond to delete does not exist)
+    identity of all bond partners (secondary atoms of the bond).
 */
-int change_particle_bond(int part, int *bond, int _delete);
+void delete_particle_bond(int part, Utils::Span<const int> bond);
+
+/** Call only on the master node: remove all bonds from particle.
+    @param part     identity of principal atom of the bond.
+*/
+void delete_particle_bonds(int part);
+
+/** Call only on the master node: Add bond to particle.
+    @param part     identity of principal atom of the bond.
+    @param bond     field containing the bond type number and the
+    identity of all bond partners (secondary atoms of the bond).
+*/
+void add_particle_bond(int part, Utils::Span<const int> bond);
 
 #ifdef EXCLUSIONS
 /** Call only on the master node: change particle constraints.
@@ -962,7 +969,7 @@ inline bool do_nonbonded(Particle const *p1, Particle const *p2) {
 #endif
 
 /** Remove bond from particle if possible */
-int try_delete_bond(Particle *part, int *bond);
+int try_delete_bond(Particle *part, const int *bond);
 
 /** Remove exclusion from particle if possible */
 void try_delete_exclusion(Particle *part, int part2);

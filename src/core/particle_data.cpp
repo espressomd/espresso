@@ -52,7 +52,10 @@
 #include "utils/mpi/gatherv.hpp"
 
 #include <boost/serialization/variant.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/range/algorithm.hpp>
 #include <boost/variant.hpp>
+
 
 #include <cmath>
 #include <cstdlib>
@@ -80,7 +83,7 @@ namespace {
  *
  * @tparam S Substruct type of Particle
  * @tparam s Pointer to a member of Particle
- * @tparam T Type of the member to update
+ * @tparam T Type of the member to update, must be serializable
  * @tparam m Pointer to the member.
  */
 template <typename S, S Particle::*s, typename T, T S::*m>
@@ -133,6 +136,14 @@ struct UpdateExternalFlag {
   }
 };
 #endif
+
+struct RemoveParticle {
+    int id;
+
+    void operator()(Particle &p) {
+
+    }
+};
 
 using Prop = ParticleProperties;
 
@@ -218,6 +229,60 @@ using UpdateForceMessage = boost::variant <
 >;
 
 /**
+ * @brief Delete specific bond.
+ */
+struct RemoveBond {
+    int id;
+    std::vector<int> bond;
+
+    void operator()(Particle &p) const {
+      try_delete_bond(&p, bond.data());
+    }
+
+    template<class Archive>
+            void serialize(Archive &ar, long int) {
+        ar & id & bond;
+    }
+};
+
+
+/**
+ * @brief Delete all bonds.
+ */
+struct RemoveBonds {
+    int id;
+
+    void operator()(Particle &p) const {
+      p.bl.clear();
+    }
+
+    template<class Archive>
+    void serialize(Archive &ar, long int) {
+        ar & id;
+    }
+};
+
+struct AddBond {
+    int id;
+    std::vector<int> bond;
+
+    void operator()(Particle &p) const {
+        boost::copy(bond, std::back_inserter(p.bl));
+    }
+
+    template<class Archive>
+    void serialize(Archive &ar, long int) {
+        ar & id & bond;
+    }
+};
+
+using UpdateBondMessage = boost::variant
+        < RemoveBond
+        , RemoveBonds
+        , AddBond
+        >;
+
+/**
  * @brief Top-level message.
  *
  * A message is either updates a property,
@@ -233,7 +298,8 @@ using UpdateMessage = boost::variant<
         UpdatePropertyMessage,
         UpdatePositionMessage,
         UpdateMomentumMessage,
-        UpdateForceMessage
+        UpdateForceMessage,
+        UpdateBondMessage
         >;
 // clang-format on
 
@@ -349,7 +415,7 @@ Particle **local_particles = nullptr;
  ************************************************/
 
 /** Remove bond from particle if possible */
-int try_delete_bond(Particle *part, int *bond);
+int try_delete_bond(Particle *part, const int *bond);
 
 /** Remove exclusion from particle if possible */
 void try_delete_exclusion(Particle *part, int part2);
@@ -1054,20 +1120,22 @@ int set_particle_fix(int part, int flag) {
 
 #endif
 
-int change_particle_bond(int part, int *bond, int _delete) {
-  auto const pnode = get_particle_node(part);
+void delete_particle_bond(int part, Utils::Span<const int> bond) {
+  mpi_send_update_message(get_particle_node(part),
+          UpdateBondMessage{
+              RemoveBond{part, {bond.begin(), bond.end()}}});
+}
 
-  if (_delete != 0 || bond == nullptr)
-    _delete = 1;
+void delete_particle_bonds(int part) {
+  mpi_send_update_message(get_particle_node(part),
+                          UpdateBondMessage{
+                                  RemoveBonds{part}});
+}
 
-  if (bond != nullptr) {
-    if (bond[0] < 0 || bond[0] >= bonded_ia_params.size()) {
-      runtimeErrorMsg() << "invalid/unknown bonded interaction type "
-                        << bond[0];
-      return ES_ERROR;
-    }
-  }
-  return mpi_send_bond(pnode, part, bond, _delete);
+void add_particle_bond(int part, Utils::Span<const int> bond) {
+  mpi_send_update_message(get_particle_node(part),
+                          UpdateBondMessage{
+                                  AddBond{part, {bond.begin(), bond.end()}}});
 }
 
 void remove_all_particles() {
@@ -1210,9 +1278,7 @@ void local_rescale_particles(int dir, double scale) {
     if (dir < 3)
       p.r.p[dir] *= scale;
     else {
-      p.r.p[0] *= scale;
-      p.r.p[1] *= scale;
-      p.r.p[2] *= scale;
+        p.r.p *= scale;
     }
   }
 }
@@ -1239,7 +1305,7 @@ int local_change_bond(int part, int *bond, int _delete) {
   return ES_OK;
 }
 
-int try_delete_bond(Particle *part, int *bond) {
+int try_delete_bond(Particle *part, const int *bond) {
   IntList *bl = &part->bl;
   int i, j, type, partners;
 

@@ -20,7 +20,7 @@ from __future__ import print_function, absolute_import
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from espressomd.utils cimport Vector3d, int_list
+from espressomd.utils cimport Vector3d, int_list, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
@@ -190,7 +190,9 @@ cdef extern from "particle_data.hpp":
         int set_particle_fix(int part, int flag)
         void pointer_to_fix(const particle * P, const int * & res)
 
-    int change_particle_bond(int part, int * bond, int _delete)
+    void delete_particle_bond(int part, Span[const int] bond)
+    void delete_particle_bonds(int part)
+    void add_particle_bond(int part, Span[const int] bond)
 
     IF EXCLUSIONS:
         int change_exclusion(int part, int part2, int _delete)

@@ -109,6 +109,14 @@ public:
 
   constexpr pointer data() const { return m_ptr; }
 };
+
+template <typename T> Span<T> make_span(T *p, size_t N) {
+  return Span<T>(p, N);
+}
+
+template <typename T> Span<const T> make_const_span(const T *p, size_t N) {
+  return Span<const T>(p, N);
+}
 } // namespace Utils
 
 #endif
