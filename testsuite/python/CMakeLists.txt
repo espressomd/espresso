@@ -46,7 +46,7 @@ function(PYTHON_TEST)
 
   if(${TEST_MAX_NUM_PROC} LESS 2)
     set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};serial")
-  elseif(${TEST_MAX_NUM_PROC} LESS 2)
+  elseif(${TEST_MAX_NUM_PROC} LESS 3)
     set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};serial;parallel")
   else()
     set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};serial;parallel;parallel_odd")
