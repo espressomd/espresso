@@ -59,6 +59,7 @@ LbWalberla::LbWalberla(double viscosity, double agrid,
                        const Vector3i &node_grid, double skin) {
   
   m_skin = skin;
+  m_agrid = agrid;
   
   Vector3i grid_dimensions;
   for (int i=0;i<3;i++) {
