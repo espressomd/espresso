@@ -19,20 +19,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
- *  P3M algorithm for long range magnetic dipole-dipole
- interaction.
+ *  P3M algorithm for long range magnetic dipole-dipole interaction.
  *
- * @note
-     In general the magnetic dipole-dipole functions bear the same
-     name than the charge-charge, but adding a "D" in front of the name
-     and replacing "charge" by "dipole". In this way one
-     can recognize the similarity of the functions while avoiding nasty
-     confusions in their use.
-
-     By default the magnetic epsilon is metallic = 0.
-
- * The corresponding header file is p3m-dipolar.hpp.
-*/
+ *  @note
+ *      In general the magnetic dipole-dipole functions bear the same name than
+ *      the charge-charge, but adding a "D" in front of the name and replacing
+ *      "charge" by "dipole". In this way one can recognize the similarity of
+ *      the functions while avoiding nasty confusions in their use.
+ *
+ *       By default the magnetic epsilon is metallic = 0.
+ *
+ *  The corresponding header file is p3m-dipolar.hpp.
+ */
 
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 
@@ -62,12 +60,12 @@ using Utils::sinc;
  * DEFINES
  ************************************************/
 
-/* MPI tags for the charge-charge p3m communications: */
-/** Tag for communication in P3M_init() -> send_calc_mesh(). */
+/* MPI tags for the dipole-dipole p3m communications: */
+/** Tag for communication in dp3m_init() -> dp3m_calc_send_mesh(). */
 #define REQ_P3M_INIT_D 2001
-/** Tag for communication in p3m_gather_fft_grid(). */
+/** Tag for communication in dp3m_gather_fft_grid(). */
 #define REQ_P3M_GATHER_D 2011
-/** Tag for communication in p3m_spread_force_grid(). */
+/** Tag for communication in dp3m_spread_force_grid(). */
 #define REQ_P3M_SPREAD_D 2021
 
 /************************************************
@@ -81,24 +79,28 @@ dp3m_data_struct dp3m;
 /*@{*/
 
 /** Calculate for magnetic dipoles the properties of the send/recv sub-meshes
- * of the local FFT mesh.
+ *  of the local FFT mesh.
  *  In order to calculate the recv sub-meshes there is a communication of
- *  the margins between neighbouring nodes. */
+ *  the margins between neighbouring nodes.
+ */
 static void dp3m_calc_send_mesh();
 
 /** Initialize for magnetic dipoles the (inverse) mesh constant @ref
-    dp3m_parameter_struct::a "a" (@ref dp3m_parameter_struct::ai "ai") and the cutoff for
-   charge
-    assignment \ref dp3m_parameter_struct::cao_cut "cao_cut", which has to be done by @ref
-    dp3m_init() once and by @ref dp3m_scaleby_box_l()
-    whenever the @ref box_l changes.  */
+ *  p3m_parameter_struct::a "a" (@ref p3m_parameter_struct::ai "ai") and the
+ *  cutoff for charge assignment @ref p3m_parameter_struct::cao_cut "cao_cut".
+ *
+ *  Function called by @ref dp3m_init() once and by @ref
+ *  dp3m_scaleby_box_l() whenever the @ref box_l changes.
+ */
 static void dp3m_init_a_ai_cao_cut();
 
 /** Calculate for magnetic dipoles the spatial position of the left down mesh
-   point of the local mesh, to be
-    stored in @ref p3m_local_mesh::ld_pos "ld_pos"; function called by @ref
-   dp3m_calc_local_ca_mesh() once
-    and by @ref dp3m_scaleby_box_l() whenever the @ref box_l changes. */
+ *  point of the local mesh, to be stored in
+ *  @ref p3m_local_mesh::ld_pos "ld_pos".
+ *
+ *  Function called by @ref dp3m_calc_local_ca_mesh() once and by
+ *  @ref dp3m_scaleby_box_l() whenever the @ref box_l changes.
+ */
 static void dp3m_calc_lm_ld_pos();
 
 /** Gather FFT grid.
@@ -109,32 +111,36 @@ static void dp3m_gather_fft_grid(double *mesh);
 
 /** Spread force grid.
  *  After the k-space calculations each node needs to get all force
- *  information to reassign the forces from the grid to the
- *  particles.
+ *  information to reassign the forces from the grid to the particles.
  */
 static void dp3m_spread_force_grid(double *mesh);
 
 /** realloc charge assignment fields. */
 static void dp3m_realloc_ca_fields(int newsize);
 
-/** Initialize the (inverse) mesh constant @ref dp3m_parameter_struct::a "a" (@ref
-    dp3m_parameter_struct::ai "ai") and the cutoff for charge assignment @ref
-    dp3m_parameter_struct::cao_cut "cao_cut", which has to be done by @ref dp3m_init()
-    once and by @ref dp3m_scaleby_box_l() whenever the @ref box_l
-    changes.  */
+/** Initialize the (inverse) mesh constant @ref p3m_parameter_struct::a "a"
+ *  (@ref p3m_parameter_struct::ai "ai") and the cutoff for charge assignment
+ *  @ref p3m_parameter_struct::cao_cut "cao_cut".
+ *
+ *  Function called by @ref dp3m_init() once and by @ref dp3m_scaleby_box_l()
+ *  whenever the @ref box_l changes.
+ */
 static void dp3m_init_a_ai_cao_cut();
 
-/** Checks for correctness for magnetic dipoles in P3M of the cao_cut, necessary
- * when the box length changes */
+/** Checks for correctness for magnetic dipoles in P3M of the cao_cut,
+ *  necessary when the box length changes
+ */
 static bool dp3m_sanity_checks_boxl(void);
 
 /** Calculate properties of the local FFT mesh for the
-    charge assignment process. */
+ *   charge assignment process.
+ */
 static void dp3m_calc_local_ca_mesh();
 
 /** Interpolate the P-th order charge assignment function from
- * Hockney/Eastwood 5-189 (or 8-61). The following charge fractions
- * are also tabulated in Deserno/Holm. */
+ *  Hockney/Eastwood 5-189 (or 8-61). The following charge fractions
+ *  are also tabulated in Deserno/Holm.
+ */
 static void dp3m_interpolate_dipole_assignment_function();
 
 /** Shift the mesh points by mesh/2 */
@@ -142,39 +148,44 @@ static void dp3m_calc_meshift();
 
 /** Calculate the Fourier transformed differential operator.
  *  Remark: This is done on the level of n-vectors and not k-vectors,
- *           i.e. the prefactor i*2*PI/L is missing! */
+ *          i.e. the prefactor i*2*PI/L is missing!
+ */
 static void dp3m_calc_differential_operator();
 
 /** Calculate the influence function optimized for the dipolar forces. */
 static void dp3m_calc_influence_function_force();
 
 /** Calculate the influence function optimized for the dipolar energy and
- * torques. */
+ *  torques.
+ */
 static void dp3m_calc_influence_function_energy();
 
 /** Calculate the constants necessary to correct the dipolar energy to minimize
- * the error. */
+ *  the error.
+ */
 static void dp3m_compute_constants_energy_dipolar();
 
 /** Calculate the aliasing sums for the optimal influence function.
  *
- * Calculates the aliasing sums in the nominator and denominator of
- * the expression for the optimal influence function (see
- * Hockney/Eastwood: 8-22, p. 275).
+ *  Calculates the aliasing sums in the nominator and denominator of
+ *  the expression for the optimal influence function (see
+ *  Hockney/Eastwood: 8-22, p. 275).
  *
- * \param  n           n-vector for which the aliasing sum is to be performed.
- * \param  nominator   aliasing sums in the nominator.
- * \return denominator aliasing sum in the denominator
+ *  \param  n           n-vector for which the aliasing sum is to be performed
+ *  \param  nominator   aliasing sums in the nominator
+ *  \retval denominator aliasing sum in the denominator
  */
-static double dp3m_perform_aliasing_sums_force(const int n[3], double nominator[1]);
-static double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]);
+static double dp3m_perform_aliasing_sums_force(const int n[3],
+                                               double nominator[1]);
+static double dp3m_perform_aliasing_sums_energy(const int n[3],
+                                                double nominator[1]);
 
 static double dp3m_k_space_error(double box_size, double prefac, int mesh,
                                  int cao, int n_c_part, double sum_q2,
                                  double alpha_L);
 /*@}*/
 
-/* Compute the dipolar surface terms */
+/** Compute the dipolar surface terms */
 static double calc_surface_term(int force_flag, int energy_flag);
 
 /** \name P3M Tuning Functions */
@@ -191,7 +202,7 @@ static void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh,
                                     double mesh_i, int cao, double alpha_L_i,
                                     double *alias1, double *alias2);
 
-// To compute the value of alpha  through a bibisection method from the formula
+// To compute the value of alpha through a bibisection method from the formula
 // 33 of JCP115,6351,(2001).
 double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
                         int n_c_part, double sum_q2, double x1, double x2,
@@ -500,8 +511,9 @@ double dp3m_perform_aliasing_sums_dipolar_self_energy(const int n[3]) {
   return u_sum;
 }
 
-/******************  functions related to the parsing&tuning  of the dipolar
- * parameters **********/
+/******************
+ * functions related to the parsing&tuning of the dipolar parameters
+ ******************/
 
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
                           double accuracy, int n_interpol) {
@@ -806,10 +818,9 @@ static void P3M_assign_torques(double prefac, int d_rs) {
           for (int i2 = 0; i2 < dp3m.params.cao; i2++) {
             /*
             The following line would fill the torque with the k-space electric
-            field
-            (without the self-field term) [notice the minus sign!]:
+            field (without the self-field term) [notice the minus sign!]:
                                 p.f.torque[d_rs] -=
-            prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];;
+                prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];
             Since the torque is the dipole moment cross-product with E, we
             have:
             */
@@ -909,8 +920,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
 
   if (dp3m.sum_mu2 > 0) {
     /* Gather information for FFT grid inside the nodes domain (inner local
-     * mesh) */
-    /* and Perform forward 3D FFT (Charge Assignment Mesh). */
+     * mesh) and Perform forward 3D FFT (Charge Assignment Mesh). */
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[0]);
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[1]);
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[2]);
@@ -998,9 +1008,9 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
 
   /* === k-space force calculation  === */
   if (force_flag) {
-    /***************************
-     DIPOLAR TORQUES (k-space)
-  ****************************/
+    /****************************
+     * DIPOLAR TORQUES (k-space)
+     ****************************/
     if (dp3m.sum_mu2 > 0) {
 #ifdef ROTATION
       P3M_TRACE(fprintf(stderr,
@@ -1554,7 +1564,7 @@ double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]) {
 /************************************************
  * Functions for dipolar P3M Parameter tuning
  * This tuning is based on the P3M tuning of the charges
- which in turn is based on the P3M_tune by M. Deserno
+ * which in turn is based on the P3M_tune by M. Deserno
  ************************************************/
 
 #define P3M_TUNE_MAX_CUTS 50
@@ -1566,10 +1576,10 @@ double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]) {
  *  The real space error is tuned such that it contributes half of the
  *  total error, and then the Fourier space error is calculated.
  *  If an optimal alpha is not found, the value 0.1 is used as fallback.
- *  @param[in]  mesh       @copybrief dp3m_parameter_struct::mesh
- *  @param[in]  cao        @copybrief dp3m_parameter_struct::cao
- *  @param[in]  r_cut_iL   @copybrief dp3m_parameter_struct::r_cut_iL
- *  @param[out] _alpha_L   @copybrief dp3m_parameter_struct::alpha_L
+ *  @param[in]  mesh       @copybrief p3m_parameter_struct::mesh
+ *  @param[in]  cao        @copybrief p3m_parameter_struct::cao
+ *  @param[in]  r_cut_iL   @copybrief p3m_parameter_struct::r_cut_iL
+ *  @param[out] _alpha_L   @copybrief p3m_parameter_struct::alpha_L
  *  @param[out] _rs_err    real space error
  *  @param[out] _ks_err    Fourier space error
  *  @returns Error magnitude
@@ -1622,10 +1632,10 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
 
 /** @copybrief p3m_mcr_time
  *
- *  @param[in]  mesh            @copybrief dp3m_parameter_struct::mesh
- *  @param[in]  cao             @copybrief dp3m_parameter_struct::cao
- *  @param[in]  r_cut_iL        @copybrief dp3m_parameter_struct::r_cut_iL
- *  @param[in]  alpha_L         @copybrief dp3m_parameter_struct::alpha_L
+ *  @param[in]  mesh            @copybrief p3m_parameter_struct::mesh
+ *  @param[in]  cao             @copybrief p3m_parameter_struct::cao
+ *  @param[in]  r_cut_iL        @copybrief p3m_parameter_struct::r_cut_iL
+ *  @param[in]  alpha_L         @copybrief p3m_parameter_struct::alpha_L
  *
  *  @returns The integration time in case of success, otherwise
  *           -@ref P3M_TUNE_FAIL
@@ -1660,13 +1670,13 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
  *  The @p _r_cut_iL is determined via a simple bisection.
  *
  *  @param[out] log             log output
- *  @param[in]  mesh            @copybrief dp3m_parameter_struct::mesh
- *  @param[in]  cao             @copybrief dp3m_parameter_struct::cao
+ *  @param[in]  mesh            @copybrief p3m_parameter_struct::mesh
+ *  @param[in]  cao             @copybrief p3m_parameter_struct::cao
  *  @param[in]  r_cut_iL_min    lower bound for @p _r_cut_iL
  *  @param[in]  r_cut_iL_max    upper bound for @p _r_cut_iL
- *  @param[out] _r_cut_iL       @copybrief dp3m_parameter_struct::r_cut_iL
- *  @param[out] _alpha_L        @copybrief dp3m_parameter_struct::alpha_L
- *  @param[out] _accuracy       @copybrief dp3m_parameter_struct::accuracy
+ *  @param[out] _r_cut_iL       @copybrief p3m_parameter_struct::r_cut_iL
+ *  @param[out] _alpha_L        @copybrief p3m_parameter_struct::alpha_L
+ *  @param[out] _accuracy       @copybrief p3m_parameter_struct::accuracy
  *
  *  @returns The integration time in case of success, otherwise
  *           -@ref P3M_TUNE_FAIL, -@ref P3M_TUNE_ACCURACY_TOO_LARGE,
@@ -1775,16 +1785,16 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
  *  up and down.
  *
  *  @param[out]     log             log output
- *  @param[in]      mesh            @copybrief dp3m_parameter_struct::mesh
+ *  @param[in]      mesh            @copybrief p3m_parameter_struct::mesh
  *  @param[in]      cao_min         lower bound for @p _cao
  *  @param[in]      cao_max         upper bound for @p _cao
  *  @param[in,out]  _cao            initial guess for the
- *                                  @copybrief dp3m_parameter_struct::cao
+ *                                  @copybrief p3m_parameter_struct::cao
  *  @param[in]      r_cut_iL_min    lower bound for @p _r_cut_iL
  *  @param[in]      r_cut_iL_max    upper bound for @p _r_cut_iL
- *  @param[out]     _r_cut_iL       @copybrief dp3m_parameter_struct::r_cut_iL
- *  @param[out]     _alpha_L        @copybrief dp3m_parameter_struct::alpha_L
- *  @param[out]     _accuracy       @copybrief dp3m_parameter_struct::accuracy
+ *  @param[out]     _r_cut_iL       @copybrief p3m_parameter_struct::r_cut_iL
+ *  @param[out]     _alpha_L        @copybrief p3m_parameter_struct::alpha_L
+ *  @param[out]     _accuracy       @copybrief p3m_parameter_struct::accuracy
  *
  *  @returns The integration time in case of success, otherwise
  *           -@ref P3M_TUNE_FAIL or -@ref P3M_TUNE_CAO_TOO_LARGE */
@@ -1940,27 +1950,23 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
 }
 
 int dp3m_adaptive_tune(char **logger) {
-/** Tuning of dipolar P3M. The algorithm
-    basically determines the mesh, cao and then the real space cutoff, in this
-   nested order.
-
-    For each mesh, the cao optimal for the mesh tested previously is used as an
-   initial guess,
-    and the algorithm tries whether increasing or decreasing it leads to a
-   better solution. This
-    is efficient, since the optimal cao only changes little with the meshes in
-   general.
-
-    The real space cutoff for a given mesh and cao is determined via a bisection
-   on the error estimate,
-    which determines where the error estimate equals the required accuracy.
-   Therefore the smallest
-    possible, i.e. fastest real space cutoff is determined.
-
-    Both the search over mesh and cao stop to search in a specific direction
-   once the computation time is
-    significantly higher than the currently known optimum.
- */
+  /** Tuning of dipolar P3M. The algorithm basically determines the mesh, cao
+   *  and then the real space cutoff, in this nested order.
+   *
+   *  For each mesh, the cao optimal for the mesh tested previously is used as
+   *  an initial guess, and the algorithm tries whether increasing or decreasing
+   *  it leads to a better solution. This is efficient, since the optimal cao
+   *  only changes little with the meshes in general.
+   *
+   *  The real space cutoff for a given mesh and cao is determined via a
+   *  bisection on the error estimate, which determines where the error
+   *  estimate equals the required accuracy. Therefore the smallest possible,
+   *  i.e. fastest real space cutoff is determined.
+   *
+   *  Both the search over mesh and cao stop to search in a specific direction
+   *  once the computation time is significantly higher than the currently
+   *  known optimum.
+   */
   int mesh_max, mesh = -1, tmp_mesh;
   double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL = 0.0;
   int cao_min, cao_max, cao = -1, tmp_cao;
@@ -2244,8 +2250,7 @@ double P3M_DIPOLAR_real_space_error(double box_size, double prefac,
 /*****************************************************************************/
 
 // Using bisection find the root of a function "func-tuned_accuracy/sqrt(2.)"
-// known to lie
-// between x1 and x2. The root, returned as rtbis, will be refined
+// known to lie between x1 and x2. The root, returned as rtbis, will be refined
 // until its accuracy is +-xacc.
 
 double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
@@ -2566,7 +2571,7 @@ void dp3m_scaleby_box_l() {
 
 /*****************************************************************************/
 
-/* function to give the dipolar-P3M energy  correction */
+/** function to give the dipolar-P3M energy correction */
 void dp3m_compute_constants_energy_dipolar() {
   double Eself, Ukp3m;
 

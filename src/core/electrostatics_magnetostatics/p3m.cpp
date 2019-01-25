@@ -60,7 +60,7 @@ using Utils::strcat_alloc;
 p3m_data_struct p3m;
 
 /* MPI tags for the charge-charge p3m communications: */
-/** Tag for communication in P3M_init() -> send_calc_mesh(). */
+/** Tag for communication in p3m_init() -> p3m_calc_send_mesh(). */
 #define REQ_P3M_INIT 200
 /** Tag for communication in p3m_gather_fft_grid(). */
 #define REQ_P3M_GATHER 201
@@ -109,23 +109,26 @@ static void p3m_print(void) {
 #endif
 
 /** Calculate for charges the properties of the send/recv sub-meshes of the
- * local FFT mesh.
+ *  local FFT mesh.
  *  In order to calculate the recv sub-meshes there is a communication of
  *  the margins between neighbouring nodes. */
 static void p3m_calc_send_mesh();
 
-/** Initialize the (inverse) mesh constant @ref p3m_parameter_struct::a "a" (@ref
-    p3m_parameter_struct::ai "ai") and the cutoff for charge assignment @ref
-    p3m_parameter_struct::cao_cut "cao_cut", which has to be done by @ref p3m_init()
-    once and by @ref p3m_scaleby_box_l() whenever the @ref box_l
-    changes.  */
+/** Initialize the (inverse) mesh constant @ref p3m_parameter_struct::a "a"
+ *  (@ref p3m_parameter_struct::ai "ai") and the cutoff for charge assignment
+ *  @ref p3m_parameter_struct::cao_cut "cao_cut".
+ *
+ *  Function called by @ref p3m_init() once and by @ref p3m_scaleby_box_l()
+ *  whenever the @ref box_l changes.
+ */
 static void p3m_init_a_ai_cao_cut(void);
 
 /** Calculate the spatial position of the left down mesh point of the local
-   mesh, to be
-    stored in @ref p3m_local_mesh::ld_pos "ld_pos"; function called by @ref
-   p3m_calc_local_ca_mesh() once
-    and by @ref p3m_scaleby_box_l() whenever the @ref box_l changes. */
+ *  mesh, to be stored in @ref p3m_local_mesh::ld_pos "ld_pos".
+ *
+ *  Function called by @ref p3m_calc_local_ca_mesh() once and by
+ *  @ref p3m_scaleby_box_l() whenever the @ref box_l changes.
+ */
 static void p3m_calc_lm_ld_pos(void);
 
 /** Calculates the dipole term */
@@ -151,17 +154,20 @@ static void p3m_realloc_ca_fields(int newsize);
 
 static bool p3m_sanity_checks_system(void);
 
-/** Checks for correctness for charges in P3M of the cao_cut, necessary when the
- * box length changes */
+/** Checks for correctness for charges in P3M of the cao_cut,
+ *  necessary when the box length changes
+ */
 static bool p3m_sanity_checks_boxl(void);
 
-/** Calculates properties of the local FFT mesh for the
-    charge assignment process. */
+/** Calculates properties of the local FFT mesh for the charge assignment
+ *  process.
+ */
 static void p3m_calc_local_ca_mesh(void);
 
 /** Interpolate the P-th order charge assignment function from
- * Hockney/Eastwood 5-189 (or 8-61). The following charge fractions
- * are also tabulated in Deserno/Holm. */
+ *  Hockney/Eastwood 5-189 (or 8-61). The following charge fractions
+ *  are also tabulated in Deserno/Holm.
+ */
 static void p3m_interpolate_charge_assignment_function(void);
 
 /** Shift the mesh points by mesh/2 */
@@ -169,33 +175,36 @@ static void p3m_calc_meshift(void);
 
 /** Calculate the Fourier transformed differential operator.
  *  Remark: This is done on the level of n-vectors and not k-vectors,
- *           i.e. the prefactor i*2*PI/L is missing! */
+ *          i.e. the prefactor i*2*PI/L is missing!
+ */
 static void p3m_calc_differential_operator(void);
 
 /** Calculate the optimal influence function of Hockney and Eastwood.
- * (optimised for force calculations)
+ *  (optimised for force calculations)
  *
  *  Each node calculates only the values for its domain in k-space
  *  (see fft.plan[3].mesh and fft.plan[3].start).
  *
  *  See also: Hockney/Eastwood 8-22 (p275). Note the somewhat
  *  different convention for the prefactors, which is described in
- *  Deserno/Holm. */
+ *  Deserno/Holm.
+ */
 static void p3m_calc_influence_function_force(void);
 
 /** Calculate the influence function optimized for the energy and the
-    self energy correction.  */
+ *  self energy correction.
+ */
 static void p3m_calc_influence_function_energy(void);
 
 /** Calculate the aliasing sums for the optimal influence function.
  *
- * Calculate the aliasing sums in the nominator and denominator of
- * the expression for the optimal influence function (see
- * Hockney/Eastwood: 8-22, p. 275).
+ *  Calculate the aliasing sums in the nominator and denominator of
+ *  the expression for the optimal influence function (see
+ *  Hockney/Eastwood: 8-22, p. 275).
  *
- * \param  n           n-vector for which the aliasing sum is to be performed.
- * \param  nominator   aliasing sums in the nominator.
- * \return denominator aliasing sum in the denominator
+ *  \param  n           n-vector for which the aliasing sum is to be performed.
+ *  \param  nominator   aliasing sums in the nominator.
+ *  \retval denominator aliasing sum in the denominator
  */
 double p3m_perform_aliasing_sums_force(int n[3], double nominator[3]);
 double p3m_perform_aliasing_sums_energy(int n[3]);
@@ -206,47 +215,46 @@ double p3m_perform_aliasing_sums_energy(int n[3]);
 /*@{*/
 
 /** Calculate the real space contribution to the rms error in the force (as
-   described
-   by Kolafa and Perram).
-   \param prefac   Prefactor of Coulomb interaction.
-   \param r_cut_iL rescaled real space cutoff for p3m method.
-   \param n_c_part number of charged particles in the system.
-   \param sum_q2   sum of square of charges in the system
-   \param alpha_L  rescaled Ewald splitting parameter.
-   \return real space error
-*/
+ *  described by Kolafa and Perram).
+ *  \param prefac     Prefactor of Coulomb interaction.
+ *  \param r_cut_iL   rescaled real space cutoff for p3m method.
+ *  \param n_c_part   number of charged particles in the system.
+ *  \param sum_q2     sum of square of charges in the system
+ *  \param alpha_L    rescaled Ewald splitting parameter.
+ *  \return real space error
+ */
 static double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
                                    double sum_q2, double alpha_L);
 
 /** Calculate the analytic expression of the error estimate for the
-    P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
-    order to obtain the rms error in the force for a system of N
-    randomly distributed particles in a cubic box (k-space part).
-    \param prefac   Prefactor of Coulomb interaction.
-    \param mesh     number of mesh points in one direction.
-    \param cao      charge assignment order.
-    \param n_c_part number of charged particles in the system.
-    \param sum_q2   sum of square of charges in the system
-    \param alpha_L  rescaled Ewald splitting parameter.
-    \return reciprocal (k) space error
-*/
+ *  P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
+ *  order to obtain the rms error in the force for a system of N
+ *  randomly distributed particles in a cubic box (k-space part).
+ *  \param prefac   Prefactor of Coulomb interaction.
+ *  \param mesh     number of mesh points in one direction.
+ *  \param cao      charge assignment order.
+ *  \param n_c_part number of charged particles in the system.
+ *  \param sum_q2   sum of square of charges in the system
+ *  \param alpha_L  rescaled Ewald splitting parameter.
+ *  \return reciprocal (k) space error
+ */
 static double p3m_k_space_error(double prefac, const int mesh[3], int cao,
                                 int n_c_part, double sum_q2, double alpha_L);
 
 /** Aliasing sum used by \ref p3m_k_space_error. */
 static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
-                                   const double mesh_i[3], int cao, double alpha_L_i,
-                                   double *alias1, double *alias2);
+                                   const double mesh_i[3], int cao,
+                                   double alpha_L_i, double *alias1,
+                                   double *alias2);
 
 /** Template parameterized calculation of the charge assignment to be called by
-   wrapper.
-    \param cao      charge assignment order.
-*/
+ *  wrapper.
+ *  \tparam cao      charge assignment order.
+ */
 template <int cao> static void p3m_do_charge_assign();
 
 template <int cao>
 void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
-
 
 void p3m_pre_init(void) {
   p3m_common_parameter_pre_init(&p3m.params);
@@ -486,7 +494,6 @@ int p3m_set_ninterpol(int n) {
 
   return ES_OK;
 }
-
 
 void p3m_interpolate_charge_assignment_function() {
   double dInterpol = 0.5 / (double)p3m.params.inter;
@@ -1479,9 +1486,10 @@ static double p3m_mcr_time(const int mesh[3], int cao, double r_cut_iL,
  *           -@ref P3M_TUNE_FAIL, -@ref P3M_TUNE_ACCURACY_TOO_LARGE,
  *           -@ref P3M_TUNE_CAO_TOO_LARGE, or -@ref P3M_TUNE_ELCTEST
  */
-static double p3m_mc_time(char **log, const int mesh[3], int cao, double r_cut_iL_min,
-                          double r_cut_iL_max, double *_r_cut_iL,
-                          double *_alpha_L, double *_accuracy) {
+static double p3m_mc_time(char **log, const int mesh[3], int cao,
+                          double r_cut_iL_min, double r_cut_iL_max,
+                          double *_r_cut_iL, double *_alpha_L,
+                          double *_accuracy) {
   double int_time;
   double r_cut_iL;
   double rs_err, ks_err;
@@ -1610,10 +1618,10 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao, double r_cut_i
  *  @returns The integration time in case of success, otherwise
  *           -@ref P3M_TUNE_FAIL or -@ref P3M_TUNE_CAO_TOO_LARGE
  */
-static double p3m_m_time(char **log, const int mesh[3], int cao_min, int cao_max,
-                         int *_cao, double r_cut_iL_min, double r_cut_iL_max,
-                         double *_r_cut_iL, double *_alpha_L,
-                         double *_accuracy) {
+static double p3m_m_time(char **log, const int mesh[3], int cao_min,
+                         int cao_max, int *_cao, double r_cut_iL_min,
+                         double r_cut_iL_max, double *_r_cut_iL,
+                         double *_alpha_L, double *_accuracy) {
   double best_time = -1, tmp_time, tmp_r_cut_iL = 0.0, tmp_alpha_L = 0.0,
          tmp_accuracy = 0.0;
   /* in which direction improvement is possible. Initially, we don't know it
@@ -1705,7 +1713,7 @@ static double p3m_m_time(char **log, const int mesh[3], int cao_min, int cao_max
       final_dir = 1;
     } else {
       /* no improvement in either direction, however if one is only marginally
-       * worse, we can still try*/
+       * worse, we can still try */
       /* down is possible and not much worse, while up is either illegal or
        * even
        * worse */
@@ -2015,8 +2023,8 @@ double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
               box_l[2]);
 }
 
-double p3m_k_space_error(double prefac, const int mesh[3], int cao, int n_c_part,
-                         double sum_q2, double alpha_L) {
+double p3m_k_space_error(double prefac, const int mesh[3], int cao,
+                         int n_c_part, double sum_q2, double alpha_L) {
   int nx, ny, nz;
   double he_q = 0.0, mesh_i[3] = {1.0 / mesh[0], 1.0 / mesh[1], 1.0 / mesh[2]},
          alpha_L_i = 1. / alpha_L;
@@ -2339,7 +2347,6 @@ void p3m_calc_send_mesh() {
   }
 }
 
-
 void p3m_scaleby_box_l() {
   if (coulomb.prefactor < 0.0) {
     runtimeErrorMsg() << "The Coulomb prefactor has to be >=0";
@@ -2355,15 +2362,14 @@ void p3m_scaleby_box_l() {
   p3m_calc_influence_function_energy();
 }
 
-
 void p3m_calc_kspace_stress(double *stress) {
   /**
-  Calculates the long range electrostatics part of the stress tensor. This is
-  part Pi_{dir, alpha,beta} in the paper by Essmann et al "A smooth particle
-  mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995);
-  doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper is
-  not present here since M is the empty set in our simulations.
-  */
+   * Calculates the long range electrostatics part of the stress tensor. This is
+   * part Pi_{dir, alpha,beta} in the paper by Essmann et al "A smooth particle
+   * mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995);
+   * doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper
+   * is not present here since M is the empty set in our simulations.
+   */
   if (p3m.sum_q2 > 0) {
     double *node_k_space_stress;
     double *k_space_stress;
@@ -2441,7 +2447,6 @@ void p3m_calc_kspace_stress(double *stress) {
     free(k_space_stress);
   }
 }
-
 
 /** Debug function to print p3m parameters */
 void p3m_p3m_print_struct(p3m_parameter_struct ps) {

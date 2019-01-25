@@ -103,7 +103,7 @@ typedef struct {
   int inner[3];
   /** inner left down grid point */
   int in_ld[3];
-  /** inner up right grid point + (1,1,1)*/
+  /** inner up right grid point + (1,1,1) */
   int in_ur[3];
   /** number of margin mesh points. */
   int margin[6];
@@ -139,57 +139,59 @@ typedef struct {
 
 /** Structure to hold P3M parameters and some dependent variables. */
 typedef struct {
-  /** Tuning or production? */
+  /** tuning or production? */
   bool tuning;
-  /** Ewald splitting parameter (0<alpha<1), rescaled to alpha_L = alpha *
-   * box_l. */
+  /** Ewald splitting parameter (0<alpha<1), rescaled to
+   *  @p alpha_L = @p alpha * @p box_l. */
   double alpha_L;
-  /** Cutoff radius for real space electrostatics (>0), rescaled to r_cut_iL =
-   * r_cut * box_l_i. */
+  /** cutoff radius for real space electrostatics (>0), rescaled to
+   *  @p r_cut_iL = @p r_cut * @p box_l_i. */
   double r_cut_iL;
   /** number of mesh points per coordinate direction (>0). */
   int mesh[3];
   /** offset of the first mesh point (lower left corner) from the
-      coordinate origin ([0,1[). */
+   *  coordinate origin ([0,1[). */
   double mesh_off[3];
   /** charge assignment order ([0,7]). */
   int cao;
   /** number of interpolation points for charge assignment function */
   int inter;
-  /** Accuracy of the actual parameter set. */
+  /** accuracy of the actual parameter set. */
   double accuracy;
 
   /** epsilon of the "surrounding dielectric". */
   double epsilon;
-  /** Cutoff for charge assignment. */
+  /** cutoff for charge assignment. */
   double cao_cut[3];
   /** mesh constant. */
   double a[3];
   /** inverse mesh constant. */
   double ai[3];
-  /** unscaled \ref alpha_L for use with fast inline functions only */
+  /** unscaled @ref p3m_parameter_struct::alpha_L "alpha_L" for use with fast
+   *  inline functions only */
   double alpha;
-  /** unscaled \ref r_cut_iL for use with fast inline functions only */
+  /** unscaled @ref p3m_parameter_struct::r_cut_iL "r_cut_iL" for use with fast
+   *  inline functions only */
   double r_cut;
   /** full size of the interpolated assignment function */
   int inter2;
   /** number of points unto which a single charge is interpolated, i.e.
-   * p3m.cao^3 */
+   *  p3m.cao^3 */
   int cao3;
   /** additional points around the charge assignment mesh, for method like
-     dielectric ELC creating virtual charges. */
+   *  dielectric ELC creating virtual charges. */
   double additional_mesh[3];
 } p3m_parameter_struct;
 
-/** initialize the parameter struct */
+/** Initialize the parameter struct */
 void p3m_common_parameter_pre_init(p3m_parameter_struct *params);
 
-/** print local mesh content.
-    \param l local mesh structure.
-*/
+/** Print local mesh content.
+ *  \param l local mesh structure.
+ */
 void p3m_p3m_print_local_mesh(p3m_local_mesh l);
 
-/** print send mesh content.
+/** Print send mesh content.
  *  \param sm send mesh structure.
  */
 void p3m_p3m_print_send_mesh(p3m_send_mesh sm);
@@ -207,16 +209,18 @@ void p3m_add_block(double *in, double *out, int start[3], int size[3],
                    int dim[3]);
 
 /** One of the aliasing sums used by \ref p3m_k_space_error.
-    (fortunately the one which is most important (because it converges
-    most slowly, since it is not damped exponentially)) can be
-    calculated analytically. The result (which depends on the order of
-    the spline interpolation) can be written as an even trigonometric
-    polynomial. The results are tabulated here (The employed formula
-    is Eqn. 7.66 in the book of Hockney and Eastwood). */
+ *  Fortunately the one which is most important (because it converges
+ *  most slowly, since it is not damped exponentially) can be
+ *  calculated analytically. The result (which depends on the order of
+ *  the spline interpolation) can be written as an even trigonometric
+ *  polynomial. The results are tabulated here (The employed formula
+ *  is Eqn. 7.66 in the book of Hockney and Eastwood).
+ */
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
 
-/** Computes the  assignment function of for the \a i'th degree
-    at value \a x. */
+/** Compute the assignment function for the \a i'th degree
+ *  at value \a x.
+ */
 double p3m_caf(int i, double x, int cao_value);
 
 #endif /* P3M || DP3M */

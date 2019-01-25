@@ -21,8 +21,7 @@
 #ifndef _P3M_MAGNETOSTATICS_H
 #define _P3M_MAGNETOSTATICS_H
 /** \file
- * P3M algorithm for long range magnetic dipole-dipole
- * interaction.
+ * P3M algorithm for long range magnetic dipole-dipole interaction.
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the dipolar Ewald summation. Details of the used method can be found in
@@ -109,17 +108,21 @@ extern dp3m_data_struct dp3m;
 
 void dp3m_pre_init();
 
+/** @copydoc p3m_set_tune_params */
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
                           double accuracy, int n_interpol);
 
-/** @return Custom error code */
+/** @copydoc p3m_set_params */
 int dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
                     double accuracy);
 
+/** @copydoc p3m_set_ninterpol */
 int dp3m_set_ninterpol(int n);
 
+/** @copydoc p3m_set_mesh_offset */
 int dp3m_set_mesh_offset(double x, double y, double z);
 
+/** @copydoc p3m_set_eps */
 int dp3m_set_eps(double eps);
 
 /** Initialize all structures, parameters and arrays needed for the
@@ -127,78 +130,72 @@ int dp3m_set_eps(double eps);
  */
 void dp3m_init(void);
 
-/** Update @ref dp3m_parameter_struct::alpha "alpha" and
-    @ref dp3m_parameter_struct::r_cut "r_cut" if @ref box_l changed */
+/** @copydoc p3m_scaleby_box_l */
 void dp3m_scaleby_box_l();
 
-/// sanity checks
+/** Sanity checks */
 bool dp3m_sanity_checks();
 
 /** Assign the physical dipoles using the tabulated assignment function.
-    If Dstore_ca_frac is true, then the charge fractions are buffered in
-   Dcur_ca_fmp and
-    Dcur_ca_frac. */
+ *  If Dstore_ca_frac is true, then the charge fractions are buffered in
+ *  Dcur_ca_fmp and Dcur_ca_frac.
+ */
 void dp3m_dipole_assign(void);
 
 /** Reset @ref dp3m core parameters */
 void dp3m_deactivate(void);
 
 /** Tune dipolar P3M parameters to desired accuracy.
-
-    The parameters
-    @ref dp3m_parameter_struct::mesh "mesh",
-    @ref dp3m_parameter_struct::cao "cao",
-    @ref dp3m_parameter_struct::r_cut_iL "r_cut_iL" and
-    @ref dp3m_parameter_struct::alpha_L "alpha_L"
-    are tuned to obtain the target accuracy (initially stored in
-    @ref dp3m_parameter_struct::accuracy "accuracy") in optimal time.
-    These parameters are stored in the @ref dp3m object.
-
-    The function utilizes the analytic expression of the error estimate
-    for the dipolar P3M method in the paper of J. J. Cerda et al., JCP 2008 in
-    order to obtain the rms error in the force for a system of N randomly
-    distributed particles in a cubic box.
-    For the real space error the estimate of Kolafa/Perram is used.
-
-    Parameter ranges if not given explicit values via dp3m_set_tune_params():
-    - @p r_cut_iL starts from (@ref min_local_box_l - @ref #skin) / (
-      n * @ref box_l), with n an integer (this implies @p r_cut_iL is the
-      largest cutoff in the system!)
-    - @p mesh is set up such that the number of mesh points is equal to the
-      number of magnetic dipolar particles
-    - @p cao explores all possible values
-    - @p alpha_L is tuned for each tuple (@p r_cut_iL, @p mesh, @p cao) and
-      calculated assuming that the error contributions of real and reciprocal
-      space should be equal
-
-    After checking if the total error lies below the target accuracy, the
-    time needed for one force calculation (including Verlet list update)
-    is measured via time_force_calc().
-
-    The function generates a log of the performed tuning.
-
-    The function is based on routines of the program HE_Q.cpp for charges
-    written by M. Deserno.
-
+ *
+ *  The parameters
+ *  @ref p3m_parameter_struct::mesh "mesh",
+ *  @ref p3m_parameter_struct::cao "cao",
+ *  @ref p3m_parameter_struct::r_cut_iL "r_cut_iL" and
+ *  @ref p3m_parameter_struct::alpha_L "alpha_L"
+ *  are tuned to obtain the target accuracy (initially stored in
+ *  @ref p3m_parameter_struct::accuracy "accuracy") in optimal time.
+ *  These parameters are stored in the @ref dp3m object.
+ *
+ *  The function utilizes the analytic expression of the error estimate
+ *  for the dipolar P3M method in the paper of J. J. Cerda et al., JCP 2008 in
+ *  order to obtain the rms error in the force for a system of N randomly
+ *  distributed particles in a cubic box.
+ *  For the real space error the estimate of Kolafa/Perram is used.
+ *
+ *  Parameter ranges if not given explicit values via dp3m_set_tune_params():
+ *  - @p r_cut_iL starts from (@ref min_local_box_l - @ref #skin) / (
+ *    n * @ref box_l), with n an integer (this implies @p r_cut_iL is the
+ *    largest cutoff in the system!)
+ *  - @p mesh is set up such that the number of mesh points is equal to the
+ *    number of magnetic dipolar particles
+ *  - @p cao explores all possible values
+ *  - @p alpha_L is tuned for each tuple (@p r_cut_iL, @p mesh, @p cao) and
+ *    calculated assuming that the error contributions of real and reciprocal
+ *    space should be equal
+ *
+ *  After checking if the total error lies below the target accuracy, the
+ *  time needed for one force calculation (including Verlet list update)
+ *  is measured via time_force_calc().
+ *
+ *  The function generates a log of the performed tuning.
+ *
+ *  The function is based on routines of the program HE_Q.cpp for charges
+ *  written by M. Deserno.
+ *
  *  @param[out]  log
  *  @return @ref ES_OK or @ref ES_ERROR
  */
 int dp3m_adaptive_tune(char **log);
 
 /** Compute the k-space part of forces and energies for the magnetic
- * dipole-dipole interaction  */
+ *  dipole-dipole interaction
+ */
 double dp3m_calc_kspace_forces(int force_flag, int energy_flag);
 
-/** Calculate number of magnetic  particles, the sum of the squared
-    charges and the squared sum of the charges. */
-
+/** Calculate number of magnetic particles, the sum of the squared
+ *  charges and the squared sum of the charges.
+ */
 void dp3m_count_magnetic_particles();
-
-/** assign a single dipole into the current charge grid. cp_cnt gives the a
-   running index,
-    which may be smaller than 0, in which case the charge is assumed to be
-   virtual and is not
-    stored in the Dca_frac arrays. */
 
 /** Assign a single dipole into the current dipole grid.
  *
@@ -208,7 +205,8 @@ void dp3m_count_magnetic_particles();
  *  @param[in] cp_cnt     The running index, which may be smaller than 0, in
  *                        which case the dipole is assumed to be virtual and
  *                        is not stored in the @ref dp3m_data_struct::ca_frac
- *                        "ca_frac" arrays */
+ *                        "ca_frac" arrays
+ */
 void dp3m_assign_dipole(double const real_pos[3], double mu,
                         double const dip[3], int cp_cnt);
 
@@ -216,7 +214,8 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
 void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
 
 /** Calculate real space contribution of p3m dipolar pair forces and torques.
-    If NPT is compiled in, it returns the energy, which is needed for NPT. */
+ *  If NPT is compiled in, it returns the energy, which is needed for NPT.
+ */
 inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
                                   double dist2, double dist, double force[3]) {
   if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.))
@@ -263,8 +262,8 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
                   ((mimj * d[j] + dip1[j] * mjr + dip2[j] * mir) * C_r -
                    mir * mjr * D_r * d[j]);
 
-// Calculate vector multiplications for vectors mi, mj, rij
 #ifdef ROTATION
+    // Calculate vector multiplications for vectors mi, mj, rij
     mixmj[0] = dip1[1] * dip2[2] - dip1[2] * dip2[1];
     mixmj[1] = dip1[2] * dip2[0] - dip1[0] * dip2[2];
     mixmj[2] = dip1[0] * dip2[1] - dip1[1] * dip2[0];
@@ -314,11 +313,11 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
 
 #if USE_ERFC_APPROXIMATION
     erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-    /*  fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */ /* *exp(-adist*adist);
-                                                                            */
+    /*  fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */
+    /* *exp(-adist*adist); */
 #else
     erfc_part_ri = erfc(adist) / dist;
-/* fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/
+    /* fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/
 #endif
 
     // Calculate scalar multiplications for vectors mi, mj, rij
@@ -338,8 +337,8 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
     C_r = (3 * B_r + 2 * alpsq * coeff * exp_adist2) * dist2i;
 
     /*
-      printf("(%4i %4i) pair energy = %f (B_r=%15.12f
-      C_r=%15.12f)\n",p1->p.identity,p2->p.identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
+      printf("(%4i %4i) pair energy = %f (B_r=%15.12f C_r=%15.12f)\n",
+      p1->p.identity,p2->p.identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
     */
 
     /* old line return fac1 * ( mimj*B_r - mir*mjr * C_r );*/

@@ -254,8 +254,12 @@ IF P3M == 1:
 
         def _tune(self):
             coulomb_set_prefactor(self._params["prefactor"])
-            python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
-                                       "cao"], -1.0, self._params["accuracy"], self._params["inter"])
+            python_p3m_set_tune_params(self._params["r_cut"],
+                                       self._params["mesh"],
+                                       self._params["cao"],
+                                       -1.0,
+                                       self._params["accuracy"],
+                                       self._params["inter"])
             resp = python_p3m_adaptive_tune()
             if resp:
                 raise Exception(
@@ -371,8 +375,12 @@ IF P3M == 1:
 
             def _tune(self):
                 coulomb_set_prefactor(self._params["prefactor"])
-                python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
-                                           "cao"], -1.0, self._params["accuracy"], self._params["inter"])
+                python_p3m_set_tune_params(self._params["r_cut"],
+                                           self._params["mesh"],
+                                           self._params["cao"],
+                                           -1.0,
+                                           self._params["accuracy"],
+                                           self._params["inter"])
                 resp = python_p3m_adaptive_tune()
                 if resp:
                     raise Exception(
@@ -390,8 +398,11 @@ IF P3M == 1:
 
             def _set_params_in_es_core(self):
                 coulomb_set_prefactor(self._params["prefactor"])
-                python_p3m_set_params(self._params["r_cut"], self._params["mesh"], self._params[
-                                      "cao"], self._params["alpha"], self._params["accuracy"])
+                python_p3m_set_params(self._params["r_cut"],
+                                      self._params["mesh"],
+                                      self._params["cao"],
+                                      self._params["alpha"],
+                                      self._params["accuracy"])
                 p3m_set_eps(self._params["epsilon"])
                 p3m_set_ninterpol(self._params["inter"])
                 python_p3m_set_mesh_offset(self._params["mesh_off"])
