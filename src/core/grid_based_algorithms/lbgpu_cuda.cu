@@ -3737,7 +3737,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
       cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
   // fprintf(stderr, "initialization of lb gpu code %i\n",
   // lbpar_gpu->number_of_nodes);
-  cudaThreadSynchronize();
+  cudaDeviceSynchronize();
 
   if (!h_gpu_check[0]) {
     fprintf(stderr, "initialization of lb gpu code failed! \n");
@@ -3817,7 +3817,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, nodes_a, nodes_b);
 
   if (LBBoundaries::lbboundaries.size() == 0 && !pdb_boundary_lattice) {
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     return;
   }
 
@@ -3839,7 +3839,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
                nodes_a, nodes_b);
   }
 
-  cudaThreadSynchronize();
+  cudaDeviceSynchronize();
 }
 #endif
 /**setup and call extern single node force initialization from the host
@@ -4148,7 +4148,7 @@ void lb_calc_shanchen_GPU() {
   if (LBBoundaries::lbboundaries.size() != 0) {
     KERNELCALL(lb_shanchen_set_boundaries, dim_grid, threads_per_block,
                *current_nodes);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
   }
 #endif
   KERNELCALL(lb_shanchen_GPU, dim_grid, threads_per_block, *current_nodes,

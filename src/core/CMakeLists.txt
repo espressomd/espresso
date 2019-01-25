@@ -96,7 +96,6 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/scafacos.cpp
   electrostatics_magnetostatics/fft-common.cpp
   electrostatics_magnetostatics/fft.cpp
-  electrostatics_magnetostatics/fft-dipolar.cpp
   grid_based_algorithms/lbboundaries.cpp
   grid_based_algorithms/lb.cpp
   immersed_boundary/ibm_tribend.cpp

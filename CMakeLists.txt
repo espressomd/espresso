@@ -46,7 +46,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
 
@@ -56,7 +55,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 
 set(WITH_PYTHON yes)
 
-option(WITH_GSL "Build with GSL support" ON)
+option(WITH_GSL    "Build with GSL support"  ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
@@ -380,17 +379,18 @@ if(WITH_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   set(BOOST_MINIMUM_VERSION "1.65.0")
-  if(CUDA_FOUND
-     AND NOT
-         CUDA_VERSION
-         VERSION_LESS
-         "9.0")
+  if (CUDA_FOUND AND NOT CUDA_VERSION VERSION_LESS "9.0")
     set(BOOST_MINIMUM_VERSION "1.66.0")
   endif()
 else()
   set(BOOST_MINIMUM_VERSION "1.53.0")
+endif()
+
+# old Boost.MPI versions contain a use-after-free bug that seems to only cause crashes on 32-bit architectures
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(BOOST_MINIMUM_VERSION "1.67.0")
 endif()
 
 find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
@@ -425,14 +425,6 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(APPLE)
-  set(CMAKE_SHARED_LINKER_FLAGS
-      "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
-endif()
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(CMAKE_SHARED_LINKER_FLAGS
-      "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
-endif()
 # drop 'lib' prefix from all libraries
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
@@ -473,9 +465,14 @@ if(NOT
   # older versions don't support -Wno-pedantic which we need in src/python
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
 endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel"
-   AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "18.0")
-  message(FATAL_ERROR "Intel compiler version not supported. At least version 18.0 required.")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "16.0")
+  # workaround for compiler crash related to decltype() and variadic template usage inside Boost
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX11_VARIADIC_TEMPLATES")
+endif()
+
+# prevent 80-bit arithmetic on old Intel processors
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffloat-store")
 endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)
