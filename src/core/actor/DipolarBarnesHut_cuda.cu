@@ -773,7 +773,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
             if ((n < bhpara->nbodies) ||
                 __all_sync(__activemask(), tmp >= dq[depth])) {
 #else
-            if ((n < bhpara->nbodies) || __all(tmp >= dq[depth])) {
+            if ((n < bhpara->nbodies) || __all_sync(tmp >= dq[depth])) {
 #endif
               if (n != i) {
 
@@ -930,7 +930,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
                                          // is far enough away (or is a body)
 #else
             if ((n < bhpara->nbodies) ||
-                __all(tmp >=
+                __all_sync(tmp >=
                       dq[depth])) { // check if all threads agree that cell is
                                     // far enough away (or is a body)
 #endif
