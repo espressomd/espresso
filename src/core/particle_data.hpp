@@ -911,15 +911,6 @@ void local_place_particle(int part, const double p[3], int _new);
 */
 void added_particle(int part);
 
-/** Used by \ref mpi_send_bond, should not be used elsewhere.
-    Modify a bond.
-    @param part the identity of the particle to change
-    @param bond the bond to do
-    @param _delete if true, delete the bond instead of add
-    @return ES_OK for add or successful delete, ES_ERROR else
-*/
-int local_change_bond(int part, int *bond, int _delete);
-
 /** Used for example by \ref mpi_send_exclusion.
     Locally add a exclusion to a particle.
     @param part1 the identity of the first exclusion partner
