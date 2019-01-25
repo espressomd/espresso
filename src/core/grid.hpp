@@ -161,12 +161,8 @@ void calc_minimal_box_dimensions();
  * the particles accordingly */
 void rescale_boxl(int dir, double d_new);
 
-template <typename T> T get_mi_coord(T a, T b, int dir, double shift = 0.0) {
+template <typename T> T get_mi_coord(T a, T b, int dir) {
   auto dx = a - b;
-#ifdef LEES_EDWARDS
-  if (dir == lees_edwards_protocol.sheardir)
-    dx -= shift;
-#endif
 
   if (PERIODIC(dir) && std::fabs(dx) > half_box_l[dir])
     dx -= std::round(dx * box_l_i[dir]) * box_l[dir];
@@ -187,13 +183,18 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
     double offset = lees_edwards_protocol.offset;
     double dist = a[lees_edwards_protocol.shearplanenormal]-
                   b[lees_edwards_protocol.shearplanenormal];
-    shift = Utils::sgn(dist) *
-                   (offset - round(offset * box_l_i[lees_edwards_protocol.sheardir]) *
-                    box_l[lees_edwards_protocol.sheardir]);
 #endif
     for (int i = 0; i < 3; i++) {
-
-        res[i] = get_mi_coord(a[i], b[i], i, shift);
+#ifdef LEES_EDWARDS
+        if (i == lees_edwards_protocol.sheardir
+            && dist >= half_box_l[lees_edwards_protocol.shearplanenormal]) {
+            shift = Utils::sgn(dist) *
+                   (offset - round(offset * box_l_i[lees_edwards_protocol.sheardir]) *
+                    box_l[lees_edwards_protocol.sheardir]);
+        } else {shift = 0.0;
+          }
+#endif
+        res[i] = get_mi_coord(a[i] - shift, b[i], i);
   }
 }
 
