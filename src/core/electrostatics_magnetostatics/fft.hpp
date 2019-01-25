@@ -18,10 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-#ifndef _FFT_MAGNETOSTATICS_H
-#define _FFT_MAGNETOSTATICS_H
-
+#ifndef _FFT_H
+#define _FFT_H
 /** \file
  *
  *  Routines, row decomposition, data structures and communication for the
@@ -40,47 +38,47 @@
  *  \todo Combine the forward and backward structures.
  *  \todo The packing routines could be moved to utils.hpp when they are needed
  * elsewhere.
+ *
+ *  For more information about FFT usage, see \ref fft.cpp "fft.cpp".
  */
 
 #include "config.hpp"
-#ifdef DP3M
+#ifdef P3M
 
 #include "fft-common.hpp"
-
-extern fft_data_struct dfft;
 
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
 
-/** Initialize some arrays connected to the 3D-FFT. */
-void dfft_pre_init();
-
-/** Initialize everything connected to the 3D-FFT related to the dipole-dipole.
+/** Initialize everything connected to the 3D-FFT.
 
  * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
- * \param data               Pointer Pointer to data array.
- * \param ca_mesh_dim        Pointer to CA mesh dimensions.
- * \param ca_mesh_margin     Pointer to CA mesh margins.
- * \param global_mesh_dim    Pointer to global CA mesh dimensions.
- * \param global_mesh_off    Pointer to global CA mesh offset.
- * \param ks_pnum            Pointer to number of permutations in k-space.
+ * \param data            Pointer Pointer to data array.
+ * \param ca_mesh_dim     Pointer to local CA mesh dimensions.
+ * \param ca_mesh_margin  Pointer to local CA mesh margins.
+ * \param global_mesh_dim Pointer to global CA mesh dimensions.
+ * \param global_mesh_off Pointer to global CA mesh offset.
+ * \param ks_pnum         Pointer to number of permutations in k-space.
  */
-int dfft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
-              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum);
+int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
+             int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
+             fft_data_struct &fft);
 
-/** perform the forward 3D FFT for meshes related to the magnetic dipole-dipole
-   interaction. The assigned charges are in \a data. The result is also stored
-   in \a data. \warning The content of \a data is overwritten. \param data
-   DMesh.
+/** perform the forward 3D FFT.
+    The assigned charges are in \a data. The result is also stored in \a data.
+    \warning The content of \a data is overwritten.
+    \param data Mesh.
 */
-void dfft_perform_forw(double *data);
+void fft_perform_forw(double *data, fft_data_struct &fft);
 
-/** perform the backward 3D FFT for meshes related to the magnetic dipole-dipole
-   interaction. \warning The content of \a data is overwritten. \param data
-   DMesh.
+/** perform the backward 3D FFT.
+    \warning The content of \a data is overwritten.
+    \param data Mesh.
 */
-void dfft_perform_back(double *data);
+void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft);
 
-#endif /* DP3M */
-#endif /* _FFT_MAGNETOSTATICS_H */
+/*@}*/
+#endif
+
+#endif

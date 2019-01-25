@@ -78,11 +78,11 @@
 #include "topology.hpp"
 #include "virtual_sites.hpp"
 
+#include "serialization/IA_parameters.hpp"
+#include "serialization/Particle.hpp"
+#include "serialization/ParticleParametersSwimming.hpp"
 #include "utils.hpp"
 #include "utils/make_unique.hpp"
-#include "utils/serialization/IA_parameters.hpp"
-#include "utils/serialization/Particle.hpp"
-#include "utils/serialization/ParticleParametersSwimming.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>

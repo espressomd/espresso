@@ -16,34 +16,39 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CORE_UTILS_SERIALIZATION_PARTICLE_SWIM_HPP
-#define CORE_UTILS_SERIALIZATION_PARTICLE_SWIM_HPP
+#ifndef SERIALIZATION_IA_PARAMETERS_HPP
+#define SERIALIZATION_IA_PARAMETERS_HPP
 
-#include "core/particle_data.hpp"
-#include "core/utils/serialization/List.hpp"
-#include <boost/serialization/vector.hpp>
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 namespace boost {
 namespace serialization {
-/* Pod serialize for ParticleParametersSwimming */
 template <typename Archive>
-void load(Archive &ar, ParticleParametersSwimming &swim,
+void load(Archive &ar, IA_parameters &p,
           const unsigned int /* file_version */) {
-  ar >> make_array(reinterpret_cast<char *>(&swim),
-                   sizeof(ParticleParametersSwimming));
+  ar >> make_array(reinterpret_cast<char *>(&p), sizeof(IA_parameters));
+
+#ifdef TABULATED
+  TabulatedPotential tab;
+  ar >> tab;
+
+  new (&(p.TAB)) TabulatedPotential(std::move(tab));
+#endif
 }
 
 template <typename Archive>
-void save(Archive &ar, ParticleParametersSwimming const &swim,
+void save(Archive &ar, IA_parameters const &p,
           const unsigned int /* file_version */) {
-  ar << make_array(reinterpret_cast<char const *>(&swim),
-                   sizeof(ParticleParametersSwimming));
+  ar << make_array(reinterpret_cast<char const *>(&p), sizeof(IA_parameters));
+
+#ifdef TABULATED
+  ar << p.TAB;
+#endif
 }
 
 template <class Archive>
-void serialize(Archive &ar, ParticleParametersSwimming &swim,
-               const unsigned int file_version) {
-  split_free(ar, swim, file_version);
+void serialize(Archive &ar, IA_parameters &p, const unsigned int file_version) {
+  split_free(ar, p, file_version);
 }
 } // namespace serialization
 } // namespace boost

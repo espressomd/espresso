@@ -23,7 +23,7 @@
 #define __CYLINDER_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 namespace Shapes {
 class Cylinder : public Shape {

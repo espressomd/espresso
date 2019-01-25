@@ -33,8 +33,8 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include "core/utils/List.hpp"
-#include "core/utils/serialization/List.hpp"
+#include "utils/List.hpp"
+#include "utils/serialization/List.hpp"
 
 using List = Utils::List<int>;
 

@@ -38,7 +38,6 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
-#include "fft-dipolar.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -311,7 +310,7 @@ void dp3m_pre_init(void) {
 
   dp3m.energy_correction = 0.0;
 
-  dfft_pre_init();
+  fft_common_pre_init(&dp3m.fft);
 }
 
 void dp3m_deactivate() {
@@ -395,9 +394,9 @@ void dp3m_init() {
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node,
                       (void *)dp3m.rs_mesh));
 
-    int ca_mesh_size =
-        dfft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
-                  dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum);
+    int ca_mesh_size = fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim,
+                                dp3m.local_mesh.margin, dp3m.params.mesh,
+                                dp3m.params.mesh_off, &dp3m.ks_pnum, dp3m.fft);
     dp3m.ks_mesh = Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     for (n = 0; n < 3; n++)
@@ -444,17 +443,18 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
   int size = 1;
 
   for (i = 0; i < 3; i++) {
-    size *= dfft.plan[3].new_mesh[i];
-    end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
+    size *= dp3m.fft.plan[3].new_mesh[i];
+    end[i] = dp3m.fft.plan[3].start[i] + dp3m.fft.plan[3].new_mesh[i];
   }
 
-  for (n[0] = dfft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
-    for (n[1] = dfft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
-      for (n[2] = dfft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        ind = (n[2] - dfft.plan[3].start[2]) +
-              dfft.plan[3].new_mesh[2] *
-                  ((n[1] - dfft.plan[3].start[1]) +
-                   (dfft.plan[3].new_mesh[1] * (n[0] - dfft.plan[3].start[0])));
+  for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
+    for (n[1] = dp3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
+      for (n[2] = dp3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
+        ind = (n[2] - dp3m.fft.plan[3].start[2]) +
+              dp3m.fft.plan[3].new_mesh[2] *
+                  ((n[1] - dp3m.fft.plan[3].start[1]) +
+                   (dp3m.fft.plan[3].new_mesh[1] *
+                    (n[0] - dp3m.fft.plan[3].start[0])));
 
         if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0))
           node_phi += 0.0;
@@ -919,9 +919,9 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[0]);
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[1]);
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[2]);
-    dfft_perform_forw(dp3m.rs_mesh_dip[0]);
-    dfft_perform_forw(dp3m.rs_mesh_dip[1]);
-    dfft_perform_forw(dp3m.rs_mesh_dip[2]);
+    fft_perform_forw(dp3m.rs_mesh_dip[0], dp3m.fft);
+    fft_perform_forw(dp3m.rs_mesh_dip[1], dp3m.fft);
+    fft_perform_forw(dp3m.rs_mesh_dip[2], dp3m.fft);
     // Note: after these calls, the grids are in the order yzx and not xyz
     // anymore!!!
   }
@@ -943,23 +943,23 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
        * |(\Fourier{\vect{mu}}(k)\cdot \vect{k})|^2 */
       ind = 0;
       i = 0;
-      for (j[0] = 0; j[0] < dfft.plan[3].new_mesh[0]; j[0]++) {
-        for (j[1] = 0; j[1] < dfft.plan[3].new_mesh[1]; j[1]++) {
-          for (j[2] = 0; j[2] < dfft.plan[3].new_mesh[2]; j[2]++) {
+      for (j[0] = 0; j[0] < dp3m.fft.plan[3].new_mesh[0]; j[0]++) {
+        for (j[1] = 0; j[1] < dp3m.fft.plan[3].new_mesh[1]; j[1]++) {
+          for (j[2] = 0; j[2] < dp3m.fft.plan[3].new_mesh[2]; j[2]++) {
             node_k_space_energy_dip +=
                 dp3m.g_energy[i] *
                 (Utils::sqr(dp3m.rs_mesh_dip[0][ind] *
-                                dp3m.d_op[j[2] + dfft.plan[3].start[2]] +
+                                dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
                             dp3m.rs_mesh_dip[1][ind] *
-                                dp3m.d_op[j[0] + dfft.plan[3].start[0]] +
+                                dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
                             dp3m.rs_mesh_dip[2][ind] *
-                                dp3m.d_op[j[1] + dfft.plan[3].start[1]]) +
+                                dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]]) +
                  Utils::sqr(dp3m.rs_mesh_dip[0][ind + 1] *
-                                dp3m.d_op[j[2] + dfft.plan[3].start[2]] +
+                                dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
                             dp3m.rs_mesh_dip[1][ind + 1] *
-                                dp3m.d_op[j[0] + dfft.plan[3].start[0]] +
+                                dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
                             dp3m.rs_mesh_dip[2][ind + 1] *
-                                dp3m.d_op[j[1] + dfft.plan[3].start[1]]));
+                                dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]]));
             ind += 2;
             i++;
           }
@@ -1016,24 +1016,26 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
       ind = 0;
       i = 0;
 
-      for (j[0] = 0; j[0] < dfft.plan[3].new_mesh[0]; j[0]++) {     // j[0]=n_y
-        for (j[1] = 0; j[1] < dfft.plan[3].new_mesh[1]; j[1]++) {   // j[1]=n_z
-          for (j[2] = 0; j[2] < dfft.plan[3].new_mesh[2]; j[2]++) { // j[2]=n_x
+      for (j[0] = 0; j[0] < dp3m.fft.plan[3].new_mesh[0]; j[0]++) { // j[0]=n_y
+        for (j[1] = 0; j[1] < dp3m.fft.plan[3].new_mesh[1];
+             j[1]++) { // j[1]=n_z
+          for (j[2] = 0; j[2] < dp3m.fft.plan[3].new_mesh[2];
+               j[2]++) { // j[2]=n_x
             // tmp0 = Re(mu)*k,   tmp1 = Im(mu)*k
 
             tmp0 = dp3m.rs_mesh_dip[0][ind] *
-                       dp3m.d_op[j[2] + dfft.plan[3].start[2]] +
+                       dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
                    dp3m.rs_mesh_dip[1][ind] *
-                       dp3m.d_op[j[0] + dfft.plan[3].start[0]] +
+                       dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
                    dp3m.rs_mesh_dip[2][ind] *
-                       dp3m.d_op[j[1] + dfft.plan[3].start[1]];
+                       dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]];
 
             tmp1 = dp3m.rs_mesh_dip[0][ind + 1] *
-                       dp3m.d_op[j[2] + dfft.plan[3].start[2]] +
+                       dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
                    dp3m.rs_mesh_dip[1][ind + 1] *
-                       dp3m.d_op[j[0] + dfft.plan[3].start[0]] +
+                       dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
                    dp3m.rs_mesh_dip[2][ind + 1] *
-                       dp3m.d_op[j[1] + dfft.plan[3].start[1]];
+                       dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]];
 
             /* the optimal influence function is the same for torques
                and energy */
@@ -1050,21 +1052,21 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
       for (d = 0; d < 3; d++) {
         d_rs = (d + dp3m.ks_pnum) % 3;
         ind = 0;
-        for (j[0] = 0; j[0] < dfft.plan[3].new_mesh[0]; j[0]++) {
-          for (j[1] = 0; j[1] < dfft.plan[3].new_mesh[1]; j[1]++) {
-            for (j[2] = 0; j[2] < dfft.plan[3].new_mesh[2]; j[2]++) {
-              dp3m.rs_mesh[ind] =
-                  dp3m.d_op[j[d] + dfft.plan[3].start[d]] * dp3m.ks_mesh[ind];
+        for (j[0] = 0; j[0] < dp3m.fft.plan[3].new_mesh[0]; j[0]++) {
+          for (j[1] = 0; j[1] < dp3m.fft.plan[3].new_mesh[1]; j[1]++) {
+            for (j[2] = 0; j[2] < dp3m.fft.plan[3].new_mesh[2]; j[2]++) {
+              dp3m.rs_mesh[ind] = dp3m.d_op[j[d] + dp3m.fft.plan[3].start[d]] *
+                                  dp3m.ks_mesh[ind];
               ind++;
-              dp3m.rs_mesh[ind] =
-                  dp3m.d_op[j[d] + dfft.plan[3].start[d]] * dp3m.ks_mesh[ind];
+              dp3m.rs_mesh[ind] = dp3m.d_op[j[d] + dp3m.fft.plan[3].start[d]] *
+                                  dp3m.ks_mesh[ind];
               ind++;
             }
           }
         }
 
         /* Back FFT force component mesh */
-        dfft_perform_back(dp3m.rs_mesh);
+        fft_perform_back(dp3m.rs_mesh, false, dp3m.fft);
         /* redistribute force component mesh */
         dp3m_spread_force_grid(dp3m.rs_mesh);
         /* Assign force component from mesh to particle */
@@ -1087,22 +1089,24 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
       /* fill in ks_mesh array for force calculation */
       ind = 0;
       i = 0;
-      for (j[0] = 0; j[0] < dfft.plan[3].new_mesh[0]; j[0]++) {     // j[0]=n_y
-        for (j[1] = 0; j[1] < dfft.plan[3].new_mesh[1]; j[1]++) {   // j[1]=n_z
-          for (j[2] = 0; j[2] < dfft.plan[3].new_mesh[2]; j[2]++) { // j[2]=n_x
+      for (j[0] = 0; j[0] < dp3m.fft.plan[3].new_mesh[0]; j[0]++) { // j[0]=n_y
+        for (j[1] = 0; j[1] < dp3m.fft.plan[3].new_mesh[1];
+             j[1]++) { // j[1]=n_z
+          for (j[2] = 0; j[2] < dp3m.fft.plan[3].new_mesh[2];
+               j[2]++) { // j[2]=n_x
             // tmp0 = Im(mu)*k,   tmp1 = -Re(mu)*k
             tmp0 = dp3m.rs_mesh_dip[0][ind + 1] *
-                       dp3m.d_op[j[2] + dfft.plan[3].start[2]] +
+                       dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
                    dp3m.rs_mesh_dip[1][ind + 1] *
-                       dp3m.d_op[j[0] + dfft.plan[3].start[0]] +
+                       dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
                    dp3m.rs_mesh_dip[2][ind + 1] *
-                       dp3m.d_op[j[1] + dfft.plan[3].start[1]];
+                       dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]];
             tmp1 = dp3m.rs_mesh_dip[0][ind] *
-                       dp3m.d_op[j[2] + dfft.plan[3].start[2]] +
+                       dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
                    dp3m.rs_mesh_dip[1][ind] *
-                       dp3m.d_op[j[0] + dfft.plan[3].start[0]] +
+                       dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
                    dp3m.rs_mesh_dip[2][ind] *
-                       dp3m.d_op[j[1] + dfft.plan[3].start[1]];
+                       dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]];
             dp3m.ks_mesh[ind] = tmp0 * dp3m.g_force[i];
             dp3m.ks_mesh[ind + 1] = -tmp1 * dp3m.g_force[i];
             ind += 2;
@@ -1115,35 +1119,37 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
       for (d = 0; d < 3; d++) { /* direction in k space: */
         d_rs = (d + dp3m.ks_pnum) % 3;
         ind = 0;
-        for (j[0] = 0; j[0] < dfft.plan[3].new_mesh[0]; j[0]++) {   // j[0]=n_y
-          for (j[1] = 0; j[1] < dfft.plan[3].new_mesh[1]; j[1]++) { // j[1]=n_z
-            for (j[2] = 0; j[2] < dfft.plan[3].new_mesh[2];
+        for (j[0] = 0; j[0] < dp3m.fft.plan[3].new_mesh[0];
+             j[0]++) { // j[0]=n_y
+          for (j[1] = 0; j[1] < dp3m.fft.plan[3].new_mesh[1];
+               j[1]++) { // j[1]=n_z
+            for (j[2] = 0; j[2] < dp3m.fft.plan[3].new_mesh[2];
                  j[2]++) { // j[2]=n_x
-              tmp0 =
-                  dp3m.d_op[j[d] + dfft.plan[3].start[d]] * dp3m.ks_mesh[ind];
+              tmp0 = dp3m.d_op[j[d] + dp3m.fft.plan[3].start[d]] *
+                     dp3m.ks_mesh[ind];
               dp3m.rs_mesh_dip[0][ind] =
-                  dp3m.d_op[j[2] + dfft.plan[3].start[2]] * tmp0;
+                  dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] * tmp0;
               dp3m.rs_mesh_dip[1][ind] =
-                  dp3m.d_op[j[0] + dfft.plan[3].start[0]] * tmp0;
+                  dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] * tmp0;
               dp3m.rs_mesh_dip[2][ind] =
-                  dp3m.d_op[j[1] + dfft.plan[3].start[1]] * tmp0;
+                  dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]] * tmp0;
               ind++;
-              tmp0 =
-                  dp3m.d_op[j[d] + dfft.plan[3].start[d]] * dp3m.ks_mesh[ind];
+              tmp0 = dp3m.d_op[j[d] + dp3m.fft.plan[3].start[d]] *
+                     dp3m.ks_mesh[ind];
               dp3m.rs_mesh_dip[0][ind] =
-                  dp3m.d_op[j[2] + dfft.plan[3].start[2]] * tmp0;
+                  dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] * tmp0;
               dp3m.rs_mesh_dip[1][ind] =
-                  dp3m.d_op[j[0] + dfft.plan[3].start[0]] * tmp0;
+                  dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] * tmp0;
               dp3m.rs_mesh_dip[2][ind] =
-                  dp3m.d_op[j[1] + dfft.plan[3].start[1]] * tmp0;
+                  dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]] * tmp0;
               ind++;
             }
           }
         }
         /* Back FFT force component mesh */
-        dfft_perform_back(dp3m.rs_mesh_dip[0]);
-        dfft_perform_back(dp3m.rs_mesh_dip[1]);
-        dfft_perform_back(dp3m.rs_mesh_dip[2]);
+        fft_perform_back(dp3m.rs_mesh_dip[0], false, dp3m.fft);
+        fft_perform_back(dp3m.rs_mesh_dip[1], false, dp3m.fft);
+        fft_perform_back(dp3m.rs_mesh_dip[2], false, dp3m.fft);
         /* redistribute force component mesh */
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[0]);
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[1]);
@@ -1393,20 +1399,21 @@ void dp3m_calc_influence_function_force() {
   dp3m_calc_meshift();
 
   for (i = 0; i < 3; i++) {
-    size *= dfft.plan[3].new_mesh[i];
-    end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
+    size *= dp3m.fft.plan[3].new_mesh[i];
+    end[i] = dp3m.fft.plan[3].start[i] + dp3m.fft.plan[3].new_mesh[i];
   }
   dp3m.g_force = Utils::realloc(dp3m.g_force, size * sizeof(double));
   fak1 = dp3m.params.mesh[0] * dp3m.params.mesh[0] * dp3m.params.mesh[0] * 2.0 /
          (box_l[0] * box_l[0]);
 
-  for (n[0] = dfft.plan[3].start[0]; n[0] < end[0]; n[0]++)
-    for (n[1] = dfft.plan[3].start[1]; n[1] < end[1]; n[1]++)
-      for (n[2] = dfft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        ind = (n[2] - dfft.plan[3].start[2]) +
-              dfft.plan[3].new_mesh[2] *
-                  ((n[1] - dfft.plan[3].start[1]) +
-                   (dfft.plan[3].new_mesh[1] * (n[0] - dfft.plan[3].start[0])));
+  for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
+    for (n[1] = dp3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++)
+      for (n[2] = dp3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
+        ind = (n[2] - dp3m.fft.plan[3].start[2]) +
+              dp3m.fft.plan[3].new_mesh[2] *
+                  ((n[1] - dp3m.fft.plan[3].start[1]) +
+                   (dp3m.fft.plan[3].new_mesh[1] *
+                    (n[0] - dp3m.fft.plan[3].start[0])));
 
         if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0))
           dp3m.g_force[ind] = 0.0;
@@ -1480,20 +1487,21 @@ void dp3m_calc_influence_function_energy() {
   dp3m_calc_meshift();
 
   for (i = 0; i < 3; i++) {
-    size *= dfft.plan[3].new_mesh[i];
-    end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
+    size *= dp3m.fft.plan[3].new_mesh[i];
+    end[i] = dp3m.fft.plan[3].start[i] + dp3m.fft.plan[3].new_mesh[i];
   }
   dp3m.g_energy = Utils::realloc(dp3m.g_energy, size * sizeof(double));
   fak1 = dp3m.params.mesh[0] * dp3m.params.mesh[0] * dp3m.params.mesh[0] * 2.0 /
          (box_l[0] * box_l[0]);
 
-  for (n[0] = dfft.plan[3].start[0]; n[0] < end[0]; n[0]++)
-    for (n[1] = dfft.plan[3].start[1]; n[1] < end[1]; n[1]++)
-      for (n[2] = dfft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        ind = (n[2] - dfft.plan[3].start[2]) +
-              dfft.plan[3].new_mesh[2] *
-                  ((n[1] - dfft.plan[3].start[1]) +
-                   (dfft.plan[3].new_mesh[1] * (n[0] - dfft.plan[3].start[0])));
+  for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
+    for (n[1] = dp3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++)
+      for (n[2] = dp3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
+        ind = (n[2] - dp3m.fft.plan[3].start[2]) +
+              dp3m.fft.plan[3].new_mesh[2] *
+                  ((n[1] - dp3m.fft.plan[3].start[1]) +
+                   (dp3m.fft.plan[3].new_mesh[1] *
+                    (n[0] - dp3m.fft.plan[3].start[0])));
 
         if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0))
           dp3m.g_energy[ind] = 0.0;

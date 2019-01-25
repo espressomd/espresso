@@ -21,7 +21,6 @@
 #include "Cylinder.hpp"
 #include "Ellipsoid.hpp"
 #include "HollowCone.hpp"
-#include "Maze.hpp"
 #include "NoWhere.hpp"
 #include "Rhomboid.hpp"
 #include "ScriptInterface.hpp"
@@ -47,7 +46,6 @@ void initialize() {
       "Shapes::Cylinder");
   ScriptInterface::register_new<ScriptInterface::Shapes::SpheroCylinder>(
       "Shapes::SpheroCylinder");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Maze>("Shapes::Maze");
   ScriptInterface::register_new<ScriptInterface::Shapes::HollowCone>(
       "Shapes::HollowCone");
   ScriptInterface::register_new<ScriptInterface::Shapes::Rhomboid>(

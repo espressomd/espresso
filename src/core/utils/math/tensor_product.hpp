@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef UTILS_MATH_TENSOR_PRODUCT_HPP
 #define UTILS_MATH_TENSOR_PRODUCT_HPP
 
-#include <Vector.hpp>
+#include "utils/Vector.hpp"
 
 #include <algorithm>
 

@@ -28,7 +28,7 @@
  *
 */
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 #include "utils/constants.hpp"
 #include "utils/math/sqr.hpp"
 

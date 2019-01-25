@@ -27,8 +27,8 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
+#include "serialization/ParticleList.hpp"
 #include "utils/mpi/sendrecv.hpp"
-#include "utils/serialization/ParticleList.hpp"
 
 #include "initialize.hpp"
 
@@ -565,14 +565,17 @@ Cell *dd_save_position_to_cell(const Vector3d &pos) {
     cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
 
     /* particles outside our box. Still take them if
-       nonperiodic boundary */
+       nonperiodic boundary. We also accept the particle if we are at
+       the box boundary, and the particle is within the box. In this case
+       the particle belongs here and could otherwise potentially be dismissed
+       due to rouding errors. */
     if (cpos[i] < 1) {
-      if (!PERIODIC(i) && boundary[2 * i])
+      if ((!PERIODIC(i) or (pos[i] >= box_l[i])) && boundary[2 * i])
         cpos[i] = 1;
       else
         return nullptr;
     } else if (cpos[i] > dd.cell_grid[i]) {
-      if (!PERIODIC(i) && boundary[2 * i + 1])
+      if ((!PERIODIC(i) or (pos[i] < box_l[i])) && boundary[2 * i + 1])
         cpos[i] = dd.cell_grid[i];
       else
         return nullptr;

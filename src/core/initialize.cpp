@@ -57,7 +57,6 @@
 #include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
-#include "observables/Observable.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
