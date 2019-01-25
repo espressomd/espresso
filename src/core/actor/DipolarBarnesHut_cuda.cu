@@ -931,8 +931,8 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
 #else
             if ((n < bhpara->nbodies) ||
                 __all_sync(tmp >=
-                      dq[depth])) { // check if all threads agree that cell is
-                                    // far enough away (or is a body)
+                           dq[depth])) { // check if all threads agree that cell
+                                         // is far enough away (or is a body)
 #endif
               if (n != i) {
                 d1 = sqrtf(tmp /*, 0.5f*/);
