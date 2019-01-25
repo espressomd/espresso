@@ -56,7 +56,7 @@
 #if defined(P3M) || defined(DP3M)
 
 /** Error Codes for p3m tuning (version 2) */
-enum P3M_TUNE_ERROR : long {
+enum P3M_TUNE_ERROR {
   /** force evaluation failed */
   P3M_TUNE_FAIL = 1,
   /** could not find a valid realspace cutoff radius */
