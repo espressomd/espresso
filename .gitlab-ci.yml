@@ -120,23 +120,15 @@ maxset-python3:test:
 
 ### Builds with CUDA
 
-cuda-shanchen:
-  stage: build
+.cuda:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  variables:
+    with_coverage: "true"
+    with_cuda: "true"
+    build_procs: 4
   script:
-    - export myconfig=shanchen python_version=3 make_check=false
-    - bash maintainer/cuda_build.sh
-  tags:
-    - docker
-    - linux
-    - cuda
-
-cuda-maxset:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
-  script:
-    - export myconfig=maxset with_coverage=true python_version=3
-    - bash maintainer/cuda_build.sh
+    - nvidia-smi
+    - bash maintainer/CI/build_cmake.sh
   artifacts:
     paths:
     - build/
@@ -146,20 +138,40 @@ cuda-maxset:
     - linux
     - cuda
 
-cuda8-maxset:
+cuda-shanchen:
+  extends: .cuda
+  stage: build
+  variables:
+    myconfig: "shanchen"
+    make_check: "false"
+
+cuda-maxset:build:
+  extends: .cuda
+  stage: build
+  variables:
+    make_check: "false"
+
+cuda-maxset:test:
+  extends: .cuda
+  stage: test
+  dependencies:
+    - cuda-maxset:build
+
+cuda8-maxset:build:
+  extends: .cuda
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
-  script:
-    - export myconfig=maxset with_coverage=true
-    - bash maintainer/cuda_build.sh
-  artifacts:
-    paths:
-    - build/
-    expire_in: 1 week
-  tags:
-    - docker
-    - linux
-    - cuda
+  variables:
+    make_check: "false"
+
+cuda8-maxset:test:
+  extends: .cuda
+  stage: test
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
+  variables:
+    make_check: "true"
+  dependencies:
+    - cuda8-maxset:build
 
 empty:
   stage: build
@@ -293,7 +305,7 @@ check_sphinx:
   stage: test
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
   dependencies:
-  - cuda8-maxset
+  - cuda8-maxset:build
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
@@ -303,18 +315,16 @@ check_sphinx:
     - cuda
 
 check_with_odd_no_of_processors:
+  extends: .cuda
   stage: test
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
   dependencies:
-  - cuda-maxset
-  script:
-    - export myconfig=maxset with_coverage=true python_version=3 build_procs=3 check_procs=3 check_odd_only=true
-    - bash maintainer/cuda_build.sh
-  tags:
-    - docker
-    - linux
-    - cuda
+  - cuda-maxset:build
+  variables:
+    make_check: "true"
+    build_procs: 3
+    check_procs: 3
+    check_odd_only: "true"
 
 deploy_documentation:
   stage: deploy
@@ -322,7 +332,7 @@ deploy_documentation:
   only:
     - python
   dependencies:
-    - cuda8-maxset
+    - cuda8-maxset:build
   before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
