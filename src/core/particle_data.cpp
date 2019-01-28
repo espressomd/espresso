@@ -132,8 +132,8 @@ struct UpdateExternalFlag {
 using Prop = ParticleProperties;
 
 // clang-format off
-using UpdatePropertyMessage = boost::variant<
-          UpdateProperty<int, &Prop::type>
+using UpdatePropertyMessage = boost::variant
+        < UpdateProperty<int, &Prop::type>
         , UpdateProperty<int, &Prop::mol_id>
 #ifdef MASS
         , UpdateProperty<double, &Prop::mass>
@@ -189,28 +189,28 @@ using UpdatePropertyMessage = boost::variant<
         , UpdateProperty<Vector3d, &Prop::ext_torque>
 #endif
 #endif
->;
+        >;
 
-using UpdatePositionMessage = boost::variant <
-          UpdatePosition<Vector3d, &ParticlePosition::p>
+using UpdatePositionMessage = boost::variant
+        < UpdatePosition<Vector3d, &ParticlePosition::p>
 #ifdef ROTATION
         , UpdatePosition<Vector4d, &ParticlePosition::quat>
 #endif
->;
+        >;
 
-using UpdateMomentumMessage = boost::variant <
-        UpdateMomentum<Vector3d, &ParticleMomentum::v>
+using UpdateMomentumMessage = boost::variant
+      < UpdateMomentum<Vector3d, &ParticleMomentum::v>
 #ifdef ROTATION
       , UpdateMomentum<Vector3d, &ParticleMomentum::omega>
 #endif
->;
+      >;
 
-using UpdateForceMessage = boost::variant <
-        UpdateForce<Vector3d, &ParticleForce::f>
+using UpdateForceMessage = boost::variant
+      < UpdateForce<Vector3d, &ParticleForce::f>
 #ifdef ROTATION
       , UpdateForce<Vector3d, &ParticleForce::torque>
 #endif
->;
+      >;
 
 /**
  * @brief Delete specific bond.
@@ -312,13 +312,12 @@ using message_type_t = typename message_type<S, s>::type;
  *
  * This visitor either recurses into the active type
  * if it is a variant type, or otherwise callse
- * operator()(const Particle&) on the active type with
+ * operator()(Particle&) on the active type with
  * the particle that ought to be updated. This construction
  * allows to nest message variants to allow for sub-
  * categories. Those are mostly used here to differentiate
  * the updates for the substructs of Particle.
  */
-
 struct UpdateVisitor : public boost::static_visitor<void> {
   UpdateVisitor(int id) : id(id) {}
 
@@ -337,6 +336,9 @@ struct UpdateVisitor : public boost::static_visitor<void> {
 };
 } // namespace
 
+/**
+ * @brief Callback for @f mpi_send_update_message.
+ */
 void mpi_update_particle_slave(int node, int id) {
   if (node == comm_cart.rank()) {
     UpdateMessage msg{};
@@ -350,10 +352,21 @@ void mpi_update_particle_slave(int node, int id) {
 /**
  * @brief Send a particle update message.
  *
- * @param pnode
+ * This sends the message to the node that is responsible for the particle,
+ * where
+ * @p msg is called with the particle as argument. The message then performs the
+ * change to the particle that is encoded in it. The mechanism to call a functor
+ * based on the active type of a variant is called visitation. Here we can use
+ * @c UpdateVisitor with a single templated call operator on the visitor because
+ * all message (eventually) provide the same interface. Overall this is
+ * logically equivalent to nested switch statements over the message types,
+ * where the case statements play the role of the call of the messages in our
+ * case. A general introduction can be found in the documentation of
+ * boost::variant.
+ *
+ * @param id Id of the particle to update
  * @param msg The message
  */
-
 void mpi_send_update_message(int id, const UpdateMessage &msg) {
   auto const pnode = get_particle_node(id);
 
