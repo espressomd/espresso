@@ -248,7 +248,7 @@ struct AddBond {
     std::vector<int> bond;
 
     void operator()(Particle &p) const {
-        boost::copy(bond, std::back_inserter(p.bl));
+        local_add_particle_bond(p, bond);
     }
 
     template<class Archive>
@@ -322,6 +322,10 @@ using message_type_t = typename message_type<S, s>::type;
  */
 
 struct UpdateVisitor : public boost::static_visitor<void> {
+    UpdateVisitor(int id) : id(id) {}
+
+    const int id;
+
   /* Recurse into sub-variants */
   template <class... Message>
   void operator()(const boost::variant<Message...> &msg) const {
@@ -329,17 +333,17 @@ struct UpdateVisitor : public boost::static_visitor<void> {
   }
   /* Plain messages are just called. */
   template <typename Message> void operator()(const Message &msg) const {
-    assert(local_particles[msg.id]);
-    msg(*local_particles[msg.id]);
+    assert(local_particles[id]);
+    msg(*local_particles[id]);
   }
 };
 } // namespace
 
-void mpi_update_particle_slave(int node, int) {
+void mpi_update_particle_slave(int node, int id) {
   if (node == comm_cart.rank()) {
     UpdateMessage msg{};
     comm_cart.recv(0, SOME_TAG, msg);
-    boost::apply_visitor(UpdateVisitor(), msg);
+    boost::apply_visitor(UpdateVisitor{id}, msg);
   }
 
   on_particle_change();
@@ -352,8 +356,10 @@ void mpi_update_particle_slave(int node, int) {
  * @param msg The message
  */
 
-void mpi_send_update_message(int pnode, const UpdateMessage &msg) {
-  mpi_call(mpi_update_particle_slave, pnode, 0);
+void mpi_send_update_message(int id, const UpdateMessage &msg) {
+    auto const pnode = get_particle_node(id);
+
+  mpi_call(mpi_update_particle_slave, pnode, id);
 
   /* If the particle is remote, send the
    * message to the target, otherwise we
@@ -361,7 +367,7 @@ void mpi_send_update_message(int pnode, const UpdateMessage &msg) {
   if (pnode != comm_cart.rank()) {
     comm_cart.send(pnode, SOME_TAG, msg);
   } else {
-    boost::apply_visitor(UpdateVisitor(), msg);
+    boost::apply_visitor(UpdateVisitor{id}, msg);
   }
 
   on_particle_change();
@@ -371,7 +377,7 @@ template <typename S, S Particle::*s, typename T, T S::*m>
 void mpi_update_particle(int id, const T &value) {
   using MessageType = message_type_t<S, s>;
   MessageType msg = UpdateParticle<S, s, T, m>{value};
-  mpi_send_update_message(get_particle_node(id), msg);
+  mpi_send_update_message(id, msg);
 }
 
 template <typename T, T ParticleProperties::*m>
@@ -1278,6 +1284,10 @@ void added_particle(int part) {
 
     max_seen_particle = part;
   }
+}
+
+void local_add_particle_bond(Particle &p, Utils::Span<const int> bond) {
+    boost::copy(bond, std::back_inserter(p.bl));
 }
 
 int try_delete_bond(Particle *part, const int *bond) {

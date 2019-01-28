@@ -937,6 +937,13 @@ void local_remove_all_particles();
 */
 void local_rescale_particles(int dir, double scale);
 
+/** @briefn Add bond to local particle.
+    @param part     identity of principal atom of the bond.
+    @param bond     field containing the bond type number and the
+    identity of all bond partners (secondary atoms of the bond).
+*/
+void local_add_particle_bond(Particle &p, Utils::Span<const int> bond);
+
 /** Synchronous send of a particle buffer to another node. The other node
     MUST call \ref recv_particles when this is called. The particles data
     is freed. */
