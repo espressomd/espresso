@@ -4,7 +4,7 @@ stages:
   - permission
   - prepare
   - build
-  - additional_checks
+  - test
   - deploy
   - result
 
@@ -55,101 +55,68 @@ style:
 
 ### Builds without CUDA
 
-default:
-  stage: build
+.default:
+  variables:
+    - with_cuda: "false"
+    - myconfig: "default"
+    - with_coverage: "true"
   script:
-    - export with_cuda=false myconfig=default with_coverage=true
     - bash maintainer/CI/build_cmake.sh
+  artifacts:
+    paths:
+    - build/
+    expire_in: 1 week
   tags:
     - docker
     - linux
 
-maxset:
+default:build:
+  extends: default
+  variables:
+    make_check: "false"
   stage: build
-  script:
-    - export with_cuda=false myconfig=maxset with_coverage=true
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
 
-maxset-python3:
+default:test:
+  stage: test
+  extends: default
+  variables:
+    make_check: "true"
+  dependencies:
+    - default:build
+
+maxset:build:
+  extends: default
   stage: build
+  variables:
+    - myconfig: "maxset"
+
+maxset:build:
+  extends: default
+  stage: test
+  variables:
+    - myconfig: "maxset"
+    - make_check: "true"
+  dependencies:
+    - maxset:build
+
+maxset-python3:build:
+  extends: default
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
-  script:
-    - export myconfig=maxset with_coverage=true python_version=3
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
-nocheckmaxset:
   stage: build
-  script:
-    - export with_cuda=false myconfig=nocheck-maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
+  variables:
+    - myconfig: "maxset"
+    - python_version: 3
 
-### Builds with different Distributions
-
-#debian:8 removed: similar to ubuntu:1404
-
-debian:9:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
-  script:
-    - export with_cuda=false
-    - export myconfig=maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
-opensuse:42.3:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
-  script:
-    - export with_cuda=false myconfig=maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
-opensuse:15.0:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
-  script:
-    - export with_cuda=false myconfig=maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
-centos:7:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
-  script:
-    - export with_cuda=false myconfig=maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
-fedora:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos:next
-  script:
-    - export with_cuda=false myconfig=maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
-#ubuntu:1404 not needed: used in cuda:8.0
-#ubuntu:1604 not needed: used in cuda:9.0
-#ubuntu:1804 not needed: default used in non-CUDA builds
+maxset-python3:build:
+  extends: default
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
+  stage: test
+  variables:
+    - myconfig: "maxset"
+    - make_check: "true"
+    - python_version: 3
+  dependencies:
+    - maxset-python3:build
 
 ### Builds with CUDA
 
@@ -214,6 +181,8 @@ ubuntu:wo-dependencies:
   tags:
     - docker
     - linux
+
+
 
 ### Builds with ROCm
 
