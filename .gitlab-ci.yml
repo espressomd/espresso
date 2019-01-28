@@ -221,7 +221,7 @@ rocm-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/rocm:latest
   script:
-    - export myconfig=maxset check_gpu_only=true
+    - export myconfig=maxset make_check=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - amdgpu
