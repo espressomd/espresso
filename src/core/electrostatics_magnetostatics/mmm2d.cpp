@@ -686,8 +686,7 @@ static double z_energy() {
   return eng;
 }
 
-static void setup(int p, double omega, double fac, int n_sccache,
-                  Utils::Span<const SCCache> sccache) {
+static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sccache) {
   int np, c, i, ic, o = (p - 1) * n_localpart;
   Particle *part;
   double pref = coulomb.prefactor * 4 * M_PI * ux * uy * fac * fac;
@@ -808,12 +807,12 @@ static void setup(int p, double omega, double fac, int n_sccache,
 /* PoQ exp sum */
 /*****************************************************************/
 static void setup_P(int p, double omega, double fac) {
-  setup(p, omega, fac, n_scxcache, scxcache);
+  setup(p, omega, fac, scxcache);
 }
 
 /* compare setup_P */
 static void setup_Q(int q, double omega, double fac) {
-  setup(q, omega, fac, n_scycache, scycache);
+  setup(q, omega, fac, scycache);
 }
 
 template<size_t dir>
