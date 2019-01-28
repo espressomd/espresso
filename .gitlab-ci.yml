@@ -57,9 +57,9 @@ style:
 
 .default:
   variables:
-    - with_cuda: "false"
-    - myconfig: "default"
-    - with_coverage: "true"
+    with_cuda: "false"
+    myconfig: "default"
+    with_coverage: "true"
   script:
     - bash maintainer/CI/build_cmake.sh
   artifacts:
@@ -71,50 +71,50 @@ style:
     - linux
 
 default:build:
-  extends: default
+  extends: .default
   variables:
     make_check: "false"
   stage: build
 
 default:test:
   stage: test
-  extends: default
+  extends: .default
   variables:
     make_check: "true"
   dependencies:
     - default:build
 
 maxset:build:
-  extends: default
+  extends: .default
   stage: build
   variables:
-    - myconfig: "maxset"
+    myconfig: "maxset"
 
-maxset:build:
-  extends: default
+maxset:test:
+  extends: .default
   stage: test
   variables:
-    - myconfig: "maxset"
-    - make_check: "true"
+    myconfig: "maxset"
+    make_check: "true"
   dependencies:
     - maxset:build
 
 maxset-python3:build:
-  extends: default
+  extends: .default
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
   stage: build
   variables:
-    - myconfig: "maxset"
-    - python_version: 3
+    myconfig: "maxset"
+    python_version: 3
 
-maxset-python3:build:
-  extends: default
+maxset-python3:test:
+  extends: .default
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
   stage: test
   variables:
-    - myconfig: "maxset"
-    - make_check: "true"
-    - python_version: 3
+    myconfig: "maxset"
+    make_check: "true"
+    python_version: 3
   dependencies:
     - maxset-python3:build
 
@@ -290,7 +290,7 @@ intel:17:
     - cuda
 
 check_sphinx:
-  stage: additional_checks
+  stage: test
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
   dependencies:
   - cuda8-maxset
@@ -303,7 +303,7 @@ check_sphinx:
     - cuda
 
 check_with_odd_no_of_processors:
-  stage: additional_checks
+  stage: test
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
   dependencies:
