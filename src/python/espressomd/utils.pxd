@@ -91,7 +91,7 @@ cdef extern from "<limits>" namespace "std" nogil:
         @staticmethod
         T max()
 
-cdef extern from "Vector.hpp":
+cdef extern from "utils/Vector.hpp":
     cppclass Vector3i:
         int & operator[](int i)
         int * data()

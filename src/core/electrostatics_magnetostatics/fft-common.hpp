@@ -21,9 +21,10 @@
 #ifndef _FFT_COMMON_H
 #define _FFT_COMMON_H
 
-#include "Vector.hpp"
 #include "config.hpp"
+
 #if defined(P3M) || defined(DP3M)
+#include "utils/Vector.hpp"
 
 #include <fftw3.h>
 
