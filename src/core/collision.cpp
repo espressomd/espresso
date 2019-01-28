@@ -397,13 +397,10 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
 
 void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
                                         const collision_struct &c) {
-  int bondG[3];
-
   switch (bonded_ia_params[collision_params.bond_vs].num) {
   case 1: {
     // Create bond between the virtual particles
-    bondG[0] = collision_params.bond_vs;
-    bondG[1] = current_vs_pid - 2;
+    const int bondG[] = {collision_params.bond_vs, current_vs_pid - 2};
     // Only add bond if vs was created on this node
     if (local_particles[current_vs_pid - 1])
       add_particle_bond(current_vs_pid - 1, bondG);
@@ -411,9 +408,7 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
   }
   case 2: {
     // Create 1st bond between the virtual particles
-    bondG[0] = collision_params.bond_vs;
-    bondG[1] = c.pp1;
-    bondG[2] = c.pp2;
+    const int bondG[] = {collision_params.bond_vs, c.pp1, c.pp2};
     // Only add bond if vs was created on this node
     if (local_particles[current_vs_pid - 1])
       add_particle_bond(current_vs_pid - 1, bondG);
@@ -428,10 +423,9 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
                                      const Particle *const p2,
                                      const int vs_pid_plus_one,
                                      const collision_struct &c) {
-  int bondG[3];
   // Create bond between the virtual particles
-  bondG[0] = collision_params.bond_vs;
-  bondG[1] = vs_pid_plus_one - 1;
+  const int bondG[] = {collision_params.bond_vs, vs_pid_plus_one - 1};
+
   if (p1->p.type == collision_params.part_type_after_glueing) {
     add_particle_bond(p1->p.identity, bondG);
   } else {
