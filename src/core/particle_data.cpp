@@ -91,9 +91,7 @@ struct UpdateParticle {
 
   void operator()(Particle &p) const { (p.*s).*m = value; }
 
-  template <class Archive> void serialize(Archive &ar, long int) {
-    ar &value;
-  }
+  template <class Archive> void serialize(Archive &ar, long int) { ar &value; }
 };
 
 template <typename T, T ParticleProperties::*m>
@@ -322,9 +320,9 @@ using message_type_t = typename message_type<S, s>::type;
  */
 
 struct UpdateVisitor : public boost::static_visitor<void> {
-    UpdateVisitor(int id) : id(id) {}
+  UpdateVisitor(int id) : id(id) {}
 
-    const int id;
+  const int id;
 
   /* Recurse into sub-variants */
   template <class... Message>
@@ -357,7 +355,7 @@ void mpi_update_particle_slave(int node, int id) {
  */
 
 void mpi_send_update_message(int id, const UpdateMessage &msg) {
-    auto const pnode = get_particle_node(id);
+  auto const pnode = get_particle_node(id);
 
   mpi_call(mpi_update_particle_slave, pnode, id);
 
@@ -1086,9 +1084,8 @@ int set_particle_ext_torque(int part, const Vector3d &torque) {
     mpi_update_particle_property<Vector3d, &ParticleProperties::ext_torque>(
         part, torque);
   }
-  mpi_send_update_message(part,
-                          UpdatePropertyMessage(UpdateExternalFlag{
-                              PARTICLE_EXT_TORQUE, flag}));
+  mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
+                                    PARTICLE_EXT_TORQUE, flag}));
   return ES_OK;
 }
 #endif
@@ -1099,16 +1096,14 @@ int set_particle_ext_force(int part, const Vector3d &force) {
     mpi_update_particle_property<Vector3d, &ParticleProperties::ext_force>(
         part, force);
   }
-  mpi_send_update_message(part,
-                          UpdatePropertyMessage(UpdateExternalFlag{
-                              PARTICLE_EXT_FORCE, flag}));
+  mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
+                                    PARTICLE_EXT_FORCE, flag}));
   return ES_OK;
 }
 
 int set_particle_fix(int part, int flag) {
   mpi_send_update_message(
-      part,
-      UpdatePropertyMessage(UpdateExternalFlag{COORDS_FIX_MASK, flag}));
+      part, UpdatePropertyMessage(UpdateExternalFlag{COORDS_FIX_MASK, flag}));
   return ES_OK;
 }
 
@@ -1116,19 +1111,16 @@ int set_particle_fix(int part, int flag) {
 
 void delete_particle_bond(int part, Utils::Span<const int> bond) {
   mpi_send_update_message(
-      part,
-      UpdateBondMessage{RemoveBond{{bond.begin(), bond.end()}}});
+      part, UpdateBondMessage{RemoveBond{{bond.begin(), bond.end()}}});
 }
 
 void delete_particle_bonds(int part) {
-  mpi_send_update_message(part,
-                          UpdateBondMessage{RemoveBonds{}});
+  mpi_send_update_message(part, UpdateBondMessage{RemoveBonds{}});
 }
 
 void add_particle_bond(int part, Utils::Span<const int> bond) {
   mpi_send_update_message(
-      part,
-      UpdateBondMessage{AddBond{{bond.begin(), bond.end()}}});
+      part, UpdateBondMessage{AddBond{{bond.begin(), bond.end()}}});
 }
 
 void remove_all_particles() {
@@ -1287,7 +1279,7 @@ void added_particle(int part) {
 }
 
 void local_add_particle_bond(Particle &p, Utils::Span<const int> bond) {
-    boost::copy(bond, std::back_inserter(p.bl));
+  boost::copy(bond, std::back_inserter(p.bl));
 }
 
 int try_delete_bond(Particle *part, const int *bond) {

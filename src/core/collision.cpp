@@ -67,10 +67,10 @@ static std::vector<collision_struct> local_collision_queue;
 Collision_parameters collision_params;
 
 namespace {
-    Particle& get_part(int id) {
-      return assert(local_particles[id]), *local_particles[id];
-    }
+Particle &get_part(int id) {
+  return assert(local_particles[id]), *local_particles[id];
 }
+} // namespace
 
 /** @brief Return true if a bond between the centers of the colliding particles
  * needs to be placed. At this point, all modes need this */
