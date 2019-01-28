@@ -20,14 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/field_coupling/ForceField.hpp"
-#include "core/field_coupling/PotentialField.hpp"
+#include "field_coupling/ForceField.hpp"
+#include "field_coupling/PotentialField.hpp"
 
-#include "core/field_coupling/detail/Base.hpp"
-#include "core/field_coupling/detail/BindCoupling.hpp"
+#include "field_coupling/detail/Base.hpp"
+#include "field_coupling/detail/BindCoupling.hpp"
 using namespace FieldCoupling;
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 template <bool linear> struct Id {
   static constexpr const bool is_linear = linear;

@@ -52,13 +52,15 @@
  */
 
 #include "config.hpp"
+
+#ifdef P3M
+
 #include "debug.hpp"
+#include "fft.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "p3m-common.hpp"
 
 #include "utils/math/AS_erfc_part.hpp"
-
-#ifdef P3M
 
 /************************************************
  * data types
@@ -118,6 +120,8 @@ typedef struct {
   double *send_grid;
   /** Field to store grid points to recv */
   double *recv_grid;
+
+  fft_data_struct fft;
 } p3m_data_struct;
 
 /** P3M parameters. */

@@ -26,7 +26,7 @@
 
 #include <string>
 
-#include "core/utils/mpi/sendrecv.hpp"
+#include "utils/mpi/sendrecv.hpp"
 
 using Utils::Mpi::isendrecv;
 using Utils::Mpi::sendrecv;

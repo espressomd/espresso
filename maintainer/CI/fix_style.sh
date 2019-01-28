@@ -27,8 +27,9 @@ if ! $AUTOPEP8 --version | grep -qEo "autopep8 $AUTOPEP8_VER"; then
     exit 2
 fi
 
-find . \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path './libs/*' | xargs -n 5 -P 8 $CLANGFORMAT -i -style=file || exit 3
-find . \( -name '*.py' -o -name '*.pyx' -o -name '*.pxd' \) -not -path './libs/*' | xargs -n 5 -P 8 $AUTOPEP8 --ignore=E266,W291,W293 --in-place --aggressive --aggressive || exit 3
+find . \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path './libs/*' | xargs -r -n 5 -P 8 $CLANGFORMAT -i -style=file || exit 3
+find . \( -name '*.py' -o -name '*.pyx' -o -name '*.pxd' \) -not -path './libs/*' | xargs -r -n 5 -P 8 $AUTOPEP8 --ignore=E266,W291,W293 --in-place --aggressive --aggressive || exit 3
+find . -type f -executable ! -name '*.sh' ! -name '*.py' ! -name '*.sh.in' ! -name pypresso.cmakein  -not -path './.git/*' | xargs -r -n 5 -P 8 chmod -x || exit 3
 
 if [ "$CI" != "" ]; then
     maintainer/gh_post_style_patch.py

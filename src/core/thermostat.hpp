@@ -32,7 +32,7 @@
 #include "random.hpp"
 #include "rotation.hpp"
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 #include <cmath>
 
