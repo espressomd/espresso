@@ -44,12 +44,16 @@ function(PYTHON_TEST)
 
   set_tests_properties(${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC})
 
+ if("gpu" IN_LIST TEST_LABELS)
+   set_tests_properties(${TEST_NAME} PROPERTIES RUN_SERIAL ON)
+ endif()
+
   if(${TEST_MAX_NUM_PROC} LESS 2)
-    set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};serial")
+    set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")
   elseif(${TEST_MAX_NUM_PROC} LESS 3)
-    set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};serial;parallel")
+    set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};parallel")
   else()
-    set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};serial;parallel;parallel_odd")
+    set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};parallel;parallel_odd")
   endif()
 
   set(python_tests ${python_tests} ${TEST_FILE} PARENT_SCOPE)
