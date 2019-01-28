@@ -99,9 +99,13 @@ typedef struct {
 
 /** \name sin/cos caching */
 /*@{*/
-static SCCache *scxcache = nullptr;
+/** sin/cos caching */
+static std::vector<SCCache> scxcache;
+/* _Not_ the size of scxcache */
 static int n_scxcache;
-static SCCache *scycache = nullptr;
+/** sin/cos caching */
+static std::vector<SCCache> scycache;
+/* _Not_ the size of scycache */
 static int n_scycache;
 /*@}*/
 
@@ -165,38 +169,31 @@ void ELC_setup_constants() {
 
 /* SC Cache */
 /************/
-static void prepare_scx_cache() {
-  int freq;
-  double arg;
 
-  for (freq = 1; freq <= n_scxcache; freq++) {
-    double pref = C_2PI * ux * freq;
-    int o = (freq - 1) * n_localpart;
+static SCCache sc(double arg) { return {sin(arg), cos(arg)}; }
+
+template<size_t dir>
+static void prepare_sc_cache(std::vector<SCCache> &sccache, double u,
+                             int n_sccache) {
+  for (int freq = 1; freq <= n_sccache; freq++) {
+    auto const pref = C_2PI * u * freq;
+    auto const o = (freq - 1) * n_localpart;
+
     int ic = 0;
     for (auto const &part : local_cells.particles()) {
-      arg = pref * part.r.p[0];
-      scxcache[o + ic].s = sin(arg);
-      scxcache[o + ic].c = cos(arg);
+      double arg = pref * part.r.p[dir];
+      sccache[o + ic] = sc(arg);
       ic++;
     }
   }
 }
 
-static void prepare_scy_cache() {
-  int freq;
-  double arg;
+static void prepare_scx_cache() {
+  prepare_sc_cache<0>(scxcache, ux, n_scxcache);
+}
 
-  for (freq = 1; freq <= n_scycache; freq++) {
-    double pref = C_2PI * uy * freq;
-    int o = (freq - 1) * n_localpart;
-    int ic = 0;
-    for (auto const &part : local_cells.particles()) {
-      arg = pref * part.r.p[1];
-      scycache[o + ic].s = sin(arg);
-      scycache[o + ic].c = cos(arg);
-      ic++;
-    }
-  }
+static void prepare_scy_cache() {
+  prepare_sc_cache<1>(scycache, uy, n_scycache);
 }
 
 /*****************************************************************/
@@ -575,7 +572,7 @@ static void add_z_force() {
 /* PoQ exp sum */
 /*****************************************************************/
 
-static void setup(int p, double omega, SCCache *sccache) {
+static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
   int ic, o = (p - 1) * n_localpart;
   double pref =
           -coulomb.prefactor * 4 * M_PI * ux * uy / (expm1(omega * box_l[2]));
@@ -1143,10 +1140,8 @@ void ELC_on_resort_particles() {
   n_localpart = cells_get_n_particles();
   n_scxcache = (int) (ceil(elc_params.far_cut / ux) + 1);
   n_scycache = (int) (ceil(elc_params.far_cut / uy) + 1);
-  scxcache =
-          Utils::realloc(scxcache, n_scxcache * n_localpart * sizeof(SCCache));
-  scycache =
-          Utils::realloc(scycache, n_scycache * n_localpart * sizeof(SCCache));
+  scxcache.resize(n_scxcache * n_localpart);
+  scycache.resize(n_scycache * n_localpart);
 
   partblk = Utils::realloc(partblk, n_localpart * 8 * sizeof(double));
 }
