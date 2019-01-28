@@ -203,7 +203,7 @@ Vector3d get_mi_vector(T const &a, U const &b) {
   return res;
 }
 
-/** fold a coordinate to primary simulation box, including velocity.
+/** fold a coordinate to primary simulation box.
     \param pos         the position...
     \param image_box   and the box
     \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z
