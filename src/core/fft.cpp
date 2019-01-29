@@ -27,7 +27,7 @@
 
 #include "fft.hpp"
 
-#ifdef P3M
+#if defined(P3M) || defined(DP3M)
 
 #include <fftw3.h>
 /* our remapping of malloc interferes with fftw3's name mangling. */

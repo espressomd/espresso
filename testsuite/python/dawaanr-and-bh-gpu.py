@@ -27,10 +27,10 @@ from espressomd.interactions import *
 from espressomd.magnetostatics import *
 from espressomd.analyze import *
 from tests_common import *
-from espressomd import assert_features, has_features, missing_features
 
 
-@ut.skipIf(not has_features(["DIPOLAR_BARNES_HUT"]),
+@ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT",
+                                        "PARTIAL_PERIODIC"]),
            "Features not available, skipping test!")
 class BHGPUTest(ut.TestCase):
     longMessage = True
