@@ -2359,7 +2359,7 @@ std::array<T, N> lb_calc_n_from_m(const std::array<T, N> &modes) {
 
 template <typename T>
 inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
-                                      const std::array<T, 19> m) {
+                                      const std::array<T, 19> &m) {
   const std::array<int, 3> period = {
       {1, lblattice.halo_grid[0],
        lblattice.halo_grid[0] * lblattice.halo_grid[1]}};
