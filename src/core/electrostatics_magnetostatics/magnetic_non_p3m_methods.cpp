@@ -204,8 +204,6 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
   std::vector<double> tx, ty, tz;
 #endif
   int dip_particles, dip_particles2;
-  double ppos[3];
-  int img[3];
   double u;
 
   if (n_nodes != 1) {
@@ -248,15 +246,7 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
       mz[dip_particles] = dip[2];
 
       /* here we wish the coordinates to be folded into the primary box */
-
-      ppos[0] = p.r.p[0];
-      ppos[1] = p.r.p[1];
-      ppos[2] = p.r.p[2];
-      img[0] = p.l.i[0];
-      img[1] = p.l.i[1];
-      img[2] = p.l.i[2];
-      fold_position(ppos, img);
-
+      auto const ppos = folded_position(p.r.p);
       x[dip_particles] = ppos[0];
       y[dip_particles] = ppos[1];
       z[dip_particles] = ppos[2];
