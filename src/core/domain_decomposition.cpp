@@ -32,6 +32,7 @@
 
 #include "initialize.hpp"
 
+#include <boost/algorithm/clamp.hpp>
 #include <boost/mpi/collectives.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if the
@@ -480,6 +481,8 @@ void dd_init_cell_interactions() {
 
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
+    using boost::algorithm::clamp;
+
     auto const gind1 = global_index({m, n, o});
     auto const lind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
 
@@ -494,6 +497,14 @@ void dd_init_cell_interactions() {
       if (dd.fully_connected[i] == true) {
         lower_index[i] = 0;
         upper_index[i] = dd.ghost_cell_grid[i] - 1;
+      }
+
+      /* Cut of ghost layer at boundary if not periodic. */
+      if ((!PERIODIC(i)) && boundary[2 * i]) {
+        lower_index[i] = clamp(lower_index[i], 0, dd.ghost_cell_grid[i] - 1);
+      }
+      if ((!PERIODIC(i)) && boundary[2 * i + 1]) {
+        upper_index[i] = clamp(upper_index[i], 0, dd.ghost_cell_grid[i] - 1);
       }
     }
 
