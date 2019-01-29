@@ -26,7 +26,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/utils/for_each_pair.hpp"
+#include "utils/for_each_pair.hpp"
 using Utils::for_each_pair;
 
 #include <numeric>

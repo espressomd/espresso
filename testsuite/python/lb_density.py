@@ -84,15 +84,5 @@ class LBCPUMass(ut.TestCase, LBMassCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_GPU']) or espressomd.has_features("SHANCHEN"), "Skipping test due to missing features.")
-class LBGPUMass(ut.TestCase, LBMassCommon):
-
-    """Test for the GPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-
-
 if __name__ == '__main__':
     ut.main()

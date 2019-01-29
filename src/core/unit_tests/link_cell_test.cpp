@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/Cell.hpp"
-#include "core/algorithm/link_cell.hpp"
+#include "Cell.hpp"
+#include "algorithm/link_cell.hpp"
 
 BOOST_AUTO_TEST_CASE(link_cell) {
   const unsigned n_cells = 10;

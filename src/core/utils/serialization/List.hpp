@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include <boost/serialization/split_free.hpp>
 
-#include "core/utils/List.hpp"
+#include "utils/List.hpp"
 
 namespace boost {
 namespace serialization {

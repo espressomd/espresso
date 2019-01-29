@@ -103,7 +103,7 @@ ROCm SDK to make use of GPU computation:
     wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
     echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list
     sudo apt update
-    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand
+    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand hip-thrust
 
 .. _Installing Requirements on Mac OS X:
 
@@ -433,11 +433,6 @@ General features
 
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
-
-..
-    -  ``NEMD`` Enables the non-equilbrium (shear) MD support.
-
-       .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibrium MD`
 
 -  ``NPT`` Enables an on-the-fly NPT integration scheme.
 

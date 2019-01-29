@@ -36,7 +36,7 @@ class InteractionsNonBondedTest(ut.TestCase):
     def setUp(self):
 
         self.system.box_l = [self.box_l] * 3
-        self.system.cell_system.skin = 0.4
+        self.system.cell_system.skin = 0.
         self.system.time_step = .1
 
         self.system.part.add(id=0, pos=self.start_pos, type=0)
@@ -585,6 +585,36 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         self.system.non_bonded_inter[0, 0].gaussian.set_params(eps=0.)
 
+    @ut.skipIf(not espressomd.has_features("GAY_BERNE"), "skipped for lack of Gay Berne")
+    def test_gb(self):
+        k_1 = 1.2
+        k_2 = 2.4
+        mu = 2.
+        nu = 5.
+        sigma_0 = 1.2
+        epsilon_0 = 0.8
+        cut = 3.3 
+
+        self.system.part[:].pos = ((1, 2, 3), (2.2, 2.1, 2.9))
+        self.system.non_bonded_inter[0, 0].gay_berne.set_params(
+            sig=sigma_0, cut=cut, eps=epsilon_0, k1=k_1, k2=k_2, mu=mu, nu=nu)
+        p1 = self.system.part[0]
+        p2 = self.system.part[1]
+        p1.rotate(axis=(1, 2, 3), angle=0.3)
+        p1.rotate(axis=(1, -2, -4), angle=1.2)
+
+        r = self.system.distance_vec(p1, p2)
+
+        r_cut = r * cut / numpy.linalg.norm(r)
+        self.assertAlmostEqual(self.system.analysis.energy()["non_bonded"],
+                               tests_common.gay_berne_potential(r, p1.director, p2.director, epsilon_0, sigma_0, mu, nu, k_1, k_2) -
+                               tests_common.gay_berne_potential(r_cut, p1.director, p2.director, epsilon_0, sigma_0, mu, nu, k_1, k_2), delta=1E-14)
+
+        self.system.integrator.run(0)
+        self.system.non_bonded_inter[0, 0].gay_berne.set_params(
+            sig=sigma_0, cut=0, eps=0, k1=k_1, k2=k_2, mu=mu, nu=nu)
+        self.system.integrator.run(0)
+        self.assertEqual(self.system.analysis.energy()["non_bonded"], 0.0)
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())

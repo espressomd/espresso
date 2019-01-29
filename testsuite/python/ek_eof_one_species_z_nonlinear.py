@@ -43,7 +43,7 @@ class ek_eof_one_species_x(ut.TestCase):
         pi = math.pi
         box_z = 3
         box_x = 3
-        width = 30
+        width = 20
 
         padding = 6
         box_y = width + 2 * padding
@@ -68,7 +68,7 @@ class ek_eof_one_species_x(ut.TestCase):
         system.time_step = dt
         system.cell_system.skin = 0.1
         system.thermostat.turn_off()
-        integration_length = 1500
+        integration_length = 800
 
         # Set up the charged and neutral species
         density_water = 26.15

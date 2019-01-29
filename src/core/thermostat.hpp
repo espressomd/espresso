@@ -32,7 +32,7 @@
 #include "random.hpp"
 #include "rotation.hpp"
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 #include <cmath>
 
@@ -162,21 +162,15 @@ inline void friction_thermo_langevin(Particle *p) {
   }
 
   // Get velocity effective in the thermostatting
-  Vector3d velocity;
+  Vector3d velocity = p->m.v;
 #ifdef ENGINE
-  const Vector3d director = p->r.calc_director();
-#endif
-  for (int i = 0; i < 3; i++) {
-    // Particle velocity
-    velocity[i] = p->m.v[i];
-#ifdef ENGINE
+  if (p->swim.v_swim != 0) {
     // In case of the engine feature, the velocity is relaxed
     // towards a swimming velocity oriented parallel to the
     // particles director
-    velocity[i] -= p->swim.v_swim * director[i];
+    velocity -= p->swim.v_swim * p->r.calc_director();
+  }
 #endif
-
-  } // for
 
   // Determine prefactors for the friction and the noise term
 

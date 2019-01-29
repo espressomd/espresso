@@ -24,6 +24,7 @@
 #include "initialize.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
+#include "collision.hpp"
 #include "communication.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
@@ -50,11 +51,9 @@
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "lattice.hpp"
 #include "metadynamics.hpp"
-#include "nemd.hpp"
 #include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
-#include "observables/Observable.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
@@ -709,8 +708,10 @@ void on_ghost_flags_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));
   /* that's all we change here */
   extern int ghosts_have_v;
+  extern int ghosts_have_bonds;
 
   ghosts_have_v = 0;
+  ghosts_have_bonds = 0;
 
 /* DPD and LB need also ghost velocities */
 #ifdef LB
@@ -739,6 +740,13 @@ void on_ghost_flags_change() {
   };
 #endif
   // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
-  if (n_thermalized_bonds)
+  if (n_thermalized_bonds) {
     ghosts_have_v = 1;
+    ghosts_have_bonds = 1;
+  }
+#ifdef COLLISION_DETECTION
+  if (collision_params.mode) {
+    ghosts_have_bonds = 1;
+  }
+#endif
 }

@@ -115,21 +115,16 @@ int collision(PartCfg &partCfg, double pos[3], double shield, int n_add,
 }
 
 int constraint_collision(double *p1, double *p2) {
-  double d1, d2, v[3];
-  Vector3d folded_pos1;
-  Vector3d folded_pos2;
-  int img[3];
-
-  memmove(folded_pos1.data(), p1, 3 * sizeof(double));
-  fold_position(folded_pos1, img);
-
-  memmove(folded_pos2.data(), p2, 3 * sizeof(double));
-  fold_position(folded_pos2, img);
+  Vector3d folded_pos1 = folded_position({p1, p1 + 3});
+  Vector3d folded_pos2 = folded_position({p2, p2 + 3});
 
   for (auto &c : Constraints::constraints) {
     auto cs =
         std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
     if (cs) {
+      double d1, d2;
+      double v[3];
+
       cs->calc_dist(folded_pos1, &d1, v);
       cs->calc_dist(folded_pos2, &d2, v);
 

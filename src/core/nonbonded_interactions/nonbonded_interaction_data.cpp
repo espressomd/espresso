@@ -64,9 +64,8 @@
 #include "pressure.hpp"
 #include "rattle.hpp"
 #include "reaction_field.hpp"
+#include "serialization/IA_parameters.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
-#include "utils/serialization/IA_parameters.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -430,19 +429,6 @@ void make_particle_type_exist_local(int type) {
     realloc_ia_params(type + 1);
 }
 
-void make_bond_type_exist(int type) {
-  int i, ns = type + 1;
-  const auto old_size = bonded_ia_params.size();
-  if (ns <= bonded_ia_params.size()) {
-    return;
-  }
-  /* else allocate new memory */
-  bonded_ia_params.resize(ns);
-  /* set bond types not used as undefined */
-  for (i = old_size; i < ns; i++)
-    bonded_ia_params[i].type = BONDED_IA_NONE;
-}
-
 int interactions_sanity_checks() {
   /* set to zero if initialization was not successful. */
   int state = 1;
@@ -472,9 +458,8 @@ int interactions_sanity_checks() {
   }
 #endif /* ifdef ELECTROSTATICS */
 
-#ifdef DIPOLES
+#if defined(DIPOLES) and defined(DP3M)
   switch (coulomb.Dmethod) {
-#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     if (mdlc_sanity_checks())
       state = 0; // fall through
@@ -482,7 +467,6 @@ int interactions_sanity_checks() {
     if (dp3m_sanity_checks())
       state = 0;
     break;
-#endif
   case DIPOLAR_MDLC_DS:
     if (mdlc_sanity_checks())
       state = 0; // fall through
