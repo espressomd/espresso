@@ -2207,18 +2207,9 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
 
 #include <boost/range/numeric.hpp>
 
-template <typename T, std::size_t N>
-std::array<T, N> lb_calc_m_from_n(const std::array<T, N> n) {
-  return Utils::matrix_vector_product<T, N, ::D3Q19::e_ki>(n);
-}
-
 /** Calculation of hydrodynamic modes */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index) {
-  std::array<double, 19> n;
-  for (int i = 0; i < 19; i++) {
-    n[i] = lbfluid[i][index];
-  }
-  return lb_calc_m_from_n(n);
+  return Utils::matrix_vector_product<double, 19, ::D3Q19::e_ki>(LB_Fluid_Ref(index, lbfluid));
 }
 
 template <typename T>
