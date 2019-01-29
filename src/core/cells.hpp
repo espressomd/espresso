@@ -60,13 +60,15 @@
 #include <utility>
 #include <vector>
 
+#include "Cell.hpp"
 #include "ParticleIterator.hpp"
+#include "ParticleRange.hpp"
 #include "ghosts.hpp"
 #include "particle_data.hpp"
-#include "utils/Range.hpp"
 
-#include "Cell.hpp"
-#include "ParticleRange.hpp"
+#include "utils/vector_traits.hpp"
+
+#include <boost/geometry/geometries/box.hpp>
 
 /** \name Cell Structure */
 /*@{*/
