@@ -5,6 +5,7 @@
 
 #include <boost/type_traits/is_arithmetic.hpp>
 
+#include <boost/geometry/core/access.hpp>
 #include <boost/geometry/core/coordinate_dimension.hpp>
 #include <boost/geometry/core/coordinate_type.hpp>
 #include <boost/geometry/core/cs.hpp>
