@@ -6,7 +6,7 @@
 #include <hip/hip_runtime.h>
 
 #define cudaDeviceProp hipDeviceProp_t
-#define cudaThreadSynchronize hipDeviceSynchronize
+#define cudaDeviceSynchronize hipDeviceSynchronize
 #define cudaErrorInvalidValue hipErrorInvalidValue
 #define cudaError_t hipError_t
 #define cudaEventCreate hipEventCreate
@@ -22,10 +22,10 @@
 #define cudaGetDeviceProperties hipGetDeviceProperties
 #define cudaGetErrorString hipGetErrorString
 #define cudaGetLastError hipGetLastError
+#define cudaGetSymbolAddress hipGetSymbolAddress
 #define cudaFreeHost hipHostFree
 #define cudaHostAlloc hipHostMalloc
 #define cudaHostAllocWriteCombined hipHostMallocWriteCombined
-#define cudaLaunchKernelGGL hipLaunchKernelGGL
 #define cudaMalloc hipMalloc
 #define cudaMallocHost hipHostMalloc
 #define cudaMemcpy hipMemcpy
@@ -57,11 +57,6 @@
 #if defined(__HIPCC__) and not defined(__CUDACC__) // AMD-only
 
 #define make_uint3 dim3
-
-inline cudaError_t cudaGetSymbolAddress(void **devPtr, const char *symbol) {
-  size_t bytes = 0;
-  return hipModuleGetGlobal(devPtr, &bytes, 0, symbol);
-}
 
 #endif
 

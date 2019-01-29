@@ -21,8 +21,10 @@
 #ifndef _STATISTICS_H
 #define _STATISTICS_H
 /** \file
-    This file contains the code for statistics on the data.
-*/
+ *  Statistical tools to analyze simulations.
+ *
+ *  Implementation in statistics.cpp.
+ */
 
 #include "PartCfg.hpp"
 #include "grid.hpp"
@@ -147,6 +149,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
                 int *agg_avg, int *agg_std, int charge_criteria);
 
 /** returns all particles within a given radius r_catch around a position.
+    @param partCfg
     @param pos position of sphere of point
     @param r_catch the radius around the position
     @param planedims orientation of coordinate system
@@ -221,6 +224,7 @@ void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types,
     the distribution function is binned into r_bin bins, which are
     equidistant. The result is stored in the array rdf.
 
+    @param partCfg
     @param p1_types list with types of particles to find the distribution for.
     @param n_p1     length of p1_types.
     @param p2_types list with types of particles the others are distributed
@@ -247,6 +251,7 @@ void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
     the distribution function is binned into r_bin bins, which are
     equidistant. The result is stored in the array rdf.
 
+    @param partCfg
     @param p1_types list with types of particles to find the distribution for.
     @param n_p1     length of p1_types.
     @param p2_types list with types of particles the others are distributed
@@ -332,11 +337,6 @@ int calc_cylindrical_average(
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution);
 
-int calc_radial_density_map(int xbins, int ybins, int thetabins, double xrange,
-                            double yrange, double axis[3], double center[3],
-                            IntList *beadids, DoubleList *density_map,
-                            DoubleList *density_profile);
-
 template <typename T1, typename T2>
 double min_distance2(T1 const pos1, T2 const pos2) {
   double diff[3];
@@ -372,11 +372,10 @@ std::vector<double> centerofmass_vel(PartCfg &, int type);
 void angularmomentum(PartCfg &, int type, double *com);
 
 /** calculate the center of mass of a special type of a saved configuration
- *  \param k       number of the saved configuration
+ *  \param partCfg
  *  \param type    type of the particle, -1 for all
- *  \param com     center of mass position
+ *  \param MofImatrix
  */
-
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
 
 /** returns the momentum of the particles in the simulation box.

@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of the energy calculation.
-*/
+ *  Implementation of the energy calculation.
+ */
 #ifndef ENERGY_INLINE_HPP
 #define ENERGY_INLINE_HPP
 
@@ -37,7 +37,6 @@
 #include "bonded_interactions/harmonic_dumbbell.hpp"
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/subt_lj.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
@@ -76,14 +75,14 @@
 #include "energy.hpp"
 
 /** Calculate non bonded energies between a pair of particles.
-    @param p1        pointer to particle 1.
-    @param p2        pointer to particle 2.
-    @param ia_params the interaction parameters between the two particles
-    @param d         vector between p1 and p2.
-    @param dist      distance between p1 and p2.
-    @param dist2     distance squared between p1 and p2.
-    @return the short ranged interaction energy between the two particles
-*/
+ *  @param p1         pointer to particle 1.
+ *  @param p2         pointer to particle 2.
+ *  @param ia_params  the interaction parameters between the two particles
+ *  @param d          vector between p1 and p2.
+ *  @param dist       distance between p1 and p2.
+ *  @param dist2      distance squared between p1 and p2.
+ *  @return the short ranged interaction energy between the two particles
+ */
 inline double calc_non_bonded_pair_energy(const Particle *p1,
                                           const Particle *p2,
                                           const IA_parameters *ia_params,
@@ -183,12 +182,12 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 }
 
 /** Add non bonded energies and short range Coulomb between a pair of particles.
-    @param p1        pointer to particle 1.
-    @param p2        pointer to particle 2.
-    @param d         vector between p1 and p2.
-    @param dist      distance between p1 and p2.
-    @param dist2     distance squared between p1 and p2.
-*/
+ *  @param p1        pointer to particle 1.
+ *  @param p2        pointer to particle 2.
+ *  @param d         vector between p1 and p2.
+ *  @param dist      distance between p1 and p2.
+ *  @param dist2     distance squared between p1 and p2.
+ */
 inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
                                        double dist, double dist2) {
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
@@ -266,9 +265,8 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 }
 
 /** Calculate bonded energies for one particle.
-    @param p1 particle for which to calculate energies
-*/
-
+ *  @param p1 particle for which to calculate energies
+ */
 inline void add_bonded_energy(Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
@@ -333,9 +331,6 @@ inline void add_bonded_energy(Particle *p1) {
         break;
       case BONDED_IA_QUARTIC:
         bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
-        break;
-      case BONDED_IA_THERMALIZED_DIST:
-        bond_broken = thermalized_bond_energy(p1, p2, iaparams, dx, &ret);
         break;
 #ifdef ELECTROSTATICS
       case BONDED_IA_BONDED_COULOMB:
@@ -452,8 +447,8 @@ inline void add_bonded_energy(Particle *p1) {
 }
 
 /** Calculate kinetic energies for one particle.
-    @param p1 particle for which to calculate energies
-*/
+ *  @param p1 particle for which to calculate energies
+ */
 inline void add_kinetic_energy(Particle *p1) {
 #ifdef VIRTUAL_SITES
   if (p1->p.is_virtual)

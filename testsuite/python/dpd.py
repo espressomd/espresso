@@ -18,12 +18,13 @@
 #
 # Tests particle property setters/getters
 from __future__ import print_function
-import unittest as ut
-import espressomd
 import numpy as np
-from time import time
+import unittest as ut
 from itertools import product
+from time import time
 
+import espressomd
+from tests_common import single_component_maxwell
 
 @ut.skipIf(not espressomd.has_features("DPD"), "Skipped because feature is disabled")
 class DPDThermostat(ut.TestCase):
@@ -43,11 +44,6 @@ class DPDThermostat(ut.TestCase):
         s = self.s
         s.part.clear()
 
-    def single_component_maxwell(self, x1, x2, kT):
-        """Integrate the probability density from x1 to x2 using the trapez rule"""
-        x = np.linspace(x1, x2, 1000)
-        return np.trapz(np.exp(-x**2 / (2.*kT)), x)/np.sqrt(2.*np.pi*kT)
-
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
         """check the recorded particle distributions in vel againsta histogram with n_bins bins. Drop velocities outside minmax. Check individual histogram bins up to an accuracy of error_tol agaisnt the analytical result for kT."""
         for i in range(3):
@@ -56,13 +52,13 @@ class DPDThermostat(ut.TestCase):
             bins = hist[1]
             for j in range(n_bins):
                 found = data[j]
-                expected = self.single_component_maxwell(bins[j], bins[j+1], kT)
+                expected = single_component_maxwell(bins[j], bins[j+1], kT)
                 self.assertLessEqual(abs(found - expected), error_tol)
 
     def test_aa_verify_single_component_maxwell(self):
         """Verifies the normalization of the analytical expression."""
         self.assertLessEqual(
-            abs(self.single_component_maxwell(-10, 10, 4.)-1.), 1E-4)   
+            abs(single_component_maxwell(-10, 10, 4.)-1.), 1E-4)
 
     def check_total_zero(self):
         v_total = np.sum(self.s.part[:].v, axis=0)
@@ -166,7 +162,7 @@ class DPDThermostat(ut.TestCase):
             v_stored[i*N:(i+1)*N,:] = s.part[:].v
         v_minmax = 5
         bins = 5
-        error_tol = 0.01
+        error_tol = 0.012
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
 
@@ -197,12 +193,12 @@ class DPDThermostat(ut.TestCase):
         s.integrator.run(0)
 
         # Only trans, so x component should be zero
-        self.assertTrue(s.part[0].f[0] == 0.)
+        self.assertLess(abs(s.part[0].f[0]), 1e-16)
         # f = gamma * v_ij
         self.assertTrue(abs(s.part[0].f[1] - gamma * v[1]) < 1e-11)
         self.assertTrue(abs(s.part[0].f[2] - gamma * v[2]) < 1e-11)
         # Momentum conservation
-        self.assertTrue(s.part[1].f[0] == 0.)
+        self.assertLess(abs(s.part[1].f[0]), 1e-16)
         self.assertTrue(abs(s.part[1].f[1] + gamma * v[1]) < 1e-11)
         self.assertTrue(abs(s.part[1].f[2] + gamma * v[2]) < 1e-11)
 
@@ -248,14 +244,14 @@ class DPDThermostat(ut.TestCase):
         s.integrator.run(0)
 
         # Only trans, so x component should be zero
-        self.assertTrue(s.part[0].f[0] == 0.)
+        self.assertLess(abs(s.part[0].f[0]), 1e-16)
         # f = gamma * v_ij
         self.assertTrue(
             abs(s.part[0].f[1] - omega(1.3, 1.4)**2*gamma*v[1]) < 1e-11)
         self.assertTrue(
             abs(s.part[0].f[2] - omega(1.3, 1.4)**2*gamma*v[2]) < 1e-11)
         # Momentum conservation
-        self.assertTrue(s.part[1].f[0] == 0.)
+        self.assertLess(abs(s.part[1].f[0]), 1e-16)
         self.assertTrue(
             abs(s.part[1].f[1] + omega(1.3, 1.4)**2*gamma*v[1]) < 1e-11)
         self.assertTrue(

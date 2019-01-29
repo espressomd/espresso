@@ -16,12 +16,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 /** \file
- * Header file for lbgpu.cpp
+ *  %Lattice Boltzmann implementation on GPUs.
  *
- * This is the header file for the Lattice Boltzmann implementation in
- * lbgpu_cfile.cpp
+ *  Implementation in lbgpu.cpp.
  */
 
 #ifndef LB_GPU_H
@@ -30,11 +28,11 @@
 #include "config.hpp"
 #include "utils.hpp"
 #ifdef LB_GPU
-
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
  * explicitly. This saves a lot of multiplications with 1's and 0's
- * thus making the code more efficient. */
+ * thus making the code more efficient.
+ */
 #define D3Q19
 #define LBQ 19
 
@@ -43,10 +41,10 @@
 #define LB_COUPLE_TWO_POINT 2
 #define LB_COUPLE_THREE_POINT 4
 
-/** \name Parameter fields for Lattice Boltzmann
- * The numbers are referenced in \ref mpi_bcast_lb_params
- * to determine what actions have to take place upon change
- * of the respective parameter. */
+/** \name Parameter fields for lattice Boltzmann
+ *  The numbers are referenced in \ref mpi_bcast_lb_params
+ *  to determine what actions have to take place upon change
+ *  of the respective parameter. */
 /*@{*/
 #define LBPAR_DENSITY 0   /**< fluid density */
 #define LBPAR_VISCOSITY 1 /**< fluid kinematic viscosity */
@@ -71,8 +69,7 @@ typedef float lbForceFloat;
 #endif
 
 /**-------------------------------------------------------------------------*/
-/** Data structure holding the parameters for the Lattice Boltzmann system for
- * gpu. */
+/** Parameters for the lattice Boltzmann system for GPU. */
 typedef struct {
   /** number density (LJ units) */
   float rho[LB_COMPONENTS];
@@ -88,16 +85,19 @@ typedef struct {
   float gamma_odd[LB_COMPONENTS];
   float gamma_even[LB_COMPONENTS];
   /** flag determining whether gamma_shear, gamma_odd, and gamma_even are
-   * calculated from gamma_shear in such a way to yield a TRT LB with minimized
-   * slip at bounce-back boundaries */
+   *  calculated from gamma_shear in such a way to yield a TRT LB with minimized
+   *  slip at bounce-back boundaries
+   */
   bool is_TRT;
   /** friction coefficient for viscous coupling (LJ units)
-   * Note that the friction coefficient is quite high and may
-   * lead to numerical artifacts with low order integrators */
+   *  Note that the friction coefficient is quite high and may
+   *  lead to numerical artifacts with low order integrators
+   */
   float friction[LB_COMPONENTS];
-  /** amplitude of the fluctuations in the viscous coupling */
-  /** Switch indicating what type of coupling is used, can either
-  use nearest neighbors or next nearest neighbors. */
+  /** amplitude of the fluctuations in the viscous coupling
+   *  Switch indicating what type of coupling is used, can either
+   *  use nearest neighbors or next nearest neighbors.
+   */
   int lb_couple_switch;
 
   float lb_coupl_pref[LB_COMPONENTS];
@@ -108,7 +108,8 @@ typedef struct {
   float agrid;
 
   /** time step for fluid propagation (LJ units)
-   *  Note: Has to be larger than MD time step! */
+   *  Note: Has to be larger than MD time step!
+   */
   float tau;
 
   /** MD timestep */
@@ -125,7 +126,7 @@ typedef struct {
 #endif
   /** Flag indicating whether fluctuations are present. */
   int fluct;
-  /**to calc and print out phys values */
+  /** to calculate and print out physical values */
   int calc_val;
 
   int external_force_density;
@@ -138,7 +139,8 @@ typedef struct {
 
 #ifdef SHANCHEN
   /** mobility. They are actually LB_COMPONENTS-1 in number, we leave
-   * LB_COMPONENTS here for practical reasons*/
+   *  LB_COMPONENTS here for practical reasons
+   */
   float gamma_mobility[LB_COMPONENTS];
   float mobility[LB_COMPONENTS];
   float coupling[LB_COMPONENTS * LB_COMPONENTS];
@@ -147,8 +149,7 @@ typedef struct {
 
 } LB_parameters_gpu;
 
-/** Data structure holding the conserved quantities for the Lattice Boltzmann
- * system. */
+/** Conserved quantities for the lattice Boltzmann system. */
 typedef struct {
 
   /** density of the node */
@@ -169,28 +170,6 @@ typedef struct {
   /** pressure tensor */
   float pi[6];
 } LB_rho_v_pi_gpu;
-
-/** Data structure holding the velocity densities for the Lattice Boltzmann
- * system. */
-typedef struct {
-
-  /** velocity density of the node */
-  float *vd;
-  /** seed for the random gen */
-  unsigned int *seed;
-  /** flag indicating whether this site belongs to a boundary */
-  unsigned int *boundary;
-
-} LB_nodes_gpu;
-
-/** Data structure for the randomnr and the seed. */
-typedef struct {
-
-  float randomnr[2];
-
-  unsigned int seed;
-
-} LB_randomnr_gpu;
 
 typedef struct {
 
@@ -221,9 +200,6 @@ void on_lb_params_change_gpu(int field);
 /************************************************************/
 /*@{*/
 
-/**
- */
-
 /** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_rho_v_pi_gpu *host_values;
@@ -249,26 +225,26 @@ void lb_get_lbpar_pointer(LB_parameters_gpu **pointeradress);
 void lb_get_para_pointer(LB_parameters_gpu **pointeradress);
 void lattice_boltzmann_update_gpu();
 
-/** (Pre-)initializes data structures. */
+/** (Pre-)initialize data structures. */
 void lb_pre_init_gpu();
 
-/** Performs a full initialization of
- *  the Lattice Boltzmann system. All derived parameters
- *  and the fluid are reset to their default values. */
+/** Perform a full initialization of the lattice Boltzmann system.
+ *  All derived parameters and the fluid are reset to their default values.
+ */
 void lb_init_gpu();
 
-/** (Re-)initializes the derived parameters
- *  for the Lattice Boltzmann system.
- *  The current state of the fluid is unchanged. */
+/** (Re-)initialize the derived parameters for the lattice Boltzmann system.
+ *  The current state of the fluid is unchanged.
+ */
 void lb_reinit_parameters_gpu();
 
-/** (Re-)initializes the fluid. */
+/** (Re-)initialize the fluid. */
 void lb_reinit_fluid_gpu();
 
-/** Resets the forces on the fluid nodes */
+/** Reset the forces on the fluid nodes */
 void reset_LB_force_densities_GPU(bool buffer = true);
 
-/** (Re-)initializes the particle array*/
+/** (Re-)initialize the particle array */
 void lb_realloc_particles_gpu();
 void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
 
@@ -311,13 +287,13 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]);
 void lb_gpu_get_boundary_forces(double *forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_seed,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
+                            lbForceFloat *host_checkpoint_force,
+                            uint64_t *philox_counter);
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_seed,
                             unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
+                            lbForceFloat *host_checkpoint_force,
+                            uint64_t *philox_counter);
 int lb_lbfluid_save_checkpoint_wrapper(char *filename, int binary);
 int lb_lbfluid_load_checkpoint_wrapper(char *filename, int binary);
 
@@ -334,7 +310,7 @@ void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
                                                        double *velocities,
                                                        int length);
 
-/*@{*/
+/*@}*/
 
 #endif /* LB_GPU */
 

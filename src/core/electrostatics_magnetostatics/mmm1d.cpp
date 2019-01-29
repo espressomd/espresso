@@ -36,6 +36,9 @@
 #include "tuning.hpp"
 #include "utils.hpp"
 
+#include "utils/strcat_alloc.hpp"
+using Utils::strcat_alloc;
+
 #ifdef ELECTROSTATICS
 
 /** How many trial calculations */
@@ -63,7 +66,7 @@
 static double uz, L2, uz2, prefuz2, prefL3_i;
 /*@}*/
 
-MMM1D_struct mmm1d_params = {0.05, 1e-5};
+MMM1D_struct mmm1d_params = {0.05, 1e-5, 0};
 /** From which distance a certain Bessel cutoff is valid. Can't be part of the
     params since these get broadcasted. */
 static double *bessel_radii;

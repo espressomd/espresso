@@ -21,8 +21,9 @@
 
 /** \file
  *
- * Cuda (.cu) file for the P3M electrostatics method.
- * Header file \ref p3m_gpu.hpp .
+ *  P3M electrostatics on GPU.
+ *
+ *  The corresponding header file is p3m_gpu.hpp.
  */
 
 #include "config.hpp"
@@ -659,7 +660,7 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
  * is (cuFFT convention) Nx x Ny x [ Nz /2 + 1 ].
  */
 
-void p3m_gpu_init(int cao, int mesh[3], double alpha) {
+void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
   P3M_GPU_TRACE(printf("cao %d mesh %d %d %d, alpha %e, box (%e %e %e)\n", cao,
                        mesh[0], mesh[1], mesh[2], alpha, box_l[0], box_l[1],
                        box_l[2]));
@@ -737,10 +738,12 @@ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
       cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.G_hat),
                                cmesh_size * sizeof(REAL_TYPE)));
 
-      cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2],
-                  FFT_PLAN_FORW_FLAG);
-      cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
-                  FFT_PLAN_BACK_FLAG);
+      if (cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2],
+                      FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS ||
+          cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
+                      FFT_PLAN_BACK_FLAG) != CUFFT_SUCCESS) {
+        throw std::string("Unable to create fft plan");
+      }
     }
 
     if (((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) &&

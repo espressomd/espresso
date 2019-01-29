@@ -27,7 +27,7 @@
     counterions and salt molecules, assigning velocities to the
     particles and cross-linking the polymers if necessary.
 
-    For more information on polymer, see \ref polymer.cpp "polymer.cpp"
+    For more information on polymer, see polymer.cpp.
 */
 
 #include "PartCfg.hpp"

@@ -30,6 +30,8 @@
 
 #include "PdbParser.hpp"
 
+#include "utils/memory.hpp"
+
 #ifdef EK_BOUNDARIES
 
 /* Replacements for bool variables */
@@ -324,15 +326,11 @@ int pdb_parse(char *pdb_filename, char *itp_filename, double scale) {
    */
 
   /* BEGIN DEPLOY */
-  galloc((void **)&pdb_charge_lattice, ek_parameters.dim_x *
-                                           ek_parameters.dim_y *
-                                           ek_parameters.dim_z * sizeof(float));
-  galloc((void **)&pdb_boundary_lattice, ek_parameters.dim_x *
-                                             ek_parameters.dim_y *
-                                             ek_parameters.dim_z * sizeof(int));
-  for (unsigned int i = 0;
-       i < ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
-       i++) {
+  const size_t size =
+      ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
+  galloc((void **)&pdb_charge_lattice, size * sizeof(float));
+  galloc((void **)&pdb_boundary_lattice, size * sizeof(int));
+  for (size_t i = 0; i < size; i++) {
     pdb_charge_lattice[i] = 0.0;
     pdb_boundary_lattice[i] = 0;
   }

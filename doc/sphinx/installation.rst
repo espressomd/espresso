@@ -95,6 +95,16 @@ On Ubuntu 18.04, you need to modify a file to make CUDA work with the default co
     sudo sed -i 's/__GNUC__ > 6/__GNUC__ > 7/g' /usr/include/crt/host_config.h
     sudo sed -i 's/than 6/than 7/g' /usr/include/crt/host_config.h
 
+If your computer has an AMD graphics card, you should also download and install the
+ROCm SDK to make use of GPU computation:
+
+.. code-block:: bash
+
+    wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
+    echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list
+    sudo apt update
+    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand hip-thrust
+
 .. _Installing Requirements on Mac OS X:
 
 Installing Requirements on Mac OS X
@@ -423,11 +433,6 @@ General features
 
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
-
-..
-    -  ``NEMD`` Enables the non-equilbrium (shear) MD support.
-
-       .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibrium MD`
 
 -  ``NPT`` Enables an on-the-fly NPT integration scheme.
 

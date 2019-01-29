@@ -32,6 +32,7 @@
 #include <memory>
 #include <numeric>
 
+#include "Scafacos.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -40,9 +41,13 @@
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "scafacos/Scafacos.hpp"
 #include "tuning.hpp"
 #include "utils.hpp"
+
+#if defined(SCAFACOS_DIPOLES) && !defined(FCS_ENABLE_DIPOLES)
+#error                                                                         \
+    "SCAFACOS_DIPOLES requires dipoles support in scafacos library (FCS_ENABLE_DIPOLES)."
+#endif
 
 /** This file contains the c-like interface for Scafacos */
 
@@ -121,9 +126,9 @@ void ScafacosData::update_particle_forces() const {
       // The scafacos term "potential" here in fact refers to the magnetic
       // field
       // So, the torques are given by m \times B
-      double t[3];
       const Vector3d dip = p.calc_dip();
-      Utils::cross_product(dip, &(potentials[it_p]), t);
+      auto const t = dip.cross(
+          Vector3d(Utils::Span<const double>(&(potentials[it_p]), 3)));
       // The force is given by G m, where G is a matrix
       // which comes from the "fields" output of scafacos like this
       // 0 1 2
@@ -466,14 +471,14 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
 #endif /* SCAFACOS */
 }
 
-void mpi_scafacos_free_slave(int a, int b) {
+void mpi_scafacos_free_slave(int, int) {
 #if defined(SCAFACOS)
   using namespace Scafacos;
   free_handle();
 #endif
 }
 
-void mpi_scafacos_set_r_cut_and_tune_slave(int a, int b) {
+void mpi_scafacos_set_r_cut_and_tune_slave(int, int) {
 #if defined(SCAFACOS)
   using namespace Scafacos;
   double r_cut;

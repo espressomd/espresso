@@ -216,8 +216,9 @@ class CollisionDetection(ut.TestCase):
                 dist_centers = p1.pos - p2.pos
             expected_pos = self.s.part[rel_to].pos_folded + \
                 self.s.collision_detection.vs_placement * dist_centers
-            np.testing.assert_allclose(
-                np.copy(p.pos_folded), expected_pos, atol=1E-4)
+            dist = expected_pos - p.pos_folded
+            dist -= np.round(dist / self.s.box_l) * self.s.box_l
+            self.assertLess(np.linalg.norm(dist), 1E-12)
 
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
     def test_bind_at_point_of_collision(self):
@@ -586,8 +587,8 @@ class CollisionDetection(ut.TestCase):
                 sigma=0,
          cutoff=0)
 
-    #@ut.skipIf(not espressomd.has_features("AngleHarmonic"),"Tests skipped because AngleHarmonic not compiled in")
-    def test_AngleHarmonic(self):
+    @ut.skipIf(not espressomd.has_features("BOND_ANGLE"), "Tests skipped because AngleHarmonic not compiled in")
+    def test_bind_three_particles(self):
         # Setup particles
         self.s.part.clear()
         dx = np.array((1, 0, 0))
@@ -733,7 +734,7 @@ class CollisionDetection(ut.TestCase):
         res = reduce[0](reduce[1][0])
         self.assertEqual(res.__class__.__name__, "CollisionDetection")
         self.assertEqual(res.mode, "bind_centers")
-        self.assertAlmostEqual(res.distance, 0.11, delta=1E-9)
+        self.assertAlmostEqual(res.distance, 0.11, delta=1E-12)
         self.assertEqual(res.bond_centers, self.H)
 
 

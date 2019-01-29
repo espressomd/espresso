@@ -18,11 +18,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef P3M_ERROR_GPU_HPP
 #define P3M_ERROR_GPU_HPP
+/** @file
+ *  P3M electrostatics on GPU.
+ *
+ *  Implementation in p3m_gpu_error_cuda.cu.
+ */
 
 #include "config.hpp"
 
 #ifdef CUDA
-double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart,
-                             double sum_q2, double alpha_L, double *box);
+double p3m_k_space_error_gpu(double prefactor, const int *mesh, int cao,
+                             int npart, double sum_q2, double alpha_L,
+                             double *box);
 #endif
 #endif
