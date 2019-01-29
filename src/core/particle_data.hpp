@@ -26,10 +26,10 @@
  */
 
 #include "config.hpp"
-#include "utils.hpp"
-#include "utils/Vector.hpp"
 
 #include "utils/List.hpp"
+#include "utils/Span.hpp"
+#include "utils/Vector.hpp"
 
 #include <memory>
 
@@ -116,7 +116,7 @@ struct ParticleProperties {
 
   // Determines, whether a particle's rotational degrees of freedom are
   // integrated
-  short int rotation = 0;
+  int rotation = 0;
 
   /** charge. */
 #ifdef ELECTROSTATICS
@@ -147,12 +147,22 @@ struct ParticleProperties {
   pointing from real particle to virtual site with respect to the orientation
   of the real particle is stored in the virtual site's quaternion attribute.
   */
-  int vs_relative_to_particle_id = 0;
-  double vs_relative_distance = 0;
-  // Store relative position of the virtual site.
-  double vs_relative_rel_orientation[4] = {0., 0., 0., 0};
-  // Store the orientation of the virtual particle in the body fixed frame.
-  double vs_quat[4] = {0., 0., 0., 0.};
+  struct VirtualSitesRelativeParameteres {
+    int to_particle_id = 0;
+    double distance = 0;
+    // Store relative position of the virtual site.
+    Vector<4, double> rel_orientation = {0., 0., 0., 0.};
+    // Store the orientation of the virtual particle in the body fixed frame.
+    Vector<4, double> quat = {0., 0., 0., 0.};
+
+    template <class Archive> void serialize(Archive &ar, long int) {
+      ar &to_particle_id;
+      ar &distance;
+      ar &rel_orientation;
+      ar &quat;
+    }
+  } vs_relative;
+
 #endif
 #else  /* VIRTUAL_SITES */
   static constexpr const int is_virtual = 0;
@@ -605,7 +615,7 @@ int set_particle_f(int part, const Vector3d &F);
     @param mass its new mass.
     @return ES_OK if particle existed
 */
-int set_particle_mass(int part, double mass);
+void set_particle_mass(int part, double mass);
 
 /** Call only on the master node: set particle solvation free energy.
     @param part the particle.
@@ -751,7 +761,7 @@ int set_particle_dipm(int part, double dipm);
 int set_particle_virtual(int part, int is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, double *vs_quat);
+void set_particle_vs_quat(int part, double *vs_relative_quat);
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
                              double *rel_ori);
 #endif
@@ -791,7 +801,7 @@ int set_particle_gamma_rot(int part, Vector3d gamma);
     @param torque new value for ext_torque.
     @return ES_OK if particle existed
 */
-int set_particle_ext_torque(int part, int flag, double torque[3]);
+int set_particle_ext_torque(int part, const Vector3d &torque);
 #endif
 /** Call only on the master node: set particle external force.
     @param part  the particle.
@@ -799,7 +809,7 @@ int set_particle_ext_torque(int part, int flag, double torque[3]);
     @param force new value for ext_force.
     @return ES_OK if particle existed
 */
-int set_particle_ext_force(int part, int flag, double force[3]);
+int set_particle_ext_force(int part, const Vector3d &force);
 /** Call only on the master node: set coordinate axes for which the particles
    motion is fixed.
     @param part  the particle.
@@ -809,17 +819,24 @@ int set_particle_ext_force(int part, int flag, double force[3]);
 int set_particle_fix(int part, int flag);
 #endif
 
-/** Call only on the master node: change particle bond.
+/** Call only on the master node: remove bond from particle.
     @param part     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
-    identity of all bond partners (secondary atoms of the bond). If nullptr,
-   delete
-   all bonds.
-    @param _delete   if true, do not add the bond, rather delete it if found
-    @return ES_OK on success or ES_ERROR if no success
-    (e. g. particle or bond to delete does not exist)
+    identity of all bond partners (secondary atoms of the bond).
 */
-int change_particle_bond(int part, int *bond, int _delete);
+void delete_particle_bond(int part, Utils::Span<const int> bond);
+
+/** Call only on the master node: remove all bonds from particle.
+    @param part     identity of principal atom of the bond.
+*/
+void delete_particle_bonds(int part);
+
+/** Call only on the master node: Add bond to particle.
+    @param part     identity of principal atom of the bond.
+    @param bond     field containing the bond type number and the
+    identity of all bond partners (secondary atoms of the bond).
+*/
+void add_particle_bond(int part, Utils::Span<const int> bond);
 
 #ifdef EXCLUSIONS
 /** Call only on the master node: change particle constraints.
@@ -870,15 +887,6 @@ void local_place_particle(int part, const double p[3], int _new);
 */
 void added_particle(int part);
 
-/** Used by \ref mpi_send_bond, should not be used elsewhere.
-    Modify a bond.
-    @param part the identity of the particle to change
-    @param bond the bond to do
-    @param _delete if true, delete the bond instead of add
-    @return ES_OK for add or successful delete, ES_ERROR else
-*/
-int local_change_bond(int part, int *bond, int _delete);
-
 /** Used for example by \ref mpi_send_exclusion.
     Locally add a exclusion to a particle.
     @param part1 the identity of the first exclusion partner
@@ -905,6 +913,13 @@ void local_remove_all_particles();
 */
 void local_rescale_particles(int dir, double scale);
 
+/** @briefn Add bond to local particle.
+    @param part     identity of principal atom of the bond.
+    @param bond     field containing the bond type number and the
+    identity of all bond partners (secondary atoms of the bond).
+*/
+void local_add_particle_bond(Particle &p, Utils::Span<const int> bond);
+
 /** Synchronous send of a particle buffer to another node. The other node
     MUST call \ref recv_particles when this is called. The particles data
     is freed. */
@@ -928,7 +943,7 @@ inline bool do_nonbonded(Particle const *p1, Particle const *p2) {
 #endif
 
 /** Remove bond from particle if possible */
-int try_delete_bond(Particle *part, int *bond);
+int try_delete_bond(Particle *part, const int *bond);
 
 /** Remove exclusion from particle if possible */
 void try_delete_exclusion(Particle *part, int part2);
@@ -1001,7 +1016,7 @@ void pointer_to_gamma_rot(Particle const *p, double const *&res);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef ROTATION
-void pointer_to_rotation(Particle const *p, short int const *&res);
+void pointer_to_rotation(Particle const *p, int const *&res);
 #endif
 
 #ifdef ENGINE

@@ -300,11 +300,9 @@ cdef class ParticleHandle(object):
         """
 
         def __set__(self, _bonds):
-
             # Assigning to the bond property means replacing the existing value
             # i.e., we delete all existing bonds
-            if change_particle_bond(self._id, NULL, 1):
-                handle_errors("Deleting existing bonds failed.")
+            delete_particle_bonds(self._id)
 
             # Empty list? ony delete
             if _bonds:
@@ -368,8 +366,7 @@ cdef class ParticleHandle(object):
             IF MASS == 1:
                 check_type_or_throw_except(
                     _mass, 1, float, "Mass has to be 1 floats")
-                if set_particle_mass(self._id, _mass) == 1:
-                    raise Exception("Set particle position first.")
+                set_particle_mass(self._id, _mass)
             ELSE:
                 raise AttributeError("You are trying to set the particle mass \
                                      but the mass feature is not compiled in.")
@@ -838,17 +835,13 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _ext_f):
-                cdef double ext_f[3]
-                cdef int ext_flag = 0
+                cdef Vector3d ext_f
                 check_type_or_throw_except(
                     _ext_f, 3, float, "External force vector has to be 3 floats.")
                 for i in range(3):
                     ext_f[i] = _ext_f[i]
-                if ext_f[0] == 0 and ext_f[1] == 0 and ext_f[2] == 0:
-                    ext_flag = 0
-                else:
-                    ext_flag = PARTICLE_EXT_FORCE
-                if set_particle_ext_force(self._id, ext_flag, ext_f) == 1:
+
+                if set_particle_ext_force(self._id, ext_f) == 1:
                     raise Exception("Set particle position first.")
 
             def __get__(self):
@@ -915,17 +908,13 @@ cdef class ParticleHandle(object):
                 """
 
                 def __set__(self, _ext_t):
-                    cdef double ext_t[3]
-                    cdef int ext_flag
+                    cdef Vector3d ext_t
                     check_type_or_throw_except(
                         _ext_t, 3, float, "External force vector has to be 3 floats.")
                     for i in range(3):
                         ext_t[i] = _ext_t[i]
-                    if ext_t[0] == 0 and ext_t[1] == 0 and ext_t[2] == 0:
-                        ext_flag = 0
-                    else:
-                        ext_flag = PARTICLE_EXT_TORQUE
-                    if set_particle_ext_torque(self._id, ext_flag, ext_t) == 1:
+
+                    if set_particle_ext_torque(self._id, ext_t) == 1:
                         raise Exception("Set particle position first.")
 
                 def __get__(self):
@@ -1113,7 +1102,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const short int * _rot = NULL
+                cdef const int * _rot = NULL
                 pointer_to_rotation(self.particle_data, _rot)
                 rot = _rot[0]
                 res = np.zeros(3, dtype=int)
@@ -1388,9 +1377,8 @@ cdef class ParticleHandle(object):
         if self._id in bond[1:]:
             raise Exception(
                 "Bond partners {} include the particle {} itself.".format(bond[1:], self._id))
-
-        if change_particle_bond(self._id, bond_info, 0):
-            handle_errors("Adding the bond failed.")
+        
+        add_particle_bond(self._id, make_const_span(bond_info, len(bond)))
 
     def delete_verified_bond(self, bond):
         """
@@ -1413,8 +1401,8 @@ cdef class ParticleHandle(object):
         bond_info[0] = bond[0]._bond_id
         for i in range(1, len(bond)):
             bond_info[i] = bond[i]
-        if change_particle_bond(self._id, bond_info, 1):
-            handle_errors("Deleting the bond failed.")
+
+        delete_particle_bond(self._id, make_const_span(bond_info, len(bond)))
 
     def check_bond_or_throw_exception(self, bond):
         """
@@ -1575,8 +1563,7 @@ cdef class ParticleHandle(object):
 
         """
 
-        if change_particle_bond(self._id, NULL, 1):
-            handle_errors("Deleting all bonds failed.")
+        delete_particle_bonds(self._id)
 
     def update(self, P):
         if "id" in P:

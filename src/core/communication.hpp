@@ -50,10 +50,9 @@
     debugging purposes you can add a nice name to \ref #names in the
     same way.  */
 
-#include <array>
-#include <mpi.h>
-
 #include <boost/mpi/communicator.hpp>
+
+#include <array>
 
 #include "MpiCallbacks.hpp"
 
@@ -114,12 +113,6 @@ void mpi_call(SlaveCallback cb, int node, int param);
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/** Abort Espresso using MPI_Abort. */
-void mpi_abort();
-
-/** Finalize MPI. Called by all nodes upon exit */
-void mpi_finalize();
-
 /**
  * @brief Replace the MPI communicator by a new one with the given periodicity
  * and node grid.
@@ -158,14 +151,6 @@ void mpi_place_particle(int node, int id, double pos[3]);
 */
 void mpi_place_new_particle(int node, int id, double pos[3]);
 
-/** Issue REQ_SET_V: send particle velocity.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param v its new velocity.
-*/
-void mpi_send_v(int node, int part, double v[3]);
-
 /** Issue REQ_SET_SWIMMING: send particle swimming properties.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -175,55 +160,6 @@ void mpi_send_v(int node, int part, double v[3]);
 void mpi_send_swimming(int node, int part,
                        const ParticleParametersSwimming &swim);
 
-/** Issue REQ_SET_F: send particle force.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param F its new force.
-*/
-void mpi_send_f(int node, int part, const Vector3d &F);
-
-/** issue req_set_solv: send particle solvation free energy
-    also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param solvation its new solvation free energy.
-*/
-void mpi_send_solvation(int node, int part, double *solvation);
-
-/** Issue REQ_SET_M: send particle mass.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param mass its new mass.
-*/
-void mpi_send_mass(int node, int part, double mass);
-
-/** Issue REQ_SET_Q: send particle charge.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param q its new charge.
-*/
-void mpi_send_q(int node, int part, double q);
-
-/** Issue REQ_SET_MU_E: send particle electrophoretic mobility.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param mu_E its new mobility.
-*/
-void mpi_send_mu_E(int node, int part, double mu_E[3]);
-
-#ifdef ROTATIONAL_INERTIA
-/** Issue REQ_SET_ROTATIONAL_INERTIA: send particle rotational inertia.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param rinertia its new rotational inertia.
-*/
-void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
-#endif
 #ifdef ROTATION
 /** Mpi call for rotating a single particle
     Also calls \ref on_particle_change.
@@ -235,120 +171,6 @@ void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
 void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
                          double angle);
 #endif
-
-#ifdef AFFINITY
-/** Issue REQ_SET_AFFINITY: send particle affinity.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param bond_site its new site of the affinity bond.
-*/
-void mpi_send_affinity(int node, int part, double bond_site[3]);
-#endif
-
-#ifdef MEMBRANE_COLLISION
-/** Issue REQ_SET_MEMBRANE_COLLISION: send outward direction of the particle.
- Also calls \ref on_particle_change.
- \param part the particle.
- \param node the node it is attached to.
- \param out_direction its new outward direction.
- */
-void mpi_send_out_direction(int node, int part, double out_direction[3]);
-#endif
-
-#ifdef ROTATION
-/** Issue REQ_SET_QUAT: send particle orientation.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param quat its new quaternions.
-*/
-void mpi_send_quat(int node, int part, double quat[4]);
-
-/** Issue REQ_SET_ROTATION: send particle rotation flag
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param pnode the node it is attached to.
-    \param rot the rotation flag
-*/
-void mpi_send_rotation(int pnode, int part, short int rot);
-
-/* Issue REQ_SET_LAMBDA: send particle angular velocity.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param omega its new angular velocity.
-*/
-void mpi_send_omega(int node, int part, const Vector3d &omega);
-
-/** Issue REQ_SET_TORQUE: send particle torque.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param torque its new torque.
-*/
-void mpi_send_torque(int node, int part, const Vector3d &torque);
-#endif
-
-#ifdef DIPOLES
-/** Issue REQ_SET_DIP: send particle dipole orientation.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param dip its new dipole orientation.
-*/
-void mpi_send_dip(int node, int part, double dip[3]);
-/** Issue REQ_SET_DIPM: send particle dipole moment.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param dipm its new dipole moment (absolute value).
-*/
-void mpi_send_dipm(int node, int part, double dipm);
-#endif
-
-#ifdef VIRTUAL_SITES
-/** Issue REQ_SET_DIPM: send particle dipole moment.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param is_virtual its new is_virtual.
-*/
-void mpi_send_virtual(int node, int part, int is_virtual);
-#endif
-
-#ifdef VIRTUAL_SITES_RELATIVE
-void mpi_send_vs_quat(int node, int part, double *vs_quat);
-void mpi_send_vs_relative(int node, int part, int vs_relative_to,
-                          double vs_distance, double *rel_ori);
-#endif
-
-/** Issue REQ_SET_TYPE: send particle type.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param type its new type.
-*/
-void mpi_send_type(int node, int part, int type);
-
-/** Issue REQ_SET_MOL_ID: send molecule id.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param mid its new mol_id.
-*/
-void mpi_send_mol_id(int node, int part, int mid);
-
-/** Issue REQ_SET_BOND: send bond.
-    Also calls \ref on_particle_change.
-    \param pnode    node it is attached to.
-    \param part     identity of principal atom of the bond.
-    \param bond     field containing the bond type number and the identity of
-   all bond partners (secondary atoms of the bond).
-    \param _delete   if true, do not add the bond, rather delete it if found
-    \return 1 on success or 0 if not (e. g. bond to delete does not exist)
-*/
-int mpi_send_bond(int pnode, int part, int *bond, int _delete);
 
 /** Issue REQ_SET_EXCLUSION: send exclusions.
     Also calls \ref on_particle_change.
@@ -467,43 +289,6 @@ void mpi_set_time_step(double time_step);
 
 /** Issue REQ_BCAST_COULOMB: send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
-
-/** send new collision parameters. */
-void mpi_bcast_collision_params();
-
-/** Issue REQ_SEND_EXT_FORCE: send nex external flag and external force. */
-void mpi_send_ext_force(int pnode, int part, int flag, int mask,
-                        double force[3]);
-
-/** Issue REQ_SEND_EXT_TORQUE: send nex external flag and external torque. */
-void mpi_send_ext_torque(int pnode, int part, int flag, int mask,
-                         double torque[3]);
-
-#ifdef LANGEVIN_PER_PARTICLE
-/** Issue REQ_SEND_PARTICLE_T: send particle type specific temperature. */
-void mpi_set_particle_temperature(int pnode, int part, double _T);
-
-/** Issue REQ_SEND_PARTICLE_T: send particle type specific frictional
- * coefficient. */
-#ifndef PARTICLE_ANISOTROPY
-void mpi_set_particle_gamma(int pnode, int part, double gamma);
-#else
-void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma);
-#endif
-
-#ifdef ROTATION
-#ifndef PARTICLE_ANISOTROPY
-void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
-#else
-void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot);
-#endif // PARTICLE_ANISOTROPY
-#endif
-#endif // LANGEVIN_PER_PARTICLE
-
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-/** Issue REQ_LB_BOUNDARY: set up walls for lb fluid */
-void mpi_bcast_lbboundary(int del_num);
-#endif
 
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir'
  * by a factor 'scale'. */

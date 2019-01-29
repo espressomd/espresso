@@ -172,10 +172,10 @@ int local_vs_relate_to(int part_num, int relate_to) {
 
   // Set the particle id of the particle we want to relate to, the distance
   // and the relative orientation
-  p_current->p.vs_relative_to_particle_id = relate_to;
-  p_current->p.vs_relative_distance = l;
+  p_current->p.vs_relative.to_particle_id = relate_to;
+  p_current->p.vs_relative.distance = l;
   for (int i = 0; i < 4; i++)
-    p_current->p.vs_relative_rel_orientation[i] = quat[i];
+    p_current->p.vs_relative.rel_orientation[i] = quat[i];
   return ES_OK;
 }
 

@@ -398,10 +398,7 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
         for (i = 2; i <= bond_size; i++) {
           bond[i] = part_id - bond_size + i;
         }
-        if (change_particle_bond(part_id - bond_size + 1, bond.data(), 0) ==
-            ES_ERROR) {
-          return (-3);
-        }
+        add_particle_bond(part_id - bond_size + 1, bond);
       }
       part_id++;
       // POLY_TRACE(/* printf("placed Monomer %d at
@@ -496,18 +493,15 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
       if (k == 1) {
         if (nonet != 1) {
           bond[1] = dchain[i][0];
-          if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-            return (-3);
+          add_particle_bond(part_id, bond);
         }
       } else {
         bond[1] = part_id - 1;
-        if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-          return (-3);
+        add_particle_bond(part_id, bond);
       }
       if ((k == MPC) && (nonet != 1)) {
         bond[1] = dchain[i][1];
-        if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-          return (-3);
+        add_particle_bond(part_id, bond);
       }
       part_id++;
     }
@@ -600,8 +594,7 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
         bond[0] = type_bond;
         if (k > 0) {
           bond[1] = part_id - 1;
-          if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-            return (-3);
+          add_particle_bond(part_id, bond);
         }
         part_id++;
         for (l = 0; l < 3; l++)
@@ -636,12 +629,10 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
           bond[0] = type_bond;
           if (k > 1) {
             bond[1] = part_id - 1;
-            if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-              return (-3);
+            add_particle_bond(part_id, bond);
           } else {
             bond[1] = ico_ind[i][j];
-            if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-              return (-3);
+            add_particle_bond(part_id, bond);
           }
           part_id++;
           for (l = 0; l < 3; l++)
@@ -661,8 +652,8 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
         bond[1] = ico_ind[i][4] + (MPC - 1);
       else
         bond[1] = ico_ind[i][4];
-      if (change_particle_bond(ico_ind[i][j], bond, 0) == ES_ERROR)
-        return (-2);
+
+      add_particle_bond(ico_ind[i][j], bond);
 
       /* connect loose edges around vertices with chains along the middle third
        * already created earlier */
@@ -677,8 +668,7 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
           errexit();
         }
         bond[1] = ico_ind[ico_NN[i][j]][l + 5] + (MPC - 2);
-        if (change_particle_bond(ico_ind[i][j], bond, 0) == ES_ERROR)
-          return (-1);
+        add_particle_bond(ico_ind[i][j], bond);
       }
     }
   }

@@ -20,7 +20,7 @@ from __future__ import print_function, absolute_import
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from espressomd.utils cimport Vector3d, int_list
+from espressomd.utils cimport Vector3d, int_list, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
@@ -97,7 +97,7 @@ cdef extern from "particle_data.hpp":
         int set_particle_rotation(int part, int rot)
 
     IF MASS:
-        int set_particle_mass(int part, double mass)
+        void set_particle_mass(int part, double mass)
 
     IF SHANCHEN:
         int set_particle_solvation(int part, double * solvation)
@@ -109,13 +109,13 @@ cdef extern from "particle_data.hpp":
 
     IF ROTATION:
         int set_particle_rotation(int part, int rot)
-        void pointer_to_rotation(const particle * p, const short int * & res)
+        void pointer_to_rotation(const particle * p, const int * & res)
 
     int set_particle_q(int part, double q)
 
     IF LB_ELECTROHYDRODYNAMICS:
         int set_particle_mu_E(int part, double mu_E[3])
-        void get_particle_mu_E(int part, double (& mu_E)[3])
+        void get_particle_mu_E(int part, double ( & mu_E)[3])
 
     int set_particle_type(int part, int type)
 
@@ -181,16 +181,18 @@ cdef extern from "particle_data.hpp":
 
     IF EXTERNAL_FORCES:
         IF ROTATION:
-            int set_particle_ext_torque(int part, int flag, double torque[3])
+            int set_particle_ext_torque(int part, const Vector3d & torque)
             void pointer_to_ext_torque(const particle * P, const int * & res1, const double * & res2)
 
-        int set_particle_ext_force(int part, int flag, double force[3])
+        int set_particle_ext_force(int part, const Vector3d & force)
         void pointer_to_ext_force(const particle * P, const int * & res1, const double * & res2)
 
         int set_particle_fix(int part, int flag)
         void pointer_to_fix(const particle * P, const int * & res)
 
-    int change_particle_bond(int part, int * bond, int _delete)
+    void delete_particle_bond(int part, Span[const int] bond)
+    void delete_particle_bonds(int part)
+    void add_particle_bond(int part, Span[const int] bond)
 
     IF EXCLUSIONS:
         int change_exclusion(int part, int part2, int _delete)
@@ -239,9 +241,9 @@ cdef class _ParticleSliceImpl:
     cdef int _chunk_size
 
 cdef extern from "grid.hpp":
-    Vector3d folded_position(const particle * )
-    Vector3d unfolded_position(const particle * )
-    cdef void fold_position(double * , int*)
+    Vector3d folded_position(const particle *)
+    Vector3d unfolded_position(const particle *)
+    cdef void fold_position(double *, int*)
     void unfold_position(double pos[3], int image_box[3])
 
 cdef make_array_locked(const Vector3d & v)
