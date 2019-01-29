@@ -42,6 +42,7 @@
 #include "partCfg_global.hpp"
 #include "random.hpp"
 #include "rotation.hpp"
+#include "serialization/ParticleList.hpp"
 #include "virtual_sites.hpp"
 
 #include "utils.hpp"
@@ -891,15 +892,11 @@ void local_remove_particle(int part) {
 }
 
 void local_place_particle(int part, const double p[3], int _new) {
-  int i[3];
   Particle *pt;
 
-  i[0] = 0;
-  i[1] = 0;
-  i[2] = 0;
+  Vector3i i{};
   Vector3d pp = {p[0], p[1], p[2]};
-  double vv[3] = {0., 0., 0.};
-  fold_position(pp, vv, i);
+  fold_position(pp, i);
 
   if (_new) {
     /* allocate particle anew */
@@ -927,7 +924,7 @@ void local_place_particle(int part, const double p[3], int _new) {
       this_node, part, p[0], p[1], p[2]));
 
   pt->r.p = pp;
-  memmove(pt->l.i.data(), i, 3 * sizeof(int));
+  pt->l.i = i;
 #ifdef BOND_CONSTRAINT
   pt->r.p_old = pp;
 #endif
@@ -1097,8 +1094,6 @@ void try_delete_exclusion(Particle *part, int part2) {
   };
 }
 #endif
-
-#include "utils/serialization/ParticleList.hpp"
 
 void send_particles(ParticleList *particles, int node) {
   PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node,

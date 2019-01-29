@@ -168,8 +168,9 @@ void copy_part_data_to_gpu(ParticleRange particles);
  *
  * This is a collective call.
  */
-void cuda_mpi_send_forces(ParticleRange particles, float *host_forces,
-                          float *host_torques);
+void cuda_mpi_send_forces(ParticleRange particles,
+                          std::vector<float> &host_forces,
+                          std::vector<float> &host_torques);
 void cuda_bcast_global_part_params();
 void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n);
@@ -180,7 +181,8 @@ void cuda_mpi_send_composition(ParticleRange, CUDA_fluid_composition *);
 
 #ifdef ENGINE
 void copy_v_cs_from_GPU(ParticleRange particles);
-void cuda_mpi_send_v_cs(ParticleRange particles, CUDA_v_cs *host_v_cs);
+void cuda_mpi_send_v_cs(ParticleRange particles,
+                        std::vector<CUDA_v_cs> host_v_cs);
 #endif
 
 #endif /* ifdef CUDA */

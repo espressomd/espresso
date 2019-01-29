@@ -1015,9 +1015,9 @@ void buildBoxBH(int blocks) {
   grid.x = blocks * FACTOR1;
   block.x = THREADS1;
 
-  cudaThreadSynchronize();
+  cudaDeviceSynchronize();
   KERNELCALL(boundingBoxKernel, grid, block);
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(cudaDeviceSynchronize());
 }
 
 // Building Barnes-Hut tree in a linear childd array representation
@@ -1030,7 +1030,7 @@ void buildTreeBH(int blocks) {
   block.x = THREADS2;
 
   KERNELCALL(treeBuildingKernel, grid, block);
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(cudaDeviceSynchronize());
 }
 
 // Calculate octant cells masses and cell index counts.
@@ -1044,7 +1044,7 @@ void summarizeBH(int blocks) {
   block.x = THREADS3;
 
   KERNELCALL(summarizationKernel, grid, block);
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(cudaDeviceSynchronize());
 }
 
 // Sort particle indexes according to the BH tree representation.
@@ -1058,7 +1058,7 @@ void sortBH(int blocks) {
   block.x = THREADS4;
 
   KERNELCALL(sortKernel, grid, block);
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(cudaDeviceSynchronize());
 }
 
 // Force calculation.
@@ -1071,7 +1071,7 @@ int forceBH(BHData *bh_data, dds_float k, float *f, float *torque) {
   block.x = THREADS5;
 
   KERNELCALL(forceCalculationKernel, grid, block, k, f, torque);
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(cudaDeviceSynchronize());
 
   cuda_safe_mem(cudaMemcpy(&error_code, bh_data->err, sizeof(int),
                            cudaMemcpyDeviceToHost));
@@ -1094,7 +1094,7 @@ int energyBH(BHData *bh_data, dds_float k, float *E) {
 
   KERNELCALL_shared(energyCalculationKernel, grid, block,
                     block.x * sizeof(dds_float), k, energySum);
-  cuda_safe_mem(cudaThreadSynchronize());
+  cuda_safe_mem(cudaDeviceSynchronize());
 
   // Sum the results of all blocks
   // One energy part per block in the prev kernel

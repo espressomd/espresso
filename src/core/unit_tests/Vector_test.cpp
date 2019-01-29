@@ -32,7 +32,7 @@
 #include <numeric>
 #include <vector>
 
-#include "../Vector.hpp"
+#include "utils/Vector.hpp"
 
 /** Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
 #define TEST_NUMBERS                                                           \

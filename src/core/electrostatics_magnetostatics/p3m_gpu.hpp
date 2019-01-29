@@ -18,6 +18,11 @@
 */
 #ifndef _P3M_GPU_H
 #define _P3M_GPU_H
+/** \file
+ *  P3M electrostatics on GPU.
+ *
+ *  Implementation in p3m_gpu_cuda.cu.
+ */
 
 #define _P3M_GPU_FLOAT
 //#define _P3M_GPU_REAL_DOUBLE
@@ -40,7 +45,7 @@
 #define FFT_PLAN_BACK_FLAG CUFFT_Z2D
 #endif
 
-void p3m_gpu_init(int cao, int mesh[3], double alpha);
+void p3m_gpu_init(int cao, const int mesh[3], double alpha);
 void p3m_gpu_add_farfield_force();
 
 #endif /* _P3M_GPU_H */

@@ -21,13 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/field_coupling/fields/AffineMap.hpp"
-#include "core/field_coupling/fields/Constant.hpp"
-#include "core/field_coupling/fields/Interpolated.hpp"
-#include "core/field_coupling/fields/gradient_type.hpp"
+#include "field_coupling/fields/AffineMap.hpp"
+#include "field_coupling/fields/Constant.hpp"
+#include "field_coupling/fields/Interpolated.hpp"
+#include "field_coupling/fields/gradient_type.hpp"
 
-#include "core/utils/interpolation/bspline_3d.hpp"
-#include "core/utils/interpolation/bspline_3d_gradient.hpp"
+#include "utils/interpolation/bspline_3d.hpp"
+#include "utils/interpolation/bspline_3d_gradient.hpp"
 
 #include <limits>
 
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
         grid_spacing, origin, Vector3d{});
 
     BOOST_CHECK((interpolated_value - field_value).norm() <
-                std::numeric_limits<double>::epsilon());
+                2 * std::numeric_limits<double>::epsilon());
   }
 }
 
