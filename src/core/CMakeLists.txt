@@ -14,7 +14,6 @@ set(EspressoCore_SRC
   forcecap.cpp
   forces.cpp
   galilei.cpp
-  ghmc.cpp
   ghosts.cpp
   global.cpp
   grid.cpp
