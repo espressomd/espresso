@@ -56,6 +56,7 @@ PREDEFINED = \\
 
 for feature in sorted(defs.features):
     configfile.write("  {} \\\n".format(feature))
+configfile.write("  DOXYGEN \\\n".format(feature))
 
 configfile.close()
 print("Done.")

@@ -21,8 +21,17 @@
 #ifndef _PARTICLE_DATA_H
 #define _PARTICLE_DATA_H
 /** \file
- *  For more information on particle_data,
- *  see \ref particle_data.cpp "particle_data.cpp"
+ *  Particles and particle lists.
+ *
+ *  This file contains everything related to particle storage. If you want to
+ *  add a new property to the particles, it is probably a good idea to modify
+ *  Particle to give scripts access to that property. You always have to modify
+ *  two positions: first the print section, where you should add your new
+ *  data at the end, and second the read section where you have to find a nice
+ *  and short name for your property to appear in the Python code. Then you
+ *  just parse your part out of argc and argv.
+ *
+ *  Implementation in particle_data.cpp.
  */
 
 #include "config.hpp"
@@ -300,7 +309,7 @@ struct ParticleLocal {
 };
 
 #ifdef LB
-/** Data related to the Lattice Boltzmann hydrodynamic coupling */
+/** Data related to the lattice Boltzmann hydrodynamic coupling */
 struct ParticleLatticeCoupling {
   /** fluctuating part of the coupling force */
   Vector3d f_random;

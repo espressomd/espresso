@@ -1852,8 +1852,7 @@ int p3m_adaptive_tune(char **log) {
             p3m.params.mesh[2]);
     *log = strcat_alloc(*log, b);
   } else {
-    mesh_density = mesh_density_min = mesh_density_max =
-        p3m.params.mesh[0] / box_l[0];
+    mesh_density_min = mesh_density_max = p3m.params.mesh[0] / box_l[0];
 
     sprintf(b, "fixed mesh %d %d %d\n", p3m.params.mesh[0], p3m.params.mesh[1],
             p3m.params.mesh[2]);

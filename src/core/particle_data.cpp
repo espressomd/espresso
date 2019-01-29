@@ -19,16 +19,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    This file contains everything related to particle storage. If you want to
-   add a new property to the particles, it is probably a good idea to modify
-   \ref Particle to give scripts access to that property. You always have to
-   modify two positions: first the print section, where you should add your new
-   data at the end, and second the read section where you have to find a nice
-   and short name for your property to appear in the Tcl code. Then you just
-   parse your part out of argc and argv.
+ *  Particles and particle lists.
+ *
+ *  The corresponding header file is particle_data.hpp.
+ */
 
-    The corresponding header file is particle_data.hpp.
-*/
 #include "particle_data.hpp"
 #include "PartCfg.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -114,7 +109,7 @@ void auto_exclusion(int distance);
 /** Deallocate the dynamic storage of a particle. */
 void free_particle(Particle *part) { part->~Particle(); }
 
-void mpi_who_has_slave(int node, int param) {
+void mpi_who_has_slave(int, int) {
   static int *sendbuf;
   int n_part;
 

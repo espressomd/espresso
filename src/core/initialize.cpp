@@ -19,8 +19,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref initialize.hpp "initialize.hpp"
-*/
+ *  Hook procedures.
+ *
+ *  Implemetation of initialize.hpp.
+ */
 #include "initialize.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"

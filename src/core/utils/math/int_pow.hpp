@@ -27,7 +27,7 @@ namespace Utils {
 namespace detail {
 template <class T, unsigned n> struct int_pow_impl {
   T operator()(T x) const {
-    /** Even branch */
+    /* Even branch */
     if (n % 2 == 0) {
       return int_pow_impl<T, n / 2>{}(x * x);
     } else {
