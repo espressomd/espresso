@@ -195,23 +195,24 @@ extern LB_Fluid lbfluid;
 
 class LB_Fluid_Ref {
 public:
-    LB_Fluid_Ref(std::size_t index, const LB_Fluid &lb_fluid) : m_index(index), m_lb_fluid(lb_fluid) {}
-    template<std::size_t I>
-    const auto &get() const {return m_lb_fluid[I][m_index];}
+  LB_Fluid_Ref(std::size_t index, const LB_Fluid &lb_fluid)
+      : m_index(index), m_lb_fluid(lb_fluid) {}
+  template <std::size_t I> const auto &get() const {
+    return m_lb_fluid[I][m_index];
+  }
 
 private:
-    const std::size_t m_index;
-    const LB_Fluid& m_lb_fluid;
+  const std::size_t m_index;
+  const LB_Fluid &m_lb_fluid;
 };
 
 namespace Utils {
 
-template<std::size_t I>
-const auto get(const LB_Fluid_Ref &lb_fluid) {
-    return lb_fluid.get<I>();
+template <std::size_t I> const auto get(const LB_Fluid_Ref &lb_fluid) {
+  return lb_fluid.get<I>();
 }
 
-}
+} // namespace Utils
 
 /** Pointer to the hydrodynamic fields of the fluid */
 extern std::vector<LB_FluidNode> lbfields;

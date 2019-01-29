@@ -22,7 +22,8 @@ template <typename T> struct mul<1, T> {
   constexpr T operator()(const T a) const { return a; }
 };
 
-template <int I, typename T, typename Container, std::size_t N, int c, int... cs>
+template <int I, typename T, typename Container, std::size_t N, int c,
+          int... cs>
 struct inner_product_template_impl {
   constexpr T operator()(const Container &vec) const {
     return mul<c, T>{}(get<I>(vec)) +
@@ -43,7 +44,8 @@ template <typename T, std::size_t N,
 constexpr T inner_product_helper(const Container &vec,
                                  std::index_sequence<column_indices...>) {
   return inner_product_template_impl<
-      0, T, Container, N, get<column_indices>(get<row_index>(matrix))...>{}(vec);
+      0, T, Container, N, get<column_indices>(get<row_index>(matrix))...>{}(
+      vec);
 }
 
 template <typename T, std::size_t N,
@@ -61,7 +63,8 @@ constexpr std::array<T, N>
 matrix_vector_product_helper(const Container &vec,
                              std::index_sequence<column_indices...>) {
   return std::array<T, N>{
-      {inner_product_template<T, N, matrix, Container, column_indices>(vec)...}};
+      {inner_product_template<T, N, matrix, Container, column_indices>(
+          vec)...}};
 }
 
 } // namespace detail
