@@ -37,6 +37,7 @@ using Utils::get_linear_index;
 
 #include "event.hpp"
 
+#include <boost/algorithm/clamp.hpp>
 #include <boost/mpi/collectives.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if the
