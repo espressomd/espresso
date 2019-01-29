@@ -19,16 +19,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    This file contains everything related to particle storage. If you want to
-   add a new property to the particles, it is probably a good idea to modify
-   \ref Particle to give scripts access to that property. You always have to
-   modify two positions: first the print section, where you should add your new
-   data at the end, and second the read section where you have to find a nice
-   and short name for your property to appear in the Tcl code. Then you just
-   parse your part out of argc and argv.
+ *  Particles and particle lists.
+ *
+ *  The corresponding header file is particle_data.hpp.
+ */
 
-    The corresponding header file is particle_data.hpp.
-*/
 #include "particle_data.hpp"
 #include "PartCfg.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -1197,15 +1192,11 @@ void local_remove_particle(int part) {
 }
 
 void local_place_particle(int part, const double p[3], int _new) {
-  int i[3];
   Particle *pt;
 
-  i[0] = 0;
-  i[1] = 0;
-  i[2] = 0;
+  Vector3i i{};
   Vector3d pp = {p[0], p[1], p[2]};
-  double vv[3] = {0., 0., 0.};
-  fold_position(pp, vv, i);
+  fold_position(pp, i);
 
   if (_new) {
     /* allocate particle anew */
@@ -1233,7 +1224,7 @@ void local_place_particle(int part, const double p[3], int _new) {
       this_node, part, p[0], p[1], p[2]));
 
   pt->r.p = pp;
-  memmove(pt->l.i.data(), i, 3 * sizeof(int));
+  pt->l.i = i;
 #ifdef BOND_CONSTRAINT
   pt->r.p_old = pp;
 #endif

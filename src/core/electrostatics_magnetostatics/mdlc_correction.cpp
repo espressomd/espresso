@@ -401,7 +401,6 @@ void add_mdlc_force_corrections() {
       dip_DLC_f_z(n_part);
   std::vector<double> dip_DLC_t_x(n_part), dip_DLC_t_y(n_part),
       dip_DLC_t_z(n_part);
-  double dip_DLC_energy = 0.0;
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
 #if defined(ROTATION) && defined(DP3M)
   double dx, dy, dz, correps;
@@ -429,13 +428,8 @@ void add_mdlc_force_corrections() {
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
-  dip_DLC_energy +=
-      coulomb.Dprefactor *
-      get_DLC_dipolar(dip_DLC_kcut, dip_DLC_f_x, dip_DLC_f_y, dip_DLC_f_z,
-                      dip_DLC_t_x, dip_DLC_t_y, dip_DLC_t_z);
-
-  //            printf("Energy DLC                                  = %20.15le
-  //            \n",dip_DLC_energy);
+  get_DLC_dipolar(dip_DLC_kcut, dip_DLC_f_x, dip_DLC_f_y, dip_DLC_f_z,
+                  dip_DLC_t_x, dip_DLC_t_y, dip_DLC_t_z);
 
   // Now we compute the the correction like Yeh and Klapp to take into account
   // the fact that you are using a
@@ -447,19 +441,7 @@ void add_mdlc_force_corrections() {
   // See Brodka, Chem. Phys. Lett. 400, 62, (2004).
 
   mz = slab_dip_count_mu(&mtot, &mx, &my);
-#ifdef DP3M
-  if (coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
-    if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
-      dip_DLC_energy += coulomb.Dprefactor * 2. * M_PI / volume * (mz * mz);
-    } else {
-      dip_DLC_energy +=
-          coulomb.Dprefactor * 2. * M_PI / volume *
-          (mz * mz - mtot * mtot / (2.0 * dp3m.params.epsilon + 1.0));
-    }
-  } else
-#endif
   {
-    dip_DLC_energy += coulomb.Dprefactor * 2. * M_PI / volume * (mz * mz);
     fprintf(stderr, "You are not using the P3M method, therefore p3m.epsilon "
                     "is unknown, I assume metallic borders \n");
   }

@@ -19,9 +19,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    This is the place for analysis (so far...).
-    Implementation of statistics.hpp
-*/
+ *  Statistical tools to analyze simulations.
+ *
+ *  The corresponding header file is statistics.hpp.
+ */
+
 #include "statistics.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
@@ -672,8 +674,6 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
   int i, j, k, m, n;
   double r;
   double r_bin;
-  double pos[3];
-  int image_box[3];
 
   // calculation over last n_conf configurations
 
@@ -693,11 +693,9 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
       for (auto const &p : partCfg) {
         // com particles
         if (p.p.type == type) {
-          for (m = 0; m < 3; m++) {
-            pos[m] = configs[k][3 * i + m];
-            image_box[m] = 0;
-          }
-          fold_coordinate(pos, image_box, dir);
+          auto const pos =
+              folded_position({&configs[k][3 * i], &configs[k][3 * i] + 3});
+
           if (pos[dir] <= r + r_bin && pos[dir] > r)
             n++;
         }

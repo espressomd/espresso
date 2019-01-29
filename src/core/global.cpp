@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref global.hpp "global.hpp".
-*/
+ *  Implementation of \ref global.hpp "global.hpp".
+ */
 #include "global.hpp"
 
 #include "bonded_interactions/thermalized_bond.hpp"
@@ -250,7 +250,7 @@ void check_global_consistency() {
 
 /*************** REQ_BCAST_PAR ************/
 
-void mpi_bcast_parameter_slave(int node, int i) {
+void mpi_bcast_parameter_slave(int, int i) {
   common_bcast_parameter(i);
   check_runtime_errors();
 }

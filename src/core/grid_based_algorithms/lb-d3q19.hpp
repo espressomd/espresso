@@ -19,9 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
- * Header file for the lattice Boltzmann D3Q19 model.
- *
- * This header file contains the definition of the D3Q19 model.
+ * %Lattice Boltzmann D3Q19 model.
  */
 
 #ifndef D3Q19_H

@@ -71,7 +71,9 @@ extern MMM2D_struct mmm2d_params;
                         If -1, the far cutoff is determined by maxPWerror.
                         Manual setting is probably only good for testing
     @param delta_top    dielectric contrast at top of the simulation box
-    @param delta_mid    dielectric contrast in the middle of the simulation box
+    @param delta_bot    dielectric contrast at the bottom of the simulation box
+    @param const_pot_on
+    @param pot_diff
 */
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
                      double delta_bot, int const_pot_on, double pot_diff);
