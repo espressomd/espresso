@@ -33,6 +33,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <limits>
 
 namespace Random {
 extern std::mt19937 generator;
@@ -120,6 +121,13 @@ inline int i_random(int maxint) {
   using namespace Random;
   check_user_has_seeded();
   std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
+  return uniform_int_dist(generator);
+}
+
+template<typename T>
+inline T random_integral(T max = std::numeric_limits<T>::max()) {
+ using namespace Random;
+  std::uniform_int_distribution<T> uniform_int_dist(0, max);
   return uniform_int_dist(generator);
 }
 

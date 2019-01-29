@@ -245,6 +245,8 @@ class Wall(ScriptInterfaceHelper):
            Distance from the origin.
     normal : array_like :obj:`int`
              Normal vector of the plan (needs not to be length 1).
+    width : :obj:`float`
+            Thickness of the Wall. 
 
     """
     _so_name = "Shapes::Wall"

@@ -1489,6 +1489,57 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
                 dx[0] * dx[1] * dx[2] * not_boundary);
 }
 
+__device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index, unsigned int *neighborindex, LB_nodes_gpu lb_node) {
+  if(index < ek_parameters_gpu.number_of_nodes)
+  {
+    float density = ek_parameters_gpu.rho[species_index][index];
+    float* flux = ek_parameters_gpu.j;
+    float diffusion = ek_parameters_gpu.D[species_index];
+    float time_step = ek_parameters_gpu.time_step;
+    float agrid = ek_parameters_gpu.agrid;
+    
+    
+    float* flux_fluc = ek_parameters_gpu.j_fluc;
+    float fluc = 0.0f;
+
+    //float A = 6.0f * 0.1111111111111111f * PI_FLOAT / (3.0f * PI_FLOAT - 8.0f);
+    //float A = 2.0f/3.0f * PI_FLOAT/(3.0f * PI_FLOAT - 8.0f) * 1.0f/(4.0f * sqrt(2.0f));
+
+    for(int i = 0; i < 9; i++)
+    {
+
+        float random = (curand_normal(&ek_parameters_gpu.rnd_state[index]));
+        float H = 0.0f;
+        float HN = 0.0f;
+        float neighbor_density = ek_parameters_gpu.rho[species_index][neighborindex[i]];
+
+	H = (density >= 0.0f) * min(density, 1.0f);
+        HN = (neighbor_density >= 0.0f) * min(neighbor_density, 1.0f);
+        
+
+        float average_density = H * HN * (density+ek_parameters_gpu.rho[species_index][neighborindex[i]])/2.0f;
+
+        if(i > 2)
+        {
+            fluc = 1.0f * powf(2.0f * average_density * diffusion * time_step / (agrid * agrid), 0.5f) * random * ek_parameters_gpu.fluctuation_amplitude / (sqrt(3.0f) * sqrt(2.0f));
+            fluc *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[i]]);
+            flux_fluc[jindex_getByRhoLinear(index, i)] = fluc;
+            flux[jindex_getByRhoLinear(index, i)] += fluc;
+        }
+        else
+        {
+            fluc = 1.0f * powf(2.0f * average_density * diffusion * time_step / (agrid * agrid), 0.5f) * random * ek_parameters_gpu.fluctuation_amplitude / sqrt(3.0f);
+            fluc *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[i]]);
+            flux_fluc[jindex_getByRhoLinear(index, i)] = fluc;
+            flux[jindex_getByRhoLinear(index, i)] += fluc;
+        }
+
+    }
+  }
+}
+
+
+
 __global__ void ek_calculate_quantities(unsigned int species_index,
                                         LB_nodes_gpu lb_node,
                                         LB_node_force_density_gpu node_f,
@@ -1601,6 +1652,10 @@ __global__ void ek_calculate_quantities(unsigned int species_index,
     if (ek_parameters_gpu->advection)
       ek_add_advection_to_flux(index, neighborindex, coord, species_index,
                                node_f, lb_node, ek_lbparameters_gpu);
+
+    /* fluctuation contribution to flux */
+    if(ek_parameters_gpu.fluctuations)
+      ek_add_fluctuations_to_flux(index, species_index, neighborindex, lb_node);
   }
 }
 
@@ -1873,6 +1928,7 @@ __global__ void ek_clear_fluxes() {
   if (index < ek_parameters_gpu->number_of_nodes) {
     for (int i = 0; i < 13; i++) {
       ek_parameters_gpu->j[jindex_getByRhoLinear(index, i)] = 0.0f;
+      ek_parameters_gpu.j_fluc[ jindex_getByRhoLinear( index, i ) ] = 0.0f;
     }
   }
 }
@@ -2196,6 +2252,13 @@ __global__ void ek_clear_node_force(LB_node_force_density_gpu node_f) {
   }
 }
 
+__global__ void initialize_random_generator(int seed) {
+  int index = ek_getThreadIndex();
+  /* Each thread gets same seed, a different sequence number, no offset */
+  curand_init(seed, index, 0, &ek_parameters_gpu.rnd_state[index]);
+}
+
+
 #ifdef EK_ELECTROSTATIC_COUPLING
 void ek_calculate_electrostatic_coupling() {
   int blocks_per_grid_x;
@@ -2441,6 +2504,11 @@ int ek_init() {
     cuda_safe_mem(
         cudaMalloc((void **)&ek_parameters.j,
                    ek_parameters.number_of_nodes * 13 * sizeof(ekfloat)));
+    cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.j_fluc,
+                             ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) ) );
+    cuda_safe_mem(cudaMalloc( (void **) &ek_parameters.rnd_state, 
+                             ek_parameters.number_of_nodes * 13 * sizeof(curandStatePhilox4_32_10_t))); 
+
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
                                      &ek_parameters, sizeof(EK_parameters)));
 
@@ -3233,6 +3301,240 @@ LOOKUP_TABLE default\n",
   return 0;
 }
 
+int ek_print_vtk_flux_fluc( int species, char* filename ) {
+
+  FILE* fp = fopen( filename, "w" );
+  ekfloat flux_local_cartesian[3]; //temporary variable for converting fluxes into cartesian coordinates for output
+
+  unsigned int coord[3];
+
+  if( fp == NULL ){
+    return 1;
+  }
+
+  ekfloat* fluxes = (ekfloat*) Utils::malloc( ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) );
+  
+  if( ek_parameters.species_index[ species ] != -1 ) 
+  {  
+    int threads_per_block = 64;
+    int blocks_per_grid_y = 4;
+    int blocks_per_grid_x =
+      ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 )
+      / (threads_per_block * blocks_per_grid_y );
+    dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+    
+    KERNELCALL( ek_clear_fluxes, dim_grid, threads_per_block, () );
+    KERNELCALL( ek_calculate_quantities, dim_grid, threads_per_block,
+                ( ek_parameters.species_index[ species ], *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values )    );
+    reset_LB_forces_GPU(false);
+              
+#ifdef EK_BOUNDARIES
+    KERNELCALL( ek_apply_boundaries, dim_grid, threads_per_block,
+                ( ek_parameters.species_index[ species ], *current_nodes, node_f )                     );
+#endif
+  
+    cuda_safe_mem( cudaMemcpy( fluxes, 
+                               ek_parameters.j_fluc,
+                               ek_parameters.number_of_nodes * 13*sizeof( ekfloat ),
+                               cudaMemcpyDeviceToHost )
+                 );
+  }
+  else
+    return 1;
+  
+  fprintf( fp, "\
+# vtk DataFile Version 2.0\n\
+flux_%d\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\n\
+POINT_DATA %u\n\
+SCALARS flux_%d float 3\n\
+LOOKUP_TABLE default\n",
+           species,
+           ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
+           ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f,
+           ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
+           ek_parameters.number_of_nodes,
+           species                                                                    );
+
+  for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) 
+  {
+    
+    float flux_local_linksum = 0;    
+    rhoindex_linear2cartesian_host(i, coord);
+     
+    flux_local_cartesian[0]  = 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_U00) ];
+
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UU0) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UD0) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_U0U) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_U0D) ];
+
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUU) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUD) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDU) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDD) ];
+
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1], coord[2], EK_LINK_D00-13) ];
+
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2], EK_LINK_DD0-13) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2], EK_LINK_DU0-13) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1], coord[2]-1, EK_LINK_D0D-13) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1], coord[2]+1, EK_LINK_D0U-13) ];
+
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]-1, EK_LINK_DDD-13) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]+1, EK_LINK_DDU-13) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]-1, EK_LINK_DUD-13) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]+1, EK_LINK_DUU-13) ];
+
+
+    flux_local_cartesian[1]  = 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_0U0) ];
+
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UU0) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UD0) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_0UU) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_0UD) ];
+
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUU) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUD) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDU) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDD) ];
+
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1]-1, coord[2], EK_LINK_0D0-13) ];
+
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2], EK_LINK_DD0-13) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2], EK_LINK_DU0-13) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1]-1, coord[2]-1, EK_LINK_0DD-13) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1]-1, coord[2]+1, EK_LINK_0DU-13) ];
+
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]-1, EK_LINK_DDD-13) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]+1, EK_LINK_DDU-13) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]-1, EK_LINK_DUD-13) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]+1, EK_LINK_DUU-13) ];
+
+
+    flux_local_cartesian[2]  = 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_00U) ];
+
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_U0U) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_U0D) ];
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_0UU) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_0UD) ];
+
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUU) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUD) ];
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDU) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDD) ];
+
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1], coord[2]-1, EK_LINK_00D-13) ];
+
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1], coord[2]-1, EK_LINK_D0D-13) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1], coord[2]+1, EK_LINK_D0U-13) ];
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1]-1, coord[2]-1, EK_LINK_0DD-13) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1]-1, coord[2]+1, EK_LINK_0DU-13) ];
+
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]-1, EK_LINK_DDD-13) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]+1, EK_LINK_DDU-13) ];
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]-1, EK_LINK_DUD-13) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]+1, EK_LINK_DUU-13) ];
+
+    for( int j = 0; j < 13; j++)
+    {
+        flux_local_linksum += fluxes[ jindex_getByRhoLinear_host(i, j) ];
+    }
+
+    fprintf( fp, "%e %e %e %e\n",
+             flux_local_cartesian[0] / ( ek_parameters.agrid * ek_parameters.agrid ),
+             flux_local_cartesian[1] / ( ek_parameters.agrid * ek_parameters.agrid ),
+             flux_local_cartesian[2] / ( ek_parameters.agrid * ek_parameters.agrid ),
+             flux_local_linksum / ( ek_parameters.agrid * ek_parameters.agrid));
+  }
+  
+  free( fluxes );
+  fclose( fp );
+  
+  return 0;
+}
+
+
+int ek_print_vtk_flux_link( int species, char* filename ) {
+
+  FILE* fp = fopen( filename, "w" );
+
+  unsigned int coord[3];
+
+  if( fp == NULL ){
+    return 1;
+  }
+
+  ekfloat* fluxes = (ekfloat*) Utils::malloc( ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) );
+  
+  if( ek_parameters.species_index[ species ] != -1 ) 
+  {  
+    int threads_per_block = 64;
+    int blocks_per_grid_y = 4;
+    int blocks_per_grid_x =
+      ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 )
+      / (threads_per_block * blocks_per_grid_y );
+    dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+    
+    KERNELCALL( ek_clear_fluxes, dim_grid, threads_per_block, () );
+    KERNELCALL( ek_calculate_quantities, dim_grid, threads_per_block,
+                ( ek_parameters.species_index[ species ], *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values )    );
+    reset_LB_forces_GPU(false);
+              
+#ifdef EK_BOUNDARIES
+    KERNELCALL( ek_apply_boundaries, dim_grid, threads_per_block,
+                ( ek_parameters.species_index[ species ], *current_nodes, node_f )                     );
+#endif
+  
+    cuda_safe_mem( cudaMemcpy( fluxes, 
+                               ek_parameters.j,
+                               ek_parameters.number_of_nodes * 13*sizeof( ekfloat ),
+                               cudaMemcpyDeviceToHost )
+                 );
+  }
+  else
+    return 1;
+  
+  fprintf( fp, "\
+# vtk DataFile Version 2.0\n\
+flux_%d\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\n\
+POINT_DATA %u\n\
+SCALARS flux_%d float 3\n\
+LOOKUP_TABLE default\n",
+           species,
+           ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
+           ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f, ek_parameters.agrid*0.5f,
+           ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
+           ek_parameters.number_of_nodes,
+           species                                                                    );
+
+  for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) 
+  {    
+    rhoindex_linear2cartesian_host(i, coord);
+
+    fprintf(fp, "%e %e %e %e %e %e %e %e %e %e %e %e %e \n", fluxes[ jindex_getByRhoLinear_host(i, 0) ],fluxes[ jindex_getByRhoLinear_host(i, 1) ],fluxes[ jindex_getByRhoLinear_host(i, 2) ],fluxes[ jindex_getByRhoLinear_host(i, 3) ],fluxes[ jindex_getByRhoLinear_host(i, 4) ],fluxes[ jindex_getByRhoLinear_host(i, 5) ],fluxes[ jindex_getByRhoLinear_host(i, 6) ],fluxes[ jindex_getByRhoLinear_host(i, 7) ],fluxes[ jindex_getByRhoLinear_host(i, 8) ],fluxes[ jindex_getByRhoLinear_host(i, 9) ],fluxes[ jindex_getByRhoLinear_host(i, 10) ],fluxes[ jindex_getByRhoLinear_host(i, 11) ],fluxes[ jindex_getByRhoLinear_host(i, 12) ]);  
+  }
+  
+  free( fluxes );
+  fclose( fp );
+  
+  return 0;
+}
+
+
 int ek_node_print_potential(int x, int y, int z, double *potential) {
   int i = z * ek_parameters.dim_y * ek_parameters.dim_x_padded +
           y * ek_parameters.dim_x_padded + x;
@@ -3624,6 +3926,16 @@ int ek_set_stencil(int stencil) {
 
 int ek_set_advection(bool advection) {
   ek_parameters.advection = advection;
+  return 0;
+}
+
+int ek_set_fluctuations(bool fluctuations) {
+  ek_parameters.fluctuations = fluctuations;
+  return 0;
+}
+
+int ek_set_fluctuation_amplitude(float fluctuation_amplitude) {
+  ek_parameters.fluctuation_amplitude = fluctuation_amplitude;
   return 0;
 }
 

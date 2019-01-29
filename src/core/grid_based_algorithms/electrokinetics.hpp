@@ -38,7 +38,6 @@ typedef float ekfloat;
 
 /* Data structure holding parameters and memory pointers for the link flux
  * system. */
-
 typedef struct {
   float agrid;
   float time_step; // MD time step
@@ -69,6 +68,8 @@ typedef struct {
   float mass_product1;
   int stencil;
   int number_of_boundary_nodes;
+  float fluctuation_amplitude;
+  bool fluctuations;
   bool advection;
   bool fluidcoupling_ideal_contribution;
 #ifdef EK_ELECTROSTATIC_COUPLING
@@ -79,6 +80,7 @@ typedef struct {
   float *charge_potential;
   ekfloat *j;
   float *lb_force_density_previous;
+  ekfloat *j_fluc;
   ekfloat *rho[MAX_NUMBER_OF_SPECIES];
   int species_index[MAX_NUMBER_OF_SPECIES];
   float density[MAX_NUMBER_OF_SPECIES];
@@ -87,6 +89,10 @@ typedef struct {
   float valency[MAX_NUMBER_OF_SPECIES];
   float ext_force_density[3][MAX_NUMBER_OF_SPECIES];
   char *node_is_catalyst;
+#ifdef EK_REACTION
+  float* pressure;
+#endif
+  curandStatePhilox4_32_10_t *rnd_state;
 } EK_parameters;
 
 #endif
@@ -137,12 +143,15 @@ extern EK_parameters ek_parameters;
 extern bool ek_initialized;
 
 void ek_integrate();
+void ek_integrate_electrostatics();
 void ek_print_parameters();
 void ek_print_lbpar();
 void lb_set_ek_pointer(EK_parameters *pointeradress);
 unsigned int ek_calculate_boundary_mass();
 int ek_print_vtk_density(int species, char *filename);
 int ek_print_vtk_flux(int species, char *filename);
+int ek_print_vtk_flux_fluc(int species, char *filename);
+int ek_print_vtk_flux_link(int species, char *filename);
 int ek_print_vtk_potential(char *filename);
 #ifdef EK_ELECTROSTATIC_COUPLING
 int ek_print_vtk_particle_potential(char *filename);
@@ -174,6 +183,8 @@ int ek_set_ext_force_density(int species, double ext_force_density_x,
 int ek_set_stencil(int stencil);
 int ek_set_advection(bool advection);
 int ek_set_fluidcoupling(bool ideal_contribution);
+int ek_set_fluctuations(bool fluctuations);
+int ek_set_fluctuation_amplitude(float fluctuation_amplitude);
 int ek_node_print_velocity(int x, int y, int z, double *velocity);
 int ek_node_print_density(int species, int x, int y, int z, double *density);
 int ek_node_print_flux(int species, int x, int y, int z, double *flux);
