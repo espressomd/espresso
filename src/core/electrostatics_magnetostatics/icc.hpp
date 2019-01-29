@@ -20,7 +20,7 @@
 */
 //
 
-/** \file iccp3m.hpp
+/** \file
 
     ICCP3M is a method that allows to take into account the influence
     of arbitrarily shaped dielectric interfaces.  The dielectric
@@ -43,80 +43,64 @@
     it can be tolerated.
 
     For the determination of the induced charges only the forces
-    acting on the induced charges has to be determined. As P3M an the
-    other coulomb solvers calculate all mutual forces, the force
+    acting on the induced charges has to be determined. As P3M and the
+    other Coulomb solvers calculate all mutual forces, the force
     calculation was modified to avoid the calculation of the short
     range part of the source-source force calculation.  For different
     particle data organisation schemes this is performed differently.
     */
 
-#ifndef _ICCP3M_H
-#define _ICCP3M_H
+#ifndef CORE_ICCP3M_HPP
+#define CORE_ICCP3M_HPP
 
 #include "config.hpp"
 
 #if defined(ELECTROSTATICS)
 
-#include "cells.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "ghosts.hpp"
-#include "global.hpp"
-#include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
-#include "topology.hpp"
-#include "utils.hpp"
-#include <ctime>
+#include "utils/Vector.hpp"
 
 /* iccp3m data structures*/
-typedef struct {
-  int initialized;
-  int n_ic;          /* Last induced id (can not be smaller then 2) */
-  int num_iteration; /* Number of max iterations                    */
-  double eout;       /* Dielectric constant of the bulk             */
-  double *areas;     /* Array of area of the grid elements          */
-  double *ein;       /* Array of dielectric constants at each surface element */
-  double *sigma;     /* Surface Charge density */
-  double convergence; /* Convergence criterion                       */
-  double *nvectorx;
-  double *nvectory;
-  double *nvectorz; /* Surface normal vectors                      */
-  double extx;
-  double exty;
-  double extz;    /* External field                              */
-  double relax;   /* relaxation parameter for iterative                       */
-  int citeration; /* current number of iterations*/
-  int set_flag;   /* flag that indicates if ICCP3M has been initialized properly
-                   */
+struct iccp3m_struct {
+  int n_ic;                  /* Last induced id (can not be smaller then 2) */
+  int num_iteration = 30;    /* Number of max iterations                    */
+  double eout = 1;           /* Dielectric constant of the bulk             */
+  std::vector<double> areas; /* Array of area of the grid elements          */
+  std::vector<double>
+      ein; /* Array of dielectric constants at each surface element */
+  std::vector<double> sigma; /* Surface Charge density */
+  double convergence = 1e-2; /* Convergence criterion                       */
+  std::vector<Vector3d> normals;  /* Surface normal vectors */
+  Vector3d ext_field = {0, 0, 0}; /* External field */
+  double relax = 0.7;             /* relaxation parameter for iterative */
+  int citeration = 0;             /* current number of iterations*/
+  int first_id = 0;
 
-  double *fx;
-  double *fy;
-  double *fz;
-  int first_id;
-} iccp3m_struct;
+  template <typename Archive>
+  void serialize(Archive &ar, long int /* version */) {
+    ar &n_ic;
+    ar &num_iteration;
+    ar &first_id;
+    ar &convergence;
+    ar &eout;
+    ar &relax;
+    ar &areas;
+    ar &ein;
+    ar &normals;
+    ar &sigma;
+    ar &ext_field;
+    ar &citeration;
+  }
+};
 extern iccp3m_struct iccp3m_cfg; /* global variable with ICCP3M configuration */
-extern int iccp3m_initialized;
-
-int bcast_iccp3m_cfg(void);
 
 /** The main iterative scheme, where the surface element charges are calculated
  * self-consistently.
  */
 int iccp3m_iteration();
 
-/** The initialisation of ICCP3M with zero values for all variables
- */
-void iccp3m_init(void);
-
 /** The allocation of ICCP3M lists for python interface
  */
 void iccp3m_alloc_lists();
-
-/** The set of the init flag from python interface
- */
-void iccp3m_set_initialized();
 
 /** check sanity of parameters for use with ICCP3M
  */

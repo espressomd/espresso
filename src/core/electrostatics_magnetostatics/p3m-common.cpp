@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file p3m-common.cpp P3M main file.
+/** \file
+ *  P3M main file.
  */
 #include "p3m-common.hpp"
 
@@ -61,7 +62,7 @@ void p3m_common_parameter_pre_init(p3m_parameter_struct *params) {
   params->additional_mesh[2] = 0;
 }
 
-/** Debug function printing p3m structures */
+/* Debug function printing p3m structures */
 void p3m_p3m_print_local_mesh(p3m_local_mesh l) {
   fprintf(stderr, "%d: p3m_local_mesh: dim=(%d,%d,%d), size=%d\n", this_node,
           l.dim[0], l.dim[1], l.dim[2], l.size);
@@ -79,7 +80,7 @@ void p3m_p3m_print_local_mesh(p3m_local_mesh l) {
           l.r_margin[4], l.r_margin[5]);
 }
 
-/** Debug function printing p3m structures */
+/* Debug function printing p3m structures */
 void p3m_p3m_print_send_mesh(p3m_send_mesh sm) {
   int i;
   fprintf(stderr, "%d: p3m_send_mesh: max=%d\n", this_node, sm.max);
@@ -176,8 +177,6 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
   return res;
 }
 
-/** Computes the  assignment function of for the \a i'th degree
-    at value \a x. */
 double p3m_caf(int i, double x, int cao_value) {
   switch (cao_value) {
   case 1:

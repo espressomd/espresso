@@ -20,8 +20,9 @@
 */
 #ifndef DIHEDRAL_H
 #define DIHEDRAL_H
-/** \file dihedral.hpp Routines to calculate the dihedral energy or/and
- *  and force for a particle quadruple.  Note that usage of dihedrals
+/** \file
+ *  Routines to calculate the dihedral energy or/and
+ *  force for a particle quadruple.  Note that usage of dihedrals
  *  increases the interaction range of bonded interactions to 2 times
  *  the maximal bond length!  \ref forces.cpp
  */
@@ -76,7 +77,7 @@ inline void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3,
   *cosphi = scalar(aXb, bXc);
 
   if (fabs(fabs(*cosphi) - 1) < TINY_SIN_VALUE)
-    *cosphi = dround(*cosphi);
+    *cosphi = std::round(*cosphi);
 
   /* Calculate dihedral angle */
   *phi = acos(*cosphi);

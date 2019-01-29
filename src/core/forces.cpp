@@ -19,9 +19,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file forces.cpp Force calculation.
+/** \file
+ *  Force calculation.
  *
- *  For more information see \ref forces.hpp "forces.h".
+ *  The corresponding header file is forces.hpp.
  */
 
 #include "EspressoSystemInterface.hpp"
@@ -35,6 +36,7 @@
 #include "forces_inline.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbgpu.hpp"
 #include "immersed_boundaries.hpp"
 #include "short_range_loop.hpp"
 
@@ -52,7 +54,7 @@ void init_forces() {
     nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
 #endif
 
-  /* initialize forces with langevin thermostat forces
+  /* initialize forces with Langevin thermostat forces
      or zero depending on the thermostat
      set torque to zero for all and rescale quaternions
   */
@@ -110,8 +112,7 @@ void force_calc() {
 #endif // LB_GPU
 
 #ifdef ELECTROSTATICS
-  if (iccp3m_initialized && iccp3m_cfg.set_flag)
-    iccp3m_iteration();
+  iccp3m_iteration();
 #endif
   init_forces();
 
@@ -125,12 +126,19 @@ void force_calc() {
 
   calc_long_range_forces();
 
-  short_range_loop([](Particle &p) { add_single_particle_force(&p); },
-                   [](Particle &p1, Particle &p2, Distance &d) {
-                     add_non_bonded_pair_force(&(p1), &(p2), d.vec21.data(),
-                                               sqrt(d.dist2), d.dist2);
-                   });
-
+  // Only calculate pair forces if the maximum cutoff is >0
+  if (max_cut > 0) {
+    short_range_loop([](Particle &p) { add_single_particle_force(&p); },
+                     [](Particle &p1, Particle &p2, Distance &d) {
+                       add_non_bonded_pair_force(&(p1), &(p2), d.vec21.data(),
+                                                 sqrt(d.dist2), d.dist2);
+                     });
+  } else {
+    // Otherwise only do single-particle contributions
+    for (auto &p : local_cells.particles()) {
+      add_single_particle_force(&p);
+    }
+  }
   auto local_parts = local_cells.particles();
   Constraints::constraints.add_forces(local_parts);
 
@@ -284,9 +292,11 @@ void calc_long_range_forces() {
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     dawaanr_calculations(1, 0);
     break;
+#ifdef DP3M
   case DIPOLAR_MDLC_DS:
     add_mdlc_force_corrections();
-  // fall through
+    // fall through
+#endif
   case DIPOLAR_DS:
     magnetic_dipolar_direct_sum_calculations(1, 0);
     break;

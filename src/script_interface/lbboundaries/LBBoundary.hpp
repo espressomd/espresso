@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
+#include "core/communication.hpp"
 #include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
 #include "shapes/Shape.hpp"
 
@@ -65,7 +66,11 @@ public:
 
   Variant call_method(const std::string &name, const VariantMap &) override {
     if (name == "get_force") {
-      return m_lbboundary->get_force();
+      // The get force method uses mpi callbacks on lb cpu
+      if (this_node == 0)
+        return m_lbboundary->get_force();
+      else
+        return none;
     }
     return none;
   }

@@ -20,8 +20,8 @@
 */
 #ifndef _LJCOS_H
 #define _LJCOS_H
-/** \file ljcos.hpp
- *  Routines to calculate the lennard jones+cosine energy and/or force
+/** \file
+ *  Routines to calculate the Lennard-Jones+cosine energy and/or force
  *  for a particle pair.
  *  \ref forces.cpp
  */
@@ -53,7 +53,7 @@ inline void add_ljcos_pair_force(const Particle *const p1,
       for (int j = 0; j < 3; j++)
         force[j] += fac * d[j];
     }
-    /* lennard-jones part of the potential. */
+    /* Lennard-Jones part of the potential. */
     else if (dist > 0) {
       double frac2 = Utils::sqr(ia_params->LJCOS_sig / r_off);
       double frac6 = frac2 * frac2 * frac2;
@@ -77,7 +77,7 @@ inline double ljcos_pair_energy(const Particle *p1, const Particle *p2,
                                 const double d[3], double dist) {
   if ((dist < ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
     double r_off = dist - ia_params->LJCOS_offset;
-    /* lennard-jones part of the potential. */
+    /* Lennard-Jones part of the potential. */
     if (dist < (ia_params->LJCOS_rmin + ia_params->LJCOS_offset)) {
       double frac2 = Utils::sqr(ia_params->LJCOS_sig / r_off);
       double frac6 = frac2 * frac2 * frac2;

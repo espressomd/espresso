@@ -21,10 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
 
-#include "Vector.hpp"
 #include "config.hpp"
 #include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"
+#include "utils/Vector.hpp"
 
 namespace LBBoundaries {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
@@ -43,8 +43,8 @@ public:
   }
 
   /* Calculate distance from the lbboundary */
-  int calc_dist(const double *pos, double *dist, double *vec) const {
-    return m_shape->calculate_dist(pos, dist, vec);
+  void calc_dist(const Vector3d &pos, double *dist, double *vec) const {
+    m_shape->calculate_dist(pos, dist, vec);
   }
 
   void set_shape(std::shared_ptr<Shapes::Shape> const &shape) {
@@ -92,7 +92,7 @@ private:
 
   /** Private data members */
   std::shared_ptr<Shapes::Shape>
-      m_shape; // TODO: I dont like this being a pointer just to get around the
+      m_shape; // TODO: I don't like this being a pointer just to get around the
                // virtual limitations
   Vector3d m_velocity;
   Vector3d m_force;

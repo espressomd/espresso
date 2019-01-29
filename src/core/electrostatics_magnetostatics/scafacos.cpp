@@ -32,6 +32,7 @@
 #include <memory>
 #include <numeric>
 
+#include "Scafacos.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -40,9 +41,13 @@
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "scafacos/Scafacos.hpp"
 #include "tuning.hpp"
 #include "utils.hpp"
+
+#if defined(SCAFACOS_DIPOLES) && !defined(FCS_ENABLE_DIPOLES)
+#error                                                                         \
+    "SCAFACOS_DIPOLES requires dipoles support in scafacos library (FCS_ENABLE_DIPOLES)."
+#endif
 
 /** This file contains the c-like interface for Scafacos */
 
@@ -87,9 +92,10 @@ int ScafacosData::update_particle_data() {
       charges.push_back(p.p.q);
     } else {
 #ifdef SCAFACOS_DIPOLES
-      dipoles.push_back(p.r.dip[0]);
-      dipoles.push_back(p.r.dip[1]);
-      dipoles.push_back(p.r.dip[2]);
+      const Vector3d dip = p.calc_dip();
+      dipoles.push_back(dip[0]);
+      dipoles.push_back(dip[1]);
+      dipoles.push_back(dip[2]);
 #endif
     }
   }
@@ -120,8 +126,9 @@ void ScafacosData::update_particle_forces() const {
       // The scafacos term "potential" here in fact refers to the magnetic
       // field
       // So, the torques are given by m \times B
-      double t[3];
-      Utils::cross_product(p.r.dip, &(potentials[it_p]), t);
+      const Vector3d dip = p.calc_dip();
+      auto const t = dip.cross(
+          Vector3d(Utils::Span<const double>(&(potentials[it_p]), 3)));
       // The force is given by G m, where G is a matrix
       // which comes from the "fields" output of scafacos like this
       // 0 1 2
@@ -130,12 +137,12 @@ void ScafacosData::update_particle_forces() const {
       // where the numbers refer to indices in the "field" output from
       // scafacos
       double f[3];
-      f[0] = fields[it_f + 0] * p.r.dip[0] + fields[it_f + 1] * p.r.dip[1] +
-             fields[it_f + 2] * p.r.dip[2];
-      f[1] = fields[it_f + 1] * p.r.dip[0] + fields[it_f + 3] * p.r.dip[1] +
-             fields[it_f + 4] * p.r.dip[2];
-      f[2] = fields[it_f + 2] * p.r.dip[0] + fields[it_f + 4] * p.r.dip[1] +
-             fields[it_f + 5] * p.r.dip[2];
+      f[0] = fields[it_f + 0] * dip[0] + fields[it_f + 1] * dip[1] +
+             fields[it_f + 2] * dip[2];
+      f[1] = fields[it_f + 1] * dip[0] + fields[it_f + 3] * dip[1] +
+             fields[it_f + 4] * dip[2];
+      f[2] = fields[it_f + 2] * dip[0] + fields[it_f + 4] * dip[1] +
+             fields[it_f + 5] * dip[2];
 
       // Add to particles
       for (int j = 0; j < 3; j++) {
@@ -273,7 +280,7 @@ double time_r_cut(double r_cut) {
 /** Determine the optimal cutoff by bisection */
 void tune_r_cut() {
   const double tune_limit = 1e-3;
-  /** scafacos p3m and ewald do not accept r_cut 0 for no good reason */
+  /** scafacos p3m and Ewald do not accept r_cut 0 for no good reason */
   double r_min = 1.0;
   double r_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;
   double t_min = 0;
@@ -314,7 +321,7 @@ void tune() {
   /** Check if there is a user supplied cutoff */
   if ((scafacos->has_near) && (scafacos->r_cut() <= 0.0)) {
     // Tuning of r_cut needs to run on the master node because it relies on
-    // master-slve mode communication
+    // master-slave mode communication
     if (this_node == 0) {
       tune_r_cut();
     } else {
@@ -464,14 +471,14 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
 #endif /* SCAFACOS */
 }
 
-void mpi_scafacos_free_slave(int a, int b) {
+void mpi_scafacos_free_slave(int, int) {
 #if defined(SCAFACOS)
   using namespace Scafacos;
   free_handle();
 #endif
 }
 
-void mpi_scafacos_set_r_cut_and_tune_slave(int a, int b) {
+void mpi_scafacos_set_r_cut_and_tune_slave(int, int) {
 #if defined(SCAFACOS)
   using namespace Scafacos;
   double r_cut;

@@ -45,7 +45,7 @@ double ShapeBasedConstraint::min_dist() {
         ia_params = get_ia_param(p.p.type, part_rep.p.type);
         if (checkIfInteraction(ia_params)) {
           double vec[3], dist;
-          m_shape->calculate_dist(folded_position(p).data(), &dist, vec);
+          m_shape->calculate_dist(folded_position(p), &dist, vec);
           return std::min(min, dist);
         } else
           return min;
@@ -71,7 +71,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
   }
 
   if (checkIfInteraction(ia_params)) {
-    m_shape->calculate_dist(folded_pos.data(), &dist, dist_vec.data());
+    m_shape->calculate_dist(folded_pos, &dist, dist_vec.data());
 
     if (dist > 0) {
       outer_normal_vec = -dist_vec / dist;
@@ -89,7 +89,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
       if ((!m_only_positive) && (dist < 0)) {
         auto const dist2 = dist * dist;
         calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec.data(),
-                                   -1.0 * dist, dist * dist, force.data(),
+                                   -1.0 * dist, dist2, force.data(),
                                    torque1.data(), torque2.data());
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
@@ -128,7 +128,7 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
   dist = 0.;
   if (checkIfInteraction(ia_params)) {
     double vec[3];
-    m_shape->calculate_dist(folded_pos.data(), &dist, vec);
+    m_shape->calculate_dist(folded_pos, &dist, vec);
     if (dist > 0) {
       nonbonded_en = calc_non_bonded_pair_energy(&p, &part_rep, ia_params, vec,
                                                  dist, dist * dist);

@@ -72,7 +72,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
   // the quaternions representing the orientation of the real particle
   // with those in the virtual particle. The re quulting quaternion is then
   // converted to a director.
-  // Whe have quat_(real particle) *quat_(virtual particle)
+  // We have quat_(real particle) *quat_(virtual particle)
   // = quat_(obtained from desired director)
   // Resolving this for the quat_(virtual particle)
 
@@ -88,7 +88,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
 
     // Obtain quaternions from desired director
     Vector<4, double> quat_director;
-    convert_quatu_to_quat(d, quat_director);
+    convert_director_to_quat(d, quat_director);
 
     // Define quat as described above:
     double x = 0;
@@ -130,7 +130,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
 // Setup the virtual_sites_relative properties of a particle so that the given
 // virtual particle will follow the given real particle
 int vs_relate_to(int part_num, int relate_to) {
-  // Get the data for the particle we act on and the one we wnat to relate
+  // Get the data for the particle we act on and the one we want to relate
   // it to.
   auto const &p_current = get_particle_data(part_num);
   auto const &p_relate_to = get_particle_data(relate_to);

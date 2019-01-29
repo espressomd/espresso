@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file mpiio.cpp
+/** \file
  *
  * Concerning the file layouts.
  * - Scalar arrays are written like this:
@@ -298,7 +298,7 @@ static void mpiio_read_array(const std::string &fn, T *arr, size_t len,
  *
  * \param fn Filename of the head file
  * \param rank The rank of the current process in MPI_COMM_WORLD
- * \param file Pointer to store the fields to
+ * \param fields Pointer to store the fields to
  */
 static void read_head(const std::string &fn, int rank, unsigned *fields) {
   FILE *f = nullptr;
@@ -325,7 +325,7 @@ static void read_head(const std::string &fn, int rank, unsigned *fields) {
  * \param rank The rank of the current process in MPI_COMM_WORLD
  * \param size The size of MPI_COMM_WORLD
  * \param nglobalpart The global amount of particles
- * \param prefs Pointer to store the prefix to
+ * \param pref Pointer to store the prefix to
  * \param nlocalpart Pointer to store the amount of local particles to
  */
 static void read_prefs(const std::string &fn, int rank, int size,

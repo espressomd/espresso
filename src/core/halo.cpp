@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file halo.cpp
+/** \file
  *
  * Halo scheme for parallelization of lattice algorithms.
  * Implementation of file \ref halo.hpp.
@@ -146,8 +146,6 @@ void halo_free_fieldtype(Fieldtype *ftype) {
  * @param type halo field layout description
  */
 void halo_dtset(char *dest, int value, Fieldtype type) {
-  char *s;
-
   int vblocks = type->vblocks;
   int vstride = type->vstride;
   int vskip = type->vskip;
@@ -158,10 +156,8 @@ void halo_dtset(char *dest, int value, Fieldtype type) {
 
   for (int i = 0; i < vblocks; i++) {
     for (int j = 0; j < vstride; j++) {
-      s = dest;
       for (int k = 0; k < count; k++)
-        memset(s + disps[k], value, lens[k]);
-      s += extent;
+        memset(dest + disps[k], value, lens[k]);
     }
     dest += vskip * extent;
   }
@@ -233,7 +229,7 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
 
 /** Preparation of the halo parallelization scheme. Sets up the
  *  necessary datastructures for \ref halo_communication
- * @param hc         halo communicator beeing created (Input/Output)
+ * @param hc         halo communicator being created (Input/Output)
  * @param lattice    lattice the communication is created for (Input)
  * @param fieldtype  field layout of the lattice data (Input)
  * @param datatype   MPI datatype for the lattice data (Input)
@@ -241,8 +237,8 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
 void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype) {
   int k, n, dir, lr, cnt, num = 0;
-  int *grid = lattice->grid;
-  int *period = lattice->halo_grid;
+  const auto grid = lattice->grid;
+  const auto period = lattice->halo_grid;
 
   for (n = 0; n < hc->num; n++) {
     MPI_Type_free(&(hc->halo_info[n].datatype));
@@ -393,7 +389,6 @@ void halo_communication(HaloCommunicator *hc, char *base) {
     case HALO_SEND:
       datatype = hc->halo_info[n].datatype;
       fieldtype = hc->halo_info[n].fieldtype;
-      s_node = hc->halo_info[n].source_node;
       r_node = hc->halo_info[n].dest_node;
 
       HALO_TRACE(
@@ -408,7 +403,6 @@ void halo_communication(HaloCommunicator *hc, char *base) {
     case HALO_RECV:
       datatype = hc->halo_info[n].datatype;
       s_node = hc->halo_info[n].source_node;
-      r_node = hc->halo_info[n].dest_node;
 
       HALO_TRACE(
           fprintf(stderr, "%d: halo_comm recv from %d.\n", this_node, s_node));

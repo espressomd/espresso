@@ -26,8 +26,8 @@
 using namespace std;
 
 namespace Shapes {
-int Stomatocyte::calculate_dist(const double *ppos, double *dist,
-                                double *vec) const {
+void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
+                                 double *vec) const {
 
   using Utils::sqr;
 
@@ -35,13 +35,12 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist,
 
   int number;
 
-  double mu, T0, T1, T1p, T2, T3, T3sqrt, T3p, T4sqrt, T4, a, b, c, d, e, rad0,
-      rad1, rad2, rad3, pt0x, pt0y, pt1x, pt1y, pt2x, pt2y, pt3x, pt3y, dst0,
-      dst1, dst2, dst3, t0, t1, t2, t3, t4, ttota, distance, mindist, time0,
-      time1, xd, yd, zd, xp, yp, zp, xpp, ypp, normal_x_3D, normal_y_3D,
-      normal_z_3D;
+  double mu, T0, T1, T1p, T2, T3, T3sqrt, T3p, T4, a, b, c, d, e, rad0, rad1,
+      rad2, rad3, pt0x, pt0y, pt1x, pt1y, pt2x, pt2y, pt3x, pt3y, dst0, dst1,
+      dst2, dst3, t0, t1, t2, t3, t4, ttota, distance, mindist, time0, time1,
+      xd, yd, zd, xp, yp, zp, xpp, ypp, normal_x_3D, normal_y_3D, normal_z_3D;
 
-  Vector3d closest_point_3D({-1.0, -1.0, -1.0});
+  Vector3d closest_pos({-1.0, -1.0, -1.0});
 
   // Set the three dimensions of the stomatocyte
 
@@ -51,26 +50,22 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist,
   a = a * c;
   b = b * c;
 
-  // Set the point for which we want to know the distance
-
-  Vector3d point_3D = Vector3d(ppos, ppos + 3);
-
   /***** Convert 3D coordinates to 2D planar coordinates *****/
 
   // Calculate the point on position + mu * orientation,
   // where the difference segment is orthogonal
 
-  mu = (m_orientation.dot(point_3D) - m_position.dot(m_orientation)) /
+  mu = (m_orientation.dot(pos) - m_position.dot(m_orientation)) /
        m_orientation.norm2();
 
   // Then the closest point to the line is
 
-  closest_point_3D = m_position + mu * m_orientation;
+  closest_pos = m_position + mu * m_orientation;
 
   // So the shortest distance to the line is
 
   Vector2d dist_2D;
-  dist_2D[0] = Vector3d(closest_point_3D - point_3D).norm();
+  dist_2D[0] = Vector3d(closest_pos - pos).norm();
   dist_2D[1] = mu * m_orientation.norm();
 
   /***** Use the obtained planar coordinates in distance function *****/
@@ -141,14 +136,6 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist,
           2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d)))));
 
   T3 = 3.0 * M_PI / 4.0 - T3p;
-
-  T4sqrt = -sqr(b) * sqr(c) *
-           (sqr(a) + 9 * sqr(c) + 4 * c * d + d * (2 * b + d) -
-            2 * a * (b + 2 * c + d)) *
-           (sqr(a) + 9 * sqr(c) + 4 * c * d + sqr(d) - 2 * a * (b + 2 * c + d) +
-            2 * b * (4 * c + d));
-
-  T4sqrt = std::max(T4sqrt, 0.0);
 
   T4 = acos((b * (-a + b + 2 * c + d) *
                  (sqr(a) + 2 * sqr(b) + 9 * sqr(c) + 4 * c * d + sqr(d) +
@@ -326,7 +313,7 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist,
   // Next we determine the 3D vector between the center
   // of the stomatocyte and the point of interest
 
-  Vector3d p(point_3D - m_position);
+  Vector3d p(pos - m_position);
 
   // Now we use the inverse matrix to find the
   // position of the point with respect to the origin
@@ -380,7 +367,5 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist,
   *dist = std::copysign(distance, m_direction);
 
   // And we are done with the stomatocyte
-
-  return 0;
 }
 } // namespace Shapes

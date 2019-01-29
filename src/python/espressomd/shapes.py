@@ -96,28 +96,6 @@ class HollowCone(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Maze(ScriptInterfaceHelper):
-
-    """
-    Spherical cavities on a regular grid that are
-    connected by tubes.
-
-    Attributes
-    ----------
-    cylrad : :obj:`float`
-             Radius of the tubes.
-    dim : :obj:`float`
-          Dimension of the maze.
-    nsphere : :obj:`int`
-              Number of spherical cavities.
-    sphrad : :obj:`float`
-             Radius of the spherical cavities.
-
-    """
-    _so_name = "Shapes::Maze"
-
-
-@script_interface_register
 class Rhomboid(ScriptInterfaceHelper):
 
     """
@@ -157,6 +135,7 @@ class Slitpore(ScriptInterfaceHelper):
     pore_mouth : :obj:`float`
     pore_width : :obj:`float`
     upper_smoothing_radius : :obj:`float`
+    dividing_plane : :obj:`float`
 
     """
     _so_name = "Shapes::Slitpore"
@@ -229,6 +208,29 @@ class Stomatocyte(ScriptInterfaceHelper):
     """
 
     _so_name = "Shapes::Stomatocyte"
+
+
+@script_interface_register
+class Torus(ScriptInterfaceHelper):
+
+    """
+    A torus shape.
+    Attributes
+    ----------
+    center : array_like :obj:`float`
+             Coordinates of the center of the torus.
+    normal : array_like :obj:`float`
+           Normal axis of the torus.
+    radius : :obj:`float`
+             Radius of the torus.
+    tube_radius : :obj:`float`
+             Radius of the tube.
+    direction : :obj:`int`
+                Surface orientation, for +1 the normal points
+                out of the mantel, for -1 it points inward.
+
+    """
+    _so_name = "Shapes::Torus"
 
 
 @script_interface_register

@@ -18,7 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file mmm2d.hpp MMM2D algorithm for long range coulomb interaction
+/** \file
+    MMM2D algorithm for long range Coulomb interaction
     in 2d+h geometries.  Implementation of the MMM2D method for the calculation
     of the electrostatic interaction for two dimensionally periodic systems.
     For details on the method see MMM general. The MMM2D method works only with
@@ -70,7 +71,9 @@ extern MMM2D_struct mmm2d_params;
                         If -1, the far cutoff is determined by maxPWerror.
                         Manual setting is probably only good for testing
     @param delta_top    dielectric contrast at top of the simulation box
-    @param delta_mid    dielectric contrast in the middle of the simulation box
+    @param delta_bot    dielectric contrast at the bottom of the simulation box
+    @param const_pot_on
+    @param pot_diff
 */
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
                      double delta_bot, int const_pot_on, double pot_diff);

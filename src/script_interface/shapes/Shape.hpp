@@ -38,9 +38,9 @@ public:
   Variant call_method(std::string const &name,
                       VariantMap const &params) override {
     if (name == "calc_distance") {
-      std::array<double, 3> pos = get_value<Vector3d>(params.at("position"));
+      auto const pos = get_value<Vector3d>(params.at("position"));
       double dist, vec[3];
-      shape()->calculate_dist(pos.data(), &dist, vec);
+      shape()->calculate_dist(pos, &dist, vec);
       return std::vector<Variant>{dist, Vector3d{vec}};
     }
 

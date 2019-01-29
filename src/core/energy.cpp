@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file energy.cpp
-    Implementation of \ref energy.hpp "energy.hpp".
-*/
+/** \file
+ *  Energy calculation.
+ */
 
 #include "EspressoSystemInterface.hpp"
 #include "constraints.hpp"
@@ -38,18 +38,17 @@
 
 ActorList energyActors;
 
-Observable_stat energy = {0, {}, 0, 0, 0};
-Observable_stat total_energy = {0, {}, 0, 0, 0};
+Observable_stat energy{};
+Observable_stat total_energy{};
 
 /************************************************************/
 
 void init_energies(Observable_stat *stat) {
-  int n_pre, n_non_bonded, n_coulomb, n_dipolar;
+  int n_pre, n_non_bonded, n_coulomb(0), n_dipolar(0);
 
   n_pre = 1;
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
-  n_coulomb = 0;
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE:
@@ -69,10 +68,7 @@ void init_energies(Observable_stat *stat) {
     n_coulomb = 1;
   }
 #endif
-
-  n_dipolar = 0;
 #ifdef DIPOLES
-
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
     n_dipolar = 1; // because there may be an external magnetic field
@@ -104,7 +100,6 @@ void init_energies(Observable_stat *stat) {
     n_dipolar = 2;
     break;
   }
-
 #endif
 
   obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded,
@@ -141,12 +136,19 @@ void energy_calc(double *result) {
 
   on_observable_calc();
 
-  short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
-                   [](Particle &p1, Particle &p2, Distance &d) {
-                     add_non_bonded_pair_energy(&p1, &p2, d.vec21.data(),
-                                                sqrt(d.dist2), d.dist2);
-                   });
-
+  // Execute short range loop if the cutoff is >0
+  if (max_cut > 0) {
+    short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
+                     [](Particle &p1, Particle &p2, Distance &d) {
+                       add_non_bonded_pair_energy(&p1, &p2, d.vec21.data(),
+                                                  sqrt(d.dist2), d.dist2);
+                     });
+  } else {
+    // Otherwise, only do the single-particle contribution
+    for (auto &p : local_cells.particles()) {
+      add_single_particle_energy(&p);
+    }
+  }
   calc_long_range_energies();
 
   auto local_parts = local_cells.particles();
@@ -238,10 +240,12 @@ void calc_long_range_energies() {
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     energy.dipolar[1] = dawaanr_calculations(0, 1);
     break;
+#ifdef DP3M
   case DIPOLAR_MDLC_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
     energy.dipolar[2] = add_mdlc_energy_corrections();
     break;
+#endif
   case DIPOLAR_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
     break;

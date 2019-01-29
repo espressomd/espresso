@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file layered.cpp
-    Implementation of \ref layered.hpp "layered.h".
+/** \file
+ *  Implementation of layered.hpp.
  */
 #include "layered.hpp"
 #include "cells.hpp"
@@ -29,6 +29,7 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "utils.hpp"
+
 #include <cstring>
 #include <mpi.h>
 
@@ -86,12 +87,12 @@ void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
   for (i = 0; i < 2; i++) {
     res[i] = a[i] - b[i];
     if (PERIODIC(i))
-      res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
+      res[i] -= std::round(res[i] * box_l_i[i]) * box_l[i];
   }
   res[2] = a[2] - b[2];
 }
 
-Cell *layered_position_to_cell(const double pos[3]) {
+Cell *layered_position_to_cell(const Vector3d &pos) {
   int cpos =
       static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
   if (cpos < 1) {
@@ -390,7 +391,7 @@ void layered_topology_init(CellPList *old) {
     Particle *part = old->cell[c]->part;
     int np = old->cell[c]->n;
     for (p = 0; p < np; p++) {
-      Cell *nc = layered_position_to_cell(part[p].r.p.data());
+      Cell *nc = layered_position_to_cell(part[p].r.p);
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
       if (nc == nullptr)
@@ -410,19 +411,20 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
 
   CELL_TRACE(fprintf(stderr, "%d: sorting in %d\n", this_node, pl->n));
   for (p = 0; p < pl->n; p++) {
-    fold_position(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i);
+    fold_position(pl->part[p].r.p, pl->part[p].l.i);
 
-    if (LAYERED_BTM_NEIGHBOR && pl->part[p].r.p[2] < my_left[2]) {
+    if (LAYERED_BTM_NEIGHBOR &&
+        (get_mi_coord(pl->part[p].r.p[2], my_left[2], 2) < 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node below\n",
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(dn, pl, p);
-    } else if (LAYERED_TOP_NEIGHBOR && pl->part[p].r.p[2] >= my_right[2]) {
+    } else if (LAYERED_TOP_NEIGHBOR &&
+               (get_mi_coord(pl->part[p].r.p[2], my_right[2], 2) >= 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node above\n",
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(up, pl, p);
     } else
-      move_indexed_particle(layered_position_to_cell(pl->part[p].r.p.data()),
-                            pl, p);
+      move_indexed_particle(layered_position_to_cell(pl->part[p].r.p), pl, p);
     /* same particle again, as this is now a new one */
     if (p < pl->n)
       p--;
@@ -430,48 +432,35 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
   CELL_TRACE(fprintf(stderr, "%d: left over %d\n", this_node, pl->n));
 }
 
-void layered_exchange_and_sort_particles(int global_flag) {
+void layered_exchange_and_sort_particles(int global_flag,
+                                         ParticleList *displaced_parts) {
   Particle *part;
   Cell *nc, *oc;
   int c, p, flag, redo;
   ParticleList send_buf_dn, send_buf_up;
   ParticleList recv_buf_up, recv_buf_dn;
-  ;
 
   CELL_TRACE(fprintf(stderr, "%d:layered exchange and sort %d\n", this_node,
                      global_flag));
 
   /* sort local particles */
-  for (c = 1; c <= n_layers; c++) {
-    oc = &cells[c];
+  for (p = 0; p < displaced_parts->n; p++) {
+    part = &displaced_parts->part[p];
 
-    for (p = 0; p < oc->n; p++) {
-      part = &oc->part[p];
-
-      if (n_nodes != 1 && LAYERED_BTM_NEIGHBOR && part->r.p[2] < my_left[2]) {
-        CELL_TRACE(fprintf(stderr, "%d: send part %d down\n", this_node,
-                           part->p.identity));
-        move_indexed_particle(&send_buf_dn, oc, p);
-        if (p < oc->n)
-          p--;
-      } else if (n_nodes != 1 && LAYERED_TOP_NEIGHBOR &&
-                 part->r.p[2] >= my_right[2]) {
-        CELL_TRACE(fprintf(stderr, "%d: send part %d up\n", this_node,
-                           part->p.identity));
-        move_indexed_particle(&send_buf_up, oc, p);
-        if (p < oc->n)
-          p--;
-      } else {
-        /* particle stays here. Fold anyways to get x,y correct */
-        fold_position(part->r.p, part->m.v, part->l.i);
-
-        nc = layered_position_to_cell(part->r.p.data());
-        if (nc != oc) {
-          move_indexed_particle(nc, oc, p);
-          if (p < oc->n)
-            p--;
-        }
-      }
+    if (n_nodes != 1 && LAYERED_BTM_NEIGHBOR &&
+        (get_mi_coord(part->r.p[2], my_left[2], 2) < 0.0)) {
+      CELL_TRACE(fprintf(stderr, "%d: send part %d down\n", this_node,
+                         part->p.identity));
+      move_indexed_particle(&send_buf_dn, displaced_parts, p);
+      if (p < displaced_parts->n)
+        p--;
+    } else if (n_nodes != 1 && LAYERED_TOP_NEIGHBOR &&
+               (get_mi_coord(part->r.p[2], my_right[2], 2) >= 0.0)) {
+      CELL_TRACE(fprintf(stderr, "%d: send part %d up\n", this_node,
+                         part->p.identity));
+      move_indexed_particle(&send_buf_up, displaced_parts, p);
+      if (p < displaced_parts->n)
+        p--;
     }
   }
 

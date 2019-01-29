@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/interpolation/bspline_3d_gradient.hpp"
 #include "utils/math/tensor_product.hpp"
 
-#include "Vector.hpp"
 #include "gradient_type.hpp"
+#include "utils/Vector.hpp"
 
 /* Turn off range checks if release build. */
 #if defined(NDEBUG) && !defined(BOOST_DISABLE_ASSERTS)
@@ -91,7 +91,7 @@ public:
   Vector3d grid_spacing() const { return m_grid_spacing; }
   storage_type const &field_data() const { return m_global_field; }
   Vector3d origin() const { return m_origin; }
-  Vector<3, int> shape() const {
+  Vector3i shape() const {
     return {m_global_field.shape(), m_global_field.shape() + 3};
   }
 

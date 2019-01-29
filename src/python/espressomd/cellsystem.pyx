@@ -25,7 +25,12 @@ from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
 
 cdef class CellSystem(object):
-    def set_domain_decomposition(self, use_verlet_lists=True):
+    def set_domain_decomposition(
+        self,
+        use_verlet_lists=True,
+     fully_connected=[False,
+                      False,
+                      False]):
         """
         Activates domain decomposition cell system.
 
@@ -38,11 +43,11 @@ cdef class CellSystem(object):
         """
 
         cell_structure.use_verlet_list = use_verlet_lists
+        dd.fully_connected = fully_connected
         # grid.h::node_grid
         mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC)
 
-        # @TODO: gathering should be interface independent
-        # return mpi_gather_runtime_errors(interp, TCL_OK)
+        handle_errors("Error while initializing the cell system.")
         return True
 
     def set_n_square(self, use_verlet_lists=True):
@@ -52,7 +57,7 @@ cdef class CellSystem(object):
         Parameters
         ----------
         'use_verlet_lists' : :obj:`bool`, optional
-                             Activates or deactivates the usage of the verlet
+                             Activates or deactivates the usage of the Verlet
                              lists for this algorithm.
 
         """
@@ -73,7 +78,7 @@ cdef class CellSystem(object):
         'n_layers': :obj:`int`, optional, positive
                     Sets the number of layers in the z-direction.
         'use_verlet_lists' : :obj:`bool`, optional
-                             Activates or deactivates the usage of the verlet
+                             Activates or deactivates the usage of the Verlet
                              lists for this algorithm.
 
         """
@@ -136,6 +141,7 @@ cdef class CellSystem(object):
             [dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
         s["max_num_cells"] = max_num_cells
         s["min_num_cells"] = min_num_cells
+        s["fully_connected"] = dd.fully_connected
 
         return s
 
@@ -154,6 +160,7 @@ cdef class CellSystem(object):
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
         s["max_num_cells"] = max_num_cells
         s["min_num_cells"] = min_num_cells
+        s["fully_connected"] = dd.fully_connected
         return s
 
     def __setstate__(self, d):

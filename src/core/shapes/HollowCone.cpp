@@ -27,14 +27,13 @@
 using namespace std;
 
 namespace Shapes {
-int HollowCone::calculate_dist(const double *ppos, double *dist,
-                               double *vec) const {
+void HollowCone::calculate_dist(const Vector3d &pos, double *dist,
+                                double *vec) const {
   int number = -1;
   double r0, r1, w, alpha, xd, yd, zd, mu, x_2D, y_2D, t0, t1, t2, time1, time2,
-      time3, time4, mdst0, mdst1, mdst2, mdst3, mindist, normalize, x, y, z,
-      distance, normal_x, normal_y,
-      direction = 0.0, xp, yp, zp, xpp, ypp, sin_xy, cos_xy, normal_x_3D,
-      normal_y_3D, normal_z_3D, normal_3D_x, normal_3D_y, normal_3D_z;
+      time3, time4, mdst0, mdst1, mdst2, mdst3, mindist, normalize, x, y, z, xp,
+      yp, zp, xpp, ypp, sin_xy, cos_xy, normal_x_3D, normal_y_3D, normal_z_3D,
+      normal_3D_x, normal_3D_y, normal_3D_z;
 
   // Set the dimensions of the hollow cone
 
@@ -45,7 +44,7 @@ int HollowCone::calculate_dist(const double *ppos, double *dist,
 
   // Set the point for which we want to know the distance
 
-  Vector3d point_3D = Vector3d(ppos, ppos + 3);
+  Vector3d point_3D = pos;
 
   /***** Convert 3D coordinates to 2D planar coordinates *****/
 
@@ -153,9 +152,10 @@ int HollowCone::calculate_dist(const double *ppos, double *dist,
   // to which the point is closest, we know the distance,
   // but we still need the normal
 
-  distance = -1.0;
-  normal_x = -1.0;
-  normal_y = -1.0;
+  double distance = -1.0;
+  double normal_x = -1.0;
+  double normal_y = -1.0;
+  double direction = 0.0;
 
   if (number == 0) {
     normal_x = x_2D - r0 + 0.5 * w * cos(alpha) - r1 * time1 * sin(alpha);
@@ -370,7 +370,5 @@ int HollowCone::calculate_dist(const double *ppos, double *dist,
   *dist = distance * std::copysign(1.0, m_direction);
 
   // And we are done with the hollow cone
-
-  return 0;
 }
 } // namespace Shapes

@@ -17,7 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file for_each_pair_test.cpp Unit tests for the Utils::for_each_pair.
+/** \file
+ * Unit tests for the Utils::for_each_pair.
  *
  */
 
@@ -25,7 +26,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/utils/for_each_pair.hpp"
+#include "utils/for_each_pair.hpp"
 using Utils::for_each_pair;
 
 #include <numeric>

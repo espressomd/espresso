@@ -223,63 +223,6 @@ current implementation with the ``COLLISION_DETECTION`` feature.
    ``r.stop()``.
 
 ..
-    .. _\`\`nemd\`\`\: Setting up non-equilibirum MD:
-
-    ``nemd``: Setting up non-equilibrium MD
-    ---------------------------------------
-
-    .. todo::
-        This is not implemented for the python interface yet
-
-    nemd exchange nemd shearrate nemd off nemd nemd profile nemd viscosity
-
-    Use NEMD (Non Equilibrium Molecular Dynamics) to simulate a system under
-    shear with help of an unphysical momentum change in two slabs in the
-    system.
-
-    Variants and will initialize NEMD. Two distinct methods exist. Both
-    methods divide the simulation box into slabs that lie parallel to the
-    x-y-plane and apply a shear in x direction. The shear is applied in the
-    top and the middle slabs. Note, that the methods should be used with a
-    DPD thermostat or in an NVE ensemble. Furthermore, you should not use
-    other special features like or inside the top and middle slabs. For
-    further reference on how NEMD is implemented into see
-    :cite:`soddeman01a`.
-
-    Variant chooses the momentum exchange method. In this method, in each
-    step the largest positive x-components of the velocity in the middle
-    slab are selected and exchanged with the largest negative x-components
-    of the velocity in the top slab.
-
-    Variant chooses the shear-rate method. In this method, the targeted
-    x-component of the mean velocity in the top and middle slabs are given
-    by
-
-    .. math:: {target\_velocity} = \pm {shearrate}\,\frac{L_z}{4}
-
-    where :math:`L_z` is the simulation box size in z-direction. During the
-    integration, the x-component of the mean velocities of the top and
-    middle slabs are measured. Then, the difference between the mean
-    x-velocities and the target x-velocities are added to the x-component of
-    the velocities of the particles in the respective slabs.
-
-    Variant will turn off NEMD, variant will print usage information of the
-    parameters of NEMD. Variant will return the velocity profile of the
-    system in x-direction (mean velocity per slab).
-
-    Variant will return the viscosity of the system, that is computed via
-
-    .. math:: \eta = \frac{F}{\dot{\gamma} L_x L_y}
-
-    where :math:`F` is the mean force (momentum transfer per unit time)
-    acting on the slab, :math:`L_x L_y` is the area of the slab and
-    :math:`\dot{\gamma}` is the shearrate.
-
-    NEMD as implemented generates a Poiseuille flow, with shear flow rate
-    varying over a finite wavelength determined by the box. For a planar
-    Couette flow (constant shear, infinite wavelength), consider using
-    Lees-Edwards boundary conditions (see ) to drive the shear.
-
 .. _Lees-Edwards boundary conditions:
 
 Lees-Edwards boundary conditions
@@ -429,7 +372,7 @@ Description of sample script
     The following features are required:
     ``LB``, ``LB_BOUNDARIES``,
     ``EXTERNAL_FORCES``,
-    ``MASS``, ``CONSTRAINTS``, ``OIF_LOCAL_FORCES``,
+    ``MASS``, ``OIF_LOCAL_FORCES``,
     ``OIF_GLOBAL_FORCES``, ``SOFT_SPHERE``, ``MEMBRANE_COLLISION``
 
 The script described in this section is available in :file:`samples/object-in-fluid/two-cells.py` and also at
@@ -1711,7 +1654,7 @@ In |es|, the basic ingredients to simulate such a system are split into three bo
 
 The system-wide thermostat has to be applied to the centre of mass and not to
 the core particle directly. Therefore, the particles have to be excluded from
-global thermostating.  With ``LANGEVIN_PER_PARTICLE`` enabled, we set the
+global thermostatting.  With ``LANGEVIN_PER_PARTICLE`` enabled, we set the
 temperature and friction coefficient of the Drude complex to zero, which allows
 to still use a global Langevin thermostat for non-polarizable particles.
 

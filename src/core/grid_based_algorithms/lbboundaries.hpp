@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lb-boundaries.hpp
+/** \file
  *
- * Boundary conditions for Lattice Boltzmann fluid dynamics.
- * Header file for \ref lb-boundaries.cpp.
+ * Boundary conditions for lattice Boltzmann fluid dynamics.
+ * Header file for \ref lbboundaries.cpp.
  *
  * In the current version only simple bounce back walls are implemented. Thus
  * after the streaming step, in all wall nodes all populations are bounced

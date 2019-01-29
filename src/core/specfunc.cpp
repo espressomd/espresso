@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file specfunc.cpp
-    Special functions, see \ref specfunc.hpp "specfunc.h"
+/** \file
+    Special functions, see \ref specfunc.hpp "specfunc.hpp"
 */
 #include "specfunc.hpp"
 #include "polynom.hpp"

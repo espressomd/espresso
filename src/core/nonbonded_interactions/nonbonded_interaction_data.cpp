@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file interaction_data.cpp
+/** \file
     Implementation of nonbonded_interaction_data.hpp
  */
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -46,6 +46,10 @@
 #include "nonbonded_interactions/ljcos.hpp"
 #include "nonbonded_interactions/ljcos2.hpp"
 #include "nonbonded_interactions/ljgen.hpp"
+#include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "nonbonded_interactions/soft_sphere.hpp"
+#include "nonbonded_interactions/steppot.hpp"
 #ifdef DIPOLAR_BARNES_HUT
 #include "actor/DipolarBarnesHut.hpp"
 #endif
@@ -54,18 +58,15 @@
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
-#include "nonbonded_interactions/morse.hpp"
-#include "nonbonded_interactions/nonbonded_tab.hpp"
-#include "nonbonded_interactions/soft_sphere.hpp"
-#include "nonbonded_interactions/steppot.hpp"
+#include "layered.hpp"
 #include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
 #include "reaction_field.hpp"
+#include "serialization/IA_parameters.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
-#include "utils/serialization/IA_parameters.hpp"
+
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
@@ -95,8 +96,8 @@ Coulomb_parameters coulomb = {
 #endif
 
 #ifdef ELECTROSTATICS
-Debye_hueckel_params dh_params = {0.0, 0.0};
-Reaction_field_params rf_params = {0.0, 0.0};
+Debye_hueckel_params dh_params{};
+Reaction_field_params rf_params{};
 
 /** Induced field (for const. potential feature) **/
 double field_induced;
@@ -130,7 +131,7 @@ double dipolar_cutoff;
 static void recalc_global_maximal_nonbonded_cutoff();
 
 /*****************************************
- * general lowlevel functions
+ * general low-level functions
  *****************************************/
 
 IA_parameters *get_ia_param_safe(int i, int j) {
@@ -169,6 +170,8 @@ double calc_electrostatics_cutoff() {
 #ifdef P3M
   case COULOMB_ELC_P3M:
     return std::max(elc_params.space_layer, p3m.params.r_cut_iL * box_l[0]);
+  case COULOMB_MMM2D:
+    return layer_h - skin;
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     /* do not use precalculated r_cut here, might not be set yet */
@@ -218,8 +221,8 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
    for the relative virtual sites algorithm. */
   max_cut_global = min_global_cut;
 
-  // global cutoff without dipolar and coulomb methods is needed
-  // for more selective addition of particle pairs to verlet lists
+  // global cutoff without dipolar and Coulomb methods is needed
+  // for more selective addition of particle pairs to Verlet lists
   max_cut_global_without_coulomb_and_dipolar = max_cut_global;
 
   // Electrostatics and magnetostatics
@@ -253,6 +256,10 @@ static void recalc_maximal_cutoff_nonbonded() {
 #ifdef LENNARD_JONES
       if (max_cut_current < (data->LJ_cut + data->LJ_offset))
         max_cut_current = (data->LJ_cut + data->LJ_offset);
+#endif
+
+#ifdef WCA
+      max_cut_current = std::max(max_cut_current, data->WCA_cut);
 #endif
 
 #ifdef DPD
@@ -422,19 +429,6 @@ void make_particle_type_exist_local(int type) {
     realloc_ia_params(type + 1);
 }
 
-void make_bond_type_exist(int type) {
-  int i, ns = type + 1;
-  const auto old_size = bonded_ia_params.size();
-  if (ns <= bonded_ia_params.size()) {
-    return;
-  }
-  /* else allocate new memory */
-  bonded_ia_params.resize(ns);
-  /* set bond types not used as undefined */
-  for (i = old_size; i < ns; i++)
-    bonded_ia_params[i].type = BONDED_IA_NONE;
-}
-
 int interactions_sanity_checks() {
   /* set to zero if initialization was not successful. */
   int state = 1;
@@ -464,9 +458,8 @@ int interactions_sanity_checks() {
   }
 #endif /* ifdef ELECTROSTATICS */
 
-#ifdef DIPOLES
+#if defined(DIPOLES) and defined(DP3M)
   switch (coulomb.Dmethod) {
-#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     if (mdlc_sanity_checks())
       state = 0; // fall through
@@ -474,7 +467,6 @@ int interactions_sanity_checks() {
     if (dp3m_sanity_checks())
       state = 0;
     break;
-#endif
   case DIPOLAR_MDLC_DS:
     if (mdlc_sanity_checks())
       state = 0; // fall through
@@ -548,6 +540,8 @@ void deactivate_coulomb_method() {
     rf_params.B = 0.0;
   case COULOMB_MMM1D:
     mmm1d_params.maxPWerror = 1e40;
+  case COULOMB_MMM2D:
+    mmm2d_params.far_cut = 0;
   default:
     break;
   }

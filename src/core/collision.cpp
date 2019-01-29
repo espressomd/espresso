@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include "boost/mpi/collectives.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -29,7 +30,9 @@
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "utils/mpi/all_compare.hpp"
+#include "utils/mpi/gather_buffer.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
+#include <boost/serialization/serialization.hpp>
 
 #ifdef COLLISION_DETECTION_DEBUG
 #define TRACE(a) a
@@ -45,9 +48,19 @@ typedef struct {
   int pp2; // 2nd particle id
 } collision_struct;
 
-// During force calculation, colliding particles are recorded in the queue
-// The queue is processed after force calculation, when it is save to add
-// particles
+namespace boost {
+namespace serialization {
+template <typename Archive>
+void serialize(Archive &ar, collision_struct &c, const unsigned int) {
+  ar &c.pp1;
+  ar &c.pp2;
+}
+} // namespace serialization
+} // namespace boost
+
+/// During force calculation, colliding particles are recorded in the queue.
+/// The queue is processed after force calculation, when it is safe to add
+/// particles.
 static std::vector<collision_struct> local_collision_queue;
 
 /// Parameters for collision detection
@@ -57,7 +70,7 @@ Collision_parameters collision_params;
  * needs to be placed. At this point, all modes need this */
 inline bool bind_centers() {
   // Note that the glue to surface mode adds bonds between the centers
-  // but does so later in the process. This is needed to gaurantee that
+  // but does so later in the process. This is needed to guarantee that
   // a particle can only be glued once, even if queued twice in a single
   // time step
   return collision_params.mode != COLLISION_MODE_OFF &&
@@ -215,6 +228,7 @@ bool validate_collision_parameters() {
 
   recalc_forces = 1;
   rebuild_verletlist = 1;
+  on_ghost_flags_change();
 
   return true;
 }
@@ -431,45 +445,9 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
 #endif
 
 std::vector<collision_struct> gather_global_collision_queue() {
-  std::vector<collision_struct> res;
-
-  std::vector<int> displacements(n_nodes); // offsets into collisions
-
-  // Initialize number of collisions gathered from all processors
-  std::vector<int> counts(n_nodes);
-  // Total number of collisions
-  int total_collisions;
-  int local_queue_size = local_collision_queue.size();
-  MPI_Allreduce(&local_queue_size, &total_collisions, 1, MPI_INT, MPI_SUM,
-                comm_cart);
-
-  if (total_collisions == 0)
-    return res;
-
-  // Gather number of collisions
-  MPI_Allgather(&local_queue_size, 1, MPI_INT, &(counts[0]), 1, MPI_INT,
-                comm_cart);
-
-  // initialize displacement information for all nodes
-  displacements[0] = 0;
-
-  // Find where to place collision information for each processor
-  std::vector<int> byte_counts(n_nodes);
-  for (int k = 1; k < n_nodes; k++)
-    displacements[k] =
-        displacements[k - 1] + (counts[k - 1]) * sizeof(collision_struct);
-
-  for (int k = 0; k < n_nodes; k++)
-    byte_counts[k] = counts[k] * sizeof(collision_struct);
-
-  // Allocate mem for the new collision info
-
-  res.resize(total_collisions);
-
-  // Gather collision information from all nodes and send it to all nodes
-  MPI_Allgatherv(&(local_collision_queue[0]), byte_counts[this_node], MPI_BYTE,
-                 &(res[0]), &(byte_counts[0]), &(displacements[0]), MPI_BYTE,
-                 comm_cart);
+  std::vector<collision_struct> res = local_collision_queue;
+  Utils::Mpi::gather_buffer(res, comm_cart);
+  boost::mpi::broadcast(comm_cart, res, 0);
 
   return res;
 }
@@ -549,7 +527,7 @@ void handle_collisions() {
   }
 
   // Note that the glue to surface mode adds bonds between the centers
-  // but does so later in the process. This is needed to gaurantee that
+  // but does so later in the process. This is needed to guarantee that
   // a particle can only be glued once, even if queued twice in a single
   // time step
   if (bind_centers()) {
@@ -621,15 +599,10 @@ void handle_collisions() {
       } else { // We consider the pair because one particle
                // is local to the node and the other is local or ghost
 
-        // Calculate initial position for new vs, which is in the local node's
+        // Use initial position for new vs, which is in the local node's
         // domain
         // Vs is moved afterwards and resorted after all collision s are handled
-        // Use position of non-ghost colliding particle.
-        Vector3d initial_pos;
-        if (p1->l.ghost)
-          initial_pos = p2->r.p;
-        else
-          initial_pos = p1->r.p;
+        const Vector3d initial_pos{my_left[0], my_left[1], my_left[2]};
 
         // If we are in the two vs mode
         // Virtual site related to first particle in the collision

@@ -18,14 +18,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file MpiCallbacks_test.cpp Unit tests for the MpiCallbacks class.
+/** \file
+ * Unit tests for the MpiCallbacks class.
  *
  */
 
 #include <random>
 #include <vector>
 
-#include "core/ParticleCache.hpp"
+#include "ParticleCache.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>

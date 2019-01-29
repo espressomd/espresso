@@ -18,10 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file lb-d3q19.hpp
- * Header file for the lattice Boltzmann D3Q19 model.
- *
- * This header file contains the definition of the D3Q19 model.
+/** \file
+ * %Lattice Boltzmann D3Q19 model.
  */
 
 #ifndef D3Q19_H

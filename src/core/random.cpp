@@ -64,14 +64,14 @@ void set_state(const string &s) {
  * @brief Get the state size of the PRNG
  */
 int get_state_size_of_generator() {
-  return generator.state_size; // this only works for the mersenne twister
+  return generator.state_size; // this only works for the Mersenne twister
                                // generator, other generators do not provide
                                // this member variable
 }
 
 /** Communication */
 
-void mpi_random_seed_slave(int pnode, int cnt) {
+void mpi_random_seed_slave(int, int) {
   int this_seed;
   user_has_seeded = true;
 

@@ -23,7 +23,7 @@
 #define __RHOMBOID_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 namespace Shapes {
 class Rhomboid : public Shape {
@@ -32,8 +32,8 @@ public:
       : m_pos({0.0, 0.0, 0.0}), m_a({0.0, 0.0, 0.0}), m_b({0.0, 0.0, 0.0}),
         m_c({0.0, 0.0, 0.0}), m_direction(0.0) {}
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 
   Vector3d &pos() { return m_pos; }
   Vector3d &a() { return m_a; }

@@ -20,7 +20,8 @@
 */
 #ifndef _P3M_COMMON_H
 #define _P3M_COMMON_H
-/** \file p3m-common.hpp   common functions for dipolar and charge p3m.
+/** \file
+ *  Common functions for dipolar and charge P3M.
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the Ewald summation. Details of the used method can be found in
@@ -28,32 +29,46 @@
  *  Particle-Mesh part.
  *
  *  Further reading:
- *  <ul>
- *  <li> P.P. Ewald,
- *       <i>Die Berechnung optischer und elektrostatischer Gitterpotentiale</i>,
+ *  -    P. P. Ewald,
+ *       *Die Berechnung optischer und elektrostatischer Gitterpotentiale*,
  *       Ann. Phys. (64) 253-287, 1921
- *  <li> R. W. Hockney and J. W. Eastwood,
- *       <i>Computer Simulation Using Particles</i>,
+ *  -    R. W. Hockney and J. W. Eastwood,
+ *       *Computer simulation using particles*,
  *       IOP, London, 1988
- *  <li> M. Deserno and C. Holm,
- *       <i>How to mesh up {E}wald sums. I. + II.</i>,
+ *  -    M. Deserno and C. Holm,
+ *       *How to mesh up Ewald sums I + II*,
  *       J. Chem. Phys. (109) 7678, 1998; (109) 7694, 1998
- *  <li> M. Deserno, C. Holm and H. J. Limbach,
- *       <i>How to mesh up {E}wald sums. </i>,
+ *  -    M. Deserno, C. Holm and H. J. Limbach,
+ *       *How to mesh up Ewald sums*,
  *       in Molecular Dynamics on Parallel Computers,
  *       Ed. R. Esser et al., World Scientific, Singapore, 2000
- *  <li> M. Deserno,
- *       <i>Counterion condensation for rigid linear polyelectrolytes</i>,
- *       PhdThesis, Universit{\"a}t Mainz, 2000
- *  <li> J.J. Cerda, P3M for dipolar interactions. J. Chem. Phys, 129, xxx
- * ,(2008).
- *  </ul>
+ *  -    M. Deserno,
+ *       *Counterion condensation for rigid linear polyelectrolytes*,
+ *       PhD Thesis, Universität Mainz, 2000
+ *  -    J. J. Cerda,
+ *       *P3M for dipolar interactions*,
+ *       J. Chem. Phys (129) 234104, 2008
  *
  */
 #include "config.hpp"
 #include "utils.hpp"
 
 #if defined(P3M) || defined(DP3M)
+
+/** Error Codes for p3m tuning (version 2) */
+enum P3M_TUNE_ERROR {
+  /** force evaluation failed */
+  P3M_TUNE_FAIL = 1,
+  /** could not find a valid realspace cutoff radius */
+  P3M_TUNE_NOCUTOFF = 2,
+  /** charge assignment order too large for mesh size */
+  P3M_TUNE_CAO_TOO_LARGE = 4,
+  /** conflict with ELC gap size */
+  P3M_TUNE_ELCTEST = 8,
+  P3M_TUNE_CUTOFF_TOO_LARGE = 16,
+  /** could not achieve target accuracy */
+  P3M_TUNE_ACCURACY_TOO_LARGE = 32
+};
 
 /** This value for p3m.epsilon indicates metallic boundary conditions. */
 #define P3M_EPSILON_METALLIC 0.0
@@ -88,7 +103,7 @@ typedef struct {
   int inner[3];
   /** inner left down grid point */
   int in_ld[3];
-  /** inner up right grid point + (1,1,1)*/
+  /** inner up right grid point + (1,1,1) */
   int in_ur[3];
   /** number of margin mesh points. */
   int margin[6];
@@ -124,57 +139,59 @@ typedef struct {
 
 /** Structure to hold P3M parameters and some dependent variables. */
 typedef struct {
-  /** Tuning or production? */
+  /** tuning or production? */
   bool tuning;
-  /** Ewald splitting parameter (0<alpha<1), rescaled to alpha_L = alpha *
-   * box_l. */
+  /** Ewald splitting parameter (0<alpha<1), rescaled to
+   *  @p alpha_L = @p alpha * @p box_l. */
   double alpha_L;
-  /** Cutoff radius for real space electrostatics (>0), rescaled to r_cut_iL =
-   * r_cut * box_l_i. */
+  /** cutoff radius for real space electrostatics (>0), rescaled to
+   *  @p r_cut_iL = @p r_cut * @p box_l_i. */
   double r_cut_iL;
   /** number of mesh points per coordinate direction (>0). */
   int mesh[3];
   /** offset of the first mesh point (lower left corner) from the
-      coordinate origin ([0,1[). */
+   *  coordinate origin ([0,1[). */
   double mesh_off[3];
   /** charge assignment order ([0,7]). */
   int cao;
   /** number of interpolation points for charge assignment function */
   int inter;
-  /** Accuracy of the actual parameter set. */
+  /** accuracy of the actual parameter set. */
   double accuracy;
 
   /** epsilon of the "surrounding dielectric". */
   double epsilon;
-  /** Cutoff for charge assignment. */
+  /** cutoff for charge assignment. */
   double cao_cut[3];
   /** mesh constant. */
   double a[3];
   /** inverse mesh constant. */
   double ai[3];
-  /** unscaled \ref alpha_L for use with fast inline functions only */
+  /** unscaled @ref p3m_parameter_struct::alpha_L "alpha_L" for use with fast
+   *  inline functions only */
   double alpha;
-  /** unscaled \ref r_cut_iL for use with fast inline functions only */
+  /** unscaled @ref p3m_parameter_struct::r_cut_iL "r_cut_iL" for use with fast
+   *  inline functions only */
   double r_cut;
   /** full size of the interpolated assignment function */
   int inter2;
   /** number of points unto which a single charge is interpolated, i.e.
-   * p3m.cao^3 */
+   *  p3m.cao^3 */
   int cao3;
   /** additional points around the charge assignment mesh, for method like
-     dielectric ELC creating virtual charges. */
+   *  dielectric ELC creating virtual charges. */
   double additional_mesh[3];
 } p3m_parameter_struct;
 
-/** initialize the parameter struct */
+/** Initialize the parameter struct */
 void p3m_common_parameter_pre_init(p3m_parameter_struct *params);
 
-/** print local mesh content.
-    \param l local mesh structure.
-*/
+/** Print local mesh content.
+ *  \param l local mesh structure.
+ */
 void p3m_p3m_print_local_mesh(p3m_local_mesh l);
 
-/** print send mesh content.
+/** Print send mesh content.
  *  \param sm send mesh structure.
  */
 void p3m_p3m_print_send_mesh(p3m_send_mesh sm);
@@ -192,16 +209,18 @@ void p3m_add_block(double *in, double *out, int start[3], int size[3],
                    int dim[3]);
 
 /** One of the aliasing sums used by \ref p3m_k_space_error.
-    (fortunately the one which is most important (because it converges
-    most slowly, since it is not damped exponentially)) can be
-    calculated analytically. The result (which depends on the order of
-    the spline interpolation) can be written as an even trigonometric
-    polynomial. The results are tabulated here (The employed formula
-    is Eqn. 7.66 in the book of Hockney and Eastwood). */
+ *  Fortunately the one which is most important (because it converges
+ *  most slowly, since it is not damped exponentially) can be
+ *  calculated analytically. The result (which depends on the order of
+ *  the spline interpolation) can be written as an even trigonometric
+ *  polynomial. The results are tabulated here (The employed formula
+ *  is Eqn. 7.66 in the book of Hockney and Eastwood).
+ */
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
 
-/** Computes the  assignment function of for the \a i'th degree
-    at value \a x. */
+/** Compute the assignment function for the \a i'th degree
+ *  at value \a x.
+ */
 double p3m_caf(int i, double x, int cao_value);
 
 #endif /* P3M || DP3M */

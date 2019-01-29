@@ -20,7 +20,7 @@
 */
 #ifndef SUBT_LJ_H
 #define SUBT_LJ_H
-/** \file subt_lj.hpp
+/** \file
  *  Routines to subtract the LENNARD-JONES Energy and/or the LENNARD-JONES force
  *  for a particle pair.
  *  \ref forces.cpp
@@ -48,25 +48,24 @@ int subt_lj_set_params(int bond_type);
     @return true if bond is broken
 */
 inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
-                                   Bonded_ia_parameters *iaparams, double dx[3],
+                                   Bonded_ia_parameters *, double dx_[3],
                                    double force[3]) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
 
-  for (int i = 0; i < 3; i++) {
-    dx[i] *= -1;
-  }
+  auto const dx = -Vector3d(dx_, dx_ + 3);
 
-  add_lj_pair_force(p1, p2, ia_params, dx, Utils::veclen(dx), force);
+  add_lj_pair_force(p1, p2, ia_params, dx.data(), dx.norm(), force);
 
   return ES_OK;
 }
 
 inline int subt_lj_pair_energy(Particle *p1, Particle *p2,
-                               Bonded_ia_parameters *iaparams, double dx[3],
+                               Bonded_ia_parameters *, double dx_[3],
                                double *_energy) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
+  auto const dx = -Vector3d(dx_, dx_ + 3);
 
-  *_energy = -lj_pair_energy(p1, p2, ia_params, dx, Utils::veclen(dx));
+  *_energy = -lj_pair_energy(p1, p2, ia_params, dx.data(), dx.norm());
   return ES_OK;
 }
 

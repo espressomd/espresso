@@ -21,7 +21,7 @@
 #define SHAPES_SIMPLE_PORE_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 namespace Shapes {
 class SimplePore : public Shape {
@@ -92,8 +92,8 @@ public:
 
   Vector3d &center() { return m_center; }
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 };
 } // namespace Shapes
 

@@ -19,11 +19,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __ELLIPSOID_HPP
-#define __ELLIPSOID_HPP
+#ifndef SHAPES_ELLIPSOID_HPP
+#define SHAPES_ELLIPSOID_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 namespace Shapes {
 class Ellipsoid : public Shape {
@@ -32,8 +32,8 @@ public:
       : m_center({0.0, 0.0, 0.0}), m_semiaxes({1.0, 1.0, 1.0}),
         m_direction(1.0) {}
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 
   void set_semiaxis_a(const double &value) { m_semiaxes[0] = value; }
   void set_semiaxis_b(const double &value) {

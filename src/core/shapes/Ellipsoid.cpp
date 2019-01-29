@@ -20,16 +20,17 @@
 */
 
 #include "Ellipsoid.hpp"
-#include "errorhandling.hpp"
-#include "utils.hpp"
+
+#include "utils/math/sqr.hpp"
+
 #include <cmath>
 
 namespace Shapes {
-int Ellipsoid::calculate_dist(const double *ppos, double *dist,
-                              double *vec) const {
+void Ellipsoid::calculate_dist(const Vector3d &pos, double *dist,
+                               double *vec) const {
 
   /* get particle position in reference frame of ellipsoid */
-  Vector3d const ppos_e = Vector3d(ppos, ppos + 3) - m_center;
+  Vector3d const ppos_e = pos - m_center;
 
   /* set appropriate initial point for Newton's method */
   double l0, l = 0.;
@@ -49,11 +50,6 @@ int Ellipsoid::calculate_dist(const double *ppos, double *dist,
     step++;
   }
 
-  if (step == 100) {
-    runtimeWarning("Maximum number of Newton steps exceeded while calculating "
-                   "distance to Ellipsoid.");
-  }
-
   /* calculate dist and vec */
   double distance = 0.;
   for (int i = 0; i < 3; i++) {
@@ -63,8 +59,6 @@ int Ellipsoid::calculate_dist(const double *ppos, double *dist,
   }
 
   *dist = distance_prefactor * m_direction * std::sqrt(distance);
-
-  return 0;
 }
 
 bool Ellipsoid::inside_ellipsoid(const Vector3d &ppos) const {

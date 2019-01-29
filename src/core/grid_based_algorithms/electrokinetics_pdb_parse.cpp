@@ -30,6 +30,8 @@
 
 #include "PdbParser.hpp"
 
+#include "utils/memory.hpp"
+
 #ifdef EK_BOUNDARIES
 
 /* Replacements for bool variables */
@@ -258,7 +260,7 @@ int populate_lattice(PdbParser::PdbParser &parser, double scale) {
         (lowernode[1] + 1) % ek_parameters.dim_y,
         (lowernode[2] + 1) % ek_parameters.dim_z)] +=
         b.charge * cellpos[0] * cellpos[1] * cellpos[2];
-    // Interpolate lennard-jones parameters to boundary
+    // Interpolate Lennard-Jones parameters to boundary
     float r = pow(2, 1. / 6.) * c.sigma * 10 / scale;
 
     a_x_shifted = (a_x_scaled + shift[0]) / ek_parameters.agrid - 0.5f;
@@ -324,15 +326,11 @@ int pdb_parse(char *pdb_filename, char *itp_filename, double scale) {
    */
 
   /* BEGIN DEPLOY */
-  galloc((void **)&pdb_charge_lattice, ek_parameters.dim_x *
-                                           ek_parameters.dim_y *
-                                           ek_parameters.dim_z * sizeof(float));
-  galloc((void **)&pdb_boundary_lattice, ek_parameters.dim_x *
-                                             ek_parameters.dim_y *
-                                             ek_parameters.dim_z * sizeof(int));
-  for (unsigned int i = 0;
-       i < ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
-       i++) {
+  const size_t size =
+      ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
+  galloc((void **)&pdb_charge_lattice, size * sizeof(float));
+  galloc((void **)&pdb_boundary_lattice, size * sizeof(int));
+  for (size_t i = 0; i < size; i++) {
     pdb_charge_lattice[i] = 0.0;
     pdb_boundary_lattice[i] = 0;
   }

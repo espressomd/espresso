@@ -1,4 +1,29 @@
-#include <cuda.h>
+/*
+Copyright (C) 2015-2019 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/** @file
+ *
+ *  P3M electrostatics on GPU.
+ *
+ *  The corresponding header file is p3m_gpu_error.hpp.
+ */
+#include "cuda_wrapper.hpp"
+
 #include <stdio.h>
 #include <thrust/device_vector.h>
 #include <thrust/reduce.h>
@@ -12,8 +37,9 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-/** @TODO: Extend to hight order. This comes from some 1/sin expansion in
- * Hockney/Eastwood */
+/** @todo Extend to higher order. This comes from some 1/sin expansion in
+ *  Hockney/Eastwood
+ */
 
 template <int cao>
 __device__ static double p3m_analytic_cotangent_sum(int n, double mesh_i) {
@@ -81,9 +107,9 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
   }
 }
 
-__global__ void p3m_k_space_error_gpu_kernel_ad(int3 mesh, double3 meshi,
-                                                int cao, double alpha_L,
-                                                double *he_q) {
+__global__ void p3m_k_space_error_gpu_kernel_ad(const int3 mesh,
+                                                const double3 meshi, int cao,
+                                                double alpha_L, double *he_q) {
   int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
   int ny = -mesh.y / 2 + blockDim.y * blockIdx.y + threadIdx.y;
   int nz = -mesh.z / 2 + blockDim.z * blockIdx.z + threadIdx.z;
@@ -138,8 +164,9 @@ __global__ void p3m_k_space_error_gpu_kernel_ad(int3 mesh, double3 meshi,
   }
 }
 
-__global__ void p3m_k_space_error_gpu_kernel_ik_i(int3 mesh, double3 meshi,
-                                                  int cao, double alpha_L,
+__global__ void p3m_k_space_error_gpu_kernel_ik_i(const int3 mesh,
+                                                  const double3 meshi, int cao,
+                                                  double alpha_L,
                                                   double *he_q) {
 
   int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
@@ -200,8 +227,9 @@ __global__ void p3m_k_space_error_gpu_kernel_ik_i(int3 mesh, double3 meshi,
   }
 }
 
-__global__ void p3m_k_space_error_gpu_kernel_ad_i(int3 mesh, double3 meshi,
-                                                  int cao, double alpha_L,
+__global__ void p3m_k_space_error_gpu_kernel_ad_i(const int3 mesh,
+                                                  const double3 meshi, int cao,
+                                                  double alpha_L,
                                                   double *he_q) {
 
   int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
@@ -264,8 +292,9 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(int3 mesh, double3 meshi,
   }
 }
 
-double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart,
-                             double sum_q2, double alpha_L, double *box) {
+double p3m_k_space_error_gpu(double prefactor, const int *mesh, int cao,
+                             int npart, double sum_q2, double alpha_L,
+                             double *box) {
   static thrust::device_vector<double> he_q;
 
   const size_t mesh_size = mesh[0] * mesh[1] * mesh[2];
@@ -290,32 +319,32 @@ double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart,
 
   switch (cao) {
   case 1:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<1>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<1>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 2:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<2>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<2>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 3:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<3>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<3>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 4:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<4>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<4>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 5:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<5>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<5>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 6:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<6>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<6>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   case 7:
-    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<7>, grid, block,
-               (mesh3, meshi, alpha_L, thrust::raw_pointer_cast(he_q.data())));
+    KERNELCALL(p3m_k_space_error_gpu_kernel_ik<7>, grid, block, mesh3, meshi,
+               alpha_L, thrust::raw_pointer_cast(he_q.data()));
     break;
   }
 

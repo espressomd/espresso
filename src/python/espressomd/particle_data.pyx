@@ -28,7 +28,7 @@ from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params
 from copy import copy
-from globals cimport max_seen_particle, time_step, box_l, n_part, n_rigidbonds, max_seen_particle_type
+from globals cimport max_seen_particle, time_step, box_l, n_part, n_rigidbonds, max_seen_particle_type, swimming_particles_exist
 import collections
 import functools
 import types
@@ -403,7 +403,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _o):
-                cdef double myo[3]
+                cdef Vector3d myo
                 check_type_or_throw_except(
                     _o, 3, float, "Omega_lab has to be 3 floats.")
                 for i in range(3):
@@ -413,10 +413,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double o[3]
-
-                convert_omega_body_to_space(self.particle_data, o)
-                return array_locked([o[0], o[1], o[2]])
+                return array_locked(self.convert_vector_body_to_space(self.omega_body))
 
         property quat:
             """
@@ -464,9 +461,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double * x = NULL
-                pointer_to_quatu(self.particle_data, x)
-                return np.array([x[0], x[1], x[2]])
+                return make_array_locked(self.particle_data.r.calc_director())
 
     # ROTATIONAL_INERTIA
         property omega_body:
@@ -484,7 +479,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _o):
-                cdef double myo[3]
+                cdef Vector3d myo
                 check_type_or_throw_except(
                     _o, 3, float, "Omega_body has to be 3 floats.")
                 for i in range(3):
@@ -520,7 +515,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _t):
-                cdef double myt[3]
+                cdef Vector3d myt
                 check_type_or_throw_except(
                     _t, 3, float, "Torque has to be 3 floats.")
                 for i in range(3):
@@ -530,10 +525,13 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double x[3]
+                cdef Vector3d torque_body
+                cdef Vector3d torque_space
+                torque_body = get_torque_body(self.particle_data[0])
+                torque_space = convert_vector_body_to_space(
+                    self.particle_data[0], torque_body)
 
-                convert_torques_body_to_space(self.particle_data, x)
-                return array_locked([x[0], x[1], x[2]])
+                return make_array_locked(torque_space)
 
     IF ROTATIONAL_INERTIA:
         property rinertia:
@@ -609,31 +607,30 @@ cdef class ParticleHandle(object):
 
 
 # Charge
-    IF ELECTROSTATICS:
-        property q:
-            """
-            Particle charge.
+    property q:
+        """
+        Particle charge.
 
-            q : :obj:`float`
+        q : :obj:`float`
 
-            .. note::
-               This needs the feature ELECTROSTATICS.
+        .. note::
+           This needs the feature ELECTROSTATICS.
 
-            """
+        """
 
-            def __set__(self, _q):
-                cdef double myq
-                check_type_or_throw_except(
-                    _q, 1, float, "Charge has to be floats.")
-                myq = _q
-                if set_particle_q(self._id, myq) == 1:
-                    raise Exception("Set particle position first.")
+        def __set__(self, _q):
+            cdef double myq
+            check_type_or_throw_except(
+                _q, 1, float, "Charge has to be floats.")
+            myq = _q
+            if set_particle_q(self._id, myq) == 1:
+                raise Exception("Set particle position first.")
 
-            def __get__(self):
-                self.update_particle_data()
-                cdef const double * x = NULL
-                pointer_to_q(self.particle_data, x)
-                return x[0]
+        def __get__(self):
+            self.update_particle_data()
+            cdef const double * x = NULL
+            pointer_to_q(self.particle_data, x)
+            return x[0]
 
     IF LB_ELECTROHYDRODYNAMICS:
         property mu_E:
@@ -802,9 +799,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
 
-                cdef const double * x = NULL
-                pointer_to_dip(self.particle_data, x)
-                return array_locked([x[0], x[1], x[2]])
+                return make_array_locked(self.particle_data.calc_dip())
 
         # Scalar magnitude of dipole moment
         property dipm:
@@ -1145,22 +1140,16 @@ cdef class ParticleHandle(object):
                 for e in self.exclusions:
                     self.delete_exclusion(e)
 
-            # Empty list? ony delete
-                if _partners:
+                nlvl = nesting_level(_partners)
 
-                    nlvl = nesting_level(_partners)
-
-                    if nlvl == 0:  # Single item
-                        self.add_exclusion(_partners)
-                    elif nlvl == 1:  # List of items
-                        for partner in _partners:
-                            self.add_exclusion(partner)
-                    else:
-                        raise ValueError(
-                            "Exclusions have to specified as a lists of partners or a single partner.")
-
-                    # Set new exclusion list
-                    # self.add_exclusion(_partners)
+                if nlvl == 0:  # Single item
+                    self.add_exclusion(_partners)
+                elif nlvl == 1:  # List of items
+                    for partner in _partners:
+                        self.add_exclusion(partner)
+                else:
+                    raise ValueError(
+                        "Exclusions have to be specified as a lists of partners or a single item.")
 
             def __get__(self):
                 self.update_particle_data()
@@ -1278,6 +1267,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _params):
+                global swimming_particles_exist
                 cdef particle_parameters_swimming swim
                 swim.swimming = True
                 swim.v_swim = 0.0
@@ -1329,6 +1319,9 @@ cdef class ParticleHandle(object):
                                 _params['rotational_friction'], 1, float, "rotational_friction has to be a float.")
                             swim.rotational_friction = _params[
                                 'rotational_friction']
+
+                if swim.f_swim != 0 or swim.v_swim != 0:
+                    swimming_particles_exist = True
 
                 if set_particle_swimming(self._id, swim) == 1:
                     raise Exception("Set particle position first.")
@@ -1625,7 +1618,7 @@ cdef class ParticleHandle(object):
             angle : float
 
             """
-            cdef double[3] a
+            cdef Vector3d a
             a[0] = axis[0]
             a[1] = axis[1]
             a[2] = axis[2]
@@ -1814,9 +1807,19 @@ cdef class ParticleList(object):
         return odict
 
     def __setstate__(self, params):
+        exclusions = collections.OrderedDict()
         for particle_number in params.keys():
             params[particle_number]["id"] = particle_number
+            IF EXCLUSIONS:
+                exclusions[
+                    particle_number] = params[
+                        particle_number][
+                            "exclusions"]
+                del params[particle_number]["exclusions"]
             self._place_new_particle(params[particle_number])
+        IF EXCLUSIONS:
+            for pid in exclusions:
+                self[pid].exclusions = exclusions[pid]
 
     def __len__(self):
         return n_part

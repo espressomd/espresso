@@ -18,12 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file cells.cpp
+/** \file
  *
  *  This file contains functions for the cell system.
  *
- *  For more information on cells, see cells.hpp
- *   */
+ *  Implementation of cells.hpp.
+ */
 #include "cells.hpp"
 #include "algorithm/link_cell.hpp"
 #include "communication.hpp"
@@ -39,7 +39,9 @@
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
 #include "utils/mpi/gather_buffer.hpp"
+
 #include <boost/iterator/indirect_iterator.hpp>
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -55,8 +57,8 @@ CellPList local_cells = {nullptr, 0, 0};
 CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
-CellStructure cell_structure = {/* type */ CELL_STRUCTURE_NONEYET,
-                                /* use_verlet_list*/ true};
+CellStructure cell_structure = {
+    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr};
 
 double max_range = 0.0;
 
@@ -159,8 +161,7 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 /************************************************************/
 /*@{*/
 
-/** Switch for choosing the topology release function of a certain
-    cell system. */
+/** Choose the topology release function of a certain cell system. */
 static void topology_release(int cs) {
   switch (cs) {
   case CELL_STRUCTURE_NONEYET:
@@ -185,10 +186,9 @@ static void topology_release(int cs) {
   }
 }
 
-/** Switch for choosing the topology init function of a certain
-    cell system. */
+/** Choose the topology init function of a certain cell system. */
 void topology_init(int cs, CellPList *local) {
-  /** broadcast the flag for using verlet list */
+  /** broadcast the flag for using Verlet list */
   boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
 
   switch (cs) {
@@ -265,16 +265,8 @@ void realloc_cells(int size) {
   for (auto &c : cells) {
     c.resize(0);
   }
-
-  auto const old_size = cells.size();
-
   /* resize the cell list */
   cells.resize(size);
-
-  /* initialize new cells */
-  for (int i = old_size; i < size; i++) {
-    init_particlelist(&cells[i]);
-  }
 }
 
 /*************************************************/
@@ -298,12 +290,65 @@ void announce_resort_particles() {
 /*************************************************/
 
 int cells_get_n_particles() {
-  using std::distance;
-  return distance(local_cells.particles().begin(),
-                  local_cells.particles().end());
+  return std::accumulate(local_cells.begin(), local_cells.end(), 0,
+                         [](int n, const Cell *c) { return n + c->n; });
 }
 
 /*************************************************/
+
+namespace {
+/**
+ * @brief Fold coordinates to box and reset the old position.
+ */
+void fold_and_reset(Particle &p) {
+  fold_position(p.r.p, p.l.i);
+
+  p.l.p_old = p.r.p;
+}
+} // namespace
+
+/**
+ * @brief Sort and fold particles.
+ *
+ * This function folds the positions of all particles back into the
+ * box and puts them back into the correct cells. Particles that do
+ * not belong to this node are removed from the cell and returned.
+ *
+ * @param cs The cell system to be used.
+ * @param cells Cells to iterate over.
+ *
+ * @returns List of Particles that do not belong on this node.
+ */
+ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
+  ParticleList displaced_parts;
+
+  for (auto &c : cells) {
+    for (int i = 0; i < c->n; i++) {
+      auto &p = c->part[i];
+
+      fold_and_reset(p);
+
+      auto target_cell = cs.position_to_cell(p.r.p);
+
+      if (target_cell == nullptr) {
+        append_unindexed_particle(&displaced_parts,
+                                  extract_indexed_particle(c, i));
+
+        if (i < c->n) {
+          i--;
+        }
+      } else if (target_cell != c) {
+        move_indexed_particle(target_cell, c, i);
+
+        if (i < c->n) {
+          i--;
+        }
+      }
+    }
+  }
+
+  return displaced_parts;
+}
 
 void cells_resort_particles(int global_flag) {
   CELL_TRACE(fprintf(stderr, "%d: entering cells_resort_particles %d\n",
@@ -314,16 +359,30 @@ void cells_resort_particles(int global_flag) {
   clear_particle_node();
   n_verlet_updates++;
 
+  ParticleList displaced_parts =
+      sort_and_fold_parts(cell_structure, local_cells);
+
   switch (cell_structure.type) {
-  case CELL_STRUCTURE_LAYERED:
-    layered_exchange_and_sort_particles(global_flag);
-    break;
+  case CELL_STRUCTURE_LAYERED: {
+    layered_exchange_and_sort_particles(global_flag, &displaced_parts);
+  } break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_balance_particles(global_flag);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_exchange_and_sort_particles(global_flag);
+    dd_exchange_and_sort_particles(global_flag, &displaced_parts);
     break;
+  }
+
+  if (0 != displaced_parts.n) {
+    for (int i = 0; i < displaced_parts.n; i++) {
+      auto &part = displaced_parts.part[i];
+      runtimeErrorMsg() << "Particle " << part.identity()
+                        << " moved more than"
+                           " one local box length in one timestep.";
+      resort_particles = Cells::RESORT_GLOBAL;
+      append_indexed_particle(local_cells.cell[0], std::move(part));
+    }
   }
 
 #ifdef ADDITIONAL_CHECKS
@@ -335,7 +394,7 @@ void cells_resort_particles(int global_flag) {
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
 
-  /* Particles are now sorted, but verlet lists are invalid
+  /* Particles are now sorted, but Verlet lists are invalid
      and p_old has to be reset. */
   resort_particles = Cells::RESORT_NONE;
   rebuild_verletlist = 1;
@@ -403,13 +462,11 @@ void cells_update_ghosts() {
 }
 
 Cell *find_current_cell(const Particle &p) {
-  auto c = cell_structure.position_to_cell(p.r.p.data());
-  if (c) {
-    return c;
-  } else if (!p.l.ghost) {
-    // Old pos must lie within the cell system
-    return cell_structure.position_to_cell(p.l.p_old.data());
-  } else {
+  assert(not resort_particles);
+
+  if (p.l.ghost) {
     return nullptr;
   }
+
+  return cell_structure.position_to_cell(p.l.p_old);
 }

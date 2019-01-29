@@ -47,6 +47,10 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double LJ_offset
         double LJ_min
 
+        double WCA_eps
+        double WCA_sig
+        double WCA_cut
+
         double LJCOS_eps
         double LJCOS_sig
         double LJCOS_cut
@@ -160,6 +164,10 @@ cdef extern from "nonbonded_interactions/lj.hpp":
                                       double eps, double sig, double cut,
                                       double shift, double offset,
                                       double min)
+
+cdef extern from "nonbonded_interactions/wca.hpp":
+    cdef int wca_set_params(int part_type_a, int part_type_b,
+                            double eps, double sig)
 IF LJCOS:
     cdef extern from "nonbonded_interactions/ljcos.hpp":
         cdef int ljcos_set_params(int part_type_a, int part_type_b,
@@ -298,7 +306,7 @@ ELSE:
 
 IF P3M:
     cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
-        #* Parameters for Bonded coulomb p3m sr */
+        #* Parameters for Bonded Coulomb p3m sr */
         cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
             double q1q2
 ELSE:
@@ -348,7 +356,7 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double gamma_distance
         double r_cut
 
-#* Parameters for Bonded coulomb */
+#* Parameters for Bonded Coulomb */
     cdef struct Bonded_coulomb_bond_parameters:
         double prefactor
 
@@ -420,17 +428,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         #*Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections */
         double v_tol
 
-#* Parameters for three body angular potential (bond-angle potentials) that
-    cdef struct Angledist_bond_parameters:
-        double bend
-        double phimin
-        double distmin
-        double phimax
-        double distmax
-        double cos_phi0
-        double sin_phi0
-
-
 #* Parameters for IBM Triel  */
     cdef cppclass tElasticLaw:
         pass
@@ -480,7 +477,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         Overlap_bond_parameters overlap
         Subt_lj_bond_parameters subt_lj
         Rigid_bond_parameters rigid_bond
-        Angledist_bond_parameters angledist
         IBM_Triel_Parameters ibm_triel
         IBM_Tribend_Parameters ibm_tribend
         IBM_VolCons_Parameters ibmVolConsParameters
@@ -523,14 +519,10 @@ cdef extern from "bonded_interactions/thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
 cdef extern from "bonded_interactions/bonded_coulomb.hpp":
     int bonded_coulomb_set_params(int bond_type, double prefactor)
-cdef extern from "bonded_interactions/bonded_coulomb_p3m_sr.hpp":
-    int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
-
 
 cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
     cppclass ImmersedBoundaries:
         void volume_conservation_set_params(const int bond_type, const int softID, const double kappaV)
-
 
 cdef extern from "immersed_boundary/ibm_triel.hpp":
     int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
@@ -552,6 +544,9 @@ IF ELECTROSTATICS:
     cdef extern from "bonded_interactions/bonded_coulomb.hpp":
         int bonded_coulomb_set_params(int bond_type, double prefactor)
 
+IF P3M:
+    cdef extern from "bonded_interactions/bonded_coulomb_p3m_sr.hpp":
+        int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     int virtual_set_params(int bond_type)
@@ -571,7 +566,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_SUBT_LJ,
         BONDED_IA_RIGID_BOND,
         BONDED_IA_VIRTUAL_BOND,
-        BONDED_IA_ANGLEDIST,
         BONDED_IA_ANGLE_HARMONIC,
         BONDED_IA_ANGLE_COSINE,
         BONDED_IA_ANGLE_COSSQUARE,

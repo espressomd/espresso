@@ -54,6 +54,7 @@ cdef extern from "integrate.hpp":
     extern double sim_time
     extern double verlet_reuse
     extern double skin
+    extern bool set_py_interrupt
 
 cdef extern from "lattice.hpp":
     extern int lattice_switch
@@ -62,6 +63,7 @@ cdef extern from "domain_decomposition.hpp":
     ctypedef struct  DomainDecomposition:
         int cell_grid[3]
         double cell_size[3]
+        bool fully_connected[3]
 
     extern DomainDecomposition dd
     extern int max_num_cells
@@ -72,6 +74,7 @@ cdef extern from "domain_decomposition.hpp":
 
 cdef extern from "particle_data.hpp":
     extern int n_part
+    extern bool swimming_particles_exist
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     double dpd_gamma

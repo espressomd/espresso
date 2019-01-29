@@ -21,9 +21,10 @@
 #ifndef INTEGRATE_H
 #define INTEGRATE_H
 
-/** \file integrate.hpp    Molecular dynamics integrator.
+/** \file
+ *  Molecular dynamics integrator.
  *
- *  For more information see \ref integrate.cpp "integrate.c".
+ *  For more information see \ref integrate.cpp "integrate.cpp".
  */
 
 #define INTEG_METHOD_NPT_ISO 0
@@ -60,9 +61,12 @@ extern bool skin_set;
 
 /** If non-zero, the forces will be recalculated before the next integration. */
 extern int recalc_forces;
-/** Average number of integration steps the verlet list has been re
+/** Average number of integration steps the Verlet list has been re
     used. */
 extern double verlet_reuse;
+
+/** Communicate signal handling to the Python interpreter */
+extern bool set_py_interrupt;
 
 /*@}*/
 
@@ -79,7 +83,7 @@ void integrator_npt_sanity_checks();
 /** Initialize the used thermodynamic Ensemble (NVT or NPT) */
 void integrate_ensemble_init();
 
-/** integrate with velocity verlet integrator.
+/** integrate with velocity Verlet integrator.
     \param n_steps number of steps to integrate.
     \param reuse_forces if nonzero, blindly trust
     the forces still stored with the particles for the first time step.

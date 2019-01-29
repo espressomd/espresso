@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file pressure.cpp
-    Implementation of \ref pressure.hpp "pressure.h".
-*/
+/** \file
+ *  Implementation of pressure.hpp.
+ */
 
 #include "cells.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
@@ -33,17 +33,17 @@
 
 #include "short_range_loop.hpp"
 
-Observable_stat virials = {0, {}, 0, 0, 0, 0, 0};
-Observable_stat total_pressure = {0, {}, 0, 0, 0, 0, 0};
-Observable_stat p_tensor = {0, {}, 0, 0, 0, 0, 0};
-Observable_stat total_p_tensor = {0, {}, 0, 0, 0, 0, 0};
+Observable_stat virials{};
+Observable_stat total_pressure{};
+Observable_stat p_tensor{};
+Observable_stat total_p_tensor{};
 
 /* Observables used in the calculation of intra- and inter- molecular
    non-bonded contributions to pressure and to stress tensor */
-Observable_stat_non_bonded virials_non_bonded = {0, {}, 0, 0, 0};
-Observable_stat_non_bonded total_pressure_non_bonded = {0, {}, 0, 0, 0};
-Observable_stat_non_bonded p_tensor_non_bonded = {0, {}, 0, 0, 0};
-Observable_stat_non_bonded total_p_tensor_non_bonded = {0, {}, 0, 0, 0};
+Observable_stat_non_bonded virials_non_bonded{};
+Observable_stat_non_bonded total_pressure_non_bonded{};
+Observable_stat_non_bonded p_tensor_non_bonded{};
+Observable_stat_non_bonded total_p_tensor_non_bonded{};
 
 nptiso_struct nptiso = {0.0,
                         0.0,
@@ -79,10 +79,11 @@ void init_virials(Observable_stat *stat);
 void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb);
 
 /** on the master node: calc energies only if necessary
-    @param v_comp flag which enables (1) compensation of the velocities required
-                  for deriving a pressure reflecting \ref nptiso_struct::p_inst
-                  (hence it only works with domain decomposition); naturally it
-                  therefore doesn't make sense to use it without NpT. */
+ *  @param v_comp flag which enables (1) compensation of the velocities required
+ *                for deriving a pressure reflecting \ref nptiso_struct::p_inst
+ *                (hence it only works with domain decomposition); naturally it
+ *                therefore doesn't make sense to use it without NpT.
+ */
 void master_pressure_calc(int v_comp);
 
 /** Initializes stat to be used by \ref pressure_calc. */
@@ -94,6 +95,16 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 /*********************************/
 /* Scalar and Tensorial Pressure */
 /*********************************/
+inline void add_single_particle_virials(int v_comp, Particle &p) {
+  add_kinetic_virials(&p, v_comp);
+  add_bonded_virials(&p);
+#ifdef BOND_ANGLE_OLD
+  add_three_body_bonded_stress(&p);
+#endif
+#ifdef BOND_ANGLE
+  add_three_body_bonded_stress(&p);
+#endif
+}
 
 void pressure_calc(double *result, double *result_t, double *result_nb,
                    double *result_t_nb, int v_comp) {
@@ -112,23 +123,20 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   init_p_tensor_non_bonded(&p_tensor_non_bonded);
 
   on_observable_calc();
-
-  short_range_loop(
-      [&v_comp](Particle &p) {
-        add_kinetic_virials(&p, v_comp);
-        add_bonded_virials(&p);
-#ifdef BOND_ANGLE_OLD
-        add_three_body_bonded_stress(&p);
-#endif
-#ifdef BOND_ANGLE
-        add_three_body_bonded_stress(&p);
-#endif
-      },
-      [](Particle &p1, Particle &p2, Distance &d) {
-        add_non_bonded_pair_virials(&(p1), &(p2), d.vec21.data(), sqrt(d.dist2),
-                                    d.dist2);
-      });
-
+  // Run short-range loop if max cut >0
+  if (max_cut > 0) {
+    short_range_loop(
+        [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
+        [](Particle &p1, Particle &p2, Distance &d) {
+          add_non_bonded_pair_virials(&(p1), &(p2), d.vec21.data(),
+                                      sqrt(d.dist2), d.dist2);
+        });
+  } else {
+    // Only add single particle virials
+    for (auto &p : local_cells.particles()) {
+      add_single_particle_virials(v_comp, p);
+    }
+  }
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);
 
@@ -254,15 +262,11 @@ void calc_long_range_virials() {
 /************************************************************/
 void init_virials(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
-  // bonded, nonbonded, coulomb, dipolar, rigid bodies
-  int n_pre, n_non_bonded, n_coulomb, n_dipolar, n_vs;
+  // bonded, nonbonded, Coulomb, dipolar, rigid bodies
+  int n_pre, n_non_bonded, n_coulomb(0), n_dipolar(0), n_vs(0);
 
   n_pre = 1;
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
-
-  n_coulomb = 0;
-  n_dipolar = 0;
-  n_vs = 0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -320,15 +324,11 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
 /***************************/
 void init_p_tensor(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
-  // bonded, nonbonded, coulomb, dipolar, rigid bodies
-  int n_pre, n_non_bonded, n_coulomb, n_dipolar, n_vs;
+  // bonded, nonbonded, Coulomb, dipolar, rigid bodies
+  int n_pre, n_non_bonded, n_coulomb(0), n_dipolar(0), n_vs(0);
 
   n_pre = 1;
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
-
-  n_coulomb = 0;
-  n_dipolar = 0;
-  n_vs = 0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -343,7 +343,6 @@ void init_p_tensor(Observable_stat *stat) {
     n_coulomb = 1;
   }
 #endif
-
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
@@ -539,8 +538,8 @@ int does_line_go_through_cube(double pos1[3], double pos2[3],
       /*does the line start outside the cube in direction i?*/
       if ((!doesntenter) && (!found_entry) &&
           fabs(vect2centre1[i]) > range[i] / 2.0) {
-        /*does the bond heads away from the cube or is part2 is before the cube
-         * in direction i? */
+        /* does the bond heads away from the cube or is part2 is before the
+         * cube in direction i? */
         if ((vect2centre1[i] * sign[i] > 0) ||
             (vect2centre2[i] * sign[i] < -range[i] / 2.0)) {
           doesntenter = 1;
@@ -582,7 +581,7 @@ int does_line_go_through_cube(double pos1[3], double pos2[3],
                           "%d: does_line_go_through_cube: Entry is %f %f %f \n",
                           this_node, entry[0], entry[1], entry[2]););
     if (!inside2) {
-      /*check which outside faces of box the line exits through */
+      /* check which outside faces of box the line exits through */
       for (i = 0; i < 3; i++) {
         i1 = (i + 1) % 3;
         i2 = (i + 2) % 3;
@@ -655,20 +654,20 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
   int zi;
   double length; /* length of line between the two points */
   int d1, d2; /* for each z-bin d1 and d2 are calculated.  they indicate through
-                 which faces of the bin the line enters and leaves the bin. i.e.
-                 if the line enters through the face corresponding to y = 0.34
-                 then d1 = 1 (y-direction) and val1 = 0.34 */
+                 which faces of the bin the line enters and leaves the bin.
+                 i.e. if the line enters through the face corresponding to y =
+                 0.34 then d1 = 1 (y-direction) and val1 = 0.34 */
   double val1, val2;
   double intersect;
   double segment, segment2;
   double calclength;
   int xa, ya, za; /* counters for bins */
   double temp[3];
-  double redentry[3], redexit[3]; /* like entry and exit but using a coordinate
-                                     system where range_start corresponds to
-                                     (0,0,0) and the length scale in each
-                                     direction is the bin width */
-  double redbox_l[3];             /* box size is reduced units */
+  double redentry[3],
+      redexit[3];     /* like entry and exit but using a coordinate system where
+                         range_start corresponds to (0,0,0) and the length scale in
+                         each direction is the bin width */
+  double redbox_l[3]; /* box size is reduced units */
   int facein, faceout;
 
   PTENSOR_TRACE(fprintf(stderr,
@@ -683,7 +682,6 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
                         range_start[2], range[0], range[1], range[2], bins[0],
                         bins[1], bins[2]););
   /* work out what direction the line joining the particles goes in */
-  length = 0;
   get_mi_vector(temp, pos2, pos1);
   for (i = 0; i < 3; i++) {
     sign[i] = (temp[i] > 0) * 2 - 1;
@@ -728,14 +726,14 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
 
     /* find in which x-bins the line starts and stops */
     if (facein == 0) {
-      startx = dround(redentry[0]) - 1 + sign10[0];
+      startx = std::round(redentry[0]) - 1 + sign10[0];
     } else {
       startx = floor(redentry[0]);
     }
     if ((startx < 0) && (range[0] == box_l[0]))
       startx += bins[0];
     if (faceout == 0) {
-      endx = dround(redexit[0] - sign10[0]);
+      endx = std::round(redexit[0] - sign10[0]);
     } else {
       endx = floor(redexit[0]);
     }
@@ -755,7 +753,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
      * starty[xbin-startx+1] */
     totoccupiedybins = 0;
     if (facein == 1) {
-      starty[0] = dround(redentry[1]) - 1 + sign10[1];
+      starty[0] = std::round(redentry[1]) - 1 + sign10[1];
     } else {
       starty[0] = floor(redentry[1]);
     }
@@ -790,7 +788,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
     /* find in which z-bins the line starts and stops for each y-bin*/
     counter = 0;
     if (facein == 2) {
-      zi = dround(redentry[2]) - 1 + sign10[2];
+      zi = std::round(redentry[2]) - 1 + sign10[2];
     } else {
       zi = floor(redentry[2]);
     }
@@ -825,7 +823,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
       ybin = starty[xa + 1];
       if (xbin == endx) {
         if (faceout == 2) {
-          zi = dround(redexit[2] - sign10[2]);
+          zi = std::round(redexit[2] - sign10[2]);
         } else {
           zi = floor(redexit[2]);
         }
@@ -1087,6 +1085,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force,
       case COULOMB_MMM1D:
         fprintf(stderr, "WARNING: Local stress tensor calculation cannot "
                         "handle MMM1D electrostatics so it is left out\n");
+        break;
       default:
         fprintf(stderr, "WARNING: Local stress tensor calculation does not "
                         "recognise this electrostatic interaction\n");
@@ -1108,9 +1107,9 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force,
                         "handle DAWAANR magnetostatics so it is left out\n");
         break;
       case DIPOLAR_DS:
-        fprintf(stderr, "WARNING: Local stress tensor calculation cannot "
-                        "handle MAGNETIC DIPOLAR SUM magnetostatics so "
-                        "it is left out\n");
+        fprintf(stderr,
+                "WARNING: Local stress tensor calculation cannot handle "
+                "MAGNETIC DIPOLAR SUM magnetostatics so it is left out\n");
         break;
 
       default:
