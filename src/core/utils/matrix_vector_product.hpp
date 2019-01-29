@@ -4,6 +4,8 @@
 #include <array>
 #include <utility>
 
+#include "get.hpp"
+
 namespace Utils {
 
 namespace detail {
@@ -23,7 +25,7 @@ template <typename T> struct mul<1, T> {
 template <int I, typename T, typename Container, std::size_t N, int c, int... cs>
 struct inner_product_template_impl {
   constexpr T operator()(const Container &vec) const {
-    return mul<c, T>{}(std::get<I>(vec)) +
+    return mul<c, T>{}(get<I>(vec)) +
            inner_product_template_impl<I + 1, T, Container, N, cs...>{}(vec);
   }
 };
@@ -31,7 +33,7 @@ struct inner_product_template_impl {
 template <int I, typename T, typename Container, std::size_t N, int c>
 struct inner_product_template_impl<I, T, Container, N, c> {
   constexpr T operator()(const Container &vec) const {
-    return mul<c, T>{}(std::get<I>(vec));
+    return mul<c, T>{}(get<I>(vec));
   }
 };
 
@@ -41,7 +43,7 @@ template <typename T, std::size_t N,
 constexpr T inner_product_helper(const Container &vec,
                                  std::index_sequence<column_indices...>) {
   return inner_product_template_impl<
-      0, T, Container, N, std::get<column_indices>(std::get<row_index>(matrix))...>{}(vec);
+      0, T, Container, N, get<column_indices>(get<row_index>(matrix))...>{}(vec);
 }
 
 template <typename T, std::size_t N,
