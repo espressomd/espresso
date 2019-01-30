@@ -63,7 +63,6 @@
 #include "ParticleIterator.hpp"
 #include "ghosts.hpp"
 #include "particle_data.hpp"
-#include "utils/Range.hpp"
 
 #include "Cell.hpp"
 #include "ParticleRange.hpp"
