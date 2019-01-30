@@ -40,9 +40,9 @@ IF ELECTROSTATICS == 1:
                 if not checks.check_charge_neutrality[PartCfg](partCfg()):
                     raise Exception("""
                     The system is not charge neutral. Please
-                    neutralize the system before adding a new actor via adding
+                    neutralize the system before adding a new actor by adding
                     the corresponding counterions to the system. Alternatively
-                    you can turn off the electroneutrality check via supplying
+                    you can turn off the electroneutrality check by supplying
                     check_neutrality=False when creating the actor. In this
                     case you may be simulating a non-neutral system which will
                     affect physical observables like e.g. the pressure, the
@@ -254,8 +254,12 @@ IF P3M == 1:
 
         def _tune(self):
             coulomb_set_prefactor(self._params["prefactor"])
-            python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
-                                       "cao"], -1.0, self._params["accuracy"], self._params["inter"])
+            python_p3m_set_tune_params(self._params["r_cut"],
+                                       self._params["mesh"],
+                                       self._params["cao"],
+                                       -1.0,
+                                       self._params["accuracy"],
+                                       self._params["inter"])
             resp = python_p3m_adaptive_tune()
             if resp:
                 raise Exception(
@@ -342,7 +346,7 @@ IF P3M == 1:
 
                 if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) != 3):
                     raise ValueError(
-                        "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
+                        "mesh_off should be a list of length 3 with values between 0.0 and 1.0")
 
             def valid_keys(self):
                 return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune", "check_neutrality"
@@ -371,8 +375,12 @@ IF P3M == 1:
 
             def _tune(self):
                 coulomb_set_prefactor(self._params["prefactor"])
-                python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
-                                           "cao"], -1.0, self._params["accuracy"], self._params["inter"])
+                python_p3m_set_tune_params(self._params["r_cut"],
+                                           self._params["mesh"],
+                                           self._params["cao"],
+                                           -1.0,
+                                           self._params["accuracy"],
+                                           self._params["inter"])
                 resp = python_p3m_adaptive_tune()
                 if resp:
                     raise Exception(
@@ -390,8 +398,11 @@ IF P3M == 1:
 
             def _set_params_in_es_core(self):
                 coulomb_set_prefactor(self._params["prefactor"])
-                python_p3m_set_params(self._params["r_cut"], self._params["mesh"], self._params[
-                                      "cao"], self._params["alpha"], self._params["accuracy"])
+                python_p3m_set_params(self._params["r_cut"],
+                                      self._params["mesh"],
+                                      self._params["cao"],
+                                      self._params["alpha"],
+                                      self._params["accuracy"])
                 p3m_set_eps(self._params["epsilon"])
                 p3m_set_ninterpol(self._params["inter"])
                 python_p3m_set_mesh_offset(self._params["mesh_off"])
@@ -423,7 +434,7 @@ IF ELECTROSTATICS:
             if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
                 raise ValueError("maxPWerror should be a positive double")
             if self._params["far_switch_radius"] < 0 and self._params["far_switch_radius"] != default_params["far_switch_radius"]:
-                raise ValueError("switch radius shoulb be a positive double")
+                raise ValueError("switch radius should be a positive double")
             if self._params["bessel_cutoff"] < 0 and self._params["bessel_cutoff"] != default_params["bessel_cutoff"]:
                 raise ValueError("bessel_cutoff should be a positive integer")
 
@@ -512,7 +523,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
                 raise ValueError("maxPWerror should be a positive double")
             if self._params["far_switch_radius"] < 0 and self._params["far_switch_radius"] != default_params["far_switch_radius"]:
-                raise ValueError("switch radius shoulb be a positive double")
+                raise ValueError("switch radius should be a positive double")
             if self._params["bessel_cutoff"] < 0 and self._params["bessel_cutoff"] != default_params["bessel_cutoff"]:
                 raise ValueError("bessel_cutoff should be a positive integer")
 

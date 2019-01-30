@@ -57,10 +57,11 @@ function cmd {
 [ -z "$with_asan" ] && with_asan="false"
 [ -z "$with_static_analysis" ] && with_static_analysis="false"
 [ -z "$myconfig" ] && myconfig="default"
-[ -z "$check_procs" ] && check_procs=2
 [ -z "$build_procs" ] && build_procs=2
+[ -z "$check_procs" ] && check_procs=$build_procs
 [ -z "$make_check" ] && make_check="true"
 [ -z "$check_odd_only" ] && check_odd_only="false"
+[ -z "$check_gpu_only" ] && check_gpu_only="false"
 [ -z "$python_version" ] && python_version="2"
 [ -z "$with_cuda" ] && with_cuda="true"
 [ -z "$build_type" ] && build_type="Debug"
@@ -101,9 +102,9 @@ outp insource srcdir builddir make_check \
     cmake_params with_fftw \
     with_python_interface with_coverage \
     with_ubsan with_asan \
-    build_procs check_odd_only \
+    check_odd_only \
     with_static_analysis myconfig \
-    check_procs build_procs \
+    build_procs check_procs \
     python_version with_cuda with_ccache
 
 # check indentation of python files
@@ -235,6 +236,8 @@ if $make_check; then
     if [ -z "$run_tests" ]; then
         if $check_odd_only; then
             cmd "make -j${build_procs} check_python_parallel_odd $make_params" || exit 1
+	elif $check_gpu_only; then
+	    cmd "make -j${build_procs} check_python_gpu $make_params" || exit 1
         else
             cmd "make -j${build_procs} check_python $make_params" || exit 1
         fi

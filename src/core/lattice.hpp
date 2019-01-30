@@ -46,32 +46,33 @@ class Lattice {
 public:
   using index_t = int;
 
-  Vector3i grid; /** number of local lattice sites in each direction
-                  (excluding halo) */
+  Vector3i grid; /**< number of local lattice sites in each direction
+                  *   (excluding halo) */
   Vector3i global_grid;
-  Vector3d agrid; /** lattice constant */
+  Vector3d agrid; /**< lattice constant */
 
-  Vector3i
-      halo_grid; /** number of lattice sites in each direction including halo
-                  */
-  int halo_size; /** halo size in all directions */
+  Vector3i halo_grid; /**< number of lattice sites in each direction
+                       *   (including halo) */
+  int halo_size;      /**< halo size in all directions */
 
-  Vector3d offset; /** global offset */
+  Vector3d offset; /**< global offset */
   Vector3d local_offset;
   Vector3i local_index_offset;
 
-  index_t halo_grid_volume; /** total number (volume) of lattice sites
-                               (including halo) */
-  index_t halo_offset; /** offset for number of halo sites stored in front of
-                          the local lattice sites */
+  index_t halo_grid_volume; /**< total number (volume) of lattice sites
+                             *   (including halo) */
+  index_t halo_offset; /**< offset for number of halo sites stored in front of
+                        *   the local lattice sites */
 
   /** Initialize lattice.
    *
    * This function initializes the variables describing the lattice
    * layout. Important: The lattice data is <em>not</em> allocated here!
    *
-   * \param lattice pointer to the lattice
-   * \param agrid   lattice spacing
+   * \param agrid      lattice spacing
+   * \param offset     lattice offset
+   * \param halo_size  halo size
+   * \param dim        lattice dimensions
    */
   int init(double *agrid, double *offset, int halo_size, size_t dim);
 
@@ -86,7 +87,6 @@ public:
    * <li>The lattice sites of the elementary cell are returned as local
    * indices</li>
    * </ul>
-   * \param lattice    pointer to the lattice (Input)
    * \param pos        spatial position (Input)
    * \param node_index local indices of the surrounding lattice sites (Output)
    * \param delta      distance fraction of pos from the surrounding
@@ -102,7 +102,6 @@ public:
    *  the specified lattice site. The coordinates of the site are
    *  taken as global coordinates and are returned as local coordinates.
    *
-   * \param  lattice pointer to the lattice
    * \param  ind     global coordinates of the lattice site (Input)
    * \param  grid     local coordinates of the lattice site (Output)
    * \return         index of the node for the lattice site

@@ -3,7 +3,7 @@
 
 namespace Utils {
 
-template <std::size_t I, typename T> const auto get(const T &v) {
+template <std::size_t I, typename T> auto get(const T &v) {
   return std::get<I>(v);
 }
 

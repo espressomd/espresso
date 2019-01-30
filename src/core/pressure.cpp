@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref pressure.hpp "pressure.hpp".
-*/
+ *  Implementation of pressure.hpp.
+ */
 
 #include "cells.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
@@ -33,17 +33,17 @@
 
 #include "short_range_loop.hpp"
 
-Observable_stat virials = {0, {}, 0, 0, 0, 0, 0};
-Observable_stat total_pressure = {0, {}, 0, 0, 0, 0, 0};
-Observable_stat p_tensor = {0, {}, 0, 0, 0, 0, 0};
-Observable_stat total_p_tensor = {0, {}, 0, 0, 0, 0, 0};
+Observable_stat virials{};
+Observable_stat total_pressure{};
+Observable_stat p_tensor{};
+Observable_stat total_p_tensor{};
 
 /* Observables used in the calculation of intra- and inter- molecular
    non-bonded contributions to pressure and to stress tensor */
-Observable_stat_non_bonded virials_non_bonded = {0, {}, 0, 0, 0};
-Observable_stat_non_bonded total_pressure_non_bonded = {0, {}, 0, 0, 0};
-Observable_stat_non_bonded p_tensor_non_bonded = {0, {}, 0, 0, 0};
-Observable_stat_non_bonded total_p_tensor_non_bonded = {0, {}, 0, 0, 0};
+Observable_stat_non_bonded virials_non_bonded{};
+Observable_stat_non_bonded total_pressure_non_bonded{};
+Observable_stat_non_bonded p_tensor_non_bonded{};
+Observable_stat_non_bonded total_p_tensor_non_bonded{};
 
 nptiso_struct nptiso = {0.0,
                         0.0,
@@ -79,10 +79,11 @@ void init_virials(Observable_stat *stat);
 void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb);
 
 /** on the master node: calc energies only if necessary
-    @param v_comp flag which enables (1) compensation of the velocities required
-                  for deriving a pressure reflecting \ref nptiso_struct::p_inst
-                  (hence it only works with domain decomposition); naturally it
-                  therefore doesn't make sense to use it without NpT. */
+ *  @param v_comp flag which enables (1) compensation of the velocities required
+ *                for deriving a pressure reflecting \ref nptiso_struct::p_inst
+ *                (hence it only works with domain decomposition); naturally it
+ *                therefore doesn't make sense to use it without NpT.
+ */
 void master_pressure_calc(int v_comp);
 
 /** Initializes stat to be used by \ref pressure_calc. */
@@ -262,14 +263,10 @@ void calc_long_range_virials() {
 void init_virials(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
   // bonded, nonbonded, Coulomb, dipolar, rigid bodies
-  int n_pre, n_non_bonded, n_coulomb, n_dipolar, n_vs;
+  int n_pre, n_non_bonded, n_coulomb(0), n_dipolar(0), n_vs(0);
 
   n_pre = 1;
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
-
-  n_coulomb = 0;
-  n_dipolar = 0;
-  n_vs = 0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -328,14 +325,10 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
 void init_p_tensor(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
   // bonded, nonbonded, Coulomb, dipolar, rigid bodies
-  int n_pre, n_non_bonded, n_coulomb, n_dipolar, n_vs;
+  int n_pre, n_non_bonded, n_coulomb(0), n_dipolar(0), n_vs(0);
 
   n_pre = 1;
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
-
-  n_coulomb = 0;
-  n_dipolar = 0;
-  n_vs = 0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -350,7 +343,6 @@ void init_p_tensor(Observable_stat *stat) {
     n_coulomb = 1;
   }
 #endif
-
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
@@ -546,8 +538,8 @@ int does_line_go_through_cube(double pos1[3], double pos2[3],
       /*does the line start outside the cube in direction i?*/
       if ((!doesntenter) && (!found_entry) &&
           fabs(vect2centre1[i]) > range[i] / 2.0) {
-        /*does the bond heads away from the cube or is part2 is before the cube
-         * in direction i? */
+        /* does the bond heads away from the cube or is part2 is before the
+         * cube in direction i? */
         if ((vect2centre1[i] * sign[i] > 0) ||
             (vect2centre2[i] * sign[i] < -range[i] / 2.0)) {
           doesntenter = 1;
@@ -589,7 +581,7 @@ int does_line_go_through_cube(double pos1[3], double pos2[3],
                           "%d: does_line_go_through_cube: Entry is %f %f %f \n",
                           this_node, entry[0], entry[1], entry[2]););
     if (!inside2) {
-      /*check which outside faces of box the line exits through */
+      /* check which outside faces of box the line exits through */
       for (i = 0; i < 3; i++) {
         i1 = (i + 1) % 3;
         i2 = (i + 2) % 3;
@@ -690,7 +682,6 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3],
                         range_start[2], range[0], range[1], range[2], bins[0],
                         bins[1], bins[2]););
   /* work out what direction the line joining the particles goes in */
-  length = 0;
   get_mi_vector(temp, pos2, pos1);
   for (i = 0; i < 3; i++) {
     sign[i] = (temp[i] > 0) * 2 - 1;
@@ -1094,6 +1085,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force,
       case COULOMB_MMM1D:
         fprintf(stderr, "WARNING: Local stress tensor calculation cannot "
                         "handle MMM1D electrostatics so it is left out\n");
+        break;
       default:
         fprintf(stderr, "WARNING: Local stress tensor calculation does not "
                         "recognise this electrostatic interaction\n");

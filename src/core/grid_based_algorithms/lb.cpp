@@ -19,12 +19,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
+ *  %Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *
- * Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
+ *  Includes fluctuating LB and coupling to MD particles via frictional
+ *  momentum transfer.
  *
- * Includes fluctuating LB and coupling to MD particles via frictional
- * momentum transfer.
- *
+ *  The corresponding header file is lb.hpp.
  */
 
 #include "grid_based_algorithms/lb.hpp"
@@ -131,8 +131,9 @@ static LB_FluidData lbfluid_a;
 static LB_FluidData lbfluid_b;
 
 /** Pointer to the velocity populations of the fluid.
- * lbfluid contains pre-collision populations, lbfluid_post
- * contains post-collision */
+ *  lbfluid contains pre-collision populations, lbfluid_post
+ *  contains post-collision.
+ */
 LB_Fluid lbfluid;
 LB_Fluid lbfluid_post;
 
@@ -1200,13 +1201,12 @@ int lb_lbnode_get_u(const Vector3i &ind, double *p_u) {
   return 0;
 }
 
-/** calculates the fluid velocity at a given position of the
- * lattice. Note that it can lead to undefined behavior if the
- * position is not within the local lattice. This version of the function
- * can be called without the position needing to be on the local processor.
- * Note that this gives a slightly different version than the values used to
- * couple to MD beads when near a wall, see
- * lb_lbfluid_get_interpolated_velocity.
+/** Calculate the fluid velocity at a given position of the lattice.
+ *  Note that it can lead to undefined behavior if the position is not
+ *  within the local lattice. This version of the function can be called
+ *  without the position needing to be on the local processor. Note that this
+ *  gives a slightly different version than the values used to couple to MD
+ *  beads when near a wall, see lb_lbfluid_get_interpolated_velocity.
  */
 int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v) {
   double local_v[3] = {0, 0, 0},
@@ -1932,8 +1932,9 @@ static void lb_realloc_fluid() {
   lbfields.resize(lblattice.halo_grid_volume);
 }
 
-/** Sets up the structures for exchange of the halo regions.
- *  See also \ref halo.cpp */
+/** Set up the structures for exchange of the halo regions.
+ *  See also \ref halo.cpp
+ */
 static void lb_prepare_communication() {
   int i;
   HaloCommunicator comm = {0, nullptr};
@@ -1983,7 +1984,7 @@ static void lb_prepare_communication() {
   release_halo_communication(&comm);
 }
 
-/** (Re-)initializes the fluid. */
+/** (Re-)initialize the fluid. */
 void lb_reinit_parameters() {
   int i;
 
@@ -2049,7 +2050,7 @@ void lb_reinit_parameters() {
   }
 }
 
-/** (Re-)initializes the fluid according to the given value of rho. */
+/** (Re-)initialize the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
@@ -2076,9 +2077,9 @@ void lb_reinit_fluid() {
 #endif // LB_BOUNDARIES
 }
 
-/** Performs a full initialization of
- *  the Lattice Boltzmann system. All derived parameters
- *  and the fluid are reset to their default values. */
+/** Perform a full initialization of the lattice Boltzmann system.
+ *  All derived parameters and the fluid are reset to their default values.
+ */
 void lb_init() {
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
 
@@ -2454,9 +2455,9 @@ inline void lb_collide_stream() {
 
 /** Update the lattice Boltzmann fluid.
  *
- * This function is called from the integrator. Since the time step
- * for the lattice dynamics can be coarser than the MD time step, we
- * monitor the time since the last lattice update.
+ *  This function is called from the integrator. Since the time step
+ *  for the lattice dynamics can be coarser than the MD time step, we
+ *  monitor the time since the last lattice update.
  */
 void lattice_boltzmann_update() {
   int factor = (int)round(lbpar.tau / time_step);
@@ -2552,7 +2553,7 @@ void add_swimmer_force(Particle &p) {
 
 /** Coupling of a single particle to viscous fluid with Stokesian friction.
  *
- * Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
+ *  Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
  *
  * @param p          The coupled particle (Input).
  * @param f_random   Additional force to be included.
@@ -2644,37 +2645,36 @@ Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &pos) {
 #endif
 
 /** Calculate particle lattice interactions.
- * So far, only viscous coupling with Stokesian friction is
- * implemented.
- * Include all particle-lattice forces in this function.
- * The function is called from \ref force_calc.
+ *  So far, only viscous coupling with Stokesian friction is implemented.
+ *  Include all particle-lattice forces in this function.
+ *  The function is called from \ref force_calc.
  *
- * Parallelizing the fluid particle coupling is not straightforward
- * because drawing of random numbers makes the whole thing nonlocal.
- * One way to do it is to treat every particle only on one node, i.e.
- * the random numbers need not be communicated. The particles that are
- * not fully inside the local lattice are taken into account via their
- * ghost images on the neighbouring nodes. But this requires that the
- * correct values of the surrounding lattice nodes are available on
- * the respective node, which means that we have to communicate the
- * halo regions before treating the ghost particles. Moreover, after
- * determining the ghost couplings, we have to communicate back the
- * halo region such that all local lattice nodes have the correct values.
- * Thus two communication phases are involved which will most likely be
- * the bottleneck of the computation.
+ *  Parallelizing the fluid particle coupling is not straightforward
+ *  because drawing of random numbers makes the whole thing nonlocal.
+ *  One way to do it is to treat every particle only on one node, i.e.
+ *  the random numbers need not be communicated. The particles that are
+ *  not fully inside the local lattice are taken into account via their
+ *  ghost images on the neighbouring nodes. But this requires that the
+ *  correct values of the surrounding lattice nodes are available on
+ *  the respective node, which means that we have to communicate the
+ *  halo regions before treating the ghost particles. Moreover, after
+ *  determining the ghost couplings, we have to communicate back the
+ *  halo region such that all local lattice nodes have the correct values.
+ *  Thus two communication phases are involved which will most likely be
+ *  the bottleneck of the computation.
  *
- * Another way of dealing with the particle lattice coupling is to
- * treat a particle and all of it's images explicitly. This requires the
- * communication of the random numbers used in the calculation of the
- * coupling force. The problem is now that, if random numbers have to
- * be redrawn, we cannot efficiently determine which particles and which
- * images have to be re-calculated. We therefore go back to the outset
- * and go through the whole system again until no failure occurs during
- * such a sweep. In the worst case, this is very inefficient because
- * many things are recalculated although they actually don't need.
- * But we can assume that this happens extremely rarely and then we have
- * on average only one communication phase for the random numbers, which
- * probably makes this method preferable compared to the above one.
+ *  Another way of dealing with the particle lattice coupling is to
+ *  treat a particle and all of it's images explicitly. This requires the
+ *  communication of the random numbers used in the calculation of the
+ *  coupling force. The problem is now that, if random numbers have to
+ *  be redrawn, we cannot efficiently determine which particles and which
+ *  images have to be re-calculated. We therefore go back to the outset
+ *  and go through the whole system again until no failure occurs during
+ *  such a sweep. In the worst case, this is very inefficient because
+ *  many things are recalculated although they actually don't need.
+ *  But we can assume that this happens extremely rarely and then we have
+ *  on average only one communication phase for the random numbers, which
+ *  probably makes this method preferable compared to the above one.
  */
 void calc_particle_lattice_ia() {
 
@@ -2737,8 +2737,9 @@ void calc_particle_lattice_ia() {
 /***********************************************************************/
 
 /** Calculate the average density of the fluid in the system.
- * This function has to be called after changing the density of
- * a local lattice site in order to set lbpar.rho consistently. */
+ *  This function has to be called after changing the density of
+ *  a local lattice site in order to set lbpar.rho consistently.
+ */
 void lb_calc_average_rho() {
   Lattice::index_t index;
   double rho, local_rho, sum_rho;
@@ -2780,10 +2781,10 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
   return ret;
 }
 
-/** Checks consistency of the halo regions (ADDITIONAL_CHECKS)
-    This function can be used as an additional check. It test whether the
-    halo regions have been exchanged correctly.
-*/
+/** Check consistency of the halo regions (ADDITIONAL_CHECKS)
+ *  This function can be used as an additional check. It test whether the
+ *  halo regions have been exchanged correctly.
+ */
 void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   Lattice::index_t index;
   int i, x, y, z, s_node, r_node, count = lbmodel.n_veloc;

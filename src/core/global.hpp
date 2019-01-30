@@ -22,11 +22,11 @@
 #define _GLOBAL_HPP
 
 /** \file
-    This file contains the code for access to globally
-    defined variables using the script command setmd. Please refer to
-    the Developer's guide, section "Adding global variables", for
-    details on how to add new variables in the interpreter's
-    space.  */
+ *  This file contains the code for access to globally
+ *  defined variables using the script command setmd. Please refer to
+ *  the Developer's guide, section "Adding global variables", for
+ *  details on how to add new variables in the interpreter's space.
+ */
 
 /**********************************************
  * description of global variables
@@ -37,23 +37,22 @@
  **********************************************/
 
 /** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
-         @param i the number from \ref global.hpp "global.hpp" referencing the
-         datafield.
-         @return nonzero on error
-     */
+ *  @param i the number from \ref global.hpp "global.hpp" referencing the
+ *           datafield.
+ *  @return nonzero on error
+ */
 int mpi_bcast_parameter(int i);
 
 /*
- * @brief Check if all the global fields a synchronized between
- *        the nodes.
+ * @brief Check if all the global fields are synchronized between the nodes.
  */
 void check_global_consistency();
 
 /** \name Field Enumeration
-    These numbers identify the variables given in
-    \ref anonymous_namespace{global.cpp}::fields "fields"
-    for use with \ref mpi_bcast_parameter.
-*/
+ *  These numbers identify the variables given in
+ *  \ref anonymous_namespace{global.cpp}::fields "fields"
+ *  for use with \ref mpi_bcast_parameter.
+ */
 enum Fields {
   /** index of \ref box_l */
   FIELD_BOXL = 0,
@@ -105,16 +104,6 @@ enum Fields {
   FIELD_LATTICE_SWITCH,
   /** index of \ref min_global_cut */
   FIELD_MIN_GLOBAL_CUT,
-  /** index of \ref ghmc_nmd */
-  FIELD_GHMC_NMD,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_PHI,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_RES,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_FLIP,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_SCALE,
   /** index of \ref langevin_gamma_rotation */
   FIELD_LANGEVIN_GAMMA_ROTATION,
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
