@@ -299,13 +299,6 @@ struct ParticleLocal {
 
   /** check whether a particle is a ghost or not */
   int ghost = 0;
-
-#ifdef GHMC
-  /** Data for the ghmc thermostat, last saved
-      position and momentum of particle */
-  ParticlePosition r_ls;
-  ParticleMomentum m_ls;
-#endif
 };
 
 #ifdef LB

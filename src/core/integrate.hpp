@@ -90,10 +90,6 @@ void integrate_ensemble_init();
  */
 void integrate_vv(int n_steps, int reuse_forces);
 
-/** function that rescales all velocities on one node according to a
-    new time step. */
-void rescale_velocities(double scale);
-
 /*@}*/
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces);
