@@ -294,16 +294,20 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /***********************************************/
   /* non bonded pair potentials                  */
   /***********************************************/
+  if (dist > max_cut)
+    return;
 
+  if (dist < ia_params->max_cut) {
 #ifdef EXCLUSIONS
-  if (do_nonbonded(p1, p2))
+    if (do_nonbonded(p1, p2))
 #endif
-    calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force.data(),
-                               torque1, torque2);
+      calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2,
+                                 force.data(), torque1, torque2);
+  }
 
-    /***********************************************/
-    /* short range electrostatics                  */
-    /***********************************************/
+  /***********************************************/
+  /* short range electrostatics                  */
+  /***********************************************/
 
 #ifdef ELECTROSTATICS
   if (coulomb.method == COULOMB_DH)
