@@ -24,6 +24,13 @@ import unittest as ut
 
 
 class Integrate(ut.TestCase):
+
+    """
+    Tests integration of Newton's equations for a particle with and without
+    external forces and with time step changes on the way.
+
+    """
+
     def test(self):
         system = espressomd.System(box_l=[10.0, 10.0, 10.0])
         system.cell_system.skin = 0
@@ -34,7 +41,7 @@ class Integrate(ut.TestCase):
         np.testing.assert_allclose(np.copy(p.v), (1, 2, 3))
         for i in range(10):
             np.testing.assert_allclose(np.copy(p.pos), np.copy(
-                i*system.time_step*p.v), atol=1E-12)
+                i * system.time_step * p.v), atol=1E-12)
             system.integrator.run(1)
         v = p.v
         pos1 = p.pos
@@ -43,7 +50,7 @@ class Integrate(ut.TestCase):
         np.testing.assert_allclose(np.copy(pos1), np.copy(p.pos), atol=1E-12)
         for i in range(10):
             np.testing.assert_allclose(np.copy(p.pos), np.copy(
-                pos1+i*system.time_step*p.v), atol=1E-12)
+                pos1 + i * system.time_step * p.v), atol=1E-12)
             system.integrator.run(1)
 
         # Newton's 2nd law
@@ -56,7 +63,7 @@ class Integrate(ut.TestCase):
             system.time_step = 0.03
             for i in range(10):
                 np.testing.assert_allclose(np.copy(p.pos), np.copy(
-                    0.5 * ext_force/p.mass * (i*system.time_step)**2 + v*i*system.time_step), atol=1E-12)
+                    0.5 * ext_force / p.mass * (i * system.time_step)**2 + v * i * system.time_step), atol=1E-12)
                 system.integrator.run(1)
 
 
