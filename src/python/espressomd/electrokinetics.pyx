@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .lb cimport HydrodynamicInteraction
-IF LB:
+IF LB_GPU:
     from .lb cimport lb_lbnode_is_index_valid
 from . import utils
 import numpy as np
@@ -102,8 +102,8 @@ IF ELECTROKINETICS:
                     "advection": ek_parameters.advection,
                     "fluid_coupling": fluid_coupling,
                     "fluctuations": ek_parameters.fluctuations,
-                    "fluctuation_amplitude": ek_parameters.fluctuation_amplitude,
-                    "es_coupling": ek_parameters.es_coupling}
+                    "fluctuation_amplitude": ek_parameters.fluctuation_amplitude}#,
+                    #"es_coupling": ek_parameters.es_coupling}
 
         def _set_params_in_es_core(self):
             if self._params["stencil"] == "linkcentered":
@@ -130,7 +130,8 @@ IF ELECTROKINETICS:
             ek_set_advection(self._params["advection"])
             ek_set_fluctuations(self._params["fluctuations"])
             ek_set_fluctuation_amplitude(self._params["fluctuation_amplitude"])
-            ek_set_electrostatics_coupling(self._params["es_coupling"])
+            IF EK_ELECTROSTATIC_COUPLING:
+                ek_set_electrostatics_coupling(self._params["es_coupling"])
 
         def set_density(self, species=None, density=None, node=None):
             """
@@ -281,19 +282,6 @@ IF ELECTROKINETICS:
 
             """
             ek_print_vtk_potential(utils.to_char_pointer(path))
-
-        def print_vtk_efield(self, path):
-            """
-            Writes the electrostatic field into a vtk-file.
-            
-            Parameters
-            ----------
-            path : :obj:`string`
-                   The path and vtk-file name the electrostatic field is written to.
-                   
-            """
-
-            ek_print_vtk_efield(utils.to_char_pointer(path))
 
         def print_vtk_lbforce(self, path):
             """

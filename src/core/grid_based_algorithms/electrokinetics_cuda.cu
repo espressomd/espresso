@@ -76,7 +76,7 @@ EK_parameters ek_parameters = {
     -1.0, -1.0,         -1.0, 0,    0,    0,    0,    0,
     -1.0, -1.0,         0.0,  0.0,  0.0,  -1.0, -1.0, {0.0, 0.0, 0.0},
     0,    {-1, -1, -1}, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
-    -1.0, -1.0,         -1.0, 0,    -1,   true, true,
+    -1.0, -1.0,         -1.0, 0,    -1,   -1.0, true, true,
 #ifdef EK_ELECTROSTATIC_COUPLING
     false
 #endif
@@ -91,6 +91,7 @@ float *ek_lb_boundary_force;
 char *ek_node_is_catalyst;
 unsigned int old_number_of_species = 0;
 unsigned int old_number_of_boundaries = 0;
+static uint64_t philox_counter = 0;
 
 FdElectrostatics *electrostatics = nullptr;
 
@@ -1489,17 +1490,34 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
                 dx[0] * dx[1] * dx[2] * not_boundary);
 }
 
-__device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index, unsigned int *neighborindex, LB_nodes_gpu lb_node) {
-  if(index < ek_parameters_gpu.number_of_nodes)
+__device__ float4 ek_random_wrapper_philox(unsigned int index, unsigned int mode,
+                                        uint64_t philox_counter, unsigned int seed) {
+  // Split the 64 bit counter into two 32 bit ints.
+  uint32_t philox_counter_hi = static_cast<uint32_t>(philox_counter >> 32);
+  uint32_t philox_counter_low = static_cast<uint32_t>(philox_counter);
+  uint4 rnd_ints =
+      curand_Philox4x32_10(make_uint4(index, philox_counter_hi, 0, mode),
+                           make_uint2(philox_counter_low, seed));
+  float4 rnd_floats;
+  rnd_floats.w = rnd_ints.w * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
+  rnd_floats.x = rnd_ints.x * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
+  rnd_floats.y = rnd_ints.y * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
+  rnd_floats.z = rnd_ints.z * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
+  return rnd_floats;
+}
+
+__device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index, unsigned int *neighborindex, LB_nodes_gpu lb_node, uint64_t philox_counter, unsigned int seed) {
+  if(index < ek_parameters_gpu->number_of_nodes)
   {
-    float density = ek_parameters_gpu.rho[species_index][index];
-    float* flux = ek_parameters_gpu.j;
-    float diffusion = ek_parameters_gpu.D[species_index];
-    float time_step = ek_parameters_gpu.time_step;
-    float agrid = ek_parameters_gpu.agrid;
+    float density = ek_parameters_gpu->rho[species_index][index];
+    float* flux = ek_parameters_gpu->j;
+    float diffusion = ek_parameters_gpu->D[species_index];
+    float time_step = ek_parameters_gpu->time_step;
+    float agrid = ek_parameters_gpu->agrid;
+    float4 random_floats;
+    float random;
     
-    
-    float* flux_fluc = ek_parameters_gpu.j_fluc;
+    float* flux_fluc = ek_parameters_gpu->j_fluc;
     float fluc = 0.0f;
 
     //float A = 6.0f * 0.1111111111111111f * PI_FLOAT / (3.0f * PI_FLOAT - 8.0f);
@@ -1508,27 +1526,36 @@ __device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int spe
     for(int i = 0; i < 9; i++)
     {
 
-        float random = (curand_normal(&ek_parameters_gpu.rnd_state[index]));
+        if(i%4==0) {
+            random_floats = ek_random_wrapper_philox(index, i + 40, philox_counter, seed);
+            random = random_floats.w - 0.5f;
+        }else if(i%4==1){
+            random = random_floats.x - 0.5f;
+        }else if(i%4==2){
+            random = random_floats.y - 0.5f;
+        }else if(i%4==3){
+            random = random_floats.z - 0.5f;
+        }
         float H = 0.0f;
         float HN = 0.0f;
-        float neighbor_density = ek_parameters_gpu.rho[species_index][neighborindex[i]];
+        float neighbor_density = ek_parameters_gpu->rho[species_index][neighborindex[i]];
 
 	H = (density >= 0.0f) * min(density, 1.0f);
         HN = (neighbor_density >= 0.0f) * min(neighbor_density, 1.0f);
         
 
-        float average_density = H * HN * (density+ek_parameters_gpu.rho[species_index][neighborindex[i]])/2.0f;
+        float average_density = H * HN * (density+ek_parameters_gpu->rho[species_index][neighborindex[i]])/2.0f;
 
         if(i > 2)
         {
-            fluc = 1.0f * powf(2.0f * average_density * diffusion * time_step / (agrid * agrid), 0.5f) * random * ek_parameters_gpu.fluctuation_amplitude / (sqrt(3.0f) * sqrt(2.0f));
+            fluc = 1.0f * powf(2.0f * average_density * diffusion * time_step / (agrid * agrid), 0.5f) * random * ek_parameters_gpu->fluctuation_amplitude / (sqrt(3.0f) * sqrt(2.0f));
             fluc *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[i]]);
             flux_fluc[jindex_getByRhoLinear(index, i)] = fluc;
             flux[jindex_getByRhoLinear(index, i)] += fluc;
         }
         else
         {
-            fluc = 1.0f * powf(2.0f * average_density * diffusion * time_step / (agrid * agrid), 0.5f) * random * ek_parameters_gpu.fluctuation_amplitude / sqrt(3.0f);
+            fluc = 1.0f * powf(2.0f * average_density * diffusion * time_step / (agrid * agrid), 0.5f) * random * ek_parameters_gpu->fluctuation_amplitude / sqrt(3.0f);
             fluc *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[i]]);
             flux_fluc[jindex_getByRhoLinear(index, i)] = fluc;
             flux[jindex_getByRhoLinear(index, i)] += fluc;
@@ -1544,7 +1571,8 @@ __global__ void ek_calculate_quantities(unsigned int species_index,
                                         LB_nodes_gpu lb_node,
                                         LB_node_force_density_gpu node_f,
                                         LB_parameters_gpu *ek_lbparameters_gpu,
-                                        LB_rho_v_gpu *d_v) {
+                                        LB_rho_v_gpu *d_v,
+                                        uint64_t philox_counter) {
 
   unsigned int index = ek_getThreadIndex();
 
@@ -1654,8 +1682,8 @@ __global__ void ek_calculate_quantities(unsigned int species_index,
                                node_f, lb_node, ek_lbparameters_gpu);
 
     /* fluctuation contribution to flux */
-    if(ek_parameters_gpu.fluctuations)
-      ek_add_fluctuations_to_flux(index, species_index, neighborindex, lb_node);
+    if (ek_parameters_gpu->fluctuations)
+      ek_add_fluctuations_to_flux(index, species_index, neighborindex, lb_node, philox_counter, ek_lbparameters_gpu->your_seed);
   }
 }
 
@@ -1928,7 +1956,7 @@ __global__ void ek_clear_fluxes() {
   if (index < ek_parameters_gpu->number_of_nodes) {
     for (int i = 0; i < 13; i++) {
       ek_parameters_gpu->j[jindex_getByRhoLinear(index, i)] = 0.0f;
-      ek_parameters_gpu.j_fluc[ jindex_getByRhoLinear( index, i ) ] = 0.0f;
+      ek_parameters_gpu->j_fluc[ jindex_getByRhoLinear( index, i ) ] = 0.0f;
     }
   }
 }
@@ -2252,12 +2280,6 @@ __global__ void ek_clear_node_force(LB_node_force_density_gpu node_f) {
   }
 }
 
-__global__ void initialize_random_generator(int seed) {
-  int index = ek_getThreadIndex();
-  /* Each thread gets same seed, a different sequence number, no offset */
-  curand_init(seed, index, 0, &ek_parameters_gpu.rnd_state[index]);
-}
-
 
 #ifdef EK_ELECTROSTATIC_COUPLING
 void ek_calculate_electrostatic_coupling() {
@@ -2346,7 +2368,7 @@ void ek_integrate() {
     KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block, i,
                *current_nodes, node_f, ek_lbparameters_gpu,
-               ek_lb_device_values);
+               ek_lb_device_values, philox_counter);
 
 #ifdef EK_BOUNDARIES
     if (ek_parameters.stencil == 1) {
@@ -2365,6 +2387,8 @@ void ek_integrate() {
   /* Integrate Navier-Stokes */
 
   lb_integrate_GPU();
+
+  philox_counter += 1;
 }
 
 #ifdef EK_BOUNDARIES
@@ -2506,8 +2530,6 @@ int ek_init() {
                    ek_parameters.number_of_nodes * 13 * sizeof(ekfloat)));
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.j_fluc,
                              ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) ) );
-    cuda_safe_mem(cudaMalloc( (void **) &ek_parameters.rnd_state, 
-                             ek_parameters.number_of_nodes * 13 * sizeof(curandStatePhilox4_32_10_t))); 
 
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
                                      &ek_parameters, sizeof(EK_parameters)));
@@ -2868,7 +2890,7 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
     KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
                ek_parameters.species_index[species], *current_nodes, node_f,
-               ek_lbparameters_gpu, ek_lb_device_values);
+               ek_lbparameters_gpu, ek_lb_device_values, philox_counter);
     reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
@@ -3095,7 +3117,7 @@ int ek_print_vtk_flux(int species, char *filename) {
     KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
                ek_parameters.species_index[species], *current_nodes, node_f,
-               ek_lbparameters_gpu, ek_lb_device_values);
+               ek_lbparameters_gpu, ek_lb_device_values, philox_counter);
     reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
@@ -3323,14 +3345,14 @@ int ek_print_vtk_flux_fluc( int species, char* filename ) {
       / (threads_per_block * blocks_per_grid_y );
     dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
     
-    KERNELCALL( ek_clear_fluxes, dim_grid, threads_per_block, () );
+    KERNELCALL( ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL( ek_calculate_quantities, dim_grid, threads_per_block,
-                ( ek_parameters.species_index[ species ], *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values )    );
-    reset_LB_forces_GPU(false);
+                ek_parameters.species_index[ species ], *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values, philox_counter);
+    reset_LB_force_densities_GPU(false);
               
 #ifdef EK_BOUNDARIES
-    KERNELCALL( ek_apply_boundaries, dim_grid, threads_per_block,
-                ( ek_parameters.species_index[ species ], *current_nodes, node_f )                     );
+    KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
+               ek_parameters.species_index[species], *current_nodes, node_f);
 #endif
   
     cuda_safe_mem( cudaMemcpy( fluxes, 
@@ -3482,14 +3504,14 @@ int ek_print_vtk_flux_link( int species, char* filename ) {
       / (threads_per_block * blocks_per_grid_y );
     dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
     
-    KERNELCALL( ek_clear_fluxes, dim_grid, threads_per_block, () );
+    KERNELCALL( ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL( ek_calculate_quantities, dim_grid, threads_per_block,
-                ( ek_parameters.species_index[ species ], *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values )    );
-    reset_LB_forces_GPU(false);
+                ek_parameters.species_index[ species ], *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values, philox_counter);
+    reset_LB_force_densities_GPU(false);
               
 #ifdef EK_BOUNDARIES
-    KERNELCALL( ek_apply_boundaries, dim_grid, threads_per_block,
-                ( ek_parameters.species_index[ species ], *current_nodes, node_f )                     );
+    KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
+               ek_parameters.species_index[species], *current_nodes, node_f);
 #endif
   
     cuda_safe_mem( cudaMemcpy( fluxes, 

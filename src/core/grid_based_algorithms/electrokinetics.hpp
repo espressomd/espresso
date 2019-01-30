@@ -92,7 +92,6 @@ typedef struct {
 #ifdef EK_REACTION
   float* pressure;
 #endif
-  curandStatePhilox4_32_10_t *rnd_state;
 } EK_parameters;
 
 #endif
