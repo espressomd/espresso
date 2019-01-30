@@ -35,10 +35,14 @@ struct ParticleIterator : public boost::iterator_facade<
     }
   }
 
-public:
-  friend typename std::iterator_traits<ParticleIterator>::difference_type
-  distance(ParticleIterator const &begin, ParticleIterator const &end) {
-    if (begin == end)
+private:
+    using base_type = typename boost::iterator_facade<
+            ParticleIterator<BidirectionalIterator, Particle>,
+            Particle, boost::forward_traversal_tag>;
+
+    friend typename base_type::difference_type
+    distance(ParticleIterator const &begin, ParticleIterator const &end) {
+        if (begin == end)
       return 0;
 
     /* Remaining parts in this cell */
@@ -58,10 +62,9 @@ public:
     return dist;
   }
 
-private:
-  friend class boost::iterator_core_access;
+    friend class boost::iterator_core_access;
 
-  void increment() {
+    void increment() {
     /* If we are not at the end of the cells,
        there actually are particles in this cells
        and if we are not at the last particle in the
@@ -74,8 +77,7 @@ private:
     } else {
       m_part_id = 0;
 
-      /* Don't run over the end */
-      if (m_cell != m_end)
+      if(m_cell != m_end)
         ++m_cell;
 
       /* Find next cell with particles */
