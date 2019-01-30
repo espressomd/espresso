@@ -359,6 +359,11 @@ static void recalc_maximal_cutoff_nonbonded() {
       if (max_cut_current < data->REACTION_range)
         max_cut_current = data->REACTION_range;
 #endif
+#ifdef THOLE
+    // If THOLE is active, use p3m cutoff
+    if (data->THOLE_scaling_coeff!=0) 
+      max_cut_current = std::max(max_cut_current, p3m.params.r_cut);
+#endif
 
       IA_parameters *data_sym = get_ia_param(j, i);
 
