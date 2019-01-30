@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "cuda_wrapper.hpp"
+
 #include "cuda_init.hpp"
 #include "cuda_utils.hpp"
 #include "debug.hpp"
@@ -28,12 +30,10 @@
 
 #ifdef CUDA
 
-#include <cuda.h>
-
 /** \name minimally required compute capability. */
 /*@{*/
-static const int computeCapabilityMinMajor = 1;
-static const int computeCapabilityMinMinor = 1;
+static const int computeCapabilityMinMajor = 3;
+static const int computeCapabilityMinMinor = 0;
 /*@}*/
 
 const char *cuda_error;

@@ -23,7 +23,7 @@
 #define __SPHEROCYLINDER_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 namespace Shapes {
 class SpheroCylinder : public Shape {
@@ -92,8 +92,8 @@ public:
   Vector3d &center() { return m_center; }
   double &direction() { return m_direction; }
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 };
 } // namespace Shapes
 

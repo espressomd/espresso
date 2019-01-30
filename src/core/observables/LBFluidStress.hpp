@@ -2,7 +2,7 @@
 #define OBSERVABLES_LB_FLUID_STRESS_HPP
 
 #include "Observable.hpp"
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 
 #include <vector>
 

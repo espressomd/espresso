@@ -19,8 +19,8 @@
 #ifndef SYSTEMINTERFACE_H
 #define SYSTEMINTERFACE_H
 
-#include "Vector.hpp"
 #include "config.hpp"
+#include "utils/Vector.hpp"
 #include <vector>
 
 /** @todo: Turn needsXY in getter/setter **/
@@ -29,7 +29,7 @@ class SystemInterface {
 public:
   SystemInterface()
       : m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false),
-        m_needsQuatuGpu(false), m_needsFGpu(false), m_needsDipGpu(false),
+        m_needsDirectorGpu(false), m_needsFGpu(false), m_needsDipGpu(false),
         m_needsTorqueGpu(false){};
   typedef Vector3d Vector3;
   typedef double Real;
@@ -86,12 +86,12 @@ public:
     return m_needsFGpu;
   }
 
-  virtual float *quatuGpuBegin() { return 0; };
-  virtual float *quatuGpuEnd() { return 0; };
-  virtual bool hasQuatuGpu() { return false; };
-  virtual bool requestQuatuGpu() {
-    m_needsQuatuGpu = hasQuatuGpu();
-    return m_needsQuatuGpu;
+  virtual float *directorGpuBegin() { return 0; };
+  virtual float *directorGpuEnd() { return 0; };
+  virtual bool hasDirectorGpu() { return false; };
+  virtual bool requestDirectorGpu() {
+    m_needsDirectorGpu = hasDirectorGpu();
+    return m_needsDirectorGpu;
   }
 
   virtual unsigned int npart_gpu() { return 0; };
@@ -100,7 +100,7 @@ public:
   virtual bool needsRGpu() { return m_needsRGpu; };
   virtual bool needsDipGpu() { return m_needsRGpu; };
   virtual bool needsQGpu() { return m_needsQGpu; };
-  virtual bool needsQuatuGpu() { return m_needsQuatuGpu; };
+  virtual bool needsDirectorGpu() { return m_needsDirectorGpu; };
   virtual bool needsFGpu() { return m_needsFGpu; };
   virtual bool needsTorqueGpu() { return m_needsTorqueGpu; };
   virtual ~SystemInterface() = default;
@@ -109,7 +109,7 @@ protected:
   bool m_needsRGpu;
   bool m_needsVGpu;
   bool m_needsQGpu;
-  bool m_needsQuatuGpu;
+  bool m_needsDirectorGpu;
   bool m_needsFGpu;
   bool m_needsDipGpu;
   bool m_needsTorqueGpu;

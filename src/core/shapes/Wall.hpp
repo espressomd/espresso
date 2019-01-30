@@ -23,15 +23,15 @@
 #define SHAPES_WALL_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 namespace Shapes {
 class Wall : public Shape {
 public:
   Wall() : m_n({1., 0., 0.}), m_d(0.0) {}
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 
   void set_normal(const Vector3d &normal) {
     m_n = normal;

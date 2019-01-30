@@ -18,16 +18,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file thermostat.cpp
-    Implementation of \ref thermostat.hpp "thermostat.h"
+/** \file
+    Implementation of \ref thermostat.hpp "thermostat.hpp"
  */
 #include "thermostat.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
-#include "ghmc.hpp"
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "npt.hpp"
-#include "thermalized_bond.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -45,7 +44,7 @@ using Thermostat::GammaType;
 
 namespace {
 /* These functions return the sentinel value for the
-   langevin params, indicating that they have not been
+   Langevin params, indicating that they have not been
    set yet. */
 constexpr double sentinel(double) { return -1.0; }
 Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }
@@ -66,12 +65,6 @@ GammaType langevin_pref2_rotation;
 double nptiso_gamma0 = 0.0;
 // INSERT COMMENT
 double nptiso_gammav = 0.0;
-
-/* GHMC THERMOSTAT */
-// Number of NVE-MD steps in each GHMC cycle
-int ghmc_nmd = 1;
-// phi parameter for partial momentum update step in GHMC
-double ghmc_phi = 0;
 
 /** buffers for the work around for the correlated random values which cool the
    system,
@@ -171,10 +164,6 @@ void thermo_init() {
 #ifdef NPT
   if (thermo_switch & THERMO_NPT_ISO)
     thermo_init_npt_isotropic();
-#endif
-#ifdef GHMC
-  if (thermo_switch & THERMO_GHMC)
-    thermo_init_ghmc();
 #endif
 }
 

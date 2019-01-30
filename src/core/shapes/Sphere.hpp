@@ -23,15 +23,15 @@
 #define __SPHERE_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 namespace Shapes {
 class Sphere : public Shape {
 public:
   Sphere() : m_pos({0.0, 0.0, 0.0}), m_rad(0.0), m_direction(1.0) {}
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 
   Vector3d &pos() { return m_pos; }
   double &rad() { return m_rad; }

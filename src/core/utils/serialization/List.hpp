@@ -20,14 +20,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define CORE_UTILS_SERIALIZATION_LIST_HPP
 
 #include <boost/serialization/array.hpp>
+#if BOOST_VERSION >= 106400 && BOOST_VERSION < 106500
+#include <boost/serialization/array_wrapper.hpp>
+#endif
 #include <boost/serialization/split_free.hpp>
 
-#include "core/utils/List.hpp"
+#include "utils/List.hpp"
 
 namespace boost {
 namespace serialization {
 template <typename T, class Archive>
-void load(Archive &ar, Utils::List<T> &v, const unsigned int file_version) {
+void load(Archive &ar, Utils::List<T> &v, const unsigned int /*file_version*/) {
   typename Utils::List<T>::size_type n;
   ar >> n;
   v.resize(n);
@@ -37,7 +40,7 @@ void load(Archive &ar, Utils::List<T> &v, const unsigned int file_version) {
 
 template <typename T, class Archive>
 void save(Archive &ar, Utils::List<T> const &v,
-          const unsigned int file_version) {
+          const unsigned int /*file_version*/) {
   typename Utils::List<T>::size_type n = v.size();
   ar << n;
   ar << make_array(v.data(), v.size());

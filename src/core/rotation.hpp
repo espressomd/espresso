@@ -20,16 +20,17 @@
 */
 #ifndef ROTATION_H
 #define ROTATION_H
-/** \file rotation.hpp
+/** \file
     This file contains all subroutines required to process rotational motion.
 
 */
 
-#include "Vector.hpp"
-#include "gb.hpp"
+#include "config.hpp"
+
+#ifdef ROTATION
+
 #include "particle_data.hpp"
-#include "thermostat.hpp"
-#include "utils.hpp"
+#include "utils/Vector.hpp"
 
 constexpr const int ROTATION_X = 2;
 constexpr const int ROTATION_Y = 4;
@@ -51,30 +52,16 @@ void convert_torques_propagate_omega();
     the integration loop */
 void convert_initial_torques();
 
-/** convert angular velocities and torques from the
-    body-fixed frames to space-fixed coordinates */
-void convert_omega_body_to_space(const Particle *p, double *omega);
-void convert_torques_body_to_space(const Particle *p, double *torque);
-
 Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &v);
 Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v);
 
-/** convert velocity form the lab-fixed coordinates
-    to the body-fixed frame */
-void convert_vel_space_to_body(const Particle *p, double *vel_body);
-
-/** Here we use quaternions to calculate the rotation matrix which
-    will be used then to transform torques from the laboratory to
-    the body-fixed frames */
-void define_rotation_matrix(Particle const &p, double A[9]);
-
-inline void convert_quat_to_quatu(const Vector<4, double> &quat,
-                                  Vector3d &quatu) {
+inline void convert_quat_to_director(const Vector<4, double> &quat,
+                                     Vector3d &director) {
   /* director */
-  quatu[0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2]);
-  quatu[1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1]);
-  quatu[2] = (quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
-              quat[3] * quat[3]);
+  director[0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2]);
+  director[1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1]);
+  director[2] = (quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
+                 quat[3] * quat[3]);
 }
 
 /** Multiply two quaternions */
@@ -88,7 +75,7 @@ void multiply_quaternions(const T1 &a, const T2 &b, T3 &result) {
 }
 
 /** Convert director to quaternions */
-int convert_quatu_to_quat(const Vector3d &d, Vector<4, double> &quat);
+int convert_director_to_quat(const Vector3d &d, Vector<4, double> &quat);
 
 #ifdef DIPOLES
 
@@ -99,24 +86,15 @@ inline int convert_dip_to_quat(const Vector3d &dip, Vector<4, double> &quat,
   // Calculate magnitude of dipole moment
   dm = sqrt(dip[0] * dip[0] + dip[1] * dip[1] + dip[2] * dip[2]);
   *dipm = dm;
-  convert_quatu_to_quat(dip, quat);
+  convert_director_to_quat(dip, quat);
 
   return 0;
-}
-
-/** convert quaternion director to the dipole moment */
-inline void convert_quatu_to_dip(const Vector3d &quatu, double dipm,
-                                 Vector3d &dip) {
-  /* dipole moment */
-  dip[0] = quatu[0] * dipm;
-  dip[1] = quatu[1] * dipm;
-  dip[2] = quatu[2] * dipm;
 }
 
 #endif
 
 /** Rotate the particle p around the NORMALIZED axis a by amount phi */
-void local_rotate_particle(Particle *p, double *a, double phi);
+void local_rotate_particle(Particle &p, const Vector3d &a, const double phi);
 
 inline void normalize_quaternion(double *q) {
   double tmp = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
@@ -126,4 +104,5 @@ inline void normalize_quaternion(double *q) {
   q[3] /= tmp;
 }
 
+#endif
 #endif

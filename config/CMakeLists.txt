@@ -18,15 +18,3 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-message(STATUS "writing ${CMAKE_BINARY_DIR}/myconfig-sample.hpp")
-execute_process(COMMAND ${PYTHON_EXECUTABLE}  
-                ${CMAKE_CURRENT_SOURCE_DIR}/gen_sampleconfig.py 
-                ${CMAKE_SOURCE_DIR}/src/features.def
-                OUTPUT_FILE ${CMAKE_BINARY_DIR}/myconfig-sample.hpp
-                )
-
-
-

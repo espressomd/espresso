@@ -21,7 +21,7 @@
 
 #include "statistics_cluster.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 /** nullptr terminated linked list of elements of a cluster (indices in particle
  * list) */
@@ -89,7 +89,7 @@ void create_free_volume_grid(PartCfg &partCfg, IntList mesh, int dim[3],
   }
 }
 
-void cluster_neighbors(int point, int dim[3], int neighbors[6]) {
+void cluster_neighbors(int point, const Vector3i &dim, int neighbors[6]) {
   int x, y, z, a;
   get_grid_pos(point, &x, &y, &z, dim);
 
@@ -124,7 +124,7 @@ void cluster_neighbors(int point, int dim[3], int neighbors[6]) {
 /** hole cluster algorithm.
     returns the number of holes and a list of mesh points belonging to each of
    them */
-int cluster_free_volume_grid(IntList mesh, int dim[3], int ***holes) {
+int cluster_free_volume_grid(IntList mesh, const Vector3i &dim, int ***holes) {
   int i = 0, j, k, n = -1, li;
   int neighbors[6];
 
@@ -192,7 +192,7 @@ int cluster_free_volume_grid(IntList mesh, int dim[3], int ***holes) {
 }
 
 /** Calculates the surface to volume ratios of the holes */
-void cluster_free_volume_surface(IntList mesh, int dim[3], int nholes,
+void cluster_free_volume_surface(IntList mesh, const Vector3i &dim, int nholes,
                                  int **holes, int *surface) {
   int i, j, n, neighbors[6], inner;
 

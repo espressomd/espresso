@@ -21,13 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/field_coupling/fields/AffineMap.hpp"
-#include "core/field_coupling/fields/Constant.hpp"
-#include "core/field_coupling/fields/Interpolated.hpp"
-#include "core/field_coupling/fields/gradient_type.hpp"
+#include "field_coupling/fields/AffineMap.hpp"
+#include "field_coupling/fields/Constant.hpp"
+#include "field_coupling/fields/Interpolated.hpp"
+#include "field_coupling/fields/gradient_type.hpp"
 
-#include "core/utils/interpolation/bspline_3d.hpp"
-#include "core/utils/interpolation/bspline_3d_gradient.hpp"
+#include "utils/interpolation/bspline_3d.hpp"
+#include "utils/interpolation/bspline_3d_gradient.hpp"
 
 #include <limits>
 
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
   /* Ctor */
   {
-    boost::multi_array<double, 3> data(Vector<3, int>{10, 11, 12});
+    boost::multi_array<double, 3> data(Vector3i{10, 11, 12});
     data[5][5][5] = -1. / 12.;
 
     const Vector3d grid_spacing = {.1, .2, .3};
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
         grid_spacing, origin, Vector3d{});
 
     BOOST_CHECK((interpolated_value - field_value).norm() <
-                std::numeric_limits<double>::epsilon());
+                2 * std::numeric_limits<double>::epsilon());
   }
 }
 
@@ -326,8 +326,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
     Vector3d x0[2] = {0.12 * a, -3. * a};
     auto const sigma = Vector2d{2., 3.};
 
-    boost::multi_array<Vector2d, 3> data(
-        Vector<3, int>{n_nodes, n_nodes, n_nodes});
+    boost::multi_array<Vector2d, 3> data(Vector3i{n_nodes, n_nodes, n_nodes});
     for (int i = 0; i < n_nodes; i++)
       for (int j = 0; j < n_nodes; j++)
         for (int k = 0; k < n_nodes; k++) {
@@ -363,8 +362,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
     Vector3d x0[2] = {0.12 * a, -3. * a};
     auto const sigma = Vector2d{2., 3.};
 
-    boost::multi_array<Vector2d, 3> data(
-        Vector<3, int>{n_nodes, n_nodes, n_nodes});
+    boost::multi_array<Vector2d, 3> data(Vector3i{n_nodes, n_nodes, n_nodes});
     for (int i = 0; i < n_nodes; i++)
       for (int j = 0; j < n_nodes; j++)
         for (int k = 0; k < n_nodes; k++) {

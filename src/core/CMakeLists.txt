@@ -1,97 +1,205 @@
-file(GLOB EspressoCore_SRC
-          "*.cpp" "io/mpiio/mpiio.cpp")
+set(EspressoCore_SRC
+  accumulators.cpp
+  cells.cpp
+  collision.cpp
+  comfixed_global.cpp
+  communication.cpp
+  constraints.cpp
+  debug.cpp
+  domain_decomposition.cpp
+  dpd.cpp
+  energy.cpp
+  errorhandling.cpp
+  EspressoSystemInterface.cpp
+  forcecap.cpp
+  forces.cpp
+  galilei.cpp
+  ghosts.cpp
+  global.cpp
+  grid.cpp
+  halo.cpp
+  immersed_boundaries.cpp
+  initialize.cpp
+  integrate.cpp
+  lattice.cpp
+  layered.cpp
+  metadynamics.cpp
+  minimize_energy.cpp
+  MpiCallbacks.cpp
+  npt.cpp
+  nsquare.cpp
+  partCfg_global.cpp
+  particle_data.cpp
+  PdbParser.cpp
+  polymer.cpp
+  polynom.cpp
+  pressure.cpp
+  random.cpp
+  rattle.cpp
+  reaction_ensemble.cpp
+  rotate_system.cpp
+  rotation.cpp
+  RuntimeErrorCollector.cpp
+  RuntimeError.cpp
+  RuntimeErrorStream.cpp
+  specfunc.cpp
+  statistics_chain.cpp
+  statistics_cluster.cpp
+  statistics.cpp
+  statistics_fluid.cpp
+  swimmer_reaction.cpp
+  SystemInterface.cpp
+  thermostat.cpp
+  topology.cpp
+  tuning.cpp
+  virtual_sites.cpp
+  accumulators/Correlator.cpp
+  accumulators/MeanVarianceCalculator.cpp
+  actor/ActorList.cpp
+  actor/DipolarBarnesHut.cpp
+  actor/DipolarDirectSum.cpp
+  actor/HarmonicOrientationWell.cpp
+  actor/HarmonicWell.cpp
+  actor/Mmm1dgpuForce.cpp
+  bonded_interactions/angle_cosine.cpp
+  bonded_interactions/angle_cossquare.cpp
+  bonded_interactions/angle_harmonic.cpp
+  bonded_interactions/bonded_coulomb.cpp
+  bonded_interactions/bonded_coulomb_p3m_sr.cpp
+  bonded_interactions/bonded_interaction_data.cpp
+  bonded_interactions/bonded_tab.cpp
+  bonded_interactions/dihedral.cpp
+  bonded_interactions/fene.cpp
+  bonded_interactions/harmonic.cpp
+  bonded_interactions/harmonic_dumbbell.cpp
+  bonded_interactions/quartic.cpp
+  bonded_interactions/subt_lj.cpp
+  bonded_interactions/thermalized_bond.cpp
+  bonded_interactions/umbrella.cpp
+  constraints/HomogeneousMagneticField.cpp
+  constraints/ShapeBasedConstraint.cpp
+  electrostatics_magnetostatics/debye_hueckel.cpp
+  electrostatics_magnetostatics/elc.cpp
+  electrostatics_magnetostatics/icc.cpp
+  electrostatics_magnetostatics/maggs.cpp
+  electrostatics_magnetostatics/magnetic_non_p3m_methods.cpp
+  electrostatics_magnetostatics/mdlc_correction.cpp
+  electrostatics_magnetostatics/mmm1d.cpp
+  electrostatics_magnetostatics/mmm2d.cpp
+  electrostatics_magnetostatics/mmm-common.cpp
+  electrostatics_magnetostatics/p3m-common.cpp
+  electrostatics_magnetostatics/p3m.cpp
+  electrostatics_magnetostatics/p3m-dipolar.cpp
+  electrostatics_magnetostatics/p3m_gpu.cpp
+  electrostatics_magnetostatics/scafacos.cpp
+  electrostatics_magnetostatics/fft-common.cpp
+  electrostatics_magnetostatics/fft.cpp
+  grid_based_algorithms/lbboundaries.cpp
+  grid_based_algorithms/lb.cpp
+  grid_based_algorithms/lb-d3q19.cpp
+  immersed_boundary/ibm_tribend.cpp
+  immersed_boundary/ibm_triel.cpp
+  immersed_boundary/ImmersedBoundaries.cpp
+  nonbonded_interactions/bmhtf-nacl.cpp
+  nonbonded_interactions/buckingham.cpp
+  nonbonded_interactions/cos2.cpp
+  nonbonded_interactions/gaussian.cpp
+  nonbonded_interactions/gb.cpp
+  nonbonded_interactions/hat.cpp
+  nonbonded_interactions/hertzian.cpp
+  nonbonded_interactions/ljcos2.cpp
+  nonbonded_interactions/ljcos.cpp
+  nonbonded_interactions/lj.cpp
+  nonbonded_interactions/ljgen.cpp
+  nonbonded_interactions/morse.cpp
+  nonbonded_interactions/nonbonded_interaction_data.cpp
+  nonbonded_interactions/nonbonded_tab.cpp
+  nonbonded_interactions/reaction_field.cpp
+  nonbonded_interactions/soft_sphere.cpp
+  nonbonded_interactions/steppot.cpp
+  nonbonded_interactions/thole.cpp
+  nonbonded_interactions/wca.cpp
+  object-in-fluid/affinity.cpp
+  object-in-fluid/membrane_collision.cpp
+  object-in-fluid/oif_global_forces.cpp
+  object-in-fluid/oif_local_forces.cpp
+  object-in-fluid/out_direction.cpp
+  observables/CylindricalLBFluxDensityProfileAtParticlePositions.cpp
+  observables/CylindricalLBVelocityProfileAtParticlePositions.cpp
+  observables/CylindricalLBVelocityProfile.cpp
+  observables/LBVelocityProfile.cpp
+  virtual_sites/lb_inertialess_tracers.cpp
+  virtual_sites/lb_inertialess_tracers_cuda_interface.cpp
+  virtual_sites/virtual_sites_com.cpp
+  virtual_sites/VirtualSitesInertialessTracers.cpp
+  virtual_sites/VirtualSitesRelative.cpp
+  )
 
-if( WITH_COVERAGE )
-  if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-  else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
-    link_libraries(gcov)
+if(CUDA)
+  set(EspressoCuda_SRC
+    cuda_common_cuda.cu
+    cuda_init.cpp
+    cuda_init_cuda.cu
+    cuda_interface.cpp
+    EspressoSystemInterface_cuda.cu
+    actor/DipolarBarnesHut_cuda.cu
+    actor/DipolarDirectSum_cuda.cu
+    actor/HarmonicOrientationWell_cuda.cu
+    actor/HarmonicWell_cuda.cu
+    actor/Mmm1dgpuForce_cuda.cu
+    electrostatics_magnetostatics/p3m_gpu_cuda.cu
+    electrostatics_magnetostatics/p3m_gpu_error_cuda.cu
+    grid_based_algorithms/electrokinetics_cuda.cu
+    grid_based_algorithms/lbgpu_cuda.cu
+    grid_based_algorithms/fd-electrostatics_cuda.cu
+    virtual_sites/lb_inertialess_tracers_cuda.cu
+    grid_based_algorithms/electrokinetics.cpp
+    grid_based_algorithms/electrokinetics_pdb_parse.cpp
+    grid_based_algorithms/lbgpu.cpp
+    )
+
+  add_gpu_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
+else(CUDA)
+  add_library(EspressoCore SHARED ${EspressoCore_SRC})
+endif(CUDA)
+
+install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
+target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(WITH_COVERAGE)
+  target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:Release>:-g>")
+  target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:Release>:-O0>")
+  target_compile_options(EspressoCore PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fprofile-instr-generate>")
+  target_compile_options(EspressoCore PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fcoverage-mapping>")
+  target_compile_options(EspressoCore PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:--coverage>")
+  target_compile_options(EspressoCore PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-fprofile-arcs>")
+  target_compile_options(EspressoCore PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-ftest-coverage>")
+  if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_link_libraries(EspressoCore PUBLIC gcov)
   endif()
 endif()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(EspressoCore PUBLIC EspressoConfig)
+target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX)
 
-add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/config-features.hpp ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
-  COMMAND
-  ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
-  ${CMAKE_SOURCE_DIR}/src/features.def
-  ${CMAKE_BINARY_DIR}/src/core/config-features.hpp
-  ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
-  DEPENDS ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
-  )
-
-add_custom_command(OUTPUT config-version.cpp
-                   COMMAND ${CMAKE_SOURCE_DIR}/config/genversion.sh -c > ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
-)
-
-# Custom target for everything that needs to be triggered when the myconfig changes
-add_library(EspressoConfig SHARED config-features.cpp)
-add_dependencies(EspressoConfig myconfig check_myconfig)
-install(TARGETS EspressoConfig LIBRARY DESTINATION ${LIBDIR})
-set_target_properties(EspressoConfig PROPERTIES SOVERSION ${SOVERSION})
-
-add_library(EspressoCore SHARED ${EspressoCore_SRC} config-version.cpp)
-install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
-set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
-
-target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Observables Accumulators cluster_analysis VirtualSites)
+if(FFTW3_FOUND)
+  target_include_directories(EspressoCore PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})
+  target_link_libraries(EspressoCore PRIVATE ${FFTW3_LIBRARIES})
+endif()
 
 if(SCAFACOS)
-  target_link_libraries(EspressoCore Scafacos)
+  target_link_libraries(EspressoCore PRIVATE Scafacos)
 endif(SCAFACOS)
-if(GSL)
-  include_directories(${GSL_INCLUDE_DIRS})
-endif(GSL)
-
-
-if(GSL)
-  target_link_libraries(EspressoCore gsl gslcblas)
-endif(GSL)
-
-if(GSL)
-  target_link_libraries(EspressoCore gsl gslcblas)
-endif(GSL)
-
-if(CUDA)
-  file(GLOB EspressoCuda_SRC
-          "*.cu"
-          )
-
-  cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-  cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-  cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC})
-  install(TARGETS EspressoCuda DESTINATION ${LIBDIR})
-  set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
-  add_dependencies(EspressoCuda EspressoConfig)
-
-  CUDA_ADD_CUFFT_TO_TARGET(EspressoCuda)
-  target_link_libraries(EspressoCore EspressoCuda)
-endif(CUDA)
 
 # Subdirectories
-add_subdirectory(observables)
-add_subdirectory(accumulators)
 add_subdirectory(io)
-if(HDF5_FOUND)
-    target_link_libraries(EspressoCore H5mdCore)
-endif(HDF5_FOUND)
+
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_UNIT_TESTS)
 
-add_subdirectory(actor)
-add_subdirectory(immersed_boundary)
-add_subdirectory(virtual_sites)
-add_subdirectory(lbboundaries)
-add_subdirectory(object-in-fluid)
+add_subdirectory(grid_based_algorithms)
 add_subdirectory(shapes)
-add_subdirectory(constraints)
 add_subdirectory(cluster_analysis)
-
-if(SCAFACOS)
-  add_subdirectory(scafacos)
-endif(SCAFACOS)
+add_subdirectory(electrostatics_magnetostatics)

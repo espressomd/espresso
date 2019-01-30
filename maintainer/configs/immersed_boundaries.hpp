@@ -33,9 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define LANGEVIN_PER_PARTICLE
 #define SWIMMER_REACTIONS
 
-#define NEMD
 #define NPT
-#define GHMC
 
 #define LB
 #define LB_BOUNDARIES
@@ -66,5 +64,3 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OVERLAPPED
 
 #define BOND_ANGLE
-#define BOND_ANGLEDIST
-#define BOND_ANGLEDIST_HARMONIC

@@ -23,7 +23,7 @@
 #define __STOMATOCYTE_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 namespace Shapes {
 class Stomatocyte : public Shape {
@@ -33,8 +33,8 @@ public:
         m_outer_radius(0.0), m_inner_radius(0.0), m_layer_width(0.0),
         m_direction(0.0) {}
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  void calculate_dist(const Vector3d &pos, double *dist,
+                      double *vec) const override;
 
   Vector3d const &position() const { return m_position; }
   void set_position(Vector3d const &position) { m_position = position; }

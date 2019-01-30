@@ -17,7 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file Vector_test.cpp Unit tests for the Utils::Vector class.
+/** \file
+ * Unit tests for the Particle struct.
  *
  */
 
@@ -28,7 +29,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include "core/utils/serialization/Particle.hpp"
+#include "serialization/Particle.hpp"
 
 BOOST_AUTO_TEST_CASE(comparison) {
   {

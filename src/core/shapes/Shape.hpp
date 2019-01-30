@@ -22,12 +22,14 @@
 #ifndef SHAPES_SHAPE_HPP
 #define SHAPES_SHAPE_HPP
 
+#include "utils/Vector.hpp"
+
 namespace Shapes {
 
 class Shape {
 public:
-  virtual int calculate_dist(const double *ppos, double *dist,
-                             double *vec) const = 0;
+  virtual void calculate_dist(const Vector3d &pos, double *dist,
+                              double *vec) const = 0;
   virtual ~Shape() {}
 };
 

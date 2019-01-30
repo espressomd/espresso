@@ -21,21 +21,20 @@
 #ifndef MEMBRANE_COLLISION_H
 #define MEMBRANE_COLLISION_H
 
-/** \file membrane_collision.hpp
+/** \file
  *  Routines to calculate the membrane collision force
  *  for a particle pair.
  *  \ref forces.cpp
  */
 
-#include "../utils.hpp"
+#include "utils.hpp"
 
 #ifdef MEMBRANE_COLLISION
 
-#include "../grid.hpp"
-#include "../integrate.hpp"
-#include "../interaction_data.hpp"
-#include "../particle_data.hpp"
-#include "../random.hpp"
+#include "grid.hpp"
+#include "integrate.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
 
 int membrane_collision_set_params(int part_type_a, int part_type_b, double a,
                                   double n, double cut, double offset);
@@ -87,10 +86,6 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
       if (fabs(out1[0]) + fabs(out1[1]) + fabs(out1[2]) + fabs(out2[0]) +
               fabs(out2[1]) + fabs(out2[2]) <
           SMALL_OIF_MEMBRANE_CUTOFF) {
-        fprintf(stderr, "membrane_collision.hpp: out_direction is not set. "
-                        "Probably, you have not used switch \" "
-                        "normal\" in your oif_create_template command. Exiting "
-                        "the process. \n");
         errexit();
       }
 

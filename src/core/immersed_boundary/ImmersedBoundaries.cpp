@@ -22,10 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef IMMERSED_BOUNDARY
 
 #include "ImmersedBoundaries.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
 #include "particle_data.hpp"
 
 /************
@@ -35,6 +35,9 @@ This function is called from integrate_vv
  **************/
 
 void ImmersedBoundaries::volume_conservation() {
+  if (VolumeInitDone && !BoundariesFound) {
+    return;
+  }
   // Calculate volumes
   calc_volumes();
 
@@ -67,6 +70,7 @@ void ImmersedBoundaries::init_volume_conservation() {
         // This check is important because InitVolumeConservation may be called
         // accidentally during the integration. Then we must not reset the
         // reference
+        BoundariesFound = true;
         if (bonded_ia_params[i].p.ibmVolConsParameters.volRef == 0) {
           const int softID = bonded_ia_params[i].p.ibmVolConsParameters.softID;
           bonded_ia_params[i].p.ibmVolConsParameters.volRef =

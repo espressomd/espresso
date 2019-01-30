@@ -216,6 +216,40 @@ interaction, while :math:`\delta` varies how smoothly the potential goes to zero
 alchemical transformations, where a group of atoms can be slowly turned
 on/off during a simulation.
 
+.. _Weeks-Chandler-Andersen interaction:
+
+Weeks-Chandler-Andersen interaction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+    Feature ``WCA`` required.
+
+
+The interface for the Weeks-Chandler-Andersen interactions is implemented in
+:class:`espressomd.interactions.WCAInteraction`. They
+are configured via the syntax::
+
+    system.non_bonded_inter[type1, type2].wca.set_params(**kwargs)
+
+This command defines a Weeks-Chandler-Andersen interaction between particles of the
+types ``type1`` and ``type2``. The potential is defined by
+
+.. math::
+
+   \label{eq:wca}
+     V_\mathrm{WCA}(r) =
+       \begin{cases}
+         4 \epsilon \left[ \left(\frac{\sigma}{r}\right)^{12}
+         - \left(\frac{\sigma}{r}\right)^6 + \frac{1}{4} \right]
+         & \mathrm{if~} r < \sigma 2^{\frac{1}{6}}\\
+         0
+         & \mathrm{otherwise}
+       \end{cases}.
+
+The net force on a particle can be capped by using
+force capping ``system.non_bonded_inter.set_force_cap(max)``, see
+section :ref:`Capping the force during warmup`
+
 .. _Lennard-Jones cosine interaction:
 
 Lennard-Jones cosine interaction
@@ -510,7 +544,7 @@ particles of the types ``type1`` and ``type2``. The Hertzian potential is define
      \end{cases}
 
 The potential has no singularity and is defined everywhere; the
-potential has a nondifferentiable maximum at :math:`r=0`, where the force
+potential has a non-differentiable maximum at :math:`r=0`, where the force
 is undefined.
 
 .. _Gaussian:
@@ -826,7 +860,7 @@ and
      \epsilon(\mathbf{\hat{r}}, \mathbf{\hat{u}}_i,
      \mathbf{\hat{u}}_j) = \\
      \epsilon_0 \left( 1- \chi^{2}(\mathbf{\hat{u}}_i
-       \cdot \mathbf{\hat{u}}_j) \right)^{-\frac {\nu}{2}} \left[1-\frac
+       \cdot \mathbf{\hat{u}}_j)^{2} \right)^{-\frac {\nu}{2}} \left[1-\frac
        {\chi'}{2} \left( \frac { (\mathbf{\hat{r}} \cdot
            \mathbf{\hat{u}}_i+ \mathbf{\hat{r}} \cdot
            \mathbf{\hat{u}}_j)^{2}} {1+\chi' \, \mathbf{\hat{u}}_i \cdot

@@ -151,7 +151,7 @@ concerning the simulation system such as box geometry, time step or :ref:`cell-s
 
     print("The box dimensions are {}".format(system.box_l))
     system.time_step = 0.01
-    system.cellsystem.skin = 0.4
+    system.cell_system.skin = 0.4
 
 .. rubric:: Particles
 
@@ -624,11 +624,7 @@ report so to the developers.
     +--------------------------------+------------------------+------------------+------------+
     | Ewald on GPU                   | Single                 | Single           | Yes        |
     +--------------------------------+------------------------+------------------+------------+
-    | GHMC Thermostat                | Single                 | Single           | Yes        |
-    +--------------------------------+------------------------+------------------+------------+
     | DPD Thermostat                 | None                   | Good             | Yes        |
-    +--------------------------------+------------------------+------------------+------------+
-    | NEMD                           | None                   | Group            | No         |
     +--------------------------------+------------------------+------------------+------------+
     | Directional Lennard-Jones      | Single                 | Single           | No         |
     +--------------------------------+------------------------+------------------+------------+

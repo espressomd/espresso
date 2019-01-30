@@ -16,6 +16,10 @@ cdef class ReactionAlgorithm(object):
     reaction algorithm by setting the standard pressure, temperature, and the
     exclusion radius.
 
+    Note: When creating particles the velocities of the new particles are set
+    according the Maxwell-Boltzmann distribution. In this step the mass of the
+    new particle is assumed to equal 1.
+
 
     Parameters
     ----------
@@ -226,6 +230,11 @@ cdef class ReactionAlgorithm(object):
                 "No dictionary for relation between types and default charges provided.")
         #check electroneutrality of the provided reaction
         if(self._params["check_for_electroneutrality"]):
+            charges = np.array(list(self._params["default_charges"].values()))
+            if(np.count_nonzero(charges) == 0):
+                # all partices have zero charge
+                # no need to check electroneutrality
+                return
             total_charge_change = 0.0
             for i in range(len(self._params["reactant_coefficients"])):
                 type_here = self._params["reactant_types"][i]
@@ -235,7 +244,6 @@ cdef class ReactionAlgorithm(object):
                 type_here = self._params["product_types"][j]
                 total_charge_change += self._params["product_coefficients"][
                     j] * self._params["default_charges"][type_here]
-            charges = np.array(list(self._params["default_charges"].values()))
             min_abs_nonzero_charge = np.min(
                 np.abs(charges[np.nonzero(charges)[0]]))
             if abs(total_charge_change) / min_abs_nonzero_charge > 1e-10:
@@ -424,7 +432,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         Performs reaction_steps reactions. Sets the number of reaction steps which are
         performed at once. Do not use too many reaction steps
         steps consecutively without having conformation
-        changing steps in between (especially important for the Wang Landau reaction ensemble). Providing a number for the parameter reaction steps reduces the need for the interpreter to be
+        changing steps in between (especially important for the Wang-Landau reaction ensemble). Providing a number for the parameter reaction steps reduces the need for the interpreter to be
         called between consecutive reactions.
 
         """
@@ -478,7 +486,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def add_collective_variable_potential_energy(self, *args, **kwargs):
         """
-        Adds the potential energy as a collective variable (reaction coordinate) for the Wang Landau Reaction Ensemble.
+        Adds the potential energy as a collective variable (reaction coordinate) for the Wang-Landau Reaction Ensemble.
         Several collective variables can be set simultaneously.
 
         Parameters
@@ -571,7 +579,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def load_wang_landau_checkpoint(self):
         """
-        Loads the dumped wang landau potential file.
+        Loads the dumped Wang-Landau potential file.
 
         """
         checkpoint_name = "checkpoint".encode("utf-8")
@@ -579,7 +587,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def write_wang_landau_checkpoint(self):
         """
-        Dumps the wang landau potential to a checkpoint file. Can be used to
+        Dumps the Wang-Landau potential to a checkpoint file. Can be used to
         checkpoint the Wang-Landau histogram, potential, parameter and the
         number of executed trial moves.
 
@@ -613,7 +621,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def write_wang_landau_results_to_file(self, filename):
         """
-        This writes out the wang landau potential as a function of the used
+        This writes out the Wang-Landau potential as a function of the used
         collective variables.
 
         """

@@ -18,13 +18,15 @@
 */
 
 #include "VirtualSitesRelative.hpp"
+
+#ifdef VIRTUAL_SITES_RELATIVE
+
 #include "cells.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "integrate.hpp"
 #include "rotation.hpp"
-
-#ifdef VIRTUAL_SITES_RELATIVE
 
 void VirtualSitesRelative::update(bool recalc_positions) const {
 
@@ -52,10 +54,8 @@ void VirtualSitesRelative::update_virtual_particle_quaternion(
         "particle associated with virtual site.\n");
   }
   multiply_quaternions(p_real->r.quat, p.p.vs_quat, p.r.quat);
-  convert_quat_to_quatu(p.r.quat, p.r.quatu);
 #ifdef DIPOLES
   // When dipoles are enabled, update dipole moment
-  convert_quatu_to_dip(p.r.quatu, p.p.dipm, p.r.dip);
 #endif
 }
 
@@ -89,7 +89,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   multiply_quaternions(p_real->r.quat, p.p.vs_relative_rel_orientation, q);
   // Calculate the director resulting from the quaternions
   Vector3d director = {0, 0, 0};
-  convert_quat_to_quatu(q, director);
+  convert_quat_to_director(q, director);
   // normalize
   double l = sqrt(sqrlen(director));
   // Division comes in the loop below
@@ -140,8 +140,8 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
   get_mi_vector(d, p.r.p, p_real->r.p);
 
   // Get omega of real particle in space-fixed frame
-  double omega_space_frame[3];
-  convert_omega_body_to_space(p_real, omega_space_frame);
+  Vector3d omega_space_frame =
+      convert_vector_body_to_space(*p_real, p_real->m.omega);
   // Obtain velocity from v=v_real particle + omega_real_particle \times
   // director
   vector_product(omega_space_frame, d, p.m.v);

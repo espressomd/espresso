@@ -378,8 +378,8 @@ ELC theory
 The ELC method differs from the other MMM algorithms in that it is not
 an algorithm for the calculation of the electrostatic interaction, but
 rather represents a correction term which allows to use any method for
-threedimensionally periodic systems with spherical summation order for
-twodimensional periodicity. The basic idea is to expand the two
+three-dimensionally periodic systems with spherical summation order for
+two-dimensional periodicity. The basic idea is to expand the two
 dimensional slab system of height h in the non-periodic z-coordinate to
 a system with periodicity in all three dimensions, with a period of
 :math:`\lambda_z>h`, which leaves an empty gap of height

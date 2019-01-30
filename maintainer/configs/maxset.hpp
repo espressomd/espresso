@@ -33,9 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define LANGEVIN_PER_PARTICLE
 #define SWIMMER_REACTIONS
 
-#define NEMD
 #define NPT
-#define GHMC
+
 #define DPD
 #define METADYNAMICS
 
@@ -71,11 +70,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SOFT_SPHERE
 #define INTER_RF
 #define OVERLAPPED
+
+#ifdef P3M
 #define THOLE
+#endif
 
 #define BOND_ANGLE
-#define BOND_ANGLEDIST
-#define BOND_ANGLEDIST_HARMONIC
 
 #define EXPERIMENTAL_FEATURES
 

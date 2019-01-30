@@ -17,18 +17,57 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ibm_triel.hpp"
+#include "config.hpp"
 
 #ifdef IMMERSED_BOUNDARY
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "immersed_boundary/ibm_triel.hpp"
 #include "particle_data.hpp"
 
-// Internal function
+namespace {
+/** Rotate calculated trielastic forces in the 2d plane back to the 3d plane
+ *Use knowledge that the x-axis in rotated system is parallel to r(p1->p2) in
+ *original system; To find the corresponding unit vector to y in the rotated
+ *system, construct vector perpendicular to r(p1->p2); note that f3 is not
+ *calculated here but is implicitly calculated by f3 = -(f1+f2) which is
+ *consistent with the literature
+ */
 void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
-                  double f2[3], double v12[3], double v13[3]);
+                  double f2[3], const Vector3d &v12, const Vector3d &v13) {
+  // fRot is in the rotated system, i.e. in a system where the side lPrime of
+  // the triangle (i.e. v12) is parallel to the x-axis, and the y-axis is
+  // perpendicular to the x-axis (cf. Krueger, Fig. 7.1c).
+  // I.e. fRot[XX] is the component parallel to the x-axis, fRot[YY]] the
+  // component parallel to the y-axis. Now, the idea is to get these unit
+  // vectors for the x- and y-axis in the real coordinate system. They are named
+  // xu and yu below. The x-component of the force in the real coordinate system
+  // is therefore: fRot[XX]*xu
+
+  // xu is simple: The x-axis in the rotated system is parallel to v12 --> xu =
+  // v12 (+ normalization)
+  auto const xu = Vector3d(v12).normalize();
+
+  // yu needs to be orthogonal to xu, and point in the direction of node 3 in
+  // Krueger, Fig. 7.1b. Therefore: First get the projection of v13 onto v12:
+  // The direction is definied by xu, the length by the scalar product (scalar
+  // product can be interpreted as a projection, after all). --> sca * xu Then:
+  // v13 - sca * xu gives the component of v13 orthogonal to v12, i..e.
+  // perpendicular to the x-axis --> yu Last: Normalize yu.
+  auto const yu = (v13 - (v13 * xu) * xu).normalize();
+
+  // Calculate forces in 3D
+  f1[0] = (f1_rot[0] * xu[0]) + (f1_rot[1] * yu[0]);
+  f1[1] = (f1_rot[0] * xu[1]) + (f1_rot[1] * yu[1]);
+  f1[2] = (f1_rot[0] * xu[2]) + (f1_rot[1] * yu[2]);
+
+  f2[0] = (f2_rot[0] * xu[0]) + (f2_rot[1] * yu[0]);
+  f2[1] = (f2_rot[0] * xu[1]) + (f2_rot[1] * yu[1]);
+  f2[2] = (f2_rot[0] * xu[2]) + (f2_rot[1] * yu[2]);
+}
+} // namespace
 
 /*************
    IBM_Triel_CalcForce
@@ -41,20 +80,17 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
   // get_mi_vector is an Espresso function which considers PBC
-  double vec2[3] = {0., 0., 0.};
-  get_mi_vector(vec2, p3->r.p, p1->r.p);
-  const double l = sqrt(sqrlen(vec2));
+  auto const vec2 = get_mi_vector(p3->r.p, p1->r.p);
+  auto const l = vec2.norm();
 
-  // lp = length between 1 and 2
-  double vec1[3] = {0., 0., 0.};
-  get_mi_vector(vec1, p2->r.p, p1->r.p);
-  const double lp = sqrt(sqrlen(vec1));
+  // lp = lenght between 1 and 2
+  auto const vec1 = get_mi_vector(p2->r.p, p1->r.p);
+  auto const lp = vec1.norm();
 
   // angles between these vectors; calculated directly via the products
-  const double cosPhi = scalar(vec1, vec2) / (lp * l);
-  double vecpro[3] = {0., 0., 0.};
-  vector_product(vec1, vec2, vecpro);
-  const double sinPhi = sqrt(sqrlen(vecpro)) / (l * lp);
+  const double cosPhi = (vec1 * vec2) / (lp * l);
+  auto const vecpro = vec1.cross(vec2);
+  const double sinPhi = vecpro.norm() / (l * lp);
 
   // Check for sanity
   if ((lp - iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxDist) ||
@@ -332,53 +368,4 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
 
   return ES_OK;
 }
-
-/** Rotate calculated trielastic forces in the 2d plane back to the 3d plane
- *Use knowledge that the x-axis in rotated system is parallel to r(p1->p2) in
- *original system; To find the corresponding unit vector to y in the rotated
- *system, construct vector perpendicular to r(p1->p2); note that f3 is not
- *calculated here but is implicitly calculated by f3 = -(f1+f2) which is
- *consistent with the literature
- */
-void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
-                  double f2[3], double v12[3], double v13[3]) {
-  // fRot is in the rotated system, i.e. in a system where the side lPrime of
-  // the triangle (i.e. v12) is parallel to the x-axis, and the y-axis is
-  // perpendicular to the x-axis (cf. Krueger, Fig. 7.1c).
-  // I.e. fRot[XX] is the component parallel to the x-axis, fRot[YY]] the
-  // component parallel to the y-axis. Now, the idea is to get these unit
-  // vectors for the x- and y-axis in the real coordinate system. They are named
-  // xu and yu below. The x-component of the force in the real coordinate system
-  // is therefore: fRot[XX]*xu
-
-  // xu is simple: The x-axis in the rotated system is parallel to v12 --> xu =
-  // v12 (+ normalization)
-  double xu[3] = {0., 0., 0.};
-  unit_vector(v12, xu);
-
-  // yu needs to be orthogonal to xu, and point in the direction of node 3 in
-  // Krueger, Fig. 7.1b. Therefore: First get the projection of v13 onto v12:
-  // The direction is defined by xu, the length by the scalar product (scalar
-  // product can be interpreted as a projection, after all). --> sca * xu Then:
-  // v13 - sca * xu gives the component of v13 orthogonal to v12, i..e.
-  // perpendicular to the x-axis --> yu Last: Normalize yu.
-
-  const double sca = scalar(v13, xu);
-  double y[3] = {0., 0., 0.};
-  for (int i = 0; i < 3; i++)
-    y[i] = v13[i] - (sca * xu[i]);
-
-  double yu[3] = {0., 0., 0.};
-  unit_vector(y, yu);
-
-  // Calculate forces in 3D
-  f1[0] = (f1_rot[0] * xu[0]) + (f1_rot[1] * yu[0]);
-  f1[1] = (f1_rot[0] * xu[1]) + (f1_rot[1] * yu[1]);
-  f1[2] = (f1_rot[0] * xu[2]) + (f1_rot[1] * yu[2]);
-
-  f2[0] = (f2_rot[0] * xu[0]) + (f2_rot[1] * yu[0]);
-  f2[1] = (f2_rot[0] * xu[1]) + (f2_rot[1] * yu[1]);
-  f2[2] = (f2_rot[0] * xu[2]) + (f2_rot[1] * yu[2]);
-}
-
 #endif

@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file dpd.cpp
-    Implementation of \ref dpd.hpp "dpd.hpp"
+/** \file
+ *  Implementation of dpd.hpp.
  */
 #include "dpd.hpp"
 

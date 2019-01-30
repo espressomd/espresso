@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "cuda_utils.hpp"
-#include "mmm-common.hpp"
+#include "electrostatics_magnetostatics/mmm-common.hpp"
 #include "specfunc_cuda.hpp"
 
 // order hardcoded. mmm1d_recalcTables() typically does order less than 30.
@@ -32,7 +32,7 @@ int *linModPsi_offsets = nullptr, *linModPsi_lengths = nullptr;
 mmm1dgpu_real *linModPsi = nullptr;
 
 // linearized array on device
-__constant__ int device_n_modPsi = 0;
+__constant__ int device_n_modPsi[1] = {0};
 __constant__ int device_linModPsi_offsets[2 * modpsi_order],
     device_linModPsi_lengths[2 * modpsi_order];
 __constant__ mmm1dgpu_real device_linModPsi[modpsi_constant_size];
@@ -76,15 +76,16 @@ int modpsi_init() {
       printf("ERROR: __constant__ device_linModPsi[] is not large enough\n");
       exit(EXIT_FAILURE);
     }
-    cuda_safe_mem(cudaMemcpyToSymbol(device_linModPsi_offsets,
+    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi_offsets),
                                      linModPsi_offsets,
                                      2 * n_modPsi * sizeof(int)));
-    cuda_safe_mem(cudaMemcpyToSymbol(device_linModPsi_lengths,
+    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi_lengths),
                                      linModPsi_lengths,
                                      2 * n_modPsi * sizeof(int)));
-    cuda_safe_mem(cudaMemcpyToSymbol(device_linModPsi, linModPsi,
+    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi), linModPsi,
                                      linModPsiSize * sizeof(mmm1dgpu_real)));
-    cuda_safe_mem(cudaMemcpyToSymbol(device_n_modPsi, &n_modPsi, sizeof(int)));
+    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_n_modPsi), &n_modPsi,
+                                     sizeof(int)));
   }
 
   return 0;

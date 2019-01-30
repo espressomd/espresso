@@ -902,7 +902,7 @@ class Analysis(object):
         spherically averaged structure factor of particles specified in
         `types`.  The structure factor is calculated for all possible wave
         vectors q up to `order` Do not choose parameter `order` too large
-        because the number of calculations gros as `order` to the third power.
+        because the number of calculations grows as `order` to the third power.
 
         Parameters
         ----------

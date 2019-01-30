@@ -18,10 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file polymer.cpp
+/** \file
     This file contains everything needed to create a start-up configuration
     of (partially charged) polymer chains with counterions and salt molecules,
-    assigning velocities to the particles and crosslinking the polymers if
+    assigning velocities to the particles and cross-linking the polymers if
    necessary.
 
     The corresponding header file is polymer.hpp.
@@ -34,6 +34,7 @@
 #include <cstring>
 
 #include "PartCfg.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
@@ -41,10 +42,12 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "interaction_data.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
 #include "utils.hpp"
+
+#include "utils/vec_rotate.hpp"
+using Utils::vec_rotate;
 
 /*************************************************************
  * Functions                                                 *
@@ -91,11 +94,11 @@ double buf_mindist4(double pos[3], int n_add, double *add) {
     return (std::min(std::min(box_l[0], box_l[1]), box_l[2]));
   for (i = 0; i < n_add; i++) {
     dx = pos[0] - add[3 * i + 0];
-    dx -= dround(dx / box_l[0]) * box_l[0];
+    dx -= std::round(dx / box_l[0]) * box_l[0];
     dy = pos[1] - add[3 * i + 1];
-    dy -= dround(dy / box_l[1]) * box_l[1];
+    dy -= std::round(dy / box_l[1]) * box_l[1];
     dz = pos[2] - add[3 * i + 2];
-    dz -= dround(dz / box_l[2]) * box_l[2];
+    dz -= std::round(dz / box_l[2]) * box_l[2];
     mindist =
         std::min(mindist, Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
   }
@@ -112,22 +115,16 @@ int collision(PartCfg &partCfg, double pos[3], double shield, int n_add,
 }
 
 int constraint_collision(double *p1, double *p2) {
-  Particle part1, part2;
-  double d1, d2, v[3];
-  double folded_pos1[3];
-  double folded_pos2[3];
-  int img[3];
-
-  memmove(folded_pos1, p1, 3 * sizeof(double));
-  fold_position(folded_pos1, img);
-
-  memmove(folded_pos2, p2, 3 * sizeof(double));
-  fold_position(folded_pos2, img);
+  Vector3d folded_pos1 = folded_position({p1, p1 + 3});
+  Vector3d folded_pos2 = folded_position({p2, p2 + 3});
 
   for (auto &c : Constraints::constraints) {
     auto cs =
         std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
     if (cs) {
+      double d1, d2;
+      double v[3];
+
       cs->calc_dist(folded_pos1, &d1, v);
       cs->calc_dist(folded_pos2, &d2, v);
 
@@ -522,8 +519,7 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
                double val_CI, int cM_dist) {
   int i, j, k, l, part_id, bond[2], type_bond = 0, type_cM = 0, type_nM = 1,
                                     type_CI = 2;
-  double pos[3], pos_shift[3], vec[3], e_vec[3], vec_l,
-      bond_length = (2 * ico_a / 3.) / (1. * MPC);
+  double pos[3], pos_shift[3], vec[3], e_vec[3], vec_l, bond_length;
   double ico_g = ico_a * (1 + sqrt(5)) / 2.0, shift = 0.0;
   double ico_coord[12][3] = {
       {0, +ico_a, +ico_g}, {0, +ico_a, -ico_g}, {0, -ico_a, +ico_g},

@@ -18,14 +18,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.4)
 include(FeatureSummary)
 project(ESPResSo)
 include(cmake/FindPythonModule.cmake)
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "4.0-dev")
+set(PROJECT_VERSION "4.1-dev")
 string(REGEX REPLACE "^([1-9]+)\\.[0-9]+.*$" "\\1" SOVERSION "${PROJECT_VERSION}")
 if (NOT ${SOVERSION} MATCHES "^[1-9]+$")
   message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
@@ -38,26 +38,9 @@ endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-# If the version is smaller than 3.4, use custom find HDF5 module
-# else, use prefer parallel feature of default module.
-if(CMAKE_VERSION VERSION_LESS 3.4)
-  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-                        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/hdf5)
-else()
-  set(HDF5_PREFER_PARALLEL 1)
-endif()
-
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
-
-# Parse repository info from git if available
-include(version)
-
-configure_file(
-  ${CMAKE_SOURCE_DIR}/src/version.hpp.in
-  ${CMAKE_BINARY_DIR}/src/version.hpp
-  )
 
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
@@ -68,13 +51,14 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 
 set(WITH_PYTHON yes)
 
-option(WITH_GSL "Build with GSL support" ON)
+option(WITH_GSL     "Build with GSL support" ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
-option(WITH_SCAFACOS "Build with Scafacos support" ON)
+option(WITH_SCAFACOS "Build with Scafacos support" OFF)
+option(WITH_BENCHMARKS "Enable benchmarks"   OFF)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
-if( CMAKE_VERSION VERSION_GREATER 3.5.2 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
+if(CMAKE_VERSION VERSION_GREATER 3.5.2 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
 if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
@@ -86,6 +70,18 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT APPLE )
   option(WITH_MSAN "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)" OFF)
 endif()
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
+option(WITH_CCACHE "Use ccache compiler invocation." OFF)
+
+if(WITH_CCACHE)
+  find_program(CCACHE ccache)
+  if(CCACHE)
+    message(STATUS "Found ccache ${CCACHE}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE} CACHE STRING "ccache executable")
+  else()
+      message(FATAL_ERROR "ccache not found.")
+  endif(CCACHE)
+endif(WITH_CCACHE)
+
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -133,21 +129,11 @@ if (WITH_CUDA)
     else()
         set(CUDA_DIR "/usr/local/cuda")
     endif()
-    find_library(CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib)
-    find_library(CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib)
-    list(APPEND LIBRARIES ${CUDART_LIBRARY})
-    list(APPEND LIBRARIES ${CUFFT_LIBRARY})
+    find_library(CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
+    find_library(CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
     set(CUDA 1)
 
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --cuda-gpu-arch=sm_30")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 3.8.9)
-      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --cuda-gpu-arch=sm_52")
-    endif()
-
-    function(cuda_include_directories)
-      include_directories(${ARGV})
-    endfunction()
-    function(cuda_add_library)
+    function(add_gpu_library)
       set(options STATIC SHARED MODULE EXCLUDE_FROM_ALL)
       set(oneValueArgs)
       set(multiValueArgs)
@@ -156,33 +142,71 @@ if (WITH_CUDA)
       set_source_files_properties(${ARG_UNPARSED_ARGUMENTS} PROPERTIES LANGUAGE "CXX" COMPILE_FLAGS "${CUDA_NVCC_FLAGS}")
       add_library(${ARGV})
       set_target_properties(${ARGV0} PROPERTIES LINKER_LANGUAGE "CXX")
-      target_link_libraries(${ARGV0} ${CUDA_LIBRARY} ${CUDART_LIBRARY})
-    endfunction()
-    function(CUDA_ADD_CUFFT_TO_TARGET target)
-      target_link_libraries(${target} "cufft")
+      target_link_libraries(${ARGV0} PRIVATE ${CUDA_LIBRARY} ${CUDART_LIBRARY})
+      target_link_libraries(${ARGV0} PRIVATE ${CUFFT_LIBRARY})
+
+      foreach(file ${ARG_UNPARSED_ARGUMENTS})
+        if(${file} MATCHES "\\.cu$")
+                if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 3.8.9)
+                  set_source_files_properties(${file} PROPERTIES COMPILE_FLAGS "--cuda-gpu-arch=sm_30 --cuda-gpu-arch=sm_52")
+                else()
+                  set_source_files_properties(${file} PROPERTIES COMPILE_FLAGS "--cuda-gpu-arch=sm_30")
+                endif()
+        endif()
+      endforeach()
     endfunction()
   else()
-    find_package(CUDA 7.0)
-    if(CUDA_FOUND)
-      list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
-      list(APPEND LIBRARIES ${CUDA_LIBRARIES})
+    list(APPEND CMAKE_MODULE_PATH "/opt/rocm/hip/cmake")
+    find_package(HIP 1.5.18494 QUIET MODULE)
+    if(HIP_FOUND)
+      set(HCC_PATH "${HIP_ROOT_DIR}")
+      find_package(HIP MODULE)
+      message(STATUS "Found HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
       set(CUDA 1)
+      list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier")
 
-      set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g -G")
-      set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -DNDEBUG")
-      set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -Os -DNDEBUG")
-      set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -G -O2")
-      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52")
-      list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
-      if (CUDA_VERSION VERSION_LESS "8.0" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
-        list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED -D_FORCE_INLINES")
-      endif()
-      SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
+      find_library(ROCFFT_LIB name "rocfft" PATHS "${HIP_ROOT_DIR}/lib")
 
-      if (CMAKE_OSX_SYSROOT)
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
-      endif()
-    endif(CUDA_FOUND)
+      function(add_gpu_library)
+        hip_add_library(${ARGV})
+        set_target_properties(${ARGV0} PROPERTIES LINKER_LANGUAGE HIP)
+        target_link_libraries(${ARGV0} PRIVATE "${ROCFFT_LIB}")
+      endfunction()
+    else()
+      find_package(CUDA 7.0)
+      if(CUDA_FOUND)
+        if(NOT CUDA_NVCC_EXECUTABLE STREQUAL "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc")
+          get_filename_component(NVCC_EXECUTABLE_DIRNAME "${CUDA_NVCC_EXECUTABLE}" DIRECTORY)
+          get_filename_component(NVCC_EXECUTABLE_DIRNAME "${NVCC_EXECUTABLE_DIRNAME}" DIRECTORY)
+          message(WARNING "Your nvcc (${CUDA_NVCC_EXECUTABLE}) does not appear to match your CUDA libraries (in ${CUDA_TOOLKIT_ROOT_DIR}). While Espresso will still compile, you might get unexpected crashes. Please point CUDA_TOOLKIT_ROOT_DIR to your CUDA toolkit path, e.g. by adding -DCUDA_TOOLKIT_ROOT_DIR=${NVCC_EXECUTABLE_DIRNAME} to your cmake command.")
+        endif()
+        set(CUDA 1)
+
+        set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
+
+        set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g -G")
+        set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -DNDEBUG")
+        set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -Os -DNDEBUG")
+        set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -G -O2")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52")
+        list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+        if (CUDA_VERSION VERSION_LESS "8.0" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
+          list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED -D_FORCE_INLINES")
+        endif()
+        SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
+
+        if (CMAKE_OSX_SYSROOT)
+          set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
+        endif()
+
+        function(add_gpu_library)
+          cuda_add_library(${ARGV})
+          set_property(TARGET ${ARGV0} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+          target_link_libraries(${ARGV0} PRIVATE ${CUDA_CUFFT_LIBRARIES})
+        endfunction()
+
+      endif(CUDA_FOUND)
+    endif()
   endif()
 endif(WITH_CUDA)
 
@@ -213,11 +237,8 @@ endif(WITH_PYTHON)
 
 find_package(FFTW3)
 if (FFTW3_FOUND)
-  include_directories(SYSTEM ${FFTW3_INCLUDE_DIR})
-  list(APPEND LIBRARIES ${FFTW3_LIBRARIES})
   set(FFTW 3)
 endif(FFTW3_FOUND)
-
 
 # If we build either interface turn on script interface
 if (WITH_PYTHON)
@@ -226,13 +247,12 @@ endif()
 
 # We need the parallel hdf5 version!
 if (WITH_HDF5)
+  set(HDF5_PREFER_PARALLEL 1)
   find_package(HDF5 "1.8" COMPONENTS C)
   if(HDF5_IS_PARALLEL)
     set(H5MD 1)
     include(FindPythonModule)
     find_python_module(h5py)
-    list(APPEND LIBRARIES ${HDF5_LIBRARIES})
-    include_directories(SYSTEM ${HDF5_INCLUDE_DIRS})
     add_feature_info(HDF5 ON "parallel")
   else()
     unset(H5MD)
@@ -282,15 +302,33 @@ if(WITH_VALGRIND_INSTRUMENTATION)
 endif(WITH_VALGRIND_INSTRUMENTATION)
 
 #######################################################################
-# Process MPI settings
+# MPI
 #######################################################################
 
 find_package(MPI REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
-include_directories(SYSTEM ${MPI_INCLUDE_PATH})
-list(APPEND LIBRARIES ${MPI_LIBRARIES})
-add_definitions(-DH5XX_USE_MPI)
+
+# CMake < 3.9
+if(NOT TARGET MPI::MPI_CXX)
+  add_library(MPI::MPI_CXX IMPORTED INTERFACE)
+
+  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
+  foreach(_MPI_FLAG ${MPI_CXX_COMPILE_FLAGS})
+     set_property(TARGET MPI::MPI_CXX
+            PROPERTY INTERFACE_COMPILE_OPTIONS ${_MPI_FLAG})
+  endforeach()
+
+  set_property(TARGET MPI::MPI_CXX
+          PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
+
+  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
+  foreach(_MPI_FLAG ${MPI_CXX_LINK_FLAGS})
+  set_property(TARGET MPI::MPI_CXX
+          PROPERTY INTERFACE_LINK_LIBRARIES ${_MPI_FLAG})
+  endforeach()
+
+  set_property(TARGET MPI::MPI_CXX
+          PROPERTY INTERFACE_LINK_LIBRARIES ${MPI_CXX_LIBRARIES})
+endif()
 
 #######################################################################
 # Boost
@@ -312,9 +350,12 @@ else()
   set(BOOST_MINIMUM_VERSION "1.53.0")
 endif()
 
+# old Boost.MPI versions contain a use-after-free bug that seems to only cause crashes on 32-bit architectures
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(BOOST_MINIMUM_VERSION "1.67.0")
+endif()
+
 find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
-list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
 if(Boost_VERSION VERSION_GREATER 106399 AND Boost_VERSION VERSION_LESS 106500)
   # Boost 1.64 has incompatible Serialization and MPI modules, see https://svn.boost.org/trac10/ticket/12723 .
@@ -329,19 +370,11 @@ endif()
 # Paths
 #######################################################################
 
-if (NOT DEFINED DATA)
-  set(DATA "share/espresso")
-endif(NOT DEFINED DATA)
-
-if (NOT DEFINED LIBDIR)
-  set(LIBDIR "lib")
-endif(NOT DEFINED LIBDIR)
-
 if (NOT DEFINED BINDIR)
   set(BINDIR "bin")
 endif(NOT DEFINED BINDIR)
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 
 
 #######################################################################
@@ -352,16 +385,9 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-if(CMAKE_VERSION VERSION_LESS 3.1)
-  include(RequireCXX11)
-endif()
 
-if(APPLE)
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
-endif()
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
-endif()
+# drop 'lib' prefix from all libraries
+set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 if(WARNINGS_ARE_ERRORS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
@@ -369,10 +395,32 @@ if(WARNINGS_ARE_ERRORS)
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
   endif()
 endif(WARNINGS_ARE_ERRORS)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -Wno-unused-function -Wno-unused-variable")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+endif()
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0.0"))
+  # disable warnings from -Wextra
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-implicit-fallthrough")
+endif()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # disable warnings from -Wextra
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-clobbered -Wno-cast-function-type")
+endif()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0.0" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # disable warnings from -Wextra
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-field-initializers")
+endif()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  # disable warnings from -Wextra
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd592")
+endif()
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   # G++ and Intel don't know this flag
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
+endif()
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-zero-variadic-macro-arguments")
 endif()
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.8.5")
   # older versions don't support -Wno-pedantic which we need in src/python
@@ -381,6 +429,11 @@ endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "16.0")
   # workaround for compiler crash related to decltype() and variadic template usage inside Boost
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX11_VARIADIC_TEMPLATES")
+endif()
+
+# prevent 80-bit arithmetic on old Intel processors
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffloat-store")
 endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)
@@ -423,11 +476,15 @@ if(WITH_TESTS)
   enable_testing()
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     set(WITH_UNIT_TESTS ON)
-    list(APPEND LIBRARIES ${Boost_LIBRARIES})
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
   add_subdirectory(testsuite)
 endif(WITH_TESTS)
+
+if(WITH_BENCHMARKS)
+  add_custom_target(benchmark)
+  add_subdirectory(maintainer/benchmarks)
+endif(WITH_BENCHMARKS)
 
 #######################################################################
 # Subdirectories
@@ -435,7 +492,6 @@ endif(WITH_TESTS)
 
 add_subdirectory(doc)
 add_subdirectory(src)
-add_subdirectory(config)
 
 #######################################################################
 # Feature summary

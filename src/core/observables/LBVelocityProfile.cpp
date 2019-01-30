@@ -17,7 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "LBVelocityProfile.hpp"
-#include "lb.hpp"
+#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lbgpu.hpp"
 #include "utils/Histogram.hpp"
 
 namespace Observables {

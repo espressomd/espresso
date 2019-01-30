@@ -19,13 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CLUSTER_ANALYSIS_CLUSTER_HPP
 #define CLUSTER_ANALYSIS_CLUSTER_HPP
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 #include <map>
 #include <string>
 #include <valarray>
 #include <vector>
 
-#include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include <tuple>
 
@@ -51,8 +50,7 @@ public:
    *  N(r) via r^d, where N(r) counts the number of particles in a sphere
    *  of radius n, and d denotes the fractal dimension.
    *  The fitting is done by the Gnu Scientific Library.
-   *  @param dr:   increment for when constructing the discrete version of N(r)
-   *  @param mean_sq_residual:  Mean square residual returned by the fit
+   *  @param dr   increment for when constructing the discrete version of N(r)
    *
    *  @return fractal dimension, rms error of the fit */
   std::pair<double, double> fractal_dimension(double dr);

@@ -310,7 +310,7 @@ def nesting_level(obj):
 
     """
 
-    if not isinstance(obj, (list, tuple)):
+    if not isinstance(obj, (list, tuple, np.ndarray)):
         return 0
 
     obj = list(obj)
@@ -331,6 +331,8 @@ def is_valid_type(value, t):
     if t == int:
         return isinstance(value, (int, np.integer, np.long))
     elif t == float:
-        return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+        if hasattr(np, 'float128'):
+            return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+        return isinstance(value, (float, np.float16, np.float32, np.float64, np.longdouble))
     else:
         return isinstance(value, t)

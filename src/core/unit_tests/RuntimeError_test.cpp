@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file RuntimeError_test.cpp Unit tests for the ErrorHandling::RuntimeError
- * class.
+/** \file
+ * Unit tests for the ErrorHandling::RuntimeError class.
  *
  */
 
@@ -34,7 +34,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include "../RuntimeError.hpp"
+#include "RuntimeError.hpp"
 
 using ErrorHandling::RuntimeError;
 using std::string;

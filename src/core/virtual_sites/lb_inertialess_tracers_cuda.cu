@@ -1,3 +1,4 @@
+#include "cuda_wrapper.hpp"
 
 // *******
 // This is an internal file of the IMMERSED BOUNDARY implementation
@@ -10,8 +11,9 @@
 
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
-#include "lbboundaries.hpp"
-#include "lbgpu.hpp"
+#include "grid_based_algorithms/lbboundaries.hpp"
+#include "grid_based_algorithms/lbgpu.cuh"
+#include "grid_based_algorithms/lbgpu.hpp"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
@@ -32,7 +34,6 @@ __global__ void
 ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
                        LB_node_force_density_gpu node_f,
                        const LB_parameters_gpu *const paraP);
-__device__ inline void atomicadd(float *address, float value);
 
 // ***** Other functions for internal use *****
 void InitCUDA_IBM(const int numParticles);
@@ -51,7 +52,7 @@ extern LB_nodes_gpu *current_nodes;
 // ** These variables are static in lbgpu_cuda.cu, so we need to duplicate them
 // here They are initialized in ForcesIntoFluid The pointers are on the host,
 // but point into device memory
-LB_parameters_gpu *paraIBM = nullptr;
+LB_parameters_gpu *para_gpu = nullptr;
 float *lb_boundary_velocity_IBM = nullptr;
 
 /****************
@@ -69,8 +70,8 @@ void IBM_ResetLBForces_GPU() {
                             (threads_per_block * blocks_per_grid_y);
     dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-    KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block,
-               (node_f, paraIBM));
+    KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block, node_f,
+               para_gpu);
   }
 }
 
@@ -119,8 +120,8 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
         make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
     KERNELCALL(ForcesIntoFluid_Kernel, dim_grid_particles,
-               threads_per_block_particles,
-               (IBM_ParticleDataInput_device, node_f, paraIBM));
+               threads_per_block_particles, IBM_ParticleDataInput_device,
+               node_f, para_gpu);
   }
 }
 
@@ -139,7 +140,6 @@ void InitCUDA_IBM(const int numParticles) {
       delete[] IBM_ParticleDataOutput_host;
       cuda_safe_mem(cudaFree(IBM_ParticleDataInput_device));
       cuda_safe_mem(cudaFree(IBM_ParticleDataOutput_device));
-      cuda_safe_mem(cudaFree(paraIBM));
       cuda_safe_mem(cudaFree(lb_boundary_velocity_IBM));
     }
 
@@ -153,12 +153,8 @@ void InitCUDA_IBM(const int numParticles) {
                    numParticles * sizeof(IBM_CUDA_ParticleDataOutput)));
     IBM_ParticleDataOutput_host = new IBM_CUDA_ParticleDataOutput[numParticles];
 
-    // Copy parameters to the GPU
-    LB_parameters_gpu *para_gpu;
+    // Use LB parameters
     lb_get_para_pointer(&para_gpu);
-    cuda_safe_mem(cudaMalloc((void **)&paraIBM, sizeof(LB_parameters_gpu)));
-    cuda_safe_mem(cudaMemcpy(paraIBM, para_gpu, sizeof(LB_parameters_gpu),
-                             cudaMemcpyHostToDevice));
 
     // Copy boundary velocities to the GPU
     // First put them into correct format
@@ -292,10 +288,9 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
     dim3 dim_grid_particles =
         make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
     KERNELCALL(ParticleVelocitiesFromLB_Kernel, dim_grid_particles,
-               threads_per_block_particles,
-               (*current_nodes, IBM_ParticleDataInput_device,
-                IBM_ParticleDataOutput_device, node_f, lb_boundary_velocity_IBM,
-                paraIBM));
+               threads_per_block_particles, *current_nodes,
+               IBM_ParticleDataInput_device, IBM_ParticleDataOutput_device,
+               node_f, lb_boundary_velocity_IBM, para_gpu);
 
     // Copy velocities from device to host
     cuda_safe_mem(cudaMemcpy(IBM_ParticleDataOutput_host,
@@ -385,13 +380,13 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
     for (int i = 0; i < 8; ++i) {
 
       // Atomic add is essential because this runs in parallel!
-      atomicadd(
+      atomicAdd(
           &(node_f.force_density[0 * para.number_of_nodes + node_index[i]]),
           (particleForce[0] * delta[i]));
-      atomicadd(
+      atomicAdd(
           &(node_f.force_density[1 * para.number_of_nodes + node_index[i]]),
           (particleForce[1] * delta[i]));
-      atomicadd(
+      atomicAdd(
           &(node_f.force_density[2 * para.number_of_nodes + node_index[i]]),
           (particleForce[2] * delta[i]));
     }
@@ -559,32 +554,6 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
       }
     }
   }
-}
-
-/************
-   atomicadd
-This is a copy of the atomicadd from lbgpu_cuda.cu
-*************/
-
-__device__ inline void atomicadd(float *address, float value) {
-
-#if !defined __CUDA_ARCH__ ||                                                  \
-    __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
-  atomicAdd(address, value);
-#elif __CUDA_ARCH__ >= 110
-
-#warning Using slower atomicAdd emulation
-
-  // float-atomic-add from
-  //[url="http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561"]
-
-  float old = value;
-  while ((old = atomicExch(address, atomicExch(address, 0.0f) + old)) != 0.0f)
-    ;
-
-#else
-#error CUDA compute capability 1.1 or higher required
-#endif
 }
 
 #endif

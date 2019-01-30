@@ -20,17 +20,18 @@
 */
 #ifndef _STATISTICS_H
 #define _STATISTICS_H
-/** \file statistics.hpp
-    This file contains the code for statistics on the data.
-*/
+/** \file
+ *  Statistical tools to analyze simulations.
+ *
+ *  Implementation in statistics.cpp.
+ */
 
 #include "PartCfg.hpp"
 #include "grid.hpp"
-#include "interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
-
 #include <map>
 #include <string>
 #include <vector>
@@ -49,7 +50,7 @@ struct Observable_stat {
   /** Array for observables on each node. */
   DoubleList data;
 
-  /** number of coulomb interactions */
+  /** number of Coulomb interactions */
   int n_coulomb;
   /** number of dipolar interactions */
   int n_dipolar;
@@ -64,9 +65,9 @@ struct Observable_stat {
   double *bonded;
   /** start of observables for non-bonded interactions. */
   double *non_bonded;
-  /** start of observables for coulomb interaction. */
+  /** start of observables for Coulomb interaction. */
   double *coulomb;
-  /** start of observables for coulomb interaction. */
+  /** start of observables for Coulomb interaction. */
   double *dipolar;
   /** Start of observables for virtual sites relative (rigid bodies) */
   double *virtual_sites;
@@ -148,6 +149,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
                 int *agg_avg, int *agg_std, int charge_criteria);
 
 /** returns all particles within a given radius r_catch around a position.
+    @param partCfg
     @param pos position of sphere of point
     @param r_catch the radius around the position
     @param planedims orientation of coordinate system
@@ -222,6 +224,7 @@ void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types,
     the distribution function is binned into r_bin bins, which are
     equidistant. The result is stored in the array rdf.
 
+    @param partCfg
     @param p1_types list with types of particles to find the distribution for.
     @param n_p1     length of p1_types.
     @param p2_types list with types of particles the others are distributed
@@ -248,6 +251,7 @@ void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
     the distribution function is binned into r_bin bins, which are
     equidistant. The result is stored in the array rdf.
 
+    @param partCfg
     @param p1_types list with types of particles to find the distribution for.
     @param n_p1     length of p1_types.
     @param p2_types list with types of particles the others are distributed
@@ -272,7 +276,7 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
     Calculates the van Hove auto correlation function (acf)  G(r,t) which is the
    probability that a particle has moved
     a distance r after time t. In the case of a random walk G(r,t)/(4 pi r*r) is
-   a gaussian. The mean square
+   a Gaussian. The mean square
     displacement (msd) is connected to the van Hove acf via sqrt(msd(t)) = int
    G(r,t) dr. This is very useful for
     the investigation of diffusion processes.
@@ -333,11 +337,6 @@ int calc_cylindrical_average(
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution);
 
-int calc_radial_density_map(int xbins, int ybins, int thetabins, double xrange,
-                            double yrange, double axis[3], double center[3],
-                            IntList *beadids, DoubleList *density_map,
-                            DoubleList *density_profile);
-
 template <typename T1, typename T2>
 double min_distance2(T1 const pos1, T2 const pos2) {
   double diff[3];
@@ -356,8 +355,7 @@ double min_distance(T1 const pos1, T2 const pos2) {
 }
 
 /** calculate the center of mass of a special type of the current configuration
- *  \param type  type of the particle
- *  \param com   center of mass position
+ *  \param part_type  type of the particle
  */
 std::vector<double> centerofmass(PartCfg &, int part_type);
 
@@ -374,11 +372,10 @@ std::vector<double> centerofmass_vel(PartCfg &, int type);
 void angularmomentum(PartCfg &, int type, double *com);
 
 /** calculate the center of mass of a special type of a saved configuration
- *  \param k       number of the saved configuration
- *  \param type_1  type of the particle, -1 for all
- *  \param com     center of mass position
+ *  \param partCfg
+ *  \param type    type of the particle, -1 for all
+ *  \param MofImatrix
  */
-
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
 
 /** returns the momentum of the particles in the simulation box.
