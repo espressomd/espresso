@@ -108,7 +108,10 @@ LB_Parameters lbpar = {
     // is_TRT
     false,
     // resend_halo
-    0};
+    0,
+    // phi
+    {}
+};
 
 /** The DnQm model to be used. */
 LB_Model<> lbmodel = {::D3Q19::c,
