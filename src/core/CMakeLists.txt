@@ -130,7 +130,6 @@ set(EspressoCore_SRC
   observables/LBVelocityProfile.cpp
   virtual_sites/lb_inertialess_tracers.cpp
   virtual_sites/lb_inertialess_tracers_cuda_interface.cpp
-  virtual_sites/virtual_sites_com.cpp
   virtual_sites/VirtualSitesInertialessTracers.cpp
   virtual_sites/VirtualSitesRelative.cpp
   )
