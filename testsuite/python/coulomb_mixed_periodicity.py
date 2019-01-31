@@ -30,7 +30,7 @@ from espressomd import scafacos
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
+@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "PARTIAL_PERIODIC"]),
            "Features not available, skipping test!")
 class CoulombMixedPeriodicity(ut.TestCase):
 
