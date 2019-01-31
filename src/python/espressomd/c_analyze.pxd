@@ -83,7 +83,6 @@ cdef extern from "pressure.hpp":
     cdef Observable_stat total_p_tensor
     cdef Observable_stat_non_bonded total_p_tensor_non_bonded
     cdef void update_pressure(int)
-    cdef int analyze_local_stress_tensor(int * periodic, double * range_start, double * range, int * bins, double_list * local_stress_tensor)
 
 cdef extern from "energy.hpp":
     cdef Observable_stat total_energy
