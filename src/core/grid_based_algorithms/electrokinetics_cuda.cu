@@ -3993,4 +3993,3 @@ int ek_load_checkpoint(char *filename) {
 #endif /* ELECTROKINETICS */
 
 #endif /* CUDA */
-

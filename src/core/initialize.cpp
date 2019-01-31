@@ -47,10 +47,10 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
 #include "lattice.hpp"
 #include "metadynamics.hpp"
 #include "nonbonded_interactions/reaction_field.hpp"
@@ -277,11 +277,10 @@ void on_observable_calc() {
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef ELECTROKINETICS
-      if (ek_initialized) {
-        ek_integrate_electrostatics();
-      }
+  if (ek_initialized) {
+    ek_integrate_electrostatics();
+  }
 #endif
-  
 }
 
 void on_particle_charge_change() {

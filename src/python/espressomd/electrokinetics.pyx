@@ -45,7 +45,6 @@ IF ELECTROKINETICS:
 
             return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude", "es_coupling"
 
-
         def required_keys(self):
             """
             Returns the necessary options to initialize the electrokinetic method.
@@ -70,8 +69,8 @@ IF ELECTROKINETICS:
                     "stencil": "linkcentered",
                     "advection": True,
                     "fluid_coupling": "friction",
-                    "fluctuations" : False,
-                    "fluctuation_amplitude" : 0.0,
+                    "fluctuations": False,
+                    "fluctuation_amplitude": 0.0,
                     "es_coupling": False}
 
         def _get_params_from_es_core(self):
@@ -100,7 +99,8 @@ IF ELECTROKINETICS:
                     "advection": ek_parameters.advection,
                     "fluid_coupling": fluid_coupling,
                     "fluctuations": ek_parameters.fluctuations,
-                    "fluctuation_amplitude": ek_parameters.fluctuation_amplitude,
+                    "fluctuation_amplitude":
+                        ek_parameters.fluctuation_amplitude,
                     "es_coupling": ek_parameters.es_coupling}
 
         def _set_params_in_es_core(self):
@@ -472,13 +472,11 @@ IF ELECTROKINETICS:
             """
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
 
-
         def print_vtk_flux_fluc(self, path):
             ek_print_vtk_flux_fluc(self.id, utils.to_char_pointer(path))
 
         def print_vtk_flux_link(self, path):
             ek_print_vtk_flux_link(self.id, utils.to_char_pointer(path))
-
 
     cdef class SpecieRoutines(object):
         cdef Vector3i node
