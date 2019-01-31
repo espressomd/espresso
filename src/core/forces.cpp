@@ -262,9 +262,11 @@ void calc_long_range_forces() {
     break;
   }
 
+#ifdef ELECTROKINETICS
 /* If enabled, calculate electrostatics contribution from electrokinetics
  * species. */
   ek_calculate_electrostatic_coupling();
+#endif
 
 #endif /*ifdef ELECTROSTATICS */
 
