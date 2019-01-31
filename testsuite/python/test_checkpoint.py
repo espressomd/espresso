@@ -24,20 +24,25 @@ import espressomd.virtual_sites
 import tests_common
 
 
+modes = set("@TEST_COMBINATION@".upper().split('-'))
+LB = (espressomd.has_features('LB') and 'LBCPU' in modes or
+      espressomd.has_features('LB_GPU') and 'LBGPU' in modes)
+
+
 class CheckpointTest(ut.TestCase):
 
     @classmethod
     def setUpClass(self):
         checkpoint = espressomd.checkpointing.Checkpoint(
-            checkpoint_id="mycheckpoint",
+            checkpoint_id="mycheckpoint_@TEST_COMBINATION@",
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
-        if espressomd.has_features('LB'):
+        if LB:
             self.lbf = system.actors[0]
-            self.lbf.load_checkpoint("@CMAKE_CURRENT_BINARY_DIR@/lb.cpt", 1)
+            self.lbf.load_checkpoint(
+                "@CMAKE_CURRENT_BINARY_DIR@/lb_@TEST_COMBINATION@.cpt", 1)
 
-    @ut.skipIf(not espressomd.has_features('LB'),
-               "Skipping test due to missing features.")
+    @ut.skipIf(not LB, "Skipping test due to missing features.")
     def test_LB(self):
         np.testing.assert_almost_equal(
             np.copy(self.lbf[1, 1, 1].velocity), np.array([0.1, 0.2, 0.3]))
@@ -65,10 +70,10 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(system.thermostat.get_state()[
             0]['gamma'], np.array([2.0, 2.0, 2.0]))
 
-    @ut.skipIf(
-        not espressomd.has_features(
-            ['LENNARD_JONES']),
-        "Cannot test for Lennard-Jones checkpointing because feature not compiled in.")
+    @ut.skipIf(not espressomd.has_features('LENNARD_JONES'),
+               "Skipping test due to missing features.")
+    @ut.skipIf('LJ' not in modes,
+               "Skipping test due to missing combination.")
     def test_non_bonded_inter(self):
         state = system.non_bonded_inter[
             0, 0].lennard_jones._get_params_from_es_core()
@@ -89,10 +94,11 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(
             len(set(state.items()) & set(reference.items())), len(reference))
 
-    @ut.skipIf(
-        not espressomd.has_features(
-            ['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']),
-        "Cannot test for virtual site checkpointing because feature not compiled in.")
+    @ut.skipIf(not espressomd.has_features(['VIRTUAL_SITES',
+                                            'VIRTUAL_SITES_RELATIVE']),
+               "Skipping test due to missing features.")
+    @ut.skipIf('VIRTUAL' not in modes,
+               "Skipping test due to missing combination.")
     def test_virtual_sites(self):
         self.assertEqual(system.part[1].virtual, 1)
         self.assertTrue(
@@ -106,22 +112,28 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(
             acc.get_variance(), np.array([0., 0.5, 2., 0., 0., 0.]))
 
-    @ut.skipIf(
-        not espressomd.has_features(
-            ['ELECTROSTATICS']),
-        "Cannot test for P3M checkpointing because feature not compiled in.")
+    @ut.skipIf(not espressomd.has_features('ELECTROSTATICS'),
+               "Skipping test due to missing features.")
+    @ut.skipIf('P3M' not in modes,
+               "Skipping test due to missing combination.")
     def test_p3m(self):
         self.assertTrue(any(isinstance(actor, espressomd.electrostatics.P3M)
                             for actor in system.actors.active_actors))
     
-    @ut.skipIf(not espressomd.has_features("COLLISION_DETECTION"), "skipped for missing features")
+    @ut.skipIf(not espressomd.has_features('COLLISION_DETECTION'),
+               "Skipping test due to missing features.")
+    @ut.skipIf('COLLISION' not in modes,
+               "Skipping test due to missing combination.")
     def test_collision_detection(self):
         coldet = system.collision_detection
         self.assertEqual(coldet.mode, "bind_centers")
         self.assertAlmostEqual(coldet.distance, 0.11, delta=1E-9)
         self.assertTrue(coldet.bond_centers, system.bonded_inter[0])
 
-    @ut.skipIf(not espressomd.has_features("EXCLUSIONS"), "Skipped because feature EXCLUSIONS missing.")
+    @ut.skipIf(not espressomd.has_features('EXCLUSIONS'),
+               "Skipping test due to missing features.")
+    @ut.skipIf('EXCLUSIONS' not in modes,
+               "Skipping test due to missing combination.")
     def test_exclusions(self):
         self.assertTrue(
             tests_common.lists_contain_same_elements(system.part[0].exclusions, [2]))
