@@ -1410,7 +1410,6 @@ void mpi_set_time_step(double time_s) {
 
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
 
-  rescale_velocities(time_step / old_ts);
   on_parameter_change(FIELD_TIMESTEP);
 }
 
@@ -1418,7 +1417,6 @@ void mpi_set_time_step_slave(int, int) {
   double old_ts = time_step;
 
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
-  rescale_velocities(time_step / old_ts);
   on_parameter_change(FIELD_TIMESTEP);
   time_step_squared = time_step * time_step;
   time_step_squared_half = time_step_squared / 2.;
