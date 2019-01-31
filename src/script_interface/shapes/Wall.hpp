@@ -32,7 +32,6 @@ class Wall : public Shape {
 public:
   Wall() : m_wall(new ::Shapes::Wall()) {
     add_parameters({{"dist", m_wall->d()},
-                    {"width", m_wall->w()},
                     {"normal",
                      [this](Variant const &v) {
                        m_wall->set_normal(get_value<Vector3d>(v));

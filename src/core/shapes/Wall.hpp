@@ -28,7 +28,7 @@
 namespace Shapes {
 class Wall : public Shape {
 public:
-  Wall() : m_n({1., 0., 0.}), m_d(0.0) , m_w(0.0) {}
+  Wall() : m_n({1., 0., 0.}), m_d(0.0) {}
 
   void calculate_dist(const Vector3d &pos, double *dist,
                       double *vec) const override;
@@ -44,10 +44,6 @@ public:
   double const &d() const { return m_d; }
 
   double &d() { return m_d; }
-
-  double const &w() const { return m_w; }
-
-  double &w() { return m_w; }
 
 private:
   /** normal vector on the plane */
