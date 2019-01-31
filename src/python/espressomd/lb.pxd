@@ -106,7 +106,7 @@ IF LB_GPU or LB:
         int lb_lbfluid_set_couple_flag(int c_couple_flag)
         int lb_lbfluid_get_couple_flag(int * c_couple_flag)
         int lb_lbfluid_get_interpolated_velocity_global(Vector3d & p, double * v)
-        int lb_lbfluid_get_pi(double * pi)
+        int lb_lbfluid_get_stress(double * pi)
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()

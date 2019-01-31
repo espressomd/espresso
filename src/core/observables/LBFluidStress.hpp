@@ -15,7 +15,7 @@ public:
     std::vector<double> res(n_values(), 0.0);
 
 #if defined(LB_GPU) || defined(LB)
-    lb_lbfluid_get_pi(res.data());
+    lb_lbfluid_get_stress(res.data());
 #endif
 
     return res;

@@ -1417,7 +1417,7 @@ int lb_lbnode_get_pi_neq(const Vector3i &ind, double *p_pi) {
 /** calculates the average stress of all nodes by iterating
  * over all nodes and deviding by the number_of_nodes.
  */
-int lb_lbfluid_get_pi(double *p_pi) {
+int lb_lbfluid_get_stress(double *p_pi) {
 
   for (int l = 0; l < 6; l++) {
     p_pi[l] = 0.0;

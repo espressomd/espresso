@@ -263,10 +263,10 @@ IF LB_GPU or LB:
             if lb_set_lattice_switch(0):
                 raise Exception("lb_set_lattice_switch error")
 
-        property pi_fluid:
+        property stress_fluid:
             def __get__(self):
                 cdef double[6] pi
-                lb_lbfluid_get_pi(pi)
+                lb_lbfluid_get_stress(pi)
                 return array_locked(np.array([[pi[0], pi[1], pi[3]],
                                               [pi[1], pi[2], pi[4]],
                                               [pi[3], pi[4], pi[5]]]))
