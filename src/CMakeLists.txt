@@ -21,8 +21,10 @@
 # Target for the unit tests
 add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) --output-on-failure)
 
-# Run unit tests on check
-add_dependencies(check check_unit_tests)
+if(WITH_TESTS)
+  # Run unit tests on check
+  add_dependencies(check check_unit_tests)
+endif(WITH_TESTS)
 
 # unit_test function
 function(UNIT_TEST)
