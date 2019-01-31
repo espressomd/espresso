@@ -30,9 +30,9 @@ IF ELECTROKINETICS:
             """
             default_params = self.default_params()
 
-            if not (self._params["stencil"] in ["linkcentered", "nonlinear", "nodecentered"]):
+            if not (self._params["stencil"] in ["linkcentered", "nodecentered"]):
                 raise ValueError(
-                    "stencil has to be 'linkcentered', 'nonlinear' or 'nodecentered'.")
+                    "stencil has to be 'linkcentered' or 'nodecentered'.")
 
             if not (self._params["fluid_coupling"] in ["friction", "estatics"]):
                 raise ValueError(
@@ -78,8 +78,6 @@ IF ELECTROKINETICS:
             if ek_parameters.stencil == 0:
                 stencil = "linkcentered"
             elif ek_parameters.stencil == 1:
-                stencil = "nonlinear"
-            elif ek_parameters.stencil == 2:
                 stencil = "nodecentered"
             else:
                 raise Exception("Value of stencil could not be identified.")
@@ -108,10 +106,8 @@ IF ELECTROKINETICS:
         def _set_params_in_es_core(self):
             if self._params["stencil"] == "linkcentered":
                 ek_set_stencil(0)
-            elif self._params["stencil"] == "nonlinear":
-                ek_set_stencil(1)
             elif self._params["stencil"] == "nodecentered":
-                ek_set_stencil(2)
+                ek_set_stencil(1)
 
             if self._params["fluid_coupling"] == "friction":
                 ek_set_fluidcoupling(True)
