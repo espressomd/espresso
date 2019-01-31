@@ -1445,7 +1445,8 @@ int lb_lbfluid_get_stress(double *p_pi) {
 #endif
   } else {
 #ifdef LB
-    int number_of_nodes = lblattice.global_grid[0] * lblattice.global_grid[1] * lblattice.global_grid[2];
+    int number_of_nodes = lblattice.global_grid[0] * lblattice.global_grid[1] *
+                          lblattice.global_grid[2];
 
     for (int i = 0; i < lblattice.global_grid[0]; i++) {
       for (int j = 0; j < lblattice.global_grid[1]; j++) {
