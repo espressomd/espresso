@@ -43,7 +43,7 @@ IF ELECTROKINETICS:
             Returns the valid options used for the electrokinetic method.
             """
 
-            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude"
+            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude", "es_coupling"
 
 
         def required_keys(self):
@@ -100,8 +100,8 @@ IF ELECTROKINETICS:
                     "advection": ek_parameters.advection,
                     "fluid_coupling": fluid_coupling,
                     "fluctuations": ek_parameters.fluctuations,
-                    "fluctuation_amplitude": ek_parameters.fluctuation_amplitude}#,
-                    #"es_coupling": ek_parameters.es_coupling}
+                    "fluctuation_amplitude": ek_parameters.fluctuation_amplitude,
+                    "es_coupling": ek_parameters.es_coupling}
 
         def _set_params_in_es_core(self):
             if self._params["stencil"] == "linkcentered":
@@ -126,8 +126,7 @@ IF ELECTROKINETICS:
             ek_set_advection(self._params["advection"])
             ek_set_fluctuations(self._params["fluctuations"])
             ek_set_fluctuation_amplitude(self._params["fluctuation_amplitude"])
-            IF EK_ELECTROSTATIC_COUPLING:
-                ek_set_electrostatics_coupling(self._params["es_coupling"])
+            ek_set_electrostatics_coupling(self._params["es_coupling"])
 
         def set_density(self, species=None, density=None, node=None):
             """
@@ -300,13 +299,14 @@ IF ELECTROKINETICS:
             path : :obj:`string`
                    The path and vtk-file name the electrostatic potential is written to.
 
-            note : This only works if 'EK_ELECTROSTATIC_COUPLING' is active.
+            note : This only works if 'es_coupling' is active.
 
             """
-            IF EK_ELECTROSTATIC_COUPLING:
+
+            if(self._params["es_coupling"]):
                 ek_print_vtk_particle_potential(utils.to_char_pointer(path))
-            ELSE:
-                raise Exception("'EK_ELECTROSTATIC_COUPLING' is not active.")
+            else:
+                raise Exception("'es_coupling' is not active.")
 
         # TODO:
         def checkpoint(self):

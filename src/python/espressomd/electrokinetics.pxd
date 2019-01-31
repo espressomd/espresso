@@ -58,10 +58,9 @@ IF ELECTROKINETICS and CUDA:
             float valency[MAX_NUMBER_OF_SPECIES]
             float ext_force_density[3][MAX_NUMBER_OF_SPECIES]
             char * node_is_catalyst
-            # IF EK_ELECTROSTATIC_COUPLING:
-            #     bool es_coupling
-            #     float *charge_potential_buffer
-            #     float *electric_field
+            bool es_coupling
+            float * charge_potential_buffer
+            float * electric_field
 
         cdef extern EK_parameters ek_parameters
 
@@ -109,10 +108,9 @@ IF ELECTROKINETICS and CUDA:
         int ek_save_checkpoint(char * filename)
         int ek_load_checkpoint(char * filename)
 
-        IF EK_ELECTROSTATIC_COUPLING:
-            int ek_set_electrostatics_coupling(bool electrostatics_coupling)
-            void ek_calculate_electrostatic_coupling()
-            int ek_print_vtk_particle_potential(char * filename)
+        int ek_set_electrostatics_coupling(bool electrostatics_coupling)
+        void ek_calculate_electrostatic_coupling()
+        int ek_print_vtk_particle_potential(char * filename)
 
         IF EK_BOUNDARIES:
             void ek_init_species_density_wallcharge(ekfloat * wallcharge_species_density, int wallcharge_species)
