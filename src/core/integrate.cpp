@@ -489,14 +489,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 /************************************************************/
 
-void rescale_velocities(double scale) {
-  for (auto &p : local_cells.particles()) {
-    p.m.v[0] *= scale;
-    p.m.v[1] *= scale;
-    p.m.v[2] *= scale;
-  }
-}
-
 /* Private functions */
 /************************************************************/
 
