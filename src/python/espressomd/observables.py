@@ -242,6 +242,7 @@ class LBVelocityProfile(Observable):
     """
     _so_name = "Observables::LBVelocityProfile"
 
+
 @script_interface_register
 class LBFluidStress(Observable):
     _so_name = "Observables::LBFluidStress"
@@ -252,6 +253,8 @@ class LBFluidStress(Observable):
     None
 
     """
+
+
 @script_interface_register
 class MagneticDipoleMoment(Observable):
 

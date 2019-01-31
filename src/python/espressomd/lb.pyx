@@ -267,9 +267,10 @@ IF LB_GPU or LB:
             def __get__(self):
                 cdef double[6] pi
                 lb_lbfluid_get_pi(pi)
-                return array_locked(np.array([[pi[0],pi[1],pi[3]],
-                                              [pi[1],pi[2],pi[4]],
-                                              [pi[3],pi[4],pi[5]]]))
+                return array_locked(np.array([[pi[0], pi[1], pi[3]],
+                                              [pi[1], pi[2], pi[4]],
+                                              [pi[3], pi[4], pi[5]]]))
+
             def __set__(self, value):
                 raise NotImplementedError
 
@@ -403,4 +404,3 @@ IF LB or LB_GPU:
 
             def __set__(self, value):
                 raise NotImplementedError
-        

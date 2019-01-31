@@ -84,7 +84,6 @@ __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   if (idx >= n)
     return;
 
-
 #ifdef LB_GPU
   CUDA_particle_data p = particles[idx];
 
@@ -99,7 +98,7 @@ __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   v[0] = 0.0;
   v[1] = 0.0;
   v[2] = 0.0;
-#endif  
+#endif
 }
 #endif
 

@@ -1414,7 +1414,7 @@ int lb_lbnode_get_pi_neq(const Vector3i &ind, double *p_pi) {
   return 0;
 }
 
-/** calculates the average stress of all nodes by iterating 
+/** calculates the average stress of all nodes by iterating
  * over all nodes and deviding by the number_of_nodes.
  */
 int lb_lbfluid_get_pi(double *p_pi) {
@@ -1425,10 +1425,10 @@ int lb_lbfluid_get_pi(double *p_pi) {
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    
-    for (int i = 0; i < lbpar_gpu.dim_x; i ++) {
-      for (int j = 0; j < lbpar_gpu.dim_y; j ++) {
-        for (int k = 0; k < lbpar_gpu.dim_z; k ++) {
+
+    for (int i = 0; i < lbpar_gpu.dim_x; i++) {
+      for (int j = 0; j < lbpar_gpu.dim_y; j++) {
+        for (int k = 0; k < lbpar_gpu.dim_z; k++) {
           const Vector3i node{{i, j, k}};
           double pi_bulk[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
           lb_lbnode_get_pi(node, pi_bulk);
@@ -1449,11 +1449,11 @@ int lb_lbfluid_get_pi(double *p_pi) {
     gridsize[0] = box_l[0] / lblattice.agrid[0];
     gridsize[1] = box_l[1] / lblattice.agrid[1];
     gridsize[2] = box_l[2] / lblattice.agrid[2];
-    int number_of_nodes = gridsize[0]* gridsize[1] * gridsize[2];
-    
-    for (int i = 0; i < gridsize[0]; i ++) {
-      for (int j = 0; j < gridsize[1]; j ++) {
-        for (int k = 0; k < gridsize[2]; k ++) {
+    int number_of_nodes = gridsize[0] * gridsize[1] * gridsize[2];
+
+    for (int i = 0; i < gridsize[0]; i++) {
+      for (int j = 0; j < gridsize[1]; j++) {
+        for (int k = 0; k < gridsize[2]; k++) {
           const Vector3i node{{i, j, k}};
           double pi_bulk[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
           lb_lbnode_get_pi(node, pi_bulk);

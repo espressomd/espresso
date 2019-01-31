@@ -10,9 +10,7 @@ namespace Observables {
 
 class LBFluidStress : public Observable {
 public:
-  int n_values() const override {
-    return 6;
-  }
+  int n_values() const override { return 6; }
   std::vector<double> operator()(PartCfg &) const override {
     std::vector<double> res(n_values(), 0.0);
 
