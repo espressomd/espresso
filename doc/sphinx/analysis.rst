@@ -501,35 +501,6 @@ That means the contributions are not easy to interpret! Those are the contributi
 Note that the angular velocities of the particles are not included in
 the calculation of the stress tensor.
 
-.. _Local Stress Tensor:
-
-Local Stress Tensor
-~~~~~~~~~~~~~~~~~~~
-
-.. todo:: This feature is not tested.
-
-:meth:`espressomd.analyze.Analysis.local_stress_tensor`
-
-A cuboid is defined in the system and divided into bins.
-For each of these bins an instantaneous stress tensor is calculated using the Irving Kirkwood method.
-That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles within that bin.
-
-If the P3M and MMM1D electrostatic methods are used, these interactions
-are not included in the local stress tensor. The DH and RF methods, in
-contrast, are included. Concerning bonded interactions only two body
-interactions (FENE, Harmonic) are included (angular and dihedral are
-not). For all electrostatic interactions only the real space part is
-included.
-
-Care should be taken when using constraints of any kind, since these are
-not accounted for in the local stress tensor calculations.
-
-The command is implemented in parallel.
-
-{ { LocalStressTensor } { { } { } } }
-
-specifying the local pressure tensor in each bin.
-
 .. _Chains:
 
 Chains
