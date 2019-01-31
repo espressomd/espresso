@@ -434,4 +434,3 @@ int observable_compute_stress_tensor(int v_comp, double *A) {
   }
   return 0;
 }
-
