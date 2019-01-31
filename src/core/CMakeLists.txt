@@ -96,6 +96,7 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/fft.cpp
   grid_based_algorithms/lbboundaries.cpp
   grid_based_algorithms/lb.cpp
+  grid_based_algorithms/lb_interface.cpp
   immersed_boundary/ibm_tribend.cpp
   immersed_boundary/ibm_triel.cpp
   immersed_boundary/ImmersedBoundaries.cpp

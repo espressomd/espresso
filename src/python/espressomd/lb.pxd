@@ -39,7 +39,7 @@ IF LB_GPU or LB:
     #
     ##############################################
 
-    cdef extern from "grid_based_algorithms/lb.hpp":
+    cdef extern from "grid_based_algorithms/lb_interface.hpp":
 
         ##############################################
         #

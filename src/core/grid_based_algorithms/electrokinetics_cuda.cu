@@ -42,6 +42,7 @@
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -3825,7 +3826,7 @@ int ek_save_checkpoint(char *filename) {
   free(densities);
   fout.close();
 
-  lb_lbfluid_save_checkpoint_wrapper((char *)(fname + ".lb").c_str(), 1);
+  lb_lbfluid_save_checkpoint((char *)(fname + ".lb").c_str(), 1);
 
   return 0;
 }
@@ -3853,7 +3854,7 @@ int ek_load_checkpoint(char *filename) {
   free(densities);
   fin.close();
 
-  lb_lbfluid_load_checkpoint_wrapper((char *)(fname + ".lb").c_str(), 1);
+  lb_lbfluid_load_checkpoint((char *)(fname + ".lb").c_str(), 1);
 
   ek_integrate_electrostatics();
 

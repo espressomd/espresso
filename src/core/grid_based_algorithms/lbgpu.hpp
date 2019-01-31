@@ -292,8 +292,6 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
                             unsigned int *host_checkpoint_boundary,
                             lbForceFloat *host_checkpoint_force);
-int lb_lbfluid_save_checkpoint_wrapper(char *filename, int binary);
-int lb_lbfluid_load_checkpoint_wrapper(char *filename, int binary);
 
 void lb_lbfluid_remove_total_momentum();
 void lb_lbfluid_fluid_add_momentum(float momentum[3]);

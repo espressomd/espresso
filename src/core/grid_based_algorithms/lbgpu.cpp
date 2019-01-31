@@ -455,14 +455,6 @@ void lb_GPU_sanity_checks() {
   }
 }
 
-int lb_lbfluid_save_checkpoint_wrapper(char *filename, int binary) {
-  return lb_lbfluid_save_checkpoint(filename, binary);
-}
-
-int lb_lbfluid_load_checkpoint_wrapper(char *filename, int binary) {
-  return lb_lbfluid_load_checkpoint(filename, binary);
-}
-
 void lb_lbfluid_particles_add_momentum(float momentum[3]) {
   auto &parts = partCfg();
   auto const n_part = parts.size();
