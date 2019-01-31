@@ -50,7 +50,6 @@ private:
   Vector3d m_n;
   /** distance of the wall from the origin. */
   double m_d;
-  double m_w;
 };
 
 } /* namespace Shapes */
