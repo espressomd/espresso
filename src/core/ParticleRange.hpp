@@ -21,9 +21,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Cell.hpp"
 #include "ParticleIterator.hpp"
-#include "utils/Range.hpp"
+
+#include <boost/range/iterator_range.hpp>
+
+#include <cassert>
 
 using CellParticleIterator = ParticleIterator<Cell **, Particle>;
-using ParticleRange = Utils::Range<CellParticleIterator>;
+
+/**
+ * @brief A range of particles.
+ *
+ * This is a boost::iterator_range with the addition that the
+ * size of the range is cached.
+ */
+class ParticleRange : public boost::iterator_range<CellParticleIterator> {
+  using base_type = boost::iterator_range<CellParticleIterator>;
+
+public:
+  using base_type::base_type;
+
+  base_type::size_type size() const {
+    if (m_size < 0) {
+      m_size = distance(begin(), end());
+    }
+
+    return assert(m_size >= 0), static_cast<base_type::size_type>(m_size);
+  }
+
+private:
+  base_type::difference_type mutable m_size = -1;
+};
 
 #endif
