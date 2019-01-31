@@ -4,8 +4,8 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "lb.hpp"
-#include "lb_interface.hpp"
 #include "lbgpu.hpp"
+#include "lb_interface.hpp"
 
 #if defined(LB) || defined(LB_GPU)
 
@@ -1171,7 +1171,6 @@ int lb_lbnode_get_boundary(const Vector3i &ind, int *p_boundary) {
   return 0;
 }
 
-#endif // defined (LB) || defined (LB_GPU)
 
 int lb_lbnode_get_pop(const Vector3i &ind, double *p_pop) {
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -1375,3 +1374,4 @@ int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v) {
 
   return 0;
 }
+#endif
