@@ -1344,6 +1344,15 @@ int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v) {
 
   return 0;
 }
+#ifdef LB_GPU
+double lbgpu_eq_stress() {
+  double p0 = 0.;
+  for (int ii = 0; ii < LB_COMPONENTS; ii++) {
+    p0 += lbpar_gpu.rho[ii] * lbpar_gpu.agrid * lbpar_gpu.agrid /
+          lbpar_gpu.tau / lbpar_gpu.tau / 3.;
+  }
+}
+#endif
 
 int lb_lbnode_get_pi(const Vector3i &ind, double *p_pi) {
   double p0 = 0;
@@ -1352,11 +1361,8 @@ int lb_lbnode_get_pi(const Vector3i &ind, double *p_pi) {
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    for (int ii = 0; ii < LB_COMPONENTS; ii++) {
-      p0 += lbpar_gpu.rho[ii] * lbpar_gpu.agrid * lbpar_gpu.agrid /
-            lbpar_gpu.tau / lbpar_gpu.tau / 3.;
-    }
-#endif // LB_GPU
+    p0 = lbgpu_eq_stress();
+#endif
   } else {
 #ifdef LB
     p0 = lbpar.rho * lbpar.agrid * lbpar.agrid / lbpar.tau / lbpar.tau / 3.;
@@ -1425,23 +1431,25 @@ int lb_lbfluid_get_stress(double *p_pi) {
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
+    // Copy observable data from gpu
+    std::vector<LB_rho_v_pi_gpu> host_values(lbpar_gpu.number_of_nodes);
+    lb_get_values_GPU(host_values.data());
+    std::for_each(host_values.begin(), host_values.end(),
+                  [&p_pi](LB_rho_v_pi_gpu &v) {
+                    for (int i = 0; i < 6; i++)
+                      p_pi[i] += v.pi[i];
+                  });
 
-    for (int i = 0; i < lbpar_gpu.dim_x; i++) {
-      for (int j = 0; j < lbpar_gpu.dim_y; j++) {
-        for (int k = 0; k < lbpar_gpu.dim_z; k++) {
-          const Vector3i node{{i, j, k}};
-          double pi_bulk[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-          lb_lbnode_get_pi(node, pi_bulk);
-          for (int l = 0; l < 6; l++) {
-            p_pi[l] += pi_bulk[l];
-          }
-        }
-      }
-    }
+    // Normalize
+    for (int i = 0; i < 6; i++)
+      p_pi[i] /= lbpar_gpu.number_of_nodes;
 
-    for (int l = 0; l < 6; l++) {
-      p_pi[l] /= lbpar_gpu.number_of_nodes;
-    }
+    // Add equilibrium stress;
+    const double p0 = lbgpu_eq_stress();
+    p_pi[0] += p0;
+    p_pi[2] += p0;
+    p_pi[5] += p0;
+
 #endif
   } else {
 #ifdef LB
