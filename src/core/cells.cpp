@@ -58,7 +58,7 @@ CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
 CellStructure cell_structure = {
-    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr};
+    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr, nullptr};
 
 double max_range = 0.0;
 

@@ -77,7 +77,7 @@ extern int boundary[6];
 extern int periodic;
 
 /** Simulation box dimensions. */
-extern double box_l[3];
+extern Vector3d box_l;
 /** Half the box dimensions. Used for get_mi_vector. */
 extern double half_box_l[3];
 /** 1 / box dimensions. */

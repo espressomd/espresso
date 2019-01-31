@@ -40,7 +40,7 @@
 
 extern double sim_time;
 extern double time_step;
-extern double box_l[3];
+extern Vector3d box_l;
 
 namespace Writer {
 namespace H5md {

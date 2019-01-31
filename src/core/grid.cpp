@@ -55,7 +55,7 @@ int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
 int boundary[6] = {0, 0, 0, 0, 0, 0};
 int periodic = 7;
 
-double box_l[3] = {1, 1, 1};
+Vector3d box_l = {1, 1, 1};
 double half_box_l[3] = {.5, .5, .5};
 double box_l_i[3] = {1, 1, 1};
 double min_box_l;

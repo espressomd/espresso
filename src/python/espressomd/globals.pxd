@@ -19,6 +19,7 @@
 include "myconfig.pxi"
 from libcpp cimport bool
 from interactions cimport ImmersedBoundaries
+from utils cimport Vector3d
 
 cdef extern from "global.hpp":
     int FIELD_BOXL
@@ -130,9 +131,8 @@ cdef extern from "rattle.hpp":
 cdef extern from "tuning.hpp":
     extern int timing_samples
 
-
 cdef extern from "grid.hpp":
-    double box_l[3]
+    Vector3d box_l
     double local_box_l[3]
     extern int node_grid[3]
     extern int periodic

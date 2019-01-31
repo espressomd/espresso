@@ -193,7 +193,7 @@ cdef class System(object):
                         "Box length must be > 0 in all directions")
                 box_l[i] = _box_l[i]
 
-            self.globals.box_l = box_l
+            self.globals.box_l = [box_l[0], box_l[1], box_l[2]]
 
         def __get__(self):
             return self.globals.box_l

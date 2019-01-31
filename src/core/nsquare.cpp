@@ -66,13 +66,17 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
   }
 }
 
+static CellGeometry nsq_cell_geometry(const Cell *) {
+  return {{}, box_l};
+}
+
 void nsq_topology_init(CellPList *old) {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
   cell_structure.position_to_node = nsq_position_to_node;
   cell_structure.position_to_cell = nsq_position_to_cell;
-
+  cell_structure.cell_geometry = nsq_cell_geometry;
   realloc_cells(n_nodes);
 
   /* mark cells */

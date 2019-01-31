@@ -15,7 +15,10 @@ cdef class Globals(object):
     property box_l:
         def __set__(self, _box_l):
             global box_l
-            box_l = _box_l
+            box_l[0] = _box_l[0]
+            box_l[1] = _box_l[1]
+            box_l[2] = _box_l[2]
+
             mpi_bcast_parameter(FIELD_BOXL)
 
         def __get__(self):
