@@ -1445,15 +1445,11 @@ int lb_lbfluid_get_stress(double *p_pi) {
 #endif
   } else {
 #ifdef LB
-    int gridsize[3];
-    gridsize[0] = box_l[0] / lblattice.agrid[0];
-    gridsize[1] = box_l[1] / lblattice.agrid[1];
-    gridsize[2] = box_l[2] / lblattice.agrid[2];
-    int number_of_nodes = gridsize[0] * gridsize[1] * gridsize[2];
+    int number_of_nodes = lblattice.global_grid[0] * lblattice.global_grid[1] * lblattice.global_grid[2];
 
-    for (int i = 0; i < gridsize[0]; i++) {
-      for (int j = 0; j < gridsize[1]; j++) {
-        for (int k = 0; k < gridsize[2]; k++) {
+    for (int i = 0; i < lblattice.global_grid[0]; i++) {
+      for (int j = 0; j < lblattice.global_grid[1]; j++) {
+        for (int k = 0; k < lblattice.global_grid[2]; k++) {
           const Vector3i node{{i, j, k}};
           double pi_bulk[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
           lb_lbnode_get_pi(node, pi_bulk);
