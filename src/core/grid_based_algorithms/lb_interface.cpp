@@ -1,11 +1,11 @@
 #include <fstream>
 
-#include "lb_interface.hpp"
-#include "lb.hpp"
-#include "lbgpu.hpp"
 #include "communication.hpp"
 #include "global.hpp"
 #include "grid.hpp"
+#include "lb.hpp"
+#include "lb_interface.hpp"
+#include "lbgpu.hpp"
 
 #if defined(LB) || defined(LB_GPU)
 
@@ -21,7 +21,6 @@ uint64_t lb_coupling_rng_state() {
   }
   return {};
 }
-
 
 void lb_coupling_set_rng_state(uint64_t counter) {
   if (lattice_switch & LATTICE_LB) {
@@ -333,7 +332,6 @@ int lb_lbfluid_set_agrid(double p_agrid) {
   return 0;
 }
 
-
 int lb_lbfluid_get_agrid(double *p_agrid) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -385,7 +383,6 @@ int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
   }
   return 0;
 }
-
 
 int lb_lbfluid_get_ext_force_density(double *p_f) {
 #ifdef SHANCHEN
@@ -1307,7 +1304,6 @@ int lb_lbnode_set_pop(const Vector3i &ind, double *p_pop) {
   return 0;
 }
 
-
 /** Calculate the fluid velocity at a given position of the lattice.
  *  Note that it can lead to undefined behavior if the position is not
  *  within the local lattice. This version of the function can be called
@@ -1379,4 +1375,3 @@ int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v) {
 
   return 0;
 }
-
