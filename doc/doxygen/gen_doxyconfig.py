@@ -27,7 +27,9 @@ import os
 import time
 
 if len(sys.argv) != 3:
-    print("Usage: {} CONFIG_PATH DOXYCONFIG".format(sys.argv[0]), file=sys.stderr)
+    print(
+        "Usage: {} CONFIG_PATH DOXYCONFIG".format(sys.argv[0]),
+        file=sys.stderr)
     exit(2)
 
 configpath, configfilename = sys.argv[1:3]
