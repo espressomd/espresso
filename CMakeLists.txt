@@ -22,7 +22,6 @@ cmake_minimum_required(VERSION 3.4)
 include(FeatureSummary)
 project(ESPResSo)
 include(cmake/FindPythonModule.cmake)
-include(cmake/FindwaLBerla.cmake)
 
 enable_language(CXX)
 
@@ -491,6 +490,7 @@ endif(WITH_BENCHMARKS)
 
 # Walberla 
 if (WITH_WALBERLA)
+  include(cmake/FindwaLBerla.cmake)
   find_package(waLBerLa)
   if (${WALBERLA_FOUND})
     set(WALBERLA 1)
