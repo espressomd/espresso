@@ -286,7 +286,7 @@ int lb_lbfluid_set_density(double *p_dens) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       lbpar_gpu.rho[ii] = static_cast<float>(p_dens[ii]);
-      on_lb_params_change(LBPAR_DENSITY);
+      lb_lbfluid_on_lb_params_change(LBPAR_DENSITY);
 #endif // LB_GPU
     } else {
 #ifdef LB
@@ -320,7 +320,7 @@ int lb_lbfluid_set_visc(double *p_visc) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       lbpar_gpu.viscosity[ii] = (float)p_visc[ii];
-      on_lb_params_change(LBPAR_VISCOSITY);
+      lb_lbfluid_on_lb_params_change(LBPAR_VISCOSITY);
 #endif // LB_GPU
     } else {
 #ifdef LB
@@ -355,7 +355,7 @@ int lb_lbfluid_set_bulk_visc(double *p_bulk_visc) {
 #ifdef LB_GPU
       lbpar_gpu.bulk_viscosity[ii] = (float)p_bulk_visc[ii];
       lbpar_gpu.is_TRT = false;
-      on_lb_params_change(LBPAR_BULKVISC);
+      lb_lbfluid_on_lb_params_change(LBPAR_BULKVISC);
 #endif // LB_GPU
     } else {
 #ifdef LB
@@ -389,7 +389,7 @@ int lb_lbfluid_set_gamma_odd(double *p_gamma_odd) {
 #ifdef LB_GPU
       lbpar_gpu.gamma_odd[ii] = (float)p_gamma_odd[ii];
       lbpar_gpu.is_TRT = false;
-      on_lb_params_change(0);
+      lb_lbfluid_on_lb_params_change(0);
 #endif // LB_GPU
     } else {
 #ifdef LB
@@ -423,7 +423,7 @@ int lb_lbfluid_set_gamma_even(double *p_gamma_even) {
 #ifdef LB_GPU
       lbpar_gpu.gamma_even[ii] = (float)p_gamma_even[ii];
       lbpar_gpu.is_TRT = false;
-      on_lb_params_change(0);
+      lb_lbfluid_on_lb_params_change(0);
 #endif // LB_GPU
     } else {
 #ifdef LB
@@ -456,7 +456,7 @@ int lb_lbfluid_set_friction(double *p_friction) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       lbpar_gpu.friction[ii] = (float)p_friction[ii];
-      on_lb_params_change(LBPAR_FRICTION);
+      lb_lbfluid_on_lb_params_change(LBPAR_FRICTION);
 #endif // LB_GPU
     } else {
 #ifdef LB
@@ -542,7 +542,7 @@ int lb_lbfluid_set_agrid(double p_agrid) {
     }
     lbpar_gpu.number_of_nodes =
         lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
-    on_lb_params_change(LBPAR_AGRID);
+    lb_lbfluid_on_lb_params_change(LBPAR_AGRID);
 #endif // LB_GPU
   } else {
 #ifdef LB
@@ -632,7 +632,7 @@ int lb_lbfluid_set_tau(double p_tau) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     lbpar_gpu.tau = static_cast<float>(p_tau);
-    on_lb_params_change(0);
+    lb_lbfluid_on_lb_params_change(0);
 #endif // LB_GPU
   } else {
 #ifdef LB
@@ -661,7 +661,7 @@ int lb_lbfluid_set_remove_momentum(void) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     lbpar_gpu.remove_momentum = 1;
-    on_lb_params_change(0);
+    lb_lbfluid_on_lb_params_change(0);
 #endif // LB_GPU
   } else {
 #ifdef LB
@@ -691,7 +691,7 @@ int lb_lbfluid_set_shanchen_coupling(double *p_coupling) {
     }
     break;
   }
-  on_lb_params_change(LBPAR_COUPLING);
+  lb_lbfluid_on_lb_params_change(LBPAR_COUPLING);
 #endif // LB_GPU
 #ifdef LB
 #error not implemented
@@ -708,7 +708,7 @@ int lb_lbfluid_set_mobility(double *p_mobility) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       lbpar_gpu.mobility[ii] = static_cast<float>(p_mobility[ii]);
-      on_lb_params_change(LBPAR_MOBILITY);
+      lb_lbfluid_on_lb_params_change(LBPAR_MOBILITY);
 #endif // LB_GPU
     } else {
 #ifdef LB
@@ -1601,6 +1601,9 @@ void lb_lbfluid_on_lb_params_change(int field) {
 #endif
 #ifdef LB_GPU
     lb_init_gpu();
+#ifdef LB_BOUNDARIES_GPU
+    LBBoundaries::lb_init_boundaries();
+#endif
 #endif
   }
   if (field == LBPAR_DENSITY) {

@@ -193,8 +193,6 @@ typedef struct {
 
 } LB_extern_nodeforcedensity_gpu;
 
-void on_lb_params_change_gpu(int field);
-
 /************************************************************/
 /** \name Exported Variables */
 /************************************************************/
