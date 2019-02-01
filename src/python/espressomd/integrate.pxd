@@ -33,7 +33,6 @@ cdef inline int _integrate(int nSteps, int recalc_forces, int reuse_forces):
     with nogil:
         return python_integrate(nSteps, recalc_forces, reuse_forces)
 
-
 cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
     cdef cppclass ErrorLevel:
         pass

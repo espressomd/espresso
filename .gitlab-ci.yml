@@ -221,10 +221,41 @@ rocm-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/rocm:latest
   script:
-    - export myconfig=maxset
+    - export myconfig=maxset make_check=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - amdgpu
+
+### Builds on different architectures
+
+.arch_template: &arch_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export with_cuda=false
+    - export OMPI_MCA_btl_vader_single_copy_mechanism=none
+    - export myconfig=maxset
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+  only:
+    - scheduled
+
+ubuntu:arm64:
+  <<: *arch_definition
+
+ubuntu:armhf:
+  <<: *arch_definition
+
+ubuntu:i386:
+  <<: *arch_definition
+
+ubuntu:ppc64le:
+  <<: *arch_definition
+
+ubuntu:s390x:
+  <<: *arch_definition
 
 ### Builds with OS X
 

@@ -77,7 +77,7 @@ void calc_oif_global(double *area_volume,
   // z volume
   double VOL_partVol = 0.;
 
-  /** loop over particles */
+  /* loop over particles */
   Particle *p1, *p2, *p3;
   Vector3d p11, p22, p33;
   int img[3];

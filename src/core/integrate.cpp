@@ -36,7 +36,6 @@
 #include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
-#include "ghmc.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
@@ -46,13 +45,13 @@
 #include "initialize.hpp"
 #include "lattice.hpp"
 #include "minimize_energy.hpp"
-#include "nemd.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
 #include "rotation.hpp"
+#include "signalhandling.hpp"
 #include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
@@ -97,6 +96,11 @@ double verlet_reuse = 0.0;
 double db_max_force = 0.0, db_max_vel = 0.0;
 int db_maxf_id = 0, db_maxv_id = 0;
 #endif
+
+bool set_py_interrupt = false;
+namespace {
+volatile static std::sig_atomic_t ctrl_C = 0;
+}
 
 /** \name Private Functions */
 /************************************************************/
@@ -288,11 +292,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
   }
 
-#ifdef GHMC
-  if (thermo_switch & THERMO_GHMC)
-    ghmc_init();
-#endif
-
   if (check_runtime_errors())
     return;
 
@@ -312,24 +311,13 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #endif
 
-#ifdef GHMC
-    if (thermo_switch & THERMO_GHMC) {
-      if (step % ghmc_nmd == 0)
-        ghmc_momentum_update();
-    }
-#endif
-
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
        v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
        NOTE: Depending on the integration method Step 1 and Step 2
        cannot be combined for the translation.
     */
-    if (integ_switch == INTEG_METHOD_NPT_ISO
-#ifdef NEMD
-        || nemd_method != NEMD_METHOD_OFF
-#endif
-    ) {
+    if (integ_switch == INTEG_METHOD_NPT_ISO) {
       propagate_vel();
       propagate_pos();
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
@@ -444,13 +432,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
       nptiso.p_inst_av += nptiso.p_inst;
 #endif
 
-#ifdef GHMC
-    if (thermo_switch & THERMO_GHMC) {
-      if (step % ghmc_nmd == ghmc_nmd - 1)
-        ghmc_mc();
-    }
-#endif
-
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       /* Propagate time: t = t+dt */
       sim_time += time_step;
@@ -462,6 +443,18 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     if (check_runtime_errors())
       break;
+
+    // Check if SIGINT has been caught.
+    if (ctrl_C == 1) {
+      // Reset the flag.
+      ctrl_C = 0;
+
+      // Set global to notify Python of signal.
+      set_py_interrupt = true;
+
+      // Break the integration loop
+      break;
+    }
   }
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
@@ -492,22 +485,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
 #endif
-
-#ifdef GHMC
-  if (thermo_switch & THERMO_GHMC)
-    ghmc_close();
-#endif
 }
 
 /************************************************************/
-
-void rescale_velocities(double scale) {
-  for (auto &p : local_cells.particles()) {
-    p.m.v[0] *= scale;
-    p.m.v[1] *= scale;
-    p.m.v[2] *= scale;
-  }
-}
 
 /* Private functions */
 /************************************************************/
@@ -707,12 +687,6 @@ void propagate_vel() {
 #endif
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
-
-/* SPECIAL TASKS in particle loop */
-#ifdef NEMD
-        if (j == 0)
-          nemd_get_velocity(p);
-#endif
       }
 
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
@@ -723,12 +697,6 @@ void propagate_vel() {
 
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();
-#endif
-
-/* SPECIAL TASKS after velocity propagation */
-#ifdef NEMD
-  nemd_change_momentum();
-  nemd_store_velocity_profile();
 #endif
 }
 
@@ -750,11 +718,6 @@ void propagate_pos() {
         if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
         {
-#ifdef NEMD
-          /* change momentum of each particle in top and bottom slab */
-          if (j == 0)
-            nemd_add_velocity(&p);
-#endif
           /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
            * v(t+0.5*dt) */
           p.r.p[j] += time_step * p.m.v[j];
@@ -840,6 +803,9 @@ void force_and_velocity_display() {
 /** @todo This needs to go!! */
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
+  // Override the signal handler so that the integrator obeys Ctrl+C
+  SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
+
   int reuse_forces = 0;
   reuse_forces = reuse_forces_par;
   INTEG_TRACE(fprintf(stderr, "%d: integrate:\n", this_node));

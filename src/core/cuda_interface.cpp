@@ -27,9 +27,10 @@
 #include "energy.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "serialization/CUDA_particle_data.hpp"
+
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/mpi/scatter_buffer.hpp"
-#include "utils/serialization/CUDA_particle_data.hpp"
 
 /// MPI tag for cuda particle gathering
 #define REQ_CUDAGETPARTS 0xcc01
@@ -128,7 +129,7 @@ void cuda_mpi_get_particles(ParticleRange particles,
   auto const n_part = particles.size();
 
   if (this_node > 0) {
-    COMM_TRACE(fprintf(stderr, "%d: get_particles_slave, %d particles\n",
+    COMM_TRACE(fprintf(stderr, "%d: get_particles_slave, %ld particles\n",
                        this_node, n_part));
     static std::vector<CUDA_particle_data> buffer;
     buffer.resize(n_part);
@@ -154,8 +155,9 @@ void cuda_mpi_get_particles(ParticleRange particles,
  * @param torques The torques as flat array of size 3 * particles.size(),
  *                this is only touched if ROTATION is active.
  */
-static void add_forces_and_torques(ParticleRange particles, float *forces,
-                                   float *torques) {
+static void add_forces_and_torques(ParticleRange particles,
+                                   const std::vector<float> &forces,
+                                   const std::vector<float> &torques) {
   int i = 0;
   for (auto &part : particles) {
     for (int j = 0; j < 3; j++) {
@@ -168,8 +170,9 @@ static void add_forces_and_torques(ParticleRange particles, float *forces,
   }
 }
 
-void cuda_mpi_send_forces(ParticleRange particles, float *host_forces,
-                          float *host_torques = nullptr) {
+void cuda_mpi_send_forces(ParticleRange particles,
+                          std::vector<float> &host_forces,
+                          std::vector<float> &host_torques) {
   auto const n_elements = 3 * particles.size();
 
   if (this_node > 0) {
@@ -186,13 +189,12 @@ void cuda_mpi_send_forces(ParticleRange particles, float *host_forces,
     Utils::Mpi::scatter_buffer(buffer_torques.data(), n_elements, comm_cart);
 #endif
 
-    add_forces_and_torques(particles, buffer_forces.data(),
-                           buffer_torques.data());
+    add_forces_and_torques(particles, buffer_forces, buffer_torques);
   } else {
     /* Scatter forces to slaves */
-    Utils::Mpi::scatter_buffer(host_forces, n_elements, comm_cart);
+    Utils::Mpi::scatter_buffer(host_forces.data(), n_elements, comm_cart);
 #ifdef ROTATION
-    Utils::Mpi::scatter_buffer(host_torques, n_elements, comm_cart);
+    Utils::Mpi::scatter_buffer(host_torques.data(), n_elements, comm_cart);
 #endif
 
     add_forces_and_torques(particles, host_forces, host_torques);
@@ -230,18 +232,20 @@ void cuda_mpi_send_composition(ParticleRange particles,
 
 #if defined(ENGINE) && defined(LB_GPU)
 namespace {
-void set_v_cs(ParticleRange particles, CUDA_v_cs *v_cs) {
+void set_v_cs(ParticleRange particles, const std::vector<CUDA_v_cs> &v_cs) {
+  int ind = 0;
   for (auto &p : particles) {
     for (int i = 0; i < 3; i++) {
-      p.swim.v_center[i] = v_cs->v_cs[0 + i];
-      p.swim.v_source[i] = v_cs->v_cs[3 + i];
+      p.swim.v_center[i] = v_cs[ind].v_cs[0 + i];
+      p.swim.v_source[i] = v_cs[ind].v_cs[3 + i];
     }
-    v_cs++;
+    ind++;
   }
 }
 } // namespace
 
-void cuda_mpi_send_v_cs(ParticleRange particles, CUDA_v_cs *host_v_cs) {
+void cuda_mpi_send_v_cs(ParticleRange particles,
+                        std::vector<CUDA_v_cs> host_v_cs) {
   // first collect number of particles on each node
   auto const n_part = particles.size();
 
@@ -250,9 +254,9 @@ void cuda_mpi_send_v_cs(ParticleRange particles, CUDA_v_cs *host_v_cs) {
     std::vector<CUDA_v_cs> buffer(n_part);
 
     Utils::Mpi::scatter_buffer(buffer.data(), n_part, comm_cart);
-    set_v_cs(particles, buffer.data());
+    set_v_cs(particles, buffer);
   } else {
-    Utils::Mpi::scatter_buffer(host_v_cs, n_part, comm_cart);
+    Utils::Mpi::scatter_buffer(host_v_cs.data(), n_part, comm_cart);
     set_v_cs(particles, host_v_cs);
   }
   COMM_TRACE(fprintf(stderr, "%d: finished send\n", this_node));

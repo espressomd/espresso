@@ -28,7 +28,7 @@
  *
 */
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 #include "utils/constants.hpp"
 #include "utils/math/sqr.hpp"
 
@@ -108,9 +108,9 @@ inline void get_grid_pos(int i, int *a, int *b, int *c, const Vector3i &adim) {
 /*************************************************************/
 /*@{*/
 
-/** returns the distance between two position.
- *  \param pos1 Position one.
- *  \param pos2 Position two.
+/** Calculate the distance between two positions.
+ *  \param a Position one.
+ *  \param b Position two.
  */
 inline double distance2(const Vector3d &a, const Vector3d &b) {
   return (a - b).norm2();
