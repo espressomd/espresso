@@ -38,8 +38,8 @@ void mpi_set_lb_fluid_counter(int high, int low);
 
 #include "errorhandling.hpp"
 
-#include "utils.hpp"
 #include "halo.hpp"
+#include "utils.hpp"
 
 #include <utils/Span.hpp>
 

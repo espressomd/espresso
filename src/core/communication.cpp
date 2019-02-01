@@ -1777,8 +1777,6 @@ void mpi_set_lb_coupling_counter(uint64_t counter) {
   mpi_set_lb_coupling_counter_slave(high, low);
 }
 
-
-
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/
 
 void mpi_bcast_cuda_global_part_vars() {

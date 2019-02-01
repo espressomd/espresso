@@ -2,8 +2,8 @@
 #define CORE_LB_INTERFACE
 
 #include "config.hpp"
-#include "utils/Vector.hpp"
 #include "lattice.hpp"
+#include "utils/Vector.hpp"
 
 #if defined(LB) || defined(LB_GPU)
 
@@ -42,8 +42,9 @@ void lb_fluid_set_rng_state(uint64_t counter);
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. */
 Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &p);
-void lb_lbfluid_add_force_density(const Vector3d &p, const Vector3d &force_density);
-const Lattice& lb_lbfluid_get_lattice();
+void lb_lbfluid_add_force_density(const Vector3d &p,
+                                  const Vector3d &force_density);
+const Lattice &lb_lbfluid_get_lattice();
 
 int lb_lbfluid_set_density(double *p_dens);
 int lb_lbfluid_get_density(double *p_dens);

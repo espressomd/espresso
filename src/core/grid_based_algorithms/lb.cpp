@@ -469,7 +469,6 @@ void lb_sanity_checks() {
   }
 }
 
-
 uint64_t lb_fluid_rng_state_cpu() { return rng_counter_fluid.value(); }
 
 void lb_fluid_set_rng_state_cpu(uint64_t counter) {
@@ -912,15 +911,10 @@ void lattice_boltzmann_update() {
   }
 }
 
-
 /***********************************************************************/
 /** \name Coupling part */
 /***********************************************************************/
 /*@{*/
-
-
-
-
 
 /***********************************************************************/
 

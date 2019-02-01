@@ -6,8 +6,8 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "lb.hpp"
-#include "lbgpu.hpp"
 #include "lb_interface.hpp"
+#include "lbgpu.hpp"
 #include "thermostat.hpp"
 
 #if defined(LB) || defined(LB_GPU)
@@ -24,7 +24,7 @@ void lb_update() {
       ek_integrate();
     } else {
 #endif
-    lattice_boltzmann_update_gpu();
+      lattice_boltzmann_update_gpu();
 #ifdef ELECTROKINETICS
     }
 #endif
@@ -131,7 +131,6 @@ void lb_reinit_fluid() {
   LBBoundaries::lb_init_boundaries();
 #endif // LB_BOUNDARIES
 }
-
 
 /** Perform a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.
@@ -1393,7 +1392,6 @@ int lb_lbnode_get_boundary(const Vector3i &ind, int *p_boundary) {
   return 0;
 }
 
-
 int lb_lbnode_get_pop(const Vector3i &ind, double *p_pop) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -1582,7 +1580,8 @@ Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
   return (lbpar.agrid / lbpar.tau) * interpolated_u;
 }
 
-void lb_lbfluid_add_force_density(const Vector3d &pos, const Vector3d &force_density) {
+void lb_lbfluid_add_force_density(const Vector3d &pos,
+                                  const Vector3d &force_density) {
   lattice_interpolation(lblattice, pos,
                         [&force_density](Lattice::index_t index, double w) {
                           auto &node = lbfields[index];
@@ -1591,9 +1590,7 @@ void lb_lbfluid_add_force_density(const Vector3d &pos, const Vector3d &force_den
                           node.force_density[1] += w * force_density[1];
                           node.force_density[2] += w * force_density[2];
                         });
-} 
-
-const Lattice& lb_lbfluid_get_lattice() {
-  return lblattice;
 }
+
+const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 #endif

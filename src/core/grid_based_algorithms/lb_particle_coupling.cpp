@@ -1,19 +1,19 @@
 #include <Random123/philox.h>
 
 #include "cells.hpp"
-#include "config.hpp"
 #include "communication.hpp"
+#include "config.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "lattice.hpp"
-#include "lb_particle_coupling.hpp"
 #include "lb_interface.hpp"
+#include "lb_particle_coupling.hpp"
 #include "lbgpu.hpp"
 #include "thermostat.hpp"
 #include "utils/Counter.hpp"
-#include "utils/uniform.hpp"
 #include "utils/u32_to_u64.hpp"
+#include "utils/uniform.hpp"
 
 namespace {
 Utils::Counter<uint64_t> rng_counter_coupling;
@@ -27,7 +27,6 @@ Utils::Counter<uint64_t> rng_counter_coupling;
 enum class RNGSalt { PARTICLES };
 } // namespace
 
-
 uint64_t lb_coupling_rng_state_cpu() { return rng_counter_coupling.value(); }
 
 void mpi_set_lb_coupling_counter_slave(int high, int low) {
@@ -36,7 +35,6 @@ void mpi_set_lb_coupling_counter_slave(int high, int low) {
       static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
 #endif
 }
-
 
 uint64_t lb_coupling_rng_state() {
   if (lattice_switch & LATTICE_LB) {

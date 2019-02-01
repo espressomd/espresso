@@ -393,7 +393,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #if defined(LB) || defined(LB_GPU)
-        lb_update();
+      lb_update();
 #endif // LB || LB_GPU
 
 #ifdef VIRTUAL_SITES
