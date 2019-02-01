@@ -111,7 +111,6 @@ int n_nodes = -1;
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_bcast_event_slave)                                                    \
   CB(mpi_place_particle_slave)                                                 \
-  CB(mpi_send_swimming_slave)                                                  \
   CB(mpi_recv_part_slave)                                                      \
   CB(mpi_integrate_slave)                                                      \
   CB(mpi_bcast_ia_params_slave)                                                \
@@ -381,36 +380,6 @@ void mpi_place_new_particle_slave(int pnode, int part) {
   }
 
   on_particle_change();
-}
-
-/****************** REQ_SET_SWIMMING ************/
-void mpi_send_swimming(int pnode, int part,
-                       const ParticleParametersSwimming &swim) {
-#ifdef ENGINE
-  mpi_call(mpi_send_swimming_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->swim = swim;
-  } else {
-    comm_cart.send(pnode, SOME_TAG, swim);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_swimming_slave(int pnode, int part) {
-#ifdef ENGINE
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    ParticleParametersSwimming swim;
-    comm_cart.recv(0, SOME_TAG, swim);
-    p->swim = swim;
-  }
-
-  on_particle_change();
-#endif
 }
 
 void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,

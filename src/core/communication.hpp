@@ -148,15 +148,6 @@ void mpi_place_particle(int node, int id, double pos[3]);
  */
 void mpi_place_new_particle(int node, int id, double pos[3]);
 
-/** Issue REQ_SET_SWIMMING: send particle swimming properties.
- *  Also calls \ref on_particle_change.
- *  \param part  the particle.
- *  \param node  the node it is attached to.
- *  \param swim  struct containing swimming parameters
- */
-void mpi_send_swimming(int node, int part,
-                       const ParticleParametersSwimming &swim);
-
 #ifdef ROTATION
 /** Mpi call for rotating a single particle
  *  Also calls \ref on_particle_change.

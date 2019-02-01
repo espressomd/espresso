@@ -141,11 +141,7 @@ int vs_relate_to(int part_num, int relate_to) {
 
   // Set the particle id of the particle we want to relate to, the distance
   // and the relative orientation
-  if (set_particle_vs_relative(part_num, relate_to, l, quat.data()) ==
-      ES_ERROR) {
-    runtimeErrorMsg() << "setting the vs_relative attributes failed";
-    return ES_ERROR;
-  }
+  set_particle_vs_relative(part_num, relate_to, l, quat.data());
   set_particle_virtual(part_num, 1);
 
   return ES_OK;
