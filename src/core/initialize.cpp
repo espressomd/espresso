@@ -671,40 +671,6 @@ void on_parameter_change(int field) {
   }
 }
 
-#ifdef LB
-void on_lb_params_change(int field) {
-  EVENT_TRACE(fprintf(stderr, "%d: on_lb_params_change\n", this_node));
-
-  if (field == LBPAR_AGRID) {
-    lb_init();
-  }
-  if (field == LBPAR_DENSITY) {
-    lb_reinit_fluid();
-  }
-  lb_reinit_parameters();
-}
-#endif
-
-#if defined(LB) || defined(LB_GPU)
-void on_lb_params_change_gpu(int field) {
-  EVENT_TRACE(fprintf(stderr, "%d: on_lb_params_change_gpu\n", this_node));
-
-#ifdef LB_GPU
-  if (field == LBPAR_AGRID) {
-    lb_init_gpu();
-#ifdef LB_BOUNDARIES_GPU
-    LBBoundaries::lb_init_boundaries();
-#endif
-  }
-  if (field == LBPAR_DENSITY) {
-    lb_reinit_fluid_gpu();
-  }
-
-  lb_reinit_parameters_gpu();
-#endif
-}
-#endif
-
 void on_ghost_flags_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));
   /* that's all we change here */

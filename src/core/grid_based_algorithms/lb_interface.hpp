@@ -104,7 +104,7 @@ int lb_lbnode_set_pop(const Vector3i &ind, double *pop);
  *  can be called without the position needing to be on the local processor.
  */
 int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v);
-
+void lb_lbfluid_on_lb_params_change(int field);
 #endif
 
 #endif

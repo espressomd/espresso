@@ -1766,7 +1766,7 @@ void mpi_bcast_lb_params(int field, int value) {
 void mpi_bcast_lb_params_slave(int field, int) {
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
-  on_lb_params_change(field);
+  lb_lbfluid_on_lb_params_change(field);
 #endif
 }
 
