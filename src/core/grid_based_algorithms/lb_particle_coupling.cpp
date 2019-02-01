@@ -15,6 +15,13 @@
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
 
+void mpi_set_lb_coupling_counter_slave(int high, int low) {
+#ifdef LB
+  rng_counter_coupling = Utils::Counter<uint64_t>(Utils::u32_to_u64(
+      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
+#endif
+}
+
 #if defined(LB) || defined(LB_GPU)
 
 namespace {
@@ -30,13 +37,6 @@ enum class RNGSalt { PARTICLES };
 } // namespace
 
 uint64_t lb_coupling_rng_state_cpu() { return rng_counter_coupling.value(); }
-
-void mpi_set_lb_coupling_counter_slave(int high, int low) {
-#ifdef LB
-  rng_counter_coupling = Utils::Counter<uint64_t>(Utils::u32_to_u64(
-      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
-#endif
-}
 
 uint64_t lb_coupling_rng_state() {
   if (lattice_switch & LATTICE_LB) {
@@ -90,6 +90,7 @@ void add_md_force(Vector3d const &pos, Vector3d const &force) {
  *
  * @return The viscous coupling force plus f_random.
  */
+#ifdef LB
 Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
@@ -121,6 +122,7 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
 
   return force;
 }
+#endif
 
 namespace {
 bool in_local_domain(Vector3d const &pos) {
