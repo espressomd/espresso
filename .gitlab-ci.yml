@@ -4,6 +4,7 @@ stages:
   - permission
   - prepare
   - build
+  - checks
   - additional_checks
   - deploy
   - result
@@ -53,10 +54,29 @@ style:
     expire_in: 1 week
     when: on_failure
 
+.job_template_artifacts_build: &artifacts_build
+  artifacts:
+    paths:
+    - build/
+    expire_in: 1 week
+
 ### Builds without CUDA
 
 default:
   stage: build
+  script:
+    - export with_cuda=false myconfig=default with_coverage=true
+    - bash maintainer/CI/build_cmake.sh
+  <<: *artifacts_build
+  tags:
+    - docker
+    - linux
+
+default checks:
+  stage: checks
+  when: on_success
+  dependencies:
+    - default
   script:
     - export with_cuda=false myconfig=default with_coverage=true
     - bash maintainer/CI/build_cmake.sh
@@ -69,6 +89,19 @@ maxset:
   script:
     - export with_cuda=false myconfig=maxset with_coverage=true
     - bash maintainer/CI/build_cmake.sh
+  <<: *artifacts_build
+  tags:
+    - docker
+    - linux
+
+maxset checks:
+  stage: checks
+  when: on_success
+  dependencies:
+    - maxset
+  script:
+    - export with_cuda=false myconfig=maxset with_coverage=true
+    - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
     - linux
@@ -76,6 +109,20 @@ maxset:
 maxset-python3:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
+  script:
+    - export myconfig=maxset with_coverage=true python_version=3
+    - bash maintainer/CI/build_cmake.sh
+  <<: *artifacts_build
+  tags:
+    - docker
+    - linux
+
+maxset-python3 checks:
+  stage: checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
+  when: on_success
+  dependencies:
+    - maxset-python3
   script:
     - export myconfig=maxset with_coverage=true python_version=3
     - bash maintainer/CI/build_cmake.sh
@@ -170,10 +217,21 @@ cuda-maxset:
   script:
     - export myconfig=maxset with_coverage=true python_version=3
     - bash maintainer/cuda_build.sh
-  artifacts:
-    paths:
-    - build/
-    expire_in: 1 week
+  <<: *artifacts_build
+  tags:
+    - docker
+    - linux
+    - cuda
+
+cuda-maxset checks:
+  stage: checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  when: on_success
+  dependencies:
+    - cuda-maxset
+  script:
+    - export with_coverage=true python_version=3 check_procs=3 check_odd_only=true
+    - bash maintainer/cuda_build.sh
   tags:
     - docker
     - linux
@@ -185,10 +243,21 @@ cuda8-maxset:
   script:
     - export myconfig=maxset with_coverage=true
     - bash maintainer/cuda_build.sh
-  artifacts:
-    paths:
-    - build/
-    expire_in: 1 week
+  <<: *artifacts_build
+  tags:
+    - docker
+    - linux
+    - cuda
+
+cuda8-maxset checks:
+  stage: checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
+  when: on_success
+  dependencies:
+    - cuda8-maxset
+  script:
+    - export myconfig=maxset with_coverage=true
+    - bash maintainer/cuda_build.sh
   tags:
     - docker
     - linux
@@ -197,6 +266,21 @@ cuda8-maxset:
 empty:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  script:
+    - export myconfig=empty python_version=3
+    - bash maintainer/CI/build_cmake.sh
+  <<: *artifacts_build
+  tags:
+    - docker
+    - linux
+    - cuda
+
+empty checks:
+  stage: checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  when: on_success
+  dependencies:
+    - empty
   script:
     - export myconfig=empty python_version=3
     - bash maintainer/CI/build_cmake.sh
@@ -264,11 +348,35 @@ osx:
   script:
     - export with_ccache=false myconfig=maxset with_cuda=false
     - bash maintainer/CI/build_cmake.sh
+  <<: *artifacts_build
+  tags:
+    - mac
+
+osx checks:
+  stage: checks
+  when: on_success
+  dependencies:
+    - osx
+  script:
+    - export with_ccache=false myconfig=maxset with_cuda=false
+    - bash maintainer/CI/build_cmake.sh
   tags:
     - mac
 
 osx-python3:
   stage: build
+  script:
+    - export with_ccache=false myconfig=maxset with_cuda=false python_version=3
+    - bash maintainer/CI/build_cmake.sh
+  <<: *artifacts_build
+  tags:
+    - mac
+
+osx-python3 checks:
+  stage: checks
+  when: on_success
+  dependencies:
+    - osx-python3
   script:
     - export with_ccache=false myconfig=maxset with_cuda=false python_version=3
     - bash maintainer/CI/build_cmake.sh
@@ -291,6 +399,22 @@ clang:6.0:
   script:
     - export myconfig=maxset with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true
     - bash maintainer/cuda_build.sh
+  <<: *artifacts_build
+  tags:
+    - docker
+    - linux
+    - cuda
+    - ptrace
+
+clang:6.0 checks:
+  stage: checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
+  when: on_success
+  dependencies:
+    - clang:6.0
+  script:
+    - export myconfig=maxset with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true
+    - bash maintainer/cuda_build.sh
   tags:
     - docker
     - linux
@@ -300,6 +424,21 @@ clang:6.0:
 intel:15:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
+    - bash maintainer/cuda_build.sh
+  <<: *artifacts_build
+  tags:
+    - docker
+    - linux
+    - cuda
+
+intel:15 checks:
+  stage: checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/intel:15
+  when: on_success
+  dependencies:
+    - intel:15
   script:
     - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
     - bash maintainer/cuda_build.sh
@@ -315,6 +454,22 @@ intel:17:
     - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
     - export cxx_flags=-O2
     - bash maintainer/cuda_build.sh
+  <<: *artifacts_build
+  tags:
+    - docker
+    - linux
+    - cuda
+
+intel:17 checks:
+  stage: checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/intel:17
+  when: on_success
+  dependencies:
+    - intel:17
+  script:
+    - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
+    - export cxx_flags=-O2
+    - bash maintainer/cuda_build.sh
   tags:
     - docker
     - linux
@@ -324,7 +479,7 @@ check_sphinx:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
   dependencies:
-  - cuda8-maxset
+    - cuda8-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
@@ -337,7 +492,7 @@ check_doxygen:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
   dependencies:
-  - cuda8-maxset
+    - cuda8-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
@@ -348,13 +503,13 @@ check_doxygen:
     - cuda
 
 check_with_odd_no_of_processors:
-  stage: additional_checks
+  stage: checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
   dependencies:
-  - cuda-maxset
+    - cuda-maxset
   script:
-    - export myconfig=maxset with_coverage=true python_version=3 build_procs=3 check_procs=3 check_odd_only=true
+    - export myconfig=maxset with_coverage=true python_version=3 check_procs=3 check_odd_only=true
     - bash maintainer/cuda_build.sh
   tags:
     - docker
