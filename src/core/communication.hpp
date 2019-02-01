@@ -448,14 +448,6 @@ void mpi_bcast_max_seen_particle_type(int s);
 void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
                       void *result_t_nb);
 
-/** Issue GET_LOCAL_STRESS_TENSOR: gather the contribution to the local stress
- *  tensors from each node.
- */
-
-void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
-                             int periodic[3], double range_start[3],
-                             double range[3]);
-
 /** Issue REQ_SET_TIME_STEP: send new \ref time_step and rescale the
  *  velocities accordingly.
  */
