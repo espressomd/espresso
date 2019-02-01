@@ -15,15 +15,6 @@
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
 
-void mpi_set_lb_coupling_counter_slave(int high, int low) {
-#ifdef LB
-  rng_counter_coupling = Utils::Counter<uint64_t>(Utils::u32_to_u64(
-      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
-#endif
-}
-
-#if defined(LB) || defined(LB_GPU)
-
 namespace {
 Utils::Counter<uint64_t> rng_counter_coupling;
 /*
@@ -33,8 +24,17 @@ Utils::Counter<uint64_t> rng_counter_coupling;
  * noise on the particle coupling and the fluid
  * thermalization.
  */
-enum class RNGSalt { PARTICLES };
+enum class RNGSalt { PARTICLES=2 };
 } // namespace
+
+void mpi_set_lb_coupling_counter_slave(int high, int low) {
+#ifdef LB
+  rng_counter_coupling = Utils::Counter<uint64_t>(Utils::u32_to_u64(
+      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
+#endif
+}
+
+#if defined(LB) || defined(LB_GPU)
 
 uint64_t lb_coupling_rng_state_cpu() { return rng_counter_coupling.value(); }
 
