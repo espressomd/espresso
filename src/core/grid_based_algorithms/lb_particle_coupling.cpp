@@ -15,6 +15,8 @@
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
 
+#if defined(LB) || defined(LB_GPU)
+
 namespace {
 Utils::Counter<uint64_t> rng_counter_coupling;
 /*
@@ -151,6 +153,7 @@ void add_swimmer_force(Particle &p) {
 #endif
 } // namespace
 
+#ifdef LB
 void calc_particle_lattice_ia() {
 
   if (transfer_momentum) {
@@ -210,3 +213,6 @@ void calc_particle_lattice_ia() {
     }
   }
 }
+#endif
+
+#endif

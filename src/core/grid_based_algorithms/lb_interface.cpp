@@ -33,14 +33,17 @@ void lb_update() {
 }
 
 void lb_on_integration_start() {
+#ifdef LB
   lb_sanity_checks();
 
   halo_communication(&update_halo_comm,
                      reinterpret_cast<char *>(lbfluid[0].data()));
+#endif
 }
 
 /** (Re-)initialize the fluid. */
 void lb_reinit_parameters() {
+#ifdef LB
   int i;
 
   if (lbpar.viscosity > 0.0) {
@@ -103,10 +106,12 @@ void lb_reinit_parameters() {
     for (i = 0; i < lbmodel.n_veloc; i++)
       lbpar.phi[i] = 0.0;
   }
+#endif
 }
 
 /** (Re-)initialize the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
+#ifdef LB
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
   /* here the conversion to lb units is performed */
@@ -130,12 +135,14 @@ void lb_reinit_fluid() {
 #ifdef LB_BOUNDARIES
   LBBoundaries::lb_init_boundaries();
 #endif // LB_BOUNDARIES
+#endif
 }
 
 /** Perform a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.
  */
 void lb_init() {
+#ifdef LB
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
 
   if (lbpar.agrid <= 0.0) {
@@ -172,6 +179,7 @@ void lb_init() {
   lb_reinit_fluid();
 
   LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
+#endif
 }
 
 #ifdef LB
@@ -1548,6 +1556,7 @@ void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
 } // namespace
 
 namespace {
+#ifdef LB
 Vector3d node_u(Lattice::index_t index) {
 #ifdef LB_BOUNDARIES
   if (lbfields[index].boundary) {
@@ -1558,6 +1567,7 @@ Vector3d node_u(Lattice::index_t index) {
   auto const local_rho = lbpar.rho + modes[0];
   return Vector3d{modes[1], modes[2], modes[3]} / local_rho;
 }
+#endif
 } // namespace
 
 /*
@@ -1566,6 +1576,7 @@ Vector3d node_u(Lattice::index_t index) {
  * @param pos Position
  * @param v Interpolated velocity in MD units.
  */
+#ifdef LB
 Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
   Vector3d interpolated_u{};
 
@@ -1579,7 +1590,9 @@ Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
 
   return (lbpar.agrid / lbpar.tau) * interpolated_u;
 }
+#endif
 
+#ifdef LB
 void lb_lbfluid_add_force_density(const Vector3d &pos,
                                   const Vector3d &force_density) {
   lattice_interpolation(lblattice, pos,
@@ -1591,8 +1604,11 @@ void lb_lbfluid_add_force_density(const Vector3d &pos,
                           node.force_density[2] += w * force_density[2];
                         });
 }
+#endif
 
+#ifdef LB
 const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
+#endif
 
 void lb_lbfluid_on_lb_params_change(int field) {
   if (field == LBPAR_AGRID) {
