@@ -34,7 +34,8 @@ def stopAll(system):
     system.part[:].omega_body = np.zeros(3)
 
 
-@ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT"]),
+@ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT",
+                                        "PARTIAL_PERIODIC"]),
            "Features not available, skipping test!")
 @ut.skipIf(espressomd.has_features(["CUDA"]) and
            str(espressomd.cuda_init.CudaInitHandle().device_list[0]) ==

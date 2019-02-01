@@ -132,7 +132,6 @@ int n_nodes = -1;
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_send_fluid_slave)                                                     \
   CB(mpi_recv_fluid_slave)                                                     \
-  CB(mpi_local_stress_tensor_slave)                                            \
   CB(mpi_iccp3m_iteration_slave)                                               \
   CB(mpi_iccp3m_init_slave)                                                    \
   CB(mpi_rotate_particle_slave)                                                \
@@ -675,68 +674,6 @@ void mpi_gather_stats_slave(int, int job) {
   }
 }
 
-/*************** REQ_GET_LOCAL_STRESS_TENSOR ************/
-void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
-                             int periodic[3], double range_start[3],
-                             double range[3]) {
-
-  PTENSOR_TRACE(fprintf(stderr,
-                        "%d: mpi_local_stress_tensor: Broadcasting "
-                        "local_stress_tensor parameters\n",
-                        this_node));
-
-  mpi_call(mpi_local_stress_tensor_slave, -1, 0);
-
-  MPI_Bcast(bins, 3, MPI_INT, 0, comm_cart);
-  MPI_Bcast(periodic, 3, MPI_INT, 0, comm_cart);
-  MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(range, 3, MPI_DOUBLE, 0, comm_cart);
-
-  PTENSOR_TRACE(fprintf(
-      stderr, "%d: mpi_local_stress_tensor: Call local_stress_tensor_calc\n",
-      this_node));
-  local_stress_tensor_calc(TensorInBin, bins, periodic, range_start, range);
-
-  PTENSOR_TRACE(fprintf(stderr,
-                        "%d: mpi_local_stress_tensor: Reduce local "
-                        "stress tensors with MPI_Reduce\n",
-                        this_node));
-  for (int i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    MPI_Reduce(MPI_IN_PLACE, TensorInBin[i].e, 9, MPI_DOUBLE, MPI_SUM, 0,
-               comm_cart);
-  }
-}
-
-void mpi_local_stress_tensor_slave(int, int) {
-  int bins[3] = {0, 0, 0};
-  int periodic[3] = {0, 0, 0};
-  double range_start[3] = {0, 0, 0};
-  double range[3] = {0, 0, 0};
-  int i, j;
-
-  MPI_Bcast(bins, 3, MPI_INT, 0, comm_cart);
-  MPI_Bcast(periodic, 3, MPI_INT, 0, comm_cart);
-  MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(range, 3, MPI_DOUBLE, 0, comm_cart);
-
-  auto TensorInBin =
-      std::vector<DoubleList>(bins[0] * bins[1] * bins[2], DoubleList(9, 0.0));
-
-  local_stress_tensor_calc(TensorInBin.data(), bins, periodic, range_start,
-                           range);
-
-  for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    MPI_Reduce(TensorInBin[i].e, nullptr, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-    PTENSOR_TRACE(fprintf(
-        stderr, "%d: mpi_local_stress_tensor: Tensor sent in bin %d is {",
-        this_node, i));
-    for (j = 0; j < 9; j++) {
-      PTENSOR_TRACE(fprintf(stderr, "%f ", TensorInBin[i].e[j]));
-    }
-    PTENSOR_TRACE(fprintf(stderr, "}\n"));
-  }
-}
-
 /*************** REQ_SET_TIME_STEP ************/
 void mpi_set_time_step(double time_s) {
   double old_ts = time_step;
@@ -751,7 +688,6 @@ void mpi_set_time_step(double time_s) {
 
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
 
-  rescale_velocities(time_step / old_ts);
   on_parameter_change(FIELD_TIMESTEP);
 }
 
@@ -759,7 +695,6 @@ void mpi_set_time_step_slave(int, int) {
   double old_ts = time_step;
 
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
-  rescale_velocities(time_step / old_ts);
   on_parameter_change(FIELD_TIMESTEP);
   time_step_squared = time_step * time_step;
   time_step_squared_half = time_step_squared / 2.;
