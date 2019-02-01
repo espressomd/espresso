@@ -1,38 +1,188 @@
 #include <fstream>
 
 #include "communication.hpp"
+#include "config.hpp"
+#include "electrokinetics.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "lb.hpp"
 #include "lbgpu.hpp"
 #include "lb_interface.hpp"
+#include "thermostat.hpp"
 
 #if defined(LB) || defined(LB_GPU)
 
-uint64_t lb_coupling_rng_state() {
+void lb_update() {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    return lb_coupling_rng_state_cpu();
+    lattice_boltzmann_update();
 #endif
-  } else if (lattice_switch & LATTICE_LB_GPU) {
+  } else if (lattice_switch & LATTICE_LB_GPU and this_node == 0) {
 #ifdef LB_GPU
-    return lb_coupling_rng_state_gpu();
+#ifdef ELECTROKINETICS
+    if (ek_initialized) {
+      ek_integrate();
+    } else {
+#endif
+    lattice_boltzmann_update_gpu();
+#ifdef ELECTROKINETICS
+    }
+#endif
 #endif
   }
-  return {};
 }
 
-void lb_coupling_set_rng_state(uint64_t counter) {
-  if (lattice_switch & LATTICE_LB) {
-#ifdef LB
-    lb_coupling_set_rng_state_cpu(counter);
-#endif
-  } else if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    lb_coupling_set_rng_state_gpu(counter);
-#endif
+void lb_on_integration_start() {
+  lb_sanity_checks();
+
+  halo_communication(&update_halo_comm,
+                     reinterpret_cast<char *>(lbfluid[0].data()));
+}
+
+/** (Re-)initialize the fluid. */
+void lb_reinit_parameters() {
+  int i;
+
+  if (lbpar.viscosity > 0.0) {
+    /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    lbpar.gamma_shear = 1. - 2. / (6. * lbpar.viscosity + 1.);
+  }
+
+  if (lbpar.bulk_viscosity > 0.0) {
+    /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    lbpar.gamma_bulk = 1. - 2. / (9. * lbpar.bulk_viscosity + 1.);
+  }
+
+  if (lbpar.is_TRT) {
+    lbpar.gamma_bulk = lbpar.gamma_shear;
+    lbpar.gamma_even = lbpar.gamma_shear;
+    lbpar.gamma_odd =
+        -(7.0 * lbpar.gamma_even + 1.0) / (lbpar.gamma_even + 7.0);
+    // gamma_odd = lbpar.gamma_shear; //uncomment for BGK
+  }
+
+  // lbpar.gamma_shear = 0.0; //uncomment for special case of BGK
+  // lbpar.gamma_bulk = 0.0;
+  // gamma_odd = 0.0;
+  // gamma_even = 0.0;
+
+  if (temperature > 0.0) {
+    /* fluctuating hydrodynamics ? */
+    lbpar.fluct = 1;
+
+    /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
+     * Note that the modes are not normalized as in the paper here! */
+    double mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
+                (lbpar.agrid * lbpar.agrid);
+    // mu *= agrid*agrid*agrid;  // Marcello's conjecture
+
+    for (i = 0; i < 4; i++)
+      lbpar.phi[i] = 0.0;
+    lbpar.phi[4] =
+        sqrt(mu * lbmodel.w_k[4] *
+             (1. - Utils::sqr(lbpar.gamma_bulk))); // Utils::sqr(x) == x*x
+    for (i = 5; i < 10; i++)
+      lbpar.phi[i] =
+          sqrt(mu * lbmodel.w_k[i] * (1. - Utils::sqr(lbpar.gamma_shear)));
+    for (i = 10; i < 16; i++)
+      lbpar.phi[i] =
+          sqrt(mu * lbmodel.w_k[i] * (1 - Utils::sqr(lbpar.gamma_odd)));
+    for (i = 16; i < 19; i++)
+      lbpar.phi[i] =
+          sqrt(mu * lbmodel.w_k[i] * (1 - Utils::sqr(lbpar.gamma_even)));
+
+    LB_TRACE(fprintf(
+        stderr,
+        "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
+        "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
+        this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
+        lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
+  } else {
+    /* no fluctuations at zero temperature */
+    lbpar.fluct = 0;
+    for (i = 0; i < lbmodel.n_veloc; i++)
+      lbpar.phi[i] = 0.0;
   }
 }
+
+/** (Re-)initialize the fluid according to the given value of rho. */
+void lb_reinit_fluid() {
+  std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
+  /* default values for fields in lattice units */
+  /* here the conversion to lb units is performed */
+  double rho = lbpar.rho;
+  std::array<double, 3> j = {{0., 0., 0.}};
+  std::array<double, 6> pi = {{0., 0., 0., 0., 0., 0.}};
+
+  LB_TRACE(fprintf(stderr,
+                   "Initialising the fluid with equilibrium populations\n"););
+
+  for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
+       ++index) {
+    // calculate equilibrium distribution
+    lb_calc_n_from_rho_j_pi(index, rho, j, pi);
+
+#ifdef LB_BOUNDARIES
+    lbfields[index].boundary = 0;
+#endif // LB_BOUNDARIES
+  }
+
+#ifdef LB_BOUNDARIES
+  LBBoundaries::lb_init_boundaries();
+#endif // LB_BOUNDARIES
+}
+
+
+/** Perform a full initialization of the lattice Boltzmann system.
+ *  All derived parameters and the fluid are reset to their default values.
+ */
+void lb_init() {
+  LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
+
+  if (lbpar.agrid <= 0.0) {
+    runtimeErrorMsg()
+        << "Lattice Boltzmann agrid not set when initializing fluid";
+  }
+
+  if (check_runtime_errors())
+    return;
+
+  double temp_agrid[3];
+  double temp_offset[3];
+  for (int i = 0; i < 3; i++) {
+    temp_agrid[i] = lbpar.agrid;
+    temp_offset[i] = 0.5;
+  }
+
+  /* initialize the local lattice domain */
+  lblattice.init(temp_agrid, temp_offset, 1, 0);
+
+  if (check_runtime_errors())
+    return;
+
+  /* allocate memory for data structures */
+  lb_realloc_fluid();
+
+  /* prepare the halo communication */
+  lb_prepare_communication();
+
+  /* initialize derived parameters */
+  lb_reinit_parameters();
+
+  /* setup the initial particle velocity distribution */
+  lb_reinit_fluid();
+
+  LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
+}
+
+#ifdef LB
+int transfer_momentum = 0;
+#endif
+
+#ifdef LB_GPU
+int transfer_momentum_gpu = 0;
+#endif
+
 uint64_t lb_fluid_rng_state() {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
@@ -44,6 +194,78 @@ uint64_t lb_fluid_rng_state() {
 #endif
   }
   return {};
+}
+
+/** Calculate the fluid velocity at a given position of the lattice.
+ *  Note that it can lead to undefined behavior if the position is not
+ *  within the local lattice. This version of the function can be called
+ *  without the position needing to be on the local processor. Note that this
+ *  gives a slightly different version than the values used to couple to MD
+ *  beads when near a wall, see lb_lbfluid_get_interpolated_velocity.
+ */
+int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v) {
+  double local_v[3] = {0, 0, 0},
+         delta[6]{}; // velocity field, relative positions to surrounding nodes
+  Vector3i ind = {0, 0, 0}, tmpind; // node indices
+  int x, y, z;                      // counters
+
+  // convert the position into lower left grid point
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    Lattice::map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
+#endif // LB_GPU
+  } else {
+#ifdef LB
+    Lattice::map_position_to_lattice_global(p, ind, delta, lbpar.agrid);
+#endif // LB
+  }
+
+  // set the initial velocity to zero in all directions
+  v[0] = 0;
+  v[1] = 0;
+  v[2] = 0;
+
+  for (z = 0; z < 2; z++) {
+    for (y = 0; y < 2; y++) {
+      for (x = 0; x < 2; x++) {
+        // give the index of the neighbouring nodes
+        tmpind[0] = ind[0] + x;
+        tmpind[1] = ind[1] + y;
+        tmpind[2] = ind[2] + z;
+
+        if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+          if (tmpind[0] == int(lbpar_gpu.dim_x))
+            tmpind[0] = 0;
+          if (tmpind[1] == int(lbpar_gpu.dim_y))
+            tmpind[1] = 0;
+          if (tmpind[2] == int(lbpar_gpu.dim_z))
+            tmpind[2] = 0;
+#endif // LB_GPU
+        } else {
+#ifdef LB
+          if (tmpind[0] == box_l[0] / lbpar.agrid)
+            tmpind[0] = 0;
+          if (tmpind[1] == box_l[1] / lbpar.agrid)
+            tmpind[1] = 0;
+          if (tmpind[2] == box_l[2] / lbpar.agrid)
+            tmpind[2] = 0;
+#endif // LB
+        }
+
+        lb_lbnode_get_u(tmpind, local_v);
+
+        v[0] +=
+            delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * local_v[0];
+        v[1] +=
+            delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * local_v[1];
+        v[2] +=
+            delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * local_v[2];
+      }
+    }
+  }
+
+  return 0;
 }
 
 void lb_fluid_set_rng_state(uint64_t counter) {
@@ -1303,75 +1525,75 @@ int lb_lbnode_set_pop(const Vector3i &ind, double *p_pop) {
   return 0;
 }
 
-/** Calculate the fluid velocity at a given position of the lattice.
- *  Note that it can lead to undefined behavior if the position is not
- *  within the local lattice. This version of the function can be called
- *  without the position needing to be on the local processor. Note that this
- *  gives a slightly different version than the values used to couple to MD
- *  beads when near a wall, see lb_lbfluid_get_interpolated_velocity.
- */
-int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v) {
-  double local_v[3] = {0, 0, 0},
-         delta[6]{}; // velocity field, relative positions to surrounding nodes
-  Vector3i ind = {0, 0, 0}, tmpind; // node indices
-  int x, y, z;                      // counters
+namespace {
+template <typename Op>
+void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
+                           Op &&op) {
+  Lattice::index_t node_index[8];
+  double delta[6];
 
-  // convert the position into lower left grid point
-  if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    Lattice::map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
-#endif // LB_GPU
-  } else {
-#ifdef LB
-    Lattice::map_position_to_lattice_global(p, ind, delta, lbpar.agrid);
-#endif // LB
-  }
+  /* determine elementary lattice cell surrounding the particle
+     and the relative position of the particle in this cell */
+  lattice.map_position_to_lattice(pos, node_index, delta);
 
-  // set the initial velocity to zero in all directions
-  v[0] = 0;
-  v[1] = 0;
-  v[2] = 0;
+  for (int z = 0; z < 2; z++) {
+    for (int y = 0; y < 2; y++) {
+      for (int x = 0; x < 2; x++) {
+        auto &index = node_index[(z * 2 + y) * 2 + x];
+        auto const w = delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
 
-  for (z = 0; z < 2; z++) {
-    for (y = 0; y < 2; y++) {
-      for (x = 0; x < 2; x++) {
-        // give the index of the neighbouring nodes
-        tmpind[0] = ind[0] + x;
-        tmpind[1] = ind[1] + y;
-        tmpind[2] = ind[2] + z;
-
-        if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-          if (tmpind[0] == int(lbpar_gpu.dim_x))
-            tmpind[0] = 0;
-          if (tmpind[1] == int(lbpar_gpu.dim_y))
-            tmpind[1] = 0;
-          if (tmpind[2] == int(lbpar_gpu.dim_z))
-            tmpind[2] = 0;
-#endif // LB_GPU
-        } else {
-#ifdef LB
-          if (tmpind[0] == box_l[0] / lbpar.agrid)
-            tmpind[0] = 0;
-          if (tmpind[1] == box_l[1] / lbpar.agrid)
-            tmpind[1] = 0;
-          if (tmpind[2] == box_l[2] / lbpar.agrid)
-            tmpind[2] = 0;
-#endif // LB
-        }
-
-        lb_lbnode_get_u(tmpind, local_v);
-
-        v[0] +=
-            delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * local_v[0];
-        v[1] +=
-            delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * local_v[1];
-        v[2] +=
-            delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * local_v[2];
+        op(index, w);
       }
     }
   }
+}
+} // namespace
 
-  return 0;
+namespace {
+Vector3d node_u(Lattice::index_t index) {
+#ifdef LB_BOUNDARIES
+  if (lbfields[index].boundary) {
+    return lbfields[index].slip_velocity;
+  }
+#endif // LB_BOUNDARIES
+  auto const modes = lb_calc_modes(index);
+  auto const local_rho = lbpar.rho + modes[0];
+  return Vector3d{modes[1], modes[2], modes[3]} / local_rho;
+}
+} // namespace
+
+/*
+ * @brief Interpolate the fluid velocity.
+ *
+ * @param pos Position
+ * @param v Interpolated velocity in MD units.
+ */
+Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
+  Vector3d interpolated_u{};
+
+  /* calculate fluid velocity at particle's position
+     this is done by linear interpolation
+     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  lattice_interpolation(lblattice, pos,
+                        [&interpolated_u](Lattice::index_t index, double w) {
+                          interpolated_u += w * node_u(index);
+                        });
+
+  return (lbpar.agrid / lbpar.tau) * interpolated_u;
+}
+
+void lb_lbfluid_add_force_density(const Vector3d &pos, const Vector3d &force_density) {
+  lattice_interpolation(lblattice, pos,
+                        [&force_density](Lattice::index_t index, double w) {
+                          auto &node = lbfields[index];
+
+                          node.force_density[0] += w * force_density[0];
+                          node.force_density[1] += w * force_density[1];
+                          node.force_density[2] += w * force_density[2];
+                        });
+} 
+
+const Lattice& lb_lbfluid_get_lattice() {
+  return lblattice;
 }
 #endif

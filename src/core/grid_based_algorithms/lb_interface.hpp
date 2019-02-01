@@ -3,16 +3,48 @@
 
 #include "config.hpp"
 #include "utils/Vector.hpp"
+#include "lattice.hpp"
 
 #if defined(LB) || defined(LB_GPU)
 
-uint64_t lb_coupling_rng_state();
-void lb_coupling_set_rng_state(uint64_t counter);
+void lb_update();
+/**
+ * @brief Event handler for integration start.
+ */
+void lb_on_integration_start();
+
+/** Perform a full initialization of
+ *  the lattice Boltzmann system. All derived parameters
+ *  and the fluid are reset to their default values.
+ */
+void lb_init();
+
+/** (Re-)initialize the fluid. */
+void lb_reinit_fluid();
+
+/** (Re-)initialize the derived parameters for the lattice Boltzmann system.
+ *  The current state of the fluid is unchanged.
+ */
+void lb_reinit_parameters();
+
+#ifdef LB
+extern int transfer_momentum;
+#endif
+
+#ifdef LB_GPU
+extern int transfer_momentum_gpu;
+#endif
 
 uint64_t lb_fluid_rng_state();
 void lb_fluid_set_rng_state(uint64_t counter);
 
-/* A C level interface to the LB fluid */
+/** calculates the fluid velocity at a given position of the
+ * lattice. Note that it can lead to undefined behaviour if the
+ * position is not within the local lattice. */
+Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &p);
+void lb_lbfluid_add_force_density(const Vector3d &p, const Vector3d &force_density);
+const Lattice& lb_lbfluid_get_lattice();
+
 int lb_lbfluid_set_density(double *p_dens);
 int lb_lbfluid_get_density(double *p_dens);
 int lb_lbfluid_set_visc(double *p_visc);

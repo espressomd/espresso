@@ -30,7 +30,6 @@
 #include "cuda_interface.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "integrate.hpp"
@@ -158,9 +157,6 @@ LB_parameters_gpu lbpar_gpu = {
 
 /** this is the array that stores the hydrodynamic fields for the output */
 LB_rho_v_pi_gpu *host_values = nullptr;
-
-/** Flag indicating momentum exchange between particles and fluid */
-int transfer_momentum_gpu = 0;
 
 static int max_ran = 1000000;
 /*@}*/

@@ -533,6 +533,8 @@ int mpi_sync_topo_part_info(void);
  */
 void mpi_bcast_lb_params(int field, int value = -1);
 
+void mpi_set_lb_coupling_counter(uint64_t counter);
+
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
 void mpi_bcast_cuda_global_part_vars();
 

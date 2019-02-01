@@ -52,6 +52,8 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "io/mpiio/mpiio.hpp"
@@ -82,7 +84,9 @@
 #include "serialization/Particle.hpp"
 #include "serialization/ParticleParametersSwimming.hpp"
 #include "utils.hpp"
+#include "utils/Counter.hpp"
 #include "utils/make_unique.hpp"
+#include "utils/u32_to_u64.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
@@ -195,7 +199,7 @@ static int terminated = 0;
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
   CB(mpi_rotate_system_slave)                                                  \
-  CB(mpi_set_lb_coupling_counter)                                              \
+  CB(mpi_set_lb_coupling_counter_slave)                                        \
   CB(mpi_set_lb_fluid_counter)
 
 // create the forward declarations
@@ -1828,6 +1832,15 @@ void mpi_bcast_lb_params_slave(int field, int) {
   on_lb_params_change(field);
 #endif
 }
+
+void mpi_set_lb_coupling_counter(uint64_t counter) {
+  uint32_t high, low;
+  std::tie(high, low) = Utils::u64_to_u32(counter);
+  mpi_call(mpi_set_lb_coupling_counter_slave, high, low);
+  mpi_set_lb_coupling_counter_slave(high, low);
+}
+
+
 
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/
 

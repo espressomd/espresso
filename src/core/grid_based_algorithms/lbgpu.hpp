@@ -203,7 +203,6 @@ void on_lb_params_change_gpu(int field);
 /** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_rho_v_pi_gpu *host_values;
-extern int transfer_momentum_gpu;
 extern LB_extern_nodeforcedensity_gpu *extern_node_force_densities_gpu;
 #ifdef ELECTROKINETICS
 extern LB_node_force_density_gpu node_f;
@@ -305,12 +304,10 @@ void lb_lbfluid_get_population(const Vector3i &, float[LBQ], int);
 void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
                                                        double *velocities,
                                                        int length);
-
-void lb_coupling_set_rng_state_gpu(uint64_t);
-void lb_fluid_set_rng_state_gpu(uint64_t);
-uint64_t lb_coupling_rng_state_gpu();
 uint64_t lb_fluid_rng_state_gpu();
-
+void lb_fluid_set_rng_state_gpu(uint64_t counter);
+uint64_t lb_coupling_rng_state_gpu();
+void lb_coupling_set_rng_state_gpu(uint64_t counter);
 /*@{*/
 
 #endif /* LB_GPU */

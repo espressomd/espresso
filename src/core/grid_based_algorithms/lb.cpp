@@ -63,12 +63,8 @@
 static void lb_check_halo_regions(const LB_Fluid &lbfluid);
 #endif // ADDITIONAL_CHECKS
 
-/** Flag indicating momentum exchange between particles and fluid */
-int transfer_momentum = 0;
-
-/** Counter for the particle coupling RNG */
+/** Counter for the RNG */
 namespace {
-Utils::Counter<uint64_t> rng_counter_coupling;
 Utils::Counter<uint64_t> rng_counter_fluid;
 
 /*
@@ -78,7 +74,7 @@ Utils::Counter<uint64_t> rng_counter_fluid;
  * noise on the particle coupling and the fluid
  * thermalization.
  */
-enum class RNGSalt { PARTICLES, FLUID };
+enum class RNGSalt { FLUID };
 } // namespace
 
 /** Struct holding the Lattice Boltzmann parameters */
@@ -473,22 +469,6 @@ void lb_sanity_checks() {
   }
 }
 
-void lb_on_integration_start() {
-  lb_sanity_checks();
-
-  halo_communication(&update_halo_comm,
-                     reinterpret_cast<char *>(lbfluid[0].data()));
-}
-
-uint64_t lb_coupling_rng_state_cpu() { return rng_counter_coupling.value(); }
-
-void lb_coupling_set_rng_state_cpu(uint64_t counter) {
-  uint32_t high, low;
-  std::tie(high, low) = Utils::u64_to_u32(counter);
-  mpi_call(mpi_set_lb_coupling_counter, high, low);
-
-  rng_counter_coupling = Utils::Counter<uint64_t>(counter);
-}
 
 uint64_t lb_fluid_rng_state_cpu() { return rng_counter_fluid.value(); }
 
@@ -501,13 +481,6 @@ void lb_fluid_set_rng_state_cpu(uint64_t counter) {
 }
 #endif
 
-void mpi_set_lb_coupling_counter(int high, int low) {
-#ifdef LB
-  rng_counter_coupling = Utils::Counter<uint64_t>(Utils::u32_to_u64(
-      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
-#endif
-}
-
 void mpi_set_lb_fluid_counter(int high, int low) {
 #ifdef LB
   rng_counter_fluid = Utils::Counter<uint64_t>(Utils::u32_to_u64(
@@ -519,7 +492,7 @@ void mpi_set_lb_fluid_counter(int high, int low) {
 /***********************************************************************/
 
 /** (Re-)allocate memory for the fluid and initialize pointers. */
-static void lb_realloc_fluid() {
+void lb_realloc_fluid() {
   LB_TRACE(printf("reallocating fluid\n"));
   const std::array<int, 2> size = {
       {lbmodel.n_veloc, lblattice.halo_grid_volume}};
@@ -539,7 +512,7 @@ static void lb_realloc_fluid() {
 /** Set up the structures for exchange of the halo regions.
  *  See also \ref halo.cpp
  */
-static void lb_prepare_communication() {
+void lb_prepare_communication() {
   int i;
   HaloCommunicator comm = {0, nullptr};
 
@@ -586,141 +559,6 @@ static void lb_prepare_communication() {
   }
 
   release_halo_communication(&comm);
-}
-
-/** (Re-)initialize the fluid. */
-void lb_reinit_parameters() {
-  int i;
-
-  if (lbpar.viscosity > 0.0) {
-    /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
-    lbpar.gamma_shear = 1. - 2. / (6. * lbpar.viscosity + 1.);
-  }
-
-  if (lbpar.bulk_viscosity > 0.0) {
-    /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
-    lbpar.gamma_bulk = 1. - 2. / (9. * lbpar.bulk_viscosity + 1.);
-  }
-
-  if (lbpar.is_TRT) {
-    lbpar.gamma_bulk = lbpar.gamma_shear;
-    lbpar.gamma_even = lbpar.gamma_shear;
-    lbpar.gamma_odd =
-        -(7.0 * lbpar.gamma_even + 1.0) / (lbpar.gamma_even + 7.0);
-    // gamma_odd = lbpar.gamma_shear; //uncomment for BGK
-  }
-
-  // lbpar.gamma_shear = 0.0; //uncomment for special case of BGK
-  // lbpar.gamma_bulk = 0.0;
-  // gamma_odd = 0.0;
-  // gamma_even = 0.0;
-
-  if (temperature > 0.0) {
-    /* fluctuating hydrodynamics ? */
-    lbpar.fluct = 1;
-
-    /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
-     * Note that the modes are not normalized as in the paper here! */
-    double mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
-                (lbpar.agrid * lbpar.agrid);
-    // mu *= agrid*agrid*agrid;  // Marcello's conjecture
-
-    for (i = 0; i < 4; i++)
-      lbpar.phi[i] = 0.0;
-    lbpar.phi[4] =
-        sqrt(mu * lbmodel.w_k[4] *
-             (1. - Utils::sqr(lbpar.gamma_bulk))); // Utils::sqr(x) == x*x
-    for (i = 5; i < 10; i++)
-      lbpar.phi[i] =
-          sqrt(mu * lbmodel.w_k[i] * (1. - Utils::sqr(lbpar.gamma_shear)));
-    for (i = 10; i < 16; i++)
-      lbpar.phi[i] =
-          sqrt(mu * lbmodel.w_k[i] * (1 - Utils::sqr(lbpar.gamma_odd)));
-    for (i = 16; i < 19; i++)
-      lbpar.phi[i] =
-          sqrt(mu * lbmodel.w_k[i] * (1 - Utils::sqr(lbpar.gamma_even)));
-
-    LB_TRACE(fprintf(
-        stderr,
-        "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
-        "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
-        this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
-        lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
-  } else {
-    /* no fluctuations at zero temperature */
-    lbpar.fluct = 0;
-    for (i = 0; i < lbmodel.n_veloc; i++)
-      lbpar.phi[i] = 0.0;
-  }
-}
-
-/** (Re-)initialize the fluid according to the given value of rho. */
-void lb_reinit_fluid() {
-  std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
-  /* default values for fields in lattice units */
-  /* here the conversion to lb units is performed */
-  double rho = lbpar.rho;
-  std::array<double, 3> j = {{0., 0., 0.}};
-  std::array<double, 6> pi = {{0., 0., 0., 0., 0., 0.}};
-
-  LB_TRACE(fprintf(stderr,
-                   "Initialising the fluid with equilibrium populations\n"););
-
-  for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
-       ++index) {
-    // calculate equilibrium distribution
-    lb_calc_n_from_rho_j_pi(index, rho, j, pi);
-
-#ifdef LB_BOUNDARIES
-    lbfields[index].boundary = 0;
-#endif // LB_BOUNDARIES
-  }
-
-#ifdef LB_BOUNDARIES
-  LBBoundaries::lb_init_boundaries();
-#endif // LB_BOUNDARIES
-}
-
-/** Perform a full initialization of the lattice Boltzmann system.
- *  All derived parameters and the fluid are reset to their default values.
- */
-void lb_init() {
-  LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
-
-  if (lbpar.agrid <= 0.0) {
-    runtimeErrorMsg()
-        << "Lattice Boltzmann agrid not set when initializing fluid";
-  }
-
-  if (check_runtime_errors())
-    return;
-
-  double temp_agrid[3];
-  double temp_offset[3];
-  for (int i = 0; i < 3; i++) {
-    temp_agrid[i] = lbpar.agrid;
-    temp_offset[i] = 0.5;
-  }
-
-  /* initialize the local lattice domain */
-  lblattice.init(temp_agrid, temp_offset, 1, 0);
-
-  if (check_runtime_errors())
-    return;
-
-  /* allocate memory for data structures */
-  lb_realloc_fluid();
-
-  /* prepare the halo communication */
-  lb_prepare_communication();
-
-  /* initialize derived parameters */
-  lb_reinit_parameters();
-
-  /* setup the initial particle velocity distribution */
-  lb_reinit_fluid();
-
-  LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
 }
 
 /** Release fluid and communication. */
@@ -1074,269 +912,15 @@ void lattice_boltzmann_update() {
   }
 }
 
-namespace {
-template <typename Op>
-void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
-                           Op &&op) {
-  Lattice::index_t node_index[8];
-  double delta[6];
-
-  /* determine elementary lattice cell surrounding the particle
-     and the relative position of the particle in this cell */
-  lattice.map_position_to_lattice(pos, node_index, delta);
-
-  for (int z = 0; z < 2; z++) {
-    for (int y = 0; y < 2; y++) {
-      for (int x = 0; x < 2; x++) {
-        auto &index = node_index[(z * 2 + y) * 2 + x];
-        auto const w = delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
-
-        op(index, w);
-      }
-    }
-  }
-}
-} // namespace
 
 /***********************************************************************/
 /** \name Coupling part */
 /***********************************************************************/
 /*@{*/
 
-namespace {
-/**
- * @brief Add a force to the lattice force density.
- * @param pos Position of the force
- * @param force Force in MD units.
- */
-void add_md_force(Vector3d const &pos, Vector3d const &force) {
-  /* transform momentum transfer to lattice units
-     (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  auto const delta_j = -(time_step * lbpar.tau / lbpar.agrid) * force;
 
-  lattice_interpolation(lblattice, pos,
-                        [&delta_j](Lattice::index_t index, double w) {
-                          auto &node = lbfields[index];
 
-                          node.force_density[0] += w * delta_j[0];
-                          node.force_density[1] += w * delta_j[1];
-                          node.force_density[2] += w * delta_j[2];
-                        });
-}
-} // namespace
 
-namespace {
-bool in_local_domain(Vector3d const &pos) {
-  return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
-          pos[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
-          pos[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
-          pos[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
-          pos[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
-          pos[2] < my_right[2] + 0.5 * lblattice.agrid[2]);
-}
-
-#ifdef ENGINE
-void add_swimmer_force(Particle &p) {
-  if (p.swim.swimming) {
-    // calculate source position
-    const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
-    auto const director = p.r.calc_director();
-    auto const source_position = p.r.p + direction * director;
-
-    if (not in_local_domain(source_position)) {
-      return;
-    }
-
-    p.swim.v_source = lb_lbfluid_get_interpolated_velocity(source_position);
-
-    add_md_force(source_position, p.swim.f_swim * director);
-  }
-}
-#endif
-} // namespace
-
-/** Coupling of a single particle to viscous fluid with Stokesian friction.
- *
- *  Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
- *
- * @param p          The coupled particle (Input).
- * @param f_random   Additional force to be included.
- *
- * @return The viscous coupling force plus f_random.
- */
-inline Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
-  /* calculate fluid velocity at particle's position
-     this is done by linear interpolation
-     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  auto const interpolated_u = lb_lbfluid_get_interpolated_velocity(p->r.p);
-
-  Vector3d v_drift = interpolated_u;
-#ifdef ENGINE
-  if (p->swim.swimming) {
-    v_drift += p->swim.v_swim * p->r.calc_director();
-    p->swim.v_center[0] = interpolated_u[0];
-    p->swim.v_center[1] = interpolated_u[1];
-    p->swim.v_center[2] = interpolated_u[2];
-  }
-#endif
-
-#ifdef LB_ELECTROHYDRODYNAMICS
-  v_drift += p->p.mu_E;
-#endif
-
-  /* calculate viscous force
-   * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
-   * */
-  auto const force = -lbpar.friction * (p->m.v - v_drift) + f_random;
-
-  add_md_force(p->r.p, force);
-
-  return force;
-}
-
-namespace {
-Vector3d node_u(Lattice::index_t index) {
-#ifdef LB_BOUNDARIES
-  if (lbfields[index].boundary) {
-    return lbfields[index].slip_velocity;
-  }
-#endif // LB_BOUNDARIES
-  auto const modes = lb_calc_modes(index);
-  auto const local_rho = lbpar.rho + modes[0];
-  return Vector3d{modes[1], modes[2], modes[3]} / local_rho;
-}
-} // namespace
-
-/*
- * @brief Interpolate the fluid velocity.
- *
- * @param pos Position
- * @param v Interpolated velocity in MD units.
- */
-Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
-  Vector3d interpolated_u{};
-
-  /* calculate fluid velocity at particle's position
-     this is done by linear interpolation
-     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  lattice_interpolation(lblattice, pos,
-                        [&interpolated_u](Lattice::index_t index, double w) {
-                          interpolated_u += w * node_u(index);
-                        });
-
-  return (lbpar.agrid / lbpar.tau) * interpolated_u;
-}
-
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &pos) {
-  Vector3d interpolated_f{};
-  lattice_interpolation(
-      lblattice, pos, [&interpolated_f](Lattice::index_t index, double w) {
-#ifdef LB_BOUNDARIES
-        if (!lbfields[index].boundary) {
-#endif
-          auto const modes = lb_calc_modes(index);
-          auto const local_rho = modes[0] + lbpar.rho;
-          interpolated_f +=
-              w / 2 / local_rho *
-              (lbfields[index].force_density_buf - lbpar.ext_force_density);
-#ifdef LB_BOUNDARIES
-        }
-#endif
-      });
-  return interpolated_f;
-}
-#endif
-
-/** Calculate particle lattice interactions.
- *  So far, only viscous coupling with Stokesian friction is implemented.
- *  Include all particle-lattice forces in this function.
- *  The function is called from \ref force_calc.
- *
- *  Parallelizing the fluid particle coupling is not straightforward
- *  because drawing of random numbers makes the whole thing nonlocal.
- *  One way to do it is to treat every particle only on one node, i.e.
- *  the random numbers need not be communicated. The particles that are
- *  not fully inside the local lattice are taken into account via their
- *  ghost images on the neighbouring nodes. But this requires that the
- *  correct values of the surrounding lattice nodes are available on
- *  the respective node, which means that we have to communicate the
- *  halo regions before treating the ghost particles. Moreover, after
- *  determining the ghost couplings, we have to communicate back the
- *  halo region such that all local lattice nodes have the correct values.
- *  Thus two communication phases are involved which will most likely be
- *  the bottleneck of the computation.
- *
- *  Another way of dealing with the particle lattice coupling is to
- *  treat a particle and all of it's images explicitly. This requires the
- *  communication of the random numbers used in the calculation of the
- *  coupling force. The problem is now that, if random numbers have to
- *  be redrawn, we cannot efficiently determine which particles and which
- *  images have to be re-calculated. We therefore go back to the outset
- *  and go through the whole system again until no failure occurs during
- *  such a sweep. In the worst case, this is very inefficient because
- *  many things are recalculated although they actually don't need.
- *  But we can assume that this happens extremely rarely and then we have
- *  on average only one communication phase for the random numbers, which
- *  probably makes this method preferable compared to the above one.
- */
-void calc_particle_lattice_ia() {
-
-  if (transfer_momentum) {
-    using rng_type = r123::Philox4x64;
-    using ctr_type = rng_type::ctr_type;
-    using key_type = rng_type::key_type;
-
-    ctr_type c{{rng_counter_coupling.value(),
-                static_cast<uint64_t>(RNGSalt::PARTICLES)}};
-    rng_counter_coupling.increment();
-
-    /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
-     * The factor 12 comes from the fact that we use random numbers
-     * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-     * time_step comes from the discretization.
-     */
-    auto const noise_amplitude =
-        sqrt(12. * 2. * lbpar.friction * temperature / time_step);
-
-    auto f_random = [&c](int id) -> Vector3d {
-      key_type k{{static_cast<uint32_t>(id)}};
-
-      auto const noise = rng_type{}(c, k);
-
-      using Utils::uniform;
-      return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
-             Vector3d::broadcast(0.5);
-    };
-
-    /* local cells */
-    for (auto &p : local_cells.particles()) {
-      if (!p.p.is_virtual || thermo_virtual) {
-        auto const force =
-            lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
-        /* add force to the particle */
-        p.f.f += force;
-#ifdef ENGINE
-        add_swimmer_force(p);
-#endif
-      }
-    }
-
-    /* ghost cells */
-    for (auto &p : ghost_cells.particles()) {
-      /* for ghost particles we have to check if they lie
-       * in the range of the local lattice nodes */
-      if (in_local_domain(p.r.p)) {
-        if (!p.p.is_virtual || thermo_virtual) {
-          lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
-#ifdef ENGINE
-          add_swimmer_force(p);
-#endif
-        }
-      }
-    }
-  }
-}
 
 /***********************************************************************/
 

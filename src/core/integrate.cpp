@@ -40,8 +40,7 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
-#include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "initialize.hpp"
 #include "lattice.hpp"
 #include "minimize_energy.hpp"
@@ -393,28 +392,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-#ifdef LB
-      if (lattice_switch & LATTICE_LB)
-        lattice_boltzmann_update();
-
-      if (check_runtime_errors())
-        break;
-#endif
-
-#ifdef LB_GPU
-      if (this_node == 0) {
-#ifdef ELECTROKINETICS
-        if (ek_initialized) {
-          ek_integrate();
-        } else {
-#endif
-          if (lattice_switch & LATTICE_LB_GPU)
-            lattice_boltzmann_update_gpu();
-#ifdef ELECTROKINETICS
-        }
-#endif
-      }
-#endif // LB_GPU
+#if defined(LB) || defined(LB_GPU)
+        lb_update();
+#endif // LB || LB_GPU
 
 #ifdef VIRTUAL_SITES
       virtual_sites()->after_lb_propagation();

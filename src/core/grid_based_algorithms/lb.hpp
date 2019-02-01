@@ -32,7 +32,6 @@
 
 #include "lattice.hpp"
 
-void mpi_set_lb_coupling_counter(int high, int low);
 void mpi_set_lb_fluid_counter(int high, int low);
 
 #ifdef LB
@@ -40,6 +39,7 @@ void mpi_set_lb_fluid_counter(int high, int low);
 #include "errorhandling.hpp"
 
 #include "utils.hpp"
+#include "halo.hpp"
 
 #include <utils/Span.hpp>
 
@@ -185,6 +185,10 @@ extern LB_Parameters lbpar;
 /** The underlying lattice */
 extern Lattice lblattice;
 
+extern HaloCommunicator update_halo_comm;
+
+void lb_realloc_fluid();
+
 /** Pointer to the velocity populations of the fluid.
  *  lbfluid contains pre-collision populations, lbfluid_post
  *  contains post-collision populations
@@ -216,9 +220,6 @@ template <std::size_t I> auto get(const LB_Fluid_Ref &lb_fluid) {
 /** Pointer to the hydrodynamic fields of the fluid */
 extern std::vector<LB_FluidNode> lbfields;
 
-/** Switch indicating momentum exchange between particles and fluid */
-extern int transfer_momentum;
-
 /************************************************************/
 /** \name Exported Functions */
 /************************************************************/
@@ -232,24 +233,7 @@ extern int transfer_momentum;
  */
 void lattice_boltzmann_update();
 
-/** Perform a full initialization of
- *  the lattice Boltzmann system. All derived parameters
- *  and the fluid are reset to their default values.
- */
-void lb_init();
-
-/** (Re-)initialize the derived parameters for the lattice Boltzmann system.
- *  The current state of the fluid is unchanged.
- */
-void lb_reinit_parameters();
-
-/** (Re-)initialize the fluid. */
-void lb_reinit_fluid();
-
-/**
- * @brief Event handler for integration start.
- */
-void lb_on_integration_start();
+void lb_sanity_checks();
 
 /** Calculates the equilibrium distributions.
     @param index Index of the local site
@@ -268,11 +252,6 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
  * Note that this function changes the state of the fluid!
  */
 void calc_particle_lattice_ia();
-
-/** calculates the fluid velocity at a given position of the
- * lattice. Note that it can lead to undefined behaviour if the
- * position is not within the local lattice. */
-Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &p);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &p);
@@ -382,6 +361,7 @@ uint64_t lb_coupling_rng_state_cpu();
 void lb_coupling_set_rng_state_cpu(uint64_t counter);
 uint64_t lb_fluid_rng_state_cpu();
 void lb_fluid_set_rng_state_cpu(uint64_t counter);
+void lb_prepare_communication();
 #endif
 
 #endif /* _LB_H */
