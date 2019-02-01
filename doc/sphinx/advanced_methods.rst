@@ -1492,7 +1492,7 @@ stencil. For all other stencils, this choice is hardcoded. The default
 is ``"friction"``.
 
 
-The feature ``EK_ELECTROSTATIC_COUPLING`` enables the action of the electrostatic potential due to the
+``es_coupling`` enables the action of the electrostatic potential due to the
 electrokinetics species and charged boundaries on the MD particles. The
 forces on the particles are calculated by interpolation from the
 electric field which is in turn calculated from the potential via finite

@@ -482,8 +482,6 @@ Fluid dynamics and fluid structure interaction
 
 -  ``EK_BOUNDARIES``
 
--  ``EK_ELECTROSTATIC_COUPLING``
-
 -  ``EK_DEBUG``
 
 -  ``EK_DOUBLE_PREC``
