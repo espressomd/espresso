@@ -1351,6 +1351,7 @@ double lbgpu_eq_stress() {
     p0 += lbpar_gpu.rho[ii] * lbpar_gpu.agrid * lbpar_gpu.agrid /
           lbpar_gpu.tau / lbpar_gpu.tau / 3.;
   }
+  return 0.0;
 }
 #endif
 
@@ -1445,7 +1446,7 @@ int lb_lbfluid_get_stress(double *p_pi) {
       p_pi[i] /= lbpar_gpu.number_of_nodes;
 
     // Add equilibrium stress;
-    const double p0 = lbgpu_eq_stress();
+    const auto p0 = lbgpu_eq_stress();
     p_pi[0] += p0;
     p_pi[2] += p0;
     p_pi[5] += p0;
