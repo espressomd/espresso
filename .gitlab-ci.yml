@@ -239,8 +239,8 @@ rocm-maxset:
   tags:
     - docker
     - linux
-  except:
-    - /^PR-.*/
+  only:
+    - scheduled
 
 ubuntu:arm64:
   <<: *arch_definition
@@ -333,6 +333,20 @@ check_sphinx:
     - linux
     - cuda
 
+check_doxygen:
+  stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
+  dependencies:
+  - cuda8-maxset
+  when: on_success
+  script:
+    - cd ${CI_PROJECT_DIR}/build
+    - make doxygen
+  tags:
+    - docker
+    - linux
+    - cuda
+
 check_with_odd_no_of_processors:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
@@ -363,7 +377,7 @@ deploy_documentation:
     - echo "$SSH_PUBLIC_KEY" > ${HOME}/.ssh/espresso_rsa.pub && chmod 600 ${HOME}/.ssh/espresso_rsa.pub
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   script:
-    - cd ${CI_PROJECT_DIR}/build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx && make doxygen && cd doc/sphinx/html &&
+    - cd ${CI_PROJECT_DIR}/build/doc && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx && make doxygen && cd doc/sphinx/html &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
     - cd ../../doxygen/html &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox

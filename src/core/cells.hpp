@@ -123,8 +123,8 @@ enum Resort : unsigned {
 /** List of cell pointers. */
 struct CellPList {
   ParticleRange particles() const {
-    return Utils::make_range(CellParticleIterator(cell, cell + n, 0),
-                             CellParticleIterator(cell + n, cell + n, 0));
+    return {CellParticleIterator(cell, cell + n, 0),
+            CellParticleIterator(cell + n, cell + n, 0)};
   }
 
   Cell **begin() { return cell; }

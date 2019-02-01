@@ -35,7 +35,6 @@ The direct analysis commands can be classified into two types:
     - :ref:`Moment of inertia matrix`
     - :ref:`Gyration tensor`
     - :ref:`Stress Tensor`
-    - :ref:`Local Stress Tensor`
 
 - Analysis on stored configurations, added by :meth:`espressomd.analyze.Analysis.append`:
     - :ref:`Radial distribution function` with ``rdf_type='<rdf>'``
