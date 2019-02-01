@@ -96,8 +96,8 @@ Coulomb_parameters coulomb = {
 #endif
 
 #ifdef ELECTROSTATICS
-Debye_hueckel_params dh_params = {0.0, 0.0};
-Reaction_field_params rf_params = {0.0, 0.0};
+Debye_hueckel_params dh_params{};
+Reaction_field_params rf_params{};
 
 /** Induced field (for const. potential feature) **/
 double field_induced;
@@ -358,6 +358,11 @@ static void recalc_maximal_cutoff_nonbonded() {
 #ifdef SWIMMER_REACTIONS
       if (max_cut_current < data->REACTION_range)
         max_cut_current = data->REACTION_range;
+#endif
+#ifdef THOLE
+      // If THOLE is active, use p3m cutoff
+      if (data->THOLE_scaling_coeff != 0)
+        max_cut_current = std::max(max_cut_current, p3m.params.r_cut);
 #endif
 
       IA_parameters *data_sym = get_ia_param(j, i);

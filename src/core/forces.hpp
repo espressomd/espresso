@@ -23,10 +23,11 @@
 /** \file
  *  Force calculation.
  *
- *  \todo Preprocessor switches for all forces (Default: everything is turned
- * on). \todo Implement more flexible thermostat, %e.g. which thermostat to use.
+ *  \todo Preprocessor switches for all forces (Default: everything is
+ *        turned on).
+ *  \todo Implement more flexible thermostat, e.g. which thermostat to use.
  *
- *  For more information see forces.cpp .
+ *  Implementation in forces.cpp.
  */
 
 #include "actor/Actor.hpp"
@@ -46,38 +47,22 @@ extern ActorList forceActors;
     ghost particle forces with zero. */
 void init_forces();
 
-/** Set forces of all ghosts to zero
- */
+/** Set forces of all ghosts to zero */
 void init_forces_ghosts();
 
 /** Calculate forces.
  *
  *  A short list, what the function is doing:
  *  <ol>
- *  <li> Initialize forces with: \ref friction_thermo_langevin (ghost forces
- with zero).
- *  <li> Calculate bonded interaction forces:<br>
- *       Loop all local particles (not the ghosts).
- *       <ul>
- *       <li> FENE
- *       <li> ANGLE (cos bend potential)
- *       </ul>
- *  <li> Calculate non-bonded short range interaction forces:<br>
- *       Loop all \ref IA_Neighbor::vList "verlet lists" of all \ref #cells.
- *       <ul>
- *       <li> Lennard-Jones.
- *       <li> Buckingham.
- *       <li> Real space part: Coulomb.
- *       <li> Ramp.
- *       </ul>
- *  <li> Calculate long range interaction forces:<br>
- Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
+ *  <li> Initialize forces
+ *  <li> Calculate bonded interaction forces
+ *  <li> Calculate non-bonded short range interaction forces
+ *  <li> Calculate long range interaction forces
  *  </ol>
  */
 void force_calc();
 
-/** Check if forces are NAN
- */
+/** Check if forces are NAN */
 void check_forces();
 
 /** Calculate long range forces (P3M, MMM2d...). */

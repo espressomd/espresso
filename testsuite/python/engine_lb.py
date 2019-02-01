@@ -94,7 +94,7 @@ class SwimmerTest(ut.TestCase):
         else:
             lbm.print_vtk_velocity("engine_test_tmp.vtk")
             different, difference = tests_common.calculate_vtk_max_pointwise_difference(
-                vtk_name, "engine_test_tmp.vtk", tol=2.0e-7)
+                vtk_name, "engine_test_tmp.vtk", tol=1.5e-6)
             os.remove("engine_test_tmp.vtk")
             print(
                 "Maximum deviation to the reference point is: {}".format(difference))

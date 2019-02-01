@@ -98,7 +98,7 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
  * errors. This removes parallelism between host and device and should only be
  * enabled while debugging. */
 #ifdef CUDA_DEBUG
-  cudaThreadSynchronize();
+  cudaDeviceSynchronize();
 #endif
   CU_err = cudaGetLastError();
   if (CU_err != cudaSuccess) {
@@ -117,13 +117,10 @@ __device__ unsigned int getThreadIndex() {
          threadIdx.x;
 }
 
-/** kernel for the initialisation of the particle force array
- * @param *particle_forces_device	    Pointer to local particle force
- * (Output)
- * @param *particle_seeds_device			Pointer to the particle
- * rn
- * seed
- * storearray (Output)
+/** Kernel for the initialisation of the particle force array
+ * @param[out] particle_forces_device    Local particle force
+ * @param[out] particle_torques_device   Local particle torque
+ * @param[out] particle_seeds_device     Particle random seed
  */
 __global__ void init_particle_force(float *particle_forces_device,
                                     float *particle_torques_device,
@@ -147,8 +144,8 @@ __global__ void init_particle_force(float *particle_forces_device,
   }
 }
 
-/** kernel for the initialisation of the fluid composition
- * @param *fluid_composition_device Pointer to local fluid composition (Output)
+/** Kernel for the initialisation of the fluid composition
+ * @param[out] fluid_composition_device  Local fluid composition
  */
 __global__ void
 init_fluid_composition(CUDA_fluid_composition *fluid_composition_device) {
@@ -165,8 +162,9 @@ init_fluid_composition(CUDA_fluid_composition *fluid_composition_device) {
   }
 }
 
-/** kernel for the initialisation of the particle force array
- * @param *particle_forces_device	pointer to local particle force (Input)
+/** Kernel for the initialisation of the particle force array
+ * @param[out] particle_forces_device    Local particle force
+ * @param[out] particle_torques_device   Local particle torque
  */
 __global__ void reset_particle_force(float *particle_forces_device,
                                      float *particle_torques_device) {
@@ -431,7 +429,7 @@ void copy_forces_from_GPU(ParticleRange particles) {
       KERNELCALL(reset_particle_force, dim_grid_particles,
                  threads_per_block_particles, particle_forces_device,
                  particle_torques_device);
-      cudaThreadSynchronize();
+      cudaDeviceSynchronize();
     }
 
     cuda_mpi_send_forces(particles, particle_forces_host,

@@ -352,6 +352,11 @@ else()
   set(BOOST_MINIMUM_VERSION "1.53.0")
 endif()
 
+# old Boost.MPI versions contain a use-after-free bug that seems to only cause crashes on 32-bit architectures
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(BOOST_MINIMUM_VERSION "1.67.0")
+endif()
+
 find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
 
 if(Boost_VERSION VERSION_GREATER 106399 AND Boost_VERSION VERSION_LESS 106500)
@@ -383,12 +388,6 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(APPLE)
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
-endif()
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
-endif()
 # drop 'lib' prefix from all libraries
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
@@ -398,9 +397,25 @@ if(WARNINGS_ARE_ERRORS)
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
   endif()
 endif(WARNINGS_ARE_ERRORS)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -Wno-unused-function -Wno-unused-variable")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter")
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+endif()
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0.0"))
+  # disable warnings from -Wextra
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-implicit-fallthrough")
+endif()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # disable warnings from -Wextra
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-clobbered -Wno-cast-function-type")
+endif()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0.0" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # disable warnings from -Wextra
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-field-initializers")
+endif()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  # disable warnings from -Wextra
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd592")
 endif()
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   # G++ and Intel don't know this flag
@@ -416,6 +431,11 @@ endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "16.0")
   # workaround for compiler crash related to decltype() and variadic template usage inside Boost
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX11_VARIADIC_TEMPLATES")
+endif()
+
+# prevent 80-bit arithmetic on old Intel processors
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffloat-store")
 endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)
