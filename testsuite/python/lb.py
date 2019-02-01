@@ -19,7 +19,6 @@ from __future__ import print_function
 import itertools
 import unittest as ut
 import numpy as np
-from time import time
 
 import espressomd
 import espressomd.lb
@@ -179,7 +178,6 @@ class TestLB(object):
         system.actors.add(self.lbf)
         system.thermostat.set_lb(kT=self.params['temp'])
         system.integrator.run(10)
-        tick = time()
         stress = np.zeros((3, 3))
         agrid = self.params["agrid"]
         for i in range(int(system.box_l[0] / agrid)):
@@ -188,12 +186,9 @@ class TestLB(object):
                     stress += self.lbf[i, j, k].pi
 
         stress /= system.volume() / agrid**3
-        print(time() - tick)
 
         obs = LBFluidStress()
-        tick = time()
         obs_stress = obs.calculate()
-        print(time() - tick)
         obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[3]],
                                [obs_stress[1], obs_stress[
                                 2], obs_stress[4]],
