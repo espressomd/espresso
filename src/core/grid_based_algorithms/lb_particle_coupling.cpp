@@ -24,7 +24,7 @@ Utils::Counter<uint64_t> rng_counter_coupling;
  * noise on the particle coupling and the fluid
  * thermalization.
  */
-enum class RNGSalt { PARTICLES=2 };
+enum class RNGSalt { PARTICLES = 2 };
 } // namespace
 
 void mpi_set_lb_coupling_counter_slave(int high, int low) {
