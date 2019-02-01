@@ -1597,10 +1597,12 @@ const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 void lb_lbfluid_on_lb_params_change(int field) {
   if (field == LBPAR_AGRID) {
 #ifdef LB
-    if (lattice_switch & LATTICE_LB) lb_init();
+    if (lattice_switch & LATTICE_LB)
+      lb_init();
 #endif
 #ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU) lb_init_gpu();
+    if (lattice_switch & LATTICE_LB_GPU)
+      lb_init_gpu();
 #endif
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
     LBBoundaries::lb_init_boundaries();
@@ -1608,17 +1610,21 @@ void lb_lbfluid_on_lb_params_change(int field) {
   }
   if (field == LBPAR_DENSITY) {
 #ifdef LB
-    if (lattice_switch & LATTICE_LB) lb_reinit_fluid();
+    if (lattice_switch & LATTICE_LB)
+      lb_reinit_fluid();
 #endif
 #ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU) lb_reinit_fluid_gpu();
+    if (lattice_switch & LATTICE_LB_GPU)
+      lb_reinit_fluid_gpu();
 #endif
   }
 #ifdef LB
-  if (lattice_switch & LATTICE_LB) lb_reinit_parameters();
+  if (lattice_switch & LATTICE_LB)
+    lb_reinit_parameters();
 #endif
 #ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU) lb_reinit_parameters_gpu();
+  if (lattice_switch & LATTICE_LB_GPU)
+    lb_reinit_parameters_gpu();
 #endif
 }
 
