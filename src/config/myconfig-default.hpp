@@ -60,5 +60,4 @@
 #ifdef CUDA
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
-#define EK_ELECTROSTATIC_COUPLING
 #endif
