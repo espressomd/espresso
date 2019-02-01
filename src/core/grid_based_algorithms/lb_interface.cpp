@@ -1595,27 +1595,27 @@ void lb_lbfluid_add_force_density(const Vector3d &pos,
 const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 
 void lb_lbfluid_on_lb_params_change(int field) {
-   if (field == LBPAR_AGRID) {
+  if (field == LBPAR_AGRID) {
 #ifdef LB
-       lb_init();
+    lb_init();
 #endif
 #ifdef LB_GPU
-       lb_init_gpu();
+    lb_init_gpu();
 #endif
-   }
-   if (field == LBPAR_DENSITY) {
+  }
+  if (field == LBPAR_DENSITY) {
 #ifdef LB
-     lb_reinit_fluid();
+    lb_reinit_fluid();
 #endif
 #ifdef LB_GPU
-     lb_reinit_fluid_gpu();
+    lb_reinit_fluid_gpu();
 #endif
-    }
+  }
 #ifdef LB
-    lb_reinit_parameters();
+  lb_reinit_parameters();
 #endif
 #ifdef LB_GPU
-    lb_reinit_parameters_gpu();
+  lb_reinit_parameters_gpu();
 #endif
 }
 
