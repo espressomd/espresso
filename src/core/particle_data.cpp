@@ -269,6 +269,20 @@ struct UpdateSwim {
     }
 };
 
+struct UpdateOrientation {
+    Vector3d axis;
+    double angle;
+
+    void operator()(Particle &p) const {
+        local_rotate_particle(p, axis, angle);
+    }
+
+    template<class Archive>
+    void serialize(Archive &ar, long int) {
+        ar & axis & angle;
+    }
+};
+
 /**
  * @brief Top-level message.
  *
@@ -287,7 +301,8 @@ using UpdateMessage = boost::variant<
         UpdateMomentumMessage,
         UpdateForceMessage,
         UpdateBondMessage,
-        UpdateSwim
+        UpdateSwim,
+        UpdateOrientation
         >;
 // clang-format on
 
@@ -328,7 +343,7 @@ using message_type_t = typename message_type<S, s>::type;
  * the updates for the substructs of Particle.
  */
 struct UpdateVisitor : public boost::static_visitor<void> {
-  UpdateVisitor(int id) : id(id) {}
+  explicit UpdateVisitor(int id) : id(id) {}
 
   const int id;
 
@@ -884,11 +899,8 @@ void set_particle_rotation(int part, int rot) {
 }
 #endif
 #ifdef ROTATION
-int rotate_particle(int part, const Vector3d &axis, double angle) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_rotate_particle(pnode, part, axis, angle);
-  return ES_OK;
+void rotate_particle(int part, const Vector3d &axis, double angle) {
+    mpi_send_update_message(part, UpdateOrientation{axis, angle});
 }
 #endif
 

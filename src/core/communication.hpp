@@ -149,15 +149,6 @@ void mpi_place_particle(int node, int id, double pos[3]);
 void mpi_place_new_particle(int node, int id, double pos[3]);
 
 #ifdef ROTATION
-/** Mpi call for rotating a single particle
- *  Also calls \ref on_particle_change.
- *  \param part   the particle.
- *  \param node   the node it is attached to.
- *  \param axis   rotation axis
- *  \param angle  rotation angle
- */
-void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
-                         double angle);
 #endif
 
 /** Issue REQ_SET_EXCLUSION: send exclusions.

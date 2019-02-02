@@ -133,7 +133,6 @@ int n_nodes = -1;
   CB(mpi_recv_fluid_slave)                                                     \
   CB(mpi_iccp3m_iteration_slave)                                               \
   CB(mpi_iccp3m_init_slave)                                                    \
-  CB(mpi_rotate_particle_slave)                                                \
   CB(mpi_bcast_max_mu_slave)                                                   \
   CB(mpi_recv_fluid_populations_slave)                                         \
   CB(mpi_send_fluid_populations_slave)                                         \
@@ -380,38 +379,6 @@ void mpi_place_new_particle_slave(int pnode, int part) {
   }
 
   on_particle_change();
-}
-
-void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
-                         double angle) {
-#ifdef ROTATION
-  mpi_call(mpi_rotate_particle_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    local_rotate_particle(*p, axis, angle);
-  } else {
-    comm_cart.send(pnode, SOME_TAG, axis);
-    comm_cart.send(pnode, SOME_TAG, angle);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_rotate_particle_slave(int pnode, int part) {
-#ifdef ROTATION
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    Vector3d axis;
-    double angle;
-    comm_cart.recv(0, SOME_TAG, axis);
-    comm_cart.recv(0, SOME_TAG, angle);
-    local_rotate_particle(*p, axis, angle);
-  }
-
-  on_particle_change();
-#endif
 }
 
 /****************** REQ_GET_PART ************/

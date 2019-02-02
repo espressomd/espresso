@@ -689,7 +689,7 @@ void set_particle_rotation(int part, int rot);
    @param axis rotation axis
    @param angle rotation angle
 */
-int rotate_particle(int part, const Vector3d &axis, double angle);
+void rotate_particle(int part, const Vector3d &axis, double angle);
 
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
