@@ -477,19 +477,19 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
 
         // lb_boundary_velocity is given in MD units --> convert to LB and
         // reconvert back at the end of this function
-        local_rho = para.rho[0];
+        local_rho = para.rho;
         local_j[0] =
-            para.rho[0] * lb_boundary_velocity[3 * (boundary_index - 1) + 0];
+            para.rho * lb_boundary_velocity[3 * (boundary_index - 1) + 0];
         local_j[1] =
-            para.rho[0] * lb_boundary_velocity[3 * (boundary_index - 1) + 1];
+            para.rho * lb_boundary_velocity[3 * (boundary_index - 1) + 1];
         local_j[2] =
-            para.rho[0] * lb_boundary_velocity[3 * (boundary_index - 1) + 2];
+            para.rho * lb_boundary_velocity[3 * (boundary_index - 1) + 2];
 
       } else
 #endif
       {
         Calc_m_from_n_IBM(n_curr, node_index[i], mode, paraP);
-        local_rho = para.rho[0] + mode[0];
+        local_rho = para.rho + mode[0];
 
         // Add the +f/2 contribution!!
         local_j[0] =

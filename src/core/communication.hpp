@@ -580,7 +580,7 @@ void mpi_recv_fluid_populations(int node, int index, double *pop);
  *  @param index  index of the lattice site
  *  @param pop    local fluid population
  */
-void mpi_send_fluid_populations(int node, int index, double *pop);
+void mpi_send_fluid_populations(int node, int index, const Vector<19, double> &pop);
 
 /** Part of MDLC */
 void mpi_bcast_max_mu();

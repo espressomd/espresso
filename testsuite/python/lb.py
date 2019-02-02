@@ -122,7 +122,7 @@ class TestLB(object):
 
             # Go over lb lattice
             for lb_node in lb_nodes:
-                dens = lb_node.density[0]
+                dens = lb_node.density
                 fluid_mass += dens
                 fluid_temp += np.sum(lb_node.velocity**2) * dens
 

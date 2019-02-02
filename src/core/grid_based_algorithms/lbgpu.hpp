@@ -56,10 +56,6 @@
 #define LBPAR_EXTFORCE 5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
 #define LBPAR_BOUNDARY 7 /**< boundary parameters */
-#ifdef SHANCHEN
-#define LBPAR_COUPLING 8
-#define LBPAR_MOBILITY 9
-#endif
 /*@}*/
 
 #if defined(LB_DOUBLE_PREC) || defined(EK_DOUBLE_PREC)
@@ -70,20 +66,20 @@ typedef float lbForceFloat;
 
 /**-------------------------------------------------------------------------*/
 /** Parameters for the lattice Boltzmann system for GPU. */
-typedef struct {
+struct LB_parameters_gpu {
   /** number density (LB units) */
-  float rho[LB_COMPONENTS];
+  float rho;
   /** mu (LJ units) */
-  float mu[LB_COMPONENTS];
+  float mu;
   /** viscosity (LJ) units */
-  float viscosity[LB_COMPONENTS];
+  float viscosity;
   /** relaxation rate of shear modes */
-  float gamma_shear[LB_COMPONENTS];
+  float gamma_shear;
   /** relaxation rate of bulk modes */
-  float gamma_bulk[LB_COMPONENTS];
+  float gamma_bulk;
   /**      */
-  float gamma_odd[LB_COMPONENTS];
-  float gamma_even[LB_COMPONENTS];
+  float gamma_odd;
+  float gamma_even;
   /** flag determining whether gamma_shear, gamma_odd, and gamma_even are
    *  calculated from gamma_shear in such a way to yield a TRT LB with minimized
    *  slip at bounce-back boundaries
@@ -93,16 +89,16 @@ typedef struct {
    *  Note that the friction coefficient is quite high and may
    *  lead to numerical artifacts with low order integrators
    */
-  float friction[LB_COMPONENTS];
+  float friction;
   /** amplitude of the fluctuations in the viscous coupling
    *  Switch indicating what type of coupling is used, can either
    *  use nearest neighbors or next nearest neighbors.
    */
   int lb_couple_switch;
 
-  float lb_coupl_pref[LB_COMPONENTS];
-  float lb_coupl_pref2[LB_COMPONENTS];
-  float bulk_viscosity[LB_COMPONENTS];
+  float lb_coupl_pref;
+  float lb_coupl_pref2;
+  float bulk_viscosity;
 
   /** lattice spacing (LJ units) */
   float agrid;
@@ -136,35 +132,24 @@ typedef struct {
   unsigned int your_seed;
 
   unsigned int reinit;
-
-#ifdef SHANCHEN
-  /** mobility. They are actually LB_COMPONENTS-1 in number, we leave
-   *  LB_COMPONENTS here for practical reasons
-   */
-  float gamma_mobility[LB_COMPONENTS];
-  float mobility[LB_COMPONENTS];
-  float coupling[LB_COMPONENTS * LB_COMPONENTS];
-  int remove_momentum;
-#endif // SHANCHEN
-
-} LB_parameters_gpu;
+};
 
 /** Conserved quantities for the lattice Boltzmann system. */
-typedef struct {
+struct LB_rho_v_gpu {
 
   /** density of the node */
-  float rho[LB_COMPONENTS];
+  float rho;
   /** velocity of the node */
 
   float v[3];
 
-} LB_rho_v_gpu;
+};
 /* this structure is almost duplicated for memory efficiency. When the stress
    tensor element are needed at every timestep, this features should be
    explicitly switched on */
 typedef struct {
   /** density of the node */
-  float rho[LB_COMPONENTS];
+  float rho;
   /** velocity of the node */
   float v[3];
   /** pressure tensor */
@@ -247,10 +232,6 @@ void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
-#ifdef SHANCHEN
-void lb_calc_shanchen_GPU();
-void lattice_boltzmann_calc_shanchen_gpu();
-#endif
 void lb_free_GPU();
 void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values);
 void lb_print_node_GPU(int single_nodeindex,
@@ -276,7 +257,7 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag);
 void lb_get_boundary_flags_GPU(unsigned int *host_bound_array);
 
 void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity);
-void lb_set_node_rho_GPU(int single_nodeindex, float *host_rho);
+void lb_set_node_rho_GPU(int single_nodeindex, float host_rho);
 
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);

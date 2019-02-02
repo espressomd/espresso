@@ -25,6 +25,7 @@ cimport numpy as np
 from libc cimport stdint
 from .actors cimport Actor
 from . cimport cuda_init
+from .particle_data cimport make_array_locked
 from . import cuda_init
 from globals cimport *
 from copy import deepcopy
@@ -128,8 +129,7 @@ IF LB_GPU or LB:
         # function that calls wrapper functions which set the parameters at C-Level
         ####################################################
         def _set_lattice_switch(self):
-            if lb_set_lattice_switch(1):
-                raise Exception("lb_set_lattice_switch error")
+            lb_set_lattice_switch(1)
 
         def _set_params_in_es_core(self):
             default_params = self.default_params()
@@ -142,39 +142,29 @@ IF LB_GPU or LB:
             global temperature
             temperature = float(self._params["kT"])
             mpi_bcast_parameter(FIELD_TEMPERATURE)
-            if python_lbfluid_set_density(self._params["dens"], self._params["agrid"]):
-                raise Exception("lb_lbfluid_set_density error")
+            python_lbfluid_set_density(self._params["dens"], self._params["agrid"])
 
-            if python_lbfluid_set_tau(self._params["tau"]):
-                raise Exception("lb_lbfluid_set_tau error")
+            lb_lbfluid_set_tau(self._params["tau"])
 
-            if python_lbfluid_set_visc(self._params["visc"], self._params["agrid"], self._params["tau"]):
-                raise Exception("lb_lbfluid_set_visc error")
+            python_lbfluid_set_visc(self._params["visc"], self._params["agrid"], self._params["tau"])
 
             if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
-                if python_lbfluid_set_bulk_visc(self._params["bulk_visc"], self._params["agrid"], self._params["tau"]):
-                    raise Exception("lb_lbfluid_set_bulk_visc error")
+                python_lbfluid_set_bulk_visc(self._params["bulk_visc"], self._params["agrid"], self._params["tau"])
 
-            if python_lbfluid_set_agrid(self._params["agrid"]):
-                raise Exception("lb_lbfluid_set_agrid error")
+            python_lbfluid_set_agrid(self._params["agrid"])
 
             if self._params["fric"] != default_params["fric"]:
-                if python_lbfluid_set_friction(self._params["fric"]):
-                    raise Exception("lb_lbfluid_set_friction error")
+                python_lbfluid_set_friction(self._params["fric"])
 
-            if python_lbfluid_set_ext_force_density(self._params["ext_force_density"], self._params["agrid"], self._params["tau"]):
-                raise Exception("lb_lbfluid_set_ext_force_density error")
+            python_lbfluid_set_ext_force_density(self._params["ext_force_density"], self._params["agrid"], self._params["tau"])
 
-            if python_lbfluid_set_couple_flag(self._params["couple"]):
-                raise Exception("lb_lbfluid_set_couple_flag error")
+            python_lbfluid_set_couple_flag(self._params["couple"])
 
             if "gamma_odd" in self._params:
-                if python_lbfluid_set_gamma_odd(self._params["gamma_odd"]):
-                    raise Exception("lb_lbfluid_set_gamma_odd error")
+                python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
 
             if "gamma_even" in self._params:
-                if python_lbfluid_set_gamma_even(self._params["gamma_even"]):
-                    raise Exception("lb_lbfluid_set_gamma_even error")
+                python_lbfluid_set_gamma_even(self._params["gamma_even"])
 
             utils.handle_errors("LB fluid activation")
 
@@ -189,8 +179,7 @@ IF LB_GPU or LB:
             if python_lbfluid_get_density(self._params["dens"], self._params["agrid"]):
                 raise Exception("lb_lbfluid_get_density error")
 
-            if python_lbfluid_get_tau(self._params["tau"]):
-                raise Exception("lb_lbfluid_set_tau error")
+            self._params["tau"] = lb_lbfluid_get_tau()
 
             if python_lbfluid_get_visc(self._params["visc"], self._params["agrid"], self._params["tau"]):
                 raise Exception("lb_lbfluid_set_visc error")
@@ -282,8 +271,7 @@ IF LB_GPU or LB:
                 raise Exception("LB not compiled in")
 
         def _deactivate_method(self):
-            if lb_set_lattice_switch(0):
-                raise Exception("lb_set_lattice_switch error")
+            lb_set_lattice_switch(0)
 
 IF LB_GPU:
     cdef class LBFluidGPU(LBFluid):
@@ -296,8 +284,7 @@ IF LB_GPU:
             lb_lbfluid_remove_total_momentum()
 
         def _set_lattice_switch(self):
-            if lb_set_lattice_switch(2):
-                raise Exception("lb_set_lattice_switch error")
+            lb_set_lattice_switch(2)
 
         def _activate_method(self):
             self.validate_params()
@@ -352,22 +339,24 @@ IF LB or LB_GPU:
 
         property velocity:
             def __get__(self):
-                cdef double[3] double_return
-                lb_lbnode_get_u(self.node, double_return)
-                return array_locked(double_return)
+                cdef Vector3d double_return
+                double_return = lb_lbnode_get_u(self.node)
+                return make_array_locked(double_return)
 
             def __set__(self, value):
-                cdef double[3] host_velocity
+                cdef Vector3d host_velocity
                 if all(is_valid_type(v, float) for v in value) and len(value) == 3:
-                    host_velocity = value
+                    host_velocity[0] = value[0]
+                    host_velocity[1] = value[1]
+                    host_velocity[2] = value[2]
                     lb_lbnode_set_u(self.node, host_velocity)
                 else:
                     raise ValueError(
                         "Velocity has to be of shape 3 and type float.")
         property density:
             def __get__(self):
-                cdef double[3] double_return
-                lb_lbnode_get_rho(self.node, double_return)
+                cdef double double_return
+                double_return = lb_lbnode_get_rho(self.node)
                 return array_locked(double_return)
 
             def __set__(self, value):
@@ -375,8 +364,8 @@ IF LB or LB_GPU:
 
         property pi:
             def __get__(self):
-                cdef double[6] pi
-                lb_lbnode_get_pi(self.node, pi)
+                cdef Vector6d pi
+                pi = lb_lbnode_get_pi(self.node)
                 return array_locked(np.array([[pi[0], pi[1], pi[3]],
                                               [pi[1], pi[2], pi[4]],
                                               [pi[3], pi[4], pi[5]]]))
@@ -386,8 +375,8 @@ IF LB or LB_GPU:
 
         property pi_neq:
             def __get__(self):
-                cdef double[6] pi
-                lb_lbnode_get_pi_neq(self.node, pi)
+                cdef Vector6d pi
+                pi = lb_lbnode_get_pi_neq(self.node)
                 return array_locked(np.array([[pi[0], pi[1], pi[3]],
                                               [pi[1], pi[2], pi[4]],
                                               [pi[3], pi[4], pi[5]]]))
@@ -397,12 +386,31 @@ IF LB or LB_GPU:
 
         property population:
             def __get__(self):
-                cdef double[19] double_return
-                lb_lbnode_get_pop(self.node, double_return)
-                return array_locked(double_return)
+                cdef Vector19d double_return
+                double_return = lb_lbnode_get_pop(self.node)
+                return array_locked(np.array([double_return[0],
+                                              double_return[1],
+                                              double_return[2],
+                                              double_return[3],
+                                              double_return[4],
+                                              double_return[5],
+                                              double_return[6],
+                                              double_return[7],
+                                              double_return[8],
+                                              double_return[9],
+                                              double_return[10],
+                                              double_return[11],
+                                              double_return[12],
+                                              double_return[13],
+                                              double_return[14],
+                                              double_return[15],
+                                              double_return[16],
+                                              double_return[17],
+                                              double_return[18]]
+                       ))
 
             def __set__(self, value):
-                cdef double[19] double_return
+                cdef Vector19d double_return
                 for i in range(19):
                     double_return[i] = value[i]
                 lb_lbnode_set_pop(self.node, double_return)
@@ -410,7 +418,7 @@ IF LB or LB_GPU:
         property boundary:
             def __get__(self):
                 cdef int int_return
-                lb_lbnode_get_boundary(self.node, & int_return)
+                int_return = lb_lbnode_get_boundary(self.node)
                 return int_return
 
             def __set__(self, value):

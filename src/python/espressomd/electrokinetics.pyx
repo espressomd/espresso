@@ -1,9 +1,12 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .lb cimport HydrodynamicInteraction
+from .lb cimport lb_lbfluid_print_vtk_boundary
+from .lb cimport lb_lbnode_get_pi
 IF LB_GPU:
     from .lb cimport lb_lbnode_is_index_valid
 from . import utils
+from .utils cimport Vector6d
 import numpy as np
 from espressomd.utils import is_valid_type
 
@@ -343,8 +346,8 @@ IF ELECTROKINETICS:
 
         property pressure:
             def __get__(self):
-                cdef double pi[6]
-                lb_lbnode_get_pi(self.node, pi)
+                cdef Vector6d pi
+                pi = lb_lbnode_get_pi(self.node)
                 return np.array([[pi[0], pi[1], pi[3]],
                                  [pi[1], pi[2], pi[4]],
                                  [pi[3], pi[4], pi[5]]])

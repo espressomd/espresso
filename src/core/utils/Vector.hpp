@@ -165,6 +165,8 @@ private:
 // Useful typedefs
 
 typedef Vector<3, double> Vector3d;
+typedef Vector<6, double> Vector6d;
+typedef Vector<19, double> Vector19d;
 typedef Vector<3, int> Vector3i;
 typedef Vector<2, double> Vector2d;
 

@@ -99,6 +99,14 @@ cdef extern from "utils/Vector.hpp":
     cppclass Vector3d:
         double & operator[](int i)
         double * data()
+    
+    cppclass Vector6d:
+        double & operator[](int i)
+        double * data()
+
+    cppclass Vector19d:
+        double & operator[](int i)
+        double * data()
 
 cdef extern from "utils/math/bspline.hpp" namespace "Utils":
     cdef double bspline(int k, int i, double x)

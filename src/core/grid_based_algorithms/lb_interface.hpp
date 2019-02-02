@@ -42,63 +42,65 @@ void lb_fluid_set_rng_state(uint64_t counter);
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. */
 #ifdef LB
-Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &p);
+const Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &p);
 #endif
 void lb_lbfluid_add_force_density(const Vector3d &p,
                                   const Vector3d &force_density);
 const Lattice &lb_lbfluid_get_lattice();
 
-int lb_lbfluid_set_density(double *p_dens);
-int lb_lbfluid_get_density(double *p_dens);
-int lb_lbfluid_set_visc(double *p_visc);
-int lb_lbfluid_get_visc(double *p_visc);
-int lb_lbfluid_set_bulk_visc(double *p_bulk_visc);
-int lb_lbfluid_get_bulk_visc(double *p_bulk_visc);
-int lb_lbfluid_set_gamma_odd(double *p_gamma_odd);
-int lb_lbfluid_set_gamma_even(double *p_gamma_even);
-int lb_lbfluid_get_gamma_even(double *p_gamma_even);
-int lb_lbfluid_set_friction(double *p_friction);
-int lb_lbfluid_get_friction(double *p_friction);
-int lb_lbfluid_set_couple_flag(int couple_flag);
-int lb_lbfluid_get_couple_flag(int *couple_flag);
-int lb_lbfluid_set_agrid(double p_agrid);
-int lb_lbfluid_get_agrid(double *p_agrid);
-int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
-                                     double p_fz);
-int lb_lbfluid_get_ext_force_density(double *p_f);
+void lb_set_lattice_switch(int local_lattice_switch);
+void lb_lbfluid_set_tau(double p_tau);
+void lb_lbfluid_set_density(double p_dens);
+void lb_lbfluid_set_visc(double p_visc);
+void lb_lbfluid_set_bulk_visc(double p_bulk_visc);
+void lb_lbfluid_set_gamma_odd(double p_gamma_odd);
+void lb_lbfluid_set_gamma_even(double p_gamma_even);
+void lb_lbfluid_set_friction(double p_friction);
+void lb_lbfluid_set_couple_flag(int couple_flag);
+void lb_lbfluid_set_agrid(double p_agrid);
+void lb_lbfluid_set_ext_force_density(int component, const Vector3d &force_density);
 
-int lb_lbfluid_set_tau(double p_tau);
-int lb_lbfluid_get_tau(double *p_tau);
+void lb_lbnode_set_rho(const Vector3i &ind, double rho);
+void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u);
+void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &pop);
+
+double lb_lbfluid_get_tau();
+double lb_lbfluid_get_agrid();
+int lb_lbfluid_get_couple_flag();
+double lb_lbfluid_get_friction();
+double lb_lbfluid_get_gamma_even();
+double lb_lbfluid_get_bulk_visc();
+double lb_lbfluid_get_visc();
+double lb_lbfluid_get_density();
+const Vector3d lb_lbfluid_get_ext_force_density();
+
+double lb_lbnode_get_rho(const Vector3i &ind);
+const Vector3d lb_lbnode_get_u(const Vector3i &ind);
+const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind);
+const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind);
+int lb_lbnode_get_boundary(const Vector3i &ind);
+const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind);
+
 #ifdef SHANCHEN
 int lb_lbfluid_set_remove_momentum(void);
 int lb_lbfluid_set_shanchen_coupling(double *p_coupling);
 int lb_lbfluid_set_mobility(double *p_mobility);
 #endif
-int lb_set_lattice_switch(int local_lattice_switch);
 
 /* IO routines */
-int lb_lbfluid_print_vtk_boundary(char *filename);
-int lb_lbfluid_print_vtk_velocity(char *filename,
-                                  std::vector<int> = {-1, -1, -1},
-                                  std::vector<int> = {-1, -1, -1});
+void lb_lbfluid_print_vtk_boundary(const std::string &filename);
+void lb_lbfluid_print_vtk_velocity(const std::string &filename,
+                               std::vector<int> = {-1, -1, -1},
+                               std::vector<int> = {-1, -1, -1});
 
-int lb_lbfluid_print_boundary(char *filename);
-int lb_lbfluid_print_velocity(char *filename);
+void lb_lbfluid_print_boundary(const std::string &filename);
+void lb_lbfluid_print_velocity(const std::string &filename);
 
-int lb_lbfluid_save_checkpoint(char *filename, int binary);
-int lb_lbfluid_load_checkpoint(char *filename, int binary);
+void lb_lbfluid_save_checkpoint(const std::string &filename, int binary);
+void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
 
 bool lb_lbnode_is_index_valid(const Vector3i &ind);
-int lb_lbnode_get_rho(const Vector3i &ind, double *p_rho);
-int lb_lbnode_get_u(const Vector3i &ind, double *u);
-int lb_lbnode_get_pi(const Vector3i &ind, double *pi);
-int lb_lbnode_get_pi_neq(const Vector3i &ind, double *pi_neq);
-int lb_lbnode_get_boundary(const Vector3i &ind, int *p_boundary);
-int lb_lbnode_get_pop(const Vector3i &ind, double *pop);
 
-int lb_lbnode_set_rho(const Vector3i &ind, double *rho);
-int lb_lbnode_set_u(const Vector3i &ind, double *u);
-int lb_lbnode_set_pop(const Vector3i &ind, double *pop);
 
 /** Calculate the fluid velocity at a given position of the lattice.
  *  Note that it can lead to undefined behaviour if the

@@ -72,11 +72,9 @@ namespace {
 void add_md_force(Vector3d const &pos, Vector3d const &force) {
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  double tau;
-  lb_lbfluid_get_tau(&tau);
-  double agrid;
-  lb_lbfluid_get_agrid(&agrid);
-  auto const delta_j = -(time_step * tau / agrid) * force;
+  
+  const auto agrid = lb_lbfluid_get_agrid();
+  auto const delta_j = -(time_step * lb_lbfluid_get_tau() / agrid) * force;
   lb_lbfluid_add_force_density(pos, delta_j);
 }
 } // namespace
@@ -114,9 +112,7 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
   /* calculate viscous force
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
    * */
-  double friction;
-  lb_lbfluid_get_friction(&friction);
-  auto const force = -friction * (p->m.v - v_drift) + f_random;
+  auto const force = -lb_lbfluid_get_friction() * (p->m.v - v_drift) + f_random;
 
   add_md_force(p->r.p, force);
 
@@ -172,10 +168,8 @@ void calc_particle_lattice_ia() {
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
      */
-    double friction;
-    lb_lbfluid_get_friction(&friction);
     auto const noise_amplitude =
-        sqrt(12. * 2. * friction * temperature / time_step);
+        sqrt(12. * 2. * lb_lbfluid_get_friction() * temperature / time_step);
 
     auto f_random = [&c](int id) -> Vector3d {
       key_type k{{static_cast<uint32_t>(id)}};
