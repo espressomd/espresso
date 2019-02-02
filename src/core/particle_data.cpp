@@ -256,6 +256,7 @@ using UpdateBondMessage = boost::variant
         , AddBond
         >;
 
+#ifdef ENGINE
 struct UpdateSwim {
     ParticleParametersSwimming swim;
 
@@ -268,7 +269,9 @@ struct UpdateSwim {
       ar & swim;
     }
 };
+#endif
 
+#ifdef ROTATION
 struct UpdateOrientation {
     Vector3d axis;
     double angle;
@@ -282,6 +285,7 @@ struct UpdateOrientation {
         ar & axis & angle;
     }
 };
+#endif
 
 /**
  * @brief Top-level message.
@@ -295,14 +299,18 @@ struct UpdateOrientation {
  * that is called with the particle, or a tree of
  * variants with leafs that have such a operator() and member.
  */
-using UpdateMessage = boost::variant<
-        UpdatePropertyMessage,
-        UpdatePositionMessage,
-        UpdateMomentumMessage,
-        UpdateForceMessage,
-        UpdateBondMessage,
-        UpdateSwim,
-        UpdateOrientation
+using UpdateMessage = boost::variant
+        < UpdatePropertyMessage
+        , UpdatePositionMessage
+        , UpdateMomentumMessage
+        , UpdateForceMessage
+        , UpdateBondMessage
+#ifdef ENGINE
+        , UpdateSwim
+#endif
+#ifdef ROTATION
+        , UpdateOrientation
+#endif
         >;
 // clang-format on
 
