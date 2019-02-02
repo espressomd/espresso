@@ -1054,9 +1054,8 @@ void set_particle_temperature(int part, double T) {
 }
 
 #ifndef PARTICLE_ANISOTROPY
-int set_particle_gamma(int part, double gamma) {
+void set_particle_gamma(int part, double gamma) {
   mpi_update_particle_property<double, &ParticleProperties::gamma>(part, gamma);
-  return ES_OK;
 }
 #else
 void set_particle_gamma(int part, Vector3d gamma) {
@@ -1067,10 +1066,9 @@ void set_particle_gamma(int part, Vector3d gamma) {
 
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
-int set_particle_gamma_rot(int part, double gamma_rot) {
+void set_particle_gamma_rot(int part, double gamma_rot) {
   mpi_update_particle_property<double, &ParticleProperties::gamma_rot>(
       part, gamma_rot);
-  return ES_OK;
 }
 #else
 void set_particle_gamma_rot(int part, Vector3d gamma_rot) {

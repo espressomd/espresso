@@ -810,13 +810,13 @@ void set_particle_temperature(int part, double T);
     @return ES_OK if particle existed
 */
 #ifndef PARTICLE_ANISOTROPY
-int set_particle_gamma(int part, double gamma);
+void set_particle_gamma(int part, double gamma);
 #else
 void set_particle_gamma(int part, Vector3d gamma);
 #endif
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
-int set_particle_gamma_rot(int part, double gamma);
+void set_particle_gamma_rot(int part, double gamma);
 #else
 void set_particle_gamma_rot(int part, Vector3d gamma_rot);
 #endif
