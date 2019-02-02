@@ -900,7 +900,7 @@ void set_particle_rotation(int part, int rot) {
 #endif
 #ifdef ROTATION
 void rotate_particle(int part, const Vector3d &axis, double angle) {
-    mpi_send_update_message(part, UpdateOrientation{axis, angle});
+  mpi_send_update_message(part, UpdateOrientation{axis, angle});
 }
 #endif
 
@@ -1052,7 +1052,8 @@ int set_particle_gamma(int part, double gamma) {
 }
 #else
 void set_particle_gamma(int part, Vector3d gamma) {
-  mpi_update_particle_property<Vector3d, &ParticleProperties::gamma>(part, gamma);
+  mpi_update_particle_property<Vector3d, &ParticleProperties::gamma>(part,
+                                                                     gamma);
 }
 #endif // PARTICLE_ANISOTROPY
 

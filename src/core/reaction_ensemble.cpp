@@ -563,7 +563,7 @@ int ReactionAlgorithm::calculate_nu_bar(
  * Replaces a particle with the given particle id to be of a certain type. This
  * especially means that the particle type and the particle charge are changed.
  */
-    void ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
+void ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
   set_particle_type(p_id, desired_type);
 #ifdef ELECTROSTATICS
   set_particle_q(p_id, charges_of_types[desired_type]);
@@ -575,7 +575,7 @@ int ReactionAlgorithm::calculate_nu_bar(
  * interaction. Additional hiding from interactions would need to be implemented
  * here.
  */
-    void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
+void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
 /**
  *remove_charge and put type to a non existing one --> no interactions anymore
  *it is as if the particle was non existing (currently only type-based
