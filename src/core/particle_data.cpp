@@ -862,6 +862,15 @@ void set_particle_f(int part, const Utils::Vector3d &F) {
                       &ParticleForce::f>(part, F);
 }
 
+#ifdef STOKESIAN_DYNAMICS
+int set_particle_radius(int part, double r) {
+  auto const pnode = get_particle_node(part);
+
+  mpi_send_radius(pnode, part, r);
+  return ES_OK;
+}
+#endif
+
 #if defined(MASS)
 void set_particle_mass(int part, double mass) {
   mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);
@@ -1609,6 +1618,14 @@ void pointer_to_swimming(Particle const *p,
   swim = &(p->swim);
 }
 #endif
+
+#ifdef STOKESIAN_DYNAMICS
+void pointer_to_radius(Particle const *p,
+                       double const *&res) {
+  res = &(p->p.radius);
+}
+#endif
+
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {

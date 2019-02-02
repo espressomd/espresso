@@ -107,6 +107,8 @@ cdef class Thermostat(object):
                              "p_diff"], piston=thmst["piston"])
             if thmst["type"] == "DPD":
                 self.set_dpd(kT=thmst["kT"])
+            if thmst["type"] == "SD":
+                self.set_sd(viscosity=thmst["viscosity"], device=thmst["device"])
 
     def get_ts(self):
         return thermo_switch
@@ -167,6 +169,13 @@ cdef class Thermostat(object):
             dpd_dict["type"] = "DPD"
             dpd_dict["kT"] = temperature
             thermo_list.append(dpd_dict)
+        IF STOKESIAN_DYNAMICS:
+            if (thermo_switch & THERMO_SD):
+                sd_dict = {}
+                sd_dict["type"] = "SD"
+                sd_dict["viscosity"] = get_sd_viscosity()
+                sd_dict["device"] = get_sd_device()
+                thermo_list.append(sd_dict)
         return thermo_list
 
     def turn_off(self):
@@ -457,12 +466,27 @@ cdef class Thermostat(object):
             mpi_bcast_parameter(FIELD_TEMPERATURE)
 
     IF STOKESIAN_DYNAMICS:
-        def set_sd(self):
+        def set_sd(self, viscosity=None, device=None):
             """
             Sets the SD thermostat with required parameters.  This
             also activates hydrodynamic interactions and the SD
             integrator.
+
+            Parameters
+            ----------
+            'viscosity' : :obj:`float`
+                    Bulk viscosity
+            'device' : :obj:`str`
+                       Device to execute on.  Possible values are
+                       "cpu" and "gpu".
+
             """
+
+            utils.check_type_or_throw_except(viscosity, 1, float, "viscosity must be a number")
+            set_sd_viscosity(viscosity)
+
+            utils.check_type_or_throw_except(device, 1, str, "device must be a string")
+            set_sd_device(device.lower())
 
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_SD)

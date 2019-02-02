@@ -26,7 +26,6 @@ NPT
 SWIMMER_REACTIONS
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY             implies ROTATION
-STOKESIAN_DYNAMICS              implies ROTATION
 
 /* Rotation */
 ROTATION
@@ -69,6 +68,9 @@ EK_BOUNDARIES                   implies ELECTROKINETICS, LB_BOUNDARIES_GPU, EXTE
 EK_BOUNDARIES                   requires CUDA
 EK_DEBUG                        requires ELECTROKINETICS
 EK_DOUBLE_PREC                  requires ELECTROKINETICS
+
+/* Stokesian dynamics features */
+STOKESIAN_DYNAMICS              implies ROTATION
 
 /* Interaction features */
 TABULATED
@@ -158,3 +160,5 @@ FFTW external
 H5MD external
 SCAFACOS external
 GSL external
+BLAS external
+LAPACK external

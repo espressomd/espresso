@@ -43,6 +43,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define ENGINE
 
+#define STOKESIAN_DYNAMICS
+
 #ifdef CUDA
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS

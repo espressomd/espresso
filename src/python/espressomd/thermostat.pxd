@@ -20,6 +20,7 @@ from __future__ import print_function, absolute_import
 
 from libcpp cimport bool as cbool
 from libc cimport stdint
+from libcpp.string cimport string
 
 include "myconfig.pxi"
 from .utils cimport Vector3d
@@ -46,3 +47,10 @@ cdef extern from "thermostat.hpp":
     cbool langevin_is_seed_required()
 
     stdint.uint64_t langevin_get_rng_state()
+
+IF STOKESIAN_DYNAMICS:
+    cdef extern from "stokesian_dynamics/sd_interface.hpp":
+        void set_sd_viscosity(double eta)
+        double get_sd_viscosity()
+        void set_sd_device(const string &dev)
+        string get_sd_device()

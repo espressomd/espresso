@@ -1,4 +1,4 @@
-#include <iostream>
+#include <cstdio>
 #include <vector>
 
 #include "device_matrix.hpp"
@@ -6,8 +6,10 @@
 
 #ifdef __CUDACC__
 #define DEVICE_FUNC __host__ __device__
+#define KERNEL_ABORT asm("trap;")
 #else
 #define DEVICE_FUNC
+#define KERNEL_ABORT abort()
 #endif
 
 namespace sd {
@@ -29,13 +31,12 @@ struct check_dist {
         T dr = std::sqrt(dx * dx + dy * dy + dz * dz);
         T dr_inv = 1 / dr;
 
-#ifdef NDEBUG
-#undef NDEBUG
-        assert(dr > a(part_id(0, i))+a(part_id(1, i)) && "Particles overlapped!");
-#define NDEBUG
-#else
-        assert(dr > a(part_id(0, i))+a(part_id(1, i)) && "Particles overlapped!");
-#endif
+        if (dr <= a(part_id(0, i)) + a(part_id(1, i))) {
+          printf("Particles %lu and %lu overlapped! (distance %f < %f)\n",
+                 part_id(0, i), part_id(1, i), dr,
+                 a(part_id(0, i)) + a(part_id(1, i)));
+          KERNEL_ABORT;
+        }
 
         pd(0, i) = dx * dr_inv;
         pd(1, i) = dy * dr_inv;
@@ -364,10 +365,12 @@ struct solver {
           zmes(n_part * 5, n_part * 5) {}
 
     std::vector<T> calc_vel(std::vector<T> const &x_host,
-                            std::vector<T> const &f_host) {
+                            std::vector<T> const &f_host,
+                            std::vector<T> const &a_host) {
         assert(x_host.size() == 6 * n_part);
         vector_type<T> x(x_host.begin(), x_host.end());
-        vector_type<T> a(n_part, T{1.0}); // TODO: Get from host
+        assert(a_host.size() == n_part);
+        vector_type<T> a(a_host.begin(), a_host.end());
 
         // TODO: More efficient!
         device_matrix<std::size_t, Policy> part_id(2, n_pair);
