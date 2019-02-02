@@ -663,7 +663,7 @@ void set_particle_mass(int part, double mass);
     @param solvation its new solvation free energy.
     @return ES_OK if particle existed
 */
-int set_particle_solvation(int part, double *solvation);
+void set_particle_solvation(int part, double *solvation);
 
 #ifdef ROTATIONAL_INERTIA
 /** Call only on the master node: set particle rotational inertia.
@@ -1070,10 +1070,19 @@ void pointer_to_bond_site(Particle const *p, double const *&res);
 void pointer_to_out_direction(const Particle *p, const double *&res);
 #endif
 
+/**
+ * @brief Check if particle exists.
+ *
+ * @param part Id of the particle
+ * @return True iff the particle exists.
+ */
 bool particle_exists(int part);
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
+ *
+ *  @param id Id of the particle
+ *  @return The MPI rank the particle is on.
  */
 int get_particle_node(int id);
 

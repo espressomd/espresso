@@ -661,8 +661,6 @@ void mpi_set_time_step(double time_s) {
 }
 
 void mpi_set_time_step_slave(int, int) {
-  double old_ts = time_step;
-
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
   on_parameter_change(FIELD_TIMESTEP);
   time_step_squared = time_step * time_step;

@@ -853,13 +853,11 @@ void set_particle_f(int part, const Vector3d &F) {
 }
 
 #ifdef SHANCHEN
-int set_particle_solvation(int part, double *solvation) {
+void set_particle_solvation(int part, double *solvation) {
   std::array<double, 2 * LB_COMPONENTS> s;
   std::copy(solvation, solvation + 2 * LB_COMPONENTS, s.begin());
   mpi_update_particle_property<std::array<double, 2 * LB_COMPONENTS>,
                                &ParticleProperties::solvation>(part, s);
-
-  return ES_OK;
 }
 
 #endif
@@ -1112,7 +1110,7 @@ void remove_all_particles() {
 
 int remove_particle(int p_id) {
   auto const &cur_par = get_particle_data(p_id);
-  if (type_list_enable == true) {
+  if (type_list_enable) {
     // remove particle from its current type_list
     int type = cur_par.p.type;
     remove_id_from_map(p_id, type);
