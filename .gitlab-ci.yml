@@ -290,7 +290,7 @@ check_doxygen:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
   dependencies:
-  - cuda8-maxset
+  - cuda-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
