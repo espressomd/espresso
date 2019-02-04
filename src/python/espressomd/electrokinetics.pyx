@@ -1,9 +1,9 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from .lb cimport HydrodynamicInteraction
-from .lb cimport lb_lbfluid_print_vtk_boundary
-from .lb cimport lb_lbnode_get_pi
 IF LB_GPU:
+    from .lb cimport HydrodynamicInteraction
+    from .lb cimport lb_lbfluid_print_vtk_boundary
+    from .lb cimport lb_lbnode_get_pi
     from .lb cimport lb_lbnode_is_index_valid
 from . import utils
 from .utils cimport Vector6d
