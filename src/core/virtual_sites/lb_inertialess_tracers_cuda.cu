@@ -419,8 +419,7 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
     float v[3] = {0};
 
     // ***** This part is copied from get_interpolated_velocity
-    // ***** + we add the force + we consider boundaries - we remove the
-    // Shan-Chen stuff
+    // ***** + we add the force + we consider boundaries
 
     float temp_delta[6];
     float delta[8];

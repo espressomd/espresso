@@ -28,9 +28,8 @@ import tests_common
     not (
         espressomd.has_features(
             'LB') or espressomd.has_features(
-            'LB_GPU')) or espressomd.has_features(
-                'SHANCHEN'),
-           "Both LB and LB_GPU not compiled in or SHANCHEN activated, can not check functionality.")
+            'LB_GPU')),
+           "Both LB and LB_GPU not compiled in, can not check functionality.")
 class TestCylindricalLBObservable(ut.TestCase):
 
     """

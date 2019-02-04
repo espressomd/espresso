@@ -54,8 +54,6 @@ class TestLB(object):
               'gamma': 1.5,
               'skin': 0.2,
               'temp_confidence': 10}
-    if espressomd.has_features("SHANCHEN"):
-        params.update({"dens": 2 * [params["dens"]]})
 
     dof = 3.
 
@@ -242,7 +240,7 @@ class TestLB(object):
 
 
 @ut.skipIf(
-    not espressomd.has_features(["LB"]) or espressomd.has_features("SHANCHEN"),
+    not espressomd.has_features(["LB"]),
            "Features not available, skipping test!")
 class TestLBCPU(TestLB, ut.TestCase):
 
@@ -253,7 +251,7 @@ class TestLBCPU(TestLB, ut.TestCase):
 
 @ut.skipIf(
     not espressomd.has_features(
-        ["LB_GPU"]) or espressomd.has_features('SHANCHEN') or espressomd.has_features("SHANCHEN"),
+        ["LB_GPU"]),
     "Features not available, skipping test!")
 class TestLBGPU(TestLB, ut.TestCase):
 

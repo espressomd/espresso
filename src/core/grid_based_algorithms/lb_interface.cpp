@@ -1258,8 +1258,7 @@ const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind) {
 #ifdef LB_GPU
     float population[19];
 
-    int c = 0;
-    lb_lbfluid_get_population(ind, population, c);
+    lb_lbfluid_get_population(ind, population);
     Vector<19, double> p_pop;
     for (int i = 0; i < LBQ; ++i)
       p_pop[i] = population[i];
@@ -1365,8 +1364,7 @@ void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &p_pop) {
     for (int i = 0; i < LBQ; ++i)
       population[i] = p_pop[i];
 
-    int c = 0;
-    lb_lbfluid_set_population(ind, population, c);
+    lb_lbfluid_set_population(ind, population);
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB

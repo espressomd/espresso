@@ -298,7 +298,7 @@ The comma is needed to force Python to create a tuple containing a single item.
 
 
 For a more detailed description, see e.g. Guckenberger and Gekle, J. Phys. Cond. Mat. (2017) or contact us.
-This feature probably does not work with advanced LB features such electro kinetics or Shan-Chen.
+This feature probably does not work with advanced LB features such electro kinetics.
 
 A sample script is provided in the :file:`samples/immersed_boundary` directory of the source distribution.
 

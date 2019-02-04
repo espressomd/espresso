@@ -22,8 +22,7 @@ import espressomd
 from espressomd import lb
 
 
-@ut.skipIf(not espressomd.has_features("LB_GPU") or espressomd.has_features(
-    "SHANCHEN"), "LB_GPU feature not available, skipping test!")
+@ut.skipIf(not espressomd.has_features("LB_GPU"), "LB_GPU feature not available, skipping test!")
 class TestLBGetUAtPos(ut.TestCase):
 
     """
