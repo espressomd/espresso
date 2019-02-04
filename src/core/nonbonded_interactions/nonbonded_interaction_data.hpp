@@ -345,10 +345,6 @@ struct IA_parameters {
   double REACTION_range = INACTIVE_CUTOFF;
 #endif
 
-#ifdef SHANCHEN
-  double affinity[LB_COMPONENTS];
-  int affinity_on = 0;
-#endif
 };
 
 extern std::vector<IA_parameters> ia_params;

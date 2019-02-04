@@ -573,10 +573,6 @@ void lb_lbfluid_set_ext_force_density(int component, const Vector3d &force_densi
 }
 
 const Vector3d lb_lbfluid_get_ext_force_density() {
-#ifdef SHANCHEN
-  fprintf(stderr, "Not implemented yet (%s:%d) ", __FILE__, __LINE__);
-  errexit();
-#endif // SHANCHEN
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return {{lbpar_gpu.ext_force_density[0], lbpar_gpu.ext_force_density[1], lbpar_gpu.ext_force_density[2]}};
@@ -625,14 +621,17 @@ void lb_set_lattice_switch(int local_lattice_switch) {
   case 0:
     lattice_switch = LATTICE_OFF;
     mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
+    break;
   case 1:
     lattice_switch = LATTICE_LB;
     mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
+    break;
   case 2:
     lattice_switch = LATTICE_LB_GPU;
     mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
-  //default:
-    //throw std::invalid_argument("Invalid lattice switch.");
+    break;
+  default:
+    throw std::invalid_argument("Invalid lattice switch.");
   }
 }
 
@@ -846,10 +845,6 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-#ifdef SHANCHEN
-    fprintf(stderr, "TODO:adapt for SHANCHEN (%s:%d)\n", __FILE__, __LINE__);
-    errexit();
-#endif // SHANCHEN
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
     host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
     lb_get_values_GPU(host_values);
@@ -881,11 +876,6 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     for (pos[2] = 0; pos[2] < gridsize[2]; pos[2]++) {
       for (pos[1] = 0; pos[1] < gridsize[1]; pos[1]++) {
         for (pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
-#ifdef SHANCHEN
-          fprintf(stderr, "SHANCHEN not implemented for the CPU LB\n", __FILE__,
-                  __LINE__);
-          errexit();
-#endif // SHANCHEN
           auto u = lb_lbnode_get_u(pos);
           fprintf(fp, "%f %f %f %f %f %f\n",
                   (pos[0] + 0.5) * lblattice.agrid[0],
@@ -1143,9 +1133,9 @@ const Vector3d lb_lbnode_get_u(const Vector3i &ind) {
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, host_print_values);
 
-    return {{host_print_values[0].v[0], host_print_values[0].v[1], host_print_values[0].v[2]}};
+    return {{host_print_values->v[0], host_print_values->v[1], host_print_values->v[2]}};
 #endif
-  } else if (lattice_switch & LATTICE_LB ) {
+  } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
     int node;
@@ -1162,8 +1152,9 @@ const Vector3d lb_lbnode_get_u(const Vector3i &ind) {
     // unit conversion
     return j / rho * lbpar.agrid / lbpar.tau;
 #endif // LB
+  } else {
+    throw std::runtime_error("LB not activated.");
   }
-  return {};
 }
 
 const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind) {
@@ -1261,7 +1252,6 @@ const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind) {
 #ifdef LB_GPU
     float population[19];
 
-    // c is the LB_COMPONENT for SHANCHEN (not yet interfaced)
     int c = 0;
     lb_lbfluid_get_population(ind, population, c);
     Vector<19, double> p_pop;
@@ -1325,9 +1315,9 @@ void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     float host_velocity[3];
-    host_velocity[0] = (float)u[0] * lbpar_gpu.tau / lbpar_gpu.agrid;
-    host_velocity[1] = (float)u[1] * lbpar_gpu.tau / lbpar_gpu.agrid;
-    host_velocity[2] = (float)u[2] * lbpar_gpu.tau / lbpar_gpu.agrid;
+    host_velocity[0] = static_cast<float>(u[0]) * lbpar_gpu.tau / lbpar_gpu.agrid;
+    host_velocity[1] = static_cast<float>(u[1]) * lbpar_gpu.tau / lbpar_gpu.agrid;
+    host_velocity[2] = static_cast<float>(u[2]) * lbpar_gpu.tau / lbpar_gpu.agrid;
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_set_node_velocity_GPU(single_nodeindex, host_velocity);
@@ -1366,7 +1356,6 @@ void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &p_pop) {
     for (int i = 0; i < LBQ; ++i)
       population[i] = p_pop[i];
 
-    // c is the LB_COMPONENT for SHANCHEN (not yet interfaced)
     int c = 0;
     lb_lbfluid_set_population(ind, population, c);
 #endif // LB_GPU

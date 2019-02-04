@@ -81,12 +81,6 @@ const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind);
 int lb_lbnode_get_boundary(const Vector3i &ind);
 const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind);
 
-#ifdef SHANCHEN
-int lb_lbfluid_set_remove_momentum(void);
-int lb_lbfluid_set_shanchen_coupling(double *p_coupling);
-int lb_lbfluid_set_mobility(double *p_mobility);
-#endif
-
 /* IO routines */
 void lb_lbfluid_print_vtk_boundary(const std::string &filename);
 void lb_lbfluid_print_vtk_velocity(const std::string &filename,

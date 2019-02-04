@@ -143,17 +143,6 @@ fedora:
 
 ### Builds with CUDA
 
-cuda-shanchen:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
-  script:
-    - export myconfig=shanchen python_version=3 make_check=false
-    - bash maintainer/cuda_build.sh
-  tags:
-    - docker
-    - linux
-    - cuda
-
 cuda-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0

@@ -45,10 +45,6 @@ inline void add_lj_pair_force(const Particle *const p1,
                               const Particle *const p2,
                               IA_parameters *ia_params, double const d[3],
                               double dist, double force[3]) {
-#ifdef SHANCHEN
-  double order;
-  double SixtRootOfTwo = 1.12246204830937;
-#endif
   if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
       (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
     double r_off = dist - ia_params->LJ_offset;
@@ -56,24 +52,6 @@ inline void add_lj_pair_force(const Particle *const p1,
     double frac6 = frac2 * frac2 * frac2;
     double fac =
         48.0 * ia_params->LJ_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
-#ifdef SHANCHEN
-    if (ia_params->affinity_on == 1) {
-      if (LB_COMPONENTS == 2) {
-        if (dist > SixtRootOfTwo * ia_params->LJ_sig &&
-            p1->r.composition[0] * p1->r.composition[1] * p2->r.composition[0] *
-                    p2->r.composition[1] >
-                0) {
-          order = 2 * ((p1->r.composition[0] - p1->r.composition[1]) /
-                           (p1->r.composition[0] + p1->r.composition[1]) +
-                       (p2->r.composition[0] - p2->r.composition[1]) /
-                           (p2->r.composition[0] + p2->r.composition[1]));
-          /* TODO: order should be rescaled properly by the lattice spacing */
-          fac *= ((1 - ia_params->affinity[1]) * 0.5 * (1 + tanh(-order)) +
-                  (1 - ia_params->affinity[0]) * 0.5 * (1 + tanh(order)));
-        }
-      }
-    }
-#endif
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
 

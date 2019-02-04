@@ -527,16 +527,6 @@ int set_particle_f(int part, const Vector3d &F) {
   return ES_OK;
 }
 
-#ifdef SHANCHEN
-int set_particle_solvation(int part, double *solvation) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_solvation(pnode, part, solvation);
-  return ES_OK;
-}
-
-#endif
-
 #if defined(MASS) || defined(LB_BOUNDARIES_GPU)
 int set_particle_mass(int part, double mass) {
   auto const pnode = get_particle_node(part);

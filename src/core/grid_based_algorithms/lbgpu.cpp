@@ -131,20 +131,6 @@ bool ek_initialized = false;
 /*-----------------------------------------------------------*/
 /** main of lb_gpu_programm */
 /*-----------------------------------------------------------*/
-#ifdef SHANCHEN
-/* called from forces.cpp. This is at the beginning of the force
-   calculation loop, so we increment the fluidstep counter here,
-   and we reset it only when the last call to a LB function
-   [lattice_boltzmann_update_gpu()] is performed within integrate_vv()
- */
-void lattice_boltzmann_calc_shanchen_gpu(void) {
-
-  int factor = (int)round(lbpar_gpu.tau / time_step);
-
-  if (fluidstep + 1 >= factor)
-    lb_calc_shanchen_GPU();
-}
-#endif // SHANCHEN
 
 /** %Lattice Boltzmann update gpu called from integrate.cpp */
 void lattice_boltzmann_update_gpu() {
@@ -157,10 +143,6 @@ void lattice_boltzmann_update_gpu() {
 
     fluidstep = 0;
     lb_integrate_GPU();
-#ifdef SHANCHEN
-    if (lbpar_gpu.remove_momentum)
-      lb_remove_fluid_momentum_GPU();
-#endif
     LB_TRACE(fprintf(stderr, "lb_integrate_GPU \n"));
   }
 }

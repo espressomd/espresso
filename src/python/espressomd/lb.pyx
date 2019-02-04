@@ -76,19 +76,11 @@ IF LB_GPU or LB:
                 raise ValueError(
                     "seed has to be given if temperature is not 0.")
 
-            IF SHANCHEN:
-                if not hasattr(self._params["dens"], "__getitem__"):
-                    raise ValueError(
-                        "Density must be two positive double (ShanChen)")
-                if not (self._params["dens"][0] > 0.0 and self._params["dens"][1] > 0.0):
-                    raise ValueError(
-                        "Density must be two positive double (ShanChen)")
-            ELSE:
-                if self._params["dens"] == default_params["dens"]:
-                    raise Exception("LB_FLUID density not set")
-                else:
-                    if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
-                        raise ValueError("Density must be one positive double")
+            if self._params["dens"] == default_params["dens"]:
+                raise Exception("LB_FLUID density not set")
+            else:
+                if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
+                    raise ValueError("Density must be one positive double")
 
         # list of valid keys for parameters
         ####################################################
@@ -103,28 +95,16 @@ IF LB_GPU or LB:
         # list of default parameters
         ####################################################
         def default_params(self):
-            IF SHANCHEN:
-                return {"agrid": -1.0,
-                        "dens": [-1.0, -1.0],
-                        "fric": [-1.0, -1.0],
-                        "ext_force_density": [0.0, 0.0, 0.0],
-                        "visc": [-1.0, -1.0],
-                        "bulk_visc": [-1.0, -1.0],
-                        "tau": -1.0,
-                        "couple": "2pt",
-                        "seed": None,
-                        "kT": 0.}
-            ELSE:
-                return {"agrid": -1.0,
-                        "dens": -1.0,
-                        "fric": -1.0,
-                        "ext_force_density": [0.0, 0.0, 0.0],
-                        "visc": -1.0,
-                        "bulk_visc": -1.0,
-                        "tau": -1.0,
-                        "couple": "2pt",
-                        "seed": None,
-                        "kT": 0.}
+            return {"agrid": -1.0,
+                    "dens": -1.0,
+                    "fric": -1.0,
+                    "ext_force_density": [0.0, 0.0, 0.0],
+                    "visc": -1.0,
+                    "bulk_visc": -1.0,
+                    "tau": -1.0,
+                    "couple": "2pt",
+                    "seed": None,
+                    "kT": 0.}
 
         # function that calls wrapper functions which set the parameters at C-Level
         ####################################################
