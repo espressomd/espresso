@@ -19,15 +19,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref global.hpp "global.hpp".
-*/
+ *  Implementation of \ref global.hpp "global.hpp".
+ */
 #include "global.hpp"
 
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
-#include "ghmc.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
 #include "lattice.hpp"
@@ -147,21 +146,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_MIN_GLOBAL_CUT,
      {&min_global_cut, Datafield::Type::DOUBLE, 1,
       "min_global_cut"}}, /* 43 from interaction_data.cpp */
-    {FIELD_GHMC_NMD,
-     {&ghmc_nmd, Datafield::Type::INT, 1,
-      "ghmc_nmd"}}, /* 44 from thermostat.cpp */
-    {FIELD_GHMC_PHI,
-     {&ghmc_phi, Datafield::Type::DOUBLE, 1,
-      "ghmc_phi"}}, /* 45 from thermostat.cpp */
-    {FIELD_GHMC_RES,
-     {&ghmc_mc_res, Datafield::Type::INT, 1,
-      "ghmc_mc_res"}}, /* 46 from ghmc.cpp */
-    {FIELD_GHMC_FLIP,
-     {&ghmc_mflip, Datafield::Type::INT, 1,
-      "ghmc_mflip"}}, /* 47 from ghmc.cpp */
-    {FIELD_GHMC_SCALE,
-     {&ghmc_tscale, Datafield::Type::INT, 1,
-      "ghmc_tscale"}}, /* 48 from ghmc.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA_ROTATION,
      {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1,
@@ -250,7 +234,7 @@ void check_global_consistency() {
 
 /*************** REQ_BCAST_PAR ************/
 
-void mpi_bcast_parameter_slave(int node, int i) {
+void mpi_bcast_parameter_slave(int, int i) {
   common_bcast_parameter(i);
   check_runtime_errors();
 }

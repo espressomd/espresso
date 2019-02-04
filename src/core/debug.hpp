@@ -19,21 +19,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
- This file controls debug facilities.
-
- The implementation is found in
- \ref debug.cpp "debug.cpp".
-
- For every define there exists a macro that can be used to encapsulate short
- lines (like printf("...",...);)
- of code that should be executed iff the respective *_DEBUG macro is defined.
-*/
+ *  This file controls debug facilities.
+ *
+ *  Implementation in debug.cpp.
+ *
+ *  For every define there exists a macro that can be used to encapsulate
+ *  short lines (like printf("...",...);) of code that should be executed
+ *  iff the respective *_DEBUG macro is defined.
+ */
 
 #include "config.hpp"
 
 /** this performs a lot of tests which will very likely detect corruptions of
-    \ref local_particles and the cell structure.
-*/
+ *  \ref local_particles and the cell structure.
+ */
 void check_particle_consistency();
 
 /** Print all particle positions contained in \ref cells::cells array. */
@@ -44,8 +43,8 @@ void print_particle_forces();
 extern int this_node;
 
 /** by setting this variable to 1, a regular exit is
-    indicated. In that case, no core dump is generated.
-*/
+ *  indicated. In that case, no core dump is generated.
+ */
 extern int regular_exit;
 
 /** Identity of the particle to check extensively if ONEPART_DEBUG is defined.

@@ -67,8 +67,8 @@ BOOST_AUTO_TEST_CASE(simple_variance_check) {
   avg.add_sample(0.0);
   avg.add_sample(5.0);
 
-  /** Var should be <x**2> - <x>**2 = (0**2 + 5.0**2) / 2. - 2.5**2 = 12.5
-   * - 6.25 = 6.25 */
+  /** Var should be \f$<x^2> - <x>^2 = (0^2 + 5.0^2) / 2. - 2.5^2 = 12.5
+   * - 6.25 = 6.25\f$ */
   BOOST_CHECK(std::fabs(avg.avg() - 2.5) <=
               std::numeric_limits<double>::epsilon());
   BOOST_CHECK(std::fabs(avg.var() - 6.25) <=

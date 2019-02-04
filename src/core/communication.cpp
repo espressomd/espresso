@@ -111,7 +111,6 @@ int n_nodes = -1;
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_bcast_event_slave)                                                    \
   CB(mpi_place_particle_slave)                                                 \
-  CB(mpi_send_swimming_slave)                                                  \
   CB(mpi_recv_part_slave)                                                      \
   CB(mpi_integrate_slave)                                                      \
   CB(mpi_bcast_ia_params_slave)                                                \
@@ -132,10 +131,8 @@ int n_nodes = -1;
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_send_fluid_slave)                                                     \
   CB(mpi_recv_fluid_slave)                                                     \
-  CB(mpi_local_stress_tensor_slave)                                            \
   CB(mpi_iccp3m_iteration_slave)                                               \
   CB(mpi_iccp3m_init_slave)                                                    \
-  CB(mpi_rotate_particle_slave)                                                \
   CB(mpi_bcast_max_mu_slave)                                                   \
   CB(mpi_recv_fluid_populations_slave)                                         \
   CB(mpi_send_fluid_populations_slave)                                         \
@@ -162,21 +159,24 @@ int n_nodes = -1;
 #define CB(name) void name(int node, int param);
 CALLBACK_LIST
 
+#ifdef DOXYGEN
+    (void); /* this line prevents an interaction in Doxygen between
+               CALLBACK_LIST and the anonymous namespace that follows */
+#endif
+
 namespace {
 
-// create the list of callbacks
 #undef CB
 #define CB(name) name,
+/// List of callbacks
 std::vector<SlaveCallback *> slave_callbacks{CALLBACK_LIST};
 
-/** The callback name list is only used for
-    debugging.
-*/
 #ifdef COMM_DEBUG
 // create the list of names
 #undef CB
 #define CB(name) #name,
 
+/** List of callback names for debugging. */
 std::vector<std::string> names{CALLBACK_LIST};
 #endif
 } // namespace
@@ -190,12 +190,12 @@ int mpi_check_runtime_errors();
  **********************************************/
 
 #if defined(OPEN_MPI)
-/*! Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
-    appears when CUDA is used. This is a bug in OpenMPI 2.0-2.1.2 and 3.0.0
-    according to
-    https://www.mail-archive.com/users@lists.open-mpi.org/msg32357.html,
-    so we set btl_vader_single_copy_mechanism = none.
-*/
+/** Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
+ *  appears when CUDA is used. This is a bug in OpenMPI 2.0-2.1.2 and 3.0.0
+ *  according to
+ *  https://www.mail-archive.com/users@lists.open-mpi.org/msg32357.html,
+ *  so we set btl_vader_single_copy_mechanism = none.
+ */
 static void openmpi_fix_vader() {
   if (OMPI_MAJOR_VERSION < 2 || OMPI_MAJOR_VERSION > 3)
     return;
@@ -375,68 +375,6 @@ void mpi_place_new_particle_slave(int pnode, int part) {
   on_particle_change();
 }
 
-/****************** REQ_SET_SWIMMING ************/
-void mpi_send_swimming(int pnode, int part,
-                       const ParticleParametersSwimming &swim) {
-#ifdef ENGINE
-  mpi_call(mpi_send_swimming_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->swim = swim;
-  } else {
-    comm_cart.send(pnode, SOME_TAG, swim);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_swimming_slave(int pnode, int part) {
-#ifdef ENGINE
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    ParticleParametersSwimming swim;
-    comm_cart.recv(0, SOME_TAG, swim);
-    p->swim = swim;
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_rotate_particle(int pnode, int part, const Vector3d &axis,
-                         double angle) {
-#ifdef ROTATION
-  mpi_call(mpi_rotate_particle_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    local_rotate_particle(*p, axis, angle);
-  } else {
-    comm_cart.send(pnode, SOME_TAG, axis);
-    comm_cart.send(pnode, SOME_TAG, angle);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_rotate_particle_slave(int pnode, int part) {
-#ifdef ROTATION
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    Vector3d axis;
-    double angle;
-    comm_cart.recv(0, SOME_TAG, axis);
-    comm_cart.recv(0, SOME_TAG, angle);
-    local_rotate_particle(*p, axis, angle);
-  }
-
-  on_particle_change();
-#endif
-}
-
 /****************** REQ_GET_PART ************/
 Particle mpi_recv_part(int pnode, int part) {
   Particle ret;
@@ -482,7 +420,7 @@ int mpi_minimize_energy() {
   return minimize_energy();
 }
 
-void mpi_minimize_energy_slave(int a, int b) { minimize_energy(); }
+void mpi_minimize_energy_slave(int, int) { minimize_energy(); }
 
 /********************* REQ_INTEGRATE ********/
 int mpi_integrate(int n_steps, int reuse_forces) {
@@ -506,7 +444,7 @@ void mpi_bcast_all_ia_params() {
   boost::mpi::broadcast(comm_cart, ia_params, 0);
 }
 
-void mpi_bcast_all_ia_params_slave(int a, int b) {
+void mpi_bcast_all_ia_params_slave(int, int) {
   boost::mpi::broadcast(comm_cart, ia_params, 0);
 }
 
@@ -565,7 +503,7 @@ void mpi_bcast_max_seen_particle_type(int ns) {
   mpi_bcast_max_seen_particle_type_slave(-1, ns);
 }
 
-void mpi_bcast_max_seen_particle_type_slave(int pnode, int ns) {
+void mpi_bcast_max_seen_particle_type_slave(int, int ns) {
   realloc_ia_params(ns);
 }
 
@@ -622,7 +560,7 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
   }
 }
 
-void mpi_gather_stats_slave(int ana_num, int job) {
+void mpi_gather_stats_slave(int, int job) {
   switch (job) {
   case 1:
     /* calculate and reduce (sum up) energies */
@@ -666,68 +604,6 @@ void mpi_gather_stats_slave(int ana_num, int job) {
   }
 }
 
-/*************** REQ_GET_LOCAL_STRESS_TENSOR ************/
-void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
-                             int periodic[3], double range_start[3],
-                             double range[3]) {
-
-  PTENSOR_TRACE(fprintf(stderr,
-                        "%d: mpi_local_stress_tensor: Broadcasting "
-                        "local_stress_tensor parameters\n",
-                        this_node));
-
-  mpi_call(mpi_local_stress_tensor_slave, -1, 0);
-
-  MPI_Bcast(bins, 3, MPI_INT, 0, comm_cart);
-  MPI_Bcast(periodic, 3, MPI_INT, 0, comm_cart);
-  MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(range, 3, MPI_DOUBLE, 0, comm_cart);
-
-  PTENSOR_TRACE(fprintf(
-      stderr, "%d: mpi_local_stress_tensor: Call local_stress_tensor_calc\n",
-      this_node));
-  local_stress_tensor_calc(TensorInBin, bins, periodic, range_start, range);
-
-  PTENSOR_TRACE(fprintf(stderr,
-                        "%d: mpi_local_stress_tensor: Reduce local "
-                        "stress tensors with MPI_Reduce\n",
-                        this_node));
-  for (int i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    MPI_Reduce(MPI_IN_PLACE, TensorInBin[i].e, 9, MPI_DOUBLE, MPI_SUM, 0,
-               comm_cart);
-  }
-}
-
-void mpi_local_stress_tensor_slave(int ana_num, int job) {
-  int bins[3] = {0, 0, 0};
-  int periodic[3] = {0, 0, 0};
-  double range_start[3] = {0, 0, 0};
-  double range[3] = {0, 0, 0};
-  int i, j;
-
-  MPI_Bcast(bins, 3, MPI_INT, 0, comm_cart);
-  MPI_Bcast(periodic, 3, MPI_INT, 0, comm_cart);
-  MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(range, 3, MPI_DOUBLE, 0, comm_cart);
-
-  auto TensorInBin =
-      std::vector<DoubleList>(bins[0] * bins[1] * bins[2], DoubleList(9, 0.0));
-
-  local_stress_tensor_calc(TensorInBin.data(), bins, periodic, range_start,
-                           range);
-
-  for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    MPI_Reduce(TensorInBin[i].e, nullptr, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-    PTENSOR_TRACE(fprintf(
-        stderr, "%d: mpi_local_stress_tensor: Tensor sent in bin %d is {",
-        this_node, i));
-    for (j = 0; j < 9; j++) {
-      PTENSOR_TRACE(fprintf(stderr, "%f ", TensorInBin[i].e[j]));
-    }
-    PTENSOR_TRACE(fprintf(stderr, "}\n"));
-  }
-}
-
 /*************** REQ_SET_TIME_STEP ************/
 void mpi_set_time_step(double time_s) {
   double old_ts = time_step;
@@ -742,15 +618,11 @@ void mpi_set_time_step(double time_s) {
 
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
 
-  rescale_velocities(time_step / old_ts);
   on_parameter_change(FIELD_TIMESTEP);
 }
 
-void mpi_set_time_step_slave(int, int i) {
-  double old_ts = time_step;
-
+void mpi_set_time_step_slave(int, int) {
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
-  rescale_velocities(time_step / old_ts);
   on_parameter_change(FIELD_TIMESTEP);
   time_step_squared = time_step * time_step;
   time_step_squared_half = time_step_squared / 2.;
@@ -772,7 +644,7 @@ void mpi_bcast_coulomb_params() {
 #endif
 }
 
-void mpi_bcast_coulomb_params_slave(int node, int parm) {
+void mpi_bcast_coulomb_params_slave(int, int) {
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
@@ -865,7 +737,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm) {
 
 /****************** REQ_SET_PERM ************/
 
-void mpi_send_permittivity_slave(int node, int index) {
+void mpi_send_permittivity_slave(int node, int) {
 #ifdef ELECTROSTATICS
   if (node == this_node) {
     double data[3];
@@ -911,7 +783,7 @@ void mpi_rescale_particles(int dir, double scale) {
   on_particle_change();
 }
 
-void mpi_rescale_particles_slave(int pnode, int dir) {
+void mpi_rescale_particles_slave(int, int dir) {
   double scale = 0.0;
   MPI_Recv(&scale, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   local_rescale_particles(dir, scale);
@@ -925,7 +797,7 @@ void mpi_bcast_cell_structure(int cs) {
   cells_re_init(cs);
 }
 
-void mpi_bcast_cell_structure_slave(int pnode, int cs) { cells_re_init(cs); }
+void mpi_bcast_cell_structure_slave(int, int cs) { cells_re_init(cs); }
 
 /*************** REQ_BCAST_NPTISO_GEOM *****************/
 
@@ -934,7 +806,7 @@ void mpi_bcast_nptiso_geom() {
   mpi_bcast_nptiso_geom_slave(-1, 0);
 }
 
-void mpi_bcast_nptiso_geom_slave(int node, int parm) {
+void mpi_bcast_nptiso_geom_slave(int, int) {
   MPI_Bcast(&nptiso.geometry, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&nptiso.dimension, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&nptiso.cubic_box, 1, MPI_INT, 0, comm_cart);
@@ -948,9 +820,7 @@ void mpi_update_mol_ids() {
   mpi_update_mol_ids_slave(-1, 0);
 }
 
-void mpi_update_mol_ids_slave(int node, int parm) {
-  update_mol_ids_setchains();
-}
+void mpi_update_mol_ids_slave(int, int) { update_mol_ids_setchains(); }
 
 /******************* REQ_SYNC_TOPO ********************/
 int mpi_sync_topo_part_info() {
@@ -993,7 +863,7 @@ int mpi_sync_topo_part_info() {
   return 1;
 }
 
-void mpi_sync_topo_part_info_slave(int node, int parm) {
+void mpi_sync_topo_part_info_slave(int, int) {
   int i;
   int molsize = 0;
   int moltype = 0;
@@ -1040,7 +910,7 @@ void mpi_bcast_lb_params(int field, int value) {
 #endif
 }
 
-void mpi_bcast_lb_params_slave(int field, int value) {
+void mpi_bcast_lb_params_slave(int field, int) {
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
   on_lb_params_change(field);
@@ -1057,7 +927,7 @@ void mpi_bcast_cuda_global_part_vars() {
 #endif
 }
 
-void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy) {
+void mpi_bcast_cuda_global_part_vars_slave(int, int) {
 #ifdef CUDA
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
@@ -1272,7 +1142,7 @@ void mpi_bcast_max_mu() {
 #endif
 }
 
-void mpi_bcast_max_mu_slave(int node, int dummy) {
+void mpi_bcast_max_mu_slave(int, int) {
 #if defined(DIPOLES) and defined(DP3M)
 
   calc_mu_max();
@@ -1288,7 +1158,7 @@ void mpi_kill_particle_motion(int rotation) {
   on_particle_change();
 }
 
-void mpi_kill_particle_motion_slave(int pnode, int rotation) {
+void mpi_kill_particle_motion_slave(int, int rotation) {
   local_kill_particle_motion(rotation);
   on_particle_change();
 }
@@ -1299,7 +1169,7 @@ void mpi_kill_particle_forces(int torque) {
   on_particle_change();
 }
 
-void mpi_kill_particle_forces_slave(int pnode, int torque) {
+void mpi_kill_particle_forces_slave(int, int torque) {
   local_kill_particle_forces(torque);
   on_particle_change();
 }
@@ -1339,7 +1209,7 @@ void mpi_system_CMS() {
   gal.cms[2] = data[2] / data[3];
 }
 
-void mpi_system_CMS_slave(int node, int index) {
+void mpi_system_CMS_slave(int, int) {
   double rdata[4];
   double *pdata = rdata;
   local_system_CMS(pdata);
@@ -1381,7 +1251,7 @@ void mpi_system_CMS_velocity() {
   gal.cms_vel[2] = data[2] / data[3];
 }
 
-void mpi_system_CMS_velocity_slave(int node, int index) {
+void mpi_system_CMS_velocity_slave(int, int) {
   double rdata[4];
   double *pdata = rdata;
   local_system_CMS_velocity(pdata);
@@ -1402,7 +1272,7 @@ void mpi_galilei_transform() {
   on_particle_change();
 }
 
-void mpi_galilei_transform_slave(int pnode, int i) {
+void mpi_galilei_transform_slave(int, int) {
   double cmsvel[3];
   MPI_Bcast(cmsvel, 3, MPI_DOUBLE, 0, comm_cart);
 
@@ -1419,7 +1289,7 @@ void mpi_setup_reaction() {
 #endif
 }
 
-void mpi_setup_reaction_slave(int pnode, int i) {
+void mpi_setup_reaction_slave(int, int) {
 #ifdef SWIMMER_REACTIONS
   local_setup_reaction();
 #endif
@@ -1441,7 +1311,7 @@ std::vector<EspressoGpuDevice> mpi_gather_cuda_devices() {
 }
 #endif
 
-void mpi_gather_cuda_devices_slave(int dummy1, int dummy2) {
+void mpi_gather_cuda_devices_slave(int, int) {
 #ifdef CUDA
   cuda_gather_gpus();
 #endif
@@ -1449,7 +1319,7 @@ void mpi_gather_cuda_devices_slave(int dummy1, int dummy2) {
 
 std::vector<int> mpi_resort_particles(int global_flag) {
   mpi_call(mpi_resort_particles_slave, global_flag, 0);
-  cells_resort_particles(global_flag);
+  cells_resort_particles(global_flag, local_cells);
 
   std::vector<int> n_parts;
   boost::mpi::gather(comm_cart, cells_get_n_particles(), n_parts, 0);
@@ -1458,7 +1328,7 @@ std::vector<int> mpi_resort_particles(int global_flag) {
 }
 
 void mpi_resort_particles_slave(int global_flag, int) {
-  cells_resort_particles(global_flag);
+  cells_resort_particles(global_flag, local_cells);
 
   boost::mpi::gather(comm_cart, cells_get_n_particles(), 0);
 }

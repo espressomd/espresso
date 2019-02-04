@@ -22,8 +22,8 @@
  *
  *  This file contains functions for the cell system.
  *
- *  For more information on cells, see cells.hpp
- *   */
+ *  Implementation of cells.hpp.
+ */
 #include "cells.hpp"
 #include "algorithm/link_cell.hpp"
 #include "communication.hpp"
@@ -57,8 +57,8 @@ CellPList local_cells = {nullptr, 0, 0};
 CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
-CellStructure cell_structure = {/* type */ CELL_STRUCTURE_NONEYET,
-                                /* use_verlet_list*/ true};
+CellStructure cell_structure = {
+    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr};
 
 double max_range = 0.0;
 
@@ -157,8 +157,7 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 /************************************************************/
 /*@{*/
 
-/** Switch for choosing the topology release function of a certain
-    cell system. */
+/** Choose the topology release function of a certain cell system. */
 static void topology_release(int cs) {
   switch (cs) {
   case CELL_STRUCTURE_NONEYET:
@@ -184,9 +183,8 @@ static void topology_release(int cs) {
   }
 }
 
-/** Switch for choosing the topology init function of a certain
-    cell system. */
-void topology_init(int cs, CellPList *local) {
+/** Choose the topology init function of a certain cell system. */
+void topology_init(int cs) {
   /** broadcast the flag for using Verlet list */
   boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
 
@@ -194,7 +192,7 @@ void topology_init(int cs, CellPList *local) {
   case CELL_STRUCTURE_NONEYET:
     break;
   case CELL_STRUCTURE_CURRENT:
-    topology_init(cell_structure.type, local);
+    topology_init(cell_structure.type);
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_topology_init();
@@ -238,7 +236,7 @@ void cells_re_init(int new_cs) {
   /* MOVE old cells to temporary buffer */
   auto tmp_cells = std::move(cells);
 
-  topology_init(new_cs, &tmp_local);
+  topology_init(new_cs);
 
   clear_particle_node();
 
@@ -298,8 +296,7 @@ int cells_get_n_particles() {
 
 namespace {
 /**
- * @brief Fold coordinates to box and reset the
- *        old position.
+ * @brief Fold coordinates to box and reset the old position.
  */
 void fold_and_reset(Particle &p) {
   fold_position(p.r.p, p.l.i);
@@ -311,10 +308,9 @@ void fold_and_reset(Particle &p) {
 /**
  * @brief Sort and fold particles.
  *
- * This function folds the positions of all particles back into
- * the box and puts them back into the correct cells. Particles
- * that do not belong to this node are removed from the cell
- * and returned.
+ * This function folds the positions of all particles back into the
+ * box and puts them back into the correct cells. Particles that do
+ * not belong to this node are removed from the cell and returned.
  *
  * @param cs The cell system to be used.
  * @param cells Cells to iterate over.

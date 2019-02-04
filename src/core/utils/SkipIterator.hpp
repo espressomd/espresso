@@ -31,9 +31,11 @@ namespace Utils {
  *        is true.
  *
  * Example:
+ * @code{.cpp}
  *    auto a = {1, 2, ,3 ,4 ,5};
- *    it = make_skip_iterator(std::begin(a), std::end(a), [](int i) { return i %
- * 2 != 0;});
+ *    it = make_skip_iterator(std::begin(a), std::end(a),
+ *                            [](int i) { return i % 2 != 0;});
+ * @endcode
  *    Then the resulting range is {2, 4}.
  */
 template <typename ForwardIterator, typename Predicate,
