@@ -19,8 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CONSTRAINTS_CONSTRAINT_HPP
 #define CONSTRAINTS_CONSTRAINT_HPP
 
-#include <memory>
-
 #include "energy.hpp"
 #include "particle_data.hpp"
 

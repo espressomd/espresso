@@ -38,17 +38,44 @@ struct function_remove_const<R(Args...) const> {
   using type = R(Args...);
 };
 
-/**
- * @brief True iff T is an instantiation of Template.
- */
-template <typename T, template <typename...> class Template>
-struct is_instance_of : public std::false_type {};
-
-template <typename... T, template <typename...> class Template>
-struct is_instance_of<Template<T...>, Template> : public std::true_type {};
-
 template <bool P, typename T = void>
 using enable_if_t = typename std::enable_if<P, T>::type;
+
+/**
+ * @brief Implementation of std::void_t
+ *
+ * See @url https://en.cppreference.com/w/cpp/types/void_t
+ *
+ */
+template <class... Ts>
+using void_t = void;
+
+    namespace detail {
+        template <template <class...> class Trait, class Enabler, class... Args>
+        struct is_detected : std::false_type{};
+
+        template <template <class...> class Trait, class... Args>
+        struct is_detected<Trait, void_t<Trait<Args...>>, Args...> : std::true_type{};
+    }
+
+    /**
+     * @brief Partial implementation of std::experimental::is_detected.
+     *
+     * Source and in-depth discussion at
+     * @url https://blog.tartanllama.xyz/detection-idiom and
+     * @url https://en.cppreference.com/w/cpp/experimental/is_detected
+     *
+     * This can be used to check if an expression is well-formed for a
+     * set of types, like so:
+     *
+     * template<typename T>
+     * using get_t = decltype(std::declval<T>().get());
+     * template<typename T>
+     * using has_get = is_detected<get_t, T>;
+     *
+     */
+    template <template <class...> class Trait, class... Args>
+    using is_detected = typename detail::is_detected<Trait, void, Args...>::type;
 
 } // namespace Utils
 

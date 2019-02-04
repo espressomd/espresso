@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "core/field_coupling/fields/AffineMap.hpp"
 #include "core/field_coupling/fields/Constant.hpp"
 #include "core/field_coupling/fields/Interpolated.hpp"
+#include "core/field_coupling/fields/PlaneWave.hpp"
 
 #include "ScriptInterface.hpp"
 
@@ -72,6 +73,29 @@ struct field_params_impl<AffineMap<T, codim>> {
             {"b", AutoParameter::read_only, [this_]() { return this_().b(); }}};
   }
 };
+
+    template <typename T, size_t codim>
+    struct field_params_impl<PlaneWave<T, codim>> {
+        using gradient_type = typename PlaneWave<T, codim>::gradient_type;
+        using value_type = typename PlaneWave<T, codim>::value_type;
+
+        static PlaneWave<T, codim> make(const VariantMap &params) {
+            return PlaneWave<T, codim>{
+                    get_value<value_type>(params, "amplitude"),
+                    get_value<value_type>(params, "wave_vector"),
+                    get_value<T>(params, "frequency"),
+                    get_value_or<T>(params, "phase", 0.)};
+        }
+
+        template <typename This>
+        static std::vector<AutoParameter> params(const This &this_) {
+            return {{"amplitude", AutoParameter::read_only, [this_]() { return this_().amplitude(); }},
+                    {"wave_vector", AutoParameter::read_only, [this_]() { return this_().k(); }},
+                    {"frequency", AutoParameter::read_only, [this_]() { return this_().omega(); }},
+                    {"phase", AutoParameter::read_only, [this_]() { return this_().phase(); }}};
+        }
+    };
+
 
 template <typename T, size_t codim>
 struct field_params_impl<Interpolated<T, codim>> {

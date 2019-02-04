@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "field_coupling/fields/Constant.hpp"
 #include "field_coupling/fields/Interpolated.hpp"
 #include "field_coupling/fields/gradient_type.hpp"
+#include "field_coupling/fields/PlaneWave.hpp"
 
 #include "utils/interpolation/bspline_3d.hpp"
 #include "utils/interpolation/bspline_3d_gradient.hpp"
