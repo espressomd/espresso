@@ -41,14 +41,15 @@
 int bonded_coulomb_set_params(int bond_type, double prefactor);
 
 /** Computes the BONDED_COULOMB pair force.
-    @param[in]  p1        First particle.
-    @param[in]  p2        Second particle.
-    @param[in]  iaparams  Interaction parameters.
-    @param[in]  dx        %Distance between the particles.
-    @param[out] force     Force.
-    @retval 0
-*/
-inline int calc_bonded_coulomb_pair_force(Particle const *p1, Particle const *p2,
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  iaparams  Interaction parameters.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] force     Force.
+ *  @retval 0
+ */
+inline int calc_bonded_coulomb_pair_force(Particle const *p1,
+                                          Particle const *p2,
                                           Bonded_ia_parameters const *iaparams,
                                           double const dx[3], double force[3]) {
   int i;
@@ -78,13 +79,13 @@ inline int calc_bonded_coulomb_pair_force(Particle const *p1, Particle const *p2
 }
 
 /** Computes the BONDED_COULOMB pair energy.
-    @param[in]  p1        First particle.
-    @param[in]  p2        Second particle.
-    @param[in]  iaparams  Interaction parameters.
-    @param[in]  dx        %Distance between the particles.
-    @param[out] _energy   Energy.
-    @retval 0
-*/
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  iaparams  Interaction parameters.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] _energy   Energy.
+ *  @retval 0
+ */
 inline int bonded_coulomb_pair_energy(Particle const *p1, Particle const *p2,
                                       Bonded_ia_parameters const *iaparams,
                                       double const dx[3], double *_energy) {

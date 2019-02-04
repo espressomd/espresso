@@ -24,8 +24,8 @@
  *  Common code for functions calculating angle forces.
  */
 
-#include "utils.hpp"
 #include "grid.hpp"
+#include "utils.hpp"
 
 /** Compute the normalized vector between two points.
  *  @param[in]  r_mid     Position of the middle particle
@@ -54,8 +54,8 @@ inline void calc_angle_vector(const Vector3d &r_mid, const Vector3d &r_out,
  */
 inline void calc_angle_force(double force1[3], double force2[3],
                              const double vec1[3], const double vec2[3],
-                             double d1i, double d2i,
-                             double cosine, double fac) {
+                             double d1i, double d2i, double cosine,
+                             double fac) {
   for (int j = 0; j < 3; j++) {
     double f1 = fac * (cosine * vec1[j] - vec2[j]) * d1i;
     double f2 = fac * (cosine * vec2[j] - vec1[j]) * d2i;
@@ -66,14 +66,10 @@ inline void calc_angle_force(double force1[3], double force2[3],
 
 inline void calc_angle_3body_vector(const Vector3d &r_mid,
                                     const Vector3d &r_left,
-                                    const Vector3d &r_right,
-                                    double &cos_phi,
-                                    double &sin_phi,
-                                    double vec21[3],
-                                    double vec31[3],
-                                    double &vec21_sqr,
-                                    double &vec31_sqr,
-                                    double &vec21_magn,
+                                    const Vector3d &r_right, double &cos_phi,
+                                    double &sin_phi, double vec21[3],
+                                    double vec31[3], double &vec21_sqr,
+                                    double &vec31_sqr, double &vec21_magn,
                                     double &vec31_magn) {
   get_mi_vector(vec21, r_mid, r_left);
   for (int j = 0; j < 3; j++)
@@ -87,16 +83,11 @@ inline void calc_angle_3body_vector(const Vector3d &r_mid,
   sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
 }
 
-inline void calc_angle_3body_force(double cos_phi,
-                                   double fac,
-                                   const double vec21[3],
-                                   const double vec31[3],
-                                   double vec21_sqr,
-                                   double vec31_sqr,
-                                   double vec21_magn,
-                                   double vec31_magn,
-                                   double force1[3],
-                                   double force2[3],
+inline void calc_angle_3body_force(double cos_phi, double fac,
+                                   const double vec21[3], const double vec31[3],
+                                   double vec21_sqr, double vec31_sqr,
+                                   double vec21_magn, double vec31_magn,
+                                   double force1[3], double force2[3],
                                    double force3[3]) {
   double fj, fk;
   for (int j = 0; j < 3; j++) {

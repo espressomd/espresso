@@ -35,23 +35,23 @@
 #include "grid.hpp"
 
 /** set parameters for the angle potential.
-
-    \todo The type of the angle potential
-    is chosen via config.hpp and cannot be changed at runtime.
-*/
+ *
+ *  \todo The type of the angle potential
+ *  is chosen via config.hpp and cannot be changed at runtime.
+ */
 int angle_harmonic_set_params(int bond_type, double bend, double phi0);
 
 /************************************************************/
 
 /** Computes the three-body angle interaction force.
-    @param[in]  p_mid     Second/middle particle.
-    @param[in]  p_left    First/left particle.
-    @param[in]  p_right   Third/right particle.
-    @param[in]  iaparams  Bonded parameters for the angle interaction.
-    @param[out] force1    Force on particle 1.
-    @param[out] force2    Force on particle 2.
-    @retval 0
-*/
+ *  @param[in]  p_mid     Second/middle particle.
+ *  @param[in]  p_left    First/left particle.
+ *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  iaparams  Bonded parameters for the angle interaction.
+ *  @param[out] force1    Force on particle 1.
+ *  @param[out] force2    Force on particle 2.
+ *  @retval 0
+ */
 inline int calc_angle_harmonic_force(Particle const *p_mid,
                                      Particle const *p_left,
                                      Particle const *p_right,
@@ -88,12 +88,10 @@ inline int calc_angle_harmonic_force(Particle const *p_mid,
 
 /* The force on each particle due to a three-body bonded potential
    is computed. */
-inline void calc_angle_harmonic_3body_forces(Particle const *p_mid,
-                                             Particle const *p_left,
-                                             Particle const *p_right,
-                                             Bonded_ia_parameters const *iaparams,
-                                             double force1[3], double force2[3],
-                                             double force3[3]) {
+inline void calc_angle_harmonic_3body_forces(
+    Particle const *p_mid, Particle const *p_left, Particle const *p_right,
+    Bonded_ia_parameters const *iaparams, double force1[3], double force2[3],
+    double force3[3]) {
   double pot_dep;
   double cos_phi;
   double sin_phi;
@@ -105,9 +103,9 @@ inline void calc_angle_harmonic_3body_forces(Particle const *p_mid,
   double vec31_magn;
   double fac;
 
-  calc_angle_3body_vector(p_mid->r.p, p_left->r.p, p_right->r.p,
-                          cos_phi, sin_phi, vec21, vec31,
-                          vec21_sqr, vec31_sqr, vec21_magn, vec31_magn);
+  calc_angle_3body_vector(p_mid->r.p, p_left->r.p, p_right->r.p, cos_phi,
+                          sin_phi, vec21, vec31, vec21_sqr, vec31_sqr,
+                          vec21_magn, vec31_magn);
 
   /* uncomment this block if interested in the angle
   if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
@@ -136,15 +134,14 @@ inline void calc_angle_harmonic_3body_forces(Particle const *p_mid,
 }
 
 /** Computes the three-body angle interaction energy.
-    @param[in]  p_mid     Second/middle particle.
-    @param[in]  p_left    First/left particle.
-    @param[in]  p_right   Third/right particle.
-    @param[in]  iaparams  Bonded parameters for the angle interaction.
-    @param[out] _energy   Energy.
-    @retval 0
-*/
-inline int angle_harmonic_energy(Particle const *p_mid,
-                                 Particle const *p_left,
+ *  @param[in]  p_mid     Second/middle particle.
+ *  @param[in]  p_left    First/left particle.
+ *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  iaparams  Bonded parameters for the angle interaction.
+ *  @param[out] _energy   Energy.
+ *  @retval 0
+ */
+inline int angle_harmonic_energy(Particle const *p_mid, Particle const *p_left,
                                  Particle const *p_right,
                                  Bonded_ia_parameters const *iaparams,
                                  double *_energy) {

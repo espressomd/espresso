@@ -43,17 +43,17 @@
 int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2);
 
 /** Computes the BONDED_COULOMB_P3M_SR pair force.
-    @param[in]  p1        First particle.
-    @param[in]  p2        Second particle.
-    @param[in]  iaparams  Interaction parameters.
-    @param[in]  dx        %Distance between the particles.
-    @param[out] force     Force.
-    @retval 0
-*/
-inline int calc_bonded_coulomb_p3m_sr_pair_force(Particle const *p1, Particle const *p2,
-                                                 Bonded_ia_parameters const *iaparams,
-                                                 double const dx[3],
-                                                 double force[3]) {
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  iaparams  Interaction parameters.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] force     Force.
+ *  @retval 0
+ */
+inline int
+calc_bonded_coulomb_p3m_sr_pair_force(Particle const *p1, Particle const *p2,
+                                      Bonded_ia_parameters const *iaparams,
+                                      double const dx[3], double force[3]) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   if (dist < p3m.params.r_cut) {
@@ -79,16 +79,17 @@ inline int calc_bonded_coulomb_p3m_sr_pair_force(Particle const *p1, Particle co
 }
 
 /** Computes the BONDED_COULOMB_P3M_SR pair energy.
-    @param[in]  p1        First particle.
-    @param[in]  p2        Second particle.
-    @param[in]  iaparams  Interaction parameters.
-    @param[in]  dx        %Distance between the particles.
-    @param[out] _energy   Energy.
-    @retval 0
-*/
-inline int bonded_coulomb_p3m_sr_pair_energy(Particle const *p1, Particle const *p2,
-                                             Bonded_ia_parameters const *iaparams,
-                                             double const dx[3], double *_energy) {
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  iaparams  Interaction parameters.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] _energy   Energy.
+ *  @retval 0
+ */
+inline int
+bonded_coulomb_p3m_sr_pair_energy(Particle const *p1, Particle const *p2,
+                                  Bonded_ia_parameters const *iaparams,
+                                  double const dx[3], double *_energy) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   *_energy = p3m_pair_energy(iaparams->p.bonded_coulomb_p3m_sr.q1q2, dist);

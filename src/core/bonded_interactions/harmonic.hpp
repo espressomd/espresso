@@ -36,14 +36,14 @@
 int harmonic_set_params(int bond_type, double k, double r, double r_cut);
 
 /** Computes the harmonic bond length force.
-    @param[in]  p1        First particle.
-    @param[in]  p2        Second particle.
-    @param[in]  iaparams  Bonded parameters for the pair interaction.
-    @param[in]  dx        %Distance between the particles.
-    @param[out] force     Force.
-    @retval 1 if the bond is broken
-    @retval 0 otherwise
-*/
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] force     Force.
+ *  @retval 1 if the bond is broken
+ *  @retval 0 otherwise
+ */
 inline int calc_harmonic_pair_force(Particle const *p1, Particle const *p2,
                                     Bonded_ia_parameters const *iaparams,
                                     double const dx[3], double force[3]) {
@@ -68,14 +68,14 @@ inline int calc_harmonic_pair_force(Particle const *p1, Particle const *p2,
 }
 
 /** Computes the harmonic bond length energy.
-    @param[in]  p1        First particle.
-    @param[in]  p2        Second particle.
-    @param[in]  iaparams  Bonded parameters for the pair interaction.
-    @param[in]  dx        %Distance between the particles.
-    @param[out] _energy   Energy.
-    @retval 1 if the bond is broken
-    @retval 0 otherwise
-*/
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] _energy   Energy.
+ *  @retval 1 if the bond is broken
+ *  @retval 0 otherwise
+ */
 inline int harmonic_pair_energy(Particle const *p1, Particle const *p2,
                                 Bonded_ia_parameters const *iaparams,
                                 double const dx[3], double *_energy) {

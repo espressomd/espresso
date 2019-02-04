@@ -47,16 +47,15 @@ void thermalized_bond_update_params(double pref_scale);
 void thermalized_bond_init();
 
 /** Separately thermalizes the com and distance of a particle pair.
-    @param[in]  p1        First particle.
-    @param[in]  p2        Second particle.
-    @param[in]  iaparams  Bonded parameters for the pair interaction.
-    @param[in]  dx        %Distance between the particles.
-    @param[out] force1    Force on particle @p p1
-    @param[out] force2    Force on particle @p p2
-    @retval 1 if the bond is broken
-    @retval 0 otherwise
-*/
-
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] force1    Force on particle @p p1
+ *  @param[out] force2    Force on particle @p p2
+ *  @retval 1 if the bond is broken
+ *  @retval 0 otherwise
+ */
 inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
                                         const Bonded_ia_parameters *iaparams,
                                         double const dx[3], double force1[3],

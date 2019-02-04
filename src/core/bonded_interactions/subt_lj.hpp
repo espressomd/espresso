@@ -39,14 +39,14 @@
 int subt_lj_set_params(int bond_type);
 
 /** Computes the negative of the Lennard-Jones pair forces.
-    @param[in]  p1        First particle.
-    @param[in]  p2        Second particle.
-    @param[in]  dx_       %Distance between the particles.
-    @param[out] force     Force on particles.
-    @retval ES_OK
-*/
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  dx_       %Distance between the particles.
+ *  @param[out] force     Force on particles.
+ *  @retval ES_OK
+ */
 inline int calc_subt_lj_pair_force(Particle const *p1, Particle const *p2,
-                                   Bonded_ia_parameters const*,
+                                   Bonded_ia_parameters const *,
                                    double const dx_[3], double force[3]) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
 
@@ -58,14 +58,14 @@ inline int calc_subt_lj_pair_force(Particle const *p1, Particle const *p2,
 }
 
 /** Computes the negative of the Lennard-Jones pair energy.
-    @param[in]  p1        First particle.
-    @param[in]  p2        Second particle.
-    @param[in]  dx_       %Distance between the particles.
-    @param[out] _energy   Energy.
-    @retval ES_OK
-*/
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  dx_       %Distance between the particles.
+ *  @param[out] _energy   Energy.
+ *  @retval ES_OK
+ */
 inline int subt_lj_pair_energy(Particle const *p1, Particle const *p2,
-                               Bonded_ia_parameters const*,
+                               Bonded_ia_parameters const *,
                                double const dx_[3], double *_energy) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
   auto const dx = -Vector3d(dx_, dx_ + 3);

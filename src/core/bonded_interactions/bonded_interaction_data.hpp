@@ -4,8 +4,8 @@
 #include "TabulatedPotential.hpp"
 #include "particle_data.hpp"
 /** \name Type codes of bonded interactions
-    Enumeration of implemented bonded interactions.
-*/
+ *  Enumeration of implemented bonded interactions.
+ */
 /************************************************************/
 /*@{*/
 
@@ -165,11 +165,11 @@ struct Bonded_coulomb_p3m_sr_bond_parameters {
 #endif
 
 /** Parameters for three-body angular potential.
-    @note
-        ATTENTION: there are different implementations of the bond angle
-        potential which you may choose with a compiler flag in the file
-        \ref config.hpp !
-*/
+ *  @note
+ *      ATTENTION: there are different implementations of the bond angle
+ *      potential which you may choose with a compiler flag in the file
+ *      \ref config.hpp !
+ */
 struct Angle_bond_parameters {
   /** bending constant */
   double bend;
@@ -236,7 +236,7 @@ struct Umbrella_bond_parameters {
 /** Dummy parameters for -LJ Potential */
 struct Subt_lj_bond_parameters {};
 
-/**Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
+/** Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM */
 struct Rigid_bond_parameters {
   /**Square of the length of Constrained Bond*/
   double d2;
@@ -378,11 +378,12 @@ inline bool pair_bond_exists_on(const Particle *const p,
 }
 
 /** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if
- * particles are ghosts.
+ *  particles are ghosts.
  *
- * @param p_bond      particle on which the bond may be stored
- * @param p_partner   bond partner
- * @param bond        enum bond type */
+ *  @param p_bond      particle on which the bond may be stored
+ *  @param p_partner   bond partner
+ *  @param bond        enum bond type
+ */
 inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
                                      const Particle *const p_partner,
                                      BondedInteraction bond) {
@@ -406,11 +407,12 @@ inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
 }
 
 /** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if
- * particles are ghosts.
+ *  particles are ghosts.
  *
- * @param p1     particle on which the bond may be stored
- * @param p2     particle on which the bond may be stored
- * @param bond   numerical bond type */
+ *  @param p1     particle on which the bond may be stored
+ *  @param p2     particle on which the bond may be stored
+ *  @param bond   numerical bond type
+ */
 inline bool pair_bond_enum_exists_between(const Particle *const p1,
                                           const Particle *const p2,
                                           BondedInteraction bond) {
