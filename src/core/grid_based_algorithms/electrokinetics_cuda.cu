@@ -1281,13 +1281,13 @@ ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index,
       if (i % 4 == 0) {
         random_floats =
             ek_random_wrapper_philox(index, i + 40, philox_counter, seed);
-        random = random_floats.w - 0.5f;
+        random = (random_floats.w - 0.5f)*2.0f;
       } else if (i % 4 == 1) {
-        random = random_floats.x - 0.5f;
+        random = (random_floats.x - 0.5f)*2.0f;
       } else if (i % 4 == 2) {
-        random = random_floats.y - 0.5f;
+        random = (random_floats.y - 0.5f)*2.0f;
       } else if (i % 4 == 3) {
-        random = random_floats.z - 0.5f;
+        random = (random_floats.z - 0.5f)*2.0f;
       }
       float H = 0.0f;
       float HN = 0.0f;
@@ -1308,7 +1308,7 @@ ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index,
                         (agrid * agrid),
                     0.5f) *
                random * ek_parameters_gpu->fluctuation_amplitude /
-               (sqrt(3.0f) * sqrt(2.0f));
+               sqrt(2.0f);
         fluc *=
             !(lb_node.boundary[index] || lb_node.boundary[neighborindex[i]]);
         flux_fluc[jindex_getByRhoLinear(index, i)] = fluc;
@@ -1318,7 +1318,7 @@ ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index,
                powf(2.0f * average_density * diffusion * time_step /
                         (agrid * agrid),
                     0.5f) *
-               random * ek_parameters_gpu->fluctuation_amplitude / sqrt(3.0f);
+               random * ek_parameters_gpu->fluctuation_amplitude;
         fluc *=
             !(lb_node.boundary[index] || lb_node.boundary[neighborindex[i]]);
         flux_fluc[jindex_getByRhoLinear(index, i)] = fluc;
