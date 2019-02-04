@@ -68,7 +68,7 @@ class LBMassCommon(object):
             self.system.integrator.run(10)
             v = []
             for n in nodes:
-                v.append(n.density[0])
+                v.append(n.density)
             result[i] = np.mean(v)
         np.testing.assert_allclose(
             result - DENS,
