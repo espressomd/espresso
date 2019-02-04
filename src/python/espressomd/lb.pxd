@@ -120,7 +120,7 @@ IF LB_GPU or LB:
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()
-        void lb_lbfluid_get_interpolated_velocity_at_positions(double * positions, double * velocities, int length);
+        void lb_lbfluid_get_interpolated_velocity_at_positions(double * positions, double * velocities, int length)
 
     ###############################################
     #
@@ -211,14 +211,14 @@ IF LB_GPU or LB:
         # get pointers
         # unit conversion MD -> LB
         c_ext_force_density[
-    0] = p_ext_force_density[
-        0] * p_agrid * p_agrid * p_tau * p_tau;
+            0] = p_ext_force_density[
+                0] * p_agrid * p_agrid * p_tau * p_tau
         c_ext_force_density[
-    1] = p_ext_force_density[
-        1] * p_agrid * p_agrid * p_tau * p_tau;
+            1] = p_ext_force_density[
+                1] * p_agrid * p_agrid * p_tau * p_tau
         c_ext_force_density[
-    2] = p_ext_force_density[
-        2] * p_agrid * p_agrid * p_tau * p_tau;
+            2] = p_ext_force_density[
+                2] * p_agrid * p_agrid * p_tau * p_tau
         # call c-function
         lb_lbfluid_set_ext_force_density(0, c_ext_force_density)
 
@@ -235,7 +235,7 @@ IF LB_GPU or LB:
             raise Exception(
                 "Parameter couple accepts only \"2pt\" and \"3pt\"")
 
-        cdef int c_couple_flag;
+        cdef int c_couple_flag
         c_couple_flag = p_couple_flag
         lb_lbfluid_set_couple_flag(c_couple_flag)
 
@@ -243,7 +243,7 @@ IF LB_GPU or LB:
 
     cdef inline python_lbfluid_get_couple_flag(p_couple_flag):
 
-        cdef int c_couple_flag;
+        cdef int c_couple_flag
         c_couple_flag = lb_lbfluid_get_couple_flag()
         p_couple_flag = c_couple_flag
 
@@ -318,12 +318,11 @@ IF LB_GPU or LB:
         c_ext_force_density = lb_lbfluid_get_ext_force_density()
         # unit conversion LB -> MD
         p_ext_force_density[
-    0] = c_ext_force_density[
-        0] / p_agrid / p_agrid / p_tau / p_tau
+            0] = c_ext_force_density[
+                0] / p_agrid / p_agrid / p_tau / p_tau
         p_ext_force_density[
-    1] = c_ext_force_density[
-        1] / p_agrid / p_agrid / p_tau / p_tau
+            1] = c_ext_force_density[
+                1] / p_agrid / p_agrid / p_tau / p_tau
         p_ext_force_density[
-    2] = c_ext_force_density[
-        2] / p_agrid / p_agrid / p_tau / p_tau
-
+            2] = c_ext_force_density[
+                2] / p_agrid / p_agrid / p_tau / p_tau

@@ -122,21 +122,32 @@ IF LB_GPU or LB:
             global temperature
             temperature = float(self._params["kT"])
             mpi_bcast_parameter(FIELD_TEMPERATURE)
-            python_lbfluid_set_density(self._params["dens"], self._params["agrid"])
+            python_lbfluid_set_density(
+    self._params["dens"],
+     self._params["agrid"])
 
             lb_lbfluid_set_tau(self._params["tau"])
 
-            python_lbfluid_set_visc(self._params["visc"], self._params["agrid"], self._params["tau"])
+            python_lbfluid_set_visc(
+    self._params["visc"],
+     self._params["agrid"],
+     self._params["tau"])
 
             if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
-                python_lbfluid_set_bulk_visc(self._params["bulk_visc"], self._params["agrid"], self._params["tau"])
+                python_lbfluid_set_bulk_visc(
+    self._params["bulk_visc"],
+     self._params["agrid"],
+     self._params["tau"])
 
             python_lbfluid_set_agrid(self._params["agrid"])
 
             if self._params["fric"] != default_params["fric"]:
                 python_lbfluid_set_friction(self._params["fric"])
 
-            python_lbfluid_set_ext_force_density(self._params["ext_force_density"], self._params["agrid"], self._params["tau"])
+            python_lbfluid_set_ext_force_density(
+    self._params["ext_force_density"],
+     self._params["agrid"],
+     self._params["tau"])
 
             python_lbfluid_set_couple_flag(self._params["couple"])
 
@@ -301,7 +312,7 @@ IF LB_GPU:
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_lbfluid_get_interpolated_velocity_at_positions(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            lb_lbfluid_get_interpolated_velocity_at_positions( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities
 
 IF LB or LB_GPU:
