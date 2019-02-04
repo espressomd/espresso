@@ -48,9 +48,9 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
     @param force     returns force of particle 1
     @return 0.
 */
-inline int calc_harmonic_dumbbell_pair_force(Particle *p1, Particle *p2,
-                                             Bonded_ia_parameters *iaparams,
-                                             double dx[3], double force[3]) {
+inline int calc_harmonic_dumbbell_pair_force(Particle *p1, Particle const *p2,
+                                             Bonded_ia_parameters const *iaparams,
+                                             double const dx[3], double force[3]) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
@@ -72,9 +72,9 @@ inline int calc_harmonic_dumbbell_pair_force(Particle *p1, Particle *p2,
   return 0;
 }
 
-inline int harmonic_dumbbell_pair_energy(Particle *p1, Particle *p2,
-                                         Bonded_ia_parameters *iaparams,
-                                         double dx[3], double *_energy) {
+inline int harmonic_dumbbell_pair_energy(Particle const *p1, Particle const *p2,
+                                         Bonded_ia_parameters const *iaparams,
+                                         double const dx[3], double *_energy) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 

@@ -45,9 +45,9 @@ int fene_set_params(int bond_type, double k, double drmax, double r0);
     @param force     returns force of particle 1
     @return true if the bond is broken
 */
-inline int calc_fene_pair_force(Particle *p1, Particle *p2,
-                                Bonded_ia_parameters *iaparams, double dx[3],
-                                double force[3]) {
+inline int calc_fene_pair_force(Particle const *p1, Particle const *p2,
+                                Bonded_ia_parameters const *iaparams,
+                                double const dx[3], double force[3]) {
   const double len2 = sqrlen(dx);
   const double len = sqrt(len2);
   const double dr = len - iaparams->p.fene.r0;
@@ -69,9 +69,9 @@ inline int calc_fene_pair_force(Particle *p1, Particle *p2,
   return 0;
 }
 
-inline int fene_pair_energy(Particle *p1, Particle *p2,
-                            Bonded_ia_parameters *iaparams, double dx[3],
-                            double *_energy) {
+inline int fene_pair_energy(Particle const *p1, Particle const *p2,
+                            Bonded_ia_parameters const *iaparams,
+                            double const dx[3], double *_energy) {
   /* compute bond stretching (r-r0) */
   double dr = sqrt(sqrlen(dx)) - iaparams->p.fene.r0;
 

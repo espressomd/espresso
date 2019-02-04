@@ -51,9 +51,9 @@ int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2);
     @param force     returns force of particle 1
     @return 0.
 */
-inline int calc_bonded_coulomb_p3m_sr_pair_force(Particle *p1, Particle *p2,
-                                                 Bonded_ia_parameters *iaparams,
-                                                 double dx[3],
+inline int calc_bonded_coulomb_p3m_sr_pair_force(Particle const *p1, Particle const *p2,
+                                                 Bonded_ia_parameters const *iaparams,
+                                                 double const dx[3],
                                                  double force[3]) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
@@ -79,9 +79,9 @@ inline int calc_bonded_coulomb_p3m_sr_pair_force(Particle *p1, Particle *p2,
   return 0;
 }
 
-inline int bonded_coulomb_p3m_sr_pair_energy(Particle *p1, Particle *p2,
-                                             Bonded_ia_parameters *iaparams,
-                                             double dx[3], double *_energy) {
+inline int bonded_coulomb_p3m_sr_pair_energy(Particle const *p1, Particle const *p2,
+                                             Bonded_ia_parameters const *iaparams,
+                                             double const dx[3], double *_energy) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   *_energy = p3m_pair_energy(iaparams->p.bonded_coulomb_p3m_sr.q1q2, dist);

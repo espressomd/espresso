@@ -43,9 +43,9 @@ inline double umbrella_force_r(double k, int dir, double r, double distn) {
 }
 
 /** Calculate umbrella potential force between particle p1 and p2 */
-inline int calc_umbrella_pair_force(Particle *p1, Particle *p2,
-                                    Bonded_ia_parameters *ia_params,
-                                    double d[3], double force[3]) {
+inline int calc_umbrella_pair_force(Particle const *p1, Particle const *p2,
+                                    Bonded_ia_parameters const *ia_params,
+                                    double const d[3], double force[3]) {
   double distn;
   double fac = 0.0;
   distn = d[ia_params->p.umbrella.dir];
@@ -68,9 +68,9 @@ inline int calc_umbrella_pair_force(Particle *p1, Particle *p2,
 }
 
 /** calculate umbrella energy between particle p1 and p2. */
-inline int umbrella_pair_energy(Particle *p1, Particle *p2,
-                                Bonded_ia_parameters *ia_params, double d[3],
-                                double *_energy) {
+inline int umbrella_pair_energy(Particle const *p1, Particle const *p2,
+                                Bonded_ia_parameters const *ia_params,
+                                double const d[3], double *_energy) {
   double distn;
   distn = d[ia_params->p.umbrella.dir];
   *_energy = 0.5 * ia_params->p.umbrella.k *

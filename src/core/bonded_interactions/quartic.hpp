@@ -47,9 +47,9 @@ int quartic_set_params(int bond_type, double k0, double k1, double r,
     @param force     returns force of particle 1
     @return 0.
 */
-inline int calc_quartic_pair_force(Particle *p1, Particle *p2,
-                                   Bonded_ia_parameters *iaparams, double dx[3],
-                                   double force[3]) {
+inline int calc_quartic_pair_force(Particle const *p1, Particle const *p2,
+                                   Bonded_ia_parameters const *iaparams,
+                                   double const dx[3], double force[3]) {
   int i;
   double fac;
   double dist2 = sqrlen(dx);
@@ -89,9 +89,9 @@ inline int calc_quartic_pair_force(Particle *p1, Particle *p2,
   return 0;
 }
 
-inline int quartic_pair_energy(Particle *p1, Particle *p2,
-                               Bonded_ia_parameters *iaparams, double dx[3],
-                               double *_energy) {
+inline int quartic_pair_energy(Particle const *p1, Particle const *p2,
+                               Bonded_ia_parameters const *iaparams,
+                               double const dx[3], double *_energy) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 

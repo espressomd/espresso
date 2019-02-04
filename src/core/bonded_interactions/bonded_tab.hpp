@@ -91,9 +91,9 @@ int tabulated_bonded_set_params(int bond_type,
     than the tabulated range it uses a linear extrapolation based on
     the first two tabulated force values.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-inline int calc_tab_bond_force(Particle *p1, Particle *p2,
+inline int calc_tab_bond_force(Particle const *p1, Particle const *p2,
                                Bonded_ia_parameters const *iaparams,
-                               double dx[3], double force[3]) {
+                               double const dx[3], double force[3]) {
   auto const *tab_pot = iaparams->p.tab.pot;
   auto const dist = sqrt(sqrlen(dx));
 
@@ -115,9 +115,9 @@ inline int calc_tab_bond_force(Particle *p1, Particle *p2,
     quadratic extrapolation based on the first two tabulated force
     values and the first tabulated energy value.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-inline int tab_bond_energy(Particle *p1, Particle *p2,
-                           Bonded_ia_parameters *iaparams, double dx[3],
-                           double *_energy) {
+inline int tab_bond_energy(Particle const *p1, Particle const *p2,
+                           Bonded_ia_parameters const *iaparams,
+                           double const dx[3], double *_energy) {
   auto const *tab_pot = iaparams->p.tab.pot;
   double dist = sqrt(sqrlen(dx));
 
@@ -139,9 +139,10 @@ inline int tab_bond_energy(Particle *p1, Particle *p2,
     connecting vectors. It is assumed that the potential is tabulated
     for all angles between 0 and Pi.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-inline int calc_tab_angle_force(Particle *p_mid, Particle *p_left,
-                                Particle *p_right,
-                                Bonded_ia_parameters *iaparams,
+inline int calc_tab_angle_force(Particle const *p_mid,
+                                Particle const *p_left,
+                                Particle const *p_right,
+                                Bonded_ia_parameters const *iaparams,
                                 double force1[3], double force2[3]) {
   double cosine, phi, invsinphi, vec1[3], vec2[3], d1i, d2i, fac;
   auto const *tab_pot = iaparams->p.tab.pot;
@@ -172,9 +173,10 @@ inline int calc_tab_angle_force(Particle *p_mid, Particle *p_left,
 
 /* The force on each particle due to a three-body bonded tabulated
    potential is computed. */
-inline void calc_angle_3body_tabulated_forces(Particle *p_mid, Particle *p_left,
-                                              Particle *p_right,
-                                              Bonded_ia_parameters *iaparams,
+inline void calc_angle_3body_tabulated_forces(Particle const *p_mid,
+                                              Particle const *p_left,
+                                              Particle const *p_right,
+                                              Bonded_ia_parameters const *iaparams,
                                               double force1[3],
                                               double force2[3],
                                               double force3[3]) {
@@ -218,8 +220,10 @@ inline void calc_angle_3body_tabulated_forces(Particle *p_mid, Particle *p_left,
     p_mid and p_right. It is assumed that the potential is tabulated
     for all angles between 0 and Pi.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-inline int tab_angle_energy(Particle *p_mid, Particle *p_left,
-                            Particle *p_right, Bonded_ia_parameters *iaparams,
+inline int tab_angle_energy(Particle const *p_mid,
+                            Particle const *p_left,
+                            Particle const *p_right,
+                            Bonded_ia_parameters const *iaparams,
                             double *_energy) {
   double phi, vec1[3], vec2[3], vl1, vl2;
   auto const *tab_pot = iaparams->p.tab.pot;
@@ -246,8 +250,9 @@ inline int tab_angle_energy(Particle *p_mid, Particle *p_left,
     \ref Bonded_ia_parameters) between particles p1. p2, p3 and p4 and
     add it to the particle forces. This function is not tested yet.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-inline int calc_tab_dihedral_force(Particle *p2, Particle *p1, Particle *p3,
-                                   Particle *p4, Bonded_ia_parameters *iaparams,
+inline int calc_tab_dihedral_force(Particle const *p2, Particle const *p1,
+                                   Particle const *p3, Particle const *p4,
+                                   Bonded_ia_parameters const *iaparams,
                                    double force2[3], double force1[3],
                                    double force3[3]) {
   int i;
@@ -301,8 +306,9 @@ inline int calc_tab_dihedral_force(Particle *p2, Particle *p1, Particle *p3,
     type_num (see \ref Bonded_ia_parameters) between particles p1. p2,
     p3 and p4. This function is not tested yet.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-inline int tab_dihedral_energy(Particle *p2, Particle *p1, Particle *p3,
-                               Particle *p4, Bonded_ia_parameters *iaparams,
+inline int tab_dihedral_energy(Particle const *p2, Particle const *p1,
+                               Particle const *p3, Particle const *p4,
+                               Bonded_ia_parameters const *iaparams,
                                double *_energy) {
   /* vectors for dihedral calculations. */
   double v12[3], v23[3], v34[3], v12Xv23[3], v23Xv34[3], l_v12Xv23, l_v23Xv34;

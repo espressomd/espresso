@@ -53,9 +53,10 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0);
     @param force2 returns force of particle 2
     @return 0
 */
-inline int calc_angle_cosine_force(Particle *p_mid, Particle *p_left,
-                                   Particle *p_right,
-                                   Bonded_ia_parameters *iaparams,
+inline int calc_angle_cosine_force(Particle const *p_mid,
+                                   Particle const *p_left,
+                                   Particle const *p_right,
+                                   Bonded_ia_parameters const *iaparams,
                                    double force1[3], double force2[3]) {
   double cosine, vec1[3], vec2[3], d1i, d2i, dist2, fac;
 
@@ -82,9 +83,10 @@ inline int calc_angle_cosine_force(Particle *p_mid, Particle *p_left,
 
 /* The force on each particle due to a three-body bonded potential
    is computed. */
-inline void calc_angle_cosine_3body_forces(Particle *p_mid, Particle *p_left,
-                                           Particle *p_right,
-                                           Bonded_ia_parameters *iaparams,
+inline void calc_angle_cosine_3body_forces(Particle const *p_mid,
+                                           Particle const *p_left,
+                                           Particle const *p_right,
+                                           Bonded_ia_parameters const *iaparams,
                                            double force1[3], double force2[3],
                                            double force3[3]) {
   double pot_dep;
@@ -132,9 +134,10 @@ inline void calc_angle_cosine_3body_forces(Particle *p_mid, Particle *p_left,
     @param _energy   return energy pointer.
     @return 0.
 */
-inline int angle_cosine_energy(Particle *p_mid, Particle *p_left,
-                               Particle *p_right,
-                               Bonded_ia_parameters *iaparams,
+inline int angle_cosine_energy(Particle const *p_mid,
+                               Particle const *p_left,
+                               Particle const *p_right,
+                               Bonded_ia_parameters const *iaparams,
                                double *_energy) {
   double cosine, vec1[3], vec2[3], d1i, d2i, dist2;
 

@@ -59,7 +59,7 @@ void thermalized_bond_init();
 
 inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
                                         const Bonded_ia_parameters *iaparams,
-                                        double dx[3], double force1[3],
+                                        double const dx[3], double force1[3],
                                         double force2[3]) {
   // Bond broke?
   if (iaparams->p.thermalized_bond.r_cut > 0.0 &&

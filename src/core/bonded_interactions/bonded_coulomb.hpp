@@ -50,9 +50,9 @@ int bonded_coulomb_set_params(int bond_type, double prefactor);
     @param force     returns force of particle 1
     @return 0.
 */
-inline int calc_bonded_coulomb_pair_force(Particle *p1, Particle *p2,
-                                          Bonded_ia_parameters *iaparams,
-                                          double dx[3], double force[3]) {
+inline int calc_bonded_coulomb_pair_force(Particle const *p1, Particle const *p2,
+                                          Bonded_ia_parameters const *iaparams,
+                                          double const dx[3], double force[3]) {
   int i;
   double fac;
   double dist2 = sqrlen(dx);
@@ -79,9 +79,9 @@ inline int calc_bonded_coulomb_pair_force(Particle *p1, Particle *p2,
   return 0;
 }
 
-inline int bonded_coulomb_pair_energy(Particle *p1, Particle *p2,
-                                      Bonded_ia_parameters *iaparams,
-                                      double dx[3], double *_energy) {
+inline int bonded_coulomb_pair_energy(Particle const *p1, Particle const *p2,
+                                      Bonded_ia_parameters const *iaparams,
+                                      double const dx[3], double *_energy) {
   double dist = sqrt(sqrlen(dx));
 
   *_energy = iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / dist;

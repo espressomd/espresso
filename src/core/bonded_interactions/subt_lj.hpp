@@ -47,9 +47,9 @@ int subt_lj_set_params(int bond_type);
     @param force     force on particles
     @return true if bond is broken
 */
-inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
-                                   Bonded_ia_parameters *, double dx_[3],
-                                   double force[3]) {
+inline int calc_subt_lj_pair_force(Particle const *p1, Particle const *p2,
+                                   Bonded_ia_parameters const*,
+                                   double const dx_[3], double force[3]) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
 
   auto const dx = -Vector3d(dx_, dx_ + 3);
@@ -59,9 +59,9 @@ inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
   return ES_OK;
 }
 
-inline int subt_lj_pair_energy(Particle *p1, Particle *p2,
-                               Bonded_ia_parameters *, double dx_[3],
-                               double *_energy) {
+inline int subt_lj_pair_energy(Particle const *p1, Particle const *p2,
+                               Bonded_ia_parameters const*,
+                               double const dx_[3], double *_energy) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
   auto const dx = -Vector3d(dx_, dx_ + 3);
 
