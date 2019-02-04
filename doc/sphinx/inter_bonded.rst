@@ -93,7 +93,7 @@ Harmonic Dumbbell Bond
     Requires ``ROTATION`` feature.
 
 
-A harmonic bond can be instantiated via
+A harmonic Dumbbell bond can be instantiated via
 :class:`espressomd.interactions.HarmonicDumbbellBond`::
 
     from espressomd.interactions import HarmonicDumbbellBond
@@ -104,11 +104,11 @@ This bond is similar to the normal harmonic bond in such a way that it
 sets up a harmonic potential, i.e. a spring, between the two particles.
 Additionally the orientation of the first particle in the bond will be aligned along
 the distance vector between both particles. This alignment can be
-controlled by the second harmonic constant :math:`k2`. Keep in mind that orientation will
+controlled by the second harmonic constant :math:`k_2`. Keep in mind that orientation will
 oscillate around the distance vector and some kind of
 friction needs to be present for it to relax.
 
-The roles of the parameters :math:`k1, r_0, r_\mathrm{cut}` are exactly the same as for the
+The roles of the parameters :math:`k_1, r_0, r_\mathrm{cut}` are exactly the same as for the
 harmonic bond.
 
 ..
@@ -154,7 +154,7 @@ It is given by
 
 .. math:: V(r) = \frac{\alpha q_1 q_2}{r},
 
-where :math:`q1` and :math:`q2` are the charges of the bound particles and :math:`\alpha` is the
+where :math:`q_1` and :math:`q_2` are the charges of the bound particles and :math:`\alpha` is the
 Coulomb prefactor. This interaction has no cutoff and acts independently of other
 Coulomb interactions.
 
@@ -575,6 +575,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
 
 
 :class:`espressomd.interactions.AngleHarmonic`
+
     A classical harmonic potential of the form:
 
     .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
@@ -590,7 +591,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     :math:`\phi=\phi_0+\pi` and accordingly a discontinuity in the
     force, and should therefore be used with caution.
 
-    example ::
+    Example::
 
         >>> angle_harmonic = AngleHarmonic(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_harmonic)
@@ -602,7 +603,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
 
     Cosine bond angle potential of the form:
 
-    .. math:: V(\phi) = K \left[1 - \cos(\phi - \phi0)\right]
+    .. math:: V(\phi) = K \left[1 - \cos(\phi - \phi_0)\right]
 
     :math:`K` is the bending constant,
     and the optional parameter :math:`\phi_0` is the equilibrium bond angle in
@@ -615,7 +616,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     (both are :math:`1/2(\phi-\phi_0)^2` in leading order), but it is
     periodic and smooth for all angles :math:`\phi`.
 
-    example ::
+    Example::
 
         >>> angle_cosine = AngleCosine(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cosine)
@@ -631,7 +632,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     potential is :math:`1/8(\phi-\phi_0)^4` around :math:`\phi_0`, and
     therefore much flatter than the two potentials before.
 
-    example ::
+    Example::
 
         >>> angle_cossquare = AngleCossquare(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cossquare)

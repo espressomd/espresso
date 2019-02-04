@@ -71,17 +71,17 @@ enum TabulatedBondedInteraction {
 };
 
 /*@}*/
-/** Parameters for FENE bond Potential.
-k - spring constant.
-drmax - maximal bond stretching.
-r0 - equilibrium bond length.
-drmax2 - square of drmax (internal parameter).
-*/
+/** Parameters for FENE bond Potential. */
 struct Fene_bond_parameters {
+  /** spring constant */
   double k;
+  /** maximal bond stretching */
   double drmax;
+  /** equilibrium bond length */
   double r0;
+  /** square of @p drmax (internal parameter) */
   double drmax2;
+  /** inverse square of @p drmax (internal parameter) */
   double drmax2i;
 };
 
@@ -108,8 +108,11 @@ struct Oif_local_forces_bond_parameters {
 
 /** Parameters for harmonic bond Potential */
 struct Harmonic_bond_parameters {
+  /** spring constant */
   double k;
+  /** equilibrium bond length */
   double r;
+  /** cutoff bond length */
   double r_cut;
 };
 
@@ -129,9 +132,13 @@ struct Thermalized_bond_parameters {
 #ifdef ROTATION
 /** Parameters for harmonic dumbbell bond Potential */
 struct Harmonic_dumbbell_bond_parameters {
+  /** spring constant */
   double k1;
+  /** rotation constant */
   double k2;
+  /** equilibrium bond length */
   double r;
+  /** cutoff bond length */
   double r_cut;
 };
 #endif
@@ -145,58 +152,66 @@ struct Quartic_bond_parameters {
 
 /** Parameters for Coulomb bond Potential */
 struct Bonded_coulomb_bond_parameters {
+  /** Coulomb prefactor */
   double prefactor;
 };
 
 #ifdef P3M
-/** Parameters for Coulomb bond p3m shortrange Potential */
+/** Parameters for Coulomb bond p3m short-range Potential */
 struct Bonded_coulomb_p3m_sr_bond_parameters {
+  /** charge factor */
   double q1q2;
 };
 #endif
 
-/** Parameters for three body angular potential (bond-angle potentials).
-        ATTENTION: Note that there are different implementations of the bond
-   angle
-        potential which you may chose with a compiler flag in the file \ref
-   config.hpp !
-        bend - bending constant.
-        phi0 - equilibrium angle (default is 180 degrees / Pi) */
+/** Parameters for three-body angular potential.
+    @note
+        ATTENTION: there are different implementations of the bond angle
+        potential which you may choose with a compiler flag in the file
+        \ref config.hpp !
+*/
 struct Angle_bond_parameters {
+  /** bending constant */
   double bend;
+  /** equilibrium angle (default is 180 degrees) */
   double phi0;
+  /** cosine of @p phi0 (internal parameter) */
   double cos_phi0;
+  /** sine of @p phi0 (internal parameter) */
   double sin_phi0;
 };
 
-/** Parameters for three body angular potential (bond_angle_harmonic).
-    bend - bending constant.
-    phi0 - equilibrium angle (default is 180 degrees / Pi) */
+/** Parameters for three-body angular potential (harmonic). */
 struct Angle_harmonic_bond_parameters {
+  /** bending constant */
   double bend;
+  /** equilibrium angle (default is 180 degrees) */
   double phi0;
 };
 
-/** Parameters for three body angular potential (bond_angle_cosine).
-    bend - bending constant.
-    phi0 - equilibrium angle (default is 180 degrees / Pi) */
+/** Parameters for three-body angular potential (cosine). */
 struct Angle_cosine_bond_parameters {
+  /** bending constant */
   double bend;
+  /** equilibrium angle (default is 180 degrees) */
   double phi0;
+  /** cosine of @p phi0 (internal parameter) */
   double cos_phi0;
+  /** sine of @p phi0 (internal parameter) */
   double sin_phi0;
 };
 
-/** Parameters for three body angular potential (bond_angle_cossquare).
-    bend - bending constant.
-    phi0 - equilibrium angle (default is 180 degrees / Pi) */
+/** Parameters for three-body angular potential (cossquare). */
 struct Angle_cossquare_bond_parameters {
+  /** bending constant */
   double bend;
+  /** equilibrium angle (default is 180 degrees) */
   double phi0;
+  /** cosine of @p phi0 (internal parameter) */
   double cos_phi0;
 };
 
-/** Parameters for four body angular potential (dihedral-angle potentials). */
+/** Parameters for four-body angular potential (dihedral-angle potentials). */
 struct Dihedral_bond_parameters {
   double mult;
   double bend;
@@ -261,10 +276,11 @@ struct IBM_Triel_Parameters {
 
 /** Parameters for IBM volume conservation bond **/
 struct IBM_VolCons_Parameters {
-  int softID; // ID of the large soft particle to which this node belongs
-  // Reference volume
+  /** ID of the large soft particle to which this node belongs */
+  int softID;
+  /** Reference volume */
   double volRef;
-  // Spring constant for volume force
+  /** Spring constant for volume force */
   double kappaV;
   // Whether to write out center-of-mass at each time step
   // Actually this is more of an analysis function and does not strictly belong
@@ -274,10 +290,10 @@ struct IBM_VolCons_Parameters {
 
 /** Parameters for IBM tribend **/
 struct IBM_Tribend_Parameters {
-  // Interaction data
+  /** Interaction data */
   double kb;
 
-  // Reference angle
+  /** Reference angle */
   double theta0;
 };
 

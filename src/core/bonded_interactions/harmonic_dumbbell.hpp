@@ -38,15 +38,13 @@
 int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
                                  double r_cut);
 
-/** Computes the HARMONIC pair force and adds this
-    force to the particle forces (see \ref bonded_interaction_data.cpp).
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
-    @param iaparams  bond type number of the angle interaction (see \ref
-   bonded_interaction_data.cpp).
-    @param dx        particle distance vector
-    @param force     returns force of particle 1
-    @return 0.
+/** Computes the harmonic dumbbell bond length force and update torque.
+    @param[in,out]  p1        First particle, torque gets updated.
+    @param[in]      p2        Second particle.
+    @param[in]      iaparams  Bonded parameters for the pair interaction.
+    @param[in]      dx        %Distance between the particles.
+    @param[out]     force     Force.
+    @retval 0
 */
 inline int calc_harmonic_dumbbell_pair_force(Particle *p1, Particle const *p2,
                                              Bonded_ia_parameters const *iaparams,
@@ -72,6 +70,14 @@ inline int calc_harmonic_dumbbell_pair_force(Particle *p1, Particle const *p2,
   return 0;
 }
 
+/** Computes the harmonic dumbbell bond length energy.
+    @param[in]  p1        First particle.
+    @param[in]  p2        Second particle.
+    @param[in]  iaparams  Bonded parameters for the pair interaction.
+    @param[in]  dx        %Distance between the particles.
+    @param[out] _energy   Energy.
+    @retval 0
+*/
 inline int harmonic_dumbbell_pair_energy(Particle const *p1, Particle const *p2,
                                          Bonded_ia_parameters const *iaparams,
                                          double const dx[3], double *_energy) {

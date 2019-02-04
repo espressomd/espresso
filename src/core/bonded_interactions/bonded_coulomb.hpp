@@ -40,15 +40,13 @@
 /// set the parameters for the bonded_coulomb potential
 int bonded_coulomb_set_params(int bond_type, double prefactor);
 
-/** Computes the BONDED_COULOMB pair force and adds this
-    force to the particle forces (see \ref nonbonded_interaction_data.cpp).
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
-    @param iaparams  bond type number of the angle interaction (see \ref
-   nonbonded_interaction_data.cpp).
-    @param dx        particle distance vector
-    @param force     returns force of particle 1
-    @return 0.
+/** Computes the BONDED_COULOMB pair force.
+    @param[in]  p1        First particle.
+    @param[in]  p2        Second particle.
+    @param[in]  iaparams  Interaction parameters.
+    @param[in]  dx        %Distance between the particles.
+    @param[out] force     Force.
+    @retval 0
 */
 inline int calc_bonded_coulomb_pair_force(Particle const *p1, Particle const *p2,
                                           Bonded_ia_parameters const *iaparams,
@@ -79,6 +77,14 @@ inline int calc_bonded_coulomb_pair_force(Particle const *p1, Particle const *p2
   return 0;
 }
 
+/** Computes the BONDED_COULOMB pair energy.
+    @param[in]  p1        First particle.
+    @param[in]  p2        Second particle.
+    @param[in]  iaparams  Interaction parameters.
+    @param[in]  dx        %Distance between the particles.
+    @param[out] _energy   Energy.
+    @retval 0
+*/
 inline int bonded_coulomb_pair_energy(Particle const *p1, Particle const *p2,
                                       Bonded_ia_parameters const *iaparams,
                                       double const dx[3], double *_energy) {

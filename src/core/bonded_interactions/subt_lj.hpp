@@ -38,14 +38,12 @@
 /// set the parameters for the subtract LJ potential
 int subt_lj_set_params(int bond_type);
 
-/** Computes the negative of the LENNARD-JONES pair forces
-    and adds this force to the particle forces.
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
-    @param iaparams  Parameters of interaction
-    @param dx        change in position
-    @param force     force on particles
-    @return true if bond is broken
+/** Computes the negative of the Lennard-Jones pair forces.
+    @param[in]  p1        First particle.
+    @param[in]  p2        Second particle.
+    @param[in]  dx_       %Distance between the particles.
+    @param[out] force     Force on particles.
+    @retval ES_OK
 */
 inline int calc_subt_lj_pair_force(Particle const *p1, Particle const *p2,
                                    Bonded_ia_parameters const*,
@@ -59,6 +57,13 @@ inline int calc_subt_lj_pair_force(Particle const *p1, Particle const *p2,
   return ES_OK;
 }
 
+/** Computes the negative of the Lennard-Jones pair energy.
+    @param[in]  p1        First particle.
+    @param[in]  p2        Second particle.
+    @param[in]  dx_       %Distance between the particles.
+    @param[out] _energy   Energy.
+    @retval ES_OK
+*/
 inline int subt_lj_pair_energy(Particle const *p1, Particle const *p2,
                                Bonded_ia_parameters const*,
                                double const dx_[3], double *_energy) {

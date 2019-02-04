@@ -2650,7 +2650,7 @@ IF TABULATED == 1:
                 type_num = 3
             else:
                 raise ValueError(
-                    "Tabulated type needs to be distance, angle, or diherdal")
+                    "Tabulated type needs to be distance, angle, or dihedral")
 
             res = tabulated_bonded_set_params(
                 self._bond_id, < TabulatedBondedInteraction > type_num,

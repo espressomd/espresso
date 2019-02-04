@@ -43,15 +43,14 @@ int angle_cossquare_set_params(int bond_type, double bend, double phi0);
 
 /************************************************************/
 
-/** Computes the three body angle interaction force and adds this
-    force to the particle forces.
-    @param p_mid     Pointer to second/middle particle.
-    @param p_left    Pointer to first/left particle.
-    @param p_right   Pointer to third/right particle.
-    @param iaparams  bond type number of the angle interaction.
-    @param force1 returns force of particle 1
-    @param force2 returns force of particle 2
-    @return 0
+/** Compute the three-body angle interaction force.
+    @param[in]  p_mid     Second/middle particle.
+    @param[in]  p_left    First/left particle.
+    @param[in]  p_right   Third/right particle.
+    @param[in]  iaparams  Bonded parameters for the angle interaction.
+    @param[out] force1    Force on particle 1.
+    @param[out] force2    Force on particle 2.
+    @retval 0
 */
 inline int calc_angle_cossquare_force(Particle const *p_mid,
                                       Particle const *p_left,
@@ -120,13 +119,13 @@ inline void calc_angle_cossquare_3body_forces(Particle const *p_mid,
                          vec21_magn, vec31_magn, force1, force2, force3);
 }
 
-/** Computes the three body angle interaction energy.
-    @param p_mid        Pointer to first particle.
-    @param p_left        Pointer to second/middle particle.
-    @param p_right        Pointer to third particle.
-    @param iaparams  bond type number of the angle interaction.
-    @param _energy   return energy pointer.
-    @return 0.
+/** Computes the three-body angle interaction energy.
+    @param[in]  p_mid     Second/middle particle.
+    @param[in]  p_left    First/left particle.
+    @param[in]  p_right   Third/right particle.
+    @param[in]  iaparams  Bonded parameters for the angle interaction.
+    @param[out] _energy   Energy.
+    @retval 0
 */
 inline int angle_cossquare_energy(Particle const *p_mid,
                                   Particle const *p_left,

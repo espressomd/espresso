@@ -43,7 +43,6 @@
 
     @param part_type_a particle type for which the interaction is defined
     @param part_type_b particle type for which the interaction is defined
-    @param filename from which file to fetch the data
 
     @return <ul>
     <li> 0 on success

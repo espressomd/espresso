@@ -42,7 +42,14 @@ inline double umbrella_force_r(double k, int dir, double r, double distn) {
   return -k * (distn - r);
 }
 
-/** Calculate umbrella potential force between particle p1 and p2 */
+/** Compute the umbrella bond length force.
+    @param[in]  p1        First particle.
+    @param[in]  p2        Second particle.
+    @param[in]  ia_params Bonded parameters for the pair interaction.
+    @param[in]  d         %Distance between the particles.
+    @param[out] force     Force.
+    @retval 0
+*/
 inline int calc_umbrella_pair_force(Particle const *p1, Particle const *p2,
                                     Bonded_ia_parameters const *ia_params,
                                     double const d[3], double force[3]) {
@@ -67,7 +74,14 @@ inline int calc_umbrella_pair_force(Particle const *p1, Particle const *p2,
   return 0;
 }
 
-/** calculate umbrella energy between particle p1 and p2. */
+/** Compute the umbrella bond length energy.
+    @param[in]  p1        First particle.
+    @param[in]  p2        Second particle.
+    @param[in]  ia_params Bonded parameters for the pair interaction.
+    @param[in]  d         %Distance between the particles.
+    @param[out] _energy   Energy.
+    @retval 0
+*/
 inline int umbrella_pair_energy(Particle const *p1, Particle const *p2,
                                 Bonded_ia_parameters const *ia_params,
                                 double const d[3], double *_energy) {

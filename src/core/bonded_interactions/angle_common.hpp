@@ -20,10 +20,19 @@
 */
 #ifndef ANGLE_COMMON_H
 #define ANGLE_COMMON_H
+/** \file
+ *  Common code for functions calculating angle forces.
+ */
 
 #include "utils.hpp"
 #include "grid.hpp"
 
+/** Compute the normalized vector between two points.
+ *  @param[in]  r_mid     Position of the middle particle
+ *  @param[in]  r_out     Position of the outer particle
+ *  @param[out] vec       Normalized vector
+ *  @param[out] di        Normalization constant
+ */
 inline void calc_angle_vector(const Vector3d &r_mid, const Vector3d &r_out,
                               double vec[3], double &di) {
   /* vector from r_out to r_mid */
@@ -33,6 +42,16 @@ inline void calc_angle_vector(const Vector3d &r_mid, const Vector3d &r_out,
     vec[j] *= di;
 }
 
+/** Compute the angle interaction force.
+ *  @param[out] force1    Force on particle 1
+ *  @param[out] force2    Force on particle 2
+ *  @param[in]  vec1      Normalized vector for particle 1
+ *  @param[in]  vec2      Normalized vector for particle 2
+ *  @param[in]  d1i       Normalization constant for @p vec1
+ *  @param[in]  d2i       Normalization constant for @p vec2
+ *  @param[in]  cosine    Cosine of the angle
+ *  @param[in]  fac       Angle bending constant
+ */
 inline void calc_angle_force(double force1[3], double force2[3],
                              const double vec1[3], const double vec2[3],
                              double d1i, double d2i,
