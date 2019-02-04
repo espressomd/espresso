@@ -35,7 +35,7 @@ public:
   void add_energy(const Particle &p, const Vector3d &folded_pos,
                   Observable_stat &energy) const override;
 
-  ParticleForce force(const Particle &p, const Vector3d &folded_pos) override;
+  ParticleForce force(const Particle &p, const Vector3d &folded_pos, double t) override;
 
   bool fits_in_box(Vector3d const &box) const override { return true; }
 

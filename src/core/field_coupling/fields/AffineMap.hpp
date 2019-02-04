@@ -66,7 +66,7 @@ public:
   gradient_type &A() { return m_A; }
   value_type &b() { return m_b; }
 
-  value_type operator()(const Vector3d &pos) const {
+  value_type operator()(const Vector3d &pos, double) const {
     return detail::matrix_vector_impl<T, codim>{}(m_A, pos) + m_b;
   }
 

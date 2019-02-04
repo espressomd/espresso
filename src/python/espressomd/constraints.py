@@ -490,7 +490,7 @@ class ElectricPlaneWave(Constraint):
         return self.frequency
 
     @property
-    def phase(self):
+    def phi(self):
         return self.phase
 
 @script_interface_register

@@ -65,7 +65,7 @@ public:
   const_iterator begin() const { return m_constraints.begin(); }
   const_iterator end() const { return m_constraints.end(); }
 
-  void add_forces(ParticleRange &particles) const {
+  void add_forces(ParticleRange &particles, double t) const {
     if (m_constraints.empty())
       return;
 
@@ -75,7 +75,7 @@ public:
       auto const pos = folded_position(p);
       ParticleForce force{};
       for (auto const &c : *this) {
-        force += c->force(p, pos);
+        force += c->force(p, pos, t);
       }
 
       p.f += force;

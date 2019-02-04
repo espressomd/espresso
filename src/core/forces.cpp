@@ -140,7 +140,7 @@ void force_calc() {
     }
   }
   auto local_parts = local_cells.particles();
-  Constraints::constraints.add_forces(local_parts);
+    Constraints::constraints.add_forces(local_parts, sim_time);
 
 #ifdef OIF_GLOBAL_FORCES
   if (max_oif_objects) {

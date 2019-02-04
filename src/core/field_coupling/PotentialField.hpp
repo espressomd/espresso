@@ -43,7 +43,7 @@ public:
 
   template <typename Particle>
   double energy(const Particle &p, const Vector3d &folded_pos) const {
-    return m_coupling(p, m_field(folded_pos));
+    return m_coupling(p, m_field(folded_pos, 0.));
   }
 };
 } /* namespace FieldCoupling */
