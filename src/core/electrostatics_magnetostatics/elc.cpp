@@ -693,15 +693,7 @@ static void setup_PQ(int p, int q, double omega) {
         e = exp(-omega * p.r.p[2]);
         scale = p.p.q * elc_params.delta_mid_bot;
 
-        lclimgebot[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
-        lclimgebot[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;
-        lclimgebot[PQECSM] = scxcache[ox + ic].c * scycache[oy + ic].s / e;
-        lclimgebot[PQECCM] = scxcache[ox + ic].c * scycache[oy + ic].c / e;
-
-        lclimgebot[PQESSP] = scxcache[ox + ic].s * scycache[oy + ic].s * e;
-        lclimgebot[PQESCP] = scxcache[ox + ic].s * scycache[oy + ic].c * e;
-        lclimgebot[PQECSP] = scxcache[ox + ic].c * scycache[oy + ic].s * e;
-        lclimgebot[PQECCP] = scxcache[ox + ic].c * scycache[oy + ic].c * e;
+        elc_mmm2d_common_PQ_setup(0, ox + ic, oy + ic, e, lclimgebot, scxcache, scycache);
 
         elc_mmm2d_common_addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
 
@@ -729,15 +721,7 @@ static void setup_PQ(int p, int q, double omega) {
         e = exp(omega * (2 * elc_params.h - p.r.p[2]));
         scale = p.p.q * elc_params.delta_mid_top;
 
-        lclimgetop[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
-        lclimgetop[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;
-        lclimgetop[PQECSM] = scxcache[ox + ic].c * scycache[oy + ic].s / e;
-        lclimgetop[PQECCM] = scxcache[ox + ic].c * scycache[oy + ic].c / e;
-
-        lclimgetop[PQESSP] = scxcache[ox + ic].s * scycache[oy + ic].s * e;
-        lclimgetop[PQESCP] = scxcache[ox + ic].s * scycache[oy + ic].c * e;
-        lclimgetop[PQECSP] = scxcache[ox + ic].c * scycache[oy + ic].s * e;
-        lclimgetop[PQECCP] = scxcache[ox + ic].c * scycache[oy + ic].c * e;
+        elc_mmm2d_common_PQ_setup(0, ox + ic, oy + ic, e, lclimgetop, scxcache, scycache);
 
         elc_mmm2d_common_addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
 
