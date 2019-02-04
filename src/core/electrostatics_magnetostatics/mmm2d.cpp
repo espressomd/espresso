@@ -31,6 +31,7 @@
 #include "integrate.hpp"
 #include "layered.hpp"
 #include "mmm-common.hpp"
+#include "elc_mmm2d_common.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "specfunc.hpp"
@@ -115,10 +116,6 @@ static int complexCutoff[COMPLEX_STEP + 1];
 /** bernoulli numbers divided by n */
 static DoubleList bon;
 
-/** inverse box dimensions */
-/*@{*/
-static double ux, ux2, uy, uy2, uz;
-/*@}*/
 
 /** maximal z for near formula, minimal z for far formula.
     Is identical in the theory, but with the Verlet tricks
@@ -154,26 +151,6 @@ MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, 0, 0, 0, 1, 1, 1};
  * LOCAL ARRAYS
  ****************************************/
 
-/** \name Product decomposition data organization
-    For the cell blocks
-    it is assumed that the lower blocks part is in the lower half.
-    This has to have positive sign, so that has to be first. */
-/*@{*/
-
-#define POQESP 0
-#define POQECP 1
-#define POQESM 2
-#define POQECM 3
-
-#define PQESSP 0
-#define PQESCP 1
-#define PQECSP 2
-#define PQECCP 3
-#define PQESSM 4
-#define PQESCM 5
-#define PQECSM 6
-#define PQECCM 7
-
 #define QQEQQP 0
 #define QQEQQM 1
 
@@ -198,10 +175,6 @@ static double *gblcblk = nullptr;
 
 /** contribution from the image charges */
 static double lclimge[8];
-
-struct SCCache {
-    double s, c;
-};
 
 /** sin/cos caching */
 static std::vector<SCCache> scxcache;
@@ -260,14 +233,13 @@ static void setup_P(int p, double omega, double fac);
 
 static void add_P_force();
 
-static double P_energy(double omega);
-
 /** q=0 per frequency code */
 static void setup_Q(int q, double omega, double fac);
 
 static void add_Q_force();
 
-static double Q_energy(double omega);
+/** P- and Q- energy calculation */
+static double dir_energy(double omega);
 
 /** p,q <> 0 per frequency code */
 static void setup_PQ(int p, int q, double omega, double fac);
@@ -283,11 +255,7 @@ static int MMM2D_tune_far(double error);
 
 ///
 void MMM2D_setup_constants() {
-  ux = 1 / box_l[0];
-  ux2 = ux * ux;
-  uy = 1 / box_l[1];
-  uy2 = uy * uy;
-  uz = 1 / box_l[2];
+  elc_mmm2d_common_init_invBoxl();
 
   switch (cell_structure.type) {
     case CELL_STRUCTURE_NSQUARE:
@@ -346,52 +314,10 @@ static void prepare_scy_cache() {
 /* data distribution */
 /*****************************************************************/
 
-/* vector operations */
-
-/** pdc = 0 */
-inline void clear_vec(double *pdc, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc[i] = 0;
-}
-
-/** pdc_d = pdc_s */
-inline void copy_vec(double *pdc_d, double *pdc_s, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = pdc_s[i];
-}
-
-/** pdc_d = pdc_s1 + pdc_s2 */
-inline void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = pdc_s1[i] + pdc_s2[i];
-}
-
-/** pdc_d = scale*pdc_s1 + pdc_s2 */
-inline void addscale_vec(double *pdc_d, double scale, double *pdc_s1,
-                         double *pdc_s2, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
-}
-
-/** pdc_d = scale*pdc */
-inline void scale_vec(double scale, double *pdc, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc[i] *= scale;
-}
-
 /* block indexing - has to fit to the PQ block definitions above.
-   size gives the full size of the data block,
+   size gives the full size of the data elc_mmm2d_common_block,
    e_size is the size of only the top or bottom half, i.e. half of size.
 */
-
-inline double *block(double *p, int index, int size) {
-  return &p[index * size];
-}
 
 inline double *blwentry(double *p, int index, int e_size) {
   return &p[2 * index * e_size];
@@ -409,11 +335,11 @@ void clear_image_contributions(int e_size) {
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
-    clear_vec(blwentry(gblcblk, 0, e_size), e_size);
+    elc_mmm2d_common_clear_vec(blwentry(gblcblk, 0, e_size), e_size);
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(gblcblk, n_layers - 1, e_size), e_size);
+    elc_mmm2d_common_clear_vec(abventry(gblcblk, n_layers - 1, e_size), e_size);
 }
 
 void gather_image_contributions(int e_size) {
@@ -427,11 +353,11 @@ void gather_image_contributions(int e_size) {
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
-    copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
+    elc_mmm2d_common_copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size, e_size);
+    elc_mmm2d_common_copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size, e_size);
 }
 
 /* the data transfer routine for the lclcblks itself */
@@ -448,44 +374,44 @@ void distribute(int e_size, double fac) {
     if (node == this_node) {
       /* calculate sums of cells below */
       for (c = 1; c < n_layers; c++)
-        addscale_vec(blwentry(gblcblk, c, e_size), fac,
-                     blwentry(gblcblk, c - 1, e_size),
-                     blwentry(lclcblk, c - 1, e_size), e_size);
+        elc_mmm2d_common_addscale_vec(blwentry(gblcblk, c, e_size), fac,
+                                      blwentry(gblcblk, c - 1, e_size),
+                                      blwentry(lclcblk, c - 1, e_size), e_size);
 
       /* calculate my ghost contribution only if a node above exists */
       if (node + 1 < n_nodes) {
-        addscale_vec(sendbuf, fac, blwentry(gblcblk, n_layers - 1, e_size),
-                     blwentry(lclcblk, n_layers - 1, e_size), e_size);
-        copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size), e_size);
+        elc_mmm2d_common_addscale_vec(sendbuf, fac, blwentry(gblcblk, n_layers - 1, e_size),
+                                      blwentry(lclcblk, n_layers - 1, e_size), e_size);
+        elc_mmm2d_common_copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size), e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
     } else if (node + 1 == this_node) {
       MPI_Recv(recvbuf, 2 * e_size, MPI_DOUBLE, node, 0, comm_cart, &status);
-      copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
-      copy_vec(blwentry(lclcblk, 0, e_size), recvbuf + e_size, e_size);
+      elc_mmm2d_common_copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
+      elc_mmm2d_common_copy_vec(blwentry(lclcblk, 0, e_size), recvbuf + e_size, e_size);
     }
 
     /* down */
     if (inv_node == this_node) {
       /* calculate sums of all cells above */
       for (c = n_layers + 1; c > 2; c--)
-        addscale_vec(abventry(gblcblk, c - 3, e_size), fac,
-                     abventry(gblcblk, c - 2, e_size),
-                     abventry(lclcblk, c, e_size), e_size);
+        elc_mmm2d_common_addscale_vec(abventry(gblcblk, c - 3, e_size), fac,
+                                      abventry(gblcblk, c - 2, e_size),
+                                      abventry(lclcblk, c, e_size), e_size);
 
       /* calculate my ghost contribution only if a node below exists */
       if (inv_node - 1 >= 0) {
-        addscale_vec(sendbuf, fac, abventry(gblcblk, 0, e_size),
-                     abventry(lclcblk, 2, e_size), e_size);
-        copy_vec(sendbuf + e_size, abventry(lclcblk, 1, e_size), e_size);
+        elc_mmm2d_common_addscale_vec(sendbuf, fac, abventry(gblcblk, 0, e_size),
+                                      abventry(lclcblk, 2, e_size), e_size);
+        elc_mmm2d_common_copy_vec(sendbuf + e_size, abventry(lclcblk, 1, e_size), e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, inv_node - 1, 0, comm_cart);
       }
     } else if (inv_node - 1 == this_node) {
       MPI_Recv(recvbuf, 2 * e_size, MPI_DOUBLE, inv_node, 0, comm_cart,
                &status);
-      copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf, e_size);
-      copy_vec(abventry(lclcblk, n_layers + 1, e_size), recvbuf + e_size,
-               e_size);
+      elc_mmm2d_common_copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf, e_size);
+      elc_mmm2d_common_copy_vec(abventry(lclcblk, n_layers + 1, e_size), recvbuf + e_size,
+                                e_size);
     }
   }
 }
@@ -538,7 +464,7 @@ static void checkpoint(char *text, int p, int q, int e_size) {
       fprintf(stderr, " %10.3g", block(gblcblk, c, 2 * e_size)[i]);
     fprintf(stderr, " m");
     for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(gblcblk, c, 2 * e_size)[i + e_size]);
+      fprintf(stderr, " %10.3g", elc_mmm2d_common_block(gblcblk, c, 2 * e_size)[i + e_size]);
     fprintf(stderr, "\n");
   }
   fprintf(stderr, "\n");
@@ -562,11 +488,11 @@ static void setup_z_force() {
      article of Arnold, Kesselheim, Breitsprecher et al, 2013, for details. */
 
   if (this_node == 0) {
-    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    elc_mmm2d_common_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
 
   if (this_node == n_nodes - 1) {
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    elc_mmm2d_common_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
   /* calculate local cellblks. partblks don't make sense */
@@ -604,7 +530,7 @@ static void add_z_force() {
   }
 
   for (int c = 1; c <= n_layers; c++) {
-    othcblk = block(gblcblk, c - 1, size);
+    othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
     add = othcblk[QQEQQP] - othcblk[QQEQQM];
     auto np = cells[c].n;
     auto part = cells[c].part;
@@ -626,26 +552,26 @@ static void setup_z_energy() {
   if (this_node == 0)
     /* the lowest lclcblk does not contain anything, since there are no charges
        below the simulation box, at least for this term. */
-    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    elc_mmm2d_common_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    elc_mmm2d_common_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
 
   /* calculate local cellblks. partblks don't make sense */
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    clear_vec(blwentry(lclcblk, c, e_size), e_size);
+    elc_mmm2d_common_clear_vec(blwentry(lclcblk, c, e_size), e_size);
     for (i = 0; i < np; i++) {
       lclcblk[size * c + ABEQQP] += part[i].p.q;
       lclcblk[size * c + ABEQZP] += part[i].p.q * part[i].r.p[2];
     }
-    scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
+    elc_mmm2d_common_scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
     /* just to be able to use the standard distribution. Here below
        and above terms are the same */
-    copy_vec(abventry(lclcblk, c, e_size), blwentry(lclcblk, c, e_size),
-             e_size);
+    elc_mmm2d_common_copy_vec(abventry(lclcblk, c, e_size), blwentry(lclcblk, c, e_size),
+                              e_size);
   }
 }
 
@@ -656,7 +582,7 @@ static double z_energy() {
   int size = 4;
   double eng = 0;
   for (c = 1; c <= n_layers; c++) {
-    othcblk = block(gblcblk, c - 1, size);
+    othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
     np = cells[c].n;
     part = cells[c].part;
     for (i = 0; i < np; i++) {
@@ -702,19 +628,19 @@ static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sc
   int e_size = 2, size = 4;
 
   if (mmm2d_params.dielectric_contrast_on)
-    clear_vec(lclimge, size);
+    elc_mmm2d_common_clear_vec(lclimge, size);
 
   if (this_node == 0) {
     /* on the lowest node, clear the lclcblk below, which only contains the
        images of the lowest layer
        if there is dielectric contrast, otherwise it is empty */
-    lclimgebot = block(lclcblk, 0, size);
-    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    lclimgebot = elc_mmm2d_common_block(lclcblk, 0, size);
+    elc_mmm2d_common_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
   if (this_node == n_nodes - 1) {
     /* same for the top node */
-    lclimgetop = block(lclcblk, n_layers + 1, size);
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    lclimgetop = elc_mmm2d_common_block(lclcblk, n_layers + 1, size);
+    elc_mmm2d_common_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
   layer_top = my_left[2] + layer_h;
@@ -722,17 +648,14 @@ static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sc
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    llclcblk = block(lclcblk, c, size);
+    llclcblk = elc_mmm2d_common_block(lclcblk, c, size);
 
-    clear_vec(llclcblk, size);
+    elc_mmm2d_common_clear_vec(llclcblk, size);
 
     for (i = 0; i < np; i++) {
       e = exp(omega * (part[i].r.p[2] - layer_top));
 
-      partblk[size * ic + POQESM] = sccache[o + ic].s / e;
-      partblk[size * ic + POQESP] = sccache[o + ic].s * e;
-      partblk[size * ic + POQECM] = sccache[o + ic].c / e;
-      partblk[size * ic + POQECP] = sccache[o + ic].c * e;
+      elc_mmm2d_common_setup(size * ic, e, o + ic, partblk, sccache);
 
       /* take images due to different dielectric constants into account */
       if (mmm2d_params.dielectric_contrast_on) {
@@ -785,21 +708,21 @@ static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sc
         lclimge[POQECM] += part[i].p.q * sccache[o + ic].c * e_di_h;
       }
 
-      addscale_vec(llclcblk, part[i].p.q, block(partblk, ic, size), llclcblk, size);
+      elc_mmm2d_common_addscale_vec(llclcblk, part[i].p.q, elc_mmm2d_common_block(partblk, ic, size), llclcblk, size);
       ic++;
     }
-    scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
-    scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
+    elc_mmm2d_common_scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
+    elc_mmm2d_common_scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
 
     layer_top += layer_h;
   }
 
   if (mmm2d_params.dielectric_contrast_on) {
-    scale_vec(pref, lclimge, size);
+    elc_mmm2d_common_scale_vec(pref, lclimge, size);
     if (this_node == 0)
-      scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
+      elc_mmm2d_common_scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
+      elc_mmm2d_common_scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 }
 
@@ -817,25 +740,17 @@ static void setup_Q(int q, double omega, double fac) {
 
 template<size_t dir>
 static void add_force() {
-  constexpr const auto size = 4;
+  const int size = 4;
 
-  auto ic = 0;
+  int ic = 0;
   for (int c = 1; c <= n_layers; c++) {
     auto const np = cells[c].n;
     auto const part = cells[c].part;
-    auto const othcblk = block(gblcblk, c - 1, size);
+    auto const othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
-      part[i].f.f[dir] += part[i].p.q * (
-              partblk[size * ic + POQESM] * othcblk[POQECP] -
-              partblk[size * ic + POQECM] * othcblk[POQESP] +
-              partblk[size * ic + POQESP] * othcblk[POQECM] -
-              partblk[size * ic + POQECP] * othcblk[POQESM]);
-      part[i].f.f[2] += part[i].p.q * (
-              partblk[size * ic + POQECM] * othcblk[POQECP] +
-              partblk[size * ic + POQESM] * othcblk[POQESP] -
-              partblk[size * ic + POQECP] * othcblk[POQECM] -
-              partblk[size * ic + POQESP] * othcblk[POQESM]);
+      part[i].f.f[dir] += part[i].p.q * elc_mmm2d_common_add_force_dir(size * ic, partblk, othcblk);
+      part[i].f.f[2] += part[i].p.q * elc_mmm2d_common_add_force_z(size * ic, partblk, othcblk);
 
       LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
                          this_node, part[i].p.identity, part[i].f.f[0],
@@ -849,8 +764,8 @@ static void add_P_force() { add_force<0>(); }
 
 static void add_Q_force() { add_force<1>(); }
 
-static double P_energy(double omega) {
-  int np, c, i, ic;
+static double dir_energy(double omega) {
+  int np, c, i;
   double *othcblk;
   int size = 4;
   double eng = 0;
@@ -858,43 +773,13 @@ static double P_energy(double omega) {
 
   Particle *part;
 
-  ic = 0;
+  int ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    othcblk = block(gblcblk, c - 1, size);
+    othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
     for (i = 0; i < np; i++) {
-      eng += pref * part[i].p.q * (partblk[size * ic + POQECM] * othcblk[POQECP] +
-                                   partblk[size * ic + POQESM] * othcblk[POQESP] +
-                                   partblk[size * ic + POQECP] * othcblk[POQECM] +
-                                   partblk[size * ic + POQESP] * othcblk[POQESM]);
-      ic++;
-    }
-  }
-  return eng;
-}
-
-static double Q_energy(double omega) {
-  int np, c, i, ic;
-  double *othcblk;
-  int size = 4;
-  double eng = 0;
-  double pref = 1 / omega;
-
-  Particle *part;
-
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-
-    othcblk = block(gblcblk, c - 1, size);
-
-    for (i = 0; i < np; i++) {
-      eng += pref * part[i].p.q * (partblk[size * ic + POQECM] * othcblk[POQECP] +
-                                   partblk[size * ic + POQESM] * othcblk[POQESP] +
-                                   partblk[size * ic + POQECP] * othcblk[POQECM] +
-                                   partblk[size * ic + POQESP] * othcblk[POQESM]);
+      eng += pref * part[i].p.q * elc_mmm2d_common_dir_energy(size * ic, partblk, othcblk);
       ic++;
     }
   }
@@ -919,19 +804,19 @@ static void setup_PQ(int p, int q, double omega, double fac) {
   double e, e_di_l, e_di_h;
   double *llclcblk;
   double *lclimgebot = nullptr, *lclimgetop = nullptr;
-  int e_size = 4, size = 8;
+  const int e_size = 4, size = 8;
 
   if (mmm2d_params.dielectric_contrast_on)
-    clear_vec(lclimge, size);
+    elc_mmm2d_common_clear_vec(lclimge, size);
 
   if (this_node == 0) {
-    lclimgebot = block(lclcblk, 0, size);
-    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    lclimgebot = elc_mmm2d_common_block(lclcblk, 0, size);
+    elc_mmm2d_common_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
 
   if (this_node == n_nodes - 1) {
-    lclimgetop = block(lclcblk, n_layers + 1, size);
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    lclimgetop = elc_mmm2d_common_block(lclcblk, n_layers + 1, size);
+    elc_mmm2d_common_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
   layer_top = my_left[2] + layer_h;
@@ -939,30 +824,14 @@ static void setup_PQ(int p, int q, double omega, double fac) {
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    llclcblk = block(lclcblk, c, size);
+    llclcblk = elc_mmm2d_common_block(lclcblk, c, size);
 
-    clear_vec(llclcblk, size);
+    elc_mmm2d_common_clear_vec(llclcblk, size);
 
     for (i = 0; i < np; i++) {
       e = exp(omega * (part[i].r.p[2] - layer_top));
 
-      partblk[size * ic + PQESSM] =
-              scxcache[ox + ic].s * scycache[oy + ic].s / e;
-      partblk[size * ic + PQESCM] =
-              scxcache[ox + ic].s * scycache[oy + ic].c / e;
-      partblk[size * ic + PQECSM] =
-              scxcache[ox + ic].c * scycache[oy + ic].s / e;
-      partblk[size * ic + PQECCM] =
-              scxcache[ox + ic].c * scycache[oy + ic].c / e;
-
-      partblk[size * ic + PQESSP] =
-              scxcache[ox + ic].s * scycache[oy + ic].s * e;
-      partblk[size * ic + PQESCP] =
-              scxcache[ox + ic].s * scycache[oy + ic].c * e;
-      partblk[size * ic + PQECSP] =
-              scxcache[ox + ic].c * scycache[oy + ic].s * e;
-      partblk[size * ic + PQECCP] =
-              scxcache[ox + ic].c * scycache[oy + ic].c * e;
+      elc_mmm2d_common_PQ_setup(size * ic, ox + ic, oy + ic, e, partblk, scxcache, scycache);
 
       if (mmm2d_params.dielectric_contrast_on) {
         if (c == 1 && this_node == 0) {
@@ -1029,66 +898,45 @@ static void setup_PQ(int p, int q, double omega, double fac) {
                 scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_h;
       }
 
-      addscale_vec(llclcblk, part[i].p.q, block(partblk, ic, size), llclcblk, size);
+      elc_mmm2d_common_addscale_vec(llclcblk, part[i].p.q, elc_mmm2d_common_block(partblk, ic, size), llclcblk, size);
       ic++;
     }
-    scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
-    scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
+    elc_mmm2d_common_scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
+    elc_mmm2d_common_scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
 
     layer_top += layer_h;
   }
 
   if (mmm2d_params.dielectric_contrast_on) {
-    scale_vec(pref, lclimge, size);
+    elc_mmm2d_common_scale_vec(pref, lclimge, size);
 
     if (this_node == 0)
-      scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
+      elc_mmm2d_common_scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
+      elc_mmm2d_common_scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 }
 
 static void add_PQ_force(int p, int q, double omega) {
-  int np, c, i, ic;
+  int np, c, i;
   Particle *part;
-  double pref_x = C_2PI * ux * p / omega;
-  double pref_y = C_2PI * uy * q / omega;
+  const double pref_x = C_2PI * ux * p / omega;
+  const double pref_y = C_2PI * uy * q / omega;
   double *othcblk;
-  int size = 8;
+  const int size = 8;
 
-  ic = 0;
+  int ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    othcblk = block(gblcblk, c - 1, size);
+    othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
 
     for (i = 0; i < np; i++) {
       part[i].f.f[0] +=
-              pref_x * part[i].p.q * (partblk[size * ic + PQESCM] * othcblk[PQECCP] +
-                                      partblk[size * ic + PQESSM] * othcblk[PQECSP] -
-                                      partblk[size * ic + PQECCM] * othcblk[PQESCP] -
-                                      partblk[size * ic + PQECSM] * othcblk[PQESSP] +
-                                      partblk[size * ic + PQESCP] * othcblk[PQECCM] +
-                                      partblk[size * ic + PQESSP] * othcblk[PQECSM] -
-                                      partblk[size * ic + PQECCP] * othcblk[PQESCM] -
-                                      partblk[size * ic + PQECSP] * othcblk[PQESSM]);
+              pref_x * part[i].p.q * elc_mmm2d_common_add_PQ_force_x(size * ic, partblk, othcblk);
       part[i].f.f[1] +=
-              pref_y * part[i].p.q * (partblk[size * ic + PQECSM] * othcblk[PQECCP] +
-                                      partblk[size * ic + PQESSM] * othcblk[PQESCP] -
-                                      partblk[size * ic + PQECCM] * othcblk[PQECSP] -
-                                      partblk[size * ic + PQESCM] * othcblk[PQESSP] +
-                                      partblk[size * ic + PQECSP] * othcblk[PQECCM] +
-                                      partblk[size * ic + PQESSP] * othcblk[PQESCM] -
-                                      partblk[size * ic + PQECCP] * othcblk[PQECSM] -
-                                      partblk[size * ic + PQESCP] * othcblk[PQESSM]);
-      part[i].f.f[2] += part[i].p.q * (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
-                                       partblk[size * ic + PQECSM] * othcblk[PQECSP] +
-                                       partblk[size * ic + PQESCM] * othcblk[PQESCP] +
-                                       partblk[size * ic + PQESSM] * othcblk[PQESSP] -
-                                       partblk[size * ic + PQECCP] * othcblk[PQECCM] -
-                                       partblk[size * ic + PQECSP] * othcblk[PQECSM] -
-                                       partblk[size * ic + PQESCP] * othcblk[PQESCM] -
-                                       partblk[size * ic + PQESSP] * othcblk[PQESSM]);
+              pref_y * part[i].p.q * elc_mmm2d_common_add_PQ_force_y(size * ic, partblk, othcblk);
+      part[i].f.f[2] += part[i].p.q * elc_mmm2d_common_add_PQ_force_z(size * ic, partblk, othcblk);
 
       LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
                          this_node, part[i].p.identity, part[i].f.f[0],
@@ -1098,28 +946,21 @@ static void add_PQ_force(int p, int q, double omega) {
   }
 }
 
-static double PQ_energy(double omega) {
-  int size = 8;
+static double PQ_energy(const double omega) {
+  const int size = 8;
   double eng = 0;
-  double pref = 1 / omega;
+  const double pref = 1 / omega;
 
   Particle *part;
 
   int ic = 0;
   for (int c = 1; c <= n_layers; c++) {
-    int np = cells[c].n;
+    const int np = cells[c].n;
     part = cells[c].part;
-    double *othcblk = block(gblcblk, c - 1, size);
+    const double *othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
-      eng += pref * part[i].p.q * (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
-                                   partblk[size * ic + PQECSM] * othcblk[PQECSP] +
-                                   partblk[size * ic + PQESCM] * othcblk[PQESCP] +
-                                   partblk[size * ic + PQESSM] * othcblk[PQESSP] +
-                                   partblk[size * ic + PQECCP] * othcblk[PQECCM] +
-                                   partblk[size * ic + PQECSP] * othcblk[PQECSM] +
-                                   partblk[size * ic + PQESCP] * othcblk[PQESCM] +
-                                   partblk[size * ic + PQESSP] * othcblk[PQESSM]);
+      eng += pref * part[i].p.q * elc_mmm2d_common_PQ_energy(size * ic, partblk, othcblk);
       ic++;
     }
   }
@@ -1202,7 +1043,7 @@ static double energy_contribution(int p, int q) {
       else
         clear_image_contributions(2);
       distribute(2, fac);
-      eng = P_energy(omega);
+      eng = dir_energy(omega);
       checkpoint("************distri p", p, 0, 2);
     }
   } else if (p == 0) {
@@ -1214,7 +1055,7 @@ static double energy_contribution(int p, int q) {
     else
       clear_image_contributions(2);
     distribute(2, fac);
-    eng = Q_energy(omega);
+    eng = dir_energy(omega);
     checkpoint("************distri q", 0, q, 2);
   } else {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));

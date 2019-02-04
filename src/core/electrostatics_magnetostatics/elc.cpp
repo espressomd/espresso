@@ -30,6 +30,7 @@
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "mmm-common.hpp"
+#include "elc_mmm2d_common.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
@@ -55,7 +56,7 @@
 
 /** \name Inverse box dimensions and derived constants */
 /*@{*/
-static double ux, ux2, uy, uy2, uz, height_inverse;
+static double height_inverse;
 /*@}*/
 
 ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0};
@@ -63,26 +64,6 @@ ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0};
 /****************************************
  * LOCAL ARRAYS
  ****************************************/
-
-/** \name Product decomposition data organization
-    For the cell blocks
-    it is assumed that the lower blocks part is in the lower half.
-    This has to have positive sign, so that has to be first. */
-/*@{*/
-#define POQESP 0
-#define POQECP 1
-#define POQESM 2
-#define POQECM 3
-
-#define PQESSP 0
-#define PQESCP 1
-#define PQECSP 2
-#define PQECCP 3
-#define PQESSM 4
-#define PQESCM 5
-#define PQECSM 6
-#define PQECCM 7
-/*@}*/
 
 /** number of local particles, equals the size of \ref elc::partblk. */
 static int n_localpart = 0;
@@ -93,9 +74,6 @@ static double *partblk = nullptr;
 static double gblcblk[8];
 
 /** structure for storing of sin and cos values */
-typedef struct {
-    double s, c;
-} SCCache;
 
 /** \name sin/cos caching */
 /*@{*/
@@ -158,11 +136,7 @@ static void add_z_force();
 /**********/
 
 void ELC_setup_constants() {
-  ux = 1 / box_l[0];
-  ux2 = ux * ux;
-  uy = 1 / box_l[1];
-  uy2 = uy * uy;
-  uz = 1 / box_l[2];
+  elc_mmm2d_common_init_invBoxl();
 
   height_inverse = 1 / elc_params.h;
 }
@@ -200,44 +174,9 @@ static void prepare_scy_cache() {
 /* data distribution */
 /*****************************************************************/
 
-inline void clear_vec(double *pdc, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc[i] = 0;
-}
-
-inline void copy_vec(double *pdc_d, double *pdc_s, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = pdc_s[i];
-}
-
-inline void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = pdc_s1[i] + pdc_s2[i];
-}
-
-inline void addscale_vec(double *pdc_d, double scale, double *pdc_s1,
-                         double *pdc_s2, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
-}
-
-inline void scale_vec(double scale, double *pdc, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc[i] *= scale;
-}
-
-inline double *block(double *p, int index, int size) {
-  return &p[index * size];
-}
-
 void distribute(int size) {
   double send_buf[8];
-  copy_vec(send_buf, gblcblk, size);
+  elc_mmm2d_common_copy_vec(send_buf, gblcblk, size);
   MPI_Allreduce(send_buf, gblcblk, size, MPI_DOUBLE, MPI_SUM, comm_cart);
 }
 
@@ -441,8 +380,8 @@ inline double image_sum_t(double q, double z) {
 
 /*****************************************************************/
 static double z_energy() {
-  double pref = coulomb.prefactor * 2 * M_PI * ux * uy;
-  int size = 4;
+  const double pref = coulomb.prefactor * 2 * M_PI * ux * uy;
+  const int size = 4;
 
   double eng = 0;
   /* for nonneutral systems, this shift gives the background contribution
@@ -451,7 +390,7 @@ static double z_energy() {
 
   if (elc_params.dielectric_contrast_on) {
     if (elc_params.const_pot) {
-      clear_vec(gblcblk, size);
+      elc_mmm2d_common_clear_vec(gblcblk, size);
       for (auto &p : local_cells.particles()) {
         gblcblk[0] += p.p.q;
         gblcblk[1] += p.p.q * (p.r.p[2] - shift);
@@ -471,7 +410,7 @@ static double z_energy() {
       double fac_delta_mid_top = elc_params.delta_mid_top / (1 - delta);
       double fac_delta = delta / (1 - delta);
 
-      clear_vec(gblcblk, size);
+      elc_mmm2d_common_clear_vec(gblcblk, size);
       for (auto &p : local_cells.particles()) {
         gblcblk[0] += p.p.q;
         gblcblk[1] += p.p.q * (p.r.p[2] - shift);
@@ -519,12 +458,12 @@ static double z_energy() {
 
 /*****************************************************************/
 static void add_z_force() {
-  double pref = coulomb.prefactor * 2 * M_PI * ux * uy;
+  const double pref = coulomb.prefactor * 2 * M_PI * ux * uy;
 
   if (elc_params.dielectric_contrast_on) {
     int size = 1;
     if (elc_params.const_pot) {
-      clear_vec(gblcblk, size);
+      elc_mmm2d_common_clear_vec(gblcblk, size);
       /* just counter the 2 pi |z| contribution stemming from P3M */
       for (auto &p : local_cells.particles()) {
         if (p.r.p[2] < elc_params.space_layer)
@@ -538,7 +477,7 @@ static void add_z_force() {
       double fac_delta_mid_top = elc_params.delta_mid_top / (1 - delta);
       double fac_delta = delta / (1 - delta);
 
-      clear_vec(gblcblk, size);
+      elc_mmm2d_common_clear_vec(gblcblk, size);
       for (auto &p : local_cells.particles()) {
         if (p.r.p[2] < elc_params.space_layer) {
           gblcblk[0] += fac_delta * (elc_params.delta_mid_bot + 1) * p.p.q;
@@ -591,19 +530,16 @@ static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
     fac_delta = fac_delta_mid_bot * elc_params.delta_mid_top;
   }
 
-  clear_vec(lclimge, size);
-  clear_vec(gblcblk, size);
+  elc_mmm2d_common_clear_vec(lclimge, size);
+  elc_mmm2d_common_clear_vec(gblcblk, size);
 
   ic = 0;
   for (auto &p : local_cells.particles()) {
     double e = exp(omega * p.r.p[2]);
 
-    partblk[size * ic + POQESM] = sccache[o + ic].s / e;
-    partblk[size * ic + POQESP] = sccache[o + ic].s * e;
-    partblk[size * ic + POQECM] = sccache[o + ic].c / e;
-    partblk[size * ic + POQECP] = sccache[o + ic].c * e;
+    elc_mmm2d_common_setup(ic * size, e, o + ic, partblk, sccache);
 
-    addscale_vec(gblcblk, p.p.q, block(partblk, ic, size), gblcblk, size);
+    elc_mmm2d_common_addscale_vec(gblcblk, p.p.q, elc_mmm2d_common_block(partblk, ic, size), gblcblk, size);
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
@@ -614,12 +550,9 @@ static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
 
         scale = p.p.q * elc_params.delta_mid_bot;
 
-        lclimgebot[POQESM] = sccache[o + ic].s / e;
-        lclimgebot[POQESP] = sccache[o + ic].s * e;
-        lclimgebot[POQECM] = sccache[o + ic].c / e;
-        lclimgebot[POQECP] = sccache[o + ic].c * e;
+        elc_mmm2d_common_setup(0, e, o + ic, lclimgebot, sccache);
 
-        addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
+        elc_mmm2d_common_addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
 
         e = (exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
              elc_params.delta_mid_bot +
@@ -644,12 +577,9 @@ static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
 
         scale = p.p.q * elc_params.delta_mid_top;
 
-        lclimgetop[POQESM] = sccache[o + ic].s / e;
-        lclimgetop[POQESP] = sccache[o + ic].s * e;
-        lclimgetop[POQECM] = sccache[o + ic].c / e;
-        lclimgetop[POQECP] = sccache[o + ic].c * e;
+        elc_mmm2d_common_setup(0, e, o + ic, lclimgetop, sccache);
 
-        addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
+        elc_mmm2d_common_addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
 
         e = (exp(omega * (p.r.p[2] - 4 * elc_params.h)) *
              elc_params.delta_mid_top +
@@ -671,11 +601,11 @@ static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
     ic++;
   }
 
-  scale_vec(pref, gblcblk, size);
+  elc_mmm2d_common_scale_vec(pref, gblcblk, size);
 
   if (elc_params.dielectric_contrast_on) {
-    scale_vec(pref_di, lclimge, size);
-    add_vec(gblcblk, gblcblk, lclimge, size);
+    elc_mmm2d_common_scale_vec(pref_di, lclimge, size);
+    elc_mmm2d_common_add_vec(gblcblk, gblcblk, lclimge, size);
   }
 }
 
@@ -690,19 +620,12 @@ static void setup_Q(int q, double omega) {
 
 template<size_t dir>
 static void add_force() {
-  int ic;
-  int size = 4;
+  const int size = 4;
 
-  ic = 0;
+  int ic = 0;
   for (auto &p : local_cells.particles()) {
-    p.f.f[dir] += p.p.q * (partblk[size * ic + POQESM] * gblcblk[POQECP] -
-                           partblk[size * ic + POQECM] * gblcblk[POQESP] +
-                           partblk[size * ic + POQESP] * gblcblk[POQECM] -
-                           partblk[size * ic + POQECP] * gblcblk[POQESM]);
-    p.f.f[2] += p.p.q * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                         partblk[size * ic + POQESM] * gblcblk[POQESP] -
-                         partblk[size * ic + POQECP] * gblcblk[POQECM] -
-                         partblk[size * ic + POQESP] * gblcblk[POQESM]);
+    p.f.f[dir] += p.p.q * elc_mmm2d_common_add_force_dir(size * ic, partblk, gblcblk);
+    p.f.f[2] += p.p.q * elc_mmm2d_common_add_force_z(size * ic, partblk, gblcblk);
     ic++;
   }
 }
@@ -715,18 +638,14 @@ static void add_Q_force() {
   add_force<1>();
 }
 
-static double dir_energy(double omega) {
-  int size = 4;
+static double dir_energy(const double omega) {
+  const int size = 4;
+  const double pref = 1 / omega;
   double eng = 0;
-  double pref = 1 / omega;
 
   int ic = 0;
-
   for (auto &p : local_cells.particles()) {
-    eng += pref * p.p.q * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                           partblk[size * ic + POQESM] * gblcblk[POQESP] +
-                           partblk[size * ic + POQECP] * gblcblk[POQECM] +
-                           partblk[size * ic + POQESP] * gblcblk[POQESM]);
+    eng += pref * p.p.q * elc_mmm2d_common_dir_energy(size * ic, partblk, gblcblk);
     ic++;
   }
 
@@ -756,32 +675,16 @@ static void setup_PQ(int p, int q, double omega) {
     fac_delta = fac_delta_mid_bot * elc_params.delta_mid_top;
   }
 
-  clear_vec(lclimge, size);
-  clear_vec(gblcblk, size);
+  elc_mmm2d_common_clear_vec(lclimge, size);
+  elc_mmm2d_common_clear_vec(gblcblk, size);
 
   ic = 0;
   for (auto &p : local_cells.particles()) {
     double e = exp(omega * p.r.p[2]);
 
-    partblk[size * ic + PQESSM] =
-            scxcache[ox + ic].s * scycache[oy + ic].s / e;
-    partblk[size * ic + PQESCM] =
-            scxcache[ox + ic].s * scycache[oy + ic].c / e;
-    partblk[size * ic + PQECSM] =
-            scxcache[ox + ic].c * scycache[oy + ic].s / e;
-    partblk[size * ic + PQECCM] =
-            scxcache[ox + ic].c * scycache[oy + ic].c / e;
+    elc_mmm2d_common_PQ_setup(size * ic, ox + ic, oy + ic, e, partblk, scxcache, scycache);
 
-    partblk[size * ic + PQESSP] =
-            scxcache[ox + ic].s * scycache[oy + ic].s * e;
-    partblk[size * ic + PQESCP] =
-            scxcache[ox + ic].s * scycache[oy + ic].c * e;
-    partblk[size * ic + PQECSP] =
-            scxcache[ox + ic].c * scycache[oy + ic].s * e;
-    partblk[size * ic + PQECCP] =
-            scxcache[ox + ic].c * scycache[oy + ic].c * e;
-
-    addscale_vec(gblcblk, p.p.q, block(partblk, ic, size), gblcblk, size);
+    elc_mmm2d_common_addscale_vec(gblcblk, p.p.q, elc_mmm2d_common_block(partblk, ic, size), gblcblk, size);
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
@@ -800,7 +703,7 @@ static void setup_PQ(int p, int q, double omega) {
         lclimgebot[PQECSP] = scxcache[ox + ic].c * scycache[oy + ic].s * e;
         lclimgebot[PQECCP] = scxcache[ox + ic].c * scycache[oy + ic].c * e;
 
-        addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
+        elc_mmm2d_common_addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
 
         e = (exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
              elc_params.delta_mid_bot +
@@ -836,7 +739,7 @@ static void setup_PQ(int p, int q, double omega) {
         lclimgetop[PQECSP] = scxcache[ox + ic].c * scycache[oy + ic].s * e;
         lclimgetop[PQECCP] = scxcache[ox + ic].c * scycache[oy + ic].c * e;
 
-        addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
+        elc_mmm2d_common_addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
 
         e = (exp(omega * (p.r.p[2] - 4 * elc_params.h)) *
              elc_params.delta_mid_top +
@@ -860,10 +763,10 @@ static void setup_PQ(int p, int q, double omega) {
     ic++;
   }
 
-  scale_vec(pref, gblcblk, size);
+  elc_mmm2d_common_scale_vec(pref, gblcblk, size);
   if (elc_params.dielectric_contrast_on) {
-    scale_vec(pref_di, lclimge, size);
-    add_vec(gblcblk, gblcblk, lclimge, size);
+    elc_mmm2d_common_scale_vec(pref_di, lclimge, size);
+    elc_mmm2d_common_add_vec(gblcblk, gblcblk, lclimge, size);
   }
 }
 
@@ -876,49 +779,21 @@ static void add_PQ_force(int p, int q, double omega) {
 
   ic = 0;
   for (auto &p : local_cells.particles()) {
-    p.f.f[0] += pref_x * p.p.q * (partblk[size * ic + PQESCM] * gblcblk[PQECCP] +
-                                  partblk[size * ic + PQESSM] * gblcblk[PQECSP] -
-                                  partblk[size * ic + PQECCM] * gblcblk[PQESCP] -
-                                  partblk[size * ic + PQECSM] * gblcblk[PQESSP] +
-                                  partblk[size * ic + PQESCP] * gblcblk[PQECCM] +
-                                  partblk[size * ic + PQESSP] * gblcblk[PQECSM] -
-                                  partblk[size * ic + PQECCP] * gblcblk[PQESCM] -
-                                  partblk[size * ic + PQECSP] * gblcblk[PQESSM]);
-    p.f.f[1] += pref_y * p.p.q * (partblk[size * ic + PQECSM] * gblcblk[PQECCP] +
-                                  partblk[size * ic + PQESSM] * gblcblk[PQESCP] -
-                                  partblk[size * ic + PQECCM] * gblcblk[PQECSP] -
-                                  partblk[size * ic + PQESCM] * gblcblk[PQESSP] +
-                                  partblk[size * ic + PQECSP] * gblcblk[PQECCM] +
-                                  partblk[size * ic + PQESSP] * gblcblk[PQESCM] -
-                                  partblk[size * ic + PQECCP] * gblcblk[PQECSM] -
-                                  partblk[size * ic + PQESCP] * gblcblk[PQESSM]);
-    p.f.f[2] += p.p.q * (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
-                         partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
-                         partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
-                         partblk[size * ic + PQESSM] * gblcblk[PQESSP] -
-                         partblk[size * ic + PQECCP] * gblcblk[PQECCM] -
-                         partblk[size * ic + PQECSP] * gblcblk[PQECSM] -
-                         partblk[size * ic + PQESCP] * gblcblk[PQESCM] -
-                         partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
+    p.f.f[0] += pref_x * p.p.q * elc_mmm2d_common_add_PQ_force_x(size * ic, partblk, gblcblk);
+    p.f.f[1] += pref_y * p.p.q * elc_mmm2d_common_add_PQ_force_y(size * ic, partblk, gblcblk);
+    p.f.f[2] += p.p.q * elc_mmm2d_common_add_PQ_force_z(size * ic, partblk, gblcblk);
     ic++;
   }
 }
 
-static double PQ_energy(double omega) {
-  int size = 8;
+static double PQ_energy(const double omega) {
+  const int size = 8;
   double eng = 0;
-  double pref = 1 / omega;
+  const double pref = 1 / omega;
 
   int ic = 0;
   for (auto &p : local_cells.particles()) {
-    eng += pref * p.p.q * (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
-                           partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
-                           partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
-                           partblk[size * ic + PQESSM] * gblcblk[PQESSP] +
-                           partblk[size * ic + PQECCP] * gblcblk[PQECCM] +
-                           partblk[size * ic + PQECSP] * gblcblk[PQECSM] +
-                           partblk[size * ic + PQESCP] * gblcblk[PQESCM] +
-                           partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
+    eng += pref * p.p.q * elc_mmm2d_common_PQ_energy(size * ic, partblk, gblcblk);
     ic++;
   }
   return eng;
