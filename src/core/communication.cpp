@@ -1919,8 +1919,7 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
     lb_get_populations(index, pop);
   } else {
     mpi_call(mpi_recv_fluid_populations_slave, node, index);
-    MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
+    MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
 #endif
 }
@@ -1935,7 +1934,8 @@ void mpi_recv_fluid_populations_slave(int node, int index) {
 #endif
 }
 
-void mpi_send_fluid_populations(int node, int index, const Vector<19, double> &pop) {
+void mpi_send_fluid_populations(int node, int index,
+                                const Vector<19, double> &pop) {
 #ifdef LB
   if (node == this_node) {
     lb_set_populations(index, pop);

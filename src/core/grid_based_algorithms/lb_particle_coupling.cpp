@@ -72,7 +72,7 @@ namespace {
 void add_md_force(Vector3d const &pos, Vector3d const &force) {
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  
+
   const auto agrid = lb_lbfluid_get_agrid();
   auto const delta_j = -(time_step * lb_lbfluid_get_tau() / agrid) * force;
   lb_lbfluid_add_force_density(pos, delta_j);

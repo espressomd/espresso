@@ -142,7 +142,6 @@ struct LB_rho_v_gpu {
   /** velocity of the node */
 
   float v[3];
-
 };
 /* this structure is almost duplicated for memory efficiency. When the stress
    tensor element are needed at every timestep, this features should be

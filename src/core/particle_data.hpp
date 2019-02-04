@@ -234,7 +234,6 @@ struct ParticlePosition {
   /**stores the particle position at the previous time step*/
   Vector3d p_old = {0., 0., 0.};
 #endif
-
 };
 
 /** Force information on a particle. Forces of ghost particles are

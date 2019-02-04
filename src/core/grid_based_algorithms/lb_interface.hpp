@@ -58,7 +58,8 @@ void lb_lbfluid_set_gamma_even(double p_gamma_even);
 void lb_lbfluid_set_friction(double p_friction);
 void lb_lbfluid_set_couple_flag(int couple_flag);
 void lb_lbfluid_set_agrid(double p_agrid);
-void lb_lbfluid_set_ext_force_density(int component, const Vector3d &force_density);
+void lb_lbfluid_set_ext_force_density(int component,
+                                      const Vector3d &force_density);
 
 void lb_lbnode_set_rho(const Vector3i &ind, double rho);
 void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u);
@@ -84,8 +85,8 @@ const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind);
 /* IO routines */
 void lb_lbfluid_print_vtk_boundary(const std::string &filename);
 void lb_lbfluid_print_vtk_velocity(const std::string &filename,
-                               std::vector<int> = {-1, -1, -1},
-                               std::vector<int> = {-1, -1, -1});
+                                   std::vector<int> = {-1, -1, -1},
+                                   std::vector<int> = {-1, -1, -1});
 
 void lb_lbfluid_print_boundary(const std::string &filename);
 void lb_lbfluid_print_velocity(const std::string &filename);
@@ -94,7 +95,6 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary);
 void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
 
 bool lb_lbnode_is_index_valid(const Vector3i &ind);
-
 
 /** Calculate the fluid velocity at a given position of the lattice.
  *  Note that it can lead to undefined behaviour if the

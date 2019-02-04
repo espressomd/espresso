@@ -105,8 +105,7 @@ LB_parameters_gpu lbpar_gpu = {
     // your_seed
     12345,
     // reinit
-    0
-};
+    0};
 
 /** this is the array that stores the hydrodynamic fields for the output */
 LB_rho_v_pi_gpu *host_values = nullptr;
@@ -190,67 +189,64 @@ void lb_reinit_parameters_gpu() {
   int ii;
 
   lbpar_gpu.time_step = (float)time_step;
-    lbpar_gpu.mu = 0.0;
+  lbpar_gpu.mu = 0.0;
 
-    if (lbpar_gpu.viscosity > 0.0 && lbpar_gpu.agrid > 0.0 &&
-        lbpar_gpu.tau > 0.0) {
-      /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
-      lbpar_gpu.gamma_shear = 1. - 2. / (6. * lbpar_gpu.viscosity + 1.);
-    }
+  if (lbpar_gpu.viscosity > 0.0 && lbpar_gpu.agrid > 0.0 &&
+      lbpar_gpu.tau > 0.0) {
+    /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    lbpar_gpu.gamma_shear = 1. - 2. / (6. * lbpar_gpu.viscosity + 1.);
+  }
 
-    if (lbpar_gpu.bulk_viscosity > 0.0) {
-      /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
-      lbpar_gpu.gamma_bulk =
-          1. - 2. / (9. * lbpar_gpu.bulk_viscosity + 1.);
-    }
+  if (lbpar_gpu.bulk_viscosity > 0.0) {
+    /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    lbpar_gpu.gamma_bulk = 1. - 2. / (9. * lbpar_gpu.bulk_viscosity + 1.);
+  }
 
-    // By default, gamma_even and gamma_odd are chosen such that the MRT becomes
-    // a TRT with ghost mode relaxation factors that minimize unphysical wall
-    // slip at bounce-back boundaries. For the relation between the gammas
-    // achieving this, consult
-    //  D. d’Humières, I. Ginzburg, Comp. & Math. w. App. 58(5):823–840 (2009)
-    // Note that the relaxation operator in Espresso is defined as
-    //  m* = m_eq + gamma * (m - m_eq)
-    // as opposed to this reference, where
-    //  m* = m + lambda * (m - m_eq)
+  // By default, gamma_even and gamma_odd are chosen such that the MRT becomes
+  // a TRT with ghost mode relaxation factors that minimize unphysical wall
+  // slip at bounce-back boundaries. For the relation between the gammas
+  // achieving this, consult
+  //  D. d’Humières, I. Ginzburg, Comp. & Math. w. App. 58(5):823–840 (2009)
+  // Note that the relaxation operator in Espresso is defined as
+  //  m* = m_eq + gamma * (m - m_eq)
+  // as opposed to this reference, where
+  //  m* = m + lambda * (m - m_eq)
 
-    if (lbpar_gpu.is_TRT) {
-      lbpar_gpu.gamma_bulk = lbpar_gpu.gamma_shear;
-      lbpar_gpu.gamma_even = lbpar_gpu.gamma_shear;
-      lbpar_gpu.gamma_odd = -(7.0f * lbpar_gpu.gamma_even + 1.0f) /
-                                (lbpar_gpu.gamma_even + 7.0f);
-    }
+  if (lbpar_gpu.is_TRT) {
+    lbpar_gpu.gamma_bulk = lbpar_gpu.gamma_shear;
+    lbpar_gpu.gamma_even = lbpar_gpu.gamma_shear;
+    lbpar_gpu.gamma_odd =
+        -(7.0f * lbpar_gpu.gamma_even + 1.0f) / (lbpar_gpu.gamma_even + 7.0f);
+  }
 
-    if (temperature > 0.0) { /* fluctuating hydrodynamics ? */
+  if (temperature > 0.0) { /* fluctuating hydrodynamics ? */
 
-      lbpar_gpu.fluct = 1;
-      LB_TRACE(fprintf(stderr, "fluct on \n"));
-      /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).*/
-      /* Note that the modes are not normalized as in the paper here! */
-      lbpar_gpu.mu = (float)temperature * lbpar_gpu.tau * lbpar_gpu.tau /
-                         c_sound_sq / (lbpar_gpu.agrid * lbpar_gpu.agrid);
+    lbpar_gpu.fluct = 1;
+    LB_TRACE(fprintf(stderr, "fluct on \n"));
+    /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).*/
+    /* Note that the modes are not normalized as in the paper here! */
+    lbpar_gpu.mu = (float)temperature * lbpar_gpu.tau * lbpar_gpu.tau /
+                   c_sound_sq / (lbpar_gpu.agrid * lbpar_gpu.agrid);
 
-      /* lb_coupl_pref is stored in MD units (force)
-       * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
-       * The factor 12 comes from the fact that we use random numbers
-       * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-       * time_step comes from the discretization.
-       */
+    /* lb_coupl_pref is stored in MD units (force)
+     * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+     * The factor 12 comes from the fact that we use random numbers
+     * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
+     * time_step comes from the discretization.
+     */
 
-      lbpar_gpu.lb_coupl_pref =
-          sqrtf(12.f * 2.f * lbpar_gpu.friction * (float)temperature /
-                lbpar_gpu.time_step);
-      lbpar_gpu.lb_coupl_pref2 =
-          sqrtf(2.f * lbpar_gpu.friction * (float)temperature /
-                lbpar_gpu.time_step);
+    lbpar_gpu.lb_coupl_pref = sqrtf(12.f * 2.f * lbpar_gpu.friction *
+                                    (float)temperature / lbpar_gpu.time_step);
+    lbpar_gpu.lb_coupl_pref2 = sqrtf(2.f * lbpar_gpu.friction *
+                                     (float)temperature / lbpar_gpu.time_step);
 
-    } else {
-      /* no fluctuations at zero temperature */
-      lbpar_gpu.fluct = 0;
-      lbpar_gpu.lb_coupl_pref = 0.0;
-      lbpar_gpu.lb_coupl_pref2 = 0.0;
-    }
-    LB_TRACE(fprintf(stderr, "lb_reinit_prarameters_gpu \n"));
+  } else {
+    /* no fluctuations at zero temperature */
+    lbpar_gpu.fluct = 0;
+    lbpar_gpu.lb_coupl_pref = 0.0;
+    lbpar_gpu.lb_coupl_pref2 = 0.0;
+  }
+  LB_TRACE(fprintf(stderr, "lb_reinit_prarameters_gpu \n"));
 
 #ifdef ELECTROKINETICS
   if (ek_initialized) {
@@ -352,12 +348,12 @@ void lb_GPU_sanity_checks() {
     if (lbpar_gpu.tau < 0.0) {
       runtimeErrorMsg() << "Lattice Boltzmann time step not set";
     }
-      if (lbpar_gpu.rho < 0.0) {
-        runtimeErrorMsg() << "Lattice Boltzmann fluid density not set";
-      }
-      if (lbpar_gpu.viscosity < 0.0) {
-        runtimeErrorMsg() << "Lattice Boltzmann fluid viscosity not set";
-      }
+    if (lbpar_gpu.rho < 0.0) {
+      runtimeErrorMsg() << "Lattice Boltzmann fluid density not set";
+    }
+    if (lbpar_gpu.viscosity < 0.0) {
+      runtimeErrorMsg() << "Lattice Boltzmann fluid viscosity not set";
+    }
   }
 }
 

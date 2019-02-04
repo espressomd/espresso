@@ -263,7 +263,6 @@ void gpu_change_number_of_part_to_comm() {
       KERNELCALL(init_particle_force, dim_grid_particles,
                  threads_per_block_particles, particle_forces_device,
                  particle_torques_device, particle_seeds_device);
-
     }
   }
 }

@@ -351,7 +351,8 @@ inline void lb_get_populations(Lattice::index_t index, double *pop) {
   }
 }
 
-inline void lb_set_populations(Lattice::index_t index, const Vector<19, double> &pop) {
+inline void lb_set_populations(Lattice::index_t index,
+                               const Vector<19, double> &pop) {
   for (int i = 0; i < lbmodel.n_veloc; ++i) {
     lbfluid[i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
   }

@@ -2403,25 +2403,24 @@ int ek_init() {
     ek_initialized = true;
 
     lbpar_gpu.agrid = ek_parameters.agrid;
-    lbpar_gpu.viscosity = 1.0; // dummy values (real initialization later)
-    lbpar_gpu.bulk_viscosity =
-        1.0; // dummy values (real initialization later)
+    lbpar_gpu.viscosity = 1.0;      // dummy values (real initialization later)
+    lbpar_gpu.bulk_viscosity = 1.0; // dummy values (real initialization later)
     lbpar_gpu.friction = ek_parameters.friction;
 
     // Convert the density (given in MD units) to LB units
     lbpar_gpu.rho = (ek_parameters.lb_density < 0.0
-                            ? 1.0
-                            : ek_parameters.lb_density * ek_parameters.agrid *
-                                  ek_parameters.agrid * ek_parameters.agrid);
+                         ? 1.0
+                         : ek_parameters.lb_density * ek_parameters.agrid *
+                               ek_parameters.agrid * ek_parameters.agrid);
 
     lbpar_gpu.is_TRT = true;
 
     lb_reinit_parameters_gpu();
     lbpar_gpu.viscosity = ek_parameters.viscosity * lbpar_gpu.time_step /
-                             (ek_parameters.agrid * ek_parameters.agrid);
+                          (ek_parameters.agrid * ek_parameters.agrid);
     lbpar_gpu.bulk_viscosity = ek_parameters.bulk_viscosity *
-                                  lbpar_gpu.time_step /
-                                  (ek_parameters.agrid * ek_parameters.agrid);
+                               lbpar_gpu.time_step /
+                               (ek_parameters.agrid * ek_parameters.agrid);
     lb_reinit_parameters_gpu();
 
     lb_init_gpu();
@@ -2541,7 +2540,7 @@ int ek_init() {
                 (ek_parameters.agrid * ek_parameters.agrid) ||
         lbpar_gpu.friction != ek_parameters.friction ||
         lbpar_gpu.rho != ek_parameters.lb_density * ek_parameters.agrid *
-                                ek_parameters.agrid * ek_parameters.agrid) {
+                             ek_parameters.agrid * ek_parameters.agrid) {
       fprintf(stderr, "dens %f %f\n", lbpar_gpu.agrid, ek_parameters.agrid);
       fprintf(stderr, "visc %f %f\n", lbpar_gpu.viscosity,
               ek_parameters.viscosity * ek_parameters.time_step /

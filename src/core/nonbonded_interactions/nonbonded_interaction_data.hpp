@@ -344,7 +344,6 @@ struct IA_parameters {
 #ifdef SWIMMER_REACTIONS
   double REACTION_range = INACTIVE_CUTOFF;
 #endif
-
 };
 
 extern std::vector<IA_parameters> ia_params;
