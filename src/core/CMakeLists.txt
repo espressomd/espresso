@@ -53,9 +53,7 @@ set(EspressoCore_SRC
   topology.cpp
   tuning.cpp
   virtual_sites.cpp
-  accumulators/Correlator.hpp
   accumulators/Correlator.cpp
-  accumulators/MeanVarianceCalculator.hpp
   accumulators/MeanVarianceCalculator.cpp
   actor/ActorList.cpp
   actor/DipolarBarnesHut.cpp
@@ -160,11 +158,7 @@ if(CUDA)
     grid_based_algorithms/lbgpu.cpp
     )
 
-  set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
-  cuda_add_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
-  set_property(TARGET EspressoCore PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
-  target_link_libraries(EspressoCore PRIVATE ${CUDA_CUFFT_LIBRARIES})
+  add_gpu_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
 else(CUDA)
   add_library(EspressoCore SHARED ${EspressoCore_SRC})
 endif(CUDA)
@@ -197,6 +191,7 @@ if(SCAFACOS)
   target_link_libraries(EspressoCore PRIVATE Scafacos)
 endif(SCAFACOS)
 
+# Subdirectories
 add_subdirectory(io)
 
 
