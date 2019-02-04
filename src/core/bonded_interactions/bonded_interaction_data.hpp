@@ -23,8 +23,6 @@ enum BondedInteraction {
   BONDED_IA_QUARTIC,
   /** Type of bonded interaction is a BONDED_COULOMB */
   BONDED_IA_BONDED_COULOMB,
-  /** Type of bonded interaction is a bond angle potential. */
-  BONDED_IA_ANGLE_OLD,
   /** Type of bonded interaction is a dihedral potential. */
   BONDED_IA_DIHEDRAL,
   /** Type of tabulated bonded interaction potential,

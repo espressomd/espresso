@@ -98,9 +98,6 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 inline void add_single_particle_virials(int v_comp, Particle &p) {
   add_kinetic_virials(&p, v_comp);
   add_bonded_virials(&p);
-#ifdef BOND_ANGLE_OLD
-  add_three_body_bonded_stress(&p);
-#endif
 #ifdef BOND_ANGLE
   add_three_body_bonded_stress(&p);
 #endif

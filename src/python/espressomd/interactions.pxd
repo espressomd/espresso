@@ -560,7 +560,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_HARMONIC_DUMBBELL,
         BONDED_IA_BONDED_COULOMB,
         BONDED_IA_BONDED_COULOMB_P3M_SR,
-        BONDED_IA_ANGLE_OLD,
         BONDED_IA_DIHEDRAL,
         BONDED_IA_TABULATED,
         BONDED_IA_SUBT_LJ,
