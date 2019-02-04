@@ -78,7 +78,9 @@ typedef struct {
   float *charge_potential;
   ekfloat *j;
   float *lb_force_density_previous;
+#ifdef EK_DEBUG
   ekfloat *j_fluc;
+#endif
   ekfloat *rho[MAX_NUMBER_OF_SPECIES];
   int species_index[MAX_NUMBER_OF_SPECIES];
   float density[MAX_NUMBER_OF_SPECIES];

@@ -32,7 +32,7 @@ import math
     not espressomd.has_features(
         ["ELECTROKINETICS"]),
            "Features not available, skipping test!")
-class ek_charged_plate(ut.TestCase):
+class ek_fluctuations(ut.TestCase):
 
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
@@ -92,15 +92,15 @@ class ek_charged_plate(ut.TestCase):
 #Integrate
 
         for t in range(sample_steps):
-          system.integrator.run(integration_steps)
-          for i in range(box_x):
-            for j in range(box_y):
-              for k in range(box_z):
-                dens = species[i,j,k].density
-                if(dens < n_max and dens > n_min):
-                  x = int((dens - n_min) / bin_size)
-                  bins[x] += 1
-                  count += 1
+            system.integrator.run(integration_steps)
+            for i in range(box_x):
+                for j in range(box_y):
+                    for k in range(box_z):
+                        dens = species[i,j,k].density
+                        if(dens < n_max and dens > n_min):
+                            x = int((dens - n_min) / bin_size)
+                            bins[x] += 1
+                            count += 1
 
         bins = bins / count / bin_size
 
@@ -108,11 +108,11 @@ class ek_charged_plate(ut.TestCase):
 
         p = []
         for i in x_range:
-          p.append(1.0/(math.sqrt(2.0*math.pi*i))*math.pow(rho0/i,i)*math.exp(i-rho0))
+            p.append(1.0/(math.sqrt(2.0*math.pi*i))*math.pow(rho0/i,i)*math.exp(i-rho0))
 
         max_diff = 0.0
         for i in range(len(x_range)):
-          max_diff = max(math.fabs(p[i]-bins[i]),max_diff)
+            max_diff = max(math.fabs(p[i]-bins[i]),max_diff)
 
         self.assertLess(max_diff, 5.0e-03,
                         "Density distribution accuracy not achieved, allowed deviation: 5.0e-03, measured: {}".format(max_diff))

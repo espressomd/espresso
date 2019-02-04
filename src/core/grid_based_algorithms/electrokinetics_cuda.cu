@@ -1269,25 +1269,23 @@ ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index,
     float4 random_floats;
     float random;
 
+#ifdef EK_DEBUG
     float *flux_fluc = ek_parameters_gpu->j_fluc;
+#endif
     float fluc = 0.0f;
-
-    // float A = 6.0f * 0.1111111111111111f * PI_FLOAT / (3.0f * PI_FLOAT
-    // - 8.0f); float A = 2.0f/3.0f * PI_FLOAT/(3.0f * PI_FLOAT - 8.0f)
-    // * 1.0f/(4.0f * sqrt(2.0f));
 
     for (int i = 0; i < 9; i++) {
 
       if (i % 4 == 0) {
         random_floats =
             ek_random_wrapper_philox(index, i + 40, philox_counter, seed);
-        random = (random_floats.w - 0.5f)*2.0f;
+        random = (random_floats.w - 0.5f) * 2.0f;
       } else if (i % 4 == 1) {
-        random = (random_floats.x - 0.5f)*2.0f;
+        random = (random_floats.x - 0.5f) * 2.0f;
       } else if (i % 4 == 2) {
-        random = (random_floats.y - 0.5f)*2.0f;
+        random = (random_floats.y - 0.5f) * 2.0f;
       } else if (i % 4 == 3) {
-        random = (random_floats.z - 0.5f)*2.0f;
+        random = (random_floats.z - 0.5f) * 2.0f;
       }
       float H = 0.0f;
       float HN = 0.0f;
@@ -1297,21 +1295,19 @@ ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index,
       H = (density >= 0.0f) * min(density, 1.0f);
       HN = (neighbor_density >= 0.0f) * min(neighbor_density, 1.0f);
 
-      float average_density =
-          H * HN *
-          (density + ek_parameters_gpu->rho[species_index][neighborindex[i]]) /
-          2.0f;
+      float average_density = H * HN * (density + neighbor_density) / 2.0f;
 
       if (i > 2) {
         fluc = 1.0f *
                powf(2.0f * average_density * diffusion * time_step /
                         (agrid * agrid),
                     0.5f) *
-               random * ek_parameters_gpu->fluctuation_amplitude /
-               sqrt(2.0f);
+               random * ek_parameters_gpu->fluctuation_amplitude / sqrt(2.0f);
         fluc *=
             !(lb_node.boundary[index] || lb_node.boundary[neighborindex[i]]);
+#ifdef EK_DEBUG
         flux_fluc[jindex_getByRhoLinear(index, i)] = fluc;
+#endif
         flux[jindex_getByRhoLinear(index, i)] += fluc;
       } else {
         fluc = 1.0f *
@@ -1321,7 +1317,9 @@ ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index,
                random * ek_parameters_gpu->fluctuation_amplitude;
         fluc *=
             !(lb_node.boundary[index] || lb_node.boundary[neighborindex[i]]);
+#ifdef EK_DEBUG
         flux_fluc[jindex_getByRhoLinear(index, i)] = fluc;
+#endif
         flux[jindex_getByRhoLinear(index, i)] += fluc;
       }
     }
@@ -1715,7 +1713,9 @@ __global__ void ek_clear_fluxes() {
   if (index < ek_parameters_gpu->number_of_nodes) {
     for (int i = 0; i < 13; i++) {
       ek_parameters_gpu->j[jindex_getByRhoLinear(index, i)] = 0.0f;
+#ifdef EK_DEBUG
       ek_parameters_gpu->j_fluc[jindex_getByRhoLinear(index, i)] = 0.0f;
+#endif
     }
   }
 }
@@ -2273,9 +2273,11 @@ int ek_init() {
     cuda_safe_mem(
         cudaMalloc((void **)&ek_parameters.j,
                    ek_parameters.number_of_nodes * 13 * sizeof(ekfloat)));
+#ifdef EK_DEBUG
     cuda_safe_mem(
         cudaMalloc((void **)&ek_parameters.j_fluc,
                    ek_parameters.number_of_nodes * 13 * sizeof(ekfloat)));
+#endif
 
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
                                      &ek_parameters, sizeof(EK_parameters)));
@@ -3068,7 +3070,9 @@ LOOKUP_TABLE default\n",
 }
 
 int ek_print_vtk_flux_fluc(int species, char *filename) {
-
+#ifndef EK_DEBUG
+  return 1;
+#else
   FILE *fp = fopen(filename, "w");
   ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
                                    // into cartesian coordinates for output
@@ -3301,6 +3305,7 @@ LOOKUP_TABLE default\n",
   fclose(fp);
 
   return 0;
+#endif // EK_DEBUG
 }
 
 int ek_print_vtk_flux_link(int species, char *filename) {
@@ -3993,3 +3998,4 @@ int ek_load_checkpoint(char *filename) {
 #endif /* ELECTROKINETICS */
 
 #endif /* CUDA */
+
