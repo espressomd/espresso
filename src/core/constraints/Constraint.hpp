@@ -33,7 +33,8 @@ public:
   /**
    * @brief Return constraint force on particle.
    */
-  virtual ParticleForce force(const Particle &p, const Vector3d &folded_pos, double t) = 0;
+  virtual ParticleForce force(const Particle &p, const Vector3d &folded_pos,
+                              double t) = 0;
 
   /**
    * @brief Check if constraints if compatible with box size.

@@ -79,7 +79,7 @@ void initialize() {
   ScriptInterface::register_new<LinearElectricPotential>(
       "Constraints::LinearElectricPotential");
   ScriptInterface::register_new<ElectricPlaneWave>(
-          "Constraints::ElectricPlaneWave");
+      "Constraints::ElectricPlaneWave");
 #endif
 }
 } /* namespace Constraints */

@@ -40,7 +40,8 @@ public:
   void add_energy(const Particle &, const Vector3d &,
                   Observable_stat &) const override {}
 
-  ParticleForce force(const Particle &p, const Vector3d &folded_pos, double t) override {
+  ParticleForce force(const Particle &p, const Vector3d &folded_pos,
+                      double t) override {
     return impl.force(p, folded_pos, t);
   }
 

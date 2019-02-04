@@ -21,7 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Constraints {
 
-ParticleForce HomogeneousMagneticField::force(const Particle &p, const Vector3d &folded_pos, double t) {
+ParticleForce HomogeneousMagneticField::force(const Particle &p,
+                                              const Vector3d &folded_pos,
+                                              double t) {
 #if defined(ROTATION) && defined(DIPOLES)
   return {Vector3d{}, Vector3d::cross(p.calc_dip(), m_field)};
 #else

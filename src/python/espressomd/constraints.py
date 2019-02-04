@@ -443,6 +443,7 @@ class LinearElectricPotential(Constraint):
 
 @script_interface_register
 class ElectricPlaneWave(Constraint):
+
     """
     Electric field of the form
 
@@ -473,7 +474,7 @@ class ElectricPlaneWave(Constraint):
 
     def __init__(self, E0, k, omega, phi=0):
         super(ElectricPlaneWave, self).__init__(amplitude=E0,
-                                                wave_vector= k,
+                                                wave_vector=k,
                                                 frequency=omega,
                                                 phase=phi)
 
@@ -492,6 +493,7 @@ class ElectricPlaneWave(Constraint):
     @property
     def phi(self):
         return self.phase
+
 
 @script_interface_register
 class FlowField(_Interpolated):

@@ -91,10 +91,11 @@ class FieldTest(ut.TestCase):
     def test_electric_plane_wave(self):
         E0 = np.array([1., -2., 3.])
         k = np.array([-.1, .2, 0.3])
-        omega=5.
-        phi=1.4
+        omega = 5.
+        phi = 1.4
 
-        electric_wave = constraints.ElectricPlaneWave(E0=E0, k=k, omega=omega, phi=phi)
+        electric_wave = constraints.ElectricPlaneWave(
+            E0=E0, k=k, omega=omega, phi=phi)
         np.testing.assert_almost_equal(E0, electric_wave.E0)
         np.testing.assert_almost_equal(k, electric_wave.k)
         np.testing.assert_almost_equal(omega, electric_wave.omega)
@@ -102,14 +103,13 @@ class FieldTest(ut.TestCase):
 
         self.system.constraints.add(electric_wave)
 
-        p = self.system.part.add(pos=[0.4 , 0.1, 0.11], q=-14.)
-        self.system.time=1042.
+        p = self.system.part.add(pos=[0.4, 0.1, 0.11], q=-14.)
+        self.system.time = 1042.
 
         self.system.integrator.run(0)
 
         np.testing.assert_almost_equal(np.copy(p.f),
-         p.q * E0 * np.sin(np.dot(k, p.pos) - omega * self.system.time + phi))
-
+                                       p.q * E0 * np.sin(np.dot(k, p.pos) - omega * self.system.time + phi))
 
     def test_homogeneous_flow_field(self):
         u = np.array([1., 2., 3.])

@@ -23,43 +23,44 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/Vector.hpp"
 
 namespace FieldCoupling {
-    namespace Fields {
+namespace Fields {
 /**
  * @brief A plane wave.
  */
-        template <typename T, size_t codim> class PlaneWave {
-        public:
-            using value_type = typename decay_to_scalar<Vector<codim, T>>::type;
-            using gradient_type = detail::gradient_type<T, codim>;
+template <typename T, size_t codim> class PlaneWave {
+public:
+  using value_type = typename decay_to_scalar<Vector<codim, T>>::type;
+  using gradient_type = detail::gradient_type<T, codim>;
 
-        private:
-            value_type m_amplitude;
-            value_type m_k;
-            T m_omega;
-            T m_phase;
+private:
+  value_type m_amplitude;
+  value_type m_k;
+  T m_omega;
+  T m_phase;
 
-        public:
-            PlaneWave(const value_type amplitude, const value_type &k, T omega, T phase)
-                    : m_amplitude(amplitude), m_k(k), m_omega(omega), m_phase(phase) {}
+public:
+  PlaneWave(const value_type amplitude, const value_type &k, T omega, T phase)
+      : m_amplitude(amplitude), m_k(k), m_omega(omega), m_phase(phase) {}
 
-            value_type &amplitude()  {return m_amplitude;}
-            value_type &k() { return m_k; }
-            T& omega()  {return m_omega;}
-            T& phase()  {return m_phase;}
+  value_type &amplitude() { return m_amplitude; }
+  value_type &k() { return m_k; }
+  T &omega() { return m_omega; }
+  T &phase() { return m_phase; }
 
-            value_type operator()(const Vector3d & x, T t = 0.) const {
-                return m_amplitude * sin(m_k * x - m_omega * t + m_phase);
-            }
+  value_type operator()(const Vector3d &x, T t = 0.) const {
+    return m_amplitude * sin(m_k * x - m_omega * t + m_phase);
+  }
 
-            gradient_type gradient(const Vector3d & x, T t = 0.) const {
-                using Utils::tensor_product;
+  gradient_type gradient(const Vector3d &x, T t = 0.) const {
+    using Utils::tensor_product;
 
-                return tensor_product(m_amplitude, m_k) * cos(m_k * x - m_omega * t + m_phase);
-            }
+    return tensor_product(m_amplitude, m_k) *
+           cos(m_k * x - m_omega * t + m_phase);
+  }
 
-            bool fits_in_box(const Vector3d &) const { return true; }
-        };
-    } // namespace Fields
+  bool fits_in_box(const Vector3d &) const { return true; }
+};
+} // namespace Fields
 } // namespace FieldCoupling
 
 #endif
