@@ -188,9 +188,9 @@ private:
               // occurs in a reaction. this charge has to be overwritten. if it
               // is not overwritten the reaction ensemble will complain.
   bool all_reactant_particles_exist(int reaction_id);
-  int replace_particle(int p_id, int desired_type);
+  void replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);
-  int hide_particle(int p_id, int previous_type);
+  void hide_particle(int p_id, int previous_type);
 
   void append_particle_property_of_random_particle(
       int type, std::vector<StoredParticleProperty> &list_of_particles);

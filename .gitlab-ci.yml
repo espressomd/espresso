@@ -286,6 +286,20 @@ check_sphinx:
     - linux
     - cuda
 
+check_doxygen:
+  stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
+  dependencies:
+  - cuda8-maxset
+  when: on_success
+  script:
+    - cd ${CI_PROJECT_DIR}/build
+    - make doxygen
+  tags:
+    - docker
+    - linux
+    - cuda
+
 check_with_odd_no_of_processors:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0

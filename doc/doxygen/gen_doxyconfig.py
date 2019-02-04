@@ -23,17 +23,22 @@ from __future__ import print_function
 import inspect
 import sys
 import os
-# find featuredefs.py
-moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
-sys.path.append(os.path.join(moduledir, '..', '..', 'src'))
-import featuredefs
+
 import time
 
 if len(sys.argv) != 3:
-    print("Usage: {} DEFFILE DOXYCONFIG".format(sys.argv[0]), file=sys.stderr)
+    print(
+        "Usage: {} CONFIG_PATH DOXYCONFIG".format(sys.argv[0]),
+        file=sys.stderr)
     exit(2)
 
-deffilename, configfilename = sys.argv[1:3]
+configpath, configfilename = sys.argv[1:3]
+
+# find featuredefs.py
+sys.path.append(configpath)
+import featuredefs
+
+deffilename = os.path.join(configpath, 'features.def')
 
 print("Reading definitions from {}...".format(deffilename))
 defs = featuredefs.defs(deffilename)
