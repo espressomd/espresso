@@ -51,6 +51,12 @@ cdef extern from "utils/List.hpp":
         double * e
         unsigned n
 
+cdef extern from "utils/Span.hpp" namespace "Utils":
+    cppclass Span[T]:
+        pass
+
+    Span[const int] make_const_span(int *, int)
+
 cdef extern from "utils/Histogram.hpp" namespace "Utils":
     cdef void unravel_index(const int * const len_dims, const int ndims,
                             const int flattened_index,

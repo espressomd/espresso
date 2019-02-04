@@ -379,24 +379,18 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
       pos[0] = poly[3 * n];
       pos[1] = poly[3 * n + 1];
       pos[2] = poly[3 * n + 2];
-      if (place_particle(part_id, pos) == ES_PART_ERROR ||
-          (set_particle_q(part_id, ((n % cM_dist == 0) ? val_cM : 0.0)) ==
-           ES_ERROR) ||
-          (set_particle_type(part_id,
-                             ((n % cM_dist == 0) ? type_cM : type_nM)) ==
-           ES_ERROR)) {
-        return (-3);
-      }
+      if (place_particle(part_id, pos) == ES_PART_ERROR)
+        return -3;
+
+      set_particle_q(part_id, ((n % cM_dist == 0) ? val_cM : 0.0));
+      set_particle_type(part_id, ((n % cM_dist == 0) ? type_cM : type_nM));
 
       if (n >= bond_size) {
         bond[1] = part_id - bond_size;
         for (i = 2; i <= bond_size; i++) {
           bond[i] = part_id - bond_size + i;
         }
-        if (change_particle_bond(part_id - bond_size + 1, bond.data(), 0) ==
-            ES_ERROR) {
-          return (-3);
-        }
+        add_particle_bond(part_id - bond_size + 1, bond);
       }
       part_id++;
       // POLY_TRACE(/* printf("placed Monomer %d at
@@ -426,10 +420,9 @@ int counterionsC(PartCfg &partCfg, int N_CI, int part_id, int mode,
       return (-1);
     if (place_particle(part_id, pos) == ES_PART_ERROR)
       return (-3);
-    if (set_particle_q(part_id, val_CI) == ES_ERROR)
-      return (-3);
-    if (set_particle_type(part_id, type_CI) == ES_ERROR)
-      return (-3);
+    set_particle_q(part_id, val_CI);
+    set_particle_type(part_id, type_CI);
+
     part_id++;
     max_cnt = std::max(cnt1, max_cnt);
 
@@ -466,11 +459,9 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
       pos[j] = dnodes[i][j];
     }
     if (place_particle(part_id, pos) == ES_PART_ERROR)
-      return (-3);
-    if (set_particle_q(part_id, val_nodes) == ES_ERROR)
-      return (-3);
-    if (set_particle_type(part_id, type_node) == ES_ERROR)
-      return (-3);
+      set_particle_q(part_id, val_nodes);
+    set_particle_type(part_id, type_node);
+
     part_id++;
   }
 
@@ -481,28 +472,22 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
         pos[j] = dnodes[dchain[i][0]][j] + k * dchain[i][2 + j] * off;
       if (place_particle(part_id, pos) == ES_PART_ERROR)
         return (-3);
-      if (set_particle_q(part_id, (k % cM_dist == 0) ? val_cM : 0.0) ==
-          ES_ERROR)
-        return (-3);
-      if (set_particle_type(part_id, (k % cM_dist == 0) ? type_cM : type_nM) ==
-          ES_ERROR)
-        return (-3);
+      set_particle_q(part_id, (k % cM_dist == 0) ? val_cM : 0.0);
+      set_particle_type(part_id, (k % cM_dist == 0) ? type_cM : type_nM);
+
       bond[0] = type_bond;
       if (k == 1) {
         if (nonet != 1) {
           bond[1] = dchain[i][0];
-          if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-            return (-3);
+          add_particle_bond(part_id, bond);
         }
       } else {
         bond[1] = part_id - 1;
-        if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-          return (-3);
+        add_particle_bond(part_id, bond);
       }
       if ((k == MPC) && (nonet != 1)) {
         bond[1] = dchain[i][1];
-        if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-          return (-3);
+        add_particle_bond(part_id, bond);
       }
       part_id++;
     }
@@ -587,15 +572,13 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
           pos_shift[l] = pos[l] + shift;
         if (place_particle(part_id, pos_shift) == ES_PART_ERROR)
           return (-3);
-        if (set_particle_q(part_id, val_cM) == ES_ERROR)
-          return (-3);
-        if (set_particle_type(part_id, type_cM) == ES_ERROR)
-          return (-3);
+        set_particle_q(part_id, val_cM);
+        set_particle_type(part_id, type_cM);
+
         bond[0] = type_bond;
         if (k > 0) {
           bond[1] = part_id - 1;
-          if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-            return (-3);
+          add_particle_bond(part_id, bond);
         }
         part_id++;
         for (l = 0; l < 3; l++)
@@ -623,19 +606,16 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
             pos_shift[l] = pos[l] + shift;
           if (place_particle(part_id, pos_shift) == ES_ERROR)
             return (-3);
-          if (set_particle_q(part_id, 0.0) == ES_ERROR)
-            return (-3);
-          if (set_particle_type(part_id, type_nM) == ES_ERROR)
-            return (-3);
+          set_particle_q(part_id, 0.0);
+          set_particle_type(part_id, type_nM);
+
           bond[0] = type_bond;
           if (k > 1) {
             bond[1] = part_id - 1;
-            if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-              return (-3);
+            add_particle_bond(part_id, bond);
           } else {
             bond[1] = ico_ind[i][j];
-            if (change_particle_bond(part_id, bond, 0) == ES_ERROR)
-              return (-3);
+            add_particle_bond(part_id, bond);
           }
           part_id++;
           for (l = 0; l < 3; l++)
@@ -655,8 +635,8 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
         bond[1] = ico_ind[i][4] + (MPC - 1);
       else
         bond[1] = ico_ind[i][4];
-      if (change_particle_bond(ico_ind[i][j], bond, 0) == ES_ERROR)
-        return (-2);
+
+      add_particle_bond(ico_ind[i][j], bond);
 
       /* connect loose edges around vertices with chains along the middle third
        * already created earlier */
@@ -671,8 +651,7 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
           errexit();
         }
         bond[1] = ico_ind[ico_NN[i][j]][l + 5] + (MPC - 2);
-        if (change_particle_bond(ico_ind[i][j], bond, 0) == ES_ERROR)
-          return (-1);
+        add_particle_bond(ico_ind[i][j], bond);
       }
     }
   }
