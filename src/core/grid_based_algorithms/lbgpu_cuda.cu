@@ -1219,7 +1219,6 @@ calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_pi_gpu *d_p_v,
     d_p_v[print_index].v[0] = d_v[index].v[0] * para->agrid / para->tau;
     d_p_v[print_index].v[1] = d_v[index].v[1] * para->agrid / para->tau;
     d_p_v[print_index].v[2] = d_v[index].v[2] * para->agrid / para->tau;
-
     /* stress calculation */
     float Rho = d_v[index].rho;
 
@@ -1330,7 +1329,7 @@ __device__ void calc_values_from_m_in_LB_units(float *mode_single,
   // Set the rho output value
 
   Rho = d_v_single->rho;
-  rho_out = &Rho;
+  *rho_out = d_v_single->rho;
 
   // note that d_v_single->v[] already includes the 1/2 f term,
   // accounting for the pre- and post-collisional average
@@ -2333,7 +2332,6 @@ __global__ void set_u_from_rho_v_pi(LB_nodes_gpu n_a, int single_nodeindex,
                                    &rho_from_m, j_from_m, pi_from_m);
 
     // Take LB component density and calculate the equilibrium part
-
     local_rho = rho_from_m;
     avg_rho = para->rho;
 
@@ -2342,7 +2340,6 @@ __global__ void set_u_from_rho_v_pi(LB_nodes_gpu n_a, int single_nodeindex,
     local_j[0] = local_rho * velocity[0];
     local_j[1] = local_rho * velocity[1];
     local_j[2] = local_rho * velocity[2];
-
     // Take LB component pressure tensor and put in equilibrium
 
     local_pi[0] = pi_from_m[0];
@@ -2934,8 +2931,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   h_gpu_check[0] = 0;
   cuda_safe_mem(
       cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
-  // fprintf(stderr, "initialization of lb gpu code %i\n",
-  // lbpar_gpu->number_of_nodes);
   cudaDeviceSynchronize();
 
   if (!h_gpu_check[0]) {
@@ -3412,8 +3407,6 @@ void lb_set_node_rho_GPU(int single_nodeindex, float host_rho) {
  *  @param host_velocity      the velocity to set
  */
 void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
-  printf("host_velocity: %f %f %f\n", host_velocity[0], host_velocity[1],
-         host_velocity[2]);
   float *device_velocity;
   cuda_safe_mem(cudaMalloc((void **)&device_velocity, 3 * sizeof(float)));
   cuda_safe_mem(cudaMemcpy(device_velocity, host_velocity, 3 * sizeof(float),

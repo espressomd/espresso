@@ -1139,7 +1139,6 @@ const Vector3d lb_lbnode_get_u(const Vector3i &ind) {
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, host_print_values);
-
     return {{host_print_values->v[0], host_print_values->v[1],
              host_print_values->v[2]}};
 #endif
