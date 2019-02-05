@@ -630,11 +630,11 @@ static void add_force() {
   }
 }
 
-static void add_P_force() {
+static inline void add_P_force() {
   add_force<0>();
 }
 
-static void add_Q_force() {
+static inline void add_Q_force() {
   add_force<1>();
 }
 
@@ -852,14 +852,14 @@ double ELC_energy() {
     omega = C_2PI * ux * p;
     setup_P(p, omega);
     distribute(4);
-    eng += dir_energy(omega);
+    eng += dir_energy(omega); /* P_energy */
     checkpoint("E************distri p", p, 0, 2);
   }
   for (q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
     omega = C_2PI * uy * q;
     setup_Q(q, omega);
     distribute(4);
-    eng += dir_energy(omega);
+    eng += dir_energy(omega); /* Q_energy */
     checkpoint("E************distri q", 0, q, 2);
   }
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {

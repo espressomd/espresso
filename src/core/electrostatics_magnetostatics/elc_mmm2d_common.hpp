@@ -1,7 +1,11 @@
 #ifndef ESPRESSO_ELC_MMM2D_COMMON_HPP
 #define ESPRESSO_ELC_MMM2D_COMMON_HPP
 
+
+#include "cells.hpp" /* dont know why, but otherwise it wont compile */
+
 #include "grid.hpp"
+#include "utils.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -23,6 +27,7 @@
 #define PQESCM 5
 #define PQECSM 6
 #define PQECCM 7
+/*@}*/
 
 /** inverse box dimensions */
 /*@{*/
@@ -34,9 +39,10 @@ static double ux, ux2, uy, uy2, uz;
 typedef struct {
     double s, c;
 } SCCache;
-
 /*@}*/
 
+/** calculating the inverse box dimensions*/
+/*@{*/
 static void elc_mmm2d_common_init_invBoxl() {
   ux = 1 / box_l[0];
   ux2 = ux * ux;
@@ -44,6 +50,9 @@ static void elc_mmm2d_common_init_invBoxl() {
   uy2 = uy * uy;
   uz = 1 / box_l[2];
 }
+
+/*@}*/
+
 
 inline double
 elc_mmm2d_common_add_force_dir(int position, const double *partblk, const double *gblcblk) {
@@ -53,20 +62,18 @@ elc_mmm2d_common_add_force_dir(int position, const double *partblk, const double
          partblk[position + POQECP] * gblcblk[POQESM];
 }
 
+
+double helper_first(int position, const double *partblk, const double *gblcblk, bool sum);
+double helper_second(int position, const double *partblk, const double *gblcblk, bool sum);
+
 inline double
 elc_mmm2d_common_add_force_z(int position, const double *partblk, const double *gblcblk) {
-  return partblk[position + POQECM] * gblcblk[POQECP] +
-         partblk[position + POQESM] * gblcblk[POQESP] -
-         partblk[position + POQECP] * gblcblk[POQECM] -
-         partblk[position + POQESP] * gblcblk[POQESM];
+  return helper_first(position, partblk, gblcblk, false);
 }
 
 inline double
 elc_mmm2d_common_dir_energy(int position, const double *partblk, const double *gblcblk) {
-  return partblk[position + POQECM] * gblcblk[POQECP] +
-         partblk[position + POQESM] * gblcblk[POQESP] +
-         partblk[position + POQECP] * gblcblk[POQECM] +
-         partblk[position + POQESP] * gblcblk[POQESM];
+  return helper_first(position, partblk, gblcblk, true);
 }
 
 inline void
@@ -117,30 +124,14 @@ elc_mmm2d_common_add_PQ_force_y(int position, const double *partblk, const doubl
 
 inline double
 elc_mmm2d_common_add_PQ_force_z(int position, const double *partblk, const double *gblcblk) {
-  return partblk[position + PQECCM] * gblcblk[PQECCP] +
-         partblk[position + PQECSM] * gblcblk[PQECSP] +
-         partblk[position + PQESCM] * gblcblk[PQESCP] +
-         partblk[position + PQESSM] * gblcblk[PQESSP] -
-         partblk[position + PQECCP] * gblcblk[PQECCM] -
-         partblk[position + PQECSP] * gblcblk[PQECSM] -
-         partblk[position + PQESCP] * gblcblk[PQESCM] -
-         partblk[position + PQESSP] * gblcblk[PQESSM];
+  return helper_second(position, partblk, gblcblk, false);
 }
 
 inline double
 elc_mmm2d_common_PQ_energy(int position, const double *partblk, const double *gblcblk) {
-  return partblk[position + PQECCM] * gblcblk[PQECCP] +
-         partblk[position + PQECSM] * gblcblk[PQECSP] +
-         partblk[position + PQESCM] * gblcblk[PQESCP] +
-         partblk[position + PQESSM] * gblcblk[PQESSP] +
-         partblk[position + PQECCP] * gblcblk[PQECCM] +
-         partblk[position + PQECSP] * gblcblk[PQECSM] +
-         partblk[position + PQESCP] * gblcblk[PQESCM] +
-         partblk[position + PQESSP] * gblcblk[PQESSM];
+  return helper_second(position, partblk, gblcblk, true);
 }
 
-/** partblk[pos + #] = sccache.# * / factor alternating div/mul*/
-/*@{*/
 inline void
 elc_mmm2d_common_setup(int position, double factor, int cacheOffset, double *partblk,
                        Utils::Span<const SCCache> sccache) {
@@ -149,7 +140,6 @@ elc_mmm2d_common_setup(int position, double factor, int cacheOffset, double *par
   partblk[position + POQECM] = sccache[cacheOffset].c / factor;
   partblk[position + POQECP] = sccache[cacheOffset].c * factor;
 }
-/*@}*/
 
 /* vector operations */
 
@@ -193,3 +183,40 @@ inline double *elc_mmm2d_common_block(double *p, int index, int size) {
 
 #endif /* ELECTROSTATICS */
 #endif /* ESPRESSO_ELC_MMM2D_COMMON_HPP */
+
+
+const std::vector<unsigned int> partblkIndex = {PQESSP, PQESSM, PQECCM, PQECCP, PQECSM, PQECSP, PQESCP, PQESCM};
+const std::vector<unsigned int> gblcblkIndex = {PQECSM, PQECSP, PQESCP, PQESCM, PQESSP, PQESSM, PQECCM, PQECCP};
+
+std::vector<unsigned int>::iterator it = partblkIndex.begin();
+
+for (std::vector<int>::iterator it = myvector.begin() ; it != myvector.end(); ++it)
+  std::cout << ' ' << *it;
+
+std::vector<int>::reverse_iterator rit = myvector.rbegin();
+for (; rit!= myvector.rend(); ++rit)
+  *rit = ++i;
+
+
+
++ partblk[position + PQESSP] * gblcblk[PQECSM]
++ partblk[position + PQESSM] * gblcblk[PQECSP]
+- partblk[position + PQECCM] * gblcblk[PQESCP]
+- partblk[position + PQECCP] * gblcblk[PQESCM]
+
+- partblk[position + PQECSM] * gblcblk[PQESSP]
+- partblk[position + PQECSP] * gblcblk[PQESSM]
++ partblk[position + PQESCP] * gblcblk[PQECCM]
++ partblk[position + PQESCM] * gblcblk[PQECCP]
+
+
+
++ partblk[position + PQESSP] * gblcblk[PQESCM]
++ partblk[position + PQESSM] * gblcblk[PQESCP]
+- partblk[position + PQECCM] * gblcblk[PQECSP]
+- partblk[position + PQECCP] * gblcblk[PQECSM]
+
++ partblk[position + PQECSM] * gblcblk[PQECCP]
++ partblk[position + PQECSP] * gblcblk[PQECCM]
+- partblk[position + PQESCP] * gblcblk[PQESSM]
+- partblk[position + PQESCM] * gblcblk[PQESSP]

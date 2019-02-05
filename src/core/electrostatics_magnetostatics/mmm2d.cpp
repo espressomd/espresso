@@ -159,8 +159,6 @@ MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, 0, 0, 0, 1, 1, 1};
 #define ABEQQM 2
 #define ABEQZM 3
 
-/*@}*/
-
 /** number of local particles */
 static int n_localpart = 0;
 
@@ -1043,7 +1041,7 @@ static double energy_contribution(int p, int q) {
       else
         clear_image_contributions(2);
       distribute(2, fac);
-      eng = dir_energy(omega);
+      eng = dir_energy(omega); /* P_energy */
       checkpoint("************distri p", p, 0, 2);
     }
   } else if (p == 0) {
@@ -1055,7 +1053,7 @@ static double energy_contribution(int p, int q) {
     else
       clear_image_contributions(2);
     distribute(2, fac);
-    eng = dir_energy(omega);
+    eng = dir_energy(omega); /* Q_energy */
     checkpoint("************distri q", 0, q, 2);
   } else {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
