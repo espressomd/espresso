@@ -168,8 +168,8 @@ void calc_particle_lattice_ia() {
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
      */
-    auto const noise_amplitude =
-        sqrt(12. * 2. * lb_lbfluid_get_friction() * lb_lbfluid_get_kT() / time_step);
+    auto const noise_amplitude = sqrt(12. * 2. * lb_lbfluid_get_friction() *
+                                      lb_lbfluid_get_kT() / time_step);
 
     auto f_random = [&c](int id) -> Vector3d {
       key_type k{{static_cast<uint32_t>(id)}};
