@@ -67,8 +67,6 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
 }
 
 void nsq_topology_init() {
-  CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
-
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
   cell_structure.position_to_node = nsq_position_to_node;
   cell_structure.position_to_cell = nsq_position_to_cell;

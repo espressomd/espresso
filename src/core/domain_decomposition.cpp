@@ -660,12 +660,6 @@ void dd_on_geometry_change(int flags) {
 
 /************************************************************/
 void dd_topology_init() {
-  int exchange_data, update_data;
-
-  CELL_TRACE(fprintf(stderr,
-                     "%d: dd_topology_init: Number of recieved cells=%d\n",
-                     this_node, old->n));
-
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
      but may be set to a larger value by the user for performance reasons. */
   min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells());
@@ -682,9 +676,9 @@ void dd_topology_init() {
   /* create communicators */
   dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
 
-  exchange_data =
+  const int exchange_data =
       (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
-  update_data = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
+  const int update_data = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
 
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data);
   dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
