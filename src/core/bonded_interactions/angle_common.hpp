@@ -25,80 +25,74 @@
  */
 
 #include "grid.hpp"
+#include "particle_data.hpp"
 #include "utils.hpp"
 
-/** Compute the normalized vector between two points.
- *  @param[in]  r_mid     Position of the middle particle
- *  @param[in]  r_out     Position of the outer particle
- *  @param[out] vec       Normalized vector
- *  @param[out] di        Normalization constant
+/** Compute a three-body angle interaction force.
+ *  @param[in]  p_mid        Second/middle particle.
+ *  @param[in]  p_left       First/left particle.
+ *  @param[in]  p_right      Third/right particle.
+ *  @param[in]  forceFactor  Angle bending constant.
+ *  @param[out] force1       Force on particle 1.
+ *  @param[out] force2       Force on particle 2.
  */
-inline void calc_angle_vector(const Vector3d &r_mid, const Vector3d &r_out,
-                              double vec[3], double &di) {
-  /* vector from r_out to r_mid */
-  get_mi_vector(vec, r_mid, r_out);
-  di = 1.0 / sqrt(sqrlen(vec));
-  for (int j = 0; j < 3; j++)
-    vec[j] *= di;
-}
-
-/** Compute the angle interaction force.
- *  @param[out] force1    Force on particle 1
- *  @param[out] force2    Force on particle 2
- *  @param[in]  vec1      Normalized vector for particle 1
- *  @param[in]  vec2      Normalized vector for particle 2
- *  @param[in]  d1i       Normalization constant for @p vec1
- *  @param[in]  d2i       Normalization constant for @p vec2
- *  @param[in]  cosine    Cosine of the angle
- *  @param[in]  fac       Angle bending constant
- */
-inline void calc_angle_force(double force1[3], double force2[3],
-                             const double vec1[3], const double vec2[3],
-                             double d1i, double d2i, double cosine,
-                             double fac) {
+template <typename ForceFactor>
+void calc_angle_generic_force(Particle const *p_mid, Particle const *p_left,
+                              Particle const *p_right, ForceFactor forceFactor,
+                              double force1[3], double force2[3]) {
+  /* vector from p_left to p_mid */
+  auto vec1 = get_mi_vector(p_mid->r.p, p_left->r.p);
+  auto d1i = 1.0 / vec1.norm();
+  vec1 *= d1i;
+  /* vector from p_mid to p_right */
+  auto vec2 = get_mi_vector(p_right->r.p, p_mid->r.p);
+  auto d2i = 1.0 / vec2.norm();
+  vec2 *= d2i;
+  /* scalar product of vec1 and vec2 */
+  auto cosine = scalar(vec1, vec2);
+  /* force factor */
+  auto fac = forceFactor(cosine);
+  /* force calculation */
+  auto f1 = fac * (cosine * vec1 - vec2) * d1i;
+  auto f2 = fac * (cosine * vec2 - vec1) * d2i;
   for (int j = 0; j < 3; j++) {
-    double f1 = fac * (cosine * vec1[j] - vec2[j]) * d1i;
-    double f2 = fac * (cosine * vec2[j] - vec1[j]) * d2i;
-    force1[j] = f1 - f2;
-    force2[j] = -f1;
+    force1[j] = (f1 - f2)[j];
+    force2[j] = -f1[j];
   }
 }
 
-inline void calc_angle_3body_vector(const Vector3d &r_mid,
-                                    const Vector3d &r_left,
-                                    const Vector3d &r_right, double &cos_phi,
-                                    double &sin_phi, double vec21[3],
-                                    double vec31[3], double &vec21_sqr,
-                                    double &vec31_sqr, double &vec21_magn,
-                                    double &vec31_magn) {
-  get_mi_vector(vec21, r_mid, r_left);
-  for (int j = 0; j < 3; j++)
-    vec21[j] = -vec21[j];
-  get_mi_vector(vec31, r_right, r_mid);
-  vec21_sqr = sqrlen(vec21);
-  vec21_magn = sqrt(vec21_sqr);
-  vec31_sqr = sqrlen(vec31);
-  vec31_magn = sqrt(vec31_sqr);
-  cos_phi = scalar(vec21, vec31) / (vec21_magn * vec31_magn);
-  sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
-}
-
-inline void calc_angle_3body_force(double cos_phi, double fac,
-                                   const double vec21[3], const double vec31[3],
-                                   double vec21_sqr, double vec31_sqr,
-                                   double vec21_magn, double vec31_magn,
-                                   double force1[3], double force2[3],
-                                   double force3[3]) {
-  double fj, fk;
-  for (int j = 0; j < 3; j++) {
-    fj = vec31[j] / (vec21_magn * vec31_magn) - cos_phi * vec21[j] / vec21_sqr;
-    fk = vec21[j] / (vec21_magn * vec31_magn) - cos_phi * vec31[j] / vec31_sqr;
-
-    // note that F1 = -(F2 + F3) in analytical case
-    force1[j] -= fac * (fj + fk);
-    force2[j] += fac * fj;
-    force3[j] += fac * fk;
-  }
+/** Compute the forces of a three-body bonded potential.
+ *  @param[in]  p_mid        Second/middle particle.
+ *  @param[in]  p_left       First/left particle.
+ *  @param[in]  p_right      Third/right particle.
+ *  @param[in]  forceFactor  Angle bending constant.
+ *  @param[out] force1       Force on particle 1.
+ *  @param[out] force2       Force on particle 2.
+ *  @param[out] force3       Force on particle 3.
+ */
+template <typename ForceFactor>
+void calc_angle_generic_3body_forces(Particle const *p_mid,
+                                     Particle const *p_left,
+                                     Particle const *p_right,
+                                     ForceFactor forceFactor, Vector3d &force1,
+                                     Vector3d &force2, Vector3d &force3) {
+  auto vec21 = -get_mi_vector(p_mid->r.p, p_left->r.p);
+  auto vec31 = get_mi_vector(p_right->r.p, p_mid->r.p);
+  auto vec21_sqr = vec21.norm2();
+  auto vec31_sqr = vec31.norm2();
+  auto vec21_magn = sqrt(vec21_sqr);
+  auto vec31_magn = sqrt(vec31_sqr);
+  auto cos_phi = scalar(vec21, vec31) / (vec21_magn * vec31_magn);
+  auto sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
+  /* force factor */
+  auto fac = forceFactor(cos_phi, sin_phi);
+  /* force calculation */
+  auto fj = vec31 / (vec21_magn * vec31_magn) - cos_phi * vec21 / vec21_sqr;
+  auto fk = vec21 / (vec21_magn * vec31_magn) - cos_phi * vec31 / vec31_sqr;
+  // note that F1 = -(F2 + F3) in analytical case
+  force1 = -fac * (fj + fk);
+  force2 = fac * fj;
+  force3 = fac * fk;
 }
 
 #endif /* ANGLE_COMMON_H */

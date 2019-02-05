@@ -57,19 +57,14 @@ inline int calc_angle_cossquare_force(Particle const *p_mid,
                                       Particle const *p_right,
                                       Bonded_ia_parameters const *iaparams,
                                       double force1[3], double force2[3]) {
-  double cosine, vec1[3], vec2[3], d1i, d2i, fac;
 
-  /* vector from p_left to p_mid */
-  calc_angle_vector(p_mid->r.p, p_left->r.p, vec1, d1i);
-  /* vector from p_mid to p_right */
-  calc_angle_vector(p_right->r.p, p_mid->r.p, vec2, d2i);
-  /* scalar product of vec1 and vec2 */
-  cosine = scalar(vec1, vec2);
-  fac = iaparams->p.angle_cossquare.bend;
+  auto forceFactor = [&iaparams](double &cosine) {
+    auto fac = iaparams->p.angle_cossquare.bend;
+    fac *= iaparams->p.angle_cossquare.cos_phi0 + cosine;
+    return fac;
+  };
 
-  fac *= iaparams->p.angle_cossquare.cos_phi0 + cosine;
-
-  calc_angle_force(force1, force2, vec1, vec2, d1i, d2i, cosine, fac);
+  calc_angle_generic_force(p_mid, p_left, p_right, forceFactor, force1, force2);
 
   return 0;
 }
@@ -78,42 +73,26 @@ inline int calc_angle_cossquare_force(Particle const *p_mid,
    is computed. */
 inline void calc_angle_cossquare_3body_forces(
     Particle const *p_mid, Particle const *p_left, Particle const *p_right,
-    Bonded_ia_parameters const *iaparams, double force1[3], double force2[3],
-    double force3[3]) {
-  double pot_dep;
-  double cos_phi;
-  double sin_phi;
-  double vec21[3];
-  double vec31[3];
-  double vec21_sqr;
-  double vec31_sqr;
-  double vec21_magn;
-  double vec31_magn;
-  double fac;
+    Bonded_ia_parameters const *iaparams, Vector3d &force1, Vector3d &force2,
+    Vector3d &force3) {
 
-  calc_angle_3body_vector(p_mid->r.p, p_left->r.p, p_right->r.p, cos_phi,
-                          sin_phi, vec21, vec31, vec21_sqr, vec31_sqr,
-                          vec21_magn, vec31_magn);
-
-  /* uncomment this block if interested in the angle
-  if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
-  if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
-  phi = acos(cos_phi);
-  */
-  {
-    double K, cos_phi0;
-    K = iaparams->p.angle_cossquare.bend;
-    cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
-
+  auto forceFactor = [&iaparams](double &cos_phi, double &sin_phi) {
+    /* uncomment this block if interested in the angle
+    if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
+    if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
+    phi = acos(cos_phi);
+    */
+    auto K = iaparams->p.angle_cossquare.bend;
+    auto cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
     // potential dependent term [dU/dphi = K * (sin_phi * cos_phi0 - cos_phi *
     // sin_phi)]
-    pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi);
-  }
+    auto pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi);
+    auto fac = pot_dep / sin_phi;
+    return fac;
+  };
 
-  fac = pot_dep / sin_phi;
-
-  calc_angle_3body_force(cos_phi, fac, vec21, vec31, vec21_sqr, vec31_sqr,
-                         vec21_magn, vec31_magn, force1, force2, force3);
+  calc_angle_generic_3body_forces(p_mid, p_left, p_right, forceFactor, force1,
+                                  force2, force3);
 }
 
 /** Computes the three-body angle interaction energy.
@@ -128,14 +107,16 @@ inline int angle_cossquare_energy(Particle const *p_mid, Particle const *p_left,
                                   Particle const *p_right,
                                   Bonded_ia_parameters const *iaparams,
                                   double *_energy) {
-  double cosine, vec1[3], vec2[3], d1i, d2i;
-
   /* vector from p_left to p_mid */
-  calc_angle_vector(p_mid->r.p, p_left->r.p, vec1, d1i);
+  auto vec1 = get_mi_vector(p_mid->r.p, p_left->r.p);
+  double d1i = 1.0 / vec1.norm();
+  vec1 *= d1i;
   /* vector from p_mid to p_right */
-  calc_angle_vector(p_right->r.p, p_mid->r.p, vec2, d2i);
+  auto vec2 = get_mi_vector(p_right->r.p, p_mid->r.p);
+  double d2i = 1.0 / vec2.norm();
+  vec2 *= d2i;
   /* scalar product of vec1 and vec2 */
-  cosine = scalar(vec1, vec2);
+  double cosine = scalar(vec1, vec2);
   if (cosine > TINY_COS_VALUE)
     cosine = TINY_COS_VALUE;
   if (cosine < -TINY_COS_VALUE)

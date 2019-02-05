@@ -636,7 +636,7 @@ inline void add_bonded_force(Particle *p1) {
                           << n_partners << "\n";
         return;
       }
-    } // 2 partners (angel bonds...)
+    } // 2 partners (angle bonds...)
     else if (n_partners == 3) {
       switch (type) {
 #ifdef MEMBRANE_COLLISION

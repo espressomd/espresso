@@ -242,8 +242,8 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
 inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2,
                                           Particle *p3,
                                           Bonded_ia_parameters *iaparams,
-                                          double force1[3], double force2[3],
-                                          double force3[3]) {
+                                          Vector3d &force1, Vector3d &force2,
+                                          Vector3d &force3) {
 
 #ifdef TABULATED
 // char* errtxt;
@@ -344,13 +344,6 @@ inline void add_bonded_virials(Particle *p1) {
  *  not the physics.
  */
 inline void add_three_body_bonded_stress(Particle *p1) {
-  double dx12[3]; // espresso notation
-  double dx21[3];
-  double dx31[3];
-  double force1[3];
-  double force2[3];
-  double force3[3];
-
   // char *errtxt;
   Particle *p2;
   Particle *p3;
@@ -372,18 +365,10 @@ inline void add_three_body_bonded_stress(Particle *p1) {
       p2 = local_particles[p1->bl.e[++i]];
       p3 = local_particles[p1->bl.e[++i]];
 
-      get_mi_vector(dx12, p1->r.p, p2->r.p);
-      for (j = 0; j < 3; j++)
-        dx21[j] = -dx12[j];
+      auto dx21 = -get_mi_vector(p1->r.p, p2->r.p);
+      auto dx31 = get_mi_vector(p3->r.p, p1->r.p);
 
-      get_mi_vector(dx31, p3->r.p, p1->r.p);
-
-      for (j = 0; j < 3; j++) {
-        force1[j] = 0.0;
-        force2[j] = 0.0;
-        force3[j] = 0.0;
-      }
-
+      Vector3d force1, force2, force3;
       calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2,
                                     force3);
 
@@ -428,17 +413,9 @@ inline void add_three_body_bonded_stress(Particle *p1) {
         p2 = local_particles[p1->bl.e[++i]];
         p3 = local_particles[p1->bl.e[++i]];
 
-        get_mi_vector(dx12, p1->r.p, p2->r.p);
-        for (j = 0; j < 3; j++)
-          dx21[j] = -dx12[j];
-
-        get_mi_vector(dx31, p3->r.p, p1->r.p);
-
-        for (j = 0; j < 3; j++) {
-          force1[j] = 0.0;
-          force2[j] = 0.0;
-          force3[j] = 0.0;
-        }
+        auto dx21 = -get_mi_vector(p1->r.p, p2->r.p);
+        auto dx31 = get_mi_vector(p3->r.p, p1->r.p);
+        Vector3d force1, force2, force3;
 
         calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2,
                                       force3);
