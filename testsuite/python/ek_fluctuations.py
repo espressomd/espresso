@@ -56,16 +56,16 @@ class ek_fluctuations(ut.TestCase):
 
 #Setup the Fluid
 
-        ek = electrokinetics.Electrokinetics(agrid = agrid,
-                                             lb_density = 1.0,
-                                             viscosity = 1.0,
-                                             friction = 0.0,
-                                             T =1.0,
-                                             prefactor = 1.0,
-                                             stencil = 'linkcentered',
-                                             advection = False,
-                                             fluctuations = True,
-                                             fluctuation_amplitude = 1.0)
+        ek = electrokinetics.Electrokinetics(agrid=agrid,
+                                             lb_density=1.0,
+                                             viscosity=1.0,
+                                             friction=0.0,
+                                             T=1.0,
+                                             prefactor=1.0,
+                                             stencil='linkcentered',
+                                             advection=False,
+                                             fluctuations=True,
+                                             fluctuation_amplitude=1.0)
 
         species = electrokinetics.Species(density=rho0,
                                           D=diff,
@@ -83,8 +83,8 @@ class ek_fluctuations(ut.TestCase):
         n_min = 10.0
         n_max = 44.0
         bin_size = 0.25
-        bins = np.zeros(int((n_max-n_min)/bin_size))
-        x_range = np.linspace(n_min,n_max,int((n_max-n_min)/bin_size))
+        bins = np.zeros(int((n_max - n_min) / bin_size))
+        x_range = np.linspace(n_min, n_max, int((n_max - n_min) / bin_size))
         sample_steps = 100
         integration_steps = 200
         count = 0
@@ -96,7 +96,7 @@ class ek_fluctuations(ut.TestCase):
             for i in range(box_x):
                 for j in range(box_y):
                     for k in range(box_z):
-                        dens = species[i,j,k].density
+                        dens = species[i, j, k].density
                         if(dens < n_max and dens > n_min):
                             x = int((dens - n_min) / bin_size)
                             bins[x] += 1
@@ -108,11 +108,12 @@ class ek_fluctuations(ut.TestCase):
 
         p = []
         for i in x_range:
-            p.append(1.0/(math.sqrt(2.0*math.pi*i))*math.pow(rho0/i,i)*math.exp(i-rho0))
+            p.append(1.0 / (math.sqrt(2.0 * math.pi * i))
+                     * math.pow(rho0 / i, i) * math.exp(i - rho0))
 
         max_diff = 0.0
         for i in range(len(x_range)):
-            max_diff = max(math.fabs(p[i]-bins[i]),max_diff)
+            max_diff = max(math.fabs(p[i] - bins[i]), max_diff)
 
         self.assertLess(max_diff, 5.0e-03,
                         "Density distribution accuracy not achieved, allowed deviation: 5.0e-03, measured: {}".format(max_diff))
