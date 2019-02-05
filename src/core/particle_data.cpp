@@ -1111,20 +1111,20 @@ std::pair<Cell *, size_t> find_particle(Particle *p, CellPList cells) {
   return {nullptr, 0};
 }
 
-    void remove_all_bonds_to(IntList &bl, int to) {
-      for (int i = 0; i < bl.n;) {
-        auto const partners = bonded_ia_params[bl.e[i]].num;
-        int j = 1;
-        for (; j <= partners; j++)
-          if (bl.e[i + j] == to)
-            break;
-        if (j <= partners) {
-          bl.erase(bl.begin() + i, bl.begin() + i + 1 + partners);
-        } else
-          i += 1 + partners;
-      }
-    }
+void remove_all_bonds_to(IntList &bl, int to) {
+  for (int i = 0; i < bl.n;) {
+    auto const partners = bonded_ia_params[bl.e[i]].num;
+    int j = 1;
+    for (; j <= partners; j++)
+      if (bl.e[i + j] == to)
+        break;
+    if (j <= partners) {
+      bl.erase(bl.begin() + i, bl.begin() + i + 1 + partners);
+    } else
+      i += 1 + partners;
+  }
 }
+} // namespace
 
 void remove_all_bonds_to(int identity) {
   for (auto &p : local_cells.particles()) {
@@ -1136,10 +1136,10 @@ void local_remove_particle(int part) {
   Cell *cell = nullptr;
   size_t n = 0;
 
-  for(auto c: local_cells) {
-    for(int i = 0; i < c->n; i++) {
+  for (auto c : local_cells) {
+    for (int i = 0; i < c->n; i++) {
       auto &p = c->part[i];
-      if(p.identity() == part) {
+      if (p.identity() == part) {
         cell = c;
         n = i;
       }
