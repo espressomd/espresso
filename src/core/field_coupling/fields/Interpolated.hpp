@@ -98,7 +98,7 @@ public:
   /*
    * @brief Evaluate f at pos with the field value as argument.
    */
-  value_type operator()(const Vector3d &pos, double) const {
+  value_type operator()(const Vector3d &pos, double = {}) const {
     using Utils::Interpolation::bspline_3d_accumulate;
     return bspline_3d_accumulate<2>(
         pos,
@@ -109,7 +109,7 @@ public:
   /*
    * @brief Evaluate f at pos with the gradient field value as argument.
    */
-  gradient_type gradient(const Vector3d &pos) const {
+  gradient_type gradient(const Vector3d &pos, double = {}) const {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
     return bspline_3d_gradient_accumulate<2>(
         pos,

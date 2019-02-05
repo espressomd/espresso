@@ -36,14 +36,14 @@ public:
   using Base::Base;
 
   template <typename Particle>
-  Vector3d force(const Particle &p, const Vector3d &folded_pos) const {
+  Vector3d force(const Particle &p, const Vector3d &folded_pos, double t) const {
     using detail::make_bind_coupling;
-    return m_coupling(p, -m_field.gradient(folded_pos));
+    return m_coupling(p, -m_field.gradient(folded_pos, t));
   }
 
   template <typename Particle>
-  double energy(const Particle &p, const Vector3d &folded_pos) const {
-    return m_coupling(p, m_field(folded_pos, 0.));
+  double energy(const Particle &p, const Vector3d &folded_pos, double t) const {
+    return m_coupling(p, m_field(folded_pos, t));
   }
 };
 } /* namespace FieldCoupling */

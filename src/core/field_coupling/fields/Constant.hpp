@@ -40,7 +40,7 @@ public:
 
   value_type &value() { return m_value; }
 
-  value_type operator()(const Vector3d &, double) const { return m_value; }
+  value_type operator()(const Vector3d &, double = {}) const { return m_value; }
   static constexpr gradient_type gradient(const Vector3d &) {
     return gradient_type{};
   }

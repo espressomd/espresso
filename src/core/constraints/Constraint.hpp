@@ -28,8 +28,7 @@ public:
   /**
    * @brief Add energy contribution of this constraints to energy.
    */
-  virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
-                          Observable_stat &energy) const = 0;
+  virtual void add_energy(const Particle &p, const Vector3d &folded_pos, double t, Observable_stat &energy) const = 0;
   /**
    * @brief Return constraint force on particle.
    */
