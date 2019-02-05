@@ -64,6 +64,7 @@ elc_mmm2d_common_add_force_dir(int position, const double *partblk, const double
 
 
 double helper_first(int position, const double *partblk, const double *gblcblk, bool sum);
+
 double helper_second(int position, const double *partblk, const double *gblcblk, bool sum);
 
 inline double
