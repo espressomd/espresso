@@ -96,8 +96,6 @@ struct LB_parameters_gpu {
    */
   int lb_couple_switch;
 
-  float lb_coupl_pref;
-  float lb_coupl_pref2;
   float bulk_viscosity;
 
   /** lattice spacing (LJ units) */

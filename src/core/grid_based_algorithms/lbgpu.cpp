@@ -68,10 +68,6 @@ LB_parameters_gpu lbpar_gpu = {
     0.0,
     // lb_couple_switch
     LB_COUPLE_TWO_POINT,
-    // lb_coupl_pref
-    0.0,
-    // lb_coupl_pref2
-    0.0,
     // bulk_viscosity
     -1.0,
     // agrid
@@ -186,8 +182,6 @@ void lb_release_gpu() {
 }
 /** (Re-)initialize the fluid. */
 void lb_reinit_parameters_gpu() {
-  int ii;
-
   lbpar_gpu.time_step = (float)time_step;
   lbpar_gpu.mu = 0.0;
 
@@ -227,22 +221,6 @@ void lb_reinit_parameters_gpu() {
     lbpar_gpu.mu = lbpar_gpu.kT * lbpar_gpu.tau * lbpar_gpu.tau / c_sound_sq /
                    (lbpar_gpu.agrid * lbpar_gpu.agrid);
 
-    /* lb_coupl_pref is stored in MD units (force)
-     * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
-     * The factor 12 comes from the fact that we use random numbers
-     * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-     * time_step comes from the discretization.
-     */
-
-    lbpar_gpu.lb_coupl_pref = sqrtf(12.f * 2.f * lbpar_gpu.friction *
-                                    lbpar_gpu.kT / lbpar_gpu.time_step);
-    lbpar_gpu.lb_coupl_pref2 =
-        sqrtf(2.f * lbpar_gpu.friction * lbpar_gpu.kT / lbpar_gpu.time_step);
-
-  } else {
-    /* no fluctuations at zero temperature */
-    lbpar_gpu.lb_coupl_pref = 0.0;
-    lbpar_gpu.lb_coupl_pref2 = 0.0;
   }
   LB_TRACE(fprintf(stderr, "lb_reinit_prarameters_gpu \n"));
 

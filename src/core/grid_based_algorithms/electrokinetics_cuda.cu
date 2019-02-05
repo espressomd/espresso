@@ -3559,8 +3559,6 @@ void ek_print_lbpar() {
   printf("    float tau = %f;\n", lbpar_gpu.tau);
   printf("    float friction = %f;\n", lbpar_gpu.friction);
   printf("    float time_step = %f;\n", lbpar_gpu.time_step);
-  printf("    float lb_coupl_pref = %f;\n", lbpar_gpu.lb_coupl_pref);
-  printf("    float lb_coupl_pref2 = %f;\n", lbpar_gpu.lb_coupl_pref2);
   printf("    float bulk_viscosity = %f;\n", lbpar_gpu.bulk_viscosity);
   printf("    unsigned int dim_x = %d;\n", lbpar_gpu.dim_x);
   printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim_y);
