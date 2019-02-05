@@ -1091,27 +1091,7 @@ int remove_particle(int p_id) {
 }
 
 namespace {
-std::pair<Cell *, size_t> find_particle(Particle *p, Cell *c) {
-  for (int i = 0; i < c->n; ++i) {
-    if ((c->part + i) == p) {
-      return {c, i};
-    }
-  }
-  return {nullptr, 0};
-}
-
-std::pair<Cell *, size_t> find_particle(Particle *p, CellPList cells) {
-  for (auto &c : cells) {
-    auto res = find_particle(p, c);
-    if (res.first) {
-      return res;
-    }
-  }
-
-  return {nullptr, 0};
-}
-
-void remove_all_bonds_to(IntList &bl, int to) {
+    void remove_all_bonds_to(IntList &bl, int to) {
   for (int i = 0; i < bl.n;) {
     auto const partners = bonded_ia_params[bl.e[i]].num;
     int j = 1;
@@ -1134,7 +1114,7 @@ void remove_all_bonds_to(int identity) {
 
 void local_remove_particle(int part) {
   Cell *cell = nullptr;
-  size_t n = 0;
+  int n = 0;
 
   for (auto c : local_cells) {
     for (int i = 0; i < c->n; i++) {
