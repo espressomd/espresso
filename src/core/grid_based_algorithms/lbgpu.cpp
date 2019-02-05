@@ -94,8 +94,6 @@ LB_parameters_gpu lbpar_gpu = {
     // number_of_boundnodes
     0,
 #endif
-    // fluct
-    0,
     // calc_val
     1,
     // external_force
@@ -105,7 +103,10 @@ LB_parameters_gpu lbpar_gpu = {
     // your_seed
     12345,
     // reinit
-    0};
+    0,
+    // Thermal energy
+    0.0
+};
 
 /** this is the array that stores the hydrodynamic fields for the output */
 LB_rho_v_pi_gpu *host_values = nullptr;
@@ -219,13 +220,12 @@ void lb_reinit_parameters_gpu() {
         -(7.0f * lbpar_gpu.gamma_even + 1.0f) / (lbpar_gpu.gamma_even + 7.0f);
   }
 
-  if (temperature > 0.0) { /* fluctuating hydrodynamics ? */
+  if (lbpar_gpu.kT > 0.0) { /* fluctuating hydrodynamics ? */
 
-    lbpar_gpu.fluct = 1;
     LB_TRACE(fprintf(stderr, "fluct on \n"));
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).*/
     /* Note that the modes are not normalized as in the paper here! */
-    lbpar_gpu.mu = (float)temperature * lbpar_gpu.tau * lbpar_gpu.tau /
+    lbpar_gpu.mu = lbpar_gpu.kT * lbpar_gpu.tau * lbpar_gpu.tau /
                    c_sound_sq / (lbpar_gpu.agrid * lbpar_gpu.agrid);
 
     /* lb_coupl_pref is stored in MD units (force)
@@ -236,13 +236,12 @@ void lb_reinit_parameters_gpu() {
      */
 
     lbpar_gpu.lb_coupl_pref = sqrtf(12.f * 2.f * lbpar_gpu.friction *
-                                    (float)temperature / lbpar_gpu.time_step);
+                                    lbpar_gpu.kT / lbpar_gpu.time_step);
     lbpar_gpu.lb_coupl_pref2 = sqrtf(2.f * lbpar_gpu.friction *
-                                     (float)temperature / lbpar_gpu.time_step);
+                                     lbpar_gpu.kT / lbpar_gpu.time_step);
 
   } else {
     /* no fluctuations at zero temperature */
-    lbpar_gpu.fluct = 0;
     lbpar_gpu.lb_coupl_pref = 0.0;
     lbpar_gpu.lb_coupl_pref2 = 0.0;
   }

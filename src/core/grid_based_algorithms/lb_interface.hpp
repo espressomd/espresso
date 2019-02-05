@@ -60,6 +60,7 @@ void lb_lbfluid_set_couple_flag(int couple_flag);
 void lb_lbfluid_set_agrid(double p_agrid);
 void lb_lbfluid_set_ext_force_density(int component,
                                       const Vector3d &force_density);
+void lb_lbfluid_set_kT(double kT);
 
 void lb_lbnode_set_rho(const Vector3i &ind, double rho);
 void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u);
@@ -74,6 +75,7 @@ double lb_lbfluid_get_bulk_visc();
 double lb_lbfluid_get_visc();
 double lb_lbfluid_get_density();
 const Vector3d lb_lbfluid_get_ext_force_density();
+double lb_lbfluid_get_kT();
 
 double lb_lbnode_get_rho(const Vector3i &ind);
 const Vector3d lb_lbnode_get_u(const Vector3i &ind);

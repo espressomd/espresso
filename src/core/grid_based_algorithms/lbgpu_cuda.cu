@@ -2543,7 +2543,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
   if (index < para->number_of_nodes) {
     calc_m_from_n(n_a, index, mode);
     relax_modes(mode, index, node_f, d_v);
-    if (para->fluct) {
+    if (para->kT > 0.0) {
       thermalize_modes(mode, index, philox_counter);
     }
     apply_forces(index, mode, node_f, d_v);

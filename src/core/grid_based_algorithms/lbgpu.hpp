@@ -120,8 +120,6 @@ struct LB_parameters_gpu {
 #ifdef LB_BOUNDARIES_GPU
   unsigned int number_of_boundnodes;
 #endif
-  /** Flag indicating whether fluctuations are present. */
-  int fluct;
   /** to calculate and print out physical values */
   int calc_val;
 
@@ -132,6 +130,8 @@ struct LB_parameters_gpu {
   unsigned int your_seed;
 
   unsigned int reinit;
+  // Thermal energy
+  float kT;
 };
 
 /** Conserved quantities for the lattice Boltzmann system. */

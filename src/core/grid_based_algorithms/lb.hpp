@@ -57,6 +57,7 @@ void mpi_set_lb_fluid_counter(int high, int low);
 #define LBPAR_FRICTION 4
 #define LBPAR_EXTFORCE 5 /**< external force density acting on the fluid */
 #define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
+#define LBPAR_KT 7 /**< thermal energy */
 
 /** Note these are used for binary logic so should be powers of 2 */
 #define LB_COUPLE_NULL 1
@@ -174,6 +175,8 @@ struct LB_Parameters {
   int fluct;
   /** amplitudes of the fluctuations of the modes */
   Vector<19, double> phi;
+  // Thermal energy
+  double kT;
 };
 
 /** The DnQm model to be used. */

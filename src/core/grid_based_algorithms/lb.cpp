@@ -106,7 +106,10 @@ LB_Parameters lbpar = {
     // resend_halo
     0,
     // phi
-    {}};
+    {},
+    // Thermal energy
+    0.0
+};
 
 /** The DnQm model to be used. */
 LB_Model<> lbmodel = {::D3Q19::c,

@@ -69,13 +69,13 @@ void lb_reinit_parameters() {
   // gamma_odd = 0.0;
   // gamma_even = 0.0;
 
-  if (temperature > 0.0) {
+  if (lbpar.kT > 0.0) {
     /* fluctuating hydrodynamics ? */
     lbpar.fluct = 1;
 
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
      * Note that the modes are not normalized as in the paper here! */
-    double mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
+    double mu = lbpar.kT / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
                 (lbpar.agrid * lbpar.agrid);
     // mu *= agrid*agrid*agrid;  // Marcello's conjecture
 
@@ -680,6 +680,32 @@ void lb_set_lattice_switch(int local_lattice_switch) {
   default:
     throw std::invalid_argument("Invalid lattice switch.");
   }
+}
+
+void lb_lbfluid_set_kT(double kT) {
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    lbpar_gpu.kT = kT;
+#endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    lbpar.kT = kT;
+    mpi_bcast_lb_params(LBPAR_KT);
+#endif
+  }
+}
+
+double lb_lbfluid_get_kT() {
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    return static_cast<double>(lbpar_gpu.kT);
+#endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    return lbpar.kT;
+#endif
+  }
+  return {};
 }
 
 void lb_lbfluid_print_vtk_boundary(const std::string &filename) {

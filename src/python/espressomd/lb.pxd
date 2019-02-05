@@ -114,6 +114,8 @@ IF LB_GPU or LB:
         stdint.uint64_t lb_fluid_rng_state() except +
         stdint.uint64_t lb_coupling_rng_state() except +
         void lb_fluid_set_rng_state(stdint.uint64_t) except +
+        void lb_lbfluid_set_kT(double) except +
+        double lb_lbfluid_get_kT() except +
 
     cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
         void lb_coupling_set_rng_state(stdint.uint64_t)

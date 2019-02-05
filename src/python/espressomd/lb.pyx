@@ -118,10 +118,8 @@ IF LB_GPU or LB:
             if self._params["kT"] > 0.:
                 seed = self._params["seed"]
                 lb_fluid_set_rng_state(seed)
+                lb_lbfluid_set_kT(self._params["kT"])
 
-            global temperature
-            temperature = float(self._params["kT"])
-            mpi_bcast_parameter(FIELD_TEMPERATURE)
             python_lbfluid_set_density(
     self._params["dens"],
      self._params["agrid"])
@@ -163,8 +161,8 @@ IF LB_GPU or LB:
         ####################################################
         def _get_params_from_es_core(self):
             default_params = self.default_params()
-            global temperature
-            self._params["kT"] = temperature
+            cdef double kT = lb_lbfluid_get_kT()
+            self._params["kT"] = kT
             cdef stdint.uint64_t seed = lb_fluid_rng_state()
             self._params['seed'] = seed
             if python_lbfluid_get_density(self._params["dens"], self._params["agrid"]):

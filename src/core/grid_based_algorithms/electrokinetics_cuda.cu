@@ -3568,7 +3568,6 @@ void ek_print_lbpar() {
   printf("    unsigned int number_of_nodes = %d;\n", lbpar_gpu.number_of_nodes);
   printf("    unsigned int number_of_particles = %d;\n",
          lbpar_gpu.number_of_particles);
-  printf("    int fluct = %d;\n", lbpar_gpu.fluct);
   printf("    int calc_val = %d;\n", lbpar_gpu.calc_val);
   printf("    int external_force_density = %d;\n",
          lbpar_gpu.external_force_density);
