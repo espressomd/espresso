@@ -118,7 +118,7 @@ IF LB_GPU or LB:
             if self._params["kT"] > 0.:
                 seed = self._params["seed"]
                 lb_fluid_set_rng_state(seed)
-                lb_lbfluid_set_kT(self._params["kT"])
+            lb_lbfluid_set_kT(self._params["kT"])
 
             python_lbfluid_set_density(
     self._params["dens"],

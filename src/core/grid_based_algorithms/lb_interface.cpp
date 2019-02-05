@@ -44,8 +44,6 @@ void lb_on_integration_start() {
 /** (Re-)initialize the fluid. */
 void lb_reinit_parameters() {
 #ifdef LB
-  int i;
-
   if (lbpar.viscosity > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     lbpar.gamma_shear = 1. - 2. / (6. * lbpar.viscosity + 1.);
@@ -77,20 +75,19 @@ void lb_reinit_parameters() {
      * Note that the modes are not normalized as in the paper here! */
     double mu = lbpar.kT / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
                 (lbpar.agrid * lbpar.agrid);
-    // mu *= agrid*agrid*agrid;  // Marcello's conjecture
 
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
       lbpar.phi[i] = 0.0;
     lbpar.phi[4] =
         sqrt(mu * lbmodel.w_k[4] *
-             (1. - Utils::sqr(lbpar.gamma_bulk))); // Utils::sqr(x) == x*x
-    for (i = 5; i < 10; i++)
+             (1. - Utils::sqr(lbpar.gamma_bulk)));
+    for (int i = 5; i < 10; i++)
       lbpar.phi[i] =
           sqrt(mu * lbmodel.w_k[i] * (1. - Utils::sqr(lbpar.gamma_shear)));
-    for (i = 10; i < 16; i++)
+    for (int i = 10; i < 16; i++)
       lbpar.phi[i] =
           sqrt(mu * lbmodel.w_k[i] * (1 - Utils::sqr(lbpar.gamma_odd)));
-    for (i = 16; i < 19; i++)
+    for (int i = 16; i < 19; i++)
       lbpar.phi[i] =
           sqrt(mu * lbmodel.w_k[i] * (1 - Utils::sqr(lbpar.gamma_even)));
 
@@ -103,7 +100,7 @@ void lb_reinit_parameters() {
   } else {
     /* no fluctuations at zero temperature */
     lbpar.fluct = 0;
-    for (i = 0; i < lbmodel.n_veloc; i++)
+    for (int i = 0; i < lbmodel.n_veloc; i++)
       lbpar.phi[i] = 0.0;
   }
 #endif
