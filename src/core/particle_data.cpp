@@ -1091,7 +1091,7 @@ int remove_particle(int p_id) {
 }
 
 namespace {
-    void remove_all_bonds_to(IntList &bl, int to) {
+void remove_all_bonds_to(IntList &bl, int to) {
   for (int i = 0; i < bl.n;) {
     auto const partners = bonded_ia_params[bl.e[i]].num;
     int j = 1;
