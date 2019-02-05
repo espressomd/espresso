@@ -220,7 +220,6 @@ void lb_reinit_parameters_gpu() {
     /* Note that the modes are not normalized as in the paper here! */
     lbpar_gpu.mu = lbpar_gpu.kT * lbpar_gpu.tau * lbpar_gpu.tau / c_sound_sq /
                    (lbpar_gpu.agrid * lbpar_gpu.agrid);
-
   }
   LB_TRACE(fprintf(stderr, "lb_reinit_prarameters_gpu \n"));
 

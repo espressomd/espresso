@@ -1658,8 +1658,8 @@ __device__ void calc_viscous_force_three_point_couple(
   /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
   float4 random_floats = random_wrapper_philox(
       particle_data[part_index].identity, LBQ * 32, philox_counter);
-  float lb_coupl_pref = sqrtf(12.f * 2.f * para->friction *
-                                    para->kT / para->time_step);
+  float lb_coupl_pref =
+      sqrtf(12.f * 2.f * para->friction * para->kT / para->time_step);
   viscforce_density[0] += lb_coupl_pref * (random_floats.w - 0.5f);
   viscforce_density[1] += lb_coupl_pref * (random_floats.x - 0.5f);
   viscforce_density[2] += lb_coupl_pref * (random_floats.y - 0.5f);
@@ -1961,8 +1961,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta,
    * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
    * time_step comes from the discretization.
    */
-  float lb_coupl_pref = sqrtf(12.f * 2.f * para->friction *
-                                    para->kT / para->time_step);
+  float lb_coupl_pref =
+      sqrtf(12.f * 2.f * para->friction * para->kT / para->time_step);
   viscforce_density[0] += lb_coupl_pref * (random_floats.w - 0.5f);
   viscforce_density[1] += lb_coupl_pref * (random_floats.x - 0.5f);
   viscforce_density[2] += lb_coupl_pref * (random_floats.y - 0.5f);

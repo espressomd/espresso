@@ -79,8 +79,7 @@ void lb_reinit_parameters() {
     for (int i = 0; i < 4; i++)
       lbpar.phi[i] = 0.0;
     lbpar.phi[4] =
-        sqrt(mu * lbmodel.w_k[4] *
-             (1. - Utils::sqr(lbpar.gamma_bulk)));
+        sqrt(mu * lbmodel.w_k[4] * (1. - Utils::sqr(lbpar.gamma_bulk)));
     for (int i = 5; i < 10; i++)
       lbpar.phi[i] =
           sqrt(mu * lbmodel.w_k[i] * (1. - Utils::sqr(lbpar.gamma_shear)));
