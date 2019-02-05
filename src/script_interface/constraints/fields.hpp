@@ -58,12 +58,12 @@ struct field_params_impl<Constant<T, codim>> {
 
 template <typename T, size_t codim>
 struct field_params_impl<AffineMap<T, codim>> {
-  using gradient_type = typename AffineMap<T, codim>::gradient_type;
+  using jacobian_type = typename AffineMap<T, codim>::jacobian_type;
   using value_type = typename AffineMap<T, codim>::value_type;
 
   static AffineMap<T, codim> make(const VariantMap &params) {
     return AffineMap<T, codim>{
-        get_value<gradient_type>(params, "A"),
+        get_value<jacobian_type>(params, "A"),
         get_value_or<value_type>(params, "b", value_type{})};
   }
 
@@ -76,7 +76,7 @@ struct field_params_impl<AffineMap<T, codim>> {
 
 template <typename T, size_t codim>
 struct field_params_impl<PlaneWave<T, codim>> {
-  using gradient_type = typename PlaneWave<T, codim>::gradient_type;
+  using jacobian_type = typename PlaneWave<T, codim>::jacobian_type;
   using value_type = typename PlaneWave<T, codim>::value_type;
 
   static PlaneWave<T, codim> make(const VariantMap &params) {

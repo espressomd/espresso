@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_EXTERNAL_FIELD_FIELDS_PLAIN_WAVE_HPP
 #define CORE_EXTERNAL_FIELD_FIELDS_PLAIN_WAVE_HPP
 
-#include "gradient_type.hpp"
+#include "jacobian_type.hpp"
 #include "utils/Vector.hpp"
 
 namespace FieldCoupling {
@@ -30,7 +30,7 @@ namespace Fields {
 template <typename T, size_t codim> class PlaneWave {
 public:
   using value_type = typename decay_to_scalar<Vector<codim, T>>::type;
-  using gradient_type = detail::gradient_type<T, codim>;
+  using jacobian_type = detail::jacobian_type<T, codim>;
 
 private:
   value_type m_amplitude;
@@ -51,7 +51,7 @@ public:
     return m_amplitude * sin(m_k * x - m_omega * t + m_phase);
   }
 
-  gradient_type gradient(const Vector3d &x, T t = 0.) const {
+  jacobian_type jacobian(const Vector3d &x, T t = 0.) const {
     using Utils::tensor_product;
 
     return tensor_product(m_amplitude, m_k) *

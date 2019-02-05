@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_EXTERNAL_FIELD_FIELDS_AFFINE_MAP_HPP
 #define CORE_EXTERNAL_FIELD_FIELDS_AFFINE_MAP_HPP
 
-#include "gradient_type.hpp"
+#include "jacobian_type.hpp"
 #include "utils/Vector.hpp"
 
 namespace FieldCoupling {
@@ -54,23 +54,23 @@ template <typename T> struct matrix_vector_impl<T, 1> {
 template <typename T, size_t codim> class AffineMap {
 public:
   using value_type = typename decay_to_scalar<Vector<codim, T>>::type;
-  using gradient_type = detail::gradient_type<T, codim>;
+  using jacobian_type = detail::jacobian_type<T, codim>;
 
 private:
-  gradient_type m_A;
+  jacobian_type m_A;
   value_type m_b;
 
 public:
-  AffineMap(const gradient_type &A, const value_type &b) : m_A(A), m_b(b) {}
+  AffineMap(const jacobian_type &A, const value_type &b) : m_A(A), m_b(b) {}
 
-  gradient_type &A() { return m_A; }
+  jacobian_type &A() { return m_A; }
   value_type &b() { return m_b; }
 
   value_type operator()(const Vector3d &pos, double = {}) const {
     return detail::matrix_vector_impl<T, codim>{}(m_A, pos) + m_b;
   }
 
-  gradient_type gradient(const Vector3d &, double = {}) const { return m_A; }
+  jacobian_type jacobian(const Vector3d &, double = {}) const { return m_A; }
 
   bool fits_in_box(const Vector3d &) const { return true; }
 };
