@@ -117,8 +117,9 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
 #endif
 }
 
-void
-ShapeBasedConstraint::add_energy(const Particle &p, const Vector3d &folded_pos, double t, Observable_stat &energy) const {
+void ShapeBasedConstraint::add_energy(const Particle &p,
+                                      const Vector3d &folded_pos, double t,
+                                      Observable_stat &energy) const {
   double dist;
   IA_parameters *ia_params;
   double nonbonded_en = 0.0;

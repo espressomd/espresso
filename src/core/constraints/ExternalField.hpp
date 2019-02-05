@@ -37,7 +37,8 @@ public:
   const Coupling &coupling() const { return impl.coupling(); }
   const Field &field() const { return impl.field(); }
 
-  void add_energy(const Particle &, const Vector3d &, double t, Observable_stat &) const override {}
+  void add_energy(const Particle &, const Vector3d &, double t,
+                  Observable_stat &) const override {}
 
   ParticleForce force(const Particle &p, const Vector3d &folded_pos,
                       double t) override {
