@@ -1110,30 +1110,47 @@ std::pair<Cell *, size_t> find_particle(Particle *p, CellPList cells) {
 
   return {nullptr, 0};
 }
-} // namespace
+
+    void remove_all_bonds_to(IntList &bl, int to) {
+      for (int i = 0; i < bl.n;) {
+        auto const partners = bonded_ia_params[bl.e[i]].num;
+        int j = 1;
+        for (; j <= partners; j++)
+          if (bl.e[i + j] == to)
+            break;
+        if (j <= partners) {
+          bl.erase(bl.begin() + i, bl.begin() + i + 1 + partners);
+        } else
+          i += 1 + partners;
+      }
+    }
+}
+
+void remove_all_bonds_to(int identity) {
+  for (auto &p : local_cells.particles()) {
+    remove_all_bonds_to(p.bl, identity);
+  }
+}
 
 void local_remove_particle(int part) {
-  Particle *p = local_particles[part];
-  assert(p);
-  assert(not p->l.ghost);
-
-  /* If the particles are sorted we can use the
-   * cell system to find the cell containing the
-   * particle. Otherwise we do a brute force search
-   * of the cells. */
   Cell *cell = nullptr;
   size_t n = 0;
-  if (Cells::RESORT_NONE == get_resort_particles()) {
-    std::tie(cell, n) = find_particle(p, find_current_cell(*p));
+
+  for(auto c: local_cells) {
+    for(int i = 0; i < c->n; i++) {
+      auto &p = c->part[i];
+      if(p.identity() == part) {
+        cell = c;
+        n = i;
+      }
+
+      remove_all_bonds_to(p.bl, part);
+    }
   }
 
-  if (not cell) {
-    std::tie(cell, n) = find_particle(p, local_cells);
-  }
-
-  assert(cell && cell->part && (n < cell->n) && ((cell->part + n) == p));
-
-  Particle p_destroy = extract_particle(cell, n);
+  assert(cell);
+  extract_particle(cell, n);
+  update_local_particles(cell);
 }
 
 void local_place_particle(int part, const double p[3], int _new) {
@@ -1253,31 +1270,6 @@ int try_delete_bond(Particle *part, const int *bond) {
     }
   }
   return ES_ERROR;
-}
-
-void remove_all_bonds_to(int identity) {
-  for (auto &p : local_cells.particles()) {
-    IntList *bl = &p.bl;
-    int i, j, partners;
-
-    for (i = 0; i < bl->n;) {
-      partners = bonded_ia_params[bl->e[i]].num;
-      for (j = 1; j <= partners; j++)
-        if (bl->e[i + j] == identity)
-          break;
-      if (j <= partners) {
-        bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
-      } else
-        i += 1 + partners;
-    }
-    if (i != bl->n) {
-      fprintf(stderr,
-              "%d: INTERNAL ERROR: bond information corrupt for "
-              "particle %d, exiting...\n",
-              this_node, p.p.identity);
-      errexit();
-    }
-  }
 }
 
 #ifdef EXCLUSIONS
