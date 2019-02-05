@@ -26,10 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <type_traits>
 
 #include "constexpr.hpp"
+#include "type_traits.hpp"
 
 namespace Utils {
 namespace detail {
-template <typename T> using decay_t = typename std::decay<T>::type;
 
 template <class T, class C>
 using has_data =
@@ -109,6 +109,14 @@ public:
 
   constexpr pointer data() const { return m_ptr; }
 };
+
+template <typename T> Span<T> make_span(T *p, size_t N) {
+  return Span<T>(p, N);
+}
+
+template <typename T> Span<add_const_t<T>> make_const_span(T *p, size_t N) {
+  return Span<add_const_t<T>>(p, N);
+}
 } // namespace Utils
 
 #endif

@@ -164,9 +164,12 @@ private:
 
 // Useful typedefs
 
-typedef Vector<3, double> Vector3d;
+template <size_t N> using VectorXd = Vector<N, double>;
+using Vector2d = VectorXd<2>;
+using Vector3d = VectorXd<3>;
+using Vector4d = VectorXd<4>;
+
 typedef Vector<3, int> Vector3i;
-typedef Vector<2, double> Vector2d;
 
 namespace detail {
 template <size_t N, typename T, typename Op>
@@ -225,7 +228,7 @@ bool operator==(Vector<N, T> const &a, Vector<N, T> const &b) {
 
 template <size_t N, typename T>
 bool operator!=(Vector<N, T> const &a, Vector<N, T> const &b) {
-  return detail::all_of(a, b, std::not_equal_to<T>());
+  return not(a == b);
 }
 
 template <size_t N, typename T>
