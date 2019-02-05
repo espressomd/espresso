@@ -34,12 +34,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace FieldCoupling::Fields;
 
-BOOST_AUTO_TEST_CASE(gradient_type_test) {
-  using FieldCoupling::Fields::detail::gradient_type;
+BOOST_AUTO_TEST_CASE(jacobian_type_test) {
+  using FieldCoupling::Fields::detail::jacobian_type;
   using std::is_same;
 
-  static_assert(is_same<gradient_type<double, 1>, Vector3d>::value, "");
-  static_assert(is_same<gradient_type<double, 2>, Vector<2, Vector3d>>::value,
+  static_assert(is_same<jacobian_type<double, 1>, Vector3d>::value, "");
+  static_assert(is_same<jacobian_type<double, 2>, Vector<2, Vector3d>>::value,
                 "");
 }
 
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(constant_scalar_field) {
   /* Types */
   {
     static_assert(std::is_same<Field::value_type, double>::value, "");
-    static_assert(std::is_same<Field::gradient_type, Vector3d>::value, "");
+    static_assert(std::is_same<Field::jacobian_type, Vector3d>::value, "");
   }
 
   /* ctor */
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(constant_scalar_field) {
   {
     Field field(5.);
 
-    BOOST_CHECK(Vector3d{} == field.gradient({1., 2., 3.}));
+    BOOST_CHECK(Vector3d{} == field.jacobian({1., 2., 3.}));
   }
 }
 
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(constant_vector_field) {
   {
     static_assert(std::is_same<Field::value_type, Vector2d>::value, "");
     static_assert(
-        std::is_same<Field::gradient_type, Vector<2, Vector3d>>::value, "");
+        std::is_same<Field::jacobian_type, Vector<2, Vector3d>>::value, "");
   }
 
   /* ctor */
@@ -124,10 +124,10 @@ BOOST_AUTO_TEST_CASE(constant_vector_field) {
 
   /* Gradient */
   {
-    const auto zero = Field::gradient_type{};
+    const auto zero = Field::jacobian_type{};
     Field field({5., 6.});
 
-    BOOST_CHECK(zero == field.gradient({1., 2., 3.}));
+    BOOST_CHECK(zero == field.jacobian({1., 2., 3.}));
   }
 }
 
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
   {
     static_assert(std::is_same<Field::value_type, double>::value, "");
     static_assert(
-        std::is_same<Field::gradient_type, Vector<3, Field::value_type>>::value,
+        std::is_same<Field::jacobian_type, Vector<3, Field::value_type>>::value,
         "");
   }
 
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
     const double b = 4.;
     Field field(A, b);
 
-    BOOST_CHECK(A == field.gradient({1., 2., 3.}));
+    BOOST_CHECK(A == field.jacobian({1., 2., 3.}));
   }
 }
 
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
   {
     static_assert(std::is_same<Field::value_type, Vector2d>::value, "");
     static_assert(
-        std::is_same<Field::gradient_type, Matrix<2, 3, double>>::value, "");
+        std::is_same<Field::jacobian_type, Matrix<2, 3, double>>::value, "");
   }
 
   /* Field value unshifted */
@@ -219,7 +219,7 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
     const Vector2d b = {7., 8.};
     Field field(A, b);
 
-    BOOST_CHECK(A == field.gradient({1., 2., 3.}));
+    BOOST_CHECK(A == field.jacobian({1., 2., 3.}));
   }
 }
 
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
   /* Types */
   {
     static_assert(std::is_same<Field::value_type, double>::value, "");
-    static_assert(std::is_same<Field::gradient_type, Vector<3, double>>::value,
+    static_assert(std::is_same<Field::jacobian_type, Vector<3, double>>::value,
                   "");
   }
 
@@ -277,7 +277,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
                 std::numeric_limits<double>::epsilon());
   }
 
-  /* gradient value */
+  /* jacobian value */
   {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
 
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
     auto const p = Vector3d{-.4, 3.14, 0.1};
 
-    auto const field_value = field.gradient(p);
+    auto const field_value = field.jacobian(p);
 
     auto const interpolated_value = bspline_3d_gradient_accumulate<2>(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
   {
     static_assert(std::is_same<Field::value_type, Vector2d>::value, "");
     static_assert(
-        std::is_same<Field::gradient_type, Vector<2, Vector3d>>::value, "");
+        std::is_same<Field::jacobian_type, Vector<2, Vector3d>>::value, "");
   }
 
   /* field value */
@@ -351,7 +351,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
                       std::numeric_limits<double>::epsilon());
   }
 
-  /* gradient value */
+  /* jacobian value */
   {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
 
@@ -377,11 +377,11 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
 
     auto const p = Vector3d{-.4, 3.14, 0.1};
 
-    auto const field_value = field.gradient(p);
+    auto const field_value = field.jacobian(p);
 
     auto const interpolated_value = bspline_3d_gradient_accumulate<2>(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-        grid_spacing, origin, Field::gradient_type{});
+        grid_spacing, origin, Field::jacobian_type{});
 
     BOOST_CHECK_SMALL((interpolated_value[0] - field_value[0]).norm(),
                       std::numeric_limits<double>::epsilon());

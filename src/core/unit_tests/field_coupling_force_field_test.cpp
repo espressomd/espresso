@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(ForceField_test) {
 
 struct DummyScalarField {
   double operator()(const Vector3d &x, double t) const { return t * x.norm(); }
-  Vector3d gradient(const Vector3d &x, double = {}) const { return 3. * x; }
+  Vector3d jacobian(const Vector3d &x, double = {}) const { return 3. * x; }
 };
 
 BOOST_AUTO_TEST_CASE(PotentialField_test) {
