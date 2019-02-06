@@ -64,73 +64,23 @@ int magnetic_dipolar_direct_sum_sanity_checks() {
 
 double magnetic_dipolar_direct_sum_calculations(int force_flag,
                                                 int energy_flag) {
-  std::vector<double> x, y, z;
-  std::vector<double> mx, my, mz;
-  std::vector<double> fx, fy, fz;
-#ifdef ROTATION
-  std::vector<double> tx, ty, tz;
-#endif
-  int dip_particles, dip_particles2;
+  std::vector<Vector3d> m;
+  m.reserve(n_part);
+
   double u;
 
-  if (n_nodes != 1) {
-    fprintf(stderr, "error: magnetic Direct Sum is just for one cpu .... \n");
-    errexit();
-  }
-  if (!(force_flag) && !(energy_flag)) {
-    fprintf(stderr, " I don't know why you call dawaanr_caclulations with all "
-                    "flags zero \n");
-    return 0;
-  }
+  std::vector<Vector3d> pos;
+  pos.reserve(n_part);
 
-  x.resize(n_part);
-  y.resize(n_part);
-  z.resize(n_part);
-
-  mx.resize(n_part);
-  my.resize(n_part);
-  mz.resize(n_part);
-
+  std::vector<ParticleForce> f;
   if (force_flag) {
-    fx.resize(n_part);
-    fy.resize(n_part);
-    fz.resize(n_part);
-
-#ifdef ROTATION
-    tx.resize(n_part);
-    ty.resize(n_part);
-    tz.resize(n_part);
-#endif
+      f.reserve(n_part);
   }
 
-  dip_particles = 0;
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
-      const Vector3d dip = p.calc_dip();
-
-      mx[dip_particles] = dip[0];
-      my[dip_particles] = dip[1];
-      mz[dip_particles] = dip[2];
-
-      /* here we wish the coordinates to be folded into the primary box */
-      auto const ppos = folded_position(p.r.p);
-      x[dip_particles] = ppos[0];
-      y[dip_particles] = ppos[1];
-      z[dip_particles] = ppos[2];
-
-      if (force_flag) {
-        fx[dip_particles] = 0;
-        fy[dip_particles] = 0;
-        fz[dip_particles] = 0;
-
-#ifdef ROTATION
-        tx[dip_particles] = 0;
-        ty[dip_particles] = 0;
-        tz[dip_particles] = 0;
-#endif
-      }
-
-      dip_particles++;
+      m.emplace_back(p.calc_dip());
+      pos.emplace_back(folded_position(p.r.p));
     }
   }
 
@@ -180,13 +130,14 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
     auto const ncut2 = ncut.norm2();
     u = 0;
 
-    for (int i = 0; i < dip_particles; i++) {
-        ParticleForce f{};
+    for (int i = 0; i < n_part; i++) {
+        ParticleForce fi{};
 
-      for (int j = 0; j < dip_particles; j++) {
-          auto const rx = x[i] - x[j];
-          auto const ry = y[i] - y[j];
-          auto const rz = z[i] - z[j];
+      for (int j = 0; j < n_part; j++) {
+          auto const d = pos[i] - pos[j];
+          auto const rx = d[0];
+          auto const ry = d[1];
+          auto const rz = d[2];
 
           for (int nx = -ncut[0]; nx <= ncut[0]; nx++) {
               auto const rnx = rx + nx * box_l[0];
@@ -197,12 +148,12 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
                           if (nx * nx + ny * ny + nz * nz <= ncut2) {
                               auto const rnz = rz + nz * box_l[2];
                               if (energy_flag) {
-                                  u += u_kernel({rnx, rny, rnz}, {mx[i], my[i], mz[i]}, {mx[j], my[j], mz[j]});
+                                  u += u_kernel({rnx, rny, rnz}, m[i], m[j]);
                               }
 
                               if (force_flag) {
                                   // force ............................
-                                  f += f_kernel({rnx, rny, rnz}, {mx[i], my[i], mz[i]}, {mx[j], my[j], mz[j]});
+                                  fi += f_kernel({rnx, rny, rnz}, m[i], m[j]);
                               } /* of force_flag  */
                           }
                       } /* of nx*nx+ny*ny +nz*nz< NCUT*NCUT   and   !(i==j && nx==0 &&
@@ -212,38 +163,20 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
           }       /* of  for nx  */
       }
       if(force_flag) {
-          fx[i] = f.f[0];
-          fy[i] = f.f[1];
-          fz[i] = f.f[2];
-#ifdef ROTATION
-          // torque ............................
-          tx[i] = f.torque[0];
-          ty[i] = f.torque[1];
-          tz[i] = f.torque[2];
-#endif
+          f.emplace_back(fi);
       }
     } /* of  j and i  */
   }   /* end of the area of calculation */
 
   /* set the forces, and torques of the particles within Espresso */
   if (force_flag) {
-
-    dip_particles2 = 0;
-
+    int dip_particles2 = 0;
     for (auto &p : local_cells.particles()) {
       if (p.p.dipm != 0.0) {
-
-        p.f.f[0] += coulomb.Dprefactor * fx[dip_particles2];
-        p.f.f[1] += coulomb.Dprefactor * fy[dip_particles2];
-        p.f.f[2] += coulomb.Dprefactor * fz[dip_particles2];
-
-#ifdef ROTATION
-        p.f.torque[0] += coulomb.Dprefactor * tx[dip_particles2];
-        p.f.torque[1] += coulomb.Dprefactor * ty[dip_particles2];
-        p.f.torque[2] += coulomb.Dprefactor * tz[dip_particles2];
-#endif
-        dip_particles2++;
+        p.f.f += coulomb.Dprefactor * f[dip_particles2].f;
+        p.f.torque += coulomb.Dprefactor * f[dip_particles2].torque;
       }
+        dip_particles2++;
     }
   } /*of if force_flag */
 
