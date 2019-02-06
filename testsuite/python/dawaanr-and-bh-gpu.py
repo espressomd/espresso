@@ -158,7 +158,7 @@ class BHGPUTest(ut.TestCase):
             self.system.part.clear()
 
     def test(self):
-      self.run_test_case()
+        self.run_test_case()
 
 if __name__ == '__main__':
     ut.main()
