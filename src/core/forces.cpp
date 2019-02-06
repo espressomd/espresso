@@ -295,7 +295,8 @@ void calc_long_range_forces() {
     // fall through
 #endif
   case DIPOLAR_DS:
-      magnetic_dipolar_direct_sum_calculations(1, 0, local_cells.particles(), comm_cart);
+    magnetic_dipolar_direct_sum_calculations(1, 0, local_cells.particles(),
+                                             comm_cart);
     break;
   case DIPOLAR_DS_GPU:
     // Do nothing. It's an actor

@@ -31,8 +31,8 @@ namespace Mpi {
 namespace detail {
 template <typename T>
 void all_gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
-                  int in_size, T *out_values, const int *sizes,
-                  const int *displs, boost::mpl::true_) {
+                      int in_size, T *out_values, const int *sizes,
+                      const int *displs, boost::mpl::true_) {
   MPI_Datatype type = boost::mpi::get_mpi_datatype<T>();
 
   /* in-place ? */
@@ -51,48 +51,49 @@ void all_gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
 
 template <typename T>
 void all_gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
-                  int in_size, T *out_values, const int *sizes,
-                  const int *displs, boost::mpl::false_) {
-    auto const n_nodes = comm.size();
-    auto const rank = comm.rank();
+                      int in_size, T *out_values, const int *sizes,
+                      const int *displs, boost::mpl::false_) {
+  auto const n_nodes = comm.size();
+  auto const rank = comm.rank();
 
-    /* not in-place */
-    if(in_values != out_values) {
-        std::copy_n(in_values, in_size, out_values + displs[rank]);
+  /* not in-place */
+  if (in_values != out_values) {
+    std::copy_n(in_values, in_size, out_values + displs[rank]);
+  }
+
+  std::vector<boost::mpi::request> req;
+  for (int i = 0; i < n_nodes; i++) {
+    if (i != rank) {
+      req.emplace_back(comm.isend(i, 42, out_values + displs[rank], in_size));
+      req.emplace_back(comm.irecv(i, 42, out_values + displs[i], sizes[i]));
     }
+  }
 
-    std::vector<boost::mpi::request> req;
-    for (int i = 0; i < n_nodes; i++) {
-        if(i != rank) {
-            req.emplace_back(comm.isend(i, 42, out_values + displs[rank], in_size));
-            req.emplace_back(comm.irecv(i, 42, out_values + displs[i], sizes[i]));
-        }
-    }
-
-    boost::mpi::wait_all(req.begin(), req.end());
+  boost::mpi::wait_all(req.begin(), req.end());
 }
 } // namespace detail
 
 template <typename T>
 void all_gatherv(const boost::mpi::communicator &comm, const T *in_values,
-             int in_size, T *out_values, const int *sizes, const int *displs) {
+                 int in_size, T *out_values, const int *sizes,
+                 const int *displs) {
   detail::all_gatherv_impl(comm, in_values, in_size, out_values, sizes, displs,
-                       boost::mpi::is_mpi_datatype<T>());
+                           boost::mpi::is_mpi_datatype<T>());
 }
 
 template <typename T>
 void all_gatherv(const boost::mpi::communicator &comm, const T *in_values,
-             int in_size, T *out_values, const int *sizes) {
-    std::vector<int> displ(comm.size());
+                 int in_size, T *out_values, const int *sizes) {
+  std::vector<int> displ(comm.size());
 
-    int offset = 0;
-    for (unsigned i = 0; i < displ.size(); i++) {
-      displ[i] = offset;
-      offset += sizes[i];
-    }
+  int offset = 0;
+  for (unsigned i = 0; i < displ.size(); i++) {
+    displ[i] = offset;
+    offset += sizes[i];
+  }
 
-    detail::all_gatherv_impl(comm, in_values, in_size, out_values, sizes,
-                         displ.data(), boost::mpi::is_mpi_datatype<T>());
+  detail::all_gatherv_impl(comm, in_values, in_size, out_values, sizes,
+                           displ.data(), boost::mpi::is_mpi_datatype<T>());
 }
 } // namespace Mpi
 } // namespace Utils

@@ -236,12 +236,14 @@ void calc_long_range_energies() {
 #endif
 #ifdef DP3M
   case DIPOLAR_MDLC_DS:
-    energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1, local_cells.particles(), comm_cart);
+    energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(
+        0, 1, local_cells.particles(), comm_cart);
     energy.dipolar[2] = add_mdlc_energy_corrections();
     break;
 #endif
   case DIPOLAR_DS:
-    energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1, local_cells.particles(), comm_cart);
+    energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(
+        0, 1, local_cells.particles(), comm_cart);
     break;
   case DIPOLAR_DS_GPU:
     // Do nothing, it's an actor.
