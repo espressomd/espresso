@@ -43,11 +43,9 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
                     0.5, 0.5, 0.5], r_cut=2.4, mesh=[
                     8, 8, 8], cao=1, alpha=12, accuracy=0.01, tune=False))
 
-    if espressomd.has_features(["DIPOLAR_DIRECT_SUM"]):
-        test_DdsCpu = generate_test_for_class(
-            system, DipolarDirectSumCpu, dict(prefactor=3.4))
+    if espressomd.has_features(["DIPOLES"]):
         test_DdsRCpu = generate_test_for_class(
-            system, DipolarDirectSumWithReplicaCpu, dict(
+            system, DipolarDirectSumCpu, dict(
                 prefactor=3.4, n_replica=2))
 
 

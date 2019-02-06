@@ -79,9 +79,6 @@ void init_energies(Observable_stat *stat) {
   case DIPOLAR_P3M:
     n_dipolar = 2;
     break;
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    n_dipolar = 2;
-    break;
   case DIPOLAR_MDLC_DS:
     n_dipolar = 3;
     break;
@@ -237,9 +234,6 @@ void calc_long_range_energies() {
     energy.dipolar[2] = add_mdlc_energy_corrections();
     break;
 #endif
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    energy.dipolar[1] = dawaanr_calculations(0, 1);
-    break;
 #ifdef DP3M
   case DIPOLAR_MDLC_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);

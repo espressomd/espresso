@@ -45,8 +45,8 @@ class DDSGPUTest(ut.TestCase):
 
     def run_test_case(self):
         pf_dds_gpu = 2.34
-        pf_dawaanr = 3.524
-        ratio_dawaanr_dds_gpu = pf_dawaanr / pf_dds_gpu
+        pf_dds = 3.524
+        ratio_dds_dds_gpu = pf_dds / pf_dds_gpu
         l = 15
         self.es.box_l = [l, l, l]
         self.es.periodicity = [0, 0, 0]
@@ -91,17 +91,17 @@ class DDSGPUTest(ut.TestCase):
             self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
             dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(
-                prefactor=pf_dawaanr)
+                prefactor=pf_dds, n_replica=0)
             self.es.actors.add(dds_cpu)
             self.es.integrator.run(steps=0, recalc_forces=True)
 
-            dawaanr_f = []
-            dawaanr_t = []
+            dds_f = []
+            dds_t = []
 
             for i in range(n):
-                dawaanr_f.append(self.es.part[i].f)
-                dawaanr_t.append(self.es.part[i].torque_lab)
-            dawaanr_e = self.es.analysis.energy()["total"]
+                dds_f.append(self.es.part[i].f)
+                dds_t.append(self.es.part[i].torque_lab)
+            dds_e = self.es.analysis.energy()["total"]
 
             del dds_cpu
             for i in range(len(self.es.actors.active_actors)):
@@ -123,22 +123,22 @@ class DDSGPUTest(ut.TestCase):
 
             # compare
             for i in range(n):
-                np.testing.assert_allclose(np.array(dawaanr_t[i]),
-                                           ratio_dawaanr_dds_gpu *
+                np.testing.assert_allclose(np.array(dds_t[i]),
+                                           ratio_dds_dds_gpu *
                                            np.array(ddsgpu_t[i]),
                                            err_msg='Torques on particle do not match for particle {}'.format(i), atol=3e-3)
-                np.testing.assert_allclose(np.array(dawaanr_f[i]),
-                                           ratio_dawaanr_dds_gpu *
+                np.testing.assert_allclose(np.array(dds_f[i]),
+                                           ratio_dds_dds_gpu *
                                            np.array(ddsgpu_f[i]),
                                            err_msg='Forces on particle do not match for particle i={}'.format(i), atol=3e-3)
             self.assertAlmostEqual(
-                dawaanr_e,
+                dds_e,
                 ddsgpu_e *
-                ratio_dawaanr_dds_gpu,
+                ratio_dds_dds_gpu,
                 places=2,
-                msg='Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(
-                    dawaanr_e,
-                    ratio_dawaanr_dds_gpu *
+                msg='Energies for dds {0} and dds_gpu {1} do not match.'.format(
+                    dds_e,
+                    ratio_dds_dds_gpu *
                     ddsgpu_e))
 
             self.es.integrator.run(steps=0, recalc_forces=True)

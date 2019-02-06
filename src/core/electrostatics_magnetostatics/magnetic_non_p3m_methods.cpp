@@ -35,148 +35,13 @@
  */
 
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+
+#ifdef DIPOLES
 #include "cells.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "thermostat.hpp"
-
-#ifdef DIPOLES
-
-// Calculates dipolar energy and/or force between two particles
-double calc_dipole_dipole_ia(Particle *p1, const Vector3d &dip1, Particle *p2,
-                             int force_flag) {
-  double u, r, pe1, pe2, pe3, pe4, r3, r5, r2, r7, a, b, cc, d, ab;
-#ifdef ROTATION
-  double bx, by, bz, ax, ay, az;
-#endif
-  double ffx, ffy, ffz;
-
-  // Cache dipole momente
-  const Vector3d dip2 = p2->calc_dip();
-
-  // Distance between particles
-  Vector3d dr;
-  get_mi_vector(dr, p1->r.p, p2->r.p);
-
-  // Powers of distance
-  r2 = dr * dr;
-  r = sqrt(r2);
-  r3 = r2 * r;
-  r5 = r3 * r2;
-  r7 = r5 * r2;
-
-  // Dot products
-  pe1 = dip1 * dip2;
-  pe2 = dip1 * dr;
-  pe3 = dip2 * dr;
-  pe4 = 3.0 / r5;
-
-  // Energy, if requested
-  u = coulomb.Dprefactor * (pe1 / r3 - pe4 * pe2 * pe3);
-
-  // Force, if requested
-  if (force_flag) {
-    a = pe4 * pe1;
-    b = -15.0 * pe2 * pe3 / r7;
-    ab = a + b;
-    cc = pe4 * pe3;
-    d = pe4 * pe2;
-
-    //  Result
-    ffx = ab * dr[0] + cc * dip1[0] + d * dip2[0];
-    ffy = ab * dr[1] + cc * dip1[1] + d * dip2[1];
-    ffz = ab * dr[2] + cc * dip1[2] + d * dip2[2];
-    // Add the force to the particles
-    p1->f.f[0] += coulomb.Dprefactor * ffx;
-    p1->f.f[1] += coulomb.Dprefactor * ffy;
-    p1->f.f[2] += coulomb.Dprefactor * ffz;
-    p2->f.f[0] -= coulomb.Dprefactor * ffx;
-    p2->f.f[1] -= coulomb.Dprefactor * ffy;
-    p2->f.f[2] -= coulomb.Dprefactor * ffz;
-
-// Torques
-#ifdef ROTATION
-    ax = dip1[1] * dip2[2] - dip2[1] * dip1[2];
-    ay = dip2[0] * dip1[2] - dip1[0] * dip2[2];
-    az = dip1[0] * dip2[1] - dip2[0] * dip1[1];
-
-    bx = dip1[1] * dr[2] - dr[1] * dip1[2];
-    by = dr[0] * dip1[2] - dip1[0] * dr[2];
-    bz = dip1[0] * dr[1] - dr[0] * dip1[1];
-
-    p1->f.torque[0] += coulomb.Dprefactor * (-ax / r3 + bx * cc);
-    p1->f.torque[1] += coulomb.Dprefactor * (-ay / r3 + by * cc);
-    p1->f.torque[2] += coulomb.Dprefactor * (-az / r3 + bz * cc);
-
-    // 2nd particle
-    bx = dip2[1] * dr[2] - dr[1] * dip2[2];
-    by = dr[0] * dip2[2] - dip2[0] * dr[2];
-    bz = dip2[0] * dr[1] - dr[0] * dip2[1];
-
-    p2->f.torque[0] += coulomb.Dprefactor * (ax / r3 + bx * d);
-    p2->f.torque[1] += coulomb.Dprefactor * (ay / r3 + by * d);
-    p2->f.torque[2] += coulomb.Dprefactor * (az / r3 + bz * d);
-#endif
-  }
-
-  // Return energy
-  return u;
-}
-
-/* =============================================================================
-                  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
-   =============================================================================
-*/
-
-double dawaanr_calculations(int force_flag, int energy_flag) {
-  double u;
-
-  if (n_nodes != 1) {
-    fprintf(stderr, "error:  DAWAANR is just for one cpu .... \n");
-    errexit();
-  }
-  if (!(force_flag) && !(energy_flag)) {
-    fprintf(stderr, " I don't know why you call dawaanr_caclulations with all "
-                    "flags zero \n");
-    return 0;
-  }
-
-  // Variable to sum up the energy
-  u = 0;
-
-  auto parts = local_cells.particles();
-
-  // Iterate over all cells
-  for (auto it = parts.begin(), end = parts.end(); it != end; ++it) {
-    // If the particle has no dipole moment, ignore it
-    if (it->p.dipm == 0.0)
-      continue;
-
-    const Vector3d dip1 = it->calc_dip();
-    auto jt = it;
-    /* Skip diagonal */
-    ++jt;
-    for (; jt != end; ++jt) {
-      // If the particle has no dipole moment, ignore it
-      if (jt->p.dipm == 0.0)
-        continue;
-      // Calculate energy and/or force between the particles
-      u += calc_dipole_dipole_ia(&(*it), dip1, &(*jt), force_flag);
-    }
-  }
-
-  // Return energy
-  return u;
-}
 
 /************************************************************/
-
-/*=================== */
-/*=================== */
-/*=================== */
-/*=================== */
-/*=================== */
-/*=================== */
 
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS
@@ -384,27 +249,10 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
   return 0.5 * coulomb.Dprefactor * u;
 }
 
-int dawaanr_set_params() {
-  if (n_nodes > 1) {
-    return ES_ERROR;
-  }
-  if (coulomb.Dmethod != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA) {
-    set_dipolar_method_local(DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA);
-  }
-  // also necessary on 1 CPU, does more than just broadcasting
-  mpi_bcast_coulomb_params();
-
-  return ES_OK;
-}
-
-int mdds_set_params(int n_cut) {
-  if (n_nodes > 1) {
-    return ES_ERROR;
-  }
-
+void mdds_set_params(int n_cut) {
   Ncut_off_magnetic_dipolar_direct_sum = n_cut;
 
-  if (Ncut_off_magnetic_dipolar_direct_sum == 0) {
+  if ((PERIODIC(0) || PERIODIC(1) || PERIODIC(2)) && Ncut_off_magnetic_dipolar_direct_sum == 0) {
     fprintf(stderr, "Careful:  the number of extra replicas to take into "
                     "account during the direct sum calculation is zero \n");
   }
@@ -415,7 +263,6 @@ int mdds_set_params(int n_cut) {
 
   // also necessary on 1 CPU, does more than just broadcasting
   mpi_bcast_coulomb_params();
-  return ES_OK;
 }
 
 #endif

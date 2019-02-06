@@ -46,6 +46,7 @@
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
+#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "galilei.hpp"
@@ -713,11 +714,10 @@ void mpi_bcast_coulomb_params_slave(int, int) {
               comm_cart);
     break;
 #endif
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    break;
   case DIPOLAR_MDLC_DS:
   // fall trough
   case DIPOLAR_DS:
+      MPI_Bcast(&Ncut_off_magnetic_dipolar_direct_sum, 1, MPI_INT, 0, comm_cart);
     break;
   case DIPOLAR_DS_GPU:
     break;

@@ -35,24 +35,6 @@
 #include "config.hpp"
 
 #ifdef DIPOLES
-#include "particle_data.hpp"
-
-// Calculates dipolar energy and/or force between two particles
-double calc_dipole_dipole_ia(Particle *p1, Particle *p2, int force_flag);
-
-/* =============================================================================
-                  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
-   =============================================================================
-*/
-
-/** Core of the DAWAANR method: here you compute all the magnetic forces,
- * torques and the magnetic energy for the whole system*/
-double dawaanr_calculations(int force_flag, int energy_flag);
-
-/** switch on DAWAANR magnetostatics.
-    @return ES_ERROR, if not on a single CPU
- */
-int dawaanr_set_params();
 
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS
@@ -71,7 +53,7 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
     @param n_cut cut off for the explicit summation
     @return ES_ERROR, if not on a single CPU
  */
-int mdds_set_params(int n_cut);
+void mdds_set_params(int n_cut);
 
 extern int Ncut_off_magnetic_dipolar_direct_sum;
 

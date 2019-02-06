@@ -77,8 +77,6 @@ enum DipolarInteraction {
   DIPOLAR_P3M,
   /** Dipolar method is P3M plus DLC. */
   DIPOLAR_MDLC_P3M,
-  /** Dipolar method is all with all and no replicas */
-  DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
   /** Dipolar method is magnetic dipolar direct sum */
   DIPOLAR_DS,
   /** Dipolar method is direct sum plus DLC. */

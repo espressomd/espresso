@@ -241,42 +241,6 @@ IF DIPOLES == 1:
     cdef class DipolarDirectSumCpu(MagnetostaticInteraction):
         """Calculate magnetostatic interactions by direct summation over all pairs.
 
-        If the system has periodic boundaries, the minimum image convention is applied
-        in the respective directions.
-
-        Attributes
-        ----------
-
-        prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
-
-        """
-
-        def default_params(self):
-            return {}
-
-        def required_keys(self):
-            return ()
-
-        def valid_keys(self):
-            return ("prefactor",)
-
-        def _get_params_from_es_core(self):
-            return {"prefactor": coulomb.Dprefactor}
-
-        def _activate_method(self):
-            self._set_params_in_es_core()
-            mpi_bcast_coulomb_params()
-
-        def _set_params_in_es_core(self):
-            self.set_magnetostatics_prefactor()
-            if dawaanr_set_params():
-                raise Exception(
-                    "Could not activate magnetostatics method " + self.__class__.__name__)
-
-    cdef class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
-        """Calculate magnetostatic interactions by direct summation over all pairs.
-
         If the system has periodic boundaries, `n_replica` copies of the system are
         taken into account in the respective directions. Spherical cutoff is applied.
 
@@ -307,9 +271,8 @@ IF DIPOLES == 1:
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
-            if mdds_set_params(self._params["n_replica"]):
-                raise Exception(
-                    "Could not activate magnetostatics method " + self.__class__.__name__)
+            mdds_set_params(self._params["n_replica"])
+
     IF SCAFACOS_DIPOLES == 1:
         class Scafacos(ScafacosConnector, MagnetostaticInteraction):
 

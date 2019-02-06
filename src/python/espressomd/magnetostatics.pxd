@@ -11,7 +11,6 @@ IF DIPOLES == 1:
             DIPOLAR_NONE = 0,
             DIPOLAR_P3M,
             DIPOLAR_MDLC_P3M,
-            DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
             DIPOLAR_DS,
             DIPOLAR_MDLC_DS,
             DIPOLAR_SCAFACOS
@@ -24,8 +23,7 @@ IF DIPOLES == 1:
         cdef extern coulomb_parameters coulomb
 
     cdef extern from "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp":
-        int dawaanr_set_params()
-        int mdds_set_params(int n_cut)
+        void mdds_set_params(int n_cut)
         int Ncut_off_magnetic_dipolar_direct_sum
 
     IF(CUDA == 1) and (ROTATION == 1):
@@ -36,7 +34,6 @@ IF DIPOLES == 1:
     IF(DIPOLAR_BARNES_HUT == 1):
         cdef extern from "actor/DipolarBarnesHut.hpp":
             void activate_dipolar_barnes_hut(float epssq, float itolsq)
-            #void activate_dipolar_barnes_hut()
             void deactivate_dipolar_barnes_hut()
 
 IF DP3M == 1:

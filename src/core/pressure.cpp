@@ -218,11 +218,6 @@ void calc_long_range_virials() {
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
   switch (coulomb.Dmethod) {
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but DAWAANR pressure not implemented\n");
-    break;
   case DIPOLAR_MDLC_DS:
     fprintf(stderr,
             "WARNING: pressure calculated, but DLC pressure not implemented\n");
@@ -286,9 +281,6 @@ void init_virials(Observable_stat *stat) {
   case DIPOLAR_NONE:
     n_dipolar = 0;
     break;
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    n_dipolar = 0;
-    break;
   case DIPOLAR_DS:
     n_dipolar = 0;
     break;
@@ -346,9 +338,6 @@ void init_p_tensor(Observable_stat *stat) {
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     n_dipolar = 0;
     break;
   case DIPOLAR_DS:
