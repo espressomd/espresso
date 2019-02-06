@@ -22,11 +22,6 @@
  * All 3d non P3M methods to deal with the
  * magnetic dipoles
  *
- *  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
- *   Handling of a system of dipoles where no replicas
- *   Assumes minimum image convention for those axis in which the
- *   system is periodic as defined by setmd.
- *
  *   MDDS => Calculates dipole-dipole interaction of a periodic system
  *   by explicitly summing the dipole-dipole interaction over several copies of
  * the system
@@ -64,49 +59,48 @@ int magnetic_dipolar_direct_sum_sanity_checks() {
 
 /************************************************************/
 
-auto f_kernel = [](Vector3d const& d, Vector3d const& m1, Vector3d const& m2) -> ParticleForce {
-    auto const pe2 = m1 * d;
-    auto const pe3 = m2 * d;
+namespace {
+    auto pair_force(Vector3d const &d, Vector3d const &m1, Vector3d const &m2) -> ParticleForce {
+        auto const pe2 = m1 * d;
+        auto const pe3 = m2 * d;
 
-    auto const r2 = d.norm2();
-    auto const r = std::sqrt(r2);
-    auto const r5 = r2 * r2 *r;
-    auto const r7 = r5 * r2;
+        auto const r2 = d.norm2();
+        auto const r = std::sqrt(r2);
+        auto const r5 = r2 * r2 * r;
+        auto const r7 = r5 * r2;
 
-    auto const a = 3.0 * (m1 * m2) / r5;
-    auto const b = -15.0 * pe2 * pe3 / r7;
+        auto const a = 3.0 * (m1 * m2) / r5;
+        auto const b = -15.0 * pe2 * pe3 / r7;
 
-    auto const f = (a + b) * d + 3.0 * (pe3 * m1 + pe2 * m2) / r5;
+        auto const f = (a + b) * d + 3.0 * (pe3 * m1 + pe2 * m2) / r5;
 #ifdef ROTATION
-    auto const r3 = r2*r;
-    auto const t = - m1.cross(m2) / r3 + 3.0 * pe3 * m1.cross(d) / r5;
+        auto const r3 = r2 * r;
+        auto const t = -m1.cross(m2) / r3 + 3.0 * pe3 * m1.cross(d) / r5;
 
-    return {f, t};
+        return {f, t};
 #else
-    return f;
+        return f;
 #endif
-};
+    };
 
-auto u_kernel = [] (Vector3d const& d, Vector3d const& m1, Vector3d const& m2) -> double {
-    auto const r2 = d*d;
-    auto const r = sqrt(r2);
-    auto const r3 = r2 * r;
-    auto const r5 = r3 * r2;
+    auto pair_potential(Vector3d const &d, Vector3d const &m1, Vector3d const &m2) -> double {
+        auto const r2 = d * d;
+        auto const r = sqrt(r2);
+        auto const r3 = r2 * r;
+        auto const r5 = r3 * r2;
 
-    auto const pe1 = m1 * m2;
-    auto const pe2 = m1 * d;
-    auto const pe3 = m2 * d;
+        auto const pe1 = m1 * m2;
+        auto const pe2 = m1 * d;
+        auto const pe3 = m2 * d;
 
-    // Energy ............................
-    return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
-};
-
+        // Energy ............................
+        return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
+    };
+}
 double magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag, const ParticleRange &particles,
                                                 const boost::mpi::communicator &comm) {
   std::vector<Vector3d> m;
   m.reserve(particles.size());
-
-  double u;
 
   std::vector<Vector3d> pos;
   pos.reserve(particles.size());
@@ -147,13 +141,12 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,
                                                                           static_cast<int>(PERIODIC(1)),
                                                                           static_cast<int>(PERIODIC(2))};
     auto const ncut2 = ncut.norm2();
-    u = 0;
-
+    double u = 0;
     for (int i = 0; i < pos.size(); i++) {
         ParticleForce fi{};
 
       for (int j = 0; j < gpos.size(); j++) {
-          auto const d = pos[i] - gpos[j];
+          auto const d = get_mi_vector(pos[i], gpos[j]);
           auto const rx = d[0];
           auto const ry = d[1];
           auto const rz = d[2];
@@ -167,12 +160,12 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,
                           if (nx * nx + ny * ny + nz * nz <= ncut2) {
                               auto const rnz = rz + nz * box_l[2];
                               if (energy_flag) {
-                                  u += u_kernel({rnx, rny, rnz}, m[i], gm[j]);
+                                  u += pair_potential({rnx, rny, rnz}, m[i], gm[j]);
                               }
 
                               if (force_flag) {
                                   // force ............................
-                                  fi += f_kernel({rnx, rny, rnz}, m[i], gm[j]);
+                                  fi += pair_force({rnx, rny, rnz}, m[i], gm[j]);
                               } /* of force_flag  */
                           }
                       } /* of nx*nx+ny*ny +nz*nz< NCUT*NCUT   and   !(i==j && nx==0 &&
@@ -203,7 +196,6 @@ void mdds_set_params(int n_cut) {
     set_dipolar_method_local(DIPOLAR_DS);
   }
 
-  // also necessary on 1 CPU, does more than just broadcasting
   mpi_bcast_coulomb_params();
 }
 

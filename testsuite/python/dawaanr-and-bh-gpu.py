@@ -158,10 +158,7 @@ class BHGPUTest(ut.TestCase):
             self.system.part.clear()
 
     def test(self):
-        if (self.system.cell_system.get_state()["n_nodes"] > 1):
-            print("NOTE: Ignoring testcase for n_nodes > 1")
-        else:
-            self.run_test_case()
+      self.run_test_case()
 
 if __name__ == '__main__':
     ut.main()
