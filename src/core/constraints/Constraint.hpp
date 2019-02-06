@@ -34,7 +34,7 @@ public:
    * @param[in] folded_pos Folded position of the particle.
    * @param[in] t The time at which the energy should be calculated.
    * @param[out] Observable to add the energy to.
-   */ 
+   */
   virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
                           double t, Observable_stat &energy) const = 0;
 
