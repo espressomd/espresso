@@ -1269,17 +1269,17 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
   /* Now we must predict the outcome of the next collision */
   /* We immediately average pre- and post-collision. */
   modes[4] = modes_from_pi_eq[0] +
-            (0.5 + 0.5 * lbpar.gamma_bulk) * (modes[4] - modes_from_pi_eq[0]);
+             (0.5 + 0.5 * lbpar.gamma_bulk) * (modes[4] - modes_from_pi_eq[0]);
   modes[5] = modes_from_pi_eq[1] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (modes[5] - modes_from_pi_eq[1]);
+             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[5] - modes_from_pi_eq[1]);
   modes[6] = modes_from_pi_eq[2] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (modes[6] - modes_from_pi_eq[2]);
+             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[6] - modes_from_pi_eq[2]);
   modes[7] = modes_from_pi_eq[3] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (modes[7] - modes_from_pi_eq[3]);
+             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[7] - modes_from_pi_eq[3]);
   modes[8] = modes_from_pi_eq[4] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (modes[8] - modes_from_pi_eq[4]);
+             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[8] - modes_from_pi_eq[4]);
   modes[9] = modes_from_pi_eq[5] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (modes[9] - modes_from_pi_eq[5]);
+             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[9] - modes_from_pi_eq[5]);
 
   // Transform the stress tensor components according to the modes that
   // correspond to those used by U. Schiller. In terms of populations this
@@ -1288,11 +1288,11 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
   // But to ensure this, the expression in Schiller's modes has to be different!
 
   pi[0] = (2.0 * (modes[0] + modes[4]) + modes[6] + 3.0 * modes[5]) / 6.0; // xx
-  pi[1] = modes[7];                                                     // xy
+  pi[1] = modes[7];                                                        // xy
   pi[2] = (2.0 * (modes[0] + modes[4]) + modes[6] - 3.0 * modes[5]) / 6.0; // yy
-  pi[3] = modes[8];                                                     // xz
-  pi[4] = modes[9];                                                     // yz
-  pi[5] = (modes[0] + modes[4] - modes[6]) / 3.0;                         // zz
+  pi[3] = modes[8];                                                        // xz
+  pi[4] = modes[9];                                                        // yz
+  pi[5] = (modes[0] + modes[4] - modes[6]) / 3.0;                          // zz
 }
 
 #endif // LB
