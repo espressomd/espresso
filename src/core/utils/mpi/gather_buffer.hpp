@@ -56,7 +56,6 @@ namespace Mpi {
 template <typename T>
 int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
                   int root = 0) {
-  static_assert(std::is_pod<T>::value, "");
   if (comm.rank() == root) {
     static std::vector<int> sizes;
     static std::vector<int> displ;
