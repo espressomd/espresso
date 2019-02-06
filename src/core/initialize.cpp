@@ -19,8 +19,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref initialize.hpp "initialize.hpp"
-*/
+ *  Hook procedures.
+ *
+ *  Implemetation of initialize.hpp.
+ */
 #include "initialize.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
@@ -42,7 +44,6 @@
 #include "energy.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
-#include "ghmc.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
@@ -51,11 +52,9 @@
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "lattice.hpp"
 #include "metadynamics.hpp"
-#include "nemd.hpp"
 #include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
-#include "observables/Observable.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"

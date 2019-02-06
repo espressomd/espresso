@@ -37,7 +37,8 @@ public:
          {"lower_smoothing_radius", m_slitpore->lower_smoothing_radius()},
          {"channel_width", m_slitpore->channel_width()},
          {"pore_width", m_slitpore->pore_width()},
-         {"pore_length", m_slitpore->pore_length()}});
+         {"pore_length", m_slitpore->pore_length()},
+         {"dividing_plane", m_slitpore->dividing_plane()}});
   }
 
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_slitpore; }

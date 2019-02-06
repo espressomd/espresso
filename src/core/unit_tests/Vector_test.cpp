@@ -32,7 +32,7 @@
 #include <numeric>
 #include <vector>
 
-#include "../Vector.hpp"
+#include "utils/Vector.hpp"
 
 /** Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
 #define TEST_NUMBERS                                                           \
@@ -107,6 +107,7 @@ BOOST_AUTO_TEST_CASE(normalize) {
 BOOST_AUTO_TEST_CASE(comparison_operators) {
   Vector<5, int> v1{1, 2, 3, 4, 5};
   Vector<5, int> v2{6, 7, 8, 9, 10};
+  Vector<5, int> v3{1, 2, 3, 5, 6};
 
   BOOST_CHECK(v1 < v2);
   BOOST_CHECK(!(v1 < v1));
@@ -117,6 +118,8 @@ BOOST_AUTO_TEST_CASE(comparison_operators) {
   BOOST_CHECK(v2 >= v1);
   BOOST_CHECK(v2 >= v2);
   BOOST_CHECK(v1 != v2);
+  BOOST_CHECK(v1 != v3);
+  BOOST_CHECK(v1 <= v3);
   BOOST_CHECK(!(v1 == v2));
   BOOST_CHECK(v1 == v1);
 }

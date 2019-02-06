@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Pressure calculation. Really similar to \ref energy.hpp "energy.hpp".
-*/
+ *  Pressure calculation. Really similar to energy.hpp.
+ */
 
 #ifndef CORE_PRESSURE_INLINE_HPP
 #define CORE_PRESSURE_INLINE_HPP
@@ -34,11 +34,12 @@
 #include "utils.hpp"
 
 /** Calculate non bonded energies between a pair of particles.
-    @param p1        pointer to particle 1.
-    @param p2        pointer to particle 2.
-    @param d         vector between p1 and p2.
-    @param dist      distance between p1 and p2.
-    @param dist2     distance squared between p1 and p2. */
+ *  @param p1        pointer to particle 1.
+ *  @param p2        pointer to particle 2.
+ *  @param d         vector between p1 and p2.
+ *  @param dist      distance between p1 and p2.
+ *  @param dist2     distance squared between p1 and p2.
+ */
 inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
                                         double dist, double dist2) {
   int p1molid, p2molid, k, l;
@@ -296,11 +297,11 @@ inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2,
 }
 
 /** Calculate bonded virials for one particle.
-    For performance reasons the force routines add their values directly to the
-   particles. So here we do some tricks to get the value out without changing
-   the forces.
-    @param p1 particle for which to calculate virials
-*/
+ *  For performance reasons the force routines add their values directly to the
+ *  particles. So here we do some tricks to get the value out without changing
+ *  the forces.
+ *  @param p1 particle for which to calculate virials
+ */
 inline void add_bonded_virials(Particle *p1) {
   double force[3] = {0, 0, 0};
   // char *errtxt;
@@ -344,10 +345,10 @@ inline void add_bonded_virials(Particle *p1) {
 }
 
 /** Calculate the contribution to the stress tensor from angular potentials.
-    The central particle of the three-particle interaction is responsible
-    for the contribution of the entire interaction - this is the coding
-    not the physics.
-*/
+ *  The central particle of the three-particle interaction is responsible
+ *  for the contribution of the entire interaction - this is the coding
+ *  not the physics.
+ */
 inline void add_three_body_bonded_stress(Particle *p1) {
   double dx12[3]; // espresso notation
   double dx21[3];
@@ -485,12 +486,12 @@ inline void add_three_body_bonded_stress(Particle *p1) {
 }
 
 /** Calculate kinetic pressure (aka energy) for one particle.
-    @param p1 particle for which to calculate pressure
-    @param v_comp flag which enables (1) compensation of the velocities required
-                  for deriving a pressure reflecting \ref nptiso_struct::p_inst
-                  (hence it only works with domain decomposition); naturally it
-                  therefore doesn't make sense to use it without NpT.
-*/
+ *  @param p1 particle for which to calculate pressure
+ *  @param v_comp flag which enables (1) compensation of the velocities required
+ *                for deriving a pressure reflecting \ref nptiso_struct::p_inst
+ *                (hence it only works with domain decomposition); naturally it
+ *                therefore doesn't make sense to use it without NpT.
+ */
 inline void add_kinetic_virials(Particle *p1, int v_comp) {
   int k, l;
   /* kinetic energy */

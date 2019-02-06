@@ -438,6 +438,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
    */
 
   SingleReaction &current_reaction = reactions[reaction_id];
+  current_reaction.tried_moves += 1;
   bool reaction_is_accepted = false;
   particle_inserted_too_close_to_another_one = false;
   int old_state_index = -1; // for Wang-Landau algorithm
@@ -520,6 +521,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     for (int i = 0; i < len_hidden_particles_properties; i++) {
       delete_particle(to_be_deleted_hidden_ids[i]); // delete particle
     }
+    current_reaction.accepted_moves += 1;
     reaction_is_accepted = true;
   } else {
     // reject
@@ -561,13 +563,11 @@ int ReactionAlgorithm::calculate_nu_bar(
  * Replaces a particle with the given particle id to be of a certain type. This
  * especially means that the particle type and the particle charge are changed.
  */
-int ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
-  int err_code_type = set_particle_type(p_id, desired_type);
-  int err_code_q = 0.0;
+void ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
+  set_particle_type(p_id, desired_type);
 #ifdef ELECTROSTATICS
-  err_code_q = set_particle_q(p_id, charges_of_types[desired_type]);
+  set_particle_q(p_id, charges_of_types[desired_type]);
 #endif
-  return (err_code_q bitor err_code_type);
 }
 
 /**
@@ -575,7 +575,7 @@ int ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
  * interaction. Additional hiding from interactions would need to be implemented
  * here.
  */
-int ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
+void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
 /**
  *remove_charge and put type to a non existing one --> no interactions anymore
  *it is as if the particle was non existing (currently only type-based
@@ -592,8 +592,7 @@ int ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
   set_particle_q(p_id, 0.0);
 #endif
   // set type
-  int err_code_type = set_particle_type(p_id, non_interacting_type);
-  return err_code_type;
+  set_particle_type(p_id, non_interacting_type);
 }
 
 int ReactionAlgorithm::delete_particle(int p_id) {

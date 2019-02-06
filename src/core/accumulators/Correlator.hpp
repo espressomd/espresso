@@ -126,10 +126,10 @@
 #include <memory>
 
 #include "AccumulatorBase.hpp"
-#include "Vector.hpp"
 #include "integrate.hpp"
 #include "observables/Observable.hpp"
 #include "utils.hpp"
+#include "utils/Vector.hpp"
 
 namespace Accumulators {
 
@@ -158,8 +158,6 @@ public:
    * @param delta_N The number of time steps between subsequent updates
    * @param tau_lin The linear part of the correlation function.
    * @param tau_max maximal time delay tau to sample
-   * @param window_distance: The distance in time domain between update of the
-   * correlation estimate
    * @param obs1 First observable to correlate
    * @param obs2 Second observable to correlate
    * @param corr_operation how to correlate the two observables A and B

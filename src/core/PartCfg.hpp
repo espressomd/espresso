@@ -19,15 +19,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_PART_CFG_HPP
 #define CORE_PART_CFG_HPP
 
-#include <boost/iterator/indirect_iterator.hpp>
-
 #include "ParticleCache.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
-#include "utils/Range.hpp"
+#include "serialization/Particle.hpp"
 #include "utils/SkipIterator.hpp"
-#include "utils/serialization/Particle.hpp"
+
+#include <boost/iterator/indirect_iterator.hpp>
+#include <boost/range/iterator_range.hpp>
 
 /**
  * @brief Proxy class that gets a particle range from
@@ -43,14 +43,13 @@ class GetLocalParts {
 
   using skip_it = Utils::SkipIterator<Particle **, SkipIfNullOrGhost>;
   using iterator = boost::indirect_iterator<skip_it>;
-  using Range = Utils::Range<iterator>;
+  using Range = boost::iterator_range<iterator>;
 
 public:
   Range operator()() const {
     if (local_particles == nullptr) {
       auto begin = skip_it(nullptr, nullptr, SkipIfNullOrGhost());
-      return Utils::make_range(make_indirect_iterator(begin),
-                               make_indirect_iterator(begin));
+      return {make_indirect_iterator(begin), make_indirect_iterator(begin)};
     }
 
     auto begin =
@@ -60,8 +59,7 @@ public:
         skip_it(local_particles + max_seen_particle + 1,
                 local_particles + max_seen_particle + 1, SkipIfNullOrGhost());
 
-    return Utils::make_range(make_indirect_iterator(begin),
-                             make_indirect_iterator(end));
+    return {make_indirect_iterator(begin), make_indirect_iterator(end)};
   }
 };
 

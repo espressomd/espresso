@@ -21,15 +21,24 @@
 #ifndef _PARTICLE_DATA_H
 #define _PARTICLE_DATA_H
 /** \file
- *  For more information on particle_data,
- *  see \ref particle_data.cpp "particle_data.cpp"
+ *  Particles and particle lists.
+ *
+ *  This file contains everything related to particle storage. If you want to
+ *  add a new property to the particles, it is probably a good idea to modify
+ *  Particle to give scripts access to that property. You always have to modify
+ *  two positions: first the print section, where you should add your new
+ *  data at the end, and second the read section where you have to find a nice
+ *  and short name for your property to appear in the Python code. Then you
+ *  just parse your part out of argc and argv.
+ *
+ *  Implementation in particle_data.cpp.
  */
 
-#include "Vector.hpp"
 #include "config.hpp"
-#include "utils.hpp"
 
 #include "utils/List.hpp"
+#include "utils/Span.hpp"
+#include "utils/Vector.hpp"
 
 #include <memory>
 
@@ -47,11 +56,9 @@
 /** bonds_flag "bonds_flag" value for updating particle config without bonding
  *  information
  */
-#define WITHOUT_BONDS 0
 /** bonds_flag "bonds_flag" value for updating particle config with bonding
  *  information
  */
-#define WITH_BONDS 1
 
 #ifdef EXTERNAL_FORCES
 /** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
@@ -125,7 +132,7 @@ struct ParticleProperties {
 
   // Determines, whether a particle's rotational degrees of freedom are
   // integrated
-  short int rotation = 0;
+  int rotation = 0;
 
   /** charge. */
 #ifdef ELECTROSTATICS
@@ -156,12 +163,22 @@ struct ParticleProperties {
   pointing from real particle to virtual site with respect to the orientation
   of the real particle is stored in the virtual site's quaternion attribute.
   */
-  int vs_relative_to_particle_id = 0;
-  double vs_relative_distance = 0;
-  // Store relative position of the virtual site.
-  double vs_relative_rel_orientation[4] = {0., 0., 0., 0};
-  // Store the orientation of the virtual particle in the body fixed frame.
-  double vs_quat[4] = {0., 0., 0., 0.};
+  struct VirtualSitesRelativeParameteres {
+    int to_particle_id = 0;
+    double distance = 0;
+    // Store relative position of the virtual site.
+    Vector<4, double> rel_orientation = {0., 0., 0., 0.};
+    // Store the orientation of the virtual particle in the body fixed frame.
+    Vector<4, double> quat = {0., 0., 0., 0.};
+
+    template <class Archive> void serialize(Archive &ar, long int) {
+      ar &to_particle_id;
+      ar &distance;
+      ar &rel_orientation;
+      ar &quat;
+    }
+  } vs_relative;
+
 #endif
 #else  /* VIRTUAL_SITES */
   static constexpr const int is_virtual = 0;
@@ -290,17 +307,10 @@ struct ParticleLocal {
 
   /** check whether a particle is a ghost or not */
   int ghost = 0;
-
-#ifdef GHMC
-  /** Data for the ghmc thermostat, last saved
-      position and momentum of particle */
-  ParticlePosition r_ls;
-  ParticleMomentum m_ls;
-#endif
 };
 
 #ifdef LB
-/** Data related to the Lattice Boltzmann hydrodynamic coupling */
+/** Data related to the lattice Boltzmann hydrodynamic coupling */
 struct ParticleLatticeCoupling {
   /** fluctuating part of the coupling force */
   Vector3d f_random;
@@ -321,6 +331,16 @@ struct ParticleParametersSwimming {
   double rotational_friction = 0.;
 #endif
 #endif
+
+  template <typename Archive> void serialize(Archive &ar, long int) {
+#ifdef ENGINE
+    ar &swimming &f_swim &v_swim
+#if defined(LB) || defined(LB_GPU)
+        &push_pull &dipole_length &v_center &v_source &rotational_friction
+#endif
+        ;
+#endif
+  }
 };
 
 /** Struct holding all information for one particle. */
@@ -487,11 +507,6 @@ extern bool swimming_particles_exist;
 extern Particle **local_particles;
 extern int max_local_particles;
 
-/** Particles' current bond partners. \ref partBondPartners is
-    sorted by particle order, and the particles are stored
-    consecutively starting with 0. This array is global to all nodes*/
-extern int *partBondPartners;
-
 /************************************************
  * Functions
  ************************************************/
@@ -516,13 +531,6 @@ void init_particlelist(ParticleList *pList);
     up to multiples of \ref PART_INCREMENT.
     \return true iff particle addresses have changed */
 int realloc_particlelist(ParticleList *plist, int size);
-
-/** Search for a specific particle.
-    \param plist the list on which to operate
-    \param id the identity of the particle to search
-    \return a pointer to the particle structure or nullptr if particle is
-    not in this list */
-Particle *got_particle(ParticleList *plist, int id);
 
 /** Append a particle at the end of a particle List.
     reallocates particles if necessary!
@@ -620,7 +628,7 @@ int place_particle(int part, double p[3]);
     @param v its new velocity.
     @return ES_OK if particle existed
 */
-int set_particle_v(int part, double v[3]);
+void set_particle_v(int part, double *v);
 
 #ifdef ENGINE
 /** Call only on the master node: set particle velocity.
@@ -628,7 +636,7 @@ int set_particle_v(int part, double v[3]);
     @param swim struct containing swimming parameters
     @return ES_OK if particle existed
 */
-int set_particle_swimming(int part, ParticleParametersSwimming swim);
+void set_particle_swimming(int part, ParticleParametersSwimming swim);
 #endif
 
 /** Call only on the master node: set particle force.
@@ -636,21 +644,21 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim);
     @param F its new force.
     @return ES_OK if particle existed
 */
-int set_particle_f(int part, const Vector3d &F);
+void set_particle_f(int part, const Vector3d &F);
 
 /** Call only on the master node: set particle mass.
     @param part the particle.
     @param mass its new mass.
     @return ES_OK if particle existed
 */
-int set_particle_mass(int part, double mass);
+void set_particle_mass(int part, double mass);
 
 /** Call only on the master node: set particle solvation free energy.
     @param part the particle.
     @param solvation its new solvation free energy.
     @return ES_OK if particle existed
 */
-int set_particle_solvation(int part, double *solvation);
+void set_particle_solvation(int part, double *solvation);
 
 #ifdef ROTATIONAL_INERTIA
 /** Call only on the master node: set particle rotational inertia.
@@ -658,7 +666,7 @@ int set_particle_solvation(int part, double *solvation);
     @param rinertia its new inertia.
     @return ES_OK if particle existed
 */
-int set_particle_rotational_inertia(int part, double rinertia[3]);
+void set_particle_rotational_inertia(int part, double *rinertia);
 #endif
 
 /** Call only on the master node: Specifies whether a particle's rotational
@@ -668,7 +676,7 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
     @param rot the degrees of freedom flag.
     @return ES_OK if particle existed
 */
-int set_particle_rotation(int part, int rot);
+void set_particle_rotation(int part, int rot);
 
 /** @brief rotate a particle around an axis
 
@@ -676,7 +684,7 @@ int set_particle_rotation(int part, int rot);
    @param axis rotation axis
    @param angle rotation angle
 */
-int rotate_particle(int part, const Vector3d &axis, double angle);
+void rotate_particle(int part, const Vector3d &axis, double angle);
 
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
@@ -684,7 +692,7 @@ int rotate_particle(int part, const Vector3d &axis, double angle);
     @param bond_site its new site of the affinity bond.
     @return ES_OK if particle existed
 */
-int set_particle_affinity(int part, double bond_site[3]);
+void set_particle_affinity(int part, double *bond_site);
 #endif
 
 #ifdef MEMBRANE_COLLISION
@@ -693,7 +701,7 @@ int set_particle_affinity(int part, double bond_site[3]);
  @param out_direction its new outward direction with respect to membrane.
  @return ES_OK if particle existed
  */
-int set_particle_out_direction(int part, double out_direction[3]);
+void set_particle_out_direction(int part, double *out_direction);
 #endif
 
 /** Call only on the master node: set particle charge.
@@ -701,7 +709,7 @@ int set_particle_out_direction(int part, double out_direction[3]);
     @param q its new charge.
     @return ES_OK if particle existed
 */
-int set_particle_q(int part, double q);
+void set_particle_q(int part, double q);
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 /** Call only on the master node: set particle electrophoretic mobility.
@@ -709,7 +717,7 @@ int set_particle_q(int part, double q);
     @param mu_E its new mobility.
     @return ES_OK if particle existed
 */
-int set_particle_mu_E(int part, double mu_E[3]);
+void set_particle_mu_E(int part, double *mu_E);
 void get_particle_mu_E(int part, double (&mu_E)[3]);
 #endif
 
@@ -718,14 +726,14 @@ void get_particle_mu_E(int part, double (&mu_E)[3]);
     @param type its new type.
     @return ES_OK if particle existed
 */
-int set_particle_type(int p_id, int type);
+void set_particle_type(int p_id, int type);
 
 /** Call only on the master node: set particle's molecule id.
     @param part the particle.
     @param mid  its new mol id.
     @return ES_OK if particle existed
 */
-int set_particle_mol_id(int part, int mid);
+void set_particle_mol_id(int part, int mid);
 
 #ifdef ROTATION
 /** Call only on the master node: set particle orientation using quaternions.
@@ -733,35 +741,29 @@ int set_particle_mol_id(int part, int mid);
     @param quat its new value for quaternions.
     @return ES_OK if particle existed
 */
-int set_particle_quat(int part, double quat[4]);
+void set_particle_quat(int part, double *quat);
 
 /** Call only on the master node: set particle angular velocity from lab frame.
     @param part the particle.
-    @param omega its new angular velocity.
+    @param omega_lab its new angular velocity.
     @return ES_OK if particle existed
 */
-int set_particle_omega_lab(int part, const Vector3d &omega);
+void set_particle_omega_lab(int part, const Vector3d &omega_lab);
 
 /** Call only on the master node: set particle angular velocity in body frame.
     @param part the particle.
     @param omega its new angular velocity.
     @return ES_OK if particle existed
 */
-int set_particle_omega_body(int part, const Vector3d &omega);
+void set_particle_omega_body(int part, const Vector3d &omega);
 
 /** Call only on the master node: set particle torque from lab frame.
     @param part the particle.
-    @param torque its new torque.
+    @param torque_lab its new torque.
     @return ES_OK if particle existed
 */
-int set_particle_torque_lab(int part, const Vector3d &torque);
+void set_particle_torque_lab(int part, const Vector3d &torque_lab);
 
-/** Call only on the master node: set particle torque in body frame.
-    @param part the particle.
-    @param torque its new torque.
-    @return ES_OK if particle existed
-*/
-int set_particle_torque_body(int part, const Vector3d &torque);
 #endif
 
 #ifdef DIPOLES
@@ -770,14 +772,14 @@ int set_particle_torque_body(int part, const Vector3d &torque);
     @param dip its new dipole orientation.
     @return ES_OK if particle existed
 */
-int set_particle_dip(int part, double dip[3]);
+void set_particle_dip(int part, double *dip);
 
 /** Call only on the master node: set particle dipole moment (absolute value).
     @param part the particle.
     @param dipm its new dipole moment.
     @return ES_OK if particle existed
 */
-int set_particle_dipm(int part, double dipm);
+void set_particle_dipm(int part, double dipm);
 #endif
 
 #ifdef VIRTUAL_SITES
@@ -786,12 +788,12 @@ int set_particle_dipm(int part, double dipm);
     @param is_virtual its new is_virtual.
     @return ES_OK if particle existed
 */
-int set_particle_virtual(int part, int is_virtual);
+void set_particle_virtual(int part, int is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, double *vs_quat);
-int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                             double *rel_ori);
+void set_particle_vs_quat(int part, double *vs_relative_quat);
+void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
+                              double *rel_ori);
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
@@ -800,7 +802,7 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
     @param T its new temperature.
     @return ES_OK if particle existed
 */
-int set_particle_temperature(int part, double T);
+void set_particle_temperature(int part, double T);
 
 /** Call only on the master node: set particle frictional coefficient.
     @param part the particle.
@@ -808,15 +810,15 @@ int set_particle_temperature(int part, double T);
     @return ES_OK if particle existed
 */
 #ifndef PARTICLE_ANISOTROPY
-int set_particle_gamma(int part, double gamma);
+void set_particle_gamma(int part, double gamma);
 #else
-int set_particle_gamma(int part, Vector3d gamma);
+void set_particle_gamma(int part, Vector3d gamma);
 #endif
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
-int set_particle_gamma_rot(int part, double gamma);
+void set_particle_gamma_rot(int part, double gamma);
 #else
-int set_particle_gamma_rot(int part, Vector3d gamma);
+void set_particle_gamma_rot(int part, Vector3d gamma_rot);
 #endif
 #endif
 #endif // LANGEVIN_PER_PARTICLE
@@ -829,7 +831,7 @@ int set_particle_gamma_rot(int part, Vector3d gamma);
     @param torque new value for ext_torque.
     @return ES_OK if particle existed
 */
-int set_particle_ext_torque(int part, int flag, double torque[3]);
+void set_particle_ext_torque(int part, const Vector3d &torque);
 #endif
 /** Call only on the master node: set particle external force.
     @param part  the particle.
@@ -837,27 +839,34 @@ int set_particle_ext_torque(int part, int flag, double torque[3]);
     @param force new value for ext_force.
     @return ES_OK if particle existed
 */
-int set_particle_ext_force(int part, int flag, double force[3]);
+void set_particle_ext_force(int part, const Vector3d &force);
 /** Call only on the master node: set coordinate axes for which the particles
    motion is fixed.
     @param part  the particle.
     @param flag new value for flagged coordinate axes to be fixed
     @return ES_OK if particle existed
 */
-int set_particle_fix(int part, int flag);
+void set_particle_fix(int part, int flag);
 #endif
 
-/** Call only on the master node: change particle bond.
+/** Call only on the master node: remove bond from particle.
     @param part     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
-    identity of all bond partners (secondary atoms of the bond). If nullptr,
-   delete
-   all bonds.
-    @param _delete   if true, do not add the bond, rather delete it if found
-    @return ES_OK on success or ES_ERROR if no success
-    (e. g. particle or bond to delete does not exist)
+    identity of all bond partners (secondary atoms of the bond).
 */
-int change_particle_bond(int part, int *bond, int _delete);
+void delete_particle_bond(int part, Utils::Span<const int> bond);
+
+/** Call only on the master node: remove all bonds from particle.
+    @param part     identity of principal atom of the bond.
+*/
+void delete_particle_bonds(int part);
+
+/** Call only on the master node: Add bond to particle.
+    @param part     identity of principal atom of the bond.
+    @param bond     field containing the bond type number and the
+    identity of all bond partners (secondary atoms of the bond).
+*/
+void add_particle_bond(int part, Utils::Span<const int> bond);
 
 #ifdef EXCLUSIONS
 /** Call only on the master node: change particle constraints.
@@ -908,15 +917,6 @@ void local_place_particle(int part, const double p[3], int _new);
 */
 void added_particle(int part);
 
-/** Used by \ref mpi_send_bond, should not be used elsewhere.
-    Modify a bond.
-    @param part the identity of the particle to change
-    @param bond the bond to do
-    @param _delete if true, delete the bond instead of add
-    @return ES_OK for add or successful delete, ES_ERROR else
-*/
-int local_change_bond(int part, int *bond, int _delete);
-
 /** Used for example by \ref mpi_send_exclusion.
     Locally add a exclusion to a particle.
     @param part1 the identity of the first exclusion partner
@@ -943,6 +943,13 @@ void local_remove_all_particles();
 */
 void local_rescale_particles(int dir, double scale);
 
+/** @briefn Add bond to local particle.
+    @param part     identity of principal atom of the bond.
+    @param bond     field containing the bond type number and the
+    identity of all bond partners (secondary atoms of the bond).
+*/
+void local_add_particle_bond(Particle &p, Utils::Span<const int> bond);
+
 /** Synchronous send of a particle buffer to another node. The other node
     MUST call \ref recv_particles when this is called. The particles data
     is freed. */
@@ -966,7 +973,7 @@ inline bool do_nonbonded(Particle const *p1, Particle const *p2) {
 #endif
 
 /** Remove bond from particle if possible */
-int try_delete_bond(Particle *part, int *bond);
+int try_delete_bond(Particle *part, const int *bond);
 
 /** Remove exclusion from particle if possible */
 void try_delete_exclusion(Particle *part, int part2);
@@ -1039,7 +1046,7 @@ void pointer_to_gamma_rot(Particle const *p, double const *&res);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef ROTATION
-void pointer_to_rotation(Particle const *p, short int const *&res);
+void pointer_to_rotation(Particle const *p, int const *&res);
 #endif
 
 #ifdef ENGINE
@@ -1058,10 +1065,19 @@ void pointer_to_bond_site(Particle const *p, double const *&res);
 void pointer_to_out_direction(const Particle *p, const double *&res);
 #endif
 
+/**
+ * @brief Check if particle exists.
+ *
+ * @param part Id of the particle
+ * @return True iff the particle exists.
+ */
 bool particle_exists(int part);
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
+ *
+ *  @param id Id of the particle
+ *  @return The MPI rank the particle is on.
  */
 int get_particle_node(int id);
 

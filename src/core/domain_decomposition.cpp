@@ -20,25 +20,23 @@
 */
 /** \file
  *
- *  This file contains everything related to the cell system: domain
- * decomposition.
- *  See also \ref domain_decomposition.hpp
+ *  Implementation of domain_decomposition.hpp.
  */
 
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
+#include "serialization/ParticleList.hpp"
 #include "utils/mpi/sendrecv.hpp"
-#include "utils/serialization/ParticleList.hpp"
 
 #include "initialize.hpp"
 
 #include <boost/mpi/collectives.hpp>
 
-/** Returns pointer to the cell which corresponds to the position if
-    the position is in the nodes spatial domain otherwise a nullptr
-    pointer. */
+/** Returns pointer to the cell which corresponds to the position if the
+ *  position is in the nodes spatial domain otherwise a nullptr pointer.
+ */
 Cell *dd_save_position_to_cell(const Vector3d &pos);
 
 /************************************************/
@@ -100,8 +98,8 @@ double max_skin = 0.0;
  *  smaller or equal \ref max_num_cells. It sets: \ref
  *  DomainDecomposition::cell_grid, \ref
  *  DomainDecomposition::ghost_cell_grid, \ref
- *  DomainDecomposition::cell_size, \ref
- *  DomainDecomposition::inv_cell_size, and \ref n_cells.
+ *  DomainDecomposition::cell_size, and \ref
+ *  DomainDecomposition::inv_cell_size.
  */
 void dd_create_cell_grid() {
   int i, n_local_cells, new_cells;
@@ -221,8 +219,9 @@ void dd_create_cell_grid() {
 }
 
 /** Fill local_cells list and ghost_cells list for use with domain
-    decomposition.  \ref cells::cells is assumed to be a 3d grid with size
-    \ref DomainDecomposition::ghost_cell_grid . */
+ *  decomposition.  \ref cells::cells is assumed to be a 3d grid with size
+ *  \ref DomainDecomposition::ghost_cell_grid.
+ */
 void dd_mark_cells() {
   int m, n, o, cnt_c = 0, cnt_l = 0, cnt_g = 0;
 
@@ -236,13 +235,13 @@ void dd_mark_cells() {
 }
 
 /** Fill a communication cell pointer list. Fill the cell pointers of
-    all cells which are inside a rectangular subgrid of the 3D cell
-    grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
-    lower left corner lc up to the high top corner hc. The cell
-    pointer list part_lists must already be large enough.
-    \param part_lists  List of cell pointers to store the result.
-    \param lc          lower left corner of the subgrid.
-    \param hc          high up corner of the subgrid.
+ *  all cells which are inside a rectangular subgrid of the 3D cell
+ *  grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
+ *  lower left corner lc up to the high top corner hc. The cell
+ *  pointer list part_lists must already be large enough.
+ *  \param part_lists  List of cell pointers to store the result.
+ *  \param lc          lower left corner of the subgrid.
+ *  \param hc          high up corner of the subgrid.
  */
 int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
   int i, m, n, o, c = 0;
@@ -271,7 +270,8 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
 }
 
 /** Create communicators for cell structure domain decomposition. (see \ref
- * GhostCommunicator) */
+ *  GhostCommunicator)
+ */
 void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
   int dir, lr, i, cnt, num, n_comm_cells[3];
   int lc[3], hc[3], done[3] = {0, 0, 0};
@@ -404,8 +404,9 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
 }
 
 /** Revert the order of a communicator: After calling this the
-    communicator is working in reverted order with exchanged
-    communication types GHOST_SEND <-> GHOST_RECV. */
+ *  communicator is working in reverted order with exchanged
+ *  communication types GHOST_SEND <-> GHOST_RECV.
+ */
 void dd_revert_comm_order(GhostCommunicator *comm) {
   int i, j, nlist2;
   GhostCommunication tmp;
@@ -437,7 +438,8 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
 }
 
 /** Of every two communication rounds, set the first receivers to prefetch and
- * poststore */
+ *  poststore
+ */
 void dd_assign_prefetches(GhostCommunicator *comm) {
   int cnt;
 
@@ -451,10 +453,11 @@ void dd_assign_prefetches(GhostCommunicator *comm) {
 }
 
 /** update the 'shift' member of those GhostCommunicators, which use
-    that value to speed up the folding process of its ghost members
-    (see \ref dd_prepare_comm for the original), i.e. all which have
-    GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
-    dd_prepare_comm. */
+ *  that value to speed up the folding process of its ghost members
+ *  (see \ref dd_prepare_comm for the original), i.e. all which have
+ *  GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
+ *  dd_prepare_comm.
+ */
 void dd_update_communicators_w_boxl() {
   int cnt = 0;
 
@@ -551,9 +554,9 @@ void dd_init_cell_interactions() {
 
 /*************************************************/
 
-/** Returns pointer to the cell which corresponds to the position if
-    the position is in the nodes spatial domain otherwise a nullptr
-    pointer. */
+/** Returns pointer to the cell which corresponds to the position if the
+ *  position is in the nodes spatial domain otherwise a nullptr pointer.
+ */
 Cell *dd_save_position_to_cell(const Vector3d &pos) {
   int cpos[3];
 
@@ -733,8 +736,7 @@ void dd_topology_release() {
 
 namespace {
 /**
- * @brief Move particles into the cell system if
- *        it belongs to this node.
+ * @brief Move particles into the cell system if it belongs to this node.
  *
  * Moves all particles from src into the local cell
  * system if they do belong here. Otherwise the

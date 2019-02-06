@@ -22,7 +22,7 @@
 /** \file
  *  Force calculation.
  *
- *  For more information see \ref forces.hpp "forces.hpp".
+ *  The corresponding header file is forces.hpp.
  */
 
 #include "EspressoSystemInterface.hpp"

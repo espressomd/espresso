@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef UTILS_INTERPOLATION_GRADIENT_HPP
 #define UTILS_INTERPOLATION_GRADIENT_HPP
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 #include "detail/ll_and_dist.hpp"
 #include "utils/math/bspline.hpp"

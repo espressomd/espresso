@@ -20,7 +20,7 @@
 #ifndef UTILS_PARALLEL_INSTANCE_CALLBACK_HPP
 #define UTILS_PARALLEL_INSTANCE_CALLBACK_HPP
 
-#include "core/MpiCallbacks.hpp"
+#include "MpiCallbacks.hpp"
 
 namespace Utils {
 namespace Parallel {

@@ -20,7 +20,7 @@
 */
 /** \file
  *
- * Boundary conditions for Lattice Boltzmann fluid dynamics.
+ * Boundary conditions for lattice Boltzmann fluid dynamics.
  * Header file for \ref lbboundaries.cpp.
  *
  * In the current version only simple bounce back walls are implemented. Thus

@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .lb cimport HydrodynamicInteraction
-IF LB:
+IF LB_GPU:
     from .lb cimport lb_lbnode_is_index_valid
 from . import utils
 import numpy as np
