@@ -1325,7 +1325,7 @@ continuity, diffusion-advection, Poisson, and Navier-Stokes equations:
 
    \begin{aligned}
    \label{eq:ek-model-continuity} \frac{\partial n_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
-   \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+   \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} + \sqrt{n_k}\vec{\mathcal{W}}_k; \\
    \label{eq:ek-model-poisson} \Delta \Phi & = & -4 \pi \, {l_\mathrm{B}}\, {k_\mathrm{B}T}\sum_k q_k n_k \vphantom{\left(\frac{\partial}{\partial}\right)}; \\
    \nonumber \left(\frac{\partial \vec{v}_{\mathrm{fl}}}{\partial t} + \vec{v}_{\mathrm{fl}} \cdot \vec{\nabla} \vec{v}_{\mathrm{fl}} \right) \rho_\mathrm{fl} & = & -{k_\mathrm{B}T}\, \nabla \rho_\mathrm{fl} - q_k n_k \nabla \Phi \\
    \label{eq:ek-model-velocity} & & +\, \eta \vec{\Delta} \vec{v}_{\mathrm{fl}} + (\eta / 3 + \eta_{\text{b}}) \nabla (\nabla \cdot \vec{v}_{\mathrm{fl}}) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
@@ -1355,6 +1355,9 @@ and input parameters
 
 :math:`\nu_k`
     the mobility of species :math:`k`,
+
+:math:`\vec{\mathcal{W}}_k`
+    the white-noise term for the flucatuations of species :math:`k`,
 
 :math:`q_k`
     the charge of a single particle of species :math:`k`,
@@ -1500,6 +1503,13 @@ differences. This only includes interactions between the species and
 boundaries and MD particles, not between MD particles and MD particles.
 To get complete electrostatic interactions a particles Coulomb method
 like Ewald or P3M has to be activated too.
+
+The fluctuation of the EK species can be turned on by the flag ``fluctuations``.
+This adds a white-noise term to the fluxes. The amplitude of this noise term
+can be controlled by ``fluctuation_amplitude``. To circumvent that these fluctuations
+lead to negative densities, they are modified by a smoothed Heaviside function,
+which decreases the magnitude of the flactuation for densities close to 0.
+By default the fluctuations are turned off.
 
 .. _Diffusive Species:
 
