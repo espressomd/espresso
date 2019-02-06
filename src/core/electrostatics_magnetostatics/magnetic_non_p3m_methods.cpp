@@ -41,7 +41,9 @@
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include "utils/math/int_pow.hpp"
+#include "utils/mpi/all_gatherv.hpp"
+
+#include <boost/mpi/collectives/all_gather.hpp>
 
 /************************************************************/
 
@@ -62,29 +64,7 @@ int magnetic_dipolar_direct_sum_sanity_checks() {
 
 /************************************************************/
 
-double magnetic_dipolar_direct_sum_calculations(int force_flag,
-                                                int energy_flag) {
-  std::vector<Vector3d> m;
-  m.reserve(n_part);
-
-  double u;
-
-  std::vector<Vector3d> pos;
-  pos.reserve(n_part);
-
-  std::vector<ParticleForce> f;
-  if (force_flag) {
-      f.reserve(n_part);
-  }
-
-  for (auto const &p : local_cells.particles()) {
-    if (p.p.dipm != 0.0) {
-      m.emplace_back(p.calc_dip());
-      pos.emplace_back(folded_position(p.r.p));
-    }
-  }
-
-  auto f_kernel = [](Vector3d const& d, Vector3d const& m1, Vector3d const& m2) -> ParticleForce {
+auto f_kernel = [](Vector3d const& d, Vector3d const& m1, Vector3d const& m2) -> ParticleForce {
     auto const pe2 = m1 * d;
     auto const pe3 = m2 * d;
 
@@ -105,36 +85,75 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
 #else
     return f;
 #endif
-  };
+};
 
-  auto u_kernel = [] (Vector3d const& d, Vector3d const& m1, Vector3d const& m2) -> double {
-      auto const r2 = d*d;
-      auto const r = sqrt(r2);
-      auto const r3 = r2 * r;
-      auto const r5 = r3 * r2;
+auto u_kernel = [] (Vector3d const& d, Vector3d const& m1, Vector3d const& m2) -> double {
+    auto const r2 = d*d;
+    auto const r = sqrt(r2);
+    auto const r3 = r2 * r;
+    auto const r5 = r3 * r2;
 
-      auto const pe1 = m1 * m2;
-      auto const pe2 = m1 * d;
-      auto const pe3 = m2 * d;
+    auto const pe1 = m1 * m2;
+    auto const pe2 = m1 * d;
+    auto const pe3 = m2 * d;
 
-      // Energy ............................
-      return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
-  };
+    // Energy ............................
+    return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
+};
+
+double magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag, const ParticleRange &particles,
+                                                const boost::mpi::communicator &comm) {
+  std::vector<Vector3d> m;
+  m.reserve(particles.size());
+
+  double u;
+
+  std::vector<Vector3d> pos;
+  pos.reserve(particles.size());
+
+  std::vector<ParticleForce> f;
+  if (force_flag) {
+      f.reserve(particles.size());
+  }
+
+  std::vector<Particle *> parts;
+  parts.reserve(particles.size());
+
+  for (auto &p : particles) {
+    if (p.p.dipm != 0.0) {
+        parts.emplace_back(&p);
+        m.emplace_back(p.calc_dip());
+        pos.emplace_back(folded_position(p.r.p));
+    }
+  }
+
+  std::vector<int> sizes(comm.size());
+
+  boost::mpi::all_gather(comm, static_cast<int>(parts.size()), sizes);
+
+  auto const offset =
+          std::accumulate(sizes.begin(), sizes.begin() + comm.rank(), 0);
+  auto const total_size = std::accumulate(sizes.begin() + comm.rank(), sizes.end(), offset);
+
+    std::vector<Vector3d> gpos(total_size);
+    std::vector<Vector3d> gm(total_size);
+
+    Utils::Mpi::all_gatherv(comm, pos.data(), pos.size(), gpos.data(), sizes.data());
+    Utils::Mpi::all_gatherv(comm, m.data(), m.size(), gm.data(), sizes.data());
 
   /*now we do the calculations */
 
-  { /* beginning of the area of calculation */
     const Vector3i ncut = Ncut_off_magnetic_dipolar_direct_sum * Vector3i{static_cast<int>(PERIODIC(0)),
                                                                           static_cast<int>(PERIODIC(1)),
                                                                           static_cast<int>(PERIODIC(2))};
     auto const ncut2 = ncut.norm2();
     u = 0;
 
-    for (int i = 0; i < n_part; i++) {
+    for (int i = 0; i < pos.size(); i++) {
         ParticleForce fi{};
 
-      for (int j = 0; j < n_part; j++) {
-          auto const d = pos[i] - pos[j];
+      for (int j = 0; j < gpos.size(); j++) {
+          auto const d = pos[i] - gpos[j];
           auto const rx = d[0];
           auto const ry = d[1];
           auto const rz = d[2];
@@ -144,16 +163,16 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
               for (int ny = -ncut[1]; ny <= ncut[1]; ny++) {
                   auto const rny = ry + ny * box_l[1];
                   for (int nz = -ncut[2]; nz <= ncut[2]; nz++) {
-                      if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
+                      if (!((offset + i) == j && nx == 0 && ny == 0 && nz == 0)) {
                           if (nx * nx + ny * ny + nz * nz <= ncut2) {
                               auto const rnz = rz + nz * box_l[2];
                               if (energy_flag) {
-                                  u += u_kernel({rnx, rny, rnz}, m[i], m[j]);
+                                  u += u_kernel({rnx, rny, rnz}, m[i], gm[j]);
                               }
 
                               if (force_flag) {
                                   // force ............................
-                                  fi += f_kernel({rnx, rny, rnz}, m[i], m[j]);
+                                  fi += f_kernel({rnx, rny, rnz}, m[i], gm[j]);
                               } /* of force_flag  */
                           }
                       } /* of nx*nx+ny*ny +nz*nz< NCUT*NCUT   and   !(i==j && nx==0 &&
@@ -163,23 +182,12 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
           }       /* of  for nx  */
       }
       if(force_flag) {
-          f.emplace_back(fi);
+          parts[i]->f.f += coulomb.Dprefactor * fi.f;
+#ifdef ROTATION
+          parts[i]->f.torque += coulomb.Dprefactor * fi.torque;
+#endif
       }
     } /* of  j and i  */
-  }   /* end of the area of calculation */
-
-  /* set the forces, and torques of the particles within Espresso */
-  if (force_flag) {
-    int dip_particles2 = 0;
-    for (auto &p : local_cells.particles()) {
-      if (p.p.dipm != 0.0) {
-        p.f.f += coulomb.Dprefactor * f[dip_particles2].f;
-        p.f.torque += coulomb.Dprefactor * f[dip_particles2].torque;
-      }
-        dip_particles2++;
-    }
-  } /*of if force_flag */
-
   return 0.5 * coulomb.Dprefactor * u;
 }
 
