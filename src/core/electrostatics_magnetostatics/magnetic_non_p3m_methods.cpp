@@ -124,26 +124,25 @@ magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,
   std::vector<Vector3d> gm;
   int offset;
 
-  if(comm.size() > 1) {
-      std::vector<int> sizes(comm.size());
+  if (comm.size() > 1) {
+    std::vector<int> sizes(comm.size());
 
-      boost::mpi::all_gather(comm, static_cast<int>(parts.size()), sizes);
+    boost::mpi::all_gather(comm, static_cast<int>(parts.size()), sizes);
 
-      offset =
-              std::accumulate(sizes.begin(), sizes.begin() + comm.rank(), 0);
-      auto const total_size =
-              std::accumulate(sizes.begin() + comm.rank(), sizes.end(), offset);
+    offset = std::accumulate(sizes.begin(), sizes.begin() + comm.rank(), 0);
+    auto const total_size =
+        std::accumulate(sizes.begin() + comm.rank(), sizes.end(), offset);
 
-      gpos.resize(total_size);
-      gm.resize(total_size);
+    gpos.resize(total_size);
+    gm.resize(total_size);
 
-      Utils::Mpi::all_gatherv(comm, pos.data(), pos.size(), gpos.data(),
-                              sizes.data());
-      Utils::Mpi::all_gatherv(comm, m.data(), m.size(), gm.data(), sizes.data());
+    Utils::Mpi::all_gatherv(comm, pos.data(), pos.size(), gpos.data(),
+                            sizes.data());
+    Utils::Mpi::all_gatherv(comm, m.data(), m.size(), gm.data(), sizes.data());
   } else {
-      std::swap(gpos, pos);
-      std::swap(gm, m);
-      offset = 0;
+    std::swap(gpos, pos);
+    std::swap(gm, m);
+    offset = 0;
   }
 
   /*now we do the calculations */
