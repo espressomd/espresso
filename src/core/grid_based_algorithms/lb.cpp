@@ -155,6 +155,67 @@ static double fluidstep = 0.0;
 
 #ifdef LB
 /********************** The Main LB Part *************************************/
+void lb_reinit_parameters() {
+  if (lbpar.viscosity > 0.0) {
+    /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    lbpar.gamma_shear = 1. - 2. / (6. * lbpar.viscosity + 1.);
+  }
+
+  if (lbpar.bulk_viscosity > 0.0) {
+    /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    lbpar.gamma_bulk = 1. - 2. / (9. * lbpar.bulk_viscosity + 1.);
+  }
+
+  if (lbpar.is_TRT) {
+    lbpar.gamma_bulk = lbpar.gamma_shear;
+    lbpar.gamma_even = lbpar.gamma_shear;
+    lbpar.gamma_odd =
+        -(7.0 * lbpar.gamma_even + 1.0) / (lbpar.gamma_even + 7.0);
+    // gamma_odd = lbpar.gamma_shear; //uncomment for BGK
+  }
+
+  // lbpar.gamma_shear = 0.0; //uncomment for special case of BGK
+  // lbpar.gamma_bulk = 0.0;
+  // gamma_odd = 0.0;
+  // gamma_even = 0.0;
+
+  if (lbpar.kT > 0.0) {
+    /* fluctuating hydrodynamics ? */
+    lbpar.fluct = 1;
+
+    /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
+     * Note that the modes are not normalized as in the paper here! */
+    double mu = lbpar.kT / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
+                (lbpar.agrid * lbpar.agrid);
+
+    for (int i = 0; i < 4; i++)
+      lbpar.phi[i] = 0.0;
+    lbpar.phi[4] =
+        sqrt(mu * lbmodel.w_k[4] * (1. - Utils::sqr(lbpar.gamma_bulk)));
+    for (int i = 5; i < 10; i++)
+      lbpar.phi[i] =
+          sqrt(mu * lbmodel.w_k[i] * (1. - Utils::sqr(lbpar.gamma_shear)));
+    for (int i = 10; i < 16; i++)
+      lbpar.phi[i] =
+          sqrt(mu * lbmodel.w_k[i] * (1 - Utils::sqr(lbpar.gamma_odd)));
+    for (int i = 16; i < 19; i++)
+      lbpar.phi[i] =
+          sqrt(mu * lbmodel.w_k[i] * (1 - Utils::sqr(lbpar.gamma_even)));
+
+    LB_TRACE(fprintf(
+        stderr,
+        "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
+        "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
+        this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
+        lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
+  } else {
+    /* no fluctuations at zero temperature */
+    lbpar.fluct = 0;
+    for (int i = 0; i < lbmodel.n_veloc; i++)
+      lbpar.phi[i] = 0.0;
+  }
+}
+
 /* Halo communication for push scheme */
 static void halo_push_communication(LB_Fluid &lbfluid) {
   Lattice::index_t index;
