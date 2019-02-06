@@ -63,14 +63,13 @@ void lb_lbfluid_invalidate_particle_allocation() {
 void lb_lbfluid_reinit_parameters() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    lb_reinit_parameters_gpu();
+    if (this_node == 0)
+      lb_reinit_parameters_gpu();
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     lb_reinit_parameters();
 #endif
-  } else {
-    throw std::runtime_error("LB not activated.");
   }
 }
 

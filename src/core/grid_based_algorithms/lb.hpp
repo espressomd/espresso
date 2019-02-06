@@ -190,6 +190,7 @@ extern HaloCommunicator update_halo_comm;
 
 void lb_realloc_fluid();
 
+void lb_reinit_parameters();
 /** Pointer to the velocity populations of the fluid.
  *  lbfluid contains pre-collision populations, lbfluid_post
  *  contains post-collision populations

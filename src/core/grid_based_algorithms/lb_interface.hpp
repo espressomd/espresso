@@ -25,7 +25,7 @@ void lb_reinit_fluid();
 /** (Re-)initialize the derived parameters for the lattice Boltzmann system.
  *  The current state of the fluid is unchanged.
  */
-void lb_reinit_parameters();
+void lb_lbfluid_reinit_parameters();
 
 #ifdef LB
 extern int transfer_momentum;

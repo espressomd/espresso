@@ -48,7 +48,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "lattice.hpp"
 #include "metadynamics.hpp"
@@ -535,19 +534,8 @@ void on_cell_structure_change() {
 }
 
 void on_temperature_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_temperature_change\n", this_node));
-
-#ifdef LB
-  if (lattice_switch & LATTICE_LB) {
-    lb_reinit_parameters();
-  }
-#endif
-#ifdef LB_GPU
-  if (this_node == 0) {
-    if (lattice_switch & LATTICE_LB_GPU) {
-      lb_reinit_parameters_gpu();
-    }
-  }
+#if defined(LB) || defined(LB_GPU)
+  lb_lbfluid_reinit_parameters();
 #endif
 }
 
@@ -595,17 +583,8 @@ void on_parameter_change(int field) {
     reinit_thermo = 1;
     break;
   case FIELD_TIMESTEP:
-#ifdef LB_GPU
-    if (this_node == 0) {
-      if (lattice_switch & LATTICE_LB_GPU) {
-        lb_reinit_parameters_gpu();
-      }
-    }
-#endif
-#ifdef LB
-    if (lattice_switch & LATTICE_LB) {
-      lb_reinit_parameters();
-    }
+#if defined(LB) || defined(LB_GPU)
+    lb_lbfluid_reinit_parameters();
 #endif
   case FIELD_LANGEVIN_GAMMA:
   case FIELD_LANGEVIN_GAMMA_ROTATION:
