@@ -27,11 +27,26 @@ class Constraint {
 public:
   /**
    * @brief Add energy contribution of this constraints to energy.
-   */
+   *
+   * Add constraint energy for particle to observable.
+   *
+   * @param[in] p The particle to add the energy for.
+   * @param[in] folded_pos Folded position of the particle.
+   * @param[in] t The time at which the energy should be calculated.
+   * @param[out] Observable to add the energy to.
+   */ 
   virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
                           double t, Observable_stat &energy) const = 0;
+
   /**
-   * @brief Return constraint force on particle.
+   * @brief Calculate the force of the constraint on a particle.
+   *
+   * Add constraint energy for particle to observable.
+   *
+   * @param[in] p The particle to calculate the force for.
+   * @param[in] folded_pos Folded position of the particle.
+   * @param[in] t The time at which the force should be calculated.
+   * @return The force on the particle.
    */
   virtual ParticleForce force(const Particle &p, const Vector3d &folded_pos,
                               double t) = 0;

@@ -26,6 +26,11 @@ namespace FieldCoupling {
 namespace Fields {
 /**
  * @brief A plane wave.
+ *
+ * A time dependent plane wave, with a certain (vector-valued)
+ * amplitude, wave vector frequency and phase.
+ *
+ * See @url https://en.wikipedia.org/wiki/Plane_wave
  */
 template <typename T, size_t codim> class PlaneWave {
 public:
@@ -47,10 +52,28 @@ public:
   T &omega() { return m_omega; }
   T &phase() { return m_phase; }
 
+  /**
+   * brief Evaluate field.
+   *
+   * @param x Where?
+   * @param t When?
+   * @return Value of the field at point x and time t.
+   */
   value_type operator()(const Vector3d &x, T t = 0.) const {
     return m_amplitude * sin(m_k * x - m_omega * t + m_phase);
   }
 
+  /**
+   * brief Evaluate the Jacobian matrix of the field.
+   *
+   * See @url https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant
+   * In the special case of a scalar field, the Jacobian is the gradient of
+   * the field.
+   *
+   * @param x Where?
+   * @param t When?
+   * @return Jacobian matrix
+   */
   jacobian_type jacobian(const Vector3d &x, T t = 0.) const {
     using Utils::tensor_product;
 
