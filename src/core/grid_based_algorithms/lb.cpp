@@ -103,8 +103,6 @@ LB_Parameters lbpar = {
     0.,
     // is_TRT
     false,
-    // resend_halo
-    0,
     // phi
     {},
     // Thermal energy
@@ -180,9 +178,6 @@ void lb_reinit_parameters() {
   // gamma_even = 0.0;
 
   if (lbpar.kT > 0.0) {
-    /* fluctuating hydrodynamics ? */
-    lbpar.fluct = 1;
-
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
      * Note that the modes are not normalized as in the paper here! */
     double mu = lbpar.kT / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
@@ -209,8 +204,6 @@ void lb_reinit_parameters() {
         this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
         lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
   } else {
-    /* no fluctuations at zero temperature */
-    lbpar.fluct = 0;
     for (int i = 0; i < lbmodel.n_veloc; i++)
       lbpar.phi[i] = 0.0;
   }
@@ -760,7 +753,7 @@ template <typename T>
 inline std::array<T, 19>
 lb_thermalize_modes(Lattice::index_t index, const r123::Philox4x64::ctr_type &c,
                     const std::array<T, 19> &modes) {
-  if (lbpar.fluct) {
+  if (lbpar.kT > 0.0) {
     using Utils::uniform;
     using rng_type = r123::Philox4x64;
     using ctr_type = rng_type::ctr_type;

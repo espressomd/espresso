@@ -171,8 +171,6 @@ struct LB_Parameters {
   bool is_TRT;
 
   /** \name Derived parameters */
-  /** Flag indicating whether fluctuations are present. */
-  int fluct;
   /** amplitudes of the fluctuations of the modes */
   Vector<19, double> phi;
   // Thermal energy
