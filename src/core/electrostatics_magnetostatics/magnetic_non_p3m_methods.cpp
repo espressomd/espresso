@@ -157,6 +157,20 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
 #endif
   };
 
+  auto u_kernel = [] (Vector3d const& d, Vector3d const& m1, Vector3d const& m2) -> double {
+      auto const r2 = d*d;
+      auto const r = sqrt(r2);
+      auto const r3 = r2 * r;
+      auto const r5 = r3 * r2;
+
+      auto const pe1 = m1 * m2;
+      auto const pe2 = m1 * d;
+      auto const pe3 = m2 * d;
+
+      // Energy ............................
+      return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
+  };
+
   /*now we do the calculations */
 
   { /* beginning of the area of calculation */
@@ -167,59 +181,47 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
     u = 0;
 
     for (int i = 0; i < dip_particles; i++) {
+        ParticleForce f{};
+
       for (int j = 0; j < dip_particles; j++) {
-        auto const pe1 = mx[i] * mx[j] + my[i] * my[j] + mz[i] * mz[j];
-        auto const rx = x[i] - x[j];
-        auto const ry = y[i] - y[j];
-        auto const rz = z[i] - z[j];
+          auto const rx = x[i] - x[j];
+          auto const ry = y[i] - y[j];
+          auto const rz = z[i] - z[j];
 
-        for (int nx = -ncut[0]; nx <= ncut[0]; nx++) {
-          auto const rnx = rx + nx * box_l[0];
-          auto const rnx2 = rnx * rnx;
-          for (int ny = -ncut[1]; ny <= ncut[1]; ny++) {
-            auto const rny = ry + ny * box_l[1];
-            auto const rny2 = rny * rny;
-            for (int nz = -ncut[2]; nz <= ncut[2]; nz++) {
-              if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
-                if (nx * nx + ny * ny + nz * nz <= ncut2) {
-                  auto const rnz = rz + nz * box_l[2];
-                  if(energy_flag)
-                    {
-                        auto const r2 = rnx2 + rny2 + rnz * rnz;
-                        auto const r = sqrt(r2);
-                        auto const r3 = r2 * r;
-                        auto const r5 = r3 * r2;
+          for (int nx = -ncut[0]; nx <= ncut[0]; nx++) {
+              auto const rnx = rx + nx * box_l[0];
+              for (int ny = -ncut[1]; ny <= ncut[1]; ny++) {
+                  auto const rny = ry + ny * box_l[1];
+                  for (int nz = -ncut[2]; nz <= ncut[2]; nz++) {
+                      if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
+                          if (nx * nx + ny * ny + nz * nz <= ncut2) {
+                              auto const rnz = rz + nz * box_l[2];
+                              if (energy_flag) {
+                                  u += u_kernel({rnx, rny, rnz}, {mx[i], my[i], mz[i]}, {mx[j], my[j], mz[j]});
+                              }
 
-                        auto const pe2 = mx[i] * rnx + my[i] * rny + mz[i] * rnz;
-                        auto const pe3 = mx[j] * rnx + my[j] * rny + mz[j] * rnz;
-
-                        // Energy ............................
-
-                        u += pe1 / r3 - 3.0 * pe2 * pe3 / r5;
-                    }
-
-                  if (force_flag) {
-                    // force ............................
-                          auto const f = f_kernel({rnx, rny, rnz}, {mx[i], my[i], mz[i]}, {mx[j], my[j], mz[j]});
-
-                          fx[i] += f.f[0];
-                          fy[i] += f.f[1];
-                          fz[i] += f.f[2];
-#ifdef ROTATION
-                    // torque ............................
-                          tx[i] += f.torque[0];
-                          ty[i] += f.torque[1];
-                          tz[i] += f.torque[2];
-#endif
-                  } /* of force_flag  */
-                }
-              } /* of nx*nx+ny*ny +nz*nz< NCUT*NCUT   and   !(i==j && nx==0 &&
+                              if (force_flag) {
+                                  // force ............................
+                                  f += f_kernel({rnx, rny, rnz}, {mx[i], my[i], mz[i]}, {mx[j], my[j], mz[j]});
+                              } /* of force_flag  */
+                          }
+                      } /* of nx*nx+ny*ny +nz*nz< NCUT*NCUT   and   !(i==j && nx==0 &&
                    ny==0 && nz==0) */
-            }   /* of  for nz */
-          }     /* of  for ny  */
-        }       /* of  for nx  */
+                  }   /* of  for nz */
+              }     /* of  for ny  */
+          }       /* of  for nx  */
       }
-
+      if(force_flag) {
+          fx[i] = f.f[0];
+          fy[i] = f.f[1];
+          fz[i] = f.f[2];
+#ifdef ROTATION
+          // torque ............................
+          tx[i] = f.torque[0];
+          ty[i] = f.torque[1];
+          tz[i] = f.torque[2];
+#endif
+      }
     } /* of  j and i  */
   }   /* end of the area of calculation */
 
