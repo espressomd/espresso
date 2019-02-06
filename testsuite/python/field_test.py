@@ -109,7 +109,20 @@ class FieldTest(ut.TestCase):
         self.system.integrator.run(0)
 
         np.testing.assert_almost_equal(np.copy(p.f),
-                                       p.q * E0 * np.sin(np.dot(k, p.pos) - omega * self.system.time + phi))
+                                       p.q * E0 * np.sin(np.dot(k, p.pos_folded) - omega * self.system.time + phi))
+
+        self.system.time = 118.
+
+        self.system.integrator.run(0)
+
+        np.testing.assert_almost_equal(np.copy(p.f),
+                                       p.q * E0 * np.sin(np.dot(k, p.pos_folded) - omega * self.system.time + phi))
+
+        self.system.integrator.run(10)
+        self.system.integrator.run(0, recalc_forces=True)
+
+        np.testing.assert_almost_equal(np.copy(p.f),
+                                       p.q * E0 * np.sin(np.dot(k, p.pos_folded) - omega * self.system.time + phi))
 
     def test_homogeneous_flow_field(self):
         u = np.array([1., 2., 3.])
