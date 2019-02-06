@@ -41,6 +41,8 @@
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
+#include "utils/math/int_pow.hpp"
+
 /************************************************************/
 
 /* =============================================================================
@@ -132,86 +134,82 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
     }
   }
 
+  auto f_kernel = [](Vector3d const& d, Vector3d const& m1, Vector3d const& m2) -> ParticleForce {
+    auto const pe2 = m1 * d;
+    auto const pe3 = m2 * d;
+
+    auto const r2 = d.norm2();
+    auto const r = std::sqrt(r2);
+    auto const r5 = r2 * r2 *r;
+    auto const r7 = r5 * r2;
+
+    auto const a = 3.0 * (m1 * m2) / r5;
+    auto const b = -15.0 * pe2 * pe3 / r7;
+
+    auto const f = (a + b) * d + 3.0 * (pe3 * m1 + pe2 * m2) / r5;
+#ifdef ROTATION
+    auto const r3 = r2*r;
+    auto const t = - m1.cross(m2) / r3 + 3.0 * pe3 * m1.cross(d) / r5;
+
+    return {f, t};
+#else
+    return f;
+#endif
+  };
+
   /*now we do the calculations */
 
   { /* beginning of the area of calculation */
-    int nx, ny, nz, i, j;
-    double r, rnx, rny, rnz, pe1, pe2, pe3, r3, r5, r2, r7;
-    double a, b, c, d;
-#ifdef ROTATION
-    double ax, ay, az, bx, by, bz;
-#endif
-    double rx, ry, rz;
-    double rnx2, rny2;
-    int NCUT[3], NCUT2;
-
-    for (i = 0; i < 3; i++) {
-      NCUT[i] = Ncut_off_magnetic_dipolar_direct_sum;
-      if (PERIODIC(i) == 0) {
-        NCUT[i] = 0;
-      }
-    }
-    NCUT2 = Ncut_off_magnetic_dipolar_direct_sum *
-            Ncut_off_magnetic_dipolar_direct_sum;
-
+    const Vector3i ncut = Ncut_off_magnetic_dipolar_direct_sum * Vector3i{static_cast<int>(PERIODIC(0)),
+                                                                          static_cast<int>(PERIODIC(1)),
+                                                                          static_cast<int>(PERIODIC(2))};
+    auto const ncut2 = ncut.norm2();
     u = 0;
 
-    for (i = 0; i < dip_particles; i++) {
-      for (j = 0; j < dip_particles; j++) {
-        pe1 = mx[i] * mx[j] + my[i] * my[j] + mz[i] * mz[j];
-        rx = x[i] - x[j];
-        ry = y[i] - y[j];
-        rz = z[i] - z[j];
+    for (int i = 0; i < dip_particles; i++) {
+      for (int j = 0; j < dip_particles; j++) {
+        auto const pe1 = mx[i] * mx[j] + my[i] * my[j] + mz[i] * mz[j];
+        auto const rx = x[i] - x[j];
+        auto const ry = y[i] - y[j];
+        auto const rz = z[i] - z[j];
 
-        for (nx = -NCUT[0]; nx <= NCUT[0]; nx++) {
-          rnx = rx + nx * box_l[0];
-          rnx2 = rnx * rnx;
-          for (ny = -NCUT[1]; ny <= NCUT[1]; ny++) {
-            rny = ry + ny * box_l[1];
-            rny2 = rny * rny;
-            for (nz = -NCUT[2]; nz <= NCUT[2]; nz++) {
+        for (int nx = -ncut[0]; nx <= ncut[0]; nx++) {
+          auto const rnx = rx + nx * box_l[0];
+          auto const rnx2 = rnx * rnx;
+          for (int ny = -ncut[1]; ny <= ncut[1]; ny++) {
+            auto const rny = ry + ny * box_l[1];
+            auto const rny2 = rny * rny;
+            for (int nz = -ncut[2]; nz <= ncut[2]; nz++) {
               if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
-                if (nx * nx + ny * ny + nz * nz <= NCUT2) {
-                  rnz = rz + nz * box_l[2];
-                  r2 = rnx2 + rny2 + rnz * rnz;
-                  r = sqrt(r2);
-                  r3 = r2 * r;
-                  r5 = r3 * r2;
-                  r7 = r5 * r2;
+                if (nx * nx + ny * ny + nz * nz <= ncut2) {
+                  auto const rnz = rz + nz * box_l[2];
+                  if(energy_flag)
+                    {
+                        auto const r2 = rnx2 + rny2 + rnz * rnz;
+                        auto const r = sqrt(r2);
+                        auto const r3 = r2 * r;
+                        auto const r5 = r3 * r2;
 
-                  pe2 = mx[i] * rnx + my[i] * rny + mz[i] * rnz;
-                  pe3 = mx[j] * rnx + my[j] * rny + mz[j] * rnz;
+                        auto const pe2 = mx[i] * rnx + my[i] * rny + mz[i] * rnz;
+                        auto const pe3 = mx[j] * rnx + my[j] * rny + mz[j] * rnz;
 
-                  // Energy ............................
+                        // Energy ............................
 
-                  u += pe1 / r3 - 3.0 * pe2 * pe3 / r5;
+                        u += pe1 / r3 - 3.0 * pe2 * pe3 / r5;
+                    }
 
                   if (force_flag) {
                     // force ............................
-                    a = mx[i] * mx[j] + my[i] * my[j] + mz[i] * mz[j];
-                    a = 3.0 * a / r5;
-                    b = -15.0 * pe2 * pe3 / r7;
-                    c = 3.0 * pe3 / r5;
-                    d = 3.0 * pe2 / r5;
+                          auto const f = f_kernel({rnx, rny, rnz}, {mx[i], my[i], mz[i]}, {mx[j], my[j], mz[j]});
 
-                    fx[i] += (a + b) * rnx + c * mx[i] + d * mx[j];
-                    fy[i] += (a + b) * rny + c * my[i] + d * my[j];
-                    fz[i] += (a + b) * rnz + c * mz[i] + d * mz[j];
-
+                          fx[i] += f.f[0];
+                          fy[i] += f.f[1];
+                          fz[i] += f.f[2];
 #ifdef ROTATION
                     // torque ............................
-                    c = 3.0 / r5 * pe3;
-                    ax = my[i] * mz[j] - my[j] * mz[i];
-                    ay = mx[j] * mz[i] - mx[i] * mz[j];
-                    az = mx[i] * my[j] - mx[j] * my[i];
-
-                    bx = my[i] * rnz - rny * mz[i];
-                    by = rnx * mz[i] - mx[i] * rnz;
-                    bz = mx[i] * rny - rnx * my[i];
-
-                    tx[i] += -ax / r3 + bx * c;
-                    ty[i] += -ay / r3 + by * c;
-                    tz[i] += -az / r3 + bz * c;
+                          tx[i] += f.torque[0];
+                          ty[i] += f.torque[1];
+                          tz[i] += f.torque[2];
 #endif
                   } /* of force_flag  */
                 }
@@ -221,6 +219,7 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
           }     /* of  for ny  */
         }       /* of  for nx  */
       }
+
     } /* of  j and i  */
   }   /* end of the area of calculation */
 
