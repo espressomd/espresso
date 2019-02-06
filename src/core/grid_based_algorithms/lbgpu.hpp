@@ -64,6 +64,21 @@ typedef double lbForceFloat;
 typedef float lbForceFloat;
 #endif
 
+class LB_particle_allocation_state {
+  bool m_invalid = true;
+public:
+  bool operator() () {
+    return m_invalid;
+  }
+  void invalidate() {
+    m_invalid = true;
+  }
+
+  void validate() {
+    m_invalid = false;
+  }
+};
+
 /**-------------------------------------------------------------------------*/
 /** Parameters for the lattice Boltzmann system for GPU. */
 struct LB_parameters_gpu {
@@ -184,6 +199,7 @@ typedef struct {
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_rho_v_pi_gpu *host_values;
 extern LB_extern_nodeforcedensity_gpu *extern_node_force_densities_gpu;
+extern LB_particle_allocation_state lb_reinit_particles_gpu;
 #ifdef ELECTROKINETICS
 extern LB_node_force_density_gpu node_f;
 extern bool ek_initialized;

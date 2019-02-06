@@ -12,7 +12,7 @@
 
 #if defined(LB) || defined(LB_GPU)
 
-void lb_update() {
+void lb_lbfluid_update() {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     lattice_boltzmann_update();
@@ -32,12 +32,30 @@ void lb_update() {
   }
 }
 
-void lb_on_integration_start() {
+void lb_lbfluid_on_integration_start() {
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    lb_GPU_sanity_checks();
+    if (this_node == 0 && lb_reinit_particles_gpu()) {
+      lb_realloc_particles_gpu();
+      lb_reinit_particles_gpu.validate();
+    }
+#endif
+  } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
   lb_sanity_checks();
 
   halo_communication(&update_halo_comm,
                      reinterpret_cast<char *>(lbfluid[0].data()));
+#endif
+  } else {
+    throw std::runtime_error("LB not activated.");
+  }
+}
+
+void lb_lbfluid_invalidate_particle_allocation() {
+#ifdef LB_GPU
+  lb_reinit_particles_gpu.invalidate();
 #endif
 }
 

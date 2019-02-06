@@ -7,11 +7,11 @@
 
 #if defined(LB) || defined(LB_GPU)
 
-void lb_update();
+void lb_lbfluid_update();
 /**
  * @brief Event handler for integration start.
  */
-void lb_on_integration_start();
+void lb_lbfluid_on_integration_start();
 
 /** Perform a full initialization of
  *  the lattice Boltzmann system. All derived parameters
@@ -61,6 +61,7 @@ void lb_lbfluid_set_agrid(double p_agrid);
 void lb_lbfluid_set_ext_force_density(int component,
                                       const Vector3d &force_density);
 void lb_lbfluid_set_kT(double kT);
+void lb_lbfluid_invalidate_particle_allocation();
 
 void lb_lbnode_set_rho(const Vector3i &ind, double rho);
 void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u);

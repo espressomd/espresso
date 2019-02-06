@@ -48,8 +48,8 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
+#include "grid_based_algorithms/lbboundaries.hpp"
 #include "lattice.hpp"
 #include "metadynamics.hpp"
 #include "nonbonded_interactions/reaction_field.hpp"
@@ -73,9 +73,6 @@
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
 static int reinit_magnetostatics = 0;
-#ifdef LB_GPU
-static int lb_reinit_particles_gpu = 1;
-#endif
 
 #ifdef CUDA
 static int reinit_particle_comm_gpu = 1;
@@ -145,30 +142,13 @@ void on_integration_start() {
 #ifdef SWIMMER_REACTIONS
   reactions_sanity_checks();
 #endif
-#ifdef LB
-  if (lattice_switch & LATTICE_LB) {
-    lb_on_integration_start();
-  }
-#endif
-#ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU) {
-    lb_GPU_sanity_checks();
-  }
+#if defined(LB) || defined(LB_GPU)
+  lb_lbfluid_on_integration_start();
 #endif
 
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
-
-#ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU && this_node == 0) {
-    if (lb_reinit_particles_gpu) {
-      lb_realloc_particles_gpu();
-      lb_reinit_particles_gpu = 0;
-    }
-  }
-#endif
-
 #ifdef CUDA
   if (reinit_particle_comm_gpu) {
     gpu_change_number_of_part_to_comm();
@@ -291,7 +271,7 @@ void on_particle_change() {
   reinit_magnetostatics = 1;
 
 #ifdef LB_GPU
-  lb_reinit_particles_gpu = 1;
+  lb_lbfluid_invalidate_particle_allocation();
 #endif
 #ifdef CUDA
   reinit_particle_comm_gpu = 1;
