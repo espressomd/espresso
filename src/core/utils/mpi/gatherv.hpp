@@ -59,6 +59,11 @@ void gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
   if (comm.rank() == root) {
     auto const n_nodes = comm.size();
 
+    /* not in-place */
+    if(in_values != out_values) {
+      std::copy_n(in_values, in_size, out_values + displs[root]);
+    }
+
     std::vector<boost::mpi::request> req;
     for (int i = 0; i < n_nodes; i++) {
       if (i == root)
