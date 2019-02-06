@@ -1193,19 +1193,18 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
     return;
   }
 #endif
-  double modes_from_pi_eq[6];
-  std::array<double, 19> mode = lb_calc_modes(index);
+  auto modes = lb_calc_modes(index);
+  *rho = modes[0] + lbpar.rho;
 
-  *rho = mode[0] + lbpar.rho;
-
-  j[0] = mode[1] + 0.5 * lbfields[index].force_density[0];
-  j[1] = mode[2] + 0.5 * lbfields[index].force_density[1];
-  j[2] = mode[3] + 0.5 * lbfields[index].force_density[2];
+  j[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
+  j[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
+  j[2] = modes[3] + 0.5 * lbfields[index].force_density[2];
 
   if (!pi)
     return;
 
   /* equilibrium part of the stress modes */
+  Vector<6, double> modes_from_pi_eq{};
   modes_from_pi_eq[0] = scalar(j, j) / *rho;
   modes_from_pi_eq[1] = (Utils::sqr(j[0]) - Utils::sqr(j[1])) / *rho;
   modes_from_pi_eq[2] = (scalar(j, j) - 3.0 * Utils::sqr(j[2])) / *rho;
@@ -1215,18 +1214,18 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 
   /* Now we must predict the outcome of the next collision */
   /* We immediately average pre- and post-collision. */
-  mode[4] = modes_from_pi_eq[0] +
-            (0.5 + 0.5 * lbpar.gamma_bulk) * (mode[4] - modes_from_pi_eq[0]);
-  mode[5] = modes_from_pi_eq[1] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[5] - modes_from_pi_eq[1]);
-  mode[6] = modes_from_pi_eq[2] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[6] - modes_from_pi_eq[2]);
-  mode[7] = modes_from_pi_eq[3] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[7] - modes_from_pi_eq[3]);
-  mode[8] = modes_from_pi_eq[4] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[8] - modes_from_pi_eq[4]);
-  mode[9] = modes_from_pi_eq[5] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[9] - modes_from_pi_eq[5]);
+  modes[4] = modes_from_pi_eq[0] +
+            (0.5 + 0.5 * lbpar.gamma_bulk) * (modes[4] - modes_from_pi_eq[0]);
+  modes[5] = modes_from_pi_eq[1] +
+            (0.5 + 0.5 * lbpar.gamma_shear) * (modes[5] - modes_from_pi_eq[1]);
+  modes[6] = modes_from_pi_eq[2] +
+            (0.5 + 0.5 * lbpar.gamma_shear) * (modes[6] - modes_from_pi_eq[2]);
+  modes[7] = modes_from_pi_eq[3] +
+            (0.5 + 0.5 * lbpar.gamma_shear) * (modes[7] - modes_from_pi_eq[3]);
+  modes[8] = modes_from_pi_eq[4] +
+            (0.5 + 0.5 * lbpar.gamma_shear) * (modes[8] - modes_from_pi_eq[4]);
+  modes[9] = modes_from_pi_eq[5] +
+            (0.5 + 0.5 * lbpar.gamma_shear) * (modes[9] - modes_from_pi_eq[5]);
 
   // Transform the stress tensor components according to the modes that
   // correspond to those used by U. Schiller. In terms of populations this
@@ -1234,12 +1233,12 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
   // Duenweg and Ladd paper, when these are written out in populations.
   // But to ensure this, the expression in Schiller's modes has to be different!
 
-  pi[0] = (2.0 * (mode[0] + mode[4]) + mode[6] + 3.0 * mode[5]) / 6.0; // xx
-  pi[1] = mode[7];                                                     // xy
-  pi[2] = (2.0 * (mode[0] + mode[4]) + mode[6] - 3.0 * mode[5]) / 6.0; // yy
-  pi[3] = mode[8];                                                     // xz
-  pi[4] = mode[9];                                                     // yz
-  pi[5] = (mode[0] + mode[4] - mode[6]) / 3.0;                         // zz
+  pi[0] = (2.0 * (modes[0] + modes[4]) + modes[6] + 3.0 * modes[5]) / 6.0; // xx
+  pi[1] = modes[7];                                                     // xy
+  pi[2] = (2.0 * (modes[0] + modes[4]) + modes[6] - 3.0 * modes[5]) / 6.0; // yy
+  pi[3] = modes[8];                                                     // xz
+  pi[4] = modes[9];                                                     // yz
+  pi[5] = (modes[0] + modes[4] - modes[6]) / 3.0;                         // zz
 }
 
 #endif // LB
