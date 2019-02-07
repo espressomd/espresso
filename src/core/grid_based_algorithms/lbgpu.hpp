@@ -290,8 +290,7 @@ void lb_lbfluid_set_population(const Vector3i &, float[LBQ]);
 void lb_lbfluid_get_population(const Vector3i &, float[LBQ]);
 
 void lb_get_interpolated_velocity_gpu(double const *positions,
-                                                       double *velocities,
-                                                       int length);
+                                      double *velocities, int length);
 uint64_t lb_fluid_get_rng_state_gpu();
 void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();

@@ -3604,8 +3604,7 @@ struct two_point_interpolation {
 };
 
 void lb_get_interpolated_velocity_gpu(double const *positions,
-                                                       double *velocities,
-                                                       int length) {
+                                      double *velocities, int length) {
   thrust::host_vector<float3> positions_host(length);
   for (int p = 0; p < 3 * length; p += 3) {
     // Cast double coming from python to float.
