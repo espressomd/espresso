@@ -348,7 +348,7 @@ check_doxygen:
     - cuda
 
 check_with_odd_no_of_processors:
-  stage: additional_checks
+  stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
   dependencies:
