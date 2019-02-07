@@ -1374,5 +1374,4 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
 }
 #endif
 
-
 #endif // LB

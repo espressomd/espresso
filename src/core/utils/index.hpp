@@ -40,6 +40,6 @@ inline void unravel_index(const int *const len_dims, const int ndims,
     unravelled_index_out[j] = (flattened_index / mul[j]) % len_dims[j];
 }
 
-}
+} // namespace Utils
 
 #endif

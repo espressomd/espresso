@@ -31,12 +31,12 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
 #include "grid_based_algorithms/lb.hpp"
-#include "lattice.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lbboundaries.hpp"
+#include "grid_based_algorithms/lbgpu.hpp"
 #include "initialize.hpp"
+#include "lattice.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
 #include <algorithm>
@@ -356,11 +356,9 @@ int lbboundary_get_force(void *lbb, double *f) {
     const auto agrid = lb_lbfluid_get_agrid();
     const auto tau = lb_lbfluid_get_tau();
     f[0] = forces[3 * no + 0] * rho * agrid /
-           (tau *
-            tau); // lbpar.tau; TODO this makes the units wrong and
+           (tau * tau); // lbpar.tau; TODO this makes the units wrong and
     f[1] = forces[3 * no + 1] * rho * agrid /
-           (tau *
-            tau); // lbpar.tau; the result correct. But it's 3.13AM
+           (tau * tau); // lbpar.tau; the result correct. But it's 3.13AM
     f[2] = forces[3 * no + 2] * rho * agrid /
            (tau * tau); // lbpar.tau; on a Saturday at the ICP. Someone fix.
 #else
