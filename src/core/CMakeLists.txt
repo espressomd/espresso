@@ -46,7 +46,6 @@ set(EspressoCore_SRC
   statistics_chain.cpp
   statistics_cluster.cpp
   statistics.cpp
-  statistics_fluid.cpp
   swimmer_reaction.cpp
   SystemInterface.cpp
   thermostat.cpp

@@ -67,7 +67,6 @@
 #include "rotation.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
-#include "statistics_fluid.hpp"
 #include "swimmer_reaction.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"

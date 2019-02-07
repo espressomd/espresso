@@ -381,4 +381,9 @@ void lb_bounce_back(LB_Fluid &lbfluid);
 
 #endif /* LB_BOUNDARIES */
 
+void lb_calc_fluid_mass(double *result);
+void lb_calc_fluid_momentum(double *result);
+void lb_calc_fluid_temp(double *result);
+void lb_collect_boundary_forces(double *result);
+
 #endif /* _LB_H */

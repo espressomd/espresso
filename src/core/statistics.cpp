@@ -39,7 +39,6 @@
 #include "short_range_loop.hpp"
 #include "statistics_chain.hpp"
 #include "statistics_cluster.hpp"
-#include "statistics_fluid.hpp"
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
 #include "utils/list_contains.hpp"
