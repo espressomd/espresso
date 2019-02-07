@@ -366,27 +366,27 @@ void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
 }
 
 void lb_set_agrid_gpu(double agrid) {
-    lbpar_gpu.agrid = static_cast<float>(agrid);
+  lbpar_gpu.agrid = static_cast<float>(agrid);
 
-    lbpar_gpu.dim_x = static_cast<unsigned int>(rint(box_l[0] / agrid));
-    lbpar_gpu.dim_y = static_cast<unsigned int>(rint(box_l[1] / agrid));
-    lbpar_gpu.dim_z = static_cast<unsigned int>(rint(box_l[2] / agrid));
-    unsigned int tmp[3];
-    tmp[0] = lbpar_gpu.dim_x;
-    tmp[1] = lbpar_gpu.dim_y;
-    tmp[2] = lbpar_gpu.dim_z;
-    /* sanity checks */
-    for (int dir = 0; dir < 3; dir++) {
-      /* check if box_l is compatible with lattice spacing */
-      if (fabs(box_l[dir] - tmp[dir] * agrid) > ROUND_ERROR_PREC) {
-        runtimeErrorMsg() << "Lattice spacing p_agrid= " << agrid
-                          << " is incompatible with box_l[" << dir
-                          << "]=" << box_l[dir] << ", factor=" << tmp[dir]
-                          << " err= " << fabs(box_l[dir] - tmp[dir] * agrid);
-      }
+  lbpar_gpu.dim_x = static_cast<unsigned int>(rint(box_l[0] / agrid));
+  lbpar_gpu.dim_y = static_cast<unsigned int>(rint(box_l[1] / agrid));
+  lbpar_gpu.dim_z = static_cast<unsigned int>(rint(box_l[2] / agrid));
+  unsigned int tmp[3];
+  tmp[0] = lbpar_gpu.dim_x;
+  tmp[1] = lbpar_gpu.dim_y;
+  tmp[2] = lbpar_gpu.dim_z;
+  /* sanity checks */
+  for (int dir = 0; dir < 3; dir++) {
+    /* check if box_l is compatible with lattice spacing */
+    if (fabs(box_l[dir] - tmp[dir] * agrid) > ROUND_ERROR_PREC) {
+      runtimeErrorMsg() << "Lattice spacing p_agrid= " << agrid
+                        << " is incompatible with box_l[" << dir
+                        << "]=" << box_l[dir] << ", factor=" << tmp[dir]
+                        << " err= " << fabs(box_l[dir] - tmp[dir] * agrid);
     }
-    lbpar_gpu.number_of_nodes =
-        lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
+  }
+  lbpar_gpu.number_of_nodes =
+      lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
 }
 
 #endif /* LB_GPU */
