@@ -149,7 +149,7 @@ IF DP3M == 1:
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
                     "tune": True}
-        
+
         def _get_params_from_es_core(self):
             params = {}
             params.update(dp3m.params)
@@ -183,7 +183,7 @@ IF DP3M == 1:
 
             self._set_params_in_es_core()
             mpi_bcast_coulomb_params()
-        
+
         def _deactivate_method(self):
             dp3m_deactivate()
             super(type(self), self)._deactivate_method()
@@ -377,4 +377,4 @@ IF DIPOLES == 1:
                 self.set_magnetostatics_prefactor()
                 activate_dipolar_barnes_hut(
                     self._params["epssq"], self._params["itolsq"])
-                #activate_dipolar_barnes_hut()
+

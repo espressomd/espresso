@@ -28,7 +28,7 @@ Magnetostatic interactions are activated via the actor framework::
 
     from espressomd.magnetostatics import DipolarDirectSumCpu
 
-    direct_sum = DipolarDirectSumCpu(prefactor=1)
+    direct_sum = DipolarDirectSumCpu(prefactor=1, n_replica=0)
     system.actors.add(direct_sum)
     # ...
     system.actors.remove(direct_sum)

@@ -53,9 +53,12 @@ magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,
                                          const ParticleRange &particles,
                                          const boost::mpi::communicator &comm);
 
-/** switch on direct sum magnetostatics.
-    @param n_cut cut off for the explicit summation
-    @return ES_ERROR, if not on a single CPU
+/**
+ * @brief switch on direct sum magnetostatics.
+ *
+ *
+ *  @param n_cut cut off for the explicit summation, replicas are only
+ *         considered in periodic directions.
  */
 void mdds_set_params(int n_cut);
 

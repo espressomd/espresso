@@ -31,13 +31,13 @@ void activate_dipolar_barnes_hut(float epssq, float itolsq) {
   delete dipolarBarnesHut;
   dipolarBarnesHut = nullptr;
   // also necessary on 1 CPU or GPU, does more than just broadcasting
-  mpi_bcast_coulomb_params();
   dipolarBarnesHut =
       new DipolarBarnesHut(espressoSystemInterface, epssq, itolsq);
   forceActors.push_back(dipolarBarnesHut);
   energyActors.push_back(dipolarBarnesHut);
 
   coulomb.Dmethod = DIPOLAR_BH_GPU;
+  mpi_bcast_coulomb_params();
 }
 
 void deactivate_dipolar_barnes_hut() {
