@@ -43,10 +43,10 @@ void lb_lbfluid_on_integration_start() {
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-  lb_sanity_checks();
+    lb_sanity_checks();
 
-  halo_communication(&update_halo_comm,
-                     reinterpret_cast<char *>(lbfluid[0].data()));
+    halo_communication(&update_halo_comm,
+                       reinterpret_cast<char *>(lbfluid[0].data()));
 #endif
   }
 }

@@ -66,17 +66,12 @@ typedef float lbForceFloat;
 
 class LB_particle_allocation_state {
   bool m_invalid = true;
-public:
-  bool operator() () {
-    return m_invalid;
-  }
-  void invalidate() {
-    m_invalid = true;
-  }
 
-  void validate() {
-    m_invalid = false;
-  }
+public:
+  bool operator()() { return m_invalid; }
+  void invalidate() { m_invalid = true; }
+
+  void validate() { m_invalid = false; }
 };
 
 /**-------------------------------------------------------------------------*/
