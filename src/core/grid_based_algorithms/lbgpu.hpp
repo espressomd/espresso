@@ -289,7 +289,7 @@ void lb_lbfluid_particles_add_momentum(float velocity[3]);
 void lb_lbfluid_set_population(const Vector3i &, float[LBQ]);
 void lb_lbfluid_get_population(const Vector3i &, float[LBQ]);
 
-void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
+void lb_get_interpolated_velocity_gpu(double const *positions,
                                                        double *velocities,
                                                        int length);
 uint64_t lb_fluid_get_rng_state_gpu();

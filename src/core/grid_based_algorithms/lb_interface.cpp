@@ -1398,21 +1398,30 @@ Vector3d node_u(Lattice::index_t index) {
  * @param pos Position
  * @param v Interpolated velocity in MD units.
  */
-#ifdef LB
 const Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
-  Vector3d interpolated_u{};
-
-  /* calculate fluid velocity at particle's position
-     this is done by linear interpolation
-     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  lattice_interpolation(lblattice, pos,
-                        [&interpolated_u](Lattice::index_t index, double w) {
-                          interpolated_u += w * node_u(index);
-                        });
-
-  return (lbpar.agrid / lbpar.tau) * interpolated_u;
-}
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    Vector3d interpolated_u{};
+    lb_get_interpolated_velocity_gpu(pos.data(), interpolated_u.data(), 1);
+    return interpolated_u;
 #endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    Vector3d interpolated_u{};
+
+    /* calculate fluid velocity at particle's position
+       this is done by linear interpolation
+       (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+    lattice_interpolation(lblattice, pos,
+                          [&interpolated_u](Lattice::index_t index, double w) {
+                            interpolated_u += w * node_u(index);
+                          });
+
+    return (lbpar.agrid / lbpar.tau) * interpolated_u;
+  }
+#endif
+  return {};
+}
 
 #ifdef LB
 void lb_lbfluid_add_force_density(const Vector3d &pos,

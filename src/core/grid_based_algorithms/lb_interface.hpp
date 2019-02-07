@@ -41,9 +41,7 @@ void lb_lbfluid_set_rng_state(uint64_t counter);
 /** calculates the fluid velocity at a given position of the
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. */
-#ifdef LB
 const Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &p);
-#endif
 void lb_lbfluid_add_force_density(const Vector3d &p,
                                   const Vector3d &force_density);
 const Lattice &lb_lbfluid_get_lattice();

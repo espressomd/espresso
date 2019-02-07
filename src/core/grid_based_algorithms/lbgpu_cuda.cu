@@ -3603,7 +3603,7 @@ struct two_point_interpolation {
   }
 };
 
-void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
+void lb_get_interpolated_velocity_gpu(double const *positions,
                                                        double *velocities,
                                                        int length) {
   thrust::host_vector<float3> positions_host(length);

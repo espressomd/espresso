@@ -115,7 +115,7 @@ IF LB_GPU or LB:
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()
-        void lb_lbfluid_get_interpolated_velocity_at_positions(double * positions, double * velocities, int length)
+        void lb_get_interpolated_velocity_gpu(double * positions, double * velocities, int length)
 
     ###############################################
     #
