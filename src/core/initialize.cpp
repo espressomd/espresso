@@ -466,7 +466,7 @@ void on_boxl_change() {
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) {
-    lb_init();
+    lb_lbfluid_init();
 #ifdef LB_BOUNDARIES
     LBBoundaries::lb_init_boundaries();
 #endif
@@ -528,7 +528,7 @@ void on_cell_structure_change() {
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) {
-    lb_init();
+    lb_lbfluid_init();
   }
 #endif
 }

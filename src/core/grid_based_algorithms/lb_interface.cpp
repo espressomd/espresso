@@ -90,44 +90,16 @@ void lb_lbfluid_reinit_fluid() {
 /** Perform a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.
  */
-void lb_init() {
-#ifdef LB
-  LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
-
-  if (lbpar.agrid <= 0.0) {
-    runtimeErrorMsg()
-        << "Lattice Boltzmann agrid not set when initializing fluid";
-  }
-
-  if (check_runtime_errors())
-    return;
-
-  Vector3d temp_agrid, temp_offset;
-  for (int i = 0; i < 3; i++) {
-    temp_agrid[i] = lbpar.agrid;
-    temp_offset[i] = 0.5;
-  }
-
-  /* initialize the local lattice domain */
-  lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
-
-  if (check_runtime_errors())
-    return;
-
-  /* allocate memory for data structures */
-  lb_realloc_fluid();
-
-  /* prepare the halo communication */
-  lb_prepare_communication();
-
-  /* initialize derived parameters */
-  lb_lbfluid_reinit_parameters();
-
-  /* setup the initial particle velocity distribution */
-  lb_reinit_fluid();
-
-  LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
+void lb_lbfluid_init() {
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    lb_init_gpu();
 #endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    lb_init();
+#endif
+  }
 }
 
 #ifdef LB
