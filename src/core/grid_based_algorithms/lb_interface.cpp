@@ -71,31 +71,20 @@ void lb_lbfluid_reinit_parameters() {
   }
 }
 
-/** (Re-)initialize the fluid according to the given value of rho. */
-void lb_reinit_fluid() {
-#ifdef LB
-  std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
-  /* default values for fields in lattice units */
-  Vector3d j{};
-  Vector<6, double> pi{};
+/** (Re-)initialize the fluid according to the value of rho. */
 
-  LB_TRACE(fprintf(stderr,
-                   "Initialising the fluid with equilibrium populations\n"););
-
-  for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
-       ++index) {
-    // calculate equilibrium distribution
-    lb_calc_n_from_rho_j_pi(index, lbpar.rho, j, pi);
-
-#ifdef LB_BOUNDARIES
-    lbfields[index].boundary = 0;
-#endif // LB_BOUNDARIES
-  }
-
-#ifdef LB_BOUNDARIES
-  LBBoundaries::lb_init_boundaries();
-#endif // LB_BOUNDARIES
+void lb_lbfluid_reinit_fluid() {
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    lb_reinit_fluid_gpu();
 #endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    lb_reinit_fluid();
+#endif
+  } else {
+    throw std::runtime_error("LB not activated.");
+  }
 }
 
 /** Perform a full initialization of the lattice Boltzmann system.
@@ -1524,14 +1513,7 @@ void lb_lbfluid_on_lb_params_change(int field) {
 #endif
   }
   if (field == LBPAR_DENSITY) {
-#ifdef LB
-    if (lattice_switch & LATTICE_LB)
-      lb_reinit_fluid();
-#endif
-#ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU)
-      lb_reinit_fluid_gpu();
-#endif
+    lb_lbfluid_reinit_fluid();
   }
   lb_lbfluid_reinit_parameters();
 }

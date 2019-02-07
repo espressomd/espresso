@@ -153,6 +153,32 @@ static double fluidstep = 0.0;
 
 #ifdef LB
 /********************** The Main LB Part *************************************/
+void lb_reinit_fluid() {
+#ifdef LB
+  std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
+  /* default values for fields in lattice units */
+  Vector3d j{};
+  Vector<6, double> pi{};
+
+  LB_TRACE(fprintf(stderr,
+                   "Initialising the fluid with equilibrium populations\n"););
+
+  for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
+       ++index) {
+    // calculate equilibrium distribution
+    lb_calc_n_from_rho_j_pi(index, lbpar.rho, j, pi);
+
+#ifdef LB_BOUNDARIES
+    lbfields[index].boundary = 0;
+#endif // LB_BOUNDARIES
+  }
+
+#ifdef LB_BOUNDARIES
+  LBBoundaries::lb_init_boundaries();
+#endif // LB_BOUNDARIES
+#endif
+}
+
 void lb_reinit_parameters() {
   if (lbpar.viscosity > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
