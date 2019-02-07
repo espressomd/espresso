@@ -48,8 +48,6 @@ void lb_lbfluid_on_integration_start() {
   halo_communication(&update_halo_comm,
                      reinterpret_cast<char *>(lbfluid[0].data()));
 #endif
-  } else {
-    throw std::runtime_error("LB not activated.");
   }
 }
 
@@ -1508,6 +1506,8 @@ void lb_lbfluid_add_force_density(const Vector3d &pos,
 #ifdef LB
 const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 #endif
+
+int lb_lbfluid_get_lattice_switch() { return lattice_switch; }
 
 void lb_lbfluid_on_lb_params_change(int field) {
   if (field == LBPAR_AGRID) {

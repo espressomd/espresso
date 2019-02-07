@@ -60,17 +60,9 @@ IF LB_GPU or LB:
             double gamma_odd[2]
             double gamma_even[2]
             int resent_halo
-###############################################
-#
-# init struct
-#
-###############################################
-        ctypedef struct lb_parameters:
-            lb_parameters lb_params
 
 ##############################################
 #
-# exported C-functions from lb.hpp
 #
 ##############################################
         void lb_lbfluid_set_tau(double c_tau) except +
@@ -99,6 +91,7 @@ IF LB_GPU or LB:
         void lb_lbfluid_save_checkpoint(string filename, int binary) except +
         void lb_lbfluid_load_checkpoint(string filename, int binary) except +
         void lb_set_lattice_switch(int local_lattice_switch) except +
+        int lb_lbfluid_get_lattice_switch() except +
         bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
         const Vector3d lb_lbnode_get_u(const Vector3i & ind) except +
         void lb_lbnode_set_u(const Vector3i & ind, const Vector3d & u) except +

@@ -47,6 +47,7 @@ const Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &p);
 void lb_lbfluid_add_force_density(const Vector3d &p,
                                   const Vector3d &force_density);
 const Lattice &lb_lbfluid_get_lattice();
+int lb_lbfluid_get_lattice_switch();
 
 void lb_set_lattice_switch(int local_lattice_switch);
 void lb_lbfluid_set_tau(double p_tau);
