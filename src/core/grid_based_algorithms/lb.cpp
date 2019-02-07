@@ -1485,18 +1485,15 @@ void lb_calc_fluid_momentum(double *result) {
 void lb_collect_boundary_forces(double *result) {
 #ifdef LB_BOUNDARIES
   int n_lb_boundaries = LBBoundaries::lbboundaries.size();
-  double *boundary_forces =
-      (double *)Utils::malloc(3 * n_lb_boundaries * sizeof(double));
-
+  std::vector<double> boundary_forces(3 * n_lb_boundaries);
   int i = 0;
   for (auto it = LBBoundaries::lbboundaries.begin();
        it != LBBoundaries::lbboundaries.end(); ++it, i++)
     for (int j = 0; j < 3; j++)
       boundary_forces[3 * i + j] = (**it).force()[j];
 
-  MPI_Reduce(boundary_forces, result, 3 * n_lb_boundaries, MPI_DOUBLE, MPI_SUM,
+  MPI_Reduce(boundary_forces.data(), result, 3 * n_lb_boundaries, MPI_DOUBLE, MPI_SUM,
              0, comm_cart);
-  free(boundary_forces);
 #endif
 }
 
