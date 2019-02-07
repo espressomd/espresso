@@ -35,8 +35,8 @@ extern int transfer_momentum;
 extern int transfer_momentum_gpu;
 #endif
 
-uint64_t lb_fluid_rng_state();
-void lb_fluid_set_rng_state(uint64_t counter);
+uint64_t lb_lbfluid_get_rng_state();
+void lb_lbfluid_set_rng_state(uint64_t counter);
 
 /** calculates the fluid velocity at a given position of the
  * lattice. Note that it can lead to undefined behaviour if the

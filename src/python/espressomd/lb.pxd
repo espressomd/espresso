@@ -104,14 +104,14 @@ IF LB_GPU or LB:
         void lb_lbfluid_set_couple_flag(int c_couple_flag) except +
         int lb_lbfluid_get_couple_flag() except +
         int lb_lbfluid_get_interpolated_velocity_global(Vector3d & p, double * v) except +
-        stdint.uint64_t lb_fluid_rng_state() except +
-        stdint.uint64_t lb_coupling_rng_state() except +
-        void lb_fluid_set_rng_state(stdint.uint64_t) except +
+        stdint.uint64_t lb_lbfluid_get_rng_state() except +
+        void lb_lbfluid_set_rng_state(stdint.uint64_t) except +
         void lb_lbfluid_set_kT(double) except +
         double lb_lbfluid_get_kT() except +
 
     cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
-        void lb_coupling_set_rng_state(stdint.uint64_t)
+        void lb_lbcoupling_set_rng_state(stdint.uint64_t)
+        stdint.uint64_t lb_lbcoupling_get_rng_state() except +
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()

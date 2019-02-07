@@ -110,14 +110,14 @@ int transfer_momentum = 0;
 int transfer_momentum_gpu = 0;
 #endif
 
-uint64_t lb_fluid_rng_state() {
+uint64_t lb_lbfluid_get_rng_state() {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    return lb_fluid_rng_state_cpu();
+    return lb_fluid_get_rng_state();
 #endif
   } else if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    return lb_fluid_rng_state_gpu();
+    return lb_fluid_get_rng_state_gpu();
 #endif
   }
   return {};
@@ -196,10 +196,10 @@ int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v) {
   return 0;
 }
 
-void lb_fluid_set_rng_state(uint64_t counter) {
+void lb_lbfluid_set_rng_state(uint64_t counter) {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    lb_fluid_set_rng_state_cpu(counter);
+    lb_fluid_set_rng_state(counter);
 #endif
   } else if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU

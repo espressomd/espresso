@@ -36,22 +36,22 @@ void mpi_set_lb_coupling_counter_slave(int high, int low) {
 
 #if defined(LB) || defined(LB_GPU)
 
-uint64_t lb_coupling_rng_state_cpu() { return rng_counter_coupling.value(); }
+uint64_t lb_coupling_get_rng_state_cpu() { return rng_counter_coupling.value(); }
 
-uint64_t lb_coupling_rng_state() {
+uint64_t lb_lbcoupling_get_rng_state() {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    return lb_coupling_rng_state_cpu();
+    return lb_coupling_get_rng_state_cpu();
 #endif
   } else if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    return lb_coupling_rng_state_gpu();
+    return lb_coupling_get_rng_state_gpu();
 #endif
   }
   return {};
 }
 
-void lb_coupling_set_rng_state(uint64_t counter) {
+void lb_lbcoupling_set_rng_state(uint64_t counter) {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     mpi_set_lb_coupling_counter(counter);

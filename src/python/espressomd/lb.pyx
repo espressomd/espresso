@@ -117,7 +117,7 @@ IF LB_GPU or LB:
             cdef stdint.uint64_t seed
             if self._params["kT"] > 0.:
                 seed = self._params["seed"]
-                lb_fluid_set_rng_state(seed)
+                lb_lbfluid_set_rng_state(seed)
             lb_lbfluid_set_kT(self._params["kT"])
 
             python_lbfluid_set_density(
@@ -163,7 +163,7 @@ IF LB_GPU or LB:
             default_params = self.default_params()
             cdef double kT = lb_lbfluid_get_kT()
             self._params["kT"] = kT
-            cdef stdint.uint64_t seed = lb_fluid_rng_state()
+            cdef stdint.uint64_t seed = lb_lbfluid_get_rng_state()
             self._params['seed'] = seed
             if python_lbfluid_get_density(self._params["dens"], self._params["agrid"]):
                 raise Exception("lb_lbfluid_get_density error")

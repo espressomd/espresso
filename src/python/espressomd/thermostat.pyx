@@ -146,7 +146,7 @@ cdef class Thermostat(object):
                 lb_dict["type"] = "LB"
                 lb_dict["kT"] = temperature
                 lb_dict["act_on_virtual"] = thermo_virtual
-                lb_dict["counter"] = lb_coupling_rng_state()
+                lb_dict["counter"] = lb_lbcoupling_get_rng_state()
                 thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
             npt_dict = {}
@@ -372,7 +372,7 @@ cdef class Thermostat(object):
             if not seed:
                 seed = 0
 
-            lb_coupling_set_rng_state(seed)
+            lb_lbcoupling_set_rng_state(seed)
 
             global thermo_switch
             thermo_switch = (thermo_switch or THERMO_LB)

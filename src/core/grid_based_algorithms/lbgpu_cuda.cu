@@ -3639,9 +3639,9 @@ void lb_fluid_set_rng_state_gpu(uint64_t counter) {
   rng_counter_fluid_gpu = Utils::Counter<uint64_t>(counter);
 }
 
-uint64_t lb_coupling_rng_state_gpu() {
+uint64_t lb_coupling_get_rng_state_gpu() {
   return rng_counter_coupling_gpu.value();
 }
-uint64_t lb_fluid_rng_state_gpu() { return rng_counter_fluid_gpu.value(); }
+uint64_t lb_fluid_get_rng_state_gpu() { return rng_counter_fluid_gpu.value(); }
 
 #endif /* LB_GPU */

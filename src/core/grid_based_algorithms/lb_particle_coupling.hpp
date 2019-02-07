@@ -8,8 +8,8 @@
  */
 void calc_particle_lattice_ia();
 
-uint64_t lb_coupling_rng_state();
-void lb_coupling_set_rng_state(uint64_t counter);
+uint64_t lb_lbcoupling_get_rng_state();
+void lb_lbcoupling_set_rng_state(uint64_t counter);
 void mpi_set_lb_coupling_counter_slave(int high, int low);
 
 #endif

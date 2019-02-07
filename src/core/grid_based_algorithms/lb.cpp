@@ -589,9 +589,9 @@ void lb_sanity_checks() {
   }
 }
 
-uint64_t lb_fluid_rng_state_cpu() { return rng_counter_fluid.value(); }
+uint64_t lb_fluid_get_rng_state() { return rng_counter_fluid.value(); }
 
-void lb_fluid_set_rng_state_cpu(uint64_t counter) {
+void lb_fluid_set_rng_state(uint64_t counter) {
   uint32_t high, low;
   std::tie(high, low) = Utils::u64_to_u32(counter);
   mpi_call(mpi_set_lb_fluid_counter, high, low);

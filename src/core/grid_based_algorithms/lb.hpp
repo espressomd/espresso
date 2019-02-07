@@ -364,10 +364,8 @@ inline void lb_set_populations(Lattice::index_t index,
   }
 }
 
-uint64_t lb_coupling_rng_state_cpu();
-void lb_coupling_set_rng_state_cpu(uint64_t counter);
-uint64_t lb_fluid_rng_state_cpu();
-void lb_fluid_set_rng_state_cpu(uint64_t counter);
+uint64_t lb_fluid_get_rng_state();
+void lb_fluid_set_rng_state(uint64_t counter);
 void lb_prepare_communication();
 #endif
 
