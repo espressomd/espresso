@@ -51,7 +51,7 @@ int lb_lbfluid_get_lattice_switch();
 
 void lb_set_lattice_switch(int local_lattice_switch);
 void lb_lbfluid_set_tau(double p_tau);
-void lb_lbfluid_set_density(double p_dens);
+void lb_lbfluid_set_rho(double p_dens);
 void lb_lbfluid_set_visc(double p_visc);
 void lb_lbfluid_set_bulk_visc(double p_bulk_visc);
 void lb_lbfluid_set_gamma_odd(double p_gamma_odd);
@@ -75,7 +75,7 @@ double lb_lbfluid_get_friction();
 double lb_lbfluid_get_gamma_even();
 double lb_lbfluid_get_bulk_visc();
 double lb_lbfluid_get_visc();
-double lb_lbfluid_get_density();
+double lb_lbfluid_get_rho();
 const Vector3d lb_lbfluid_get_ext_force_density();
 double lb_lbfluid_get_kT();
 

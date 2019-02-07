@@ -367,4 +367,16 @@ void lb_fluid_set_rng_state_cpu(uint64_t counter);
 void lb_prepare_communication();
 #endif
 
+#ifdef LB_BOUNDARIES
+/** Bounce back boundary conditions.
+ * The populations that have propagated into a boundary node
+ * are bounced back to the node they came from. This results
+ * in no slip boundary conditions.
+ *
+ * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
+ */
+void lb_bounce_back(LB_Fluid &lbfluid);
+
+#endif /* LB_BOUNDARIES */
+
 #endif /* _LB_H */

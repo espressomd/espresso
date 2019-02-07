@@ -67,8 +67,8 @@ IF LB_GPU or LB:
 ##############################################
         void lb_lbfluid_set_tau(double c_tau) except +
         double lb_lbfluid_get_tau() except +
-        void lb_lbfluid_set_density(double c_dens) except +
-        double lb_lbfluid_get_density() except +
+        void lb_lbfluid_set_rho(double c_dens) except +
+        double lb_lbfluid_get_rho() except +
         void lb_lbfluid_set_visc(double c_visc) except +
         double lb_lbfluid_get_visc() except +
         void lb_lbfluid_set_agrid(double c_agrid) except +
@@ -131,7 +131,7 @@ IF LB_GPU or LB:
         else:
             c_dens = p_dens * agrid * agrid * agrid
         # call c-function
-        lb_lbfluid_set_density(c_dens)
+        lb_lbfluid_set_rho(c_dens)
 
 ###############################################
 
@@ -261,7 +261,7 @@ IF LB_GPU or LB:
     cdef inline python_lbfluid_get_density(p_dens, agrid):
         cdef double c_dens
         # call c-function
-        c_dens = lb_lbfluid_get_density()
+        c_dens = lb_lbfluid_get_rho()
         if isinstance(p_dens, float) or isinstance(p_dens, int):
             p_dens = <double > c_dens / agrid / agrid / agrid
         else:

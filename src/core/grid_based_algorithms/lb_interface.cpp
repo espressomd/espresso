@@ -247,7 +247,7 @@ void lb_fluid_set_rng_state(uint64_t counter) {
   }
 }
 
-void lb_lbfluid_set_density(double p_dens) {
+void lb_lbfluid_set_rho(double p_dens) {
   if (p_dens <= 0)
     throw std::invalid_argument("Density has to be > 0.");
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -263,7 +263,7 @@ void lb_lbfluid_set_density(double p_dens) {
   }
 }
 
-double lb_lbfluid_get_density() {
+double lb_lbfluid_get_rho() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return static_cast<double>(lbpar_gpu.rho);
