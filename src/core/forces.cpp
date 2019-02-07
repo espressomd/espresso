@@ -159,10 +159,8 @@ void force_calc() {
 #endif
   }
 #endif
-    lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
+  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
 #endif
-
-
 
 #ifdef METADYNAMICS
   /* Metadynamics main function */
