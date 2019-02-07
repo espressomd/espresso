@@ -198,7 +198,7 @@ IF DP3M == 1:
         def python_dp3m_adaptive_tune(self):
             cdef char * log = NULL
             cdef int response
-            response = dp3m_adaptive_tune(& log)
+            response = dp3m_adaptive_tune( & log)
             handle_errors(
                 "dipolar P3M_init: k-space cutoff is larger than half of box dimension")
             return response, log
@@ -377,4 +377,3 @@ IF DIPOLES == 1:
                 self.set_magnetostatics_prefactor()
                 activate_dipolar_barnes_hut(
                     self._params["epssq"], self._params["itolsq"])
-
