@@ -29,8 +29,8 @@
 
 #ifdef ROTATION
 
-#include "Vector.hpp"
 #include "particle_data.hpp"
+#include "utils/Vector.hpp"
 
 constexpr const int ROTATION_X = 2;
 constexpr const int ROTATION_Y = 4;
@@ -80,15 +80,11 @@ int convert_director_to_quat(const Vector3d &d, Vector<4, double> &quat);
 #ifdef DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
-inline int convert_dip_to_quat(const Vector3d &dip, Vector<4, double> &quat,
-                               double *dipm) {
-  double dm;
-  // Calculate magnitude of dipole moment
-  dm = sqrt(dip[0] * dip[0] + dip[1] * dip[1] + dip[2] * dip[2]);
-  *dipm = dm;
+inline std::pair<Vector4d, double> convert_dip_to_quat(const Vector3d &dip) {
+  Vector4d quat;
   convert_director_to_quat(dip, quat);
 
-  return 0;
+  return {quat, dip.norm()};
 }
 
 #endif

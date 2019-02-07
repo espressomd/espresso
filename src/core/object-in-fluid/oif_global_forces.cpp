@@ -29,7 +29,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "particle_data.hpp"
 
 #include "utils/math/triangle_functions.hpp"
@@ -77,7 +77,7 @@ void calc_oif_global(double *area_volume,
   // z volume
   double VOL_partVol = 0.;
 
-  /** loop over particles */
+  /* loop over particles */
   Particle *p1, *p2, *p3;
   Vector3d p11, p22, p33;
   int img[3];

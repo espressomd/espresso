@@ -18,45 +18,48 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef INITIALZE_H
-#define INITIALZE_H
+#ifndef CORE_INITIALIZE_HPP
+#define CORE_INITIALIZE_HPP
 /** \file
-    This file contains the hook procedures. These
-    are the ones with names on_* and are called whenever something is
-    changed in Espresso which might influence other parts. For
-    example, the P3M code has to be reinitialized whenever the box
-    size changes. The hooking mechanism allows to keep track of such
-    changes.
-
-    For this mechanism to work, two things have to be fulfilled. If
-    some part of the code changes some property, it has to call the
-    corresponding hook, i. e. on_particle_change if a particle
-    property has been changed or on_short_range_ia_change, if a short
-    ranged interaction has been changed.  In turn procedures that
-    depend on particle properties or the box size, should react to
-    such changes in the corresponding hook procedure.
+ *  This file contains the hook procedures. These are the ones with names
+ *  on_* and are called whenever something is changed in Espresso which
+ *  might influence other parts. For example, the P3M code has to be
+ *  reinitialized whenever the box size changes. The hooking mechanism
+ *  allows to keep track of such changes.
+ *
+ *  For this mechanism to work, two things have to be fulfilled. If
+ *  some part of the code changes some property, it has to call the
+ *  corresponding hook, i.e. on_particle_change() if a particle
+ *  property has been changed or on_short_range_ia_change(), if a short
+ *  ranged interaction has been changed. In turn procedures that
+ *  depend on particle properties or the box size, should react to
+ *  such changes in the corresponding hook procedure.
+ *
+ *  Implementation in initialize.cpp.
  */
 
 /** \name Hook procedures
-    These procedures are called if several significant changes to
-    the system happen which may make a reinitialization of subsystems
-    necessary. Note that all these functions are called on ALL nodes.
-    if you need to do something only on the master node, check
-    \ref this_node == 0. The use of the asynchronous mpi_* functions
-    (e. g. mpi_bcast_parameter) on the master node is possible.
-*/
+ *  These procedures are called if several significant changes to
+ *  the system happen which may make a reinitialization of subsystems
+ *  necessary. Note that all these functions are called on ALL nodes.
+ *  If you need to do something only on the master node, check
+ *  \ref this_node == 0. The use of the asynchronous mpi_* functions
+ *  (e.g. mpi_bcast_parameter) on the master node is possible.
+ */
 /*@{*/
 
 /** called once at the very beginning of the program start. */
 void on_program_start();
 
-/** called every time the simulation is continued/started, i. e.
-    when switching from Tcl to the simulation core. */
+/** called every time the simulation is continued/started, i.e.
+ *  when switching from Tcl to the simulation core.
+ */
 void on_integration_start();
 
 /** called before calculating observables, i.e. energy, pressure or
-    the integrator (forces). Initialize any methods here which are not
-    initialized immediately (P3M, Maggs, etc.). */
+ *  the integrator (forces). Initialize any methods here which are not
+ *  initialized immediately (P3M, Maggs, etc.).
+ */
 void on_observable_calc();
 
 /** called every time a particle property is changed via Tcl. */
@@ -81,36 +84,36 @@ void on_constraint_change();
 void on_max_cut_change();
 
 /** called every time the box length has changed. This routine
-    is relatively fast, and changing the box length every time step
-    as for example necessary for NpT is more or less ok. */
+ *  is relatively fast, and changing the box length every time step
+ *  as for example necessary for NpT is more or less ok.
+ */
 void on_boxl_change();
 
-/** called every time a major change to the cell structure has
-    happened, like the skin or grid have changed. This one is
-    potentially slow. */
+/** called every time a major change to the cell structure has happened,
+ *  like the skin or grid have changed. This one is potentially slow.
+ */
 void on_cell_structure_change();
 
-/** called every time the temperature changes. This one is
-    potentially slow. */
+/** called every time the temperature changes. This one is potentially slow. */
 void on_temperature_change();
 
 /** called every time other parameters (timestep,...) are changed. Note that
-    this does not happen automatically. The callback procedure of the changed
-    variable is responsible for that by calling \ref mpi_bcast_event (2).
-    @param parameter is the FIELD_* identifier of the field changed.
-*/
+ *  this does not happen automatically. The callback procedure of the changed
+ *  variable is responsible for that by calling \ref mpi_bcast_event (2).
+ *  @param parameter is the FIELD_* identifier of the field changed.
+ */
 void on_parameter_change(int parameter);
 
 /** called every time the number of particle types has changed (increased) */
 void on_max_seen_particle_type_change();
 
 /** call this if you want to change ghost flags, e.g. whether ghosts
-    have velocities or not.  This is a opt-in process, i. e. all
-    features are turned off and have to be reactivated if necessary
-    inside this procedure.  */
+ *  have velocities or not. This is a opt-in process, i.e. all
+ *  features are turned off and have to be reactivated if necessary
+ *  inside this procedure.
+ */
 void on_ghost_flags_change();
 
-void on_lb_params_change(int field);
 void on_lbboundary_change();
 
 /** called every time the walls for the lb fluid are changed */

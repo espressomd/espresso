@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef UTILS_COORDINATE_TRANSFORMATION_HPP
 #define UTILS_COORDINATE_TRANSFORMATION_HPP
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 #include "vec_rotate.hpp"
 
 namespace Utils {

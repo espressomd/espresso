@@ -22,7 +22,7 @@
 /** \file
  *  Force calculation.
  *
- *  For more information see \ref forces.hpp "forces.hpp".
+ *  The corresponding header file is forces.hpp.
  */
 
 #include "EspressoSystemInterface.hpp"
@@ -35,9 +35,11 @@
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
-#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "immersed_boundaries.hpp"
+#include "lattice.hpp"
 #include "short_range_loop.hpp"
 
 #include <cassert>
@@ -98,11 +100,6 @@ void force_calc() {
 #endif
 
 #ifdef LB_GPU
-#ifdef SHANCHEN
-  if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
-    lattice_boltzmann_calc_shanchen_gpu();
-#endif // SHANCHEN
-
   // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on
   // integrate 0
   // this_node==0 makes sure it is the master node where the gpu exists

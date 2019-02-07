@@ -419,8 +419,7 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
     float v[3] = {0};
 
     // ***** This part is copied from get_interpolated_velocity
-    // ***** + we add the force + we consider boundaries - we remove the
-    // Shan-Chen stuff
+    // ***** + we add the force + we consider boundaries
 
     float temp_delta[6];
     float delta[8];
@@ -477,19 +476,19 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
 
         // lb_boundary_velocity is given in MD units --> convert to LB and
         // reconvert back at the end of this function
-        local_rho = para.rho[0];
+        local_rho = para.rho;
         local_j[0] =
-            para.rho[0] * lb_boundary_velocity[3 * (boundary_index - 1) + 0];
+            para.rho * lb_boundary_velocity[3 * (boundary_index - 1) + 0];
         local_j[1] =
-            para.rho[0] * lb_boundary_velocity[3 * (boundary_index - 1) + 1];
+            para.rho * lb_boundary_velocity[3 * (boundary_index - 1) + 1];
         local_j[2] =
-            para.rho[0] * lb_boundary_velocity[3 * (boundary_index - 1) + 2];
+            para.rho * lb_boundary_velocity[3 * (boundary_index - 1) + 2];
 
       } else
 #endif
       {
         Calc_m_from_n_IBM(n_curr, node_index[i], mode, paraP);
-        local_rho = para.rho[0] + mode[0];
+        local_rho = para.rho + mode[0];
 
         // Add the +f/2 contribution!!
         local_j[0] =
@@ -532,25 +531,20 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
 
   if (index < para.number_of_nodes) {
     const float force_factor = powf(para.agrid, 2) * para.tau * para.tau;
-    for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
 #ifdef EXTERNAL_FORCES
-      if (para.external_force_density) {
-        node_f.force_density[(0 + ii * 3) * para.number_of_nodes + index] =
-            para.ext_force_density[0 + ii * 3] * force_factor;
-        node_f.force_density[(1 + ii * 3) * para.number_of_nodes + index] =
-            para.ext_force_density[1 + ii * 3] * force_factor;
-        node_f.force_density[(2 + ii * 3) * para.number_of_nodes + index] =
-            para.ext_force_density[2 + ii * 3] * force_factor;
-      } else
+    if (para.external_force_density) {
+      node_f.force_density[0 * para.number_of_nodes + index] =
+          para.ext_force_density[0] * force_factor;
+      node_f.force_density[1 * para.number_of_nodes + index] =
+          para.ext_force_density[1] * force_factor;
+      node_f.force_density[2 * para.number_of_nodes + index] =
+          para.ext_force_density[2] * force_factor;
+    } else
 #endif
-      {
-        node_f.force_density[(0 + ii * 3) * para.number_of_nodes + index] =
-            0.0f;
-        node_f.force_density[(1 + ii * 3) * para.number_of_nodes + index] =
-            0.0f;
-        node_f.force_density[(2 + ii * 3) * para.number_of_nodes + index] =
-            0.0f;
-      }
+    {
+      node_f.force_density[0 * para.number_of_nodes + index] = 0.0f;
+      node_f.force_density[1 * para.number_of_nodes + index] = 0.0f;
+      node_f.force_density[2 * para.number_of_nodes + index] = 0.0f;
     }
   }
 }

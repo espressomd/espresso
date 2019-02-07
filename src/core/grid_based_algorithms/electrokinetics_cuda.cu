@@ -39,6 +39,7 @@
 #include "errorhandling.hpp"
 #include "fd-electrostatics.cuh"
 #include "grid_based_algorithms/electrokinetics.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
@@ -192,7 +193,7 @@ __device__ void ek_displacement(float *dx, LB_nodes_gpu n,
                                 unsigned int node_index,
                                 LB_parameters_gpu *ek_lbparameters_gpu) {
 
-  float rho = ek_lbparameters_gpu->rho[0] * ek_lbparameters_gpu->agrid *
+  float rho = ek_lbparameters_gpu->rho * ek_lbparameters_gpu->agrid *
               ek_lbparameters_gpu->agrid * ek_lbparameters_gpu->agrid;
 
   float mode[19];
@@ -2402,25 +2403,24 @@ int ek_init() {
     ek_initialized = true;
 
     lbpar_gpu.agrid = ek_parameters.agrid;
-    lbpar_gpu.viscosity[0] = 1.0; // dummy values (real initialization later)
-    lbpar_gpu.bulk_viscosity[0] =
-        1.0; // dummy values (real initialization later)
-    lbpar_gpu.friction[0] = ek_parameters.friction;
+    lbpar_gpu.viscosity = 1.0;      // dummy values (real initialization later)
+    lbpar_gpu.bulk_viscosity = 1.0; // dummy values (real initialization later)
+    lbpar_gpu.friction = ek_parameters.friction;
 
     // Convert the density (given in MD units) to LB units
-    lbpar_gpu.rho[0] = (ek_parameters.lb_density < 0.0
-                            ? 1.0
-                            : ek_parameters.lb_density * ek_parameters.agrid *
-                                  ek_parameters.agrid * ek_parameters.agrid);
+    lbpar_gpu.rho = (ek_parameters.lb_density < 0.0
+                         ? 1.0
+                         : ek_parameters.lb_density * ek_parameters.agrid *
+                               ek_parameters.agrid * ek_parameters.agrid);
 
     lbpar_gpu.is_TRT = true;
 
     lb_reinit_parameters_gpu();
-    lbpar_gpu.viscosity[0] = ek_parameters.viscosity * lbpar_gpu.time_step /
-                             (ek_parameters.agrid * ek_parameters.agrid);
-    lbpar_gpu.bulk_viscosity[0] = ek_parameters.bulk_viscosity *
-                                  lbpar_gpu.time_step /
-                                  (ek_parameters.agrid * ek_parameters.agrid);
+    lbpar_gpu.viscosity = ek_parameters.viscosity * lbpar_gpu.time_step /
+                          (ek_parameters.agrid * ek_parameters.agrid);
+    lbpar_gpu.bulk_viscosity = ek_parameters.bulk_viscosity *
+                               lbpar_gpu.time_step /
+                               (ek_parameters.agrid * ek_parameters.agrid);
     lb_reinit_parameters_gpu();
 
     lb_init_gpu();
@@ -2532,17 +2532,17 @@ int ek_init() {
     ek_initialized = true;
   } else {
     if (lbpar_gpu.agrid != ek_parameters.agrid ||
-        lbpar_gpu.viscosity[0] !=
+        lbpar_gpu.viscosity !=
             ek_parameters.viscosity * ek_parameters.time_step /
                 (ek_parameters.agrid * ek_parameters.agrid) ||
-        lbpar_gpu.bulk_viscosity[0] !=
+        lbpar_gpu.bulk_viscosity !=
             ek_parameters.bulk_viscosity * ek_parameters.time_step /
                 (ek_parameters.agrid * ek_parameters.agrid) ||
-        lbpar_gpu.friction[0] != ek_parameters.friction ||
-        lbpar_gpu.rho[0] != ek_parameters.lb_density * ek_parameters.agrid *
-                                ek_parameters.agrid * ek_parameters.agrid) {
+        lbpar_gpu.friction != ek_parameters.friction ||
+        lbpar_gpu.rho != ek_parameters.lb_density * ek_parameters.agrid *
+                             ek_parameters.agrid * ek_parameters.agrid) {
       fprintf(stderr, "dens %f %f\n", lbpar_gpu.agrid, ek_parameters.agrid);
-      fprintf(stderr, "visc %f %f\n", lbpar_gpu.viscosity[0],
+      fprintf(stderr, "visc %f %f\n", lbpar_gpu.viscosity,
               ek_parameters.viscosity * ek_parameters.time_step /
                   (ek_parameters.agrid * ek_parameters.agrid));
       fprintf(stderr,
@@ -2722,7 +2722,7 @@ LOOKUP_TABLE default\n",
           lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
 
   for (int i = 0; i < lbpar_gpu.number_of_nodes; i++) {
-    fprintf(fp, "%e ", host_values[i].rho[0]);
+    fprintf(fp, "%e ", host_values[i].rho);
   }
 
   free(host_values);
@@ -3548,27 +3548,24 @@ void ek_print_lbpar() {
 
   printf("lbpar_gpu {\n");
 
-  printf("    float rho = %f;\n", lbpar_gpu.rho[0]);
-  printf("    float mu = %f;\n", lbpar_gpu.mu[0]);
-  printf("    float viscosity = %f;\n", lbpar_gpu.viscosity[0]);
-  printf("    float gamma_shear = %f;\n", lbpar_gpu.gamma_shear[0]);
-  printf("    float gamma_bulk = %f;\n", lbpar_gpu.gamma_bulk[0]);
-  printf("    float gamma_odd = %f;\n", lbpar_gpu.gamma_odd[0]);
-  printf("    float gamma_even = %f;\n", lbpar_gpu.gamma_even[0]);
+  printf("    float rho = %f;\n", lbpar_gpu.rho);
+  printf("    float mu = %f;\n", lbpar_gpu.mu);
+  printf("    float viscosity = %f;\n", lbpar_gpu.viscosity);
+  printf("    float gamma_shear = %f;\n", lbpar_gpu.gamma_shear);
+  printf("    float gamma_bulk = %f;\n", lbpar_gpu.gamma_bulk);
+  printf("    float gamma_odd = %f;\n", lbpar_gpu.gamma_odd);
+  printf("    float gamma_even = %f;\n", lbpar_gpu.gamma_even);
   printf("    float agrid = %f;\n", lbpar_gpu.agrid);
   printf("    float tau = %f;\n", lbpar_gpu.tau);
-  printf("    float friction = %f;\n", lbpar_gpu.friction[0]);
+  printf("    float friction = %f;\n", lbpar_gpu.friction);
   printf("    float time_step = %f;\n", lbpar_gpu.time_step);
-  printf("    float lb_coupl_pref = %f;\n", lbpar_gpu.lb_coupl_pref[0]);
-  printf("    float lb_coupl_pref2 = %f;\n", lbpar_gpu.lb_coupl_pref2[0]);
-  printf("    float bulk_viscosity = %f;\n", lbpar_gpu.bulk_viscosity[0]);
+  printf("    float bulk_viscosity = %f;\n", lbpar_gpu.bulk_viscosity);
   printf("    unsigned int dim_x = %d;\n", lbpar_gpu.dim_x);
   printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim_y);
   printf("    unsigned int dim_z = %d;\n", lbpar_gpu.dim_z);
   printf("    unsigned int number_of_nodes = %d;\n", lbpar_gpu.number_of_nodes);
   printf("    unsigned int number_of_particles = %d;\n",
          lbpar_gpu.number_of_particles);
-  printf("    int fluct = %d;\n", lbpar_gpu.fluct);
   printf("    int calc_val = %d;\n", lbpar_gpu.calc_val);
   printf("    int external_force_density = %d;\n",
          lbpar_gpu.external_force_density);
@@ -3825,7 +3822,7 @@ int ek_save_checkpoint(char *filename) {
   free(densities);
   fout.close();
 
-  lb_lbfluid_save_checkpoint_wrapper((char *)(fname + ".lb").c_str(), 1);
+  lb_lbfluid_save_checkpoint((char *)(fname + ".lb").c_str(), 1);
 
   return 0;
 }
@@ -3853,7 +3850,7 @@ int ek_load_checkpoint(char *filename) {
   free(densities);
   fin.close();
 
-  lb_lbfluid_load_checkpoint_wrapper((char *)(fname + ".lb").c_str(), 1);
+  lb_lbfluid_load_checkpoint((char *)(fname + ".lb").c_str(), 1);
 
   ek_integrate_electrostatics();
 

@@ -7,6 +7,7 @@ function(CMAKE_TEST)
   endforeach(dependency)
   set(TEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}")
   add_test(NAME ${TEST_NAME} COMMAND ${TEST_FILE})
+  set_tests_properties(${TEST_NAME} PROPERTIES RUN_SERIAL ON)
   set(cmake_tests ${cmake_tests} ${TEST_FILE} PARENT_SCOPE)
 endfunction(CMAKE_TEST)
 

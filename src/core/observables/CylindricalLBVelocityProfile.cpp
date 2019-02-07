@@ -19,7 +19,8 @@
 */
 
 #include "CylindricalLBVelocityProfile.hpp"
-#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "lattice.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
 

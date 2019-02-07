@@ -434,11 +434,6 @@ General features
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
-..
-    -  ``NEMD`` Enables the non-equilbrium (shear) MD support.
-
-       .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibrium MD`
-
 -  ``NPT`` Enables an on-the-fly NPT integration scheme.
 
    .. seealso:: :ref:`Isotropic NPT thermostat`
@@ -447,8 +442,6 @@ integrator or thermostat:
 -  ``MEMBRANE_COLLISION``
 
 -  ``REACTION_ENSEMBLE``
-
--  ``GHMC``
 
 -  ``MULTI_TIMESTEP`` (experimental)
 
@@ -477,8 +470,6 @@ Fluid dynamics and fluid structure interaction
 -  ``LB_BOUNDARIES``
 
 -  ``LB_BOUNDARIES_GPU``
-
--  ``SHANCHEN`` (experimental) Enables the Shan Chen bicomponent fluid code on the GPU.
 
 -  ``AFFINITY``
 

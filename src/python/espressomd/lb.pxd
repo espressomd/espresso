@@ -22,11 +22,14 @@ include "myconfig.pxi"
 
 from libcpp cimport bool
 from libcpp.vector cimport vector
+from libcpp.string cimport string
 from libc cimport stdint
 
 from .actors cimport Actor
 from .utils cimport Vector3d
 from .utils cimport Vector3i
+from .utils cimport Vector6d
+from .utils cimport Vector19d
 
 cdef class HydrodynamicInteraction(Actor):
     pass
@@ -39,7 +42,7 @@ IF LB_GPU or LB:
     #
     ##############################################
 
-    cdef extern from "grid_based_algorithms/lb.hpp":
+    cdef extern from "grid_based_algorithms/lb_interface.hpp":
 
         ##############################################
         #
@@ -57,65 +60,62 @@ IF LB_GPU or LB:
             double gamma_odd[2]
             double gamma_even[2]
             int resent_halo
-###############################################
-#
-# init struct
-#
-###############################################
-        ctypedef struct lb_parameters:
-            lb_parameters lb_params
 
 ##############################################
 #
-# exported C-functions from lb.hpp
 #
 ##############################################
-        int lb_lbfluid_set_tau(double c_tau)
-        int lb_lbfluid_get_tau(double * c_tau)
-        int lb_lbfluid_set_density(double * c_dens)
-        int lb_lbfluid_get_density(double * c_dens)
-        int lb_lbfluid_set_visc(double * c_visc)
-        int lb_lbfluid_get_visc(double * c_visc)
-        int lb_lbfluid_set_agrid(double c_agrid)
-        int lb_lbfluid_get_agrid(double * c_agrid)
-        int lb_lbfluid_set_friction(double * c_friction)
-        int lb_lbfluid_get_friction(double * c_friction)
-        int lb_lbfluid_set_gamma_odd(double * c_gamma_odd)
-        int lb_lbfluid_get_gamma_odd(double * c_gamma_odd)
-        int lb_lbfluid_set_gamma_even(double * c_gamma_even)
-        int lb_lbfluid_get_gamma_even(double * c_gamma_even)
-        int lb_lbfluid_set_ext_force_density(int component, double c_fx, double c_fy, double c_fz)
-        int lb_lbfluid_get_ext_force_density(double * c_f)
-        int lb_lbfluid_set_bulk_visc(double * c_bulk_visc)
-        int lb_lbfluid_get_bulk_visc(double * c_bulk_visc)
-        int lb_lbfluid_print_vtk_velocity(char * filename)
-        int lb_lbfluid_print_vtk_velocity(char * filename, vector[int] bb1, vector[int] bb2)
-        int lb_lbfluid_print_vtk_boundary(char * filename)
-        int lb_lbfluid_print_velocity(char * filename)
-        int lb_lbfluid_print_boundary(char * filename)
-        int lb_lbfluid_save_checkpoint(char * filename, int binary)
-        int lb_lbfluid_load_checkpoint(char * filename, int binary) except +
-        int lb_set_lattice_switch(int local_lattice_switch)
-        bool lb_lbnode_is_index_valid(const Vector3i & ind)
-        int lb_lbnode_get_u(const Vector3i & ind, double * double_return)
-        int lb_lbnode_set_u(const Vector3i & ind, double * u);
-        int lb_lbnode_get_rho(const Vector3i & ind, double * double_return)
-        int lb_lbnode_get_pi(const Vector3i & ind, double * double_return)
-        int lb_lbnode_get_pi_neq(const Vector3i & ind, double * double_return)
-        int lb_lbnode_get_pop(const Vector3i & ind, double * double_return)
-        int lb_lbnode_set_pop(const Vector3i & ind, double * double_return)
-        int lb_lbnode_get_boundary(const Vector3i & ind, int * int_return)
-        int lb_lbfluid_set_couple_flag(int c_couple_flag)
-        int lb_lbfluid_get_couple_flag(int * c_couple_flag)
-        int lb_lbfluid_get_interpolated_velocity_global(Vector3d & p, double * v)
-        stdint.uint64_t lb_fluid_rng_state()
-        stdint.uint64_t lb_coupling_rng_state()
-        void lb_fluid_set_rng_state(stdint.uint64_t)
+        void lb_lbfluid_set_tau(double c_tau) except +
+        double lb_lbfluid_get_tau() except +
+        void lb_lbfluid_set_density(double c_dens) except +
+        double lb_lbfluid_get_density() except +
+        void lb_lbfluid_set_visc(double c_visc) except +
+        double lb_lbfluid_get_visc() except +
+        void lb_lbfluid_set_agrid(double c_agrid) except +
+        double lb_lbfluid_get_agrid() except +
+        void lb_lbfluid_set_friction(double c_friction) except +
+        double lb_lbfluid_get_friction() except +
+        void lb_lbfluid_set_gamma_odd(double c_gamma_odd) except +
+        double lb_lbfluid_get_gamma_odd() except +
+        void lb_lbfluid_set_gamma_even(double c_gamma_even) except +
+        double lb_lbfluid_get_gamma_even() except +
+        void lb_lbfluid_set_ext_force_density(int component, const Vector3d forcedensity) except +
+        const Vector3d lb_lbfluid_get_ext_force_density() except +
+        void lb_lbfluid_set_bulk_visc(double c_bulk_visc) except +
+        double lb_lbfluid_get_bulk_visc() except +
+        void lb_lbfluid_print_vtk_velocity(string filename) except +
+        void lb_lbfluid_print_vtk_velocity(string filename, vector[int] bb1, vector[int] bb2) except +
+        void lb_lbfluid_print_vtk_boundary(string filename) except +
+        void lb_lbfluid_print_velocity(string filename) except +
+        void lb_lbfluid_print_boundary(string filename) except +
+        void lb_lbfluid_save_checkpoint(string filename, int binary) except +
+        void lb_lbfluid_load_checkpoint(string filename, int binary) except +
+        void lb_set_lattice_switch(int local_lattice_switch) except +
+        int lb_lbfluid_get_lattice_switch() except +
+        bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
+        const Vector3d lb_lbnode_get_u(const Vector3i & ind) except +
+        void lb_lbnode_set_u(const Vector3i & ind, const Vector3d & u) except +
+        double lb_lbnode_get_rho(const Vector3i & ind) except +
+        const Vector6d lb_lbnode_get_pi(const Vector3i & ind) except +
+        const Vector6d lb_lbnode_get_pi_neq(const Vector3i & ind) except +
+        const Vector19d lb_lbnode_get_pop(const Vector3i & ind) except +
+        void lb_lbnode_set_pop(const Vector3i & ind, const Vector19d & populations) except +
+        int lb_lbnode_get_boundary(const Vector3i & ind) except +
+        void lb_lbfluid_set_couple_flag(int c_couple_flag) except +
+        int lb_lbfluid_get_couple_flag() except +
+        int lb_lbfluid_get_interpolated_velocity_global(Vector3d & p, double * v) except +
+        stdint.uint64_t lb_fluid_rng_state() except +
+        stdint.uint64_t lb_coupling_rng_state() except +
+        void lb_fluid_set_rng_state(stdint.uint64_t) except +
+        void lb_lbfluid_set_kT(double) except +
+        double lb_lbfluid_get_kT() except +
+
+    cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
         void lb_coupling_set_rng_state(stdint.uint64_t)
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()
-        void lb_lbfluid_get_interpolated_velocity_at_positions(double * positions, double * velocities, int length);
+        void lb_lbfluid_get_interpolated_velocity_at_positions(double * positions, double * velocities, int length)
 
     ###############################################
     #
@@ -123,168 +123,100 @@ IF LB_GPU or LB:
     #
     ###############################################
     cdef inline python_lbfluid_set_density(p_dens, agrid):
-
-        IF SHANCHEN:
-            cdef double c_dens[2]
-        ELSE:
-            cdef double c_dens[1]
+        cdef double c_dens
 
         # get pointers
         if isinstance(p_dens, float) or isinstance(p_dens, int):
-            c_dens[0] = <float > p_dens * agrid * agrid * agrid
+            c_dens = <float > p_dens * agrid * agrid * agrid
         else:
             c_dens = p_dens * agrid * agrid * agrid
         # call c-function
-        if(lb_lbfluid_set_density(c_dens)):
-            raise Exception("lb_fluid_set_density error at C-level interface")
-
-        return 0
-
-###############################################
-
-    cdef inline python_lbfluid_set_tau(p_tau):
-
-        cdef double c_tau
-        # get pointers
-        c_tau = p_tau
-        # call c-function
-        if(lb_lbfluid_set_tau(c_tau)):
-            raise Exception("lb_fluid_set_tau error at C-level interface")
-
-        return 0
+        lb_lbfluid_set_density(c_dens)
 
 ###############################################
 
     cdef inline python_lbfluid_set_visc(p_visc, p_agrid, p_tau):
-
-        IF SHANCHEN:
-            cdef double c_visc[2]
-        ELSE:
-            cdef double c_visc[1]
+        cdef double c_visc
         # get pointers
         if isinstance(p_visc, float) or isinstance(p_visc, int):
-            c_visc[0] = <float > p_visc * p_tau / (p_agrid * p_agrid)
+            c_visc = <float > p_visc * p_tau / (p_agrid * p_agrid)
         else:
             c_visc = p_visc * p_tau / (p_agrid * p_agrid)
         # call c-function
-        if(lb_lbfluid_set_visc(c_visc)):
-            raise Exception("lb_fluid_set_visc error at C-level interface")
-
-        return 0
+        lb_lbfluid_set_visc(c_visc)
 
 ###############################################
 
     cdef inline python_lbfluid_set_agrid(p_agrid):
-
         cdef double c_agrid
         # get pointers
         c_agrid = p_agrid
         # call c-function
-        if(lb_lbfluid_set_agrid(c_agrid)):
-            raise Exception("lb_fluid_set_agrid error at C-level interface")
-
-        return 0
+        lb_lbfluid_set_agrid(c_agrid)
 
 ###############################################
 
     cdef inline python_lbfluid_set_bulk_visc(p_bvisc, p_agrid, p_tau):
-
-        IF SHANCHEN:
-            cdef double c_bvisc[2]
-        ELSE:
-            cdef double c_bvisc[1]
+        cdef double c_bvisc
         # get pointers
         if isinstance(p_bvisc, float) or isinstance(p_bvisc, int):
-            c_bvisc[0] = <float > p_bvisc * p_tau / (p_agrid * p_agrid)
+            c_bvisc = <float > p_bvisc * p_tau / (p_agrid * p_agrid)
         else:
             c_bvisc = p_bvisc * p_tau / (p_agrid * p_agrid)
         # call c-function
-        if(lb_lbfluid_set_bulk_visc(c_bvisc)):
-            raise Exception(
-                "lb_fluid_set_bulk_visc error at C-level interface")
-
-        return 0
+        lb_lbfluid_set_bulk_visc(c_bvisc)
 
 ###############################################
 
     cdef inline python_lbfluid_set_friction(p_friction):
-
-        IF SHANCHEN:
-            cdef double c_friction[2]
-        ELSE:
-            cdef double c_friction[1]
+        cdef double c_friction
         # get pointers
         if isinstance(p_friction, float) or isinstance(p_friction, int):
-            c_friction[0] = <float > p_friction
+            c_friction = <float > p_friction
         else:
             c_friction = p_friction
         # call c-function
-        if(lb_lbfluid_set_friction(c_friction)):
-            raise Exception("lb_fluid_set_friction error at C-level interface")
-
-        return 0
+        lb_lbfluid_set_friction(c_friction)
 
     cdef inline python_lbfluid_set_gamma_odd(gamma_odd):
-        IF SHANCHEN:
-            cdef double c_gamma_odd[2]
-        ELSE:
-            cdef double c_gamma_odd[1]
+        cdef double c_gamma_odd
         # get pointers
         if isinstance(gamma_odd, float) or isinstance(gamma_odd, int):
-            c_gamma_odd[0] = <float > gamma_odd
+            c_gamma_odd = <float > gamma_odd
         else:
             c_gamma_odd = gamma_odd
         # call c-function
-        if(lb_lbfluid_set_gamma_odd(c_gamma_odd)):
-            raise Exception(
-                "lb_fluid_set_gamma_odd error at C-level interface")
-
-        return 0
+        lb_lbfluid_set_gamma_odd(c_gamma_odd)
 
     cdef inline python_lbfluid_set_gamma_even(gamma_even):
-        IF SHANCHEN:
-            cdef double c_gamma_even[2]
-        ELSE:
-            cdef double c_gamma_even[1]
+        cdef double c_gamma_even
         # get pointers
         if isinstance(gamma_even, float) or isinstance(gamma_even, int):
-            c_gamma_even[0] = <float > gamma_even
+            c_gamma_even = <float > gamma_even
         else:
             c_gamma_even = gamma_even
         # call c-function
-        if(lb_lbfluid_set_gamma_even(c_gamma_even)):
-            raise Exception(
-                "lb_fluid_set_gamma_even error at C-level interface")
-
-        return 0
+        lb_lbfluid_set_gamma_even(c_gamma_even)
 
 ###############################################
 
     cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density, p_agrid, p_tau):
 
-        cdef double c_ext_force_density[3]
+        cdef Vector3d c_ext_force_density
         # get pointers
         # unit conversion MD -> LB
         c_ext_force_density[
-    0] = p_ext_force_density[
-        0] * p_agrid * p_agrid * p_tau * p_tau;
+            0] = p_ext_force_density[
+                0] * p_agrid * p_agrid * p_tau * p_tau
         c_ext_force_density[
-    1] = p_ext_force_density[
-        1] * p_agrid * p_agrid * p_tau * p_tau;
+            1] = p_ext_force_density[
+                1] * p_agrid * p_agrid * p_tau * p_tau
         c_ext_force_density[
-    2] = p_ext_force_density[
-        2] * p_agrid * p_agrid * p_tau * p_tau;
+            2] = p_ext_force_density[
+                2] * p_agrid * p_agrid * p_tau * p_tau
         # call c-function
-        IF SHANCHEN:
-            if(lb_lbfluid_set_ext_force_density(1, c_ext_force_density[0], c_ext_force_density[1], c_ext_force_density[2])):
-                raise Exception(
-                    "lb_fluid_set_ext_force_density error at C-level interface")
-        ELSE:
-            if(lb_lbfluid_set_ext_force_density(0, c_ext_force_density[0], c_ext_force_density[1], c_ext_force_density[2])):
-                raise Exception(
-                    "lb_fluid_set_ext_force_density error at C-level interface")
+        lb_lbfluid_set_ext_force_density(0, c_ext_force_density)
 
-        return 0
 
 ###############################################
 
@@ -298,21 +230,16 @@ IF LB_GPU or LB:
             raise Exception(
                 "Parameter couple accepts only \"2pt\" and \"3pt\"")
 
-        cdef int c_couple_flag;
+        cdef int c_couple_flag
         c_couple_flag = p_couple_flag
-        if(lb_lbfluid_set_couple_flag(c_couple_flag)):
-            raise Exception(
-                "lb_lbfluid_set_couple_flag error at C-level interface")
-        return 0
+        lb_lbfluid_set_couple_flag(c_couple_flag)
 
 ###############################################
 
     cdef inline python_lbfluid_get_couple_flag(p_couple_flag):
 
-        cdef int c_couple_flag;
-        if(lb_lbfluid_get_couple_flag( & c_couple_flag)):
-            raise Exception(
-                "lb_lbfluid_get_couple_flag error at C-level interface")
+        cdef int c_couple_flag
+        c_couple_flag = lb_lbfluid_get_couple_flag()
         p_couple_flag = c_couple_flag
 
         if p_couple_flag == 2:
@@ -323,8 +250,6 @@ IF LB_GPU or LB:
             raise Exception(
                 "lb_lbfluid_get_couple_flag error at C-level interface")
 
-        return 0
-
 ###############################################
 
 
@@ -334,114 +259,65 @@ IF LB_GPU or LB:
 #
 ###############################################
     cdef inline python_lbfluid_get_density(p_dens, agrid):
-
-        IF SHANCHEN:
-            cdef double c_dens[2]
-        ELSE:
-            cdef double c_dens[1]
+        cdef double c_dens
         # call c-function
-        if(lb_lbfluid_get_density(c_dens)):
-            raise Exception("lb_fluid_get_density error at C-level interface")
+        c_dens = lb_lbfluid_get_density()
         if isinstance(p_dens, float) or isinstance(p_dens, int):
-            p_dens = <double > c_dens[0] / agrid / agrid / agrid
+            p_dens = <double > c_dens / agrid / agrid / agrid
         else:
             p_dens = c_dens / agrid / agrid / agrid
 
-        return 0
-
-###############################################
-    cdef inline python_lbfluid_get_tau(p_tau):
-
-        cdef double c_tau[1]
-        # call c-function
-        if(lb_lbfluid_get_tau(c_tau)):
-            raise Exception("lb_fluid_get_tau error at C-level interface")
-        p_tau = <double > c_tau[0]
-
-        return 0
-
 ###############################################
     cdef inline python_lbfluid_get_visc(p_visc, p_agrid, p_tau):
-
-        IF SHANCHEN:
-            cdef double c_visc[2]
-        ELSE:
-            cdef double c_visc[1]
+        cdef double c_visc
         # call c-function
-        if(lb_lbfluid_get_visc(c_visc)):
-            raise Exception(
-                "lb_fluid_get_viscosity error at C-level interface")
+        c_visc = lb_lbfluid_get_visc()
         if isinstance(p_visc, float) or isinstance(p_visc, int):
-            p_visc = <double > c_visc[0] / p_tau * (p_agrid * p_agrid)
+            p_visc = <double > c_visc / p_tau * (p_agrid * p_agrid)
         else:
             p_visc = c_visc / p_tau * (p_agrid * p_agrid)
 
-        return 0
-
 ###############################################
     cdef inline python_lbfluid_get_agrid(p_agrid):
-
-        cdef double c_agrid[1]
+        cdef double c_agrid
         # call c-function
-        if(lb_lbfluid_get_agrid(c_agrid)):
-            raise Exception("lb_fluid_get_agrid error at C-level interface")
-        p_agrid = <double > c_agrid[0]
-
-        return 0
+        c_agrid = lb_lbfluid_get_agrid()
+        p_agrid = <double > c_agrid
 
 ###############################################
     cdef inline python_lbfluid_get_bulk_visc(p_bvisc, p_agrid, p_tau):
-
-        IF SHANCHEN:
-            cdef double c_bvisc[2]
-        ELSE:
-            cdef double c_bvisc[1]
+        cdef double c_bvisc
         # call c-function
-        if(lb_lbfluid_get_bulk_visc(c_bvisc)):
-            raise Exception(
-                "lb_fluid_get_bulk_viscosity error at C-level interface")
+        c_bvisc = lb_lbfluid_get_bulk_visc()
         if isinstance(p_bvisc, float) or isinstance(p_bvisc, int):
-            p_bvisc = <double > c_bvisc[0] / p_tau * (p_agrid * p_agrid)
+            p_bvisc = <double > c_bvisc / p_tau * (p_agrid * p_agrid)
         else:
             p_bvisc = c_bvisc / p_tau * (p_agrid * p_agrid)
 
-        return 0
-
 ###############################################
     cdef inline python_lbfluid_get_friction(p_friction):
-
-        IF SHANCHEN:
-            cdef double c_friction[2]
-        ELSE:
-            cdef double c_friction[1]
+        cdef double c_friction
         # call c-function
-        if(lb_lbfluid_get_friction(c_friction)):
-            raise Exception("lb_fluid_get_friction error at C-level interface")
+        c_friction = lb_lbfluid_get_friction()
         if isinstance(p_friction, float) or isinstance(p_friction, int):
-            p_fricition = <double > c_friction[0]
+            p_fricition = <double > c_friction
         else:
             p_friction = c_friction
-
-        return 0
 
 ###############################################
 
     cdef inline python_lbfluid_get_ext_force_density(p_ext_force_density, p_agrid, p_tau):
 
-        cdef double c_ext_force_density[3]
+        cdef Vector3d c_ext_force_density
         # call c-function
-        if(lb_lbfluid_get_ext_force_density(c_ext_force_density)):
-            raise Exception(
-                "lb_fluid_get_ext_force_density error at C-level interface")
+        c_ext_force_density = lb_lbfluid_get_ext_force_density()
         # unit conversion LB -> MD
         p_ext_force_density[
-    0] = c_ext_force_density[
-        0] / p_agrid / p_agrid / p_tau / p_tau
+            0] = c_ext_force_density[
+                0] / p_agrid / p_agrid / p_tau / p_tau
         p_ext_force_density[
-    1] = c_ext_force_density[
-        1] / p_agrid / p_agrid / p_tau / p_tau
+            1] = c_ext_force_density[
+                1] / p_agrid / p_agrid / p_tau / p_tau
         p_ext_force_density[
-    2] = c_ext_force_density[
-        2] / p_agrid / p_agrid / p_tau / p_tau
-
-        return 0
+            2] = c_ext_force_density[
+                2] / p_agrid / p_agrid / p_tau / p_tau

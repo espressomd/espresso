@@ -4,6 +4,8 @@
 #include <array>
 #include <utility>
 
+#include "get.hpp"
+
 namespace Utils {
 
 namespace detail {
@@ -20,54 +22,57 @@ template <typename T> struct mul<1, T> {
   constexpr T operator()(const T a) const { return a; }
 };
 
-template <int I, typename T, std::size_t N, int c, int... cs>
+template <int I, typename T, typename Container, std::size_t N, int c,
+          int... cs>
 struct inner_product_template_impl {
-  constexpr T operator()(std::array<T, N> const &a) const {
-    return mul<c, T>{}(std::get<I>(a)) +
-           inner_product_template_impl<I + 1, T, N, cs...>{}(a);
+  constexpr T operator()(const Container &vec) const {
+    return mul<c, T>{}(get<I>(vec)) +
+           inner_product_template_impl<I + 1, T, Container, N, cs...>{}(vec);
   }
 };
 
-template <int I, typename T, std::size_t N, int c>
-struct inner_product_template_impl<I, T, N, c> {
-  constexpr T operator()(std::array<T, N> const &a) const {
-    return mul<c, T>{}(std::get<I>(a));
+template <int I, typename T, typename Container, std::size_t N, int c>
+struct inner_product_template_impl<I, T, Container, N, c> {
+  constexpr T operator()(const Container &vec) const {
+    return mul<c, T>{}(get<I>(vec));
   }
 };
 
 template <typename T, std::size_t N,
-          const std::array<std::array<int, N>, N> &matrix,
+          const std::array<std::array<int, N>, N> &matrix, typename Container,
           std::size_t row_index, std::size_t... column_indices>
-constexpr T inner_product_helper(const std::array<T, N> &vec,
+constexpr T inner_product_helper(const Container &vec,
                                  std::index_sequence<column_indices...>) {
   return inner_product_template_impl<
-      0, T, N, std::get<column_indices>(std::get<row_index>(matrix))...>{}(vec);
+      0, T, Container, N, get<column_indices>(get<row_index>(matrix))...>{}(
+      vec);
 }
 
 template <typename T, std::size_t N,
-          const std::array<std::array<int, N>, N> &matrix,
+          const std::array<std::array<int, N>, N> &matrix, typename Container,
           std::size_t row_index>
-constexpr T inner_product_template(const std::array<T, N> &vec) {
-  return detail::inner_product_helper<T, N, matrix, row_index>(
+constexpr T inner_product_template(const Container &vec) {
+  return detail::inner_product_helper<T, N, matrix, Container, row_index>(
       vec, std::make_index_sequence<N>{});
 }
 
 template <typename T, std::size_t N,
-          const std::array<std::array<int, N>, N> &matrix,
+          const std::array<std::array<int, N>, N> &matrix, typename Container,
           std::size_t... column_indices>
 constexpr std::array<T, N>
-matrix_vector_product_helper(const std::array<T, N> &vec,
+matrix_vector_product_helper(const Container &vec,
                              std::index_sequence<column_indices...>) {
   return std::array<T, N>{
-      {inner_product_template<T, N, matrix, column_indices>(vec)...}};
+      {inner_product_template<T, N, matrix, Container, column_indices>(
+          vec)...}};
 }
 
 } // namespace detail
 
 template <typename T, std::size_t N,
-          const std::array<std::array<int, N>, N> &matrix>
-constexpr std::array<T, N> matrix_vector_product(const std::array<T, N> &vec) {
-  return detail::matrix_vector_product_helper<T, N, matrix>(
+          const std::array<std::array<int, N>, N> &matrix, typename Container>
+constexpr std::array<T, N> matrix_vector_product(const Container &vec) {
+  return detail::matrix_vector_product_helper<T, N, matrix, Container>(
       vec, std::make_index_sequence<N>{});
 }
 

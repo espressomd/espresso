@@ -107,16 +107,6 @@ debian:9:
     - docker
     - linux
 
-opensuse:42.3:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
-  script:
-    - export with_cuda=false myconfig=maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
 opensuse:15.0:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
@@ -152,17 +142,6 @@ fedora:
 #ubuntu:1804 not needed: default used in non-CUDA builds
 
 ### Builds with CUDA
-
-cuda-shanchen:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
-  script:
-    - export myconfig=shanchen python_version=3 make_check=false
-    - bash maintainer/cuda_build.sh
-  tags:
-    - docker
-    - linux
-    - cuda
 
 cuda-maxset:
   stage: build
@@ -206,10 +185,41 @@ rocm-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/rocm:latest
   script:
-    - export myconfig=maxset
+    - export myconfig=maxset make_check=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - amdgpu
+
+### Builds on different architectures
+
+.arch_template: &arch_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export with_cuda=false
+    - export OMPI_MCA_btl_vader_single_copy_mechanism=none
+    - export myconfig=maxset
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+  only:
+    - scheduled
+
+ubuntu:arm64:
+  <<: *arch_definition
+
+ubuntu:armhf:
+  <<: *arch_definition
+
+ubuntu:i386:
+  <<: *arch_definition
+
+ubuntu:ppc64le:
+  <<: *arch_definition
+
+ubuntu:s390x:
+  <<: *arch_definition
 
 ### Builds with OS X
 
@@ -251,13 +261,13 @@ clang:6.0:
     - cuda
     - ptrace
 
-intel:17:
+intel:18:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export myconfig=maxset with_cuda=false with_coverage=false I_MPI_SHM_LMT=shm
+    - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
     - export cxx_flags=-O2
-    - bash maintainer/CI/build_cmake.sh
+    - bash maintainer/cuda_build.sh
   tags:
     - docker
     - linux
@@ -271,6 +281,20 @@ check_sphinx:
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
+  tags:
+    - docker
+    - linux
+    - cuda
+
+check_doxygen:
+  stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
+  dependencies:
+  - cuda-maxset
+  when: on_success
+  script:
+    - cd ${CI_PROJECT_DIR}/build
+    - make doxygen
   tags:
     - docker
     - linux

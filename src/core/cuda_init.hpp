@@ -20,6 +20,9 @@
 #define _CUDA_INIT_H
 
 #include "config.hpp"
+
+#ifdef CUDA
+
 #include <vector>
 
 /** Struct to hold information relevant to Espresso
@@ -109,4 +112,5 @@ int cuda_get_device_props(const int dev, EspressoGpuDevice &d);
 /** current error message of CUDA. */
 extern const char *cuda_error;
 
+#endif
 #endif

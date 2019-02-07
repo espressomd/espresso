@@ -33,6 +33,8 @@ from . import particle_data
 from . import cuda_init
 from . import code_info
 from .utils cimport numeric_limits
+from .lb cimport lb_lbfluid_get_tau
+from .lb cimport lb_lbfluid_get_lattice_switch
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
@@ -265,21 +267,16 @@ cdef class System(object):
         """
 
         def __set__(self, double _time_step):
-            IF LB:
-                global lbpar
-            IF LB_GPU:
-                global lbpar_gpu
             if _time_step <= 0:
                 raise ValueError("Time Step must be positive")
-            IF LB:
-                if lbpar.tau >= 0.0 and _time_step < lbpar.tau:
-                    raise ValueError(
-                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar.tau) + ")")
-            IF LB_GPU:
-                if (lbpar_gpu.tau >= 0.0 and
-                        lbpar_gpu.tau - _time_step > numeric_limits[float].epsilon() * abs(lbpar_gpu.tau + _time_step)):
-                    raise ValueError(
-                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar_gpu.tau) + ")")
+            IF LB or LB_GPU:
+                cdef double tau
+                if lb_lbfluid_get_lattice_switch() != 0:
+                    tau = lb_lbfluid_get_tau()
+                    if (tau >= 0.0 and
+                            tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):
+                        raise ValueError(
+                            "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(tau) + ")")
             self.globals.time_step = _time_step
 
         def __get__(self):

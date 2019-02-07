@@ -54,8 +54,6 @@ class TestLB(object):
               'gamma': 1.5,
               'skin': 0.2,
               'temp_confidence': 10}
-    if espressomd.has_features("SHANCHEN"):
-        params.update({"dens": 2 * [params["dens"]]})
 
     dof = 3.
 
@@ -122,7 +120,7 @@ class TestLB(object):
 
             # Go over lb lattice
             for lb_node in lb_nodes:
-                dens = lb_node.density[0]
+                dens = lb_node.density
                 fluid_mass += dens
                 fluid_temp += np.sum(lb_node.velocity**2) * dens
 
@@ -152,7 +150,7 @@ class TestLB(object):
         # temp_prec_fluid = scipy.stats.norm.interval(0.95,
         # loc=self.params["temp"], scale=np.std(all_temp_fluid,ddof=1))[1]
         # -self.params["temp"]
-        temp_prec_particle = 0.05 * self.params["temp"]
+        temp_prec_particle = 0.06 * self.params["temp"]
         temp_prec_fluid = 0.05 * self.params["temp"]
 
         self.assertAlmostEqual(
@@ -242,7 +240,7 @@ class TestLB(object):
 
 
 @ut.skipIf(
-    not espressomd.has_features(["LB"]) or espressomd.has_features("SHANCHEN"),
+    not espressomd.has_features(["LB"]),
            "Features not available, skipping test!")
 class TestLBCPU(TestLB, ut.TestCase):
 
@@ -253,7 +251,7 @@ class TestLBCPU(TestLB, ut.TestCase):
 
 @ut.skipIf(
     not espressomd.has_features(
-        ["LB_GPU"]) or espressomd.has_features('SHANCHEN') or espressomd.has_features("SHANCHEN"),
+        ["LB_GPU"]),
     "Features not available, skipping test!")
 class TestLBGPU(TestLB, ut.TestCase):
 
