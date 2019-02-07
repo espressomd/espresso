@@ -49,7 +49,7 @@ void lb_lbfluid_add_force_density(const Vector3d &p,
 const Lattice &lb_lbfluid_get_lattice();
 int lb_lbfluid_get_lattice_switch();
 
-void lb_set_lattice_switch(int local_lattice_switch);
+void lb_lbfluid_set_lattice_switch(int local_lattice_switch);
 void lb_lbfluid_set_tau(double p_tau);
 void lb_lbfluid_set_rho(double p_dens);
 void lb_lbfluid_set_visc(double p_visc);

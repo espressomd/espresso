@@ -370,18 +370,15 @@ double lb_lbfluid_get_gamma_even() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.gamma_even;
-#else
-    return {};
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     return lbpar.gamma_even;
-#else
-    return {};
 #endif // LB
   } else {
     throw std::runtime_error("LB not activated.");
   }
+  return {};
 }
 
 void lb_lbfluid_set_friction(double p_friction) {
@@ -404,16 +401,13 @@ double lb_lbfluid_get_friction() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.friction;
-#else
-    return {};
 #endif // LB_GPU
   } else {
 #ifdef LB
     return lbpar.friction;
-#else
-    return {};
 #endif // LB
   }
+  return {};
 }
 
 void lb_lbfluid_set_couple_flag(int couple_flag) {
@@ -438,51 +432,28 @@ int lb_lbfluid_get_couple_flag() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.lb_couple_switch;
-#else
-    return {};
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     return LB_COUPLE_TWO_POINT;
-#else
-    return {};
 #endif
   } else {
     return LB_COUPLE_NULL;
   }
+  return {};
 }
 
-void lb_lbfluid_set_agrid(double p_agrid) {
-  if (p_agrid <= 0)
+void lb_lbfluid_set_agrid(double agrid) {
+  if (agrid <= 0)
     throw std::invalid_argument("agrid has to be > 0.");
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    lbpar_gpu.agrid = static_cast<float>(p_agrid);
-
-    lbpar_gpu.dim_x = static_cast<unsigned int>(rint(box_l[0] / p_agrid));
-    lbpar_gpu.dim_y = static_cast<unsigned int>(rint(box_l[1] / p_agrid));
-    lbpar_gpu.dim_z = static_cast<unsigned int>(rint(box_l[2] / p_agrid));
-    unsigned int tmp[3];
-    tmp[0] = lbpar_gpu.dim_x;
-    tmp[1] = lbpar_gpu.dim_y;
-    tmp[2] = lbpar_gpu.dim_z;
-    /* sanity checks */
-    for (int dir = 0; dir < 3; dir++) {
-      /* check if box_l is compatible with lattice spacing */
-      if (fabs(box_l[dir] - tmp[dir] * p_agrid) > ROUND_ERROR_PREC) {
-        runtimeErrorMsg() << "Lattice spacing p_agrid= " << p_agrid
-                          << " is incompatible with box_l[" << dir
-                          << "]=" << box_l[dir] << ", factor=" << tmp[dir]
-                          << " err= " << fabs(box_l[dir] - tmp[dir] * p_agrid);
-      }
-    }
-    lbpar_gpu.number_of_nodes =
-        lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
+    lb_set_agrid_gpu(agrid);
     lb_lbfluid_on_lb_params_change(LBPAR_AGRID);
 #endif // LB_GPU
   } else {
 #ifdef LB
-    lbpar.agrid = p_agrid;
+    lbpar.agrid = agrid;
     mpi_bcast_lb_params(LBPAR_AGRID);
 #endif // LB
   }
@@ -492,18 +463,15 @@ double lb_lbfluid_get_agrid() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.agrid;
-#else
-    return {};
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     return lbpar.agrid;
-#else
-    return {};
 #endif // LB
   } else {
     throw std::runtime_error("LB not activated.");
   }
+  return {};
 }
 
 void lb_lbfluid_set_ext_force_density(int component,
@@ -539,14 +507,10 @@ const Vector3d lb_lbfluid_get_ext_force_density() {
 #ifdef LB_GPU
     return {{lbpar_gpu.ext_force_density[0], lbpar_gpu.ext_force_density[1],
              lbpar_gpu.ext_force_density[2]}};
-#else
-    return {};
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     return lbpar.ext_force_density;
-#else
-    return {};
 #endif // LB
   }
   return {};
@@ -586,7 +550,7 @@ double lb_lbfluid_get_tau() {
   }
 }
 
-void lb_set_lattice_switch(int local_lattice_switch) {
+void lb_lbfluid_set_lattice_switch(int local_lattice_switch) {
   switch (local_lattice_switch) {
   case 0:
     lattice_switch = LATTICE_OFF;

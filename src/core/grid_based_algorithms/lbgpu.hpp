@@ -255,6 +255,7 @@ void lb_init_extern_nodeforcedensities_GPU(
     LB_extern_nodeforcedensity_gpu *host_extern_node_force_densities,
     LB_parameters_gpu *lbpar_gpu);
 
+void lb_set_agrid_gpu(double agrid);
 void lb_calc_particle_lattice_ia_gpu(bool couple_virtual);
 
 void lb_calc_fluid_mass_GPU(double *mass);

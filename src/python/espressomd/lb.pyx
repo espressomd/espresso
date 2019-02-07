@@ -109,7 +109,7 @@ IF LB_GPU or LB:
         # function that calls wrapper functions which set the parameters at C-Level
         ####################################################
         def _set_lattice_switch(self):
-            lb_set_lattice_switch(1)
+            lb_lbfluid_set_lattice_switch(1)
 
         def _set_params_in_es_core(self):
             default_params = self.default_params()
@@ -260,7 +260,7 @@ IF LB_GPU or LB:
                 raise Exception("LB not compiled in")
 
         def _deactivate_method(self):
-            lb_set_lattice_switch(0)
+            lb_lbfluid_set_lattice_switch(0)
 
 IF LB_GPU:
     cdef class LBFluidGPU(LBFluid):
@@ -273,7 +273,7 @@ IF LB_GPU:
             lb_lbfluid_remove_total_momentum()
 
         def _set_lattice_switch(self):
-            lb_set_lattice_switch(2)
+            lb_lbfluid_set_lattice_switch(2)
 
         def _activate_method(self):
             self.validate_params()
