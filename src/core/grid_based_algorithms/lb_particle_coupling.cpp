@@ -36,7 +36,9 @@ void mpi_set_lb_coupling_counter_slave(int high, int low) {
 
 #if defined(LB) || defined(LB_GPU)
 
-uint64_t lb_coupling_get_rng_state_cpu() { return rng_counter_coupling.value(); }
+uint64_t lb_coupling_get_rng_state_cpu() {
+  return rng_counter_coupling.value();
+}
 
 uint64_t lb_lbcoupling_get_rng_state() {
   if (lattice_switch & LATTICE_LB) {

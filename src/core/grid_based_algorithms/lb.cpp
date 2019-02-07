@@ -1460,26 +1460,22 @@ void lb_calc_fluid_mass(double *result) {
 void lb_calc_fluid_momentum(double *result) {
 
   int x, y, z, index;
-  double j[3], momentum[3] = {0.0, 0.0, 0.0};
+  Vector3d j{}, momentum{};
 
   for (x = 1; x <= lblattice.grid[0]; x++) {
     for (y = 1; y <= lblattice.grid[1]; y++) {
       for (z = 1; z <= lblattice.grid[2]; z++) {
         index = get_linear_index(x, y, z, lblattice.halo_grid);
 
-        lb_calc_local_j(index, j);
-        momentum[0] += j[0] + lbfields[index].force_density[0];
-        momentum[1] += j[1] + lbfields[index].force_density[1];
-        momentum[2] += j[2] + lbfields[index].force_density[2];
+        j = lb_calc_local_j(index);
+        momentum += j + lbfields[index].force_density;
       }
     }
   }
 
-  momentum[0] *= lbpar.agrid / lbpar.tau;
-  momentum[1] *= lbpar.agrid / lbpar.tau;
-  momentum[2] *= lbpar.agrid / lbpar.tau;
+  momentum *= lbpar.agrid / lbpar.tau;
 
-  MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(momentum.data(), result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
 void lb_collect_boundary_forces(double *result) {
@@ -1492,10 +1488,9 @@ void lb_collect_boundary_forces(double *result) {
     for (int j = 0; j < 3; j++)
       boundary_forces[3 * i + j] = (**it).force()[j];
 
-  MPI_Reduce(boundary_forces.data(), result, 3 * n_lb_boundaries, MPI_DOUBLE, MPI_SUM,
-             0, comm_cart);
+  MPI_Reduce(boundary_forces.data(), result, 3 * n_lb_boundaries, MPI_DOUBLE,
+             MPI_SUM, 0, comm_cart);
 #endif
 }
-
 
 #endif // LB
