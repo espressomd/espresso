@@ -351,8 +351,6 @@ check_with_odd_no_of_processors:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
-  dependencies:
-  - cuda-maxset
   script:
     - export myconfig=maxset with_coverage=true python_version=3 build_procs=3 check_procs=3 check_odd_only=true
     - bash maintainer/cuda_build.sh
