@@ -6,7 +6,7 @@
  *  Include all particle-lattice forces in this function.
  *  The function is called from \ref force_calc.
  */
-void calc_particle_lattice_ia();
+void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual);
 
 uint64_t lb_lbcoupling_get_rng_state();
 void lb_lbcoupling_set_rng_state(uint64_t counter);

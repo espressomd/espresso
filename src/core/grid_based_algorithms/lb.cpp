@@ -28,7 +28,6 @@
  */
 
 #include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include <cinttypes>
 #include <fstream>

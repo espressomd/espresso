@@ -251,13 +251,6 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              const std::array<double, 3> &j,
                              const std::array<double, 6> &pi);
 
-/** Calculates the coupling of MD particles to the LB fluid.
- * This function  is called from \ref force_calc. The force is added
- * to the particle force and the corresponding momentum exchange is
- * applied to the fluid.
- * Note that this function changes the state of the fluid!
- */
-void calc_particle_lattice_ia();
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &p);

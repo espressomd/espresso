@@ -153,9 +153,14 @@ void add_swimmer_force(Particle &p) {
 #endif
 } // namespace
 
+void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    if (transfer_momentum_gpu && this_node == 0)
+      lb_calc_particle_lattice_ia_gpu(couple_virtual);
+#endif
+  } else if (lattice_switch & LATTICE_LB) { 
 #ifdef LB
-void calc_particle_lattice_ia() {
-
   if (transfer_momentum) {
     using rng_type = r123::Philox4x64;
     using ctr_type = rng_type::ctr_type;
@@ -185,7 +190,7 @@ void calc_particle_lattice_ia() {
 
     /* local cells */
     for (auto &p : local_cells.particles()) {
-      if (!p.p.is_virtual || thermo_virtual) {
+      if (!p.p.is_virtual or thermo_virtual or (p.p.is_virtual && couple_virtual)) {
         auto const force =
             lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
         /* add force to the particle */
@@ -210,7 +215,8 @@ void calc_particle_lattice_ia() {
       }
     }
   }
-}
 #endif
+  }
+}
 
 #endif
