@@ -1287,13 +1287,6 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
     return;
   }
 
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_pi in " << __FILE__ << __LINE__
-                      << ": CPU LB not switched on.";
-    j[0] = j[1] = j[2] = 0;
-    return;
-  }
-
 #ifdef LB_BOUNDARIES
   if (lbfields[index].boundary) {
     *rho = lbpar.rho;
@@ -1438,7 +1431,7 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
 }
 #endif
 
-// Statistics
+// Statistics in MD units.
 
 /** Calculate mass of the LB fluid.
  * \param result Fluid mass
@@ -1487,41 +1480,6 @@ void lb_calc_fluid_momentum(double *result) {
   momentum[2] *= lbpar.agrid / lbpar.tau;
 
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-}
-
-/** Calculate temperature of the LB fluid.
- * \param result Fluid temperature
- */
-void lb_calc_fluid_temp(double *result) {
-  int x, y, z, index;
-  double rho, j[3];
-  double temp = 0.0;
-  int number_of_non_boundary_nodes = 0;
-
-  for (x = 1; x <= lblattice.grid[0]; x++) {
-    for (y = 1; y <= lblattice.grid[1]; y++) {
-      for (z = 1; z <= lblattice.grid[2]; z++) {
-
-        index = get_linear_index(x, y, z, lblattice.halo_grid);
-
-#ifdef LB_BOUNDARIES
-        if (!lbfields[index].boundary)
-#endif
-        {
-          lb_calc_local_fields(index, &rho, j, nullptr);
-          temp += scalar(j, j);
-          number_of_non_boundary_nodes++;
-        }
-      }
-    }
-  }
-
-  temp *= 1. /
-          (3. * lbpar.rho * number_of_non_boundary_nodes * lbpar.tau *
-           lbpar.tau * lbpar.agrid) /
-          n_nodes;
-
-  MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
 void lb_collect_boundary_forces(double *result) {
