@@ -149,6 +149,10 @@ cuda-maxset:
   script:
     - export myconfig=maxset with_coverage=true python_version=3
     - bash maintainer/cuda_build.sh
+  artifacts:
+    paths:
+    - build/
+    expire_in: 1 week
   tags:
     - docker
     - linux
