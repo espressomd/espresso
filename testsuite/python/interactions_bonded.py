@@ -85,7 +85,7 @@ class InteractionsBondedTest(ut.TestCase):
 
         # Check that bond breaks when distance > r_cut
         self.system.part[1].pos = self.system.part[1].pos + self.step
-        with self.assertRaisesRegexp(Exception, "Encoutered errors during integrate"):
+        with self.assertRaisesRegexp(Exception, "Encountered errors during integrate"):
             self.system.integrator.run(recalc_forces=True, steps=0)
 
     # Test Fene Bond
@@ -125,7 +125,7 @@ class InteractionsBondedTest(ut.TestCase):
 
         # Check that bond breaks when distance > r_cut
         self.system.part[1].pos = self.system.part[1].pos + self.step
-        with self.assertRaisesRegexp(Exception, "Encoutered errors during integrate"):
+        with self.assertRaisesRegexp(Exception, "Encountered errors during integrate"):
             self.system.integrator.run(recalc_forces=True, steps=0)
 
     @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),

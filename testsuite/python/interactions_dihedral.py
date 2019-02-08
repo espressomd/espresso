@@ -102,8 +102,6 @@ class InteractionsBondedTest(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
 
-    @ut.skipIf(not espressomd.has_features(["BOND_ANGLE"]),
-               "Features not available, skipping test!")
     # Analytical Expression
     def dihedral_angle(self, p1, p2, p3, p4):
         """
@@ -124,11 +122,9 @@ class InteractionsBondedTest(ut.TestCase):
         else:
             cosphi = np.abs(np.dot(v12Xv23, v23Xv34)) / (
                 l_v12Xv23 * l_v23Xv34)
-            f1 = (v23Xv34 - cosphi * v12Xv23) / l_v12Xv23
-            f4 = (v12Xv23 - cosphi * v23Xv34) / l_v23Xv34
             return np.arccos(cosphi)
 
-    # Test Dihedral Bond
+    # Test Dihedral Angle
     def test_dihedral(self):
         dh_k = 1
         dh_phase = np.pi / 6
