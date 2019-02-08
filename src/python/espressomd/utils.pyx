@@ -296,8 +296,7 @@ def get_unravelled_index(len_dims, n_dims, flattened_index):
     cdef int c_flattened_index = flattened_index
     cdef vector[int] unravelled_index_out
     unravelled_index_out.assign(n_dims, 0)
-    unravel_index(c_len_dims.data(), c_n_dims,
-                  c_flattened_index, unravelled_index_out.data())
+    unravelled_index_out = unravel_index(c_len_dims, c_flattened_index)
     out = np.empty(n_dims)
     for i in range(n_dims):
         out[i] = unravelled_index_out[i]

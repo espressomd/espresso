@@ -158,8 +158,8 @@ void Histogram<T, Dims>::update(std::vector<T> const &data,
       index.push_back(calculate_bin_index(data[dim], m_bin_sizes[dim],
                                           m_limits[dim].first));
     }
-    size_t flat_index =
-        m_n_dims_data * ::Utils::ravel_index<Dims>(index, m_n_bins);
+    auto const flat_index =
+        m_n_dims_data * ::Utils::ravel_index(index, m_n_bins);
     if (weights.size() != m_n_dims_data)
       throw std::invalid_argument("Wrong dimensions of given weights!");
     for (size_t ind = 0; ind < m_n_dims_data; ++ind) {
@@ -239,16 +239,16 @@ public:
 
 private:
   void do_normalize() override {
-    int unravelled_index[4];
+    std::vector<std::size_t> unravelled_index(4);
     int r_bin;
     double min_r, r_bin_size, phi_bin_size, z_bin_size, bin_volume;
     // Ugly vector cast due to "unravel_index" function.
     std::array<size_t, Dims> len_bins_u = get_n_bins();
-    std::vector<int> len_bins(len_bins_u.begin(), len_bins_u.end());
+    std::vector<std::size_t> len_bins(len_bins_u.begin(), len_bins_u.end());
     len_bins.push_back(m_n_dims_data);
     for (size_t ind = 0; ind < m_hist.size(); ind += m_n_dims_data) {
       // Get the unraveled indices and calculate the bin volume.
-      ::Utils::unravel_index(len_bins.data(), 4, ind, unravelled_index);
+      unravelled_index = ::Utils::unravel_index(len_bins, ind);
       r_bin = unravelled_index[0];
       min_r = get_limits()[0].first;
       r_bin_size = get_bin_sizes()[0];
