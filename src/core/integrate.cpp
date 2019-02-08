@@ -319,11 +319,17 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (integ_switch == INTEG_METHOD_NPT_ISO) {
       propagate_vel();
       propagate_pos();
+
+      /* Propagate time: t = t+dt */
+      sim_time += time_step;
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
       if (steepest_descent_step())
         break;
     } else {
       propagate_vel_pos();
+
+      /* Propagate time: t = t+dt */
+      sim_time += time_step;
     }
 
 #ifdef BOND_CONSTRAINT
@@ -413,9 +419,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      /* Propagate time: t = t+dt */
-      sim_time += time_step;
-
 #ifdef COLLISION_DETECTION
       handle_collisions();
 #endif

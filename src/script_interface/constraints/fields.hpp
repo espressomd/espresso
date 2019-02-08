@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "core/field_coupling/fields/AffineMap.hpp"
 #include "core/field_coupling/fields/Constant.hpp"
 #include "core/field_coupling/fields/Interpolated.hpp"
+#include "core/field_coupling/fields/PlaneWave.hpp"
 
 #include "ScriptInterface.hpp"
 
@@ -57,12 +58,12 @@ struct field_params_impl<Constant<T, codim>> {
 
 template <typename T, size_t codim>
 struct field_params_impl<AffineMap<T, codim>> {
-  using gradient_type = typename AffineMap<T, codim>::gradient_type;
+  using jacobian_type = typename AffineMap<T, codim>::jacobian_type;
   using value_type = typename AffineMap<T, codim>::value_type;
 
   static AffineMap<T, codim> make(const VariantMap &params) {
     return AffineMap<T, codim>{
-        get_value<gradient_type>(params, "A"),
+        get_value<jacobian_type>(params, "A"),
         get_value_or<value_type>(params, "b", value_type{})};
   }
 
@@ -70,6 +71,31 @@ struct field_params_impl<AffineMap<T, codim>> {
   static std::vector<AutoParameter> params(const This &this_) {
     return {{"A", AutoParameter::read_only, [this_]() { return this_().A(); }},
             {"b", AutoParameter::read_only, [this_]() { return this_().b(); }}};
+  }
+};
+
+template <typename T, size_t codim>
+struct field_params_impl<PlaneWave<T, codim>> {
+  using jacobian_type = typename PlaneWave<T, codim>::jacobian_type;
+  using value_type = typename PlaneWave<T, codim>::value_type;
+
+  static PlaneWave<T, codim> make(const VariantMap &params) {
+    return PlaneWave<T, codim>{get_value<value_type>(params, "amplitude"),
+                               get_value<value_type>(params, "wave_vector"),
+                               get_value<T>(params, "frequency"),
+                               get_value_or<T>(params, "phase", 0.)};
+  }
+
+  template <typename This>
+  static std::vector<AutoParameter> params(const This &this_) {
+    return {{"amplitude", AutoParameter::read_only,
+             [this_]() { return this_().amplitude(); }},
+            {"wave_vector", AutoParameter::read_only,
+             [this_]() { return this_().k(); }},
+            {"frequency", AutoParameter::read_only,
+             [this_]() { return this_().omega(); }},
+            {"phase", AutoParameter::read_only,
+             [this_]() { return this_().phase(); }}};
   }
 };
 
