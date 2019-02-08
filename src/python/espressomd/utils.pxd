@@ -55,10 +55,10 @@ cdef extern from "utils/Span.hpp" namespace "Utils":
     cppclass Span[T]:
         pass
 
-    Span[const int] make_const_span(int *, int)
+    Span[const int] make_const_span(int * , int)
 
 cdef extern from "utils/index.hpp" namespace "Utils":
-    cdef vector[U] unravel_index[T, U](const T &dimensions, U ravelled_index)
+    cdef vector[U] unravel_index[T, U](const T & dimensions, U ravelled_index)
 
 cdef int_list create_int_list_from_python_object(obj)
 cdef np.ndarray create_nparray_from_int_list(int_list * il)
