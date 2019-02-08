@@ -36,7 +36,6 @@
 #include "bonded_interactions/dihedral.hpp"
 #include "debug.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 /** Non-Bonded tabulated potentials:
  *  Reads tabulated parameters and force and energy tables from a file.
@@ -249,9 +248,9 @@ inline int tab_angle_energy(Particle const *p_mid, Particle const *p_left,
   vec2 *= d2i;
   /* calculate phi */
 #ifdef TABANGLEMINUS
-  auto phi = acos(-scalar(vec1, vec2));
+  auto phi = acos(vec1 * vec2);
 #else
-  auto phi = acos(scalar(vec1, vec2));
+  auto phi = acos(vec1 * vec2);
 #endif
 
   *_energy = tab_pot->energy(phi);

@@ -24,9 +24,32 @@
  *  Common code for functions calculating angle forces.
  */
 
+#include <tuple>
 #include "grid.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
+
+
+inline std::tuple<Vector3d, Vector3d, double, double, double>
+calc_vectors_and_cosine(Vector3d const &r_mid, Vector3d const &r_left,
+                        Vector3d const &r_right, bool fix_cosine=false) {
+  /* vector from p_left to p_mid */
+  auto vec1 = get_mi_vector(r_mid, r_left);
+  auto const d1i = 1.0 / vec1.norm();
+  vec1 *= d1i;
+  /* vector from p_mid to p_right */
+  auto vec2 = get_mi_vector(r_right, r_mid);
+  auto const d2i = 1.0 / vec2.norm();
+  vec2 *= d2i;
+  /* angle between vec1 and vec2 */
+  auto cosine = vec1 * vec2;
+  if (fix_cosine) {
+    if (cosine > TINY_COS_VALUE)
+      cosine = TINY_COS_VALUE;
+    if (cosine < -TINY_COS_VALUE)
+      cosine = -TINY_COS_VALUE;
+  }
+  return std::make_tuple(vec1, vec2, d1i, d2i, cosine);
+}
 
 /** Compute a three-body angle interaction force.
  *  @param[in]  p_mid        Second/middle particle.
@@ -40,16 +63,11 @@ template <typename ForceFactor>
 void calc_angle_generic_force(Particle const *p_mid, Particle const *p_left,
                               Particle const *p_right, ForceFactor forceFactor,
                               double force1[3], double force2[3]) {
-  /* vector from p_left to p_mid */
-  auto vec1 = get_mi_vector(p_mid->r.p, p_left->r.p);
-  auto d1i = 1.0 / vec1.norm();
-  vec1 *= d1i;
-  /* vector from p_mid to p_right */
-  auto vec2 = get_mi_vector(p_right->r.p, p_mid->r.p);
-  auto d2i = 1.0 / vec2.norm();
-  vec2 *= d2i;
-  /* scalar product of vec1 and vec2 */
-  auto cosine = scalar(vec1, vec2);
+  Vector3d vec1, vec2;
+  double d1i, d2i, cosine;
+  std::tie(vec1, vec2, d1i, d2i, cosine) = calc_vectors_and_cosine(p_mid->r.p,
+      p_left->r.p, p_right->r.p);
+
   /* force factor */
   auto fac = forceFactor(cosine);
   /* force calculation */
@@ -82,7 +100,7 @@ void calc_angle_generic_3body_forces(Particle const *p_mid,
   auto vec31_sqr = vec31.norm2();
   auto vec21_magn = sqrt(vec21_sqr);
   auto vec31_magn = sqrt(vec31_sqr);
-  auto cos_phi = scalar(vec21, vec31) / (vec21_magn * vec31_magn);
+  auto cos_phi = (vec21 * vec31) / (vec21_magn * vec31_magn);
   auto sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
   /* force factor */
   auto fac = forceFactor(cos_phi, sin_phi);

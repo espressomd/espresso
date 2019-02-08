@@ -28,9 +28,9 @@
 
 #include "bonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef BOND_ANGLE
+#include <tuple>
 #include "angle_common.hpp"
 #include "grid.hpp"
 
@@ -119,27 +119,12 @@ inline int angle_harmonic_energy(Particle const *p_mid, Particle const *p_left,
                                  Particle const *p_right,
                                  Bonded_ia_parameters const *iaparams,
                                  double *_energy) {
-  /* vector from p_left to p_mid */
-  auto vec1 = get_mi_vector(p_mid->r.p, p_left->r.p);
-  double d1i = 1.0 / vec1.norm();
-  vec1 *= d1i;
-  /* vector from p_mid to p_right */
-  auto vec2 = get_mi_vector(p_right->r.p, p_mid->r.p);
-  double d2i = 1.0 / vec2.norm();
-  vec2 *= d2i;
-  /* scalar product of vec1 and vec2 */
-  double cosine = scalar(vec1, vec2);
-  if (cosine > TINY_COS_VALUE)
-    cosine = TINY_COS_VALUE;
-  if (cosine < -TINY_COS_VALUE)
-    cosine = -TINY_COS_VALUE;
+  auto const vectors = calc_vectors_and_cosine(p_mid->r.p, p_left->r.p,
+                                               p_right->r.p, true);
+  auto const cosine = std::get<4>(vectors);
   /* bond angle energy */
-  {
-    double phi;
-    phi = acos(-cosine);
-    *_energy = 0.5 * iaparams->p.angle_harmonic.bend *
-               Utils::sqr(phi - iaparams->p.angle_harmonic.phi0);
-  }
+  *_energy = 0.5 * iaparams->p.angle_harmonic.bend *
+             Utils::sqr(acos(-cosine) - iaparams->p.angle_harmonic.phi0);
   return 0;
 }
 
