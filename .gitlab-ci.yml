@@ -170,10 +170,6 @@ cuda-maxset:
   script:
     - export myconfig=maxset with_coverage=true python_version=3
     - bash maintainer/cuda_build.sh
-  artifacts:
-    paths:
-    - build/
-    expire_in: 1 week
   tags:
     - docker
     - linux
@@ -327,18 +323,31 @@ check_sphinx:
   - cuda8-maxset
   when: on_success
   script:
-    - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
+    - cd ${CI_PROJECT_DIR}/build
+    - make sphinx
+  tags:
+    - docker
+    - linux
+    - cuda
+
+check_doxygen:
+  stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
+  dependencies:
+  - cuda8-maxset
+  when: on_success
+  script:
+    - cd ${CI_PROJECT_DIR}/build
+    - make doxygen
   tags:
     - docker
     - linux
     - cuda
 
 check_with_odd_no_of_processors:
-  stage: additional_checks
+  stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
-  dependencies:
-  - cuda-maxset
   script:
     - export myconfig=maxset with_coverage=true python_version=3 build_procs=3 check_procs=3 check_odd_only=true
     - bash maintainer/cuda_build.sh

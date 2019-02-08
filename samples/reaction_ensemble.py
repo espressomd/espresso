@@ -83,3 +83,6 @@ for i in range(10000):
     if(i % 100 == 0):
         print("HA", system.number_of_particles(type=0), "A-",
               system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
+
+print("reaction 0 has acceptance rate: ", RE.get_acceptance_rate_reaction(0))
+print("reaction 1 has acceptance rate: ", RE.get_acceptance_rate_reaction(1))
