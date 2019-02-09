@@ -30,9 +30,9 @@
 #include "particle_data.hpp"
 
 #ifdef BOND_ANGLE
-#include <tuple>
 #include "angle_common.hpp"
 #include "grid.hpp"
+#include <tuple>
 
 /** set parameters for the angle potential.
  *
@@ -58,19 +58,16 @@ inline int calc_angle_cosine_force(Particle const *p_mid,
                                    Bonded_ia_parameters const *iaparams,
                                    double force1[3], double force2[3]) {
 
-  auto forceFactor = [&iaparams](double &cosine) {
+  auto forceFactor = [&iaparams](double cosine) {
     auto fac = iaparams->p.angle_cosine.bend;
-    if (cosine > TINY_COS_VALUE)
-      cosine = TINY_COS_VALUE;
-    if (cosine < -TINY_COS_VALUE)
-      cosine = -TINY_COS_VALUE;
     fac *= iaparams->p.angle_cosine.sin_phi0 *
                (cosine / sqrt(1 - Utils::sqr(cosine))) +
            iaparams->p.angle_cosine.cos_phi0;
     return fac;
   };
 
-  calc_angle_generic_force(p_mid, p_left, p_right, forceFactor, force1, force2);
+  calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor,
+                           force1, force2, true);
 
   return 0;
 }
@@ -100,8 +97,8 @@ inline void calc_angle_cosine_3body_forces(Particle const *p_mid,
     return fac;
   };
 
-  calc_angle_generic_3body_forces(p_mid, p_left, p_right, forceFactor, force1,
-                                  force2, force3);
+  std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
+      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor);
 }
 
 /** Computes the three-body angle interaction energy.
@@ -116,8 +113,8 @@ inline int angle_cosine_energy(Particle const *p_mid, Particle const *p_left,
                                Particle const *p_right,
                                Bonded_ia_parameters const *iaparams,
                                double *_energy) {
-  auto const vectors = calc_vectors_and_cosine(p_mid->r.p, p_left->r.p,
-                                               p_right->r.p, true);
+  auto const vectors =
+      calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
   auto const cosine = std::get<4>(vectors);
   /* bond angle energy */
   *_energy =

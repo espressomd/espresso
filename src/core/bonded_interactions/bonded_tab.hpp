@@ -36,6 +36,7 @@
 #include "bonded_interactions/dihedral.hpp"
 #include "debug.hpp"
 #include "particle_data.hpp"
+#include <tuple>
 
 /** Non-Bonded tabulated potentials:
  *  Reads tabulated parameters and force and energy tables from a file.
@@ -138,7 +139,7 @@ inline int tab_bond_energy(Particle const *p1, Particle const *p2,
                            Bonded_ia_parameters const *iaparams,
                            double const dx[3], double *_energy) {
   auto const *tab_pot = iaparams->p.tab.pot;
-  double dist = sqrt(sqrlen(dx));
+  auto const dist = sqrt(sqrlen(dx));
 
   if (dist < tab_pot->cutoff()) {
     *_energy = tab_pot->energy(dist);
@@ -171,24 +172,24 @@ inline int calc_tab_angle_force(Particle const *p_mid, Particle const *p_left,
                                 Bonded_ia_parameters const *iaparams,
                                 double force1[3], double force2[3]) {
 
-  auto forceFactor = [&iaparams](double &cosine) {
-    double phi;
+  auto forceFactor = [&iaparams](double cosine) {
 #ifdef TABANGLEMINUS
-    phi = acos(-cosine);
+    double const phi = acos(-cosine);
 #else
-    phi = acos(cosine);
+    double const phi = acos(cosine);
 #endif
-    double invsinphi = sin(phi);
-    if (invsinphi < TINY_SIN_VALUE)
-      invsinphi = TINY_SIN_VALUE;
-    invsinphi = 1.0 / invsinphi;
+    double sinphi = sin(phi);
+    if (sinphi < TINY_SIN_VALUE)
+      sinphi = TINY_SIN_VALUE;
+    auto const invsinphi = 1.0 / sinphi;
     /* look up force factor */
     auto const *tab_pot = iaparams->p.tab.pot;
-    auto fac = tab_pot->force(phi) * invsinphi;
+    auto const fac = tab_pot->force(phi) * invsinphi;
     return fac;
   };
 
-  calc_angle_generic_force(p_mid, p_left, p_right, forceFactor, force1, force2);
+  calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor,
+                           force1, force2, false);
 
   return 0;
 }
@@ -200,25 +201,25 @@ inline void calc_angle_3body_tabulated_forces(
     Bonded_ia_parameters const *iaparams, Vector3d &force1, Vector3d &force2,
     Vector3d &force3) {
 
-  auto forceFactor = [&iaparams](double &cos_phi, double &sin_phi) {
+  auto forceFactor = [&iaparams](double &cos_phi, double sin_phi) {
     if (cos_phi < -1.0)
       cos_phi = -TINY_COS_VALUE;
     if (cos_phi > 1.0)
       cos_phi = TINY_COS_VALUE;
 #ifdef TABANGLEMINUS
-    auto phi = acos(-cos_phi);
+    auto const phi = acos(-cos_phi);
 #else
-    auto phi = acos(cos_phi);
+    auto const phi = acos(cos_phi);
 #endif
     auto const *tab_pot = iaparams->p.tab.pot;
-    auto dU = tab_pot->force(phi); // d/dphi of U(phi)
+    auto const dU = tab_pot->force(phi); // d/dphi of U(phi)
     // potential dependent term (dU/dphi * 1 / sin(phi))
-    auto pot_dep = dU / sin_phi;
+    auto const pot_dep = dU / sin_phi;
     return pot_dep;
   };
 
-  calc_angle_generic_3body_forces(p_mid, p_left, p_right, forceFactor, force1,
-                                  force2, force3);
+  std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
+      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor);
 }
 
 /** Compute the three-body angle interaction energy.
@@ -240,17 +241,17 @@ inline int tab_angle_energy(Particle const *p_mid, Particle const *p_left,
   auto const *tab_pot = iaparams->p.tab.pot;
   /* vector from p_left to p_mid */
   auto vec1 = get_mi_vector(p_mid->r.p, p_left->r.p);
-  double d1i = 1.0 / vec1.norm();
+  auto const d1i = 1.0 / vec1.norm();
   vec1 *= d1i;
   /* vector from p_mid to p_right */
   auto vec2 = get_mi_vector(p_right->r.p, p_mid->r.p);
-  double d2i = 1.0 / vec2.norm();
+  auto const d2i = 1.0 / vec2.norm();
   vec2 *= d2i;
   /* calculate phi */
 #ifdef TABANGLEMINUS
-  auto phi = acos(vec1 * vec2);
+  auto const phi = acos(-(vec1 * vec2));
 #else
-  auto phi = acos(vec1 * vec2);
+  auto const phi = acos(vec1 * vec2);
 #endif
 
   *_energy = tab_pot->energy(phi);
