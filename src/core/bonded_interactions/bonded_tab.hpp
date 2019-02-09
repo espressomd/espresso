@@ -238,23 +238,17 @@ inline int tab_angle_energy(Particle const *p_mid, Particle const *p_left,
                             Particle const *p_right,
                             Bonded_ia_parameters const *iaparams,
                             double *_energy) {
-  auto const *tab_pot = iaparams->p.tab.pot;
-  /* vector from p_left to p_mid */
-  auto vec1 = get_mi_vector(p_mid->r.p, p_left->r.p);
-  auto const d1i = 1.0 / vec1.norm();
-  vec1 *= d1i;
-  /* vector from p_mid to p_right */
-  auto vec2 = get_mi_vector(p_right->r.p, p_mid->r.p);
-  auto const d2i = 1.0 / vec2.norm();
-  vec2 *= d2i;
+  auto const vectors =
+      calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, false);
+  auto const cosine = std::get<4>(vectors);
   /* calculate phi */
 #ifdef TABANGLEMINUS
-  auto const phi = acos(-(vec1 * vec2));
+  auto const phi = acos(-cosine);
 #else
-  auto const phi = acos(vec1 * vec2);
+  auto const phi = acos(cosine);
 #endif
 
-  *_energy = tab_pot->energy(phi);
+  *_energy = iaparams->p.tab.pot->energy(phi);
 
   return 0;
 }

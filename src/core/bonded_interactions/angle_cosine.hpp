@@ -81,19 +81,19 @@ inline void calc_angle_cosine_3body_forces(Particle const *p_mid,
                                            Vector3d &force1, Vector3d &force2,
                                            Vector3d &force3) {
 
-  auto forceFactor = [&iaparams](double &cos_phi, double &sin_phi) {
+  auto forceFactor = [&iaparams](double cos_phi, double sin_phi) {
     /* uncomment this block if interested in the angle
     if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
     if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
     phi = acos(cos_phi);
     */
-    auto K = iaparams->p.angle_cosine.bend;
-    auto sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
-    auto cos_phi0 = iaparams->p.angle_cosine.cos_phi0;
+    auto const K = iaparams->p.angle_cosine.bend;
+    auto const sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
+    auto const cos_phi0 = iaparams->p.angle_cosine.cos_phi0;
     // potential dependent term [dU/dphi = K * sin(phi - phi0)]
     // trig identity: sin(a - b) = sin(a)cos(b) - cos(a)sin(b)
-    auto pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi0);
-    auto fac = pot_dep / sin_phi;
+    auto const pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi0);
+    auto const fac = pot_dep / sin_phi;
     return fac;
   };
 
