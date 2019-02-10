@@ -62,6 +62,8 @@
 #include "immersed_boundaries.hpp"
 #include "npt.hpp"
 
+#include <profiler/profiler.hpp>
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
