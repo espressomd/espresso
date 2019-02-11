@@ -80,9 +80,7 @@ endfunction(UNIT_TEST)
 add_subdirectory(core)
 add_subdirectory(config)
 
-if(WITH_PROFILER)
 add_subdirectory(profiler)
-endif()
 
 if(SCAFACOS)
   add_subdirectory(scafacos)

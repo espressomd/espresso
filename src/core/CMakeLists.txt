@@ -181,10 +181,7 @@ endif()
 
 target_link_libraries(EspressoCore PUBLIC EspressoConfig)
 target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX)
-
-if(WITH_PROFILER)
-  target_link_libraries(EspressoCore PRIVATE Profiler)
-endif()
+target_link_libraries(EspressoCore PRIVATE Profiler)
 
 if(FFTW3_FOUND)
   target_include_directories(EspressoCore PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})
