@@ -31,15 +31,15 @@ struct LB_Particle_Coupling {
    * @brief Friction constant for the particle coupling.
    */
   double friction = 0.0;
-private:
-    friend class boost::serialization::access;
 
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version)
-    {
-        ar & rng_counter_coupling;
-        ar & friction;
-    }
+private:
+  friend class boost::serialization::access;
+
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &rng_counter_coupling;
+    ar &friction;
+  }
 };
 
 extern LB_Particle_Coupling lb_particle_coupling;
