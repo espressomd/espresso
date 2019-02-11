@@ -189,7 +189,7 @@ inline int calc_tab_angle_force(Particle const *p_mid, Particle const *p_left,
   };
 
   calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor,
-                           force1, force2, false);
+                           force1, force2, true);
 
   return 0;
 }
@@ -201,11 +201,7 @@ inline void calc_angle_3body_tabulated_forces(
     Bonded_ia_parameters const *iaparams, Vector3d &force1, Vector3d &force2,
     Vector3d &force3) {
 
-  auto forceFactor = [&iaparams](double &cos_phi, double sin_phi) {
-    if (cos_phi < -1.0)
-      cos_phi = -TINY_COS_VALUE;
-    if (cos_phi > 1.0)
-      cos_phi = TINY_COS_VALUE;
+  auto forceFactor = [&iaparams](double cos_phi, double sin_phi) {
 #ifdef TABANGLEMINUS
     auto const phi = acos(-cos_phi);
 #else
@@ -219,7 +215,7 @@ inline void calc_angle_3body_tabulated_forces(
   };
 
   std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
-      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor);
+      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor, true);
 }
 
 /** Compute the three-body angle interaction energy.
@@ -239,7 +235,7 @@ inline int tab_angle_energy(Particle const *p_mid, Particle const *p_left,
                             Bonded_ia_parameters const *iaparams,
                             double *_energy) {
   auto const vectors =
-      calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, false);
+      calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
   auto const cosine = std::get<4>(vectors);
   /* calculate phi */
 #ifdef TABANGLEMINUS

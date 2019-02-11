@@ -82,11 +82,6 @@ inline void calc_angle_cosine_3body_forces(Particle const *p_mid,
                                            Vector3d &force3) {
 
   auto forceFactor = [&iaparams](double cos_phi, double sin_phi) {
-    /* uncomment this block if interested in the angle
-    if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
-    if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
-    phi = acos(cos_phi);
-    */
     auto const K = iaparams->p.angle_cosine.bend;
     auto const sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
     auto const cos_phi0 = iaparams->p.angle_cosine.cos_phi0;
@@ -98,7 +93,7 @@ inline void calc_angle_cosine_3body_forces(Particle const *p_mid,
   };
 
   std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
-      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor);
+      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor, false);
 }
 
 /** Computes the three-body angle interaction energy.

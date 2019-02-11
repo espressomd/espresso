@@ -62,7 +62,7 @@ template <typename ForceFactor>
 void calc_angle_generic_force(Vector3d const &r_mid, Vector3d const &r_left,
                               Vector3d const &r_right, ForceFactor forceFactor,
                               double force1[3], double force2[3],
-                              bool sanitize_cosine = false) {
+                              bool sanitize_cosine) {
   Vector3d vec1, vec2;
   double d1i, d2i, cosine;
   std::tie(vec1, vec2, d1i, d2i, cosine) =
@@ -83,13 +83,15 @@ void calc_angle_generic_force(Vector3d const &r_mid, Vector3d const &r_left,
  *  @param[in]  r_left       Position of first/left particle.
  *  @param[in]  r_right      Position of third/right particle.
  *  @param[in]  forceFactor  Angle bending constant.
+ *  @param[in]  sanitize_cosine  Sanitize the cosine of the angle.
  *  @return Forces on particles 1, 2 and 3.
  */
 template <typename ForceFactor>
 std::tuple<Vector3d, Vector3d, Vector3d>
 calc_angle_generic_3body_forces(Vector3d const &r_mid, Vector3d const &r_left,
                                 Vector3d const &r_right,
-                                ForceFactor forceFactor) {
+                                ForceFactor forceFactor,
+                                bool sanitize_cosine) {
   auto const vec21 = get_mi_vector(r_left, r_mid);
   auto const vec31 = get_mi_vector(r_right, r_mid);
   auto const vec21_sqr = vec21.norm2();
@@ -97,6 +99,12 @@ calc_angle_generic_3body_forces(Vector3d const &r_mid, Vector3d const &r_left,
   auto const vec21_len = sqrt(vec21_sqr);
   auto const vec31_len = sqrt(vec31_sqr);
   auto cos_phi = (vec21 * vec31) / (vec21_len * vec31_len);
+  if (sanitize_cosine) {
+    if (cos_phi > TINY_COS_VALUE)
+      cos_phi = TINY_COS_VALUE;
+    if (cos_phi < -TINY_COS_VALUE)
+      cos_phi = -TINY_COS_VALUE;
+  }
   auto sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
   /* force factor */
   auto const fac = forceFactor(cos_phi, sin_phi);

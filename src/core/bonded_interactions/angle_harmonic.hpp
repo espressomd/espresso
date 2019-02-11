@@ -81,16 +81,7 @@ inline void calc_angle_harmonic_3body_forces(
     Bonded_ia_parameters const *iaparams, Vector3d &force1, Vector3d &force2,
     Vector3d &force3) {
 
-  auto forceFactor = [&iaparams](double &cos_phi, double sin_phi) {
-    /* uncomment this block if interested in the angle
-    if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
-    if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
-    phi = acos(cos_phi);
-    */
-    if (cos_phi < -1.0)
-      cos_phi = -TINY_COS_VALUE;
-    if (cos_phi > 1.0)
-      cos_phi = TINY_COS_VALUE;
+  auto forceFactor = [&iaparams](double cos_phi, double sin_phi) {
     auto const phi = acos(cos_phi);
     auto const K = iaparams->p.angle_harmonic.bend;
     auto const phi0 = iaparams->p.angle_harmonic.phi0;
@@ -101,7 +92,7 @@ inline void calc_angle_harmonic_3body_forces(
   };
 
   std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
-      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor);
+      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor, true);
 }
 
 /** Computes the three-body angle interaction energy.
