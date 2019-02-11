@@ -83,10 +83,9 @@ auto pair_potential(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
   return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
 }
 
-double
-mdds_calculations(int force_flag, int energy_flag,
-                  const ParticleRange &particles,
-                  const boost::mpi::communicator &comm) {
+double mdds_calculations(int force_flag, int energy_flag,
+                         const ParticleRange &particles,
+                         const boost::mpi::communicator &comm) {
   std::vector<Vector3d> local_momenta;
   local_momenta.reserve(particles.size());
 
@@ -110,7 +109,8 @@ mdds_calculations(int force_flag, int energy_flag,
   if (comm.size() > 1) {
     std::vector<int> sizes(comm.size());
 
-    boost::mpi::all_gather(comm, static_cast<int>(local_interacting_particles.size()), sizes);
+    boost::mpi::all_gather(
+        comm, static_cast<int>(local_interacting_particles.size()), sizes);
 
     offset = std::accumulate(sizes.begin(), sizes.begin() + comm.rank(), 0);
     auto const total_size =
@@ -119,9 +119,11 @@ mdds_calculations(int force_flag, int energy_flag,
     all_positions.resize(total_size);
     all_momenta.resize(total_size);
 
-    Utils::Mpi::all_gatherv(comm, local_positions.data(), local_positions.size(), all_positions.data(),
+    Utils::Mpi::all_gatherv(comm, local_positions.data(),
+                            local_positions.size(), all_positions.data(),
                             sizes.data());
-    Utils::Mpi::all_gatherv(comm, local_momenta.data(), local_momenta.size(), all_momenta.data(), sizes.data());
+    Utils::Mpi::all_gatherv(comm, local_momenta.data(), local_momenta.size(),
+                            all_momenta.data(), sizes.data());
   } else {
     std::swap(all_positions, local_positions);
     std::swap(all_momenta, local_momenta);
@@ -130,9 +132,9 @@ mdds_calculations(int force_flag, int energy_flag,
 
   /* Number of image boxes considered */
   const Vector3i ncut =
-      mdds_n_replicas *
-      Vector3i{static_cast<int>(PERIODIC(0)), static_cast<int>(PERIODIC(1)),
-               static_cast<int>(PERIODIC(2))};
+      mdds_n_replicas * Vector3i{static_cast<int>(PERIODIC(0)),
+                                 static_cast<int>(PERIODIC(1)),
+                                 static_cast<int>(PERIODIC(2))};
   auto const ncut2 = ncut.norm2();
 
   double u = 0;
@@ -145,8 +147,8 @@ mdds_calculations(int force_flag, int energy_flag,
        * no replicas.
        */
       auto const d = (ncut2 == 0)
-                     ? get_mi_vector(all_positions[i], all_positions[j])
-                     : (all_positions[i] - all_positions[j]);
+                         ? get_mi_vector(all_positions[i], all_positions[j])
+                         : (all_positions[i] - all_positions[j]);
 
       for (int nx = -ncut[0]; nx <= ncut[0]; nx++) {
         auto const rnx = d[0] + nx * box_l[0];
@@ -157,22 +159,25 @@ mdds_calculations(int force_flag, int energy_flag,
               if (nx * nx + ny * ny + nz * nz <= ncut2) {
                 auto const rnz = d[2] + nz * box_l[2];
                 if (energy_flag) {
-                  u += pair_potential({rnx, rny, rnz}, all_momenta[i], all_momenta[j]);
+                  u += pair_potential({rnx, rny, rnz}, all_momenta[i],
+                                      all_momenta[j]);
                 }
 
                 if (force_flag) {
-                  fi += pair_force({rnx, rny, rnz}, all_momenta[i], all_momenta[j]);
+                  fi += pair_force({rnx, rny, rnz}, all_momenta[i],
+                                   all_momenta[j]);
                 }
               }
             }
-          }   /* of  for nz */
-        }     /* of  for ny  */
-      }       /* of  for nx  */
+          } /* of  for nz */
+        }   /* of  for ny  */
+      }     /* of  for nx  */
     }
     if (force_flag) {
       local_interacting_particles[i - offset]->f.f += coulomb.Dprefactor * fi.f;
 #ifdef ROTATION
-      local_interacting_particles[i - offset]->f.torque += coulomb.Dprefactor * fi.torque;
+      local_interacting_particles[i - offset]->f.torque +=
+          coulomb.Dprefactor * fi.torque;
 #endif
     }
   } /* of  j and i  */
@@ -181,21 +186,19 @@ mdds_calculations(int force_flag, int energy_flag,
 } // namespace
 
 void mdds_forces(const ParticleRange &particles,
-                        const boost::mpi::communicator &comm) {
+                 const boost::mpi::communicator &comm) {
   mdds_calculations(1, 0, particles, comm);
 }
 
 double mdds_energy(const ParticleRange &particles,
-                          const boost::mpi::communicator &comm) {
+                   const boost::mpi::communicator &comm) {
   return mdds_calculations(0, 1, particles, comm);
 }
-
 
 void mdds_set_params(int n_cut) {
   mdds_n_replicas = n_cut;
 
-  if ((PERIODIC(0) || PERIODIC(1) || PERIODIC(2)) &&
-      mdds_n_replicas == 0) {
+  if ((PERIODIC(0) || PERIODIC(1) || PERIODIC(2)) && mdds_n_replicas == 0) {
     fprintf(stderr, "Careful:  the number of extra replicas to take into "
                     "account during the direct sum calculation is zero \n");
   }

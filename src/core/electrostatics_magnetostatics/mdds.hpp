@@ -48,7 +48,7 @@
 void mdds_forces(const ParticleRange &particles,
                  const boost::mpi::communicator &comm);
 double mdds_energy(const ParticleRange &particles,
-                        const boost::mpi::communicator &comm);
+                   const boost::mpi::communicator &comm);
 /**
  * @brief switch on direct sum magnetostatics.
  *
