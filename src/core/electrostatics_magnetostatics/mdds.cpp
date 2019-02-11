@@ -82,100 +82,114 @@ auto pair_potential(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
   // Energy ............................
   return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
 }
-} // namespace
+
 double
 mdds_calculations(int force_flag, int energy_flag,
                   const ParticleRange &particles,
                   const boost::mpi::communicator &comm) {
-  std::vector<Vector3d> m;
-  m.reserve(particles.size());
+  std::vector<Vector3d> local_momenta;
+  local_momenta.reserve(particles.size());
 
-  std::vector<Vector3d> pos;
-  pos.reserve(particles.size());
+  std::vector<Vector3d> local_positions;
+  local_positions.reserve(particles.size());
 
-  std::vector<Particle *> parts;
-  parts.reserve(particles.size());
+  std::vector<Particle *> local_interacting_particles;
+  local_interacting_particles.reserve(particles.size());
 
   for (auto &p : particles) {
     if (p.p.dipm != 0.0) {
-      parts.emplace_back(&p);
-      m.emplace_back(p.calc_dip());
-      pos.emplace_back(folded_position(p.r.p));
+      local_interacting_particles.emplace_back(&p);
+      local_momenta.emplace_back(p.calc_dip());
+      local_positions.emplace_back(folded_position(p.r.p));
     }
   }
 
-  std::vector<Vector3d> gpos;
-  std::vector<Vector3d> gm;
+  std::vector<Vector3d> all_positions;
+  std::vector<Vector3d> all_momenta;
   int offset;
   if (comm.size() > 1) {
     std::vector<int> sizes(comm.size());
 
-    boost::mpi::all_gather(comm, static_cast<int>(parts.size()), sizes);
+    boost::mpi::all_gather(comm, static_cast<int>(local_interacting_particles.size()), sizes);
 
     offset = std::accumulate(sizes.begin(), sizes.begin() + comm.rank(), 0);
     auto const total_size =
         std::accumulate(sizes.begin() + comm.rank(), sizes.end(), offset);
 
-    gpos.resize(total_size);
-    gm.resize(total_size);
+    all_positions.resize(total_size);
+    all_momenta.resize(total_size);
 
-    Utils::Mpi::all_gatherv(comm, pos.data(), pos.size(), gpos.data(),
+    Utils::Mpi::all_gatherv(comm, local_positions.data(), local_positions.size(), all_positions.data(),
                             sizes.data());
-    Utils::Mpi::all_gatherv(comm, m.data(), m.size(), gm.data(), sizes.data());
+    Utils::Mpi::all_gatherv(comm, local_momenta.data(), local_momenta.size(), all_momenta.data(), sizes.data());
   } else {
-    std::swap(gpos, pos);
-    std::swap(gm, m);
+    std::swap(all_positions, local_positions);
+    std::swap(all_momenta, local_momenta);
     offset = 0;
   }
 
-  /*now we do the calculations */
+  /* Number of image boxes considered */
   const Vector3i ncut =
       mdds_n_replicas *
       Vector3i{static_cast<int>(PERIODIC(0)), static_cast<int>(PERIODIC(1)),
                static_cast<int>(PERIODIC(2))};
   auto const ncut2 = ncut.norm2();
+
   double u = 0;
-  for (int i = offset; i < (parts.size() + offset); i++) {
+  for (int i = offset; i < (local_interacting_particles.size() + offset); i++) {
     ParticleForce fi{};
 
-    for (int j = 0; j < gpos.size(); j++) {
-      auto const d = get_mi_vector(gpos[i], gpos[j]);
-      auto const rx = d[0];
-      auto const ry = d[1];
-      auto const rz = d[2];
+    for (int j = 0; j < all_positions.size(); j++) {
+      /*
+       * Minimum image convention has to be only considered when using
+       * no replicas.
+       */
+      auto const d = (ncut2 == 0)
+                     ? get_mi_vector(all_positions[i], all_positions[j])
+                     : (all_positions[i] - all_positions[j]);
 
       for (int nx = -ncut[0]; nx <= ncut[0]; nx++) {
-        auto const rnx = rx + nx * box_l[0];
+        auto const rnx = d[0] + nx * box_l[0];
         for (int ny = -ncut[1]; ny <= ncut[1]; ny++) {
-          auto const rny = ry + ny * box_l[1];
+          auto const rny = d[1] + ny * box_l[1];
           for (int nz = -ncut[2]; nz <= ncut[2]; nz++) {
             if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
               if (nx * nx + ny * ny + nz * nz <= ncut2) {
-                auto const rnz = rz + nz * box_l[2];
+                auto const rnz = d[2] + nz * box_l[2];
                 if (energy_flag) {
-                  u += pair_potential({rnx, rny, rnz}, gm[i], gm[j]);
+                  u += pair_potential({rnx, rny, rnz}, all_momenta[i], all_momenta[j]);
                 }
 
                 if (force_flag) {
-                  // force ............................
-                  fi += pair_force({rnx, rny, rnz}, gm[i], gm[j]);
-                } /* of force_flag  */
+                  fi += pair_force({rnx, rny, rnz}, all_momenta[i], all_momenta[j]);
+                }
               }
-            } /* of nx*nx+ny*ny +nz*nz< NCUT*NCUT   and   !(i==j && nx==0 &&
-         ny==0 && nz==0) */
+            }
           }   /* of  for nz */
         }     /* of  for ny  */
       }       /* of  for nx  */
     }
     if (force_flag) {
-      parts[i - offset]->f.f += coulomb.Dprefactor * fi.f;
+      local_interacting_particles[i - offset]->f.f += coulomb.Dprefactor * fi.f;
 #ifdef ROTATION
-      parts[i - offset]->f.torque += coulomb.Dprefactor * fi.torque;
+      local_interacting_particles[i - offset]->f.torque += coulomb.Dprefactor * fi.torque;
 #endif
     }
   } /* of  j and i  */
   return 0.5 * coulomb.Dprefactor * u;
 }
+} // namespace
+
+void mdds_forces(const ParticleRange &particles,
+                        const boost::mpi::communicator &comm) {
+  mdds_calculations(1, 0, particles, comm);
+}
+
+double mdds_energy(const ParticleRange &particles,
+                          const boost::mpi::communicator &comm) {
+  return mdds_calculations(0, 1, particles, comm);
+}
+
 
 void mdds_set_params(int n_cut) {
   mdds_n_replicas = n_cut;

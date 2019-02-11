@@ -45,21 +45,10 @@
 
 /* Core of the method: here you compute all the magnetic forces,torques and the
  * energy for the whole system using direct sum*/
-double
-mdds_calculations(int force_flag, int energy_flag,
-                  const ParticleRange &particles,
-                  const boost::mpi::communicator &comm);
-
-inline void mdds_forces(const ParticleRange &particles,
-                 const boost::mpi::communicator &comm) {
-    mdds_calculations(1, 0, particles, comm);
-}
-
-inline double mdds_energy(const ParticleRange &particles,
-                        const boost::mpi::communicator &comm) {
-    return mdds_calculations(0, 1, particles, comm);
-}
-
+void mdds_forces(const ParticleRange &particles,
+                 const boost::mpi::communicator &comm);
+double mdds_energy(const ParticleRange &particles,
+                        const boost::mpi::communicator &comm);
 /**
  * @brief switch on direct sum magnetostatics.
  *
