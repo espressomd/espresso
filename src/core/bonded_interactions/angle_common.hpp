@@ -90,8 +90,7 @@ template <typename ForceFactor>
 std::tuple<Vector3d, Vector3d, Vector3d>
 calc_angle_generic_3body_forces(Vector3d const &r_mid, Vector3d const &r_left,
                                 Vector3d const &r_right,
-                                ForceFactor forceFactor,
-                                bool sanitize_cosine) {
+                                ForceFactor forceFactor, bool sanitize_cosine) {
   auto const vec21 = get_mi_vector(r_left, r_mid);
   auto const vec31 = get_mi_vector(r_right, r_mid);
   auto const vec21_sqr = vec21.norm2();
