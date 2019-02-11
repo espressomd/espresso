@@ -393,7 +393,6 @@ std::vector<int> mpi_resort_particles(int global_flag);
 /*@{*/
 #define P3M_COUNT_CHARGES 0
 #define CHECK_PARTICLES 2
-#define MAGGS_COUNT_CHARGES 3
 #define P3M_COUNT_DIPOLES 5
 /*@}*/
 

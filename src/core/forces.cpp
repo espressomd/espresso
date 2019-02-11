@@ -30,7 +30,6 @@
 #include "comfixed_global.hpp"
 #include "constraints.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
@@ -245,9 +244,6 @@ void calc_long_range_forces() {
       p3m_calc_kspace_forces(1, 0);
     break;
 #endif
-  case COULOMB_MAGGS:
-    maggs_calc_forces();
-    break;
   case COULOMB_MMM2D:
     MMM2D_add_far_force();
     MMM2D_dielectric_layers_force_contribution();

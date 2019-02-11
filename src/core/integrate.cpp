@@ -33,7 +33,6 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "ghosts.hpp"
@@ -343,12 +342,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
-
     /* Integration Step: Step 3 of Velocity Verlet scheme:
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
        v(t+0.5*dt) ) */
@@ -426,12 +419,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
       virtual_sites()->after_lb_propagation();
 #endif
     }
-
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
 
 #ifdef NPT
     if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO))

@@ -81,7 +81,6 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/debye_hueckel.cpp
   electrostatics_magnetostatics/elc.cpp
   electrostatics_magnetostatics/icc.cpp
-  electrostatics_magnetostatics/maggs.cpp
   electrostatics_magnetostatics/magnetic_non_p3m_methods.cpp
   electrostatics_magnetostatics/mdlc_correction.cpp
   electrostatics_magnetostatics/mmm1d.cpp
@@ -202,4 +201,3 @@ endif(WITH_UNIT_TESTS)
 add_subdirectory(grid_based_algorithms)
 add_subdirectory(shapes)
 add_subdirectory(cluster_analysis)
-add_subdirectory(electrostatics_magnetostatics)

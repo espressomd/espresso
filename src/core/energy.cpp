@@ -25,7 +25,6 @@
 #include "EspressoSystemInterface.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
@@ -214,10 +213,6 @@ void calc_long_range_energies() {
   case COULOMB_MMM2D:
     *energy.coulomb += MMM2D_far_energy();
     *energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
-    break;
-  /* calculate electric part of energy (only for MAGGS) */
-  case COULOMB_MAGGS:
-    *energy.coulomb += maggs_electric_energy();
     break;
   default:
     break;

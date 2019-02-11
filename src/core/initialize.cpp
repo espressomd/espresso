@@ -34,7 +34,6 @@
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/icc.hpp" /* -iccp3m- */
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
@@ -246,9 +245,6 @@ void on_observable_calc() {
       p3m_count_charged_particles();
       break;
 #endif
-    case COULOMB_MAGGS:
-      maggs_init();
-      break;
     default:
       break;
     }
@@ -331,11 +327,6 @@ void on_coulomb_change() {
     break;
   case COULOMB_MMM2D:
     MMM2D_init();
-    break;
-  case COULOMB_MAGGS:
-    maggs_init();
-    /* Maggs electrostatics needs ghost velocities */
-    on_ghost_flags_change();
     break;
   default:
     break;
@@ -453,9 +444,6 @@ void on_boxl_change() {
   case COULOMB_MMM2D:
     MMM2D_init();
     break;
-  case COULOMB_MAGGS:
-    maggs_init();
-    break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
     Scafacos::update_system_params();
@@ -522,11 +510,6 @@ void on_cell_structure_change() {
     break;
   case COULOMB_MMM2D:
     MMM2D_init();
-    break;
-  case COULOMB_MAGGS:
-    maggs_init();
-    /* Maggs electrostatics needs ghost velocities */
-    on_ghost_flags_change();
     break;
   default:
     break;
@@ -724,11 +707,6 @@ void on_ghost_flags_change() {
 #endif
 #ifdef BOND_CONSTRAINT
   if (n_rigidbonds)
-    ghosts_have_v = 1;
-#endif
-#ifdef ELECTROSTATICS
-  /* Maggs electrostatics needs ghost velocities too */
-  if (coulomb.method == COULOMB_MAGGS)
     ghosts_have_v = 1;
 #endif
 #ifdef DPD

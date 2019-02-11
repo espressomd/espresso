@@ -58,7 +58,7 @@ void on_integration_start();
 
 /** called before calculating observables, i.e. energy, pressure or
  *  the integrator (forces). Initialize any methods here which are not
- *  initialized immediately (P3M, Maggs, etc.).
+ *  initialized immediately (P3M etc.).
  */
 void on_observable_calc();
 
