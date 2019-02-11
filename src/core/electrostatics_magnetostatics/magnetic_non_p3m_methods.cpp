@@ -100,9 +100,9 @@ auto pair_potential(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
 }
 } // namespace
 double
-magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,
-                                         const ParticleRange &particles,
-                                         const boost::mpi::communicator &comm) {
+mdds_calculations(int force_flag, int energy_flag,
+                  const ParticleRange &particles,
+                  const boost::mpi::communicator &comm) {
   std::vector<Vector3d> m;
   m.reserve(particles.size());
 

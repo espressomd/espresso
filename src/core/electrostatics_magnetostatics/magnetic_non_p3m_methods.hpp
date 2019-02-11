@@ -33,10 +33,10 @@
  *
  */
 #include "config.hpp"
-#include <ParticleRange.hpp>
-#include <boost/mpi/communicator.hpp>
 
 #ifdef DIPOLES
+#include <ParticleRange.hpp>
+#include <boost/mpi/communicator.hpp>
 
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS
@@ -49,9 +49,9 @@ int magnetic_dipolar_direct_sum_sanity_checks();
 /* Core of the method: here you compute all the magnetic forces,torques and the
  * energy for the whole system using direct sum*/
 double
-magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,
-                                         const ParticleRange &particles,
-                                         const boost::mpi::communicator &comm);
+mdds_calculations(int force_flag, int energy_flag,
+                  const ParticleRange &particles,
+                  const boost::mpi::communicator &comm);
 
 /**
  * @brief switch on direct sum magnetostatics.

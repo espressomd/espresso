@@ -474,9 +474,6 @@ int interactions_sanity_checks() {
     break;
   case DIPOLAR_MDLC_DS:
     if (mdlc_sanity_checks())
-      state = 0; // fall through
-  case DIPOLAR_DS:
-    if (magnetic_dipolar_direct_sum_sanity_checks())
       state = 0;
     break;
   default:
