@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include <profiler/profiler.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
+#include <profiler/profiler.hpp>
 
 #include <utility>
 
@@ -102,7 +102,7 @@ void decide_distance(CellIterator first, CellIterator last,
 template <typename ParticleKernel, typename PairKernel>
 void short_range_loop(ParticleKernel &&particle_kernel,
                       PairKernel &&pair_kernel) {
-ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   auto first = boost::make_indirect_iterator(local_cells.begin());
   auto last = boost::make_indirect_iterator(local_cells.end());

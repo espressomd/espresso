@@ -93,7 +93,7 @@ void check_forces() {
 }
 
 void force_calc() {
-ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   espressoSystemInterface.update();
 
