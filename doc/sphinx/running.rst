@@ -62,9 +62,8 @@ This feature is used to propagate each particle by a small distance parallel to 
 When only conservative forces for which a potential exists are in use, this is equivalent to a steepest descent energy minimization.
 A common application is removing overlap between randomly placed particles.
 
-Please note that the behavior is undefined if either a thermostat,
-Maggs electrostatics or lattice Boltzmann is activated. It runs a simple
-steepest descent algorithm:
+Please note that the behavior is undefined if either a thermostat is activated. 
+It runs a simple steepest descent algorithm:
 
 Iterate
 

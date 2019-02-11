@@ -621,8 +621,6 @@ looking directly at the code.
 
 -  ``FFT_DEBUG`` Output from the unified FFT code.
 
--  ``MAGGS_DEBUG``
-
 -  ``RANDOM_DEBUG``
 
 -  ``FORCE_DEBUG`` Output from the force calculation loops.
