@@ -476,7 +476,6 @@ class InteractionsNonBondedTest(ut.TestCase):
     @ut.skipIf(not espressomd.has_features("SOFT_SPHERE"),
                "Features not available, skipping test!")
     def test_soft_sphere(self):
-
         ss_a = 1.92
         ss_n = 3.03
         ss_cut = 1.123

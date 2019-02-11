@@ -305,8 +305,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef SOFT_SPHERE
-      if (max_cut_current < data->soft_cut)
-        max_cut_current = data->soft_cut;
+      if (max_cut_current < (data->soft_cut + data->soft_offset))
+        max_cut_current = (data->soft_cut + data->soft_offset);
 #endif
 
 #ifdef AFFINITY
