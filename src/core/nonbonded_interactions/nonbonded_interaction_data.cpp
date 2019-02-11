@@ -71,9 +71,9 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/range/algorithm/fill.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
-#include <boost/range/algorithm/fill.hpp>
 
 #include <cstdlib>
 #include <cstring>
