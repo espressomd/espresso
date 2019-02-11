@@ -161,7 +161,7 @@ class InteractionsBondedTest(ut.TestCase):
 
         # measure at half the bond length resolution to observe interpolation
         self.system.part[1].pos = self.system.part[1].pos + self.step / 2.0
-        for i in range(2 * 335 - 2):
+        for i in range(2 * 335 - 3):
             self.system.part[1].pos = self.system.part[1].pos + self.step / 2.0
             self.system.integrator.run(recalc_forces=True, steps=0)
 
@@ -191,7 +191,7 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_almost_equal(f0_sim_copy, f1_ref)
 
         # Check that bond breaks when distance > r_cut
-        self.system.part[1].pos = self.system.part[1].pos + self.step
+        self.system.part[1].pos = self.system.part[1].pos + 3 * self.step
         with self.assertRaisesRegexp(Exception, "Encountered errors during integrate"):
             self.system.integrator.run(recalc_forces=True, steps=0)
 

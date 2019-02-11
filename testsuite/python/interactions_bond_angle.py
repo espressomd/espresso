@@ -87,9 +87,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                 phi=i * d_phi, bend=ah_bend, phi0=ah_phi0)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
-            f2_sim = self.system.part[2].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
+            f2_sim = np.copy(self.system.part[2].f)
 
             # Check that energies match
             np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
@@ -119,9 +119,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                 phi=i * d_phi, bend=ac_bend, phi0=ac_phi0)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
-            f2_sim = self.system.part[2].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
+            f2_sim = np.copy(self.system.part[2].f)
 
             # Check that energies match
             np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
@@ -150,9 +150,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                 phi=i * d_phi, bend=acs_bend, phi0=acs_phi0)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
-            f2_sim = self.system.part[2].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
+            f2_sim = np.copy(self.system.part[2].f)
 
             # Check that energies match
             np.testing.assert_almost_equal(E_sim, E_ref)
@@ -194,9 +194,9 @@ class InteractionsNonBondedTest(ut.TestCase):
             E_sim = self.system.analysis.energy()["bonded"]
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
-            f2_sim = self.system.part[2].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
+            f2_sim = np.copy(self.system.part[2].f)
 
             # Reference value: traverse the tabulated array in reverse using a
             # negative index (ESPResSo uses the external angle convention)
