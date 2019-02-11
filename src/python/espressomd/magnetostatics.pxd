@@ -22,9 +22,9 @@ IF DIPOLES == 1:
             dipolar_interaction Dmethod
         cdef extern coulomb_parameters coulomb
 
-    cdef extern from "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp":
+    cdef extern from "electrostatics_magnetostatics/mdds.hpp":
         void mdds_set_params(int n_cut)
-        int Ncut_off_magnetic_dipolar_direct_sum
+        int mdds_n_replicas
 
     IF(CUDA == 1) and (ROTATION == 1):
         cdef extern from "actor/DipolarDirectSum.hpp":

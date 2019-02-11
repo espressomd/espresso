@@ -26,7 +26,7 @@
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
 #include "electrostatics_magnetostatics/maggs.hpp"
-#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+#include "electrostatics_magnetostatics/mdds.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy_inline.hpp"
@@ -236,14 +236,12 @@ void calc_long_range_energies() {
 #endif
 #ifdef DP3M
   case DIPOLAR_MDLC_DS:
-    energy.dipolar[1] = mdds_calculations(
-            0, 1, local_cells.particles(), comm_cart);
+    energy.dipolar[1] = mdds_energy(local_cells.particles(), comm_cart);
     energy.dipolar[2] = add_mdlc_energy_corrections();
     break;
 #endif
   case DIPOLAR_DS:
-    energy.dipolar[1] = mdds_calculations(
-            0, 1, local_cells.particles(), comm_cart);
+    energy.dipolar[1] = mdds_energy(local_cells.particles(), comm_cart);
     break;
   case DIPOLAR_DS_GPU:
     // Do nothing, it's an actor.

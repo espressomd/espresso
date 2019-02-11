@@ -82,7 +82,7 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/elc.cpp
   electrostatics_magnetostatics/icc.cpp
   electrostatics_magnetostatics/maggs.cpp
-  electrostatics_magnetostatics/magnetic_non_p3m_methods.cpp
+        electrostatics_magnetostatics/mdds.cpp
   electrostatics_magnetostatics/mdlc_correction.cpp
   electrostatics_magnetostatics/mmm1d.cpp
   electrostatics_magnetostatics/mmm2d.cpp

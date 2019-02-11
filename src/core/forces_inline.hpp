@@ -37,7 +37,7 @@
 #include "bonded_interactions/umbrella.hpp"
 #include "collision.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+#include "electrostatics_magnetostatics/mdds.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/mmm2d.hpp"

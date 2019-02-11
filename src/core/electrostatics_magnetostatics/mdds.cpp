@@ -29,7 +29,7 @@
  *
  */
 
-#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+#include "electrostatics_magnetostatics/mdds.hpp"
 
 #ifdef DIPOLES
 #include "cells.hpp"
@@ -40,24 +40,12 @@
 
 #include <boost/mpi/collectives/all_gather.hpp>
 
-/************************************************************/
-
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS
    =============================================================================
 */
 
-int Ncut_off_magnetic_dipolar_direct_sum = 0;
-
-/************************************************************/
-
-int magnetic_dipolar_direct_sum_sanity_checks() {
-  /* left for the future , at this moment nothing to do */
-
-  return 0;
-}
-
-/************************************************************/
+int mdds_n_replicas = 0;
 
 namespace {
 auto pair_force(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
@@ -74,14 +62,10 @@ auto pair_force(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
   auto const b = -15.0 * pe2 * pe3 / r7;
 
   auto const f = (a + b) * d + 3.0 * (pe3 * m1 + pe2 * m2) / r5;
-#ifdef ROTATION
   auto const r3 = r2 * r;
   auto const t = -m1.cross(m2) / r3 + 3.0 * pe3 * m1.cross(d) / r5;
 
   return {f, t};
-#else
-  return f;
-#endif
 }
 
 auto pair_potential(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
@@ -123,7 +107,6 @@ mdds_calculations(int force_flag, int energy_flag,
   std::vector<Vector3d> gpos;
   std::vector<Vector3d> gm;
   int offset;
-
   if (comm.size() > 1) {
     std::vector<int> sizes(comm.size());
 
@@ -147,7 +130,7 @@ mdds_calculations(int force_flag, int energy_flag,
 
   /*now we do the calculations */
   const Vector3i ncut =
-      Ncut_off_magnetic_dipolar_direct_sum *
+      mdds_n_replicas *
       Vector3i{static_cast<int>(PERIODIC(0)), static_cast<int>(PERIODIC(1)),
                static_cast<int>(PERIODIC(2))};
   auto const ncut2 = ncut.norm2();
@@ -195,10 +178,10 @@ mdds_calculations(int force_flag, int energy_flag,
 }
 
 void mdds_set_params(int n_cut) {
-  Ncut_off_magnetic_dipolar_direct_sum = n_cut;
+  mdds_n_replicas = n_cut;
 
   if ((PERIODIC(0) || PERIODIC(1) || PERIODIC(2)) &&
-      Ncut_off_magnetic_dipolar_direct_sum == 0) {
+      mdds_n_replicas == 0) {
     fprintf(stderr, "Careful:  the number of extra replicas to take into "
                     "account during the direct sum calculation is zero \n");
   }

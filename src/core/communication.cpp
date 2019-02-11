@@ -40,7 +40,7 @@
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
 #include "electrostatics_magnetostatics/maggs.hpp"
-#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+#include "electrostatics_magnetostatics/mdds.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/mmm2d.hpp"
@@ -717,7 +717,7 @@ void mpi_bcast_coulomb_params_slave(int, int) {
   case DIPOLAR_MDLC_DS:
   // fall trough
   case DIPOLAR_DS:
-    MPI_Bcast(&Ncut_off_magnetic_dipolar_direct_sum, 1, MPI_INT, 0, comm_cart);
+    MPI_Bcast(&mdds_n_replicas, 1, MPI_INT, 0, comm_cart);
     break;
   case DIPOLAR_DS_GPU:
     break;

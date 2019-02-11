@@ -43,15 +43,22 @@
    =============================================================================
 */
 
-/* Sanity checks for the magnetic dipolar direct sum*/
-int magnetic_dipolar_direct_sum_sanity_checks();
-
 /* Core of the method: here you compute all the magnetic forces,torques and the
  * energy for the whole system using direct sum*/
 double
 mdds_calculations(int force_flag, int energy_flag,
                   const ParticleRange &particles,
                   const boost::mpi::communicator &comm);
+
+inline void mdds_forces(const ParticleRange &particles,
+                 const boost::mpi::communicator &comm) {
+    mdds_calculations(1, 0, particles, comm);
+}
+
+inline double mdds_energy(const ParticleRange &particles,
+                        const boost::mpi::communicator &comm) {
+    return mdds_calculations(0, 1, particles, comm);
+}
 
 /**
  * @brief switch on direct sum magnetostatics.
@@ -62,7 +69,7 @@ mdds_calculations(int force_flag, int energy_flag,
  */
 void mdds_set_params(int n_cut);
 
-extern int Ncut_off_magnetic_dipolar_direct_sum;
+extern int mdds_n_replicas;
 
 #endif /*of ifdef DIPOLES  */
 #endif /* of ifndef  MAG_NON_P3M_H */
