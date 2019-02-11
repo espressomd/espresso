@@ -98,7 +98,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define STAT_DEBUG
 #define POLY_DEBUG
 #define PTENSOR_DEBUG
-#define MAGGS_DEBUG
 #define LB_DEBUG
 #define VIRTUAL_SITES_DEBUG
 #define LE_DEBUG
