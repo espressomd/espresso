@@ -1,3 +1,4 @@
+#include <boost/mpi.hpp>
 #include <Random123/philox.h>
 
 #include "cells.hpp"
@@ -15,29 +16,30 @@
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
 
-namespace {
-Utils::Counter<uint64_t> rng_counter_coupling;
-/*
- * @brief Salt for the RNGs
- *
- * This is to avoid correlations between the
- * noise on the particle coupling and the fluid
- * thermalization.
- */
-enum class RNGSalt { PARTICLES = 2 };
-} // namespace
+LB_Particle_Coupling lb_particle_coupling;
 
 void mpi_set_lb_coupling_counter_slave(int high, int low) {
-#ifdef LB
-  rng_counter_coupling = Utils::Counter<uint64_t>(Utils::u32_to_u64(
+  lb_particle_coupling.rng_counter_coupling = Utils::Counter<uint64_t>(Utils::u32_to_u64(
       static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
-#endif
+}
+
+void mpi_bcast_lb_particle_coupling_slave(int, int) {
+  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
 #if defined(LB) || defined(LB_GPU)
 
+void lb_lbcoupling_set_friction(double friction) {
+  lb_particle_coupling.friction = friction;
+  mpi_bcast_lb_particle_coupling();
+}
+
+double lb_lbcoupling_get_friction() {
+  return lb_particle_coupling.friction;
+}
+
 uint64_t lb_coupling_get_rng_state_cpu() {
-  return rng_counter_coupling.value();
+  return lb_particle_coupling.rng_counter_coupling.value();
 }
 
 uint64_t lb_lbcoupling_get_rng_state() {
@@ -56,7 +58,8 @@ uint64_t lb_lbcoupling_get_rng_state() {
 void lb_lbcoupling_set_rng_state(uint64_t counter) {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    mpi_set_lb_coupling_counter(counter);
+    lb_particle_coupling.rng_counter_coupling = Utils::Counter<uint64_t>(counter);
+    mpi_bcast_lb_particle_coupling();
 #endif
   } else if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -114,7 +117,7 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
   /* calculate viscous force
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
    * */
-  auto const force = -lb_lbfluid_get_friction() * (p->m.v - v_drift) + f_random;
+  auto const force = -lb_lbcoupling_get_friction() * (p->m.v - v_drift) + f_random;
 
   add_md_force(p->r.p, force);
 
@@ -157,7 +160,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     if (transfer_momentum_gpu && this_node == 0)
-      lb_calc_particle_lattice_ia_gpu(couple_virtual);
+      lb_calc_particle_lattice_ia_gpu(couple_virtual, lb_lbcoupling_get_friction());
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
@@ -166,18 +169,18 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
       using ctr_type = rng_type::ctr_type;
       using key_type = rng_type::key_type;
 
-      ctr_type c{{rng_counter_coupling.value(),
-                  static_cast<uint64_t>(RNGSalt::PARTICLES)}};
-      rng_counter_coupling.increment();
+      ctr_type c{{lb_particle_coupling.rng_counter_coupling.value(),
+                  static_cast<uint64_t>(LB_Particle_Coupling::RNGSalt::PARTICLES)}};
+      lb_particle_coupling.rng_counter_coupling.increment();
 
       /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
        * The factor 12 comes from the fact that we use random numbers
        * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
        * time_step comes from the discretization.
        */
-      auto const noise_amplitude = sqrt(12. * 2. * lb_lbfluid_get_friction() *
+      auto const noise_amplitude = sqrt(12. * 2. * lb_lbcoupling_get_friction() *
                                         lb_lbfluid_get_kT() / time_step);
-
+      printf("friction: %f\n", lb_lbcoupling_get_friction());
       auto f_random = [&c](int id) -> Vector3d {
         key_type k{{static_cast<uint32_t>(id)}};
 

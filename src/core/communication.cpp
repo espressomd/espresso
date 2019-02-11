@@ -158,7 +158,8 @@ int n_nodes = -1;
   CB(mpi_rotate_system_slave)                                                  \
   CB(mpi_set_lb_coupling_counter_slave)                                        \
   CB(mpi_set_lb_fluid_counter)                                                 \
-  CB(mpi_update_particle_slave)
+  CB(mpi_update_particle_slave)                                                \
+  CB(mpi_bcast_lb_particle_coupling_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -925,11 +926,9 @@ void mpi_bcast_lb_params_slave(int field, int) {
 #endif
 }
 
-void mpi_set_lb_coupling_counter(uint64_t counter) {
-  uint32_t high, low;
-  std::tie(high, low) = Utils::u64_to_u32(counter);
-  mpi_call(mpi_set_lb_coupling_counter_slave, high, low);
-  mpi_set_lb_coupling_counter_slave(high, low);
+void mpi_bcast_lb_particle_coupling() {
+  mpi_call(mpi_bcast_lb_particle_coupling_slave, 0, 0);
+  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/

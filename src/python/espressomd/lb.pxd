@@ -44,27 +44,6 @@ IF LB_GPU or LB:
 
     cdef extern from "grid_based_algorithms/lb_interface.hpp":
 
-        ##############################################
-        #
-        # Python LB struct clone of C-struct
-        #
-        ##############################################
-        ctypedef struct lb_parameters:
-            double rho[2]
-            double viscosity[2]
-            double bulk_viscosity[2]
-            double agrid
-            double tau
-            double friction[2]
-            double ext_force_density[3]
-            double gamma_odd[2]
-            double gamma_even[2]
-            int resent_halo
-
-##############################################
-#
-#
-##############################################
         void lb_lbfluid_set_tau(double c_tau) except +
         double lb_lbfluid_get_tau() except +
         void lb_lbfluid_set_rho(double c_dens) except +
@@ -73,8 +52,6 @@ IF LB_GPU or LB:
         double lb_lbfluid_get_visc() except +
         void lb_lbfluid_set_agrid(double c_agrid) except +
         double lb_lbfluid_get_agrid() except +
-        void lb_lbfluid_set_friction(double c_friction) except +
-        double lb_lbfluid_get_friction() except +
         void lb_lbfluid_set_gamma_odd(double c_gamma_odd) except +
         double lb_lbfluid_get_gamma_odd() except +
         void lb_lbfluid_set_gamma_even(double c_gamma_even) except +
@@ -112,6 +89,8 @@ IF LB_GPU or LB:
     cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
         void lb_lbcoupling_set_rng_state(stdint.uint64_t)
         stdint.uint64_t lb_lbcoupling_get_rng_state() except +
+        void lb_lbcoupling_set_friction(double)
+        double lb_lbcoupling_get_friction() except +
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()
@@ -176,7 +155,7 @@ IF LB_GPU or LB:
         else:
             c_friction = p_friction
         # call c-function
-        lb_lbfluid_set_friction(c_friction)
+        lb_lbcoupling_set_friction(c_friction)
 
     cdef inline python_lbfluid_set_gamma_odd(gamma_odd):
         cdef double c_gamma_odd
@@ -298,7 +277,7 @@ IF LB_GPU or LB:
     cdef inline python_lbfluid_get_friction(p_friction):
         cdef double c_friction
         # call c-function
-        c_friction = lb_lbfluid_get_friction()
+        c_friction = lb_lbcoupling_get_friction()
         if isinstance(p_friction, float) or isinstance(p_friction, int):
             p_fricition = <double > c_friction
         else:

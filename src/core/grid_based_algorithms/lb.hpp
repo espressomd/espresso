@@ -148,9 +148,6 @@ struct LB_Parameters {
    *  Note: Has to be larger than MD time step! */
   double tau;
 
-  /** friction coefficient for viscous coupling (LJ units) */
-  double friction;
-
   /** external force density applied to the fluid at each lattice site (LB
    * Units) */
   Vector3d ext_force_density;

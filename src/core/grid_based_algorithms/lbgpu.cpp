@@ -66,8 +66,6 @@ LB_parameters_gpu lbpar_gpu = {
     0.0,
     // is_TRT
     false,
-    // friction
-    0.0,
     // lb_couple_switch
     LB_COUPLE_TWO_POINT,
     // bulk_viscosity

@@ -381,35 +381,6 @@ double lb_lbfluid_get_gamma_even() {
   return {};
 }
 
-void lb_lbfluid_set_friction(double p_friction) {
-  if (p_friction <= 0)
-    throw std::invalid_argument("friction has to be > 0.");
-  if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    lbpar_gpu.friction = static_cast<float>(p_friction);
-    lb_lbfluid_on_lb_params_change(LBPAR_FRICTION);
-#endif // LB_GPU
-  } else {
-#ifdef LB
-    lbpar.friction = p_friction;
-    mpi_bcast_lb_params(LBPAR_FRICTION);
-#endif // LB
-  }
-}
-
-double lb_lbfluid_get_friction() {
-  if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    return lbpar_gpu.friction;
-#endif // LB_GPU
-  } else {
-#ifdef LB
-    return lbpar.friction;
-#endif // LB
-  }
-  return {};
-}
-
 void lb_lbfluid_set_couple_flag(int couple_flag) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU

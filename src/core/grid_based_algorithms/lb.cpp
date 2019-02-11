@@ -88,8 +88,6 @@ LB_Parameters lbpar = {
     -1.0,
     // tau
     -1.0,
-    // friction
-    0.0,
     // ext_force_density
     {0.0, 0.0, 0.0},
     // gamma_odd

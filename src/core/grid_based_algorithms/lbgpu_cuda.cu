@@ -1554,12 +1554,13 @@ interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
  * @param[in]  flag_cs            Determine if we are at the centre (0,
  *                                typical) or at the source (1, swimmer only)
  * @param[in]  philox_counter
+ * @param[in]  friction           Friction constant for the particle coupling
  */
 __device__ void calc_viscous_force_three_point_couple(
     LB_nodes_gpu n_a, float *delta, CUDA_particle_data *particle_data,
     float *particle_force, unsigned int part_index, float *delta_j,
     unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs,
-    uint64_t philox_counter) {
+    uint64_t philox_counter, float friction) {
   float interpolated_u[3];
   float interpolated_rho;
   float viscforce_density[3];
@@ -1637,21 +1638,21 @@ __device__ void calc_viscous_force_three_point_couple(
 
   /* Viscous force */
   viscforce_density[0] -=
-      interpolated_rho * para->friction *
+      interpolated_rho * friction *
       (velocity[0] - interpolated_u[0] * para->agrid / para->tau) / rhotot;
   viscforce_density[1] -=
-      interpolated_rho * para->friction *
+      interpolated_rho * friction *
       (velocity[1] - interpolated_u[1] * para->agrid / para->tau) / rhotot;
   viscforce_density[2] -=
-      interpolated_rho * para->friction *
+      interpolated_rho * friction *
       (velocity[2] - interpolated_u[2] * para->agrid / para->tau) / rhotot;
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  viscforce_density[0] += interpolated_rho * para->friction *
+  viscforce_density[0] += interpolated_rho * friction *
                           particle_data[part_index].mu_E[0] / rhotot;
-  viscforce_density[1] += interpolated_rho * para->friction *
+  viscforce_density[1] += interpolated_rho * friction *
                           particle_data[part_index].mu_E[1] / rhotot;
-  viscforce_density[2] += interpolated_rho * para->friction *
+  viscforce_density[2] += interpolated_rho * friction *
                           particle_data[part_index].mu_E[2] / rhotot;
 #endif
 
@@ -1659,7 +1660,7 @@ __device__ void calc_viscous_force_three_point_couple(
   float4 random_floats = random_wrapper_philox(
       particle_data[part_index].identity, LBQ * 32, philox_counter);
   float lb_coupl_pref =
-      sqrtf(12.f * 2.f * para->friction * para->kT / para->time_step);
+      sqrtf(12.f * 2.f * friction * para->kT / para->time_step);
   viscforce_density[0] += lb_coupl_pref * (random_floats.w - 0.5f);
   viscforce_density[1] += lb_coupl_pref * (random_floats.x - 0.5f);
   viscforce_density[2] += lb_coupl_pref * (random_floats.y - 0.5f);
@@ -1848,13 +1849,14 @@ __device__ __inline__ void interpolation_two_point_coupling(
  *  @param[in]  flag_cs            Determine if we are at the centre (0,
  *                                 typical) or at the source (1, swimmer only)
  *  @param[in]  philox_counter
+ *  @param[in]  friction           Friction constant for the particle coupling
  */
 __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta,
                                    CUDA_particle_data *particle_data,
                                    float *particle_force,
                                    unsigned int part_index, float *delta_j,
                                    unsigned int *node_index, LB_rho_v_gpu *d_v,
-                                   int flag_cs, uint64_t philox_counter) {
+                                   int flag_cs, uint64_t philox_counter, float friction) {
   float interpolated_u[3];
   float interpolated_rho;
   float viscforce_density[3];
@@ -1934,21 +1936,21 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta,
 
   /* Viscous force */
   viscforce_density[0] -=
-      interpolated_rho * para->friction *
+      interpolated_rho * friction *
       (velocity[0] - interpolated_u[0] * para->agrid / para->tau) / rhotot;
   viscforce_density[1] -=
-      interpolated_rho * para->friction *
+      interpolated_rho * friction *
       (velocity[1] - interpolated_u[1] * para->agrid / para->tau) / rhotot;
   viscforce_density[2] -=
-      interpolated_rho * para->friction *
+      interpolated_rho * friction *
       (velocity[2] - interpolated_u[2] * para->agrid / para->tau) / rhotot;
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  viscforce_density[0] += interpolated_rho * para->friction *
+  viscforce_density[0] += interpolated_rho * friction *
                           particle_data[part_index].mu_E[0] / rhotot;
-  viscforce_density[1] += interpolated_rho * para->friction *
+  viscforce_density[1] += interpolated_rho * friction *
                           particle_data[part_index].mu_E[1] / rhotot;
-  viscforce_density[2] += interpolated_rho * para->friction *
+  viscforce_density[2] += interpolated_rho * friction *
                           particle_data[part_index].mu_E[2] / rhotot;
 #endif
 
@@ -1962,7 +1964,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta,
    * time_step comes from the discretization.
    */
   float lb_coupl_pref =
-      sqrtf(12.f * 2.f * para->friction * para->kT / para->time_step);
+      sqrtf(12.f * 2.f * friction * para->kT / para->time_step);
   viscforce_density[0] += lb_coupl_pref * (random_floats.w - 0.5f);
   viscforce_density[1] += lb_coupl_pref * (random_floats.x - 0.5f);
   viscforce_density[2] += lb_coupl_pref * (random_floats.y - 0.5f);
@@ -2576,7 +2578,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a,
                                        float *particle_force,
                                        LB_node_force_density_gpu node_f,
                                        LB_rho_v_gpu *d_v, bool couple_virtual,
-                                       uint64_t philox_counter) {
+                                       uint64_t philox_counter, float friction) {
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
@@ -2591,14 +2593,14 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a,
       /* force acting on the particle. delta_j will be used later to compute the
        * force that acts back onto the fluid. */
       calc_viscous_force(n_a, delta, particle_data, particle_force, part_index,
-                         delta_j, node_index, d_v, 0, philox_counter);
+                         delta_j, node_index, d_v, 0, philox_counter, friction);
       calc_node_force(delta, delta_j, node_index, node_f);
 
 #ifdef ENGINE
       if (particle_data[part_index].swim.swimming) {
         calc_viscous_force(n_a, delta, particle_data, particle_force,
                            part_index, delta_j, node_index, d_v, 1,
-                           philox_counter);
+                           philox_counter, friction);
         calc_node_force(delta, delta_j, node_index, node_f);
       }
 #endif
@@ -2617,7 +2619,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a,
 __global__ void calc_fluid_particle_ia_three_point_couple(
     LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,
     LB_node_force_density_gpu node_f, LB_rho_v_gpu *d_v,
-    uint64_t philox_counter) {
+    uint64_t philox_counter, float friction) {
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[27];
@@ -2628,14 +2630,14 @@ __global__ void calc_fluid_particle_ia_three_point_couple(
      * force that acts back onto the fluid. */
     calc_viscous_force_three_point_couple(n_a, delta, particle_data,
                                           particle_force, part_index, delta_j,
-                                          node_index, d_v, 0, philox_counter);
+                                          node_index, d_v, 0, philox_counter, friction);
     calc_node_force_three_point_couple(delta, delta_j, node_index, node_f);
 
 #ifdef ENGINE
     if (particle_data[part_index].swim.swimming) {
       calc_viscous_force_three_point_couple(n_a, delta, particle_data,
                                             particle_force, part_index, delta_j,
-                                            node_index, d_v, 1, philox_counter);
+                                            node_index, d_v, 1, philox_counter, friction);
       calc_node_force_three_point_couple(delta, delta_j, node_index, node_f);
     }
 #endif
@@ -3028,7 +3030,7 @@ void lb_init_extern_nodeforcedensities_GPU(
 }
 
 /** Setup and call particle kernel from the host */
-void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
+void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
   if (lbpar_gpu.number_of_particles) {
     /* call of the particle kernel */
     /* values for the particle kernel */
@@ -3046,12 +3048,12 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual) {
                  threads_per_block_particles, *current_nodes,
                  gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
                  node_f, device_rho_v, couple_virtual,
-                 rng_counter_coupling_gpu.value());
+                 rng_counter_coupling_gpu.value(), friction);
     } else { /** only other option is the three point coupling scheme */
       KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles,
                  threads_per_block_particles, *current_nodes,
                  gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 node_f, device_rho_v, rng_counter_coupling_gpu.value());
+                 node_f, device_rho_v, rng_counter_coupling_gpu.value(), friction);
     }
     rng_counter_coupling_gpu.increment();
   }
