@@ -43,7 +43,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.part.add(id=1, pos=self.start_pos, type=0)
 
     def tearDown(self):
-
+        self.system.non_bonded_inter.reset()
         self.system.part.clear()
 
     # Required, since assertAlmostEqual does NOT check significant places

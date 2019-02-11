@@ -73,6 +73,8 @@
 #include <boost/iostreams/stream.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/range/algorithm/fill.hpp>
+
 #include <cstdlib>
 #include <cstring>
 
@@ -415,6 +417,11 @@ void realloc_ia_params(int nsize) {
 
   max_seen_particle_type = nsize;
   std::swap(ia_params, new_params);
+}
+
+void reset_ia_params() {
+  boost::fill(ia_params, IA_parameters{});
+  mpi_bcast_all_ia_params();
 }
 
 bool is_new_particle_type(int type) {
