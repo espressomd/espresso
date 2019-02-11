@@ -86,8 +86,15 @@ class InteractionsNonBondedTest(ut.TestCase):
             E_ref = self.angle_harmonic_potential(
                 phi=i * d_phi, bend=ah_bend, phi0=ah_phi0)
 
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f2_sim = self.system.part[2].f
+
             # Check that energies match
             np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
+            # Force equals minus the counter-force
+            np.testing.assert_allclose(f0_sim + f2_sim, -f1_sim)
 
     # Test Angle Cosine Potential
     def test_angle_cosine(self):
@@ -111,8 +118,15 @@ class InteractionsNonBondedTest(ut.TestCase):
             E_ref = self.angle_cosine_potential(
                 phi=i * d_phi, bend=ac_bend, phi0=ac_phi0)
 
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f2_sim = self.system.part[2].f
+
             # Check that energies match
             np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
+            # Force equals minus the counter-force
+            np.testing.assert_allclose(f0_sim + f2_sim, -f1_sim)
 
     def test_angle_cos_squared(self):
         acs_bend = 1
@@ -135,9 +149,69 @@ class InteractionsNonBondedTest(ut.TestCase):
             E_ref = self.angle_cos_squared_potential(
                 phi=i * d_phi, bend=acs_bend, phi0=acs_phi0)
 
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f2_sim = self.system.part[2].f
+
             # Check that energies match
             np.testing.assert_almost_equal(E_sim, E_ref)
+            # Force equals minus the counter-force
+            np.testing.assert_allclose(f0_sim + f2_sim, -f1_sim)
 
+    # Test Tabulated Harmonic Angle
+    @ut.skipIf(not espressomd.has_features(["TABULATED"]),
+               "TABULATED feature is not available, skipping tabulated test.")
+    def test_angle_tabulated(self):
+        ah_bend = 1.
+        ah_phi0 = 0.4327 * np.pi
+        N = 111
+        d_phi = np.pi / N
+
+        tab_energy = [self.angle_harmonic_potential(
+            phi=i * d_phi, bend=ah_bend, phi0=ah_phi0) for i in range(N + 1)]
+        tab_force = [ah_bend * abs(i * d_phi - ah_phi0) for i in range(N + 1)]
+        angle_tabulated = espressomd.interactions.Tabulated(
+            type='angle', energy=tab_energy, force=tab_force, min=0., max=np.pi)
+        self.system.bonded_inter.add(angle_tabulated)
+        self.system.part[0].add_bond((angle_tabulated, 1, 2))
+
+        # check stored parameters
+        interaction_id = len(self.system.bonded_inter) - 1
+        tabulated = self.system.bonded_inter[interaction_id]
+        np.testing.assert_allclose(tabulated.params['force'], tab_force)
+        np.testing.assert_allclose(tabulated.params['energy'], tab_energy)
+        np.testing.assert_almost_equal(tabulated.params['min'], 0.)
+        np.testing.assert_almost_equal(tabulated.params['max'], np.pi)
+
+        # measure at half the angular resolution to observe interpolation
+        for i in range(2 * N - 1):
+            self.system.part[2].pos = self.start_pos + \
+                self.rotate_vector(self.rel_pos, self.axis, i * d_phi / 2.0)
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["bonded"]
+
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f2_sim = self.system.part[2].f
+
+            # Reference value: traverse the tabulated array in reverse using a
+            # negative index (ESPResSo uses the external angle convention)
+            j = -(i // 2) - 1
+            if i % 2 == 0:
+                E_ref = tab_energy[j]
+                f0_ref = tab_force[j]
+            else:
+                E_ref = (tab_energy[j] + tab_energy[j - 1]) / 2.0
+                f0_ref = (tab_force[j] + tab_force[j - 1]) / 2.0
+
+            # Check that energies match, ...
+            np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
+            # Force equals minus the counter-force
+            np.testing.assert_allclose(f0_sim + f2_sim, -f1_sim)
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())

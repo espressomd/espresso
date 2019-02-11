@@ -128,6 +128,73 @@ class InteractionsBondedTest(ut.TestCase):
         with self.assertRaisesRegexp(Exception, "Encountered errors during integrate"):
             self.system.integrator.run(recalc_forces=True, steps=0)
 
+    # Test Tabulated Harmonic Bond
+    @ut.skipIf(not espressomd.has_features(["TABULATED"]),
+               "TABULATED feature is not available, skipping tabulated test.")
+    def test_tabulated(self):
+        hb_k = 5
+        hb_r_0 = 1.5
+        hb_r_cut = 3.355
+
+        tab_energy = [tests_common.harmonic_potential(
+                      scalar_r=(i + 1) * self.step_width, k=hb_k, r_0=hb_r_0,
+                      r_cut=hb_r_cut) for i in range(335)]
+        tab_force = [tests_common.harmonic_force(
+                     scalar_r=(i + 1) * self.step_width, k=hb_k, r_0=hb_r_0,
+                     r_cut=hb_r_cut) for i in range(335)]
+        hb_tab = espressomd.interactions.Tabulated(
+            type='distance', min=self.step_width, max=self.step_width * 335,
+            energy=tab_energy, force=tab_force)
+        self.system.bonded_inter.add(hb_tab)
+        self.system.part[0].add_bond((hb_tab, 1))
+
+        # check stored parameters
+        interaction_id = len(self.system.bonded_inter) - 1
+        tabulated = self.system.bonded_inter[interaction_id]
+        np.testing.assert_allclose(tabulated.params['force'], tab_force)
+        np.testing.assert_allclose(tabulated.params['energy'], tab_energy)
+        np.testing.assert_almost_equal(
+            tabulated.params['min'],
+            self.step_width)
+        np.testing.assert_almost_equal(tabulated.params['max'],
+                                       335 * self.step_width)
+
+        # measure at half the bond length resolution to observe interpolation
+        self.system.part[1].pos = self.system.part[1].pos + self.step / 2.0
+        for i in range(2 * 335 - 2):
+            self.system.part[1].pos = self.system.part[1].pos + self.step / 2.0
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["bonded"]
+
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+
+            # Get tabulated values
+            j = i // 2
+            if i % 2 == 1:
+                E_ref = (tab_energy[j] + tab_energy[j + 1]) / 2.0
+                f1_ref = (tab_force[j] + tab_force[j + 1]) / 2.0
+            else:
+                f1_ref = tab_force[j]
+                E_ref = tab_energy[j]
+            f1_ref *= self.axis
+
+            # Check that energies match, ...
+            np.testing.assert_almost_equal(E_sim, E_ref)
+            # force equals minus the counter-force  ...
+            self.assertTrue((f0_sim == -f1_sim).all())
+            # and has correct value.
+            f0_sim_copy = np.copy(f0_sim)
+            np.testing.assert_almost_equal(f0_sim_copy, f1_ref)
+
+        # Check that bond breaks when distance > r_cut
+        self.system.part[1].pos = self.system.part[1].pos + self.step
+        with self.assertRaisesRegexp(Exception, "Encountered errors during integrate"):
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
     @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
                "ELECTROSTATICS feature is not available, skipping coulomb test.")
     def test_coulomb(self):

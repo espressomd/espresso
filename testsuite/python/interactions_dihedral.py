@@ -167,5 +167,53 @@ class InteractionsBondedTest(ut.TestCase):
             f2_sim_copy = np.copy(f2_sim)
             np.testing.assert_almost_equal(f2_sim_copy, f2_ref)
 
+    # Test Tabulated Dihedral Angle
+    @ut.skipIf(not espressomd.has_features(["TABULATED"]),
+               "TABULATED feature is not available, skipping tabulated test.")
+    def test_tabulated_dihedral(self):
+        N = 111
+        d_phi = 2 * np.pi / N
+        # tabulated values for the range [0, 2*pi]
+        tab_phi = [i * d_phi for i in range(N + 1)]
+        tab_energy = [np.cos(i * d_phi) for i in range(N + 1)]
+        tab_force = [np.cos(i * d_phi) for i in range(N + 1)]
+
+        dihedral_tabulated = espressomd.interactions.Tabulated(
+            type='dihedral', energy=tab_energy, force=tab_force, min=0.,
+            max=2 * np.pi)
+        self.system.bonded_inter.add(dihedral_tabulated)
+        self.system.part[1].add_bond((dihedral_tabulated, 0, 2, 3))
+        self.system.part[2].pos = self.system.part[1].pos + [1, 0, 0]
+
+        # check stored parameters
+        interaction_id = len(self.system.bonded_inter) - 1
+        tabulated = self.system.bonded_inter[interaction_id]
+        np.testing.assert_allclose(tabulated.params['force'], tab_force)
+        np.testing.assert_allclose(tabulated.params['energy'], tab_energy)
+        np.testing.assert_almost_equal(tabulated.params['min'], 0.)
+        np.testing.assert_almost_equal(tabulated.params['max'], 2 * np.pi)
+
+        # measure at half the angular resolution to observe interpolation
+        for i in range(2 * N - 1):
+            # increase dihedral angle by d_phi (phi ~ 0 at i = 0)
+            self.system.part[0].pos = self.system.part[1].pos + \
+                rotate_vector(self.rel_pos_1, self.axis, -i * d_phi / 4)
+            self.system.part[3].pos = self.system.part[2].pos + \
+                rotate_vector(self.rel_pos_1, self.axis, i * d_phi / 4)
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["bonded"]
+
+            # Get tabulated values
+            j = i // 2
+            if i % 2 == 0:
+                E_ref = tab_energy[j]
+            else:
+                E_ref = (tab_energy[j] + tab_energy[j + 1]) / 2.0
+
+            # Check that energies match, ...
+            np.testing.assert_almost_equal(E_sim, E_ref)
+
 if __name__ == '__main__':
     ut.main()
