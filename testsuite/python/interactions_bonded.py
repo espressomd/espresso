@@ -160,8 +160,8 @@ class InteractionsBondedTest(ut.TestCase):
                                        335 * self.step_width)
 
         # measure at half the bond length resolution to observe interpolation
-        self.system.part[1].pos = self.system.part[1].pos + self.step / 2.0
-        for i in range(2 * 335 - 3):
+        self.system.part[1].pos = self.system.part[1].pos + self.step
+        for i in range(1, 2 * 335 - 3):
             self.system.part[1].pos = self.system.part[1].pos + self.step / 2.0
             self.system.integrator.run(recalc_forces=True, steps=0)
 
