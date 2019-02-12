@@ -53,7 +53,9 @@ class LBEHTest(ut.TestCase):
         )
 
         self.s.actors.add(self.lbf)
-        self.s.thermostat.set_lb(LB_fluid=self.lbf, friction=self.params['friction'])
+        self.s.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            friction=self.params['friction'])
 
     def test(self):
         s = self.s

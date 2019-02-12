@@ -85,7 +85,10 @@ class TestLB(object):
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0], seed=4)
         self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=3, friction=self.params['friction'])
+        self.system.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            seed=3,
+            friction=self.params['friction'])
         # give particles a push
         for p in self.system.part:
             p.v = p.v + [0.1, 0.0, 0.0]
@@ -207,7 +210,10 @@ class TestLB(object):
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=3, friction=self.params['friction'])
+        self.system.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            seed=3,
+            friction=self.params['friction'])
         self.system.part.add(
             pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid

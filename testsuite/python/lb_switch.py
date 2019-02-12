@@ -52,7 +52,6 @@ class LBSwitchActor(ut.TestCase):
         system.actors.add(lb_fluid_1)
         system.thermostat.set_lb(LB_fluid=lb_fluid_1, friction=friction_1)
 
-
         system.integrator.run(1)
 
         force_on_part = -friction_1 * np.copy(system.part[0].v)

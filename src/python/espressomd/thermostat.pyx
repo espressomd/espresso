@@ -32,6 +32,7 @@ if LB or LB_GPU:
     from .lb cimport lb_lbcoupling_set_friction
     from .lb cimport lb_lbcoupling_get_friction
 
+
 def AssertThermostatType(*allowedthermostats):
     """Assert that only a certain thermostat is active
 
@@ -102,7 +103,9 @@ cdef class Thermostat(object):
                 self.set_langevin(kT=thmst["kT"], gamma=thmst[
                                   "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"])
             if thmst["type"] == "LB":
-                self.set_lb(act_on_virtual=thmst["act_on_virtual"], seed=thmst["counter"])
+                self.set_lb(
+                    act_on_virtual=thmst["act_on_virtual"],
+                    seed=thmst["counter"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])
@@ -339,7 +342,12 @@ cdef class Thermostat(object):
 
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
-        def set_lb(self, seed=None, act_on_virtual=True, LB_fluid=None, friction=0.0):
+        def set_lb(
+            self,
+            seed=None,
+            act_on_virtual=True,
+            LB_fluid=None,
+                friction=0.0):
             """
             Sets the LB thermostat.
 
