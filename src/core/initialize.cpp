@@ -668,6 +668,9 @@ void on_parameter_change(int field) {
     /* Thermalized distance bonds needs ghost velocities */
     on_ghost_flags_change();
     break;
+  case FIELD_SIMTIME:
+    recalc_forces = 1;
+    break;
   }
 }
 
