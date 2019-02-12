@@ -40,11 +40,14 @@
 #include "immersed_boundaries.hpp"
 #include "short_range_loop.hpp"
 
+#include <profiler/profiler.hpp>
+
 #include <cassert>
 
 ActorList forceActors;
 
 void init_forces() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
 
@@ -90,6 +93,7 @@ void check_forces() {
 }
 
 void force_calc() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   espressoSystemInterface.update();
 
@@ -201,6 +205,7 @@ void force_calc() {
 }
 
 void calc_long_range_forces() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
