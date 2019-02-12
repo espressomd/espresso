@@ -203,7 +203,8 @@ cdef class Thermostat(object):
         global thermo_switch
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-        lb_lbcoupling_set_friction(0.0)
+        IF LB or LB_GPU:
+            lb_lbcoupling_set_friction(0.0)
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
