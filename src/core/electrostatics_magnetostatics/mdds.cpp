@@ -37,8 +37,10 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "utils/mpi/all_gatherv.hpp"
+#include "utils/cartesian_product.hpp"
 
 #include <boost/mpi/collectives/all_gather.hpp>
+#include <boost/range/counting_range.hpp>
 
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS
@@ -81,6 +83,23 @@ auto pair_potential(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
 
   // Energy ............................
   return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
+}
+
+template<typename F>
+void for_each_image(Vector3i const& ncut, F f) {
+    auto const ncut2 = ncut.norm2();
+
+    using Utils::cartesian_product;
+    using boost::counting_range;
+
+    cartesian_product([&](int nx, int ny, int nz) {
+        if(nx*nx + ny*ny + nz*nz <= ncut2) {
+            f(nx, ny, nz);
+        }
+        } ,
+                      counting_range(-ncut[0], ncut[0] + 1),
+                      counting_range(-ncut[1], ncut[1] + 1),
+                      counting_range(-ncut[2], ncut[2] + 1));
 }
 
 double mdds_calculations(int force_flag, int energy_flag,
@@ -135,7 +154,7 @@ double mdds_calculations(int force_flag, int energy_flag,
       mdds_n_replicas * Vector3i{static_cast<int>(PERIODIC(0)),
                                  static_cast<int>(PERIODIC(1)),
                                  static_cast<int>(PERIODIC(2))};
-  auto const ncut2 = ncut.norm2();
+  auto const with_replicas = (ncut.norm2() > 0);
 
   double u = 0;
   for (int i = offset; i < (local_interacting_particles.size() + offset); i++) {
@@ -146,33 +165,27 @@ double mdds_calculations(int force_flag, int energy_flag,
        * Minimum image convention has to be only considered when using
        * no replicas.
        */
-      auto const d = (ncut2 == 0)
-                         ? get_mi_vector(all_positions[i], all_positions[j])
-                         : (all_positions[i] - all_positions[j]);
+      auto const d = (with_replicas)
+                         ? (all_positions[i] - all_positions[j])
+                         : get_mi_vector(all_positions[i], all_positions[j]);
 
-      for (int nx = -ncut[0]; nx <= ncut[0]; nx++) {
-        auto const rnx = d[0] + nx * box_l[0];
-        for (int ny = -ncut[1]; ny <= ncut[1]; ny++) {
-          auto const rny = d[1] + ny * box_l[1];
-          for (int nz = -ncut[2]; nz <= ncut[2]; nz++) {
-            if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
-              if (nx * nx + ny * ny + nz * nz <= ncut2) {
-                auto const rnz = d[2] + nz * box_l[2];
-                if (energy_flag) {
-                  u += pair_potential({rnx, rny, rnz}, all_momenta[i],
-                                      all_momenta[j]);
-                }
+      if(energy_flag) {
+          for_each_image(ncut, [&](int nx, int ny, int nz) {
+              if(!(i == j && nx == 0 && ny == 0 && nz == 0)) {
+                  auto const rn = d + Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
+                  u += pair_potential(rn, all_momenta[i], all_momenta[j]);
+          }});
+      }
 
-                if (force_flag) {
-                  fi += pair_force({rnx, rny, rnz}, all_momenta[i],
-                                   all_momenta[j]);
-                }
-              }
-            }
-          } /* of  for nz */
-        }   /* of  for ny  */
-      }     /* of  for nx  */
+        if(force_flag) {
+            for_each_image(ncut, [&](int nx, int ny, int nz) {
+                if(!(i == j && nx == 0 && ny == 0 && nz == 0)) {
+                    auto const rn = d + Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
+                    fi += pair_force(rn, all_momenta[i], all_momenta[j]);
+                }});
+        }
     }
+
     if (force_flag) {
       local_interacting_particles[i - offset]->f.f += coulomb.Dprefactor * fi.f;
 #ifdef ROTATION

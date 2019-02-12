@@ -27,7 +27,7 @@ namespace Utils {
 /**
  * @brief Execute op for each pair of elements in (first, last] once.
  *
- * Diagonal elements are excluded. Pair are traversed ordered, so that
+ * Diagonal elements are excluded. Pairs are traversed ordered, so that
  * for op(*it, *jt), it holds that distance(it - first) < distance(jt - first),
  * and distance(it_n - first) < distance(it_n+1 - first) for consecutive calls.
  */

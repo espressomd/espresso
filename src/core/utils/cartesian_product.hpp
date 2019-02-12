@@ -12,7 +12,7 @@ namespace detail {
                 op((*is)...);
         }
 
-        void operator()(const Body& op) const {
+        void operator()(const Body&) const {
             ;
         }
     };
