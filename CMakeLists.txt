@@ -490,6 +490,9 @@ endif(WITH_BENCHMARKS)
 
 # Walberla 
 if (WITH_WALBERLA)
+  # This has to be here to be visible when find_package is called
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  
   include(cmake/FindwaLBerla.cmake)
   find_package(waLBerLa)
   if (${WALBERLA_FOUND})

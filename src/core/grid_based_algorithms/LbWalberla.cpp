@@ -21,7 +21,7 @@
 #include "field/vtk/FlagFieldCellFilter.h"
 #include "field/vtk/VTKWriter.h"
 #include "lbm/boundary/NoSlip.h"
-#include "lbm/boundary/SimpleUBB.h"
+#include "lbm/boundary/UBB.h"
 #include "lbm/communication/PdfFieldPackInfo.h"
 #include "lbm/field/AddToStorage.h"
 #include "lbm/field/PdfField.h"
@@ -99,7 +99,7 @@ LbWalberla::LbWalberla(double viscosity, double agrid,
       field::addFlagFieldToStorage<Flag_field_t>(m_blocks, "flag field");
 
   m_boundary_handling_id = m_blocks->addBlockData<Boundary_handling_t>(
-      LB_boundary_handling(m_flag_field_id, m_pdf_field_id, 0.0),
+      LB_boundary_handling(m_flag_field_id, m_pdf_field_id),
       "boundary handling");
 
   empty_flags_for_boundary(m_blocks, m_boundary_handling_id);
@@ -156,6 +156,27 @@ void LbWalberla::set_node_as_boundary(const Vector3i &node) {
         block->getData<Boundary_handling_t>(m_boundary_handling_id);
     boundary_handling->forceBoundary(No_slip_flag, node[0], node[1], node[2]);
   }
+}
+
+
+
+
+Vector3d LbWalberla::get_node_velocity_at_boundary(const Vector3i node) const {
+  Cell global_cell{node[0], node[1], node[2]};
+  // Get block which has the cell
+  const IBlock *block = m_blocks->getBlock(global_cell, 0);
+
+  // Transform coords to block local
+  Cell local_cell;
+  m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
+
+  const Boundary_handling_t *boundary_handling =
+      block->getData<Boundary_handling_t>(m_boundary_handling_id);
+  walberla::boundary::BoundaryUID uid =
+      boundary_handling->getBoundaryUID(UBB_flag);
+  return to_vector3d(
+      boundary_handling->getBoundaryCondition<UBB_t>(uid).getValue(
+          local_cell[0], local_cell[1], local_cell[2]));
 }
 
 void LbWalberla::remove_node_from_boundary(const Vector3i &node) {

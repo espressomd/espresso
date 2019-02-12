@@ -13,7 +13,7 @@
 #include "field/distributors/KernelDistributor.h"
 #include "field/interpolators/TrilinearFieldInterpolator.h"
 #include "lbm/boundary/NoSlip.h"
-#include "lbm/boundary/SimpleUBB.h"
+#include "lbm/boundary/UBB.h"
 #include "lbm/field/Adaptors.h"
 #include "lbm/field/PdfField.h"
 #include "lbm/lattice_model/D3Q19.h"
@@ -42,21 +42,16 @@ class LbWalberla {
   using Pdf_field_t = walberla::lbm::PdfField<Lattice_model_t>;
 
   using No_slip_t = walberla::lbm::NoSlip<Lattice_model_t, walberla::uint8_t>;
-  using UBB_t = walberla::lbm::SimpleUBB<Lattice_model_t, walberla::uint8_t>;
+  using UBB_t = walberla::lbm::UBB<Lattice_model_t, walberla::uint8_t>;
   using Boundary_conditions_t = boost::tuples::tuple<No_slip_t, UBB_t>;
   using Boundary_handling_t =
       walberla::BoundaryHandling<Flag_field_t, Lattice_model_t::Stencil,
                                  Boundary_conditions_t>;
-
   class LB_boundary_handling {
-  
-
   public:
     LB_boundary_handling(const walberla::BlockDataID &flag_field_id,
-                         const walberla::BlockDataID &pdf_field_id,
-                         const walberla::real_t top_velocity)
-        : m_flag_field_id(flag_field_id), m_pdf_field_id(pdf_field_id),
-          m_top_velocity(top_velocity) {}
+                         const walberla::BlockDataID &pdf_field_id)
+        : m_flag_field_id(flag_field_id), m_pdf_field_id(pdf_field_id) {}
 
     Boundary_handling_t *operator()(walberla::IBlock *const block) {
 
@@ -69,16 +64,14 @@ class LbWalberla {
           "boundary handling", flag_field, fluid,
           boost::tuples::make_tuple(
               No_slip_t("no slip", No_slip_flag, pdf_field),
-              UBB_t("velocity bounce back", UBB_flag, pdf_field, m_top_velocity,
-                    walberla::real_c(0), walberla::real_c(0))));
+              UBB_t("velocity bounce back", UBB_flag, pdf_field, nullptr)));
     }
 
   private:
     const walberla::BlockDataID m_flag_field_id;
     const walberla::BlockDataID m_pdf_field_id;
-
-    const walberla::real_t m_top_velocity;
   };
+
 
 public:
   LbWalberla(double viscosity, double agrid,
@@ -95,8 +88,8 @@ public:
   //  Vector3d get_stress_at_pos(const Vector3d& position);
 
   void set_node_as_boundary(const Vector3i &node);
-  //  void set_node_as_boundary(const Vector3i &node,
-  //                            const Vector3d &slip_velocity);
+  Vector3d get_node_velocity_at_boundary(const Vector3i node) const;
+  void set_node_velocity_at_boundary(const Vector3i node, const Vector3d v);
   void remove_node_from_boundary(const Vector3i &node);
   int get_node_is_boundary(const Vector3i &node);
 
