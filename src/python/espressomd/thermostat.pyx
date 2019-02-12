@@ -28,7 +28,9 @@ IF LB:
     from .lb import LBFluid
 IF LB_GPU:
     from .lb import LBFluidGPU
-
+if LB or LB_GPU:
+    from .lb cimport lb_lbcoupling_set_friction
+    from .lb cimport lb_lbcoupling_get_friction
 
 def AssertThermostatType(*allowedthermostats):
     """Assert that only a certain thermostat is active
@@ -100,8 +102,7 @@ cdef class Thermostat(object):
                 self.set_langevin(kT=thmst["kT"], gamma=thmst[
                                   "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"])
             if thmst["type"] == "LB":
-                self.set_lb(
-                    kT=thmst["kT"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["counter"])
+                self.set_lb(act_on_virtual=thmst["act_on_virtual"], seed=thmst["counter"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])
@@ -143,8 +144,8 @@ cdef class Thermostat(object):
         IF LB:
             if thermo_switch & THERMO_LB:
                 lb_dict = {}
+                lb_dict["friction"] = lb_lbcoupling_get_friction()
                 lb_dict["type"] = "LB"
-                lb_dict["kT"] = temperature
                 lb_dict["act_on_virtual"] = thermo_virtual
                 lb_dict["counter"] = lb_lbcoupling_get_rng_state()
                 thermo_list.append(lb_dict)
@@ -199,6 +200,7 @@ cdef class Thermostat(object):
         global thermo_switch
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+        lb_lbcoupling_set_friction(0.0)
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
@@ -337,7 +339,7 @@ cdef class Thermostat(object):
 
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
-        def set_lb(self, seed=None, act_on_virtual=True, LB_fluid=None):
+        def set_lb(self, seed=None, act_on_virtual=True, LB_fluid=None, friction=0.0):
             """
             Sets the LB thermostat.
 
@@ -364,8 +366,7 @@ cdef class Thermostat(object):
                 raise ValueError(
                     "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
-            global temperature
-            if temperature > 0. and not seed:
+            if lb_lbfluid_get_kT() > 0. and not seed:
                 raise ValueError(
                     "seed has to be given as keyword arg")
 
@@ -381,7 +382,7 @@ cdef class Thermostat(object):
             global thermo_virtual
             thermo_virtual = act_on_virtual
             mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
-
+            lb_lbcoupling_set_friction(friction)
             return True
 
     IF NPT:

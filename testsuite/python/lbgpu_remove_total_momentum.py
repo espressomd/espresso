@@ -50,8 +50,8 @@ class RemoveTotalMomentumTest(ut.TestCase):
             s.part[:].mass = 2. * (0.1 + np.random.random(100))
 
         lbf = espressomd.lb.LBFluidGPU(
-            agrid=agrid, fric=fric, dens=dens, visc=visc, tau=dt)
-
+            agrid=agrid, dens=dens, visc=visc, tau=dt)
+        s.thermostat.set_lb(LB_fluid=lbf, friction=fric)
         s.actors.add(lbf)
 
         s.integrator.run(300)
@@ -64,5 +64,4 @@ class RemoveTotalMomentumTest(ut.TestCase):
         self.assertAlmostEqual(np.min(p), 0., places=3)
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

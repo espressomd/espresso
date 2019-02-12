@@ -43,9 +43,9 @@ class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
         system.time_step = 0.05
         system.cell_system.skin = 0.1
         lbf = lb.LBFluid(kT=0.0,
-                         agrid=1, dens=1, visc=1.8, tau=system.time_step, fric=1)
+                         agrid=1, dens=1, visc=1.8, tau=system.time_step)
         system.actors.add(lbf)
-        system.thermostat.set_lb(LB_fluid=lbf, act_on_virtual=False)
+        system.thermostat.set_lb(LB_fluid=lbf, act_on_virtual=False, friction=1)
 
         # Setup boundaries
         walls = [lbboundaries.LBBoundary() for k in range(2)]

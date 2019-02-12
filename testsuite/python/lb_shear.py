@@ -38,7 +38,6 @@ SHEAR_RATE = 0.3
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
-             'fric': 1.0,
              'tau': TIME_STEP
              }
 

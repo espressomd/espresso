@@ -55,7 +55,6 @@ LB_PARAMETERS = {
     'visc': VISC,
     'bulk_visc': BULK_VISC,
     'tau': TAU,
-    'fric': 1.0,
     'dens': 1.0,
     'gamma_odd': 1.0,
     'gamma_even': 1.0

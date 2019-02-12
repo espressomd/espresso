@@ -85,7 +85,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
+            return "agrid", "dens", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
         # list of essential keys required for the fluid
         ####################################################
@@ -97,7 +97,6 @@ IF LB_GPU or LB:
         def default_params(self):
             return {"agrid": -1.0,
                     "dens": -1.0,
-                    "fric": -1.0,
                     "ext_force_density": [0.0, 0.0, 0.0],
                     "visc": -1.0,
                     "bulk_visc": -1.0,
@@ -139,9 +138,6 @@ IF LB_GPU or LB:
 
             python_lbfluid_set_agrid(self._params["agrid"])
 
-            if self._params["fric"] != default_params["fric"]:
-                python_lbfluid_set_friction(self._params["fric"])
-
             python_lbfluid_set_ext_force_density(
     self._params["ext_force_density"],
      self._params["agrid"],
@@ -179,10 +175,6 @@ IF LB_GPU or LB:
 
             if python_lbfluid_get_agrid(self._params["agrid"]):
                 raise Exception("lb_lbfluid_set_agrid error")
-
-            if not self._params["fric"] == default_params["fric"]:
-                if python_lbfluid_get_friction(self._params["fric"]):
-                    raise Exception("lb_lbfluid_set_friction error")
 
             if not self._params["ext_force_density"] == default_params["ext_force_density"]:
                 if python_lbfluid_get_ext_force_density(self._params["ext_force_density"], self._params["agrid"], self._params["tau"]):

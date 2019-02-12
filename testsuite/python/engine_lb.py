@@ -109,8 +109,9 @@ class SwimmerTest(ut.TestCase):
         self.prepare(S)
 
         lbm = espressomd.lb.LBFluid(
-            agrid=1.0, tau=S.time_step, fric=0.5, visc=1.0, dens=1.0)
+            agrid=1.0, tau=S.time_step, visc=1.0, dens=1.0)
         S.actors.add(lbm)
+        S.thermostat.set_lb(LB_fluid=lbm, friction=0.5)
 
         self.run_and_check(
             S, lbm, tests_common.abspath("data/engine_lb.vtk"))

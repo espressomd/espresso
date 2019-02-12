@@ -37,7 +37,6 @@ DENS = 1.7
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
-             'fric': 1.0,
              'tau': TIME_STEP
              }
 
