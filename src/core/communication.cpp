@@ -213,8 +213,9 @@ static void openmpi_fix_vader() {
 }
 #endif
 
-
 void walberla_mpi_init();
+
+
 
 void mpi_init() {
 #ifdef OPEN_MPI

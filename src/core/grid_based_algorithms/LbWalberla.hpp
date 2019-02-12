@@ -12,7 +12,6 @@
 #include "field/FlagField.h"
 #include "field/distributors/KernelDistributor.h"
 #include "field/interpolators/TrilinearFieldInterpolator.h"
-#include "lbm/boundary/NoSlip.h"
 #include "lbm/boundary/UBB.h"
 #include "lbm/field/Adaptors.h"
 #include "lbm/field/PdfField.h"
@@ -22,7 +21,6 @@
 
 const walberla::FlagUID Fluid_flag("fluid");
 const walberla::FlagUID UBB_flag("velocity bounce back");
-const walberla::FlagUID No_slip_flag("no slip");
 
 /** Class that runs and controls the LB on WaLBerla
  */
@@ -41,9 +39,8 @@ class LbWalberla {
   using Flag_field_t = walberla::FlagField<walberla::uint8_t>;
   using Pdf_field_t = walberla::lbm::PdfField<Lattice_model_t>;
 
-  using No_slip_t = walberla::lbm::NoSlip<Lattice_model_t, walberla::uint8_t>;
   using UBB_t = walberla::lbm::UBB<Lattice_model_t, walberla::uint8_t>;
-  using Boundary_conditions_t = boost::tuples::tuple<No_slip_t, UBB_t>;
+  using Boundary_conditions_t = boost::tuples::tuple<UBB_t>;
   using Boundary_handling_t =
       walberla::BoundaryHandling<Flag_field_t, Lattice_model_t::Stencil,
                                  Boundary_conditions_t>;
@@ -63,7 +60,6 @@ class LbWalberla {
       return new Boundary_handling_t(
           "boundary handling", flag_field, fluid,
           boost::tuples::make_tuple(
-              No_slip_t("no slip", No_slip_flag, pdf_field),
               UBB_t("velocity bounce back", UBB_flag, pdf_field, nullptr)));
     }
 

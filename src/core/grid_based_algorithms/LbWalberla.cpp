@@ -43,7 +43,7 @@ using namespace walberla;
 void walberla_mpi_init() {
 int argc = 0;
   char **argv = NULL;
-//  static mpi::Environment m_env = mpi::Environment(argc, argv);
+  static mpi::Environment m_env = mpi::Environment(argc, argv,false,false);
 }
 
 
@@ -148,15 +148,6 @@ void LbWalberla::print_vtk_density(char *filename) {
 
 void LbWalberla::integrate() { m_time_loop->run(); }
 
-void LbWalberla::set_node_as_boundary(const Vector3i &node) {
-  // TODO: Variable boundary flag and check length scale
-  auto block = m_blocks->getBlock(node[0], node[1], node[2]);
-  if (block != nullptr) {
-    Boundary_handling_t *boundary_handling =
-        block->getData<Boundary_handling_t>(m_boundary_handling_id);
-    boundary_handling->forceBoundary(No_slip_flag, node[0], node[1], node[2]);
-  }
-}
 
 
 
