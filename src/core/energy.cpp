@@ -149,7 +149,7 @@ void energy_calc(double *result) {
   calc_long_range_energies();
 
   auto local_parts = local_cells.particles();
-  Constraints::constraints.add_energy(local_parts, energy);
+  Constraints::constraints.add_energy(local_parts, sim_time, energy);
 
 #ifdef CUDA
   copy_energy_from_GPU();
