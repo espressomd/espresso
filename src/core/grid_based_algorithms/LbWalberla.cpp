@@ -36,6 +36,7 @@
 
 #include "timeloop/SweepTimeloop.h"
 
+
 #include <memory>
 
 using namespace walberla;
@@ -69,20 +70,19 @@ LbWalberla::LbWalberla(double viscosity, double agrid,
     grid_dimensions[i]=int(box_dimensions[i]/agrid);
   }
 
-  // Probably needs some args
-  int argc = 0;
   m_blocks = blockforest::createUniformBlockGrid(
-      node_grid[0], // blocks in x direction
-      node_grid[1], // blocks in y direction
-      node_grid[2], // blocks in z direction
-      grid_dimensions[0] /
-          node_grid[0], // number of cells per block in x direction
-      grid_dimensions[1] /
-          node_grid[1], // number of cells per block in y direction
-      grid_dimensions[2] /
-          node_grid[2], // number of cells per block in z direction
-      1,                // Lattice constant
-      false);           // more than one block can be on the same process
+      uint_c(node_grid[0]), // blocks in x direction
+      uint_c(node_grid[1]), // blocks in y direction
+      uint_c(node_grid[2]), // blocks in z direction
+      uint_c(grid_dimensions[0] /
+          node_grid[0]), // number of cells per block in x direction
+      uint_c(grid_dimensions[1] /
+          node_grid[1]), // number of cells per block in y direction
+      uint_c(grid_dimensions[2] /
+          node_grid[2]), // number of cells per block in z direction
+      real_c(1.0),                // Lattice constant
+      uint_c(node_grid[0]),uint_c(node_grid[1]),uint_c(node_grid[2]), // cpus per direction
+      true, true, true, false);
 
   m_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
