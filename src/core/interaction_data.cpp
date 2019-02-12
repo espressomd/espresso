@@ -71,8 +71,10 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/range/algorithm/fill.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
+
 #include <cstdlib>
 #include <cstring>
 
@@ -375,8 +377,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef SOFT_SPHERE
-      if (max_cut_current < data->soft_cut)
-        max_cut_current = data->soft_cut;
+      if (max_cut_current < (data->soft_cut + data->soft_offset))
+        max_cut_current = (data->soft_cut + data->soft_offset);
 #endif
 
 #ifdef AFFINITY
@@ -482,6 +484,11 @@ void realloc_ia_params(int nsize) {
 
   max_seen_particle_type = nsize;
   std::swap(ia_params, new_params);
+}
+
+void reset_ia_params() {
+  boost::fill(ia_params, IA_parameters{});
+  mpi_bcast_all_ia_params();
 }
 
 bool is_new_particle_type(int type) {

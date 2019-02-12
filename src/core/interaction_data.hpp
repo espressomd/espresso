@@ -756,9 +756,6 @@ extern double dipolar_cutoff;
     (through ghosts).  */
 extern double min_global_cut;
 
-/** Switch for nonbonded interaction exclusion */
-extern int ia_excl;
-
 /************************************************
  * exported functions
  ************************************************/
@@ -825,6 +822,11 @@ void realloc_ia_params(int nsize);
     electrostatic interactions is stored in max_cut_non_bonded. This
     value is used in the verlet pair list algorithm. */
 void recalc_maximal_cutoff();
+
+/**
+ * @brief Reset all interaction parameters to their defaults.
+ */
+void reset_ia_params();
 
 /** check whether all force calculation routines are properly initialized. */
 int interactions_sanity_checks();

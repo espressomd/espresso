@@ -152,6 +152,7 @@ cdef extern from "interaction_data.hpp":
     cdef void make_bond_type_exist(int type)
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
+    cdef void reset_ia_params()
 
 cdef extern from "lj.hpp":
     cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
