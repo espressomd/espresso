@@ -174,7 +174,7 @@ void lb_init() {
   /* initialize derived parameters */
   lb_reinit_parameters();
 
-  /* setup the initial particle velocity distribution */
+  /* setup the initial populations */
   lb_reinit_fluid();
 
   LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
