@@ -41,6 +41,7 @@
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "halo.hpp"
 #include "lb-d3q19.hpp"
+#include "random.hpp"
 #include "thermostat.hpp"
 #include "utils/Counter.hpp"
 #include "utils/matrix_vector_product.hpp"
@@ -65,15 +66,6 @@ static void lb_check_halo_regions(const LB_Fluid &lbfluid);
 /** Counter for the RNG */
 namespace {
 Utils::Counter<uint64_t> rng_counter_fluid;
-
-/*
- * @brief Salt for the RNGs
- *
- * This is to avoid correlations between the
- * noise on the particle coupling and the fluid
- * thermalization.
- */
-enum class RNGSalt { FLUID };
 } // namespace
 
 /** Struct holding the Lattice Boltzmann parameters */

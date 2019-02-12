@@ -20,14 +20,6 @@ void mpi_bast_lb_particle_coupling(int, int);
 struct LB_Particle_Coupling {
   Utils::Counter<uint64_t> rng_counter_coupling;
   /*
-   * @brief Salt for the RNGs
-   *
-   * This is to avoid correlations between the
-   * noise on the particle coupling and the fluid
-   * thermalization.
-   */
-  enum class RNGSalt { PARTICLES = 2 };
-  /*
    * @brief Friction constant for the particle coupling.
    */
   double friction = 0.0;

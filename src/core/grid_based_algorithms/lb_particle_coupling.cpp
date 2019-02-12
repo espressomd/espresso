@@ -171,9 +171,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
       using ctr_type = rng_type::ctr_type;
       using key_type = rng_type::key_type;
 
-      ctr_type c{
-          {lb_particle_coupling.rng_counter_coupling.value(),
-           static_cast<uint64_t>(LB_Particle_Coupling::RNGSalt::PARTICLES)}};
+      ctr_type c{{lb_particle_coupling.rng_counter_coupling.value(),
+                  static_cast<uint64_t>(RNGSalt::PARTICLES)}};
       lb_particle_coupling.rng_counter_coupling.increment();
 
       /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
