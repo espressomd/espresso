@@ -36,11 +36,14 @@
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include "utils/mpi/all_gatherv.hpp"
 #include "utils/cartesian_product.hpp"
+#include "utils/mpi/all_gatherv.hpp"
 
 #include <boost/mpi/collectives/all_gather.hpp>
 #include <boost/range/counting_range.hpp>
+#include <boost/range/algorithm_ext/for_each.hpp>
+#include <boost/range/iterator_range.hpp>
+#include <boost/range/numeric.hpp>
 
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS
@@ -85,74 +88,72 @@ auto pair_potential(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
   return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
 }
 
-template<typename F>
-void for_each_image(Vector3i const& ncut, F f) {
-    auto const ncut2 = ncut.norm2();
+template <typename F> void for_each_image(Vector3i const &ncut, F f) {
+  auto const ncut2 = ncut.norm2();
 
-    using Utils::cartesian_product;
-    using boost::counting_range;
+  using boost::counting_range;
+  using Utils::cartesian_product;
 
-    cartesian_product([&](int nx, int ny, int nz) {
-        if(nx*nx + ny*ny + nz*nz <= ncut2) {
-            f(nx, ny, nz);
+  cartesian_product(
+      [&](int nx, int ny, int nz) {
+        if (nx * nx + ny * ny + nz * nz <= ncut2) {
+          f(nx, ny, nz);
         }
-        } ,
-                      counting_range(-ncut[0], ncut[0] + 1),
-                      counting_range(-ncut[1], ncut[1] + 1),
-                      counting_range(-ncut[2], ncut[2] + 1));
+      },
+      counting_range(-ncut[0], ncut[0] + 1),
+      counting_range(-ncut[1], ncut[1] + 1),
+      counting_range(-ncut[2], ncut[2] + 1));
 }
 
 struct PosMom {
-    Vector3d pos;
-    Vector3d m;
+  Vector3d pos;
+  Vector3d m;
 
-    template<class Archive>
-            void serialize(Archive & ar, long int) {
-                ar & pos & m;
-            }
+  template <class Archive> void serialize(Archive &ar, long int) { ar &pos &m; }
 };
+
+int all_gather_posmom(std::vector<PosMom> const &local_posmom,
+                      std::vector<PosMom> &global_posmom,
+                      const boost::mpi::communicator &comm) {
+  std::vector<int> sizes(comm.size());
+
+  boost::mpi::all_gather(comm, static_cast<int>(local_posmom.size()), sizes);
+
+  auto const offset =
+      std::accumulate(sizes.begin(), sizes.begin() + comm.rank(), 0);
+  auto const total_size =
+      std::accumulate(sizes.begin() + comm.rank(), sizes.end(), offset);
+
+  global_posmom.resize(total_size);
+
+  Utils::Mpi::all_gatherv(comm, local_posmom.data(), local_posmom.size(),
+                          global_posmom.data(), sizes.data());
+
+  return offset;
+}
 
 double mdds_calculations(int force_flag, int energy_flag,
                          const ParticleRange &particles,
                          const boost::mpi::communicator &comm) {
-  std::vector<Vector3d> local_momenta;
-  local_momenta.reserve(particles.size());
-
-  std::vector<Vector3d> local_positions;
-  local_positions.reserve(particles.size());
-
   std::vector<Particle *> local_interacting_particles;
   local_interacting_particles.reserve(particles.size());
 
-  std::vector<PosMom> lpm;
-  lpm.reserve(particles.size());
+  std::vector<PosMom> local_posmom;
+  local_posmom.reserve(particles.size());
 
   for (auto &p : particles) {
     if (p.p.dipm != 0.0) {
       local_interacting_particles.emplace_back(&p);
-      local_momenta.emplace_back(p.calc_dip());
-      local_positions.emplace_back(folded_position(p.r.p));
-      lpm.emplace_back(PosMom{folded_position(p.r.p), p.calc_dip()});
+      local_posmom.emplace_back(PosMom{folded_position(p.r.p), p.calc_dip()});
     }
   }
 
   std::vector<PosMom> all_posmom;
-  int offset;
+  size_t offset;
   if (comm.size() > 1) {
-    std::vector<int> sizes(comm.size());
-
-    boost::mpi::all_gather(
-        comm, static_cast<int>(local_interacting_particles.size()), sizes);
-
-    offset = std::accumulate(sizes.begin(), sizes.begin() + comm.rank(), 0);
-    auto const total_size =
-        std::accumulate(sizes.begin() + comm.rank(), sizes.end(), offset);
-
-    all_posmom.resize(total_size);
-
-    Utils::Mpi::all_gatherv(comm, lpm.data(), lpm.size(), all_posmom.data(), sizes.data());
+    offset = all_gather_posmom(local_posmom, all_posmom, comm);
   } else {
-    std::swap(all_posmom, lpm);
+    std::swap(all_posmom, local_posmom);
     offset = 0;
   }
 
@@ -163,46 +164,58 @@ double mdds_calculations(int force_flag, int energy_flag,
                                  static_cast<int>(PERIODIC(2))};
   auto const with_replicas = (ncut.norm2() > 0);
 
+  if(force_flag) {
+      using boost::counting_range;
+
+      boost::for_each(counting_range<size_t>(offset, offset + local_interacting_particles.size()), local_interacting_particles,
+              [&all_posmom, &ncut, with_replicas](int i, Particle *p) {
+          auto const &pi = all_posmom[i];
+
+          auto const fi = boost::accumulate(counting_range<size_t>(0, all_posmom.size()), ParticleForce{}, [&](ParticleForce f, size_t j) {
+              auto const &pj = all_posmom[j];
+              auto const d = (with_replicas) ? (pi.pos - pj.pos) : get_mi_vector(pi.pos, pj.pos);
+
+              for_each_image(ncut, [&](int nx, int ny, int nz) {
+                  if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
+                      auto const rn =
+                              d + Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
+                      f += pair_force(rn, pi.m, pj.m);
+                  }
+              });
+
+              return f;
+          } );
+
+          p->f.f += coulomb.Dprefactor * fi.f;
+          p->f.torque += coulomb.Dprefactor * fi.torque;
+      });
+  }
+
   double u = 0;
-  for (int i = offset; i < (local_interacting_particles.size() + offset); i++) {
+  for (auto i = offset; i < (local_interacting_particles.size() + offset); i++) {
     ParticleForce fi{};
 
     auto const &pi = all_posmom[i];
 
     for (int j = 0; j < all_posmom.size(); j++) {
-        auto const &pj = all_posmom[j];
+      auto const &pj = all_posmom[j];
 
       /*
        * Minimum image convention has to be only considered when using
        * no replicas.
        */
-      auto const d = (with_replicas)
-                         ? (pi.pos - pj.pos)
-                         : get_mi_vector(pi.pos, pj.pos);
+      auto const d =
+          (with_replicas) ? (pi.pos - pj.pos) : get_mi_vector(pi.pos, pj.pos);
 
-      if(energy_flag) {
-          for_each_image(ncut, [&](int nx, int ny, int nz) {
-              if(!(i == j && nx == 0 && ny == 0 && nz == 0)) {
-                  auto const rn = d + Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
-                  u += pair_potential(rn, pi.m, pj.m);
-          }});
+      if (energy_flag) {
+        for_each_image(ncut, [&](int nx, int ny, int nz) {
+          if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
+            auto const rn =
+                d + Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
+            u += pair_potential(rn, pi.m, pj.m);
+          }
+        });
       }
-
-        if(force_flag) {
-            for_each_image(ncut, [&](int nx, int ny, int nz) {
-                if(!(i == j && nx == 0 && ny == 0 && nz == 0)) {
-                    auto const rn = d + Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
-                    fi += pair_force(rn, pi.m, pj.m);
-                }});
-        }
-    }
-
-    if (force_flag) {
-      local_interacting_particles[i - offset]->f.f += coulomb.Dprefactor * fi.f;
-#ifdef ROTATION
-      local_interacting_particles[i - offset]->f.torque +=
-          coulomb.Dprefactor * fi.torque;
-#endif
     }
   } /* of  j and i  */
   return 0.5 * coulomb.Dprefactor * u;
