@@ -4,6 +4,7 @@ from .lb cimport HydrodynamicInteraction
 IF LB_GPU:
     from .lb cimport lb_lbnode_is_index_valid
 from . import utils
+import os
 import numpy as np
 from espressomd.utils import is_valid_type
 
@@ -301,10 +302,17 @@ IF ELECTROKINETICS:
             ELSE:
                 raise Exception("'EK_ELECTROSTATIC_COUPLING' ist not active.")
 
-        # TODO:
-        def checkpoint(self):
-            raise Exception(
-                "Please implement this method in the pickle routine.")
+        def save_checkpoint(self,path):
+            tmp_path = path + ".__tmp__"
+            ek_save_checkpoint(utils.to_char_pointer(tmp_path))
+            ek_path = tmp_path + ".ek"
+            lb_path = tmp_path + ".lb"
+            os.rename(ek_path, path + ".ek")
+            os.rename(lb_path, path + ".lb")
+
+        def load_checkpoint(self,path):
+            self._activate_method()
+            ek_load_checkpoint(utils.to_char_pointer(path))
 
         def add_reaction(self, shape):
             raise Exception("This method is not implemented yet.")
@@ -362,6 +370,22 @@ IF ELECTROKINETICS:
         py_number_of_species = 0
         id = -1
         _params = {}
+
+        # __getstate__ and __setstate__ define the pickle interaction
+        def __getstate__(self):
+            odict = {}
+            odict["id"] = self.id
+            odict.update(self._params.copy())
+            return odict
+
+        def __setstate__(self, params):
+            self.id = params["id"]
+            params.pop("id")
+            self._params = params
+            self._set_params_in_es_core()
+
+        def __str__(self):
+            return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
