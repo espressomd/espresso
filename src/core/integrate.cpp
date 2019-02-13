@@ -133,35 +133,35 @@ void finalize_p_inst_npt();
 
 static void coulomb_sanity_check() {
   switch (coulomb.method) {
-    case COULOMB_NONE:
-      break;
-    case COULOMB_DH:
-      break;
-    case COULOMB_RF:
-      break;
+  case COULOMB_NONE:
+    break;
+  case COULOMB_DH:
+    break;
+  case COULOMB_RF:
+    break;
 #ifdef P3M
-    case COULOMB_P3M:
-      break;
+  case COULOMB_P3M:
+    break;
 #endif /*P3M*/
-    default: {
-      runtimeErrorMsg()
-              << "npt only works with P3M, Debye-Huckel or reaction field";
-    }
+  default: {
+    runtimeErrorMsg()
+        << "npt only works with P3M, Debye-Huckel or reaction field";
+  }
   }
 }
 
 static void dipole_sanity_check() {
   switch (coulomb.Dmethod) {
-    case DIPOLAR_NONE:
-      break;
+  case DIPOLAR_NONE:
+    break;
 #ifdef DP3M
-    case DIPOLAR_P3M:
-      break;
+  case DIPOLAR_P3M:
+    break;
 #endif /* DP3M */
-    default: {
-      runtimeErrorMsg()
-              << "NpT does not work with your dipolar method, please use P3M.";
-    }
+  default: {
+    runtimeErrorMsg()
+        << "NpT does not work with your dipolar method, please use P3M.";
+  }
   }
 }
 

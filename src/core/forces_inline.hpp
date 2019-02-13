@@ -255,69 +255,73 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 }
 
-static void calc_pair_coulomb_force(Particle *p1, Particle *p2, double *d, double dist, double dist2, Vector3d &force) {
+static void calc_pair_coulomb_force(Particle *p1, Particle *p2, double *d,
+                                    double dist, double dist2,
+                                    Vector3d &force) {
   const double q1q2 = p1->p.q * p2->p.q;
 
-  if (!q1q2) return;
+  if (!q1q2)
+    return;
 
   switch (coulomb.method) {
 #ifdef P3M
-    case COULOMB_ELC_P3M: {
-      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
+  case COULOMB_ELC_P3M: {
+    p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
 
-      // forces from the virtual charges
-      // they go directly onto the particles, since they are not pairwise forces
-      if (elc_params.dielectric_contrast_on)
-        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
-                                                     p2->f.f.data());
-      break;
-    }
-    case COULOMB_P3M_GPU:
-    case COULOMB_P3M: {
+    // forces from the virtual charges
+    // they go directly onto the particles, since they are not pairwise forces
+    if (elc_params.dielectric_contrast_on)
+      ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
+                                                   p2->f.f.data());
+    break;
+  }
+  case COULOMB_P3M_GPU:
+  case COULOMB_P3M: {
 #ifdef NPT
     double eng = p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
     if (integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
 #else
-      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
+    p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
 #endif
     break;
-    }
+  }
 #endif
-    case COULOMB_MMM1D:
-      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
-      break;
-    case COULOMB_MMM2D:
-      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
-      break;
+  case COULOMB_MMM1D:
+    add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
+    break;
+  case COULOMB_MMM2D:
+    add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
+    break;
 #ifdef SCAFACOS
-    case COULOMB_SCAFACOS:
+  case COULOMB_SCAFACOS:
     Scafacos::add_pair_force(p1, p2, d, dist, force.data());
     break;
 #endif
-    default:
-      break;
+  default:
+    break;
   }
 }
 
-static void calc_pair_dipole_force(Particle *p1, Particle *p2, double *d, double dist, double dist2, Vector3d &force) {
+static void calc_pair_dipole_force(Particle *p1, Particle *p2, double *d,
+                                   double dist, double dist2, Vector3d &force) {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-      // fall trough
-    case DIPOLAR_P3M: {
+  case DIPOLAR_MDLC_P3M:
+    // fall trough
+  case DIPOLAR_P3M: {
 #ifdef NPT
-      double eng = dp3m_add_pair_force(p1, p2, d, dist2, dist, force.data());
+    double eng = dp3m_add_pair_force(p1, p2, d, dist2, dist, force.data());
     if (integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
 #else
-      dp3m_add_pair_force(p1, p2, d, dist2, dist, force.data());
+    dp3m_add_pair_force(p1, p2, d, dist2, dist, force.data());
 #endif
-      break;
-    }
+    break;
+  }
 #endif /*ifdef DP3M */
-    default:
-      break;
+  default:
+    break;
   }
 }
 

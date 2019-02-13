@@ -660,17 +660,17 @@ int mdlc_sanity_checks() {
 static int set_dipole_mesh() {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-    case DIPOLAR_P3M:
-      set_dipolar_method_local(DIPOLAR_MDLC_P3M);
-      return 0;
+  case DIPOLAR_MDLC_P3M:
+  case DIPOLAR_P3M:
+    set_dipolar_method_local(DIPOLAR_MDLC_P3M);
+    return 0;
 #endif
-    case DIPOLAR_MDLC_DS:
-    case DIPOLAR_DS:
-      set_dipolar_method_local(DIPOLAR_MDLC_DS);
-      return 0;
-    default:
-      return 1;
+  case DIPOLAR_MDLC_DS:
+  case DIPOLAR_DS:
+    set_dipolar_method_local(DIPOLAR_MDLC_DS);
+    return 0;
+  default:
+    return 1;
   }
 }
 

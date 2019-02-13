@@ -497,45 +497,45 @@ void on_boxl_change() {
 
 static void init_coulomb() {
   switch (coulomb.method) {
-    case COULOMB_DH:
-      break;
+  case COULOMB_DH:
+    break;
 #ifdef P3M
-    case COULOMB_ELC_P3M:
-      ELC_init();
-      // fall through
-    case COULOMB_P3M:
-      p3m_init();
-      break;
-    case COULOMB_P3M_GPU:
-      break;
+  case COULOMB_ELC_P3M:
+    ELC_init();
+    // fall through
+  case COULOMB_P3M:
+    p3m_init();
+    break;
+  case COULOMB_P3M_GPU:
+    break;
 #endif
-    case COULOMB_MMM1D:
-      MMM1D_init();
-      break;
-    case COULOMB_MMM2D:
-      MMM2D_init();
-      break;
-    case COULOMB_MAGGS:
-      maggs_init();
-      /* Maggs electrostatics needs ghost velocities */
-      on_ghost_flags_change();
-      break;
-    default:
-      break;
+  case COULOMB_MMM1D:
+    MMM1D_init();
+    break;
+  case COULOMB_MMM2D:
+    MMM2D_init();
+    break;
+  case COULOMB_MAGGS:
+    maggs_init();
+    /* Maggs electrostatics needs ghost velocities */
+    on_ghost_flags_change();
+    break;
+  default:
+    break;
   }
 }
 
 static void init_dipole() {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-      // fall through
-    case DIPOLAR_P3M:
-      dp3m_init();
-      break;
+  case DIPOLAR_MDLC_P3M:
+    // fall through
+  case DIPOLAR_P3M:
+    dp3m_init();
+    break;
 #endif
-    default:
-      break;
+  default:
+    break;
   }
 }
 

@@ -168,103 +168,103 @@ void energy_calc(double *result) {
 static void calc_long_range_coulomb_energy() {
   switch (coulomb.method) {
 #ifdef P3M
-    case COULOMB_P3M_GPU:
-      printf(
-              "long range energy calculation not implemented for GPU P3M\n"); // TODO
-      // make
-      // right
-      break;
-    case COULOMB_P3M:
-      p3m_charge_assign();
+  case COULOMB_P3M_GPU:
+    printf(
+        "long range energy calculation not implemented for GPU P3M\n"); // TODO
+    // make
+    // right
+    break;
+  case COULOMB_P3M:
+    p3m_charge_assign();
+    energy.coulomb[1] = p3m_calc_kspace_forces(0, 1);
+    break;
+  case COULOMB_ELC_P3M:
+    // assign the original charges first
+    // they may not have been assigned yet
+    p3m_charge_assign();
+    if (!elc_params.dielectric_contrast_on)
       energy.coulomb[1] = p3m_calc_kspace_forces(0, 1);
-      break;
-    case COULOMB_ELC_P3M:
-      // assign the original charges first
-      // they may not have been assigned yet
-      p3m_charge_assign();
-      if (!elc_params.dielectric_contrast_on)
-        energy.coulomb[1] = p3m_calc_kspace_forces(0, 1);
-      else {
-        energy.coulomb[1] = 0.5 * p3m_calc_kspace_forces(0, 1);
-        energy.coulomb[1] += 0.5 * ELC_P3M_dielectric_layers_energy_self();
+    else {
+      energy.coulomb[1] = 0.5 * p3m_calc_kspace_forces(0, 1);
+      energy.coulomb[1] += 0.5 * ELC_P3M_dielectric_layers_energy_self();
 
-        //  assign both original and image charges now
-        ELC_p3m_charge_assign_both();
-        ELC_P3M_modify_p3m_sums_both();
+      //  assign both original and image charges now
+      ELC_p3m_charge_assign_both();
+      ELC_P3M_modify_p3m_sums_both();
 
-        energy.coulomb[1] += 0.5 * p3m_calc_kspace_forces(0, 1);
+      energy.coulomb[1] += 0.5 * p3m_calc_kspace_forces(0, 1);
 
-        // assign only the image charges now
-        ELC_p3m_charge_assign_image();
-        ELC_P3M_modify_p3m_sums_image();
+      // assign only the image charges now
+      ELC_p3m_charge_assign_image();
+      ELC_P3M_modify_p3m_sums_image();
 
-        energy.coulomb[1] -= 0.5 * p3m_calc_kspace_forces(0, 1);
-      }
-      energy.coulomb[2] = ELC_energy();
-      break;
+      energy.coulomb[1] -= 0.5 * p3m_calc_kspace_forces(0, 1);
+    }
+    energy.coulomb[2] = ELC_energy();
+    break;
 #endif
 #ifdef SCAFACOS
-    case COULOMB_SCAFACOS:
+  case COULOMB_SCAFACOS:
     assert(!Scafacos::dipolar());
     energy.coulomb[1] += Scafacos::long_range_energy();
     break;
 #endif
-    case COULOMB_MMM2D:
-      *energy.coulomb += MMM2D_far_energy();
-      *energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
-      break;
-      /* calculate electric part of energy (only for MAGGS) */
-    case COULOMB_MAGGS:
-      *energy.coulomb += maggs_electric_energy();
-      break;
-    default:
-      break;
+  case COULOMB_MMM2D:
+    *energy.coulomb += MMM2D_far_energy();
+    *energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
+    break;
+    /* calculate electric part of energy (only for MAGGS) */
+  case COULOMB_MAGGS:
+    *energy.coulomb += maggs_electric_energy();
+    break;
+  default:
+    break;
   }
 }
 
 static void calc_long_range_dipole_energy() {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
-    case DIPOLAR_P3M:
-      dp3m_dipole_assign();
-      energy.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
-      break;
-    case DIPOLAR_MDLC_P3M:
-      dp3m_dipole_assign();
-      energy.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
-      energy.dipolar[2] = add_mdlc_energy_corrections();
-      break;
+  case DIPOLAR_P3M:
+    dp3m_dipole_assign();
+    energy.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
+    break;
+  case DIPOLAR_MDLC_P3M:
+    dp3m_dipole_assign();
+    energy.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
+    energy.dipolar[2] = add_mdlc_energy_corrections();
+    break;
 #endif
-    case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-      energy.dipolar[1] = dawaanr_calculations(0, 1);
-      break;
+  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
+    energy.dipolar[1] = dawaanr_calculations(0, 1);
+    break;
 #ifdef DP3M
-    case DIPOLAR_MDLC_DS:
-      energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
-      energy.dipolar[2] = add_mdlc_energy_corrections();
-      break;
+  case DIPOLAR_MDLC_DS:
+    energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
+    energy.dipolar[2] = add_mdlc_energy_corrections();
+    break;
 #endif
-    case DIPOLAR_DS:
-      energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
-      break;
-    case DIPOLAR_DS_GPU:
-      // Do nothing, it's an actor.
-      break;
+  case DIPOLAR_DS:
+    energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
+    break;
+  case DIPOLAR_DS_GPU:
+    // Do nothing, it's an actor.
+    break;
 #ifdef DIPOLAR_BARNES_HUT
-    case DIPOLAR_BH_GPU:
-      // Do nothing, it's an actor.
-      break;
+  case DIPOLAR_BH_GPU:
+    // Do nothing, it's an actor.
+    break;
 #endif // DIPOLAR_BARNES_HUT
 #ifdef SCAFACOS_DIPOLES
-    case DIPOLAR_SCAFACOS:
+  case DIPOLAR_SCAFACOS:
     assert(Scafacos::dipolar());
     energy.dipolar[1] = Scafacos::long_range_energy();
 #endif
-    case DIPOLAR_NONE:
-      break;
-    default:
-      runtimeErrorMsg() << "unknown dipolar method";
-      break;
+  case DIPOLAR_NONE:
+    break;
+  default:
+    runtimeErrorMsg() << "unknown dipolar method";
+    break;
   }
 }
 

@@ -1247,19 +1247,19 @@ void ELC_init() {
 
 static int switch_error() {
   switch (coulomb.method) {
-    case COULOMB_P3M_GPU: {
-      runtimeErrorMsg()
-              << "ELC tuning failed, ELC is not set up to work with the GPU P3M";
-      return ES_ERROR;
-    }
-    case COULOMB_ELC_P3M:
+  case COULOMB_P3M_GPU: {
+    runtimeErrorMsg()
+        << "ELC tuning failed, ELC is not set up to work with the GPU P3M";
+    return ES_ERROR;
+  }
+  case COULOMB_ELC_P3M:
 
-    case COULOMB_P3M:
-      p3m.params.epsilon = P3M_EPSILON_METALLIC;
-      coulomb.method = COULOMB_ELC_P3M;
-      break;
-    default:
-      return ES_ERROR;
+  case COULOMB_P3M:
+    p3m.params.epsilon = P3M_EPSILON_METALLIC;
+    coulomb.method = COULOMB_ELC_P3M;
+    break;
+  default:
+    return ES_ERROR;
   }
 }
 

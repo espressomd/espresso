@@ -182,71 +182,69 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 }
 
 static void add_pair_coulomb_energy(Particle *p1, Particle *p2, double *d,
-                                    double dist, double dist2){
+                                    double dist, double dist2) {
   double ret = 0;
   if (coulomb.method != COULOMB_NONE) {
     /* real space Coulomb */
     switch (coulomb.method) {
 #ifdef P3M
-      case COULOMB_P3M_GPU:
-      case COULOMB_P3M:
-        ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
-        break;
-      case COULOMB_ELC_P3M:
-        ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
-        if (elc_params.dielectric_contrast_on)
-          ret += 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2);
-        break;
+    case COULOMB_P3M_GPU:
+    case COULOMB_P3M:
+      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
+      break;
+    case COULOMB_ELC_P3M:
+      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
+      if (elc_params.dielectric_contrast_on)
+        ret += 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2);
+      break;
 #endif
 #ifdef SCAFACOS
-      case COULOMB_SCAFACOS:
+    case COULOMB_SCAFACOS:
       ret += Scafacos::pair_energy(p1, p2, dist);
       break;
 #endif
-      case COULOMB_DH:
-        ret = dh_coulomb_pair_energy(p1, p2, dist);
-        break;
-      case COULOMB_RF:
-        ret = rf_coulomb_pair_energy(p1, p2, dist);
-        break;
-      case COULOMB_INTER_RF:
-        // this is done above as interaction
-        ret = 0;
-        break;
-      case COULOMB_MMM1D:
-        ret = mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
-        break;
-      case COULOMB_MMM2D:
-        ret = mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
-        break;
-      default:
-        ret = 0.;
+    case COULOMB_DH:
+      ret = dh_coulomb_pair_energy(p1, p2, dist);
+      break;
+    case COULOMB_RF:
+      ret = rf_coulomb_pair_energy(p1, p2, dist);
+      break;
+    case COULOMB_INTER_RF:
+      // this is done above as interaction
+      ret = 0;
+      break;
+    case COULOMB_MMM1D:
+      ret = mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
+      break;
+    case COULOMB_MMM2D:
+      ret = mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+      break;
+    default:
+      ret = 0.;
     }
     energy.coulomb[0] += ret;
   }
 }
 
-
 static void add_pair_dipole_energy(Particle *p1, Particle *p2, double *d,
-                                   double dist, double dist2){
+                                   double dist, double dist2) {
   double ret = 0;
   if (coulomb.Dmethod != DIPOLAR_NONE) {
     // ret=0;
     switch (coulomb.Dmethod) {
 #ifdef DP3M
-      case DIPOLAR_MDLC_P3M:
-        // fall trough
-      case DIPOLAR_P3M:
-        ret = dp3m_pair_energy(p1, p2, d, dist2, dist);
-        break;
+    case DIPOLAR_MDLC_P3M:
+      // fall trough
+    case DIPOLAR_P3M:
+      ret = dp3m_pair_energy(p1, p2, d, dist2, dist);
+      break;
 #endif
-      default:
-        ret = 0;
+    default:
+      ret = 0;
     }
     energy.dipolar[0] += ret;
   }
 }
-
 
 /** Add non bonded energies and short range Coulomb between a pair of particles.
  *  @param p1        pointer to particle 1.
