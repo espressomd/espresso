@@ -35,10 +35,10 @@ class SimplePoreConstraint(ut.TestCase):
         pore = SimplePore(
             axis=[1., 0., 0.], radius=2., smoothing_radius=.1, length=2., center=[5., 5., 5.])
 
-        d, _ = pore.call_method("calc_distance", position=[.0, .0, .0])
+        d, _ = pore.calc_distance(position=[.0, .0, .0])
         self.assertGreater(d, 0.)
 
-        d, _ = pore.call_method("calc_distance", position=[5., 5., .0])
+        d, _ = pore.calc_distance(position=[5., 5., .0])
         self.assertLess(d, 0.)
 
     def test_stability(self):
