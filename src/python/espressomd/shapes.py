@@ -241,6 +241,7 @@ class Torus(ScriptInterfaceHelper):
     _so_name = "Shapes::Torus"
     _so_bind_methods = ['calc_distance']
 
+
 @script_interface_register
 class Wall(ScriptInterfaceHelper):
 
