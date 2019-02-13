@@ -18,7 +18,13 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
 @script_interface_register
-class Cylinder(ScriptInterfaceHelper):
+class Shape(ScriptInterfaceHelper):
+    _so_name = "Shapes::Shape"
+    _so_bind_methods = ("calc_distance",)
+
+
+@script_interface_register
+class Cylinder(Shape):
 
     """
     A cylinder shape.
@@ -41,11 +47,10 @@ class Cylinder(ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::Cylinder"
-    _so_bind_methods = ['calc_distance']
 
 
 @script_interface_register
-class Ellipsoid(ScriptInterfaceHelper):
+class Ellipsoid(Shape):
 
     """
     An ellipsoid.
@@ -66,11 +71,10 @@ class Ellipsoid(ScriptInterfaceHelper):
        out of the mantel, for -1 it points inward.
     """
     _so_name = "Shapes::Ellipsoid"
-    _so_bind_methods = ['calc_distance']
 
 
 @script_interface_register
-class HollowCone(ScriptInterfaceHelper):
+class HollowCone(Shape):
 
     """
     A hollow cone shape.
@@ -95,11 +99,10 @@ class HollowCone(ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::HollowCone"
-    _so_bind_methods = ['calc_distance']
 
 
 @script_interface_register
-class Rhomboid(ScriptInterfaceHelper):
+class Rhomboid(Shape):
 
     """
     An parallelepiped.
@@ -120,11 +123,10 @@ class Rhomboid(ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::Rhomboid"
-    _so_bind_methods = ['calc_distance']
 
 
 @script_interface_register
-class Slitpore(ScriptInterfaceHelper):
+class Slitpore(Shape):
 
     """
 
@@ -143,11 +145,10 @@ class Slitpore(ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::Slitpore"
-    _so_bind_methods = ['calc_distance']
 
 
 @script_interface_register
-class Sphere(ScriptInterfaceHelper):
+class Sphere(Shape):
 
     """
     A sphere.
@@ -164,11 +165,10 @@ class Sphere(ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::Sphere"
-    _so_bind_methods = ['calc_distance']
 
 
 @script_interface_register
-class SpheroCylinder(ScriptInterfaceHelper):
+class SpheroCylinder(Shape):
 
     """
     A cylinder with hemispheres as caps.
@@ -189,11 +189,10 @@ class SpheroCylinder(ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::SpheroCylinder"
-    _so_bind_methods = ['calc_distance']
 
 
 @script_interface_register
-class Stomatocyte(ScriptInterfaceHelper):
+class Stomatocyte(Shape):
 
     """
     Attributes
@@ -215,11 +214,10 @@ class Stomatocyte(ScriptInterfaceHelper):
     """
 
     _so_name = "Shapes::Stomatocyte"
-    _so_bind_methods = ['calc_distance']
 
 
 @script_interface_register
-class Torus(ScriptInterfaceHelper):
+class Torus(Shape):
 
     """
     A torus shape.
@@ -239,11 +237,10 @@ class Torus(ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::Torus"
-    _so_bind_methods = ['calc_distance']
 
 
 @script_interface_register
-class Wall(ScriptInterfaceHelper):
+class Wall(Shape):
 
     """
     An infinite plane.
@@ -257,11 +254,10 @@ class Wall(ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::Wall"
-    _so_bind_methods = ['calc_distance']
 
 
 @script_interface_register
-class SimplePore(ScriptInterfaceHelper):
+class SimplePore(Shape):
 
     """
     Two parallel infinite planes, and a cylindrical orfice connecting them.
@@ -283,4 +279,3 @@ class SimplePore(ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::SimplePore"
-    _so_bind_methods = ['calc_distance']
