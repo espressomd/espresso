@@ -4,8 +4,12 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "statistics.hpp"
-#include <electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp>
-#include <electrostatics_magnetostatics/p3m-dipolar.hpp>
+#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
+
+#ifdef ELECTROSTATICS
+#ifdef DIPOLES
 
 void pressure_n_dipolar(int &n_dipolar) {
   switch (coulomb.Dmethod) {
@@ -374,3 +378,6 @@ int mdlc_correction_set_dipole_mesh() {
     return 1;
   }
 }
+
+#endif // DIPOLES
+#endif // ELECTROSTATICS

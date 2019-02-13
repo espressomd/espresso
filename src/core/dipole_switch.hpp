@@ -3,6 +3,9 @@
 
 #include "statistics.hpp"
 
+#ifdef ELECTROSTATICS
+#ifdef DIPOLES
+
 void pressure_n_dipolar(int &n_dipolar);
 void pressure_calc_long_range_dipole_force(Observable_stat &virials,
                                            Observable_stat &p_tensor);
@@ -32,4 +35,6 @@ void energy_n_dipolar(int &n_dipolar);
 
 int mdlc_correction_set_dipole_mesh();
 
+#endif // DIPOLES
+#endif // ELECTROSTATICS
 #endif // ESPRESSO_DIPOLE_SWITCH_HPP

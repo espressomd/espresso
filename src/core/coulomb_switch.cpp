@@ -9,6 +9,7 @@
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp" // bcast dp3m
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "errorhandling.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp" // skin
@@ -17,6 +18,8 @@
 #include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp" // nptiso
 #include "statistics.hpp"
+
+#ifdef ELECTROSTATICS
 
 void pressure_inline_add_pair_pressure(Particle *p1, Particle *p2, double *d,
                                        double dist, double dist2,
@@ -680,6 +683,7 @@ int iccp3m_sanity_check() {
 }
 
 int elc_switch_error() {
+#ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_P3M_GPU: {
     runtimeErrorMsg()
@@ -695,9 +699,11 @@ int elc_switch_error() {
   default:
     return ES_ERROR;
   }
+#endif
 }
 
 void bcast_coulomb_params() {
+#ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE:
     // fall through, scafacos has internal parameter propagation
@@ -738,9 +744,11 @@ void bcast_coulomb_params() {
             this_node, coulomb.method);
     errexit();
   }
+#endif
 }
 
 void bcast_dipole_params() {
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
     break;
@@ -774,4 +782,7 @@ void bcast_dipole_params() {
             this_node, coulomb.Dmethod);
     errexit();
   }
+#endif
 }
+
+#endif // ELECTROSTATICS

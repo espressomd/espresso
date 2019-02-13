@@ -3,6 +3,8 @@
 
 #include "statistics.hpp"
 
+#ifdef ELECTROSTATICS
+
 void pressure_inline_add_pair_pressure(Particle *p1, Particle *p2, double *d,
                                        double dist, double dist2,
                                        Observable_stat &virials,
@@ -46,4 +48,5 @@ int elc_switch_error();
 void bcast_coulomb_params();
 void bcast_dipole_params();
 
+#endif // ELECTROSTATICS
 #endif // ESPRESSO_COULOMB_SWITCH_HPP
