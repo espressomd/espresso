@@ -39,6 +39,8 @@
 
 #include <memory>
 
+#include "boost/optional.hpp"
+
 using namespace walberla;
 
 void walberla_mpi_init() {
@@ -82,7 +84,7 @@ LbWalberla::LbWalberla(double viscosity, double agrid,
           node_grid[2]), // number of cells per block in z direction
       real_c(1.0),                // Lattice constant
       uint_c(node_grid[0]),uint_c(node_grid[1]),uint_c(node_grid[2]), // cpus per direction
-      true, true, true, false);
+      true, true, true, true);
 
   m_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
@@ -149,62 +151,74 @@ void LbWalberla::print_vtk_density(char *filename) {
 void LbWalberla::integrate() { m_time_loop->run(); }
 
 
-void LbWalberla::set_node_velocity_at_boundary(const Vector3i node,
-                                               const Vector3d v) {
-  Cell global_cell{node[0], node[1], node[2]};
-  // Get block which has the cell
+
+boost::optional<LbWalberla::BlockAndCell> LbWalberla::get_block_and_cell(const Vector3i& node) const {
+  // Get block and local cell
+  Cell global_cell{uint_c(node[0]),uint_c(node[1]),uint_c(node[2])};
   auto block = m_blocks->getBlock(global_cell, 0);
+  // Return if we don't have the cell
+  if (!block) return {boost::none};
 
   // Transform coords to block local
   Cell local_cell;
   m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
+  return {{block,local_cell}};
+}
+
+bool LbWalberla::set_node_velocity_at_boundary(const Vector3i node,
+  const Vector3d v) {
+  auto bc = get_block_and_cell(node);
+  // Return if we don't have the cell.
+  if (!bc) return false;
+
   UBB_t::Velocity velocity(v[0], v[1], v[2]);
 
   Boundary_handling_t *boundary_handling =
-      block->getData<Boundary_handling_t>(m_boundary_handling_id);
+      (*bc).block->getData<Boundary_handling_t>(m_boundary_handling_id);
   walberla::boundary::BoundaryUID uid =
       boundary_handling->getBoundaryUID(UBB_flag);
   boundary_handling->getBoundaryCondition<UBB_t>(uid).registerCell(
-      boundary_handling->getNearBoundaryFlag(), local_cell[0], local_cell[1],
-      local_cell[2], velocity);
+      boundary_handling->getNearBoundaryFlag(), (*bc).cell[0], (*bc).cell[1],
+      (*bc).cell[2], velocity);
+  return true;
 }
 
 
 
-Vector3d LbWalberla::get_node_velocity_at_boundary(const Vector3i node) const {
-  Cell global_cell{node[0], node[1], node[2]};
-  // Get block which has the cell
-  const IBlock *block = m_blocks->getBlock(global_cell, 0);
-
-  // Transform coords to block local
-  Cell local_cell;
-  m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
-
+boost::optional<Vector3d> LbWalberla::get_node_velocity_at_boundary(const Vector3i& node) const {
+  auto bc = get_block_and_cell(node);
+  // return if we don't have the cell
+  if (!bc) return {boost::none};
   const Boundary_handling_t *boundary_handling =
-      block->getData<Boundary_handling_t>(m_boundary_handling_id);
+      (*bc).block->getData<Boundary_handling_t>(m_boundary_handling_id);
   walberla::boundary::BoundaryUID uid =
       boundary_handling->getBoundaryUID(UBB_flag);
+  
+  if (!boundary_handling->isBoundary((*bc).cell))
+    return {boost::none};
+
   return to_vector3d(
       boundary_handling->getBoundaryCondition<UBB_t>(uid).getValue(
-          local_cell[0], local_cell[1], local_cell[2]));
+          (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]));
 }
 
-void LbWalberla::remove_node_from_boundary(const Vector3i &node) {
-  auto block = m_blocks->getBlock(node[0], node[1], node[2]);
-  if (block != nullptr) {
+bool LbWalberla::remove_node_from_boundary(const Vector3i &node) {
+  auto bc=get_block_and_cell(node);
+  if (!bc) return false;
     Boundary_handling_t *boundary_handling =
-        block->getData<Boundary_handling_t>(m_boundary_handling_id);
-    boundary_handling->removeBoundary(node[0], node[1], node[2]);
-  }
+        (*bc).block->getData<Boundary_handling_t>(m_boundary_handling_id);
+    boundary_handling->removeBoundary((*bc).cell[0],(*bc).cell[1],(*bc).cell[2]);
+return true;
 }
 
-int LbWalberla::get_node_is_boundary(const Vector3i &node) {
-  auto block = m_blocks->getBlock(node[0], node[1], node[2]);
-  if (block == nullptr)
-    return -1;
+
+boost::optional<bool> LbWalberla::get_node_is_boundary(const Vector3i &node) const {
+  auto bc = get_block_and_cell(node);
+  if (!bc) return {boost::none};
+
   Boundary_handling_t *boundary_handling =
-      block->getData<Boundary_handling_t>(m_boundary_handling_id);
-  return boundary_handling->isBoundary(node[0], node[1], node[2]);
+      (*bc).block->getData<Boundary_handling_t>(m_boundary_handling_id);
+  return {boundary_handling->isBoundary((*bc).cell)};
 }
 
 std::shared_ptr<walberla::vtk::VTKOutput>
@@ -238,24 +252,20 @@ LbWalberla::create_fluid_field_vtk_writer(
   return pdf_field_vtk_writer;
 }
 
-Vector3d LbWalberla::get_node_velocity(const Vector3i node) const {
-  Cell global_cell{node[0], node[1], node[2]};
-  // Get block which has the cell
-  const IBlock *block = m_blocks->getBlock(global_cell, 0);
-
-  // Transform coords to block local
-  Cell local_cell;
-  m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
-
+boost::optional<Vector3d> LbWalberla::get_node_velocity(const Vector3i node) const {
+  auto bc = get_block_and_cell(node);
+  if (!bc) return {boost::none};
   // Get pdf field
   //     auto const& pdf_field = block->getData<Pdf_field_t>(m_pdf_field_id);
   auto const &vel_adaptor =
-      block->getData<VelocityAdaptor>(m_velocity_adaptor_id);
-  return to_vector3d(vel_adaptor->get(local_cell));
+      (*bc).block->getData<VelocityAdaptor>(m_velocity_adaptor_id);
+  return to_vector3d(vel_adaptor->get((*bc).cell));
 }
 
-Vector3d LbWalberla::get_velocity_at_pos(const Vector3d &pos) const {
+boost::optional<Vector3d> LbWalberla::get_velocity_at_pos(const Vector3d &pos) const {
   auto block = m_blocks->getBlock(to_vector3(pos));
+  if (!block) return {boost::none};
+
   auto *velocity_interpolator = block->getData<VectorFieldAdaptorInterpolator>(
       m_velocity_interpolator_id);
   Vector3<real_t> v;
@@ -263,20 +273,14 @@ Vector3d LbWalberla::get_velocity_at_pos(const Vector3d &pos) const {
   return to_vector3d(v);
 }
 
-void LbWalberla::set_node_velocity(const Vector3i node, const Vector3d v) {
-  Cell global_cell{node[0], node[1], node[2]};
-  // Get block which has the cell
-  auto block = m_blocks->getBlock(global_cell, 0);
+bool LbWalberla::set_node_velocity(const Vector3i& node, const Vector3d v) {
+  auto bc= get_block_and_cell(node);
+  if (!bc) return false;
+  
+  auto pdf_field = (*bc).block->getData<Pdf_field_t>(m_pdf_field_id);
+  const real_t density = pdf_field->getDensity((*bc).cell);
 
-  // Transform coords to block local
-  Cell local_cell;
-  m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
-
-  // Get pdf field
-  auto pdf_field = block->getData<Pdf_field_t>(m_pdf_field_id);
-  const real_t density = pdf_field->getDensity(local_cell);
-
-  pdf_field->setDensityAndVelocity(local_cell,
+  pdf_field->setDensityAndVelocity((*bc).cell,
                                    Vector3<double>{v[0], v[1], v[2]}, density);
 }
 
