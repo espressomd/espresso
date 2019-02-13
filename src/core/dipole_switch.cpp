@@ -381,37 +381,37 @@ int mdlc_correction_set_dipole_mesh() {
 
 void bcast_dipole_params() {
   switch (coulomb.Dmethod) {
-    case DIPOLAR_NONE:
-      break;
+  case DIPOLAR_NONE:
+    break;
 #ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-      MPI_Bcast(&dlc_params, sizeof(DLC_struct), MPI_BYTE, 0, comm_cart);
-      // fall through
-    case DIPOLAR_P3M:
-      MPI_Bcast(&dp3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0,
-                comm_cart);
-      break;
+  case DIPOLAR_MDLC_P3M:
+    MPI_Bcast(&dlc_params, sizeof(DLC_struct), MPI_BYTE, 0, comm_cart);
+    // fall through
+  case DIPOLAR_P3M:
+    MPI_Bcast(&dp3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0,
+              comm_cart);
+    break;
 #endif
-    case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-      break;
-    case DIPOLAR_MDLC_DS:
-      // fall trough
-    case DIPOLAR_DS:
-      break;
-    case DIPOLAR_DS_GPU:
-      break;
+  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
+    break;
+  case DIPOLAR_MDLC_DS:
+    // fall trough
+  case DIPOLAR_DS:
+    break;
+  case DIPOLAR_DS_GPU:
+    break;
 #ifdef DIPOLAR_BARNES_HUT
-    case DIPOLAR_BH_GPU:
-      break;
+  case DIPOLAR_BH_GPU:
+    break;
 #endif
-    case DIPOLAR_SCAFACOS:
-      break;
-    default:
-      fprintf(stderr,
-              "%d: INTERNAL ERROR: cannot bcast dipolar params for "
-              "unknown method %d\n",
-              this_node, coulomb.Dmethod);
-      errexit();
+  case DIPOLAR_SCAFACOS:
+    break;
+  default:
+    fprintf(stderr,
+            "%d: INTERNAL ERROR: cannot bcast dipolar params for "
+            "unknown method %d\n",
+            this_node, coulomb.Dmethod);
+    errexit();
   }
 }
 
