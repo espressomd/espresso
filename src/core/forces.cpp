@@ -204,69 +204,122 @@ void force_calc() {
   recalc_forces = 0;
 }
 
-void calc_long_range_forces() {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
-#ifdef ELECTROSTATICS
-  /* calculate k-space part of electrostatic interaction. */
+static void calc_long_range_coulomb_force() {
   switch (coulomb.method) {
 #ifdef P3M
-  case COULOMB_ELC_P3M:
-    if (elc_params.dielectric_contrast_on) {
-      ELC_P3M_modify_p3m_sums_both();
-      ELC_p3m_charge_assign_both();
-      ELC_P3M_self_forces();
-    } else
-      p3m_charge_assign();
+    case COULOMB_ELC_P3M:
+      if (elc_params.dielectric_contrast_on) {
+        ELC_P3M_modify_p3m_sums_both();
+        ELC_p3m_charge_assign_both();
+        ELC_P3M_self_forces();
+      } else
+        p3m_charge_assign();
 
-    p3m_calc_kspace_forces(1, 0);
+      p3m_calc_kspace_forces(1, 0);
 
-    if (elc_params.dielectric_contrast_on)
-      ELC_P3M_restore_p3m_sums();
+      if (elc_params.dielectric_contrast_on)
+        ELC_P3M_restore_p3m_sums();
 
-    ELC_add_force();
+      ELC_add_force();
 
-    break;
+      break;
 #endif
 #ifdef CUDA
-  case COULOMB_P3M_GPU:
-    if (this_node == 0) {
-      FORCE_TRACE(printf("Computing GPU P3M forces.\n"));
-      p3m_gpu_add_farfield_force();
-    }
-    /* there is no NPT handling here as long as we cannot compute energies.
-       This is checked in integrator_npt_sanity_checks() when integration
-       starts. */
-    break;
+    case COULOMB_P3M_GPU:
+      if (this_node == 0) {
+        FORCE_TRACE(printf("Computing GPU P3M forces.\n"));
+        p3m_gpu_add_farfield_force();
+      }
+      /* there is no NPT handling here as long as we cannot compute energies.g
+         This is checked in integrator_npt_sanity_checks() when integration
+         starts. */
+      break;
 #endif
 #ifdef P3M
-  case COULOMB_P3M:
-    FORCE_TRACE(printf("%d: Computing P3M forces.\n", this_node));
-    p3m_charge_assign();
+    case COULOMB_P3M:
+      FORCE_TRACE(printf("%d: Computing P3M forces.\n", this_node));
+      p3m_charge_assign();
 #ifdef NPT
     if (integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += p3m_calc_kspace_forces(1, 1);
     else
 #endif
       p3m_calc_kspace_forces(1, 0);
-    break;
+      break;
 #endif
-  case COULOMB_MAGGS:
-    maggs_calc_forces();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_add_far_force();
-    MMM2D_dielectric_layers_force_contribution();
-    break;
+    case COULOMB_MAGGS:
+      maggs_calc_forces();
+      break;
+    case COULOMB_MMM2D:
+      MMM2D_add_far_force();
+      MMM2D_dielectric_layers_force_contribution();
+      break;
 #ifdef SCAFACOS
-  case COULOMB_SCAFACOS:
+    case COULOMB_SCAFACOS:
     assert(!Scafacos::dipolar());
     Scafacos::add_long_range_force();
     break;
 #endif
-  default:
-    break;
+    default:
+      break;
   }
+}
 
+static void calc_long_range_dipole() {
+  switch (coulomb.Dmethod) {
+#ifdef DP3M
+    case DIPOLAR_MDLC_P3M:
+      add_mdlc_force_corrections();
+      // fall through
+    case DIPOLAR_P3M:
+      dp3m_dipole_assign();
+#ifdef NPT
+    if (integ_switch == INTEG_METHOD_NPT_ISO) {
+      nptiso.p_vir[0] += dp3m_calc_kspace_forces(1, 1);
+      fprintf(stderr, "dipolar_P3M at this moment is added to p_vir[0]\n");
+    } else
+#endif
+      dp3m_calc_kspace_forces(1, 0);
+
+      break;
+#endif
+    case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
+      dawaanr_calculations(1, 0);
+      break;
+#ifdef DP3M
+    case DIPOLAR_MDLC_DS:
+      add_mdlc_force_corrections();
+      // fall through
+#endif
+    case DIPOLAR_DS:
+      magnetic_dipolar_direct_sum_calculations(1, 0);
+      break;
+    case DIPOLAR_DS_GPU:
+      // Do nothing. It's an actor
+      break;
+#ifdef DIPOLAR_BARNES_HUT
+    case DIPOLAR_BH_GPU:
+      // Do nothing, it's an actor.
+      break;
+#endif // BARNES_HUT
+#ifdef SCAFACOS_DIPOLES
+    case DIPOLAR_SCAFACOS:
+    assert(Scafacos::dipolar());
+    Scafacos::add_long_range_force();
+#endif
+    case DIPOLAR_NONE:
+      break;
+    default:
+      runtimeErrorMsg() << "unknown dipolar method";
+      break;
+  }
+}
+
+void calc_long_range_forces() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+#ifdef ELECTROSTATICS
+  /* calculate k-space part of electrostatic interaction. */
+  calc_long_range_coulomb_force();
 /* If enabled, calculate electrostatics contribution from electrokinetics
  * species. */
 #ifdef EK_ELECTROSTATIC_COUPLING
@@ -277,52 +330,6 @@ void calc_long_range_forces() {
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-    add_mdlc_force_corrections();
-  // fall through
-  case DIPOLAR_P3M:
-    dp3m_dipole_assign();
-#ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      nptiso.p_vir[0] += dp3m_calc_kspace_forces(1, 1);
-      fprintf(stderr, "dipolar_P3M at this moment is added to p_vir[0]\n");
-    } else
-#endif
-      dp3m_calc_kspace_forces(1, 0);
-
-    break;
-#endif
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    dawaanr_calculations(1, 0);
-    break;
-#ifdef DP3M
-  case DIPOLAR_MDLC_DS:
-    add_mdlc_force_corrections();
-    // fall through
-#endif
-  case DIPOLAR_DS:
-    magnetic_dipolar_direct_sum_calculations(1, 0);
-    break;
-  case DIPOLAR_DS_GPU:
-    // Do nothing. It's an actor
-    break;
-#ifdef DIPOLAR_BARNES_HUT
-  case DIPOLAR_BH_GPU:
-    // Do nothing, it's an actor.
-    break;
-#endif // BARNES_HUT
-#ifdef SCAFACOS_DIPOLES
-  case DIPOLAR_SCAFACOS:
-    assert(Scafacos::dipolar());
-    Scafacos::add_long_range_force();
-#endif
-  case DIPOLAR_NONE:
-    break;
-  default:
-    runtimeErrorMsg() << "unknown dipolar method";
-    break;
-  }
+  calc_long_range_dipole();
 #endif /*ifdef DIPOLES */
 }

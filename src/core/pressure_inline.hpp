@@ -33,6 +33,63 @@
 #include "thermostat.hpp"
 #include "utils.hpp"
 
+static void add_pair_pressure(Particle *p1, Particle *p2,
+                              double *d, double dist,
+                              double dist2) {
+  switch (coulomb.method) {
+#ifdef P3M
+    case COULOMB_P3M_GPU:
+    case COULOMB_P3M: {
+/**
+Here we calculate the short ranged contribution of the electrostatics.
+These terms are called Pi_{dir, alpha, beta} in the paper by Essmann et al
+"A smooth particle mesh Ewald method", The Journal of Chemical Physics
+103, 8577 (1995); doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta}
+in the Essmann paper is not present here since M is the empty set in our
+simulations.
+*/
+      double force[3] = {0, 0, 0};
+      p3m_add_pair_force(p1->p.q * p2->p.q, d, dist2, dist, force);
+      virials.coulomb[0] += p3m_pair_energy(p1->p.q * p2->p.q, dist);
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
+          p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
+      break;
+    }
+#endif
+
+/* short range potentials, where we use the virial */
+/***************************************************/
+    case COULOMB_DH: {
+      double force[3] = {0, 0, 0};
+
+      add_dh_coulomb_pair_force(p1, p2, d, dist, force);
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
+          p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
+      virials.coulomb[0] += force[0] * d[0] + force[1] * d[1] + force[2] * d[2];
+      break;
+    }
+    case COULOMB_RF: {
+      double force[3] = {0, 0, 0};
+
+      add_rf_coulomb_pair_force(p1, p2, d, dist, force);
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
+          p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
+      virials.coulomb[0] += force[0] * d[0] + force[1] * d[1] + force[2] * d[2];
+      break;
+    }
+    case COULOMB_INTER_RF:
+// this is done together with the other short range interactions
+      break;
+    default:
+      fprintf(stderr, "calculating pressure for electrostatics method that "
+                      "doesn't have it implemented\n");
+      break;
+  }
+}
+
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.
  *  @param p2        pointer to particle 2.
@@ -84,60 +141,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 #ifdef ELECTROSTATICS
   /* real space Coulomb */
   if (coulomb.method != COULOMB_NONE) {
-    switch (coulomb.method) {
-#ifdef P3M
-    case COULOMB_P3M_GPU:
-    case COULOMB_P3M:
-      /**
-      Here we calculate the short ranged contribution of the electrostatics.
-      These terms are called Pi_{dir, alpha, beta} in the paper by Essmann et al
-      "A smooth particle mesh Ewald method", The Journal of Chemical Physics
-      103, 8577 (1995); doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta}
-      in the Essmann paper is not present here since M is the empty set in our
-      simulations.
-      */
-      force[0] = 0.0;
-      force[1] = 0.0;
-      force[2] = 0.0;
-      p3m_add_pair_force(p1->p.q * p2->p.q, d, dist2, dist, force);
-      virials.coulomb[0] += p3m_pair_energy(p1->p.q * p2->p.q, dist);
-      for (k = 0; k < 3; k++)
-        for (l = 0; l < 3; l++)
-          p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
-
-      break;
-#endif
-
-    /* short range potentials, where we use the virial */
-    /***************************************************/
-    case COULOMB_DH: {
-      double force[3] = {0, 0, 0};
-
-      add_dh_coulomb_pair_force(p1, p2, d, dist, force);
-      for (k = 0; k < 3; k++)
-        for (l = 0; l < 3; l++)
-          p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
-      virials.coulomb[0] += force[0] * d[0] + force[1] * d[1] + force[2] * d[2];
-      break;
-    }
-    case COULOMB_RF: {
-      double force[3] = {0, 0, 0};
-
-      add_rf_coulomb_pair_force(p1, p2, d, dist, force);
-      for (k = 0; k < 3; k++)
-        for (l = 0; l < 3; l++)
-          p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
-      virials.coulomb[0] += force[0] * d[0] + force[1] * d[1] + force[2] * d[2];
-      break;
-    }
-    case COULOMB_INTER_RF:
-      // this is done together with the other short range interactions
-      break;
-    default:
-      fprintf(stderr, "calculating pressure for electrostatics method that "
-                      "doesn't have it implemented\n");
-      break;
-    }
+    add_pair_pressure(p1, p2, d, dist, dist2);
   }
 #endif /*ifdef ELECTROSTATICS */
 

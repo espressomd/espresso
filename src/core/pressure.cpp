@@ -177,84 +177,95 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
 
 /************************************************************/
 
+static void calc_long_range_coulomb_force() {
+  switch (coulomb.method) {
+#ifdef P3M
+    case COULOMB_ELC_P3M:
+      fprintf(stderr,
+              "WARNING: pressure calculated, but ELC pressure not implemented\n");
+      break;
+    case COULOMB_P3M_GPU:
+      fprintf(
+              stderr,
+              "WARNING: pressure calculated, but GPU P3M pressure not implemented\n");
+      break;
+    case COULOMB_P3M: {
+      p3m_charge_assign();
+      virials.coulomb[1] = p3m_calc_kspace_forces(0, 1);
+      p3m_charge_assign();
+      p3m_calc_kspace_stress(p_tensor.coulomb + 9);
+      break;
+    }
+#endif
+    case COULOMB_MMM2D:
+      fprintf(
+              stderr,
+              "WARNING: pressure calculated, but MMM2D pressure not implemented\n");
+      break;
+    case COULOMB_MMM1D:
+    case COULOMB_MMM1D_GPU:
+      fprintf(
+              stderr,
+              "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
+      break;
+    default:
+      break;
+  }
+}
+
+static void calc_long_range_dipole_force() {
+  switch (coulomb.Dmethod) {
+    case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
+      fprintf(
+              stderr,
+              "WARNING: pressure calculated, but DAWAANR pressure not implemented\n");
+      break;
+    case DIPOLAR_MDLC_DS:
+      fprintf(stderr,
+              "WARNING: pressure calculated, but DLC pressure not implemented\n");
+      break;
+    case DIPOLAR_DS:
+      fprintf(stderr, "WARNING: pressure calculated, but  MAGNETIC DIRECT SUM "
+                      "pressure not implemented\n");
+      break;
+
+#ifdef DP3M
+    case DIPOLAR_MDLC_P3M:
+      fprintf(stderr,
+              "WARNING: pressure calculated, but DLC pressure not implemented\n");
+      break;
+    case DIPOLAR_P3M: {
+      int k;
+      dp3m_dipole_assign();
+      virials.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
+
+      for (k = 0; k < 3; k++)
+        p_tensor.coulomb[9 + k * 3 + k] = virials.dipolar[1] / 3.;
+      fprintf(stderr, "WARNING: stress tensor calculated, but dipolar P3M stress "
+                      "tensor not implemented\n");
+      fprintf(stderr, "WARNING: things have been added to the coulomb virial and "
+                      "p_tensor arrays !!!!!!!\n");
+
+      break;
+    }
+#endif
+    default:
+      break;
+  }
+}
+
+
+
+
 void calc_long_range_virials() {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    fprintf(stderr,
-            "WARNING: pressure calculated, but ELC pressure not implemented\n");
-    break;
-  case COULOMB_P3M_GPU:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but GPU P3M pressure not implemented\n");
-    break;
-  case COULOMB_P3M: {
-    p3m_charge_assign();
-    virials.coulomb[1] = p3m_calc_kspace_forces(0, 1);
-    p3m_charge_assign();
-    p3m_calc_kspace_stress(p_tensor.coulomb + 9);
-    break;
-  }
-#endif
-  case COULOMB_MMM2D:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but MMM2D pressure not implemented\n");
-    break;
-  case COULOMB_MMM1D:
-  case COULOMB_MMM1D_GPU:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
-    break;
-  default:
-    break;
-  }
+  calc_long_range_coulomb_force();
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but DAWAANR pressure not implemented\n");
-    break;
-  case DIPOLAR_MDLC_DS:
-    fprintf(stderr,
-            "WARNING: pressure calculated, but DLC pressure not implemented\n");
-    break;
-  case DIPOLAR_DS:
-    fprintf(stderr, "WARNING: pressure calculated, but  MAGNETIC DIRECT SUM "
-                    "pressure not implemented\n");
-    break;
-
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-    fprintf(stderr,
-            "WARNING: pressure calculated, but DLC pressure not implemented\n");
-    break;
-  case DIPOLAR_P3M: {
-    int k;
-    dp3m_dipole_assign();
-    virials.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
-
-    for (k = 0; k < 3; k++)
-      p_tensor.coulomb[9 + k * 3 + k] = virials.dipolar[1] / 3.;
-    fprintf(stderr, "WARNING: stress tensor calculated, but dipolar P3M stress "
-                    "tensor not implemented\n");
-    fprintf(stderr, "WARNING: things have been added to the coulomb virial and "
-                    "p_tensor arrays !!!!!!!\n");
-
-    break;
-  }
-#endif
-  default:
-    break;
-  }
+  calc_long_range_dipole_force();
 #endif /*ifdef DIPOLES */
 }
 
