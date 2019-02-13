@@ -74,6 +74,7 @@ void pressure_calc_long_range_dipole_force(Observable_stat &virials,
 }
 
 void nonbonded_interaction_data_dipole_sanity_checks(int &state) {
+#ifdef DP3M
   switch (coulomb.Dmethod) {
   case DIPOLAR_MDLC_P3M:
     if (mdlc_sanity_checks())
@@ -92,6 +93,7 @@ void nonbonded_interaction_data_dipole_sanity_checks(int &state) {
   default:
     break;
   }
+#endif
 }
 
 void nonbonded_interaction_data_calc_dipolar_cutoff(double &ret) {
