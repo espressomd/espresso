@@ -23,18 +23,18 @@ import espressomd.checkpointing
 import espressomd.virtual_sites
 import tests_common
 
+modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
+           for x in [mode, mode.split('.')[0]]}
 
-modes = set("@TEST_COMBINATION@".upper().split('-'))
-LB = (espressomd.has_features('LB') and 'LBCPU' in modes or
-      espressomd.has_features('LB_GPU') and 'LBGPU' in modes)
-
+LB = (espressomd.has_features('LB') and 'LB.CPU' in modes or
+      espressomd.has_features('LB_GPU') and 'LB.GPU' in modes)
 
 class CheckpointTest(ut.TestCase):
 
     @classmethod
     def setUpClass(self):
         checkpoint = espressomd.checkpointing.Checkpoint(
-            checkpoint_id="mycheckpoint_@TEST_COMBINATION@",
+            checkpoint_id="mycheckpoint_@TEST_COMBINATION@".replace('.', '__'),
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
         if LB:
@@ -114,7 +114,7 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf(not espressomd.has_features('ELECTROSTATICS'),
                "Skipping test due to missing features.")
-    @ut.skipIf('P3M' not in modes,
+    @ut.skipIf('P3M.CPU' not in modes,
                "Skipping test due to missing combination.")
     def test_p3m(self):
         self.assertTrue(any(isinstance(actor, espressomd.electrostatics.P3M)

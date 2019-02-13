@@ -26,13 +26,11 @@ import espressomd.observables
 import espressomd.lb
 
 checkpoint = espressomd.checkpointing.Checkpoint(
-    checkpoint_id="mycheckpoint_@TEST_COMBINATION@",
+    checkpoint_id="mycheckpoint_@TEST_COMBINATION@".replace('.', '__'),
     checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
-modeset = set(['LBCPU', 'LBGPU', 'P3M', 'EXCLUSIONS', 'LJ', 'VIRTUAL',
-               'COLLISION'])
-modes = set("@TEST_COMBINATION@".upper().split('-'))
-assert modes.issubset(modeset), "unknown modes: " + ', '.join(modes - modeset)
+modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
+           for x in [mode, mode.split('.')[0]]}
 
 system = espressomd.System(box_l=[12.0, 12.0, 12.0])
 system.cell_system.skin = 0.1
@@ -41,9 +39,9 @@ system.time_step = 0.01
 system.min_global_cut = 2.0
 
 LB_implementation = None
-if espressomd.has_features('LB') and 'LBCPU' in modes:
+if espressomd.has_features('LB') and 'LB.CPU' in modes:
     LB_implementation = espressomd.lb.LBFluid
-elif espressomd.has_features('LB_GPU') and 'LBGPU' in modes:
+elif espressomd.has_features('LB_GPU') and 'LB.GPU' in modes:
     LB_implementation = espressomd.lb.LBFluidGPU
 if LB_implementation:
     lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01, fric=2.0)
@@ -55,7 +53,7 @@ system.part.add(pos=[1.0, 1.0, 2.0])
 if espressomd.has_features('EXCLUSIONS') and 'EXCLUSIONS' in modes:
     system.part.add(pos=[2.0] * 3, exclusions=[0, 1])
 
-if espressomd.has_features('ELECTROSTATICS') and 'P3M' in modes:
+if espressomd.has_features('ELECTROSTATICS') and 'P3M.CPU' in modes:
     system.part[0].q = 1
     system.part[1].q = -1
     p3m = espressomd.electrostatics.P3M(
