@@ -173,7 +173,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 
       ctr_type c{{lb_particle_coupling.rng_counter_coupling.value(),
                   static_cast<uint64_t>(RNGSalt::PARTICLES)}};
-      lb_particle_coupling.rng_counter_coupling.increment();
+      if (lb_lbfluid_get_kT() > 0.0)
+        lb_particle_coupling.rng_counter_coupling.increment();
 
       /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
        * The factor 12 comes from the fact that we use random numbers
@@ -184,14 +185,18 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
           sqrt(12. * 2. * lb_lbcoupling_get_friction() * lb_lbfluid_get_kT() /
                time_step);
       auto f_random = [&c](int id) -> Vector3d {
-        key_type k{{static_cast<uint32_t>(id)}};
+        if (lb_lbfluid_get_kT() > 0.0) {
+          key_type k{{static_cast<uint32_t>(id)}};
 
-        auto const noise = rng_type{}(c, k);
+          auto const noise = rng_type{}(c, k);
 
-        using Utils::uniform;
-        return Vector3d{uniform(noise[0]), uniform(noise[1]),
-                        uniform(noise[2])} -
-               Vector3d::broadcast(0.5);
+          using Utils::uniform;
+          return Vector3d{uniform(noise[0]), uniform(noise[1]),
+                          uniform(noise[2])} -
+                 Vector3d::broadcast(0.5);
+        } else {
+          return Vector3d{};
+        }
       };
 
       /* local cells */
