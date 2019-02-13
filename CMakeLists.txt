@@ -72,6 +72,7 @@ endif()
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 option(WITH_CCACHE "Use ccache compiler invocation." OFF)
 option(WITH_PROFILER "Enable profiler annotations." OFF)
+option(TEST_TIMEOUT "Timeout in seconds for each testsuite test" "300")
 
 if(WITH_CCACHE)
   find_program(CCACHE ccache)

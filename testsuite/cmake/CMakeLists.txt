@@ -35,6 +35,6 @@ endif()
 
 cmake_test(FILE test_python_bindings.sh DEPENDENCIES BashUnitTests.sh)
 
-add_custom_target(check_cmake_install COMMAND ${CMAKE_CTEST_COMMAND} -C serial --output-on-failure)
+add_custom_target(check_cmake_install COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -C serial --output-on-failure)
 add_dependencies(check_cmake_install setup_install)
 
