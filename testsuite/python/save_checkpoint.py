@@ -30,7 +30,7 @@ checkpoint = espressomd.checkpointing.Checkpoint(
     checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
-           for x in [mode, mode.split('.')[0]]}
+         for x in [mode, mode.split('.')[0]]}
 
 system = espressomd.System(box_l=[12.0, 12.0, 12.0])
 system.cell_system.skin = 0.1
@@ -50,7 +50,7 @@ if LB_implementation:
 system.part.add(pos=[1.0] * 3)
 system.part.add(pos=[1.0, 1.0, 2.0])
 
-if espressomd.has_features('EXCLUSIONS') and 'EXCLUSIONS' in modes:
+if espressomd.has_features('EXCLUSIONS'):
     system.part.add(pos=[2.0] * 3, exclusions=[0, 1])
 
 if espressomd.has_features('ELECTROSTATICS') and 'P3M.CPU' in modes:
@@ -74,8 +74,7 @@ acc.update()
 
 system.thermostat.set_langevin(kT=1.0, gamma=2.0)
 
-if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']) \
-        and 'VIRTUAL' in modes:
+if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
         have_velocity=True, have_quaternion=True)
     system.part[1].vs_auto_relate_to(0)
@@ -102,7 +101,7 @@ if LB_implementation:
     lbf.save_checkpoint(
         "@CMAKE_CURRENT_BINARY_DIR@/lb_@TEST_COMBINATION@.cpt",
         1)
-if espressomd.has_features("COLLISION_DETECTION") and 'COLLISION' in modes:
+if espressomd.has_features("COLLISION_DETECTION"):
         system.collision_detection.set_params(
             mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
 checkpoint.save(0)

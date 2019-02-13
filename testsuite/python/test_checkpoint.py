@@ -24,10 +24,11 @@ import espressomd.virtual_sites
 import tests_common
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
-           for x in [mode, mode.split('.')[0]]}
+         for x in [mode, mode.split('.')[0]]}
 
 LB = (espressomd.has_features('LB') and 'LB.CPU' in modes or
       espressomd.has_features('LB_GPU') and 'LB.GPU' in modes)
+
 
 class CheckpointTest(ut.TestCase):
 
@@ -97,8 +98,6 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not espressomd.has_features(['VIRTUAL_SITES',
                                             'VIRTUAL_SITES_RELATIVE']),
                "Skipping test due to missing features.")
-    @ut.skipIf('VIRTUAL' not in modes,
-               "Skipping test due to missing combination.")
     def test_virtual_sites(self):
         self.assertEqual(system.part[1].virtual, 1)
         self.assertTrue(
@@ -122,8 +121,6 @@ class CheckpointTest(ut.TestCase):
     
     @ut.skipIf(not espressomd.has_features('COLLISION_DETECTION'),
                "Skipping test due to missing features.")
-    @ut.skipIf('COLLISION' not in modes,
-               "Skipping test due to missing combination.")
     def test_collision_detection(self):
         coldet = system.collision_detection
         self.assertEqual(coldet.mode, "bind_centers")
@@ -132,8 +129,6 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf(not espressomd.has_features('EXCLUSIONS'),
                "Skipping test due to missing features.")
-    @ut.skipIf('EXCLUSIONS' not in modes,
-               "Skipping test due to missing combination.")
     def test_exclusions(self):
         self.assertTrue(
             tests_common.lists_contain_same_elements(system.part[0].exclusions, [2]))
