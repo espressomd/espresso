@@ -495,6 +495,50 @@ void on_boxl_change() {
 #endif
 }
 
+static void init_coulomb() {
+  switch (coulomb.method) {
+    case COULOMB_DH:
+      break;
+#ifdef P3M
+    case COULOMB_ELC_P3M:
+      ELC_init();
+      // fall through
+    case COULOMB_P3M:
+      p3m_init();
+      break;
+    case COULOMB_P3M_GPU:
+      break;
+#endif
+    case COULOMB_MMM1D:
+      MMM1D_init();
+      break;
+    case COULOMB_MMM2D:
+      MMM2D_init();
+      break;
+    case COULOMB_MAGGS:
+      maggs_init();
+      /* Maggs electrostatics needs ghost velocities */
+      on_ghost_flags_change();
+      break;
+    default:
+      break;
+  }
+}
+
+static void init_dipole() {
+  switch (coulomb.Dmethod) {
+#ifdef DP3M
+    case DIPOLAR_MDLC_P3M:
+      // fall through
+    case DIPOLAR_P3M:
+      dp3m_init();
+      break;
+#endif
+    default:
+      break;
+  }
+}
+
 void on_cell_structure_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
 
@@ -504,47 +548,11 @@ void on_cell_structure_change() {
    have separate, faster methods, as this might happen frequently
    in a NpT simulation. */
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_DH:
-    break;
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    ELC_init();
-  // fall through
-  case COULOMB_P3M:
-    p3m_init();
-    break;
-  case COULOMB_P3M_GPU:
-    break;
-#endif
-  case COULOMB_MMM1D:
-    MMM1D_init();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_init();
-    break;
-  case COULOMB_MAGGS:
-    maggs_init();
-    /* Maggs electrostatics needs ghost velocities */
-    on_ghost_flags_change();
-    break;
-  default:
-    break;
-  }
+  init_coulomb();
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  // fall through
-  case DIPOLAR_P3M:
-    dp3m_init();
-    break;
-#endif
-  default:
-    break;
-  }
+  init_dipole();
 #endif /* ifdef DIPOLES */
 
 #ifdef LB

@@ -1245,6 +1245,24 @@ void ELC_init() {
   ELC_on_resort_particles();
 }
 
+static int switch_error() {
+  switch (coulomb.method) {
+    case COULOMB_P3M_GPU: {
+      runtimeErrorMsg()
+              << "ELC tuning failed, ELC is not set up to work with the GPU P3M";
+      return ES_ERROR;
+    }
+    case COULOMB_ELC_P3M:
+
+    case COULOMB_P3M:
+      p3m.params.epsilon = P3M_EPSILON_METALLIC;
+      coulomb.method = COULOMB_ELC_P3M;
+      break;
+    default:
+      return ES_ERROR;
+  }
+}
+
 void ELC_on_resort_particles() {
   n_localpart = cells_get_n_particles();
   n_scxcache = (int)(ceil(elc_params.far_cut / ux) + 1);
@@ -1299,21 +1317,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 
   ELC_setup_constants();
 
-  switch (coulomb.method) {
-  case COULOMB_P3M_GPU: {
-    runtimeErrorMsg()
-        << "ELC tuning failed, ELC is not set up to work with the GPU P3M";
-    return ES_ERROR;
-  }
-  case COULOMB_ELC_P3M:
-
-  case COULOMB_P3M:
-    p3m.params.epsilon = P3M_EPSILON_METALLIC;
-    coulomb.method = COULOMB_ELC_P3M;
-    break;
-  default:
-    return ES_ERROR;
-  }
+  switch_error();
 
   elc_params.far_cut = far_cut;
   if (far_cut != -1) {

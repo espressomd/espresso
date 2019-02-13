@@ -441,54 +441,62 @@ void make_particle_type_exist_local(int type) {
     realloc_ia_params(type + 1);
 }
 
+static void coulomb_sanity_checks(int &state) {
+  switch (coulomb.method) {
+    case COULOMB_MMM1D:
+      if (MMM1D_sanity_checks())
+        state = 0;
+      break;
+    case COULOMB_MMM2D:
+      if (MMM2D_sanity_checks())
+        state = 0;
+      break;
+#ifdef P3M
+    case COULOMB_ELC_P3M:
+      if (ELC_sanity_checks())
+        state = 0; // fall through
+    case COULOMB_P3M_GPU:
+    case COULOMB_P3M:
+      if (p3m_sanity_checks())
+        state = 0;
+      break;
+#endif
+    default:
+      break;
+  }
+}
+
+static void dipole_sanity_checks(int &state) {
+  switch (coulomb.Dmethod) {
+    case DIPOLAR_MDLC_P3M:
+      if (mdlc_sanity_checks())
+        state = 0; // fall through
+    case DIPOLAR_P3M:
+      if (dp3m_sanity_checks())
+        state = 0;
+      break;
+    case DIPOLAR_MDLC_DS:
+      if (mdlc_sanity_checks())
+        state = 0; // fall through
+    case DIPOLAR_DS:
+      if (magnetic_dipolar_direct_sum_sanity_checks())
+        state = 0;
+      break;
+    default:
+      break;
+  }
+}
+
 int interactions_sanity_checks() {
   /* set to zero if initialization was not successful. */
   int state = 1;
 
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_MMM1D:
-    if (MMM1D_sanity_checks())
-      state = 0;
-    break;
-  case COULOMB_MMM2D:
-    if (MMM2D_sanity_checks())
-      state = 0;
-    break;
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    if (ELC_sanity_checks())
-      state = 0; // fall through
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    if (p3m_sanity_checks())
-      state = 0;
-    break;
-#endif
-  default:
-    break;
-  }
+  coulomb_sanity_checks(state);
 #endif /* ifdef ELECTROSTATICS */
 
 #if defined(DIPOLES) and defined(DP3M)
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_MDLC_P3M:
-    if (mdlc_sanity_checks())
-      state = 0; // fall through
-  case DIPOLAR_P3M:
-    if (dp3m_sanity_checks())
-      state = 0;
-    break;
-  case DIPOLAR_MDLC_DS:
-    if (mdlc_sanity_checks())
-      state = 0; // fall through
-  case DIPOLAR_DS:
-    if (magnetic_dipolar_direct_sum_sanity_checks())
-      state = 0;
-    break;
-  default:
-    break;
-  }
+  dipole_sanity_checks(state);
 #endif /* ifdef  DIPOLES */
 
   return state;

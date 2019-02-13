@@ -657,6 +657,23 @@ int mdlc_sanity_checks() {
 }
 /* ***************************************************************** */
 
+static int set_dipole_mesh() {
+  switch (coulomb.Dmethod) {
+#ifdef DP3M
+    case DIPOLAR_MDLC_P3M:
+    case DIPOLAR_P3M:
+      set_dipolar_method_local(DIPOLAR_MDLC_P3M);
+      return 0;
+#endif
+    case DIPOLAR_MDLC_DS:
+    case DIPOLAR_DS:
+      set_dipolar_method_local(DIPOLAR_MDLC_DS);
+      return 0;
+    default:
+      return 1;
+  }
+}
+
 int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
   MDLC_TRACE(fprintf(stderr, "%d: mdlc_set_params().\n", this_node));
 
@@ -664,18 +681,8 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
   dlc_params.gap_size = gap_size;
   dlc_params.h = box_l[2] - gap_size;
 
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  case DIPOLAR_P3M:
-    set_dipolar_method_local(DIPOLAR_MDLC_P3M);
-    break;
-#endif
-  case DIPOLAR_MDLC_DS:
-  case DIPOLAR_DS:
-    set_dipolar_method_local(DIPOLAR_MDLC_DS);
-    break;
-  default:
+  if (set_dipole_mesh()) {
+    // if set_dipole_mesh fails
     return ES_ERROR;
   }
 
