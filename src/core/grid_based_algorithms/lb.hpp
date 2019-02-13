@@ -41,8 +41,8 @@ void mpi_set_lb_fluid_counter(int high, int low);
 #include "halo.hpp"
 #include "utils.hpp"
 
-#include "utils/Span.hpp"
 #include "utils/Counter.hpp"
+#include "utils/Span.hpp"
 
 /** \name Parameter fields for Lattice Boltzmann
  * The numbers are referenced in \ref mpi_bcast_lb_params
