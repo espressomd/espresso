@@ -28,6 +28,9 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "npt.hpp"
 
+#include <boost/mpi.hpp>
+#include "utils/u32_to_u64.hpp"
+
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
@@ -40,6 +43,8 @@ double temperature = 0.0;
 /** True if the thermostat should act on virtual particles. */
 bool thermo_virtual = true;
 
+int langevin_seed;
+
 using Thermostat::GammaType;
 
 namespace {
@@ -51,6 +56,7 @@ Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }
 } // namespace
 
 /* LANGEVIN THERMOSTAT */
+
 
 /* Langevin friction coefficient gamma for translation. */
 GammaType langevin_gamma = sentinel(GammaType{});
@@ -78,6 +84,26 @@ double nptiso_pref2;
 double nptiso_pref3;
 double nptiso_pref4;
 #endif
+
+Utils::Counter<uint64_t> langevin_rng_counter;
+
+void mpi_bcast_langevin_rng_counter_slave(int, int) {
+  boost::mpi::broadcast(comm_cart, langevin_rng_counter, 0);
+}
+
+void langevin_rng_counter_increment() {
+    langevin_rng_counter.increment();
+}
+
+void langevin_set_rng_state(uint64_t counter) {
+    langevin_rng_counter = Utils::Counter<uint64_t>(counter);
+    mpi_bcast_langevin_rng_counter();
+
+}
+
+uint64_t langevin_get_rng_state() {
+  return langevin_rng_counter.value();
+}
 
 void thermo_init_langevin() {
   langevin_pref1 = -langevin_gamma;

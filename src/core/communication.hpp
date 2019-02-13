@@ -293,6 +293,8 @@ void mpi_bcast_lb_params(int field, int value = -1);
 
 void mpi_bcast_lb_particle_coupling();
 
+void mpi_bcast_langevin_rng_counter();
+
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
 void mpi_bcast_cuda_global_part_vars();
 
@@ -351,6 +353,7 @@ void mpi_send_fluid_populations(int node, int index,
 
 /** Part of MDLC */
 void mpi_bcast_max_mu();
+
 
 /** Galilei and other: set all particle velocities and rotational inertias to
  *                     zero.

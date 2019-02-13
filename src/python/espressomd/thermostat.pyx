@@ -101,11 +101,11 @@ cdef class Thermostat(object):
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
                 self.set_langevin(kT=thmst["kT"], gamma=thmst[
-                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"])
+                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["rng_counter_langevin"])
             if thmst["type"] == "LB":
                 self.set_lb(
                     act_on_virtual=thmst["act_on_virtual"],
-                    seed=thmst["counter"])
+                    seed=thmst["rng_counter_fluid"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])
@@ -127,6 +127,7 @@ cdef class Thermostat(object):
             lang_dict["type"] = "LANGEVIN"
             lang_dict["kT"] = temperature
             lang_dict["act_on_virtual"] = thermo_virtual
+            lang_dict["rng_counter_langevin"] = langevin_get_rng_state()
             IF PARTICLE_ANISOTROPY:
                 lang_dict["gamma"] = [langevin_gamma[0],
                                       langevin_gamma[1],
@@ -150,7 +151,7 @@ cdef class Thermostat(object):
                 lb_dict["friction"] = lb_lbcoupling_get_friction()
                 lb_dict["type"] = "LB"
                 lb_dict["act_on_virtual"] = thermo_virtual
-                lb_dict["counter"] = lb_lbcoupling_get_rng_state()
+                lb_dict["rng_counter_fluid"] = lb_lbcoupling_get_rng_state()
                 thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
             npt_dict = {}
@@ -209,7 +210,7 @@ cdef class Thermostat(object):
 
     @AssertThermostatType(THERMO_LANGEVIN)
     def set_langevin(self, kT=None, gamma=None, gamma_rotation=None,
-                     act_on_virtual=False):
+                     act_on_virtual=False, seed=None):
         """
         Sets the Langevin thermostat with required parameters 'kT' 'gamma'
         and optional parameter 'gamma_rotation'.
@@ -228,6 +229,8 @@ cdef class Thermostat(object):
                          if 'PARTICLE_ANISOTROPY' is also compiled in.
         act_on_virtual : :obj:`bool`, optional
                 If true the thermostat will act on virtual sites, default is off.
+        seed :obj:`int`, optional
+                Initial counter value (or seed) of the philux rng.
 
         """
 
@@ -280,6 +283,15 @@ cdef class Thermostat(object):
                 if float(gamma_rotation[0]) < 0. or float(gamma_rotation[1]) < 0. or float(gamma_rotation[2]) < 0.:
                     raise ValueError(
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
+
+        #if not seed:
+        #    raise ValueError(
+        #        "seed has to be given as keyword arg")
+
+        if not seed:
+            seed = 0
+
+        langevin_set_rng_state(seed)
 
         global temperature
         temperature = float(kT)

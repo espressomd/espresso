@@ -41,7 +41,7 @@
  * noise on the particle coupling and the fluid
  * thermalization.
  */
-enum class RNGSalt { FLUID, PARTICLES };
+enum class RNGSalt { FLUID, PARTICLES, LANGEVIN };
 
 namespace Random {
 extern std::mt19937 generator;
@@ -107,6 +107,7 @@ void init_random(void);
 void init_random_seed(int seed);
 
 } // namespace Random
+
 
 /**
  * @brief Draws a random real number from the uniform distribution in the range
