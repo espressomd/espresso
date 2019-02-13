@@ -981,8 +981,6 @@ inline void lb_collide_stream() {
   lb_bounce_back(lbfluid_post);
 #endif // LB_BOUNDARIES
 
-  rng_counter_fluid.increment();
-
   /* swap the pointers for old and new population fields */
   std::swap(lbfluid, lbfluid_post);
 

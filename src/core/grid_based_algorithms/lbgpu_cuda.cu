@@ -3409,7 +3409,6 @@ void lb_integrate_GPU() {
                lb_boundary_velocity, lb_boundary_force);
   }
 #endif
-  rng_counter_fluid_gpu.increment();
 }
 
 void lb_gpu_get_boundary_forces(double *forces) {
