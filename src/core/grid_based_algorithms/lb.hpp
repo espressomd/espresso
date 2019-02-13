@@ -41,7 +41,8 @@ void mpi_set_lb_fluid_counter(int high, int low);
 #include "halo.hpp"
 #include "utils.hpp"
 
-#include <utils/Span.hpp>
+#include "utils/Span.hpp"
+#include "utils/Counter.hpp"
 
 /** \name Parameter fields for Lattice Boltzmann
  * The numbers are referenced in \ref mpi_bcast_lb_params
@@ -372,5 +373,5 @@ void lb_calc_fluid_mass(double *result);
 void lb_calc_fluid_momentum(double *result);
 void lb_calc_fluid_temp(double *result);
 void lb_collect_boundary_forces(double *result);
-
+extern Utils::Counter<uint64_t> rng_counter_fluid;
 #endif /* _LB_H */

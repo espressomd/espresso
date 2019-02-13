@@ -173,8 +173,6 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 
       ctr_type c{{lb_particle_coupling.rng_counter_coupling.value(),
                   static_cast<uint64_t>(RNGSalt::PARTICLES)}};
-      if (lb_lbfluid_get_kT() > 0.0)
-        lb_particle_coupling.rng_counter_coupling.increment();
 
       /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
        * The factor 12 comes from the fact that we use random numbers
@@ -231,4 +229,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
   }
 }
 
+void lb_lbcoupling_propagate() {
+  lb_particle_coupling.rng_counter_coupling.increment();
+}
 #endif

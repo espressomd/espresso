@@ -9,7 +9,7 @@
  *  The function is called from \ref force_calc.
  */
 void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual);
-
+void lb_lbcoupling_propagate();
 uint64_t lb_lbcoupling_get_rng_state();
 void lb_lbcoupling_set_rng_state(uint64_t counter);
 void lb_lbcoupling_set_friction(double friction);

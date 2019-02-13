@@ -64,9 +64,7 @@ static void lb_check_halo_regions(const LB_Fluid &lbfluid);
 #endif // ADDITIONAL_CHECKS
 
 /** Counter for the RNG */
-namespace {
 Utils::Counter<uint64_t> rng_counter_fluid;
-} // namespace
 
 /** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = {

@@ -32,6 +32,19 @@ void lb_lbfluid_update() {
   }
 }
 
+void lb_lbfluid_propagate() {
+  lb_lbfluid_update();
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    rng_counter_fluid_gpu.increment();
+#endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    rng_counter_fluid.increment();
+#endif
+  }
+}
+
 void lb_lbfluid_on_integration_start() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU

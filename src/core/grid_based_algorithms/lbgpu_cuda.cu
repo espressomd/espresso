@@ -129,7 +129,7 @@ static const float c_sound_sq = 1.0f / 3.0f;
 
 static constexpr float sqrt12 = 3.4641016151377544f;
 static Utils::Counter<uint64_t> rng_counter_coupling_gpu;
-static Utils::Counter<uint64_t> rng_counter_fluid_gpu;
+Utils::Counter<uint64_t> rng_counter_fluid_gpu;
 __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
                                         uint64_t philox_counter) {
   // Split the 64 bit counter into two 32 bit ints.

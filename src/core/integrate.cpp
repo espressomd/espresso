@@ -41,6 +41,7 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "initialize.hpp"
 #include "lattice.hpp"
 #include "minimize_energy.hpp"
@@ -407,7 +408,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #if defined(LB) || defined(LB_GPU)
-      lb_lbfluid_update();
+      lb_lbfluid_propagate();
+      lb_lbcoupling_propagate();
 #endif // LB || LB_GPU
 
 #ifdef VIRTUAL_SITES

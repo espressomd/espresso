@@ -7,6 +7,8 @@
 
 #if defined(LB) || defined(LB_GPU)
 
+void lb_lbfluid_propagate();
+
 void lb_lbfluid_update();
 /**
  * @brief Event handler for integration start.
