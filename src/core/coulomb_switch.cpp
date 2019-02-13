@@ -682,6 +682,7 @@ int iccp3m_sanity_check() {
 }
 
 int elc_switch_error() {
+#ifdef P3M
   switch (coulomb.method) {
   case COULOMB_P3M_GPU: {
     runtimeErrorMsg()
@@ -695,8 +696,10 @@ int elc_switch_error() {
     coulomb.method = COULOMB_ELC_P3M;
     return ES_OK;
   default:
-    return ES_ERROR;
+    break;
   }
+#endif
+  return ES_ERROR;
 }
 
 void bcast_coulomb_params() {
