@@ -46,7 +46,6 @@ int iccp3m_sanity_check();
 int elc_switch_error();
 
 void bcast_coulomb_params();
-void bcast_dipole_params();
 
 #endif // ELECTROSTATICS
 #endif // ESPRESSO_COULOMB_SWITCH_HPP

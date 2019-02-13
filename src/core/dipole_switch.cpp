@@ -1,12 +1,12 @@
 
+#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "statistics.hpp"
-#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 
 #ifdef ELECTROSTATICS
 #ifdef DIPOLES
@@ -376,6 +376,42 @@ int mdlc_correction_set_dipole_mesh() {
     return 0;
   default:
     return 1;
+  }
+}
+
+void bcast_dipole_params() {
+  switch (coulomb.Dmethod) {
+    case DIPOLAR_NONE:
+      break;
+#ifdef DP3M
+    case DIPOLAR_MDLC_P3M:
+      MPI_Bcast(&dlc_params, sizeof(DLC_struct), MPI_BYTE, 0, comm_cart);
+      // fall through
+    case DIPOLAR_P3M:
+      MPI_Bcast(&dp3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0,
+                comm_cart);
+      break;
+#endif
+    case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
+      break;
+    case DIPOLAR_MDLC_DS:
+      // fall trough
+    case DIPOLAR_DS:
+      break;
+    case DIPOLAR_DS_GPU:
+      break;
+#ifdef DIPOLAR_BARNES_HUT
+    case DIPOLAR_BH_GPU:
+      break;
+#endif
+    case DIPOLAR_SCAFACOS:
+      break;
+    default:
+      fprintf(stderr,
+              "%d: INTERNAL ERROR: cannot bcast dipolar params for "
+              "unknown method %d\n",
+              this_node, coulomb.Dmethod);
+      errexit();
   }
 }
 

@@ -35,6 +35,8 @@ void energy_n_dipolar(int &n_dipolar);
 
 int mdlc_correction_set_dipole_mesh();
 
+void bcast_dipole_params();
+
 #endif // DIPOLES
 #endif // ELECTROSTATICS
 #endif // ESPRESSO_DIPOLE_SWITCH_HPP

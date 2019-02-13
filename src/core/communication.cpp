@@ -81,6 +81,7 @@
 #include <boost/serialization/string.hpp>
 
 #include "coulomb_switch.hpp"
+#include "dipole_switch.hpp"
 
 using namespace std;
 
