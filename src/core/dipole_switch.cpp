@@ -1,11 +1,11 @@
 
-#include <electrostatics_magnetostatics/p3m-dipolar.hpp>
-#include <electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp>
-#include "statistics.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
-#include "integrate.hpp"
+#include "statistics.hpp"
+#include <electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp>
+#include <electrostatics_magnetostatics/p3m-dipolar.hpp>
 
 void pressure_n_dipolar(int &n_dipolar) {
   switch (coulomb.Dmethod) {
@@ -27,12 +27,13 @@ void pressure_n_dipolar(int &n_dipolar) {
   }
 }
 
-void pressure_calc_long_range_dipole_force(Observable_stat &virials, Observable_stat &p_tensor) {
+void pressure_calc_long_range_dipole_force(Observable_stat &virials,
+                                           Observable_stat &p_tensor) {
   switch (coulomb.Dmethod) {
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     fprintf(
-            stderr,
-            "WARNING: pressure calculated, but DAWAANR pressure not implemented\n");
+        stderr,
+        "WARNING: pressure calculated, but DAWAANR pressure not implemented\n");
     break;
   case DIPOLAR_MDLC_DS:
     fprintf(stderr,
@@ -61,7 +62,7 @@ void pressure_calc_long_range_dipole_force(Observable_stat &virials, Observable_
                     "p_tensor arrays !!!!!!!\n");
 
     break;
-    }
+  }
 #endif
   default:
     break;
@@ -99,9 +100,9 @@ void nonbonded_interaction_data_calc_dipolar_cutoff(double &ret) {
     ret = dp3m.params.r_cut_iL * box_l[0];
   }
 #endif /*ifdef DP3M */
-      // Note: Dipolar calculation via scafacos
-      // There doesn't seem to be short range delegation for dipolar methods
-      // in Scafacos, so no cutoff is contributed
+       // Note: Dipolar calculation via scafacos
+       // There doesn't seem to be short range delegation for dipolar methods
+       // in Scafacos, so no cutoff is contributed
   default:
     break;
   }
@@ -117,7 +118,7 @@ void integrate_dipole_sanity_check() {
 #endif /* DP3M */
   default: {
     runtimeErrorMsg()
-            << "NpT does not work with your dipolar method, please use P3M.";
+        << "NpT does not work with your dipolar method, please use P3M.";
   }
   }
 }
@@ -184,7 +185,8 @@ void initialize_init_dipole() {
 }
 
 void forces_inline_calc_pair_dipole_force(Particle *p1, Particle *p2, double *d,
-                                          double dist, double dist2, Vector3d &force) {
+                                          double dist, double dist2,
+                                          Vector3d &force) {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -256,7 +258,8 @@ void forces_calc_long_range_dipole() {
 }
 
 void energy_inline_add_pair_dipole_energy(Particle *p1, Particle *p2, double *d,
-                                          double dist, double dist2, Observable_stat &energy) {
+                                          double dist, double dist2,
+                                          Observable_stat &energy) {
   double ret = 0;
   if (coulomb.Dmethod != DIPOLAR_NONE) {
     // ret=0;
@@ -270,8 +273,8 @@ void energy_inline_add_pair_dipole_energy(Particle *p1, Particle *p2, double *d,
 #endif
     default:
       ret = 0;
-  }
-  energy.dipolar[0] += ret;
+    }
+    energy.dipolar[0] += ret;
   }
 }
 
@@ -309,9 +312,9 @@ void energy_calc_long_range_dipole_energy(Observable_stat &energy) {
     break;
 #endif // DIPOLAR_BARNES_HUT
 #ifdef SCAFACOS_DIPOLES
-    case DIPOLAR_SCAFACOS:
-      assert(Scafacos::dipolar());
-      energy.dipolar[1] = Scafacos::long_range_energy();
+  case DIPOLAR_SCAFACOS:
+    assert(Scafacos::dipolar());
+    energy.dipolar[1] = Scafacos::long_range_energy();
 #endif
   case DIPOLAR_NONE:
     break;

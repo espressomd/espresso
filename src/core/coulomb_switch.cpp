@@ -1,27 +1,27 @@
 
-#include "errorhandling.hpp"
-#include "statistics.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/elc.hpp"
+#include "communication.hpp" // bcast functions
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp" // bcast dp3m
-#include "electrostatics_magnetostatics/p3m_gpu.hpp"
+#include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp" // bcast dp3m
+#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/p3m_gpu.hpp"
+#include "errorhandling.hpp"
+#include "initialize.hpp"
+#include "integrate.hpp" // skin
+#include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/reaction_field.hpp"
-#include "layered.hpp"
-#include "integrate.hpp" // skin
-#include "initialize.hpp"
 #include "npt.hpp" // nptiso
-#include "communication.hpp" // bcast functions
+#include "statistics.hpp"
 
-
-void
-pressure_inline_add_pair_pressure(Particle *p1, Particle *p2, double *d, double dist, double dist2, Observable_stat &virials,
-                                  Observable_stat &p_tensor) {
+void pressure_inline_add_pair_pressure(Particle *p1, Particle *p2, double *d,
+                                       double dist, double dist2,
+                                       Observable_stat &virials,
+                                       Observable_stat &p_tensor) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_P3M_GPU:
@@ -90,7 +90,8 @@ void pressure_n_coulomb(int &n_coulomb) {
   }
 }
 
-void pressure_calc_long_range_coulomb_force(Observable_stat &virials, Observable_stat &p_tensor) {
+void pressure_calc_long_range_coulomb_force(Observable_stat &virials,
+                                            Observable_stat &p_tensor) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -99,8 +100,8 @@ void pressure_calc_long_range_coulomb_force(Observable_stat &virials, Observable
     break;
   case COULOMB_P3M_GPU:
     fprintf(
-            stderr,
-            "WARNING: pressure calculated, but GPU P3M pressure not implemented\n");
+        stderr,
+        "WARNING: pressure calculated, but GPU P3M pressure not implemented\n");
     break;
   case COULOMB_P3M: {
     p3m_charge_assign();
@@ -112,14 +113,14 @@ void pressure_calc_long_range_coulomb_force(Observable_stat &virials, Observable
 #endif
   case COULOMB_MMM2D:
     fprintf(
-            stderr,
-            "WARNING: pressure calculated, but MMM2D pressure not implemented\n");
+        stderr,
+        "WARNING: pressure calculated, but MMM2D pressure not implemented\n");
     break;
   case COULOMB_MMM1D:
   case COULOMB_MMM1D_GPU:
     fprintf(
-            stderr,
-            "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
+        stderr,
+        "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
     break;
   default:
     break;
@@ -175,7 +176,7 @@ void nonbonded_interaction_data_calc_electrostatics_cutoff(double &ret) {
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-  ret = Scafacos::get_r_cut();
+    ret = Scafacos::get_r_cut();
 #endif
   default:
     break;
@@ -223,7 +224,7 @@ void integrate_coulomb_sanity_check() {
 #endif /*P3M*/
   default: {
     runtimeErrorMsg()
-            << "npt only works with P3M, Debye-Huckel or reaction field";
+        << "npt only works with P3M, Debye-Huckel or reaction field";
   }
   }
 }
@@ -235,7 +236,7 @@ void initialize_on_observable_calc() {
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     EVENT_TRACE(
-            fprintf(stderr, "%d: p3m_count_charged_particles\n", this_node));
+        fprintf(stderr, "%d: p3m_count_charged_particles\n", this_node));
     p3m_count_charged_particles();
     break;
 #endif
@@ -355,8 +356,8 @@ void initialize_init_coulomb() {
   }
 }
 
-void forces_inline_calc_pair_coulomb_force(Particle *p1, Particle *p2, double *d,
-                                           double dist, double dist2,
+void forces_inline_calc_pair_coulomb_force(Particle *p1, Particle *p2,
+                                           double *d, double dist, double dist2,
                                            Vector3d &force) {
   const double q1q2 = p1->p.q * p2->p.q;
 
@@ -395,8 +396,8 @@ void forces_inline_calc_pair_coulomb_force(Particle *p1, Particle *p2, double *d
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-  Scafacos::add_pair_force(p1, p2, d, dist, force.data());
-  break;
+    Scafacos::add_pair_force(p1, p2, d, dist, force.data());
+    break;
 #endif
   default:
     break;
@@ -455,17 +456,18 @@ void forces_calc_long_range_coulomb_force() {
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-  assert(!Scafacos::dipolar());
-  Scafacos::add_long_range_force();
-  break;
+    assert(!Scafacos::dipolar());
+    Scafacos::add_long_range_force();
+    break;
 #endif
   default:
     break;
   }
 }
 
-void energy_inline_add_pair_coulomb_energy(Particle *p1, Particle *p2, double *d,
-                                           double dist, double dist2, Observable_stat &energy) {
+void energy_inline_add_pair_coulomb_energy(Particle *p1, Particle *p2,
+                                           double *d, double dist, double dist2,
+                                           Observable_stat &energy) {
   double ret = 0;
   if (coulomb.method != COULOMB_NONE) {
     /* real space Coulomb */
@@ -514,7 +516,7 @@ void energy_calc_long_range_coulomb_energy(Observable_stat &energy) {
 #ifdef P3M
   case COULOMB_P3M_GPU:
     printf(
-            "long range energy calculation not implemented for GPU P3M\n"); // TODO
+        "long range energy calculation not implemented for GPU P3M\n"); // TODO
     // make
     // right
     break;
@@ -681,7 +683,7 @@ int elc_switch_error() {
   switch (coulomb.method) {
   case COULOMB_P3M_GPU: {
     runtimeErrorMsg()
-            << "ELC tuning failed, ELC is not set up to work with the GPU P3M";
+        << "ELC tuning failed, ELC is not set up to work with the GPU P3M";
     return ES_ERROR;
   }
   case COULOMB_ELC_P3M:
