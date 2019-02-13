@@ -83,7 +83,6 @@ public:
   double get_density_at_pos(const Vector3d &position);
   //  Vector3d get_stress_at_pos(const Vector3d& position);
 
-  void set_node_as_boundary(const Vector3i &node);
   Vector3d get_node_velocity_at_boundary(const Vector3i node) const;
   void set_node_velocity_at_boundary(const Vector3i node, const Vector3d v);
   void remove_node_from_boundary(const Vector3i &node);

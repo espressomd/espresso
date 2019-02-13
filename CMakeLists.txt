@@ -499,6 +499,7 @@ if (WITH_WALBERLA)
   find_package(waLBerLa)
   if (WALBERLA_FOUND)
     set(WALBERLA 1)
+    set(WALBERLA_LIBS mpi core domain_decomposition blockforest boundary core domain_decomposition field lbm timeloop vtk stdc++fs)
   endif(WALBERLA_FOUND)
 endif(WITH_WALBERLA)
 

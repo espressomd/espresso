@@ -149,6 +149,25 @@ void LbWalberla::print_vtk_density(char *filename) {
 void LbWalberla::integrate() { m_time_loop->run(); }
 
 
+void LbWalberla::set_node_velocity_at_boundary(const Vector3i node,
+                                               const Vector3d v) {
+  Cell global_cell{node[0], node[1], node[2]};
+  // Get block which has the cell
+  auto block = m_blocks->getBlock(global_cell, 0);
+
+  // Transform coords to block local
+  Cell local_cell;
+  m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
+  UBB_t::Velocity velocity(v[0], v[1], v[2]);
+
+  Boundary_handling_t *boundary_handling =
+      block->getData<Boundary_handling_t>(m_boundary_handling_id);
+  walberla::boundary::BoundaryUID uid =
+      boundary_handling->getBoundaryUID(UBB_flag);
+  boundary_handling->getBoundaryCondition<UBB_t>(uid).registerCell(
+      boundary_handling->getNearBoundaryFlag(), local_cell[0], local_cell[1],
+      local_cell[2], velocity);
+}
 
 
 
