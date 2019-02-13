@@ -245,5 +245,3 @@ cdef extern from "grid.hpp":
     Vector3d unfolded_position(const particle *)
     cdef void fold_position(double *, int*)
     void unfold_position(double pos[3], int image_box[3])
-
-cdef make_array_locked(const Vector3d & v)
