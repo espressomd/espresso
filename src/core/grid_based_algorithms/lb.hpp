@@ -87,6 +87,7 @@ void mpi_set_lb_fluid_counter(int high, int low);
  *  velocity sub-lattice and the corresponding coefficients
  *  of the pseudo-equilibrium distribution
  */
+extern Utils::Counter<uint64_t> rng_counter_fluid;
 template <size_t N_vel = 19> struct LB_Model {
   /** number of velocities */
   static const constexpr int n_veloc = static_cast<int>(N_vel);
@@ -373,5 +374,4 @@ void lb_calc_fluid_mass(double *result);
 void lb_calc_fluid_momentum(double *result);
 void lb_calc_fluid_temp(double *result);
 void lb_collect_boundary_forces(double *result);
-extern Utils::Counter<uint64_t> rng_counter_fluid;
 #endif /* _LB_H */
