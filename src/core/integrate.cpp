@@ -131,6 +131,40 @@ void force_and_velocity_display();
 
 void finalize_p_inst_npt();
 
+static void coulomb_sanity_check() {
+  switch (coulomb.method) {
+    case COULOMB_NONE:
+      break;
+    case COULOMB_DH:
+      break;
+    case COULOMB_RF:
+      break;
+#ifdef P3M
+    case COULOMB_P3M:
+      break;
+#endif /*P3M*/
+    default: {
+      runtimeErrorMsg()
+              << "npt only works with P3M, Debye-Huckel or reaction field";
+    }
+  }
+}
+
+static void dipole_sanity_check() {
+  switch (coulomb.Dmethod) {
+    case DIPOLAR_NONE:
+      break;
+#ifdef DP3M
+    case DIPOLAR_P3M:
+      break;
+#endif /* DP3M */
+    default: {
+      runtimeErrorMsg()
+              << "NpT does not work with your dipolar method, please use P3M.";
+    }
+  }
+}
+
 /*@}*/
 
 void integrator_sanity_checks() {
@@ -150,39 +184,11 @@ void integrator_npt_sanity_checks() {
     }
 
 #ifdef ELECTROSTATICS
-
-    switch (coulomb.method) {
-    case COULOMB_NONE:
-      break;
-    case COULOMB_DH:
-      break;
-    case COULOMB_RF:
-      break;
-#ifdef P3M
-    case COULOMB_P3M:
-      break;
-#endif /*P3M*/
-    default: {
-      runtimeErrorMsg()
-          << "npt only works with P3M, Debye-Huckel or reaction field";
-    }
-    }
+    coulomb_sanity_check();
 #endif /*ELECTROSTATICS*/
 
 #ifdef DIPOLES
-
-    switch (coulomb.Dmethod) {
-    case DIPOLAR_NONE:
-      break;
-#ifdef DP3M
-    case DIPOLAR_P3M:
-      break;
-#endif /* DP3M */
-    default: {
-      runtimeErrorMsg()
-          << "NpT does not work with your dipolar method, please use P3M.";
-    }
-    }
+    dipole_sanity_check();
 #endif /* ifdef DIPOLES */
   }
 }
