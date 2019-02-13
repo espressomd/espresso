@@ -53,6 +53,8 @@ set(EspressoCore_SRC
   topology.cpp
   tuning.cpp
   virtual_sites.cpp
+  coulomb_switch.cpp
+  dipole_switch.cpp
   accumulators/Correlator.cpp
   accumulators/MeanVarianceCalculator.cpp
   actor/ActorList.cpp

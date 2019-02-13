@@ -69,6 +69,10 @@
 #include "virtual_sites.hpp"
 
 #include "utils/mpi/all_compare.hpp"
+
+#include "coulomb_switch.hpp"
+#include "dipole_switch.hpp"
+
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -236,22 +240,9 @@ void on_observable_calc() {
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
-    switch (coulomb.method) {
-#ifdef P3M
-    case COULOMB_ELC_P3M:
-    case COULOMB_P3M_GPU:
-    case COULOMB_P3M:
-      EVENT_TRACE(
-          fprintf(stderr, "%d: p3m_count_charged_particles\n", this_node));
-      p3m_count_charged_particles();
-      break;
-#endif
-    case COULOMB_MAGGS:
-      maggs_init();
-      break;
-    default:
-      break;
-    }
+
+    initialize_on_observable_calc();
+
     reinit_electrostatics = 0;
   }
 #endif /*ifdef ELECTROSTATICS */
@@ -259,17 +250,9 @@ void on_observable_calc() {
 #ifdef DIPOLES
   if (reinit_magnetostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
-    switch (coulomb.Dmethod) {
-#ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-    // fall through
-    case DIPOLAR_P3M:
-      dp3m_count_magnetic_particles();
-      break;
-#endif
-    default:
-      break;
-    }
+
+    initialize_on_observable_calc_dipole();
+
     reinit_magnetostatics = 0;
   }
 #endif /*ifdef ELECTROSTATICS */
@@ -305,55 +288,17 @@ void on_particle_change() {
   invalidate_fetch_cache();
 }
 
+
 void on_coulomb_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_coulomb_change\n", this_node));
   invalidate_obs();
 
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_DH:
-    break;
-#ifdef P3M
-#ifdef CUDA
-  case COULOMB_P3M_GPU:
-    p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
-    break;
-#endif
-  case COULOMB_ELC_P3M:
-    ELC_init();
-  // fall through
-  case COULOMB_P3M:
-    p3m_init();
-    break;
-#endif
-  case COULOMB_MMM1D:
-    MMM1D_init();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_init();
-    break;
-  case COULOMB_MAGGS:
-    maggs_init();
-    /* Maggs electrostatics needs ghost velocities */
-    on_ghost_flags_change();
-    break;
-  default:
-    break;
-  }
+  initialize_on_coulomb_change();
 #endif /* ELECTROSTATICS */
 
 #ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  // fall through
-  case DIPOLAR_P3M:
-    dp3m_init();
-    break;
-#endif
-  default:
-    break;
-  }
+  initialize_on_coulomb_change_dipole();
 #endif /* ifdef DIPOLES */
 
   /* all Coulomb methods have a short range part, aka near field
@@ -404,21 +349,12 @@ void on_lbboundary_change() {
   recalc_forces = 1;
 }
 
+
+
 void on_resort_particles() {
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    ELC_on_resort_particles();
-    break;
-#endif
-  case COULOMB_MMM2D:
-    MMM2D_on_resort_particles();
-    break;
-  default:
-    break;
-  }
+  initialize_on_resort_particles();
 #endif /* ifdef ELECTROSTATICS */
 
   /* DIPOLAR interactions so far don't need this */
@@ -437,52 +373,11 @@ void on_boxl_change() {
 
 /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    ELC_init();
-  // fall through
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    p3m_scaleby_box_l();
-    break;
-#endif
-  case COULOMB_MMM1D:
-    MMM1D_init();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_init();
-    break;
-  case COULOMB_MAGGS:
-    maggs_init();
-    break;
-#ifdef SCAFACOS
-  case COULOMB_SCAFACOS:
-    Scafacos::update_system_params();
-    break;
-#endif
-  default:
-    break;
-  }
+  initialize_on_boxl_change();
 #endif
 
 #ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  // fall through
-  case DIPOLAR_P3M:
-    dp3m_scaleby_box_l();
-    break;
-#endif
-#ifdef SCAFACOS
-  case DIPOLAR_SCAFACOS:
-    Scafacos::update_system_params();
-    break;
-#endif
-  default:
-    break;
-  }
+  initialize_on_boxl_change_dipole();
 #endif
 
 #ifdef LB
@@ -495,50 +390,6 @@ void on_boxl_change() {
 #endif
 }
 
-static void init_coulomb() {
-  switch (coulomb.method) {
-  case COULOMB_DH:
-    break;
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    ELC_init();
-    // fall through
-  case COULOMB_P3M:
-    p3m_init();
-    break;
-  case COULOMB_P3M_GPU:
-    break;
-#endif
-  case COULOMB_MMM1D:
-    MMM1D_init();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_init();
-    break;
-  case COULOMB_MAGGS:
-    maggs_init();
-    /* Maggs electrostatics needs ghost velocities */
-    on_ghost_flags_change();
-    break;
-  default:
-    break;
-  }
-}
-
-static void init_dipole() {
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-    // fall through
-  case DIPOLAR_P3M:
-    dp3m_init();
-    break;
-#endif
-  default:
-    break;
-  }
-}
-
 void on_cell_structure_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
 
@@ -548,11 +399,11 @@ void on_cell_structure_change() {
    have separate, faster methods, as this might happen frequently
    in a NpT simulation. */
 #ifdef ELECTROSTATICS
-  init_coulomb();
+  initialize_init_coulomb();
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  init_dipole();
+  initialize_init_dipole();
 #endif /* ifdef DIPOLES */
 
 #ifdef LB

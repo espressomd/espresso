@@ -78,6 +78,9 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "coulomb_switch.hpp"
+#include "dipole_switch.hpp"
+
 /****************************************
  * variables
  *****************************************/
@@ -168,50 +171,18 @@ double calc_electrostatics_cutoff() {
      Note that the box length may have changed,
      but the method not yet reinitialized.
    */
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    return std::max(elc_params.space_layer, p3m.params.r_cut_iL * box_l[0]);
-  case COULOMB_MMM2D:
-    return layer_h - skin;
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    /* do not use precalculated r_cut here, might not be set yet */
-    return p3m.params.r_cut_iL * box_l[0];
-#endif
-  case COULOMB_DH:
-    return dh_params.r_cut;
-  case COULOMB_RF:
-  case COULOMB_INTER_RF:
-    return rf_params.r_cut;
-#ifdef SCAFACOS
-  case COULOMB_SCAFACOS:
-    return Scafacos::get_r_cut();
-#endif
-  default:
-    break;
-  }
+  double ret = 0.;
+  nonbonded_interaction_data_calc_electrostatics_cutoff(ret);
+  return ret;
 #endif /*ifdef ELECTROSTATICS */
   return 0;
 }
 
 double calc_dipolar_cutoff() {
 #ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  // fall through
-  case DIPOLAR_P3M: {
-    /* do not use precalculated r_cut here, might not be set yet */
-    return dp3m.params.r_cut_iL * box_l[0];
-  }
-#endif /*ifdef DP3M */
-  // Note: Dipolar calculation via scafacos
-  // There doesn't seem to be short range delegation for dipolar methods
-  // in Scafacos, so no cutoff is contributed
-  default:
-    break;
-  }
+  double ret = 0;
+  nonbonded_interaction_data_calc_dipolar_cutoff(ret);
+  return ret;
 #endif
   return 0;
 }
@@ -441,62 +412,16 @@ void make_particle_type_exist_local(int type) {
     realloc_ia_params(type + 1);
 }
 
-static void coulomb_sanity_checks(int &state) {
-  switch (coulomb.method) {
-  case COULOMB_MMM1D:
-    if (MMM1D_sanity_checks())
-      state = 0;
-    break;
-  case COULOMB_MMM2D:
-    if (MMM2D_sanity_checks())
-      state = 0;
-    break;
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    if (ELC_sanity_checks())
-      state = 0; // fall through
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    if (p3m_sanity_checks())
-      state = 0;
-    break;
-#endif
-  default:
-    break;
-  }
-}
-
-static void dipole_sanity_checks(int &state) {
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_MDLC_P3M:
-    if (mdlc_sanity_checks())
-      state = 0; // fall through
-  case DIPOLAR_P3M:
-    if (dp3m_sanity_checks())
-      state = 0;
-    break;
-  case DIPOLAR_MDLC_DS:
-    if (mdlc_sanity_checks())
-      state = 0; // fall through
-  case DIPOLAR_DS:
-    if (magnetic_dipolar_direct_sum_sanity_checks())
-      state = 0;
-    break;
-  default:
-    break;
-  }
-}
-
 int interactions_sanity_checks() {
   /* set to zero if initialization was not successful. */
   int state = 1;
 
 #ifdef ELECTROSTATICS
-  coulomb_sanity_checks(state);
+  nonbonded_interaction_data_coulomb_sanity_checks(state);
 #endif /* ifdef ELECTROSTATICS */
 
 #if defined(DIPOLES) and defined(DP3M)
-  dipole_sanity_checks(state);
+  nonbonded_interaction_data_dipole_sanity_checks(state);
 #endif /* ifdef  DIPOLES */
 
   return state;
@@ -541,30 +466,8 @@ int coulomb_set_prefactor(double prefactor) {
 */
 void deactivate_coulomb_method() {
   coulomb.prefactor = 0;
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    break;
-#endif
-  case COULOMB_DH:
-    dh_params.r_cut = 0.0;
-    dh_params.kappa = 0.0;
-  case COULOMB_RF:
-  case COULOMB_INTER_RF:
-    rf_params.kappa = 0.0;
-    rf_params.epsilon1 = 0.0;
-    rf_params.epsilon2 = 0.0;
-    rf_params.r_cut = 0.0;
-    rf_params.B = 0.0;
-  case COULOMB_MMM1D:
-    mmm1d_params.maxPWerror = 1e40;
-  case COULOMB_MMM2D:
-    mmm2d_params.far_cut = 0;
-  default:
-    break;
-  }
+
+  nonbonded_interaction_data_deactivate_coulomb_method();
 
   mpi_bcast_coulomb_params();
   coulomb.method = COULOMB_NONE;

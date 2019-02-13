@@ -80,6 +80,8 @@
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 
+#include "coulomb_switch.hpp"
+
 using namespace std;
 
 namespace Communication {
@@ -648,85 +650,6 @@ void mpi_bcast_coulomb_params() {
   mpi_call(mpi_bcast_coulomb_params_slave, 1, 0);
   mpi_bcast_coulomb_params_slave(-1, 0);
 #endif
-}
-
-static void bcast_coulomb_params() {
-  switch (coulomb.method) {
-  case COULOMB_NONE:
-    // fall through, scafacos has internal parameter propagation
-  case COULOMB_SCAFACOS:
-    break;
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, comm_cart);
-    // fall through
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    MPI_Bcast(&p3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0,
-              comm_cart);
-    break;
-#endif
-  case COULOMB_DH:
-    MPI_Bcast(&dh_params, sizeof(Debye_hueckel_params), MPI_BYTE, 0, comm_cart);
-    break;
-  case COULOMB_MMM1D:
-  case COULOMB_MMM1D_GPU:
-    MPI_Bcast(&mmm1d_params, sizeof(MMM1D_struct), MPI_BYTE, 0, comm_cart);
-    break;
-  case COULOMB_MMM2D:
-    MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, comm_cart);
-    break;
-  case COULOMB_MAGGS:
-    MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart);
-    break;
-  case COULOMB_RF:
-  case COULOMB_INTER_RF:
-    MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0,
-              comm_cart);
-    break;
-  default:
-    fprintf(stderr,
-            "%d: INTERNAL ERROR: cannot bcast coulomb params for "
-            "unknown method %d\n",
-            this_node, coulomb.method);
-    errexit();
-  }
-}
-
-static void bcast_dipole_params() {
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_NONE:
-    break;
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-    MPI_Bcast(&dlc_params, sizeof(DLC_struct), MPI_BYTE, 0, comm_cart);
-    // fall through
-  case DIPOLAR_P3M:
-    MPI_Bcast(&dp3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0,
-              comm_cart);
-    break;
-#endif
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    break;
-  case DIPOLAR_MDLC_DS:
-    // fall trough
-  case DIPOLAR_DS:
-    break;
-  case DIPOLAR_DS_GPU:
-    break;
-#ifdef DIPOLAR_BARNES_HUT
-  case DIPOLAR_BH_GPU:
-    break;
-#endif
-  case DIPOLAR_SCAFACOS:
-    break;
-  default:
-    fprintf(stderr,
-            "%d: INTERNAL ERROR: cannot bcast dipolar params for "
-            "unknown method %d\n",
-            this_node, coulomb.Dmethod);
-    errexit();
-  }
 }
 
 void mpi_bcast_coulomb_params_slave(int, int) {

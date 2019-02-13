@@ -53,6 +53,8 @@
 #include "short_range_loop.hpp"
 #include "utils/NoOp.hpp"
 
+#include "coulomb_switch.hpp"
+
 iccp3m_struct iccp3m_cfg;
 
 /* functions that are used in icc* to compute the electric field acting on the
@@ -71,30 +73,6 @@ inline void init_ghost_force_iccp3m(Particle *part);
  */
 void force_calc_iccp3m();
 
-static void calc_pair_coulomb_force(Particle *p1, Particle *p2, double *d,
-                                    double dist, double dist2, double *force) {
-  auto const q1q2 = p1->p.q * p2->p.q;
-  if (!q1q2)
-    return;
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    p3m_add_pair_force(q1q2, d, dist2, dist, force);
-    break;
-#endif /* P3M */
-  case COULOMB_MMM1D:
-    add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force);
-    break;
-  case COULOMB_MMM2D:
-    add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force);
-    break;
-  default:
-    break;
-  }
-}
-
 /** Variant of add_non_bonded_pair_force where only Coulomb
  *  contributions are calculated   */
 inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
@@ -111,7 +89,7 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   /***********************************************/
 
   /* real space Coulomb */
-  calc_pair_coulomb_force(p1, p2, d, dist, dist2, force);
+  icc_calc_pair_coulomb_force(p1, p2, d, dist, dist2, force);
 
   /***********************************************/
   /* add total nonbonded forces to particle      */
@@ -259,40 +237,6 @@ void init_forces_iccp3m() {
   }
 }
 
-static void calc_long_range_force_contribution_iccp3m() {
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    if (elc_params.dielectric_contrast_on) {
-      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric contrast";
-    }
-    p3m_charge_assign();
-    p3m_calc_kspace_forces(1, 0);
-    ELC_add_force();
-    break;
-
-#ifdef CUDA
-  case COULOMB_P3M_GPU:
-    if (this_node == 0) {
-      FORCE_TRACE(printf("Computing GPU P3M forces.\n"));
-      p3m_gpu_add_farfield_force();
-    }
-    break;
-#endif
-  case COULOMB_P3M:
-    p3m_charge_assign();
-    p3m_calc_kspace_forces(1, 0);
-    break;
-#endif
-  case COULOMB_MMM2D:
-    MMM2D_add_far_force();
-    MMM2D_dielectric_layers_force_contribution();
-    break;
-  default:
-    break;
-  }
-}
-
 void calc_long_range_forces_iccp3m() {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
@@ -302,45 +246,8 @@ void calc_long_range_forces_iccp3m() {
     runtimeErrorMsg() << "ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ";
   }
 
-  calc_long_range_force_contribution_iccp3m();
+  icc_calc_long_range_force_contribution_iccp3m();
 #endif
-}
-
-/** \name Private Functions */
-/************************************************************/
-/*@{*/
-
-int iccp3m_sanity_check() {
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M: {
-    if (elc_params.dielectric_contrast_on) {
-      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric contrast";
-      return 1;
-    }
-    break;
-  }
-#endif
-  case COULOMB_DH: {
-    runtimeErrorMsg() << "ICCP3M does not work with Debye-Hueckel.";
-    return 1;
-  }
-  case COULOMB_RF: {
-    runtimeErrorMsg() << "ICCP3M does not work with COULOMB_RF.";
-    return 1;
-  }
-  default:
-    break;
-  }
-
-#ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    runtimeErrorMsg() << "ICCP3M does not work in the NPT ensemble";
-    return 1;
-  }
-#endif
-
-  return 0;
 }
 
 #endif

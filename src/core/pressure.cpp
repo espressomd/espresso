@@ -33,6 +33,9 @@
 
 #include "short_range_loop.hpp"
 
+#include "coulomb_switch.hpp"
+#include "dipole_switch.hpp"
+
 Observable_stat virials{};
 Observable_stat total_pressure{};
 Observable_stat p_tensor{};
@@ -177,92 +180,15 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
 
 /************************************************************/
 
-static void calc_long_range_coulomb_force() {
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    fprintf(stderr,
-            "WARNING: pressure calculated, but ELC pressure not implemented\n");
-    break;
-  case COULOMB_P3M_GPU:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but GPU P3M pressure not implemented\n");
-    break;
-  case COULOMB_P3M: {
-    p3m_charge_assign();
-    virials.coulomb[1] = p3m_calc_kspace_forces(0, 1);
-    p3m_charge_assign();
-    p3m_calc_kspace_stress(p_tensor.coulomb + 9);
-    break;
-  }
-#endif
-  case COULOMB_MMM2D:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but MMM2D pressure not implemented\n");
-    break;
-  case COULOMB_MMM1D:
-  case COULOMB_MMM1D_GPU:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
-    break;
-  default:
-    break;
-  }
-}
-
-static void calc_long_range_dipole_force() {
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but DAWAANR pressure not implemented\n");
-    break;
-  case DIPOLAR_MDLC_DS:
-    fprintf(stderr,
-            "WARNING: pressure calculated, but DLC pressure not implemented\n");
-    break;
-  case DIPOLAR_DS:
-    fprintf(stderr, "WARNING: pressure calculated, but  MAGNETIC DIRECT SUM "
-                    "pressure not implemented\n");
-    break;
-
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-    fprintf(stderr,
-            "WARNING: pressure calculated, but DLC pressure not implemented\n");
-    break;
-  case DIPOLAR_P3M: {
-    int k;
-    dp3m_dipole_assign();
-    virials.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
-
-    for (k = 0; k < 3; k++)
-      p_tensor.coulomb[9 + k * 3 + k] = virials.dipolar[1] / 3.;
-    fprintf(stderr, "WARNING: stress tensor calculated, but dipolar P3M stress "
-                    "tensor not implemented\n");
-    fprintf(stderr, "WARNING: things have been added to the coulomb virial and "
-                    "p_tensor arrays !!!!!!!\n");
-
-    break;
-  }
-#endif
-  default:
-    break;
-  }
-}
-
 void calc_long_range_virials() {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  calc_long_range_coulomb_force();
+  pressure_calc_long_range_coulomb_force(virials, p_tensor);
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  calc_long_range_dipole_force();
+  pressure_calc_long_range_dipole_force(virials, p_tensor);
 #endif /*ifdef DIPOLES */
 }
 
@@ -277,36 +203,10 @@ void init_virials(Observable_stat *stat) {
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_NONE:
-    n_coulomb = 0;
-    break;
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    n_coulomb = 2;
-    break;
-  default:
-    n_coulomb = 1;
-  }
+  pressure_n_coulomb(n_coulomb);
 #endif
 #ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_NONE:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_DS:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_P3M:
-    n_dipolar = 2;
-    break;
-  default:
-    n_dipolar = 0;
-    break;
-  }
+  pressure_n_dipolar(n_dipolar);
 #endif
 #ifdef VIRTUAL_SITES
   n_vs = virtual_sites()->n_pressure_contribs();
@@ -339,35 +239,10 @@ void init_p_tensor(Observable_stat *stat) {
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_NONE:
-    n_coulomb = 0;
-    break;
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    n_coulomb = 2;
-    break;
-  default:
-    n_coulomb = 1;
-  }
+  pressure_n_coulomb(n_coulomb);
 #endif
 #ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_NONE:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_DS:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_P3M:
-    n_dipolar = 2;
-    break;
-  default:
-    n_dipolar = 0;
-  }
+  pressure_n_dipolar(n_dipolar);
 #endif
 #ifdef VIRTUAL_SITES
   n_vs = virtual_sites()->n_pressure_contribs();
