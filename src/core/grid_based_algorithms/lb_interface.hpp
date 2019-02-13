@@ -30,11 +30,11 @@ void lb_lbfluid_reinit_fluid();
 void lb_lbfluid_reinit_parameters();
 
 #ifdef LB
-extern int transfer_momentum;
+extern bool transfer_momentum;
 #endif
 
 #ifdef LB_GPU
-extern int transfer_momentum_gpu;
+extern bool transfer_momentum_gpu;
 #endif
 
 uint64_t lb_lbfluid_get_rng_state();

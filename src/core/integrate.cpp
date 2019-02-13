@@ -254,7 +254,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     thermo_heat_up();
 
 #ifdef LB
-    transfer_momentum = 0;
+    transfer_momentum = false;
     if (lattice_switch & LATTICE_LB && this_node == 0 && n_part)
       runtimeWarning("Recalculating forces, so the LB coupling forces are not "
                      "included in the particle force the first time step. This "
@@ -262,7 +262,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
                      "sampling.\n");
 #endif
 #ifdef LB_GPU
-    transfer_momentum_gpu = 0;
+    transfer_momentum_gpu = false;
     if (lattice_switch & LATTICE_LB_GPU && this_node == 0 && n_part)
       runtimeWarning("Recalculating forces, so the LB coupling forces are not "
                      "included in the particle force the first time step. This "

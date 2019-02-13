@@ -31,6 +31,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include <cinttypes>
 #include <fstream>
+#include <profiler/profiler.hpp>
 
 #ifdef LB
 
@@ -912,6 +913,7 @@ inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
 
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
   for (auto it = LBBoundaries::lbboundaries.begin();
@@ -934,7 +936,6 @@ inline void lb_collide_stream() {
 
   const r123::Philox4x64::ctr_type c{
       {rng_counter_fluid.value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
-
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {

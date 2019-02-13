@@ -116,11 +116,11 @@ void lb_lbfluid_init() {
 }
 
 #ifdef LB
-int transfer_momentum = 0;
+bool transfer_momentum = false;
 #endif
 
 #ifdef LB_GPU
-int transfer_momentum_gpu = 0;
+bool transfer_momentum_gpu = false;
 #endif
 
 uint64_t lb_lbfluid_get_rng_state() {

@@ -1,5 +1,6 @@
 #include <Random123/philox.h>
 #include <boost/mpi.hpp>
+#include <profiler/profiler.hpp>
 
 #include "cells.hpp"
 #include "communication.hpp"
@@ -158,6 +159,7 @@ void add_swimmer_force(Particle &p) {
 } // namespace
 
 void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     if (transfer_momentum_gpu && this_node == 0)
