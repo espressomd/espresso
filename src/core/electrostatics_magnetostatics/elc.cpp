@@ -132,7 +132,6 @@ static double Q_energy(double omega);
 /*@}*/
 /** \name p,q <> 0 per frequency code */
 /*@{*/
-
 static void setup_PQ(int p, int q, double omega);
 static void add_PQ_force(int p, int q, double omega);
 static double PQ_energy(double omega);
