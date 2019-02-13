@@ -492,10 +492,12 @@ endif(WITH_BENCHMARKS)
 if (WITH_WALBERLA)
   # This has to be here to be visible when find_package is called
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  set(WALBERLA_BUILD_DOC off)
+  set(WALBERLA_WARNING_DISABLE off)
   
   include(cmake/FindwaLBerla.cmake)
   find_package(waLBerLa)
-  if (${WALBERLA_FOUND})
+  if (WALBERLA_FOUND)
     set(WALBERLA 1)
   endif(WALBERLA_FOUND)
 endif(WITH_WALBERLA)
