@@ -26,7 +26,7 @@ import espressomd.observables
 import espressomd.lb
 
 checkpoint = espressomd.checkpointing.Checkpoint(
-    checkpoint_id="mycheckpoint_@TEST_COMBINATION@".replace('.', '__'),
+    checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace('.', '__'),
     checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
@@ -99,8 +99,8 @@ checkpoint.register("particle_force1")
 if LB_implementation:
     lbf[1, 1, 1].velocity = [0.1, 0.2, 0.3]
     lbf.save_checkpoint(
-        "@CMAKE_CURRENT_BINARY_DIR@/lb_@TEST_COMBINATION@.cpt",
-        1)
+        "@CMAKE_CURRENT_BINARY_DIR@/lb_@TEST_COMBINATION@_@TEST_BINARY@.cpt",
+        int("@TEST_BINARY@"))
 if espressomd.has_features("COLLISION_DETECTION"):
         system.collision_detection.set_params(
             mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)

@@ -35,13 +35,13 @@ class CheckpointTest(ut.TestCase):
     @classmethod
     def setUpClass(self):
         checkpoint = espressomd.checkpointing.Checkpoint(
-            checkpoint_id="mycheckpoint_@TEST_COMBINATION@".replace('.', '__'),
+            checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace('.', '__'),
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
         if LB:
             self.lbf = system.actors[0]
             self.lbf.load_checkpoint(
-                "@CMAKE_CURRENT_BINARY_DIR@/lb_@TEST_COMBINATION@.cpt", 1)
+                "@CMAKE_CURRENT_BINARY_DIR@/lb_@TEST_COMBINATION@_@TEST_BINARY@.cpt", int("@TEST_BINARY@"))
 
     @ut.skipIf(not LB, "Skipping test due to missing features.")
     def test_LB(self):
