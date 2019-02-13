@@ -35,7 +35,8 @@ class CheckpointTest(ut.TestCase):
     @classmethod
     def setUpClass(self):
         checkpoint = espressomd.checkpointing.Checkpoint(
-            checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace('.', '__'),
+            checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
+                '.', '__'),
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
         if LB:

@@ -26,7 +26,8 @@ import espressomd.observables
 import espressomd.lb
 
 checkpoint = espressomd.checkpointing.Checkpoint(
-    checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace('.', '__'),
+    checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
+        '.', '__'),
     checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
