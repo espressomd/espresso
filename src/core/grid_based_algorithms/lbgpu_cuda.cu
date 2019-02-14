@@ -75,8 +75,8 @@ static LB_rho_v_pi_gpu *print_rho_v_pi = nullptr;
 
 /** @name structs for velocity densities */
 /*@{*/
-static LB_nodes_gpu nodes_a = {nullptr, nullptr, nullptr};
-static LB_nodes_gpu nodes_b = {nullptr, nullptr, nullptr};
+static LB_nodes_gpu nodes_a = {nullptr, nullptr};
+static LB_nodes_gpu nodes_b = {nullptr, nullptr};
 ;
 /** struct for node force density*/
 
@@ -137,7 +137,7 @@ __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
   uint32_t philox_counter_low = static_cast<uint32_t>(philox_counter);
   uint4 rnd_ints =
       curand_Philox4x32_10(make_uint4(index, philox_counter_hi, 0, mode),
-                           make_uint2(philox_counter_low, para->your_seed));
+                           make_uint2(philox_counter_low, 0));
   float4 rnd_floats;
   rnd_floats.w = rnd_ints.w * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   rnd_floats.x = rnd_ints.x * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);

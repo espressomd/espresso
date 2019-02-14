@@ -121,8 +121,6 @@ struct LB_parameters_gpu {
 
   float ext_force_density[3];
 
-  unsigned int your_seed;
-
   unsigned int reinit;
   // Thermal energy
   float kT;
