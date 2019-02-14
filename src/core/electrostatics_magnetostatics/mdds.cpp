@@ -173,53 +173,77 @@ void collect_local_particles(const ParticleRange &particles,
         }
     }
 }
+} // namespace
 
-double mdds_calculations(int force_flag, int energy_flag,
-                         const ParticleRange &particles,
-                         const boost::mpi::communicator &comm) {
-  std::vector<Particle *> local_interacting_particles;
-  std::vector<PosMom> local_posmom;
+void mdds_forces(const ParticleRange &particles,
+                 const boost::mpi::communicator &comm) {
+    std::vector<Particle *> local_interacting_particles;
+    std::vector<PosMom> local_posmom;
 
-  collect_local_particles(particles, local_interacting_particles, local_posmom);
+    collect_local_particles(particles, local_interacting_particles, local_posmom);
 
-  std::vector<PosMom> all_posmom;
-  size_t offset;
-  if (comm.size() > 1) {
-    offset = all_gather_posmom(local_posmom, all_posmom, comm);
-  } else {
-    std::swap(all_posmom, local_posmom);
-    offset = 0;
-  }
+    std::vector<PosMom> all_posmom;
+    size_t offset;
+    if (comm.size() > 1) {
+        offset = all_gather_posmom(local_posmom, all_posmom, comm);
+    } else {
+        std::swap(all_posmom, local_posmom);
+        offset = 0;
+    }
 
-  /* Number of image boxes considered */
-  const Vector3i ncut =
-      mdds_n_replicas * Vector3i{static_cast<int>(PERIODIC(0)),
-                                 static_cast<int>(PERIODIC(1)),
-                                 static_cast<int>(PERIODIC(2))};
-  auto const with_replicas = (ncut.norm2() > 0);
+    /* Number of image boxes considered */
+    const Vector3i ncut =
+            mdds_n_replicas * Vector3i{static_cast<int>(PERIODIC(0)),
+                                       static_cast<int>(PERIODIC(1)),
+                                       static_cast<int>(PERIODIC(2))};
+    auto const with_replicas = (ncut.norm2() > 0);
 
     using boost::make_iterator_range;
-  if(force_flag) {
-      /* Range of particles we calculate the ia for on this node */
-      auto begin = all_posmom.begin() + offset;
-      auto const end = begin + local_interacting_particles.size();
 
-      /* Output iterator for the force */
-      auto p = local_interacting_particles.begin();
+    /* Range of particles we calculate the ia for on this node */
+    auto begin = all_posmom.begin() + offset;
+    auto const end = begin + local_interacting_particles.size();
 
-      for(auto pi = begin; pi != end; ++pi, ++p) {
-          auto const fi = image_sum(all_posmom.begin(), all_posmom.end(),
-                  pi, with_replicas, ncut, ParticleForce{},
-                  [pi](Vector3d const& rn, Vector3d const& mj) {
-                      return pair_force(rn, pi->m, mj);
-                  });
+    /* Output iterator for the force */
+    auto p = local_interacting_particles.begin();
 
-          (*p)->f.f += coulomb.Dprefactor * fi.f;
-          (*p)->f.torque += coulomb.Dprefactor * fi.torque;
-      }
-  }
+    for(auto pi = begin; pi != end; ++pi, ++p) {
+        auto const fi = image_sum(all_posmom.begin(), all_posmom.end(),
+                                  pi, with_replicas, ncut, ParticleForce{},
+                                  [pi](Vector3d const& rn, Vector3d const& mj) {
+                                      return pair_force(rn, pi->m, mj);
+                                  });
 
-    if(energy_flag) {
+        (*p)->f.f += coulomb.Dprefactor * fi.f;
+        (*p)->f.torque += coulomb.Dprefactor * fi.torque;
+    }
+}
+
+double mdds_energy(const ParticleRange &particles,
+                   const boost::mpi::communicator &comm) {
+    std::vector<Particle *> local_interacting_particles;
+    std::vector<PosMom> local_posmom;
+
+    collect_local_particles(particles, local_interacting_particles, local_posmom);
+
+    std::vector<PosMom> all_posmom;
+    size_t offset;
+    if (comm.size() > 1) {
+        offset = all_gather_posmom(local_posmom, all_posmom, comm);
+    } else {
+        std::swap(all_posmom, local_posmom);
+        offset = 0;
+    }
+
+    /* Number of image boxes considered */
+    const Vector3i ncut =
+            mdds_n_replicas * Vector3i{static_cast<int>(PERIODIC(0)),
+                                       static_cast<int>(PERIODIC(1)),
+                                       static_cast<int>(PERIODIC(2))};
+    auto const with_replicas = (ncut.norm2() > 0);
+
+    using boost::make_iterator_range;
+
         /* Range of particles we calculate the ia for on this node */
         auto begin = all_posmom.begin() + offset;
         auto const end = begin + local_interacting_particles.size();
@@ -229,26 +253,14 @@ double mdds_calculations(int force_flag, int energy_flag,
 
         auto u = 0.;
         for(auto pi = begin; pi != end; ++pi, ++p) {
-            u = image_sum(all_posmom.begin(), all_posmom.end(),
-                                      pi, with_replicas, ncut, u,
-                                      [pi](Vector3d const& rn, Vector3d const& mj) {
-                                          return pair_potential(rn, pi->m, mj);
-                                      });
+            u = image_sum(std::next(pi), all_posmom.end(),
+                          pi, with_replicas, ncut, u,
+                          [pi](Vector3d const& rn, Vector3d const& mj) {
+                              return pair_potential(rn, pi->m, mj);
+                          });
         }
 
-        return 0.5 * coulomb.Dprefactor * u;
-    }
-}
-} // namespace
-
-void mdds_forces(const ParticleRange &particles,
-                 const boost::mpi::communicator &comm) {
-  mdds_calculations(1, 0, particles, comm);
-}
-
-double mdds_energy(const ParticleRange &particles,
-                   const boost::mpi::communicator &comm) {
-  return mdds_calculations(0, 1, particles, comm);
+        return coulomb.Dprefactor * u;
 }
 
 void mdds_set_params(int n_cut) {
