@@ -1,19 +1,19 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+#Copyright(C) 2010 - 2018 The ESPResSo project
 #
-# This file is part of ESPResSo.
+#This file is part of ESPResSo.
 #
-# ESPResSo is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#ESPResSo is free software : you can redistribute it and / or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
 #
-# ESPResSo is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#ESPResSo is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+#GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#You should have received a copy of the GNU General Public License
+#along with this program.If not, see < http: // www.gnu.org/licenses/>.
 from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 import numpy as np
@@ -47,9 +47,9 @@ class LbWalberlaFluidRoutines(object):
         self.node[1] = int(key[1])
         self.node[2] = int(key[2])
         self.lbWalberla = lb
-# TODO: check for valid input range
-#        if not lb_lbnode_is_index_valid(self.node):
-#            raise ValueError("LB node index out of bounds")
+#TODO : check for valid input range
+#if not lb_lbnode_is_index_valid(self.node) :
+#raise ValueError("LB node index out of bounds")
 
     @property 
     def velocity(self):
@@ -67,8 +67,4 @@ class LbWalberlaFluidRoutines(object):
         else:
             raise ValueError(
                 "Velocity has to be of shape 3 and type float.")
-
-
-
-
 

@@ -51,16 +51,16 @@ public:
   }
   Variant call_method(const std::string &name,
                       const VariantMap &params) override {
-    if (name == "node_get_v"){
+    if (name == "node_get_v") {
       auto const node = get_value<Vector3i>(params.at("node"));
       auto const v = m_lb_walberla->get_node_velocity(node);
       return v;
-      }
-    if (name == "node_set_v"){
+    }
+    if (name == "node_set_v") {
       auto const node = get_value<Vector3i>(params.at("node"));
       auto const v = get_value<Vector3d>(params.at("v"));
       m_lb_walberla->set_node_velocity(node, v);
-      }
+    }
     return none;
   };
 
@@ -71,3 +71,4 @@ private:
 } // namespace ScriptInterface
 #endif
 #endif
+
