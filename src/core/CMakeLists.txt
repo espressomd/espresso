@@ -44,7 +44,6 @@ set(EspressoCore_SRC
   RuntimeErrorStream.cpp
   specfunc.cpp
   statistics_chain.cpp
-  statistics_cluster.cpp
   statistics.cpp
   statistics_fluid.cpp
   swimmer_reaction.cpp
