@@ -256,7 +256,7 @@ double mdds_energy(const ParticleRange &particles,
 
   collect_local_particles(particles, local_interacting_particles, local_posmom);
 
-  std::vector<int> sizes = all_gather(comm, static_cast<int>(local_posmom.size()));
+  const auto sizes = all_gather(comm, static_cast<int>(local_posmom.size()));
 
   int offset, total_size;
   std::tie(offset, total_size) = offset_and_size(sizes, comm.rank());
