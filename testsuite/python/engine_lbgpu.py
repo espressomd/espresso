@@ -114,7 +114,7 @@ class SwimmerTest(ut.TestCase):
             tau=S.time_step,
             visc=1.0,
             dens=1.0
-            )
+        )
         S.actors.add(lbm)
         S.thermostat.set_lb(LB_fluid=lbm, friction=0.5)
         self.run_and_check(
