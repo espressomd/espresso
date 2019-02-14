@@ -60,11 +60,6 @@ void mpi_set_lb_fluid_counter(int high, int low);
 #define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
 #define LBPAR_KT 7       /**< thermal energy */
 
-/** Note these are used for binary logic so should be powers of 2 */
-#define LB_COUPLE_NULL 1
-#define LB_COUPLE_TWO_POINT 2
-#define LB_COUPLE_THREE_POINT 4
-
 /*@}*/
 /** Some general remarks:
  *  This file implements the LB D3Q19 method to Espresso. The LB_Model

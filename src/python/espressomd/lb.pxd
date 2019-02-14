@@ -78,8 +78,6 @@ IF LB_GPU or LB:
         const Vector19d lb_lbnode_get_pop(const Vector3i & ind) except +
         void lb_lbnode_set_pop(const Vector3i & ind, const Vector19d & populations) except +
         int lb_lbnode_get_boundary(const Vector3i & ind) except +
-        void lb_lbfluid_set_couple_flag(int c_couple_flag) except +
-        int lb_lbfluid_get_couple_flag() except +
         int lb_lbfluid_get_interpolated_velocity_global(Vector3d & p, double * v) except +
         stdint.uint64_t lb_lbfluid_get_rng_state() except +
         void lb_lbfluid_set_rng_state(stdint.uint64_t) except +
@@ -195,41 +193,6 @@ IF LB_GPU or LB:
                 2] * p_agrid * p_agrid * p_tau * p_tau
         # call c-function
         lb_lbfluid_set_ext_force_density(0, c_ext_force_density)
-
-
-###############################################
-
-    cdef inline python_lbfluid_set_couple_flag(p_couple_flag):
-
-        if p_couple_flag == "2pt":
-            p_couple_flag = 2
-        elif p_couple_flag == "3pt":
-            p_couple_flag = 4
-        else:
-            raise Exception(
-                "Parameter couple accepts only \"2pt\" and \"3pt\"")
-
-        cdef int c_couple_flag
-        c_couple_flag = p_couple_flag
-        lb_lbfluid_set_couple_flag(c_couple_flag)
-
-###############################################
-
-    cdef inline python_lbfluid_get_couple_flag(p_couple_flag):
-
-        cdef int c_couple_flag
-        c_couple_flag = lb_lbfluid_get_couple_flag()
-        p_couple_flag = c_couple_flag
-
-        if p_couple_flag == 2:
-            p_couple_flag = "2pt"
-        elif p_couple_flag == 4:
-            p_couple_flag = "3pt"
-        else:
-            raise Exception(
-                "lb_lbfluid_get_couple_flag error at C-level interface")
-
-###############################################
 
 
 ###############################################

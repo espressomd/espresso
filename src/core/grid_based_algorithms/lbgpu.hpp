@@ -37,11 +37,6 @@
  * thus making the code more efficient. */
 #define LBQ 19
 
-/** Note these are used for binary logic so should be powers of 2 */
-#define LB_COUPLE_NULL 1
-#define LB_COUPLE_TWO_POINT 2
-#define LB_COUPLE_THREE_POINT 4
-
 /** \name Parameter fields for lattice Boltzmann
  *  The numbers are referenced in \ref mpi_bcast_lb_params
  *  to determine what actions have to take place upon change
@@ -96,11 +91,6 @@ struct LB_parameters_gpu {
    *  slip at bounce-back boundaries
    */
   bool is_TRT;
-  /** amplitude of the fluctuations in the viscous coupling
-   *  Switch indicating what type of coupling is used, can either
-   *  use nearest neighbors or next nearest neighbors.
-   */
-  int lb_couple_switch;
 
   float bulk_viscosity;
 

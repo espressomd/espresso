@@ -85,7 +85,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
+            return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
         # list of essential keys required for the fluid
         ####################################################
@@ -101,7 +101,6 @@ IF LB_GPU or LB:
                     "visc": -1.0,
                     "bulk_visc": -1.0,
                     "tau": -1.0,
-                    "couple": "2pt",
                     "seed": None,
                     "kT": 0.}
 
@@ -143,8 +142,6 @@ IF LB_GPU or LB:
      self._params["agrid"],
      self._params["tau"])
 
-            python_lbfluid_set_couple_flag(self._params["couple"])
-
             if "gamma_odd" in self._params:
                 python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
 
@@ -179,10 +176,6 @@ IF LB_GPU or LB:
             if not self._params["ext_force_density"] == default_params["ext_force_density"]:
                 if python_lbfluid_get_ext_force_density(self._params["ext_force_density"], self._params["agrid"], self._params["tau"]):
                     raise Exception("lb_lbfluid_set_ext_force_density error")
-
-            if not self._params["couple"] == default_params["couple"]:
-                if python_lbfluid_get_couple_flag(self._params["couple"]):
-                    raise Exception("lb_lbfluid_get_couple_flag error")
 
             return self._params
 

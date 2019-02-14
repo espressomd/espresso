@@ -394,39 +394,6 @@ double lb_lbfluid_get_gamma_even() {
   return {};
 }
 
-void lb_lbfluid_set_couple_flag(int couple_flag) {
-  if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    if (couple_flag != LB_COUPLE_TWO_POINT &&
-        couple_flag != LB_COUPLE_THREE_POINT)
-      throw std::invalid_argument("Invalid couple flag.");
-    lbpar_gpu.lb_couple_switch = couple_flag;
-#endif // LB_GPU
-  } else {
-#ifdef LB
-    /* Only the two point nearest neighbor coupling is present in the case of
-       the cpu, so just throw an error if something else is tried */
-    if (couple_flag != LB_COUPLE_TWO_POINT)
-      throw std::invalid_argument("Invalid couple flag.");
-#endif // LB
-  }
-}
-
-int lb_lbfluid_get_couple_flag() {
-  if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    return lbpar_gpu.lb_couple_switch;
-#endif
-  } else if (lattice_switch & LATTICE_LB) {
-#ifdef LB
-    return LB_COUPLE_TWO_POINT;
-#endif
-  } else {
-    return LB_COUPLE_NULL;
-  }
-  return {};
-}
-
 void lb_lbfluid_set_agrid(double agrid) {
   if (agrid <= 0)
     throw std::invalid_argument("agrid has to be > 0.");
