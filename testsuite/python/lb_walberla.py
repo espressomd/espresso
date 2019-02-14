@@ -28,12 +28,15 @@ import numpy as np
 class LbWalberlaTest(ut.TestCase):
     visc = 2.
     agrid = .5
+    vel = [1.3,2.2,3.1]
 
     def test(self):
         system = espressomd.System(box_l=[10] * 3)
         lb = LbWalberla(visc=self.visc, agrid=self.agrid)
         self.assertEqual(lb.visc, self.visc)
         self.assertEqual(lb.agrid, self.agrid)
+        lb[0,0,0].velocity = self.vel
+        self.assertEqual(lb[0,0,0].velocity, self.vel)
     
 if __name__ == "__main__":
     # print("Features: ", espressomd.features())
