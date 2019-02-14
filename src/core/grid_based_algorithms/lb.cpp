@@ -1355,7 +1355,7 @@ double lbgpu_eq_stress() {
 }
 #endif
 
-int lb_lbnode_get_pi(const Vector3i &ind, Vector<6, double> &p_pi) {
+int lb_lbnode_get_pi(const Vector3i &ind, double *p_pi) {
   double p0 = 0;
 
   lb_lbnode_get_pi_neq(ind, p_pi);
@@ -1377,7 +1377,7 @@ int lb_lbnode_get_pi(const Vector3i &ind, Vector<6, double> &p_pi) {
   return 0;
 }
 
-int lb_lbnode_get_pi_neq(const Vector3i &ind, Vector<6, double> &p_pi) {
+int lb_lbnode_get_pi_neq(const Vector3i &ind, double *p_pi) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
@@ -1462,7 +1462,7 @@ int lb_lbfluid_get_stress(double *p_pi) {
         for (int k = 0; k < lblattice.global_grid[2]; k++) {
           const Vector3i node{{i, j, k}};
           Vector<6, double> pi_bulk{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}};
-          lb_lbnode_get_pi(node, pi_bulk);
+          lb_lbnode_get_pi(node, pi_bulk.data());
           for (int l = 0; l < 6; l++) {
             p_pi[l] += pi_bulk[l];
           }
