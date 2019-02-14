@@ -58,9 +58,10 @@ inline int calc_angle_cossquare_force(Particle const *p_mid,
                                       Bonded_ia_parameters const *iaparams,
                                       double force1[3], double force2[3]) {
 
-  auto forceFactor = [&iaparams](double cosine) {
-    auto fac = iaparams->p.angle_cossquare.bend;
-    fac *= iaparams->p.angle_cossquare.cos_phi0 + cosine;
+  auto forceFactor = [&iaparams](double cos_phi) {
+    auto const K = iaparams->p.angle_cossquare.bend;
+    auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
+    auto const fac = K * (cos_phi0 + cos_phi);
     return fac;
   };
 
@@ -82,8 +83,7 @@ inline void calc_angle_cossquare_3body_forces(
     auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
     // potential dependent term [dU/dphi = K * (sin_phi * cos_phi0 - cos_phi *
     // sin_phi)]
-    auto const pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi);
-    auto const fac = pot_dep / sin_phi;
+    auto const fac = K * (sin_phi * cos_phi0 - cos_phi * sin_phi) / sin_phi;
     return fac;
   };
 
@@ -105,10 +105,11 @@ inline int angle_cossquare_energy(Particle const *p_mid, Particle const *p_left,
                                   double *_energy) {
   auto const vectors =
       calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
-  auto const cosine = std::get<4>(vectors);
+  auto const cos_phi = std::get<4>(vectors);
+  auto const K = iaparams->p.angle_cossquare.bend;
+  auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
   /* bond angle energy */
-  *_energy = 0.5 * iaparams->p.angle_cossquare.bend *
-             Utils::sqr(cosine + iaparams->p.angle_cossquare.cos_phi0);
+  *_energy = 0.5 * K * Utils::sqr(cos_phi + cos_phi0);
   return 0;
 }
 

@@ -59,12 +59,13 @@ inline int calc_angle_harmonic_force(Particle const *p_mid,
                                      double force1[3], double force2[3]) {
 
   auto forceFactor = [&iaparams](double cosine) {
-    auto fac = iaparams->p.angle_harmonic.bend;
-    double const phi = acos(-cosine);
-    double sinphi = sin(phi);
-    if (sinphi < TINY_SIN_VALUE)
-      sinphi = TINY_SIN_VALUE;
-    fac *= (phi - iaparams->p.angle_harmonic.phi0) / sinphi;
+    auto const K = iaparams->p.angle_harmonic.bend;
+    auto const phi = acos(-cosine);
+    auto const phi0 = iaparams->p.angle_harmonic.phi0;
+    double sin_phi = sin(phi);
+    if (sin_phi < TINY_SIN_VALUE)
+      sin_phi = TINY_SIN_VALUE;
+    auto const fac = K * (phi - phi0) / sin_phi;
     return fac;
   };
 
@@ -86,8 +87,7 @@ inline void calc_angle_harmonic_3body_forces(
     auto const K = iaparams->p.angle_harmonic.bend;
     auto const phi0 = iaparams->p.angle_harmonic.phi0;
     // potential dependent term [dU/dphi = K * (phi - phi0)]
-    auto const pot_dep = K * (phi - phi0);
-    auto const fac = pot_dep / sin_phi;
+    auto const fac = K * (phi - phi0) / sin_phi;
     return fac;
   };
 
@@ -109,10 +109,12 @@ inline int angle_harmonic_energy(Particle const *p_mid, Particle const *p_left,
                                  double *_energy) {
   auto const vectors =
       calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
-  auto const cosine = std::get<4>(vectors);
+  auto const cos_phi = std::get<4>(vectors);
+  auto const phi = acos(-cos_phi);
+  auto const K = iaparams->p.angle_harmonic.bend;
+  auto const phi0 = iaparams->p.angle_harmonic.phi0;
   /* bond angle energy */
-  *_energy = 0.5 * iaparams->p.angle_harmonic.bend *
-             Utils::sqr(acos(-cosine) - iaparams->p.angle_harmonic.phi0);
+  *_energy = 0.5 * K * Utils::sqr(phi - phi0);
   return 0;
 }
 
