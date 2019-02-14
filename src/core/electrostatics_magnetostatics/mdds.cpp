@@ -135,27 +135,25 @@ T image_sum(InputIterator begin, InputIterator end, InputIterator pi,
   return init;
 }
 
-int all_gather_posmom(std::vector<PosMom> const &local_posmom,
-                      std::vector<PosMom> &global_posmom,
-                      const boost::mpi::communicator &comm) {
-  std::vector<int> sizes(comm.size());
+template<typename T>
+std::vector<T> all_gather(const boost::mpi::communicator &comm,
+                          const T &local_value) {
+  std::vector<T> all_values;
+  boost::mpi::all_gather(comm, local_value, all_values);
 
-  boost::mpi::all_gather(comm, static_cast<int>(local_posmom.size()), sizes);
-
-  auto const offset =
-      std::accumulate(sizes.begin(), sizes.begin() + comm.rank(), 0);
-  auto const total_size =
-      std::accumulate(sizes.begin() + comm.rank(), sizes.end(), offset);
-
-  global_posmom.resize(total_size);
-
-  Utils::Mpi::all_gatherv(comm, local_posmom.data(), local_posmom.size(),
-                          global_posmom.data(), sizes.data());
-
-  return offset;
+  return all_values;
 }
 
-void collect_local_particles(const ParticleRange &particles,
+std::pair<int, int> offset_and_size(std::vector<int> const& sizes, int rank) {
+  auto const offset =
+          std::accumulate(sizes.begin(), sizes.begin() + rank, 0);
+  auto const total_size =
+          std::accumulate(sizes.begin() + rank, sizes.end(), offset);
+
+  return {offset, total_size};
+}
+
+    void collect_local_particles(const ParticleRange &particles,
                              std::vector<Particle *> &interacting_particles,
                              std::vector<PosMom> &posmom) {
   interacting_particles.reserve(interacting_particles.size() +
@@ -178,13 +176,19 @@ void mdds_forces(const ParticleRange &particles,
 
   collect_local_particles(particles, local_interacting_particles, local_posmom);
 
+  auto const local_size = static_cast<int>(local_posmom.size());
+  std::vector<int> sizes = all_gather(comm, local_size);
+
+  int offset, total_size;
+  std::tie(offset, total_size) = offset_and_size(sizes, comm.rank());
+
   std::vector<PosMom> all_posmom;
-  size_t offset;
   if (comm.size() > 1) {
-    offset = all_gather_posmom(local_posmom, all_posmom, comm);
+    all_posmom.resize(total_size);
+    Utils::Mpi::all_gatherv(comm, local_posmom.data(), local_size,
+                            all_posmom.data(), sizes.data());
   } else {
     std::swap(all_posmom, local_posmom);
-    offset = 0;
   }
 
   /* Number of image boxes considered */
@@ -252,13 +256,18 @@ double mdds_energy(const ParticleRange &particles,
 
   collect_local_particles(particles, local_interacting_particles, local_posmom);
 
+  std::vector<int> sizes = all_gather(comm, static_cast<int>(local_posmom.size()));
+
+  int offset, total_size;
+  std::tie(offset, total_size) = offset_and_size(sizes, comm.rank());
+
   std::vector<PosMom> all_posmom;
-  size_t offset;
   if (comm.size() > 1) {
-    offset = all_gather_posmom(local_posmom, all_posmom, comm);
+    all_posmom.resize(total_size);
+    Utils::Mpi::all_gatherv(comm, local_posmom.data(), local_posmom.size(),
+                                         all_posmom.data(), sizes.data());
   } else {
     std::swap(all_posmom, local_posmom);
-    offset = 0;
   }
 
   /* Number of image boxes considered */
