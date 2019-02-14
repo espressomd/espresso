@@ -3043,11 +3043,11 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
     dim3 dim_grid_particles =
         make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
-      KERNELCALL(calc_fluid_particle_ia, dim_grid_particles,
-                 threads_per_block_particles, *current_nodes,
-                 gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 node_f, device_rho_v, couple_virtual,
-                 rng_counter_coupling_gpu.value(), friction);
+    KERNELCALL(calc_fluid_particle_ia, dim_grid_particles,
+               threads_per_block_particles, *current_nodes,
+               gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
+               node_f, device_rho_v, couple_virtual,
+               rng_counter_coupling_gpu.value(), friction);
     rng_counter_coupling_gpu.increment();
   }
 }
