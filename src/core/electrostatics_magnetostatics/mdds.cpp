@@ -86,7 +86,6 @@ auto pair_potential(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
   auto const pe2 = m1 * d;
   auto const pe3 = m2 * d;
 
-  // Energy ............................
   return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
 }
 
@@ -167,6 +166,10 @@ std::pair<int, int> offset_and_size(std::vector<int> const& sizes, int rank) {
     }
   }
 }
+
+
+
+
 } // namespace
 
 void mdds_forces(const ParticleRange &particles,
@@ -177,7 +180,7 @@ void mdds_forces(const ParticleRange &particles,
   collect_local_particles(particles, local_interacting_particles, local_posmom);
 
   auto const local_size = static_cast<int>(local_posmom.size());
-  std::vector<int> sizes = all_gather(comm, local_size);
+  auto const sizes = all_gather(comm, local_size);
 
   int offset, total_size;
   std::tie(offset, total_size) = offset_and_size(sizes, comm.rank());
