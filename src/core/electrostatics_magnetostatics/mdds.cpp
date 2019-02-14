@@ -186,9 +186,10 @@ void mdds_forces(const ParticleRange &particles,
   std::tie(offset, total_size) = offset_and_size(sizes, comm.rank());
 
   std::vector<PosMom> all_posmom;
+  std::vector<boost::mpi::request> reqs;
   if (comm.size() > 1) {
     all_posmom.resize(total_size);
-    Utils::Mpi::all_gatherv(comm, local_posmom.data(), local_size,
+    reqs = Utils::Mpi::iall_gatherv(comm, local_posmom.data(), local_size,
                             all_posmom.data(), sizes.data());
   } else {
     std::swap(all_posmom, local_posmom);
@@ -208,38 +209,44 @@ void mdds_forces(const ParticleRange &particles,
   /* Output iterator for the force */
   auto p = local_interacting_particles.begin();
 
+  /* IA with local particles */
+  for (auto pi = begin; pi != end; ++pi, ++p) {
+    /* IA with own images */
+    auto fi = image_sum(pi, std::next(pi), pi, with_replicas, ncut, ParticleForce{},
+                    [pi](Vector3d const &rn, Vector3d const &mj) {
+                        return pair_force(rn, pi->m, mj);
+                    });
+
+    auto q = std::next(p);
+    for (auto pj = std::next(pi); pj != end; ++pj, ++q) {
+      auto const d = (with_replicas) ? (pi->pos - pj->pos)
+                                     : get_mi_vector(pi->pos, pj->pos);
+
+      ParticleForce fij{};
+      for_each_image(ncut, [&](int nx, int ny, int nz) {
+          fij += pair_force(d, pi->m, pj->m);
+      });
+
+      fi += fij;
+      (*q)->f.f -= coulomb.Dprefactor * fij.f;
+      /* Conservation of angular momentum mandates that
+       * 0 = t_i + r_ij x F_ij + t_j */
+      (*q)->f.torque += coulomb.Dprefactor * (-fij.torque + fij.f.cross(d));
+    }
+
+    (*p)->f.f += coulomb.Dprefactor * fi.f;
+    (*p)->f.torque += coulomb.Dprefactor * fi.torque;
+  }
+
+  boost::mpi::wait_all(reqs.begin(), reqs.end());
+
+  p = local_interacting_particles.begin();
   for (auto pi = begin; pi != end; ++pi, ++p) {
     auto fi = image_sum(all_posmom.begin(), begin, pi, with_replicas, ncut,
                         ParticleForce{},
                         [pi](Vector3d const &rn, Vector3d const &mj) {
                           return pair_force(rn, pi->m, mj);
                         });
-
-    /* IA with own images */
-    fi += image_sum(pi, std::next(pi), pi, with_replicas, ncut, ParticleForce{},
-                    [pi](Vector3d const &rn, Vector3d const &mj) {
-                      return pair_force(rn, pi->m, mj);
-                    });
-
-    /* IA with local particles */
-    {
-      auto q = std::next(p);
-      for (auto pj = std::next(pi); pj != end; ++pj, ++q) {
-        auto const d = (with_replicas) ? (pi->pos - pj->pos)
-                                       : get_mi_vector(pi->pos, pj->pos);
-
-        ParticleForce fij{};
-        for_each_image(ncut, [&](int nx, int ny, int nz) {
-          fij += pair_force(d, pi->m, pj->m);
-        });
-
-        fi += fij;
-        (*q)->f.f -= coulomb.Dprefactor * fij.f;
-        /* Conservation of angular momentum mandates that 0 = t_i + r_ij x F_ij
-         * + t_j */
-        (*q)->f.torque += coulomb.Dprefactor * (-fij.torque + fij.f.cross(d));
-      };
-    }
 
     fi += image_sum(end, all_posmom.end(), pi, with_replicas, ncut,
                     ParticleForce{},
