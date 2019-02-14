@@ -200,10 +200,9 @@ double mdds_calculations(int force_flag, int energy_flag,
 
     using boost::make_iterator_range;
   if(force_flag) {
-      auto const n_local_part = local_interacting_particles.size();
       /* Range of particles we calculate the ia for on this node */
       auto begin = all_posmom.begin() + offset;
-      auto const end = begin + n_local_part;
+      auto const end = begin + local_interacting_particles.size();
 
       /* Output iterator for the force */
       auto p = local_interacting_particles.begin();
@@ -220,33 +219,25 @@ double mdds_calculations(int force_flag, int energy_flag,
       }
   }
 
-  double u = 0;
-  for (auto i = offset; i < (local_interacting_particles.size() + offset); i++) {
+    if(energy_flag) {
+        /* Range of particles we calculate the ia for on this node */
+        auto begin = all_posmom.begin() + offset;
+        auto const end = begin + local_interacting_particles.size();
 
-    auto const &pi = all_posmom[i];
+        /* Output iterator for the force */
+        auto p = local_interacting_particles.begin();
 
-    for (int j = 0; j < all_posmom.size(); j++) {
-      auto const &pj = all_posmom[j];
+        auto u = 0.;
+        for(auto pi = begin; pi != end; ++pi, ++p) {
+            u = image_sum(all_posmom.begin(), all_posmom.end(),
+                                      pi, with_replicas, ncut, u,
+                                      [pi](Vector3d const& rn, Vector3d const& mj) {
+                                          return pair_potential(rn, pi->m, mj);
+                                      });
+        }
 
-      /*
-       * Minimum image convention has to be only considered when using
-       * no replicas.
-       */
-      auto const d =
-          (with_replicas) ? (pi.pos - pj.pos) : get_mi_vector(pi.pos, pj.pos);
-
-      if (energy_flag) {
-        for_each_image(ncut, [&](int nx, int ny, int nz) {
-          if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
-            auto const rn =
-                d + Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
-            u += pair_potential(rn, pi.m, pj.m);
-          }
-        });
-      }
+        return 0.5 * coulomb.Dprefactor * u;
     }
-  } /* of  j and i  */
-  return 0.5 * coulomb.Dprefactor * u;
 }
 } // namespace
 
