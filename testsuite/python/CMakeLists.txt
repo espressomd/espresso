@@ -63,16 +63,18 @@ function(PYTHON_TEST)
   set(python_tests ${python_tests} ${TEST_FILE} PARENT_SCOPE)
 endfunction(PYTHON_TEST)
 
+# Checkpointing tests: semicolon-separated list of mutually-compatible features.
+# Separate features with hyphens, use a period to add an optional flag.
 foreach(TEST_COMBINATION lb.cpu-p3m.cpu-lj;lb.gpu-p3m.cpu-lj)
+  if(${TEST_COMBINATION} MATCHES "\\.gpu")
+    set(TEST_LABELS "gpu")
+  else()
+    set(TEST_LABELS "")
+  endif()
   foreach(TEST_BINARY 1;0)
-    if(${TEST_COMBINATION} MATCHES "\\.gpu")
-      set(TEST_LABELS "gpu")
-    else()
-      set(TEST_LABELS "")
-    endif()
-  python_test(FILE save_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
-  python_test(FILE test_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY}
-              DEPENDS save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
+    python_test(FILE save_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
+    python_test(FILE test_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY}
+                DEPENDS save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
   endforeach(TEST_BINARY)
 endforeach(TEST_COMBINATION)
 python_test(FILE cellsystem.py MAX_NUM_PROC 4)
