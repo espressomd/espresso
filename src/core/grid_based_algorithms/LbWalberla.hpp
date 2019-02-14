@@ -18,6 +18,7 @@
 #include "lbm/lattice_model/D3Q19.h"
 #include "timeloop/SweepTimeloop.h"
 #include "vtk/VTKOutput.h"
+#include "boost/optional.hpp"
 
 const walberla::FlagUID Fluid_flag("fluid");
 const walberla::FlagUID UBB_flag("velocity bounce back");
@@ -68,6 +69,10 @@ class LbWalberla {
     const walberla::BlockDataID m_pdf_field_id;
   };
 
+struct BlockAndCell {
+  walberla::IBlock* block;
+  walberla::Cell cell;
+};
 
 public:
   LbWalberla(double viscosity, double agrid,
@@ -75,19 +80,18 @@ public:
              double skin);
 
   void integrate();
-  Vector3d get_node_velocity(const Vector3i node) const;
-  void set_node_velocity(const Vector3i node, const Vector3d v);
+  boost::optional<Vector3d> get_node_velocity(const Vector3i node) const;
+  bool set_node_velocity(const Vector3i& node, const Vector3d v);
 
-  void add_force_at_pos(const Vector3d &position, const Vector3d &force);
-  Vector3d get_velocity_at_pos(const Vector3d &position) const;
-  double get_density_at_pos(const Vector3d &position);
+  bool add_force_at_pos(const Vector3d &position, const Vector3d &force);
+  boost::optional<Vector3d> get_velocity_at_pos(const Vector3d &position) const;
+  boost::optional<double> get_density_at_pos(const Vector3d &position);
   //  Vector3d get_stress_at_pos(const Vector3d& position);
 
-  void set_node_as_boundary(const Vector3i &node);
-  Vector3d get_node_velocity_at_boundary(const Vector3i node) const;
-  void set_node_velocity_at_boundary(const Vector3i node, const Vector3d v);
-  void remove_node_from_boundary(const Vector3i &node);
-  int get_node_is_boundary(const Vector3i &node);
+  boost::optional<Vector3d> get_node_velocity_at_boundary(const Vector3i& node) const;
+  bool set_node_velocity_at_boundary(const Vector3i node, const Vector3d v);
+  bool remove_node_from_boundary(const Vector3i &node);
+  boost::optional<bool> get_node_is_boundary(const Vector3i &node) const;
 
   void print_vtk_velocity(char *filename);
   void print_vtk_density(char *filename);
@@ -111,7 +115,7 @@ public:
   }
 
 private:
-
+  boost::optional<BlockAndCell> get_block_and_cell(const Vector3i& node) const;
   walberla::BlockDataID m_pdf_field_id;
   walberla::BlockDataID m_flag_field_id;
   walberla::BlockDataID m_force_field_id;

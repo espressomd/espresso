@@ -5,7 +5,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/walberla" )
     # Subdirectory walberla exists
     message( STATUS "Using walberla subfolder" )
     add_subdirectory( walberla EXCLUDE_FROM_ALL )
-    waLBerla_import()
+    waLBerla_import(NO_COMPILER_FLAGS)
     set( WALBERLA_DIR   "${CMAKE_CURRENT_SOURCE_DIR}/walberla" CACHE  PATH  "waLBerla path"  FORCE )
     set( WALBERLA_FOUND ON                                     CACHE  BOOL  "waLBerla found" FORCE )
 else()

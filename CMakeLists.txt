@@ -492,13 +492,14 @@ endif(WITH_BENCHMARKS)
 if (WITH_WALBERLA)
   # This has to be here to be visible when find_package is called
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-  set(WALBERLA_BUILD_DOC off)
-  set(WALBERLA_WARNING_DISABLE off)
+  set(WALBERLA_BUILD_DOC OFF CACHE BOOL "Build walberla doc")
+  set(WALBERLA_WARNING_DISABLE ON CACHE BOOL "disable walberla warnings" )
   
   include(cmake/FindwaLBerla.cmake)
   find_package(waLBerLa)
   if (WALBERLA_FOUND)
     set(WALBERLA 1)
+    set(WALBERLA_LIBS mpi core domain_decomposition blockforest boundary core domain_decomposition field lbm timeloop vtk stdc++fs)
   endif(WALBERLA_FOUND)
 endif(WITH_WALBERLA)
 
