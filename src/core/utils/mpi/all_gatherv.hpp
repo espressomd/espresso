@@ -26,23 +26,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/mpi/exception.hpp>
 #include <boost/mpi/nonblocking.hpp>
 
-#include <vector>
 #include <array>
+#include <vector>
 
 namespace Utils {
 namespace Mpi {
 namespace detail {
-    std::vector<int> displacements(Span<const int> sizes) {
-        std::vector<int> displ(sizes.size());
+std::vector<int> displacements(Span<const int> sizes) {
+  std::vector<int> displ(sizes.size());
 
-        int offset = 0;
-        for (unsigned i = 0; i < displ.size(); i++) {
-            displ[i] = offset;
-            offset += sizes[i];
-        }
+  int offset = 0;
+  for (unsigned i = 0; i < displ.size(); i++) {
+    displ[i] = offset;
+    offset += sizes[i];
+  }
 
-        return displ;
-    }
+  return displ;
+}
 
 template <typename T>
 void all_gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
@@ -79,10 +79,10 @@ iall_gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
                             const_cast<int *>(sizes), const_cast<int *>(displs),
                             type, comm, req[0].m_requests));
   } else {
-    BOOST_MPI_CHECK_RESULT(MPI_Iallgatherv,
-                           (const_cast<T *>(in_values), in_size, type,
-                            out_values, const_cast<int *>(sizes),
-                            const_cast<int *>(displs), type, comm, req[0].m_requests));
+    BOOST_MPI_CHECK_RESULT(
+        MPI_Iallgatherv, (const_cast<T *>(in_values), in_size, type, out_values,
+                          const_cast<int *>(sizes), const_cast<int *>(displs),
+                          type, comm, req[0].m_requests));
   }
 
   return req;
@@ -116,7 +116,8 @@ template <typename T>
 void all_gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
                       int in_size, T *out_values, const int *sizes,
                       const int *displs, boost::mpl::false_) {
-  auto reqs = iall_gatherv_impl(comm, in_values, in_size, out_values, sizes, displs, boost::mpl::false_{});
+  auto reqs = iall_gatherv_impl(comm, in_values, in_size, out_values, sizes,
+                                displs, boost::mpl::false_{});
   boost::mpi::wait_all(reqs.begin(), reqs.end());
 }
 
@@ -132,31 +133,38 @@ void all_gatherv(const boost::mpi::communicator &comm, const T *in_values,
 
 template <typename T>
 auto iall_gatherv(const boost::mpi::communicator &comm, const T *in_values,
-                     int in_size, T *out_values, const int *sizes,
-                     const int *displs) -> decltype(detail::iall_gatherv_impl(comm, in_values, in_size, out_values, sizes, displs,
-                                                                              boost::mpi::is_mpi_datatype<T>())) {
-        return detail::iall_gatherv_impl(comm, in_values, in_size, out_values, sizes, displs,
-                                 boost::mpi::is_mpi_datatype<T>());
-    }
+                  int in_size, T *out_values, const int *sizes,
+                  const int *displs)
+    -> decltype(detail::iall_gatherv_impl(comm, in_values, in_size, out_values,
+                                          sizes, displs,
+                                          boost::mpi::is_mpi_datatype<T>())) {
+  return detail::iall_gatherv_impl(comm, in_values, in_size, out_values, sizes,
+                                   displs, boost::mpi::is_mpi_datatype<T>());
+}
 
 template <typename T>
 void all_gatherv(const boost::mpi::communicator &comm, const T *in_values,
                  int in_size, T *out_values, const int *sizes) {
-  auto const displ = detail::displacements({sizes, static_cast<size_t>(comm.size())});
+  auto const displ =
+      detail::displacements({sizes, static_cast<size_t>(comm.size())});
 
   detail::all_gatherv_impl(comm, in_values, in_size, out_values, sizes,
                            displ.data(), boost::mpi::is_mpi_datatype<T>());
 }
 
-    template <typename T>
-    auto iall_gatherv(const boost::mpi::communicator &comm, const T *in_values,
-                     int in_size, T *out_values, const int *sizes) -> decltype(detail::iall_gatherv_impl(comm, in_values, in_size, out_values, sizes,
-                                                                                                        std::declval<int *>(), boost::mpi::is_mpi_datatype<T>())) {
-        auto const displ = detail::displacements({sizes, static_cast<size_t>(comm.size())});
+template <typename T>
+auto iall_gatherv(const boost::mpi::communicator &comm, const T *in_values,
+                  int in_size, T *out_values, const int *sizes)
+    -> decltype(detail::iall_gatherv_impl(comm, in_values, in_size, out_values,
+                                          sizes, std::declval<int *>(),
+                                          boost::mpi::is_mpi_datatype<T>())) {
+  auto const displ =
+      detail::displacements({sizes, static_cast<size_t>(comm.size())});
 
-        return detail::iall_gatherv_impl(comm, in_values, in_size, out_values, sizes,
-                                 displ.data(), boost::mpi::is_mpi_datatype<T>());
-    }
+  return detail::iall_gatherv_impl(comm, in_values, in_size, out_values, sizes,
+                                   displ.data(),
+                                   boost::mpi::is_mpi_datatype<T>());
+}
 } // namespace Mpi
 } // namespace Utils
 #endif

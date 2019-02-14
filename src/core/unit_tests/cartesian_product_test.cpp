@@ -27,26 +27,26 @@
 #include <string>
 
 BOOST_AUTO_TEST_CASE(cart_prod) {
-    std::array<std::string, 2> strings{"Apple", "Banana"};
-    std::array<int, 4> numbers{5,6,7};
+  std::array<std::string, 2> strings{"Apple", "Banana"};
+  std::array<int, 4> numbers{5, 6, 7};
 
-    std::vector<std::pair<std::string, int>> prod;
-    Utils::cartesian_product([&prod](const std::string&s, int i) {
-        prod.emplace_back(s, i);
-    }, strings, numbers);
+  std::vector<std::pair<std::string, int>> prod;
+  Utils::cartesian_product(
+      [&prod](const std::string &s, int i) { prod.emplace_back(s, i); },
+      strings, numbers);
 
-    auto it = prod.begin();
-    for(auto const&s: strings) {
-        for(auto const&i: numbers) {
-            auto const expected = std::pair<std::string, int>{s, i};
-            BOOST_CHECK(expected == *it++);
-        }
+  auto it = prod.begin();
+  for (auto const &s : strings) {
+    for (auto const &i : numbers) {
+      auto const expected = std::pair<std::string, int>{s, i};
+      BOOST_CHECK(expected == *it++);
     }
+  }
 
-    /* empty */
-    {
-        auto called = false;
-        Utils::cartesian_product([&](){ called = true; });
-        BOOST_CHECK(not called);
-    }
+  /* empty */
+  {
+    auto called = false;
+    Utils::cartesian_product([&]() { called = true; });
+    BOOST_CHECK(not called);
+  }
 }

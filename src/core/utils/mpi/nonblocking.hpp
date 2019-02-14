@@ -8,15 +8,14 @@
 #include <boost/mpi/nonblocking.hpp>
 
 namespace Utils {
-    namespace Mpi {
-        template<typename ReqRange>
-        void wait_all(ReqRange rng) {
-            using std::begin;
-            using std::end;
+namespace Mpi {
+template <typename ReqRange> void wait_all(ReqRange rng) {
+  using std::begin;
+  using std::end;
 
-            boost::mpi::wait_all(begin(rng), end(rng));
-        }
-    }
+  boost::mpi::wait_all(begin(rng), end(rng));
 }
+} // namespace Mpi
+} // namespace Utils
 
-#endif //ESPRESSO_NONBLOCKING_HPP
+#endif // ESPRESSO_NONBLOCKING_HPP

@@ -6,18 +6,16 @@
 namespace Utils {
 namespace detail {
 
-    template <class Body, class...> struct cart_prod_impl {
-        template <class... Is>
-        void operator()(const Body &op, Is... is) const {
-                op((*is)...);
-        }
+template <class Body, class...> struct cart_prod_impl {
+  template <class... Is> void operator()(const Body &op, Is... is) const {
+    op((*is)...);
+  }
 
-        void operator()(const Body&) const {
-            ;
-        }
-    };
+  void operator()(const Body &) const { ; }
+};
 
-template <class Body, class Head, class... Tail> struct cart_prod_impl<Body, Head, Tail...> {
+template <class Body, class Head, class... Tail>
+struct cart_prod_impl<Body, Head, Tail...> {
   template <class... Is>
   void operator()(const Head &head, const Tail... tail, Is... is) const {
     using std::begin;
@@ -37,7 +35,7 @@ template <class Body, class Head, class... Tail> struct cart_prod_impl<Body, Hea
  * @param rng Ranges to form the product over
  */
 template <typename Body, typename... ForwardRange>
-void cartesian_product(const Body &op, const ForwardRange&... rng) {
+void cartesian_product(const Body &op, const ForwardRange &... rng) {
   detail::cart_prod_impl<Body, ForwardRange...>{}(rng..., op);
 }
 } // namespace Utils

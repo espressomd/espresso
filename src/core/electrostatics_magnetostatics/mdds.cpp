@@ -134,7 +134,7 @@ T image_sum(InputIterator begin, InputIterator end, InputIterator pi,
   return init;
 }
 
-template<typename T>
+template <typename T>
 std::vector<T> all_gather(const boost::mpi::communicator &comm,
                           const T &local_value) {
   std::vector<T> all_values;
@@ -143,16 +143,15 @@ std::vector<T> all_gather(const boost::mpi::communicator &comm,
   return all_values;
 }
 
-std::pair<int, int> offset_and_size(std::vector<int> const& sizes, int rank) {
-  auto const offset =
-          std::accumulate(sizes.begin(), sizes.begin() + rank, 0);
+std::pair<int, int> offset_and_size(std::vector<int> const &sizes, int rank) {
+  auto const offset = std::accumulate(sizes.begin(), sizes.begin() + rank, 0);
   auto const total_size =
-          std::accumulate(sizes.begin() + rank, sizes.end(), offset);
+      std::accumulate(sizes.begin() + rank, sizes.end(), offset);
 
   return {offset, total_size};
 }
 
-    void collect_local_particles(const ParticleRange &particles,
+void collect_local_particles(const ParticleRange &particles,
                              std::vector<Particle *> &interacting_particles,
                              std::vector<PosMom> &posmom) {
   interacting_particles.reserve(interacting_particles.size() +
@@ -166,9 +165,6 @@ std::pair<int, int> offset_and_size(std::vector<int> const& sizes, int rank) {
     }
   }
 }
-
-
-
 
 } // namespace
 
@@ -190,7 +186,7 @@ void mdds_forces(const ParticleRange &particles,
   if (comm.size() > 1) {
     all_posmom.resize(total_size);
     reqs = Utils::Mpi::iall_gatherv(comm, local_posmom.data(), local_size,
-                            all_posmom.data(), sizes.data());
+                                    all_posmom.data(), sizes.data());
   } else {
     std::swap(all_posmom, local_posmom);
   }
@@ -212,10 +208,11 @@ void mdds_forces(const ParticleRange &particles,
   /* IA with local particles */
   for (auto pi = begin; pi != end; ++pi, ++p) {
     /* IA with own images */
-    auto fi = image_sum(pi, std::next(pi), pi, with_replicas, ncut, ParticleForce{},
-                    [pi](Vector3d const &rn, Vector3d const &mj) {
-                        return pair_force(rn, pi->m, mj);
-                    });
+    auto fi =
+        image_sum(pi, std::next(pi), pi, with_replicas, ncut, ParticleForce{},
+                  [pi](Vector3d const &rn, Vector3d const &mj) {
+                    return pair_force(rn, pi->m, mj);
+                  });
 
     auto q = std::next(p);
     for (auto pj = std::next(pi); pj != end; ++pj, ++q) {
@@ -224,7 +221,7 @@ void mdds_forces(const ParticleRange &particles,
 
       ParticleForce fij{};
       for_each_image(ncut, [&](int nx, int ny, int nz) {
-          fij += pair_force(d, pi->m, pj->m);
+        fij += pair_force(d, pi->m, pj->m);
       });
 
       fi += fij;
@@ -275,7 +272,7 @@ double mdds_energy(const ParticleRange &particles,
   if (comm.size() > 1) {
     all_posmom.resize(total_size);
     Utils::Mpi::all_gatherv(comm, local_posmom.data(), local_posmom.size(),
-                                         all_posmom.data(), sizes.data());
+                            all_posmom.data(), sizes.data());
   } else {
     std::swap(all_posmom, local_posmom);
   }
