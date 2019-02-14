@@ -45,6 +45,7 @@
 #include <boost/range/algorithm_ext/for_each.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/range/numeric.hpp>
+#include <boost/range/value_type.hpp>
 
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS
@@ -113,6 +114,31 @@ struct PosMom {
   template <class Archive> void serialize(Archive &ar, long int) { ar &pos &m; }
 };
 
+template<class InputIterator, class T, class F>
+T image_sum(InputIterator begin, InputIterator end,
+            InputIterator pi,
+            bool with_replicas, Vector3i const& ncut,
+            T init, F f) {
+
+    for(auto pj = begin; pj != end; ++pj) {
+        auto const exclude_primary = (pi == pj);
+        auto const primary_distance =
+                (with_replicas) ? (pi->pos - pj->pos) : get_mi_vector(pi->pos, pj->pos);
+
+        for_each_image(ncut, [&](int nx, int ny, int nz) {
+            if (!(exclude_primary && nx == 0 && ny == 0 && nz == 0)) {
+                auto const rn =
+                        primary_distance + Vector3d{nx * box_l[0],
+                                                    ny * box_l[1],
+                                                    nz * box_l[2]};
+                init += f(rn, pj->m);
+            }
+        });
+    }
+
+    return init;
+}
+
 int all_gather_posmom(std::vector<PosMom> const &local_posmom,
                       std::vector<PosMom> &global_posmom,
                       const boost::mpi::communicator &comm) {
@@ -133,21 +159,28 @@ int all_gather_posmom(std::vector<PosMom> const &local_posmom,
   return offset;
 }
 
+void collect_local_particles(const ParticleRange &particles,
+                             std::vector<Particle *> &interacting_particles,
+                             std::vector<PosMom> &posmom
+                             ) {
+    interacting_particles.reserve(interacting_particles.size() + particles.size());
+    posmom.reserve(posmom.size() + particles.size());
+
+    for (auto &p : particles) {
+        if (p.p.dipm != 0.0) {
+            interacting_particles.emplace_back(&p);
+            posmom.emplace_back(PosMom{folded_position(p.r.p), p.calc_dip()});
+        }
+    }
+}
+
 double mdds_calculations(int force_flag, int energy_flag,
                          const ParticleRange &particles,
                          const boost::mpi::communicator &comm) {
   std::vector<Particle *> local_interacting_particles;
-  local_interacting_particles.reserve(particles.size());
-
   std::vector<PosMom> local_posmom;
-  local_posmom.reserve(particles.size());
 
-  for (auto &p : particles) {
-    if (p.p.dipm != 0.0) {
-      local_interacting_particles.emplace_back(&p);
-      local_posmom.emplace_back(PosMom{folded_position(p.r.p), p.calc_dip()});
-    }
-  }
+  collect_local_particles(particles, local_interacting_particles, local_posmom);
 
   std::vector<PosMom> all_posmom;
   size_t offset;
@@ -158,8 +191,6 @@ double mdds_calculations(int force_flag, int energy_flag,
     offset = 0;
   }
 
-
-
   /* Number of image boxes considered */
   const Vector3i ncut =
       mdds_n_replicas * Vector3i{static_cast<int>(PERIODIC(0)),
@@ -167,31 +198,26 @@ double mdds_calculations(int force_flag, int energy_flag,
                                  static_cast<int>(PERIODIC(2))};
   auto const with_replicas = (ncut.norm2() > 0);
 
+    using boost::make_iterator_range;
   if(force_flag) {
-      using boost::counting_range;
+      auto const n_local_part = local_interacting_particles.size();
+      /* Range of particles we calculate the ia for on this node */
+      auto begin = all_posmom.begin() + offset;
+      auto const end = begin + n_local_part;
 
-      boost::for_each(counting_range<size_t>(offset, offset + local_interacting_particles.size()), local_interacting_particles,
-              [&all_posmom, &ncut, with_replicas](int i, Particle *p) {
-          auto const &pi = all_posmom[i];
+      /* Output iterator for the force */
+      auto p = local_interacting_particles.begin();
 
-          auto const fi = boost::accumulate(counting_range<size_t>(0, all_posmom.size()), ParticleForce{}, [&](ParticleForce f, size_t j) {
-              auto const &pj = all_posmom[j];
-              auto const d = (with_replicas) ? (pi.pos - pj.pos) : get_mi_vector(pi.pos, pj.pos);
+      for(auto pi = begin; pi != end; ++pi, ++p) {
+          auto const fi = image_sum(all_posmom.begin(), all_posmom.end(),
+                  pi, with_replicas, ncut, ParticleForce{},
+                  [pi](Vector3d const& rn, Vector3d const& mj) {
+                      return pair_force(rn, pi->m, mj);
+                  });
 
-              for_each_image(ncut, [&](int nx, int ny, int nz) {
-                  if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
-                      auto const rn =
-                              d + Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
-                      f += pair_force(rn, pi.m, pj.m);
-                  }
-              });
-
-              return f;
-          } );
-
-          p->f.f += coulomb.Dprefactor * fi.f;
-          p->f.torque += coulomb.Dprefactor * fi.torque;
-      });
+          (*p)->f.f += coulomb.Dprefactor * fi.f;
+          (*p)->f.torque += coulomb.Dprefactor * fi.torque;
+      }
   }
 
   double u = 0;
