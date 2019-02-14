@@ -37,12 +37,12 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "utils/cartesian_product.hpp"
-#include "utils/mpi/all_gatherv.hpp"
 #include "utils/for_each_pair.hpp"
+#include "utils/mpi/all_gatherv.hpp"
 
 #include <boost/mpi/collectives/all_gather.hpp>
-#include <boost/range/counting_range.hpp>
 #include <boost/range/algorithm_ext/for_each.hpp>
+#include <boost/range/counting_range.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/range/numeric.hpp>
 #include <boost/range/value_type.hpp>
@@ -114,29 +114,25 @@ struct PosMom {
   template <class Archive> void serialize(Archive &ar, long int) { ar &pos &m; }
 };
 
-template<class InputIterator, class T, class F>
-T image_sum(InputIterator begin, InputIterator end,
-            InputIterator pi,
-            bool with_replicas, Vector3i const& ncut,
-            T init, F f) {
+template <class InputIterator, class T, class F>
+T image_sum(InputIterator begin, InputIterator end, InputIterator pi,
+            bool with_replicas, Vector3i const &ncut, T init, F f) {
 
-    for(auto pj = begin; pj != end; ++pj) {
-        auto const exclude_primary = (pi == pj);
-        auto const primary_distance =
-                (with_replicas) ? (pi->pos - pj->pos) : get_mi_vector(pi->pos, pj->pos);
+  for (auto pj = begin; pj != end; ++pj) {
+    auto const exclude_primary = (pi == pj);
+    auto const primary_distance =
+        (with_replicas) ? (pi->pos - pj->pos) : get_mi_vector(pi->pos, pj->pos);
 
-        for_each_image(ncut, [&](int nx, int ny, int nz) {
-            if (!(exclude_primary && nx == 0 && ny == 0 && nz == 0)) {
-                auto const rn =
-                        primary_distance + Vector3d{nx * box_l[0],
-                                                    ny * box_l[1],
-                                                    nz * box_l[2]};
-                init += f(rn, pj->m);
-            }
-        });
-    }
+    for_each_image(ncut, [&](int nx, int ny, int nz) {
+      if (!(exclude_primary && nx == 0 && ny == 0 && nz == 0)) {
+        auto const rn = primary_distance +
+                        Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
+        init += f(rn, pj->m);
+      }
+    });
+  }
 
-    return init;
+  return init;
 }
 
 int all_gather_posmom(std::vector<PosMom> const &local_posmom,
@@ -161,133 +157,132 @@ int all_gather_posmom(std::vector<PosMom> const &local_posmom,
 
 void collect_local_particles(const ParticleRange &particles,
                              std::vector<Particle *> &interacting_particles,
-                             std::vector<PosMom> &posmom
-                             ) {
-    interacting_particles.reserve(interacting_particles.size() + particles.size());
-    posmom.reserve(posmom.size() + particles.size());
+                             std::vector<PosMom> &posmom) {
+  interacting_particles.reserve(interacting_particles.size() +
+                                particles.size());
+  posmom.reserve(posmom.size() + particles.size());
 
-    for (auto &p : particles) {
-        if (p.p.dipm != 0.0) {
-            interacting_particles.emplace_back(&p);
-            posmom.emplace_back(PosMom{folded_position(p.r.p), p.calc_dip()});
-        }
+  for (auto &p : particles) {
+    if (p.p.dipm != 0.0) {
+      interacting_particles.emplace_back(&p);
+      posmom.emplace_back(PosMom{folded_position(p.r.p), p.calc_dip()});
     }
+  }
 }
 } // namespace
 
 void mdds_forces(const ParticleRange &particles,
                  const boost::mpi::communicator &comm) {
-    std::vector<Particle *> local_interacting_particles;
-    std::vector<PosMom> local_posmom;
+  std::vector<Particle *> local_interacting_particles;
+  std::vector<PosMom> local_posmom;
 
-    collect_local_particles(particles, local_interacting_particles, local_posmom);
+  collect_local_particles(particles, local_interacting_particles, local_posmom);
 
-    std::vector<PosMom> all_posmom;
-    size_t offset;
-    if (comm.size() > 1) {
-        offset = all_gather_posmom(local_posmom, all_posmom, comm);
-    } else {
-        std::swap(all_posmom, local_posmom);
-        offset = 0;
-    }
+  std::vector<PosMom> all_posmom;
+  size_t offset;
+  if (comm.size() > 1) {
+    offset = all_gather_posmom(local_posmom, all_posmom, comm);
+  } else {
+    std::swap(all_posmom, local_posmom);
+    offset = 0;
+  }
 
-    /* Number of image boxes considered */
-    const Vector3i ncut =
-            mdds_n_replicas * Vector3i{static_cast<int>(PERIODIC(0)),
-                                       static_cast<int>(PERIODIC(1)),
-                                       static_cast<int>(PERIODIC(2))};
-    auto const with_replicas = (ncut.norm2() > 0);
+  /* Number of image boxes considered */
+  const Vector3i ncut =
+      mdds_n_replicas * Vector3i{static_cast<int>(PERIODIC(0)),
+                                 static_cast<int>(PERIODIC(1)),
+                                 static_cast<int>(PERIODIC(2))};
+  auto const with_replicas = (ncut.norm2() > 0);
 
-    /* Range of particles we calculate the ia for on this node */
-    auto begin = all_posmom.begin() + offset;
-    auto const end = begin + local_interacting_particles.size();
+  /* Range of particles we calculate the ia for on this node */
+  auto begin = all_posmom.begin() + offset;
+  auto const end = begin + local_interacting_particles.size();
 
-    /* Output iterator for the force */
-    auto p = local_interacting_particles.begin();
+  /* Output iterator for the force */
+  auto p = local_interacting_particles.begin();
 
-    for(auto pi = begin; pi != end; ++pi, ++p) {
-        auto fi = image_sum(all_posmom.begin(), begin,
-                                  pi, with_replicas, ncut, ParticleForce{},
-                                  [pi](Vector3d const& rn, Vector3d const& mj) {
-                                      return pair_force(rn, pi->m, mj);
-                                  });
-
-        /* IA with own images */
-        fi += image_sum(pi, std::next(pi),
-                        pi, with_replicas, ncut, ParticleForce{},
+  for (auto pi = begin; pi != end; ++pi, ++p) {
+    auto fi = image_sum(all_posmom.begin(), begin, pi, with_replicas, ncut,
+                        ParticleForce{},
                         [pi](Vector3d const &rn, Vector3d const &mj) {
-                            return pair_force(rn, pi->m, mj);
+                          return pair_force(rn, pi->m, mj);
                         });
 
-        /* IA with local particles */
-        {
-            auto q = std::next(p);
-            for(auto pj = std::next(pi); pj != end; ++pj, ++q) {
-                auto const d =
-                        (with_replicas) ? (pi->pos - pj->pos) : get_mi_vector(pi->pos, pj->pos);
+    /* IA with own images */
+    fi += image_sum(pi, std::next(pi), pi, with_replicas, ncut, ParticleForce{},
+                    [pi](Vector3d const &rn, Vector3d const &mj) {
+                      return pair_force(rn, pi->m, mj);
+                    });
 
-                ParticleForce fij{};
-                for_each_image(ncut, [&](int nx, int ny, int nz) {
-                    fij += pair_force(d, pi->m, pj->m);
-                });
+    /* IA with local particles */
+    {
+      auto q = std::next(p);
+      for (auto pj = std::next(pi); pj != end; ++pj, ++q) {
+        auto const d = (with_replicas) ? (pi->pos - pj->pos)
+                                       : get_mi_vector(pi->pos, pj->pos);
 
-                fi += fij;
-                (*q)->f.f -= coulomb.Dprefactor * fij.f;
-                /* Conservation of angular momentum mandates that 0 = t_i + r_ij x F_ij + t_j */
-                (*q)->f.torque += coulomb.Dprefactor * (-fij.torque + fij.f.cross(d));
-            };
-        }
+        ParticleForce fij{};
+        for_each_image(ncut, [&](int nx, int ny, int nz) {
+          fij += pair_force(d, pi->m, pj->m);
+        });
 
-        fi += image_sum(end, all_posmom.end(),
-                                  pi, with_replicas, ncut, ParticleForce{},
-                                  [pi](Vector3d const& rn, Vector3d const& mj) {
-                                      return pair_force(rn, pi->m, mj);
-                                  });
-
-        (*p)->f.f += coulomb.Dprefactor * fi.f;
-        (*p)->f.torque += coulomb.Dprefactor * fi.torque;
+        fi += fij;
+        (*q)->f.f -= coulomb.Dprefactor * fij.f;
+        /* Conservation of angular momentum mandates that 0 = t_i + r_ij x F_ij
+         * + t_j */
+        (*q)->f.torque += coulomb.Dprefactor * (-fij.torque + fij.f.cross(d));
+      };
     }
+
+    fi += image_sum(end, all_posmom.end(), pi, with_replicas, ncut,
+                    ParticleForce{},
+                    [pi](Vector3d const &rn, Vector3d const &mj) {
+                      return pair_force(rn, pi->m, mj);
+                    });
+
+    (*p)->f.f += coulomb.Dprefactor * fi.f;
+    (*p)->f.torque += coulomb.Dprefactor * fi.torque;
+  }
 }
 
 double mdds_energy(const ParticleRange &particles,
                    const boost::mpi::communicator &comm) {
-    std::vector<Particle *> local_interacting_particles;
-    std::vector<PosMom> local_posmom;
+  std::vector<Particle *> local_interacting_particles;
+  std::vector<PosMom> local_posmom;
 
-    collect_local_particles(particles, local_interacting_particles, local_posmom);
+  collect_local_particles(particles, local_interacting_particles, local_posmom);
 
-    std::vector<PosMom> all_posmom;
-    size_t offset;
-    if (comm.size() > 1) {
-        offset = all_gather_posmom(local_posmom, all_posmom, comm);
-    } else {
-        std::swap(all_posmom, local_posmom);
-        offset = 0;
-    }
+  std::vector<PosMom> all_posmom;
+  size_t offset;
+  if (comm.size() > 1) {
+    offset = all_gather_posmom(local_posmom, all_posmom, comm);
+  } else {
+    std::swap(all_posmom, local_posmom);
+    offset = 0;
+  }
 
-    /* Number of image boxes considered */
-    const Vector3i ncut =
-            mdds_n_replicas * Vector3i{static_cast<int>(PERIODIC(0)),
-                                       static_cast<int>(PERIODIC(1)),
-                                       static_cast<int>(PERIODIC(2))};
-    auto const with_replicas = (ncut.norm2() > 0);
-        /* Range of particles we calculate the ia for on this node */
-        auto begin = all_posmom.begin() + offset;
-        auto const end = begin + local_interacting_particles.size();
+  /* Number of image boxes considered */
+  const Vector3i ncut =
+      mdds_n_replicas * Vector3i{static_cast<int>(PERIODIC(0)),
+                                 static_cast<int>(PERIODIC(1)),
+                                 static_cast<int>(PERIODIC(2))};
+  auto const with_replicas = (ncut.norm2() > 0);
+  /* Range of particles we calculate the ia for on this node */
+  auto begin = all_posmom.begin() + offset;
+  auto const end = begin + local_interacting_particles.size();
 
-        /* Output iterator for the force */
-        auto p = local_interacting_particles.begin();
+  /* Output iterator for the force */
+  auto p = local_interacting_particles.begin();
 
-        auto u = 0.;
-        for(auto pi = begin; pi != end; ++pi, ++p) {
-            u = image_sum(pi, all_posmom.end(),
-                          pi, with_replicas, ncut, u,
-                          [pi](Vector3d const& rn, Vector3d const& mj) {
-                              return pair_potential(rn, pi->m, mj);
-                          });
-        }
+  auto u = 0.;
+  for (auto pi = begin; pi != end; ++pi, ++p) {
+    u = image_sum(pi, all_posmom.end(), pi, with_replicas, ncut, u,
+                  [pi](Vector3d const &rn, Vector3d const &mj) {
+                    return pair_potential(rn, pi->m, mj);
+                  });
+  }
 
-        return coulomb.Dprefactor * u;
+  return coulomb.Dprefactor * u;
 }
 
 void mdds_set_params(int n_cut) {
