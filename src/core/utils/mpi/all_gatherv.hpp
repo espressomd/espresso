@@ -77,12 +77,12 @@ iall_gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
     BOOST_MPI_CHECK_RESULT(MPI_Iallgatherv,
                            (MPI_IN_PLACE, 0, type, out_values,
                             const_cast<int *>(sizes), const_cast<int *>(displs),
-                            type, comm));
+                            type, comm, req[0].m_requests));
   } else {
     BOOST_MPI_CHECK_RESULT(MPI_Iallgatherv,
                            (const_cast<T *>(in_values), in_size, type,
                             out_values, const_cast<int *>(sizes),
-                            const_cast<int *>(displs), type, comm));
+                            const_cast<int *>(displs), type, comm, req[0].m_requests));
   }
 
   return req;

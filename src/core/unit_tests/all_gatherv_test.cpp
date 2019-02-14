@@ -25,12 +25,13 @@
 
 #include "utils/mpi/all_gatherv.hpp"
 using Utils::Mpi::all_gatherv;
+using Utils::Mpi::iall_gatherv;
 
 #include <string>
 
 namespace mpi = boost::mpi;
 
-BOOST_AUTO_TEST_CASE(mpi_type) {
+BOOST_AUTO_TEST_CASE(mpi_type_blocking) {
   mpi::communicator world;
   auto const rank = world.rank();
   auto const size = world.size();
@@ -41,6 +42,38 @@ BOOST_AUTO_TEST_CASE(mpi_type) {
     std::vector<int> sizes(size, 1);
 
     all_gatherv(world, &rank, 1, out.data(), sizes.data());
+
+    for (int i = 0; i < size; i++) {
+      BOOST_CHECK_EQUAL(i, out.at(i));
+    }
+  }
+
+  /* in-place */
+  {
+    std::vector<int> out(size, -1);
+    out[rank] = rank;
+    std::vector<int> sizes(size, 1);
+
+    all_gatherv(world, out.data(), 1, out.data(), sizes.data());
+
+    for (int i = 0; i < size; i++) {
+      BOOST_CHECK_EQUAL(i, out.at(i));
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(mpi_type_nonblocking) {
+  mpi::communicator world;
+  auto const rank = world.rank();
+  auto const size = world.size();
+
+  /* out-of-place */
+  {
+    std::vector<int> out(size, -1);
+    std::vector<int> sizes(size, 1);
+
+    auto reqs = iall_gatherv(world, &rank, 1, out.data(), sizes.data());
+    boost::mpi::wait_all(reqs.begin(), reqs.end());
 
     for (int i = 0; i < size; i++) {
       BOOST_CHECK_EQUAL(i, out.at(i));
@@ -73,6 +106,39 @@ BOOST_AUTO_TEST_CASE(non_mpi_type) {
     std::vector<int> sizes(size, 1);
 
     all_gatherv(world, &in, 1, out.data(), sizes.data());
+
+    for (int i = 0; i < size; i++) {
+      BOOST_CHECK_EQUAL(std::to_string(i), out.at(i));
+    }
+  }
+
+  /* in-place */
+  {
+    std::vector<std::string> out(size);
+    out[rank] = in;
+    std::vector<int> sizes(size, 1);
+
+    all_gatherv(world, out.data(), 1, out.data(), sizes.data());
+
+    for (int i = 0; i < size; i++) {
+      BOOST_CHECK_EQUAL(std::to_string(i), out.at(i));
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(non_mpi_type_nonblocking) {
+  mpi::communicator world;
+  auto const rank = world.rank();
+  auto const size = world.size();
+  auto const in = std::to_string(rank);
+
+  /* out-of-place */
+  {
+    std::vector<std::string> out(size);
+    std::vector<int> sizes(size, 1);
+
+    auto reqs = iall_gatherv(world, &in, 1, out.data(), sizes.data());
+    boost::mpi::wait_all(reqs.begin(), reqs.end());
 
     for (int i = 0; i < size; i++) {
       BOOST_CHECK_EQUAL(std::to_string(i), out.at(i));
