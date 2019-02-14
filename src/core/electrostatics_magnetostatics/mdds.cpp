@@ -198,8 +198,6 @@ void mdds_forces(const ParticleRange &particles,
                                        static_cast<int>(PERIODIC(2))};
     auto const with_replicas = (ncut.norm2() > 0);
 
-    using boost::make_iterator_range;
-
     /* Range of particles we calculate the ia for on this node */
     auto begin = all_posmom.begin() + offset;
     auto const end = begin + local_interacting_particles.size();
@@ -208,7 +206,39 @@ void mdds_forces(const ParticleRange &particles,
     auto p = local_interacting_particles.begin();
 
     for(auto pi = begin; pi != end; ++pi, ++p) {
-        auto const fi = image_sum(all_posmom.begin(), all_posmom.end(),
+        auto fi = image_sum(all_posmom.begin(), begin,
+                                  pi, with_replicas, ncut, ParticleForce{},
+                                  [pi](Vector3d const& rn, Vector3d const& mj) {
+                                      return pair_force(rn, pi->m, mj);
+                                  });
+
+        /* IA with own images */
+        fi += image_sum(pi, std::next(pi),
+                        pi, with_replicas, ncut, ParticleForce{},
+                        [pi](Vector3d const &rn, Vector3d const &mj) {
+                            return pair_force(rn, pi->m, mj);
+                        });
+
+        /* IA with local particles */
+        {
+            auto q = std::next(p);
+            for(auto pj = std::next(pi); pj != end; ++pj, ++q) {
+                auto const d =
+                        (with_replicas) ? (pi->pos - pj->pos) : get_mi_vector(pi->pos, pj->pos);
+
+                ParticleForce fij{};
+                for_each_image(ncut, [&](int nx, int ny, int nz) {
+                    fij += pair_force(d, pi->m, pj->m);
+                });
+
+                fi += fij;
+                (*q)->f.f -= coulomb.Dprefactor * fij.f;
+                /* Conservation of angular momentum mandates that 0 = t_i + r_ij x F_ij + t_j */
+                (*q)->f.torque += coulomb.Dprefactor * (-fij.torque + fij.f.cross(d));
+            };
+        }
+
+        fi += image_sum(end, all_posmom.end(),
                                   pi, with_replicas, ncut, ParticleForce{},
                                   [pi](Vector3d const& rn, Vector3d const& mj) {
                                       return pair_force(rn, pi->m, mj);
@@ -241,9 +271,6 @@ double mdds_energy(const ParticleRange &particles,
                                        static_cast<int>(PERIODIC(1)),
                                        static_cast<int>(PERIODIC(2))};
     auto const with_replicas = (ncut.norm2() > 0);
-
-    using boost::make_iterator_range;
-
         /* Range of particles we calculate the ia for on this node */
         auto begin = all_posmom.begin() + offset;
         auto const end = begin + local_interacting_particles.size();
@@ -253,7 +280,7 @@ double mdds_energy(const ParticleRange &particles,
 
         auto u = 0.;
         for(auto pi = begin; pi != end; ++pi, ++p) {
-            u = image_sum(std::next(pi), all_posmom.end(),
+            u = image_sum(pi, all_posmom.end(),
                           pi, with_replicas, ncut, u,
                           [pi](Vector3d const& rn, Vector3d const& mj) {
                               return pair_potential(rn, pi->m, mj);
