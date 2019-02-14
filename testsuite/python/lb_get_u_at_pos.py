@@ -59,7 +59,7 @@ class TestLBGetUAtPos(ut.TestCase):
             agrid=self.params['agrid'],
             tau=self.params['tau'],
             fric=self.params['friction'],
-            couple = "3pt"
+            couple="3pt"
         )
         self.system.actors.add(self.lb_fluid)
         self.vels = np.zeros((self.n_nodes_per_dim, 3))

@@ -4581,8 +4581,7 @@ void lb_lbfluid_get_population(const Vector3i &xyz, float population_host[LBQ],
 struct interpolation {
   LB_nodes_gpu current_nodes_gpu;
   LB_rho_v_gpu *d_v_gpu;
-  interpolation(LB_nodes_gpu _current_nodes_gpu,
-                          LB_rho_v_gpu *_d_v_gpu)
+  interpolation(LB_nodes_gpu _current_nodes_gpu, LB_rho_v_gpu *_d_v_gpu)
       : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu){};
   __device__ float3 operator()(const float3 &position) const {
     float u[3];
@@ -4592,12 +4591,12 @@ struct interpolation {
       unsigned int node_index[8];
       float delta[8];
       interpolation_two_point_coupling(current_nodes_gpu, _position, node_index,
-                                     mode, d_v_gpu, delta, u);
+                                       mode, d_v_gpu, delta, u);
     } else {
       unsigned int node_index[27];
       float delta[27];
-      interpolation_three_point_coupling(current_nodes_gpu, _position, node_index,
-                                     d_v_gpu, delta, u);
+      interpolation_three_point_coupling(current_nodes_gpu, _position,
+                                         node_index, d_v_gpu, delta, u);
     }
     return make_float3(u[0], u[1], u[2]);
   }
