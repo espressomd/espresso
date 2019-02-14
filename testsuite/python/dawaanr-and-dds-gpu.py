@@ -31,7 +31,7 @@ import tests_common
 @ut.skipIf(not espressomd.has_features(["DIPOLES",
                                         "CUDA",
                                         "PARTIAL_PERIODIC",
-                                        "ROTATION"]),
+                                        "LENNARD_JONES"]),
            "Features not available, skipping test!")
 class DDSGPUTest(ut.TestCase):
     # Handle for espresso system

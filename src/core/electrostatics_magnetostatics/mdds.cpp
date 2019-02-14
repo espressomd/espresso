@@ -38,6 +38,7 @@
 
 #include "utils/cartesian_product.hpp"
 #include "utils/mpi/all_gatherv.hpp"
+#include "utils/for_each_pair.hpp"
 
 #include <boost/mpi/collectives/all_gather.hpp>
 #include <boost/range/counting_range.hpp>
@@ -157,6 +158,8 @@ double mdds_calculations(int force_flag, int energy_flag,
     offset = 0;
   }
 
+
+
   /* Number of image boxes considered */
   const Vector3i ncut =
       mdds_n_replicas * Vector3i{static_cast<int>(PERIODIC(0)),
@@ -193,7 +196,6 @@ double mdds_calculations(int force_flag, int energy_flag,
 
   double u = 0;
   for (auto i = offset; i < (local_interacting_particles.size() + offset); i++) {
-    ParticleForce fi{};
 
     auto const &pi = all_posmom[i];
 
