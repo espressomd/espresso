@@ -56,7 +56,6 @@ void lb_lbfluid_set_visc(double p_visc);
 void lb_lbfluid_set_bulk_visc(double p_bulk_visc);
 void lb_lbfluid_set_gamma_odd(double p_gamma_odd);
 void lb_lbfluid_set_gamma_even(double p_gamma_even);
-void lb_lbfluid_set_couple_flag(int couple_flag);
 void lb_lbfluid_set_agrid(double p_agrid);
 void lb_lbfluid_set_ext_force_density(int component,
                                       const Vector3d &force_density);
@@ -69,7 +68,6 @@ void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &pop);
 
 double lb_lbfluid_get_tau();
 double lb_lbfluid_get_agrid();
-int lb_lbfluid_get_couple_flag();
 double lb_lbfluid_get_gamma_even();
 double lb_lbfluid_get_bulk_visc();
 double lb_lbfluid_get_visc();
