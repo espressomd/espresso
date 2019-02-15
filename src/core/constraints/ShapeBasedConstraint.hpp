@@ -37,10 +37,11 @@ public:
     ShapeBasedConstraint::reset_force();
   }
 
-  void add_energy(const Particle &p, const Vector3d &folded_pos,
+  void add_energy(const Particle &p, const Vector3d &folded_pos, double t,
                   Observable_stat &energy) const override;
 
-  ParticleForce force(const Particle &p, const Vector3d &folded_pos) override;
+  ParticleForce force(const Particle &p, const Vector3d &folded_pos,
+                      double t) override;
 
   bool fits_in_box(Vector3d const &) const override { return true; }
 
