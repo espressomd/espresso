@@ -17,14 +17,12 @@
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
-@script_interface_register
-class Shape(ScriptInterfaceHelper):
-    _so_name = "Shapes::Shape"
+class Shape(object):
     _so_bind_methods = ("calc_distance",)
 
 
 @script_interface_register
-class Cylinder(Shape):
+class Cylinder(Shape, ScriptInterfaceHelper):
 
     """
     A cylinder shape.
@@ -50,7 +48,7 @@ class Cylinder(Shape):
 
 
 @script_interface_register
-class Ellipsoid(Shape):
+class Ellipsoid(Shape, ScriptInterfaceHelper):
 
     """
     An ellipsoid.
@@ -74,7 +72,7 @@ class Ellipsoid(Shape):
 
 
 @script_interface_register
-class HollowCone(Shape):
+class HollowCone(Shape, ScriptInterfaceHelper):
 
     """
     A hollow cone shape.
@@ -102,7 +100,7 @@ class HollowCone(Shape):
 
 
 @script_interface_register
-class Rhomboid(Shape):
+class Rhomboid(Shape, ScriptInterfaceHelper):
 
     """
     An parallelepiped.
@@ -126,7 +124,7 @@ class Rhomboid(Shape):
 
 
 @script_interface_register
-class Slitpore(Shape):
+class Slitpore(Shape, ScriptInterfaceHelper):
 
     """
 
@@ -148,7 +146,7 @@ class Slitpore(Shape):
 
 
 @script_interface_register
-class Sphere(Shape):
+class Sphere(Shape, ScriptInterfaceHelper):
 
     """
     A sphere.
@@ -168,7 +166,7 @@ class Sphere(Shape):
 
 
 @script_interface_register
-class SpheroCylinder(Shape):
+class SpheroCylinder(Shape, ScriptInterfaceHelper):
 
     """
     A cylinder with hemispheres as caps.
@@ -192,7 +190,7 @@ class SpheroCylinder(Shape):
 
 
 @script_interface_register
-class Stomatocyte(Shape):
+class Stomatocyte(Shape, ScriptInterfaceHelper):
 
     """
     Attributes
@@ -217,7 +215,7 @@ class Stomatocyte(Shape):
 
 
 @script_interface_register
-class Torus(Shape):
+class Torus(Shape, ScriptInterfaceHelper):
 
     """
     A torus shape.
@@ -240,7 +238,7 @@ class Torus(Shape):
 
 
 @script_interface_register
-class Wall(Shape):
+class Wall(Shape, ScriptInterfaceHelper):
 
     """
     An infinite plane.
@@ -257,7 +255,7 @@ class Wall(Shape):
 
 
 @script_interface_register
-class SimplePore(Shape):
+class SimplePore(Shape, ScriptInterfaceHelper):
 
     """
     Two parallel infinite planes, and a cylindrical orfice connecting them.
