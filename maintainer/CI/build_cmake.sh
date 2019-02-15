@@ -232,8 +232,7 @@ end "BUILD"
 
 # check for exit function, which should never be called from shared library
 if [ "$(which nm)" != "" ]; then
-    nm -o -C $(find . -name *.so) | grep '[^a-z]exit@@GLIBC'
-    if [ "$?" = "0" ]; then
+    if nm -o -C $(find . -name *.so) | grep '[^a-z]exit@@GLIBC'; then
         echo "Found calls to exit() function in shared libraries."
         exit 1
     fi
