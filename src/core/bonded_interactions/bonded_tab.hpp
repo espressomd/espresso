@@ -100,7 +100,7 @@ inline int calc_tab_bond_force(Particle *p1, Particle *p2,
     auto const fac = tab_pot->force(dist) / dist;
 
     for (int j = 0; j < 3; j++)
-      force[j] -= fac * dx[j];
+      force[j] += fac * dx[j];
 
     return 0;
   } else {
