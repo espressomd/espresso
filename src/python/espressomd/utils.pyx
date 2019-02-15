@@ -151,7 +151,7 @@ def to_char_pointer(s):
 
     """
     if isinstance(s, unicode):
-        s = ( < unicode > s).encode('utf8')
+        s = (< unicode > s).encode('utf8')
     return s
 
 
@@ -167,7 +167,7 @@ def to_str(s):
     if type(s) is unicode:
         return < unicode > s
     elif PY_MAJOR_VERSION >= 3 and isinstance(s, bytes):
-        return ( < bytes > s).decode('ascii')
+        return (< bytes > s).decode('ascii')
     elif isinstance(s, unicode):
         return unicode(s)
     else:
@@ -267,6 +267,7 @@ cpdef handle_errors(msg):
     # Cast because cython does not support typed enums completely
         if < int > err.level() == <int > ERROR:
             raise Exception("{}: {}".format(msg, err.format()))
+
 
 def nesting_level(obj):
     """
