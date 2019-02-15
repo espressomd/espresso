@@ -58,15 +58,12 @@ inline int calc_angle_harmonic_force(Particle const *p_mid,
                                      Bonded_ia_parameters const *iaparams,
                                      double force1[3], double force2[3]) {
 
-  auto forceFactor = [&iaparams](double cosine) {
-    auto const K = iaparams->p.angle_harmonic.bend;
-    auto const phi = acos(-cosine);
+  auto forceFactor = [&iaparams](double const cos_phi) {
+    auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
+    auto const phi = acos(-cos_phi);
     auto const phi0 = iaparams->p.angle_harmonic.phi0;
-    double sin_phi = sin(phi);
-    if (sin_phi < TINY_SIN_VALUE)
-      sin_phi = TINY_SIN_VALUE;
-    auto const fac = K * (phi - phi0) / sin_phi;
-    return fac;
+    auto const K = iaparams->p.angle_harmonic.bend;
+    return K * (phi - phi0) / sin_phi;
   };
 
   calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor,
@@ -82,13 +79,12 @@ inline void calc_angle_harmonic_3body_forces(
     Bonded_ia_parameters const *iaparams, Vector3d &force1, Vector3d &force2,
     Vector3d &force3) {
 
-  auto forceFactor = [&iaparams](double cos_phi, double sin_phi) {
+  auto forceFactor = [&iaparams](double const cos_phi, double const sin_phi) {
     auto const phi = acos(cos_phi);
-    auto const K = iaparams->p.angle_harmonic.bend;
     auto const phi0 = iaparams->p.angle_harmonic.phi0;
+    auto const K = iaparams->p.angle_harmonic.bend;
     // potential dependent term [dU/dphi = K * (phi - phi0)]
-    auto const fac = K * (phi - phi0) / sin_phi;
-    return fac;
+    return K * (phi - phi0) / sin_phi;
   };
 
   std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
@@ -111,9 +107,8 @@ inline int angle_harmonic_energy(Particle const *p_mid, Particle const *p_left,
       calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
   auto const cos_phi = std::get<4>(vectors);
   auto const phi = acos(-cos_phi);
-  auto const K = iaparams->p.angle_harmonic.bend;
   auto const phi0 = iaparams->p.angle_harmonic.phi0;
-  /* bond angle energy */
+  auto const K = iaparams->p.angle_harmonic.bend;
   *_energy = 0.5 * K * Utils::sqr(phi - phi0);
   return 0;
 }

@@ -58,11 +58,10 @@ inline int calc_angle_cossquare_force(Particle const *p_mid,
                                       Bonded_ia_parameters const *iaparams,
                                       double force1[3], double force2[3]) {
 
-  auto forceFactor = [&iaparams](double cos_phi) {
+  auto forceFactor = [&iaparams](double const cos_phi) {
     auto const K = iaparams->p.angle_cossquare.bend;
     auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
-    auto const fac = K * (cos_phi0 + cos_phi);
-    return fac;
+    return K * (cos_phi0 + cos_phi);
   };
 
   calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor,
@@ -78,13 +77,12 @@ inline void calc_angle_cossquare_3body_forces(
     Bonded_ia_parameters const *iaparams, Vector3d &force1, Vector3d &force2,
     Vector3d &force3) {
 
-  auto forceFactor = [&iaparams](double cos_phi, double sin_phi) {
+  auto forceFactor = [&iaparams](double const cos_phi, double const sin_phi) {
     auto const K = iaparams->p.angle_cossquare.bend;
     auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
     // potential dependent term [dU/dphi = K * (sin_phi * cos_phi0 - cos_phi *
     // sin_phi)]
-    auto const fac = K * (sin_phi * cos_phi0 - cos_phi * sin_phi) / sin_phi;
-    return fac;
+    return K * (sin_phi * cos_phi0 - cos_phi * sin_phi) / sin_phi;
   };
 
   std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
@@ -106,9 +104,8 @@ inline int angle_cossquare_energy(Particle const *p_mid, Particle const *p_left,
   auto const vectors =
       calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
   auto const cos_phi = std::get<4>(vectors);
-  auto const K = iaparams->p.angle_cossquare.bend;
   auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
-  /* bond angle energy */
+  auto const K = iaparams->p.angle_cossquare.bend;
   *_energy = 0.5 * K * Utils::sqr(cos_phi + cos_phi0);
   return 0;
 }

@@ -58,13 +58,12 @@ inline int calc_angle_cosine_force(Particle const *p_mid,
                                    Bonded_ia_parameters const *iaparams,
                                    double force1[3], double force2[3]) {
 
-  auto forceFactor = [&iaparams](double cos_phi) {
+  auto forceFactor = [&iaparams](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
     auto const cos_phi0 = iaparams->p.angle_cosine.cos_phi0;
     auto const sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
     auto const K = iaparams->p.angle_cosine.bend;
-    auto const fac = K * (sin_phi0 * (cos_phi / sin_phi) + cos_phi0);
-    return fac;
+    return K * (sin_phi0 * (cos_phi / sin_phi) + cos_phi0);
   };
 
   calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor,
@@ -82,14 +81,13 @@ inline void calc_angle_cosine_3body_forces(Particle const *p_mid,
                                            Vector3d &force1, Vector3d &force2,
                                            Vector3d &force3) {
 
-  auto forceFactor = [&iaparams](double cos_phi, double sin_phi) {
+  auto forceFactor = [&iaparams](double const cos_phi, double const sin_phi) {
     auto const K = iaparams->p.angle_cosine.bend;
     auto const sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
     auto const cos_phi0 = iaparams->p.angle_cosine.cos_phi0;
     // potential dependent term [dU/dphi = K * sin(phi - phi0)]
     // trig identity: sin(a - b) = sin(a)cos(b) - cos(a)sin(b)
-    auto const fac = K * (sin_phi * cos_phi0 - cos_phi * sin_phi0) / sin_phi;
-    return fac;
+    return K * (sin_phi * cos_phi0 - cos_phi * sin_phi0) / sin_phi;
   };
 
   std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
@@ -115,9 +113,7 @@ inline int angle_cosine_energy(Particle const *p_mid, Particle const *p_left,
   auto const cos_phi0 = iaparams->p.angle_cosine.cos_phi0;
   auto const sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
   auto const K = iaparams->p.angle_cosine.bend;
-  /* bond angle energy */
   *_energy = K * (cos_phi * cos_phi0 - sin_phi * sin_phi0 + 1);
-
   return 0;
 }
 
