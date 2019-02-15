@@ -186,7 +186,7 @@ void CoupleIBMParticleToFluid(Particle *p) {
         // Do not put force into a halo node
         if (!IsHalo(node_index[(z * 2 + y) * 2 + x])) {
           // Add force into the lbfields structure
-          auto &local_f =
+          double *local_f =
               lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
           local_f[0] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
