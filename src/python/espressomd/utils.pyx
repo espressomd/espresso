@@ -268,41 +268,6 @@ cpdef handle_errors(msg):
         if < int > err.level() == <int > ERROR:
             raise Exception("{}: {}".format(msg, err.format()))
 
-
-def get_unravelled_index(len_dims, n_dims, flattened_index):
-    """
-    Getting the unraveled index for a given flattened index in ``n_dims`` dimensions.
-
-    Parameters
-    ----------
-    len_dims : array_like :obj:`int`
-               The length of each of the ``n_dims`` dimensions.
-    n_dims : :obj:`int`
-             The number of dimensions.
-    flattened_index : :obj:`int`
-                      The flat index that should be converted back to an
-                      ``n_dims`` dimensional index.
-
-    Returns
-    -------
-    unravelled_index : array_like :obj:`int`
-                       An array containing the index for each dimension.
-
-    """
-    cdef vector[int] c_len_dims
-    for i in range(len(len_dims)):
-        c_len_dims.push_back(len_dims[i])
-    cdef int c_n_dims = n_dims
-    cdef int c_flattened_index = flattened_index
-    cdef vector[int] unravelled_index_out
-    unravelled_index_out.assign(n_dims, 0)
-    unravelled_index_out = unravel_index(c_len_dims, c_flattened_index)
-    out = np.empty(n_dims)
-    for i in range(n_dims):
-        out[i] = unravelled_index_out[i]
-    return out
-
-
 def nesting_level(obj):
     """
     Returns the maximal nesting level of an object.
