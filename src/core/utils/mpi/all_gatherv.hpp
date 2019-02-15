@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace Utils {
 namespace Mpi {
 namespace detail {
-std::vector<int> displacements(Span<const int> sizes) {
+inline std::vector<int> displacements(Span<const int> sizes) {
   std::vector<int> displ(sizes.size());
 
   int offset = 0;
