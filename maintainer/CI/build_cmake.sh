@@ -230,6 +230,15 @@ cmd "make -k -j${build_procs}" || cmd "make -k -j1" || exit $?
 
 end "BUILD"
 
+# check for exit function, which should never be called from shared library
+if [ "$(which nm)" != "" ]; then
+    nm -o -C $(find . -name *.so) | grep '[^a-z]exit@@GLIBC'
+    if [ "$?" = "0" ]; then
+        echo "Found calls to exit() function in shared libraries."
+        exit 1
+    fi
+fi
+
 if $make_check; then
     start "TEST"
 
