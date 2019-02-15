@@ -74,7 +74,7 @@ int modpsi_init() {
                         linModPsi_lengths[2 * n_modPsi - 1];
     if (linModPsiSize > modpsi_constant_size) {
       printf("ERROR: __constant__ device_linModPsi[] is not large enough\n");
-      exit(EXIT_FAILURE);
+      std::abort();
     }
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi_offsets),
                                      linModPsi_offsets,

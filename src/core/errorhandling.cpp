@@ -114,7 +114,7 @@ void mpi_gather_runtime_errors_slave(int, int) {
 
 void errexit() {
   ErrorHandling::m_callbacks->comm().abort(1);
-  exit(1);
+  std::abort();
 }
 
 int check_runtime_errors() {
