@@ -79,7 +79,8 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s,
 
 void Mmm1dgpuForce::setup(SystemInterface &s) {
   if (s.box()[2] <= 0) {
-    throw std::runtime_error("Error: Please set box length before initializing MMM1D!");
+    throw std::runtime_error(
+        "Error: Please set box length before initializing MMM1D!");
   }
   if (need_tune == true && s.npart_gpu() > 0) {
     set_params(s.box()[2], coulomb.prefactor, maxPWerror, far_switch_radius,
@@ -240,7 +241,8 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
             maxCut) // we already have our switching radius and only need to
                     // determine the cutoff, i.e. this is the final tuning round
     {
-      throw std::runtime_error("No reasonable Bessel cutoff could be determined.");
+      throw std::runtime_error(
+          "No reasonable Bessel cutoff could be determined.");
     }
 
     set_params(0, 0, _maxPWerror, far_switch_radius, bessel_cutoff);
@@ -253,7 +255,8 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
                                mmm1dgpu_real _far_switch_radius,
                                int _bessel_cutoff, bool manual) {
   if (_boxz > 0 && _far_switch_radius > _boxz) {
-    throw std::runtime_error("switching radius must not be larger than box length");
+    throw std::runtime_error(
+        "switching radius must not be larger than box length");
   }
   mmm1dgpu_real _far_switch_radius_2 = _far_switch_radius * _far_switch_radius;
   mmm1dgpu_real _uz = 1.0 / _boxz;
