@@ -228,7 +228,7 @@ rocm-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export with_cuda=false
+    - export with_cuda=false test_timeout=900
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
     - export myconfig=maxset
     - bash maintainer/CI/build_cmake.sh
@@ -236,7 +236,7 @@ rocm-maxset:
     - docker
     - linux
   only:
-    - scheduled
+    - schedules
 
 ubuntu:arm64:
   <<: *arch_definition
