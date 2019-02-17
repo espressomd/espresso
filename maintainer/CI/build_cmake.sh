@@ -279,9 +279,9 @@ if $with_coverage; then
     lcov -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
     # Uploading report to CodeCov
     if [ -z "$CODECOV_TOKEN" ]; then
-        bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+        bash <(curl -s https://codecov.io/bash) -X gcovout || echo "Codecov did not collect coverage reports"
     else
-        bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" || echo "Codecov did not collect coverage reports"
+        bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" -X gcovout || echo "Codecov did not collect coverage reports"
     fi
 fi
 
