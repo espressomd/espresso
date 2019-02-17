@@ -27,6 +27,7 @@ T linear_interpolation(Container const &table, T hi, T offset, T x) {
   auto const dind = (x - offset) * hi;
   auto const ind = static_cast<int>(dind);
   assert(ind <= dind);
+  assert((ind >= 0) and (ind < table.size()));
   auto const dx = dind - ind;
 
   /* linear interpolation between data points */
