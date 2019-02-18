@@ -213,7 +213,7 @@ void lb_lbfluid_set_rng_state(uint64_t counter) {
   }
 }
 
-void lb_lbfluid_set_rho(double p_dens) {
+void lb_lbfluid_set_density(double p_dens) {
   if (p_dens <= 0)
     throw std::invalid_argument("Density has to be > 0.");
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -229,7 +229,7 @@ void lb_lbfluid_set_rho(double p_dens) {
   }
 }
 
-double lb_lbfluid_get_rho() {
+double lb_lbfluid_get_density() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return static_cast<double>(lbpar_gpu.rho);
@@ -247,7 +247,7 @@ double lb_lbfluid_get_rho() {
   }
 }
 
-void lb_lbfluid_set_visc(double p_visc) {
+void lb_lbfluid_set_viscosity(double p_visc) {
   if (p_visc <= 0)
     throw std::invalid_argument("Viscosity has to be >0.");
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -263,7 +263,7 @@ void lb_lbfluid_set_visc(double p_visc) {
   }
 }
 
-double lb_lbfluid_get_visc() {
+double lb_lbfluid_get_viscosity() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return static_cast<double>(lbpar_gpu.viscosity);
@@ -281,7 +281,7 @@ double lb_lbfluid_get_visc() {
   }
 }
 
-void lb_lbfluid_set_bulk_visc(double p_bulk_visc) {
+void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc) {
   if (p_bulk_visc <= 0)
     throw std::invalid_argument("Bulk viscosity has to be >0.");
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -299,7 +299,7 @@ void lb_lbfluid_set_bulk_visc(double p_bulk_visc) {
   }
 }
 
-double lb_lbfluid_get_bulk_visc() {
+double lb_lbfluid_get_bulk_viscosity() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.bulk_viscosity;
@@ -986,7 +986,7 @@ bool lb_lbnode_is_index_valid(const Vector3i &ind) {
   return false;
 }
 
-double lb_lbnode_get_rho(const Vector3i &ind) {
+double lb_lbnode_get_density(const Vector3i &ind) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +

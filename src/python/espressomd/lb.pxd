@@ -46,10 +46,10 @@ IF LB_GPU or LB:
 
         void lb_lbfluid_set_tau(double c_tau) except +
         double lb_lbfluid_get_tau() except +
-        void lb_lbfluid_set_rho(double c_dens) except +
-        double lb_lbfluid_get_rho() except +
-        void lb_lbfluid_set_visc(double c_visc) except +
-        double lb_lbfluid_get_visc() except +
+        void lb_lbfluid_set_density(double c_dens) except +
+        double lb_lbfluid_get_density() except +
+        void lb_lbfluid_set_viscosity(double c_visc) except +
+        double lb_lbfluid_get_viscosity() except +
         void lb_lbfluid_set_agrid(double c_agrid) except +
         double lb_lbfluid_get_agrid() except +
         void lb_lbfluid_set_gamma_odd(double c_gamma_odd) except +
@@ -58,8 +58,8 @@ IF LB_GPU or LB:
         double lb_lbfluid_get_gamma_even() except +
         void lb_lbfluid_set_ext_force_density(int component, const Vector3d forcedensity) except +
         const Vector3d lb_lbfluid_get_ext_force_density() except +
-        void lb_lbfluid_set_bulk_visc(double c_bulk_visc) except +
-        double lb_lbfluid_get_bulk_visc() except +
+        void lb_lbfluid_set_bulk_viscosity(double c_bulk_visc) except +
+        double lb_lbfluid_get_bulk_viscosity() except +
         void lb_lbfluid_print_vtk_velocity(string filename) except +
         void lb_lbfluid_print_vtk_velocity(string filename, vector[int] bb1, vector[int] bb2) except +
         void lb_lbfluid_print_vtk_boundary(string filename) except +
@@ -72,7 +72,7 @@ IF LB_GPU or LB:
         bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
         const Vector3d lb_lbnode_get_u(const Vector3i & ind) except +
         void lb_lbnode_set_u(const Vector3i & ind, const Vector3d & u) except +
-        double lb_lbnode_get_rho(const Vector3i & ind) except +
+        double lb_lbnode_get_density(const Vector3i & ind) except +
         const Vector6d lb_lbnode_get_pi(const Vector3i & ind) except +
         const Vector6d lb_lbnode_get_pi_neq(const Vector3i & ind) except +
         const Vector19d lb_lbnode_get_pop(const Vector3i & ind) except +
@@ -108,11 +108,11 @@ IF LB_GPU or LB:
         else:
             c_dens = p_dens * agrid * agrid * agrid
         # call c-function
-        lb_lbfluid_set_rho(c_dens)
+        lb_lbfluid_set_density(c_dens)
 
 ###############################################
 
-    cdef inline python_lbfluid_set_visc(p_visc, p_agrid, p_tau):
+    cdef inline python_lbfluid_set_viscosity(p_visc, p_agrid, p_tau):
         cdef double c_visc
         # get pointers
         if isinstance(p_visc, float) or isinstance(p_visc, int):
@@ -120,7 +120,7 @@ IF LB_GPU or LB:
         else:
             c_visc = p_visc * p_tau / (p_agrid * p_agrid)
         # call c-function
-        lb_lbfluid_set_visc(c_visc)
+        lb_lbfluid_set_viscosity(c_visc)
 
 ###############################################
 
@@ -133,7 +133,7 @@ IF LB_GPU or LB:
 
 ###############################################
 
-    cdef inline python_lbfluid_set_bulk_visc(p_bvisc, p_agrid, p_tau):
+    cdef inline python_lbfluid_set_bulk_viscosity(p_bvisc, p_agrid, p_tau):
         cdef double c_bvisc
         # get pointers
         if isinstance(p_bvisc, float) or isinstance(p_bvisc, int):
@@ -141,7 +141,7 @@ IF LB_GPU or LB:
         else:
             c_bvisc = p_bvisc * p_tau / (p_agrid * p_agrid)
         # call c-function
-        lb_lbfluid_set_bulk_visc(c_bvisc)
+        lb_lbfluid_set_bulk_viscosity(c_bvisc)
 
 ###############################################
 
@@ -203,17 +203,17 @@ IF LB_GPU or LB:
     cdef inline python_lbfluid_get_density(p_dens, agrid):
         cdef double c_dens
         # call c-function
-        c_dens = lb_lbfluid_get_rho()
+        c_dens = lb_lbfluid_get_density()
         if isinstance(p_dens, float) or isinstance(p_dens, int):
             p_dens = <double > c_dens / agrid / agrid / agrid
         else:
             p_dens = c_dens / agrid / agrid / agrid
 
 ###############################################
-    cdef inline python_lbfluid_get_visc(p_visc, p_agrid, p_tau):
+    cdef inline python_lbfluid_get_viscosity(p_visc, p_agrid, p_tau):
         cdef double c_visc
         # call c-function
-        c_visc = lb_lbfluid_get_visc()
+        c_visc = lb_lbfluid_get_viscosity()
         if isinstance(p_visc, float) or isinstance(p_visc, int):
             p_visc = <double > c_visc / p_tau * (p_agrid * p_agrid)
         else:
@@ -227,10 +227,10 @@ IF LB_GPU or LB:
         p_agrid = <double > c_agrid
 
 ###############################################
-    cdef inline python_lbfluid_get_bulk_visc(p_bvisc, p_agrid, p_tau):
+    cdef inline python_lbfluid_get_bulk_viscosity(p_bvisc, p_agrid, p_tau):
         cdef double c_bvisc
         # call c-function
-        c_bvisc = lb_lbfluid_get_bulk_visc()
+        c_bvisc = lb_lbfluid_get_bulk_viscosity()
         if isinstance(p_bvisc, float) or isinstance(p_bvisc, int):
             p_bvisc = <double > c_bvisc / p_tau * (p_agrid * p_agrid)
         else:

@@ -124,13 +124,13 @@ IF LB_GPU or LB:
 
             lb_lbfluid_set_tau(self._params["tau"])
 
-            python_lbfluid_set_visc(
+            python_lbfluid_set_viscosity(
     self._params["visc"],
      self._params["agrid"],
      self._params["tau"])
 
             if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
-                python_lbfluid_set_bulk_visc(
+                python_lbfluid_set_bulk_viscosity(
     self._params["bulk_visc"],
      self._params["agrid"],
      self._params["tau"])
@@ -163,12 +163,12 @@ IF LB_GPU or LB:
 
             self._params["tau"] = lb_lbfluid_get_tau()
 
-            if python_lbfluid_get_visc(self._params["visc"], self._params["agrid"], self._params["tau"]):
-                raise Exception("lb_lbfluid_set_visc error")
+            if python_lbfluid_get_viscosity(self._params["visc"], self._params["agrid"], self._params["tau"]):
+                raise Exception("lb_lbfluid_set_viscosity error")
 
             if not self._params["bulk_visc"] == default_params["bulk_visc"]:
-                if python_lbfluid_get_bulk_visc(self._params["bulk_visc"], self._params["agrid"], self._params["tau"]):
-                    raise Exception("lb_lbfluid_set_bulk_visc error")
+                if python_lbfluid_get_bulk_viscosity(self._params["bulk_visc"], self._params["agrid"], self._params["tau"]):
+                    raise Exception("lb_lbfluid_set_bulk_viscosity error")
 
             if python_lbfluid_get_agrid(self._params["agrid"]):
                 raise Exception("lb_lbfluid_set_agrid error")
@@ -330,7 +330,7 @@ IF LB or LB_GPU:
         property density:
             def __get__(self):
                 cdef double double_return
-                double_return = lb_lbnode_get_rho(self.node)
+                double_return = lb_lbnode_get_density(self.node)
                 return array_locked(double_return)
 
             def __set__(self, value):
