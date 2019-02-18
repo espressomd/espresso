@@ -31,7 +31,6 @@ void lb_lbfluid_reinit_fluid();
  */
 void lb_lbfluid_reinit_parameters();
 
-
 /**
  * @brief Get the current counter of the Philox RNG.
  */
@@ -61,12 +60,14 @@ void lb_lbfluid_add_force_density(const Vector3d &p,
 const Lattice &lb_lbfluid_get_lattice();
 
 /**
- * @brief Get the global variable lattice_switch which defines wether NONE, CPU or GPU LB is active.
+ * @brief Get the global variable lattice_switch which defines wether NONE, CPU
+ * or GPU LB is active.
  */
 int lb_lbfluid_get_lattice_switch();
 
 /**
- * @brief Set the global variable lattice_switch which defines wether NONE, CPU or GPU LB is active.
+ * @brief Set the global variable lattice_switch which defines wether NONE, CPU
+ * or GPU LB is active.
  */
 void lb_lbfluid_set_lattice_switch(int local_lattice_switch);
 

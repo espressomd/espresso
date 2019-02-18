@@ -255,7 +255,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #if defined(LB) || defined(LB_GPU)
     lb_lbcoupling_deactivate();
-    if (not (lattice_switch & LATTICE_OFF) && this_node == 0 && n_part)
+    if (not(lattice_switch & LATTICE_OFF) && this_node == 0 && n_part)
       runtimeWarning("Recalculating forces, so the LB coupling forces are not "
                      "included in the particle force the first time step. This "
                      "only matters if it happens frequently during "
