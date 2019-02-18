@@ -79,6 +79,8 @@ bool PdbParser::parse_pdb_file(const string &filename) {
 bool PdbParser::parse_itp_file(const string &filename) {
   ifstream file(filename.c_str());
   string tmp, buf;
+  const decltype(buf)::value_type EOF_value =
+      std::char_traits<decltype(buf)::value_type>::eof();
   itp_atom atom;
   std::size_t pos;
 
@@ -87,7 +89,7 @@ bool PdbParser::parse_itp_file(const string &filename) {
 
   while (file.good()) {
     try {
-      buf = char(file.get());
+      buf = file.get();
       /* Skip leading whitespace */
       if (std::isspace(buf[0]))
         continue;
@@ -113,11 +115,10 @@ bool PdbParser::parse_itp_file(const string &filename) {
 
         if (section == "atoms") {
           while (file.good()) {
-            buf = char(file.get());
+            buf = file.get();
 
-            /* Ignore leading whitespace, check for end of file (standard says
-             * EOF is "generally" -1) */
-            if (std::isspace(buf[0]) || (buf[0] == -1)) {
+            /* Ignore leading whitespace, check for end of file */
+            if (std::isspace(buf[0]) || (buf[0] == EOF_value)) {
               continue;
             }
             /* End of atoms section */
@@ -144,7 +145,7 @@ bool PdbParser::parse_itp_file(const string &filename) {
           itp_atomtype type;
           std::string type_name;
           while (file.good()) {
-            buf = char(file.get());
+            buf = file.get();
 
             /* Ignore leading whitespace */
             if (std::isspace(buf[0])) {
@@ -156,9 +157,8 @@ bool PdbParser::parse_itp_file(const string &filename) {
               break;
             }
 
-            /* Ignore leading whitespace, check for end of file (standard says
-             * EOF is "generally" -1) */
-            if (std::isspace(buf[0]) || (buf[0] == -1)) {
+            /* Ignore leading whitespace, check for end of file */
+            if (std::isspace(buf[0]) || (buf[0] == EOF_value)) {
               continue;
             }
 
