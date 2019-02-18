@@ -1,11 +1,11 @@
 
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp" // magnetic_dipolar_direct_sum_sanity_checks
 #include "electrostatics_magnetostatics/mdlc_correction.hpp" // mdlc_sanity_checks
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp" // dp3m
-#include "electrostatics_magnetostatics/scafacos.hpp" // scafacos
-#include "integrate.hpp" // integ_switch
-#include "npt.hpp" // nptiso
-#include "statistics.hpp" // Observable_stat
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"     // dp3m
+#include "electrostatics_magnetostatics/scafacos.hpp"        // scafacos
+#include "integrate.hpp"                                     // integ_switch
+#include "npt.hpp"                                           // nptiso
+#include "statistics.hpp"                                    // Observable_stat
 
 #ifdef ELECTROSTATICS
 #ifdef DIPOLES
