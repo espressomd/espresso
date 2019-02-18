@@ -17,12 +17,24 @@ double lb_lbcoupling_get_friction();
 void mpi_set_lb_coupling_counter_slave(int high, int low);
 void mpi_bast_lb_particle_coupling(int, int);
 
+/*
+ * @brief Activate the coupling between LB and MD particles.
+ */
+void lb_lbcoupling_activate();
+
+/*
+ * @brief Deactivate the coupling between LB and MD particles.
+ */
+void lb_lbcoupling_deactivate();
+
+
 struct LB_Particle_Coupling {
   Utils::Counter<uint64_t> rng_counter_coupling;
   /*
    * @brief Friction constant for the particle coupling.
    */
   double friction = 0.0;
+  bool couple_to_md = false;
 
 private:
   friend class boost::serialization::access;
@@ -31,6 +43,7 @@ private:
   void serialize(Archive &ar, const unsigned int version) {
     ar &rng_counter_coupling;
     ar &friction;
+    ar &couple_to_md;
   }
 };
 

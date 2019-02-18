@@ -253,17 +253,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     thermo_heat_up();
 
-#ifdef LB
-    transfer_momentum = false;
-    if (lattice_switch & LATTICE_LB && this_node == 0 && n_part)
-      runtimeWarning("Recalculating forces, so the LB coupling forces are not "
-                     "included in the particle force the first time step. This "
-                     "only matters if it happens frequently during "
-                     "sampling.\n");
-#endif
-#ifdef LB_GPU
-    transfer_momentum_gpu = false;
-    if (lattice_switch & LATTICE_LB_GPU && this_node == 0 && n_part)
+#if defined(LB) || defined(LB_GPU)
+    lb_lbcoupling_deactivate();
+    if (not (lattice_switch & LATTICE_OFF) && this_node == 0 && n_part)
       runtimeWarning("Recalculating forces, so the LB coupling forces are not "
                      "included in the particle force the first time step. This "
                      "only matters if it happens frequently during "
@@ -361,11 +353,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
        v(t+0.5*dt) ) */
 
-#ifdef LB
-    transfer_momentum = (n_part > 0);
-#endif
-#ifdef LB_GPU
-    transfer_momentum_gpu = (n_part > 0);
+#if defined(LB) || defined(LB_GPU)
+    if (n_part > 0)
+      lb_lbcoupling_activate();
 #endif
 
     // Communication step: distribute ghost positions

@@ -7,9 +7,11 @@
 
 #if defined(LB) || defined(LB_GPU)
 
+/**
+ * @brief Propagate the LB fluid.
+ */
 void lb_lbfluid_propagate();
 
-void lb_lbfluid_update();
 /**
  * @brief Event handler for integration start.
  */
@@ -28,14 +30,6 @@ void lb_lbfluid_reinit_fluid();
  *  The current state of the fluid is unchanged.
  */
 void lb_lbfluid_reinit_parameters();
-
-#ifdef LB
-extern bool transfer_momentum;
-#endif
-
-#ifdef LB_GPU
-extern bool transfer_momentum_gpu;
-#endif
 
 uint64_t lb_lbfluid_get_rng_state();
 void lb_lbfluid_set_rng_state(uint64_t counter);

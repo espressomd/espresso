@@ -29,7 +29,15 @@ void mpi_bcast_lb_particle_coupling_slave(int, int) {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
-#if defined(LB) || defined(LB_GPU)
+void lb_lbcoupling_activate() {
+  lb_particle_coupling.couple_to_md = true;
+  mpi_bcast_lb_particle_coupling();
+}
+
+void lb_lbcoupling_deactivate() {
+  lb_particle_coupling.couple_to_md = false;
+  mpi_bcast_lb_particle_coupling();
+}
 
 void lb_lbcoupling_set_friction(double friction) {
   lb_particle_coupling.friction = friction;
@@ -68,6 +76,8 @@ void lb_lbcoupling_set_rng_state(uint64_t counter) {
 #endif
   }
 }
+
+#if defined(LB) || defined(LB_GPU)
 
 namespace {
 /**
@@ -162,13 +172,13 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    if (transfer_momentum_gpu && this_node == 0)
+    if (lb_particle_coupling.couple_to_md && this_node == 0)
       lb_calc_particle_lattice_ia_gpu(couple_virtual,
                                       lb_lbcoupling_get_friction());
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    if (transfer_momentum) {
+    if (lb_particle_coupling.couple_to_md) {
       using rng_type = r123::Philox4x64;
       using ctr_type = rng_type::ctr_type;
       using key_type = rng_type::key_type;

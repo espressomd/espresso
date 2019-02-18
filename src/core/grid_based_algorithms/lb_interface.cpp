@@ -115,14 +115,6 @@ void lb_lbfluid_init() {
   }
 }
 
-#ifdef LB
-bool transfer_momentum = false;
-#endif
-
-#ifdef LB_GPU
-bool transfer_momentum_gpu = false;
-#endif
-
 uint64_t lb_lbfluid_get_rng_state() {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
