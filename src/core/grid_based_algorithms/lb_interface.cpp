@@ -1004,15 +1004,13 @@ double lb_lbnode_get_density(const Vector3i &ind) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
     double rho;
     double j[3];
     double pi[6];
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    auto ind_shifted = ind;
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1048,12 +1046,12 @@ const Vector3d lb_lbnode_get_u(const Vector3i &ind) {
 #ifdef LB
     Lattice::index_t index;
     int node;
-    Vector3i grid, ind_shifted = ind;
+    auto ind_shifted = ind;
     double rho;
     Vector3d j;
     Vector<6, double> pi;
 
-    node = lblattice.map_lattice_to_node(ind_shifted.data(), grid.data());
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1108,15 +1106,13 @@ const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
     double rho;
     double j[3];
     Vector<6, double> pi{};
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    auto ind_shifted = ind;
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1142,12 +1138,10 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
+    auto ind_shifted = ind;
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     int p_boundary;
@@ -1177,12 +1171,10 @@ const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
+    auto ind_shifted = ind;
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     Vector<19, double> p_pop;
@@ -1208,15 +1200,13 @@ void lb_lbnode_set_rho(const Vector3i &ind, double p_rho) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
     double rho;
     Vector3d j;
     Vector<6, double> pi;
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    auto ind_shifted = ind;
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1245,15 +1235,13 @@ void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u) {
   } else {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
     double rho;
     Vector3d j;
     Vector<6, double> pi;
-
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    
+    auto ind_shifted = ind;
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1281,12 +1269,10 @@ void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &p_pop) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    auto ind_shifted = ind;
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
