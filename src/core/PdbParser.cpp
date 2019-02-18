@@ -89,7 +89,7 @@ bool PdbParser::parse_itp_file(const string &filename) {
 
   while (file.good()) {
     try {
-      buf = file.get();
+      buf = char(file.get());
       /* Skip leading whitespace */
       if (std::isspace(buf[0]))
         continue;
@@ -115,7 +115,7 @@ bool PdbParser::parse_itp_file(const string &filename) {
 
         if (section == "atoms") {
           while (file.good()) {
-            buf = file.get();
+            buf = char(file.get());
 
             /* Ignore leading whitespace, check for end of file */
             if (std::isspace(buf[0]) || (buf[0] == EOF_value)) {
@@ -145,7 +145,7 @@ bool PdbParser::parse_itp_file(const string &filename) {
           itp_atomtype type;
           std::string type_name;
           while (file.good()) {
-            buf = file.get();
+            buf = char(file.get());
 
             /* Ignore leading whitespace */
             if (std::isspace(buf[0])) {
