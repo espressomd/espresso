@@ -31,12 +31,14 @@ void mpi_bcast_lb_particle_coupling_slave(int, int) {
 
 void lb_lbcoupling_activate() {
   lb_particle_coupling.couple_to_md = true;
-  mpi_bcast_lb_particle_coupling();
+  if (this_node == 0)
+    mpi_bcast_lb_particle_coupling();
 }
 
 void lb_lbcoupling_deactivate() {
   lb_particle_coupling.couple_to_md = false;
-  mpi_bcast_lb_particle_coupling();
+  if (this_node == 0)
+    mpi_bcast_lb_particle_coupling();
 }
 
 void lb_lbcoupling_set_friction(double friction) {
