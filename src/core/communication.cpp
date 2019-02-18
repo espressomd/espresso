@@ -80,8 +80,8 @@
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 
-#include "coulomb_switch.hpp"
-#include "dipole_switch.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 using namespace std;
 

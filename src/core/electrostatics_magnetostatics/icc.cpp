@@ -53,7 +53,7 @@
 #include "short_range_loop.hpp"
 #include "utils/NoOp.hpp"
 
-#include "coulomb_switch.hpp"
+#include "coulomb.hpp"
 
 iccp3m_struct iccp3m_cfg;
 

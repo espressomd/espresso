@@ -70,8 +70,8 @@
 
 #include "utils/mpi/all_compare.hpp"
 
-#include "coulomb_switch.hpp"
-#include "dipole_switch.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;

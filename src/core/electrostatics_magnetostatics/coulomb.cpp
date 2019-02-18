@@ -1,22 +1,21 @@
 
 #include "communication.hpp" // bcast functions
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
+#include "electrostatics_magnetostatics/debye_hueckel.hpp" // Debye_hueckel_params
+#include "electrostatics_magnetostatics/elc.hpp" // elc_params
+#include "electrostatics_magnetostatics/maggs.hpp" // maggs_init
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/p3m_gpu.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
-#include "errorhandling.hpp"
-#include "initialize.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp" // MMM1D_sanity_check
+#include "electrostatics_magnetostatics/mmm2d.hpp" // MMM2D_sanity_check
+#include "electrostatics_magnetostatics/p3m.hpp" // p3m_params
+#include "electrostatics_magnetostatics/p3m_gpu.hpp" // p3m_gpu_init
+#include "electrostatics_magnetostatics/scafacos.hpp" // scafacos
+#include "errorhandling.hpp" // runtime_error
+#include "initialize.hpp" // on_ghost_flags_change
 #include "integrate.hpp" // skin
-#include "layered.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "nonbonded_interactions/reaction_field.hpp"
+#include "layered.hpp" // layer_h
+#include "nonbonded_interactions/reaction_field.hpp" // Reaction_field_params
 #include "npt.hpp" // nptiso
-#include "statistics.hpp"
+#include "statistics.hpp" // Observable_stat
 
 #ifdef ELECTROSTATICS
 
@@ -361,48 +360,47 @@ void initialize_init_coulomb() {
 void forces_inline_calc_pair_coulomb_force(Particle *p1, Particle *p2,
                                            double *d, double dist, double dist2,
                                            Vector3d &force) {
-  const double q1q2 = p1->p.q * p2->p.q;
+  auto const q1q2 = p1->p.q * p2->p.q;
 
-  if (!q1q2)
-    return;
-
-  switch (coulomb.method) {
+  if (q1q2 != 0) {
+    switch (coulomb.method) {
 #ifdef P3M
-  case COULOMB_ELC_P3M: {
-    p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
+    case COULOMB_ELC_P3M: {
+      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
 
-    // forces from the virtual charges
-    // they go directly onto the particles, since they are not pairwise forces
-    if (elc_params.dielectric_contrast_on)
-      ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
-                                                   p2->f.f.data());
-    break;
-  }
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M: {
+      // forces from the virtual charges
+      // they go directly onto the particles, since they are not pairwise forces
+      if (elc_params.dielectric_contrast_on)
+        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
+                                                     p2->f.f.data());
+      break;
+    }
+    case COULOMB_P3M_GPU:
+    case COULOMB_P3M: {
 #ifdef NPT
-    double eng = p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
-    if (integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += eng;
+      double eng = p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
+      if (integ_switch == INTEG_METHOD_NPT_ISO)
+        nptiso.p_vir[0] += eng;
 #else
-    p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
+      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
 #endif
-    break;
-  }
+      break;
+    }
 #endif
-  case COULOMB_MMM1D:
-    add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
-    break;
-  case COULOMB_MMM2D:
-    add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
-    break;
+    case COULOMB_MMM1D:
+      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
+      break;
+    case COULOMB_MMM2D:
+      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
+      break;
 #ifdef SCAFACOS
-  case COULOMB_SCAFACOS:
-    Scafacos::add_pair_force(p1, p2, d, dist, force.data());
-    break;
+    case COULOMB_SCAFACOS:
+      Scafacos::add_pair_force(p1, p2, d, dist, force.data());
+      break;
 #endif
-  default:
-    break;
+    default:
+      break;
+    }
   }
 }
 
@@ -593,24 +591,24 @@ void energy_n_coulomb(int &n_coulomb) {
 void icc_calc_pair_coulomb_force(Particle *p1, Particle *p2, double *d,
                                  double dist, double dist2, double *force) {
   auto const q1q2 = p1->p.q * p2->p.q;
-  if (!q1q2)
-    return;
-  switch (coulomb.method) {
+  if (q1q2 != 0) {
+    switch (coulomb.method) {
 #ifdef P3M
-  case COULOMB_ELC_P3M:
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    p3m_add_pair_force(q1q2, d, dist2, dist, force);
-    break;
+    case COULOMB_ELC_P3M:
+    case COULOMB_P3M_GPU:
+    case COULOMB_P3M:
+      p3m_add_pair_force(q1q2, d, dist2, dist, force);
+      break;
 #endif /* P3M */
-  case COULOMB_MMM1D:
-    add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force);
-    break;
-  case COULOMB_MMM2D:
-    add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force);
-    break;
-  default:
-    break;
+    case COULOMB_MMM1D:
+      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force);
+      break;
+    case COULOMB_MMM2D:
+      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force);
+      break;
+    default:
+      break;
+    }
   }
 }
 

@@ -37,7 +37,7 @@
 #include <cmath>
 #include <mpi.h>
 
-#include "coulomb_switch.hpp"
+#include "coulomb.hpp"
 
 #ifdef P3M
 

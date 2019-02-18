@@ -33,7 +33,7 @@
 #include "thermostat.hpp"
 #include "utils.hpp"
 
-#include "coulomb_switch.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.

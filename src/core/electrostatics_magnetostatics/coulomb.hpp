@@ -1,7 +1,7 @@
 #ifndef ESPRESSO_COULOMB_SWITCH_HPP
 #define ESPRESSO_COULOMB_SWITCH_HPP
 
-#include "statistics.hpp"
+#include "statistics.hpp" // Observable_stat
 
 #ifdef ELECTROSTATICS
 

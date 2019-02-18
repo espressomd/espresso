@@ -33,8 +33,8 @@
 
 #include "short_range_loop.hpp"
 
-#include "coulomb_switch.hpp"
-#include "dipole_switch.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 Observable_stat virials{};
 Observable_stat total_pressure{};

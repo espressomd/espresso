@@ -44,7 +44,7 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-#include "dipole_switch.hpp"
+#include "dipole.hpp"
 
 #if defined(DIPOLES) && defined(DP3M)
 

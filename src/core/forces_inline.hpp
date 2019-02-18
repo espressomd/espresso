@@ -69,8 +69,8 @@
 #include "object-in-fluid/out_direction.hpp"
 #include "thermostat.hpp"
 
-#include "coulomb_switch.hpp"
-#include "dipole_switch.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"

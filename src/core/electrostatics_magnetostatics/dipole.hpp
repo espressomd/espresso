@@ -1,7 +1,7 @@
 #ifndef ESPRESSO_DIPOLE_SWITCH_HPP
 #define ESPRESSO_DIPOLE_SWITCH_HPP
 
-#include "statistics.hpp"
+#include "statistics.hpp" // Observable_stat
 
 #ifdef ELECTROSTATICS
 #ifdef DIPOLES

@@ -53,8 +53,6 @@ set(EspressoCore_SRC
   topology.cpp
   tuning.cpp
   virtual_sites.cpp
-  coulomb_switch.cpp
-  dipole_switch.cpp
   accumulators/Correlator.cpp
   accumulators/MeanVarianceCalculator.cpp
   actor/ActorList.cpp
@@ -96,6 +94,8 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/scafacos.cpp
   electrostatics_magnetostatics/fft-common.cpp
   electrostatics_magnetostatics/fft.cpp
+  electrostatics_magnetostatics/coulomb.cpp
+  electrostatics_magnetostatics/dipole.cpp
   grid_based_algorithms/lbboundaries.cpp
   grid_based_algorithms/lb.cpp
   grid_based_algorithms/lb-d3q19.cpp

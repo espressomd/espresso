@@ -74,8 +74,8 @@
 
 #include "energy.hpp"
 
-#include "coulomb_switch.hpp"
-#include "dipole_switch.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1         pointer to particle 1.

@@ -70,8 +70,8 @@
 #include <cstring>
 #include <mpi.h>
 
-#include "coulomb_switch.hpp"
-#include "dipole_switch.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
