@@ -67,8 +67,9 @@ cell1 = oif.OifCell(cell_type=cell_type,
 
 # fluid
 lbf = espressomd.lb.LBFluid(agrid=1, dens=1.0, visc=1.5,
-                            tau=0.1, fric=1.5, ext_force_density=[0.002, 0.0, 0.0])
+                            tau=0.1, ext_force_density=[0.002, 0.0, 0.0])
 system.actors.add(lbf)
+system.thermostat.set_lb(LB_fluid=lbf, friction=1.5)
 
 # creating boundaries and obstacles in the channel
 # OutputVtk writes a file

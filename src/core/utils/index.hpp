@@ -2,16 +2,19 @@
 #define UTILS_INDEX_HPP
 
 #include <array>
+#include <iterator>
 #include <numeric>
 #include <vector>
 
 namespace Utils {
 
 /**
- * \brief Returns the flat index for given multidimensional indices and
- * dimensions. \param unravelled_indices a container with the multidimensional
- * indices. \param dimensions a container with the corresponding dimensions.
- * \retval the flat index
+ * @brief Returns the flat index for given multidimensional indices and
+ * dimensions.
+ * @param unravelled_indices a container with the multidimensional
+ * indices.
+ * @param dimensions a container with the corresponding dimensions.
+ * @retval the flat index
  */
 template <typename T, typename U>
 inline size_t ravel_index(const T &unravelled_indices, const U &dimensions) {
@@ -30,24 +33,29 @@ inline size_t ravel_index(const T &unravelled_indices, const U &dimensions) {
 }
 
 /**
- * \brief Returns the unraveled index of the provided flat index.
+ * @brief Returns the unraveled index of the provided flat index.
  *        Therefore is the inversion of flattening an ndims dimensional index.
- * \param dimensions an int array of length ndims containing the lengths of the
- * dimensions. (Input)
- * \param ravelled_index the flat index. (Input)
- * \retval an array with length ndims where the unflat indices are written to.
+ * @param[in] dimensions_begin Iterator pointing to the begin of the container
+ * with the lengths of the dimensions.
+ * @param[in] dimensions_end   Iterator pointing to the end of the container
+ * with the lengths of the dimensions.
+ * @param[out] begin_out       Outputiterator pointing to the begin of the
+ * container where the result should be written to.
+ * @param[in] ravelled_index   The flat index.
  */
-template <typename T, typename U>
-inline const std::vector<U> unravel_index(const T &dimensions,
-                                          const U ravelled_index) {
-  auto const n_dims = dimensions.size();
-  std::vector<U> unravelled_indices(n_dims);
+template <typename InputIterator, typename OutputIterator, typename T>
+inline void unravel_index(InputIterator dimensions_begin,
+                          InputIterator dimensions_end,
+                          OutputIterator begin_out, T ravelled_index) {
+  auto end_out = begin_out + std::distance(dimensions_begin, dimensions_end);
+  auto rbegin_in = std::make_reverse_iterator(dimensions_begin);
+  auto rend_in = std::make_reverse_iterator(dimensions_end);
+  auto rend_out = std::make_reverse_iterator(end_out);
   std::size_t mul = 1;
-  for (int j = n_dims - 1; j >= 0; j--) {
-    unravelled_indices[j] = (ravelled_index / mul) % dimensions[j];
-    mul *= dimensions[j];
+  for (; rend_in != rbegin_in; ++rend_in, ++rend_out) {
+    *rend_out = (ravelled_index / mul) % (*rend_in);
+    mul *= (*rend_in);
   }
-  return unravelled_indices;
 }
 
 } // namespace Utils

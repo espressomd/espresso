@@ -26,6 +26,7 @@
 #define LB_GPU_H
 
 #include "config.hpp"
+#include "utils/Counter.hpp"
 
 #ifdef LB_GPU
 #include "utils.hpp"
@@ -35,11 +36,6 @@
  * explicitly. This saves a lot of multiplications with 1's and 0's
  * thus making the code more efficient. */
 #define LBQ 19
-
-/** Note these are used for binary logic so should be powers of 2 */
-#define LB_COUPLE_NULL 1
-#define LB_COUPLE_TWO_POINT 2
-#define LB_COUPLE_THREE_POINT 4
 
 /** \name Parameter fields for lattice Boltzmann
  *  The numbers are referenced in \ref mpi_bcast_lb_params
@@ -95,11 +91,6 @@ struct LB_parameters_gpu {
    *  slip at bounce-back boundaries
    */
   bool is_TRT;
-  /** amplitude of the fluctuations in the viscous coupling
-   *  Switch indicating what type of coupling is used, can either
-   *  use nearest neighbors or next nearest neighbors.
-   */
-  int lb_couple_switch;
 
   float bulk_viscosity;
 
@@ -129,8 +120,6 @@ struct LB_parameters_gpu {
   int external_force_density;
 
   float ext_force_density[3];
-
-  unsigned int your_seed;
 
   unsigned int reinit;
   // Thermal energy
@@ -291,7 +280,7 @@ void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();
 void lb_coupling_set_rng_state_gpu(uint64_t counter);
 /*@{*/
-
+extern Utils::Counter<uint64_t> rng_counter_fluid_gpu;
 #endif /* LB_GPU */
 
 #endif /* LB_GPU_H */

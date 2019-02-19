@@ -85,7 +85,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
+            return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
         # list of essential keys required for the fluid
         ####################################################
@@ -101,7 +101,6 @@ IF LB_GPU or LB:
                     "visc": -1.0,
                     "bulk_visc": -1.0,
                     "tau": -1.0,
-                    "couple": "2pt",
                     "seed": None,
                     "kT": 0.}
 
@@ -125,13 +124,13 @@ IF LB_GPU or LB:
 
             lb_lbfluid_set_tau(self._params["tau"])
 
-            python_lbfluid_set_visc(
+            python_lbfluid_set_viscosity(
     self._params["visc"],
      self._params["agrid"],
      self._params["tau"])
 
             if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
-                python_lbfluid_set_bulk_visc(
+                python_lbfluid_set_bulk_viscosity(
     self._params["bulk_visc"],
      self._params["agrid"],
      self._params["tau"])
@@ -142,8 +141,6 @@ IF LB_GPU or LB:
     self._params["ext_force_density"],
      self._params["agrid"],
      self._params["tau"])
-
-            python_lbfluid_set_couple_flag(self._params["couple"])
 
             if "gamma_odd" in self._params:
                 python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
@@ -166,12 +163,12 @@ IF LB_GPU or LB:
 
             self._params["tau"] = lb_lbfluid_get_tau()
 
-            if python_lbfluid_get_visc(self._params["visc"], self._params["agrid"], self._params["tau"]):
-                raise Exception("lb_lbfluid_set_visc error")
+            if python_lbfluid_get_viscosity(self._params["visc"], self._params["agrid"], self._params["tau"]):
+                raise Exception("lb_lbfluid_set_viscosity error")
 
             if not self._params["bulk_visc"] == default_params["bulk_visc"]:
-                if python_lbfluid_get_bulk_visc(self._params["bulk_visc"], self._params["agrid"], self._params["tau"]):
-                    raise Exception("lb_lbfluid_set_bulk_visc error")
+                if python_lbfluid_get_bulk_viscosity(self._params["bulk_visc"], self._params["agrid"], self._params["tau"]):
+                    raise Exception("lb_lbfluid_set_bulk_viscosity error")
 
             if python_lbfluid_get_agrid(self._params["agrid"]):
                 raise Exception("lb_lbfluid_set_agrid error")
@@ -179,10 +176,6 @@ IF LB_GPU or LB:
             if not self._params["ext_force_density"] == default_params["ext_force_density"]:
                 if python_lbfluid_get_ext_force_density(self._params["ext_force_density"], self._params["agrid"], self._params["tau"]):
                     raise Exception("lb_lbfluid_set_ext_force_density error")
-
-            if not self._params["couple"] == default_params["couple"]:
-                if python_lbfluid_get_couple_flag(self._params["couple"]):
-                    raise Exception("lb_lbfluid_get_couple_flag error")
 
             return self._params
 
@@ -337,7 +330,7 @@ IF LB or LB_GPU:
         property density:
             def __get__(self):
                 cdef double double_return
-                double_return = lb_lbnode_get_rho(self.node)
+                double_return = lb_lbnode_get_density(self.node)
                 return array_locked(double_return)
 
             def __set__(self, value):

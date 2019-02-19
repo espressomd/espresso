@@ -31,6 +31,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include <cinttypes>
 #include <fstream>
+#include <profiler/profiler.hpp>
 
 #ifdef LB
 
@@ -64,9 +65,7 @@ static void lb_check_halo_regions(const LB_Fluid &lbfluid);
 #endif // ADDITIONAL_CHECKS
 
 /** Counter for the RNG */
-namespace {
 Utils::Counter<uint64_t> rng_counter_fluid;
-} // namespace
 
 /** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = {
@@ -174,7 +173,7 @@ void lb_init() {
   /* initialize derived parameters */
   lb_reinit_parameters();
 
-  /* setup the initial particle velocity distribution */
+  /* setup the initial populations */
   lb_reinit_fluid();
 
   LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
@@ -914,6 +913,7 @@ inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
 
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
   for (auto it = LBBoundaries::lbboundaries.begin();
@@ -936,7 +936,6 @@ inline void lb_collide_stream() {
 
   const r123::Philox4x64::ctr_type c{
       {rng_counter_fluid.value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
-
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
@@ -982,8 +981,6 @@ inline void lb_collide_stream() {
   /* boundary conditions for links */
   lb_bounce_back(lbfluid_post);
 #endif // LB_BOUNDARIES
-
-  rng_counter_fluid.increment();
 
   /* swap the pointers for old and new population fields */
   std::swap(lbfluid, lbfluid_post);

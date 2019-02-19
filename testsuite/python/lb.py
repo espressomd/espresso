@@ -42,11 +42,11 @@ class TestLB(object):
     system.seed = range(n_nodes)
     np.random.seed = 1
     params = {'int_steps': 15,
-              'int_times': 30,
+              'int_times': 20,
               'time_step': 0.01,
               'tau': 0.01,
               'agrid': 0.5,
-              'box_l': 9.0,
+              'box_l': 6.0,
               'dens': 0.85,
               'viscosity': 3.0,
               'friction': 2.0,
@@ -68,7 +68,7 @@ class TestLB(object):
     def test_mass_momentum_thermostat(self):
         self.system.actors.clear()
         self.system.part.clear()
-        self.n_col_part = 1000
+        self.n_col_part = 100
         self.system.part.add(pos=np.random.random(
             (self.n_col_part, 3)) * self.params["box_l"])
         if espressomd.has_features("MASS"):

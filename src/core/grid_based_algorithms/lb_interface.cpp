@@ -32,6 +32,19 @@ void lb_lbfluid_update() {
   }
 }
 
+void lb_lbfluid_propagate() {
+  lb_lbfluid_update();
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    rng_counter_fluid_gpu.increment();
+#endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    rng_counter_fluid.increment();
+#endif
+  }
+}
+
 void lb_lbfluid_on_integration_start() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -101,14 +114,6 @@ void lb_lbfluid_init() {
 #endif
   }
 }
-
-#ifdef LB
-int transfer_momentum = 0;
-#endif
-
-#ifdef LB_GPU
-int transfer_momentum_gpu = 0;
-#endif
 
 uint64_t lb_lbfluid_get_rng_state() {
   if (lattice_switch & LATTICE_LB) {
@@ -208,7 +213,7 @@ void lb_lbfluid_set_rng_state(uint64_t counter) {
   }
 }
 
-void lb_lbfluid_set_rho(double p_dens) {
+void lb_lbfluid_set_density(double p_dens) {
   if (p_dens <= 0)
     throw std::invalid_argument("Density has to be > 0.");
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -224,7 +229,7 @@ void lb_lbfluid_set_rho(double p_dens) {
   }
 }
 
-double lb_lbfluid_get_rho() {
+double lb_lbfluid_get_density() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return static_cast<double>(lbpar_gpu.rho);
@@ -242,7 +247,7 @@ double lb_lbfluid_get_rho() {
   }
 }
 
-void lb_lbfluid_set_visc(double p_visc) {
+void lb_lbfluid_set_viscosity(double p_visc) {
   if (p_visc <= 0)
     throw std::invalid_argument("Viscosity has to be >0.");
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -258,7 +263,7 @@ void lb_lbfluid_set_visc(double p_visc) {
   }
 }
 
-double lb_lbfluid_get_visc() {
+double lb_lbfluid_get_viscosity() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return static_cast<double>(lbpar_gpu.viscosity);
@@ -276,7 +281,7 @@ double lb_lbfluid_get_visc() {
   }
 }
 
-void lb_lbfluid_set_bulk_visc(double p_bulk_visc) {
+void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc) {
   if (p_bulk_visc <= 0)
     throw std::invalid_argument("Bulk viscosity has to be >0.");
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -294,7 +299,7 @@ void lb_lbfluid_set_bulk_visc(double p_bulk_visc) {
   }
 }
 
-double lb_lbfluid_get_bulk_visc() {
+double lb_lbfluid_get_bulk_viscosity() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.bulk_viscosity;
@@ -377,39 +382,6 @@ double lb_lbfluid_get_gamma_even() {
 #endif // LB
   } else {
     throw std::runtime_error("LB not activated.");
-  }
-  return {};
-}
-
-void lb_lbfluid_set_couple_flag(int couple_flag) {
-  if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    if (couple_flag != LB_COUPLE_TWO_POINT &&
-        couple_flag != LB_COUPLE_THREE_POINT)
-      throw std::invalid_argument("Invalid couple flag.");
-    lbpar_gpu.lb_couple_switch = couple_flag;
-#endif // LB_GPU
-  } else {
-#ifdef LB
-    /* Only the two point nearest neighbor coupling is present in the case of
-       the cpu, so just throw an error if something else is tried */
-    if (couple_flag != LB_COUPLE_TWO_POINT)
-      throw std::invalid_argument("Invalid couple flag.");
-#endif // LB
-  }
-}
-
-int lb_lbfluid_get_couple_flag() {
-  if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    return lbpar_gpu.lb_couple_switch;
-#endif
-  } else if (lattice_switch & LATTICE_LB) {
-#ifdef LB
-    return LB_COUPLE_TWO_POINT;
-#endif
-  } else {
-    return LB_COUPLE_NULL;
   }
   return {};
 }
@@ -1014,7 +986,7 @@ bool lb_lbnode_is_index_valid(const Vector3i &ind) {
   return false;
 }
 
-double lb_lbnode_get_rho(const Vector3i &ind) {
+double lb_lbnode_get_density(const Vector3i &ind) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
@@ -1032,15 +1004,13 @@ double lb_lbnode_get_rho(const Vector3i &ind) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
     double rho;
     double j[3];
     double pi[6];
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    auto ind_shifted = ind;
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1076,12 +1046,12 @@ const Vector3d lb_lbnode_get_u(const Vector3i &ind) {
 #ifdef LB
     Lattice::index_t index;
     int node;
-    Vector3i grid, ind_shifted = ind;
+    auto ind_shifted = ind;
     double rho;
     Vector3d j;
     Vector<6, double> pi;
 
-    node = lblattice.map_lattice_to_node(ind_shifted.data(), grid.data());
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1136,15 +1106,13 @@ const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
     double rho;
     double j[3];
     Vector<6, double> pi{};
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    auto ind_shifted = ind;
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1170,12 +1138,10 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
+    auto ind_shifted = ind;
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     int p_boundary;
@@ -1205,12 +1171,10 @@ const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
+    auto ind_shifted = ind;
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     Vector<19, double> p_pop;
@@ -1236,15 +1200,13 @@ void lb_lbnode_set_rho(const Vector3i &ind, double p_rho) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
     double rho;
     Vector3d j;
     Vector<6, double> pi;
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    auto ind_shifted = ind;
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1273,15 +1235,13 @@ void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u) {
   } else {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
     double rho;
     Vector3d j;
     Vector<6, double> pi;
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    auto ind_shifted = ind;
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1309,12 +1269,10 @@ void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &p_pop) {
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Lattice::index_t index;
-    int node, grid[3], ind_shifted[3];
+    int node;
 
-    ind_shifted[0] = ind[0];
-    ind_shifted[1] = ind[1];
-    ind_shifted[2] = ind[2];
-    node = lblattice.map_lattice_to_node(ind_shifted, grid);
+    auto ind_shifted = ind;
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);

@@ -66,8 +66,6 @@ LB_parameters_gpu lbpar_gpu = {
     0.0,
     // is_TRT
     false,
-    // lb_couple_switch
-    LB_COUPLE_TWO_POINT,
     // bulk_viscosity
     -1.0,
     // agrid
@@ -96,8 +94,6 @@ LB_parameters_gpu lbpar_gpu = {
     0,
     // ext_force
     {0.0, 0.0, 0.0},
-    // your_seed
-    12345,
     // reinit
     0,
     // Thermal energy
@@ -147,9 +143,6 @@ void lb_realloc_particles_gpu() {
 
   lbpar_gpu.number_of_particles = n_part;
   LB_TRACE(printf("#particles realloc\t %u \n", lbpar_gpu.number_of_particles));
-  lbpar_gpu.your_seed = (unsigned int)std::random_device{}();
-
-  LB_TRACE(fprintf(stderr, "test your_seed %u \n", lbpar_gpu.your_seed));
 
   lb_realloc_particles_GPU_leftovers(&lbpar_gpu);
 }

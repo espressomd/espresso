@@ -1,5 +1,6 @@
 #include <Random123/philox.h>
 #include <boost/mpi.hpp>
+#include <profiler/profiler.hpp>
 
 #include "cells.hpp"
 #include "communication.hpp"
@@ -18,17 +19,19 @@
 
 LB_Particle_Coupling lb_particle_coupling;
 
-void mpi_set_lb_coupling_counter_slave(int high, int low) {
-  lb_particle_coupling.rng_counter_coupling =
-      Utils::Counter<uint64_t>(Utils::u32_to_u64(static_cast<uint32_t>(high),
-                                                 static_cast<uint32_t>(low)));
-}
-
 void mpi_bcast_lb_particle_coupling_slave(int, int) {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
-#if defined(LB) || defined(LB_GPU)
+void lb_lbcoupling_activate() {
+  lb_particle_coupling.couple_to_md = true;
+  mpi_bcast_lb_particle_coupling_slave(0, 0);
+}
+
+void lb_lbcoupling_deactivate() {
+  lb_particle_coupling.couple_to_md = false;
+  mpi_bcast_lb_particle_coupling_slave(0, 0);
+}
 
 void lb_lbcoupling_set_friction(double friction) {
   lb_particle_coupling.friction = friction;
@@ -67,6 +70,8 @@ void lb_lbcoupling_set_rng_state(uint64_t counter) {
 #endif
   }
 }
+
+#if defined(LB) || defined(LB_GPU)
 
 namespace {
 /**
@@ -158,22 +163,22 @@ void add_swimmer_force(Particle &p) {
 } // namespace
 
 void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    if (transfer_momentum_gpu && this_node == 0)
+    if (lb_particle_coupling.couple_to_md && this_node == 0)
       lb_calc_particle_lattice_ia_gpu(couple_virtual,
                                       lb_lbcoupling_get_friction());
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    if (transfer_momentum) {
+    if (lb_particle_coupling.couple_to_md) {
       using rng_type = r123::Philox4x64;
       using ctr_type = rng_type::ctr_type;
       using key_type = rng_type::key_type;
 
       ctr_type c{{lb_particle_coupling.rng_counter_coupling.value(),
                   static_cast<uint64_t>(RNGSalt::PARTICLES)}};
-      lb_particle_coupling.rng_counter_coupling.increment();
 
       /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
        * The factor 12 comes from the fact that we use random numbers
@@ -184,14 +189,18 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
           sqrt(12. * 2. * lb_lbcoupling_get_friction() * lb_lbfluid_get_kT() /
                time_step);
       auto f_random = [&c](int id) -> Vector3d {
-        key_type k{{static_cast<uint32_t>(id)}};
+        if (lb_lbfluid_get_kT() > 0.0) {
+          key_type k{{static_cast<uint32_t>(id)}};
 
-        auto const noise = rng_type{}(c, k);
+          auto const noise = rng_type{}(c, k);
 
-        using Utils::uniform;
-        return Vector3d{uniform(noise[0]), uniform(noise[1]),
-                        uniform(noise[2])} -
-               Vector3d::broadcast(0.5);
+          using Utils::uniform;
+          return Vector3d{uniform(noise[0]), uniform(noise[1]),
+                          uniform(noise[2])} -
+                 Vector3d::broadcast(0.5);
+        } else {
+          return Vector3d{};
+        }
       };
 
       /* local cells */
@@ -226,4 +235,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
   }
 }
 
+void lb_lbcoupling_propagate() {
+  lb_particle_coupling.rng_counter_coupling.increment();
+}
 #endif

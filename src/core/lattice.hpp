@@ -100,13 +100,12 @@ public:
    *
    *  This function determines the processor responsible for
    *  the specified lattice site. The coordinates of the site are
-   *  taken as global coordinates and are returned as local coordinates.
+   *  taken as global coordinates.
    *
-   * \param  ind     global coordinates of the lattice site (Input)
-   * \param  grid     local coordinates of the lattice site (Output)
+   * \param  ind     global coordinates of the lattice site
    * \return         index of the node for the lattice site
    */
-  int map_lattice_to_node(int *ind, int *grid) const;
+  int map_lattice_to_node(Vector3i &ind) const;
 
   /********************** static Functions **********************/
 

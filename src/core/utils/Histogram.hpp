@@ -239,16 +239,17 @@ public:
 
 private:
   void do_normalize() override {
-    std::vector<std::size_t> unravelled_index(4);
+    std::array<std::size_t, 4> unravelled_index;
     int r_bin;
     double min_r, r_bin_size, phi_bin_size, z_bin_size, bin_volume;
-    // Ugly vector cast due to "unravel_index" function.
-    std::array<size_t, Dims> len_bins_u = get_n_bins();
-    std::vector<std::size_t> len_bins(len_bins_u.begin(), len_bins_u.end());
-    len_bins.push_back(m_n_dims_data);
+    auto const dims = get_n_bins();
+    std::array<std::size_t, 4> extended_dims;
+    std::copy(dims.begin(), dims.end(), extended_dims.begin());
+    extended_dims[3] = m_n_dims_data;
     for (size_t ind = 0; ind < m_hist.size(); ind += m_n_dims_data) {
       // Get the unraveled indices and calculate the bin volume.
-      unravelled_index = ::Utils::unravel_index(len_bins, ind);
+      ::Utils::unravel_index(extended_dims.begin(), extended_dims.end(),
+                             unravelled_index.begin(), ind);
       r_bin = unravelled_index[0];
       min_r = get_limits()[0].first;
       r_bin_size = get_bin_sizes()[0];

@@ -75,8 +75,8 @@ static LB_rho_v_pi_gpu *print_rho_v_pi = nullptr;
 
 /** @name structs for velocity densities */
 /*@{*/
-static LB_nodes_gpu nodes_a = {nullptr, nullptr, nullptr};
-static LB_nodes_gpu nodes_b = {nullptr, nullptr, nullptr};
+static LB_nodes_gpu nodes_a = {nullptr, nullptr};
+static LB_nodes_gpu nodes_b = {nullptr, nullptr};
 ;
 /** struct for node force density*/
 
@@ -129,7 +129,7 @@ static const float c_sound_sq = 1.0f / 3.0f;
 
 static constexpr float sqrt12 = 3.4641016151377544f;
 static Utils::Counter<uint64_t> rng_counter_coupling_gpu;
-static Utils::Counter<uint64_t> rng_counter_fluid_gpu;
+Utils::Counter<uint64_t> rng_counter_fluid_gpu;
 __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
                                         uint64_t philox_counter) {
   // Split the 64 bit counter into two 32 bit ints.
@@ -137,7 +137,7 @@ __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
   uint32_t philox_counter_low = static_cast<uint32_t>(philox_counter);
   uint4 rnd_ints =
       curand_Philox4x32_10(make_uint4(index, philox_counter_hi, 0, mode),
-                           make_uint2(philox_counter_low, para->your_seed));
+                           make_uint2(philox_counter_low, 0));
   float4 rnd_floats;
   rnd_floats.w = rnd_ints.w * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   rnd_floats.x = rnd_ints.x * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
@@ -3043,19 +3043,11 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
     dim3 dim_grid_particles =
         make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
-    if (lbpar_gpu.lb_couple_switch & LB_COUPLE_TWO_POINT) {
-      KERNELCALL(calc_fluid_particle_ia, dim_grid_particles,
-                 threads_per_block_particles, *current_nodes,
-                 gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 node_f, device_rho_v, couple_virtual,
-                 rng_counter_coupling_gpu.value(), friction);
-    } else { /** only other option is the three point coupling scheme */
-      KERNELCALL(calc_fluid_particle_ia_three_point_couple, dim_grid_particles,
-                 threads_per_block_particles, *current_nodes,
-                 gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 node_f, device_rho_v, rng_counter_coupling_gpu.value(),
-                 friction);
-    }
+    KERNELCALL(calc_fluid_particle_ia, dim_grid_particles,
+               threads_per_block_particles, *current_nodes,
+               gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
+               node_f, device_rho_v, couple_virtual,
+               rng_counter_coupling_gpu.value(), friction);
     rng_counter_coupling_gpu.increment();
   }
 }
@@ -3409,7 +3401,6 @@ void lb_integrate_GPU() {
                lb_boundary_velocity, lb_boundary_force);
   }
 #endif
-  rng_counter_fluid_gpu.increment();
 }
 
 void lb_gpu_get_boundary_forces(double *forces) {

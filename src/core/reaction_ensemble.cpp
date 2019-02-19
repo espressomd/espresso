@@ -1107,9 +1107,11 @@ void WangLandauReactionEnsemble::invalidate_bins() {
   int empty_bins_in_memory = 0;
   for (int flattened_index = 0; flattened_index < wang_landau_potential.size();
        flattened_index++) {
-    // unravel index
-    auto const unraveled_index = Utils::unravel_index(
-        nr_subindices_of_collective_variable, flattened_index);
+    std::vector<int> unraveled_index(
+        nr_subindices_of_collective_variable.size());
+    Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                         nr_subindices_of_collective_variable.end(),
+                         unraveled_index.begin(), flattened_index);
     // use unraveled index
     int EnergyCollectiveVariable_index = 0;
     if (collective_variables.size() > 1)
@@ -1432,8 +1434,11 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
                // multidimensional Wang-Landau potential are printed out, since
                // the range [E_min(nbar), E_max(nbar)] for each nbar may be a
                // different one
-        auto const unraveled_index = Utils::unravel_index(
-            nr_subindices_of_collective_variable, flattened_index);
+        std::vector<int> unraveled_index(
+            nr_subindices_of_collective_variable.size());
+        Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                             nr_subindices_of_collective_variable.end(),
+                             unraveled_index.begin(), flattened_index);
         // use unraveled index
         for (int i = 0; i < collective_variables.size(); i++) {
           fprintf(pFile, "%f ",
@@ -1496,8 +1501,11 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
     for (int flattened_index = 0;
          flattened_index < wang_landau_potential.size(); flattened_index++) {
       // unravel index
-      auto const unraveled_index = Utils::unravel_index(
-          nr_subindices_of_collective_variable, flattened_index);
+      std::vector<int> unraveled_index(
+          nr_subindices_of_collective_variable.size());
+      Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                           nr_subindices_of_collective_variable.end(),
+                           unraveled_index.begin(), flattened_index);
       // use unraveled index
       for (int i = 0; i < collective_variables.size(); i++) {
         fprintf(pFile, "%f ",
@@ -1521,10 +1529,11 @@ int WangLandauReactionEnsemble::
     get_flattened_index_wang_landau_without_energy_collective_variable(
         int flattened_index_with_EnergyCollectiveVariable,
         int CV_index_energy_observable) {
-  // unravel index
-  auto const unraveled_index =
-      Utils::unravel_index(nr_subindices_of_collective_variable,
-                           flattened_index_with_EnergyCollectiveVariable);
+  std::vector<int> unraveled_index(nr_subindices_of_collective_variable.size());
+  Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                       nr_subindices_of_collective_variable.end(),
+                       unraveled_index.begin(),
+                       flattened_index_with_EnergyCollectiveVariable);
   // use unraveled index
   const int nr_collective_variables =
       collective_variables.size() -

@@ -3572,7 +3572,6 @@ void ek_print_lbpar() {
   printf("    float ext_force_density[3] = {%f, %f, %f};\n",
          lbpar_gpu.ext_force_density[0], lbpar_gpu.ext_force_density[1],
          lbpar_gpu.ext_force_density[2]);
-  printf("    unsigned int your_seed = %d;\n", lbpar_gpu.your_seed);
   printf("    unsigned int reinit = %d;\n", lbpar_gpu.reinit);
 
   printf("}\n");
