@@ -79,8 +79,6 @@ bool PdbParser::parse_pdb_file(const string &filename) {
 bool PdbParser::parse_itp_file(const string &filename) {
   ifstream file(filename.c_str());
   string tmp, buf;
-  const decltype(buf)::value_type EOF_value =
-      std::char_traits<decltype(buf)::value_type>::eof();
   itp_atom atom;
   std::size_t pos;
 
@@ -118,7 +116,7 @@ bool PdbParser::parse_itp_file(const string &filename) {
             buf = char(file.get());
 
             /* Ignore leading whitespace, check for end of file */
-            if (std::isspace(buf[0]) || (buf[0] == EOF_value)) {
+            if (std::isspace(buf[0]) || file.eof()) {
               continue;
             }
             /* End of atoms section */
@@ -158,7 +156,7 @@ bool PdbParser::parse_itp_file(const string &filename) {
             }
 
             /* Ignore leading whitespace, check for end of file */
-            if (std::isspace(buf[0]) || (buf[0] == EOF_value)) {
+            if (std::isspace(buf[0]) || file.eof()) {
               continue;
             }
 
