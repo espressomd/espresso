@@ -275,9 +275,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-    //"Propagate" counter
-    if (n_steps > 0 && thermo_switch & THERMO_LANGEVIN)
+    //Propagate langevin philox rng counter
+    if (n_steps > 0 && (thermo_switch & THERMO_LANGEVIN)) {
         langevin_rng_counter_increment();
+    }
 
     force_calc();
 
@@ -374,6 +375,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    //Propagate langevin philox rng counter
+    if (n_steps > 0 && (thermo_switch & THERMO_LANGEVIN)) {
+        langevin_rng_counter_increment();
+    }
+
     force_calc();
 
 #ifdef VIRTUAL_SITES

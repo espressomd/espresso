@@ -175,7 +175,7 @@ inline Vector3d v_noise(int particle_id) {
                         uniform(noise[2])} -
                Vector3d::broadcast(0.5);
       };
-
+      
       return f_random(particle_id);
 }
 
@@ -249,6 +249,7 @@ inline void friction_thermo_langevin(Particle *p) {
 
   // Do the actual thermostatting
   p->f.f = langevin_pref1_temp * velocity + langevin_pref2_temp * v_noise(p->p.identity);
+  //p->f.f = langevin_pref1_temp * velocity + langevin_pref2_temp * Vector3d{ Thermostat::noise(), Thermostat::noise(), Thermostat::noise()};// v_noise(p->p.identity);
   //if (langevin_pref2_temp > 0.0) 
 
 
