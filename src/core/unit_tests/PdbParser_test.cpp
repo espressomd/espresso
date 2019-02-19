@@ -35,8 +35,8 @@ BOOST_AUTO_TEST_CASE(parser) {
   const std::string itp_filepath("PdbParser.itp");
   std::ofstream file;
   file.open(pdb_filepath);
-  file << "ATOM      1 O    LIG A   1       1.000   1.000   1.000  1.00\n";
-  file << "ATOM      2 C    LIG A   1       2.000  -0.500   1.000  1.00";
+  file << "ATOM      1 O1   LIG A   1       1.000   1.000   1.000  1.00\n";
+  file << "ATOM      2 C1   LIG A   1       2.000  -0.500   1.000  1.00";
   file.close();
   file.open(itp_filepath);
   file << "[ atomtypes ]\n";
