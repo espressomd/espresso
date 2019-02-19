@@ -19,26 +19,18 @@
 
 LB_Particle_Coupling lb_particle_coupling;
 
-void mpi_set_lb_coupling_counter_slave(int high, int low) {
-  lb_particle_coupling.rng_counter_coupling =
-      Utils::Counter<uint64_t>(Utils::u32_to_u64(static_cast<uint32_t>(high),
-                                                 static_cast<uint32_t>(low)));
-}
-
 void mpi_bcast_lb_particle_coupling_slave(int, int) {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
 void lb_lbcoupling_activate() {
   lb_particle_coupling.couple_to_md = true;
-  if (this_node == 0)
-    mpi_bcast_lb_particle_coupling();
+  mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
 
 void lb_lbcoupling_deactivate() {
   lb_particle_coupling.couple_to_md = false;
-  if (this_node == 0)
-    mpi_bcast_lb_particle_coupling();
+  mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
 
 void lb_lbcoupling_set_friction(double friction) {

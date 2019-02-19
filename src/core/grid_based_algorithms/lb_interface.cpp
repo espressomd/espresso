@@ -1239,7 +1239,7 @@ void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u) {
     double rho;
     Vector3d j;
     Vector<6, double> pi;
-    
+
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
