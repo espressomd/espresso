@@ -40,7 +40,6 @@ DENS = 1.0
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
-             'fric': 1.0,
              'tau': TIME_STEP}
 # System setup
 radius = 5.4
@@ -61,6 +60,7 @@ class Stokes(object):
         self.system.actors.clear()
         self.system.lbboundaries.clear()
         self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, friction=1.0)
 
         # Setup walls
         walls = [None] * 4

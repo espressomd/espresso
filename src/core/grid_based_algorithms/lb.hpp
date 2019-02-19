@@ -41,7 +41,8 @@ void mpi_set_lb_fluid_counter(int high, int low);
 #include "halo.hpp"
 #include "utils.hpp"
 
-#include <utils/Span.hpp>
+#include "utils/Counter.hpp"
+#include "utils/Span.hpp"
 
 /** \name Parameter fields for Lattice Boltzmann
  * The numbers are referenced in \ref mpi_bcast_lb_params
@@ -58,11 +59,6 @@ void mpi_set_lb_fluid_counter(int high, int low);
 #define LBPAR_EXTFORCE 5 /**< external force density acting on the fluid */
 #define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
 #define LBPAR_KT 7       /**< thermal energy */
-
-/** Note these are used for binary logic so should be powers of 2 */
-#define LB_COUPLE_NULL 1
-#define LB_COUPLE_TWO_POINT 2
-#define LB_COUPLE_THREE_POINT 4
 
 /*@}*/
 /** Some general remarks:
@@ -86,6 +82,7 @@ void mpi_set_lb_fluid_counter(int high, int low);
  *  velocity sub-lattice and the corresponding coefficients
  *  of the pseudo-equilibrium distribution
  */
+extern Utils::Counter<uint64_t> rng_counter_fluid;
 template <size_t N_vel = 19> struct LB_Model {
   /** number of velocities */
   static const constexpr int n_veloc = static_cast<int>(N_vel);
@@ -148,9 +145,6 @@ struct LB_Parameters {
    *  Note: Has to be larger than MD time step! */
   double tau;
 
-  /** friction coefficient for viscous coupling (LJ units) */
-  double friction;
-
   /** external force density applied to the fluid at each lattice site (LB
    * Units) */
   Vector3d ext_force_density;
@@ -189,6 +183,10 @@ extern Lattice lblattice;
 extern HaloCommunicator update_halo_comm;
 
 void lb_realloc_fluid();
+
+void lb_init();
+
+void lb_reinit_fluid();
 
 void lb_reinit_parameters();
 /** Pointer to the velocity populations of the fluid.
@@ -247,14 +245,6 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              const std::array<double, 3> &j,
                              const std::array<double, 6> &pi);
 
-/** Calculates the coupling of MD particles to the LB fluid.
- * This function  is called from \ref force_calc. The force is added
- * to the particle force and the corresponding momentum exchange is
- * applied to the fluid.
- * Note that this function changes the state of the fluid!
- */
-void calc_particle_lattice_ia();
-
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &p);
 #endif
@@ -299,26 +289,24 @@ inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
  *  @param[in]  index  Local lattice site
  *  @param[out] j      Local fluid speed
  */
-inline void lb_calc_local_j(Lattice::index_t index, double *j) {
+inline Vector3d lb_calc_local_j(Lattice::index_t index) {
   if (!(lattice_switch & LATTICE_LB)) {
     runtimeErrorMsg() << "Error in lb_calc_local_j in " << __FILE__ << __LINE__
                       << ": CPU LB not switched on.";
-    j[0] = j[1] = j[2] = 0;
-    return;
+    return {};
   }
-
-  j[0] = lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
-         lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
-         lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
-         lbfluid[14][index];
-  j[1] = lbfluid[3][index] - lbfluid[4][index] + lbfluid[7][index] -
-         lbfluid[8][index] - lbfluid[9][index] + lbfluid[10][index] +
-         lbfluid[15][index] - lbfluid[16][index] + lbfluid[17][index] -
-         lbfluid[18][index];
-  j[2] = lbfluid[5][index] - lbfluid[6][index] + lbfluid[11][index] -
-         lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
-         lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
-         lbfluid[18][index];
+  return {{lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
+               lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
+               lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
+               lbfluid[14][index],
+           lbfluid[3][index] - lbfluid[4][index] + lbfluid[7][index] -
+               lbfluid[8][index] - lbfluid[9][index] + lbfluid[10][index] +
+               lbfluid[15][index] - lbfluid[16][index] + lbfluid[17][index] -
+               lbfluid[18][index],
+           lbfluid[5][index] - lbfluid[6][index] + lbfluid[11][index] -
+               lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
+               lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
+               lbfluid[18][index]}};
 }
 
 /** Calculate the local fluid fields.
@@ -360,11 +348,25 @@ inline void lb_set_populations(Lattice::index_t index,
   }
 }
 
-uint64_t lb_coupling_rng_state_cpu();
-void lb_coupling_set_rng_state_cpu(uint64_t counter);
-uint64_t lb_fluid_rng_state_cpu();
-void lb_fluid_set_rng_state_cpu(uint64_t counter);
+uint64_t lb_fluid_get_rng_state();
+void lb_fluid_set_rng_state(uint64_t counter);
 void lb_prepare_communication();
 #endif
 
+#ifdef LB_BOUNDARIES
+/** Bounce back boundary conditions.
+ * The populations that have propagated into a boundary node
+ * are bounced back to the node they came from. This results
+ * in no slip boundary conditions.
+ *
+ * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
+ */
+void lb_bounce_back(LB_Fluid &lbfluid);
+
+#endif /* LB_BOUNDARIES */
+
+void lb_calc_fluid_mass(double *result);
+void lb_calc_fluid_momentum(double *result);
+void lb_calc_fluid_temp(double *result);
+void lb_collect_boundary_forces(double *result);
 #endif /* _LB_H */

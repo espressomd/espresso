@@ -38,11 +38,16 @@ class Integrate(ut.TestCase):
         # Newton's 1st law with time step change on the way
         p = system.part.add(pos=(0, 0, 0), v=(1, 2, 3))
         system.time_step = 0.01
+        system.time = 12.
         np.testing.assert_allclose(np.copy(p.v), (1, 2, 3))
         for i in range(10):
             np.testing.assert_allclose(np.copy(p.pos), np.copy(
                 i * system.time_step * p.v), atol=1E-12)
             system.integrator.run(1)
+
+        # Check that the time has passed
+        np.testing.assert_allclose(system.time, 12. + 10 * system.time_step)
+
         v = p.v
         pos1 = p.pos
         system.time_step = 0.02

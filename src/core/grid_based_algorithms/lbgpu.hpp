@@ -26,6 +26,7 @@
 #define LB_GPU_H
 
 #include "config.hpp"
+#include "utils/Counter.hpp"
 
 #ifdef LB_GPU
 #include "utils.hpp"
@@ -35,11 +36,6 @@
  * explicitly. This saves a lot of multiplications with 1's and 0's
  * thus making the code more efficient. */
 #define LBQ 19
-
-/** Note these are used for binary logic so should be powers of 2 */
-#define LB_COUPLE_NULL 1
-#define LB_COUPLE_TWO_POINT 2
-#define LB_COUPLE_THREE_POINT 4
 
 /** \name Parameter fields for lattice Boltzmann
  *  The numbers are referenced in \ref mpi_bcast_lb_params
@@ -95,16 +91,6 @@ struct LB_parameters_gpu {
    *  slip at bounce-back boundaries
    */
   bool is_TRT;
-  /** friction coefficient for viscous coupling (LJ units)
-   *  Note that the friction coefficient is quite high and may
-   *  lead to numerical artifacts with low order integrators
-   */
-  float friction;
-  /** amplitude of the fluctuations in the viscous coupling
-   *  Switch indicating what type of coupling is used, can either
-   *  use nearest neighbors or next nearest neighbors.
-   */
-  int lb_couple_switch;
 
   float bulk_viscosity;
 
@@ -134,8 +120,6 @@ struct LB_parameters_gpu {
   int external_force_density;
 
   float ext_force_density[3];
-
-  unsigned int your_seed;
 
   unsigned int reinit;
   // Thermal energy
@@ -255,7 +239,8 @@ void lb_init_extern_nodeforcedensities_GPU(
     LB_extern_nodeforcedensity_gpu *host_extern_node_force_densities,
     LB_parameters_gpu *lbpar_gpu);
 
-void lb_calc_particle_lattice_ia_gpu(bool couple_virtual);
+void lb_set_agrid_gpu(double agrid);
+void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction);
 
 void lb_calc_fluid_mass_GPU(double *mass);
 void lb_calc_fluid_momentum_GPU(double *host_mom);
@@ -288,15 +273,14 @@ void lb_lbfluid_particles_add_momentum(float velocity[3]);
 void lb_lbfluid_set_population(const Vector3i &, float[LBQ]);
 void lb_lbfluid_get_population(const Vector3i &, float[LBQ]);
 
-void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
-                                                       double *velocities,
-                                                       int length);
-uint64_t lb_fluid_rng_state_gpu();
+void lb_get_interpolated_velocity_gpu(double const *positions,
+                                      double *velocities, int length);
+uint64_t lb_fluid_get_rng_state_gpu();
 void lb_fluid_set_rng_state_gpu(uint64_t counter);
-uint64_t lb_coupling_rng_state_gpu();
+uint64_t lb_coupling_get_rng_state_gpu();
 void lb_coupling_set_rng_state_gpu(uint64_t counter);
 /*@{*/
-
+extern Utils::Counter<uint64_t> rng_counter_fluid_gpu;
 #endif /* LB_GPU */
 
 #endif /* LB_GPU_H */

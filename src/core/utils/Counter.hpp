@@ -7,6 +7,15 @@ private:
   T m_val;
   T m_initial;
 
+private:
+  friend class boost::serialization::access;
+
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &m_val;
+    ar &m_initial;
+  }
+
 public:
   explicit Counter(T initial_value = T(0)) noexcept
       : m_val(initial_value), m_initial(initial_value) {}

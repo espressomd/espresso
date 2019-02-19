@@ -42,8 +42,11 @@ class LBGPUViscous(ut.TestCase):
         v_part = np.array([1, 2, 3])
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf = espressomd.lb.LBFluidGPU(
-            visc=self.viscosity, dens=self.dens, agrid=self.agrid, tau=self.system.time_step, fric=self.friction)
+            visc=self.viscosity, dens=self.dens, agrid=self.agrid, tau=self.system.time_step)
         self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            friction=self.friction)
         self.system.part.add(
             pos=[0.5 * self.agrid] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid

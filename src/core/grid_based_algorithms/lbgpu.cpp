@@ -66,10 +66,6 @@ LB_parameters_gpu lbpar_gpu = {
     0.0,
     // is_TRT
     false,
-    // friction
-    0.0,
-    // lb_couple_switch
-    LB_COUPLE_TWO_POINT,
     // bulk_viscosity
     -1.0,
     // agrid
@@ -98,8 +94,6 @@ LB_parameters_gpu lbpar_gpu = {
     0,
     // ext_force
     {0.0, 0.0, 0.0},
-    // your_seed
-    12345,
     // reinit
     0,
     // Thermal energy
@@ -149,9 +143,6 @@ void lb_realloc_particles_gpu() {
 
   lbpar_gpu.number_of_particles = n_part;
   LB_TRACE(printf("#particles realloc\t %u \n", lbpar_gpu.number_of_particles));
-  lbpar_gpu.your_seed = (unsigned int)std::random_device{}();
-
-  LB_TRACE(fprintf(stderr, "test your_seed %u \n", lbpar_gpu.your_seed));
 
   lb_realloc_particles_GPU_leftovers(&lbpar_gpu);
 }
@@ -363,6 +354,30 @@ void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
   momentum[0] = linear_momentum[0];
   momentum[1] = linear_momentum[1];
   momentum[2] = linear_momentum[2];
+}
+
+void lb_set_agrid_gpu(double agrid) {
+  lbpar_gpu.agrid = static_cast<float>(agrid);
+
+  lbpar_gpu.dim_x = static_cast<unsigned int>(rint(box_l[0] / agrid));
+  lbpar_gpu.dim_y = static_cast<unsigned int>(rint(box_l[1] / agrid));
+  lbpar_gpu.dim_z = static_cast<unsigned int>(rint(box_l[2] / agrid));
+  unsigned int tmp[3];
+  tmp[0] = lbpar_gpu.dim_x;
+  tmp[1] = lbpar_gpu.dim_y;
+  tmp[2] = lbpar_gpu.dim_z;
+  /* sanity checks */
+  for (int dir = 0; dir < 3; dir++) {
+    /* check if box_l is compatible with lattice spacing */
+    if (fabs(box_l[dir] - tmp[dir] * agrid) > ROUND_ERROR_PREC) {
+      runtimeErrorMsg() << "Lattice spacing p_agrid= " << agrid
+                        << " is incompatible with box_l[" << dir
+                        << "]=" << box_l[dir] << ", factor=" << tmp[dir]
+                        << " err= " << fabs(box_l[dir] - tmp[dir] * agrid);
+    }
+  }
+  lbpar_gpu.number_of_nodes =
+      lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
 }
 
 #endif /* LB_GPU */

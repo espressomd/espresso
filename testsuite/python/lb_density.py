@@ -34,7 +34,6 @@ TIME_STEP = 0.01
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
-             'fric': 2.0,
              'tau': TIME_STEP,
              'kT': KT,
              'seed': 23}
@@ -52,7 +51,7 @@ class LBMassCommon(object):
         self.system.set_random_state_PRNG()
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=3)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=3, friction=2.0)
 
     def test_mass_conservation(self):
         self.prepare()

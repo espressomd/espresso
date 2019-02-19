@@ -32,6 +32,19 @@ void lb_lbfluid_update() {
   }
 }
 
+void lb_lbfluid_propagate() {
+  lb_lbfluid_update();
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    rng_counter_fluid_gpu.increment();
+#endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    rng_counter_fluid.increment();
+#endif
+  }
+}
+
 void lb_lbfluid_on_integration_start() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -71,92 +84,45 @@ void lb_lbfluid_reinit_parameters() {
   }
 }
 
-/** (Re-)initialize the fluid according to the given value of rho. */
-void lb_reinit_fluid() {
-#ifdef LB
-  std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
-  /* default values for fields in lattice units */
-  Vector3d j{};
-  Vector<6, double> pi{};
+/** (Re-)initialize the fluid according to the value of rho. */
 
-  LB_TRACE(fprintf(stderr,
-                   "Initialising the fluid with equilibrium populations\n"););
-
-  for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
-       ++index) {
-    // calculate equilibrium distribution
-    lb_calc_n_from_rho_j_pi(index, lbpar.rho, j, pi);
-
-#ifdef LB_BOUNDARIES
-    lbfields[index].boundary = 0;
-#endif // LB_BOUNDARIES
-  }
-
-#ifdef LB_BOUNDARIES
-  LBBoundaries::lb_init_boundaries();
-#endif // LB_BOUNDARIES
+void lb_lbfluid_reinit_fluid() {
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    lb_reinit_fluid_gpu();
 #endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    lb_reinit_fluid();
+#endif
+  } else {
+    throw std::runtime_error("LB not activated.");
+  }
 }
 
 /** Perform a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.
  */
-void lb_init() {
-#ifdef LB
-  LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
-
-  if (lbpar.agrid <= 0.0) {
-    runtimeErrorMsg()
-        << "Lattice Boltzmann agrid not set when initializing fluid";
-  }
-
-  if (check_runtime_errors())
-    return;
-
-  Vector3d temp_agrid, temp_offset;
-  for (int i = 0; i < 3; i++) {
-    temp_agrid[i] = lbpar.agrid;
-    temp_offset[i] = 0.5;
-  }
-
-  /* initialize the local lattice domain */
-  lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
-
-  if (check_runtime_errors())
-    return;
-
-  /* allocate memory for data structures */
-  lb_realloc_fluid();
-
-  /* prepare the halo communication */
-  lb_prepare_communication();
-
-  /* initialize derived parameters */
-  lb_lbfluid_reinit_parameters();
-
-  /* setup the initial particle velocity distribution */
-  lb_reinit_fluid();
-
-  LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
+void lb_lbfluid_init() {
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    lb_init_gpu();
 #endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    lb_init();
+#endif
+  }
 }
 
-#ifdef LB
-int transfer_momentum = 0;
-#endif
-
-#ifdef LB_GPU
-int transfer_momentum_gpu = 0;
-#endif
-
-uint64_t lb_fluid_rng_state() {
+uint64_t lb_lbfluid_get_rng_state() {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    return lb_fluid_rng_state_cpu();
+    return lb_fluid_get_rng_state();
 #endif
   } else if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    return lb_fluid_rng_state_gpu();
+    return lb_fluid_get_rng_state_gpu();
 #endif
   }
   return {};
@@ -235,10 +201,10 @@ int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v) {
   return 0;
 }
 
-void lb_fluid_set_rng_state(uint64_t counter) {
+void lb_lbfluid_set_rng_state(uint64_t counter) {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    lb_fluid_set_rng_state_cpu(counter);
+    lb_fluid_set_rng_state(counter);
 #endif
   } else if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -281,7 +247,7 @@ double lb_lbfluid_get_density() {
   }
 }
 
-void lb_lbfluid_set_visc(double p_visc) {
+void lb_lbfluid_set_viscosity(double p_visc) {
   if (p_visc <= 0)
     throw std::invalid_argument("Viscosity has to be >0.");
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -297,7 +263,7 @@ void lb_lbfluid_set_visc(double p_visc) {
   }
 }
 
-double lb_lbfluid_get_visc() {
+double lb_lbfluid_get_viscosity() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return static_cast<double>(lbpar_gpu.viscosity);
@@ -315,7 +281,7 @@ double lb_lbfluid_get_visc() {
   }
 }
 
-void lb_lbfluid_set_bulk_visc(double p_bulk_visc) {
+void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc) {
   if (p_bulk_visc <= 0)
     throw std::invalid_argument("Bulk viscosity has to be >0.");
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -333,7 +299,7 @@ void lb_lbfluid_set_bulk_visc(double p_bulk_visc) {
   }
 }
 
-double lb_lbfluid_get_bulk_visc() {
+double lb_lbfluid_get_bulk_viscosity() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.bulk_viscosity;
@@ -409,119 +375,28 @@ double lb_lbfluid_get_gamma_even() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.gamma_even;
-#else
-    return {};
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     return lbpar.gamma_even;
-#else
-    return {};
 #endif // LB
   } else {
     throw std::runtime_error("LB not activated.");
   }
+  return {};
 }
 
-void lb_lbfluid_set_friction(double p_friction) {
-  if (p_friction <= 0)
-    throw std::invalid_argument("friction has to be > 0.");
-  if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    lbpar_gpu.friction = static_cast<float>(p_friction);
-    lb_lbfluid_on_lb_params_change(LBPAR_FRICTION);
-#endif // LB_GPU
-  } else {
-#ifdef LB
-    lbpar.friction = p_friction;
-    mpi_bcast_lb_params(LBPAR_FRICTION);
-#endif // LB
-  }
-}
-
-double lb_lbfluid_get_friction() {
-  if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    return lbpar_gpu.friction;
-#else
-    return {};
-#endif // LB_GPU
-  } else {
-#ifdef LB
-    return lbpar.friction;
-#else
-    return {};
-#endif // LB
-  }
-}
-
-void lb_lbfluid_set_couple_flag(int couple_flag) {
-  if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    if (couple_flag != LB_COUPLE_TWO_POINT &&
-        couple_flag != LB_COUPLE_THREE_POINT)
-      throw std::invalid_argument("Invalid couple flag.");
-    lbpar_gpu.lb_couple_switch = couple_flag;
-#endif // LB_GPU
-  } else {
-#ifdef LB
-    /* Only the two point nearest neighbor coupling is present in the case of
-       the cpu, so just throw an error if something else is tried */
-    if (couple_flag != LB_COUPLE_TWO_POINT)
-      throw std::invalid_argument("Invalid couple flag.");
-#endif // LB
-  }
-}
-
-int lb_lbfluid_get_couple_flag() {
-  if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
-    return lbpar_gpu.lb_couple_switch;
-#else
-    return {};
-#endif
-  } else if (lattice_switch & LATTICE_LB) {
-#ifdef LB
-    return LB_COUPLE_TWO_POINT;
-#else
-    return {};
-#endif
-  } else {
-    return LB_COUPLE_NULL;
-  }
-}
-
-void lb_lbfluid_set_agrid(double p_agrid) {
-  if (p_agrid <= 0)
+void lb_lbfluid_set_agrid(double agrid) {
+  if (agrid <= 0)
     throw std::invalid_argument("agrid has to be > 0.");
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    lbpar_gpu.agrid = static_cast<float>(p_agrid);
-
-    lbpar_gpu.dim_x = static_cast<unsigned int>(rint(box_l[0] / p_agrid));
-    lbpar_gpu.dim_y = static_cast<unsigned int>(rint(box_l[1] / p_agrid));
-    lbpar_gpu.dim_z = static_cast<unsigned int>(rint(box_l[2] / p_agrid));
-    unsigned int tmp[3];
-    tmp[0] = lbpar_gpu.dim_x;
-    tmp[1] = lbpar_gpu.dim_y;
-    tmp[2] = lbpar_gpu.dim_z;
-    /* sanity checks */
-    for (int dir = 0; dir < 3; dir++) {
-      /* check if box_l is compatible with lattice spacing */
-      if (fabs(box_l[dir] - tmp[dir] * p_agrid) > ROUND_ERROR_PREC) {
-        runtimeErrorMsg() << "Lattice spacing p_agrid= " << p_agrid
-                          << " is incompatible with box_l[" << dir
-                          << "]=" << box_l[dir] << ", factor=" << tmp[dir]
-                          << " err= " << fabs(box_l[dir] - tmp[dir] * p_agrid);
-      }
-    }
-    lbpar_gpu.number_of_nodes =
-        lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
+    lb_set_agrid_gpu(agrid);
     lb_lbfluid_on_lb_params_change(LBPAR_AGRID);
 #endif // LB_GPU
   } else {
 #ifdef LB
-    lbpar.agrid = p_agrid;
+    lbpar.agrid = agrid;
     mpi_bcast_lb_params(LBPAR_AGRID);
 #endif // LB
   }
@@ -531,18 +406,15 @@ double lb_lbfluid_get_agrid() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.agrid;
-#else
-    return {};
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     return lbpar.agrid;
-#else
-    return {};
 #endif // LB
   } else {
     throw std::runtime_error("LB not activated.");
   }
+  return {};
 }
 
 void lb_lbfluid_set_ext_force_density(int component,
@@ -578,14 +450,10 @@ const Vector3d lb_lbfluid_get_ext_force_density() {
 #ifdef LB_GPU
     return {{lbpar_gpu.ext_force_density[0], lbpar_gpu.ext_force_density[1],
              lbpar_gpu.ext_force_density[2]}};
-#else
-    return {};
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     return lbpar.ext_force_density;
-#else
-    return {};
 #endif // LB
   }
   return {};
@@ -625,7 +493,7 @@ double lb_lbfluid_get_tau() {
   }
 }
 
-void lb_set_lattice_switch(int local_lattice_switch) {
+void lb_lbfluid_set_lattice_switch(int local_lattice_switch) {
   switch (local_lattice_switch) {
   case 0:
     lattice_switch = LATTICE_OFF;
@@ -1118,7 +986,7 @@ bool lb_lbnode_is_index_valid(const Vector3i &ind) {
   return false;
 }
 
-double lb_lbnode_get_rho(const Vector3i &ind) {
+double lb_lbnode_get_density(const Vector3i &ind) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
@@ -1473,21 +1341,30 @@ Vector3d node_u(Lattice::index_t index) {
  * @param pos Position
  * @param v Interpolated velocity in MD units.
  */
-#ifdef LB
 const Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
-  Vector3d interpolated_u{};
-
-  /* calculate fluid velocity at particle's position
-     this is done by linear interpolation
-     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  lattice_interpolation(lblattice, pos,
-                        [&interpolated_u](Lattice::index_t index, double w) {
-                          interpolated_u += w * node_u(index);
-                        });
-
-  return (lbpar.agrid / lbpar.tau) * interpolated_u;
-}
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    Vector3d interpolated_u{};
+    lb_get_interpolated_velocity_gpu(pos.data(), interpolated_u.data(), 1);
+    return interpolated_u;
 #endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    Vector3d interpolated_u{};
+
+    /* calculate fluid velocity at particle's position
+       this is done by linear interpolation
+       (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+    lattice_interpolation(lblattice, pos,
+                          [&interpolated_u](Lattice::index_t index, double w) {
+                            interpolated_u += w * node_u(index);
+                          });
+
+    return (lbpar.agrid / lbpar.tau) * interpolated_u;
+  }
+#endif
+  return {};
+}
 
 #ifdef LB
 void lb_lbfluid_add_force_density(const Vector3d &pos,
@@ -1524,14 +1401,7 @@ void lb_lbfluid_on_lb_params_change(int field) {
 #endif
   }
   if (field == LBPAR_DENSITY) {
-#ifdef LB
-    if (lattice_switch & LATTICE_LB)
-      lb_reinit_fluid();
-#endif
-#ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU)
-      lb_reinit_fluid_gpu();
-#endif
+    lb_lbfluid_reinit_fluid();
   }
   lb_lbfluid_reinit_parameters();
 }

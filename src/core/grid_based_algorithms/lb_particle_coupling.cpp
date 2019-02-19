@@ -1,4 +1,6 @@
 #include <Random123/philox.h>
+#include <boost/mpi.hpp>
+#include <profiler/profiler.hpp>
 
 #include "cells.hpp"
 #include "communication.hpp"
@@ -15,46 +17,60 @@
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
 
-namespace {
-Utils::Counter<uint64_t> rng_counter_coupling;
-/*
- * @brief Salt for the RNGs
- *
- * This is to avoid correlations between the
- * noise on the particle coupling and the fluid
- * thermalization.
- */
-enum class RNGSalt { PARTICLES = 2 };
-} // namespace
+LB_Particle_Coupling lb_particle_coupling;
 
 void mpi_set_lb_coupling_counter_slave(int high, int low) {
-#ifdef LB
-  rng_counter_coupling = Utils::Counter<uint64_t>(Utils::u32_to_u64(
-      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
-#endif
+  lb_particle_coupling.rng_counter_coupling =
+      Utils::Counter<uint64_t>(Utils::u32_to_u64(static_cast<uint32_t>(high),
+                                                 static_cast<uint32_t>(low)));
 }
 
-#if defined(LB) || defined(LB_GPU)
+void mpi_bcast_lb_particle_coupling_slave(int, int) {
+  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
+}
 
-uint64_t lb_coupling_rng_state_cpu() { return rng_counter_coupling.value(); }
+void lb_lbcoupling_activate() {
+  lb_particle_coupling.couple_to_md = true;
+  if (this_node == 0)
+    mpi_bcast_lb_particle_coupling();
+}
 
-uint64_t lb_coupling_rng_state() {
+void lb_lbcoupling_deactivate() {
+  lb_particle_coupling.couple_to_md = false;
+  if (this_node == 0)
+    mpi_bcast_lb_particle_coupling();
+}
+
+void lb_lbcoupling_set_friction(double friction) {
+  lb_particle_coupling.friction = friction;
+  mpi_bcast_lb_particle_coupling();
+}
+
+double lb_lbcoupling_get_friction() { return lb_particle_coupling.friction; }
+
+uint64_t lb_coupling_get_rng_state_cpu() {
+  return lb_particle_coupling.rng_counter_coupling.value();
+}
+
+uint64_t lb_lbcoupling_get_rng_state() {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    return lb_coupling_rng_state_cpu();
+    return lb_coupling_get_rng_state_cpu();
 #endif
   } else if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    return lb_coupling_rng_state_gpu();
+    return lb_coupling_get_rng_state_gpu();
 #endif
   }
   return {};
 }
 
-void lb_coupling_set_rng_state(uint64_t counter) {
+void lb_lbcoupling_set_rng_state(uint64_t counter) {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    mpi_set_lb_coupling_counter(counter);
+    lb_particle_coupling.rng_counter_coupling =
+        Utils::Counter<uint64_t>(counter);
+    mpi_bcast_lb_particle_coupling();
 #endif
   } else if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -62,6 +78,8 @@ void lb_coupling_set_rng_state(uint64_t counter) {
 #endif
   }
 }
+
+#if defined(LB) || defined(LB_GPU)
 
 namespace {
 /**
@@ -112,7 +130,8 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
   /* calculate viscous force
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
    * */
-  auto const force = -lb_lbfluid_get_friction() * (p->m.v - v_drift) + f_random;
+  auto const force =
+      -lb_lbcoupling_get_friction() * (p->m.v - v_drift) + f_random;
 
   add_md_force(p->r.p, force);
 
@@ -151,64 +170,80 @@ void add_swimmer_force(Particle &p) {
 #endif
 } // namespace
 
-#ifdef LB
-void calc_particle_lattice_ia() {
-
-  if (transfer_momentum) {
-    using rng_type = r123::Philox4x64;
-    using ctr_type = rng_type::ctr_type;
-    using key_type = rng_type::key_type;
-
-    ctr_type c{{rng_counter_coupling.value(),
-                static_cast<uint64_t>(RNGSalt::PARTICLES)}};
-    rng_counter_coupling.increment();
-
-    /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
-     * The factor 12 comes from the fact that we use random numbers
-     * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-     * time_step comes from the discretization.
-     */
-    auto const noise_amplitude = sqrt(12. * 2. * lb_lbfluid_get_friction() *
-                                      lb_lbfluid_get_kT() / time_step);
-
-    auto f_random = [&c](int id) -> Vector3d {
-      key_type k{{static_cast<uint32_t>(id)}};
-
-      auto const noise = rng_type{}(c, k);
-
-      using Utils::uniform;
-      return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
-             Vector3d::broadcast(0.5);
-    };
-
-    /* local cells */
-    for (auto &p : local_cells.particles()) {
-      if (!p.p.is_virtual || thermo_virtual) {
-        auto const force =
-            lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
-        /* add force to the particle */
-        p.f.f += force;
-#ifdef ENGINE
-        add_swimmer_force(p);
+void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    if (lb_particle_coupling.couple_to_md && this_node == 0)
+      lb_calc_particle_lattice_ia_gpu(couple_virtual,
+                                      lb_lbcoupling_get_friction());
 #endif
-      }
-    }
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    if (lb_particle_coupling.couple_to_md) {
+      using rng_type = r123::Philox4x64;
+      using ctr_type = rng_type::ctr_type;
+      using key_type = rng_type::key_type;
 
-    /* ghost cells */
-    for (auto &p : ghost_cells.particles()) {
-      /* for ghost particles we have to check if they lie
-       * in the range of the local lattice nodes */
-      if (in_local_domain(p.r.p)) {
-        if (!p.p.is_virtual || thermo_virtual) {
-          lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
+      ctr_type c{{lb_particle_coupling.rng_counter_coupling.value(),
+                  static_cast<uint64_t>(RNGSalt::PARTICLES)}};
+
+      /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+       * The factor 12 comes from the fact that we use random numbers
+       * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
+       * time_step comes from the discretization.
+       */
+      auto const noise_amplitude =
+          sqrt(12. * 2. * lb_lbcoupling_get_friction() * lb_lbfluid_get_kT() /
+               time_step);
+      auto f_random = [&c](int id) -> Vector3d {
+        if (lb_lbfluid_get_kT() > 0.0) {
+          key_type k{{static_cast<uint32_t>(id)}};
+
+          auto const noise = rng_type{}(c, k);
+
+          using Utils::uniform;
+          return Vector3d{uniform(noise[0]), uniform(noise[1]),
+                          uniform(noise[2])} -
+                 Vector3d::broadcast(0.5);
+        } else {
+          return Vector3d{};
+        }
+      };
+
+      /* local cells */
+      for (auto &p : local_cells.particles()) {
+        if (!p.p.is_virtual or thermo_virtual or
+            (p.p.is_virtual && couple_virtual)) {
+          auto const force =
+              lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
+          /* add force to the particle */
+          p.f.f += force;
 #ifdef ENGINE
           add_swimmer_force(p);
 #endif
         }
       }
+
+      /* ghost cells */
+      for (auto &p : ghost_cells.particles()) {
+        /* for ghost particles we have to check if they lie
+         * in the range of the local lattice nodes */
+        if (in_local_domain(p.r.p)) {
+          if (!p.p.is_virtual || thermo_virtual) {
+            lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
+#ifdef ENGINE
+            add_swimmer_force(p);
+#endif
+          }
+        }
+      }
     }
+#endif
   }
 }
-#endif
 
+void lb_lbcoupling_propagate() {
+  lb_particle_coupling.rng_counter_coupling.increment();
+}
 #endif

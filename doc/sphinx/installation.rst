@@ -126,7 +126,7 @@ following commands:
       doxygen py27-opengl py27-sphinx py27-pip gsl hdf5 +openmpi
     sudo port select --set cython cython27
     sudo port select --set python python27
-    sudo port selet --set pip pip27
+    sudo port select --set pip pip27
     sudo port select --set mpi openmpi-mp-fortran
 
 Alternatively, you can use Homebrew.

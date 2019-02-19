@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "LBVelocityProfile.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
 #include "utils/Histogram.hpp"
 
 namespace Observables {
@@ -34,14 +33,8 @@ std::vector<double> LBVelocityProfile::operator()(PartCfg &partCfg) const {
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
   std::vector<double> velocities(m_sample_positions.size());
-  if (lattice_switch & LATTICE_LB_GPU) {
-#if defined(LB_GPU)
-    lb_lbfluid_get_interpolated_velocity_at_positions(
-        m_sample_positions.data(), velocities.data(),
-        m_sample_positions.size() / 3);
-#endif
-  } else if (lattice_switch & LATTICE_LB) {
-#if defined(LB)
+  if ((lattice_switch & LATTICE_LB) or (lattice_switch & LATTICE_LB_GPU)) {
+#if defined(LB) || defined(LB_GPU)
     for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
       Vector3d pos_tmp = {m_sample_positions[ind + 0],
                           m_sample_positions[ind + 1],
@@ -51,8 +44,7 @@ std::vector<double> LBVelocityProfile::operator()(PartCfg &partCfg) const {
     }
 #endif
   } else {
-    throw std::runtime_error("Either CPU LB or GPU LB has to be active for "
-                             "this observable to work.");
+    throw std::runtime_error("LB not activated.");
   }
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
     const Vector3d position = {{m_sample_positions[ind + 0],

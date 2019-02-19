@@ -33,8 +33,9 @@ from . import particle_data
 from . import cuda_init
 from . import code_info
 from .utils cimport numeric_limits
-from .lb cimport lb_lbfluid_get_tau
-from .lb cimport lb_lbfluid_get_lattice_switch
+if LB or LB_GPU:
+    from .lb cimport lb_lbfluid_get_tau
+    from .lb cimport lb_lbfluid_get_lattice_switch
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy

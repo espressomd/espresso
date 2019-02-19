@@ -55,12 +55,7 @@ cdef extern from "utils/Span.hpp" namespace "Utils":
     cppclass Span[T]:
         pass
 
-    Span[const int] make_const_span(int *, int)
-
-cdef extern from "utils/Histogram.hpp" namespace "Utils":
-    cdef void unravel_index(const int * const len_dims, const int ndims,
-                            const int flattened_index,
-                            int * unravelled_index_out)
+    Span[const int] make_const_span(int * , int)
 
 cdef int_list create_int_list_from_python_object(obj)
 cdef np.ndarray create_nparray_from_int_list(int_list * il)

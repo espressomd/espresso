@@ -85,7 +85,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
+            return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
         # list of essential keys required for the fluid
         ####################################################
@@ -97,19 +97,17 @@ IF LB_GPU or LB:
         def default_params(self):
             return {"agrid": -1.0,
                     "dens": -1.0,
-                    "fric": -1.0,
                     "ext_force_density": [0.0, 0.0, 0.0],
                     "visc": -1.0,
                     "bulk_visc": -1.0,
                     "tau": -1.0,
-                    "couple": "2pt",
                     "seed": None,
                     "kT": 0.}
 
         # function that calls wrapper functions which set the parameters at C-Level
         ####################################################
         def _set_lattice_switch(self):
-            lb_set_lattice_switch(1)
+            lb_lbfluid_set_lattice_switch(1)
 
         def _set_params_in_es_core(self):
             default_params = self.default_params()
@@ -117,7 +115,7 @@ IF LB_GPU or LB:
             cdef stdint.uint64_t seed
             if self._params["kT"] > 0.:
                 seed = self._params["seed"]
-                lb_fluid_set_rng_state(seed)
+                lb_lbfluid_set_rng_state(seed)
             lb_lbfluid_set_kT(self._params["kT"])
 
             python_lbfluid_set_density(
@@ -126,28 +124,23 @@ IF LB_GPU or LB:
 
             lb_lbfluid_set_tau(self._params["tau"])
 
-            python_lbfluid_set_visc(
+            python_lbfluid_set_viscosity(
     self._params["visc"],
      self._params["agrid"],
      self._params["tau"])
 
             if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
-                python_lbfluid_set_bulk_visc(
+                python_lbfluid_set_bulk_viscosity(
     self._params["bulk_visc"],
      self._params["agrid"],
      self._params["tau"])
 
             python_lbfluid_set_agrid(self._params["agrid"])
 
-            if self._params["fric"] != default_params["fric"]:
-                python_lbfluid_set_friction(self._params["fric"])
-
             python_lbfluid_set_ext_force_density(
     self._params["ext_force_density"],
      self._params["agrid"],
      self._params["tau"])
-
-            python_lbfluid_set_couple_flag(self._params["couple"])
 
             if "gamma_odd" in self._params:
                 python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
@@ -163,34 +156,26 @@ IF LB_GPU or LB:
             default_params = self.default_params()
             cdef double kT = lb_lbfluid_get_kT()
             self._params["kT"] = kT
-            cdef stdint.uint64_t seed = lb_fluid_rng_state()
+            cdef stdint.uint64_t seed = lb_lbfluid_get_rng_state()
             self._params['seed'] = seed
             if python_lbfluid_get_density(self._params["dens"], self._params["agrid"]):
                 raise Exception("lb_lbfluid_get_density error")
 
             self._params["tau"] = lb_lbfluid_get_tau()
 
-            if python_lbfluid_get_visc(self._params["visc"], self._params["agrid"], self._params["tau"]):
-                raise Exception("lb_lbfluid_set_visc error")
+            if python_lbfluid_get_viscosity(self._params["visc"], self._params["agrid"], self._params["tau"]):
+                raise Exception("lb_lbfluid_set_viscosity error")
 
             if not self._params["bulk_visc"] == default_params["bulk_visc"]:
-                if python_lbfluid_get_bulk_visc(self._params["bulk_visc"], self._params["agrid"], self._params["tau"]):
-                    raise Exception("lb_lbfluid_set_bulk_visc error")
+                if python_lbfluid_get_bulk_viscosity(self._params["bulk_visc"], self._params["agrid"], self._params["tau"]):
+                    raise Exception("lb_lbfluid_set_bulk_viscosity error")
 
             if python_lbfluid_get_agrid(self._params["agrid"]):
                 raise Exception("lb_lbfluid_set_agrid error")
 
-            if not self._params["fric"] == default_params["fric"]:
-                if python_lbfluid_get_friction(self._params["fric"]):
-                    raise Exception("lb_lbfluid_set_friction error")
-
             if not self._params["ext_force_density"] == default_params["ext_force_density"]:
                 if python_lbfluid_get_ext_force_density(self._params["ext_force_density"], self._params["agrid"], self._params["tau"]):
                     raise Exception("lb_lbfluid_set_ext_force_density error")
-
-            if not self._params["couple"] == default_params["couple"]:
-                if python_lbfluid_get_couple_flag(self._params["couple"]):
-                    raise Exception("lb_lbfluid_get_couple_flag error")
 
             return self._params
 
@@ -260,7 +245,7 @@ IF LB_GPU or LB:
                 raise Exception("LB not compiled in")
 
         def _deactivate_method(self):
-            lb_set_lattice_switch(0)
+            lb_lbfluid_set_lattice_switch(0)
 
 IF LB_GPU:
     cdef class LBFluidGPU(LBFluid):
@@ -273,7 +258,7 @@ IF LB_GPU:
             lb_lbfluid_remove_total_momentum()
 
         def _set_lattice_switch(self):
-            lb_set_lattice_switch(2)
+            lb_lbfluid_set_lattice_switch(2)
 
         def _activate_method(self):
             self.validate_params()
@@ -310,7 +295,7 @@ IF LB_GPU:
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_lbfluid_get_interpolated_velocity_at_positions( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            lb_get_interpolated_velocity_gpu( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities
 
 IF LB or LB_GPU:
@@ -345,7 +330,7 @@ IF LB or LB_GPU:
         property density:
             def __get__(self):
                 cdef double double_return
-                double_return = lb_lbnode_get_rho(self.node)
+                double_return = lb_lbnode_get_density(self.node)
                 return array_locked(double_return)
 
             def __set__(self, value):

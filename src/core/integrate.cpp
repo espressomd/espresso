@@ -41,6 +41,7 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "initialize.hpp"
 #include "lattice.hpp"
 #include "minimize_energy.hpp"
@@ -60,6 +61,8 @@
 #include "forces.hpp"
 #include "immersed_boundaries.hpp"
 #include "npt.hpp"
+
+#include <profiler/profiler.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -214,6 +217,8 @@ void integrate_ensemble_init() {
 /************************************************************/
 
 void integrate_vv(int n_steps, int reuse_forces) {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -245,19 +250,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
       1: do not recalculate forces. Mostly when reading checkpoints with forces
    */
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
+    ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     thermo_heat_up();
 
-#ifdef LB
-    transfer_momentum = 0;
-    if (lattice_switch & LATTICE_LB && this_node == 0 && n_part)
-      runtimeWarning("Recalculating forces, so the LB coupling forces are not "
-                     "included in the particle force the first time step. This "
-                     "only matters if it happens frequently during "
-                     "sampling.\n");
-#endif
-#ifdef LB_GPU
-    transfer_momentum_gpu = 0;
-    if (lattice_switch & LATTICE_LB_GPU && this_node == 0 && n_part)
+#if defined(LB) || defined(LB_GPU)
+    lb_lbcoupling_deactivate();
+    if (not(lattice_switch & LATTICE_OFF) && this_node == 0 && n_part)
       runtimeWarning("Recalculating forces, so the LB coupling forces are not "
                      "included in the particle force the first time step. This "
                      "only matters if it happens frequently during "
@@ -289,6 +287,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
       handle_collisions();
     }
 #endif
+    ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
 
   if (check_runtime_errors())
@@ -301,7 +300,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
   /* Integration loop */
+  ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
   for (int step = 0; step < n_steps; step++) {
+    ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
 #ifdef BOND_CONSTRAINT
@@ -319,11 +320,17 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (integ_switch == INTEG_METHOD_NPT_ISO) {
       propagate_vel();
       propagate_pos();
+
+      /* Propagate time: t = t+dt */
+      sim_time += time_step;
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
       if (steepest_descent_step())
         break;
     } else {
       propagate_vel_pos();
+
+      /* Propagate time: t = t+dt */
+      sim_time += time_step;
     }
 
 #ifdef BOND_CONSTRAINT
@@ -346,11 +353,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
        v(t+0.5*dt) ) */
 
-#ifdef LB
-    transfer_momentum = (n_part > 0);
-#endif
-#ifdef LB_GPU
-    transfer_momentum_gpu = (n_part > 0);
+#if defined(LB) || defined(LB_GPU)
+    if (n_part > 0)
+      lb_lbcoupling_activate();
 #endif
 
     // Communication step: distribute ghost positions
@@ -393,7 +398,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #if defined(LB) || defined(LB_GPU)
-      lb_lbfluid_update();
+      lb_lbfluid_propagate();
+      lb_lbcoupling_propagate();
 #endif // LB || LB_GPU
 
 #ifdef VIRTUAL_SITES
@@ -413,9 +419,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      /* Propagate time: t = t+dt */
-      sim_time += time_step;
-
 #ifdef COLLISION_DETECTION
       handle_collisions();
 #endif
@@ -436,6 +439,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
       break;
     }
   }
+  ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
   if (virtual_sites()->need_ghost_comm_before_vel_update()) {

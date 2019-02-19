@@ -100,7 +100,6 @@ cdef extern from "dpd.hpp":
     extern int dpd_twf
 
 
-
 cdef extern from "cells.hpp":
     extern double max_range
     ctypedef struct CellStructure:

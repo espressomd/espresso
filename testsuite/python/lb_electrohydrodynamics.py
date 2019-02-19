@@ -49,12 +49,13 @@ class LBEHTest(ut.TestCase):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.s.time_step,
-            fric=self.params['friction'],
             kT=self.params['temp']
         )
 
         self.s.actors.add(self.lbf)
-        self.s.thermostat.set_lb(LB_fluid=self.lbf)
+        self.s.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            friction=self.params['friction'])
 
     def test(self):
         s = self.s

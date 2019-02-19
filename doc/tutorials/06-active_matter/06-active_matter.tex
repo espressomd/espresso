@@ -195,15 +195,13 @@ Say we want to set up a pusher with ID 0 at the position $(1,1,1)$ that has a
 dipolar strength of 0.1. Then we need to first set up the LB fluid (on the GPU)
 by invoking
 \begin{espresso}
-lbf = espressomd.lb.LBFluidGPU(agrid=1, dens=1.0, visc=1.0, tau=0.01, fric=20.0, couple='3pt')
+lbf = espressomd.lb.LBFluidGPU(agrid=1, dens=1.0, visc=1.0, tau=0.01)
 system.actors.add(lbf)
+system.thermostat.set_lb(LB_fluid=lbf, friction=20.0)
 \end{espresso}
 In this example we used parameters for which we know the LB reproduces
-Stokes-level hydrodynamic interactions well. The key \codees{'couple':3pt}
-ensures that the three-point interpolation stencil is used to couple the
-position of the particle and the forces to the LB grid. This reduces
-lattice-based artifacts that can occur for these systems. Here, we simulate a
-quiescent LB fluid by deactivating the LB thermostat (this is the default
+Stokes-level hydrodynamic interactions well. Here, we simulate a
+quiescent unthermalized LB fluid (this is the default
 behavior). We next set up the pusher by imputing the following line
 \begin{espresso}
 system.part.add(pos=[1,1,1],swimming={'f_swim':0.1, 'dipole_length':1.0})

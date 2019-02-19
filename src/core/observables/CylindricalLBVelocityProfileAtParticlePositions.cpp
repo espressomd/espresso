@@ -19,7 +19,6 @@
 */
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
 #include "lattice.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
@@ -44,22 +43,15 @@ operator()(PartCfg &partCfg) const {
                    [&partCfg](int id) { return folded_position(partCfg[id]); });
 
   std::vector<Vector3d> velocities(ids().size());
-  if (lattice_switch & LATTICE_LB_GPU) {
-#if defined(LB_GPU)
-    lb_lbfluid_get_interpolated_velocity_at_positions(
-        folded_positions.front().data(), velocities.front().data(),
-        folded_positions.size());
-#endif
-  } else if (lattice_switch & LATTICE_LB) {
-#if defined(LB)
+  if ((lattice_switch & LATTICE_LB) or (lattice_switch & LATTICE_LB_GPU)) {
+#if defined(LB) || defined(LB_GPU)
     boost::transform(folded_positions, velocities.begin(),
                      [](const Vector3d &pos) {
                        return lb_lbfluid_get_interpolated_velocity(pos);
                      });
 #endif
   } else {
-    throw std::runtime_error("Either CPU LB or GPU LB has to be active for "
-                             "this observable to work.");
+    throw std::runtime_error("LB not activated.");
   }
   for (auto &p : folded_positions)
     p -= center;

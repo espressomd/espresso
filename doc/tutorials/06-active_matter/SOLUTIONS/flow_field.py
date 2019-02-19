@@ -96,8 +96,9 @@ visco = 1.0
 densi = 1.0
 
 lbf = lb.LBFluidGPU(agrid=agrid, dens=densi,
-                    visc=visco, tau=dt, fric=frict, couple='3pt')
+                    visc=visco, tau=dt)
 system.actors.add(lbf)
+system.thermostat.set_lb(LB_fluid=lbf, friction=frict)
 
 ##########################################################################
 

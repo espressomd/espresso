@@ -34,6 +34,15 @@
 #include <string>
 #include <vector>
 
+/*
+ * @brief Salt for the RNGs
+ *
+ * This is to avoid correlations between the
+ * noise on the particle coupling and the fluid
+ * thermalization.
+ */
+enum class RNGSalt { FLUID, PARTICLES };
+
 namespace Random {
 extern std::mt19937 generator;
 extern std::normal_distribution<double> normal_distribution;

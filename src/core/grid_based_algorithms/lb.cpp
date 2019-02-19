@@ -28,10 +28,10 @@
  */
 
 #include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include <cinttypes>
 #include <fstream>
+#include <profiler/profiler.hpp>
 
 #ifdef LB
 
@@ -42,6 +42,7 @@
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "halo.hpp"
 #include "lb-d3q19.hpp"
+#include "random.hpp"
 #include "thermostat.hpp"
 #include "utils/Counter.hpp"
 #include "utils/matrix_vector_product.hpp"
@@ -64,18 +65,7 @@ static void lb_check_halo_regions(const LB_Fluid &lbfluid);
 #endif // ADDITIONAL_CHECKS
 
 /** Counter for the RNG */
-namespace {
 Utils::Counter<uint64_t> rng_counter_fluid;
-
-/*
- * @brief Salt for the RNGs
- *
- * This is to avoid correlations between the
- * noise on the particle coupling and the fluid
- * thermalization.
- */
-enum class RNGSalt { FLUID };
-} // namespace
 
 /** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = {
@@ -89,8 +79,6 @@ LB_Parameters lbpar = {
     -1.0,
     // tau
     -1.0,
-    // friction
-    0.0,
     // ext_force_density
     {0.0, 0.0, 0.0},
     // gamma_odd
@@ -153,6 +141,70 @@ static double fluidstep = 0.0;
 
 #ifdef LB
 /********************** The Main LB Part *************************************/
+void lb_init() {
+  LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
+
+  if (lbpar.agrid <= 0.0) {
+    runtimeErrorMsg()
+        << "Lattice Boltzmann agrid not set when initializing fluid";
+  }
+
+  if (check_runtime_errors())
+    return;
+
+  Vector3d temp_agrid, temp_offset;
+  for (int i = 0; i < 3; i++) {
+    temp_agrid[i] = lbpar.agrid;
+    temp_offset[i] = 0.5;
+  }
+
+  /* initialize the local lattice domain */
+  lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
+
+  if (check_runtime_errors())
+    return;
+
+  /* allocate memory for data structures */
+  lb_realloc_fluid();
+
+  /* prepare the halo communication */
+  lb_prepare_communication();
+
+  /* initialize derived parameters */
+  lb_reinit_parameters();
+
+  /* setup the initial populations */
+  lb_reinit_fluid();
+
+  LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
+}
+
+void lb_reinit_fluid() {
+#ifdef LB
+  std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
+  /* default values for fields in lattice units */
+  Vector3d j{};
+  Vector<6, double> pi{};
+
+  LB_TRACE(fprintf(stderr,
+                   "Initialising the fluid with equilibrium populations\n"););
+
+  for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
+       ++index) {
+    // calculate equilibrium distribution
+    lb_calc_n_from_rho_j_pi(index, lbpar.rho, j, pi);
+
+#ifdef LB_BOUNDARIES
+    lbfields[index].boundary = 0;
+#endif // LB_BOUNDARIES
+  }
+
+#ifdef LB_BOUNDARIES
+  LBBoundaries::lb_init_boundaries();
+#endif // LB_BOUNDARIES
+#endif
+}
+
 void lb_reinit_parameters() {
   if (lbpar.viscosity > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
@@ -525,9 +577,9 @@ void lb_sanity_checks() {
   }
 }
 
-uint64_t lb_fluid_rng_state_cpu() { return rng_counter_fluid.value(); }
+uint64_t lb_fluid_get_rng_state() { return rng_counter_fluid.value(); }
 
-void lb_fluid_set_rng_state_cpu(uint64_t counter) {
+void lb_fluid_set_rng_state(uint64_t counter) {
   uint32_t high, low;
   std::tie(high, low) = Utils::u64_to_u32(counter);
   mpi_call(mpi_set_lb_fluid_counter, high, low);
@@ -861,6 +913,7 @@ inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
 
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
   for (auto it = LBBoundaries::lbboundaries.begin();
@@ -883,7 +936,6 @@ inline void lb_collide_stream() {
 
   const r123::Philox4x64::ctr_type c{
       {rng_counter_fluid.value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
-
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
@@ -927,10 +979,8 @@ inline void lb_collide_stream() {
 
 #ifdef LB_BOUNDARIES
   /* boundary conditions for links */
-  LBBoundaries::lb_bounce_back(lbfluid_post);
+  lb_bounce_back(lbfluid_post);
 #endif // LB_BOUNDARIES
-
-  rng_counter_fluid.increment();
 
   /* swap the pointers for old and new population fields */
   std::swap(lbfluid, lbfluid_post);
@@ -1223,13 +1273,6 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
     return;
   }
 
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_pi in " << __FILE__ << __LINE__
-                      << ": CPU LB not switched on.";
-    j[0] = j[1] = j[2] = 0;
-    return;
-  }
-
 #ifdef LB_BOUNDARIES
   if (lbfields[index].boundary) {
     *rho = lbpar.rho;
@@ -1293,6 +1336,147 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
   pi[3] = modes[8];                                                        // xz
   pi[4] = modes[9];                                                        // yz
   pi[5] = (modes[0] + modes[4] - modes[6]) / 3.0;                          // zz
+}
+
+#ifdef LB_BOUNDARIES
+/** Bounce back boundary conditions.
+ * The populations that have propagated into a boundary node
+ * are bounced back to the node they came from. This results
+ * in no slip boundary conditions.
+ *
+ * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
+ */
+void lb_bounce_back(LB_Fluid &lbfluid) {
+  int k, i, l;
+  int yperiod = lblattice.halo_grid[0];
+  int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
+  int next[19];
+  double population_shift;
+  next[0] = 0;                     // ( 0, 0, 0) =
+  next[1] = 1;                     // ( 1, 0, 0) +
+  next[2] = -1;                    // (-1, 0, 0)
+  next[3] = yperiod;               // ( 0, 1, 0) +
+  next[4] = -yperiod;              // ( 0,-1, 0)
+  next[5] = zperiod;               // ( 0, 0, 1) +
+  next[6] = -zperiod;              // ( 0, 0,-1)
+  next[7] = (1 + yperiod);         // ( 1, 1, 0) +
+  next[8] = -(1 + yperiod);        // (-1,-1, 0)
+  next[9] = (1 - yperiod);         // ( 1,-1, 0)
+  next[10] = -(1 - yperiod);       // (-1, 1, 0) +
+  next[11] = (1 + zperiod);        // ( 1, 0, 1) +
+  next[12] = -(1 + zperiod);       // (-1, 0,-1)
+  next[13] = (1 - zperiod);        // ( 1, 0,-1)
+  next[14] = -(1 - zperiod);       // (-1, 0, 1) +
+  next[15] = (yperiod + zperiod);  // ( 0, 1, 1) +
+  next[16] = -(yperiod + zperiod); // ( 0,-1,-1)
+  next[17] = (yperiod - zperiod);  // ( 0, 1,-1)
+  next[18] = -(yperiod - zperiod); // ( 0,-1, 1) +
+  int reverse[] = {0, 2,  1,  4,  3,  6,  5,  8,  7, 10,
+                   9, 12, 11, 14, 13, 16, 15, 18, 17};
+
+  /* bottom-up sweep */
+  //  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++)
+  for (int z = 0; z < lblattice.grid[2] + 2; z++) {
+    for (int y = 0; y < lblattice.grid[1] + 2; y++) {
+      for (int x = 0; x < lblattice.grid[0] + 2; x++) {
+        k = get_linear_index(x, y, z, lblattice.halo_grid);
+
+        if (lbfields[k].boundary) {
+
+          for (i = 0; i < 19; i++) {
+            population_shift = 0;
+            for (l = 0; l < 3; l++) {
+              population_shift -= lbpar.rho * 2 * lbmodel.c[i][l] *
+                                  lbmodel.w[i] * lbfields[k].slip_velocity[l] /
+                                  lbmodel.c_sound_sq;
+            }
+
+            if (x - lbmodel.c[i][0] > 0 &&
+                x - lbmodel.c[i][0] < lblattice.grid[0] + 1 &&
+                y - lbmodel.c[i][1] > 0 &&
+                y - lbmodel.c[i][1] < lblattice.grid[1] + 1 &&
+                z - lbmodel.c[i][2] > 0 &&
+                z - lbmodel.c[i][2] < lblattice.grid[2] + 1) {
+              if (!lbfields[k - next[i]].boundary) {
+                for (l = 0; l < 3; l++) {
+                  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
+                      .force()[l] += // TODO
+                      (2 * lbfluid[i][k] + population_shift) * lbmodel.c[i][l];
+                }
+                lbfluid[reverse[i]][k - next[i]] =
+                    lbfluid[i][k] + population_shift;
+              } else {
+                lbfluid[reverse[i]][k - next[i]] = lbfluid[i][k] = 0.0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+#endif
+
+// Statistics in MD units.
+
+/** Calculate mass of the LB fluid.
+ * \param result Fluid mass
+ */
+void lb_calc_fluid_mass(double *result) {
+  int x, y, z, index;
+  double sum_rho = 0.0, rho = 0.0;
+
+  for (x = 1; x <= lblattice.grid[0]; x++) {
+    for (y = 1; y <= lblattice.grid[1]; y++) {
+      for (z = 1; z <= lblattice.grid[2]; z++) {
+        index = get_linear_index(x, y, z, lblattice.halo_grid);
+
+        lb_calc_local_rho(index, &rho);
+        sum_rho += rho;
+      }
+    }
+  }
+
+  MPI_Reduce(&sum_rho, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+}
+
+/** Calculate momentum of the LB fluid.
+ * \param result Fluid momentum
+ */
+void lb_calc_fluid_momentum(double *result) {
+
+  int x, y, z, index;
+  Vector3d j{}, momentum{};
+
+  for (x = 1; x <= lblattice.grid[0]; x++) {
+    for (y = 1; y <= lblattice.grid[1]; y++) {
+      for (z = 1; z <= lblattice.grid[2]; z++) {
+        index = get_linear_index(x, y, z, lblattice.halo_grid);
+
+        j = lb_calc_local_j(index);
+        momentum += j + lbfields[index].force_density;
+      }
+    }
+  }
+
+  momentum *= lbpar.agrid / lbpar.tau;
+
+  MPI_Reduce(momentum.data(), result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+}
+
+void lb_collect_boundary_forces(double *result) {
+#ifdef LB_BOUNDARIES
+  int n_lb_boundaries = LBBoundaries::lbboundaries.size();
+  std::vector<double> boundary_forces(3 * n_lb_boundaries);
+  int i = 0;
+  for (auto it = LBBoundaries::lbboundaries.begin();
+       it != LBBoundaries::lbboundaries.end(); ++it, i++)
+    for (int j = 0; j < 3; j++)
+      boundary_forces[3 * i + j] = (**it).force()[j];
+
+  MPI_Reduce(boundary_forces.data(), result, 3 * n_lb_boundaries, MPI_DOUBLE,
+             MPI_SUM, 0, comm_cart);
+#endif
 }
 
 #endif // LB

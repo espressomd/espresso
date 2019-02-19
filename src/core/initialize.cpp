@@ -466,7 +466,7 @@ void on_boxl_change() {
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) {
-    lb_init();
+    lb_lbfluid_init();
 #ifdef LB_BOUNDARIES
     LBBoundaries::lb_init_boundaries();
 #endif
@@ -528,7 +528,7 @@ void on_cell_structure_change() {
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) {
-    lb_init();
+    lb_lbfluid_init();
   }
 #endif
 }
@@ -626,6 +626,9 @@ void on_parameter_change(int field) {
   case FIELD_THERMALIZEDBONDS:
     /* Thermalized distance bonds needs ghost velocities */
     on_ghost_flags_change();
+    break;
+  case FIELD_SIMTIME:
+    recalc_forces = 1;
     break;
   }
 }

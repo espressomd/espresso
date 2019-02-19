@@ -67,7 +67,6 @@
 #include "rotation.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
-#include "statistics_fluid.hpp"
 #include "swimmer_reaction.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
@@ -159,7 +158,8 @@ int n_nodes = -1;
   CB(mpi_rotate_system_slave)                                                  \
   CB(mpi_set_lb_coupling_counter_slave)                                        \
   CB(mpi_set_lb_fluid_counter)                                                 \
-  CB(mpi_update_particle_slave)
+  CB(mpi_update_particle_slave)                                                \
+  CB(mpi_bcast_lb_particle_coupling_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -553,8 +553,6 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     lb_calc_fluid_momentum((double *)result);
     break;
   case 7:
-    mpi_call(mpi_gather_stats_slave, -1, 7);
-    lb_calc_fluid_temp((double *)result);
     break;
 #ifdef LB_BOUNDARIES
   case 8:
@@ -599,7 +597,6 @@ void mpi_gather_stats_slave(int, int job) {
     lb_calc_fluid_momentum(nullptr);
     break;
   case 7:
-    lb_calc_fluid_temp(nullptr);
     break;
 #ifdef LB_BOUNDARIES
   case 8:
@@ -929,11 +926,9 @@ void mpi_bcast_lb_params_slave(int field, int) {
 #endif
 }
 
-void mpi_set_lb_coupling_counter(uint64_t counter) {
-  uint32_t high, low;
-  std::tie(high, low) = Utils::u64_to_u32(counter);
-  mpi_call(mpi_set_lb_coupling_counter_slave, high, low);
-  mpi_set_lb_coupling_counter_slave(high, low);
+void mpi_bcast_lb_particle_coupling() {
+  mpi_call(mpi_bcast_lb_particle_coupling_slave, 0, 0);
+  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/
