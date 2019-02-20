@@ -1,6 +1,8 @@
 set(EspressoCore_SRC
   accumulators.cpp
   cells.cpp
+  cluster_analysis/Cluster.cpp
+  cluster_analysis/ClusterStructure.cpp
   collision.cpp
   comfixed_global.cpp
   communication.cpp
@@ -187,6 +189,10 @@ if(FFTW3_FOUND)
   target_link_libraries(EspressoCore PRIVATE ${FFTW3_LIBRARIES})
 endif()
 
+if(GSL)
+  target_link_libraries(EspressoCore PRIVATE GSL::gsl GSL::gslcblas)
+endif()
+
 if(SCAFACOS)
   target_link_libraries(EspressoCore PRIVATE Scafacos)
 endif(SCAFACOS)
@@ -201,5 +207,4 @@ endif(WITH_UNIT_TESTS)
 
 add_subdirectory(grid_based_algorithms)
 add_subdirectory(shapes)
-add_subdirectory(cluster_analysis)
 add_subdirectory(electrostatics_magnetostatics)
