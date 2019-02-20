@@ -23,10 +23,9 @@
 #define SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
 
 #include "core/cluster_analysis/ClusterStructure.hpp"
+
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/pair_criteria/pair_criteria.hpp"
-
-#include <utils/Factory.hpp>
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {
