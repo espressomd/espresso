@@ -180,8 +180,6 @@ endif()
 target_link_libraries(EspressoCore PUBLIC EspressoConfig)
 target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX)
 target_link_libraries(EspressoCore PRIVATE Profiler)
-
-add_library(pdbparser SHARED PdbParser.cpp)
 target_link_libraries(EspressoCore PRIVATE pdbparser)
 
 if(FFTW3_FOUND)
