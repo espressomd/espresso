@@ -25,10 +25,10 @@
 
 #include <exception>
 #include <functional>
-#include <map>
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 
 namespace Utils {
 
@@ -78,35 +78,21 @@ template <
 class Factory {
 public:
   /** The returned pointer type */
-  typedef std::unique_ptr<T> pointer_type;
+  using pointer_type = std::unique_ptr<T>;
   /** Type of the constructor functions */
-  typedef std::function<T *()> builder_type;
+  using builder_type = std::function<T *()>;
 
-  /**
-   * @brief Default constructor function,
-   * which just calls new with the Derived type.
-   */
-  template <class Derived> static T *builder() {
-    /* This produces nicer error messages if the requirements are not
-     * fulfilled. */
-    static_assert(std::is_base_of<T, Derived>::value,
-                  "Class to build needs to be a subclass of the class the "
-                  "factory is for.");
-    return new Derived();
-  }
-
+public:
   /**
    * @brief Construct an instance by name.
    */
-  static pointer_type make(const std::string &name) {
-    if (m_map.find(name) == m_map.end()) {
+  pointer_type make(const std::string &name) const {
+    try {
+      auto builder = m_map.at(name);
+      return assert(builder), pointer_type(builder());
+    } catch (std::out_of_range const &) {
       throw std::domain_error("Class '" + name + "' not found.");
     }
-
-    if (m_map[name]) {
-      return pointer_type(m_map[name]());
-    }
-    throw std::out_of_range("Invalid function pointer");
   }
 
   /**
@@ -115,7 +101,7 @@ public:
    * @param name Given name to check.
    * @return Whether we know how to make a `name`.
    */
-  static bool has_builder(const std::string &name) {
+  bool has_builder(const std::string &name) const {
     return not(m_map.find(name) == m_map.end());
   }
 
@@ -125,7 +111,7 @@ public:
    * @param name Given name for the type, has to be unique in this Factory<T>.
    * @param b Function to create an instance.
    */
-  static void register_new(const std::string &name, const builder_type &b) {
+  void register_new(const std::string &name, const builder_type &b) {
     m_map[name] = b;
   }
 
@@ -134,18 +120,14 @@ public:
    *
    * @param name Given name for the type, has to be unique in this Factory<T>.
    */
-  template <typename Derived>
-  static void register_new(const std::string &name) {
-    register_new(name, builder<Derived>);
+  template <typename Derived> void register_new(const std::string &name) {
+    register_new(name, []() -> T* { return new Derived(); } );
   }
 
 private:
   /** Maps names to construction functions. */
-  static std::map<std::string, builder_type> m_map;
+  std::unordered_map<std::string, builder_type> m_map;
 };
-
-template <class T>
-std::map<std::string, typename Factory<T>::builder_type> Factory<T>::m_map;
 
 } /* namespace Utils */
 

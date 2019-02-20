@@ -22,7 +22,7 @@
 #include "ScriptInterfaceBase.hpp"
 #include "ParallelScriptInterface.hpp"
 #include "Serializer.hpp"
-#include "utils/Factory.hpp"
+#include "ScriptInterface.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -31,9 +31,9 @@
 
 #include <sstream>
 
-namespace iostreams = boost::iostreams;
-
 namespace ScriptInterface {
+  Utils::Factory<ScriptInterfaceBase> factory;
+
 std::shared_ptr<ScriptInterfaceBase>
 ScriptInterfaceBase::make_shared(std::string const &name,
                                  CreationPolicy policy) {
@@ -41,7 +41,7 @@ ScriptInterfaceBase::make_shared(std::string const &name,
 
   switch (policy) {
   case CreationPolicy::LOCAL:
-    sp = Utils::Factory<ScriptInterfaceBase>::make(name);
+    sp = factory.make(name);
     break;
   case CreationPolicy::GLOBAL:
     sp =
@@ -127,6 +127,8 @@ std::string ScriptInterfaceBase::serialize() const {
  */
 std::shared_ptr<ScriptInterfaceBase>
 ScriptInterfaceBase::unserialize(std::string const &state) {
+  namespace iostreams = boost::iostreams;
+
   iostreams::array_source src(state.data(), state.size());
   iostreams::stream<iostreams::array_source> ss(src);
   boost::archive::binary_iarchive ia(ss);

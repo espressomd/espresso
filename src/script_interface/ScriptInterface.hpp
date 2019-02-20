@@ -37,11 +37,13 @@
  *  See page @ref script_interface for detailed instructions.
  */
 namespace ScriptInterface {
+  extern Utils::Factory<ScriptInterfaceBase> factory;
+
 template <typename T> static void register_new(std::string const &name) {
   static_assert(std::is_base_of<ScriptInterfaceBase, T>::value, "");
 
   /* Register with the factory */
-  Utils::Factory<ScriptInterfaceBase>::register_new<T>(name);
+  factory.register_new<T>(name);
 }
 
 inline std::shared_ptr<ScriptInterfaceBase> get_instance(Variant value) {
