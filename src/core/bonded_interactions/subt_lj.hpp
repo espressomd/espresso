@@ -42,30 +42,29 @@ int subt_lj_set_params(int bond_type);
     and adds this force to the particle forces.
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
-    @param iaparams  Parameters of interaction
     @param dx        change in position
     @param force     force on particles
     @return true if bond is broken
 */
 inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
-                                   Bonded_ia_parameters *, double dx_[3],
+                                   Bonded_ia_parameters *, double dx[3],
                                    double force[3]) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
 
-  auto const dx = -Vector3d(dx_, dx_ + 3);
+  auto const dx_ = -Vector3d(dx, dx + 3);
 
-  add_lj_pair_force(p1, p2, ia_params, dx.data(), dx.norm(), force);
+  add_lj_pair_force(p1, p2, ia_params, dx_.data(), dx_.norm(), force);
 
   return ES_OK;
 }
 
 inline int subt_lj_pair_energy(Particle *p1, Particle *p2,
-                               Bonded_ia_parameters *, double dx_[3],
+                               Bonded_ia_parameters *, double dx[3],
                                double *_energy) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
-  auto const dx = -Vector3d(dx_, dx_ + 3);
+  auto const dx_ = -Vector3d(dx, dx + 3);
 
-  *_energy = -lj_pair_energy(p1, p2, ia_params, dx.data(), dx.norm());
+  *_energy = -lj_pair_energy(p1, p2, ia_params, dx_.data(), dx_.norm());
   return ES_OK;
 }
 
