@@ -1,5 +1,6 @@
 cimport c_profiler
 
+
 def begin_section(name):
     """
     Start named section in profiler.
@@ -13,6 +14,7 @@ def begin_section(name):
     """
 
     c_profiler.begin_section(name)
+
 
 def end_section(name):
     """

@@ -36,22 +36,22 @@
 #endif
 
 namespace Profiler {
-    /**
-     * @brief Start named section.
-     *
-     * @param name Identifier of the section.
-     */
-    inline void begin_section(const std::string &name) {
-        ESPRESSO_PROFILER_MARK_BEGIN(name.c_str());
-    }
+/**
+ * @brief Start named section.
+ *
+ * @param name Identifier of the section.
+ */
+inline void begin_section(const std::string &name) {
+  ESPRESSO_PROFILER_MARK_BEGIN(name.c_str());
+}
 
-    /**
+/**
  * @brief End named section.
  *
  * @param name Identifier of the section.
  */
-    inline void end_section(const std::string &name) {
-        ESPRESSO_PROFILER_MARK_BEGIN(name.c_str());
-    }
+inline void end_section(const std::string &name) {
+  ESPRESSO_PROFILER_MARK_BEGIN(name.c_str());
 }
+} // namespace Profiler
 #endif
