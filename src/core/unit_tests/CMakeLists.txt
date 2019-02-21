@@ -68,3 +68,4 @@ unit_test(NAME field_coupling_force_field SRC field_coupling_force_field_test.cp
 unit_test(NAME Span_test SRC Span_test.cpp)
 unit_test(NAME periodic_fold_test SRC periodic_fold_test.cpp)
 unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS Boost::mpi MPI::MPI_CXX)
+unit_test(NAME PdbParser_test SRC PdbParser_test.cpp ../PdbParser.cpp)

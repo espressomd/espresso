@@ -70,7 +70,7 @@ inline void add_tabulated_pair_force(const Particle *const p1,
     auto const fac = ia_params->TAB.force(dist) / dist;
 
     for (int j = 0; j < 3; j++)
-      force[j] -= fac * d[j];
+      force[j] += fac * d[j];
   }
 }
 

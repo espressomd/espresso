@@ -19,7 +19,7 @@
 #
 
 # Target for the unit tests
-add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) --output-on-failure)
+add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} $(ARGS) --output-on-failure)
 
 if(WITH_TESTS)
   # Run unit tests on check
@@ -80,6 +80,8 @@ endfunction(UNIT_TEST)
 add_subdirectory(core)
 add_subdirectory(config)
 
+add_subdirectory(profiler)
+
 if(SCAFACOS)
   add_subdirectory(scafacos)
 endif(SCAFACOS)
@@ -87,7 +89,6 @@ endif(SCAFACOS)
 if(WITH_SCRIPT_INTERFACE)
   add_subdirectory(script_interface)
 endif()
-
 
 if(WITH_PYTHON)
   add_subdirectory(python)

@@ -55,7 +55,7 @@ class TabulatedTest(ut.TestCase):
             self.s.part[1].pos = [5., 5., 6. + z]
             self.s.integrator.run(0)
             np.testing.assert_allclose(
-                np.copy(self.s.part[0].f), [0., 0., 5. + z * 2.3])
+                np.copy(self.s.part[0].f), [0., 0., -(5. + z * 2.3)])
             np.testing.assert_allclose(
                 np.copy(self.s.part[0].f), -np.copy(self.s.part[1].f))
             self.assertAlmostEqual(

@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(FieldBase_test) {
 }
 
 struct DummyVectorField {
-  Vector3d operator()(const Vector3d &x) const { return 2. * x; }
+  Vector3d operator()(const Vector3d &x, double t) const { return t * x; }
 };
 
 BOOST_AUTO_TEST_CASE(ForceField_test) {
@@ -112,24 +112,23 @@ BOOST_AUTO_TEST_CASE(ForceField_test) {
   const Vector3d x{1., 2., 3.};
   const int p = 5;
 
-  BOOST_CHECK((2. * x) == ff.force(5, x));
+  BOOST_CHECK((9. * x) == ff.force(5, x, 9.));
   BOOST_CHECK(1 == ff.coupling().count);
 }
 
 struct DummyScalarField {
-  double operator()(const Vector3d &x) const { return 2. * x.norm(); }
-  Vector3d gradient(const Vector3d &x) const { return 3. * x; }
+  double operator()(const Vector3d &x, double t) const { return t * x.norm(); }
+  Vector3d jacobian(const Vector3d &x, double = {}) const { return 3. * x; }
 };
 
 BOOST_AUTO_TEST_CASE(PotentialField_test) {
   auto pf = PotentialField<Id<true>, DummyScalarField>(Id<true>{},
                                                        DummyScalarField{});
   const Vector3d x{1., 2., 3.};
-  const int p = 5;
 
-  BOOST_CHECK((2. * x.norm()) == pf.energy(5, x));
+  BOOST_CHECK((2. * x.norm()) == pf.energy(5, x, 2.));
   BOOST_CHECK(1 == pf.coupling().count);
 
-  BOOST_CHECK(-(3. * x) == pf.force(5, x));
+  BOOST_CHECK(-(3. * x) == pf.force(5, x, 0));
   BOOST_CHECK(2 == pf.coupling().count);
 }
