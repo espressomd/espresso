@@ -1,7 +1,7 @@
 
 #include "coulomb.hpp"
-#include "communication.hpp"                       // bcast functions
-#include "electrostatics_magnetostatics/maggs.hpp" // maggs_init
+#include "communication.hpp"                         // bcast functions
+#include "electrostatics_magnetostatics/maggs.hpp"   // maggs_init
 #include "electrostatics_magnetostatics/p3m_gpu.hpp" // p3m_gpu_init
 #include "errorhandling.hpp"                         // runtime_error
 #include "initialize.hpp"                            // on_ghost_flags_change
