@@ -1,6 +1,8 @@
 #ifndef PROFILER_PROFILER_HPP
 #define PROFILER_PROFILER_HPP
 
+#include <string>
+
 #ifdef HAVE_CALIPER
 #include <caliper/cali.h>
 
@@ -39,13 +41,17 @@ namespace Profiler {
      *
      * @param name Identifier of the section.
      */
-    void begin_section(const std::string &name);
+    inline void begin_section(const std::string &name) {
+        ESPRESSO_PROFILER_MARK_BEGIN(name.c_str());
+    }
 
     /**
  * @brief End named section.
  *
  * @param name Identifier of the section.
  */
-    void end_section(const std::string &name);
+    inline void end_section(const std::string &name) {
+        ESPRESSO_PROFILER_MARK_BEGIN(name.c_str());
+    }
 }
 #endif
