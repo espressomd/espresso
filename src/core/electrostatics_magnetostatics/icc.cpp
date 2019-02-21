@@ -89,7 +89,7 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   /***********************************************/
 
   /* real space Coulomb */
-  icc_calc_pair_coulomb_force(p1, p2, d, dist, dist2, force);
+  Coulomb::icc_calc_pair_coulomb_force(p1, p2, d, dist, dist2, force);
 
   /***********************************************/
   /* add total nonbonded forces to particle      */
@@ -114,7 +114,7 @@ int iccp3m_iteration() {
   if (iccp3m_cfg.n_ic == 0)
     return 0;
 
-  iccp3m_sanity_check();
+  Coulomb::iccp3m_sanity_check();
 
   if ((iccp3m_cfg.eout <= 0)) {
     runtimeErrorMsg()
@@ -246,7 +246,7 @@ void calc_long_range_forces_iccp3m() {
     runtimeErrorMsg() << "ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ";
   }
 
-  icc_calc_long_range_force_contribution_iccp3m();
+  Coulomb::icc_calc_long_range_force();
 #endif
 }
 

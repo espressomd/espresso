@@ -241,7 +241,7 @@ void on_observable_calc() {
   if (reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
 
-    initialize_on_observable_calc();
+    Coulomb::on_observable_calc();
 
     reinit_electrostatics = 0;
   }
@@ -251,7 +251,7 @@ void on_observable_calc() {
   if (reinit_magnetostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
 
-    initialize_on_observable_calc_dipole();
+    Dipole::on_observable_calc();
 
     reinit_magnetostatics = 0;
   }
@@ -293,11 +293,11 @@ void on_coulomb_change() {
   invalidate_obs();
 
 #ifdef ELECTROSTATICS
-  initialize_on_coulomb_change();
+  Coulomb::on_coulomb_change();
 #endif /* ELECTROSTATICS */
 
 #ifdef DIPOLES
-  initialize_on_coulomb_change_dipole();
+  Dipole::on_coulomb_change();
 #endif /* ifdef DIPOLES */
 
   /* all Coulomb methods have a short range part, aka near field
@@ -351,7 +351,7 @@ void on_lbboundary_change() {
 void on_resort_particles() {
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
-  initialize_on_resort_particles();
+  Coulomb::on_resort_particles();
 #endif /* ifdef ELECTROSTATICS */
 
   /* DIPOLAR interactions so far don't need this */
@@ -370,11 +370,11 @@ void on_boxl_change() {
 
 /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
-  initialize_on_boxl_change();
+  Coulomb::on_boxl_change();
 #endif
 
 #ifdef DIPOLES
-  initialize_on_boxl_change_dipole();
+  Dipole::on_boxl_change();
 #endif
 
 #ifdef LB
@@ -396,11 +396,11 @@ void on_cell_structure_change() {
    have separate, faster methods, as this might happen frequently
    in a NpT simulation. */
 #ifdef ELECTROSTATICS
-  initialize_init_coulomb();
+  Coulomb::init_coulomb();
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  initialize_init_dipole();
+  Dipole::init_dipole();
 #endif /* ifdef DIPOLES */
 
 #ifdef LB

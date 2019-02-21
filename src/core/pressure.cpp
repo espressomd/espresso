@@ -183,12 +183,12 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
 void calc_long_range_virials() {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  pressure_calc_long_range_coulomb_force(virials, p_tensor);
+  Coulomb::pressure_calc_long_range_force(virials, p_tensor);
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  pressure_calc_long_range_dipole_force(virials, p_tensor);
+  Dipole::calc_long_range_dipole_force(virials, p_tensor);
 #endif /*ifdef DIPOLES */
 }
 
@@ -203,10 +203,10 @@ void init_virials(Observable_stat *stat) {
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
 #ifdef ELECTROSTATICS
-  pressure_n_coulomb(n_coulomb);
+  Coulomb::pressure_n_coulomb(n_coulomb);
 #endif
 #ifdef DIPOLES
-  pressure_n_dipolar(n_dipolar);
+  Dipole::pressure_n_dipolar(n_dipolar);
 #endif
 #ifdef VIRTUAL_SITES
   n_vs = virtual_sites()->n_pressure_contribs();
@@ -239,10 +239,10 @@ void init_p_tensor(Observable_stat *stat) {
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
 #ifdef ELECTROSTATICS
-  pressure_n_coulomb(n_coulomb);
+  Coulomb::pressure_n_coulomb(n_coulomb);
 #endif
 #ifdef DIPOLES
-  pressure_n_dipolar(n_dipolar);
+  Dipole::pressure_n_dipolar(n_dipolar);
 #endif
 #ifdef VIRTUAL_SITES
   n_vs = virtual_sites()->n_pressure_contribs();

@@ -53,10 +53,10 @@ void init_energies(Observable_stat *stat) {
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
 #ifdef ELECTROSTATICS
-  energy_n_coulomb(n_coulomb);
+  Coulomb::energy_n_coulomb(n_coulomb);
 #endif
 #ifdef DIPOLES
-  energy_n_dipolar(n_dipolar);
+  Dipole::energy_n_dipolar(n_dipolar);
 #endif
 
   obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded,
@@ -125,11 +125,11 @@ void energy_calc(double *result) {
 void calc_long_range_energies() {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  energy_calc_long_range_coulomb_energy(energy);
+  Coulomb::energy_calc_long_range_coulomb_energy(energy);
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  energy_calc_long_range_dipole_energy(energy);
+  Dipole::calc_long_range_dipole_energy(energy);
 #endif /* ifdef DIPOLES */
 }
 

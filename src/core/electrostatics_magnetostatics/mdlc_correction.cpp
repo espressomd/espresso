@@ -666,7 +666,7 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
   dlc_params.gap_size = gap_size;
   dlc_params.h = box_l[2] - gap_size;
 
-  if (mdlc_correction_set_dipole_mesh()) {
+  if (Dipole::set_dipole_mesh()) {
     // if set_dipole_mesh fails
     return ES_ERROR;
   }
