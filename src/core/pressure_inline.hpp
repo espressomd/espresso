@@ -86,8 +86,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 #ifdef ELECTROSTATICS
   /* real space Coulomb */
   if (coulomb.method != COULOMB_NONE) {
-    Coulomb::add_pair_pressure(p1, p2, d, dist, dist2, virials,
-                      p_tensor);
+    Coulomb::add_pair_pressure(p1, p2, d, dist, dist2, virials, p_tensor);
   }
 #endif /*ifdef ELECTROSTATICS */
 

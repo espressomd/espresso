@@ -75,8 +75,8 @@
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "electrostatics_magnetostatics/reaction_field.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #endif
 #ifdef P3M
 #include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
