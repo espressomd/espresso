@@ -33,4 +33,19 @@
 #define ESPRESSO_PROFILER_MARK_END(A)
 #endif
 
+namespace Profiler {
+    /**
+     * @brief Start named section.
+     *
+     * @param name Identifier of the section.
+     */
+    void begin_section(const std::string &name);
+
+    /**
+ * @brief End named section.
+ *
+ * @param name Identifier of the section.
+ */
+    void end_section(const std::string &name);
+}
 #endif
