@@ -91,6 +91,6 @@ if espressomd.has_features(["MASS"]):
 
 if espressomd.has_features(["ELECTROSTATICS"]):
     print("Q\n%s" % system.part[:].q)
-    system.part[::2].q = np.ones(n_part / 2)
-    system.part[1::2].q = -np.ones(n_part / 2)
+    system.part[::2].q = np.ones(n_part // 2)
+    system.part[1::2].q = -np.ones(n_part // 2)
     print("Q_NEW\n%s" % system.part[:].q)

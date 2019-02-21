@@ -98,7 +98,7 @@ try:
     import espressomd.visualization
     if hasattr(espressomd.visualization.mayaviLive, 'deferred_ImportError') or \\
        hasattr(espressomd.visualization.openGLLive, 'deferred_ImportError'):
-        raise espressomd.visualization.openGLLive.deferred_ImportError
+        raise ImportError()
 except ImportError:
     from {} import MagicMock
     import espressomd
@@ -112,7 +112,7 @@ try:
     import espressomd.visualization as test
     if hasattr(test.mayaviLive, 'deferred_ImportError') or \\
        hasattr(test.openGLLive, 'deferred_ImportError'):
-        raise test.openGLLive.deferred_ImportError
+        raise ImportError()
 except ImportError:
     from {} import MagicMock
     import espressomd
@@ -126,7 +126,7 @@ try:
     from espressomd import visualization
     if hasattr(visualization.mayaviLive, 'deferred_ImportError') or \\
        hasattr(visualization.openGLLive, 'deferred_ImportError'):
-        raise visualization.openGLLive.deferred_ImportError
+        raise ImportError()
 except ImportError:
     from {} import MagicMock
     import espressomd
@@ -140,7 +140,7 @@ try:
     from espressomd import visualization as test
     if hasattr(test.mayaviLive, 'deferred_ImportError') or \\
        hasattr(test.openGLLive, 'deferred_ImportError'):
-        raise test.openGLLive.deferred_ImportError
+        raise ImportError()
 except ImportError:
     from {} import MagicMock
     import espressomd

@@ -195,7 +195,7 @@ def mock_es_visualization(code):
     exception. Please note that `espressomd.visualization` is deferring the
     exception, thus requiring additional checks. Import aliases are supported,
     however please don't use `from espressomd.visualization import *` because
-    it makes it impossible to mock an import without a namespace.
+    it hides the namespace of classes to be mocked.
     """
     # consider all legal import statements in Python3
     # (the ordering follows regex precedence rules)
@@ -233,7 +233,7 @@ except ImportError:
                 return """
     if hasattr({0}.mayaviLive, 'deferred_ImportError') or \\
        hasattr({0}.openGLLive, 'deferred_ImportError'):
-        raise {0}.openGLLive.deferred_ImportError""".format(alias)
+        raise ImportError()""".format(alias)
         else:
             return ""
 

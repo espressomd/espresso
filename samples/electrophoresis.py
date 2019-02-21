@@ -126,8 +126,8 @@ system.part.add(pos=np.random.random((n_monomers, 3)) * system.box_l,
 n_ions = 100
 
 system.part.add(pos=np.random.random((n_ions, 3)) * system.box_l,
-                q=np.hstack((np.ones(n_ions / 2), -np.ones(n_ions / 2))),
-                type=np.array(np.hstack((np.ones(n_ions / 2), 2 * np.ones(n_ions / 2))), dtype=int))
+                q=np.hstack((np.ones(n_ions // 2), -np.ones(n_ions // 2))),
+                type=np.array(np.hstack((np.ones(n_ions // 2), 2 * np.ones(n_ions // 2))), dtype=int))
 
 
 # Sign charges to particles after the particle creation:
