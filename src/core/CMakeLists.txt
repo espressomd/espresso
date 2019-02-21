@@ -96,6 +96,7 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/fft.cpp
   electrostatics_magnetostatics/coulomb.cpp
   electrostatics_magnetostatics/dipole.cpp
+  electrostatics_magnetostatics/reaction_field.cpp
   grid_based_algorithms/lbboundaries.cpp
   grid_based_algorithms/lb.cpp
   grid_based_algorithms/lb-d3q19.cpp
@@ -116,7 +117,6 @@ set(EspressoCore_SRC
   nonbonded_interactions/morse.cpp
   nonbonded_interactions/nonbonded_interaction_data.cpp
   nonbonded_interactions/nonbonded_tab.cpp
-  nonbonded_interactions/reaction_field.cpp
   nonbonded_interactions/soft_sphere.cpp
   nonbonded_interactions/steppot.cpp
   nonbonded_interactions/thole.cpp
@@ -205,4 +205,3 @@ endif(WITH_UNIT_TESTS)
 add_subdirectory(grid_based_algorithms)
 add_subdirectory(shapes)
 add_subdirectory(cluster_analysis)
-add_subdirectory(electrostatics_magnetostatics)

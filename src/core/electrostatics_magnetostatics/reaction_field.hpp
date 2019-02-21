@@ -28,12 +28,11 @@
  *
  */
 
-#include "debug.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
-#include "utils.hpp"
+#include "config.hpp"
 
 #ifdef ELECTROSTATICS
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
 
 /** Structure to hold Reaction Field Parameters. */
 typedef struct {
@@ -71,19 +70,6 @@ inline void add_rf_coulomb_pair_force_no_cutoff(const Particle *const p1,
 
   for (j = 0; j < 3; j++)
     force[j] += fac * d[j];
-
-  ONEPART_TRACE(if (p1->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: RF   f = (%.3e,%.3e,%.3e) with "
-                            "part id=%d at dist %f fac %.3e\n",
-                            this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                            p2->p.identity, dist, fac));
-  ONEPART_TRACE(if (p2->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: RF   f = (%.3e,%.3e,%.3e) with "
-                            "part id=%d at dist %f fac %.3e\n",
-                            this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                            p1->p.identity, dist, fac));
 }
 
 /** Computes the Reaction Field pair force and adds this
@@ -120,50 +106,6 @@ inline double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist) {
   }
   return 0.0;
 }
-
-/*from I. G. Tironi et al., J. Chem. Phys. 102, 5451 (1995)*/
-#ifdef INTER_RF
-
-///
-int interrf_set_params(int part_type_a, int part_type_b, int rf_on);
-
-inline void add_interrf_pair_force(const Particle *const p1,
-                                   const Particle *const p2,
-                                   IA_parameters *ia_params, double d[3],
-                                   double dist, double force[3]) {
-#ifdef ONEPART_DEBUG
-  double fac = 0.0; /* TODO: this  variable was not declared. Now the code
-                       compiles, but I have no idea of what value to assign to
-                       it (MS) */
-#endif
-  if ((ia_params->rf_on == 1) && (dist < rf_params.r_cut)) {
-    add_rf_coulomb_pair_force_no_cutoff(p1, p2, d, dist, force);
-  }
-
-  ONEPART_TRACE(if (p1->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) "
-                            "with part id=%d at dist %f fac %.3e\n",
-                            this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                            p2->p.identity, dist, fac));
-  ONEPART_TRACE(if (p2->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) "
-                            "with part id=%d at dist %f fac %.3e\n",
-                            this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                            p1->p.identity, dist, fac));
-}
-
-inline double interrf_pair_energy(const Particle *p1, const Particle *p2,
-                                  const IA_parameters *ia_params, double dist) {
-  if ((ia_params->rf_on == 1) && (dist < rf_params.r_cut)) {
-    double val = rf_coulomb_pair_energy_no_cutoff(p1, p2, dist);
-    return val;
-  }
-  return 0.0;
-}
-
-#endif
 
 /*@}*/
 #endif

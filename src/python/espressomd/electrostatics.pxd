@@ -52,10 +52,8 @@ IF ELECTROSTATICS:
                 COULOMB_MAGGS, \
                 COULOMB_ELC_P3M, \
                 COULOMB_RF, \
-                COULOMB_INTER_RF, \
                 COULOMB_P3M_GPU, \
                 COULOMB_MMM1D_GPU, \
-                COULOMB_EK, \
                 COULOMB_SCAFACOS
 
         int coulomb_set_prefactor(double prefactor)

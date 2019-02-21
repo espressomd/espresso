@@ -57,7 +57,7 @@
 #include "io/mpiio/mpiio.hpp"
 #include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
-#include "nonbonded_interactions/reaction_field.hpp"
+#include "electrostatics_magnetostatics/reaction_field.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"

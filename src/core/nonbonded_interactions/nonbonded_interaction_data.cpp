@@ -57,13 +57,13 @@
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/reaction_field.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "layered.hpp"
 #include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
-#include "reaction_field.hpp"
 #include "serialization/IA_parameters.hpp"
 #include "thermostat.hpp"
 
@@ -102,7 +102,6 @@ Coulomb_parameters coulomb = {
 
 #ifdef ELECTROSTATICS
 Debye_hueckel_params dh_params{};
-Reaction_field_params rf_params{};
 
 /** Induced field (for const. potential feature) **/
 double field_induced;

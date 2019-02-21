@@ -76,7 +76,7 @@
 #include "bonded_interactions/bonded_coulomb.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
-#include "nonbonded_interactions/reaction_field.hpp"
+#include "electrostatics_magnetostatics/reaction_field.hpp"
 #endif
 #ifdef P3M
 #include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
@@ -237,9 +237,6 @@ inline void calc_non_bonded_pair_force_parts(
   if (dist < ia_params->GB_cut) {
     add_gb_pair_force(p1, p2, ia_params, d, dist, force, torque1, torque2);
   }
-#endif
-#ifdef INTER_RF
-  add_interrf_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
 }
 

@@ -60,7 +60,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define INTER_RF
 #define OVERLAPPED
 
 #define BOND_ANGLE

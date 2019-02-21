@@ -27,6 +27,8 @@
 #ifdef ELECTROSTATICS
 #include "communication.hpp"
 
+Reaction_field_params rf_params{};
+
 int rf_set_params(double kappa, double epsilon1, double epsilon2,
                   double r_cut) {
   rf_params.kappa = kappa;
@@ -50,23 +52,4 @@ int rf_set_params(double kappa, double epsilon1, double epsilon2,
 
   return 1;
 }
-
-#ifdef INTER_RF
-
-int interrf_set_params(int part_type_a, int part_type_b, int rf_on) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->rf_on = rf_on;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
-}
-
-#endif
-
 #endif

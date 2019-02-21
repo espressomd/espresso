@@ -52,7 +52,6 @@
 #include "nonbonded_interactions/morse.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
-#include "nonbonded_interactions/reaction_field.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/steppot.hpp"
 #include "nonbonded_interactions/thole.hpp"
@@ -68,6 +67,7 @@
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/reaction_field.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
@@ -175,10 +175,6 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 #ifdef GAY_BERNE
   /* Gay-Berne */
   ret += gb_pair_energy(p1, p2, ia_params, d, dist);
-#endif
-
-#ifdef INTER_RF
-  ret += interrf_pair_energy(p1, p2, ia_params, dist);
 #endif
 
   return ret;

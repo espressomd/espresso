@@ -343,8 +343,6 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``INTER_RF``
-
 -  ``MMM1D_GPU``
 
 -  ``_P3M_GPU_FLOAT``

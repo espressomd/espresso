@@ -107,7 +107,6 @@ namespace Coulomb {
           ret = dh_params.r_cut;
           break;
         case COULOMB_RF:
-        case COULOMB_INTER_RF:
           ret = rf_params.r_cut;
           break;
 #ifdef SCAFACOS
@@ -131,7 +130,6 @@ namespace Coulomb {
           dh_params.r_cut = 0.0;
           dh_params.kappa = 0.0;
         case COULOMB_RF:
-        case COULOMB_INTER_RF:
           rf_params.kappa = 0.0;
           rf_params.epsilon1 = 0.0;
           rf_params.epsilon2 = 0.0;
@@ -572,10 +570,6 @@ namespace Coulomb {
           MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart);
           break;
         case COULOMB_RF:
-        case COULOMB_INTER_RF:
-          MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0,
-                    comm_cart);
-          break;
         default:
           fprintf(stderr,
                   "%d: INTERNAL ERROR: cannot bcast coulomb params for "

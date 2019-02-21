@@ -10,7 +10,7 @@
 #include "integrate.hpp"                              // skin
 #include "npt.hpp"                                    // nptiso
 #include "statistics.hpp"                             // Observable_stat
-#include "nonbonded_interactions/reaction_field.hpp"  // Reaction_field_params
+#include "reaction_field.hpp"  // Reaction_field_params
 
 #ifdef ELECTROSTATICS
 
@@ -105,9 +105,6 @@ namespace Coulomb {
           virials.coulomb[0] += force[0] * d[0] + force[1] * d[1] + force[2] * d[2];
           break;
         }
-        case COULOMB_INTER_RF:
-          // this is done together with the other short range interactions
-          break;
         default:
           fprintf(stderr, "calculating pressure for electrostatics method that "
                           "doesn't have it implemented\n");
@@ -193,10 +190,6 @@ namespace Coulomb {
             break;
           case COULOMB_RF:
             ret = rf_coulomb_pair_energy(p1, p2, dist);
-            break;
-          case COULOMB_INTER_RF:
-            // this is done above as interaction
-            ret = 0;
             break;
           case COULOMB_MMM1D:
             ret = mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
