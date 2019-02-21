@@ -14,7 +14,7 @@ set(TUTORIALS_DIR "${CMAKE_CURRENT_BINARY_DIR}/local_tutorials")
 add_custom_target(local_tutorials
                   COMMAND ${CMAKE_COMMAND} -E remove_directory ${TUTORIALS_DIR}  # cleanup
                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/doc/tutorials ${TUTORIALS_DIR}
-                  DEPENDS tutorials_python)
+                  DEPENDS tutorials_python_only)
 
 tutorial_test(FILE test_01-lennard_jones.py)
 tutorial_test(FILE test_02-charged_system-1.py)

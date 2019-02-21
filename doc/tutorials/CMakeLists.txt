@@ -92,8 +92,7 @@ add_custom_target(tutorials_html DEPENDS
   tutorials_08_html
   )
 
-add_custom_target(tutorials_python DEPENDS
-  tutorials
+add_custom_target(tutorials_python_only DEPENDS
   tutorials_01_python
   tutorials_02_1_python
   tutorials_02_2_python
@@ -103,6 +102,11 @@ add_custom_target(tutorials_python DEPENDS
   tutorials_04_4_python
   tutorials_05_python
   tutorials_08_python
+  )
+
+add_custom_target(tutorials_python DEPENDS
+  tutorials
+  tutorials_python_only
   )
 
 configure_file(Readme.rst ${CMAKE_CURRENT_BINARY_DIR}/Readme.rst COPYONLY)
