@@ -119,7 +119,6 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
     delta[3 + dir] = rel - ind[dir]; // delta_x/a
     delta[dir] = 1.0 - delta[3 + dir];
   }
-
   node_index[0] = get_linear_index(ind, this->halo_grid);
   node_index[1] = node_index[0] + 1;
   node_index[2] = node_index[0] + this->halo_grid[0];

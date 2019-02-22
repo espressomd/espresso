@@ -20,7 +20,6 @@ void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
   lattice.map_position_to_lattice(pos, node_index, delta);
-
   for (int z = 0; z < 2; z++) {
     for (int y = 0; y < 2; y++) {
       for (int x = 0; x < 2; x++) {
@@ -33,7 +32,7 @@ void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
   }
 }
 template <typename Op>
-void new_lattice_interpolation(Vector3i const &ind, Vector6d const &delta,
+void global_lattice_interpolation(Vector3i const &ind, Vector6d const &delta,
                            Op &&op) {
   Vector3i neighbor_ind{};
   for (int z = 0; z < 2; z++) {
@@ -42,7 +41,7 @@ void new_lattice_interpolation(Vector3i const &ind, Vector6d const &delta,
         auto const w = delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
         neighbor_ind = ind + Vector3i{{x, y, z}};
         for (int i=0; i<3; ++i) {
-          if (neighbor_ind[i] == box_l[i] / lb_lbfluid_get_agrid()) {
+          if (neighbor_ind[i] == static_cast<int>(box_l[i] / lb_lbfluid_get_agrid())) {
             neighbor_ind[i] = 0;
           }
         }
@@ -100,7 +99,7 @@ const Vector3d lb_lbfluid_get_interpolated_velocity_global(const Vector3d &pos) 
     Vector6d delta{};
     Lattice::map_position_to_lattice_global(pos, ind, delta, lb_lbfluid_get_agrid());
     Vector3d interpolated_u{};
-    new_lattice_interpolation(ind, delta,
+    global_lattice_interpolation(ind, delta,
                           [&interpolated_u](Vector3i const& ind, double w) {
                             interpolated_u += w * lb_lbnode_get_u(ind);
                           });
@@ -116,11 +115,10 @@ void lb_lbfluid_add_force_density(const Vector3d &pos,
                                   const Vector3d &force_density) {
   lattice_interpolation(lblattice, pos,
                         [&force_density](Lattice::index_t index, double w) {
-                          auto &node = lbfields[index];
-
-                          node.force_density[0] += w * force_density[0];
-                          node.force_density[1] += w * force_density[1];
-                          node.force_density[2] += w * force_density[2];
+                            auto &field = lbfields[index];
+                            field.force_density[0] += w * force_density[0];
+                            field.force_density[1] += w * force_density[1];
+                            field.force_density[2] += w * force_density[2];
                         });
 }
 #endif

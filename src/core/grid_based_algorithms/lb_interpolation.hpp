@@ -20,5 +20,4 @@ const Vector3d lb_lbfluid_get_interpolated_velocity_global(const Vector3d &pos);
  */
 void lb_lbfluid_add_force_density(const Vector3d &p,
                                   const Vector3d &force_density);
-
 #endif

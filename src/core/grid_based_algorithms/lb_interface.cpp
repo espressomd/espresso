@@ -940,7 +940,6 @@ double lb_lbnode_get_density(const Vector3i &ind) {
     node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
-
     mpi_recv_fluid(node, index, &rho, j, pi);
     // unit conversion
     rho *= 1 / lbpar.agrid / lbpar.agrid / lbpar.agrid;
