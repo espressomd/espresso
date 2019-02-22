@@ -175,8 +175,8 @@ void CoupleIBMParticleToFluid(Particle *p) {
   delta_j[2] = p->f.f[2] * lbpar.tau * lbpar.tau / lbpar.agrid;
 
   // Get indices and weights of affected nodes using discrete delta function
-  Lattice::index_t node_index[8];
-  double delta[6];
+  Vector<8, std::size_t> node_index{};
+  Vector6d delta{};
   lblattice.map_position_to_lattice(p->r.p, node_index, delta);
 
   // Loop over all affected nodes
@@ -209,8 +209,7 @@ that we add the f/2 contribution - only for CPU
 
 void GetIBMInterpolatedVelocity(double *p, double *const v,
                                 double *const forceAdded) {
-  Lattice::index_t node_index[8], index;
-  double delta[6];
+  Lattice::index_t index;
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
   int x, y, z;
@@ -231,6 +230,8 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
 
   /* determine elementary lattice cell surrounding the particle
    and the relative position of the particle in this cell */
+  Vector<8, std::size_t> node_index{};
+  Vector6d delta{};
   lblattice.map_position_to_lattice(pos, node_index, delta);
 
   /* calculate fluid velocity at particle's position

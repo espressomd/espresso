@@ -83,21 +83,22 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
 }
 
 void Lattice::map_position_to_lattice(const Vector3d &pos,
-                                      index_t node_index[8],
-                                      double delta[6]) const {
-  int ind[3];
+                                      Vector<8, std::size_t> &node_index,
+                                      Vector6d &delta) const {
+  Vector3i ind{};
+  auto const epsilon = std::numeric_limits<double>::epsilon();
 
   /* determine the elementary lattice cell containing the particle
      and the relative position of the particle in this cell */
   for (int dir = 0; dir < 3; dir++) {
-    const double lpos = pos[dir] - my_left[dir];
-    const double rel = lpos / this->agrid[dir] + 0.5; // +1 for halo offset
-    ind[dir] = (int)floor(rel);
+    auto const lpos = pos[dir] - my_left[dir];
+    auto const rel = lpos / this->agrid[dir] + 0.5; // +1 for halo offset
+    ind[dir] = static_cast<int>(floor(rel));
 
     /* surrounding elementary cell is not completely inside this box,
        adjust if this is due to round off errors */
     if (ind[dir] < 0) {
-      if (fabs(rel) < ROUND_ERROR_PREC) {
+      if (fabs(rel) < epsilon) {
         ind[dir] = 0; // TODO
       } else {
         fprintf(stderr,
@@ -106,7 +107,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
                 this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
       }
     } else if (ind[dir] > this->grid[dir]) {
-      if (lpos - local_box_l[dir] < ROUND_ERROR_PREC * local_box_l[dir])
+      if (lpos - local_box_l[dir] < epsilon * local_box_l[dir])
         ind[dir] = this->grid[dir];
       else
         fprintf(stderr,
@@ -119,7 +120,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
     delta[dir] = 1.0 - delta[3 + dir];
   }
 
-  node_index[0] = get_linear_index(ind[0], ind[1], ind[2], this->halo_grid);
+  node_index[0] = get_linear_index(ind, this->halo_grid);
   node_index[1] = node_index[0] + 1;
   node_index[2] = node_index[0] + this->halo_grid[0];
   node_index[3] = node_index[0] + this->halo_grid[0] + 1;
@@ -131,33 +132,21 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
 
 /********************** static Functions **********************/
 
-void Lattice::map_position_to_lattice_global(Vector3d &pos, Vector3i &ind,
+void Lattice::map_position_to_lattice_global(const Vector3d &pos, Vector3i &ind,
                                              double delta[6],
                                              double tmp_agrid) {
-  // not sure why I don't have access to agrid here so I make a temp var and
-  // pass it to this function
-  int i;
-  double rel[3];
-  // fold the position onto the local box, note here ind is used as a dummy
-  // variable
-  for (i = 0; i < 3; i++) {
-    pos[i] = pos[i] - 0.5 * tmp_agrid;
-  }
+  Vector3d rel{};
+  Vector3d local_pos = pos;
+  local_pos = pos - Vector3d::broadcast(0.5 * tmp_agrid);
 
-  fold_position(pos, ind);
+  fold_position(local_pos, ind);
 
-  // convert the position into lower left grid point
-  for (i = 0; i < 3; i++) {
-    rel[i] = (pos[i]) / tmp_agrid;
-  }
-
-  // calculate the index of the position
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
+    // convert the position into lower left grid point
+    rel[i] = (local_pos[i]) / tmp_agrid;
+    // calculate the index of the position
     ind[i] = floor(rel[i]);
-  }
-
-  // calculate the linear interpolation weighting
-  for (i = 0; i < 3; i++) {
+    // calculate the linear interpolation weighting
     delta[3 + i] = rel[i] - ind[i];
     delta[i] = 1 - delta[3 + i];
   }

@@ -1213,8 +1213,8 @@ namespace {
 template <typename Op>
 void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
                            Op &&op) {
-  Lattice::index_t node_index[8];
-  double delta[6];
+  Vector<8, std::size_t> node_index{};
+  Vector6d delta{};
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */

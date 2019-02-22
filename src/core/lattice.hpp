@@ -92,8 +92,8 @@ public:
    * \param delta      distance fraction of pos from the surrounding
    *                   elementary cell, 6 directions (Output)
    */
-  void map_position_to_lattice(const Vector3d &pos, index_t node_index[8],
-                               double delta[6]) const;
+  void map_position_to_lattice(const Vector3d &pos, Vector<8, std::size_t> &node_index,
+                               Vector6d &delta) const;
   /********************** Inline Functions **********************/
 
   /** Map a global lattice site to the node grid.
@@ -126,7 +126,7 @@ public:
    *                   elementary cell, 6 directions (Output)
    * \param tmp_agrid  lattice mesh distance
    */
-  static void map_position_to_lattice_global(Vector3d &pos, Vector3i &ind,
+  static void map_position_to_lattice_global(const Vector3d &pos, Vector3i &ind,
                                              double delta[6], double tmp_agrid);
 };
 
