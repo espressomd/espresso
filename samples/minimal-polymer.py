@@ -30,14 +30,13 @@ import numpy as np
 # System parameters
 #############################################################
 
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system = espressomd.System(box_l=[100, 100, 100])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.box_l = [100, 100, 100]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 system.cell_system.set_n_square(use_verlet_lists=False)
 outfile = open('polymer.vtf', 'w')
