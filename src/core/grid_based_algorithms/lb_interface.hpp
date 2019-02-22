@@ -203,12 +203,6 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
  */
 bool lb_lbnode_is_index_valid(const Vector3i &ind);
 
-/** Calculate the fluid velocity at a given position of the lattice.
- *  Note that it can lead to undefined behaviour if the
- *  position is not within the local lattice. This version of the function
- *  can be called without the position needing to be on the local processor.
- */
-int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v);
 void lb_lbfluid_on_lb_params_change(int field);
 #endif
 

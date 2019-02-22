@@ -78,7 +78,6 @@ IF LB_GPU or LB:
         const Vector19d lb_lbnode_get_pop(const Vector3i & ind) except +
         void lb_lbnode_set_pop(const Vector3i & ind, const Vector19d & populations) except +
         int lb_lbnode_get_boundary(const Vector3i & ind) except +
-        int lb_lbfluid_get_interpolated_velocity_global(Vector3d & p, double * v) except +
         stdint.uint64_t lb_lbfluid_get_rng_state() except +
         void lb_lbfluid_set_rng_state(stdint.uint64_t) except +
         void lb_lbfluid_set_kT(double) except +
@@ -93,6 +92,9 @@ IF LB_GPU or LB:
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()
         void lb_get_interpolated_velocity_gpu(double * positions, double * velocities, int length)
+
+    cdef extern from "grid_based_algorithms/lb_interpolation.hpp":
+        const Vector3d lb_lbfluid_get_interpolated_velocity_global(Vector3d & p) except +
 
     ###############################################
     #
