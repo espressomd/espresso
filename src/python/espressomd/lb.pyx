@@ -197,7 +197,7 @@ IF LB_GPU or LB:
 
             for i in range(3):
                 p[i] = pos[i]
-            cdef Vector3d v = lb_lbfluid_get_interpolated_velocity_global(p)
+            cdef Vector3d v = lb_lbinterpolation_get_interpolated_velocity_global(p)
             return make_array_locked(v)
 
         # input/output function wrappers for whole LB fields

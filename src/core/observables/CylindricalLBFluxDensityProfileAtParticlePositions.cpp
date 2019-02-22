@@ -49,7 +49,7 @@ operator()(PartCfg &partCfg) const {
 #if defined(LB) || defined(LB_GPU)
     boost::transform(folded_positions, velocities.begin(),
                      [](const Vector3d &pos) {
-                       return lb_lbfluid_get_interpolated_velocity_global(pos);
+                       return lb_lbinterpolation_get_interpolated_velocity_global(pos);
                      });
 #endif
   } else {

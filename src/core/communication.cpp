@@ -54,6 +54,7 @@
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
+#include "grid_based_algorithms/lb_interpolation.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "io/mpiio/mpiio.hpp"
@@ -158,7 +159,8 @@ int n_nodes = -1;
   CB(mpi_rotate_system_slave)                                                  \
   CB(mpi_set_lb_fluid_counter)                                                 \
   CB(mpi_update_particle_slave)                                                \
-  CB(mpi_bcast_lb_particle_coupling_slave)
+  CB(mpi_bcast_lb_particle_coupling_slave)                                     \
+  CB(mpi_recv_lb_interpolated_velocity_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -1113,6 +1115,30 @@ void mpi_recv_fluid_populations_slave(int node, int index) {
     double data[19];
     lb_get_populations(index, data);
     MPI_Send(data, 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+  }
+#endif
+}
+
+Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos) {
+#ifdef LB
+  if (this_node == 0) {
+    comm_cart.send(node, SOME_TAG, pos);
+    mpi_call(mpi_recv_lb_interpolated_velocity_slave, node, 0);
+    Vector3d interpolated_u{};
+    comm_cart.recv(node, SOME_TAG, interpolated_u);
+    return interpolated_u;
+ }
+#endif
+ return {};
+}
+
+void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
+#ifdef LB
+  if (node == this_node) {
+    Vector3d pos{};
+    comm_cart.recv(0, SOME_TAG, pos);
+    auto const interpolated_u = lb_lbinterpolation_get_interpolated_velocity(pos);
+    comm_cart.send(0, SOME_TAG, interpolated_u);
   }
 #endif
 }

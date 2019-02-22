@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include "communication.hpp"
 #include "grid.hpp"
 #include "lattice.hpp"
 #include "utils/Vector.hpp"
@@ -31,25 +32,6 @@ void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
     }
   }
 }
-template <typename Op>
-void global_lattice_interpolation(Vector3i const &ind, Vector6d const &delta,
-                           Op &&op) {
-  Vector3i neighbor_ind{};
-  for (int z = 0; z < 2; z++) {
-    for (int y = 0; y < 2; y++) {
-      for (int x = 0; x < 2; x++) {
-        auto const w = delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
-        neighbor_ind = ind + Vector3i{{x, y, z}};
-        for (int i=0; i<3; ++i) {
-          if (neighbor_ind[i] == static_cast<int>(box_l[i] / lb_lbfluid_get_agrid())) {
-            neighbor_ind[i] = 0;
-          }
-        }
-        op(neighbor_ind, w);
-      }
-    }
-  }
-}
 
 Vector3d node_u(Lattice::index_t index) {
 #ifdef LB_BOUNDARIES
@@ -64,7 +46,7 @@ Vector3d node_u(Lattice::index_t index) {
 
 } // namespace
 
-const Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
+const Vector3d lb_lbinterpolation_get_interpolated_velocity(const Vector3d &pos) {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Vector3d interpolated_u{};
@@ -83,7 +65,7 @@ const Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &pos) {
   return {};
 }
 
-const Vector3d lb_lbfluid_get_interpolated_velocity_global(const Vector3d &pos) {
+const Vector3d lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     Vector3d interpolated_u{};
@@ -92,33 +74,24 @@ const Vector3d lb_lbfluid_get_interpolated_velocity_global(const Vector3d &pos) 
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    /* calculate fluid velocity at particle's position
-       this is done by linear interpolation
-       (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-    Vector3i ind{};
-    Vector6d delta{};
-    Lattice::map_position_to_lattice_global(pos, ind, delta, lb_lbfluid_get_agrid());
-    Vector3d interpolated_u{};
-    global_lattice_interpolation(ind, delta,
-                          [&interpolated_u](Vector3i const& ind, double w) {
-                            interpolated_u += w * lb_lbnode_get_u(ind);
-                          });
-
-    return interpolated_u;
+    auto const node = map_position_node_array(pos);
+    if (node == 0) {
+      return lb_lbinterpolation_get_interpolated_velocity(pos);
+    } else {
+      return mpi_recv_lb_interpolated_velocity(node, pos);
+    }
   }
 #endif
   return {};
 }
 
 #ifdef LB
-void lb_lbfluid_add_force_density(const Vector3d &pos,
+void lb_lbinterpolation_add_force_density(const Vector3d &pos,
                                   const Vector3d &force_density) {
   lattice_interpolation(lblattice, pos,
                         [&force_density](Lattice::index_t index, double w) {
                             auto &field = lbfields[index];
-                            field.force_density[0] += w * force_density[0];
-                            field.force_density[1] += w * force_density[1];
-                            field.force_density[2] += w * force_density[2];
+                            field.force_density += w * force_density;
                         });
 }
 #endif
