@@ -127,7 +127,7 @@ public:
    * \param tmp_agrid  lattice mesh distance
    */
   static void map_position_to_lattice_global(const Vector3d &pos, Vector3i &ind,
-                                             double delta[6], double tmp_agrid);
+                                             Vector6d &delta, double tmp_agrid);
 };
 
 #endif /* LATTICE_HPP */

@@ -133,7 +133,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
 /********************** static Functions **********************/
 
 void Lattice::map_position_to_lattice_global(const Vector3d &pos, Vector3i &ind,
-                                             double delta[6],
+                                             Vector6d &delta,
                                              double tmp_agrid) {
   Vector3d rel{};
   Vector3d local_pos = pos;

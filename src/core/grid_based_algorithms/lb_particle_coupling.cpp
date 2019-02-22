@@ -10,6 +10,7 @@
 #include "integrate.hpp"
 #include "lattice.hpp"
 #include "lb_interface.hpp"
+#include "lb_interpolation.hpp"
 #include "lb_particle_coupling.hpp"
 #include "lbgpu.hpp"
 #include "thermostat.hpp"
