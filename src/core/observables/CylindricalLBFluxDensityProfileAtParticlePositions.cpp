@@ -47,10 +47,10 @@ operator()(PartCfg &partCfg) const {
   std::vector<Vector3d> velocities(folded_positions.size());
   if ((lattice_switch & LATTICE_LB) or (lattice_switch & LATTICE_LB_GPU)) {
 #if defined(LB) || defined(LB_GPU)
-    boost::transform(folded_positions, velocities.begin(),
-                     [](const Vector3d &pos) {
-                       return lb_lbinterpolation_get_interpolated_velocity_global(pos);
-                     });
+    boost::transform(
+        folded_positions, velocities.begin(), [](const Vector3d &pos) {
+          return lb_lbinterpolation_get_interpolated_velocity_global(pos);
+        });
 #endif
   } else {
     throw std::runtime_error("LB not activated.");

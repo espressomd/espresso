@@ -53,8 +53,8 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "io/mpiio/mpiio.hpp"
@@ -1127,9 +1127,9 @@ Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos) {
     Vector3d interpolated_u{};
     comm_cart.recv(node, SOME_TAG, interpolated_u);
     return interpolated_u;
- }
+  }
 #endif
- return {};
+  return {};
 }
 
 void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
@@ -1137,7 +1137,8 @@ void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
   if (node == this_node) {
     Vector3d pos{};
     comm_cart.recv(0, SOME_TAG, pos);
-    auto const interpolated_u = lb_lbinterpolation_get_interpolated_velocity(pos);
+    auto const interpolated_u =
+        lb_lbinterpolation_get_interpolated_velocity(pos);
     comm_cart.send(0, SOME_TAG, interpolated_u);
   }
 #endif

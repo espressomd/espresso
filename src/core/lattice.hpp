@@ -92,7 +92,8 @@ public:
    * \param delta      distance fraction of pos from the surrounding
    *                   elementary cell, 6 directions (Output)
    */
-  void map_position_to_lattice(const Vector3d &pos, Vector<8, std::size_t> &node_index,
+  void map_position_to_lattice(const Vector3d &pos,
+                               Vector<8, std::size_t> &node_index,
                                Vector6d &delta) const;
   /********************** Inline Functions **********************/
 

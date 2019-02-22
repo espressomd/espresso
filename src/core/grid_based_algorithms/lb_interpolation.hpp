@@ -13,11 +13,12 @@ const Vector3d lb_lbinterpolation_get_interpolated_velocity(const Vector3d &p);
  * @param pos Position at which the velocity is to be calculated.
  * @retval interpolated fluid velocity.
  */
-const Vector3d lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos);
+const Vector3d
+lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos);
 
 /**
  * @brief Add a force density to the fluid at the given position.
  */
 void lb_lbinterpolation_add_force_density(const Vector3d &p,
-                                  const Vector3d &force_density);
+                                          const Vector3d &force_density);
 #endif

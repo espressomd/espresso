@@ -1,5 +1,5 @@
-#include "config.hpp"
 #include "communication.hpp"
+#include "config.hpp"
 #include "grid.hpp"
 #include "lattice.hpp"
 #include "utils/Vector.hpp"
@@ -41,12 +41,14 @@ Vector3d node_u(Lattice::index_t index) {
 #endif // LB_BOUNDARIES
   auto const modes = lb_calc_modes(index);
   auto const local_rho = lbpar.rho + modes[0];
-  return Vector3d{modes[1], modes[2], modes[3]} / local_rho * lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
+  return Vector3d{modes[1], modes[2], modes[3]} / local_rho *
+         lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
 }
 
 } // namespace
 
-const Vector3d lb_lbinterpolation_get_interpolated_velocity(const Vector3d &pos) {
+const Vector3d
+lb_lbinterpolation_get_interpolated_velocity(const Vector3d &pos) {
   if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     Vector3d interpolated_u{};
@@ -65,7 +67,8 @@ const Vector3d lb_lbinterpolation_get_interpolated_velocity(const Vector3d &pos)
   return {};
 }
 
-const Vector3d lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
+const Vector3d
+lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     Vector3d interpolated_u{};
@@ -87,11 +90,11 @@ const Vector3d lb_lbinterpolation_get_interpolated_velocity_global(const Vector3
 
 #ifdef LB
 void lb_lbinterpolation_add_force_density(const Vector3d &pos,
-                                  const Vector3d &force_density) {
+                                          const Vector3d &force_density) {
   lattice_interpolation(lblattice, pos,
                         [&force_density](Lattice::index_t index, double w) {
-                            auto &field = lbfields[index];
-                            field.force_density += w * force_density;
+                          auto &field = lbfields[index];
+                          field.force_density += w * force_density;
                         });
 }
 #endif

@@ -1208,7 +1208,6 @@ void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &p_pop) {
   }
 }
 
-
 #ifdef LB
 const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 #endif
