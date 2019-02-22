@@ -174,8 +174,8 @@ for cntr in range(npart):
     z = ...
     quats = ...
 
-    system.part.add(pos=[x, y, z], type=0, swimming={
-                    'v_swim': vel}, quat=quats, rotation=[1, 1, 1])
+    system.part.add(pos=[x, y, z], type=0, swimming={'v_swim': vel},
+                    quat=quats, rotation=[1, 1, 1])
 
 ##########################################################################
 
