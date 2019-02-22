@@ -369,7 +369,7 @@ struct UpdateVisitor : public boost::static_visitor<void> {
 } // namespace
 
 /**
- * @brief Callback for @f mpi_send_update_message.
+ * @brief Callback for \ref mpi_send_update_message.
  */
 void mpi_update_particle_slave(int node, int id) {
   if (node == comm_cart.rank()) {
