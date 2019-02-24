@@ -42,9 +42,8 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
         (int)ceil((my_left[d] - this->offset[d]) / this->agrid[d]);
     this->local_offset[d] =
         this->offset[d] + this->local_index_offset[d] * this->agrid[d];
-    this->grid[d] =
-        (int)ceil((my_right[d] - this->local_offset[d] - epsilon) /
-                  this->agrid[d]);
+    this->grid[d] = (int)ceil((my_right[d] - this->local_offset[d] - epsilon) /
+                              this->agrid[d]);
   }
 
   // sanity checks
