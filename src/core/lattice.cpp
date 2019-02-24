@@ -33,6 +33,7 @@ int lattice_switch = LATTICE_OFF;
 
 int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
   /* determine the number of local lattice nodes */
+  auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
     this->agrid[d] = agrid[d];
     this->global_grid[d] = (int)std::round(box_l[d] / agrid[d]);
@@ -42,7 +43,7 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
     this->local_offset[d] =
         this->offset[d] + this->local_index_offset[d] * this->agrid[d];
     this->grid[d] =
-        (int)ceil((my_right[d] - this->local_offset[d] - ROUND_ERROR_PREC) /
+        (int)ceil((my_right[d] - this->local_offset[d] - epsilon) /
                   this->agrid[d]);
   }
 
@@ -50,7 +51,7 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
   for (int dir = 0; dir < 3; dir++) {
     // check if local_box_l is compatible with lattice spacing
     if (fabs(local_box_l[dir] - this->grid[dir] * agrid[dir]) >
-        ROUND_ERROR_PREC * box_l[dir]) {
+        epsilon * box_l[dir]) {
       runtimeErrorMsg() << "Lattice spacing agrid[" << dir << "]=" << agrid[dir]
                         << " is incompatible with local_box_l[" << dir
                         << "]=" << local_box_l[dir] << " ( box_l[" << dir
