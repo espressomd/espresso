@@ -497,12 +497,38 @@ extern bool swimming_particles_exist;
 
 #include <unordered_map>
 
-using ParticleIndex = std::unordered_map<int, Particle *>;
+class ParticleIndex {
+    std::unordered_map<int, Particle *> m_map;
+public:
+    Particle * operator[](int i) {
+      return m_map[i];
+    }
+
+    const Particle *operator[](int i) const {
+      auto it = m_map.find(i);
+
+      return (it != m_map.end()) ? it->second : nullptr;
+    }
+
+    void clear() {
+      m_map.clear();
+    }
+
+    void update(Particle &p) {
+      m_map[p.identity()] = &p;
+    }
+
+    template<class Range>
+    void update(Range rng) {
+            for(auto &p : rng) {
+              update(p);
+            }
+    }
+};
 
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
-using LocalParticles = std::unordered_map<int, Particle *>;
-extern LocalParticles local_particles;
+extern ParticleIndex local_particles;
 
 /************************************************
  * Functions

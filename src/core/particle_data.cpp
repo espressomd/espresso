@@ -445,7 +445,7 @@ bool swimming_particles_exist = false;
 std::unordered_map<int, int> particle_node;
 
 int max_local_particles = 0;
-LocalParticles local_particles;
+ParticleIndex local_particles;
 
 /************************************************
  * local functions
@@ -562,13 +562,8 @@ void clear_particle_node() { particle_node.clear(); }
 void build_particle_index() {
   local_particles.clear();
 
-  for (auto &p : ghost_cells.particles()) {
-    local_particles[p.identity()] = &p;
-  }
-
-  for (auto &p : local_cells.particles()) {
-    local_particles[p.identity()] = &p;
-  }
+  local_particles.update(ghost_cells.particles());
+  local_particles.update(local_cells.particles());
 }
 
 void init_particlelist(ParticleList *pList) {
@@ -603,10 +598,7 @@ int realloc_particlelist(ParticleList *l, int size) {
 }
 
 void update_local_particles(ParticleList *pl) {
-  Particle *p = pl->part;
-  int n = pl->n, i;
-  for (i = 0; i < n; i++)
-    local_particles[p[i].p.identity] = &p[i];
+    local_particles.update(Utils::Span<Particle>(pl->part, pl->n));
 }
 
 void append_particle(ParticleList *l, Particle &&part) {
@@ -1157,7 +1149,7 @@ void local_place_particle(int part, const double p[3], int _new) {
     if (rl)
       update_local_particles(cell);
     else
-      local_particles[pt->p.identity] = pt;
+        local_particles.update(*pt);
   } else
     pt = local_particles[part];
 
