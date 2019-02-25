@@ -30,7 +30,7 @@ namespace Fields {
  * A time dependent plane wave, with a certain (vector-valued)
  * amplitude, wave vector frequency and phase.
  *
- * See @url https://en.wikipedia.org/wiki/Plane_wave
+ * See https://en.wikipedia.org/wiki/Plane_wave
  */
 template <typename T, size_t codim> class PlaneWave {
 public:
@@ -66,7 +66,7 @@ public:
   /**
    * brief Evaluate the Jacobian matrix of the field.
    *
-   * See @url https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant
+   * See https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant
    * In the special case of a scalar field, the Jacobian is the gradient of
    * the field.
    *

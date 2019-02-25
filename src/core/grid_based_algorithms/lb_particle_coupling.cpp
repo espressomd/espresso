@@ -10,6 +10,7 @@
 #include "integrate.hpp"
 #include "lattice.hpp"
 #include "lb_interface.hpp"
+#include "lb_interpolation.hpp"
 #include "lb_particle_coupling.hpp"
 #include "lbgpu.hpp"
 #include "thermostat.hpp"
@@ -19,26 +20,18 @@
 
 LB_Particle_Coupling lb_particle_coupling;
 
-void mpi_set_lb_coupling_counter_slave(int high, int low) {
-  lb_particle_coupling.rng_counter_coupling =
-      Utils::Counter<uint64_t>(Utils::u32_to_u64(static_cast<uint32_t>(high),
-                                                 static_cast<uint32_t>(low)));
-}
-
 void mpi_bcast_lb_particle_coupling_slave(int, int) {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
 void lb_lbcoupling_activate() {
   lb_particle_coupling.couple_to_md = true;
-  if (this_node == 0)
-    mpi_bcast_lb_particle_coupling();
+  mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
 
 void lb_lbcoupling_deactivate() {
   lb_particle_coupling.couple_to_md = false;
-  if (this_node == 0)
-    mpi_bcast_lb_particle_coupling();
+  mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
 
 void lb_lbcoupling_set_friction(double friction) {
@@ -93,7 +86,7 @@ void add_md_force(Vector3d const &pos, Vector3d const &force) {
 
   const auto agrid = lb_lbfluid_get_agrid();
   auto const delta_j = -(time_step * lb_lbfluid_get_tau() / agrid) * force;
-  lb_lbfluid_add_force_density(pos, delta_j);
+  lb_lbinterpolation_add_force_density(pos, delta_j);
 }
 } // namespace
 
@@ -111,7 +104,8 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  auto const interpolated_u = lb_lbfluid_get_interpolated_velocity(p->r.p);
+  auto const interpolated_u =
+      lb_lbinterpolation_get_interpolated_velocity(p->r.p);
 
   Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
@@ -162,7 +156,8 @@ void add_swimmer_force(Particle &p) {
       return;
     }
 
-    p.swim.v_source = lb_lbfluid_get_interpolated_velocity(source_position);
+    p.swim.v_source =
+        lb_lbinterpolation_get_interpolated_velocity(source_position);
 
     add_md_force(source_position, p.swim.f_swim * director);
   }

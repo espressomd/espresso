@@ -14,16 +14,19 @@ uint64_t lb_lbcoupling_get_rng_state();
 void lb_lbcoupling_set_rng_state(uint64_t counter);
 void lb_lbcoupling_set_friction(double friction);
 double lb_lbcoupling_get_friction();
-void mpi_set_lb_coupling_counter_slave(int high, int low);
 void mpi_bast_lb_particle_coupling(int, int);
 
 /*
  * @brief Activate the coupling between LB and MD particles.
+ * @note This is a collective function and needs to be called from all
+ * processes.
  */
 void lb_lbcoupling_activate();
 
 /*
  * @brief Deactivate the coupling between LB and MD particles.
+ * @note This is a collective function and needs to be called from all
+ * processes.
  */
 void lb_lbcoupling_deactivate();
 

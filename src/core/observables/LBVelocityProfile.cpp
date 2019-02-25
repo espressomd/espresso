@@ -17,7 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "LBVelocityProfile.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_interpolation.hpp"
+#include "lattice.hpp"
 #include "utils/Histogram.hpp"
 
 namespace Observables {
@@ -39,7 +40,8 @@ std::vector<double> LBVelocityProfile::operator()(PartCfg &partCfg) const {
       Vector3d pos_tmp = {m_sample_positions[ind + 0],
                           m_sample_positions[ind + 1],
                           m_sample_positions[ind + 2]};
-      const auto v = lb_lbfluid_get_interpolated_velocity(pos_tmp);
+      const auto v =
+          lb_lbinterpolation_get_interpolated_velocity_global(pos_tmp);
       std::copy_n(v.begin(), 3, &(velocities[ind + 0]));
     }
 #endif

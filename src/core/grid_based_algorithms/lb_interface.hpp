@@ -42,19 +42,6 @@ uint64_t lb_lbfluid_get_rng_state();
 void lb_lbfluid_set_rng_state(uint64_t counter);
 
 /**
- * @brief Calculates the fluid velocity at a given position of the
- * lattice.
- * @note It can lead to undefined behaviour if the
- * position is not within the local lattice. */
-const Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &p);
-
-/**
- * @brief Add a force density to the fluid at the given position.
- */
-void lb_lbfluid_add_force_density(const Vector3d &p,
-                                  const Vector3d &force_density);
-
-/**
  * @brief Return the instance of the Lattice within the LB method.
  */
 const Lattice &lb_lbfluid_get_lattice();
@@ -216,12 +203,6 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
  */
 bool lb_lbnode_is_index_valid(const Vector3i &ind);
 
-/** Calculate the fluid velocity at a given position of the lattice.
- *  Note that it can lead to undefined behaviour if the
- *  position is not within the local lattice. This version of the function
- *  can be called without the position needing to be on the local processor.
- */
-int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v);
 void lb_lbfluid_on_lb_params_change(int field);
 #endif
 
