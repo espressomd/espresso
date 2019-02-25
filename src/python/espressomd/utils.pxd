@@ -100,8 +100,8 @@ cdef extern from "utils/Vector.hpp":
     cppclass Vector3d:
         double & operator[](int i)
         double * data()
-        Vector3d operator*(double i)
-        Vector3d operator/(double i)
+        Vector3d operator * (double i)
+        Vector3d operator / (double i)
     
     cppclass Vector6d:
         double & operator[](int i)
