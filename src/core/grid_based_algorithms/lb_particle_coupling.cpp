@@ -34,12 +34,12 @@ void lb_lbcoupling_deactivate() {
   mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
 
-void lb_lbcoupling_set_friction(double friction) {
-  lb_particle_coupling.friction = friction;
+void lb_lbcoupling_set_gamma(double gamma) {
+  lb_particle_coupling.gamma = gamma;
   mpi_bcast_lb_particle_coupling();
 }
 
-double lb_lbcoupling_get_friction() { return lb_particle_coupling.friction; }
+double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
 
 uint64_t lb_coupling_get_rng_state_cpu() {
   return lb_particle_coupling.rng_counter_coupling.value();
@@ -125,7 +125,7 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
    * */
   auto const force =
-      -lb_lbcoupling_get_friction() * (p->m.v - v_drift) + f_random;
+      -lb_lbcoupling_get_gamma() * (p->m.v - v_drift) + f_random;
 
   add_md_force(p->r.p, force);
 
@@ -171,7 +171,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 #ifdef LB_GPU
     if (lb_particle_coupling.couple_to_md && this_node == 0)
       lb_calc_particle_lattice_ia_gpu(couple_virtual,
-                                      lb_lbcoupling_get_friction());
+                                      lb_lbcoupling_get_gamma());
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
@@ -189,7 +189,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
        * time_step comes from the discretization.
        */
       auto const noise_amplitude =
-          sqrt(12. * 2. * lb_lbcoupling_get_friction() * lb_lbfluid_get_kT() /
+          sqrt(12. * 2. * lb_lbcoupling_get_gamma() * lb_lbfluid_get_kT() /
                time_step);
       auto f_random = [&c](int id) -> Vector3d {
         if (lb_lbfluid_get_kT() > 0.0) {

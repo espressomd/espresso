@@ -86,8 +86,8 @@ IF LB_GPU or LB:
     cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
         void lb_lbcoupling_set_rng_state(stdint.uint64_t)
         stdint.uint64_t lb_lbcoupling_get_rng_state() except +
-        void lb_lbcoupling_set_friction(double)
-        double lb_lbcoupling_get_friction() except +
+        void lb_lbcoupling_set_gamma(double)
+        double lb_lbcoupling_get_gamma() except +
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()
@@ -147,15 +147,15 @@ IF LB_GPU or LB:
 
 ###############################################
 
-    cdef inline python_lbfluid_set_friction(p_friction):
-        cdef double c_friction
+    cdef inline python_lbfluid_set_gamma(p_gamma):
+        cdef double c_gamma
         # get pointers
-        if isinstance(p_friction, float) or isinstance(p_friction, int):
-            c_friction = <float > p_friction
+        if isinstance(p_gamma, float) or isinstance(p_gamma, int):
+            c_gamma = <float > p_gamma
         else:
-            c_friction = p_friction
+            c_gamma = p_gamma
         # call c-function
-        lb_lbcoupling_set_friction(c_friction)
+        lb_lbcoupling_set_gamma(c_gamma)
 
     cdef inline python_lbfluid_set_gamma_odd(gamma_odd):
         cdef double c_gamma_odd
@@ -239,14 +239,14 @@ IF LB_GPU or LB:
             p_bvisc = c_bvisc / p_tau * (p_agrid * p_agrid)
 
 ###############################################
-    cdef inline python_lbfluid_get_friction(p_friction):
-        cdef double c_friction
+    cdef inline python_lbfluid_get_gamma(p_gamma):
+        cdef double c_gamma
         # call c-function
-        c_friction = lb_lbcoupling_get_friction()
-        if isinstance(p_friction, float) or isinstance(p_friction, int):
-            p_fricition = <double > c_friction
+        c_gamma = lb_lbcoupling_get_gamma()
+        if isinstance(p_gamma, float) or isinstance(p_gamma, int):
+            p_gamma = <double > c_gamma
         else:
-            p_friction = c_friction
+            p_gamma = c_gamma
 
 ###############################################
 

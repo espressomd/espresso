@@ -116,7 +116,7 @@ class SwimmerTest(ut.TestCase):
             dens=1.0
         )
         S.actors.add(lbm)
-        S.thermostat.set_lb(LB_fluid=lbm, friction=0.5)
+        S.thermostat.set_lb(LB_fluid=lbm, gamma=0.5)
         self.run_and_check(
             S, lbm, tests_common.abspath("data/engine_lbgpu_2pt.vtk"))
 

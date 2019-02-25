@@ -60,7 +60,7 @@ class Stokes(object):
         self.system.actors.clear()
         self.system.lbboundaries.clear()
         self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, friction=1.0)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.0)
 
         # Setup walls
         walls = [None] * 4

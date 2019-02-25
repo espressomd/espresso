@@ -121,7 +121,7 @@ lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco,
 ## Exercise 6 ##
 # Can the particle rotate in the flow field?
 system.actors.add(lbf)
-system.thermostat.set_lb(LB_fluid=lbf, friction=frict)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=frict)
 
 ##########################################################################
 

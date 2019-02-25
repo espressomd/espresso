@@ -29,8 +29,8 @@ IF LB:
 IF LB_GPU:
     from .lb import LBFluidGPU
 if LB or LB_GPU:
-    from .lb cimport lb_lbcoupling_set_friction
-    from .lb cimport lb_lbcoupling_get_friction
+    from .lb cimport lb_lbcoupling_set_gamma
+    from .lb cimport lb_lbcoupling_get_gamma
 
 
 def AssertThermostatType(*allowedthermostats):
@@ -147,7 +147,7 @@ cdef class Thermostat(object):
         IF LB:
             if thermo_switch & THERMO_LB:
                 lb_dict = {}
-                lb_dict["friction"] = lb_lbcoupling_get_friction()
+                lb_dict["gamma"] = lb_lbcoupling_get_gamma()
                 lb_dict["type"] = "LB"
                 lb_dict["act_on_virtual"] = thermo_virtual
                 lb_dict["counter"] = lb_lbcoupling_get_rng_state()
@@ -204,7 +204,7 @@ cdef class Thermostat(object):
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         IF LB or LB_GPU:
-            lb_lbcoupling_set_friction(0.0)
+            lb_lbcoupling_set_gamma(0.0)
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
@@ -348,7 +348,7 @@ cdef class Thermostat(object):
             seed=None,
             act_on_virtual=True,
             LB_fluid=None,
-                friction=0.0):
+                gamma=0.0):
             """
             Sets the LB thermostat.
 
@@ -362,6 +362,8 @@ cdef class Thermostat(object):
                  if kT > 0.
             act_on_virtual : :obj:`bool`, optional
                 If true the thermostat will act on virtual sites, default is on.
+            gamma : :obj:`float`
+                Frictional coupling constant for the MD particle coupling.
 
             """
             valid_LB_fluid = False
@@ -391,7 +393,7 @@ cdef class Thermostat(object):
             global thermo_virtual
             thermo_virtual = act_on_virtual
             mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
-            lb_lbcoupling_set_friction(friction)
+            lb_lbcoupling_set_gamma(gamma)
             return True
 
     IF NPT:

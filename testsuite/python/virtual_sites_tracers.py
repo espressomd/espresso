@@ -48,7 +48,7 @@ class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
         system.thermostat.set_lb(
             LB_fluid=lbf,
             act_on_virtual=False,
-            friction=1)
+            gamma=1)
 
         # Setup boundaries
         walls = [lbboundaries.LBBoundary() for k in range(2)]
