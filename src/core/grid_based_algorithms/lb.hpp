@@ -255,7 +255,7 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 /** Calculation of hydrodynamic modes.
  *
  *  @param index number of the node to calculate the modes for
- *  @param mode output pointer to a double[19]
+ *  @retval Array containing the modes.
  */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index);
 
@@ -287,7 +287,7 @@ inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
 /** Calculate the local fluid momentum.
  *  The calculation is implemented explicitly for the special case of D3Q19.
  *  @param[in]  index  Local lattice site
- *  @param[out] j      Local fluid speed
+ *  @retval The local fluid momentum.
  */
 inline Vector3d lb_calc_local_j(Lattice::index_t index) {
   if (!(lattice_switch & LATTICE_LB)) {

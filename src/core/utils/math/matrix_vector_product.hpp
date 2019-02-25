@@ -69,6 +69,15 @@ matrix_vector_product_helper(const Container &vec,
 
 } // namespace detail
 
+/**
+ * @brief Calculate the matrix-vector product for a statically given (square) matrix.
+ * @tparam T data type for the vector.
+ * @tparam N size of the vector.
+ * @tparam matrix const reference to a static integer array (size N) of arrays (each of size N).
+ * @tparam Container container type for the vector.
+ * @param vec Container with data of type T and length N with the vector data.
+ * @retval An array with the result of the matrix-vector product.
+ */
 template <typename T, std::size_t N,
           const std::array<std::array<int, N>, N> &matrix, typename Container>
 constexpr std::array<T, N> matrix_vector_product(const Container &vec) {
