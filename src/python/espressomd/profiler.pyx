@@ -8,9 +8,8 @@ def begin_section(name):
     Parameters
     ----------
 
-    name: obj:`str`
+    name : obj:`str`
         Name of the section
-
     """
 
     c_profiler.begin_section(name)
@@ -23,9 +22,8 @@ def end_section(name):
     Parameters
     ----------
 
-    name: obj:`str`
+    name: obj :`str`
         Name of the section
-
     """
 
     c_profiler.end_section(name)
