@@ -3302,12 +3302,9 @@ void lb_get_interpolated_velocity_gpu(double const *positions,
   thrust::host_vector<float3> velocities_host = velocities_device;
   int index = 0;
   for (auto v : velocities_host) {
-    velocities[index] =
-        static_cast<double>(v.x);
-    velocities[index + 1] =
-        static_cast<double>(v.y);
-    velocities[index + 2] =
-        static_cast<double>(v.z);
+    velocities[index] = static_cast<double>(v.x);
+    velocities[index + 1] = static_cast<double>(v.y);
+    velocities[index + 2] = static_cast<double>(v.z);
     index += 3;
   }
 }
