@@ -126,9 +126,6 @@ void propagate_vel_pos();
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
 void propagate_vel_finalize_p_inst();
 
-/** Integrator stability check (see compile flag ADDITIONAL_CHECKS). */
-void force_and_velocity_display();
-
 void finalize_p_inst_npt();
 
 /*@}*/
@@ -497,6 +494,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
 #endif
+
+    build_particle_index();
 }
 
 /************************************************************/
@@ -706,10 +705,6 @@ void propagate_vel() {
           p.m.v[0], p.m.v[1], p.m.v[2]));
     }
   }
-
-#ifdef ADDITIONAL_CHECKS
-  force_and_velocity_display();
-#endif
 }
 
 void propagate_pos() {
@@ -791,25 +786,6 @@ void propagate_vel_pos() {
   }
 
   announce_resort_particles();
-
-#ifdef ADDITIONAL_CHECKS
-  force_and_velocity_display();
-#endif
-}
-
-void force_and_velocity_display() {
-#ifdef ADDITIONAL_CHECKS
-  if (db_max_force > skin2)
-    fprintf(stderr, "%d: max_force=%e, part=%d f=(%e,%e,%e)\n", this_node,
-            sqrt(db_max_force), db_maxf_id, local_particles[db_maxf_id]->f.f[0],
-            local_particles[db_maxf_id]->f.f[1],
-            local_particles[db_maxf_id]->f.f[2]);
-  if (db_max_vel > skin2)
-    fprintf(stderr, "%d: max_vel=%e, part=%d v=(%e,%e,%e)\n", this_node,
-            sqrt(db_max_vel), db_maxv_id, local_particles[db_maxv_id]->m.v[0],
-            local_particles[db_maxv_id]->m.v[1],
-            local_particles[db_maxv_id]->m.v[2]);
-#endif
 }
 
 /** @todo This needs to go!! */
