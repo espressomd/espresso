@@ -66,6 +66,7 @@ function cmd {
 [ -z "$with_cuda" ] && with_cuda="true"
 [ -z "$build_type" ] && build_type="Debug"
 [ -z "$with_ccache" ] && with_ccache="false"
+[ -z "$test_timeout" ] && test_timeout="300"
 
 # If there are no user-provided flags they
 # are added according to with_coverage.
@@ -88,6 +89,7 @@ fi
 cmake_params="-DCMAKE_BUILD_TYPE=$build_type -DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params -DWITH_SCAFACOS=ON"
 cmake_params="$cmake_params -DCMAKE_CXX_FLAGS=$cxx_flags"
 cmake_params="$cmake_params -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
+cmake_params="$cmake_params -DTEST_TIMEOUT=$test_timeout"
 if $with_ccache; then
   cmake_params="$cmake_params -DWITH_CCACHE=ON"
 fi
@@ -230,21 +232,30 @@ cmd "make -k -j${build_procs}" || cmd "make -k -j1" || exit $?
 
 end "BUILD"
 
+# check for exit function, which should never be called from shared library
+# can't do this on CUDA though because nvcc creates a host function that just calls exit for each device funtion
+if [ $with_cuda != "true" -o "$(echo $NVCC | grep -o clang)" = "clang" ]; then
+    if nm -o -C $(find . -name *.so) | grep '[^a-z]exit@@GLIBC'; then
+        echo "Found calls to exit() function in shared libraries."
+        exit 1
+    fi
+fi
+
 if $make_check; then
     start "TEST"
 
     if [ -z "$run_tests" ]; then
         if $check_odd_only; then
             cmd "make -j${build_procs} check_python_parallel_odd $make_params" || exit 1
-	elif $check_gpu_only; then
-	    cmd "make -j${build_procs} check_python_gpu $make_params" || exit 1
+        elif $check_gpu_only; then
+            cmd "make -j${build_procs} check_python_gpu $make_params" || exit 1
         else
             cmd "make -j${build_procs} check_python $make_params" || exit 1
         fi
     else
         cmd "make python_tests $make_params"
         for t in $run_tests; do
-            cmd "ctest --output-on-failure -R $t" || exit 1
+            cmd "ctest --timeout 60 --output-on-failure -R $t" || exit 1
         done
     fi
     cmd "make -j${build_procs} check_unit_tests $make_params" || exit 1
