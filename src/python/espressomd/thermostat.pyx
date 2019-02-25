@@ -377,14 +377,12 @@ cdef class Thermostat(object):
                 raise ValueError(
                     "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
-            if lb_lbfluid_get_kT() > 0. and not seed:
-                raise ValueError(
-                    "seed has to be given as keyword arg")
-
-            if not seed:
-                seed = 0
-
-            lb_lbcoupling_set_rng_state(seed)
+            if lb_lbfluid_get_kT() > 0.:
+                if not seed:
+                    raise ValueError(
+                        "seed has to be given as keyword arg")
+                else:
+                    lb_lbcoupling_set_rng_state(seed)
 
             global thermo_switch
             thermo_switch = (thermo_switch or THERMO_LB)
