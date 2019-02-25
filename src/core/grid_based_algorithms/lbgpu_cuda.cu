@@ -1980,7 +1980,6 @@ __global__ void set_u_from_rho_v_pi(LB_nodes_gpu n_a, int single_nodeindex,
                        blockDim.x * blockIdx.x + threadIdx.x;
 
   if (index == 0) {
-    printf("kernel v: %f %f %f\n", velocity[0], velocity[1], velocity[2]);
     float local_rho;
     float local_j[3];
     float local_pi[6];
@@ -3026,8 +3025,6 @@ void lb_set_node_rho_GPU(int single_nodeindex, float host_rho) {
  *  @param host_velocity      the velocity to set
  */
 void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
-  printf("velocity: %f %f %f\n", host_velocity[0], host_velocity[1],
-         host_velocity[2]);
   float *device_velocity;
   cuda_safe_mem(cudaMalloc((void **)&device_velocity, 3 * sizeof(float)));
   cuda_safe_mem(cudaMemcpy(device_velocity, host_velocity, 3 * sizeof(float),

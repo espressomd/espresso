@@ -1139,7 +1139,6 @@ void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
 }
 
 void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
-  printf("setting velocity: %f %f %f\n", u[0], u[1], u[2]);
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     float host_velocity[3];
