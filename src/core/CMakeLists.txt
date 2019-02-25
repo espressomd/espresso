@@ -30,7 +30,6 @@ set(EspressoCore_SRC
   nsquare.cpp
   partCfg_global.cpp
   particle_data.cpp
-  PdbParser.cpp
   polymer.cpp
   polynom.cpp
   pressure.cpp
@@ -181,6 +180,7 @@ endif()
 target_link_libraries(EspressoCore PUBLIC EspressoConfig)
 target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX)
 target_link_libraries(EspressoCore PRIVATE Profiler)
+target_link_libraries(EspressoCore PRIVATE pdbparser)
 
 if(FFTW3_FOUND)
   target_include_directories(EspressoCore PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})
