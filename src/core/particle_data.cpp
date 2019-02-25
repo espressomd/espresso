@@ -598,7 +598,7 @@ int realloc_particlelist(ParticleList *l, int size) {
 }
 
 void update_local_particles(ParticleList *pl) {
-    local_particles.update(Utils::Span<Particle>(pl->part, pl->n));
+  local_particles.update(Utils::Span<Particle>(pl->part, pl->n));
 }
 
 void append_particle(ParticleList *l, Particle &&part) {
@@ -1149,7 +1149,7 @@ void local_place_particle(int part, const double p[3], int _new) {
     if (rl)
       update_local_particles(cell);
     else
-        local_particles.update(*pt);
+      local_particles.update(*pt);
   } else
     pt = local_particles[part];
 
