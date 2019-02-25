@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/range/numeric.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "utils/matrix_vector_product.hpp"
+#include "utils/math/matrix_vector_product.hpp"
 
 extern constexpr std::array<std::array<int, 3>, 3> matrix{
     {{{1, 2, 9}}, {{8, 41, 6}}, {{31, 15, 99}}}};

@@ -45,7 +45,7 @@
 #include "random.hpp"
 #include "thermostat.hpp"
 #include "utils/Counter.hpp"
-#include "utils/matrix_vector_product.hpp"
+#include "utils/math/matrix_vector_product.hpp"
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
