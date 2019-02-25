@@ -344,17 +344,12 @@ double lb_lbfluid_get_agrid() {
   return {};
 }
 
-void lb_lbfluid_set_ext_force_density(int component,
-                                      const Vector3d &force_density) {
+void lb_lbfluid_set_ext_force_density(const Vector3d &force_density) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    /* external force density is stored in MD units */
-    lbpar_gpu.ext_force_density[3 * component + 0] =
-        static_cast<float>(force_density[0]);
-    lbpar_gpu.ext_force_density[3 * component + 1] =
-        static_cast<float>(force_density[1]);
-    lbpar_gpu.ext_force_density[3 * component + 2] =
-        static_cast<float>(force_density[2]);
+    lbpar_gpu.ext_force_density[0] = static_cast<float>(force_density[0]);
+    lbpar_gpu.ext_force_density[1] = static_cast<float>(force_density[1]);
+    lbpar_gpu.ext_force_density[2] = static_cast<float>(force_density[2]);
     if (force_density[0] != 0 || force_density[1] != 0 ||
         force_density[2] != 0) {
       lbpar_gpu.external_force_density = 1;
@@ -564,6 +559,7 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
     host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
     lb_get_values_GPU(host_values);
+    auto const lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
     fprintf(fp,
             "# vtk DataFile Version 2.0\nlbfluid_gpu\n"
             "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
@@ -581,8 +577,9 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
         for (pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++) {
           int j = lbpar_gpu.dim_y * lbpar_gpu.dim_x * pos[2] +
                   lbpar_gpu.dim_x * pos[1] + pos[0];
-          fprintf(fp, "%f %f %f\n", host_values[j].v[0], host_values[j].v[1],
-                  host_values[j].v[2]);
+          fprintf(fp, "%f %f %f\n", host_values[j].v[0] * lattice_speed,
+                  host_values[j].v[1] * lattice_speed,
+                  host_values[j].v[2] * lattice_speed);
         }
     free(host_values);
 #endif // LB_GPU
@@ -604,7 +601,7 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
     for (pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
       for (pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
         for (pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++) {
-          auto u = lb_lbnode_get_u(pos);
+          auto u = lb_lbnode_get_velocity(pos);
           fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
         }
 #endif // LB
@@ -673,6 +670,8 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     throw std::runtime_error("Could not open file for writing.");
   }
 
+  auto const lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
+  auto const agrid = lb_lbfluid_get_agrid();
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
@@ -687,10 +686,11 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
       k /= lbpar_gpu.dim_y;
       xyz[2] = k;
       /** print of the calculated phys values */
-      fprintf(fp, "%f %f %f %f %f %f\n", (xyz[0] + 0.5) * lbpar_gpu.agrid,
-              (xyz[1] + 0.5) * lbpar_gpu.agrid,
-              (xyz[2] + 0.5) * lbpar_gpu.agrid, host_values[j].v[0],
-              host_values[j].v[1], host_values[j].v[2]);
+      fprintf(fp, "%f %f %f %f %f %f\n", (xyz[0] + 0.5) * agrid,
+              (xyz[1] + 0.5) * agrid, (xyz[2] + 0.5) * agrid,
+              host_values[j].v[0] * lattice_speed,
+              host_values[j].v[1] * lattice_speed,
+              host_values[j].v[2] * lattice_speed);
     }
     free(host_values);
 #endif // LB_GPU
@@ -706,11 +706,12 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     for (pos[2] = 0; pos[2] < gridsize[2]; pos[2]++) {
       for (pos[1] = 0; pos[1] < gridsize[1]; pos[1]++) {
         for (pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
-          auto u = lb_lbnode_get_u(pos);
+          auto const u = lb_lbnode_get_velocity(pos);
           fprintf(fp, "%f %f %f %f %f %f\n",
                   (pos[0] + 0.5) * lblattice.agrid[0],
                   (pos[1] + 0.5) * lblattice.agrid[1],
-                  (pos[2] + 0.5) * lblattice.agrid[2], u[0], u[1], u[2]);
+                  (pos[2] + 0.5) * lblattice.agrid[2], u[0] * lattice_speed,
+                  u[1] * lattice_speed, u[2] * lattice_speed);
         }
       }
     }
@@ -941,8 +942,6 @@ double lb_lbnode_get_density(const Vector3i &ind) {
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_recv_fluid(node, index, &rho, j, pi);
-    // unit conversion
-    rho *= 1 / lbpar.agrid / lbpar.agrid / lbpar.agrid;
     return rho;
 #else
     return {};
@@ -952,7 +951,7 @@ double lb_lbnode_get_density(const Vector3i &ind) {
   }
 }
 
-const Vector3d lb_lbnode_get_u(const Vector3i &ind) {
+const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
@@ -965,8 +964,6 @@ const Vector3d lb_lbnode_get_u(const Vector3i &ind) {
     lb_print_node_GPU(single_nodeindex, host_print_values);
     return {{host_print_values->v[0], host_print_values->v[1],
              host_print_values->v[2]}};
-#else
-    return {};
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
@@ -982,14 +979,12 @@ const Vector3d lb_lbnode_get_u(const Vector3i &ind) {
                              lblattice.halo_grid);
 
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
-    // unit conversion
-    return j / rho * lbpar.agrid / lbpar.tau;
-#else
-    return {};
+    return j / rho;
 #endif // LB
   } else {
     throw std::runtime_error("LB not activated.");
   }
+  return {};
 }
 
 const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind) {
@@ -1114,13 +1109,12 @@ const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind) {
   }
 }
 
-void lb_lbnode_set_rho(const Vector3i &ind, double p_rho) {
+void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    float host_rho;
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
-    host_rho = static_cast<float>(p_rho);
+    auto const host_rho = static_cast<float>(p_rho);
     lb_set_node_rho_GPU(single_nodeindex, host_rho);
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
@@ -1144,16 +1138,14 @@ void lb_lbnode_set_rho(const Vector3i &ind, double p_rho) {
   }
 }
 
-void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u) {
+void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
+  printf("setting velocity: %f %f %f\n", u[0], u[1], u[2]);
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     float host_velocity[3];
-    host_velocity[0] =
-        static_cast<float>(u[0]) * lbpar_gpu.tau / lbpar_gpu.agrid;
-    host_velocity[1] =
-        static_cast<float>(u[1]) * lbpar_gpu.tau / lbpar_gpu.agrid;
-    host_velocity[2] =
-        static_cast<float>(u[2]) * lbpar_gpu.tau / lbpar_gpu.agrid;
+    host_velocity[0] = static_cast<float>(u[0]);
+    host_velocity[1] = static_cast<float>(u[1]);
+    host_velocity[2] = static_cast<float>(u[2]);
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_set_node_velocity_GPU(single_nodeindex, host_velocity);
@@ -1174,9 +1166,7 @@ void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u) {
     /* transform to lattice units */
 
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
-    j[0] = rho * u[0] * lbpar.tau / lbpar.agrid;
-    j[1] = rho * u[1] * lbpar.tau / lbpar.agrid;
-    j[2] = rho * u[2] * lbpar.tau / lbpar.agrid;
+    j = rho * u;
     mpi_send_fluid(node, index, rho, j, pi);
 #endif // LB
   }

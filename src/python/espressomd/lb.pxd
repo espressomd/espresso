@@ -56,7 +56,7 @@ IF LB_GPU or LB:
         double lb_lbfluid_get_gamma_odd() except +
         void lb_lbfluid_set_gamma_even(double c_gamma_even) except +
         double lb_lbfluid_get_gamma_even() except +
-        void lb_lbfluid_set_ext_force_density(int component, const Vector3d forcedensity) except +
+        void lb_lbfluid_set_ext_force_density(const Vector3d forcedensity) except +
         const Vector3d lb_lbfluid_get_ext_force_density() except +
         void lb_lbfluid_set_bulk_viscosity(double c_bulk_visc) except +
         double lb_lbfluid_get_bulk_viscosity() except +
@@ -70,9 +70,10 @@ IF LB_GPU or LB:
         void lb_lbfluid_set_lattice_switch(int local_lattice_switch) except +
         int lb_lbfluid_get_lattice_switch() except +
         bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
-        const Vector3d lb_lbnode_get_u(const Vector3i & ind) except +
-        void lb_lbnode_set_u(const Vector3i & ind, const Vector3d & u) except +
+        const Vector3d lb_lbnode_get_velocity(const Vector3i & ind) except +
+        void lb_lbnode_set_velocity(const Vector3i & ind, const Vector3d & u) except +
         double lb_lbnode_get_density(const Vector3i & ind) except +
+        void lb_lbnode_set_density(const Vector3i & ind, double density) except +
         const Vector6d lb_lbnode_get_pi(const Vector3i & ind) except +
         const Vector6d lb_lbnode_get_pi_neq(const Vector3i & ind) except +
         const Vector19d lb_lbnode_get_pop(const Vector3i & ind) except +
@@ -182,7 +183,6 @@ IF LB_GPU or LB:
     cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density, p_agrid, p_tau):
 
         cdef Vector3d c_ext_force_density
-        # get pointers
         # unit conversion MD -> LB
         c_ext_force_density[
             0] = p_ext_force_density[
@@ -193,8 +193,7 @@ IF LB_GPU or LB:
         c_ext_force_density[
             2] = p_ext_force_density[
                 2] * p_agrid * p_agrid * p_tau * p_tau
-        # call c-function
-        lb_lbfluid_set_ext_force_density(0, c_ext_force_density)
+        lb_lbfluid_set_ext_force_density(c_ext_force_density)
 
 
 ###############################################
@@ -265,3 +264,25 @@ IF LB_GPU or LB:
         p_ext_force_density[
             2] = c_ext_force_density[
                 2] / p_agrid / p_agrid / p_tau / p_tau
+
+    cdef inline void python_lbnode_set_velocity(Vector3i node, Vector3d velocity):
+        cdef double agrid = lb_lbfluid_get_agrid()
+        cdef double tau = lb_lbfluid_get_tau()
+        cdef Vector3d c_velocity = velocity * tau / agrid
+        lb_lbnode_set_velocity(node, c_velocity)
+
+    cdef inline Vector3d python_lbnode_get_velocity(Vector3i node):
+        cdef double agrid = lb_lbfluid_get_agrid()
+        cdef double tau = lb_lbfluid_get_tau()
+        cdef Vector3d c_velocity = lb_lbnode_get_velocity(node)
+        return c_velocity * agrid / tau
+
+    cdef inline void python_lbnode_set_density(Vector3i node, double density):
+        cdef double agrid = lb_lbfluid_get_agrid()
+        cdef double c_density = density * agrid * agrid * agrid
+        lb_lbnode_set_density(node, c_density)
+
+    cdef inline double python_lbnode_get_density(Vector3i node):
+        cdef double agrid = lb_lbfluid_get_agrid()
+        cdef double c_density = lb_lbnode_get_density(node)
+        return c_density / agrid / agrid / agrid

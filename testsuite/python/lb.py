@@ -161,7 +161,7 @@ class TestLB(object):
         self.assertAlmostEqual(
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
-    def test_set_get_u(self):
+    def test_lb_node_set_get(self):
         self.system.actors.clear()
         self.lbf = self.lb_class(
             kT=0.0,
@@ -175,6 +175,9 @@ class TestLB(object):
         self.lbf[0, 0, 0].velocity = v_fluid
         np.testing.assert_allclose(
             np.copy(self.lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
+        density = 0.234
+        self.lbf[0, 0, 0].density = density
+        self.assertAlmostEqual(self.lbf[0, 0, 0].density, density, delta=1e-4)
 
     def test_grid_index(self):
         self.system.actors.clear()

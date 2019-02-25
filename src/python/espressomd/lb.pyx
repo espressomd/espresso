@@ -311,28 +311,24 @@ IF LB or LB_GPU:
 
         property velocity:
             def __get__(self):
-                cdef Vector3d double_return
-                double_return = lb_lbnode_get_u(self.node)
-                return make_array_locked(double_return)
+                return make_array_locked(python_lbnode_get_velocity(self.node))
 
             def __set__(self, value):
-                cdef Vector3d host_velocity
+                cdef Vector3d c_velocity
                 if all(is_valid_type(v, float) for v in value) and len(value) == 3:
-                    host_velocity[0] = value[0]
-                    host_velocity[1] = value[1]
-                    host_velocity[2] = value[2]
-                    lb_lbnode_set_u(self.node, host_velocity)
+                    c_velocity[0] = value[0]
+                    c_velocity[1] = value[1]
+                    c_velocity[2] = value[2]
+                    python_lbnode_set_velocity(self.node, c_velocity)
                 else:
                     raise ValueError(
                         "Velocity has to be of shape 3 and type float.")
         property density:
             def __get__(self):
-                cdef double double_return
-                double_return = lb_lbnode_get_density(self.node)
-                return array_locked(double_return)
+                return python_lbnode_get_density(self.node)
 
             def __set__(self, value):
-                raise NotImplementedError
+                python_lbnode_set_density(self.node, value)
 
         property pi:
             def __get__(self):

@@ -1191,7 +1191,7 @@ __device__ void apply_forces(unsigned int index, float *mode,
   reset_LB_force_densities(index, node_f);
 }
 
-/** Calculate hydrodynamic fields in MD units
+/** Calculate hydrodynamic fields in LB units
  *  @param[in]  n_a     Local node residing in array a for boundary flag
  *  @param[out] mode    Local register values mode
  *  @param[out] d_p_v   Local print values
@@ -1199,9 +1199,10 @@ __device__ void apply_forces(unsigned int index, float *mode,
  *  @param[in]  node_f  Local node force
  *  @param[in]  index   Node index / thread index
  *  @param[in]  print_index  Node index / thread index
+ *  TODO: code duplication with \ref calc_values_from_m_in_LB_units
  */
 __device__ void
-calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_pi_gpu *d_p_v,
+calc_values_in_LB_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_pi_gpu *d_p_v,
                         LB_rho_v_gpu *d_v, LB_node_force_density_gpu node_f,
                         unsigned int index, unsigned int print_index) {
   float j[3];
@@ -1213,12 +1214,11 @@ calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_pi_gpu *d_p_v,
 
     update_rho_v(mode, index, node_f, d_v);
 
-    d_p_v[print_index].rho =
-        d_v[index].rho / para->agrid / para->agrid / para->agrid;
+    d_p_v[print_index].rho = d_v[index].rho;
 
-    d_p_v[print_index].v[0] = d_v[index].v[0] * para->agrid / para->tau;
-    d_p_v[print_index].v[1] = d_v[index].v[1] * para->agrid / para->tau;
-    d_p_v[print_index].v[2] = d_v[index].v[2] * para->agrid / para->tau;
+    d_p_v[print_index].v[0] = d_v[index].v[0];
+    d_p_v[print_index].v[1] = d_v[index].v[1];
+    d_p_v[print_index].v[2] = d_v[index].v[2];
     /* stress calculation */
     float Rho = d_v[index].rho;
 
@@ -1296,7 +1296,7 @@ calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_pi_gpu *d_p_v,
     pi[5] += (mode[0] + mode[4] - mode[6]) / 3.0f;                      // zz
 
     for (int i = 0; i < 6; i++) {
-      d_p_v[print_index].pi[i] = pi[i] / para->tau / para->tau / para->agrid;
+      d_p_v[print_index].pi[i] = pi[i];
     }
   } else {
     d_p_v[print_index].rho = 0.0f;
@@ -1980,6 +1980,7 @@ __global__ void set_u_from_rho_v_pi(LB_nodes_gpu n_a, int single_nodeindex,
                        blockDim.x * blockIdx.x + threadIdx.x;
 
   if (index == 0) {
+    printf("kernel v: %f %f %f\n", velocity[0], velocity[1], velocity[2]);
     float local_rho;
     float local_j[3];
     float local_pi[6];
@@ -2373,7 +2374,7 @@ get_mesoscopic_values_in_MD_units(LB_nodes_gpu n_a, LB_rho_v_pi_gpu *p_v,
   if (index < para->number_of_nodes) {
     float mode[19];
     calc_m_from_n(n_a, index, mode);
-    calc_values_in_MD_units(n_a, mode, p_v, d_v, node_f, index, index);
+    calc_values_in_LB_units(n_a, mode, p_v, d_v, node_f, index, index);
   }
 }
 
@@ -2408,7 +2409,7 @@ __global__ void lb_print_node(int single_nodeindex, LB_rho_v_pi_gpu *d_p_v,
     calc_m_from_n(n_a, single_nodeindex, mode);
 
     /* the following actually copies rho and v from d_v, and calculates pi */
-    calc_values_in_MD_units(n_a, mode, d_p_v, d_v, node_f, single_nodeindex, 0);
+    calc_values_in_LB_units(n_a, mode, d_p_v, d_v, node_f, single_nodeindex, 0);
   }
 }
 
@@ -3011,18 +3012,13 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag) {
  *  @param host_rho           the density to set
  */
 void lb_set_node_rho_GPU(int single_nodeindex, float host_rho) {
-  float *device_rho;
-  cuda_safe_mem(cudaMalloc((void **)&device_rho, sizeof(float)));
-  cuda_safe_mem(
-      cudaMemcpy(device_rho, &host_rho, sizeof(float), cudaMemcpyHostToDevice));
   int threads_per_block_flag = 1;
   int blocks_per_grid_flag_y = 1;
   int blocks_per_grid_flag_x = 1;
   dim3 dim_grid_flag =
       make_uint3(blocks_per_grid_flag_x, blocks_per_grid_flag_y, 1);
   KERNELCALL(set_rho, dim_grid_flag, threads_per_block_flag, *current_nodes,
-             device_rho_v, single_nodeindex, *device_rho);
-  cudaFree(device_rho);
+             device_rho_v, single_nodeindex, host_rho);
 }
 
 /** Set the net velocity at a single node
@@ -3030,6 +3026,8 @@ void lb_set_node_rho_GPU(int single_nodeindex, float host_rho) {
  *  @param host_velocity      the velocity to set
  */
 void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
+  printf("velocity: %f %f %f\n", host_velocity[0], host_velocity[1],
+         host_velocity[2]);
   float *device_velocity;
   cuda_safe_mem(cudaMalloc((void **)&device_velocity, 3 * sizeof(float)));
   cuda_safe_mem(cudaMemcpy(device_velocity, host_velocity, 3 * sizeof(float),

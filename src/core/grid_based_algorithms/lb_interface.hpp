@@ -96,8 +96,7 @@ void lb_lbfluid_set_agrid(double p_agrid);
 /**
  * @brief Set the external force density acting on the LB fluid.
  */
-void lb_lbfluid_set_ext_force_density(int component,
-                                      const Vector3d &force_density);
+void lb_lbfluid_set_ext_force_density(const Vector3d &force_density);
 
 /**
  * @brief Set the LB fluid thermal energy.
@@ -117,7 +116,7 @@ void lb_lbnode_set_density(const Vector3i &ind, double density);
 /**
  * @brief Set the LB fluid velocity for a single node.
  */
-void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u);
+void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u);
 
 /**
  * @brief Set the LB fluid populations for a single node.
@@ -172,7 +171,7 @@ double lb_lbnode_get_density(const Vector3i &ind);
 /**
  * @brief Get the LB fluid velocity for a single node.
  */
-const Vector3d lb_lbnode_get_u(const Vector3i &ind);
+const Vector3d lb_lbnode_get_velocity(const Vector3i &ind);
 const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind);
 const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind);
 

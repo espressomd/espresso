@@ -2643,7 +2643,7 @@ int ek_lb_print_vtk_velocity(char *filename) {
   LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu *)Utils::malloc(
       lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu));
   lb_get_values_GPU(host_values);
-
+  auto const lattice_speed = lbpar_gpu.agrid / lbpar_gpu.tau;
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
 velocity\n\
@@ -2662,8 +2662,9 @@ LOOKUP_TABLE default\n",
           lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
 
   for (int i = 0; i < lbpar_gpu.number_of_nodes; i++) {
-    fprintf(fp, "%e %e %e ", host_values[i].v[0], host_values[i].v[1],
-            host_values[i].v[2]);
+    fprintf(fp, "%e %e %e ", host_values[i].v[0] * lattice_speed,
+            host_values[i].v[1] * lattice_speed,
+            host_values[i].v[2] * lattice_speed);
   }
 
   free(host_values);
@@ -2682,10 +2683,11 @@ int ek_node_print_velocity(
 
   int i = z * ek_parameters.dim_y * ek_parameters.dim_x +
           y * ek_parameters.dim_x + x;
+  auto const lattice_speed = lbpar_gpu.agrid / lbpar_gpu.tau;
 
-  velocity[0] = host_values[i].v[0];
-  velocity[1] = host_values[i].v[1];
-  velocity[2] = host_values[i].v[2];
+  velocity[0] = host_values[i].v[0] * lattice_speed;
+  velocity[1] = host_values[i].v[1] * lattice_speed;
+  velocity[2] = host_values[i].v[2] * lattice_speed;
 
   free(host_values);
 
@@ -2721,9 +2723,9 @@ LOOKUP_TABLE default\n",
           lbpar_gpu.agrid * 0.5f, lbpar_gpu.agrid * 0.5f,
           lbpar_gpu.agrid * 0.5f, lbpar_gpu.agrid, lbpar_gpu.agrid,
           lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
-
+  auto const agrid = lb_lbfluid_get_agrid();
   for (int i = 0; i < lbpar_gpu.number_of_nodes; i++) {
-    fprintf(fp, "%e ", host_values[i].rho);
+    fprintf(fp, "%e ", host_values[i].rho / agrid / agrid / agrid);
   }
 
   free(host_values);
