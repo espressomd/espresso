@@ -69,19 +69,20 @@ lb_lbinterpolation_get_interpolated_velocity(const Vector3d &pos) {
 
 const Vector3d
 lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
+  auto const folded_pos = folded_position(pos);
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     Vector3d interpolated_u{};
-    lb_get_interpolated_velocity_gpu(pos.data(), interpolated_u.data(), 1);
+    lb_get_interpolated_velocity_gpu(folded_pos.data(), interpolated_u.data(), 1);
     return interpolated_u;
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
-    auto const node = map_position_node_array(pos);
+    auto const node = map_position_node_array(folded_pos);
     if (node == 0) {
-      return lb_lbinterpolation_get_interpolated_velocity(pos);
+      return lb_lbinterpolation_get_interpolated_velocity(folded_pos);
     } else {
-      return mpi_recv_lb_interpolated_velocity(node, pos);
+      return mpi_recv_lb_interpolated_velocity(node, folded_pos);
     }
   }
 #endif
