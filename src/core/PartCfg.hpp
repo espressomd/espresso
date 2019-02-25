@@ -30,9 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 class GetLocalParts {
 public:
-  ParticleRange operator()() const {
-    return local_cells.particles();
-  }
+  ParticleRange operator()() const { return local_cells.particles(); }
 };
 
 using PartCfg = ParticleCache<GetLocalParts, PositionUnfolder>;

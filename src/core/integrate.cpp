@@ -495,7 +495,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
   }
 #endif
 
-    build_particle_index();
+  build_particle_index();
 }
 
 /************************************************************/
