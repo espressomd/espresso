@@ -124,8 +124,7 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
   /* calculate viscous force
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
    * */
-  auto const force =
-      -lb_lbcoupling_get_gamma() * (p->m.v - v_drift) + f_random;
+  auto const force = -lb_lbcoupling_get_gamma() * (p->m.v - v_drift) + f_random;
 
   add_md_force(p->r.p, force);
 
@@ -188,9 +187,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
        * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
        * time_step comes from the discretization.
        */
-      auto const noise_amplitude =
-          sqrt(12. * 2. * lb_lbcoupling_get_gamma() * lb_lbfluid_get_kT() /
-               time_step);
+      auto const noise_amplitude = sqrt(12. * 2. * lb_lbcoupling_get_gamma() *
+                                        lb_lbfluid_get_kT() / time_step);
       auto f_random = [&c](int id) -> Vector3d {
         if (lb_lbfluid_get_kT() > 0.0) {
           key_type k{{static_cast<uint32_t>(id)}};
