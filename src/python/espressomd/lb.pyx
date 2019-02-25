@@ -294,7 +294,8 @@ IF LB_GPU:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             lb_get_interpolated_velocity_gpu( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
-            return velocities
+            cdef double lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()
+            return velocities * lattice_speed
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):

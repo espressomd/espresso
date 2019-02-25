@@ -266,7 +266,7 @@ IF LB_GPU or LB:
                 2] / p_agrid / p_agrid / p_tau / p_tau
 
     cdef inline void python_lbnode_set_velocity(Vector3i node, Vector3d velocity):
-        cdef double inv_lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()
+        cdef double inv_lattice_speed = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid()
         cdef Vector3d c_velocity = velocity * inv_lattice_speed
         lb_lbnode_set_velocity(node, c_velocity)
 
