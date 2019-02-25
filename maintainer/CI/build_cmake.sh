@@ -273,6 +273,9 @@ else
 fi
 
 if $with_coverage; then
+(
+    set +e
+
     cd $builddir
     lcov -q --directory . --capture --output-file coverage.info # capture coverage info
     lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
@@ -283,6 +286,7 @@ if $with_coverage; then
     else
         bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" || echo "Codecov did not collect coverage reports"
     fi
+)
 fi
 
 trap : 0
