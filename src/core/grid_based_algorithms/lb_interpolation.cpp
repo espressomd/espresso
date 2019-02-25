@@ -73,7 +73,8 @@ lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     Vector3d interpolated_u{};
-    lb_get_interpolated_velocity_gpu(folded_pos.data(), interpolated_u.data(), 1);
+    lb_get_interpolated_velocity_gpu(folded_pos.data(), interpolated_u.data(),
+                                     1);
     return interpolated_u;
 #endif
   } else if (lattice_switch & LATTICE_LB) {
