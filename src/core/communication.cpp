@@ -39,7 +39,6 @@
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/mmm2d.hpp"
@@ -306,14 +305,9 @@ void mpi_bcast_event(int event) {
 
 void mpi_bcast_event_slave(int node, int event) {
   switch (event) {
-#ifdef ELECTROSTATICS
 #ifdef P3M
   case P3M_COUNT_CHARGES:
     p3m_count_charged_particles();
-    break;
-#endif
-  case MAGGS_COUNT_CHARGES:
-    maggs_count_charged_particles();
     break;
 #endif
   case CHECK_PARTICLES:
@@ -681,9 +675,6 @@ void mpi_bcast_coulomb_params_slave(int, int) {
   case COULOMB_MMM2D:
     MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, comm_cart);
     break;
-  case COULOMB_MAGGS:
-    MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart);
-    break;
   case COULOMB_RF:
   case COULOMB_INTER_RF:
     MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0,
@@ -738,38 +729,6 @@ void mpi_bcast_coulomb_params_slave(int, int) {
 #endif
 
   on_coulomb_change();
-#endif
-}
-
-/****************** REQ_SET_PERM ************/
-
-void mpi_send_permittivity_slave(int node, int) {
-#ifdef ELECTROSTATICS
-  if (node == this_node) {
-    double data[3];
-    int indices[3];
-    MPI_Recv(data, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    MPI_Recv(indices, 3, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    for (int d = 0; d < 3; d++) {
-      maggs_set_permittivity(indices[0], indices[1], indices[2], d, data[d]);
-    }
-  }
-#endif
-}
-
-void mpi_send_permittivity(int node, int index, int *indices,
-                           double *permittivity) {
-#ifdef ELECTROSTATICS
-  if (node == this_node) {
-    for (int d = 0; d < 3; d++) {
-      maggs_set_permittivity(indices[0], indices[1], indices[2], d,
-                             permittivity[d]);
-    }
-  } else {
-    mpi_call(mpi_send_permittivity_slave, node, index);
-    MPI_Send(permittivity, 3, MPI_DOUBLE, node, SOME_TAG, comm_cart);
-    MPI_Send(indices, 3, MPI_INT, node, SOME_TAG, comm_cart);
-  }
 #endif
 }
 
