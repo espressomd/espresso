@@ -83,9 +83,7 @@ namespace {
 void add_md_force(Vector3d const &pos, Vector3d const &force) {
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-
-  const auto agrid = lb_lbfluid_get_agrid();
-  auto const delta_j = -(time_step * lb_lbfluid_get_tau() / agrid) * force;
+  auto const delta_j = -(time_step / lb_lbfluid_get_lattice_speed()) * force;
   lb_lbinterpolation_add_force_density(pos, delta_j);
 }
 } // namespace
@@ -105,7 +103,8 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   auto const interpolated_u =
-      lb_lbinterpolation_get_interpolated_velocity(p->r.p);
+      lb_lbinterpolation_get_interpolated_velocity(p->r.p) *
+      lb_lbfluid_get_lattice_speed();
 
   Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
@@ -156,7 +155,8 @@ void add_swimmer_force(Particle &p) {
     }
 
     p.swim.v_source =
-        lb_lbinterpolation_get_interpolated_velocity(source_position);
+        lb_lbinterpolation_get_interpolated_velocity(source_position) *
+        lb_lbfluid_get_lattice_speed();
 
     add_md_force(source_position, p.swim.f_swim * director);
   }

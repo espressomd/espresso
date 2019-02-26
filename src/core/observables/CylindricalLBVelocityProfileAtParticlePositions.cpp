@@ -18,6 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "lattice.hpp"
 #include "utils.hpp"
@@ -47,7 +48,8 @@ operator()(PartCfg &partCfg) const {
 #if defined(LB) || defined(LB_GPU)
     boost::transform(
         folded_positions, velocities.begin(), [](const Vector3d &pos) {
-          return lb_lbinterpolation_get_interpolated_velocity_global(pos);
+          return lb_lbinterpolation_get_interpolated_velocity_global(pos) *
+                 lb_lbfluid_get_lattice_speed();
         });
 #endif
   } else {

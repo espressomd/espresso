@@ -19,6 +19,7 @@
 */
 
 #include "CylindricalLBVelocityProfile.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "lattice.hpp"
 #include "utils.hpp"
@@ -45,7 +46,8 @@ operator()(PartCfg &partCfg) const {
                           m_sample_positions[ind + 1],
                           m_sample_positions[ind + 2]};
       const Vector3d v =
-          lb_lbinterpolation_get_interpolated_velocity_global(pos_tmp);
+          lb_lbinterpolation_get_interpolated_velocity_global(pos_tmp) *
+          lb_lbfluid_get_lattice_speed();
       std::copy_n(v.begin(), 3, &(velocities[ind + 0]));
     }
 #endif

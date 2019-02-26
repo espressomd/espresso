@@ -2542,10 +2542,6 @@ int ek_init() {
         lb_lbcoupling_get_gamma() != ek_parameters.friction ||
         lbpar_gpu.rho != ek_parameters.lb_density * ek_parameters.agrid *
                              ek_parameters.agrid * ek_parameters.agrid) {
-      fprintf(stderr, "dens %f %f\n", lbpar_gpu.agrid, ek_parameters.agrid);
-      fprintf(stderr, "visc %f %f\n", lbpar_gpu.viscosity,
-              ek_parameters.viscosity * ek_parameters.time_step /
-                  (ek_parameters.agrid * ek_parameters.agrid));
       fprintf(stderr,
               "ERROR: The LB parameters on the GPU cannot be reinitialized.\n");
 

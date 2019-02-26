@@ -41,8 +41,7 @@ Vector3d node_u(Lattice::index_t index) {
 #endif // LB_BOUNDARIES
   auto const modes = lb_calc_modes(index);
   auto const local_rho = lbpar.rho + modes[0];
-  return Vector3d{modes[1], modes[2], modes[3]} / local_rho *
-         lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
+  return Vector3d{modes[1], modes[2], modes[3]} / local_rho;
 }
 
 } // namespace

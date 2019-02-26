@@ -460,6 +460,10 @@ double lb_lbfluid_get_kT() {
   return {};
 }
 
+double lb_lbfluid_get_lattice_speed() {
+  return lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
+}
+
 void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
   FILE *fp = fopen(filename.c_str(), "w");
 

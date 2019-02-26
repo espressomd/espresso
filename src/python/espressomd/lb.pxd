@@ -83,6 +83,7 @@ IF LB_GPU or LB:
         void lb_lbfluid_set_rng_state(stdint.uint64_t) except +
         void lb_lbfluid_set_kT(double) except +
         double lb_lbfluid_get_kT() except +
+        double lb_lbfluid_get_lattice_speed() except +
 
     cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
         void lb_lbcoupling_set_rng_state(stdint.uint64_t)

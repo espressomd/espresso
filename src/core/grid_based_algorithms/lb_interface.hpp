@@ -164,6 +164,11 @@ const Vector3d lb_lbfluid_get_ext_force_density();
 double lb_lbfluid_get_kT();
 
 /**
+ * @brief Get the lattice speed (agrid/tau).
+ */
+double lb_lbfluid_get_lattice_speed();
+
+/**
  * @brief Get the LB fluid density for a single node.
  */
 double lb_lbnode_get_density(const Vector3i &ind);

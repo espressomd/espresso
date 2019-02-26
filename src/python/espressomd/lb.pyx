@@ -197,7 +197,7 @@ IF LB_GPU or LB:
 
             for i in range(3):
                 p[i] = pos[i]
-            cdef Vector3d v = lb_lbinterpolation_get_interpolated_velocity_global(p)
+            cdef Vector3d v = lb_lbinterpolation_get_interpolated_velocity_global(p) * lb_lbfluid_get_lattice_speed()
             return make_array_locked(v)
 
         # input/output function wrappers for whole LB fields
@@ -294,8 +294,7 @@ IF LB_GPU:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             lb_get_interpolated_velocity_gpu( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
-            cdef double lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()
-            return velocities * lattice_speed
+            return velocities * lb_lbfluid_get_lattice_speed()
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):
