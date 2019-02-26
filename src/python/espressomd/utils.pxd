@@ -106,6 +106,8 @@ cdef extern from "utils/Vector.hpp":
     cppclass Vector6d:
         double & operator[](int i)
         double * data()
+        Vector6d operator * (double i)
+        Vector6d operator / (double i)
 
     cppclass Vector19d:
         double & operator[](int i)

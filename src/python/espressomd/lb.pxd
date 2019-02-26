@@ -285,3 +285,15 @@ IF LB_GPU or LB:
         cdef double agrid = lb_lbfluid_get_agrid()
         cdef double c_density = lb_lbnode_get_density(node)
         return c_density / agrid / agrid / agrid
+
+    cdef inline Vector6d python_lbnode_get_pi(Vector3i node):
+        cdef double tau = lb_lbfluid_get_tau()
+        cdef double agrid = lb_lbfluid_get_agrid()
+        cdef Vector6d c_pi = lb_lbnode_get_pi(node)
+        return c_pi / tau / tau / agrid
+
+    cdef inline Vector6d python_lbnode_get_pi_neq(Vector3i node):
+        cdef double tau = lb_lbfluid_get_tau()
+        cdef double agrid = lb_lbfluid_get_agrid()
+        cdef Vector6d c_pi = lb_lbnode_get_pi_neq(node)
+        return c_pi / tau / tau / agrid
