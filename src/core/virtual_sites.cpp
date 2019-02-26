@@ -132,17 +132,17 @@ void calculate_vs_relate_to_params(const Particle &p_current,
 // both particles to be accessible through local_particles and only executes the
 // changes on the virtual site locally
 int local_vs_relate_to(Particle *p_current, const Particle *p_relate_to) {
-    Vector<4, double> quat;
-    double l;
-    calculate_vs_relate_to_params(*p_current, *p_relate_to, l, quat);
+  Vector<4, double> quat;
+  double l;
+  calculate_vs_relate_to_params(*p_current, *p_relate_to, l, quat);
 
-    // Set the particle id of the particle we want to relate to, the distance
-    // and the relative orientation
-    p_current->p.vs_relative.to_particle_id = p_relate_to->identity();
-    p_current->p.vs_relative.distance = l;
-    for (int i = 0; i < 4; i++)
-        p_current->p.vs_relative.rel_orientation[i] = quat[i];
-    return ES_OK;
+  // Set the particle id of the particle we want to relate to, the distance
+  // and the relative orientation
+  p_current->p.vs_relative.to_particle_id = p_relate_to->identity();
+  p_current->p.vs_relative.distance = l;
+  for (int i = 0; i < 4; i++)
+    p_current->p.vs_relative.rel_orientation[i] = quat[i];
+  return ES_OK;
 }
 
 // Setup the virtual_sites_relative properties of a particle so that the given

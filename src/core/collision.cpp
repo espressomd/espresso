@@ -384,7 +384,8 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void place_vs_and_relate_to_particle(const int current_vs_pid,
-                                     const Vector3d &pos, const Particle *relate_to,
+                                     const Vector3d &pos,
+                                     const Particle *relate_to,
                                      const Vector3d &initial_pos) {
 
   // The virtual site is placed at initial_pos which will be in the local
@@ -397,8 +398,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   local_vs_relate_to(p_vs, relate_to);
 
   p_vs->p.is_virtual = 1;
-  p_vs->p.type =
-      collision_params.vs_particle_type;
+  p_vs->p.type = collision_params.vs_particle_type;
 }
 
 void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
@@ -613,8 +613,8 @@ void handle_collisions() {
           // Positions of the virtual sites
           bind_at_point_of_collision_calc_vs_pos(p1, p2, pos1, pos2);
 
-          auto handle_particle = [&](Particle *p, Vector3d const& pos) {
-            if(not p->l.ghost) {
+          auto handle_particle = [&](Particle *p, Vector3d const &pos) {
+            if (not p->l.ghost) {
               place_vs_and_relate_to_particle(current_vs_pid, pos, p,
                                               initial_pos);
               // Particle storage locations may have changed due to
@@ -679,8 +679,8 @@ void handle_collisions() {
 
           // Vs placement happens on the node that has p1
           if (!attach_vs_to.l.ghost) {
-            place_vs_and_relate_to_particle(
-                current_vs_pid, pos, &attach_vs_to, initial_pos);
+            place_vs_and_relate_to_particle(current_vs_pid, pos, &attach_vs_to,
+                                            initial_pos);
             // Particle storage locations may have changed due to
             // added particle
             p1 = local_particles[c.pp1];

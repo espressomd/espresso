@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef VIRTUAL_SITES_HPP
 #define VIRTUAL_SITES_HPP
 
-#include <serialization/Particle.hpp>
 #include "config.hpp"
+#include <serialization/Particle.hpp>
 
 #ifdef VIRTUAL_SITES
 #include "virtual_sites/VirtualSites.hpp"
