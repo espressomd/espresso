@@ -605,7 +605,7 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
     for (pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
       for (pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
         for (pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++) {
-          auto u = lb_lbnode_get_velocity(pos);
+          auto u = lb_lbnode_get_velocity(pos) * lb_lbfluid_get_lattice_speed();
           fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
         }
 #endif // LB
@@ -710,12 +710,12 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     for (pos[2] = 0; pos[2] < gridsize[2]; pos[2]++) {
       for (pos[1] = 0; pos[1] < gridsize[1]; pos[1]++) {
         for (pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
-          auto const u = lb_lbnode_get_velocity(pos);
+          auto const u = lb_lbnode_get_velocity(pos) * lattice_speed;
           fprintf(fp, "%f %f %f %f %f %f\n",
                   (pos[0] + 0.5) * lblattice.agrid[0],
                   (pos[1] + 0.5) * lblattice.agrid[1],
-                  (pos[2] + 0.5) * lblattice.agrid[2], u[0] * lattice_speed,
-                  u[1] * lattice_speed, u[2] * lattice_speed);
+                  (pos[2] + 0.5) * lblattice.agrid[2], u[0],
+                  u[1], u[2]);
         }
       }
     }
