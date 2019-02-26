@@ -444,7 +444,6 @@ bool swimming_particles_exist = false;
  */
 std::unordered_map<int, int> particle_node;
 
-int max_local_particles = 0;
 ParticleIndex local_particles;
 
 /************************************************
