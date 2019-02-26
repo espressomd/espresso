@@ -509,7 +509,22 @@ namespace detail {
             return (it != m_map.end()) ? it->second : nullptr;
         }
 
-        void clear() { m_map.clear(); }
+        /**
+         * @brief Remove entries for non-existing particles.
+         */
+        void shrink_to_fit() {
+            for(auto it = m_map.begin(); it != m_map.end(); ++it) {
+                if(not it->second) {
+                    m_map.erase(it);
+                }
+            }
+        }
+
+        void clear() {
+            for(auto &kv: m_map) {
+               kv.second = nullptr;
+            }
+        }
 
         void update(Particle &p) { m_map[p.identity()] = &p; }
 
@@ -523,7 +538,6 @@ namespace detail {
 }
 
 using ParticleIndex = detail::Index<Particle>;
-using ConstParticleIndex = detail::Index<const Particle>;
 
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
