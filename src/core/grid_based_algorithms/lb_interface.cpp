@@ -714,8 +714,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
           fprintf(fp, "%f %f %f %f %f %f\n",
                   (pos[0] + 0.5) * lblattice.agrid[0],
                   (pos[1] + 0.5) * lblattice.agrid[1],
-                  (pos[2] + 0.5) * lblattice.agrid[2], u[0],
-                  u[1], u[2]);
+                  (pos[2] + 0.5) * lblattice.agrid[2], u[0], u[1], u[2]);
         }
       }
     }
