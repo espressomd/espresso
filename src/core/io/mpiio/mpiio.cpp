@@ -389,17 +389,16 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   std::vector<int> id(nlocalpart);
   mpiio_read_array<int>(fnam + ".id", id.data(), nlocalpart, pref, MPI_INT);
 
-  if (fields & MPIIO_OUT_POS) {
     // 1.pos on all nodes:
     // Read nlocalpart * 3 doubles at defined prefix * 3
     std::vector<double> pos(3 * nlocalpart);
+    std::vector<Particle *> parts(nlocalpart);
     mpiio_read_array<double>(fnam + ".pos", pos.data(), 3 * nlocalpart,
                              3 * pref, MPI_DOUBLE);
 
     for (int i = 0; i < nlocalpart; ++i) {
-      local_place_particle(id[i], &pos[3 * i], 1);
+      parts[i] = local_place_particle(id[i], &pos[3 * i], 1);
     }
-  }
 
   if (fields & MPIIO_OUT_TYP) {
     // 1.type on all nodes:
@@ -409,7 +408,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
                           MPI_INT);
 
     for (int i = 0; i < nlocalpart; ++i)
-      local_particles[id[i]]->p.type = type[i];
+      parts[i]->p.type = type[i];
   }
 
   if (fields & MPIIO_OUT_VEL) {
@@ -421,7 +420,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
     for (int i = 0; i < nlocalpart; ++i)
       for (int k = 0; k < 3; ++k)
-        local_particles[id[i]]->m.v[k] = vel[3 * i + k];
+        parts[i]->m.v[k] = vel[3 * i + k];
   }
 
   if (fields & MPIIO_OUT_BND) {
@@ -444,7 +443,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
     for (int i = 0; i < nlocalpart; ++i) {
       int blen = boff[i + 1] - boff[i];
-      auto &bl = local_particles[id[i]]->bl;
+      auto &bl = parts[i]->bl;
       bl.resize(blen);
       std::copy_n(&bond[boff[i]], blen, bl.begin());
     }
