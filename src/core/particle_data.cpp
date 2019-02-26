@@ -1195,7 +1195,7 @@ void local_remove_particle(int part) {
   Particle p_destroy = extract_indexed_particle(cell, n);
 }
 
-void local_place_particle(int part, const double p[3], int _new) {
+Particle *local_place_particle(int part, const double p[3], int _new) {
   Particle *pt;
 
   Vector3i i{};
@@ -1232,6 +1232,8 @@ void local_place_particle(int part, const double p[3], int _new) {
 #ifdef BOND_CONSTRAINT
   pt->r.p_old = pp;
 #endif
+
+  return pt;
 }
 
 void local_remove_all_particles() {
