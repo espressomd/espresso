@@ -1371,6 +1371,8 @@ void auto_exclusions(int distance) {
   /* calculate transient connectivity. For each of the current neighbors,
      also exclude their close enough neighbors.
   */
+  auto const max_seen_particle = partCfg().max_id();
+
   for (count = 1; count < distance; count++) {
     for (p1 = 0; p1 <= max_seen_particle; p1++) {
       for (i = 0; i < partners[p1].n; i += 2) {
