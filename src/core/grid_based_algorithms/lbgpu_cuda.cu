@@ -2364,7 +2364,7 @@ __global__ void apply_boundaries(LB_nodes_gpu n_curr,
  *  @param[in]  node_f  Local node force
  */
 __global__ void
-get_mesoscopic_values_in_MD_units(LB_nodes_gpu n_a, LB_rho_v_pi_gpu *p_v,
+get_mesoscopic_values_in_LB_units(LB_nodes_gpu n_a, LB_rho_v_pi_gpu *p_v,
                                   LB_rho_v_gpu *d_v,
                                   LB_node_force_density_gpu node_f) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
@@ -2757,7 +2757,7 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values) {
       (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(get_mesoscopic_values_in_MD_units, dim_grid, threads_per_block,
+  KERNELCALL(get_mesoscopic_values_in_LB_units, dim_grid, threads_per_block,
              *current_nodes, print_rho_v_pi, device_rho_v, node_f);
   cuda_safe_mem(cudaMemcpy(host_values, print_rho_v_pi, size_of_rho_v_pi,
                            cudaMemcpyDeviceToHost));
