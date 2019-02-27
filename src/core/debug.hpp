@@ -169,14 +169,6 @@ extern int check_id;
 #define MDLC_TRACE(cmd)
 #endif
 
-#ifdef MAGGS_DEBUG
-#define MAGGS_TRACE(cmd)                                                       \
-  { cmd; }
-#else
-/** Equals { cmd } iff MAGGS_DEBUG is set. */
-#define MAGGS_TRACE(cmd)
-#endif
-
 #ifdef FFT_DEBUG
 #define FFT_TRACE(cmd)                                                         \
   { cmd; }

@@ -147,7 +147,7 @@ cuda-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
-    - export myconfig=maxset with_coverage=true python_version=3
+    - export myconfig=maxset with_coverage=true python_version=3 test_timeout=900
     - bash maintainer/cuda_build.sh
   artifacts:
     paths:
