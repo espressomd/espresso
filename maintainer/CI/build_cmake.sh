@@ -270,7 +270,6 @@ fi
 
 if $with_coverage; then
     cd $builddir
-    ls -al src/core/unit_tests/CMakeFiles/Variant_test.dir
     lcov -q --directory . --capture --output-file coverage.info # capture coverage info
     lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
     lcov -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
