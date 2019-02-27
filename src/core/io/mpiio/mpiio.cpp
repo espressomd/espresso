@@ -389,16 +389,16 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   std::vector<int> id(nlocalpart);
   mpiio_read_array<int>(fnam + ".id", id.data(), nlocalpart, pref, MPI_INT);
 
-    // 1.pos on all nodes:
-    // Read nlocalpart * 3 doubles at defined prefix * 3
-    std::vector<double> pos(3 * nlocalpart);
-    std::vector<Particle *> parts(nlocalpart);
-    mpiio_read_array<double>(fnam + ".pos", pos.data(), 3 * nlocalpart,
-                             3 * pref, MPI_DOUBLE);
+  // 1.pos on all nodes:
+  // Read nlocalpart * 3 doubles at defined prefix * 3
+  std::vector<double> pos(3 * nlocalpart);
+  std::vector<Particle *> parts(nlocalpart);
+  mpiio_read_array<double>(fnam + ".pos", pos.data(), 3 * nlocalpart, 3 * pref,
+                           MPI_DOUBLE);
 
-    for (int i = 0; i < nlocalpart; ++i) {
-      parts[i] = local_place_particle(id[i], &pos[3 * i], 1);
-    }
+  for (int i = 0; i < nlocalpart; ++i) {
+    parts[i] = local_place_particle(id[i], &pos[3 * i], 1);
+  }
 
   if (fields & MPIIO_OUT_TYP) {
     // 1.type on all nodes:

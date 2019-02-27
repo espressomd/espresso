@@ -438,9 +438,7 @@ public:
    *
    * @return Id
    */
-  int max_id() const {
-    return remote_parts.rbegin()->identity();
-  }
+  int max_id() const { return remote_parts.rbegin()->identity(); }
 };
 
 #endif

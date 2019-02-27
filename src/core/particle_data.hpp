@@ -498,44 +498,42 @@ extern bool swimming_particles_exist;
 #include <unordered_map>
 
 namespace detail {
-    template<class Particle>
-    class Index {
-        std::unordered_map<int, Particle *> m_map;
+template <class Particle> class Index {
+  std::unordered_map<int, Particle *> m_map;
 
-    public:
-        Particle *operator[](int i) const {
-            auto it = m_map.find(i);
+public:
+  Particle *operator[](int i) const {
+    auto it = m_map.find(i);
 
-            return (it != m_map.end()) ? it->second : nullptr;
-        }
+    return (it != m_map.end()) ? it->second : nullptr;
+  }
 
-        /**
-         * @brief Remove entries for non-existing particles.
-         */
-        void shrink_to_fit() {
-            for(auto it = m_map.begin(); it != m_map.end(); ++it) {
-                if(not it->second) {
-                    m_map.erase(it);
-                }
-            }
-        }
+  /**
+   * @brief Remove entries for non-existing particles.
+   */
+  void shrink_to_fit() {
+    for (auto it = m_map.begin(); it != m_map.end(); ++it) {
+      if (not it->second) {
+        m_map.erase(it);
+      }
+    }
+  }
 
-        void clear() {
-            for(auto &kv: m_map) {
-               kv.second = nullptr;
-            }
-        }
+  void clear() {
+    for (auto &kv : m_map) {
+      kv.second = nullptr;
+    }
+  }
 
-        void update(Particle &p) { m_map[p.identity()] = &p; }
+  void update(Particle &p) { m_map[p.identity()] = &p; }
 
-        template<class Range>
-        void update(Range rng) {
-            for (auto &p : rng) {
-                update(p);
-            }
-        }
-    };
-}
+  template <class Range> void update(Range rng) {
+    for (auto &p : rng) {
+      update(p);
+    }
+  }
+};
+} // namespace detail
 
 using ParticleIndex = detail::Index<Particle>;
 
