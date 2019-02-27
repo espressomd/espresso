@@ -270,7 +270,7 @@ fi
 
 if $with_coverage; then
     cd $builddir
-    lcov -q --directory . --capture --output-file coverage.info # capture coverage info
+    lcov -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
     lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
     lcov -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
     # Uploading report to CodeCov
