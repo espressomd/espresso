@@ -347,8 +347,6 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
   return displaced_parts;
 }
 
-
-
 void cells_resort_particles(int global_flag, CellPList local_cells) {
   CELL_TRACE(fprintf(stderr, "%d: entering cells_resort_particles %d\n",
                      this_node, global_flag));
@@ -361,16 +359,28 @@ void cells_resort_particles(int global_flag, CellPList local_cells) {
   ParticleList displaced_parts =
       sort_and_fold_parts(cell_structure, local_cells);
 
+  ParticleList new_parts;
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED: {
-    layered_exchange_and_sort_particles(global_flag, &displaced_parts);
+    new_parts = layered_exchange_and_sort_particles(global_flag, &displaced_parts);
   } break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_balance_particles(global_flag);
+    new_parts = nsq_balance_particles(global_flag);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_exchange_and_sort_particles(global_flag, &displaced_parts);
+    new_parts = dd_exchange_and_sort_particles(global_flag, &displaced_parts);
     break;
+  }
+
+  std::vector<Cell *> updated_cells;
+  updated_cells.reserve(new_parts.n);
+
+  for(int p = 0; p < new_parts.n; p++) {
+    auto cell = cell_structure.position_to_cell(new_parts.part[p].r.p);
+    move_particle(cell, &new_parts, p);
+    if(p < new_parts.n) {
+      p--;
+    }
   }
 
   if (0 != displaced_parts.n) {

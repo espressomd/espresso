@@ -819,7 +819,7 @@ void exchange_neighbors(ParticleList *pl, ParticleList *new_parts) {
 }
 } // namespace
 
-void dd_exchange_and_sort_particles(int global, ParticleList *pl) {
+ParticleList dd_exchange_and_sort_particles(int global, ParticleList *pl) {
     ParticleList new_parts;
   if (global) {
     /* Worst case we need node_grid - 1 rounds per direction.
@@ -839,6 +839,8 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl) {
   } else {
     exchange_neighbors(pl, &new_parts);
   }
+
+  return new_parts;
 
     for(int p = 0; p < new_parts.n; p++) {
         auto &part = new_parts.part[p];

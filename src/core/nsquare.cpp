@@ -217,9 +217,9 @@ ParticleList nsq_balance_particles(int global_flag) {
   }
   CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: done\n", this_node));
 
+  return new_particles;
+
   for (int i = 0; i < new_particles.n; i++) {
     append_particle(local, std::move(new_particles.part[i]));
   }
-
-  return {};
 }

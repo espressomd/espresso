@@ -414,8 +414,8 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
   CELL_TRACE(fprintf(stderr, "%d: left over %d\n", this_node, pl->n));
 }
 
-void layered_exchange_and_sort_particles(int global_flag,
-                                         ParticleList *displaced_parts) {
+ParticleList layered_exchange_and_sort_particles(int global_flag,
+                                                 ParticleList *displaced_parts) {
   int flag, redo;
   ParticleList send_buf_dn, send_buf_up;
   ParticleList recv_buf_up, recv_buf_dn;
@@ -532,6 +532,8 @@ void layered_exchange_and_sort_particles(int global_flag,
 
   realloc_particlelist(&recv_buf_up, 0);
   realloc_particlelist(&recv_buf_dn, 0);
+
+  return new_parts;
 
   for(int p = 0; p < new_parts.n; p++) {
     auto &part = new_parts.part[p];

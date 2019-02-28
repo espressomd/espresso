@@ -159,7 +159,7 @@ void dd_topology_release();
  *  particle moves)
  *  @param pl List of particles
  */
-void dd_exchange_and_sort_particles(int global, ParticleList *pl);
+ParticleList dd_exchange_and_sort_particles(int global, ParticleList *pl);
 
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells();
