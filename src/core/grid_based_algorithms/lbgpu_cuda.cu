@@ -168,251 +168,151 @@ template <typename T> __device__ T xyz_to_index(T x, T y, T z) {
 
 __device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
                                                unsigned int index, int x) {
-  auto const flat_index = [&index](int population){return population*para->number_of_nodes + index;};
+  auto const flat_index = [&index](int population) {
+    return population * para->number_of_nodes + index;
+  };
   switch (x) {
   case 0:
-    return n_a.vd[flat_index(0)] +
-           n_a.vd[flat_index(1)] +
-           n_a.vd[flat_index(2)] +
-           n_a.vd[flat_index(3)] +
-           n_a.vd[flat_index(4)] +
-           n_a.vd[flat_index(5)] +
-           n_a.vd[flat_index(6)] +
-           n_a.vd[flat_index(7)] +
-           n_a.vd[flat_index(8)] +
-           n_a.vd[flat_index(9)] +
-           n_a.vd[flat_index(10)] +
-           n_a.vd[flat_index(11)] +
-           n_a.vd[flat_index(12)] +
-           n_a.vd[flat_index(13)] +
-           n_a.vd[flat_index(14)] +
-           n_a.vd[flat_index(15)] +
-           n_a.vd[flat_index(16)] +
-           n_a.vd[flat_index(17)] +
+    return n_a.vd[flat_index(0)] + n_a.vd[flat_index(1)] +
+           n_a.vd[flat_index(2)] + n_a.vd[flat_index(3)] +
+           n_a.vd[flat_index(4)] + n_a.vd[flat_index(5)] +
+           n_a.vd[flat_index(6)] + n_a.vd[flat_index(7)] +
+           n_a.vd[flat_index(8)] + n_a.vd[flat_index(9)] +
+           n_a.vd[flat_index(10)] + n_a.vd[flat_index(11)] +
+           n_a.vd[flat_index(12)] + n_a.vd[flat_index(13)] +
+           n_a.vd[flat_index(14)] + n_a.vd[flat_index(15)] +
+           n_a.vd[flat_index(16)] + n_a.vd[flat_index(17)] +
            n_a.vd[flat_index(18)];
     break;
   case 1:
-    return (n_a.vd[flat_index(1)] -
-            n_a.vd[flat_index(2)]) +
-           (n_a.vd[flat_index(7)] -
-            n_a.vd[flat_index(8)]) +
-           (n_a.vd[flat_index(9)] -
-            n_a.vd[flat_index(10)]) +
-           (n_a.vd[flat_index(11)] -
-            n_a.vd[flat_index(12)]) +
-           (n_a.vd[flat_index(13)] -
-            n_a.vd[flat_index(14)]);
+    return (n_a.vd[flat_index(1)] - n_a.vd[flat_index(2)]) +
+           (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) +
+           (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) +
+           (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) +
+           (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]);
     break;
   case 2:
-    return (n_a.vd[flat_index(3)] -
-            n_a.vd[flat_index(4)]) +
-           (n_a.vd[flat_index(7)] -
-            n_a.vd[flat_index(8)]) -
-           (n_a.vd[flat_index(9)] -
-            n_a.vd[flat_index(10)]) +
-           (n_a.vd[flat_index(15)] -
-            n_a.vd[flat_index(16)]) +
-           (n_a.vd[flat_index(17)] -
-            n_a.vd[flat_index(18)]);
+    return (n_a.vd[flat_index(3)] - n_a.vd[flat_index(4)]) +
+           (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) -
+           (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) +
+           (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) +
+           (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
     break;
   case 3:
-    return (n_a.vd[flat_index(5)] -
-            n_a.vd[flat_index(6)]) +
-           (n_a.vd[flat_index(11)] -
-            n_a.vd[flat_index(12)]) -
-           (n_a.vd[flat_index(13)] -
-            n_a.vd[flat_index(14)]) +
-           (n_a.vd[flat_index(15)] -
-            n_a.vd[flat_index(16)]) -
-           (n_a.vd[flat_index(17)] -
-            n_a.vd[flat_index(18)]);
+    return (n_a.vd[flat_index(5)] - n_a.vd[flat_index(6)]) +
+           (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]) +
+           (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
     break;
   case 4:
-    return -n_a.vd[flat_index(0)] +
-           n_a.vd[flat_index(7)] +
-           n_a.vd[flat_index(8)] +
-           n_a.vd[flat_index(9)] +
-           n_a.vd[flat_index(10)] +
-           n_a.vd[flat_index(11)] +
-           n_a.vd[flat_index(12)] +
-           n_a.vd[flat_index(13)] +
-           n_a.vd[flat_index(14)] +
-           n_a.vd[flat_index(15)] +
-           n_a.vd[flat_index(16)] +
-           n_a.vd[flat_index(17)] +
+    return -n_a.vd[flat_index(0)] + n_a.vd[flat_index(7)] +
+           n_a.vd[flat_index(8)] + n_a.vd[flat_index(9)] +
+           n_a.vd[flat_index(10)] + n_a.vd[flat_index(11)] +
+           n_a.vd[flat_index(12)] + n_a.vd[flat_index(13)] +
+           n_a.vd[flat_index(14)] + n_a.vd[flat_index(15)] +
+           n_a.vd[flat_index(16)] + n_a.vd[flat_index(17)] +
            n_a.vd[flat_index(18)];
     break;
   case 5:
-    return (n_a.vd[flat_index(1)] +
-            n_a.vd[flat_index(2)]) -
-           (n_a.vd[flat_index(3)] +
-            n_a.vd[flat_index(4)]) +
-           (n_a.vd[flat_index(11)] +
-            n_a.vd[flat_index(12)]) +
-           (n_a.vd[flat_index(13)] +
-            n_a.vd[flat_index(14)]) -
-           (n_a.vd[flat_index(15)] +
-            n_a.vd[flat_index(16)]) -
-           (n_a.vd[flat_index(17)] +
-            n_a.vd[flat_index(18)]);
+    return (n_a.vd[flat_index(1)] + n_a.vd[flat_index(2)]) -
+           (n_a.vd[flat_index(3)] + n_a.vd[flat_index(4)]) +
+           (n_a.vd[flat_index(11)] + n_a.vd[flat_index(12)]) +
+           (n_a.vd[flat_index(13)] + n_a.vd[flat_index(14)]) -
+           (n_a.vd[flat_index(15)] + n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] + n_a.vd[flat_index(18)]);
     break;
   case 6:
-    return (n_a.vd[flat_index(1)] +
-            n_a.vd[flat_index(2)]) +
-           (n_a.vd[flat_index(3)] +
-            n_a.vd[flat_index(4)]) -
-           (n_a.vd[flat_index(11)] +
-            n_a.vd[flat_index(12)]) -
-           (n_a.vd[flat_index(13)] +
-            n_a.vd[flat_index(14)]) -
-           (n_a.vd[flat_index(15)] +
-            n_a.vd[flat_index(16)]) -
-           (n_a.vd[flat_index(17)] +
-            n_a.vd[flat_index(18)]) -
-           2.0f * ((n_a.vd[flat_index(5)] +
-                    n_a.vd[flat_index(6)]) -
-                   (n_a.vd[flat_index(7)] +
-                    n_a.vd[flat_index(8)]) -
-                   (n_a.vd[flat_index(9)] +
-                    n_a.vd[flat_index(10)]));
+    return (n_a.vd[flat_index(1)] + n_a.vd[flat_index(2)]) +
+           (n_a.vd[flat_index(3)] + n_a.vd[flat_index(4)]) -
+           (n_a.vd[flat_index(11)] + n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] + n_a.vd[flat_index(14)]) -
+           (n_a.vd[flat_index(15)] + n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] + n_a.vd[flat_index(18)]) -
+           2.0f * ((n_a.vd[flat_index(5)] + n_a.vd[flat_index(6)]) -
+                   (n_a.vd[flat_index(7)] + n_a.vd[flat_index(8)]) -
+                   (n_a.vd[flat_index(9)] + n_a.vd[flat_index(10)]));
     break;
   case 7:
-    return (n_a.vd[flat_index(7)] +
-            n_a.vd[flat_index(8)]) -
-           (n_a.vd[flat_index(9)] +
-            n_a.vd[flat_index(10)]);
+    return (n_a.vd[flat_index(7)] + n_a.vd[flat_index(8)]) -
+           (n_a.vd[flat_index(9)] + n_a.vd[flat_index(10)]);
     break;
   case 8:
-    return (n_a.vd[flat_index(11)] +
-            n_a.vd[flat_index(12)]) -
-           (n_a.vd[flat_index(13)] +
-            n_a.vd[flat_index(14)]);
+    return (n_a.vd[flat_index(11)] + n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] + n_a.vd[flat_index(14)]);
     break;
   case 9:
-    return (n_a.vd[flat_index(15)] +
-            n_a.vd[flat_index(16)]) -
-           (n_a.vd[flat_index(17)] +
-            n_a.vd[flat_index(18)]);
+    return (n_a.vd[flat_index(15)] + n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] + n_a.vd[flat_index(18)]);
     break;
   case 10:
-    return -2.0f * (n_a.vd[flat_index(1)] -
-                    n_a.vd[flat_index(2)]) +
-           (n_a.vd[flat_index(7)] -
-            n_a.vd[flat_index(8)]) +
-           (n_a.vd[flat_index(9)] -
-            n_a.vd[flat_index(10)]) +
-           (n_a.vd[flat_index(11)] -
-            n_a.vd[flat_index(12)]) +
-           (n_a.vd[flat_index(13)] -
-            n_a.vd[flat_index(14)]);
+    return -2.0f * (n_a.vd[flat_index(1)] - n_a.vd[flat_index(2)]) +
+           (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) +
+           (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) +
+           (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) +
+           (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]);
     break;
   case 11:
-    return -2.0f * (n_a.vd[flat_index(3)] -
-                    n_a.vd[flat_index(4)]) +
-           (n_a.vd[flat_index(7)] -
-            n_a.vd[flat_index(8)]) -
-           (n_a.vd[flat_index(9)] -
-            n_a.vd[flat_index(10)]) +
-           (n_a.vd[flat_index(15)] -
-            n_a.vd[flat_index(16)]) +
-           (n_a.vd[flat_index(17)] -
-            n_a.vd[flat_index(18)]);
+    return -2.0f * (n_a.vd[flat_index(3)] - n_a.vd[flat_index(4)]) +
+           (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) -
+           (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) +
+           (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) +
+           (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
     break;
   case 12:
-    return -2.0f * (n_a.vd[flat_index(5)] -
-                    n_a.vd[flat_index(6)]) +
-           (n_a.vd[flat_index(11)] -
-            n_a.vd[flat_index(12)]) -
-           (n_a.vd[flat_index(13)] -
-            n_a.vd[flat_index(14)]) +
-           (n_a.vd[flat_index(15)] -
-            n_a.vd[flat_index(16)]) -
-           (n_a.vd[flat_index(17)] -
-            n_a.vd[flat_index(18)]);
+    return -2.0f * (n_a.vd[flat_index(5)] - n_a.vd[flat_index(6)]) +
+           (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]) +
+           (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
     break;
   case 13:
-    return (n_a.vd[flat_index(7)] -
-            n_a.vd[flat_index(8)]) +
-           (n_a.vd[flat_index(9)] -
-            n_a.vd[flat_index(10)]) -
-           (n_a.vd[flat_index(11)] -
-            n_a.vd[flat_index(12)]) -
-           (n_a.vd[flat_index(13)] -
-            n_a.vd[flat_index(14)]);
+    return (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) +
+           (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) -
+           (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]);
     break;
   case 14:
-    return (n_a.vd[flat_index(7)] -
-            n_a.vd[flat_index(8)]) -
-           (n_a.vd[flat_index(9)] -
-            n_a.vd[flat_index(10)]) -
-           (n_a.vd[flat_index(15)] -
-            n_a.vd[flat_index(16)]) -
-           (n_a.vd[flat_index(17)] -
-            n_a.vd[flat_index(18)]);
+    return (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) -
+           (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) -
+           (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
     break;
   case 15:
-    return (n_a.vd[flat_index(11)] -
-            n_a.vd[flat_index(12)]) -
-           (n_a.vd[flat_index(13)] -
-            n_a.vd[flat_index(14)]) -
-           (n_a.vd[flat_index(15)] -
-            n_a.vd[flat_index(16)]) +
-           (n_a.vd[flat_index(17)] -
-            n_a.vd[flat_index(18)]);
+    return (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]) -
+           (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) +
+           (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
     break;
   case 16:
-    return n_a.vd[flat_index(0)] +
-           n_a.vd[flat_index(7)] +
-           n_a.vd[flat_index(8)] +
-           n_a.vd[flat_index(9)] +
-           n_a.vd[flat_index(10)] +
-           n_a.vd[flat_index(11)] +
-           n_a.vd[flat_index(12)] +
-           n_a.vd[flat_index(13)] +
-           n_a.vd[flat_index(14)] +
-           n_a.vd[flat_index(15)] +
-           n_a.vd[flat_index(16)] +
-           n_a.vd[flat_index(17)] +
+    return n_a.vd[flat_index(0)] + n_a.vd[flat_index(7)] +
+           n_a.vd[flat_index(8)] + n_a.vd[flat_index(9)] +
+           n_a.vd[flat_index(10)] + n_a.vd[flat_index(11)] +
+           n_a.vd[flat_index(12)] + n_a.vd[flat_index(13)] +
+           n_a.vd[flat_index(14)] + n_a.vd[flat_index(15)] +
+           n_a.vd[flat_index(16)] + n_a.vd[flat_index(17)] +
            n_a.vd[flat_index(18)] -
-           2.0f * ((n_a.vd[flat_index(1)] +
-                    n_a.vd[flat_index(2)]) +
-                   (n_a.vd[flat_index(3)] +
-                    n_a.vd[flat_index(4)]) +
-                   (n_a.vd[flat_index(5)] +
-                    n_a.vd[flat_index(6)]));
+           2.0f * ((n_a.vd[flat_index(1)] + n_a.vd[flat_index(2)]) +
+                   (n_a.vd[flat_index(3)] + n_a.vd[flat_index(4)]) +
+                   (n_a.vd[flat_index(5)] + n_a.vd[flat_index(6)]));
     break;
   case 17:
-    return -(n_a.vd[flat_index(1)] +
-             n_a.vd[flat_index(2)]) +
-           (n_a.vd[flat_index(3)] +
-            n_a.vd[flat_index(4)]) +
-           (n_a.vd[flat_index(11)] +
-            n_a.vd[flat_index(12)]) +
-           (n_a.vd[flat_index(13)] +
-            n_a.vd[flat_index(14)]) -
-           (n_a.vd[flat_index(15)] +
-            n_a.vd[flat_index(16)]) -
-           (n_a.vd[flat_index(17)] +
-            n_a.vd[flat_index(18)]);
+    return -(n_a.vd[flat_index(1)] + n_a.vd[flat_index(2)]) +
+           (n_a.vd[flat_index(3)] + n_a.vd[flat_index(4)]) +
+           (n_a.vd[flat_index(11)] + n_a.vd[flat_index(12)]) +
+           (n_a.vd[flat_index(13)] + n_a.vd[flat_index(14)]) -
+           (n_a.vd[flat_index(15)] + n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] + n_a.vd[flat_index(18)]);
   case 18:
-    return -(n_a.vd[flat_index(1)] +
-             n_a.vd[flat_index(2)]) -
-           (n_a.vd[flat_index(3)] +
-            n_a.vd[flat_index(4)]) -
-           (n_a.vd[flat_index(11)] +
-            n_a.vd[flat_index(12)]) -
-           (n_a.vd[flat_index(13)] +
-            n_a.vd[flat_index(14)]) -
-           (n_a.vd[flat_index(15)] +
-            n_a.vd[flat_index(16)]) -
-           (n_a.vd[flat_index(17)] +
-            n_a.vd[flat_index(18)]) +
-           2.0f * ((n_a.vd[flat_index(5)] +
-                    n_a.vd[flat_index(6)]) +
-                   (n_a.vd[flat_index(7)] +
-                    n_a.vd[flat_index(8)]) +
-                   (n_a.vd[flat_index(9)] +
-                    n_a.vd[flat_index(10)]));
+    return -(n_a.vd[flat_index(1)] + n_a.vd[flat_index(2)]) -
+           (n_a.vd[flat_index(3)] + n_a.vd[flat_index(4)]) -
+           (n_a.vd[flat_index(11)] + n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] + n_a.vd[flat_index(14)]) -
+           (n_a.vd[flat_index(15)] + n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] + n_a.vd[flat_index(18)]) +
+           2.0f * ((n_a.vd[flat_index(5)] + n_a.vd[flat_index(6)]) +
+                   (n_a.vd[flat_index(7)] + n_a.vd[flat_index(8)]) +
+                   (n_a.vd[flat_index(9)] + n_a.vd[flat_index(10)]));
     break;
   }
   return 0.0;
@@ -1492,6 +1392,69 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared,
   }
 }
 
+__device__ __inline__ float3
+interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
+                                   unsigned int *node_indices, float *delta) {
+  int left_node_index[3];
+  float temp_delta[27];
+#pragma unroll
+  for (int i = 0; i < 3; ++i) {
+    auto const scaled_pos = particle_position[i] / para->agrid - 0.5f;
+    left_node_index[i] = __float2int_rd(scaled_pos);
+    auto const relative_pos =
+        scaled_pos - static_cast<float>(left_node_index[i]);
+  }
+  // modulo for negative numbers is strange at best, shift to make sure we are
+  // positive
+  int x = (left_node_index[0] + para->dim_x) % para->dim_x;
+  int y = (left_node_index[1] + para->dim_y) % para->dim_y;
+  int z = (left_node_index[2] + para->dim_z) % para->dim_z;
+  auto xp1 = x + 1;
+  auto yp1 = y + 1;
+  auto zp1 = z + 1;
+  auto xp2 = x + 2;
+  auto yp2 = y + 2;
+  auto zp2 = z + 2;
+  auto fold_if_necessary = [](int ind, int dim) {
+    return ind >= dim ? ind % dim : ind;
+  };
+  xp1 = fold_if_necessary(xp1, para->dim_x);
+  yp1 = fold_if_necessary(yp1, para->dim_y);
+  zp1 = fold_if_necessary(zp1, para->dim_z);
+  xp2 = fold_if_necessary(xp1, para->dim_x);
+  yp2 = fold_if_necessary(yp1, para->dim_y);
+  zp2 = fold_if_necessary(zp1, para->dim_z);
+  node_indices[0] = xyz_to_index(x, y, z);
+  node_indices[1] = xyz_to_index(xp1, y, z);
+  node_indices[2] = xyz_to_index(xp2, y, z);
+  node_indices[3] = xyz_to_index(x, yp1, z);
+  node_indices[4] = xyz_to_index(xp1, yp1, z);
+  node_indices[5] = xyz_to_index(xp2, yp1, z);
+  node_indices[6] = xyz_to_index(x, yp2, z);
+  node_indices[7] = xyz_to_index(xp1, yp2, z);
+  node_indices[8] = xyz_to_index(xp2, yp2, z);
+  node_indices[9] = xyz_to_index(x, y, zp1);
+  node_indices[10] = xyz_to_index(xp1, y, zp1);
+  node_indices[11] = xyz_to_index(xp2, y, zp1);
+  node_indices[12] = xyz_to_index(x, yp1, zp1);
+  node_indices[13] = xyz_to_index(xp1, yp1, zp1);
+  node_indices[14] = xyz_to_index(xp2, yp1, zp1);
+  node_indices[15] = xyz_to_index(x, yp2, zp1);
+  node_indices[16] = xyz_to_index(xp1, yp2, zp1);
+  node_indices[17] = xyz_to_index(xp2, yp2, zp1);
+  node_indices[18] = xyz_to_index(x, y, zp2);
+  node_indices[19] = xyz_to_index(xp1, y, zp2);
+  node_indices[20] = xyz_to_index(xp2, y, zp2);
+  node_indices[21] = xyz_to_index(x, yp1, zp2);
+  node_indices[22] = xyz_to_index(xp1, yp1, zp2);
+  node_indices[23] = xyz_to_index(xp2, yp1, zp2);
+  node_indices[24] = xyz_to_index(x, yp2, zp2);
+  node_indices[25] = xyz_to_index(xp1, yp2, zp2);
+  node_indices[26] = xyz_to_index(xp2, yp2, zp2);
+
+  return {0.0f, 0.0f, 0.0f};
+}
+
 /**
  *  (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  *  @param[in]  n_a                Local node residing in array a
@@ -1503,15 +1466,14 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared,
  */
 __device__ __inline__ float3
 interpolation_two_point_coupling(LB_nodes_gpu n_a, float *particle_position,
-                                 unsigned int *node_index, LB_rho_v_gpu *d_v,
-                                 float *delta) {
+                                 unsigned int *node_index, float *delta) {
   int left_node_index[3];
   float temp_delta[6];
   // see ahlrichs + duenweg page 8227 equ (10) and (11)
 #pragma unroll
   for (int i = 0; i < 3; ++i) {
-    float scaledpos = particle_position[i] / para->agrid - 0.5f;
-    left_node_index[i] = (int)(floorf(scaledpos));
+    auto const scaledpos = particle_position[i] / para->agrid - 0.5f;
+    left_node_index[i] = static_cast<int>(floorf(scaledpos));
     temp_delta[3 + i] = scaledpos - left_node_index[i];
     temp_delta[i] = 1.0f - temp_delta[3 + i];
   }
@@ -1642,7 +1604,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta,
 
   // Do the velocity interpolation
   auto const interpolated_u =
-      interpolation_two_point_coupling(n_a, position, node_index, d_v, delta);
+      interpolation_two_point_coupling(n_a, position, node_index, delta);
 
 #ifdef ENGINE
   velocity[0] -= particle_data[part_index].swim.v_swim *
@@ -3274,7 +3236,7 @@ struct two_point_interpolation {
     float delta[8];
     float _position[3] = {position.x, position.y, position.z};
     return interpolation_two_point_coupling(current_nodes_gpu, _position,
-                                            node_index, d_v_gpu, delta);
+                                            node_index, delta);
   }
 };
 
