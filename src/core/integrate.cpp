@@ -28,6 +28,7 @@
 
 #include "integrate.hpp"
 #include "accumulators.hpp"
+#include "algorithm/periodic_fold.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -723,6 +724,7 @@ double offset_at_time_step =
 #ifdef LEES_EDWARDS
     /* LE Push */
     {
+      int dummy_i;
       // Lees-Edwards acts at the zero step for the velocity half update and at
       // the midstep for the position.
       //
@@ -730,14 +732,16 @@ double offset_at_time_step =
       // the flag and occurs in propagate_vel_finalize_p_inst
       if (p.r.p[lees_edwards_protocol.shearplanenormal] >= box_l[lees_edwards_protocol.shearplanenormal]) {
         p.m.v[lees_edwards_protocol.sheardir] -= shear_velocity / 2.0;
-        p.r.p[lees_edwards_protocol.sheardir] -= (offset_at_time_step -
-                     std::round(offset_at_time_step * box_l_i[lees_edwards_protocol.sheardir]) * box_l[lees_edwards_protocol.sheardir]);
+        p.r.p[lees_edwards_protocol.sheardir] -= offset_at_time_step ;
+	p.p.lees_edwards_offset -= offset_at_time_step ;
+	Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir], &dummy_i, box_l[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
                                     // propagate_vel_finalize_p_inst
       } else if (p.r.p[lees_edwards_protocol.shearplanenormal] <= 0.) {
         p.m.v[lees_edwards_protocol.sheardir] += shear_velocity / 2.0;
-        p.r.p[lees_edwards_protocol.sheardir] += (offset_at_time_step -
-                     std::round(offset_at_time_step * box_l_i[lees_edwards_protocol.sheardir]) * box_l[lees_edwards_protocol.sheardir]);
+        p.r.p[lees_edwards_protocol.sheardir] += offset_at_time_step ;
+	p.p.lees_edwards_offset += offset_at_time_step ;
+	Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir], &dummy_i, box_l[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = 1; // perform a positive half velocity shift in
                                    // propagate_vel_finalize_p_inst
       } else {

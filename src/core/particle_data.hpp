@@ -133,6 +133,7 @@ struct ParticleProperties {
 
 #ifdef LEES_EDWARDS
   short int lees_edwards_flag = 0;
+  double lees_edwards_offset = 0;
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
