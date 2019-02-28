@@ -321,8 +321,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /***********************************************/
 
 #ifdef ELECTROSTATICS
-  bool isDHorRF = coulomb.method == COULOMB_DH || coulomb.method == COULOMB_RF;
-  if (isDHorRF)
     Coulomb::calc_pair_force(p1, p2, d, dist, dist2, force);
 #endif
 
@@ -346,16 +344,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     force += dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
   }
 #endif
-
-  /***********************************************/
-  /* long range electrostatics                   */
-  /***********************************************/
-
-#ifdef ELECTROSTATICS
-  /* real space Coulomb */
-  if (!isDHorRF)
-    Coulomb::calc_pair_force(p1, p2, d, dist, dist2, force);
-#endif /*ifdef ELECTROSTATICS */
 
     /***********************************************/
     /* long range magnetostatics                   */
