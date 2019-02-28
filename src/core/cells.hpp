@@ -166,6 +166,15 @@ struct CellStructure {
    *  \return pointer to cell  where to put the particle.
    */
   Cell *(*position_to_cell)(const Vector3d &pos);
+
+  /**
+   * @brief Maximal search range.
+   *
+   * This is the maximal search range currently supported
+   * by the cell system. Only pairs closer than this are
+   * found by the pair finding algorithms.
+   */
+   double max_range;
 };
 
 /*@}*/
@@ -278,6 +287,8 @@ int cells_get_n_particles();
  * Pairs are sorted so that first.id < second.id
  */
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
+
+std::pair<double, int> cells_find_closest_particle(Vector3d const &pos);
 
 /**
  * @brief Increase the local resort level at least to level.

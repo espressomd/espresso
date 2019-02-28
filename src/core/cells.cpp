@@ -39,8 +39,14 @@
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
 #include "utils/mpi/gather_buffer.hpp"
+#include "short_range_loop.hpp"
 
 #include <boost/iterator/indirect_iterator.hpp>
+#include <boost/optional.hpp>
+#include <boost/range/numeric.hpp>
+#include <boost/serialization/utility.hpp>
+
+#include <utils/Span.hpp>
 
 #include <cstdio>
 #include <cstdlib>
@@ -58,7 +64,7 @@ CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
 CellStructure cell_structure = {
-    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr};
+    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr, 0.0};
 
 double max_range = 0.0;
 
@@ -66,6 +72,121 @@ double max_range = 0.0;
  */
 unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
+
+/**
+ * @brief Search the neighborhood of x for particles
+ *        within a sphere around a point
+ *
+ * Search is limited up to the maxrange of the cell system,
+ * so it only find particles close than max range.
+ *
+ * @param x Point at which so search
+ * @param r Search radius.
+ * @return  List of particles nearby.
+ */
+std::vector<int> local_find_nearby_particles(const Vector3d& x, double r) {
+  using boost::accumulate;
+  using Utils::Span;
+
+  auto search_cell = cell_structure.position_to_cell(x);
+  auto const r2 = r*r;
+
+  auto nearby = [&](Cell *c, std::vector<int> init) {
+    return accumulate(Span<const Particle>(c->part, c->n),
+                      init, [&](std::vector<int> parts, const Particle &p) {
+
+                if(r2 <= get_mi_vector(x, p.r.p).norm2()) {
+                  parts.push_back(p.identity());
+                }
+
+                return parts;
+            });
+  };
+
+  return accumulate(search_cell->neighbors().all(), nearby(search_cell, {}),
+          [&](std::vector<int> parts, Cell *n){
+    return nearby(n, parts);
+  });
+}
+
+void cells_find_nearby_particles_slave(int pnode, int) {
+  if(comm_cart.rank() == pnode) {
+    std::pair<Vector3d, double> params;
+    comm_cart.recv(0, 52, params);
+    comm_cart.send(0, 52, local_find_nearby_particles(params.first, params.second));
+  }
+}
+
+std::vector<int> cells_find_nearby_particles(Vector3d const &pos, double radius) {
+  auto const pnode = cell_structure.position_to_node(pos);
+
+  if(comm_cart.rank() == pnode) {
+    return local_find_nearby_particles(pos, radius);
+  } else {
+    mpi_call(cells_find_nearby_particles_slave, pnode, -1);
+
+    comm_cart.send(pnode, 52, std::make_pair(pos, radius));
+
+    std::vector<int> result;
+    comm_cart.recv(pnode, 52, result);
+
+    return result;
+  }
+}
+
+/**
+ * @brief Find particle closest to a point.
+ *
+ * @param pos Search point.
+ *
+ * @return If a particle is found, the distance and id of the particle,
+ *         otherwise +Inf and an invalid particle id.
+ */
+std::pair<double,int> local_find_closest_particle(const Vector3d &pos) {
+  using boost::accumulate;
+  using Utils::Span;
+  using DistId = std::pair<double, int>;
+
+  auto search_cell = cell_structure.position_to_cell(pos);
+
+  /* Closest particle within a cell */
+  auto closest_part = [&pos](DistId init, Cell* c) {
+     return accumulate(Span<const Particle>(c->part, c->n),
+                       init,
+                       [&pos](DistId dist, const Particle &p){
+                          return std::min(dist, {get_mi_vector(pos, p.r.p).norm(), p.identity()});
+      });
+  };
+
+  return accumulate(search_cell->neighbors().all(),
+                                      closest_part({std::numeric_limits<double>::infinity(), -1}, search_cell),
+   closest_part);
+}
+
+void cells_find_closest_particle_slave(int pnode, int) {
+  if(comm_cart.rank() == pnode) {
+    Vector3d pos;
+    comm_cart.recv(0, 52, pos);
+    comm_cart.send(0, 52, local_find_closest_particle(pos));
+  }
+}
+
+std::pair<double, int> cells_find_closest_particle(Vector3d const &pos) {
+  auto const pnode = cell_structure.position_to_node(pos);
+
+  if(comm_cart.rank() == pnode) {
+    return local_find_closest_particle(pos);
+  } else {
+    mpi_call(cells_find_closest_particle_slave, pnode, -1);
+
+    comm_cart.send(pnode, 52, pos);
+
+    std::pair<double, int> id{};
+    comm_cart.recv(pnode, 52, id);
+
+    return id;
+  }
+}
 
 /**
  * @brief Get pairs closer than distance from the cells.
@@ -192,7 +313,7 @@ void topology_init(int cs, CellPList *local) {
   case CELL_STRUCTURE_NONEYET:
     break;
   case CELL_STRUCTURE_CURRENT:
-    topology_init(cell_structure.type, local);
+      topology_init(cell_structure.type, local);
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_topology_init(local);
@@ -236,7 +357,7 @@ void cells_re_init(int new_cs) {
   /* MOVE old cells to temporary buffer */
   auto tmp_cells = std::move(cells);
 
-  topology_init(new_cs, &tmp_local);
+    topology_init(new_cs, &tmp_local);
 
   clear_particle_node();
 
@@ -406,11 +527,9 @@ void cells_resort_particles(int global_flag) {
 /*************************************************/
 
 void cells_on_geometry_change(int flags) {
-  if (max_cut > 0.0) {
-    max_range = max_cut + skin;
-  } else
-    /* if no interactions yet, we also don't need a skin */
-    max_range = 0.0;
+  /* If there are no interactions, we also don't have to consider the
+   * skin. */
+  max_range = (max_cut > 0.0) ? (max_cut + skin) : 0.0;
 
   CELL_TRACE(fprintf(stderr, "%d: on_geometry_change with max range %f\n",
                      this_node, max_range));

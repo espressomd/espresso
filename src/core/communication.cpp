@@ -152,7 +152,9 @@ int n_nodes = -1;
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
   CB(mpi_rotate_system_slave)                                                  \
-  CB(mpi_update_particle_slave)
+  CB(mpi_update_particle_slave) \
+  CB(cells_find_closest_particle_slave) \
+  CB(cells_find_nearby_particles_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
