@@ -168,250 +168,251 @@ template <typename T> __device__ T xyz_to_index(T x, T y, T z) {
 
 __device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
                                                unsigned int index, int x) {
+  auto const flat_index = [&index](int population){return population*para->number_of_nodes + index;};
   switch (x) {
   case 0:
-    return n_a.vd[0 * para->number_of_nodes + index] +
-           n_a.vd[1 * para->number_of_nodes + index] +
-           n_a.vd[2 * para->number_of_nodes + index] +
-           n_a.vd[3 * para->number_of_nodes + index] +
-           n_a.vd[4 * para->number_of_nodes + index] +
-           n_a.vd[5 * para->number_of_nodes + index] +
-           n_a.vd[6 * para->number_of_nodes + index] +
-           n_a.vd[7 * para->number_of_nodes + index] +
-           n_a.vd[8 * para->number_of_nodes + index] +
-           n_a.vd[9 * para->number_of_nodes + index] +
-           n_a.vd[10 * para->number_of_nodes + index] +
-           n_a.vd[11 * para->number_of_nodes + index] +
-           n_a.vd[12 * para->number_of_nodes + index] +
-           n_a.vd[13 * para->number_of_nodes + index] +
-           n_a.vd[14 * para->number_of_nodes + index] +
-           n_a.vd[15 * para->number_of_nodes + index] +
-           n_a.vd[16 * para->number_of_nodes + index] +
-           n_a.vd[17 * para->number_of_nodes + index] +
-           n_a.vd[18 * para->number_of_nodes + index];
+    return n_a.vd[flat_index(0)] +
+           n_a.vd[flat_index(1)] +
+           n_a.vd[flat_index(2)] +
+           n_a.vd[flat_index(3)] +
+           n_a.vd[flat_index(4)] +
+           n_a.vd[flat_index(5)] +
+           n_a.vd[flat_index(6)] +
+           n_a.vd[flat_index(7)] +
+           n_a.vd[flat_index(8)] +
+           n_a.vd[flat_index(9)] +
+           n_a.vd[flat_index(10)] +
+           n_a.vd[flat_index(11)] +
+           n_a.vd[flat_index(12)] +
+           n_a.vd[flat_index(13)] +
+           n_a.vd[flat_index(14)] +
+           n_a.vd[flat_index(15)] +
+           n_a.vd[flat_index(16)] +
+           n_a.vd[flat_index(17)] +
+           n_a.vd[flat_index(18)];
     break;
   case 1:
-    return (n_a.vd[1 * para->number_of_nodes + index] -
-            n_a.vd[2 * para->number_of_nodes + index]) +
-           (n_a.vd[7 * para->number_of_nodes + index] -
-            n_a.vd[8 * para->number_of_nodes + index]) +
-           (n_a.vd[9 * para->number_of_nodes + index] -
-            n_a.vd[10 * para->number_of_nodes + index]) +
-           (n_a.vd[11 * para->number_of_nodes + index] -
-            n_a.vd[12 * para->number_of_nodes + index]) +
-           (n_a.vd[13 * para->number_of_nodes + index] -
-            n_a.vd[14 * para->number_of_nodes + index]);
+    return (n_a.vd[flat_index(1)] -
+            n_a.vd[flat_index(2)]) +
+           (n_a.vd[flat_index(7)] -
+            n_a.vd[flat_index(8)]) +
+           (n_a.vd[flat_index(9)] -
+            n_a.vd[flat_index(10)]) +
+           (n_a.vd[flat_index(11)] -
+            n_a.vd[flat_index(12)]) +
+           (n_a.vd[flat_index(13)] -
+            n_a.vd[flat_index(14)]);
     break;
   case 2:
-    return (n_a.vd[3 * para->number_of_nodes + index] -
-            n_a.vd[4 * para->number_of_nodes + index]) +
-           (n_a.vd[7 * para->number_of_nodes + index] -
-            n_a.vd[8 * para->number_of_nodes + index]) -
-           (n_a.vd[9 * para->number_of_nodes + index] -
-            n_a.vd[10 * para->number_of_nodes + index]) +
-           (n_a.vd[15 * para->number_of_nodes + index] -
-            n_a.vd[16 * para->number_of_nodes + index]) +
-           (n_a.vd[17 * para->number_of_nodes + index] -
-            n_a.vd[18 * para->number_of_nodes + index]);
+    return (n_a.vd[flat_index(3)] -
+            n_a.vd[flat_index(4)]) +
+           (n_a.vd[flat_index(7)] -
+            n_a.vd[flat_index(8)]) -
+           (n_a.vd[flat_index(9)] -
+            n_a.vd[flat_index(10)]) +
+           (n_a.vd[flat_index(15)] -
+            n_a.vd[flat_index(16)]) +
+           (n_a.vd[flat_index(17)] -
+            n_a.vd[flat_index(18)]);
     break;
   case 3:
-    return (n_a.vd[5 * para->number_of_nodes + index] -
-            n_a.vd[6 * para->number_of_nodes + index]) +
-           (n_a.vd[11 * para->number_of_nodes + index] -
-            n_a.vd[12 * para->number_of_nodes + index]) -
-           (n_a.vd[13 * para->number_of_nodes + index] -
-            n_a.vd[14 * para->number_of_nodes + index]) +
-           (n_a.vd[15 * para->number_of_nodes + index] -
-            n_a.vd[16 * para->number_of_nodes + index]) -
-           (n_a.vd[17 * para->number_of_nodes + index] -
-            n_a.vd[18 * para->number_of_nodes + index]);
+    return (n_a.vd[flat_index(5)] -
+            n_a.vd[flat_index(6)]) +
+           (n_a.vd[flat_index(11)] -
+            n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] -
+            n_a.vd[flat_index(14)]) +
+           (n_a.vd[flat_index(15)] -
+            n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] -
+            n_a.vd[flat_index(18)]);
     break;
   case 4:
-    return -n_a.vd[0 * para->number_of_nodes + index] +
-           n_a.vd[7 * para->number_of_nodes + index] +
-           n_a.vd[8 * para->number_of_nodes + index] +
-           n_a.vd[9 * para->number_of_nodes + index] +
-           n_a.vd[10 * para->number_of_nodes + index] +
-           n_a.vd[11 * para->number_of_nodes + index] +
-           n_a.vd[12 * para->number_of_nodes + index] +
-           n_a.vd[13 * para->number_of_nodes + index] +
-           n_a.vd[14 * para->number_of_nodes + index] +
-           n_a.vd[15 * para->number_of_nodes + index] +
-           n_a.vd[16 * para->number_of_nodes + index] +
-           n_a.vd[17 * para->number_of_nodes + index] +
-           n_a.vd[18 * para->number_of_nodes + index];
+    return -n_a.vd[flat_index(0)] +
+           n_a.vd[flat_index(7)] +
+           n_a.vd[flat_index(8)] +
+           n_a.vd[flat_index(9)] +
+           n_a.vd[flat_index(10)] +
+           n_a.vd[flat_index(11)] +
+           n_a.vd[flat_index(12)] +
+           n_a.vd[flat_index(13)] +
+           n_a.vd[flat_index(14)] +
+           n_a.vd[flat_index(15)] +
+           n_a.vd[flat_index(16)] +
+           n_a.vd[flat_index(17)] +
+           n_a.vd[flat_index(18)];
     break;
   case 5:
-    return (n_a.vd[1 * para->number_of_nodes + index] +
-            n_a.vd[2 * para->number_of_nodes + index]) -
-           (n_a.vd[3 * para->number_of_nodes + index] +
-            n_a.vd[4 * para->number_of_nodes + index]) +
-           (n_a.vd[11 * para->number_of_nodes + index] +
-            n_a.vd[12 * para->number_of_nodes + index]) +
-           (n_a.vd[13 * para->number_of_nodes + index] +
-            n_a.vd[14 * para->number_of_nodes + index]) -
-           (n_a.vd[15 * para->number_of_nodes + index] +
-            n_a.vd[16 * para->number_of_nodes + index]) -
-           (n_a.vd[17 * para->number_of_nodes + index] +
-            n_a.vd[18 * para->number_of_nodes + index]);
+    return (n_a.vd[flat_index(1)] +
+            n_a.vd[flat_index(2)]) -
+           (n_a.vd[flat_index(3)] +
+            n_a.vd[flat_index(4)]) +
+           (n_a.vd[flat_index(11)] +
+            n_a.vd[flat_index(12)]) +
+           (n_a.vd[flat_index(13)] +
+            n_a.vd[flat_index(14)]) -
+           (n_a.vd[flat_index(15)] +
+            n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] +
+            n_a.vd[flat_index(18)]);
     break;
   case 6:
-    return (n_a.vd[1 * para->number_of_nodes + index] +
-            n_a.vd[2 * para->number_of_nodes + index]) +
-           (n_a.vd[3 * para->number_of_nodes + index] +
-            n_a.vd[4 * para->number_of_nodes + index]) -
-           (n_a.vd[11 * para->number_of_nodes + index] +
-            n_a.vd[12 * para->number_of_nodes + index]) -
-           (n_a.vd[13 * para->number_of_nodes + index] +
-            n_a.vd[14 * para->number_of_nodes + index]) -
-           (n_a.vd[15 * para->number_of_nodes + index] +
-            n_a.vd[16 * para->number_of_nodes + index]) -
-           (n_a.vd[17 * para->number_of_nodes + index] +
-            n_a.vd[18 * para->number_of_nodes + index]) -
-           2.0f * ((n_a.vd[5 * para->number_of_nodes + index] +
-                    n_a.vd[6 * para->number_of_nodes + index]) -
-                   (n_a.vd[7 * para->number_of_nodes + index] +
-                    n_a.vd[8 * para->number_of_nodes + index]) -
-                   (n_a.vd[9 * para->number_of_nodes + index] +
-                    n_a.vd[10 * para->number_of_nodes + index]));
+    return (n_a.vd[flat_index(1)] +
+            n_a.vd[flat_index(2)]) +
+           (n_a.vd[flat_index(3)] +
+            n_a.vd[flat_index(4)]) -
+           (n_a.vd[flat_index(11)] +
+            n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] +
+            n_a.vd[flat_index(14)]) -
+           (n_a.vd[flat_index(15)] +
+            n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] +
+            n_a.vd[flat_index(18)]) -
+           2.0f * ((n_a.vd[flat_index(5)] +
+                    n_a.vd[flat_index(6)]) -
+                   (n_a.vd[flat_index(7)] +
+                    n_a.vd[flat_index(8)]) -
+                   (n_a.vd[flat_index(9)] +
+                    n_a.vd[flat_index(10)]));
     break;
   case 7:
-    return (n_a.vd[7 * para->number_of_nodes + index] +
-            n_a.vd[8 * para->number_of_nodes + index]) -
-           (n_a.vd[9 * para->number_of_nodes + index] +
-            n_a.vd[10 * para->number_of_nodes + index]);
+    return (n_a.vd[flat_index(7)] +
+            n_a.vd[flat_index(8)]) -
+           (n_a.vd[flat_index(9)] +
+            n_a.vd[flat_index(10)]);
     break;
   case 8:
-    return (n_a.vd[11 * para->number_of_nodes + index] +
-            n_a.vd[12 * para->number_of_nodes + index]) -
-           (n_a.vd[13 * para->number_of_nodes + index] +
-            n_a.vd[14 * para->number_of_nodes + index]);
+    return (n_a.vd[flat_index(11)] +
+            n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] +
+            n_a.vd[flat_index(14)]);
     break;
   case 9:
-    return (n_a.vd[15 * para->number_of_nodes + index] +
-            n_a.vd[16 * para->number_of_nodes + index]) -
-           (n_a.vd[17 * para->number_of_nodes + index] +
-            n_a.vd[18 * para->number_of_nodes + index]);
+    return (n_a.vd[flat_index(15)] +
+            n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] +
+            n_a.vd[flat_index(18)]);
     break;
   case 10:
-    return -2.0f * (n_a.vd[1 * para->number_of_nodes + index] -
-                    n_a.vd[2 * para->number_of_nodes + index]) +
-           (n_a.vd[7 * para->number_of_nodes + index] -
-            n_a.vd[8 * para->number_of_nodes + index]) +
-           (n_a.vd[9 * para->number_of_nodes + index] -
-            n_a.vd[10 * para->number_of_nodes + index]) +
-           (n_a.vd[11 * para->number_of_nodes + index] -
-            n_a.vd[12 * para->number_of_nodes + index]) +
-           (n_a.vd[13 * para->number_of_nodes + index] -
-            n_a.vd[14 * para->number_of_nodes + index]);
+    return -2.0f * (n_a.vd[flat_index(1)] -
+                    n_a.vd[flat_index(2)]) +
+           (n_a.vd[flat_index(7)] -
+            n_a.vd[flat_index(8)]) +
+           (n_a.vd[flat_index(9)] -
+            n_a.vd[flat_index(10)]) +
+           (n_a.vd[flat_index(11)] -
+            n_a.vd[flat_index(12)]) +
+           (n_a.vd[flat_index(13)] -
+            n_a.vd[flat_index(14)]);
     break;
   case 11:
-    return -2.0f * (n_a.vd[3 * para->number_of_nodes + index] -
-                    n_a.vd[4 * para->number_of_nodes + index]) +
-           (n_a.vd[7 * para->number_of_nodes + index] -
-            n_a.vd[8 * para->number_of_nodes + index]) -
-           (n_a.vd[9 * para->number_of_nodes + index] -
-            n_a.vd[10 * para->number_of_nodes + index]) +
-           (n_a.vd[15 * para->number_of_nodes + index] -
-            n_a.vd[16 * para->number_of_nodes + index]) +
-           (n_a.vd[17 * para->number_of_nodes + index] -
-            n_a.vd[18 * para->number_of_nodes + index]);
+    return -2.0f * (n_a.vd[flat_index(3)] -
+                    n_a.vd[flat_index(4)]) +
+           (n_a.vd[flat_index(7)] -
+            n_a.vd[flat_index(8)]) -
+           (n_a.vd[flat_index(9)] -
+            n_a.vd[flat_index(10)]) +
+           (n_a.vd[flat_index(15)] -
+            n_a.vd[flat_index(16)]) +
+           (n_a.vd[flat_index(17)] -
+            n_a.vd[flat_index(18)]);
     break;
   case 12:
-    return -2.0f * (n_a.vd[5 * para->number_of_nodes + index] -
-                    n_a.vd[6 * para->number_of_nodes + index]) +
-           (n_a.vd[11 * para->number_of_nodes + index] -
-            n_a.vd[12 * para->number_of_nodes + index]) -
-           (n_a.vd[13 * para->number_of_nodes + index] -
-            n_a.vd[14 * para->number_of_nodes + index]) +
-           (n_a.vd[15 * para->number_of_nodes + index] -
-            n_a.vd[16 * para->number_of_nodes + index]) -
-           (n_a.vd[17 * para->number_of_nodes + index] -
-            n_a.vd[18 * para->number_of_nodes + index]);
+    return -2.0f * (n_a.vd[flat_index(5)] -
+                    n_a.vd[flat_index(6)]) +
+           (n_a.vd[flat_index(11)] -
+            n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] -
+            n_a.vd[flat_index(14)]) +
+           (n_a.vd[flat_index(15)] -
+            n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] -
+            n_a.vd[flat_index(18)]);
     break;
   case 13:
-    return (n_a.vd[7 * para->number_of_nodes + index] -
-            n_a.vd[8 * para->number_of_nodes + index]) +
-           (n_a.vd[9 * para->number_of_nodes + index] -
-            n_a.vd[10 * para->number_of_nodes + index]) -
-           (n_a.vd[11 * para->number_of_nodes + index] -
-            n_a.vd[12 * para->number_of_nodes + index]) -
-           (n_a.vd[13 * para->number_of_nodes + index] -
-            n_a.vd[14 * para->number_of_nodes + index]);
+    return (n_a.vd[flat_index(7)] -
+            n_a.vd[flat_index(8)]) +
+           (n_a.vd[flat_index(9)] -
+            n_a.vd[flat_index(10)]) -
+           (n_a.vd[flat_index(11)] -
+            n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] -
+            n_a.vd[flat_index(14)]);
     break;
   case 14:
-    return (n_a.vd[7 * para->number_of_nodes + index] -
-            n_a.vd[8 * para->number_of_nodes + index]) -
-           (n_a.vd[9 * para->number_of_nodes + index] -
-            n_a.vd[10 * para->number_of_nodes + index]) -
-           (n_a.vd[15 * para->number_of_nodes + index] -
-            n_a.vd[16 * para->number_of_nodes + index]) -
-           (n_a.vd[17 * para->number_of_nodes + index] -
-            n_a.vd[18 * para->number_of_nodes + index]);
+    return (n_a.vd[flat_index(7)] -
+            n_a.vd[flat_index(8)]) -
+           (n_a.vd[flat_index(9)] -
+            n_a.vd[flat_index(10)]) -
+           (n_a.vd[flat_index(15)] -
+            n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] -
+            n_a.vd[flat_index(18)]);
     break;
   case 15:
-    return (n_a.vd[11 * para->number_of_nodes + index] -
-            n_a.vd[12 * para->number_of_nodes + index]) -
-           (n_a.vd[13 * para->number_of_nodes + index] -
-            n_a.vd[14 * para->number_of_nodes + index]) -
-           (n_a.vd[15 * para->number_of_nodes + index] -
-            n_a.vd[16 * para->number_of_nodes + index]) +
-           (n_a.vd[17 * para->number_of_nodes + index] -
-            n_a.vd[18 * para->number_of_nodes + index]);
+    return (n_a.vd[flat_index(11)] -
+            n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] -
+            n_a.vd[flat_index(14)]) -
+           (n_a.vd[flat_index(15)] -
+            n_a.vd[flat_index(16)]) +
+           (n_a.vd[flat_index(17)] -
+            n_a.vd[flat_index(18)]);
     break;
   case 16:
-    return n_a.vd[0 * para->number_of_nodes + index] +
-           n_a.vd[7 * para->number_of_nodes + index] +
-           n_a.vd[8 * para->number_of_nodes + index] +
-           n_a.vd[9 * para->number_of_nodes + index] +
-           n_a.vd[10 * para->number_of_nodes + index] +
-           n_a.vd[11 * para->number_of_nodes + index] +
-           n_a.vd[12 * para->number_of_nodes + index] +
-           n_a.vd[13 * para->number_of_nodes + index] +
-           n_a.vd[14 * para->number_of_nodes + index] +
-           n_a.vd[15 * para->number_of_nodes + index] +
-           n_a.vd[16 * para->number_of_nodes + index] +
-           n_a.vd[17 * para->number_of_nodes + index] +
-           n_a.vd[18 * para->number_of_nodes + index] -
-           2.0f * ((n_a.vd[1 * para->number_of_nodes + index] +
-                    n_a.vd[2 * para->number_of_nodes + index]) +
-                   (n_a.vd[3 * para->number_of_nodes + index] +
-                    n_a.vd[4 * para->number_of_nodes + index]) +
-                   (n_a.vd[5 * para->number_of_nodes + index] +
-                    n_a.vd[6 * para->number_of_nodes + index]));
+    return n_a.vd[flat_index(0)] +
+           n_a.vd[flat_index(7)] +
+           n_a.vd[flat_index(8)] +
+           n_a.vd[flat_index(9)] +
+           n_a.vd[flat_index(10)] +
+           n_a.vd[flat_index(11)] +
+           n_a.vd[flat_index(12)] +
+           n_a.vd[flat_index(13)] +
+           n_a.vd[flat_index(14)] +
+           n_a.vd[flat_index(15)] +
+           n_a.vd[flat_index(16)] +
+           n_a.vd[flat_index(17)] +
+           n_a.vd[flat_index(18)] -
+           2.0f * ((n_a.vd[flat_index(1)] +
+                    n_a.vd[flat_index(2)]) +
+                   (n_a.vd[flat_index(3)] +
+                    n_a.vd[flat_index(4)]) +
+                   (n_a.vd[flat_index(5)] +
+                    n_a.vd[flat_index(6)]));
     break;
   case 17:
-    return -(n_a.vd[1 * para->number_of_nodes + index] +
-             n_a.vd[2 * para->number_of_nodes + index]) +
-           (n_a.vd[3 * para->number_of_nodes + index] +
-            n_a.vd[4 * para->number_of_nodes + index]) +
-           (n_a.vd[11 * para->number_of_nodes + index] +
-            n_a.vd[12 * para->number_of_nodes + index]) +
-           (n_a.vd[13 * para->number_of_nodes + index] +
-            n_a.vd[14 * para->number_of_nodes + index]) -
-           (n_a.vd[15 * para->number_of_nodes + index] +
-            n_a.vd[16 * para->number_of_nodes + index]) -
-           (n_a.vd[17 * para->number_of_nodes + index] +
-            n_a.vd[(18) * para->number_of_nodes + index]);
+    return -(n_a.vd[flat_index(1)] +
+             n_a.vd[flat_index(2)]) +
+           (n_a.vd[flat_index(3)] +
+            n_a.vd[flat_index(4)]) +
+           (n_a.vd[flat_index(11)] +
+            n_a.vd[flat_index(12)]) +
+           (n_a.vd[flat_index(13)] +
+            n_a.vd[flat_index(14)]) -
+           (n_a.vd[flat_index(15)] +
+            n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] +
+            n_a.vd[flat_index(18)]);
   case 18:
-    return -(n_a.vd[1 * para->number_of_nodes + index] +
-             n_a.vd[2 * para->number_of_nodes + index]) -
-           (n_a.vd[3 * para->number_of_nodes + index] +
-            n_a.vd[4 * para->number_of_nodes + index]) -
-           (n_a.vd[11 * para->number_of_nodes + index] +
-            n_a.vd[12 * para->number_of_nodes + index]) -
-           (n_a.vd[13 * para->number_of_nodes + index] +
-            n_a.vd[14 * para->number_of_nodes + index]) -
-           (n_a.vd[15 * para->number_of_nodes + index] +
-            n_a.vd[16 * para->number_of_nodes + index]) -
-           (n_a.vd[17 * para->number_of_nodes + index] +
-            n_a.vd[18 * para->number_of_nodes + index]) +
-           2.0f * ((n_a.vd[5 * para->number_of_nodes + index] +
-                    n_a.vd[6 * para->number_of_nodes + index]) +
-                   (n_a.vd[7 * para->number_of_nodes + index] +
-                    n_a.vd[8 * para->number_of_nodes + index]) +
-                   (n_a.vd[9 * para->number_of_nodes + index] +
-                    n_a.vd[10 * para->number_of_nodes + index]));
+    return -(n_a.vd[flat_index(1)] +
+             n_a.vd[flat_index(2)]) -
+           (n_a.vd[flat_index(3)] +
+            n_a.vd[flat_index(4)]) -
+           (n_a.vd[flat_index(11)] +
+            n_a.vd[flat_index(12)]) -
+           (n_a.vd[flat_index(13)] +
+            n_a.vd[flat_index(14)]) -
+           (n_a.vd[flat_index(15)] +
+            n_a.vd[flat_index(16)]) -
+           (n_a.vd[flat_index(17)] +
+            n_a.vd[flat_index(18)]) +
+           2.0f * ((n_a.vd[flat_index(5)] +
+                    n_a.vd[flat_index(6)]) +
+                   (n_a.vd[flat_index(7)] +
+                    n_a.vd[flat_index(8)]) +
+                   (n_a.vd[flat_index(9)] +
+                    n_a.vd[flat_index(10)]));
     break;
   }
   return 0.0;
