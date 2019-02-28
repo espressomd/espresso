@@ -414,9 +414,7 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
 
 void layered_exchange_and_sort_particles(int global_flag,
                                          ParticleList *displaced_parts) {
-  Particle *part;
-  Cell *nc, *oc;
-  int c, p, flag, redo;
+  int flag, redo;
   ParticleList send_buf_dn, send_buf_up;
   ParticleList recv_buf_up, recv_buf_dn;
 
@@ -424,8 +422,8 @@ void layered_exchange_and_sort_particles(int global_flag,
                      global_flag));
 
   /* sort local particles */
-  for (p = 0; p < displaced_parts->n; p++) {
-    part = &displaced_parts->part[p];
+  for (auto p = 0; p < displaced_parts->n; p++) {
+    auto part = &displaced_parts->part[p];
 
     if (n_nodes != 1 && LAYERED_BTM_NEIGHBOR &&
         (get_mi_coord(part->r.p[2], my_left[2], 2) < 0.0)) {

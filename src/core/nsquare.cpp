@@ -143,16 +143,17 @@ void nsq_topology_init() {
   }
 }
 
-void nsq_balance_particles(int global_flag) {
+ParticleList nsq_balance_particles(int global_flag) {
   int i, n, surplus, s_node, tmp, lack, l_node, transfer;
 
   /* we don't have the concept of neighbors, and therefore don't need that.
      However, if global particle changes happen, we might want to rebalance. */
   if (global_flag != CELL_GLOBAL_EXCHANGE)
-    return;
+    return {};
 
-  int pp = cells_get_n_particles();
-  int *ppnode = (int *)Utils::malloc(n_nodes * sizeof(int));
+  std::vector<int> ppnode;
+  boost::mpi::all_gather(comm_cart, cells_get_n_particles(), ppnode);
+
   /* minimal difference between node shares */
   int minshare = n_part / n_nodes;
   int maxshare = minshare + 1;
@@ -160,7 +161,6 @@ void nsq_balance_particles(int global_flag) {
   CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: load %d-%d\n",
                      this_node, minshare, maxshare));
 
-  MPI_Allgather(&pp, 1, MPI_INT, ppnode, 1, MPI_INT, comm_cart);
   for (;;) {
     /* find node with most excessive particles */
     surplus = -1;
@@ -231,5 +231,5 @@ void nsq_balance_particles(int global_flag) {
   }
   CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: done\n", this_node));
 
-  free(ppnode);
+  return {};
 }

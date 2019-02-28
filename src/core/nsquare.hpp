@@ -69,5 +69,5 @@ void nsq_topology_release();
 void nsq_topology_init();
 
 /** implements the load balancing as described above. */
-void nsq_balance_particles(int global_flag);
+ParticleList nsq_balance_particles(int global_flag);
 #endif
