@@ -152,11 +152,11 @@ void integrator_npt_sanity_checks() {
     }
 
 #ifdef ELECTROSTATICS
-    Coulomb::integrate_coulomb_sanity_check();
+    Coulomb::integrate_sanity_check();
 #endif /*ELECTROSTATICS*/
 
 #ifdef DIPOLES
-    Dipole::integrate_dipole_sanity_check();
+    Dipole::integrate_sanity_check();
 #endif /* ifdef DIPOLES */
   }
 }

@@ -355,7 +355,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 
 #ifdef ELECTROSTATICS
   /* real space Coulomb */
-  Coulomb::calc_pair_coulomb_force(p1, p2, d, dist, dist2, force);
+  Coulomb::calc_pair_force(p1, p2, d, dist, dist2, force);
 
 #endif /*ifdef ELECTROSTATICS */
 
@@ -365,7 +365,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 
 #ifdef DIPOLES
   /* real space magnetic dipole-dipole */
-  Dipole::calc_pair_dipole_force(p1, p2, d, dist, dist2, force);
+  Dipole::calc_pair_force(p1, p2, d, dist, dist2, force);
 #endif /* ifdef DIPOLES */
 
   /***********************************************/

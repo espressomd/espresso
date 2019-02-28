@@ -10,7 +10,7 @@
 
 namespace Coulomb {
 
-void pressure_n_coulomb(int &n_coulomb) {
+void pressure_n(int &n_coulomb) {
   switch (coulomb.method) {
   case COULOMB_NONE:
     n_coulomb = 0;
@@ -24,8 +24,8 @@ void pressure_n_coulomb(int &n_coulomb) {
   }
 }
 
-void pressure_calc_long_range_force(Observable_stat &virials,
-                                    Observable_stat &p_tensor) {
+void calc_pressure_long_range(Observable_stat &virials,
+                              Observable_stat &p_tensor) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -61,7 +61,7 @@ void pressure_calc_long_range_force(Observable_stat &virials,
   }
 }
 
-void nonbonded_coulomb_sanity_checks(int &state) {
+void sanity_checks(int &state) {
   switch (coulomb.method) {
   case COULOMB_MMM1D:
     if (MMM1D_sanity_checks())
@@ -86,7 +86,7 @@ void nonbonded_coulomb_sanity_checks(int &state) {
   }
 }
 
-void nonbonded_electrostatics_cutoff(double &ret) {
+void cutoff(double &ret) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -116,7 +116,7 @@ void nonbonded_electrostatics_cutoff(double &ret) {
   }
 }
 
-void nonbonded_deactivate_coulomb() {
+void deactivate() {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -142,7 +142,7 @@ void nonbonded_deactivate_coulomb() {
   }
 }
 
-void integrate_coulomb_sanity_check() {
+void integrate_sanity_check() {
   switch (coulomb.method) {
   case COULOMB_NONE:
     break;
@@ -247,7 +247,7 @@ void on_boxl_change() {
   }
 }
 
-void init_coulomb() {
+void init() {
   switch (coulomb.method) {
   case COULOMB_DH:
     break;
@@ -272,7 +272,7 @@ void init_coulomb() {
   }
 }
 
-void calc_long_range_coulomb_force() {
+void calc_long_range_force() {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -330,7 +330,7 @@ void calc_long_range_coulomb_force() {
   }
 }
 
-void energy_calc_long_range_coulomb_energy(Observable_stat &energy) {
+void calc_energy_long_range(Observable_stat &energy) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_P3M_GPU:
@@ -383,7 +383,7 @@ void energy_calc_long_range_coulomb_energy(Observable_stat &energy) {
   }
 }
 
-void energy_n_coulomb(int &n_coulomb) {
+void energy_n(int &n_coulomb) {
   switch (coulomb.method) {
   case COULOMB_NONE:
     n_coulomb = 0;
@@ -400,64 +400,6 @@ void energy_n_coulomb(int &n_coulomb) {
     break;
   default:
     n_coulomb = 1;
-  }
-}
-
-void icc_calc_pair_coulomb_force(Particle *p1, Particle *p2, double *d,
-                                 double dist, double dist2, double *force) {
-  auto const q1q2 = p1->p.q * p2->p.q;
-  if (q1q2 != 0) {
-    switch (coulomb.method) {
-#ifdef P3M
-    case COULOMB_ELC_P3M:
-    case COULOMB_P3M_GPU:
-    case COULOMB_P3M:
-      p3m_add_pair_force(q1q2, d, dist2, dist, force);
-      break;
-#endif /* P3M */
-    case COULOMB_MMM1D:
-      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force);
-      break;
-    case COULOMB_MMM2D:
-      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force);
-      break;
-    default:
-      break;
-    }
-  }
-}
-
-void icc_calc_long_range_force() {
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    if (elc_params.dielectric_contrast_on) {
-      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric contrast";
-    }
-    p3m_charge_assign();
-    p3m_calc_kspace_forces(1, 0);
-    ELC_add_force();
-    break;
-
-#ifdef CUDA
-  case COULOMB_P3M_GPU:
-    if (this_node == 0) {
-      FORCE_TRACE(printf("Computing GPU P3M forces.\n"));
-      p3m_gpu_add_farfield_force();
-    }
-    break;
-#endif
-  case COULOMB_P3M:
-    p3m_charge_assign();
-    p3m_calc_kspace_forces(1, 0);
-    break;
-#endif
-  case COULOMB_MMM2D:
-    MMM2D_add_far_force();
-    MMM2D_dielectric_layers_force_contribution();
-    break;
-  default:
-    break;
   }
 }
 
@@ -494,7 +436,7 @@ int iccp3m_sanity_check() {
   return 0;
 }
 
-int elc_switch_error() {
+int elc_sanity_check() {
 #ifdef P3M
   switch (coulomb.method) {
   case COULOMB_P3M_GPU: {

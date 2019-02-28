@@ -207,7 +207,7 @@ void calc_long_range_forces() {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_long_range_coulomb_force();
+  Coulomb::calc_long_range_force();
 /* If enabled, calculate electrostatics contribution from electrokinetics
  * species. */
 #ifdef EK_ELECTROSTATIC_COUPLING
@@ -218,6 +218,6 @@ void calc_long_range_forces() {
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
-  Dipole::calc_long_range_dipole();
+  Dipole::calc_long_range_force();
 #endif /*ifdef DIPOLES */
 }

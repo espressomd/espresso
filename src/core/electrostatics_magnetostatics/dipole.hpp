@@ -11,39 +11,39 @@
 
 namespace Dipole {
 // pressure
-void pressure_n_dipolar(int &n_dipolar);
-void calc_long_range_dipole_force(Observable_stat &virials,
-                                  Observable_stat &p_tensor);
+void pressure_n(int &n_dipolar);
+void calc_pressure_long_range(Observable_stat &virials,
+                              Observable_stat &p_tensor);
 
 // nonbonded_interaction_data
 void nonbonded_sanity_check(int &state);
-void nonbonded_calc_cutoff(double &ret);
+void cutoff(double &ret);
 
 // integrate
-void integrate_dipole_sanity_check();
+void integrate_sanity_check();
 
 // initialize
 void on_observable_calc();
 void on_coulomb_change();
 void on_boxl_change();
-void init_dipole();
+void init();
 
 // forces
-void calc_long_range_dipole();
+void calc_long_range_force();
 
 // energy
-void calc_long_range_dipole_energy(Observable_stat &energy);
-void energy_n_dipolar(int &n_dipolar);
+void calc_energy_long_range(Observable_stat &energy);
+void energy_n(int &n_dipolar);
 
 // mdlc_correction
-int set_dipole_mesh();
+int set_mesh();
 
 // communication
-void bcast_dipole_params();
+void bcast_params();
 
 // forces_inline
-inline void calc_pair_dipole_force(Particle *p1, Particle *p2, double *d,
-                                   double dist, double dist2, Vector3d &force) {
+inline void calc_pair_force(Particle *p1, Particle *p2, double *d,
+                            double dist, double dist2, Vector3d &force) {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -65,9 +65,9 @@ inline void calc_pair_dipole_force(Particle *p1, Particle *p2, double *d,
 }
 
 // energy_inline
-inline void add_pair_dipole_energy(Particle *p1, Particle *p2, double *d,
-                                   double dist, double dist2,
-                                   Observable_stat &energy) {
+inline void add_pair_energy(Particle *p1, Particle *p2, double *d,
+                            double dist, double dist2,
+                            Observable_stat &energy) {
   double ret = 0;
   if (coulomb.Dmethod != DIPOLAR_NONE) {
     // ret=0;

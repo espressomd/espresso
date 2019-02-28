@@ -170,7 +170,7 @@ double calc_electrostatics_cutoff() {
      but the method not yet reinitialized.
    */
   double ret = 0.;
-  Coulomb::nonbonded_electrostatics_cutoff(ret);
+  Coulomb::cutoff(ret);
   return ret;
 #endif /*ifdef ELECTROSTATICS */
   return 0;
@@ -179,7 +179,7 @@ double calc_electrostatics_cutoff() {
 double calc_dipolar_cutoff() {
 #ifdef DIPOLES
   double ret = 0;
-  Dipole::nonbonded_calc_cutoff(ret);
+  Dipole::cutoff(ret);
   return ret;
 #endif
   return 0;
@@ -415,7 +415,7 @@ int interactions_sanity_checks() {
   int state = 1;
 
 #ifdef ELECTROSTATICS
-  Coulomb::nonbonded_coulomb_sanity_checks(state);
+  Coulomb::sanity_checks(state);
 #endif /* ifdef ELECTROSTATICS */
 
 #if defined(DIPOLES) and defined(DP3M)
@@ -465,7 +465,7 @@ int coulomb_set_prefactor(double prefactor) {
 void deactivate_coulomb_method() {
   coulomb.prefactor = 0;
 
-  Coulomb::nonbonded_deactivate_coulomb();
+  Coulomb::deactivate();
 
   mpi_bcast_coulomb_params();
   coulomb.method = COULOMB_NONE;

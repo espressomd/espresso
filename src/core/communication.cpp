@@ -322,7 +322,6 @@ void mpi_bcast_event_slave(int node, int event) {
     dp3m_count_magnetic_particles();
     break;
 #endif
-
   default:;
   }
 }
@@ -659,7 +658,7 @@ void mpi_bcast_coulomb_params_slave(int, int) {
 #ifdef DIPOLES
   set_dipolar_method_local(coulomb.Dmethod);
 
-  Dipole::bcast_dipole_params();
+  Dipole::bcast_params();
 #endif
 
   on_coulomb_change();

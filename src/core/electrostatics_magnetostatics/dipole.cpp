@@ -11,7 +11,7 @@
 
 namespace Dipole {
 
-void pressure_n_dipolar(int &n_dipolar) {
+void pressure_n(int &n_dipolar) {
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
     n_dipolar = 0;
@@ -31,8 +31,8 @@ void pressure_n_dipolar(int &n_dipolar) {
   }
 }
 
-void calc_long_range_dipole_force(Observable_stat &virials,
-                                  Observable_stat &p_tensor) {
+void calc_pressure_long_range(Observable_stat &virials,
+                              Observable_stat &p_tensor) {
   switch (coulomb.Dmethod) {
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     fprintf(
@@ -96,7 +96,7 @@ void nonbonded_sanity_check(int &state) {
 #endif
 }
 
-void nonbonded_calc_cutoff(double &ret) {
+void cutoff(double &ret) {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -114,7 +114,7 @@ void nonbonded_calc_cutoff(double &ret) {
   }
 }
 
-void integrate_dipole_sanity_check() {
+void integrate_sanity_check() {
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
     break;
@@ -176,7 +176,7 @@ void on_boxl_change() {
   }
 }
 
-void init_dipole() {
+void init() {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -190,7 +190,7 @@ void init_dipole() {
   }
 }
 
-void calc_long_range_dipole() {
+void calc_long_range_force() {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -240,7 +240,7 @@ void calc_long_range_dipole() {
   }
 }
 
-void calc_long_range_dipole_energy(Observable_stat &energy) {
+void calc_energy_long_range(Observable_stat &energy) {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_P3M:
@@ -286,7 +286,7 @@ void calc_long_range_dipole_energy(Observable_stat &energy) {
   }
 }
 
-void energy_n_dipolar(int &n_dipolar) {
+void energy_n(int &n_dipolar) {
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
     n_dipolar = 1; // because there may be an external magnetic field
@@ -320,7 +320,7 @@ void energy_n_dipolar(int &n_dipolar) {
   }
 }
 
-int set_dipole_mesh() {
+int set_mesh() {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -337,7 +337,7 @@ int set_dipole_mesh() {
   }
 }
 
-void bcast_dipole_params() {
+void bcast_params() {
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
     break;

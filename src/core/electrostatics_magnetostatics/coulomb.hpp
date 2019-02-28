@@ -17,40 +17,37 @@
 namespace Coulomb {
 
 // pressure.cpp
-void pressure_n_coulomb(int &n_coulomb);
-void pressure_calc_long_range_force(Observable_stat &virials,
-                                    Observable_stat &p_tensor);
+void pressure_n(int &n_coulomb);
+void calc_pressure_long_range(Observable_stat &virials,
+                              Observable_stat &p_tensor);
 
 // nonbonded_interaction_data
-void nonbonded_coulomb_sanity_checks(int &state);
-void nonbonded_electrostatics_cutoff(double &ret);
-void nonbonded_deactivate_coulomb();
+void sanity_checks(int &state);
+void cutoff(double &ret);
+void deactivate();
 
 // integrate
-void integrate_coulomb_sanity_check();
+void integrate_sanity_check();
 
 // initialize
 void on_observable_calc();
 void on_coulomb_change();
 void on_resort_particles();
 void on_boxl_change();
-void init_coulomb();
+void init();
 
 // forces_calc
-void calc_long_range_coulomb_force();
+void calc_long_range_force();
 
 // energy
-void energy_calc_long_range_coulomb_energy(Observable_stat &energy);
-void energy_n_coulomb(int &n_coulomb);
+void calc_energy_long_range(Observable_stat &energy);
+void energy_n(int &n_coulomb);
 
 // icc
-void icc_calc_pair_coulomb_force(Particle *p1, Particle *p2, double *d,
-                                 double dist, double dist2, double *force);
-void icc_calc_long_range_force();
 int iccp3m_sanity_check();
 
 // elc
-int elc_switch_error();
+int elc_sanity_check();
 
 // communication
 void bcast_coulomb_params();
@@ -112,9 +109,9 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double *d,
 }
 
 // forces_inline
-inline void calc_pair_coulomb_force(Particle *p1, Particle *p2, double *d,
-                                    double dist, double dist2,
-                                    Vector3d &force) {
+inline void calc_pair_force(Particle *p1, Particle *p2, double *d,
+                            double dist, double dist2,
+                            Vector3d &force) {
   auto const q1q2 = p1->p.q * p2->p.q;
 
   if (q1q2 != 0) {
@@ -160,9 +157,9 @@ inline void calc_pair_coulomb_force(Particle *p1, Particle *p2, double *d,
 }
 
 // energy_inline
-inline void add_pair_coulomb_energy(Particle *p1, Particle *p2, double *d,
-                                    double dist, double dist2,
-                                    Observable_stat &energy) {
+inline void add_pair_energy(Particle *p1, Particle *p2, double *d,
+                            double dist, double dist2,
+                            Observable_stat &energy) {
   double ret = 0;
   if (coulomb.method != COULOMB_NONE) {
     /* real space Coulomb */

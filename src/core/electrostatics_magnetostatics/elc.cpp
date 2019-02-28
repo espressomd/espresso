@@ -1301,7 +1301,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 
   ELC_setup_constants();
 
-  Coulomb::elc_switch_error();
+  Coulomb::elc_sanity_check();
 
   elc_params.far_cut = far_cut;
   if (far_cut != -1) {

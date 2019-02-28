@@ -239,7 +239,7 @@ void on_observable_calc() {
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
-    
+
     Coulomb::on_observable_calc();
 
     reinit_electrostatics = 0;
@@ -395,11 +395,11 @@ void on_cell_structure_change() {
    have separate, faster methods, as this might happen frequently
    in a NpT simulation. */
 #ifdef ELECTROSTATICS
-  Coulomb::init_coulomb();
+  Coulomb::init();
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  Dipole::init_dipole();
+  Dipole::init();
 #endif /* ifdef DIPOLES */
 
 #ifdef LB
