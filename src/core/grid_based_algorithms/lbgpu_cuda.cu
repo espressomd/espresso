@@ -1475,17 +1475,15 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared,
  *  @param[in]  n_a                Local node residing in array a
  *  @param[in]  particle_position  Particle position
  *  @param[out] node_index         Node index around (8) particle
- *  @param[out] mode               The 19 modes for current lattice point
  *  @param[in]  d_v                Local device values
  *  @param[out] delta              Weighting of particle position
  *  @retval Interpolated velocity
  */
 __device__ __inline__ float3 interpolation_two_point_coupling(
     LB_nodes_gpu n_a, float *particle_position, unsigned int *node_index,
-    float *mode, LB_rho_v_gpu *d_v, float *delta) {
+    LB_rho_v_gpu *d_v, float *delta) {
   int left_node_index[3];
   float temp_delta[6];
-  float temp_delta_half[6];
 
   // see ahlrichs + duenweg page 8227 equ (10) and (11)
 #pragma unroll
@@ -1531,6 +1529,7 @@ __device__ __inline__ float3 interpolation_two_point_coupling(
                   para->dim_x * para->dim_y * ((z + 1) % para->dim_z);
 
   float3 interpolated_u{0.0f, 0.0f, 0.0f};
+  float mode[19];
 #pragma unroll
   for (int i = 0; i < 8; ++i) {
     float totmass = 0.0f;
@@ -1618,8 +1617,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta,
 #endif
 
   // Do the velocity interpolation
-  float mode[19];
-  auto const interpolated_u = interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta);
+  auto const interpolated_u = interpolation_two_point_coupling(n_a, position, node_index, d_v, delta);
 
 #ifdef ENGINE
   velocity[0] -= particle_data[part_index].swim.v_swim *
@@ -3255,10 +3253,9 @@ struct two_point_interpolation {
   __device__ float3 operator()(const float3 &position) const {
     unsigned int node_index[8];
     float delta[8];
-    float mode[19];
     float _position[3] = {position.x, position.y, position.z};
     return interpolation_two_point_coupling(current_nodes_gpu, _position, node_index,
-                                     mode, d_v_gpu, delta);
+                                     d_v_gpu, delta);
   }
 };
 
