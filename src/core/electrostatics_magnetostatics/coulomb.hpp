@@ -6,11 +6,11 @@
 #include "electrostatics_magnetostatics/mmm1d.hpp"         // MMM1D_sanity_check
 #include "electrostatics_magnetostatics/mmm2d.hpp"         // MMM2D_sanity_check
 #include "electrostatics_magnetostatics/p3m.hpp"           // p3m_params
+#include "electrostatics_magnetostatics/reaction_field.hpp"// Reaction_field_params
 #include "electrostatics_magnetostatics/scafacos.hpp"      // scafacos
 #include "integrate.hpp"                                   // skin
 #include "npt.hpp"                                         // nptiso
-#include "reaction_field.hpp" // Reaction_field_params
-#include "statistics.hpp"     // Observable_stat
+#include "statistics.hpp"                                  // Observable_stat
 
 #ifdef ELECTROSTATICS
 
@@ -143,6 +143,12 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
       break;
     case COULOMB_MMM2D:
       add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
+      break;
+    case COULOMB_DH:
+      add_dh_coulomb_pair_force(p1, p2, d, dist, force.data());
+      break;
+    case COULOMB_RF:
+      add_rf_coulomb_pair_force(p1, p2, d, dist, force.data());
       break;
 #ifdef SCAFACOS
     case COULOMB_SCAFACOS:
