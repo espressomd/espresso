@@ -109,9 +109,8 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double *d,
 }
 
 // forces_inline
-inline void calc_pair_force(Particle *p1, Particle *p2, double *d,
-                            double dist, double dist2,
-                            Vector3d &force) {
+inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
+                            double dist2, Vector3d &force) {
   auto const q1q2 = p1->p.q * p2->p.q;
 
   if (q1q2 != 0) {
@@ -157,9 +156,8 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double *d,
 }
 
 // energy_inline
-inline void add_pair_energy(Particle *p1, Particle *p2, double *d,
-                            double dist, double dist2,
-                            Observable_stat &energy) {
+inline void add_pair_energy(Particle *p1, Particle *p2, double *d, double dist,
+                            double dist2, Observable_stat &energy) {
   double ret = 0;
   if (coulomb.method != COULOMB_NONE) {
     /* real space Coulomb */

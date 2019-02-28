@@ -42,8 +42,8 @@ int set_mesh();
 void bcast_params();
 
 // forces_inline
-inline void calc_pair_force(Particle *p1, Particle *p2, double *d,
-                            double dist, double dist2, Vector3d &force) {
+inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
+                            double dist2, Vector3d &force) {
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -65,9 +65,8 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double *d,
 }
 
 // energy_inline
-inline void add_pair_energy(Particle *p1, Particle *p2, double *d,
-                            double dist, double dist2,
-                            Observable_stat &energy) {
+inline void add_pair_energy(Particle *p1, Particle *p2, double *d, double dist,
+                            double dist2, Observable_stat &energy) {
   double ret = 0;
   if (coulomb.Dmethod != DIPOLAR_NONE) {
     // ret=0;
