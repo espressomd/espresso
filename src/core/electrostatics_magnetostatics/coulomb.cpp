@@ -378,7 +378,6 @@ void energy_calc_long_range_coulomb_energy(Observable_stat &energy) {
     *energy.coulomb += MMM2D_far_energy();
     *energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
     break;
-    /* calculate electric part of energy (only for MAGGS) */
   default:
     break;
   }
