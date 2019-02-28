@@ -52,51 +52,51 @@ int elc_sanity_check();
 void bcast_coulomb_params();
 
 // forces_inline
-    inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
-                                double dist2, Vector3d &force) {
-        auto const q1q2 = p1->p.q * p2->p.q;
+inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
+                            double dist2, Vector3d &force) {
+  auto const q1q2 = p1->p.q * p2->p.q;
 
-        if (q1q2 != 0) {
-            switch (coulomb.method) {
+  if (q1q2 != 0) {
+    switch (coulomb.method) {
 #ifdef P3M
-                case COULOMB_ELC_P3M: {
-                    p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
+    case COULOMB_ELC_P3M: {
+      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
 
-                    // forces from the virtual charges
-                    // they go directly onto the particles, since they are not pairwise forces
-                    if (elc_params.dielectric_contrast_on)
-                        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
-                                                                     p2->f.f.data());
-                    break;
-                }
-                case COULOMB_P3M_GPU:
-                case COULOMB_P3M: {
-                    p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
-                    break;
-                }
-#endif
-                case COULOMB_MMM1D:
-                    add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
-                    break;
-                case COULOMB_MMM2D:
-                    add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
-                    break;
-                case COULOMB_DH:
-                    add_dh_coulomb_pair_force(p1, p2, d, dist, force.data());
-                    break;
-                case COULOMB_RF:
-                    add_rf_coulomb_pair_force(p1, p2, d, dist, force.data());
-                    break;
-#ifdef SCAFACOS
-                case COULOMB_SCAFACOS:
-                    Scafacos::add_pair_force(p1, p2, d, dist, force.data());
-                    break;
-#endif
-                default:
-                    break;
-            }
-        }
+      // forces from the virtual charges
+      // they go directly onto the particles, since they are not pairwise forces
+      if (elc_params.dielectric_contrast_on)
+        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
+                                                     p2->f.f.data());
+      break;
     }
+    case COULOMB_P3M_GPU:
+    case COULOMB_P3M: {
+      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
+      break;
+    }
+#endif
+    case COULOMB_MMM1D:
+      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
+      break;
+    case COULOMB_MMM2D:
+      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
+      break;
+    case COULOMB_DH:
+      add_dh_coulomb_pair_force(p1, p2, d, dist, force.data());
+      break;
+    case COULOMB_RF:
+      add_rf_coulomb_pair_force(p1, p2, d, dist, force.data());
+      break;
+#ifdef SCAFACOS
+    case COULOMB_SCAFACOS:
+      Scafacos::add_pair_force(p1, p2, d, dist, force.data());
+      break;
+#endif
+    default:
+      break;
+    }
+  }
+}
 
 // pressure_inline.hpp
 inline void add_pair_pressure(Particle *p1, Particle *p2, double *d,
@@ -116,10 +116,10 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double *d,
 
     /* Calculate the virial pressure */
     for (int k = 0; k < 3; k++) {
-        for (int l = 0; l < 3; l++) {
-            p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
-        }
-        virials.coulomb[0] += d[k] * force[k];
+      for (int l = 0; l < 3; l++) {
+        p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
+      }
+      virials.coulomb[0] += d[k] * force[k];
     }
     break;
   }
@@ -131,36 +131,38 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double *d,
 }
 
 // energy_inline
-inline double add_pair_energy(Particle *p1, Particle *p2, double *d, double dist, double dist2) {
-    /* real space Coulomb */
-    switch (coulomb.method) {
+inline double add_pair_energy(Particle *p1, Particle *p2, double *d,
+                              double dist, double dist2) {
+  /* real space Coulomb */
+  switch (coulomb.method) {
 #ifdef P3M
-    case COULOMB_P3M_GPU:
-    case COULOMB_P3M:
+  case COULOMB_P3M_GPU:
+  case COULOMB_P3M:
+    return p3m_pair_energy(p1->p.q * p2->p.q, dist);
+  case COULOMB_ELC_P3M:
+    if (elc_params.dielectric_contrast_on) {
+      return 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2) +
+             p3m_pair_energy(p1->p.q * p2->p.q, dist);
+    } else {
       return p3m_pair_energy(p1->p.q * p2->p.q, dist);
-    case COULOMB_ELC_P3M:
-      if (elc_params.dielectric_contrast_on) {
-          return 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2) + p3m_pair_energy(p1->p.q * p2->p.q, dist);
-      } else {
-          return p3m_pair_energy(p1->p.q * p2->p.q, dist);
-      }
+    }
 #endif
 #ifdef SCAFACOS
-    case COULOMB_SCAFACOS:
-      return Scafacos::pair_energy(p1, p2, dist);
+  case COULOMB_SCAFACOS:
+    return Scafacos::pair_energy(p1, p2, dist);
 #endif
-    case COULOMB_DH:
-      return dh_coulomb_pair_energy(p1, p2, dist);
-    case COULOMB_RF:
-      return rf_coulomb_pair_energy(p1, p2, dist);
-    case COULOMB_MMM1D:
-      return mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
-    case COULOMB_MMM2D:
-      return mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
-    default:
-      return 0.;
-    }
+  case COULOMB_DH:
+    return dh_coulomb_pair_energy(p1, p2, dist);
+  case COULOMB_RF:
+    return rf_coulomb_pair_energy(p1, p2, dist);
+  case COULOMB_MMM1D:
+    return mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
+  case COULOMB_MMM2D:
+    return mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+  default:
+    return 0.;
   }
+}
 } // namespace Coulomb
 #endif // ELECTROSTATICS
 #endif // ESPRESSO_COULOMB_SWITCH_HPP

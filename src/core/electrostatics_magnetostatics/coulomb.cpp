@@ -6,9 +6,9 @@
 #include "electrostatics_magnetostatics/p3m_gpu.hpp" // p3m_gpu_init
 #include "errorhandling.hpp"                         // runtime_error
 #include "initialize.hpp"                            // on_ghost_flags_change
+#include "integrate.hpp"                             // skin
 #include "layered.hpp"                               // layer_h
-#include "integrate.hpp"                                    // skin
-#include "npt.hpp"                                          // nptiso
+#include "npt.hpp"                                   // nptiso
 
 namespace Coulomb {
 

@@ -321,7 +321,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /***********************************************/
 
 #ifdef ELECTROSTATICS
-    Coulomb::calc_pair_force(p1, p2, d, dist, dist2, force);
+  Coulomb::calc_pair_force(p1, p2, d, dist, dist2, force);
 #endif
 
 /*********************************************************************/
@@ -329,11 +329,11 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 /* but nothing afterwards                                            */
 /*********************************************************************/
 #ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-        for (j = 0; j < 3; j++) {
-            nptiso.p_vir[j] += force[j] * d[j];
-        }
+  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+    for (j = 0; j < 3; j++) {
+      nptiso.p_vir[j] += force[j] * d[j];
     }
+  }
 #endif
 
 /***********************************************/
@@ -347,9 +347,9 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 #endif
 
-    /***********************************************/
-    /* long range magnetostatics                   */
-    /***********************************************/
+  /***********************************************/
+  /* long range magnetostatics                   */
+  /***********************************************/
 
 #ifdef DIPOLES
   /* real space magnetic dipole-dipole */
