@@ -633,8 +633,8 @@ int ReactionAlgorithm::delete_particle(int p_id) {
 /**
  * Writes a random position inside the central box into the provided array.
  */
-std::vector<double> ReactionAlgorithm::get_random_position_in_box() {
-  std::vector<double> out_pos(3);
+Vector3d ReactionAlgorithm::get_random_position_in_box() {
+  Vector3d out_pos;
   if (box_is_cylindric_around_z_axis) {
     // see http://mathworld.wolfram.com/DiskPointPicking.html
     double random_radius =
@@ -710,7 +710,6 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   } else {
     p_id = max_seen_particle + 1;
   }
-  std::vector<double> pos_vec;
 
   // create random velocity vector according to Maxwell Boltzmann distribution
   // for components
@@ -723,7 +722,10 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   double charge = charges_of_types[desired_type];
 #endif
 
-  pos_vec = get_random_position_in_box();
+  auto pos_vec = get_random_position_in_box();
+  double d_min;
+  std::tie(d_min, std::ignore) = cells_find_closest_particle(pos_vec);
+  
   place_particle(p_id, pos_vec.data());
   // set type
   set_particle_type(p_id, desired_type);
@@ -733,12 +735,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
 #endif
   // set velocities
   set_particle_v(p_id, vel);
-  double d_min = distto(partCfg(), pos_vec.data(),
-                        p_id); // TODO also catch constraints with an IFDEF
-                               // CONSTRAINTS here, but only interesting,
-                               // when doing MD/ HMC because then the system
-                               // might explode easily here due to high
-                               // forces
+
   if (d_min < exclusion_radius)
     particle_inserted_too_close_to_another_one =
         true; // setting of a minimal
@@ -825,25 +822,20 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   }
 
   // propose new positions
-  std::vector<double> new_pos(3);
   for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
     p_id = p_id_s_changed_particles[i];
     // change particle position
-    new_pos = get_random_position_in_box();
+    auto new_pos = get_random_position_in_box();
+    double d_min;
+    std::tie(d_min, std::ignore) = cells_find_closest_particle(new_pos);
+
     double vel[3];
     auto const &p = get_particle_data(p_id);
     vel[0] = std::sqrt(temperature / p.p.mass) * gaussian_random();
     vel[1] = std::sqrt(temperature / p.p.mass) * gaussian_random();
     vel[2] = std::sqrt(temperature / p.p.mass) * gaussian_random();
     set_particle_v(p_id, vel);
-    // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
-    // //enhanced proposal of small radii
     place_particle(p_id, new_pos.data());
-    double d_min = distto(partCfg(), new_pos.data(),
-                          p_id); // TODO also catch constraints with an IFDEF
-                                 // CONSTRAINTS here, but only interesting,
-                                 // when doing MD/ HMC because then the system
-                                 // might explode easily here due to high
 
     if (d_min < exclusion_radius)
       particle_inserted_too_close_to_another_one = true;
