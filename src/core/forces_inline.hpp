@@ -36,13 +36,6 @@
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
 #include "collision.hpp"
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
-#include "electrostatics_magnetostatics/mdlc_correction.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "forces.hpp"
 #include "metadynamics.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
@@ -69,14 +62,13 @@
 #include "object-in-fluid/out_direction.hpp"
 #include "thermostat.hpp"
 
-#include "electrostatics_magnetostatics/coulomb.hpp"
+#ifdef DIPOLES
 #include "electrostatics_magnetostatics/dipole.hpp"
+#endif
 
 #ifdef ELECTROSTATICS
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "bonded_interactions/bonded_coulomb.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
-#include "electrostatics_magnetostatics/reaction_field.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 #endif
 #ifdef P3M
 #include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"

@@ -36,16 +36,6 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "cuda_interface.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/mdlc_correction.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/reaction_field.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "galilei.hpp"
@@ -80,7 +70,9 @@
 #include <boost/serialization/string.hpp>
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/icc.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
 using namespace std;
 
@@ -133,7 +125,6 @@ int n_nodes = -1;
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_send_fluid_slave)                                                     \
   CB(mpi_recv_fluid_slave)                                                     \
-  CB(mpi_iccp3m_iteration_slave)                                               \
   CB(mpi_iccp3m_init_slave)                                                    \
   CB(mpi_bcast_max_mu_slave)                                                   \
   CB(mpi_recv_fluid_populations_slave)                                         \
@@ -937,27 +928,6 @@ void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
     lb_local_fields_get_boundary_flag(index, &data);
     MPI_Send(&data, 1, MPI_INT, 0, SOME_TAG, comm_cart);
   }
-#endif
-}
-
-/********************* REQ_ICCP3M_ITERATION ********/
-int mpi_iccp3m_iteration() {
-#ifdef ELECTROSTATICS
-  mpi_call(mpi_iccp3m_iteration_slave, -1, 0);
-
-  iccp3m_iteration();
-
-  return check_runtime_errors();
-#else
-  return 0;
-#endif
-}
-
-void mpi_iccp3m_iteration_slave(int, int) {
-#ifdef ELECTROSTATICS
-  iccp3m_iteration();
-
-  check_runtime_errors();
 #endif
 }
 
