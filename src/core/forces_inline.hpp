@@ -357,9 +357,9 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     Coulomb::calc_pair_force(p1, p2, d, dist, dist2, force);
 #endif /*ifdef ELECTROSTATICS */
 
-  /***********************************************/
-  /* long range magnetostatics                   */
-  /***********************************************/
+    /***********************************************/
+    /* long range magnetostatics                   */
+    /***********************************************/
 
 #ifdef DIPOLES
   /* real space magnetic dipole-dipole */

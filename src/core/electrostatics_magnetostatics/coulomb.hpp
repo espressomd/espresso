@@ -6,11 +6,11 @@
 #include "electrostatics_magnetostatics/mmm1d.hpp"         // MMM1D_sanity_check
 #include "electrostatics_magnetostatics/mmm2d.hpp"         // MMM2D_sanity_check
 #include "electrostatics_magnetostatics/p3m.hpp"           // p3m_params
-#include "electrostatics_magnetostatics/reaction_field.hpp"// Reaction_field_params
-#include "electrostatics_magnetostatics/scafacos.hpp"      // scafacos
-#include "integrate.hpp"                                   // skin
-#include "npt.hpp"                                         // nptiso
-#include "statistics.hpp"                                  // Observable_stat
+#include "electrostatics_magnetostatics/reaction_field.hpp" // Reaction_field_params
+#include "electrostatics_magnetostatics/scafacos.hpp"       // scafacos
+#include "integrate.hpp"                                    // skin
+#include "npt.hpp"                                          // nptiso
+#include "statistics.hpp"                                   // Observable_stat
 
 #ifdef ELECTROSTATICS
 
