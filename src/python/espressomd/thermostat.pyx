@@ -24,11 +24,8 @@ from globals cimport *
 import numpy as np
 from . cimport utils
 from .lb cimport *
-IF LB:
-    from .lb import LBFluid
-IF LB_GPU:
-    from .lb import LBFluidGPU
 if LB or LB_GPU:
+    from .lb import HydrodynamicInteraction
     from .lb cimport lb_lbcoupling_set_gamma
     from .lb cimport lb_lbcoupling_get_gamma
 
@@ -366,14 +363,7 @@ cdef class Thermostat(object):
                 Frictional coupling constant for the MD particle coupling.
 
             """
-            valid_LB_fluid = False
-            IF LB:
-                if isinstance(LB_fluid, LBFluid):
-                    valid_LB_fluid = True
-            IF LB_GPU:
-                if isinstance(LB_fluid, LBFluidGPU):
-                    valid_LB_fluid = True
-            if not valid_LB_fluid:
+            if not isinstance(LB_fluid, HydrodynamicInteraction):
                 raise ValueError(
                     "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
