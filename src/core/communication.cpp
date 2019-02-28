@@ -70,8 +70,8 @@
 #include <boost/serialization/string.hpp>
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/icc.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/icc.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
 using namespace std;

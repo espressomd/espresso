@@ -67,8 +67,8 @@
 #endif
 
 #ifdef ELECTROSTATICS
-#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "bonded_interactions/bonded_coulomb.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #endif
 #ifdef P3M
 #include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
