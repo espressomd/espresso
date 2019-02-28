@@ -1484,7 +1484,6 @@ __device__ __inline__ float3 interpolation_two_point_coupling(
     LB_rho_v_gpu *d_v, float *delta) {
   int left_node_index[3];
   float temp_delta[6];
-
   // see ahlrichs + duenweg page 8227 equ (10) and (11)
 #pragma unroll
   for (int i = 0; i < 3; ++i) {
@@ -1505,28 +1504,24 @@ __device__ __inline__ float3 interpolation_two_point_coupling(
 
   // modulo for negative numbers is strange at best, shift to make sure we are
   // positive
-  int x = left_node_index[0] + para->dim_x;
-  int y = left_node_index[1] + para->dim_y;
-  int z = left_node_index[2] + para->dim_z;
-
-  node_index[0] = x % para->dim_x + para->dim_x * (y % para->dim_y) +
-                  para->dim_x * para->dim_y * (z % para->dim_z);
-  node_index[1] = (x + 1) % para->dim_x + para->dim_x * (y % para->dim_y) +
-                  para->dim_x * para->dim_y * (z % para->dim_z);
-  node_index[2] = x % para->dim_x + para->dim_x * ((y + 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * (z % para->dim_z);
-  node_index[3] = (x + 1) % para->dim_x +
-                  para->dim_x * ((y + 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * (z % para->dim_z);
-  node_index[4] = x % para->dim_x + para->dim_x * (y % para->dim_y) +
-                  para->dim_x * para->dim_y * ((z + 1) % para->dim_z);
-  node_index[5] = (x + 1) % para->dim_x + para->dim_x * (y % para->dim_y) +
-                  para->dim_x * para->dim_y * ((z + 1) % para->dim_z);
-  node_index[6] = x % para->dim_x + para->dim_x * ((y + 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * ((z + 1) % para->dim_z);
-  node_index[7] = (x + 1) % para->dim_x +
-                  para->dim_x * ((y + 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * ((z + 1) % para->dim_z);
+  int x = (left_node_index[0] + para->dim_x) % para->dim_x;
+  int y = (left_node_index[1] + para->dim_y) % para->dim_y;
+  int z = (left_node_index[2] + para->dim_z) % para->dim_z;
+  auto xp1 = x + 1;
+  auto yp1 = y + 1;
+  auto zp1 = z + 1;
+  auto fold_if_necessary = [](int ind, int dim) { return ind >= dim ? ind % dim : ind; };
+  xp1 = fold_if_necessary(xp1, para->dim_x);
+  yp1 = fold_if_necessary(yp1, para->dim_y);
+  zp1 = fold_if_necessary(zp1, para->dim_z);
+  node_index[0] = xyz_to_index(x,y,z);
+  node_index[1] = xyz_to_index(xp1, y, z);
+  node_index[2] = xyz_to_index(x, yp1, z);
+  node_index[3] = xyz_to_index(xp1, yp1, z);
+  node_index[4] = xyz_to_index(x, y, zp1);
+  node_index[5] = xyz_to_index(xp1, y, zp1);
+  node_index[6] = xyz_to_index(x, yp1, zp1);
+  node_index[7] = xyz_to_index(xp1, yp1, zp1);
 
   float3 interpolated_u{0.0f, 0.0f, 0.0f};
   float mode[19];
