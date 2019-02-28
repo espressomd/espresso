@@ -144,9 +144,7 @@ void nsq_topology_init() {
 }
 
 ParticleList nsq_balance_particles(int global_flag) {
-  int i, n, surplus, s_node, tmp, lack, l_node, transfer;
-
-  /* we don't have the concept of neighbors, and therefore don't need that.
+    /* we don't have the concept of neighbors, and therefore don't need that.
      However, if global particle changes happen, we might want to rebalance. */
   if (global_flag != CELL_GLOBAL_EXCHANGE)
     return {};
@@ -163,59 +161,37 @@ ParticleList nsq_balance_particles(int global_flag) {
 
   for (;;) {
     /* find node with most excessive particles */
-    surplus = -1;
-    s_node = -1;
-    for (n = 0; n < n_nodes; n++) {
-      tmp = ppnode[n] - minshare;
-      CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: node %d has %d\n",
-                         this_node, n, ppnode[n]));
-      if (tmp > surplus) {
-        surplus = tmp;
-        s_node = n;
-      }
+    auto const minmax = std::minmax_element(ppnode.begin(), ppnode.end());
+    /* Nothing to do */
+    if(minmax.first == minmax.second) {
+      break;
     }
-    CELL_TRACE(fprintf(stderr,
-                       "%d: nsq_balance_particles: excess %d on node %d\n",
-                       this_node, surplus, s_node));
 
-    /* find node with most lacking particles */
-    lack = -1;
-    l_node = -1;
-    for (n = 0; n < n_nodes; n++) {
-      tmp = maxshare - ppnode[n];
-      if (tmp > lack) {
-        lack = tmp;
-        l_node = n;
-      }
-    }
+    auto const surplus = *minmax.second - minshare;
+    auto const s_node = std::distance(ppnode.begin(), minmax.second);
+    auto const lack = maxshare - *minmax.first;
+    auto const l_node = std::distance(ppnode.begin(), minmax.first);
+
     CELL_TRACE(fprintf(stderr,
                        "%d: nsq_balance_particles: lack %d on node %d\n",
                        this_node, lack, l_node));
-
-    /* should not happen: minshare or maxshare wrong or more likely,
-       the algorithm */
-    if (s_node == -1 || l_node == -1) {
-      fprintf(stderr, "%d: Particle load balancing failed\n", this_node);
-      break;
-    }
 
     /* exit if all nodes load is withing min and max share */
     if (lack <= 1 && surplus <= 1)
       break;
 
-    transfer = lack < surplus ? lack : surplus;
+    auto const transfer = lack < surplus ? lack : surplus;
 
     if (s_node == this_node) {
       ParticleList send_buf;
       init_particlelist(&send_buf);
       realloc_particlelist(&send_buf, send_buf.n = transfer);
-      for (i = 0; i < transfer; i++) {
+      for (int i = 0; i < transfer; i++) {
         send_buf.part[i] = std::move(local->part[--local->n]);
       }
       realloc_particlelist(local, local->n);
 
       send_particles(&send_buf, l_node);
-
     } else if (l_node == this_node) {
       ParticleList recv_buf{};
 
