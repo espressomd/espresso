@@ -25,30 +25,37 @@
    maintainers of ESPResSo, as it has a profound impact on many users,
    in particular newbies.
 */
-/* global features */
-#define PARTIAL_PERIODIC
-#define ELECTROSTATICS
-#define EXTERNAL_FORCES
+
+// Geometry, equation of motion, thermostat/barostat
+#define ROTATION
+#define ROTATIONAL_INERTIA
 #define MASS
-#define EXCLUSIONS
-#define NPT
-#define COLLISION_DETECTION
+#define PARTIAL_PERIODIC
+#define PARTICLE_ANISOTROPY
+#define EXTERNAL_FORCES
 #define LANGEVIN_PER_PARTICLE
+#define BOND_CONSTRAINT
+#define NPT
+#define DPD
 
-/* potentials */
-#define TABULATED
-#define LENNARD_JONES
-#define LENNARD_JONES_GENERIC
-#define MORSE
-#define LJCOS
-#define LJCOS2
-#define BUCKINGHAM
-#define SOFT_SPHERE
-#define BOND_ANGLE
-#define GAUSSIAN
-#define HERTZIAN
+// Charges and dipoles
+#define ELECTROSTATICS
+#ifdef CUDA
+#define MMM1D_GPU
+#endif
 
-// Lattice Boltzmann
+#define DIPOLES
+
+
+
+// Active matter
+#define SWIMMER_REACTIONS
+#define ENGINE
+
+
+
+
+// Hydrodynamics
 #define LB
 #define LB_BOUNDARIES
 #ifdef CUDA
@@ -62,3 +69,33 @@
 #define EK_BOUNDARIES
 #define EK_ELECTROSTATIC_COUPLING
 #endif
+
+// Force/energy calculation
+#define EXCLUSIONS
+
+#define TABULATED
+#define LENNARD_JONES
+#define LENNARD_JONES_GENERIC
+#define LJGEN_SOFTCORE
+#define LJCOS
+#define LJCOS2
+#define GAUSSIAN
+#define HAT
+#define SMOOTH_STEP
+#define HERTZIAN
+#define SOFT_SPHERE
+#define INTER_RF
+#define WCA
+
+#ifdef P3M
+#define THOLE
+#endif
+
+#define BOND_ANGLE
+
+
+// Further featuers
+#define VIRTUAL_SITES_RELATIVE
+#define VIRTUAL_SITES_INERTIALESS_TRACERS
+#define IMMERSED_BOUNDARY
+#define COLLISION_DETECTION
