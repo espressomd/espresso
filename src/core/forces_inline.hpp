@@ -447,60 +447,61 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 }
 
-inline int calc_bond_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double *dx, double *force) {
-    int bond_broken = 0;
+inline int calc_bond_pair_force(Particle *p1, Particle *p2,
+                                Bonded_ia_parameters *iaparams, double *dx,
+                                double *force) {
+  int bond_broken = 0;
 
-    switch (iaparams->type) {
-        case BONDED_IA_FENE:
-            bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
-            break;
+  switch (iaparams->type) {
+  case BONDED_IA_FENE:
+    bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+    break;
 #ifdef ROTATION
-        case BONDED_IA_HARMONIC_DUMBBELL:
-            bond_broken =
-                    calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
-            break;
+  case BONDED_IA_HARMONIC_DUMBBELL:
+    bond_broken =
+        calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
+    break;
 #endif
-        case BONDED_IA_HARMONIC:
-            bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
-            break;
-        case BONDED_IA_QUARTIC:
-            bond_broken = calc_quartic_pair_force(p1, p2, iaparams, dx, force);
-            break;
+  case BONDED_IA_HARMONIC:
+    bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
+    break;
+  case BONDED_IA_QUARTIC:
+    bond_broken = calc_quartic_pair_force(p1, p2, iaparams, dx, force);
+    break;
 #ifdef ELECTROSTATICS
-        case BONDED_IA_BONDED_COULOMB:
-            bond_broken =
-                    calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
-            break;
+  case BONDED_IA_BONDED_COULOMB:
+    bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
+    break;
 #endif
 #ifdef P3M
-        case BONDED_IA_BONDED_COULOMB_P3M_SR:
-            bond_broken =
-                    calc_bonded_coulomb_p3m_sr_pair_force(p1, p2, iaparams, dx, force);
-            break;
+  case BONDED_IA_BONDED_COULOMB_P3M_SR:
+    bond_broken =
+        calc_bonded_coulomb_p3m_sr_pair_force(p1, p2, iaparams, dx, force);
+    break;
 #endif
 #ifdef LENNARD_JONES
-        case BONDED_IA_SUBT_LJ:
-            bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
-            break;
+  case BONDED_IA_SUBT_LJ:
+    bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
+    break;
 #endif
 #ifdef TABULATED
-        case BONDED_IA_TABULATED:
-            if (iaparams->num == 1)
-                bond_broken = calc_tab_bond_force(p1, p2, iaparams, dx, force);
-            break;
+  case BONDED_IA_TABULATED:
+    if (iaparams->num == 1)
+      bond_broken = calc_tab_bond_force(p1, p2, iaparams, dx, force);
+    break;
 #endif
 #ifdef UMBRELLA
-        case BONDED_IA_UMBRELLA:
-                bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
-                break;
+  case BONDED_IA_UMBRELLA:
+    bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
+    break;
 #endif
-        default:
-            bond_broken = 0;
-            break;
+  default:
+    bond_broken = 0;
+    break;
 
-    } // switch type
+  } // switch type
 
-    return bond_broken;
+  return bond_broken;
 }
 
 /** Calculate bonded forces for one particle.
@@ -571,22 +572,21 @@ inline void add_bonded_force(Particle *p1) {
       bond_broken = calc_bond_pair_force(p1, p2, iaparams, dx, force);
 
 #ifdef NPT
-        if (integ_switch == INTEG_METHOD_NPT_ISO)
-            for(int j = 0; j < 3; j++)
-                nptiso.p_vir[j] += force[j] * dx[j];
+      if (integ_switch == INTEG_METHOD_NPT_ISO)
+        for (int j = 0; j < 3; j++)
+          nptiso.p_vir[j] += force[j] * dx[j];
 #endif
-      
-      switch(type)
-        {
-            case BONDED_IA_THERMALIZED_DIST:
-                bond_broken =
-                        calc_thermalized_bond_forces(p1, p2, iaparams, dx, force, force2);
-            break;
 
-            default:
-                break;
-        }
-    }   // 1 partner
+      switch (type) {
+      case BONDED_IA_THERMALIZED_DIST:
+        bond_broken =
+            calc_thermalized_bond_forces(p1, p2, iaparams, dx, force, force2);
+        break;
+
+      default:
+        break;
+      }
+    } // 1 partner
     else if (n_partners == 2) {
       switch (type) {
 #ifdef BOND_ANGLE
