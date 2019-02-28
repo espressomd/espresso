@@ -35,6 +35,7 @@ from espressomd.utils import array_locked, is_valid_type
 # Actor class
 ####################################################
 
+
 def _construct(cls, params):
     obj = cls(**params)
     obj._params = params
@@ -222,7 +223,8 @@ cdef class HydrodynamicInteraction(Actor):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
 
         def _activate_method(self):
-            raise Exception("Subclasses of HydrodynamicInteraction have to implement _activate_method.") 
+            raise Exception(
+    "Subclasses of HydrodynamicInteraction have to implement _activate_method.") 
 
         def _deactivate_method(self):
             lb_lbfluid_set_lattice_switch(0)
@@ -236,6 +238,7 @@ IF LB:
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
 
         """
+
         def _set_lattice_switch(self):
             lb_lbfluid_set_lattice_switch(1)
 
@@ -250,6 +253,7 @@ IF LB_GPU:
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
 
         """
+
         def remove_total_momentum(self):
             lb_lbfluid_remove_total_momentum()
 
@@ -287,7 +291,7 @@ IF LB_GPU:
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_get_interpolated_velocity_gpu( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            lb_get_interpolated_velocity_gpu(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 IF LB or LB_GPU:
