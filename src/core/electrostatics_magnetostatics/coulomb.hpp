@@ -138,47 +138,36 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double *d,
 }
 
 // energy_inline
-inline void add_pair_energy(Particle *p1, Particle *p2, double *d, double dist,
-                            double dist2, Observable_stat &energy) {
-  double ret = 0;
-  if (coulomb.method != COULOMB_NONE) {
+inline double add_pair_energy(Particle *p1, Particle *p2, double *d, double dist, double dist2) {
     /* real space Coulomb */
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
-      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
-      break;
+      return p3m_pair_energy(p1->p.q * p2->p.q, dist);
     case COULOMB_ELC_P3M:
-      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
-      if (elc_params.dielectric_contrast_on)
-        ret += 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2);
-      break;
+      if (elc_params.dielectric_contrast_on) {
+          return 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2) + p3m_pair_energy(p1->p.q * p2->p.q, dist);
+      } else {
+          return p3m_pair_energy(p1->p.q * p2->p.q, dist);
+      }
 #endif
 #ifdef SCAFACOS
     case COULOMB_SCAFACOS:
-      ret += Scafacos::pair_energy(p1, p2, dist);
-      break;
+      return Scafacos::pair_energy(p1, p2, dist);
 #endif
     case COULOMB_DH:
-      ret = dh_coulomb_pair_energy(p1, p2, dist);
-      break;
+      return dh_coulomb_pair_energy(p1, p2, dist);
     case COULOMB_RF:
-      ret = rf_coulomb_pair_energy(p1, p2, dist);
-      break;
+      return rf_coulomb_pair_energy(p1, p2, dist);
     case COULOMB_MMM1D:
-      ret = mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
-      break;
+      return mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
     case COULOMB_MMM2D:
-      ret = mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
-      break;
+      return mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
     default:
-      ret = 0.;
+      return 0.;
     }
-    energy.coulomb[0] += ret;
   }
-}
-
 } // namespace Coulomb
 #endif // ELECTROSTATICS
 #endif // ESPRESSO_COULOMB_SWITCH_HPP
