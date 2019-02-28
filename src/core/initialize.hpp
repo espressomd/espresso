@@ -48,6 +48,8 @@
  */
 /*@{*/
 
+#include "cells.hpp"
+
 /** called once at the very beginning of the program start. */
 void on_program_start();
 
@@ -69,7 +71,7 @@ void on_particle_change();
 void on_particle_charge_change();
 
 /** called every time the particles are resorted from node to node. */
-void on_resort_particles();
+void on_resort_particles(const ParticleDiff &diff);
 
 /** called every time the Coulomb parameters are changed. */
 void on_coulomb_change();

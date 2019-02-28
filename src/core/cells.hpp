@@ -168,6 +168,11 @@ struct CellStructure {
   Cell *(*position_to_cell)(const Vector3d &pos);
 };
 
+struct ParticleDiff {
+    std::vector<const Particle *> added;
+    std::vector<int> removed;
+};
+
 /*@}*/
 
 /************************************************************/

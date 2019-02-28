@@ -395,7 +395,7 @@ void on_lbboundary_change() {
   recalc_forces = 1;
 }
 
-void on_resort_particles() {
+void on_resort_particles(const ParticleDiff &diff) {
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {

@@ -386,7 +386,7 @@ void layered_topology_init() {
 }
 
 static void layered_append_particles(ParticleList *pl, ParticleList *up,
-                                     ParticleList *dn) {
+                                     ParticleList *dn, ParticleList *local) {
   int p;
 
   CELL_TRACE(fprintf(stderr, "%d: sorting in %d\n", this_node, pl->n));
@@ -403,8 +403,10 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node above\n",
                          this_node, pl->part[p].p.identity));
       move_particle(up, pl, p);
-    } else
-      move_particle(layered_position_to_cell(pl->part[p].r.p), pl, p);
+    } else {
+      move_particle(local, pl, p);
+    }
+
     /* same particle again, as this is now a new one */
     if (p < pl->n)
       p--;
@@ -496,8 +498,18 @@ void layered_exchange_and_sort_particles(int global_flag,
         errexit();
       }
     }
-    layered_append_particles(&recv_buf_up, &send_buf_up, &send_buf_dn);
-    layered_append_particles(&recv_buf_dn, &send_buf_up, &send_buf_dn);
+
+    ParticleList new_parts;
+    layered_append_particles(&recv_buf_up, &send_buf_up, &send_buf_dn, &new_parts);
+    layered_append_particles(&recv_buf_dn, &send_buf_up, &send_buf_dn, &new_parts);
+
+    for(int p = 0; p < new_parts.n; p++) {
+      auto &part = new_parts.part[p];
+      move_particle(layered_position_to_cell(part.r.p), &new_parts, p);
+      if(p < new_parts.n) {
+        p--;
+      }
+    }
 
     /* handshake redo */
     flag = (send_buf_up.n != 0 || send_buf_dn.n != 0);

@@ -347,6 +347,8 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
   return displaced_parts;
 }
 
+
+
 void cells_resort_particles(int global_flag, CellPList local_cells) {
   CELL_TRACE(fprintf(stderr, "%d: entering cells_resort_particles %d\n",
                      this_node, global_flag));
@@ -389,7 +391,7 @@ void cells_resort_particles(int global_flag, CellPList local_cells) {
     rebuild_verletlist = 1;
   }
 
-  on_resort_particles();
+  on_resort_particles({});
 
   CELL_TRACE(
       fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));

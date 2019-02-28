@@ -159,6 +159,8 @@ ParticleList nsq_balance_particles(int global_flag) {
   CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: load %d-%d\n",
                      this_node, minshare, maxshare));
 
+  ParticleList new_particles;
+  std::vector<int> removed_particles;
   for (;;) {
     /* find node with most excessive particles */
     auto const minmax = std::minmax_element(ppnode.begin(), ppnode.end());
@@ -184,11 +186,19 @@ ParticleList nsq_balance_particles(int global_flag) {
 
     if (s_node == this_node) {
       ParticleList send_buf;
-      init_particlelist(&send_buf);
+
       realloc_particlelist(&send_buf, send_buf.n = transfer);
-      for (int i = 0; i < transfer; i++) {
-        send_buf.part[i] = std::move(local->part[--local->n]);
+
+      {
+        int i = 0;
+        for (; i < std::min(transfer, new_particles.n); i++) {
+          send_buf.part[i] = std::move(new_particles.part[--new_particles.n]);
+        }
+        for (; i < transfer; i++) {
+          send_buf.part[i] = std::move(local->part[--local->n]);
+        }
       }
+
       realloc_particlelist(local, local->n);
 
       send_particles(&send_buf, l_node);
@@ -197,7 +207,7 @@ ParticleList nsq_balance_particles(int global_flag) {
 
       recv_particles(&recv_buf, s_node);
       for (int i = 0; i < recv_buf.n; i++) {
-        append_particle(local, std::move(recv_buf.part[i]));
+        append_particle(&new_particles, std::move(recv_buf.part[i]));
       }
 
       realloc_particlelist(&recv_buf, 0);
@@ -206,6 +216,10 @@ ParticleList nsq_balance_particles(int global_flag) {
     ppnode[l_node] += transfer;
   }
   CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: done\n", this_node));
+
+  for (int i = 0; i < new_particles.n; i++) {
+    append_particle(local, std::move(new_particles.part[i]));
+  }
 
   return {};
 }
