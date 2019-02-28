@@ -50,12 +50,13 @@ cdef class HydrodynamicInteraction(Actor):
         return _construct, (self.__class__, self._params), None
 
     def __getitem__(self, key):
-        if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
-            if len(key) == 3:
-                return LBFluidRoutines(np.array(key))
-        else:
-            raise Exception(
-                "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," % key)
+        IF LB or LB_GPU:
+            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+                if len(key) == 3:
+                    return LBFluidRoutines(np.array(key))
+            else:
+                raise Exception(
+                    "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," % key)
 
     # validate the given parameters on actor initialization
     ####################################################
