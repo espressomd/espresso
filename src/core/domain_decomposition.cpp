@@ -721,17 +721,17 @@ namespace {
  *
  * @param src Particles to move.
  * @param rest Output list for left-over particles.
+ * @param new_particles New parts for this node.
  */
-void move_if_local(ParticleList &src, ParticleList &rest) {
+void move_if_local(ParticleList &src,
+                   ParticleList &rest,
+                   ParticleList &new_particles) {
   for (int i = 0; i < src.n; i++) {
     auto &part = src.part[i];
 
-    auto target_cell = dd_save_position_to_cell(part.r.p);
-
-    if (target_cell) {
-      append_particle(target_cell, std::move(src.part[i]));
+    if (map_position_node_array(part.r.p) == this_node) {
+      append_particle(&new_particles, std::move(src.part[i]));
     } else {
-
       append_particle(&rest, std::move(src.part[i]));
     }
   }
@@ -775,7 +775,7 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
   }
 }
 
-void exchange_neighbors(ParticleList *pl) {
+void exchange_neighbors(ParticleList *pl, ParticleList *new_parts) {
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
     if (node_grid[dir] == 1) {
@@ -791,7 +791,7 @@ void exchange_neighbors(ParticleList *pl) {
 
       realloc_particlelist(&send_buf, 0);
 
-      move_if_local(recv_buf, *pl);
+      move_if_local(recv_buf, *pl, *new_parts);
     } else {
       using boost::mpi::request;
       using Utils::Mpi::isendrecv;
@@ -809,8 +809,8 @@ void exchange_neighbors(ParticleList *pl) {
       std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
       boost::mpi::wait_all(reqs.begin(), reqs.end());
 
-      move_if_local(recv_buf_l, *pl);
-      move_if_local(recv_buf_r, *pl);
+      move_if_local(recv_buf_l, *pl, *new_parts);
+      move_if_local(recv_buf_r, *pl, *new_parts);
 
       realloc_particlelist(&send_buf_l, 0);
       realloc_particlelist(&send_buf_r, 0);
@@ -820,13 +820,14 @@ void exchange_neighbors(ParticleList *pl) {
 } // namespace
 
 void dd_exchange_and_sort_particles(int global, ParticleList *pl) {
+    ParticleList new_parts;
   if (global) {
     /* Worst case we need node_grid - 1 rounds per direction.
      * This correctly implies that if there is only one node,
      * no action should be taken. */
     int rounds_left = node_grid[0] + node_grid[1] + node_grid[2] - 3;
     for (; rounds_left > 0; rounds_left--) {
-      exchange_neighbors(pl);
+      exchange_neighbors(pl, &new_parts);
 
       auto left_over =
           boost::mpi::all_reduce(comm_cart, pl->n, std::plus<int>());
@@ -836,8 +837,16 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl) {
       }
     }
   } else {
-    exchange_neighbors(pl);
+    exchange_neighbors(pl, &new_parts);
   }
+
+    for(int p = 0; p < new_parts.n; p++) {
+        auto &part = new_parts.part[p];
+        move_particle(dd_save_position_to_cell(part.r.p), &new_parts, p);
+        if(p < new_parts.n) {
+            p--;
+        }
+    }
 }
 
 /*************************************************/

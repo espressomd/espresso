@@ -419,6 +419,7 @@ void layered_exchange_and_sort_particles(int global_flag,
   int flag, redo;
   ParticleList send_buf_dn, send_buf_up;
   ParticleList recv_buf_up, recv_buf_dn;
+  ParticleList new_parts;
 
   CELL_TRACE(fprintf(stderr, "%d:layered exchange and sort %d\n", this_node,
                      global_flag));
@@ -499,17 +500,8 @@ void layered_exchange_and_sort_particles(int global_flag,
       }
     }
 
-    ParticleList new_parts;
     layered_append_particles(&recv_buf_up, &send_buf_up, &send_buf_dn, &new_parts);
     layered_append_particles(&recv_buf_dn, &send_buf_up, &send_buf_dn, &new_parts);
-
-    for(int p = 0; p < new_parts.n; p++) {
-      auto &part = new_parts.part[p];
-      move_particle(layered_position_to_cell(part.r.p), &new_parts, p);
-      if(p < new_parts.n) {
-        p--;
-      }
-    }
 
     /* handshake redo */
     flag = (send_buf_up.n != 0 || send_buf_dn.n != 0);
@@ -540,4 +532,12 @@ void layered_exchange_and_sort_particles(int global_flag,
 
   realloc_particlelist(&recv_buf_up, 0);
   realloc_particlelist(&recv_buf_dn, 0);
+
+  for(int p = 0; p < new_parts.n; p++) {
+    auto &part = new_parts.part[p];
+    move_particle(layered_position_to_cell(part.r.p), &new_parts, p);
+    if(p < new_parts.n) {
+      p--;
+    }
+  }
 }
