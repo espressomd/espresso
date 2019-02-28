@@ -150,93 +150,6 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 #endif /*ifdef DIPOLES */
 }
 
-inline void calc_bonded_force(Particle *p1, Particle *p2,
-                              Bonded_ia_parameters *iaparams, int *i,
-                              double dx[3], double force[3]) {
-#ifdef TABULATED
-// char* errtxt;
-#endif
-
-  /* Calculates the bonded force between two particles */
-  switch (iaparams->type) {
-  case BONDED_IA_FENE:
-    calc_fene_pair_force(p1, p2, iaparams, dx, force);
-    break;
-#ifdef ROTATION
-  case BONDED_IA_HARMONIC_DUMBBELL:
-    calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
-    break;
-#endif
-  case BONDED_IA_HARMONIC:
-    calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
-    break;
-#ifdef LENNARD_JONES
-  case BONDED_IA_SUBT_LJ:
-    calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
-    break;
-#endif
-    /* since it is not clear at the moment how to handle a many body interaction
-     * here, I skip it */
-  case BONDED_IA_ANGLE_HARMONIC:
-    (*i)++;
-    force[0] = force[1] = force[2] = 0;
-    break;
-  case BONDED_IA_ANGLE_COSINE:
-    (*i)++;
-    force[0] = force[1] = force[2] = 0;
-    break;
-  case BONDED_IA_ANGLE_COSSQUARE:
-    (*i)++;
-    force[0] = force[1] = force[2] = 0;
-    break;
-  case BONDED_IA_DIHEDRAL:
-    (*i) += 2;
-    force[0] = force[1] = force[2] = 0;
-    break;
-
-#ifdef TABULATED
-  case BONDED_IA_TABULATED:
-    // printf("BONDED TAB, Particle: %d, P2: %d TYPE_TAB:
-    // %d\n",p1->p.identity,p2->p.identity,iparams->p.tab.type);
-    switch (iaparams->p.tab.type) {
-    case 1:
-      calc_tab_bond_force(p1, p2, iaparams, dx, force);
-      break;
-    case 2:
-      (*i)++;
-      force[0] = force[1] = force[2] = 0;
-      break;
-    case 3:
-      (*i) += 2;
-      force[0] = force[1] = force[2] = 0;
-      break;
-    default:
-      runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
-                        << p1->p.identity << " unknown\n";
-      return;
-    }
-    break;
-#endif
-#ifdef BOND_CONSTRAINT
-  case BONDED_IA_RIGID_BOND:
-    force[0] = force[1] = force[2] = 0;
-    break;
-#endif
-  case BONDED_IA_VIRTUAL_BOND:
-    force[0] = force[1] = force[2] = 0;
-    break;
-  default:
-    //      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d
-    //      unhandled\n",bonded_ia_params[type_num].type,p1->p.identity);
-    fprintf(stderr,
-            "add_bonded_virials: WARNING: Bond type %d , atom %d unhandled, "
-            "Atom 2: %d\n",
-            iaparams->type, p1->p.identity, p2->p.identity);
-    force[0] = force[1] = force[2] = 0;
-    break;
-  }
-}
-
 /* calc_three_body_bonded_forces is called by add_three_body_bonded_stress. This
    routine is only entered for angular potentials. */
 inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2,
@@ -333,7 +246,7 @@ inline void add_bonded_virials(Particle *p1) {
     double a[3] = {p1->r.p[0], p1->r.p[1], p1->r.p[2]};
     double b[3] = {p2->r.p[0], p2->r.p[1], p2->r.p[2]};
     auto dx = get_mi_vector(a, b);
-    calc_bonded_force(p1, p2, iaparams, &i, dx.data(), force);
+    calc_bond_pair_force(p1, p2, iaparams, dx.data(), force);
     *obsstat_bonded(&virials, type_num) +=
         dx[0] * force[0] + dx[1] * force[1] + dx[2] * force[2];
 
