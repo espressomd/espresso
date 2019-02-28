@@ -1,6 +1,9 @@
 #ifndef ESPRESSO_COULOMB_SWITCH_HPP
 #define ESPRESSO_COULOMB_SWITCH_HPP
 
+#include "config.hpp"
+
+#ifdef ELECTROSTATICS
 #include "electrostatics_magnetostatics/debye_hueckel.hpp" // Debye_hueckel_params
 #include "electrostatics_magnetostatics/elc.hpp"           // elc_params
 #include "electrostatics_magnetostatics/mmm1d.hpp"         // MMM1D_sanity_check
@@ -8,11 +11,7 @@
 #include "electrostatics_magnetostatics/p3m.hpp"           // p3m_params
 #include "electrostatics_magnetostatics/reaction_field.hpp" // Reaction_field_params
 #include "electrostatics_magnetostatics/scafacos.hpp"       // scafacos
-#include "integrate.hpp"                                    // skin
-#include "npt.hpp"                                          // nptiso
 #include "statistics.hpp"                                   // Observable_stat
-
-#ifdef ELECTROSTATICS
 
 namespace Coulomb {
 
@@ -72,13 +71,7 @@ void bcast_coulomb_params();
                 }
                 case COULOMB_P3M_GPU:
                 case COULOMB_P3M: {
-#ifdef NPT
-                    double eng = p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
-                    if (integ_switch == INTEG_METHOD_NPT_ISO)
-                        nptiso.p_vir[0] += eng;
-#else
                     p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
-#endif
                     break;
                 }
 #endif

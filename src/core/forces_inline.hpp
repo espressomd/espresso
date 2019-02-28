@@ -329,9 +329,11 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 /* but nothing afterwards                                            */
 /*********************************************************************/
 #ifdef NPT
-  for (j = 0; j < 3; j++)
-    if (integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[j] += force[j] * d[j];
+    if (integ_switch == INTEG_METHOD_NPT_ISO) {
+        for (j = 0; j < 3; j++) {
+            nptiso.p_vir[j] += force[j] * d[j];
+        }
+    }
 #endif
 
 /***********************************************/

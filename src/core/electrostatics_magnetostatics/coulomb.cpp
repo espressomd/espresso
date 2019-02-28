@@ -1,12 +1,14 @@
 
 #include "coulomb.hpp"
+
+#ifdef ELECTROSTATICS
 #include "communication.hpp"                         // bcast functions
 #include "electrostatics_magnetostatics/p3m_gpu.hpp" // p3m_gpu_init
 #include "errorhandling.hpp"                         // runtime_error
 #include "initialize.hpp"                            // on_ghost_flags_change
 #include "layered.hpp"                               // layer_h
-
-#ifdef ELECTROSTATICS
+#include "integrate.hpp"                                    // skin
+#include "npt.hpp"                                          // nptiso
 
 namespace Coulomb {
 
