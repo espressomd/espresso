@@ -173,9 +173,6 @@ void on_observable_calc() {
     p3m_count_charged_particles();
     break;
 #endif
-  case COULOMB_MAGGS:
-    maggs_init();
-    break;
   default:
     break;
   }
@@ -203,11 +200,6 @@ void on_coulomb_change() {
     break;
   case COULOMB_MMM2D:
     MMM2D_init();
-    break;
-  case COULOMB_MAGGS:
-    maggs_init();
-    /* Maggs electrostatics needs ghost velocities */
-    on_ghost_flags_change();
     break;
   default:
     break;
@@ -246,9 +238,6 @@ void on_boxl_change() {
   case COULOMB_MMM2D:
     MMM2D_init();
     break;
-  case COULOMB_MAGGS:
-    maggs_init();
-    break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
     Scafacos::update_system_params();
@@ -278,11 +267,6 @@ void init_coulomb() {
     break;
   case COULOMB_MMM2D:
     MMM2D_init();
-    break;
-  case COULOMB_MAGGS:
-    maggs_init();
-    /* Maggs electrostatics needs ghost velocities */
-    on_ghost_flags_change();
     break;
   default:
     break;
@@ -332,9 +316,6 @@ void calc_long_range_coulomb_force() {
       p3m_calc_kspace_forces(1, 0);
     break;
 #endif
-  case COULOMB_MAGGS:
-    maggs_calc_forces();
-    break;
   case COULOMB_MMM2D:
     MMM2D_add_far_force();
     MMM2D_dielectric_layers_force_contribution();
@@ -399,9 +380,6 @@ void energy_calc_long_range_coulomb_energy(Observable_stat &energy) {
     *energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
     break;
     /* calculate electric part of energy (only for MAGGS) */
-  case COULOMB_MAGGS:
-    *energy.coulomb += maggs_electric_energy();
-    break;
   default:
     break;
   }
@@ -564,9 +542,6 @@ void bcast_coulomb_params() {
     break;
   case COULOMB_MMM2D:
     MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, comm_cart);
-    break;
-  case COULOMB_MAGGS:
-    MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart);
     break;
   case COULOMB_RF:
   default:
