@@ -34,7 +34,6 @@
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/icc.hpp" /* -iccp3m- */
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
@@ -240,7 +239,7 @@ void on_observable_calc() {
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
-
+    
     Coulomb::on_observable_calc();
 
     reinit_electrostatics = 0;
@@ -580,11 +579,6 @@ void on_ghost_flags_change() {
 #endif
 #ifdef BOND_CONSTRAINT
   if (n_rigidbonds)
-    ghosts_have_v = 1;
-#endif
-#ifdef ELECTROSTATICS
-  /* Maggs electrostatics needs ghost velocities too */
-  if (coulomb.method == COULOMB_MAGGS)
     ghosts_have_v = 1;
 #endif
 #ifdef DPD

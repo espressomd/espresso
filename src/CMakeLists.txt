@@ -19,7 +19,7 @@
 #
 
 # Target for the unit tests
-add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) --output-on-failure)
+add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} $(ARGS) --output-on-failure)
 
 if(WITH_TESTS)
   # Run unit tests on check
@@ -81,6 +81,7 @@ add_subdirectory(core)
 add_subdirectory(config)
 
 add_subdirectory(profiler)
+add_subdirectory(pdbparser)
 
 if(SCAFACOS)
   add_subdirectory(scafacos)

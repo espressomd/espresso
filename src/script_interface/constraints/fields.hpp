@@ -114,7 +114,7 @@ struct field_params_impl<Interpolated<T, codim>> {
     }
 
     if (*std::min_element(field_shape.begin(), field_shape.end()) < 1) {
-      throw std::runtime_error("Field is to small, needs to be at least "
+      throw std::runtime_error("Field is too small, needs to be at least "
                                "one in all directions.");
     }
 

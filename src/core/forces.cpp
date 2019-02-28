@@ -30,7 +30,6 @@
 #include "comfixed_global.hpp"
 #include "constraints.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"

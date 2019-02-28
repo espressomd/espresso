@@ -25,7 +25,6 @@
 #include "EspressoSystemInterface.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"

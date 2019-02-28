@@ -126,7 +126,7 @@ following commands:
       doxygen py27-opengl py27-sphinx py27-pip gsl hdf5 +openmpi
     sudo port select --set cython cython27
     sudo port select --set python python27
-    sudo port selet --set pip pip27
+    sudo port select --set pip pip27
     sudo port select --set mpi openmpi-mp-fortran
 
 Alternatively, you can use Homebrew.
@@ -618,8 +618,6 @@ looking directly at the code.
 -  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
 
 -  ``FFT_DEBUG`` Output from the unified FFT code.
-
--  ``MAGGS_DEBUG``
 
 -  ``RANDOM_DEBUG``
 
