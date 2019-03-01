@@ -2,7 +2,7 @@
 #define CORE_LB_INTERFACE
 
 #include "config.hpp"
-#include "lattice.hpp"
+#include "grid_based_algorithms/lattice.hpp"
 #include "utils/Vector.hpp"
 
 #if defined(LB) || defined(LB_GPU)

@@ -1,7 +1,7 @@
 #include "communication.hpp"
 #include "config.hpp"
 #include "grid.hpp"
-#include "lattice.hpp"
+#include "grid_based_algorithms/lattice.hpp"
 #include "utils/Vector.hpp"
 
 #include "lb.hpp"

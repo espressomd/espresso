@@ -17,11 +17,9 @@ set(EspressoCore_SRC
   ghosts.cpp
   global.cpp
   grid.cpp
-  halo.cpp
   immersed_boundaries.cpp
   initialize.cpp
   integrate.cpp
-  lattice.cpp
   layered.cpp
   metadynamics.cpp
   minimize_energy.cpp
@@ -90,6 +88,8 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/scafacos.cpp
   electrostatics_magnetostatics/fft-common.cpp
   electrostatics_magnetostatics/fft.cpp
+  grid_based_algorithms/halo.cpp
+  grid_based_algorithms/lattice.cpp
   grid_based_algorithms/lbboundaries.cpp
   grid_based_algorithms/lb.cpp
   grid_based_algorithms/lb_interface.cpp

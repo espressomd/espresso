@@ -56,9 +56,6 @@ cdef extern from "integrate.hpp":
     extern double skin
     extern bool set_py_interrupt
 
-cdef extern from "lattice.hpp":
-    extern int lattice_switch
-
 cdef extern from "domain_decomposition.hpp":
     ctypedef struct  DomainDecomposition:
         int cell_grid[3]
