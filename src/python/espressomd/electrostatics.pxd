@@ -49,7 +49,6 @@ IF ELECTROSTATICS:
                 COULOMB_P3M, \
                 COULOMB_MMM1D, \
                 COULOMB_MMM2D, \
-                COULOMB_MAGGS, \
                 COULOMB_ELC_P3M, \
                 COULOMB_RF, \
                 COULOMB_INTER_RF, \
