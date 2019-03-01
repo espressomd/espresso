@@ -222,8 +222,7 @@ void predict_momentum_particles(double *result) {
  * calculation
  * @return Result for this processor (Output)
  */
-Vector3d calc_linear_momentum(int include_particles,
-                                         int include_lbfluid) {
+Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
   Vector3d linear_momentum{};
   if (include_particles) {
     Vector3d momentum_particles{};

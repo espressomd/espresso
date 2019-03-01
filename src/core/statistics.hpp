@@ -386,8 +386,7 @@ void predict_momentum_particles(double *result);
 /** Docs missing
 \todo Docs missing
 */
-Vector3d calc_linear_momentum(int include_particles,
-                                         int include_lbfluid);
+Vector3d calc_linear_momentum(int include_particles, int include_lbfluid);
 
 inline double *obsstat_bonded(Observable_stat *stat, int j) {
   return stat->bonded + stat->chunk_size * j;
