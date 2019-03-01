@@ -268,7 +268,7 @@ IF LB_GPU:
 
         @cython.boundscheck(False)
         @cython.wraparound(False)
-        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None):
+        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None, three_point=False):
             """Calculate the fluid velocity at given positions.
 
             Parameters
@@ -292,7 +292,7 @@ IF LB_GPU:
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_get_interpolated_velocity_gpu(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            lb_get_interpolated_velocity_gpu(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length, three_point)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 IF LB or LB_GPU:
