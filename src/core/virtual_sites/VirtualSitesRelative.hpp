@@ -36,7 +36,7 @@ public:
   * Velocities are only updated have_velocity() return true
   * @param recalc_positions can be used to skip the recalculation of positions
   */
-  void update(bool recalc_positions = true) const override;
+  void update(bool recalc_positions) const override;
   /** Back-transfer forces (and torques) to non-virtual particles */
   void back_transfer_forces_and_torques() const override;
   /** @brief Is a ghost communication needed before position updates */

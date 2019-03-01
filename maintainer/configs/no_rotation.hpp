@@ -41,14 +41,8 @@
 #define MMM1D_GPU
 #endif
 
-
-
-
 // Active matter
 #define SWIMMER_REACTIONS
-
-
-
 
 // Hydrodynamics
 #define LB
@@ -87,7 +81,6 @@
 #endif
 
 #define BOND_ANGLE
-
 
 // Further featuers
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
