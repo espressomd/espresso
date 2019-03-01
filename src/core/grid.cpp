@@ -61,8 +61,8 @@ double box_l_i[3] = {1, 1, 1};
 double min_box_l;
 Vector3d local_box_l{1, 1, 1};
 double min_local_box_l;
-double my_left[3] = {0, 0, 0};
-double my_right[3] = {1, 1, 1};
+Vector3d my_left = {0, 0, 0};
+Vector3d my_right = {1, 1, 1};
 
 /************************************************************/
 

@@ -93,9 +93,9 @@ extern Vector3d local_box_l;
     are taken into account! */
 extern double min_local_box_l;
 /** Left (bottom, front) corner of this nodes local box. */
-extern double my_left[3];
+extern Vector3d my_left;
 /** Right (top, back) corner of this nodes local box. */
-extern double my_right[3];
+extern Vector3d my_right;
 
 /*@}*/
 
