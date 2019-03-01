@@ -1412,45 +1412,50 @@ interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
   auto xp1 = x + 1;
   auto yp1 = y + 1;
   auto zp1 = z + 1;
-  auto xp2 = x + 2;
-  auto yp2 = y + 2;
-  auto zp2 = z + 2;
+  auto xm1 = x - 1;
+  auto ym1 = y - 1;
+  auto zm1 = z - 1;
   auto fold_if_necessary = [](int ind, int dim) {
-    return ind >= dim ? ind % dim : ind;
+    if (ind >= dim) {
+      return ind % dim
+    } else if (ind < 0) {
+      return (ind + dim) % dim;
+    }
+    return ind;
   };
   xp1 = fold_if_necessary(xp1, para->dim_x);
   yp1 = fold_if_necessary(yp1, para->dim_y);
   zp1 = fold_if_necessary(zp1, para->dim_z);
-  xp2 = fold_if_necessary(xp1, para->dim_x);
-  yp2 = fold_if_necessary(yp1, para->dim_y);
-  zp2 = fold_if_necessary(zp1, para->dim_z);
+  xm1 = fold_if_necessary(xp1, para->dim_x);
+  ym1 = fold_if_necessary(yp1, para->dim_y);
+  zm1 = fold_if_necessary(zp1, para->dim_z);
   node_indices[0] = xyz_to_index(x, y, z);
   node_indices[1] = xyz_to_index(xp1, y, z);
-  node_indices[2] = xyz_to_index(xp2, y, z);
+  node_indices[2] = xyz_to_index(xm1, y, z);
   node_indices[3] = xyz_to_index(x, yp1, z);
   node_indices[4] = xyz_to_index(xp1, yp1, z);
-  node_indices[5] = xyz_to_index(xp2, yp1, z);
-  node_indices[6] = xyz_to_index(x, yp2, z);
-  node_indices[7] = xyz_to_index(xp1, yp2, z);
-  node_indices[8] = xyz_to_index(xp2, yp2, z);
+  node_indices[5] = xyz_to_index(xm1, yp1, z);
+  node_indices[6] = xyz_to_index(x, ym1, z);
+  node_indices[7] = xyz_to_index(xp1, ym1, z);
+  node_indices[8] = xyz_to_index(xm1, ym1, z);
   node_indices[9] = xyz_to_index(x, y, zp1);
   node_indices[10] = xyz_to_index(xp1, y, zp1);
-  node_indices[11] = xyz_to_index(xp2, y, zp1);
+  node_indices[11] = xyz_to_index(xm1, y, zp1);
   node_indices[12] = xyz_to_index(x, yp1, zp1);
   node_indices[13] = xyz_to_index(xp1, yp1, zp1);
-  node_indices[14] = xyz_to_index(xp2, yp1, zp1);
-  node_indices[15] = xyz_to_index(x, yp2, zp1);
-  node_indices[16] = xyz_to_index(xp1, yp2, zp1);
-  node_indices[17] = xyz_to_index(xp2, yp2, zp1);
-  node_indices[18] = xyz_to_index(x, y, zp2);
-  node_indices[19] = xyz_to_index(xp1, y, zp2);
-  node_indices[20] = xyz_to_index(xp2, y, zp2);
-  node_indices[21] = xyz_to_index(x, yp1, zp2);
-  node_indices[22] = xyz_to_index(xp1, yp1, zp2);
-  node_indices[23] = xyz_to_index(xp2, yp1, zp2);
-  node_indices[24] = xyz_to_index(x, yp2, zp2);
-  node_indices[25] = xyz_to_index(xp1, yp2, zp2);
-  node_indices[26] = xyz_to_index(xp2, yp2, zp2);
+  node_indices[14] = xyz_to_index(xm1, yp1, zp1);
+  node_indices[15] = xyz_to_index(x, ym1, zp1);
+  node_indices[16] = xyz_to_index(xp1, ym1, zp1);
+  node_indices[17] = xyz_to_index(xm1, ym1, zp1);
+  node_indices[18] = xyz_to_index(x, y, zm1);
+  node_indices[19] = xyz_to_index(xp1, y, zm1);
+  node_indices[20] = xyz_to_index(xm1, y, zm1);
+  node_indices[21] = xyz_to_index(x, yp1, zm1);
+  node_indices[22] = xyz_to_index(xp1, yp1, zm1);
+  node_indices[23] = xyz_to_index(xm1, yp1, zm1);
+  node_indices[24] = xyz_to_index(x, ym1, zm1);
+  node_indices[25] = xyz_to_index(xp1, ym1, zm1);
+  node_indices[26] = xyz_to_index(xm1, ym1, zm1);
 
   return {0.0f, 0.0f, 0.0f};
 }
