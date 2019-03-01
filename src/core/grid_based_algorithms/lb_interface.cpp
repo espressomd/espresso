@@ -1226,4 +1226,17 @@ void lb_lbfluid_on_lb_params_change(int field) {
   lb_lbfluid_reinit_parameters();
 }
 
+Vector3d lb_lbfluid_calc_fluid_momentum() {
+    Vector3d fluid_momentum{};
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    lb_calc_fluid_momentum_GPU(fluid_momentum.data());
+#endif
+  } else if (lattice_switch & LATTICE_LB) {
+#ifdef LB
+    mpi_gather_stats(6, fluid_momentum.data(), nullptr, nullptr, nullptr);
+#endif
+  }
+  return fluid_momentum;
+}
 #endif

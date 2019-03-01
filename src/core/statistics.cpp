@@ -28,8 +28,7 @@
 #include "communication.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -225,29 +224,16 @@ void predict_momentum_particles(double *result) {
  */
 std::vector<double> calc_linear_momentum(int include_particles,
                                          int include_lbfluid) {
-  double momentum_particles[3] = {0., 0., 0.};
-  std::vector<double> linear_momentum(3, 0.0);
+  Vector3d linear_momentum{};
   if (include_particles) {
-    mpi_gather_stats(4, momentum_particles, nullptr, nullptr, nullptr);
-    linear_momentum[0] += momentum_particles[0];
-    linear_momentum[1] += momentum_particles[1];
-    linear_momentum[2] += momentum_particles[2];
+    Vector3d momentum_particles{};
+    mpi_gather_stats(4, momentum_particles.data(), nullptr, nullptr, nullptr);
+    linear_momentum += momentum_particles;
   }
   if (include_lbfluid) {
-    double momentum_fluid[3] = {0., 0., 0.};
-#ifdef LB
-    if (lattice_switch & LATTICE_LB) {
-      mpi_gather_stats(6, momentum_fluid, nullptr, nullptr, nullptr);
-    }
+#if defined(LB) or defined(LB_GPU)
+    linear_momentum += lb_lbfluid_calc_fluid_momentum();
 #endif
-#ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU) {
-      lb_calc_fluid_momentum_GPU(momentum_fluid);
-    }
-#endif
-    linear_momentum[0] += momentum_fluid[0];
-    linear_momentum[1] += momentum_fluid[1];
-    linear_momentum[2] += momentum_fluid[2];
   }
   return linear_momentum;
 }
