@@ -160,6 +160,9 @@ void File::init_filestructure() {
                  "particles/atoms/id",
                  "particles/atoms/species",
                  "particles/atoms/position",
+#ifdef LEES_EDWARDS
+                 "particles/atoms/lees_edwards_offset",
+#endif
                  "particles/atoms/velocity",
                  "particles/atoms/force",
                  "particles/atoms/image",
@@ -178,6 +181,9 @@ void File::init_filestructure() {
       {"particles/atoms/id/step", 1, type_int},
       {"particles/atoms/species/value", 2, type_int},
       {"particles/atoms/position/value", 3, type_double},
+#ifdef LEES_EDWARDS
+      {"particles/atoms/lees_edwards_offset/value", 2, type_double},
+#endif
       {"particles/atoms/velocity/value", 3, type_double},
       {"particles/atoms/force/value", 3, type_double},
       {"particles/atoms/image/value", 3, type_int},
@@ -247,6 +253,12 @@ void File::create_links_for_time_and_step_datasets() {
                  "particles/atoms/position/time", H5P_DEFAULT, H5P_DEFAULT);
   H5Lcreate_hard(m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(),
                  "particles/atoms/position/step", H5P_DEFAULT, H5P_DEFAULT);
+#ifdef LEES_EDWARDS
+  H5Lcreate_hard(m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(),
+                 "particles/atoms/lees_edwards_offset/time", H5P_DEFAULT, H5P_DEFAULT);
+  H5Lcreate_hard(m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(),
+                 "particles/atoms/lees_edwards_offset/step", H5P_DEFAULT, H5P_DEFAULT);
+#endif
   H5Lcreate_hard(m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(),
                  "particles/atoms/species/time", H5P_DEFAULT, H5P_DEFAULT);
   H5Lcreate_hard(m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(),
@@ -323,6 +335,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     int particle_index, int_array_3d &id, int_array_3d &typ,
     double_array_3d &mass, double_array_3d &pos, int_array_3d &image,
     double_array_3d &vel, double_array_3d &f, double_array_3d &charge,
+    double_array_3d &lees_edwards_offset,
     Particle const &current_particle, int write_dat, int_array_3d &bond) {
 #ifdef H5MD_DEBUG
   /* Turn on hdf5 error messages */
@@ -334,6 +347,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   bool write_force = write_dat & W_F;
   bool write_mass = write_dat & W_MASS;
   bool write_charge = write_dat & W_CHARGE;
+  bool write_lees_edwards_offset = write_dat & W_LE_OFFSET;
 
   id[0][particle_index][0] = current_particle.p.identity;
   if (write_species)
@@ -352,6 +366,11 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     image[0][particle_index][0] = i[0];
     image[0][particle_index][1] = i[1];
     image[0][particle_index][2] = i[2];
+#ifdef LEES_EDWARDS
+    if (write_lees_edwards_offset) {
+      lees_edwards_offset[0][particle_index][0] = current_particle.p.lees_edwards_offset;
+    }
+#endif
   }
 
   if (write_vel) {
@@ -407,11 +426,13 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   bool write_force = write_dat & W_F;
   bool write_mass = write_dat & W_MASS;
   bool write_charge = write_dat & W_CHARGE;
+  bool write_lees_edwards_offset = write_dat & W_LE_OFFSET;
 
   double_array_3d pos(boost::extents[1][num_particles_to_be_written][3]);
   double_array_3d vel(boost::extents[1][num_particles_to_be_written][3]);
   double_array_3d f(boost::extents[1][num_particles_to_be_written][3]);
   int_array_3d image(boost::extents[1][num_particles_to_be_written][3]);
+  double_array_3d lees_edwards_offset(boost::extents[1][num_particles_to_be_written][1]);
   int_array_3d id(boost::extents[1][num_particles_to_be_written][1]);
   int_array_3d typ(boost::extents[1][num_particles_to_be_written][1]);
   double_array_3d mass(boost::extents[1][num_particles_to_be_written][1]);
@@ -430,7 +451,7 @@ void File::Write(int write_dat, PartCfg &partCfg) {
       int particle_index = 0;
       for (auto const &current_particle : partCfg) {
         fill_arrays_for_h5md_write_with_particle_property(
-            particle_index++, id, typ, mass, pos, image, vel, f, charge,
+            particle_index++, id, typ, mass, pos, image, vel, f, charge, lees_edwards_offset,
             current_particle, write_dat, bond);
       }
     }
@@ -440,7 +461,7 @@ void File::Write(int write_dat, PartCfg &partCfg) {
 
     for (auto &current_particle : local_cells.particles()) {
       fill_arrays_for_h5md_write_with_particle_property(
-          particle_index, id, typ, mass, pos, image, vel, f, charge,
+          particle_index, id, typ, mass, pos, image, vel, f, charge, lees_edwards_offset,
           current_particle, write_dat, bond);
       particle_index++;
     }
@@ -522,6 +543,12 @@ void File::Write(int write_dat, PartCfg &partCfg) {
                  offset_3d, count_3d);
     WriteDataset(image, "particles/atoms/image/value", change_extent_3d,
                  offset_3d, count_3d);
+#ifdef LEES_EDWARDS
+    if (write_lees_edwards_offset) {
+      WriteDataset(lees_edwards_offset, "particles/atoms/lees_edwards_offset/value", change_extent_2d,
+		   offset_2d, count_2d);
+    }
+#endif
   }
   if (write_vel) {
     WriteDataset(vel, "particles/atoms/velocity/value", change_extent_3d,

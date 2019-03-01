@@ -66,7 +66,8 @@ public:
     W_F = 1 << 2,
     W_TYPE = 1 << 3,
     W_MASS = 1 << 4,
-    W_CHARGE = 1 << 5
+    W_CHARGE = 1 << 5,
+    W_LE_OFFSET = 1 << 6
   };
   /**
    * @brief General method to write to the datasets which calls more specific
@@ -129,7 +130,9 @@ private:
       int particle_index, int_array_3d &id, int_array_3d &typ,
       double_array_3d &mass, double_array_3d &pos, int_array_3d &image,
       double_array_3d &vel, double_array_3d &f, double_array_3d &charge,
-      Particle const &current_particle, int write_dat, int_array_3d &bond);
+      double_array_3d &lees_edwards_offset,
+      Particle const &current_particle, int write_dat, int_array_3d &bond
+							 );
   /*
    * @brief Method to write the simulation script to the dataset.
    */
