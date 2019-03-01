@@ -1397,205 +1397,98 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared,
  * @retval Value for the interpolation function.
  * see Duenweg and Ladd http://arxiv.org/abs/0803.2826
  */
-__device__ __inline__ float three_point_polynomial_smallerequal_than_half(float u) {
-    return 1.f/3.f * (1.f + sqrtf(1.f - 3.f * u * u));
+__device__ __inline__ float
+three_point_polynomial_smallerequal_than_half(float u) {
+  return 1.f / 3.f * (1.f + sqrtf(1.f - 3.f * u * u));
 }
 
 __device__ __inline__ float three_point_polynomial_larger_than_half(float u) {
-    return 1.f/6.f * (5.f + - 3 * fabsf(u) - sqrtf(-2.f + 6.f * fabsf(u) - 3.f * u * u));
+  return 1.f / 6.f *
+         (5.f + -3 * fabsf(u) - sqrtf(-2.f + 6.f * fabsf(u) - 3.f * u * u));
 }
 
 __device__ __inline__ float3
 interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
+                                   float *lb_boundary_velocity,
                                    unsigned int *node_indices, float *delta) {
   int left_node_index[3];
-  float3 temp_delta[27];
+  float3 temp_delta[3];
+
 #pragma unroll
   for (int i = 0; i < 3; ++i) {
-    // position of particle in units of agrid. 
+    // position of particle in units of agrid.
     auto const scaled_pos = particle_position[i] / para->agrid - 0.5f;
     left_node_index[i] = static_cast<int>(rint(scaled_pos));
     // distance to center node in agrid
-    auto const dist =
-        scaled_pos - static_cast<float>(left_node_index[i]);
+    auto const dist = scaled_pos - static_cast<float>(left_node_index[i]);
     // distance to left node in agrid
     auto const dist_m1 =
         scaled_pos - static_cast<float>(left_node_index[i] - 1.f);
     // distance to right node in agrid
     auto const dist_p1 =
         scaled_pos - static_cast<float>(left_node_index[i] + 1.f);
-    printf("dists: %f %f %f\n", dist, dist_m1, dist_p1);
     if (i == 0) {
-      temp_delta[0].x = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[1].x = three_point_polynomial_larger_than_half(dist_m1);
+      temp_delta[0].x = three_point_polynomial_larger_than_half(dist_m1);
+      temp_delta[1].x = three_point_polynomial_smallerequal_than_half(dist);
       temp_delta[2].x = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[3].x = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[4].x = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[5].x = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[6].x = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[7].x = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[8].x = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[9].x = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[10].x = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[11].x = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[12].x = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[13].x = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[14].x = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[15].x = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[16].x = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[17].x = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[18].x = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[19].x = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[20].x = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[21].x = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[22].x = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[23].x = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[24].x = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[25].x = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[26].x = three_point_polynomial_larger_than_half(dist_p1);
-    } else if (i==1) {
-      temp_delta[0].y = three_point_polynomial_smallerequal_than_half(dist);
+    } else if (i == 1) {
+      temp_delta[0].y = three_point_polynomial_larger_than_half(dist_m1);
       temp_delta[1].y = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[2].y = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[3].y = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[4].y = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[5].y = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[6].y = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[7].y = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[8].y = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[9].y = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[10].y = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[11].y = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[12].y = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[13].y = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[14].y = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[15].y = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[16].y = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[17].y = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[18].y = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[19].y = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[20].y = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[21].y = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[22].y = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[23].y = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[24].y = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[25].y = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[26].y = three_point_polynomial_larger_than_half(dist_m1);
-    } else if (i==2) {
-      temp_delta[0].z = three_point_polynomial_smallerequal_than_half(dist);
+      temp_delta[2].y = three_point_polynomial_larger_than_half(dist_p1);
+    } else if (i == 2) {
+      temp_delta[0].z = three_point_polynomial_larger_than_half(dist_m1);
       temp_delta[1].z = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[2].z = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[3].z = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[4].z = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[5].z = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[6].z = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[7].z = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[8].z = three_point_polynomial_smallerequal_than_half(dist);
-      temp_delta[9].z = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[10].z = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[11].z = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[12].z = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[13].z = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[14].z = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[15].z = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[16].z = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[17].z = three_point_polynomial_larger_than_half(dist_p1);
-      temp_delta[18].z = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[19].z = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[20].z = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[21].z = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[22].z = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[23].z = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[24].z = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[25].z = three_point_polynomial_larger_than_half(dist_m1);
-      temp_delta[26].z = three_point_polynomial_larger_than_half(dist_m1);
+      temp_delta[2].z = three_point_polynomial_larger_than_half(dist_p1);
     }
   }
-  float sum=0.0f;
-  for (int i=0; i<27; ++i) {
-    delta[i] = temp_delta[i].x * temp_delta[i].y * temp_delta[i].z;
-    sum += delta[i];
-  }
-  printf("sum %f\n");
-  // modulo for negative numbers is strange at best, shift to make sure we are
-  // positive
-  int x = (left_node_index[0] + para->dim_x) % para->dim_x;
-  int y = (left_node_index[1] + para->dim_y) % para->dim_y;
-  int z = (left_node_index[2] + para->dim_z) % para->dim_z;
-  auto xp1 = x + 1;
-  auto yp1 = y + 1;
-  auto zp1 = z + 1;
-  auto xm1 = x - 1;
-  auto ym1 = y - 1;
-  auto zm1 = z - 1;
+
   auto fold_if_necessary = [](int ind, int dim) {
     if (ind >= dim) {
-      return ind % dim;
+      return ind - dim;
     } else if (ind < 0) {
-      return (ind + dim) % dim;
+      return ind + dim;
     }
     return ind;
   };
-  xp1 = fold_if_necessary(xp1, para->dim_x);
-  yp1 = fold_if_necessary(yp1, para->dim_y);
-  zp1 = fold_if_necessary(zp1, para->dim_z);
-  xm1 = fold_if_necessary(xp1, para->dim_x);
-  ym1 = fold_if_necessary(yp1, para->dim_y);
-  zm1 = fold_if_necessary(zp1, para->dim_z);
-  node_indices[0] = xyz_to_index(x, y, z);
-  node_indices[1] = xyz_to_index(xp1, y, z);
-  node_indices[2] = xyz_to_index(xm1, y, z);
-  node_indices[3] = xyz_to_index(x, yp1, z);
-  node_indices[4] = xyz_to_index(xp1, yp1, z);
-  node_indices[5] = xyz_to_index(xm1, yp1, z);
-  node_indices[6] = xyz_to_index(x, ym1, z);
-  node_indices[7] = xyz_to_index(xp1, ym1, z);
-  node_indices[8] = xyz_to_index(xm1, ym1, z);
-  node_indices[9] = xyz_to_index(x, y, zp1);
-  node_indices[10] = xyz_to_index(xp1, y, zp1);
-  node_indices[11] = xyz_to_index(xm1, y, zp1);
-  node_indices[12] = xyz_to_index(x, yp1, zp1);
-  node_indices[13] = xyz_to_index(xp1, yp1, zp1);
-  node_indices[14] = xyz_to_index(xm1, yp1, zp1);
-  node_indices[15] = xyz_to_index(x, ym1, zp1);
-  node_indices[16] = xyz_to_index(xp1, ym1, zp1);
-  node_indices[17] = xyz_to_index(xm1, ym1, zp1);
-  node_indices[18] = xyz_to_index(x, y, zm1);
-  node_indices[19] = xyz_to_index(xp1, y, zm1);
-  node_indices[20] = xyz_to_index(xm1, y, zm1);
-  node_indices[21] = xyz_to_index(x, yp1, zm1);
-  node_indices[22] = xyz_to_index(xp1, yp1, zm1);
-  node_indices[23] = xyz_to_index(xm1, yp1, zm1);
-  node_indices[24] = xyz_to_index(x, ym1, zm1);
-  node_indices[25] = xyz_to_index(xp1, ym1, zm1);
-  node_indices[26] = xyz_to_index(xm1, ym1, zm1);
+
+  int cnt = 0;
   float3 interpolated_u{0.0f, 0.0f, 0.0f};
 #pragma unroll
-  for (int i = 0; i < 27; ++i) {
-    float totmass = 0.0f;
-    float mode[19];
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      for (int k = 0; k < 3; ++k) {
+        auto x = fold_if_necessary(left_node_index[0] - 1 + i, para->dim_x);
+        auto y = fold_if_necessary(left_node_index[1] - 1 + j, para->dim_y);
+        auto z = fold_if_necessary(left_node_index[2] - 1 + k, para->dim_z);
+        delta[cnt] = temp_delta[i].x * temp_delta[j].y * temp_delta[k].z;
+        node_indices[cnt] = xyz_to_index(x, y, z);
+        auto const boundary_index = n_a.boundary[node_indices[cnt]];
+        if (not boundary_index) {
+          float totmass = 0.0f;
+          auto const mass_mode = calc_mode_x_from_n(n_a, node_indices[cnt], 0);
 
-    calc_m_from_n(n_a, node_indices[i], mode);
-    auto const mass_mode = calc_mode_x_from_n(n_a, node_indices[i], 0);
+          totmass += mass_mode + para->rho;
 
-    totmass += mass_mode + para->rho;
-
-    /* The boolean expression (n_a.boundary[node_index[i]] == 0) causes boundary
-       nodes to couple with velocity 0 to particles. This is necessary, since
-       boundary nodes undergo the same LB dynamics as fluid nodes do. The flow
-       within the boundaries does not interact with the physical fluid, since
-       these populations are overwritten by the bounce back kernel. Particles
-       close to walls can couple to this unphysical flow, though.
-    */
-    auto const j_x = calc_mode_x_from_n(n_a, node_indices[i], 1);
-    auto const j_y = calc_mode_x_from_n(n_a, node_indices[i], 2);
-    auto const j_z = calc_mode_x_from_n(n_a, node_indices[i], 3);
-    interpolated_u.x +=
-        (j_x / totmass) * delta[i] * (n_a.boundary[node_indices[i]] == 0);
-    interpolated_u.y +=
-        (j_y / totmass) * delta[i] * (n_a.boundary[node_indices[i]] == 0);
-    interpolated_u.z +=
-        (j_z / totmass) * delta[i] * (n_a.boundary[node_indices[i]] == 0);
+          auto const j_x = calc_mode_x_from_n(n_a, node_indices[cnt], 1);
+          auto const j_y = calc_mode_x_from_n(n_a, node_indices[cnt], 2);
+          auto const j_z = calc_mode_x_from_n(n_a, node_indices[cnt], 3);
+          interpolated_u.x += (j_x / totmass) * delta[cnt];
+          interpolated_u.y += (j_y / totmass) * delta[cnt];
+          interpolated_u.z += (j_z / totmass) * delta[cnt];
+        } else {
+          interpolated_u.x +=
+              lb_boundary_velocity[3 * (boundary_index - 1) + 0] * para->tau /
+              para->agrid * delta[cnt];
+          interpolated_u.y +=
+              lb_boundary_velocity[3 * (boundary_index - 1) + 1] * para->tau /
+              para->agrid * delta[cnt];
+          interpolated_u.z +=
+              lb_boundary_velocity[3 * (boundary_index - 1) + 2] * para->tau /
+              para->agrid * delta[cnt];
+        }
+        ++cnt;
+      }
+    }
   }
   return interpolated_u;
 }
@@ -3374,26 +3267,32 @@ struct two_point_interpolation {
   LB_nodes_gpu current_nodes_gpu;
   LB_rho_v_gpu *d_v_gpu;
   bool three_point = false;
+  float *lb_boundary_velocity;
   two_point_interpolation(LB_nodes_gpu _current_nodes_gpu,
-                          LB_rho_v_gpu *_d_v_gpu, bool three_point)
-      : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu), three_point(three_point){};
+                          LB_rho_v_gpu *_d_v_gpu, bool three_point,
+                          float *lb_boundary_velocity)
+      : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu),
+        three_point(three_point), lb_boundary_velocity(lb_boundary_velocity){};
   __device__ float3 operator()(const float3 &position) const {
     float _position[3] = {position.x, position.y, position.z};
     if (three_point) {
       unsigned int node_indices[27];
       float delta[27];
-      return interpolation_three_point_coupling(current_nodes_gpu, _position, node_indices, delta);
+      return interpolation_three_point_coupling(current_nodes_gpu, _position,
+                                                lb_boundary_velocity,
+                                                node_indices, delta);
     } else {
       unsigned int node_index[8];
       float delta[8];
       return interpolation_two_point_coupling(current_nodes_gpu, _position,
-                                            node_index, delta);
+                                              node_index, delta);
     }
   }
 };
 
 void lb_get_interpolated_velocity_gpu(double const *positions,
-                                      double *velocities, int length, bool three_point) {
+                                      double *velocities, int length,
+                                      bool three_point) {
   thrust::host_vector<float3> positions_host(length);
   for (int p = 0; p < 3 * length; p += 3) {
     // Cast double coming from python to float.
@@ -3405,7 +3304,8 @@ void lb_get_interpolated_velocity_gpu(double const *positions,
   thrust::device_vector<float3> velocities_device(length);
   thrust::transform(positions_device.begin(), positions_device.end(),
                     velocities_device.begin(),
-                    two_point_interpolation(*current_nodes, device_rho_v, three_point));
+                    two_point_interpolation(*current_nodes, device_rho_v,
+                                            three_point, lb_boundary_velocity));
   thrust::host_vector<float3> velocities_host = velocities_device;
   int index = 0;
   for (auto v : velocities_host) {
