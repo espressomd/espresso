@@ -1820,6 +1820,13 @@ cdef class NonBondedInteractions(object):
         cdef string state = core_state
         ia_params_set_state(state)
 
+    def reset(self):
+        """
+        Reset all interaction parameters to their default
+        values.
+        """
+
+        reset_ia_params()
 
 cdef class BondedInteraction(object):
     """Base class for bonded interactions.

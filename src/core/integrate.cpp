@@ -33,7 +33,6 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "ghosts.hpp"
@@ -61,6 +60,8 @@
 #include "forces.hpp"
 #include "immersed_boundaries.hpp"
 #include "npt.hpp"
+
+#include <profiler/profiler.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -215,6 +216,8 @@ void integrate_ensemble_init() {
 /************************************************************/
 
 void integrate_vv(int n_steps, int reuse_forces) {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -246,6 +249,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
       1: do not recalculate forces. Mostly when reading checkpoints with forces
    */
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
+    ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     thermo_heat_up();
 
 #ifdef LB
@@ -290,6 +294,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
       handle_collisions();
     }
 #endif
+    ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
 
   if (check_runtime_errors())
@@ -302,7 +307,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
   /* Integration loop */
+  ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
   for (int step = 0; step < n_steps; step++) {
+    ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
 #ifdef BOND_CONSTRAINT
@@ -320,11 +327,17 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (integ_switch == INTEG_METHOD_NPT_ISO) {
       propagate_vel();
       propagate_pos();
+
+      /* Propagate time: t = t+dt */
+      sim_time += time_step;
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
       if (steepest_descent_step())
         break;
     } else {
       propagate_vel_pos();
+
+      /* Propagate time: t = t+dt */
+      sim_time += time_step;
     }
 
 #ifdef BOND_CONSTRAINT
@@ -334,12 +347,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
       cells_update_ghosts();
 
       correct_pos_shake();
-    }
-#endif
-
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
     }
 #endif
 
@@ -421,21 +428,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
     }
 
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
-
 #ifdef NPT
     if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO))
       nptiso.p_inst_av += nptiso.p_inst;
 #endif
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      /* Propagate time: t = t+dt */
-      sim_time += time_step;
-
 #ifdef COLLISION_DETECTION
       handle_collisions();
 #endif
@@ -456,6 +454,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
       break;
     }
   }
+  ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
   if (virtual_sites()->need_ghost_comm_before_vel_update()) {

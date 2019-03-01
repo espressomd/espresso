@@ -62,7 +62,7 @@ void IBM_ForcesIntoFluid_CPU() {
   // Halo has already been sent. Check for safety
   if (lbpar.resend_halo) {
     printf("Error. Halo should already be sent!\n");
-    exit(1);
+    std::abort();
   }
 
   // Update the forces on the ghost particles

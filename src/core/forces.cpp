@@ -30,7 +30,6 @@
 #include "comfixed_global.hpp"
 #include "constraints.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
@@ -40,11 +39,14 @@
 #include "immersed_boundaries.hpp"
 #include "short_range_loop.hpp"
 
+#include <profiler/profiler.hpp>
+
 #include <cassert>
 
 ActorList forceActors;
 
 void init_forces() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
 
@@ -90,6 +92,7 @@ void check_forces() {
 }
 
 void force_calc() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   espressoSystemInterface.update();
 
@@ -140,7 +143,7 @@ void force_calc() {
     }
   }
   auto local_parts = local_cells.particles();
-  Constraints::constraints.add_forces(local_parts);
+  Constraints::constraints.add_forces(local_parts, sim_time);
 
 #ifdef OIF_GLOBAL_FORCES
   if (max_oif_objects) {
@@ -201,6 +204,7 @@ void force_calc() {
 }
 
 void calc_long_range_forces() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
@@ -245,9 +249,6 @@ void calc_long_range_forces() {
       p3m_calc_kspace_forces(1, 0);
     break;
 #endif
-  case COULOMB_MAGGS:
-    maggs_calc_forces();
-    break;
   case COULOMB_MMM2D:
     MMM2D_add_far_force();
     MMM2D_dielectric_layers_force_contribution();
