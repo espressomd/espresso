@@ -1227,7 +1227,7 @@ void lb_lbfluid_on_lb_params_change(int field) {
 }
 
 Vector3d lb_lbfluid_calc_fluid_momentum() {
-    Vector3d fluid_momentum{};
+  Vector3d fluid_momentum{};
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     lb_calc_fluid_momentum_GPU(fluid_momentum.data());

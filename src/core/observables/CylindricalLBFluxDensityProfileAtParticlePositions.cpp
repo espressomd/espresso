@@ -46,11 +46,11 @@ operator()(PartCfg &partCfg) const {
 
   std::vector<Vector3d> velocities(folded_positions.size());
 #if defined(LB) || defined(LB_GPU)
-    boost::transform(
-        folded_positions, velocities.begin(), [](const Vector3d &pos) {
-          return lb_lbinterpolation_get_interpolated_velocity_global(pos) *
-                 lb_lbfluid_get_lattice_speed();
-        });
+  boost::transform(
+      folded_positions, velocities.begin(), [](const Vector3d &pos) {
+        return lb_lbinterpolation_get_interpolated_velocity_global(pos) *
+               lb_lbfluid_get_lattice_speed();
+      });
 #endif
   for (auto &p : folded_positions)
     p -= center;
