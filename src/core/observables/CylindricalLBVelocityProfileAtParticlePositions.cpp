@@ -18,7 +18,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
-#include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "utils.hpp"
@@ -44,7 +43,6 @@ operator()(PartCfg &partCfg) const {
                    [&partCfg](int id) { return folded_position(partCfg[id]); });
 
   std::vector<Vector3d> velocities(ids().size());
-  if ((lattice_switch & LATTICE_LB) or (lattice_switch & LATTICE_LB_GPU)) {
 #if defined(LB) || defined(LB_GPU)
     boost::transform(
         folded_positions, velocities.begin(), [](const Vector3d &pos) {
@@ -52,9 +50,6 @@ operator()(PartCfg &partCfg) const {
                  lb_lbfluid_get_lattice_speed();
         });
 #endif
-  } else {
-    throw std::runtime_error("LB not activated.");
-  }
   for (auto &p : folded_positions)
     p -= center;
   for (int ind = 0; ind < ids().size(); ++ind) {
