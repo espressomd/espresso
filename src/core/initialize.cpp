@@ -48,7 +48,6 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
-#include "grid_based_algorithms/lattice.hpp"
 #include "metadynamics.hpp"
 #include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp"
