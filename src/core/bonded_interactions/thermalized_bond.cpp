@@ -30,30 +30,19 @@
 
 int n_thermalized_bonds = 0;
 
-int thermalized_bond_set_params(int bond_type, double temp_com,
-                                double gamma_com, double temp_distance,
-                                double gamma_distance, double r_cut) {
+int thermalized_bond_set_params(int bond_type, double temp, double gamma, double r_cut) {
   if (bond_type < 0)
     return ES_ERROR;
 
   make_bond_type_exist(bond_type);
 
-  bonded_ia_params[bond_type].p.thermalized_bond.temp_com = temp_com;
-  bonded_ia_params[bond_type].p.thermalized_bond.gamma_com = gamma_com;
-  bonded_ia_params[bond_type].p.thermalized_bond.temp_distance = temp_distance;
-  bonded_ia_params[bond_type].p.thermalized_bond.gamma_distance =
-      gamma_distance;
+  bonded_ia_params[bond_type].p.thermalized_bond.temp = temp;
+  bonded_ia_params[bond_type].p.thermalized_bond.gamma =gamma;
   bonded_ia_params[bond_type].p.thermalized_bond.r_cut = r_cut;
-
-  bonded_ia_params[bond_type].p.thermalized_bond.pref1_com = gamma_com;
-  bonded_ia_params[bond_type].p.thermalized_bond.pref2_com =
-      sqrt(24.0 * gamma_com / time_step * temp_com);
-  bonded_ia_params[bond_type].p.thermalized_bond.pref1_dist = gamma_distance;
-  bonded_ia_params[bond_type].p.thermalized_bond.pref2_dist =
-      sqrt(24.0 * gamma_distance / time_step * temp_distance);
-
+  bonded_ia_params[bond_type].p.thermalized_bond.pref1 = gamma;
+  bonded_ia_params[bond_type].p.thermalized_bond.pref2 =
+      sqrt(24.0 * gamma / time_step * temp);
   bonded_ia_params[bond_type].type = BONDED_IA_THERMALIZED_DIST;
-
   bonded_ia_params[bond_type].num = 1;
 
   n_thermalized_bonds += 1;
@@ -74,26 +63,21 @@ void thermalized_bond_cool_down() {
 }
 
 void thermalized_bond_init() {
-
   for (int i = 0; i < bonded_ia_params.size(); i++) {
     if (bonded_ia_params[i].type == BONDED_IA_THERMALIZED_DIST) {
       Thermalized_bond_parameters &t = bonded_ia_params[i].p.thermalized_bond;
-      t.pref1_com = t.gamma_com;
-      t.pref2_com = sqrt(24.0 * t.gamma_com / time_step * t.temp_com);
-      t.pref1_dist = t.gamma_distance;
-      t.pref2_dist =
-          sqrt(24.0 * t.gamma_distance / time_step * t.temp_distance);
+      t.pref1 = t.gamma;
+      t.pref2 =
+          sqrt(24.0 * t.gamma / time_step * t.temp);
     }
   }
 }
 
 void thermalized_bond_update_params(double pref_scale) {
-
   for (int i = 0; i < bonded_ia_params.size(); i++) {
     if (bonded_ia_params[i].type == BONDED_IA_THERMALIZED_DIST) {
       Thermalized_bond_parameters &t = bonded_ia_params[i].p.thermalized_bond;
-      t.pref2_com *= pref_scale;
-      t.pref2_dist *= pref_scale;
+      t.pref2 *= pref_scale;
     }
   }
 }

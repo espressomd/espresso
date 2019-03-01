@@ -351,16 +351,13 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
 
 #* Parameters for thermalized  bond */
     cdef struct Thermalized_bond_parameters:
-        double temp_com
-        double gamma_com
-        double temp_distance
-        double gamma_distance
+        double temp
+        double gamma
         double r_cut
 
 #* Parameters for Bonded Coulomb */
     cdef struct Bonded_coulomb_bond_parameters:
         double prefactor
-
 
 #* Parameters for three body angular potential (bond-angle potentials).
     cdef struct Angle_bond_parameters:
@@ -517,7 +514,7 @@ cdef extern from "object-in-fluid/oif_local_forces.hpp":
 cdef extern from "object-in-fluid/out_direction.hpp":
     int oif_out_direction_set_params(int bond_type)
 cdef extern from "bonded_interactions/thermalized_bond.hpp":
-    int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
+    int thermalized_bond_set_params(int bond_type, double temp, double gamma, double r_cut)
 cdef extern from "bonded_interactions/bonded_coulomb.hpp":
     int bonded_coulomb_set_params(int bond_type, double prefactor)
 

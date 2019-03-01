@@ -37,9 +37,7 @@ extern int n_thermalized_bonds;
 #include "utils.hpp"
 
 // Set the parameters for the thermalized bond
-int thermalized_bond_set_params(int bond_type, double temp_com,
-                                double gamma_com, double temp_distance,
-                                double gamma_distance, double r_cut);
+int thermalized_bond_set_params(int bond_type, double temp, double gamma, double r_cut);
 
 void thermalized_bond_heat_up();
 void thermalized_bond_cool_down();
@@ -67,45 +65,24 @@ inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
     return 1;
   }
 
-  double force_lv_com, force_lv_dist, com_vel, dist_vel;
+  double force_lv_dist, dist_vel;
   double mass_tot = p1->p.mass + p2->p.mass;
-  double mass_tot_inv = 1.0 / mass_tot;
-  double sqrt_mass_tot = sqrt(mass_tot);
   double sqrt_mass_red = sqrt(p1->p.mass * p2->p.mass / mass_tot);
 
   for (int i = 0; i < 3; i++) {
-
-    // Langevin thermostat for center of mass
-    com_vel =
-        mass_tot_inv * (p1->p.mass * p1->m.v[i] + p2->p.mass * p2->m.v[i]);
-    if (iaparams->p.thermalized_bond.pref2_com > 0.0) {
-      force_lv_com = -iaparams->p.thermalized_bond.pref1_com * com_vel +
-                     sqrt_mass_tot * iaparams->p.thermalized_bond.pref2_com *
-                         (d_random() - 0.5);
-    } else {
-      force_lv_com = -iaparams->p.thermalized_bond.pref1_com * com_vel;
-    }
-
     // Langevin thermostat for distance p1->p2
     dist_vel = p2->m.v[i] - p1->m.v[i];
-    if (iaparams->p.thermalized_bond.pref2_dist > 0.0) {
-      force_lv_dist = -iaparams->p.thermalized_bond.pref1_dist * dist_vel +
-                      sqrt_mass_red * iaparams->p.thermalized_bond.pref2_dist *
+    if (iaparams->p.thermalized_bond.pref2 > 0.0) {
+      force_lv_dist = -iaparams->p.thermalized_bond.pref1 * dist_vel +
+                      sqrt_mass_red * iaparams->p.thermalized_bond.pref2 *
                           (d_random() - 0.5);
     } else {
-      force_lv_dist = -iaparams->p.thermalized_bond.pref1_dist * dist_vel;
+      force_lv_dist = -iaparams->p.thermalized_bond.pref1 * dist_vel;
     }
     // Add forces
-    force1[i] = p1->p.mass * mass_tot_inv * force_lv_com - force_lv_dist;
-    force2[i] = p2->p.mass * mass_tot_inv * force_lv_com + force_lv_dist;
+    force1[i] = - force_lv_dist;
+    force2[i] = + force_lv_dist;
   }
-
-  ONEPART_TRACE(if (p1->p.identity == check_id) fprintf(
-      stderr, "%d: OPT: THERMALIZED BOND f = (%.3e,%.3e,%.3e)\n", this_node,
-      p1->f.f[0] + force1[0], p1->f.f[1] + force1[1], p1->f.f[2] + force1[2]));
-  ONEPART_TRACE(if (p2->p.identity == check_id) fprintf(
-      stderr, "%d: OPT: THERMALIZED BOND f = (%.3e,%.3e,%.3e)\n", this_node,
-      p2->f.f[0] + force2[0], p2->f.f[1] + force2[1], p2->f.f[2] + force2[2]));
   return 0;
 }
 

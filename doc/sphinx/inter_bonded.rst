@@ -682,17 +682,13 @@ temperature and friction coefficient.
 The bond is configured with::
 
     from espressomd.interactions import ThermalizedBond
-    thermalized_bond = ThermalizedBond(temp_com=<float>, gamma_com=<float>,
-                                       temp_distance=<float>, gamma_distance=<float>,
-                                       r_cut=<float>)
+    thermalized_bond = ThermalizedBond(temp, gamma, r_cut=<float>)
     system.bonded_inter.add(thermalized_bond)
 
 The parameters are:
 
-    * ``temp_com``: Temperature of the Langevin thermostat for the COM of the particle pair.
-    * ``gamma_com``: Friction coefficient of the Langevin thermostat for the COM of the particle pair.
-    * ``temp_distance``: Temperature of the Langevin thermostat for the distance vector of the particle pair.
-    * ``gamma_distance``: Friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
+    * ``temp``: Temperature of the Langevin thermostat for the distance vector of the particle pair.
+    * ``gamma``: Friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
     * ``r_cut``:  Specifies maximum distance beyond which the bond is considered broken.
 
 The bond is closely related to simulating :ref:`Particle polarizability with

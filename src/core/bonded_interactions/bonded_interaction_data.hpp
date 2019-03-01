@@ -117,15 +117,11 @@ struct Harmonic_bond_parameters {
 
 /** Parameters for Thermalized bond **/
 struct Thermalized_bond_parameters {
-  double temp_com;
-  double gamma_com;
-  double temp_distance;
-  double gamma_distance;
+  double temp;
+  double gamma;
   double r_cut;
-  double pref1_com;
-  double pref2_com;
-  double pref1_dist;
-  double pref2_dist;
+  double pref1;
+  double pref2;
 };
 
 #ifdef ROTATION
