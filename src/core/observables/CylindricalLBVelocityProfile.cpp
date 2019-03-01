@@ -19,7 +19,9 @@
 */
 
 #include "CylindricalLBVelocityProfile.hpp"
-#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_interpolation.hpp"
+#include "lattice.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
 
@@ -37,23 +39,20 @@ operator()(PartCfg &partCfg) const {
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
   std::vector<double> velocities(m_sample_positions.size());
-  if (lattice_switch & LATTICE_LB_GPU) {
-#if defined(LB_GPU)
-    lb_lbfluid_get_interpolated_velocity_at_positions(
-        m_sample_positions.data(), velocities.data(),
-        m_sample_positions.size() / 3);
-#endif
-  } else if (lattice_switch & LATTICE_LB) {
-#if defined(LB)
+  if (not(lattice_switch & LATTICE_OFF)) {
+#if defined(LB) || defined(LB_GPU)
     for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
       Vector3d pos_tmp = {m_sample_positions[ind + 0],
                           m_sample_positions[ind + 1],
                           m_sample_positions[ind + 2]};
-      lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
+      const Vector3d v =
+          lb_lbinterpolation_get_interpolated_velocity_global(pos_tmp) *
+          lb_lbfluid_get_lattice_speed();
+      std::copy_n(v.begin(), 3, &(velocities[ind + 0]));
     }
 #endif
   } else {
-    return histogram.get_histogram();
+    throw std::runtime_error("LB not activated.");
   }
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
     const Vector3d pos_shifted = {{m_sample_positions[ind + 0] - center[0],
