@@ -37,7 +37,8 @@ extern int n_thermalized_bonds;
 #include "utils.hpp"
 
 // Set the parameters for the thermalized bond
-int thermalized_bond_set_params(int bond_type, double temp, double gamma, double r_cut);
+int thermalized_bond_set_params(int bond_type, double temp, double gamma,
+                                double r_cut);
 
 void thermalized_bond_heat_up();
 void thermalized_bond_cool_down();
@@ -80,8 +81,8 @@ inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
       force_lv_dist = -iaparams->p.thermalized_bond.pref1 * dist_vel;
     }
     // Add forces
-    force1[i] = - force_lv_dist;
-    force2[i] = + force_lv_dist;
+    force1[i] = -force_lv_dist;
+    force2[i] = +force_lv_dist;
   }
   return 0;
 }
