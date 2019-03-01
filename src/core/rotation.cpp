@@ -43,7 +43,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
-#include "lattice.hpp"
+#include "grid_based_algorithms/lattice.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"

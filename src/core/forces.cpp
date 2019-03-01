@@ -37,7 +37,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
-#include "lattice.hpp"
+#include "grid_based_algorithms/lattice.hpp"
 #include "short_range_loop.hpp"
 
 #include <profiler/profiler.hpp>

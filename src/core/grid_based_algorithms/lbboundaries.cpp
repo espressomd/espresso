@@ -36,7 +36,7 @@
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "initialize.hpp"
-#include "lattice.hpp"
+#include "grid_based_algorithms/lattice.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
 #include <algorithm>
