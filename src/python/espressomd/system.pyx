@@ -294,11 +294,6 @@ cdef class System(object):
         def __get__(self):
             return max_cut_nonbonded
 
-    IF LB or LB_GPU:
-        property lattice_switch:
-            def __get__(self):
-                return lb_lbfluid_get_lattice_switch()
-
     property max_cut_bonded:
         def __get__(self):
             return max_cut_bonded
