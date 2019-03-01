@@ -222,7 +222,7 @@ void predict_momentum_particles(double *result) {
  * calculation
  * @return Result for this processor (Output)
  */
-std::vector<double> calc_linear_momentum(int include_particles,
+Vector3d calc_linear_momentum(int include_particles,
                                          int include_lbfluid) {
   Vector3d linear_momentum{};
   if (include_particles) {
@@ -238,8 +238,8 @@ std::vector<double> calc_linear_momentum(int include_particles,
   return linear_momentum;
 }
 
-std::vector<double> centerofmass(PartCfg &partCfg, int type) {
-  std::vector<double> com(3);
+Vector3d centerofmass(PartCfg &partCfg, int type) {
+  Vector3d com{};
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
@@ -255,9 +255,9 @@ std::vector<double> centerofmass(PartCfg &partCfg, int type) {
   return com;
 }
 
-std::vector<double> centerofmass_vel(PartCfg &partCfg, int type) {
+Vector3d centerofmass_vel(PartCfg &partCfg, int type) {
   /*center of mass velocity scaled with time_step*/
-  std::vector<double> com_vel(3);
+  Vector3d com_vel{};
   int count = 0;
 
   for (auto const &p : partCfg) {
