@@ -170,7 +170,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 #ifdef LB_GPU
     if (lb_particle_coupling.couple_to_md && this_node == 0)
       lb_calc_particle_lattice_ia_gpu(couple_virtual,
-                                      lb_lbcoupling_get_gamma());
+                                      lb_lbcoupling_get_gamma(), false);
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB

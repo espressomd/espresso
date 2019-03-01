@@ -240,7 +240,7 @@ void lb_init_extern_nodeforcedensities_GPU(
     LB_parameters_gpu *lbpar_gpu);
 
 void lb_set_agrid_gpu(double agrid);
-void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction);
+void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction, bool three_point_coupling);
 
 void lb_calc_fluid_mass_GPU(double *mass);
 void lb_calc_fluid_momentum_GPU(double *host_mom);
