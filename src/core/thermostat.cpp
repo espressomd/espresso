@@ -67,9 +67,7 @@ GammaType langevin_pref2;
 GammaType langevin_pref2_rotation;
 
 /* NPT ISOTROPIC THERMOSTAT */
-// INSERT COMMENT
 double nptiso_gamma0 = 0.0;
-// INSERT COMMENT
 double nptiso_gammav = 0.0;
 
 /** buffers for the work around for the correlated random values which cool the
@@ -92,13 +90,18 @@ void mpi_bcast_langevin_rng_counter_slave(int, int) {
 }
 
 void langevin_rng_counter_increment() {
-    langevin_rng_counter.increment();
+    if (thermo_switch & THERMO_LANGEVIN)
+        langevin_rng_counter.increment();
+}
+
+bool langevin_is_seed_required() {
+    /* Seed is required if rng is not initialized (value == initial_value) */
+    return langevin_rng_counter.initial_value() == langevin_rng_counter.value();
 }
 
 void langevin_set_rng_state(uint64_t counter) {
     langevin_rng_counter = Utils::Counter<uint64_t>(counter);
     mpi_bcast_langevin_rng_counter();
-
 }
 
 uint64_t langevin_get_rng_state() {

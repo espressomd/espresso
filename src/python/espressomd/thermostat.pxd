@@ -42,4 +42,6 @@ cdef extern from "thermostat.hpp":
         double langevin_gamma
 
     void langevin_set_rng_state(stdint.uint64_t counter)
+    cbool langevin_is_seed_required()
+
     stdint.uint64_t langevin_get_rng_state()

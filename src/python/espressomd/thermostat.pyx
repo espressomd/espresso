@@ -229,8 +229,9 @@ cdef class Thermostat(object):
                          if 'PARTICLE_ANISOTROPY' is also compiled in.
         act_on_virtual : :obj:`bool`, optional
                 If true the thermostat will act on virtual sites, default is off.
-        seed :obj:`int`, optional
-                Initial counter value (or seed) of the philux rng.
+        seed : :obj:`int`, required
+                Initial counter value (or seed) of the philux RNG.
+                Required on first activation of the langevin thermostat.
 
         """
 
@@ -284,14 +285,13 @@ cdef class Thermostat(object):
                     raise ValueError(
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
 
-        #if not seed:
-        #    raise ValueError(
-        #        "seed has to be given as keyword arg")
+        #Seed is required the rng is not initialized
+        if not seed and langevin_is_seed_required():
+            raise ValueError(
+                "seed has to be given as keyword argument on first activation of the thermostat")
 
-        if not seed:
-            seed = 0
-
-        langevin_set_rng_state(seed)
+        if seed:
+            langevin_set_rng_state(seed)
 
         global temperature
         temperature = float(kT)

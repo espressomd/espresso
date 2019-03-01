@@ -273,8 +273,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-    //Propagate langevin philox rng counter
-    if (n_steps > 0 && (thermo_switch & THERMO_LANGEVIN)) {
+    //Langevin philox rng counter
+    if (n_steps > 0) {
         langevin_rng_counter_increment();
     }
 
@@ -376,7 +376,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     //Propagate langevin philox rng counter
-    if (n_steps > 0 && (thermo_switch & THERMO_LANGEVIN)) {
+    if (n_steps > 0) {
         langevin_rng_counter_increment();
     }
 

@@ -98,12 +98,16 @@ extern Utils::Counter<uint64_t> langevin_rng_counter;
  * functions
  ************************************************/
 
+/** communication for the philox counter */
 void mpi_bcast_langevin_rng_counter(int, int);
 
+/** only require seed if rng is not initialized */
+bool langevin_is_seed_required();
+
+/** philox functiontality: increment, get/set */
 void langevin_rng_counter_increment();
 void langevin_set_rng_state(uint64_t counter);
 uint64_t langevin_get_rng_state();
-
 
 /** initialize constants of the thermostat on
     start of integration */
