@@ -875,16 +875,6 @@ void set_particle_f(int part, const Vector3d &F) {
       part, F);
 }
 
-#ifdef SHANCHEN
-void set_particle_solvation(int part, double *solvation) {
-  std::array<double, 2 * LB_COMPONENTS> s;
-  std::copy(solvation, solvation + 2 * LB_COMPONENTS, s.begin());
-  mpi_update_particle_property<std::array<double, 2 * LB_COMPONENTS>,
-                               &ParticleProperties::solvation>(part, s);
-}
-
-#endif
-
 #if defined(MASS)
 void set_particle_mass(int part, double mass) {
   mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);

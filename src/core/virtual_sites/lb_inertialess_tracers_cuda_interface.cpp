@@ -37,10 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/mpi/scatter_buffer.hpp"
 
-/// MPI tags for sending velocities and receiving particles
-#define REQ_CUDAIBMSENDVEL 0xcc03
-#define REQ_CUDAIBMGETPART 0xcc04
-
 // Variables for communication
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host = nullptr;
 IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_host = nullptr;

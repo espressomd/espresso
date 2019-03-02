@@ -108,11 +108,6 @@ struct ParticleProperties {
   constexpr static double mass{1.0};
 #endif /* MASS */
 
-#ifdef SHANCHEN
-  std::array<double, 2 *LB_COMPONENTS> solvation =
-      std::array<double, 2 * LB_COMPONENTS>{};
-#endif
-
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
   Vector3d rinertia = {1., 1., 1.};
@@ -246,11 +241,6 @@ struct ParticlePosition {
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
   Vector3d p_old = {0., 0., 0.};
-#endif
-
-#ifdef SHANCHEN
-  std::array<double, LB_COMPONENTS> composition =
-      std::array<double, LB_COMPONENTS>{};
 #endif
 };
 
