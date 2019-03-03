@@ -21,9 +21,10 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
+if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
+    from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
 import numpy as np
 from espressomd.interactions import FeneBond
-from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
 
 from tests_common import verify_lj_forces
 from numpy import random
