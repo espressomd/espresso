@@ -40,7 +40,7 @@ CMake
     The build system is based on CMake
 
 C++ Compiler
-    C++11 capable C++ compiler (e.g., Gcc 4.8.1 or later)
+    C++14 capable C++ compiler (e.g., gcc 5 or later)
 
 Boost
     A number of advanced C++ features used by ESPResSo is provided by Boost.
@@ -471,8 +471,6 @@ Fluid dynamics and fluid structure interaction
 
 -  ``LB_BOUNDARIES_GPU``
 
--  ``SHANCHEN`` (experimental) Enables the Shan Chen bicomponent fluid code on the GPU.
-
 -  ``AFFINITY``
 
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
@@ -620,8 +618,6 @@ looking directly at the code.
 -  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
 
 -  ``FFT_DEBUG`` Output from the unified FFT code.
-
--  ``MAGGS_DEBUG``
 
 -  ``RANDOM_DEBUG``
 

@@ -168,6 +168,8 @@ template <size_t N> using VectorXd = Vector<N, double>;
 using Vector2d = VectorXd<2>;
 using Vector3d = VectorXd<3>;
 using Vector4d = VectorXd<4>;
+using Vector6d = VectorXd<6>;
+using Vector19d = VectorXd<19>;
 
 typedef Vector<3, int> Vector3i;
 

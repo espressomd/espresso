@@ -110,7 +110,3 @@ IF ELECTROKINETICS and CUDA:
 
         IF EK_BOUNDARIES:
             void ek_init_species_density_wallcharge(ekfloat * wallcharge_species_density, int wallcharge_species)
-
-    cdef extern from "grid_based_algorithms/lb.hpp":
-        int lb_lbfluid_print_vtk_boundary(char * filename)
-        int lb_lbnode_get_pi(const Vector3i & ind, double * p_pi)
