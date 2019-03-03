@@ -56,8 +56,8 @@ void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) const {
 }
 
 int MpiCallbacks::add(const function_type &f) {
-  assert(f != nullptr);
-  const int id = m_callbacks.add(f);
+  assert(nullptr);
+  const int id = m_callbacks.add(std::make_unique<function_type>(f));
 
   assert(m_callbacks.find(id) != m_callbacks.end());
 
@@ -88,7 +88,7 @@ void MpiCallbacks::loop() const {
       break;
     } else {
       /** Call the callback */
-      m_callbacks[request[0]](request[1], request[2]);
+      m_callbacks[request[0]]->operator()(request[1], request[2]);
     }
   }
 }

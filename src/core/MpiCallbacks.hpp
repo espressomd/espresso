@@ -22,14 +22,71 @@
 #ifndef COMMUNICATION_MPI_CALLBACKS
 #define COMMUNICATION_MPI_CALLBACKS
 
-#include <functional>
-#include <initializer_list>
-
 #include <boost/mpi/communicator.hpp>
 
 #include "utils/NumeratedContainer.hpp"
+#include "utils/make_function.hpp"
+
+#include <functional>
+#include <initializer_list>
+#include <tuple>
 
 namespace Communication {
+
+namespace detail {
+    namespace detail {
+        template <class F, class Tuple, std::size_t... I>
+        constexpr decltype(auto) apply_impl(F&& f, Tuple&& t, std::index_sequence<I...>)
+        {
+            return f(std::get<I>(std::forward<Tuple>(t))...);
+        }
+    }  // namespace detail
+
+    template <class F, class Tuple>
+    constexpr decltype(auto) apply(F&& f, Tuple&& t)
+    {
+        return detail::apply_impl(
+                std::forward<F>(f), std::forward<Tuple>(t),
+                std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
+    }
+
+    template<class... Args>
+    struct tuple {
+        std::tuple<Args...> t;
+
+        template<class Archive, class Tuple, size_t... I>
+        void serialize_impl(Archive &ar, Tuple t, std::index_sequence<I...>) {
+            int dummy[] = { 0, void(ar & std::get<I>)... };
+        }
+
+        template<class Archive>
+                void serialize(Archive &ar, const long int) {
+                serialize_impl(ar, t, std::make_index_sequence<sizeof...(Args)>{});
+                }
+    };
+
+    struct concept_t {
+        virtual void operator()(const boost::mpi::communicator &) const = 0;
+
+        virtual ~concept_t() = default;
+    };
+
+    template<class... Args>
+    struct model_t final : public concept_t {
+        using function_type = std::function<void(Args...)>;
+
+        function_type m_f;
+
+        explicit model_t(function_type f) : m_f(std::move(f)) {}
+
+        void operator()(const boost::mpi::communicator &comm) const override {
+          tuple<Args...> params;
+          comm.recv(0, 42, params);
+
+          apply(m_f, params.t);
+        }
+    };
+}
 
 /**
  * @brief  The interface of the MPI callback mechanism.
@@ -50,7 +107,7 @@ public:
                         bool abort_on_exit = true)
       : m_abort_on_exit(abort_on_exit), m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
-    m_callbacks.add(function_type());
+    m_callbacks.add(std::unique_ptr<function_type>{});
   }
 
   ~MpiCallbacks() {
@@ -168,7 +225,7 @@ private:
   /**
    * Internal storage for the callback functions.
    */
-  Utils::NumeratedContainer<function_type> m_callbacks;
+  Utils::NumeratedContainer<std::unique_ptr<function_type>> m_callbacks;
 
   /**
    * Mapping of function pointers to ids, so static callbacks can be
