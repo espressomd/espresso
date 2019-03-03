@@ -86,7 +86,6 @@
 #define THOLE
 #endif
 
-#define BOND_ANGLE
 
 // Further featuers
 #define VIRTUAL_SITES_RELATIVE

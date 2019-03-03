@@ -66,7 +66,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OVERLAPPED
 #define THOLE
 
-#define BOND_ANGLE
 
 #define VIRTUAL_SITES_RELATIVE
 

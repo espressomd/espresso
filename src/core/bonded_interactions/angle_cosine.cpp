@@ -24,7 +24,6 @@
  */
 #include "angle_cosine.hpp"
 
-#ifdef BOND_ANGLE
 #include "communication.hpp"
 
 /** set parameters for the angle potential.
@@ -51,4 +50,3 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0) {
   return ES_OK;
 }
 
-#endif
