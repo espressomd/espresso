@@ -67,5 +67,3 @@ if has_features("VIRTUAL_SITES_RELATIVE"):
     
         """
         _so_name = "VirtualSites::VirtualSitesRelative"
-    
-    

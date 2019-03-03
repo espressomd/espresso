@@ -46,14 +46,9 @@
 
 #define DIPOLES
 
-
-
 // Active matter
 #define SWIMMER_REACTIONS
 #define ENGINE
-
-
-
 
 // Hydrodynamics
 #define LB
@@ -92,7 +87,6 @@
 #endif
 
 #define BOND_ANGLE
-
 
 // Further featuers
 #define VIRTUAL_SITES_RELATIVE

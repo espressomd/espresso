@@ -41,13 +41,6 @@
 #define MMM1D_GPU
 #endif
 
-
-
-
-
-
-
-
 // Hydrodynamics
 #define LB
 #define LB_BOUNDARIES
@@ -85,7 +78,6 @@
 #endif
 
 #define BOND_ANGLE
-
 
 // Further featuers
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
