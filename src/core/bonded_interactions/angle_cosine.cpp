@@ -49,4 +49,3 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0) {
 
   return ES_OK;
 }
-

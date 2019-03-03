@@ -2867,6 +2867,7 @@ class Virtual(BondedInteraction):
     def _set_params_in_es_core(self):
         virtual_set_params(self._bond_id)
 
+
 class AngleHarmonic(BondedInteraction):
 
     """
@@ -2911,6 +2912,8 @@ class AngleHarmonic(BondedInteraction):
     def _set_params_in_es_core(self):
         angle_harmonic_set_params(
             self._bond_id, self._params["bend"], self._params["phi0"])
+
+
 class AngleCosine(BondedInteraction):
 
     """
@@ -2955,6 +2958,8 @@ class AngleCosine(BondedInteraction):
     def _set_params_in_es_core(self):
         angle_cosine_set_params(
             self._bond_id, self._params["bend"], self._params["phi0"])
+
+
 class AngleCossquare(BondedInteraction):
 
     """

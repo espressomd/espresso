@@ -76,7 +76,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define THOLE
 #endif
 
-
 #define EXPERIMENTAL_FEATURES
 
 #define VIRTUAL_SITES_RELATIVE

@@ -86,7 +86,6 @@
 #define THOLE
 #endif
 
-
 // Further featuers
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
