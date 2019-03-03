@@ -23,6 +23,7 @@
 #define COMMUNICATION_MPI_CALLBACKS
 
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/collectives/broadcast.hpp>
 
 #include "utils/NumeratedContainer.hpp"
 #include "utils/make_function.hpp"
@@ -55,8 +56,8 @@ namespace detail {
         std::tuple<Args...> t;
 
         template<class Archive, class Tuple, size_t... I>
-        void serialize_impl(Archive &ar, Tuple t, std::index_sequence<I...>) {
-            int dummy[] = { 0, void(ar & std::get<I>)... };
+        void serialize_impl(Archive &ar, Tuple &t, std::index_sequence<I...>) {
+            int dummy[] = { 0, ((void)(ar & std::get<I>(t)), 0)... };
         }
 
         template<class Archive>
@@ -81,11 +82,16 @@ namespace detail {
 
         void operator()(const boost::mpi::communicator &comm) const override {
           tuple<Args...> params;
-          comm.recv(0, 42, params);
+          boost::mpi::broadcast(comm, params, 0);
 
           apply(m_f, params.t);
         }
     };
+
+    template<class... Args>
+    auto make_model(const std::function<void(Args...)> &f) {
+        return std::make_unique<model_t<Args...>>(f);
+    }
 }
 
 /**
@@ -107,7 +113,7 @@ public:
                         bool abort_on_exit = true)
       : m_abort_on_exit(abort_on_exit), m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
-    m_callbacks.add(std::unique_ptr<function_type>{});
+    m_callbacks.add(std::unique_ptr<detail::concept_t>{});
   }
 
   ~MpiCallbacks() {
@@ -200,11 +206,6 @@ public:
    */
   boost::mpi::communicator const &comm() const { return m_comm; }
 
-  /**
-   * Set the MPI communicator for the callbacks.
-   */
-  void set_comm(boost::mpi::communicator &comm) { m_comm = comm; }
-
 private:
   /**
    * @brief Id for the loop_abort. Has to be 0.
@@ -225,7 +226,7 @@ private:
   /**
    * Internal storage for the callback functions.
    */
-  Utils::NumeratedContainer<std::unique_ptr<function_type>> m_callbacks;
+  Utils::NumeratedContainer<std::unique_ptr<detail::concept_t>> m_callbacks;
 
   /**
    * Mapping of function pointers to ids, so static callbacks can be

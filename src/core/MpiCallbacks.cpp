@@ -23,13 +23,13 @@
 
 #include "utils/make_unique.hpp"
 #include "utils/serialization/array.hpp"
+#include <utils/make_function.hpp>
 
 #include <boost/mpi.hpp>
 
 #include <stdexcept>
 
 namespace Communication {
-
 void MpiCallbacks::call(int id, int par1, int par2) const {
   /** Can only be call from master */
   if (m_comm.rank() != 0) {
@@ -41,10 +41,10 @@ void MpiCallbacks::call(int id, int par1, int par2) const {
     throw std::out_of_range("Callback does not exists.");
   }
 
-  std::array<int, 3> request{{id, par1, par2}};
-
   /** Send request to slaves */
-  boost::mpi::broadcast(m_comm, request.data(), request.size(), 0);
+  boost::mpi::broadcast(m_comm, id, 0);
+  detail::tuple<int,int> params{{par1, par2}};
+  boost::mpi::broadcast(m_comm, params, 0);
 }
 
 void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) const {
@@ -56,8 +56,7 @@ void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) const {
 }
 
 int MpiCallbacks::add(const function_type &f) {
-  assert(nullptr);
-  const int id = m_callbacks.add(std::make_unique<function_type>(f));
+  const int id = m_callbacks.add(std::make_unique<detail::model_t<int, int>>(f));
 
   assert(m_callbacks.find(id) != m_callbacks.end());
 
@@ -80,15 +79,15 @@ void MpiCallbacks::abort_loop() const { call(LOOP_ABORT, 0, 0); }
 
 void MpiCallbacks::loop() const {
   for (;;) {
-    std::array<int, 3> request;
+    int request;
     /** Communicate callback id and parameters */
-    boost::mpi::broadcast(m_comm, request.data(), request.size(), 0);
+    boost::mpi::broadcast(m_comm, request, 0);
     /** id == 0 is loop_abort. */
-    if (request[0] == LOOP_ABORT) {
+    if (request == LOOP_ABORT) {
       break;
     } else {
       /** Call the callback */
-      m_callbacks[request[0]]->operator()(request[1], request[2]);
+      m_callbacks[request]->operator()(m_comm);
     }
   }
 }

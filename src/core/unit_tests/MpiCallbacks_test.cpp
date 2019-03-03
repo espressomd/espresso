@@ -103,7 +103,11 @@ BOOST_AUTO_TEST_CASE(add_dynamic_callback) {
   MpiCallbacks callbacks(world, /* abort_on_exit */ false);
 
   bool called = false;
-  auto cb = [&called](int a, int b) { called = (a == 5) && (b == 13); };
+  auto cb = [&called](int a, int b) {
+    called = true;
+    BOOST_CHECK_EQUAL(a, 5);
+    BOOST_CHECK_EQUAL(b, 13);
+  };
 
   const int id = callbacks.add(cb);
 
@@ -118,7 +122,7 @@ BOOST_AUTO_TEST_CASE(add_dynamic_callback) {
     callbacks.loop();
   }
 
-  Testing::reduce_and_check(world, called);
+  BOOST_CHECK(called);
 }
 
 /**
@@ -210,6 +214,54 @@ BOOST_AUTO_TEST_CASE(destructor) {
 
   /* This must be reachable by all nodes */
   Testing::reduce_and_check(world, true);
+}
+
+struct DummyArchive {
+  std::vector<int> values;
+  int cnt = 0;
+
+  void operator&(int &i) {
+    values.push_back(i);
+    i = cnt++;
+  }
+};
+
+BOOST_AUTO_TEST_CASE(tuple) {
+  using Communication::detail::tuple;
+  using Communication::detail::apply;
+
+  /* Values */
+  {
+    tuple<int, int> t{{1, 2}};
+    BOOST_CHECK_EQUAL(1, std::get<0>(t.t));
+    BOOST_CHECK_EQUAL(2, std::get<1>(t.t));
+  }
+
+  /* Serialization */
+  {
+    tuple<int, int, int> t{{6, -2, 9}};
+
+    DummyArchive ar;
+    t.serialize(ar, 0);
+
+    BOOST_CHECK_EQUAL(ar.values.size(), 3);
+    BOOST_CHECK_EQUAL(ar.values[0], 6);
+    BOOST_CHECK_EQUAL(ar.values[1], -2);
+    BOOST_CHECK_EQUAL(ar.values[2], 9);
+
+    BOOST_CHECK_EQUAL(0, std::get<0>(t.t));
+    BOOST_CHECK_EQUAL(1, std::get<1>(t.t));
+    BOOST_CHECK_EQUAL(2, std::get<2>(t.t));
+  }
+
+  /* apply */
+  {
+    apply([](int a, double b, const char* c) {
+        BOOST_CHECK_EQUAL(a, 6);
+        BOOST_CHECK_EQUAL(b, -2.3);
+        BOOST_CHECK_EQUAL(c, "9");
+    }, tuple<int, double, const char*>{{6, -2.3, "9"}}.t);
+  }
 }
 
 int main(int argc, char **argv) {
