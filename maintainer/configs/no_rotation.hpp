@@ -44,8 +44,6 @@
 
 
 
-// Active matter
-#define SWIMMER_REACTIONS
 
 
 
