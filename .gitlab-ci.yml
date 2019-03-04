@@ -315,7 +315,7 @@ check_with_odd_no_of_processors:
 
 deploy_documentation:
   stage: deploy
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   only:
     - python
   dependencies:
@@ -329,9 +329,9 @@ deploy_documentation:
     - echo "$SSH_PUBLIC_KEY" > ${HOME}/.ssh/espresso_rsa.pub && chmod 600 ${HOME}/.ssh/espresso_rsa.pub
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   script:
-    - cd ${CI_PROJECT_DIR}/build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx && make doxygen && cd doc/sphinx/html &&
+    - cd ${CI_PROJECT_DIR}/build && make sphinx && make doxygen && cd doc/sphinx/html &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
-    - cd ../../doxygen/html &&
+    - cd ${CI_PROJECT_DIR/build/doc/doxygen/html &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
   tags:
     - docker
