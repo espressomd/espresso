@@ -45,7 +45,7 @@ if espressomd.has_features('LB') and 'LB.CPU' in modes:
 elif espressomd.has_features('LB_GPU') and 'LB.GPU' in modes:
     LB_implementation = espressomd.lb.LBFluidGPU
 if LB_implementation:
-    lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01, fric=2.0)
+    lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
     system.actors.add(lbf)
 
 system.part.add(pos=[1.0] * 3)

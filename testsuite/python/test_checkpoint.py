@@ -51,7 +51,9 @@ class CheckpointTest(ut.TestCase):
         state = self.lbf.get_params()
         reference = {'agrid': 0.5, 'visc': 1.3,
                      'dens': 1.5, 'tau': 0.01}
-        self.assertDictContainsSubset(reference, state)
+        for key, val in reference.items():
+            self.assertTrue(key in state)
+            self.assertAlmostEqual(reference[key], state[key], delta=1E-9)
 
     def test_variables(self):
         self.assertEqual(system.cell_system.skin, 0.1)
