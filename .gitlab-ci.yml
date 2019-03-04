@@ -277,7 +277,7 @@ check_sphinx:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   dependencies:
-  - cuda-maxset
+    - cuda-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
@@ -295,7 +295,7 @@ check_doxygen:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   dependencies:
-  - cuda-maxset
+    - cuda-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
@@ -322,13 +322,11 @@ check_with_odd_no_of_processors:
     - cuda
 
 
-.deploy_documentation:
+.deploy_base:
   stage: deploy
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   only:
     - python
-  dependencies:
-    - cuda-maxset
   before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
@@ -337,15 +335,13 @@ check_with_odd_no_of_processors:
     - echo "$SSH_PRIVATE_KEY" > ${HOME}/.ssh/espresso_rsa && chmod 600 ${HOME}/.ssh/espresso_rsa
     - echo "$SSH_PUBLIC_KEY" > ${HOME}/.ssh/espresso_rsa.pub && chmod 600 ${HOME}/.ssh/espresso_rsa.pub
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-  - cd ${CI_PROJECT_DIR/build/doc/doxygen/html &&
-    rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
   tags:
     - docker
     - linux
     - cuda
 
 deploy_sphinx_documentation:
-  extends: deploy_documentation
+  extends: .deploy_base
   dependencies:
     - check_sphinx
   script:
@@ -353,7 +349,7 @@ deploy_sphinx_documentation:
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
 
 deploy_doxygen_documentation:
-  extends: deploy_documentation
+  extends: .deploy_base
   dependencies:
     - check_doxygen
   script:
