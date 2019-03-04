@@ -164,6 +164,7 @@ int n_nodes = -1;
 // create the forward declarations
 #define CB(name) void name(int node, int param);
 CALLBACK_LIST
+#undef CB
 
 #ifdef DOXYGEN
     (void); /* this line prevents an interaction in Doxygen between
@@ -171,19 +172,13 @@ CALLBACK_LIST
 #endif
 
 namespace {
-
-#undef CB
-#define CB(name) name,
-/// List of callbacks
-std::vector<SlaveCallback *> slave_callbacks{CALLBACK_LIST};
-
 #ifdef COMM_DEBUG
 // create the list of names
-#undef CB
 #define CB(name) #name,
 
 /** List of callback names for debugging. */
 std::vector<std::string> names{CALLBACK_LIST};
+#undef CB
 #endif
 } // namespace
 
@@ -268,9 +263,9 @@ void mpi_init() {
   Communication::m_callbacks =
       Utils::make_unique<Communication::MpiCallbacks>(comm_cart);
 
-  for (auto &cb : slave_callbacks) {
-    mpiCallbacks().add(cb);
-  }
+#define CB(name) Communication::m_callbacks->add(&name);
+  CALLBACK_LIST
+#undef CB
 
   ErrorHandling::init_error_handling(mpiCallbacks());
   partCfg(Utils::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
