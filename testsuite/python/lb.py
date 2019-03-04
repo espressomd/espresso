@@ -296,7 +296,7 @@ class TestLBGPU(TestLB, ut.TestCase):
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
-        self.lbf.set_interpolation_order(1)
+        self.lbf.set_interpolation_order("quadratic")
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
             seed=3,

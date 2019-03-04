@@ -169,83 +169,87 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     if (lb_particle_coupling.couple_to_md && this_node == 0) {
-      if (lb_lbinterpolation_get_interpolation_order() ==
-          InterpolationOrder::linear) {
+      switch (lb_lbinterpolation_get_interpolation_order()) {
+      case (InterpolationOrder::linear):
         lb_calc_particle_lattice_ia_gpu(couple_virtual,
                                         lb_lbcoupling_get_gamma(), false);
-      } else if (lb_lbinterpolation_get_interpolation_order() ==
-                 InterpolationOrder::quadratic) {
+        break;
+      case (InterpolationOrder::quadratic):
         lb_calc_particle_lattice_ia_gpu(couple_virtual,
                                         lb_lbcoupling_get_gamma(), true);
+        break;
       }
     }
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     if (lb_particle_coupling.couple_to_md) {
-      if (not(lb_lbinterpolation_get_interpolation_order() ==
-              InterpolationOrder::linear)) {
+      switch (lb_lbinterpolation_get_interpolation_order()) {
+      case (InterpolationOrder::quadratic):
         throw std::runtime_error("The non-linear interpolation scheme is not "
                                  "implemented for the CPU LB.");
-      }
-      using rng_type = r123::Philox4x64;
-      using ctr_type = rng_type::ctr_type;
-      using key_type = rng_type::key_type;
+      case (InterpolationOrder::linear): {
+        using rng_type = r123::Philox4x64;
+        using ctr_type = rng_type::ctr_type;
+        using key_type = rng_type::key_type;
 
-      ctr_type c{{lb_particle_coupling.rng_counter_coupling.value(),
-                  static_cast<uint64_t>(RNGSalt::PARTICLES)}};
+        ctr_type c{{lb_particle_coupling.rng_counter_coupling.value(),
+                    static_cast<uint64_t>(RNGSalt::PARTICLES)}};
 
-      /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
-       * The factor 12 comes from the fact that we use random numbers
-       * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-       * time_step comes from the discretization.
-       */
-      auto const noise_amplitude = sqrt(12. * 2. * lb_lbcoupling_get_gamma() *
-                                        lb_lbfluid_get_kT() / time_step);
-      auto f_random = [&c](int id) -> Vector3d {
-        if (lb_lbfluid_get_kT() > 0.0) {
-          key_type k{{static_cast<uint32_t>(id)}};
+        /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+         * The factor 12 comes from the fact that we use random numbers
+         * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
+         * time_step comes from the discretization.
+         */
+        auto const noise_amplitude = sqrt(12. * 2. * lb_lbcoupling_get_gamma() *
+                                          lb_lbfluid_get_kT() / time_step);
+        auto f_random = [&c](int id) -> Vector3d {
+          if (lb_lbfluid_get_kT() > 0.0) {
+            key_type k{{static_cast<uint32_t>(id)}};
 
-          auto const noise = rng_type{}(c, k);
+            auto const noise = rng_type{}(c, k);
 
-          using Utils::uniform;
-          return Vector3d{uniform(noise[0]), uniform(noise[1]),
-                          uniform(noise[2])} -
-                 Vector3d::broadcast(0.5);
-        } else {
-          return Vector3d{};
-        }
-      };
+            using Utils::uniform;
+            return Vector3d{uniform(noise[0]), uniform(noise[1]),
+                            uniform(noise[2])} -
+                   Vector3d::broadcast(0.5);
+          } else {
+            return Vector3d{};
+          }
+        };
 
-      /* local cells */
-      for (auto &p : local_cells.particles()) {
-        if (!p.p.is_virtual or thermo_virtual or
-            (p.p.is_virtual && couple_virtual)) {
-          auto const force =
-              lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
-          /* add force to the particle */
-          p.f.f += force;
-#ifdef ENGINE
-          add_swimmer_force(p);
-#endif
-        }
-      }
-
-      /* ghost cells */
-      for (auto &p : ghost_cells.particles()) {
-        /* for ghost particles we have to check if they lie
-         * in the range of the local lattice nodes */
-        if (in_local_domain(p.r.p)) {
-          if (!p.p.is_virtual || thermo_virtual) {
-            lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
+        /* local cells */
+        for (auto &p : local_cells.particles()) {
+          if (!p.p.is_virtual or thermo_virtual or
+              (p.p.is_virtual && couple_virtual)) {
+            auto const force = lb_viscous_coupling(
+                &p, noise_amplitude * f_random(p.identity()));
+            /* add force to the particle */
+            p.f.f += force;
 #ifdef ENGINE
             add_swimmer_force(p);
 #endif
           }
         }
-      }
-    }
+
+        /* ghost cells */
+        for (auto &p : ghost_cells.particles()) {
+          /* for ghost particles we have to check if they lie
+           * in the range of the local lattice nodes */
+          if (in_local_domain(p.r.p)) {
+            if (!p.p.is_virtual || thermo_virtual) {
+              lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
+#ifdef ENGINE
+              add_swimmer_force(p);
 #endif
+            }
+          }
+        }
+        break;
+      }
+      }
+#endif
+    }
   }
 }
 

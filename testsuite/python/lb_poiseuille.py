@@ -152,7 +152,7 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-        self.lbf.set_interpolation_order(1)
+        self.lbf.set_interpolation_order("quadratic")
 
     def test_profile(self):
         """

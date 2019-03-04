@@ -179,14 +179,16 @@ cdef class HydrodynamicInteraction(Actor):
 
             Parameters
             ----------
-            interpolation_order : :obj:`int`
-                0 refers to linear interpolation, 1 to quadratic interpolation.
+            interpolation_order : :obj:`str`
+                ``linear`` refers to linear interpolation, ``quadratic`` to quadratic interpolation.
 
             """
-            if (interpolation_order == 0):
+            if (interpolation_order == "linear"):
                 lb_lbinterpolation_set_interpolation_order(linear)
-            elif (interpolation_order == 1):
+            elif (interpolation_order == "quadratic"):
                 lb_lbinterpolation_set_interpolation_order(quadratic)
+            else:
+                raise ValueError("Invalid parameter")
 
         def get_interpolated_velocity(self, pos):
             """Get LB fluid velocity at specified position.
