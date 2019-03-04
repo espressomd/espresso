@@ -282,6 +282,10 @@ check_sphinx:
   script:
     - cd ${CI_PROJECT_DIR}/build
     - make sphinx
+  artifacts:
+    paths:
+    - build/doc/sphinx
+    expire_in: 1 week
   tags:
     - docker
     - linux
@@ -296,6 +300,10 @@ check_doxygen:
   script:
     - cd ${CI_PROJECT_DIR}/build
     - make doxygen
+  artifacts:
+    paths:
+    - build/doc/doxygen
+    expire_in: 1 week
   tags:
     - docker
     - linux
@@ -313,7 +321,8 @@ check_with_odd_no_of_processors:
     - linux
     - cuda
 
-deploy_documentation:
+
+.deploy_documentation:
   stage: deploy
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   only:
@@ -328,15 +337,28 @@ deploy_documentation:
     - echo "$SSH_PRIVATE_KEY" > ${HOME}/.ssh/espresso_rsa && chmod 600 ${HOME}/.ssh/espresso_rsa
     - echo "$SSH_PUBLIC_KEY" > ${HOME}/.ssh/espresso_rsa.pub && chmod 600 ${HOME}/.ssh/espresso_rsa.pub
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-  script:
-    - cd ${CI_PROJECT_DIR}/build && make sphinx && make doxygen && cd doc/sphinx/html &&
-      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
-    - cd ${CI_PROJECT_DIR/build/doc/doxygen/html &&
-      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
+  - cd ${CI_PROJECT_DIR/build/doc/doxygen/html &&
+    rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
   tags:
     - docker
     - linux
     - cuda
+
+deploy_sphinx_documentation:
+  extends: deploy_documentation
+  dependencies:
+    - check_sphinx
+  script:
+    - cd ${CI_PROJECT_DIR}/build/doc/sphinx/html && 
+      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
+
+deploy_doxygen_documentation:
+  extends: deploy_documentation
+  dependencies:
+    - check_doxygen
+  script:
+    - cd ${CI_PROJECT_DIR/build/doc/doxygen/html &&
+      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
 
 status_success:
   stage: result
