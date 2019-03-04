@@ -27,11 +27,8 @@
 */
 
 // Geometry, equation of motion, thermostat/barostat
-#define ROTATION
-#define ROTATIONAL_INERTIA
 #define MASS
 #define PARTIAL_PERIODIC
-#define PARTICLE_ANISOTROPY
 #define EXTERNAL_FORCES
 #define LANGEVIN_PER_PARTICLE
 #define BOND_CONSTRAINT
@@ -43,12 +40,6 @@
 #ifdef CUDA
 #define MMM1D_GPU
 #endif
-
-#define DIPOLES
-
-// Active matter
-#define SWIMMER_REACTIONS
-#define ENGINE
 
 // Hydrodynamics
 #define LB
@@ -87,7 +78,6 @@
 #endif
 
 // Further featuers
-#define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
 #define IMMERSED_BOUNDARY
 #define COLLISION_DETECTION
