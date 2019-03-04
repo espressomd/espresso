@@ -29,7 +29,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "particle_data.hpp"
 
 #include "utils/math/triangle_functions.hpp"

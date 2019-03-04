@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Max-Planck-Institute for Polymer Research, Theory Group
 
   This file is part of ESPResSo.
 
@@ -18,37 +18,31 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file
- *
- * Fluid related analysis functions.
- * Header file for \ref statistics_fluid.cpp.
- *
- */
 
-#ifndef STATISTICS_FLUID_H
-#define STATISTICS_FLUID_H
+#define BOOST_TEST_MODULE Utils::Counter test
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
-#include "config.hpp"
+#include "utils/Counter.hpp"
+using Utils::Counter;
 
-#ifdef LB
+BOOST_AUTO_TEST_CASE(ctor) {
+  {
+    auto c = Counter<int>(5);
+    BOOST_CHECK_EQUAL(c.value(), 5);
+    BOOST_CHECK_EQUAL(c.initial_value(), 5);
+  }
 
-/** Calculate mass of the LB fluid.
- * \param result Fluid mass
- */
-void lb_calc_fluid_mass(double *result);
+  {
+    auto c = Counter<int>(5, 6);
+    BOOST_CHECK_EQUAL(c.initial_value(), 5);
+    BOOST_CHECK_EQUAL(c.value(), 6);
+  }
+}
 
-/** Calculate momentum of the LB fluid.
- * \param result Fluid momentum
- */
-void lb_calc_fluid_momentum(double *result);
-
-/** Calculate temperature of the LB fluid.
- * \param result Fluid temperature
- */
-void lb_calc_fluid_temp(double *result);
-
-void lb_collect_boundary_forces(double *result);
-
-#endif /* LB */
-
-#endif /* STATISTICS_FLUID_H */
+BOOST_AUTO_TEST_CASE(increment) {
+  auto c = Counter<int>(5);
+  c.increment();
+  BOOST_CHECK_EQUAL(c.value(), 6);
+  BOOST_CHECK_EQUAL(c.initial_value(), 5);
+}

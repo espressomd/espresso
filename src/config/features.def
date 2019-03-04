@@ -76,8 +76,6 @@ EK_ELECTROSTATIC_COUPLING       requires CUDA and FFTW
 EK_DEBUG                        requires ELECTROKINETICS
 EK_DOUBLE_PREC                  requires ELECTROKINETICS
 LATTICE                         equals LB or LB_GPU
-SHANCHEN                        implies LB_GPU
-SHANCHEN                        requires not ELECTROKINETICS and EXPERIMENTAL_FEATURES
 
 
 /* Interaction features */
@@ -116,7 +114,6 @@ BOND_ANGLE                      requires not BOND_ANGLE_OLD
 /* Immersed-Boundary Bayreuth version */
 IMMERSED_BOUNDARY
 IMMERSED_BOUNDARY               requires VIRTUAL_SITES
-IMMERSED_BOUNDARY               requires not SHANCHEN
 SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS

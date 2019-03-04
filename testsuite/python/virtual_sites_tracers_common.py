@@ -59,21 +59,15 @@ class VirtualSitesTracersCommon(object):
         system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=1)
         system.integrator.run(400)
 
-        #
-        #
         system.part[0].pos = (0, 5.5, 5.5)
-
         system.time = 0
         ## Perform integration
 
-        print("time, actual position, expected position")
         for i in range(3):
             system.integrator.run(100)
             # compute expected position
             X = self.lbf.get_interpolated_velocity(
                 system.part[0].pos)[0] * system.time
-            print(system.time, system.part[
-                  0].pos[0], X, system.part[0].pos[0] - X)
             self.assertAlmostEqual(
                 system.part[0].pos[0] / X - 1, 0, delta=0.005)
 
@@ -142,24 +136,16 @@ class VirtualSitesTracersCommon(object):
         system.bonded_inter.add(tribend)
         system.part[0].add_bond((tribend, 1, 2, 3))
 
-        ## output before
-        print("Angle before twisting: " + str(self.compute_angle()))
-
         ## twist
         system.part[1].pos = [5.2, 5, 6]
-
-        ## output after
-        print("Angle after twisting: " + str(self.compute_angle()))
 
         ## Perform integrat[ion
         last_angle = self.compute_angle()
         for i in range(6):
             system.integrator.run(500)
             angle = self.compute_angle()
-            print("Angle after relaxation: ", angle)
             self.assertLess(angle, last_angle)
             last_angle = angle
-
         self.assertLess(angle, 0.03)
 
     @ut.skipIf(not espressomd.has_features("IMMERSED_BOUNDARY"), "skipped for lack of IMMERSED_BOUNDARY")
@@ -198,16 +184,14 @@ class VirtualSitesTracersCommon(object):
         system.bonded_inter.add(triStrong)
         system.part[6].add_bond((triStrong, 7, 8))
         ## Perform integration
-#        system.integrator.run(1)
-#        system.part[3:].pos =system.part[3:].pos +random.random((6,3)) -.5
-
         system.integrator.run(6000)
 
         # For the cpu variant, check particle velocities
         if isinstance(self.lbf, lb.LBFluid):  # as opposed to LBFluidGPU
             for p in system.part:
                 np.testing.assert_allclose(
-                    np.copy(p.v), self.lbf.get_interpolated_velocity(p.pos),
+                    np.copy(p.v), np.copy(
+                        self.lbf.get_interpolated_velocity(p.pos)),
                    atol=2E-2)
         # get new shapes
         dist1non = np.linalg.norm(
