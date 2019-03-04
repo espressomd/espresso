@@ -52,7 +52,7 @@ constexpr decltype(auto) apply(F &&f, Tuple &&t) {
 
 namespace detail {
 template <class F, class Tuple, std::size_t... I>
-constexpr void for_each_impl(F &&f, Tuple &t, std::index_sequence<I...>) {
+constexpr void for_each_impl(F &&f, Tuple t, std::index_sequence<I...>) {
   using expand = int[];
   (void)expand{0, ((void)(f(std::get<I>(t))), 0)...};
 }
@@ -63,6 +63,13 @@ template <class F, class Tuple> void for_each(F &&f, Tuple &t) {
       std::forward<F>(f), t,
       std::make_index_sequence<std::tuple_size<Tuple>::value>{});
 }
+
+template <class F, class Tuple> void for_each(F &&f, Tuple &&t) {
+  detail::for_each_impl(
+      std::forward<F>(f), std::forward<Tuple>(t),
+      std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
+}
+
 
 template <class... Args> struct tuple {
   std::tuple<Args...> t;

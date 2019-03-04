@@ -110,7 +110,6 @@ int n_nodes = -1;
 
 // if you want to add a callback, add it here, and here only
 #define CALLBACK_LIST                                                          \
-  CB(mpi_bcast_parameter_slave)                                                \
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_bcast_event_slave)                                                    \
   CB(mpi_place_particle_slave)                                                 \

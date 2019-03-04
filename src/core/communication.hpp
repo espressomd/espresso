@@ -391,6 +391,29 @@ std::vector<int> mpi_resort_particles(int global_flag);
 
 /*@}*/
 
+namespace Communication {
+    struct RegisterCallback {
+    private:
+        std::vector<std::unique_ptr<detail::concept_t>> &static_callbacks() {
+            static std::vector<std::unique_ptr<detail::concept_t>> m_callbacks;
+
+            return m_callbacks;
+        }
+
+    public:
+        RegisterCallback() = delete;
+
+        template<class... Args>
+        explicit RegisterCallback(void (*cb)(Args...)) {
+            auto &cbs = static_callbacks();
+
+            cbs.emplace_back(detail::make_model(cb));
+        }
+    };
+}
+
+#define REGISTER_CALLBACK(cb) namespace Communication { static RegisterCallback register_##cb{&cb}; }
+
 /** \name Event codes for \ref mpi_bcast_event
  *  These codes are used by \ref mpi_bcast_event to notify certain changes
  *  of doing something now.

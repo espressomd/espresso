@@ -239,6 +239,8 @@ void mpi_bcast_parameter_slave(int i) {
   check_runtime_errors();
 }
 
+REGISTER_CALLBACK(mpi_bcast_parameter_slave);
+
 int mpi_bcast_parameter(int i) {
   Communication::mpiCallbacks().call(mpi_bcast_parameter_slave, i);
 
