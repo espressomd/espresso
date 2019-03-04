@@ -751,11 +751,11 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
       cpfile.close();
     } else {
       std::fstream cpfile(filename, std::ios::out | std::ios::binary);
-      cpfile.write(reinterpret_cast<char *>(&host_checkpoint_vd),
+      cpfile.write(reinterpret_cast<char *>(host_checkpoint_vd),
                    19 * sizeof(float) * lbpar_gpu.number_of_nodes);
-      cpfile.write(reinterpret_cast<char *>(&host_checkpoint_boundary),
+      cpfile.write(reinterpret_cast<char *>(host_checkpoint_boundary),
                    sizeof(int) * lbpar_gpu.number_of_nodes);
-      cpfile.write(reinterpret_cast<char *>(&host_checkpoint_force),
+      cpfile.write(reinterpret_cast<char *>(host_checkpoint_force),
                    3 * sizeof(float) * lbpar_gpu.number_of_nodes);
       cpfile.close();
     }
@@ -835,12 +835,14 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
     } else {
       if (fread(host_checkpoint_vd.data(), sizeof(float),
                 19 * int(lbpar_gpu.number_of_nodes),
-                cpfile) != (unsigned int)(19 * lbpar_gpu.number_of_nodes))
-        if (fread(host_checkpoint_boundary.data(), sizeof(int),
-                  int(lbpar_gpu.number_of_nodes),
-                  cpfile) != (unsigned int)lbpar_gpu.number_of_nodes) {
-          fclose(cpfile);
-        }
+                cpfile) != (unsigned int)(19 * lbpar_gpu.number_of_nodes)) {
+        fclose(cpfile);
+      }
+      if (fread(host_checkpoint_boundary.data(), sizeof(int),
+                int(lbpar_gpu.number_of_nodes),
+                cpfile) != (unsigned int)lbpar_gpu.number_of_nodes) {
+        fclose(cpfile);
+      }
       if (fread(host_checkpoint_force.data(), sizeof(lbForceFloat),
                 3 * int(lbpar_gpu.number_of_nodes),
                 cpfile) != (unsigned int)(3 * lbpar_gpu.number_of_nodes)) {
