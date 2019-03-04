@@ -2,6 +2,15 @@
 #define LATTICE_INTERPOLATION_HPP
 
 /**
+ * Interpolation order for the LB fluid interpolation.
+ * @note For the CPU LB only linear interpolation is available.
+ */
+enum class InterpolationOrder { linear, quadratic };
+void lb_lbinterpolation_set_interpolation_order(
+    InterpolationOrder const &interpolation_order);
+void mpi_set_interpolation_order_slave(int order, int);
+InterpolationOrder lb_lbinterpolation_get_interpolation_order();
+/**
  * @brief Calculates the fluid velocity at a given position of the
  * lattice.
  * @note It can lead to undefined behaviour if the

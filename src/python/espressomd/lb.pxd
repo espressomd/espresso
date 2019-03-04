@@ -97,6 +97,13 @@ IF LB_GPU or LB:
 
     cdef extern from "grid_based_algorithms/lb_interpolation.hpp":
         const Vector3d lb_lbinterpolation_get_interpolated_velocity_global(Vector3d & p) except +
+        cdef cppclass InterpolationOrder:
+            pass
+        void lb_lbinterpolation_set_interpolation_order(InterpolationOrder & order)
+
+    cdef extern from "grid_based_algorithms/lb_interpolation.hpp" namespace "InterpolationOrder":
+        cdef InterpolationOrder linear
+        cdef InterpolationOrder quadratic
 
     ###############################################
     #

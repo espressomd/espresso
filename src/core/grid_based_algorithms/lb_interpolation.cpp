@@ -1,3 +1,4 @@
+#include "grid_based_algorithms/lb_interpolation.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "grid.hpp"
@@ -12,6 +13,33 @@
 
 namespace {
 
+InterpolationOrder interpolation_order = InterpolationOrder::linear;
+}
+
+void lb_lbinterpolation_set_interpolation_order(
+    InterpolationOrder const &interpolation_order) {
+  if (interpolation_order == InterpolationOrder::linear) {
+    mpi_call(mpi_set_interpolation_order_slave, 0, 0);
+    mpi_set_interpolation_order_slave(0, 0);
+  } else if (interpolation_order == InterpolationOrder::quadratic) {
+    mpi_call(mpi_set_interpolation_order_slave, 1, 0);
+    mpi_set_interpolation_order_slave(1, 0);
+  }
+}
+
+void mpi_set_interpolation_order_slave(int order, int) {
+  if (order == 0) {
+    interpolation_order = InterpolationOrder::linear;
+  } else if (order == 1) {
+    interpolation_order = InterpolationOrder::quadratic;
+  }
+}
+
+InterpolationOrder lb_lbinterpolation_get_interpolation_order() {
+  return interpolation_order;
+}
+
+namespace {
 template <typename Op>
 void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
                            Op &&op) {
@@ -72,12 +100,21 @@ lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     Vector3d interpolated_u{};
-    lb_get_interpolated_velocity_gpu(folded_pos.data(), interpolated_u.data(),
-                                     1, false);
+    if (interpolation_order == InterpolationOrder::linear) {
+      lb_get_interpolated_velocity_gpu(folded_pos.data(), interpolated_u.data(),
+                                       1, false);
+    } else if (interpolation_order == InterpolationOrder::quadratic) {
+      lb_get_interpolated_velocity_gpu(folded_pos.data(), interpolated_u.data(),
+                                       1, true);
+    }
     return interpolated_u;
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
+    if (interpolation_order == InterpolationOrder::quadratic) {
+      throw std::runtime_error("The non-linear interpolation scheme is not "
+                               "implemented for the CPU LB.");
+    }
     auto const node = map_position_node_array(folded_pos);
     if (node == 0) {
       return lb_lbinterpolation_get_interpolated_velocity(folded_pos);
@@ -92,6 +129,10 @@ lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
 #ifdef LB
 void lb_lbinterpolation_add_force_density(const Vector3d &pos,
                                           const Vector3d &force_density) {
+  if (interpolation_order == InterpolationOrder::quadratic) {
+    throw std::runtime_error("The non-linear interpolation scheme is not "
+                             "implemented for the CPU LB.");
+  }
   lattice_interpolation(lblattice, pos,
                         [&force_density](Lattice::index_t index, double w) {
                           auto &field = lbfields[index];

@@ -1457,9 +1457,12 @@ interpolation_three_point_coupling(LB_nodes_gpu n_a, float *particle_position,
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 3; ++k) {
-        auto const x = fold_if_necessary(left_node_index[0] - 1 + i, para->dim_x);
-        auto const y = fold_if_necessary(left_node_index[1] - 1 + j, para->dim_y);
-        auto const z = fold_if_necessary(left_node_index[2] - 1 + k, para->dim_z);
+        auto const x =
+            fold_if_necessary(left_node_index[0] - 1 + i, para->dim_x);
+        auto const y =
+            fold_if_necessary(left_node_index[1] - 1 + j, para->dim_y);
+        auto const z =
+            fold_if_necessary(left_node_index[2] - 1 + k, para->dim_z);
         delta[cnt] = temp_delta[i].x * temp_delta[j].y * temp_delta[k].z;
         node_indices[cnt] = xyz_to_index(x, y, z);
         auto const boundary_index = n_a.boundary[node_indices[cnt]];
@@ -1600,7 +1603,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta,
                                    unsigned int part_index, float *delta_j,
                                    unsigned int *node_index, LB_rho_v_gpu *d_v,
                                    int flag_cs, uint64_t philox_counter,
-                                   float friction, float* lb_boundary_velocity, bool three_point_coupling) {
+                                   float friction, float *lb_boundary_velocity,
+                                   bool three_point_coupling) {
 // Zero out workspace
 #pragma unroll
   for (int jj = 0; jj < 3; ++jj) {
@@ -1642,10 +1646,11 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta,
 
   float3 interpolated_u;
   if (three_point_coupling) {
-    interpolated_u = interpolation_three_point_coupling(n_a, position, lb_boundary_velocity, node_index, delta);
+    interpolated_u = interpolation_three_point_coupling(
+        n_a, position, lb_boundary_velocity, node_index, delta);
   } else {
     interpolated_u =
-      interpolation_two_point_coupling(n_a, position, node_index, delta);
+        interpolation_two_point_coupling(n_a, position, node_index, delta);
   }
 
 #ifdef ENGINE
@@ -1742,14 +1747,17 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta,
  */
 __device__ void calc_node_force(float *delta, float *delta_j,
                                 unsigned int *node_index,
-                                LB_node_force_density_gpu node_f, bool three_point_coupling) {
+                                LB_node_force_density_gpu node_f,
+                                bool three_point_coupling) {
   int max_node = 8;
   if (three_point_coupling) {
     max_node = 27;
   }
-  for (int node=0; node<max_node; ++node) {
-    for (int i=0; i<3; ++i) {
-      atomicAdd(&(node_f.force_density[i * para->number_of_nodes + node_index[node]]), delta[node] * delta_j[i]);
+  for (int node = 0; node < max_node; ++node) {
+    for (int i = 0; i < 3; ++i) {
+      atomicAdd(
+          &(node_f.force_density[i * para->number_of_nodes + node_index[node]]),
+          delta[node] * delta_j[i]);
     }
   }
 }
@@ -2238,7 +2246,8 @@ __global__ void
 calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data,
                        float *particle_force, LB_node_force_density_gpu node_f,
                        LB_rho_v_gpu *d_v, bool couple_virtual,
-                       uint64_t philox_counter, float friction, float* lb_boundary_velocity, bool three_point_coupling) {
+                       uint64_t philox_counter, float friction,
+                       float *lb_boundary_velocity, bool three_point_coupling) {
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
@@ -2253,15 +2262,18 @@ calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data,
       /* force acting on the particle. delta_j will be used later to compute the
        * force that acts back onto the fluid. */
       calc_viscous_force(n_a, delta, particle_data, particle_force, part_index,
-                         delta_j, node_index, d_v, 0, philox_counter, friction, lb_boundary_velocity, three_point_coupling);
+                         delta_j, node_index, d_v, 0, philox_counter, friction,
+                         lb_boundary_velocity, three_point_coupling);
       calc_node_force(delta, delta_j, node_index, node_f, three_point_coupling);
 
 #ifdef ENGINE
       if (particle_data[part_index].swim.swimming) {
         calc_viscous_force(n_a, delta, particle_data, particle_force,
                            part_index, delta_j, node_index, d_v, 1,
-                           philox_counter, friction, lb_boundary_velocity, three_point_coupling);
-        calc_node_force(delta, delta_j, node_index, node_f, three_point_coupling);
+                           philox_counter, friction, lb_boundary_velocity,
+                           three_point_coupling);
+        calc_node_force(delta, delta_j, node_index, node_f,
+                        three_point_coupling);
       }
 #endif
     }
@@ -2654,7 +2666,8 @@ void lb_init_extern_nodeforcedensities_GPU(
 }
 
 /** Setup and call particle kernel from the host */
-void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction, bool three_point_coupling) {
+void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction,
+                                     bool three_point_coupling) {
   if (lbpar_gpu.number_of_particles) {
     /* call of the particle kernel */
     /* values for the particle kernel */
@@ -2671,7 +2684,8 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction, bool 
                threads_per_block_particles, *current_nodes,
                gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
                node_f, device_rho_v, couple_virtual,
-               rng_counter_coupling_gpu.value(), friction, lb_boundary_velocity, three_point_coupling);
+               rng_counter_coupling_gpu.value(), friction, lb_boundary_velocity,
+               three_point_coupling);
     rng_counter_coupling_gpu.increment();
   }
 }

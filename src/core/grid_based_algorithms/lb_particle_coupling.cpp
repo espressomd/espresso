@@ -168,13 +168,26 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    if (lb_particle_coupling.couple_to_md && this_node == 0)
-      lb_calc_particle_lattice_ia_gpu(couple_virtual,
-                                      lb_lbcoupling_get_gamma(), false);
+    if (lb_particle_coupling.couple_to_md && this_node == 0) {
+      if (lb_lbinterpolation_get_interpolation_order() ==
+          InterpolationOrder::linear) {
+        lb_calc_particle_lattice_ia_gpu(couple_virtual,
+                                        lb_lbcoupling_get_gamma(), false);
+      } else if (lb_lbinterpolation_get_interpolation_order() ==
+                 InterpolationOrder::quadratic) {
+        lb_calc_particle_lattice_ia_gpu(couple_virtual,
+                                        lb_lbcoupling_get_gamma(), true);
+      }
+    }
 #endif
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
     if (lb_particle_coupling.couple_to_md) {
+      if (not(lb_lbinterpolation_get_interpolation_order() ==
+              InterpolationOrder::linear)) {
+        throw std::runtime_error("The non-linear interpolation scheme is not "
+                                 "implemented for the CPU LB.");
+      }
       using rng_type = r123::Philox4x64;
       using ctr_type = rng_type::ctr_type;
       using key_type = rng_type::key_type;

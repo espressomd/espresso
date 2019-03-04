@@ -159,7 +159,8 @@ int n_nodes = -1;
   CB(mpi_set_lb_fluid_counter)                                                 \
   CB(mpi_update_particle_slave)                                                \
   CB(mpi_bcast_lb_particle_coupling_slave)                                     \
-  CB(mpi_recv_lb_interpolated_velocity_slave)
+  CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
+  CB(mpi_set_interpolation_order_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);

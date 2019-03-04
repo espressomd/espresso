@@ -174,6 +174,21 @@ cdef class HydrodynamicInteraction(Actor):
 
             return self._params
 
+        def set_interpolation_order(self, interpolation_order):
+            """ Set the order for the fluid interpolation scheme.
+
+            Parameters
+            ----------
+            interpolation_order : :obj:`int`
+                0 refers to linear interpolation, 1 to quadratic interpolation.
+
+            """
+            if (interpolation_order == 0):
+                lb_lbinterpolation_set_interpolation_order(linear)
+            elif (interpolation_order == 1):
+                lb_lbinterpolation_set_interpolation_order(quadratic)
+
+
         def get_interpolated_velocity(self, pos):
             """Get LB fluid velocity at specified position.
 
