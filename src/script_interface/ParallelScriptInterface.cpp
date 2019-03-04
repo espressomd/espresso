@@ -37,7 +37,7 @@ ParallelScriptInterface::ParallelScriptInterface(std::string const &name) {
 
   /* Add the callback */
   m_callback_id =
-      m_cb->add(Communication::MpiCallbacks::function_type([](int, int) {}));
+      m_cb->add([](int, int) {});
 
   call(CallbackAction::NEW);
 

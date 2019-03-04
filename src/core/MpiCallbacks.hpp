@@ -72,13 +72,12 @@ namespace detail {
         virtual ~concept_t() = default;
     };
 
-    template<class... Args>
+    template<class F, class... Args>
     struct model_t final : public concept_t {
-        using function_type = std::function<void(Args...)>;
+        F m_f;
 
-        function_type m_f;
-
-        explicit model_t(function_type f) : m_f(std::move(f)) {}
+        template<class FRef>
+        explicit model_t(FRef&& f) : m_f(std::forward<FRef>(f)) {}
 
         void operator()(const boost::mpi::communicator &comm) const override {
           tuple<Args...> params;
@@ -88,14 +87,28 @@ namespace detail {
         }
     };
 
+    template<class CRef, class C, class R, class... Args>
+    auto make_model_impl(CRef&& c, R(C::*)(Args...) const) {
+        return std::make_unique<model_t<C, Args...>>(std::forward<CRef>(c));
+    }
+
+    template<typename F>
+    auto make_model(F&& f) {
+        using C = std::remove_reference_t<F>;
+        return make_model_impl(std::forward<F>(f), &C::operator());
+    }
+
+    /*
     template<class... Args>
     auto make_model(const std::function<void(Args...)> &f) {
-        return std::make_unique<model_t<Args...>>(f);
+        return std::make_unique<model_t<std::function<void(Args...)>,
+                Args...>>(f);
     }
+    */
 
     template<class ... Args>
     auto make_model(void (*f_ptr)(Args...)) {
-        return std::make_unique<model_t<Args...>>(f_ptr);
+        return std::make_unique<model_t<void(*)(Args...), Args...>>(f_ptr);
     }
 }
 
@@ -111,10 +124,8 @@ class MpiCallbacks {
 public:
   /** Function type of static callbacks. */
   typedef void (*func_ptr_type)(int, int);
-  /** Type of the callback functions. */
-  typedef std::function<void(int, int)> function_type;
 
-  explicit MpiCallbacks(boost::mpi::communicator &comm,
+    explicit MpiCallbacks(boost::mpi::communicator &comm,
                         bool abort_on_exit = true)
       : m_abort_on_exit(abort_on_exit), m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
@@ -134,10 +145,15 @@ public:
    * Add a new callback to the system. This is a collective
    * function that must be run on all nodes.
    *
+   * @tparam F An object with a const call operator.
+   *
    * @param f The callback function to add.
    * @return An integer id with which the callback can be called.
    **/
-  int add(const function_type &f);
+   template<typename F>
+   int add(F&& f) {
+        return m_callbacks.add(detail::make_model(std::forward<F>(f)));
+   }
 
   /**
    * @brief Add a new static callback.
@@ -148,9 +164,15 @@ public:
    * @param fp Pointer to the static callback function to add.
    * @return An integer id with which the callback can be called.
    **/
-  int add(func_ptr_type fp);
+  template<class... Args>
+  int add(void (*fp)(Args...)) {
+      const int id = m_callbacks.add(detail::make_model(fp));
+      m_func_ptr_to_id[reinterpret_cast<void(*)()>(fp)] = id;
 
-  /**
+      return id;
+  }
+
+    /**
    * @brief Remove callback.
    *
    * Remove the callback id from the callback list.
@@ -172,7 +194,23 @@ public:
    * @param par1 First parameter to pass to the callback.
    * @param par2 Second parameter to pass to the callback.
    */
-  void call(int id, int par1 = 0, int par2 = 0) const;
+   template<class... Args>
+  void call(int id, Args&&... args) const {
+      /** Can only be call from master */
+      if (m_comm.rank() != 0) {
+          throw std::logic_error("Callbacks can only be invoked on rank 0.");
+      }
+
+      /** Check if callback exists */
+      if (m_callbacks.find(id) == m_callbacks.end()) {
+          throw std::out_of_range("Callback does not exists.");
+      }
+
+      /** Send request to slaves */
+      boost::mpi::broadcast(m_comm, id, 0);
+      detail::tuple<Args...> params{{args...}};
+      boost::mpi::broadcast(m_comm, params, 0);
+  }
 
   /**
    * @brief call a callback.
@@ -186,7 +224,14 @@ public:
    * @param par1 First parameter to pass to the callback.
    * @param par2 Second parameter to pass to the callback.
    */
-  void call(func_ptr_type fp, int par1 = 0, int par2 = 0) const;
+  template<class... Args>
+  void call(void (*fp)(std::decay_t<Args>...), Args&&... args) const {
+      /** If the function pointer is invalid, map.at will throw
+          an out_of_range exception. */
+      const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
+
+      call(id, std::forward<Args>(args)...);
+  }
 
   /**
    * @brief Mpi slave loop.
@@ -237,7 +282,7 @@ private:
    * Mapping of function pointers to ids, so static callbacks can be
    * called by their pointer for backward compatibility.
    */
-  std::unordered_map<void *, int> m_func_ptr_to_id;
+  std::unordered_map<void (*)(), int> m_func_ptr_to_id;
 };
 } /* namespace Communication */
 

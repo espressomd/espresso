@@ -43,8 +43,7 @@ VariantMap ParallelScriptInterfaceSlave::bcast_variant_map() const {
 }
 
 ParallelScriptInterfaceSlave::ParallelScriptInterfaceSlave() {
-  m_cb->add(Communication::MpiCallbacks::function_type(
-      [this](int a, int) { mpi_slave(a, 0); }));
+  m_cb->add([this](int a, int) { mpi_slave(a, 0); });
 }
 
 std::map<ObjectId, ObjectId> &

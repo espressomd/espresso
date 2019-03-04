@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(root_check) {
   MpiCallbacks callbacks(world, true);
 
   auto cb = [](int, int) -> void {};
-  auto const id = callbacks.add(std::function<void(int, int)>{cb});
+  auto const id = callbacks.add(cb);
 
   /* Exception on non-root */
   if (world.rank() != 0) {
