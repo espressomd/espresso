@@ -3210,14 +3210,13 @@ void lb_lbfluid_get_population(const Vector3i &xyz,
   cuda_safe_mem(cudaFree(population_device));
 }
 
-struct two_point_interpolation {
+struct interpolation {
   LB_nodes_gpu current_nodes_gpu;
   LB_rho_v_gpu *d_v_gpu;
   bool three_point = false;
   float *lb_boundary_velocity;
-  two_point_interpolation(LB_nodes_gpu _current_nodes_gpu,
-                          LB_rho_v_gpu *_d_v_gpu, bool three_point,
-                          float *lb_boundary_velocity)
+  interpolation(LB_nodes_gpu _current_nodes_gpu, LB_rho_v_gpu *_d_v_gpu,
+                bool three_point, float *lb_boundary_velocity)
       : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu),
         three_point(three_point), lb_boundary_velocity(lb_boundary_velocity){};
   __device__ float3 operator()(const float3 &position) const {
@@ -3251,8 +3250,8 @@ void lb_get_interpolated_velocity_gpu(double const *positions,
   thrust::device_vector<float3> velocities_device(length);
   thrust::transform(positions_device.begin(), positions_device.end(),
                     velocities_device.begin(),
-                    two_point_interpolation(*current_nodes, device_rho_v,
-                                            three_point, lb_boundary_velocity));
+                    interpolation(*current_nodes, device_rho_v, three_point,
+                                  lb_boundary_velocity));
   thrust::host_vector<float3> velocities_host = velocities_device;
   int index = 0;
   for (auto v : velocities_host) {
