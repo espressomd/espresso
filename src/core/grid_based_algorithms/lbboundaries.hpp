@@ -65,18 +65,6 @@ int lbboundary_get_force(int no, double *f);
 void add(const std::shared_ptr<LBBoundary> &);
 void remove(const std::shared_ptr<LBBoundary> &);
 
-#ifdef LB_BOUNDARIES
-/** Bounce back boundary conditions.
- * The populations that have propagated into a boundary node
- * are bounced back to the node they came from. This results
- * in no slip boundary conditions.
- *
- * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
- */
-void lb_bounce_back(LB_Fluid &lbfluid);
-
-#endif /* LB_BOUNDARIES */
-
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 } // namespace LBBoundaries
 #endif /* LB_BOUNDARIES_H */

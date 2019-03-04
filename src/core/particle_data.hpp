@@ -108,11 +108,6 @@ struct ParticleProperties {
   constexpr static double mass{1.0};
 #endif /* MASS */
 
-#ifdef SHANCHEN
-  std::array<double, 2 *LB_COMPONENTS> solvation =
-      std::array<double, 2 * LB_COMPONENTS>{};
-#endif
-
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
   Vector3d rinertia = {1., 1., 1.};
@@ -246,11 +241,6 @@ struct ParticlePosition {
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
   Vector3d p_old = {0., 0., 0.};
-#endif
-
-#ifdef SHANCHEN
-  std::array<double, LB_COMPONENTS> composition =
-      std::array<double, LB_COMPONENTS>{};
 #endif
 };
 
@@ -474,7 +464,7 @@ void MPI_Send(Particle const *, Size, Ts...) {
 
 /** List of particles. The particle array is resized using a sophisticated
  *  (we hope) algorithm to avoid unnecessary resizes.
- *  Access using \ref realloc_particlelist, \ref got_particle, ...
+ *  Access using \ref realloc_particlelist, ...
  */
 struct ParticleList {
   ParticleList() : part{nullptr}, n{0}, max{0} {}
@@ -827,24 +817,19 @@ void set_particle_gamma_rot(int part, Vector3d gamma_rot);
 #ifdef ROTATION
 /** Call only on the master node: set particle external torque.
     @param part  the particle.
-    @param flag  new value for ext_flag.
     @param torque new value for ext_torque.
-    @return ES_OK if particle existed
 */
 void set_particle_ext_torque(int part, const Vector3d &torque);
 #endif
 /** Call only on the master node: set particle external force.
     @param part  the particle.
-    @param flag  new value for ext_flag.
     @param force new value for ext_force.
-    @return ES_OK if particle existed
 */
 void set_particle_ext_force(int part, const Vector3d &force);
 /** Call only on the master node: set coordinate axes for which the particles
    motion is fixed.
     @param part  the particle.
     @param flag new value for flagged coordinate axes to be fixed
-    @return ES_OK if particle existed
 */
 void set_particle_fix(int part, int flag);
 #endif
@@ -943,8 +928,8 @@ void local_remove_all_particles();
 */
 void local_rescale_particles(int dir, double scale);
 
-/** @briefn Add bond to local particle.
-    @param part     identity of principal atom of the bond.
+/** @brief Add bond to local particle.
+    @param p     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
     identity of all bond partners (secondary atoms of the bond).
 */

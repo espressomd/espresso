@@ -369,7 +369,7 @@ struct UpdateVisitor : public boost::static_visitor<void> {
 } // namespace
 
 /**
- * @brief Callback for @f mpi_send_update_message.
+ * @brief Callback for \ref mpi_send_update_message.
  */
 void mpi_update_particle_slave(int node, int id) {
   if (node == comm_cart.rank()) {
@@ -874,16 +874,6 @@ void set_particle_f(int part, const Vector3d &F) {
   mpi_update_particle<ParticleForce, &Particle::f, Vector3d, &ParticleForce::f>(
       part, F);
 }
-
-#ifdef SHANCHEN
-void set_particle_solvation(int part, double *solvation) {
-  std::array<double, 2 * LB_COMPONENTS> s;
-  std::copy(solvation, solvation + 2 * LB_COMPONENTS, s.begin());
-  mpi_update_particle_property<std::array<double, 2 * LB_COMPONENTS>,
-                               &ParticleProperties::solvation>(part, s);
-}
-
-#endif
 
 #if defined(MASS)
 void set_particle_mass(int part, double mass) {

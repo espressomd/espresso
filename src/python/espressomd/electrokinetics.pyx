@@ -1,10 +1,13 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from .lb cimport HydrodynamicInteraction
 IF LB_GPU:
+    from .lb cimport HydrodynamicInteraction
+    from .lb cimport lb_lbfluid_print_vtk_boundary
+    from .lb cimport python_lbnode_get_pi
     from .lb cimport lb_lbnode_is_index_valid
 from . import utils
 import os
+from .utils cimport Vector6d
 import numpy as np
 from espressomd.utils import is_valid_type
 
@@ -203,7 +206,7 @@ IF ELECTROKINETICS:
                 raise Exception(
                     'EK init failed', 'agrid incompatible with box size')
             elif err != 0:
-                raise Exception('EK init failed', 'unknown error')
+                raise Exception('EK init failed, unknown error', err)
 
         def add_species(self, species):
             """
@@ -351,8 +354,8 @@ IF ELECTROKINETICS:
 
         property pressure:
             def __get__(self):
-                cdef double pi[6]
-                lb_lbnode_get_pi(self.node, pi)
+                cdef Vector6d pi
+                pi = python_lbnode_get_pi(self.node)
                 return np.array([[pi[0], pi[1], pi[3]],
                                  [pi[1], pi[2], pi[4]],
                                  [pi[3], pi[4], pi[5]]])

@@ -136,7 +136,6 @@ python_test(FILE polymer.py MAX_NUM_PROC 4)
 python_test(FILE auto_exclusions.py MAX_NUM_PROC 1)
 python_test(FILE subt_lj.py MAX_NUM_PROC 2)
 python_test(FILE observable_cylindrical.py MAX_NUM_PROC 4)
-python_test(FILE unravel_index.py MAX_NUM_PROC 4)
 python_test(FILE observable_cylindricalLB.py MAX_NUM_PROC 1)
 python_test(FILE analyze_chains.py MAX_NUM_PROC 1)
 python_test(FILE analyze_distance.py MAX_NUM_PROC 1)
@@ -189,12 +188,12 @@ add_custom_target(python_test_data
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-add_custom_target(check_python_parallel_odd COMMAND ${CMAKE_CTEST_COMMAND} -j${TEST_NP} -L parallel_odd $(ARGS) --output-on-failure)
+add_custom_target(check_python_parallel_odd COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L parallel_odd $(ARGS) --output-on-failure)
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
-add_custom_target(check_python_gpu COMMAND ${CMAKE_CTEST_COMMAND} -j${TEST_NP} -L gpu $(ARGS) --output-on-failure)
+add_custom_target(check_python_gpu COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L gpu $(ARGS) --output-on-failure)
 add_dependencies(check_python_gpu pypresso python_test_data)
 
-add_custom_target(check_python COMMAND ${CMAKE_CTEST_COMMAND} -j${TEST_NP} $(ARGS) --output-on-failure)
+add_custom_target(check_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} $(ARGS) --output-on-failure)
 add_dependencies(check_python pypresso python_test_data)
 add_dependencies(check check_python)
 
