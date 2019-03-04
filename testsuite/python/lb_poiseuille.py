@@ -143,6 +143,7 @@ class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
+
 @ut.skipIf(not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
@@ -160,14 +161,18 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
         """
         self.prepare()
         velocities = np.zeros((50, 2))
-        x_values =np.linspace(2.0 * AGRID, self.system.box_l[0]-2.0*AGRID, 50)
+        x_values = np.linspace(
+            2.0 * AGRID,
+            self.system.box_l[0] - 2.0 * AGRID,
+            50)
 
         cnt = 0
         for x in x_values:
             v_tmp = []
             for y in range(int(self.system.box_l[1] + 1)):
                 for z in range(int(self.system.box_l[2] + 1)):
-                    v_tmp.append(self.lbf.get_interpolated_velocity([x, y * AGRID, z * AGRID])[2])
+                    v_tmp.append(
+                        self.lbf.get_interpolated_velocity([x, y * AGRID, z * AGRID])[2])
             velocities[cnt, 1] = np.mean(np.array(v_tmp))
             velocities[cnt, 0] = x
             cnt += 1

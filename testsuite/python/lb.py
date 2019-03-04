@@ -270,6 +270,7 @@ class TestLBGPU(TestLB, ut.TestCase):
         self.lb_class = espressomd.lb.LBFluidGPU
         self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
+
 @ut.skipIf(
     not espressomd.has_features(
         ["LB_GPU"]),

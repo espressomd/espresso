@@ -188,7 +188,6 @@ cdef class HydrodynamicInteraction(Actor):
             elif (interpolation_order == 1):
                 lb_lbinterpolation_set_interpolation_order(quadratic)
 
-
         def get_interpolated_velocity(self, pos):
             """Get LB fluid velocity at specified position.
 
@@ -307,7 +306,7 @@ IF LB_GPU:
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_get_interpolated_velocity_gpu(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length, three_point)
+            lb_get_interpolated_velocity_gpu( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length, three_point)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 IF LB or LB_GPU:
