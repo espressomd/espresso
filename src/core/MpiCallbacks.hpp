@@ -26,7 +26,6 @@
 #include <boost/mpi/collectives/broadcast.hpp>
 
 #include "utils/NumeratedContainer.hpp"
-#include "utils/make_function.hpp"
 
 #include <functional>
 #include <initializer_list>
@@ -57,7 +56,8 @@ namespace detail {
 
         template<class Archive, class Tuple, size_t... I>
         void serialize_impl(Archive &ar, Tuple &t, std::index_sequence<I...>) {
-            int dummy[] = { 0, ((void)(ar & std::get<I>(t)), 0)... };
+            using expand = int[];
+            expand{ 0, ((void)(ar & std::get<I>(t)), 0)... };
         }
 
         template<class Archive>
@@ -91,6 +91,11 @@ namespace detail {
     template<class... Args>
     auto make_model(const std::function<void(Args...)> &f) {
         return std::make_unique<model_t<Args...>>(f);
+    }
+
+    template<class ... Args>
+    auto make_model(void (*f_ptr)(Args...)) {
+        return std::make_unique<model_t<Args...>>(f_ptr);
     }
 }
 
@@ -232,7 +237,7 @@ private:
    * Mapping of function pointers to ids, so static callbacks can be
    * called by their pointer for backward compatibility.
    */
-  std::unordered_map<func_ptr_type, int> m_func_ptr_to_id;
+  std::unordered_map<void *, int> m_func_ptr_to_id;
 };
 } /* namespace Communication */
 

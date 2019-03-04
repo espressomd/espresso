@@ -21,12 +21,6 @@
 
 #include "MpiCallbacks.hpp"
 
-#include "utils/make_unique.hpp"
-#include "utils/serialization/array.hpp"
-#include <utils/make_function.hpp>
-
-#include <boost/mpi.hpp>
-
 #include <stdexcept>
 
 namespace Communication {
@@ -50,13 +44,13 @@ void MpiCallbacks::call(int id, int par1, int par2) const {
 void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) const {
   /** If the function pointer is invalid, map.at will throw
       an out_of_range exception. */
-  const int id = m_func_ptr_to_id.at(fp);
+  const int id = m_func_ptr_to_id.at(reinterpret_cast<void *>(fp));
 
   call(id, par1, par2);
 }
 
 int MpiCallbacks::add(const function_type &f) {
-  const int id = m_callbacks.add(std::make_unique<detail::model_t<int, int>>(f));
+  const int id = m_callbacks.add(detail::make_model(f));
 
   assert(m_callbacks.find(id) != m_callbacks.end());
 
@@ -64,11 +58,10 @@ int MpiCallbacks::add(const function_type &f) {
 }
 
 int MpiCallbacks::add(func_ptr_type fp) {
-  assert(fp != nullptr);
+  assert(fp);
 
-  function_type f = function_type(fp);
-  const int id = add(f);
-  m_func_ptr_to_id[fp] = id;
+  const int id = m_callbacks.add(detail::make_model(fp));
+  m_func_ptr_to_id[reinterpret_cast<void*>(fp)] = id;
 
   return id;
 }
