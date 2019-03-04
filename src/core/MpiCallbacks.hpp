@@ -54,7 +54,7 @@ namespace detail {
 template <class F, class Tuple, std::size_t... I>
 constexpr void for_each_impl(F &&f, Tuple &t, std::index_sequence<I...>) {
   using expand = int[];
-  expand{0, ((void)(f(std::get<I>(t))), 0)...};
+  (void)expand{0, ((void)(f(std::get<I>(t))), 0)...};
 }
 } // namespace detail
 
@@ -111,6 +111,7 @@ template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
  * @brief  The interface of the MPI callback mechanism.
  */
 class MpiCallbacks {
+public:
   /* Avoid accidental copy, leads to mpi deadlock
      or split brain */
   MpiCallbacks(MpiCallbacks const &) = delete;
@@ -121,7 +122,7 @@ public:
                         bool abort_on_exit = true)
       : m_abort_on_exit(abort_on_exit), m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
-    m_callbacks.add(std::unique_ptr<detail::concept_t>{});
+    m_callbacks.add(detail::make_model([](){}));
   }
 
   ~MpiCallbacks() {
@@ -170,7 +171,7 @@ public:
    *
    * @param id Identifier of the callback to remove.
    */
-  void remove(const int id);
+  void remove(int id);
 
   /**
    * @brief call a callback.

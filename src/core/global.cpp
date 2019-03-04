@@ -234,13 +234,13 @@ void check_global_consistency() {
 
 /*************** REQ_BCAST_PAR ************/
 
-void mpi_bcast_parameter_slave(int, int i) {
+void mpi_bcast_parameter_slave(int i) {
   common_bcast_parameter(i);
   check_runtime_errors();
 }
 
 int mpi_bcast_parameter(int i) {
-  mpi_call(mpi_bcast_parameter_slave, -1, i);
+  Communication::mpiCallbacks().call(mpi_bcast_parameter_slave, i);
 
   common_bcast_parameter(i);
 
