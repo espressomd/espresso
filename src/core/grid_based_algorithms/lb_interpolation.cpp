@@ -9,12 +9,20 @@
 #include "lb_interface.hpp"
 #include "lbgpu.hpp"
 
-#if defined(LB) || defined(LB_GPU)
-
 namespace {
 
 InterpolationOrder interpolation_order = InterpolationOrder::linear;
 }
+
+void mpi_set_interpolation_order_slave(int order, int) {
+  if (order == 0) {
+    interpolation_order = InterpolationOrder::linear;
+  } else if (order == 1) {
+    interpolation_order = InterpolationOrder::quadratic;
+  }
+}
+
+#if defined(LB) || defined(LB_GPU)
 
 void lb_lbinterpolation_set_interpolation_order(
     InterpolationOrder const &interpolation_order) {
@@ -24,14 +32,6 @@ void lb_lbinterpolation_set_interpolation_order(
   } else if (interpolation_order == InterpolationOrder::quadratic) {
     mpi_call(mpi_set_interpolation_order_slave, 1, 0);
     mpi_set_interpolation_order_slave(1, 0);
-  }
-}
-
-void mpi_set_interpolation_order_slave(int order, int) {
-  if (order == 0) {
-    interpolation_order = InterpolationOrder::linear;
-  } else if (order == 1) {
-    interpolation_order = InterpolationOrder::quadratic;
   }
 }
 
