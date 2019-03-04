@@ -353,7 +353,7 @@ deploy_doxygen_documentation:
   dependencies:
     - check_doxygen
   script:
-    - cd ${CI_PROJECT_DIR/build/doc/doxygen/html &&
+    - cd ${CI_PROJECT_DIR}/build/doc/doxygen/html &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
 
 status_success:
