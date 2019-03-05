@@ -127,12 +127,24 @@ public:
   MpiCallbacks(MpiCallbacks const &) = delete;
   MpiCallbacks &operator=(MpiCallbacks const &) = delete;
 
+private:
+    friend class RegisterCallback;
+    static auto &static_callbacks() {
+        static std::vector<std::pair<void(*)(), std::unique_ptr<detail::concept_t>>> m_callbacks;
+
+        return m_callbacks;
+    }
+
 public:
   explicit MpiCallbacks(boost::mpi::communicator &comm,
                         bool abort_on_exit = true)
       : m_abort_on_exit(abort_on_exit), m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
     m_callbacks.add(detail::make_model([](){}));
+
+    for(auto& kv: static_callbacks()) {\
+        m_func_ptr_to_id[kv.first] = m_callbacks.add(std::move(kv.second));
+    }
   }
 
   ~MpiCallbacks() {
@@ -284,6 +296,22 @@ private:
    */
   std::unordered_map<void (*)(), int> m_func_ptr_to_id;
 };
+
+    class RegisterCallback {
+
+    public:
+        RegisterCallback() = delete;
+
+        template<class... Args>
+        explicit RegisterCallback(void (*cb)(Args...)) {
+            auto &cbs = MpiCallbacks::static_callbacks();
+
+            cbs.emplace_back(reinterpret_cast<void(*)()>(cb), detail::make_model(cb));
+        }
+    };
 } /* namespace Communication */
+
+
+#define REGISTER_CALLBACK(cb) namespace Communication { static RegisterCallback register_##cb{&cb}; }
 
 #endif
