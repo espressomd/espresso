@@ -30,7 +30,6 @@ namespace ScriptInterface {
 using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
 
 ParallelScriptInterface::ParallelScriptInterface(std::string const &name) {
-  Utils::print(__PRETTY_FUNCTION__, "name", name);
   assert(m_cb && "Not initialized!");
 
   /* Create the slaves */

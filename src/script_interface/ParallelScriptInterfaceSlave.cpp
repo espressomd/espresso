@@ -52,13 +52,10 @@ ParallelScriptInterfaceSlave::get_translation_table() {
 }
 
 void ParallelScriptInterfaceSlave::mpi_slave(CallbackAction action) {
-  Utils::print(__PRETTY_FUNCTION__, "action", static_cast<int>(action));
   switch (action) {
   case CallbackAction::NEW: {
     std::pair<ObjectId, std::string> what;
     boost::mpi::broadcast(m_cb->comm(), what, 0);
-
-    Utils::print(__PRETTY_FUNCTION__, "CallbackAction::NEW", "name", what.second);
 
     m_p = ScriptInterfaceBase::make_shared(
         what.second, ScriptInterfaceBase::CreationPolicy::LOCAL);
