@@ -36,24 +36,21 @@ class Callback {
 public:
   Callback(Communication::MpiCallbacks &cb,
            const std::function<void(int, int)> &callback)
-      : m_cb(cb) {
-    m_callback_id = m_cb.add(callback);
+      : m_cb(cb), m_callback_id(cb.add(callback)) {
   }
-
-  ~Callback() { m_cb.remove(m_callback_id); }
 
   /**
    * @brief Run the callback function on the slave.
    *
    * The callback is not run on the calling node.
    */
-  void call(int a = 0, int b = 0) { m_cb.call(m_callback_id, a, b); }
+  void call(int a = 0, int b = 0) { m_callback_id(a, b); }
 
 private:
   /* Callback system we're on */
   Communication::MpiCallbacks &m_cb;
   /* Id of the encapsulated callback */
-  int m_callback_id;
+  Communication::MpiCallbacks::CallbackHandle<int, int> m_callback_id;
 };
 
 } /* namespace Parallel */

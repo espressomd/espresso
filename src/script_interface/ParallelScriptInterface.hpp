@@ -76,8 +76,8 @@ private:
 
   VariantMap unwrap_variant_map(VariantMap const &map);
 
-  void call(CallbackAction action, int has_params = 0) {
-    m_cb->call(m_callback_id, static_cast<int>(action), has_params);
+  void call(CallbackAction action) {
+    m_callback_id(action);
   }
 
   /**
@@ -86,7 +86,7 @@ private:
   void collect_garbage();
 
   /* Data members */
-  int m_callback_id;
+  Communication::MpiCallbacks::CallbackHandle<ParallelScriptInterfaceSlave::CallbackAction>  m_callback_id;
   /* Payload object */
   std::shared_ptr<ScriptInterfaceBase> m_p;
   map_t obj_map;

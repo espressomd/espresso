@@ -26,10 +26,13 @@
 #include <boost/mpi/communicator.hpp>
 
 #include "utils/NumeratedContainer.hpp"
+#include "utils/Span.hpp"
+#include "utils/print.hpp"
 
 #include <functional>
 #include <initializer_list>
 #include <tuple>
+#include <typeindex>
 
 namespace Communication {
 
@@ -83,6 +86,7 @@ template <class... Args> struct tuple {
 };
 
 struct concept_t {
+  virtual Utils::Span<const std::type_index> arguments() const = 0;
   virtual void operator()(const boost::mpi::communicator &) const = 0;
 
   virtual ~concept_t() = default;
@@ -94,7 +98,14 @@ template <class F, class... Args> struct model_t final : public concept_t {
   template <class FRef>
   explicit model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
 
+  Utils::Span<const std::type_index> arguments() const override {
+      static const auto args = std::array<std::type_index, sizeof...(Args)>{ std::type_index{typeid(Args)}... };
+
+      return args;
+  }
+
   void operator()(const boost::mpi::communicator &comm) const override {
+      Utils::print(__PRETTY_FUNCTION__);
     tuple<Args...> params;
     boost::mpi::broadcast(comm, params, 0);
 
@@ -122,6 +133,51 @@ template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
  */
 class MpiCallbacks {
 public:
+    template<class... Args>
+    class CallbackHandle {
+    public:
+        CallbackHandle(CallbackHandle const&) = delete;
+        CallbackHandle(CallbackHandle &&rhs) noexcept {
+          std::swap(m_id, rhs.m_id);
+          std::swap(m_cb, rhs.m_cb);
+        }
+        CallbackHandle& operator=(CallbackHandle const&) = delete;
+        CallbackHandle& operator=(CallbackHandle &&rhs) noexcept {
+          std::swap(m_id, rhs.m_id);
+          std::swap(m_cb, rhs.m_cb);
+
+          return *this;
+        }
+
+    private:
+        int m_id;
+        MpiCallbacks *m_cb;
+
+        /* Enable if ArgRef pack matches Args up to reference. */
+        template<class... ArgRef>
+        using enable_if_args = std::enable_if_t<std::is_same<
+                  std::tuple<std::remove_reference_t<ArgRef>...>,
+                  std::tuple<Args...>
+                >::value>;
+    public:
+        CallbackHandle() : m_id(0), m_cb(nullptr) {}
+        CallbackHandle(int id, MpiCallbacks *cb) : m_id(id), m_cb(cb) {}
+
+        template<class... ArgRef>
+        enable_if_args<ArgRef...> operator()(ArgRef&&... args) const {
+          if(m_cb) m_cb->call(m_id, std::forward<ArgRef>(args)...);
+        }
+
+        ~CallbackHandle() {
+          if(m_cb) m_cb->remove(m_id);
+        }
+    };
+
+    template<class F, class... Args>
+    auto make_handle(int id, detail::model_t<F, Args...> const&) {
+      return CallbackHandle<Args...>{id, this};
+    }
+
   /* Avoid accidental copy, leads to mpi deadlock
      or split brain */
   MpiCallbacks(MpiCallbacks const &) = delete;
@@ -165,8 +221,9 @@ public:
    * @param f The callback function to add.
    * @return An integer id with which the callback can be called.
    **/
-  template <typename F> int add(F &&f) {
-    return m_callbacks.add(detail::make_model(std::forward<F>(f)));
+  template <typename F> auto add(F &&f) {
+    auto model = detail::make_model(std::forward<F>(f));
+    return make_handle(m_callbacks.add(std::move(model)), *model);
   }
 
   /**
@@ -178,11 +235,9 @@ public:
    * @param fp Pointer to the static callback function to add.
    * @return An integer id with which the callback can be called.
    **/
-  template <class... Args> int add(void (*fp)(Args...)) {
+  template <class... Args> void add(void (*fp)(Args...)) {
     const int id = m_callbacks.add(detail::make_model(fp));
     m_func_ptr_to_id[reinterpret_cast<void (*)()>(fp)] = id;
-
-    return id;
   }
 
   /**
@@ -208,6 +263,7 @@ public:
    * @param par2 Second parameter to pass to the callback.
    */
   template <class... Args> void call(int id, Args &&... args) const {
+      Utils::print(__PRETTY_FUNCTION__);
     /** Can only be call from master */
     if (m_comm.rank() != 0) {
       throw std::logic_error("Callbacks can only be invoked on rank 0.");
@@ -217,6 +273,15 @@ public:
     if (m_callbacks.find(id) == m_callbacks.end()) {
       throw std::out_of_range("Callback does not exists.");
     }
+
+    /*
+     auto const arg_types = std::array<std::type_index, sizeof...(Args)>{ std::type_index(typeid(std::decay_t<Args>))... };
+     auto const cb_arg_types = m_callbacks[id]->arguments();
+
+     if(arg_types.size() != cb_arg_types.size()) {
+         throw std::domain_error("Wrong number of arguments.");
+     }
+    */
 
     /** Send request to slaves */
     boost::mpi::broadcast(m_comm, id, 0);

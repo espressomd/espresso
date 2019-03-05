@@ -35,15 +35,13 @@ VariantMap ParallelScriptInterfaceSlave::bcast_variant_map() const {
   /* If the parameter is a object we have to translate it first to a
      local id.
   */
-  for (auto &p : ret) {
-    translate_id(p.second);
-  }
+  translate_id(ret);
 
   return ret;
 }
 
 ParallelScriptInterfaceSlave::ParallelScriptInterfaceSlave() {
-  m_cb->add([this](int a, int) { mpi_slave(a, 0); });
+  m_callback_id = m_cb->add([this](CallbackAction a) { mpi_slave(a); });
 }
 
 std::map<ObjectId, ObjectId> &
@@ -53,11 +51,14 @@ ParallelScriptInterfaceSlave::get_translation_table() {
   return m_translation_table;
 }
 
-void ParallelScriptInterfaceSlave::mpi_slave(int action, int) {
-  switch (CallbackAction(action)) {
+void ParallelScriptInterfaceSlave::mpi_slave(CallbackAction action) {
+  Utils::print(__PRETTY_FUNCTION__, "action", static_cast<int>(action));
+  switch (action) {
   case CallbackAction::NEW: {
     std::pair<ObjectId, std::string> what;
     boost::mpi::broadcast(m_cb->comm(), what, 0);
+
+    Utils::print(__PRETTY_FUNCTION__, "CallbackAction::NEW", "name", what.second);
 
     m_p = ScriptInterfaceBase::make_shared(
         what.second, ScriptInterfaceBase::CreationPolicy::LOCAL);
@@ -97,9 +98,7 @@ void ParallelScriptInterfaceSlave::mpi_slave(int action, int) {
     /* Broadcast method name and parameters */
     boost::mpi::broadcast(m_cb->comm(), d, 0);
 
-    for (auto &p : d.second) {
-      translate_id(p.second);
-    }
+    translate_id(d.second);
 
     /* Forward to the local instance. */
     m_p->call_method(d.first, d.second);
