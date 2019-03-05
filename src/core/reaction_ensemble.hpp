@@ -33,10 +33,16 @@ struct SingleReaction {
   std::vector<int> reactant_coefficients;
   std::vector<int> product_types;
   std::vector<int> product_coefficients;
-  double gamma;
+  double gamma = {};
   // calculated values that are stored for performance reasons
-  int nu_bar;
+  int nu_bar = {};
   Utils::Accumulator accumulator_exponentials = Utils::Accumulator(1);
+  int tried_moves = 0;
+  int accepted_moves = 0;
+  double get_acceptance_rate() {
+    return static_cast<double>(accepted_moves) /
+           static_cast<double>(tried_moves);
+  };
 };
 
 struct StoredParticleProperty {
@@ -46,9 +52,9 @@ struct StoredParticleProperty {
 };
 
 struct CollectiveVariable {
-  double CV_minimum;
-  double CV_maximum;
-  double delta_CV;
+  double CV_minimum = {};
+  double CV_maximum = {};
+  double delta_CV = {};
   virtual double determine_current_state() = 0; // use pure virtual, otherwise
                                                 // this will be used in vector
                                                 // of collective variables
@@ -127,6 +133,10 @@ public:
 
   int m_accepted_configurational_MC_moves = 0;
   int m_tried_configurational_MC_moves = 0;
+  double get_acceptance_rate_configurational_moves() {
+    return static_cast<double>(m_accepted_configurational_MC_moves) /
+           static_cast<double>(m_tried_configurational_MC_moves);
+  }
 
   void set_cuboid_reaction_ensemble_volume();
   virtual int do_reaction(int reaction_steps);
@@ -178,9 +188,9 @@ private:
               // occurs in a reaction. this charge has to be overwritten. if it
               // is not overwritten the reaction ensemble will complain.
   bool all_reactant_particles_exist(int reaction_id);
-  int replace_particle(int p_id, int desired_type);
+  void replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);
-  int hide_particle(int p_id, int previous_type);
+  void hide_particle(int p_id, int previous_type);
 
   void append_particle_property_of_random_particle(
       int type, std::vector<StoredParticleProperty> &list_of_particles);

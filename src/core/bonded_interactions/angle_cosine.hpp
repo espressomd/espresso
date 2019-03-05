@@ -30,7 +30,6 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-#ifdef BOND_ANGLE
 #include "grid.hpp"
 
 /** set parameters for the angle potential.
@@ -59,7 +58,6 @@ inline int calc_angle_cosine_force(Particle *p_mid, Particle *p_left,
   double cosine, vec1[3], vec2[3], d1i, d2i, dist2, fac;
   int j;
 
-  cosine = 0.0;
   /* vector from p_left to p_mid */
   get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
   dist2 = sqrlen(vec1);
@@ -178,7 +176,6 @@ inline int angle_cosine_energy(Particle *p_mid, Particle *p_left,
   double cosine, vec1[3], vec2[3], d1i, d2i, dist2;
   int j;
 
-  cosine = 0.0;
   /* vector from p_mid to p_left */
   get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
   dist2 = sqrlen(vec1);
@@ -207,5 +204,4 @@ inline int angle_cosine_energy(Particle *p_mid, Particle *p_left,
   return 0;
 }
 
-#endif /* BOND_ANGLE */
 #endif /* ANGLE_COSINE_H */

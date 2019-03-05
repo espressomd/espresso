@@ -1614,8 +1614,8 @@ inline double calc_mmm2d_copy_pair_energy(double d[3]) {
     double tmp_r;
     int end, n;
 
-    ztn_r = zeta_r = uy * d[2];
-    ztn_i = zeta_i = uy * d[1];
+    zeta_r = uy * d[2];
+    zeta_i = uy * d[1];
 
     zet2_r = zeta_r * zeta_r - zeta_i * zeta_i;
     zet2_i = 2 * zeta_r * zeta_i;

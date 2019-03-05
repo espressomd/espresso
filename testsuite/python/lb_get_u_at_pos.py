@@ -22,8 +22,7 @@ import espressomd
 from espressomd import lb
 
 
-@ut.skipIf(not espressomd.has_features("LB_GPU") or espressomd.has_features(
-    "SHANCHEN"), "LB_GPU feature not available, skipping test!")
+@ut.skipIf(not espressomd.has_features("LB_GPU"), "LB_GPU feature not available, skipping test!")
 class TestLBGetUAtPos(ut.TestCase):
 
     """
@@ -58,7 +57,6 @@ class TestLBGetUAtPos(ut.TestCase):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.params['tau'],
-            fric=self.params['friction']
         )
         self.system.actors.add(self.lb_fluid)
         self.vels = np.zeros((self.n_nodes_per_dim, 3))

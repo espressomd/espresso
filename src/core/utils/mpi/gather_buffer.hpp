@@ -48,6 +48,7 @@ namespace Mpi {
           large enough to hold all elements and has the local
           part in the beginning. On the slaves the local buffer.
  * @param n_elem The number of elements in the local buffer.
+ * @param comm The MPI communicator.
  * @param root The rank where the data should be gathered.
  * @return On rank root, the total number of elements in the buffer,
  *         on the other ranks 0.
@@ -87,6 +88,7 @@ int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
  *
  * @param buffer On the master the target buffer that has the local
           part in the beginning. On the slaves the local buffer.
+ * @param comm The MPI communicator.
  * @param root The rank where the data should be gathered.
  * @return On rank root, the total number of elements in the buffer,
  *         on the other ranks 0.

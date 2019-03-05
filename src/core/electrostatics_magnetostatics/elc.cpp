@@ -58,7 +58,7 @@
 static double ux, ux2, uy, uy2, uz, height_inverse;
 /*@}*/
 
-ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0};
+ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0.0};
 
 /****************************************
  * LOCAL ARRAYS

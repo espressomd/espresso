@@ -21,8 +21,7 @@
 /** \file
  *  Domain decomposition for parallel computing.
  *
- *  For more information on the domain decomposition,
- *  see \ref grid.hpp "grid.hpp".
+ *  The corresponding header file is grid.hpp.
  */
 
 #include "grid.hpp"
@@ -31,12 +30,14 @@
 #include "debug.hpp"
 #include "global.hpp"
 #include "utils.hpp"
+
+#include <boost/algorithm/clamp.hpp>
+#include <mpi.h>
+
 #include <cmath>
 #include <cstdio>
-
 #include <cstdlib>
 #include <cstring>
-#include <mpi.h>
 
 /************************************************
  * defines
@@ -58,7 +59,7 @@ double box_l[3] = {1, 1, 1};
 double half_box_l[3] = {.5, .5, .5};
 double box_l_i[3] = {1, 1, 1};
 double min_box_l;
-double local_box_l[3] = {1, 1, 1};
+Vector3d local_box_l{1, 1, 1};
 double min_local_box_l;
 double my_left[3] = {0, 0, 0};
 double my_right[3] = {1, 1, 1};
@@ -71,23 +72,16 @@ void init_node_grid() {
 }
 
 int map_position_node_array(const Vector3d &pos) {
-  int i, im[3] = {0, 0, 0};
-  double f_pos[3];
+  auto const f_pos = folded_position(pos);
 
-  for (i = 0; i < 3; i++)
-    f_pos[i] = pos[i];
-
-  fold_position(f_pos, im);
-
-  for (i = 0; i < 3; i++) {
-    im[i] = (int)floor(node_grid[i] * f_pos[i] * box_l_i[i]);
-    if (im[i] < 0)
-      im[i] = 0;
-    else if (im[i] >= node_grid[i])
-      im[i] = node_grid[i] - 1;
+  Vector3i im;
+  for (int i = 0; i < 3; i++) {
+    im[i] = std::floor(f_pos[i] / local_box_l[i]);
+    im[i] = boost::algorithm::clamp(im[i], 0, node_grid[i] - 1);
   }
 
-  return map_array_node(im);
+  auto const node = map_array_node(im);
+  return node;
 }
 
 int calc_node_neighbors(int node) {

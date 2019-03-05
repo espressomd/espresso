@@ -21,8 +21,10 @@
 #ifndef _STATISTICS_H
 #define _STATISTICS_H
 /** \file
-    This file contains the code for statistics on the data.
-*/
+ *  Statistical tools to analyze simulations.
+ *
+ *  Implementation in statistics.cpp.
+ */
 
 #include "PartCfg.hpp"
 #include "grid.hpp"
@@ -147,6 +149,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
                 int *agg_avg, int *agg_std, int charge_criteria);
 
 /** returns all particles within a given radius r_catch around a position.
+    @param partCfg
     @param pos position of sphere of point
     @param r_catch the radius around the position
     @param planedims orientation of coordinate system
@@ -221,6 +224,7 @@ void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types,
     the distribution function is binned into r_bin bins, which are
     equidistant. The result is stored in the array rdf.
 
+    @param partCfg
     @param p1_types list with types of particles to find the distribution for.
     @param n_p1     length of p1_types.
     @param p2_types list with types of particles the others are distributed
@@ -247,6 +251,7 @@ void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
     the distribution function is binned into r_bin bins, which are
     equidistant. The result is stored in the array rdf.
 
+    @param partCfg
     @param p1_types list with types of particles to find the distribution for.
     @param n_p1     length of p1_types.
     @param p2_types list with types of particles the others are distributed
@@ -352,12 +357,12 @@ double min_distance(T1 const pos1, T2 const pos2) {
 /** calculate the center of mass of a special type of the current configuration
  *  \param part_type  type of the particle
  */
-std::vector<double> centerofmass(PartCfg &, int part_type);
+Vector3d centerofmass(PartCfg &, int part_type);
 
 /** Docs missing
 \todo Docs missing
 */
-std::vector<double> centerofmass_vel(PartCfg &, int type);
+Vector3d centerofmass_vel(PartCfg &, int type);
 
 /** calculate the angular momentum of a special type of the current
  * configuration
@@ -367,11 +372,10 @@ std::vector<double> centerofmass_vel(PartCfg &, int type);
 void angularmomentum(PartCfg &, int type, double *com);
 
 /** calculate the center of mass of a special type of a saved configuration
- *  \param k       number of the saved configuration
+ *  \param partCfg
  *  \param type    type of the particle, -1 for all
- *  \param com     center of mass position
+ *  \param MofImatrix
  */
-
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
 
 /** returns the momentum of the particles in the simulation box.
@@ -382,9 +386,7 @@ void predict_momentum_particles(double *result);
 /** Docs missing
 \todo Docs missing
 */
-void momentum_calc(double *momentum);
-std::vector<double> calc_linear_momentum(int include_particles,
-                                         int include_lbfluid);
+Vector3d calc_linear_momentum(int include_particles, int include_lbfluid);
 
 inline double *obsstat_bonded(Observable_stat *stat, int j) {
   return stat->bonded + stat->chunk_size * j;

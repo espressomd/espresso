@@ -403,7 +403,7 @@ BOOST_AUTO_TEST_CASE(erase) {
 
     auto r = l.erase(l.begin(), l.end());
     BOOST_CHECK(l.empty());
-    BOOST_CHECK(r = l.begin());
+    BOOST_CHECK(r == l.begin() - 1);
   }
 }
 

@@ -27,7 +27,7 @@
 
 #include "fft.hpp"
 
-#ifdef P3M
+#if defined(P3M) || defined(DP3M)
 #include "communication.hpp"
 #include "debug.hpp"
 #include "fft-common.hpp"

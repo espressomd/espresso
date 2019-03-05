@@ -114,7 +114,7 @@ public:
    * and has the prerequisite that the other nodes are
    * in the MPI loop.
    *
-   * @param id Pointer to static callback (e.g. the function name) to call.
+   * @param fp Static callback (e.g. the function name) to call.
    * @param par1 First parameter to pass to the callback.
    * @param par2 Second parameter to pass to the callback.
    */

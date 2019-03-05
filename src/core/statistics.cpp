@@ -19,15 +19,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    This is the place for analysis (so far...).
-    Implementation of statistics.hpp
-*/
+ *  Statistical tools to analyze simulations.
+ *
+ *  The corresponding header file is statistics.hpp.
+ */
+
 #include "statistics.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -36,8 +37,6 @@
 #include "pressure.hpp"
 #include "short_range_loop.hpp"
 #include "statistics_chain.hpp"
-#include "statistics_cluster.hpp"
-#include "statistics_fluid.hpp"
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
 #include "utils/list_contains.hpp"
@@ -223,37 +222,23 @@ void predict_momentum_particles(double *result) {
  * calculation
  * @return Result for this processor (Output)
  */
-std::vector<double> calc_linear_momentum(int include_particles,
-                                         int include_lbfluid) {
-  double momentum_particles[3] = {0., 0., 0.};
-  std::vector<double> linear_momentum(3, 0.0);
+Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
+  Vector3d linear_momentum{};
   if (include_particles) {
-    mpi_gather_stats(4, momentum_particles, nullptr, nullptr, nullptr);
-    linear_momentum[0] += momentum_particles[0];
-    linear_momentum[1] += momentum_particles[1];
-    linear_momentum[2] += momentum_particles[2];
+    Vector3d momentum_particles{};
+    mpi_gather_stats(4, momentum_particles.data(), nullptr, nullptr, nullptr);
+    linear_momentum += momentum_particles;
   }
   if (include_lbfluid) {
-    double momentum_fluid[3] = {0., 0., 0.};
-#ifdef LB
-    if (lattice_switch & LATTICE_LB) {
-      mpi_gather_stats(6, momentum_fluid, nullptr, nullptr, nullptr);
-    }
+#if defined(LB) or defined(LB_GPU)
+    linear_momentum += lb_lbfluid_calc_fluid_momentum();
 #endif
-#ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU) {
-      lb_calc_fluid_momentum_GPU(momentum_fluid);
-    }
-#endif
-    linear_momentum[0] += momentum_fluid[0];
-    linear_momentum[1] += momentum_fluid[1];
-    linear_momentum[2] += momentum_fluid[2];
   }
   return linear_momentum;
 }
 
-std::vector<double> centerofmass(PartCfg &partCfg, int type) {
-  std::vector<double> com(3);
+Vector3d centerofmass(PartCfg &partCfg, int type) {
+  Vector3d com{};
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
@@ -269,9 +254,9 @@ std::vector<double> centerofmass(PartCfg &partCfg, int type) {
   return com;
 }
 
-std::vector<double> centerofmass_vel(PartCfg &partCfg, int type) {
+Vector3d centerofmass_vel(PartCfg &partCfg, int type) {
   /*center of mass velocity scaled with time_step*/
-  std::vector<double> com_vel(3);
+  Vector3d com_vel{};
   int count = 0;
 
   for (auto const &p : partCfg) {
@@ -672,8 +657,6 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
   int i, j, k, m, n;
   double r;
   double r_bin;
-  double pos[3];
-  int image_box[3];
 
   // calculation over last n_conf configurations
 
@@ -693,11 +676,9 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
       for (auto const &p : partCfg) {
         // com particles
         if (p.p.type == type) {
-          for (m = 0; m < 3; m++) {
-            pos[m] = configs[k][3 * i + m];
-            image_box[m] = 0;
-          }
-          fold_coordinate(pos, image_box, dir);
+          auto const pos =
+              folded_position({&configs[k][3 * i], &configs[k][3 * i] + 3});
+
           if (pos[dir] <= r + r_bin && pos[dir] > r)
             n++;
         }
