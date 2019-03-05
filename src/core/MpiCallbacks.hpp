@@ -56,6 +56,9 @@ constexpr void for_each_impl(F &&f, Tuple t, std::index_sequence<I...>) {
   using expand = int[];
   (void)expand{0, ((void)(f(std::get<I>(t))), 0)...};
 }
+
+template <class F, class Tuple>
+constexpr void for_each_impl(F, Tuple, std::index_sequence<>) {}
 } // namespace detail
 
 template <class F, class Tuple> void for_each(F &&f, Tuple &t) {
