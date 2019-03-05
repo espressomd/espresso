@@ -26,7 +26,6 @@
 #include <boost/mpi/communicator.hpp>
 
 #include "utils/NumeratedContainer.hpp"
-#include "utils/print.hpp"
 #include "utils/tuple.hpp"
 
 #include <functional>
@@ -57,7 +56,6 @@ template <class F, class... Args> struct model_t final : public concept_t {
   explicit model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
 
   void operator()(const boost::mpi::communicator &comm) const override {
-      Utils::print(__PRETTY_FUNCTION__);
     tuple<Args...> params;
     boost::mpi::broadcast(comm, params, 0);
 
@@ -218,7 +216,6 @@ public:
    */
 private:
   template <class... Args> void call(int id, Args &&... args) const {
-      Utils::print(__PRETTY_FUNCTION__);
     /** Can only be call from master */
     if (m_comm.rank() != 0) {
       throw std::logic_error("Callbacks can only be invoked on rank 0.");

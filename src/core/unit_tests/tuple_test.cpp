@@ -104,4 +104,14 @@ BOOST_AUTO_TEST_CASE(apply) {
 
                 )));
     }
+
+    /* empty */
+    {
+        bool called = false;
+        apply([&called]() {
+            called = true;
+        }, std::make_tuple());
+
+        BOOST_CHECK(called);
+    }
 }
