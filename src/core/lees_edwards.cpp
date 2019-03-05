@@ -23,6 +23,7 @@
 #include "lees_edwards.hpp"
 #include "integrate.hpp"
 
+
 lees_edwards_protocol_struct lees_edwards_protocol = {LEES_EDWARDS_PROTOCOL_OFF, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 1};
 
 /* Functions to determine the current offset and shear rate with respect to the chosen protocol */
@@ -85,4 +86,12 @@ double lees_edwards_get_velocity(double time) {
   } else {
     return 0.0;
   }  
+}
+
+void local_lees_edwards_image_reset() {
+  for (auto &p : local_cells.particles()) {
+    p.l.i[0] = 0;
+    p.l.i[1] = 0;
+    p.l.i[2] = 0;
+    }
 }

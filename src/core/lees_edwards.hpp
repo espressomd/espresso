@@ -2,6 +2,7 @@
 #define LEES_EDWARDS_H
 
 #include "config.hpp"
+#include "cells.hpp"
 
 /** \file lees_erdwards.hpp
 *
@@ -42,5 +43,7 @@ void setup_lees_edwards_protocol(double time_offset);
 double lees_edwards_get_offset(double time);
 /** Calculation of current velocity*/
 double lees_edwards_get_velocity(double time);
-
+/** At the beginning of Lees_Edwards we have to reset reset all particle images to zero*/
+void lees_edwards_image_reset();
+void local_lees_edwards_image_reset();
 #endif

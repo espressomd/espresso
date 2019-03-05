@@ -115,6 +115,9 @@ class LeesEdwards(ScriptInterfaceHelper):
 
         handle_errors("Validation of Lees-Edwards parameters failed")
 
+    def lees_edwards_image_reset(self):
+        mpi_lees_edwards_image_reset()
+
     def get_parameter(self, name):
         """Gets a single parameter from the Lees-Edwards boundary."""
 
