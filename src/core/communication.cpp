@@ -119,7 +119,6 @@ int n_nodes = -1;
   CB(mpi_bcast_all_ia_params_slave)                                            \
   CB(mpi_bcast_max_seen_particle_type_slave)                                   \
   CB(mpi_gather_stats_slave)                                                   \
-  CB(mpi_set_time_step_slave)                                                  \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_place_new_particle_slave)                                             \
   CB(mpi_remove_particle_slave)                                                \
@@ -128,7 +127,6 @@ int n_nodes = -1;
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_update_mol_ids_slave)                                                 \
   CB(mpi_sync_topo_part_info_slave)                                            \
-  CB(mpi_send_exclusion_slave)                                                 \
   CB(mpi_bcast_lb_params_slave)                                                \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_send_fluid_slave)                                                     \
@@ -603,28 +601,20 @@ void mpi_gather_stats_slave(int, int job) {
 }
 
 /*************** REQ_SET_TIME_STEP ************/
-void mpi_set_time_step(double time_s) {
-  double old_ts = time_step;
+void mpi_set_time_step_slave(double dt) {
+    time_step = dt;
+    time_step_squared = time_step * time_step;
+    time_step_squared_half = time_step_squared / 2.;
+    time_step_half = time_step / 2.;
 
-  mpi_call(mpi_set_time_step_slave, -1, 0);
-
-  time_step = time_s;
-
-  time_step_squared = time_step * time_step;
-  time_step_squared_half = time_step_squared / 2.;
-  time_step_half = time_step / 2.;
-
-  MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
-
-  on_parameter_change(FIELD_TIMESTEP);
+    on_parameter_change(FIELD_TIMESTEP);
 }
 
-void mpi_set_time_step_slave(int, int) {
-  MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
-  on_parameter_change(FIELD_TIMESTEP);
-  time_step_squared = time_step * time_step;
-  time_step_squared_half = time_step_squared / 2.;
-  time_step_half = time_step / 2.;
+REGISTER_CALLBACK(mpi_set_time_step_slave)
+
+void mpi_set_time_step(double time_s) {
+    mpiCallbacks().call(mpi_set_time_step_slave, time_s);
+    mpi_set_time_step_slave(time_s);
 }
 
 int mpi_check_runtime_errors() {
@@ -904,22 +894,16 @@ void mpi_bcast_cuda_global_part_vars_slave(int, int) {
 }
 
 /********************* REQ_SET_EXCL ********/
-void mpi_send_exclusion(int part1, int part2, int _delete) {
+void mpi_send_exclusion_slave(int part1, int part2, int _delete) {
 #ifdef EXCLUSIONS
-  mpi_call(mpi_send_exclusion_slave, part1, part2);
-
-  MPI_Bcast(&_delete, 1, MPI_INT, 0, comm_cart);
-  local_change_exclusion(part1, part2, _delete);
-  on_particle_change();
+    local_change_exclusion(part1, part2, _delete);
+    on_particle_change();
 #endif
 }
 
-void mpi_send_exclusion_slave(int part1, int part2) {
+void mpi_send_exclusion(int part1, int part2, int _delete) {
 #ifdef EXCLUSIONS
-  int _delete = 0;
-  MPI_Bcast(&_delete, 1, MPI_INT, 0, comm_cart);
-  local_change_exclusion(part1, part2, _delete);
-  on_particle_change();
+  mpiCallbacks().call(mpi_send_exclusion_slave, part1, part2, _delete);
 #endif
 }
 

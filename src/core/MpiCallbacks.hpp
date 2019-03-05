@@ -148,7 +148,7 @@ public:
     /** Add a dummy at id 0 for loop abort. */
     m_callbacks.add(detail::make_model([](){}));
 
-    for(auto& kv: static_callbacks()) {\
+    for(auto& kv: static_callbacks()) {
         m_func_ptr_to_id[kv.first] = m_callbacks.add(std::move(kv.second));
     }
   }
