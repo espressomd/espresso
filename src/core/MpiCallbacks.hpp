@@ -26,8 +26,8 @@
 #include <boost/mpi/communicator.hpp>
 
 #include "utils/NumeratedContainer.hpp"
-#include "utils/Span.hpp"
 #include "utils/print.hpp"
+#include "utils/tuple.hpp"
 
 #include <functional>
 #include <initializer_list>
@@ -35,58 +35,16 @@
 #include <typeindex>
 
 namespace Communication {
-
 namespace detail {
-namespace detail {
-template <class F, class Tuple, std::size_t... I>
-constexpr decltype(auto) apply_impl(F &&f, Tuple &&t,
-                                    std::index_sequence<I...>) {
-  return f(std::get<I>(std::forward<Tuple>(t))...);
-}
-} // namespace detail
-
-template <class F, class Tuple>
-constexpr decltype(auto) apply(F &&f, Tuple &&t) {
-  return detail::apply_impl(
-      std::forward<F>(f), std::forward<Tuple>(t),
-      std::make_index_sequence<
-          std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
-}
-
-namespace detail {
-template <class F, class Tuple, std::size_t... I>
-constexpr void for_each_impl(F &&f, Tuple t, std::index_sequence<I...>) {
-  using expand = int[];
-  (void)expand{0, ((void)(f(std::get<I>(t))), 0)...};
-}
-
-template <class F, class Tuple>
-constexpr void for_each_impl(F, Tuple, std::index_sequence<>) {}
-} // namespace detail
-
-template <class F, class Tuple> void for_each(F &&f, Tuple &t) {
-  detail::for_each_impl(
-      std::forward<F>(f), t,
-      std::make_index_sequence<std::tuple_size<Tuple>::value>{});
-}
-
-template <class F, class Tuple> void for_each(F &&f, Tuple &&t) {
-  detail::for_each_impl(
-      std::forward<F>(f), std::forward<Tuple>(t),
-      std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
-}
-
-
 template <class... Args> struct tuple {
   std::tuple<Args...> t;
 
   template <class Archive> void serialize(Archive &ar, const long int) {
-    for_each([&ar](auto &e) { ar &e; }, t);
+    Utils::for_each([&ar](auto &e) { ar &e; }, t);
   }
 };
 
 struct concept_t {
-  virtual Utils::Span<const std::type_index> arguments() const = 0;
   virtual void operator()(const boost::mpi::communicator &) const = 0;
 
   virtual ~concept_t() = default;
@@ -98,18 +56,12 @@ template <class F, class... Args> struct model_t final : public concept_t {
   template <class FRef>
   explicit model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
 
-  Utils::Span<const std::type_index> arguments() const override {
-      static const auto args = std::array<std::type_index, sizeof...(Args)>{ std::type_index{typeid(Args)}... };
-
-      return args;
-  }
-
   void operator()(const boost::mpi::communicator &comm) const override {
       Utils::print(__PRETTY_FUNCTION__);
     tuple<Args...> params;
     boost::mpi::broadcast(comm, params, 0);
 
-    apply(m_f, params.t);
+    Utils::apply(m_f, params.t);
   }
 };
 
@@ -248,7 +200,9 @@ public:
    *
    * @param id Identifier of the callback to remove.
    */
-  void remove(int id);
+  void remove(int id) {
+      m_callbacks.remove(id);
+  }
 
   /**
    * @brief call a callback.
@@ -262,6 +216,7 @@ public:
    * @param par1 First parameter to pass to the callback.
    * @param par2 Second parameter to pass to the callback.
    */
+private:
   template <class... Args> void call(int id, Args &&... args) const {
       Utils::print(__PRETTY_FUNCTION__);
     /** Can only be call from master */
@@ -274,21 +229,13 @@ public:
       throw std::out_of_range("Callback does not exists.");
     }
 
-    /*
-     auto const arg_types = std::array<std::type_index, sizeof...(Args)>{ std::type_index(typeid(std::decay_t<Args>))... };
-     auto const cb_arg_types = m_callbacks[id]->arguments();
-
-     if(arg_types.size() != cb_arg_types.size()) {
-         throw std::domain_error("Wrong number of arguments.");
-     }
-    */
-
     /** Send request to slaves */
     boost::mpi::broadcast(m_comm, id, 0);
     detail::tuple<Args...> params{{args...}};
     boost::mpi::broadcast(m_comm, params, 0);
   }
 
+public:
   /**
    * @brief call a callback.
    *
@@ -319,14 +266,29 @@ public:
    * This should be run on the slaves and must be running
    * so that the master can issue call().
    */
-  void loop() const;
+  void loop() const {
+      for (;;) {
+          int request;
+          /** Communicate callback id and parameters */
+          boost::mpi::broadcast(m_comm, request, 0);
+          /** id == 0 is loop_abort. */
+          if (request == LOOP_ABORT) {
+              break;
+          } else {
+              /** Call the callback */
+              m_callbacks[request]->operator()(m_comm);
+          }
+      }
+  }
 
   /**
    * @brief Abort mpi loop.
    *
    * Make the slaves exit the MPI loop.
    */
-  void abort_loop() const;
+  void abort_loop() {
+      call(LOOP_ABORT);
+  }
 
   /**
    * @brief The boost mpi communicator used by this instance

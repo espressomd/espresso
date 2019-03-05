@@ -23,8 +23,7 @@ set(EspressoCore_SRC
   layered.cpp
   metadynamics.cpp
   minimize_energy.cpp
-  MpiCallbacks.cpp
-  npt.cpp
+        npt.cpp
   nsquare.cpp
   partCfg_global.cpp
   particle_data.cpp

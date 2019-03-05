@@ -33,235 +33,29 @@
 
 #include <boost/mpi.hpp>
 
-namespace Testing {
-void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
-  if (comm.rank() == 0) {
-    bool total = false;
-    boost::mpi::reduce(comm, local_value, total, std::logical_and<bool>(), 0);
-    BOOST_CHECK(total);
-  } else {
-    boost::mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
-  }
-}
-} // namespace Testing
+struct Archive {
+    std::vector<int> values;
+    int cnt = 0;
 
-bool static_callback_called = false;
-void static_callback(int a, int b) {
-  static_callback_called = (a == 5) && (b == 13);
-}
-
-using boost::mpi::communicator;
-using Communication::MpiCallbacks;
-
-/**
- * Check is the mpi loop can be aborted
- * by abort_loop()
- */
-BOOST_AUTO_TEST_CASE(loop_exit) {
-  communicator world;
-  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
-
-  if (world.rank() == 0) {
-    callbacks.abort_loop();
-  } else {
-    callbacks.loop();
-  }
-
-  Testing::reduce_and_check(world, true);
-}
-
-/**
- * Check if adding and calling a static callback
- * works as expected.
- */
-BOOST_AUTO_TEST_CASE(add_static_callback) {
-  communicator world;
-  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
-
-  const int id = callbacks.add(static_callback);
-
-  /** Id should be 1, 0 is loop_abort */
-  Testing::reduce_and_check(world, id == 1);
-
-  if (world.rank() == 0) {
-    callbacks.call(static_callback, 5, 13);
-    static_callback(5, 13);
-    callbacks.abort_loop();
-  } else {
-    callbacks.loop();
-  }
-
-  Testing::reduce_and_check(world, static_callback_called);
-}
-
-/**
- * Check if adding and calling a dynamic callback
- * works as expected.
- */
-BOOST_AUTO_TEST_CASE(add_dynamic_callback) {
-  communicator world;
-  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
-
-  bool called = false;
-  auto cb = [&called](int a, int b) {
-    called = true;
-    BOOST_CHECK_EQUAL(a, 5);
-    BOOST_CHECK_EQUAL(b, 13);
-  };
-
-  const int id = callbacks.add(cb);
-
-  /** Id should be 1, 0 is loop_abort */
-  Testing::reduce_and_check(world, id == 1);
-
-  if (world.rank() == 0) {
-    callbacks.call(id, 5, 13);
-    cb(5, 13);
-    callbacks.abort_loop();
-  } else {
-    callbacks.loop();
-  }
-
-  BOOST_CHECK(called);
-}
-
-/**
- * Check whether removing a dynamic callback
- * works.
- */
-BOOST_AUTO_TEST_CASE(remove_dynamic_callback) {
-  communicator world;
-  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
-
-  bool called = false;
-  auto cb = [&called](int a, int b) { called = (a == 5) && (b == 13); };
-
-  const int dynamic_id = callbacks.add(cb);
-  /** Id should be 1, 0 is loop_abort */
-  Testing::reduce_and_check(world, dynamic_id == 1);
-
-  const int static_id = callbacks.add(static_callback);
-  /** Id should be 2 */
-  Testing::reduce_and_check(world, static_id == 2);
-
-  /** Remove dynamic callback */
-  callbacks.remove(dynamic_id);
-
-  if (world.rank() == 0) {
-    /** Check that it is gone */
-    BOOST_CHECK_THROW(callbacks.call(dynamic_id, 0, 0), std::out_of_range);
-  }
-
-  /** Calling the other callback should still work */
-  static_callback_called = false;
-  if (world.rank() == 0) {
-    callbacks.call(static_callback, 5, 13);
-    static_callback(5, 13);
-    callbacks.abort_loop();
-  } else {
-    callbacks.loop();
-  }
-
-  Testing::reduce_and_check(world, static_callback_called);
-
-  /** Re-adding should work. */
-  const int new_dynamic_id = callbacks.add(cb);
-  /** Id should be recycled id 1 */
-  Testing::reduce_and_check(world, new_dynamic_id == 1);
-
-  /** New callback should work */
-  if (world.rank() == 0) {
-    callbacks.call(new_dynamic_id, 5, 13);
-    cb(5, 13);
-    callbacks.abort_loop();
-  } else {
-    callbacks.loop();
-  }
-
-  Testing::reduce_and_check(world, called);
-}
-
-BOOST_AUTO_TEST_CASE(root_check) {
-  communicator world;
-  MpiCallbacks callbacks(world, true);
-
-  auto cb = [](int, int) -> void {};
-  auto const id = callbacks.add(cb);
-
-  /* Exception on non-root */
-  if (world.rank() != 0) {
-    BOOST_CHECK_THROW(callbacks.call(id), std::logic_error);
-    callbacks.loop();
-  } else {
-    BOOST_CHECK_NO_THROW(callbacks.call(id));
-  }
-}
-
-/* Check that the destructor calls abort */
-BOOST_AUTO_TEST_CASE(destructor) {
-  communicator world;
-
-  {
-    /* Will be destroyed on scope exit */
-    MpiCallbacks callbacks(world);
-
-    if (world.rank() == 0) {
-      ;
-    } else {
-      callbacks.loop();
+    void operator&(int &i) {
+      values.push_back(i);
+      i = cnt++;
     }
-  }
-
-  /* This must be reachable by all nodes */
-  Testing::reduce_and_check(world, true);
-}
-
-struct DummyArchive {
-  std::vector<int> values;
-  int cnt = 0;
-
-  void operator&(int &i) {
-    values.push_back(i);
-    i = cnt++;
-  }
 };
 
-BOOST_AUTO_TEST_CASE(tuple) {
-  using Communication::detail::tuple;
-  using Communication::detail::apply;
+BOOST_AUTO_TEST_CASE(tuple_helpers) {
+  auto t = Communication::detail::tuple<int, int, int>{{1, 3, 5}};
 
-  /* Values */
-  {
-    tuple<int, int> t{{1, 2}};
-    BOOST_CHECK_EQUAL(1, std::get<0>(t.t));
-    BOOST_CHECK_EQUAL(2, std::get<1>(t.t));
-  }
+  Archive ar;
+  t.serialize(ar, 0);
 
-  /* Serialization */
-  {
-    tuple<int, int, int> t{{6, -2, 9}};
+  BOOST_CHECK_EQUAL(ar.values[0], 1);
+  BOOST_CHECK_EQUAL(ar.values[1], 3);
+  BOOST_CHECK_EQUAL(ar.values[2], 5);
 
-    DummyArchive ar;
-    t.serialize(ar, 0);
-
-    BOOST_CHECK_EQUAL(ar.values.size(), 3);
-    BOOST_CHECK_EQUAL(ar.values[0], 6);
-    BOOST_CHECK_EQUAL(ar.values[1], -2);
-    BOOST_CHECK_EQUAL(ar.values[2], 9);
-
-    BOOST_CHECK_EQUAL(0, std::get<0>(t.t));
-    BOOST_CHECK_EQUAL(1, std::get<1>(t.t));
-    BOOST_CHECK_EQUAL(2, std::get<2>(t.t));
-  }
-
-  /* apply */
-  {
-    apply([](int a, double b, const char* c) {
-        BOOST_CHECK_EQUAL(a, 6);
-        BOOST_CHECK_EQUAL(b, -2.3);
-        BOOST_CHECK_EQUAL(c, "9");
-    }, tuple<int, double, const char*>{{6, -2.3, "9"}}.t);
-  }
+  BOOST_CHECK_EQUAL(std::get<0>(t.t), 0);
+  BOOST_CHECK_EQUAL(std::get<1>(t.t), 1);
+  BOOST_CHECK_EQUAL(std::get<2>(t.t), 2);
 }
 
 int main(int argc, char **argv) {
