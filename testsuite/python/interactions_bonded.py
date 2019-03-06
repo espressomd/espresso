@@ -93,7 +93,14 @@ class InteractionsBondedTest(ut.TestCase):
             lambda r: tests_common.coulomb_potential(r, coulomb_k, q1, q2),
             0.01, self.system.box_l[0] / 3)
 
-    def run_test(self, bond_instance, force_func, energy_func, min_dist, cutoff, test_breakage=False):
+    def run_test(
+        self,
+        bond_instance,
+     force_func,
+     energy_func,
+     min_dist,
+     cutoff,
+     test_breakage=False):
         self.system.bonded_inter.add(bond_instance)
         self.system.part[0].bonds = ((bond_instance, 1),)
 
