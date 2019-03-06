@@ -1601,6 +1601,8 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *                                 typical) or at the source (1, swimmer only)
  *  @param[in]  philox_counter
  *  @param[in]  friction           Friction constant for the particle coupling
+ *  @tparam no_of_neighbours       The number of neighbours to consider for
+ * interpolation
  */
 template <std::size_t no_of_neighbours>
 __device__ void calc_viscous_force(
@@ -1741,6 +1743,8 @@ __device__ void calc_viscous_force(
  *  @param[in]  delta_j            Weighting of particle momentum
  *  @param[in]  node_index         Node index around (8) particle
  *  @param[out] node_f             Node force
+ *  @tparam no_of_neighbours       The number of neighbours to consider for
+ * interpolation
  */
 template <std::size_t no_of_neighbours>
 __device__ void calc_node_force(float *delta, float *delta_j,
@@ -2657,7 +2661,10 @@ void lb_init_extern_nodeforcedensities_GPU(
   cudaFree(extern_node_force_densities);
 }
 
-/** Setup and call particle kernel from the host */
+/** Setup and call particle kernel from the host
+ *  @tparam no_of_neighbours       The number of neighbours to consider for
+ * interpolation
+ */
 template <std::size_t no_of_neighbours>
 void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
   if (lbpar_gpu.number_of_particles) {
@@ -3205,6 +3212,11 @@ void lb_lbfluid_get_population(const Vector3i &xyz,
   cuda_safe_mem(cudaFree(population_device));
 }
 
+/**
+ * @brief Velocity interpolation functor
+ * @tparam no_of_neighbours The number of neighbours to consider for
+ * interpolation
+ */
 template <std::size_t no_of_neighbours> struct interpolation {
   LB_nodes_gpu current_nodes_gpu;
   LB_rho_v_gpu *d_v_gpu;
