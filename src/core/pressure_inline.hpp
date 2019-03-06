@@ -276,117 +276,43 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     /* scan bond list for angular interactions */
     type_num = p1->bl.e[i];
     iaparams = &bonded_ia_params[type_num];
+    // Skip non-three-particle-bonds
+    if (iaparams->num != 2) // number of partners
+    {
+      i += 1 + iaparams->num;
+      continue;
+    }
     type = iaparams->type;
 
-    if (type == BONDED_IA_ANGLE_HARMONIC || type == BONDED_IA_ANGLE_COSINE ||
-        type == BONDED_IA_ANGLE_COSSQUARE) {
-      p2 = local_particles[p1->bl.e[++i]];
-      p3 = local_particles[p1->bl.e[++i]];
+    p2 = local_particles[p1->bl.e[++i]];
+    p3 = local_particles[p1->bl.e[++i]];
 
-      get_mi_vector(dx12, p1->r.p, p2->r.p);
-      for (j = 0; j < 3; j++)
-        dx21[j] = -dx12[j];
+    get_mi_vector(dx12, p1->r.p, p2->r.p);
+    for (j = 0; j < 3; j++)
+      dx21[j] = -dx12[j];
 
-      get_mi_vector(dx31, p3->r.p, p1->r.p);
+    get_mi_vector(dx31, p3->r.p, p1->r.p);
 
-      for (j = 0; j < 3; j++) {
-        force1[j] = 0.0;
-        force2[j] = 0.0;
-        force3[j] = 0.0;
-      }
-
-      calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2,
-                                    force3);
-
-      /* uncomment the next line to see that the virial is indeed zero */
-      // printf("W = %g\n", scalar(force2, dx21) + scalar(force3, dx31));
-
-      /* three-body bonded interactions contribute to the stress but not the
-       * scalar pressure */
-      for (k = 0; k < 3; k++) {
-        for (l = 0; l < 3; l++) {
-          obsstat_bonded(&p_tensor, type_num)[3 * k + l] +=
-              force2[k] * dx21[l] + force3[k] * dx31[l];
-        }
-      }
-      i = i + 1;
+    for (j = 0; j < 3; j++) {
+      force1[j] = 0.0;
+      force2[j] = 0.0;
+      force3[j] = 0.0;
     }
-    // skip over non-angular interactions
-    else if (type == BONDED_IA_FENE) {
-      i = i + 2;
-    } else if (type == BONDED_IA_OIF_GLOBAL_FORCES) {
-      i = i + 3;
-    } else if (type == BONDED_IA_OIF_LOCAL_FORCES) {
-      i = i + 4;
-    } else if (type == BONDED_IA_OIF_OUT_DIRECTION) {
-      i = i + 3;
-    } else if (type == BONDED_IA_HARMONIC) {
-      i = i + 2;
-    }
-#ifdef LENNARD_JONES
-    else if (type == BONDED_IA_SUBT_LJ) {
-      i = i + 2;
-    }
-#endif
-    else if (type == BONDED_IA_DIHEDRAL) {
-      i = i + 4;
-    }
-#ifdef TABULATED
-    else if (type == BONDED_IA_TABULATED) {
-      if (iaparams->p.tab.type == TAB_BOND_LENGTH) {
-        i = i + 2;
-      } else if (iaparams->p.tab.type == TAB_BOND_ANGLE) {
-        p2 = local_particles[p1->bl.e[++i]];
-        p3 = local_particles[p1->bl.e[++i]];
 
-        get_mi_vector(dx12, p1->r.p, p2->r.p);
-        for (j = 0; j < 3; j++)
-          dx21[j] = -dx12[j];
+    calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2, force3);
 
-        get_mi_vector(dx31, p3->r.p, p1->r.p);
+    /* uncomment the next line to see that the virial is indeed zero */
+    // printf("W = %g\n", scalar(force2, dx21) + scalar(force3, dx31));
 
-        for (j = 0; j < 3; j++) {
-          force1[j] = 0.0;
-          force2[j] = 0.0;
-          force3[j] = 0.0;
-        }
-
-        calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2,
-                                      force3);
-
-        /* uncomment the next line to see that the virial is indeed zero */
-        // printf("W = %g\n", scalar(force2, dx21) + scalar(force3, dx31));
-
-        /* three-body bonded interactions contribute to the stress but not the
-         * scalar pressure */
-        for (k = 0; k < 3; k++) {
-          for (l = 0; l < 3; l++) {
-            obsstat_bonded(&p_tensor, type_num)[3 * k + l] +=
-                force2[k] * dx21[l] + force3[k] * dx31[l];
-          }
-        }
-        i = i + 1;
-      } else if (iaparams->p.tab.type == TAB_BOND_DIHEDRAL) {
-        i = i + 4;
-      } else {
-        runtimeErrorMsg()
-            << "add_three_body_bonded_stress: match not found for particle "
-            << p1->p.identity << ".\n";
+    /* three-body bonded interactions contribute to the stress but not the
+     * scalar pressure */
+    for (k = 0; k < 3; k++) {
+      for (l = 0; l < 3; l++) {
+        obsstat_bonded(&p_tensor, type_num)[3 * k + l] +=
+            force2[k] * dx21[l] + force3[k] * dx31[l];
       }
     }
-#endif
-#ifdef BOND_CONSTRAINT
-    else if (type == BONDED_IA_RIGID_BOND) {
-      i = i + 2;
-    }
-#endif
-    else if (type == BONDED_IA_VIRTUAL_BOND) {
-      i = i + 2;
-    } else {
-      runtimeErrorMsg()
-          << "add_three_body_bonded_stress: match not found for particle "
-          << p1->p.identity << ".\n";
-    }
+    i += 2;
   }
 }
 
