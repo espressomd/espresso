@@ -98,8 +98,20 @@ particle_force1 = np.copy(system.part[1].f)
 checkpoint.register("particle_force0")
 checkpoint.register("particle_force1")
 if LB_implementation:
+    m = np.pi / 12
+    nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
+    ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
+    nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
+    # Create a n_nodes*3 array with deterministic values
+    # Assign these values as populations to respective nodes of the LB fluid
+    grid_3D = np.fromfunction(
+        lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
+                              (nx, ny, nz), dtype=float)
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                lbf[i, j, k].population = np.arange(1, 20) * grid_3D[i, j, k]
     cpt_mode = int("@TEST_BINARY@")
-    lbf[1, 1, 1].velocity = [0.1, 0.2, 0.3]
     lbf_cpt_path = checkpoint.checkpoint_dir + "/lb{}.cpt"
     lbf.save_checkpoint(lbf_cpt_path.format(""), cpt_mode)
     # write an LB checkpoint with missing data
@@ -114,6 +126,6 @@ if LB_implementation:
         else:
             f.write(b"1" + lbf_cpt_str)  # first dimension becomes larger
 if espressomd.has_features("COLLISION_DETECTION"):
-        system.collision_detection.set_params(
-            mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
+    system.collision_detection.set_params(
+        mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
 checkpoint.save(0)
