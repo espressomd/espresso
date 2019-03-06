@@ -32,8 +32,6 @@
 
 #include "grid_based_algorithms/lattice.hpp"
 
-void mpi_set_lb_fluid_counter(int high, int low);
-
 #ifdef LB
 
 #include "errorhandling.hpp"

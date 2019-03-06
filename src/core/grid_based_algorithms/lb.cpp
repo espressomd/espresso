@@ -579,23 +579,17 @@ void lb_sanity_checks() {
 
 uint64_t lb_fluid_get_rng_state() { return rng_counter_fluid.value(); }
 
-void lb_fluid_set_rng_state(uint64_t counter) {
-  uint32_t high, low;
-  std::tie(high, low) = Utils::u64_to_u32(counter);
-  mpi_call(mpi_set_lb_fluid_counter, high, low);
-
+void mpi_set_lb_fluid_counter(uint64_t counter) {
   rng_counter_fluid = Utils::Counter<uint64_t>(counter);
 }
-#endif
 
-void mpi_set_lb_fluid_counter(int high, int low) {
-#ifdef LB
-  rng_counter_fluid = Utils::Counter<uint64_t>(Utils::u32_to_u64(
-      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
-#endif
+REGISTER_CALLBACK(mpi_set_lb_fluid_counter)
+
+void lb_fluid_set_rng_state(uint64_t counter) {
+  mpi_call(mpi_set_lb_fluid_counter, counter);
+  mpi_set_lb_fluid_counter(counter);
 }
 
-#ifdef LB
 /***********************************************************************/
 
 /** (Re-)allocate memory for the fluid and initialize pointers. */

@@ -38,7 +38,7 @@ namespace detail {
 template <class... Args> struct tuple {
   std::tuple<Args...> t;
 
-  template <class Archive> void serialize(Archive &ar, const long int) {
+  template <class Archive> void serialize(Archive &ar, long int) {
     Utils::for_each([&ar](auto &e) { ar &e; }, t);
   }
 };
@@ -56,7 +56,7 @@ template <class F, class... Args> struct model_t final : public concept_t {
   explicit model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
 
   void operator()(const boost::mpi::communicator &comm) const override {
-    tuple<Args...> params;
+    tuple<std::remove_const_t<Args>...> params;
     boost::mpi::broadcast(comm, params, 0);
 
     Utils::apply(m_f, params.t);
@@ -228,7 +228,9 @@ private:
 
     /** Send request to slaves */
     boost::mpi::broadcast(m_comm, id, 0);
-    detail::tuple<Args...> params{{args...}};
+    detail::tuple<
+            std::remove_const_t<
+            std::remove_reference_t<Args>>...> params{{args...}};
     boost::mpi::broadcast(m_comm, params, 0);
   }
 
@@ -336,6 +338,14 @@ private:
 } /* namespace Communication */
 
 
-#define REGISTER_CALLBACK(cb) namespace Communication { static RegisterCallback register_##cb{&cb}; }
+/**
+ * @brief Register a static callback
+ *
+ * This registers a function as an mpi callback. The
+ * macro should be used at global scope.
+ *
+ * @param cb A function
+ */
+#define REGISTER_CALLBACK(cb) namespace Communication { static RegisterCallback register_##cb(&cb); }
 
 #endif

@@ -153,7 +153,6 @@ int n_nodes = -1;
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
   CB(mpi_rotate_system_slave)                                                  \
-  CB(mpi_set_lb_fluid_counter)                                                 \
   CB(mpi_update_particle_slave)                                                \
   CB(mpi_bcast_lb_particle_coupling_slave)                                     \
   CB(mpi_recv_lb_interpolated_velocity_slave)
@@ -894,18 +893,19 @@ void mpi_bcast_cuda_global_part_vars_slave(int, int) {
 }
 
 /********************* REQ_SET_EXCL ********/
-void mpi_send_exclusion_slave(int part1, int part2, int _delete) {
 #ifdef EXCLUSIONS
+void mpi_send_exclusion_slave(int part1, int part2, int _delete) {
     local_change_exclusion(part1, part2, _delete);
     on_particle_change();
-#endif
 }
 
+REGISTER_CALLBACK(mpi_send_exclusion_slave)
+
 void mpi_send_exclusion(int part1, int part2, int _delete) {
-#ifdef EXCLUSIONS
-  mpiCallbacks().call(mpi_send_exclusion_slave, part1, part2, _delete);
-#endif
+  mpi_call(mpi_send_exclusion_slave, part1, part2, _delete);
+  mpi_send_exclusion_slave(part1, part2, _delete);
 }
+#endif
 
 /************** REQ_SET_FLUID **************/
 void mpi_send_fluid(int node, int index, double rho,

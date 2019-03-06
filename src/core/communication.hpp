@@ -107,7 +107,10 @@ typedef void(SlaveCallback)(int node, int param);
 void mpi_init();
 
 /* Call a slave function. */
-void mpi_call(SlaveCallback cb, int node, int param);
+template <class... Args>
+void mpi_call(void (*fp)(std::decay_t<Args>...), Args &&... args) {
+    Communication::mpiCallbacks().call(fp, std::forward<Args>(args)...);
+}
 
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
