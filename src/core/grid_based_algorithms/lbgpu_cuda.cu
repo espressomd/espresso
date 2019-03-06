@@ -1389,8 +1389,6 @@ __device__ __inline__ float three_point_polynomial_larger_than_half(float u) {
          (5.f + -3 * fabsf(u) - sqrtf(-2.f + 6.f * fabsf(u) - 3.f * u * u));
 }
 
-template <std::size_t no_of_neighbours,
-          std::enable_if_t<no_of_neighbours == 27> * = nullptr>
 __device__ __inline__ float3
 velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
                        float *lb_boundary_velocity,
@@ -1490,13 +1488,11 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *  @param[out] delta              Weighting of particle position
  *  @retval Interpolated velocity
  */
-template <std::size_t no_of_neighbours,
-          std::enable_if_t<no_of_neighbours == 8> * = nullptr>
 __device__ __inline__ float3 velocity_interpolation(
     LB_nodes_gpu n_a, float *particle_position, float *lb_boundary_velocity,
     Utils::Array<unsigned int, 8> &node_index, Utils::Array<float, 8> &delta) {
-  int left_node_index[3];
-  float temp_delta[6];
+  Utils::Array<int, 3> left_node_index;
+  Utils::Array<float, 6> temp_delta;
   // see ahlrichs + duenweg page 8227 equ (10) and (11)
 #pragma unroll
   for (int i = 0; i < 3; ++i) {
@@ -1634,7 +1630,7 @@ calc_viscous_force(LB_nodes_gpu n_a,
       flag_cs * direction * particle_data[part_index].swim.director[2];
 #endif
 
-  float3 const interpolated_u = velocity_interpolation<no_of_neighbours>(
+  float3 const interpolated_u = velocity_interpolation(
       n_a, position, lb_boundary_velocity, node_index, delta);
 
 #ifdef ENGINE
@@ -3216,7 +3212,7 @@ template <std::size_t no_of_neighbours> struct interpolation {
     float _position[3] = {position.x, position.y, position.z};
     Utils::Array<unsigned int, no_of_neighbours> node_indices;
     Utils::Array<float, no_of_neighbours> delta;
-    return velocity_interpolation<no_of_neighbours>(
+    return velocity_interpolation(
         current_nodes_gpu, _position, lb_boundary_velocity, node_indices,
         delta);
   }
