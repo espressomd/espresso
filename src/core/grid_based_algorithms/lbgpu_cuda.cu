@@ -41,8 +41,8 @@
 #include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
-#include "utils/Counter.hpp"
 #include "utils/Array.hpp"
+#include "utils/Counter.hpp"
 
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
@@ -1411,7 +1411,8 @@ template <std::size_t no_of_neighbours,
           std::enable_if_t<no_of_neighbours == 27> * = nullptr>
 __device__ __inline__ float3
 velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
-                       float *lb_boundary_velocity, Utils::Array<unsigned int, 27> &node_indices,
+                       float *lb_boundary_velocity,
+                       Utils::Array<unsigned int, 27> &node_indices,
                        Utils::Array<float, 27> &delta) {
   int left_node_index[3];
   float3 temp_delta[3];
@@ -1509,10 +1510,9 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  */
 template <std::size_t no_of_neighbours,
           std::enable_if_t<no_of_neighbours == 8> * = nullptr>
-__device__ __inline__ float3
-velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
-                       float *lb_boundary_velocity, Utils::Array<unsigned int, 8> &node_index,
-                       Utils::Array<float, 8> &delta) {
+__device__ __inline__ float3 velocity_interpolation(
+    LB_nodes_gpu n_a, float *particle_position, float *lb_boundary_velocity,
+    Utils::Array<unsigned int, 8> &node_index, Utils::Array<float, 8> &delta) {
   int left_node_index[3];
   float temp_delta[6];
   // see ahlrichs + duenweg page 8227 equ (10) and (11)
@@ -1605,11 +1605,14 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  * interpolation
  */
 template <std::size_t no_of_neighbours>
-__device__ void calc_viscous_force(
-    LB_nodes_gpu n_a, Utils::Array<float, no_of_neighbours> &delta, CUDA_particle_data *particle_data,
-    float *particle_force, unsigned int part_index, float *delta_j,
-    Utils::Array<unsigned int, no_of_neighbours> &node_index, LB_rho_v_gpu *d_v, int flag_cs,
-    uint64_t philox_counter, float friction, float *lb_boundary_velocity) {
+__device__ void
+calc_viscous_force(LB_nodes_gpu n_a,
+                   Utils::Array<float, no_of_neighbours> &delta,
+                   CUDA_particle_data *particle_data, float *particle_force,
+                   unsigned int part_index, float *delta_j,
+                   Utils::Array<unsigned int, no_of_neighbours> &node_index,
+                   LB_rho_v_gpu *d_v, int flag_cs, uint64_t philox_counter,
+                   float friction, float *lb_boundary_velocity) {
 // Zero out workspace
 #pragma unroll
   for (int jj = 0; jj < 3; ++jj) {
@@ -1747,9 +1750,11 @@ __device__ void calc_viscous_force(
  * interpolation
  */
 template <std::size_t no_of_neighbours>
-__device__ void calc_node_force(Utils::Array<float, no_of_neighbours> const &delta, float *delta_j,
-                                Utils::Array<unsigned int, no_of_neighbours> const &node_index,
-                                LB_node_force_density_gpu node_f) {
+__device__ void
+calc_node_force(Utils::Array<float, no_of_neighbours> const &delta,
+                float *delta_j,
+                Utils::Array<unsigned int, no_of_neighbours> const &node_index,
+                LB_node_force_density_gpu node_f) {
   for (int node = 0; node < no_of_neighbours; ++node) {
     for (int i = 0; i < 3; ++i) {
       atomicAdd(

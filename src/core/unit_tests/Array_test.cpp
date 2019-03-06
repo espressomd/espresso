@@ -24,9 +24,9 @@
 #include "utils/Array.hpp"
 using Utils::Array;
 
+#include <array>
 #include <numeric>
 #include <vector>
-#include <array>
 
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {
   static_assert(4 == Array<int, 4>().size(), "");
@@ -48,12 +48,12 @@ BOOST_AUTO_TEST_CASE(iterators) {
 
   BOOST_CHECK(*(a.begin()) == 1);
   BOOST_CHECK(*(a.cbegin()) == 1);
-  BOOST_CHECK(*(a.end()- 1) == 4);
-  BOOST_CHECK(*(a.cend() -1) == 4);
+  BOOST_CHECK(*(a.end() - 1) == 4);
+  BOOST_CHECK(*(a.cend() - 1) == 4);
 }
 
 BOOST_AUTO_TEST_CASE(element_access) {
-  auto a = Array<int, 5>{{5,6,7,8,9}};
+  auto a = Array<int, 5>{{5, 6, 7, 8, 9}};
 
   int c = 5;
   for (Array<int, 5>::size_type i = 0; i < a.size(); ++i) {
