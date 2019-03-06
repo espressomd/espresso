@@ -42,7 +42,7 @@
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "utils/Counter.hpp"
-#include "utils/Vector.hpp"
+#include "utils/Array.hpp"
 
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
@@ -1408,11 +1408,11 @@ __device__ __inline__ float three_point_polynomial_larger_than_half(float u) {
 }
 
 template <std::size_t no_of_neighbours,
-          typename std::enable_if<no_of_neighbours == 27>::type * = nullptr>
+          std::enable_if_t<no_of_neighbours == 27> * = nullptr>
 __device__ __inline__ float3
 velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
-                       float *lb_boundary_velocity, unsigned int *node_indices,
-                       float *delta) {
+                       float *lb_boundary_velocity, Utils::Array<unsigned int, 27> &node_indices,
+                       Utils::Array<float, 27> &delta) {
   int left_node_index[3];
   float3 temp_delta[3];
 
@@ -1508,11 +1508,11 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *  @retval Interpolated velocity
  */
 template <std::size_t no_of_neighbours,
-          typename std::enable_if<no_of_neighbours == 8>::type * = nullptr>
+          std::enable_if_t<no_of_neighbours == 8> * = nullptr>
 __device__ __inline__ float3
 velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
-                       float *lb_boundary_velocity, unsigned int *node_index,
-                       float *delta) {
+                       float *lb_boundary_velocity, Utils::Array<unsigned int, 8> &node_index,
+                       Utils::Array<float, 8> &delta) {
   int left_node_index[3];
   float temp_delta[6];
   // see ahlrichs + duenweg page 8227 equ (10) and (11)
@@ -1606,9 +1606,9 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  */
 template <std::size_t no_of_neighbours>
 __device__ void calc_viscous_force(
-    LB_nodes_gpu n_a, float *delta, CUDA_particle_data *particle_data,
+    LB_nodes_gpu n_a, Utils::Array<float, no_of_neighbours> &delta, CUDA_particle_data *particle_data,
     float *particle_force, unsigned int part_index, float *delta_j,
-    unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs,
+    Utils::Array<unsigned int, no_of_neighbours> &node_index, LB_rho_v_gpu *d_v, int flag_cs,
     uint64_t philox_counter, float friction, float *lb_boundary_velocity) {
 // Zero out workspace
 #pragma unroll
@@ -1747,8 +1747,8 @@ __device__ void calc_viscous_force(
  * interpolation
  */
 template <std::size_t no_of_neighbours>
-__device__ void calc_node_force(float *delta, float *delta_j,
-                                unsigned int *node_index,
+__device__ void calc_node_force(Utils::Array<float, no_of_neighbours> const &delta, float *delta_j,
+                                Utils::Array<unsigned int, no_of_neighbours> const &node_index,
                                 LB_node_force_density_gpu node_f) {
   for (int node = 0; node < no_of_neighbours; ++node) {
     for (int i = 0; i < 3; ++i) {
@@ -2249,8 +2249,8 @@ __global__ void calc_fluid_particle_ia(
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
-  unsigned int node_index[no_of_neighbours];
-  float delta[no_of_neighbours];
+  Utils::Array<unsigned int, no_of_neighbours> node_index;
+  Utils::Array<float, no_of_neighbours> delta;
   float delta_j[3];
   if (part_index < para->number_of_particles) {
 #if defined(VIRTUAL_SITES)
@@ -3227,8 +3227,8 @@ template <std::size_t no_of_neighbours> struct interpolation {
         lb_boundary_velocity(lb_boundary_velocity){};
   __device__ float3 operator()(const float3 &position) const {
     float _position[3] = {position.x, position.y, position.z};
-    unsigned int node_indices[no_of_neighbours];
-    float delta[no_of_neighbours];
+    Utils::Array<unsigned int, no_of_neighbours> node_indices;
+    Utils::Array<float, no_of_neighbours> delta;
     return velocity_interpolation<no_of_neighbours>(
         current_nodes_gpu, _position, lb_boundary_velocity, node_indices,
         delta);

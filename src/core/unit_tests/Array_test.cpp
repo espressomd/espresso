@@ -21,21 +21,21 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/DeviceArray.hpp"
-using Utils::DeviceArray;
+#include "utils/Array.hpp"
+using Utils::Array;
 
 #include <numeric>
 #include <vector>
 #include <array>
 
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {
-  static_assert(4 == DeviceArray<int, 4>().size(), "");
-  static_assert(4 == DeviceArray<int, 4>().max_size(), "");
+  static_assert(4 == Array<int, 4>().size(), "");
+  static_assert(4 == Array<int, 4>().max_size(), "");
 }
 
 BOOST_AUTO_TEST_CASE(array_ctor) {
-  DeviceArray<int, 4> a;
-  DeviceArray<int, 0> b;
+  Array<int, 4> a;
+  Array<int, 0> b;
 
   BOOST_CHECK_EQUAL(a.size(), 4);
   BOOST_CHECK_EQUAL(a.max_size(), 4);
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(array_ctor) {
 }
 
 BOOST_AUTO_TEST_CASE(iterators) {
-  auto a = DeviceArray<int, 4>{{1, 2, 3, 4}};
+  auto a = Array<int, 4>{{1, 2, 3, 4}};
 
   BOOST_CHECK(*(a.begin()) == 1);
   BOOST_CHECK(*(a.cbegin()) == 1);
@@ -53,10 +53,10 @@ BOOST_AUTO_TEST_CASE(iterators) {
 }
 
 BOOST_AUTO_TEST_CASE(element_access) {
-  auto a = DeviceArray<int, 5>{{5,6,7,8,9}};
+  auto a = Array<int, 5>{{5,6,7,8,9}};
 
   int c = 5;
-  for (DeviceArray<int, 5>::size_type i = 0; i < a.size(); ++i) {
+  for (Array<int, 5>::size_type i = 0; i < a.size(); ++i) {
     BOOST_CHECK(a.at(i) == c);
     BOOST_CHECK(a[i] == c);
     ++c;
