@@ -220,6 +220,10 @@ inline void add_bonded_virials(Particle *p1) {
   while (i < p1->bl.n) {
     type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
+    if (iaparams->num!=1) {
+      i+=iaparams->num;
+      continue;
+    }
 
     /* fetch particle 2 */
     p2 = local_particles[p1->bl.e[i++]];
@@ -284,8 +288,8 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     }
     type = iaparams->type;
 
-    p2 = local_particles[p1->bl.e[++i]];
-    p3 = local_particles[p1->bl.e[++i]];
+    p2 = local_particles[p1->bl.e[i+1]];
+    p3 = local_particles[p1->bl.e[i+2]];
 
     get_mi_vector(dx12, p1->r.p, p2->r.p);
     for (j = 0; j < 3; j++)
@@ -312,7 +316,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
             force2[k] * dx21[l] + force3[k] * dx31[l];
       }
     }
-    i += 2;
+    i += 3; // bond type and 2 partners
   }
 }
 

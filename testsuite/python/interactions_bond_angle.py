@@ -44,6 +44,7 @@ class InteractionsAngleBondTest(ut.TestCase):
         # Add a pair bond to make sure that doesn't cause trouble
         harmonic_bond = espressomd.interactions.HarmonicBond(k=0, r_0=0)
         self.system.bonded_inter.add(harmonic_bond)
+        self.harmonic_bond = harmonic_bond
         self.system.part[1].add_bond((harmonic_bond, 0))
 
     def tearDown(self):
@@ -80,6 +81,8 @@ class InteractionsAngleBondTest(ut.TestCase):
     def run_test(self, bond_instance, force_func, energy_func):
         self.system.bonded_inter.add(bond_instance)
         self.system.part[0].add_bond((bond_instance, 1, 2))
+        # Add an extra (strengh 0) pair bond, which should change nothing
+        self.system.part[0].add_bond((self.harmonic_bond, 1))
 
         N = 111
         d_phi = np.pi / N
@@ -107,6 +110,22 @@ class InteractionsAngleBondTest(ut.TestCase):
             # Total force =0?
             np.testing.assert_allclose(
                 np.sum(np.copy(self.system.part[0:3].f), 0), [0, 0, 0], atol=1E-12)
+
+            # No pressure
+            self.assertAlmostEqual(
+                self.system.analysis.pressure()["bonded"], 0, delta=1E-12)
+            # Stress tensor trace=0
+            self.assertAlmostEqual(
+                np.trace(self.system.analysis.stress_tensor()["bonded"]), 0, delta=1E-12)
+
+            p_tensor_expected = \
+                np.outer(self.system.part[1].f, self.system.distance_vec(self.system.part[0], self.system.part[1])) \
+                + np.outer(self.system.part[2].f, self.system.distance_vec(
+                    self.system.part[0], self.system.part[2]))
+            p_tensor_expected /= self.system.volume()
+            np.testing.assert_allclose(
+                self.system.analysis.stress_tensor()["bonded"],
+                p_tensor_expected, atol=1E-12)
 
     def test_angle_harmonic(self):
         ah_bend = 1.
