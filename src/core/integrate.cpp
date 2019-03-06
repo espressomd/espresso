@@ -733,21 +733,21 @@ double offset_at_time_step =
       if (p.r.p[lees_edwards_protocol.shearplanenormal] >= box_l[lees_edwards_protocol.shearplanenormal]) {
         p.m.v[lees_edwards_protocol.sheardir] -= shear_velocity / 2.0;
         p.r.p[lees_edwards_protocol.sheardir] -= offset_at_time_step ;
-	    //p.p.lees_edwards_offset -= (time_step * p.l.i[lees_edwards_protocol.shearplanenormal] * shear_velocity);
-	Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir], &dummy_i, box_l[lees_edwards_protocol.sheardir]);
+	    p.p.lees_edwards_offset -= (time_step * p.l.i[lees_edwards_protocol.shearplanenormal] * shear_velocity);
+	    Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir], &dummy_i, box_l[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
                                     // propagate_vel_finalize_p_inst
       } else if (p.r.p[lees_edwards_protocol.shearplanenormal] <= 0.) {
         p.m.v[lees_edwards_protocol.sheardir] += shear_velocity / 2.0;
         p.r.p[lees_edwards_protocol.sheardir] += offset_at_time_step ;
-	    //p.p.lees_edwards_offset += (time_step * p.l.i[lees_edwards_protocol.shearplanenormal] * shear_velocity);
-	Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir], &dummy_i, box_l[lees_edwards_protocol.sheardir]);
+	    p.p.lees_edwards_offset += (time_step * p.l.i[lees_edwards_protocol.shearplanenormal] * shear_velocity);
+	    Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir], &dummy_i, box_l[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = 1; // perform a positive half velocity shift in
                                    // propagate_vel_finalize_p_inst
       } else {
         p.p.lees_edwards_flag = 0;
       }
-	  p.p.lees_edwards_offset += (time_step * p.l.i[lees_edwards_protocol.shearplanenormal] * shear_velocity);
+	  p.p.lees_edwards_offset -= (time_step * p.l.i[lees_edwards_protocol.shearplanenormal] * shear_velocity);
     }
 #endif
 
