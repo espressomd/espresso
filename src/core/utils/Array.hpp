@@ -23,12 +23,14 @@ template <typename T, std::size_t N> struct Array {
   using const_pointer = const value_type *;
   value_type m_data[N ? N : 1];
   DEVICE_QUALIFIER constexpr reference at(size_type i) {
-    return (i < N) ? m_data[i]
-                   : throw std::out_of_range("Array access out of bounds.");
+    if (i >= N)
+      throw std::out_of_range("Array access out of bounds.");
+    return m_data[i];
   }
   DEVICE_QUALIFIER constexpr const_reference at(size_type i) const {
-    return (i < N) ? m_data[i]
-                   : throw std::out_of_range("Array access out of bounds.");
+    if (i >= N)
+      throw std::out_of_range("Array access out of bounds.");
+    return m_data[i];
   }
   DEVICE_QUALIFIER constexpr reference operator[](size_type i) {
     return m_data[i];
