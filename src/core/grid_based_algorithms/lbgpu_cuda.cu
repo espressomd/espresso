@@ -183,28 +183,24 @@ __device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
            n_a.vd[flat_index(14)] + n_a.vd[flat_index(15)] +
            n_a.vd[flat_index(16)] + n_a.vd[flat_index(17)] +
            n_a.vd[flat_index(18)];
-    break;
   case 1:
     return (n_a.vd[flat_index(1)] - n_a.vd[flat_index(2)]) +
            (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) +
            (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) +
            (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) +
            (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]);
-    break;
   case 2:
     return (n_a.vd[flat_index(3)] - n_a.vd[flat_index(4)]) +
            (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) -
            (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) +
            (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) +
            (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
-    break;
   case 3:
     return (n_a.vd[flat_index(5)] - n_a.vd[flat_index(6)]) +
            (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) -
            (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]) +
            (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) -
            (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
-    break;
   case 4:
     return -n_a.vd[flat_index(0)] + n_a.vd[flat_index(7)] +
            n_a.vd[flat_index(8)] + n_a.vd[flat_index(9)] +
@@ -213,7 +209,6 @@ __device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
            n_a.vd[flat_index(14)] + n_a.vd[flat_index(15)] +
            n_a.vd[flat_index(16)] + n_a.vd[flat_index(17)] +
            n_a.vd[flat_index(18)];
-    break;
   case 5:
     return (n_a.vd[flat_index(1)] + n_a.vd[flat_index(2)]) -
            (n_a.vd[flat_index(3)] + n_a.vd[flat_index(4)]) +
@@ -221,7 +216,6 @@ __device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
            (n_a.vd[flat_index(13)] + n_a.vd[flat_index(14)]) -
            (n_a.vd[flat_index(15)] + n_a.vd[flat_index(16)]) -
            (n_a.vd[flat_index(17)] + n_a.vd[flat_index(18)]);
-    break;
   case 6:
     return (n_a.vd[flat_index(1)] + n_a.vd[flat_index(2)]) +
            (n_a.vd[flat_index(3)] + n_a.vd[flat_index(4)]) -
@@ -232,58 +226,48 @@ __device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
            2.0f * ((n_a.vd[flat_index(5)] + n_a.vd[flat_index(6)]) -
                    (n_a.vd[flat_index(7)] + n_a.vd[flat_index(8)]) -
                    (n_a.vd[flat_index(9)] + n_a.vd[flat_index(10)]));
-    break;
   case 7:
     return (n_a.vd[flat_index(7)] + n_a.vd[flat_index(8)]) -
            (n_a.vd[flat_index(9)] + n_a.vd[flat_index(10)]);
-    break;
   case 8:
     return (n_a.vd[flat_index(11)] + n_a.vd[flat_index(12)]) -
            (n_a.vd[flat_index(13)] + n_a.vd[flat_index(14)]);
-    break;
   case 9:
     return (n_a.vd[flat_index(15)] + n_a.vd[flat_index(16)]) -
            (n_a.vd[flat_index(17)] + n_a.vd[flat_index(18)]);
-    break;
   case 10:
     return -2.0f * (n_a.vd[flat_index(1)] - n_a.vd[flat_index(2)]) +
            (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) +
            (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) +
            (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) +
            (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]);
-    break;
   case 11:
     return -2.0f * (n_a.vd[flat_index(3)] - n_a.vd[flat_index(4)]) +
            (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) -
            (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) +
            (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) +
            (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
-    break;
   case 12:
     return -2.0f * (n_a.vd[flat_index(5)] - n_a.vd[flat_index(6)]) +
            (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) -
            (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]) +
            (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) -
            (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
-    break;
   case 13:
     return (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) +
            (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) -
            (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) -
            (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]);
-    break;
   case 14:
     return (n_a.vd[flat_index(7)] - n_a.vd[flat_index(8)]) -
            (n_a.vd[flat_index(9)] - n_a.vd[flat_index(10)]) -
            (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) -
            (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
-    break;
   case 15:
     return (n_a.vd[flat_index(11)] - n_a.vd[flat_index(12)]) -
            (n_a.vd[flat_index(13)] - n_a.vd[flat_index(14)]) -
            (n_a.vd[flat_index(15)] - n_a.vd[flat_index(16)]) +
            (n_a.vd[flat_index(17)] - n_a.vd[flat_index(18)]);
-    break;
   case 16:
     return n_a.vd[flat_index(0)] + n_a.vd[flat_index(7)] +
            n_a.vd[flat_index(8)] + n_a.vd[flat_index(9)] +
@@ -295,7 +279,6 @@ __device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
            2.0f * ((n_a.vd[flat_index(1)] + n_a.vd[flat_index(2)]) +
                    (n_a.vd[flat_index(3)] + n_a.vd[flat_index(4)]) +
                    (n_a.vd[flat_index(5)] + n_a.vd[flat_index(6)]));
-    break;
   case 17:
     return -(n_a.vd[flat_index(1)] + n_a.vd[flat_index(2)]) +
            (n_a.vd[flat_index(3)] + n_a.vd[flat_index(4)]) +
@@ -313,7 +296,6 @@ __device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
            2.0f * ((n_a.vd[flat_index(5)] + n_a.vd[flat_index(6)]) +
                    (n_a.vd[flat_index(7)] + n_a.vd[flat_index(8)]) +
                    (n_a.vd[flat_index(9)] + n_a.vd[flat_index(10)]));
-    break;
   }
   return 0.0;
 }
