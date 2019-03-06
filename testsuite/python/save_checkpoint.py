@@ -98,10 +98,21 @@ particle_force1 = np.copy(system.part[1].f)
 checkpoint.register("particle_force0")
 checkpoint.register("particle_force1")
 if LB_implementation:
+    cpt_mode = int("@TEST_BINARY@")
     lbf[1, 1, 1].velocity = [0.1, 0.2, 0.3]
-    lbf.save_checkpoint(
-        "@CMAKE_CURRENT_BINARY_DIR@/lb_@TEST_COMBINATION@_@TEST_BINARY@.cpt",
-        int("@TEST_BINARY@"))
+    lbf_cpt_path = checkpoint.checkpoint_dir + "/lb{}.cpt"
+    lbf.save_checkpoint(lbf_cpt_path.format(""), cpt_mode)
+    # write an LB checkpoint with missing data
+    with open(lbf_cpt_path.format(""), "rb") as f:
+        lbf_cpt_str = f.read()
+    with open(lbf_cpt_path.format("-corrupted"), "wb") as f:
+        f.write(lbf_cpt_str[:len(lbf_cpt_str) // 2])
+    # write an LB checkpoint with different box dimensions
+    with open(lbf_cpt_path.format("-wrong-boxdim"), "wb") as f:
+        if cpt_mode == 1:
+            f.write(8 * b"\x00" + lbf_cpt_str[8:])  # first dimension becomes 0
+        else:
+            f.write(b"1" + lbf_cpt_str)  # first dimension becomes larger
 if espressomd.has_features("COLLISION_DETECTION"):
         system.collision_detection.set_params(
             mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)

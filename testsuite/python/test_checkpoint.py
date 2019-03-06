@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import sys
 import subprocess
 import unittest as ut
 import numpy as np
@@ -34,21 +35,26 @@ class CheckpointTest(ut.TestCase):
 
     @classmethod
     def setUpClass(self):
-        checkpoint = espressomd.checkpointing.Checkpoint(
+        self.checkpoint = espressomd.checkpointing.Checkpoint(
             checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
                 '.', '__'),
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
-        checkpoint.load(0)
-        if LB:
-            self.lbf = system.actors[0]
-            self.lbf.load_checkpoint(
-                "@CMAKE_CURRENT_BINARY_DIR@/lb_@TEST_COMBINATION@_@TEST_BINARY@.cpt", int("@TEST_BINARY@"))
+        self.checkpoint.load(0)
 
     @ut.skipIf(not LB, "Skipping test due to missing features.")
     def test_LB(self):
+        lbf = system.actors[0]
+        cpt_mode = int("@TEST_BINARY@")
+        cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
+        with self.assertRaises(RuntimeError):
+            lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
+        assertRaisesRegex = self.assertRaisesRegexp if sys.version_info < (3,2) else self.assertRaisesRegex
+        with assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+            lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+        lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         np.testing.assert_almost_equal(
-            np.copy(self.lbf[1, 1, 1].velocity), np.array([0.1, 0.2, 0.3]))
-        state = self.lbf.get_params()
+            np.copy(lbf[1, 1, 1].velocity), np.array([0.1, 0.2, 0.3]))
+        state = lbf.get_params()
         reference = {'agrid': 0.5, 'visc': 1.3,
                      'dens': 1.5, 'tau': 0.01}
         for key, val in reference.items():
