@@ -116,7 +116,7 @@ public:
                 decltype(std::declval<void(*)(Args...)>()(args...))
         >::value>
         {
-          if(m_cb) m_cb->call(m_id, std::forward<ArgRef>(args)...);
+          assert(m_cb), m_cb->call(m_id, std::forward<ArgRef>(args)...);
         }
 
         ~CallbackHandle() {

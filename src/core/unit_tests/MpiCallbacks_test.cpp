@@ -58,6 +58,10 @@ BOOST_AUTO_TEST_CASE(tuple_helpers) {
   BOOST_CHECK_EQUAL(std::get<2>(t.t), 2);
 }
 
+BOOST_AUTO_TEST_CASE(callback_handle) {
+  ;
+}
+
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);
 
