@@ -93,5 +93,6 @@ void local_lees_edwards_image_reset() {
     p.l.i[0] = 0;
     p.l.i[1] = 0;
     p.l.i[2] = 0;
+    p.p.lees_edwards_offset = 0;
     }
 }
