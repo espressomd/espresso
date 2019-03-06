@@ -171,12 +171,12 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
     if (lb_particle_coupling.couple_to_md && this_node == 0) {
       switch (lb_lbinterpolation_get_interpolation_order()) {
       case (InterpolationOrder::linear):
-        lb_calc_particle_lattice_ia_gpu(couple_virtual,
-                                        lb_lbcoupling_get_gamma(), false);
+        lb_calc_particle_lattice_ia_gpu<8>(couple_virtual,
+                                           lb_lbcoupling_get_gamma());
         break;
       case (InterpolationOrder::quadratic):
-        lb_calc_particle_lattice_ia_gpu(couple_virtual,
-                                        lb_lbcoupling_get_gamma(), true);
+        lb_calc_particle_lattice_ia_gpu<27>(couple_virtual,
+                                            lb_lbcoupling_get_gamma());
         break;
       }
     }

@@ -96,12 +96,12 @@ lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
     Vector3d interpolated_u{};
     switch (interpolation_order) {
     case (InterpolationOrder::linear):
-      lb_get_interpolated_velocity_gpu(folded_pos.data(), interpolated_u.data(),
-                                       1, false);
+      lb_get_interpolated_velocity_gpu<8>(folded_pos.data(),
+                                          interpolated_u.data(), 1);
       break;
     case (InterpolationOrder::quadratic):
-      lb_get_interpolated_velocity_gpu(folded_pos.data(), interpolated_u.data(),
-                                       1, true);
+      lb_get_interpolated_velocity_gpu<27>(folded_pos.data(),
+                                           interpolated_u.data(), 1);
       break;
     }
     return interpolated_u;

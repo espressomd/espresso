@@ -240,8 +240,9 @@ void lb_init_extern_nodeforcedensities_GPU(
     LB_parameters_gpu *lbpar_gpu);
 
 void lb_set_agrid_gpu(double agrid);
-void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction,
-                                     bool three_point_coupling);
+
+template <std::size_t no_of_neighbours>
+void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction);
 
 void lb_calc_fluid_mass_GPU(double *mass);
 void lb_calc_fluid_momentum_GPU(double *host_mom);
@@ -274,9 +275,14 @@ void lb_lbfluid_particles_add_momentum(float velocity[3]);
 void lb_lbfluid_set_population(const Vector3i &, float[LBQ]);
 void lb_lbfluid_get_population(const Vector3i &, float[LBQ]);
 
+template <std::size_t no_of_neighbours>
 void lb_get_interpolated_velocity_gpu(double const *positions,
-                                      double *velocities, int length,
-                                      bool three_point);
+                                      double *velocities, int length);
+void linear_velocity_interpolation(double const *positions, double *velocities,
+                                   int length);
+void quadratic_velocity_interpolation(double const *positions,
+                                      double *velocities, int length);
+
 uint64_t lb_fluid_get_rng_state_gpu();
 void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();
