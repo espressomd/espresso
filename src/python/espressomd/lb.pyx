@@ -282,37 +282,37 @@ IF LB_GPU:
             self._set_lattice_switch()
             self._set_params_in_es_core()
 
-#        @cython.boundscheck(False)
-#        @cython.wraparound(False)
-#        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None, three_point=False):
-#            """Calculate the fluid velocity at given positions.
-#
-#            Parameters
-#            ----------
-#            positions : numpy-array of type :obj:`float` of shape (N,3)
-#                        The 3-dimensional positions.
-#
-#            Returns
-#            -------
-#            velocities : numpy-array of type :obj:`float` of shape (N,3)
-#                         The 3-dimensional LB fluid velocities.
-#
-#            Raises
-#            ------
-#            AssertionError
-#                If shape of ``positions`` not (N,3).
-#
-#            """
-#            assert positions.shape[
-#                1] == 3, "The input array must have shape (N,3)"
-#            cdef int length
-#            length = positions.shape[0]
-#            velocities = np.empty_like(positions)
-#            if three_point:
-#                lb_get_interpolated_velocity_gpu[27]( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
-#            else:
-#                lb_get_interpolated_velocity_gpu[8]( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
-#            return velocities * lb_lbfluid_get_lattice_speed()
+        @cython.boundscheck(False)
+        @cython.wraparound(False)
+        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None, three_point=False):
+            """Calculate the fluid velocity at given positions.
+
+            Parameters
+            ----------
+            positions : numpy-array of type :obj:`float` of shape (N,3)
+                        The 3-dimensional positions.
+
+            Returns
+            -------
+            velocities : numpy-array of type :obj:`float` of shape (N,3)
+                         The 3-dimensional LB fluid velocities.
+
+            Raises
+            ------
+            AssertionError
+                If shape of ``positions`` not (N,3).
+
+            """
+            assert positions.shape[
+                1] == 3, "The input array must have shape (N,3)"
+            cdef int length
+            length = positions.shape[0]
+            velocities = np.empty_like(positions)
+            if three_point:
+                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            else:
+                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            return velocities * lb_lbfluid_get_lattice_speed()
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):
