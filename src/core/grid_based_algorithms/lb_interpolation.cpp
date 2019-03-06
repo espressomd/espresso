@@ -25,8 +25,8 @@ void mpi_set_interpolation_order_slave(int, int) {
 void lb_lbinterpolation_set_interpolation_order(
     InterpolationOrder const &order) {
   interpolation_order = order;
-  boost::mpi::broadcast(comm_cart, interpolation_order, 0);
   mpi_call(mpi_set_interpolation_order_slave, 0, 0);
+  boost::mpi::broadcast(comm_cart, interpolation_order, 0);
 }
 
 InterpolationOrder lb_lbinterpolation_get_interpolation_order() {
