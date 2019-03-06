@@ -113,7 +113,7 @@ public:
         /* Enable if a hypothetical function with signature void(Args..)
          * could be called with the provided arguments. */
         -> std::enable_if_t<std::is_void<
-                decltype(std::declval<void(*)(Args...)>()(args...))
+                decltype(std::declval<void(*)(Args...)>()(std::forward<ArgRef>(args)...))
         >::value>
         {
           assert(m_cb), m_cb->call(m_id, std::forward<ArgRef>(args)...);
@@ -329,6 +329,9 @@ private:
    */
   std::unordered_map<void (*)(), int> m_func_ptr_to_id;
 };
+
+template<class... Args>
+using CallbackHandle = MpiCallbacks::CallbackHandle<Args...>;
 
 /**
  * @brief Helper class to atomatically add callbacks.

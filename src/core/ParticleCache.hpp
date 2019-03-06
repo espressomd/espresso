@@ -165,8 +165,8 @@ class ParticleCache {
   /** State */
   bool m_valid, m_valid_bonds;
 
-  Communication::MpiCallbacks::CallbackHandle<> update_cb;
-  Communication::MpiCallbacks::CallbackHandle<> update_bonds_cb;
+  Communication::CallbackHandle<> update_cb;
+  Communication::CallbackHandle<> update_bonds_cb;
 
   /** Functor to get a particle range */
   GetParticles parts;

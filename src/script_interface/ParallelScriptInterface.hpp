@@ -86,7 +86,7 @@ private:
   void collect_garbage();
 
   /* Data members */
-  Communication::MpiCallbacks::CallbackHandle<ParallelScriptInterfaceSlave::CallbackAction>  m_callback_id;
+  Communication::CallbackHandle<ParallelScriptInterfaceSlave::CallbackAction> m_callback_id;
   /* Payload object */
   std::shared_ptr<ScriptInterfaceBase> m_p;
   map_t obj_map;

@@ -64,7 +64,7 @@ private:
   VariantMap bcast_variant_map() const;
 
 private:
-    Communication::MpiCallbacks::CallbackHandle<CallbackAction>  m_callback_id;
+    Communication::CallbackHandle<CallbackAction>  m_callback_id;
   void mpi_slave(CallbackAction action);
 };
 } /* namespace ScriptInterface */
