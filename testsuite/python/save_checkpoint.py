@@ -14,7 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import unittest as ut
 import numpy as np
+import os
 
 import espressomd
 import espressomd.checkpointing
@@ -25,11 +27,6 @@ import espressomd.accumulators
 import espressomd.observables
 import espressomd.lb
 
-checkpoint = espressomd.checkpointing.Checkpoint(
-    checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
-        '.', '__'),
-    checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
-
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
 
@@ -38,6 +35,11 @@ system.cell_system.skin = 0.1
 system.seed = system.cell_system.get_state()["n_nodes"] * [1234]
 system.time_step = 0.01
 system.min_global_cut = 2.0
+
+# create checkpoint folder
+idx = "mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(".", "__")
+checkpoint = espressomd.checkpointing.Checkpoint(
+    checkpoint_id=idx, checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
 LB_implementation = None
 if espressomd.has_features('LB') and 'LB.CPU' in modes:
@@ -97,35 +99,60 @@ particle_force0 = np.copy(system.part[0].f)
 particle_force1 = np.copy(system.part[1].f)
 checkpoint.register("particle_force0")
 checkpoint.register("particle_force1")
+if espressomd.has_features("COLLISION_DETECTION"):
+    system.collision_detection.set_params(
+        mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
+
 if LB_implementation:
     m = np.pi / 12
     nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
     ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
     nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
-    # Create a n_nodes*3 array with deterministic values
-    # Assign these values as populations to respective nodes of the LB fluid
+    # Create a 3D grid with deterministic values to fill the LB fluid lattice
     grid_3D = np.fromfunction(
         lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
                               (nx, ny, nz), dtype=float)
     for i in range(nx):
         for j in range(ny):
             for k in range(nz):
-                lbf[i, j, k].population = np.arange(1, 20) * grid_3D[i, j, k]
+                lbf[i, j, k].population = grid_3D[i, j, k] * np.arange(1, 20)
     cpt_mode = int("@TEST_BINARY@")
-    lbf_cpt_path = checkpoint.checkpoint_dir + "/lb{}.cpt"
-    lbf.save_checkpoint(lbf_cpt_path.format(""), cpt_mode)
-    # write an LB checkpoint with missing data
-    with open(lbf_cpt_path.format(""), "rb") as f:
-        lbf_cpt_str = f.read()
-    with open(lbf_cpt_path.format("-corrupted"), "wb") as f:
-        f.write(lbf_cpt_str[:len(lbf_cpt_str) // 2])
-    # write an LB checkpoint with different box dimensions
-    with open(lbf_cpt_path.format("-wrong-boxdim"), "wb") as f:
-        if cpt_mode == 1:
-            f.write(8 * b"\x00" + lbf_cpt_str[8:])  # first dimension becomes 0
-        else:
-            f.write(b"1" + lbf_cpt_str)  # first dimension becomes larger
-if espressomd.has_features("COLLISION_DETECTION"):
-    system.collision_detection.set_params(
-        mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
+    # save LB checkpoint file
+    lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
+    lbf.save_checkpoint(lbf_cpt_path, cpt_mode)
+
+# save checkpoint file
 checkpoint.save(0)
+
+
+class TestLB(ut.TestCase):
+
+    def test_checkpointing(self):
+        self.assertTrue(os.path.isdir(checkpoint.checkpoint_dir),
+                        "checkpoint directory not created")
+
+        checkpoint_filepath = checkpoint.checkpoint_dir + "/0.checkpoint"
+        self.assertTrue(os.path.isfile(checkpoint_filepath),
+                        "checkpoint file not created")
+
+        if LB_implementation:
+            self.assertTrue(os.path.isfile(lbf_cpt_path),
+                            "LB checkpoint file not created")
+
+            with open(lbf_cpt_path, "rb") as f:
+                lbf_cpt_str = f.read()
+            # write an LB checkpoint with missing data
+            with open(lbf_cpt_path[:-4] + "-corrupted.cpt", "wb") as f:
+                f.write(lbf_cpt_str[:len(lbf_cpt_str) // 2])
+            # write an LB checkpoint with different box dimensions
+            with open(lbf_cpt_path[:-4] + "-wrong-boxdim.cpt", "wb") as f:
+                if cpt_mode == 1:
+                    # first dimension becomes 0
+                    f.write(8 * b"\x00" + lbf_cpt_str[8:])
+                else:
+                    # first dimension becomes larger
+                    f.write(b"1" + lbf_cpt_str)
+
+
+if __name__ == '__main__':
+    ut.main()

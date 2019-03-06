@@ -60,7 +60,7 @@ class CheckpointTest(ut.TestCase):
         nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
         grid_3D = np.fromfunction(
             lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
-                                 (nx, ny, nz), dtype=float)
+            (nx, ny, nz), dtype=float)
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
@@ -153,12 +153,12 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not espressomd.has_features('EXCLUSIONS'),
                "Skipping test due to missing features.")
     def test_exclusions(self):
-        self.assertTrue(
-            tests_common.lists_contain_same_elements(system.part[0].exclusions, [2]))
-        self.assertTrue(
-            tests_common.lists_contain_same_elements(system.part[1].exclusions, [2]))
-        self.assertTrue(
-            tests_common.lists_contain_same_elements(system.part[2].exclusions, [0, 1]))
+        self.assertTrue(tests_common.lists_contain_same_elements(
+            system.part[0].exclusions, [2]))
+        self.assertTrue(tests_common.lists_contain_same_elements(
+            system.part[1].exclusions, [2]))
+        self.assertTrue(tests_common.lists_contain_same_elements(
+            system.part[2].exclusions, [0, 1]))
 
 
 if __name__ == '__main__':
