@@ -114,6 +114,16 @@ template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
  */
 class MpiCallbacks {
 public:
+    /**
+      * @brief RAII handle for a callback.
+      *
+      * This is what the client gets for registering a
+      * dynamic (= not function pointer) callback.
+      * It manages the livetime of the callback hand is
+      * needed to call it. The handle has a type derived
+      * from the signature of the callback, which makes
+      * it possible to do static type checking on the
+      * arguements. */
     template<class... Args>
     class CallbackHandle {
     public:
@@ -138,6 +148,13 @@ public:
         CallbackHandle() : m_id(0), m_cb(nullptr) {}
         CallbackHandle(int id, MpiCallbacks *cb) : m_id(id), m_cb(cb) {}
 
+	/**
+	  * @brief Call the callback managed by this handle.
+	  *
+	  * The arguments are passed to the remote callees, it
+	  * must be possible to call the function with the provided
+	  * arguments, otherwise this will not compile.
+	  */
         template<class... ArgRef>
         auto operator()(ArgRef&&... args) const
         /* Enable if a hypothetical function with signature void(Args..)
@@ -200,7 +217,7 @@ public:
    * @tparam F An object with a const call operator.
    *
    * @param f The callback function to add.
-   * @return An integer id with which the callback can be called.
+   * @return A handle with which the callback can be called.
    **/
   template <typename F> auto add(F &&f) {
     auto model = detail::make_model(std::forward<F>(f));
@@ -214,7 +231,6 @@ public:
    * function that must be run on all nodes.
    *
    * @param fp Pointer to the static callback function to add.
-   * @return An integer id with which the callback can be called.
    **/
   template <class... Args> void add(void (*fp)(Args...)) {
     const int id = m_callbacks.add(detail::make_model(fp));
@@ -234,6 +250,7 @@ private:
         m_callbacks.remove(id);
     }
 
+ private:
   /**
    * @brief call a callback.
    *
@@ -246,7 +263,6 @@ private:
    * @param par1 First parameter to pass to the callback.
    * @param par2 Second parameter to pass to the callback.
    */
-private:
   template <class... Args> void call(int id, Args &&... args) const {
     /** Can only be call from master */
     if (m_comm.rank() != 0) {
@@ -261,6 +277,9 @@ private:
     /** Send request to slaves */
     boost::mpi::broadcast(m_comm, id, 0);
 
+    /* Pack the arguments into a packed mpi buffer.
+       this is needed because boost mpi required broadcast
+       objects to be mutable even on the sending rank. */
     boost::mpi::packed_oarchive oa(m_comm);
     Utils::for_each([&oa](auto &&e) { oa << e; }, std::forward_as_tuple(std::forward<Args>(args)...));
 
@@ -277,7 +296,7 @@ public:
    * in the MPI loop. Also the function has to be previously
    * registered e.g. with the @def REGISTER_CALLBACK macro.
    *
-   * @param fp Static callback (e.g. the function name) to call.
+   * @param fp Pointer to the function to call.
    * @param args Arguments for the callback.
    */
   template <class... Args, class... ArgRef>
@@ -382,7 +401,6 @@ using CallbackHandle = MpiCallbacks::CallbackHandle<Args...>;
         }
     };
 } /* namespace Communication */
-
 
 /**
  * @brief Register a static callback
