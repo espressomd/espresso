@@ -33,7 +33,7 @@ checkpoint = espressomd.checkpointing.Checkpoint(
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
 
-system = espressomd.System(box_l=[12.0, 12.0, 12.0])
+system = espressomd.System(box_l=[10.0, 12.0, 14.0])
 system.cell_system.skin = 0.1
 system.seed = system.cell_system.get_state()["n_nodes"] * [1234]
 system.time_step = 0.01
