@@ -36,31 +36,53 @@
 
 namespace Communication {
 namespace detail {
-template <class... Args> struct tuple {
-  std::tuple<Args...> t;
 
-  template <class Archive> void serialize(Archive &ar, long int) {
-    Utils::for_each([&ar](auto &e) { ar &e; }, t);
-  }
-};
-
+/**
+  * @brief Type-erased interface for callbacks.
+  *
+  * This encapsulates the signature of the callback
+  * and the parameter transfer, so that it can be
+  * called without any type information on the parameters.
+  */
 struct callback_concept_t {
   virtual void operator()(const boost::mpi::communicator &) const = 0;
 
   virtual ~callback_concept_t() = default;
 };
 
+/**
+  * @brief Concrete implementation of @class callback_concept_t.
+  *
+  * This is an implementation of a callback for a specific callable
+  * F and a set of arguments to call it with.
+  */
 template <class F, class... Args> struct callback_model_t final : public callback_concept_t {
   F m_f;
 
   template <class FRef>
   explicit callback_model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
 
+/**
+  * @brief Execute the callback.
+  *
+  * Receive parameters for this callback, and then call it.
+  *
+  * @param comm The communicator to receive the paramters on.
+  */
   void operator()(const boost::mpi::communicator &comm) const override {
-    tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
-    boost::mpi::broadcast(comm, params, 0);
+    /* This is the local receive buffer for the parameters. We have to strip
+       away const so we can actually deserialize into it. */
+    std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
 
-    Utils::apply(m_f, Utils::as_const(params.t));
+    boost::mpi::packed_iarchive ia(comm);
+    boost::mpi::broadcast(comm, ia, 0);
+    Utils::for_each([&ia](auto &e) { ia >> e; }, params);
+
+    /* We add const here, so that parameters can only by by value
+       or const referece. Output parameters on callbacks are not
+       sensible because the changes are not propagated back, so
+       we make sure this does not compile. */
+    Utils::apply(m_f, Utils::as_const(params));
   }
 };
 
@@ -74,6 +96,14 @@ template <typename F> auto make_model(F &&f) {
   return make_model_impl(std::forward<F>(f), &C::operator());
 }
 
+/**
+  * @brief Make a @class callback_model_t for a function pointer.
+  *
+  * This instantiates a implementation of a callback for a function
+  * pointer. The main task here is to transfer the signature from
+  * the pointer to the callback_model_t by template argument type
+  * deduction.
+  */
 template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
   return std::make_unique<callback_model_t<void (*)(Args...), Args...>>(f_ptr);
 }
@@ -230,10 +260,11 @@ private:
 
     /** Send request to slaves */
     boost::mpi::broadcast(m_comm, id, 0);
-    detail::tuple<
-            std::remove_const_t<
-            std::remove_reference_t<Args>>...> params{{std::forward<Args>(args)...}};
-    boost::mpi::broadcast(m_comm, params, 0);
+
+    boost::mpi::packed_oarchive oa(m_comm);
+    Utils::for_each([&oa](auto &&e) { oa << e; }, std::forward_as_tuple(std::forward<Args>(args)...));
+
+    boost::mpi::broadcast(m_comm, oa, 0);
   }
 
 public:

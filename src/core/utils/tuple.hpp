@@ -17,7 +17,9 @@ namespace Utils {
     /**
      * @brief Call function with expanded tuple as parameters.
      *
-     * @tparam F callable with tuple elements as agruments
+     * Like std::apply.
+     *
+     * @tparam F Callable with tuple elements as agruments
      * @tparam Tuple Has to comform to the tuple interface
      * @param f
      * @param t
