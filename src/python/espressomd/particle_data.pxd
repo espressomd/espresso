@@ -99,10 +99,6 @@ cdef extern from "particle_data.hpp":
     IF MASS:
         void set_particle_mass(int part, double mass)
 
-    IF SHANCHEN:
-        void set_particle_solvation(int part, double * solvation)
-        void pointer_to_solvation(const particle * p, const double * & res)
-
     IF ROTATIONAL_INERTIA:
         void set_particle_rotational_inertia(int part, double rinertia[3])
         void pointer_to_rotational_inertia(const particle * p, const double * & res)

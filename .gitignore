@@ -15,6 +15,7 @@ myconfig.hpp
 build/
 CMakeFiles
 cmake-build*
+compile_commands.json
 
 *.*~
 

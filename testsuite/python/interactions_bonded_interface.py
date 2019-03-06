@@ -108,13 +108,12 @@ class ParticleProperties(ut.TestCase):
     test_dihedral = generateTestForBondParams(
         0, espressomd.interactions.Dihedral, {"mult": 3.0, "bend": 5.2, "phase": 3.})
 
-    if espressomd.has_features(["BOND_ANGLE"]):
-        test_angle_harm = generateTestForBondParams(
-            0, espressomd.interactions.AngleHarmonic, {"bend": 5.2, "phi0": 3.2})
-        test_angle_cos = generateTestForBondParams(
-            0, espressomd.interactions.AngleCosine, {"bend": 5.2, "phi0": 3.2})
-        test_angle_cossquare = generateTestForBondParams(
-            0, espressomd.interactions.AngleCossquare, {"bend": 5.2, "phi0": 0.})
+    test_angle_harm = generateTestForBondParams(
+        0, espressomd.interactions.AngleHarmonic, {"bend": 5.2, "phi0": 3.2})
+    test_angle_cos = generateTestForBondParams(
+        0, espressomd.interactions.AngleCosine, {"bend": 5.2, "phi0": 3.2})
+    test_angle_cossquare = generateTestForBondParams(
+        0, espressomd.interactions.AngleCossquare, {"bend": 5.2, "phi0": 0.})
     if espressomd.has_features(["LENNARD_JONES"]):
         test_subt_lj = generateTestForBondParams(
             0, espressomd.interactions.SubtLJ, {})

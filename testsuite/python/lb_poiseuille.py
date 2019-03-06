@@ -38,7 +38,6 @@ TIME_STEP = 0.1
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
-             'fric': 1.0,
              'tau': TIME_STEP,
              'ext_force_density': [0.0, 0.0, EXT_FORCE]}
 

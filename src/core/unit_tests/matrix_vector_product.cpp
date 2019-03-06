@@ -16,10 +16,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/* minimal config to run SHANCHEN testcase */
-#define EXPERIMENTAL_FEATURES
 
-#define LB_GPU
-#define SHANCHEN
-#define EXTERNAL_FORCES
-#define PARTIAL_PERIODIC
+#define BOOST_TEST_MODULE matrix_vector_product test
+#define BOOST_TEST_DYN_LINK
+#include <boost/range/numeric.hpp>
+#include <boost/test/unit_test.hpp>
+
+#include "utils/math/matrix_vector_product.hpp"
+
+extern constexpr std::array<std::array<int, 3>, 3> matrix{
+    {{{1, 2, 9}}, {{8, 41, 6}}, {{31, 15, 99}}}};
+
+BOOST_AUTO_TEST_CASE(inner_product) {
+  const std::array<double, 3> vector{{0.5, 1.25, 3.1}};
+  auto const result = Utils::matrix_vector_product<double, 3, matrix>(vector);
+  for (int i = 0; i < 3; ++i) {
+    BOOST_CHECK(result[i] == boost::inner_product(matrix[i], vector, 0.0));
+  }
+}
