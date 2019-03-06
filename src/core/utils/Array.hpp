@@ -22,7 +22,7 @@ template <typename T, std::size_t N> struct Array {
   using pointer = value_type *;
   using const_pointer = const value_type *;
   value_type m_data[N ? N : 1];
-  DEVICE_QUALIFIER reference at(size_type i) {
+  DEVICE_QUALIFIER constexpr reference at(size_type i) {
     return (i < N) ? m_data[i]
                    : throw std::out_of_range("Array access out of bounds.");
   }
