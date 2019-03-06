@@ -53,8 +53,21 @@ class CheckpointTest(ut.TestCase):
         with assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
             lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
-        np.testing.assert_almost_equal(
-            np.copy(lbf[1, 1, 1].velocity), np.array([0.1, 0.2, 0.3]))
+        precision = 9 if "LB.CPU" in modes else 5
+        m = np.pi / 12
+        nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
+        ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
+        nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
+        grid_3D = np.fromfunction(
+            lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
+                                 (nx, ny, nz), dtype=float)
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    np.testing.assert_almost_equal(
+                        np.copy(lbf[i, j, k].population),
+                                grid_3D[i, j, k] * np.arange(1, 20),
+                                decimal=precision)
         state = lbf.get_params()
         reference = {'agrid': 0.5, 'visc': 1.3,
                      'dens': 1.5, 'tau': 0.01}
