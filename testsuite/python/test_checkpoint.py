@@ -49,7 +49,7 @@ class CheckpointTest(ut.TestCase):
         with self.assertRaises(RuntimeError):
             lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
         assertRaisesRegex = self.assertRaisesRegexp if sys.version_info < (
-            3,2) else self.assertRaisesRegex
+            3, 2) else self.assertRaisesRegex
         with assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
             lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
