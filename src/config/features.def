@@ -109,7 +109,6 @@ OIF_GLOBAL_FORCES
 AFFINITY
 MEMBRANE_COLLISION
 
-BOND_ANGLE                      requires not BOND_ANGLE_OLD
 
 /* Immersed-Boundary Bayreuth version */
 IMMERSED_BOUNDARY

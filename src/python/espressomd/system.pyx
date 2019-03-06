@@ -51,7 +51,8 @@ from .comfixed import ComFixed
 from globals cimport max_seen_particle
 from .globals import Globals
 from espressomd.utils import array_locked, is_valid_type
-from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
+IF VIRTUAL_SITES:
+    from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
 IF COLLISION_DETECTION == 1:
     from .collision_detection import CollisionDetection
