@@ -44,17 +44,17 @@ template <class... Args> struct tuple {
   }
 };
 
-struct concept_t {
+struct callback_concept_t {
   virtual void operator()(const boost::mpi::communicator &) const = 0;
 
-  virtual ~concept_t() = default;
+  virtual ~callback_concept_t() = default;
 };
 
-template <class F, class... Args> struct model_t final : public concept_t {
+template <class F, class... Args> struct callback_model_t final : public callback_concept_t {
   F m_f;
 
   template <class FRef>
-  explicit model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
+  explicit callback_model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
 
   void operator()(const boost::mpi::communicator &comm) const override {
     tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
@@ -66,7 +66,7 @@ template <class F, class... Args> struct model_t final : public concept_t {
 
 template <class CRef, class C, class R, class... Args>
 auto make_model_impl(CRef &&c, R (C::*)(Args...) const) {
-  return std::make_unique<model_t<C, Args...>>(std::forward<CRef>(c));
+  return std::make_unique<callback_model_t<C, Args...>>(std::forward<CRef>(c));
 }
 
 template <typename F> auto make_model(F &&f) {
@@ -75,7 +75,7 @@ template <typename F> auto make_model(F &&f) {
 }
 
 template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
-  return std::make_unique<model_t<void (*)(Args...), Args...>>(f_ptr);
+  return std::make_unique<callback_model_t<void (*)(Args...), Args...>>(f_ptr);
 }
 } // namespace detail
 
@@ -104,18 +104,18 @@ public:
         int m_id;
         MpiCallbacks *m_cb;
 
-        /* Enable if ArgRef pack matches Args up to reference. */
-        template<class... ArgRef>
-        using enable_if_args = std::enable_if_t<std::is_same<
-                  std::tuple<std::remove_reference_t<ArgRef>...>,
-                  std::tuple<Args...>
-                >::value>;
     public:
         CallbackHandle() : m_id(0), m_cb(nullptr) {}
         CallbackHandle(int id, MpiCallbacks *cb) : m_id(id), m_cb(cb) {}
 
         template<class... ArgRef>
-        enable_if_args<ArgRef...> operator()(ArgRef&&... args) const {
+        auto operator()(ArgRef&&... args) const
+        /* Enable if a hypothetical function with signature void(Args..)
+         * could be called with the provided arguments. */
+        -> std::enable_if_t<std::is_void<
+                decltype(std::declval<void(*)(Args...)>()(args...))
+        >::value>
+        {
           if(m_cb) m_cb->call(m_id, std::forward<ArgRef>(args)...);
         }
 
@@ -125,7 +125,7 @@ public:
     };
 
     template<class F, class... Args>
-    auto make_handle(int id, detail::model_t<F, Args...> const&) {
+    auto make_handle(int id, detail::callback_model_t<F, Args...> const&) {
       return CallbackHandle<Args...>{id, this};
     }
 
@@ -137,7 +137,7 @@ public:
 private:
     friend class RegisterCallback;
     static auto &static_callbacks() {
-        static std::vector<std::pair<void(*)(), std::unique_ptr<detail::concept_t>>> m_callbacks;
+        static std::vector<std::pair<void(*)(), std::unique_ptr<detail::callback_concept_t>>> m_callbacks;
 
         return m_callbacks;
     }
@@ -191,17 +191,18 @@ public:
     m_func_ptr_to_id[reinterpret_cast<void (*)()>(fp)] = id;
   }
 
-  /**
-   * @brief Remove callback.
-   *
-   * Remove the callback id from the callback list.
-   * This is a collective call that must be run on all node.
-   *
-   * @param id Identifier of the callback to remove.
-   */
-  void remove(int id) {
-      m_callbacks.remove(id);
-  }
+private:
+    /**
+     * @brief Remove callback.
+     *
+     * Remove the callback id from the callback list.
+     * This is a collective call that must be run on all node.
+     *
+     * @param id Identifier of the callback to remove.
+     */
+    void remove(int id) {
+        m_callbacks.remove(id);
+    }
 
   /**
    * @brief call a callback.
@@ -242,14 +243,16 @@ public:
    * Call a static callback by pointer.
    * The method can only be called the master
    * and has the prerequisite that the other nodes are
-   * in the MPI loop.
+   * in the MPI loop. Also the function has to be previously
+   * registered e.g. with the @def REGISTER_CALLBACK macro.
    *
    * @param fp Static callback (e.g. the function name) to call.
-   * @param par1 First parameter to pass to the callback.
-   * @param par2 Second parameter to pass to the callback.
+   * @param args Arguments for the callback.
    */
   template <class... Args, class... ArgRef>
      auto call(void (*fp)(Args...), ArgRef &&... args) const ->
+     /* Enable only if fp can be called with the provided arguments,
+      * e.g. if fp(args...) is well-formed. */
      std::enable_if_t<
              std::is_void<decltype(fp(args...)) >::value
      > {
@@ -318,7 +321,7 @@ private:
   /**
    * Internal storage for the callback functions.
    */
-  Utils::NumeratedContainer<std::unique_ptr<detail::concept_t>> m_callbacks;
+  Utils::NumeratedContainer<std::unique_ptr<detail::callback_concept_t>> m_callbacks;
 
   /**
    * Mapping of function pointers to ids, so static callbacks can be
@@ -327,6 +330,11 @@ private:
   std::unordered_map<void (*)(), int> m_func_ptr_to_id;
 };
 
+/**
+ * @brief Helper class to atomatically add callbacks.
+ *
+ * Should not be used directly, but via @def REGISTER_CALLBACK.
+ */
     class RegisterCallback {
 
     public:
