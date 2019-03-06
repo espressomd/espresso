@@ -64,3 +64,18 @@ BOOST_AUTO_TEST_CASE(element_access) {
 
   BOOST_CHECK_THROW(a.at(a.size()), std::out_of_range);
 }
+
+BOOST_AUTO_TEST_CASE(fill) {
+  Array<int, 10> a{};
+  a.fill(10);
+  for (Array<int, 10>::size_type i = 0; i < a.size(); ++i) {
+    BOOST_CHECK(a[i] == 10);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(broadcast) {
+  constexpr auto a = Array<int, 3>::broadcast(5);
+  static_assert(a[0] == 5, "");
+  static_assert(a[1] == 5, "");
+  static_assert(a[2] == 5, "");
+}

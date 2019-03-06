@@ -60,8 +60,16 @@ template <typename T, std::size_t N> struct Array {
   DEVICE_QUALIFIER constexpr size_type size() const { return N; }
   DEVICE_QUALIFIER constexpr size_type max_size() const { return N; }
   DEVICE_QUALIFIER void fill(const value_type &value) {
-    for (int i = 0; i < N; ++i)
+    for (size_type i = 0; i < size(); ++i)
       m_data[i] = value;
+  }
+  DEVICE_QUALIFIER static constexpr Array<T, N>
+  broadcast(const value_type &value) {
+    Array<T, N> ret{};
+    for (size_type i = 0; i < N; ++i) {
+      ret[i] = value;
+    }
+    return ret;
   }
 };
 
