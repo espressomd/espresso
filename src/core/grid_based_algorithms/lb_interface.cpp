@@ -807,9 +807,8 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
           auto pop = lb_lbnode_get_pop(ind);
           if (!binary) {
             for (int n = 0; n < 19; n++) {
-              cpfile << pop[n];
+              cpfile << pop[n] << "\n";
             }
-            cpfile << "\n";
           } else {
             cpfile.write(reinterpret_cast<char *>(&pop[0]),
                          19 * sizeof(double));
