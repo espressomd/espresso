@@ -132,7 +132,6 @@ int n_nodes = -1;
   CB(mpi_send_fluid_slave)                                                     \
   CB(mpi_recv_fluid_slave)                                                     \
   CB(mpi_iccp3m_iteration_slave)                                               \
-  CB(mpi_iccp3m_init_slave)                                                    \
   CB(mpi_bcast_max_mu_slave)                                                   \
   CB(mpi_recv_fluid_populations_slave)                                         \
   CB(mpi_send_fluid_populations_slave)                                         \
@@ -1016,22 +1015,23 @@ void mpi_iccp3m_iteration_slave(int, int) {
 }
 
 /********************* REQ_ICCP3M_INIT********/
-int mpi_iccp3m_init() {
+void mpi_iccp3m_init_slave(const iccp3m_struct &iccp3m_cfg_) {
 #ifdef ELECTROSTATICS
-  mpi_call(mpi_iccp3m_init_slave, -1, -1);
+  iccp3m_cfg = iccp3m_cfg_;
 
-  boost::mpi::broadcast(comm_cart, iccp3m_cfg, 0);
-  return check_runtime_errors();
-#else
-  return 0;
+  check_runtime_errors();
 #endif
 }
 
-void mpi_iccp3m_init_slave(int, int) {
-#ifdef ELECTROSTATICS
-  boost::mpi::broadcast(comm_cart, iccp3m_cfg, 0);
+REGISTER_CALLBACK(mpi_iccp3m_init_slave)
 
-  check_runtime_errors();
+int mpi_iccp3m_init() {
+#ifdef ELECTROSTATICS
+  mpi_call(mpi_iccp3m_init_slave, iccp3m_cfg);
+
+  return check_runtime_errors();
+#else
+  return 0;
 #endif
 }
 

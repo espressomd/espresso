@@ -27,6 +27,7 @@
 
 #include "utils/NumeratedContainer.hpp"
 #include "utils/tuple.hpp"
+#include "utils/as_const.hpp"
 
 #include <functional>
 #include <initializer_list>
@@ -56,10 +57,10 @@ template <class F, class... Args> struct model_t final : public concept_t {
   explicit model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
 
   void operator()(const boost::mpi::communicator &comm) const override {
-    tuple<std::remove_const_t<Args>...> params;
+    tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
     boost::mpi::broadcast(comm, params, 0);
 
-    Utils::apply(m_f, params.t);
+    Utils::apply(m_f, Utils::as_const(params.t));
   }
 };
 
@@ -230,7 +231,7 @@ private:
     boost::mpi::broadcast(m_comm, id, 0);
     detail::tuple<
             std::remove_const_t<
-            std::remove_reference_t<Args>>...> params{{args...}};
+            std::remove_reference_t<Args>>...> params{{std::forward<Args>(args)...}};
     boost::mpi::broadcast(m_comm, params, 0);
   }
 
@@ -247,13 +248,16 @@ public:
    * @param par1 First parameter to pass to the callback.
    * @param par2 Second parameter to pass to the callback.
    */
-  template <class... Args>
-  void call(void (*fp)(std::decay_t<Args>...), Args &&... args) const {
+  template <class... Args, class... ArgRef>
+     auto call(void (*fp)(Args...), ArgRef &&... args) const ->
+     std::enable_if_t<
+             std::is_void<decltype(fp(args...)) >::value
+     > {
     /** If the function pointer is invalid, map.at will throw
         an out_of_range exception. */
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
 
-    call(id, std::forward<Args>(args)...);
+    call(id, std::forward<ArgRef>(args)...);
   }
 
   /**
