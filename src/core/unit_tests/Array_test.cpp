@@ -17,8 +17,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define BOOST_TEST_MODULE Utils::Span test
+#define BOOST_TEST_NO_MAIN
+#define BOOST_TEST_MODULE Utils::Array test
 #define BOOST_TEST_DYN_LINK
+
+#include <boost/mpi.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include "utils/Array.hpp"
@@ -78,4 +81,28 @@ BOOST_AUTO_TEST_CASE(broadcast) {
   static_assert(a[0] == 5, "");
   static_assert(a[1] == 5, "");
   static_assert(a[2] == 5, "");
+}
+
+BOOST_AUTO_TEST_CASE(serialization) {
+  boost::mpi::communicator world;
+  auto const rank = world.rank();
+  auto const size = world.size();
+  Array<double, 3> a{1.0, 2.0, 3.0};
+  if (size > 1) {
+    if (rank == 0) {
+      world.send(1, 42, a);
+    } else if (rank == 1) {
+      Array<double, 3> b{};
+      world.recv(0, 42, b);
+      for (Array<double, 3>::size_type i = 0; i < 3; ++i) {
+        BOOST_CHECK_EQUAL(a[i], b[i]);
+      }
+    }
+  }
+}
+
+int main(int argc, char **argv) {
+  boost::mpi::environment mpi_env(argc, argv);
+
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
