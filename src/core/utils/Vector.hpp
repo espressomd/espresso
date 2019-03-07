@@ -21,7 +21,6 @@
 #define VECTOR_HPP
 
 #include <algorithm>
-#include <array>
 #include <cassert>
 #include <cmath>
 #include <functional>
@@ -30,34 +29,27 @@
 #include <numeric>
 #include <vector>
 
-#include "utils/serialization/array.hpp"
-#include <boost/serialization/access.hpp>
+#include "utils/Array.hpp"
 
-template <typename Scalar, std::size_t n> class Vector {
-private:
-  std::array<Scalar, n> d;
-
+template <typename Scalar, std::size_t n> class Vector : public Utils::Array<Scalar, n> {
 public:
-  /* Concept Container requirements */
-  using size_type = typename std::array<Scalar, n>::size_type;
-  using difference_type = typename std::array<Scalar, n>::difference_type;
-  using value_type = Scalar;
-  using reference = Scalar &;
-  using const_reference = const Scalar &;
-  using iterator = typename std::array<Scalar, n>::iterator;
-  using const_iterator = typename std::array<Scalar, n>::const_iterator;
-
+  using Utils::Array<Scalar, n>::begin;
+  using Utils::Array<Scalar, n>::cbegin;
+  using Utils::Array<Scalar, n>::end;
+  using Utils::Array<Scalar, n>::cend;
+  using Utils::Array<Scalar, n>::data;
+  using Utils::Array<Scalar, n>::operator[];
   Vector() = default;
   Vector(Vector const &) = default;
   Vector &operator=(Vector const &) = default;
 
-  void swap(Vector &rhs) { std::swap(d, rhs.d); }
+  void swap(Vector &rhs) { std::swap(data(), rhs.data()); }
 
   template <typename Container>
   explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
 
   explicit Vector(Scalar const (&v)[n]) {
-    std::copy_n(std::begin(v), n, d.begin());
+    std::copy_n(std::begin(v), n, begin());
   }
 
   Vector(std::initializer_list<Scalar> v)
@@ -66,46 +58,15 @@ public:
   template <typename InputIterator>
   Vector(InputIterator begin, InputIterator end) {
     if (std::distance(begin, end) == n) {
-      std::copy_n(begin, n, d.begin());
+      std::copy_n(begin, n, begin());
     } else {
       throw std::length_error(
           "Construction of Vector from Container of wrong length.");
     }
   }
 
-  Scalar &operator[](int i) {
-    assert(i < n);
-    return d[i];
-  }
-  Scalar const &operator[](int i) const {
-    assert(i < n);
-    return d[i];
-  }
-
-  iterator begin() { return d.begin(); }
-  const_iterator begin() const { return d.begin(); }
-  const_iterator cbegin() const { return d.cbegin(); }
-
-  iterator end() { return d.end(); }
-  const_iterator end() const { return d.end(); }
-  const_iterator cend() const { return d.cend(); }
-
-  reference front() { return d.front(); }
-  reference back() { return d.back(); }
-
-  const_reference front() const { return d.front(); }
-  const_reference back() const { return d.back(); }
-
-  static constexpr size_t size() { return n; }
-  Scalar const *data() const { return d.data(); }
-  Scalar *data() { return d.data(); }
-  size_type max_size() const { return d.max_size(); }
-  bool empty() const { return d.empty(); }
-
-  operator std::array<Scalar, n> const &() const { return d; }
-
   std::vector<Scalar> as_vector() const {
-    return std::vector<Scalar>(std::begin(d), std::end(d));
+    return std::vector<Scalar>(begin(), end());
   }
 
   operator std::vector<Scalar>() const { return as_vector(); }
@@ -119,7 +80,7 @@ public:
     const auto N = norm();
     if (N > Scalar(0)) {
       for (int i = 0; i < n; i++)
-        d[i] /= N;
+        this->operator[](i) /= N;
     }
 
     return *this;
@@ -152,13 +113,6 @@ public:
 
   inline Vector<Scalar, 3> cross(const Vector<Scalar, 3> &a) const {
     return cross(*this, a);
-  }
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int /* version */) {
-    ar &d;
   }
 };
 
