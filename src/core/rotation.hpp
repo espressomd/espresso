@@ -55,8 +55,7 @@ void convert_initial_torques();
 Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &v);
 Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v);
 
-inline void convert_quat_to_director(const Vector4d &quat,
-                                     Vector3d &director) {
+inline void convert_quat_to_director(const Vector4d &quat, Vector3d &director) {
   /* director */
   director[0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2]);
   director[1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1]);

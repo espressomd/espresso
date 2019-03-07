@@ -1,8 +1,8 @@
 #ifndef UTILS_ARRAY_HPP
 #define UTILS_ARRAY_HPP
 
-#include <cstddef>
 #include <boost/serialization/access.hpp>
+#include <cstddef>
 
 #include "utils/serialization/array.hpp"
 
@@ -36,11 +36,11 @@ template <typename T, std::size_t N> struct Array {
     return m_data[i];
   }
   DEVICE_QUALIFIER constexpr reference operator[](size_type i) {
-    assert(i<N);
+    assert(i < N);
     return m_data[i];
   }
   DEVICE_QUALIFIER constexpr const_reference operator[](size_type i) const {
-    assert(i<N);
+    assert(i < N);
     return m_data[i];
   }
   DEVICE_QUALIFIER constexpr reference front() { return *begin(); }
@@ -76,6 +76,7 @@ template <typename T, std::size_t N> struct Array {
     }
     return ret;
   }
+
 private:
   friend boost::serialization::access;
   template <typename Archive>

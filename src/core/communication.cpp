@@ -1104,8 +1104,7 @@ void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
 #endif
 }
 
-void mpi_send_fluid_populations(int node, int index,
-                                const Vector19d &pop) {
+void mpi_send_fluid_populations(int node, int index, const Vector19d &pop) {
 #ifdef LB
   if (node == this_node) {
     lb_set_populations(index, pop);

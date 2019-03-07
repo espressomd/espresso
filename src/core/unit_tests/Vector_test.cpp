@@ -160,8 +160,8 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
     BOOST_CHECK(v2 == (v1 /= 2));
   }
 
-  BOOST_CHECK((sqrt(Vector3d{1., 2., 3.}) ==
-               Vector3d{sqrt(1.), sqrt(2.), sqrt(3.)}));
+  BOOST_CHECK(
+      (sqrt(Vector3d{1., 2., 3.}) == Vector3d{sqrt(1.), sqrt(2.), sqrt(3.)}));
 }
 
 BOOST_AUTO_TEST_CASE(broadcast) {
