@@ -43,13 +43,13 @@ constexpr int test_numbers[] = TEST_NUMBERS;
 constexpr int n_test_numbers = sizeof(test_numbers) / sizeof(int);
 
 template <int n> bool norm2() {
-  Vector<n, int> v(std::begin(test_numbers), test_numbers + n);
+  Vector<int, n> v(std::begin(test_numbers), test_numbers + n);
 
   return v.norm2() == std::inner_product(v.begin(), v.end(), v.begin(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(initializer_list_constructor) {
-  Vector<n_test_numbers, int> v(TEST_NUMBERS);
+  Vector<int, n_test_numbers> v(TEST_NUMBERS);
 
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
 
@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(initializer_list_constructor) {
 }
 
 BOOST_AUTO_TEST_CASE(iterator_constructor) {
-  Vector<n_test_numbers, int> v(std::begin(test_numbers),
+  Vector<int, n_test_numbers> v(std::begin(test_numbers),
                                 std::end(test_numbers));
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
 
@@ -68,25 +68,25 @@ BOOST_AUTO_TEST_CASE(iterator_constructor) {
 BOOST_AUTO_TEST_CASE(const_iterator_constructor) {
   /* {begin,end}() const variant */
   {
-    const Vector<n_test_numbers, int> v(std::begin(test_numbers),
+    const Vector<int, n_test_numbers> v(std::begin(test_numbers),
                                         std::end(test_numbers));
     BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
   }
 
   /* {cbegin,cend}() const variant */
   {
-    Vector<n_test_numbers, int> v(std::begin(test_numbers),
+    Vector<int, n_test_numbers> v(std::begin(test_numbers),
                                   std::end(test_numbers));
     BOOST_CHECK(std::equal(v.cbegin(), v.cend(), test_numbers));
   }
 }
 
 BOOST_AUTO_TEST_CASE(default_constructor_test) {
-  Vector<1, int> v2;
+  Vector<int, 1> v2;
   BOOST_CHECK(v2.size() == 1);
-  Vector<2, int> v3;
+  Vector<int, 2> v3;
   BOOST_CHECK(v3.size() == 2);
-  Vector<11, int> v4;
+  Vector<int, 11> v4;
   BOOST_CHECK(v4.size() == 11);
 }
 
@@ -105,9 +105,9 @@ BOOST_AUTO_TEST_CASE(normalize) {
 }
 
 BOOST_AUTO_TEST_CASE(comparison_operators) {
-  Vector<5, int> v1{1, 2, 3, 4, 5};
-  Vector<5, int> v2{6, 7, 8, 9, 10};
-  Vector<5, int> v3{1, 2, 3, 5, 6};
+  Vector<int, 5> v1{1, 2, 3, 4, 5};
+  Vector<int, 5> v2{6, 7, 8, 9, 10};
+  Vector<int, 5> v3{1, 2, 3, 5, 6};
 
   BOOST_CHECK(v1 < v2);
   BOOST_CHECK(!(v1 < v1));
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
 }
 
 BOOST_AUTO_TEST_CASE(broadcast) {
-  const auto fives = Vector<11, int>::broadcast(5);
+  const auto fives = Vector<int, 11>::broadcast(5);
 
   BOOST_CHECK(fives.size() == 11);
   for (auto const &e : fives) {
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(swap) {
 
 BOOST_AUTO_TEST_CASE(decay_to_scalar_test) {
   {
-    using original_t = Vector<1, int>;
+    using original_t = Vector<int, 1>;
     using decayed_t = typename decay_to_scalar<original_t>::type;
 
     static_assert(std::is_same<int, decayed_t>::value, "");
