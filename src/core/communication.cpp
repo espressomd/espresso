@@ -111,7 +111,6 @@ int n_nodes = -1;
 // if you want to add a callback, add it here, and here only
 #define CALLBACK_LIST                                                          \
   CB(mpi_who_has_slave)                                                        \
-  CB(mpi_bcast_event_slave)                                                    \
   CB(mpi_place_particle_slave)                                                 \
   CB(mpi_recv_part_slave)                                                      \
   CB(mpi_integrate_slave)                                                      \
@@ -159,6 +158,7 @@ int n_nodes = -1;
 // create the forward declarations
 #define CB(name) void name(int node, int param);
 CALLBACK_LIST
+
 #undef CB
 
 #ifdef DOXYGEN
@@ -292,33 +292,6 @@ void mpi_call(SlaveCallback cb, int node, int param) {
   mpiCallbacks().call(cb, node, param);
 
   COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
-}
-
-/**************** REQ_CHTOPL ***********/
-void mpi_bcast_event(int event) {
-  mpi_call(mpi_bcast_event_slave, -1, event);
-  mpi_bcast_event_slave(-1, event);
-}
-
-void mpi_bcast_event_slave(int node, int event) {
-  switch (event) {
-#ifdef P3M
-  case P3M_COUNT_CHARGES:
-    p3m_count_charged_particles();
-    break;
-#endif
-  case CHECK_PARTICLES:
-    check_particles();
-    break;
-
-#ifdef DP3M
-  case P3M_COUNT_DIPOLES:
-    dp3m_count_magnetic_particles();
-    break;
-#endif
-
-  default:;
-  }
 }
 
 /****************** REQ_PLACE/REQ_PLACE_NEW ************/

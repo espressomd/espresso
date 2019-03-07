@@ -123,18 +123,6 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
                               std::array<int, 3> const &periodicity = {
                                   {1, 1, 1}});
 
-/** Issue REQ_EVENT: tells all clients of some system change.
- *  The events are:
- *  <ul>
- *  <li> PARTICLE_CHANGED
- *  <li> INTERACTION_CHANGED
- *  </ul>
- *  Then all nodes execute the respective on_* procedure from initialize.cpp.
- *  Note that not all of these codes are used. Since some actions (like placing
- *  a particle) include communication anyways, this is handled by the way.
- */
-void mpi_bcast_event(int event);
-
 /** Issue REQ_PLACE: move particle to a position on a node.
  *  Also calls \ref on_particle_change.
  *  \param id    the particle to move.

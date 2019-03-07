@@ -1986,7 +1986,7 @@ int dp3m_adaptive_tune(char **logger) {
   P3M_TRACE(fprintf(stderr, "%d: dp3m_adaptive_tune\n", this_node));
 
   /* preparation */
-  mpi_bcast_event(P3M_COUNT_DIPOLES);
+  mpi_call(dp3m_count_magnetic_particles);
 
   /* Print Status */
   sprintf(b,
@@ -2143,6 +2143,8 @@ void dp3m_count_magnetic_particles() {
   dp3m.sum_mu2 = tot_sums[0];
   dp3m.sum_dip_part = (int)(tot_sums[1] + 0.1);
 }
+
+REGISTER_CALLBACK(dp3m_count_magnetic_particles)
 
 /*****************************************************************************/
 
