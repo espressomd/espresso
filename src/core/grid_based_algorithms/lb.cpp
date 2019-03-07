@@ -676,8 +676,8 @@ void lb_release() { release_halo_communication(&update_halo_comm); }
 /***********************************************************************/
 /*@{*/
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             const std::array<double, 3> &j,
-                             const std::array<double, 6> &pi) {
+                             Vector3d const &j,
+                             Vector6d const &pi) {
   double local_rho, local_j[3], local_pi[6], trace;
   local_rho = rho;
 
