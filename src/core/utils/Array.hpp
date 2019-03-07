@@ -56,13 +56,19 @@ template <typename T, std::size_t N> struct Array {
     return &m_data[0];
   }
   DEVICE_QUALIFIER constexpr iterator begin() noexcept { return &m_data[0]; };
-  DEVICE_QUALIFIER constexpr const_iterator begin() const noexcept { return &m_data[0]; };
+  DEVICE_QUALIFIER constexpr const_iterator begin() const noexcept {
+    return &m_data[0];
+  };
   DEVICE_QUALIFIER constexpr const_iterator cbegin() const noexcept {
     return &m_data[0];
   };
   DEVICE_QUALIFIER constexpr iterator end() noexcept { return &m_data[N]; };
-  DEVICE_QUALIFIER constexpr const_iterator end() const noexcept { return &m_data[N]; };
-  DEVICE_QUALIFIER constexpr const_iterator cend() const noexcept { return &m_data[N]; };
+  DEVICE_QUALIFIER constexpr const_iterator end() const noexcept {
+    return &m_data[N];
+  };
+  DEVICE_QUALIFIER constexpr const_iterator cend() const noexcept {
+    return &m_data[N];
+  };
   DEVICE_QUALIFIER constexpr bool empty() const noexcept { return size() == 0; }
   DEVICE_QUALIFIER constexpr size_type size() const noexcept { return N; }
   DEVICE_QUALIFIER constexpr size_type max_size() const noexcept { return N; }

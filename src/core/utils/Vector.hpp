@@ -31,7 +31,8 @@
 
 #include "utils/Array.hpp"
 
-template <typename Scalar, std::size_t n> class Vector : public Utils::Array<Scalar, n> {
+template <typename Scalar, std::size_t n>
+class Vector : public Utils::Array<Scalar, n> {
 public:
   using Utils::Array<Scalar, n>::at;
   using Utils::Array<Scalar, n>::operator[];
