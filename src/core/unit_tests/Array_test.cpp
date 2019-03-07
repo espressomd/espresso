@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   boost::mpi::communicator world;
   auto const rank = world.rank();
   auto const size = world.size();
-  Array<double, 3> a{1.0, 2.0, 3.0};
+  Array<double, 3> const a{{1.0, 2.0, 3.0}};
   if (size > 1) {
     if (rank == 0) {
       world.send(1, 42, a);
