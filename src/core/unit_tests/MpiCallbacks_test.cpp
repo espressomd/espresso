@@ -86,6 +86,29 @@ BOOST_AUTO_TEST_CASE(callback_model_t) {
     }
 }
 
+BOOST_AUTO_TEST_CASE(adding_function_ptr_cb) {
+    boost::mpi::communicator world;
+    Communication::MpiCallbacks cb(world);
+
+    void (*fp)(int, const std::string &) = [](int i, const std::string &s){
+        BOOST_CHECK_EQUAL(537, i);
+        BOOST_CHECK_EQUAL("adding_function_ptr_cb", s);
+
+        called = true;
+    };
+
+    cb.add(fp);
+
+    called = false;
+
+    if(0 == world.rank()) {
+        cb.call(fp, 537, std::string("adding_function_ptr_cb"));
+    } else {
+        cb.loop();
+        BOOST_CHECK(called);
+    }
+}
+
 BOOST_AUTO_TEST_CASE(RegisterCallback) {
     void (*fp)(int, const std::string &) = [](int i, const std::string &s){
         BOOST_CHECK_EQUAL(537, i);
@@ -103,14 +126,30 @@ BOOST_AUTO_TEST_CASE(RegisterCallback) {
 
     if(0 == world.rank()) {
         cb.call(fp, 537, std::string("2nd"));
-        fp(537, std::string("2nd"));
     } else {
         cb.loop();
+        BOOST_CHECK(called);
     }
-
-    BOOST_CHECK(called);
 }
 
+BOOST_AUTO_TEST_CASE(CallbackHandle) {
+    boost::mpi::communicator world;
+    Communication::MpiCallbacks cbs(world);
+
+    bool m_called = false;
+    Communication::CallbackHandle<std::string> cb(&cbs, [&m_called](std::string s){
+       BOOST_CHECK_EQUAL("CallbackHandle", s);
+
+       m_called = true;
+    });
+
+    if(0 == world.rank()) {
+        cb(std::string("CallbackHandle"));
+    } else {
+        cbs.loop();
+        BOOST_CHECK(called);
+    }
+}
 
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);

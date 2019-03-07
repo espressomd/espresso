@@ -132,7 +132,7 @@ class MpiCallbacks {
     enum class Message {
         ABORT,
         BCAST,
-        SINGLE
+        NODE
     };
 
 public:
@@ -141,11 +141,11 @@ public:
       *
       * This is what the client gets for registering a
       * dynamic (= not function pointer) callback.
-      * It manages the livetime of the callback hand is
+      * It manages the lifetime of the callback handle is
       * needed to call it. The handle has a type derived
       * from the signature of the callback, which makes
       * it possible to do static type checking on the
-      * arguements. */
+      * arguments. */
     template<class... Args>
     class CallbackHandle {
     public:
