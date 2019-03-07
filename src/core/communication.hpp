@@ -349,7 +349,7 @@ void mpi_recv_fluid_populations(int node, int index, double *pop);
  *  @param pop    local fluid population
  */
 void mpi_send_fluid_populations(int node, int index,
-                                const Vector<19, double> &pop);
+                                const Vector19d &pop);
 
 /** Part of MDLC */
 void mpi_bcast_max_mu();

@@ -1105,7 +1105,7 @@ void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
 }
 
 void mpi_send_fluid_populations(int node, int index,
-                                const Vector<19, double> &pop) {
+                                const Vector19d &pop) {
 #ifdef LB
   if (node == this_node) {
     lb_set_populations(index, pop);
@@ -1119,7 +1119,7 @@ void mpi_send_fluid_populations(int node, int index,
 void mpi_send_fluid_populations_slave(int node, int index) {
 #ifdef LB
   if (node == this_node) {
-    Vector<19, double> populations;
+    Vector19d populations;
     MPI_Recv(populations.data(), 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
     lb_set_populations(index, populations);

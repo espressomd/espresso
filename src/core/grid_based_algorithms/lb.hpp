@@ -166,7 +166,7 @@ struct LB_Parameters {
 
   /** \name Derived parameters */
   /** amplitudes of the fluctuations of the modes */
-  Vector<19, double> phi;
+  Vector19d phi;
   // Thermal energy
   double kT;
 };
@@ -342,7 +342,7 @@ inline void lb_get_populations(Lattice::index_t index, double *pop) {
 }
 
 inline void lb_set_populations(Lattice::index_t index,
-                               const Vector<19, double> &pop) {
+                               const Vector19d &pop) {
   for (int i = 0; i < lbmodel.n_veloc; ++i) {
     lbfluid[i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
   }

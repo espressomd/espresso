@@ -859,7 +859,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
     if (!cpfile) {
       throw std::runtime_error("Could not open file for reading.");
     }
-    Vector<19, double> pop;
+    Vector19d pop;
     Vector3i ind;
 
     Vector3i gridsize;
@@ -1079,13 +1079,13 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
   }
 }
 
-const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind) {
+const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     float population[19];
 
     lb_lbfluid_get_population(ind, population);
-    Vector<19, double> p_pop;
+    Vector19d p_pop;
     for (int i = 0; i < LBQ; ++i)
       p_pop[i] = population[i];
     return p_pop;
@@ -1101,7 +1101,7 @@ const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind) {
     node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
-    Vector<19, double> p_pop;
+    Vector19d p_pop;
     mpi_recv_fluid_populations(node, index, p_pop.data());
     return p_pop;
 #else
@@ -1174,7 +1174,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
   }
 }
 
-void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &p_pop) {
+void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &p_pop) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     float population[19];
