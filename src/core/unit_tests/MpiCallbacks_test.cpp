@@ -33,10 +33,12 @@
 
 #include <boost/mpi.hpp>
 
+#include <string>
+
 static bool called = false;
 
 /**
- * Test that the implementation of callback_modell_t
+ * Test that the implementation of callback_model_t
  * correctly deserialize the parameters and call
  * the callback with them.
  */
@@ -83,6 +85,32 @@ BOOST_AUTO_TEST_CASE(callback_model_t) {
         BOOST_CHECK(called);
     }
 }
+
+BOOST_AUTO_TEST_CASE(RegisterCallback) {
+    void (*fp)(int, const std::string &) = [](int i, const std::string &s){
+        BOOST_CHECK_EQUAL(537, i);
+        BOOST_CHECK_EQUAL("2nd", s);
+
+        called = true;
+    };
+
+    Communication::RegisterCallback{fp};
+
+    boost::mpi::communicator world;
+    Communication::MpiCallbacks cb(world);
+
+    called = false;
+
+    if(0 == world.rank()) {
+        cb.call(fp, 537, std::string("2nd"));
+        fp(537, std::string("2nd"));
+    } else {
+        cb.loop();
+    }
+
+    BOOST_CHECK(called);
+}
+
 
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);
