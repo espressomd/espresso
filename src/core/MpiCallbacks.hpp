@@ -45,8 +45,7 @@ namespace detail {
   * called without any type information on the parameters.
   */
 struct callback_concept_t {
-  virtual void operator()(const boost::mpi::communicator &) const = 0;
-
+  virtual void operator()(boost::mpi::packed_iarchive &) const = 0;
   virtual ~callback_concept_t() = default;
 };
 
@@ -69,17 +68,14 @@ template <class F, class... Args> struct callback_model_t final : public callbac
   *
   * @param comm The communicator to receive the paramters on.
   */
-  void operator()(const boost::mpi::communicator &comm) const override {
+  void operator()(boost::mpi::packed_iarchive &ia) const override {
     /* This is the local receive buffer for the parameters. We have to strip
        away const so we can actually deserialize into it. */
     std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
-
-    boost::mpi::packed_iarchive ia(comm);
-    boost::mpi::broadcast(comm, ia, 0);
     Utils::for_each([&ia](auto &e) { ia >> e; }, params);
 
     /* We add const here, so that parameters can only by by value
-       or const referece. Output parameters on callbacks are not
+       or const reference. Output parameters on callbacks are not
        sensible because the changes are not propagated back, so
        we make sure this does not compile. */
     Utils::apply(m_f, Utils::as_const(params));
@@ -274,12 +270,10 @@ private:
     }
 
     /** Send request to slaves */
-    boost::mpi::broadcast(m_comm, id, 0);
-
-    /* Pack the arguments into a packed mpi buffer.
-       this is needed because boost mpi required broadcast
-       objects to be mutable even on the sending rank. */
     boost::mpi::packed_oarchive oa(m_comm);
+    oa << id;
+
+    /* Pack the arguments into a packed mpi buffer. */
     Utils::for_each([&oa](auto &&e) { oa << e; }, std::forward_as_tuple(std::forward<Args>(args)...));
 
     boost::mpi::broadcast(m_comm, oa, 0);
@@ -323,15 +317,19 @@ public:
    */
   void loop() const {
       for (;;) {
-          int request;
           /** Communicate callback id and parameters */
-          boost::mpi::broadcast(m_comm, request, 0);
+          boost::mpi::packed_iarchive ia(m_comm);
+          boost::mpi::broadcast(m_comm, ia, 0);
+
+          int request;
+          ia >> request;
+
           /** id == 0 is loop_abort. */
           if (request == LOOP_ABORT) {
               break;
           } else {
               /** Call the callback */
-              m_callbacks[request]->operator()(m_comm);
+              m_callbacks[request]->operator()(ia);
           }
       }
   }
