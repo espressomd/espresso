@@ -931,7 +931,8 @@ void mpi_send_exclusion_slave(int part1, int part2) {
 }
 
 /************** REQ_SET_FLUID **************/
-void mpi_send_fluid(int node, int index, double rho, Vector3d const &j,
+void mpi_send_fluid(int node, int index, double rho,
+                    Vector3d const &j,
                     Vector6d const &pi) {
 #ifdef LB
   if (node == this_node) {
@@ -951,7 +952,8 @@ void mpi_send_fluid_slave(int node, int index) {
     double data[10];
     MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     Vector3d j = {{data[1], data[2], data[3]}};
-    Vector6d pi = {{data[4], data[5], data[6], data[7], data[8], data[9]}};
+    Vector6d pi = {
+        {data[4], data[5], data[6], data[7], data[8], data[9]}};
     lb_calc_n_from_rho_j_pi(index, data[0], j, pi);
   }
 #endif
