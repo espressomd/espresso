@@ -18,7 +18,7 @@ set(EspressoCore_SRC
   global.cpp
   grid.cpp
   immersed_boundaries.cpp
-  initialize.cpp
+        event.cpp
   integrate.cpp
   layered.cpp
   metadynamics.cpp

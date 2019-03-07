@@ -29,7 +29,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"

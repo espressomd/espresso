@@ -32,7 +32,7 @@
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"

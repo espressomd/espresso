@@ -22,7 +22,7 @@
 #include "minimize_energy.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"

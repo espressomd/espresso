@@ -33,7 +33,7 @@
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/cos2.hpp"

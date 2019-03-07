@@ -22,7 +22,7 @@
 #include "virtual_sites.hpp"
 #include "communication.hpp"
 #include "config.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"

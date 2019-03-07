@@ -28,7 +28,7 @@
 #include "errorhandling.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
 #include "utils.hpp"

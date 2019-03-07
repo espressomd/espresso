@@ -30,7 +30,7 @@
 #include "domain_decomposition.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"

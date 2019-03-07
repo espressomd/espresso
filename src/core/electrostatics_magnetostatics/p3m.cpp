@@ -34,7 +34,7 @@
 #include "fft.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "tuning.hpp"

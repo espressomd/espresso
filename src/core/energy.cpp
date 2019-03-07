@@ -30,7 +30,7 @@
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy_inline.hpp"
 #include "forces.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include <cassert>
 
 #include "short_range_loop.hpp"
