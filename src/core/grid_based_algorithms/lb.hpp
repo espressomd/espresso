@@ -36,6 +36,8 @@ void mpi_set_lb_fluid_counter(int high, int low);
 
 #ifdef LB
 
+#include <array>
+
 #include "errorhandling.hpp"
 
 #include "halo.hpp"
