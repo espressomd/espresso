@@ -171,7 +171,7 @@ using Vector4d = VectorXd<4>;
 using Vector6d = VectorXd<6>;
 using Vector19d = VectorXd<19>;
 
-typedef Vector<3, int> Vector3i;
+using Vector3i = Vector<3, int>;
 
 namespace detail {
 template <size_t N, typename T, typename Op>
