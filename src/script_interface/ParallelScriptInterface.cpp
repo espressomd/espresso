@@ -29,7 +29,7 @@
 namespace ScriptInterface {
 using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
 
-ParallelScriptInterface::ParallelScriptInterface(std::string const &name) : m_callback_id(m_cb->add([](ParallelScriptInterfaceSlave::CallbackAction){}))
+ParallelScriptInterface::ParallelScriptInterface(std::string const &name) : m_callback_id(m_cb, [](ParallelScriptInterfaceSlave::CallbackAction){})
 {
   assert(m_cb && "Not initialized!");
 

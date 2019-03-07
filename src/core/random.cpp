@@ -136,12 +136,11 @@ string mpi_random_get_stat() {
 void init_random(void) {
   /** Set the initial seed */
   init_random_seed(1 + this_node);
-
-  /** Register callbacks */
-  mpiCallbacks().add(mpi_random_seed_slave);
-  mpiCallbacks().add(mpi_random_set_stat_slave);
-  mpiCallbacks().add(mpi_random_get_stat_slave);
 }
+
+REGISTER_CALLBACK(mpi_random_seed_slave)
+REGISTER_CALLBACK(mpi_random_set_stat_slave)
+REGISTER_CALLBACK(mpi_random_get_stat_slave)
 
 void init_random_seed(int seed) {
   std::seed_seq seeder{

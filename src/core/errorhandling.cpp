@@ -39,7 +39,7 @@ namespace ErrorHandling {
 
 /* Forward declarations */
 
-void mpi_gather_runtime_errors_slave(int, int);
+void mpi_gather_runtime_errors_slave();
 
 namespace {
 /** RuntimeErrorCollector instance.
@@ -55,8 +55,6 @@ Communication::MpiCallbacks *m_callbacks = nullptr;
 /** Initialize the error collection system. */
 void init_error_handling(Communication::MpiCallbacks &cb) {
   m_callbacks = &cb;
-
-  m_callbacks->add(mpi_gather_runtime_errors_slave);
 
   runtimeErrorCollector = unique_ptr<RuntimeErrorCollector>(
       new RuntimeErrorCollector(m_callbacks->comm()));
@@ -102,14 +100,15 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
 
 vector<RuntimeError> mpi_gather_runtime_errors() {
   // Tell other processors to send their errors
-  m_callbacks->call(mpi_gather_runtime_errors_slave, -1, 0);
+  m_callbacks->call(mpi_gather_runtime_errors_slave);
   return runtimeErrorCollector->gather();
 }
 
-void mpi_gather_runtime_errors_slave(int, int) {
+void mpi_gather_runtime_errors_slave() {
   runtimeErrorCollector->gatherSlave();
 }
 
+REGISTER_CALLBACK(mpi_gather_runtime_errors_slave)
 } // namespace ErrorHandling
 
 void errexit() {

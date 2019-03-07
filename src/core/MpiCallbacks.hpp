@@ -82,14 +82,34 @@ template <class F, class... Args> struct callback_model_t final : public callbac
   }
 };
 
+    template<class F, class R, class... Args>
+    struct FunctorTypes {
+        using functor_type = F;
+        using return_type = R;
+        using argument_types = std::tuple<Args...>;
+    };
+
+    template <class C, class R, class... Args>
+    auto functor_types_impl(R (C::*)(Args...) const) {
+        return FunctorTypes<C, R, Args...>{};
+    }
+
+    template<class F>
+    using functor_types = decltype(functor_types_impl(&std::remove_reference_t<F>::operator()));
+
 template <class CRef, class C, class R, class... Args>
-auto make_model_impl(CRef &&c, R (C::*)(Args...) const) {
+auto make_model_impl(CRef &&c, FunctorTypes<C, R, Args...>) {
   return std::make_unique<callback_model_t<C, Args...>>(std::forward<CRef>(c));
 }
 
+/**
+  * @brief Make a @class callback_model_t for a functor or lambda.
+  *
+  * The signature is deduced from F::operator() const, which has
+  * to exist and can not be overloaded.
+  */
 template <typename F> auto make_model(F &&f) {
-  using C = std::remove_reference_t<F>;
-  return make_model_impl(std::forward<F>(f), &C::operator());
+  return make_model_impl(std::forward<F>(f), functor_types<F>{});
 }
 
 /**
@@ -109,6 +129,12 @@ template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
  * @brief  The interface of the MPI callback mechanism.
  */
 class MpiCallbacks {
+    enum class Message {
+        ABORT,
+        BCAST,
+        SINGLE
+    };
+
 public:
     /**
       * @brief RAII handle for a callback.
@@ -123,26 +149,22 @@ public:
     template<class... Args>
     class CallbackHandle {
     public:
-        CallbackHandle(CallbackHandle const&) = delete;
-        CallbackHandle(CallbackHandle &&rhs) noexcept {
-          std::swap(m_id, rhs.m_id);
-          std::swap(m_cb, rhs.m_cb);
-        }
-        CallbackHandle& operator=(CallbackHandle const&) = delete;
-        CallbackHandle& operator=(CallbackHandle &&rhs) noexcept {
-          std::swap(m_id, rhs.m_id);
-          std::swap(m_cb, rhs.m_cb);
+        template<typename F,
+                class = std::enable_if_t<
+                        std::is_same<typename detail::functor_types<F>::argument_types,
+                                     std::tuple<Args...>>::value>>
+        CallbackHandle(MpiCallbacks *cb, F&& f) : m_id(cb->add(std::forward<F>(f))), m_cb(cb) {}
 
-          return *this;
-        }
+        CallbackHandle(CallbackHandle const&) = delete;
+        CallbackHandle(CallbackHandle &&rhs) = default;
+        CallbackHandle& operator=(CallbackHandle const&) = delete;
+        CallbackHandle& operator=(CallbackHandle &&rhs) = default;
 
     private:
         int m_id;
         MpiCallbacks *m_cb;
 
     public:
-	CallbackHandle(int id, MpiCallbacks *cb) : m_id(id), m_cb(cb) {}
-
 	/**
 	  * @brief Call the callback managed by this handle.
 	  *
@@ -165,11 +187,6 @@ public:
           if(m_cb) m_cb->remove(m_id);
         }
     };
-
-    template<class F, class... Args>
-    auto make_handle(int id, detail::callback_model_t<F, Args...> const&) {
-      return CallbackHandle<Args...>{id, this};
-    }
 
   /* Avoid accidental copy, leads to mpi deadlock
      or split brain */
@@ -203,6 +220,7 @@ public:
     }
   }
 
+private:
   /**
    * @brief Add a new callback.
    *
@@ -216,9 +234,10 @@ public:
    **/
   template <typename F> auto add(F &&f) {
     auto model = detail::make_model(std::forward<F>(f));
-    return make_handle(m_callbacks.add(std::move(model)), *model);
+    return m_callbacks.add(std::move(model));
   }
 
+public:
   /**
    * @brief Add a new static callback.
    *
@@ -407,6 +426,6 @@ using CallbackHandle = MpiCallbacks::CallbackHandle<Args...>;
  *
  * @param cb A function
  */
-#define REGISTER_CALLBACK(cb) namespace Communication { static RegisterCallback register_##cb(&cb); }
+#define REGISTER_CALLBACK(cb) namespace Communication { static ::Communication::RegisterCallback register_##cb(&cb); }
 
 #endif
