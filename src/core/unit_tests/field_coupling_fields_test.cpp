@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
   /* Types */
   {
     static_assert(std::is_same<Field::value_type, double>::value, "");
-    static_assert(std::is_same<Field::jacobian_type, Vector<3, double>>::value,
+    static_assert(std::is_same<Field::jacobian_type, Vector3d>::value,
                   "");
   }
 

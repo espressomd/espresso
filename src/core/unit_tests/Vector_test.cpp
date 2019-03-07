@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(test_norm2) {
 }
 
 BOOST_AUTO_TEST_CASE(normalize) {
-  Vector<3, double> v{1, 2, 3};
+  Vector3d v{1, 2, 3};
   v.normalize();
 
   BOOST_CHECK((v.norm2() - 1.0) <= std::numeric_limits<double>::epsilon());
@@ -160,8 +160,8 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
     BOOST_CHECK(v2 == (v1 /= 2));
   }
 
-  BOOST_CHECK((sqrt(Vector<3, double>{1., 2., 3.}) ==
-               Vector<3, double>{sqrt(1.), sqrt(2.), sqrt(3.)}));
+  BOOST_CHECK((sqrt(Vector3d{1., 2., 3.}) ==
+               Vector3d{sqrt(1.), sqrt(2.), sqrt(3.)}));
 }
 
 BOOST_AUTO_TEST_CASE(broadcast) {

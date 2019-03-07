@@ -47,7 +47,7 @@ public:
         {{"center",
           [this](const Variant &v) {
             cylindrical_profile_observable()->center =
-                get_value<::Vector<3, double>>(v);
+                get_value<::Vector3d>(v);
           },
           [this]() { return cylindrical_profile_observable()->center; }},
          {"axis",
