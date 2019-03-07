@@ -4,8 +4,6 @@
 #include <boost/serialization/access.hpp>
 #include <cstddef>
 
-#include "utils/serialization/array.hpp"
-
 #if defined(__CUDACC__)
 #define DEVICE_QUALIFIER __host__ __device__
 #else
