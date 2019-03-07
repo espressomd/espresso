@@ -975,7 +975,7 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
     auto ind_shifted = ind;
     double rho;
     Vector3d j;
-    Vector<6, double> pi;
+    Vector6d pi;
 
     node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
@@ -990,9 +990,9 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
   return {};
 }
 
-const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind) {
+const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
   double p0 = 0;
-  Vector<6, double> p_pi = lb_lbnode_get_pi_neq(ind);
+  Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -1011,8 +1011,8 @@ const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind) {
   return p_pi;
 }
 
-const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind) {
-  Vector<6, double> p_pi{};
+const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
+  Vector6d p_pi{};
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
@@ -1033,7 +1033,7 @@ const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind) {
     int node;
     double rho;
     double j[3];
-    Vector<6, double> pi{};
+    Vector6d pi{};
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted);
@@ -1126,7 +1126,7 @@ void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
     int node;
     double rho;
     Vector3d j;
-    Vector<6, double> pi;
+    Vector6d pi;
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted);
@@ -1158,7 +1158,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
     int node;
     double rho;
     Vector3d j;
-    Vector<6, double> pi;
+    Vector6d pi;
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted);

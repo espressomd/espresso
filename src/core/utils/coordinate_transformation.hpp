@@ -35,7 +35,7 @@ transform_pos_to_cylinder_coordinates(const ::Vector<3, double> &pos,
   ::Vector<3, double> rotated_pos = pos;
   if (axis == "x") {
     rotated_pos = vec_rotate(y_axis, -PI / 2.0, pos);
-  } else if (axis == "y") {
+  } else if (axis == "y") { 
     rotated_pos = vec_rotate(x_axis, PI / 2.0, pos);
   }
   double r = std::sqrt(rotated_pos[0] * rotated_pos[0] +

@@ -177,8 +177,8 @@ double lb_lbnode_get_density(const Vector3i &ind);
  * @brief Get the LB fluid velocity for a single node.
  */
 const Vector3d lb_lbnode_get_velocity(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind);
+const Vector6d lb_lbnode_get_pi(const Vector3i &ind);
+const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind);
 
 /**
  * @brief Get the LB fluid boundary bool for a single node.
