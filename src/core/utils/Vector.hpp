@@ -33,17 +33,25 @@
 
 template <typename Scalar, std::size_t n> class Vector : public Utils::Array<Scalar, n> {
 public:
+  using Utils::Array<Scalar, n>::at;
+  using Utils::Array<Scalar, n>::operator[];
+  using Utils::Array<Scalar, n>::front;
+  using Utils::Array<Scalar, n>::back;
+  using Utils::Array<Scalar, n>::data;
   using Utils::Array<Scalar, n>::begin;
   using Utils::Array<Scalar, n>::cbegin;
   using Utils::Array<Scalar, n>::end;
   using Utils::Array<Scalar, n>::cend;
-  using Utils::Array<Scalar, n>::data;
-  using Utils::Array<Scalar, n>::operator[];
+  using Utils::Array<Scalar, n>::empty;
+  using Utils::Array<Scalar, n>::size;
+  using Utils::Array<Scalar, n>::max_size;
+  using Utils::Array<Scalar, n>::fill;
+  using Utils::Array<Scalar, n>::broadcast;
   Vector() = default;
   Vector(Vector const &) = default;
   Vector &operator=(Vector const &) = default;
 
-  void swap(Vector &rhs) { std::swap(data(), rhs.data()); }
+  void swap(Vector &rhs) { std::swap_ranges(begin(), end(), rhs.begin()); }
 
   template <typename Container>
   explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
@@ -56,13 +64,24 @@ public:
       : Vector(std::begin(v), std::end(v)) {}
 
   template <typename InputIterator>
-  Vector(InputIterator begin, InputIterator end) {
-    if (std::distance(begin, end) == n) {
-      std::copy_n(begin, n, begin());
+  Vector(InputIterator first, InputIterator last) {
+    if (std::distance(first, last) == n) {
+      std::copy_n(first, n, begin());
     } else {
       throw std::length_error(
           "Construction of Vector from Container of wrong length.");
     }
+  }
+
+  /**
+   * @brief Create a vector that has all entries set to
+   *         one value.
+   */
+  static Vector<Scalar, n> broadcast(const Scalar &s) {
+    Vector<Scalar, n> ret;
+    std::fill(ret.begin(), ret.end(), s);
+
+    return ret;
   }
 
   std::vector<Scalar> as_vector() const {
@@ -84,17 +103,6 @@ public:
     }
 
     return *this;
-  }
-
-  /**
-   * @brief Create a vector that has all entries set to
-   *         one value.
-   */
-  static Vector<Scalar, n> broadcast(const Scalar &s) {
-    Vector<Scalar, n> ret;
-    std::fill(ret.begin(), ret.end(), s);
-
-    return ret;
   }
 
   static void cross(const Vector<Scalar, 3> &a, const Vector<Scalar, 3> &b,
@@ -205,7 +213,7 @@ Vector<T, N> operator-(Vector<T, N> const &a, Vector<T, N> const &b) {
 template <size_t N, typename T> Vector<T, N> operator-(Vector<T, N> const &a) {
   Vector<T, N> ret;
 
-  std::transform(a.begin(), a.end(), ret.begin(),
+  std::transform(std::begin(a), std::end(a), std::begin(ret),
                  [](T const &v) { return -v; });
 
   return ret;
@@ -221,7 +229,7 @@ template <size_t N, typename T>
 Vector<T, N> operator*(T const &a, Vector<T, N> const &b) {
   Vector<T, N> ret;
 
-  std::transform(b.begin(), b.end(), ret.begin(),
+  std::transform(std::begin(b), std::end(b), std::begin(ret),
                  [a](T const &val) { return a * val; });
 
   return ret;
@@ -231,7 +239,7 @@ template <size_t N, typename T>
 Vector<T, N> operator*(Vector<T, N> const &b, T const &a) {
   Vector<T, N> ret;
 
-  std::transform(b.begin(), b.end(), ret.begin(),
+  std::transform(std::begin(b), std::end(b), std::begin(ret),
                  [a](T const &val) { return a * val; });
 
   return ret;
@@ -239,7 +247,7 @@ Vector<T, N> operator*(Vector<T, N> const &b, T const &a) {
 
 template <size_t N, typename T>
 Vector<T, N> &operator*=(Vector<T, N> &b, T const &a) {
-  std::transform(b.begin(), b.end(), b.begin(),
+  std::transform(std::begin(b), std::end(b), std::begin(b),
                  [a](T const &val) { return a * val; });
   return b;
 }
@@ -249,14 +257,14 @@ template <size_t N, typename T>
 Vector<T, N> operator/(Vector<T, N> const &a, T const &b) {
   Vector<T, N> ret;
 
-  std::transform(a.begin(), a.end(), ret.begin(),
+  std::transform(std::begin(a), std::end(a), ret.begin(),
                  [b](T const &val) { return val / b; });
   return ret;
 }
 
 template <size_t N, typename T>
 Vector<T, N> &operator/=(Vector<T, N> &a, T const &b) {
-  std::transform(a.begin(), a.end(), a.begin(),
+  std::transform(std::begin(a), std::end(a), std::begin(a),
                  [b](T const &val) { return val / b; });
   return a;
 }
@@ -264,7 +272,7 @@ Vector<T, N> &operator/=(Vector<T, N> &a, T const &b) {
 /* Scalar product */
 template <size_t N, typename T>
 T operator*(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return std::inner_product(a.begin(), a.end(), b.begin(), T{});
+  return std::inner_product(std::begin(a), std::end(a), std::begin(b), T{});
 }
 
 /* Componentwise square root */
@@ -272,7 +280,7 @@ template <size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
   using std::sqrt;
   Vector<T, N> ret;
 
-  std::transform(a.begin(), a.end(), ret.begin(),
+  std::transform(std::begin(a), std::end(a), ret.begin(),
                  [](T const &v) { return sqrt(v); });
 
   return ret;

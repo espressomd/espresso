@@ -55,15 +55,17 @@ template <typename T, std::size_t N> struct Array {
   DEVICE_QUALIFIER constexpr const_pointer data() const noexcept {
     return &m_data[0];
   }
-  DEVICE_QUALIFIER constexpr iterator begin() { return &m_data[0]; };
-  DEVICE_QUALIFIER constexpr const_iterator cbegin() const {
+  DEVICE_QUALIFIER constexpr iterator begin() noexcept { return &m_data[0]; };
+  DEVICE_QUALIFIER constexpr const_iterator begin() const noexcept { return &m_data[0]; };
+  DEVICE_QUALIFIER constexpr const_iterator cbegin() const noexcept {
     return &m_data[0];
   };
-  DEVICE_QUALIFIER constexpr iterator end() { return &m_data[N]; };
-  DEVICE_QUALIFIER constexpr const_iterator cend() const { return &m_data[N]; };
-  DEVICE_QUALIFIER constexpr bool empty() const { return size() == 0; }
-  DEVICE_QUALIFIER constexpr size_type size() const { return N; }
-  DEVICE_QUALIFIER constexpr size_type max_size() const { return N; }
+  DEVICE_QUALIFIER constexpr iterator end() noexcept { return &m_data[N]; };
+  DEVICE_QUALIFIER constexpr const_iterator end() const noexcept { return &m_data[N]; };
+  DEVICE_QUALIFIER constexpr const_iterator cend() const noexcept { return &m_data[N]; };
+  DEVICE_QUALIFIER constexpr bool empty() const noexcept { return size() == 0; }
+  DEVICE_QUALIFIER constexpr size_type size() const noexcept { return N; }
+  DEVICE_QUALIFIER constexpr size_type max_size() const noexcept { return N; }
   DEVICE_QUALIFIER void fill(const value_type &value) {
     for (size_type i = 0; i < size(); ++i)
       m_data[i] = value;
