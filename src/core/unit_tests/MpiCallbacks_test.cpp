@@ -33,33 +33,55 @@
 
 #include <boost/mpi.hpp>
 
-struct Archive {
-    std::vector<int> values;
-    int cnt = 0;
+static bool called = false;
 
-    void operator&(int &i) {
-      values.push_back(i);
-      i = cnt++;
+/**
+ * Test that the implementation of callback_modell_t
+ * correctly deserialize the parameters and call
+ * the callback with them.
+ */
+BOOST_AUTO_TEST_CASE(callback_model_t) {
+    using namespace Communication;
+    boost::mpi::communicator world;
+
+    boost::mpi::packed_oarchive::buffer_type buff;
+    boost::mpi::packed_oarchive oa(world, buff);
+    oa << 537 << 3.4;
+
+    /* function pointer variant */
+    {
+        called = false;
+        void (*fp)(int, double) = [](int i, double d){
+            BOOST_CHECK_EQUAL(537, i);
+            BOOST_CHECK_EQUAL(3.4, d);
+
+            called = true;
+        };
+
+        auto cb = detail::make_model(fp);
+
+        boost::mpi::packed_iarchive ia(world, buff);
+        cb->operator()(ia);
+
+        BOOST_CHECK(called);
     }
-};
 
-BOOST_AUTO_TEST_CASE(tuple_helpers) {
-  auto t = Communication::detail::tuple<int, int, int>{{1, 3, 5}};
+    /* Lambda */
+    {
+        called = false;
+        auto cb = detail::make_model([state=19](int i, double d){
+            BOOST_CHECK_EQUAL(19, state);
+            BOOST_CHECK_EQUAL(537, i);
+            BOOST_CHECK_EQUAL(3.4, d);
 
-  Archive ar;
-  t.serialize(ar, 0);
+            called = true;
+        });
 
-  BOOST_CHECK_EQUAL(ar.values[0], 1);
-  BOOST_CHECK_EQUAL(ar.values[1], 3);
-  BOOST_CHECK_EQUAL(ar.values[2], 5);
+        boost::mpi::packed_iarchive ia(world, buff);
+        cb->operator()(ia);
 
-  BOOST_CHECK_EQUAL(std::get<0>(t.t), 0);
-  BOOST_CHECK_EQUAL(std::get<1>(t.t), 1);
-  BOOST_CHECK_EQUAL(std::get<2>(t.t), 2);
-}
-
-BOOST_AUTO_TEST_CASE(callback_handle) {
-  ;
+        BOOST_CHECK(called);
+    }
 }
 
 int main(int argc, char **argv) {
