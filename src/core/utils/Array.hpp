@@ -2,6 +2,9 @@
 #define UTILS_ARRAY_HPP
 
 #include <cstddef>
+#include <boost/serialization/access.hpp>
+
+#include "utils/serialization/array.hpp"
 
 #if defined(__CUDACC__)
 #define DEVICE_QUALIFIER __host__ __device__
@@ -33,9 +36,11 @@ template <typename T, std::size_t N> struct Array {
     return m_data[i];
   }
   DEVICE_QUALIFIER constexpr reference operator[](size_type i) {
+    assert(i<N);
     return m_data[i];
   }
   DEVICE_QUALIFIER constexpr const_reference operator[](size_type i) const {
+    assert(i<N);
     return m_data[i];
   }
   DEVICE_QUALIFIER constexpr reference front() { return *begin(); }
@@ -70,6 +75,12 @@ template <typename T, std::size_t N> struct Array {
       ret[i] = value;
     }
     return ret;
+  }
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int /* version */) {
+    ar &m_data;
   }
 };
 
