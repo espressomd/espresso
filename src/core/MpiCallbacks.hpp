@@ -145,8 +145,7 @@ public:
         MpiCallbacks *m_cb;
 
     public:
-        CallbackHandle() : m_id(0), m_cb(nullptr) {}
-        CallbackHandle(int id, MpiCallbacks *cb) : m_id(id), m_cb(cb) {}
+	CallbackHandle(int id, MpiCallbacks *cb) : m_id(id), m_cb(cb) {}
 
 	/**
 	  * @brief Call the callback managed by this handle.

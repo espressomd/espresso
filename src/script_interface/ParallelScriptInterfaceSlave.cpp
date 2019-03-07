@@ -40,9 +40,7 @@ VariantMap ParallelScriptInterfaceSlave::bcast_variant_map() const {
   return ret;
 }
 
-ParallelScriptInterfaceSlave::ParallelScriptInterfaceSlave() {
-  m_callback_id = m_cb->add([this](CallbackAction a) { mpi_slave(a); });
-}
+ParallelScriptInterfaceSlave::ParallelScriptInterfaceSlave() : m_callback_id(m_cb->add([this](CallbackAction a) { mpi_slave(a); })) {}
 
 std::map<ObjectId, ObjectId> &
 ParallelScriptInterfaceSlave::get_translation_table() {
