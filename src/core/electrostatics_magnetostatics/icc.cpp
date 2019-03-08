@@ -34,10 +34,6 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
 #include "cells.hpp"
@@ -53,7 +49,7 @@
 #include "short_range_loop.hpp"
 #include "utils/NoOp.hpp"
 
-#include "coulomb.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 
 iccp3m_struct iccp3m_cfg;
 

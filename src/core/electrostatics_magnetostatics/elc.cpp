@@ -24,10 +24,8 @@
  * electrostatics_magnetostatics/elc.hpp
  * "electrostatics_magnetostatics/elc.hpp".
  */
-#include "electrostatics_magnetostatics/elc.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "mmm-common.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -37,7 +35,7 @@
 #include <cmath>
 #include <mpi.h>
 
-#include "coulomb.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 
 #ifdef P3M
 
