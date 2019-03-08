@@ -36,6 +36,8 @@ void mpi_set_lb_fluid_counter(int high, int low);
 
 #ifdef LB
 
+#include <array>
+
 #include "errorhandling.hpp"
 
 #include "halo.hpp"
@@ -166,7 +168,7 @@ struct LB_Parameters {
 
   /** \name Derived parameters */
   /** amplitudes of the fluctuations of the modes */
-  Vector<19, double> phi;
+  Vector19d phi;
   // Thermal energy
   double kT;
 };
@@ -242,8 +244,7 @@ void lb_sanity_checks();
     @param pi local fluid pressure
 */
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             const std::array<double, 3> &j,
-                             const std::array<double, 6> &pi);
+                             Vector3d const &j, Vector6d const &pi);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &p);
@@ -341,8 +342,7 @@ inline void lb_get_populations(Lattice::index_t index, double *pop) {
   }
 }
 
-inline void lb_set_populations(Lattice::index_t index,
-                               const Vector<19, double> &pop) {
+inline void lb_set_populations(Lattice::index_t index, const Vector19d &pop) {
   for (int i = 0; i < lbmodel.n_veloc; ++i) {
     lbfluid[i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
   }
