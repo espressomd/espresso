@@ -17,19 +17,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE Utils::Array test
 #define BOOST_TEST_DYN_LINK
 
-#include <boost/mpi.hpp>
+#include <array>
+#include <numeric>
+#include <sstream>
+#include <vector>
+
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include "utils/Array.hpp"
 using Utils::Array;
-
-#include <array>
-#include <numeric>
-#include <vector>
 
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {
   static_assert(4 == Array<int, 4>().size(), "");
@@ -84,30 +85,21 @@ BOOST_AUTO_TEST_CASE(broadcast) {
 }
 
 BOOST_AUTO_TEST_CASE(serialization) {
-  boost::mpi::communicator world;
-  auto const rank = world.rank();
-  auto const size = world.size();
-  Array<double, 3> const a{{1.0, 2.0, 3.0}};
-  if (size > 1) {
-    if (rank == 0) {
-      world.send(1, 42, a);
-    } else if (rank == 1) {
-      Array<double, 3> b{};
-      world.recv(0, 42, b);
-      for (Array<double, 3>::size_type i = 0; i < 3; ++i) {
-        BOOST_CHECK_EQUAL(a[i], b[i]);
-      }
-    }
-  }
+  Array<double, 24> a;
+  std::iota(std::begin(a), std::end(a), 0);
+
+  std::stringstream stream;
+  boost::archive::text_oarchive out_ar(stream);
+  out_ar << a;
+
+  boost::archive::text_iarchive in_ar(stream);
+  decltype(a) b;
+  in_ar >> b;
+
+  BOOST_CHECK(std::equal(std::begin(a), std::end(a), std::begin(b)));
 }
 
 BOOST_AUTO_TEST_CASE(zero_size) {
   Array<int, 0> const a{};
   BOOST_CHECK(a.size() == 0);
-}
-
-int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
