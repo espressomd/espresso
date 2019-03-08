@@ -10,6 +10,8 @@
 #include "lbgpu.hpp"
 #include "thermostat.hpp"
 
+int lattice_switch = LATTICE_OFF;
+
 #if defined(LB) || defined(LB_GPU)
 
 void lb_lbfluid_update() {
