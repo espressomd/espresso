@@ -1,5 +1,5 @@
-#ifndef ESPRESSO_COULOMB_SWITCH_HPP
-#define ESPRESSO_COULOMB_SWITCH_HPP
+#ifndef ESPRESSO_COULOMB_HPP
+#define ESPRESSO_COULOMB_HPP
 
 #include "config.hpp"
 
@@ -165,4 +165,4 @@ inline double add_pair_energy(Particle *p1, Particle *p2, double *d,
 }
 } // namespace Coulomb
 #endif // ELECTROSTATICS
-#endif // ESPRESSO_COULOMB_SWITCH_HPP
+#endif // ESPRESSO_COULOMB_HPP

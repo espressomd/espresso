@@ -40,7 +40,7 @@ typedef float dds_float;
 class DipolarBarnesHut : public Actor {
 public:
   DipolarBarnesHut(SystemInterface &s, float epssq, float itolsq) {
-    k = coulomb.Dprefactor;
+    k = dipole.prefactor;
     m_epssq = epssq;
     m_itolsq = itolsq;
     setBHPrecision(&m_epssq, &m_itolsq);

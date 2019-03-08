@@ -12,7 +12,7 @@
 namespace Dipole {
 
 void pressure_n(int &n_dipolar) {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
   case DIPOLAR_NONE:
     n_dipolar = 0;
     break;
@@ -33,7 +33,7 @@ void pressure_n(int &n_dipolar) {
 
 void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor) {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     fprintf(
         stderr,
@@ -75,7 +75,7 @@ void calc_pressure_long_range(Observable_stat &virials,
 
 void nonbonded_sanity_check(int &state) {
 #ifdef DP3M
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
   case DIPOLAR_MDLC_P3M:
     if (mdlc_sanity_checks())
       state = 0; // fall through
@@ -97,7 +97,7 @@ void nonbonded_sanity_check(int &state) {
 }
 
 void cutoff(double &ret) {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     // fall through
@@ -115,7 +115,7 @@ void cutoff(double &ret) {
 }
 
 void integrate_sanity_check() {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
   case DIPOLAR_NONE:
     break;
 #ifdef DP3M
@@ -130,7 +130,7 @@ void integrate_sanity_check() {
 }
 
 void on_observable_calc() {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     // fall through
@@ -144,7 +144,7 @@ void on_observable_calc() {
 }
 
 void on_coulomb_change() {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     // fall through
@@ -158,7 +158,7 @@ void on_coulomb_change() {
 }
 
 void on_boxl_change() {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     // fall through
@@ -177,7 +177,7 @@ void on_boxl_change() {
 }
 
 void init() {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     // fall through
@@ -191,7 +191,7 @@ void init() {
 }
 
 void calc_long_range_force() {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     add_mdlc_force_corrections();
@@ -241,7 +241,7 @@ void calc_long_range_force() {
 }
 
 void calc_energy_long_range(Observable_stat &energy) {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_P3M:
     dp3m_dipole_assign();
@@ -287,7 +287,7 @@ void calc_energy_long_range(Observable_stat &energy) {
 }
 
 void energy_n(int &n_dipolar) {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
   case DIPOLAR_NONE:
     n_dipolar = 1; // because there may be an external magnetic field
     break;
@@ -321,7 +321,7 @@ void energy_n(int &n_dipolar) {
 }
 
 int set_mesh() {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
   case DIPOLAR_P3M:
@@ -338,7 +338,7 @@ int set_mesh() {
 }
 
 void bcast_params() {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
   case DIPOLAR_NONE:
     break;
 #ifdef DP3M
@@ -368,7 +368,7 @@ void bcast_params() {
     fprintf(stderr,
             "%d: INTERNAL ERROR: cannot bcast dipolar params for "
             "unknown method %d\n",
-            this_node, coulomb.Dmethod);
+            this_node, dipole.method);
     errexit();
   }
 }

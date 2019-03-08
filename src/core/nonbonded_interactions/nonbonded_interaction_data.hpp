@@ -362,10 +362,19 @@ struct Coulomb_parameters {
   /** Method to treat Coulomb interaction. */
   CoulombMethod method;
 #endif
+};
+
+/** \name Compounds for Dipole interactions */
+/*@{*/
+
+/** field containing the interaction parameters for
+ *  the Dipole interaction.  */
+struct Dipole_parameters {
 
 #ifdef DIPOLES
-  double Dprefactor;
-  DipolarInteraction Dmethod;
+    double prefactor;
+
+    DipolarInteraction method;
 #endif
 };
 
@@ -387,6 +396,9 @@ extern int max_seen_particle_type;
 
 /** Structure containing the Coulomb parameters. */
 extern Coulomb_parameters coulomb;
+/** Structure containing the Dipole parameters. */
+extern Dipole_parameters dipole;
+
 
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;

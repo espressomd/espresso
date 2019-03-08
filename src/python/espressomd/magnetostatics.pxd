@@ -7,7 +7,7 @@ IF DIPOLES == 1:
         void mpi_bcast_coulomb_params()
 
     cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-        ctypedef enum dipolar_interaction "DipolarInteraction":
+        ctypedef enum DipolarInteraction:
             DIPOLAR_NONE = 0,
             DIPOLAR_P3M,
             DIPOLAR_MDLC_P3M,
@@ -18,10 +18,11 @@ IF DIPOLES == 1:
 
         int dipolar_set_Dprefactor(double prefactor)
 
-        ctypedef struct coulomb_parameters "Coulomb_parameters":
-            double Dprefactor
-            dipolar_interaction Dmethod
-        cdef extern coulomb_parameters coulomb
+        ctypedef struct Dipole_parameters:
+            double prefactor
+            DipolarInteraction method
+
+        cdef extern Dipole_parameters dipole
 
     cdef extern from "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp":
         int dawaanr_set_params()

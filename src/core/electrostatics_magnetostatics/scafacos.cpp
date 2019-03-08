@@ -146,8 +146,8 @@ void ScafacosData::update_particle_forces() const {
 
       // Add to particles
       for (int j = 0; j < 3; j++) {
-        p.f.f[j] += coulomb.Dprefactor * f[j];
-        p.f.torque[j] += coulomb.Dprefactor * t[j];
+        p.f.f[j] += dipole.prefactor * f[j];
+        p.f.torque[j] += dipole.prefactor * t[j];
       }
       it++;
 #endif
@@ -243,7 +243,7 @@ double long_range_energy() {
 #ifdef SCAFACOS_DIPOLES
       scafacos->run_dipolar(particles.dipoles, particles.positions,
                             particles.fields, particles.potentials);
-      return -0.5 * coulomb.Dprefactor *
+      return -0.5 * dipole.prefactor *
              std::inner_product(particles.dipoles.begin(),
                                 particles.dipoles.end(),
                                 particles.potentials.begin(), 0.0);
@@ -347,7 +347,7 @@ static void set_params_safe(const std::string &method,
   scafacos->set_dipolar(dipolar_ia);
 #ifdef DIPOLES
   if (dipolar_ia) {
-    coulomb.Dmethod = DIPOLAR_SCAFACOS;
+    dipole.method = DIPOLAR_SCAFACOS;
   }
 #endif
 #ifdef ELECTROSTATICS

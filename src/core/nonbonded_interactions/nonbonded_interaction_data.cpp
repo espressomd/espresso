@@ -86,18 +86,19 @@
 int max_seen_particle_type = 0;
 std::vector<IA_parameters> ia_params;
 
-#if defined(ELECTROSTATICS) || defined(DIPOLES)
-Coulomb_parameters coulomb = {
 #ifdef ELECTROSTATICS
+Coulomb_parameters coulomb = {
     0.0,
     COULOMB_NONE,
-#endif
-#ifdef DIPOLES
-    0.0,
-    DIPOLAR_NONE,
-#endif
 };
-#endif
+#endif // ELECTROSTATICS
+
+#ifdef DIPOLES
+Dipole_parameters dipole = {
+        0.0,
+        DIPOLAR_NONE,
+};
+#endif // DIPOLES
 
 #ifdef ELECTROSTATICS
 Debye_hueckel_params dh_params{};
@@ -428,16 +429,16 @@ int interactions_sanity_checks() {
 #ifdef DIPOLES
 void set_dipolar_method_local(DipolarInteraction method) {
 #ifdef DIPOLAR_DIRECT_SUM
-  if ((coulomb.Dmethod == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU)) {
+  if ((dipole.method == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU)) {
     deactivate_dipolar_direct_sum_gpu();
   }
 #endif
 #ifdef DIPOLAR_BARNES_HUT
-  if ((coulomb.Dmethod == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
+  if ((dipole.method == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
     deactivate_dipolar_barnes_hut();
   }
 #endif // BARNES_HUT
-  coulomb.Dmethod = method;
+  dipole.method = method;
 }
 #endif
 
@@ -484,7 +485,7 @@ int dipolar_set_Dprefactor(double prefactor) {
     return ES_ERROR;
   }
 
-  coulomb.Dprefactor = prefactor;
+  dipole.prefactor = prefactor;
 
   mpi_bcast_coulomb_params();
   return ES_OK;

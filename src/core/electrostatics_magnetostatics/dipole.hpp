@@ -1,5 +1,5 @@
-#ifndef ESPRESSO_DIPOLE_SWITCH_HPP
-#define ESPRESSO_DIPOLE_SWITCH_HPP
+#ifndef ESPRESSO_DIPOLE_HPP
+#define ESPRESSO_DIPOLE_HPP
 
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp" // dp3m
 #include "integrate.hpp"                                 // integ_switch
@@ -44,7 +44,7 @@ void bcast_params();
 // forces_inline
 inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
                             double dist2, Vector3d &force) {
-  switch (coulomb.Dmethod) {
+  switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     // fall trough
@@ -68,9 +68,9 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
 inline void add_pair_energy(Particle *p1, Particle *p2, double *d, double dist,
                             double dist2, Observable_stat &energy) {
   double ret = 0;
-  if (coulomb.Dmethod != DIPOLAR_NONE) {
+  if (dipole.method != DIPOLAR_NONE) {
     // ret=0;
-    switch (coulomb.Dmethod) {
+    switch (dipole.method) {
 #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
       // fall trough
@@ -89,4 +89,4 @@ inline void add_pair_energy(Particle *p1, Particle *p2, double *d, double dist,
 
 #endif // DIPOLES
 #endif // ELECTROSTATICS
-#endif // ESPRESSO_DIPOLE_SWITCH_HPP
+#endif // ESPRESSO_DIPOLE_HPP

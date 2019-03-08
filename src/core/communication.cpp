@@ -640,14 +640,17 @@ void mpi_bcast_coulomb_params() {
 void mpi_bcast_coulomb_params_slave(int, int) {
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
-  MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
 
 #ifdef ELECTROSTATICS
+  MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
+
   Coulomb::bcast_coulomb_params();
 #endif
 
 #ifdef DIPOLES
-  set_dipolar_method_local(coulomb.Dmethod);
+  MPI_Bcast(&dipole, sizeof(Dipole_parameters), MPI_BYTE, 0, comm_cart);
+
+  set_dipolar_method_local(dipole.method);
 
   Dipole::bcast_params();
 #endif

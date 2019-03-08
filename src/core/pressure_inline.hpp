@@ -92,7 +92,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 
 #ifdef DIPOLES
   /* real space magnetic dipole-dipole */
-  if (coulomb.Dmethod != DIPOLAR_NONE) {
+  if (dipole.method != DIPOLAR_NONE) {
     fprintf(stderr, "calculating pressure for magnetostatics which doesn't "
                     "have it implemented\n");
   }

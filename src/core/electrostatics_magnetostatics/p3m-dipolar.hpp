@@ -261,7 +261,7 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
 
     // Calculate real-space forces
     for (int j = 0; j < 3; j++)
-      force[j] += coulomb.Dprefactor *
+      force[j] += dipole.prefactor *
                   ((mimj * d[j] + dip1[j] * mjr + dip2[j] * mir) * C_r -
                    mir * mjr * D_r * d[j]);
 
@@ -282,17 +282,17 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
     // Calculate real-space torques
     for (int j = 0; j < 3; j++) {
       p1->f.torque[j] +=
-          coulomb.Dprefactor * (-mixmj[j] * B_r + mixr[j] * mjr * C_r);
+          dipole.prefactor * (-mixmj[j] * B_r + mixr[j] * mjr * C_r);
       p2->f.torque[j] +=
-          coulomb.Dprefactor * (mixmj[j] * B_r + mjxr[j] * mir * C_r);
+          dipole.prefactor * (mixmj[j] * B_r + mjxr[j] * mir * C_r);
     }
 #endif
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
     double fac1 =
-        coulomb.Dprefactor * p1->p.dipm * p2->p.dipm * exp(-adist * adist);
+        dipole.prefactor * p1->p.dipm * p2->p.dipm * exp(-adist * adist);
 #else
-    double fac1 = coulomb.Dprefactor * p1->p.dipm * p2->p.dipm;
+    double fac1 = dipole.prefactor * p1->p.dipm * p2->p.dipm;
 #endif
     return fac1 * (mimj * B_r - mir * mjr * C_r);
 #endif
@@ -312,15 +312,15 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
 
   if (dist < dp3m.params.r_cut && dist > 0) {
     adist = dp3m.params.alpha * dist;
-    /*fac1 = coulomb.Dprefactor;*/
+    /*fac1 = dipole.prefactor;*/
 
 #if USE_ERFC_APPROXIMATION
     erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-    /*  fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */
+    /*  fac1 = dipole.prefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */
     /* *exp(-adist*adist); */
 #else
     erfc_part_ri = erfc(adist) / dist;
-    /* fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/
+    /* fac1 = dipole.prefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/
 #endif
 
     // Calculate scalar multiplications for vectors mi, mj, rij
@@ -345,7 +345,7 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
     */
 
     /* old line return fac1 * ( mimj*B_r - mir*mjr * C_r );*/
-    return coulomb.Dprefactor * (mimj * B_r - mir * mjr * C_r);
+    return dipole.prefactor * (mimj * B_r - mir * mjr * C_r);
   }
   return 0.0;
 }

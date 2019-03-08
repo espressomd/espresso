@@ -220,7 +220,7 @@ void on_integration_start() {
     runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
 #endif
 #ifdef DIPOLES
-  if (!Utils::Mpi::all_compare(comm_cart, coulomb.Dmethod))
+  if (!Utils::Mpi::all_compare(comm_cart, dipole.method))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
   check_global_consistency();
@@ -449,7 +449,7 @@ void on_parameter_change(int field) {
     }
 #endif
 #ifdef DIPOLES
-    if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
+    if (dipole.method == DIPOLAR_SCAFACOS) {
       Scafacos::update_system_params();
     }
 #endif

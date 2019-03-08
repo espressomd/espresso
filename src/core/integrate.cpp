@@ -893,7 +893,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 #endif
 
 #ifdef DIPOLES
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dprefactor > 0) {
+  if (nptiso.dimension < 3 && !nptiso.cubic_box && dipole.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must "
                          "use the the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;

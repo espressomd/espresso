@@ -456,9 +456,9 @@ void add_mdlc_force_corrections() {
     if ((p.p.dipm) != 0.0) {
       const Vector3d dip = p.calc_dip();
 
-      p.f.f[0] += coulomb.Dprefactor * dip_DLC_f_x[ip];
-      p.f.f[1] += coulomb.Dprefactor * dip_DLC_f_y[ip];
-      p.f.f[2] += coulomb.Dprefactor *
+      p.f.f[0] += dipole.prefactor * dip_DLC_f_x[ip];
+      p.f.f[1] += dipole.prefactor * dip_DLC_f_y[ip];
+      p.f.f[2] += dipole.prefactor *
                   dip_DLC_f_z[ip]; // SDC correction term is zero for the forces
 
 #if defined(ROTATION) && defined(DP3M)
@@ -473,11 +473,11 @@ void add_mdlc_force_corrections() {
         dz = correc * (-1.0) * mz;
 
         p.f.torque[0] +=
-            coulomb.Dprefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
+            dipole.prefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
         p.f.torque[1] +=
-            coulomb.Dprefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
+            dipole.prefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
         p.f.torque[2] +=
-            coulomb.Dprefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
+            dipole.prefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
 
       } else {
 
@@ -487,11 +487,11 @@ void add_mdlc_force_corrections() {
         dz = correc * (-1.0 + 1. / (2.0 * dp3m.params.epsilon + 1.0)) * mz;
 
         p.f.torque[0] +=
-            coulomb.Dprefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
+            dipole.prefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
         p.f.torque[1] +=
-            coulomb.Dprefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
+            dipole.prefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
         p.f.torque[2] +=
-            coulomb.Dprefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
+            dipole.prefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
       }
 #endif
     }
@@ -517,7 +517,7 @@ double add_mdlc_energy_corrections() {
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
-  dip_DLC_energy += coulomb.Dprefactor * get_DLC_energy_dipolar(dip_DLC_kcut);
+  dip_DLC_energy += dipole.prefactor * get_DLC_energy_dipolar(dip_DLC_kcut);
 
   //           printf("Energy DLC                                  = %20.15le
   //           \n",dip_DLC_energy);
@@ -535,18 +535,18 @@ double add_mdlc_energy_corrections() {
 
   if (this_node == 0) {
 #ifdef DP3M
-    if (coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
+    if (dipole.method == DIPOLAR_MDLC_P3M) {
       if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
-        dip_DLC_energy += coulomb.Dprefactor * 2. * M_PI / volume * (mz * mz);
+        dip_DLC_energy += dipole.prefactor * 2. * M_PI / volume * (mz * mz);
       } else {
         dip_DLC_energy +=
-            coulomb.Dprefactor * 2. * M_PI / volume *
+            dipole.prefactor * 2. * M_PI / volume *
             (mz * mz - mtot * mtot / (2.0 * dp3m.params.epsilon + 1.0));
       }
     } else
 #endif
     {
-      dip_DLC_energy += coulomb.Dprefactor * 2. * M_PI / volume * (mz * mz);
+      dip_DLC_energy += dipole.prefactor * 2. * M_PI / volume * (mz * mz);
       fprintf(stderr, "You are not using the P3M method, therefore "
                       "dp3m.params.epsilon unknown, I assume metallic borders "
                       "\n");
