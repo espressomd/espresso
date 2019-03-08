@@ -2,11 +2,12 @@ import numpy
 cimport numpy
 import os
 from libcpp cimport bool
-from espressomd.particle_data import ParticleHandle
-from particle_data cimport *
-from espressomd.interactions cimport *
-from espressomd.system cimport *
 from libcpp.vector cimport vector
+from .particle_data import ParticleHandle
+from .particle_data cimport *
+from .interactions cimport *
+from .system cimport *
+from .interactions import NonBondedInteractions
 
 include "myconfig.pxi"
 
@@ -22,7 +23,6 @@ from tvtk.tools import visual
 import atexit
 import threading
 
-from espressomd.interactions import NonBondedInteractions
 
 # workaround for https://github.com/enthought/mayavi/issues/3
 import vtk

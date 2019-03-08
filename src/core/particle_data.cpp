@@ -444,8 +444,7 @@ bool swimming_particles_exist = false;
  */
 std::unordered_map<int, int> particle_node;
 
-int max_local_particles = 0;
-LocalParticles local_particles;
+ParticleIndex local_particles;
 
 /************************************************
  * local functions
@@ -562,13 +561,8 @@ void clear_particle_node() { particle_node.clear(); }
 void build_particle_index() {
   local_particles.clear();
 
-  for (auto &p : ghost_cells.particles()) {
-    local_particles[p.identity()] = &p;
-  }
-
-  for (auto &p : local_cells.particles()) {
-    local_particles[p.identity()] = &p;
-  }
+  local_particles.update(ghost_cells.particles());
+  local_particles.update(local_cells.particles());
 }
 
 void init_particlelist(ParticleList *pList) {
@@ -603,10 +597,7 @@ int realloc_particlelist(ParticleList *l, int size) {
 }
 
 void update_local_particles(ParticleList *pl) {
-  Particle *p = pl->part;
-  int n = pl->n, i;
-  for (i = 0; i < n; i++)
-    local_particles[p[i].p.identity] = &p[i];
+  local_particles.update(Utils::Span<Particle>(pl->part, pl->n));
 }
 
 void append_particle(ParticleList *l, Particle &&part) {
@@ -816,16 +807,6 @@ void set_particle_f(int part, const Vector3d &F) {
       part, F);
 }
 
-#ifdef SHANCHEN
-void set_particle_solvation(int part, double *solvation) {
-  std::array<double, 2 * LB_COMPONENTS> s;
-  std::copy(solvation, solvation + 2 * LB_COMPONENTS, s.begin());
-  mpi_update_particle_property<std::array<double, 2 * LB_COMPONENTS>,
-                               &ParticleProperties::solvation>(part, s);
-}
-
-#endif
-
 #if defined(MASS)
 void set_particle_mass(int part, double mass) {
   mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);
@@ -894,7 +875,7 @@ void set_particle_virtual(int part, int is_virtual) {
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part, double *vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
-  vs_relative.quat = Vector<4, double>(vs_relative_quat, vs_relative_quat + 4);
+  vs_relative.quat = Vector4d(vs_relative_quat, vs_relative_quat + 4);
 
   mpi_update_particle_property<
       ParticleProperties::VirtualSitesRelativeParameteres,
@@ -1133,7 +1114,7 @@ void local_remove_particle(int part) {
   update_local_particles(cell);
 }
 
-void local_place_particle(int part, const double p[3], int _new) {
+Particle *local_place_particle(int part, const double p[3], int _new) {
   Particle *pt;
 
   Vector3i i{};
@@ -1157,7 +1138,7 @@ void local_place_particle(int part, const double p[3], int _new) {
     if (rl)
       update_local_particles(cell);
     else
-      local_particles[pt->p.identity] = pt;
+      local_particles.update(*pt);
   } else
     pt = local_particles[part];
 
@@ -1170,6 +1151,8 @@ void local_place_particle(int part, const double p[3], int _new) {
 #ifdef BOND_CONSTRAINT
   pt->r.p_old = pp;
 #endif
+
+  return pt;
 }
 
 void local_remove_all_particles() {

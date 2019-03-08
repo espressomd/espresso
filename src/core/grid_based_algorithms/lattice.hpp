@@ -34,14 +34,13 @@
 /** Switch determining the type of lattice dynamics. A value of zero
  *  means that there is no lattice dynamics. Different types can be
  *  combined by or'ing the respective flags.
+ *  So far, only \ref LATTICE_OFF and \ref LATTICE_LB exist.
  */
 extern int lattice_switch;
 
-#define LATTICE_LB 1     /**< lattice Boltzmann */
-#define LATTICE_LB_GPU 2 /**< lattice Boltzmann */
-#define INTERPOLATION_LINEAR 1
-
-#define LATTICE_OFF 0 /**< lattice off */
+#define LATTICE_LB 1     /** Lattice Boltzmann */
+#define LATTICE_LB_GPU 2 /** Lattice Boltzmann */
+#define LATTICE_OFF 0    /** Lattice off */
 
 class Lattice {
 public:
@@ -93,21 +92,21 @@ public:
    * \param delta      distance fraction of pos from the surrounding
    *                   elementary cell, 6 directions (Output)
    */
-  void map_position_to_lattice(const Vector3d &pos, index_t node_index[8],
-                               double delta[6]) const;
+  void map_position_to_lattice(const Vector3d &pos,
+                               Vector<std::size_t, 8> &node_index,
+                               Vector6d &delta) const;
   /********************** Inline Functions **********************/
 
   /** Map a global lattice site to the node grid.
    *
    *  This function determines the processor responsible for
    *  the specified lattice site. The coordinates of the site are
-   *  taken as global coordinates and are returned as local coordinates.
+   *  taken as global coordinates.
    *
-   * \param  ind     global coordinates of the lattice site (Input)
-   * \param  grid     local coordinates of the lattice site (Output)
+   * \param  ind     global coordinates of the lattice site
    * \return         index of the node for the lattice site
    */
-  int map_lattice_to_node(int *ind, int *grid) const;
+  int map_lattice_to_node(Vector3i &ind) const;
 
   /********************** static Functions **********************/
 
@@ -128,8 +127,8 @@ public:
    *                   elementary cell, 6 directions (Output)
    * \param tmp_agrid  lattice mesh distance
    */
-  static void map_position_to_lattice_global(Vector3d &pos, Vector3i &ind,
-                                             double delta[6], double tmp_agrid);
+  static void map_position_to_lattice_global(const Vector3d &pos, Vector3i &ind,
+                                             Vector6d &delta, double tmp_agrid);
 };
 
 #endif /* LATTICE_HPP */

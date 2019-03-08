@@ -432,6 +432,13 @@ public:
        would also be correct, but is O(n*log(n)). */
     return remote_parts.begin()[id_index.at(id)];
   }
+
+  /**
+   * @brief Highest particle id.
+   *
+   * @return Id
+   */
+  int max_id() const { return remote_parts.rbegin()->identity(); }
 };
 
 #endif

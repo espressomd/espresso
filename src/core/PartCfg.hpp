@@ -22,46 +22,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ParticleCache.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
 #include "serialization/Particle.hpp"
-#include "utils/SkipIterator.hpp"
-
-#include <boost/iterator/transform_iterator.hpp>
-#include <boost/range/iterator_range.hpp>
 
 /**
  * @brief Proxy class that gets a particle range from
  *        from the global local_particles.
  */
 class GetLocalParts {
-  class SkipIfNullOrGhost {
-  public:
-    bool operator()(const LocalParticles::value_type &kv) const {
-      return (kv.second == nullptr) or (kv.second->l.ghost);
-    }
-  };
-
-  class SecondDeref {
-  public:
-    using result_type = Particle &;
-    Particle &operator()(const LocalParticles::value_type &kv) const {
-      return assert(kv.second), *(kv.second);
-    }
-  };
-
-  using skip_it =
-      Utils::SkipIterator<LocalParticles::iterator, SkipIfNullOrGhost>;
-  using iterator = boost::transform_iterator<SecondDeref, skip_it>;
-  using Range = boost::iterator_range<iterator>;
-
 public:
-  Range operator()() const {
-
-    auto begin = skip_it(local_particles.begin(), local_particles.end());
-    auto end = skip_it(local_particles.end(), local_particles.end());
-
-    return {begin, end};
-  }
+  ParticleRange operator()() const { return local_cells.particles(); }
 };
 
 using PartCfg = ParticleCache<GetLocalParts, PositionUnfolder>;

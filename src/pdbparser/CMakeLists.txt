@@ -1,0 +1,5 @@
+add_library(pdbparser SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/PdbParser.cpp)
+target_include_directories(pdbparser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(WITH_UNIT_TESTS)
+  add_subdirectory(unit_tests)
+endif(WITH_UNIT_TESTS)

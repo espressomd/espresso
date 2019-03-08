@@ -17,11 +17,9 @@ set(EspressoCore_SRC
   ghosts.cpp
   global.cpp
   grid.cpp
-  halo.cpp
   immersed_boundaries.cpp
   initialize.cpp
   integrate.cpp
-  lattice.cpp
   layered.cpp
   metadynamics.cpp
   minimize_energy.cpp
@@ -30,7 +28,6 @@ set(EspressoCore_SRC
   nsquare.cpp
   partCfg_global.cpp
   particle_data.cpp
-  PdbParser.cpp
   polymer.cpp
   polynom.cpp
   pressure.cpp
@@ -45,7 +42,6 @@ set(EspressoCore_SRC
   specfunc.cpp
   statistics_chain.cpp
   statistics.cpp
-  statistics_fluid.cpp
   swimmer_reaction.cpp
   SystemInterface.cpp
   thermostat.cpp
@@ -80,7 +76,6 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/debye_hueckel.cpp
   electrostatics_magnetostatics/elc.cpp
   electrostatics_magnetostatics/icc.cpp
-  electrostatics_magnetostatics/maggs.cpp
   electrostatics_magnetostatics/magnetic_non_p3m_methods.cpp
   electrostatics_magnetostatics/mdlc_correction.cpp
   electrostatics_magnetostatics/mmm1d.cpp
@@ -93,9 +88,13 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/scafacos.cpp
   electrostatics_magnetostatics/fft-common.cpp
   electrostatics_magnetostatics/fft.cpp
+  grid_based_algorithms/halo.cpp
+  grid_based_algorithms/lattice.cpp
   grid_based_algorithms/lbboundaries.cpp
   grid_based_algorithms/lb.cpp
-  grid_based_algorithms/lb-d3q19.cpp
+  grid_based_algorithms/lb_interface.cpp
+  grid_based_algorithms/lb_interpolation.cpp
+  grid_based_algorithms/lb_particle_coupling.cpp
   immersed_boundary/ibm_tribend.cpp
   immersed_boundary/ibm_triel.cpp
   immersed_boundary/ImmersedBoundaries.cpp
@@ -179,8 +178,9 @@ if(WITH_COVERAGE)
 endif()
 
 target_link_libraries(EspressoCore PUBLIC EspressoConfig)
-target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX)
+target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX Random123)
 target_link_libraries(EspressoCore PRIVATE Profiler)
+target_link_libraries(EspressoCore PRIVATE pdbparser)
 
 if(FFTW3_FOUND)
   target_include_directories(EspressoCore PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})
@@ -202,4 +202,3 @@ endif(WITH_UNIT_TESTS)
 add_subdirectory(grid_based_algorithms)
 add_subdirectory(shapes)
 add_subdirectory(cluster_analysis)
-add_subdirectory(electrostatics_magnetostatics)
