@@ -35,10 +35,10 @@ template <typename T, typename = void> struct get_value_helper {
   T operator()(Variant const &v) const { return boost::get<T>(v); }
 };
 
-/* Vector<N,T> case */
-template <size_t N, typename T> struct get_value_helper<Vector<N, T>, void> {
-  Vector<N, T> operator()(Variant const &v) const {
-    return Vector<N, T>(boost::get<std::vector<T>>(v));
+/* Vector<T, N> case */
+template <size_t N, typename T> struct get_value_helper<Vector<T, N>, void> {
+  Vector<T, N> operator()(Variant const &v) const {
+    return Vector<T, N>(boost::get<std::vector<T>>(v));
   }
 };
 

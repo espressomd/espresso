@@ -93,10 +93,18 @@ IF LB_GPU or LB:
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()
-        void lb_get_interpolated_velocity_gpu(double * positions, double * velocities, int length)
+        void linear_velocity_interpolation(double * positions, double * velocities, int length)
+        void quadratic_velocity_interpolation(double * positions, double * velocities, int length)
 
     cdef extern from "grid_based_algorithms/lb_interpolation.hpp":
         const Vector3d lb_lbinterpolation_get_interpolated_velocity_global(Vector3d & p) except +
+        cdef cppclass InterpolationOrder:
+            pass
+        void lb_lbinterpolation_set_interpolation_order(InterpolationOrder & order)
+
+    cdef extern from "grid_based_algorithms/lb_interpolation.hpp" namespace "InterpolationOrder":
+        cdef InterpolationOrder linear
+        cdef InterpolationOrder quadratic
 
     ###############################################
     #

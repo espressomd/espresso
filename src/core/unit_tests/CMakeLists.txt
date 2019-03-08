@@ -71,4 +71,4 @@ unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS Boost::mpi MPI::MPI_C
 unit_test(NAME matrix_vector_product SRC matrix_vector_product.cpp)
 unit_test(NAME ravel_index SRC index_test.cpp)
 unit_test(NAME tuple_test SRC tuple_test.cpp)
-
+unit_test(NAME Array_test SRC Array_test.cpp DEPENDS Boost::serialization)

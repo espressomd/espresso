@@ -37,12 +37,12 @@ template <typename T> struct infer_length_helper {
 };
 
 /* Specialization for Vectors */
-template <size_t N, typename T> struct infer_length_helper<Vector<N, T>> {
+template <size_t N, typename T> struct infer_length_helper<Vector<T, N>> {
   static constexpr size_t value{N};
 };
 
 template <size_t N, size_t M, typename T>
-struct infer_length_helper<Vector<M, Vector<N, T>>> {
+struct infer_length_helper<Vector<Vector<T, N>, M>> {
   static constexpr size_t value{N * M};
 };
 } // namespace detail
