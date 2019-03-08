@@ -372,9 +372,9 @@ struct Coulomb_parameters {
 struct Dipole_parameters {
 
 #ifdef DIPOLES
-    double prefactor;
+  double prefactor;
 
-    DipolarInteraction method;
+  DipolarInteraction method;
 #endif
 };
 
@@ -398,7 +398,6 @@ extern int max_seen_particle_type;
 extern Coulomb_parameters coulomb;
 /** Structure containing the Dipole parameters. */
 extern Dipole_parameters dipole;
-
 
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;

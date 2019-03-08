@@ -95,8 +95,8 @@ Coulomb_parameters coulomb = {
 
 #ifdef DIPOLES
 Dipole_parameters dipole = {
-        0.0,
-        DIPOLAR_NONE,
+    0.0,
+    DIPOLAR_NONE,
 };
 #endif // DIPOLES
 
