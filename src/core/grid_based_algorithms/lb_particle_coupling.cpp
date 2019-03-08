@@ -1,4 +1,3 @@
-#define R123_USE_MULHILO64_C99 1
 #include <Random123/philox.h>
 #include <boost/mpi.hpp>
 #include <profiler/profiler.hpp>
