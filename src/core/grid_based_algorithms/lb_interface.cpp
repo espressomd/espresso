@@ -1017,8 +1017,9 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
     fclose(cpfile);
 #endif // LB
   } else {
-    runtimeErrorMsg() << "To load an LB checkpoint one needs to have already "
-                         "initialized the LB fluid with the same grid size.";
+    throw std::runtime_error(
+        "To load an LB checkpoint one needs to have already "
+        "initialized the LB fluid with the same grid size.");
   }
 }
 
