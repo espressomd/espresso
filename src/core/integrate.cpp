@@ -33,17 +33,15 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
-#include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "initialize.hpp"
-#include "lattice.hpp"
 #include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -253,17 +251,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     thermo_heat_up();
 
-#ifdef LB
-    transfer_momentum = 0;
-    if (lattice_switch & LATTICE_LB && this_node == 0 && n_part)
-      runtimeWarning("Recalculating forces, so the LB coupling forces are not "
-                     "included in the particle force the first time step. This "
-                     "only matters if it happens frequently during "
-                     "sampling.\n");
-#endif
-#ifdef LB_GPU
-    transfer_momentum_gpu = 0;
-    if (lattice_switch & LATTICE_LB_GPU && this_node == 0 && n_part)
+#if defined(LB) || defined(LB_GPU)
+    lb_lbcoupling_deactivate();
+    if (lattice_switch != LATTICE_OFF && this_node == 0 && n_part)
       runtimeWarning("Recalculating forces, so the LB coupling forces are not "
                      "included in the particle force the first time step. This "
                      "only matters if it happens frequently during "
@@ -351,21 +341,13 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
-
     /* Integration Step: Step 3 of Velocity Verlet scheme:
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
        v(t+0.5*dt) ) */
 
-#ifdef LB
-    transfer_momentum = (n_part > 0);
-#endif
-#ifdef LB_GPU
-    transfer_momentum_gpu = (n_part > 0);
+#if defined(LB) || defined(LB_GPU)
+    if (n_part > 0)
+      lb_lbcoupling_activate();
 #endif
 
     // Communication step: distribute ghost positions
@@ -407,39 +389,15 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-#ifdef LB
-      if (lattice_switch & LATTICE_LB)
-        lattice_boltzmann_update();
-
-      if (check_runtime_errors())
-        break;
-#endif
-
-#ifdef LB_GPU
-      if (this_node == 0) {
-#ifdef ELECTROKINETICS
-        if (ek_initialized) {
-          ek_integrate();
-        } else {
-#endif
-          if (lattice_switch & LATTICE_LB_GPU)
-            lattice_boltzmann_update_gpu();
-#ifdef ELECTROKINETICS
-        }
-#endif
-      }
-#endif // LB_GPU
+#if defined(LB) || defined(LB_GPU)
+      lb_lbfluid_propagate();
+      lb_lbcoupling_propagate();
+#endif // LB || LB_GPU
 
 #ifdef VIRTUAL_SITES
       virtual_sites()->after_lb_propagation();
 #endif
     }
-
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
 
 #ifdef NPT
     if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO))

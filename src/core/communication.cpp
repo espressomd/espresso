@@ -39,7 +39,6 @@
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/mmm2d.hpp"
@@ -52,6 +51,9 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_interpolation.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "io/mpiio/mpiio.hpp"
@@ -65,7 +67,6 @@
 #include "rotation.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
-#include "statistics_fluid.hpp"
 #include "swimmer_reaction.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
@@ -74,7 +75,9 @@
 #include "serialization/Particle.hpp"
 #include "serialization/ParticleParametersSwimming.hpp"
 #include "utils.hpp"
+#include "utils/Counter.hpp"
 #include "utils/make_unique.hpp"
+#include "utils/u32_to_u64.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
@@ -153,7 +156,11 @@ int n_nodes = -1;
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
   CB(mpi_rotate_system_slave)                                                  \
-  CB(mpi_update_particle_slave)
+  CB(mpi_set_lb_fluid_counter)                                                 \
+  CB(mpi_update_particle_slave)                                                \
+  CB(mpi_bcast_lb_particle_coupling_slave)                                     \
+  CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
+  CB(mpi_set_interpolation_order_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -306,14 +313,9 @@ void mpi_bcast_event(int event) {
 
 void mpi_bcast_event_slave(int node, int event) {
   switch (event) {
-#ifdef ELECTROSTATICS
 #ifdef P3M
   case P3M_COUNT_CHARGES:
     p3m_count_charged_particles();
-    break;
-#endif
-  case MAGGS_COUNT_CHARGES:
-    maggs_count_charged_particles();
     break;
 #endif
   case CHECK_PARTICLES:
@@ -547,8 +549,6 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     lb_calc_fluid_momentum((double *)result);
     break;
   case 7:
-    mpi_call(mpi_gather_stats_slave, -1, 7);
-    lb_calc_fluid_temp((double *)result);
     break;
 #ifdef LB_BOUNDARIES
   case 8:
@@ -593,7 +593,6 @@ void mpi_gather_stats_slave(int, int job) {
     lb_calc_fluid_momentum(nullptr);
     break;
   case 7:
-    lb_calc_fluid_temp(nullptr);
     break;
 #ifdef LB_BOUNDARIES
   case 8:
@@ -681,9 +680,6 @@ void mpi_bcast_coulomb_params_slave(int, int) {
   case COULOMB_MMM2D:
     MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, comm_cart);
     break;
-  case COULOMB_MAGGS:
-    MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart);
-    break;
   case COULOMB_RF:
   case COULOMB_INTER_RF:
     MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0,
@@ -738,38 +734,6 @@ void mpi_bcast_coulomb_params_slave(int, int) {
 #endif
 
   on_coulomb_change();
-#endif
-}
-
-/****************** REQ_SET_PERM ************/
-
-void mpi_send_permittivity_slave(int node, int) {
-#ifdef ELECTROSTATICS
-  if (node == this_node) {
-    double data[3];
-    int indices[3];
-    MPI_Recv(data, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    MPI_Recv(indices, 3, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    for (int d = 0; d < 3; d++) {
-      maggs_set_permittivity(indices[0], indices[1], indices[2], d, data[d]);
-    }
-  }
-#endif
-}
-
-void mpi_send_permittivity(int node, int index, int *indices,
-                           double *permittivity) {
-#ifdef ELECTROSTATICS
-  if (node == this_node) {
-    for (int d = 0; d < 3; d++) {
-      maggs_set_permittivity(indices[0], indices[1], indices[2], d,
-                             permittivity[d]);
-    }
-  } else {
-    mpi_call(mpi_send_permittivity_slave, node, index);
-    MPI_Send(permittivity, 3, MPI_DOUBLE, node, SOME_TAG, comm_cart);
-    MPI_Send(indices, 3, MPI_INT, node, SOME_TAG, comm_cart);
-  }
 #endif
 }
 
@@ -919,8 +883,13 @@ void mpi_bcast_lb_params(int field, int value) {
 void mpi_bcast_lb_params_slave(int field, int) {
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
-  on_lb_params_change(field);
+  lb_lbfluid_on_lb_params_change(field);
 #endif
+}
+
+void mpi_bcast_lb_particle_coupling() {
+  mpi_call(mpi_bcast_lb_particle_coupling_slave, 0, 0);
+  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/
@@ -962,9 +931,8 @@ void mpi_send_exclusion_slave(int part1, int part2) {
 }
 
 /************** REQ_SET_FLUID **************/
-void mpi_send_fluid(int node, int index, double rho,
-                    const std::array<double, 3> &j,
-                    const std::array<double, 6> &pi) {
+void mpi_send_fluid(int node, int index, double rho, Vector3d const &j,
+                    Vector6d const &pi) {
 #ifdef LB
   if (node == this_node) {
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
@@ -982,9 +950,8 @@ void mpi_send_fluid_slave(int node, int index) {
   if (node == this_node) {
     double data[10];
     MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    std::array<double, 3> j = {{data[1], data[2], data[3]}};
-    std::array<double, 6> pi = {
-        {data[4], data[5], data[6], data[7], data[8], data[9]}};
+    Vector3d j = {{data[1], data[2], data[3]}};
+    Vector6d pi = {{data[4], data[5], data[6], data[7], data[8], data[9]}};
     lb_calc_n_from_rho_j_pi(index, data[0], j, pi);
   }
 #endif
@@ -1095,45 +1062,65 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
     lb_get_populations(index, pop);
   } else {
     mpi_call(mpi_recv_fluid_populations_slave, node, index);
-    MPI_Recv(pop, 19 * LB_COMPONENTS, MPI_DOUBLE, node, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
+    MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 
 void mpi_recv_fluid_populations_slave(int node, int index) {
 #ifdef LB
   if (node == this_node) {
-    double data[19 * LB_COMPONENTS];
+    double data[19];
     lb_get_populations(index, data);
-    MPI_Send(data, 19 * LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+    MPI_Send(data, 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 
-void mpi_send_fluid_populations(int node, int index, double *pop) {
+Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos) {
+#ifdef LB
+  if (this_node == 0) {
+    comm_cart.send(node, SOME_TAG, pos);
+    mpi_call(mpi_recv_lb_interpolated_velocity_slave, node, 0);
+    Vector3d interpolated_u{};
+    comm_cart.recv(node, SOME_TAG, interpolated_u);
+    return interpolated_u;
+  }
+#endif
+  return {};
+}
+
+void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
+#ifdef LB
+  if (node == this_node) {
+    Vector3d pos{};
+    comm_cart.recv(0, SOME_TAG, pos);
+    auto const interpolated_u =
+        lb_lbinterpolation_get_interpolated_velocity(pos);
+    comm_cart.send(0, SOME_TAG, interpolated_u);
+  }
+#endif
+}
+
+void mpi_send_fluid_populations(int node, int index, const Vector19d &pop) {
 #ifdef LB
   if (node == this_node) {
     lb_set_populations(index, pop);
   } else {
     mpi_call(mpi_send_fluid_populations_slave, node, index);
-    MPI_Send(pop, 19 * LB_COMPONENTS, MPI_DOUBLE, node, SOME_TAG, comm_cart);
+    MPI_Send(pop.data(), 19, MPI_DOUBLE, node, SOME_TAG, comm_cart);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 
 void mpi_send_fluid_populations_slave(int node, int index) {
 #ifdef LB
   if (node == this_node) {
-    double data[19 * LB_COMPONENTS];
-    MPI_Recv(data, 19 * LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    Vector19d populations;
+    MPI_Recv(populations.data(), 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
-    lb_set_populations(index, data);
+    lb_set_populations(index, populations);
   }
-  lbpar.resend_halo = 1;
 #endif
 }
 
