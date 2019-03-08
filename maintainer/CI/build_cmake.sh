@@ -16,7 +16,6 @@ abort()
 
 trap 'abort' 0
 set -e
-set -x
 
 # HELPER FUNCTIONS
 
