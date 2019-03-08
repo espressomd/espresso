@@ -782,19 +782,15 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
       cpfile.precision(16);
       cpfile << std::fixed;
     }
+
     double pop[19];
     Vector3i ind;
-
-    Vector3i gridsize;
-
-    gridsize[0] = box_l[0] / lbpar.agrid;
-    gridsize[1] = box_l[1] / lbpar.agrid;
-    gridsize[2] = box_l[2] / lbpar.agrid;
+    auto const gridsize = lblattice.global_grid;
 
     if (!binary) {
       cpfile << gridsize[0] << " " << gridsize[1] << " " << gridsize[2] << "\n";
     } else {
-      cpfile.write(reinterpret_cast<char *>(&gridsize[0]),
+      cpfile.write(reinterpret_cast<const char *>(gridsize.data()),
                    3 * sizeof(gridsize[0]));
     }
 
@@ -939,16 +935,13 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
     if (!cpfile) {
       throw std::runtime_error(err_msg + "could not open file for reading.");
     }
+
     Vector19d pop;
     Vector3i ind;
-
-    Vector3i gridsize;
-    mpi_bcast_lb_params(0);
-    gridsize[0] = box_l[0] / lbpar.agrid;
-    gridsize[1] = box_l[1] / lbpar.agrid;
-    gridsize[2] = box_l[2] / lbpar.agrid;
-
+    auto const gridsize = lblattice.global_grid;
     int saved_gridsize[3];
+    mpi_bcast_lb_params(0);
+
     if (!binary) {
       res = fscanf(cpfile, "%i %i %i\n", &saved_gridsize[0], &saved_gridsize[1],
                    &saved_gridsize[2]);
