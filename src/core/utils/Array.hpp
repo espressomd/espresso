@@ -12,6 +12,24 @@
 
 namespace Utils {
 
+namespace detail {
+
+template<typename T, std::size_t N> struct Storage {
+  T m_data[N];
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int /* version */) {
+    ar &m_data;
+  }
+};
+
+template<typename T>
+struct Storage<T, 0> {};
+
+}
+
+
 template <typename T, std::size_t N> struct Array {
   using value_type = T;
   using size_type = std::size_t;
@@ -22,58 +40,80 @@ template <typename T, std::size_t N> struct Array {
   using const_iterator = const value_type *;
   using pointer = value_type *;
   using const_pointer = const value_type *;
-  value_type m_data[N ? N : 1];
+
+  detail::Storage<T, N> m_storage;
+
   DEVICE_QUALIFIER constexpr reference at(size_type i) {
     if (i >= N)
       throw std::out_of_range("Array access out of bounds.");
-    return m_data[i];
+    return m_storage.m_data[i];
   }
+
   DEVICE_QUALIFIER constexpr const_reference at(size_type i) const {
     if (i >= N)
       throw std::out_of_range("Array access out of bounds.");
-    return m_data[i];
+    return m_storage.m_data[i];
   }
+
   DEVICE_QUALIFIER constexpr reference operator[](size_type i) {
     assert(i < N);
-    return m_data[i];
+    return m_storage.m_data[i];
   }
+
   DEVICE_QUALIFIER constexpr const_reference operator[](size_type i) const {
     assert(i < N);
-    return m_data[i];
+    return m_storage.m_data[i];
   }
+
   DEVICE_QUALIFIER constexpr reference front() { return *begin(); }
+
   DEVICE_QUALIFIER constexpr const_reference front() const { return *cbegin(); }
+
   DEVICE_QUALIFIER constexpr reference back() {
-    return N ? *(end() - 1) : *end();
+    return *(end() - 1);
   }
+
   DEVICE_QUALIFIER constexpr const_reference back() const {
-    return N ? *(cend() - 1) : *cend();
+    return *(cend() - 1);
   }
-  DEVICE_QUALIFIER constexpr pointer data() noexcept { return &m_data[0]; }
+
+  DEVICE_QUALIFIER constexpr pointer data() noexcept { return &m_storage.m_data[0]; }
+
   DEVICE_QUALIFIER constexpr const_pointer data() const noexcept {
-    return &m_data[0];
+    return &m_storage.m_data[0];
   }
-  DEVICE_QUALIFIER constexpr iterator begin() noexcept { return &m_data[0]; };
+
+  DEVICE_QUALIFIER constexpr iterator begin() noexcept { return &m_storage.m_data[0]; };
+
   DEVICE_QUALIFIER constexpr const_iterator begin() const noexcept {
-    return &m_data[0];
+    return &m_storage.m_data[0];
   };
+
   DEVICE_QUALIFIER constexpr const_iterator cbegin() const noexcept {
-    return &m_data[0];
+    return &m_storage.m_data[0];
   };
-  DEVICE_QUALIFIER constexpr iterator end() noexcept { return &m_data[N]; };
+
+  DEVICE_QUALIFIER constexpr iterator end() noexcept { return &m_storage.m_data[N]; };
+
   DEVICE_QUALIFIER constexpr const_iterator end() const noexcept {
-    return &m_data[N];
+    return &m_storage.m_data[N];
   };
+
   DEVICE_QUALIFIER constexpr const_iterator cend() const noexcept {
-    return &m_data[N];
+    return &m_storage.m_data[N];
   };
+
   DEVICE_QUALIFIER constexpr bool empty() const noexcept { return size() == 0; }
+
   DEVICE_QUALIFIER constexpr size_type size() const noexcept { return N; }
+
   DEVICE_QUALIFIER constexpr size_type max_size() const noexcept { return N; }
+
   DEVICE_QUALIFIER void fill(const value_type &value) {
     for (size_type i = 0; i < size(); ++i)
-      m_data[i] = value;
+      m_storage.m_data[i] = value;
   }
+
   DEVICE_QUALIFIER static constexpr Array<T, N>
   broadcast(const value_type &value) {
     Array<T, N> ret{};
@@ -87,7 +127,7 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int /* version */) {
-    ar &m_data;
+    ar &m_storage;
   }
 };
 

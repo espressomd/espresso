@@ -101,6 +101,11 @@ BOOST_AUTO_TEST_CASE(serialization) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(zero_size) {
+  Array<int, 0> const a{};
+  BOOST_CHECK(a.size() == 0);
+}
+
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);
 
