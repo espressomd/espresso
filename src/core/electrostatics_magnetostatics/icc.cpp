@@ -44,9 +44,9 @@
 #include "communication.hpp"
 #include "config.hpp"
 #include "debug.hpp"
+#include "event.hpp"
 #include "forces.hpp"
 #include "global.hpp"
-#include "event.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 

@@ -28,6 +28,7 @@
 #include "config.hpp"
 
 #include "communication.hpp"
+#include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
@@ -36,7 +37,6 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
-#include "event.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
 #include <algorithm>

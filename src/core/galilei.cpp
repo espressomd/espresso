@@ -24,9 +24,9 @@
 
 #include "galilei.hpp"
 #include "cells.hpp"
+#include "event.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
-#include "event.hpp"
 #include "utils.hpp"
 
 galilei_struct gal;
