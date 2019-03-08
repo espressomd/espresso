@@ -109,7 +109,7 @@ void mpi_init();
 /* Call a slave function. */
 template <class... Args, class... ArgRef>
 void mpi_call(void (*fp)(Args...), ArgRef &&... args) {
-    Communication::mpiCallbacks().call(fp, std::forward<ArgRef>(args)...);
+  Communication::mpiCallbacks().call(fp, std::forward<ArgRef>(args)...);
 }
 
 /** Process requests from master node. Slave nodes main loop. */

@@ -104,9 +104,7 @@ vector<RuntimeError> mpi_gather_runtime_errors() {
   return runtimeErrorCollector->gather();
 }
 
-void mpi_gather_runtime_errors_slave() {
-  runtimeErrorCollector->gatherSlave();
-}
+void mpi_gather_runtime_errors_slave() { runtimeErrorCollector->gatherSlave(); }
 
 REGISTER_CALLBACK(mpi_gather_runtime_errors_slave)
 } // namespace ErrorHandling

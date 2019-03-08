@@ -34,7 +34,9 @@ public:
     cb.add(&mpi_callback);
   }
 
-  static void make(Communication::MpiCallbacks &cb) { cb.call(&mpi_callback, CallbackAction::CREATE); }
+  static void make(Communication::MpiCallbacks &cb) {
+    cb.call(&mpi_callback, CallbackAction::CREATE);
+  }
 
 private:
   /* Supported callback types. Currently we can only create new instances. */

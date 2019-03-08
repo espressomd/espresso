@@ -76,9 +76,7 @@ private:
 
   VariantMap unwrap_variant_map(VariantMap const &map);
 
-  void call(CallbackAction action) {
-    m_callback_id(action);
-  }
+  void call(CallbackAction action) { m_callback_id(action); }
 
   /**
    * @brief Remove instances that are not used by anybody but us.
@@ -86,7 +84,8 @@ private:
   void collect_garbage();
 
   /* Data members */
-  Communication::CallbackHandle<ParallelScriptInterfaceSlave::CallbackAction> m_callback_id;
+  Communication::CallbackHandle<ParallelScriptInterfaceSlave::CallbackAction>
+      m_callback_id;
   /* Payload object */
   std::shared_ptr<ScriptInterfaceBase> m_p;
   map_t obj_map;

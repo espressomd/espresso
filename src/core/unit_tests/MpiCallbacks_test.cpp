@@ -43,112 +43,113 @@ static bool called = false;
  * the callback with them.
  */
 BOOST_AUTO_TEST_CASE(callback_model_t) {
-    using namespace Communication;
-    boost::mpi::communicator world;
+  using namespace Communication;
+  boost::mpi::communicator world;
 
-    boost::mpi::packed_oarchive::buffer_type buff;
-    boost::mpi::packed_oarchive oa(world, buff);
-    oa << 537 << 3.4;
+  boost::mpi::packed_oarchive::buffer_type buff;
+  boost::mpi::packed_oarchive oa(world, buff);
+  oa << 537 << 3.4;
 
-    /* function pointer variant */
-    {
-        called = false;
-        void (*fp)(int, double) = [](int i, double d){
-            BOOST_CHECK_EQUAL(537, i);
-            BOOST_CHECK_EQUAL(3.4, d);
+  /* function pointer variant */
+  {
+    called = false;
+    void (*fp)(int, double) = [](int i, double d) {
+      BOOST_CHECK_EQUAL(537, i);
+      BOOST_CHECK_EQUAL(3.4, d);
 
-            called = true;
-        };
+      called = true;
+    };
 
-        auto cb = detail::make_model(fp);
+    auto cb = detail::make_model(fp);
 
-        boost::mpi::packed_iarchive ia(world, buff);
-        cb->operator()(ia);
+    boost::mpi::packed_iarchive ia(world, buff);
+    cb->operator()(ia);
 
-        BOOST_CHECK(called);
-    }
+    BOOST_CHECK(called);
+  }
 
-    /* Lambda */
-    {
-        called = false;
-        auto cb = detail::make_model([state=19](int i, double d){
-            BOOST_CHECK_EQUAL(19, state);
-            BOOST_CHECK_EQUAL(537, i);
-            BOOST_CHECK_EQUAL(3.4, d);
+  /* Lambda */
+  {
+    called = false;
+    auto cb = detail::make_model([state = 19](int i, double d) {
+      BOOST_CHECK_EQUAL(19, state);
+      BOOST_CHECK_EQUAL(537, i);
+      BOOST_CHECK_EQUAL(3.4, d);
 
-            called = true;
-        });
+      called = true;
+    });
 
-        boost::mpi::packed_iarchive ia(world, buff);
-        cb->operator()(ia);
+    boost::mpi::packed_iarchive ia(world, buff);
+    cb->operator()(ia);
 
-        BOOST_CHECK(called);
-    }
+    BOOST_CHECK(called);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(adding_function_ptr_cb) {
-    boost::mpi::communicator world;
-    Communication::MpiCallbacks cb(world);
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cb(world);
 
-    void (*fp)(int, const std::string &) = [](int i, const std::string &s){
-        BOOST_CHECK_EQUAL(537, i);
-        BOOST_CHECK_EQUAL("adding_function_ptr_cb", s);
+  void (*fp)(int, const std::string &) = [](int i, const std::string &s) {
+    BOOST_CHECK_EQUAL(537, i);
+    BOOST_CHECK_EQUAL("adding_function_ptr_cb", s);
 
-        called = true;
-    };
+    called = true;
+  };
 
-    cb.add(fp);
+  cb.add(fp);
 
-    called = false;
+  called = false;
 
-    if(0 == world.rank()) {
-        cb.call(fp, 537, std::string("adding_function_ptr_cb"));
-    } else {
-        cb.loop();
-        BOOST_CHECK(called);
-    }
+  if (0 == world.rank()) {
+    cb.call(fp, 537, std::string("adding_function_ptr_cb"));
+  } else {
+    cb.loop();
+    BOOST_CHECK(called);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(RegisterCallback) {
-    void (*fp)(int, const std::string &) = [](int i, const std::string &s){
-        BOOST_CHECK_EQUAL(537, i);
-        BOOST_CHECK_EQUAL("2nd", s);
+  void (*fp)(int, const std::string &) = [](int i, const std::string &s) {
+    BOOST_CHECK_EQUAL(537, i);
+    BOOST_CHECK_EQUAL("2nd", s);
 
-        called = true;
-    };
+    called = true;
+  };
 
-    Communication::RegisterCallback{fp};
+  Communication::RegisterCallback{fp};
 
-    boost::mpi::communicator world;
-    Communication::MpiCallbacks cb(world);
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cb(world);
 
-    called = false;
+  called = false;
 
-    if(0 == world.rank()) {
-        cb.call(fp, 537, std::string("2nd"));
-    } else {
-        cb.loop();
-        BOOST_CHECK(called);
-    }
+  if (0 == world.rank()) {
+    cb.call(fp, 537, std::string("2nd"));
+  } else {
+    cb.loop();
+    BOOST_CHECK(called);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(CallbackHandle) {
-    boost::mpi::communicator world;
-    Communication::MpiCallbacks cbs(world);
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
 
-    bool m_called = false;
-    Communication::CallbackHandle<std::string> cb(&cbs, [&m_called](std::string s){
-       BOOST_CHECK_EQUAL("CallbackHandle", s);
+  bool m_called = false;
+  Communication::CallbackHandle<std::string> cb(
+      &cbs, [&m_called](std::string s) {
+        BOOST_CHECK_EQUAL("CallbackHandle", s);
 
-       m_called = true;
-    });
+        m_called = true;
+      });
 
-    if(0 == world.rank()) {
-        cb(std::string("CallbackHandle"));
-    } else {
-        cbs.loop();
-        BOOST_CHECK(called);
-    }
+  if (0 == world.rank()) {
+    cb(std::string("CallbackHandle"));
+  } else {
+    cbs.loop();
+    BOOST_CHECK(called);
+  }
 }
 
 int main(int argc, char **argv) {

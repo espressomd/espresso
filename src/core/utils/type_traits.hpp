@@ -38,7 +38,7 @@ struct function_remove_const<R(Args...) const> {
   using type = R(Args...);
 };
 
-template<class T>
+template <class T>
 using function_remove_const_t = typename function_remove_const<T>::type;
 
 /**

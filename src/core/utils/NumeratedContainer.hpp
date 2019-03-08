@@ -75,14 +75,14 @@ public:
    *
    * @param c The object to add.
    */
-   index_type add(const T& c) {
+  index_type add(const T &c) {
     const index_type ind = get_index();
     m_container.emplace(std::make_pair(ind, c));
     return ind;
   }
 
   /** @overload */
-  index_type add(T&& c) {
+  index_type add(T &&c) {
     const index_type ind = get_index();
     m_container.emplace(std::make_pair(ind, std::move(c)));
     return ind;

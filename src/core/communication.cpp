@@ -574,19 +574,19 @@ void mpi_gather_stats_slave(int, int job) {
 
 /*************** REQ_SET_TIME_STEP ************/
 void mpi_set_time_step_slave(double dt) {
-    time_step = dt;
-    time_step_squared = time_step * time_step;
-    time_step_squared_half = time_step_squared / 2.;
-    time_step_half = time_step / 2.;
+  time_step = dt;
+  time_step_squared = time_step * time_step;
+  time_step_squared_half = time_step_squared / 2.;
+  time_step_half = time_step / 2.;
 
-    on_parameter_change(FIELD_TIMESTEP);
+  on_parameter_change(FIELD_TIMESTEP);
 }
 
 REGISTER_CALLBACK(mpi_set_time_step_slave)
 
 void mpi_set_time_step(double time_s) {
-    mpiCallbacks().call(mpi_set_time_step_slave, time_s);
-    mpi_set_time_step_slave(time_s);
+  mpiCallbacks().call(mpi_set_time_step_slave, time_s);
+  mpi_set_time_step_slave(time_s);
 }
 
 int mpi_check_runtime_errors() {
@@ -868,8 +868,8 @@ void mpi_bcast_cuda_global_part_vars_slave(int, int) {
 /********************* REQ_SET_EXCL ********/
 #ifdef EXCLUSIONS
 void mpi_send_exclusion_slave(int part1, int part2, int _delete) {
-    local_change_exclusion(part1, part2, _delete);
-    on_particle_change();
+  local_change_exclusion(part1, part2, _delete);
+  on_particle_change();
 }
 
 REGISTER_CALLBACK(mpi_send_exclusion_slave)

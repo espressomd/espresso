@@ -26,8 +26,8 @@
 #include <boost/mpi/communicator.hpp>
 
 #include "utils/NumeratedContainer.hpp"
-#include "utils/tuple.hpp"
 #include "utils/as_const.hpp"
+#include "utils/tuple.hpp"
 
 #include <functional>
 #include <initializer_list>
@@ -38,36 +38,37 @@ namespace Communication {
 namespace detail {
 
 /**
-  * @brief Type-erased interface for callbacks.
-  *
-  * This encapsulates the signature of the callback
-  * and the parameter transfer, so that it can be
-  * called without any type information on the parameters.
-  */
+ * @brief Type-erased interface for callbacks.
+ *
+ * This encapsulates the signature of the callback
+ * and the parameter transfer, so that it can be
+ * called without any type information on the parameters.
+ */
 struct callback_concept_t {
   virtual void operator()(boost::mpi::packed_iarchive &) const = 0;
   virtual ~callback_concept_t() = default;
 };
 
 /**
-  * @brief Concrete implementation of @class callback_concept_t.
-  *
-  * This is an implementation of a callback for a specific callable
-  * F and a set of arguments to call it with.
-  */
-template <class F, class... Args> struct callback_model_t final : public callback_concept_t {
+ * @brief Concrete implementation of @class callback_concept_t.
+ *
+ * This is an implementation of a callback for a specific callable
+ * F and a set of arguments to call it with.
+ */
+template <class F, class... Args>
+struct callback_model_t final : public callback_concept_t {
   F m_f;
 
   template <class FRef>
   explicit callback_model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
 
-/**
-  * @brief Execute the callback.
-  *
-  * Receive parameters for this callback, and then call it.
-  *
-  * @param comm The communicator to receive the paramters on.
-  */
+  /**
+   * @brief Execute the callback.
+   *
+   * Receive parameters for this callback, and then call it.
+   *
+   * @param comm The communicator to receive the paramters on.
+   */
   void operator()(boost::mpi::packed_iarchive &ia) const override {
     /* This is the local receive buffer for the parameters. We have to strip
        away const so we can actually deserialize into it. */
@@ -82,20 +83,20 @@ template <class F, class... Args> struct callback_model_t final : public callbac
   }
 };
 
-    template<class F, class R, class... Args>
-    struct FunctorTypes {
-        using functor_type = F;
-        using return_type = R;
-        using argument_types = std::tuple<Args...>;
-    };
+template <class F, class R, class... Args> struct FunctorTypes {
+  using functor_type = F;
+  using return_type = R;
+  using argument_types = std::tuple<Args...>;
+};
 
-    template <class C, class R, class... Args>
-    auto functor_types_impl(R (C::*)(Args...) const) {
-        return FunctorTypes<C, R, Args...>{};
-    }
+template <class C, class R, class... Args>
+auto functor_types_impl(R (C::*)(Args...) const) {
+  return FunctorTypes<C, R, Args...>{};
+}
 
-    template<class F>
-    using functor_types = decltype(functor_types_impl(&std::remove_reference_t<F>::operator()));
+template <class F>
+using functor_types =
+    decltype(functor_types_impl(&std::remove_reference_t<F>::operator()));
 
 template <class CRef, class C, class R, class... Args>
 auto make_model_impl(CRef &&c, FunctorTypes<C, R, Args...>) {
@@ -103,23 +104,23 @@ auto make_model_impl(CRef &&c, FunctorTypes<C, R, Args...>) {
 }
 
 /**
-  * @brief Make a @class callback_model_t for a functor or lambda.
-  *
-  * The signature is deduced from F::operator() const, which has
-  * to exist and can not be overloaded.
-  */
+ * @brief Make a @class callback_model_t for a functor or lambda.
+ *
+ * The signature is deduced from F::operator() const, which has
+ * to exist and can not be overloaded.
+ */
 template <typename F> auto make_model(F &&f) {
   return make_model_impl(std::forward<F>(f), functor_types<F>{});
 }
 
 /**
-  * @brief Make a @class callback_model_t for a function pointer.
-  *
-  * This instantiates a implementation of a callback for a function
-  * pointer. The main task here is to transfer the signature from
-  * the pointer to the callback_model_t by template argument type
-  * deduction.
-  */
+ * @brief Make a @class callback_model_t for a function pointer.
+ *
+ * This instantiates a implementation of a callback for a function
+ * pointer. The main task here is to transfer the signature from
+ * the pointer to the callback_model_t by template argument type
+ * deduction.
+ */
 template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
   return std::make_unique<callback_model_t<void (*)(Args...), Args...>>(f_ptr);
 }
@@ -129,64 +130,59 @@ template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
  * @brief  The interface of the MPI callback mechanism.
  */
 class MpiCallbacks {
-    enum class Message {
-        ABORT,
-        BCAST,
-        NODE
-    };
+  enum class Message { ABORT, BCAST, NODE };
 
 public:
+  /**
+   * @brief RAII handle for a callback.
+   *
+   * This is what the client gets for registering a
+   * dynamic (= not function pointer) callback.
+   * It manages the lifetime of the callback handle is
+   * needed to call it. The handle has a type derived
+   * from the signature of the callback, which makes
+   * it possible to do static type checking on the
+   * arguments. */
+  template <class... Args> class CallbackHandle {
+  public:
+    template <typename F, class = std::enable_if_t<std::is_same<
+                              typename detail::functor_types<F>::argument_types,
+                              std::tuple<Args...>>::value>>
+    CallbackHandle(MpiCallbacks *cb, F &&f)
+        : m_id(cb->add(std::forward<F>(f))), m_cb(cb) {}
+
+    CallbackHandle(CallbackHandle const &) = delete;
+    CallbackHandle(CallbackHandle &&rhs) = default;
+    CallbackHandle &operator=(CallbackHandle const &) = delete;
+    CallbackHandle &operator=(CallbackHandle &&rhs) = default;
+
+  private:
+    int m_id;
+    MpiCallbacks *m_cb;
+
+  public:
     /**
-      * @brief RAII handle for a callback.
-      *
-      * This is what the client gets for registering a
-      * dynamic (= not function pointer) callback.
-      * It manages the lifetime of the callback handle is
-      * needed to call it. The handle has a type derived
-      * from the signature of the callback, which makes
-      * it possible to do static type checking on the
-      * arguments. */
-    template<class... Args>
-    class CallbackHandle {
-    public:
-        template<typename F,
-                class = std::enable_if_t<
-                        std::is_same<typename detail::functor_types<F>::argument_types,
-                                     std::tuple<Args...>>::value>>
-        CallbackHandle(MpiCallbacks *cb, F&& f) : m_id(cb->add(std::forward<F>(f))), m_cb(cb) {}
-
-        CallbackHandle(CallbackHandle const&) = delete;
-        CallbackHandle(CallbackHandle &&rhs) = default;
-        CallbackHandle& operator=(CallbackHandle const&) = delete;
-        CallbackHandle& operator=(CallbackHandle &&rhs) = default;
-
-    private:
-        int m_id;
-        MpiCallbacks *m_cb;
-
-    public:
-	/**
-	  * @brief Call the callback managed by this handle.
-	  *
-	  * The arguments are passed to the remote callees, it
-	  * must be possible to call the function with the provided
-	  * arguments, otherwise this will not compile.
-	  */
-        template<class... ArgRef>
-        auto operator()(ArgRef&&... args) const
+     * @brief Call the callback managed by this handle.
+     *
+     * The arguments are passed to the remote callees, it
+     * must be possible to call the function with the provided
+     * arguments, otherwise this will not compile.
+     */
+    template <class... ArgRef>
+    auto operator()(ArgRef &&... args) const
         /* Enable if a hypothetical function with signature void(Args..)
          * could be called with the provided arguments. */
-        -> std::enable_if_t<std::is_void<
-                decltype(std::declval<void(*)(Args...)>()(std::forward<ArgRef>(args)...))
-        >::value>
-        {
-          assert(m_cb), m_cb->call(m_id, std::forward<ArgRef>(args)...);
-        }
+        -> std::enable_if_t<
+            std::is_void<decltype(std::declval<void (*)(Args...)>()(
+                std::forward<ArgRef>(args)...))>::value> {
+      assert(m_cb), m_cb->call(m_id, std::forward<ArgRef>(args)...);
+    }
 
-        ~CallbackHandle() {
-          if(m_cb) m_cb->remove(m_id);
-        }
-    };
+    ~CallbackHandle() {
+      if (m_cb)
+        m_cb->remove(m_id);
+    }
+  };
 
   /* Avoid accidental copy, leads to mpi deadlock
      or split brain */
@@ -194,22 +190,24 @@ public:
   MpiCallbacks &operator=(MpiCallbacks const &) = delete;
 
 private:
-    friend class RegisterCallback;
-    static auto &static_callbacks() {
-        static std::vector<std::pair<void(*)(), std::unique_ptr<detail::callback_concept_t>>> m_callbacks;
+  friend class RegisterCallback;
+  static auto &static_callbacks() {
+    static std::vector<
+        std::pair<void (*)(), std::unique_ptr<detail::callback_concept_t>>>
+        m_callbacks;
 
-        return m_callbacks;
-    }
+    return m_callbacks;
+  }
 
 public:
   explicit MpiCallbacks(boost::mpi::communicator &comm,
                         bool abort_on_exit = true)
       : m_abort_on_exit(abort_on_exit), m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
-    m_callbacks.add(detail::make_model([](){}));
+    m_callbacks.add(detail::make_model([]() {}));
 
-    for(auto& kv: static_callbacks()) {
-        m_func_ptr_to_id[kv.first] = m_callbacks.add(std::move(kv.second));
+    for (auto &kv : static_callbacks()) {
+      m_func_ptr_to_id[kv.first] = m_callbacks.add(std::move(kv.second));
     }
   }
 
@@ -252,19 +250,17 @@ public:
   }
 
 private:
-    /**
-     * @brief Remove callback.
-     *
-     * Remove the callback id from the callback list.
-     * This is a collective call that must be run on all node.
-     *
-     * @param id Identifier of the callback to remove.
-     */
-    void remove(int id) {
-        m_callbacks.remove(id);
-    }
+  /**
+   * @brief Remove callback.
+   *
+   * Remove the callback id from the callback list.
+   * This is a collective call that must be run on all node.
+   *
+   * @param id Identifier of the callback to remove.
+   */
+  void remove(int id) { m_callbacks.remove(id); }
 
- private:
+private:
   /**
    * @brief call a callback.
    *
@@ -293,7 +289,8 @@ private:
     oa << id;
 
     /* Pack the arguments into a packed mpi buffer. */
-    Utils::for_each([&oa](auto &&e) { oa << e; }, std::forward_as_tuple(std::forward<Args>(args)...));
+    Utils::for_each([&oa](auto &&e) { oa << e; },
+                    std::forward_as_tuple(std::forward<Args>(args)...));
 
     boost::mpi::broadcast(m_comm, oa, 0);
   }
@@ -312,12 +309,10 @@ public:
    * @param args Arguments for the callback.
    */
   template <class... Args, class... ArgRef>
-     auto call(void (*fp)(Args...), ArgRef &&... args) const ->
-     /* Enable only if fp can be called with the provided arguments,
-      * e.g. if fp(args...) is well-formed. */
-     std::enable_if_t<
-             std::is_void<decltype(fp(args...)) >::value
-     > {
+  auto call(void (*fp)(Args...), ArgRef &&... args) const ->
+      /* Enable only if fp can be called with the provided arguments,
+       * e.g. if fp(args...) is well-formed. */
+      std::enable_if_t<std::is_void<decltype(fp(args...))>::value> {
     /** If the function pointer is invalid, map.at will throw
         an out_of_range exception. */
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
@@ -335,22 +330,22 @@ public:
    * so that the master can issue call().
    */
   void loop() const {
-      for (;;) {
-          /** Communicate callback id and parameters */
-          boost::mpi::packed_iarchive ia(m_comm);
-          boost::mpi::broadcast(m_comm, ia, 0);
+    for (;;) {
+      /** Communicate callback id and parameters */
+      boost::mpi::packed_iarchive ia(m_comm);
+      boost::mpi::broadcast(m_comm, ia, 0);
 
-          int request;
-          ia >> request;
+      int request;
+      ia >> request;
 
-          /** id == 0 is loop_abort. */
-          if (request == LOOP_ABORT) {
-              break;
-          } else {
-              /** Call the callback */
-              m_callbacks[request]->operator()(ia);
-          }
+      /** id == 0 is loop_abort. */
+      if (request == LOOP_ABORT) {
+        break;
+      } else {
+        /** Call the callback */
+        m_callbacks[request]->operator()(ia);
       }
+    }
   }
 
   /**
@@ -358,9 +353,7 @@ public:
    *
    * Make the slaves exit the MPI loop.
    */
-  void abort_loop() {
-      call(LOOP_ABORT);
-  }
+  void abort_loop() { call(LOOP_ABORT); }
 
   /**
    * @brief The boost mpi communicator used by this instance
@@ -387,7 +380,8 @@ private:
   /**
    * Internal storage for the callback functions.
    */
-  Utils::NumeratedContainer<std::unique_ptr<detail::callback_concept_t>> m_callbacks;
+  Utils::NumeratedContainer<std::unique_ptr<detail::callback_concept_t>>
+      m_callbacks;
 
   /**
    * Mapping of function pointers to ids, so static callbacks can be
@@ -396,7 +390,7 @@ private:
   std::unordered_map<void (*)(), int> m_func_ptr_to_id;
 };
 
-template<class... Args>
+template <class... Args>
 using CallbackHandle = MpiCallbacks::CallbackHandle<Args...>;
 
 /**
@@ -404,18 +398,17 @@ using CallbackHandle = MpiCallbacks::CallbackHandle<Args...>;
  *
  * Should not be used directly, but via @def REGISTER_CALLBACK.
  */
-    class RegisterCallback {
+class RegisterCallback {
 
-    public:
-        RegisterCallback() = delete;
+public:
+  RegisterCallback() = delete;
 
-        template<class... Args>
-        explicit RegisterCallback(void (*cb)(Args...)) {
-            auto &cbs = MpiCallbacks::static_callbacks();
+  template <class... Args> explicit RegisterCallback(void (*cb)(Args...)) {
+    auto &cbs = MpiCallbacks::static_callbacks();
 
-            cbs.emplace_back(reinterpret_cast<void(*)()>(cb), detail::make_model(cb));
-        }
-    };
+    cbs.emplace_back(reinterpret_cast<void (*)()>(cb), detail::make_model(cb));
+  }
+};
 } /* namespace Communication */
 
 /**
@@ -426,6 +419,9 @@ using CallbackHandle = MpiCallbacks::CallbackHandle<Args...>;
  *
  * @param cb A function
  */
-#define REGISTER_CALLBACK(cb) namespace Communication { static ::Communication::RegisterCallback register_##cb(&cb); }
+#define REGISTER_CALLBACK(cb)                                                  \
+  namespace Communication {                                                    \
+  static ::Communication::RegisterCallback register_##cb(&cb);                 \
+  }
 
 #endif

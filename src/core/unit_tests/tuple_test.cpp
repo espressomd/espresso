@@ -29,89 +29,84 @@
 #include "utils/tuple.hpp"
 
 BOOST_AUTO_TEST_CASE(for_each) {
-    using Utils::for_each;
+  using Utils::for_each;
 
-    /* l-value reference tuple */
-    {
-        auto a = std::array<int, 3>{2, 3, 5};
+  /* l-value reference tuple */
+  {
+    auto a = std::array<int, 3>{2, 3, 5};
 
-        for_each([i = 0, a](int &e) mutable {
-            a[i] = e;
-            e = i++;
-        }, a);
+    for_each(
+        [i = 0, a](int &e) mutable {
+          a[i] = e;
+          e = i++;
+        },
+        a);
 
-        BOOST_CHECK_EQUAL(a[0], 0);
-        BOOST_CHECK_EQUAL(a[1], 1);
-        BOOST_CHECK_EQUAL(a[2], 2);
-    }
+    BOOST_CHECK_EQUAL(a[0], 0);
+    BOOST_CHECK_EQUAL(a[1], 1);
+    BOOST_CHECK_EQUAL(a[2], 2);
+  }
 
-    /* r-value reference */
-    {
-        auto t = std::make_tuple(std::make_unique<int>(5));
+  /* r-value reference */
+  {
+    auto t = std::make_tuple(std::make_unique<int>(5));
 
-        for_each([](auto &e) {
-            BOOST_CHECK_EQUAL(*e, 5);
-        }, std::move(t));
-    }
+    for_each([](auto &e) { BOOST_CHECK_EQUAL(*e, 5); }, std::move(t));
+  }
 
-    /* move-only functor */
-    {
-        for_each([u = std::make_unique<int>()](auto &e) {
-            BOOST_CHECK_EQUAL(3, e);
-        }, std::make_pair(3, 3));
-    }
+  /* move-only functor */
+  {
+    for_each(
+        [u = std::make_unique<int>()](auto &e) { BOOST_CHECK_EQUAL(3, e); },
+        std::make_pair(3, 3));
+  }
 
-    /* empty */
-    {
-        for_each([](){ BOOST_CHECK(false); }, std::make_tuple());
-    }
+  /* empty */
+  {
+    for_each([]() { BOOST_CHECK(false); }, std::make_tuple());
+  }
 }
 
 BOOST_AUTO_TEST_CASE(apply) {
-    using Utils::apply;
+  using Utils::apply;
 
-    /* constexpr */
-    {
-        static_assert(
-                apply(std::plus<>(),
-                        std::array<int, 2>{3,8}) == 11, "");
-    }
+  /* constexpr */
+  { static_assert(apply(std::plus<>(), std::array<int, 2>{3, 8}) == 11, ""); }
 
-    /* l-value reference */
-    {
-        auto t = std::make_tuple(4, 0, 7);
+  /* l-value reference */
+  {
+    auto t = std::make_tuple(4, 0, 7);
 
-        apply([](int &a, int &b, int &c){
-            BOOST_CHECK_EQUAL(a, 4);
-            BOOST_CHECK_EQUAL(b, 0);
-            BOOST_CHECK_EQUAL(c, 7);
+    apply(
+        [](int &a, int &b, int &c) {
+          BOOST_CHECK_EQUAL(a, 4);
+          BOOST_CHECK_EQUAL(b, 0);
+          BOOST_CHECK_EQUAL(c, 7);
 
-            a = -1;
-            b = -2;
-            c = -3;
-        }, t);
+          a = -1;
+          b = -2;
+          c = -3;
+        },
+        t);
 
-        BOOST_CHECK_EQUAL(std::get<0>(t), -1);
-        BOOST_CHECK_EQUAL(std::get<1>(t), -2);
-        BOOST_CHECK_EQUAL(std::get<2>(t), -3);
-    }
+    BOOST_CHECK_EQUAL(std::get<0>(t), -1);
+    BOOST_CHECK_EQUAL(std::get<1>(t), -2);
+    BOOST_CHECK_EQUAL(std::get<2>(t), -3);
+  }
 
-    /* r-value reference */
-    {
-        apply([](auto &&a){
-            BOOST_CHECK_EQUAL(*a, 4);
-        }, std::make_tuple(std::make_unique<int>(4
+  /* r-value reference */
+  {
+    apply([](auto &&a) { BOOST_CHECK_EQUAL(*a, 4); },
+          std::make_tuple(std::make_unique<int>(4
 
-                )));
-    }
+                                                )));
+  }
 
-    /* empty */
-    {
-        bool called = false;
-        apply([&called]() {
-            called = true;
-        }, std::make_tuple());
+  /* empty */
+  {
+    bool called = false;
+    apply([&called]() { called = true; }, std::make_tuple());
 
-        BOOST_CHECK(called);
-    }
+    BOOST_CHECK(called);
+  }
 }

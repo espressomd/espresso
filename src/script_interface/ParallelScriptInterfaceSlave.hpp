@@ -55,7 +55,7 @@ private:
     }
   }
 
-  static void translate_id(VariantMap & map) {
+  static void translate_id(VariantMap &map) {
     for (auto &e : map) {
       translate_id(e.second);
     }
@@ -64,7 +64,7 @@ private:
   VariantMap bcast_variant_map() const;
 
 private:
-    Communication::CallbackHandle<CallbackAction>  m_callback_id;
+  Communication::CallbackHandle<CallbackAction> m_callback_id;
   void mpi_slave(CallbackAction action);
 };
 } /* namespace ScriptInterface */
