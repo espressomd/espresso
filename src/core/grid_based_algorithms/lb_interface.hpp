@@ -121,7 +121,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u);
 /**
  * @brief Set the LB fluid populations for a single node.
  */
-void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &pop);
+void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &pop);
 
 /**
  * @brief Get the LB time step.
@@ -177,8 +177,8 @@ double lb_lbnode_get_density(const Vector3i &ind);
  * @brief Get the LB fluid velocity for a single node.
  */
 const Vector3d lb_lbnode_get_velocity(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind);
+const Vector6d lb_lbnode_get_pi(const Vector3i &ind);
+const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind);
 
 /**
  * @brief Get the LB fluid boundary bool for a single node.
@@ -188,7 +188,7 @@ int lb_lbnode_get_boundary(const Vector3i &ind);
 /**
  * @brief Get the LB fluid populations for a single node.
  */
-const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind);
+const Vector19d lb_lbnode_get_pop(const Vector3i &ind);
 
 /* IO routines */
 void lb_lbfluid_print_vtk_boundary(const std::string &filename);

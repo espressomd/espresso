@@ -162,9 +162,9 @@ struct ParticleProperties {
     int to_particle_id = 0;
     double distance = 0;
     // Store relative position of the virtual site.
-    Vector<4, double> rel_orientation = {0., 0., 0., 0.};
+    Vector4d rel_orientation = {0., 0., 0., 0.};
     // Store the orientation of the virtual particle in the body fixed frame.
-    Vector<4, double> quat = {0., 0., 0., 0.};
+    Vector4d quat = {0., 0., 0., 0.};
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &to_particle_id;
@@ -228,7 +228,7 @@ struct ParticlePosition {
 
 #ifdef ROTATION
   /** quaternions to define particle orientation */
-  Vector<4, double> quat = {1., 0., 0., 0.};
+  Vector4d quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
   inline const Vector3d calc_director() const {
     return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),

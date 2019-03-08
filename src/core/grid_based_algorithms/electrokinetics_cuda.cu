@@ -75,13 +75,98 @@ void LBBoundaries::lb_init_boundaries();
 #define PI_FLOAT 3.14159265358979323846f
 
 EK_parameters ek_parameters = {
-    -1.0, -1.0,         -1.0, 0,    0,    0,    0,    0,
-    -1.0, -1.0,         0.0,  0.0,  0.0,  -1.0, -1.0, {0.0, 0.0, 0.0},
-    0,    {-1, -1, -1}, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
-    -1.0, -1.0,         -1.0, 0,    -1,   true, true,
+    // agrid
+    -1.0,
+    // time_step
+    -1.0,
+    // lb_density
+    -1.0,
+    // dim_x
+    0,
+    // dim_x_padded
+    0,
+    // dim_y
+    0,
+    // dim_z
+    0,
+    // number_of_nodes
+    0,
+    // viscosity
+    -1.0,
+    // bulk_viscosity
+    -1.0,
+    // gamma_odd
+    0.0,
+    // gamma_even
+    0.0,
+    // friction
+    0.0,
+    // T
+    -1.0,
+    // prefactor
+    -1.0,
+    // lb_force_density
+    {0.0, 0.0, 0.0},
+    // number_of_species
+    0,
+    // reaction_species
+    {-1, -1, -1},
+    // rho_reactant_reservoir
+    -1.0,
+    // rho_product0_reservoir
+    -1.0,
+    // rho_product1_reservoir
+    -1.0,
+    // reaction_ct_rate
+    -1.0,
+    // reaction_fraction_0
+    -1.0,
+    // reaction_fraction_1
+    -1.0,
+    // mass_reactant
+    -1.0,
+    // mass_product0
+    -1.0,
+    // mass_product1
+    -1.0,
+    // stencil
+    0,
+    // number_of_boundary_nodes
+    -1,
+    // advection
+    true,
+    // fluidcoupling_ideal_contribution
+    true,
 #ifdef EK_ELECTROSTATIC_COUPLING
-    false
+    // es_coupling
+    false,
+    // charge_potential_buffer
+    nullptr,
+    // electric_field
+    nullptr,
 #endif
+    // charge_potential
+    nullptr,
+    // j
+    nullptr,
+    // lb_force_density_previous
+    nullptr,
+    // rho
+    {nullptr},
+    // species_index
+    {-1},
+    // density
+    {0.0},
+    // D
+    {0.0},
+    // d
+    {0.0},
+    // valency
+    {0.0},
+    // ext_force_density
+    {0.0},
+    // node_is_catalyst
+    nullptr,
 };
 
 __device__ __constant__ EK_parameters ek_parameters_gpu[1];
