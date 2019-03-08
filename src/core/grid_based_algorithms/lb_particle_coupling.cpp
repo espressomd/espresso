@@ -189,6 +189,11 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
         throw std::runtime_error("The non-linear interpolation scheme is not "
                                  "implemented for the CPU LB.");
       case (InterpolationOrder::linear): {
+#ifdef ENGINE
+        ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                           GHOSTTRANS_SWIMMING);
+#endif
+
         using rng_type = r123::Philox4x64;
         using ctr_type = rng_type::ctr_type;
         using key_type = rng_type::key_type;
