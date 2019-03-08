@@ -146,12 +146,12 @@ void lb_lbfluid_set_density(double p_dens) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.rho = static_cast<float>(p_dens);
-    lb_lbfluid_on_lb_params_change(LBPAR_DENSITY);
+    lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
 #endif // LB_GPU
   } else {
 #ifdef LB
     lbpar.rho = p_dens;
-    mpi_bcast_lb_params(LBPAR_DENSITY);
+    mpi_bcast_lb_params(LBParam::DENSITY);
 #endif // LB
   }
 }
@@ -180,12 +180,12 @@ void lb_lbfluid_set_viscosity(double p_visc) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.viscosity = static_cast<float>(p_visc);
-    lb_lbfluid_on_lb_params_change(LBPAR_VISCOSITY);
+    lb_lbfluid_on_lb_params_change(LBParam::VISCOSITY);
 #endif // LB_GPU
   } else {
 #ifdef LB
     lbpar.viscosity = p_visc;
-    mpi_bcast_lb_params(LBPAR_VISCOSITY);
+    mpi_bcast_lb_params(LBParam::VISCOSITY);
 #endif // LB
   }
 }
@@ -215,13 +215,13 @@ void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc) {
 #ifdef LB_GPU
     lbpar_gpu.bulk_viscosity = static_cast<float>(p_bulk_visc);
     lbpar_gpu.is_TRT = false;
-    lb_lbfluid_on_lb_params_change(LBPAR_BULKVISC);
+    lb_lbfluid_on_lb_params_change(LBParam::BULKVISC);
 #endif // LB_GPU
   } else {
 #ifdef LB
     lbpar.bulk_viscosity = p_bulk_visc;
     lbpar.is_TRT = false;
-    mpi_bcast_lb_params(LBPAR_BULKVISC);
+    mpi_bcast_lb_params(LBParam::BULKVISC);
 #endif // LB
   }
 }
@@ -251,13 +251,13 @@ void lb_lbfluid_set_gamma_odd(double p_gamma_odd) {
 #ifdef LB_GPU
     lbpar_gpu.gamma_odd = static_cast<float>(p_gamma_odd);
     lbpar_gpu.is_TRT = false;
-    lb_lbfluid_on_lb_params_change(0);
+    lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
 #endif // LB_GPU
   } else {
 #ifdef LB
     lbpar.gamma_odd = p_gamma_odd;
     lbpar.is_TRT = false;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBParam::DENSITY);
 #endif // LB
   }
 }
@@ -287,13 +287,13 @@ void lb_lbfluid_set_gamma_even(double p_gamma_even) {
 #ifdef LB_GPU
     lbpar_gpu.gamma_even = static_cast<float>(p_gamma_even);
     lbpar_gpu.is_TRT = false;
-    lb_lbfluid_on_lb_params_change(0);
+    lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
 #endif // LB_GPU
   } else {
 #ifdef LB
     lbpar.gamma_even = p_gamma_even;
     lbpar.is_TRT = false;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBParam::DENSITY);
 #endif // LB
   }
 }
@@ -319,12 +319,12 @@ void lb_lbfluid_set_agrid(double agrid) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_set_agrid_gpu(agrid);
-    lb_lbfluid_on_lb_params_change(LBPAR_AGRID);
+    lb_lbfluid_on_lb_params_change(LBParam::AGRID);
 #endif // LB_GPU
   } else {
 #ifdef LB
     lbpar.agrid = agrid;
-    mpi_bcast_lb_params(LBPAR_AGRID);
+    mpi_bcast_lb_params(LBParam::AGRID);
 #endif // LB
   }
 }
@@ -362,7 +362,7 @@ void lb_lbfluid_set_ext_force_density(const Vector3d &force_density) {
   } else {
 #ifdef LB
     lbpar.ext_force_density = force_density;
-    mpi_bcast_lb_params(LBPAR_EXTFORCE);
+    mpi_bcast_lb_params(LBParam::EXTFORCE);
 #endif // LB
   }
 }
@@ -387,12 +387,12 @@ void lb_lbfluid_set_tau(double p_tau) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.tau = static_cast<float>(p_tau);
-    lb_lbfluid_on_lb_params_change(0);
+    lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
 #endif // LB_GPU
   } else {
 #ifdef LB
     lbpar.tau = p_tau;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBParam::DENSITY);
 #endif // LB
   }
 }
@@ -429,7 +429,7 @@ void lb_lbfluid_set_kT(double kT) {
   } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lbpar.kT = kT;
-    mpi_bcast_lb_params(LBPAR_KT);
+    mpi_bcast_lb_params(LBParam::KT);
 #endif
   }
 }
@@ -850,7 +850,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
     Vector3i ind;
 
     Vector3i gridsize;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBParam::DENSITY);
     gridsize[0] = box_l[0] / lbpar.agrid;
     gridsize[1] = box_l[1] / lbpar.agrid;
     gridsize[2] = box_l[2] / lbpar.agrid;
@@ -1193,8 +1193,8 @@ const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 
 int lb_lbfluid_get_lattice_switch() { return (int)lattice_switch; }
 
-void lb_lbfluid_on_lb_params_change(int field) {
-  if (field == LBPAR_AGRID) {
+void lb_lbfluid_on_lb_params_change(LBParam field) {
+  if (field == LBParam::AGRID) {
 #ifdef LB
     if (lattice_switch == ActiveLB::CPU)
       lb_init();
@@ -1207,7 +1207,7 @@ void lb_lbfluid_on_lb_params_change(int field) {
     LBBoundaries::lb_init_boundaries();
 #endif
   }
-  if (field == LBPAR_DENSITY) {
+  if (field == LBParam::DENSITY) {
     lb_lbfluid_reinit_fluid();
   }
   lb_lbfluid_reinit_parameters();

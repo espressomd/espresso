@@ -3,6 +3,7 @@
 
 #include "config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb_constants.hpp"
 #include "utils/Vector.hpp"
 
 #if defined(LB) || defined(LB_GPU)
@@ -205,7 +206,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
  */
 bool lb_lbnode_is_index_valid(const Vector3i &ind);
 
-void lb_lbfluid_on_lb_params_change(int field);
+void lb_lbfluid_on_lb_params_change(LBParam field);
 
 Vector3d lb_lbfluid_calc_fluid_momentum();
 #endif
