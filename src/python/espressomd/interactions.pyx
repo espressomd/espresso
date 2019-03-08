@@ -2867,153 +2867,143 @@ class Virtual(BondedInteraction):
     def _set_params_in_es_core(self):
         virtual_set_params(self._bond_id)
 
-IF BOND_ANGLE == 1:
-    class AngleHarmonic(BondedInteraction):
+
+class AngleHarmonic(BondedInteraction):
+
+    """
+    Bond angle dependent harmonic potential.
+
+    See :ref:`Bond-angle interactions`
+
+    """
+
+    def type_number(self):
+        return BONDED_IA_ANGLE_HARMONIC
+
+    def type_name(self):
+        """Name of interaction type.
 
         """
-        Bond angle dependent harmonic potential.
+        return "ANGLE_HARMONIC"
 
-        See :ref:`Bond-angle interactions`
-
-        """
-
-        def type_number(self):
-            return BONDED_IA_ANGLE_HARMONIC
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "ANGLE_HARMONIC"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "bend", "phi0"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "bend", "phi0"
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {"bend": 0, "phi0": 0}
-
-        def _get_params_from_es_core(self):
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.angle_harmonic.bend,
-                 "phi0": bonded_ia_params[self._bond_id].p.angle_harmonic.phi0}
-
-        def _set_params_in_es_core(self):
-            angle_harmonic_set_params(
-                self._bond_id, self._params["bend"], self._params["phi0"])
-ELSE:
-    class AngleHarmonic(BondedInteractionNotDefined):
-        name = "AngleHarmonic"
-
-IF BOND_ANGLE == 1:
-    class AngleCosine(BondedInteraction):
+    def valid_keys(self):
+        """All parameters that can be set.
 
         """
-        Bond angle dependent ine potential.
+        return "bend", "phi0"
 
-        See :ref:`Bond-angle interactions`
-
-        """
-
-        def type_number(self):
-            return BONDED_IA_ANGLE_COSINE
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "ANGLE_COSINE"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "bend", "phi0"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "bend", "phi0"
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {"bend": 0, "phi0": 0}
-
-        def _get_params_from_es_core(self):
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.angle_cosine.bend,
-                 "phi0": bonded_ia_params[self._bond_id].p.angle_cosine.phi0}
-
-        def _set_params_in_es_core(self):
-            angle_cosine_set_params(
-                self._bond_id, self._params["bend"], self._params["phi0"])
-ELSE:
-    class AngleCosine(BondedInteractionNotDefined):
-        name = "AngelCosine"
-
-IF BOND_ANGLE == 1:
-    class AngleCossquare(BondedInteraction):
+    def required_keys(self):
+        """Parameters that have to be set.
 
         """
-        Bond angle dependent cos^2 potential.
+        return "bend", "phi0"
 
-        See :ref:`Bond-angle interactions`
+    def set_default_params(self):
+        """Sets parameters that are not required to their default value.
 
         """
+        self._params = {"bend": 0, "phi0": 0}
 
-        def type_number(self):
-            return BONDED_IA_ANGLE_COSSQUARE
+    def _get_params_from_es_core(self):
+        return \
+            {"bend": bonded_ia_params[self._bond_id].p.angle_harmonic.bend,
+             "phi0": bonded_ia_params[self._bond_id].p.angle_harmonic.phi0}
 
-        def type_name(self):
-            """Name of interaction type.
+    def _set_params_in_es_core(self):
+        angle_harmonic_set_params(
+            self._bond_id, self._params["bend"], self._params["phi0"])
 
-            """
-            return "ANGLE_COSSQUARE"
 
-        def valid_keys(self):
-            """All parameters that can be set.
+class AngleCosine(BondedInteraction):
 
-            """
-            return "bend", "phi0"
+    """
+    Bond angle dependent ine potential.
 
-        def required_keys(self):
-            """Parameters that have to be set.
+    See :ref:`Bond-angle interactions`
 
-            """
-            return "bend", "phi0"
+    """
 
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
+    def type_number(self):
+        return BONDED_IA_ANGLE_COSINE
 
-            """
-            self._params = {"bend": 0, "phi0": 0}
+    def type_name(self):
+        """Name of interaction type.
 
-        def _get_params_from_es_core(self):
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.angle_cossquare.bend,
-                 "phi0": bonded_ia_params[self._bond_id].p.angle_cossquare.phi0}
+        """
+        return "ANGLE_COSINE"
 
-        def _set_params_in_es_core(self):
-            angle_cossquare_set_params(
-                self._bond_id, self._params["bend"], self._params["phi0"])
-ELSE:
-    class AngleCossquare(BondedInteractionNotDefined):
-        name = "AngleCossquare"
+    def valid_keys(self):
+        """All parameters that can be set.
 
+        """
+        return "bend", "phi0"
+
+    def required_keys(self):
+        """Parameters that have to be set.
+
+        """
+        return "bend", "phi0"
+
+    def set_default_params(self):
+        """Sets parameters that are not required to their default value.
+
+        """
+        self._params = {"bend": 0, "phi0": 0}
+
+    def _get_params_from_es_core(self):
+        return \
+            {"bend": bonded_ia_params[self._bond_id].p.angle_cosine.bend,
+             "phi0": bonded_ia_params[self._bond_id].p.angle_cosine.phi0}
+
+    def _set_params_in_es_core(self):
+        angle_cosine_set_params(
+            self._bond_id, self._params["bend"], self._params["phi0"])
+
+
+class AngleCossquare(BondedInteraction):
+
+    """
+    Bond angle dependent cos^2 potential.
+
+    See :ref:`Bond-angle interactions`
+
+    """
+
+    def type_number(self):
+        return BONDED_IA_ANGLE_COSSQUARE
+
+    def type_name(self):
+        """Name of interaction type.
+
+        """
+        return "ANGLE_COSSQUARE"
+
+    def valid_keys(self):
+        """All parameters that can be set.
+
+        """
+        return "bend", "phi0"
+
+    def required_keys(self):
+        """Parameters that have to be set.
+
+        """
+        return "bend", "phi0"
+
+    def set_default_params(self):
+        """Sets parameters that are not required to their default value.
+
+        """
+        self._params = {"bend": 0, "phi0": 0}
+
+    def _get_params_from_es_core(self):
+        return \
+            {"bend": bonded_ia_params[self._bond_id].p.angle_cossquare.bend,
+             "phi0": bonded_ia_params[self._bond_id].p.angle_cossquare.phi0}
+
+    def _set_params_in_es_core(self):
+        angle_cossquare_set_params(
+            self._bond_id, self._params["bend"], self._params["phi0"])
 # IBM triel
 IF IMMERSED_BOUNDARY:
     class IBM_Triel(BondedInteraction):

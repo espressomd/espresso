@@ -25,9 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Utils {
 template <typename T, size_t N, size_t M>
-Vector<N, Vector<M, T>> tensor_product(const Vector<N, T> &x,
-                                       const Vector<M, T> &y) {
-  Vector<N, Vector<M, T>> ret;
+Vector<Vector<T, M>, N> tensor_product(const Vector<T, N> &x,
+                                       const Vector<T, M> &y) {
+  Vector<Vector<T, M>, N> ret;
 
   std::transform(x.begin(), x.end(), ret.begin(),
                  [&y](const T &x_i) { return x_i * y; });
@@ -39,7 +39,7 @@ Vector<N, Vector<M, T>> tensor_product(const Vector<N, T> &x,
  * @brief Overload if left operand is scalar.
  */
 template <typename T, size_t N>
-Vector<N, T> tensor_product(const T &x, const Vector<N, T> &y) {
+Vector<T, N> tensor_product(const T &x, const Vector<T, N> &y) {
   return x * y;
 }
 } // namespace Utils

@@ -305,9 +305,8 @@ void mpi_bcast_cuda_global_part_vars();
  *  @param j      local fluid velocity
  *  @param pi     local fluid pressure
  */
-void mpi_send_fluid(int node, int index, double rho,
-                    const std::array<double, 3> &j,
-                    const std::array<double, 6> &pi);
+void mpi_send_fluid(int node, int index, double rho, const Vector3d &j,
+                    const Vector6d &pi);
 
 /** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
  *  @param node   processor to send to
@@ -348,8 +347,7 @@ void mpi_recv_fluid_populations(int node, int index, double *pop);
  *  @param index  index of the lattice site
  *  @param pop    local fluid population
  */
-void mpi_send_fluid_populations(int node, int index,
-                                const Vector<19, double> &pop);
+void mpi_send_fluid_populations(int node, int index, const Vector19d &pop);
 
 /** Part of MDLC */
 void mpi_bcast_max_mu();

@@ -159,7 +159,8 @@ int n_nodes = -1;
   CB(mpi_set_lb_fluid_counter)                                                 \
   CB(mpi_update_particle_slave)                                                \
   CB(mpi_bcast_lb_particle_coupling_slave)                                     \
-  CB(mpi_recv_lb_interpolated_velocity_slave)
+  CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
+  CB(mpi_set_interpolation_order_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -930,9 +931,8 @@ void mpi_send_exclusion_slave(int part1, int part2) {
 }
 
 /************** REQ_SET_FLUID **************/
-void mpi_send_fluid(int node, int index, double rho,
-                    const std::array<double, 3> &j,
-                    const std::array<double, 6> &pi) {
+void mpi_send_fluid(int node, int index, double rho, Vector3d const &j,
+                    Vector6d const &pi) {
 #ifdef LB
   if (node == this_node) {
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
@@ -950,9 +950,8 @@ void mpi_send_fluid_slave(int node, int index) {
   if (node == this_node) {
     double data[10];
     MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    std::array<double, 3> j = {{data[1], data[2], data[3]}};
-    std::array<double, 6> pi = {
-        {data[4], data[5], data[6], data[7], data[8], data[9]}};
+    Vector3d j = {{data[1], data[2], data[3]}};
+    Vector6d pi = {{data[4], data[5], data[6], data[7], data[8], data[9]}};
     lb_calc_n_from_rho_j_pi(index, data[0], j, pi);
   }
 #endif
@@ -1103,8 +1102,7 @@ void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
 #endif
 }
 
-void mpi_send_fluid_populations(int node, int index,
-                                const Vector<19, double> &pop) {
+void mpi_send_fluid_populations(int node, int index, const Vector19d &pop) {
 #ifdef LB
   if (node == this_node) {
     lb_set_populations(index, pop);
@@ -1118,7 +1116,7 @@ void mpi_send_fluid_populations(int node, int index,
 void mpi_send_fluid_populations_slave(int node, int index) {
 #ifdef LB
   if (node == this_node) {
-    Vector<19, double> populations;
+    Vector19d populations;
     MPI_Recv(populations.data(), 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
     lb_set_populations(index, populations);

@@ -146,6 +146,9 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_MIN_GLOBAL_CUT,
      {&min_global_cut, Datafield::Type::DOUBLE, 1,
       "min_global_cut"}}, /* 43 from interaction_data.cpp */
+    {FIELD_SWIMMING_PARTICLES_EXIST,
+     {&swimming_particles_exist, Datafield::Type::BOOL, 1,
+      "swimming_particles_exist"}}, /* from particle_data.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA_ROTATION,
      {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1,
