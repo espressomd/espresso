@@ -30,6 +30,13 @@ void lb_lbcoupling_activate() {
 }
 
 void lb_lbcoupling_deactivate() {
+  if (lattice_switch != LATTICE_OFF && this_node == 0 && n_part) {
+    runtimeWarning("Recalculating forces, so the LB coupling forces are not "
+                   "included in the particle force the first time step. This "
+                   "only matters if it happens frequently during "
+                   "sampling.\n");
+  }
+
   lb_particle_coupling.couple_to_md = false;
   mpi_bcast_lb_particle_coupling_slave(0, 0);
 }

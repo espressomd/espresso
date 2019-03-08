@@ -356,19 +356,7 @@ void on_lbboundary_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
   invalidate_obs();
 
-#ifdef LB_BOUNDARIES
-  if (lattice_switch & LATTICE_LB) {
-    LBBoundaries::lb_init_boundaries();
-  }
-#endif
-
-#ifdef LB_BOUNDARIES_GPU
-  if (this_node == 0) {
-    if (lattice_switch & LATTICE_LB_GPU) {
-      LBBoundaries::lb_init_boundaries();
-    }
-  }
-#endif
+  LBBoundaries::lb_init_boundaries();
 
   recalc_forces = 1;
 }
@@ -452,12 +440,10 @@ void on_boxl_change() {
 #endif
 
 #ifdef LB
-  if (lattice_switch & LATTICE_LB) {
     lb_lbfluid_init();
 #ifdef LB_BOUNDARIES
     LBBoundaries::lb_init_boundaries();
 #endif
-  }
 #endif
 }
 
@@ -509,9 +495,7 @@ void on_cell_structure_change() {
 #endif /* ifdef DIPOLES */
 
 #ifdef LB
-  if (lattice_switch & LATTICE_LB) {
-    lb_lbfluid_init();
-  }
+  lb_lbfluid_init();
 #endif
 }
 
