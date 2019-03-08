@@ -88,7 +88,7 @@ void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
 
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #if defined(LB_GPU) && defined(LB_BOUNDARIES_GPU)
     int number_of_boundnodes = 0;
     int *host_boundary_node_list = (int *)Utils::malloc(sizeof(int));
@@ -339,7 +339,7 @@ int lbboundary_get_force(void *lbb, double *f) {
 
   std::vector<double> forces(3 * lbboundaries.size());
 
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)
     lb_gpu_get_boundary_forces(forces.data());
 

@@ -36,6 +36,11 @@ cdef class HydrodynamicInteraction(Actor):
 
 IF LB_GPU or LB:
 
+    cdef enum ActiveLB:
+        ActiveLB_NONE = 0
+        ActiveLB_CPU = 1
+        ActiveLB_GPU = 2
+
     ##############################################
     #
     # extern functions and structs

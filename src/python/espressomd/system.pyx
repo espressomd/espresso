@@ -36,6 +36,7 @@ from .utils cimport numeric_limits
 if LB or LB_GPU:
     from .lb cimport lb_lbfluid_get_tau
     from .lb cimport lb_lbfluid_get_lattice_switch
+    from .lb cimport ActiveLB_NONE
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
@@ -273,7 +274,7 @@ cdef class System(object):
                 raise ValueError("Time Step must be positive")
             IF LB or LB_GPU:
                 cdef double tau
-                if lb_lbfluid_get_lattice_switch() != 0:
+                if lb_lbfluid_get_lattice_switch() != ActiveLB_NONE:
                     tau = lb_lbfluid_get_tau()
                     if (tau >= 0.0 and
                             tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):

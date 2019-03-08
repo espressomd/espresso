@@ -118,10 +118,10 @@ Interpolates LB velocity at the particle positions and propagates the particles
 
 void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Get velocities
-  if (lattice_switch & LATTICE_LB)
+  if (lattice_switch == ActiveLB::CPU)
     ParticleVelocitiesFromLB_CPU();
 #ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU)
+  if (lattice_switch == ActiveLB::GPU)
     ParticleVelocitiesFromLB_GPU(particles);
 #endif
 

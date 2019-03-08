@@ -29,7 +29,7 @@
 #include "debug.hpp"
 #include "grid.hpp"
 
-int lattice_switch = LATTICE_OFF;
+ActiveLB lattice_switch = ActiveLB::NONE;
 
 int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
   /* determine the number of local lattice nodes */

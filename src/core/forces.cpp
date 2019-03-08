@@ -154,7 +154,7 @@ void force_calc() {
 
 #if defined(LB_GPU) || defined(LB)
 #ifdef LB
-  if (lattice_switch & LATTICE_LB) {
+  if (lattice_switch == ActiveLB::CPU) {
 #ifdef ENGINE
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
                        GHOSTTRANS_SWIMMING);

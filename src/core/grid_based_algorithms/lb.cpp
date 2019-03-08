@@ -1263,7 +1263,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                           double *pi) {
 
-  if (!(lattice_switch & LATTICE_LB)) {
+  if (lattice_switch != ActiveLB::CPU) {
     runtimeErrorMsg() << "Error in lb_calc_local_fields in " << __FILE__
                       << __LINE__ << ": CPU LB not switched on.";
     *rho = 0;

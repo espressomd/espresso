@@ -13,11 +13,11 @@
 #if defined(LB) || defined(LB_GPU)
 
 void lb_lbfluid_update() {
-  if (lattice_switch & LATTICE_LB) {
+  if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lattice_boltzmann_update();
 #endif
-  } else if (lattice_switch & LATTICE_LB_GPU and this_node == 0) {
+  } else if (lattice_switch == ActiveLB::GPU and this_node == 0) {
 #ifdef LB_GPU
 #ifdef ELECTROKINETICS
     if (ek_initialized) {
@@ -34,11 +34,11 @@ void lb_lbfluid_update() {
 
 void lb_lbfluid_propagate() {
   lb_lbfluid_update();
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     rng_counter_fluid_gpu.increment();
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     rng_counter_fluid.increment();
 #endif
@@ -46,7 +46,7 @@ void lb_lbfluid_propagate() {
 }
 
 void lb_lbfluid_on_integration_start() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_GPU_sanity_checks();
     if (this_node == 0 && lb_reinit_particles_gpu()) {
@@ -54,7 +54,7 @@ void lb_lbfluid_on_integration_start() {
       lb_reinit_particles_gpu.validate();
     }
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lb_sanity_checks();
 
@@ -72,12 +72,12 @@ void lb_lbfluid_invalidate_particle_allocation() {
 
 /** (Re-)initialize the fluid. */
 void lb_lbfluid_reinit_parameters() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     if (this_node == 0)
       lb_reinit_parameters_gpu();
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lb_reinit_parameters();
 #endif
@@ -87,11 +87,11 @@ void lb_lbfluid_reinit_parameters() {
 /** (Re-)initialize the fluid according to the value of rho. */
 
 void lb_lbfluid_reinit_fluid() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_reinit_fluid_gpu();
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lb_reinit_fluid();
 #endif
@@ -104,11 +104,11 @@ void lb_lbfluid_reinit_fluid() {
  *  All derived parameters and the fluid are reset to their default values.
  */
 void lb_lbfluid_init() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_init_gpu();
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lb_init();
 #endif
@@ -116,11 +116,11 @@ void lb_lbfluid_init() {
 }
 
 uint64_t lb_lbfluid_get_rng_state() {
-  if (lattice_switch & LATTICE_LB) {
+  if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lb_fluid_get_rng_state();
 #endif
-  } else if (lattice_switch & LATTICE_LB_GPU) {
+  } else if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return lb_fluid_get_rng_state_gpu();
 #endif
@@ -129,11 +129,11 @@ uint64_t lb_lbfluid_get_rng_state() {
 }
 
 void lb_lbfluid_set_rng_state(uint64_t counter) {
-  if (lattice_switch & LATTICE_LB) {
+  if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lb_fluid_set_rng_state(counter);
 #endif
-  } else if (lattice_switch & LATTICE_LB_GPU) {
+  } else if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_fluid_set_rng_state_gpu(counter);
 #endif
@@ -143,7 +143,7 @@ void lb_lbfluid_set_rng_state(uint64_t counter) {
 void lb_lbfluid_set_density(double p_dens) {
   if (p_dens <= 0)
     throw std::invalid_argument("Density has to be > 0.");
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.rho = static_cast<float>(p_dens);
     lb_lbfluid_on_lb_params_change(LBPAR_DENSITY);
@@ -157,13 +157,13 @@ void lb_lbfluid_set_density(double p_dens) {
 }
 
 double lb_lbfluid_get_density() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return static_cast<double>(lbpar_gpu.rho);
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.rho;
 #else
@@ -177,7 +177,7 @@ double lb_lbfluid_get_density() {
 void lb_lbfluid_set_viscosity(double p_visc) {
   if (p_visc <= 0)
     throw std::invalid_argument("Viscosity has to be >0.");
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.viscosity = static_cast<float>(p_visc);
     lb_lbfluid_on_lb_params_change(LBPAR_VISCOSITY);
@@ -191,13 +191,13 @@ void lb_lbfluid_set_viscosity(double p_visc) {
 }
 
 double lb_lbfluid_get_viscosity() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return static_cast<double>(lbpar_gpu.viscosity);
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.viscosity;
 #else
@@ -211,7 +211,7 @@ double lb_lbfluid_get_viscosity() {
 void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc) {
   if (p_bulk_visc <= 0)
     throw std::invalid_argument("Bulk viscosity has to be >0.");
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.bulk_viscosity = static_cast<float>(p_bulk_visc);
     lbpar_gpu.is_TRT = false;
@@ -227,13 +227,13 @@ void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc) {
 }
 
 double lb_lbfluid_get_bulk_viscosity() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.bulk_viscosity;
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.bulk_viscosity;
 #else
@@ -247,7 +247,7 @@ double lb_lbfluid_get_bulk_viscosity() {
 void lb_lbfluid_set_gamma_odd(double p_gamma_odd) {
   if (fabs(p_gamma_odd) > 1)
     throw std::invalid_argument("Gamma odd has to be <= 1.");
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.gamma_odd = static_cast<float>(p_gamma_odd);
     lbpar_gpu.is_TRT = false;
@@ -263,13 +263,13 @@ void lb_lbfluid_set_gamma_odd(double p_gamma_odd) {
 }
 
 double lb_lbfluid_get_gamma_odd() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.gamma_odd;
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.gamma_odd;
 #else
@@ -283,7 +283,7 @@ double lb_lbfluid_get_gamma_odd() {
 void lb_lbfluid_set_gamma_even(double p_gamma_even) {
   if (fabs(p_gamma_even) > 1)
     throw std::invalid_argument("gamma_even has to be <= 1.");
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.gamma_even = static_cast<float>(p_gamma_even);
     lbpar_gpu.is_TRT = false;
@@ -299,11 +299,11 @@ void lb_lbfluid_set_gamma_even(double p_gamma_even) {
 }
 
 double lb_lbfluid_get_gamma_even() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.gamma_even;
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.gamma_even;
 #endif // LB
@@ -316,7 +316,7 @@ double lb_lbfluid_get_gamma_even() {
 void lb_lbfluid_set_agrid(double agrid) {
   if (agrid <= 0)
     throw std::invalid_argument("agrid has to be > 0.");
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_set_agrid_gpu(agrid);
     lb_lbfluid_on_lb_params_change(LBPAR_AGRID);
@@ -330,11 +330,11 @@ void lb_lbfluid_set_agrid(double agrid) {
 }
 
 double lb_lbfluid_get_agrid() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.agrid;
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.agrid;
 #endif // LB
@@ -345,7 +345,7 @@ double lb_lbfluid_get_agrid() {
 }
 
 void lb_lbfluid_set_ext_force_density(const Vector3d &force_density) {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.ext_force_density[0] = static_cast<float>(force_density[0]);
     lbpar_gpu.ext_force_density[1] = static_cast<float>(force_density[1]);
@@ -368,12 +368,12 @@ void lb_lbfluid_set_ext_force_density(const Vector3d &force_density) {
 }
 
 const Vector3d lb_lbfluid_get_ext_force_density() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return {{lbpar_gpu.ext_force_density[0], lbpar_gpu.ext_force_density[1],
              lbpar_gpu.ext_force_density[2]}};
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.ext_force_density;
 #endif // LB
@@ -384,7 +384,7 @@ const Vector3d lb_lbfluid_get_ext_force_density() {
 void lb_lbfluid_set_tau(double p_tau) {
   if (p_tau <= 0)
     throw std::invalid_argument("tau has to be positive.");
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.tau = static_cast<float>(p_tau);
     lb_lbfluid_on_lb_params_change(0);
@@ -398,13 +398,13 @@ void lb_lbfluid_set_tau(double p_tau) {
 }
 
 double lb_lbfluid_get_tau() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return lbpar_gpu.tau;
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.tau;
 #else
@@ -416,30 +416,17 @@ double lb_lbfluid_get_tau() {
 }
 
 void lb_lbfluid_set_lattice_switch(int local_lattice_switch) {
-  switch (local_lattice_switch) {
-  case 0:
-    lattice_switch = LATTICE_OFF;
-    mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
-    break;
-  case 1:
-    lattice_switch = LATTICE_LB;
-    mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
-    break;
-  case 2:
-    lattice_switch = LATTICE_LB_GPU;
-    mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
-    break;
-  default:
-    throw std::invalid_argument("Invalid lattice switch.");
-  }
+  assert(local_lattice_switch >= 0 && local_lattice_switch <= 2);
+  lattice_switch = (ActiveLB)local_lattice_switch;
+  mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
 }
 
 void lb_lbfluid_set_kT(double kT) {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.kT = kT;
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lbpar.kT = kT;
     mpi_bcast_lb_params(LBPAR_KT);
@@ -448,11 +435,11 @@ void lb_lbfluid_set_kT(double kT) {
 }
 
 double lb_lbfluid_get_kT() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return static_cast<double>(lbpar_gpu.kT);
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.kT;
 #endif
@@ -471,7 +458,7 @@ void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
     throw std::runtime_error("Could not open file for writing.");
   }
 
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     unsigned int *bound_array;
     bound_array = (unsigned int *)Utils::malloc(lbpar_gpu.number_of_nodes *
@@ -538,7 +525,7 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
        val1 != bb1.end() && val2 != bb2.end(); ++val1, ++val2) {
     if (*val1 == -1 || *val2 == -1) {
       bb_low = {0, 0, 0};
-      if (lattice_switch & LATTICE_LB_GPU) {
+      if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
         bb_high = {static_cast<int>(lbpar_gpu.dim_x) - 1,
                    static_cast<int>(lbpar_gpu.dim_y) - 1,
@@ -558,7 +545,7 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
   }
 
   Vector3i pos;
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
     host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
@@ -620,7 +607,7 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
     throw std::runtime_error("Could not open file for writing.");
   }
 
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     unsigned int *bound_array;
     bound_array = (unsigned int *)Utils::malloc(lbpar_gpu.number_of_nodes *
@@ -676,7 +663,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
 
   auto const lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
   auto const agrid = lb_lbfluid_get_agrid();
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
     host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
@@ -725,7 +712,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
 }
 
 void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float *host_checkpoint_vd =
         (float *)Utils::malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
@@ -763,7 +750,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
     free(host_checkpoint_boundary);
     free(host_checkpoint_force);
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     std::fstream cpfile;
     if (binary) {
@@ -807,7 +794,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
 }
 
 void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     FILE *cpfile;
     cpfile = fopen(filename.c_str(), "r");
@@ -852,7 +839,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
                            host_checkpoint_force.data());
     fclose(cpfile);
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     FILE *cpfile;
     cpfile = fopen(filename.c_str(), "r");
@@ -903,13 +890,13 @@ bool lb_lbnode_is_index_valid(const Vector3i &ind) {
   auto within_bounds = [](const Vector3i &ind, const Vector3i &limits) {
     return ind < limits && ind >= Vector3i{};
   };
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return within_bounds(ind, {static_cast<int>(lbpar_gpu.dim_x),
                                static_cast<int>(lbpar_gpu.dim_y),
                                static_cast<int>(lbpar_gpu.dim_z)});
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return within_bounds(ind, lblattice.global_grid);
 #endif
@@ -918,7 +905,7 @@ bool lb_lbnode_is_index_valid(const Vector3i &ind) {
 }
 
 double lb_lbnode_get_density(const Vector3i &ind) {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
@@ -932,7 +919,7 @@ double lb_lbnode_get_density(const Vector3i &ind) {
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Lattice::index_t index;
     int node;
@@ -955,7 +942,7 @@ double lb_lbnode_get_density(const Vector3i &ind) {
 }
 
 const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
     if (host_print_values == nullptr)
@@ -968,7 +955,7 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
     return {{host_print_values->v[0], host_print_values->v[1],
              host_print_values->v[2]}};
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Lattice::index_t index;
     int node;
@@ -994,7 +981,7 @@ const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
   double p0 = 0;
   Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
 
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     p0 += lbpar_gpu.rho / lbpar_gpu.agrid / lbpar_gpu.tau / lbpar_gpu.tau / 3.;
 #endif // LB_GPU
@@ -1013,7 +1000,7 @@ const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
 
 const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
   Vector6d p_pi{};
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
     if (host_print_values == nullptr)
@@ -1027,7 +1014,7 @@ const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
       p_pi[i] = host_print_values->pi[i];
     }
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Lattice::index_t index;
     int node;
@@ -1049,7 +1036,7 @@ const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
 }
 
 int lb_lbnode_get_boundary(const Vector3i &ind) {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     unsigned int host_flag;
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
@@ -1059,7 +1046,7 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Lattice::index_t index;
     int node;
@@ -1080,7 +1067,7 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
 }
 
 const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float population[19];
 
@@ -1092,7 +1079,7 @@ const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Lattice::index_t index;
     int node;
@@ -1113,14 +1100,14 @@ const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
 }
 
 void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     auto const host_rho = static_cast<float>(p_rho);
     lb_set_node_rho_GPU(single_nodeindex, host_rho);
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Lattice::index_t index;
     int node;
@@ -1142,7 +1129,7 @@ void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
 }
 
 void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float host_velocity[3];
     host_velocity[0] = static_cast<float>(u[0]);
@@ -1175,7 +1162,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
 }
 
 void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &p_pop) {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float population[19];
 
@@ -1184,7 +1171,7 @@ void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &p_pop) {
 
     lb_lbfluid_set_population(ind, population);
 #endif // LB_GPU
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Lattice::index_t index;
     int node;
@@ -1204,16 +1191,16 @@ void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &p_pop) {
 const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 #endif
 
-int lb_lbfluid_get_lattice_switch() { return lattice_switch; }
+int lb_lbfluid_get_lattice_switch() { return (int)lattice_switch; }
 
 void lb_lbfluid_on_lb_params_change(int field) {
   if (field == LBPAR_AGRID) {
 #ifdef LB
-    if (lattice_switch & LATTICE_LB)
+    if (lattice_switch == ActiveLB::CPU)
       lb_init();
 #endif
 #ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU)
+    if (lattice_switch == ActiveLB::GPU)
       lb_init_gpu();
 #endif
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
@@ -1228,11 +1215,11 @@ void lb_lbfluid_on_lb_params_change(int field) {
 
 Vector3d lb_lbfluid_calc_fluid_momentum() {
   Vector3d fluid_momentum{};
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_calc_fluid_momentum_GPU(fluid_momentum.data());
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     mpi_gather_stats(6, fluid_momentum.data(), nullptr, nullptr, nullptr);
 #endif

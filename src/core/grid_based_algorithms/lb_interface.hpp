@@ -47,14 +47,12 @@ void lb_lbfluid_set_rng_state(uint64_t counter);
 const Lattice &lb_lbfluid_get_lattice();
 
 /**
- * @brief Get the global variable lattice_switch which defines wether NONE, CPU
- * or GPU LB is active.
+ * @brief Get the global variable @ref lattice_switch.
  */
 int lb_lbfluid_get_lattice_switch();
 
 /**
- * @brief Set the global variable lattice_switch which defines wether NONE, CPU
- * or GPU LB is active.
+ * @brief Set the global variable @ref lattice_switch.
  */
 void lb_lbfluid_set_lattice_switch(int local_lattice_switch);
 

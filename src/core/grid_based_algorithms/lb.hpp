@@ -267,7 +267,7 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index);
  */
 inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
   // unit conversion: mass density
-  if (!(lattice_switch & LATTICE_LB)) {
+  if (lattice_switch != ActiveLB::CPU) {
     runtimeErrorMsg() << "Error in lb_calc_local_rho in " << __FILE__
                       << __LINE__ << ": CPU LB not switched on.";
     *rho = 0;
@@ -291,7 +291,7 @@ inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
  *  @retval The local fluid momentum.
  */
 inline Vector3d lb_calc_local_j(Lattice::index_t index) {
-  if (!(lattice_switch & LATTICE_LB)) {
+  if (lattice_switch != ActiveLB::CPU) {
     runtimeErrorMsg() << "Error in lb_calc_local_j in " << __FILE__ << __LINE__
                       << ": CPU LB not switched on.";
     return {};
@@ -325,7 +325,7 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
                                               int *boundary) {
 
-  if (!(lattice_switch & LATTICE_LB)) {
+  if (lattice_switch != ActiveLB::CPU) {
     runtimeErrorMsg() << "Error in lb_local_fields_get_boundary_flag in "
                       << __FILE__ << __LINE__ << ": CPU LB not switched on.";
     *boundary = 0;

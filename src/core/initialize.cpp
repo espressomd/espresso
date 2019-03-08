@@ -357,14 +357,14 @@ void on_lbboundary_change() {
   invalidate_obs();
 
 #ifdef LB_BOUNDARIES
-  if (lattice_switch & LATTICE_LB) {
+  if (lattice_switch == ActiveLB::CPU) {
     LBBoundaries::lb_init_boundaries();
   }
 #endif
 
 #ifdef LB_BOUNDARIES_GPU
   if (this_node == 0) {
-    if (lattice_switch & LATTICE_LB_GPU) {
+    if (lattice_switch == ActiveLB::GPU) {
       LBBoundaries::lb_init_boundaries();
     }
   }
@@ -452,7 +452,7 @@ void on_boxl_change() {
 #endif
 
 #ifdef LB
-  if (lattice_switch & LATTICE_LB) {
+  if (lattice_switch == ActiveLB::CPU) {
     lb_lbfluid_init();
 #ifdef LB_BOUNDARIES
     LBBoundaries::lb_init_boundaries();
@@ -509,7 +509,7 @@ void on_cell_structure_change() {
 #endif /* ifdef DIPOLES */
 
 #ifdef LB
-  if (lattice_switch & LATTICE_LB) {
+  if (lattice_switch == ActiveLB::CPU) {
     lb_lbfluid_init();
   }
 #endif
@@ -626,7 +626,7 @@ void on_ghost_flags_change() {
 
 /* DPD and LB need also ghost velocities */
 #ifdef LB
-  if (lattice_switch & LATTICE_LB)
+  if (lattice_switch == ActiveLB::CPU)
     ghosts_have_v = 1;
 #endif
 #ifdef BOND_CONSTRAINT
