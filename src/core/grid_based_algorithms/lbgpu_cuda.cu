@@ -82,13 +82,13 @@ static LB_nodes_gpu nodes_b = {nullptr, nullptr};
 
 /** struct for node force density */
 LB_node_force_density_gpu node_f = {
-  // force_density
-  nullptr,
-  // scforce_density
-  nullptr,
+    // force_density
+    nullptr,
+    // scforce_density
+    nullptr,
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
-  // force_density_buf
-  nullptr
+    // force_density_buf
+    nullptr
 #endif
 };
 
