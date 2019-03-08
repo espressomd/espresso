@@ -440,9 +440,9 @@ void on_boxl_change() {
 #endif
 
 #ifdef LB
-    lb_lbfluid_init();
+  lb_lbfluid_init();
 #ifdef LB_BOUNDARIES
-    LBBoundaries::lb_init_boundaries();
+  LBBoundaries::lb_init_boundaries();
 #endif
 #endif
 }

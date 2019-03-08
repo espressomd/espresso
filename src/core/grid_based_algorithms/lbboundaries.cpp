@@ -90,7 +90,7 @@ void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
 void lb_init_boundaries() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_GPU) && defined(LB_BOUNDARIES_GPU)
-    if(this_node != 0) {
+    if (this_node != 0) {
       return;
     }
 
