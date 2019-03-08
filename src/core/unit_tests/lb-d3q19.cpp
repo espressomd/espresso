@@ -16,4 +16,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "config.hpp"
+#define BOOST_TEST_MODULE d3q19 test
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
+
+#include "grid_based_algorithms/lb-d3q19.hpp"
+
+BOOST_AUTO_TEST_CASE(d3q19) {
+  for (int i = 0; i < 19; ++i) {
+    for (int j = 0; j < 19; ++j) {
+      BOOST_CHECK(D3Q19::e_ki[i][j] == D3Q19::e_ki_transposed[j][i]);
+    }
+  }
+}

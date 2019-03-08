@@ -594,7 +594,6 @@ inline void add_bonded_force(Particle *p1) {
     }   // 1 partner
     else if (n_partners == 2) {
       switch (type) {
-#ifdef BOND_ANGLE
       case BONDED_IA_ANGLE_HARMONIC:
         bond_broken =
             calc_angle_harmonic_force(p1, p2, p3, iaparams, force, force2);
@@ -607,7 +606,6 @@ inline void add_bonded_force(Particle *p1) {
         bond_broken =
             calc_angle_cossquare_force(p1, p2, p3, iaparams, force, force2);
         break;
-#endif
 #ifdef OIF_GLOBAL_FORCES
       case BONDED_IA_OIF_GLOBAL_FORCES:
         bond_broken = 0;
