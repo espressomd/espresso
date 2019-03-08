@@ -50,6 +50,7 @@
 #include "utils/uniform.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
+#define R123_USE_MULHILO64_C99 1
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
 
