@@ -27,8 +27,6 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
-#include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "errorhandling.hpp"
@@ -52,12 +50,6 @@
 #ifdef DIPOLAR_BARNES_HUT
 #include "actor/DipolarBarnesHut.hpp"
 #endif
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/reaction_field.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "layered.hpp"
 #include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"

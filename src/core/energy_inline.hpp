@@ -38,7 +38,6 @@
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/subt_lj.hpp"
 #include "bonded_interactions/umbrella.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -62,13 +61,6 @@
 #ifdef P3M
 #include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
 #endif
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/reaction_field.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
 

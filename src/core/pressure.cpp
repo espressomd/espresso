@@ -23,8 +23,6 @@
  */
 
 #include "cells.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"

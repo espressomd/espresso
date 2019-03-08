@@ -38,13 +38,12 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-#include "dipole.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 #if defined(DIPOLES) && defined(DP3M)
 

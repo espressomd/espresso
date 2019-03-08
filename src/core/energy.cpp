@@ -27,7 +27,6 @@
 #include "cuda_interface.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy_inline.hpp"
 #include "forces.hpp"
 #include "initialize.hpp"
