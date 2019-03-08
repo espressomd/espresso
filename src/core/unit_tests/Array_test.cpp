@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(array_ctor) {
 }
 
 BOOST_AUTO_TEST_CASE(iterators) {
-  auto a = Array<int, 4>{{1, 2, 3, 4}};
+  auto a = Array<int, 4>{{{1, 2, 3, 4}}};
 
   BOOST_CHECK(*(a.begin()) == 1);
   BOOST_CHECK(*(a.cbegin()) == 1);
@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(iterators) {
 }
 
 BOOST_AUTO_TEST_CASE(element_access) {
-  auto a = Array<int, 5>{{5, 6, 7, 8, 9}};
+  auto a = Array<int, 5>{{{5, 6, 7, 8, 9}}};
 
   int c = 5;
   for (Array<int, 5>::size_type i = 0; i < a.size(); ++i) {
