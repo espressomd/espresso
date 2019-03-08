@@ -131,7 +131,6 @@ void calculate_vs_relate_to_params(const Particle &p_current,
 // both particles to be accessible through local_particles and only executes the
 // changes on the virtual site locally
 int local_vs_relate_to(Particle *p_current, const Particle *p_relate_to) {
-  Vector<4, double> quat;
   Vector4d quat;
 
   double l;
