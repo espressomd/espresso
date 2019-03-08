@@ -14,8 +14,9 @@ namespace Utils {
 
 namespace detail {
 
-template<typename T, std::size_t N> struct Storage {
+template <typename T, std::size_t N> struct Storage {
   T m_data[N];
+
 private:
   friend boost::serialization::access;
   template <typename Archive>
@@ -24,11 +25,9 @@ private:
   }
 };
 
-template<typename T>
-struct Storage<T, 0> {};
+template <typename T> struct Storage<T, 0> {};
 
-}
-
+} // namespace detail
 
 template <typename T, std::size_t N> struct Array {
   using value_type = T;
@@ -69,21 +68,23 @@ template <typename T, std::size_t N> struct Array {
 
   DEVICE_QUALIFIER constexpr const_reference front() const { return *cbegin(); }
 
-  DEVICE_QUALIFIER constexpr reference back() {
-    return *(end() - 1);
-  }
+  DEVICE_QUALIFIER constexpr reference back() { return *(end() - 1); }
 
   DEVICE_QUALIFIER constexpr const_reference back() const {
     return *(cend() - 1);
   }
 
-  DEVICE_QUALIFIER constexpr pointer data() noexcept { return &m_storage.m_data[0]; }
+  DEVICE_QUALIFIER constexpr pointer data() noexcept {
+    return &m_storage.m_data[0];
+  }
 
   DEVICE_QUALIFIER constexpr const_pointer data() const noexcept {
     return &m_storage.m_data[0];
   }
 
-  DEVICE_QUALIFIER constexpr iterator begin() noexcept { return &m_storage.m_data[0]; };
+  DEVICE_QUALIFIER constexpr iterator begin() noexcept {
+    return &m_storage.m_data[0];
+  };
 
   DEVICE_QUALIFIER constexpr const_iterator begin() const noexcept {
     return &m_storage.m_data[0];
@@ -93,7 +94,9 @@ template <typename T, std::size_t N> struct Array {
     return &m_storage.m_data[0];
   };
 
-  DEVICE_QUALIFIER constexpr iterator end() noexcept { return &m_storage.m_data[N]; };
+  DEVICE_QUALIFIER constexpr iterator end() noexcept {
+    return &m_storage.m_data[N];
+  };
 
   DEVICE_QUALIFIER constexpr const_iterator end() const noexcept {
     return &m_storage.m_data[N];
