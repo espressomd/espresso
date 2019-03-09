@@ -132,9 +132,6 @@ int n_nodes = -1;
   CB(mpi_recv_fluid_slave)                                                     \
   CB(mpi_iccp3m_iteration_slave)                                               \
   CB(mpi_bcast_max_mu_slave)                                                   \
-  CB(mpi_recv_fluid_populations_slave)                                         \
-  CB(mpi_send_fluid_populations_slave)                                         \
-  CB(mpi_recv_fluid_boundary_flag_slave)                                       \
   CB(mpi_kill_particle_motion_slave)                                           \
   CB(mpi_kill_particle_forces_slave)                                           \
   CB(mpi_system_CMS_slave)                                                     \
@@ -941,9 +938,19 @@ void mpi_recv_fluid_slave(int node, int index) {
 #endif
 }
 
+#ifdef LB_BOUNDARIES
+void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
+  if (node == this_node) {
+    int data;
+    lb_local_fields_get_boundary_flag(index, &data);
+    MPI_Send(&data, 1, MPI_INT, 0, SOME_TAG, comm_cart);
+  }
+}
+
+REGISTER_CALLBACK(mpi_recv_fluid_boundary_flag_slave)
+
 /************** REQ_LB_GET_BOUNDARY_FLAG **************/
 void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
-#ifdef LB_BOUNDARIES
   if (node == this_node) {
     lb_local_fields_get_boundary_flag(index, boundary);
   } else {
@@ -952,18 +959,8 @@ void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
     MPI_Recv(&data, 1, MPI_INT, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     *boundary = data;
   }
-#endif
 }
-
-void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
-#ifdef LB_BOUNDARIES
-  if (node == this_node) {
-    int data;
-    lb_local_fields_get_boundary_flag(index, &data);
-    MPI_Send(&data, 1, MPI_INT, 0, SOME_TAG, comm_cart);
-  }
 #endif
-}
 
 /********************* REQ_ICCP3M_ITERATION ********/
 int mpi_iccp3m_iteration() {
@@ -1007,26 +1004,27 @@ int mpi_iccp3m_init() {
 #endif
 }
 
-void mpi_recv_fluid_populations(int node, int index, double *pop) {
 #ifdef LB
+void mpi_recv_fluid_populations_slave(int node, int index) {
+  if (node == this_node) {
+    double data[19];
+    lb_get_populations(index, data);
+    MPI_Send(data, 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+  }
+}
+
+REGISTER_CALLBACK(mpi_recv_fluid_populations_slave)
+
+void mpi_recv_fluid_populations(int node, int index, double *pop) {
   if (node == this_node) {
     lb_get_populations(index, pop);
   } else {
     mpi_call(mpi_recv_fluid_populations_slave, node, index);
     MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
-#endif
 }
 
-void mpi_recv_fluid_populations_slave(int node, int index) {
-#ifdef LB
-  if (node == this_node) {
-    double data[19];
-    lb_get_populations(index, data);
-    MPI_Send(data, 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
-  }
 #endif
-}
 
 Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos) {
 #ifdef LB
@@ -1053,27 +1051,27 @@ void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
 #endif
 }
 
-void mpi_send_fluid_populations(int node, int index, const Vector19d &pop) {
 #ifdef LB
-  if (node == this_node) {
-    lb_set_populations(index, pop);
-  } else {
-    mpi_call(mpi_send_fluid_populations_slave, node, index);
-    MPI_Send(pop.data(), 19, MPI_DOUBLE, node, SOME_TAG, comm_cart);
-  }
-#endif
-}
-
 void mpi_send_fluid_populations_slave(int node, int index) {
-#ifdef LB
   if (node == this_node) {
     Vector19d populations;
     MPI_Recv(populations.data(), 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
     lb_set_populations(index, populations);
   }
-#endif
 }
+
+REGISTER_CALLBACK(mpi_send_fluid_populations_slave)
+
+void mpi_send_fluid_populations(int node, int index, const Vector19d &pop) {
+  if (node == this_node) {
+    lb_set_populations(index, pop);
+  } else {
+    mpi_call(mpi_send_fluid_populations_slave, node, index);
+    MPI_Send(pop.data(), 19, MPI_DOUBLE, node, SOME_TAG, comm_cart);
+  }
+}
+#endif
 
 /****************************************************/
 
