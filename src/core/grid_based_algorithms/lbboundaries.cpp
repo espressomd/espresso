@@ -268,7 +268,7 @@ void lb_init_boundaries() {
 #endif
 
 #endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
-  } else if (lattice_switch & LATTICE_LB)  {
+  } else if (lattice_switch & LATTICE_LB) {
 #if defined(LB) && defined(LB_BOUNDARIES)
     int node_domain_position[3], offset[3];
     int the_boundary = -1;
