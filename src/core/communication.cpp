@@ -984,6 +984,7 @@ void mpi_iccp3m_iteration_slave(int, int) {
 }
 
 /********************* REQ_ICCP3M_INIT********/
+#ifdef ELECTROSTATICS
 void mpi_iccp3m_init_slave(const iccp3m_struct &iccp3m_cfg_) {
 #ifdef ELECTROSTATICS
   iccp3m_cfg = iccp3m_cfg_;
@@ -1003,6 +1004,7 @@ int mpi_iccp3m_init() {
   return 0;
 #endif
 }
+#endif
 
 #ifdef LB
 void mpi_recv_fluid_populations_slave(int node, int index) {
