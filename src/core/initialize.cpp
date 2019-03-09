@@ -352,13 +352,16 @@ void on_constraint_change() {
   recalc_forces = 1;
 }
 
+
 void on_lbboundary_change() {
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
   EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
   invalidate_obs();
 
   LBBoundaries::lb_init_boundaries();
 
   recalc_forces = 1;
+#endif
 }
 
 void on_resort_particles() {
