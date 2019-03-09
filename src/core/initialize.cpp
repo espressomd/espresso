@@ -352,7 +352,6 @@ void on_constraint_change() {
   recalc_forces = 1;
 }
 
-
 void on_lbboundary_change() {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
   EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
