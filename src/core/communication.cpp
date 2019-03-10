@@ -260,9 +260,9 @@ void mpi_init() {
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-  MPI_Dims_create(n_nodes, 3, node_grid);
+  MPI_Dims_create(n_nodes, 3, node_grid.get_node_grid().data());
 
-  mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
+  mpi_reshape_communicator(node_grid.get_node_grid(),
                            /* periodicity */ {{1, 1, 1}});
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
@@ -279,8 +279,8 @@ void mpi_init() {
   on_program_start();
 }
 
-void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity) {
+void mpi_reshape_communicator(Vector3i const &node_grid,
+                              Vector3i const &periodicity) {
   MPI_Comm temp_comm;
   MPI_Cart_create(MPI_COMM_WORLD, 3, const_cast<int *>(node_grid.data()),
                   const_cast<int *>(periodicity.data()), 0, &temp_comm);

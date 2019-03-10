@@ -64,8 +64,15 @@
 /************************************************************/
 /*@{*/
 
-/** The number of nodes in each spatial dimension. */
-extern int node_grid[3];
+class NodeGrid {
+private:
+  Vector3i node_grid{};
+
+public:
+  Vector3i get_node_grid() const;
+  void set_node_grid(Vector3i const &grid);
+};
+extern NodeGrid node_grid;
 /** position of node in node grid */
 extern int node_pos[3];
 /** the six nearest neighbors of a node in the node grid. */

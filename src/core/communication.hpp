@@ -116,9 +116,8 @@ void mpi_loop();
  * @brief Replace the MPI communicator by a new one with the given periodicity
  * and node grid.
  */
-void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity = {
-                                  {1, 1, 1}});
+void mpi_reshape_communicator(Vector3i const &node_grid,
+                              Vector3i const &periodicity = {{1, 1, 1}});
 
 /** Issue REQ_EVENT: tells all clients of some system change.
  *  The events are:

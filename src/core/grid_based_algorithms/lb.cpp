@@ -299,7 +299,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[0] > 1) {
+  if (node_grid.get_node_grid()[0] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -340,7 +340,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[0] > 1) {
+  if (node_grid.get_node_grid()[0] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -389,7 +389,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  if (node_grid[1] > 1) {
+  if (node_grid.get_node_grid()[1] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -432,7 +432,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  if (node_grid[1] > 1) {
+  if (node_grid.get_node_grid()[1] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -481,7 +481,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[2] > 1) {
+  if (node_grid.get_node_grid()[2] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -522,7 +522,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[2] > 1) {
+  if (node_grid.get_node_grid()[2] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {

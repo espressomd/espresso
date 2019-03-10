@@ -53,7 +53,7 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
                         << " is incompatible with local_box_l[" << dir
                         << "]=" << local_box_l[dir] << " ( box_l[" << dir
                         << "]=" << box_l[dir] << " node_grid[" << dir
-                        << "]=" << node_grid[dir] << " )";
+                        << "]=" << node_grid.get_node_grid()[dir] << " )";
     }
   }
 
@@ -152,9 +152,12 @@ void Lattice::map_position_to_lattice_global(const Vector3d &pos, Vector3i &ind,
 int Lattice::map_lattice_to_node(Vector3i &ind) const {
   /* determine coordinates in node_grid */
   Vector3i grid;
-  grid[0] = (int)floor(ind[0] * this->agrid[0] * box_l_i[0] * node_grid[0]);
-  grid[1] = (int)floor(ind[1] * this->agrid[1] * box_l_i[1] * node_grid[1]);
-  grid[2] = (int)floor(ind[2] * this->agrid[2] * box_l_i[2] * node_grid[2]);
+  grid[0] = (int)floor(ind[0] * this->agrid[0] * box_l_i[0] *
+                       node_grid.get_node_grid()[0]);
+  grid[1] = (int)floor(ind[1] * this->agrid[1] * box_l_i[1] *
+                       node_grid.get_node_grid()[1]);
+  grid[2] = (int)floor(ind[2] * this->agrid[2] * box_l_i[2] *
+                       node_grid.get_node_grid()[2]);
 
   /* change from global to local lattice coordinates */
   ind[0] = ind[0] - grid[0] * this->grid[0] + this->halo_size;

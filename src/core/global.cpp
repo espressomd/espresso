@@ -100,8 +100,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_RIGIDBONDS,
      {&n_rigidbonds, Datafield::Type::INT, 1,
       "n_rigidbonds"}}, /* 19 from rattle.cpp */
-    {FIELD_NODEGRID,
-     {node_grid, Datafield::Type::INT, 3, "node_grid"}}, /* 20 from grid.cpp */
     {FIELD_NPTISO_G0,
      {&nptiso_gamma0, Datafield::Type::DOUBLE, 1,
       "nptiso_gamma0"}}, /* 21 from thermostat.cpp */

@@ -2223,7 +2223,8 @@ bool p3m_sanity_checks_system() {
     ret = true;
   }
 
-  if (node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+  if (node_grid.get_node_grid()[0] < node_grid.get_node_grid()[1] ||
+      node_grid.get_node_grid()[1] < node_grid.get_node_grid()[2]) {
     runtimeErrorMsg() << "P3M_init: node grid must be sorted, largest first";
     ret = true;
   }

@@ -292,7 +292,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
 #ifdef PARTIAL_PERIODIC
       if (!PERIODIC(dir) &&
           (boundary[2 * dir + lr] != 0 || boundary[2 * dir + 1 - lr] != 0)) {
-        if (node_grid[dir] == 1) {
+        if (node_grid.get_node_grid()[dir] == 1) {
           hinfo->type = HALO_OPEN;
         } else if (lr == 0) {
           if (boundary[2 * dir + lr] == 1) {
@@ -310,7 +310,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
       } else
 #endif
       {
-        if (node_grid[dir] == 1) {
+        if (node_grid.get_node_grid()[dir] == 1) {
           hc->halo_info[cnt].type = HALO_LOCL;
         } else {
           hc->halo_info[cnt].type = HALO_SENDRECV;

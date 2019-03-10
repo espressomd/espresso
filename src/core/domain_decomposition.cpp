@@ -282,7 +282,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
     for (lr = 0; lr < 2; lr++) {
       /* No communication for border of non periodic direction */
       if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
-        if (node_grid[dir] == 1)
+        if (node_grid.get_node_grid()[dir] == 1)
           num++;
         else
           num += 2;
@@ -313,7 +313,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
        communication, simply by taking the lr loop only over one
        value */
     for (lr = 0; lr < 2; lr++) {
-      if (node_grid[dir] == 1) {
+      if (node_grid.get_node_grid()[dir] == 1) {
         /* just copy cells on a single node */
         if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
           comm->comm[cnt].type = GHOST_LOCL;
@@ -465,7 +465,7 @@ void dd_update_communicators_w_boxl() {
   for (int dir = 0; dir < 3; dir++) {
     /* lr loop: left right */
     for (int lr = 0; lr < 2; lr++) {
-      if (node_grid[dir] == 1) {
+      if (node_grid.get_node_grid()[dir] == 1) {
         if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
           if (boundary[2 * dir + lr] != 0) {
@@ -509,7 +509,7 @@ void dd_init_cell_interactions() {
   int m, n, o, p, q, r, ind1, ind2;
 
   for (int i = 0; i < 3; i++) {
-    if (dd.fully_connected[i] == true and node_grid[i] != 1) {
+    if (dd.fully_connected[i] == true and node_grid.get_node_grid()[i] != 1) {
       runtimeErrorMsg()
           << "Node grid not compatible with fully_connected property";
     }
@@ -805,11 +805,11 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 void exchange_neighbors(ParticleList *pl) {
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
-    if (node_grid[dir] == 1) {
+    if (node_grid.get_node_grid()[dir] == 1) {
       continue;
       /* In this (common) case left and right neighbors are
          the same, and we need only one communication */
-    } else if (node_grid[dir] == 2) {
+    } else if (node_grid.get_node_grid()[dir] == 2) {
       ParticleList send_buf, recv_buf;
       move_left_or_right(*pl, send_buf, send_buf, dir);
 
@@ -848,10 +848,12 @@ void exchange_neighbors(ParticleList *pl) {
 
 void dd_exchange_and_sort_particles(int global, ParticleList *pl) {
   if (global) {
-    /* Worst case we need node_grid - 1 rounds per direction.
+    /* Worst case we need node_grid.get_node_grid() - 1 rounds per direction.
      * This correctly implies that if there is only one node,
      * no action should be taken. */
-    int rounds_left = node_grid[0] + node_grid[1] + node_grid[2] - 3;
+    int rounds_left = node_grid.get_node_grid()[0] +
+                      node_grid.get_node_grid()[1] +
+                      node_grid.get_node_grid()[2] - 3;
     for (; rounds_left > 0; rounds_left--) {
       exchange_neighbors(pl);
 
@@ -878,7 +880,7 @@ int calc_processor_min_num_cells() {
      only one processor for a direction, there have to be at least two cells for
      this direction. */
   for (i = 0; i < 3; i++)
-    if (node_grid[i] == 1)
+    if (node_grid.get_node_grid()[i] == 1)
       min *= 2;
   return min;
 }

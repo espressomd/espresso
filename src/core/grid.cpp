@@ -30,6 +30,7 @@
 #include "debug.hpp"
 #include "global.hpp"
 #include "utils.hpp"
+#include "utils/Vector.hpp"
 
 #include <boost/algorithm/clamp.hpp>
 #include <mpi.h>
@@ -48,8 +49,9 @@
 /**********************************************
  * variables
  **********************************************/
-
-int node_grid[3] = {0, 0, 0};
+NodeGrid node_grid;
+Vector3i NodeGrid::get_node_grid() const { return node_grid; }
+void NodeGrid::set_node_grid(Vector3i const &grid) { node_grid = grid; }
 int node_pos[3] = {-1, -1, -1};
 int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
 int boundary[6] = {0, 0, 0, 0, 0, 0};
@@ -77,7 +79,7 @@ int map_position_node_array(const Vector3d &pos) {
   Vector3i im;
   for (int i = 0; i < 3; i++) {
     im[i] = std::floor(f_pos[i] / local_box_l[i]);
-    im[i] = boost::algorithm::clamp(im[i], 0, node_grid[i] - 1);
+    im[i] = boost::algorithm::clamp(im[i], 0, node_grid.get_node_grid()[i] - 1);
   }
 
   auto const node = map_array_node(im);
@@ -102,7 +104,7 @@ int calc_node_neighbors(int node) {
       boundary[2 * dir] = 0;
     }
     /* right boundary ? */
-    if (node_pos[dir] == node_grid[dir] - 1) {
+    if (node_pos[dir] == node_grid.get_node_grid()[dir] - 1) {
       boundary[2 * dir + 1] = -1;
     } else {
       boundary[2 * dir + 1] = 0;
@@ -126,7 +128,8 @@ void grid_changed_box_l() {
   GRID_TRACE(fprintf(stderr, "%d: node_grid %d %d %d\n", this_node,
                      node_grid[0], node_grid[1], node_grid[2]));
   for (i = 0; i < 3; i++) {
-    local_box_l[i] = box_l[i] / (double)node_grid[i];
+    local_box_l[i] =
+        box_l[i] / static_cast<double>(node_grid.get_node_grid()[i]);
     my_left[i] = node_pos[i] * local_box_l[i];
     my_right[i] = (node_pos[i] + 1) * local_box_l[i];
     box_l_i[i] = 1 / box_l[i];
@@ -149,8 +152,7 @@ void grid_changed_box_l() {
 void grid_changed_n_nodes() {
   GRID_TRACE(fprintf(stderr, "%d: grid_changed_n_nodes:\n", this_node));
 
-  mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
-                           {{1, 1, 1}});
+  mpi_reshape_communicator(node_grid.get_node_grid(), {{1, 1, 1}});
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 

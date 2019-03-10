@@ -80,7 +80,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   /* === node grids === */
   /* real space node grid (n_grid[0]) */
   for (i = 0; i < 3; i++) {
-    n_grid[0][i] = node_grid[i];
+    n_grid[0][i] = node_grid.get_node_grid()[i];
     my_pos[0][i] = node_pos[i];
   }
   for (i = 0; i < n_nodes; i++) {
