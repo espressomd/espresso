@@ -47,7 +47,7 @@
 
 #include "EspressoSystemInterface.hpp"
 #include "global.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "p3m_gpu_common.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)

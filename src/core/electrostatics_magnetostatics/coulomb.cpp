@@ -9,8 +9,10 @@
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "electrostatics_magnetostatics/reaction_field.hpp"
+#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
+#include "npt.hpp"
 
 Coulomb_parameters coulomb = {
     0.0,
