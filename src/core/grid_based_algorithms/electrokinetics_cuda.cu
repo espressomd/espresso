@@ -180,7 +180,7 @@ float *ek_lb_boundary_force;
 char *ek_node_is_catalyst;
 unsigned int old_number_of_species = 0;
 unsigned int old_number_of_boundaries = 0;
-Utils::Counter<uint64_t>philox_counter = Utils::Counter<uint64_t>(0);
+Utils::Counter<uint64_t> philox_counter = Utils::Counter<uint64_t>(0);
 
 FdElectrostatics *electrostatics = nullptr;
 
@@ -1347,10 +1347,11 @@ __device__ float4 ek_random_wrapper_philox(unsigned int index,
   return rnd_floats;
 }
 
-__device__ void
-ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index,
-                            unsigned int *neighborindex, LB_nodes_gpu lb_node,
-                            uint64_t philox_counter) {
+__device__ void ek_add_fluctuations_to_flux(unsigned int index,
+                                            unsigned int species_index,
+                                            unsigned int *neighborindex,
+                                            LB_nodes_gpu lb_node,
+                                            uint64_t philox_counter) {
   if (index < ek_parameters_gpu->number_of_nodes) {
     float density = ek_parameters_gpu->rho[species_index][index];
     float *flux = ek_parameters_gpu->j;
@@ -1368,8 +1369,7 @@ ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index,
     for (int i = 0; i < 9; i++) {
 
       if (i % 4 == 0) {
-        random_floats =
-            random_wrapper_philox(index, i + 40, philox_counter);
+        random_floats = random_wrapper_philox(index, i + 40, philox_counter);
         random = (random_floats.w - 0.5f) * 2.0f;
       } else if (i % 4 == 1) {
         random = (random_floats.x - 0.5f) * 2.0f;
@@ -2750,7 +2750,8 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
     KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
                ek_parameters.species_index[species], *current_nodes, node_f,
-               ek_lbparameters_gpu, ek_lb_device_values, philox_counter.value());
+               ek_lbparameters_gpu, ek_lb_device_values,
+               philox_counter.value());
     reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
@@ -2977,7 +2978,8 @@ int ek_print_vtk_flux(int species, char *filename) {
     KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
                ek_parameters.species_index[species], *current_nodes, node_f,
-               ek_lbparameters_gpu, ek_lb_device_values, philox_counter.value());
+               ek_lbparameters_gpu, ek_lb_device_values,
+               philox_counter.value());
     reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
@@ -3211,7 +3213,8 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
     KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
                ek_parameters.species_index[species], *current_nodes, node_f,
-               ek_lbparameters_gpu, ek_lb_device_values, philox_counter.value());
+               ek_lbparameters_gpu, ek_lb_device_values,
+               philox_counter.value());
     reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
@@ -3446,7 +3449,8 @@ int ek_print_vtk_flux_link(int species, char *filename) {
     KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
                ek_parameters.species_index[species], *current_nodes, node_f,
-               ek_lbparameters_gpu, ek_lb_device_values, philox_counter.value());
+               ek_lbparameters_gpu, ek_lb_device_values,
+               philox_counter.value());
     reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
@@ -4105,7 +4109,7 @@ int ek_load_checkpoint(char *filename) {
 }
 
 void ek_set_rng_state(uint64_t counter) {
-  if(ek_initialized)
+  if (ek_initialized)
     philox_counter = Utils::Counter<uint64_t>(counter);
 }
 

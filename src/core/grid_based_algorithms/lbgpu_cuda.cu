@@ -3265,7 +3265,7 @@ void lb_fluid_set_rng_state_gpu(uint64_t counter) {
   rng_counter_fluid_gpu = Utils::Counter<uint64_t>(counter);
 #ifdef ELECTROKINETICS
   ek_set_rng_state(counter);
-#endif //ELECTROKINETICS
+#endif // ELECTROKINETICS
 }
 
 uint64_t lb_coupling_get_rng_state_gpu() {
