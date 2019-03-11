@@ -34,8 +34,9 @@ TIME_STEP = 0.01
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
-             'fric': 2.0,
-             'tau': TIME_STEP}
+             'tau': TIME_STEP,
+             'kT': KT,
+             'seed': 23}
 
 
 class LBMassCommon(object):
@@ -50,7 +51,7 @@ class LBMassCommon(object):
         self.system.set_random_state_PRNG()
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(kT=KT)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=3, gamma=2.0)
 
     def test_mass_conservation(self):
         self.prepare()
@@ -66,7 +67,7 @@ class LBMassCommon(object):
             self.system.integrator.run(10)
             v = []
             for n in nodes:
-                v.append(n.density[0])
+                v.append(n.density)
             result[i] = np.mean(v)
         np.testing.assert_allclose(
             result - DENS,
@@ -75,7 +76,7 @@ class LBMassCommon(object):
 
 
 @ut.skipIf(not espressomd.has_features(
-    ['LB']) or espressomd.has_features("SHANCHEN"), "Skipping test due to missing features.")
+    ['LB']), "Skipping test due to missing features.")
 class LBCPUMass(ut.TestCase, LBMassCommon):
 
     """Test for the CPU implementation of the LB."""

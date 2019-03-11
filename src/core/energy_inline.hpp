@@ -316,7 +316,6 @@ inline void add_bonded_energy(Particle *p1) {
     } // 1 partner
     else if (n_partners == 2) {
       switch (type) {
-#ifdef BOND_ANGLE
       case BONDED_IA_ANGLE_HARMONIC:
         bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);
         break;
@@ -326,7 +325,6 @@ inline void add_bonded_energy(Particle *p1) {
       case BONDED_IA_ANGLE_COSSQUARE:
         bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
         break;
-#endif
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 2)

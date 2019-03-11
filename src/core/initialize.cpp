@@ -37,10 +37,8 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
-#include "lattice.hpp"
 #include "metadynamics.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
@@ -69,9 +67,6 @@
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
 static int reinit_magnetostatics = 0;
-#ifdef LB_GPU
-static int lb_reinit_particles_gpu = 1;
-#endif
 
 #ifdef CUDA
 static int reinit_particle_comm_gpu = 1;
@@ -141,30 +136,13 @@ void on_integration_start() {
 #ifdef SWIMMER_REACTIONS
   reactions_sanity_checks();
 #endif
-#ifdef LB
-  if (lattice_switch & LATTICE_LB) {
-    lb_sanity_checks();
-  }
-#endif
-#ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU) {
-    lb_GPU_sanity_checks();
-  }
+#if defined(LB) || defined(LB_GPU)
+  lb_lbfluid_on_integration_start();
 #endif
 
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
-
-#ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU && this_node == 0) {
-    if (lb_reinit_particles_gpu) {
-      lb_realloc_particles_gpu();
-      lb_reinit_particles_gpu = 0;
-    }
-  }
-#endif
-
 #ifdef CUDA
   if (reinit_particle_comm_gpu) {
     gpu_change_number_of_part_to_comm();
@@ -266,7 +244,7 @@ void on_particle_change() {
   reinit_magnetostatics = 1;
 
 #ifdef LB_GPU
-  lb_reinit_particles_gpu = 1;
+  lb_lbfluid_invalidate_particle_allocation();
 #endif
 #ifdef CUDA
   reinit_particle_comm_gpu = 1;
@@ -371,7 +349,7 @@ void on_boxl_change() {
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) {
-    lb_init();
+    lb_lbfluid_init();
 #ifdef LB_BOUNDARIES
     LBBoundaries::lb_init_boundaries();
 #endif
@@ -397,25 +375,14 @@ void on_cell_structure_change() {
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) {
-    lb_init();
+    lb_lbfluid_init();
   }
 #endif
 }
 
 void on_temperature_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_temperature_change\n", this_node));
-
-#ifdef LB
-  if (lattice_switch & LATTICE_LB) {
-    lb_reinit_parameters();
-  }
-#endif
-#ifdef LB_GPU
-  if (this_node == 0) {
-    if (lattice_switch & LATTICE_LB_GPU) {
-      lb_reinit_parameters_gpu();
-    }
-  }
+#if defined(LB) || defined(LB_GPU)
+  lb_lbfluid_reinit_parameters();
 #endif
 }
 
@@ -463,17 +430,8 @@ void on_parameter_change(int field) {
     reinit_thermo = 1;
     break;
   case FIELD_TIMESTEP:
-#ifdef LB_GPU
-    if (this_node == 0) {
-      if (lattice_switch & LATTICE_LB_GPU) {
-        lb_reinit_parameters_gpu();
-      }
-    }
-#endif
-#ifdef LB
-    if (lattice_switch & LATTICE_LB) {
-      lb_reinit_parameters();
-    }
+#if defined(LB) || defined(LB_GPU)
+    lb_lbfluid_reinit_parameters();
 #endif
   case FIELD_LANGEVIN_GAMMA:
   case FIELD_LANGEVIN_GAMMA_ROTATION:
@@ -521,40 +479,6 @@ void on_parameter_change(int field) {
     break;
   }
 }
-
-#ifdef LB
-void on_lb_params_change(int field) {
-  EVENT_TRACE(fprintf(stderr, "%d: on_lb_params_change\n", this_node));
-
-  if (field == LBPAR_AGRID) {
-    lb_init();
-  }
-  if (field == LBPAR_DENSITY) {
-    lb_reinit_fluid();
-  }
-  lb_reinit_parameters();
-}
-#endif
-
-#if defined(LB) || defined(LB_GPU)
-void on_lb_params_change_gpu(int field) {
-  EVENT_TRACE(fprintf(stderr, "%d: on_lb_params_change_gpu\n", this_node));
-
-#ifdef LB_GPU
-  if (field == LBPAR_AGRID) {
-    lb_init_gpu();
-#ifdef LB_BOUNDARIES_GPU
-    LBBoundaries::lb_init_boundaries();
-#endif
-  }
-  if (field == LBPAR_DENSITY) {
-    lb_reinit_fluid_gpu();
-  }
-
-  lb_reinit_parameters_gpu();
-#endif
-}
-#endif
 
 void on_ghost_flags_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));

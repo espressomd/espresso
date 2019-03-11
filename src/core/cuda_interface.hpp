@@ -37,12 +37,6 @@ typedef struct {
 } CUDA_v_cs;
 #endif
 
-typedef struct {
-  /** fluid composition at the particle given to md part */
-  float weight[LB_COMPONENTS];
-
-} CUDA_fluid_composition;
-
 // Parameters for swimmers
 #ifdef ENGINE
 typedef struct {
@@ -76,10 +70,6 @@ struct CUDA_particle_data {
 
 #ifdef ROTATION
   float director[3];
-#endif
-
-#ifdef SHANCHEN
-  float solvation[2 * LB_COMPONENTS];
 #endif
 
 #if defined(LB_ELECTROHYDRODYNAMICS) && defined(LB_GPU)
@@ -147,7 +137,6 @@ float *gpu_get_particle_torque_pointer();
 
 CUDA_energy *gpu_get_energy_pointer();
 float *gpu_get_particle_torque_pointer();
-CUDA_fluid_composition *gpu_get_fluid_composition_pointer();
 CUDA_particle_seed *gpu_get_particle_seed_pointer();
 void gpu_change_number_of_part_to_comm();
 void gpu_init_particle_comm();
@@ -174,10 +163,6 @@ void cuda_mpi_send_forces(ParticleRange particles,
 void cuda_bcast_global_part_params();
 void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n);
-
-#ifdef SHANCHEN
-void cuda_mpi_send_composition(ParticleRange, CUDA_fluid_composition *);
-#endif
 
 #ifdef ENGINE
 void copy_v_cs_from_GPU(ParticleRange particles);

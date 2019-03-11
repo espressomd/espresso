@@ -36,7 +36,7 @@ inline Vector3d del_gaussian(Vector3d x, Vector3d x0, double sigma) {
 inline boost::multi_array<double, 3> gaussian_field(int size, Vector3d h,
                                                     Vector3d origin,
                                                     Vector3d x0, double sigma) {
-  boost::multi_array<double, 3> data(Vector<3, int>{10, 10, 10});
+  boost::multi_array<double, 3> data(Vector3i{10, 10, 10});
   for (int i = 0; i < 10; i++)
     for (int j = 0; j < 10; j++)
       for (int k = 0; k < 10; k++) {
