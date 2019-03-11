@@ -36,8 +36,8 @@
 
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "cells.hpp"
-#include "grid.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "grid.hpp"
 #include "thermostat.hpp"
 
 #ifdef DIPOLES

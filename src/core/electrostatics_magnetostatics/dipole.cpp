@@ -1,17 +1,17 @@
 
 #include "electrostatics_magnetostatics/dipole.hpp"
 
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 
 #ifdef ELECTROSTATICS
 #ifdef DIPOLES
 
 Dipole_parameters dipole = {
-        0.0,
-        DIPOLAR_NONE,
+    0.0,
+    DIPOLAR_NONE,
 };
 
 namespace Dipole {

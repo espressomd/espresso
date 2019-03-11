@@ -39,9 +39,9 @@
 #include "config.hpp"
 
 #ifdef DP3M
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 
 #include "utils/math/AS_erfc_part.hpp"
 

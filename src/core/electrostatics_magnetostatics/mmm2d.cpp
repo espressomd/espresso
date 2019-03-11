@@ -25,9 +25,9 @@
  */
 
 #include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"

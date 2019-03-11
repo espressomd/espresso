@@ -6,7 +6,6 @@ IF DIPOLES == 1:
     cdef extern from "communication.hpp":
         void mpi_bcast_coulomb_params()
 
-
     cdef extern from "electrostatics_magnetostatics/dipole.hpp":
         ctypedef enum DipolarInteraction:
             DIPOLAR_NONE = 0,
@@ -26,7 +25,6 @@ IF DIPOLES == 1:
     cdef extern from "electrostatics_magnetostatics/dipole.hpp" namespace "Dipole":
 
         int set_Dprefactor(double prefactor)
-
 
     cdef extern from "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp":
         int dawaanr_set_params()

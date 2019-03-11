@@ -12,9 +12,9 @@
 /** field containing the interaction parameters for
  *  the Dipole interaction.  */
 struct Dipole_parameters {
-    double prefactor;
+  double prefactor;
 
-    DipolarInteraction method;
+  DipolarInteraction method;
 };
 /*@}*/
 

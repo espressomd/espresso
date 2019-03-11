@@ -59,11 +59,10 @@
 
 #include "utils/mpi/all_compare.hpp"
 
-
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;

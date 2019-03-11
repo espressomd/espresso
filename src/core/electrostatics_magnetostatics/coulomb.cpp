@@ -13,8 +13,8 @@
 #include "layered.hpp"
 
 Coulomb_parameters coulomb = {
-        0.0,
-        COULOMB_NONE,
+    0.0,
+    COULOMB_NONE,
 };
 
 namespace Coulomb {

@@ -34,9 +34,9 @@
 #include <cmath>
 #include <mpi.h>
 
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
 
 #ifdef P3M
 

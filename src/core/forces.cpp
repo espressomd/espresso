@@ -29,9 +29,9 @@
 
 #include "comfixed_global.hpp"
 #include "constraints.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
