@@ -44,6 +44,7 @@
 #include "utils.hpp"
 
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 
 #if defined(DIPOLES) && defined(DP3M)
 

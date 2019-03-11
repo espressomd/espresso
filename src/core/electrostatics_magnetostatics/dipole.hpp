@@ -1,13 +1,25 @@
 #ifndef ESPRESSO_DIPOLE_HPP
 #define ESPRESSO_DIPOLE_HPP
 
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp" // dp3m
-#include "integrate.hpp"                                 // integ_switch
-#include "npt.hpp"                                       // nptiso
-#include "statistics.hpp"                                // Observable_stat
+#include "statistics.hpp"
 
 #ifdef ELECTROSTATICS
 #ifdef DIPOLES
+
+/** \name Compounds for Dipole interactions */
+/*@{*/
+
+/** field containing the interaction parameters for
+ *  the Dipole interaction.  */
+struct Dipole_parameters {
+    double prefactor;
+
+    DipolarInteraction method;
+};
+/*@}*/
+
+/** Structure containing the Dipole parameters. */
+extern Dipole_parameters dipole;
 
 namespace Dipole {
 // pressure
@@ -41,49 +53,8 @@ int set_mesh();
 // communication
 void bcast_params();
 
-// forces_inline
-inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
-                            double dist2, Vector3d &force) {
-  switch (dipole.method) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-    // fall trough
-  case DIPOLAR_P3M: {
-#ifdef NPT
-    double eng = dp3m_add_pair_force(p1, p2, d, dist2, dist, force.data());
-    if (integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += eng;
-#else
-    dp3m_add_pair_force(p1, p2, d, dist2, dist, force.data());
-#endif
-    break;
-  }
-#endif /*ifdef DP3M */
-  default:
-    break;
-  }
-}
-
-// energy_inline
-inline void add_pair_energy(Particle *p1, Particle *p2, double *d, double dist,
-                            double dist2, Observable_stat &energy) {
-  double ret = 0;
-  if (dipole.method != DIPOLAR_NONE) {
-    // ret=0;
-    switch (dipole.method) {
-#ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-      // fall trough
-    case DIPOLAR_P3M:
-      ret = dp3m_pair_energy(p1, p2, d, dist2, dist);
-      break;
-#endif
-    default:
-      ret = 0;
-    }
-    energy.dipolar[0] += ret;
-  }
-}
+/** @brief Set the dipolar prefactor */
+int set_Dprefactor(double prefactor);
 
 } // namespace Dipole
 

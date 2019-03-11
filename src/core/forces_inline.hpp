@@ -63,7 +63,7 @@
 #include "thermostat.hpp"
 
 #ifdef DIPOLES
-#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/dipole_inline.hpp"
 #endif
 
 #ifdef ELECTROSTATICS

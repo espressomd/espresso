@@ -40,6 +40,7 @@ struct Coulomb_parameters {
     CoulombMethod method;
 };
 
+/** Structure containing the Coulomb parameters. */
 extern Coulomb_parameters coulomb;
 
 namespace Coulomb {

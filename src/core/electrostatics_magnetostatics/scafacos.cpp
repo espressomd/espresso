@@ -40,9 +40,11 @@
 #include "grid.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "tuning.hpp"
 #include "utils.hpp"
+
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 #if defined(SCAFACOS_DIPOLES) && !defined(FCS_ENABLE_DIPOLES)
 #error                                                                         \

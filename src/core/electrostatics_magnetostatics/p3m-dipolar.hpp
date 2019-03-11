@@ -40,8 +40,8 @@
 
 #ifdef DP3M
 #include "fft.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "p3m-common.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 #include "utils/math/AS_erfc_part.hpp"
 

@@ -79,13 +79,6 @@
 int max_seen_particle_type = 0;
 std::vector<IA_parameters> ia_params;
 
-#ifdef DIPOLES
-Dipole_parameters dipole = {
-    0.0,
-    DIPOLAR_NONE,
-};
-#endif // DIPOLES
-
 #ifdef ELECTROSTATICS
 Debye_hueckel_params dh_params{};
 
@@ -437,22 +430,6 @@ void set_dipolar_method_local(DipolarInteraction method) {
 /* =========================================================
    ========================================================= */
 #endif /*ifdef ELECTROSTATICS */
-
-#ifdef DIPOLES
-
-int dipolar_set_Dprefactor(double prefactor) {
-  if (prefactor < 0.0) {
-    runtimeErrorMsg() << "Dipolar prefactor has to be >=0";
-    return ES_ERROR;
-  }
-
-  dipole.prefactor = prefactor;
-
-  mpi_bcast_coulomb_params();
-  return ES_OK;
-}
-
-#endif /* ifdef  DIPOLES */
 
 int virtual_set_params(int bond_type) {
   if (bond_type < 0)

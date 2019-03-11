@@ -68,7 +68,7 @@
 #include "energy.hpp"
 
 #ifdef DIPOLES
-#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/dipole_inline.hpp"
 #endif
 
 /** Calculate non bonded energies between a pair of particles.

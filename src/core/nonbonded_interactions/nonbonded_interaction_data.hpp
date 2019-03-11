@@ -323,20 +323,6 @@ extern std::vector<IA_parameters> ia_params;
 
 /** thermodynamic force parameters */
 
-/** \name Compounds for Dipole interactions */
-/*@{*/
-
-/** field containing the interaction parameters for
- *  the Dipole interaction.  */
-struct Dipole_parameters {
-
-#ifdef DIPOLES
-  double prefactor;
-
-  DipolarInteraction method;
-#endif
-};
-
 #ifdef ELECTROSTATICS
 
 /** Induced field (for const. potential feature). **/
@@ -352,9 +338,6 @@ extern double field_applied;
 
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
-
-/** Structure containing the Dipole parameters. */
-extern Dipole_parameters dipole;
 
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
@@ -374,11 +357,6 @@ extern double min_global_cut;
 /************************************************
  * exported functions
  ************************************************/
-
-#ifdef DIPOLES
-/** @brief Set the dipolar prefactor */
-int dipolar_set_Dprefactor(double prefactor);
-#endif
 
 /** get interaction parameters between particle sorts i and j */
 inline IA_parameters *get_ia_param(int i, int j) {

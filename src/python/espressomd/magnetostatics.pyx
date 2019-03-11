@@ -50,7 +50,7 @@ IF DIPOLES == 1:
             Set the magnetostatics prefactor
 
             """
-            if dipolar_set_Dprefactor(self._params["prefactor"]):
+            if set_Dprefactor(self._params["prefactor"]):
                     raise Exception(
                         "Could not set magnetostatic prefactor")
             # also necessary on 1 CPU or GPU, does more than just broadcasting
@@ -64,7 +64,7 @@ IF DIPOLES == 1:
             return dipole.method
 
         def _deactivate_method(self):
-            dipolar_set_Dprefactor(0.0)
+            set_Dprefactor(0.0)
             dipole.method = DIPOLAR_NONE
             mpi_bcast_coulomb_params()
 
@@ -148,7 +148,7 @@ IF DP3M == 1:
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
                     "tune": True}
-        
+
         def _get_params_from_es_core(self):
             params = {}
             params.update(dp3m.params)
@@ -182,7 +182,7 @@ IF DP3M == 1:
 
             self._set_params_in_es_core()
             mpi_bcast_coulomb_params()
-        
+
         def _deactivate_method(self):
             dp3m_deactivate()
             super(type(self), self)._deactivate_method()
@@ -332,7 +332,7 @@ IF DIPOLES == 1:
                 Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                dipolar_set_Dprefactor(self._params["prefactor"])
+                set_Dprefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
 
             def _deactivate_method(self):
