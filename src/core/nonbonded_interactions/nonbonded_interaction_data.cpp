@@ -72,6 +72,7 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 
 /****************************************
  * variables
