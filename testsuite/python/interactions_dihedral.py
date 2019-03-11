@@ -102,8 +102,6 @@ class InteractionsBondedTest(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
 
-    @ut.skipIf(not espressomd.has_features(["BOND_ANGLE"]),
-               "Features not available, skipping test!")
     # Analytical Expression
     def dihedral_angle(self, p1, p2, p3, p4):
         """

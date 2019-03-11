@@ -38,8 +38,9 @@
 #include "cuda_interface.hpp"
 #include "forces.hpp"
 #include "ghosts.hpp"
+#include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
@@ -72,7 +73,7 @@ static void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
 
 /** convert quaternions to the director */
 /** Convert director to quaternions */
-int convert_director_to_quat(const Vector3d &d, Vector<4, double> &quat) {
+int convert_director_to_quat(const Vector3d &d, Vector4d &quat) {
   double d_xy, dm;
   double theta2, phi2;
 

@@ -101,11 +101,6 @@ struct ParticleProperties {
   constexpr static double mass{1.0};
 #endif /* MASS */
 
-#ifdef SHANCHEN
-  std::array<double, 2 *LB_COMPONENTS> solvation =
-      std::array<double, 2 * LB_COMPONENTS>{};
-#endif
-
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
   Vector3d rinertia = {1., 1., 1.};
@@ -160,9 +155,9 @@ struct ParticleProperties {
     int to_particle_id = 0;
     double distance = 0;
     // Store relative position of the virtual site.
-    Vector<4, double> rel_orientation = {0., 0., 0., 0.};
+    Vector4d rel_orientation = {0., 0., 0., 0.};
     // Store the orientation of the virtual particle in the body fixed frame.
-    Vector<4, double> quat = {0., 0., 0., 0.};
+    Vector4d quat = {0., 0., 0., 0.};
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &to_particle_id;
@@ -226,7 +221,7 @@ struct ParticlePosition {
 
 #ifdef ROTATION
   /** quaternions to define particle orientation */
-  Vector<4, double> quat = {1., 0., 0., 0.};
+  Vector4d quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
   inline const Vector3d calc_director() const {
     return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
@@ -239,11 +234,6 @@ struct ParticlePosition {
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
   Vector3d p_old = {0., 0., 0.};
-#endif
-
-#ifdef SHANCHEN
-  std::array<double, LB_COMPONENTS> composition =
-      std::array<double, LB_COMPONENTS>{};
 #endif
 };
 
