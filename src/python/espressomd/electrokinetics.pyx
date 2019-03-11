@@ -19,6 +19,25 @@ IF ELECTROKINETICS:
         """
         species_list = []
 
+        def __getstate__(self):
+            odict = {}
+            odict["species_list"] = self.species_list
+            odict.update(self._params.copy())
+            return odict
+
+        def __setstate__(self, params):
+            self.species_list = params["species_list"]
+            params.pop("species_list")
+            self._params = params
+            self._set_params_in_es_core()
+
+        def __str__(self):
+            tmp_params = self.get_params()
+            tmp_params["species_list"] = {}
+            for i in range(len(self.species_list)):
+                tmp_params["species_list"][i] = self.species_list[i]
+            return self.__class__.__name__ + "(" + str(tmp_params) + ")"
+
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
                 if len(key) == 3:
@@ -47,7 +66,7 @@ IF ELECTROKINETICS:
             Returns the valid options used for the electrokinetic method.
 
             """
-            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling"
+            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "species_list"
 
         def required_keys(self):
             """
