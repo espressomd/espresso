@@ -139,21 +139,6 @@ static const float c_sound_sq = 1.0f / 3.0f;
 static constexpr float sqrt12 = 3.4641016151377544f;
 static Utils::Counter<uint64_t> rng_counter_coupling_gpu;
 Utils::Counter<uint64_t> rng_counter_fluid_gpu;
-__device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
-                                        uint64_t philox_counter) {
-  // Split the 64 bit counter into two 32 bit ints.
-  uint32_t philox_counter_hi = static_cast<uint32_t>(philox_counter >> 32);
-  uint32_t philox_counter_low = static_cast<uint32_t>(philox_counter);
-  uint4 rnd_ints =
-      curand_Philox4x32_10(make_uint4(index, philox_counter_hi, 0, mode),
-                           make_uint2(philox_counter_low, 0));
-  float4 rnd_floats;
-  rnd_floats.w = rnd_ints.w * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  rnd_floats.x = rnd_ints.x * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  rnd_floats.y = rnd_ints.y * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  rnd_floats.z = rnd_ints.z * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  return rnd_floats;
-}
 
 /** Transformation from 1d array-index to xyz
  *  @param[in]  index   Node index / thread index
@@ -3279,7 +3264,7 @@ void lb_coupling_set_rng_state_gpu(uint64_t counter) {
 void lb_fluid_set_rng_state_gpu(uint64_t counter) {
   rng_counter_fluid_gpu = Utils::Counter<uint64_t>(counter);
 #ifdef ELECTROKINETICS
-  ek_set_rng_state(counter)
+  ek_set_rng_state(counter);
 #endif //ELECTROKINETICS
 }
 

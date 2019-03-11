@@ -1369,7 +1369,7 @@ ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index,
 
       if (i % 4 == 0) {
         random_floats =
-            ek_random_wrapper_philox(index, i + 40, philox_counter);
+            random_wrapper_philox(index, i + 40, philox_counter);
         random = (random_floats.w - 0.5f) * 2.0f;
       } else if (i % 4 == 1) {
         random = (random_floats.x - 0.5f) * 2.0f;
