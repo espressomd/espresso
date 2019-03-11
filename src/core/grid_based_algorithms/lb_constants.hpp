@@ -32,12 +32,9 @@ enum class LBParam {
   DENSITY,   /**< fluid density */
   VISCOSITY, /**< fluid kinematic viscosity */
   AGRID,     /**< grid constant for fluid lattice */
-  TAU,       /**< time step for fluid propagation */
-  /** friction coefficient for viscous coupling between particles and fluid */
-  FRICTION,
-  EXTFORCE, /**< external force density acting on the fluid */
-  BULKVISC, /**< fluid bulk viscosity */
-  KT        /**< thermal energy */
+  EXTFORCE,  /**< external force density acting on the fluid */
+  BULKVISC,  /**< fluid bulk viscosity */
+  KT         /**< thermal energy */
 };
 
 #endif /* LB_CONSTANTS_HPP */
