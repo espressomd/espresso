@@ -52,10 +52,7 @@
 /* TODO: get rid of this code duplication with lb-boundaries.h by solving the
          cuda-mpi incompatibility */
 
-#define LATTICE_OFF 0
-#define LATTICE_LB_CPU 1
-#define LATTICE_LB_GPU 2
-extern int lattice_switch;
+extern ActiveLB lattice_switch;
 extern bool ek_initialized;
 extern EK_parameters *lb_ek_parameters_gpu;
 
@@ -2476,7 +2473,7 @@ int ek_init() {
       ek_parameters.species_index[i] = -1;
     }
 
-    if (lattice_switch != LATTICE_OFF) {
+    if (lattice_switch != ActiveLB::NONE) {
       fprintf(stderr,
               "ERROR: Electrokinetics automatically intializes the LB on the "
               "GPU and can therefore not be used in conjunction with LB.\n");
@@ -2485,7 +2482,7 @@ int ek_init() {
       return 1;
     }
 
-    lattice_switch = LATTICE_LB_GPU;
+    lattice_switch = ActiveLB::GPU;
     ek_initialized = true;
 
     lbpar_gpu.agrid = ek_parameters.agrid;
