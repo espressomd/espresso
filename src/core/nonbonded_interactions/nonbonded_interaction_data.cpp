@@ -69,6 +69,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 
@@ -77,13 +78,6 @@
  *****************************************/
 int max_seen_particle_type = 0;
 std::vector<IA_parameters> ia_params;
-
-#ifdef ELECTROSTATICS
-Coulomb_parameters coulomb = {
-    0.0,
-    COULOMB_NONE,
-};
-#endif // ELECTROSTATICS
 
 #ifdef DIPOLES
 Dipole_parameters dipole = {
@@ -439,31 +433,6 @@ void set_dipolar_method_local(DipolarInteraction method) {
 /********************************************************************************/
 /*                                 electrostatics */
 /********************************************************************************/
-
-int coulomb_set_prefactor(double prefactor) {
-  if (prefactor < 0.0) {
-    runtimeErrorMsg() << "Coulomb prefactor has to be >=0";
-    return ES_ERROR;
-  }
-
-  coulomb.prefactor = prefactor;
-  mpi_bcast_coulomb_params();
-
-  return ES_OK;
-}
-
-/** @brief Deactivates the current Coulomb method
-    This was part of coulomb_set_bjerrum()
-*/
-void deactivate_coulomb_method() {
-  coulomb.prefactor = 0;
-
-  Coulomb::deactivate();
-
-  mpi_bcast_coulomb_params();
-  coulomb.method = COULOMB_NONE;
-  mpi_bcast_coulomb_params();
-}
 
 /* =========================================================
    ========================================================= */

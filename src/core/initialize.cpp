@@ -59,6 +59,8 @@
 
 #include "utils/mpi/all_compare.hpp"
 
+
+#include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 

@@ -35,31 +35,6 @@
 
 /*@}*/
 
-/** \name Type codes for the type of Coulomb interaction
-    Enumeration of implemented methods for the electrostatic
-    interaction.
-*/
-/************************************************************/
-/*@{*/
-
-#ifdef ELECTROSTATICS
-enum CoulombMethod {
-  COULOMB_NONE,      //< Coulomb interaction switched off (NONE)
-  COULOMB_DH,        //< Coulomb method is Debye-Hueckel
-  COULOMB_P3M,       //< Coulomb method is P3M
-  COULOMB_MMM1D,     //< Coulomb method is one-dimensional MMM
-  COULOMB_MMM2D,     //< Coulomb method is two-dimensional MMM
-  COULOMB_ELC_P3M,   //< Coulomb method is P3M plus ELC
-  COULOMB_RF,        //< Coulomb method is Reaction-Field
-  COULOMB_P3M_GPU,   //< Coulomb method is P3M with GPU based long range part
-                     // calculation
-  COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
-  COULOMB_SCAFACOS,  //< Coulomb method is scafacos
-};
-
-#endif
-/*@}*/
-
 #ifdef DIPOLES
 /** \name Type codes for the type of dipolar interaction
   Enumeration of implemented methods for the magnetostatic
@@ -348,22 +323,6 @@ extern std::vector<IA_parameters> ia_params;
 
 /** thermodynamic force parameters */
 
-/** \name Compounds for Coulomb interactions */
-/*@{*/
-
-/** field containing the interaction parameters for
- *  the Coulomb  interaction.  */
-struct Coulomb_parameters {
-
-#ifdef ELECTROSTATICS
-  /** bjerrum length times temperature. */
-  double prefactor;
-
-  /** Method to treat Coulomb interaction. */
-  CoulombMethod method;
-#endif
-};
-
 /** \name Compounds for Dipole interactions */
 /*@{*/
 
@@ -394,8 +353,6 @@ extern double field_applied;
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
 
-/** Structure containing the Coulomb parameters. */
-extern Coulomb_parameters coulomb;
 /** Structure containing the Dipole parameters. */
 extern Dipole_parameters dipole;
 
@@ -417,16 +374,6 @@ extern double min_global_cut;
 /************************************************
  * exported functions
  ************************************************/
-
-#ifdef ELECTROSTATICS
-/** @brief Set the electrostatics prefactor */
-int coulomb_set_prefactor(double prefactor);
-
-/** @brief Deactivates the current Coulomb method
-    This was part of coulomb_set_bjerrum()
-*/
-void deactivate_coulomb_method();
-#endif
 
 #ifdef DIPOLES
 /** @brief Set the dipolar prefactor */

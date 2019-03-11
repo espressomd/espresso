@@ -57,7 +57,7 @@
 
 #include "debug.hpp"
 #include "fft.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "p3m-common.hpp"
 
 #include "utils/math/AS_erfc_part.hpp"

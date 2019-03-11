@@ -25,13 +25,13 @@
  */
 
 #include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
 #include "mmm-common.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "specfunc.hpp"
 #include "utils.hpp"

@@ -1,14 +1,21 @@
 
-#include "coulomb.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 
 #ifdef ELECTROSTATICS
-#include "communication.hpp"                         // bcast functions
-#include "electrostatics_magnetostatics/p3m_gpu.hpp" // p3m_gpu_init
-#include "errorhandling.hpp"                         // runtime_error
-#include "initialize.hpp"                            // on_ghost_flags_change
-#include "integrate.hpp"                             // skin
-#include "layered.hpp"                               // layer_h
-#include "npt.hpp"                                   // nptiso
+#include "electrostatics_magnetostatics/debye_hueckel.hpp"
+#include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "electrostatics_magnetostatics/mmm2d.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/p3m_gpu.hpp"
+#include "electrostatics_magnetostatics/reaction_field.hpp"
+#include "integrate.hpp"
+#include "layered.hpp"
+
+Coulomb_parameters coulomb = {
+        0.0,
+        COULOMB_NONE,
+};
 
 namespace Coulomb {
 
@@ -497,6 +504,31 @@ void bcast_coulomb_params() {
             this_node, coulomb.method);
     errexit();
   }
+}
+
+int set_prefactor(double prefactor) {
+  if (prefactor < 0.0) {
+    runtimeErrorMsg() << "Coulomb prefactor has to be >=0";
+    return ES_ERROR;
+  }
+
+  coulomb.prefactor = prefactor;
+  mpi_bcast_coulomb_params();
+
+  return ES_OK;
+}
+
+/** @brief Deactivates the current Coulomb method
+    This was part of coulomb_set_bjerrum()
+*/
+void deactivate_method() {
+  coulomb.prefactor = 0;
+
+  Coulomb::deactivate();
+
+  mpi_bcast_coulomb_params();
+  coulomb.method = COULOMB_NONE;
+  mpi_bcast_coulomb_params();
 }
 
 } // namespace Coulomb

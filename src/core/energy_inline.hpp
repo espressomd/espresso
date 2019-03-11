@@ -57,6 +57,7 @@
 #include "nonbonded_interactions/wca.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
+#include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #endif
 #ifdef P3M
 #include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
@@ -66,8 +67,9 @@
 
 #include "energy.hpp"
 
-#include "electrostatics_magnetostatics/coulomb.hpp"
+#ifdef DIPOLES
 #include "electrostatics_magnetostatics/dipole.hpp"
+#endif
 
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1         pointer to particle 1.

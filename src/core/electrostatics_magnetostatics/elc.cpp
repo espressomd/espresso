@@ -28,13 +28,14 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "mmm-common.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "utils.hpp"
 #include <cmath>
 #include <mpi.h>
 
+#include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
 #ifdef P3M

@@ -30,11 +30,12 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "mmm-common.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "polynom.hpp"
 #include "specfunc.hpp"
 #include "tuning.hpp"
 #include "utils.hpp"
+
+#include "electrostatics_magnetostatics/coulomb.hpp"
 
 #include "utils/strcat_alloc.hpp"
 using Utils::strcat_alloc;

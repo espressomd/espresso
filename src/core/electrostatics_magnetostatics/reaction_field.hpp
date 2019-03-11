@@ -31,8 +31,8 @@
 #include "config.hpp"
 
 #ifdef ELECTROSTATICS
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 
 /** Structure to hold Reaction Field Parameters. */
 typedef struct {

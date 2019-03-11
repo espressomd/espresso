@@ -69,6 +69,8 @@
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 
+#include "electrostatics_magnetostatics/p3m.hpp"
+
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"

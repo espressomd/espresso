@@ -50,6 +50,7 @@
 #include "utils/NoOp.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/coulomb_inline.hpp"
 
 iccp3m_struct iccp3m_cfg;
 
