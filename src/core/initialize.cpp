@@ -390,6 +390,7 @@ void on_resort_particles(const ParticleDiff &diff) {
   }
 #endif /* ifdef ELECTROSTATICS */
 
+  clear_particle_node();
   build_particle_index();
 
 #ifdef ADDITIONAL_CHECKS

@@ -353,7 +353,6 @@ void cells_resort_particles(int global_flag, CellPList local_cells) {
 
   invalidate_ghosts();
 
-  clear_particle_node();
   n_verlet_updates++;
 
   ParticleList displaced_parts =
