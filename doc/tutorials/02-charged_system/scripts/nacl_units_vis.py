@@ -57,9 +57,9 @@ def decreaseTemp():
 
 
 # Register buttons
-visualizer.keyboardManager.registerButton(
+visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
-visualizer.keyboardManager.registerButton(
+visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
 
 

@@ -147,9 +147,9 @@ def decreaseElectricField():
 
 
 # Register buttons
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent(
+visualizer.keyboardManager.register_button(KeyboardButtonEvent(
     'u', KeyboardFireEvent.Hold, increaseElectricField))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent(
+visualizer.keyboardManager.register_button(KeyboardButtonEvent(
     'j', KeyboardFireEvent.Hold, decreaseElectricField))
 
 
