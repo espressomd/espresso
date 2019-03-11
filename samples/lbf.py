@@ -54,11 +54,12 @@ system.part.add(id=0, pos=[box_l / 2.0, box_l /
                            2.0, box_l / 2.0], fix=[1, 1, 1])
 
 
-lb_params = {'agrid': 1, 'fric': 1, 'dens': 1, 'visc': 1, 'tau': 0.01,
+lb_params = {'agrid': 1, 'dens': 1, 'visc': 1, 'tau': 0.01,
              'ext_force_density': [0, 0, -1.0 / (box_l**3)]}
 #lbf = espressomd.lb.LBFluidGPU(**lb_params)
 lbf = espressomd.lb.LBFluid(**lb_params)
 system.actors.add(lbf)
+system.thermostat.set_lb(LB_fluid=lbf, friction=1.0)
 print(system.actors)
 print(lbf.get_params())
 

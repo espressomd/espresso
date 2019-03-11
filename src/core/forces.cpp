@@ -30,21 +30,23 @@
 #include "comfixed_global.hpp"
 #include "constraints.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
-#include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
 #include "short_range_loop.hpp"
+
+#include <profiler/profiler.hpp>
 
 #include <cassert>
 
 ActorList forceActors;
 
 void init_forces() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
 
@@ -90,26 +92,13 @@ void check_forces() {
 }
 
 void force_calc() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   espressoSystemInterface.update();
 
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
 #endif
-
-#ifdef LB_GPU
-#ifdef SHANCHEN
-  if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
-    lattice_boltzmann_calc_shanchen_gpu();
-#endif // SHANCHEN
-
-  // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on
-  // integrate 0
-  // this_node==0 makes sure it is the master node where the gpu exists
-  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu &&
-      (this_node == 0))
-    lb_calc_particle_lattice_ia_gpu(thermo_virtual);
-#endif // LB_GPU
 
 #ifdef ELECTROSTATICS
   iccp3m_iteration();
@@ -140,7 +129,7 @@ void force_calc() {
     }
   }
   auto local_parts = local_cells.particles();
-  Constraints::constraints.add_forces(local_parts);
+  Constraints::constraints.add_forces(local_parts, sim_time);
 
 #ifdef OIF_GLOBAL_FORCES
   if (max_oif_objects) {
@@ -163,9 +152,16 @@ void force_calc() {
   immersed_boundaries.volume_conservation();
 #endif
 
+#if defined(LB_GPU) || defined(LB)
 #ifdef LB
-  if (lattice_switch & LATTICE_LB)
-    calc_particle_lattice_ia();
+  if (lattice_switch & LATTICE_LB) {
+#ifdef ENGINE
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_SWIMMING);
+#endif
+  }
+#endif
+  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
 #endif
 
 #ifdef METADYNAMICS
@@ -201,6 +197,7 @@ void force_calc() {
 }
 
 void calc_long_range_forces() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
@@ -245,9 +242,6 @@ void calc_long_range_forces() {
       p3m_calc_kspace_forces(1, 0);
     break;
 #endif
-  case COULOMB_MAGGS:
-    maggs_calc_forces();
-    break;
   case COULOMB_MMM2D:
     MMM2D_add_far_force();
     MMM2D_dielectric_layers_force_contribution();

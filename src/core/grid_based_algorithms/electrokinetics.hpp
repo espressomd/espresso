@@ -177,6 +177,7 @@ int ek_set_advection(bool advection);
 int ek_set_fluidcoupling(bool ideal_contribution);
 int ek_set_fluctuations(bool fluctuations);
 int ek_set_fluctuation_amplitude(float fluctuation_amplitude);
+void ek_set_rng_state(uint64_t counter);
 int ek_node_print_velocity(int x, int y, int z, double *velocity);
 int ek_node_print_density(int species, int x, int y, int z, double *density);
 int ek_node_print_flux(int species, int x, int y, int z, double *flux);

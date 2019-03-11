@@ -50,6 +50,7 @@ using HomogeneousFlowField = ExternalField<Viscous, Constant<double, 3>>;
 
 using ElectricPotential = ExternalPotential<Charge, Interpolated<double, 1>>;
 using LinearElectricPotential = ExternalPotential<Charge, AffineMap<double, 1>>;
+using ElectricPlaneWave = ExternalField<Charge, PlaneWave<double, 3>>;
 
 void initialize() {
   ScriptInterface::register_new<ScriptInterface::Constraints::Constraints>(
@@ -77,6 +78,8 @@ void initialize() {
       "Constraints::ElectricPotential");
   ScriptInterface::register_new<LinearElectricPotential>(
       "Constraints::LinearElectricPotential");
+  ScriptInterface::register_new<ElectricPlaneWave>(
+      "Constraints::ElectricPlaneWave");
 #endif
 }
 } /* namespace Constraints */
