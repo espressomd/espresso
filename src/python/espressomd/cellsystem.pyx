@@ -20,6 +20,7 @@ from __future__ import print_function, absolute_import
 from . cimport cellsystem
 from . cimport integrate
 from .grid cimport node_grid
+from .grid cimport mpi_bcast_node_grid
 from .utils cimport Vector3i
 from globals cimport *
 import numpy as np
@@ -105,6 +106,7 @@ cdef class CellSystem(object):
             grid[1] = 1
             grid[2] = n_nodes
             node_grid.set_node_grid(grid)
+            mpi_bcast_node_grid()
 
         mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED)
 
@@ -252,6 +254,7 @@ cdef class CellSystem(object):
                 grid[1] = _node_grid[1]
                 grid[2] = _node_grid[2]
                 node_grid.set_node_grid(grid)
+                mpi_bcast_node_grid()
 
         def __get__(self):
             cdef Vector3i grid = node_grid.get_node_grid()

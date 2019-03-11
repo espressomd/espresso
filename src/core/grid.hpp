@@ -44,6 +44,8 @@
  *  Implementation in grid.cpp.
  */
 
+#include <boost/mpi/collectives.hpp>
+
 #include "RuntimeErrorStream.hpp"
 #include "algorithm/periodic_fold.hpp"
 #include "communication.hpp"
@@ -71,9 +73,26 @@ private:
 public:
   const Vector3i get_node_grid() const;
   void set_node_grid(Vector3i const &grid);
+
+private:
+  friend class boost::serialization::access;
+
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &node_grid;
+  }
 };
 
 extern NodeGrid node_grid;
+
+inline void mpi_bcast_node_grid_slave(int, int) {
+  boost::mpi::broadcast(comm_cart, node_grid, 0);
+}
+
+inline void mpi_bcast_node_grid() {
+  boost::mpi::broadcast(comm_cart, node_grid, 0);
+  mpi_call(mpi_bcast_node_grid_slave, 0, 0);
+}
 
 /** position of node in node grid */
 extern int node_pos[3];
