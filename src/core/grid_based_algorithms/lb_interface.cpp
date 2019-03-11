@@ -417,7 +417,7 @@ double lb_lbfluid_get_tau() {
 
 void lb_lbfluid_set_lattice_switch(int local_lattice_switch) {
   assert(local_lattice_switch >= 0 && local_lattice_switch <= 2);
-  lattice_switch = (ActiveLB)local_lattice_switch;
+  lattice_switch = static_cast<ActiveLB>(local_lattice_switch);
   mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
 }
 
@@ -1191,7 +1191,7 @@ void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &p_pop) {
 const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 #endif
 
-int lb_lbfluid_get_lattice_switch() { return (int)lattice_switch; }
+int lb_lbfluid_get_lattice_switch() { return static_cast<int>(lattice_switch); }
 
 void lb_lbfluid_on_lb_params_change(LBParam field) {
   if (field == LBParam::AGRID) {
