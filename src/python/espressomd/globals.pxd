@@ -23,7 +23,6 @@ from interactions cimport ImmersedBoundaries
 cdef extern from "global.hpp":
     int FIELD_BOXL
     int FIELD_SKIN
-    int FIELD_NODEGRID
     int FIELD_MAXNUMCELLS
     int FIELD_MINNUMCELLS
     int FIELD_NPTISO_PISTON
@@ -120,7 +119,6 @@ cdef extern from "tuning.hpp":
 cdef extern from "grid.hpp":
     double box_l[3]
     double local_box_l[3]
-    extern int node_grid[3]
     extern int periodic
     extern double min_box_l
 

@@ -50,7 +50,7 @@
  * variables
  **********************************************/
 NodeGrid node_grid;
-Vector3i NodeGrid::get_node_grid() const { return node_grid; }
+const Vector3i NodeGrid::get_node_grid() const { return node_grid; }
 void NodeGrid::set_node_grid(Vector3i const &grid) { node_grid = grid; }
 int node_pos[3] = {-1, -1, -1};
 int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
