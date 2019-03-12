@@ -259,40 +259,30 @@ inline void add_bonded_virials(Particle *p1) {
  *  not the physics.
  */
 inline void add_three_body_bonded_stress(Particle *p1) {
-  // char *errtxt;
-  Particle *p2;
-  Particle *p3;
-  Bonded_ia_parameters *iaparams;
-
-  int i, k, j, l;
-  int type_num;
-  BondedInteraction type;
-
-  i = 0;
+  int i = 0;
   while (i < p1->bl.n) {
     /* scan bond list for angular interactions */
-    type_num = p1->bl.e[i];
-    iaparams = &bonded_ia_params[type_num];
+    auto type_num = p1->bl.e[i];
+    auto iaparams = &bonded_ia_params[type_num];
+
     // Skip non-three-particle-bonds
     if (iaparams->num != 2) // number of partners
     {
       i += 1 + iaparams->num;
       continue;
     }
-    type = iaparams->type;
+    auto p2 = local_particles[p1->bl.e[i + 1]];
+    auto p3 = local_particles[p1->bl.e[i + 2]];
 
-    p2 = local_particles[p1->bl.e[i + 1]];
-    p3 = local_particles[p1->bl.e[i + 2]];
-
-    auto dx21 = -get_mi_vector(p1->r.p, p2->r.p);
-    auto dx31 = get_mi_vector(p3->r.p, p1->r.p);
+    auto const dx21 = -get_mi_vector(p1->r.p, p2->r.p);
+    auto const dx31 = get_mi_vector(p3->r.p, p1->r.p);
 
     Vector3d force1, force2, force3;
     calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2, force3);
     /* three-body bonded interactions contribute to the stress but not the
      * scalar pressure */
-    for (k = 0; k < 3; k++) {
-      for (l = 0; l < 3; l++) {
+    for (int k = 0; k < 3; k++) {
+      for (int l = 0; l < 3; l++) {
         obsstat_bonded(&p_tensor, type_num)[3 * k + l] +=
             force2[k] * dx21[l] + force3[k] * dx31[l];
       }
