@@ -335,6 +335,15 @@ void mpi_bcast_event_slave(int node, int event) {
   }
 }
 
+void mpi_bcast_node_grid() {
+  boost::mpi::broadcast(comm_cart, node_grid, 0);
+  mpi_call(mpi_bcast_node_grid_slave, 0, 0);
+}
+
+void mpi_bcast_node_grid_slave(int, int) {
+  boost::mpi::broadcast(comm_cart, node_grid, 0);
+}
+
 /****************** REQ_PLACE/REQ_PLACE_NEW ************/
 
 void mpi_place_particle(int pnode, int part, double p[3]) {

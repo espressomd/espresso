@@ -85,15 +85,6 @@ private:
 
 extern NodeGrid node_grid;
 
-inline void mpi_bcast_node_grid_slave(int, int) {
-  boost::mpi::broadcast(comm_cart, node_grid, 0);
-}
-
-inline void mpi_bcast_node_grid() {
-  boost::mpi::broadcast(comm_cart, node_grid, 0);
-  mpi_call(mpi_bcast_node_grid_slave, 0, 0);
-}
-
 /** position of node in node grid */
 extern int node_pos[3];
 /** the six nearest neighbors of a node in the node grid. */

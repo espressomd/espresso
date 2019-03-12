@@ -131,6 +131,7 @@ void mpi_reshape_communicator(Vector3i const &node_grid,
  */
 void mpi_bcast_event(int event);
 
+void mpi_bcast_node_grid();
 /** Issue REQ_PLACE: move particle to a position on a node.
  *  Also calls \ref on_particle_change.
  *  \param id    the particle to move.

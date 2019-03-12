@@ -20,7 +20,6 @@ from __future__ import print_function, absolute_import
 from . cimport cellsystem
 from . cimport integrate
 from .grid cimport node_grid
-from .grid cimport mpi_bcast_node_grid
 from .utils cimport Vector3i
 from globals cimport *
 import numpy as np
