@@ -153,14 +153,6 @@ void force_calc() {
 #endif
 
 #if defined(LB_GPU) || defined(LB)
-#ifdef LB
-  if (lattice_switch & LATTICE_LB) {
-#ifdef ENGINE
-    ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_SWIMMING);
-#endif
-  }
-#endif
   lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
 #endif
 
