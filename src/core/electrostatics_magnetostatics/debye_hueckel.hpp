@@ -62,8 +62,8 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
     if (dh_params.kappa > 0.0) {
       /* debye hueckel case: */
       double kappa_dist = dh_params.kappa * dist;
-      fac = p1->p.q * p2->p.q *
-            (exp(-kappa_dist) / (dist * dist * dist)) * (1.0 + kappa_dist);
+      fac = p1->p.q * p2->p.q * (exp(-kappa_dist) / (dist * dist * dist)) *
+            (1.0 + kappa_dist);
     } else {
       /* pure Coulomb case: */
       fac = p1->p.q * p2->p.q / (dist * dist * dist);
@@ -76,8 +76,7 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
 inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist) {
   if (dist < dh_params.r_cut) {
     if (dh_params.kappa > 0.0)
-      return p1->p.q * p2->p.q *
-             exp(-dh_params.kappa * dist) / dist;
+      return p1->p.q * p2->p.q * exp(-dh_params.kappa * dist) / dist;
     else
       return p1->p.q * p2->p.q / dist;
   }

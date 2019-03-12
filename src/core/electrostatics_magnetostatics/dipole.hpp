@@ -19,26 +19,26 @@
 /************************************************************/
 /*@{*/
 enum DipolarInteraction {
-    /** dipolar interaction switched off (NONE). */
-            DIPOLAR_NONE = 0,
-    /** dipolar method is P3M. */
-            DIPOLAR_P3M,
-    /** Dipolar method is P3M plus DLC. */
-            DIPOLAR_MDLC_P3M,
-    /** Dipolar method is all with all and no replicas */
-            DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
-    /** Dipolar method is magnetic dipolar direct sum */
-            DIPOLAR_DS,
-    /** Dipolar method is direct sum plus DLC. */
-            DIPOLAR_MDLC_DS,
-    /** Direct summation on gpu */
-            DIPOLAR_DS_GPU,
+  /** dipolar interaction switched off (NONE). */
+  DIPOLAR_NONE = 0,
+  /** dipolar method is P3M. */
+  DIPOLAR_P3M,
+  /** Dipolar method is P3M plus DLC. */
+  DIPOLAR_MDLC_P3M,
+  /** Dipolar method is all with all and no replicas */
+  DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
+  /** Dipolar method is magnetic dipolar direct sum */
+  DIPOLAR_DS,
+  /** Dipolar method is direct sum plus DLC. */
+  DIPOLAR_MDLC_DS,
+  /** Direct summation on gpu */
+  DIPOLAR_DS_GPU,
 #ifdef DIPOLAR_BARNES_HUT
-    /** Direct summation on gpu by Barnes-Hut algorithm */
-            DIPOLAR_BH_GPU,
+  /** Direct summation on gpu by Barnes-Hut algorithm */
+  DIPOLAR_BH_GPU,
 #endif
-    /** Scafacos library */
-            DIPOLAR_SCAFACOS
+  /** Scafacos library */
+  DIPOLAR_SCAFACOS
 };
 
 /** field containing the interaction parameters for

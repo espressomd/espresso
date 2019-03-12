@@ -3,17 +3,17 @@
 
 #ifdef DIPOLES
 
+#include "actor/DipolarBarnesHut.hpp"
+#include "actor/DipolarDirectSum.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
-#include "actor/DipolarBarnesHut.hpp"
-#include "actor/DipolarDirectSum.hpp"
 
+#include "communication.hpp"
+#include "errorhandling.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
-#include "errorhandling.hpp"
-#include "communication.hpp"
 
 #include <boost/mpi/collectives.hpp>
 
@@ -393,19 +393,19 @@ int set_Dprefactor(double prefactor) {
   return ES_OK;
 }
 
-    void set_method_local(DipolarInteraction method) {
+void set_method_local(DipolarInteraction method) {
 #ifdef DIPOLAR_DIRECT_SUM
-      if ((dipole.method == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU)) {
-        deactivate_dipolar_direct_sum_gpu();
-      }
+  if ((dipole.method == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU)) {
+    deactivate_dipolar_direct_sum_gpu();
+  }
 #endif
 #ifdef DIPOLAR_BARNES_HUT
-      if ((dipole.method == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
-        deactivate_dipolar_barnes_hut();
-      }
+  if ((dipole.method == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
+    deactivate_dipolar_barnes_hut();
+  }
 #endif // BARNES_HUT
-      dipole.method = method;
-    }
+  dipole.method = method;
+}
 
 } // namespace Dipole
 #endif // DIPOLES

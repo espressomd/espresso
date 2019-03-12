@@ -67,11 +67,9 @@ struct DLC_struct {
   /** up to where particles can be found */
   double h;
 
-  template<class Archive>
-  void serialize(Archive &ar, long int) {
-    ar & maxPWerror & far_cut & gap_size & far_calculated & h;
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &maxPWerror &far_cut &gap_size &far_calculated &h;
   }
-
 };
 extern DLC_struct dlc_params;
 

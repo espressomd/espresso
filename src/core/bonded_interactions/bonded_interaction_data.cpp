@@ -93,16 +93,16 @@ void make_bond_type_exist(int type) {
 }
 
 int virtual_set_params(int bond_type) {
-    if (bond_type < 0)
-        return ES_ERROR;
+  if (bond_type < 0)
+    return ES_ERROR;
 
-            make_bond_type_exist(bond_type);
+  make_bond_type_exist(bond_type);
 
-            bonded_ia_params[bond_type].type = BONDED_IA_VIRTUAL_BOND;
-    bonded_ia_params[bond_type].num = 1;
+  bonded_ia_params[bond_type].type = BONDED_IA_VIRTUAL_BOND;
+  bonded_ia_params[bond_type].num = 1;
 
-            /* broadcast interaction parameters */
-                    mpi_bcast_ia_params(bond_type, -1);
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1);
 
-            return ES_OK;
-  }
+  return ES_OK;
+}

@@ -26,9 +26,9 @@
 #include "EspressoSystemInterface.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 
 #include <iostream>
 

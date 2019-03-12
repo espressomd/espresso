@@ -581,7 +581,8 @@ static void add_z_force() {
 
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 
-    coulomb.field_induced = gbl_dm_z * coulomb.prefactor * 4 * M_PI * ux * uy * uz;
+    coulomb.field_induced =
+        gbl_dm_z * coulomb.prefactor * 4 * M_PI * ux * uy * uz;
     coulomb.field_applied = mmm2d_params.pot_diff * uz;
     field_tot = coulomb.field_induced + coulomb.field_applied;
   }

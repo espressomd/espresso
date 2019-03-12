@@ -160,7 +160,7 @@ double calc_electrostatics_cutoff() {
 double calc_dipolar_cutoff() {
 #ifdef DIPOLES
   double ret = 0;
-    Dipole::cutoff(ret, box_l);
+  Dipole::cutoff(ret, box_l);
   return ret;
 #endif
   return 0;
@@ -415,4 +415,3 @@ int interactions_sanity_checks() {
 /* =========================================================
    ========================================================= */
 #endif /*ifdef ELECTROSTATICS */
-

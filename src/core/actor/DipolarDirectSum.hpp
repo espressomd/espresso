@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "DipolarDirectSum_cuda.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
-#include "grid.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "grid.hpp"
 
 #include <memory>
 

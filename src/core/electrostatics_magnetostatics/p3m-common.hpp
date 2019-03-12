@@ -182,11 +182,10 @@ typedef struct {
    *  dielectric ELC creating virtual charges. */
   double additional_mesh[3];
 
-  template<typename Archive>
-  void serialize(Archive &ar, long int) {
-    ar & tuning & alpha_L & r_cut_iL & mesh;
-    ar & mesh_off & cao & inter & accuracy & epsilon & cao_cut;
-    ar & a & ai & alpha & r_cut & inter2 & cao3 & additional_mesh;
+  template <typename Archive> void serialize(Archive &ar, long int) {
+    ar &tuning &alpha_L &r_cut_iL &mesh;
+    ar &mesh_off &cao &inter &accuracy &epsilon &cao_cut;
+    ar &a &ai &alpha &r_cut &inter2 &cao3 &additional_mesh;
   }
 
 } p3m_parameter_struct;
