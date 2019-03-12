@@ -731,12 +731,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
 #ifdef LB_GPU
     float *host_checkpoint_vd =
         (float *)Utils::malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
-    unsigned int *host_checkpoint_boundary = (unsigned int *)Utils::malloc(
-        lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-    lbForceFloat *host_checkpoint_force = (lbForceFloat *)Utils::malloc(
-        lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
-    lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_boundary,
-                           host_checkpoint_force);
+    lb_save_checkpoint_GPU(host_checkpoint_vd);
     if (!binary) {
       std::fstream cpfile(filename, std::ios::out);
       cpfile << std::fixed;
@@ -746,12 +741,6 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
       cpfile << lbpar_gpu.dim_z << "\n";
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         cpfile << host_checkpoint_vd[n] << "\n";
-      }
-      for (int n = 0; n < int(lbpar_gpu.number_of_nodes); n++) {
-        cpfile << host_checkpoint_boundary[n] << "\n";
-      }
-      for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
-        cpfile << host_checkpoint_force[n] << "\n";
       }
       cpfile.close();
     } else {
@@ -764,15 +753,9 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
                    sizeof(lbpar_gpu.dim_z));
       cpfile.write(reinterpret_cast<char *>(host_checkpoint_vd),
                    19 * sizeof(float) * lbpar_gpu.number_of_nodes);
-      cpfile.write(reinterpret_cast<char *>(host_checkpoint_boundary),
-                   sizeof(int) * lbpar_gpu.number_of_nodes);
-      cpfile.write(reinterpret_cast<char *>(host_checkpoint_force),
-                   3 * sizeof(float) * lbpar_gpu.number_of_nodes);
       cpfile.close();
     }
     free(host_checkpoint_vd);
-    free(host_checkpoint_boundary);
-    free(host_checkpoint_force);
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
@@ -830,10 +813,6 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       throw std::runtime_error(err_msg + "could not open file for reading.");
     }
     std::vector<float> host_checkpoint_vd(lbpar_gpu.number_of_nodes * 19);
-    std::vector<unsigned int> host_checkpoint_boundary(
-        lbpar_gpu.number_of_nodes);
-    std::vector<lbForceFloat> host_checkpoint_force(lbpar_gpu.number_of_nodes *
-                                                    3);
     if (!binary) {
       int saved_gridsize[3];
       for (int n = 0; n < 3; n++) {
@@ -864,22 +843,6 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
           throw std::runtime_error(err_msg + "incorrectly formatted data.");
         }
       }
-      for (int n = 0; n < int(lbpar_gpu.number_of_nodes); n++) {
-        res = fscanf(cpfile, "%u", &host_checkpoint_boundary[n]);
-        if (res == EOF) {
-          throw std::runtime_error(err_msg + "EOF found.");
-        } else if (res != 1) {
-          throw std::runtime_error(err_msg + "incorrectly formatted data.");
-        }
-      }
-      for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
-        res = fscanf(cpfile, "%f", &host_checkpoint_force[n]);
-        if (res == EOF) {
-          throw std::runtime_error(err_msg + "EOF found.");
-        } else if (res != 1) {
-          throw std::runtime_error(err_msg + "incorrectly formatted data.");
-        }
-      }
     } else {
       int saved_gridsize[3];
       if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
@@ -901,16 +864,6 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
                 cpfile) != (unsigned int)(19 * lbpar_gpu.number_of_nodes)) {
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
-      if (fread(host_checkpoint_boundary.data(), sizeof(int),
-                int(lbpar_gpu.number_of_nodes),
-                cpfile) != (unsigned int)lbpar_gpu.number_of_nodes) {
-        throw std::runtime_error(err_msg + "incorrectly formatted data.");
-      }
-      if (fread(host_checkpoint_force.data(), sizeof(lbForceFloat),
-                3 * int(lbpar_gpu.number_of_nodes),
-                cpfile) != (unsigned int)(3 * lbpar_gpu.number_of_nodes)) {
-        throw std::runtime_error(err_msg + "incorrectly formatted data.");
-      }
     }
     if (!binary) {
       // skip spaces
@@ -926,9 +879,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
     fclose(cpfile);
-    lb_load_checkpoint_GPU(host_checkpoint_vd.data(),
-                           host_checkpoint_boundary.data(),
-                           host_checkpoint_force.data());
+    lb_load_checkpoint_GPU(host_checkpoint_vd.data());
 #endif // LB_GPU
   } else if (lattice_switch & LATTICE_LB) {
 #ifdef LB
