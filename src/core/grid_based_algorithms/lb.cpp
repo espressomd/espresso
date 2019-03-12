@@ -997,7 +997,6 @@ inline void lb_collide_stream() {
 /** \name Update step for the lattice Boltzmann fluid                  */
 /***********************************************************************/
 /*@{*/
-/*@}*/
 
 /** Update the lattice Boltzmann fluid.
  *
@@ -1015,6 +1014,8 @@ void lattice_boltzmann_update() {
     lb_collide_stream();
   }
 }
+
+/*@}*/
 
 /***********************************************************************/
 /** \name Coupling part */
@@ -1433,5 +1434,7 @@ void lb_collect_boundary_forces(double *result) {
              MPI_SUM, 0, comm_cart);
 #endif
 }
+
+/*@}*/
 
 #endif // LB

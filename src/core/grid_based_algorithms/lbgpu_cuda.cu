@@ -77,8 +77,7 @@ static LB_rho_v_pi_gpu *print_rho_v_pi = nullptr;
 /*@{*/
 static LB_nodes_gpu nodes_a = {nullptr, nullptr};
 static LB_nodes_gpu nodes_b = {nullptr, nullptr};
-;
-/** struct for node force density*/
+/*@}*/
 
 /** struct for node force density */
 LB_node_force_density_gpu node_f = {
@@ -95,8 +94,10 @@ LB_node_force_density_gpu node_f = {
 static LB_extern_nodeforcedensity_gpu *extern_node_force_densities = nullptr;
 
 #ifdef LB_BOUNDARIES_GPU
+/** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
 
+/** @brief Velocity at the boundary */
 static float *lb_boundary_velocity = nullptr;
 
 /** @name pointers for bound index array */
@@ -115,6 +116,9 @@ static int *gpu_check = nullptr;
 static int *h_gpu_check = nullptr;
 /*@}*/
 
+/** @brief Direction of data transfer between @ref nodes_a and @ref nodes_b
+ *  during integration in @ref lb_integrate_GPU
+ */
 static bool intflag = true;
 LB_nodes_gpu *current_nodes = nullptr;
 /** @name defining size values for allocating global memory */
@@ -157,7 +161,6 @@ __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
 
 /** Transformation from 1d array-index to xyz
  *  @param[in]  index   Node index / thread index
- *  @param[out] xyz     Calculated xyz array
  */
 template <typename T> __device__ uint3 index_to_xyz(T index) {
   auto const x = index % para->dim_x;
@@ -169,7 +172,7 @@ template <typename T> __device__ uint3 index_to_xyz(T index) {
 }
 
 /** Transformation from xyz to 1d array-index
- *  @param[in] xyz     The xyz array
+ *  @param[in] x,y,z     The xyz array
  */
 template <typename T> __device__ T xyz_to_index(T x, T y, T z) {
   return x + para->dim_x * (y + para->dim_y * z);
@@ -1496,8 +1499,8 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *  @param[in]  n_a                Local node residing in array a
  *  @param[in]  particle_position  Particle position
  *  @param[out] node_index         Node index around (8) particle
- *  @param[in]  d_v                Local device values
  *  @param[out] delta              Weighting of particle position
+ *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @retval Interpolated velocity
  */
 __device__ __inline__ float3 velocity_interpolation(
@@ -1591,6 +1594,7 @@ __device__ __inline__ float3 velocity_interpolation(
  *                                 typical) or at the source (1, swimmer only)
  *  @param[in]  philox_counter
  *  @param[in]  friction           Friction constant for the particle coupling
+ *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @tparam no_of_neighbours       The number of neighbours to consider for
  * interpolation
  */
@@ -2234,6 +2238,8 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[in]  d_v                 Local device values
  *  @param[in]  couple_virtual
  *  @param[in]  philox_counter
+ *  @param[in]  friction            Friction constant for the particle coupling
+ *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @tparam     no_of_neighbours    The number of neighbours to consider for
  * interpolation
  */
@@ -2885,7 +2891,7 @@ void lb_calc_fluid_temperature_GPU(double *host_temp) {
 }
 
 /** Setup and call kernel for getting macroscopic fluid values of all nodes
- *  @param host_checkpoint_vd[out]   LB populations
+ *  @param[out] host_checkpoint_vd   LB populations
  */
 void lb_save_checkpoint_GPU(float *const host_checkpoint_vd) {
   cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd,
@@ -2894,7 +2900,7 @@ void lb_save_checkpoint_GPU(float *const host_checkpoint_vd) {
 }
 
 /** Setup and call kernel for getting macroscopic fluid values of all nodes
- *  @param host_checkpoint_vd[in]    LB populations
+ *  @param[in] host_checkpoint_vd    LB populations
  */
 void lb_load_checkpoint_GPU(float const *const host_checkpoint_vd) {
   current_nodes = &nodes_a;
@@ -2972,9 +2978,9 @@ void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu) {
                                    sizeof(LB_parameters_gpu)));
 }
 
-/**integration kernel for the lb gpu fluid update called from host */
+/** Integration kernel for the lb gpu fluid update called from host */
 void lb_integrate_GPU() {
-  /** values for the kernel call */
+  /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x =
@@ -2989,7 +2995,7 @@ void lb_integrate_GPU() {
   }
 #endif
 
-  /**call of fluid step*/
+  /* call of fluid step */
   if (intflag) {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
                device_rho_v, node_f, lb_ek_parameters_gpu,
