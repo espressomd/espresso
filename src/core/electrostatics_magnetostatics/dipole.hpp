@@ -7,6 +7,8 @@
 
 #include "Observable_stat.hpp"
 
+#include <boost/mpi/communicator.hpp>
+
 /** \name Compounds for Dipole interactions */
 /*@{*/
 
@@ -57,7 +59,7 @@ void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor);
 
 void nonbonded_sanity_check(int &state);
-void cutoff(double &ret);
+void cutoff(double &ret, const double box_l[3]);
 
 void integrate_sanity_check();
 void on_observable_calc();
@@ -71,7 +73,7 @@ void calc_energy_long_range(Observable_stat &energy);
 void energy_n(int &n_dipolar);
 
 int set_mesh();
-void bcast_params();
+void bcast_params(const boost::mpi::communicator &comm);
 
 /** @brief Set the dipolar prefactor */
 int set_Dprefactor(double prefactor);

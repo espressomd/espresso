@@ -653,7 +653,7 @@ void mpi_bcast_coulomb_params_slave(int, int) {
 
   Dipole::set_method_local(dipole.method);
 
-  Dipole::bcast_params();
+  Dipole::bcast_params(comm_cart);
 #endif
 
   on_coulomb_change();

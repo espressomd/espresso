@@ -1,6 +1,8 @@
 
 #include "electrostatics_magnetostatics/dipole.hpp"
 
+#ifdef DIPOLES
+
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
@@ -10,9 +12,10 @@
 
 #include "integrate.hpp"
 #include "npt.hpp"
-#include "grid.hpp"
+#include "errorhandling.hpp"
+#include "communication.hpp"
 
-#ifdef DIPOLES
+#include <boost/mpi/collectives.hpp>
 
 Dipole_parameters dipole = {
     0.0,
@@ -106,7 +109,7 @@ void nonbonded_sanity_check(int &state) {
 #endif
 }
 
-void cutoff(double &ret) {
+void cutoff(double &ret, const double box_l[3]) {
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -347,17 +350,18 @@ int set_mesh() {
   }
 }
 
-void bcast_params() {
+void bcast_params(const boost::mpi::communicator &comm) {
+  namespace mpi = boost::mpi;
+
   switch (dipole.method) {
   case DIPOLAR_NONE:
     break;
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
-    MPI_Bcast(&dlc_params, sizeof(DLC_struct), MPI_BYTE, 0, comm_cart);
+    mpi::broadcast(comm, dlc_params, 0);
     // fall through
   case DIPOLAR_P3M:
-    MPI_Bcast(&dp3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0,
-              comm_cart);
+    mpi::broadcast(comm, dp3m.params, 0);
     break;
 #endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
@@ -374,12 +378,6 @@ void bcast_params() {
 #endif
   case DIPOLAR_SCAFACOS:
     break;
-  default:
-    fprintf(stderr,
-            "%d: INTERNAL ERROR: cannot bcast dipolar params for "
-            "unknown method %d\n",
-            this_node, dipole.method);
-    errexit();
   }
 }
 

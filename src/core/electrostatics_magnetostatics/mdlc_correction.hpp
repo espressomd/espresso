@@ -45,7 +45,7 @@
 #if defined(DIPOLES) && defined(DP3M)
 
 /** parameters for the MDLC method */
-typedef struct {
+struct DLC_struct {
   /** maximal pairwise error of the potential and force */
   double maxPWerror;
 
@@ -67,7 +67,12 @@ typedef struct {
   /** up to where particles can be found */
   double h;
 
-} DLC_struct;
+  template<class Archive>
+  void serialize(Archive &ar, long int) {
+    ar & maxPWerror & far_cut & gap_size & far_calculated & h;
+  }
+
+};
 extern DLC_struct dlc_params;
 
 int mdlc_set_params(double maxPWerror, double gap_size, double far_cut);
