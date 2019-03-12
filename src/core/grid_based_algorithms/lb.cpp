@@ -160,9 +160,9 @@ void lb_init() {
   }
 
   /* initialize the local lattice domain */
-  lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
+  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
 
-  if (check_runtime_errors())
+  if (check_runtime_errors() || init_status != ES_OK)
     return;
 
   /* allocate memory for data structures */

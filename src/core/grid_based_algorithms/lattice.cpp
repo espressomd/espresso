@@ -45,21 +45,17 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
   }
 
   // sanity checks
-  bool incompatible_agrid = false;
   for (int dir = 0; dir < 3; dir++) {
     // check if local_box_l is compatible with lattice spacing
     if (fabs(local_box_l[dir] - this->grid[dir] * agrid[dir]) >
         epsilon * box_l[dir]) {
-      incompatible_agrid = true;
       runtimeErrorMsg() << "Lattice spacing agrid[" << dir << "]=" << agrid[dir]
                         << " is incompatible with local_box_l[" << dir
                         << "]=" << local_box_l[dir] << " ( box_l[" << dir
                         << "]=" << box_l[dir] << " node_grid[" << dir
                         << "]=" << node_grid[dir] << " )";
+      return ES_ERROR;
     }
-  }
-  if (incompatible_agrid) {
-    return ES_ERROR;
   }
 
   LATTICE_TRACE(fprintf(stderr,

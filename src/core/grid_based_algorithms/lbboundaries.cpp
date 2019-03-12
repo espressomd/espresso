@@ -279,7 +279,7 @@ void lb_init_boundaries() {
     offset[2] = node_domain_position[2] * lblattice.grid[2];
 
     for (int n = 0; n < lblattice.halo_grid_volume; n++) {
-      lbfields[n].boundary = 0;
+      lbfields.at(n).boundary = 0;
     }
 
     if (lblattice.halo_grid_volume == 0)
