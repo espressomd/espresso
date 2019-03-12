@@ -140,6 +140,7 @@ static double fluidstep = 0.0;
 #include "grid.hpp"
 
 #ifdef LB
+
 /********************** The Main LB Part *************************************/
 void lb_init() {
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
@@ -1022,40 +1023,6 @@ void lattice_boltzmann_update() {
 
 /***********************************************************************/
 
-/** Calculate the average density of the fluid in the system.
- *  This function has to be called after changing the density of
- *  a local lattice site in order to set lbpar.rho consistently.
- */
-void lb_calc_average_rho() {
-  Lattice::index_t index;
-  double rho, local_rho, sum_rho;
-
-  rho = 0.0;
-  local_rho = 0.0;
-  index = 0;
-  for (int z = 1; z <= lblattice.grid[2]; z++) {
-    for (int y = 1; y <= lblattice.grid[1]; y++) {
-      for (int x = 1; x <= lblattice.grid[0]; x++) {
-        lb_calc_local_rho(index, &rho);
-        local_rho += rho;
-
-        index++;
-      }
-      // skip halo region
-      index += 2;
-    }
-    // skip halo region
-    index += 2 * lblattice.halo_grid[0];
-  }
-  MPI_Allreduce(&rho, &sum_rho, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
-
-  /* calculate average density in MD units */
-  // TODO!!!
-  lbpar.rho = sum_rho / (box_l[0] * box_l[1] * box_l[2]);
-}
-
-/*@}*/
-
 static int compare_buffers(double *buf1, double *buf2, int size) {
   int ret;
   if (memcmp(buf1, buf2, size) != 0) {
@@ -1262,16 +1229,6 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
 
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                           double *pi) {
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_fields in " << __FILE__
-                      << __LINE__ << ": CPU LB not switched on.";
-    *rho = 0;
-    j[0] = j[1] = j[2] = 0;
-    pi[0] = pi[1] = pi[2] = pi[3] = pi[4] = pi[5] = 0;
-    return;
-  }
-
 #ifdef LB_BOUNDARIES
   if (lbfields[index].boundary) {
     *rho = lbpar.rho;
@@ -1416,28 +1373,27 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
 }
 #endif
 
-// Statistics in MD units.
-
-/** Calculate mass of the LB fluid.
- * \param result Fluid mass
+/** Calculate the local fluid momentum.
+ *  The calculation is implemented explicitly for the special case of D3Q19.
+ *  @param[in]  index  Local lattice site
+ *  @retval The local fluid momentum.
  */
-void lb_calc_fluid_mass(double *result) {
-  int x, y, z, index;
-  double sum_rho = 0.0, rho = 0.0;
-
-  for (x = 1; x <= lblattice.grid[0]; x++) {
-    for (y = 1; y <= lblattice.grid[1]; y++) {
-      for (z = 1; z <= lblattice.grid[2]; z++) {
-        index = get_linear_index(x, y, z, lblattice.halo_grid);
-
-        lb_calc_local_rho(index, &rho);
-        sum_rho += rho;
-      }
-    }
-  }
-
-  MPI_Reduce(&sum_rho, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+inline Vector3d lb_calc_local_j(Lattice::index_t index) {
+  return {{lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
+               lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
+               lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
+               lbfluid[14][index],
+           lbfluid[3][index] - lbfluid[4][index] + lbfluid[7][index] -
+               lbfluid[8][index] - lbfluid[9][index] + lbfluid[10][index] +
+               lbfluid[15][index] - lbfluid[16][index] + lbfluid[17][index] -
+               lbfluid[18][index],
+           lbfluid[5][index] - lbfluid[6][index] + lbfluid[11][index] -
+               lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
+               lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
+               lbfluid[18][index]}};
 }
+
+// Statistics in MD units.
 
 /** Calculate momentum of the LB fluid.
  * \param result Fluid momentum
