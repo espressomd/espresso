@@ -242,12 +242,8 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]);
 void lb_gpu_get_boundary_forces(double *forces);
-void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
-void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
+void lb_save_checkpoint_GPU(float *const host_checkpoint_vd);
+void lb_load_checkpoint_GPU(float const *const host_checkpoint_vd);
 
 void lb_lbfluid_remove_total_momentum();
 void lb_lbfluid_fluid_add_momentum(float momentum[3]);
