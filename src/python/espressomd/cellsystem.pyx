@@ -131,7 +131,10 @@ cdef class CellSystem(object):
         s["n_layers"] = n_layers_
         s["verlet_reuse"] = verlet_reuse
         s["n_nodes"] = n_nodes
-        s["node_grid"] = np.array([self.node_grid[0], self.node_grid[1], self.node_grid[2]])
+        s["node_grid"] = np.array(
+            [self.node_grid[0],
+             self.node_grid[1],
+             self.node_grid[2]])
         s["cell_grid"] = np.array(
             [dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
         s["cell_size"] = np.array(
@@ -154,7 +157,10 @@ cdef class CellSystem(object):
             s["type"] = "nsquare"
 
         s["skin"] = skin
-        s["node_grid"] = np.array([self.node_grid[0], self.node_grid[1], self.node_grid[2]])
+        s["node_grid"] = np.array(
+            [self.node_grid[0],
+             self.node_grid[1],
+             self.node_grid[2]])
         s["max_num_cells"] = max_num_cells
         s["min_num_cells"] = min_num_cells
         s["fully_connected"] = dd.fully_connected
