@@ -115,7 +115,7 @@ static int *gpu_check = nullptr;
 static int *h_gpu_check = nullptr;
 /*@}*/
 
-static unsigned int intflag = 1;
+static bool intflag = true;
 LB_nodes_gpu *current_nodes = nullptr;
 /** @name defining size values for allocating global memory */
 /*@{*/
@@ -2493,7 +2493,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block, nodes_a,
              device_rho_v, node_f, gpu_check);
 
-  intflag = 1;
+  intflag = true;
   current_nodes = &nodes_a;
   h_gpu_check[0] = 0;
   cuda_safe_mem(
@@ -2898,7 +2898,7 @@ void lb_save_checkpoint_GPU(float *const host_checkpoint_vd) {
  */
 void lb_load_checkpoint_GPU(float const *const host_checkpoint_vd) {
   current_nodes = &nodes_a;
-  intflag = 1;
+  intflag = true;
 
   cuda_safe_mem(cudaMemcpy(current_nodes->vd, host_checkpoint_vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
@@ -2990,18 +2990,18 @@ void lb_integrate_GPU() {
 #endif
 
   /**call of fluid step*/
-  if (intflag == 1) {
+  if (intflag) {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
                device_rho_v, node_f, lb_ek_parameters_gpu,
                rng_counter_fluid_gpu.value());
     current_nodes = &nodes_b;
-    intflag = 0;
+    intflag = false;
   } else {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
                device_rho_v, node_f, lb_ek_parameters_gpu,
                rng_counter_fluid_gpu.value());
     current_nodes = &nodes_a;
-    intflag = 1;
+    intflag = true;
   }
 
 #ifdef LB_BOUNDARIES_GPU
