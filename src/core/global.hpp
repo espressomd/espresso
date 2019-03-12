@@ -72,7 +72,7 @@ enum Fields {
   FIELD_NLAYERS,
   /** index of \ref n_rigidbonds */
   FIELD_RIGIDBONDS,
-    /** index of \ref nptiso_gamma0 */
+  /** index of \ref nptiso_gamma0 */
   FIELD_NPTISO_G0,
   /** index of \ref nptiso_gammav */
   FIELD_NPTISO_GV,
