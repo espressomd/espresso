@@ -143,7 +143,7 @@ static double fluidstep = 0.0;
 
 /********************** The Main LB Part *************************************/
 void lb_init() {
-  LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
+  LB_TRACE(printf("Begin initializing fluid on CPU\n"));
 
   if (lbpar.agrid <= 0.0) {
     runtimeErrorMsg()
@@ -160,9 +160,9 @@ void lb_init() {
   }
 
   /* initialize the local lattice domain */
-  lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
+  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
 
-  if (check_runtime_errors())
+  if (check_runtime_errors() || init_status != ES_OK)
     return;
 
   /* allocate memory for data structures */
@@ -177,7 +177,7 @@ void lb_init() {
   /* setup the initial populations */
   lb_reinit_fluid();
 
-  LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
+  LB_TRACE(printf("Initializing fluid on CPU successful\n"));
 }
 
 void lb_reinit_fluid() {
@@ -188,7 +188,7 @@ void lb_reinit_fluid() {
   Vector6d pi{};
 
   LB_TRACE(fprintf(stderr,
-                   "Initialising the fluid with equilibrium populations\n"););
+                   "Initializing the fluid with equilibrium populations\n"););
 
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        ++index) {

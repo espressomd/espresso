@@ -257,7 +257,7 @@ void lb_reinit_parameters_gpu() {
  */
 void lb_init_gpu() {
 
-  LB_TRACE(printf("Begin initialzing fluid on GPU\n"));
+  LB_TRACE(printf("Begin initializing fluid on GPU\n"));
   /** set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
 
@@ -268,7 +268,7 @@ void lb_init_gpu() {
   gpu_init_particle_comm();
   cuda_bcast_global_part_params();
 
-  LB_TRACE(printf("Initialzing fluid on GPU successful\n"));
+  LB_TRACE(printf("Initializing fluid on GPU successful\n"));
 }
 
 /*@}*/
