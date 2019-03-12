@@ -2885,45 +2885,23 @@ void lb_calc_fluid_temperature_GPU(double *host_temp) {
 }
 
 /** Setup and call kernel for getting macroscopic fluid values of all nodes
- *  @param host_checkpoint_vd         struct to save the gpu populations
- *  @param host_checkpoint_boundary   struct to save the boundary nodes
- *  @param host_checkpoint_force      struct to save the forces on the nodes
+ *  @param host_checkpoint_vd[out]   LB populations
  */
-void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force) {
+void lb_save_checkpoint_GPU(float *const host_checkpoint_vd) {
   cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
-                           cudaMemcpyDeviceToHost));
-  cuda_safe_mem(cudaMemcpy(host_checkpoint_boundary, current_nodes->boundary,
-                           lbpar_gpu.number_of_nodes * sizeof(unsigned int),
-                           cudaMemcpyDeviceToHost));
-  cuda_safe_mem(cudaMemcpy(host_checkpoint_force, node_f.force_density,
-                           lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat),
                            cudaMemcpyDeviceToHost));
 }
 
 /** Setup and call kernel for getting macroscopic fluid values of all nodes
- *  @param host_checkpoint_vd         struct to save the GPU populations
- *  @param host_checkpoint_boundary   struct to save the boundary nodes
- *  @param host_checkpoint_force      struct to save the forces on the nodes
- *  @param host_checkpoint_philox_counter
+ *  @param host_checkpoint_vd[in]    LB populations
  */
-void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force) {
+void lb_load_checkpoint_GPU(float const *const host_checkpoint_vd) {
   current_nodes = &nodes_a;
   intflag = 1;
 
   cuda_safe_mem(cudaMemcpy(current_nodes->vd, host_checkpoint_vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
-                           cudaMemcpyHostToDevice));
-
-  cuda_safe_mem(cudaMemcpy(current_nodes->boundary, host_checkpoint_boundary,
-                           lbpar_gpu.number_of_nodes * sizeof(unsigned int),
-                           cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpy(node_f.force_density, host_checkpoint_force,
-                           lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat),
                            cudaMemcpyHostToDevice));
 }
 
