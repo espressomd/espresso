@@ -224,6 +224,9 @@ ubuntu:armhf:
 
 ubuntu:i386:
   <<: *arch_definition
+  only:
+    - branches
+    - tags
 
 ubuntu:ppc64le:
   <<: *arch_definition

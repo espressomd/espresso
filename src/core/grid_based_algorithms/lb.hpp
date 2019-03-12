@@ -36,6 +36,8 @@ void mpi_set_lb_fluid_counter(int high, int low);
 
 #ifdef LB
 
+#include <array>
+
 #include "errorhandling.hpp"
 
 #include "halo.hpp"
@@ -166,7 +168,7 @@ struct LB_Parameters {
 
   /** \name Derived parameters */
   /** amplitudes of the fluctuations of the modes */
-  Vector<19, double> phi;
+  Vector19d phi;
   // Thermal energy
   double kT;
 };
@@ -242,8 +244,7 @@ void lb_sanity_checks();
     @param pi local fluid pressure
 */
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             const std::array<double, 3> &j,
-                             const std::array<double, 6> &pi);
+                             Vector3d const &j, Vector6d const &pi);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &p);
@@ -259,56 +260,6 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
  */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index);
 
-/** Calculate the local fluid density.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index the local lattice site (Input).
- * @param rho   local fluid density
- */
-inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
-  // unit conversion: mass density
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_rho in " << __FILE__
-                      << __LINE__ << ": CPU LB not switched on.";
-    *rho = 0;
-    return;
-  }
-
-  double avg_rho = lbpar.rho;
-
-  *rho = avg_rho + lbfluid[0][index] + lbfluid[1][index] + lbfluid[2][index] +
-         lbfluid[3][index] + lbfluid[4][index] + lbfluid[5][index] +
-         lbfluid[6][index] + lbfluid[7][index] + lbfluid[8][index] +
-         lbfluid[9][index] + lbfluid[10][index] + lbfluid[11][index] +
-         lbfluid[12][index] + lbfluid[13][index] + lbfluid[14][index] +
-         lbfluid[15][index] + lbfluid[16][index] + lbfluid[17][index] +
-         lbfluid[18][index];
-}
-
-/** Calculate the local fluid momentum.
- *  The calculation is implemented explicitly for the special case of D3Q19.
- *  @param[in]  index  Local lattice site
- *  @retval The local fluid momentum.
- */
-inline Vector3d lb_calc_local_j(Lattice::index_t index) {
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_j in " << __FILE__ << __LINE__
-                      << ": CPU LB not switched on.";
-    return {};
-  }
-  return {{lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
-               lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
-               lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
-               lbfluid[14][index],
-           lbfluid[3][index] - lbfluid[4][index] + lbfluid[7][index] -
-               lbfluid[8][index] - lbfluid[9][index] + lbfluid[10][index] +
-               lbfluid[15][index] - lbfluid[16][index] + lbfluid[17][index] -
-               lbfluid[18][index],
-           lbfluid[5][index] - lbfluid[6][index] + lbfluid[11][index] -
-               lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
-               lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
-               lbfluid[18][index]}};
-}
-
 /** Calculate the local fluid fields.
  * The calculation is implemented explicitly for the special case of D3Q19.
  *
@@ -323,14 +274,6 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
                                               int *boundary) {
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_local_fields_get_boundary_flag in "
-                      << __FILE__ << __LINE__ << ": CPU LB not switched on.";
-    *boundary = 0;
-    return;
-  }
-
   *boundary = lbfields[index].boundary;
 }
 #endif
@@ -341,8 +284,7 @@ inline void lb_get_populations(Lattice::index_t index, double *pop) {
   }
 }
 
-inline void lb_set_populations(Lattice::index_t index,
-                               const Vector<19, double> &pop) {
+inline void lb_set_populations(Lattice::index_t index, const Vector19d &pop) {
   for (int i = 0; i < lbmodel.n_veloc; ++i) {
     lbfluid[i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
   }

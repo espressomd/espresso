@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cells.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "integrate.hpp"
 #include "lb_inertialess_tracers_cuda_interface.hpp"
@@ -175,7 +176,7 @@ void CoupleIBMParticleToFluid(Particle *p) {
   delta_j[2] = p->f.f[2] * lbpar.tau * lbpar.tau / lbpar.agrid;
 
   // Get indices and weights of affected nodes using discrete delta function
-  Vector<8, std::size_t> node_index{};
+  Vector<std::size_t, 8> node_index{};
   Vector6d delta{};
   lblattice.map_position_to_lattice(p->r.p, node_index, delta);
 
@@ -230,7 +231,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
 
   /* determine elementary lattice cell surrounding the particle
    and the relative position of the particle in this cell */
-  Vector<8, std::size_t> node_index{};
+  Vector<std::size_t, 8> node_index{};
   Vector6d delta{};
   lblattice.map_position_to_lattice(pos, node_index, delta);
 

@@ -28,7 +28,7 @@ namespace Observables {
 
 class CylindricalProfileObservable : virtual public Observable {
 public:
-  ::Vector<3, double> center;
+  ::Vector3d center;
   std::string axis;
   double min_r, max_r;
   double min_phi, max_phi;

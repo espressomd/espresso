@@ -10,6 +10,8 @@
 #include "lbgpu.hpp"
 #include "thermostat.hpp"
 
+int lattice_switch = LATTICE_OFF;
+
 #if defined(LB) || defined(LB_GPU)
 
 void lb_lbfluid_update() {
@@ -104,7 +106,7 @@ void lb_lbfluid_reinit_fluid() {
  *  All derived parameters and the fluid are reset to their default values.
  */
 void lb_lbfluid_init() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch & LATTICE_LB_GPU && this_node == 0) {
 #ifdef LB_GPU
     lb_init_gpu();
 #endif
@@ -859,7 +861,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
     if (!cpfile) {
       throw std::runtime_error("Could not open file for reading.");
     }
-    Vector<19, double> pop;
+    Vector19d pop;
     Vector3i ind;
 
     Vector3i gridsize;
@@ -975,7 +977,7 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
     auto ind_shifted = ind;
     double rho;
     Vector3d j;
-    Vector<6, double> pi;
+    Vector6d pi;
 
     node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
@@ -990,9 +992,9 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
   return {};
 }
 
-const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind) {
+const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
   double p0 = 0;
-  Vector<6, double> p_pi = lb_lbnode_get_pi_neq(ind);
+  Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -1011,8 +1013,8 @@ const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind) {
   return p_pi;
 }
 
-const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind) {
-  Vector<6, double> p_pi{};
+const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
+  Vector6d p_pi{};
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
@@ -1033,7 +1035,7 @@ const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind) {
     int node;
     double rho;
     double j[3];
-    Vector<6, double> pi{};
+    Vector6d pi{};
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted);
@@ -1079,13 +1081,13 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
   }
 }
 
-const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind) {
+const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     float population[19];
 
     lb_lbfluid_get_population(ind, population);
-    Vector<19, double> p_pop;
+    Vector19d p_pop;
     for (int i = 0; i < LBQ; ++i)
       p_pop[i] = population[i];
     return p_pop;
@@ -1101,7 +1103,7 @@ const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind) {
     node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
-    Vector<19, double> p_pop;
+    Vector19d p_pop;
     mpi_recv_fluid_populations(node, index, p_pop.data());
     return p_pop;
 #else
@@ -1126,7 +1128,7 @@ void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
     int node;
     double rho;
     Vector3d j;
-    Vector<6, double> pi;
+    Vector6d pi;
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted);
@@ -1158,7 +1160,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
     int node;
     double rho;
     Vector3d j;
-    Vector<6, double> pi;
+    Vector6d pi;
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted);
@@ -1174,7 +1176,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
   }
 }
 
-void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &p_pop) {
+void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &p_pop) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     float population[19];
@@ -1213,7 +1215,7 @@ void lb_lbfluid_on_lb_params_change(int field) {
       lb_init();
 #endif
 #ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU)
+    if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
       lb_init_gpu();
 #endif
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)

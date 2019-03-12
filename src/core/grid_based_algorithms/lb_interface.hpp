@@ -5,6 +5,17 @@
 #include "grid_based_algorithms/lattice.hpp"
 #include "utils/Vector.hpp"
 
+/** Switch determining the type of lattice dynamics. A value of zero
+ *  means that there is no lattice dynamics. Different types can be
+ *  combined by or'ing the respective flags.
+ *  So far, only \ref LATTICE_OFF and \ref LATTICE_LB exist.
+ */
+extern int lattice_switch;
+
+#define LATTICE_LB 1     /** Lattice Boltzmann */
+#define LATTICE_LB_GPU 2 /** Lattice Boltzmann */
+#define LATTICE_OFF 0    /** Lattice off */
+
 #if defined(LB) || defined(LB_GPU)
 
 /**
@@ -121,7 +132,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u);
 /**
  * @brief Set the LB fluid populations for a single node.
  */
-void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &pop);
+void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &pop);
 
 /**
  * @brief Get the LB time step.
@@ -177,8 +188,8 @@ double lb_lbnode_get_density(const Vector3i &ind);
  * @brief Get the LB fluid velocity for a single node.
  */
 const Vector3d lb_lbnode_get_velocity(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind);
+const Vector6d lb_lbnode_get_pi(const Vector3i &ind);
+const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind);
 
 /**
  * @brief Get the LB fluid boundary bool for a single node.
@@ -188,7 +199,7 @@ int lb_lbnode_get_boundary(const Vector3i &ind);
 /**
  * @brief Get the LB fluid populations for a single node.
  */
-const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind);
+const Vector19d lb_lbnode_get_pop(const Vector3i &ind);
 
 /* IO routines */
 void lb_lbfluid_print_vtk_boundary(const std::string &filename);

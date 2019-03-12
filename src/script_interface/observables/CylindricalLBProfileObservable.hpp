@@ -46,8 +46,7 @@ public:
     this->add_parameters(
         {{"center",
           [this](const Variant &v) {
-            cylindrical_profile_observable()->center =
-                get_value<::Vector<3, double>>(v);
+            cylindrical_profile_observable()->center = get_value<::Vector3d>(v);
           },
           [this]() { return cylindrical_profile_observable()->center; }},
          {"axis",

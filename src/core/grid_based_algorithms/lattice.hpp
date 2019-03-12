@@ -26,21 +26,10 @@
  * surrounds the local lattice sites.
  */
 
-#ifndef _LATTICE_HPP
-#define _LATTICE_HPP
+#ifndef CORE_LB_LATTICE_HPP
+#define CORE_LB_LATTICE_HPP
 
 #include "utils/Vector.hpp"
-
-/** Switch determining the type of lattice dynamics. A value of zero
- *  means that there is no lattice dynamics. Different types can be
- *  combined by or'ing the respective flags.
- *  So far, only \ref LATTICE_OFF and \ref LATTICE_LB exist.
- */
-extern int lattice_switch;
-
-#define LATTICE_LB 1     /** Lattice Boltzmann */
-#define LATTICE_LB_GPU 2 /** Lattice Boltzmann */
-#define LATTICE_OFF 0    /** Lattice off */
 
 class Lattice {
 public:
@@ -93,7 +82,7 @@ public:
    *                   elementary cell, 6 directions (Output)
    */
   void map_position_to_lattice(const Vector3d &pos,
-                               Vector<8, std::size_t> &node_index,
+                               Vector<std::size_t, 8> &node_index,
                                Vector6d &delta) const;
   /********************** Inline Functions **********************/
 

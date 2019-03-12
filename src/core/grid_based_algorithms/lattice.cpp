@@ -29,8 +29,6 @@
 #include "debug.hpp"
 #include "grid.hpp"
 
-int lattice_switch = LATTICE_OFF;
-
 int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
@@ -83,7 +81,7 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
 }
 
 void Lattice::map_position_to_lattice(const Vector3d &pos,
-                                      Vector<8, std::size_t> &node_index,
+                                      Vector<std::size_t, 8> &node_index,
                                       Vector6d &delta) const {
   Vector3i ind{};
   auto const epsilon = std::numeric_limits<double>::epsilon();
