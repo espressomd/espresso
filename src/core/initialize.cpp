@@ -538,10 +538,6 @@ void on_parameter_change(int field) {
 #endif
     cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
     break;
-  case FIELD_NODEGRID:
-    grid_changed_n_nodes();
-    cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
-    break;
   case FIELD_MINNUMCELLS:
   case FIELD_MAXNUMCELLS:
     cells_re_init(CELL_STRUCTURE_CURRENT);

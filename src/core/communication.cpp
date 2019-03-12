@@ -336,12 +336,16 @@ void mpi_bcast_event_slave(int node, int event) {
 }
 
 void mpi_bcast_node_grid() {
-  boost::mpi::broadcast(comm_cart, node_grid, 0);
   mpi_call(mpi_bcast_node_grid_slave, 0, 0);
+  boost::mpi::broadcast(comm_cart, node_grid, 0);
+  grid_changed_n_nodes();
+  cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
 }
 
 void mpi_bcast_node_grid_slave(int, int) {
   boost::mpi::broadcast(comm_cart, node_grid, 0);
+  grid_changed_n_nodes();
+  cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
 }
 
 /****************** REQ_PLACE/REQ_PLACE_NEW ************/
