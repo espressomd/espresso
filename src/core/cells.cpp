@@ -381,7 +381,7 @@ ParticleList topology_sort(int global, ParticleList& displaced_parts) {
     case CELL_STRUCTURE_LAYERED:
       return layered_exchange_and_sort_particles(global, &displaced_parts);
     case CELL_STRUCTURE_NSQUARE:
-      return nsq_balance_particles();
+      return nsq_balance_particles(global);
     case CELL_STRUCTURE_DOMDEC:
       return dd_exchange_and_sort_particles(global, &displaced_parts);
   }
