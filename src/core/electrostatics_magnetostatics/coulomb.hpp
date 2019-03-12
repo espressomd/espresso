@@ -1,7 +1,7 @@
 #ifndef ESPRESSO_COULOMB_HPP
 #define ESPRESSO_COULOMB_HPP
 
-#include "statistics.hpp"
+#include "Observable_stat.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -36,6 +36,9 @@ struct Coulomb_parameters {
   /** bjerrum length times temperature. */
   double prefactor;
 
+  double field_induced;
+  double field_applied;
+
   /** Method to treat Coulomb interaction. */
   CoulombMethod method;
 };
@@ -44,44 +47,32 @@ struct Coulomb_parameters {
 extern Coulomb_parameters coulomb;
 
 namespace Coulomb {
-
-// pressure.cpp
 void pressure_n(int &n_coulomb);
 void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor);
 
-// nonbonded_interaction_data
 void sanity_checks(int &state);
 void cutoff(double &ret);
 void deactivate();
 
-// integrate
 void integrate_sanity_check();
-
-// initialize
 void on_observable_calc();
 void on_coulomb_change();
 void on_resort_particles();
 void on_boxl_change();
 void init();
 
-// forces_calc
 void calc_long_range_force();
 
-// energy
 void calc_energy_long_range(Observable_stat &energy);
 void energy_n(int &n_coulomb);
 
-// icc
 int iccp3m_sanity_check();
 
-// elc
 int elc_sanity_check();
 
-// communication
 void bcast_coulomb_params();
 
-// electrostatics.pyx/pxd
 /** @brief Set the electrostatics prefactor */
 int set_prefactor(double prefactor);
 
@@ -89,7 +80,6 @@ int set_prefactor(double prefactor);
     This was part of coulomb_set_bjerrum()
 */
 void deactivate_method();
-
 } // namespace Coulomb
 #endif // ELECTROSTATICS
 #endif // ESPRESSO_COULOMB_HPP

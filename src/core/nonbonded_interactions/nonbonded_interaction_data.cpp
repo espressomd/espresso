@@ -406,22 +406,6 @@ int interactions_sanity_checks() {
   return state;
 }
 
-#ifdef DIPOLES
-void set_dipolar_method_local(DipolarInteraction method) {
-#ifdef DIPOLAR_DIRECT_SUM
-  if ((dipole.method == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU)) {
-    deactivate_dipolar_direct_sum_gpu();
-  }
-#endif
-#ifdef DIPOLAR_BARNES_HUT
-  if ((dipole.method == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
-    deactivate_dipolar_barnes_hut();
-  }
-#endif // BARNES_HUT
-  dipole.method = method;
-}
-#endif
-
 #ifdef ELECTROSTATICS
 
 /********************************************************************************/
@@ -432,17 +416,3 @@ void set_dipolar_method_local(DipolarInteraction method) {
    ========================================================= */
 #endif /*ifdef ELECTROSTATICS */
 
-int virtual_set_params(int bond_type) {
-  if (bond_type < 0)
-    return ES_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].type = BONDED_IA_VIRTUAL_BOND;
-  bonded_ia_params[bond_type].num = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
-}

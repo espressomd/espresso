@@ -17,44 +17,55 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
   auto const q1q2 = p1->p.q * p2->p.q;
 
   if (q1q2 != 0) {
+    Vector3d f{};
+
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_ELC_P3M: {
-      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
+      p3m_add_pair_force(q1q2, d, dist2, dist, f.data());
 
       // forces from the virtual charges
       // they go directly onto the particles, since they are not pairwise forces
-      if (elc_params.dielectric_contrast_on)
-        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
-                                                     p2->f.f.data());
+      if (elc_params.dielectric_contrast_on) {
+        Vector3d f1{};
+        Vector3d f2{};
+
+        ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1.data(),
+                                                     f2.data());
+
+        p1->f.f += coulomb.prefactor * f1;
+        p2->f.f += coulomb.prefactor * f2;
+      }
       break;
     }
     case COULOMB_P3M_GPU:
     case COULOMB_P3M: {
-      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
+      p3m_add_pair_force(q1q2, d, dist2, dist, f.data());
       break;
     }
 #endif
     case COULOMB_MMM1D:
-      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
+      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, f.data());
       break;
     case COULOMB_MMM2D:
-      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
+      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, f.data());
       break;
     case COULOMB_DH:
-      add_dh_coulomb_pair_force(p1, p2, d, dist, force.data());
+      add_dh_coulomb_pair_force(p1, p2, d, dist, f.data());
       break;
     case COULOMB_RF:
-      add_rf_coulomb_pair_force(p1, p2, d, dist, force.data());
+      add_rf_coulomb_pair_force(p1, p2, d, dist, f.data());
       break;
 #ifdef SCAFACOS
     case COULOMB_SCAFACOS:
-      Scafacos::add_pair_force(p1, p2, d, dist, force.data());
+      Scafacos::add_pair_force(p1, p2, d, dist, f.data());
       break;
 #endif
     default:
       break;
     }
+
+    force += coulomb.prefactor * f;
   }
 }
 

@@ -35,37 +35,6 @@
 
 /*@}*/
 
-#ifdef DIPOLES
-/** \name Type codes for the type of dipolar interaction
-  Enumeration of implemented methods for the magnetostatic
-  interaction.
- */
-/************************************************************/
-/*@{*/
-enum DipolarInteraction {
-  /** dipolar interaction switched off (NONE). */
-  DIPOLAR_NONE = 0,
-  /** dipolar method is P3M. */
-  DIPOLAR_P3M,
-  /** Dipolar method is P3M plus DLC. */
-  DIPOLAR_MDLC_P3M,
-  /** Dipolar method is all with all and no replicas */
-  DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
-  /** Dipolar method is magnetic dipolar direct sum */
-  DIPOLAR_DS,
-  /** Dipolar method is direct sum plus DLC. */
-  DIPOLAR_MDLC_DS,
-  /** Direct summation on gpu */
-  DIPOLAR_DS_GPU,
-#ifdef DIPOLAR_BARNES_HUT
-  /** Direct summation on gpu by Barnes-Hut algorithm */
-  DIPOLAR_BH_GPU,
-#endif
-  /** Scafacos library */
-  DIPOLAR_SCAFACOS
-};
-#endif
-
 /* Data Types */
 /************************************************************/
 
@@ -318,15 +287,6 @@ extern std::vector<IA_parameters> ia_params;
 
 /** thermodynamic force parameters */
 
-#ifdef ELECTROSTATICS
-
-/** Induced field (for const. potential feature). **/
-extern double field_induced;
-/** Applied field (for const. potential feature) **/
-extern double field_applied;
-
-#endif
-
 /************************************************
  * exported variables
  ************************************************/
@@ -414,10 +374,7 @@ inline int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
 
-int virtual_set_params(int bond_type);
-
 #ifdef DIPOLES
-void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
 #include "utils/math/sqr.hpp"

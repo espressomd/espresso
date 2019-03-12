@@ -39,6 +39,7 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
 #include "thermostat.hpp"
+#include "dipole.hpp"
 
 #ifdef DIPOLES
 
@@ -389,7 +390,7 @@ int dawaanr_set_params() {
     return ES_ERROR;
   }
   if (dipole.method != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA) {
-    set_dipolar_method_local(DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA);
+   Dipole::set_method_local(DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA);
   }
   // also necessary on 1 CPU, does more than just broadcasting
   mpi_bcast_coulomb_params();
@@ -410,7 +411,7 @@ int mdds_set_params(int n_cut) {
   }
 
   if (dipole.method != DIPOLAR_DS && dipole.method != DIPOLAR_MDLC_DS) {
-    set_dipolar_method_local(DIPOLAR_DS);
+   Dipole::set_method_local(DIPOLAR_DS);
   }
 
   // also necessary on 1 CPU, does more than just broadcasting

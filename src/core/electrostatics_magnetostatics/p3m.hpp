@@ -229,12 +229,12 @@ inline double p3m_add_pair_force(double chgfac, double *d, double dist2,
       double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
       double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-      double fac1 = coulomb.prefactor * chgfac * exp(-adist * adist);
+      double fac1 = chgfac * exp(-adist * adist);
       double fac2 =
           fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * wupii) / dist2;
 #else
       erfc_part_ri = erfc(adist) / dist;
-      double fac1 = coulomb.prefactor * chgfac;
+      double fac1 = cchgfac;
       double fac2 = fac1 *
                     (erfc_part_ri +
                      2.0 * p3m.params.alpha * wupii * exp(-adist * adist)) /

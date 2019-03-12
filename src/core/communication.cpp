@@ -651,7 +651,7 @@ void mpi_bcast_coulomb_params_slave(int, int) {
 #ifdef DIPOLES
   MPI_Bcast(&dipole, sizeof(Dipole_parameters), MPI_BYTE, 0, comm_cart);
 
-  set_dipolar_method_local(dipole.method);
+  Dipole::set_method_local(dipole.method);
 
   Dipole::bcast_params();
 #endif

@@ -40,6 +40,7 @@
 
 #ifdef DP3M
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "particle_data.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
 

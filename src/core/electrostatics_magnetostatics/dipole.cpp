@@ -5,10 +5,13 @@
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
+#include "actor/DipolarBarnesHut.hpp"
+#include "actor/DipolarDirectSum.hpp"
+
 #include "integrate.hpp"
 #include "npt.hpp"
+#include "grid.hpp"
 
-#ifdef ELECTROSTATICS
 #ifdef DIPOLES
 
 Dipole_parameters dipole = {
@@ -332,12 +335,12 @@ int set_mesh() {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
   case DIPOLAR_P3M:
-    set_dipolar_method_local(DIPOLAR_MDLC_P3M);
+    set_method_local(DIPOLAR_MDLC_P3M);
     return 0;
 #endif
   case DIPOLAR_MDLC_DS:
   case DIPOLAR_DS:
-    set_dipolar_method_local(DIPOLAR_MDLC_DS);
+    set_method_local(DIPOLAR_MDLC_DS);
     return 0;
   default:
     return 1;
@@ -392,6 +395,19 @@ int set_Dprefactor(double prefactor) {
   return ES_OK;
 }
 
+    void set_method_local(DipolarInteraction method) {
+#ifdef DIPOLAR_DIRECT_SUM
+      if ((dipole.method == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU)) {
+        deactivate_dipolar_direct_sum_gpu();
+      }
+#endif
+#ifdef DIPOLAR_BARNES_HUT
+      if ((dipole.method == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
+        deactivate_dipolar_barnes_hut();
+      }
+#endif // BARNES_HUT
+      dipole.method = method;
+    }
+
 } // namespace Dipole
 #endif // DIPOLES
-#endif // ELECTROSTATICS

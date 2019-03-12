@@ -412,4 +412,5 @@ inline bool pair_bond_enum_exists_between(const Particle *const p1,
 }
 
 void recalc_maximal_cutoff_bonded();
+int virtual_set_params(int bond_type);
 #endif
