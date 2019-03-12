@@ -38,8 +38,9 @@
 #include "cuda_interface.hpp"
 #include "forces.hpp"
 #include "ghosts.hpp"
+#include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
@@ -72,7 +73,7 @@ static void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
 
 /** convert quaternions to the director */
 /** Convert director to quaternions */
-int convert_director_to_quat(const Vector3d &d, Vector<4, double> &quat) {
+int convert_director_to_quat(const Vector3d &d, Vector4d &quat) {
   double d_xy, dm;
   double theta2, phi2;
 
@@ -294,7 +295,8 @@ void convert_torques_propagate_omega() {
       fprintf(stderr, "%d: convert_torques_propagate_omega:\n", this_node));
 
 #if defined(LB_GPU) && defined(ENGINE)
-  if ((lattice_switch & LATTICE_LB_GPU) && swimming_particles_exist) {
+  if ((lb_lbfluid_get_lattice_switch() & LATTICE_LB_GPU) &&
+      swimming_particles_exist) {
     copy_v_cs_from_GPU(local_cells.particles());
   }
 #endif
@@ -307,7 +309,7 @@ void convert_torques_propagate_omega() {
     convert_torque_to_body_frame_apply_fix_and_thermostat(p);
 
 #if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
-    if (p.swim.swimming && lattice_switch != 0) {
+    if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != 0) {
 
       auto const dip = p.swim.dipole_length * p.r.calc_director();
 

@@ -250,7 +250,6 @@ inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2,
 #endif
 
   switch (iaparams->type) {
-#ifdef BOND_ANGLE
   case BONDED_IA_ANGLE_HARMONIC:
     // p1 is *p_mid, p2 is *p_left, p3 is *p_right
     calc_angle_harmonic_3body_forces(p1, p2, p3, iaparams, force1, force2,
@@ -266,7 +265,6 @@ inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2,
     calc_angle_cossquare_3body_forces(p1, p2, p3, iaparams, force1, force2,
                                       force3);
     break;
-#endif
 #ifdef TABULATED
   case BONDED_IA_TABULATED:
     switch (iaparams->p.tab.type) {

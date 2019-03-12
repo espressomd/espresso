@@ -70,12 +70,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SOFT_SPHERE
 #define INTER_RF
 #define OVERLAPPED
+#define WCA
 
 #ifdef P3M
 #define THOLE
 #endif
-
-#define BOND_ANGLE
 
 #define EXPERIMENTAL_FEATURES
 

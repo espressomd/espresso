@@ -22,8 +22,6 @@ import numpy as np
 import unittest as ut
 
 
-@ut.skipIf(not espressomd.has_features(["BOND_ANGLE"]),
-           "Features not available, skipping test!")
 class InteractionsNonBondedTest(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     box_l = 10.

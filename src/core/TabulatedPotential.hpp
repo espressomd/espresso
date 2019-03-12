@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/linear_interpolation.hpp"
 #include "utils/serialization/List.hpp"
 
+#include <boost/algorithm/clamp.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -51,8 +52,9 @@ struct TabulatedPotential {
    *  @return Interpolated force.
    */
   double force(double x) const {
-    assert(x <= maxval);
-    return Utils::linear_interpolation(force_tab, invstepsize, minval, x);
+    using boost::algorithm::clamp;
+    return Utils::linear_interpolation(force_tab, invstepsize, minval,
+                                       clamp(x, minval, maxval));
   }
 
   /** Evaluate the energy at position @p x.
@@ -60,8 +62,9 @@ struct TabulatedPotential {
    *  @return Interpolated energy.
    */
   double energy(double x) const {
-    assert(x <= maxval);
-    return Utils::linear_interpolation(energy_tab, invstepsize, minval, x);
+    using boost::algorithm::clamp;
+    return Utils::linear_interpolation(energy_tab, invstepsize, minval,
+                                       clamp(x, minval, maxval));
   }
 
   double cutoff() const { return maxval; }

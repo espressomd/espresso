@@ -367,43 +367,6 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
     same aggregate. The second optional parameter enables one to consider
     aggregation state of only oppositely charged particles.
 
-    .. _Finding holes:
-
-    Finding holes
-    ~~~~~~~~~~~~~
-    .. todo:: This feature is not implemented
-
-    analyze holes
-
-    Function for the calculation of the unoccupied volume (often also called
-    free volume) in a system. Details can be found in
-    :cite:`schmitz00a`. It identifies free space in the
-    simulation box via a mesh based cluster algorithm. Free space is defined
-    via a probe particle and its interactions with other particles which
-    have to be defined through LJ interactions with the other existing
-    particle types via the inter command before calling this routine. A
-    point of the mesh is counted as free space if the distance of the point
-    is larger than LJ\_cut+LJ\_offset to any particle as defined by the LJ
-    interaction parameters between the probe particle type and other
-    particle types.How to use this function: Define interactions between all
-    (or the ones you are interested in) particle types in your system and a
-    fictitious particle type. Practically one uses the van der Waals radius
-    of the particles plus the size of the probe you want to use as the
-    Lennard-Jones cutoff. The mesh spacing is the box length divided by the
-    .
-
-    { { } { } { } }
-
-    A hole is defined as a continuous cluster of mesh elements that belong
-    to the unoccupied volume. Since the function is quite rudimentary it
-    gives back the whole information suitable for further processing on the
-    script level. and are given in number of mesh points, which means you
-    have to calculate the actual size via the corresponding volume or
-    surface elements yourself. The complete information is given in the
-    element\_lists for each hole. The element numbers give the position of a
-    mesh point in the linear representation of the 3D grid (coordinates are
-    in the order x, y, z). Attention: the algorithm assumes a cubic box.
-    Surface results have not been tested. .
 
 	.. _Temperature of the LB fluid:
 

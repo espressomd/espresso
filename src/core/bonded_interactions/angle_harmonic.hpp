@@ -29,7 +29,6 @@
 #include "bonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
-#ifdef BOND_ANGLE
 #include "angle_common.hpp"
 #include "grid.hpp"
 #include <tuple>
@@ -113,5 +112,4 @@ inline int angle_harmonic_energy(Particle const *p_mid, Particle const *p_left,
   return 0;
 }
 
-#endif /* BOND_ANGLE */
 #endif /* ANGLE_HARMONIC_H */

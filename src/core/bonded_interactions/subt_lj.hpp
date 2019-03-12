@@ -38,39 +38,33 @@
 /// set the parameters for the subtract LJ potential
 int subt_lj_set_params(int bond_type);
 
-/** Computes the negative of the Lennard-Jones pair forces.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
- *  @param[in]  dx_       %Distance between the particles.
- *  @param[out] force     Force on particles.
- *  @retval ES_OK
- */
-inline int calc_subt_lj_pair_force(Particle const *p1, Particle const *p2,
-                                   Bonded_ia_parameters const *,
-                                   double const dx_[3], double force[3]) {
+/** Computes the negative of the LENNARD-JONES pair forces
+    and adds this force to the particle forces.
+    @param p1        Pointer to first particle.
+    @param p2        Pointer to second/middle particle.
+    @param dx        change in position
+    @param force     force on particles
+    @return true if bond is broken
+*/
+inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
+                                   Bonded_ia_parameters *, double dx[3],
+                                   double force[3]) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
 
-  auto const dx = -Vector3d(dx_, dx_ + 3);
+  auto const dx_ = -Vector3d(dx, dx + 3);
 
-  add_lj_pair_force(p1, p2, ia_params, dx.data(), dx.norm(), force);
+  add_lj_pair_force(p1, p2, ia_params, dx_.data(), dx_.norm(), force);
 
   return ES_OK;
 }
 
-/** Computes the negative of the Lennard-Jones pair energy.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
- *  @param[in]  dx_       %Distance between the particles.
- *  @param[out] _energy   Energy.
- *  @retval ES_OK
- */
-inline int subt_lj_pair_energy(Particle const *p1, Particle const *p2,
-                               Bonded_ia_parameters const *,
-                               double const dx_[3], double *_energy) {
+inline int subt_lj_pair_energy(Particle *p1, Particle *p2,
+                               Bonded_ia_parameters *, double dx[3],
+                               double *_energy) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
-  auto const dx = -Vector3d(dx_, dx_ + 3);
+  auto const dx_ = -Vector3d(dx, dx + 3);
 
-  *_energy = -lj_pair_energy(p1, p2, ia_params, dx.data(), dx.norm());
+  *_energy = -lj_pair_energy(p1, p2, ia_params, dx_.data(), dx_.norm());
   return ES_OK;
 }
 

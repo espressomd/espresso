@@ -58,7 +58,7 @@ void on_integration_start();
 
 /** called before calculating observables, i.e. energy, pressure or
  *  the integrator (forces). Initialize any methods here which are not
- *  initialized immediately (P3M, Maggs, etc.).
+ *  initialized immediately (P3M etc.).
  */
 void on_observable_calc();
 
@@ -114,7 +114,6 @@ void on_max_seen_particle_type_change();
  */
 void on_ghost_flags_change();
 
-void on_lb_params_change(int field);
 void on_lbboundary_change();
 
 /** called every time the walls for the lb fluid are changed */
