@@ -599,7 +599,7 @@ void append_particle(ParticleList *l, Particle &&part) {
   new (&(l->part[l->n - 1])) Particle(std::move(part));
 }
 
-void move_particle(ParticleList *destList, ParticleList *sourceList, int ind) {
+int move_particle(ParticleList *destList, ParticleList *sourceList, int ind) {
   assert(sourceList->n > 0);
   assert(ind < sourceList->n);
 
@@ -615,6 +615,8 @@ void move_particle(ParticleList *destList, ParticleList *sourceList, int ind) {
 
   sourceList->n -= 1;
   realloc_particlelist(sourceList, sourceList->n);
+
+  return destList->n - 1;
 }
 
 /**

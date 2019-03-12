@@ -486,10 +486,17 @@ extern int n_part;
 extern bool swimming_particles_exist;
 
 #include <unordered_map>
+#include <vector>
+
+struct ParticleDiff {
+    std::vector<Particle *> added;
+    std::vector<int> removed;
+};
 
 namespace detail {
 template <class Particle> class Index {
-  std::unordered_map<int, Particle *> m_map;
+    using map_type = std::unordered_map<int, Particle *>;
+    map_type m_map;
 
 public:
   Particle *operator[](int i) const {
@@ -522,6 +529,32 @@ public:
       update(p);
     }
   }
+
+  void update(const ParticleDiff &diff) {
+    for (auto id: diff.removed) {
+      remove(id);
+    }
+
+    for (auto p: diff.added) {
+      auto it = m_map.find(p->identity());
+      /* Update the entry if it is not yet in the index,
+       * or is set to nullptr or points to a ghost. */
+      if ((it == m_map.end()) or (not it->second) or (it->second->l.ghost)) {
+        assert(p);
+        update(*p);
+      }
+    }
+  }
+
+  void remove(int id) {
+    auto it = m_map.find(id);
+
+    if(it != m_map.end()) {
+        it->second = nullptr;
+    }
+  }
+
+
 };
 } // namespace detail
 
@@ -569,7 +602,7 @@ void append_particle(ParticleList *l, Particle &&part);
     \param ind        Index of the particle in the sourceList.
     \return Pointer to new location of the particle.
  */
-void move_particle(ParticleList *destList, ParticleList *sourceList, int ind);
+int move_particle(ParticleList *destList, ParticleList *sourceList, int ind);
 
 Particle extract_particle(ParticleList *sl, int i);
 

@@ -121,6 +121,9 @@ void on_lbboundary_change();
 /** called every time the walls for the lb fluid are changed */
 void on_lbboundary_change();
 
+/** Ghost partiles updated */
+void on_ghost_particles_change(const ParticleDiff &diff);
+
 /*@}*/
 
 #endif

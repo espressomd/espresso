@@ -667,21 +667,3 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
     }
   }
 }
-
-/** Go through \ref ghost_cells and remove the ghost entries from \ref
-    local_particles. Part of \ref dd_exchange_and_sort_particles.*/
-void invalidate_ghosts() {
-  int c, p;
-  /* remove ghosts, but keep Real Particles */
-  for (c = 0; c < ghost_cells.n; c++) {
-    Particle *part = ghost_cells.cell[c]->part;
-    int np = ghost_cells.cell[c]->n;
-    for (p = 0; p < np; p++) {
-      /* Particle is stored as ghost in the local_particles array,
-         if the pointer stored there belongs to a ghost cell
-         particle array. */
-      free_particle(part + p);
-    }
-    ghost_cells.cell[c]->n = 0;
-  }
-}

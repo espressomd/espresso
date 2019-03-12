@@ -175,6 +175,9 @@ void on_integration_start() {
   partCfg().invalidate();
   invalidate_fetch_cache();
 
+  /* Remove nullptr entries from particle index. */
+  local_particles.shrink_to_fit();
+
 #ifdef ADDITIONAL_CHECKS
 
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
@@ -391,14 +394,18 @@ void on_resort_particles(const ParticleDiff &diff) {
 #endif /* ifdef ELECTROSTATICS */
 
   clear_particle_node();
-  build_particle_index();
+
+  local_particles.update(diff);
 
 #ifdef ADDITIONAL_CHECKS
   /* at the end of the day, everything should be consistent again */
   check_particle_consistency();
 #endif
 
+  n_verlet_updates++;
+
   recalc_forces = 1;
+  rebuild_verletlist = 1;
 }
 
 void on_boxl_change() {
@@ -661,4 +668,8 @@ void on_ghost_flags_change() {
     ghosts_have_bonds = 1;
   }
 #endif
+}
+
+void on_ghost_particles_change(const ParticleDiff &diff) {
+  local_particles.update(diff);
 }
