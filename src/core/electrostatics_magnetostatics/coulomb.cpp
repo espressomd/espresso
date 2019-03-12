@@ -2,6 +2,7 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
 #ifdef ELECTROSTATICS
+#include "communication.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
@@ -10,11 +11,10 @@
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "electrostatics_magnetostatics/reaction_field.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
+#include "errorhandling.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
 #include "npt.hpp"
-#include "errorhandling.hpp"
-#include "communication.hpp"
 
 Coulomb_parameters coulomb;
 

@@ -109,34 +109,34 @@ inline double add_pair_energy(Particle *p1, Particle *p2, double *d,
                               double dist, double dist2) {
   /* real space Coulomb */
   auto E = [&]() {
-      switch (coulomb.method) {
+    switch (coulomb.method) {
 #ifdef P3M
-          case COULOMB_P3M_GPU:
-          case COULOMB_P3M:
-              return p3m_pair_energy(p1->p.q * p2->p.q, dist);
-          case COULOMB_ELC_P3M:
-              if (elc_params.dielectric_contrast_on) {
-                  return 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2) +
-                         p3m_pair_energy(p1->p.q * p2->p.q, dist);
-              } else {
-                  return p3m_pair_energy(p1->p.q * p2->p.q, dist);
-              }
+    case COULOMB_P3M_GPU:
+    case COULOMB_P3M:
+      return p3m_pair_energy(p1->p.q * p2->p.q, dist);
+    case COULOMB_ELC_P3M:
+      if (elc_params.dielectric_contrast_on) {
+        return 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2) +
+               p3m_pair_energy(p1->p.q * p2->p.q, dist);
+      } else {
+        return p3m_pair_energy(p1->p.q * p2->p.q, dist);
+      }
 #endif
 #ifdef SCAFACOS
-          case COULOMB_SCAFACOS:
-            return Scafacos::pair_energy(p1, p2, dist);
+    case COULOMB_SCAFACOS:
+      return Scafacos::pair_energy(p1, p2, dist);
 #endif
-          case COULOMB_DH:
-              return dh_coulomb_pair_energy(p1, p2, dist);
-          case COULOMB_RF:
-              return rf_coulomb_pair_energy(p1, p2, dist);
-          case COULOMB_MMM1D:
-              return mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
-          case COULOMB_MMM2D:
-              return mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
-          default:
-              return 0.;
-      }
+    case COULOMB_DH:
+      return dh_coulomb_pair_energy(p1, p2, dist);
+    case COULOMB_RF:
+      return rf_coulomb_pair_energy(p1, p2, dist);
+    case COULOMB_MMM1D:
+      return mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
+    case COULOMB_MMM2D:
+      return mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+    default:
+      return 0.;
+    }
   }();
 
   return coulomb.prefactor * E;
