@@ -30,6 +30,13 @@ void lb_lbcoupling_activate() {
 }
 
 void lb_lbcoupling_deactivate() {
+  if (lattice_switch != LATTICE_OFF && this_node == 0 && n_part) {
+    runtimeWarning("Recalculating forces, so the LB coupling forces are not "
+                   "included in the particle force the first time step. This "
+                   "only matters if it happens frequently during "
+                   "sampling.\n");
+  }
+
   lb_particle_coupling.couple_to_md = false;
   mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
@@ -189,6 +196,11 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
         throw std::runtime_error("The non-linear interpolation scheme is not "
                                  "implemented for the CPU LB.");
       case (InterpolationOrder::linear): {
+#ifdef ENGINE
+        ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                           GHOSTTRANS_SWIMMING);
+#endif
+
         using rng_type = r123::Philox4x64;
         using ctr_type = rng_type::ctr_type;
         using key_type = rng_type::key_type;

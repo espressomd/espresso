@@ -536,10 +536,6 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     predict_momentum_particles((double *)result);
     break;
 #ifdef LB
-  case 5:
-    mpi_call(mpi_gather_stats_slave, -1, 5);
-    lb_calc_fluid_mass((double *)result);
-    break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
     lb_calc_fluid_momentum((double *)result);
@@ -582,9 +578,6 @@ void mpi_gather_stats_slave(int, int job) {
     predict_momentum_particles(nullptr);
     break;
 #ifdef LB
-  case 5:
-    lb_calc_fluid_mass(nullptr);
-    break;
   case 6:
     lb_calc_fluid_momentum(nullptr);
     break;

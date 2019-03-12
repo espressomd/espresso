@@ -10,6 +10,8 @@
 #include "lbgpu.hpp"
 #include "thermostat.hpp"
 
+int lattice_switch = LATTICE_OFF;
+
 #if defined(LB) || defined(LB_GPU)
 
 void lb_lbfluid_update() {
@@ -104,7 +106,7 @@ void lb_lbfluid_reinit_fluid() {
  *  All derived parameters and the fluid are reset to their default values.
  */
 void lb_lbfluid_init() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch & LATTICE_LB_GPU && this_node == 0) {
 #ifdef LB_GPU
     lb_init_gpu();
 #endif
@@ -1213,7 +1215,7 @@ void lb_lbfluid_on_lb_params_change(int field) {
       lb_init();
 #endif
 #ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU)
+    if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
       lb_init_gpu();
 #endif
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
