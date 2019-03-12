@@ -56,7 +56,6 @@
 #ifdef P3M
 
 #include "debug.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
 
@@ -304,10 +303,10 @@ inline double p3m_pair_energy(double chgfac, double dist) {
     double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
     double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-    return coulomb.prefactor * chgfac * erfc_part_ri * exp(-adist * adist);
+    return chgfac * erfc_part_ri * exp(-adist * adist);
 #else
     double erfc_part_ri = erfc(adist) / dist;
-    return coulomb.prefactor * chgfac * erfc_part_ri;
+    return chgfac * erfc_part_ri;
 #endif
   }
   return 0.0;

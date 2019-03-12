@@ -1398,10 +1398,9 @@ static void prepareBernoulliNumbers(int bon_order) {
   }
 }
 
-void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
+void add_mmm2d_coulomb_pair_force(double pref, double d[3], double dl2,
                                   double dl, double force[3]) {
   double F[3];
-  double pref = coulomb.prefactor * charge_factor;
   double z2 = d[2] * d[2];
   double rho2 = d[1] * d[1] + z2;
   int i;

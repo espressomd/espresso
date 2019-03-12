@@ -1,9 +1,10 @@
 #ifndef ESPRESSO_COULOMB_HPP
 #define ESPRESSO_COULOMB_HPP
 
-#include "Observable_stat.hpp"
+#include "config.hpp"
 
 #ifdef ELECTROSTATICS
+#include "Observable_stat.hpp"
 
 /** \name Type codes for the type of Coulomb interaction
     Enumeration of implemented methods for the electrostatic
@@ -34,13 +35,13 @@ enum CoulombMethod {
  *  the Coulomb  interaction.  */
 struct Coulomb_parameters {
   /** bjerrum length times temperature. */
-  double prefactor;
+  double prefactor = 0.;
 
-  double field_induced;
-  double field_applied;
+  double field_induced = 0.;
+  double field_applied = 0.;
 
   /** Method to treat Coulomb interaction. */
-  CoulombMethod method;
+  CoulombMethod method = COULOMB_NONE;
 };
 
 /** Structure containing the Coulomb parameters. */
@@ -52,7 +53,7 @@ void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor);
 
 void sanity_checks(int &state);
-void cutoff(double &ret);
+void cutoff(double &ret, const double box_l[3]);
 void deactivate();
 
 void integrate_sanity_check();

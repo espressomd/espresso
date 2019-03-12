@@ -223,7 +223,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
 
     /* real space parts */
 
-    pref = coulomb.prefactor / (r2 * r);
+    pref = 1. / (r2 * r);
     Fx += pref * d[0];
     Fy += pref * d[1];
     Fz += pref * d[2];
@@ -231,7 +231,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
     shift_z = d[2] + box_l[2];
     rt2 = rxy2 + shift_z * shift_z;
     rt = sqrt(rt2);
-    pref = coulomb.prefactor / (rt2 * rt);
+    pref = 1. / (rt2 * rt);
     Fx += pref * d[0];
     Fy += pref * d[1];
     Fz += pref * shift_z;
@@ -239,7 +239,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
     shift_z = d[2] - box_l[2];
     rt2 = rxy2 + shift_z * shift_z;
     rt = sqrt(rt2);
-    pref = coulomb.prefactor / (rt2 * rt);
+    pref = 1. / (rt2 * rt);
     Fx += pref * d[0];
     Fy += pref * d[1];
     Fz += pref * shift_z;
@@ -271,11 +271,11 @@ void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
     sr *= uz2 * 4 * C_2PI;
     sz *= uz2 * 4 * C_2PI;
 
-    pref = coulomb.prefactor * (sr / rxy + 2 * uz / rxy2);
+    pref = 1. * (sr / rxy + 2 * uz / rxy2);
 
     F[0] = pref * d[0];
     F[1] = pref * d[1];
-    F[2] = coulomb.prefactor * sz;
+    F[2] = 1. * sz;
   }
 
   for (dim = 0; dim < 3; dim++)

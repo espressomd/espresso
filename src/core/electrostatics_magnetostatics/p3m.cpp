@@ -31,6 +31,7 @@
 #include "domain_decomposition.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "fft.hpp"
 #include "global.hpp"
 #include "grid.hpp"

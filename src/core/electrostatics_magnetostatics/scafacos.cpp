@@ -172,7 +172,7 @@ void add_pair_force(Particle *p1, Particle *p2, double *d, double dist,
 
   assert(scafacos);
   const double field = scafacos->pair_force(dist);
-  const double fak = p2->p.q * p1->p.q * field * coulomb.prefactor / dist;
+  const double fak = p2->p.q * p1->p.q * field / dist;
 
   for (int i = 0; i < 3; i++) {
     p1->f.f[i] -= fak * d[i];
@@ -182,7 +182,7 @@ void add_pair_force(Particle *p1, Particle *p2, double *d, double dist,
 
 double pair_energy(Particle *p1, Particle *p2, double dist) {
   if (dist <= get_r_cut())
-    return coulomb.prefactor * p1->p.q * p2->p.q * scafacos->pair_energy(dist);
+    return p1->p.q * p2->p.q * scafacos->pair_energy(dist);
   else
     return 0.;
 }

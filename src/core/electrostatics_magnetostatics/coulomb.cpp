@@ -13,11 +13,10 @@
 #include "integrate.hpp"
 #include "layered.hpp"
 #include "npt.hpp"
+#include "errorhandling.hpp"
+#include "communication.hpp"
 
-Coulomb_parameters coulomb = {
-    0.0,
-    COULOMB_NONE,
-};
+Coulomb_parameters coulomb;
 
 namespace Coulomb {
 
@@ -97,7 +96,7 @@ void sanity_checks(int &state) {
   }
 }
 
-void cutoff(double &ret) {
+void cutoff(double &ret, const double box_l[3]) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:

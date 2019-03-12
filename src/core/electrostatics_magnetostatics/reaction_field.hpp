@@ -31,7 +31,6 @@
 #include "config.hpp"
 
 #ifdef ELECTROSTATICS
-#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "particle_data.hpp"
 
 /** Structure to hold Reaction Field Parameters. */
@@ -66,7 +65,7 @@ inline void add_rf_coulomb_pair_force_no_cutoff(const Particle *const p1,
   double fac;
   fac = 1.0 / (dist * dist * dist) +
         rf_params.B / (rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
-  fac *= coulomb.prefactor * p1->p.q * p2->p.q;
+  fac *= p1->p.q * p2->p.q;
 
   for (j = 0; j < 3; j++)
     force[j] += fac * d[j];
@@ -96,7 +95,7 @@ inline double rf_coulomb_pair_energy_no_cutoff(const Particle *p1,
             (2 * rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
   // cut off part
   fac -= (1 - rf_params.B / 2) / rf_params.r_cut;
-  fac *= coulomb.prefactor * p1->p.q * p2->p.q;
+  fac *= p1->p.q * p2->p.q;
   return fac;
 }
 

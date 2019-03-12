@@ -151,7 +151,7 @@ double calc_electrostatics_cutoff() {
      but the method not yet reinitialized.
    */
   double ret = 0.;
-  Coulomb::cutoff(ret);
+    Coulomb::cutoff(ret, box_l);
   return ret;
 #endif /*ifdef ELECTROSTATICS */
   return 0;
