@@ -277,7 +277,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     auto const dx21 = -get_mi_vector(p1->r.p, p2->r.p);
     auto const dx31 = get_mi_vector(p3->r.p, p1->r.p);
 
-    Vector3d force1, force2, force3;
+    Vector3d force1{}, force2{}, force3{};
     calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2, force3);
     /* three-body bonded interactions contribute to the stress but not the
      * scalar pressure */
