@@ -25,11 +25,11 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
+#include "debug.hpp"
 #include "domain_decomposition.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "utils.hpp"
-#include "debug.hpp"
 
 #include <cstring>
 #include <mpi.h>

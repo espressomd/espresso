@@ -30,19 +30,19 @@
 #include "grid_based_algorithms/lb.hpp"
 
 #ifdef LB
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "cuda_interface.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "halo.hpp"
+#include "integrate.hpp"
 #include "lb-d3q19.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
-#include "cuda_interface.hpp"
-#include "integrate.hpp"
-#include "debug.hpp"
 
 #include "utils/Counter.hpp"
 #include "utils/math/matrix_vector_product.hpp"
@@ -55,10 +55,10 @@
 #include <profiler/profiler.hpp>
 
 #include <cassert>
-#include <cstdio>
-#include <iostream>
 #include <cinttypes>
+#include <cstdio>
 #include <fstream>
+#include <iostream>
 
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_halo_regions(const LB_Fluid &lbfluid);

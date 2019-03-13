@@ -27,6 +27,7 @@
 #include "cells.hpp"
 #include "algorithm/link_cell.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "domain_decomposition.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
@@ -36,7 +37,6 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
-#include "debug.hpp"
 
 #include "utils/NoOp.hpp"
 #include "utils/mpi/gather_buffer.hpp"

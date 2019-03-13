@@ -38,13 +38,13 @@
 
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "domain_decomposition.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "tuning.hpp"
-#include "debug.hpp"
 
 #include "utils/strcat_alloc.hpp"
 using Utils::strcat_alloc;
