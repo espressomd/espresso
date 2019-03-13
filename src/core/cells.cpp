@@ -36,10 +36,10 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
+#include "short_range_loop.hpp"
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
 #include "utils/mpi/gather_buffer.hpp"
-#include "short_range_loop.hpp"
 
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/optional.hpp>
@@ -84,43 +84,43 @@ int rebuild_verletlist = 1;
  * @param r Search radius.
  * @return  List of particles nearby.
  */
-std::vector<int> local_find_nearby_particles(const Vector3d& x, double r) {
+std::vector<int> local_find_nearby_particles(const Vector3d &x, double r) {
   using boost::accumulate;
   using Utils::Span;
 
   auto search_cell = cell_structure.position_to_cell(x);
-  auto const r2 = r*r;
+  auto const r2 = r * r;
 
   auto nearby = [&](Cell *c, std::vector<int> init) {
-    return accumulate(Span<const Particle>(c->part, c->n),
-                      init, [&](std::vector<int> parts, const Particle &p) {
+    return accumulate(Span<const Particle>(c->part, c->n), init,
+                      [&](std::vector<int> parts, const Particle &p) {
+                        if (r2 <= get_mi_vector(x, p.r.p).norm2()) {
+                          parts.push_back(p.identity());
+                        }
 
-                if(r2 <= get_mi_vector(x, p.r.p).norm2()) {
-                  parts.push_back(p.identity());
-                }
-
-                return parts;
-            });
+                        return parts;
+                      });
   };
 
-  return accumulate(search_cell->neighbors().all(), nearby(search_cell, {}),
-          [&](std::vector<int> parts, Cell *n){
-    return nearby(n, parts);
-  });
+  return accumulate(
+      search_cell->neighbors().all(), nearby(search_cell, {}),
+      [&](std::vector<int> parts, Cell *n) { return nearby(n, parts); });
 }
 
 void cells_find_nearby_particles_slave(int pnode, int) {
-  if(comm_cart.rank() == pnode) {
+  if (comm_cart.rank() == pnode) {
     std::pair<Vector3d, double> params;
     comm_cart.recv(0, 52, params);
-    comm_cart.send(0, 52, local_find_nearby_particles(params.first, params.second));
+    comm_cart.send(0, 52,
+                   local_find_nearby_particles(params.first, params.second));
   }
 }
 
-std::vector<int> cells_find_nearby_particles(Vector3d const &pos, double radius) {
+std::vector<int> cells_find_nearby_particles(Vector3d const &pos,
+                                             double radius) {
   auto const pnode = cell_structure.position_to_node(pos);
 
-  if(comm_cart.rank() == pnode) {
+  if (comm_cart.rank() == pnode) {
     return local_find_nearby_particles(pos, radius);
   } else {
     mpi_call(cells_find_nearby_particles_slave, pnode, -1);
@@ -142,7 +142,7 @@ std::vector<int> cells_find_nearby_particles(Vector3d const &pos, double radius)
  * @return If a particle is found, the distance and id of the particle,
  *         otherwise +Inf and an invalid particle id.
  */
-std::pair<double,int> local_find_closest_particle(const Vector3d &pos) {
+std::pair<double, int> local_find_closest_particle(const Vector3d &pos) {
   using boost::accumulate;
   using Utils::Span;
   using DistId = std::pair<double, int>;
@@ -150,21 +150,22 @@ std::pair<double,int> local_find_closest_particle(const Vector3d &pos) {
   auto search_cell = cell_structure.position_to_cell(pos);
 
   /* Closest particle within a cell */
-  auto closest_part = [&pos](DistId init, Cell* c) {
-     return accumulate(Span<const Particle>(c->part, c->n),
-                       init,
-                       [&pos](DistId dist, const Particle &p){
-                          return std::min(dist, {get_mi_vector(pos, p.r.p).norm(), p.identity()});
-      });
+  auto closest_part = [&pos](DistId init, Cell *c) {
+    return accumulate(Span<const Particle>(c->part, c->n), init,
+                      [&pos](DistId dist, const Particle &p) {
+                        return std::min(dist, {get_mi_vector(pos, p.r.p).norm(),
+                                               p.identity()});
+                      });
   };
 
-  return accumulate(search_cell->neighbors().all(),
-                                      closest_part({std::numeric_limits<double>::infinity(), -1}, search_cell),
-   closest_part);
+  return accumulate(
+      search_cell->neighbors().all(),
+      closest_part({std::numeric_limits<double>::infinity(), -1}, search_cell),
+      closest_part);
 }
 
 void cells_find_closest_particle_slave(int pnode, int) {
-  if(comm_cart.rank() == pnode) {
+  if (comm_cart.rank() == pnode) {
     Vector3d pos;
     comm_cart.recv(0, 52, pos);
     comm_cart.send(0, 52, local_find_closest_particle(pos));
@@ -174,7 +175,7 @@ void cells_find_closest_particle_slave(int pnode, int) {
 std::pair<double, int> cells_find_closest_particle(Vector3d const &pos) {
   auto const pnode = cell_structure.position_to_node(pos);
 
-  if(comm_cart.rank() == pnode) {
+  if (comm_cart.rank() == pnode) {
     return local_find_closest_particle(pos);
   } else {
     mpi_call(cells_find_closest_particle_slave, pnode, -1);
@@ -313,7 +314,7 @@ void topology_init(int cs, CellPList *local) {
   case CELL_STRUCTURE_NONEYET:
     break;
   case CELL_STRUCTURE_CURRENT:
-      topology_init(cell_structure.type, local);
+    topology_init(cell_structure.type, local);
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_topology_init(local);
@@ -357,7 +358,7 @@ void cells_re_init(int new_cs) {
   /* MOVE old cells to temporary buffer */
   auto tmp_cells = std::move(cells);
 
-    topology_init(new_cs, &tmp_local);
+  topology_init(new_cs, &tmp_local);
 
   clear_particle_node();
 

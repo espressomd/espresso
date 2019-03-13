@@ -174,7 +174,7 @@ struct CellStructure {
    * by the cell system. Only pairs closer than this are
    * found by the pair finding algorithms.
    */
-   double max_range;
+  double max_range;
 };
 
 /*@}*/

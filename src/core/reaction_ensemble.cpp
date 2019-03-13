@@ -725,7 +725,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   auto pos_vec = get_random_position_in_box();
   double d_min;
   std::tie(d_min, std::ignore) = cells_find_closest_particle(pos_vec);
-  
+
   place_particle(p_id, pos_vec.data());
   // set type
   set_particle_type(p_id, desired_type);
