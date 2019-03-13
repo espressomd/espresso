@@ -295,7 +295,7 @@ void convert_torques_propagate_omega() {
       fprintf(stderr, "%d: convert_torques_propagate_omega:\n", this_node));
 
 #if defined(LB_GPU) && defined(ENGINE)
-  if ((lb_lbfluid_get_lattice_switch() & LATTICE_LB_GPU) &&
+  if ((lb_lbfluid_get_lattice_switch() == ActiveLB::GPU) &&
       swimming_particles_exist) {
     copy_v_cs_from_GPU(local_cells.particles());
   }
@@ -309,7 +309,7 @@ void convert_torques_propagate_omega() {
     convert_torque_to_body_frame_apply_fix_and_thermostat(p);
 
 #if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
-    if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != 0) {
+    if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
 
       auto const dip = p.swim.dipole_length * p.r.calc_director();
 

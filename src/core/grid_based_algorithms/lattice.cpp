@@ -54,6 +54,7 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
                         << "]=" << local_box_l[dir] << " ( box_l[" << dir
                         << "]=" << box_l[dir] << " node_grid[" << dir
                         << "]=" << node_grid[dir] << " )";
+      return ES_ERROR;
     }
   }
 

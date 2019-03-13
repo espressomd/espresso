@@ -77,8 +77,7 @@ static LB_rho_v_pi_gpu *print_rho_v_pi = nullptr;
 /*@{*/
 static LB_nodes_gpu nodes_a = {nullptr, nullptr};
 static LB_nodes_gpu nodes_b = {nullptr, nullptr};
-;
-/** struct for node force density*/
+/*@}*/
 
 /** struct for node force density */
 LB_node_force_density_gpu node_f = {
@@ -95,8 +94,10 @@ LB_node_force_density_gpu node_f = {
 static LB_extern_nodeforcedensity_gpu *extern_node_force_densities = nullptr;
 
 #ifdef LB_BOUNDARIES_GPU
+/** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
 
+/** @brief Velocity at the boundary */
 static float *lb_boundary_velocity = nullptr;
 
 /** @name pointers for bound index array */
@@ -115,7 +116,10 @@ static int *gpu_check = nullptr;
 static int *h_gpu_check = nullptr;
 /*@}*/
 
-static unsigned int intflag = 1;
+/** @brief Direction of data transfer between @ref nodes_a and @ref nodes_b
+ *  during integration in @ref lb_integrate_GPU
+ */
+static bool intflag = true;
 LB_nodes_gpu *current_nodes = nullptr;
 /** @name defining size values for allocating global memory */
 /*@{*/
@@ -139,25 +143,9 @@ static const float c_sound_sq = 1.0f / 3.0f;
 static constexpr float sqrt12 = 3.4641016151377544f;
 static Utils::Counter<uint64_t> rng_counter_coupling_gpu;
 Utils::Counter<uint64_t> rng_counter_fluid_gpu;
-__device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
-                                        uint64_t philox_counter) {
-  // Split the 64 bit counter into two 32 bit ints.
-  uint32_t philox_counter_hi = static_cast<uint32_t>(philox_counter >> 32);
-  uint32_t philox_counter_low = static_cast<uint32_t>(philox_counter);
-  uint4 rnd_ints =
-      curand_Philox4x32_10(make_uint4(index, philox_counter_hi, 0, mode),
-                           make_uint2(philox_counter_low, 0));
-  float4 rnd_floats;
-  rnd_floats.w = rnd_ints.w * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  rnd_floats.x = rnd_ints.x * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  rnd_floats.y = rnd_ints.y * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  rnd_floats.z = rnd_ints.z * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  return rnd_floats;
-}
 
 /** Transformation from 1d array-index to xyz
  *  @param[in]  index   Node index / thread index
- *  @param[out] xyz     Calculated xyz array
  */
 template <typename T> __device__ uint3 index_to_xyz(T index) {
   auto const x = index % para->dim_x;
@@ -169,7 +157,7 @@ template <typename T> __device__ uint3 index_to_xyz(T index) {
 }
 
 /** Transformation from xyz to 1d array-index
- *  @param[in] xyz     The xyz array
+ *  @param[in] x,y,z     The xyz array
  */
 template <typename T> __device__ T xyz_to_index(T x, T y, T z) {
   return x + para->dim_x * (y + para->dim_y * z);
@@ -1496,8 +1484,8 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *  @param[in]  n_a                Local node residing in array a
  *  @param[in]  particle_position  Particle position
  *  @param[out] node_index         Node index around (8) particle
- *  @param[in]  d_v                Local device values
  *  @param[out] delta              Weighting of particle position
+ *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @retval Interpolated velocity
  */
 __device__ __inline__ float3 velocity_interpolation(
@@ -1591,6 +1579,7 @@ __device__ __inline__ float3 velocity_interpolation(
  *                                 typical) or at the source (1, swimmer only)
  *  @param[in]  philox_counter
  *  @param[in]  friction           Friction constant for the particle coupling
+ *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @tparam no_of_neighbours       The number of neighbours to consider for
  * interpolation
  */
@@ -2234,6 +2223,8 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[in]  d_v                 Local device values
  *  @param[in]  couple_virtual
  *  @param[in]  philox_counter
+ *  @param[in]  friction            Friction constant for the particle coupling
+ *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @tparam     no_of_neighbours    The number of neighbours to consider for
  * interpolation
  */
@@ -2493,7 +2484,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block, nodes_a,
              device_rho_v, node_f, gpu_check);
 
-  intflag = 1;
+  intflag = true;
   current_nodes = &nodes_a;
   h_gpu_check[0] = 0;
   cuda_safe_mem(
@@ -2885,45 +2876,23 @@ void lb_calc_fluid_temperature_GPU(double *host_temp) {
 }
 
 /** Setup and call kernel for getting macroscopic fluid values of all nodes
- *  @param host_checkpoint_vd         struct to save the gpu populations
- *  @param host_checkpoint_boundary   struct to save the boundary nodes
- *  @param host_checkpoint_force      struct to save the forces on the nodes
+ *  @param[out] host_checkpoint_vd   LB populations
  */
-void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force) {
+void lb_save_checkpoint_GPU(float *const host_checkpoint_vd) {
   cuda_safe_mem(cudaMemcpy(host_checkpoint_vd, current_nodes->vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
-                           cudaMemcpyDeviceToHost));
-  cuda_safe_mem(cudaMemcpy(host_checkpoint_boundary, current_nodes->boundary,
-                           lbpar_gpu.number_of_nodes * sizeof(unsigned int),
-                           cudaMemcpyDeviceToHost));
-  cuda_safe_mem(cudaMemcpy(host_checkpoint_force, node_f.force_density,
-                           lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat),
                            cudaMemcpyDeviceToHost));
 }
 
 /** Setup and call kernel for getting macroscopic fluid values of all nodes
- *  @param host_checkpoint_vd         struct to save the GPU populations
- *  @param host_checkpoint_boundary   struct to save the boundary nodes
- *  @param host_checkpoint_force      struct to save the forces on the nodes
- *  @param host_checkpoint_philox_counter
+ *  @param[in] host_checkpoint_vd    LB populations
  */
-void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force) {
+void lb_load_checkpoint_GPU(float const *const host_checkpoint_vd) {
   current_nodes = &nodes_a;
-  intflag = 1;
+  intflag = true;
 
   cuda_safe_mem(cudaMemcpy(current_nodes->vd, host_checkpoint_vd,
                            lbpar_gpu.number_of_nodes * 19 * sizeof(float),
-                           cudaMemcpyHostToDevice));
-
-  cuda_safe_mem(cudaMemcpy(current_nodes->boundary, host_checkpoint_boundary,
-                           lbpar_gpu.number_of_nodes * sizeof(unsigned int),
-                           cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpy(node_f.force_density, host_checkpoint_force,
-                           lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat),
                            cudaMemcpyHostToDevice));
 }
 
@@ -2994,9 +2963,9 @@ void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu) {
                                    sizeof(LB_parameters_gpu)));
 }
 
-/**integration kernel for the lb gpu fluid update called from host */
+/** Integration kernel for the lb gpu fluid update called from host */
 void lb_integrate_GPU() {
-  /** values for the kernel call */
+  /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x =
@@ -3011,19 +2980,19 @@ void lb_integrate_GPU() {
   }
 #endif
 
-  /**call of fluid step*/
-  if (intflag == 1) {
+  /* call of fluid step */
+  if (intflag) {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
                device_rho_v, node_f, lb_ek_parameters_gpu,
                rng_counter_fluid_gpu.value());
     current_nodes = &nodes_b;
-    intflag = 0;
+    intflag = false;
   } else {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
                device_rho_v, node_f, lb_ek_parameters_gpu,
                rng_counter_fluid_gpu.value());
     current_nodes = &nodes_a;
-    intflag = 1;
+    intflag = true;
   }
 
 #ifdef LB_BOUNDARIES_GPU
@@ -3051,7 +3020,7 @@ void lb_gpu_get_boundary_forces(double *forces) {
 }
 
 struct lb_lbfluid_mass_of_particle {
-  __device__ float operator()(CUDA_particle_data particle) const {
+  __host__ __device__ float operator()(CUDA_particle_data particle) const {
 #ifdef MASS
     return particle.mass;
 #else
@@ -3278,6 +3247,9 @@ void lb_coupling_set_rng_state_gpu(uint64_t counter) {
 
 void lb_fluid_set_rng_state_gpu(uint64_t counter) {
   rng_counter_fluid_gpu = Utils::Counter<uint64_t>(counter);
+#ifdef ELECTROKINETICS
+  ek_set_rng_state(counter);
+#endif // ELECTROKINETICS
 }
 
 uint64_t lb_coupling_get_rng_state_gpu() {
