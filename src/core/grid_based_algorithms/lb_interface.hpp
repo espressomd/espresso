@@ -55,20 +55,13 @@ const Lattice &lb_lbfluid_get_lattice();
 
 /**
  * @brief Get the global variable @ref lattice_switch.
- *
- * Function to be called from Cython.
- */
-int lb_lbfluid_get_lattice_switch_cython();
-
-/**
- * @brief Get the global variable @ref lattice_switch.
  */
 ActiveLB lb_lbfluid_get_lattice_switch();
 
 /**
  * @brief Set the global variable @ref lattice_switch.
  */
-void lb_lbfluid_set_lattice_switch(int local_lattice_switch);
+void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
 
 /**
  * @brief Set the LB time step.

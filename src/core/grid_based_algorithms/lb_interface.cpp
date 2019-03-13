@@ -417,9 +417,16 @@ double lb_lbfluid_get_tau() {
   }
 }
 
-void lb_lbfluid_set_lattice_switch(int local_lattice_switch) {
-  assert(local_lattice_switch >= 0 && local_lattice_switch <= 2);
-  lattice_switch = static_cast<ActiveLB>(local_lattice_switch);
+void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
+  switch (local_lattice_switch) {
+  case ActiveLB::NONE:
+  case ActiveLB::CPU:
+  case ActiveLB::GPU:
+    break;
+  default:
+    throw std::invalid_argument("Invalid lattice switch.");
+  }
+  lattice_switch = local_lattice_switch;
   mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
 }
 
