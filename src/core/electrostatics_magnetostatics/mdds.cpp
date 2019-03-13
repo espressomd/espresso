@@ -234,6 +234,28 @@ void collect_local_particles(const ParticleRange &particles,
 
 } // namespace
 
+/**
+ * @brief Calculated the interaction forces.
+ *
+ * This employs a parallel n2 loop over all particle
+ * pairs. The computation the partitioned into serveral
+ * steps so that the communication latency can be hidden
+ * behinder some local computation:
+ *
+ * 1. The local particle positions and momenta are packed into
+ *    one array.
+ * 2. The asynchronous distribution of the local arrays to all
+ *    ranks is started.
+ * 3. The interaction for the local pairs is started, here every
+ *    pair is visited only once, and the force is added to both particles.
+ * 4. Wait for the data from the other nodes.
+ * 5. Calculate the interaction with the rest of the particles. Here
+ *    every pair is visited twice (not necessarily on the same rank)
+ *    so that no reduction of the forces is needed.
+ *
+ * Logically this is equivalent to the potential calculation in @f mdds_energy,
+ * which calculates a naiive n2 sum, but has better performance and scaling.
+ */
 void mdds_forces(const ParticleRange &particles,
                  const boost::mpi::communicator &comm) {
   std::vector<Particle *> local_interacting_particles;
@@ -280,6 +302,7 @@ void mdds_forces(const ParticleRange &particles,
                     return pair_force(rn, pi->m, mj);
                   });
 
+    /* IA with other local particles */
     auto q = std::next(p);
     for (auto pj = std::next(pi); pj != end; ++pj, ++q) {
       auto const d = (with_replicas) ? (pi->pos - pj->pos)
@@ -301,8 +324,10 @@ void mdds_forces(const ParticleRange &particles,
     (*p)->f.torque += coulomb.Dprefactor * fi.torque;
   }
 
+  /* Wait for the rest of the data to arrive */
   boost::mpi::wait_all(reqs.begin(), reqs.end());
 
+  /* Interaction with all the other particles */
   p = local_interacting_particles.begin();
   for (auto pi = begin; pi != end; ++pi, ++p) {
     auto fi = image_sum(all_posmom.begin(), begin, pi, with_replicas, ncut,
@@ -322,6 +347,12 @@ void mdds_forces(const ParticleRange &particles,
   }
 }
 
+/**
+ * @brief Calculated the interaction potentials.
+ *
+ * This employs a parallel n2 loop over all particle
+ * pairs.
+*/
 double mdds_energy(const ParticleRange &particles,
                    const boost::mpi::communicator &comm) {
   std::vector<Particle *> local_interacting_particles;
