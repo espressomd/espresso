@@ -48,7 +48,7 @@ class H5md(object):
                  If types (called 'species' in the H5MD specification) should be written.
     write_mass : :obj:`bool`, optional
                  If masses should be written.
-    write_charge : :obj:`bool`, opional
+    write_charge : :obj:`bool`, optional
                    If charges should be written.
     write_ordered : :obj:`bool`, optional
                     If particle properties should be ordered according to

@@ -291,6 +291,10 @@ int mpi_sync_topo_part_info(void);
  */
 void mpi_bcast_lb_params(int field, int value = -1);
 
+void mpi_bcast_lb_particle_coupling();
+
+Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos);
+
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
 void mpi_bcast_cuda_global_part_vars();
 
@@ -301,9 +305,8 @@ void mpi_bcast_cuda_global_part_vars();
  *  @param j      local fluid velocity
  *  @param pi     local fluid pressure
  */
-void mpi_send_fluid(int node, int index, double rho,
-                    const std::array<double, 3> &j,
-                    const std::array<double, 6> &pi);
+void mpi_send_fluid(int node, int index, double rho, const Vector3d &j,
+                    const Vector6d &pi);
 
 /** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
  *  @param node   processor to send to
@@ -344,7 +347,7 @@ void mpi_recv_fluid_populations(int node, int index, double *pop);
  *  @param index  index of the lattice site
  *  @param pop    local fluid population
  */
-void mpi_send_fluid_populations(int node, int index, double *pop);
+void mpi_send_fluid_populations(int node, int index, const Vector19d &pop);
 
 /** Part of MDLC */
 void mpi_bcast_max_mu();
@@ -393,7 +396,6 @@ std::vector<int> mpi_resort_particles(int global_flag);
 /*@{*/
 #define P3M_COUNT_CHARGES 0
 #define CHECK_PARTICLES 2
-#define MAGGS_COUNT_CHARGES 3
 #define P3M_COUNT_DIPOLES 5
 /*@}*/
 

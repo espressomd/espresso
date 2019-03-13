@@ -30,7 +30,6 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-#ifdef BOND_ANGLE
 #include "grid.hpp"
 
 /** set parameters for the angle potential.
@@ -205,5 +204,4 @@ inline int angle_cosine_energy(Particle *p_mid, Particle *p_left,
   return 0;
 }
 
-#endif /* BOND_ANGLE */
 #endif /* ANGLE_COSINE_H */

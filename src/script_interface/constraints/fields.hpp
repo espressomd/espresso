@@ -104,7 +104,7 @@ struct field_params_impl<Interpolated<T, codim>> {
   static Interpolated<T, codim> make(const VariantMap &params) {
     auto const field_data =
         get_value<std::vector<double>>(params, "_field_data");
-    auto const field_shape = get_value<Vector<3, int>>(params, "_field_shape");
+    auto const field_shape = get_value<Vector3i>(params, "_field_shape");
     auto const field_codim = get_value<int>(params, "_field_codim");
 
     if (field_codim != codim) {
@@ -114,14 +114,14 @@ struct field_params_impl<Interpolated<T, codim>> {
     }
 
     if (*std::min_element(field_shape.begin(), field_shape.end()) < 1) {
-      throw std::runtime_error("Field is to small, needs to be at least "
+      throw std::runtime_error("Field is too small, needs to be at least "
                                "one in all directions.");
     }
 
     auto const grid_spacing = get_value<Vector3d>(params, "grid_spacing");
     auto const origin = -0.5 * grid_spacing;
 
-    using field_data_type = typename decay_to_scalar<Vector<codim, T>>::type;
+    using field_data_type = typename decay_to_scalar<Vector<T, codim>>::type;
     auto array_ref = boost::const_multi_array_ref<field_data_type, 3>(
         reinterpret_cast<const field_data_type *>(field_data.data()),
         field_shape);

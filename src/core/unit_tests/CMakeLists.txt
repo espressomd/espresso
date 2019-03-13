@@ -71,4 +71,6 @@ unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS Boost::mpi MPI::MPI_C
 unit_test(NAME gatherv_test SRC gatherv_test.cpp DEPENDS Boost::mpi MPI::MPI_CXX)
 unit_test(NAME all_gatherv_test SRC all_gatherv_test.cpp DEPENDS Boost::mpi MPI::MPI_CXX)
 unit_test(NAME cartesian_product_test SRC cartesian_product_test.cpp)
-unit_test(NAME PdbParser_test SRC PdbParser_test.cpp ../PdbParser.cpp)
+unit_test(NAME matrix_vector_product SRC matrix_vector_product.cpp)
+unit_test(NAME ravel_index SRC index_test.cpp)
+unit_test(NAME Array_test SRC Array_test.cpp DEPENDS Boost::serialization)

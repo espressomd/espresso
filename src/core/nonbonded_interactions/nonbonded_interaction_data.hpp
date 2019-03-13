@@ -49,7 +49,6 @@ enum CoulombMethod {
   COULOMB_P3M,       //< Coulomb method is P3M
   COULOMB_MMM1D,     //< Coulomb method is one-dimensional MMM
   COULOMB_MMM2D,     //< Coulomb method is two-dimensional MMM
-  COULOMB_MAGGS,     //< Coulomb method is "Maggs"
   COULOMB_ELC_P3M,   //< Coulomb method is P3M plus ELC
   COULOMB_RF,        //< Coulomb method is Reaction-Field
   COULOMB_INTER_RF,  //< Coulomb method is Reaction-Field BUT as interaction
@@ -341,11 +340,6 @@ struct IA_parameters {
 
 #ifdef SWIMMER_REACTIONS
   double REACTION_range = INACTIVE_CUTOFF;
-#endif
-
-#ifdef SHANCHEN
-  double affinity[LB_COMPONENTS];
-  int affinity_on = 0;
 #endif
 };
 

@@ -163,7 +163,7 @@ cdef class PScriptInterface(object):
         elif np.issubdtype(np.dtype(type(value)), np.floating):
             return make_variant[double](value)
         else:
-            raise TypeError("Unkown type for conversion to Variant")
+            raise TypeError("Unknown type for conversion to Variant")
 
     cdef variant_to_python_object(self, Variant value) except +:
         cdef ObjectId oid
@@ -219,7 +219,7 @@ cdef class PScriptInterface(object):
 
             return res
 
-        raise Exception("Unkown type")
+        raise Exception("Unknown type")
 
     def get_parameter(self, name):
         cdef Variant value = self.sip.get().get_parameter(to_char_pointer(name))
