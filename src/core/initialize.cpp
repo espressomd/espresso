@@ -620,7 +620,7 @@ void on_ghost_flags_change() {
 
 /* DPD and LB need also ghost velocities */
 #ifdef LB
-  if (lattice_switch & LATTICE_LB)
+  if (lattice_switch == ActiveLB::CPU)
     ghosts_have_v = 1;
 #endif
 #ifdef BOND_CONSTRAINT
