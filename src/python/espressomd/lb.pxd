@@ -278,7 +278,12 @@ IF LB_GPU or LB:
         if p_couple_flag == "2pt":
             p_couple_flag = 2
         elif p_couple_flag == "3pt":
-            p_couple_flag = 4
+            raise Exception(
+               """
+               Three-point coupling has been removed from the ESPResSo 4.0
+               line due to errors. A re-implementation is available in the
+               development branch.
+               """)
         else:
             raise Exception(
                 "Parameter couple accepts only \"2pt\" and \"3pt\"")

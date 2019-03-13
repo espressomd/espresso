@@ -238,6 +238,28 @@ class TestLB(object):
             np.testing.assert_allclose(
                 np.copy(self.lbf[n].velocity), fluid_velocity, atol=1E-6)
 
+    def test_disable_3pt_coupling(self):
+        self.system.actors.clear()
+        # Check that 3pt coupling cannot be activated
+        with (self.assertRaises(Exception)):
+            lbf = self.lb_class(
+                visc=self.params['viscosity'],
+                dens=self.params['dens'],
+                agrid=self.params['agrid'],
+                tau=self.system.time_step,
+                fric=self.params['friction'],couple="3pt")
+            self.system.actors.add(lbf)
+        self.system.actors.clear()
+
+        # Check that explicit 2pt coupling can be activated
+        lbf = self.lb_class(
+                visc=self.params['viscosity'],
+                dens=self.params['dens'],
+                agrid=self.params['agrid'],
+                tau=self.system.time_step,
+                fric=self.params['friction'],couple="2pt")
+        self.system.actors.add(lbf)
+        self.system.actors.clear()
 
 @ut.skipIf(not espressomd.has_features(["LB"]),
            "Features not available, skipping test!")
