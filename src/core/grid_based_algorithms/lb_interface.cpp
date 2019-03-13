@@ -718,39 +718,31 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
 #ifdef LB_GPU
     float *host_checkpoint_vd =
         (float *)Utils::malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
-    unsigned int *host_checkpoint_boundary = (unsigned int *)Utils::malloc(
-        lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-    lbForceFloat *host_checkpoint_force = (lbForceFloat *)Utils::malloc(
-        lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
-    lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_boundary,
-                           host_checkpoint_force);
+    lb_save_checkpoint_GPU(host_checkpoint_vd);
     if (!binary) {
       std::fstream cpfile(filename, std::ios::out);
       cpfile << std::fixed;
       cpfile.precision(8);
+      cpfile << lbpar_gpu.dim_x << " ";
+      cpfile << lbpar_gpu.dim_y << " ";
+      cpfile << lbpar_gpu.dim_z << "\n";
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         cpfile << host_checkpoint_vd[n] << "\n";
-      }
-      for (int n = 0; n < int(lbpar_gpu.number_of_nodes); n++) {
-        cpfile << host_checkpoint_boundary[n] << "\n";
-      }
-      for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
-        cpfile << host_checkpoint_force[n] << "\n";
       }
       cpfile.close();
     } else {
       std::fstream cpfile(filename, std::ios::out | std::ios::binary);
-      cpfile.write(reinterpret_cast<char *>(&host_checkpoint_vd),
+      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim_x),
+                   sizeof(lbpar_gpu.dim_x));
+      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim_y),
+                   sizeof(lbpar_gpu.dim_y));
+      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim_z),
+                   sizeof(lbpar_gpu.dim_z));
+      cpfile.write(reinterpret_cast<char *>(host_checkpoint_vd),
                    19 * sizeof(float) * lbpar_gpu.number_of_nodes);
-      cpfile.write(reinterpret_cast<char *>(&host_checkpoint_boundary),
-                   sizeof(int) * lbpar_gpu.number_of_nodes);
-      cpfile.write(reinterpret_cast<char *>(&host_checkpoint_force),
-                   3 * sizeof(float) * lbpar_gpu.number_of_nodes);
       cpfile.close();
     }
     free(host_checkpoint_vd);
-    free(host_checkpoint_boundary);
-    free(host_checkpoint_force);
 #endif // LB_GPU
   } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
@@ -762,14 +754,17 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
       cpfile.precision(16);
       cpfile << std::fixed;
     }
+
     double pop[19];
     Vector3i ind;
+    auto const gridsize = lblattice.global_grid;
 
-    Vector3i gridsize;
-
-    gridsize[0] = box_l[0] / lbpar.agrid;
-    gridsize[1] = box_l[1] / lbpar.agrid;
-    gridsize[2] = box_l[2] / lbpar.agrid;
+    if (!binary) {
+      cpfile << gridsize[0] << " " << gridsize[1] << " " << gridsize[2] << "\n";
+    } else {
+      cpfile.write(reinterpret_cast<const char *>(gridsize.data()),
+                   3 * sizeof(gridsize[0]));
+    }
 
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
@@ -780,9 +775,8 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
           auto pop = lb_lbnode_get_pop(ind);
           if (!binary) {
             for (int n = 0; n < 19; n++) {
-              cpfile << pop[n];
+              cpfile << pop[n] << "\n";
             }
-            cpfile << "\n";
           } else {
             cpfile.write(reinterpret_cast<char *>(&pop[0]),
                          19 * sizeof(double));
@@ -796,66 +790,121 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
 }
 
 void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
+  int res;
+  std::string err_msg = "Error while reading LB checkpoint: ";
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     FILE *cpfile;
     cpfile = fopen(filename.c_str(), "r");
     if (!cpfile) {
-      throw std::runtime_error("Could not open file for reading.");
+      throw std::runtime_error(err_msg + "could not open file for reading.");
     }
     std::vector<float> host_checkpoint_vd(lbpar_gpu.number_of_nodes * 19);
-    std::vector<unsigned int> host_checkpoint_boundary(
-        lbpar_gpu.number_of_nodes);
-    std::vector<lbForceFloat> host_checkpoint_force(lbpar_gpu.number_of_nodes *
-                                                    3);
-    int res = EOF;
     if (!binary) {
+      int saved_gridsize[3];
+      for (int n = 0; n < 3; n++) {
+        res = fscanf(cpfile, "%i", &saved_gridsize[n]);
+        if (res == EOF) {
+          throw std::runtime_error(err_msg + "EOF found.");
+        } else if (res != 1) {
+          throw std::runtime_error(err_msg + "incorrectly formatted data.");
+        }
+      }
+      if (saved_gridsize[0] != lbpar_gpu.dim_x ||
+          saved_gridsize[1] != lbpar_gpu.dim_y ||
+          saved_gridsize[2] != lbpar_gpu.dim_z) {
+        throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
+                                 std::to_string(saved_gridsize[0]) + ' ' +
+                                 std::to_string(saved_gridsize[1]) + ' ' +
+                                 std::to_string(saved_gridsize[2]) +
+                                 "], expected [" +
+                                 std::to_string(lbpar_gpu.dim_x) + ' ' +
+                                 std::to_string(lbpar_gpu.dim_y) + ' ' +
+                                 std::to_string(lbpar_gpu.dim_z) + "].");
+      }
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         res = fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
+        if (res == EOF) {
+          throw std::runtime_error(err_msg + "EOF found.");
+        } else if (res != 1) {
+          throw std::runtime_error(err_msg + "incorrectly formatted data.");
+        }
       }
-      for (int n = 0; n < int(lbpar_gpu.number_of_nodes); n++) {
-        res = fscanf(cpfile, "%u", &host_checkpoint_boundary[n]);
-      }
-      for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
-        res = fscanf(cpfile, "%f", &host_checkpoint_force[n]);
-      }
-      if (lbpar_gpu.number_of_nodes && res == EOF)
-        throw std::runtime_error("Error while reading LB checkpoint.");
     } else {
+      int saved_gridsize[3];
+      if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
+        throw std::runtime_error(err_msg + "incorrectly formatted data.");
+      } else if (saved_gridsize[0] != lbpar_gpu.dim_x ||
+                 saved_gridsize[1] != lbpar_gpu.dim_y ||
+                 saved_gridsize[2] != lbpar_gpu.dim_z) {
+        throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
+                                 std::to_string(saved_gridsize[0]) + ' ' +
+                                 std::to_string(saved_gridsize[1]) + ' ' +
+                                 std::to_string(saved_gridsize[2]) +
+                                 "], expected [" +
+                                 std::to_string(lbpar_gpu.dim_x) + ' ' +
+                                 std::to_string(lbpar_gpu.dim_y) + ' ' +
+                                 std::to_string(lbpar_gpu.dim_z) + "].");
+      }
       if (fread(host_checkpoint_vd.data(), sizeof(float),
                 19 * int(lbpar_gpu.number_of_nodes),
-                cpfile) != (unsigned int)(19 * lbpar_gpu.number_of_nodes))
-        if (fread(host_checkpoint_boundary.data(), sizeof(int),
-                  int(lbpar_gpu.number_of_nodes),
-                  cpfile) != (unsigned int)lbpar_gpu.number_of_nodes) {
-          fclose(cpfile);
-        }
-      if (fread(host_checkpoint_force.data(), sizeof(lbForceFloat),
-                3 * int(lbpar_gpu.number_of_nodes),
-                cpfile) != (unsigned int)(3 * lbpar_gpu.number_of_nodes)) {
-        fclose(cpfile);
+                cpfile) != (unsigned int)(19 * lbpar_gpu.number_of_nodes)) {
+        throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
     }
-    lb_load_checkpoint_GPU(host_checkpoint_vd.data(),
-                           host_checkpoint_boundary.data(),
-                           host_checkpoint_force.data());
+    if (!binary) {
+      // skip spaces
+      for (int n = 0; n < 2; ++n) {
+        res = fgetc(cpfile);
+        if (res != (int)' ' && res != (int)'\n')
+          break;
+      }
+    } else {
+      res = fgetc(cpfile);
+    }
+    if (res != EOF) {
+      throw std::runtime_error(err_msg + "extra data found, expected EOF.");
+    }
     fclose(cpfile);
+    lb_load_checkpoint_GPU(host_checkpoint_vd.data());
 #endif // LB_GPU
   } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     FILE *cpfile;
     cpfile = fopen(filename.c_str(), "r");
     if (!cpfile) {
-      throw std::runtime_error("Could not open file for reading.");
+      throw std::runtime_error(err_msg + "could not open file for reading.");
     }
+
     Vector19d pop;
     Vector3i ind;
-
-    Vector3i gridsize;
+    auto const gridsize = lblattice.global_grid;
+    int saved_gridsize[3];
     mpi_bcast_lb_params(LBParam::DENSITY);
-    gridsize[0] = box_l[0] / lbpar.agrid;
-    gridsize[1] = box_l[1] / lbpar.agrid;
-    gridsize[2] = box_l[2] / lbpar.agrid;
+
+    if (!binary) {
+      res = fscanf(cpfile, "%i %i %i\n", &saved_gridsize[0], &saved_gridsize[1],
+                   &saved_gridsize[2]);
+      if (res == EOF) {
+        throw std::runtime_error(err_msg + "EOF found.");
+      } else if (res != 3) {
+        throw std::runtime_error(err_msg + "incorrectly formatted data.");
+      }
+    } else {
+      if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
+        throw std::runtime_error(err_msg + "incorrectly formatted data.");
+      }
+    }
+    if (saved_gridsize[0] != gridsize[0] || saved_gridsize[1] != gridsize[1] ||
+        saved_gridsize[2] != gridsize[2]) {
+      throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
+                               std::to_string(saved_gridsize[0]) + ' ' +
+                               std::to_string(saved_gridsize[1]) + ' ' +
+                               std::to_string(saved_gridsize[2]) +
+                               "], expected [" + std::to_string(gridsize[0]) +
+                               ' ' + std::to_string(gridsize[1]) + ' ' +
+                               std::to_string(gridsize[2]) + "].");
+    }
 
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
@@ -864,27 +913,46 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
           ind[1] = j;
           ind[2] = k;
           if (!binary) {
-            if (fscanf(cpfile,
-                       "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf "
-                       "%lf %lf %lf %lf %lf %lf \n",
-                       &pop[0], &pop[1], &pop[2], &pop[3], &pop[4], &pop[5],
-                       &pop[6], &pop[7], &pop[8], &pop[9], &pop[10], &pop[11],
-                       &pop[12], &pop[13], &pop[14], &pop[15], &pop[16],
-                       &pop[17], &pop[18]) != 19) {
+            res = fscanf(cpfile,
+                         "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf "
+                         "%lf %lf %lf %lf %lf %lf \n",
+                         &pop[0], &pop[1], &pop[2], &pop[3], &pop[4], &pop[5],
+                         &pop[6], &pop[7], &pop[8], &pop[9], &pop[10], &pop[11],
+                         &pop[12], &pop[13], &pop[14], &pop[15], &pop[16],
+                         &pop[17], &pop[18]);
+            if (res == EOF) {
+              throw std::runtime_error(err_msg + "EOF found.");
+            } else if (res != 19) {
+              throw std::runtime_error(err_msg + "incorrectly formatted data.");
             }
           } else {
-            if (fread(pop.data(), sizeof(double), 19, cpfile) != 19)
-              throw std::runtime_error("Error reading file.");
+            if (fread(pop.data(), sizeof(double), 19, cpfile) != 19) {
+              throw std::runtime_error(err_msg + "incorrectly formatted data.");
+            }
           }
           lb_lbnode_set_pop(ind, pop);
         }
       }
     }
+    if (!binary) {
+      // skip spaces
+      for (int n = 0; n < 2; ++n) {
+        res = fgetc(cpfile);
+        if (res != (int)' ' && res != (int)'\n')
+          break;
+      }
+    } else {
+      res = fgetc(cpfile);
+    }
+    if (res != EOF) {
+      throw std::runtime_error(err_msg + "extra data found, expected EOF.");
+    }
     fclose(cpfile);
 #endif // LB
   } else {
-    runtimeErrorMsg() << "To load an LB checkpoint one needs to have already "
-                         "initialized the LB fluid with the same grid size.";
+    throw std::runtime_error(
+        "To load an LB checkpoint one needs to have already "
+        "initialized the LB fluid with the same grid size.");
   }
 }
 

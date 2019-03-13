@@ -199,6 +199,21 @@ class TestLB(object):
             v = self.lbf[
                 0, 0, int(self.params['box_l'] / self.params['agrid']) + 1].velocity
 
+    def test_incompatible_agrid(self):
+        """
+        LB lattice initialization must raise an exception when either box_l or
+        local_box_l aren't integer multiples of agrid.
+        """
+        self.system.actors.clear()
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'] + 1e-5,
+            tau=self.system.time_step,
+            ext_force_density=[0, 0, 0])
+        with self.assertRaises(Exception):
+            self.system.actors.add(self.lbf)
+
     @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
                "Features not available, skipping test!")
     def test_viscous_coupling(self):
@@ -270,17 +285,6 @@ class TestLBGPU(TestLB, ut.TestCase):
         self.lb_class = espressomd.lb.LBFluidGPU
         self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
-
-@ut.skipIf(
-    not espressomd.has_features(
-        ["LB_GPU"]),
-    "Features not available, skipping test!")
-class TestLBGPU(TestLB, ut.TestCase):
-
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidGPU
-        self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
-
     @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
                "Features not available, skipping test!")
     def test_viscous_coupling_higher_order_interpolation(self):
@@ -308,5 +312,7 @@ class TestLBGPU(TestLB, ut.TestCase):
         self.system.integrator.run(1)
         np.testing.assert_allclose(
             np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
+
+
 if __name__ == "__main__":
     ut.main()
