@@ -30,7 +30,6 @@
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "pressure.hpp"
-#include "thermostat.hpp"
 #include "utils.hpp"
 
 /** Calculate non bonded energies between a pair of particles.

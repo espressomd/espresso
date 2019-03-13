@@ -13,7 +13,8 @@
 #include "lb_interpolation.hpp"
 #include "lb_particle_coupling.hpp"
 #include "lbgpu.hpp"
-#include "thermostat.hpp"
+#include "random.hpp"
+
 #include "utils/Counter.hpp"
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
@@ -232,8 +233,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 
         /* local cells */
         for (auto &p : local_cells.particles()) {
-          if (!p.p.is_virtual or thermo_virtual or
-              (p.p.is_virtual && couple_virtual)) {
+          if (!p.p.is_virtual or couple_virtual) {
             auto const force = lb_viscous_coupling(
                 &p, noise_amplitude * f_random(p.identity()));
             /* add force to the particle */
@@ -249,7 +249,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
           /* for ghost particles we have to check if they lie
            * in the range of the local lattice nodes */
           if (in_local_domain(p.r.p)) {
-            if (!p.p.is_virtual || thermo_virtual) {
+            if (!p.p.is_virtual || couple_virtual) {
               lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
 #ifdef ENGINE
               add_swimmer_force(p);

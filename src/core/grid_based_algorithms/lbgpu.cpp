@@ -37,7 +37,6 @@
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "statistics.hpp"
-#include "thermostat.hpp"
 #include "utils.hpp"
 
 #include <cmath>

@@ -29,6 +29,7 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "utils.hpp"
+#include "debug.hpp"
 
 #include <cstring>
 #include <mpi.h>
