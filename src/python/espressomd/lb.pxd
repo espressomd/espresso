@@ -36,14 +36,16 @@ cdef class HydrodynamicInteraction(Actor):
 
 IF LB_GPU or LB:
 
-    cdef enum PyActiveLB:
-        NONE = 0, CPU, GPU
-
     ##############################################
     #
     # extern functions and structs
     #
     ##############################################
+
+    cdef extern from "grid_based_algorithms/lb_interface.hpp" namespace "ActiveLB":
+        cdef ActiveLB NONE
+        cdef ActiveLB CPU
+        cdef ActiveLB GPU
 
     cdef extern from "grid_based_algorithms/lb_interface.hpp":
 
