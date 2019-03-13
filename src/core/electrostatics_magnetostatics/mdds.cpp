@@ -352,7 +352,7 @@ void mdds_forces(const ParticleRange &particles,
  *
  * This employs a parallel n2 loop over all particle
  * pairs.
-*/
+ */
 double mdds_energy(const ParticleRange &particles,
                    const boost::mpi::communicator &comm) {
   std::vector<Particle *> local_interacting_particles;
