@@ -55,6 +55,15 @@
 int mdds_n_replicas = 0;
 
 namespace {
+/**
+ * @brief Pair force of two interacting dipoles.
+ *
+ * @param d Distance vector.
+ * @param m1 Dipole moment of one particle.
+ * @param m2 Dipole moment of the other particle.
+ *
+ * @return Resulting force.
+ */
 auto pair_force(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
     -> ParticleForce {
   auto const pe2 = m1 * d;
@@ -75,6 +84,15 @@ auto pair_force(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
   return {f, t};
 }
 
+/**
+ * @brief Pair potential for two interacting dipoles.
+ *
+ * @param d Distance vector.
+ * @param m1 Dipole moment of one particle.
+ * @param m2 Dipole moment of the other particle.
+ *
+ * @return Interaction energy.
+ */
 auto pair_potential(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
     -> double {
   auto const r2 = d * d;
@@ -89,12 +107,33 @@ auto pair_potential(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
   return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
 }
 
+/**
+ * @brief Call kernel for every 3-d index in
+ *        a ball arcound the origin.
+ *
+ * This calls a Callable for all index-triples
+ * that are within ball around the origin with
+ * radius |ncut|.
+ *
+ * @tparam F Callable
+ * @param ncut Limit in the three directions,
+ *             all non-zero elements have to be
+ *             the same number.
+ * @param f will be called for each index triple
+ *        within the limits of @p ncut.
+ */
 template <typename F> void for_each_image(Vector3i const &ncut, F f) {
   auto const ncut2 = ncut.norm2();
 
   using boost::counting_range;
   using Utils::cartesian_product;
 
+  /* This runs over the index "cube"
+   * [-ncut[0], ncut[0]] x ... x [-ncut[2], ncut[2]]
+   * (inclusive on both sides), and calls f with
+   *  all the elements as argument. Counting range
+   *  is a range that just enumerates a range.
+   */
   cartesian_product(
       [&](int nx, int ny, int nz) {
         if (nx * nx + ny * ny + nz * nz <= ncut2) {
@@ -106,6 +145,9 @@ template <typename F> void for_each_image(Vector3i const &ncut, F f) {
       counting_range(-ncut[2], ncut[2] + 1));
 }
 
+/**
+ * @brief Position and moment of one particle.
+ */
 struct PosMom {
   Vector3d pos;
   Vector3d m;
@@ -113,6 +155,30 @@ struct PosMom {
   template <class Archive> void serialize(Archive &ar, long int) { ar &pos &m; }
 };
 
+/**
+ * @brief Sum over all pairs with periodic images.
+ *
+ * This implements the "primed" pair sum, the sum over all
+ * pairs between one particles and all other particles,
+ * including @p ncut periodic replicas in each direction.
+ * Primed means that in the primary replica the self-interaction
+ * is excluded, but not with the other periodic replicas. E.g.
+ * a particle does not interact with its self, but does with
+ * its periodically shifted versions.
+ *
+ * @param begin Iterator pointing to begin of particle range
+ * @param end Iterator pointing past the end of particle range
+ * @param pi Pointer to particle that is considered
+ * @param with_replicas If periodic replicas are to be considered
+ *        at all. If false, distences are calulated as Euclidian
+ *        distances, and not using minimum image convention.
+ * @param ncut Number of replicas in each direction.
+ * @param init Initial value of the sum.
+ * @param f Binary operation mapping distance and moment of the
+ *          interaction partner to the value to be summed up for this pair.
+ *
+ * @return The total sum.
+ */
 template <class InputIterator, class T, class F>
 T image_sum(InputIterator begin, InputIterator end, InputIterator pi,
             bool with_replicas, Vector3i const &ncut, T init, F f) {
