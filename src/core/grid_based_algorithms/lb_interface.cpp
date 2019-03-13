@@ -1268,7 +1268,8 @@ int lb_lbfluid_get_lattice_switch_cython() {
 }
 
 void lb_lbfluid_on_lb_params_change(LBParam field) {
-  if (field == LBParam::AGRID) {
+  switch (field) {
+  case LBParam::AGRID:
 #ifdef LB
     if (lattice_switch == ActiveLB::CPU)
       lb_init();
@@ -1280,9 +1281,15 @@ void lb_lbfluid_on_lb_params_change(LBParam field) {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
     LBBoundaries::lb_init_boundaries();
 #endif
-  }
-  if (field == LBParam::DENSITY) {
+    break;
+  case LBParam::DENSITY:
     lb_lbfluid_reinit_fluid();
+    break;
+  case LBParam::VISCOSITY:
+  case LBParam::EXTFORCE:
+  case LBParam::BULKVISC:
+  case LBParam::KT:
+    break;
   }
   lb_lbfluid_reinit_parameters();
 }
