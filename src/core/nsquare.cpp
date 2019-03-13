@@ -160,7 +160,6 @@ ParticleList nsq_balance_particles(int global_flag) {
                      this_node, minshare, maxshare));
 
   ParticleList new_particles;
-  std::vector<int> removed_particles;
   for (;;) {
     /* find node with most excessive particles */
     auto const minmax = std::minmax_element(ppnode.begin(), ppnode.end());
@@ -218,8 +217,4 @@ ParticleList nsq_balance_particles(int global_flag) {
   CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: done\n", this_node));
 
   return new_particles;
-
-  for (int i = 0; i < new_particles.n; i++) {
-    append_particle(local, std::move(new_particles.part[i]));
-  }
 }

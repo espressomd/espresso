@@ -213,6 +213,19 @@ void topology_init(int cs) {
   }
 }
 
+ParticleList topology_sort(int global, ParticleList& displaced_parts) {
+    switch (cell_structure.type) {
+        case CELL_STRUCTURE_LAYERED:
+            return layered_exchange_and_sort_particles(global, &displaced_parts);
+        case CELL_STRUCTURE_NSQUARE:
+            return nsq_balance_particles(global);
+        case CELL_STRUCTURE_DOMDEC:
+            return dd_exchange_and_sort_particles(global, &displaced_parts);
+        default:
+            return assert(false), ParticleList{};
+    }
+}
+
 /*@}*/
 
 /************************************************************
@@ -220,37 +233,6 @@ void topology_init(int cs) {
  ************************************************************/
 
 /************************************************************/
-
-void cells_re_init(int new_cs) {
-  CellPList tmp_local;
-
-  CELL_TRACE(fprintf(stderr, "%d: cells_re_init: convert type (%d->%d)\n",
-                     this_node, cell_structure.type, new_cs));
-
-  topology_release(cell_structure.type);
-  /* MOVE old local_cell list to temporary buffer */
-  memmove(&tmp_local, &local_cells, sizeof(CellPList));
-  init_cellplist(&local_cells);
-
-  /* MOVE old cells to temporary buffer */
-  auto tmp_cells = std::move(cells);
-
-  topology_init(new_cs);
-
-  /* Add the particles to the new cs */
-  cells_resort_particles(CELL_GLOBAL_EXCHANGE, tmp_local);
-
-  /* finally deallocate the old cells */
-  realloc_cellplist(&tmp_local, 0);
-
-  for (auto &cell : tmp_cells) {
-    cell.resize(0);
-  }
-
-  CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n", this_node));
-
-  on_cell_structure_change();
-}
 
 /************************************************************/
 
@@ -300,7 +282,6 @@ void fold_and_reset(Particle &p) {
 
   p.l.p_old = p.r.p;
 }
-} // namespace
 
 /**
  * @brief Sort and fold particles.
@@ -344,7 +325,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
   return displaced_parts;
 }
 
-static ParticleDiff update_ghosts() {
+ParticleDiff update_ghosts() {
     using Utils::make_span;
 
     auto part_diff = ParticleDiff{};
@@ -376,15 +357,70 @@ static ParticleDiff update_ghosts() {
     return part_diff;
 }
 
-ParticleList topology_sort(int global, ParticleList& displaced_parts) {
-  switch (cell_structure.type) {
-    case CELL_STRUCTURE_LAYERED:
-      return layered_exchange_and_sort_particles(global, &displaced_parts);
-    case CELL_STRUCTURE_NSQUARE:
-      return nsq_balance_particles(global);
-    case CELL_STRUCTURE_DOMDEC:
-      return dd_exchange_and_sort_particles(global, &displaced_parts);
-  }
+auto add_particles(ParticleList new_parts) {
+    std::vector<Particle *> parts(new_parts.n);
+    std::vector<std::pair<Cell *, int>> updated_cells;
+    updated_cells.reserve(new_parts.n);
+
+    for (int p = 0; p < new_parts.n; p++) {
+        auto cell = cell_structure.position_to_cell(new_parts.part[p].r.p);
+        append_particle(cell ? cell : local_cells.cell[0], std::move(new_parts.part[p]));
+
+        /* The new particle is now the last part in the cell */
+        updated_cells.emplace_back(cell, cell->n - 1);
+    }
+
+    boost::transform(updated_cells, parts.begin(), [](auto &u) -> Particle * {
+        return &(u.first->part[u.second]);
+    });
+
+    return parts;
+}
+} // namespace
+
+void cells_re_init(int new_cs) {
+    using Utils::make_const_span;
+    using Utils::make_span;
+
+    CellPList tmp_local;
+
+    CELL_TRACE(fprintf(stderr, "%d: cells_re_init: convert type (%d->%d)\n",
+                       this_node, cell_structure.type, new_cs));
+
+    topology_release(cell_structure.type);
+    /* MOVE old local_cell list to temporary buffer */
+    memmove(&tmp_local, &local_cells, sizeof(CellPList));
+    init_cellplist(&local_cells);
+
+    /* MOVE old cells to temporary buffer */
+    auto tmp_cells = std::move(cells);
+
+    ParticleDiff part_diff;
+    ParticleList parts{};
+    for(auto const&c: tmp_cells) {
+        for(auto &p : make_span(c.part, c.n)) {
+            part_diff.removed.push_back(p.identity());
+            append_particle(&parts, std::move(p));
+        }
+    }
+
+    topology_init(new_cs);
+    part_diff.added = add_particles(parts);
+    on_resort_particles(part_diff);
+
+    /* Add the particles to the new cs */
+    cells_resort_particles(CELL_GLOBAL_EXCHANGE, local_cells);
+
+    /* finally deallocate the old cells */
+    realloc_cellplist(&tmp_local, 0);
+
+    for (auto &cell : tmp_cells) {
+        cell.resize(0);
+    }
+
+    CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n", this_node));
+
+    on_cell_structure_change();
 }
 
 void cells_resort_particles(int global_flag, CellPList local_cells) {
@@ -400,23 +436,12 @@ void cells_resort_particles(int global_flag, CellPList local_cells) {
       part_diff.removed.emplace_back(p.identity());
   }
 
-  ParticleList new_parts = topology_sort(global_flag, displaced_parts);
-
-  std::vector<std::pair<Cell *, int>> updated_cells;
-  updated_cells.reserve(new_parts.n);
-
-  for(int p = 0; p < new_parts.n; p++) {
-    auto cell = cell_structure.position_to_cell(new_parts.part[p].r.p);
-    append_particle(cell, std::move(new_parts.part[p]));
-
-    /* The new particle is now the last part in the cell */
-    updated_cells.emplace_back(cell, cell->n - 1);
+  for(auto const&p : Utils::make_span(displaced_parts.part, displaced_parts.n)) {
+      assert(not local_particles[p.identity()]);
   }
 
-  part_diff.added.resize(updated_cells.size());
-  boost::transform(updated_cells, part_diff.added.begin(), [](auto &u) -> Particle * {
-    return &(u.first->part[u.second]);
-  });
+  ParticleList new_parts = topology_sort(global_flag, displaced_parts);
+  part_diff.added = add_particles(new_parts);
 
   if (0 != displaced_parts.n) {
     for (int i = 0; i < displaced_parts.n; i++) {
@@ -427,10 +452,10 @@ void cells_resort_particles(int global_flag, CellPList local_cells) {
       append_particle(local_cells.cell[0], std::move(part));
     }
     resort_particles = Cells::RESORT_GLOBAL;
+  } else {
+      /* Particles are now sorted */
+      resort_particles = Cells::RESORT_NONE;
   }
-
-  /* Particles are now sorted */
-  resort_particles = Cells::RESORT_NONE;
 
   on_resort_particles(part_diff);
 }

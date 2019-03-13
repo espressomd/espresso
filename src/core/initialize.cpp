@@ -394,7 +394,6 @@ void on_resort_particles(const ParticleDiff &diff) {
 #endif /* ifdef ELECTROSTATICS */
 
   clear_particle_node();
-
   local_particles.update(diff);
 
 #ifdef ADDITIONAL_CHECKS

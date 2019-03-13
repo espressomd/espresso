@@ -536,12 +536,14 @@ public:
     }
 
     for (auto p: diff.added) {
+        assert(p);
       auto it = m_map.find(p->identity());
       /* Update the entry if it is not yet in the index,
        * or is set to nullptr or points to a ghost. */
-      if ((it == m_map.end()) or (not it->second) or (it->second->l.ghost)) {
-        assert(p);
-        update(*p);
+      if (it == m_map.end()) {
+        m_map.insert({p->identity(), p});
+      } else if ((not it->second) or (it->second->l.ghost)) {
+        it->second = p;
       }
     }
   }
