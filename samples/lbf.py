@@ -60,7 +60,7 @@ system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0)
 print(lbf.get_params())
 
-f_list = np.zeros((10,3))
+f_list = np.zeros((10, 3))
 for i in range(10):
     f_list[i] = system.part[0].f
     system.integrator.run(steps=10)
