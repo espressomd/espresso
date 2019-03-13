@@ -166,6 +166,12 @@ struct CellStructure {
    *  \return pointer to cell  where to put the particle.
    */
   Cell *(*position_to_cell)(const Vector3d &pos);
+
+  Cell *sort_cell() {
+    static Cell m_sort_cell;
+
+    return &m_sort_cell;
+  }
 };
 
 /*@}*/

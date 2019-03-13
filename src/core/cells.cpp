@@ -357,22 +357,38 @@ ParticleDiff update_ghosts() {
     return part_diff;
 }
 
-auto add_particles(ParticleList new_parts) {
-    std::vector<Particle *> parts(new_parts.n);
-    std::vector<std::pair<Cell *, int>> updated_cells;
-    updated_cells.reserve(new_parts.n);
+template<class OutputIt>
+    void add_local_particles(const CellStructure &cell_structure, ParticleList new_parts, OutputIt out) {
+        std::vector<std::pair<Cell *, int>> updated_cells;
+        updated_cells.reserve(new_parts.n);
 
-    for (int p = 0; p < new_parts.n; p++) {
-        auto cell = cell_structure.position_to_cell(new_parts.part[p].r.p);
-        append_particle(cell ? cell : local_cells.cell[0], std::move(new_parts.part[p]));
+        for (int p = 0; p < new_parts.n; p++) {
+            auto cell = cell_structure.position_to_cell(new_parts.part[p].r.p);
+            assert(cell);
 
-        /* The new particle is now the last part in the cell */
-        updated_cells.emplace_back(cell, cell->n - 1);
+            append_particle(cell, std::move(new_parts.part[p]));
+
+            /* The new particle is now the last part in the cell */
+            updated_cells.emplace_back(cell, cell->n - 1);
+        }
+
+        boost::transform(updated_cells, out, [](auto &u) -> Particle * {
+            return &(u.first->part[u.second]);
+        });
     }
 
-    boost::transform(updated_cells, parts.begin(), [](auto &u) -> Particle * {
-        return &(u.first->part[u.second]);
-    });
+/**
+ * @brief Add particles to a cell system.
+ *
+ * @param cell_structure Cell system to add particles to.
+ * @param new_parts Particles to add, the particels have to
+ *        belong to this node.
+ * @return Pointers to the added particles.
+ */
+auto add_local_particles(const CellStructure &cell_structure, ParticleList new_parts) {
+    std::vector<Particle *> parts(new_parts.n);
+
+    add_local_particles(cell_structure, new_parts, parts.begin());
 
     return parts;
 }
@@ -382,41 +398,44 @@ void cells_re_init(int new_cs) {
     using Utils::make_const_span;
     using Utils::make_span;
 
-    CellPList tmp_local;
-
     CELL_TRACE(fprintf(stderr, "%d: cells_re_init: convert type (%d->%d)\n",
                        this_node, cell_structure.type, new_cs));
 
     topology_release(cell_structure.type);
-    /* MOVE old local_cell list to temporary buffer */
-    memmove(&tmp_local, &local_cells, sizeof(CellPList));
+    auto tmp_local = local_cells;
+
     init_cellplist(&local_cells);
 
     /* MOVE old cells to temporary buffer */
     auto tmp_cells = std::move(cells);
 
+    topology_init(new_cs);
+
     ParticleDiff part_diff;
-    ParticleList parts{};
-    for(auto const&c: tmp_cells) {
-        for(auto &p : make_span(c.part, c.n)) {
+    ParticleList parts;
+    ParticleList dispalced_parts;
+    for(auto &p: tmp_local.particles()) {
             part_diff.removed.push_back(p.identity());
-            append_particle(&parts, std::move(p));
-        }
+
+            if(cell_structure.position_to_cell(p.r.p)) {
+                append_particle(&parts, std::move(p));
+            } else {
+                append_particle(&dispalced_parts, std::move(p));
+            }
     }
 
-    topology_init(new_cs);
-    part_diff.added = add_particles(parts);
-    on_resort_particles(part_diff);
+    add_local_particles(cell_structure, parts, std::back_inserter(part_diff.added));
 
-    /* Add the particles to the new cs */
-    cells_resort_particles(CELL_GLOBAL_EXCHANGE, local_cells);
+    for(auto &p: make_span(dispalced_parts.part, dispalced_parts.n)) {
+        fold_and_reset(p);
+    }
+
+    add_local_particles(cell_structure, topology_sort(CELL_GLOBAL_EXCHANGE, dispalced_parts), std::back_inserter(part_diff.added));
+    update_ghosts();
+    on_resort_particles(part_diff);
 
     /* finally deallocate the old cells */
     realloc_cellplist(&tmp_local, 0);
-
-    for (auto &cell : tmp_cells) {
-        cell.resize(0);
-    }
 
     CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n", this_node));
 
@@ -436,12 +455,8 @@ void cells_resort_particles(int global_flag, CellPList local_cells) {
       part_diff.removed.emplace_back(p.identity());
   }
 
-  for(auto const&p : Utils::make_span(displaced_parts.part, displaced_parts.n)) {
-      assert(not local_particles[p.identity()]);
-  }
-
   ParticleList new_parts = topology_sort(global_flag, displaced_parts);
-  part_diff.added = add_particles(new_parts);
+  part_diff.added = add_local_particles(cell_structure, new_parts);
 
   if (0 != displaced_parts.n) {
     for (int i = 0; i < displaced_parts.n; i++) {
@@ -516,7 +531,7 @@ void cells_update_ghosts() {
     cells_resort_particles(global);
 
     /* Communication step:  number of ghosts and ghost information */
-    auto ghosts_change = update_ghosts();
+    auto const ghosts_change = update_ghosts();
     on_ghost_particles_change(ghosts_change);
   } else
     /* Communication step: ghost information */

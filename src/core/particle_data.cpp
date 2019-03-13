@@ -554,17 +554,6 @@ int get_particle_node(int id) {
 
 void clear_particle_node() { particle_node.clear(); }
 
-/************************************************
- * organizational functions
- ************************************************/
-
-void build_particle_index() {
-  local_particles.clear();
-
-  local_particles.update(ghost_cells.particles());
-  local_particles.update(local_cells.particles());
-}
-
 int realloc_particlelist(ParticleList *l, int size) {
   assert(size >= 0);
   int old_max = l->max;

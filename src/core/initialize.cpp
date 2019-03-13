@@ -395,12 +395,7 @@ void on_resort_particles(const ParticleDiff &diff) {
 
   clear_particle_node();
   local_particles.update(diff);
-
-#ifdef ADDITIONAL_CHECKS
-  /* at the end of the day, everything should be consistent again */
-  check_particle_consistency();
-#endif
-
+  
   n_verlet_updates++;
 
   recalc_forces = 1;

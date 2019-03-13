@@ -509,9 +509,11 @@ public:
    * @brief Remove entries for non-existing particles.
    */
   void shrink_to_fit() {
-    for (auto it = m_map.begin(); it != m_map.end(); ++it) {
+    for (auto it = m_map.begin(); it != m_map.end();) {
       if (not it->second) {
-        m_map.erase(it);
+        it = m_map.erase(it);
+      } else {
+          ++it;
       }
     }
   }
@@ -610,11 +612,6 @@ Particle extract_particle(ParticleList *sl, int i);
 
 /*    Other Functions                           */
 /************************************************/
-
-/**
- * @brief Fill local_particles.
- */
-void build_particle_index();
 
 /** Update the entries in \ref local_particles for all particles in the list pl.
     @param pl the list to put in.
