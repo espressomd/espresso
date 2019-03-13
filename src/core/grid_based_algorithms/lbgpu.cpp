@@ -28,6 +28,7 @@
 
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
