@@ -247,19 +247,20 @@ class TestLB(object):
                 dens=self.params['dens'],
                 agrid=self.params['agrid'],
                 tau=self.system.time_step,
-                fric=self.params['friction'],couple="3pt")
+                fric=self.params['friction'], couple="3pt")
             self.system.actors.add(lbf)
         self.system.actors.clear()
 
         # Check that explicit 2pt coupling can be activated
         lbf = self.lb_class(
-                visc=self.params['viscosity'],
+            visc=self.params['viscosity'],
                 dens=self.params['dens'],
                 agrid=self.params['agrid'],
                 tau=self.system.time_step,
-                fric=self.params['friction'],couple="2pt")
+                fric=self.params['friction'], couple="2pt")
         self.system.actors.add(lbf)
         self.system.actors.clear()
+
 
 @ut.skipIf(not espressomd.has_features(["LB"]),
            "Features not available, skipping test!")
