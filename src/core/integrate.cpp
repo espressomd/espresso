@@ -477,6 +477,9 @@ double le_vel = lees_edwards_get_velocity(sim_time + time_step);
       }
 #endif
     }
+#ifdef LEES_EDWARDS
+      p.p.lees_edwards_offset -= (0.5 * time_step * p.l.i[lees_edwards_protocol.shearplanenormal] * le_vel);
+#endif
 
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
@@ -747,7 +750,7 @@ double offset_at_time_step =
       } else {
         p.p.lees_edwards_flag = 0;
       }
-      p.p.lees_edwards_offset -= (time_step * p.l.i[lees_edwards_protocol.shearplanenormal] * shear_velocity);
+      p.p.lees_edwards_offset -= (0.5 * time_step * p.l.i[lees_edwards_protocol.shearplanenormal] * shear_velocity);
     }
 #endif
 
