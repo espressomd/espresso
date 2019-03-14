@@ -31,88 +31,88 @@ using Utils::Mpi::gatherv;
 namespace mpi = boost::mpi;
 
 BOOST_AUTO_TEST_CASE(mpi_type) {
-    mpi::communicator world;
-    auto const rank = world.rank();
-    auto const size = world.size();
-    auto const root = world.size() - 1;
+  mpi::communicator world;
+  auto const rank = world.rank();
+  auto const size = world.size();
+  auto const root = world.size() - 1;
 
-    /* out-of-place */
-    {
-        if(rank == root) {
-            std::vector<int> out(size, -1);
-            std::vector<int> sizes(size, 1);
+  /* out-of-place */
+  {
+    if (rank == root) {
+      std::vector<int> out(size, -1);
+      std::vector<int> sizes(size, 1);
 
-            gatherv(world, &rank, 1, out.data(), sizes.data(), root);
+      gatherv(world, &rank, 1, out.data(), sizes.data(), root);
 
-            for(int i = 0; i < size; i++) {
-                BOOST_CHECK_EQUAL(i, out.at(i));
-            }
-        } else {
-            Utils::Mpi::gatherv(world, &rank, 1, root);
-        }
+      for (int i = 0; i < size; i++) {
+        BOOST_CHECK_EQUAL(i, out.at(i));
+      }
+    } else {
+      Utils::Mpi::gatherv(world, &rank, 1, root);
     }
+  }
 
-    /* in-place */
-    {
-        if(rank == root) {
-            std::vector<int> out(size, -1);
-            out[rank] = rank;
-            std::vector<int> sizes(size, 1);
+  /* in-place */
+  {
+    if (rank == root) {
+      std::vector<int> out(size, -1);
+      out[rank] = rank;
+      std::vector<int> sizes(size, 1);
 
-            gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
+      gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
 
-            for(int i = 0; i < size; i++) {
-                BOOST_CHECK_EQUAL(i, out.at(i));
-            }
-        } else {
-            Utils::Mpi::gatherv(world, &rank, 1, root);
-        }
+      for (int i = 0; i < size; i++) {
+        BOOST_CHECK_EQUAL(i, out.at(i));
+      }
+    } else {
+      Utils::Mpi::gatherv(world, &rank, 1, root);
     }
+  }
 }
 
 BOOST_AUTO_TEST_CASE(non_mpi_type) {
-    mpi::communicator world;
-    auto const rank = world.rank();
-    auto const size = world.size();
-    auto const root = world.size() - 1;
-    auto const in = std::to_string(rank);
+  mpi::communicator world;
+  auto const rank = world.rank();
+  auto const size = world.size();
+  auto const root = world.size() - 1;
+  auto const in = std::to_string(rank);
 
-    /* out-of-place */
-    {
-        if(rank == root) {
-            std::vector<std::string> out(size);
-            std::vector<int> sizes(size, 1);
+  /* out-of-place */
+  {
+    if (rank == root) {
+      std::vector<std::string> out(size);
+      std::vector<int> sizes(size, 1);
 
-            gatherv(world, &in, 1, out.data(), sizes.data(), root);
+      gatherv(world, &in, 1, out.data(), sizes.data(), root);
 
-            for(int i = 0; i < size; i++) {
-                BOOST_CHECK_EQUAL(std::to_string(i), out.at(i));
-            }
-        } else {
-            Utils::Mpi::gatherv(world, &in, 1, root);
-        }
+      for (int i = 0; i < size; i++) {
+        BOOST_CHECK_EQUAL(std::to_string(i), out.at(i));
+      }
+    } else {
+      Utils::Mpi::gatherv(world, &in, 1, root);
     }
+  }
 
-    /* in-place */
-    {
-        if(rank == root) {
-            std::vector<std::string> out(size);
-            out[rank] = in;
-            std::vector<int> sizes(size, 1);
+  /* in-place */
+  {
+    if (rank == root) {
+      std::vector<std::string> out(size);
+      out[rank] = in;
+      std::vector<int> sizes(size, 1);
 
-            gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
+      gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
 
-            for(int i = 0; i < size; i++) {
-                BOOST_CHECK_EQUAL(std::to_string(i), out.at(i));
-            }
-        } else {
-            Utils::Mpi::gatherv(world, &in, 1, root);
-        }
+      for (int i = 0; i < size; i++) {
+        BOOST_CHECK_EQUAL(std::to_string(i), out.at(i));
+      }
+    } else {
+      Utils::Mpi::gatherv(world, &in, 1, root);
     }
+  }
 }
 
 int main(int argc, char **argv) {
-    mpi::environment mpi_env(argc, argv);
+  mpi::environment mpi_env(argc, argv);
 
-    return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
