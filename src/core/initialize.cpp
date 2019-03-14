@@ -37,6 +37,7 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "metadynamics.hpp"
@@ -59,9 +60,6 @@
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -226,6 +224,12 @@ void on_observable_calc() {
     reinit_magnetostatics = 0;
   }
 #endif /*ifdef ELECTROSTATICS */
+
+#ifdef ELECTROKINETICS
+  if (ek_initialized) {
+    ek_integrate_electrostatics();
+  }
+#endif
 }
 
 void on_particle_charge_change() {
@@ -477,7 +481,7 @@ void on_ghost_flags_change() {
 
 /* DPD and LB need also ghost velocities */
 #ifdef LB
-  if (lattice_switch & LATTICE_LB)
+  if (lattice_switch == ActiveLB::CPU)
     ghosts_have_v = 1;
 #endif
 #ifdef BOND_CONSTRAINT

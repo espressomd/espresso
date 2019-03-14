@@ -63,7 +63,6 @@
 #include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
 #endif
 #include "statistics.hpp"
-#include "thermostat.hpp"
 
 #include "energy.hpp"
 

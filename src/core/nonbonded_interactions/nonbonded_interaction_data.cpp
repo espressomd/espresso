@@ -56,7 +56,6 @@
 #include "pressure.hpp"
 #include "rattle.hpp"
 #include "serialization/IA_parameters.hpp"
-#include "thermostat.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>

@@ -244,7 +244,7 @@ cdef class HydrodynamicInteraction(Actor):
     "Subclasses of HydrodynamicInteraction have to implement _activate_method.") 
 
         def _deactivate_method(self):
-            lb_lbfluid_set_lattice_switch(0)
+            lb_lbfluid_set_lattice_switch(NONE)
 
 
 # LBFluid main class
@@ -257,7 +257,7 @@ IF LB:
         """
 
         def _set_lattice_switch(self):
-            lb_lbfluid_set_lattice_switch(1)
+            lb_lbfluid_set_lattice_switch(CPU)
 
         def _activate_method(self):
             self.validate_params()
@@ -275,7 +275,7 @@ IF LB_GPU:
             lb_lbfluid_remove_total_momentum()
 
         def _set_lattice_switch(self):
-            lb_lbfluid_set_lattice_switch(2)
+            lb_lbfluid_set_lattice_switch(GPU)
 
         def _activate_method(self):
             self.validate_params()

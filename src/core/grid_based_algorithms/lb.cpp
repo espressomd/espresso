@@ -28,37 +28,37 @@
  */
 
 #include "grid_based_algorithms/lb.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include <cinttypes>
-#include <fstream>
-#include <profiler/profiler.hpp>
 
 #ifdef LB
-
 #include "cells.hpp"
 #include "communication.hpp"
+#include "cuda_interface.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "halo.hpp"
+#include "integrate.hpp"
 #include "lb-d3q19.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
-#include "thermostat.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
+
 #include "utils/Counter.hpp"
 #include "utils/math/matrix_vector_product.hpp"
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
-#include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
+#include <mpi.h>
+#include <profiler/profiler.hpp>
 
 #include <cassert>
+#include <cinttypes>
 #include <cstdio>
+#include <fstream>
 #include <iostream>
-#include <mpi.h>
-
-#include "cuda_interface.hpp"
 
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_halo_regions(const LB_Fluid &lbfluid);
@@ -143,7 +143,7 @@ static double fluidstep = 0.0;
 
 /********************** The Main LB Part *************************************/
 void lb_init() {
-  LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
+  LB_TRACE(printf("Begin initializing fluid on CPU\n"));
 
   if (lbpar.agrid <= 0.0) {
     runtimeErrorMsg()
@@ -160,9 +160,9 @@ void lb_init() {
   }
 
   /* initialize the local lattice domain */
-  lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
+  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
 
-  if (check_runtime_errors())
+  if (check_runtime_errors() || init_status != ES_OK)
     return;
 
   /* allocate memory for data structures */
@@ -177,7 +177,7 @@ void lb_init() {
   /* setup the initial populations */
   lb_reinit_fluid();
 
-  LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
+  LB_TRACE(printf("Initializing fluid on CPU successful\n"));
 }
 
 void lb_reinit_fluid() {
@@ -188,7 +188,7 @@ void lb_reinit_fluid() {
   Vector6d pi{};
 
   LB_TRACE(fprintf(stderr,
-                   "Initialising the fluid with equilibrium populations\n"););
+                   "Initializing the fluid with equilibrium populations\n"););
 
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        ++index) {
@@ -997,7 +997,6 @@ inline void lb_collide_stream() {
 /** \name Update step for the lattice Boltzmann fluid                  */
 /***********************************************************************/
 /*@{*/
-/*@}*/
 
 /** Update the lattice Boltzmann fluid.
  *
@@ -1015,6 +1014,8 @@ void lattice_boltzmann_update() {
     lb_collide_stream();
   }
 }
+
+/*@}*/
 
 /***********************************************************************/
 /** \name Coupling part */
@@ -1433,5 +1434,7 @@ void lb_collect_boundary_forces(double *result) {
              MPI_SUM, 0, comm_cart);
 #endif
 }
+
+/*@}*/
 
 #endif // LB

@@ -39,7 +39,7 @@
 #include "dipole.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
-#include "thermostat.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #ifdef DIPOLES
 
