@@ -33,8 +33,6 @@
     top of each other don't interact by chance. */
 #define INACTIVE_CUTOFF -1.0
 
-/*@}*/
-
 /** \name Type codes for the type of Coulomb interaction
     Enumeration of implemented methods for the electrostatic
     interaction.
@@ -63,12 +61,7 @@ enum CoulombMethod {
 /*@}*/
 
 #ifdef DIPOLES
-/** \name Type codes for the type of dipolar interaction
-  Enumeration of implemented methods for the magnetostatic
-  interaction.
- */
-/************************************************************/
-/*@{*/
+/** @brief Implemented methods for the magnetostatic interaction. */
 enum DipolarInteraction {
   /** dipolar interaction switched off (NONE). */
   DIPOLAR_NONE = 0,
@@ -378,6 +371,7 @@ extern double field_induced;
 extern double field_applied;
 
 #endif
+/*@}*/
 
 /************************************************
  * exported variables

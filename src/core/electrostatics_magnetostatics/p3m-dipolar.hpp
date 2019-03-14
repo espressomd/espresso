@@ -350,5 +350,7 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
   return 0.0;
 }
 
+/*@}*/
+
 #endif /* DP3M */
 #endif /* _P3M_DIPOLES_H */

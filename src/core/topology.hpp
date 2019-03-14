@@ -57,7 +57,7 @@ extern std::vector<Molecule> topology;
 
 extern int topo_part_info_synced;
 
-/*@{*/
+/*@}*/
 
 /************************************************************/
 /** \name Exported Functions */
