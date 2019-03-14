@@ -26,6 +26,7 @@ from ...code_info import features
 
 if not 'H5MD' in features():
     class H5md(object):
+
         def __init__(self, *args, **kwargs):
             raise RuntimeError("H5md not available.")
 else:
@@ -79,7 +80,8 @@ else:
                         if j:
                             self.what_bin += self.what[i]
                     else:
-                        raise ValueError("{} has to be a bool value.".format(i))
+                        raise ValueError(
+                            "{} has to be a bool value.".format(i))
                 elif i not in self.valid_params:
                     raise ValueError(
                         "Unknown parameter {} for H5MD writer.".format(i))
