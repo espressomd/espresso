@@ -31,23 +31,23 @@
 
 #include "utils/Array.hpp"
 
-template <typename Scalar, std::size_t n>
-class Vector : public Utils::Array<Scalar, n> {
+template <typename T, std::size_t n>
+class Vector : public Utils::Array<T, n> {
 public:
-  using Utils::Array<Scalar, n>::at;
-  using Utils::Array<Scalar, n>::operator[];
-  using Utils::Array<Scalar, n>::front;
-  using Utils::Array<Scalar, n>::back;
-  using Utils::Array<Scalar, n>::data;
-  using Utils::Array<Scalar, n>::begin;
-  using Utils::Array<Scalar, n>::cbegin;
-  using Utils::Array<Scalar, n>::end;
-  using Utils::Array<Scalar, n>::cend;
-  using Utils::Array<Scalar, n>::empty;
-  using Utils::Array<Scalar, n>::size;
-  using Utils::Array<Scalar, n>::max_size;
-  using Utils::Array<Scalar, n>::fill;
-  using Utils::Array<Scalar, n>::broadcast;
+  using Utils::Array<T, n>::at;
+  using Utils::Array<T, n>::operator[];
+  using Utils::Array<T, n>::front;
+  using Utils::Array<T, n>::back;
+  using Utils::Array<T, n>::data;
+  using Utils::Array<T, n>::begin;
+  using Utils::Array<T, n>::cbegin;
+  using Utils::Array<T, n>::end;
+  using Utils::Array<T, n>::cend;
+  using Utils::Array<T, n>::empty;
+  using Utils::Array<T, n>::size;
+  using Utils::Array<T, n>::max_size;
+  using Utils::Array<T, n>::fill;
+  using Utils::Array<T, n>::broadcast;
   Vector() = default;
   Vector(Vector const &) = default;
   Vector &operator=(Vector const &) = default;
@@ -57,11 +57,11 @@ public:
   template <typename Container>
   explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
 
-  explicit Vector(Scalar const (&v)[n]) {
+  explicit Vector(T const (&v)[n]) {
     std::copy_n(std::begin(v), n, begin());
   }
 
-  Vector(std::initializer_list<Scalar> v)
+  Vector(std::initializer_list<T> v)
       : Vector(std::begin(v), std::end(v)) {}
 
   template <typename InputIterator>
@@ -78,27 +78,27 @@ public:
    * @brief Create a vector that has all entries set to
    *         one value.
    */
-  static Vector<Scalar, n> broadcast(const Scalar &s) {
-    Vector<Scalar, n> ret;
+  static Vector<T, n> broadcast(const T &s) {
+    Vector<T, n> ret;
     std::fill(ret.begin(), ret.end(), s);
 
     return ret;
   }
 
-  std::vector<Scalar> as_vector() const {
-    return std::vector<Scalar>(begin(), end());
+  std::vector<T> as_vector() const {
+    return std::vector<T>(begin(), end());
   }
 
-  operator std::vector<Scalar>() const { return as_vector(); }
+  operator std::vector<T>() const { return as_vector(); }
 
-  inline Scalar dot(const Vector<Scalar, n> &b) const { return *this * b; }
+  inline T dot(const Vector<T, n> &b) const { return *this * b; }
 
-  inline Scalar norm2() const { return (*this) * (*this); }
-  inline Scalar norm() const { return sqrt(norm2()); }
+  inline T norm2() const { return (*this) * (*this); }
+  inline T norm() const { return sqrt(norm2()); }
 
   inline Vector &normalize(void) {
     const auto N = norm();
-    if (N > Scalar(0)) {
+    if (N > T(0)) {
       for (int i = 0; i < n; i++)
         this->operator[](i) /= N;
     }
@@ -106,21 +106,21 @@ public:
     return *this;
   }
 
-  static void cross(const Vector<Scalar, 3> &a, const Vector<Scalar, 3> &b,
-                    Vector<Scalar, 3> &c) {
+  static void cross(const Vector<T, 3> &a, const Vector<T, 3> &b,
+                    Vector<T, 3> &c) {
     c[0] = a[1] * b[2] - a[2] * b[1];
     c[1] = a[2] * b[0] - a[0] * b[2];
     c[2] = a[0] * b[1] - a[1] * b[0];
   }
 
-  static Vector<Scalar, 3> cross(const Vector<Scalar, 3> &a,
-                                 const Vector<Scalar, 3> &b) {
-    Vector<Scalar, 3> c;
+  static Vector<T, 3> cross(const Vector<T, 3> &a,
+                                 const Vector<T, 3> &b) {
+    Vector<T, 3> c;
     cross(a, b, c);
     return c;
   }
 
-  inline Vector<Scalar, 3> cross(const Vector<Scalar, 3> &a) const {
+  inline Vector<T, 3> cross(const Vector<T, 3> &a) const {
     return cross(*this, a);
   }
 };
