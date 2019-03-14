@@ -1223,6 +1223,8 @@ Particle *local_place_particle(int part, const double p[3], int _new) {
   pt->r.p_old = pp;
 #endif
 
+  assert(local_particles[part] == pt);
+
   return pt;
 }
 
