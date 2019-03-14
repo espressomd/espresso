@@ -46,6 +46,7 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "metadynamics.hpp"
@@ -66,6 +67,7 @@
 #include "virtual_sites.hpp"
 
 #include "utils/mpi/all_compare.hpp"
+
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -247,6 +249,12 @@ void on_observable_calc() {
     reinit_magnetostatics = 0;
   }
 #endif /*ifdef ELECTROSTATICS */
+
+#ifdef ELECTROKINETICS
+  if (ek_initialized) {
+    ek_integrate_electrostatics();
+  }
+#endif
 }
 
 void on_particle_charge_change() {
@@ -353,24 +361,14 @@ void on_constraint_change() {
 }
 
 void on_lbboundary_change() {
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
   EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
   invalidate_obs();
 
-#ifdef LB_BOUNDARIES
-  if (lattice_switch & LATTICE_LB) {
-    LBBoundaries::lb_init_boundaries();
-  }
-#endif
-
-#ifdef LB_BOUNDARIES_GPU
-  if (this_node == 0) {
-    if (lattice_switch & LATTICE_LB_GPU) {
-      LBBoundaries::lb_init_boundaries();
-    }
-  }
-#endif
+  LBBoundaries::lb_init_boundaries();
 
   recalc_forces = 1;
+#endif
 }
 
 void on_resort_particles() {
@@ -452,12 +450,10 @@ void on_boxl_change() {
 #endif
 
 #ifdef LB
-  if (lattice_switch & LATTICE_LB) {
-    lb_lbfluid_init();
+  lb_lbfluid_init();
 #ifdef LB_BOUNDARIES
-    LBBoundaries::lb_init_boundaries();
+  LBBoundaries::lb_init_boundaries();
 #endif
-  }
 #endif
 }
 
@@ -509,9 +505,7 @@ void on_cell_structure_change() {
 #endif /* ifdef DIPOLES */
 
 #ifdef LB
-  if (lattice_switch & LATTICE_LB) {
-    lb_lbfluid_init();
-  }
+  lb_lbfluid_init();
 #endif
 }
 
@@ -626,7 +620,7 @@ void on_ghost_flags_change() {
 
 /* DPD and LB need also ghost velocities */
 #ifdef LB
-  if (lattice_switch & LATTICE_LB)
+  if (lattice_switch == ActiveLB::CPU)
     ghosts_have_v = 1;
 #endif
 #ifdef BOND_CONSTRAINT

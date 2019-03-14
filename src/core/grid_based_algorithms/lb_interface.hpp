@@ -3,7 +3,14 @@
 
 #include "config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb_constants.hpp"
 #include "utils/Vector.hpp"
+
+/** @brief LB implementation currently active. */
+enum class ActiveLB { NONE, CPU, GPU };
+
+/** @brief Switch determining the type of lattice dynamics. */
+extern ActiveLB lattice_switch;
 
 #if defined(LB) || defined(LB_GPU)
 
@@ -47,16 +54,14 @@ void lb_lbfluid_set_rng_state(uint64_t counter);
 const Lattice &lb_lbfluid_get_lattice();
 
 /**
- * @brief Get the global variable lattice_switch which defines wether NONE, CPU
- * or GPU LB is active.
+ * @brief Get the global variable @ref lattice_switch.
  */
-int lb_lbfluid_get_lattice_switch();
+ActiveLB lb_lbfluid_get_lattice_switch();
 
 /**
- * @brief Set the global variable lattice_switch which defines wether NONE, CPU
- * or GPU LB is active.
+ * @brief Set the global variable @ref lattice_switch.
  */
-void lb_lbfluid_set_lattice_switch(int local_lattice_switch);
+void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
 
 /**
  * @brief Set the LB time step.
@@ -207,7 +212,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
  */
 bool lb_lbnode_is_index_valid(const Vector3i &ind);
 
-void lb_lbfluid_on_lb_params_change(int field);
+void lb_lbfluid_on_lb_params_change(LBParam field);
 
 Vector3d lb_lbfluid_calc_fluid_momentum();
 #endif

@@ -42,8 +42,15 @@ IF LB_GPU or LB:
     #
     ##############################################
 
+    cdef extern from "grid_based_algorithms/lb_interface.hpp" namespace "ActiveLB":
+        cdef ActiveLB NONE
+        cdef ActiveLB CPU
+        cdef ActiveLB GPU
+
     cdef extern from "grid_based_algorithms/lb_interface.hpp":
 
+        cdef enum ActiveLB:
+            pass
         void lb_lbfluid_set_tau(double c_tau) except +
         double lb_lbfluid_get_tau() except +
         void lb_lbfluid_set_density(double c_dens) except +
@@ -67,8 +74,8 @@ IF LB_GPU or LB:
         void lb_lbfluid_print_boundary(string filename) except +
         void lb_lbfluid_save_checkpoint(string filename, int binary) except +
         void lb_lbfluid_load_checkpoint(string filename, int binary) except +
-        void lb_lbfluid_set_lattice_switch(int local_lattice_switch) except +
-        int lb_lbfluid_get_lattice_switch() except +
+        void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) except +
+        ActiveLB lb_lbfluid_get_lattice_switch() except +
         bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
         const Vector3d lb_lbnode_get_velocity(const Vector3i & ind) except +
         void lb_lbnode_set_velocity(const Vector3i & ind, const Vector3d & u) except +

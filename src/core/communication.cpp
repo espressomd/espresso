@@ -540,10 +540,6 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     predict_momentum_particles((double *)result);
     break;
 #ifdef LB
-  case 5:
-    mpi_call(mpi_gather_stats_slave, -1, 5);
-    lb_calc_fluid_mass((double *)result);
-    break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
     lb_calc_fluid_momentum((double *)result);
@@ -586,9 +582,6 @@ void mpi_gather_stats_slave(int, int job) {
     predict_momentum_particles(nullptr);
     break;
 #ifdef LB
-  case 5:
-    lb_calc_fluid_mass(nullptr);
-    break;
   case 6:
     lb_calc_fluid_momentum(nullptr);
     break;
@@ -873,17 +866,17 @@ void mpi_sync_topo_part_info_slave(int, int) {
 
 /******************* REQ_BCAST_LBPAR ********************/
 
-void mpi_bcast_lb_params(int field, int value) {
+void mpi_bcast_lb_params(LBParam field, int value) {
 #ifdef LB
-  mpi_call(mpi_bcast_lb_params_slave, field, value);
-  mpi_bcast_lb_params_slave(field, value);
+  mpi_call(mpi_bcast_lb_params_slave, static_cast<int>(field), value);
+  mpi_bcast_lb_params_slave(static_cast<int>(field), value);
 #endif
 }
 
 void mpi_bcast_lb_params_slave(int field, int) {
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
-  lb_lbfluid_on_lb_params_change(field);
+  lb_lbfluid_on_lb_params_change(static_cast<LBParam>(field));
 #endif
 }
 

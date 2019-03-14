@@ -29,8 +29,6 @@
 #include "debug.hpp"
 #include "grid.hpp"
 
-int lattice_switch = LATTICE_OFF;
-
 int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
@@ -56,6 +54,7 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
                         << "]=" << local_box_l[dir] << " ( box_l[" << dir
                         << "]=" << box_l[dir] << " node_grid[" << dir
                         << "]=" << node_grid[dir] << " )";
+      return ES_ERROR;
     }
   }
 

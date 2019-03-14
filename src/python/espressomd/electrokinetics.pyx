@@ -33,9 +33,9 @@ IF ELECTROKINETICS:
             """
             default_params = self.default_params()
 
-            if not (self._params["stencil"] in ["linkcentered", "nonlinear", "nodecentered"]):
+            if not (self._params["stencil"] in ["linkcentered", "nodecentered"]):
                 raise ValueError(
-                    "stencil has to be 'linkcentered', 'nonlinear' or 'nodecentered'.")
+                    "stencil has to be 'linkcentered' or 'nodecentered'.")
 
             if not (self._params["fluid_coupling"] in ["friction", "estatics"]):
                 raise ValueError(
@@ -44,9 +44,9 @@ IF ELECTROKINETICS:
         def valid_keys(self):
             """
             Returns the valid options used for the electrokinetic method.
-
             """
-            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling"
+
+            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude", "es_coupling"
 
         def required_keys(self):
             """
@@ -71,14 +71,15 @@ IF ELECTROKINETICS:
                     "prefactor": -1,
                     "stencil": "linkcentered",
                     "advection": True,
-                    "fluid_coupling": "friction"}
+                    "fluid_coupling": "friction",
+                    "fluctuations": False,
+                    "fluctuation_amplitude": 0.0,
+                    "es_coupling": False}
 
         def _get_params_from_es_core(self):
             if ek_parameters.stencil == 0:
                 stencil = "linkcentered"
             elif ek_parameters.stencil == 1:
-                stencil = "nonlinear"
-            elif ek_parameters.stencil == 2:
                 stencil = "nodecentered"
             else:
                 raise Exception("Value of stencil could not be identified.")
@@ -99,15 +100,17 @@ IF ELECTROKINETICS:
                     "prefactor": ek_parameters.prefactor,
                     "stencil": stencil,
                     "advection": ek_parameters.advection,
-                    "fluid_coupling": fluid_coupling}
+                    "fluid_coupling": fluid_coupling,
+                    "fluctuations": ek_parameters.fluctuations,
+                    "fluctuation_amplitude":
+                        ek_parameters.fluctuation_amplitude,
+                    "es_coupling": ek_parameters.es_coupling}
 
         def _set_params_in_es_core(self):
             if self._params["stencil"] == "linkcentered":
                 ek_set_stencil(0)
-            elif self._params["stencil"] == "nonlinear":
-                ek_set_stencil(1)
             elif self._params["stencil"] == "nodecentered":
-                ek_set_stencil(2)
+                ek_set_stencil(1)
 
             if self._params["fluid_coupling"] == "friction":
                 ek_set_fluidcoupling(True)
@@ -124,6 +127,9 @@ IF ELECTROKINETICS:
             ek_set_gamma_odd(self._params["gamma_odd"])
             ek_set_gamma_even(self._params["gamma_even"])
             ek_set_advection(self._params["advection"])
+            ek_set_fluctuations(self._params["fluctuations"])
+            ek_set_fluctuation_amplitude(self._params["fluctuation_amplitude"])
+            ek_set_electrostatics_coupling(self._params["es_coupling"])
 
         def set_density(self, species=None, density=None, node=None):
             """
@@ -275,7 +281,7 @@ IF ELECTROKINETICS:
             """
             ek_print_vtk_potential(utils.to_char_pointer(path))
 
-        def print_vtk_lbforce_density(self, path):
+        def print_vtk_lbforce(self, path):
             """
             Writes the LB force information into a vtk-file.
 
@@ -296,13 +302,14 @@ IF ELECTROKINETICS:
             path : :obj:`string`
                    The path and vtk-file name the electrostatic potential is written to.
 
-            note : This only works if 'EK_ELECTROSTATIC_COUPLING' is active.
+            note : This only works if 'es_coupling' is active.
 
             """
-            IF EK_ELECTROSTATIC_COUPLING:
+
+            if(self._params["es_coupling"]):
                 ek_print_vtk_particle_potential(utils.to_char_pointer(path))
-            ELSE:
-                raise Exception("'EK_ELECTROSTATIC_COUPLING' ist not active.")
+            else:
+                raise Exception("'es_coupling' is not active.")
 
         # TODO:
         def checkpoint(self):
@@ -467,6 +474,12 @@ IF ELECTROKINETICS:
 
             """
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
+
+        def print_vtk_flux_fluc(self, path):
+            ek_print_vtk_flux_fluc(self.id, utils.to_char_pointer(path))
+
+        def print_vtk_flux_link(self, path):
+            ek_print_vtk_flux_link(self.id, utils.to_char_pointer(path))
 
     cdef class SpecieRoutines(object):
         cdef Vector3i node

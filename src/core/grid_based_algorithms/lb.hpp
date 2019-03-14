@@ -31,6 +31,7 @@
 #include "config.hpp"
 
 #include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb_constants.hpp"
 
 void mpi_set_lb_fluid_counter(int high, int low);
 
@@ -46,23 +47,6 @@ void mpi_set_lb_fluid_counter(int high, int low);
 #include "utils/Counter.hpp"
 #include "utils/Span.hpp"
 
-/** \name Parameter fields for Lattice Boltzmann
- * The numbers are referenced in \ref mpi_bcast_lb_params
- * to determine what actions have to take place upon change
- * of the respective parameter.
- */
-/*@{*/
-#define LBPAR_DENSITY 0   /**< fluid density */
-#define LBPAR_VISCOSITY 1 /**< fluid kinematic viscosity */
-#define LBPAR_AGRID 2     /**< grid constant for fluid lattice */
-#define LBPAR_TAU 3       /**< time step for fluid propagation */
-/** friction coefficient for viscous coupling between particles and fluid */
-#define LBPAR_FRICTION 4
-#define LBPAR_EXTFORCE 5 /**< external force density acting on the fluid */
-#define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
-#define LBPAR_KT 7       /**< thermal energy */
-
-/*@}*/
 /** Some general remarks:
  *  This file implements the LB D3Q19 method to Espresso. The LB_Model
  *  construction is preserved for historical reasons and might be removed
@@ -260,56 +244,6 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
  */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index);
 
-/** Calculate the local fluid density.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index the local lattice site (Input).
- * @param rho   local fluid density
- */
-inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
-  // unit conversion: mass density
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_rho in " << __FILE__
-                      << __LINE__ << ": CPU LB not switched on.";
-    *rho = 0;
-    return;
-  }
-
-  double avg_rho = lbpar.rho;
-
-  *rho = avg_rho + lbfluid[0][index] + lbfluid[1][index] + lbfluid[2][index] +
-         lbfluid[3][index] + lbfluid[4][index] + lbfluid[5][index] +
-         lbfluid[6][index] + lbfluid[7][index] + lbfluid[8][index] +
-         lbfluid[9][index] + lbfluid[10][index] + lbfluid[11][index] +
-         lbfluid[12][index] + lbfluid[13][index] + lbfluid[14][index] +
-         lbfluid[15][index] + lbfluid[16][index] + lbfluid[17][index] +
-         lbfluid[18][index];
-}
-
-/** Calculate the local fluid momentum.
- *  The calculation is implemented explicitly for the special case of D3Q19.
- *  @param[in]  index  Local lattice site
- *  @retval The local fluid momentum.
- */
-inline Vector3d lb_calc_local_j(Lattice::index_t index) {
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_j in " << __FILE__ << __LINE__
-                      << ": CPU LB not switched on.";
-    return {};
-  }
-  return {{lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
-               lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
-               lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
-               lbfluid[14][index],
-           lbfluid[3][index] - lbfluid[4][index] + lbfluid[7][index] -
-               lbfluid[8][index] - lbfluid[9][index] + lbfluid[10][index] +
-               lbfluid[15][index] - lbfluid[16][index] + lbfluid[17][index] -
-               lbfluid[18][index],
-           lbfluid[5][index] - lbfluid[6][index] + lbfluid[11][index] -
-               lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
-               lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
-               lbfluid[18][index]}};
-}
-
 /** Calculate the local fluid fields.
  * The calculation is implemented explicitly for the special case of D3Q19.
  *
@@ -324,14 +258,6 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
                                               int *boundary) {
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_local_fields_get_boundary_flag in "
-                      << __FILE__ << __LINE__ << ": CPU LB not switched on.";
-    *boundary = 0;
-    return;
-  }
-
   *boundary = lbfields[index].boundary;
 }
 #endif
@@ -369,4 +295,7 @@ void lb_calc_fluid_mass(double *result);
 void lb_calc_fluid_momentum(double *result);
 void lb_calc_fluid_temp(double *result);
 void lb_collect_boundary_forces(double *result);
+
+/*@}*/
+
 #endif /* _LB_H */
