@@ -26,6 +26,7 @@
 #if defined(P3M) || defined(DP3M)
 #include "utils/Vector.hpp"
 
+#include <boost/optional.hpp>
 #include <fftw3.h>
 
 /************************************************
@@ -60,10 +61,8 @@ typedef struct {
   /** size of new mesh (number of mesh points). */
   int new_size;
 
-  /** number of nodes which have to communicate with each other. */
-  int g_size;
   /** group of nodes which have to communicate with each other. */
-  int *group;
+  std::vector<int> group;
 
   /** packing function for send blocks. */
   void (*pack_function)(double *, double *, int *, int *, int *, int);
@@ -160,9 +159,9 @@ void fft_common_pre_init(fft_data_struct *fft);
  * node  (Output). \param pos        positions of the nodes in in grid2
  * (Output). \param my_pos      position of this_node in  grid2.
  * \return Size of the communication group (Output of course!).  */
-int fft_find_comm_groups(const Vector3i &grid1, const Vector3i &grid2,
-                         int *node_list1, int *node_list2, int *group, int *pos,
-                         int *my_pos);
+boost::optional<std::vector<int>>
+fft_find_comm_groups(const Vector3i &grid1, const Vector3i &grid2, int *node_list1, int *node_list2, int *pos,
+                     int *my_pos);
 
 /** Calculate the local fft mesh.  Calculate the local mesh (loc_mesh)
  *  of a node at position (n_pos) in a node grid (n_grid) for a global
@@ -292,22 +291,6 @@ void fft_pack_block_permute2(double *in, double *out, int start[3], int size[3],
  */
 void fft_unpack_block(double *in, double *out, int start[3], int size[3],
                       int dim[3], int element);
-
-/** Debug function to print global fft mesh.
- *  Print a globally distributed mesh contained in data. Element size is
- *  element.
- * \param plan     fft/communication plan (see \ref fft_forw_plan).
- * \param data     mesh data.
- * \param element  element size.
- * \param num      element index to print.
- */
-void fft_print_global_fft_mesh(fft_forw_plan plan, double *data, int element,
-                               int num);
-
-/** Debug function to print fft_forw_plan structure.
- * \param pl fft/communication plan (see \ref fft_forw_plan).
- */
-void fft_print_fft_plan(fft_forw_plan pl);
 
 #endif /* defined(P3M) || defined(DP3M) */
 #endif /* _FFT_COMMON_H */

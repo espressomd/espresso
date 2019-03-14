@@ -110,36 +110,35 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   /* copy local mesh off real space charge assignment grid */
   for (i = 0; i < 3; i++)
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
+
   for (i = 1; i < 4; i++) {
-    fft.plan[i].g_size = fft_find_comm_groups(
-        {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-        {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
-        fft.plan[i].group, n_pos[i], my_pos[i]);
-    if (fft.plan[i].g_size == -1) {
+    auto group = fft_find_comm_groups(
+            {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+            {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i], n_pos[i], my_pos[i]);
+    if (not group) {
       /* try permutation */
       j = n_grid[i][(fft.plan[i].row_dir + 1) % 3];
       n_grid[i][(fft.plan[i].row_dir + 1) % 3] =
-          n_grid[i][(fft.plan[i].row_dir + 2) % 3];
+              n_grid[i][(fft.plan[i].row_dir + 2) % 3];
       n_grid[i][(fft.plan[i].row_dir + 2) % 3] = j;
-      fft.plan[i].g_size = fft_find_comm_groups(
-          {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
-          fft.plan[i].group, n_pos[i], my_pos[i]);
-      if (fft.plan[i].g_size == -1) {
-        fprintf(stderr, "%d: INTERNAL ERROR: fft_find_comm_groups error\n",
-                this_node);
-        errexit();
-      }
+
+      group = fft_find_comm_groups(
+              {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+              {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i], n_pos[i], my_pos[i]);
+
+      assert(group);
     }
+      
+    fft.plan[i].group = *group;
 
     fft.plan[i].send_block = Utils::realloc(
-        fft.plan[i].send_block, 6 * fft.plan[i].g_size * sizeof(int));
+        fft.plan[i].send_block, 6 * fft.plan[i].group.size() * sizeof(int));
     fft.plan[i].send_size = Utils::realloc(
-        fft.plan[i].send_size, 1 * fft.plan[i].g_size * sizeof(int));
+        fft.plan[i].send_size, 1 * fft.plan[i].group.size() * sizeof(int));
     fft.plan[i].recv_block = Utils::realloc(
-        fft.plan[i].recv_block, 6 * fft.plan[i].g_size * sizeof(int));
+        fft.plan[i].recv_block, 6 * fft.plan[i].group.size() * sizeof(int));
     fft.plan[i].recv_size = Utils::realloc(
-        fft.plan[i].recv_size, 1 * fft.plan[i].g_size * sizeof(int));
+        fft.plan[i].recv_size, 1 * fft.plan[i].group.size() * sizeof(int));
 
     fft.plan[i].new_size = fft_calc_local_mesh(
         my_pos[i], n_grid[i], global_mesh_dim, global_mesh_off,
@@ -153,7 +152,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     /* FFT_TRACE( printf(")\n")); */
 
     /* === send/recv block specifications === */
-    for (j = 0; j < fft.plan[i].g_size; j++) {
+    for (j = 0; j < fft.plan[i].group.size(); j++) {
       /* send block: this_node to comm-group-node i (identity: node) */
       int node = fft.plan[i].group[j];
       fft.plan[i].send_size[j] = fft_calc_send_block(
@@ -190,16 +189,9 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
       fft.plan[i].element = 1;
     else {
       fft.plan[i].element = 2;
-      for (j = 0; j < fft.plan[i].g_size; j++) {
+      for (j = 0; j < fft.plan[i].group.size(); j++) {
         fft.plan[i].send_size[j] *= 2;
         fft.plan[i].recv_size[j] *= 2;
-      }
-    }
-    /* DEBUG */
-    for (j = 0; j < n_nodes; j++) {
-      /* MPI_Barrier(comm_cart); */
-      if (j == this_node) {
-        FFT_TRACE(fft_print_fft_plan(fft.plan[i]));
       }
     }
   }
@@ -397,7 +389,7 @@ void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
   MPI_Status status;
   double *tmp_ptr;
 
-  for (i = 0; i < plan.g_size; i++) {
+  for (i = 0; i < plan.group.size(); i++) {
     plan.pack_function(in, fft.send_buf, &(plan.send_block[6 * i]),
                        &(plan.send_block[6 * i + 3]), plan.old_mesh,
                        plan.element);
@@ -433,7 +425,7 @@ void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
      replace the receive blocks by the send blocks and vice
      versa. Attention then also new_mesh and old_mesh are exchanged */
 
-  for (i = 0; i < plan_f.g_size; i++) {
+  for (i = 0; i < plan_f.group.size(); i++) {
 
     plan_b.pack_function(in, fft.send_buf, &(plan_f.recv_block[6 * i]),
                          &(plan_f.recv_block[6 * i + 3]), plan_f.new_mesh,
