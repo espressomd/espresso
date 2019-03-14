@@ -39,11 +39,10 @@
 class VirtualSites {
 public:
   VirtualSites() : m_have_velocity(true), m_have_quaternion(false){};
-  /** @brief Update positions and/or velocities of virtual sites
-
-  * Velocities are only updated if have_velocity() returns true.
-  * @param recalc_positions can be used to skip the recalculation of positions.
-  */
+  /** @brief Update positions and/or velocities of virtual sites.
+   *  Velocities are only updated if get_have_velocity() returns true.
+   *  @param recalc_positions  Skip the recalculation of positions if false.
+   */
   virtual void update(bool recalc_positions = true) const = 0;
   /** Back-transfer forces (and torques) to non-virtual particles. */
   virtual void back_transfer_forces_and_torques() const = 0;
@@ -52,7 +51,7 @@ public:
   virtual void after_lb_propagation(){};
   /** @brief Number of pressure contributions */
   virtual int n_pressure_contribs() const { return 0; };
-  /** @brief Pressure contribution(). */
+  /** @brief Pressure contribution. */
   virtual void
   pressure_and_stress_tensor_contribution(double *pressure,
                                           double *stress_tensor) const {};

@@ -37,14 +37,17 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-/** Non-Bonded tabulated potentials.
-    ia_params and force/energy tables are communicated to each node
-
-    @param part_type_a particle type for which the interaction is defined
-    @param part_type_b particle type for which the interaction is defined
-
- *  @retval @ref ES_OK
-*/
+/** Set the parameters of a non-Bonded tabulated potential.
+ *  ia_params and force/energy tables are communicated to each node
+ *
+ *  @param part_type_a  particle type for which the interaction is defined
+ *  @param part_type_b  particle type for which the interaction is defined
+ *  @param min          @copybrief TabulatedPotential::minval
+ *  @param max          @copybrief TabulatedPotential::maxval
+ *  @param energy       @copybrief TabulatedPotential::energy_tab
+ *  @param force        @copybrief TabulatedPotential::force_tab
+ *  @retval ES_OK
+ */
 int tabulated_set_params(int part_type_a, int part_type_b, double min,
                          double max, std::vector<double> const &energy,
                          std::vector<double> const &force);

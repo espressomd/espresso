@@ -39,19 +39,21 @@ using Utils::permute_ifield;
 #include <fftw3.h>
 #include <mpi.h>
 
-/** communicate the grid data according to the given fft_forw_plan.
- * \param plan communication plan (see \ref fft_forw_plan).
+/** Communicate the grid data according to the given forward FFT plan.
+ * \param plan FFT communication plan.
  * \param in   input mesh.
  * \param out  output mesh.
+ * \param fft    FFT communication plan.
  */
 static void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
                                fft_data_struct &fft);
 
-/** communicate the grid data according to the given
- * fft_forw_plan/fft_bakc_plan. \param plan_f communication plan (see \ref
- * fft_forw_plan). \param plan_b additional back plan (see \ref fft_back_plan).
+/** Communicate the grid data according to the given backward FFT plan.
+ * \param plan_f Forward FFT plan.
+ * \param plan_b Backward FFT plan.
  * \param in     input mesh.
  * \param out    output mesh.
+ * \param fft    FFT communication plan.
  */
 static void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
                                double *in, double *out, fft_data_struct &fft);

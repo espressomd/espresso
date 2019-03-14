@@ -35,70 +35,77 @@
 
 /** parameters for the ELC method */
 typedef struct {
-  /** maximal pairwise error of the potential and force */
+  /** maximal pairwise error of the potential and force. */
   double maxPWerror;
   /** the cutoff of the exponential sum. Since in all other MMM methods this is
-      the far formula, we call it here the same, although in the ELC context it
-      does not make much sense. */
-  double far_cut, far_cut2;
+   * the far formula, we call it here the same, although in the ELC context it
+   * does not make much sense.
+   */
+  double far_cut;
+  /** squared value of ELC_struct::far_cut "far_cut". */
+  double far_cut2;
   /** size of the empty gap. Note that ELC relies on the user to make sure that
-      this condition is fulfilled. */
+   * this condition is fulfilled.
+   */
   double gap_size;
-  /** whether the cutoff was set by the user, or calculated by Espresso. In the
-     latter case, the
-      cutoff will be adapted if important parameters, such as the box
-     dimensions, change. */
+  /** flag whether the cutoff was set by the user, or calculated by Espresso.
+   *  In the latter case, the cutoff will be adapted if important parameters,
+   *  such as the box dimensions, change.
+   */
   int far_calculated;
-  /** if true, use a homogeneous neutralizing background for nonneutral systems.
-     Unlike
-      the 3d case, this background adds an additional force pointing towards the
-     system
-      center, so be careful with this. */
-
-  /// neutralize the box by an homogeneous background
+  /** flag whether the box is neutralized by an homogeneous background.
+   *  If true, use a homogeneous neutralizing background for nonneutral
+   *  systems. Unlike the 3d case, this background adds an additional
+   *  force pointing towards the system center, so be careful with this.
+   */
   int neutralize;
 
-  /// flag whether there is any dielectric contrast in the system
+  /// flag whether there is any dielectric contrast in the system.
   int dielectric_contrast_on;
 
-  /// dielectric prefactors
-  double delta_mid_top, delta_mid_bot;
+  /// dielectric constant of upper part.
+  double delta_mid_top;
+  /// dielectric constant of lower part.
+  double delta_mid_bot;
 
-  /// const. potential parameters
+  /// flag whether a const. potential is applied.
   int const_pot;
+  /// const. potential.
   double pot_diff;
 
-  /** minimal distance of two charges for which the far formula is used. For
-     plain ELC, this equals
-      gap_size, but for dielectric ELC it is only 1./3. of that. */
+  /** minimal distance of two charges for which the far formula is used.
+   *  For plain ELC, this equals ELC_struct::gap_size "gap_size", but for
+   *  dielectric ELC it is only 1/3 of that.
+   */
   double minimal_dist;
-  /** layer around the dielectric contrast in which we trick around */
+  /** layer around the dielectric contrast in which we trick around. */
   double space_layer;
-  /** the space that is finally left */
+  /** the space that is finally left. */
   double space_box;
-  /** up to where particles can be found */
+  /** up to where particles can be found. */
   double h;
 
 } ELC_struct;
 extern ELC_struct elc_params;
 
 /** set parameters for ELC.
-    @param maxPWerror the required accuracy of the potential and the force. Note
-   that this counts for the
-    plain 1/r contribution alone, without the prefactor and the charge
-   prefactor.
-    @param min_dist   the gap size.
-    @param far_cut    the cutoff of the exponential sum. If -1, the cutoff is
-   automatically calculated using
-    the error formulas.
-    @param neutralize whether to add a neutralizing background. WARNING: This
-   background exerts forces, which
-    are dependent on the simulation box; especially the gap size enters into the
-   value of the forces.
-    @param delta_mid_top dielectric constant of upper part
-    @param delta_mid_bot dielectric constant of center part
-    @param bottom  dielectric constant of lower part
-*/
+ *  @param maxPWerror  @copybrief ELC_struct::maxPWerror
+ *                     Note that this counts for the plain 1/r contribution
+ *                     alone, without the prefactor and the charge prefactor.
+ *  @param min_dist    the gap size.
+ *  @param far_cut     @copybrief ELC_struct::far_cut
+ *                     If -1, the cutoff is automatically calculated using
+ *                     the error formulas.
+ *  @param neutralize  whether to add a neutralizing background. WARNING: This
+ *                     background exerts forces, which are dependent on the
+ *                     simulation box; especially the gap size enters into the
+ *                     value of the forces.
+ *  @param delta_mid_top @copybrief ELC_struct::delta_mid_top
+ *  @param delta_mid_bot @copybrief ELC_struct::delta_mid_bot
+ *  @param const_pot   @copybrief ELC_struct::const_pot
+ *  @param pot_diff    @copybrief ELC_struct::pot_diff
+ *  @retval ES_OK
+ */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
                    int neutralize, double delta_mid_top, double delta_mid_bot,
                    int const_pot, double pot_diff);
@@ -110,6 +117,8 @@ void ELC_add_force();
 double ELC_energy();
 
 /// check the ELC parameters
+/// @retval ES_OK
+/// @retval ES_ERROR
 int ELC_sanity_checks();
 
 /// initialize the ELC constants

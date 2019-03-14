@@ -198,8 +198,8 @@ bool p3m_sanity_checks();
 void p3m_count_charged_particles();
 
 /** Assign the physical charges using the tabulated charge assignment function.
- *  If @ref STORE_CA_FRAC is true, then the charge fractions are buffered in
- *  @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
+ *  If @ref P3M_STORE_CA_FRAC is true, then the charge fractions are buffered
+ *  in @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
  *  "ca_frac".
  */
 void p3m_charge_assign();

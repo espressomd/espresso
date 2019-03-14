@@ -71,9 +71,9 @@ namespace {
  * @brief A generic particle update.
  *
  * Here the sub-struct struture of Particle is
- * used: the specification of the data memeber to update
- * consists of to parts, the pointer to the subsutruct @p s
- * and a pointer to a member of that substruct @m.
+ * used: the specification of the data member to update
+ * consists of two parts, the pointer to the substruct @p s
+ * and a pointer to a member of that substruct @p m.
  *
  * @tparam S Substruct type of Particle
  * @tparam s Pointer to a member of Particle

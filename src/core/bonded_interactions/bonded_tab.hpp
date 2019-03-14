@@ -37,7 +37,7 @@
 #include "particle_data.hpp"
 #include <tuple>
 
-/** Bonded tabulated potentials.
+/** Set the parameters of a bonded tabulated potential.
  *  ia_params and force/energy tables are communicated to each node.
  *
  *  @param bond_type    Bond type for which the interaction is defined
@@ -47,8 +47,8 @@
  *  @param energy       @copybrief TabulatedPotential::energy_tab
  *  @param force        @copybrief TabulatedPotential::force_tab
  *
- *  @retval @ref ES_OK on success
- *  @retval @ref ES_ERROR on error
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
  */
 int tabulated_bonded_set_params(int bond_type,
                                 TabulatedBondedInteraction tab_type, double min,

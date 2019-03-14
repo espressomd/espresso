@@ -33,7 +33,11 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-/// set the parameters for the quartic potential
+/** set the parameters for the quartic potential
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int quartic_set_params(int bond_type, double k0, double k1, double r,
                        double r_cut);
 

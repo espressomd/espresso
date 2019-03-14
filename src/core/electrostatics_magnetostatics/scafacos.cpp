@@ -390,7 +390,7 @@ void set_parameters(const std::string &method, const std::string &params,
                     bool dipolar_ia) {
   mpi_call(mpi_scafacos_set_parameters_slave, method.size(), params.size());
 
-  /** This requires C++11, otherwise this is undefined because std::string was
+  /* This requires C++11, otherwise this is undefined because std::string was
    * not required to have continuous memory before. */
   /* const_cast is ok, this code runs only on rank 0 where the mpi call does not
    * modify the buffer */
