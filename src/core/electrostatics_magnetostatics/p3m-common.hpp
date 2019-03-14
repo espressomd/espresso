@@ -140,47 +140,47 @@ typedef struct {
 /** Structure to hold P3M parameters and some dependent variables. */
 typedef struct {
   /** tuning or production? */
-  bool tuning;
+  bool tuning = false;
   /** Ewald splitting parameter (0<alpha<1), rescaled to
    *  @p alpha_L = @p alpha * @p box_l. */
-  double alpha_L;
+  double alpha_L = 0.0;
   /** cutoff radius for real space electrostatics (>0), rescaled to
    *  @p r_cut_iL = @p r_cut * @p box_l_i. */
-  double r_cut_iL;
+  double r_cut_iL = 0.0;
   /** number of mesh points per coordinate direction (>0). */
-  int mesh[3];
+  int mesh[3] = {};
   /** offset of the first mesh point (lower left corner) from the
    *  coordinate origin ([0,1[). */
-  double mesh_off[3];
+  double mesh_off[3] = {P3M_MESHOFF, P3M_MESHOFF, P3M_MESHOFF};
   /** charge assignment order ([0,7]). */
-  int cao;
+  int cao = 0;
   /** number of interpolation points for charge assignment function */
-  int inter;
+  int inter = P3M_N_INTERPOL;
   /** accuracy of the actual parameter set. */
-  double accuracy;
+  double accuracy = 0.0;
 
   /** epsilon of the "surrounding dielectric". */
-  double epsilon;
+  double epsilon = P3M_EPSILON;
   /** cutoff for charge assignment. */
-  double cao_cut[3];
+  double cao_cut[3] = {};
   /** mesh constant. */
-  double a[3];
+  double a[3] = {};
   /** inverse mesh constant. */
-  double ai[3];
+  double ai[3] = {};
   /** unscaled @ref p3m_parameter_struct::alpha_L "alpha_L" for use with fast
    *  inline functions only */
-  double alpha;
+  double alpha = 0.0;
   /** unscaled @ref p3m_parameter_struct::r_cut_iL "r_cut_iL" for use with fast
    *  inline functions only */
-  double r_cut;
+  double r_cut = -1.;
   /** full size of the interpolated assignment function */
-  int inter2;
+  int inter2 = 0;
   /** number of points unto which a single charge is interpolated, i.e.
    *  p3m.cao^3 */
-  int cao3;
+  int cao3 = 0;
   /** additional points around the charge assignment mesh, for method like
    *  dielectric ELC creating virtual charges. */
-  double additional_mesh[3];
+  double additional_mesh[3] = {};
 
   template <typename Archive> void serialize(Archive &ar, long int) {
     ar &tuning &alpha_L &r_cut_iL &mesh;
@@ -188,10 +188,7 @@ typedef struct {
     ar &a &ai &alpha &r_cut &inter2 &cao3 &additional_mesh;
   }
 
-} p3m_parameter_struct;
-
-/** Initialize the parameter struct */
-void p3m_common_parameter_pre_init(p3m_parameter_struct *params);
+} P3MParameters;
 
 /** Print local mesh content.
  *  \param l local mesh structure.

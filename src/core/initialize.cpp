@@ -87,13 +87,6 @@ void on_program_start() {
   /* initially go for domain decomposition */
   topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
-#ifdef P3M
-  p3m_pre_init();
-#endif
-#ifdef DP3M
-  dp3m_pre_init();
-#endif
-
 #ifdef LB_GPU
   if (this_node == 0) {
     //   lb_pre_init_gpu();

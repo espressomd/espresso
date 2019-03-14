@@ -483,7 +483,7 @@ void bcast_coulomb_params() {
     // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-    MPI_Bcast(&p3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0,
+    MPI_Bcast(&p3m.params, sizeof(P3MParameters), MPI_BYTE, 0,
               comm_cart);
     break;
 #endif

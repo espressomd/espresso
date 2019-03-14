@@ -257,41 +257,42 @@ template <int cao> static void p3m_do_charge_assign();
 template <int cao>
 void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
 
-void p3m_pre_init(void) {
-  p3m_common_parameter_pre_init(&p3m.params);
-  /* p3m.local_mesh is uninitialized */
-  /* p3m.sm is uninitialized */
+p3m_data_struct::p3m_data_struct() {
+    /* local_mesh is uninitialized */
+  /* sm is uninitialized */
 
-  p3m.rs_mesh = nullptr;
-  p3m.ks_mesh = nullptr;
-  p3m.sum_qpart = 0;
-  p3m.sum_q2 = 0.0;
-  p3m.square_sum_q = 0.0;
+  rs_mesh = nullptr;
+  ks_mesh = nullptr;
+  sum_qpart = 0;
+  sum_q2 = 0.0;
+  square_sum_q = 0.0;
 
-  for (int i = 0; i < 7; i++)
-    p3m.int_caf[i] = nullptr;
-  p3m.pos_shift = 0.0;
-  p3m.meshift_x = nullptr;
-  p3m.meshift_y = nullptr;
-  p3m.meshift_z = nullptr;
+  for (auto &e: int_caf) {
+      e = nullptr;
+  }
 
-  p3m.d_op[0] = nullptr;
-  p3m.d_op[1] = nullptr;
-  p3m.d_op[2] = nullptr;
-  p3m.g_force = nullptr;
-  p3m.g_energy = nullptr;
+  pos_shift = 0.0;
+  meshift_x = nullptr;
+  meshift_y = nullptr;
+  meshift_z = nullptr;
+
+  d_op[0] = nullptr;
+  d_op[1] = nullptr;
+  d_op[2] = nullptr;
+  g_force = nullptr;
+  g_energy = nullptr;
 
 #ifdef P3M_STORE_CA_FRAC
-  p3m.ca_num = 0;
-  p3m.ca_frac = nullptr;
-  p3m.ca_fmp = nullptr;
+  ca_num = 0;
+  ca_frac = nullptr;
+  ca_fmp = nullptr;
 #endif
-  p3m.ks_pnum = 0;
+  ks_pnum = 0;
 
-  p3m.send_grid = nullptr;
-  p3m.recv_grid = nullptr;
+  send_grid = nullptr;
+  recv_grid = nullptr;
 
-  fft_common_pre_init(&p3m.fft);
+  fft_common_pre_init(&fft);
 }
 
 void p3m_free() {
@@ -2452,8 +2453,8 @@ void p3m_calc_kspace_stress(double *stress) {
 }
 
 /** Debug function to print p3m parameters */
-void p3m_p3m_print_struct(p3m_parameter_struct ps) {
-  fprintf(stderr, "%d: p3m_parameter_struct:\n", this_node);
+void p3m_p3m_print_struct(P3MParameters ps) {
+  fprintf(stderr, "%d: P3MParameters:\n", this_node);
   fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f\n", ps.alpha_L, ps.r_cut_iL);
   fprintf(stderr, "   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n", ps.mesh[0],
           ps.mesh[1], ps.mesh[2], ps.mesh_off[0], ps.mesh_off[1],

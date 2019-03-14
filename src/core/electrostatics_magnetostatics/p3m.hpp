@@ -65,8 +65,10 @@
  * data types
  ************************************************/
 
-typedef struct {
-  p3m_parameter_struct params;
+struct p3m_data_struct {
+    p3m_data_struct();
+
+  P3MParameters params;
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
@@ -121,12 +123,10 @@ typedef struct {
   double *recv_grid;
 
   fft_data_struct fft;
-} p3m_data_struct;
+};
 
 /** P3M parameters. */
 extern p3m_data_struct p3m;
-
-void p3m_pre_init(void);
 
 /** Tune P3M parameters to desired accuracy.
  *

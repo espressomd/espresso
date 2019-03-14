@@ -41,7 +41,7 @@ IF ELECTROSTATICS:
         void mpi_bcast_coulomb_params()
 
     IF P3M:
-        from p3m_common cimport p3m_parameter_struct
+        from p3m_common cimport P3MParameters
 
     cdef extern from "electrostatics_magnetostatics/coulomb.hpp":
 
@@ -70,7 +70,7 @@ IF ELECTROSTATICS:
 
     IF P3M:
         cdef extern from "electrostatics_magnetostatics/p3m-common.hpp":
-            ctypedef struct p3m_parameter_struct:
+            ctypedef struct P3MParameters:
                 double alpha_L
                 double r_cut_iL
                 int    mesh[3]
@@ -97,7 +97,7 @@ IF ELECTROSTATICS:
             int p3m_adaptive_tune(char ** log)
 
             ctypedef struct p3m_data_struct:
-                p3m_parameter_struct params
+                P3MParameters params
 
             # links intern C-struct with python object
             cdef extern p3m_data_struct p3m

@@ -43,7 +43,7 @@ IF DIPOLES == 1:
             void deactivate_dipolar_barnes_hut()
 
 IF DP3M == 1:
-    from p3m_common cimport p3m_parameter_struct
+    from p3m_common cimport P3MParameters
 
     cdef extern from "electrostatics_magnetostatics/p3m-dipolar.hpp":
         int dp3m_set_params(double r_cut, int mesh, int cao, double alpha, double accuracy)
@@ -55,7 +55,7 @@ IF DP3M == 1:
         int dp3m_deactivate()
 
         ctypedef struct dp3m_data_struct:
-            p3m_parameter_struct params
+            P3MParameters params
 
         # links intern C-struct with python object
         cdef extern dp3m_data_struct dp3m

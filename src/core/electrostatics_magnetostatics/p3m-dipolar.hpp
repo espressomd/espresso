@@ -46,8 +46,10 @@
 
 #include "utils/math/AS_erfc_part.hpp"
 
-typedef struct {
-  p3m_parameter_struct params;
+struct dp3m_data_struct {
+    dp3m_data_struct();
+
+  P3MParameters params;
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
@@ -101,7 +103,7 @@ typedef struct {
   double energy_correction;
 
   fft_data_struct fft;
-} dp3m_data_struct;
+};
 
 /** dipolar P3M parameters. */
 extern dp3m_data_struct dp3m;
@@ -109,8 +111,6 @@ extern dp3m_data_struct dp3m;
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
-void dp3m_pre_init();
 
 /** @copydoc p3m_set_tune_params */
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,

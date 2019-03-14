@@ -284,41 +284,41 @@ inside the loops
 
 */
 
-void dp3m_pre_init(void) {
-  p3m_common_parameter_pre_init(&dp3m.params);
-  dp3m.params.epsilon = P3M_EPSILON_MAGNETIC;
+dp3m_data_struct::dp3m_data_struct()
+{
+  params.epsilon = P3M_EPSILON_MAGNETIC;
 
-  /* dp3m.local_mesh is uninitialized */
-  /* dp3m.sm is uninitialized */
-  dp3m.rs_mesh = nullptr;
-  dp3m.rs_mesh_dip[0] = nullptr;
-  dp3m.rs_mesh_dip[1] = nullptr;
-  dp3m.rs_mesh_dip[2] = nullptr;
-  dp3m.ks_mesh = nullptr;
+  /* local_mesh is uninitialized */
+  /* sm is uninitialized */
+  rs_mesh = nullptr;
+  rs_mesh_dip[0] = nullptr;
+  rs_mesh_dip[1] = nullptr;
+  rs_mesh_dip[2] = nullptr;
+  ks_mesh = nullptr;
 
-  dp3m.sum_dip_part = 0;
-  dp3m.sum_mu2 = 0.0;
+  sum_dip_part = 0;
+  sum_mu2 = 0.0;
 
   for (int i = 0; i < 7; i++)
-    dp3m.int_caf[i] = nullptr;
-  dp3m.pos_shift = 0.0;
-  dp3m.meshift = nullptr;
+    int_caf[i] = nullptr;
+  pos_shift = 0.0;
+  meshift = nullptr;
 
-  dp3m.d_op = nullptr;
-  dp3m.g_force = nullptr;
-  dp3m.g_energy = nullptr;
+  d_op = nullptr;
+  g_force = nullptr;
+  g_energy = nullptr;
 
-  dp3m.ca_num = 0;
-  dp3m.ca_frac = nullptr;
-  dp3m.ca_fmp = nullptr;
-  dp3m.ks_pnum = 0;
+  ca_num = 0;
+  ca_frac = nullptr;
+  ca_fmp = nullptr;
+  ks_pnum = 0;
 
-  dp3m.send_grid = nullptr;
-  dp3m.recv_grid = nullptr;
+  send_grid = nullptr;
+  recv_grid = nullptr;
 
-  dp3m.energy_correction = 0.0;
+  energy_correction = 0.0;
 
-  fft_common_pre_init(&dp3m.fft);
+  fft_common_pre_init(&fft);
 }
 
 void dp3m_deactivate() {
@@ -2109,8 +2109,8 @@ int dp3m_adaptive_tune(char **logger) {
 
 /*****************************************************************************/
 
-void p3m_print_dp3m_struct(p3m_parameter_struct ps) {
-  fprintf(stderr, "%d: dipolar p3m_parameter_struct:\n", this_node);
+void p3m_print_dp3m_struct(P3MParameters ps) {
+  fprintf(stderr, "%d: dipolar P3MParameters:\n", this_node);
   fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f\n", ps.alpha_L, ps.r_cut_iL);
   fprintf(stderr, "   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n", ps.mesh[0],
           ps.mesh[1], ps.mesh[2], ps.mesh_off[0], ps.mesh_off[1],
