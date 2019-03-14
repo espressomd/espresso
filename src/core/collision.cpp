@@ -395,6 +395,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   added_particle(current_vs_pid);
   auto p_vs = local_place_particle(current_vs_pid, initial_pos.data(), 1);
   p_vs->r.p = pos;
+  assert(relate_to);
   local_vs_relate_to(p_vs, relate_to);
 
   p_vs->p.is_virtual = 1;
