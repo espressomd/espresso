@@ -140,7 +140,7 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
  */
 void halo_free_fieldtype(Fieldtype *ftype);
 
-/** Preparation of a certain halo parallelizations scheme. Sets up the
+/** Preparation of the halo parallelization scheme. Sets up the
  *  necessary datastructures for \ref halo_communication
  * @param hc         halo communicator being created (Input/Output)
  * @param lattice    lattice the communication is created for (Input)
