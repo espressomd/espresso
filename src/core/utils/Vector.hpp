@@ -54,24 +54,27 @@ public:
   void swap(Vector &rhs) { std::swap_ranges(begin(), end(), rhs.begin()); }
 
 private:
-    constexpr void copy_init(const T* first, const T* last) {
-      auto it = begin();
-      while(first != last) {
-          *it++ = *first++;
-      }
+  constexpr void copy_init(const T *first, const T *last) {
+    auto it = begin();
+    while (first != last) {
+      *it++ = *first++;
+    }
   }
 
 public:
   template <typename Container>
-  explicit constexpr Vector(Container &&v) : Vector(std::begin(v), std::end(v)) {}
-  explicit constexpr Vector(T const (&v)[N]) { copy_init(std::begin(v), std::end(v)); }
+  explicit constexpr Vector(Container &&v)
+      : Vector(std::begin(v), std::end(v)) {}
+  explicit constexpr Vector(T const (&v)[N]) {
+    copy_init(std::begin(v), std::end(v));
+  }
   constexpr Vector(std::initializer_list<T> v) {
-      if(N != v.size()) {
-          throw std::length_error(
-                  "Construction of Vector from Container of wrong length.");
-      }
+    if (N != v.size()) {
+      throw std::length_error(
+          "Construction of Vector from Container of wrong length.");
+    }
 
-      copy_init(v.begin(), v.end());
+    copy_init(v.begin(), v.end());
   }
 
   template <typename InputIterator>
