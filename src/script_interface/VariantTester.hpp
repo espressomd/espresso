@@ -59,38 +59,38 @@ public:
       auto const type = boost::get<std::string>(par.at("type"));
 
       if (type == "none")
-        return is_none(par.at("value"));
+        return is_type<None>(par.at("value"));
 
       if (type == "bool") {
-        return is_bool(par.at("value"));
+        return is_type<bool>(par.at("value"));
       }
 
       if (type == "int") {
-        return is_int(par.at("value"));
+        return is_type<int>(par.at("value"));
       }
 
       if (type == "double") {
-        return is_double(par.at("value"));
+        return is_type<double>(par.at("value"));
       }
 
       if (type == "string") {
-        return is_string(par.at("value"));
+        return is_type<std::string>(par.at("value"));
       }
 
       if (type == "objectid") {
-        return is_objectid(par.at("value"));
+        return is_type<ObjectId>(par.at("value"));
       }
 
       if (type == "double_vector") {
-        return is_double_vector(par.at("value"));
+        return is_type<std::vector<double>>(par.at("value"));
       }
 
       if (type == "int_vector") {
-        return is_int_vector(par.at("value"));
+        return is_type<std::vector<int>>(par.at("value"));
       }
 
       if (type == "vector") {
-        return is_vector(par.at("value"));
+        return is_type<Variant>(par.at("value"));
       }
     }
 

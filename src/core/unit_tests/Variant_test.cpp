@@ -59,18 +59,12 @@ BOOST_AUTO_TEST_CASE(infer_type_test) {
 }
 
 BOOST_AUTO_TEST_CASE(is_a) {
-  BOOST_CHECK(is_none(Variant(None{})));
-  BOOST_CHECK(is_bool(Variant(bool{})));
-  BOOST_CHECK(is_int(Variant(int{})));
-  BOOST_CHECK(is_double(Variant(double{})));
-  BOOST_CHECK(is_string(Variant(std::string{})));
-  BOOST_CHECK(is_int_vector(Variant(std::vector<int>{})));
-  BOOST_CHECK(is_double_vector(Variant(std::vector<double>{})));
-  BOOST_CHECK(is_objectid(Variant(ObjectId{})));
-  BOOST_CHECK(is_vector(Variant(std::vector<Variant>{})));
+  BOOST_CHECK(is_type<None>(Variant(None{})));
+  BOOST_CHECK(is_type<bool>(Variant(bool{})));
+  BOOST_CHECK(is_type<int>(Variant(int{})));
 }
 
-BOOST_AUTO_TEST_CASE(none_is_default) { BOOST_CHECK(is_none(Variant{})); }
+BOOST_AUTO_TEST_CASE(none_is_default) { BOOST_CHECK(is_type<None>(Variant{})); }
 
 BOOST_AUTO_TEST_CASE(transform_vectors_test) {
   std::vector<Variant> vv;
@@ -84,21 +78,21 @@ BOOST_AUTO_TEST_CASE(transform_vectors_test) {
 
   transform_vectors(v);
   /* v should now be { INT_VECTOR, { STRING, DOUBLE_VECTOR}} */
-  BOOST_CHECK(is_vector(v));
+  BOOST_CHECK(is_type<std::vector<Variant>>(v));
 
   BOOST_CHECK(boost::get<std::vector<Variant>>(v).size() == 2);
   /* First vector should be transformed to an INT_VECTOR */
-  BOOST_CHECK(is_int_vector(boost::get<std::vector<Variant>>(v)[0]));
+  BOOST_CHECK(is_type<std::vector<int>>(boost::get<std::vector<Variant>>(v)[0]));
   /* The nested vector should be unchanged because it is mixed. */
-  BOOST_CHECK(is_vector(boost::get<std::vector<Variant>>(v)[1]));
+  BOOST_CHECK(is_type<std::vector<Variant>>(boost::get<std::vector<Variant>>(v)[1]));
 
   auto const &inner_vv =
       boost::get<std::vector<Variant>>(boost::get<std::vector<Variant>>(v)[1]);
   BOOST_CHECK(inner_vv.size() == 2);
   /* The string should be unchanged */
-  BOOST_CHECK(is_string(inner_vv[0]));
+  BOOST_CHECK(is_type<std::string>(inner_vv[0]));
   /* The vector<Variant> should now be a DOUBLE_VECTOR */
-  BOOST_CHECK(is_double_vector(inner_vv[1]));
+  BOOST_CHECK(is_type<std::vector<double>>(inner_vv[1]));
 }
 
 BOOST_AUTO_TEST_CASE(make_from_args_test) {

@@ -47,7 +47,7 @@ constexpr const None none{};
  */
 typedef boost::make_recursive_variant<
     None, bool, int, double, std::string, std::vector<int>, std::vector<double>,
-    ObjectId, std::vector<boost::recursive_variant_>>::type Variant;
+    ObjectId, std::vector<boost::recursive_variant_>, Vector2d, Vector3d, Vector4d>::type Variant;
 
 /**
  * @brief Human readable names for the types in the variant.
@@ -64,7 +64,10 @@ enum class VariantType {
   INT_VECTOR,
   DOUBLE_VECTOR,
   OBJECTID,
-  VECTOR
+  VECTOR,
+  VECTOR2D,
+  VECTOR3D,
+  VECTOR4D
 };
 
 typedef std::map<std::string, Variant> VariantMap;
@@ -113,6 +116,18 @@ template <size_t N> struct infer_type_helper<Vector<double, N>> {
   static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
 };
 
+    template <> struct infer_type_helper<Vector<double, 2>> {
+        static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
+    };
+
+    template <> struct infer_type_helper<Vector<double, 3>> {
+        static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
+    };
+
+    template <> struct infer_type_helper<Vector<double, 4>> {
+        static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
+    };
+
 template <size_t N, size_t M>
 struct infer_type_helper<Vector<Vector<double, M>, N>> {
   static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
@@ -156,15 +171,24 @@ std::string get_type_label(Variant const &);
  */
 std::string get_type_label(VariantType);
 
-bool is_none(Variant const &v);
-bool is_bool(Variant const &v);
-bool is_int(Variant const &v);
-bool is_string(Variant const &v);
-bool is_double(Variant const &v);
-bool is_int_vector(Variant const &v);
-bool is_double_vector(Variant const &v);
-bool is_objectid(Variant const &v);
-bool is_vector(Variant const &v);
+namespace detail {
+    template<class T>
+    struct is_type_visitor : boost::static_visitor<bool> {
+        template<class U>
+                constexpr bool operator()(const U &) const {
+                    return std::is_same<T, U>::value;
+                }
+    };
+}
+
+template<class T>
+bool is_type(Variant const &v) {
+    return boost::apply_visitor(detail::is_type_visitor<T>{}, v);
+}
+
+inline bool is_none(Variant const& v) {
+    return is_type<None>(v);
+}
 
 /**
  * @brief Combine doubles/ints into respective vectors.

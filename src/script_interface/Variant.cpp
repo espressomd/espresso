@@ -31,42 +31,6 @@ std::string get_type_label(VariantType t) {
   return std::string(VariantLabels[static_cast<int>(t)]);
 }
 
-bool is_none(Variant const &v) {
-  return v.which() == static_cast<int>(VariantType::NONE);
-}
-
-bool is_bool(Variant const &v) {
-  return v.which() == static_cast<int>(VariantType::BOOL);
-}
-
-bool is_int(Variant const &v) {
-  return v.which() == static_cast<int>(VariantType::INT);
-}
-
-bool is_string(Variant const &v) {
-  return v.which() == static_cast<int>(VariantType::STRING);
-}
-
-bool is_double(Variant const &v) {
-  return v.which() == static_cast<int>(VariantType::DOUBLE);
-}
-
-bool is_int_vector(Variant const &v) {
-  return v.which() == static_cast<int>(VariantType::INT_VECTOR);
-}
-
-bool is_double_vector(Variant const &v) {
-  return v.which() == static_cast<int>(VariantType::DOUBLE_VECTOR);
-}
-
-bool is_objectid(Variant const &v) {
-  return v.which() == static_cast<int>(VariantType::OBJECTID);
-}
-
-bool is_vector(Variant const &v) {
-  return v.which() == static_cast<int>(VariantType::VECTOR);
-}
-
 namespace {
 template <typename T>
 std::vector<T> to_vector(std::vector<Variant> const &variant_vector) {
@@ -82,17 +46,17 @@ std::vector<T> to_vector(std::vector<Variant> const &variant_vector) {
 } /* namespace */
 
 void transform_vectors(Variant &v) {
-  if (is_vector(v)) {
+  if (is_type<std::vector<Variant>>(v)) {
     auto &variant_vector = boost::get<std::vector<Variant>>(v);
 
     /* only int, transform to vector<int> */
-    if (std::all_of(variant_vector.begin(), variant_vector.end(), is_int)) {
+    if (std::all_of(variant_vector.begin(), variant_vector.end(), is_type<int>)) {
       v = to_vector<int>(variant_vector);
       return;
     }
 
     /* only double, transform to vector<double> */
-    if (std::all_of(variant_vector.begin(), variant_vector.end(), is_double)) {
+    if (std::all_of(variant_vector.begin(), variant_vector.end(), is_type<double>)) {
       v = to_vector<double>(variant_vector);
       return;
     }
@@ -105,7 +69,7 @@ void transform_vectors(Variant &v) {
 }
 
 std::string print_variant_types(Variant const &v) {
-  if (is_vector(v)) {
+  if (is_type<std::vector<Variant>>(v)) {
     auto const &variant_vector = boost::get<std::vector<Variant>>(v);
     std::string ret{"{"};
 

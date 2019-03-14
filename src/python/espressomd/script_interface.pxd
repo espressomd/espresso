@@ -55,6 +55,8 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     void transform_vectors(Variant &)
     string get_type_label(const Variant &)
     string get_type_label(ParameterType)
+    bool is_type[T](const Variant &)
+    bool is_none(const Variant &)
 
 cdef extern from "ScriptInterface.hpp" namespace "boost":
     T get[T](const Variant &) except +

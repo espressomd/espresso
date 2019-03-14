@@ -84,7 +84,7 @@ void ParallelScriptInterface::set_parameter(const std::string &name,
                                             const Variant &value) {
   std::pair<std::string, Variant> d(name, Variant());
 
-  if (is_objectid(value)) {
+  if (is_type<ObjectId>(value)) {
     d.second = map_parallel_to_local_id(value);
   } else {
     d.second = value;
@@ -150,7 +150,7 @@ VariantMap ParallelScriptInterface::unwrap_variant_map(VariantMap const &map) {
 
   /* Unwrap the object ids */
   for (auto &it : p) {
-    if (is_objectid(it.second)) {
+    if (is_type<ObjectId>(it.second)) {
       it.second = map_parallel_to_local_id(it.second);
     }
   }
@@ -160,7 +160,7 @@ VariantMap ParallelScriptInterface::unwrap_variant_map(VariantMap const &map) {
 
 Variant
 ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
-  if (is_objectid(value)) {
+  if (is_type<ObjectId>(value)) {
     /** Check if the objectid is the empty object (ObjectId()),
      * if so it does not need translation, the empty object
      * has the same id everywhere.
@@ -172,7 +172,7 @@ ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
     } else {
       return oid;
     }
-  } else if (is_vector(value)) {
+  } else if (is_type<std::vector<Variant>>(value)) {
     auto const &in_vec = boost::get<std::vector<Variant>>(value);
     std::vector<Variant> out_vec;
     out_vec.reserve(in_vec.size());

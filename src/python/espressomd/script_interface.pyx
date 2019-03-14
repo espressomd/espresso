@@ -165,13 +165,12 @@ cdef class PScriptInterface(object):
         else:
             raise TypeError("Unknown type for conversion to Variant")
 
-    cdef variant_to_python_object(self, Variant value) except +:
+    cdef variant_to_python_object(self, const Variant &value) except +:
         cdef ObjectId oid
         cdef vector[Variant] vec
-        cdef int type = value.which()
         cdef shared_ptr[ScriptInterfaceBase] ptr
 
-        if < int > type == <int > NONE:
+        if is_none(value) :
             return None
         if < int > type == <int > BOOL:
             return get[bool](value)
