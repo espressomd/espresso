@@ -8,7 +8,6 @@
 #include "lb.hpp"
 #include "lb_interface.hpp"
 #include "lbgpu.hpp"
-#include "thermostat.hpp"
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 
