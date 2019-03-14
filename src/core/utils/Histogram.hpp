@@ -26,9 +26,9 @@
 #include <numeric>
 #include <vector>
 
+#include "Span.hpp"
 #include "constants.hpp"
 #include "utils/index.hpp"
-#include "Span.hpp"
 
 namespace Utils {
 
@@ -102,7 +102,7 @@ protected:
   size_t m_n_dims_data;
   // Track the number of total hits per bin entry.
   std::vector<size_t> m_tot_count;
-    std::vector<T> m_ones;
+  std::vector<T> m_ones;
 };
 
 /**
@@ -117,7 +117,8 @@ template <typename T, size_t Dims>
 Histogram<T, Dims>::Histogram(std::array<size_t, Dims> n_bins,
                               size_t n_dims_data,
                               std::array<std::pair<T, T>, Dims> limits)
-    : m_n_bins(n_bins), m_limits(limits), m_n_dims_data(n_dims_data), m_ones(n_dims_data, T{1.}) {
+    : m_n_bins(n_bins), m_limits(limits), m_n_dims_data(n_dims_data),
+      m_ones(n_dims_data, T{1.}) {
   if (n_bins.size() != limits.size()) {
     throw std::invalid_argument("Argument for number of bins and limits do "
                                 "not have same number of dimensions!");
@@ -151,13 +152,12 @@ void Histogram<T, Dims>::update(Span<const T> data) {
  * \param weights: m_n_dims_data dimensional weights.
  */
 template <typename T, size_t Dims>
-void Histogram<T, Dims>::update(Span<const T> data,
-                                Span<const T> weights) {
+void Histogram<T, Dims>::update(Span<const T> data, Span<const T> weights) {
   if (check_limits(data, m_limits)) {
     Array<size_t, Dims> index;
     for (size_t dim = 0; dim < m_n_bins.size(); ++dim) {
-      index[dim] = calculate_bin_index(data[dim], m_bin_sizes[dim],
-                                          m_limits[dim].first);
+      index[dim] =
+          calculate_bin_index(data[dim], m_bin_sizes[dim], m_limits[dim].first);
     }
     auto const flat_index =
         m_n_dims_data * ::Utils::ravel_index(index, m_n_bins);
