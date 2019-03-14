@@ -55,7 +55,7 @@ public:
   void swap(Vector &rhs) { std::swap_ranges(begin(), end(), rhs.begin()); }
 
   template <typename Container>
-  explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
+  explicit Vector(Container &&v) : Vector(std::begin(v), std::end(v)) {}
 
   explicit Vector(T const (&v)[n]) {
     std::copy_n(std::begin(v), n, begin());
@@ -91,10 +91,8 @@ public:
 
   operator std::vector<T>() const { return as_vector(); }
 
-  inline T dot(const Vector<T, n> &b) const { return *this * b; }
-
   inline T norm2() const { return (*this) * (*this); }
-  inline T norm() const { return sqrt(norm2()); }
+  inline T norm() const { return std::sqrt(norm2()); }
 
   inline Vector &normalize(void) {
     const auto N = norm();
@@ -104,24 +102,6 @@ public:
     }
 
     return *this;
-  }
-
-  static void cross(const Vector<T, 3> &a, const Vector<T, 3> &b,
-                    Vector<T, 3> &c) {
-    c[0] = a[1] * b[2] - a[2] * b[1];
-    c[1] = a[2] * b[0] - a[0] * b[2];
-    c[2] = a[0] * b[1] - a[1] * b[0];
-  }
-
-  static Vector<T, 3> cross(const Vector<T, 3> &a,
-                                 const Vector<T, 3> &b) {
-    Vector<T, 3> c;
-    cross(a, b, c);
-    return c;
-  }
-
-  inline Vector<T, 3> cross(const Vector<T, 3> &a) const {
-    return cross(*this, a);
   }
 };
 
@@ -285,6 +265,16 @@ template <size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
                  [](T const &v) { return sqrt(v); });
 
   return ret;
+}
+
+template<class T>
+Vector<T, 3> vector_product(const Vector<T, 3> &a,
+                   const Vector<T, 3> &b) {
+    return {
+            a[1] * b[2] - a[2] * b[1],
+            a[2] * b[0] - a[0] * b[2],
+            a[0] * b[1] - a[1] * b[0]
+    };
 }
 
 /**

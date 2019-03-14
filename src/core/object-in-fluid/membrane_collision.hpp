@@ -96,7 +96,7 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
 
       // for very small angles the force should not be applied - these happen at
       // the crossing of the boundary and would result in oscillation
-      product = out1.dot(out2);
+      product = out1 * out2;
       angle = acos(product);
 
       if (fabs(angle) > SMALL_OIF_MEMBRANE_CUTOFF) {
