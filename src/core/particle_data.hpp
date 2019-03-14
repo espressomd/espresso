@@ -616,7 +616,6 @@ int place_particle(int part, double p[3]);
 /** Call only on the master node: set particle velocity.
     @param part the particle.
     @param v its new velocity.
-    @return ES_OK if particle existed
 */
 void set_particle_v(int part, double *v);
 
@@ -624,7 +623,6 @@ void set_particle_v(int part, double *v);
 /** Call only on the master node: set particle velocity.
     @param part the particle.
     @param swim struct containing swimming parameters
-    @return ES_OK if particle existed
 */
 void set_particle_swimming(int part, ParticleParametersSwimming swim);
 #endif
@@ -632,21 +630,18 @@ void set_particle_swimming(int part, ParticleParametersSwimming swim);
 /** Call only on the master node: set particle force.
     @param part the particle.
     @param F its new force.
-    @return ES_OK if particle existed
 */
 void set_particle_f(int part, const Vector3d &F);
 
 /** Call only on the master node: set particle mass.
     @param part the particle.
     @param mass its new mass.
-    @return ES_OK if particle existed
 */
 void set_particle_mass(int part, double mass);
 
 /** Call only on the master node: set particle solvation free energy.
     @param part the particle.
     @param solvation its new solvation free energy.
-    @return ES_OK if particle existed
 */
 void set_particle_solvation(int part, double *solvation);
 
@@ -654,7 +649,6 @@ void set_particle_solvation(int part, double *solvation);
 /** Call only on the master node: set particle rotational inertia.
     @param part the particle.
     @param rinertia its new inertia.
-    @return ES_OK if particle existed
 */
 void set_particle_rotational_inertia(int part, double *rinertia);
 #endif
@@ -664,7 +658,6 @@ void set_particle_rotational_inertia(int part, double *rinertia);
     the torque and omega variables are meaningless
     @param part the particle.
     @param rot the degrees of freedom flag.
-    @return ES_OK if particle existed
 */
 void set_particle_rotation(int part, int rot);
 
@@ -680,7 +673,6 @@ void rotate_particle(int part, const Vector3d &axis, double angle);
 /** Call only on the master node: set particle affinity.
     @param part the particle.
     @param bond_site its new site of the affinity bond.
-    @return ES_OK if particle existed
 */
 void set_particle_affinity(int part, double *bond_site);
 #endif
@@ -689,7 +681,6 @@ void set_particle_affinity(int part, double *bond_site);
 /** Call only on the master node: set particle out_direction.
  @param part the particle.
  @param out_direction its new outward direction with respect to membrane.
- @return ES_OK if particle existed
  */
 void set_particle_out_direction(int part, double *out_direction);
 #endif
@@ -697,7 +688,6 @@ void set_particle_out_direction(int part, double *out_direction);
 /** Call only on the master node: set particle charge.
     @param part the particle.
     @param q its new charge.
-    @return ES_OK if particle existed
 */
 void set_particle_q(int part, double q);
 
@@ -705,7 +695,6 @@ void set_particle_q(int part, double q);
 /** Call only on the master node: set particle electrophoretic mobility.
     @param part the particle.
     @param mu_E its new mobility.
-    @return ES_OK if particle existed
 */
 void set_particle_mu_E(int part, double *mu_E);
 void get_particle_mu_E(int part, double (&mu_E)[3]);
@@ -714,14 +703,12 @@ void get_particle_mu_E(int part, double (&mu_E)[3]);
 /** Call only on the master node: set particle type.
     @param p_id the particle.
     @param type its new type.
-    @return ES_OK if particle existed
 */
 void set_particle_type(int p_id, int type);
 
 /** Call only on the master node: set particle's molecule id.
     @param part the particle.
     @param mid  its new mol id.
-    @return ES_OK if particle existed
 */
 void set_particle_mol_id(int part, int mid);
 
@@ -729,28 +716,24 @@ void set_particle_mol_id(int part, int mid);
 /** Call only on the master node: set particle orientation using quaternions.
     @param part the particle.
     @param quat its new value for quaternions.
-    @return ES_OK if particle existed
 */
 void set_particle_quat(int part, double *quat);
 
 /** Call only on the master node: set particle angular velocity from lab frame.
     @param part the particle.
     @param omega_lab its new angular velocity.
-    @return ES_OK if particle existed
 */
 void set_particle_omega_lab(int part, const Vector3d &omega_lab);
 
 /** Call only on the master node: set particle angular velocity in body frame.
     @param part the particle.
     @param omega its new angular velocity.
-    @return ES_OK if particle existed
 */
 void set_particle_omega_body(int part, const Vector3d &omega);
 
 /** Call only on the master node: set particle torque from lab frame.
     @param part the particle.
     @param torque_lab its new torque.
-    @return ES_OK if particle existed
 */
 void set_particle_torque_lab(int part, const Vector3d &torque_lab);
 
@@ -760,14 +743,12 @@ void set_particle_torque_lab(int part, const Vector3d &torque_lab);
 /** Call only on the master node: set particle dipole orientation.
     @param part the particle.
     @param dip its new dipole orientation.
-    @return ES_OK if particle existed
 */
 void set_particle_dip(int part, double *dip);
 
 /** Call only on the master node: set particle dipole moment (absolute value).
     @param part the particle.
     @param dipm its new dipole moment.
-    @return ES_OK if particle existed
 */
 void set_particle_dipm(int part, double dipm);
 #endif
@@ -776,7 +757,6 @@ void set_particle_dipm(int part, double dipm);
 /** Call only on the master node: set particle dipole moment (absolute value).
     @param part the particle.
     @param is_virtual its new is_virtual.
-    @return ES_OK if particle existed
 */
 void set_particle_virtual(int part, int is_virtual);
 #endif
@@ -790,14 +770,12 @@ void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 /** Call only on the master node: set particle temperature.
     @param part the particle.
     @param T its new temperature.
-    @return ES_OK if particle existed
 */
 void set_particle_temperature(int part, double T);
 
 /** Call only on the master node: set particle frictional coefficient.
     @param part the particle.
     @param gamma its new frictional coefficient.
-    @return ES_OK if particle existed
 */
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma(int part, double gamma);

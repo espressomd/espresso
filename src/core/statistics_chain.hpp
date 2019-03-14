@@ -51,32 +51,32 @@ extern int chain_length;
 
 /** calculate the end-to-end-distance. chain information \ref chain_start etc.
    must be set!
-    @return the end-to-end-distance */
+ */
 void calc_re(PartCfg &, double **re);
 
 /** calculate the end-to-end-distance averaged over all configurations stored in
    \ref #configs. Chain information \ref chain_start etc. must be set!
-    @return the averaged end-to-end-distance */
+ */
 void calc_re_av(double **re);
 
 /** calculate the radius of gyration. chain information \ref chain_start etc.
    must be set!
-    @return the radius of gyration */
+ */
 void calc_rg(PartCfg &, double **rg);
 
 /** calculate the radius of gyration averaged over all configurations stored in
    \ref #configs. Chain information \ref chain_start etc. must be set!
-    @return the averaged radius of gyration */
+ */
 void calc_rg_av(PartCfg &, double **rg);
 
 /** calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory). chain
    information \ref chain_start etc. must be set!
-    @return the hydrodynamic radius */
+ */
 void calc_rh(PartCfg &, double **rh);
 
 /** calculate the hydrodynamic radius averaged over all configurations stored in
    \ref #configs. Chain information \ref chain_start etc. must be set!
-    @return the averaged hydrodynamic radius */
+ */
 void calc_rh_av(double **rh);
 
 /** calculates the internal distances within a chain. Chain information \ref
