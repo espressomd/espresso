@@ -31,8 +31,7 @@
 
 #include "utils/Array.hpp"
 
-template <typename T, std::size_t n>
-class Vector : public Utils::Array<T, n> {
+template <typename T, std::size_t n> class Vector : public Utils::Array<T, n> {
 public:
   using Utils::Array<T, n>::at;
   using Utils::Array<T, n>::operator[];
@@ -55,17 +54,14 @@ public:
   void swap(Vector &rhs) { std::swap_ranges(begin(), end(), rhs.begin()); }
 
   template <typename Container>
-  explicit Vector(Container &&v) : Vector(std::begin(v), std::end(v)) {}
+  explicit constexpr Vector(Container &&v) : Vector(std::begin(v), std::end(v)) {}
 
-  explicit Vector(T const (&v)[n]) {
-    std::copy_n(std::begin(v), n, begin());
-  }
+  explicit constexpr Vector(T const (&v)[n]) { std::copy_n(std::begin(v), n, begin()); }
 
-  Vector(std::initializer_list<T> v)
-      : Vector(std::begin(v), std::end(v)) {}
+  constexpr Vector(std::initializer_list<T> v) : Vector(std::begin(v), std::end(v)) {}
 
   template <typename InputIterator>
-  Vector(InputIterator first, InputIterator last) {
+  constexpr Vector(InputIterator first, InputIterator last) {
     if (std::distance(first, last) == n) {
       std::copy_n(first, n, begin());
     } else {
@@ -85,16 +81,21 @@ public:
     return ret;
   }
 
-  std::vector<T> as_vector() const {
-    return std::vector<T>(begin(), end());
-  }
+  std::vector<T> as_vector() const { return std::vector<T>(begin(), end()); }
 
   operator std::vector<T>() const { return as_vector(); }
 
   inline T norm2() const { return (*this) * (*this); }
   inline T norm() const { return std::sqrt(norm2()); }
 
-  inline Vector &normalize(void) {
+  /*
+   * @brief Normalize the vector.
+   *
+   * Normalize the vector by its length,
+   * if not zero, otherwise the vector is unchanged.
+   */
+
+  inline Vector &normalize() {
     const auto N = norm();
     if (N > T(0)) {
       for (int i = 0; i < n; i++)
@@ -134,7 +135,7 @@ Vector<T, N> &binary_op_assign(Vector<T, N> &a, Vector<T, N> const &b, Op op) {
 }
 
 template <size_t N, typename T, typename Op>
-bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
+constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
   for (int i = 0; i < a.size(); i++) {
     /* Short circuit */
     if (!static_cast<bool>(op(a[i], b[i]))) {
@@ -147,32 +148,32 @@ bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
 } // namespace detail
 
 template <size_t N, typename T>
-bool operator<(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator<(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::less<T>());
 }
 
 template <size_t N, typename T>
-bool operator>(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator>(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::greater<T>());
 }
 
 template <size_t N, typename T>
-bool operator<=(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator<=(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::less_equal<T>());
 }
 
 template <size_t N, typename T>
-bool operator>=(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator>=(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::greater_equal<T>());
 }
 
 template <size_t N, typename T>
-bool operator==(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator==(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::equal_to<T>());
 }
 
 template <size_t N, typename T>
-bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
   return not(a == b);
 }
 
@@ -267,14 +268,10 @@ template <size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
   return ret;
 }
 
-template<class T>
-Vector<T, 3> vector_product(const Vector<T, 3> &a,
-                   const Vector<T, 3> &b) {
-    return {
-            a[1] * b[2] - a[2] * b[1],
-            a[2] * b[0] - a[0] * b[2],
-            a[0] * b[1] - a[1] * b[0]
-    };
+template <class T>
+Vector<T, 3> vector_product(const Vector<T, 3> &a, const Vector<T, 3> &b) {
+  return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
+          a[0] * b[1] - a[1] * b[0]};
 }
 
 /**
