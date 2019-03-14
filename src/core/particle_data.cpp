@@ -889,7 +889,7 @@ void set_particle_rotational_inertia(int part, double *rinertia) {
       part, Vector3d(rinertia, rinertia + 3));
 }
 #else
-const constexpr double ParticleProperties::rinertia[3];
+constexpr Vector3d ParticleProperties::rinertia;
 #endif
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {

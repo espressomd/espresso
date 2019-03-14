@@ -31,39 +31,53 @@
 
 #include "utils/Array.hpp"
 
-template <typename T, std::size_t n> class Vector : public Utils::Array<T, n> {
+template <typename T, std::size_t N> class Vector : public Utils::Array<T, N> {
 public:
-  using Utils::Array<T, n>::at;
-  using Utils::Array<T, n>::operator[];
-  using Utils::Array<T, n>::front;
-  using Utils::Array<T, n>::back;
-  using Utils::Array<T, n>::data;
-  using Utils::Array<T, n>::begin;
-  using Utils::Array<T, n>::cbegin;
-  using Utils::Array<T, n>::end;
-  using Utils::Array<T, n>::cend;
-  using Utils::Array<T, n>::empty;
-  using Utils::Array<T, n>::size;
-  using Utils::Array<T, n>::max_size;
-  using Utils::Array<T, n>::fill;
-  using Utils::Array<T, n>::broadcast;
+  using Utils::Array<T, N>::at;
+  using Utils::Array<T, N>::operator[];
+  using Utils::Array<T, N>::front;
+  using Utils::Array<T, N>::back;
+  using Utils::Array<T, N>::data;
+  using Utils::Array<T, N>::begin;
+  using Utils::Array<T, N>::cbegin;
+  using Utils::Array<T, N>::end;
+  using Utils::Array<T, N>::cend;
+  using Utils::Array<T, N>::empty;
+  using Utils::Array<T, N>::size;
+  using Utils::Array<T, N>::max_size;
+  using Utils::Array<T, N>::fill;
+  using Utils::Array<T, N>::broadcast;
   Vector() = default;
   Vector(Vector const &) = default;
   Vector &operator=(Vector const &) = default;
 
   void swap(Vector &rhs) { std::swap_ranges(begin(), end(), rhs.begin()); }
 
+private:
+    constexpr void copy_init(const T* first, const T* last) {
+      auto it = begin();
+      while(first != last) {
+          *it++ = *first++;
+      }
+  }
+
+public:
   template <typename Container>
   explicit constexpr Vector(Container &&v) : Vector(std::begin(v), std::end(v)) {}
+  explicit constexpr Vector(T const (&v)[N]) { copy_init(std::begin(v), std::end(v)); }
+  constexpr Vector(std::initializer_list<T> v) {
+      if(N != v.size()) {
+          throw std::length_error(
+                  "Construction of Vector from Container of wrong length.");
+      }
 
-  explicit constexpr Vector(T const (&v)[n]) { std::copy_n(std::begin(v), n, begin()); }
-
-  constexpr Vector(std::initializer_list<T> v) : Vector(std::begin(v), std::end(v)) {}
+      copy_init(v.begin(), v.end());
+  }
 
   template <typename InputIterator>
-  constexpr Vector(InputIterator first, InputIterator last) {
-    if (std::distance(first, last) == n) {
-      std::copy_n(first, n, begin());
+  Vector(InputIterator first, InputIterator last) {
+    if (std::distance(first, last) == N) {
+      std::copy_n(first, N, begin());
     } else {
       throw std::length_error(
           "Construction of Vector from Container of wrong length.");
@@ -74,8 +88,8 @@ public:
    * @brief Create a vector that has all entries set to
    *         one value.
    */
-  static Vector<T, n> broadcast(const T &s) {
-    Vector<T, n> ret;
+  static Vector<T, N> broadcast(const T &s) {
+    Vector<T, N> ret;
     std::fill(ret.begin(), ret.end(), s);
 
     return ret;
@@ -96,10 +110,10 @@ public:
    */
 
   inline Vector &normalize() {
-    const auto N = norm();
-    if (N > T(0)) {
-      for (int i = 0; i < n; i++)
-        this->operator[](i) /= N;
+    const auto l = norm();
+    if (l > T(0)) {
+      for (int i = 0; i < N; i++)
+        this->operator[](i) /= l;
     }
 
     return *this;
