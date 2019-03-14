@@ -93,12 +93,12 @@ public:
   /* Exceptions */
   struct UnknownParameter : public std::runtime_error {
     UnknownParameter(std::string const &name)
-        : runtime_error("Parameter " + name + " is read-only.") {}
+        : runtime_error("Unknown parameter '" + name + "'.") {}
   };
 
   struct WriteError : public std::runtime_error {
     WriteError(std::string const &name)
-        : runtime_error("Unknown parameter '" + name + "'.") {}
+        : runtime_error("Parameter " + name + " is read-only.") {}
   };
 
 protected:
