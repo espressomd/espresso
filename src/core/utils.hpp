@@ -35,12 +35,12 @@
 #include <cassert>
 #include <cmath>
 
-/*************************************************************/
-/** \name Vector and matrix operations for three dimensons.  */
-/*************************************************************/
+/**************************************************************/
+/** \name Vector and matrix operations for three dimensions.  */
+/**************************************************************/
 /*@{*/
 
-/** calculates the scalar product of two vectors a nd b */
+/** calculates the scalar product of two vectors a and b */
 template <typename T1, typename T2> double scalar(const T1 &a, const T2 &b) {
   double d2 = 0.0;
   for (int i = 0; i < 3; i++)

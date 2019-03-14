@@ -149,100 +149,13 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 #endif /*ifdef DIPOLES */
 }
 
-inline void calc_bonded_force(Particle *p1, Particle *p2,
-                              Bonded_ia_parameters *iaparams, int *i,
-                              double dx[3], double force[3]) {
-#ifdef TABULATED
-// char* errtxt;
-#endif
-
-  /* Calculates the bonded force between two particles */
-  switch (iaparams->type) {
-  case BONDED_IA_FENE:
-    calc_fene_pair_force(p1, p2, iaparams, dx, force);
-    break;
-#ifdef ROTATION
-  case BONDED_IA_HARMONIC_DUMBBELL:
-    calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
-    break;
-#endif
-  case BONDED_IA_HARMONIC:
-    calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
-    break;
-#ifdef LENNARD_JONES
-  case BONDED_IA_SUBT_LJ:
-    calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
-    break;
-#endif
-    /* since it is not clear at the moment how to handle a many body interaction
-     * here, I skip it */
-  case BONDED_IA_ANGLE_HARMONIC:
-    (*i)++;
-    force[0] = force[1] = force[2] = 0;
-    break;
-  case BONDED_IA_ANGLE_COSINE:
-    (*i)++;
-    force[0] = force[1] = force[2] = 0;
-    break;
-  case BONDED_IA_ANGLE_COSSQUARE:
-    (*i)++;
-    force[0] = force[1] = force[2] = 0;
-    break;
-  case BONDED_IA_DIHEDRAL:
-    (*i) += 2;
-    force[0] = force[1] = force[2] = 0;
-    break;
-
-#ifdef TABULATED
-  case BONDED_IA_TABULATED:
-    // printf("BONDED TAB, Particle: %d, P2: %d TYPE_TAB:
-    // %d\n",p1->p.identity,p2->p.identity,iparams->p.tab.type);
-    switch (iaparams->p.tab.type) {
-    case 1:
-      calc_tab_bond_force(p1, p2, iaparams, dx, force);
-      break;
-    case 2:
-      (*i)++;
-      force[0] = force[1] = force[2] = 0;
-      break;
-    case 3:
-      (*i) += 2;
-      force[0] = force[1] = force[2] = 0;
-      break;
-    default:
-      runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
-                        << p1->p.identity << " unknown\n";
-      return;
-    }
-    break;
-#endif
-#ifdef BOND_CONSTRAINT
-  case BONDED_IA_RIGID_BOND:
-    force[0] = force[1] = force[2] = 0;
-    break;
-#endif
-  case BONDED_IA_VIRTUAL_BOND:
-    force[0] = force[1] = force[2] = 0;
-    break;
-  default:
-    //      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d
-    //      unhandled\n",bonded_ia_params[type_num].type,p1->p.identity);
-    fprintf(stderr,
-            "add_bonded_virials: WARNING: Bond type %d , atom %d unhandled, "
-            "Atom 2: %d\n",
-            iaparams->type, p1->p.identity, p2->p.identity);
-    force[0] = force[1] = force[2] = 0;
-    break;
-  }
-}
-
 /* calc_three_body_bonded_forces is called by add_three_body_bonded_stress. This
    routine is only entered for angular potentials. */
 inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2,
                                           Particle *p3,
                                           Bonded_ia_parameters *iaparams,
-                                          double force1[3], double force2[3],
-                                          double force3[3]) {
+                                          Vector3d &force1, Vector3d &force2,
+                                          Vector3d &force3) {
 
 #ifdef TABULATED
 // char* errtxt;
@@ -306,6 +219,10 @@ inline void add_bonded_virials(Particle *p1) {
   while (i < p1->bl.n) {
     type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
+    if (iaparams->num != 1) {
+      i += iaparams->num;
+      continue;
+    }
 
     /* fetch particle 2 */
     p2 = local_particles[p1->bl.e[i++]];
@@ -324,7 +241,7 @@ inline void add_bonded_virials(Particle *p1) {
     double a[3] = {p1->r.p[0], p1->r.p[1], p1->r.p[2]};
     double b[3] = {p2->r.p[0], p2->r.p[1], p2->r.p[2]};
     auto dx = get_mi_vector(a, b);
-    calc_bonded_force(p1, p2, iaparams, &i, dx.data(), force);
+    calc_bond_pair_force(p1, p2, iaparams, dx.data(), force);
     *obsstat_bonded(&virials, type_num) +=
         dx[0] * force[0] + dx[1] * force[1] + dx[2] * force[2];
 
@@ -341,138 +258,35 @@ inline void add_bonded_virials(Particle *p1) {
  *  not the physics.
  */
 inline void add_three_body_bonded_stress(Particle *p1) {
-  double dx12[3]; // espresso notation
-  double dx21[3];
-  double dx31[3];
-  double force1[3];
-  double force2[3];
-  double force3[3];
-
-  // char *errtxt;
-  Particle *p2;
-  Particle *p3;
-  Bonded_ia_parameters *iaparams;
-
-  int i, k, j, l;
-  int type_num;
-  BondedInteraction type;
-
-  i = 0;
+  int i = 0;
   while (i < p1->bl.n) {
     /* scan bond list for angular interactions */
-    type_num = p1->bl.e[i];
-    iaparams = &bonded_ia_params[type_num];
-    type = iaparams->type;
+    auto type_num = p1->bl.e[i];
+    auto iaparams = &bonded_ia_params[type_num];
 
-    if (type == BONDED_IA_ANGLE_HARMONIC || type == BONDED_IA_ANGLE_COSINE ||
-        type == BONDED_IA_ANGLE_COSSQUARE) {
-      p2 = local_particles[p1->bl.e[++i]];
-      p3 = local_particles[p1->bl.e[++i]];
-
-      get_mi_vector(dx12, p1->r.p, p2->r.p);
-      for (j = 0; j < 3; j++)
-        dx21[j] = -dx12[j];
-
-      get_mi_vector(dx31, p3->r.p, p1->r.p);
-
-      for (j = 0; j < 3; j++) {
-        force1[j] = 0.0;
-        force2[j] = 0.0;
-        force3[j] = 0.0;
-      }
-
-      calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2,
-                                    force3);
-
-      /* uncomment the next line to see that the virial is indeed zero */
-      // printf("W = %g\n", scalar(force2, dx21) + scalar(force3, dx31));
-
-      /* three-body bonded interactions contribute to the stress but not the
-       * scalar pressure */
-      for (k = 0; k < 3; k++) {
-        for (l = 0; l < 3; l++) {
-          obsstat_bonded(&p_tensor, type_num)[3 * k + l] +=
-              force2[k] * dx21[l] + force3[k] * dx31[l];
-        }
-      }
-      i = i + 1;
+    // Skip non-three-particle-bonds
+    if (iaparams->num != 2) // number of partners
+    {
+      i += 1 + iaparams->num;
+      continue;
     }
-    // skip over non-angular interactions
-    else if (type == BONDED_IA_FENE) {
-      i = i + 2;
-    } else if (type == BONDED_IA_OIF_GLOBAL_FORCES) {
-      i = i + 3;
-    } else if (type == BONDED_IA_OIF_LOCAL_FORCES) {
-      i = i + 4;
-    } else if (type == BONDED_IA_OIF_OUT_DIRECTION) {
-      i = i + 3;
-    } else if (type == BONDED_IA_HARMONIC) {
-      i = i + 2;
-    }
-#ifdef LENNARD_JONES
-    else if (type == BONDED_IA_SUBT_LJ) {
-      i = i + 2;
-    }
-#endif
-    else if (type == BONDED_IA_DIHEDRAL) {
-      i = i + 4;
-    }
-#ifdef TABULATED
-    else if (type == BONDED_IA_TABULATED) {
-      if (iaparams->p.tab.type == TAB_BOND_LENGTH) {
-        i = i + 2;
-      } else if (iaparams->p.tab.type == TAB_BOND_ANGLE) {
-        p2 = local_particles[p1->bl.e[++i]];
-        p3 = local_particles[p1->bl.e[++i]];
+    auto p2 = local_particles[p1->bl.e[i + 1]];
+    auto p3 = local_particles[p1->bl.e[i + 2]];
 
-        get_mi_vector(dx12, p1->r.p, p2->r.p);
-        for (j = 0; j < 3; j++)
-          dx21[j] = -dx12[j];
+    auto const dx21 = -get_mi_vector(p1->r.p, p2->r.p);
+    auto const dx31 = get_mi_vector(p3->r.p, p1->r.p);
 
-        get_mi_vector(dx31, p3->r.p, p1->r.p);
-
-        for (j = 0; j < 3; j++) {
-          force1[j] = 0.0;
-          force2[j] = 0.0;
-          force3[j] = 0.0;
-        }
-
-        calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2,
-                                      force3);
-
-        /* uncomment the next line to see that the virial is indeed zero */
-        // printf("W = %g\n", scalar(force2, dx21) + scalar(force3, dx31));
-
-        /* three-body bonded interactions contribute to the stress but not the
-         * scalar pressure */
-        for (k = 0; k < 3; k++) {
-          for (l = 0; l < 3; l++) {
-            obsstat_bonded(&p_tensor, type_num)[3 * k + l] +=
-                force2[k] * dx21[l] + force3[k] * dx31[l];
-          }
-        }
-        i = i + 1;
-      } else if (iaparams->p.tab.type == TAB_BOND_DIHEDRAL) {
-        i = i + 4;
-      } else {
-        runtimeErrorMsg()
-            << "add_three_body_bonded_stress: match not found for particle "
-            << p1->p.identity << ".\n";
+    Vector3d force1{}, force2{}, force3{};
+    calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2, force3);
+    /* three-body bonded interactions contribute to the stress but not the
+     * scalar pressure */
+    for (int k = 0; k < 3; k++) {
+      for (int l = 0; l < 3; l++) {
+        obsstat_bonded(&p_tensor, type_num)[3 * k + l] +=
+            force2[k] * dx21[l] + force3[k] * dx31[l];
       }
     }
-#endif
-#ifdef BOND_CONSTRAINT
-    else if (type == BONDED_IA_RIGID_BOND) {
-      i = i + 2;
-    }
-#endif
-    else if (type == BONDED_IA_VIRTUAL_BOND) {
-      i = i + 2;
-    } else {
-      runtimeErrorMsg()
-          << "add_three_body_bonded_stress: match not found for particle "
-          << p1->p.identity << ".\n";
-    }
+    i += 3; // bond type and 2 partners
   }
 }
 
