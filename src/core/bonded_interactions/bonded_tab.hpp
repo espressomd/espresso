@@ -38,29 +38,6 @@
 #include "particle_data.hpp"
 #include <tuple>
 
-/** Non-Bonded tabulated potentials:
- *  Reads tabulated parameters and force and energy tables from a file.
- *  ia_params and force/energy tables are then communicated to each node
- *
- *  @param part_type_a  %Particle type for which the interaction is defined
- *  @param part_type_b  %Particle type for which the interaction is defined
- *  @param min          @copybrief TabulatedPotential::minval
- *  @param max          @copybrief TabulatedPotential::maxval
- *  @param energy       @copybrief TabulatedPotential::energy_tab
- *  @param force        @copybrief TabulatedPotential::force_tab
- *
- *  @retval 0 on success
- *  @retval 1 on particle type mismatches
- *  @retval 2 file name too long
- *  @retval 3 cannot open the file
- *  @retval 4 file too short
- *  @retval 5 file broken, cannot parse numbers
- *  @retval 6 number of points of existing potential changed
- */
-int tabulated_set_params(int part_type_a, int part_type_b, double min,
-                         double max, std::vector<double> const &energy,
-                         std::vector<double> const &force);
-
 /** Bonded tabulated potentials: Reads tabulated parameters and force
  *  and energy tables from a file.  ia_params and force/energy tables
  *  are then communicated to each node.
