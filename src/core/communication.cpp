@@ -68,7 +68,6 @@
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
 #include "swimmer_reaction.hpp"
-#include "topology.hpp"
 #include "virtual_sites.hpp"
 
 #include "serialization/IA_parameters.hpp"
@@ -124,9 +123,7 @@ int n_nodes = -1;
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
-  CB(mpi_update_mol_ids_slave)                                                 \
-  CB(mpi_sync_topo_part_info_slave)                                            \
-  CB(mpi_bcast_lb_params_slave)                                                \
+    CB(mpi_bcast_lb_params_slave)                                                \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_send_fluid_slave)                                                     \
   CB(mpi_recv_fluid_slave)                                                     \
@@ -728,107 +725,19 @@ void mpi_bcast_nptiso_geom_slave(int, int) {
   MPI_Bcast(&nptiso.non_const_dim, 1, MPI_INT, 0, comm_cart);
 }
 
-/***************REQ_UPDATE_MOL_IDS *********************/
-
-void mpi_update_mol_ids() {
-  mpi_call(mpi_update_mol_ids_slave, -1, 0);
-  mpi_update_mol_ids_slave(-1, 0);
-}
-
-void mpi_update_mol_ids_slave(int, int) { update_mol_ids_setchains(); }
-
-/******************* REQ_SYNC_TOPO ********************/
-int mpi_sync_topo_part_info() {
-  int i;
-  int molsize = 0;
-  int moltype = 0;
-
-  mpi_call(mpi_sync_topo_part_info_slave, -1, 0);
-  int n_mols = topology.size();
-  MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
-
-  for (i = 0; i < n_mols; i++) {
-    molsize = topology[i].part.n;
-    moltype = topology[i].type;
-
-#ifdef MOLFORCES
-    MPI_Bcast(&(topology[i].trap_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(topology[i].trap_center, 3, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].trap_spring_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].drag_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].noforce_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].isrelative), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].favcounter), 1, MPI_INT, 0, comm_cart);
-    if (topology[i].favcounter == -1)
-      MPI_Bcast(topology[i].fav, 3, MPI_DOUBLE, 0, comm_cart);
-    /* check if any molecules are trapped */
-    if ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
-      IsTrapped = 1;
-    }
-#endif
-
-    MPI_Bcast(&molsize, 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&moltype, 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(topology[i].part.e, topology[i].part.n, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&topology[i].type, 1, MPI_INT, 0, comm_cart);
-  }
-
-  sync_topo_part_info();
-
-  return 1;
-}
-
-void mpi_sync_topo_part_info_slave(int, int) {
-  int i;
-  int molsize = 0;
-  int moltype = 0;
-  int n_mols = 0;
-
-  MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
-  realloc_topology(n_mols);
-  for (i = 0; i < n_mols; i++) {
-
-#ifdef MOLFORCES
-    MPI_Bcast(&(topology[i].trap_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(topology[i].trap_center, 3, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].trap_spring_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].drag_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].noforce_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].isrelative), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].favcounter), 1, MPI_INT, 0, comm_cart);
-    if (topology[i].favcounter == -1)
-      MPI_Bcast(topology[i].fav, 3, MPI_DOUBLE, 0, comm_cart);
-    /* check if any molecules are trapped */
-    if ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
-      IsTrapped = 1;
-    }
-#endif
-
-    MPI_Bcast(&molsize, 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&moltype, 1, MPI_INT, 0, comm_cart);
-    topology[i].type = moltype;
-    topology[i].part.resize(molsize);
-
-    MPI_Bcast(topology[i].part.e, topology[i].part.n, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&topology[i].type, 1, MPI_INT, 0, comm_cart);
-  }
-
-  sync_topo_part_info();
-}
-
 /******************* REQ_BCAST_LBPAR ********************/
 
-void mpi_bcast_lb_params(int field, int value) {
+void mpi_bcast_lb_params(LBParam field, int value) {
 #ifdef LB
-  mpi_call(mpi_bcast_lb_params_slave, field, value);
-  mpi_bcast_lb_params_slave(field, value);
+  mpi_call(mpi_bcast_lb_params_slave, static_cast<int>(field), value);
+  mpi_bcast_lb_params_slave(static_cast<int>(field), value);
 #endif
 }
 
 void mpi_bcast_lb_params_slave(int field, int) {
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
-  lb_lbfluid_on_lb_params_change(field);
+  lb_lbfluid_on_lb_params_change(static_cast<LBParam>(field));
 #endif
 }
 

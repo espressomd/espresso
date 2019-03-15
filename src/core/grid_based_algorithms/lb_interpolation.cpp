@@ -70,7 +70,7 @@ Vector3d node_u(Lattice::index_t index) {
 
 const Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Vector3d &pos) {
-  if (lattice_switch & LATTICE_LB) {
+  if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Vector3d interpolated_u{};
 
@@ -91,7 +91,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Vector3d &pos) {
 const Vector3d
 lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
   auto const folded_pos = folded_position(pos);
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     Vector3d interpolated_u{};
     switch (interpolation_order) {
@@ -106,7 +106,7 @@ lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
     }
     return interpolated_u;
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     switch (interpolation_order) {
     case (InterpolationOrder::quadratic):

@@ -120,4 +120,4 @@ public:
                                              Vector6d &delta, double tmp_agrid);
 };
 
-#endif /* LATTICE_HPP */
+#endif /* CORE_LB_LATTICE_HPP */

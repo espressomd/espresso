@@ -37,23 +37,6 @@
  * thus making the code more efficient. */
 #define LBQ 19
 
-/** \name Parameter fields for lattice Boltzmann
- *  The numbers are referenced in \ref mpi_bcast_lb_params
- *  to determine what actions have to take place upon change
- *  of the respective parameter. */
-/*@{*/
-#define LBPAR_DENSITY 0   /**< fluid density */
-#define LBPAR_VISCOSITY 1 /**< fluid kinematic viscosity */
-#define LBPAR_AGRID 2     /**< grid constant for fluid lattice */
-#define LBPAR_TAU 3       /**< time step for fluid propagation */
-#define LBPAR_FRICTION                                                         \
-  4 /**< friction coefficient for viscous coupling between particles and fluid \
-     */
-#define LBPAR_EXTFORCE 5 /**< external force acting on the fluid */
-#define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
-#define LBPAR_BOUNDARY 7 /**< boundary parameters */
-/*@}*/
-
 #if defined(LB_DOUBLE_PREC) || defined(EK_DOUBLE_PREC)
 typedef double lbForceFloat;
 #else
@@ -259,12 +242,8 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]);
 void lb_gpu_get_boundary_forces(double *forces);
-void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
-void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
+void lb_save_checkpoint_GPU(float *const host_checkpoint_vd);
+void lb_load_checkpoint_GPU(float const *const host_checkpoint_vd);
 
 void lb_lbfluid_remove_total_momentum();
 void lb_lbfluid_fluid_add_momentum(float momentum[3]);

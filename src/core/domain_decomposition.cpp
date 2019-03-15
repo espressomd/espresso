@@ -24,8 +24,11 @@
  */
 
 #include "domain_decomposition.hpp"
+
+#include "debug.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "serialization/ParticleList.hpp"
 #include "utils/mpi/sendrecv.hpp"

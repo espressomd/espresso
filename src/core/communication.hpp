@@ -58,6 +58,7 @@
 
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
+#include "grid_based_algorithms/lb_constants.hpp"
 #include "particle_data.hpp"
 
 #include "utils/serialization/array.hpp"
@@ -270,17 +271,12 @@ void mpi_bcast_nptiso_geom(void);
  *  a single molecule */
 void mpi_update_mol_ids(void);
 
-/** Issue REQ_SYNC_TOPO: Update the molecules ids to that they correspond to
- *  the topology
- */
-int mpi_sync_topo_part_info(void);
-
 /** Issue REQ_BCAST_LBPAR: Broadcast a parameter for lattice Boltzmann.
  *  @param[in] field  References the parameter field to be broadcasted.
  *                    The references are defined in lb.hpp
  *  @param[in] value  Dummy value
  */
-void mpi_bcast_lb_params(int field, int value = -1);
+void mpi_bcast_lb_params(LBParam field, int value = -1);
 
 void mpi_bcast_lb_particle_coupling();
 

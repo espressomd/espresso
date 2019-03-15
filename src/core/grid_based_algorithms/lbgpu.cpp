@@ -28,6 +28,7 @@
 
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
@@ -37,7 +38,6 @@
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "statistics.hpp"
-#include "thermostat.hpp"
 #include "utils.hpp"
 
 #include <cmath>
@@ -257,7 +257,7 @@ void lb_reinit_parameters_gpu() {
  */
 void lb_init_gpu() {
 
-  LB_TRACE(printf("Begin initialzing fluid on GPU\n"));
+  LB_TRACE(printf("Begin initializing fluid on GPU\n"));
   /** set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
 
@@ -268,7 +268,7 @@ void lb_init_gpu() {
   gpu_init_particle_comm();
   cuda_bcast_global_part_params();
 
-  LB_TRACE(printf("Initialzing fluid on GPU successful\n"));
+  LB_TRACE(printf("Initializing fluid on GPU successful\n"));
 }
 
 /*@}*/
