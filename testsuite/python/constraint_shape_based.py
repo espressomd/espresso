@@ -163,22 +163,13 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # check force calculation of cylinder constraint
         interaction_dir = -1  # constraint is directed inwards
         cylinder_shape = espressomd.shapes.Cylinder(
-            center=[
-                self.box_l /
-                2.0,
-                self.box_l /
-                2.0,
-                self.box_l /
-                2.0],
-            axis=[
-                0,
-                0,
-                1],
+            center=[self.box_l / 2.0,
+                    self.box_l / 2.0,
+                    self.box_l / 2.0],
+            axis=[0, 0, 1],
             direction=interaction_dir,
-            radius=self.box_l /
-            2.0,
-            length=self.box_l +
-            5)  # +5 in order to have no top or bottom
+            radius=self.box_l / 2.0,
+            length=self.box_l + 5)  # +5 in order to have no top or bottom
         penetrability = False  # impenetrable
         outer_cylinder_constraint = espressomd.constraints.ShapeBasedConstraint(
             shape=cylinder_shape, particle_type=1, penetrable=penetrability)
@@ -494,7 +485,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
             upper_smoothing_radius=3,
             pore_length=15,
             pore_mouth=20,
-            pore_width=10)
+            pore_width=10,
+            dividing_plane=self.box_l / 2)
         slitpore_constraint = espressomd.constraints.ShapeBasedConstraint(
             shape=slitpore_shape, particle_type=1, penetrable=True)
         system.constraints.add(slitpore_constraint)

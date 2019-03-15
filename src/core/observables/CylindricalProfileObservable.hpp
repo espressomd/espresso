@@ -22,13 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cmath>
 
 #include "Observable.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 namespace Observables {
 
 class CylindricalProfileObservable : virtual public Observable {
 public:
-  ::Vector<3, double> center;
+  ::Vector3d center;
   std::string axis;
   double min_r, max_r;
   double min_phi, max_phi;

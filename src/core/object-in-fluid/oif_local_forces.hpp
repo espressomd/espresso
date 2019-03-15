@@ -25,10 +25,10 @@
  * (Dupin2007) \ref forces.cpp
  */
 
-#include "Vector.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
+#include "utils/Vector.hpp"
 #include "utils/math/triangle_functions.hpp"
 
 // set parameters for local forces

@@ -24,10 +24,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/MpiCallbacks.hpp"
-#include "core/utils/make_unique.hpp"
+#include "MpiCallbacks.hpp"
+#include "utils/make_unique.hpp"
 
-#include "../../script_interface/ParallelScriptInterface.hpp"
+#include "ParallelScriptInterface.hpp"
 
 namespace mpi = boost::mpi;
 std::unique_ptr<Communication::MpiCallbacks> callbacks;

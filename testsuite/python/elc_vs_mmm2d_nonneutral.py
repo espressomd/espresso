@@ -23,7 +23,7 @@ import espressomd.electrostatics
 from espressomd import electrostatic_extensions
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
+@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "PARTIAL_PERIODIC"]),
            "Features not available, skipping test!")
 class ELC_vs_MMM2D_neutral(ut.TestCase):
     # Handle to espresso system

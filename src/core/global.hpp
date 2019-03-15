@@ -22,11 +22,11 @@
 #define _GLOBAL_HPP
 
 /** \file
-    This file contains the code for access to globally
-    defined variables using the script command setmd. Please refer to
-    the Developer's guide, section "Adding global variables", for
-    details on how to add new variables in the interpreter's
-    space.  */
+ *  This file contains the code for access to globally
+ *  defined variables using the script command setmd. Please refer to
+ *  the Developer's guide, section "Adding global variables", for
+ *  details on how to add new variables in the interpreter's space.
+ */
 
 /**********************************************
  * description of global variables
@@ -37,56 +37,39 @@
  **********************************************/
 
 /** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
-         @param i the number from \ref global.hpp "global.hpp" referencing the
-         datafield.
-         @return nonzero on error
-     */
+ *  @param i the number from \ref global.hpp "global.hpp" referencing the
+ *           datafield.
+ *  @return nonzero on error
+ */
 int mpi_bcast_parameter(int i);
 
 /*
- * @brief Check if all the global fields a synchronized between
- *        the nodes.
+ * @brief Check if all the global fields are synchronized between the nodes.
  */
 void check_global_consistency();
 
 /** \name Field Enumeration
-    These numbers identify the variables given in
-    \ref anonymous_namespace{global.cpp}::fields "fields"
-    for use with \ref mpi_bcast_parameter.
-*/
+ *  These numbers identify the variables given in
+ *  \ref anonymous_namespace{global.cpp}::fields "fields"
+ *  for use with \ref mpi_bcast_parameter.
+ */
 enum Fields {
   /** index of \ref box_l */
   FIELD_BOXL = 0,
   /** index of \ref DomainDecomposition::cell_grid */
   FIELD_CELLGRID,
-  /** index of \ref DomainDecomposition::cell_size */
-  FIELD_CELLSIZE,
   /** index of \ref langevin_gamma */
   FIELD_LANGEVIN_GAMMA,
   /** index of \ref integ_switch */
   FIELD_INTEG_SWITCH,
-  /** index of \ref local_box_l */
-  FIELD_LBOXL,
-  /** index of \ref max_cut */
-  FIELD_MCUT,
   /** index of \ref max_num_cells  */
   FIELD_MAXNUMCELLS,
   /** index of \ref max_seen_particle */
   FIELD_MAXPART,
-  /** index of \ref max_range */
-  FIELD_MAXRANGE,
-  /** index of \ref max_skin */
-  FIELD_MAXSKIN,
   /** index of \ref min_num_cells  */
   FIELD_MINNUMCELLS,
   /** index of \ref n_layers */
   FIELD_NLAYERS,
-  /** index of \ref n_nodes */
-  FIELD_NNODES,
-  /** index of \ref n_part */
-  FIELD_NPART,
-  /** index of \ref max_seen_particle_type */
-  FIELD_NPARTTYPE,
   /** index of \ref n_rigidbonds */
   FIELD_RIGIDBONDS,
   /** index of \ref node_grid */
@@ -117,44 +100,18 @@ enum Fields {
   FIELD_SIMTIME,
   /** index of \ref time_step */
   FIELD_TIMESTEP,
-  /** index of \ref timing_samples */
-  FIELD_TIMINGSAMP,
-  /** index of \ref max_cut_nonbonded */
-  FIELD_MCUT_NONBONDED,
-  /** index of \ref verlet_reuse */
-  FIELD_VERLETREUSE,
   /** index of \ref lattice_switch */
   FIELD_LATTICE_SWITCH,
-  /** index of \ref max_cut_bonded */
-  FIELD_MCUT_BONDED,
   /** index of \ref min_global_cut */
   FIELD_MIN_GLOBAL_CUT,
-  /** index of \ref ghmc_nmd */
-  FIELD_GHMC_NMD,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_PHI,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_RES,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_FLIP,
-  /** index of \ref ghmc_phi */
-  FIELD_GHMC_SCALE,
-  /** index of \ref warnings */
-  FIELD_WARNINGS,
-  /** index of \ref langevin_trans */
-  FIELD_LANGEVIN_TRANS_SWITCH,
-  /** index of \ref langevin_rotate */
-  FIELD_LANGEVIN_ROT_SWITCH,
   /** index of \ref langevin_gamma_rotation */
   FIELD_LANGEVIN_GAMMA_ROTATION,
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
   /** index of \ref n_thermalized_bonds */
   FIELD_THERMALIZEDBONDS,
   FIELD_FORCE_CAP,
-  FIELD_THERMO_VIRTUAL
+  FIELD_THERMO_VIRTUAL,
+  FIELD_SWIMMING_PARTICLES_EXIST
 };
-
-/** bool: whether to write out warnings or not */
-extern int warnings;
 
 #endif

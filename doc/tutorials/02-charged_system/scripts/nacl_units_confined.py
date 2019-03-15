@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-from espressomd import assert_features, electrostatics, electrostatic_extensions
+from espressomd import electrostatics, electrostatic_extensions, assert_features
 from espressomd.shapes import Wall
 import numpy
 

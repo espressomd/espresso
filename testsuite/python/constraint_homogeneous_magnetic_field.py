@@ -73,11 +73,12 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
 
         # check dipolar energy when adding dipole moments
         self.S.part.add(id=0, pos=[0, 0, 0], dip=dip_mom0, rotation=(1, 1, 1))
-        self.assertEqual(self.S.analysis.energy()[
-                         "dipolar"], -1.0 * numpy.dot(H_field, dip_mom0))
+        self.assertEqual(self.S.analysis.energy()["dipolar"],
+                         -1.0 * numpy.dot(H_field, dip_mom0))
         self.S.part.add(id=1, pos=[1, 1, 1], dip=dip_mom1, rotation=(1, 1, 1))
         self.assertEqual(self.S.analysis.energy()["dipolar"],
-                         (-1.0 * numpy.dot(H_field, dip_mom0) - 1.0 * numpy.dot(H_field, dip_mom1)))
+                         (-1.0 * numpy.dot(H_field, dip_mom0)
+                          - 1.0 * numpy.dot(H_field, dip_mom1)))
 
         if espressomd.has_features(["ROTATION"]):
             # check that running the integrator leads to expected torques

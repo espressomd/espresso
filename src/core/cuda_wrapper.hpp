@@ -6,7 +6,7 @@
 #include <hip/hip_runtime.h>
 
 #define cudaDeviceProp hipDeviceProp_t
-#define cudaThreadSynchronize hipDeviceSynchronize
+#define cudaDeviceSynchronize hipDeviceSynchronize
 #define cudaErrorInvalidValue hipErrorInvalidValue
 #define cudaError_t hipError_t
 #define cudaEventCreate hipEventCreate

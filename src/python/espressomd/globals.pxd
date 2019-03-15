@@ -35,6 +35,7 @@ cdef extern from "global.hpp":
     int FIELD_THERMO_VIRTUAL
     int FIELD_TEMPERATURE
     int FIELD_LANGEVIN_GAMMA
+    int FIELD_SWIMMING_PARTICLES_EXIST
     IF ROTATION:
         int FIELD_LANGEVIN_GAMMA_ROTATION
     IF NPT:
@@ -54,9 +55,7 @@ cdef extern from "integrate.hpp":
     extern double sim_time
     extern double verlet_reuse
     extern double skin
-
-cdef extern from "lattice.hpp":
-    extern int lattice_switch
+    extern bool set_py_interrupt
 
 cdef extern from "domain_decomposition.hpp":
     ctypedef struct  DomainDecomposition:
@@ -98,18 +97,6 @@ cdef extern from "dpd.hpp":
     extern double dpd_tr_cut
     extern int dpd_twf
 
-
-IF LB:
-    cdef extern from "grid_based_algorithms/lb.hpp":
-        ctypedef struct LB_Parameters:
-            double tau
-        extern LB_Parameters lbpar
-
-IF LB_GPU:
-    cdef extern from "grid_based_algorithms/lbgpu.hpp":
-        ctypedef struct LB_parameters_gpu:
-            double tau
-        extern LB_parameters_gpu lbpar_gpu
 
 cdef extern from "cells.hpp":
     extern double max_range

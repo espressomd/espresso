@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/container/flat_set.hpp>
 #include <boost/mpi/collectives.hpp>
 
-#include "core/MpiCallbacks.hpp"
+#include "MpiCallbacks.hpp"
 #include "utils/NoOp.hpp"
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/parallel/Callback.hpp"

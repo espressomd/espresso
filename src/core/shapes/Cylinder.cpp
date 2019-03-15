@@ -20,10 +20,7 @@
 */
 
 #include "Cylinder.hpp"
-#include "utils.hpp"
 #include <cmath>
-
-using namespace std;
 
 namespace Shapes {
 

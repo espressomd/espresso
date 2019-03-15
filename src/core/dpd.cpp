@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref dpd.hpp "dpd.hpp"
+ *  Implementation of dpd.hpp.
  */
 #include "dpd.hpp"
 

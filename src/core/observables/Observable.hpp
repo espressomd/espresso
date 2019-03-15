@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#include "core/PartCfg.hpp"
+#include "PartCfg.hpp"
 
 namespace Observables {
 class Observable {

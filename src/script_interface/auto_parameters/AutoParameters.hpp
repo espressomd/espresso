@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 
 #include "AutoParameter.hpp"
-#include "script_interface/ScriptInterfaceBase.hpp"
+#include "ScriptInterfaceBase.hpp"
 
 namespace ScriptInterface {
 

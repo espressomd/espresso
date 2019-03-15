@@ -1,7 +1,7 @@
 #ifndef UTILS_MATH_TRIANGEL_FUNCTIONS_HPP
 #define UTILS_MATH_TRIANGEL_FUNCTIONS_HPP
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 #include <cmath>
 

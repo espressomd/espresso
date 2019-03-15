@@ -23,9 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <utility>
 
-#include "core/utils/make_function.hpp"
-#include "script_interface/Variant.hpp"
-#include "script_interface/get_value.hpp"
+#include "Variant.hpp"
+#include "get_value.hpp"
+
+#include "utils/make_function.hpp"
 
 namespace ScriptInterface {
 
@@ -36,12 +37,12 @@ template <typename T> struct infer_length_helper {
 };
 
 /* Specialization for Vectors */
-template <size_t N, typename T> struct infer_length_helper<Vector<N, T>> {
+template <size_t N, typename T> struct infer_length_helper<Vector<T, N>> {
   static constexpr size_t value{N};
 };
 
 template <size_t N, size_t M, typename T>
-struct infer_length_helper<Vector<M, Vector<N, T>>> {
+struct infer_length_helper<Vector<Vector<T, N>, M>> {
   static constexpr size_t value{N * M};
 };
 } // namespace detail
@@ -148,7 +149,7 @@ struct AutoParameter {
    * @param name The name the parameter should be bound to in the interface.
    * @param type The parameter type, by default this is deduced from the
    *             type of the reference.
-   * @param length The supposed length of the parameter, by default this this
+   * @param length The supposed length of the parameter, by default it
    *               is deduced from the type of the reference.
    */
   template <typename T>
@@ -175,7 +176,7 @@ struct AutoParameter {
    * @param name The name the parameter should be bound to in the interface.
    * @param type The parameter type, by default this is deduced from the
    *             type of the reference.
-   * @param length The supposed length of the parameter, by default this this
+   * @param length The supposed length of the parameter, by default it
    *               is deduced from the type of the reference.
    */
   template <typename T>

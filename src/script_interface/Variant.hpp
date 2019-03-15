@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/variant.hpp>
 
 #include "None.hpp"
-#include "core/Vector.hpp"
 #include "utils/AutoObjectId.hpp"
+#include "utils/Vector.hpp"
 
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/serialization.hpp>
@@ -109,16 +109,16 @@ template <> struct infer_type_helper<std::vector<double>> {
   static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
 };
 
-template <size_t N> struct infer_type_helper<Vector<N, double>> {
+template <size_t N> struct infer_type_helper<Vector<double, N>> {
   static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
 };
 
 template <size_t N, size_t M>
-struct infer_type_helper<Vector<N, Vector<M, double>>> {
+struct infer_type_helper<Vector<Vector<double, M>, N>> {
   static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
 };
 
-template <size_t N> struct infer_type_helper<Vector<N, int>> {
+template <size_t N> struct infer_type_helper<Vector<int, N>> {
   static constexpr VariantType value{VariantType::INT_VECTOR};
 };
 

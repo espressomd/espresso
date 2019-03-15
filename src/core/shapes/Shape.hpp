@@ -22,7 +22,7 @@
 #ifndef SHAPES_SHAPE_HPP
 #define SHAPES_SHAPE_HPP
 
-#include <core/Vector.hpp>
+#include "utils/Vector.hpp"
 
 namespace Shapes {
 

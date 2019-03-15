@@ -24,11 +24,11 @@ from libcpp.memory cimport shared_ptr
 from libcpp.memory cimport weak_ptr
 from libcpp cimport bool
 
-cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
+cdef extern from "Parameter.hpp" namespace "ScriptInterface":
     cdef cppclass ParameterType:
         bool operator == (const ParameterType & a, const ParameterType & b)
 
-cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::ParameterType":
+cdef extern from "Parameter.hpp" namespace "ScriptInterface::ParameterType":
     cdef ParameterType NONE
     cdef ParameterType BOOL
     cdef ParameterType INT
@@ -39,13 +39,13 @@ cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::Pa
     cdef ParameterType OBJECTID
     cdef ParameterType VECTOR
 
-cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
+cdef extern from "Parameter.hpp" namespace "ScriptInterface":
     cdef cppclass Parameter:
         ParameterType type()
         int n_elements()
         bool required()
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
+cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     void initialize()
     cdef cppclass Variant:
         Variant()
@@ -56,10 +56,10 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
     string get_type_label(const Variant &)
     string get_type_label(ParameterType)
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
+cdef extern from "ScriptInterface.hpp" namespace "boost":
     T get[T](const Variant &) except +
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
+cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass ObjectId:
         string to_string()
         bool operator == (const ObjectId & rhs)
@@ -83,13 +83,13 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         @staticmethod
         shared_ptr[ScriptInterfaceBase] unserialize(const string & state) except +
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
+cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
     cdef cppclass CreationPolicy:
         pass
     shared_ptr[ScriptInterfaceBase] make_shared(const string & name, CreationPolicy policy) except +
     weak_ptr[ScriptInterfaceBase] get_instance(ObjectId id) except +
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase::CreationPolicy":
+cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase::CreationPolicy":
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
 

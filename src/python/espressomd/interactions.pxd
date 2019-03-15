@@ -155,6 +155,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef IA_parameters * get_ia_param_safe(int i, int j)
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
+    cdef void reset_ia_params()
 
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef void make_bond_type_exist(int type)
@@ -560,7 +561,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_HARMONIC_DUMBBELL,
         BONDED_IA_BONDED_COULOMB,
         BONDED_IA_BONDED_COULOMB_P3M_SR,
-        BONDED_IA_ANGLE_OLD,
         BONDED_IA_DIHEDRAL,
         BONDED_IA_TABULATED,
         BONDED_IA_SUBT_LJ,

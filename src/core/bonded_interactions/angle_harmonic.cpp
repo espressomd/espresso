@@ -24,7 +24,6 @@
  */
 #include "angle_harmonic.hpp"
 
-#ifdef BOND_ANGLE
 #include "communication.hpp"
 
 /** set parameters for the angle potential.
@@ -49,5 +48,3 @@ int angle_harmonic_set_params(int bond_type, double bend, double phi0) {
 
   return ES_OK;
 }
-
-#endif

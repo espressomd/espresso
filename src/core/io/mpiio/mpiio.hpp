@@ -31,11 +31,11 @@ namespace Mpiio {
  *  multiple fields, OR the corresponding values.
  *
  */
-enum MPIIOOutputFields {
-  MPIIO_OUT_POS = 1,
-  MPIIO_OUT_VEL = 2,
-  MPIIO_OUT_TYP = 4,
-  MPIIO_OUT_BND = 8,
+enum MPIIOOutputFields : unsigned int {
+  MPIIO_OUT_POS = 1u,
+  MPIIO_OUT_VEL = 2u,
+  MPIIO_OUT_TYP = 4u,
+  MPIIO_OUT_BND = 8u,
 };
 
 /** Parallel binary output using MPI-IO. To be called by all MPI

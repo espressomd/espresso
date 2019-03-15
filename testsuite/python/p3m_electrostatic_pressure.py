@@ -66,7 +66,7 @@ class pressureViaVolumeScaling(object):
         return pressure
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS, LENNARD_JONES"]),
+@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "LENNARD_JONES"]),
            "Features not available, skipping test!")
 class VirialPressureConsistency(ut.TestCase):
 

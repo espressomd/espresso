@@ -26,7 +26,7 @@
 #include <random>
 #include <vector>
 
-#include "core/ParticleCache.hpp"
+#include "ParticleCache.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>

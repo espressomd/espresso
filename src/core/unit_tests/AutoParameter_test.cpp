@@ -20,11 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "script_interface/auto_parameters/AutoParameter.hpp"
+#include "auto_parameters/AutoParameter.hpp"
 
 BOOST_AUTO_TEST_CASE(infer_length) {
   using ScriptInterface::infer_length;
-  static_assert(infer_length<Vector<11, int>>() == 11, "");
+  static_assert(infer_length<Vector<int, 11>>() == 11, "");
   static_assert(infer_length<int>() == 0, "");
 }
 
