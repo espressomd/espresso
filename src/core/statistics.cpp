@@ -91,115 +91,6 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
   return std::sqrt(mindist2);
 }
 
-void merge_aggregate_lists(int *head_list, int *agg_id_list, int p1molid,
-                           int p2molid, int *link_list) {
-  int target1, target2, head_p1;
-  /* merge list containing p2molid into list containing p1molid*/
-  target1 = head_list[agg_id_list[p2molid]];
-  head_list[agg_id_list[p2molid]] = -2;
-  head_p1 = head_list[agg_id_list[p1molid]];
-  head_list[agg_id_list[p1molid]] = target1;
-  agg_id_list[target1] = agg_id_list[p1molid];
-  target2 = link_list[target1];
-  while (target2 != -1) {
-    target1 = target2;
-    target2 = link_list[target1];
-    agg_id_list[target1] = agg_id_list[p1molid];
-  }
-  agg_id_list[target1] = agg_id_list[p1molid];
-  link_list[target1] = head_p1;
-}
-
-int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
-                int f_mol_id, int *head_list, int *link_list, int *agg_id_list,
-                int *agg_num, int *agg_size, int *agg_max, int *agg_min,
-                int *agg_avg, int *agg_std, int charge) {
-  int target1;
-  int *contact_num, ind;
-
-  if (min_contact > 1) {
-    contact_num =
-        (int *)Utils::malloc(topology.size() * topology.size() * sizeof(int));
-    for (int i = 0; i < topology.size() * topology.size(); i++)
-      contact_num[i] = 0;
-  } else {
-    contact_num = (int *)0; /* Just to keep the compiler happy */
-  }
-
-  on_observable_calc();
-
-  for (int i = s_mol_id; i <= f_mol_id; i++) {
-    head_list[i] = i;
-    link_list[i] = -1;
-    agg_id_list[i] = i;
-    agg_size[i] = 0;
-  }
-
-  // Calculate pair contributions if max_cut is >0. No single particle
-  // contributions apply here
-  if (max_cut > 0)
-    short_range_loop(
-        Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
-          auto p1molid = p1.p.mol_id;
-          auto p2molid = p2.p.mol_id;
-          if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
-              ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-            if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
-#ifdef ELECTROSTATICS
-              if (charge && (p1.p.q * p2.p.q >= 0)) {
-                return;
-              }
-#endif
-              if (d.dist2 < dist_criteria2) {
-                if (p1molid > p2molid) {
-                  ind = p1molid * topology.size() + p2molid;
-                } else {
-                  ind = p2molid * topology.size() + p1molid;
-                }
-                if (min_contact > 1) {
-                  contact_num[ind]++;
-                  if (contact_num[ind] >= min_contact) {
-                    merge_aggregate_lists(head_list, agg_id_list, p1molid,
-                                          p2molid, link_list);
-                  }
-                } else {
-                  merge_aggregate_lists(head_list, agg_id_list, p1molid,
-                                        p2molid, link_list);
-                }
-              }
-            }
-          }
-        });
-
-  /* count number of aggregates
-     find aggregate size
-     find max and find min size, and std */
-  for (int i = s_mol_id; i <= f_mol_id; i++) {
-    if (head_list[i] != -2) {
-      (*agg_num)++;
-      agg_size[*agg_num - 1]++;
-      target1 = head_list[i];
-      while (link_list[target1] != -1) {
-        target1 = link_list[target1];
-        agg_size[*agg_num - 1]++;
-      }
-    }
-  }
-
-  for (int i = 0; i < *agg_num; i++) {
-    *agg_avg += agg_size[i];
-    *agg_std += agg_size[i] * agg_size[i];
-    if (*agg_min > agg_size[i]) {
-      *agg_min = agg_size[i];
-    }
-    if (*agg_max < agg_size[i]) {
-      *agg_max = agg_size[i];
-    }
-  }
-
-  return 0;
-}
-
 /** Calculate momentum of all particles in the local domain
  * @param result Result for this processor (Output)
  */
@@ -807,59 +698,6 @@ int calc_cylindrical_average(
   return ES_OK;
 }
 
-int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
-                 int rbins, int tmax, double *msd, double **vanhove) {
-  int c1, c3, c3_max, ind;
-  double bin_width, inv_bin_width;
-  std::vector<int> ids;
-
-  for (auto const &p : partCfg) {
-    if (p.p.type == ptype) {
-      ids.push_back(p.p.identity);
-    }
-  }
-
-  if (ids.empty()) {
-    return 0;
-  }
-
-  /* preparation */
-  bin_width = (rmax - rmin) / (double)rbins;
-  inv_bin_width = 1.0 / bin_width;
-
-  /* calculate msd and store distribution in vanhove */
-  for (c1 = 0; c1 < n_configs; c1++) {
-    c3_max = (c1 + tmax + 1) > n_configs ? n_configs : c1 + tmax + 1;
-    for (c3 = (c1 + 1); c3 < c3_max; c3++) {
-      for (auto const &id : ids) {
-        Vector3d p1, p2;
-        p1[0] = configs[c1][3 * id];
-        p1[1] = configs[c1][3 * id + 1];
-        p1[2] = configs[c1][3 * id + 2];
-        p2[0] = configs[c3][3 * id];
-        p2[1] = configs[c3][3 * id + 1];
-        p2[2] = configs[c3][3 * id + 2];
-        auto const dist = (p1 - p2).norm();
-        if (dist > rmin && dist < rmax) {
-          ind = (int)((dist - rmin) * inv_bin_width);
-          vanhove[(c3 - c1 - 1)][ind]++;
-        }
-        msd[(c3 - c1 - 1)] += dist * dist;
-      }
-    }
-  }
-
-  /* normalize */
-  for (c1 = 0; c1 < (tmax); c1++) {
-    for (int i = 0; i < rbins; i++) {
-      vanhove[c1][i] /= (double)(n_configs - c1 - 1) * ids.size();
-    }
-    msd[c1] /= (double)(n_configs - c1 - 1) * ids.size();
-  }
-
-  return ids.size();
-}
-
 /****************************************************************************************
  *                                 config storage functions
  ****************************************************************************************/
@@ -879,50 +717,6 @@ void analyze_append(PartCfg &partCfg) {
   n_configs++;
 }
 
-void analyze_push(PartCfg &partCfg) {
-  n_part_conf = partCfg.size();
-  free(configs[0]);
-  for (int i = 0; i < n_configs - 1; i++) {
-    configs[i] = configs[i + 1];
-  }
-  configs[n_configs - 1] =
-      (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
-
-  int i = 0;
-  for (auto const &p : partCfg) {
-    configs[n_configs - 1][3 * i + 0] = p.r.p[0];
-    configs[n_configs - 1][3 * i + 1] = p.r.p[1];
-    configs[n_configs - 1][3 * i + 2] = p.r.p[2];
-
-    i++;
-  }
-}
-
-void analyze_replace(PartCfg &partCfg, int ind) {
-  n_part_conf = partCfg.size();
-
-  int i = 0;
-  for (auto const &p : partCfg) {
-    configs[ind][3 * i + 0] = p.r.p[0];
-    configs[ind][3 * i + 1] = p.r.p[1];
-    configs[ind][3 * i + 2] = p.r.p[2];
-
-    i++;
-  }
-}
-
-void analyze_remove(int ind) {
-  int i;
-  free(configs[ind]);
-  for (i = ind; i < n_configs - 1; i++) {
-    configs[i] = configs[i + 1];
-  }
-  n_configs--;
-  configs = Utils::realloc(configs, n_configs * sizeof(double *));
-  if (n_configs == 0)
-    n_part_conf = 0;
-}
-
 void analyze_configs(double *tmp_config, int count) {
   int i;
   n_part_conf = count;
@@ -935,22 +729,6 @@ void analyze_configs(double *tmp_config, int count) {
     configs[n_configs][3 * i + 2] = tmp_config[3 * i + 2];
   }
   n_configs++;
-}
-
-void analyze_activate(PartCfg &partCfg, int ind) {
-  int i;
-  double pos[3];
-  n_part_conf = partCfg.size();
-
-  for (i = 0; i < n_part_conf; i++) {
-    pos[0] = configs[ind][3 * i];
-    pos[1] = configs[ind][3 * i + 1];
-    pos[2] = configs[ind][3 * i + 2];
-    if (place_particle(i, pos) == ES_ERROR) {
-      runtimeErrorMsg() << "failed upon replacing particle " << i
-                        << "  in Espresso";
-    }
-  }
 }
 
 /****************************************************************************************

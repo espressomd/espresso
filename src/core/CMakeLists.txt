@@ -45,7 +45,6 @@ set(EspressoCore_SRC
   swimmer_reaction.cpp
   SystemInterface.cpp
   thermostat.cpp
-  topology.cpp
   tuning.cpp
   virtual_sites.cpp
   accumulators/Correlator.cpp
