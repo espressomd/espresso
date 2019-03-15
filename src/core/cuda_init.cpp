@@ -22,10 +22,10 @@
 #include "config.hpp"
 #include "utils.hpp"
 
+#include <cstring>
 #include <iterator>
 #include <mpi.h>
 #include <set>
-#include <string.h>
 
 #ifdef CUDA
 

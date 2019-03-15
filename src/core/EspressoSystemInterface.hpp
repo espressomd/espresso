@@ -19,7 +19,7 @@
 #ifndef ESPRESSOSYSTEMINTERFACE_H
 #define ESPRESSOSYSTEMINTERFACE_H
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
@@ -168,7 +168,7 @@ protected:
         m_q_gpu_end(nullptr), m_director_gpu_begin(nullptr),
         m_director_gpu_end(nullptr), m_needsParticleStructGpu(false),
         m_splitParticleStructGpu(false){};
-  ~EspressoSystemInterface() override {}
+  ~EspressoSystemInterface() override = default;
 
   void gatherParticles();
   void split_particle_struct();

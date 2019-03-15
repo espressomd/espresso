@@ -44,7 +44,7 @@ public:
               << std::endl;
   };
 
-  ~HarmonicWell() override {}
+  ~HarmonicWell() override = default;
 
 protected:
   float x, y, z;

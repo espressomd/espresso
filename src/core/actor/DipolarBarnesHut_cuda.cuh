@@ -27,7 +27,7 @@
 
 #include <cstdio>
 #include <iostream>
-#include <time.h>
+#include <ctime>
 
 typedef float dds_float;
 

@@ -42,7 +42,7 @@ public:
         x, y, z, k, s.npart_gpu(), s.directorGpuBegin(), s.torqueGpuBegin());
   };
 
-  ~HarmonicOrientationWell() override {}
+  ~HarmonicOrientationWell() override = default;
 
 protected:
   float x, y, z;

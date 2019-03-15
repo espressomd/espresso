@@ -39,7 +39,7 @@ public:
     const bool res = decide(p1, p2);
     return res;
   }
-  virtual ~PairCriterion() {}
+  virtual ~PairCriterion() = default;
 };
 
 /** @brief True if two particles are closer than a cut off distance, respecting
