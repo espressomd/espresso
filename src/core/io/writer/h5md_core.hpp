@@ -57,8 +57,8 @@ public:
    * Constructor/destructor without arguments (due to script_interface).
    * @brief Constructor of the File class.
    */
-  File();
-  ~File();
+  File() = default;
+  ~File() = default;
   /**
    * @brief Initialize the File object.
    */
@@ -83,14 +83,7 @@ public:
    * Boolean values for position, velocity, force and mass.
    */
   void Write(int write_dat, PartCfg &partCfg);
-
-  /**
-   * @brief Method to write the energy contributions to the H5MD file.
-   * @param total Boolean values for total energy
-   * @param kinetic Boolean values for kinetic energy
-   * \todo Implement this method.
-   */
-  void WriteEnergy(bool total = true, bool kinetic = true);
+  
   std::string &filename() { return m_filename; };
   std::string &scriptname() { return m_scriptname; };
   // Returns the int that describes which data should be written to the dataset.

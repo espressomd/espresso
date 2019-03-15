@@ -61,9 +61,8 @@ public:
    * \param agrid      lattice spacing
    * \param offset     lattice offset
    * \param halo_size  halo size
-   * \param dim        lattice dimensions
    */
-  int init(double *agrid, double *offset, int halo_size, size_t dim);
+  int init(double *agrid, double *offset, int halo_size);
 
   /** Map a spatial position to the surrounding lattice sites.
    *

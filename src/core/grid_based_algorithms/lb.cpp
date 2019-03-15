@@ -160,7 +160,7 @@ void lb_init() {
   }
 
   /* initialize the local lattice domain */
-  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
+  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1);
 
   if (check_runtime_errors() || init_status != ES_OK)
     return;
@@ -669,9 +669,6 @@ void lb_prepare_communication() {
   release_halo_communication(&comm);
 }
 
-/** Release fluid and communication. */
-void lb_release() { release_halo_communication(&update_halo_comm); }
-
 /***********************************************************************/
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
@@ -916,9 +913,8 @@ inline void lb_collide_stream() {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
-  for (auto it = LBBoundaries::lbboundaries.begin();
-       it != LBBoundaries::lbboundaries.end(); ++it) {
-    (**it).reset_force();
+  for (auto &lbboundarie : LBBoundaries::lbboundaries) {
+    (*lbboundarie).reset_force();
   }
 #endif // LB_BOUNDARIES
 

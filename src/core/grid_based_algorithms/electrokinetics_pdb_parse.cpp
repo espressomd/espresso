@@ -19,7 +19,7 @@
 /* vim: set ts=8 sts=2 sw=2 et: */
 #include <iostream>
 #include <limits>
-#include <math.h>
+#include <cmath>
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>

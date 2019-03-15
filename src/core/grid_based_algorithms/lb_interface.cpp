@@ -1269,10 +1269,6 @@ const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 
 ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
 
-int lb_lbfluid_get_lattice_switch_cython() {
-  return static_cast<int>(lattice_switch);
-}
-
 void lb_lbfluid_on_lb_params_change(LBParam field) {
   switch (field) {
   case LBParam::AGRID:

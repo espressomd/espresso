@@ -29,7 +29,7 @@
 #include "debug.hpp"
 #include "grid.hpp"
 
-int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
+int Lattice::init(double *agrid, double *offset, int halo_size) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {

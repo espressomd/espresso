@@ -231,7 +231,6 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              Vector3d const &j, Vector6d const &pi);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &p);
 #endif
 
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
@@ -252,8 +251,7 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index);
  * @param j       local fluid speed
  * @param pi      local fluid pressure
  */
-void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
-                          double *pi);
+
 
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
