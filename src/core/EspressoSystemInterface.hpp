@@ -167,7 +167,7 @@ protected:
         m_q_gpu_begin(0), m_q_gpu_end(0), m_director_gpu_begin(0),
         m_director_gpu_end(0), m_needsParticleStructGpu(false),
         m_splitParticleStructGpu(false){};
-  virtual ~EspressoSystemInterface() {}
+  ~EspressoSystemInterface() override {}
 
   void gatherParticles();
   void split_particle_struct();

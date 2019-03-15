@@ -59,7 +59,7 @@ public:
     allocBHmemCopy(s.npart_gpu(), &m_bh_data);
   };
 
-  void computeForces(SystemInterface &s) {
+  void computeForces(SystemInterface &s) override {
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
@@ -73,7 +73,7 @@ public:
       errexit();
     }
   };
-  void computeEnergy(SystemInterface &s) {
+  void computeEnergy(SystemInterface &s) override {
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
