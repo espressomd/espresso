@@ -60,7 +60,7 @@ set_tests_properties(test_store_properties PROPERTIES FIXTURES_SETUP test_store_
 sample_test(FILE test_visualization_bonded.py)
 sample_test(FILE test_visualization_cellsystem.py)
 sample_test(FILE test_visualization_charged.py)
-foreach(var_constraint_shape wall;sphere;ellipsoid;cylinder;spherocylinder;maze;stomatocyte;simplepore;slitpore;hollowcone)
+foreach(var_constraint_shape wall;sphere;ellipsoid;cylinder;spherocylinder;stomatocyte;simplepore;slitpore;hollowcone)
   sample_test(FILE test_visualization_constraints.py SUFFIX ${var_constraint_shape})
 endforeach(var_constraint_shape)
 sample_test(FILE test_visualization_interactive.py)

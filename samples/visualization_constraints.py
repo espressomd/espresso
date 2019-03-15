@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--wall", action="store_const", dest="shape", const="Wall",
                    default="Wall")
-for shape in ("Sphere", "Ellipsoid", "Cylinder", "SpheroCylinder", "Maze",
+for shape in ("Sphere", "Ellipsoid", "Cylinder", "SpheroCylinder",
               "Stomatocyte", "SimplePore", "SlitPore", "HollowCone"):
     group.add_argument("--" + shape.lower(), action="store_const",
                        dest="shape", const=shape)
@@ -85,11 +85,6 @@ if args.shape == "SpheroCylinder":
                                                direction=1, radius=10, length=30),
         particle_type=0,
         penetrable=True)
-
-if args.shape == "Maze":
-    system.constraints.add(shape=espressomd.shapes.Maze(
-        cylrad=3, dim=2, nsphere=2, sphrad=8),
-        particle_type=0, penetrable=True)
 
 if args.shape == "Stomatocyte":
     system.constraints.add(shape=espressomd.shapes.Stomatocyte(

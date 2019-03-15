@@ -50,10 +50,10 @@ visualizer = espressomd.visualization_opengl.openGLLive(
     velocity_arrows_type_radii=[0.1],
     velocity_arrows_type_colors=[[0, 1, 0]])
 
-lbf = lb.LBFluid(agrid=1.0, dens=1.0,
+lbf = lb.LBFluid(kT=0, agrid=1.0, dens=1.0,
                  visc=1.0, tau=0.1, ext_force_density=[0, 0.003, 0])
 system.actors.add(lbf)
-system.thermostat.set_lb(kT=0)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 
 # Setup boundaries
 walls = [lbboundaries.LBBoundary() for k in range(2)]

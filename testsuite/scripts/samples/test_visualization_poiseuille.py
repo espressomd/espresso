@@ -17,6 +17,8 @@
 
 import unittest as ut
 import importlib_wrapper
+import numpy as np
+from espressomd.observables import ParticleVelocities
 
 
 def disable_GUI(code):
@@ -35,6 +37,11 @@ sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 @skipIfMissingFeatures
 class Sample(ut.TestCase):
     system = sample.system
+
+    def test_particle_coupling(self):
+        part_vel = ParticleVelocities(ids=list(range(100)))
+        mean_velocity = np.mean(part_vel.calculate())
+        self.assertGreater(mean_velocity, 1e-5)
 
 
 if __name__ == "__main__":
