@@ -648,7 +648,7 @@ void dd_on_geometry_change(int flags, const Vector3i &grid) {
   if (!(flags & CELL_FLAG_FAST) && max_range > 0) {
     int i;
     for (i = 0; i < 3; i++) {
-      int poss_size = (int)floor(local_box_l[i] / max_range);
+      auto poss_size = (int)floor(local_box_l[i] / max_range);
       if (poss_size > dd.cell_grid[i])
         break;
     }

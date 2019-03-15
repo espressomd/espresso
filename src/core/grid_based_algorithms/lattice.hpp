@@ -61,7 +61,6 @@ public:
    * \param agrid      lattice spacing
    * \param offset     lattice offset
    * \param halo_size  halo size
-   * \param dim        lattice dimensions
    */
   int init(double *agrid, double *offset, int halo_size, size_t dim,
            const Vector3d &local_box, const Vector3d &myright,

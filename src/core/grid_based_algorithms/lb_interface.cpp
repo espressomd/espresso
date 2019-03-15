@@ -722,7 +722,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
 void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
-    float *host_checkpoint_vd =
+    auto *host_checkpoint_vd =
         (float *)Utils::malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
     lb_save_checkpoint_GPU(host_checkpoint_vd);
     if (!binary) {
@@ -1268,10 +1268,6 @@ const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 #endif
 
 ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
-
-int lb_lbfluid_get_lattice_switch_cython() {
-  return static_cast<int>(lattice_switch);
-}
 
 void lb_lbfluid_on_lb_params_change(LBParam field) {
   switch (field) {

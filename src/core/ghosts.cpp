@@ -180,7 +180,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
-          ParticlePosition *pp = reinterpret_cast<ParticlePosition *>(insert);
+          auto *pp = reinterpret_cast<ParticlePosition *>(insert);
           int i;
           *pp = pt->r;
           for (i = 0; i < 3; i++)
@@ -241,7 +241,7 @@ static void prepare_ghost_cell(Cell *cell, int size) {
     int np = cell->n;
     Particle *part = cell->part;
     for (int p = 0; p < np; p++) {
-      Particle *pt = new (&part[p]) Particle();
+      auto *pt = new (&part[p]) Particle();
 
       // init ghost variable
       pt->l.ghost = 1;
@@ -431,8 +431,8 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
 }
 
 void reduce_forces_sum(void *add, void *to, int *len, MPI_Datatype *type) {
-  ParticleForce *cadd = static_cast<ParticleForce *>(add),
-                *cto = static_cast<ParticleForce *>(to);
+  auto *cadd = static_cast<ParticleForce *>(add),
+       *cto = static_cast<ParticleForce *>(to);
   int i, clen = *len / sizeof(ParticleForce);
 
   if (*type != MPI_BYTE || (*len % sizeof(ParticleForce)) != 0) {

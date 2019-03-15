@@ -115,7 +115,8 @@ void gather_buffer(std::vector<T> &buffer, boost::mpi::communicator comm,
     /* Send local size */
     detail::size_and_offset(n_elem, comm, root);
     /* Send data */
-    gatherv(comm, buffer.data(), n_elem, static_cast<T *>(nullptr), 0, 0, root);
+    gatherv(comm, buffer.data(), n_elem, static_cast<T *>(nullptr), nullptr,
+            nullptr, root);
   }
 }
 } // namespace Mpi
