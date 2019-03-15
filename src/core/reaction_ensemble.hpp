@@ -110,9 +110,7 @@ class ReactionAlgorithm {
 
 public:
   ReactionAlgorithm() = default;
-  ;
   virtual ~ReactionAlgorithm() = default;
-  ;
 
   std::vector<SingleReaction> reactions;
   std::map<int, double> charges_of_types;
