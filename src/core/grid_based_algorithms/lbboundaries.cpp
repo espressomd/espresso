@@ -270,9 +270,9 @@ void lb_init_boundaries() {
 #endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB) && defined(LB_BOUNDARIES)
-    int node_domain_position[3], offset[3];
+    Vector3i node_domain_position, offset;
     int the_boundary = -1;
-    map_node_array(this_node, node_domain_position);
+    map_node_array(this_node, node_domain_position.data());
     const auto lblattice = lb_lbfluid_get_lattice();
     offset[0] = node_domain_position[0] * lblattice.grid[0];
     offset[1] = node_domain_position[1] * lblattice.grid[1];

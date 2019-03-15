@@ -70,7 +70,8 @@ typedef struct {
 
 const std::unordered_map<int, Datafield> fields{
     {FIELD_BOXL,
-     {box_l, Datafield::Type::DOUBLE, 3, "box_l"}}, /* 0  from grid.cpp */
+     {box_l.data(), Datafield::Type::DOUBLE, 3,
+      "box_l"}}, /* 0  from grid.cpp */
     {FIELD_CELLGRID,
      {dd.cell_grid, Datafield::Type::INT, 3,
       "cell_grid"}}, /* 1  from cells.cpp */
@@ -102,7 +103,8 @@ const std::unordered_map<int, Datafield> fields{
      {&n_rigidbonds, Datafield::Type::INT, 1,
       "n_rigidbonds"}}, /* 19 from rattle.cpp */
     {FIELD_NODEGRID,
-     {node_grid, Datafield::Type::INT, 3, "node_grid"}}, /* 20 from grid.cpp */
+     {node_grid.data(), Datafield::Type::INT, 3,
+      "node_grid"}}, /* 20 from grid.cpp */
     {FIELD_NPTISO_G0,
      {&nptiso_gamma0, Datafield::Type::DOUBLE, 1,
       "nptiso_gamma0"}}, /* 21 from thermostat.cpp */

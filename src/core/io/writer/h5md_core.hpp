@@ -26,6 +26,7 @@
 #include "PartCfg.hpp"
 #include "cells.hpp"
 #include "global.hpp"
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -37,10 +38,6 @@
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
 #include "communication.hpp"
 #include <h5xx/h5xx.hpp>
-
-extern double sim_time;
-extern double time_step;
-extern double box_l[3];
 
 namespace Writer {
 namespace H5md {

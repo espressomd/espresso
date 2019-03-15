@@ -40,7 +40,6 @@
 #include "forces.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
-#include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"

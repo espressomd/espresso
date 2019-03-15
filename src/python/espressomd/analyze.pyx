@@ -32,7 +32,8 @@ from .interactions import *
 from espressomd.interactions cimport *
 import numpy as np
 cimport numpy as np
-from globals cimport n_configs, min_box_l
+from globals cimport n_configs
+
 from collections import OrderedDict
 from .system import System
 from espressomd.utils import is_valid_type

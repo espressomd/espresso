@@ -124,7 +124,7 @@ extern int min_num_cells;
  *  CELL_FLAG_GRIDCHANGED, see documentation of \ref
  *  cells_on_geometry_change.
  */
-void dd_on_geometry_change(int flags);
+void dd_on_geometry_change(int flags, const Vector3i &grid);
 
 /** Initialize the topology. The argument is a list of cell pointers,
  *  containing particles that have to be sorted into new cells. The
@@ -135,7 +135,7 @@ void dd_on_geometry_change(int flags);
  *  @param cl List of cell pointers with particles to be stored in the
  *  new cell system.
  */
-void dd_topology_init(CellPList *cl);
+void dd_topology_init(CellPList *cl, const Vector3i &grid);
 
 /** Called when the current cell structure is invalidated because for
  *  example the box length has changed. This procedure may NOT destroy
@@ -156,10 +156,11 @@ void dd_topology_release();
  *  particle moves)
  *  @param pl List of particles
  */
-void dd_exchange_and_sort_particles(int global, ParticleList *pl);
+void dd_exchange_and_sort_particles(int global, ParticleList *pl,
+                                    const Vector3i &grid);
 
 /** calculate physical (processor) minimal number of cells */
-int calc_processor_min_num_cells();
+int calc_processor_min_num_cells(const Vector3i &grid);
 
 /** Fill a communication cell pointer list. Fill the cell pointers of
  *  all cells which are inside a rectangular subgrid of the 3D cell

@@ -178,7 +178,8 @@ void CoupleIBMParticleToFluid(Particle *p) {
   // Get indices and weights of affected nodes using discrete delta function
   Vector<std::size_t, 8> node_index{};
   Vector6d delta{};
-  lblattice.map_position_to_lattice(p->r.p, node_index, delta);
+  lblattice.map_position_to_lattice(p->r.p, node_index, delta, my_left,
+                                    local_box_l);
 
   // Loop over all affected nodes
   for (int z = 0; z < 2; z++) {
@@ -233,7 +234,8 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
    and the relative position of the particle in this cell */
   Vector<std::size_t, 8> node_index{};
   Vector6d delta{};
-  lblattice.map_position_to_lattice(pos, node_index, delta);
+  lblattice.map_position_to_lattice(pos, node_index, delta, my_left,
+                                    local_box_l);
 
   /* calculate fluid velocity at particle's position
    this is done by linear interpolation
