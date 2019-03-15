@@ -45,7 +45,7 @@ template <typename T> inline T *realloc(T *old, size_t size) {
     return nullptr;
   }
 
-  T *p = static_cast<T *>(::realloc(static_cast<void *>(old), size));
+  auto *p = static_cast<T *>(::realloc(static_cast<void *>(old), size));
 
   if (p == nullptr) {
     throw std::bad_alloc{};

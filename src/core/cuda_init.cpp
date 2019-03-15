@@ -107,7 +107,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
     /* Send number of devices to master */
     MPI_Gather(&n_gpus, 1, MPI_INT, n_gpu_array, 1, MPI_INT, 0, MPI_COMM_WORLD);
     /* Send devices to maser */
-    for (std::vector<EspressoGpuDevice>::iterator device = devices.begin();
+    for (auto device = devices.begin();
          device != devices.end(); ++device) {
       MPI_Send(&(*device), sizeof(EspressoGpuDevice), MPI_BYTE, 0, 0,
                MPI_COMM_WORLD);

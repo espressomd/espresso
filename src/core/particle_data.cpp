@@ -495,7 +495,7 @@ void mpi_who_has_slave(int, int) {
 }
 
 void mpi_who_has() {
-  static int *sizes = new int[n_nodes];
+  static auto *sizes = new int[n_nodes];
   int *pdata = nullptr;
   int pdata_s = 0;
 

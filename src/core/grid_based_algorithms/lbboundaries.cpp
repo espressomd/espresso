@@ -95,8 +95,8 @@ void lb_init_boundaries() {
     }
 
     int number_of_boundnodes = 0;
-    int *host_boundary_node_list = (int *)Utils::malloc(sizeof(int));
-    int *host_boundary_index_list = (int *)Utils::malloc(sizeof(int));
+    auto *host_boundary_node_list = (int *)Utils::malloc(sizeof(int));
+    auto *host_boundary_index_list = (int *)Utils::malloc(sizeof(int));
     size_t size_of_index;
     int boundary_number =
         -1; // the number the boundary will actually belong to.
@@ -237,7 +237,7 @@ void lb_init_boundaries() {
     }
 
     /**call of cuda fkt*/
-    float *boundary_velocity =
+    auto *boundary_velocity =
         (float *)Utils::malloc(3 * (lbboundaries.size() + 1) * sizeof(float));
     int n = 0;
     for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end();
