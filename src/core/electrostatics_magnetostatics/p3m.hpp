@@ -166,8 +166,9 @@ void p3m_pre_init(void);
  *  The function is based on routines of the program HE_Q.cpp written by M.
  *  Deserno.
  *
- *  @param[out]  log
- *  @return @ref ES_OK or @ref ES_ERROR
+ *  @param[out]  log  log output
+ *  @retval ES_OK
+ *  @retval ES_ERROR
  */
 int p3m_adaptive_tune(char **log);
 
@@ -279,10 +280,8 @@ int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
 
 /** Set mesh offset
  *
- *  Set x, y, z components of @ref p3m_parameter_struct::mesh_off "mesh off"
- *  @param[in]  x
- *  @param[in]  y
- *  @param[in]  z
+ *  @param[in]  x , y , z  Components of @ref p3m_parameter_struct::mesh_off
+ *                         "mesh_off"
  */
 int p3m_set_mesh_offset(double x, double y, double z);
 
