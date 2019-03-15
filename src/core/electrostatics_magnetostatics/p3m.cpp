@@ -1801,6 +1801,8 @@ int p3m_adaptive_tune(char **log) {
 
   /* preparation */
   mpi_call(p3m_count_charged_particles);
+  p3m_count_charged_particles();
+
   /* Print Status */
   sprintf(b, "P3M tune parameters: Accuracy goal = %.5e prefactor = %.5e\n",
           p3m.params.accuracy, coulomb.prefactor);

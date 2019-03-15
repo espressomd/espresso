@@ -1988,6 +1988,7 @@ int dp3m_adaptive_tune(char **logger) {
 
   /* preparation */
   mpi_call(dp3m_count_magnetic_particles);
+  dp3m_count_magnetic_particles();
 
   /* Print Status */
   sprintf(b,
