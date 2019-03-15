@@ -127,7 +127,6 @@ int n_nodes = -1;
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
-  CB(mpi_update_mol_ids_slave)                                                 \
   CB(mpi_sync_topo_part_info_slave)                                            \
   CB(mpi_send_exclusion_slave)                                                 \
   CB(mpi_bcast_lb_params_slave)                                                \
@@ -777,54 +776,6 @@ void mpi_bcast_nptiso_geom_slave(int, int) {
 }
 
 /***************REQ_UPDATE_MOL_IDS *********************/
-
-void mpi_update_mol_ids() {
-  mpi_call(mpi_update_mol_ids_slave, -1, 0);
-  mpi_update_mol_ids_slave(-1, 0);
-}
-
-void mpi_update_mol_ids_slave(int, int) { update_mol_ids_setchains(); }
-
-/******************* REQ_SYNC_TOPO ********************/
-int mpi_sync_topo_part_info() {
-  int i;
-  int molsize = 0;
-  int moltype = 0;
-
-  mpi_call(mpi_sync_topo_part_info_slave, -1, 0);
-  int n_mols = topology.size();
-  MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
-
-  for (i = 0; i < n_mols; i++) {
-    molsize = topology[i].part.n;
-    moltype = topology[i].type;
-
-#ifdef MOLFORCES
-    MPI_Bcast(&(topology[i].trap_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(topology[i].trap_center, 3, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].trap_spring_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].drag_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].noforce_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].isrelative), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].favcounter), 1, MPI_INT, 0, comm_cart);
-    if (topology[i].favcounter == -1)
-      MPI_Bcast(topology[i].fav, 3, MPI_DOUBLE, 0, comm_cart);
-    /* check if any molecules are trapped */
-    if ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
-      IsTrapped = 1;
-    }
-#endif
-
-    MPI_Bcast(&molsize, 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&moltype, 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(topology[i].part.e, topology[i].part.n, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&topology[i].type, 1, MPI_INT, 0, comm_cart);
-  }
-
-  sync_topo_part_info();
-
-  return 1;
-}
 
 void mpi_sync_topo_part_info_slave(int, int) {
   int i;
