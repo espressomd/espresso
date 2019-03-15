@@ -32,6 +32,8 @@
 #include "utils/Array.hpp"
 
 template <typename T, std::size_t N> class Vector : public Utils::Array<T, N> {
+  using Base = Utils::Array<T, N>;
+
 public:
   using Utils::Array<T, N>::at;
   using Utils::Array<T, N>::operator[];
@@ -64,10 +66,11 @@ private:
 public:
   template <typename Container>
   explicit Vector(const Container &v) : Vector(std::begin(v), std::end(v)) {}
-  explicit constexpr Vector(T const (&v)[N]) {
+  explicit constexpr Vector(T const (&v)[N]) : Base() {
     copy_init(std::begin(v), std::end(v));
   }
-  constexpr Vector(std::initializer_list<T> v) {
+
+  constexpr Vector(std::initializer_list<T> v) : Base() {
     if (N != v.size()) {
       throw std::length_error(
           "Construction of Vector from Container of wrong length.");
