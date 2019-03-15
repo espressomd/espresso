@@ -102,7 +102,7 @@ cdef extern from "utils/Vector.hpp":
         double * data()
         Vector3d operator * (double i)
         Vector3d operator / (double i)
-    
+
     cppclass Vector6d:
         double & operator[](int i)
         double * data()
@@ -115,3 +115,5 @@ cdef extern from "utils/Vector.hpp":
 
 cdef extern from "utils/math/bspline.hpp" namespace "Utils":
     cdef double bspline(int k, int i, double x)
+
+cdef make_array_locked(const Vector3d & v)

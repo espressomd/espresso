@@ -47,7 +47,7 @@ constexpr const None none{};
  */
 typedef boost::make_recursive_variant<
     None, bool, int, double, std::string, std::vector<int>, std::vector<double>,
-    ObjectId, std::vector<boost::recursive_variant_>, Vector2d, Vector3d, Vector4d>::type Variant;
+    ObjectId, std::vector<boost::recursive_variant_>, Vector3d>::type Variant;
 
 /**
  * @brief Human readable names for the types in the variant.
@@ -65,9 +65,7 @@ enum class VariantType {
   DOUBLE_VECTOR,
   OBJECTID,
   VECTOR,
-  VECTOR2D,
-  VECTOR3D,
-  VECTOR4D
+  VECTOR3D
 };
 
 typedef std::map<std::string, Variant> VariantMap;
@@ -116,16 +114,8 @@ template <size_t N> struct infer_type_helper<Vector<double, N>> {
   static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
 };
 
-    template <> struct infer_type_helper<Vector<double, 2>> {
-        static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
-    };
-
-    template <> struct infer_type_helper<Vector<double, 3>> {
-        static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
-    };
-
-    template <> struct infer_type_helper<Vector<double, 4>> {
-        static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
+    template <> struct infer_type_helper<Vector3d> {
+        static constexpr VariantType value{VariantType::VECTOR3D};
     };
 
 template <size_t N, size_t M>

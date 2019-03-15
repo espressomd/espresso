@@ -35,10 +35,41 @@ template <typename T, typename = void> struct get_value_helper {
   T operator()(Variant const &v) const { return boost::get<T>(v); }
 };
 
+/*
+ * Allows
+ * floating point -> floating point and
+ * intergral -> floating point
+ */
+template <class To, class From>
+using allow_conversion =
+    std::integral_constant<bool, std::is_floating_point<To>::value &&
+                                     std::is_arithmetic<From>::value>;
+
+template <class T, size_t N>
+struct vector_conversion_visitor : boost::static_visitor<Vector<T, N>> {
+  Vector<T, N> operator()(Vector<T, N> const &v) const { return v; }
+
+  template <typename U>
+  auto operator()(std::vector<U> const &iv) const
+      -> std::enable_if_t<std::is_same<T, U>::value ||
+                              allow_conversion<T, U>::value,
+                          Vector<T, N>> {
+    if (N != iv.size()) {
+      throw boost::bad_get{};
+    }
+
+    return {iv.begin(), iv.end()};
+  }
+
+  template <typename U> Vector<T, N> operator()(U const &) const {
+    throw boost::bad_get{};
+  }
+};
+
 /* Vector<T, N> case */
-template <size_t N, typename T> struct get_value_helper<Vector<T, N>, void> {
+template <typename T, size_t N> struct get_value_helper<Vector<T, N>> {
   Vector<T, N> operator()(Variant const &v) const {
-    return Vector<T, N>(boost::get<std::vector<T>>(v));
+    return boost::apply_visitor(detail::vector_conversion_visitor<T, N>{}, v);
   }
 };
 
@@ -59,6 +90,15 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
     } else {
       throw boost::bad_get{};
     }
+  }
+
+  template <typename U>
+  auto operator()(std::vector<U> const &iv) const
+      -> std::enable_if_t<allow_conversion<T, U>::value, std::vector<T>> {
+    std::vector<T> ret(iv.size());
+    std::copy(iv.begin(), iv.end(), ret.begin());
+
+    return ret;
   }
 };
 

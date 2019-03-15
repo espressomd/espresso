@@ -90,7 +90,7 @@ public:
       }
 
       if (type == "vector") {
-        return is_type<Variant>(par.at("value"));
+        return is_type<std::vector<Variant>>(par.at("value"));
       }
     }
 

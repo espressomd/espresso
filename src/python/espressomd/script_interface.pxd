@@ -38,6 +38,7 @@ cdef extern from "Parameter.hpp" namespace "ScriptInterface::ParameterType":
     cdef ParameterType DOUBLE_VECTOR
     cdef ParameterType OBJECTID
     cdef ParameterType VECTOR
+    cdef ParameterType VECTOR3D
 
 cdef extern from "Parameter.hpp" namespace "ScriptInterface":
     cdef cppclass Parameter:
@@ -59,7 +60,7 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     bool is_none(const Variant &)
 
 cdef extern from "ScriptInterface.hpp" namespace "boost":
-    T get[T](const Variant &) except +
+    const T &get[T](const Variant &) except +
 
 cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass ObjectId:

@@ -1,6 +1,7 @@
 from espressomd.utils import to_char_pointer, to_str, handle_errors
 import numpy as np
-from espressomd.utils import is_valid_type
+from espressomd.utils import is_valid_type, array_locked
+from espressomd.utils cimport Vector3d, make_array_locked
 
 cdef class PObjectId(object):
     cdef ObjectId id
@@ -96,34 +97,11 @@ cdef class PScriptInterface(object):
             name = to_char_pointer(pname)
 
             try:
-                ptype = self.parameters.at(name).type()
+                self.parameters.at(name)
             except:
                 raise ValueError("Unknown parameter %s" % name)
 
-            # Check number of elements if applicable
-            if < int > ptype in [< int > INT_VECTOR, < int > DOUBLE_VECTOR]:
-                n_elements = self.parameters[name].n_elements()
-                if n_elements != 0 and not (len(in_params[pname]) == n_elements):
-                    raise ValueError(
-                        "Value of %s expected to be %i elements" % (name, n_elements))
-
-            # We accept ints for floats (but not the other way round)
-            if < int > ptype == <int > DOUBLE and is_valid_type(in_params[pname], int):
-                in_params[pname] = float(in_params[pname])
-            # We already know that the argument is an iterable of the correct
-            # length
-            elif < int > ptype == <int > DOUBLE_VECTOR:
-                for i in range(len(in_params[pname])):
-                    if is_valid_type(in_params[pname][i], int):
-                        in_params[pname][i] = float(in_params[pname][i])
-
-            v = self.python_object_to_variant(in_params[pname])
-
-            if v.which() == <int > ptype:
-                out_params[name] = v
-            else:
-                raise ValueError("Wrong type for parameter '%s': Expected %s, but got %s" %
-                                 (pname, get_type_label(ptype), get_type_label(v)))
+            out_params[name] = self.python_object_to_variant(in_params[pname])
 
         return out_params
 
@@ -169,22 +147,23 @@ cdef class PScriptInterface(object):
         cdef ObjectId oid
         cdef vector[Variant] vec
         cdef shared_ptr[ScriptInterfaceBase] ptr
-
         if is_none(value) :
             return None
-        if < int > type == <int > BOOL:
+        if is_type[bool](value) :
             return get[bool](value)
-        if < int > type == <int > INT:
+        if is_type[int](value) :
             return get[int](value)
-        if < int > type == <int > DOUBLE:
+        if is_type[double](value) :
             return get[double](value)
-        if < int > type == <int > STRING:
+        if is_type[string](value) :
             return to_str(get[string](value))
-        if < int > type == <int > INT_VECTOR:
+        if is_type[vector[int]](value) :
             return get[vector[int]](value)
-        if < int > type == <int > DOUBLE_VECTOR:
+        if is_type[vector[double]](value):
             return get[vector[double]](value)
-        if < int > type == <int > OBJECTID:
+        if is_type[Vector3d](value) :
+            return make_array_locked(get[Vector3d](value))
+        if is_type[ObjectId](value) :
             # Get the id and build a corresponding object
             try:
                 oid = get[ObjectId](value)
@@ -209,7 +188,7 @@ cdef class PScriptInterface(object):
                     return None
             except:
                 return None
-        if < int > type == < int > VECTOR:
+        if is_type[vector[Variant]](value) :
             vec = get[vector[Variant]](value)
             res = []
 

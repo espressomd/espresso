@@ -301,3 +301,6 @@ def is_valid_type(value, t):
         return isinstance(value, (float, np.float16, np.float32, np.float64, np.longdouble))
     else:
         return isinstance(value, t)
+
+cdef make_array_locked(const Vector3d & v):
+    return array_locked([v[0], v[1], v[2]])
