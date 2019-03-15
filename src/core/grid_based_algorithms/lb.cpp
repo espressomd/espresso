@@ -28,37 +28,37 @@
  */
 
 #include "grid_based_algorithms/lb.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include <cinttypes>
-#include <fstream>
-#include <profiler/profiler.hpp>
 
 #ifdef LB
-
 #include "cells.hpp"
 #include "communication.hpp"
+#include "cuda_interface.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "halo.hpp"
+#include "integrate.hpp"
 #include "lb-d3q19.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
-#include "thermostat.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
+
 #include "utils/Counter.hpp"
 #include "utils/math/matrix_vector_product.hpp"
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
-#include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
+#include <mpi.h>
+#include <profiler/profiler.hpp>
 
 #include <cassert>
+#include <cinttypes>
 #include <cstdio>
+#include <fstream>
 #include <iostream>
-#include <mpi.h>
-
-#include "cuda_interface.hpp"
 
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_halo_regions(const LB_Fluid &lbfluid);
@@ -140,9 +140,10 @@ static double fluidstep = 0.0;
 #include "grid.hpp"
 
 #ifdef LB
+
 /********************** The Main LB Part *************************************/
 void lb_init() {
-  LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
+  LB_TRACE(printf("Begin initializing fluid on CPU\n"));
 
   if (lbpar.agrid <= 0.0) {
     runtimeErrorMsg()
@@ -159,9 +160,9 @@ void lb_init() {
   }
 
   /* initialize the local lattice domain */
-  lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
+  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
 
-  if (check_runtime_errors())
+  if (check_runtime_errors() || init_status != ES_OK)
     return;
 
   /* allocate memory for data structures */
@@ -176,7 +177,7 @@ void lb_init() {
   /* setup the initial populations */
   lb_reinit_fluid();
 
-  LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
+  LB_TRACE(printf("Initializing fluid on CPU successful\n"));
 }
 
 void lb_reinit_fluid() {
@@ -187,7 +188,7 @@ void lb_reinit_fluid() {
   Vector6d pi{};
 
   LB_TRACE(fprintf(stderr,
-                   "Initialising the fluid with equilibrium populations\n"););
+                   "Initializing the fluid with equilibrium populations\n"););
 
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        ++index) {
@@ -996,7 +997,6 @@ inline void lb_collide_stream() {
 /** \name Update step for the lattice Boltzmann fluid                  */
 /***********************************************************************/
 /*@{*/
-/*@}*/
 
 /** Update the lattice Boltzmann fluid.
  *
@@ -1015,46 +1015,14 @@ void lattice_boltzmann_update() {
   }
 }
 
+/*@}*/
+
 /***********************************************************************/
 /** \name Coupling part */
 /***********************************************************************/
 /*@{*/
 
 /***********************************************************************/
-
-/** Calculate the average density of the fluid in the system.
- *  This function has to be called after changing the density of
- *  a local lattice site in order to set lbpar.rho consistently.
- */
-void lb_calc_average_rho() {
-  Lattice::index_t index;
-  double rho, local_rho, sum_rho;
-
-  rho = 0.0;
-  local_rho = 0.0;
-  index = 0;
-  for (int z = 1; z <= lblattice.grid[2]; z++) {
-    for (int y = 1; y <= lblattice.grid[1]; y++) {
-      for (int x = 1; x <= lblattice.grid[0]; x++) {
-        lb_calc_local_rho(index, &rho);
-        local_rho += rho;
-
-        index++;
-      }
-      // skip halo region
-      index += 2;
-    }
-    // skip halo region
-    index += 2 * lblattice.halo_grid[0];
-  }
-  MPI_Allreduce(&rho, &sum_rho, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
-
-  /* calculate average density in MD units */
-  // TODO!!!
-  lbpar.rho = sum_rho / (box_l[0] * box_l[1] * box_l[2]);
-}
-
-/*@}*/
 
 static int compare_buffers(double *buf1, double *buf2, int size) {
   int ret;
@@ -1262,16 +1230,6 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
 
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                           double *pi) {
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_fields in " << __FILE__
-                      << __LINE__ << ": CPU LB not switched on.";
-    *rho = 0;
-    j[0] = j[1] = j[2] = 0;
-    pi[0] = pi[1] = pi[2] = pi[3] = pi[4] = pi[5] = 0;
-    return;
-  }
-
 #ifdef LB_BOUNDARIES
   if (lbfields[index].boundary) {
     *rho = lbpar.rho;
@@ -1416,28 +1374,27 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
 }
 #endif
 
-// Statistics in MD units.
-
-/** Calculate mass of the LB fluid.
- * \param result Fluid mass
+/** Calculate the local fluid momentum.
+ *  The calculation is implemented explicitly for the special case of D3Q19.
+ *  @param[in]  index  Local lattice site
+ *  @retval The local fluid momentum.
  */
-void lb_calc_fluid_mass(double *result) {
-  int x, y, z, index;
-  double sum_rho = 0.0, rho = 0.0;
-
-  for (x = 1; x <= lblattice.grid[0]; x++) {
-    for (y = 1; y <= lblattice.grid[1]; y++) {
-      for (z = 1; z <= lblattice.grid[2]; z++) {
-        index = get_linear_index(x, y, z, lblattice.halo_grid);
-
-        lb_calc_local_rho(index, &rho);
-        sum_rho += rho;
-      }
-    }
-  }
-
-  MPI_Reduce(&sum_rho, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+inline Vector3d lb_calc_local_j(Lattice::index_t index) {
+  return {{lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
+               lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
+               lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
+               lbfluid[14][index],
+           lbfluid[3][index] - lbfluid[4][index] + lbfluid[7][index] -
+               lbfluid[8][index] - lbfluid[9][index] + lbfluid[10][index] +
+               lbfluid[15][index] - lbfluid[16][index] + lbfluid[17][index] -
+               lbfluid[18][index],
+           lbfluid[5][index] - lbfluid[6][index] + lbfluid[11][index] -
+               lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
+               lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
+               lbfluid[18][index]}};
 }
+
+// Statistics in MD units.
 
 /** Calculate momentum of the LB fluid.
  * \param result Fluid momentum
@@ -1477,5 +1434,7 @@ void lb_collect_boundary_forces(double *result) {
              MPI_SUM, 0, comm_cart);
 #endif
 }
+
+/*@}*/
 
 #endif // LB

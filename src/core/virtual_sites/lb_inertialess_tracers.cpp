@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cells.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "integrate.hpp"
 #include "lb_inertialess_tracers_cuda_interface.hpp"
@@ -118,10 +119,10 @@ Interpolates LB velocity at the particle positions and propagates the particles
 
 void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Get velocities
-  if (lattice_switch & LATTICE_LB)
+  if (lattice_switch == ActiveLB::CPU)
     ParticleVelocitiesFromLB_CPU();
 #ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU)
+  if (lattice_switch == ActiveLB::GPU)
     ParticleVelocitiesFromLB_GPU(particles);
 #endif
 

@@ -292,14 +292,6 @@ struct ParticleLocal {
   bool ghost = false;
 };
 
-#ifdef LB
-/** Data related to the lattice Boltzmann hydrodynamic coupling */
-struct ParticleLatticeCoupling {
-  /** fluctuating part of the coupling force */
-  Vector3d f_random;
-};
-#endif
-
 struct ParticleParametersSwimming {
 // ifdef inside because we need this type for some MPI prototypes
 #ifdef ENGINE
@@ -357,9 +349,6 @@ struct Particle {
     ret.m = m;
     ret.f = f;
     ret.l = l;
-#ifdef LB
-    ret.lc = lc;
-#endif
 #ifdef ENGINE
     ret.swim = swim;
 #endif
@@ -380,10 +369,7 @@ struct Particle {
   ParticleForce f;
   ///
   ParticleLocal l;
-///
-#ifdef LB
-  ParticleLatticeCoupling lc;
-#endif
+  ///
   /** Bonded interactions list
    *
    *  The format is pretty simple: just the bond type, and then the particle

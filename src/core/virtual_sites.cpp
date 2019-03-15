@@ -133,6 +133,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
 // changes on the virtual site locally
 int local_vs_relate_to(Particle *p_current, const Particle *p_relate_to) {
   Vector4d quat;
+  
   double l;
   calculate_vs_relate_to_params(*p_current, *p_relate_to, l, quat);
 

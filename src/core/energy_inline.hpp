@@ -70,7 +70,6 @@
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "statistics.hpp"
-#include "thermostat.hpp"
 
 #include "energy.hpp"
 

@@ -38,8 +38,7 @@ public:
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
     for (auto const &id : ids()) {
       auto const ppos = ::Vector3d(folded_position(partCfg[id]));
-      histogram.update(ppos, ::Vector3d{{partCfg[id].f.f[0], partCfg[id].f.f[1],
-                                         partCfg[id].f.f[2]}});
+      histogram.update(ppos, partCfg[id].f.f);
     }
     histogram.normalize();
     return histogram.get_histogram();

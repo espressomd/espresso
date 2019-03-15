@@ -58,9 +58,6 @@
  */
 
 #include "cells.hpp"
-#include "integrate.hpp"
-#include "thermostat.hpp"
-#include "utils.hpp"
 
 /** Structure containing the information about the cell grid used for domain
  *  decomposition.

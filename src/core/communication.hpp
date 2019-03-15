@@ -58,6 +58,7 @@
 
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
+#include "grid_based_algorithms/lb_constants.hpp"
 #include "particle_data.hpp"
 
 #include "utils/serialization/array.hpp"
@@ -289,7 +290,7 @@ int mpi_sync_topo_part_info(void);
  *                    The references are defined in lb.hpp
  *  @param[in] value  Dummy value
  */
-void mpi_bcast_lb_params(int field, int value = -1);
+void mpi_bcast_lb_params(LBParam field, int value = -1);
 
 void mpi_bcast_lb_particle_coupling();
 
