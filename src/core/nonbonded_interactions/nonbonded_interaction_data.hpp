@@ -42,19 +42,19 @@
 
 #ifdef ELECTROSTATICS
 enum CoulombMethod {
-  COULOMB_NONE,      //< Coulomb interaction switched off (NONE)
-  COULOMB_DH,        //< Coulomb method is Debye-Hueckel
-  COULOMB_P3M,       //< Coulomb method is P3M
-  COULOMB_MMM1D,     //< Coulomb method is one-dimensional MMM
-  COULOMB_MMM2D,     //< Coulomb method is two-dimensional MMM
-  COULOMB_ELC_P3M,   //< Coulomb method is P3M plus ELC
-  COULOMB_RF,        //< Coulomb method is Reaction-Field
-  COULOMB_INTER_RF,  //< Coulomb method is Reaction-Field BUT as interaction
-  COULOMB_P3M_GPU,   //< Coulomb method is P3M with GPU based long range part
-                     // calculation
-  COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
-  COULOMB_EK,        //< Coulomb method is electrokinetics
-  COULOMB_SCAFACOS,  //< Coulomb method is scafacos
+  COULOMB_NONE,      ///< Coulomb interaction switched off
+  COULOMB_DH,        ///< Coulomb method is Debye-Hueckel
+  COULOMB_P3M,       ///< Coulomb method is P3M
+  COULOMB_MMM1D,     ///< Coulomb method is one-dimensional MMM
+  COULOMB_MMM2D,     ///< Coulomb method is two-dimensional MMM
+  COULOMB_ELC_P3M,   ///< Coulomb method is P3M plus ELC
+  COULOMB_RF,        ///< Coulomb method is Reaction-Field
+  COULOMB_INTER_RF,  ///< Coulomb method is Reaction-Field BUT as interaction
+  COULOMB_P3M_GPU,   ///< Coulomb method is P3M with GPU-based long-range part
+                     ///  calculation
+  COULOMB_MMM1D_GPU, ///< Coulomb method is one-dimensional MMM running on GPU
+  COULOMB_EK,        ///< Coulomb method is electrokinetics
+  COULOMB_SCAFACOS,  ///< Coulomb method is scafacos
 };
 
 #endif

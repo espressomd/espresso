@@ -212,43 +212,45 @@ void mpi_bcast_ia_params(int i, int j);
 void mpi_bcast_max_seen_particle_type(int s);
 
 /** Issue REQ_GATHER: gather data for analysis in analyze.
+ *  \todo update parameter descriptions
  *  \param job what to do:
- *  <ul>
- *      <li> 1 calculate and reduce (sum up) energies, using \ref energy_calc.
- *      <li> 2 calculate and reduce (sum up) pressure, stress tensor, using \ref
- * pressure_calc.
- *      <li> 3 calculate and reduce (sum up) instantaneous pressure, using \ref
- * pressure_calc.
- *  </ul>
+ *      \arg \c 1 calculate and reduce (sum up) energies,
+ *           using \ref energy_calc.
+ *      \arg \c 2 calculate and reduce (sum up) pressure, stress tensor,
+ *           using \ref pressure_calc.
+ *      \arg \c 3 calculate and reduce (sum up) instantaneous pressure,
+ *           using \ref pressure_calc.
+ *      \arg \c 4 use \ref predict_momentum_particles
+ *      \arg \c 6 use \ref lb_calc_fluid_momentum
+ *      \arg \c 8 use \ref lb_collect_boundary_forces
  *  \param result where to store the gathered value(s):
- *  <ul><li> job=1 unused (the results are stored in a global
+ *      \arg for \c job=1 unused (the results are stored in a global
  *           energy array of type \ref Observable_stat)
- *      <li> job=2 unused (the results are stored in a global
+ *      \arg for \c job=2 unused (the results are stored in a global
  *           virials array of type \ref Observable_stat)
- *      <li> job=3 unused (the results are stored in a global
+ *      \arg for \c job=3 unused (the results are stored in a global
  *           virials array of type \ref Observable_stat)
  *  \param result_t where to store the gathered value(s):
- *  <ul><li> job=1 unused (the results are stored in a global
+ *      \arg for \c job=1 unused (the results are stored in a global
  *           energy array of type \ref Observable_stat)
- *      <li> job=2 unused (the results are stored in a global
+ *      \arg for \c job=2 unused (the results are stored in a global
  *           p_tensor tensor of type \ref Observable_stat)
- *      <li> job=3 unused (the results are stored in a global
+ *      \arg for \c job=3 unused (the results are stored in a global
  *           p_tensor tensor of type \ref Observable_stat)
  *  \param result_nb where to store the gathered value(s):
- *  <ul><li> job=1 unused (the results are stored in a global
+ *      \arg for \c job=1 unused (the results are stored in a global
  *           energy array of type \ref Observable_stat_non_bonded)
- *      <li> job=2 unused (the results are stored in a global
+ *      \arg for \c job=2 unused (the results are stored in a global
  *           virials_non_bonded array of type \ref Observable_stat_non_bonded)
- *      <li> job=3 unused (the results are stored in a global
+ *      \arg for \c job=3 unused (the results are stored in a global
  *           virials_non_bonded array of type \ref Observable_stat_non_bonded)
  *  \param result_t_nb where to store the gathered value(s):
- *  <ul><li> job=1 unused (the results are stored in a global
+ *      \arg for \c job=1 unused (the results are stored in a global
  *           energy array of type \ref Observable_stat_non_bonded)
- *      <li> job=2 unused (the results are stored in a global
+ *      \arg for \c job=2 unused (the results are stored in a global
  *           p_tensor_non_bonded tensor of type \ref Observable_stat_non_bonded)
- *      <li> job=3 unused (the results are stored in a global
+ *      \arg for \c job=3 unused (the results are stored in a global
  *           p_tensor_non_bonded tensor of type \ref Observable_stat_non_bonded)
- *  </ul>
  */
 void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
                       void *result_t_nb);

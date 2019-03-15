@@ -126,7 +126,7 @@ typedef struct {
  * DEFINES
  ************************************************/
 
-/** @name MPI tags for FFF communication */
+/** @name MPI tags for FFT communication */
 /*@{*/
 /** Tag for communication in fft_init() */
 #define REQ_FFT_INIT 300

@@ -46,7 +46,7 @@ inline double KS(double lambda) { // Defined by (19) from Dupin2007
 /** Computes the local forces (Dupin2007) and adds them
  *  to the particle forces.
  *  @param p1           %Particle of triangle 1.
- *  @param p2,p3        Particles common to triangle 1 and triangle 2.
+ *  @param p2 , p3      Particles common to triangle 1 and triangle 2.
  *  @param p4           %Particle of triangle 2.
  *  @param iaparams     Bonded parameters for the OIF interaction.
  *  @param force        Force on @p p1.
