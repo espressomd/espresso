@@ -386,6 +386,26 @@ double get_r_cut() {
   return 0.0;
 }
 
+void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
+  std::string method;
+  std::string params;
+
+  method.resize(n_method);
+  params.resize(n_params);
+
+  /** This requires C++11, otherwise this is undefined because std::string was
+   * not required to have continuous memory before. */
+  MPI_Bcast(&(*method.begin()), n_method, MPI_CHAR, 0, comm_cart);
+  MPI_Bcast(&(*params.begin()), n_params, MPI_CHAR, 0, comm_cart);
+  bool dip = false;
+#ifdef SCAFACOS_DIPOLES
+  MPI_Bcast(&dip, sizeof(bool), MPI_CHAR, 0, comm_cart);
+#endif
+  set_params_safe(method, params, dip);
+}
+
+REGISTER_CALLBACK(mpi_scafacos_set_parameters_slave)
+
 void set_parameters(const std::string &method, const std::string &params,
                     bool dipolar_ia) {
   mpi_call(mpi_scafacos_set_parameters_slave, method.size(), params.size());
@@ -449,27 +469,6 @@ void update_system_params() {
 
 } // namespace Scafacos
 #endif /* SCAFACOS */
-
-void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
-#if defined(SCAFACOS)
-  using namespace Scafacos;
-  std::string method;
-  std::string params;
-
-  method.resize(n_method);
-  params.resize(n_params);
-
-  /** This requires C++11, otherwise this is undefined because std::string was
-   * not required to have continuous memory before. */
-  MPI_Bcast(&(*method.begin()), n_method, MPI_CHAR, 0, comm_cart);
-  MPI_Bcast(&(*params.begin()), n_params, MPI_CHAR, 0, comm_cart);
-  bool dip = false;
-#ifdef SCAFACOS_DIPOLES
-  MPI_Bcast(&dip, sizeof(bool), MPI_CHAR, 0, comm_cart);
-#endif
-  set_params_safe(method, params, dip);
-#endif /* SCAFACOS */
-}
 
 void mpi_scafacos_free_slave(int, int) {
 #if defined(SCAFACOS)

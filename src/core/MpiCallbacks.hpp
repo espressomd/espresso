@@ -22,12 +22,12 @@
 #ifndef COMMUNICATION_MPI_CALLBACKS
 #define COMMUNICATION_MPI_CALLBACKS
 
-#include <boost/mpi/collectives/broadcast.hpp>
-#include <boost/mpi/communicator.hpp>
-
 #include "utils/NumeratedContainer.hpp"
 #include "utils/as_const.hpp"
 #include "utils/tuple.hpp"
+
+#include <boost/mpi/collectives/broadcast.hpp>
+#include <boost/mpi/communicator.hpp>
 
 #include <functional>
 #include <initializer_list>
