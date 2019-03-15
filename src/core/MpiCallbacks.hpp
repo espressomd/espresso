@@ -170,9 +170,9 @@ public:
         : m_id(cb->add(std::forward<F>(f))), m_cb(cb) {}
 
     CallbackHandle(CallbackHandle const &) = delete;
-    CallbackHandle(CallbackHandle &&rhs) = default;
+    CallbackHandle(CallbackHandle &&rhs) noexcept = default;
     CallbackHandle &operator=(CallbackHandle const &) = delete;
-    CallbackHandle &operator=(CallbackHandle &&rhs) = default;
+    CallbackHandle &operator=(CallbackHandle &&rhs) noexcept = default;
 
   private:
     int m_id;
