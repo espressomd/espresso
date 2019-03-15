@@ -65,27 +65,6 @@ extern int n_part_conf;
     @return the minimal distance of two particles */
 double mindist(PartCfg &, IntList const &set1, IntList const &set2);
 
-/** calculate the aggregate distribution for molecules.
-    @param dist_criteria2 distance criteria squared
-    @param min_contact minimum number of contacts
-    @param s_mol_id start molecule id
-    @param f_mol_id finish molecule id
-    @param head_list
-    @param link_list
-    @param agg_id_list
-    @param agg_num
-    @param agg_size
-    @param agg_max
-    @param agg_min
-    @param agg_avg
-    @param agg_std
-    @param charge_criteria
-*/
-int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
-                int f_mol_id, int *head_list, int *link_list, int *agg_id_list,
-                int *agg_num, int *agg_size, int *agg_max, int *agg_min,
-                int *agg_avg, int *agg_std, int charge_criteria);
-
 /** returns all particles within a given radius r_catch around a position.
     @param partCfg
     @param pos position of sphere of point
@@ -109,28 +88,6 @@ double distto(PartCfg &, double pos[3], int pid);
 
 /** appends particles' positions in 'partCfg' to onfigs */
 void analyze_append(PartCfg &);
-
-/** appends the configuration stored in 'config[3*count]' to configs
-    @param config the configuration which should be added
-    @param count  how many particles in 'config' */
-void analyze_configs(double *config, int count);
-
-/** Docs missing!
-\todo Docs missing
-*/
-void analyze_activate(PartCfg &, int ind);
-
-/** removes configs[0], pushes all entries forward, appends current 'partCfg' to
- * last spot */
-void analyze_push(PartCfg &);
-
-/** replaces configs[ind] with current 'partCfg'
-    @param ind the entry in \ref #configs to be replaced */
-void analyze_replace(PartCfg &, int ind);
-
-/** removes configs[ind] and shrinks the array accordingly
-    @param ind the entry in \ref #configs to be removed */
-void analyze_remove(int ind);
 
 /** Calculates the distribution of particles around others.
     Calculates the distance distribution of particles with types given
