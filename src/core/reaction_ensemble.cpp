@@ -37,8 +37,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "utils/index.hpp"
 
+#include <cstdio>
 #include <fstream>
-#include <stdio.h>
 
 namespace ReactionEnsemble {
 /**

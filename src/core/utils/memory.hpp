@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_UTILS_MEMORY_HPP
 #define CORE_UTILS_MEMORY_HPP
 
+#include <cstdlib>
 #include <new>
 #include <stdexcept>
-#include <stdlib.h>
 
 namespace Utils {
 
