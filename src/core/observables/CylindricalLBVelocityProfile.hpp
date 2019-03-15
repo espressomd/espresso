@@ -21,7 +21,6 @@
 #define OBSERVABLES_CYLINDRICALLBVELOCITYPROFILE_HPP
 
 #include "CylindricalLBProfileObservable.hpp"
-#include "grid.hpp"
 #include "partCfg_global.hpp"
 #include "utils/Histogram.hpp"
 

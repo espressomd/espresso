@@ -1004,7 +1004,7 @@ double lb_lbnode_get_density(const Vector3i &ind) {
     double pi[6];
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_recv_fluid(node, index, &rho, j, pi);
@@ -1040,7 +1040,7 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
     Vector3d j;
     Vector6d pi;
 
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1099,7 +1099,7 @@ const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
     Vector6d pi{};
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1128,7 +1128,7 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
     int node;
     auto ind_shifted = ind;
 
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     int p_boundary;
@@ -1161,7 +1161,7 @@ const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
     int node;
     auto ind_shifted = ind;
 
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     Vector19d p_pop;
@@ -1192,7 +1192,7 @@ void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
     Vector6d pi;
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1224,7 +1224,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
     Vector6d pi;
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1253,7 +1253,7 @@ void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &p_pop) {
     int node;
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
