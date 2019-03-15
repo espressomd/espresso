@@ -20,7 +20,8 @@ cdef class Globals(object):
                 raise ValueError("Box length must be of length 3")
             for i in range(3):
                 if _box_l[i] <= 0:
-                    raise ValueError("Box length must be > 0  in all directions")
+                    raise ValueError(
+                        "Box length must be > 0  in all directions")
                 temp_box_l[i] = _box_l[i]
             grid.box_l = temp_box_l
             mpi_bcast_parameter(FIELD_BOXL)

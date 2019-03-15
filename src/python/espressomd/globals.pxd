@@ -68,7 +68,7 @@ cdef extern from "domain_decomposition.hpp":
     extern int max_num_cells
     extern int min_num_cells
     extern double max_skin
-    int calc_processor_min_num_cells(const Vector3i &grid)
+    int calc_processor_min_num_cells(const Vector3i & grid)
 
 
 cdef extern from "particle_data.hpp":
@@ -116,8 +116,6 @@ cdef extern from "rattle.hpp":
 
 cdef extern from "tuning.hpp":
     extern int timing_samples
-
-
 
 
 cdef extern from "npt.hpp":
