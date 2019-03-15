@@ -366,9 +366,9 @@ void p3m_init() {
     P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
                       (void *)p3m.rs_mesh));
 
-    int ca_mesh_size =
-        fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
-                 p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft, node_grid);
+    int ca_mesh_size = fft_init(
+        &p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
+        p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft, node_grid);
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,

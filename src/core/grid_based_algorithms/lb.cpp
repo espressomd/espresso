@@ -160,7 +160,8 @@ void lb_init() {
   }
 
   /* initialize the local lattice domain */
-  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0, local_box_l, my_right, box_l);
+  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0,
+                                   local_box_l, my_right, box_l);
 
   if (check_runtime_errors() || init_status != ES_OK)
     return;
@@ -263,7 +264,8 @@ void lb_reinit_parameters() {
 }
 
 /* Halo communication for push scheme */
-static void halo_push_communication(LB_Fluid &lbfluid, const Vector3i &local_node_grid) {
+static void halo_push_communication(LB_Fluid &lbfluid,
+                                    const Vector3i &local_node_grid) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
@@ -632,7 +634,8 @@ void lb_prepare_communication() {
    * datatypes */
 
   /* prepare the communication for a single velocity */
-  prepare_halo_communication(&comm, &lblattice, FIELDTYPE_DOUBLE, MPI_DOUBLE, node_grid);
+  prepare_halo_communication(&comm, &lblattice, FIELDTYPE_DOUBLE, MPI_DOUBLE,
+                             node_grid);
 
   update_halo_comm.num = comm.num;
   update_halo_comm.halo_info =

@@ -29,8 +29,9 @@
 #include "debug.hpp"
 #include "grid.hpp"
 
-int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim, const Vector3d &local_box,
-                  const Vector3d &myright, const Vector3d &box_length) {
+int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim,
+                  const Vector3d &local_box, const Vector3d &myright,
+                  const Vector3d &box_length) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
@@ -61,10 +62,10 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim, cons
   LATTICE_TRACE(fprintf(stderr,
                         "%d: box_l (%.3f,%.3f,%.3f) grid (%d,%d,%d) "
                         "node_neighbors (%d,%d,%d,%d,%d,%d)\n",
-                        this_node, local_box[0], local_box[1],
-                        local_box[2], this->grid[0], this->grid[1],
-                        this->grid[2], node_neighbors[0], node_neighbors[1],
-                        node_neighbors[2], node_neighbors[3], node_neighbors[4],
+                        this_node, local_box[0], local_box[1], local_box[2],
+                        this->grid[0], this->grid[1], this->grid[2],
+                        node_neighbors[0], node_neighbors[1], node_neighbors[2],
+                        node_neighbors[3], node_neighbors[4],
                         node_neighbors[5]));
 
   this->halo_size = halo_size;
@@ -81,8 +82,10 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim, cons
   return ES_OK;
 }
 
-void Lattice::map_position_to_lattice(const Vector3d &pos, Vector<std::size_t, 8> &node_index, Vector6d &delta,
-                                      const Vector3d &myLeft, const Vector3d &local_box) const {
+void Lattice::map_position_to_lattice(const Vector3d &pos,
+                                      Vector<std::size_t, 8> &node_index,
+                                      Vector6d &delta, const Vector3d &myLeft,
+                                      const Vector3d &local_box) const {
   Vector3i ind{};
   auto const epsilon = std::numeric_limits<double>::epsilon();
 
@@ -149,12 +152,16 @@ void Lattice::map_position_to_lattice_global(const Vector3d &pos, Vector3i &ind,
   }
 }
 
-int Lattice::map_lattice_to_node(Vector3i &ind, const Vector3i &local_node_grid) const {
+int Lattice::map_lattice_to_node(Vector3i &ind,
+                                 const Vector3i &local_node_grid) const {
   /* determine coordinates in node_grid */
   Vector3i grid;
-  grid[0] = (int)floor(ind[0] * this->agrid[0] * box_l_i[0] * local_node_grid[0]);
-  grid[1] = (int)floor(ind[1] * this->agrid[1] * box_l_i[1] * local_node_grid[1]);
-  grid[2] = (int)floor(ind[2] * this->agrid[2] * box_l_i[2] * local_node_grid[2]);
+  grid[0] =
+      (int)floor(ind[0] * this->agrid[0] * box_l_i[0] * local_node_grid[0]);
+  grid[1] =
+      (int)floor(ind[1] * this->agrid[1] * box_l_i[1] * local_node_grid[1]);
+  grid[2] =
+      (int)floor(ind[2] * this->agrid[2] * box_l_i[2] * local_node_grid[2]);
 
   /* change from global to local lattice coordinates */
   ind[0] = ind[0] - grid[0] * this->grid[0] + this->halo_size;

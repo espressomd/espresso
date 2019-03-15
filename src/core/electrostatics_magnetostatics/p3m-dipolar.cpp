@@ -402,9 +402,10 @@ void dp3m_init() {
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node,
                       (void *)dp3m.rs_mesh));
 
-    int ca_mesh_size = fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim,
-                                dp3m.local_mesh.margin, dp3m.params.mesh,
-                                dp3m.params.mesh_off, &dp3m.ks_pnum, dp3m.fft, node_grid);
+    int ca_mesh_size =
+        fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
+                 dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum,
+                 dp3m.fft, node_grid);
     dp3m.ks_mesh = Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     for (n = 0; n < 3; n++)

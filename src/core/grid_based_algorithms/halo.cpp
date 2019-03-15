@@ -234,7 +234,8 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
  * @param fieldtype  field layout of the lattice data (Input)
  * @param datatype   MPI datatype for the lattice data (Input)
  */
-void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice, Fieldtype fieldtype, MPI_Datatype datatype,
+void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
+                                Fieldtype fieldtype, MPI_Datatype datatype,
                                 const Vector3i &local_node_grid) {
   int k, n, dir, lr, cnt, num = 0;
   const auto grid = lattice->grid;

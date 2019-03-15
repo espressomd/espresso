@@ -27,7 +27,6 @@
 #include "cells.hpp"
 #include "global.hpp"
 
-
 #include <algorithm>
 #include <fstream>
 #include <iostream>

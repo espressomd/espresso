@@ -63,8 +63,9 @@ public:
    * \param halo_size  halo size
    * \param dim        lattice dimensions
    */
-  int init(double *agrid, double *offset, int halo_size, size_t dim, const Vector3d &local_box,
-           const Vector3d &myright, const Vector3d &box_length);
+  int init(double *agrid, double *offset, int halo_size, size_t dim,
+           const Vector3d &local_box, const Vector3d &myright,
+           const Vector3d &box_length);
 
   /** Map a spatial position to the surrounding lattice sites.
    *
@@ -82,8 +83,10 @@ public:
    * \param delta      distance fraction of pos from the surrounding
    *                   elementary cell, 6 directions (Output)
    */
-  void map_position_to_lattice(const Vector3d &pos, Vector<std::size_t, 8> &node_index, Vector6d &delta,
-                               const Vector3d &myLeft, const Vector3d &local_box) const;
+  void map_position_to_lattice(const Vector3d &pos,
+                               Vector<std::size_t, 8> &node_index,
+                               Vector6d &delta, const Vector3d &myLeft,
+                               const Vector3d &local_box) const;
   /********************** Inline Functions **********************/
 
   /** Map a global lattice site to the node grid.

@@ -673,8 +673,7 @@ void dd_topology_init(CellPList *old, const Vector3i &grid) {
 
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
      but may be set to a larger value by the user for performance reasons. */
-  min_num_cells =
-      std::max(min_num_cells, calc_processor_min_num_cells(grid));
+  min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells(grid));
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
@@ -686,17 +685,14 @@ void dd_topology_init(CellPList *old, const Vector3i &grid) {
   dd_mark_cells();
 
   /* create communicators */
-  dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM,
-                  grid);
+  dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM, grid);
 
   exchange_data =
       (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
   update_data = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
 
-  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data,
-                  grid);
-  dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data,
-                  grid);
+  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data, grid);
+  dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data, grid);
   dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE,
                   grid);
 
