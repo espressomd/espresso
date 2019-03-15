@@ -274,15 +274,6 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
 }
 
 void mpi_call(SlaveCallback cb, int node, int param) {
-#ifdef COMM_DEBUG
-  auto it = std::find(slave_callbacks.begin(), slave_callbacks.end(), cb);
-
-  if (it != slave_callbacks.end()) {
-    auto const id = it - slave_callbacks.begin();
-    COMM_TRACE(fprintf(stderr, "%d: issuing %s %d %d\n", this_node,
-                       names[id].c_str(), node, param));
-  }
-#endif /* COMM_DEBUG */
   mpiCallbacks().call(cb, node, param);
 
   COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
