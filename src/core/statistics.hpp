@@ -31,7 +31,6 @@
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "topology.hpp"
 #include "utils.hpp"
 
 #include <map>
@@ -164,34 +163,6 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
 void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
                  std::vector<int> &p2_types, double r_min, double r_max,
                  int r_bins, std::vector<double> &rdf, int n_conf);
-
-/** Calculates the van Hove auto correlation function and as a side product the
-   mean square displacement (msd).
-
-    Calculates the van Hove auto correlation function (acf)  G(r,t) which is the
-   probability that a particle has moved
-    a distance r after time t. In the case of a random walk G(r,t)/(4 pi r*r) is
-   a Gaussian. The mean square
-    displacement (msd) is connected to the van Hove acf via sqrt(msd(t)) = int
-   G(r,t) dr. This is very useful for
-    the investigation of diffusion processes.
-    calc_vanhove does the calculation for one particle type ptype and stores the
-   functions specified by rmin, rmax and
-    rbins in the arrays msd and vanhove.
-
-    @param ptype    particle type for which the analysis should be performed
-    @param rmin     minimal distance for G(r,t)
-    @param rmax     maximal distance for G(r,t)
-    @param rbins    number of bins for the r distribution in G(r,t)
-    @param tmax     max time, for which G(r,t) is computed, if omitted or set to
-   zero, default tmax=n_configs-1 is used
-    @param msd      array to store the mean square displacement (size
-   n_configs-1)
-    @param vanhove  array to store G(r,t) (size (n_configs-1)*(rbins))
-
-*/
-int calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins,
-                 int tmax, double *msd, double **vanhove);
 
 /** Calculates the spherically averaged structure factor.
 

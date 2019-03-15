@@ -698,59 +698,6 @@ int calc_cylindrical_average(
   return ES_OK;
 }
 
-int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
-                 int rbins, int tmax, double *msd, double **vanhove) {
-  int c1, c3, c3_max, ind;
-  double bin_width, inv_bin_width;
-  std::vector<int> ids;
-
-  for (auto const &p : partCfg) {
-    if (p.p.type == ptype) {
-      ids.push_back(p.p.identity);
-    }
-  }
-
-  if (ids.empty()) {
-    return 0;
-  }
-
-  /* preparation */
-  bin_width = (rmax - rmin) / (double)rbins;
-  inv_bin_width = 1.0 / bin_width;
-
-  /* calculate msd and store distribution in vanhove */
-  for (c1 = 0; c1 < n_configs; c1++) {
-    c3_max = (c1 + tmax + 1) > n_configs ? n_configs : c1 + tmax + 1;
-    for (c3 = (c1 + 1); c3 < c3_max; c3++) {
-      for (auto const &id : ids) {
-        Vector3d p1, p2;
-        p1[0] = configs[c1][3 * id];
-        p1[1] = configs[c1][3 * id + 1];
-        p1[2] = configs[c1][3 * id + 2];
-        p2[0] = configs[c3][3 * id];
-        p2[1] = configs[c3][3 * id + 1];
-        p2[2] = configs[c3][3 * id + 2];
-        auto const dist = (p1 - p2).norm();
-        if (dist > rmin && dist < rmax) {
-          ind = (int)((dist - rmin) * inv_bin_width);
-          vanhove[(c3 - c1 - 1)][ind]++;
-        }
-        msd[(c3 - c1 - 1)] += dist * dist;
-      }
-    }
-  }
-
-  /* normalize */
-  for (c1 = 0; c1 < (tmax); c1++) {
-    for (int i = 0; i < rbins; i++) {
-      vanhove[c1][i] /= (double)(n_configs - c1 - 1) * ids.size();
-    }
-    msd[c1] /= (double)(n_configs - c1 - 1) * ids.size();
-  }
-
-  return ids.size();
-}
-
 /****************************************************************************************
  *                                 config storage functions
  ****************************************************************************************/

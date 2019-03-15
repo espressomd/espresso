@@ -280,11 +280,6 @@ void mpi_bcast_nptiso_geom(void);
  *  a single molecule */
 void mpi_update_mol_ids(void);
 
-/** Issue REQ_SYNC_TOPO: Update the molecules ids to that they correspond to
- *  the topology
- */
-int mpi_sync_topo_part_info(void);
-
 /** Issue REQ_BCAST_LBPAR: Broadcast a parameter for lattice Boltzmann.
  *  @param[in] field  References the parameter field to be broadcasted.
  *                    The references are defined in lb.hpp
