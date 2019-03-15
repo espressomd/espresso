@@ -19,7 +19,8 @@ import unittest as ut
 import importlib_wrapper
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part2.py")
+    "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part2.py",
+    loops=400)
 
 
 @skipIfMissingFeatures

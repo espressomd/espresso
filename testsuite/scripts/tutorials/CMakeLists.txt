@@ -39,7 +39,7 @@ tutorial_test(FILE test_09-swimmer_reactions__reaction.py)
 tutorial_test(FILE test_10-reaction_ensemble__scripts__RE_vs_cpH.py)
 tutorial_test(FILE test_10-reaction_ensemble__scripts__RE_vs_cpH_poly.py)
 
-add_custom_target(check_tutorials COMMAND ${CMAKE_CTEST_COMMAND} $(ARGS) --output-on-failure)
+add_custom_target(check_tutorials COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} $(ARGS) --output-on-failure)
 
 add_dependencies(check_tutorials pypresso local_tutorials)
 
