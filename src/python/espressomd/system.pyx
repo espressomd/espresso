@@ -191,15 +191,7 @@ cdef class System(object):
         """
 
         def __set__(self, _box_l):
-            if len(_box_l) != 3:
-                raise ValueError("Box length must be of length 3")
-            for i in range(3):
-                if _box_l[i] <= 0:
-                    raise ValueError(
-                        "Box length must be > 0 in all directions")
-                box_l[i] = _box_l[i]
-
-            self.globals.box_l = box_l
+            self.globals.box_l = _box_l
 
         def __get__(self):
             return self.globals.box_l

@@ -1412,7 +1412,7 @@ static double p3m_get_accuracy(const int mesh[3], int cao, double r_cut_iL,
 #ifdef CUDA
   if (coulomb.method == COULOMB_P3M_GPU)
     ks_err = p3m_k_space_error_gpu(coulomb.prefactor, mesh, cao, p3m.sum_qpart,
-                                   p3m.sum_q2, alpha_L, box_l);
+                                   p3m.sum_q2, alpha_L, box_l.data());
   else
 #endif
     ks_err = p3m_k_space_error(coulomb.prefactor, mesh, cao, p3m.sum_qpart,

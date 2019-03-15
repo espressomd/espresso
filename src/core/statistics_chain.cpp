@@ -24,7 +24,6 @@
 #include "PartCfg.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "grid.hpp"
 #include "statistics.hpp"
 #include "topology.hpp"
 #include "utils.hpp"

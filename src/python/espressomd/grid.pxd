@@ -1,8 +1,8 @@
-from utils cimport Vector3i
+from utils cimport Vector3i, Vector3d
 
 cdef extern from "grid.hpp":
-    double box_l[3]
-    double local_box_l[3]
-    extern Vector3i node_grid
-    extern int periodic
-    extern double min_box_l
+    Vector3d box_l
+    Vector3d local_box_l
+    Vector3i node_grid
+    int periodic
+    double min_box_l

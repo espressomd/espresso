@@ -28,7 +28,6 @@
 
 #include "Observable_stat.hpp"
 #include "PartCfg.hpp"
-#include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "topology.hpp"

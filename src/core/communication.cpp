@@ -264,7 +264,7 @@ void mpi_init() {
 
   mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
                            /* periodicity */ {{1, 1, 1}});
-  MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
+  MPI_Cart_coords(comm_cart, this_node, 3, node_pos.data());
 
   Communication::m_callbacks =
       Utils::make_unique<Communication::MpiCallbacks>(comm_cart);

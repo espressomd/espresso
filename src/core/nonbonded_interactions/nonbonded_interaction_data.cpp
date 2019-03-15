@@ -32,7 +32,6 @@
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "initialize.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/buckingham.hpp"

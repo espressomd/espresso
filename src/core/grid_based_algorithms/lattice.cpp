@@ -29,30 +29,31 @@
 #include "debug.hpp"
 #include "grid.hpp"
 
-int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
+int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim, const Vector3d &local_box,
+                  const Vector3d &myright, const Vector3d &box_length) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
     this->agrid[d] = agrid[d];
-    this->global_grid[d] = (int)std::round(box_l[d] / agrid[d]);
+    this->global_grid[d] = (int)std::round(box_length[d] / agrid[d]);
     this->offset[d] = offset[d];
     this->local_index_offset[d] =
         (int)ceil((my_left[d] - this->offset[d]) / this->agrid[d]);
     this->local_offset[d] =
         this->offset[d] + this->local_index_offset[d] * this->agrid[d];
-    this->grid[d] = (int)ceil((my_right[d] - this->local_offset[d] - epsilon) /
+    this->grid[d] = (int)ceil((myright[d] - this->local_offset[d] - epsilon) /
                               this->agrid[d]);
   }
 
   // sanity checks
   for (int dir = 0; dir < 3; dir++) {
     // check if local_box_l is compatible with lattice spacing
-    if (fabs(local_box_l[dir] - this->grid[dir] * agrid[dir]) >
-        epsilon * box_l[dir]) {
+    if (fabs(local_box[dir] - this->grid[dir] * agrid[dir]) >
+        epsilon * box_length[dir]) {
       runtimeErrorMsg() << "Lattice spacing agrid[" << dir << "]=" << agrid[dir]
                         << " is incompatible with local_box_l[" << dir
-                        << "]=" << local_box_l[dir] << " ( box_l[" << dir
-                        << "]=" << box_l[dir] <<  " )";
+                        << "]=" << local_box[dir] << " ( box_l[" << dir
+                        << "]=" << box_length[dir] << " )";
       return ES_ERROR;
     }
   }
@@ -60,8 +61,8 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
   LATTICE_TRACE(fprintf(stderr,
                         "%d: box_l (%.3f,%.3f,%.3f) grid (%d,%d,%d) "
                         "node_neighbors (%d,%d,%d,%d,%d,%d)\n",
-                        this_node, local_box_l[0], local_box_l[1],
-                        local_box_l[2], this->grid[0], this->grid[1],
+                        this_node, local_box[0], local_box[1],
+                        local_box[2], this->grid[0], this->grid[1],
                         this->grid[2], node_neighbors[0], node_neighbors[1],
                         node_neighbors[2], node_neighbors[3], node_neighbors[4],
                         node_neighbors[5]));
@@ -80,16 +81,15 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
   return ES_OK;
 }
 
-void Lattice::map_position_to_lattice(const Vector3d &pos,
-                                      Vector<std::size_t, 8> &node_index,
-                                      Vector6d &delta) const {
+void Lattice::map_position_to_lattice(const Vector3d &pos, Vector<std::size_t, 8> &node_index, Vector6d &delta,
+                                      const Vector3d &myLeft, const Vector3d &local_box) const {
   Vector3i ind{};
   auto const epsilon = std::numeric_limits<double>::epsilon();
 
   /* determine the elementary lattice cell containing the particle
      and the relative position of the particle in this cell */
   for (int dir = 0; dir < 3; dir++) {
-    auto const lpos = pos[dir] - my_left[dir];
+    auto const lpos = pos[dir] - myLeft[dir];
     auto const rel = lpos / this->agrid[dir] + 0.5; // +1 for halo offset
     ind[dir] = static_cast<int>(floor(rel));
 
@@ -105,7 +105,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
                 this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
       }
     } else if (ind[dir] > this->grid[dir]) {
-      if (lpos - local_box_l[dir] < epsilon * local_box_l[dir])
+      if (lpos - local_box[dir] < epsilon * local_box[dir])
         ind[dir] = this->grid[dir];
       else
         fprintf(stderr,
