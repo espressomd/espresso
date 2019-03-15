@@ -25,6 +25,7 @@
 #include "utils/NumeratedContainer.hpp"
 #include "utils/as_const.hpp"
 #include "utils/tuple.hpp"
+#include "utils/type_traits.hpp"
 
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/communicator.hpp>
@@ -36,6 +37,16 @@
 
 namespace Communication {
 namespace detail {
+
+template <class T>
+using is_allowed_argument = std::integral_constant<
+    bool, not(std::is_pointer<T>::value ||
+              (!std::is_const<std::remove_reference_t<T>>::value &&
+               std::is_lvalue_reference<T>::value))>;
+
+template <class... Args>
+using are_allowed_arguments =
+    typename Utils::conjunction<is_allowed_argument<Args>...>::type;
 
 /**
  * @brief Type-erased interface for callbacks.
@@ -59,6 +70,10 @@ template <class F, class... Args>
 struct callback_model_t final : public callback_concept_t {
   F m_f;
 
+  static_assert(are_allowed_arguments<Args...>::value,
+                "Pointers and non-const references are not allowed as "
+                "arguments for callbacks.");
+
   template <class FRef>
   explicit callback_model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
 
@@ -67,7 +82,7 @@ struct callback_model_t final : public callback_concept_t {
    *
    * Receive parameters for this callback, and then call it.
    *
-   * @param comm The communicator to receive the paramters on.
+   * @param comm The communicator to receive the parameters on.
    */
   void operator()(boost::mpi::packed_iarchive &ia) const override {
     /* This is the local receive buffer for the parameters. We have to strip
