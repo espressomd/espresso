@@ -44,7 +44,6 @@
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy.hpp"
 #include "event.hpp"
 #include "forces.hpp"
@@ -138,8 +137,6 @@ int n_nodes = -1;
   CB(mpi_check_runtime_errors_slave)                                           \
   CB(mpi_minimize_energy_slave)                                                \
   CB(mpi_gather_cuda_devices_slave)                                            \
-  CB(mpi_scafacos_set_r_cut_and_tune_slave)                                    \
-  CB(mpi_scafacos_free_slave)                                                  \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
