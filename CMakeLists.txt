@@ -543,17 +543,24 @@ endif(WITH_BENCHMARKS)
 
 # Walberla 
 if (WITH_WALBERLA)
-  # This has to be here to be visible when find_package is called
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-  set(WALBERLA_BUILD_DOC OFF CACHE BOOL "Build walberla doc")
-  set(WALBERLA_WARNING_DISABLE ON CACHE BOOL "disable walberla warnings" )
-  
-  include(cmake/FindwaLBerla.cmake)
-  find_package(waLBerLa)
-  if (WALBERLA_FOUND)
-    set(WALBERLA 1)
-    set(WALBERLA_LIBS mpi core domain_decomposition blockforest boundary core domain_decomposition field lbm timeloop vtk stdc++fs)
-  endif(WALBERLA_FOUND)
+  include(AddExternal)
+  include(Download)
+  download(
+      libs/walberla
+      GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla
+      GIT_TAG master)
+  add_external(walberla
+      libs/walberla/src
+      WALBERLA_BUILD_TESTS=off
+      WALBERLA_BUILD_BENCHMARKS=off
+      WALBERLA_BUILD_TOOLS=off
+      WALBERLA_BUILD_TUTORIALS=off
+      WALBERLA_BUILD_SHOWCASES=off
+      WALBERLA_BUILD_DOC=off
+      )
+  set(WALBERLA 1)
+  include(${CMAKE_BINARY_DIR}/external/walberla/_external_targets.cmake)
+  set(WALBERLA_LIBS walberla::core walberla::domain_decomposition walberla::blockforest walberla::boundary walberla::core walberla::domain_decomposition walberla::field walberla::lbm walberla::timeloop walberla::vtk stdc++fs)
 endif(WITH_WALBERLA)
 
 #######################################################################
