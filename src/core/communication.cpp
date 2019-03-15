@@ -123,7 +123,7 @@ int n_nodes = -1;
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
-    CB(mpi_bcast_lb_params_slave)                                                \
+  CB(mpi_bcast_lb_params_slave)                                                \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_send_fluid_slave)                                                     \
   CB(mpi_recv_fluid_slave)                                                     \
