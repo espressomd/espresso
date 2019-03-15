@@ -63,8 +63,7 @@ private:
 
 public:
   template <typename Container>
-  explicit Vector(const Container &v)
-      : Vector(std::begin(v), std::end(v)) {}
+  explicit Vector(const Container &v) : Vector(std::begin(v), std::end(v)) {}
   explicit constexpr Vector(T const (&v)[N]) {
     copy_init(std::begin(v), std::end(v));
   }
