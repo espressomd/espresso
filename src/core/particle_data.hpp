@@ -356,9 +356,6 @@ struct Particle {
     ret.m = m;
     ret.f = f;
     ret.l = l;
-#ifdef LB
-    ret.lc = lc;
-#endif
 #ifdef ENGINE
     ret.swim = swim;
 #endif
