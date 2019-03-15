@@ -74,6 +74,9 @@ struct callback_model_t final : public callback_concept_t {
                 "Pointers and non-const references are not allowed as "
                 "arguments for callbacks.");
 
+  callback_model_t(callback_model_t const &) = delete;
+  callback_model_t(callback_model_t &&) = delete;
+
   template <class FRef>
   explicit callback_model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
 
