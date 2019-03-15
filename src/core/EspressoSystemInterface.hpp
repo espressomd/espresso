@@ -162,10 +162,10 @@ public:
 protected:
   static EspressoSystemInterface *m_instance;
   EspressoSystemInterface()
-      : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0),
-        m_dip_gpu_begin(0), m_dip_gpu_end(0), m_v_gpu_begin(0), m_v_gpu_end(0),
-        m_q_gpu_begin(0), m_q_gpu_end(0), m_director_gpu_begin(0),
-        m_director_gpu_end(0), m_needsParticleStructGpu(false),
+      : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(nullptr), m_r_gpu_end(nullptr),
+        m_dip_gpu_begin(nullptr), m_dip_gpu_end(nullptr), m_v_gpu_begin(nullptr), m_v_gpu_end(nullptr),
+        m_q_gpu_begin(nullptr), m_q_gpu_end(nullptr), m_director_gpu_begin(nullptr),
+        m_director_gpu_end(nullptr), m_needsParticleStructGpu(false),
         m_splitParticleStructGpu(false){};
   ~EspressoSystemInterface() override {}
 

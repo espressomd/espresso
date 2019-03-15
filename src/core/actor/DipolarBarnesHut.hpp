@@ -92,7 +92,7 @@ protected:
   float k;
   float m_epssq;
   float m_itolsq;
-  BHData m_bh_data = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  BHData m_bh_data = {0, 0, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 };
 
 void activate_dipolar_barnes_hut(float epssq, float itolsq);

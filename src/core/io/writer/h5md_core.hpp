@@ -83,7 +83,7 @@ public:
    * Boolean values for position, velocity, force and mass.
    */
   void Write(int write_dat, PartCfg &partCfg);
-  
+
   std::string &filename() { return m_filename; };
   std::string &scriptname() { return m_scriptname; };
   // Returns the int that describes which data should be written to the dataset.
