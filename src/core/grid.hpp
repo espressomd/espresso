@@ -65,7 +65,7 @@
 /*@{*/
 
 /** The number of nodes in each spatial dimension. */
-extern int node_grid[3];
+extern Vector3i node_grid;
 /** position of node in node grid */
 extern int node_pos[3];
 /** the six nearest neighbors of a node in the node grid. */

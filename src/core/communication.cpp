@@ -260,7 +260,7 @@ void mpi_init() {
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-  MPI_Dims_create(n_nodes, 3, node_grid);
+  MPI_Dims_create(n_nodes, 3, node_grid.data());
 
   mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
                            /* periodicity */ {{1, 1, 1}});

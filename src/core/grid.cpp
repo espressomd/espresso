@@ -49,7 +49,7 @@
  * variables
  **********************************************/
 
-int node_grid[3] = {0, 0, 0};
+Vector3i node_grid{};
 int node_pos[3] = {-1, -1, -1};
 int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
 int boundary[6] = {0, 0, 0, 0, 0, 0};
