@@ -474,7 +474,7 @@ int interactions_sanity_checks() {
     if (mdlc_sanity_checks())
       state = 0; // fall through
   case DIPOLAR_P3M:
-    if (dp3m_sanity_checks())
+    if (dp3m_sanity_checks(node_grid))
       state = 0;
     break;
   case DIPOLAR_MDLC_DS:

@@ -598,7 +598,7 @@ Cell *dd_save_position_to_cell(const Vector3d &pos) {
 /* Public Functions */
 /************************************************************/
 
-void dd_on_geometry_change(int flags) {
+void dd_on_geometry_change(int flags, const Vector3i &grid) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
@@ -613,7 +613,7 @@ void dd_on_geometry_change(int flags) {
         fprintf(stderr, "%d: dd_on_geometry_change full redo\n", this_node));
 
     /* Reset min num cells to default */
-    min_num_cells = calc_processor_min_num_cells(node_grid);
+    min_num_cells = calc_processor_min_num_cells(grid);
 
     cells_re_init(CELL_STRUCTURE_CURRENT);
     return;
@@ -659,11 +659,11 @@ void dd_on_geometry_change(int flags) {
       return;
     }
   }
-  dd_update_communicators_w_boxl(node_grid);
+  dd_update_communicators_w_boxl(grid);
 }
 
 /************************************************************/
-void dd_topology_init(CellPList *old) {
+void dd_topology_init(CellPList *old, const Vector3i &grid) {
   int c, p;
   int exchange_data, update_data;
 
@@ -674,7 +674,7 @@ void dd_topology_init(CellPList *old) {
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
      but may be set to a larger value by the user for performance reasons. */
   min_num_cells =
-      std::max(min_num_cells, calc_processor_min_num_cells(node_grid));
+      std::max(min_num_cells, calc_processor_min_num_cells(grid));
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
@@ -687,18 +687,18 @@ void dd_topology_init(CellPList *old) {
 
   /* create communicators */
   dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM,
-                  node_grid);
+                  grid);
 
   exchange_data =
       (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
   update_data = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
 
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data,
-                  node_grid);
+                  grid);
   dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data,
-                  node_grid);
+                  grid);
   dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE,
-                  node_grid);
+                  grid);
 
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
@@ -708,7 +708,7 @@ void dd_topology_init(CellPList *old) {
   dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
-  dd_init_cell_interactions(node_grid);
+  dd_init_cell_interactions(grid);
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {
@@ -863,7 +863,7 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl,
      * no action should be taken. */
     int rounds_left = grid[0] + grid[1] + grid[2] - 3;
     for (; rounds_left > 0; rounds_left--) {
-      exchange_neighbors(pl, node_grid);
+      exchange_neighbors(pl, grid);
 
       auto left_over =
           boost::mpi::all_reduce(comm_cart, pl->n, std::plus<int>());
@@ -873,7 +873,7 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl,
       }
     }
   } else {
-    exchange_neighbors(pl, node_grid);
+    exchange_neighbors(pl, grid);
   }
 }
 

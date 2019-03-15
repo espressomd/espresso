@@ -95,7 +95,7 @@ public:
    * \param  ind     global coordinates of the lattice site
    * \return         index of the node for the lattice site
    */
-  int map_lattice_to_node(Vector3i &ind) const;
+  int map_lattice_to_node(Vector3i &ind, const Vector3i &local_node_grid) const;
 
   /********************** static Functions **********************/
 

@@ -263,7 +263,7 @@ void lb_reinit_parameters() {
 }
 
 /* Halo communication for push scheme */
-static void halo_push_communication(LB_Fluid &lbfluid) {
+static void halo_push_communication(LB_Fluid &lbfluid, const Vector3i &local_node_grid) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
@@ -299,7 +299,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[0] > 1) {
+  if (local_node_grid[0] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -340,7 +340,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[0] > 1) {
+  if (local_node_grid[0] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -389,7 +389,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  if (node_grid[1] > 1) {
+  if (local_node_grid[1] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -432,7 +432,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  if (node_grid[1] > 1) {
+  if (local_node_grid[1] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -481,7 +481,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[2] > 1) {
+  if (local_node_grid[2] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -522,7 +522,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[2] > 1) {
+  if (local_node_grid[2] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -632,7 +632,7 @@ void lb_prepare_communication() {
    * datatypes */
 
   /* prepare the communication for a single velocity */
-  prepare_halo_communication(&comm, &lblattice, FIELDTYPE_DOUBLE, MPI_DOUBLE);
+  prepare_halo_communication(&comm, &lblattice, FIELDTYPE_DOUBLE, MPI_DOUBLE, node_grid);
 
   update_halo_comm.num = comm.num;
   update_halo_comm.halo_info =
@@ -975,7 +975,7 @@ inline void lb_collide_stream() {
   }
 
   /* exchange halo regions */
-  halo_push_communication(lbfluid_post);
+  halo_push_communication(lbfluid_post, node_grid);
 
 #ifdef LB_BOUNDARIES
   /* boundary conditions for links */

@@ -196,13 +196,13 @@ void topology_init(int cs, CellPList *local) {
     topology_init(cell_structure.type, local);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_init(local);
+    dd_topology_init(local, node_grid);
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_topology_init(local);
     break;
   case CELL_STRUCTURE_LAYERED:
-    layered_topology_init(local);
+    layered_topology_init(local, node_grid);
     break;
   default:
     fprintf(stderr,
@@ -418,7 +418,7 @@ void cells_on_geometry_change(int flags) {
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    dd_on_geometry_change(flags);
+    dd_on_geometry_change(flags, node_grid);
     break;
   case CELL_STRUCTURE_LAYERED:
     /* there is no fast version, always redo everything. */
