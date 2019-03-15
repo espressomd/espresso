@@ -252,7 +252,6 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index);
  * @param pi      local fluid pressure
  */
 
-
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
                                               int *boundary) {

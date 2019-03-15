@@ -169,14 +169,15 @@ public:
    *     the linear compression method)
    *
    */
-  Correlator(int tau_lin, double tau_max, int delta_N,
-             std::string compress1_, std::string compress2_,
-             std::string corr_operation, obs_ptr obs1,
+  Correlator(int tau_lin, double tau_max, int delta_N, std::string compress1_,
+             std::string compress2_, std::string corr_operation, obs_ptr obs1,
              obs_ptr obs2)
       : AccumulatorBase(delta_N), finalized(0), t(0), m_tau_lin(tau_lin),
         m_dt(delta_N * time_step), m_tau_max(tau_max),
-        compressA_name(std::move(compress1_)), compressB_name(std::move(compress2_)),
-        corr_operation_name(std::move(corr_operation)), A_obs(std::move(obs1)), B_obs(std::move(obs2)) {
+        compressA_name(std::move(compress1_)),
+        compressB_name(std::move(compress2_)),
+        corr_operation_name(std::move(corr_operation)), A_obs(std::move(obs1)),
+        B_obs(std::move(obs2)) {
     initialize();
   }
 

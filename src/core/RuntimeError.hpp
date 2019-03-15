@@ -40,8 +40,9 @@ struct RuntimeError {
   RuntimeError() = default;
   RuntimeError(ErrorLevel level, int who, std::string what,
                std::string function, std::string file, int line)
-      : m_level(level), m_who(who), m_what(std::move(what)), m_function(std::move(function)),
-        m_file(std::move(file)), m_line(line) {}
+      : m_level(level), m_who(who), m_what(std::move(what)),
+        m_function(std::move(function)), m_file(std::move(file)), m_line(line) {
+  }
 
   /** The error level */
   ErrorLevel level() const { return m_level; }

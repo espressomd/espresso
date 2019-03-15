@@ -611,7 +611,8 @@ void File::WriteScript(std::string const &filename) {
   /* Create the dataset. */
   hid_t link_crt_plist = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_create_intermediate_group(
-      link_crt_plist, static_cast<unsigned int>(true)); // Set flag for intermediate group creation
+      link_crt_plist, static_cast<unsigned int>(
+                          true)); // Set flag for intermediate group creation
   dset = H5Dcreate(file_id, "parameters/files/script", dtype, space,
                    link_crt_plist, H5P_DEFAULT, H5P_DEFAULT);
   /* Write data from buffer to dataset. */

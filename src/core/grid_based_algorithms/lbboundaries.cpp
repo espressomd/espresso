@@ -308,8 +308,8 @@ void lb_init_boundaries() {
             }
           }
 
-          if (dist <= 0 && the_boundary >= 0 && not
-              LBBoundaries::lbboundaries.empty()) {
+          if (dist <= 0 && the_boundary >= 0 &&
+              not LBBoundaries::lbboundaries.empty()) {
             auto const index = get_linear_index(x, y, z, lblattice.halo_grid);
             auto &node = lbfields[index];
             node.boundary = the_boundary + 1;

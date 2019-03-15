@@ -17,9 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /* vim: set ts=8 sts=2 sw=2 et: */
+#include <cmath>
 #include <iostream>
 #include <limits>
-#include <cmath>
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>

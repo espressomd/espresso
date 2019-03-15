@@ -216,8 +216,8 @@ struct AutoParameter {
   AutoParameter(std::string name, F const &set, G const &get,
                 VariantType type = infer_type<R>(),
                 size_t length = infer_length<R>())
-      : name(std::move(name)), type(type), length(length), set(Utils::make_function(set)),
-        get(Utils::make_function(get)) {}
+      : name(std::move(name)), type(type), length(length),
+        set(Utils::make_function(set)), get(Utils::make_function(get)) {}
 
   template <typename G,
             /* Try to guess the type from the return type of the getter */

@@ -18,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "RuntimeErrorStream.hpp"
 
-#include <utility>
 #include "RuntimeErrorCollector.hpp"
+#include <utility>
 
 namespace ErrorHandling {
 /** ostringstream is not copyable, but it is fine here to copy just the content.
