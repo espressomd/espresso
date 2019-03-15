@@ -108,11 +108,6 @@ struct ParticleProperties {
   constexpr static double mass{1.0};
 #endif /* MASS */
 
-#ifdef SHANCHEN
-  std::array<double, 2 *LB_COMPONENTS> solvation =
-      std::array<double, 2 * LB_COMPONENTS>{};
-#endif
-
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
   Vector3d rinertia = {1., 1., 1.};
@@ -167,9 +162,9 @@ struct ParticleProperties {
     int to_particle_id = 0;
     double distance = 0;
     // Store relative position of the virtual site.
-    Vector<4, double> rel_orientation = {0., 0., 0., 0.};
+    Vector4d rel_orientation = {0., 0., 0., 0.};
     // Store the orientation of the virtual particle in the body fixed frame.
-    Vector<4, double> quat = {0., 0., 0., 0.};
+    Vector4d quat = {0., 0., 0., 0.};
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &to_particle_id;
@@ -233,7 +228,7 @@ struct ParticlePosition {
 
 #ifdef ROTATION
   /** quaternions to define particle orientation */
-  Vector<4, double> quat = {1., 0., 0., 0.};
+  Vector4d quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
   inline const Vector3d calc_director() const {
     return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
@@ -246,11 +241,6 @@ struct ParticlePosition {
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
   Vector3d p_old = {0., 0., 0.};
-#endif
-
-#ifdef SHANCHEN
-  std::array<double, LB_COMPONENTS> composition =
-      std::array<double, LB_COMPONENTS>{};
 #endif
 };
 
@@ -309,14 +299,6 @@ struct ParticleLocal {
   int ghost = 0;
 };
 
-#ifdef LB
-/** Data related to the lattice Boltzmann hydrodynamic coupling */
-struct ParticleLatticeCoupling {
-  /** fluctuating part of the coupling force */
-  Vector3d f_random;
-};
-#endif
-
 struct ParticleParametersSwimming {
 // ifdef inside because we need this type for some MPI prototypes
 #ifdef ENGINE
@@ -374,9 +356,6 @@ struct Particle {
     ret.m = m;
     ret.f = f;
     ret.l = l;
-#ifdef LB
-    ret.lc = lc;
-#endif
 #ifdef ENGINE
     ret.swim = swim;
 #endif
@@ -397,10 +376,7 @@ struct Particle {
   ParticleForce f;
   ///
   ParticleLocal l;
-///
-#ifdef LB
-  ParticleLatticeCoupling lc;
-#endif
+  ///
   /** Bonded interactions list
    *
    *  The format is pretty simple: just the bond type, and then the particle
@@ -474,7 +450,7 @@ void MPI_Send(Particle const *, Size, Ts...) {
 
 /** List of particles. The particle array is resized using a sophisticated
  *  (we hope) algorithm to avoid unnecessary resizes.
- *  Access using \ref realloc_particlelist, \ref got_particle, ...
+ *  Access using \ref realloc_particlelist, ...
  */
 struct ParticleList {
   ParticleList() : part{nullptr}, n{0}, max{0} {}
@@ -827,24 +803,19 @@ void set_particle_gamma_rot(int part, Vector3d gamma_rot);
 #ifdef ROTATION
 /** Call only on the master node: set particle external torque.
     @param part  the particle.
-    @param flag  new value for ext_flag.
     @param torque new value for ext_torque.
-    @return ES_OK if particle existed
 */
 void set_particle_ext_torque(int part, const Vector3d &torque);
 #endif
 /** Call only on the master node: set particle external force.
     @param part  the particle.
-    @param flag  new value for ext_flag.
     @param force new value for ext_force.
-    @return ES_OK if particle existed
 */
 void set_particle_ext_force(int part, const Vector3d &force);
 /** Call only on the master node: set coordinate axes for which the particles
    motion is fixed.
     @param part  the particle.
     @param flag new value for flagged coordinate axes to be fixed
-    @return ES_OK if particle existed
 */
 void set_particle_fix(int part, int flag);
 #endif
@@ -908,8 +879,10 @@ void remove_all_bonds_to(int part);
     @param part the identity of the particle to move
     @param p    its new position
     @param _new  if true, the particle is allocated, else has to exists already
+
+    @return Pointer to the particle.
 */
-void local_place_particle(int part, const double p[3], int _new);
+Particle *local_place_particle(int part, const double p[3], int _new);
 
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
     Called if on a different node a new particle was added.
@@ -943,8 +916,8 @@ void local_remove_all_particles();
 */
 void local_rescale_particles(int dir, double scale);
 
-/** @briefn Add bond to local particle.
-    @param part     identity of principal atom of the bond.
+/** @brief Add bond to local particle.
+    @param p     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
     identity of all bond partners (secondary atoms of the bond).
 */

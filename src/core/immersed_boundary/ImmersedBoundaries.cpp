@@ -183,7 +183,7 @@ void ImmersedBoundaries::calc_volumes() {
           else {
             printf("Error. Encountered non-virtual particle with "
                    "VOLUME_CONSERVATION_IBM\n");
-            exit(1);
+            std::abort();
           }
         }
         // Iterate, increase by the number of partners of this bond + 1 for bond
@@ -309,7 +309,7 @@ void ImmersedBoundaries::calc_volume_force() {
           if (!p1.p.is_virtual) {
             printf("Error. Encountered non-virtual particle with "
                    "VOLUME_CONSERVATION_IBM\n");
-            exit(1);
+            std::abort();
           }
           softID = iaparams.p.ibmVolConsParameters.softID;
           volRef = iaparams.p.ibmVolConsParameters.volRef;

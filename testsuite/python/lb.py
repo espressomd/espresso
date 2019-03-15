@@ -19,6 +19,7 @@ from __future__ import print_function
 import itertools
 import unittest as ut
 import numpy as np
+import sys
 
 import espressomd
 import espressomd.lb
@@ -42,11 +43,11 @@ class TestLB(object):
     system.seed = range(n_nodes)
     np.random.seed = 1
     params = {'int_steps': 15,
-              'int_times': 30,
+              'int_times': 20,
               'time_step': 0.01,
               'tau': 0.01,
               'agrid': 0.5,
-              'box_l': 9.0,
+              'box_l': 6.0,
               'dens': 0.85,
               'viscosity': 3.0,
               'friction': 2.0,
@@ -54,8 +55,6 @@ class TestLB(object):
               'gamma': 1.5,
               'skin': 0.2,
               'temp_confidence': 10}
-    if espressomd.has_features("SHANCHEN"):
-        params.update({"dens": 2 * [params["dens"]]})
 
     dof = 3.
 
@@ -66,11 +65,12 @@ class TestLB(object):
     system.periodicity = [1, 1, 1]
     system.time_step = params['time_step']
     system.cell_system.skin = params['skin']
+    lbf = None
 
     def test_mass_momentum_thermostat(self):
         self.system.actors.clear()
         self.system.part.clear()
-        self.n_col_part = 1000
+        self.n_col_part = 100
         self.system.part.add(pos=np.random.random(
             (self.n_col_part, 3)) * self.params["box_l"])
         if espressomd.has_features("MASS"):
@@ -80,13 +80,17 @@ class TestLB(object):
         self.system.thermostat.turn_off()
 
         self.lbf = self.lb_class(
+            kT=self.params['temp'],
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'], ext_force_density=[0, 0, 0])
+            ext_force_density=[0, 0, 0], seed=4)
         self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(kT=self.params['temp'])
+        self.system.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            seed=3,
+            gamma=self.params['friction'])
         # give particles a push
         for p in self.system.part:
             p.v = p.v + [0.1, 0.0, 0.0]
@@ -121,7 +125,7 @@ class TestLB(object):
 
             # Go over lb lattice
             for lb_node in lb_nodes:
-                dens = lb_node.density[0]
+                dens = lb_node.density
                 fluid_mass += dens
                 fluid_temp += np.sum(lb_node.velocity**2) * dens
 
@@ -159,19 +163,23 @@ class TestLB(object):
         self.assertAlmostEqual(
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
-    def test_set_get_u(self):
+    def test_lb_node_set_get(self):
         self.system.actors.clear()
         self.lbf = self.lb_class(
+            kT=0.0,
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'], ext_force_density=[0, 0, 0])
+            ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf[0, 0, 0].velocity = v_fluid
         np.testing.assert_allclose(
             np.copy(self.lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
+        density = 0.234
+        self.lbf[0, 0, 0].density = density
+        self.assertAlmostEqual(self.lbf[0, 0, 0].density, density, delta=1e-4)
 
     def test_grid_index(self):
         self.system.actors.clear()
@@ -180,7 +188,7 @@ class TestLB(object):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'], ext_force_density=[0, 0, 0])
+            ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
         with self.assertRaises(ValueError):
             v = self.lbf[
@@ -191,6 +199,23 @@ class TestLB(object):
         with self.assertRaises(ValueError):
             v = self.lbf[
                 0, 0, int(self.params['box_l'] / self.params['agrid']) + 1].velocity
+
+    def test_incompatible_agrid(self):
+        """
+        LB lattice initialization must raise an exception when either box_l or
+        local_box_l aren't integer multiples of agrid.
+        """
+        self.system.actors.clear()
+        print("Testing LB error messages:", file=sys.stderr)
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'] + 1e-5,
+            tau=self.system.time_step,
+            ext_force_density=[0, 0, 0])
+        with self.assertRaises(Exception):
+            self.system.actors.add(self.lbf)
+        print("End of LB error messages", file=sys.stderr)
 
     @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
                "Features not available, skipping test!")
@@ -205,8 +230,12 @@ class TestLB(object):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'], ext_force_density=[0, 0, 0])
+            ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            seed=3,
+            gamma=self.params['friction'])
         self.system.part.add(
             pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
@@ -226,7 +255,7 @@ class TestLB(object):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'], ext_force_density=ext_force_density)
+            ext_force_density=ext_force_density)
         self.system.actors.add(self.lbf)
         n_time_steps = 5
         self.system.integrator.run(n_time_steps)
@@ -240,7 +269,7 @@ class TestLB(object):
 
 
 @ut.skipIf(
-    not espressomd.has_features(["LB"]) or espressomd.has_features("SHANCHEN"),
+    not espressomd.has_features(["LB"]),
            "Features not available, skipping test!")
 class TestLBCPU(TestLB, ut.TestCase):
 
@@ -251,13 +280,41 @@ class TestLBCPU(TestLB, ut.TestCase):
 
 @ut.skipIf(
     not espressomd.has_features(
-        ["LB_GPU"]) or espressomd.has_features('SHANCHEN') or espressomd.has_features("SHANCHEN"),
+        ["LB_GPU"]),
     "Features not available, skipping test!")
 class TestLBGPU(TestLB, ut.TestCase):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidGPU
         self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
+
+    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
+               "Features not available, skipping test!")
+    def test_viscous_coupling_higher_order_interpolation(self):
+        self.system.thermostat.turn_off()
+        self.system.actors.clear()
+        self.system.part.clear()
+        v_part = np.array([1, 2, 3])
+        v_fluid = np.array([1.2, 4.3, 0.2])
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step,
+            ext_force_density=[0, 0, 0])
+        self.system.actors.add(self.lbf)
+        self.lbf.set_interpolation_order("quadratic")
+        self.system.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            seed=3,
+            gamma=self.params['friction'])
+        self.system.part.add(
+            pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
+        self.lbf[0, 0, 0].velocity = v_fluid
+        v_fluid = self.lbf.get_interpolated_velocity(self.system.part[0].pos)
+        self.system.integrator.run(1)
+        np.testing.assert_allclose(
+            np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ cdef class Actor(object):
             if k in self.valid_keys():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a vaild key" % k)
+                raise KeyError("%s is not a valid key" % k)
 
     def _activate(self):
         inter = self._get_interaction_type()

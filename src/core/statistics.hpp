@@ -26,12 +26,13 @@
  *  Implementation in statistics.cpp.
  */
 
+#include "Observable_stat.hpp"
 #include "PartCfg.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "topology.hpp"
 #include "utils.hpp"
+
 #include <map>
 #include <string>
 #include <vector>
@@ -39,70 +40,6 @@
 /** \name Data Types */
 /************************************************************/
 /*@{*/
-
-struct Observable_stat {
-  /** Status flag for observable calculation.  For 'analyze energy': 0
-      re-initialize observable struct, else everything is fine,
-      calculation can start.  For 'analyze pressure' and 'analyze
-      p_inst': 0 or !(1+v_comp) re-initialize, else all OK. */
-  int init_status;
-
-  /** Array for observables on each node. */
-  DoubleList data;
-
-  /** number of Coulomb interactions */
-  int n_coulomb;
-  /** number of dipolar interactions */
-  int n_dipolar;
-  /** number of non bonded interactions */
-  int n_non_bonded;
-  /** Number of virtual sites relative (rigid body) contributions */
-  int n_virtual_sites;
-  /** Number of external field contributions */
-  const static int n_external_field = 1;
-
-  /** start of bonded interactions. Right after the special ones */
-  double *bonded;
-  /** start of observables for non-bonded interactions. */
-  double *non_bonded;
-  /** start of observables for Coulomb interaction. */
-  double *coulomb;
-  /** start of observables for Coulomb interaction. */
-  double *dipolar;
-  /** Start of observables for virtual sites relative (rigid bodies) */
-  double *virtual_sites;
-  /** Start of observables for external fields */
-  double *external_fields;
-
-  /** number of doubles per data item */
-  int chunk_size;
-};
-
-/** Structure used only in the pressure and stress tensor calculation to
-   distinguish
-    non-bonded intra- and inter- molecular contributions. */
-typedef struct {
-  /** Status flag for observable calculation.
-      For 'analyze energy': 0 re-initialize observable struct, else every thing
-     is fine, calculation can start.
-      For 'analyze pressure' and 'analyze p_inst': 0 or !(1+v_comp)
-     re-initialize, else all OK. */
-  int init_status_nb;
-
-  /** Array for observables on each node. */
-  DoubleList data_nb;
-
-  /** number of non bonded interactions */
-  int n_nonbonded;
-
-  /** start of observables for non-bonded intramolecular interactions. */
-  double *non_bonded_intra;
-  /** start of observables for non-bonded intermolecular interactions. */
-  double *non_bonded_inter;
-
-  /** number of doubles per data item */
-  int chunk_size_nb;
-} Observable_stat_non_bonded;
 
 /*@}*/
 
@@ -127,27 +64,6 @@ extern int n_part_conf;
     @return the minimal distance of two particles */
 double mindist(PartCfg &, IntList const &set1, IntList const &set2);
 
-/** calculate the aggregate distribution for molecules.
-    @param dist_criteria2 distance criteria squared
-    @param min_contact minimum number of contacts
-    @param s_mol_id start molecule id
-    @param f_mol_id finish molecule id
-    @param head_list
-    @param link_list
-    @param agg_id_list
-    @param agg_num
-    @param agg_size
-    @param agg_max
-    @param agg_min
-    @param agg_avg
-    @param agg_std
-    @param charge_criteria
-*/
-int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
-                int f_mol_id, int *head_list, int *link_list, int *agg_id_list,
-                int *agg_num, int *agg_size, int *agg_max, int *agg_min,
-                int *agg_avg, int *agg_std, int charge_criteria);
-
 /** returns all particles within a given radius r_catch around a position.
     @param partCfg
     @param pos position of sphere of point
@@ -171,28 +87,6 @@ double distto(PartCfg &, double pos[3], int pid);
 
 /** appends particles' positions in 'partCfg' to onfigs */
 void analyze_append(PartCfg &);
-
-/** appends the configuration stored in 'config[3*count]' to configs
-    @param config the configuration which should be added
-    @param count  how many particles in 'config' */
-void analyze_configs(double *config, int count);
-
-/** Docs missing!
-\todo Docs missing
-*/
-void analyze_activate(PartCfg &, int ind);
-
-/** removes configs[0], pushes all entries forward, appends current 'partCfg' to
- * last spot */
-void analyze_push(PartCfg &);
-
-/** replaces configs[ind] with current 'partCfg'
-    @param ind the entry in \ref #configs to be replaced */
-void analyze_replace(PartCfg &, int ind);
-
-/** removes configs[ind] and shrinks the array accordingly
-    @param ind the entry in \ref #configs to be removed */
-void analyze_remove(int ind);
 
 /** Calculates the distribution of particles around others.
     Calculates the distance distribution of particles with types given
@@ -270,34 +164,6 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
                  std::vector<int> &p2_types, double r_min, double r_max,
                  int r_bins, std::vector<double> &rdf, int n_conf);
 
-/** Calculates the van Hove auto correlation function and as a side product the
-   mean square displacement (msd).
-
-    Calculates the van Hove auto correlation function (acf)  G(r,t) which is the
-   probability that a particle has moved
-    a distance r after time t. In the case of a random walk G(r,t)/(4 pi r*r) is
-   a Gaussian. The mean square
-    displacement (msd) is connected to the van Hove acf via sqrt(msd(t)) = int
-   G(r,t) dr. This is very useful for
-    the investigation of diffusion processes.
-    calc_vanhove does the calculation for one particle type ptype and stores the
-   functions specified by rmin, rmax and
-    rbins in the arrays msd and vanhove.
-
-    @param ptype    particle type for which the analysis should be performed
-    @param rmin     minimal distance for G(r,t)
-    @param rmax     maximal distance for G(r,t)
-    @param rbins    number of bins for the r distribution in G(r,t)
-    @param tmax     max time, for which G(r,t) is computed, if omitted or set to
-   zero, default tmax=n_configs-1 is used
-    @param msd      array to store the mean square displacement (size
-   n_configs-1)
-    @param vanhove  array to store G(r,t) (size (n_configs-1)*(rbins))
-
-*/
-int calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins,
-                 int tmax, double *msd, double **vanhove);
-
 /** Calculates the spherically averaged structure factor.
 
     Calculates the spherically averaged structure factor of particles of a
@@ -357,12 +223,12 @@ double min_distance(T1 const pos1, T2 const pos2) {
 /** calculate the center of mass of a special type of the current configuration
  *  \param part_type  type of the particle
  */
-std::vector<double> centerofmass(PartCfg &, int part_type);
+Vector3d centerofmass(PartCfg &, int part_type);
 
 /** Docs missing
 \todo Docs missing
 */
-std::vector<double> centerofmass_vel(PartCfg &, int type);
+Vector3d centerofmass_vel(PartCfg &, int type);
 
 /** calculate the angular momentum of a special type of the current
  * configuration
@@ -386,9 +252,7 @@ void predict_momentum_particles(double *result);
 /** Docs missing
 \todo Docs missing
 */
-void momentum_calc(double *momentum);
-std::vector<double> calc_linear_momentum(int include_particles,
-                                         int include_lbfluid);
+Vector3d calc_linear_momentum(int include_particles, int include_lbfluid);
 
 inline double *obsstat_bonded(Observable_stat *stat, int j) {
   return stat->bonded + stat->chunk_size * j;
