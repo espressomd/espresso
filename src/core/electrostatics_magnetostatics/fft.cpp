@@ -58,7 +58,7 @@ static void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
 
 int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft) {
+             fft_data_struct &fft, const Vector3i &grid) {
   int i, j;
   /* helpers */
   int mult[3];
@@ -80,7 +80,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   /* === node grids === */
   /* real space node grid (n_grid[0]) */
   for (i = 0; i < 3; i++) {
-    n_grid[0][i] = node_grid[i];
+    n_grid[0][i] = grid[i];
     my_pos[0][i] = node_pos[i];
   }
   for (i = 0; i < n_nodes; i++) {

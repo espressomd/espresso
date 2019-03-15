@@ -21,6 +21,8 @@
 
 #include "h5md_core.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "grid.hpp"
+#include "integrate.hpp"
 #include <vector>
 
 namespace Writer {

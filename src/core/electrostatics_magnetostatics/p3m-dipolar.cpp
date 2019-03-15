@@ -346,7 +346,7 @@ void dp3m_init() {
   } else {
     P3M_TRACE(fprintf(stderr, "%d: dp3m_init:\n", this_node));
 
-    if (dp3m_sanity_checks())
+    if (dp3m_sanity_checks(node_grid))
       return;
 
     P3M_TRACE(fprintf(stderr, "%d: dp3m_init: starting\n", this_node));
@@ -402,9 +402,10 @@ void dp3m_init() {
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node,
                       (void *)dp3m.rs_mesh));
 
-    int ca_mesh_size = fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim,
-                                dp3m.local_mesh.margin, dp3m.params.mesh,
-                                dp3m.params.mesh_off, &dp3m.ks_pnum, dp3m.fft);
+    int ca_mesh_size =
+        fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
+                 dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum,
+                 dp3m.fft, node_grid);
     dp3m.ks_mesh = Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     for (n = 0; n < 3; n++)
@@ -2422,7 +2423,7 @@ bool dp3m_sanity_checks_boxl() {
 
 /*****************************************************************************/
 
-bool dp3m_sanity_checks() {
+bool dp3m_sanity_checks(const Vector3i &grid) {
   bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
@@ -2462,7 +2463,7 @@ bool dp3m_sanity_checks() {
     runtimeErrorMsg() << "dipolar P3M_init: cao is not yet set";
     ret = true;
   }
-  if (node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+  if (grid[0] < grid[1] || grid[1] < grid[2]) {
     runtimeErrorMsg()
         << "dipolar P3M_init: node grid must be sorted, largest first";
     ret = true;
