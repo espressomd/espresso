@@ -41,7 +41,7 @@ lbf = lb.LBFluid(agrid=1, dens=1, visc=1, tau=system.time_step, ext_force_densit
                  force, 0, 0])
 system.actors.add(lbf)
 
-system.thermostat.set_lb(LB_fluid=lbf, friction=1.0, act_on_virtual=False)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0, act_on_virtual=False)
 
 # Setup boundaries
 walls = [lbboundaries.LBBoundary() for k in range(2)]
