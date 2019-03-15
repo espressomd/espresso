@@ -48,7 +48,12 @@ BOOST_AUTO_TEST_CASE(callback_model_t) {
 
   boost::mpi::packed_oarchive::buffer_type buff;
   boost::mpi::packed_oarchive oa(world, buff);
-  oa << 537 << 3.4;
+
+  {
+    int i = 537;
+    double d = 3.4;
+    oa << i << d;
+  }
 
   /* function pointer variant */
   {
