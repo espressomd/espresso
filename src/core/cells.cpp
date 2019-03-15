@@ -369,7 +369,7 @@ void cells_resort_particles(int global_flag) {
     nsq_balance_particles(global_flag);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_exchange_and_sort_particles(global_flag, &displaced_parts);
+    dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid);
     break;
   }
 

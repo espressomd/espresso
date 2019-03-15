@@ -24,6 +24,7 @@ from globals cimport *
 import numpy as np
 import collections
 
+from grid cimport box_l
 from . cimport integrate
 from . import interactions
 from . import integrate

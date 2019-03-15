@@ -19,6 +19,7 @@
 include "myconfig.pxi"
 from libcpp cimport bool
 from interactions cimport ImmersedBoundaries
+from utils cimport Vector3i
 
 cdef extern from "global.hpp":
     int FIELD_BOXL
@@ -67,7 +68,7 @@ cdef extern from "domain_decomposition.hpp":
     extern int max_num_cells
     extern int min_num_cells
     extern double max_skin
-    int calc_processor_min_num_cells()
+    int calc_processor_min_num_cells(const Vector3i &grid)
 
 
 cdef extern from "particle_data.hpp":
@@ -117,12 +118,7 @@ cdef extern from "tuning.hpp":
     extern int timing_samples
 
 
-cdef extern from "grid.hpp":
-    double box_l[3]
-    double local_box_l[3]
-    extern int node_grid[3]
-    extern int periodic
-    extern double min_box_l
+
 
 cdef extern from "npt.hpp":
     ctypedef struct nptiso_struct:

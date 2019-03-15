@@ -156,10 +156,11 @@ void dd_topology_release();
  *  particle moves)
  *  @param pl List of particles
  */
-void dd_exchange_and_sort_particles(int global, ParticleList *pl);
+void dd_exchange_and_sort_particles(int global, ParticleList *pl,
+                                    const Vector3i &grid);
 
 /** calculate physical (processor) minimal number of cells */
-int calc_processor_min_num_cells();
+int calc_processor_min_num_cells(const Vector3i &grid);
 
 /** Fill a communication cell pointer list. Fill the cell pointers of
  *  all cells which are inside a rectangular subgrid of the 3D cell

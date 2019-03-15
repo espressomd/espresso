@@ -1,10 +1,10 @@
 import numpy as np
 
-from globals cimport box_l
+from grid cimport box_l
 from globals cimport time_step
 from globals cimport mpi_set_time_step
 from globals cimport min_global_cut
-from globals cimport periodic
+from grid cimport periodic
 from globals cimport sim_time
 from globals cimport timing_samples
 from globals cimport forcecap_set
