@@ -33,11 +33,17 @@
 #include <functional>
 #include <initializer_list>
 #include <tuple>
-#include <typeindex>
+#include <utility>
 
 namespace Communication {
 namespace detail {
-
+/**
+ * @brief Check if a type can be used as a callback argument.
+ *
+ * This checks is a type can be a parameter type for a MPI callback.
+ * Not allowed are pointers and non-const references, as output
+ * parameters can not work across ranks.
+ */
 template <class T>
 using is_allowed_argument = std::integral_constant<
     bool, not(std::is_pointer<T>::value ||

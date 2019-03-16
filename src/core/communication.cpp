@@ -72,6 +72,7 @@
 #include "serialization/IA_parameters.hpp"
 #include "serialization/Particle.hpp"
 #include "serialization/ParticleParametersSwimming.hpp"
+
 #include "utils.hpp"
 #include "utils/Counter.hpp"
 #include "utils/make_unique.hpp"
@@ -122,7 +123,6 @@ int n_nodes = -1;
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
-  CB(mpi_bcast_lb_params_slave)                                                \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_iccp3m_iteration_slave)                                               \
   CB(mpi_bcast_max_mu_slave)                                                   \
@@ -712,20 +712,6 @@ void mpi_bcast_nptiso_geom_slave(int, int) {
 
 /******************* REQ_BCAST_LBPAR ********************/
 
-void mpi_bcast_lb_params(LBParam field, int value) {
-#ifdef LB
-  mpi_call(mpi_bcast_lb_params_slave, static_cast<int>(field), value);
-  mpi_bcast_lb_params_slave(static_cast<int>(field), value);
-#endif
-}
-
-void mpi_bcast_lb_params_slave(int field, int) {
-#ifdef LB
-  MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
-  lb_lbfluid_on_lb_params_change(static_cast<LBParam>(field));
-#endif
-}
-
 void mpi_bcast_lb_particle_coupling() {
   mpi_call(mpi_bcast_lb_particle_coupling_slave, 0, 0);
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
@@ -761,30 +747,6 @@ REGISTER_CALLBACK(mpi_send_exclusion_slave)
 void mpi_send_exclusion(int part1, int part2, int _delete) {
   mpi_call(mpi_send_exclusion_slave, part1, part2, _delete);
   mpi_send_exclusion_slave(part1, part2, _delete);
-}
-#endif
-
-#ifdef LB_BOUNDARIES
-void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
-  if (node == this_node) {
-    int data;
-    lb_local_fields_get_boundary_flag(index, &data);
-    MPI_Send(&data, 1, MPI_INT, 0, SOME_TAG, comm_cart);
-  }
-}
-
-REGISTER_CALLBACK(mpi_recv_fluid_boundary_flag_slave)
-
-/************** REQ_LB_GET_BOUNDARY_FLAG **************/
-void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
-  if (node == this_node) {
-    lb_local_fields_get_boundary_flag(index, boundary);
-  } else {
-    int data = 0;
-    mpi_call(mpi_recv_fluid_boundary_flag_slave, node, index);
-    MPI_Recv(&data, 1, MPI_INT, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    *boundary = data;
-  }
 }
 #endif
 
@@ -832,28 +794,6 @@ int mpi_iccp3m_init() {
 }
 #endif
 
-#ifdef LB
-void mpi_recv_fluid_populations_slave(int node, int index) {
-  if (node == this_node) {
-    double data[19];
-    lb_get_populations(index, data);
-    MPI_Send(data, 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
-  }
-}
-
-REGISTER_CALLBACK(mpi_recv_fluid_populations_slave)
-
-void mpi_recv_fluid_populations(int node, int index, double *pop) {
-  if (node == this_node) {
-    lb_get_populations(index, pop);
-  } else {
-    mpi_call(mpi_recv_fluid_populations_slave, node, index);
-    MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-  }
-}
-
-#endif
-
 Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos) {
 #ifdef LB
   if (this_node == 0) {
@@ -878,28 +818,6 @@ void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
   }
 #endif
 }
-
-#ifdef LB
-void mpi_send_fluid_populations_slave(int node, int index) {
-  if (node == this_node) {
-    Vector19d populations;
-    MPI_Recv(populations.data(), 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
-    lb_set_populations(index, populations);
-  }
-}
-
-REGISTER_CALLBACK(mpi_send_fluid_populations_slave)
-
-void mpi_send_fluid_populations(int node, int index, const Vector19d &pop) {
-  if (node == this_node) {
-    lb_set_populations(index, pop);
-  } else {
-    mpi_call(mpi_send_fluid_populations_slave, node, index);
-    MPI_Send(pop.data(), 19, MPI_DOUBLE, node, SOME_TAG, comm_cart);
-  }
-}
-#endif
 
 /****************************************************/
 
@@ -1072,7 +990,7 @@ void mpi_loop() {
     mpiCallbacks().loop();
 }
 
-/*********************** other stuff ****************/
+  /*********************** other stuff ****************/
 
 #ifdef CUDA
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices() {

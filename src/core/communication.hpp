@@ -268,27 +268,12 @@ void mpi_bcast_nptiso_geom(void);
  *  a single molecule */
 void mpi_update_mol_ids(void);
 
-/** Issue REQ_BCAST_LBPAR: Broadcast a parameter for lattice Boltzmann.
- *  @param[in] field  References the parameter field to be broadcasted.
- *                    The references are defined in lb.hpp
- *  @param[in] value  Dummy value
- */
-void mpi_bcast_lb_params(LBParam field, int value = -1);
-
 void mpi_bcast_lb_particle_coupling();
 
 Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
 void mpi_bcast_cuda_global_part_vars();
-
-/** Issue REQ_LB_GET_BOUNDARY_FLAG: Receive a single lattice sites boundary
- *  flag from a processor.
- *  @param node      processor to send to
- *  @param index     index of the lattice site
- *  @param boundary  local boundary flag
- */
-void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary);
 
 /** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
  *  @return nonzero on error
@@ -299,20 +284,6 @@ int mpi_iccp3m_iteration();
  *  @return nonzero on error
  */
 int mpi_iccp3m_init();
-
-/** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param pop    local fluid population
- */
-void mpi_recv_fluid_populations(int node, int index, double *pop);
-
-/** Issue REQ_SEND_FLUID_POPULATIONS: Send a single lattice site to a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param pop    local fluid population
- */
-void mpi_send_fluid_populations(int node, int index, const Vector19d &pop);
 
 /** Part of MDLC */
 void mpi_bcast_max_mu();

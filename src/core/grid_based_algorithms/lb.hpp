@@ -153,6 +153,11 @@ struct LB_Parameters {
   Vector19d phi;
   // Thermal energy
   double kT;
+
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &rho &viscosity &bulk_viscosity &agrid &tau &ext_force_density &gamma_odd
+        &gamma_even &gamma_shear &gamma_bulk &is_TRT &phi &kT;
+  }
 };
 
 /** The DnQm model to be used. */
