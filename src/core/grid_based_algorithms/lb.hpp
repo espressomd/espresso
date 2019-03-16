@@ -243,15 +243,6 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
  */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index);
 
-/** Calculate the local fluid fields.
- * The calculation is implemented explicitly for the special case of D3Q19.
- *
- * @param index   Index of the local lattice site.
- * @param rho     local fluid density
- * @param j       local fluid speed
- * @param pi      local fluid pressure
- */
-
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
                                               int *boundary) {

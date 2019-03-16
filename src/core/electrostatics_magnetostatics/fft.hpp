@@ -52,15 +52,16 @@
 /*@{*/
 
 /** Initialize everything connected to the 3D-FFT.
-
- * \param data            Data array.
- * \param ca_mesh_dim     Local CA mesh dimensions.
- * \param ca_mesh_margin  Local CA mesh margins.
- * \param global_mesh_dim Global CA mesh dimensions.
- * \param global_mesh_off Global CA mesh offset.
- * \param ks_pnum         Number of permutations in k-space.
- * \param fft             FFT plan.
- * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
+ *
+ *  \param data            Data array.
+ *  \param ca_mesh_dim     Local CA mesh dimensions.
+ *  \param ca_mesh_margin  Local CA mesh margins.
+ *  \param global_mesh_dim Global CA mesh dimensions.
+ *  \param global_mesh_off Global CA mesh offset.
+ *  \param ks_pnum         Number of permutations in k-space.
+ *  \param fft             FFT plan.
+ *  \param grid            Number of nodes in each spatial dimension.
+ *  \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  */
 int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,

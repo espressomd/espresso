@@ -21,10 +21,10 @@
 #ifndef STATISTICS_CHAIN_H
 #define STATISTICS_CHAIN_H
 /** \file
-
-    This file contains the code for statistics on the data using the
-    molecule information set with analyse set chains.
-*/
+ *
+ *  This file contains the code for statistics on the data using the
+ *  molecule information set with analyze set chains.
+ */
 
 #include "PartCfg.hpp"
 
@@ -49,18 +49,21 @@ extern int chain_length;
 /************************************************************/
 /*@{*/
 
-/** calculate the end-to-end-distance. chain information \ref chain_start etc.
-   must be set!
+/** Calculate the end-to-end-distance.
+ *  Chain information \ref chain_start etc. must be set!
  */
 void calc_re(PartCfg &, double **re);
 
-/** calculate the radius of gyration. chain information \ref chain_start etc.
-   must be set!
+/** Calculate the radius of gyration.
+ *  Chain information \ref chain_start etc. must be set!
  */
 void calc_rg(PartCfg &, double **rg);
 
-/** calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory). chain
-   information \ref chain_start etc. must be set!
+/** Calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory).
+ *  Chain information \ref chain_start etc. must be set!
  */
 void calc_rh(PartCfg &, double **rh);
+
+/*@}*/
+
 #endif

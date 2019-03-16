@@ -39,13 +39,6 @@
 struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,
                                       0, 0,       0,       nullptr};
 
-/** Creates a fieldtype describing the data layout
- *  @param count   number of subtypes (Input)
- *  @param lengths array of lengths of the subtypes (Input)
- *  @param disps   array of displacements the subtypes (Input)
- *  @param extent  extent of the whole new fieldtype (Input)
- *  @param newtype newly created fieldtype (Input/Output)
- */
 void halo_create_fieldtype(int count, int *lengths, int *disps, int extent,
                            Fieldtype *newtype) {
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
@@ -72,13 +65,6 @@ void halo_create_fieldtype(int count, int *lengths, int *disps, int extent,
   }
 }
 
-/** Creates a field vector layout
- *  @param vblocks number of vector blocks(Input)
- *  @param vstride size of strides in field vector (Input)
- *  @param vskip   displacements of strides in field vector (Input)
- *  @param oldtype fieldtype the vector is composed of (Input)
- *  @param newtype newly created fieldtype (Input/Output)
- */
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
                               Fieldtype oldtype, Fieldtype *newtype) {
   int i;
@@ -129,9 +115,6 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
   }
 }
 
-/** Frees a fieldtype
- * @param ftype pointer to the type to be freed (Input)
- */
 void halo_free_fieldtype(Fieldtype *ftype) {
   if ((*ftype)->count > 0) {
     free((*ftype)->lengths);
@@ -323,9 +306,6 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
   }
 }
 
-/** Frees datastructures associated with a halo communicator
- * @param hc halo communicator to be released
- */
 void release_halo_communication(HaloCommunicator *hc) {
   int n;
 
@@ -336,11 +316,6 @@ void release_halo_communication(HaloCommunicator *hc) {
   free(hc->halo_info);
 }
 
-/** Perform communication according to the parallelization scheme
- *  described by the halo communicator
- * @param hc halo communicator describing the parallelization scheme
- * @param base base plane of local node
- */
 void halo_communication(HaloCommunicator *hc, char *base) {
   int s_node, r_node;
 
